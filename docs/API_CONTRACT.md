@@ -181,8 +181,8 @@ Nothing is published without merchant review.
 |---|---|---|
 | POST | `/api/v1/conversations` | `{merchant_id?, channel, mode}` → conversation |
 | GET | `/api/v1/conversations/{id}` | messages + state |
-| POST | `/api/v1/ai/chat` | `{query, conversation_id?, context:{geo,now,locale,party_size}}` → **SSE stream** (§116) |
-| POST | `/api/v1/ai/search` | non-streaming variant for MCP/UCP/API consumers |
+| POST | `/ai/v1/search/stream` | `{query, conversation_id?, context:{geo,now,locale,party_size}}` → **SSE stream** (§116). The web BFF proxies this as `POST /api/nexus/ai/stream`; the platform service never serves `/api/v1/ai/**`. |
+| POST | `/ai/v1/search` | non-streaming variant for MCP/UCP/API consumers (also the §105 fallback target) |
 | POST | `/ai/v1/query/understand` | `{query, context}` → `Intent` (below) |
 | POST | `/ai/v1/search` | deterministic hybrid search: `{intent, geo?, filters?, limit}` → `{items:EntityCard[], facets, took_ms, strategy, degraded:false}` |
 | POST | `/ai/v1/recommend` | `{intent|conversation_id, limit}` → `{set_id, items:EntityCard[]}` with explanations + fact ids |
@@ -192,7 +192,7 @@ Nothing is published without merchant review.
 | POST | `/ai/v1/feedback` | `{subject_type,subject_id,signal,value,session_id}` (§99) |
 | GET | `/ai/v1/tools` | tool registry manifest (§11) with schema + permission |
 
-SSE event stream for `/ai/v1/ai/search` (statuses are user-legible, never chain-of-thought):
+SSE event stream for `/ai/v1/search/stream` (statuses are user-legible, never chain-of-thought):
 ```
 event: status     data: {"stage":"understanding","text":"理解需求…"}
 event: intent     data: {Intent}
@@ -243,10 +243,14 @@ All admin routes require `role IN (platform_admin, platform_ops)` and write `aud
 
 ## 10. External agent surfaces (§43-45)
 
-- `GET /api/v1/merchants/{slug}/.well-known/ucp` → capability profile `{version, capabilities[], endpoints[], payment_handlers[]}`,
-  served from `agent_profiles` via `UcpAdapter` only. Business code must not build UCP JSON.
+- `GET /.well-known/ucp` (host root, the path UCP discovery actually fetches) → NEXUS's own profile
+  `{version, capabilities[], endpoints[], payment_handlers[]}`; `GET /api/v1/merchants/{slug}/ucp.json` → that merchant's
+  delegated profile, referenced from the host document. Both are produced by `UcpAdapter` only — business code must not
+  build UCP JSON, and no other route may serve these shapes.
 - `/mcp` (streamable HTTP + JSON-RPC): tools `search_nexus`, `get_merchant`, `search_products`, `check_availability`,
-  `create_cart`, `create_reservation`, `get_order_status`. Every call authenticates an `external_principals` row,
+  `create_cart`, `create_reservation`, `get_order_status`. `check_availability` is the external-facing **alias** of the
+  registry tool `get_availability` (canonical name inside `apps/ai`, per AGENT_CONTRACT §3) — the alias lives only in the
+  MCP adapter and is documented in the tool manifest, so no second implementation appears. Every call authenticates an `external_principals` row,
   checks scopes, and writes `agent_runs` + `audit_logs`.
 
 ## 11. Non-functional contract

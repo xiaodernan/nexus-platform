@@ -1,0 +1,19 @@
+{
+  "name": "@nexus/e2e",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:consumer": "playwright test specs/consumer",
+    "test:merchant": "playwright test specs/merchant",
+    "test:api": "playwright test specs/api",
+    "test:visual": "playwright test specs/visual --update-snapshots=missing",
+    "report": "playwright show-report report",
+    "codegen": "playwright codegen http://localhost:3000"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.1",
+    "dotenv": "^17.2.0"
+  }
+}

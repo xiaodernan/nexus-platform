@@ -65,3 +65,18 @@ unless `NEXUS_LLM_PROVIDER!=mock`.
 M0 contracts+infra+docs → M1 auth & merchant onboarding → M2 consumer search (deterministic) → M3 AI search+RAG →
 M4 recommendation+merchant agent → M5 vertical slice E2E → M6 analytics/growth polish → M7 deployment.
 Vertical slice (§168) is the acceptance target; anything not on that path is deferred.
+
+## D9 Canonical local ports (BINDING — this machine already runs other projects on 5432/6379)
+| Service | Container/port | Host port | Why |
+|---|---|---|---|
+| Postgres (pgvector) | `nexus-postgres` | **5433** | 5432 is occupied by an unrelated `careeros-postgres` |
+| Redis | `nexus-redis` | **6380** | 6379 is occupied by an unrelated `specproof-redis` |
+| Platform (Spring Boot) | host process | 8080 | free |
+| AI service (FastAPI) | host process | 8000 | free |
+| Web (Next.js) | host process | 3000 | free |
+
+Default dev connection strings:
+`postgres://nexus_app:nexus_app_dev@127.0.0.1:5433/nexus` and `redis://127.0.0.1:6380/0`.
+Test database: `nexus_test` on the same container. Agents must not invent other host ports and must not
+touch the non-Nexus containers.
+
