@@ -75,8 +75,10 @@ Vertical slice (§168) is the acceptance target; anything not on that path is de
 | AI service (FastAPI) | host process | 8000 | free |
 | Web (Next.js) | host process | 3000 | free |
 
-Default dev connection strings:
-`postgres://nexus_app:nexus_app_dev@127.0.0.1:5433/nexus` and `redis://127.0.0.1:6380/0`.
-Test database: `nexus_test` on the same container. Agents must not invent other host ports and must not
-touch the non-Nexus containers.
+Default dev connection strings come from `.env` (git-ignored, §131: dev credentials are never written into
+tracked docs): `NEXUS_PLATFORM_DB_URL` = `postgresql://nexus_app@127.0.0.1:5433/nexus`, `NEXUS_AI_DB_URL` =
+`postgresql://nexus_ai@127.0.0.1:5433/nexus`, `NEXUS_REDIS_URL` = `redis://127.0.0.1:6380/0`. Container-internal
+hosts are `postgres:5432` / `redis:6379`. Test database: `nexus_test` on the same container. Demo tenant slug is
+`hong-kong` with the stable id `00000000-0000-0000-0000-000000000001`. Agents must not invent other host ports and
+must not touch the non-Nexus containers.
 

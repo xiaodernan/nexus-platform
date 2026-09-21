@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.dev/schemas/tool_spec.json",
+  "title": "ToolSpec",
+  "description": "A tool declaration in the registry — docs/AGENT_CONTRACT.md §3, field for field with the Python `ToolSpec(name=…, version=\"1\", description=…, input_schema={…}, output_schema={…}, permission=…, scopes=[\"tenant\"], timeout_ms=4000, retries=1, cache_ttl_s=0, side_effect=…, cost_class=…, fallback=…)` example, plus the budget constants of §2. Published verbatim on `GET /ai/v1/tools` (API_CONTRACT §7). Tools are the only path from an agent to data (spec §52).",
+  "type": "object",
+  "additionalProperties": false,
+  "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+  "required": [
+    "name",
+    "version",
+    "description",
+    "input_schema",
+    "output_schema",
+    "permission",
+    "scopes",
+    "timeout_ms",
+    "retries",
+    "cache_ttl_s",
+    "side_effect",
+    "cost_class",
+    "fallback"
+  ],
+  "properties": {
+    "name": { "$ref": "#/$defs/ToolName" },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+(\\.[0-9]+){0,2}$",
+      "maxLength": 16,
+      "description": "AGENT_CONTRACT §3 `version=\"1\"`. Multi-version policy is still an open question in `docs/agents.md`, so only one part is required."
+    },
+    "description": { "type": "string", "minLength": 10, "maxLength": 512 },
+    "input_schema": {
+      "$ref": "#/$defs/JsonSchemaDocument",
+      "description": "Argument schema. Rule `tool_spec_closed_input` requires `type: \"object\"` + `additionalProperties: false` — unlisted arguments are hard errors (AGENT_CONTRACT §3)."
+    },
+    "output_schema": { "$ref": "#/$defs/JsonSchemaDocument" },
+    "permission": { "$ref": "#/$defs/PermissionName" },
+    "scopes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/ToolScope" },
+      "description": "AGENT_CONTRACT §3 `scopes=[\"tenant\"]` — required context(s) the dispatcher must have."
+    },
+    "timeout_ms": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 10000,
+      "description": "AGENT_CONTRACT §2 rule 5 sets 4s per tool / 12s per request; only network tools may reach 10s (`search_web`, §3). Rule `tool_spec_within_budget` checks the pair."
+    },
+    "retries": { "type": "integer", "minimum": 0, "maximum": 2 },
+    "cache_ttl_s": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "AGENT_CONTRACT §3 `cache_ttl_s=0  # availability: never cached`. Rule `tool_spec_availability_uncached` re-checks the freshness table in `src/fact.ts`."
+    },
+    "side_effect": {
+      "type": "boolean",
+      "description": "True for mutations; they also need `requires_idempotency_key: true` (API_CONTRACT §1, AGENT_CONTRACT §8) — rule `tool_spec_mutation_idempotent`."
+    },
+    "cost_class": { "$ref": "#/$defs/CostClass" },
+    "fallback": {
+      "anyOf": [{ "$ref": "#/$defs/FallbackKind" }, { "type": "null" }],
+      "description": "AGENT_CONTRACT §3 `fallback=\"deterministic_search\"`; the rung of the failure ladder (API §1, spec §105) that runs when this tool fails. `null` = fail fast."
+    },
+    "requires_idempotency_key": { "type": "boolean" },
+    "untrusted_output": {
+      "type": "boolean",
+      "description": "Result carries third-party text that must be data-enveloped before it can enter a prompt (AGENT_CONTRACT §7/§8)."
+    },
+    "network_egress": {
+      "type": "boolean",
+      "description": "Only `search_web` may set this (AGENT_CONTRACT §3)."
+    },
+    "task_class": {
+      "type": ["string", "null"],
+      "description": "Router hint when `cost_class` is `llm_cheap`/`llm_reason` — AGENT §9. The slashes in §9's prose are canonicalised (CONTRACT NOTES 3).",
+      "anyOf": [{ "$ref": "#/$defs/TaskClass" }, { "type": "null" }]
+    },
+    "agents": {
+      "type": "array",
+      "maxItems": 19,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/AgentName" },
+      "description": "Agents allowed to call this tool in v1 (AGENT_CONTRACT §1 roster). Informational — `permission_grants` is the enforcement point (§8)."
+    }
+  },
+  "$defs": {
+    "ToolName": {
+      "type": "string",
+      "title": "ToolName",
+      "description": "AGENT_CONTRACT §3 「Canonical tool names (implement exactly these)」 — all 24, verbatim.",
+      "enum": [
+        "search_merchants",
+        "search_products",
+        "search_services",
+        "search_reviews",
+        "search_location",
+        "get_business_hours",
+        "get_price",
+        "get_inventory",
+        "get_availability",
+        "create_reservation",
+        "create_cart",
+        "update_cart",
+        "checkout",
+        "get_order_status",
+        "search_web",
+        "retrieve_merchant_documents",
+        "analyze_reviews",
+        "get_user_preferences",
+        "set_user_preference",
+        "summarize_reviews",
+        "compare_entities",
+        "draft_campaign",
+        "draft_seo_page",
+        "record_event"
+      ]
+    },
+    "PermissionName": {
+      "type": "string",
+      "title": "PermissionName",
+      "description": "The RBAC vocabulary of `permission_grants.permission` (V1 line 133, AGENT_CONTRACT §8). An agent may never grant itself more (§8).",
+      "enum": [
+        "read_profile",
+        "write_profile",
+        "publish_listing",
+        "read_products",
+        "write_products",
+        "read_availability",
+        "write_availability",
+        "read_reviews",
+        "write_reviews",
+        "read_orders",
+        "write_orders",
+        "create_cart",
+        "create_reservation",
+        "checkout",
+        "refund_payment",
+        "send_message",
+        "read_preferences",
+        "write_preferences",
+        "read_analytics",
+        "configure_ai",
+        "create_draft_campaign",
+        "publish_campaign",
+        "read_merchant_documents",
+        "read_web",
+        "admin_members",
+        "moderate_content",
+        "export_data"
+      ]
+    },
+    "ToolScope": {
+      "type": "string",
+      "title": "ToolScope",
+      "description": "AGENT_CONTRACT §3 scopes / §8 subject kinds.",
+      "enum": ["tenant", "merchant", "user", "public", "external_agent"]
+    },
+    "CostClass": {
+      "type": "string",
+      "title": "CostClass",
+      "description": "AGENT_CONTRACT §3/§9 cost buckets used for routing and the cost roll-up (spec §160).",
+      "enum": ["db", "vector", "llm_cheap", "llm_reason", "external"]
+    },
+    "FallbackKind": {
+      "type": "string",
+      "title": "FallbackKind",
+      "description": "The failure ladder — API_CONTRACT §1, AGENT_CONTRACT §2 rule 2, spec §105.",
+      "enum": ["model_fallback", "deterministic_search", "human"]
+    },
+    "TaskClass": {
+      "type": "string",
+      "title": "TaskClass",
+      "description": "AGENT_CONTRACT §9 task classes for the model router; `TASK_CLASS` in `src/enums.ts` (the slashes in §9's prose are canonicalised — CONTRACT NOTES 3).",
+      "enum": [
+        "intent_extract",
+        "classify_route",
+        "embed",
+        "rerank",
+        "summary",
+        "reason_plan",
+        "generate_ui_copy"
+      ]
+    },
+    "AgentName": {
+      "type": "string",
+      "title": "AgentName",
+      "description": "AGENT_CONTRACT §1 roster = `AGENT_NAME` in `src/enums.ts`. V1 line 808's `agent_runs.agent` comment is narrower and says `fraud`; the roster wins (CONTRACT NOTES 5).",
+      "enum": [
+        "user_intent",
+        "search",
+        "retrieval",
+        "location",
+        "availability",
+        "ranking",
+        "recommendation",
+        "review",
+        "fact_verification",
+        "reservation",
+        "cart",
+        "checkout",
+        "customer_service",
+        "merchant_sales",
+        "marketing",
+        "seo",
+        "analytics",
+        "fraud_trust",
+        "admin_agent"
+      ]
+    },
+    "JsonSchemaDocument": {
+      "type": "object",
+      "title": "JsonSchema",
+      "description": "An embedded JSON Schema (draft 2020-12). Deliberately open: schema *keywords* are camelCase (`additionalProperties`, `$ref`) so the snake_case rule for data keys does not apply here. `src/json-schema.ts` is the TS mirror.",
+      "required": [],
+      "properties": {
+        "$schema": { "type": "string" },
+        "$id": { "type": "string" },
+        "$ref": { "type": "string" },
+        "$defs": { "type": "object" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "type": {
+          "oneOf": [
+            { "type": "string", "enum": ["object", "array", "string", "number", "integer", "boolean", "null"] },
+            { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "enum": ["object", "array", "string", "number", "integer", "boolean", "null"] } }
+          ]
+        },
+        "enum": { "type": "array", "minItems": 1 },
+        "const": {},
+        "properties": { "type": "object" },
+        "required": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "additionalProperties": { "oneOf": [{ "type": "boolean" }, { "type": "object" }] },
+        "patternProperties": { "type": "object" },
+        "propertyNames": { "type": "object" },
+        "items": { "oneOf": [{ "type": "boolean" }, { "type": "object" }] },
+        "prefixItems": { "type": "array", "items": { "type": "object" } },
+        "minItems": { "type": "integer", "minimum": 0 },
+        "maxItems": { "type": "integer", "minimum": 0 },
+        "uniqueItems": { "type": "boolean" },
+        "pattern": { "type": "string" },
+        "minLength": { "type": "integer", "minimum": 0 },
+        "maxLength": { "type": "integer", "minimum": 0 },
+        "minimum": { "type": "number" },
+        "maximum": { "type": "number" },
+        "exclusiveMinimum": { "type": "number" },
+        "exclusiveMaximum": { "type": "number" },
+        "multipleOf": { "type": "number", "exclusiveMinimum": 0 },
+        "format": { "type": "string" },
+        "anyOf": { "type": "array", "minItems": 1, "items": { "type": "object" } },
+        "oneOf": { "type": "array", "minItems": 1, "items": { "type": "object" } },
+        "allOf": { "type": "array", "minItems": 1, "items": { "type": "object" } },
+        "not": { "type": "object" },
+        "if": { "type": "object" },
+        "then": { "oneOf": [{ "type": "boolean" }, { "type": "object" }] },
+        "else": { "oneOf": [{ "type": "boolean" }, { "type": "object" }] },
+        "default": {},
+        "examples": { "type": "array" }
+      }
+    }
+  }
+}

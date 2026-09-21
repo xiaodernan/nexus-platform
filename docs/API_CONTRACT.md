@@ -9,15 +9,24 @@
 |---|---|---|---|
 | `/api/v1/**` | Spring Boot platform service (`services/platform`) | 8080 | Auth, RBAC, merchants, offerings, orders, carts, reservations, payments, reviews, conversations, events, growth, admin |
 | `/ai/v1/**` | FastAPI AI service (`apps/ai`) | 8000 | Query understanding, hybrid search, RAG, agent orchestration, recommendations, comparison, eval, observability |
-| `/mcp`, `/.well-known/ucp` | FastAPI AI service adapters | 8000 | External-agent surface (§43-45) |
+| `/mcp` | FastAPI AI service adapters | 8000 | External-agent tool surface (§44-45) |
+| `/.well-known/ucp` | Spring Boot platform (`UcpController`) | 8080 | UCP origin profile; per-merchant profiles are `/api/v1/merchants/{slug}/ucp.json` (D14). The web edge proxies this host-root path to the platform; it is never served by the AI service, because profiles are projected from `agent_profiles`, which the platform owns. |
 | `/**` | Next.js (`apps/web`) | 3000 | SSR/SSG pages, BFF proxy at `/api/*`, streaming UI |
 
 Data access rules (no `LLM → database` path, §52):
-- Platform service: `nexus_app` DB role, read-write on commerce tables.
-- AI service: `nexus_ai` DB role — **SELECT** on merchants/offerings/locations/reviews/facts/business_hours/availability_slots,
-  and read-write only on `documents, chunks, facts, recommendation_sets, feedback_events, agent_runs, llm_calls, eval_*, review_summaries, seo_pages, campaigns`.
-  Anything it must mutate in the commerce core (cart, reservation, order) goes through platform HTTP APIs with a scoped token.
-- Web never talks to Postgres. It calls platform + AI through the BFF.
+- Platform service: `nexus_app` DB role, read-write on every commerce table (it owns them).
+- AI service: `nexus_ai` DB role, and the grant set is **exactly** the list below (enforced in
+  `infra/postgres/init/00_roles.sql`, verified against the live DB — 23 tables, nothing wider):
+  - **SELECT only**: merchants, offerings, locations, reviews, business_hours, availability_slots,
+    tenants, user_preferences, external_principals
+  - **read-write**: documents, chunks, facts, recommendation_sets, feedback_events, agent_runs,
+    llm_calls, eval_suites/eval_cases/eval_runs, review_summaries, seo_pages, campaigns, coupons
+    (`coupons` is the marketing agent's draft workspace — §27 keeps publish behind a human)
+  - **INSERT only** (append-only, D19): events — note this is measured behaviour, not theory: with
+    INSERT but no SELECT, `INSERT ... RETURNING` is rejected, so the event writer must not use RETURNING.
+  - Everything else — users, carts, orders, payments, reservations, **conversations, messages,
+    handoffs** — is unreachable for `nexus_ai` by design. Mutations there go through platform HTTP APIs
+    with a scoped token (§0, D20). Web never talks to Postgres; it calls platform + AI through the BFF.
 
 ## 1. Global conventions
 
@@ -136,13 +145,15 @@ Demo login (§87): `POST /api/v1/auth/demo {role: consumer|merchant|admin}` retu
 | POST | `/api/v1/merchant/imports` | `write_products` |
 | GET | `/api/v1/merchant/imports/{job_id}` | `read_products` |
 | GET | `/api/v1/merchant/dashboard/overview` | `read_analytics` |
+| GET | `/api/v1/merchant/businesses/{id}/overview` | `read_analytics` — same funnel scoped to one business (D15; the multi-business workspace needs the per-business form) |
 | GET | `/api/v1/merchant/analytics?from&to&metric` | `read_analytics` |
 | POST | `/api/v1/merchant/ai-agent/config` | `configure_ai` |
 | GET | `/api/v1/merchant/conversations` · POST `/{id}/reply` · POST `/{id}/handoff-resolve` | `send_message` |
 | POST | `/api/v1/merchant/campaigns` (AI drafts land in `draft`) | `create_draft_campaign` |
 | POST | `/api/v1/merchant/campaigns/{id}/approve-publish` | `publish_campaign` — **explicit human action** (§27) |
 | POST | `/api/v1/merchant/coupons` | `create_draft_campaign` |
-| GET | `/api/v1/merchant/knowledge-base` · POST `/knowledge-base/reindex` | `read_products` / `configure_ai` |
+| GET | `/api/v1/merchant/knowledge-base` | `read_products` |
+| POST | `/api/v1/merchant/knowledge-base/reindex` | `configure_ai` |
 | POST | `/api/v1/merchant/api-keys` · DELETE `/{id}` | `admin_members` |
 | GET | `/api/v1/merchant/members` · POST/PATCH/DELETE `/{member_id}` | `admin_members` |
 | GET | `/api/v1/merchant/export` | `read_products` — merchant owns data (§107) |
@@ -183,15 +194,18 @@ Nothing is published without merchant review.
 | POST | `/api/v1/conversations` | `{merchant_id?, channel, mode}` → conversation |
 | GET | `/api/v1/conversations/{id}` | messages + state |
 | POST | `/ai/v1/search/stream` | `{query, conversation_id?, context:{geo,now,locale,party_size}}` → **SSE stream** (§116). The web BFF proxies this as `POST /api/nexus/ai/stream`; the platform service never serves `/api/v1/ai/**`. |
-| POST | `/ai/v1/search` | non-streaming variant for MCP/UCP/API consumers (also the §105 fallback target) |
+| POST | `/ai/v1/search` | deterministic (non-streaming) hybrid search, and the §105 degradation target: `{intent\|query, geo?, filters?, limit}` → `{items:EntityCard[], facets, took_ms, strategy, degraded:false}` |
 | POST | `/ai/v1/query/understand` | `{query, context}` → `Intent` (below) |
-| POST | `/ai/v1/search` | deterministic hybrid search: `{intent, geo?, filters?, limit}` → `{items:EntityCard[], facets, took_ms, strategy, degraded:false}` |
 | POST | `/ai/v1/recommend` | `{intent|conversation_id, limit}` → `{set_id, items:EntityCard[]}` with explanations + fact ids |
 | POST | `/ai/v1/compare` | `{subject_ids:[...] }` → `{rows:[{attribute, cards:[{value,fact_id}]}]}` (§37) |
 | POST | `/ai/v1/rag/retrieve` | `{query, merchant_id?, filters, top_k}` → `{chunks:[{id,text,score,document_id,source_uri,fact_ids}]}` |
 | POST | `/ai/v1/merchant-agent/chat` | `{merchant_id, message, conversation_id}` → SSE; grounded only in merchant KB, low confidence → handoff (§24-26) |
 | POST | `/ai/v1/feedback` | `{subject_type,subject_id,signal,value,session_id}` (§99) |
 | GET | `/ai/v1/tools` | tool registry manifest (§11) with schema + permission |
+| POST | `/ai/v1/imports/extract` | service-to-service only (§7.0): `{source_type,source_ref,raw_text}` → `{proposals:[{kind,name,price,currency,category,confidence,source_span}], extractor, degraded}` (§22). Called by the platform's import worker, never by a browser. |
+| POST | `/api/v1/conversations/{id}/reply` | `{content}` → persisted consumer/agent turn (the browser path; the agent path is §7.0) |
+| GET | `/api/v1/conversations` | the acting user's threads, newest first |
+| POST | `/api/v1/internal/conversations/{id}/agent-message` | service-to-service only (§7.0): the AI service's single audited door for persisting an agent turn. |
 
 SSE event stream for `/ai/v1/search/stream` (statuses are user-legible, never chain-of-thought):
 ```
@@ -203,6 +217,18 @@ event: summary    data: {"text":"找到 8 个符合条件的选择","citations":
 event: done       data: {"agent_run_id":"uuid","latency_ms":812,"cost_usd":0.0042,"degraded":false}
 ```
 `event: error` → client falls back to `POST /ai/v1/search` (deterministic).
+
+### 7.0 Service-to-service surface (never browser-reachable)
+
+Two paths exist only between our own services. The BFF must not proxy them, they are absent from the
+public OpenAPI document, and a request that arrives from an edge is rejected for missing the shared
+secret. This is D20: the platform owns every commerce and conversation write, so an agent turn is
+*posted to* the platform, not written *into* Postgres by the AI service.
+
+| Method | Path | Direction | Contract |
+|---|---|---|---|
+| POST | `/api/v1/internal/conversations/{id}/agent-message` | AI → platform | Header `X-Internal-Token: ${NEXUS_AI_INTERNAL_TOKEN}` (≥16 chars, constant-time compare) + `X-Tenant`. Body `{role, content, agent_run_id?, fact_ids?, degraded?}` → the persisted message. Unconfigured token ⇒ **501**, never an open door (D7). |
+| POST | `/ai/v1/imports/extract` | platform → AI | `{source_type,source_ref,raw_text}` → `{proposals:[{kind,name,price,currency,category,confidence,source_span}], extractor, degraded}` (§22). Extracted text is untrusted content (§51): `confidence` and `source_span` are mandatory so a human reviews every proposal before publish. |
 
 ### 7.1 Intent (canonical query-understanding object, §8)
 ```jsonc

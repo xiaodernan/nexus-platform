@@ -15,7 +15,7 @@ Verification kinds: `unit` `integration` `api` `e2e` `visual` `eval` `manual-rev
 | 4 | Not a Yelp/Amazon/Shopify/OpenTable clone; AI Decision Layer | `docs/VISION.md`, `docs/PRODUCT.md` | manual-review | building |
 | 5-7 | HK first, global-ready, dense-vertical cold start | `tenants` table, `infra/config/markets.yaml`, i18n routing | integration | building |
 | 8 | Homepage: premium (Apple+Perplexity), NL input, rails | `apps/web/app/(consumer)/page.tsx`, `packages/ui` | visual | building |
-| 9 | AI search accepts natural language | API_CONTRACT §7 `/ai/v1/ai/search` | e2e | building |
+| 9 | AI search accepts natural language | API_CONTRACT §7 `/ai/v1/search/stream` | e2e | building |
 
 ## 1. Understanding, agents, tools, retrieval
 

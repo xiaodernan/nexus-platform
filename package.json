@@ -1,0 +1,22 @@
+{
+  "name": "nexus",
+  "private": true,
+  "version": "0.1.0",
+  "description": "NEXUS — Autonomous AI Commerce & Local Discovery Platform (Hong Kong, Phase 1)",
+  "engines": {
+    "node": ">=20.11.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace @nexus/web",
+    "build:web": "npm run build --workspace @nexus/web",
+    "start:web": "npm run start --workspace @nexus/web",
+    "lint:web": "npm run lint --workspace @nexus/web",
+    "typecheck:web": "npm run typecheck --workspace @nexus/web",
+    "test:web": "npm run test --workspace @nexus/web"
+  }
+}

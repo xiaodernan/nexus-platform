@@ -1,0 +1,556 @@
+"""The deterministic hybrid search pipeline — API_CONTRACT §7 `/ai/v1/search`, §105 fallback.
+
+Hard properties of this module:
+
+* **zero LLM calls.** `search()` runs SQL → features → weights → cards and never touches a
+  model router, so it is the endpoint the SSE stream can fall back to when the LLM is down
+  (§105). `provider` is reported as `"none"` to make that visible in the response.
+* **organic first, sponsored second.** `organic_rank()` then `apply_sponsored()`, capped at
+  1-in-top-5, organic best match never displaced, label attached (§66-67).
+* **tenant scoping is structural** — every candidate query carries `tenant_id` as a bound
+  parameter, and the merchant agent path additionally binds `merchant_id`.
+* nothing is invented: availability only ever comes from `availability_slots` rows, opening
+  state only from `business_hours`, prices/ratings from columns or `facts` rows; an absent
+  value stays absent rather than defaulting to something plausible.
+"""
+
+from __future__ import annotations
+
+import logging
+import time
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
+from typing import Any, Protocol, Sequence
+from uuid import UUID
+
+from nexus_ai.contract import EntityCard, FacetValue, Intent, SearchResponse
+from nexus_ai.nlu.timeparse import HK_TZ
+from nexus_ai.search import sql as S
+from nexus_ai.search.cards import build_card, compute_open, attach_price_staleness
+from nexus_ai.search.ranking import (
+    Candidate,
+    RankingWeights,
+    Scored,
+    apply_sponsored,
+    facet_counts,
+    load_ranking_weights,
+    organic_rank,
+    personalization_signal,
+    sponsor_label,
+)
+from nexus_ai.trust.facts import FactBundle, facts_from_rows
+from nexus_ai.trust.freshness import mean_remaining_fraction
+
+log = logging.getLogger("nexus_ai.search")
+
+KIND_TO_SUBJECT = {
+    "discover_merchant": ("merchant",),
+    "reserve": ("merchant", "offering"),
+    "purchase": ("offering",),
+    "compare": ("merchant", "offering"),
+    "plan_experience": ("merchant", "offering"),
+    "ask_merchant": ("merchant",),
+    "unknown": ("merchant",),
+}
+DEFAULT_TENANT_ID = UUID("00000000-0000-0000-0000-000000000001")
+
+
+class SearchBackend(Protocol):
+    """DECISIONS D3: Postgres-only for phase 1, behind one seam so a real engine can slot in."""
+
+    name: str
+
+    async def merchant_candidates(self, **kw: Any) -> list[dict[str, Any]]: ...
+
+    async def offering_candidates(self, **kw: Any) -> list[dict[str, Any]]: ...
+
+    async def facts(self, subject_ids: Sequence[str]) -> list[dict[str, Any]]: ...
+
+    async def hours(self, merchant_ids: Sequence[str]) -> list[dict[str, Any]]: ...
+
+    async def slots(self, merchant_ids: Sequence[str], starts_at: datetime,
+                    ends_at: datetime, party_size: int | None) -> list[dict[str, Any]]: ...
+
+    async def feedback(self, user_id: str, subject_ids: Sequence[str]) -> list[dict[str, Any]]: ...
+
+
+class PostgresBackend:
+    """All SQL here is the parameterized builders in `nexus_ai.search.sql`."""
+
+    name = "postgres"
+
+    def __init__(self, database: Any, *, search_path: str = "public") -> None:
+        self.db = database
+        self.search_path = search_path
+
+    async def merchant_candidates(self, **kw: Any) -> list[dict[str, Any]]:
+        q = S.build_merchant_query(**kw)
+        return await self.db.readonly(q.sql, *q.params, schema=self.search_path)
+
+    async def offering_candidates(self, **kw: Any) -> list[dict[str, Any]]:
+        q = S.build_offering_query(**kw)
+        return await self.db.readonly(q.sql, *q.params, schema=self.search_path)
+
+    async def facts(self, subject_ids: Sequence[str]) -> list[dict[str, Any]]:
+        sql_text, params = S.facts_for(subject_ids)
+        if not sql_text:
+            return []
+        return await self.db.readonly(sql_text, *params, schema=self.search_path)
+
+    async def hours(self, merchant_ids: Sequence[str]) -> list[dict[str, Any]]:
+        sql_text, params = S.hours_for(merchant_ids)
+        if not sql_text:
+            return []
+        return await self.db.readonly(sql_text, *params, schema=self.search_path)
+
+    async def slots(self, merchant_ids: Sequence[str], starts_at: datetime,
+                    ends_at: datetime, party_size: int | None) -> list[dict[str, Any]]:
+        sql_text, params = S.slots_for(merchant_ids, starts_at, ends_at, party_size)
+        if not sql_text:
+            return []
+        return await self.db.readonly(sql_text, *params, schema=self.search_path)
+
+    async def feedback(self, user_id: str, subject_ids: Sequence[str]) -> list[dict[str, Any]]:
+        if not user_id or not subject_ids:
+            return []
+        sql_text = """
+            SELECT subject_id::text AS subject_id, signal, value
+            FROM feedback_events
+            WHERE user_id::text = $1::uuid AND subject_id::text = ANY($2::text[])
+            ORDER BY created_at DESC LIMIT 200
+        """
+        try:
+            return await self.db.readonly(sql_text, str(user_id),
+                                          [str(s) for s in subject_ids],
+                                          schema=self.search_path)
+        except Exception:  # pragma: no cover - telemetry must never break a search
+            log.info("feedback read failed", exc_info=True)
+            return []
+
+
+class StaticBackend:
+    """Fixture-driven backend: keeps ranking/card/eval logic testable without a database."""
+
+    name = "static"
+
+    def __init__(self, merchants: Sequence[dict[str, Any]] = (),
+                 offerings: Sequence[dict[str, Any]] = (),
+                 facts: Sequence[dict[str, Any]] = (),
+                 hours: Sequence[dict[str, Any]] = (),
+                 slots: Sequence[dict[str, Any]] = ()) -> None:
+        self.merchants = list(merchants)
+        self.offerings = list(offerings)
+        self._facts = list(facts)
+        self._hours = list(hours)
+        self._slots = list(slots)
+
+    async def merchant_candidates(self, *, text=None, filters=None, **_kw: Any
+                                  ) -> list[dict[str, Any]]:
+        rows = [dict(r) for r in self.merchants]
+        return _filter_static(rows, text or "", filters or {})
+
+    async def offering_candidates(self, *, text=None, filters=None, **_kw: Any
+                                  ) -> list[dict[str, Any]]:
+        rows = [dict(r) for r in self.offerings]
+        return _filter_static(rows, text or "", filters or {})
+
+    async def facts(self, subject_ids: Sequence[str]) -> list[dict[str, Any]]:
+        ids = {str(s) for s in subject_ids}
+        return [dict(r) for r in self._facts if str(r.get("subject_id")) in ids]
+
+    async def hours(self, merchant_ids: Sequence[str]) -> list[dict[str, Any]]:
+        ids = {str(m) for m in merchant_ids}
+        return [dict(r) for r in self._hours if str(r.get("merchant_id")) in ids]
+
+    async def slots(self, merchant_ids, starts_at, ends_at, party_size) -> list[dict[str, Any]]:
+        ids = {str(m) for m in merchant_ids}
+        out = []
+        for row in self._slots:
+            if str(row.get("merchant_id")) not in ids:
+                continue
+            starts = row.get("starts_at")
+            if isinstance(starts, datetime) and not (starts_at <= starts <= ends_at):
+                continue
+            if int(row.get("capacity_left") or 0) <= 0:
+                continue
+            out.append(dict(row))
+        return out
+
+    async def feedback(self, user_id: str, subject_ids: Sequence[str]) -> list[dict[str, Any]]:
+        return []
+
+
+def _filter_static(rows: list[dict[str, Any]], text: str,
+                   filters: dict[str, Any]) -> list[dict[str, Any]]:
+    low = (text or "").lower()
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        hay = " ".join(str(r.get(k) or "") for k in
+                       ("display_name", "display_name_zh", "name", "name_zh", "description",
+                        "category_primary", "district")).lower()
+        hay += " " + " ".join(str(t) for t in (r.get("tags") or []))
+        score = 0.0
+        if low:
+            tokens = [t for t in low.split() if t]
+            hits = sum(1 for t in tokens if t in hay)
+            name_hit = any(t in str(r.get("display_name") or "").lower()
+                           or t in str(r.get("name") or "").lower() for t in tokens)
+            if hits == 0 and not name_hit:
+                continue
+            score = min(1.0, 0.25 * hits + (0.4 if name_hit else 0.0))
+        if filters.get("category") and r.get("category_primary") != filters["category"]:
+            continue
+        if filters.get("district") and str(r.get("district") or "").lower() != \
+                str(filters["district"]).lower():
+            continue
+        if filters.get("max_price") is not None and r.get("avg_price_hkd") is not None \
+                and float(r["avg_price_hkd"]) > float(filters["max_price"]):
+            continue
+        r["kw_score"] = max(float(r.get("kw_score") or 0.0), score)
+        r.setdefault("vec_score", 0.0)
+        r.setdefault("text_matched", bool(low))
+        r.setdefault("subject_type", "merchant" if r.get("display_name") else "offering")
+        out.append(r)
+    return out
+
+
+# --------------------------------------------------------------------------- request shaping
+@dataclass
+class SearchPlan:
+    """What the deterministic pipeline needs from the caller — no model involved."""
+
+    query_text: str = ""
+    subject_types: tuple[str, ...] = ("merchant",)
+    filters: dict[str, Any] = field(default_factory=dict)
+    geo: tuple[float, float] | None = None
+    radius_m: int | None = None
+    budget_max: float | None = None
+    budget_per: str = "party"
+    party_size: int | None = None
+    at: datetime | None = None
+    now: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    open_now: bool = False
+    open_late_after: int | None = None
+    sort_preference: str = "relevance"
+    avoid: list[str] = field(default_factory=list)
+    attributes: dict[str, Any] = field(default_factory=dict)
+    limit: int = 20
+
+
+def plan_from_intent(intent: Intent | None, *, query: str | None = None,
+                     geo: Any = None, filters: Any = None, now: datetime | None = None,
+                     limit: int = 20, locale: str = "zh-HK") -> SearchPlan:
+    from nexus_ai.nlu.lexicon import DISTRICTS
+
+    now = now or datetime.now(timezone.utc)
+    plan = SearchPlan(now=now, limit=limit)
+    plan.query_text = (query or (intent.raw_query if intent else "") or "").strip()
+    if intent is None:
+        plan.filters = _plain(filters)
+        _apply_geo(plan, geo)
+        return plan
+
+    plan.subject_types = KIND_TO_SUBJECT.get(intent.intent, ("merchant",))
+    if filters and _plain(filters).get("kind") in ("product", "service", "experience"):
+        plan.subject_types = ("offering",)
+    out = plan.filters = _plain(filters)
+    out.setdefault("category", intent.category)
+    if intent.location and intent.location.value:
+        out.setdefault("district", intent.location.value)
+    if intent.location and intent.location.radius_m:
+        plan.radius_m = int(intent.location.radius_m)
+    _apply_geo(plan, geo)
+    if plan.geo is None and intent.location and intent.location.resolved:
+        plan.geo = (intent.location.resolved.lat, intent.location.resolved.lng)
+    if plan.geo is None and out.get("district"):
+        d = DISTRICTS.get(str(out["district"]))
+        if d:
+            plan.geo = (d["lat"], d["lng"])
+            plan.radius_m = plan.radius_m or int(d.get("radius_m") or 2500)
+    if intent.budget:
+        plan.budget_max = intent.budget.max
+        plan.budget_per = intent.budget.per or "party"
+    plan.party_size = intent.party_size
+    plan.sort_preference = intent.sort_preference or "relevance"
+    plan.at = intent.time.starts_at if intent.time else None
+    if intent.time and intent.time.quality and intent.time.quality.startswith(
+            "open_late_after:"):
+        plan.open_late_after = int(intent.time.quality.split(":", 1)[1])
+    if intent.time and intent.time.type == "unspecified" and not plan.at:
+        plan.at = None
+    if intent.urgency == "now":
+        plan.open_now = True
+    for c in intent.constraints:
+        if c.key in ("cuisine_avoid", "avoid", "exclude"):
+            plan.avoid.append(c.value)
+    for p in intent.preferences:
+        if p.polarity > 0:
+            plan.attributes.setdefault(p.key, True)
+    out["avoid"] = plan.avoid
+    out["attributes"] = {**out.get("attributes", {}), **plan.attributes}
+    out["open_now"] = plan.open_now
+    if plan.open_late_after is not None:
+        out["min_closing_hour"] = plan.open_late_after
+    out["open_weekday"] = plan.at.astimezone(HK_TZ).weekday() if plan.at else None
+    out["open_time"] = plan.at.astimezone(HK_TZ).strftime("%H:%M:%S") if plan.at else None
+    plan.filters = {k: v for k, v in out.items() if v not in (None, "", [], {})}
+    return plan
+
+
+def _plain(filters: Any) -> dict[str, Any]:
+    if filters is None:
+        return {}
+    if isinstance(filters, dict):
+        return dict(filters)
+    return dict(filters.model_dump(exclude_none=True))
+
+
+def _apply_geo(plan: SearchPlan, geo: Any) -> None:
+    if geo is None:
+        return
+    if isinstance(geo, dict):
+        lat, lng = geo.get("lat"), geo.get("lng")
+    else:
+        lat, lng = getattr(geo, "lat", None), getattr(geo, "lng", None)
+    if lat is not None and lng is not None:
+        plan.geo = (float(lat), float(lng))
+        plan.radius_m = plan.radius_m or 5000
+
+
+# --------------------------------------------------------------------------- the pipeline
+def _row_price(row: dict[str, Any]) -> float | None:
+    for key in ("price_amount", "avg_price_hkd", "price_min"):
+        if row.get(key) is not None:
+            return float(row[key])
+    return None
+
+
+def _row_sponsored(row: dict[str, Any]) -> bool:
+    attrs = row.get("attributes") or {}
+    if isinstance(attrs, str):
+        import json
+
+        try:
+            attrs = json.loads(attrs)
+        except Exception:
+            attrs = {}
+    return bool(attrs.get("sponsored") or attrs.get("promoted"))
+
+
+def _relevance(row: dict[str, Any], *, vector_lane: bool) -> float:
+    kw = float(row.get("kw_score") or 0.0)
+    vec = float(row.get("vec_score") or 0.0) if vector_lane else 0.0
+    fused = max(kw, vec) + 0.35 * min(kw, vec)
+    return round(max(0.0, min(1.0, fused)), 4)
+
+
+def candidates_from_rows(rows: Sequence[dict[str, Any]], plan: SearchPlan, *,
+                         bundle: FactBundle, facts_by_subject: dict[str, list[Any]],
+                         hours_by_merchant: dict[str, list[Any]],
+                         slots_by_merchant: dict[str, list[dict[str, Any]]],
+                         personalization: dict[str, float],
+                         weights: RankingWeights,
+                         vector_lane: bool) -> list[Candidate]:
+    out: list[Candidate] = []
+    for row in rows:
+        subject_type = str(row.get("subject_type") or "merchant")
+        subject_id = str(row.get("subject_id") or row.get("id"))
+        merchant_id = str(row.get("merchant_id") or row.get("merchant_id_key") or subject_id)
+        av_row = slots_by_merchant.get(merchant_id)
+        availability = None
+        if av_row:
+            left = int(av_row.get("capacity_left") or 0)
+            need = int(plan.party_size or 1)
+            availability = "available" if left >= need else ("limited" if left else "full")
+        open_state = compute_open(hours_by_merchant.get(merchant_id, []), now=plan.now,
+                                  at=plan.at) if subject_type == "merchant" else None
+        cand = Candidate(
+            subject_type=subject_type, subject_id=subject_id, merchant_id=merchant_id,
+            relevance=_relevance(row, vector_lane=vector_lane),
+            rating=_num(row.get("rating_agg")),
+            rating_count=int(row.get("review_count") or 0),
+            tenant_mean_rating=_num(row.get("tenant_mean_rating")) or 3.5,
+            distance_m=_num(row.get("meters")),
+            price=_row_price(row),
+            budget_max=plan.budget_max, budget_per=plan.budget_per,
+            availability=availability,
+            popularity=_num(row.get("popularity_score")) or 0.0,
+            freshness=mean_remaining_fraction(facts_by_subject.get(subject_id, []),
+                                              now=plan.now),
+            personalization=personalization.get(subject_id),
+            sponsored=_row_sponsored(row),
+            open_now=None if (open_state or {}).get("is_open") is None
+            else bool((open_state or {}).get("is_open")),
+            district=row.get("district") or (row.get("area")),
+            category=row.get("category") or row.get("category_primary") or row.get("kind"),
+            raw={"row": row, "text_matched": bool(row.get("text_matched")),
+                 "as_of": plan.now, "organic_rank": None,
+                 "availability": ({"status": availability,
+                                   "next_slot": _iso(av_row.get("starts_at"))}
+                                  if av_row else None),
+                 "open_state": open_state,
+                 "slot": av_row},
+        )
+        out.append(cand)
+    return out
+
+
+def _iso(value: Any) -> str | None:
+    if isinstance(value, datetime):
+        return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    return None
+
+
+def _num(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _slot_window(plan: SearchPlan) -> tuple[datetime, datetime] | None:
+    if plan.at is None:
+        if not plan.open_now:
+            return None
+        start = plan.now
+        return start, start + timedelta(hours=3)
+    at = plan.at if plan.at.tzinfo else plan.at.replace(tzinfo=timezone.utc)
+    return at - timedelta(minutes=30), at + timedelta(hours=2)
+
+
+async def search(*, backend: SearchBackend, plan: SearchPlan,
+                 weights: RankingWeights | None = None,
+                 tenant_id: UUID | str = DEFAULT_TENANT_ID,
+                 embedding: Sequence[float] | None = None,
+                 vector_lane: bool = False,
+                 user_id: str | None = None,
+                 locale: str = "zh-HK",
+                 include_sponsored: bool = True) -> tuple[list[EntityCard], SearchResponse,
+                                                          FactBundle, list[Scored]]:
+    """Deterministic search end-to-end. Returns cards, the response, the grounding bundle and
+    the scored list (the latter two feed `/ai/v1/recommend`, compare and the eval harness)."""
+    started = time.perf_counter()
+    w = weights or load_ranking_weights(_default_weights_path())
+    bundle = FactBundle()
+    subject_ids: list[str] = []
+    merchant_ids: list[str] = []
+    rows: list[dict[str, Any]] = []
+
+    common = dict(tenant_id=str(tenant_id), text=plan.query_text or None,
+                  filters=plan.filters, geo=plan.geo, radius_m=plan.radius_m,
+                  limit=max(60, plan.limit * 3))
+    if "merchant" in plan.subject_types:
+        rows += await backend.merchant_candidates(embedding=list(embedding) if embedding
+                                                  else None, **common)
+    if "offering" in plan.subject_types:
+        rows += await backend.offering_candidates(**{k: v for k, v in common.items()
+                                                     if k != "embedding"})
+    seen: set[str] = set()
+    deduped: list[dict[str, Any]] = []
+    for r in rows:
+        key = f"{r.get('subject_type')}:{r.get('subject_id') or r.get('id')}"
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(r)
+        subject_ids.append(str(r.get("subject_id") or r.get("id")))
+        merchant_ids.append(str(r.get("merchant_id") or r.get("merchant_id_key")
+                                or r.get("id")))
+
+    fact_rows = await backend.facts(subject_ids) if subject_ids else []
+    for fact in facts_from_rows(fact_rows, now=plan.now):
+        bundle.add(fact)
+    facts_by_subject: dict[str, list[Any]] = {}
+    for raw in fact_rows:
+        facts_by_subject.setdefault(str(raw.get("subject_id")), []).append(raw)
+
+    hours_rows = await backend.hours(list(dict.fromkeys(merchant_ids))) if merchant_ids else []
+    hours_by_merchant: dict[str, list[Any]] = {}
+    for raw in hours_rows:
+        hours_by_merchant.setdefault(str(raw.get("merchant_id")), []).append(raw)
+
+    slots_by_merchant: dict[str, list[dict[str, Any]]] = {}
+    window = _slot_window(plan)
+    if window and merchant_ids:
+        slot_rows = await backend.slots(list(dict.fromkeys(merchant_ids)), window[0],
+                                        window[1], plan.party_size)
+        for raw in slot_rows:
+            mid = str(raw.get("merchant_id"))
+            cur = slots_by_merchant.get(mid)
+            if cur is None or (raw.get("starts_at") and cur.get("starts_at")
+                               and raw["starts_at"] < cur["starts_at"]):
+                slots_by_merchant[mid] = raw
+
+    personalization: dict[str, float] = {}
+    if user_id and subject_ids:
+        fb_rows = await backend.feedback(str(user_id), subject_ids)
+        grouped: dict[str, list[float]] = {}
+        for raw in fb_rows:
+            val = _feedback_value(raw)
+            if val is not None:
+                grouped.setdefault(str(raw.get("subject_id")), []).append(val)
+        for sid, values in grouped.items():
+            sig = personalization_signal(values, w.personalization)
+            if sig is not None:
+                personalization[sid] = sig
+
+    candidates = candidates_from_rows(deduped, plan, bundle=bundle,
+                                      facts_by_subject=facts_by_subject,
+                                      hours_by_merchant=hours_by_merchant,
+                                      slots_by_merchant=slots_by_merchant,
+                                      personalization=personalization, weights=w,
+                                      vector_lane=vector_lane)
+    ranked = organic_rank(candidates, w)
+    ranked = apply_sponsored(ranked, w) if include_sponsored else ranked
+
+    facets_raw = facet_counts([s.candidate for s in ranked], w.facets)
+    facets = {k: [FacetValue(value=v, count=c) for v, c in
+                 sorted(d.items(), key=lambda x: (-x[1], x[0]))]
+              for k, d in facets_raw.items() if d}
+
+    top = ranked[: max(1, plan.limit)]
+    cards: list[EntityCard] = []
+    for scored in top:
+        cand = scored.candidate
+        card = build_card(cand, scored, bundle, locale=locale,
+                          open_state=cand.raw.get("open_state"),
+                          availability=cand.raw.get("availability"),
+                          query=plan.query_text,
+                          sponsor_label=(sponsor_label(locale, w) if cand.sponsored else None))
+        cards.append(attach_price_staleness(card, bundle))
+
+    took_ms = int((time.perf_counter() - started) * 1000)
+    strategy = f"{w.version}+{backend.name}"
+    if vector_lane:
+        strategy += "+vector"
+    response = SearchResponse(
+        items=cards, facets=facets, took_ms=took_ms, strategy=strategy,
+        degraded=False, provider="none", total_estimate=len(ranked),
+        agent_run_id=None, relevance_floor_applied=True)
+    return cards, response, bundle, top
+
+
+def _feedback_value(row: dict[str, Any]) -> float | None:
+    signal = str(row.get("signal") or "")
+    value = row.get("value")
+    if isinstance(value, dict):
+        for k in ("rating", "value", "score"):
+            if value.get(k) is not None:
+                try:
+                    return float(value[k]) / 5.0 if float(value[k]) > 1 else float(value[k])
+                except (TypeError, ValueError):
+                    return None
+    return {"save": 1.0, "favorite": 1.0, "click": 0.6, "reserve": 1.0, "purchase": 1.0,
+            "dismiss": 0.0, "hide": 0.0, "share": 0.9}.get(signal)
+
+
+def _default_weights_path() -> Any:
+    from nexus_ai.config import get_settings
+
+    return get_settings().ranking_weights_path
+
+
+__all__ = ["SearchBackend", "PostgresBackend", "StaticBackend", "SearchPlan",
+           "plan_from_intent", "search", "candidates_from_rows", "DEFAULT_TENANT_ID"]

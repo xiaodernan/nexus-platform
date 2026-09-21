@@ -3,7 +3,9 @@
 Maintained by the lead agent. A line moves to `verified` only when the quoted command has been run and
 its output seen. Nothing here is aspirational.
 
-As of last update: **no work stream is finished**; 8 agents are building in parallel against the M0 contracts.
+As of last update: **no work stream is finished.** Infra, SDK, docs, types, UI-kit and seed streams are
+done; the platform, AI-service and consumer-web streams each hit their turn budget mid-build (see
+"Stream states at the turn ceiling") and are being rebuilt in smaller increments.
 
 ## Running services (verified by `docker ps` / queries)
 
@@ -62,6 +64,43 @@ Ports are fixed by `docs/DECISIONS.md` §D9 because this machine already runs un
 | D16 | Role provisioning lived only in container init scripts (fresh Flyway DB had zero roles) | Infra moved role/grant statements into the migration stream + `db_apply_migrations.sh` step 2, keeping `infra/postgres/init/00_roles.sql` as the container path. |
 | D17 | Infra stream proposed a new `V4__identity.sql` for `users`/`user_identities`/`user_preferences`; seed stream proposed a V-migration converting `chunks.embedding` to `vector(384)` | **Both rejected.** `V1__init.sql` contains 56 tables including all three (verified by grep and by `information_schema` on the live `nexus` DB); the "11 tables" the infra stream saw was a `citext`-aborted partial apply, now fixed. And the live column is `vector(1024)`, matching the contract. A V4/V5 adding those objects would fail on `CREATE TABLE users` already exists, or silently fork a second definition — if either migration appears, delete it and re-run `scripts/db_apply_migrations.sh`. |
 | D18 | `GET /api/v1/merchants/{id}/availability` (§4) has no implementation anywhere: the platform stream built reservation booking + capacity decrement but not the public availability read; the AI stream implemented the equivalent as an internal search filter | Platform owns it (D11). Deferred to the integration pass with an explicit owner; the seed stream offered to write it — accepted only as a reference SQL implementation to review, not as a second service. |
+
+| D19 | Infra finished and reported that `nexus_ai` has no access to `tenants`, `user_preferences`, `events` — so `get_user_preferences` and `record_event` could not run as written in AGENT_CONTRACT §1 | Grants amended in `infra/postgres/init/00_roles.sql` and re-applied to the live DB (verified: 23 tables for `nexus_ai`): + SELECT `tenants` (market config), + SELECT `external_principals` (MCP caller resolution), + SELECT `user_preferences`, + **INSERT-only** `events`. Two measured consequences are written into that file: (1) `INSERT ... RETURNING` is rejected with INSERT-but-no-SELECT, so the event writer must not use RETURNING; (2) the earlier blanket `ALTER DEFAULT PRIVILEGES ... TO nexus_ai` leaked SELECT over users/carts/orders and is now revoked fail-closed. Preference *writes* stay with the platform (`/api/v1/me/preferences`), so one actor owns one table. |
+| D20 | D12 said the AI service should own `conversations`/`messages`/`handoffs`; the platform instead built one guarded write door (`POST /api/v1/internal/conversations/{id}/agent-message`, `X-Internal-Token`, 501 when unconfigured) and the AI service had not written any dialogue SQL yet | **The platform door wins; D12 is superseded for those three tables.** Rationale: the AI service executes LLM output and is the least trusted writer in the system (§51/§52), and a second SQL path around the door is exactly the unaudited write D12 was meant to prevent. `nexus_ai` therefore gets **no** grant on those tables (verified absent), and API_CONTRACT §7.0 documents the two service-to-service paths (`agent-message` in, `/ai/v1/imports/extract` out, which the platform's `HttpImportAdapter` already calls). |
+| D21 | AGENT_CONTRACT §1 lets the marketing agent draft coupons, but D19's grant list had no `coupons` | `coupons` added to the AI read-write set (drafts only — §27 publish still requires the human `approve-publish` call, which is platform-side). Found by cross-reading the roster table against the grant list, not by a runtime failure. |
+
+## Route coverage ledger (machine-generated, not opinion)
+
+`node scripts/check_contract_drift.mjs` parses every path in `docs/API_CONTRACT.md`, then looks for it in
+the real implementations. Last full run (lead, before the current build wave):
+
+| Bucket | Count | Meaning |
+|---|---|---|
+| Documented routes parsed | 92 | every row of §3-§10 |
+| Served by platform/ai | 45 | a handler exists in `services/platform` or `apps/ai` |
+| **CLIENT-ONLY** | 39 | SDK/web calls it, no service answers — a working-looking button that 404s |
+| **MISSING** | 4 | nobody references it at all |
+| **UNDOCUMENTED** | 1 | code names a path the contract never defines |
+
+The 4 MISSING are one family, and that family has no builder since the platform stream stopped:
+`/api/v1/referrals/invite`, `/api/v1/referrals/me`, `/api/v1/referrals/me/stats` (§61-62 growth),
+`/api/v1/merchant/customers` (§23/§56). The 1 UNDOCUMENTED is `POST /api/v1/events` — the SDK batches
+telemetry there (§58) and the contract never gave it a row. Lead owns all six; CI runs the checker in
+report mode now and must flip to failing mode at M4 (§156).
+
+## Stream states at the turn ceiling (2026-09-22, measured not claimed)
+
+Three build streams stopped because they hit their 150-turn budget, not because the work was done:
+
+| Stream | State on disk | Verified by |
+|---|---|---|
+| platform | 76 main sources, compiles (`mvn -o compile` BUILD SUCCESS), 5 test classes, **`mvn -o test` fails 17 of 22** — 422 channel enum mismatch, a 500 on the internal agent-message door, notification preference validation + an unauthenticated inbox call | lead run at 01:05 |
+| ai-service | 29 python modules: config/contract/models (router+mock+embeddings)/nlu/search SQL — stopped before the trust layer and before any HTTP router | drift scan + file listing |
+| web | `package.json`, tailwind/eslint/vitest config, 64 SVG media assets, and `src/lib/**` (types, api base, env, facts, format, mock) — **zero pages, zero components** | `find apps/web/src` |
+
+Consequence for the plan: the vertical slice (§166-168) cannot be browser-verified until web has pages and
+the AI service has a routable `/ai/v1/search/stream`. The lead rebuilds those two in small, provable
+increments rather than one long stream.
 
 
 ## Definition of done for the vertical slice (§170)

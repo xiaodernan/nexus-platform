@@ -1,0 +1,22 @@
+# Local development profile. These are throwaway localhost values for the dev Postgres/Redis
+# containers, not secrets — never reuse this file outside localhost, and never put real
+# credentials in it (they belong in the environment / secret store).
+spring:
+  datasource:
+    url: ${NEXUS_DB_URL:jdbc:postgresql://localhost:5432/nexus}
+    username: ${NEXUS_DB_USER:nexus_app}
+    password: ${NEXUS_DB_PASSWORD:nexus_dev_pw}
+
+nexus:
+  jwt:
+    secret: ${NEXUS_JWT_SECRET:dev-only-insecure-jwt-secret-change-me-0123456789}
+  demo:
+    login-enabled: true
+  ratelimit:
+    # Kept on in dev but generous, so manual curl sessions do not get throttled.
+    auth-requests: 100
+    write-requests: 300
+    ai-requests: 100
+logging:
+  level:
+    com.nexus: DEBUG

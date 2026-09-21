@@ -111,7 +111,7 @@ test.describe('consumer core journey', () => {
   });
 
   test('LLM outage degrades instead of breaking the site (§105)', async ({ page }) => {
-    await page.route('**/ai/v1/ai/search', (r) => r.abort('failed'));
+    await page.route('**/ai/v1/search/stream', (r) => r.abort('failed'));
     await page.goto('/search?q=' + encodeURIComponent('附近咖啡馆'));
     // deterministic search must still return cards, plus a visible degraded marker
     await expect(page.getByTestId('entity-card').first()).toBeVisible({ timeout: 15000 });

@@ -1,0 +1,44 @@
+{
+  "name": "@nexus/sdk",
+  "version": "0.1.0",
+  "description": "Zero-dependency, fetch-based TypeScript SDK for the NEXUS platform + AI HTTP surface.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "node -e \"for (const d of ['dist','dist-test']) require('node:fs').rmSync(d,{recursive:true,force:true})\"",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "pretest": "tsc -p tsconfig.test.json",
+    "test": "node --test \"./dist-test/test/*.test.js\""
+  },
+  "keywords": [
+    "nexus",
+    "sdk",
+    "api",
+    "client",
+    "typescript"
+  ],
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.6.0"
+  }
+}

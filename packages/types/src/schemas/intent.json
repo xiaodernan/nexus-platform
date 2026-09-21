@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.dev/schemas/intent.json",
+  "title": "Intent",
+  "description": "The canonical query-understanding object — docs/API_CONTRACT.md §7.1 (shape reproduced in `fixtures/intent/01_valid_api_example.json`), produced by `POST /ai/v1/query/understand` (API_CONTRACT §7) by the `user_intent` agent (AGENT_CONTRACT.md §1: 「may not invent location/budget/party_size」). Governing rule is spec §8: 「必须允许不确定字段。不要强行猜测。」 — every uncertain field is present-but-null, so all of `category`, `location`, `time`, `budget`, `party_size`, `urgency` are REQUIRED keys whose value may be null. Nothing carries a JSON Schema `default`: a default is a guess.",
+  "type": "object",
+  "additionalProperties": false,
+  "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+  "required": [
+    "raw_query",
+    "intent",
+    "category",
+    "location",
+    "time",
+    "budget",
+    "party_size",
+    "preferences",
+    "constraints",
+    "sort_preference",
+    "urgency",
+    "language",
+    "confidence",
+    "unknowns"
+  ],
+  "properties": {
+    "raw_query": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "API_CONTRACT §7.1 `raw_query` — the verbatim user text, kept so copy can echo the user's own words (AGENT_CONTRACT §12)."
+    },
+    "intent": { "$ref": "#/$defs/IntentKind" },
+    "category": {
+      "type": ["string", "null"],
+      "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$",
+      "maxLength": 64,
+      "description": "API_CONTRACT §7.1 comment: 「null when not stated」. V1 `categories.slug`."
+    },
+    "location": {
+      "oneOf": [{ "$ref": "#/$defs/LocationRef" }, { "type": "null" }],
+      "description": "Null means the user said nothing about place — the agent asks (spec §8) instead of using the tenant's default district."
+    },
+    "time": { "oneOf": [{ "$ref": "#/$defs/TimeRef" }, { "type": "null" }] },
+    "budget": {
+      "oneOf": [{ "$ref": "#/$defs/BudgetRef" }, { "type": "null" }],
+      "description": "Never seeded with the tenant average (AGENT_CONTRACT §1 `user_intent`)."
+    },
+    "party_size": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "maximum": 999,
+      "description": "`null` in the §7.1 example, and that is the correct answer: asking beats guessing (spec §8)."
+    },
+    "preferences": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/PreferenceTerm" },
+      "description": "API_CONTRACT §7.1 `preferences` — soft terms only. `[]` = none extracted (rule `intent_unknowns_are_unsettled` treats `[]` as unset)."
+    },
+    "constraints": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/ConstraintTerm" },
+      "description": "API_CONTRACT §7.1 `constraints` — hard filters (「不吃辣」 appends `{key:'cuisine_avoid', value:'spicy'}`)."
+    },
+    "sort_preference": {
+      "anyOf": [{ "$ref": "#/$defs/SortPreference" }, { "type": "null" }],
+      "description": "`relevance` is the neutral option (API_CONTRACT §7.1) rather than a guess about the user; null means the merger has not chosen yet."
+    },
+    "urgency": { "anyOf": [{ "$ref": "#/$defs/UrgencyLevel" }, { "type": "null" }] },
+    "language": {
+      "anyOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/SupportedLocale" }, { "type": "null" }],
+      "description": "API_CONTRACT §7.1 `language`. The answer must be written in this locale (AGENT_CONTRACT §12), so it is never inferred from the UI chrome alone; null falls back to the tenant default at render time."
+    },
+    "confidence": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/ConfidenceMap" },
+    "unknowns": {
+      "type": "array",
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/UnknownField" },
+      "description": "API_CONTRACT §7.1 `unknowns` (spec §8 「只问一个追问」). Invariant: a name listed here must be null / absent / empty in the same object — rule `intent_unknowns_are_unsettled`."
+    },
+    "clarification_asked": {
+      "type": "boolean",
+      "description": "spec §8 allows exactly one follow-up, so the flag must be recorded."
+    },
+    "conversation_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+    "turn": { "type": "integer", "minimum": 0 },
+    "provider": {
+      "type": ["string", "null"],
+      "maxLength": 64,
+      "description": "`mock` must be visible as such (DECISIONS D4)."
+    },
+    "model": { "type": ["string", "null"], "maxLength": 128 },
+    "latency_ms": { "type": ["number", "null"], "minimum": 0 }
+  },
+  "$defs": {
+    "IntentKind": {
+      "type": "string",
+      "title": "IntentKind",
+      "description": "API_CONTRACT §7.1 `intent` (spec §8 「识别意图」). `unknown` is a first-class answer — it routes to a clarifying question, not to a generic result page.",
+      "enum": [
+        "discover_merchant",
+        "discover_offering",
+        "reserve",
+        "purchase",
+        "ask_merchant",
+        "compare",
+        "plan_experience",
+        "unknown"
+      ]
+    },
+    "LocationRefType": {
+      "type": "string",
+      "title": "LocationRefType",
+      "description": "API_CONTRACT §7.1 `location.type`; HK conventions (district / area / MTR station — spec §112).",
+      "enum": ["district", "area", "mtr_station", "address", "point", "landmark", "current_location"]
+    },
+    "TimeRefType": {
+      "type": "string",
+      "title": "TimeRefType",
+      "description": "API_CONTRACT §7.1 `time.type`. `open_now` triggers the live-hours computation (AGENT_CONTRACT §5, TTL 24h for hours but 0 for availability).",
+      "enum": ["explicit", "relative", "range", "open_now", "unspecified"]
+    },
+    "BudgetUnit": {
+      "type": "string",
+      "title": "BudgetUnit",
+      "description": "API_CONTRACT §7.1 `budget.per` (`\"per\":\"party\"`). V1 `offerings.price_model` uses `per_person`/`hourly`, so the bound's unit must be carried explicitly.",
+      "enum": ["party", "person", "item", "total"]
+    },
+    "SortPreference": {
+      "type": "string",
+      "title": "SortPreference",
+      "description": "API_CONTRACT §7.1 `sort_preference`; 「近一点」 rewrites it to `distance` (same section). Backs `RANKING_FACTOR` weights in AGENT_CONTRACT §6.",
+      "enum": ["relevance", "distance", "price_low", "rating", "trending"]
+    },
+    "UrgencyLevel": {
+      "type": "string",
+      "title": "UrgencyLevel",
+      "description": "API_CONTRACT §7.1 shows `\"urgency\": \"normal\"` without enumerating the domain; closed as `low|normal|high` (CONTRACT NOTES 4 in `src/enums.ts`).",
+      "enum": ["low", "normal", "high"]
+    },
+    "UnknownField": {
+      "type": "string",
+      "title": "IntentUnknownField",
+      "description": "Field names an extractor may declare unknown — `IntentUnknownField` in `src/intent.ts`. `raw_query`, `confidence` and `unknowns` themselves are never unknown.",
+      "enum": [
+        "category",
+        "location",
+        "time",
+        "budget",
+        "party_size",
+        "preferences",
+        "constraints",
+        "sort_preference",
+        "urgency"
+      ]
+    },
+    "LocationRef": {
+      "type": "object",
+      "title": "LocationRef",
+      "description": "API_CONTRACT §7.1 `location` = `{type:'district', value:'Sha Tin', resolved:{lat,lng}, radius_m:null}`. `radius_m: null` means 「user never said」, not 「unbounded」.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["type", "value", "resolved", "radius_m"],
+      "properties": {
+        "type": { "$ref": "#/$defs/LocationRefType" },
+        "value": { "type": ["string", "null"], "maxLength": 256 },
+        "resolved": {
+          "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/GeoPoint" }, { "type": "null" }]
+        },
+        "radius_m": { "type": ["number", "null"], "minimum": 0, "maximum": 100000 },
+        "area": {
+          "type": ["string", "null"],
+          "description": "V1 `locations.area` (`NT|KLN|HKI`).",
+          "pattern": "^[A-Z]{2,4}$"
+        },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+      }
+    },
+    "TimeRef": {
+      "type": "object",
+      "title": "TimeRef",
+      "description": "API_CONTRACT §7.1 `time` = `{type:'explicit', starts_at:'2026-09-26T19:00:00Z', ends_at:null}`.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["type", "starts_at", "ends_at"],
+      "properties": {
+        "type": { "$ref": "#/$defs/TimeRefType" },
+        "starts_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+        "ends_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+        "raw": {
+          "type": ["string", "null"],
+          "maxLength": 128,
+          "description": "The user's own phrase (「周六晚上」), kept for echo-back copy (AGENT_CONTRACT §12)."
+        },
+        "timezone": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "IANA zone the phrase was interpreted in — V1 `tenants.timezone` default `Asia/Hong_Kong` (AGENT_CONTRACT §12)."
+        }
+      }
+    },
+    "BudgetRef": {
+      "type": "object",
+      "title": "BudgetRef",
+      "description": "API_CONTRACT §7.1 `budget` = `{min:null, max:500, currency:'HKD', per:'party'}`. 「太贵了」 merges as `budget.max *= 0.7` (`BUDGET_RELAX_FACTOR` in `src/intent.ts`).",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["min", "max", "currency", "per"],
+      "properties": {
+        "min": { "type": ["number", "null"], "minimum": 0 },
+        "max": { "type": ["number", "null"], "minimum": 0 },
+        "currency": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/currency_code" },
+        "per": { "anyOf": [{ "$ref": "#/$defs/BudgetUnit" }, { "type": "null" }] }
+      }
+    },
+    "PreferenceTerm": {
+      "type": "object",
+      "title": "PreferenceTerm",
+      "description": "API_CONTRACT §7.1 `preferences[]` = `{key,value,polarity}`.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["key", "value", "polarity"],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", "maxLength": 64 },
+        "value": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "polarity": { "type": "integer", "enum": [1, -1] },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "introduced_at_turn": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "ConstraintTerm": {
+      "type": "object",
+      "title": "ConstraintTerm",
+      "description": "API_CONTRACT §7.1 `constraints[]` = `{key,value}` — hard, filterable terms (V1 `offerings.constraints`).",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["key", "value"],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", "maxLength": 64 },
+        "value": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "expression": {
+          "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/JsonObject" }, { "type": "null" }]
+        }
+      }
+    }
+  }
+}

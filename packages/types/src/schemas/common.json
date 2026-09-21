@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.dev/schemas/common.json",
+  "title": "NEXUS wire primitives",
+  "description": "Shared primitives for every NEXUS contract object. Source: docs/API_CONTRACT.md §1 (global conventions: JSON only, snake_case keys, ISO-8601 UTC, money as string decimal) and §2 (GeoPoint / Money). Not a stand-alone payload: consumers $ref these definitions.",
+  "type": "object",
+  "$defs": {
+    "snake_case_key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$",
+      "description": "API_CONTRACT §1: all JSON keys are snake_case. Applied via `propertyNames` to every open object in the contract (attributes, details, properties, filters)."
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "description": "PostgreSQL `uuid` / `gen_random_uuid()` — V1__init.sql."
+    },
+    "uuid_or_null": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "Nullable id. spec §8: an unknown reference is `null`, never a placeholder value."
+    },
+    "iso_date_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC instant — API_CONTRACT §1."
+    },
+    "iso_date_time_or_null": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Absent-in-time marker. `null` means 'the user/row said nothing', which is different from 'no end' — see API_CONTRACT §7.1."
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 96,
+      "description": "V1 `<table>.slug`; API_CONTRACT §4 route params accept `id_or_slug`."
+    },
+    "slug_or_null": {
+      "type": ["string", "null"],
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 96
+    },
+    "currency_code": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO-4217. V1 `tenants.currency` default `HKD`; AGENT_CONTRACT §12. Currency is always carried next to an amount — there is no implicit HKD on the wire."
+    },
+    "currency_code_or_null": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Z]{3}$"
+    },
+    "money_amount": {
+      "type": "string",
+      "pattern": "^-?[0-9]+(\\.[0-9]{1,6})?$",
+      "description": "API_CONTRACT §1 'money as string decimal'. A float must never carry a price (V1 columns are `numeric(12,2)` / `numeric(10,6)`)."
+    },
+    "Money": {
+      "type": "object",
+      "title": "Money",
+      "description": "API_CONTRACT §2 `Money` = `{ \"amount\": \"128.00\", \"currency\": \"HKD\" }`.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "#/$defs/snake_case_key" },
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": { "$ref": "#/$defs/money_amount" },
+        "currency": { "$ref": "#/$defs/currency_code" }
+      }
+    },
+    "PriceModel": {
+      "type": "string",
+      "title": "PriceModel",
+      "description": "V1__init.sql `offerings.price_model` (line 224); mirrored by `PRICE_MODEL` in `src/enums.ts`.",
+      "enum": ["fixed", "from_price", "per_person", "hourly", "range"]
+    },
+    "PriceSource": {
+      "type": "string",
+      "title": "PriceSource",
+      "description": "V1__init.sql `offerings.price_source` (line 227). Note the deliberate difference from `facts.source`: the offerings table says `estimated` where the fact table says `inferred` (CONTRACT NOTES 6 in `src/enums.ts`).",
+      "enum": ["merchant", "imported", "observed", "estimated"]
+    },
+    "Price": {
+      "type": "object",
+      "title": "Price",
+      "description": "API_CONTRACT §2 `EntityCard.price` = `{amount, currency, model}`; extends `Money` with the V1 price columns so a rendered price carries its model and provenance (AGENT_CONTRACT §5 price TTL is 6h and source-dependent).",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "#/$defs/snake_case_key" },
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": { "$ref": "#/$defs/money_amount" },
+        "currency": { "$ref": "#/$defs/currency_code" },
+        "model": { "$ref": "#/$defs/PriceModel" },
+        "min": {
+          "type": ["string", "null"],
+          "pattern": "^-?[0-9]+(\\.[0-9]{1,6})?$",
+          "description": "V1 `offerings.price_min`, used when `model` is `range`."
+        },
+        "max": {
+          "type": ["string", "null"],
+          "pattern": "^-?[0-9]+(\\.[0-9]{1,6})?$",
+          "description": "V1 `offerings.price_max`."
+        },
+        "source": { "$ref": "#/$defs/PriceSource" },
+        "priced_at": { "$ref": "#/$defs/iso_date_time_or_null" },
+        "stale": {
+          "type": "boolean",
+          "description": "AGENT_CONTRACT §5: a stale price is shown with 「价格可能已更新」 and re-checked at checkout (API_CONTRACT §6)."
+        }
+      }
+    },
+    "GeoPoint": {
+      "type": "object",
+      "title": "GeoPoint",
+      "description": "API_CONTRACT §2 `GeoPoint` = `{ \"lat\": 22.3809, \"lng\": 114.1861 }`; V1 `locations.lat/lng numeric(9,6)`. Precise geo requires user consent (AGENT_CONTRACT §1 `location`).",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "#/$defs/snake_case_key" },
+      "required": ["lat", "lng"],
+      "properties": {
+        "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+        "lng": { "type": "number", "minimum": -180, "maximum": 180 },
+        "accuracy_m": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "ImageAsset": {
+      "type": "object",
+      "title": "ImageAsset",
+      "description": "API_CONTRACT §2 `EntityCard.image` = `{url, alt, credit}`. `credit: \"synthetic\"` is the honesty marker for seeded artwork (DECISIONS D6, spec §109).",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "#/$defs/snake_case_key" },
+      "required": ["url"],
+      "properties": {
+        "url": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "alt": { "type": ["string", "null"], "maxLength": 512 },
+        "credit": { "type": ["string", "null"], "maxLength": 256 },
+        "width": { "type": ["integer", "null"], "minimum": 1 },
+        "height": { "type": ["integer", "null"], "minimum": 1 },
+        "placeholder": { "type": ["string", "null"] }
+      }
+    },
+    "RatingInfo": {
+      "type": "object",
+      "title": "RatingInfo",
+      "description": "API_CONTRACT §2 `EntityCard.rating` = `{value: 4.6, count: 213}`; V1 `rating_agg numeric(3,2)` + `review_count`.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "#/$defs/snake_case_key" },
+      "required": ["value", "count"],
+      "properties": {
+        "value": { "type": ["number", "null"], "minimum": 0, "maximum": 5 },
+        "count": { "type": ["integer", "null"], "minimum": 0 },
+        "smoothed": {
+          "type": "boolean",
+          "description": "True when `value` is the Bayesian-smoothed quality score, not the raw mean (AGENT_CONTRACT §6)."
+        }
+      }
+    },
+    "DistanceInfo": {
+      "type": "object",
+      "title": "DistanceInfo",
+      "description": "API_CONTRACT §2 `EntityCard.distance` = `{meters, text, travel_minutes}`; computed server-side so every surface renders the same label.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "#/$defs/snake_case_key" },
+      "required": ["meters", "text"],
+      "properties": {
+        "meters": { "type": ["number", "null"], "minimum": 0 },
+        "text": { "type": ["string", "null"], "maxLength": 64 },
+        "travel_minutes": { "type": ["number", "null"], "minimum": 0 },
+        "from": {
+          "description": "Origin the distance was measured from. Never echoed when it is precise client geo (spec §112, AGENT_CONTRACT §10 `geo_precision`).",
+          "oneOf": [{ "$ref": "#/$defs/GeoPoint" }, { "type": "null" }]
+        }
+      }
+    },
+    "JsonObject": {
+      "type": "object",
+      "title": "JsonObject",
+      "description": "Any `jsonb` map the contracts leave open (`attributes`, `filters`, `details`, `properties`, `context`). Keys stay snake_case (API_CONTRACT §1).",
+      "propertyNames": { "$ref": "#/$defs/snake_case_key" }
+    },
+    "ConfidenceMap": {
+      "type": "object",
+      "title": "ConfidenceMap",
+      "description": "Per-field extraction confidence, 0..1 — API_CONTRACT §7.1 `{category:0.95, budget:0.9, time:0.8}`. AGENT_CONTRACT §4: below 0.6 the copy hedges, below 0.4 the field is dropped and handoff offered. Never rounded up for presentation.",
+      "propertyNames": { "$ref": "#/$defs/snake_case_key" },
+      "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+    },
+    "SupportedLocale": {
+      "type": "string",
+      "title": "SupportedLocale",
+      "description": "AGENT_CONTRACT §12 (`zh-HK` default, plus `en`, `zh-CN`); mirrored by `SUPPORTED_LOCALE` in `src/enums.ts`. TS `Locale` stays an open string because V1 `tenants.locales text[]` may add more, but the schema is the closed v1 registry.",
+      "enum": ["en", "zh-HK", "zh-CN"]
+    },
+    "CursorPageRequest": {
+      "type": "object",
+      "title": "PageRequest",
+      "description": "API_CONTRACT §1 pagination: `?limit=20&cursor=…`, limit server-clamped to 1..100.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "#/$defs/snake_case_key" },
+      "required": [],
+      "properties": {
+        "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "cursor": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.dev/schemas/entity_card.json",
+  "title": "EntityCard",
+  "description": "The single render contract for consumer UI, AI answers and MCP/UCP payloads — docs/API_CONTRACT.md §2 `EntityCard`, AGENT_CONTRACT.md §4 (renderer contract) and §6 (sponsored inserted after organic scoring). Spec §35/§36/§115. Discriminated by `card_type`; the TS mirror is the five-member union in `src/card.ts`. Variant-only keys are listed once here and narrowed by the TypeScript union, because every variant shares `EntityCardBase`.",
+  "type": "object",
+  "additionalProperties": false,
+  "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+  "required": ["card_type", "id", "title", "facts", "flags"],
+  "properties": {
+    "card_type": { "$ref": "#/$defs/CardType" },
+    "id": {
+      "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid",
+      "description": "API_CONTRACT §2 `id` — the subject row (merchant / offering / collection)."
+    },
+    "slug": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/slug_or_null" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "subtitle": { "type": ["string", "null"], "maxLength": 256 },
+    "description": {
+      "type": ["string", "null"],
+      "maxLength": 4096,
+      "description": "Untrusted merchant/KB text — sanitised before it reaches a prompt (AGENT_CONTRACT §7/§8)."
+    },
+    "image": {
+      "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/ImageAsset" }, { "type": "null" }]
+    },
+    "price": {
+      "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/Price" }, { "type": "null" }],
+      "description": "Rendering a price requires a backing `price` fact — rule `entity_card_rendered_value_backed` (API_CONTRACT §2 「facts backing every rendered number」, AGENT_CONTRACT §4)."
+    },
+    "rating": {
+      "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/RatingInfo" }, { "type": "null" }]
+    },
+    "distance": {
+      "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/DistanceInfo" }, { "type": "null" }]
+    },
+    "open": {
+      "oneOf": [{ "$ref": "#/$defs/CardOpeningState" }, { "type": "null" }],
+      "description": "API_CONTRACT §2's card example shows the compact projection `{is_open, text}` while its `OpeningState` object also carries `as_of`/`source_fact_id`; this field accepts the compact form and the conformance rule demands the citation whenever a verdict is rendered (see CONTRACT NOTES 8)."
+    },
+    "availability": {
+      "oneOf": [{ "$ref": "https://nexus.dev/schemas/fact.json#/$defs/AvailabilityInfo" }, { "type": "null" }]
+    },
+    "ai_match": {
+      "oneOf": [{ "$ref": "https://nexus.dev/schemas/fact.json#/$defs/AiMatchInfo" }, { "type": "null" }]
+    },
+    "actions": { "type": "array", "maxItems": 12, "items": { "$ref": "#/$defs/CardAction" } },
+    "facts": {
+      "type": "array",
+      "description": "API_CONTRACT §2 `facts` — 「Fact[] backing every rendered number」. An empty array means nothing on this card is claim-grade, so the renderer must not show price/rating/availability/open.",
+      "items": { "$ref": "https://nexus.dev/schemas/fact.json" }
+    },
+    "flags": { "$ref": "#/$defs/EntityFlags" },
+    "tenant_id": {
+      "description": "API_CONTRACT §1 `X-Tenant`; the TS mirror accepts a tenant uuid or slug (DECISIONS D5).",
+      "oneOf": [
+        { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid" },
+        { "$ref": "https://nexus.dev/schemas/common.json#/$defs/slug" },
+        { "type": "null" }
+      ]
+    },
+    "merchant_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+    "category": { "type": ["string", "null"], "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$", "maxLength": 64 },
+    "tags": { "type": "array", "maxItems": 32, "items": { "type": "string", "minLength": 1, "maxLength": 64 } },
+    "attributes": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/JsonObject" },
+    "location": {
+      "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/GeoPoint" }, { "type": "null" }]
+    },
+    "district": { "type": ["string", "null"], "maxLength": 128 },
+    "transit": {
+      "description": "V1 `locations.mtr_station` / `mtr_walk_min` — the HK convention (spec §112).",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+          "required": ["station", "walk_minutes"],
+          "properties": {
+            "station": { "type": ["string", "null"], "maxLength": 128 },
+            "walk_minutes": { "type": ["integer", "null"], "minimum": 0 }
+          }
+        },
+        { "type": "null" }
+      ]
+    },
+    "as_of": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+
+    "location_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+    "ownership_verified": { "type": "boolean" },
+    "plan": {
+      "type": ["string", "null"],
+      "description": "Membership tier — must never influence organic rank (AGENT_CONTRACT §6, spec §67); it exists so the UI can render 「推廣」 rather than the ranker reading it."
+    },
+    "ai_agent_enabled": { "type": "boolean" },
+    "merchant_name": { "type": ["string", "null"], "maxLength": 256 },
+    "stock_quantity": { "type": ["integer", "null"], "minimum": 0 },
+    "purchasable": { "type": "boolean" },
+    "duration_minutes": { "type": ["integer", "null"], "minimum": 0 },
+    "bookable": { "type": "boolean" },
+    "min_party_size": { "type": ["integer", "null"], "minimum": 0 },
+    "max_party_size": { "type": ["integer", "null"], "minimum": 0 },
+    "season": { "type": ["string", "null"], "maxLength": 64 },
+    "legs": { "type": "array", "maxItems": 12, "items": { "$ref": "https://nexus.dev/schemas/entity_card.json" } },
+    "kind": { "type": ["string", "null"], "maxLength": 32 },
+    "author": { "type": ["string", "null"], "maxLength": 128 },
+    "items": { "type": "array", "maxItems": 60, "items": { "$ref": "https://nexus.dev/schemas/entity_card.json" } },
+    "item_count": { "type": ["integer", "null"], "minimum": 0 },
+    "published_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "card_type": { "const": "merchant" } }, "required": ["card_type"] },
+      "then": {
+        "properties": {
+          "stock_quantity": false,
+          "purchasable": false,
+          "duration_minutes": false,
+          "bookable": false,
+          "min_party_size": false,
+          "max_party_size": false,
+          "legs": false,
+          "items": false,
+          "kind": false,
+          "author": false,
+          "item_count": false,
+          "published_at": false,
+          "season": false
+        }
+      }
+    },
+    {
+      "if": { "properties": { "card_type": { "const": "product" } }, "required": ["card_type"] },
+      "then": {
+        "properties": {
+          "duration_minutes": false,
+          "bookable": false,
+          "min_party_size": false,
+          "max_party_size": false,
+          "legs": false,
+          "items": false,
+          "kind": false,
+          "author": false,
+          "item_count": false,
+          "published_at": false,
+          "season": false,
+          "ownership_verified": false,
+          "ai_agent_enabled": false
+        }
+      }
+    },
+    {
+      "if": { "properties": { "card_type": { "const": "service" } }, "required": ["card_type"] },
+      "then": {
+        "properties": {
+          "stock_quantity": false,
+          "purchasable": false,
+          "legs": false,
+          "items": false,
+          "kind": false,
+          "author": false,
+          "item_count": false,
+          "published_at": false,
+          "season": false,
+          "ownership_verified": false,
+          "ai_agent_enabled": false
+        }
+      }
+    },
+    {
+      "if": { "properties": { "card_type": { "const": "experience" } }, "required": ["card_type"] },
+      "then": {
+        "properties": {
+          "stock_quantity": false,
+          "purchasable": false,
+          "min_party_size": false,
+          "max_party_size": false,
+          "items": false,
+          "kind": false,
+          "author": false,
+          "item_count": false,
+          "published_at": false,
+          "ownership_verified": false,
+          "ai_agent_enabled": false
+        }
+      }
+    },
+    {
+      "if": { "properties": { "card_type": { "const": "collection" } }, "required": ["card_type"] },
+      "then": {
+        "properties": {
+          "price": false,
+          "availability": false,
+          "open": false,
+          "stock_quantity": false,
+          "purchasable": false,
+          "duration_minutes": false,
+          "bookable": false,
+          "min_party_size": false,
+          "max_party_size": false,
+          "legs": false,
+          "season": false,
+          "ownership_verified": false,
+          "ai_agent_enabled": false
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "CardType": {
+      "type": "string",
+      "title": "CardType",
+      "description": "API_CONTRACT §2 `card_type` comment (`merchant|product|service|experience|collection`) = `CARD_TYPE` in `src/enums.ts`.",
+      "enum": ["merchant", "product", "service", "experience", "collection"]
+    },
+    "CardActionType": {
+      "type": "string",
+      "title": "CardActionType",
+      "description": "The closed CTA registry every surface may render; `CARD_ACTION_TYPE` in `src/enums.ts`. TS widens to `(string & {})` only so a future registry addition does not break a build, but unknown values are rejected on the wire (AGENT_CONTRACT §3 'unknown values are hard errors').",
+      "enum": [
+        "reserve",
+        "buy",
+        "add_to_cart",
+        "view_menu",
+        "view_reviews",
+        "compare",
+        "message",
+        "direction",
+        "share",
+        "external_link",
+        "follow"
+      ]
+    },
+    "CardAction": {
+      "type": "object",
+      "title": "CardAction",
+      "description": "API_CONTRACT §2 `actions[]` = `{type,label,endpoint}`. `endpoint` is always a platform path (`/api/v1/...`), never an `/ai/v1/...` path, because mutations go through the platform with a scoped token (API_CONTRACT §0, DECISIONS D5) and require an explicit user action (AGENT_CONTRACT §8).",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["type", "label", "endpoint"],
+      "properties": {
+        "type": { "$ref": "#/$defs/CardActionType" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "endpoint": {
+          "type": ["string", "null"],
+          "pattern": "^(/api/v1/|/checkout/|https://)",
+          "maxLength": 512,
+          "description": "Null for client-side-only actions such as `compare`. Demo hosts use `example.*` domains (DECISIONS D6)."
+        },
+        "method": { "type": "string", "enum": ["GET", "POST", "PATCH", "DELETE"] },
+        "payload": {
+          "description": "Static params; must not carry a price — the server re-prices at checkout (API_CONTRACT §6).",
+          "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/JsonObject" }, { "type": "null" }]
+        },
+        "requires_auth": { "type": "boolean" },
+        "secondary": { "type": "boolean" }
+      }
+    },
+    "EntityFlags": {
+      "type": "object",
+      "title": "EntityFlags",
+      "description": "API_CONTRACT §2 `flags` = `{sponsored, demo, unverified}`. `demo` must be surfaced in the UI and mirrored by the `X-Demo-Data` header (DECISIONS D6, spec §109/§155); `sponsored` is a paid slot inserted after organic scoring, capped at 1 per top 5 (AGENT_CONTRACT §6, spec §66-67).",
+      "additionalProperties": { "type": "boolean" },
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["sponsored", "demo", "unverified"],
+      "properties": {
+        "sponsored": { "type": "boolean" },
+        "demo": { "type": "boolean" },
+        "unverified": { "type": "boolean" },
+        "stale": { "type": "boolean" },
+        "untrusted_content": { "type": "boolean" }
+      }
+    },
+    "CardOpeningState": {
+      "type": "object",
+      "title": "CardOpeningState",
+      "description": "The card projection of `fact.json#/$defs/OpeningState`: only `is_open` is required, because API_CONTRACT §2's EntityCard example renders `{is_open, text}`. Every field keeps the same name and type as the full object; the conformance rule `entity_card_rendered_value_backed` still demands `as_of` + a cited `source_fact_id` before a verdict is shown (AGENT_CONTRACT §4/§5).",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["is_open"],
+      "properties": {
+        "is_open": { "type": ["boolean", "null"] },
+        "opens_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+        "closes_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+        "as_of": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+        "source_fact_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+        "text": { "type": ["string", "null"], "maxLength": 128 },
+        "crosses_midnight": { "type": "boolean" }
+      }
+    }
+  }
+}

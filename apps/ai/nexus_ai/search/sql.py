@@ -1,0 +1,425 @@
+"""Parameterized candidate SQL — tsvector ∪ pg_trgm ∪ pgvector ∪ metadata ∪ geo.
+
+DECISIONS D3: Postgres-only in phase 1 — `to_tsvector('simple')` + `pg_trgm` + pgvector
+HNSW + bbox prefilter then haversine (no PostGIS in the image).
+
+Rule enforced throughout this module: **values are never concatenated into SQL**. Every
+user-supplied value goes through `Params`, which emits `$n` placeholders and returns the
+bound list. The only inlined literals are the `tsvector` config name (allow-listed) and
+structural SQL text.
+"""
+
+from __future__ import annotations
+
+import json
+import math
+from dataclasses import dataclass
+from datetime import datetime, time
+from typing import Any, Iterable
+
+TS_CONFIG_ALLOWLIST = {"simple", "english"}
+EARTH_RADIUS_M = 6371008.8
+VECTOR_FLOOR = 0.05
+"""Cosine floor for a chunk hit to count as a vector candidate."""
+
+
+class Params:
+    """Ordered placeholder builder. `add(value)` -> `$n`; nothing is ever inlined."""
+
+    def __init__(self) -> None:
+        self.values: list[Any] = []
+
+    def add(self, value: Any) -> str:
+        self.values.append(value)
+        return f"${len(self.values)}"
+
+    def extend(self, values: Iterable[Any]) -> list[str]:
+        return [self.add(v) for v in values]
+
+
+def haversine_m(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """Great-circle metres; `haversine_sql` mirrors it in the database."""
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dl = math.radians(lng2 - lng1)
+    return EARTH_RADIUS_M * math.acos(max(-1.0, min(1.0,
+        math.sin(p1) * math.sin(p2) + math.cos(p1) * math.cos(p2) * math.cos(dl))))
+
+
+def bbox(center_lat: float, center_lng: float, radius_m: float) -> tuple[float, float, float, float]:
+    """(lat_min, lat_max, lng_min, lng_max) — the indexable prefilter (§6)."""
+    d_lat = radius_m / 111320.0
+    cos_lat = max(1e-4, math.cos(math.radians(center_lat)))
+    d_lng = radius_m / (111320.0 * cos_lat)
+    return (center_lat - d_lat, center_lat + d_lat, center_lng - d_lng, center_lng + d_lng)
+
+
+def haversine_expr(lat_ph: str, lng_ph: str, col_lat: str, col_lng: str) -> str:
+    """Correct spherical law-of-cosines expression, float8-cast for asyncpg."""
+    la = f"radians({col_lat}::float8)"
+    lo = f"radians({col_lng}::float8)"
+    cla = f"radians({lat_ph}::float8)"
+    clo = f"radians({lng_ph}::float8)"
+    inner = (f"cos({cla}) * cos({la}) * cos({lo} - {clo}) + sin({cla}) * sin({la})")
+    return f"({EARTH_RADIUS_M} * acos(greatest(-1.0, least(1.0, {inner}))))::float8"
+
+
+@dataclass
+class CandidateQuery:
+    sql: str
+    params: list[Any]
+    ts_config: str = "simple"
+
+
+def _tsconfig(ts_config: str) -> str:
+    return ts_config if ts_config in TS_CONFIG_ALLOWLIST else "simple"
+
+
+# --------------------------------------------------------------------- merchants
+def build_merchant_query(
+    *,
+    tenant_id: str,
+    text: str | None,
+    embedding: list[float] | None,
+    ts_config: str = "simple",
+    filters: dict[str, Any] | None = None,
+    geo: tuple[float, float] | None = None,
+    radius_m: int | None = None,
+    limit: int = 60,
+) -> CandidateQuery:
+    p = Params()
+    cfg = _tsconfig(ts_config)
+    filters = filters or {}
+    text_ph = p.add(text or "")
+    tsq = f"plainto_tsquery('{cfg}'::regconfig, {text_ph})"
+    wsq = f"websearch_to_tsquery('{cfg}'::regconfig, {text_ph})"
+    tenant_ph = p.add(str(tenant_id))
+    limit_ph = p.add(int(limit))
+
+    where = [f"m.tenant_id = {tenant_ph}::uuid", "m.status = 'published'"]
+    if filters.get("category"):
+        where.append(f"m.category_primary = {p.add(str(filters['category']))}")
+    if filters.get("max_price") is not None:
+        where.append(f"(m.avg_price_hkd IS NULL OR m.avg_price_hkd <= {p.add(float(filters['max_price']))})")
+    if filters.get("min_price") is not None:
+        where.append(f"(m.avg_price_hkd IS NULL OR m.avg_price_hkd >= {p.add(float(filters['min_price']))})")
+    if filters.get("min_rating") is not None:
+        where.append(f"m.rating_agg >= {p.add(float(filters['min_rating']))}")
+    if filters.get("tags"):
+        where.append(f"m.tags && {p.add([str(t) for t in filters['tags']])}::text[]")
+    if filters.get("exclude"):
+        where.append(f"m.id::text <> ALL({p.add([str(x) for x in filters['exclude']])}::text[])")
+    if filters.get("merchant_id"):
+        where.append(f"m.id = {p.add(str(filters['merchant_id']))}::uuid")
+    for key, value in (filters.get("attributes") or {}).items():
+        where.append(f"m.attributes @> {p.add(json.dumps({str(key): value}, ensure_ascii=False))}::jsonb")
+    if filters.get("district"):
+        where.append(
+            f"EXISTS (SELECT 1 FROM locations ld WHERE ld.merchant_id = m.id "
+            f"AND lower(coalesce(ld.district,'')) = lower({p.add(str(filters['district']))}))")
+    if filters.get("open_weekday") is not None and filters.get("open_time") is not None:
+        wd = p.add(int(filters["open_weekday"]))
+        tm = p.add(str(filters["open_time"]))
+        where.append(
+            f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
+            f"AND bh.weekday = {wd}::smallint AND ("
+            f"(bh.crosses_midnight = false AND bh.opens_at <= {tm}::time AND bh.closes_at > {tm}::time) "
+            f"OR (bh.crosses_midnight = true AND (bh.opens_at <= {tm}::time "
+            f"OR bh.closes_at > {tm}::time))))")
+    min_closing = filters.get("min_closing_hour")
+    if min_closing is not None:
+        where.append(
+            f"EXISTS (SELECT 1 FROM business_hours bc WHERE bc.merchant_id = m.id AND ("
+            f"bc.closes_at >= ({p.add(int(min_closing))}::int * interval '1 hour')::time "
+            f"OR bc.crosses_midnight = true))")
+
+    # ---- geo lane: bbox prefilter then haversine on the nearest primary location
+    geo_join = ""
+    geo_select = "NULL::float8 AS meters, NULL::text AS district, NULL::text AS address_line1, " \
+                 "NULL::text AS mtr_station, NULL::int AS mtr_walk_min"
+    if geo:
+        lat, lng = float(geo[0]), float(geo[1])
+        lat_ph, lng_ph = p.add(lat), p.add(lng)
+        lat_min, lat_max, lng_min, lng_max = bbox(lat, lng, int(radius_m or 5000))
+        b1, b2, b3, b4 = p.add(lat_min), p.add(lat_max), p.add(lng_min), p.add(lng_max)
+        geo_select = (f"loc.meters AS meters, loc.district AS district, "
+                      f"loc.address_line1 AS address_line1, loc.mtr_station AS mtr_station, "
+                      f"loc.mtr_walk_min AS mtr_walk_min")
+        geo_join = f"""LEFT JOIN LATERAL (
+          SELECT l.id, l.district, l.address_line1, l.mtr_station, l.mtr_walk_min,
+                 {haversine_expr(lat_ph, lng_ph, 'l.lat', 'l.lng')} AS meters
+          FROM locations l
+          WHERE l.merchant_id = m.id
+            AND l.lat BETWEEN {b1}::float8 AND {b2}::float8
+            AND l.lng BETWEEN {b3}::float8 AND {b4}::float8
+          ORDER BY meters ASC NULLS LAST LIMIT 1
+        ) loc ON true"""
+        where.append("loc.id IS NOT NULL")
+        if radius_m:
+            where.append(f"loc.meters <= {p.add(float(radius_m))}")
+
+    kw_score = (
+        f"GREATEST(COALESCE(ts_rank(m.search_tsv, {tsq}), 0),"
+        f" COALESCE(ts_rank(m.search_tsv, {wsq}), 0),"
+        f" COALESCE(similarity(m.display_name, {text_ph}), 0),"
+        f" COALESCE(similarity(coalesce(m.display_name_zh,''), {text_ph}), 0),"
+        f" COALESCE(word_similarity({text_ph}, coalesce(m.display_name,'') || ' ' ||"
+        f" coalesce(m.display_name_zh,'') || ' ' || coalesce(m.description,'') || ' ' ||"
+        f" array_to_string(m.tags,' ')), 0))")
+    text_matched = (f"(m.search_tsv @@ {tsq} OR m.search_tsv @@ {wsq}"
+                    f" OR m.display_name % {text_ph} OR coalesce(m.display_name_zh,'') % {text_ph})")
+    match = text_matched if (text or "").strip() else "true"
+
+    # ---- vector lane: pgvector cosine, max-pooled from the merchant's chunks
+    vec_join = ""
+    vec_select = "0::float8 AS vec_score"
+    if embedding:
+        vec_ph = p.add(vector_literal(embedding))
+        vec_join = f"""LEFT JOIN LATERAL (
+          SELECT max(1 - (c.embedding <=> {vec_ph}::vector)) AS vec_score
+          FROM chunks c
+          WHERE c.merchant_id = m.id AND c.embedding IS NOT NULL
+          GROUP BY c.merchant_id
+          HAVING max(1 - (c.embedding <=> {vec_ph}::vector)) >= {VECTOR_FLOOR}
+        ) vv ON true"""
+        vec_select = "COALESCE(vv.vec_score, 0)::float8 AS vec_score"
+
+    avoid = [str(a) for a in (filters.get("avoid") or [])]
+    avoid_clause = ""
+    if avoid:
+        # "唔食辣" must not silently pass a spicy-tagged merchant through (§8 filters)
+        av_ph = p.add(avoid)
+        avoid_clause = f"""AND NOT (
+            coalesce(m.category_primary,'') = ANY({av_ph}::text[])
+            OR EXISTS (SELECT 1 FROM offerings ao WHERE ao.merchant_id = m.id
+                       AND (ao.name || ' ' || coalesce(ao.name_zh,'') || ' ' ||
+                            coalesce(ao.description,'')) ILIKE ANY(
+                             SELECT '%'||x||'%' FROM unnest({av_ph}::text[]) x)))"""
+
+    order_expr = (f"(GREATEST({kw_score}, COALESCE(vv.vec_score, 0)))" if embedding
+                  else kw_score)
+
+    sql = f"""
+SELECT m.id, m.slug, m.display_name, m.display_name_zh, m.description, m.category_primary,
+       m.avg_price_hkd, m.rating_agg, m.review_count, m.popularity_score, m.tags,
+       m.attributes, m.data_origin, m.plan, m.images, m.ai_agent_enabled,
+       'merchant'::text AS subject_type, m.id::text AS subject_id, m.id::text AS merchant_id,
+       {geo_select},
+       {kw_score} AS kw_score,
+       {match} AS text_matched,
+       {vec_select},
+       COALESCE(tm.mean_rating, 3.5)::float8 AS tenant_mean_rating
+FROM merchants m
+{geo_join}
+{vec_join}
+CROSS JOIN LATERAL (
+  SELECT avg(r2.rating_agg)::float8 AS mean_rating FROM merchants r2
+  WHERE r2.tenant_id = {tenant_ph}::uuid AND r2.status = 'published' AND r2.rating_agg > 0
+) tm
+WHERE {' AND '.join(where)}
+  {avoid_clause}
+ORDER BY {order_expr} DESC, m.rating_agg DESC
+LIMIT {limit_ph}
+"""
+    return CandidateQuery(sql=sql, params=p.values, ts_config=cfg)
+
+
+def vector_literal(embedding: list[float]) -> str:
+    """pgvector text form. Bound as a parameter and cast with `::vector` in the SQL."""
+    return "[" + ",".join(f"{float(v):.6f}" for v in embedding) + "]"
+
+
+# --------------------------------------------------------------------- offerings
+def build_offering_query(
+    *,
+    tenant_id: str,
+    text: str | None,
+    ts_config: str = "simple",
+    filters: dict[str, Any] | None = None,
+    geo: tuple[float, float] | None = None,
+    radius_m: int | None = None,
+    limit: int = 60,
+) -> CandidateQuery:
+    """Offerings carry no chunks of their own, so this lane is keyword+metadata+geo
+    only — honestly documented rather than faking a vector score (§13 lanes)."""
+    p = Params()
+    cfg = _tsconfig(ts_config)
+    filters = filters or {}
+    text_ph = p.add(text or "")
+    tsq = f"plainto_tsquery('{cfg}'::regconfig, {text_ph})"
+    wsq = f"websearch_to_tsquery('{cfg}'::regconfig, {text_ph})"
+    tenant_ph = p.add(str(tenant_id))
+    limit_ph = p.add(int(limit))
+
+    where = [f"o.tenant_id = {tenant_ph}::uuid", "o.status = 'active'",
+             "m.status = 'published'"]
+    if filters.get("kind") in ("product", "service", "experience"):
+        where.append(f"o.kind = {p.add(str(filters['kind']))}")
+    if filters.get("category"):
+        where.append(f"m.category_primary = {p.add(str(filters['category']))}")
+    if filters.get("max_price") is not None:
+        where.append(f"(COALESCE(o.price_amount, o.price_max) IS NULL "
+                     f"OR COALESCE(o.price_amount, o.price_max) <= {p.add(float(filters['max_price']))})")
+    if filters.get("min_price") is not None:
+        where.append(f"(COALESCE(o.price_amount, o.price_min) IS NULL "
+                     f"OR COALESCE(o.price_amount, o.price_min) >= {p.add(float(filters['min_price']))})")
+    if filters.get("merchant_id"):
+        where.append(f"o.merchant_id = {p.add(str(filters['merchant_id']))}::uuid")
+    if filters.get("exclude"):
+        where.append(f"o.id::text <> ALL({p.add([str(x) for x in filters['exclude']])}::text[])")
+    if filters.get("min_rating") is not None:
+        where.append(f"o.rating_agg >= {p.add(float(filters['min_rating']))}")
+    for key, value in (filters.get("attributes") or {}).items():
+        where.append(f"o.attributes @> {p.add(json.dumps({str(key): value}, ensure_ascii=False))}::jsonb")
+
+    geo_join = ""
+    geo_select = "NULL::float8 AS meters, NULL::text AS district"
+    if geo:
+        lat, lng = float(geo[0]), float(geo[1])
+        lat_ph, lng_ph = p.add(lat), p.add(lng)
+        lat_min, lat_max, lng_min, lng_max = bbox(lat, lng, int(radius_m or 5000))
+        b1, b2, b3, b4 = p.add(lat_min), p.add(lat_max), p.add(lng_min), p.add(lng_max)
+        geo_select = "loc.meters AS meters, loc.district AS district"
+        geo_join = f"""JOIN LATERAL (
+          SELECT l.id, l.district,
+                 {haversine_expr(lat_ph, lng_ph, 'l.lat', 'l.lng')} AS meters
+          FROM locations l
+          WHERE l.merchant_id = m.id
+            AND l.lat BETWEEN {b1}::float8 AND {b2}::float8
+            AND l.lng BETWEEN {b3}::float8 AND {b4}::float8
+          ORDER BY meters ASC NULLS LAST LIMIT 1
+        ) loc ON true"""
+        where.append("loc.id IS NOT NULL")
+        if radius_m:
+            where.append(f"loc.meters <= {p.add(float(radius_m))}")
+
+    kw_score = (
+        f"GREATEST(COALESCE(ts_rank(o.search_tsv, {tsq}), 0),"
+        f" COALESCE(ts_rank(o.search_tsv, {wsq}), 0),"
+        f" COALESCE(similarity(o.name, {text_ph}), 0),"
+        f" COALESCE(similarity(coalesce(o.name_zh,''), {text_ph}), 0),"
+        f" COALESCE(word_similarity({text_ph}, coalesce(o.name,'') || ' ' ||"
+        f" coalesce(o.name_zh,'') || ' ' || coalesce(o.description,'') || ' ' ||"
+        f" coalesce(o.description_zh,'')), 0))")
+    match = (f"(o.search_tsv @@ {tsq} OR o.search_tsv @@ {wsq} OR o.name % {text_ph}"
+             f" OR coalesce(o.name_zh,'') % {text_ph})") if (text or "").strip() else "true"
+
+    avoid = [str(a) for a in (filters.get("avoid") or [])]
+    avoid_clause = ""
+    if avoid:
+        av_ph = p.add(avoid)
+        avoid_clause = f"""AND NOT (coalesce(o.name,'') || ' ' || coalesce(o.name_zh,'')
+            || ' ' || coalesce(o.description,'') ILIKE ANY(
+              SELECT '%'||x||'%' FROM unnest({av_ph}::text[]) x))"""
+
+    sql = f"""
+SELECT o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.description, o.description_zh,
+       o.kind, o.price_amount, o.price_min, o.price_max, o.currency, o.price_model,
+       o.price_source, o.price_updated_at, o.stock_quantity, o.stock_updated_at,
+       o.bookable, o.min_party_size, o.max_party_size, o.rating_agg, o.review_count,
+       o.popularity_score, o.attributes, o.images, o.constraints,
+       m.slug AS merchant_slug, m.display_name AS merchant_name,
+       m.display_name_zh AS merchant_name_zh, m.category_primary AS category,
+       m.avg_price_hkd, m.data_origin, m.plan, m.tags,
+       'offering'::text AS subject_type, o.id::text AS subject_id, o.merchant_id::text AS merchant_id_key,
+       {geo_select},
+       {kw_score} AS kw_score,
+       {match} AS text_matched,
+       0::float8 AS vec_score,
+       COALESCE((SELECT avg(r2.rating_agg)::float8 FROM merchants r2
+                 WHERE r2.tenant_id = {tenant_ph}::uuid AND r2.status='published'
+                   AND r2.rating_agg > 0), 3.5) AS tenant_mean_rating
+FROM offerings o
+JOIN merchants m ON m.id = o.merchant_id
+{geo_join}
+WHERE {' AND '.join(where)}
+  {avoid_clause}
+ORDER BY {kw_score} DESC, o.rating_agg DESC
+LIMIT {limit_ph}
+"""
+    return CandidateQuery(sql=sql, params=p.values, ts_config=cfg)
+
+
+# --------------------------------------------------------------------- side queries
+def facts_for(subject_ids: Iterable[str], attributes: Iterable[str] | None = None
+              ) -> tuple[str, list[Any]]:
+    p = Params()
+    ids = [str(s) for s in subject_ids if s]
+    if not ids:
+        return "", []
+    sql = f"""
+SELECT id::text AS fact_id, subject_type, subject_id::text AS subject_id,
+       merchant_id::text AS merchant_id, attribute, value, unit, currency, source,
+       source_uri, confidence::float8 AS confidence, observed_at, expires_at, stale
+FROM facts
+WHERE subject_id::text = ANY({p.add(ids)}::text[])
+"""
+    if attributes:
+        sql += f" AND attribute = ANY({p.add(list(attributes))}::text[])"
+    sql += " ORDER BY confidence DESC, observed_at DESC"
+    return sql, p.values
+
+
+def hours_for(merchant_ids: Iterable[str]) -> tuple[str, list[Any]]:
+    p = Params()
+    ids = [str(m) for m in merchant_ids if m]
+    if not ids:
+        return "", []
+    sql = f"""
+SELECT merchant_id::text AS merchant_id, weekday, opens_at, closes_at, crosses_midnight, source
+FROM business_hours WHERE merchant_id::text = ANY({p.add(ids)}::text[])
+ORDER BY merchant_id, weekday, opens_at
+"""
+    return sql, p.values
+
+
+def slots_for(merchant_ids: Iterable[str], starts_at: datetime, ends_at: datetime,
+              party_size: int | None = None) -> tuple[str, list[Any]]:
+    p = Params()
+    ids = [str(m) for m in merchant_ids if m]
+    if not ids:
+        return "", []
+    sql = f"""
+SELECT merchant_id::text AS merchant_id, id::text AS slot_id, starts_at, ends_at,
+       capacity_total, capacity_left, price_amount, currency, source
+FROM availability_slots
+WHERE merchant_id::text = ANY({p.add(ids)}::text[])
+  AND starts_at >= {p.add(starts_at)} AND starts_at <= {p.add(ends_at)}
+  AND capacity_left > 0
+"""
+    if party_size:
+        sql += f"  AND capacity_left >= {p.add(int(party_size))}\n"
+    sql += " ORDER BY merchant_id, starts_at"
+    return sql, p.values
+
+
+def reviews_for(merchant_ids: Iterable[str], per_merchant: int = 5) -> tuple[str, list[Any]]:
+    p = Params()
+    ids = [str(m) for m in merchant_ids if m]
+    if not ids:
+        return "", []
+    sql = f"""
+SELECT r.id::text AS review_id, r.merchant_id::text AS merchant_id,
+       r.offering_id::text AS offering_id, r.rating::float8 AS rating, r.title, r.body,
+       r.language, r.created_at, r.verified_purchase, r.verified_reservation,
+       r.data_origin, r.aspects, r.helpful_count
+FROM reviews r
+WHERE r.merchant_id::text = ANY({p.add(ids)}::text[]) AND r.status = 'published'
+  AND r.id IN (SELECT id FROM reviews r2
+               WHERE r2.merchant_id::text = ANY({p.add(ids)}::text[])
+                 AND r2.status='published'
+               ORDER BY r2.merchant_id, r2.helpful_count DESC, r2.created_at DESC)
+ORDER BY r.merchant_id, r.helpful_count DESC, r.created_at DESC
+"""
+    return sql, p.values
+
+
+def open_now_predicate_expr(now: datetime) -> tuple[int, str]:
+    """(weekday, 'HH:MM:SS') in Asia/Hong_Kong — bound as params by the caller."""
+    from nexus_ai.nlu.timeparse import HK_TZ
+
+    local = now.astimezone(HK_TZ) if now.tzinfo else now.replace(tzinfo=HK_TZ)
+    return local.weekday(), local.strftime("%H:%M:%S")
+
+
+def time_today(hh: int, mm: int = 0) -> time:
+    return time(hh, mm)

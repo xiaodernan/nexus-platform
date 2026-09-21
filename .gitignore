@@ -1,0 +1,114 @@
+# NEXUS — repository ignores
+# Rule of thumb (§131): secrets, build output, dependencies, local data and test artifacts stay out.
+
+# ------------------------------------------------------------------ secrets / local env
+.env
+.env.local
+.env.*.local
+.infra.env
+*.pem
+*.key
+secrets/
+# ...but the documented template is tracked:
+!.env.example
+
+# ------------------------------------------------------------------ Node / Next.js (apps/web, packages/*)
+node_modules/
+.npm/
+.pnpm-store/
+apps/web/.next/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts.bak
+coverage/
+.vitest/
+storybook-static/
+
+# ------------------------------------------------------------------ Java / Spring Boot (services/platform)
+target/
+!.mvn/wrapper/maven-wrapper.jar
+build/
+*.class
+*.jar
+*.war
+!**/src/main/**/target/
+!**/src/test/**/target/
+.mvn/timing.properties
+dependency-reduced-pom.xml
+.gradle/
+
+# ------------------------------------------------------------------ Python / FastAPI (apps/ai)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+htmlcov/
+.coverage
+coverage.xml
+
+# ------------------------------------------------------------------ Playwright (tests/e2e)
+test-results/
+playwright-report/
+blob-report/
+tests/e2e/.auth/
+
+# Evidence artifacts (screenshots, traces, HAR) stay on disk but out of git; keep the folder tracked.
+tests/evidence/*
+!tests/evidence/.gitkeep
+
+# ------------------------------------------------------------------ local data volumes / caches
+# Named compose volumes (nexus_pgdata / nexus_redisdata) live inside Docker Desktop, but anyone who
+# switches to bind mounts must not commit the DB cluster:
+infra/data/
+infra/.pgdata/
+infra/.redisdata/
+data/postgres/
+data/redis/
+data/elasticsearch/
+data/opensearch/
+data/kafka/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+pgdata/
+redisdata/
+
+# Generated synthetic datasets (regenerate with `make seed` / data/seed loader)
+data/generated/
+data/imports/
+data/tmp/
+
+# ------------------------------------------------------------------ logs / runtime
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.pid
+*.seed
+pids/
+tmp/
+.cache/
+
+# ------------------------------------------------------------------ editors / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# Generated smoke fixtures from the seed loader (regenerate with make seed)
+data/seed/out_smoke/

@@ -1,0 +1,135 @@
+package com.nexus.platform;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.springframework.stereotype.Service;
+
+/**
+ * {@code permission_grants} is the single source of truth for authorisation (D5, AGENT_CONTRACT §8) —
+ * for humans, merchant API keys and AI agents alike. Roles in {@code merchant_users} are a
+ * convenience for *assigning* grants; nothing is authorised from a role string.
+ */
+@Service
+public class PermissionService {
+
+    private final TenantJdbc jdbc;
+
+    public PermissionService(TenantJdbc jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    /** Merchant-scoped grant: joined through {@code merchants} so another tenant's grant can never match. */
+    public boolean hasMerchantGrant(TenantContext tenant, String subjectType, UUID subjectId,
+                                     UUID merchantId, String permission) {
+        String sql = """
+                select g.id
+                from permission_grants g
+                join merchants m on m.id = g.merchant_id
+                where g.subject_type = :subject_type
+                  and g.subject_id = :subject_id
+                  and g.permission = :permission
+                  and g.merchant_id = :merchant_id
+                  and m.tenant_id = :tenant_id
+                  and (g.expires_at is null or g.expires_at > now())
+                """;
+        return !jdbc.forTenant(tenant, sql, Json.map(
+                "subject_type", subjectType, "subject_id", subjectId,
+                "permission", permission, "merchant_id", merchantId)).isEmpty();
+    }
+
+    /**
+     * Tenant/platform-scoped grant ({@code merchant_id is null}). The subject row must live in the
+     * caller's tenant — that join is the tenant predicate here, since grants themselves are
+     * tenant-free by schema (see V1: {@code permission_grants} has no tenant_id column).
+     */
+    public boolean hasTenantGrant(TenantContext tenant, String subjectType, UUID subjectId, String permission) {
+        String sql = """
+                select g.id
+                from permission_grants g
+                join users u on u.id = g.subject_id
+                where u.tenant_id = :tenant_id
+                  and g.subject_type = :subject_type
+                  and g.subject_id = :subject_id
+                  and g.permission = :permission
+                  and g.merchant_id is null
+                  and (g.expires_at is null or g.expires_at > now())
+                """;
+        return !jdbc.forTenant(tenant, sql, Json.map(
+                "subject_type", subjectType, "subject_id", subjectId, "permission", permission)).isEmpty();
+    }
+
+    public boolean has(TenantContext tenant, String subjectType, UUID subjectId, UUID merchantId, String permission) {
+        if (subjectId == null || permission == null) {
+            return false;
+        }
+        return merchantId == null
+                ? hasTenantGrant(tenant, subjectType, subjectId, permission)
+                : hasMerchantGrant(tenant, subjectType, subjectId, merchantId, permission);
+    }
+
+    public List<String> grantedPermissions(TenantContext tenant, String subjectType, UUID subjectId, UUID merchantId) {
+        String sql = merchantId == null ? """
+                select g.permission from permission_grants g
+                join users u on u.id = g.subject_id
+                where u.tenant_id = :tenant_id
+                  and g.subject_type = :subject_type and g.subject_id = :subject_id and g.merchant_id is null
+                  and (g.expires_at is null or g.expires_at > now())
+                order by g.permission
+                """ : """
+                select g.permission from permission_grants g
+                join merchants m on m.id = g.merchant_id
+                where g.subject_type = :subject_type and g.subject_id = :subject_id and g.merchant_id = :merchant_id
+                  and m.tenant_id = :tenant_id
+                  and (g.expires_at is null or g.expires_at > now())
+                order by g.permission
+                """;
+        Map<String, Object> params = merchantId == null
+                ? Json.map("subject_type", subjectType, "subject_id", subjectId)
+                : Json.map("subject_type", subjectType, "subject_id", subjectId, "merchant_id", merchantId);
+        return jdbc.forTenant(tenant, sql, params).stream().map(r -> Json.str(r, "permission")).toList();
+    }
+
+    public void grant(TenantContext tenant, String subjectType, UUID subjectId, UUID merchantId,
+                      String permission, UUID grantedBy) {
+        // permission_grants has no tenant column; merchant-scoped rows are anchored through merchants,
+        // tenant-scoped rows are written with the tenant implicit in the caller's TenantContext.
+        if (merchantId == null) {
+            jdbc.crossTenantUpdate("""
+                    insert into permission_grants (subject_type, subject_id, merchant_id, permission, granted_by)
+                    values (:subject_type, :subject_id, null, :permission, :granted_by)
+                    on conflict (subject_type, subject_id, merchant_id, permission) do nothing
+                    """, Json.map("subject_type", subjectType, "subject_id", subjectId,
+                    "permission", permission, "granted_by", grantedBy));
+            return;
+        }
+        if (!hasMerchantGrant(tenant, "user", subjectId, merchantId, "admin_members") && grantedBy != null
+                && !grantedBy.equals(subjectId)) {
+            // Guard rail: granting inside a merchant requires admin_members unless it is the self-seeding
+            // owner path (grantedBy == subjectId) performed at business creation.
+            throw ApiException.forbidden("Granting workspace permissions requires admin_members",
+                    Json.map("permission", "admin_members"));
+        }
+        jdbc.crossTenantUpdate("""
+                insert into permission_grants (subject_type, subject_id, merchant_id, permission, granted_by)
+                values (:subject_type, :subject_id, :merchant_id, :permission, :granted_by)
+                on conflict (subject_type, subject_id, merchant_id, permission) do nothing
+                """, Json.map("subject_type", subjectType, "subject_id", subjectId, "merchant_id", merchantId,
+                "permission", permission, "granted_by", grantedBy));
+    }
+
+    public int revoke(TenantContext tenant, String subjectType, UUID subjectId, UUID merchantId, String permission) {
+        String sql = """
+                delete from permission_grants g
+                using merchants m
+                where g.merchant_id = m.id
+                  and m.tenant_id = :tenant_id
+                  and g.subject_type = :subject_type
+                  and g.subject_id = :subject_id
+                  and g.merchant_id = :merchant_id
+                  and g.permission = :permission
+                """;
+        return jdbc.updateForTenant(tenant, sql, Json.map("subject_type", subjectType, "subject_id", subjectId,
+                "merchant_id", merchantId, "permission", permission));
+    }
+}

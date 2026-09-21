@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.dev/schemas/error_envelope.json",
+  "title": "ApiErrorEnvelope",
+  "description": "The error body sent on every non-2xx response — docs/API_CONTRACT.md §1 「Error envelope (always)」: `{ \"error\": { \"code\": …, \"message\": …, \"details\": {}, \"request_id\": … } }`. `error` is the only top-level key. Spec §104 reliability, §105 AI failure handling.",
+  "type": "object",
+  "additionalProperties": false,
+  "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+  "required": ["error"],
+  "properties": {
+    "error": { "$ref": "#/$defs/ApiError" }
+  },
+  "$defs": {
+    "ErrorCode": {
+      "type": "string",
+      "title": "ErrorCode",
+      "description": "API_CONTRACT §1's enumerated codes, each with a fixed HTTP status (`ERROR_CODE_STATUS` in `src/enums.ts`). NOTE: §1's *example* uses `merchant_not_found`, which is not one of the eight; the enumeration is treated as the closed domain and the resource is carried in `details` (CONTRACT NOTES 9 in `src/enums.ts`).",
+      "enum": [
+        "validation_error",
+        "unauthorized",
+        "forbidden",
+        "not_found",
+        "conflict",
+        "rate_limited",
+        "ai_unavailable",
+        "internal"
+      ]
+    },
+    "ApiError": {
+      "type": "object",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["code", "message", "details", "request_id"],
+      "properties": {
+        "code": { "$ref": "#/$defs/ErrorCode" },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "Localised to the caller's locale (AGENT_CONTRACT §12). Never a stack trace, never chain-of-thought (spec §116)."
+        },
+        "details": {
+          "$ref": "https://nexus.dev/schemas/common.json#/$defs/JsonObject",
+          "description": "Structured context: `resource`/`reason` for `not_found`, `http_status`, `retry_after` for `rate_limited` (API §1 `Retry-After`), `stage`/`fallback`/`retryable` for `ai_unavailable` (the failure ladder)."
+        },
+        "request_id": {
+          "type": ["string", "null"],
+          "maxLength": 128,
+          "description": "Echoed `X-Request-Id` — API_CONTRACT §1 「attached to logs, agent_runs, audit_logs」."
+        },
+        "field_errors": {
+          "type": "object",
+          "propertyNames": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "additionalProperties": { "type": "string", "maxLength": 512 },
+          "description": "Per-path validation messages when `code` is `validation_error`. Paths are dotted (`intent.budget.max`), so this map is exempt from the snake_case key rule."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "code": { "const": "rate_limited" } }, "required": ["code"] },
+          "then": { "properties": { "details": { "required": ["retry_after", "remaining"] } } }
+        },
+        {
+          "if": { "properties": { "code": { "const": "ai_unavailable" } }, "required": ["code"] },
+          "then": { "properties": { "details": { "required": ["stage", "fallback", "retryable"] } } }
+        },
+        {
+          "if": { "properties": { "code": { "const": "not_found" } }, "required": ["code"] },
+          "then": { "properties": { "details": { "required": ["resource"] } } }
+        }
+      ]
+    }
+  }
+}

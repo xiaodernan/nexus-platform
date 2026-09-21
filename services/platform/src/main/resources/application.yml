@@ -1,0 +1,93 @@
+# NEXUS platform service — production-shaped defaults. Everything sensitive comes from env vars.
+# The `dev` profile (application-dev.yml) supplies localhost credentials; nothing here holds a secret.
+server:
+  port: ${NEXUS_PORT:8080}
+  forward-headers-strategy: framework
+  error:
+    whitelabel:
+      enabled: false
+
+spring:
+  application:
+    name: nexus-platform
+  datasource:
+    # DECISIONS D9 pins the local container ports (5433/6380) because 5432/6379 are occupied on this
+    # machine by unrelated stacks. Variable names match the root `.env` written by infra.
+    url: ${NEXUS_PLATFORM_DB_URL:${NEXUS_DB_URL:jdbc:postgresql://127.0.0.1:5433/nexus}}
+    username: ${NEXUS_PLATFORM_DB_USERNAME:${NEXUS_DB_USER:nexus_app}}
+    password: ${NEXUS_PLATFORM_DB_PASSWORD:${NEXUS_DB_PASSWORD:}}
+    hikari:
+      maximum-pool-size: ${NEXUS_DB_POOL_MAX:20}
+      connection-timeout: 5000
+  flyway:
+    # V1__init.sql + V2__integrity.sql are copied out of ../../infra/db/migrations into db/migration by
+    # the build (see README "Migrations") so this service always ships the infra-owned schema verbatim.
+    locations: classpath:db/migration
+    # The infra role split (00_roles.sql) means an already-provisioned database may carry the V1/V2
+    # objects without a history table: baseline *at* V2 instead of re-running them over live data.
+    baseline-on-migrate: true
+    baseline-version: ${NEXUS_FLYWAY_BASELINE_VERSION:2}
+    baseline-description: infra-owned V1/V2 applied by scripts/db_apply_migrations.sh
+    clean-disabled: true
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: always
+    serialization:
+      write-dates-as-timestamps: false
+      write-date-timestamps-as-nanoseconds: false
+    time-zone: UTC
+  mvc:
+    problemdetails:
+      enabled: false
+
+logging:
+  level:
+    root: ${NEXUS_LOG_LEVEL:INFO}
+    com.nexus: ${NEXUS_LOG_LEVEL:INFO}
+
+nexus:
+  tenant:
+    default-slug: ${NEXUS_TENANT:hong-kong}
+    resolve-from-hostname: true
+  jwt:
+    # Required outside the dev profile — JwtService refuses to boot with a blank secret there.
+    secret: ${NEXUS_JWT_SECRET:}
+    issuer: nexus-platform
+    access-ttl-seconds: ${NEXUS_JWT_ACCESS_TTL:900}      # 15m  (API_CONTRACT §3)
+    refresh-ttl-seconds: ${NEXUS_JWT_REFRESH_TTL:2592000} # 30d (rotating)
+    cookie-name: nexus_session
+  redis:
+    url: ${NEXUS_REDIS_URL:redis://localhost:6379}
+    enabled: ${NEXUS_REDIS_ENABLED:true}
+    timeout-ms: 400
+  ratelimit:
+    enabled: ${NEXUS_RATELIMIT_ENABLED:true}
+    auth-requests: ${NEXUS_RL_AUTH:10}
+    auth-window-seconds: ${NEXUS_RL_AUTH_WINDOW:300}
+    ai-requests: ${NEXUS_RL_AI:20}
+    ai-window-seconds: ${NEXUS_RL_AI_WINDOW:60}
+    write-requests: ${NEXUS_RL_WRITE:60}
+    write-window-seconds: ${NEXUS_RL_WRITE_WINDOW:60}
+  pagination:
+    default-limit: 20
+    max-limit: 100
+  ai:
+    base-url: ${NEXUS_AI_BASE_URL:http://localhost:8000}
+    timeout-ms: ${NEXUS_AI_TIMEOUT:8000}
+  demo:
+    # Demo login (§87) and demo payment provider. Always clearly labelled; never pretends to be real.
+    login-enabled: ${NEXUS_DEMO_LOGIN:true}
+  imports:
+    # heuristic | http  (MerchantImportPort implementation, see README)
+    mode: ${NEXUS_IMPORT_MODE:heuristic}
+  idempotency:
+    ttl-seconds: ${NEXUS_IDEMPOTENCY_TTL:86400}
+  deletion:
+    # §106 — account deletion is queued for the retention job, not an instant hard delete
+    grace-days: ${NEXUS_DELETION_GRACE_DAYS:30}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui

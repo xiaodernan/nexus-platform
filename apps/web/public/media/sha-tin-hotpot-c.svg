@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480" role="presentation">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1" gradientTransform="rotate(63 0.5 0.5)">
+      <stop offset="0%" stop-color="hsl(350 46% 96%)"/>
+      <stop offset="55%" stop-color="hsl(14 42% 88%)"/>
+      <stop offset="100%" stop-color="hsl(50 38% 80%)"/>
+    </linearGradient>
+    <pattern id="p" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(31.5)">
+      <circle cx="2" cy="2" r="1.1" fill="hsl(350 30% 30%)" fill-opacity="0.14"/>
+    </pattern>
+  </defs>
+  <rect width="640" height="480" fill="url(#g)"/>
+  <rect width="640" height="480" fill="url(#p)"/>
+  <g opacity="0.9">
+    <circle cx="467.2" cy="144" r="115.19999999999999" fill="none" stroke="hsl(350 55% 26%)" stroke-opacity="0.28" stroke-width="1.5"/>
+    <circle cx="467.2" cy="144" r="62.400000000000006" fill="hsl(350 55% 26%)" fill-opacity="0.08"/>
+  </g>
+  <text x="320" y="246" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, PingFang HK, Microsoft JhengHei, sans-serif" font-size="77" font-weight="600" fill="hsl(350 45% 22%)" fill-opacity="0.55">围炉</text>
+  <g>
+    <rect x="522" y="446" width="106" height="20" rx="10" fill="hsl(350 45% 18%)" fill-opacity="0.5"/>
+    <text x="575" y="460" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10" letter-spacing="1.4" fill="#ffffff" fill-opacity="0.92">SYNTHETIC DEMO</text>
+  </g>
+</svg>

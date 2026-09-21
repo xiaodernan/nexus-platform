@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.dev/schemas/event.json",
+  "title": "Event",
+  "description": "The single event shape — docs/AGENT_CONTRACT.md §10 (「single shape, one place」, verbatim field order preserved), written to infra/db/V1__init.sql `events` (lines 762-781) by the `record_event` tool (AGENT §3) and `POST /api/v1/events`. Spec §58 event tracking, §122 real-time events, §162 north star.",
+  "type": "object",
+  "additionalProperties": false,
+  "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+  "required": [
+    "name",
+    "occurred_at",
+    "tenant_id",
+    "actor_type",
+    "actor_id",
+    "subject_type",
+    "subject_id",
+    "session_id",
+    "conversation_id",
+    "properties",
+    "context"
+  ],
+  "properties": {
+    "name": { "$ref": "#/$defs/EventName" },
+    "occurred_at": {
+      "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time",
+      "description": "AGENT_CONTRACT §10 `occurred_at`; V1 `events.occurred_at timestamptz`."
+    },
+    "tenant_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+    "actor_type": { "$ref": "#/$defs/ActorType" },
+    "actor_id": {
+      "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null",
+      "description": "AGENT_CONTRACT §10 `\"actor_id\": \"uuid|null\"` — null for anonymous traffic. Rule `event_actor_identity` closes the pairing."
+    },
+    "subject_type": {
+      "anyOf": [{ "$ref": "#/$defs/EventSubjectType" }, { "type": "null" }],
+      "description": "AGENT_CONTRACT §10 lists four values but its own required name list needs campaign/order/reservation/agent_run subjects; the superset is used (CONTRACT NOTES 2 in `src/enums.ts`)."
+    },
+    "subject_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+    "session_id": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Anonymous/browser session id — V1 `events.session_id`. Required for `actor_type: anonymous`."
+    },
+    "conversation_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+    "properties": {
+      "$ref": "https://nexus.dev/schemas/common.json#/$defs/JsonObject",
+      "description": "AGENT_CONTRACT §10 `properties: {}` — event-specific, snake_case keys (API_CONTRACT §1). Rules add the required members per event name."
+    },
+    "context": { "$ref": "#/$defs/EventContext" },
+    "event_id": {
+      "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid",
+      "description": "AGENT_CONTRACT §10: 「`event_id` (uuid) is the dedupe key — producers must retry safely」. Optional here because V1 generates one when absent (`event_id uuid UNIQUE DEFAULT gen_random_uuid()`); ingest callers SHOULD always send it."
+    },
+    "id": {
+      "type": "string",
+      "description": "V1 `events.id bigserial` — read-back only, never accepted from a producer."
+    },
+    "ingest_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time" },
+    "request_id": { "type": ["string", "null"], "maxLength": 128 },
+    "degraded": {
+      "type": "boolean",
+      "description": "AGENT_CONTRACT §10 north-star derivation ignores `degraded: true`; spec §105/§162."
+    }
+  },
+  "$defs": {
+    "EventName": {
+      "type": "string",
+      "title": "EventName",
+      "description": "AGENT_CONTRACT §10 「Required names」 — all 17, verbatim. V1 line 768 comments only 13 (and says `cart` where AGENT §10 says `cart_add`); the contract file wins (CONTRACT NOTES 1 in `src/enums.ts`).",
+      "enum": [
+        "search",
+        "view",
+        "click",
+        "favorite",
+        "compare",
+        "reserve",
+        "cart_add",
+        "checkout",
+        "purchase",
+        "cancel",
+        "review",
+        "share",
+        "feedback",
+        "ai_answer",
+        "handoff",
+        "campaign_publish",
+        "agent_run"
+      ]
+    },
+    "NorthStarConversionEvent": {
+      "type": "string",
+      "title": "NorthStarConversionEvent",
+      "description": "The conversion subset of `EventName` — AGENT_CONTRACT §10 / V1 view `v_north_star` (line 1024) / spec §162.",
+      "enum": ["reserve", "purchase", "favorite", "share"]
+    },
+    "ActorType": {
+      "type": "string",
+      "title": "ActorType",
+      "description": "AGENT_CONTRACT §10 `actor_type` (V1 `events.actor_type`).",
+      "enum": ["user", "merchant_user", "agent", "system", "anonymous"]
+    },
+    "EventSubjectType": {
+      "type": "string",
+      "title": "EventSubjectType",
+      "description": "AGENT_CONTRACT §10 `subject_type` superset — see the file header. Always paired with `subject_id` (rule `event_subject_pairing`).",
+      "enum": [
+        "merchant",
+        "offering",
+        "search_result",
+        "conversation",
+        "recommendation_set",
+        "guide",
+        "collection",
+        "campaign",
+        "coupon",
+        "order",
+        "reservation",
+        "review",
+        "agent_run"
+      ]
+    },
+    "GeoPrecision": {
+      "type": "string",
+      "title": "GeoPrecision",
+      "description": "AGENT_CONTRACT §10 `context.geo_precision`. Precise geo needs consent; the default for consumer traffic is `district` (spec §50/§112, AGENT §1 `location`).",
+      "enum": ["precise", "district", "area", "none"]
+    },
+    "DeviceClass": {
+      "type": "string",
+      "title": "DeviceClass",
+      "description": "AGENT_CONTRACT §10 `context.device`.",
+      "enum": ["mobile", "desktop", "tablet", "watch", "unknown"]
+    },
+    "EventContext": {
+      "type": "object",
+      "title": "EventContext",
+      "description": "AGENT_CONTRACT §10 `context` = `{locale, device, geo_precision}` plus the open envelope V1 `events.context jsonb` documents (coarse geo, utm).",
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": [],
+      "properties": {
+        "locale": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/SupportedLocale" },
+        "device": { "$ref": "#/$defs/DeviceClass" },
+        "geo_precision": { "$ref": "#/$defs/GeoPrecision" },
+        "district": { "type": ["string", "null"], "maxLength": 128 },
+        "utm": {
+          "type": "object",
+          "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+          "required": [],
+          "properties": {
+            "source": { "type": ["string", "null"] },
+            "medium": { "type": ["string", "null"] },
+            "campaign": { "type": ["string", "null"] },
+            "term": { "type": ["string", "null"] },
+            "content": { "type": ["string", "null"] }
+          }
+        },
+        "referral_code": { "type": ["string", "null"], "maxLength": 64 },
+        "app_version": { "type": ["string", "null"], "maxLength": 64 },
+        "user_agent": { "type": ["string", "null"], "maxLength": 512 }
+      }
+    },
+    "SearchEventProperties": {
+      "type": "object",
+      "title": "SearchEventProperties",
+      "description": "spec §58 records 「查询词 + 结果数」 for every search, so a `search` event's properties must carry both. Enforced as rule `event_search_properties`.",
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["query", "result_count"],
+      "properties": {
+        "query": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "result_count": { "type": "integer", "minimum": 0 },
+        "strategy": { "type": "string", "maxLength": 32 },
+        "took_ms": { "type": "number", "minimum": 0 },
+        "degraded": { "type": "boolean" }
+      }
+    }
+  }
+}

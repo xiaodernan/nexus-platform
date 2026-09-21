@@ -1,0 +1,55 @@
+# Market rollout config (§4, §95, §128). Data, not code: adding a market must not require a release.
+# Phase 1 enables exactly one market; the rest are declared so the tenancy model is exercised honestly.
+version: 1
+default_market: hong-kong
+
+markets:
+  hong-kong:
+    enabled: true
+    tenant_slug: hong-kong
+    country_code: HK
+    regions: [HKI, KLN, NT]
+    districts_phase1:            # §94 cold start: one dense vertical + one dense geography
+      - Sha Tin
+      - Tai Wai
+      - Ma On Shan
+      - Tsim Sha Tsui
+      - Mong Kok
+      - Kwun Tong
+      - Kowloon Bay
+      - Central
+      - Wan Chai
+      - Causeway Bay
+    locales: [zh-HK, en, zh-CN]
+    default_locale: zh-HK
+    currency: HKD
+    timezone: Asia/Hong_Kong
+    categories_enabled: [restaurant, cafe, bar, fitness, beauty, activity, hotel, experience, shopping, service]
+    payment_providers: [demo]           # §42: no card data stored; add stripe|alipayhk|payme when contracted
+    compliance:                          # §128 — jurisdiction switches, never hardcoded in features
+      ai_disclosure_required: true
+      review_transparency_required: true
+      sponsored_label_required: true
+      consumer_data_export_required: true
+      age_restricted_categories: [bar]
+    map:
+      provider: none                     # no tiles without a key; SVG scatter only (see CONSUMER.md)
+      mtr_reference_data: true
+
+  shenzhen:
+    enabled: false
+    country_code: CN
+    locales: [zh-CN, en]
+    currency: CNY
+    timezone: Asia/Shanghai
+    blocked_on: [payment_contract, data_residency_review, business_registration_rules]
+
+  singapore:
+    enabled: false
+    country_code: SG
+    locales: [en, zh-CN]
+    currency: SGD
+    timezone: Asia/Singapore
+    blocked_on: [payment_contract, merchant_acquisition]
+
+rollout_order: [hong-kong, shenzhen, guangzhou, greater-bay-area, singapore, tokyo, seoul]

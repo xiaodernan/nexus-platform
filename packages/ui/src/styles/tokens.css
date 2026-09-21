@@ -1,0 +1,284 @@
+/*
+ * NEXUS design tokens (spec §78 UI Design System, §79 Premium AI-native Commerce).
+ *
+ * One accent system (cobalt) + one neutral "ink" ramp, in light and dark.
+ * Semantic tokens are CSS custom properties so components never hardcode hex values,
+ * and a theme switch is a single `class` change on <html> (no re-render / no FOUC flash
+ * when the inline script in app/layout.tsx applies the stored theme before paint).
+ *
+ * Contrast: every text/background pair below is checked to WCAG 2.1 AA
+ * (>= 4.5:1 body text, >= 3:1 large text and non-text/UI boundaries).
+ * See packages/ui/README.md for the measured ratios.
+ *
+ * Type scale is modular (~1.2, "perfect fourth") tuned for CJK readability:
+ * generous line-height, slightly larger base size than typical Latin-first systems.
+ */
+
+@layer nexus-tokens {
+  :root {
+    /* ---------------------------------------------------------------- accent
+       Cobalt. The only saturated hue in the product. Used for: primary action,
+       links, focus, AI attribution. Never decorative fill. */
+    --nexus-accent: #2547f4;
+    --nexus-accent-hover: #1c39d6;
+    --nexus-accent-active: #1730b8;
+    --nexus-accent-ink: #ffffff; /* text on --nexus-accent — 6.4:1 */
+    --nexus-accent-soft: #eef1fe; /* tinted backgrounds */
+    --nexus-accent-soft-ink: #1c39d6;
+    --nexus-accent-line: #c3ccfb;
+    --nexus-accent-ring: rgba(37, 71, 244, 0.35);
+
+    /* AI-attribution gradient: reserved for "this came from the model" moments
+       (summary panel, stage indicator). Never used on organic/sponsored chrome. */
+    --nexus-ai-gradient: linear-gradient(135deg, #2547f4 0%, #6b4cf6 60%, #9a5cf0 100%);
+    --nexus-ai-ink: #4b3bd8;
+
+    /* ---------------------------------------------------------------- surfaces */
+    --nexus-canvas: #f6f7f9;
+    --nexus-surface: #ffffff;
+    --nexus-surface-raised: #ffffff;
+    --nexus-surface-sunken: #eef0f5;
+    --nexus-surface-muted: #f2f4f8;
+    --nexus-surface-overlay: rgba(17, 20, 30, 0.44);
+    --nexus-surface-inverse: #0c0f18;
+
+    /* ---------------------------------------------------------------- ink */
+    --nexus-ink-strong: #0b0d14; /* 19.1:1 on surface */
+    --nexus-ink: #1b2030; /* 14.4:1 */
+    --nexus-ink-muted: #525a70; /* 7.2:1 */
+    --nexus-ink-faint: #6a7288; /* 4.8:1 */
+    --nexus-ink-disabled: #9aa2b4; /* large text / icons only */
+    --nexus-ink-inverse: #f5f7fc;
+
+    /* ---------------------------------------------------------------- lines */
+    --nexus-border: #e3e6ee;
+    --nexus-border-strong: #ccd2e0;
+    --nexus-border-inverse: rgba(255, 255, 255, 0.14);
+
+    /* ---------------------------------------------------------------- semantic */
+    --nexus-positive: #0f7a53;
+    --nexus-positive-soft: #e6f5ee;
+    --nexus-warning: #8a5a00;
+    --nexus-warning-soft: #fdf3e2;
+    --nexus-danger: #a51f2e;
+    --nexus-danger-soft: #fdedee;
+    /* Sponsored / demo chrome must be legible but never compete with accent. */
+    --nexus-neutral-chip: #eceff5;
+    --nexus-neutral-chip-ink: #3c4356;
+
+    /* ---------------------------------------------------------------- radius */
+    --nexus-radius-xs: 6px;
+    --nexus-radius-sm: 8px;
+    --nexus-radius-md: 12px;
+    --nexus-radius-lg: 16px;
+    --nexus-radius-xl: 22px;
+    --nexus-radius-2xl: 28px;
+    --nexus-radius-full: 999px;
+
+    /* ---------------------------------------------------------------- elevation
+       Two-layer shadows (contact + ambient) — reads as depth, not as a grey blur. */
+    --nexus-shadow-xs: 0 1px 2px rgba(12, 15, 24, 0.06);
+    --nexus-shadow-sm: 0 1px 2px rgba(12, 15, 24, 0.06), 0 2px 6px -2px rgba(12, 15, 24, 0.08);
+    --nexus-shadow-md: 0 2px 4px rgba(12, 15, 24, 0.04), 0 8px 24px -8px rgba(12, 15, 24, 0.14);
+    --nexus-shadow-lg: 0 4px 8px rgba(12, 15, 24, 0.05), 0 18px 48px -12px rgba(12, 15, 24, 0.2);
+    --nexus-shadow-xl: 0 8px 16px rgba(12, 15, 24, 0.06), 0 32px 80px -24px rgba(12, 15, 24, 0.28);
+    --nexus-shadow-focus: 0 0 0 3px var(--nexus-accent-ring);
+
+    /* ---------------------------------------------------------------- motion */
+    --nexus-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --nexus-ease-in-out: cubic-bezier(0.62, 0, 0.28, 1);
+    --nexus-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --nexus-duration-quick: 120ms;
+    --nexus-duration-base: 200ms;
+    --nexus-duration-slow: 380ms;
+    --nexus-duration-reveal: 640ms;
+
+    /* ---------------------------------------------------------------- type */
+    --nexus-font-sans: var(--nexus-font-body, "InterVariable"), "Inter", -apple-system,
+      BlinkMacSystemFont, "Segoe UI", "PingFang HK", "PingFang SC", "Hiragino Sans",
+      "Microsoft JhengHei", "Noto Sans CJK TC", "Noto Sans TC", sans-serif;
+    --nexus-font-display: var(--nexus-font-heading, "InterVariable"), "Inter", -apple-system,
+      BlinkMacSystemFont, "Segoe UI", "PingFang HK", "PingFang SC", "Hiragino Sans",
+      "Microsoft JhengHei", "Noto Sans CJK TC", "Noto Sans TC", sans-serif;
+    --nexus-font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+    /* tracking: negative for large Latin display sizes, neutral for CJK body */
+    --nexus-tracking-display: -0.028em;
+    --nexus-tracking-tight: -0.014em;
+    --nexus-tracking-normal: 0em;
+    --nexus-tracking-wide: 0.06em;
+  }
+
+  .dark {
+    --nexus-accent: #7b8cff;
+    --nexus-accent-hover: #93a1ff;
+    --nexus-accent-active: #a7b3ff;
+    --nexus-accent-ink: #080b14; /* text on accent — 6.5:1 */
+    --nexus-accent-soft: #1b2050;
+    --nexus-accent-soft-ink: #c3cbff;
+    --nexus-accent-line: #2f3878;
+    --nexus-accent-ring: rgba(123, 140, 255, 0.4);
+
+    --nexus-ai-gradient: linear-gradient(135deg, #7b8cff 0%, #a78bfa 55%, #d8a3f5 100%);
+    --nexus-ai-ink: #b6a6ff;
+
+    --nexus-canvas: #080a11;
+    --nexus-surface: #101320;
+    --nexus-surface-raised: #161a29;
+    --nexus-surface-sunken: #0b0e17;
+    --nexus-surface-muted: #171b2a;
+    --nexus-surface-overlay: rgba(3, 4, 10, 0.66);
+    --nexus-surface-inverse: #f5f7fc;
+
+    --nexus-ink-strong: #f6f8fd; /* 18.9:1 on surface */
+    --nexus-ink: #e6eaf4; /* 14.2:1 */
+    --nexus-ink-muted: #a7afc3; /* 7.9:1 */
+    --nexus-ink-faint: #8b93a8; /* 5.2:1 */
+    --nexus-ink-disabled: #5f687e;
+    --nexus-ink-inverse: #0c0f18;
+
+    --nexus-border: #232838;
+    --nexus-border-strong: #333a4f;
+    --nexus-border-inverse: rgba(12, 15, 24, 0.16);
+
+    --nexus-positive: #4bd6a0;
+    --nexus-positive-soft: #10281f;
+    --nexus-warning: #f0b95a;
+    --nexus-warning-soft: #2a2113;
+    --nexus-danger: #ff8b96;
+    --nexus-danger-soft: #2b1417;
+    --nexus-neutral-chip: #1b2032;
+    --nexus-neutral-chip-ink: #c3cadb;
+
+    --nexus-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --nexus-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px -2px rgba(0, 0, 0, 0.6);
+    --nexus-shadow-md: 0 2px 4px rgba(0, 0, 0, 0.4), 0 10px 28px -10px rgba(0, 0, 0, 0.8);
+    --nexus-shadow-lg: 0 4px 10px rgba(0, 0, 0, 0.45), 0 20px 56px -14px rgba(0, 0, 0, 0.85);
+    --nexus-shadow-xl: 0 10px 20px rgba(0, 0, 0, 0.5), 0 36px 90px -26px rgba(0, 0, 0, 0.9);
+  }
+}
+
+/* -------------------------------------------------------------------------- base
+ * Kept minimal: components own their own styles, this file only sets the canvas,
+ * font smoothing, focus visibility and reduced-motion discipline.
+ */
+*,
+*::before,
+*::after {
+  border-color: var(--nexus-border);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background-color: var(--nexus-canvas);
+  color: var(--nexus-ink);
+  font-family: var(--nexus-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01";
+  font-variant-numeric: tabular-nums;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--nexus-accent);
+  color: var(--nexus-accent-ink);
+}
+
+/* Visible keyboard focus everywhere, invisible for mouse users (:focus-visible).
+   3px accent ring + 2px offset keeps contrast against both light and dark surfaces. */
+:focus-visible {
+  outline: 2px solid var(--nexus-accent);
+  outline-offset: 2px;
+  border-radius: var(--nexus-radius-xs);
+}
+
+/* Scrollbars: quiet, themed, still keyboard-accessible. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nexus-border-strong) transparent;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Utility used by the rail components on the homepage / search results. */
+.rail-scroll {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.rail-scroll > * {
+  scroll-snap-align: start;
+}
+
+@keyframes nexus-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+@keyframes nexus-pulse-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes nexus-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nexus-shimmer::after {
+    animation: none !important;
+  }
+  .nexus-pulse {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Screen-reader only, but keyboard-focusable helpers must not be hidden. */
+.nexus-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+.nexus-sr-only:focus,
+.nexus-sr-only:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}

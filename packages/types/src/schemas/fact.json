@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.dev/schemas/fact.json",
+  "title": "Fact",
+  "description": "The trust-layer primitive — docs/API_CONTRACT.md §2 `Fact` (verbatim example reproduced in `fixtures/fact/01_valid_api_example.json`), persisted in infra/db/V1__init.sql `facts` (lines 537-553), governed by docs/AGENT_CONTRACT.md §4 (「any number a user can see must resolve to a Fact」) and §5 (freshness TTLs). Spec §19.",
+  "type": "object",
+  "additionalProperties": false,
+  "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+  "required": [
+    "fact_id",
+    "subject_type",
+    "subject_id",
+    "attribute",
+    "value",
+    "source",
+    "confidence",
+    "observed_at",
+    "expires_at",
+    "stale"
+  ],
+  "properties": {
+    "fact_id": {
+      "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid",
+      "description": "API_CONTRACT §2 `fact_id`. V1 stores the same value in `facts.id` (line 538) — the platform layer maps `id -> fact_id` on serialisation (CONTRACT NOTES 7 in `src/enums.ts`)."
+    },
+    "subject_type": { "$ref": "#/$defs/FactSubjectType" },
+    "subject_id": {
+      "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid",
+      "description": "V1 `facts.subject_id` is NOT NULL: a fact is always about a row."
+    },
+    "merchant_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+    "attribute": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "V1 `facts.attribute` is free text, so the schema only pins the snake_case form; `FACT_ATTRIBUTE` in `src/enums.ts` is the recommended registry (`price`, `opening_hours`, `availability`, `capacity`, `rating`, `inventory`, …)."
+    },
+    "value": {
+      "description": "API_CONTRACT §2 `value`. For prices it is a `Money` object (the §2 example). Anything JSON-serialisable is storable (V1 `value jsonb`), which is why the branches are enumerated instead of `true`.",
+      "anyOf": [
+        { "$ref": "https://nexus.dev/schemas/common.json#/$defs/Money" },
+        { "type": "string", "maxLength": 8192 },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "array" },
+        { "$ref": "https://nexus.dev/schemas/common.json#/$defs/JsonObject" }
+      ]
+    },
+    "unit": { "type": ["string", "null"], "maxLength": 32 },
+    "currency": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/currency_code_or_null" },
+    "source": { "$ref": "#/$defs/FactSource" },
+    "source_uri": { "type": ["string", "null"], "maxLength": 2048 },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "V1 `numeric(4,3) DEFAULT 1.000`. AGENT_CONTRACT §4: never upgraded for presentation."
+    },
+    "observed_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time" },
+    "expires_at": {
+      "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null",
+      "description": "AGENT_CONTRACT §5 TTLs are enforced by the conformance rule `fact_within_ttl` against `FRESHNESS_TTL_SECONDS` in `src/fact.ts`."
+    },
+    "stale": { "type": "boolean" },
+    "created_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time" }
+  },
+  "$defs": {
+    "FactSource": {
+      "type": "string",
+      "title": "FactSource",
+      "description": "API_CONTRACT §2 comment (`merchant|imported|observed|third_party|inferred`) = V1 `facts.source` priority order, AGENT_CONTRACT §4 (merchant > imported > observed > third-party > inferred).",
+      "enum": ["merchant", "imported", "observed", "third_party", "inferred"]
+    },
+    "FactSubjectType": {
+      "type": "string",
+      "title": "FactSubjectType",
+      "description": "V1 `facts.subject_type` (line 540).",
+      "enum": ["merchant", "offering", "location", "review", "policy"]
+    },
+    "OpeningState": {
+      "type": "object",
+      "title": "OpeningState",
+      "description": "API_CONTRACT §2 'Opening state (computed, never guessed)'. Derived from V1 `business_hours` (weekday 0=Mon..6=Sun, `crosses_midnight`) and cached at most 24h (AGENT_CONTRACT §5).",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["is_open", "opens_at", "closes_at", "as_of", "source_fact_id"],
+      "properties": {
+        "is_open": { "type": ["boolean", "null"] },
+        "opens_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+        "closes_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+        "as_of": {
+          "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time",
+          "description": "When the verdict was computed — AGENT_CONTRACT §5 forbids a cached answer reading as live."
+        },
+        "source_fact_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+        "text": { "type": ["string", "null"], "maxLength": 128 },
+        "crosses_midnight": { "type": "boolean" }
+      }
+    },
+    "AvailabilityStatus": {
+      "type": "string",
+      "title": "AvailabilityStatus",
+      "description": "API_CONTRACT §2 `availability.status`. `unknown` is a legal answer; fabricating a slot is not (DECISIONS D6, spec §20).",
+      "enum": ["available", "limited", "unavailable", "unknown"]
+    },
+    "AvailabilityInfo": {
+      "type": "object",
+      "title": "AvailabilityInfo",
+      "description": "API_CONTRACT §2 `EntityCard.availability` = `{status, next_slot}`. Real-time only: AGENT_CONTRACT §5 sets TTL 0 and API_CONTRACT §4 marks the endpoint `no-store`.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["status", "next_slot"],
+      "properties": {
+        "status": { "$ref": "#/$defs/AvailabilityStatus" },
+        "next_slot": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+        "next_slot_ends_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+        "capacity_left": { "type": ["integer", "null"], "minimum": 0 },
+        "pool_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+        "slot_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+        "fact_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+        "as_of": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" }
+      }
+    },
+    "MatchExplanation": {
+      "type": "object",
+      "title": "MatchExplanation",
+      "description": "API_CONTRACT §2 `MatchExplanation` — 「every bullet must trace to a fact id」 (spec §18). The traceability check is the conformance rule `entity_card_explanation_traceable`.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["label", "text", "fact_id"],
+      "properties": {
+        "label": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$",
+          "maxLength": 64,
+          "description": "Machine label for styling/i18n, e.g. `within_budget`. `EXPLANATION_LABEL` in `src/enums.ts` is the recommended registry."
+        },
+        "text": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "value": { "type": ["string", "number", "null"] },
+        "weight": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "fact_id": {
+          "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null",
+          "description": "`null` is representable but not renderable: AGENT_CONTRACT §4's renderer contract drops the bullet."
+        }
+      }
+    },
+    "AiMatchInfo": {
+      "type": "object",
+      "title": "AiMatchInfo",
+      "description": "API_CONTRACT §2 `EntityCard.ai_match` = `{score, reasons[]}`. Sponsored placement is a separate flag and never feeds `score` (AGENT_CONTRACT §6, spec §67).",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["score", "reasons"],
+      "properties": {
+        "score": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "reasons": { "type": "array", "maxItems": 8, "items": { "$ref": "#/$defs/MatchExplanation" } },
+        "strategy": { "type": ["string", "null"], "maxLength": 64 },
+        "rank": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "FactRef": {
+      "type": "object",
+      "title": "FactRef",
+      "description": "Citation pointer embedded in recommendation items so a client can re-resolve a claim without shipping the whole fact.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["fact_id"],
+      "properties": {
+        "fact_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid" },
+        "attribute": { "type": "string", "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

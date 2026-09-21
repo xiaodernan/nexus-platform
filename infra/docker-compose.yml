@@ -1,0 +1,151 @@
+# NEXUS infrastructure — Phase 1
+#
+# Contract refs: docs/DECISIONS.md D1/D3, docs/API_CONTRACT.md §0 (role split + ports).
+#
+# TWO EXECUTION PATHS (deliberate):
+#   1. DEFAULT (works today):   docker compose -f infra/docker-compose.yml --env-file .env up -d postgres redis
+#      -> only the two containerized data stores start. platform / ai / web run as HOST PROCESSES in Phase 1
+#         (see docs/DEPLOYMENT.md §2) because their source trees are being authored concurrently and have no
+#         Dockerfile yet.
+#   2. FULL (needs Dockerfiles): docker compose --profile full up --build
+#      -> additionally builds services/platform/Dockerfile, apps/ai/Dockerfile, apps/web/Dockerfile.
+#         Those three files do NOT exist in the repository yet; until they do, `--profile full` fails at build
+#         with "failed to read dockerfile". Expected and tracked: docs/DEPLOYMENT.md §3 + §8,
+#         docs/ENVIRONMENT_REPORT.md §7.
+#
+# NOTE ON HOST PORTS: 5432 and 6379 are already occupied on this machine by unrelated projects
+# (careeros-postgres, specproof-redis), so NEXUS publishes on 127.0.0.1:5433 -> 5432 and
+# 127.0.0.1:6380 -> 6379. Override with NEXUS_PG_HOST_PORT / NEXUS_REDIS_HOST_PORT.
+# Inside the compose network the services are still postgres:5432 / redis:6379.
+
+name: nexus
+
+services:
+  # ------------------------------------------------------------------ data stores
+  postgres:
+    image: pgvector/pgvector:pg16            # PG16 + pgvector/pg_trgm/pgcrypto/btree_gist/citext
+    container_name: nexus-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${NEXUS_DB_NAME:-nexus}
+      POSTGRES_USER: postgres
+      # Local-dev-only superuser password; real deployments inject this from a secret store (DECISIONS D6, §131).
+      POSTGRES_PASSWORD: ${NEXUS_DB_ROOT_PASSWORD:-postgres}
+      # Consumed by /docker-entrypoint-initdb.d/00_roles.sql (psql \getenv) on FIRST init of the volume only.
+      NEXUS_DB_APP_PASSWORD: ${NEXUS_DB_APP_PASSWORD:-nexus_dev_app_only}
+      NEXUS_DB_AI_PASSWORD: ${NEXUS_DB_AI_PASSWORD:-nexus_dev_ai_only}
+      PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: Asia/Hong_Kong                      # AGENT_CONTRACT §12
+    ports:
+      - "127.0.0.1:${NEXUS_PG_HOST_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro   # roles + extensions, first boot only
+      - ./db/migrations:/migrations:ro                   # so `make db-migrate` can psql -f inside the box
+      - ./db/seed:/seed:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${NEXUS_DB_NAME:-nexus}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: nexus-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    environment:
+      TZ: Asia/Hong_Kong
+    ports:
+      - "127.0.0.1:${NEXUS_REDIS_HOST_PORT:-6380}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ------------------------------------------------------------------ app services (profile: full)
+  platform:
+    image: nexus/platform:dev
+    container_name: nexus-platform
+    profiles: ["full"]
+    build:
+      context: ../services/platform           # requires services/platform/Dockerfile
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    environment:
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: ${NEXUS_SPRING_PROFILE:-dev}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${NEXUS_DB_NAME:-nexus}
+      SPRING_DATASOURCE_USERNAME: nexus_app   # API_CONTRACT §0: read-write commerce role
+      SPRING_DATASOURCE_PASSWORD: ${NEXUS_DB_APP_PASSWORD:-nexus_dev_app_only}
+      SPRING_FLYWAY_URL: jdbc:postgresql://postgres:5432/${NEXUS_DB_NAME:-nexus}
+      SPRING_FLYWAY_USER: nexus_app
+      SPRING_FLYWAY_PASSWORD: ${NEXUS_DB_APP_PASSWORD:-nexus_dev_app_only}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:-}
+      NEXUS_DEFAULT_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}
+      NEXUS_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}
+    ports:
+      - "127.0.0.1:${NEXUS_PLATFORM_HOST_PORT:-8080}:8080"
+
+  ai:
+    image: nexus/ai:dev
+    container_name: nexus-ai
+    profiles: ["full"]
+    build:
+      context: ../apps/ai                     # requires apps/ai/Dockerfile
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    environment:
+      NEXUS_AI_PORT: "8000"
+      # API_CONTRACT §0: SELECT on commerce reads, RW only on RAG/eval/agent tables. No LLM -> DB path (D3/§52).
+      NEXUS_DB_URL: postgresql://nexus_ai:${NEXUS_DB_AI_PASSWORD:-nexus_dev_ai_only}@postgres:5432/${NEXUS_DB_NAME:-nexus}
+      NEXUS_DB_SCHEMA_SCRIPTS: /migrations
+      NEXUS_REDIS_URL: redis://redis:6379/0
+      NEXUS_LLM_PROVIDER: ${NEXUS_LLM_PROVIDER:-mock}   # D4: mock keeps the whole product offline
+      NEXUS_LLM_BASE_URL: ${NEXUS_LLM_BASE_URL:-}
+      NEXUS_LLM_API_KEY: ${NEXUS_LLM_API_KEY:-}
+      NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:-}
+      NEXUS_DEFAULT_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}
+      NEXUS_PLATFORM_BASE_URL: http://platform:8080
+      NEXUS_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}
+      TZ: Asia/Hong_Kong
+    ports:
+      - "127.0.0.1:${NEXUS_AI_HOST_PORT:-8000}:8000"
+    volumes:
+      - ./db/migrations:/migrations:ro        # read-only: eval fixtures/SQL snippets for the AI service
+
+  web:
+    image: nexus/web:dev
+    container_name: nexus-web
+    profiles: ["full"]
+    build:
+      context: ../apps/web                    # requires apps/web/Dockerfile
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on: [platform, ai]
+    environment:
+      NEXT_PUBLIC_PLATFORM_URL: ${NEXT_PUBLIC_PLATFORM_URL:-http://localhost:8080}
+      NEXT_PUBLIC_AI_URL: ${NEXT_PUBLIC_AI_URL:-http://localhost:8000}
+      PLATFORM_INTERNAL_URL: http://platform:8080
+      AI_INTERNAL_URL: http://ai:8000
+      NEXUS_DEFAULT_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}
+    ports:
+      - "127.0.0.1:${NEXUS_WEB_HOST_PORT:-3000}:3000"
+
+volumes:
+  pgdata:
+    name: nexus_pgdata
+  redisdata:
+    name: nexus_redisdata

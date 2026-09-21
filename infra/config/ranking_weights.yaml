@@ -1,0 +1,76 @@
+# NEXUS hybrid ranking weights — AGENT_CONTRACT.md §6 / spec §13,§17,§67,§113
+# These are DATA, not code: the version of this file is recorded in
+# recommendation_sets.strategy as `hybrid_v1`.
+#
+# score = w_relevance*rel + w_quality*quality + w_distance*dist + w_price*price_fit
+#       + w_availability*avail + w_personalization*pers + w_popularity*pop + w_freshness*fresh
+#
+# INVARIANTS (enforced by search/ranking.py, do not edit them away):
+#  * `organic` below is the ONLY scoring block. `sponsored` is applied AFTER organic
+#    scoring and can never change an organic score (§67). There is deliberately no
+#    `plan`, `spend` or `bid` key in the organic block, and the loader rejects one.
+#  * Weights must sum to 1.0 (tolerance 1e-6) or loading fails.
+
+version: hybrid_v1
+
+weights:
+  relevance: 0.34
+  quality: 0.16
+  distance: 0.16
+  price_fit: 0.10
+  availability: 0.08
+  personalization: 0.06
+  popularity: 0.06
+  freshness: 0.04
+
+# Candidates scoring below this relevance are dropped BEFORE scoring, never ranked
+# by popularity to hide irrelevance (§6).
+relevance_floor: 0.05
+
+quality:
+  # Bayesian smoothing: q = rating*n/(n+prior_weight) + tenant_mean*prior_weight/(n+prior_weight)
+  prior_weight: 15
+  min_rating_count_for_high_confidence: 50
+
+distance:
+  # exponential decay constant, metres. dist_score = exp(-meters / decay_m)
+  decay_m: 2500
+  # when the user gave no geo hint this component contributes its weight * neutral
+  neutral: 0.5
+  max_radius_m: 15000
+
+price:
+  # price_fit = exp(-|ln(price/budget)| / tolerance), 1.0 when inside budget
+  tolerance: 0.45
+  # used when the intent has no budget: rank by absolute HKD band, neutral at this point
+  neutral_band_hkd: 300
+  hard_cap_multiplier: 2.0
+
+availability:
+  weight_when_realtime_true: 1.0
+  weight_when_unknown: 0.35
+
+freshness:
+  # freshness = mean over attributes of remaining TTL fraction (§5 table)
+  unknown_ttl: 0.5
+
+personalization:
+  # feedback EMA (§6): slow-moving, needs at least min_signals before it counts
+  min_signals: 3
+  ema_alpha: 0.1
+  neutral: 0.5
+
+sponsored:
+  # applied AFTER organic scoring. Never displaces the organic best match (rank 0).
+  cap_in_top: 5
+  max_in_top: 1
+  label:
+    zh-HK: "廣告"
+    zh-CN: "广告"
+    en: "Sponsored"
+
+facets:
+  - district
+  - category
+  - price_band
+  - open_now

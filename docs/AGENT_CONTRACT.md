@@ -17,8 +17,8 @@ implementation must honour. Deviating silently is the fastest way to make NEXUS 
 | `review` | analyst | AI svc | `review_summaries` | invent quotes |
 | `fact_verification` | guard | AI svc | — | be skipped on user-facing claims |
 | `reservation` / `cart` / `checkout` | action | platform svc | domain tables | execute without explicit user action |
-| `customer_service` | conversational | AI svc | messages | answer below confidence floor → handoff |
-| `merchant_sales` | conversational | AI svc | messages, `leads` | act outside merchant grants |
+| `customer_service` | conversational | AI svc | via platform door (§7.0) | answer below confidence floor → handoff |
+| `merchant_sales` | conversational | AI svc | via platform door (§7.0), `leads` | act outside merchant grants |
 | `marketing` | generator | AI svc | `campaigns(draft)`, `coupons(draft)` | publish (§27) |
 | `seo` | generator | AI svc | `seo_pages(draft)` | publish pages below quality bar (§28-30) |
 | `analytics` | analyst | AI svc | — | expose other merchants' data |
