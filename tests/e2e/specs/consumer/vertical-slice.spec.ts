@@ -1,4 +1,4 @@
-import { test, expect } from '../lib/fixture.js';
+import { test, expect } from '../../lib/fixture.js';
 
 /**
  * Vertical slice = the MVP acceptance path (spec §168, §170, §138, §141).

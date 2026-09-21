@@ -52,7 +52,10 @@ export function unauditedNumbers(card: {
 
 export const test = base.extend<NexusFixtures>({
   platform: async ({}, use) => {
-    const ctx = await request.newContext({ baseURL: PLATFORM, extraHeaders: { 'X-Tenant': 'hong-kong' } });
+    const ctx = await request.newContext({
+      baseURL: PLATFORM,
+      extraHTTPHeaders: { 'X-Tenant': 'hong-kong' },
+    });
     await use(ctx);
     await ctx.dispose();
   },
@@ -66,8 +69,8 @@ export const test = base.extend<NexusFixtures>({
     const { access_token } = await demoLogin(ctx, 'consumer');
     await ctx.dispose();
     await page.addInitScript(
-      ([token]) => window.localStorage.setItem('nexus.dev_token', token),
-      [access_token],
+      (token: string) => window.localStorage.setItem('nexus.dev_token', token),
+      access_token,
     );
     await use(page);
   },

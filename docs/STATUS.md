@@ -30,15 +30,39 @@ Ports are fixed by `docs/DECISIONS.md` §D9 because this machine already runs un
 
 ## Reconciliation items (must close before M1 commit)
 
-1. **Embedding dimension.** Contract says `vector(1024)`; the seed agent reported switching the table to
-   384 for a local small-embedding model, while the current migration file still reads 1024. Pick one value,
-   make it a single source (`NEXUS_EMBED_DIM` + the column in V1), and align `HashingEmbedding` in the AI
-   service. A mismatch = every RAG insert fails at runtime, so this is P0.
-2. **Migration ownership.** Infra + platform both apply `V1__init.sql`; Flyway `locations` must point at
-   `infra/db/migrations` (or a copy step) with no second divergent copy of the DDL.
-3. **`nexus-seed-verify` container** must be removed once `nexus-postgres` is the shared DB.
-4. **Demo tenant UUID** must be the documented stable value in every stream (`00000000-0000-0000-0000-000000000001`).
-5. Each agent's self-declared "gaps" list gets appended here verbatim-then-verified as they report.
+1. **Embedding dimension — resolved at 1024, after two agent reports claimed otherwise.**
+   `infra/db/migrations/V1__init.sql:522` says `vector(1024)` and `pg_attribute.atttypmod` reports 1024 on both
+   `nexus` and `nexus_lead_check`. The seed stream twice reported having switched the shared file to 384; that edit
+   was never applied, and the AI stream switched `HashingEmbedding` to 384 on the belief that it was. **The contract
+   value 1024 stands**; the AI service must emit 1024-dim vectors or every RAG insert fails on a dim mismatch. The
+   `chunks_embedding_dim_guard` trigger is the tripwire that makes this loud instead of silent.
+   **Adjudicated by direct measurement, re-run twice:** `grep` shows `V1__init.sql:522 = vector(1024)` and
+   `pg_attribute.atttypmod = 1024` for `chunks.embedding`. The AI stream asked for a V3 `ALTER ... TYPE vector(384)`
+   on the belief that the file said 384 — that ALTER must **not** land; the AI service's `NEXUS_EMBEDDING_DIM`
+   default changes to 1024 instead. Lead action at integration: patch the config default, delete any V3 dim ALTER,
+   re-run the RAG eval.
+2. **Migration ownership** — resolved: single stream `infra/db/migrations/V*.sql` applied by
+   `scripts/db_apply_migrations.sh`; V1 + V2 verified applying cleanly (58 tables, `ON_ERROR_STOP=1`) on a
+   scratch database `nexus_lead_check`. A stray duplicate `infra/db/V1__init.sql` was deleted.
+3. **`nexus-seed-verify` container (55432)** — still needed by the seed stream for parallel verification;
+   remove at consolidation, not before.
+4. **Demo tenant UUID** `00000000-0000-0000-0000-000000000001` — now documented in `infra/db/seed/README.md`.
+5. **Contract drift reported by the AI stream (all real, resolved below as D10-D12).**
+
+## Lead rulings on contract gaps
+
+| # | Gap found in the field | Ruling |
+|---|---|---|
+| D10 | `availability` had two definitions: `resource_pools` vs `slots.capacity_left` (no pools are seeded) | `available ⇔ EXISTS(slot WHERE capacity_left > 0 AND starts_at = requested_time)`; `resource_pools` is a slot **template**, never a query predicate. AGENT_CONTRACT §4/§5 updated. |
+| D11 | `GET /api/v1/merchants/{id}/availability` had no owner and no response shape | Platform owns it as a projection over `availability_slots`, same semantics as D10, `Cache-Control: no-store`. |
+| D12 | AI stream needs `conversations`/`messages`/`handoffs` writes, which §0 assigned to the platform | `conversations`, `messages`, `handoffs` move to the AI service's write set (it is the only writer of agent-path dialogue). Platform keeps read access for dashboards and owns everything else. Two writers on one table is the actual bug. |
+| D13 | §7 named `/api/v1/ai/chat` + an `agent_run` SSE event that no table backs | Canonical stream is `POST /ai/v1/search/stream` (web BFF proxies at `/api/nexus/ai/stream`); stream events are exactly `intent \| status \| results \| summary \| error \| done` with `agent_run_id` inside `done`. `GET /ai/v1/conversations/{id}` returns the `agent_runs` timeline. |
+| D14 | MCP advertises `check_availability`, registry names it `get_availability` | `check_availability` is an MCP-adapter alias only; one implementation, declared in the tool manifest. UCP is served at host root `/.well-known/ucp` with per-merchant `.../ucp.json`. |
+| D15 | `GET /api/v1/merchant/businesses/{id}/overview` in §5 has no §9 data source | Analytics module owns it, backed by `v_merchant_funnel`. |
+| D16 | Role provisioning lived only in container init scripts (fresh Flyway DB had zero roles) | Infra moved role/grant statements into the migration stream + `db_apply_migrations.sh` step 2, keeping `infra/postgres/init/00_roles.sql` as the container path. |
+| D17 | Infra stream proposed a new `V4__identity.sql` for `users`/`user_identities`/`user_preferences`; seed stream proposed a V-migration converting `chunks.embedding` to `vector(384)` | **Both rejected.** `V1__init.sql` contains 56 tables including all three (verified by grep and by `information_schema` on the live `nexus` DB); the "11 tables" the infra stream saw was a `citext`-aborted partial apply, now fixed. And the live column is `vector(1024)`, matching the contract. A V4/V5 adding those objects would fail on `CREATE TABLE users` already exists, or silently fork a second definition — if either migration appears, delete it and re-run `scripts/db_apply_migrations.sh`. |
+| D18 | `GET /api/v1/merchants/{id}/availability` (§4) has no implementation anywhere: the platform stream built reservation booking + capacity decrement but not the public availability read; the AI stream implemented the equivalent as an internal search filter | Platform owns it (D11). Deferred to the integration pass with an explicit owner; the seed stream offered to write it — accepted only as a reference SQL implementation to review, not as a second service. |
+
 
 ## Definition of done for the vertical slice (§170)
 

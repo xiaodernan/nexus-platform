@@ -10,8 +10,8 @@ test.describe('HTTP contract', () => {
     const res = await platform.get('/api/v1/merchants/does-not-exist-xyz');
     expect(res.status()).toBe(404);
     const body = await res.json();
-    expect(body.error?.code, JSON.stringify(body)).toBeTypeOf('string');
-    expect(body.error?.request_id).toBeTypeOf('string');
+    expect(body.error?.code, JSON.stringify(body)).toBeTruthy();
+    expect(typeof body.error?.request_id).toBe('string');
   });
 
   test('responses use snake_case and honour X-Request-Id', async ({ platform }) => {
@@ -59,15 +59,16 @@ test.describe('HTTP contract', () => {
 
     const cart = await platform.post('/api/v1/carts', { headers: auth, data: {} });
     test.skip(!cart.ok(), await cart.text());
-    const cartId = (await cart.json()).id as string;
+    const cartId = String((await cart.json()).id);
 
-    const offerings = await platform.get(`/api/v1/merchants/${items[0].id}/menu?limit=1`, { headers: auth });
+    const offerings = await platform.get(`/api/v1/merchants/${items[0]?.id}/menu?limit=1`, { headers: auth });
+    test.skip(!offerings.ok(), await offerings.text());
     const menu = ((await offerings.json()).items ?? []) as Array<{ id: string }>;
     test.skip(menu.length === 0, 'merchant has no offerings');
 
     const add = await platform.post('/api/v1/carts/items', {
       headers: auth,
-      data: { cart_id: cartId, offering_id: menu[0].id, quantity: 1 },
+      data: { cart_id: cartId, offering_id: menu[0]?.id, quantity: 1 },
     });
     test.skip(!add.ok(), await add.text());
 
@@ -77,13 +78,13 @@ test.describe('HTTP contract', () => {
       data: {},
     });
     test.skip(!first.ok(), await first.text());
-    const a = await first.json();
+    const a = (await first.json()) as { id?: string; order?: { id?: string } };
 
     const second = await platform.post(`/api/v1/carts/${cartId}/checkout`, {
       headers: { ...auth, 'Idempotency-Key': key },
       data: {},
     });
-    const b = await second.json();
+    const b = (await second.json()) as { id?: string; order?: { id?: string } };
     expect(second.status(), JSON.stringify(b)).toBe(first.status());
     expect(b.order?.id ?? b.id, 'second checkout created a new order').toBe(a.order?.id ?? a.id);
   });

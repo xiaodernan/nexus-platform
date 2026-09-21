@@ -105,7 +105,8 @@ Data access rules (no `LLM → database` path, §52):
 | GET | `/api/v1/me/favorites` · POST `/api/v1/me/favorites` · DELETE `/api/v1/me/favorites/{type}/{id}` | |
 | GET/POST/DELETE | `/api/v1/me/saved-searches[/{id}]` | |
 | GET | `/api/v1/me/orders` · `/me/reservations` · `/me/conversations` | |
-| GET | `/api/v1/notifications` · POST `/api/v1/notifications/{id}/read` | |
+| GET | `/api/v1/notifications` · POST `/api/v1/notifications/{id}/read` | in-app inbox for the acting subject (§123-125); merchant notifications are read through the same route with the merchant membership |
+| GET | `/api/v1/users/{id}` | **admin/ops only** — consumer support tooling (§68). Merchant staff must never reach this; merchant-side customer data goes through `/api/v1/merchant/customers` and is RBAC-scoped (§46, §47). The `/api/v1/me/*` routes are the self-service surface and stay separate on purpose. |
 
 JWT claims: `sub, tid (tenant), typ(access|refresh), sid, jti, iat, exp`. Access 15m, refresh 30d rotating.
 Demo login (§87): `POST /api/v1/auth/demo {role: consumer|merchant|admin}` returns a scoped demo session.

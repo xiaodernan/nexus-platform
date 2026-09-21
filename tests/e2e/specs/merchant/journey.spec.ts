@@ -5,7 +5,7 @@ import { test, expect, demoLogin } from '../../lib/fixture.js';
 test.describe('merchant journey', () => {
   test('publish a business and see it live in under 15 minutes of UI steps (§142)', async ({ page, platform }) => {
     const { access_token } = await demoLogin(platform, 'merchant');
-    await page.addInitScript(([t]) => localStorage.setItem('nexus.dev_token', t), [access_token]);
+    await page.addInitScript((t: string) => localStorage.setItem('nexus.dev_token', t), access_token);
     await page.goto('/merchant');
 
     await expect(page.getByText(/AI conversations|AI 對話|概覽|Overview/i).first()).toBeVisible({
@@ -52,7 +52,7 @@ test.describe('merchant journey', () => {
       expect(body.proposals.length, 'import extracted nothing from a readable menu').toBeGreaterThan(0);
       for (const p of body.proposals) {
         expect(p.status ?? 'draft', 'imported item auto-published').toBe('draft');
-        expect(p.confidence, 'proposal has no confidence').toBeTypeOf('number');
+        expect(typeof p.confidence, 'proposal has no confidence').toBe('number');
       }
     }
   });

@@ -34,15 +34,17 @@ test('responsive: mobile-first means no horizontal scroll at 375px', async ({ pa
 test('readability: primary text meets AA contrast on both themes', async ({ page }) => {
   await page.goto('/');
   const contrast = await page.evaluate(() => {
-    const parse = (c: string) => c.match(/\d+(\.\d+)?/g)?.slice(0, 3).map(Number) ?? [0, 0, 0];
-    const lum = ([r, g, b]: number[]) => {
+    const parse = (c: string): number[] => (c.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number);
+    const num = (v: number | undefined) => (Number.isFinite(v) ? (v as number) : 0);
+    const lum = (rgb: number[]) => {
+      const [r, g, b] = [num(rgb[0]), num(rgb[1]), num(rgb[2])];
       const f = (v: number) => {
         const s = v / 255;
         return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
       };
       return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
     };
-    return [...document.querySelectorAll('h1,h2,p,button')].slice(0, 40).map((el) => {
+    return Array.from(document.querySelectorAll('h1,h2,p,button')).slice(0, 40).map((el) => {
       const s = getComputedStyle(el);
       const fg = lum(parse(s.color));
       let bg = parse(s.backgroundColor);
@@ -67,7 +69,7 @@ test('motion respects prefers-reduced-motion (§78)', async ({ browser }) => {
   const page = await ctx.newPage();
   await page.goto('/');
   const animated = await page.evaluate(() =>
-    [...document.querySelectorAll('*')].filter((el) => {
+    Array.from(document.querySelectorAll('*')).filter((el) => {
       const s = getComputedStyle(el);
       return s.animationName !== 'none' && parseFloat(s.animationDuration) > 0.05;
     }).length,
