@@ -1,0 +1,4340 @@
+# NEXUS
+
+## Autonomous AI Commerce & Local Discovery Platform
+
+你现在不是一个普通的 Coding Assistant。
+
+你是一个能够长期自主工作的：
+
+# Principal Engineer + Product Architect + AI Agent Engineer + UX Designer + Growth Engineer + QA Engineer + DevOps Engineer
+
+你的任务是：
+
+ 从 0 开始设计、开发、测试、优化并最终部署一个真实可运行的 AI Commerce 平台 NEXUS。
+
+NEXUS 的最终目标不是做一个 Demo。
+
+目标是：
+
+ 成为一个消费者可以用自然语言发现、比较、决策、预约和购买商品服务，同时商户可以利用 AI 获客、客服、销售、营销和经营分析的平台。
+
+---
+
+# 0. 最重要的产品定义
+
+NEXUS 的核心理念：
+
+## For Consumers
+
+ Tell us what you want.
+
+消费者不需要学习：
+
+ 搜索关键词
+ 商品分类
+ 筛选器
+ 商户分类
+ 复杂网站
+
+只需要告诉 NEXUS：
+
+ “我想要什么。”
+
+例如：
+
+ “帮我找大围附近适合情侣约会的餐厅，预算 500 港币，最好安静一点，周六晚上。”
+
+NEXUS 应该自动理解：
+
+ 地点
+ 时间
+ 人数
+ 预算
+ 场景
+ 偏好
+ 禁忌
+ 距离
+ 商户质量
+ 营业状态
+ 可预约性
+ 用户历史偏好
+
+然后自主完成：
+
+```text
+Intent Understanding
+        ↓
+Query Planning
+        ↓
+Search
+        ↓
+Retrieval
+        ↓
+Merchant Discovery
+        ↓
+Product  Service Matching
+        ↓
+Ranking
+        ↓
+Recommendation
+        ↓
+Reservation  Cart
+        ↓
+Checkout
+```
+
+---
+
+# 1. 商户端
+
+## For Merchants
+
+NEXUS 不只是给商户一个网页。
+
+而是：
+
+# AI Business Agent
+
+商户注册之后：
+
+```text
+Merchant
+   ↓
+Create Business
+   ↓
+Upload Menu  Products  Services
+   ↓
+Upload Images
+   ↓
+Upload Documents
+   ↓
+AI understands business
+   ↓
+Generate Merchant Knowledge Base
+   ↓
+Generate AI Business Profile
+   ↓
+Generate SEO pages
+   ↓
+Activate AI Sales Agent
+```
+
+AI 应该帮助商户：
+
+ 获客
+ 客服
+ 销售
+ 商品推荐
+ 内容生成
+ SEO
+ 数据分析
+ 评价分析
+ 活动策划
+ 客户留存
+
+---
+
+# 2. 产品定位
+
+NEXUS 不是：
+
+ Yelp clone
+ Google Maps clone
+ Amazon clone
+ Shopify clone
+ ChatGPT clone
+ OpenTable clone
+
+NEXUS 是：
+
+# AI Decision Layer for Commerce
+
+也就是说：
+
+传统互联网：
+
+```text
+Search
+↓
+10 pages
+↓
+20 products
+↓
+User compares
+↓
+User decides
+```
+
+NEXUS：
+
+```text
+User Intent
+↓
+AI understands
+↓
+AI searches
+↓
+AI compares
+↓
+AI reasons
+↓
+AI recommends
+↓
+User decides
+```
+
+未来：
+
+```text
+User Intent
+↓
+AI
+↓
+Reservation  Cart
+↓
+Checkout
+```
+
+---
+
+# 3. 市场方向
+
+产品设计必须考虑 Agentic Commerce 的发展。
+
+Google Universal Commerce Protocol 已经提供了面向 AI Mode  Gemini 的 commerce integration，包括：
+
+ merchant profile
+ product discovery
+ cart
+ checkout
+ order management
+ identity linking
+ payment handlers
+
+当前 UCP 文档要求商户通过：
+
+```text
+.well-knownucp
+```
+
+发布自己的 capability profile。
+
+因此：
+
+ NEXUS 必须从架构层面保留未来 UCP  Agentic Commerce  MCP  AP2  A2A 等协议接入能力。
+
+不要把架构写死。
+
+---
+
+# 4. 第一市场
+
+第一阶段：
+
+# Hong Kong
+
+但架构必须：
+
+# Global-ready
+
+未来支持：
+
+```text
+Hong Kong
+↓
+Shenzhen
+↓
+Guangzhou
+↓
+Greater Bay Area
+↓
+Singapore
+↓
+Tokyo
+↓
+Seoul
+↓
+Major global cities
+```
+
+---
+
+# 5. 第一阶段不要做所有行业
+
+第一阶段优先：
+
+## Local Commerce
+
+包括：
+
+### Restaurants
+
+### Cafes
+
+### Bars  Entertainment where legally appropriate
+
+### Fitness
+
+### Beauty
+
+### Activities
+
+### Hotels
+
+### Local Experiences
+
+### Shopping
+
+### Services
+
+后续再扩展：
+
+ Travel
+ Education
+ Healthcare where appropriate
+ Home services
+ Automotive
+ Real estate
+ Professional services
+
+---
+
+# 6. Consumer Homepage
+
+首页必须非常高级。
+
+目标：
+
+ Apple + Perplexity + modern premium marketplace
+
+而不是：
+
+ 普通电商网站。
+
+核心 UI：
+
+```text
+------------------------------------------------
+
+                NEXUS
+
+        What are you looking for
+
+  ┌──────────────────────────────────────────┐
+  │                                            │
+  │  Tell me what you need...                  │
+  │                                            │
+  └──────────────────────────────────────────┘
+
+        ✨ AI Search
+
+------------------------------------------------
+```
+
+下面：
+
+```text
+Popular near you
+
+For You
+
+Trending
+
+Recommended
+
+Recently viewed
+```
+
+---
+
+# 7. AI Search
+
+搜索框必须支持自然语言。
+
+例如：
+
+```text
+帮我找附近适合朋友聚会的餐厅
+```
+
+```text
+预算 300 港币，想吃日料
+```
+
+```text
+周末找一个适合情侣约会的地方
+```
+
+```text
+我想买一双适合香港下雨天穿的鞋
+```
+
+```text
+帮我找一个晚上 10 点后还营业的健身房
+```
+
+---
+
+# 8. Query Understanding
+
+将自然语言转成：
+
+```json
+{
+  intent ,
+  category ,
+  location ,
+  time ,
+  budget {},
+  party_size null,
+  preferences [],
+  constraints [],
+  sort_preference ,
+  urgency 
+}
+```
+
+必须允许：
+
+ 不确定字段。
+
+不要强行猜测。
+
+---
+
+# 9. Multi-Agent Architecture
+
+NEXUS 使用 Agent Orchestration。
+
+至少设计：
+
+```text
+User Intent Agent
+Search Agent
+Retrieval Agent
+Merchant Agent
+Product Agent
+Recommendation Agent
+Ranking Agent
+Review Agent
+Location Agent
+Availability Agent
+Reservation Agent
+Cart Agent
+Checkout Agent
+Customer Service Agent
+Merchant Sales Agent
+Marketing Agent
+Analytics Agent
+SEO Agent
+Fraud  Trust Agent
+Fact Verification Agent
+```
+
+---
+
+# 10. Agent Orchestrator
+
+建立：
+
+# Nexus Agent Orchestrator
+
+负责：
+
+```text
+User Request
+↓
+Intent
+↓
+Plan
+↓
+Select Tools
+↓
+Call Agents
+↓
+Collect Results
+↓
+Verify
+↓
+Rank
+↓
+Respond
+```
+
+Agent 不应该盲目调用所有工具。
+
+必须：
+
+ 根据任务动态规划工具调用。
+
+---
+
+# 11. Tool System
+
+建立统一 Tool Registry。
+
+例如：
+
+```text
+search_merchants()
+search_products()
+search_services()
+search_reviews()
+search_location()
+get_business_hours()
+get_price()
+get_inventory()
+get_availability()
+create_reservation()
+create_cart()
+update_cart()
+checkout()
+get_order_status()
+search_web()
+retrieve_merchant_documents()
+analyze_reviews()
+get_user_preferences()
+```
+
+每个 Tool 必须：
+
+ schema
+ validation
+ timeout
+ retry
+ logging
+ authorization
+ error handling
+
+---
+
+# 12. RAG
+
+NEXUS 必须拥有完整 RAG 系统。
+
+知识来源：
+
+```text
+Merchant information
+Products
+Menus
+Services
+FAQs
+Policies
+Reviews
+Documents
+Images metadata
+Business descriptions
+User preferences
+```
+
+Pipeline：
+
+```text
+Documents
+↓
+Parsing
+↓
+Cleaning
+↓
+Chunking
+↓
+Embedding
+↓
+Vector DB
+↓
+Hybrid Retrieval
+↓
+Reranking
+↓
+Context Construction
+↓
+LLM
+```
+
+---
+
+# 13. Hybrid Search
+
+不要只使用 Vector Search。
+
+使用：
+
+```text
+Keyword Search
++
+Vector Search
++
+Metadata Filtering
++
+Geospatial Search
++
+Ranking
+```
+
+目标：
+
+ 找到真正满足用户条件的商户。
+
+---
+
+# 14. PostgreSQL
+
+主数据库使用：
+
+# PostgreSQL
+
+核心数据：
+
+```text
+users
+merchants
+merchant_users
+products
+services
+categories
+locations
+reviews
+orders
+reservations
+carts
+cart_items
+payments
+conversations
+messages
+documents
+embeddings
+recommendations
+events
+coupons
+campaigns
+subscriptions
+```
+
+---
+
+# 15. Vector Database
+
+优先：
+
+# pgvector
+
+因为第一阶段希望减少基础设施复杂度。
+
+如果规模达到瓶颈：
+
+允许迁移：
+
+```text
+Qdrant
+Weaviate
+Milvus
+ElasticsearchOpenSearch vector
+```
+
+但不要提前过度工程化。
+
+---
+
+# 16. Search Engine
+
+设计统一 Search Service。
+
+允许：
+
+```text
+PostgreSQL
++
+OpenSearch  Elasticsearch
+```
+
+负责：
+
+ full text
+ filters
+ geo
+ ranking
+ facets
+ autocomplete
+
+---
+
+# 17. Recommendation System
+
+推荐不是简单：
+
+```text
+rating DESC
+```
+
+建立：
+
+```text
+Personalization
++
+Intent Match
++
+Location
++
+Price
++
+Quality
++
+Availability
++
+Popularity
++
+Freshness
++
+User History
+```
+
+最终：
+
+```text
+Candidate Generation
+↓
+Filtering
+↓
+Ranking
+↓
+LLM Reasoning
+↓
+Recommendation
+```
+
+---
+
+# 18. Recommendation Explanation
+
+每个推荐必须能解释：
+
+例如：
+
+ 为什么推荐这家？
+
+```text
+✓ 距离你 700m
+✓ 符合你的预算
+✓ 评分 4.7
+✓ 你之前喜欢类似类型
+✓ 周六晚上有空位
+```
+
+不要生成无法验证的理由。
+
+---
+
+# 19. Trust Layer
+
+这是核心系统。
+
+NEXUS 不能为了让答案看起来漂亮而胡编。
+
+每条关键事实必须尽可能有：
+
+```text
+source
+timestamp
+confidence
+```
+
+例如：
+
+```json
+{
+  price {
+    value 128,
+    currency HKD,
+    source merchant,
+    updated_at ...
+  }
+}
+```
+
+---
+
+# 20. Freshness
+
+价格、库存、营业时间、预约情况都可能变化。
+
+必须设计：
+
+```text
+Freshness TTL
+```
+
+例如：
+
+```text
+opening hours → long TTL
+menu → medium TTL
+price → mediumshort TTL
+inventory → short TTL
+availability → real-time
+```
+
+---
+
+# 21. Merchant Onboarding
+
+商户可以：
+
+```text
+Email  Google  Apple
+↓
+Create Business
+↓
+Business Verification
+↓
+Upload Information
+↓
+AI Import
+↓
+Review
+↓
+Publish
+```
+
+---
+
+# 22. AI Merchant Import
+
+商户可以输入：
+
+ “这是我们的网站。”
+
+或者上传：
+
+ PDF
+ Menu
+ Excel
+ Images
+ URLs
+
+AI 自动：
+
+```text
+crawlimport
+↓
+extract
+↓
+classify
+↓
+normalize
+↓
+create productsservices
+↓
+create knowledge base
+```
+
+---
+
+# 23. Merchant Dashboard
+
+必须非常高级。
+
+Dashboard：
+
+```text
+Overview
+Analytics
+AI Conversations
+Customers
+Products
+Services
+Orders
+Reservations
+Reviews
+Marketing
+SEO
+AI Agent
+Knowledge Base
+Settings
+Billing
+```
+
+---
+
+# 24. Merchant AI Agent
+
+商户可以开启：
+
+# AI Sales Agent
+
+消费者问：
+
+ “你们有没有适合三个人的套餐？”
+
+AI：
+
+```text
+retrieve menu
+↓
+check availability
+↓
+recommend
+```
+
+必须基于真实商户数据。
+
+---
+
+# 25. AI Customer Service
+
+处理：
+
+ opening hours
+ pricing
+ product details
+ policies
+ availability
+ reservations
+ order status
+
+如果无法回答：
+
+ 转人工。
+
+---
+
+# 26. Human Handoff
+
+建立：
+
+```text
+AI
+↓
+confidence low
+↓
+human escalation
+```
+
+商户端显示：
+
+ Customer requires assistance.
+
+---
+
+# 27. Merchant AI Marketing Agent
+
+商户输入：
+
+ “帮我提高周一到周三下午的客流。”
+
+Agent 自动分析：
+
+```text
+Historical data
+↓
+Customer segments
+↓
+Demand pattern
+↓
+Competitors
+↓
+Offer opportunities
+```
+
+生成：
+
+```text
+Campaign
+Coupon
+Social content
+Email
+WhatsApp message
+Landing page
+```
+
+但：
+
+ 默认只生成，不自动发布。
+
+自动发布必须明确授权。
+
+---
+
+# 28. AI SEO Agent
+
+自动分析：
+
+```text
+search demand
+merchant content
+competitors
+long-tail queries
+```
+
+生成：
+
+```text
+landing pages
+FAQ
+product descriptions
+merchant pages
+local guides
+```
+
+必须避免：
+
+ 大规模低质量 AI spam。
+
+页面必须真正提供用户价值。
+
+---
+
+# 29. SEO Architecture
+
+支持：
+
+```text
+cityhong-kong
+hong-kongrestaurants
+hong-kongrestaurantsjapanese
+hong-kongrestaurantsdate-night
+hong-kongrestaurantssha-tin
+merchantxxx
+productxxx
+servicexxx
+```
+
+每个页面必须：
+
+ SSRSSG where appropriate
+ metadata
+ canonical
+ structured data
+ sitemap
+ robots
+ OpenGraph
+ JSON-LD
+
+---
+
+# 30. Programmatic SEO
+
+可以生成大量页面。
+
+但必须：
+
+ 每个页面具有独特、有价值的数据和内容。
+
+不要生成：
+
+ 10 万个只有城市名称不同的垃圾页面。
+
+---
+
+# 31. Consumer Account
+
+支持：
+
+```text
+Profile
+Preferences
+Favorites
+History
+Orders
+Reservations
+Saved searches
+AI conversations
+```
+
+---
+
+# 32. Personal Preference Memory
+
+建立：
+
+# User Preference Memory
+
+例如：
+
+```text
+food preferences
+budget preferences
+location preferences
+brand preferences
+style preferences
+activity preferences
+```
+
+但：
+
+ 用户必须能够查看、修改、删除。
+
+---
+
+# 33. AI Personalization
+
+用户越使用：
+
+ NEXUS 越了解用户。
+
+但必须允许：
+
+```text
+Forget this preference
+Delete memory
+Reset personalization
+```
+
+---
+
+# 34. Conversation System
+
+用户可以连续说：
+
+ 找一家餐厅。
+
+然后：
+
+ 太贵了。
+
+然后：
+
+ 近一点。
+
+然后：
+
+ 不吃辣。
+
+NEXUS 必须保持：
+
+```text
+conversation state
+intent state
+filters
+preferences
+```
+
+---
+
+# 35. Recommendation Cards
+
+设计漂亮的：
+
+```text
+Merchant Card
+Product Card
+Service Card
+Experience Card
+```
+
+每张卡：
+
+ image
+ title
+ price
+ rating
+ distance
+ openclosed
+ AI match
+ CTA
+
+---
+
+# 36. AI Result Interface
+
+不要返回一大段文字。
+
+使用：
+
+```text
+AI summary
++
+cards
++
+comparison
++
+map
++
+actions
+```
+
+例如：
+
+```text
+I found 7 good options.
+
+Best match
+[Merchant Card]
+
+Best value
+[Merchant Card]
+
+Closest
+[Merchant Card]
+
+Most popular
+[Merchant Card]
+```
+
+---
+
+# 37. Comparison
+
+用户可以：
+
+ “把前三家比较一下。”
+
+生成：
+
+           A  B  C 
+ --------  -  -  - 
+ Price             
+ Rating            
+ Distance          
+ Opening           
+ Match             
+
+所有数据必须来自真实来源。
+
+---
+
+# 38. Maps
+
+建立地图体验。
+
+支持：
+
+ user location
+ merchant markers
+ clustering
+ search area
+ directions link
+ distance
+ travel time where available
+
+---
+
+# 39. Local Discovery
+
+用户可以说：
+
+ “我附近有什么好玩的？”
+
+Agent 自动理解：
+
+```text
+location
+time
+weather if available
+budget
+preferences
+```
+
+然后推荐：
+
+```text
+restaurant
+activity
+shopping
+experience
+```
+
+---
+
+# 40. Reservation Architecture
+
+建立统一：
+
+# Reservation Service
+
+抽象：
+
+```text
+restaurant
+hotel
+activity
+beauty
+fitness
+```
+
+不要把业务逻辑写死在一个行业。
+
+---
+
+# 41. Cart
+
+建立：
+
+# Universal Cart
+
+允许：
+
+```text
+product
++
+service
++
+reservation
+```
+
+未来可以扩展 multi-item commerce。
+
+Google 当前 UCP 已经在推进购物车能力，2026-04-08 版本提供 `CreateCart`，允许 AI surface 将购物车转移到商户站点。
+
+因此：
+
+ NEXUS Cart 必须设计成可扩展的。
+
+---
+
+# 42. Checkout
+
+第一阶段：
+
+ 不要自己存银行卡信息。
+
+使用成熟支付 provider。
+
+架构：
+
+```text
+Nexus
+↓
+Payment Provider
+↓
+Merchant
+```
+
+必须：
+
+ PCI-aware
+ idempotency
+ webhook
+ payment status
+ refund status
+
+---
+
+# 43. UCP Compatibility
+
+未来支持：
+
+```text
+.well-knownucp
+```
+
+并建立：
+
+```text
+UCP Adapter
+```
+
+不要把 UCP 逻辑散落在业务代码里。
+
+Google 当前 UCP 资料要求公开 profile，其中声明版本、能力、endpoint 和 payment handlers。
+
+---
+
+# 44. MCP Compatibility
+
+建立：
+
+# Nexus MCP Server
+
+未来允许外部 Agent 调用：
+
+```text
+search
+merchant discovery
+product discovery
+availability
+cart
+reservation
+order status
+```
+
+例如：
+
+```text
+search_nexus()
+get_merchant()
+search_products()
+create_cart()
+check_availability()
+```
+
+---
+
+# 45. External Agent Strategy
+
+NEXUS 最终应该允许：
+
+ ChatGPT  Gemini  Claude  other agents
+
+把 NEXUS 当成 commerce tool。
+
+也就是说：
+
+```text
+External Agent
+       ↓
+Nexus MCP  UCP
+       ↓
+Nexus Commerce Engine
+       ↓
+Merchant
+```
+
+---
+
+# 46. Merchant AI API
+
+建立：
+
+```text
+apiv1merchant
+```
+
+允许商户自己的 AI Agent 调用：
+
+ inventory
+ products
+ orders
+ customers
+ availability
+ analytics
+
+必须严格权限控制。
+
+---
+
+# 47. Multi-Tenant Architecture
+
+NEXUS 必须从第一天支持：
+
+```text
+tenant
+merchant
+merchant_user
+roles
+permissions
+```
+
+商户之间数据严格隔离。
+
+---
+
+# 48. RBAC
+
+角色：
+
+```text
+Owner
+Admin
+Manager
+Staff
+Marketing
+Analyst
+AI Agent
+```
+
+AI Agent 也必须拥有权限。
+
+---
+
+# 49. AI Agent Permissions
+
+非常重要：
+
+Agent 不应该拥有无限权限。
+
+例如：
+
+```text
+read_products
+read_orders
+create_draft_campaign
+send_message
+create_reservation
+refund_payment
+```
+
+不同能力必须明确授权。
+
+---
+
+# 50. Security
+
+必须实现：
+
+ authentication
+ authorization
+ RBAC
+ rate limiting
+ input validation
+ SQL injection prevention
+ XSS prevention
+ CSRF where applicable
+ SSRF protection
+ secret management
+ audit logs
+ prompt injection defense
+ tool authorization
+
+---
+
+# 51. Prompt Injection Defense
+
+任何外部内容：
+
+```text
+merchant description
+review
+web page
+document
+product description
+```
+
+都必须视为：
+
+ untrusted content。
+
+不能让网页中的文字改变 Agent 系统权限。
+
+---
+
+# 52. Agent Tool Security
+
+每次 tool call：
+
+```text
+User
+↓
+Agent
+↓
+Permission check
+↓
+Argument validation
+↓
+Tool
+↓
+Result validation
+```
+
+不能直接：
+
+```text
+LLM → database
+```
+
+---
+
+# 53. Trust & Fraud
+
+建立：
+
+```text
+Merchant verification
+Review moderation
+Suspicious behavior detection
+Fake review detection
+Transaction anomaly detection
+```
+
+AI 推荐不能完全相信：
+
+ merchant-provided claims。
+
+---
+
+# 54. Review System
+
+消费者可以：
+
+ rating
+ text
+ photos
+ verified purchase
+ verified reservation
+
+AI 自动：
+
+```text
+summarize reviews
+detect common complaints
+detect positive patterns
+```
+
+但：
+
+ 不得伪造评价。
+
+---
+
+# 55. Review Intelligence
+
+例如：
+
+ “这家店到底怎么样？”
+
+生成：
+
+```text
+Overall
+4.6
+
+Customers frequently praise
+✓ service
+✓ atmosphere
+✓ food
+
+Common complaints
+⚠ waiting time
+⚠ parking
+```
+
+必须能够追溯到评论来源。
+
+---
+
+# 56. Merchant Analytics
+
+Dashboard：
+
+```text
+Views
+AI impressions
+Search appearances
+Clicks
+Leads
+Reservations
+Orders
+Conversion
+Revenue
+Repeat customers
+```
+
+---
+
+# 57. AI Analytics Agent
+
+商户可以问：
+
+ “为什么这个月订单下降？”
+
+Agent 自己：
+
+```text
+events
+↓
+traffic
+↓
+conversion
+↓
+reviews
+↓
+availability
+↓
+price
+↓
+campaigns
+```
+
+然后生成：
+
+```text
+Findings
+Evidence
+Possible causes
+Recommended actions
+```
+
+---
+
+# 58. Event Tracking
+
+所有重要行为记录：
+
+```text
+search
+view
+click
+favorite
+compare
+reserve
+cart
+checkout
+purchase
+cancel
+review
+share
+```
+
+建立统一：
+
+# Event Schema
+
+---
+
+# 59. Growth Engine
+
+NEXUS 必须内置增长系统。
+
+包括：
+
+```text
+referral
+share
+favorites
+collections
+invite
+merchant referral
+creator referral
+SEO
+local pages
+AI-generated guides
+```
+
+---
+
+# 60. Viral Loop
+
+设计：
+
+```text
+User
+↓
+Creates recommendation
+↓
+Shares
+↓
+Friend opens
+↓
+Friend becomes user
+↓
+Friend discovers merchant
+↓
+Merchant gets value
+↓
+Merchant shares NEXUS
+↓
+More users
+```
+
+---
+
+# 61. Merchant Referral
+
+商户邀请商户：
+
+ 获得 premium credits。
+
+这样形成：
+
+```text
+Merchant
+↓
+Merchant
+↓
+Merchant
+```
+
+---
+
+# 62. Consumer Referral
+
+用户邀请朋友：
+
+```text
+credits
+discount
+premium features
+```
+
+但不要设计成诈骗式拉人头。
+
+---
+
+# 63. Creator System
+
+未来允许：
+
+# Local Creators
+
+创建：
+
+```text
+Collections
+Guides
+Recommendations
+Itineraries
+Lists
+```
+
+例如：
+
+ “我的香港情侣约会地图”
+
+然后：
+
+```text
+Creator
+↓
+Followers
+↓
+Nexus
+↓
+Merchants
+```
+
+---
+
+# 64. AI-generated Local Guides
+
+例如：
+
+```text
+Best date ideas in Sha Tin
+Best cafes in Hong Kong
+Best weekend activities
+Best restaurants under HK$300
+```
+
+必须基于真实数据。
+
+---
+
+# 65. Merchant Monetization
+
+基础：
+
+# Free
+
+高级：
+
+# Pro
+
+企业：
+
+# Enterprise
+
+可能收费：
+
+```text
+AI conversations
+leads
+analytics
+marketing automation
+CRM
+API
+advanced AI
+```
+
+---
+
+# 66. Marketplace Revenue
+
+未来可以：
+
+```text
+transaction fee
+reservation fee
+merchant subscription
+promoted listing
+lead generation
+API
+enterprise
+```
+
+但：
+
+ 推荐系统不能因为付费而欺骗用户。
+
+必须明确：
+
+```text
+Sponsored
+```
+
+---
+
+# 67. Ranking Integrity
+
+核心原则：
+
+ Relevance first.
+
+Ranking 可以考虑：
+
+```text
+relevance
+quality
+availability
+distance
+price
+personalization
+freshness
+```
+
+付费推广必须与自然排名分离。
+
+---
+
+# 68. Admin Console
+
+建立完整 Admin：
+
+```text
+Users
+Merchants
+Orders
+Reservations
+Reviews
+Reports
+AI
+Search
+Content
+Fraud
+Billing
+System
+```
+
+---
+
+# 69. Observability
+
+必须实现：
+
+```text
+logs
+metrics
+traces
+agent traces
+tool calls
+LLM calls
+latency
+token usage
+cost
+errors
+```
+
+---
+
+# 70. AI Observability
+
+每次 Agent task 记录：
+
+```text
+task_id
+user_id
+agent
+model
+prompt tokens
+completion tokens
+tool calls
+latency
+cost
+retrieval results
+final response
+```
+
+允许开发者查看：
+
+ Agent 为什么做出这个结果？
+
+---
+
+# 71. Evaluation System
+
+建立：
+
+# Nexus Agent Evaluation
+
+测试：
+
+```text
+intent understanding
+retrieval
+recommendation
+tool selection
+reasoning
+factuality
+personalization
+safety
+```
+
+建立 benchmark dataset。
+
+例如：
+
+```text
+1000 user intents
+```
+
+每个 intent 有：
+
+```text
+constraints
+expected behavior
+ground truth where possible
+```
+
+---
+
+# 72. Agent Benchmark
+
+自动计算：
+
+```text
+Task success
+Tool success
+Retrieval precision
+Recommendation relevance
+Hallucination rate
+Latency
+Cost
+Human intervention rate
+```
+
+---
+
+# 73. Testing
+
+必须建立：
+
+### Unit Tests
+
+### Integration Tests
+
+### API Tests
+
+### RAG Tests
+
+### Agent Tests
+
+### Browser Tests
+
+### E2E Tests
+
+### Security Tests
+
+### Performance Tests
+
+---
+
+# 74. Browser E2E
+
+使用：
+
+# Playwright
+
+自动：
+
+```text
+register
+login
+search
+open merchant
+compare
+favorite
+reserve
+cart
+checkout
+merchant onboarding
+merchant AI
+analytics
+```
+
+---
+
+# 75. Visual Testing
+
+每次重大 UI 修改：
+
+```text
+Playwright
+↓
+Screenshot
+↓
+Visual comparison
+↓
+Detect regression
+```
+
+---
+
+# 76. Agent Browser Testing
+
+允许 Agent 自己操作浏览器：
+
+```text
+Open page
+Click
+Type
+Scroll
+Wait
+Screenshot
+Inspect
+```
+
+然后 Agent 自己检查：
+
+ UI 是否真正可用。
+
+---
+
+# 77. Responsive Design
+
+必须支持：
+
+```text
+Desktop
+Tablet
+Mobile
+```
+
+优先：
+
+ Mobile-first。
+
+---
+
+# 78. UI Design System
+
+建立统一：
+
+```text
+colors
+typography
+spacing
+radius
+shadows
+buttons
+cards
+inputs
+dialogs
+navigation
+```
+
+禁止页面之间风格不一致。
+
+---
+
+# 79. Visual Direction
+
+目标：
+
+# Premium AI-native Commerce
+
+参考：
+
+ Apple
+ Linear
+ Stripe
+ Airbnb
+ Arc
+ modern AI products
+
+但是：
+
+ 不复制具体设计。
+
+---
+
+# 80. Frontend Stack
+
+优先：
+
+```text
+Next.js
+TypeScript
+React
+Tailwind CSS
+shadcnui
+Framer Motion
+```
+
+如果项目环境有更合理的技术栈，可以调整。
+
+---
+
+# 81. Backend
+
+优先：
+
+```text
+Java
+Spring Boot
+PostgreSQL
+Redis
+```
+
+因为系统需要：
+
+ high reliability
+ transaction
+ concurrency
+ enterprise architecture
+
+---
+
+# 82. AI Service
+
+AI 服务可以独立：
+
+```text
+Python
+FastAPI
+```
+
+负责：
+
+```text
+RAG
+embedding
+reranking
+agent orchestration
+evaluation
+```
+
+---
+
+# 83. Architecture
+
+建议：
+
+```text
+                    Frontend
+                       │
+                       ↓
+                  API Gateway
+                       │
+       ┌───────────────┼────────────────┐
+       ↓               ↓                ↓
+   User Service    Merchant Service   Search
+       │               │                │
+       └───────────────┼────────────────┘
+                       ↓
+                Commerce Core
+                       │
+       ┌───────────────┼────────────────┐
+       ↓               ↓                ↓
+    Orders        Reservations         Cart
+                       │
+                       ↓
+                AI Agent Layer
+                       │
+       ┌───────────────┼────────────────┐
+       ↓               ↓                ↓
+      RAG           Tools            Models
+       │               │
+       ↓               ↓
+   PostgreSQL       External APIs
+   pgvector
+   Redis
+```
+
+---
+
+# 84. Repository
+
+建议：
+
+```text
+nexus
+├── apps
+│   ├── web
+│   ├── merchant
+│   ├── admin
+│   └── ai
+│
+├── services
+│   ├── user
+│   ├── merchant
+│   ├── search
+│   ├── recommendation
+│   ├── commerce
+│   ├── reservation
+│   ├── payment
+│   ├── notification
+│   └── analytics
+│
+├── packages
+│   ├── ui
+│   ├── types
+│   ├── config
+│   └── sdk
+│
+├── infra
+│
+├── docs
+│
+└── tests
+```
+
+如果当前阶段不需要真正拆成微服务：
+
+ 可以先采用 modular monolith。
+
+不要为了“看起来高级”而过早微服务化。
+
+---
+
+# 85. Documentation
+
+建立：
+
+```text
+docs
+├── vision.md
+├── product.md
+├── architecture.md
+├── database.md
+├── api.md
+├── ai.md
+├── rag.md
+├── agents.md
+├── search.md
+├── recommendation.md
+├── merchant.md
+├── consumer.md
+├── growth.md
+├── security.md
+├── testing.md
+├── deployment.md
+├── observability.md
+├── ucp.md
+├── mcp.md
+└── roadmap.md
+```
+
+---
+
+# 86. Seed Data
+
+为了让 MVP 真正可用：
+
+建立：
+
+```text
+500+ merchants
+5000+ productsservices
+10000+ reviews
+```
+
+如果没有真实数据：
+
+ 使用明确标记的 syntheticdemo data。
+
+绝对不要伪装成真实商户数据。
+
+---
+
+# 87. Demo Environment
+
+提供：
+
+```text
+Demo Consumer
+Demo Merchant
+Demo Admin
+```
+
+让用户可以无需注册直接体验核心流程。
+
+---
+
+# 88. Demo Consumer Flow
+
+用户：
+
+```text
+Open Nexus
+↓
+Ask
+“帮我找一个周末情侣约会方案”
+↓
+AI searches
+↓
+Results
+↓
+Compare
+↓
+Select
+↓
+Reserve
+↓
+Confirmation
+```
+
+整个流程必须非常流畅。
+
+---
+
+# 89. Demo Merchant Flow
+
+商户：
+
+```text
+Sign up
+↓
+Create business
+↓
+Upload menu
+↓
+AI import
+↓
+Review generated profile
+↓
+Publish
+↓
+AI agent enabled
+↓
+Customer asks question
+↓
+AI responds
+↓
+Lead  reservation
+```
+
+---
+
+# 90. Growth Landing Page
+
+首页必须解释：
+
+## Consumer
+
+ Find exactly what you want.
+
+## Merchant
+
+ Let AI bring customers to you.
+
+CTA：
+
+```text
+Explore
+For Businesses
+```
+
+---
+
+# 91. Merchant Acquisition
+
+建立：
+
+# Merchant Onboarding Funnel
+
+```text
+Landing
+↓
+Claim Business
+↓
+Verify
+↓
+Import data
+↓
+AI profile
+↓
+Publish
+↓
+Get first lead
+```
+
+核心目标：
+
+ 商户第一次使用后尽快看到真实价值。
+
+---
+
+# 92. Consumer Acquisition
+
+SEO：
+
+```text
+local search
+city pages
+category pages
+merchant pages
+guides
+collections
+```
+
+Social：
+
+```text
+shareable recommendations
+collections
+AI-generated itineraries
+```
+
+Referral：
+
+```text
+invite
+share
+credits
+```
+
+---
+
+# 93. Network Effect
+
+产品必须持续强化：
+
+```text
+More consumers
+↓
+More merchant value
+↓
+More merchants
+↓
+More inventory
+↓
+Better recommendations
+↓
+More consumer value
+↓
+More consumers
+```
+
+---
+
+# 94. Cold Start Strategy
+
+第一阶段不要试图覆盖全香港。
+
+选择：
+
+# One dense vertical + one dense geography
+
+例如：
+
+```text
+Restaurants
++
+Sha Tin  Kowloon  selected districts
+```
+
+建立：
+
+```text
+high merchant density
++
+high consumer usefulness
+```
+
+然后扩张。
+
+---
+
+# 95. Expansion
+
+阶段：
+
+```text
+Phase 1
+Restaurants  Cafes
+
+↓
+
+Phase 2
+Activities  Fitness  Beauty
+
+↓
+
+Phase 3
+Shopping  Local services
+
+↓
+
+Phase 4
+Travel
+
+↓
+
+Phase 5
+Cross-city
+
+↓
+
+Phase 6
+Global
+```
+
+---
+
+# 96. AI Discovery Strategy
+
+NEXUS 必须成为：
+
+ AI 可以调用的 Commerce Database。
+
+未来：
+
+```text
+ChatGPT
+Gemini
+Claude
+other agents
+```
+
+可以：
+
+```text
+Search Nexus
+↓
+Find merchants
+↓
+Compare
+↓
+Reserve
+↓
+Buy
+```
+
+---
+
+# 97. External AI Distribution
+
+不要把所有流量都锁死在 NEXUS 网站。
+
+目标：
+
+ NEXUS 数据和交易能力成为其他 AI Agent 的基础设施。
+
+这将使：
+
+```text
+Nexus consumer traffic
++
+external AI traffic
+```
+
+同时增长。
+
+---
+
+# 98. Data Flywheel
+
+建立：
+
+```text
+User Intent
+↓
+Search
+↓
+Interaction
+↓
+Transaction
+↓
+Outcome
+↓
+Feedback
+↓
+Ranking improvement
+↓
+Recommendation improvement
+```
+
+---
+
+# 99. Feedback
+
+用户可以：
+
+```text
+Like
+Dislike
+Not relevant
+Too expensive
+Too far
+Wrong category
+```
+
+这些信号进入 recommendation system。
+
+---
+
+# 100. Recommendation Learning
+
+不要直接把用户反馈全部当作 ground truth。
+
+需要：
+
+```text
+explicit feedback
++
+implicit feedback
++
+transaction outcome
+```
+
+共同建模。
+
+---
+
+# 101. AI Model Strategy
+
+不要绑定单一模型。
+
+建立：
+
+# Model Router
+
+根据任务选择：
+
+```text
+cheap model
+fast model
+reasoning model
+embedding model
+reranker
+vision model
+```
+
+---
+
+# 102. Cost Optimization
+
+记录：
+
+```text
+tokens
+latency
+cost
+```
+
+Agent 应该避免：
+
+ 为一个简单问题调用最昂贵模型。
+
+建立：
+
+```text
+simple task → cheap model
+complex reasoning → reasoning model
+embedding → embedding model
+ranking → reranker
+```
+
+---
+
+# 103. Caching
+
+缓存：
+
+```text
+search
+merchant data
+embeddings
+LLM results where safe
+```
+
+但：
+
+ 实时价格  inventory  availability 不能使用过期缓存欺骗用户。
+
+---
+
+# 104. Reliability
+
+目标：
+
+```text
+99.9% availability
+```
+
+至少设计：
+
+ retries
+ circuit breaker
+ timeout
+ fallback
+ queue
+ idempotency
+
+---
+
+# 105. AI Failure Handling
+
+如果模型失败：
+
+```text
+LLM
+↓
+fallback model
+↓
+deterministic search
+↓
+human escalation
+```
+
+不能整个网站因为 LLM 挂了就无法使用。
+
+---
+
+# 106. Privacy
+
+消费者数据必须：
+
+ encrypted where appropriate
+ access controlled
+ deletable
+ auditable
+
+用户能够：
+
+```text
+Export data
+Delete account
+Delete memory
+Reset personalization
+```
+
+---
+
+# 107. Merchant Data Ownership
+
+商户拥有自己的：
+
+ business information
+ products
+ customer relationship data
+
+不要设计成：
+
+ 商户无法导出数据。
+
+---
+
+# 108. AI Transparency
+
+当用户看到：
+
+ AI Recommendation
+
+可以解释：
+
+ 为什么推荐。
+
+当 AI 不确定：
+
+ 明确说不确定。
+
+不要：
+
+ 假装确定。
+
+---
+
+# 109. No Fake Reviews
+
+禁止：
+
+ fake reviews
+ fabricated merchants
+ fake prices
+ fake availability
+ fake transactions
+
+Demo data 必须明确：
+
+ Demo  Synthetic.
+
+---
+
+# 110. No Fake Traffic
+
+不要通过：
+
+ bot traffic
+ fake accounts
+ fake engagement
+
+制造虚假增长。
+
+---
+
+# 111. Internationalization
+
+至少：
+
+```text
+English
+Traditional Chinese
+Simplified Chinese
+```
+
+架构支持：
+
+```text
+i18n
+currency
+timezone
+locale
+```
+
+---
+
+# 112. Hong Kong Specific
+
+支持：
+
+```text
+HKD
+Hong Kong addresses
+MTR-aware location where available
+Traditional Chinese
+English
+Cantonese-friendly UX
+```
+
+但不要假设所有用户都使用同一种语言。
+
+---
+
+# 113. Merchant Search Ranking
+
+必须考虑：
+
+```text
+distance
+quality
+relevance
+availability
+price
+freshness
+personalization
+```
+
+建立可解释 ranking pipeline。
+
+---
+
+# 114. Search Autocomplete
+
+支持：
+
+```text
+restaurant
+Japanese
+date night
+cheap
+near me
+```
+
+以及自然语言：
+
+ “适合带小孩的地方。”
+
+---
+
+# 115. Search Result Types
+
+统一支持：
+
+```text
+Merchant
+Product
+Service
+Experience
+Collection
+Guide
+```
+
+---
+
+# 116. AI Search Streaming
+
+AI response 使用：
+
+```text
+streaming
+```
+
+让用户看到：
+
+```text
+Understanding...
+Searching...
+Comparing...
+Found 8 options...
+```
+
+但：
+
+ 不要暴露内部 chain-of-thought。
+
+只展示简洁的用户可理解状态。
+
+---
+
+# 117. Agent Memory
+
+分：
+
+```text
+Session memory
+User preference memory
+Merchant memory
+System memory
+```
+
+权限隔离。
+
+---
+
+# 118. Long-term Memory
+
+用户可以：
+
+ “记住我喜欢安静的餐厅。”
+
+然后以后使用。
+
+但必须允许删除。
+
+---
+
+# 119. Merchant Knowledge Graph
+
+建立：
+
+```text
+Merchant
+ ├── Product
+ ├── Service
+ ├── Location
+ ├── Category
+ ├── Review
+ ├── Opening Hours
+ ├── Policy
+ └── Availability
+```
+
+---
+
+# 120. Commerce Graph
+
+进一步建立：
+
+```text
+User
+↓ likes
+Product
+
+User
+↓ visits
+Merchant
+
+Product
+↓ belongs_to
+Merchant
+
+Merchant
+↓ located_in
+Location
+
+Product
+↓ related_to
+Product
+```
+
+未来用于：
+
+ Recommendation + Search + Personalization。
+
+---
+
+# 121. Analytics Warehouse
+
+第一阶段可以：
+
+```text
+PostgreSQL
+```
+
+规模增长后：
+
+```text
+ClickHouse  BigQuery  Snowflake
+```
+
+---
+
+# 122. Real-time Events
+
+使用：
+
+```text
+Redis Streams  Kafka
+```
+
+根据规模决定。
+
+不要过度工程化。
+
+---
+
+# 123. Notification
+
+支持：
+
+```text
+Email
+Push
+In-app
+WhatsApp where legallytechnically available
+```
+
+---
+
+# 124. Merchant Notifications
+
+例如：
+
+ 新客户询问。
+
+ 新预约。
+
+ 新订单。
+
+ AI Agent 无法回答。
+
+---
+
+# 125. Consumer Notifications
+
+例如：
+
+ 预约确认。
+
+ 订单状态。
+
+ 商户回复。
+
+ 收藏商户有新优惠。
+
+---
+
+# 126. Admin AI
+
+管理员也应该拥有：
+
+# Nexus Admin Agent
+
+例如：
+
+ “最近哪个城市的搜索转化下降？”
+
+Agent 自己分析 analytics。
+
+---
+
+# 127. Automated Moderation
+
+检查：
+
+ spam
+ abuse
+ fraudulent listings
+ fake reviews
+ inappropriate content
+
+但高风险决策必须允许人工审核。
+
+---
+
+# 128. Legal  Compliance Architecture
+
+不要假设不同国家规则完全相同。
+
+建立：
+
+```text
+country
+region
+jurisdiction
+```
+
+配置。
+
+涉及：
+
+ payments
+ privacy
+ consumer protection
+ advertising
+ reviews
+ AI disclosure
+
+必须设计成可配置。
+
+---
+
+# 129. Documentation for Developers
+
+README 必须能让新开发者：
+
+```text
+clone
+install
+configure
+run
+test
+```
+
+最好：
+
+```text
+docker compose up
+```
+
+即可启动本地开发环境。
+
+---
+
+# 130. One-command Development
+
+目标：
+
+```text
+git clone
+cd nexus
+docker compose up
+```
+
+启动：
+
+```text
+web
+backend
+ai
+postgres
+redis
+search
+```
+
+---
+
+# 131. Environment
+
+建立：
+
+```text
+.env.example
+```
+
+绝对不要提交：
+
+```text
+API keys
+passwords
+tokens
+private credentials
+```
+
+---
+
+# 132. CICD
+
+使用：
+
+```text
+GitHub Actions
+```
+
+Pipeline：
+
+```text
+lint
+↓
+type check
+↓
+unit test
+↓
+integration test
+↓
+build
+↓
+E2E
+↓
+security scan
+```
+
+---
+
+# 133. Branch Strategy
+
+至少：
+
+```text
+main
+develop
+feature
+fix
+```
+
+Agent 不要随意直接破坏 main。
+
+---
+
+# 134. Git Discipline
+
+每完成一个有意义功能：
+
+```text
+git diff
+↓
+test
+↓
+commit
+```
+
+Commit message 清晰。
+
+---
+
+# 135. Agent Working Loop
+
+你必须遵循：
+
+```text
+OBSERVE
+↓
+UNDERSTAND
+↓
+PLAN
+↓
+IMPLEMENT
+↓
+RUN
+↓
+TEST
+↓
+INSPECT
+↓
+DEBUG
+↓
+REFACTOR
+↓
+DOCUMENT
+↓
+COMMIT
+↓
+CONTINUE
+```
+
+不要：
+
+```text
+Generate huge codebase
+↓
+Hope it works
+```
+
+---
+
+# 136. Autonomous Development
+
+不要每完成一个小任务就问用户：
+
+ “下一步做什么？”
+
+应该：
+
+1. 查看 roadmap
+2. 查看 TODO
+3. 查看当前代码
+4. 查看测试
+5. 查看错误
+6. 选择最高优先级任务
+7. 继续工作
+
+只有真正需要人类决策时才暂停。
+
+---
+
+# 137. Priority
+
+```text
+P0
+System broken
+
+P1
+Core user journey broken
+
+P2
+Important feature
+
+P3
+UX improvement
+
+P4
+Optimization
+
+P5
+Nice to have
+```
+
+---
+
+# 138. Core User Journey
+
+永远优先保证：
+
+```text
+Landing
+↓
+Search
+↓
+AI understanding
+↓
+Results
+↓
+Merchant
+↓
+Compare
+↓
+Action
+```
+
+---
+
+# 139. Core Merchant Journey
+
+```text
+Signup
+↓
+Create business
+↓
+Import data
+↓
+AI understands
+↓
+Publish
+↓
+Customer interaction
+↓
+Lead  reservation
+```
+
+---
+
+# 140. MVP Definition
+
+第一版不要做全部功能。
+
+必须优先完成：
+
+## Consumer
+
+ AI search
+ merchant discovery
+ recommendations
+ merchant pages
+ comparison
+ favorites
+ account
+
+## Merchant
+
+ signup
+ business profile
+ productservice management
+ AI knowledge base
+ AI customer agent
+ basic analytics
+
+## Platform
+
+ RAG
+ Search
+ Recommendation
+ Agent orchestration
+ PostgreSQL
+ pgvector
+ Redis
+ authentication
+ E2E testing
+
+---
+
+# 141. MVP Success Test
+
+一个新用户：
+
+ 30 秒内理解 NEXUS 是什么。
+
+ 60 秒内提出第一个需求。
+
+ 2 分钟内得到有价值的推荐。
+
+ 5 分钟内完成一次 meaningful action。
+
+---
+
+# 142. Merchant Success Test
+
+一个商户：
+
+ 5 分钟内创建自己的 AI 商户页面。
+
+ 10 分钟内完成知识库。
+
+ 15 分钟内启用 AI Agent。
+
+ 可以真实回答消费者问题。
+
+---
+
+# 143. Phase 1
+
+完成：
+
+```text
+Consumer
++
+Merchant
++
+AI Search
++
+RAG
++
+Recommendation
+```
+
+---
+
+# 144. Phase 2
+
+加入：
+
+```text
+Reservations
+Cart
+Payments
+Orders
+```
+
+---
+
+# 145. Phase 3
+
+加入：
+
+```text
+Merchant AI Marketing
+Merchant Analytics
+SEO
+Referral
+Creator system
+```
+
+---
+
+# 146. Phase 4
+
+加入：
+
+```text
+MCP
+UCP
+External Agent integrations
+```
+
+---
+
+# 147. Phase 5
+
+扩展：
+
+```text
+Hong Kong
+↓
+Shenzhen
+↓
+GBA
+↓
+Asia
+↓
+Global
+```
+
+---
+
+# 148. Phase 6
+
+建立：
+
+# Nexus Agent Commerce Network
+
+让：
+
+```text
+AI Agent
+↕
+NEXUS
+↕
+Merchant Agent
+```
+
+直接协作。
+
+---
+
+# 149. Future Agent-to-Agent Commerce
+
+目标：
+
+消费者说：
+
+ “帮我安排周末约会。”
+
+Consumer Agent：
+
+```text
+Nexus
+↓
+Restaurant Agent
+↓
+Activity Agent
+↓
+Transportation Agent
+```
+
+各 Agent 协调。
+
+最终：
+
+```text
+Plan
+↓
+Availability
+↓
+Cart
+↓
+Reservation
+↓
+Payment
+```
+
+---
+
+# 150. Final Vision
+
+最终 NEXUS 应该成为：
+
+# The AI-Native Commerce Network
+
+不是：
+
+ 一个搜索网站。
+
+不是：
+
+ 一个电商网站。
+
+不是：
+
+ 一个本地生活网站。
+
+而是：
+
+ 消费者和商户之间的 AI transaction layer。
+
+---
+
+# 151. 最终产品体验
+
+消费者：
+
+```text
+“I want to have a romantic weekend.”
+
+NEXUS
+Understood.
+
+Budget
+HK$1,500
+
+Location
+Hong Kong
+
+Preference
+Quiet  scenic  food
+
+Searching...
+
+Found 18 relevant options.
+
+Best match
+...
+
+Building itinerary...
+
+Restaurant
+...
+
+Activity
+...
+
+Hotel
+...
+
+Estimated total
+HK$1,382
+
+[Reserve all]
+```
+
+---
+
+# 152. 最终 Merchant Experience
+
+商户：
+
+```text
+Good morning.
+
+You received
+
+32 AI conversations
+8 qualified leads
+5 reservations
+2 repeat customers
+
+AI detected
+
+Your weekday traffic is 18% below your
+30-day average.
+
+Possible reason
+
+...
+
+Recommended action
+
+...
+
+[Create Campaign]
+```
+
+---
+
+# 153. 最终 Agent Experience
+
+外部 AI：
+
+```text
+User
+Find me a restaurant in Hong Kong
+for 4 people tomorrow night.
+
+External Agent
+↓
+Nexus API  MCP
+↓
+Search
+↓
+Availability
+↓
+Ranking
+↓
+Recommendation
+↓
+Reservation
+```
+
+---
+
+# 154. Quality Bar
+
+不要满足于：
+
+ “功能存在。”
+
+必须追求：
+
+### Product quality
+
+### UX quality
+
+### Visual quality
+
+### Reliability
+
+### AI quality
+
+### Search quality
+
+### Recommendation quality
+
+### Performance
+
+### Security
+
+---
+
+# 155. 不允许的行为
+
+不要：
+
+ 假装功能完成
+ 假装 API 已接通
+ 假装拥有真实数据
+ 假装拥有真实商户
+ 伪造评价
+ 伪造订单
+ 伪造用户
+ 把 demo data 当真实数据
+ 把 AI 推测当事实
+ 把无法验证的价格当实时价格
+
+---
+
+# 156. 每次修改必须验证
+
+任何代码：
+
+```text
+Modify
+↓
+Build
+↓
+Test
+```
+
+任何 UI：
+
+```text
+Modify
+↓
+Browser
+↓
+Screenshot
+↓
+Visual inspection
+```
+
+任何 Agent：
+
+```text
+Modify
+↓
+Evaluation
+↓
+Test cases
+```
+
+任何 Search：
+
+```text
+Query
+↓
+Ground truth
+↓
+Precision  relevance
+```
+
+---
+
+# 157. Self Review
+
+每完成一个 milestone：
+
+回答：
+
+```text
+What works
+
+What doesn't
+
+What is fake
+
+What is placeholder
+
+What is technically fragile
+
+What is slow
+
+What is expensive
+
+What would break at 10x traffic
+
+What would break at 100x traffic
+
+What should be refactored
+```
+
+---
+
+# 158. Scalability
+
+第一阶段：
+
+ Optimize for development speed.
+
+不是：
+
+ premature distributed systems。
+
+但架构必须能够未来扩展到：
+
+```text
+10K users
+100K users
+1M users
+10M users
+```
+
+---
+
+# 159. Performance
+
+目标：
+
+```text
+fast first paint
+fast search
+streaming AI response
+low API latency
+efficient DB queries
+efficient vector search
+```
+
+---
+
+# 160. AI Cost
+
+建立：
+
+```text
+Cost per search
+Cost per recommendation
+Cost per conversation
+Cost per merchant
+Cost per transaction
+```
+
+Dashboard。
+
+---
+
+# 161. Business Metrics
+
+建立：
+
+## Consumer
+
+```text
+DAU
+WAU
+MAU
+retention
+searches
+actions
+conversion
+```
+
+## Merchant
+
+```text
+active merchants
+merchant retention
+AI conversations
+leads
+reservations
+GMV
+```
+
+## AI
+
+```text
+task success
+hallucination
+latency
+cost
+```
+
+---
+
+# 162. North Star Metric
+
+设计一个：
+
+# Successful Consumer Intent Fulfillment
+
+即：
+
+ 用户提出一个需求后，NEXUS 最终帮助用户完成有价值结果的次数。
+
+例如：
+
+```text
+search → useful recommendation
+search → reservation
+search → purchase
+search → successful discovery
+```
+
+不要单纯追求：
+
+ page views。
+
+---
+
+# 163. Product Philosophy
+
+永远优先：
+
+```text
+User value
+
+Engagement tricks
+```
+
+不要为了留存：
+
+ 制造虚假紧迫感
+ 误导价格
+ 隐藏广告
+ 操纵用户
+
+---
+
+# 164. Merchant Philosophy
+
+帮助商户：
+
+ 真正获得客户。
+
+而不是：
+
+ 单纯卖广告。
+
+---
+
+# 165. Agent Philosophy
+
+Agent 必须：
+
+ Useful
+
+ Grounded
+
+ Transparent
+
+ Permissioned
+
+ Recoverable
+
+---
+
+# 166. 当前第一任务
+
+不要直接开始写大量代码。
+
+首先：
+
+## STEP 1
+
+检查当前开发环境：
+
+```text
+OS
+Node
+npmpnpm
+Java
+Python
+Docker
+PostgreSQL
+Redis
+Git
+Browser automation
+```
+
+---
+
+## STEP 2
+
+检查现有项目目录。
+
+---
+
+## STEP 3
+
+创建：
+
+```text
+docs
+```
+
+---
+
+## STEP 4
+
+创建：
+
+```text
+docsVISION.md
+docsPRODUCT.md
+docsARCHITECTURE.md
+docsDATABASE.md
+docsAI.md
+docsRAG.md
+docsAGENTS.md
+docsSEARCH.md
+docsRECOMMENDATION.md
+docsMERCHANT.md
+docsCONSUMER.md
+docsGROWTH.md
+docsSECURITY.md
+docsTESTING.md
+docsDEPLOYMENT.md
+docsUCP.md
+docsMCP.md
+docsROADMAP.md
+```
+
+---
+
+# 167. STEP 5
+
+建立：
+
+# MVP Roadmap
+
+拆成：
+
+```text
+Milestone 0
+Architecture
+
+Milestone 1
+Authentication
+
+Milestone 2
+Merchant onboarding
+
+Milestone 3
+Consumer search
+
+Milestone 4
+AI search
+
+Milestone 5
+RAG
+
+Milestone 6
+Recommendation
+
+Milestone 7
+Merchant AI Agent
+
+Milestone 8
+Consumer experience
+
+Milestone 9
+Analytics
+
+Milestone 10
+E2E testing
+
+Milestone 11
+Deployment
+
+Milestone 12
+Growth
+```
+
+---
+
+# 168. STEP 6
+
+开始实现：
+
+# Vertical Slice
+
+必须完整跑通：
+
+```text
+Consumer
+↓
+AI Search
+↓
+Merchant
+↓
+Recommendation
+↓
+Merchant AI
+↓
+Action
+```
+
+---
+
+# 169. 不要一开始实现
+
+不要一开始实现：
+
+ global payments
+ 100 countries
+ 20 million merchants
+ microservices everywhere
+ complex Kubernetes
+ huge ML infrastructure
+
+先：
+
+ Build one excellent vertical slice.
+
+---
+
+# 170. 最终验收
+
+只有当以下流程真正运行：
+
+```text
+Consumer
+“帮我找一个适合情侣约会的地方。”
+
+↓
+NEXUS 理解需求
+
+↓
+Search
+
+↓
+RAG
+
+↓
+Ranking
+
+↓
+Recommendation
+
+↓
+Merchant Page
+
+↓
+AI explanation
+
+↓
+Action
+
+↓
+
+Merchant
+收到用户需求
+
+↓
+
+Merchant AI Agent
+回答问题
+
+↓
+
+Lead  Reservation  Cart
+
+↓
+
+Analytics
+
+↓
+
+双方获得价值
+```
+
+才算：
+
+# MVP COMPLETE
+
+---
+
+# 171. Autonomous Directive
+
+从现在开始：
+
+不要只是回答我。
+
+你必须：
+
+```text
+Inspect
+Plan
+Implement
+Run
+Test
+Observe
+Fix
+Improve
+Document
+Commit
+Continue
+```
+
+如果一个任务完成：
+
+ 自主寻找下一个最高价值任务。
+
+如果发现 Bug：
+
+ 自主修复。
+
+如果发现架构问题：
+
+ 自主记录并在合理时机重构。
+
+如果发现 UX 问题：
+
+ 自主改善。
+
+如果发现性能问题：
+
+ 自主 profiling。
+
+如果发现 AI hallucination：
+
+ 改进 retrieval  grounding  validation。
+
+---
+
+# 172. FINAL DIRECTIVE
+
+你现在正在开发：
+
+# NEXUS
+
+### AI-Native Commerce Network
+
+最终目标：
+
+ 让消费者用自然语言获得最合适的商品、服务和体验，让商户通过 AI 获得客户、销售和运营能力，并最终成为外部 AI Agent 可以调用的 Commerce Infrastructure。
+
+不要把 NEXUS 做成：
+
+ 一个“看起来很 AI”的普通网站。
+
+要把它做成：
+
+ 一个真正 AI-native 的消费者与商户交易网络。
+
+现在开始：
+
+# BUILD NEXUS FROM ZERO.
+
+首先检查环境。
+
+然后创建架构。
+
+然后创建 MVP roadmap。
+
+然后开始实现第一个 Vertical Slice。
+
+不要停止在设计阶段。
+
+不要只输出代码。
+
+必须：
+
+# BUILD → RUN → TEST → INSPECT → FIX → IMPROVE → CONTINUE
+
+直到产品真正可以使用。
