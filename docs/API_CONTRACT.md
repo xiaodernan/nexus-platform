@@ -256,6 +256,19 @@ Nothing is published without merchant review.
 | POST | `/api/v1/webhooks/payments/{provider}` | signature verified, idempotent |
 | POST | `/api/v1/merchants/{id}/reviews` | verified purchase/reservation flags computed server-side |
 
+`POST /api/v1/merchants/{idOrSlug}/reviews` is served by `com.nexus.catalog.ReviewController` (the only
+write in that module), and what it stores is decided by §55/§127 rather than by convenience: `@RequiresAuth`
+plus a mandatory `Idempotency-Key`, `data_origin='user'`, **`status='pending'`**, and an open
+`moderation_cases` row beside it — a pending review with no case in the queue is a review nobody will ever
+read. It therefore changes **no rendered number**: `rating_agg` and the `rating` fact next to it are defined
+over published rows (D35), and the response says `aggregate_changed: false` on its face. Publishing one is a
+human act, and no route here performs it. `verified_purchase` / `verified_reservation` are looked up from the
+caller's own order and reservation rows at this merchant (`completed`/`confirmed` and
+`paid`/`preparing`/`completed` respectively), never taken from the request body, and the response prints the
+predicate it used so a tick cannot come apart from its evidence. A second open review from the same account
+is `409 review_exists` — one voice per person per place — unless the first was `rejected`, which is a
+judgement about that text and not a permanent silence.
+
 ## 7. Conversations & AI
 
 | Method | Path | Body / result |

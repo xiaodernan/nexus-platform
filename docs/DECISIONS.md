@@ -668,3 +668,49 @@ with the reservation's and the reservation's with the merchant inbox's — and b
 because the directory's popularity-sorted first page is all restaurants and their table slots are
 unpriced. 8,513 of 32,492 seeded slots do carry a price; the walk now looks for one, and reports
 `slot=473.11 reservation=473.11` instead of agreeing about nothing.
+
+## D37 A consumer review is queued, counted nowhere until published, and badged only by evidence — 2026-09-23
+
+§6 promised `POST /api/v1/merchants/{id}/reviews` for the whole life of this project and nothing served it:
+a consumer could read 11,000 reviews and add none. Building the write forced three decisions that a
+"insert the row and return 201" implementation makes silently.
+
+**1. `status='pending'`, and an `open` row in `moderation_cases` beside it.** §55/§127 put user-generated
+content in front of a stranger only past a human decision, and this build has no automated abuse filter —
+`fraud_trust` is a designed agent, not a running one. Writing `published` (the column's own default) would
+have made the public rating whoever-typed-fastest's. The pending row is echoed to its author and to nobody
+else; the public `/reviews` read already filters on `status = 'published'`, so no other code had to change
+to keep it out. A pending review with no case in the queue is a review nobody will ever read, which is why
+one insert is not enough.
+
+**2. It moves no rendered number, and the response says so.** `merchants.rating_agg` and the `rating` fact
+beside it are defined over published rows (D35), so a queued review cannot change the average — and
+`aggregate_changed: false` travels in the payload rather than being something the reader has to infer. This
+is the invariant that makes decision 1 safe instead of merely quiet: publication is the moment both must be
+restated, and there is deliberately no route here that performs it.
+
+**3. The visit badges are looked up, never accepted.** The body's own `verified_reservation`/
+`verified_purchase`/`data_origin` fields are ignored; the flags come from this caller's reservation and order
+rows at this merchant (`confirmed|completed` and `paid|preparing|completed`), and the response prints the
+predicate it used under `verification_basis`, so a tick cannot mean more than the row behind it. `data_origin`
+is the literal `'user'` — the one honest origin for this write, and the flag that keeps it out of the demo
+badge.
+
+Two refusals carry the same reasoning. A missing `Idempotency-Key` is 422 (a double-tapped submit must not
+create two reviews and two cases). A second open review from the same account at the same place is
+409 `review_exists` — one voice per person per place, inside an aggregate that claims to count people —
+unless the first was `rejected`, which is a judgement about that text and not a permanent silence.
+
+**The exception that had to be made, and why it is not a hole.** The first live run of the route returned 409
+for the demo consumer at the first merchant it tried, everywhere: the synthetic corpus attributes thousands
+of published reviews to the very accounts a session can log in as. Counting those against the one-voice rule
+would leave no demo user able to post at all — an honest route nobody can reach is still a dead route. So
+`openReviewBy` excludes `data_origin = 'demo'` rows: a synthetic review is not anybody's voice. The synthetic
+rows keep their place in the aggregate (that is what a demo dataset is, and they are badged `demo` while
+they do it); what they cannot do is spend a real person's one review. `demoRowsDoNotBlockARealReview` pins
+both halves.
+
+Suite: 115/115 (7 new in `ReviewWriteTest`). Over HTTP against a throwaway seeded database, posting to
+`basil-leaf-0419`: `201 · status=pending · data_origin=user · verified_*=false ·
+aggregate_changed=false`, the page's rating `3.79 · 291` identical before and after, and in the database
+one `user` review and one open case.

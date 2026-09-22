@@ -366,7 +366,12 @@ public class CatalogController {
         return out;
     }
 
-    private static Map<String, Object> reviewView(Map<String, Object> row) {
+    /**
+     * The §5 review shape. Package-private so {@link ReviewController} can echo the row it just created
+     * through the same projection the public list uses — one projection, one truth (D24). Two spellings is
+     * how an author ends up seeing a field the published page does not show, or the other way round.
+     */
+    static Map<String, Object> reviewView(Map<String, Object> row) {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("review_id", Json.str(row, "id"));
         out.put("merchant_id", Json.str(row, "merchant_id"));

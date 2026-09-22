@@ -1198,3 +1198,34 @@ it: with `:8010` down, those steps report **BLOCKED**, not passed. `verify_merch
 limit in its opening lines — the in-app browser's viewport is unavailable here, so the evidence is rendered
 HTML plus the JSON it was projected from, which is why §171's screenshot step stays open and the browser leg
 waits on the web stream's in-flight route work rather than being declared done.
+
+
+## 30. The review write door, which was promised before there was a room behind it (2026-09-23)
+
+§6 has listed `POST /api/v1/merchants/{id}/reviews` since the contract was written; nothing served it, so a
+consumer could read 11,000 reviews and add none. `ReviewController` + `ReviewRepository` now answer it, with
+the three choices D37 records: queued as `pending` with a `moderation_cases` row beside it, moving no
+rendered number because the aggregate and its `rating` fact count published rows only (D35), and visit
+badges looked up from this caller's own reservations and orders instead of accepted from the body.
+
+The route was tested where the rest of this work is tested — after the harness built a database from
+nothing. The first live attempt came back **409 on the first merchant**, and would have come back 409 at
+every merchant in the dataset: the synthetic corpus attributes published reviews to the very demo accounts a
+session can log in as, so the one-voice-per-place rule was being spent by rows nobody ever wrote. Unit tests
+could not have shown that — they invent their own fixtures. The fix is an explicit, narrow exception
+(`data_origin = 'demo'` is not anybody's voice) with the reasoning written down, and a test that pins both
+halves: the synthetic row still counts in the aggregate, and it no longer buys the silence.
+
+```
+mvn -o test                                   115/115 (7 new)
+live on the throwaway, basil-leaf-0419         201 · pending · user · verified_*=false · aggregate_changed=false
+page rating before / after                     3.79 · 291  /  3.79 · 291
+database                                       1 user review, 1 open moderation case
+scripts/e2e_fresh.sh                           8/8 PASS (contract ↔ router included)
+```
+
+One own error worth keeping: the first version of the aggregate-untouched test posted **without** an
+`Idempotency-Key`, so the route 422'd and the assertion "the number did not move" passed on a request that
+wrote nothing. It was green and meaningless until the live run forced the key in. A check that cannot tell
+"refused" from "accepted and inert" is not a check — same lesson as the reservation walk's `null == null`
+money comparisons, learned twice in one day.
