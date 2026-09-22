@@ -229,6 +229,14 @@ silent charges (§103). A background sweeper marks expired `facts.stale=true` us
 - **Hours mirror:** `business_hours` (one row per weekday × location, `weekday` 0=Mon…6=Sun) is what
   `open` is computed from, and the merchant's `opening_hours` fact is the same statement in citable form.
   A write to `business_hours` must upsert that fact, or the citation goes stale on its own TTL (D25).
+- **Rating mirror:** `merchants.rating_agg` / `offerings.rating_agg` are what the card prints, and a `rating` fact
+  is the same mean in citable form — `source='observed'` (the platform's arithmetic over its own published review
+  rows, not a merchant's claim), `confidence` banded by sample size, `value` carrying `count`, `max_score`,
+  `method` and `reviewed_through` (the newest review inside the window). Both sides must be the number a
+  `round(avg(rating), 2)` over the published reviews returns, which pins the rounding convention: `numeric` rounds
+  half away from zero and Python's `round` rounds half to even, and seventeen seeded ratings once sat a cent apart
+  because of it (D35). A subject with no published review has no aggregate to print and no fact — a rating of
+  `0.00` is a claim, not an absence.
 - **Render contract:** `EntityCard.facts[]` and `ai_match.reasons[].fact_id` must resolve here; a bullet without a
   `fact_id` does not render.
 - **Post-validation:** generated text is checked so each numeric/entity claim maps back to a fact; unmatched claims are

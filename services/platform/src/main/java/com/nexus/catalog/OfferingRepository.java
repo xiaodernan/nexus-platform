@@ -30,11 +30,14 @@ public class OfferingRepository {
             pf.expires_at as price_fact_expires_at, pf.stale as price_fact_stale,
             cf.id as capacity_fact_id, cf.value as capacity_fact_value, cf.source as capacity_fact_source,
             cf.confidence as capacity_fact_confidence, cf.observed_at as capacity_fact_observed_at,
-            cf.expires_at as capacity_fact_expires_at, cf.stale as capacity_fact_stale
+            cf.expires_at as capacity_fact_expires_at, cf.stale as capacity_fact_stale,
+            rf.id as rating_fact_id, rf.value as rating_fact_value, rf.source as rating_fact_source,
+            rf.confidence as rating_fact_confidence, rf.observed_at as rating_fact_observed_at,
+            rf.expires_at as rating_fact_expires_at, rf.stale as rating_fact_stale
             """;
 
     /**
-     * The FROM clause every read here shares, including the two {@code facts} laterals that
+     * The FROM clause every read here shares, including the three {@code facts} laterals that
      * {@link #view} turns into §2 facts. One constant rather than four copies: an offering price that
      * carries its fact on the menu but not in the workspace list is the two-surfaces-disagreeing failure
      * {@link MerchantCards} was written to avoid.
@@ -54,6 +57,12 @@ public class OfferingRepository {
                   where f.subject_type = 'offering' and f.subject_id = o.id and f.attribute = 'capacity'
                   order by f.observed_at desc limit 1
                 ) cf on true
+            left join lateral (
+                  select f.id, f.value, f.source, f.confidence, f.observed_at, f.expires_at, f.stale
+                  from facts f
+                  where f.subject_type = 'offering' and f.subject_id = o.id and f.attribute = 'rating'
+                  order by f.observed_at desc limit 1
+                ) rf on true
             """;
 
     private final TenantJdbc jdbc;
@@ -266,7 +275,7 @@ public class OfferingRepository {
         // An offering nobody has rated has no rating, not a 0.0 one — the same §19 rule the merchant
         // card applies, read from the same helper so the two cannot drift apart.
         out.put("rating", MerchantCards.rating(Json.dec(row, "rating_agg"), Json.integer(row, "review_count")));
-        out.put("facts", MerchantCards.factsOf(row, "offering", List.of("price", "capacity")));
+        out.put("facts", MerchantCards.factsOf(row, "offering", List.of("price", "capacity", "rating")));
         out.put("created_at", Json.ts(row, "created_at"));
         out.put("updated_at", Json.ts(row, "updated_at"));
         out.put("flags", Json.map("demo", com.nexus.platform.DemoFlags.isDemo(Json.str(row, "merchant_data_origin")),

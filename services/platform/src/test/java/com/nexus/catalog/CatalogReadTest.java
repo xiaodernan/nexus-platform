@@ -352,6 +352,9 @@ class CatalogReadTest extends NexusIntegrationTest {
                 "{\"amount\": \"48.00\", \"currency\": \"HKD\", \"model\": \"fixed\"}", "merchant", "0.980");
         seedOfferingFact(merchant, noodles, "capacity", "{\"max_party_size\": 8, \"duration_minutes\": 90}",
                 "imported", "0.700");
+        seedOfferingFact(merchant, noodles, "rating",
+                "{\"value\": 4.70, \"count\": 11, \"max_score\": 5, \"method\": \"mean_of_published_reviews\"}",
+                "observed", "0.800");
 
         JsonNode items = Json.tree(body("/api/v1/merchants/priced-" + tag + "/menu")).path("items");
         assertThat(items).hasSize(2);
@@ -364,7 +367,7 @@ class CatalogReadTest extends NexusIntegrationTest {
         JsonNode rated = items.get(1);
         assertThat(rated.path("rating").path("value").asDouble()).isEqualTo(4.7);
         assertThat(rated.path("rating").path("count").asInt()).isEqualTo(11);
-        assertThat(rated.path("facts")).hasSize(2);
+        assertThat(rated.path("facts")).hasSize(3);
         JsonNode fact = factByName(rated.path("facts"), "price");
         assertThat(fact.path("subject_type").asText()).isEqualTo("offering");
         assertThat(fact.path("subject_id").asText()).isEqualTo(noodles.toString());
@@ -375,6 +378,13 @@ class CatalogReadTest extends NexusIntegrationTest {
         // The `capacity` fact is the one behind the party-size and duration columns a reservation form shows.
         assertThat(factByName(rated.path("facts"), "capacity").path("value").path("max_party_size").asInt())
                 .isEqualTo(8);
+        // §19 on the offering's own number: 「4.7 · 11」 is printed above, so the mean needs its Fact —
+        // and the two must be the same mean, or the citation is decoration.
+        JsonNode ratingFact = factByName(rated.path("facts"), "rating");
+        assertThat(ratingFact.path("subject_type").asText()).isEqualTo("offering");
+        assertThat(ratingFact.path("subject_id").asText()).isEqualTo(noodles.toString());
+        assertThat(ratingFact.path("value").path("value").asDouble()).isEqualTo(4.7);
+        assertThat(ratingFact.path("value").path("count").asInt()).isEqualTo(11);
         // The profile's top offerings use the same projection, so the two pages cannot disagree (§19).
         // Same default order (popularity desc), so index 1 is the noodles on both responses.
         JsonNode profileOffering = Json.tree(body("/api/v1/merchants/priced-" + tag))

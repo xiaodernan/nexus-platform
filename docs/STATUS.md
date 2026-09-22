@@ -878,3 +878,65 @@ cannot check these four responses at all (it can only check what the platform al
 `GET /api/v1/merchants/{slug}`'s profile still has no published schema (36 top-level keys unchecked); and the
 cards these pages embed inherit the §19 rating defect — `rating` renders on 520 merchants while no `facts` row
 carries `attribute='rating'`, which is the next thing to fix at the seed layer.
+
+
+## 23. The rating behind the rendered rating (2026-09-23)
+
+§19: a number a consumer can see has to carry the fact under it. The card prints 「4.3 · 128 則評價」from
+`merchants.rating_agg` + `review_count`, `MerchantCards` has joined a `rating` lateral since D25 — and the seeder
+wrote no such row. Measured on the seeded tenant:
+
+```
+select attribute, count(*) from facts group by attribute
+  address=684  capacity=157  cuisine=520  opening_hours=520  price=2080        -- no `rating` at all
+merchants rendering a rating: 520
+```
+
+The second measurement was the surprise. `having m.rating_agg <> round(avg(r.rating), 2)` named **17 merchants,
+every one exactly 0.01 away, every exact mean ending in `.xx50`**. Not bad rows: two rounding conventions.
+Python's `round()` is half-to-even, Postgres' `round(numeric, 2)` is half-away-from-zero — and the generator's own
+invariant check compared them with `abs(diff) > 0.01`, so `generate.py` printed PASS on a dataset the database
+contradicted by a cent. D35 rules on it.
+
+Landed:
+
+- `round2` / `mean2` do the aggregate in `Decimal` with half-up rounding, so the stored value and any SQL
+  recompute are the same number by construction; `m2` uses it too, because `merchants.avg_price_hkd` is rounded
+  by `numeric` whether Python agrees or not. The `> 0.01` tolerance is gone — a tolerance on an equality the
+  database can recompute is where a defect sits, not where it is caught.
+- **1,727 rating facts**: 520 merchants and 1,207 offerings, `source='observed'` (the platform's arithmetic over
+  its own published reviews, not a merchant's claim), `confidence` banded by sample size (0.70 under 5 reviews,
+  0.80 under 50, 0.90 above), a 24h TTL, and a value that carries `count`, `max_score`, `method` and
+  `reviewed_through` — the newest review inside the window, which the aggregate column cannot say.
+- Six `quality.sql` checks: one fact per reviewed subject and no fact without one, equality with the recomputed
+  mean, equality with the rendered column, an evidence window that is not behind its own inputs, a confidence
+  that tracks `n`, and the TTL/shape.
+- `OfferingRepository` now joins a third lateral and asks for `rating` in `factsOf(...)`. The menu and the
+  offering profile printed ratings with no citation beside them; `CatalogReadTest` asserts the fact and the
+  printed number are the same mean.
+- `CollectionsController` echoes an `items` element that is not an object instead of deleting it, so
+  `item_count 4 · items [] · dropped_item_ids []` is no longer an answer this endpoint can give (new test), and a
+  `seo.cover` that is not an object degrades to the real `cover_url` (test added against the claim that it
+  500s — it did not).
+
+```
+bash scripts/db_gate_fresh.sh --keep    159 checks PASS (was 153) · facts 4,661 → 5,688 · 3 runs, exit 0
+psql on the kept gate database          rating=1,727 · merchant facts == rating_agg: 520 / 520
+mvn -o test                             106/106
+```
+
+The gate database was dropped afterwards; neither live database was opened by it. One note on the run itself: two
+`mvn` invocations overlapping in `services/platform/target/` produced a `Tests run: 0` surefire crash and a bogus
+failure, and a clean single run was green — the suite is only trustworthy one at a time.
+
+Still open:
+
+- The dev `nexus` database still carries the pre-D35 seed, so the running `:8090` serves cards whose `facts` array
+  has no rating entry. Reloading it truncates `DEPENDENT_TABLES`, which holds rows other sessions wrote against
+  that instance, so the reseed belongs to whoever owns `:8090` rather than to a unilateral call here.
+- `packages/types/src/fact.ts` `FRESHNESS_TTL_SECONDS` has no `rating` key, so the TTL table a payload checker
+  reads cannot judge a rating fact's 24h window. That file carries another stream's uncommitted edits.
+- Two agent reports this hour cited commits (`e0247f4`, `48119f3`), files and line numbers that do not exist in
+  this repository — including a whole `services/ai/` tree and `docs/PRD.md`. Every claim was checked against the
+  tree before use and none was folded into the ledger; a report whose paths do not resolve here is not evidence
+  about this project.

@@ -575,3 +575,53 @@ invented by the platform.** §8 now states it that way.
 `POST /api/v1/collections` stays unbuilt on purpose. It is the one §8 write that creates a publishable consumer
 page, so it belongs behind the workspace permission chain with the §27 authorization recorded on the row, not
 beside four anonymous cacheable reads.
+
+## D35 One rounding convention, and the rating behind every rendered rating — 2026-09-23
+
+§19 says a number a consumer can see must carry the fact behind it. The card renders
+「4.3 · 128 則評價」from `merchants.rating_agg` + `review_count`, and `MerchantCards` has joined a lateral for a
+`rating` fact since D25 — but the seeder emitted **no `rating` rows at all**, so the join was always null and the
+array carried price and hours only. Measured over the seeded tenant: 520 merchants render a rating, `select
+attribute, count(*) from facts group by 1` returns `address, capacity, cuisine, opening_hours, price` and no
+`rating`.
+
+Finding the absence turned up a second defect. Comparing the stored aggregate against a SQL recompute over the
+same reviews — `having m.rating_agg <> round(avg(r.rating), 2)` — named **seventeen merchants, every one of them
+exactly 0.01 apart, every exact mean ending in `.xx50`**. Not corrupt data: two rounding conventions. Python's
+`round()` is half-to-even (2.825 → 2.82), Postgres' `round(numeric, 2)` is half-away-from-zero (2.825 → 2.83), and
+the seeder's own invariant check tolerated it (`abs(stored - want) > 0.01`), so the generator reported PASS on a
+dataset where the API and any re-derivation disagree with each other.
+
+Ruling: **the seeder rounds the way `numeric` rounds, and the checks compare exactly.**
+
+- `round2` / `mean2` in `data/seed/generate.py` do the arithmetic in `Decimal` — half-up, and no float summation
+  error — so the stored value and `round(avg(rating), 2)` are the same number by construction. `m2`, which writes
+  every money field, uses the same helper for the same reason: `merchants.avg_price_hkd` goes through Postgres'
+  rounding whether Python agrees with it or not.
+- The `> 0.01` tolerance is gone from the self-check. A tolerance on an equality the database can recompute is not
+  a check; it is a place for a defect to sit.
+- A `rating` fact now exists for **every reviewed subject** — 520 merchants and the offerings reviewed individually
+  — with `source='observed'` (the platform's own arithmetic over its own review rows, not a merchant's claim),
+  `confidence` banded by sample size (`n<5 → 0.70`, `n<50 → 0.80`, else `0.90`), a 24h TTL matching
+  `review_summary`'s, and a value that restates the aggregate *and* says what the column cannot: `count`,
+  `max_score`, `method`, and `reviewed_through`, the newest published review inside the window.
+- Confidence is about the sample, never the arithmetic. A mean of four opinions is computed exactly as reliably as
+  a mean of four hundred; it just supports a weaker claim, and `CONFIDENCE_FLOOR_PHRASE` (AGENT_CONTRACT §4) is the
+  AI layer's threshold for hedging — a flat 0.90 would let one five-star review be quoted without qualification.
+  Every band sits at or above that floor, because a review mean really is first-party data.
+- `observed_at` is the recompute instant, not the newest review's. The alternative puts every rating fact outside
+  its own TTL the moment it is written — the reviews are months old — which reports a fresh calculation as a stale
+  claim. The evidence window is stated where it belongs, inside the value.
+- Zero reviews ⇒ no fact and no rating, which `MerchantCards.rating` already enforced. An unreviewed subject that
+  acquired a rating fact would be the §109 failure in a new costume, so `quality.sql` forbids it in that direction
+  too.
+
+Six checks went into `quality.sql` alongside the existing TTL checks: one fact per reviewed subject (and no fact
+without a reviewed subject), agreement with the recomputed mean, agreement with the rendered column, an evidence
+window that is not in the future relative to its own inputs, a confidence that tracks `n`, and the 24h TTL with
+`source='observed'`. Fresh-database gate: **159 checks** (was 153), `facts` 4,661 → 5,688 rows, `RESULT: PASS`,
+exit 0, neither live database opened.
+
+The §8 read got the same treatment for a shape it used to discard: an element of `collections.items` that is not
+an object — a bare id string from an older seed, a number, a null — is now echoed in `items` instead of vanishing,
+so `item_count 4 · items [] · dropped_item_ids []` is no longer an answer this endpoint can give.

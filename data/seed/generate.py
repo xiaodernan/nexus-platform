@@ -26,6 +26,7 @@ import re
 import sys
 import uuid
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -55,7 +56,7 @@ DEMO_PASSWORD = "nexus-demo-2026"          # documented demo login; never stored
 # TTLs per AGENT_CONTRACT.md §5
 TTL_HOURS = {"price": 6, "inventory": 0.25, "opening_hours": 24, "description": 24 * 7,
              "review_summary": 24, "popularity": 1, "address": 24 * 30, "cuisine": 24 * 30,
-             "availability": 0}
+             "rating": 24, "availability": 0}
 
 
 # --------------------------------------------------------------------------- primitive helpers
@@ -84,8 +85,52 @@ class Arr(list):
     """Marker: emit as a Postgres text[] literal."""
 
 
+def round2(x) -> float:
+    """Two-dp rounding that agrees with Postgres ``round(numeric, 2)``.
+
+    Python's built-in ``round`` is half-to-even, so twelve reviews averaging 2.825 store as 2.82 while
+    any SQL recompute over the same rows returns 2.83. That is not a cosmetic difference here: the
+    rating and price facts below are re-derived from the rows they summarise, so a seeder that rounds
+    one way and a database that rounds the other produce two true answers for one rendered number
+    (§19, and the reason ``quality.sql`` compares a stored aggregate against a recomputed one).
+    ``numeric`` rounds half away from zero, so the seeder does too.
+    """
+    return float(Decimal(str(x)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
 def m2(x) -> str:
-    return f"{round(float(x), 2):.2f}"
+    return f"{round2(x):.2f}"
+
+
+def mean2(vals) -> float:
+    """The mean of 1-dp star ratings, rounded the way ``round(numeric, 2)`` in SQL rounds.
+
+    Decimal rather than float: twelve 1-dp stars sum to exactly 33.9, while float addition can hand
+    back 33.899999999999995, and a quotient sitting on a half-cent boundary then rounds the wrong way
+    again — the same one-cent disagreement with SQL that {@link round2} exists to remove. Ratings come
+    from ``round(..., 1)``, so ``str(v)`` is always a short exact decimal.
+    """
+    if not vals:
+        return 0.0
+    total = sum((Decimal(str(v)) for v in vals), Decimal(0))
+    return float((total / Decimal(len(vals))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
+def rating_confidence(n: int) -> float:
+    """How much a mean over ``n`` reviews is worth (spec §19, AGENT_CONTRACT §4).
+
+    The value itself is exact either way — this is the statement of how generalisable it is. Four
+    opinions of one shop are a weaker claim than four hundred, and the confidence band is what the AI
+    layer reads before it decides to hedge (``CONFIDENCE_FLOOR_PHRASE``) or to omit the claim, so a
+    flat 0.9 for every merchant would let a single five-star review be quoted as a rating without
+    qualification. The bands stay at or above that hedge floor, because a review mean really is the
+    platform's own arithmetic over real rows — it is the *sample* that is thin, not the method.
+    """
+    if n < 5:
+        return 0.7
+    if n < 50:
+        return 0.8
+    return 0.9
 
 
 def ts(dt: datetime) -> str:
@@ -515,15 +560,28 @@ class Gen:
                     # could not be reproduced from what a consumer sees (§19).
                     status=_moderation_status(rid, self.a.seed),
                 ))
+        # One pass over the reviews, then a lookup per subject: the aggregates below are the same
+        # numbers `quality.sql` recomputes in SQL, so they must be derived from exactly the published
+        # rows and nothing else (§19).
+        pub_m = {}
+        pub_o = {}
+        for r in self.reviews:
+            if r["status"] != "published":
+                continue
+            pub_m.setdefault(r["merchant"]["id"], []).append(r)
+            if r["offering"] is not None:
+                pub_o.setdefault(r["offering"]["id"], []).append(r)
         for m in self.merchants:
-            rs = [r for r in self.reviews if r["merchant"] is m and r["status"] == "published"]
-            m["rating_agg"] = round(sum(r["rating"] for r in rs) / len(rs), 2) if rs else 0.0
+            rs = pub_m.get(m["id"], [])
+            m["rating_agg"] = mean2([r["rating"] for r in rs])
             m["review_count"] = len(rs)
+            # The evidence window, not the recompute instant: an aggregate says what it averaged over.
+            m["reviewed_through"] = max((r["created"] for r in rs), default=None)
         for o in self.offerings:
-            linked = [r["rating"] for r in self.reviews
-                      if r["offering"] is o and r["status"] == "published"]
-            o["review_count"] = len(linked)
-            o["rating"] = round(sum(linked) / len(linked), 2) if linked else 0.0
+            rs = pub_o.get(o["id"], [])
+            o["review_count"] = len(rs)
+            o["rating"] = mean2([r["rating"] for r in rs])
+            o["reviewed_through"] = max((r["created"] for r in rs), default=None)
 
     def review_ctx(self, m):
         d = m["district"]
@@ -741,6 +799,19 @@ class Gen:
                                         {"primary": m["leaf"], "zh": LEAF_CUISINE_ZH[m["leaf"]],
                                          "data_origin": "demo"}, None, None, "merchant", ttl_h=24 * 30,
                                         uri=f"{DEMO_URI}/cuisine/{m['slug']}"))
+            # §19: the card renders 「4.3 · 128 則評價」, so the number needs its own fact row. The
+            # value repeats what the aggregate column holds — same arithmetic, same rounding — and
+            # adds the two things the column cannot say: how many reviews it rests on, and how far
+            # back the evidence runs.
+            if m["review_count"]:
+                self.facts.append(self.fact("merchant", m["id"], m, "rating",
+                                            {"value": m["rating_agg"], "count": m["review_count"],
+                                             "max_score": 5, "method": "mean_of_published_reviews",
+                                             "reviewed_through": ts(m["reviewed_through"]),
+                                             "data_origin": "demo"},
+                                            None, None, "observed", ttl_h=TTL_HOURS["rating"],
+                                            uri=f"{DEMO_URI}/rating/{m['slug']}",
+                                            confidence=rating_confidence(m["review_count"])))
             for loc in m["locs"]:
                 self.facts.append(self.fact("location", loc["id"], m, "address",
                                             {"line1": loc["line1"], "line2": loc["line2"],
@@ -761,6 +832,20 @@ class Gen:
                                             None, "HKD", o["price_source"], ttl_h=6,
                                             uri=f"{DEMO_URI}/price/{o['slug']}", observed=obs,
                                             expires=exp))
+            # The offering profile renders a rating too, and reads it off the same rule the merchant
+            # card does — so every reviewed offering carries one, not just the three the profile shows
+            # prices for.
+            for o in m["offerings"]:
+                if o["review_count"]:
+                    self.facts.append(self.fact("offering", o["id"], m, "rating",
+                                                {"value": o["rating"], "count": o["review_count"],
+                                                 "max_score": 5,
+                                                 "method": "mean_of_published_reviews",
+                                                 "reviewed_through": ts(o["reviewed_through"]),
+                                                 "data_origin": "demo"},
+                                                None, None, "observed", ttl_h=TTL_HOURS["rating"],
+                                                uri=f"{DEMO_URI}/rating/{o['slug']}",
+                                                confidence=rating_confidence(o["review_count"])))
             if m["top"] in ("fitness", "beauty", "experience", "activity", "hotel"):
                 for o in m["offerings"][:2]:
                     if o["duration"]:
@@ -772,13 +857,14 @@ class Gen:
                                                     uri=f"{DEMO_URI}/capacity/{o['slug']}"))
 
     def fact(self, subject_type, subject_id, m, attribute, value, unit, currency, source, ttl_h,
-             uri, observed=None, expires=None):
+             uri, observed=None, expires=None, confidence=None):
         obs = observed or self.now
         exp = expires or (obs + timedelta(hours=ttl_h) if ttl_h else None)
         stale = bool(exp and exp < self.now and self.rng.random() < 0.35)
+        rolled = self.rng.choice([1.0, 0.98, 0.95, 0.9, 0.8])
         return dict(subject_type=subject_type, subject_id=subject_id, merchant=m, attribute=attribute,
                     value=value, unit=unit, currency=currency, source=source, uri=uri,
-                    confidence=self.rng.choice([1.0, 0.98, 0.95, 0.9, 0.8]), observed=obs,
+                    confidence=rolled if confidence is None else confidence, observed=obs,
                     expires=exp, stale=stale,
                     id=uid("fact", f"{subject_type}:{subject_id}:{attribute}"))
 
@@ -1545,7 +1631,9 @@ def self_check(gen: Gen, out_dir: Path, args) -> int:
             errs.append(f"merchant {r['slug']}: data_origin not demo")
     # Stored aggregates must agree with the *published* reviews they summarise (§19): the merchant
     # and offering rows are what search and cards render, and an average that quietly counts pending
-    # or flagged reviews cannot be reproduced from the data a consumer sees.
+    # or flagged reviews cannot be reproduced from the data a consumer sees. Compared as the emitted
+    # two-decimal strings, because that is the exact form the database stores and the card prints —
+    # a tolerance here once hid seventeen ratings that SQL would have recomputed a cent higher.
     pub_by_merchant: dict[str, list[float]] = {}
     pub_by_offering: dict[str, list[float]] = {}
     for r in tables["reviews"][1]:
@@ -1554,18 +1642,41 @@ def self_check(gen: Gen, out_dir: Path, args) -> int:
         pub_by_merchant.setdefault(r["merchant_id"], []).append(float(r["rating"]))
         if r["offering_id"] not in ("", NULL):
             pub_by_offering.setdefault(r["offering_id"], []).append(float(r["rating"]))
-    for r in tables["merchants"][1]:
-        vals = pub_by_merchant.get(r["id"], [])
-        want = round(sum(vals) / len(vals), 2) if vals else 0.0
-        if abs(float(r["rating_agg"]) - want) > 0.01 or int(r["review_count"]) != len(vals):
-            errs.append(f"merchant {r['slug']}: rating_agg/review_count {r['rating_agg']}/"
-                        f"{r['review_count']} != published {want}/{len(vals)}")
-    for r in tables["offerings"][1]:
-        vals = pub_by_offering.get(r["id"], [])
-        want = round(sum(vals) / len(vals), 2) if vals else 0.0
-        if abs(float(r["rating_agg"] or 0) - want) > 0.01 or int(r["review_count"]) != len(vals):
-            errs.append(f"offering {r['slug']}: rating_agg/review_count {r['rating_agg']}/"
-                        f"{r['review_count']} != published {want}/{len(vals)}")
+    rating_facts: dict[tuple[str, str], list[dict]] = {}
+    for r in tables["facts"][1]:
+        if r["attribute"] == "rating":
+            rating_facts.setdefault((r["subject_type"], r["subject_id"]), []).append(r)
+    for kind, table, rows in (("merchant", "merchants", tables["merchants"][1]),
+                              ("offering", "offerings", tables["offerings"][1])):
+        for r in rows:
+            vals = (pub_by_merchant if kind == "merchant" else pub_by_offering).get(r["id"], [])
+            want = mean2(vals)
+            stored = r["rating_agg"] if r["rating_agg"] not in (NULL, "") else m2(0.0)
+            if stored != m2(want) or int(r["review_count"]) != len(vals):
+                errs.append(f"{kind} {r['slug']}: rating_agg/review_count {r['rating_agg']}/"
+                            f"{r['review_count']} != published {m2(want)}/{len(vals)}")
+            # ...and the fact behind the number agrees with both of them: same value, same count, one
+            # row per reviewed subject, and a subject that points back at this exact row.
+            found = rating_facts.get((kind, r["id"]), [])
+            if len(vals) == 0:
+                if found:
+                    errs.append(f"{kind} {r['slug']}: rating fact with no published review behind it")
+                continue
+            if len(found) != 1:
+                errs.append(f"{kind} {r['slug']}: {len(found)} rating fact(s) for {len(vals)} reviews")
+                continue
+            f = found[0]
+            fv = json.loads(f["value"])
+            if m2(fv["value"]) != stored or int(fv["count"]) != len(vals):
+                errs.append(f"{kind} {r['slug']}: rating fact {fv['value']}/{fv['count']} != column "
+                            f"{stored}/{len(vals)}")
+            if kind == "merchant" and f["merchant_id"] != r["id"]:
+                errs.append(f"merchant {r['slug']}: rating fact anchored on {f['merchant_id']}")
+            if f["source"] != "observed" or not f["source_uri"].startswith("demo://"):
+                errs.append(f"{kind} {r['slug']}: rating fact source {f['source']}/{f['source_uri']}")
+            if float(f["confidence"]) != rating_confidence(len(vals)):
+                errs.append(f"{kind} {r['slug']}: rating fact confidence {f['confidence']} for n="
+                            f"{len(vals)}, expected {rating_confidence(len(vals))}")
     for r in tables["documents"][1]:
         if DISCLAIMER_UNI not in r["raw_text"]:
             errs.append(f"document {r['title']}: missing disclaimer inside text")

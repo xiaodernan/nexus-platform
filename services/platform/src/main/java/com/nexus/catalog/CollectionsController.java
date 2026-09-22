@@ -141,10 +141,14 @@ public class CollectionsController {
         Map<String, Map<String, Object>> byId = cardIndex(merchantIdsOf(stored), tenant, asOf);
 
         List<String> dropped = new ArrayList<>();
-        List<Map<String, Object>> items = new ArrayList<>();
+        List<Object> items = new ArrayList<>();
         List<Map<String, Object>> resolved = new ArrayList<>();
         for (Object element : stored) {
             if (!(element instanceof Map<?, ?> raw)) {
+                // Not an object, so not a reference this read can resolve — but it is still one of the
+                // `item_count` elements the row stores. Echo it as written: a list that answered four short
+                // with nothing dropped and nothing named is the §8 lie in its cleanest form.
+                items.add(element);
                 continue;
             }
             Map<String, Object> item = asMap(raw);

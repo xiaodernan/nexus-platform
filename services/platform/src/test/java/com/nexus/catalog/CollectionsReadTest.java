@@ -182,6 +182,42 @@ class CollectionsReadTest extends NexusIntegrationTest {
         assertThat(items.get(2).path("type").asText()).isEqualTo("heading");
     }
 
+    @Test
+    @DisplayName("A stored item that is not an object is echoed rather than deleted")
+    void scalarItemsSurviveTheResolutionWalk() {
+        String tag = tag();
+        UUID shop = merchant(tenant, "scalar-merchant-" + tag);
+        // `[<id>, 42, null, {...}]`: jsonb keeps every element, so `item_count` says four. Dropping the
+        // three this read cannot resolve left a four-item guide rendering an empty list with nothing
+        // named as dropped — the reader had no way to tell "empty" from "we skipped what we couldn't parse".
+        seed(tenant, "guide", "scalar-items-" + tag, of("\"" + shop + "\"", "42", "null", item(shop)));
+
+        JsonNode page = Json.tree(body("/api/v1/collections/scalar-items-" + tag));
+        assertThat(page.path("item_count").asInt()).isEqualTo(4);
+        assertThat(page.path("items")).hasSize(4);
+        assertThat(page.path("items").get(0).asText()).isEqualTo(shop.toString());
+        // A bare string is not reinterpreted as a reference: only the shape the column documents resolves.
+        assertThat(page.path("items").get(0).has("card")).isFalse();
+        assertThat(page.path("items").get(3).path("card").path("id").asText()).isEqualTo(shop.toString());
+        assertThat(page.path("cards")).hasSize(1);
+        assertThat(page.path("dropped_item_ids")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A `cover` that is not an object degrades to the column, it does not fail the read")
+    void nonObjectCoverDoesNotBreakTheProfile() {
+        String tag = tag();
+        seed(tenant, "guide", "string-cover-" + tag, items(merchant(tenant, "cover-merchant-" + tag)),
+                "public", Instant.now(), Map.of("cover", "https://demo.invalid/one-big-string.jpg"), author);
+
+        JsonNode page = Json.tree(body("/api/v1/guides/string-cover-" + tag));
+        // `seo` is free jsonb, so any writer can put anything under any key; the projection's job is to
+        // say what it knows — the real `cover_url` — and leave the rest null.
+        assertThat(page.path("cover_image").path("url").asText()).isEqualTo("/demo/img/guide.svg");
+        assertThat(page.path("cover_image").path("alt").isNull()).isTrue();
+        assertThat(page.path("cover_image").path("credit").isNull()).isTrue();
+    }
+
     // ---------------------------------------------------------------- attribution
 
     @Test

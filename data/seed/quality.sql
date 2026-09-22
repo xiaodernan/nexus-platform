@@ -463,6 +463,133 @@ SELECT 'hours facts respect the 24h TTL',
        (SELECT count(*) FROM facts WHERE attribute='opening_hours'
           AND expires_at <> observed_at + interval '24 hours') || ' hours fact(s) with a wrong TTL';
 
+-- §19: the card prints 「4.3 · 128 則評價」, so the number must exist as a fact with a source, a
+-- timestamp and a confidence — and it must be the same number. These recompute the mean from the
+-- published review rows in SQL and compare: a stored aggregate that only Python's round-half-to-even
+-- agrees with used to pass a tolerance-based check and still disagree with every SQL recompute (D35).
+WITH recomputed AS (
+  SELECT 'merchant'::text AS st, r.merchant_id AS sid, round(avg(r.rating), 2) AS val,
+         count(*) AS n, max(r.created_at) AS through_at
+    FROM reviews r WHERE r.status = 'published' GROUP BY r.merchant_id
+  UNION ALL
+  SELECT 'offering', r.offering_id, round(avg(r.rating), 2), count(*), max(r.created_at)
+    FROM reviews r WHERE r.status = 'published' AND r.offering_id IS NOT NULL GROUP BY r.offering_id
+), rated AS (
+  SELECT rc.st, rc.sid, rc.val, rc.n, rc.through_at,
+         (SELECT count(*) FROM facts f
+           WHERE f.subject_type = rc.st AND f.subject_id = rc.sid AND f.attribute = 'rating') AS nfacts,
+         (SELECT f.id FROM facts f
+           WHERE f.subject_type = rc.st AND f.subject_id = rc.sid AND f.attribute = 'rating' LIMIT 1) AS fid
+    FROM recomputed rc WHERE rc.n > 0
+)
+INSERT INTO qc
+SELECT 'rating: every reviewed subject has exactly one rating fact',
+       NOT EXISTS (SELECT 1 FROM rated WHERE nfacts <> 1)
+       AND NOT EXISTS (SELECT 1 FROM facts f WHERE f.attribute = 'rating'
+                        AND NOT EXISTS (SELECT 1 FROM rated rc
+                                         WHERE rc.st = f.subject_type AND rc.sid = f.subject_id)),
+       (SELECT count(*) FROM rated WHERE nfacts <> 1) || ' reviewed subject(s) without one fact'
+       || ', ' || (SELECT count(*) FROM facts f WHERE f.attribute = 'rating'
+                    AND NOT EXISTS (SELECT 1 FROM rated rc
+                                     WHERE rc.st = f.subject_type AND rc.sid = f.subject_id))
+       || ' rating fact(s) over no published review';
+
+WITH recomputed AS (
+  SELECT 'merchant'::text AS st, r.merchant_id AS sid, round(avg(r.rating), 2) AS val,
+         count(*) AS n, max(r.created_at) AS through_at
+    FROM reviews r WHERE r.status = 'published' GROUP BY r.merchant_id
+  UNION ALL
+  SELECT 'offering', r.offering_id, round(avg(r.rating), 2), count(*), max(r.created_at)
+    FROM reviews r WHERE r.status = 'published' AND r.offering_id IS NOT NULL GROUP BY r.offering_id
+)
+INSERT INTO qc
+SELECT 'rating fact restates the recomputed mean',
+       NOT EXISTS (SELECT 1 FROM facts f JOIN recomputed rc
+                     ON rc.st = f.subject_type AND rc.sid = f.subject_id
+                   WHERE f.attribute = 'rating'
+                     AND ((f.value->>'value')::numeric(4,2) <> rc.val
+                          OR (f.value->>'count')::int <> rc.n)),
+       (SELECT count(*) FROM facts f JOIN recomputed rc
+          ON rc.st = f.subject_type AND rc.sid = f.subject_id
+        WHERE f.attribute = 'rating'
+          AND ((f.value->>'value')::numeric(4,2) <> rc.val OR (f.value->>'count')::int <> rc.n))
+       || ' rating fact(s) disagreeing with their reviews';
+
+WITH recomputed AS (
+  SELECT 'merchant'::text AS st, r.merchant_id AS sid, round(avg(r.rating), 2) AS val, count(*) AS n
+    FROM reviews r WHERE r.status = 'published' GROUP BY r.merchant_id
+  UNION ALL
+  SELECT 'offering', r.offering_id, round(avg(r.rating), 2), count(*)
+    FROM reviews r WHERE r.status = 'published' AND r.offering_id IS NOT NULL GROUP BY r.offering_id
+)
+INSERT INTO qc
+SELECT 'rating fact agrees with the rendered aggregate column',
+       NOT EXISTS (SELECT 1 FROM facts f JOIN merchants m ON m.id = f.subject_id
+                    WHERE f.attribute = 'rating' AND f.subject_type = 'merchant'
+                      AND (f.value->>'value')::numeric(4,2) <> m.rating_agg)
+       AND NOT EXISTS (SELECT 1 FROM facts f JOIN offerings o ON o.id = f.subject_id
+                    WHERE f.attribute = 'rating' AND f.subject_type = 'offering'
+                      AND o.rating_agg IS NOT NULL
+                      AND (f.value->>'value')::numeric(4,2) <> o.rating_agg),
+       (SELECT count(*) FROM facts f JOIN merchants m ON m.id = f.subject_id
+         WHERE f.attribute = 'rating' AND f.subject_type = 'merchant'
+           AND (f.value->>'value')::numeric(4,2) <> m.rating_agg)
+       || ' merchant and '
+       || (SELECT count(*) FROM facts f JOIN offerings o ON o.id = f.subject_id
+         WHERE f.attribute = 'rating' AND f.subject_type = 'offering' AND o.rating_agg IS NOT NULL
+           AND (f.value->>'value')::numeric(4,2) <> o.rating_agg)
+       || ' offering fact(s) off their own column';
+
+WITH recomputed AS (
+  SELECT 'merchant'::text AS st, r.merchant_id AS sid, max(r.created_at) AS through_at
+    FROM reviews r WHERE r.status = 'published' GROUP BY r.merchant_id
+  UNION ALL
+  SELECT 'offering', r.offering_id, max(r.created_at)
+    FROM reviews r WHERE r.status = 'published' AND r.offering_id IS NOT NULL GROUP BY r.offering_id
+)
+INSERT INTO qc
+SELECT 'rating fact is observed after the newest review it averages',
+       NOT EXISTS (SELECT 1 FROM facts f JOIN recomputed rc
+                     ON rc.st = f.subject_type AND rc.sid = f.subject_id
+                   WHERE f.attribute = 'rating'
+                     AND (f.observed_at < rc.through_at
+                          OR (f.value->>'reviewed_through')::timestamptz <> rc.through_at)),
+       (SELECT count(*) FROM facts f JOIN recomputed rc
+          ON rc.st = f.subject_type AND rc.sid = f.subject_id
+        WHERE f.attribute = 'rating'
+          AND (f.observed_at < rc.through_at
+               OR (f.value->>'reviewed_through')::timestamptz <> rc.through_at))
+       || ' rating fact(s) with an impossible evidence window';
+
+WITH rated AS (
+  SELECT 'merchant'::text AS st, r.merchant_id AS sid, count(*) AS n
+    FROM reviews r WHERE r.status = 'published' GROUP BY r.merchant_id
+  UNION ALL
+  SELECT 'offering', r.offering_id, count(*)
+    FROM reviews r WHERE r.status = 'published' AND r.offering_id IS NOT NULL GROUP BY r.offering_id
+)
+INSERT INTO qc
+SELECT 'rating confidence tracks the sample size (§19 hedge floor)',
+       NOT EXISTS (SELECT 1 FROM facts f JOIN rated rc ON rc.st = f.subject_type AND rc.sid = f.subject_id
+                   WHERE f.attribute = 'rating'
+                     AND f.confidence <> CASE WHEN rc.n < 5 THEN 0.7
+                                              WHEN rc.n < 50 THEN 0.8 ELSE 0.9 END),
+       (SELECT count(*) FROM facts f JOIN rated rc ON rc.st = f.subject_type AND rc.sid = f.subject_id
+         WHERE f.attribute = 'rating'
+           AND f.confidence <> CASE WHEN rc.n < 5 THEN 0.7
+                                    WHEN rc.n < 50 THEN 0.8 ELSE 0.9 END)
+       || ' rating fact(s) whose confidence ignores n';
+
+INSERT INTO qc
+SELECT 'rating facts respect the 24h TTL',
+       NOT EXISTS (SELECT 1 FROM facts WHERE attribute='rating'
+                     AND (expires_at IS DISTINCT FROM observed_at + interval '24 hours'
+                          OR source <> 'observed' OR unit IS NOT NULL OR currency IS NOT NULL)),
+       (SELECT count(*) FROM facts WHERE attribute='rating'
+          AND (expires_at IS DISTINCT FROM observed_at + interval '24 hours'
+               OR source <> 'observed' OR unit IS NOT NULL OR currency IS NOT NULL))
+       || ' mis-shaped rating fact(s)';
+
 INSERT INTO qc
 SELECT 'some facts are deliberately stale (UI must show 已過時)',
        EXISTS (SELECT 1 FROM facts WHERE stale) AND EXISTS (SELECT 1 FROM facts WHERE NOT stale)
