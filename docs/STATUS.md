@@ -1182,3 +1182,19 @@ listed with their paths in the tool's output rather than paraphrased here.
 The harness now ends with that reconciliation as step 8 of 8, so the contract cannot drift from the router without a gate going red: `scripts/e2e_fresh.sh` runs the reconciler against the same throwaway instance the probes just graded, and a full run is now seed → schema → 525 served-read checks → 30 reservation checks → contract ↔ router, `RESULT: PASS` on one command.
 
 §11 gained the two operational reads it never documented (`GET /api/v1/health` and `/ready`, with the exact fields each returns). The first draft of that bullet claimed both were `no-store`; measured against a running instance, neither sets a `Cache-Control` header at all, so the row now says what is true and why it is fine — §103's `no-store` rule is about money and seats — and why a caller still must not cache the answer: `ready` issues a `select 1` per call, which is the only reason it can ever say `down`.
+
+
+## 29. Two deliverables nobody could check out (2026-09-23)
+
+While confirming that nothing of mine was left uncommitted, two more turned out to be exactly that:
+`scripts/verify_consumer_slice.py` and `scripts/verify_merchant_page.py`, written during the M4 slice work
+and never added. They had been *run* — tallies quoted from them appear in earlier sections — from a working
+tree that could not be reproduced. Same shape as `com.nexus.growth` earlier the same day, which is the
+pattern worth naming: a green measurement made from an uncommitted artefact is not a gate, it is a memory.
+
+`verify_consumer_slice.py` is the §170 walk (platform :8090 + the web prod build on :3002 in live mode,
+folding in the merchant-page and reservation-write legs), and it probes the AI service rather than assuming
+it: with `:8010` down, those steps report **BLOCKED**, not passed. `verify_merchant_page.py` says its own
+limit in its opening lines — the in-app browser's viewport is unavailable here, so the evidence is rendered
+HTML plus the JSON it was projected from, which is why §171's screenshot step stays open and the browser leg
+waits on the web stream's in-flight route work rather than being declared done.
