@@ -119,14 +119,14 @@ listener_on_port() {
 [ -z "$(listener_on_port)" ] || die "port $PORT is already in use — choose another with E2E_PORT=..."
 
 # --------------------------------------------------------------------------- 1/7 empty database
-step "1/7  create $E2E_DB from template0"
+step "1/8  create $E2E_DB from template0"
 psql_maint "CREATE DATABASE \"$E2E_DB\" TEMPLATE template0 ENCODING 'UTF8'" >/dev/null
 [ "$(psql_e2e "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
                 AND table_name NOT LIKE 'pg_%'")" = "0" ] \
   || die "the fresh database is not empty"
 
 # --------------------------------------------------------------------------- 2/7 schema + roles
-step "2/7  apply infra/db/migrations/V*.sql + 00_roles.sql"
+step "2/8  apply infra/db/migrations/V*.sql + 00_roles.sql"
 NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_NAME="$E2E_DB" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/db_apply_migrations.sh" | sed -e 's/^/    /'
 TABLES="$(psql_e2e "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
@@ -136,21 +136,21 @@ echo "    -> tables=$TABLES migrations=$MIGRATIONS"
 
 # --------------------------------------------------------------------------- 3/7 dataset
 if [ "$SKIP_GENERATE" = "1" ]; then
-  step "3/7  seed generation skipped (--skip-generate)"
+  step "3/8  seed generation skipped (--skip-generate)"
 else
-  step "3/7  generate the synthetic dataset"
+  step "3/8  generate the synthetic dataset"
   PYTHON="${PYTHON:-python}"
   ( cd "$ROOT" && "$PYTHON" data/seed/generate.py ) 2>&1 | tail -3 | sed -e 's/^/    /'
 fi
 
-step "4/7  load the seed into the fresh database"
+step "4/8  load the seed into the fresh database"
 CONTAINER="$CONTAINER" DB="$E2E_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 \
   "$ROOT/data/seed/load.sh" | tail -6 | sed -e 's/^/    /'
 FACTS="$(psql_e2e "SELECT count(*) FROM facts WHERE attribute='rating'")"
 echo "    -> rating facts loaded: $FACTS"
 
 # --------------------------------------------------------------------------- 5/7 boot
-step "5/7  boot the platform against $E2E_DB on :$PORT"
+step "5/8  boot the platform against $E2E_DB on :$PORT"
 # baseline-version has to name the migrations the infra script already ran: Flyway would otherwise
 # replay V1..V4 over a schema that has them (D30/D32 are what made that failure loud instead of silent).
 # Redis is switched off so this run cannot write rate-limit or session keys into the shared instance.
@@ -201,19 +201,27 @@ if ! tasklist //FI "PID eq $LISTEN_PID" //FO CSV 2>/dev/null | grep -qi java; th
 fi
 
 # --------------------------------------------------------------------------- 6/7 probes
-step "6/7  probe the served consumer reads"
+step "6/8  probe the served consumer reads"
 node "$SCRIPT_DIR/verify_served_reads.mjs" --base "http://127.0.0.1:$PORT" --tenant "${NEXUS_TENANT:-hong-kong}"
 echo
 
 # --------------------------------------------------------------------------- 7/7 the write leg
 if [ "$READS_ONLY" = "1" ]; then
-  step "7/7  skipped (--reads-only): no rows written"
+  step "7/8  skipped (--reads-only): no rows written"
 else
-  step "7/7  walk the reservation write path against $E2E_DB"
+  step "7/8  walk the reservation write path against $E2E_DB"
   # The reason this runs here rather than against :8090: the walk books a real slot and cancels it, so
   # it leaves rows behind. A state machine is best proved on a database that can be thrown away with
   # the run that proved it, not on the demo data another session is looking at.
   NEXUS_PLATFORM_URL="http://127.0.0.1:$PORT" NEXUS_TENANT="${NEXUS_TENANT:-hong-kong}"     "${PYTHON:-python}" "$SCRIPT_DIR/verify_reservation.py" 2>&1 | tail -40 | sed -e 's/^/    /'
 fi
 echo
-echo "RESULT: PASS — seeded rows, served payloads and the reservation walk agree on :$PORT"
+
+# --------------------------------------------------------------------------- 8/8 the contract itself
+step "8/8  reconcile docs/API_CONTRACT.md against what this build declares"
+# Same instance, same build, one question the other two ledgers cannot answer: does the document describe
+# the router? `/v3/api-docs` is generated from the annotations that registered, so a documented §4/§8 read
+# that is absent here is a page a consumer can be sent to with nothing behind it — and that fails the run.
+node "$SCRIPT_DIR/verify_contract_runtime.mjs" --base "http://127.0.0.1:$PORT" | sed -e 's/^/    /'
+echo
+echo "RESULT: PASS — seeded rows, served payloads, the reservation walk and the contract agree on :$PORT"

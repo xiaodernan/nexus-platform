@@ -419,6 +419,16 @@ All admin routes require `role IN (platform_admin, platform_ops)` and write `aud
   used as a write path for anything a user can see — an event is an observation, not a record.
   Unauthenticated calls are allowed only with an anonymous `session_id`; no free-text field is stored
   and nothing collected here may influence organic ranking (§66).
+- **Liveness and readiness**: `GET /api/v1/health` → `{status, service, profiles[], request_id}` — a process
+  answer, no dependency touched, so it stays 200 while the database is down. `GET /api/v1/ready` →
+  `{status: ready|not_ready, database: up|down, schema_version, key_value_backend: redis|in_memory}`, where
+  `schema_version` is the highest successful `flyway_schema_history` entry and `not_ready` is a real answer
+  rather than a 500. Neither sets an explicit `Cache-Control` — §103's `no-store` rule is about money and
+  seats, and these are neither — so a caller must not treat the answer as durable: `health` carries a fresh
+  `request_id` and `ready` issues a `select 1` per call, which is the only reason it can say `down` at all.
+- The generated documents themselves are part of the contract: `/v3/api-docs` is what the router registered,
+  so `scripts/verify_contract_runtime.mjs` diffs it against §-tables, and
+  `scripts/verify_served_reads.mjs` probes every path declared there.
 - All list endpoints support `ETag`/`Cache-Control` except availability/inventory/price (no-store, §103).
 - OpenAPI is generated from code annotations at `/v3/api-docs` and `/ai/openapi.json` — this document is the design
   input, generated specs are the build output; they must agree (contract test in CI).

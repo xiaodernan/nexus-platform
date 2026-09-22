@@ -1178,3 +1178,7 @@ Still open, and deliberately not silently absorbed: `POST /api/v1/share` is docu
 and it is a decision to drop it, not a formatting fix), and the 14 remaining undocumented-served rows are
 mostly `com.nexus.merchant` / `com.nexus.conversation` routes whose owners should write their own rows —
 listed with their paths in the tool's output rather than paraphrased here.
+
+The harness now ends with that reconciliation as step 8 of 8, so the contract cannot drift from the router without a gate going red: `scripts/e2e_fresh.sh` runs the reconciler against the same throwaway instance the probes just graded, and a full run is now seed → schema → 525 served-read checks → 30 reservation checks → contract ↔ router, `RESULT: PASS` on one command.
+
+§11 gained the two operational reads it never documented (`GET /api/v1/health` and `/ready`, with the exact fields each returns). The first draft of that bullet claimed both were `no-store`; measured against a running instance, neither sets a `Cache-Control` header at all, so the row now says what is true and why it is fine — §103's `no-store` rule is about money and seats — and why a caller still must not cache the answer: `ready` issues a `select 1` per call, which is the only reason it can ever say `down`.
