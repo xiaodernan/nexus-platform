@@ -1039,3 +1039,39 @@ Also: `e2e_fresh.sh` refuses to run on a port someone else is already listening 
 believe a response unless the java process holding that port is the one it started. The first version of
 the harness graded a leftover instance from an earlier attempt; that is how a green end-to-end run can
 mean nothing.
+
+
+## 26. Auditing the surface the service says it has (2026-09-23)
+
+The probes so far asked about the routes the author remembered. The service publishes a better list:
+springdoc is a dependency, so `/v3/api-docs` is what the *running process* claims to answer. `verify_served_reads.mjs`
+now fetches it and hits every declared GET, filling each path parameter with an identifier this run
+actually resolved (a merchant slug it just read, an offering from its menu, the guide from §8) and using a
+deliberately unresolvable one where nothing exists to address.
+
+The rule that makes that meaningful: **a route is allowed to refuse, but not to be silent.** 401/403 is a
+workspace route behaving as designed; a 404 or 422 must carry `error.code` naming what it rejected; a 5xx
+or an unnamed 404 is the OpenAPI document advertising something the router does not have behind it.
+
+```
+· served surface: 39 declared GETs · 13 answered 200 · 26 failed closed or asked for auth
+  · 0 5xx · 0 not really mapped
+RESULT: PASS — 525 served-read checks (was 204)
+```
+
+Every EntityCard-shaped object anywhere in those 39 responses goes through the §19 check — the sweep walks
+the payload tree rather than trusting an endpoint to tell it where it put a card — so a rating printed on a
+surface nobody wrote a probe for still has to carry its fact.
+
+Two 500s were reported against this tree while I was building the sweep ("`/api/v1/offerings/{slug}` and
+`/api/v1/collections/{slug}` crash on a scalar `seo`"). Both were checked against the code before being
+"fixed", and neither exists here: the offering laterals all filter `f.subject_type = 'offering'`, and
+`Json.jsonObject` returns an empty map for a non-object column, which is what `coverOf` and `seoOf` build
+on. The sweep found 0 5xx. What the dispute was worth is now an assertion rather than an argument —
+`CollectionsReadTest.scalarSeoDoesNotBreakTheProfile` inserts a guide whose `seo` is the string
+`"not-an-object"` and requires the read to answer from the columns it can still trust, `creator` and
+`User curator` from the real author, cover from `cover_url`, and `noindex` because unreadable provenance is
+still unreviewed (§27 does not default open).
+
+`mvn -o test`: 107/107. The whole run again from an empty database: 1,727 rating facts loaded, datasource
+guard green, 525 read checks, 30/30 reservation checks against a priced slot (`slot=473.11`).

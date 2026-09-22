@@ -24,6 +24,10 @@ const arg = (name, fallback) => {
 const BASE = arg('base', 'http://127.0.0.1:8090').replace(/\/$/, '');
 const TENANT = arg('tenant', 'hong-kong');
 
+// What this run has actually managed to address things by, so the surface sweep fills real ids
+// rather than inventing ones it cannot resolve.
+const run = { slug: null, merchantId: null, offeringSlug: null, guideSlug: null };
+
 const failures = [];
 const notes = [];
 let checks = 0;
@@ -97,9 +101,11 @@ async function main() {
   // ---- one profile, and the offerings it lists
   const slug = cards.find((c) => c?.slug)?.slug;
   if (!slug) return finish();
+  run.slug = slug;
   const profile = await get(`/api/v1/merchants/${slug}`);
   ok(`GET /api/v1/merchants/${slug}`, profile.status === 200, `HTTP ${profile.status}`);
   ratingIsBacked({ ...profile.body, facts: profile.body?.facts ?? [] }, `profile ${slug}`);
+  run.merchantId = profile.body?.id ?? slug;
   ok('the profile marks its data origin', profile.headers.get('x-demo-data') !== null,
     'no X-Demo-Data header on a seeded read');
 
@@ -107,6 +113,7 @@ async function main() {
   ok(`GET /api/v1/merchants/${slug}/menu`, menu.status === 200, `HTTP ${menu.status}`);
   const offerings = menu.body?.items ?? [];
   const withRating = offerings.filter((o) => o?.rating?.value != null);
+  run.offeringSlug = (withRating[0] ?? offerings[0])?.slug ?? null;
   note('menu offerings probed', `${offerings.length} (${withRating.length} rated)`);
   for (const o of withRating) ratingIsBacked(o, `menu offering ${o?.slug}`);
 
@@ -181,6 +188,7 @@ async function main() {
   const guides = await get('/api/v1/guides');
   ok('GET /api/v1/guides', guides.status === 200, `HTTP ${guides.status}`);
   const listed = guides.body?.items ?? [];
+  run.guideSlug = listed[0]?.slug ?? null;
   note('published guides', listed.length);
   ok('every listed guide is a guide', listed.every((g) => g?.kind === 'guide'),
     JSON.stringify(listed.map((g) => g?.kind)));
@@ -234,7 +242,93 @@ async function main() {
   ok('an unknown kind is a 422 that names the field', badKind.status === 422
     && badKind.body?.error?.details?.field === 'kind', `HTTP ${badKind.status}`);
 
+  // ---- the whole declared surface, not just the routes the author remembered.
+  // `/v3/api-docs` is the running service's own list of what it answers, so this is a coverage check
+  // rather than an enumeration of hopes: every GET the service advertises gets hit, and a route that
+  // 500s, or that the router does not actually have behind the declaration, fails the run. Public reads
+  // must return 200; anything needing an id this run does not have must fail *closed* with a named
+  // error code — a bare 404 body or a stack-trace status means the contract and the handler disagree.
+  await surfaceSweep();
+
   return finish();
+}
+
+/** Hit every GET the running service declares, and hold each response to its declared behaviour. */
+async function surfaceSweep(ids) {
+  const doc = await get('/v3/api-docs');
+  if (doc.status !== 200 || !doc.body?.paths) {
+    note('served surface', `unavailable (HTTP ${doc.status}) — coverage not proven`);
+    failures.push('the service publishes no OpenAPI document, so its served surface cannot be audited');
+    return;
+  }
+  const gets = Object.entries(doc.body.paths).filter(([, ops]) => ops && ops.get);
+  ok('the declared surface contains the consumer reads this suite cares about',
+    gets.some(([p]) => p === '/api/v1/merchants')
+    && gets.some(([p]) => /guides/.test(p))
+    && gets.some(([p]) => /reviews/.test(p)),
+    `${gets.length} GET paths declared`);
+
+  let real = 0, reachable = 0, fivedowns = 0, unmapped = 0;
+  const reported = [];
+  for (const [template] of gets) {
+    const placeholders = [...template.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]);
+    const values = idsFor(template);
+    const known = placeholders.every((p) => values[p] !== undefined);
+    const filled = template.replace(/\{([^}]+)\}/g, (_, name) =>
+      values[name] !== undefined ? values[name] : `zzz-unknown-${name}`);
+    const res = await get(filled);
+    if (res.status >= 500) {
+      fivedowns += 1; reported.push(`5xx on ${filled}`); continue;
+    }
+    // Failing closed means *naming* the failure: a 404 with `collection_not_found` is the handler
+    // answering correctly, while a 404 with no body (or the catch-all "No such endpoint") means the
+    // OpenAPI document advertises something the router does not actually have behind it.
+    const named = typeof res.body?.error?.code === 'string' && res.body.error.code !== 'not_found';
+    if (res.status === 401 || res.status === 403) { reachable += 1; continue; }   // auth-gated, as designed
+    if (res.status === 404 && !known) {
+      unmapped += 1; reported.push(`declared, no route behind it: ${filled}`); continue;
+    }
+    if (res.status >= 400 && !named) {
+      unmapped += 1; reported.push(`${res.status} without a named error code: ${filled}`); continue;
+    }
+    if (res.status === 200) {
+      ok(`served GET ${template} returns JSON`, res.body !== null, 'unparsable body');
+      for (const card of cardsIn(res.body)) ratingIsBacked(card, `surface ${template}`);
+      real += 1;
+    } else reachable += 1;
+  }
+  note('served surface', `${gets.length} declared GETs · ${real} answered 200 · `
+    + `${reachable} failed closed or asked for auth · ${fivedowns} 5xx · ${unmapped} not really mapped`);
+  ok('no declared GET route 500s', fivedowns === 0, reported.filter((r) => r.startsWith('5xx')).join('; '));
+  ok('every declared GET route answers as itself', unmapped === 0,
+    reported.filter((r) => !r.startsWith('5xx')).join('; '));
+}
+
+/** The best id this run actually has for each path parameter a declared route asks for. */
+function idsFor(template) {
+  const ids = {};
+  const merchant = /collection|guide/i.test(template) ? null : run.slug;
+  if (/idOrSlug/.test(template)) ids.idOrSlug = merchant ?? run.slug;
+  if (/\{slug\}/.test(template)) {
+    ids.slug = /collection|guide/i.test(template) ? (run.guideSlug ?? run.slug)
+      : /offerings?/.test(template) ? (run.offeringSlug ?? run.slug) : run.slug;
+  }
+  if (/\{id\}/.test(template)) ids.id = /reservation/.test(template) ? 'NX-unknown' : (run.merchantId ?? run.slug);
+  if (/merchant_id|merchantId/.test(template)) {
+    ids.merchant_id = run.merchantId; ids.merchantId = run.merchantId;
+  }
+  if (/offering/.test(template) && /\{|offer/.test(template)) ids.offering_slug = run.offeringSlug;
+  if (/\{code\}/.test(template)) ids.code = 'NX-unknown';
+  return ids;
+}
+
+/** Every EntityCard-shaped object anywhere in a payload, however the endpoint nests it. */
+function cardsIn(body, found = []) {
+  if (body === null || typeof body !== 'object') return found;
+  if (Array.isArray(body)) { for (const v of body) cardsIn(v, found); return found; }
+  if (typeof body.card_type === 'string' && ('rating' in body || 'facts' in body)) found.push(body);
+  for (const v of Object.values(body)) cardsIn(v, found);
+  return found;
 }
 
 function finish() {

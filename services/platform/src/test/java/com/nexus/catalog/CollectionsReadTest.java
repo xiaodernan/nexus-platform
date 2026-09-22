@@ -218,6 +218,33 @@ class CollectionsReadTest extends NexusIntegrationTest {
         assertThat(page.path("cover_image").path("credit").isNull()).isTrue();
     }
 
+    @Test
+    @DisplayName("A `seo` column that is not an object degrades to nothing, it does not fail the read")
+    void scalarSeoDoesNotBreakTheProfile() {
+        String tag = tag();
+        // `collections.seo` is jsonb with no shape constraint, so a writer can put a string or an array
+        // there. The read's job is then to say what it still knows from the real columns — the title, the
+        // cover, the author — and to treat the unreadable provenance as absent, which §8 already defines
+        // as `ai`, not to answer 500 for data it did not expect.
+        jdbc.update("""
+                insert into collections (id, tenant_id, author_id, kind, slug, title, description, cover_url,
+                                         items, visibility, data_origin, seo, published_at)
+                values (:id, :t, :author, 'guide', :slug, 'Scalar seo guide', 'A demo list.', '/demo/img/x.svg',
+                        cast(:items as jsonb), 'public', 'demo', cast(:seo as jsonb), now())
+                """, new MapSqlParameterSource("id", UUID.randomUUID()).addValue("t", tenant.id())
+                .addValue("author", author).addValue("slug", "scalar-seo-" + tag)
+                .addValue("items", items(merchant(tenant, "seo-merchant-" + tag)))
+                .addValue("seo", "\"not-an-object\""));
+
+        JsonNode page = Json.tree(body("/api/v1/guides/scalar-seo-" + tag));
+        assertThat(page.path("slug").asText()).isEqualTo("scalar-seo-" + tag);
+        assertThat(page.path("generated_by").asText()).isEqualTo("creator");
+        assertThat(page.path("curated_by").path("name").asText()).isEqualTo("User curator");
+        // Unreadable provenance is still unreviewed, so the §27 gate applies rather than defaulting open.
+        assertThat(page.path("noindex").asBoolean()).isTrue();
+        assertThat(page.path("cover_image").path("url").asText()).isEqualTo("/demo/img/x.svg");
+    }
+
     // ---------------------------------------------------------------- attribution
 
     @Test
