@@ -1229,3 +1229,10 @@ One own error worth keeping: the first version of the aggregate-untouched test p
 wrote nothing. It was green and meaningless until the live run forced the key in. A check that cannot tell
 "refused" from "accepted and inert" is not a check — same lesson as the reservation walk's `null == null`
 money comparisons, learned twice in one day.
+
+Consequence, stated so nobody rediscovers it: this leaves a queue with no door. The rows `ReviewController`
+writes can only be published by §9's `POST /api/v1/admin/moderation/{case_id}/resolve`, which the reconciler
+lists as documented and unserved — so in the current build a real review stays pending forever, and the
+aggregate can only ever move through merchant edits and the seeded corpus. That is the honest state, not a
+bug to hide by publishing on write, and it is now the blocking dependency of the review surface: it belongs
+to whoever builds §9.
