@@ -765,9 +765,9 @@ The wave also corrected two doc claims that D30 had orphaned: `DEPLOYMENT.md` §
 transfer is belt-and-braces and names the configuration it protects.
 
 Still open: `nexus_test`'s ledger is now *recorded*, not *validated* — nothing runs the migration files through it,
-so a hand-built schema that drifts from `V*.sql` would still be invisible until something errors; the 29
-client-only routes remain unowned. Two items this paragraph listed are closed in the section after it: the missing
-fresh-DB gate trigger, and `API_CONTRACT.md` §0 calling `nexus_app` the owner of the commerce tables.
+so a hand-built schema that drifts from `V*.sql` would still be invisible until something errors; the
+client-only routes remain unowned. Two items this paragraph listed are closed in the section after it: the missing fresh-DB gate trigger, and `API_CONTRACT.md` §0 calling
+`nexus_app` the owner of the commerce tables.
 
 ## Building the database nobody had ever built (2026-09-23, task #21)
 
@@ -830,3 +830,51 @@ the collections read path: `API_CONTRACT.md` §8 describes `collections.items` a
 every seeded row use a flat `[{subject_type,subject_id,note}]`. Neither document is wrong about its own layer, and
 the mismatch will bite the first page that renders a guide — it needs a ruling, not a silent pick.
 
+## Four endpoints nobody had served, and the column shape they disagreed about (2026-09-23, task #22)
+
+The §8 collections/guides read path was delegated; the agent landed `CollectionsRepository` and stopped at the
+words "Now the controller." That is a half-finished slice, not a result, so the controller, the tests and the
+ruling below are the lead's. The repository turned out to be worth keeping: its `WHERE` carries the publishability
+predicate (§8's "absent provenance is `creator` only when `author_id` is a real user, otherwise the row is not
+publishable") as SQL rather than as controller logic, which is what makes the list and the by-slug 404 unable to
+disagree about what is readable.
+
+Reading §8 to write the handler found a contract/storage divergence (**D34**): §8 described
+`collections.items` as an array of typed blocks (`{type: paragraph|heading|list|cards}`) while V1's column
+comment, DATABASE.md §3.9 and all four seeded rows describe the flat `[{subject_type,subject_id,note}]`. A
+block-only reader renders **zero cards for every guide in the demo**, so the ruling had to be made rather than
+worked around: the flat array is the storage contract, resolution is a read-side concern, and a typed element is
+passed through unresolved instead of deleted. No migration adds block storage — nothing writes it and no consumer
+reads it.
+
+`/api/v1/collections`, `/api/v1/collections/{slug}`, `/api/v1/guides` and `/api/v1/guides/{slug}` are now served:
+public, `Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=86400`, `Vary: X-Tenant`,
+`X-Demo-Data` badged off `data_origin`. Merchant references resolve through `MerchantCards` — one batched read per
+row, never one per item — so a guide's card is byte-identical to the same merchant's card in the directory, keys
+and all, with the open state stamped by the instant of that read. Unresolvable ids drop and are named in
+`dropped_item_ids`; `item_count` still reports what was stored. `POST /api/v1/collections` remains unbuilt
+deliberately: it creates a publishable consumer page, so it belongs behind the permission chain with the §27
+authorization on the row, not beside four anonymous reads.
+
+Verification, on a throwaway instance on `:8091` so the already-running `:8090` was not disturbed:
+
+```
+mvn -o test                       104/104  (CollectionsReadTest 10, from a standing 94)
+GET /api/v1/guides                1 guide · creator · curated_by 陳小姐 (Demo) · item_count 10
+GET /api/v1/guides/sha-tin-date-night
+                                  item_count 10 · items 10 · cards 10 · distinct shops 9 · dropped 0
+                                  noindex true · "not reviewed by a human (§27)"
+GET /api/v1/guides/quiet-meals-near-me   404 guide_not_found   (a collection is not a guide)
+GET /api/v1/collections?kind=blog        422 validation_error, details.field=kind, allowed=[collection,guide,itinerary]
+scripts/check_contract_drift.mjs  served 64 → 68, client-only 29 → 25
+```
+
+Nine items across ten citations is the seeded data being honest, not a defect: `build_collections` overlaps its
+quiet-hours pick with its Sha Tin pick. It is also why `cards` mirrors the item walk rather than the distinct shop
+set — an array one shorter than the list it was built from reads as a lost row.
+
+Still open: the collection/guide payload has no `packages/types` schema yet, so `verify_payload_conformance.mjs`
+cannot check these four responses at all (it can only check what the platform already declares);
+`GET /api/v1/merchants/{slug}`'s profile still has no published schema (36 top-level keys unchecked); and the
+cards these pages embed inherit the §19 rating defect — `rating` renders on 520 merchants while no `facts` row
+carries `attribute='rating'`, which is the next thing to fix at the seed layer.

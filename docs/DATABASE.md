@@ -145,6 +145,8 @@ Grouped by domain; the ER overview in §10 shows relationships. "Owner role" = w
 ### 3.9 Discovery objects (§63, §64, §115)
 - **`favorites`**, **`saved_searches`** (stores the resolved `intent jsonb` + `notify`), **`collections`**
   (`kind collection|guide|itinerary`, ordered `items jsonb`, `data_origin` demo-flag for AI guides, §64 real-data rule).
+  `items` is the flat array its column comment states — `[{subject_type, subject_id, note}]` — and the API resolves
+  the merchant ids into cards on read; a typed block passes through unresolved rather than being deleted (D34).
 
 ### 3.10 Growth & monetization (§59–§66)
 - **`coupons`** — `status` includes `draft`; `published_by`/`published_at` = the explicit human authorization for §27.

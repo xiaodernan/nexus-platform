@@ -328,9 +328,9 @@ apply to both objects:
 | Response field | Column / derivation | Honesty rule |
 | --- | --- | --- |
 | `Guide.slug`, `title`, `description` | `collections.slug`, `title` (+ `title_zh` for the zh-HK locale) | direct |
-| `Guide.body_blocks` | `collections.items` jsonb — an ordered array of `{type: paragraph\|heading\|list\|cards}` blocks; a `cards` block carries entity **ids**, and the platform resolves them into `EntityCard`s on the same read | a block may not cite a merchant that does not exist; unresolvable ids drop the item, they never render a placeholder card |
+| `Guide.items[]`, `Guide.cards[]` | `collections.items` jsonb — **the ordered array the column actually holds**, `[{subject_type, subject_id, note}]` (V1's own comment, and what every seeded row is). Merchant references are resolved into §2 `EntityCard`s on the same read: `items[]` keeps the stored order with each resolved card nested under `card`, and `cards[]` is that same list flattened | an id that resolves to no published merchant drops the item and is named in `dropped_item_ids`; it never renders a placeholder card, and the page never silently gets a shorter list than the author wrote. Repeats are kept: the seeded Sha Tin guide cites ten items across nine shops, and `len(cards)` tracks the items, not the shops. An element with a `type` key (a paragraph or heading block) is passed through unresolved — see D34 on why blocks are tolerated and not invented |
 | `Guide.generated_by` (`ai\|editor\|creator`) | `collections.seo->>'generated_by'` | required; absent provenance is served as `creator` **only** when `author_id` is a real user, otherwise the row is not publishable |
-| `Guide.reviewed_by_human` | `collections.seo->>'reviewed_by_human'` = `'true'` | this is the §27 gate: `false` ⇒ the web layer noindexes the page and the sitemap omits it |
+| `Guide.reviewed_by_human` | `collections.seo->>'reviewed_by_human'` = `'true'` | this is the §27 gate, and the platform applies it: a detail read answers `reviewed_by_human` plus the derived `noindex` and `noindex_reason`, so `false` ⇒ noindex and sitemap-omitted without the view deciding anything (§30 computes the same verdict for `seo_pages`) |
 | `Collection.curated_by.{type,name}` | `collections.seo->>'curated_by'` (`editorial\|creator\|model\|ai`) + `users.display_name` for `author_id`, or the model's own name for `model` | the name is a real account's name, a real model version, or the literal `"AI curation"` — never a person who did not curate it |
 | `Collection.cover_image.{url,alt,credit}` | `collections.cover_url`, `collections.seo->'cover'` | `credit` is nullable and stays nullable — an uncredited photo must not gain a photographer |
 | `flags.demo` | `collections.data_origin = 'demo'` | the column is the source of the badge; the UI may not decide it |
@@ -341,6 +341,12 @@ apply to both objects:
 `GET /api/v1/collections` · `POST /api/v1/collections` · `GET /api/v1/collections/{slug}` ·
 `GET /api/v1/guides/{slug}` (SSR + JSON-LD) ·
 `POST /api/v1/share {subject_type,subject_id}` → short link + OG payload.
+
+The four §8 reads above are served by `CollectionsController` (`com.nexus.catalog`): public, no session,
+`Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=86400`, `Vary: X-Tenant`, and every one
+of them answers only rows that are `visibility='public'`, `published_at IS NOT NULL` **and** attributable (D34).
+`POST /api/v1/collections` is not: a consumer-facing read is not where a publishable row gets created, and the
+write belongs behind the workspace permission chain with the §27 authorization recorded on it.
 Referral rewards are recorded only on genuine conversion events (§110 forbids fake growth).
 
 Programmatic SEO (§29/§30) reads the `seo_pages` projection, which the platform owns — the web edge never

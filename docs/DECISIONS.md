@@ -536,3 +536,42 @@ in 63s, exit 0, neither live database opened.
 
 Not done: it is not wired into `make`, because `Makefile` carries another stream's uncommitted edits — the script
 stands on its own and the target can be added by whoever next owns that file.
+
+## D34 A guide is a row in `collections`, its items are the flat array the column holds, and blocks are passed through — 2026-09-23
+
+§8 built the read path. The first thing it surfaced is that the contract and the storage describe two different
+columns: §8 documented `Guide.body_blocks` as "`collections.items` jsonb — an ordered array of
+`{type: paragraph|heading|list|cards}` blocks", while V1's own comment on that column says
+`ordered [{subject_type,subject_id,note}]`, DATABASE.md §3.9 repeats "ordered `items jsonb`", and all four seeded
+rows (the Sha Tin date guide, two collections and one itinerary) are flat. Both documents were current. Writing
+the controller forced the question, because a block-only reader renders **zero cards for every guide in the demo**.
+
+Ruling: **`collections.items` is the flat ordered array; typed blocks are tolerated and passed through, never
+invented by the platform.** §8 now states it that way.
+
+- Resolution is a read-side concern. Merchant references are resolved through `MerchantCards` — one batched
+  `cardsByIds` for the whole row, never a query per item — and the response carries `items` (stored order, each
+  resolved entry nesting its own `card`), `cards` (the same walk flattened) and `dropped_item_ids`.
+- An id that resolves to no published merchant **drops the item and is named**. Placeholder cards are the §19
+  failure §8 was already guarding; a silently shorter list is the same failure one layer down, so the drop is
+  reported rather than hidden. `item_count` stays the stored size, which is what lets a page say "10 cited,
+  8 still open".
+- `cards` follows the items, repeats included. The seeded guide cites ten items across nine shops, and a
+  distinct-shops array would be one shorter than the list it came from — which reads as a lost row. Measured on
+  the running service: `item_count 10 · items 10 · cards 10 · distinct 9 · dropped 0`.
+- An element carrying `type` (a paragraph, a heading) is echoed unresolved. "This read cannot project it" is not
+  "it does not exist", and deleting a guide's prose because it is not a merchant id is the worse of the two
+  errors. No migration adds block storage: nothing writes blocks today, no consumer reads them, and a column
+  invented for a shape the seeder does not produce is how the next D33-class divergence gets written.
+- Attribution is derived exactly as §8 words it, and the platform applies the §27 gate rather than delegating it:
+  `generated_by` falls back to `creator` only when `author_id` is a real account, `curated_by.name` is that
+  account's `display_name`, a `model` curation with no model named reports as `ai` / `"AI curation"`, and
+  `noindex` + `noindex_reason` are computed here. Live, the seeded guide answers
+  `creator · 陳小姐 (Demo) · noindex true · not reviewed by a human (§27)` — the name is the account the seeder
+  created, not a persona.
+- The publishability predicate lives in the repository's `WHERE`, not in the controller, so the list and the
+  by-slug 404 cannot disagree about what is readable. An unattributable row is absent from both.
+
+`POST /api/v1/collections` stays unbuilt on purpose. It is the one §8 write that creates a publishable consumer
+page, so it belongs behind the workspace permission chain with the §27 authorization recorded on the row, not
+beside four anonymous cacheable reads.
