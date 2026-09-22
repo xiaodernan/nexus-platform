@@ -457,3 +457,46 @@ is a separate fact that must also hold.**
   cleaner model (a grant then belongs to a role-holder-in-a-workspace and dies with the membership). It is also a
   change to every permission call site, the `Principal` shape, and the RBAC tests, in a module another stream owns.
   This ruling records the seam; it does not pretend the current shape is the destination.
+
+## D32 The runtime role gets no schema `CREATE`, and a ledger-less database says so instead of being clobbered — 2026-09-23
+
+D30 split the migration credential from the runtime credential and left one item open on purpose: `nexus_app`
+still held `CREATE` on `schema public`, granted back when that role also ran Flyway. The reasoning recorded there
+— "this file only runs on a first-boot volume" — was wrong. `00_roles.sql` is re-run at the end of
+`scripts/db_apply_migrations.sh` (its own header says so, and the run below proves it), so narrowing the grant in
+the file that makes it reaches the existing dev database too, with no fork between fresh and existing volumes.
+
+Ruling: **the platform role holds `USAGE` on the schema and DML on its tables, and nothing that creates a database
+object.**
+
+- Granted as `GRANT USAGE ON SCHEMA public TO nexus_app; REVOKE CREATE ON SCHEMA public FROM nexus_app;` — the
+  `REVOKE` is written out so re-running the file stays idempotent. `nexus_ai` was already `USAGE`-only, so the two
+  roles now agree on the rule the §0 privilege split intends.
+- What the privilege actually bought: nothing. Schema `CREATE` permits *new* objects, not changes to objects the
+  role does not own — which is exactly why V4 failed as `42501 must be owner of table user_identities` *while* the
+  app role held it. Verified from both directions afterwards: `nexus_app` cannot create a table
+  (`permission denied for schema public`), and 94 integration tests plus the live booking walk run as `nexus_app`
+  against a `U`-only schema with no change in behaviour.
+- `ALTER DEFAULT PRIVILEGES FOR ROLE <db-owner> ... TO nexus_app` (already in the file) is what makes the revoke
+  safe for future migrations: a table V5 creates gets DML for the runtime role automatically, so no migration ever
+  needs the runtime role to be able to create anything itself.
+
+The same run exposed the second half. `nexus_test` has every object V1–V4 creates — its index and constraint sets
+match the migrated dev database one for one, 334 of 334, the three deltas all being Flyway's own bookkeeping
+tables — but records **zero** rows in `schema_migrations` and has no `flyway_schema_history` at all
+(`spring.flyway.enabled=false` in `NexusIntegrationTest`, so the service never migrates it). Against that database
+`db_apply_migrations.sh` tried to re-run V1 and died on `relation "tenants" already exists`, which also skipped the
+role grants further down: a ledger that disagrees with its content blocks the whole script.
+
+Ruling: **a migration is never silently re-applied, and the repair is an explicit declaration rather than a guess.**
+
+- `apply_file` now separates the two failure classes. An `already exists` error stops with a message naming the
+  condition (content predates ledger, hand-built schema, or half-applied) and the command that fixes the first of
+  them; any other SQL error propagates unchanged, still inside `--single-transaction`, so a genuinely broken
+  migration leaves no partial schema.
+- `--record V<n>__<name>` inserts the ledger row and executes nothing, printing that it did so. Auto-detecting
+  "content already matches" was rejected: comparing an arbitrary migration against live objects is either too weak
+  to trust (a subset check passes on a half-built schema) or too specific to keep up with the files, and a wrong
+  row would make a later real migration skippable. The operator asserts the match; here that assertion is the
+  334-row index/constraint diff above, and `--force` remains the escape hatch when content and file must be
+  reconciled by re-running.

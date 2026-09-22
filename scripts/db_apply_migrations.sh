@@ -10,6 +10,12 @@
 #   scripts/db_apply_migrations.sh --seed         # ...then infra/db/seed/*.sql (idempotent seeds)
 #   scripts/db_apply_migrations.sh --force        # re-apply everything (TRUNCATE-free; assumes scripts are idempotent)
 #   scripts/db_apply_migrations.sh --file x.sql    # apply one arbitrary SQL file (relative to repo root)
+#   scripts/db_apply_migrations.sh --record V2__integrity   # declare one migration applied, running nothing
+#
+# One ledger caveat this script cannot fix by itself: the platform service runs Flyway and keeps
+# `flyway_schema_history`, while this script keeps `schema_migrations`. A database built by hand has
+# neither, and then a run here fails on `already exists` rather than clobbering it — read that error and
+# use --record once the content has been compared against a migrated database (DECISIONS D32).
 #
 # Environment overrides (an exported value wins over .env, so a scratch/target DB is addressable
 # without editing .env, which other streams read):
@@ -42,15 +48,17 @@ ROLES_SQL="$ROOT/infra/postgres/init/00_roles.sql"
 # Flyway migration has to replace in place (views). Same default as application.yml.
 APP_ROLE="${NEXUS_PLATFORM_DB_USERNAME:-nexus_app}"
 APPLY_ONLY=""
+RECORD=()
 RUN_SEED=0
 FORCE=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --seed)  RUN_SEED=1 ;;
-    --force) FORCE=1 ;;
-    --file)  shift; APPLY_ONLY="${1:?--file needs a path}" ;;
-    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    --seed)    RUN_SEED=1 ;;
+    --force)   FORCE=1 ;;
+    --record)  shift; RECORD+=("${1:?--record needs a version, e.g. --record V2__integrity}") ;;
+    --file)    shift; APPLY_ONLY="${1:?--file needs a path}" ;;
+    -h|--help) sed -n '2,27p' "$0"; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
   shift
@@ -97,12 +105,51 @@ apply_file() {
   fi
   echo "> apply $version  <- $(basename "$file")"
   # --single-transaction: a migration that fails half-way leaves NO partial schema behind.
+  local err rc=0
+  err="$(mktemp "${TMPDIR:-/tmp}/nexus-migrate.XXXXXX")"
   sed 's/\r$//' "$file" | docker exec -i "$CONTAINER" \
-    psql -v ON_ERROR_STOP=1 --single-transaction -U "$PGUSER" -d "$DBNAME" -q -f -
+    psql -v ON_ERROR_STOP=1 --single-transaction -U "$PGUSER" -d "$DBNAME" -q -f - 2>"$err" || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    cat "$err" >&2
+    # `already exists` is not a broken migration — it is a database whose content predates its ledger,
+    # which happens whenever a schema was built by hand (or by Flyway, whose history this script does
+    # not read when the service never booted against that database). Re-running would be a silent
+    # double-apply, so stop and name the repair instead of letting the operator guess at the error.
+    if grep -qE 'already exists' "$err"; then
+      rm -f "$err"
+      echo "!! $version was not executed: the objects it creates are already in '$DBNAME', but" \
+           "$version is not in schema_migrations, so this script cannot tell applied-by-hand from a" \
+           "half-built schema." >&2
+      echo "!! Compare the content (tables + pg_indexes + pg_constraint) against a database that IS" \
+           "migrated, then declare it:" >&2
+      echo "     scripts/db_apply_migrations.sh --record $version" >&2
+      echo "!! Until then this database cannot be migrated by either ledger, and role grants further" \
+           "down in this run are skipped." >&2
+      exit 1
+    fi
+    rm -f "$err"
+    return "$rc"
+  fi
+  rm -f "$err"
   if [ -n "$version" ]; then
     psql_exec "INSERT INTO schema_migrations(version, applied_at) VALUES ('$version', now())
                ON CONFLICT (version) DO NOTHING" >/dev/null
   fi
+}
+
+record_applied() {
+  # Declare a migration applied without executing it, for a database whose content was verified to
+  # already match. Deliberately manual: the ledger is the only record of what a hand-built schema has,
+  # and a wrong row here makes a real migration skippable later.
+  local version="$1" file
+  file="$MIG_DIR/${version%.sql}.sql"
+  [ -f "$file" ] || { echo "!! --record: no such migration file: $(basename "$file")" >&2; exit 2; }
+  local already
+  already="$(psql_exec "SELECT 1 FROM schema_migrations WHERE version = '$(basename "${file%.sql}")'")"
+  if [ "$already" = "1" ]; then echo "= already recorded"; return 0; fi
+  psql_exec "INSERT INTO schema_migrations(version, applied_at) VALUES ('$(basename "${file%.sql}")', now())" >/dev/null
+  echo "= recorded $(basename "${file%.sql}") as applied WITHOUT executing it"
+  echo "  ledger only — nothing ran against '$DBNAME'. The operator asserted the content matches."
 }
 
 # ------------------------------------------------------------------ preflight
@@ -127,6 +174,15 @@ psql_exec "CREATE TABLE IF NOT EXISTS schema_migrations (
              version    text PRIMARY KEY,
              applied_at timestamptz NOT NULL DEFAULT now()
            )" >/dev/null
+
+# ------------------------------------------------------------------ declared-by-hand migrations
+# Processed before the loop so a --record run also lands the role grants below: the reason a ledger-less
+# database needs this script at all is usually those grants.
+if [ "${#RECORD[@]}" -gt 0 ]; then
+  for v in "${RECORD[@]}"; do
+    record_applied "$v"
+  done
+fi
 
 # ------------------------------------------------------------------ migrations, in filename order
 # Flyway-style V<version>__<name>.sql, applied in lexicographic order (bash globs are sorted).
@@ -158,11 +214,13 @@ echo "> apply role grants  <- $(basename "$ROLES_SQL")"
 apply_roles_file
 
 # ------------------------------------------------------------------ hand the views to the app role
-# The platform ships Flyway and baselines an already-provisioned database at V2 (application.yml), so the
-# NEXT `V<n>__*.sql` runs as `nexus_app` — and V3 is a `CREATE OR REPLACE VIEW v_merchant_funnel`, which
-# Postgres refuses from a non-owner ("must be owner of view ...") because this script created every object
-# as the superuser. Views are the only objects a later migration has to replace in place, so ownership of
-# exactly those moves to the role that will have to rewrite them. Tables stay with the superuser.
+# Views are the only objects a later migration has to replace in place (`CREATE OR REPLACE VIEW`), and
+# Postgres refuses that from a non-owner — so whoever runs Flyway must own them. Since D30 that is the
+# infra superuser, which can replace anything, making this transfer belt-and-braces rather than
+# load-bearing. It is kept anyway: a database provisioned by this script stays migratable by the runtime
+# role if someone points `SPRING_FLYWAY_USER` back at it, which is exactly the configuration that booted
+# before D30 and failed V4 with `42501 must be owner of table user_identities`. Tables stay with the
+# superuser.
 echo "> transfer view ownership to $APP_ROLE"
 psql_exec "do \$\$
 declare r record;

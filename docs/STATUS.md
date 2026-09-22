@@ -708,9 +708,64 @@ the first booking. The check now compares the inbox row against the booking resp
 script typed, and the leg prefers a slot it has not already claimed. `mvn -o test`: **94 tests, 0 failures** on
 `nexus_test`.
 
-Still open from this wave: `nexus_app` keeps the leftover `CREATE` on the schema (revoking it needs a migration,
-not an edit to a first-boot initdb file — D30 point 1); the test database runs with `spring.flyway.enabled=false`,
-so migrations applied to it by hand are validated by nothing; the scratch gate database was dropped after the run
-and has no automated trigger yet — `make` still does not build a fresh DB and gate it; and the drift ledger reads
+Still open from this wave: the scratch gate database was dropped after the run and has no automated trigger yet —
+`make` still does not build a fresh DB and gate it; and the drift ledger reads
 101 routes parsed · 64 served · 29 client-only · 0 missing · 0 undocumented over a 270-file corpus (platform 114,
-up one from another stream's file).
+up one from another stream's file). Two items it listed are now closed in the section after this one: `nexus_app`'s
+leftover `CREATE`, and `nexus_test` having no migration ledger at all.
+
+## A privilege nobody needed, and a database whose schema had no record (2026-09-23, task #20)
+
+Committing the previous wave (`599cfce`) left one of its own open items mis-stated: D30 justified not revoking
+`nexus_app`'s `CREATE ON SCHEMA public` because "`00_roles.sql` only runs on a first-boot volume". The file's own
+header says otherwise — `scripts/db_apply_migrations.sh` re-applies it after the migrations precisely so the grants
+bind to real tables. So the narrowing is a two-line edit in the file that made the grant, and it reaches the
+existing dev database on the next run rather forking it from fresh volumes (**D32**).
+
+What the privilege had been buying was nothing, and the proof is the failure that removed it: schema `CREATE`
+permits new objects, not changes to objects someone else owns, which is exactly why V4 died as
+`42501 must be owner of table user_identities` *while* `nexus_app` held `CREATE`. After the revoke, measured:
+
+```
+nexus       nexus_app acl = pg_database_owner=UC/…, =U/…, nexus_app=U/pg_database_owner, nexus_ai=U/…
+nexus_test  nexus_app acl = pg_database_owner=UC/…, =U/…, nexus_app=U/pg_database_owner, nexus_ai=U/…
+$ psql -U nexus_app -d nexus_test -c 'create table public.lead_probe_20(id int)'
+ERROR:  permission denied for schema public
+```
+
+and the same role still serves everything that matters: `mvn -o test` **94/94** against `nexus_test`, and
+`scripts/verify_reservation.py` **29/29** against the running :8090 — which needed no restart, because Postgres
+checks privileges per statement, not per connection, so the revoke applied to the already-open pool the moment it
+landed. What keeps future migrations working without it is `ALTER DEFAULT PRIVILEGES`, already in the same file: a
+table V5 creates arrives with DML for `nexus_app` and nothing at all for `nexus_ai`.
+
+Applying that to `nexus_test` is where the second problem surfaced, and it is the one D30 point 2 only suspected.
+The test database has the complete V1–V4 content — its index and constraint sets match `nexus` one for one, 334
+rows, with the only three differences being Flyway's own bookkeeping objects — and records **zero** rows in
+`schema_migrations` plus no `flyway_schema_history` at all, since `NexusIntegrationTest` sets
+`spring.flyway.enabled=false`. Against it, `db_apply_migrations.sh` re-ran V1 and aborted on
+`relation "tenants" already exists`, which — being `set -e` — also skipped the role grants below. So a disagreeing
+ledger did not merely misreport the database, it made the database un-maintainable by the only script that can
+reach it.
+
+The fix is not detection, it is declaration (**D32**). `apply_file` now separates the two failure classes: an
+`already exists` error stops with a message that names the condition (content predates ledger, hand-built schema,
+or half-applied) and prints the repair, while any other SQL error propagates unchanged inside
+`--single-transaction`. `--record V<n>__<name>` then writes the ledger row and executes nothing, printing that it
+did. Auto-detection was rejected on purpose — a subset check passes on a half-built schema, a full check would have
+to understand every migration file, and a wrong row makes a later real migration skippable. The four rows for
+`nexus_test` came from the 334-row comparison above, and the transcript is
+`= recorded V4__tenant_scoped_identity as applied WITHOUT executing it / ledger only — nothing ran against
+'nexus_test'`. Afterwards a plain run is quiet: four `= skip`, then the grants, then
+`tables=57 · migrations=4`.
+
+The wave also corrected two doc claims that D30 had orphaned: `DEPLOYMENT.md` §5 still described `nexus_app` as
+"also the Flyway role in dev", and `db_apply_migrations.sh`'s view-ownership comment still asserted that the next
+`V<n>` runs as the app role — true before D30, load-bearing for nothing after it, so the comment now says the
+transfer is belt-and-braces and names the configuration it protects.
+
+Still open: `nexus_test`'s ledger is now *recorded*, not *validated* — nothing runs the migration files through it,
+so a hand-built schema that drifts from `V*.sql` would still be invisible until something errors; the fresh-DB gate
+has no trigger (`make` does not build a database and run `quality.sql`); `docs/API_CONTRACT.md` §0 still says the
+platform role "owns" the commerce tables, which stopped being true when the superuser created them; and the 29
+client-only routes remain unowned.

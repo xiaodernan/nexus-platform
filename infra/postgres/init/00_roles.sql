@@ -1,5 +1,5 @@
 -- NEXUS — database roles + privilege split.  docs/API_CONTRACT.md §0 is the binding text:
---   Platform service  -> role nexus_app : read-write on commerce tables (it owns them).
+--   Platform service  -> role nexus_app : read-write on commerce tables (DML only — it creates nothing, D32).
 --   AI service        -> role nexus_ai  : SELECT on
 --                        merchants|offerings|locations|reviews|facts|business_hours|availability_slots
 --                        |tenants|external_principals
@@ -77,14 +77,17 @@ BEGIN
   EXECUTE format('GRANT CONNECT ON DATABASE %I TO nexus_app, nexus_ai', current_database());
 END
 $conn$;
-GRANT USAGE, CREATE ON SCHEMA public TO nexus_app;   -- CREATE is left over from when the app role also ran Flyway
+GRANT USAGE ON SCHEMA public TO nexus_app;           -- no CREATE: the platform role writes, never DDLs
 GRANT USAGE         ON SCHEMA public TO nexus_ai;    -- usage only: the AI role may never DDL
--- Migrations now run as the infra superuser (see docs/DECISIONS.md D30): `CREATE` on the schema lets a role
--- make new objects, but it cannot ALTER a table it does not own, so the app role was never able to run a
--- table-level migration anyway (V4 proved it: 42501 must be owner of table user_identities). Revoking the
--- app role's CREATE is the narrowing that follows from that ruling — deliberately NOT done here, because
--- this file only runs on a first-boot volume, so editing it would make fresh databases and the existing
--- dev one disagree while neither edit is visible in the running system.
+-- `CREATE` used to be granted to the app role because that role also ran Flyway. D30 split the two
+-- credentials — migrations now run as the infra superuser — and the privilege was never what made
+-- migration work anyway: schema `CREATE` lets a role add objects, not alter existing ones, which is
+-- precisely why V4 failed as `42501 must be owner of table user_identities` while the app role held it.
+-- With the split in place nothing in the runtime path creates a database object, so the grant is
+-- removed: it only widened the blast radius of a statement that reaches DDL. This file is re-run at the
+-- end of scripts/db_apply_migrations.sh (see the header), so the narrowing lands on the existing dev
+-- database as well as on a first-boot volume; the explicit REVOKE keeps a re-run free of error.
+REVOKE CREATE ON SCHEMA public FROM nexus_app;
 
 -- --------------------------------------------------------------------------------- future tables
 -- FAIL-CLOSED on purpose. New objects created by the migrate role (the superuser that owns this

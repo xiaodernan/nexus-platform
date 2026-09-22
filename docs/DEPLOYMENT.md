@@ -84,7 +84,10 @@ make, run the commands shown in each recipe directly.
   That script is the *infra* path and it connects as the superuser. The service also runs Flyway at boot — as the
   superuser in dev, never as `nexus_app`, which has no DDL on tables it must alter (D30) — and the two bookkeeping
   tables are separate (`schema_migrations` vs `flyway_schema_history`), which is why `--file` on a live database
-  leaves Flyway unaware of it.
+  leaves Flyway unaware of it. There is a third state, a hand-built database with **neither** ledger (this is
+  `nexus_test`, which runs with `spring.flyway.enabled=false`): a plain run there stops at `relation "tenants"
+  already exists` rather than clobbering it, and names the repair — `--record V<n>__<name>` writes the ledger row
+  and executes nothing, which is correct only after comparing the content against a migrated database (D32).
 * **No psql on the host**: everything runs as `docker exec -i nexus-platform-postgres psql … -f -` (the image's
   client is the
   supported path) or `docker run --rm --network nexus-platform_default <image> psql -h postgres …` for network tests
@@ -94,7 +97,8 @@ make, run the commands shown in each recipe directly.
   `00000000-0000-0000-0000-000000000001`** with `zh-HK`/`HKD`/`Asia/Hong_Kong`, the HK bbox + 17 districts and
   `config.demo = true`. Use that literal UUID in every fixture/test.
 * **Roles** `infra/postgres/init/00_roles.sql` (also applied after migrations so grants bind to real tables):
-  `nexus_app` = read-write on all commerce tables + `CREATE ON SCHEMA public` (it is also the Flyway role in dev);
+  `nexus_app` = read-write on all commerce tables, `USAGE` on the schema and no `CREATE` (migrations are not its
+  job — Flyway runs as the infra superuser in dev, D30/D32);
   `nexus_ai` = exactly §0 — SELECT on `merchants, offerings, locations, reviews, business_hours,
   availability_slots` and read-write on `documents, chunks, facts, recommendation_sets, feedback_events, agent_runs,
   llm_calls, eval_suites/eval_cases/eval_runs, review_summaries, seo_pages, campaigns`. Measured: 6 read-only + 13

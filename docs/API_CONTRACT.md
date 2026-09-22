@@ -14,7 +14,10 @@
 | `/**` | Next.js (`apps/web`) | 3000 | SSR/SSG pages, BFF proxy at `/api/*`, streaming UI |
 
 Data access rules (no `LLM → database` path, §52):
-- Platform service: `nexus_app` DB role, read-write on every commerce table (it owns them).
+- Platform service: `nexus_app` DB role, read-write on every commerce table. It is not the *owner* of them and it
+  holds no `CREATE` on the schema: the infra superuser creates objects, dev Flyway migrates as that superuser, and
+  DML on tables a later migration adds reaches the runtime role through `ALTER DEFAULT PRIVILEGES`
+  ([`DECISIONS.md`](DECISIONS.md) D30/D32).
 - AI service: `nexus_ai` DB role, and the grant set is **exactly** the list below (enforced in
   `infra/postgres/init/00_roles.sql`, verified against the live DB — 23 tables, nothing wider):
   - **SELECT only**: merchants, offerings, locations, reviews, business_hours, availability_slots,

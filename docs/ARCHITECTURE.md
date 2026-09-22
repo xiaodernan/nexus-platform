@@ -206,9 +206,13 @@ in a real browser, screenshot under `tests/evidence/`; 4. no stub pretending to 
 
 ## Open questions / risks
 - ~~**DB roles not provisioned**~~ — closed: `infra/postgres/init/00_roles.sql` creates `nexus_app`/`nexus_ai` and
-  grants the §0 split table by table, and it is re-applied by `scripts/db_apply_migrations.sh`. What is still open is
-  that the app role keeps a leftover `CREATE` on the schema from when it also ran Flyway; revoking it needs a
-  migration, because the initdb file never re-runs on an existing volume (DATABASE.md §9).
+  grants the §0 split table by table, and it is re-applied by `scripts/db_apply_migrations.sh`.
+- ~~**App role keeps a leftover `CREATE` on the schema**~~ — closed (D32): the grant was made when `nexus_app` also
+  ran Flyway, which D30 ended. It buys nothing (schema `CREATE` cannot alter a table the role does not own) and the
+  file that grants it is re-run by `db_apply_migrations.sh`, not only at initdb, so revoking it there reaches the
+  existing dev database too. Measured after the revoke: `nexus_app` gets `permission denied for schema public` on
+  `CREATE TABLE`, while every DML grant it needs stays — `ALTER DEFAULT PRIVILEGES` in the same file keeps handing
+  it the tables a later migration creates.
 - **RLS absent:** tenancy is enforced purely in application code; acceptable at phase-1 scale, a real risk at 100x.
 - **CJK full-text quality** with `tsvector('simple')` may be insufficient for the primary zh-HK market before the
   search-engine seam is enabled — validate in M2.

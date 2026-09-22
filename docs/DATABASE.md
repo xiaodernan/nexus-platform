@@ -256,16 +256,27 @@ halves were stale. `infra/postgres/init/00_roles.sql` creates the roles, revokes
 grants the §0 SELECT set and the read-write set table by table (fail-closed: an unknown table gets nothing), and
 `db_apply_migrations.sh` re-applies it. The `V2` migration is `V2__integrity.sql` — constraints, not grants.
 
-**Third credential: the one that migrates.** `nexus_app` has `CREATE` on the schema (so it can make a table) but owns
-no table, so it cannot `ALTER` one — `42501 must be owner of table …`. V3 got through only because
+**Third credential: the one that migrates.** `nexus_app` used to hold `CREATE` on the schema while owning no table,
+so it could make a new object but not `ALTER` one — `42501 must be owner of table …`. V3 got through only because
 `db_apply_migrations.sh` hands *view* ownership to the app role. `V4__tenant_scoped_identity.sql` was the first
 migration that had to change a table, and it failed the boot in both the host launcher and `infra/docker-compose.yml`,
 which had `SPRING_FLYWAY_USER: nexus_app`. Flyway now runs as the infra superuser in dev (`NEXUS_MIGRATION_DB_*`,
 defaulting to `postgres` + `NEXUS_DB_ROOT_PASSWORD` from the gitignored `.env`) while the runtime datasource stays
 `nexus_app`: the credential that changes schema is not the credential that serves requests
-([`DECISIONS.md`](DECISIONS.md) D30). Narrowing `nexus_app`'s leftover `CREATE` is deliberately *not* done here —
-`00_roles.sql` only runs on a first-boot volume, so the edit would silently fork fresh databases from the dev one
-that already exists.
+([`DECISIONS.md`](DECISIONS.md) D30). And since the runtime role never needed that `CREATE` for anything the split
+did not already remove, it is revoked (`USAGE` only, matching `nexus_ai`) — the grant and the revoke both live in
+`00_roles.sql`, which `db_apply_migrations.sh` re-applies, so fresh and existing databases land in the same place
+(D32).
+
+**Two ledgers, and a third state that has neither.** `schema_migrations` (written by `db_apply_migrations.sh`) and
+`flyway_schema_history` (written by the service at boot) are independent, and `nexus_test` has *neither* — it runs
+with `spring.flyway.enabled=false`, so whatever built its schema did so by hand. A database in that state used to
+abort the infra script on `relation "tenants" already exists`, which also skipped the role grants further down. The
+script now distinguishes the two failure classes and, for the first, prints the repair: `--record V<n>__<name>`
+declares one migration applied without executing anything, after comparing the content against a database that is
+genuinely migrated. That is how `nexus_test`'s four rows were obtained — 334 of 334 indexes and constraints match
+`nexus` one for one, the only three deltas being Flyway's own bookkeeping objects — and D32 records why the
+comparison stays manual instead of becoming an auto-detect.
 
 ## 10. ER overview (text, `PK`·`FK`)
 
