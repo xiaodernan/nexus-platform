@@ -1107,10 +1107,11 @@ Two things this measurement caught about itself:
   phantom second method for nearly every documented write: the ledger claimed the service served
   `GET /api/v1/auth/login` and the contract did not. 116 routes in scope and 63 absent were mostly that
   bug; requiring an explicit verb takes it to 79 and 28.
+- The sweep raised two false alarms about the service and one true alarm about itself, and it is worth saying which was which. The "500 on `/api/v1/offerings/{slug}`" and "declared but not mapped" rows were my own probe pushing a merchant slug into unrelated templates; checked directly, no offering detail route exists in this build, and the contract does not promise one either, which is the consistent state. The service was never wrong there — the measurement was, twice, in the direction that would have had me fixing a phantom.
 - The report capped the served-but-undocumented list at 12 rows, hiding 15. A ledger that truncates is how
   a gap survives being measured.
 
-**The 27 undocumented routes are the honest next doc task, and they are not one owner's.** They are
+**Twenty-seven routes were served and documented nowhere; three of them were this wave's own, and the change that measured them documents them.** Those three are `GET /api/v1/merchant/customers` — with its own `source` and `definition` fields, and `all|repeat|new` stated as a *filter* rather than a claim that anything writes a customer segment — the §11 telemetry response, which the contract had shrunk to `202 {accepted, rejected}` when the handler answers `{accepted, rejected, duplicates, reject_reasons, max_batch, note}`, and the surface sweep's identifier rule below. The remaining 26 are not one owner's: they are
 `POST /api/v1/events`, `GET/POST /api/v1/me/favorites`, `POST /api/v1/me/preferences`,
 `POST /api/v1/me/saved-searches`, `GET/PUT /api/v1/notifications/preferences`,
 `POST /api/v1/notifications/{id}/read`, `POST /api/v1/notifications/read-all`,

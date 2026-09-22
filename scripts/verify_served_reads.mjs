@@ -26,7 +26,7 @@ const TENANT = arg('tenant', 'hong-kong');
 
 // What this run has actually managed to address things by, so the surface sweep fills real ids
 // rather than inventing ones it cannot resolve.
-const run = { slug: null, merchantId: null, offeringSlug: null, guideSlug: null };
+const run = { slug: null, merchantId: null, offeringSlug: null, guideSlug: null, collectionSlug: null };
 
 const failures = [];
 const notes = [];
@@ -189,6 +189,11 @@ async function main() {
   ok('GET /api/v1/guides', guides.status === 200, `HTTP ${guides.status}`);
   const listed = guides.body?.items ?? [];
   run.guideSlug = listed[0]?.slug ?? null;
+  // A guide slug cannot address a collection route — the two differ only in `kind`, and the read enforces
+  // it, so filling `{slug}` under /collections with a guide's slug produces a correct 404 that would look
+  // like an unmapped route. Collect one of each instead of guessing across subject types.
+  const collections = await get('/api/v1/collections');
+  run.collectionSlug = (collections.body?.items ?? [])[0]?.slug ?? null;
   note('published guides', listed.length);
   ok('every listed guide is a guide', listed.every((g) => g?.kind === 'guide'),
     JSON.stringify(listed.map((g) => g?.kind)));
@@ -271,25 +276,21 @@ async function surfaceSweep(ids) {
   let real = 0, reachable = 0, fivedowns = 0, unmapped = 0;
   const reported = [];
   for (const [template] of gets) {
-    const placeholders = [...template.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]);
     const values = idsFor(template);
-    const known = placeholders.every((p) => values[p] !== undefined);
     const filled = template.replace(/\{([^}]+)\}/g, (_, name) =>
       values[name] !== undefined ? values[name] : `zzz-unknown-${name}`);
     const res = await get(filled);
     if (res.status >= 500) {
       fivedowns += 1; reported.push(`5xx on ${filled}`); continue;
     }
-    // Failing closed means *naming* the failure: a 404 with `collection_not_found` is the handler
-    // answering correctly, while a 404 with no body (or the catch-all "No such endpoint") means the
-    // OpenAPI document advertises something the router does not actually have behind it.
-    const named = typeof res.body?.error?.code === 'string' && res.body.error.code !== 'not_found';
+    // Failing closed means naming the failure *as that resource*: `guide_not_found` is the handler
+    // answering correctly. The platform's catch-all answers 404 with `not_found` / "No such endpoint",
+    // which means the OpenAPI document advertises a path the router does not have — accepting that as a
+    // legitimate 404 is how this check would hide its own subject, so it is counted as unmapped.
+    const domainCode = typeof res.body?.error?.code === 'string' && res.body.error.code !== 'not_found';
     if (res.status === 401 || res.status === 403) { reachable += 1; continue; }   // auth-gated, as designed
-    if (res.status === 404 && !known) {
-      unmapped += 1; reported.push(`declared, no route behind it: ${filled}`); continue;
-    }
-    if (res.status >= 400 && !named) {
-      unmapped += 1; reported.push(`${res.status} without a named error code: ${filled}`); continue;
+    if (res.status >= 400 && !domainCode) {
+      unmapped += 1; reported.push(`${res.status} with no route behind it: ${filled}`); continue;
     }
     if (res.status === 200) {
       ok(`served GET ${template} returns JSON`, res.body !== null, 'unparsable body');
@@ -310,8 +311,9 @@ function idsFor(template) {
   const merchant = /collection|guide/i.test(template) ? null : run.slug;
   if (/idOrSlug/.test(template)) ids.idOrSlug = merchant ?? run.slug;
   if (/\{slug\}/.test(template)) {
-    ids.slug = /collection|guide/i.test(template) ? (run.guideSlug ?? run.slug)
-      : /offerings?/.test(template) ? (run.offeringSlug ?? run.slug) : run.slug;
+    ids.slug = /collections/i.test(template) ? (run.collectionSlug ?? run.slug)
+      : /guides/i.test(template) ? (run.guideSlug ?? run.slug)
+      : /offerings?/i.test(template) ? (run.offeringSlug ?? run.slug) : run.slug;
   }
   if (/\{id\}/.test(template)) ids.id = /reservation/.test(template) ? 'NX-unknown' : (run.merchantId ?? run.slug);
   if (/merchant_id|merchantId/.test(template)) {

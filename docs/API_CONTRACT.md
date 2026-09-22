@@ -211,6 +211,7 @@ one typed), plus the directory page's `as_of`, `filters` and `unit`.
 | GET | `/api/v1/merchant/dashboard/overview` | `read_analytics` |
 | GET | `/api/v1/merchant/businesses/{id}/overview` | `read_analytics` — same funnel scoped to one business (D15; the multi-business workspace needs the per-business form) |
 | GET | `/api/v1/merchant/analytics?from&to&metric` | `read_analytics` |
+| GET | `/api/v1/merchant/customers?merchant_id&segment&limit&cursor` | `read_analytics`, `merchant = "param:merchant_id"` — the §56 audience list for one business: `[{customer_id, display_name, email, transactions, orders, reservations, spend:{amount,currency}, first_seen_at, last_seen_at, repeat}]` with the paging envelope. `segment` is a **filter** over `all|repeat|new`, not a stored label: nothing in this contract writes a customer segment, and no predictive score is claimed. The payload defines itself instead of leaving the screen to invent one — `source` says `orders + reservations (completed transactions only)`, and `definition` states that a customer is a tenant user with at least one order (not cancelled/refunded) or reservation (not cancelled) at this merchant, that `spend` is `sum(orders.total)` with reservations adding none, and that `repeat` means two or more qualifying transactions. `computed_at` is the instant the aggregates were read. Served by `com.nexus.growth`. |
 | GET | `/api/v1/merchant/reservations?status&from&to&merchant_id&limit&cursor` | `read_orders` — the merchant's booking inbox (§23). Scoped to the businesses the caller is a member of (D5), `no-store`: a booking list is stale the moment one is written. Returns the holder's own rows with the contact fields needed to serve the guest, nothing wider (§46/§47). Served by `MerchantContentController#reservationInbox` on the `com.nexus.merchant` base path (the inbox is a workspace screen, so it lives with the console rather than with `com.nexus.commerce`, which holds only the checkout repositories). `user_id` is deliberately absent from the projection: it names a person to us, not to the merchant. Nothing moves a booking to `confirmed` — acceptance has no route yet (D26), which the response's own `definitions` say. |
 | POST | `/api/v1/merchant/ai-agent/config` | `configure_ai` |
 | GET | `/api/v1/merchant/conversations` · POST `/{id}/reply` · POST `/{id}/handoff-resolve` | `send_message` |
@@ -406,7 +407,10 @@ All admin routes require `role IN (platform_admin, platform_ops)` and write `aud
 
 - p95 `/ai/v1/search` < 250ms warm; AI search first-stream-event < 1.2s; LLM full answer < 6s.
 - **Telemetry ingest**: `POST /api/v1/events {events:[{name, properties, occurred_at, session_id}]}` →
-  `202 {accepted, rejected}`. The SDK batches here (§58); `Idempotency-Key` is required and de-dupes a
+  `202 {accepted, rejected, duplicates, reject_reasons, max_batch, note}`. `accepted` counts the rows now
+  durable (a replayed `event_id` lands in `duplicates` and is not written twice); `reject_reasons` is
+  bounded to 10 entries while `rejected` keeps the exact count. The SDK batches here (§58);
+  `Idempotency-Key` is required and de-dupes a
   flushed batch, not an individual event. It appends to the `events` table through the platform only
   (`nexus_ai` keeps its INSERT-only grant, D19), never validates a business invariant, and must not be
   used as a write path for anything a user can see — an event is an observation, not a record.
