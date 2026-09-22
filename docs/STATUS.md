@@ -765,7 +765,68 @@ The wave also corrected two doc claims that D30 had orphaned: `DEPLOYMENT.md` §
 transfer is belt-and-braces and names the configuration it protects.
 
 Still open: `nexus_test`'s ledger is now *recorded*, not *validated* — nothing runs the migration files through it,
-so a hand-built schema that drifts from `V*.sql` would still be invisible until something errors; the fresh-DB gate
-has no trigger (`make` does not build a database and run `quality.sql`); `docs/API_CONTRACT.md` §0 still says the
-platform role "owns" the commerce tables, which stopped being true when the superuser created them; and the 29
-client-only routes remain unowned.
+so a hand-built schema that drifts from `V*.sql` would still be invisible until something errors; the 29
+client-only routes remain unowned. Two items this paragraph listed are closed in the section after it: the missing
+fresh-DB gate trigger, and `API_CONTRACT.md` §0 calling `nexus_app` the owner of the commerce tables.
+
+## Building the database nobody had ever built (2026-09-23, task #21)
+
+D30's seeder break and D32's ledger-less database had the same shape: a defect that only exists on a path nobody
+ran. So the path got a command. `scripts/db_gate_fresh.sh` creates an empty database from `template0`, applies
+`V*.sql` + `00_roles.sql` into it, regenerates the dataset, loads it, runs `data/seed/quality.sql` as a hard gate
+and drops the database (**D33**). It refuses to start unless the target is empty, refuses the four names that hold
+real data, and resolves the container by asking which one answers rather than trusting a compose file — this
+workstation has five Postgres containers and two of them are other projects'.
+
+First run failed, which is the point of a gate. `load.sh` aborted with
+`ERROR: .../data/seed/out looks incomplete (no 21_collections.sql)` against a directory `generate.py` had just
+produced correctly. The writer emitted `f"{prefix}_{table}.sql"` where `prefix` is already `21_collections`, so
+every SQL file repeated its table name while the docs, the CSV sibling and the loader's probe all said
+`21_collections.sql`. `git log -S` puts the line in `e237f6d` — the parallel build wave, not the seed work — and
+it survives review because `out/` is gitignored: the only machine that ever sees the failure is a fresh clone, and
+the probe there checks *existence*, not freshness. The fix is the documented name plus a wipe of the previous run's
+`out/*.sql` and `out/*.csv`, since `load.sh` globs the directory and a rename that leaves both spellings behind
+makes it COPY every table twice — a duplicate-key error naming a random table, with the stale file nowhere in the
+message. Third run:
+
+```
+=== 5/5  data/seed/quality.sql (the hard gate)
+RESULT: PASS — 153 quality checks passed against a from-scratch schema (tables=57, migrations=4)
+        SYNTHETIC DEMO DATA. The live databases were not opened by this run.
+```
+
+The gate also paid for itself on documentation. `DEPLOYMENT.md` §6 told the next agent to run
+`docker exec nexus-postgres psql -AtU postgres -d nexus`, and that command fails here with
+`FATAL: role "postgres" does not exist` — `nexus-postgres` is a *different* stack's container (it publishes
+`:55433`), while `nexus-platform-testpg` holds `nexus`, `nexus_test` and `nexus_funnel_probe` on the documented
+`127.0.0.1:5433`. `container_name: nexus-platform-postgres` in the compose file is not running at all. The
+checklist now names the containers that answer, and the "57 tables" it promised is explained rather than asserted:
+`V*.sql` + `00_roles.sql` create 56, the infra ledger adds `schema_migrations` (57, what the gate reports), and a
+service boot adds Flyway's own `flyway_schema_history` (58, what `nexus` shows). §8's "decide the schema owner"
+pre-deploy item is closed — D30/D32 decided it — and replaced by the part that is genuinely still open: making the
+same split work on a hosted instance where the table owner is not the connecting user, which is the case
+`ALTER DEFAULT PRIVILEGES` silently does nothing under.
+
+Two things this wave nearly got wrong, and both are worth writing down because the measurement was misleading rather
+than absent. `git add` of the new script printed `warning: in the working copy of 'scripts/db_gate_fresh.sh', LF
+will be replaced by CRLF the next time Git touches it`, and with `core.autocrlf=true` set globally on this machine
+that is the statement that a checkout can hand every one of the repo's four shell scripts to `bash` with a `\r` on
+each line — the repo had no `.gitattributes` to overrule it. It now pins `*.sh text eol=lf`, which is a no-op on
+the current files (all four are LF in the working tree and in the index) and a guarantee on a future checkout.
+Confirming that took byte-level inspection, because the obvious probes here lie: `$(grep -c $'\r' file)` reports
+*the file's line count* — the CR disappears inside command substitution, leaving an empty pattern that matches every
+line — and `git checkout-index` does not apply the smudge filter, so checking a file out into a temp directory
+proves nothing about what a clone would write. `python -c "open(p,'rb').read().count(b'\r')"` is the only one of the
+three that answers the question; it is what established that the script was and is LF, and that the staged blob is
+too. (This belongs in the same ledger as the GBK psql output and `| tail` swallowing exit codes.)
+
+Still open: the gate has no `make` target (`Makefile` carries another stream's uncommitted edits, so the target
+belongs to whoever next owns that file); nothing invokes it, so a migration that only works on a database which
+already has content can still merge — at 63 seconds per run it is cheap enough to be a pre-merge check, and it
+is not yet one; and `nexus_test`'s recorded ledger is validated by nothing — a from-scratch build proves
+the migration files, not that the hand-built test schema matches them. A third gap surfaced while reading §8 for
+the collections read path: `API_CONTRACT.md` §8 describes `collections.items` as an ordered array of typed blocks
+(`{type: paragraph|heading|list|cards}`, a `cards` block carrying entity ids), while V1's own column comment and
+every seeded row use a flat `[{subject_type,subject_id,note}]`. Neither document is wrong about its own layer, and
+the mismatch will bite the first page that renders a guide — it needs a ruling, not a silent pick.
+

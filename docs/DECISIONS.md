@@ -500,3 +500,39 @@ Ruling: **a migration is never silently re-applied, and the repair is an explici
   row would make a later real migration skippable. The operator asserts the match; here that assertion is the
   334-row index/constraint diff above, and `--force` remains the escape hatch when content and file must be
   reconciled by re-running.
+
+## D33 A generated file's name is part of its contract, and the seed gate now runs on an empty database — 2026-09-23
+
+`data/seed/generate.py` documents its output as `out/NN_<table>.sql`, `data/seed/load.sh` checks for
+`out/21_collections.sql` before loading, and the CSVs it writes are `21_collections.csv`. The SQL writer was
+`out_dir / f"{prefix}_{table}.sql"` where `prefix` is already `21_collections` — so every SQL file carried the
+table name twice, and `load.sh` rejected a correctly generated directory with
+`data/seed/load.sh: ERROR: .../data/seed/out looks incomplete (no 21_collections.sql)`. The line came in with
+`e237f6d` (the parallel build wave, not the seed work), and it is reachable precisely on the path nobody had
+walked: `out/` is gitignored, so a fresh clone generates it from scratch, and the probe then finds none of the
+files it expects. Any machine with an older `out/` sitting in it never sees the failure, because the probe tests
+existence rather than freshness.
+
+Ruling: **the filename is part of the producer/consumer contract; the writer follows the documented name.**
+
+- `write_outputs` now emits `{prefix}.sql`, which is what the header, the CSV sibling, and `load.sh`'s probe all
+  say.
+- It also deletes the previous run's `out/*.sql` and `out/*.csv` first. `load.sh` globs `[0-9][0-9]_*.sql`, so a
+  rename that leaves both spellings behind makes the loader COPY the same table twice — a duplicate-key error
+  naming some table at random, with the stale file nowhere in the message. `out/` is derived state; wiping the
+  files this run owns is cheaper than that diagnosis, and `out/optional/` is untouched because it is not part of
+  the default load set.
+
+The reason this is recorded as a decision rather than a commit message: the bug was only reachable through a path
+nobody ran — `load.sh` against a directory generated *after* the rename — which is the same blind spot V4 exposed
+(D30's seeder break) one layer up. The cure for both is the same command, so it exists now:
+`scripts/db_gate_fresh.sh` creates an empty database from `template0`, applies `V*.sql` + `00_roles.sql` into it,
+regenerates the dataset, loads it, runs `data/seed/quality.sql` as a hard gate, and drops the database. It refuses
+to run if the target resolves to `nexus` or `nexus_test`, resolves the container by checking which candidate is
+actually running (this machine hosts four Postgres instances, one of them another project's — D22), and exits
+non-zero on any failed check. First green run: `RESULT: PASS — 153 quality checks passed against a from-scratch
+schema (tables=57, migrations=4)`, with the two defects above found on the way there; reproduced on a second run
+in 63s, exit 0, neither live database opened.
+
+Not done: it is not wired into `make`, because `Makefile` carries another stream's uncommitted edits — the script
+stands on its own and the target can be added by whoever next owns that file.

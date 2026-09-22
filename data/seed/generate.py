@@ -1364,6 +1364,12 @@ def chunk_sections(text: str, min_tokens=240, max_tokens=400, overlap=0.12, hard
 # --------------------------------------------------------------------------- writers
 def write_outputs(gen: Gen, out_dir: Path):
     out_dir.mkdir(parents=True, exist_ok=True)
+    # `out/` is derived state (gitignored), so clear the previous run's scripts before writing. Without
+    # this, a filename change leaves both spellings on disk and load.sh's `out/[0-9][0-9]_*.sql` glob
+    # COPYs the same table twice — which is a duplicate-key failure that names a random table, not the
+    # stale file. (The `.sql` suffix below is exactly such a change: see D33.)
+    for stale in list(out_dir.glob("*.sql")) + list(out_dir.glob("*.csv")):
+        stale.unlink()
     written = []
     for i, (table, cols) in enumerate(TABLES, start=1):
         rows = gen.rows.get(table, [])
@@ -1376,7 +1382,7 @@ def write_outputs(gen: Gen, out_dir: Path):
             w.writerow(cols)
             for r in rows:
                 w.writerow(r)
-        sql_path = out_dir / f"{prefix}_{table}.sql"
+        sql_path = out_dir / f"{prefix}.sql"
         with sql_path.open("w", encoding="utf-8", newline="") as f:
             f.write(f"-- {DISCLAIMER}\n")
             if table == "tenants":

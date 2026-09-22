@@ -1,0 +1,5 @@
+# Shell scripts must reach `bash` with LF. `core.autocrlf=true` is a per-machine setting, so without this line a
+# checkout on a machine that smudges CRLF gives every script here a `\r` on each line — and `bash scripts/…sh` fails
+# on line 1 with no mention of line endings. The four tracked scripts are all LF today, so pinning them is a
+# no-op locally and a guarantee on a fresh clone (D33: the fresh-clone path is the one nobody walks).
+*.sh text eol=lf

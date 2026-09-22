@@ -107,16 +107,35 @@ make, run the commands shown in each recipe directly.
   `nexus_ai` on purpose (see ENVIRONMENT_REPORT §5.5 for the leak this rule prevents).
 * **Extensions** are created by `infra/postgres/init/00_extensions.sql` on first boot *and* by V1 itself, so the
   migration is self-sufficient on a bare image.
+* **Fresh-database gate** `scripts/db_gate_fresh.sh` — one command that proves the whole chain on an empty database:
+  `CREATE DATABASE … TEMPLATE template0`, apply `V*.sql` + `00_roles.sql`, `python data/seed/generate.py`,
+  `data/seed/load.sh` with `RESEED_DEPENDENTS=1`, run `data/seed/quality.sql` as a hard gate, drop the database.
+  It exists because two defects were only reachable on that path (D33): a generated filename `load.sh` had never
+  seen, and a seed directory stale enough to pass an existence probe. Refuses to run unless the target database is
+  empty, and refuses the names `nexus`, `nexus_test`, `nexus_dev`, `postgres` outright; resolves the container by
+  checking which candidate actually answers (`NEXUS_PG_CONTAINER` wins, then `nexus-platform-postgres`, then
+  `nexus-platform-testpg` — this machine has five Postgres containers, D22). Green:
+  `RESULT: PASS — 153 quality checks passed against a from-scratch schema (tables=57, migrations=4)`.
+  Not wired into `make` yet (`Makefile` carries another stream's uncommitted edits).
 
 ## 6. Verification checklist for the next agent
 
+The container names below are the ones that actually hold this project's databases. `docker ps` on this machine
+lists five Postgres containers, and the two named just `nexus-postgres` / `nexus-redis` are **not** all ours:
+`nexus-postgres` publishes `:55433` and rejects `-U postgres` (`FATAL: role "postgres" does not exist`), while
+`nexus-platform-testpg` is the instance that holds `nexus`, `nexus_test` and `nexus_funnel_probe` and publishes the
+documented `127.0.0.1:5433` (D22). `infra/docker-compose.yml` declares `container_name: nexus-platform-postgres`,
+which is not running here — so use the name in this checklist, or `NEXUS_PG_CONTAINER`, not the compose name.
+
 ```bash
-docker ps --filter name=nexus-                       # both healthy, ports 5433 / 6380
-docker exec nexus-postgres pg_isready -U postgres -d nexus
-docker exec -i nexus-postgres psql -AtU postgres -d nexus -c "\dt" | wc -l        # 57 tables
-docker exec -i nexus-postgres psql -AtU postgres -d nexus -c \
-  "select indexname from pg_indexes where tablename='chunks' and indexdef ilike '%hnsw%'"
-docker exec nexus-redis redis-cli ping                                            # PONG
+docker ps --format '{{.Names}}\t{{.Ports}}'          # expect nexus-platform-testpg -> 127.0.0.1:5433, nexus-redis -> 6380
+docker exec nexus-platform-testpg pg_isready -U postgres -d nexus
+docker exec -i nexus-platform-testpg psql -AtU postgres -d nexus -c "\dt" | wc -l   # 58 = 56 V*.sql tables
+                                                       # + schema_migrations (infra path) + flyway_schema_history (service boot).
+                                                       # A from-scratch schema via the infra path alone is 57 — the fresh gate prints it.
+docker exec -i nexus-platform-testpg psql -AtU postgres -d nexus -c \
+  "select indexname from pg_indexes where tablename='chunks' and indexdef ilike '%hnsw%'"   # chunks_embedding_hnsw
+docker exec nexus-redis redis-cli ping                                             # PONG
 # from the AI service host process:
 #   postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus   (must fail on carts/users writes)
 ```
@@ -134,10 +153,13 @@ docker exec nexus-redis redis-cli ping                                          
 
 1. Three Dockerfiles (platform / ai / web) + a `--profile full` smoke test; `web` needs
    `PLATFORM_INTERNAL_URL`/`AI_INTERNAL_URL`, the other two need their DB/Redis URLs (already in compose).
-2. Decide the schema owner: `postgres`-applied migrations + `ALL` grants to `nexus_app` (today) **or**
-   Flyway-as-`nexus_app` (then `nexus_ai` grants must live inside each migration). Mixing both casually is the one
-   arrangement that will surprise people — the mechanics are spelled out in §5 above and in
-   [ENVIRONMENT_REPORT.md](ENVIRONMENT_REPORT.md) §5.5.
+2. ~~Decide the schema owner~~ — decided, and no longer open: `postgres` applies migrations and owns the schema,
+   `nexus_app` holds `USAGE` with no `CREATE` and is never a migration role (D30, D32). What remains is the
+   production half of that split: the deploy pipeline needs a migration credential that is *not* the runtime one,
+   and `ALTER DEFAULT PRIVILEGES` (already in `00_roles.sql`) has to be re-verified against whatever role the
+   managed Postgres instance makes the table owner — on a hosted instance that is often not the connecting user,
+   and a default-privilege line keyed to the wrong role grants nothing, silently. The mechanics are in §5 above
+   and in [ENVIRONMENT_REPORT.md](ENVIRONMENT_REPORT.md) §5.5.
 3. Fix the §0 gaps (ENVIRONMENT_REPORT §5.3) before M3 or accept that three canonical tools are platform-routed.
 4. TLS + Redis `requirepass`, a non-dev `NEXUS_JWT_SECRET` (RS256 in prod per D5), backups of the `nexus_pgdata`
    volume, and a `V*` migration for anything that changes the 1024-dim embedding contract (D3).
