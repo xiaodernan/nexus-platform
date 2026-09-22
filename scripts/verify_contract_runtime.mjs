@@ -27,37 +27,76 @@ const argv = process.argv.slice(2);
 const arg = (n, f) => { const i = argv.indexOf(`--${n}`); return i >= 0 && argv[i + 1] ? argv[i + 1] : f; };
 const BASE = arg('base', 'http://127.0.0.1:8090').replace(/\/$/, '');
 
-/** `{a|b|c}` alternations and `[optional]` suffixes are documentation shorthand, not two routes. */
-const norm = (p) => p.replace(/\{[^}]*\}/g, '{}').replace(/\[[^\]]*\]/g, '')
-  .replace(/\/+$/, '').replace(/\?.*$/, '');
+const VERBS = '(?:GET|POST|PATCH|PUT|DELETE|HEAD|OPTIONS)';
 
+/**
+ * The contract writes an optional id as `…/offerings[/{id}]`, which documents one route with two
+ * spellings — the collection form and the item form. Collapsing the brackets to the base and then
+ * reporting the item route as "not served" is a reading error, not a gap, so the bracket expands to
+ * every form the notation permits and a documented route counts as served when *any* of them answers.
+ */
+function forms(rawPath) {
+  const m = rawPath.match(/^([^\[]*)\[([^\]]*)\](.*)$/);
+  if (!m) return [rawPath];
+  const [, base, opt, tail] = m;
+  return [`${base}${tail}`, `${base}${opt}${tail}`].filter((v, i, a) => a.indexOf(v) === i);
+}
+
+/** `{a|b|c}` alternations and `[optional]` suffixes are documentation shorthand, not extra routes. */
+const norm = (p) => p.replace(/\{[^}]*\}/g, '{}').replace(/\/+$/, '').replace(/\?.*$/, '');
+
+/**
+ * Read the contract in the notation it is actually written in.
+ *
+ * A method cell names several verbs (`GET/POST/DELETE`); a row then names several paths separated by the
+ * middle dot, some of them relative to the `/api/v1` prefix (`` | GET | `/api/v1/me/orders` · `/me/…` ``);
+ * a span can carry its own verb (`` POST `/api/v1/notifications/{id}/read` ``); and a span can continue
+ * past the path into a body sketch (`` POST /api/v1/events {events:[…]} ``). Taking only the first verb
+ * of a cell, or only a span that is exactly a path, quietly un-documents all of those — which is what the
+ * first two parses did, in opposite directions: one defaulted every bare span to GET and reported 63
+ * phantom gaps, the other saw one verb per row and reported 26 gaps that were mostly this. An inventory
+ * that cannot read its own source reports its blindness as somebody else's documentation hole.
+ */
 function documented() {
   const rows = [];
   let section = 0;
-  const lines = readFileSync(CONTRACT, 'utf8').split(/\r?\n/);
-  for (const line of lines) {
+  const text = readFileSync(CONTRACT, 'utf8').replace(/\r\n/g, '\n');
+  for (const line of text.split('\n')) {
     const heading = line.match(/^##\s+(\d+)/);
     if (heading) section = Number(heading[1]);
-    const cells = line.match(/^\|\s*(GET|POST|PATCH|PUT|DELETE|HEAD|OPTIONS)(?:\/(GET|POST|PATCH|PUT|DELETE|HEAD|OPTIONS))*\s*\|\s*`([^`]+)`/i);
-    // An inline mention counts only when it names its own verb. Defaulting a bare `/api/v1/x` span to
-    // GET invented a second, wrong method for nearly every documented write, and the gap list read as
-    // "the service serves GET /api/v1/auth/login and the contract doesn't" — noise in both directions.
-    const inline = [...line.matchAll(/`(GET|POST|PATCH|PUT|DELETE|HEAD|OPTIONS)\s+(\/(?:api\/v1|ai\/v1|well-known|mcp)[^`\s|]*)`/gi)];
-    if (cells) {
-      const methods = cells[1].toUpperCase().split('/');
-      for (const m of methods) rows.push({ method: m, raw: cells[3], section });
-    }
-    for (const m of inline) {
-      rows.push({ method: m[1].toUpperCase(), raw: m[2], section });
+    const cell = line.match(new RegExp('^\\|\\s*(?:' + VERBS + ')(?:/(?:' + VERBS + '))*\\s*\\|', 'i'));
+    const verbs = cell ? cell[0].replace(/\||\s/g, '').toUpperCase().split('/') : [];
+    const push = (method, rawPath) => {
+      // Split on whitespace (a body sketch follows the path) and on `[` (the contract writes an optional
+      // id suffix as `…/offerings[/{id}]`). Not on `{` — that is how every parameterised route in the
+      // ledger came to be truncated to its prefix, turning 26 gaps into a spurious 47.
+      const p = rawPath.split(/[\s[]/)[0].replace(/[.,;]$/, '');
+      if (/^\/api\/v1\b/.test(p) || /^\/ai\/v1\b/.test(p) || /^\/well-known\b/.test(p)) {
+        rows.push({ method, raw: p, section });
+      } else if (/^\/(me|merchant|merchants|admin|ai|notifications)\b/.test(p) && verbs.length) {
+        rows.push({ method, raw: `/api/v1${p}`, section });
+      }
+      // anything else (`/api/nexus/**`, prose) is a proxy or a sentence, not a service route
+    };
+    for (const span of line.match(/`[^`\n]+`/g) ?? []) {
+      const body = span.slice(1, -1).trim();
+      const own = body.match(new RegExp('^(' + VERBS + ')\\s+(\\S.*)$', 'i'));
+      if (own) { push(own[1].toUpperCase(), own[2]); continue; }
+      if (body.startsWith('/')) for (const v of verbs) push(v, body);
     }
   }
+  // One documented route, keyed by method and its *written* form, holding every path spelling the
+  // notation permits. `served` is then "at least one spelling answers".
   const seen = new Map();
   for (const r of rows) {
-    const p = norm(r.raw.split(/\s+/)[0]);
-    if (!p.startsWith('/') || p.length < 8) continue;
-    seen.set(`${r.method} ${p}`, { ...r, path: p });
+    const p = norm(r.raw);
+    if (p.length < 8 || p.includes('*')) continue;   // `/api/v1/**` is a BFF mount, not a handler
+    const key = `${r.method} ${p.replace(/\[[^\]]*\]/g, '')}`;
+    const row = seen.get(key) ?? { ...r, spellings: new Set() };
+    row.spellings.add(p);
+    seen.set(key, row);
   }
-  return [...seen.values()];
+  return [...seen.values()].map((r) => ({ ...r, path: [...r.spellings][0], spellings: [...r.spellings] }));
 }
 
 async function served() {
@@ -75,36 +114,39 @@ const PHASE1 = new Set([4, 8]);
 try {
   const docs = documented();
   const live = await served();
+  const answers = (d) => d.spellings.some((p) => live.has(`${d.method} ${p}`));
   const scope = docs.filter((d) => d.path.startsWith('/api/v1'));
-  const missing = scope.filter((d) => !live.has(`${d.method} ${d.path}`));
-  const matched = scope.filter((d) => live.has(`${d.method} ${d.path}`));
-  // Reads are what a consumer can see, so a documented §4/§8 *read* that the router does not have is a
-  // defect. A documented *write* that is unbuilt is a decision — §8's `POST /api/v1/collections` is
-  // deliberately absent until the §27 authorization path exists (D34), and failing on it every run would
-  // train everyone to ignore the exit code.
+  const matched = scope.filter(answers);
+  const missing = scope.filter((d) => !answers(d));
   const hardMissing = missing.filter((d) => PHASE1.has(d.section) && d.method === 'GET');
 
   console.log(`contract routes in scope : ${scope.length} of ${docs.length} documented`);
-  console.log(`declared by the service   : ${matched.length}`);
-  console.log(`absent                    : ${missing.length}`
-    + (hardMissing.length ? `  (${hardMissing.length} of them in the phase-1 §4/§8 surface)` : ''));
+  console.log(`declared by the service  : ${matched.length}`);
+  console.log(`documented, not served   : ${missing.length}`
+    + (hardMissing.length ? `  (${hardMissing.length} of them a phase-1 §4/§8 read)` : ''));
   const bySection = new Map();
   for (const m of missing) {
-    const k = `§${m.section}`;
-    bySection.set(k, (bySection.get(k) ?? []).concat(`${m.method} ${m.raw}`));
+    const k = Number(m.section);
+    bySection.set(k, (bySection.get(k) ?? []).concat(`${m.method} ${m.path}`));
   }
-  for (const [k, list] of [...bySection].sort()) {
-    console.log(`  ${k.padEnd(7)}${list.join(', ')}`);
+  for (const [k, list] of [...bySection].sort((a, b) => a[0] - b[0])) {
+    console.log(`  §${String(k).padEnd(6)} ${list.join(', ')}`);
   }
-  const undocumented = [...live].filter((l) => !scope.some((d) => `${d.method} ${d.path}` === l));
-  console.log(`served but not in the contract: ${undocumented.length}`);
-  for (const u of undocumented.sort()) console.log(`  · ${u}`);   // the whole list; a ledger that hides rows is not a ledger
+  const documentedAny = new Set(scope.flatMap((d) => d.spellings.map((p) => `${d.method} ${p}`)));
+  const undocumented = [...live].filter((l) => !documentedAny.has(l));
+  console.log(`served, not documented   : ${undocumented.length}`);
+  for (const u of undocumented.sort()) console.log(`  · ${u}`);
+  if (undocumented.length) {
+    console.log('  before "fixing" any of these, read the §-tables: this parser has been wrong twice,');
+    console.log('  and a hole in the reader looks exactly like a hole in the document.');
+  }
 
   if (hardMissing.length) {
-    console.log('\nRESULT: FAIL — a phase-1 §4/§8 route is documented and not served');
+    console.log('\nRESULT: FAIL — a phase-1 §4/§8 read is documented and not served');
+    for (const m of hardMissing) console.log(`  - ${m.method} ${m.path}`);
     process.exit(1);
   }
-  console.log('\nRESULT: PASS — every documented phase-1 §4/§8 route is declared by the running service');
+  console.log('\nRESULT: PASS — every documented phase-1 §4/§8 read is declared by the running service');
 } catch (err) {
   console.log(`cannot reconcile: ${err.message}`);
   console.log('start one with:  bash scripts/e2e_fresh.sh --keep');

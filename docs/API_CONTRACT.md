@@ -148,7 +148,10 @@ belongs here, not in a private type.
 | PATCH | `/api/v1/me` | profile |
 | DELETE | `/api/v1/me` | creates `deletion_request` (§106) |
 | GET | `/api/v1/me/export` | streaming JSON of all personal data |
-| GET/PATCH/DELETE | `/api/v1/me/preferences[/{id}]` | preference memory; user-visible, editable, deletable (§32-33) |
+| GET/POST | `/api/v1/me/preferences` | preference memory (§32-33): the list, and an appended entry. |
+| PATCH/DELETE | `/api/v1/me/preferences/{id}` | one entry, by id. There is no "erase all" route on purpose: a bulk wipe would be indistinguishable, to the person who just lost their quiet-venue memory, from a bug. |
+| POST | `/api/v1/notifications/read-all` | marks the caller's whole inbox read; returns `{marked_read}` — the count it reports is rows this call actually changed |
+| GET/PUT | `/api/v1/notifications/preferences` | the §123-125 channel switches. The read answers `in_app`, `email`, `push` with the tenant default where nothing was ever stored, and names what the caller may change in `editable_channels`; the write takes one or more of exactly those booleans and 422s an unknown channel or a non-boolean rather than ignoring it, because a silently dropped preference is a notification that never arrives. |
 | POST | `/api/v1/me/personalization/reset` | wipes inferred memory |
 | GET | `/api/v1/me/favorites` · POST `/api/v1/me/favorites` · DELETE `/api/v1/me/favorites/{type}/{id}` | |
 | GET/POST/DELETE | `/api/v1/me/saved-searches[/{id}]` | |

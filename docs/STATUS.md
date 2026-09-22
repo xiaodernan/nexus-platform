@@ -1127,3 +1127,54 @@ suite whose inputs are uncommitted is not a gate; it is a local mood. `com.nexus
 this section's change. The rest belongs to the waves that wrote them, and is listed here with its paths so
 whoever owns each can land it — nobody should have to guess whether the service they are testing matches
 the source they are reading.
+
+
+## 28. Teaching the inventory to read the contract's own shorthand (2026-09-23)
+
+`verify_contract_runtime.mjs` reported "26 routes served and documented nowhere". Fourteen of them were
+documentation gaps; the other twelve were the tool failing to read the document. Both sides of that had to
+be settled before the list was worth acting on, because a reader who does not know which kind of row they
+are looking at will "fix" the notation holes and call the ledger clean.
+
+What the contract actually writes, and what the first parses missed:
+
+- a method cell names several verbs (`GET/POST/DELETE`), and the row may then name several paths after it
+  (`| GET | \`/api/v1/me/orders\` · \`/me/reservations\` · \`/me/conversations\` |`) — the second and third
+  written relative to the `/api/v1` prefix, which the first parse dropped;
+- a span carries its own verb (`· POST \`/api/v1/notifications/{id}/read\``), so cell verbs belong to the
+  first path only;
+- a span continues past the path into a body sketch (`` POST /api/v1/events {events:[…]} ``), so a pattern
+  that demanded the closing backtick right after the path un-documented the routes written that way —
+  including §11's telemetry ingest, which the same tool had just told me to go and document;
+- `…/offerings[/{id}]` is one route with two spellings, which must be counted as served when *either*
+  answers. Collapsing the brackets to the base made every item-only route look like a missing collection
+  route and turned 26 gaps into a spurious 47.
+
+The counts are the point of doing this in the open: undocumented-served went 27 → 26 → 20 → 18 → **14**,
+and documented-not-served 63 → 28 → 47 → 40 → **38** — the second number landing where the contract really
+does promise routes nothing serves (§5 workspace writes, the whole §6 cart family whose services exist with
+no controller, §9 admin). A measurement whose movement tracks the reader's comprehension rather than the
+system's state is not measuring the system.
+
+Two contract rows were wrong against the code and are corrected here, not just reformatted:
+
+- §3 documented preferences as `GET/PATCH/DELETE /api/v1/me/preferences[/{id}]`. `MeController` answers
+  **GET and POST on the collection** and **PATCH and DELETE on one entry by id** — the row invented a
+  collection-wide `DELETE`, which would be "forget every preference I have", and omitted the POST that is
+  the only way an entry gets there. The rewrite states the four real routes and says why there is no bulk
+  erase.
+- §3's notification rows never mentioned `GET/PUT /api/v1/notifications/preferences` or
+  `POST /api/v1/notifications/read-all`, both served since the M1 wave. They are documented with what the
+  service actually returns — `in_app|email|push` filled from the tenant defaults where nothing was stored,
+  `editable_channels` naming what a client may send, and `{marked_read}` counting the rows a call changed
+  rather than the rows in the inbox.
+
+Writing those rows also produced a notation rule worth keeping: a method cell has to be `GET/POST`, not
+`GET · POST` — the `·` belongs between paths, and a row using it between verbs is unreadable to the tool
+and ambiguous to a human about which verb binds which path.
+
+Still open, and deliberately not silently absorbed: `POST /api/v1/share` is documented and not served
+(added to the ledger's gap list rather than deleted from the contract, because §59-62 want the short link
+and it is a decision to drop it, not a formatting fix), and the 14 remaining undocumented-served rows are
+mostly `com.nexus.merchant` / `com.nexus.conversation` routes whose owners should write their own rows —
+listed with their paths in the tool's output rather than paraphrased here.
