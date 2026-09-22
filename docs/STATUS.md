@@ -995,3 +995,47 @@ with null off `slots[0]`, and now read `slot=328.00 reservation=328.00` and `slo
 
 Still open: no browser has been driven against a throwaway database, so §168's UI journey and the §171
 screenshot step remain unproven; the cart/checkout leg has no HTTP surface to walk at all.
+
+
+## 25. What the seam found on its second day (2026-09-23)
+
+D35 built the crossing; this is what came out of it once the probes stopped asking only the questions
+the author already knew the answers to.
+
+**`facts.source` was not a closed vocabulary.** `select distinct source from facts` on the seeded tenant:
+`demo, estimated, merchant, observed` — and `estimated` is not a provenance. 171 rows said the platform
+had *estimated* a price in the one column whose job is to say who vouched for it, because
+`offerings.price_source` (whose domain does include `estimated`, and whose consumer reads it) was copied
+straight across. The published `fact.json` schema enumerates six sources and requires the field, §4 ranks
+exactly those strings when two claims conflict, and the column is free `text` — so nothing between the
+seeder and the contract noticed. D36 rules: the estimate stays in the column that owns the word, the fact
+says `inferred`, and `value.estimated=true` keeps it visible inside the citation.
+
+Four structural checks came with it, none of them enforced anywhere before: one fact per
+`(subject, attribute)` (the reader does `order by observed_at desc limit 1`, so a duplicate is a coin
+toss between two truths), `confidence` inside 0..1 (`numeric(4,3)` stores 9.999 happily),
+`expires_at > observed_at`, and `stale` only where the TTL has actually run out. Gate: **163 checks**,
+was 159, `RESULT: PASS`, exit 0.
+
+**The end-to-end read chain went from 194 to 204 checks** by following the rating to its evidence:
+the card's printed value against `review_stats.average_rating`, its count against `published_reviews`
+and against the sum of the star distribution, the rating fact's `reviewed_through` against
+`latest_review_at`, and a cursor walk over the review pages proving the listing advances and returns
+rows that belong to the merchant and say they are demo. Three of those checks caught *the probe's own*
+wrong assumptions before they caught anything real (`review_count` instead of `review_stats.count`, a
+distribution treated as a map when it is an array of `{bucket, count, share}`, `status_scope` being a
+sentence rather than a token) — each was fixed by reading the served payload, not by loosening the
+assertion.
+
+**A money check that compared null with null.** `verify_reservation.py` asserted the reservation restates
+the slot's price and the inbox restates the reservation's — 30 green checks, and the walk had booked an
+unpriced table slot, because the directory's popularity-sorted first page is all restaurants. 8,513 of
+32,492 seeded slots do carry a price; the walk now looks for one and reports
+`slot=473.11 reservation=473.11`, capacity `6 -> 4`, replay `200`, anonymous `401`. Where a branch
+cannot be reached — the demo owner's own merchant has no priced inventory, so the inbox leg still reads
+`slot=null inbox=null` — the evidence now says so instead of looking like a pass.
+
+Also: `e2e_fresh.sh` refuses to run on a port someone else is already listening on, and refuses to
+believe a response unless the java process holding that port is the one it started. The first version of
+the harness graded a leftover instance from an earlier attempt; that is how a green end-to-end run can
+mean nothing.

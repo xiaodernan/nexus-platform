@@ -15,6 +15,7 @@
 #   scripts/e2e_fresh.sh                 # full run, cleans up after itself
 #   scripts/e2e_fresh.sh --keep          # leave the database (and the service) up for psql/curl
 #   scripts/e2e_fresh.sh --skip-generate # load data/seed/out/ as found
+#   scripts/e2e_fresh.sh --reads-only    # skip the reservation walk that writes rows
 #   E2E_PORT=8093 scripts/e2e_fresh.sh
 #
 # The live `nexus` and `nexus_test` databases are never opened, and neither is the running :8090
@@ -26,6 +27,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 KEEP=0
 SKIP_GENERATE=0
+READS_ONLY=0
 PORT="${E2E_PORT:-8092}"
 
 if [ -f "$ROOT/.env" ]; then
@@ -36,6 +38,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --keep)          KEEP=1 ;;
     --skip-generate) SKIP_GENERATE=1 ;;
+    --reads-only)    READS_ONLY=1 ;;
     -h|--help)       sed -n '2,25p' "$0"; exit 0 ;;
     *) echo "e2e_fresh.sh: unknown option: $1" >&2; exit 2 ;;
   esac
@@ -106,15 +109,24 @@ trap cleanup EXIT
 echo "e2e_fresh.sh  container=$CONTAINER db=$E2E_DB port=$PORT keep=$KEEP"
 echo "              live databases this run must NOT touch: $LIVE_DB, nexus_test"
 
-# --------------------------------------------------------------------------- 1/6 empty database
-step "1/6  create $E2E_DB from template0"
+# Who owns the port right now. If something is already listening, this run must not start: the health
+# probe would answer from *that* process, and every check below would be grading a service this script
+# did not configure. That is not hypothetical — an earlier run reached the probes against a leftover
+# instance from the previous attempt, which had been launched before the datasource fix landed.
+listener_on_port() {
+  { netstat -ano 2>/dev/null | grep -aE "TCP +[0-9.]+:$PORT +.*LISTENING" || true; }     | awk '{print $NF}' | head -1
+}
+[ -z "$(listener_on_port)" ] || die "port $PORT is already in use — choose another with E2E_PORT=..."
+
+# --------------------------------------------------------------------------- 1/7 empty database
+step "1/7  create $E2E_DB from template0"
 psql_maint "CREATE DATABASE \"$E2E_DB\" TEMPLATE template0 ENCODING 'UTF8'" >/dev/null
 [ "$(psql_e2e "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
                 AND table_name NOT LIKE 'pg_%'")" = "0" ] \
   || die "the fresh database is not empty"
 
-# --------------------------------------------------------------------------- 2/6 schema + roles
-step "2/6  apply infra/db/migrations/V*.sql + 00_roles.sql"
+# --------------------------------------------------------------------------- 2/7 schema + roles
+step "2/7  apply infra/db/migrations/V*.sql + 00_roles.sql"
 NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_NAME="$E2E_DB" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/db_apply_migrations.sh" | sed -e 's/^/    /'
 TABLES="$(psql_e2e "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
@@ -122,23 +134,23 @@ TABLES="$(psql_e2e "SELECT count(*) FROM information_schema.tables WHERE table_s
 MIGRATIONS="$(psql_e2e "SELECT count(*) FROM schema_migrations")"
 echo "    -> tables=$TABLES migrations=$MIGRATIONS"
 
-# --------------------------------------------------------------------------- 3/6 dataset
+# --------------------------------------------------------------------------- 3/7 dataset
 if [ "$SKIP_GENERATE" = "1" ]; then
-  step "3/6  seed generation skipped (--skip-generate)"
+  step "3/7  seed generation skipped (--skip-generate)"
 else
-  step "3/6  generate the synthetic dataset"
+  step "3/7  generate the synthetic dataset"
   PYTHON="${PYTHON:-python}"
   ( cd "$ROOT" && "$PYTHON" data/seed/generate.py ) 2>&1 | tail -3 | sed -e 's/^/    /'
 fi
 
-step "4/6  load the seed into the fresh database"
+step "4/7  load the seed into the fresh database"
 CONTAINER="$CONTAINER" DB="$E2E_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 \
   "$ROOT/data/seed/load.sh" | tail -6 | sed -e 's/^/    /'
 FACTS="$(psql_e2e "SELECT count(*) FROM facts WHERE attribute='rating'")"
 echo "    -> rating facts loaded: $FACTS"
 
-# --------------------------------------------------------------------------- 5/6 boot
-step "5/6  boot the platform against $E2E_DB on :$PORT"
+# --------------------------------------------------------------------------- 5/7 boot
+step "5/7  boot the platform against $E2E_DB on :$PORT"
 # baseline-version has to name the migrations the infra script already ran: Flyway would otherwise
 # replay V1..V4 over a schema that has them (D30/D32 are what made that failure loud instead of silent).
 # Redis is switched off so this run cannot write rate-limit or session keys into the shared instance.
@@ -182,9 +194,26 @@ if ! grep -aq "NEXUS_PLATFORM_DB_URL=jdbc:postgresql://127.0.0.1:5433/$E2E_DB" "
   die "the service is not reading $E2E_DB — refusing to probe another database"
 fi
 echo "    -> datasource confirmed: the launcher kept our URL over .env"
+# ...and the process answering is the one this run started, not a neighbour that bound the port first.
+[ -n "$LISTEN_PID" ] || die "no listener on :$PORT to attribute the responses to"
+if ! tasklist //FI "PID eq $LISTEN_PID" //FO CSV 2>/dev/null | grep -qi java; then
+  die "the listener on :$PORT (pid $LISTEN_PID) is not a java process this run started"
+fi
 
-# --------------------------------------------------------------------------- 6/6 probes
-step "6/6  probe the served consumer reads"
+# --------------------------------------------------------------------------- 6/7 probes
+step "6/7  probe the served consumer reads"
 node "$SCRIPT_DIR/verify_served_reads.mjs" --base "http://127.0.0.1:$PORT" --tenant "${NEXUS_TENANT:-hong-kong}"
 echo
-echo "RESULT: PASS — seeded rows and served payloads agree on :$PORT"
+
+# --------------------------------------------------------------------------- 7/7 the write leg
+if [ "$READS_ONLY" = "1" ]; then
+  step "7/7  skipped (--reads-only): no rows written"
+else
+  step "7/7  walk the reservation write path against $E2E_DB"
+  # The reason this runs here rather than against :8090: the walk books a real slot and cancels it, so
+  # it leaves rows behind. A state machine is best proved on a database that can be thrown away with
+  # the run that proved it, not on the demo data another session is looking at.
+  NEXUS_PLATFORM_URL="http://127.0.0.1:$PORT" NEXUS_TENANT="${NEXUS_TENANT:-hong-kong}"     "${PYTHON:-python}" "$SCRIPT_DIR/verify_reservation.py" 2>&1 | tail -40 | sed -e 's/^/    /'
+fi
+echo
+echo "RESULT: PASS — seeded rows, served payloads and the reservation walk agree on :$PORT"

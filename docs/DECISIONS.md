@@ -625,3 +625,46 @@ exit 0, neither live database opened.
 The §8 read got the same treatment for a shape it used to discard: an element of `collections.items` that is not
 an object — a bare id string from an older seed, a number, a null — is now echoed in `items` instead of vanishing,
 so `item_count 4 · items [] · dropped_item_ids []` is no longer an answer this endpoint can give.
+
+## D36 `facts.source` is a closed vocabulary, and an estimate is not a provenance — 2026-09-23
+
+`facts` has no CHECK on `source`. The vocabulary lives in two other places — API_CONTRACT §2 /
+AGENT_CONTRACT §4 (`merchant|imported|observed|third_party|inferred|demo`, and §4 ranks exactly those
+strings for conflict resolution) and `packages/types` (`FactSource`, which the published `fact.json` schema
+enumerates) — while the column is free `text`. Nothing in the database, the service or the suite joined
+those two sides, so the seeder was free to write whatever it liked.
+
+It did. `select distinct source from facts` on the seeded tenant: `demo, estimated, merchant, observed`.
+171 rows said **`estimated`**, which is not a provenance — it is how a number was obtained. The value came
+from `offerings.price_source` (whose own documented domain *does* include `estimated`, and whose
+`flags.estimated_price` consumer reads it), copied straight into the fact's `source` column.
+
+Why that matters more than a typo:
+
+- The published `Fact` schema rejects it. `fact.json` lists six sources and marks the field required, so
+  any payload carrying such a fact is invalid against the project's own contract.
+- Source is the tie-breaker for conflicting claims (§4: merchant > observed > imported > third_party >
+  inferred > demo). A seventh value has no rank, so the resolution of "merchant said 80, something said
+  80" depends on which string sorts later rather than on who vouched for it.
+- It overstates. "Estimated by the platform" and "a merchant told us" are different claims, and the first
+  one is what an estimate is.
+
+Ruling: **the estimate stays where it belongs and the fact says `inferred`.**
+`offerings.price_source` keeps `estimated` — that column's vocabulary is its own and something reads it.
+The fact that carries the same number gets `source='inferred'` (documented, ranked last but one, and true:
+the platform worked it out), and `value.estimated = true` so the estimate is still visible *inside* the
+citation rather than smuggled into the provenance field. `PRICE_SOURCE_TO_FACT` is the one mapping, and
+`quality.sql` now refuses any source outside the six, so the next coinage has to be a decision.
+
+Three structural checks came with it, because none of them was enforced anywhere: no second row for the
+same `(subject_type, subject_id, attribute)` (the reader takes `order by observed_at desc limit 1`, so a
+duplicate is two competing truths and a coin toss), `confidence` inside 0..1 (`numeric(4,3` allows 9.999),
+`expires_at > observed_at`, and `stale` only where the TTL has actually run out.
+
+Gate: **163 checks** (was 159), `RESULT: PASS` on a from-scratch database, exit 0.
+
+The walk learned the same lesson from the other side. `verify_reservation.py` compared the slot's price
+with the reservation's and the reservation's with the merchant inbox's — and both passed on `null == null`,
+because the directory's popularity-sorted first page is all restaurants and their table slots are
+unpriced. 8,513 of 32,492 seeded slots do carry a price; the walk now looks for one, and reports
+`slot=473.11 reservation=473.11` instead of agreeing about nothing.

@@ -580,8 +580,57 @@ SELECT 'rating confidence tracks the sample size (§19 hedge floor)',
                                     WHEN rc.n < 50 THEN 0.8 ELSE 0.9 END)
        || ' rating fact(s) whose confidence ignores n';
 
+-- facts invariants the schema cannot state: `facts` has no CHECK on source, no bound on confidence,
+-- and no uniqueness on (subject, attribute). `FactSource` is a documented vocabulary (API_CONTRACT §2,
+-- AGENT_CONTRACT §4 ranks exactly those strings), so an undeclared value silently resolves below every
+-- real claim while outranking them in any `max()` that reads source as text.
 INSERT INTO qc
-SELECT 'rating facts respect the 24h TTL',
+SELECT 'facts.source is a documented provenance (§2)',
+       NOT EXISTS (SELECT 1 FROM facts WHERE source NOT IN
+                     ('merchant','imported','observed','third_party','inferred','demo')),
+       (SELECT count(*) FROM facts WHERE source NOT IN
+          ('merchant','imported','observed','third_party','inferred','demo'))
+       || ' fact(s) with an undeclared source';
+
+INSERT INTO qc
+SELECT 'one fact per (subject, attribute)',
+       NOT EXISTS (SELECT 1 FROM facts GROUP BY subject_type, subject_id, attribute HAVING count(*) > 1),
+       (SELECT coalesce(sum(c), 0) FROM (SELECT count(*) c FROM facts
+          GROUP BY subject_type, subject_id, attribute HAVING count(*) > 1) d)
+       || ' competing row(s); the reader would have to guess which is true';
+
+INSERT INTO qc
+SELECT 'confidence within 0..1 and a TTL that runs forward',
+       NOT EXISTS (SELECT 1 FROM facts WHERE confidence < 0 OR confidence > 1)
+       AND NOT EXISTS (SELECT 1 FROM facts
+                        WHERE expires_at IS NOT NULL AND expires_at <= observed_at)
+       AND NOT EXISTS (SELECT 1 FROM facts WHERE stale AND expires_at > now()),
+       (SELECT count(*) FROM facts WHERE confidence < 0 OR confidence > 1) || ' bad confidence, '
+       || (SELECT count(*) FROM facts WHERE expires_at IS NOT NULL AND expires_at <= observed_at)
+       || ' non-forward TTL, '
+       || (SELECT count(*) FROM facts WHERE stale AND expires_at > now()) || ' stale-while-live';
+
+-- An estimate is not a merchant statement. `offerings.price_source` keeps the word (the profile's
+-- `flags.estimated_price` reads it); the fact that carries the same number says `inferred`, or the
+-- provenance vocabulary silently grows a seventh member nothing documents.
+INSERT INTO qc
+SELECT 'an estimated price is facted as inferred, not as merchant',
+       NOT EXISTS (SELECT 1 FROM facts f JOIN offerings o ON o.id = f.subject_id
+                    WHERE f.subject_type = 'offering' AND f.attribute = 'price'
+                      AND o.price_source = 'estimated'
+                      AND (f.source <> 'inferred' OR (f.value->>'estimated')::text <> 'true'))
+       AND NOT EXISTS (SELECT 1 FROM facts f JOIN offerings o ON o.id = f.subject_id
+                        WHERE f.subject_type = 'offering' AND f.attribute = 'price'
+                          AND o.price_source <> 'estimated'
+                          AND (f.value->>'estimated')::text = 'true'),
+       (SELECT count(*) FROM facts f JOIN offerings o ON o.id = f.subject_id
+         WHERE f.subject_type = 'offering' AND f.attribute = 'price'
+           AND o.price_source = 'estimated'
+           AND (f.source <> 'inferred' OR (f.value->>'estimated')::text <> 'true'))
+       || ' estimate(s) claiming another provenance';
+
+INSERT INTO qc
+SELECT 'rating facts respect the 24h TTL and cite their own reviews',
        NOT EXISTS (SELECT 1 FROM facts WHERE attribute='rating'
                      AND (expires_at IS DISTINCT FROM observed_at + interval '24 hours'
                           OR source <> 'observed' OR unit IS NOT NULL OR currency IS NOT NULL)),

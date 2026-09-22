@@ -110,6 +110,73 @@ async function main() {
   note('menu offerings probed', `${offerings.length} (${withRating.length} rated)`);
   for (const o of withRating) ratingIsBacked(o, `menu offering ${o?.slug}`);
 
+  // ---- the evidence chain: the printed rating, its fact, and the reviews it is the mean of.
+  // These come from three different queries — the card's aggregate column, the fact row, and a live
+  // count over `reviews` — and one page shows all of them. A merchant can render 「3.79 · 291」 while a
+  // distribution that sums to 288 says otherwise, and only a check across the responses can see it.
+  const reviews = await get(`/api/v1/merchants/${slug}/reviews?limit=50`);
+  ok(`GET /api/v1/merchants/${slug}/reviews`, reviews.status === 200, `HTTP ${reviews.status}`);
+  const stats = profile.body?.review_stats ?? {};
+  const printed = profile.body?.rating ?? {};
+  const distribution = stats.distribution ?? [];
+  const distTotal = distribution.reduce((a, d) => a + Number(d?.count || 0), 0);
+  const shareTotal = distribution.reduce((a, d) => a + Number(d?.share || 0), 0);
+  const ratingFact = factFor({ facts: profile.body?.facts ?? [] }, 'rating');
+  note('review evidence', `published=${stats.published_reviews} distribution=${distTotal} `
+    + `card=${printed.count} fact=${ratingFact?.value?.count} scope=${reviews.body?.status_scope}`);
+  ok('the printed rating, the published count and the distribution all agree',
+    Number(printed.count) === Number(stats.published_reviews) && distTotal === Number(printed.count),
+    `card ${printed.count} vs published ${stats.published_reviews} vs distribution ${distTotal}`);
+  ok('the printed value is the average the stats report',
+    Number(printed.value) === Number(stats.average_rating),
+    `card ${printed.value} vs stats ${stats.average_rating}`);
+  ok('the star shares add up to the whole', Math.abs(shareTotal - 1) < 0.01, `sum ${shareTotal}`);
+  ok('the rating fact counts the same reviews',
+    Number(ratingFact?.value?.count) === Number(stats.published_reviews),
+    `fact ${ratingFact?.value?.count} vs ${stats.published_reviews}`);
+  // The fact's evidence window and the stats' newest review are the same event seen through two
+  // queries; if they differ, one of them is not describing the reviews that exist.
+  ok('the rating fact was taken through the newest review',
+    ratingFact === null || stats.latest_review_at === undefined
+    || Date.parse(ratingFact.value?.reviewed_through) === Date.parse(stats.latest_review_at),
+    `reviewed_through ${ratingFact?.value?.reviewed_through} vs latest ${stats.latest_review_at}`);
+  // The scope is a sentence the service states about itself, not a token — what matters to a reader is
+  // that it says *which* reviews were counted and names what is left out.
+  ok('the review list states its counting scope',
+    /published/i.test(String(reviews.body?.status_scope ?? ''))
+    && /pending|flagged|rejected/i.test(String(reviews.body?.status_scope ?? '')),
+    JSON.stringify(reviews.body?.status_scope));
+
+  // A page is 50 rows and a seeded merchant has up to 443, so walk the cursor rather than assume the
+  // first page is the whole set — and prove the cursor advances at all.
+  const seen = new Map();
+  let cursor = reviews.body?.next_cursor ?? null;
+  let pages = 1;
+  for (const item of reviews.body?.items ?? []) seen.set(item?.review_id, item);
+  while (cursor && pages < 10) {
+    const next = await get(`/api/v1/merchants/${slug}/reviews?limit=50&cursor=${encodeURIComponent(cursor)}`);
+    if (next.status !== 200) { cursor = null; break; }
+    const before = seen.size;
+    for (const item of next.body?.items ?? []) seen.set(item?.review_id, item);
+    ok(`review page ${pages + 1} contributes new rows`, seen.size > before,
+      `${before} -> ${seen.size}`);
+    cursor = next.body?.next_cursor ?? null;
+    pages += 1;
+  }
+  note('review pages walked', pages);
+  const rows = [...seen.values()];
+  ok('every served review is a review of this merchant, with real text',
+    rows.length > 0 && rows.every((r) => r?.merchant_id === profile.body?.id
+      && Number(r?.rating) >= 1 && Number(r?.rating) <= 5
+      && String(r?.body ?? '').trim().length > 20 && r?.review_id && r?.created_at),
+    JSON.stringify(rows.slice(0, 2).map((r) => [r?.rating, (r?.body ?? '').length])));
+  ok('seeded reviews are marked as demo, not presented as real visitors',
+    rows.every((r) => r?.flags?.demo === true),
+    JSON.stringify(rows.slice(0, 3).map((r) => [r?.data_origin, r?.flags?.demo])));
+  ok('the walk reaches as far as the aggregate counts',
+    cursor === null ? rows.length === Number(stats.published_reviews) : rows.length <= distTotal,
+    `${rows.length} rows of ${distTotal}, cursor ${cursor === null ? 'exhausted' : 'still going'}`);
+
   // ---- §8: guides are collections with a kind, and their items resolve or say why not
   const guides = await get('/api/v1/guides');
   ok('GET /api/v1/guides', guides.status === 200, `HTTP ${guides.status}`);

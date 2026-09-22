@@ -58,6 +58,15 @@ TTL_HOURS = {"price": 6, "inventory": 0.25, "opening_hours": 24, "description": 
              "review_summary": 24, "popularity": 1, "address": 24 * 30, "cuisine": 24 * 30,
              "rating": 24, "availability": 0}
 
+# `facts.source` is the provenance vocabulary of API_CONTRACT §2 / AGENT_CONTRACT §4, and it is a free
+# `text` column with no CHECK — the enum lives in `packages/types` (`FactSource`) and in the docs, so the
+# seeder is the only place that can actually keep it honest.
+FACT_SOURCES = ("merchant", "imported", "observed", "third_party", "inferred", "demo")
+# An *estimated* price is how the number was obtained, not who vouched for it: `offerings.price_source`
+# keeps that word (the profile's `flags.estimated_price` reads it), while the fact that carries the same
+# number says `inferred`, which is the documented provenance for "the platform worked this out".
+PRICE_SOURCE_TO_FACT = {"estimated": "inferred"}
+
 
 # --------------------------------------------------------------------------- primitive helpers
 def uid(kind: str, key: str) -> str:
@@ -828,8 +837,11 @@ class Gen:
                                              "model": o["price_model"],
                                              "min": (m2(o["pmin"]) if o["pmin"] else None),
                                              "max": (m2(o["pmax"]) if o["pmax"] else None),
+                                             "estimated": o["price_source"] == "estimated",
                                              "data_origin": "demo"},
-                                            None, "HKD", o["price_source"], ttl_h=6,
+                                            None, "HKD",
+                                            PRICE_SOURCE_TO_FACT.get(o["price_source"], o["price_source"]),
+                                            ttl_h=6,
                                             uri=f"{DEMO_URI}/price/{o['slug']}", observed=obs,
                                             expires=exp))
             # The offering profile renders a rating too, and reads it off the same rule the merchant
@@ -1646,6 +1658,25 @@ def self_check(gen: Gen, out_dir: Path, args) -> int:
     for r in tables["facts"][1]:
         if r["attribute"] == "rating":
             rating_facts.setdefault((r["subject_type"], r["subject_id"]), []).append(r)
+    # Fact-table invariants the schema cannot express: `facts` is free text/jsonb with no CHECKs, so
+    # these have to be asserted somewhere or they drift silently. A source outside §2's vocabulary is
+    # the dangerous one — `FactSource` lives in packages/types and AGENT_CONTRACT §4 ranks those exact
+    # strings, so an undeclared value resolves below every real claim yet outranks them alphabetically.
+    seen_triples: set[tuple[str, str, str]] = set()
+    for r in tables["facts"][1]:
+        triple = (r["subject_type"], r["subject_id"], r["attribute"])
+        if triple in seen_triples:
+            errs.append(f"facts: a second row for {triple} — the reader would have to guess which is true")
+        seen_triples.add(triple)
+        if r["source"] not in FACT_SOURCES:
+            errs.append(f"facts {triple}: source {r['source']!r} is not a documented provenance")
+        conf = float(r["confidence"])
+        if not (0.0 <= conf <= 1.0):
+            errs.append(f"facts {triple}: confidence {conf} outside 0..1 (numeric(4,3) allows it)")
+        if r["expires_at"] != NULL and r["expires_at"] <= r["observed_at"]:
+            errs.append(f"facts {triple}: expires_at {r['expires_at']} is not after observed_at")
+        if r["stale"] == "true" and r["expires_at"] != NULL and r["expires_at"] > ts(gen.now):
+            errs.append(f"facts {triple}: marked stale while still inside its TTL")
     for kind, table, rows in (("merchant", "merchants", tables["merchants"][1]),
                               ("offering", "offerings", tables["offerings"][1])):
         for r in rows:

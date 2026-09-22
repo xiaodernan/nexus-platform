@@ -47,21 +47,42 @@ status, demo = call('POST', '/api/v1/auth/demo', {'role': 'consumer'})
 token = demo.get('access_token')
 check('demo consumer login', status == 200 and bool(token), f'HTTP {status}')
 
-status, page = call('GET', '/api/v1/merchants?district=Sha%20Tin&limit=20')
-merchant = next((c for c in page.get('items', []) if c.get('id')), None)
-check('directory listing', status == 200 and merchant is not None, merchant and merchant['slug'])
+status, page = call('GET', '/api/v1/merchants?district=Sha%20Tin&limit=50')
+cards = [c for c in page.get('items', []) if c.get('id')]
+check('the Sha Tin directory has merchants to book from', status == 200 and bool(cards),
+      f'{len(cards)} card(s)')
 
-mid = merchant['id']
+# Look for a *priced* bookable slot, across as many directory pages as it takes. 8,513 of the 32,492
+# seeded slots carry a price and the rest are unpriced table inventory; the directory's default sort is
+# popularity, so its first page is all restaurants and a walk that stops there books an unpriced slot —
+# where the two money checks below can only compare null with null. Green, and blind.
+merchant, slot, mid, scanned, priced = None, None, None, 0, None
+cursor, pages = None, 0
+while cards and pages < 4 and priced is None:
+    pages += 1
+    for cand in cards:
+        scanned += 1
+        st, a = call('GET', f"/api/v1/merchants/{cand['id']}/availability?party_size=2")
+        if st != 200:
+            continue
+        room = [s for s in a.get('slots', []) if (s.get('capacity_left') or 0) >= 2]
+        hit = next((s for s in room if s.get('price') is not None), None)
+        if hit is not None:
+            merchant, slot, mid, priced = cand, hit, cand['id'], hit['price']
+            break
+        if room and merchant is None:
+            merchant, slot, mid = cand, room[0], cand['id']
+    cursor = page.get('next_cursor')
+    if cursor and priced is None:
+        status, page = call('GET', f'/api/v1/merchants?district=Sha%20Tin&limit=50&cursor={cursor}')
+        cards = [c for c in page.get('items', []) if c.get('id')]
+check('a bookable merchant was found', merchant is not None, merchant and merchant['slug'])
+
 status, avail = call('GET', f'/api/v1/merchants/{mid}/availability?party_size=2')
-# Prefer a slot that carries a price. The two checks below compare the slot's price with the
-# reservation's and the reservation's with the merchant inbox's, and on an unpriced slot both of those
-# can only ever be `null == null` — the honest answer for that slot, and no test of the money path at
-# all. Falling back to any slot with room keeps the walk running where nothing is priced.
-bookable = [s for s in avail.get('slots', []) if (s.get('capacity_left') or 0) >= 2]
-slot = next((s for s in bookable if s.get('price') is not None),
-            bookable[0] if bookable else None)
-check('a slot with room for two', status == 200 and slot is not None,
-      slot and f"{slot['id'][:8]} left={slot['capacity_left']} {slot['starts_at']}")
+check('the slot the walk books', slot is not None,
+      slot and f"{slot['id'][:8]} left={slot['capacity_left']} {slot['starts_at']} "
+      + (f"price={priced['amount']} {priced['currency']}" if priced
+         else f'price=none after {scanned} merchant(s)'))
 
 before = slot['capacity_left']
 body = {'merchant_id': mid, 'slot_id': slot['id'], 'party_size': 2,
@@ -75,7 +96,8 @@ check('status stays pending', created.get('status') == 'pending', created.get('s
 slot_price = (slot.get('price') or {}).get('amount')
 res_price = (created.get('price') or {}).get('amount')
 check('price is the slot’s, or honestly absent', slot_price == res_price,
-      f'slot={slot_price} reservation={res_price}')
+      f'slot={slot_price} reservation={res_price}'
+      + ('' if slot_price is not None else '  [unpriced slot — only the null branch ran]'))
 check('terms came from the slot', created.get('starts_at') == slot['starts_at'], created.get('starts_at'))
 
 status, replay = call('POST', '/api/v1/reservations', body, token)
