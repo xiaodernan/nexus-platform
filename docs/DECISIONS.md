@@ -714,3 +714,49 @@ Suite: 115/115 (7 new in `ReviewWriteTest`). Over HTTP against a throwaway seede
 `basil-leaf-0419`: `201 · status=pending · data_origin=user · verified_*=false ·
 aggregate_changed=false`, the page's rating `3.79 · 291` identical before and after, and in the database
 one `user` review and one open case.
+
+## D38 A claim is one row, and it can be restated — 2026-09-23
+
+Found while making D37's review queue publishable. Restating a rating fact means updating its row, and
+`update facts set …` fails:
+
+```
+ERROR:  record "new" has no field "updated_at"
+  in PL/pgSQL function set_updated_at() line 2 at assignment
+```
+
+V1 walks a list of tables and puts `<table>_updated_at BEFORE UPDATE → set_updated_at()` on each, `facts`
+included — but V1's own `facts` declaration has `created_at` and no `updated_at`. The trigger body is not
+validated until it fires, so the schema ships believing facts are updatable and the first attempt anywhere
+discovers they never were. Not "were designed insert-only": **no UPDATE of a `facts` row has ever succeeded
+in any environment of this project**, and `FactRepository.record` is an INSERT because an upsert threw.
+
+That accident was load-bearing in a bad way. DATABASE.md §7, AGENT_CONTRACT §5 and D25 describe `facts` as
+the row a rendered claim cites and require a merchant edit to *restate* it; D36 made one row per
+`(subject, attribute)` a checked invariant; D37 leaves reviews to be published, which moves an aggregate and
+so must restate a rating fact. All three describe a table the schema forbade.
+
+Ruling:
+
+- **V6 adds the missing column** (`updated_at timestamptz NOT NULL DEFAULT now()`), which is what the trigger
+  V1 already installed expects, and what every other table on that list already had. `updated_at` is when the
+  row was last restated; `observed_at` is when the value was true of the world; `expires_at` is its deadline.
+  Three different clocks, and only the first two were in the table.
+- **V5 makes one claim one row.** Dedupe by keeping the newest observation per `(subject_type, subject_id,
+  attribute)`, then a unique index. Without it, the readers' `order by observed_at desc limit 1` is a coin
+  toss between two live claims and D36's seeded-only check is a promise about data the platform never wrote.
+- **`FactRepository.record` upserts.** A re-observation replaces the value, source, confidence, TTL and
+  freshness of the same row, so a refreshed claim is fresh again rather than a second expiry clock running
+  beside the first. `returning id` gives the caller the surviving row either way.
+- **The merchant price fact is `price`, not `avg_price`.** `MerchantService.recordProfileFacts` filed the
+  edit under `avg_price` while `MerchantCards`, the seeded corpus, `quality.sql` and `FactAttribute` all join
+  `price`. So the write landed in an attribute nobody reads and the card went on citing the pre-edit number
+  as its provenance — a citation that had become false, which is the one thing a trust row must not be.
+  `avg_price` rows in any database: 0 written after this, 0 read by anything, ever.
+
+Tests (`FactWriteTest`, 2 new; suite 117/117): edit → the card's price fact says 88.00, edit again → 120.00
+and still exactly one row; and the second observation is the *same row id*, with `stale=false` and
+`expires_at - observed_at` still exactly six hours, measured from the new observation rather than inherited.
+Both are the assertions that would have failed loudly before V6 and could not be written at all before it.
+
+Gate: V1..V6 from an empty database, `RESULT: PASS — 163 quality checks (tables=57, migrations=6)`.

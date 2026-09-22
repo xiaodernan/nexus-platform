@@ -1236,3 +1236,48 @@ lists as documented and unserved — so in the current build a real review stays
 aggregate can only ever move through merchant edits and the seeded corpus. That is the honest state, not a
 bug to hide by publishing on write, and it is now the blocking dependency of the review surface: it belongs
 to whoever builds §9.
+
+
+## 31. A trigger that made the trust layer read-only (2026-09-23)
+
+D37 left a queue with no door, and opening it needs one thing: restating a `rating` fact after a review is
+published. `update facts set …` answered
+
+```
+ERROR:  record "new" has no field "updated_at"
+  in PL/pgSQL function set_updated_at() line 2 at assignment
+```
+
+V1 walks a list of tables and installs `<table>_updated_at BEFORE UPDATE → set_updated_at()` on each,
+`facts` among them, and V1's own `facts` declaration has `created_at` and no `updated_at`. A trigger body is
+not validated until it fires, so the schema has been shipping an UPDATE path that cannot run: **no fact row
+has ever been updated in any environment of this project.** That is also why `FactRepository.record` is an
+INSERT — not a design choice, a workaround nobody wrote down. The accident was load-bearing in the worst
+direction: §7, §5, D25, D36 and D37 all describe a facts row that gets restated when the world changes, and
+the table forbade it.
+
+- **V6** adds the column the trigger already expected. Three clocks, named: `observed_at` when the value was
+  true of the world, `updated_at` when this row was last restated, `expires_at` the deadline.
+- **V5** makes one claim one row — dedupe to the newest observation per `(subject_type, subject_id,
+  attribute)`, then a unique index. Every reader sorts by `observed_at desc limit 1`, so without this, two
+  live rows about one claim is a coin toss; D36's check only ever guarded data the platform did not write.
+- **`record` upserts** now: same row, new value/source/confidence/`observed_at`/TTL, `stale=false`.
+- **`avg_price` → `price`.** `MerchantService.recordProfileFacts` filed merchant price edits under an
+  attribute no reader joins, while `MerchantCards`, the seed, `quality.sql` and `FactAttribute` all use
+  `price`. The edit therefore wrote a fact nobody could cite and left the card citing the *previous* price as
+  its provenance — a citation that had quietly become false, which is the single thing a trust row must not
+  turn into.
+
+`FactWriteTest` (2 new; suite **117/117**): 88.00 → the card's price fact says 88.00; 120.00 → it says
+120.00 with **one** row and **zero** `avg_price` rows; and the second observation is the *same row id*,
+`stale=false`, `expires_at - observed_at` exactly six hours measured from the new observation. Neither test
+could have been written before V6, and the second would have failed without V5.
+
+```
+db_gate_fresh.sh   V1..V6 from an empty database · 163 checks · tables=57 migrations=6 · PASS
+e2e_fresh.sh       8/8 · 525 served-read checks · 0 5xx · 30/30 reservation checks · contract ↔ router PASS
+```
+
+Both migrations were also applied to the shared `nexus_test` incrementally through `db_apply_migrations.sh`
+(the script skipped V1-V4 and reported `migrations=6`); the suite cannot see V5/V6 otherwise, since the
+tests run with Flyway off.

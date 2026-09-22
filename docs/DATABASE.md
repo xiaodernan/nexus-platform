@@ -237,6 +237,18 @@ silent charges (§103). A background sweeper marks expired `facts.stale=true` us
   half away from zero and Python's `round` rounds half to even, and seventeen seeded ratings once sat a cent apart
   because of it (D35). A subject with no published review has no aggregate to print and no fact — a rating of
   `0.00` is a claim, not an absence.
+- **One row per claim.** `facts (subject_type, subject_id, attribute)` is unique (V5): an re-observation
+  updates that row — value, source, confidence, `observed_at`, a fresh `expires_at`, `stale=false` — because
+  every reader takes `order by observed_at desc limit 1`, and two live rows about one claim is two truths with
+  a tie-break. V1 put a `BEFORE UPDATE … set_updated_at()` trigger on `facts` without giving it an
+  `updated_at` column, so no fact could be updated at all until V6 supplied the column the trigger assumed;
+  D38 is the discovery, `FactWriteTest` the guard. Three clocks, not one: `observed_at` is when the value was
+  true of the world, `updated_at` when this row was last restated, `expires_at` its deadline.
+- **The attribute is part of the contract.** A fact is found by `(subject, attribute)`, so a write under a
+  name no reader joins is invisible rather than wrong: `MerchantService` filed merchant price edits as
+  `avg_price` while `MerchantCards`, the seed, `quality.sql` and `FactAttribute` all use `price`, which left
+  the card citing a superseded number as its own provenance. `avg_price` is retired; `price` carries
+  `{amount, currency, model[, band]}`.
 - **Render contract:** `EntityCard.facts[]` and `ai_match.reasons[].fact_id` must resolve here; a bullet without a
   `fact_id` does not render.
 - **Post-validation:** generated text is checked so each numeric/entity claim maps back to a fact; unmatched claims are

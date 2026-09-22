@@ -238,8 +238,14 @@ public class MerchantService {
 
     void recordProfileFacts(TenantContext tenant, UUID merchantId, Map<String, Object> fields) {
         if (fields.get("avg_price_hkd") != null) {
-            facts.record(tenant, "merchant", merchantId, merchantId, "avg_price",
-                    Json.map("amount", String.valueOf(fields.get("avg_price_hkd")), "currency", "HKD"),
+            // The claim is `price`, because that is the attribute every reader joins — `MerchantCards`'
+            // merchant lateral, the seeded corpus, `quality.sql`, and `FactAttribute` in packages/types.
+            // This used to file it under `avg_price`, which no query reads: the edit wrote a fact nobody
+            // could cite and left the old `price` row in place as the citation for a number that had
+            // already changed (D38).
+            facts.record(tenant, "merchant", merchantId, merchantId, "price",
+                    Json.map("amount", String.valueOf(fields.get("avg_price_hkd")), "currency", "HKD",
+                            "model", "per_person"),
                     null, "HKD", "merchant", 1.0, FactRepository.PRICE_TTL);
         }
         if (fields.get("description") != null) {

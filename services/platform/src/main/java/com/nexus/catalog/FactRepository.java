@@ -30,15 +30,28 @@ public class FactRepository {
         this.jdbc = jdbc;
     }
 
+    /**
+     * Record an observation of a claim. A second observation of the same {@code (subject, attribute)}
+     * <em>replaces</em> the first rather than filing a rival beside it: readers take
+     * {@code order by observed_at desc limit 1}, so a stale row that outlives the fact it describes is a
+     * second truth waiting to be cited (V5 makes that a constraint, not a convention). A refreshed claim is
+     * observed now, is no longer stale, and carries a fresh TTL — one expiry clock per claim.
+     */
     public UUID record(TenantContext tenant, String subjectType, UUID subjectId, UUID merchantId, String attribute,
                        Object value, String unit, String currency, String source, double confidence, Duration ttl) {
         Map<String, Object> row = jdbc.crossTenantReturning("""
                 insert into facts (subject_type, subject_id, merchant_id, attribute, value, unit, currency, source,
-                                   confidence, expires_at)
+                                   confidence, observed_at, expires_at)
                 values (:subject_type, :subject_id, cast(:merchant_id as uuid), :attribute, cast(:value as jsonb),
                         cast(:unit as text), cast(:currency as text), :source, cast(:confidence as numeric),
+                        now(),
                         case when cast(:ttl_seconds as bigint) is null then null
                              else now() + make_interval(secs => cast(:ttl_seconds as bigint)) end)
+                on conflict (subject_type, subject_id, attribute) do update
+                  set value = excluded.value, unit = excluded.unit, currency = excluded.currency,
+                      source = excluded.source, confidence = excluded.confidence,
+                      merchant_id = excluded.merchant_id, observed_at = now(), stale = false,
+                      expires_at = excluded.expires_at
                 returning id
                 """, Json.map("subject_type", subjectType, "subject_id", subjectId, "merchant_id", merchantId,
                 "attribute", attribute,
