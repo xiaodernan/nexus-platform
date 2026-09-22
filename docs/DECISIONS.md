@@ -82,3 +82,378 @@ hosts are `postgres:5432` / `redis:6379`. Test database: `nexus_test` on the sam
 `hong-kong` with the stable id `00000000-0000-0000-0000-000000000001`. Agents must not invent other host ports and
 must not touch the non-Nexus containers.
 
+
+## D22 D9 was wrong about two containers on this machine — measured 2026-09-22
+
+D9 pinned Postgres to the container name `nexus-postgres` on host port 5433. Both halves of that claim are
+false on the current machine, and the build has been quietly working around it:
+
+| Claim | Measured |
+|---|---|
+| `nexus-postgres` is ours | `docker inspect -f '{{json .Config.Labels}}' nexus-postgres` → `com.docker.compose.project.config_files = D:\内容创作平台\infra\docker-compose.yml`. Another project owns that name **and** that volume (`nexus-pgdata`, superuser `nexus`, `nexus` DB with 29 unrelated tables: design_nodes / games / remixes). It publishes host port **55433**, not 5433. |
+| Our Postgres answers on 127.0.0.1:5433 | Until today nothing did. `nexus-redis` (ours, `获客平台\infra`) is the only Nexus store the compose file has ever successfully started; `docker compose up postgres` fails on the container-name conflict, so our stack has never had its own database container running. |
+| "the `nexus` DB has 59 tables" (STATUS, older revision) | Not reproducible anywhere: 5433 is a manual `nexus-platform-testpg` container whose only Nexus DB is `nexus_test` (58 tables, roles `nexus_app` + `nexus_ai` — provisioned by the platform stream); 55432 `nexus-seed-verify` has user `nexus`, DB `nexus`, **0** public tables; 55433 is the other project's. The earlier number was measured against a container that no longer exists and was never re-checked. |
+
+Rulings, binding for every stream:
+
+1. **Never create, stop, exec into or drop anything belonging to `nexus-postgres`, `careeros-*`,
+   `specproof-*`, `football_os_db`, or `content-creation` stacks.** They are the user's other projects.
+2. Our compose service must stop claiming the colliding name. `infra/docker-compose.yml` gets
+   `container_name: nexus-platform-postgres` (project `nexus`, volume `nexus_pgdata` — both already unique),
+   and every script that does `docker exec nexus-postgres` (`Makefile`, `scripts/db_apply_migrations.sh`,
+   `data/seed/load.sh`, `data/seed/quality.sql`) follows in the same change, or the scripts will drive a
+   container that is not ours. **This edit is deliberately sequenced after the DB stream's current work on
+   `infra/**` and `data/seed/**`** — two writers on those files is how the D17 phantom migrations happened.
+3. Until (2) lands, the canonical dev database is whatever container answers 127.0.0.1:5433, and today that
+   is `nexus-platform-testpg`. It is **not** compose-managed and its data lives in the container layer, so
+   anything loaded into it must be treated as re-creatable, not durable: seed data loaded there has to be
+   re-loadable from `infra/db/seed/` by script, and no stream may treat its contents as a migration source.
+4. D9's "Web host port 3000" is also stale on this machine: 3000 is occupied by another project. Dev is
+   3001, the lead's production verification server is 3002. CI may keep 3000 because a runner is empty.
+5. Ledger discipline, from §157: a STATUS row that quotes a port or a container name is a claim about a
+   machine, and machines change. Rows of that kind carry the date they were re-measured, and the re-measure
+   is `docker ps` + one query — not `grep` over our own docs.
+6. Ruling (2) landed on 2026-09-22: the compose project is `nexus-platform` and its containers are
+   `nexus-platform-postgres` / `nexus-platform-redis`. The first `docker compose up -d postgres` under the
+   old `name: nexus` **removed the other project's `nexus-postgres` container** (both compose files declared
+   the same project name, so `up` reconciled their stack away from it). It was restored from that project's
+   own compose file with its `nexus-pgdata` volume intact — 29 tables re-counted afterwards. Recorded here
+   because §157 asks for the near-miss, not just the outcome: a shared container name is a destructive
+   dependency, and `docker compose up` on a file that collides is not a read-only action.
+7. The D9 host-port pin is wrong for the application tier too, measured 2026-09-22 with
+   `netstat` + `Get-CimInstance Win32_Process`:
+   | Port | Owner (command line) | Consequence |
+   |---|---|---|
+   | 8080 | `java -jar target/career-os-backend-0.1.0.jar` | not ours |
+   | 8000 | `python -m uvicorn app.main:app --port 8000` | not ours |
+   Both belong to the AI Career OS stack. `application.yml` keeps `${NEXUS_PORT:8080}` and the AI keeps
+   `8000`, because those are the contract's defaults and a CI runner is empty; locally the platform runs
+   with `NEXUS_PORT=8090` and the AI with its own `--port 8010`, and `infra/docker-compose.yml` already
+   exposes `NEXUS_PLATFORM_HOST_PORT` / `NEXUS_AI_HOST_PORT` for exactly this. Never kill or re-bind those
+   two processes; a `404` from `:8000/ai/v1/health` is a different app answering, not our service being
+   broken — check the responder's identity before diagnosing.
+
+## D23 The AI service had never met a real database — three dead paths, found on 2026-09-22
+
+`apps/ai` was green for days: `pytest -q` reported 64 passed. Four of those tests were the live-DB suite,
+and every one of them **skipped itself** because `NEXUS_TEST_DATABASE_URL` was unset. With the seed loaded
+(STATUS "Seed dataset"), they ran, and three things that had never actually worked came out:
+
+| # | Symptom measured | Cause | Fix |
+|---|---|---|---|
+| 1 | `GET /ai/v1/health` → `{"database": {"configured": true, "available": false, "error": "syntax error at or near \"ONLY\""}}` | `Database.readonly()` opened its read-only transaction with `SET LOCAL READ ONLY`, which is not Postgres syntax. **Every** read through that method failed, so live search could only ever return an empty list. | `SET TRANSACTION READ ONLY`, which is the accepted form and is legal as the first statement of the block. |
+| 2 | `agent_runs` insert rejected: `null value in column "started_at" violates not-null constraint` | Callers time a run off a monotonic clock and pass `started_at=None`; the INSERT bound that NULL explicitly, overriding the column's `DEFAULT now()`. `persist_run` swallows the failure, so the §52 audit ledger was silently empty in live mode and only `ledger.persisted=false` hinted at it. | Derive `started_at` from the measured `latency_ms` in the INSERT, and leave an explicit value authoritative via `COALESCE`. |
+| 3 | `POST /ai/v1/search` with a categorised query → `items: []` while the same SQL without the category filter returned 60 candidates | The NLU answers with a coarse bucket (`restaurant`, `escape_room`, `retail`) and the filter compared it to `merchants.category_primary`, a display label ("Ramen · Sha Tin"). No live row can match; the offline fixture hid it because its catalogue stores the bucket itself. | `nexus_ai/search/categories.py` resolves a bucket to taxonomy slugs and the builders match through `merchant_categories`/`categories` (one tree level). Needs `SELECT` on those two tables for `nexus_ai`, so `00_roles.sql` and API_CONTRACT §0 gained them; `seed/quality.sql` now forbids a `category_primary` that is not one of the merchant's own category names, which is what kept the district baked into the label. |
+
+Rulings:
+
+1. **A skipped test is not a passing test.** `pytest -q` excluding `integration` is fine as the default, but
+   the CI job must run `NEXUS_TEST_DATABASE_URL=... pytest -m integration` whenever a service database is up,
+   or the read path, the audit ledger and the category filter can each be dead and the suite still says green.
+2. Two buckets deliberately have no counterpart in the 77-node taxonomy (`cinema`, `medical`, `footwear`,
+   `electronics`, `tutoring`). They resolve to themselves and match nothing, which returns an honest empty
+   page; inventing a mapping to keep a demo pretty is the §109 failure mode in a new place.
+3. `tests/test_search_sql.py` pins the resolver and asserts the candidate SQL walks the taxonomy tables, so
+   the string-equality bug cannot come back through a refactor of the demo path.
+
+## D24 §4 consumer reads ride the one card projection — 2026-09-22
+
+`GET /api/v1/merchants/{id_or_slug}` was the vertical slice's blocker: the route existed in the contract and in
+`apps/web`, and answered `404 "No such endpoint"`. `com.nexus.catalog` now serves all six §4 merchant reads
+(14 tests in `CatalogReadTest`, 61/61 green, each route re-read live against the seed — STATUS "Consumer catalog
+reads"). Five rulings came out of writing them:
+
+1. **One projection, not two.** The directory list, the profile and the §29 SEO page are all `MerchantCards.COLUMNS`
+   + `LATERAL_JOINS` + `card()`. A second merchant `select` is how "4.6 · 213 reviews" starts meaning different
+   things on two pages; the profile is the card plus its own extra keys, and the test asserts the *same* `fact_id`
+   appears on the list card and on the profile.
+2. **Filter on the column the card prints.** `district` compares `locations.district` (the primary location), not a
+   text search, so "what you filter is what the card says". `category` answers the printed `category_primary` name,
+   a taxonomy leaf slug/name **and** its parent — the D23 lesson, and the reason `?category=Hot%20Pot` and
+   `?category=hotpot` return the same 25 merchants, including one that calls itself Indian: its own
+   `merchant_categories` link puts it in that aisle and the card still prints its own primary. An unseeded slug
+   returns 0 rather than being fuzzy-matched into a result.
+3. **Unknown is not cheap, and absent is not empty.** `avg_price_hkd IS NULL` fails `max_price` (and
+   `rating_agg`-less rows fail `rating`) because "we do not know" must not satisfy "HK$200 or less". A draft, a
+   suspended, another tenant's or an unknown merchant is `404 merchant_not_found` on every one of the six routes,
+   and a not-yet-generated AI summary is `404 review_summary_not_found` — "no summary exists" and "this place has no
+   reviews" are different facts, and the second one's real answer is `review_stats.published_reviews = 0`.
+4. **A bare sort token is ascending, everywhere.** `Paging.orderBy` appends `asc` unless the token starts with `-`, so
+   the whitelist holds bare column fragments and the endpoint defaults are stated in full (`m.popularity_score desc
+   nulls last`) — "least popular first" is not a default anyone asked for. `rating_agg`/`popularity_score` are
+   `NOT NULL DEFAULT 0`, so a merchant nobody rated simply has the lowest rating there is — it leads `sort=rating`
+   and trails `sort=-rating`, and only `nulls last` makes a genuinely nullable column (an unknown
+   `avg_price_hkd`) sink. No fragment reads `plan`, campaign, coupon or spend,
+   and the profile does not echo `plan` at all (§66).
+5. **A price is an object, a fact is a number, and a cached seat is a lie.** Money goes out through `Json.money`
+   (`"136.70"` + currency); `confidence`, `average_rating` and `share` are JSON numbers, which is why the first test
+   run failed on `"0.900" != 0.9` — the contract's money-string rule does not extend to a scale. Availability answers
+   `Cache-Control: no-store` because a seat is a claim about a moment someone else may take a second later (§20),
+   and its `price`/`offering` stay `null` on seeded slots rather than borrowing the pool's price (§19).
+
+Side effect worth keeping: this pass cleared the ledger's last 4 MISSING and its 3 UNDOCUMENTED rows — the two AI
+routes it turned up (`GET /ai/v1/health`, `GET /ai/v1/conversations/{id}`) are now documented from the payloads the
+running service returns, with the conversation read's missing tenant predicate recorded as a known limit rather
+than papered over.
+
+## D25 A rendered claim needs a fact row — the hours case — 2026-09-22
+
+The vertical slice's merchant page read `/api/v1/merchants/{slug}` and cast the payload straight into
+`MerchantDetail`. The cast was a lie of omission: `price` is an object on the wire and a string in the view-model,
+`business_hours` numbers weekdays `0=Mon…6=Sun` while the page labels `0=Sun…6=Sat`, and `price_model`
+`from_price` is not a `PriceModel` the UI knows. The page rendered blank fields in live mode and full ones in mock
+mode, which is the one comparison that makes fake data look like progress (§109). `apps/web/src/lib/platform-catalog.ts`
+is now the only place that crosses those conventions; `data.ts` projects through it and casts nothing.
+
+Three rulings came out of it, and all three change what the platform owes a card:
+
+1. **A computed badge still needs a fact to cite.** `open.is_open` is derived at query time from
+   `business_hours`, so it was emitted with `source_fact_id: null` — the §19 rule says a rendered claim resolves to
+   a `Fact`, and "open now" is a claim. `MerchantCards` now joins the merchant's newest
+   `f.attribute = 'opening_hours'` row into every card (`hf` lateral) and names its id from `open`. This is
+   presentation, not a new fact: the row and the boolean are the same statement read from the same table.
+2. **The write must keep the mirror true.** `opening_hours` (stored) and `business_hours` (rendered) are one claim in
+   two vocabularies; `@nexus/ui/trust/fact.ts` now resolves them through an alias table, mirroring the TTL table
+   `apps/ai/nexus_ai/trust/freshness.py` already keeps. `MerchantService.addHours` did write a fact, but only the
+   interval being edited (`{weekday, opens_at, closes_at}`), a second shape nothing else in the system produces: the
+   seeded rows carry `{zones: […], closed_weekday}`, and `hoursFactText` can only decode that one, so a merchant edit
+   replaced a legible week with an unrenderable fragment. It now records the merchant's whole week, which is also
+   what `open` is computed from — a citation must not be narrower than the claim it supports. The route this needed
+   arrived the same day from the merchant-console stream: `MerchantContentController` reaches `addHours` through
+   `POST`/`PATCH /api/v1/merchant/businesses`, so the mirror is now HTTP-reachable — and `com.nexus.merchant` still
+   ships no integration test, which D26 records as the open half of that surface.
+3. **`demo` is a source, not a mistake.** 520 seeded hours rows carry `facts.source = 'demo'`, which §2's union did
+   not include. `apps/ai` resolved that by clamping unknown sources to `inferred` — provenance laundering, the
+   opposite of §109. `demo` is now a first-class `FactSource` ranked below `inferred` (ui, `apps/ai`,
+   `packages/types`, API_CONTRACT §2, DATABASE.md), with a confidence cap of 0.5, so synthetic data states where it
+   came from and never outranks a real observation.
+
+Deliberately not done: no `rating` fact row exists for any seeded merchant, so the live card keeps rendering
+未验证 for the rating number. Materialising one from `review_stats` is a data decision (§19), not a projection
+fix, and inventing it in TypeScript is exactly what this task was cleaning up.
+
+## D26 A hold is released by whoever took it — the reservation cancel ruling — 2026-09-22
+
+§6 of the API contract lists `PATCH /api/v1/reservations/{id}` with the note "status transitions guarded" and
+defines no body, no actor and no target state. The route did not exist. That gap was not cosmetic: the consumer
+slice could reach a booking and had no way out of it, so `NX-RES-A5DMBX` — the demo hold `docs/STATUS.md` records
+as left in the developer database — is stuck holding two of five seats with no route that can return them.
+
+Five rulings, each driven by something the code did rather than by taste:
+
+1. **The route offers exactly one transition, to the person it belongs to.** `pending`/`confirmed` → `cancelled`,
+   for the authenticated holder (`reservations.user_id` against the token's subject, never against
+   `contact.email`). Anyone else gets `404 reservation_not_found`, per D5: a route that answers 403 to a stranger
+   lets anyone test whether a booking code exists. This is the smallest reading of "transitions guarded" that
+   does not require inventing an actor the workspace vocabulary cannot name (see 3).
+2. **A release follows the same rule as a claim.** `ReservationService.cancel` guards on
+   `status in ('pending','confirmed')` inside the update, so a double-tapped cancel returns the seats once; the
+   replay answers 200 and deliberately omits `slot` rather than printing a seat count for a change it did not
+   make. Seats go back in the same transaction, clamped by `least(capacity_left + party_size, capacity_total)`
+   because a merchant who shrank the pool mid-evening would otherwise make the restore fail
+   `availability_slots_capacity_bounds` — a booking that cannot be released cleanly is worse for the diner than a
+   slot one seat short of its new total.
+3. **Merchant-side advancement is not implemented, and is a contract question, not a code gap.** Nothing in §5's
+   permission vocabulary means "change somebody else's booking": `read_orders` is a read, `create_reservation` is
+   a claim. Granting a write through either would be §52's forbidden step (a write with no matching permission),
+   and minting `manage_reservations` is a vocabulary change with grant-set consequences. Ruled: refuse, and record
+   it — `POST /api/v1/orders/{id}/cancel` has the same shape problem on the commerce side.
+4. **`completed` and `no_show` are records, not holds.** They answer 409 `reservation_not_cancellable`: rewriting an
+   evening that already happened into a cancellation would falsify the merchant's history for the sake of a button
+   (§109).
+5. **The API must read its own integrity rules, not rediscover them.** V2's partial unique index — one live hold
+   per `(slot_id, user_id)` — is the actual rule, but `existing()` keyed on `party_size` too. Changing your party
+   size therefore passed the replay guard, claimed seats, and hit the index: a 500 with a rolled-back claim. Now
+   the same size replays the same code and a different size answers 409 `reservation_exists` naming the code to
+   cancel. `ReservationApiTest` pins both halves.
+
+Also recorded: `reason` has no column on `reservations`, so a cancellation reason is written to
+`audit_logs.metadata` and the response says where it went rather than pretending it reached the merchant — and
+says plainly that **no route notifies the merchant**, because a person who has spoken to a restaurant needs to
+know the app did not pass the message on.
+
+Deliberately not done: no `GET /api/v1/reservations/{id}` (§6 does not list it, and `/api/v1/me/reservations`
+already lists the holder's own), no `POST …/cancel` alias (that is the orders' shape, and two spellings of one
+transition is how they drift apart), no migration for `cancelled_at`/`cancellation_reason`, and no test for the
+merchant console — `com.nexus.merchant` now has a controller but still ships zero integration tests, so the D25
+hours mirror is reachable and unverified at the same time.
+
+## D27 `error.code` is a status ladder, not a closed vocabulary — 2026-09-23
+
+Found by the first run of `scripts/verify_payload_conformance.mjs` against live services: the platform's 404
+body carries `"code": "merchant_not_found"`, which `error_envelope.json` rejected as outside §1's eight. That
+was CONTRACT NOTE 9's ruling (closed enum, subject in `details.resource`) meeting the code that §1's own
+example line sanctions — and the grep says the example is the norm, not the exception: **22 resource-qualified
+codes ship in `services/platform/src/main/java`** (`api_key_not_found`, `campaign_not_found`,
+`cart_not_found`, `cart_item_not_found`, `conversation_not_found`, `coupon_not_found`,
+`idempotency_key_conflict`, `import_job_not_found`, `member_not_found`, `merchant_not_found`,
+`notification_not_found`, `offering_not_found`, `order_not_found`, `preference_not_found`,
+`reservation_not_found`, `review_summary_not_found`, `seo_route_not_found`, `slot_not_found`,
+`subject_not_found`, `tenant_not_found`, `user_not_found`), and `apps/web` is already built on the family:
+`src/lib/data.ts` documents "a not-found code that carries its subject", and
+`app/[city]/[category]/page.tsx` keeps a `NOT_ROUTABLE` set to enumerate them.
+
+Three ways out were on the table:
+
+1. **Make the services conform** — 8 codes, subject moved to `details.resource`. Rejected: 22 emit sites in
+   modules other streams are actively editing, a matching client change, and the result is a *less*
+   informative wire field for no gain — `details.resource` and the code suffix carry the same bytes.
+2. **Curate a closed list of the 22** — keeps drift detectable, but in a parallel build every new resource
+   needs a contract edit before its handler can be written, which is exactly the pressure that makes a
+   vocabulary get ignored rather than extended. Rejected for process reasons, not technical ones.
+3. **Rule §1's eight as the ladder and allow a resource prefix** — adopted.
+
+Ruling: `error.code` is either one of §1's eight ladder codes **or** `<snake_case_resource>_<suffix>` where
+the suffix is one of `not_found | conflict | forbidden` — the three codes where naming the subject changes
+what the user is offered next (a 404 page, a replay prompt, a permission wall). Consequences, all enforced:
+
+- The **status is read off the suffix**, so `ladderErrorCode("merchant_not_found") = "not_found" → 404`. A
+  client that has never heard of `slot_not_found` still lands on the right rung of §105's failure ladder —
+  which is the only thing §1's table is for.
+- `error_http_status_matches_code` in `scripts/rules.mjs` now resolves through the suffix, so a
+  `merchant_not_found` sent with 403 fails the contract. The closed-enum version could not express that
+  failure at all: it rejected the code before the status was ever examined.
+- `details.resource` stays mandatory for a **bare** `not_found` and is not required for a resource-qualified
+  one — a code that already names the subject does not need to name it twice. That is the `if/then` branch in
+  `error_envelope.json`, left deliberately on `const: "not_found"`.
+- `validation_error`, `rate_limited`, `ai_unavailable`, `internal`, `unauthorized` may **not** be specialised:
+  their `details` shapes (`Retry-After`, the ladder rung, the field map) are the whole payload, so a prefix
+  would only hide which `if/then` branch applies.
+
+This ruling settles exactly one line of the live report. It does not launder the rest: the same run filed 59
+other violations — `organic_rank` and `score_breakdown` on consumer cards (§66/§116 ranking internals in the
+render contract), `endpoint: "/ai/v1/compare"` against D5, `view`/`ask` CTAs outside `CARD_ACTION_TYPE`,
+platform cards rendering a `rating` no fact backs — and each of those stays a bug with an owner in
+`docs/STATUS.md`. A contract that widens itself to whatever the code does is not a contract.
+
+## D28 Where a card citation lives: `facts[]` for values, on the object for live state — 2026-09-23
+
+The same live run asked a smaller question in a different shape: the AI service puts `fact_id` inside
+`EntityCard.rating`, the published `RatingInfo` is closed at `{value, count, smoothed?}` — and `AvailabilityInfo`
+already has a `fact_id`, and `OpeningState` a `source_fact_id`. Three card objects, three spellings of "this came
+from that fact row", so one of them is a bug and it is not obviously which.
+
+Ruling: **a rendered *value* is cited by `facts[]`; a rendered *state* carries its own citation.**
+
+- Price and rating are values with an ordinary TTL. §2 says `facts` is the "Fact[] backing every rendered number",
+  and `entity_card_rendered_value_backed` enforces exactly that, so a second pointer inside the value would either
+  agree with `facts[]` for no reason or — the failure that actually matters — quietly disagree with it while
+  `packages/ui`'s trust badge reads the other one. `rating.fact_id` is dropped at the service.
+- Availability and open/closed are **states with TTL 0** (AGENT §5). Their whole claim is "as of now", which a
+  `facts[]` entry one indirection away cannot express: the object needs `as_of` and its `source_fact_id` on the same
+  surface the renderer reads. That is why those two are allowed their own citation fields and price/rating are not.
+- Nothing changed in the schema for this ruling, which is the point: §2's shape was already right, and the fix is
+  one field off the AI's projection (`STATUS.md` row A3). If a future field genuinely needs per-value provenance that
+  `facts[]` cannot carry, that is a new *rule* in `scripts/rules.mjs` and a reason to say why in `AGENT_CONTRACT` —
+  not a licence for each service to name its own citation field.
+
+Recorded because the drift is symmetrical and easy to re-introduce: adding `fact_id` to `RatingInfo` to make the AI's
+payload legal would have turned one service's invention into a permanent contract ambiguity, and the closed-object
+check that caught it would have been the thing deleted.
+
+
+## D29 Identity uniqueness follows the tenant — 2026-09-23
+
+`V1__init.sql` declared `users_email_uniq ON users(email)` and `UNIQUE (provider, provider_id)` on
+`user_identities`. Both are global. Every read of the same tables is tenant-scoped (`where tenant_id = :tenant_id`),
+and `AuthService`'s own duplicate-register message says "already registered **in this tenant**". A constraint and a
+query that disagree is not a stalemate: the constraint wins, so a second tenant that registered an address the first
+tenant already held got an unhandled `DuplicateKeyException` — a 500 from a public, unauthenticated route. The §87
+demo login made that reachable by anyone who ever clicked it, because it inserts `demo.consumer@example.hk` *per
+tenant*: the first tenant to try got a session, every tenant after it got a stack trace. Two tenants could not both
+serve a customer named Alice, which is not a limitation of the schema so much as the end of the tenancy model in §2.
+
+Ruling: **an identity is unique inside a tenant, and the database is the thing that says so.**
+
+- `user_identities` gains `tenant_id` (backfilled from its own `users` row, then `SET NOT NULL`) and the key becomes
+  `(tenant_id, provider, provider_id)`; the email index becomes `(tenant_id, email)` with V1's predicate kept
+  verbatim, so a soft-deleted account still cannot hold an address hostage and pure-OAuth accounts with no email
+  still never collide. That is `V4__tenant_scoped_identity.sql`.
+- Carrying `tenant_id` on the identity row is duplication in the schema-relations sense and correctness in the
+  security sense: the alternative was to keep joining `users` to find out which tenant an identity belongs to, i.e.
+  to let a future query decide tenancy by whether it happened to include the join. `locations` and `offerings`
+  already duplicate the column for the same reason.
+- Nothing in the request shapes changed, so the HTTP contract needed no new field. What did change is the *meaning*
+  of a 409: `email_taken` now asserts "taken in this tenant", and a client that reads it as global would be
+  confirming to a caller that some other storefront has the address — which §2 forbids as surely as a leak.
+- Register's pre-check is a read, and a read is not a constraint. The insert is wrapped so that a concurrent
+  duplicate answers the same 409 either path takes, instead of the 500 the race used to produce.
+
+`AuthTokenTest.emailIsScopedToItsTenant` is the guard: the same address registers twice in two tenants, gets two
+different ids, each logs into its own account, and the duplicate inside one tenant still 409s. This settles
+uniqueness for `users` and `user_identities` only. It does not license a global lookup anywhere else, and it does
+not decide whether a *platform* admin should ever be able to find a person across tenants — that route does not
+exist yet and would need its own ruling.
+
+## D30 The credential that migrates is not the credential that serves — 2026-09-23
+
+V4 was the first migration that had to change a table, and the platform could not boot with it pending:
+
+```
+Script V4__tenant_scoped_identity.sql failed
+SQL State  : 42501
+Message    : ERROR: must be owner of table user_identities
+```
+
+The reason was in two config files that agreed with each other and with nothing else.
+`infra/postgres/init/00_roles.sql` gives `nexus_app` `USAGE, CREATE` on the schema — enough to make a new object,
+not enough to alter one it does not own, since every table in the database belongs to the infra superuser.
+`infra/docker-compose.yml` then set `SPRING_FLYWAY_USER: nexus_app`, and the host dev path inherited the same
+assumption (`00_roles.sql` even carried the comment "app role also runs Flyway in dev"). V1/V2 never exercised it
+because the script applied them as the superuser; V3 passed only because `db_apply_migrations.sh` deliberately hands
+*view* ownership to the app role, which is a narrow exception for the one object type a migration has to replace in
+place. So "the service migrates itself at boot" had been true for exactly one kind of DDL, and it was never written
+down as a limitation.
+
+Ruling: **the migration credential and the runtime credential are different, in every environment, and neither one
+is a secret in a tracked file.**
+
+- `application-dev.yml` now sets `spring.flyway.url/user/password` from `NEXUS_MIGRATION_DB_*`, defaulting to
+  `postgres` + `NEXUS_DB_ROOT_PASSWORD` (which lives in the gitignored `.env` — §131). The runtime datasource still
+  connects as `nexus_app`. `infra/docker-compose.yml` carries the same split explicitly.
+- `scripts/run_platform_dev.sh` names the active profile out loud. It did not before: `SPRING_PROFILES_ACTIVE` was
+  set only by compose, so a host launch ran on the base defaults while everyone believed `application-dev.yml` was
+  in play — which also means the dev profile's port pins and its generous rate-limit windows had never actually
+  applied locally until this change.
+- Ordering matters more than the choice. `nexus_app` must not gain DDL rights, because the §9 role split is the
+  structural guarantee behind "no `LLM → database`" (§52); a role that can `ALTER TABLE orders` is a role whose
+  mistakes are not caught by the database.
+
+Two things this does **not** fix, recorded rather than smoothed over:
+
+1. Revoking `nexus_app`'s leftover `CREATE` needs a migration, not an edit to `00_roles.sql` — that file only runs on
+   a first-boot volume, so editing it would fork fresh databases away from the dev one that already exists, which is
+   the failure mode D22 exists to prevent. The grant stays, and is now commented as a leftover where it is set.
+2. Flyway and `db_apply_migrations.sh` keep *separate* ledgers (`flyway_schema_history` vs `schema_migrations`).
+   Applying V4 with `--file` leaves Flyway unaware of it, and the test database runs with `spring.flyway.enabled=false`,
+   so a hand-applied migration there is validated by nothing at all. Editing an already-applied migration also
+   changes its recorded Flyway checksum: V4's header was renumbered from D28 to D29 after it had been applied, and
+   the boot refused it until the history row was dropped and the resumable file re-run.
+
+## D31 A workspace grant's subject is the person, not the membership row — 2026-09-23
+
+`permission_grants.subject_type` accepts `(user, merchant_user, agent, api_key)`, and the obvious reading of
+`merchant_user` is "the id of a row in `merchant_users`". The seeder wrote it that way. Nothing in the runtime agrees:
+`AuthorizationInterceptor` tests three spellings of one check, and every one of them passes
+`principal.subjectId()` or `principal.userId()` — both ids on `users` — with `merchant_id` carrying the workspace.
+A grant keyed to the membership row is therefore invisible to the only code that reads grants, which is how the
+seeded demo console ended up with 15 grants, 3 owners, and a 403 on every workspace route (§48's vocabulary,
+unreachable in practice).
+
+Ruling: **`subject_id` names the acting subject. For a workspace grant that subject is a person, and the membership
+is a separate fact that must also hold.**
+
+- The seed now writes `(subject_type='merchant_user', subject_id=<users.id>, merchant_id=<the workspace>)`, which is
+  what the interceptor honours. `data/seed/quality.sql` checks the property from both sides: a
+  `merchant_user` grant must reach an *active* membership at the same merchant, and every seeded
+  owner/manager membership must have grants. Its FK probe joins the same way the interceptor does, so the check
+  can no longer pass on a shape the service cannot read.
+- Two things follow that the old reading gave for free and this one does not. Removing somebody's membership does
+  **not** revoke their grants — the rows still name a person who is no longer in the workspace — so revocation has
+  to delete grant rows too, and nothing in the schema enforces that pairing today. And `agent`/`api_key` subjects
+  stay keyed by their own table's id, because for those the acting subject *is* the credential, so no membership
+  is involved.
+- The alternative was to make the runtime resolve the membership row and check grants against it, which is the
+  cleaner model (a grant then belongs to a role-holder-in-a-workspace and dies with the membership). It is also a
+  change to every permission call site, the `Principal` shape, and the RBAC tests, in a module another stream owns.
+  This ruling records the seam; it does not pretend the current shape is the destination.

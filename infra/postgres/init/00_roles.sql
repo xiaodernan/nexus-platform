@@ -25,10 +25,22 @@
 -- (§131, DECISIONS D5). Nothing here is usable outside this machine.
 
 -- --------------------------------------------------------------------------------- passwords
--- \getenv maps an unset environment variable to an empty string; hand the value to SQL through a
--- custom GUC so plpgsql can read it (psql does not interpolate inside dollar-quoted bodies).
+-- \getenv maps an UNSET environment variable to an undefined psql variable (not to the empty string),
+-- and an undefined `:'var'` is passed through literally -> syntax error. Test each with `:{?name}` and
+-- default it to '' so the plpgsql fallbacks below (the published localhost dev passwords) take over
+-- when someone runs this file by hand outside scripts/db_apply_migrations.sh.
+-- Hand the value to SQL through a custom GUC so plpgsql can read it (psql does not interpolate
+-- inside dollar-quoted bodies).
 \getenv nexus_app_password NEXUS_DB_APP_PASSWORD
+\if :{?nexus_app_password}
+\else
+\set nexus_app_password ''
+\endif
 \getenv nexus_ai_password  NEXUS_DB_AI_PASSWORD
+\if :{?nexus_ai_password}
+\else
+\set nexus_ai_password ''
+\endif
 SET nexus.app_password = :'nexus_app_password';
 SET nexus.ai_password  = :'nexus_ai_password';
 
@@ -65,13 +77,20 @@ BEGIN
   EXECUTE format('GRANT CONNECT ON DATABASE %I TO nexus_app, nexus_ai', current_database());
 END
 $conn$;
-GRANT USAGE, CREATE ON SCHEMA public TO nexus_app;   -- app role also runs Flyway in dev
+GRANT USAGE, CREATE ON SCHEMA public TO nexus_app;   -- CREATE is left over from when the app role also ran Flyway
 GRANT USAGE         ON SCHEMA public TO nexus_ai;    -- usage only: the AI role may never DDL
+-- Migrations now run as the infra superuser (see docs/DECISIONS.md D30): `CREATE` on the schema lets a role
+-- make new objects, but it cannot ALTER a table it does not own, so the app role was never able to run a
+-- table-level migration anyway (V4 proved it: 42501 must be owner of table user_identities). Revoking the
+-- app role's CREATE is the narrowing that follows from that ruling — deliberately NOT done here, because
+-- this file only runs on a first-boot volume, so editing it would make fresh databases and the existing
+-- dev one disagree while neither edit is visible in the running system.
 
 -- --------------------------------------------------------------------------------- future tables
--- FAIL-CLOSED on purpose. New objects created by the migrate role (postgres) become read-write for the
--- platform role automatically, and get NOTHING for nexus_ai: no default SELECT. Two consequences that
--- are intended, not accidents:
+-- FAIL-CLOSED on purpose. New objects created by the migrate role (the superuser that owns this
+-- database: `postgres` under infra/docker-compose.yml, `nexus` if the volume was booted with a
+-- different POSTGRES_USER) become read-write for the platform role automatically, and get NOTHING for
+-- nexus_ai: no default SELECT. Two consequences that are intended, not accidents:
 --   * a fresh volume where 00_roles.sql runs at initdb time must re-apply this file after the
 --     migrations (scripts/db_apply_migrations.sh does exactly that) or nexus_ai has no access at all;
 --   * any NEW AI-readable/-writable table must be granted explicitly inside the migration that
@@ -79,14 +98,41 @@ GRANT USAGE         ON SCHEMA public TO nexus_ai;    -- usage only: the AI role 
 -- (A blanket `ALTER DEFAULT PRIVILEGES ... GRANT SELECT ON TABLES TO nexus_ai` was tried first and is
 --  now revoked below: at initdb time it leaked SELECT over users/carts/orders/payments/audit_logs,
 --  which API_CONTRACT §0 does not allow.)
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLES TO nexus_app;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
-  GRANT USAGE, SELECT ON SEQUENCES TO nexus_app;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
-  REVOKE ALL ON TABLES FROM nexus_ai;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
-  REVOKE ALL ON SEQUENCES FROM nexus_ai;
+--
+-- The role is resolved from pg_database.datdba instead of the literal `postgres`, because a hardcoded
+-- name aborts the whole file with `role "postgres" does not exist` on any container whose superuser
+-- has another name — and this file is the last step of scripts/db_apply_migrations.sh, so that error
+-- would look like a migration failure.
+DO $dflt$
+DECLARE
+  migrate_role text;
+BEGIN
+  SELECT pg_get_userbyid(datdba) INTO migrate_role
+    FROM pg_database WHERE datname = current_database();
+  IF migrate_role IS NULL OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = migrate_role) THEN
+    RAISE NOTICE 'migrate role for database % not resolvable, skipping default privileges',
+      current_database();
+    RETURN;
+  END IF;
+  EXECUTE format(
+    'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA public
+       GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLES TO nexus_app',
+    migrate_role);
+  EXECUTE format(
+    'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA public
+       GRANT USAGE, SELECT ON SEQUENCES TO nexus_app',
+    migrate_role);
+  EXECUTE format(
+    'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA public
+       REVOKE ALL ON TABLES FROM nexus_ai',
+    migrate_role);
+  EXECUTE format(
+    'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA public
+       REVOKE ALL ON SEQUENCES FROM nexus_ai',
+    migrate_role);
+  RAISE NOTICE 'default privileges bound to migrate role %', migrate_role;
+END
+$dflt$;
 
 -- --------------------------------------------------------------------------------- nexus_app
 -- §0 "read-write on commerce tables": the platform service owns auth/RBAC/merchants/offerings/orders/
@@ -116,7 +162,7 @@ DECLARE
   t text;
   ro text[] := ARRAY[
     'merchants','offerings','locations','reviews','business_hours','availability_slots',
-    'tenants','user_preferences'];
+    'tenants','user_preferences','categories','merchant_categories'];
 BEGIN
   FOREACH t IN ARRAY ro LOOP
     IF to_regclass('public.' || t) IS NOT NULL THEN

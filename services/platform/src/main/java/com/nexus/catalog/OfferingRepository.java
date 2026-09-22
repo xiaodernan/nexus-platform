@@ -24,7 +24,36 @@ public class OfferingRepository {
             o.stock_quantity, o.stock_updated_at, o.bookable, o.min_party_size, o.max_party_size,
             o.duration_minutes, o.images, o.attributes, o.constraints, o.options, o.status, o.popularity_score,
             o.rating_agg, o.review_count, o.created_at, o.updated_at, m.slug as merchant_slug,
-            m.display_name as merchant_name, m.data_origin as merchant_data_origin
+            m.display_name as merchant_name, m.data_origin as merchant_data_origin,
+            pf.id as price_fact_id, pf.value as price_fact_value, pf.source as price_fact_source,
+            pf.confidence as price_fact_confidence, pf.observed_at as price_fact_observed_at,
+            pf.expires_at as price_fact_expires_at, pf.stale as price_fact_stale,
+            cf.id as capacity_fact_id, cf.value as capacity_fact_value, cf.source as capacity_fact_source,
+            cf.confidence as capacity_fact_confidence, cf.observed_at as capacity_fact_observed_at,
+            cf.expires_at as capacity_fact_expires_at, cf.stale as capacity_fact_stale
+            """;
+
+    /**
+     * The FROM clause every read here shares, including the two {@code facts} laterals that
+     * {@link #view} turns into §2 facts. One constant rather than four copies: an offering price that
+     * carries its fact on the menu but not in the workspace list is the two-surfaces-disagreeing failure
+     * {@link MerchantCards} was written to avoid.
+     */
+    private static final String FROM = """
+            from offerings o
+            join merchants m on m.id = o.merchant_id
+            left join lateral (
+                  select f.id, f.value, f.source, f.confidence, f.observed_at, f.expires_at, f.stale
+                  from facts f
+                  where f.subject_type = 'offering' and f.subject_id = o.id and f.attribute = 'price'
+                  order by f.observed_at desc limit 1
+                ) pf on true
+            left join lateral (
+                  select f.id, f.value, f.source, f.confidence, f.observed_at, f.expires_at, f.stale
+                  from facts f
+                  where f.subject_type = 'offering' and f.subject_id = o.id and f.attribute = 'capacity'
+                  order by f.observed_at desc limit 1
+                ) cf on true
             """;
 
     private final TenantJdbc jdbc;
@@ -34,9 +63,8 @@ public class OfferingRepository {
     }
 
     public Optional<Map<String, Object>> find(TenantContext tenant, UUID id) {
-        return jdbc.firstForTenant(tenant, "select " + COLUMNS + " from offerings o "
-                + "join merchants m on m.id = o.merchant_id where o.id = :id and o.tenant_id = :tenant_id",
-                Json.map("id", id));
+        return jdbc.firstForTenant(tenant, "select " + COLUMNS + FROM
+                + " where o.id = :id and o.tenant_id = :tenant_id", Json.map("id", id));
     }
 
     public Map<String, Object> require(TenantContext tenant, UUID id) {
@@ -44,16 +72,14 @@ public class OfferingRepository {
     }
 
     public Optional<Map<String, Object>> findBySlug(TenantContext tenant, UUID merchantId, String slug) {
-        return jdbc.firstForTenant(tenant, "select " + COLUMNS + " from offerings o "
-                        + "join merchants m on m.id = o.merchant_id "
-                        + "where o.merchant_id = :merchant_id and o.slug = :slug and o.tenant_id = :tenant_id",
+        return jdbc.firstForTenant(tenant, "select " + COLUMNS + FROM
+                        + " where o.merchant_id = :merchant_id and o.slug = :slug and o.tenant_id = :tenant_id",
                 Json.map("merchant_id", merchantId, "slug", slug));
     }
 
     public List<Map<String, Object>> listByMerchant(TenantContext tenant, UUID merchantId, String status, String kind,
                                                     int limit, int offset) {
-        StringBuilder sql = new StringBuilder("select " + COLUMNS + " from offerings o "
-                + "join merchants m on m.id = o.merchant_id where o.tenant_id = :tenant_id");
+        StringBuilder sql = new StringBuilder("select " + COLUMNS + FROM + " where o.tenant_id = :tenant_id");
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("tenant_id", tenant.tenantId());
         params.put("merchant_id", merchantId);
@@ -173,18 +199,39 @@ public class OfferingRepository {
     /** Active offerings of a merchant (consumer menu view). */
     public List<Map<String, Object>> activeForMerchant(TenantContext tenant, UUID merchantId, int limit, int offset,
                                                       String orderBy) {
-        return jdbc.forTenant(tenant, "select " + COLUMNS + " from offerings o "
-                + "join merchants m on m.id = o.merchant_id "
-                + "where o.tenant_id = :tenant_id and o.merchant_id = :merchant_id and o.status = 'active' "
-                + "order by " + orderBy + " limit :limit offset :offset",
-                Json.map("merchant_id", merchantId, "limit", limit, "offset", offset));
+        return activeForMerchant(tenant, merchantId, null, limit, offset, orderBy);
+    }
+
+    /** Same, optionally narrowed to one {@code kind}; {@code orderBy} is a whitelisted fragment. */
+    public List<Map<String, Object>> activeForMerchant(TenantContext tenant, UUID merchantId, String kind,
+                                                      int limit, int offset, String orderBy) {
+        Map<String, Object> params = Json.map("merchant_id", merchantId, "limit", limit, "offset", offset);
+        String kindClause = "";
+        if (kind != null) {
+            kindClause = " and o.kind = :kind";
+            params.put("kind", kind);
+        }
+        return jdbc.forTenant(tenant, "select " + COLUMNS + FROM
+                + "where o.tenant_id = :tenant_id and o.merchant_id = :merchant_id and o.status = 'active'"
+                + kindClause + " "
+                + "order by " + orderBy + " limit :limit offset :offset", params);
     }
 
     public long countActive(TenantContext tenant, UUID merchantId) {
+        return countActive(tenant, merchantId, null);
+    }
+
+    public long countActive(TenantContext tenant, UUID merchantId, String kind) {
+        Map<String, Object> params = Json.map("merchant_id", merchantId);
+        String kindClause = "";
+        if (kind != null) {
+            kindClause = " and o.kind = :kind";
+            params.put("kind", kind);
+        }
         return jdbc.countForTenant(tenant, """
                 select count(*) from offerings o
                 where o.tenant_id = :tenant_id and o.merchant_id = :merchant_id and o.status = 'active'
-                """, Json.map("merchant_id", merchantId));
+                """ + kindClause, params);
     }
 
     public static Map<String, Object> view(Map<String, Object> row) {
@@ -216,7 +263,10 @@ public class OfferingRepository {
         out.put("constraints", Json.jsonObject(row, "constraints"));
         out.put("options", Json.jsonArray(row, "options"));
         out.put("status", Json.str(row, "status"));
-        out.put("rating", Json.map("value", Json.dec(row, "rating_agg"), "count", Json.integer(row, "review_count")));
+        // An offering nobody has rated has no rating, not a 0.0 one — the same §19 rule the merchant
+        // card applies, read from the same helper so the two cannot drift apart.
+        out.put("rating", MerchantCards.rating(Json.dec(row, "rating_agg"), Json.integer(row, "review_count")));
+        out.put("facts", MerchantCards.factsOf(row, "offering", List.of("price", "capacity")));
         out.put("created_at", Json.ts(row, "created_at"));
         out.put("updated_at", Json.ts(row, "updated_at"));
         out.put("flags", Json.map("demo", com.nexus.platform.DemoFlags.isDemo(Json.str(row, "merchant_data_origin")),

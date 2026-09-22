@@ -17,14 +17,24 @@
 # (careeros-postgres, specproof-redis), so NEXUS publishes on 127.0.0.1:5433 -> 5432 and
 # 127.0.0.1:6380 -> 6379. Override with NEXUS_PG_HOST_PORT / NEXUS_REDIS_HOST_PORT.
 # Inside the compose network the services are still postgres:5432 / redis:6379.
+# NOTE ON CONTAINER NAMES: this project's compose `name:` is `nexus`, and the Postgres container is
+# `nexus-platform-postgres`. It used to be `nexus-postgres` — a name another project on this machine
+# (D:\内容创作平台) had already taken, with its own volume and its own unrelated `nexus` database — so
+# `docker compose up postgres` failed on a name conflict for the whole build. Do not reuse that name.
 
-name: nexus
+# The compose PROJECT name is part of the identity Docker uses to decide which containers a
+# `docker compose` invocation owns. It used to be `nexus`, which is *also* the project name an unrelated
+# stack on this machine declares (D:\内容创作平台\infra\docker-compose.yml) — so `up` in either directory
+# recreated the other project's containers. `nexus-platform` is unique; the container names below are too.
+name: nexus-platform
 
 services:
   # ------------------------------------------------------------------ data stores
   postgres:
     image: pgvector/pgvector:pg16            # PG16 + pgvector/pg_trgm/pgcrypto/btree_gist/citext
-    container_name: nexus-postgres
+    # NOT `nexus-postgres`: another project on this machine (D:\内容创作平台) already owns that container
+    # name and its volume, so `docker compose up` failed here for the whole build. See docs/DECISIONS.md D22.
+    container_name: nexus-platform-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${NEXUS_DB_NAME:-nexus}
@@ -52,7 +62,8 @@ services:
 
   redis:
     image: redis:7.4-alpine
-    container_name: nexus-redis
+    # `nexus-redis` is claimed by the same foreign compose project as `nexus-postgres` (see the header note).
+    container_name: nexus-platform-redis
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
     environment:
@@ -86,8 +97,12 @@ services:
       SPRING_DATASOURCE_USERNAME: nexus_app   # API_CONTRACT §0: read-write commerce role
       SPRING_DATASOURCE_PASSWORD: ${NEXUS_DB_APP_PASSWORD:-nexus_dev_app_only}
       SPRING_FLYWAY_URL: jdbc:postgresql://postgres:5432/${NEXUS_DB_NAME:-nexus}
-      SPRING_FLYWAY_USER: nexus_app
-      SPRING_FLYWAY_PASSWORD: ${NEXUS_DB_APP_PASSWORD:-nexus_dev_app_only}
+      # Migration credential != runtime credential. `nexus_app` has DML only (00_roles.sql), so Flyway
+      # running as it cannot ALTER a table: V4__tenant_scoped_identity failed the boot with
+      # `42501 must be owner of table user_identities`. Views happened to be migratable by the app role
+      # only because db_apply_migrations.sh transfers view ownership. The runtime role below is unchanged.
+      SPRING_FLYWAY_USER: postgres
+      SPRING_FLYWAY_PASSWORD: ${NEXUS_DB_ROOT_PASSWORD:-postgres}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: "6379"
       NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:-}

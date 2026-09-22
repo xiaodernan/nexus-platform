@@ -3,7 +3,7 @@
 -- data/seed/quality.sql — the gate for the seeded demo dataset.
 --
 -- Run after data/seed/load.sh:
---   docker exec -i nexus-postgres psql -U postgres -d nexus -v ON_ERROR_STOP=1 < data/seed/quality.sql
+--   docker exec -i nexus-platform-postgres psql -U postgres -d nexus -v ON_ERROR_STOP=1 < data/seed/quality.sql
 --   # CI scale-down example:
 --   ... psql -v ON_ERROR_STOP=1 -v MIN_MERCHANTS=100 -v MIN_OFFERINGS=800 \
 --          -v MIN_REVIEWS=1200 -v MIN_NEAR_SHA_TIN=60 < data/seed/quality.sql
@@ -19,12 +19,10 @@
 -- density, AGENT_CONTRACT §5 freshness TTLs, and spec §55 review-intelligence signal quality.
 -- =============================================================================
 \set ON_ERROR_STOP on
-\set QUIET on
 \if :{?MIN_MERCHANTS} \else \set MIN_MERCHANTS 500 \endif
 \if :{?MIN_OFFERINGS} \else \set MIN_OFFERINGS 5000 \endif
 \if :{?MIN_REVIEWS} \else \set MIN_REVIEWS 10000 \endif
 \if :{?MIN_NEAR_SHA_TIN} \else \set MIN_NEAR_SHA_TIN 300 \endif
-\toggle QUIET off
 
 -- spec §94: dense geography around the Sha Tin centroid (22.3831, 114.1876). No PostGIS in this
 -- project (docs/DECISIONS.md D3), so the 3 km test is a plain haversine written out in SQL.
@@ -36,16 +34,11 @@ RETURNS double precision LANGUAGE sql IMMUTABLE AS $$
     + cos(radians(lat0)) * cos(radians(lat1)) * pow(sin(radians(lng1 - lng0) / 2), 2)))
 $$;
 
-CREATE TEMP TABLE qc (check text PRIMARY KEY, ok boolean, detail text);
+CREATE TEMP TABLE qc ("check" text PRIMARY KEY, ok boolean, detail text);
 
 -- =========================================================== A  counts & shape
 \echo ''
 \echo '== A. per-table row counts =='
-SELECT r.t AS table_name,
-       (EXECUTE) IS NULL AS _never,   -- placeholder removed below; kept out of the final build
-       NULL::text
-WHERE false;
-
 \t on
 \o /dev/null
 -- exact counts, one row per table, in load order
@@ -56,10 +49,10 @@ FROM unnest(ARRAY['tenants','users','user_identities','user_preferences','catego
  'merchant_users','permission_grants','locations','business_hours','merchant_categories','offerings',
  'offering_relations','resource_pools','availability_slots','reviews','documents','chunks','facts',
  'favorites','collections','review_summaries']) WITH ORDINALITY AS u(t, ord) \gexec
+\o
 \t off
 
 \echo ''
-column t format a22
 SELECT t AS "table", lpad(n::text, 8) AS rows FROM counts ORDER BY 1;
 
 \echo ''
@@ -138,27 +131,8 @@ INSERT INTO qc VALUES
    (SELECT count(*) FROM public.reservations) + (SELECT count(*) FROM public.events) +
    (SELECT count(*) FROM public.feedback_events)) = 0, 'orders+reservations+events+feedback_events must stay 0');
 
--- referential integrity, part 1: every declared FK in the demo graph, swept from the catalogue.
-INSERT INTO qc
-SELECT 'fk: ' || child || '.' || col || ' -> ' || parent, ok, detail FROM (
-  WITH demo(t) AS (SELECT unnest(ARRAY['tenants','users','user_identities','user_preferences','categories',
-    'merchants','merchant_users','permission_grants','locations','business_hours','merchant_categories',
-    'offerings','offering_relations','resource_pools','availability_slots','reviews','documents','chunks',
-    'facts','favorites','collections','review_summaries'])),
-  fks AS (
-    SELECT c.conrelid::regclass::text child, a.attname col, c.confrelid::regclass::text parent,
-           ca.attname pcol
-    FROM pg_constraint c
-    JOIN pg_attribute a  ON a.attrelid = c.conrelid  AND a.attnum = ANY (c.conkey)
-    JOIN pg_attribute ca ON ca.attrelid = c.confrelid AND ca.attnum = ANY (c.confkey)
-    WHERE c.contype='f' AND c.confrelid::regclass::text IN (SELECT t FROM demo)
-      AND c.conrelid::regclass::text NOT LIKE 'pg_%')
-  SELECT f.child, f.col, f.parent,
-         (SELECT count(*) FROM (SELECT 1) AS _dummy) ,  -- replaced below
-         true, ''
-) _shape WHERE false;
-
--- The catalogue sweep needs per-FK dynamic SQL, so it runs in plpgsql and writes the same table.
+-- referential integrity: every declared FK in the demo graph, swept from the catalogue.
+-- The sweep needs per-FK dynamic SQL, so it runs in plpgsql and writes the qc table.
 DO $$
 DECLARE r record; n bigint; ok boolean;
 BEGIN
@@ -179,60 +153,55 @@ BEGIN
       'SELECT count(*) FROM public.%I c LEFT JOIN public.%I p ON p.%I = c.%I WHERE c.%I IS NOT NULL AND p.%I IS NULL',
       r.child, r.parent, r.pcol, r.col, r.col, r.pcol) INTO n;
     ok := n = 0;
-    INSERT INTO qc (check, ok, detail)
+    INSERT INTO qc ("check", ok, detail)
     VALUES ('fk: ' || r.child || '.' || r.col || ' -> ' || r.parent || '.' || r.pcol, ok,
             n || ' orphan row(s)')
-    ON CONFLICT (check) DO UPDATE SET ok = EXCLUDED.ok, detail = EXCLUDED.detail;
+    ON CONFLICT ("check") DO UPDATE SET ok = EXCLUDED.ok, detail = EXCLUDED.detail;
   END LOOP;
 END $$;
 
--- referential integrity, part 2: polymorphic references the schema cannot express.
+-- referential integrity, part 2: polymorphic references the schema cannot express. A subject_type
+-- the probe does not know about is an orphan by definition, so an invented type cannot pass.
 INSERT INTO qc
-SELECT 'orphan: favorites.' || subject_type || ' -> ' || CASE subject_type
-         WHEN 'user' THEN 'users' WHEN 'merchant' THEN 'merchants' ELSE 'offerings' END,
-       NOT EXISTS (SELECT 1), ''
-WHERE false;
-
-INSERT INTO qc
-WITH poly AS (
-  SELECT subject_type, subject_id::text sid,
-         CASE subject_type WHEN 'user' THEN 'users' WHEN 'merchant' THEN 'merchants'
-                           WHEN 'offering' THEN 'offerings' END AS parent
-  FROM favorites),
- probe AS (
-  SELECT 'user'::text parent, id::text k FROM users
+WITH probe AS (
+  SELECT 'user'::text t, id::text k FROM users
   UNION ALL SELECT 'merchant', id::text FROM merchants
-  UNION ALL SELECT 'offering', id::text FROM offerings)
-SELECT 'orphan: favorites.' || p.subject_type,
-       count(*) FILTER (WHERE k.k IS NULL) = 0,
-       coalesce((SELECT string_agg(x, ', ') FROM (
-           SELECT (p2.subject_type || ':' || p2.subject_id) x FROM poly p2
-           LEFT JOIN probe q ON q.parent = p2.parent AND q.k = p2.sid
-           WHERE q.k IS NULL LIMIT 3) z), '0 orphans') || ' rows referencing a missing ' || p.subject_type
-FROM poly p LEFT JOIN probe q ON q.parent = p.parent AND q.k = p.sid
-GROUP BY 1;
+  UNION ALL SELECT 'offering', id::text FROM offerings
+  UNION ALL SELECT 'collection', id::text FROM collections),
+ g AS (
+  SELECT f.subject_type t, (q.k IS NULL) bad
+  FROM favorites f
+  LEFT JOIN probe q ON q.t = f.subject_type AND q.k = f.subject_id::text)
+SELECT 'orphan: favorites.' || t,
+       count(*) FILTER (WHERE bad) = 0,
+       count(*) FILTER (WHERE bad) || ' unresolvable of ' || count(*) || ' row(s)'
+FROM g GROUP BY t;
 
 INSERT INTO qc
-WITH g AS (SELECT subject_type, subject_id::text sid FROM permission_grants),
- m AS (SELECT id::text k FROM merchants), u AS (SELECT id::text k FROM users),
- mu AS (SELECT id::text k FROM merchant_users)
-SELECT 'orphan: permission_grants.' || subject_type,
-       count(*) FILTER (
-         WHERE subject_type = 'merchant_user' AND NOT EXISTS (SELECT 1 FROM mu WHERE mu.k = sid)
-            OR subject_type = 'user'          AND NOT EXISTS (SELECT 1 FROM u  WHERE u.k  = sid)
-            OR subject_type = 'merchant'      AND NOT EXISTS (SELECT 1 FROM m  WHERE m.k  = sid)
-       ) = 0,
-       'unresolvable subject_id for subject_type=' || subject_type
-FROM g GROUP BY 1;
+WITH g AS (SELECT subject_type, subject_id::text sid, merchant_id FROM permission_grants),
+ probe AS (
+  -- `subject_id` names a row in whatever table `subject_type` spells — except for a workspace grant.
+  -- AuthorizationInterceptor asks for `principal.subjectId()` and `principal.userId()`, and both of those
+  -- are ids on `users`, so a grant keyed to a `merchant_users` row id is unreachable at runtime (D31).
+  -- The probe joins the way the interceptor does: the person, plus an active membership at that merchant.
+  SELECT 'merchant'::text parent, id::text k, NULL::uuid m FROM merchants
+  UNION ALL SELECT 'user', id::text, NULL FROM users
+  UNION ALL SELECT 'merchant_user', u.id::text, mu.merchant_id
+    FROM merchant_users mu JOIN users u ON u.id = mu.user_id WHERE mu.status = 'active')
+SELECT 'orphan: permission_grants.' || g.subject_type,
+       count(*) FILTER (WHERE q.k IS NULL) = 0,
+       count(*) FILTER (WHERE q.k IS NULL) || ' unresolvable subject_id of ' || count(*) || ' grant(s)'
+FROM g LEFT JOIN probe q ON q.parent = g.subject_type AND q.k = g.sid
+     AND (q.m IS NULL OR q.m = g.merchant_id)
+GROUP BY g.subject_type;
 
 -- product rules / honesty markers
 INSERT INTO qc
-SELECT 'merchant has a location', count(*) = 0,
-       coalesce((SELECT count(*) FROM merchants m WHERE NOT EXISTS
-         (SELECT 1 FROM locations l WHERE l.merchant_id = m.id)), 0) || ' merchant(s) with 0 locations'
-FROM (SELECT 1) _x
-WHERE NOT EXISTS (SELECT 1 FROM merchants m WHERE NOT EXISTS
-                    (SELECT 1 FROM locations l WHERE l.merchant_id = m.id));
+SELECT 'merchant has a location',
+       NOT EXISTS (SELECT 1 FROM merchants m WHERE NOT EXISTS
+         (SELECT 1 FROM locations l WHERE l.merchant_id = m.id)),
+       (SELECT count(*) FROM merchants m WHERE NOT EXISTS
+          (SELECT 1 FROM locations l WHERE l.merchant_id = m.id)) || ' merchant(s) with 0 locations';
 
 INSERT INTO qc
 SELECT 'merchant has a primary location',
@@ -253,6 +222,20 @@ SELECT 'merchant has >=1 offering', NOT EXISTS (SELECT 1 FROM merchants m WHERE 
          (SELECT 1 FROM offerings o WHERE o.merchant_id = m.id)),
        (SELECT count(*) FROM merchants m WHERE NOT EXISTS
          (SELECT 1 FROM offerings o WHERE o.merchant_id = m.id)) || ' merchant(s) with no offering';
+
+-- `category_primary` is the bare display label: `MerchantCards.subtitleOf` appends the district
+-- itself, and the AI service resolves a categorised search through merchant_categories — a label
+-- carrying " · District" both rendered twice and matched no taxonomy node.
+INSERT INTO qc
+SELECT 'category_primary is one of the merchant''s own category names',
+       NOT EXISTS (SELECT 1 FROM merchants m WHERE m.category_primary IS NULL
+         OR m.category_primary LIKE '% · %'
+         OR NOT EXISTS (SELECT 1 FROM merchant_categories mc JOIN categories c ON c.id = mc.category_id
+                         WHERE mc.merchant_id = m.id AND c.name = m.category_primary)),
+       (SELECT count(*) FROM merchants m WHERE m.category_primary IS NULL OR m.category_primary LIKE '% · %'
+         OR NOT EXISTS (SELECT 1 FROM merchant_categories mc JOIN categories c ON c.id = mc.category_id
+                        WHERE mc.merchant_id = m.id AND c.name = m.category_primary))
+         || ' merchant(s) with a label outside their own categories';
 
 INSERT INTO qc
 SELECT 'merchant has a menu document (RAG feed)', NOT EXISTS (SELECT 1 FROM merchants m
@@ -414,16 +397,18 @@ SELECT 'every source_uri is demo:// (trust layer provenance)',
 INSERT INTO qc
 SELECT 'images are local placeholders, never hotlinks',
        NOT EXISTS (SELECT 1 FROM merchants m JOIN jsonb_array_elements(m.images) img ON true
-                     WHERE img->>'url' !^ '/demo/img/'),
+                     WHERE img->>'url' !~ '^/demo/img/'),
        (SELECT count(*) FROM merchants m JOIN jsonb_array_elements(m.images) img ON true
           WHERE img->>'url' !~ '^/demo/img/') || ' external image URL(s)';
 
 INSERT INTO qc
 SELECT 'SEO pages are noindex (demo must not rank, §155)',
-       NOT EXISTS (SELECT 1 FROM merchants WHERE coalesce((seo->>'noindex')::text, 'true') <> 'true')
-       AND NOT EXISTS (SELECT 1 FROM collections WHERE coalesce((seo->>'noindex')::text, 'true') <> 'true'),
-       (SELECT count(*) FROM merchants WHERE coalesce((seo->>'noindex')::text,'true')<>'true')
-       || ' indexable merchant page(s)';
+       NOT EXISTS (SELECT 1 FROM merchants WHERE seo->>'noindex' IS DISTINCT FROM 'true')
+       AND NOT EXISTS (SELECT 1 FROM collections WHERE seo->>'noindex' IS DISTINCT FROM 'true'),
+       (SELECT count(*) FROM merchants WHERE seo->>'noindex' IS DISTINCT FROM 'true')
+       || ' merchant page(s) + ' ||
+       (SELECT count(*) FROM collections WHERE seo->>'noindex' IS DISTINCT FROM 'true')
+       || ' collection page(s) without an explicit noindex';
 
 INSERT INTO qc
 SELECT 'disclaimer text is inside every menu document',
@@ -439,14 +424,17 @@ SELECT 'password_hash is the placeholder, never a real hash',
          '!!DEMO-PLACEHOLDER-NOT-A-PASSWORD-HASH!!') || ' user(s) with a non-placeholder hash';
 
 INSERT INTO qc
-SELECT 'demo roles exist for POST /api/v1/auth/demo',
+-- users.role has no merchant value (V1 comment: consumer|platform_admin|platform_ops|creator);
+-- merchant access comes from merchant_users.role, which is what /auth/demo?role=merchant must find.
+SELECT 'demo identities exist for /api/v1/auth/demo',
        EXISTS (SELECT 1 FROM users WHERE role='consumer')
-       AND EXISTS (SELECT 1 FROM users WHERE role='merchant_owner')
        AND EXISTS (SELECT 1 FROM users WHERE role='platform_admin')
-       AND (SELECT count(*) FROM merchant_users) >= 3,
+       AND (SELECT count(*) FROM merchant_users mu JOIN users u ON u.id = mu.user_id
+             WHERE mu.role = 'owner') >= 3,
        'consumer=' || (SELECT count(*) FROM users WHERE role='consumer')
-       || ' merchant_owner=' || (SELECT count(*) FROM users WHERE role='merchant_owner')
-       || ' platform_admin=' || (SELECT count(*) FROM users WHERE role='platform_admin');
+       || ' platform_admin=' || (SELECT count(*) FROM users WHERE role='platform_admin')
+       || ' owner_links=' || (SELECT count(*) FROM merchant_users mu JOIN users u ON u.id = mu.user_id
+                                WHERE mu.role = 'owner');
 
 INSERT INTO qc
 SELECT 'everything hangs off the single demo tenant',
@@ -503,12 +491,18 @@ SELECT 'slots: every slot has a pool in the same merchant',
        (SELECT count(*) FROM availability_slots s JOIN resource_pools p ON p.id = s.pool_id
           WHERE p.merchant_id <> s.merchant_id) || ' cross-merchant slot(s)';
 
+-- resource_pools.offering_id is nullable by design (V1): a restaurant's table pool serves every
+-- sitting, so the hard rule is that the merchant behind an active bookable offering has a pool.
 INSERT INTO qc
-SELECT 'bookable offerings have a resource pool',
+SELECT 'bookable offerings resolve to a pool',
        NOT EXISTS (SELECT 1 FROM offerings o WHERE o.bookable AND o.status='active' AND NOT EXISTS
-         (SELECT 1 FROM resource_pools p WHERE p.offering_id = o.id)),
+         (SELECT 1 FROM resource_pools p WHERE p.merchant_id = o.merchant_id AND p.status='active')),
        (SELECT count(*) FROM offerings o WHERE o.bookable AND o.status='active' AND NOT EXISTS
-          (SELECT 1 FROM resource_pools p WHERE p.offering_id = o.id)) || ' bookable offering(s) with no pool';
+          (SELECT 1 FROM resource_pools p WHERE p.merchant_id = o.merchant_id AND p.status='active'))
+       || ' bookable offering(s) with no merchant pool; '
+       || (SELECT count(*) FROM offerings o WHERE o.bookable AND o.status='active' AND EXISTS
+          (SELECT 1 FROM resource_pools p WHERE p.offering_id = o.id AND p.status='active'))
+       || ' bound to a specific offering';
 
 INSERT INTO qc
 SELECT 'slots marked source=demo (never real availability)',
@@ -523,10 +517,18 @@ SELECT 'chunks: embedding NULL and embed_model=pending',
        || ' chunk(s) already embedded or mislabelled';
 
 INSERT INTO qc
-SELECT 'chunks: token size in 90..420 (§7 window)',
-       NOT EXISTS (SELECT 1 FROM chunks WHERE token_count < 60 OR token_count > 460),
-       (SELECT count(*) FROM chunks WHERE token_count < 60 OR token_count > 460)
-       || ' chunk(s) outside the section window (hard min 60 to allow the final chunk to be short)';
+WITH sized AS (
+  SELECT c.id, c.token_count,
+         count(*) OVER (PARTITION BY c.document_id) AS n_chunks,
+         ordinal::int = (max(ordinal::int) OVER (PARTITION BY c.document_id)) AS is_last
+  FROM chunks c)
+SELECT 'chunks: token size inside the §7 window',
+       NOT EXISTS (SELECT 1 FROM sized WHERE token_count > 400
+         OR token_count < CASE WHEN n_chunks = 1 THEN 20 WHEN is_last THEN 40 ELSE 200 END),
+       (SELECT count(*) FROM sized WHERE token_count > 400
+         OR token_count < CASE WHEN n_chunks = 1 THEN 20 WHEN is_last THEN 40 ELSE 200 END)
+       || ' chunk(s) outside the bounds (ceiling 400; interior of a split doc >= 200; a doc tail >= '
+       || '40 because that is the shortest authored section in the seed scripts)';
 
 INSERT INTO qc
 SELECT 'chunks: ordinal contiguous per document',
@@ -591,16 +593,46 @@ SELECT 'collections/guides reference live merchants',
           WHERE it->>'merchant_id' IS NOT NULL AND NOT EXISTS (SELECT 1 FROM merchants m
              WHERE m.id::text = it->>'merchant_id')) || ' dangling guide item(s)';
 
+-- RBAC reachability. PermissionService resolves a `merchant_user` grant by joining
+-- `users u on u.id = g.subject_id`, so subject_id must be a *user id* even though the column carries
+-- no FK — which is why the pg_constraint sweep above could never see it. Writing the merchant_users
+-- row id there loads cleanly and then answers 403 on every workspace route forever; the first seeded
+-- demo console did exactly that (3 owners, 15 grants, 0 reachable permissions).
+WITH bad AS (
+  SELECT g.id
+  FROM permission_grants g
+  WHERE g.subject_type = 'merchant_user' AND NOT EXISTS (
+      SELECT 1 FROM merchant_users mu
+       WHERE mu.user_id = g.subject_id AND mu.merchant_id = g.merchant_id AND mu.status = 'active'))
+INSERT INTO qc
+SELECT 'merchant_user grants reach a membership',
+       NOT EXISTS (SELECT 1 FROM bad),
+       (SELECT count(*) FROM bad) || ' unreachable of '
+       || (SELECT count(*) FROM permission_grants WHERE subject_type = 'merchant_user');
+
+-- ...and the other direction: a dataset where nobody holds a grant is a console nobody can open.
+INSERT INTO qc
+SELECT 'every seeded owner membership has grants',
+       NOT EXISTS (SELECT 1 FROM merchant_users mu WHERE mu.role IN ('owner','manager')
+                     AND NOT EXISTS (SELECT 1 FROM permission_grants g
+                                      WHERE g.subject_type = 'merchant_user'
+                                        AND g.subject_id = mu.user_id AND g.merchant_id = mu.merchant_id)),
+       (SELECT count(*) FROM merchant_users mu WHERE mu.role IN ('owner','manager')
+          AND NOT EXISTS (SELECT 1 FROM permission_grants g
+                           WHERE g.subject_type = 'merchant_user'
+                             AND g.subject_id = mu.user_id AND g.merchant_id = mu.merchant_id))
+       || ' silent membership(s)';
+
 -- ============================================================ C  hard gate
 \echo ''
 SELECT CASE WHEN ok THEN '  PASS ' ELSE '  FAIL ' END AS status,
-       rpad(check, 52, ' ') AS check, detail
-FROM qc ORDER BY ok ASC, check;
+       rpad("check", 52, ' ') AS check, detail
+FROM qc ORDER BY ok ASC, "check";
 
 DO $$
 DECLARE bad int; names text;
 BEGIN
-  SELECT count(*), string_agg(check, E'\n    - ') INTO bad, names FROM qc WHERE NOT ok;
+  SELECT count(*), string_agg("check", E'\n    - ') INTO bad, names FROM qc WHERE NOT ok;
   IF bad > 0 THEN
     RAISE EXCEPTION 'quality gate: % check(s) failed:\n    - %', bad, names;
   END IF;

@@ -75,7 +75,9 @@ There is **no `LLM → database` path.** Enforcement is by *role*, not by conven
   through platform HTTP APIs with a scoped token.
 - Web never talks to Postgres; it calls platform + AI via the BFF.
 
-See [DATABASE.md](DATABASE.md) §9 for the grant split and the gap that the roles are **not yet created** by `V1__init.sql`.
+See [DATABASE.md](DATABASE.md) §9 for the grant split. The roles are created by `infra/postgres/init/00_roles.sql`
+(first-boot initdb, re-applied by `scripts/db_apply_migrations.sh`), not by `V1__init.sql` — and Flyway runs under a
+third credential, the infra superuser, because the runtime role cannot `ALTER` a table it does not own (§9, D30).
 
 ## 4. Request lifecycles
 
@@ -203,8 +205,10 @@ in a real browser, screenshot under `tests/evidence/`; 4. no stub pretending to 
 `NotImplementedError`/501. Full list: [`DECISIONS.md`](DECISIONS.md) D7, [TESTING.md](TESTING.md).
 
 ## Open questions / risks
-- **DB roles not provisioned:** `nexus_app`/`nexus_ai` are described by [`API_CONTRACT.md`](API_CONTRACT.md) §0 but no
-  `CREATE ROLE`/`GRANT` exists in `V1__init.sql`. Must be added (V2 or `infra/db`) or the role split is convention only.
+- ~~**DB roles not provisioned**~~ — closed: `infra/postgres/init/00_roles.sql` creates `nexus_app`/`nexus_ai` and
+  grants the §0 split table by table, and it is re-applied by `scripts/db_apply_migrations.sh`. What is still open is
+  that the app role keeps a leftover `CREATE` on the schema from when it also ran Flyway; revoking it needs a
+  migration, because the initdb file never re-runs on an existing volume (DATABASE.md §9).
 - **RLS absent:** tenancy is enforced purely in application code; acceptable at phase-1 scale, a real risk at 100x.
 - **CJK full-text quality** with `tsvector('simple')` may be insufficient for the primary zh-HK market before the
   search-engine seam is enabled — validate in M2.

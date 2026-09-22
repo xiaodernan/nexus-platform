@@ -57,7 +57,9 @@ nexus:
     refresh-ttl-seconds: ${NEXUS_JWT_REFRESH_TTL:2592000} # 30d (rotating)
     cookie-name: nexus_session
   redis:
-    url: ${NEXUS_REDIS_URL:redis://localhost:6379}
+    # D9 pins 6380: something else on this machine owns 6379, and the rate limiter writes there if this
+    # default is left alone. Same reasoning as the datasource URL above.
+    url: ${NEXUS_REDIS_URL:redis://127.0.0.1:6380/0}
     enabled: ${NEXUS_REDIS_ENABLED:true}
     timeout-ms: 400
   ratelimit:
@@ -72,7 +74,9 @@ nexus:
     default-limit: 20
     max-limit: 100
   ai:
-    base-url: ${NEXUS_AI_BASE_URL:http://localhost:8000}
+    # 8010, not 8000 (D9). A default that points at a port another stack serves would post our query text —
+    # and the internal token — to a service that is not ours.
+    base-url: ${NEXUS_AI_BASE_URL:http://127.0.0.1:8010}
     timeout-ms: ${NEXUS_AI_TIMEOUT:8000}
   demo:
     # Demo login (§87) and demo payment provider. Always clearly labelled; never pretends to be real.

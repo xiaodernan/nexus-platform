@@ -56,7 +56,14 @@ public class AuthService {
             // 409 with a generic message; the email is echoed only to the caller who just typed it.
             throw ApiException.conflict("email_taken", "That email is already registered in this tenant", Map.of());
         }
-        UUID id = users.insertUser(tenant, email, hasher.hash(password), displayName, locale, "consumer", false);
+        UUID id;
+        try {
+            id = users.insertUser(tenant, email, hasher.hash(password), displayName, locale, "consumer", false);
+        } catch (org.springframework.dao.DuplicateKeyException raced) {
+            // The read above is not the constraint. Two concurrent registrations of one address in one
+            // tenant used to surface as a 500; the answer a client needs is the same 409 either path takes.
+            throw ApiException.conflict("email_taken", "That email is already registered in this tenant", Map.of());
+        }
         users.linkIdentity(tenant, id, "password", email);
         Map<String, Object> row = users.requireUser(tenant, id);
         TokenBundle bundle = issueTokens(tenant, id, Json.str(row, "role"), null);
@@ -84,7 +91,10 @@ public class AuthService {
         }
         UUID id = Json.uuid(row, "id");
         users.touchLastLogin(tenant, id);
-        TokenBundle bundle = issueTokens(tenant, id, Json.str(row, "role"), null);
+        // Same workspace resolution the demo login does: a merchant who signs in with a password must
+        // not get a thinner session than one who signs in through the demo switch.
+        TokenBundle bundle = issueTokens(tenant, id, Json.str(row, "role"),
+                users.defaultMerchantId(tenant, id).orElse(null));
         audit.record(tenant, "user", id, "login", "user", id, null, null, null, Json.map(),
                 Req0.ip(request), Req0.userAgent(request));
         return withTokens(userView(tenant, users.requireUser(tenant, id)), bundle);
@@ -120,7 +130,8 @@ public class AuthService {
         }
         Map<String, Object> row = users.requireUser(tenant, userId);
         users.touchLastLogin(tenant, userId);
-        TokenBundle bundle = issueTokens(tenant, userId, Json.str(row, "role"), null);
+        TokenBundle bundle = issueTokens(tenant, userId, Json.str(row, "role"),
+                users.defaultMerchantId(tenant, userId).orElse(null));
         audit.record(tenant, "user", userId, "login_oauth", "user", userId, null, null, null,
                 Json.map("provider", provider, "created", created), Req0.ip(request), Req0.userAgent(request));
         Map<String, Object> out = withTokens(userView(tenant, row), bundle);
@@ -158,7 +169,8 @@ public class AuthService {
         if (!"active".equals(Json.str(row, "status"))) {
             throw ApiException.forbidden("Account is not active", Json.map("status", Json.str(row, "status")));
         }
-        TokenBundle bundle = rotate(tenant, userId, Json.str(row, "role"), sid);
+        TokenBundle bundle = rotate(tenant, userId, Json.str(row, "role"),
+                users.defaultMerchantId(tenant, userId).orElse(null), sid);
         audit.record(tenant, "user", userId, "refresh", "user", userId, null, null, null, Json.map(),
                 Req0.ip(request), Req0.userAgent(request));
         return withTokens(userView(tenant, row), bundle);
@@ -181,10 +193,13 @@ public class AuthService {
      * {@code /auth/login}; the only way in is this endpoint, which is switch-gated.
      */
     public Map<String, Object> demo(TenantContext tenant, String role, HttpServletRequest request) {
+        // These are the addresses data/seed emits. They own the merchant_users links, preferences
+        // and favourites the consoles and the consumer slice render, so signing in as a minted
+        // look-alike instead would hand back an empty account and a green test.
         String email = switch (role) {
-            case "consumer" -> "demo-consumer@example.hk";
-            case "merchant" -> "demo-merchant@example.hk";
-            case "admin" -> "demo-admin@example.hk";
+            case "consumer" -> "demo.consumer@example.hk";
+            case "merchant" -> "demo.owner1@example.hk";
+            case "admin" -> "demo.admin@example.hk";
             default -> throw ApiException.validation("role must be consumer|merchant|admin", Json.map("field", "role"));
         };
         String userRole = switch (role) {
@@ -197,7 +212,8 @@ public class AuthService {
             return users.requireUser(tenant, id);
         });
         UUID userId = Json.uuid(row, "id");
-        TokenBundle bundle = issueTokens(tenant, userId, Json.str(row, "role"), null);
+        TokenBundle bundle = issueTokens(tenant, userId, Json.str(row, "role"),
+                users.defaultMerchantId(tenant, userId).orElse(null));
         audit.record(tenant, "user", userId, "login_demo", "user", userId, null, null, null,
                 Json.map("requested_role", role), Req0.ip(request), Req0.userAgent(request));
         Map<String, Object> out = withTokens(userView(tenant, row), bundle);
@@ -212,26 +228,33 @@ public class AuthService {
         String sid = UUID.randomUUID().toString();
         String accessJti = UUID.randomUUID().toString();
         String refreshJti = UUID.randomUUID().toString();
-        Map<String, Object> extra = new LinkedHashMap<>();
-        extra.put("role", role);
-        if (merchantId != null) {
-            extra.put("mer", merchantId.toString());
-        }
+        Map<String, Object> extra = workspaceClaims(role, merchantId);
         String access = jwt.sign(jwt.claims("access", userId.toString(), tenant.idString(), sid, accessJti, extra));
         String refresh = jwt.sign(jwt.claims("refresh", userId.toString(), tenant.idString(), sid, refreshJti, extra));
         registry.registerFamily(sid, refreshJti, Duration.ofSeconds(jwt.refreshTtlSeconds()));
         return new TokenBundle(access, refresh, jwt.accessTtlSeconds(), hasher.randomToken(16), sid);
     }
 
-    private TokenBundle rotate(TenantContext tenant, UUID userId, String role, String sid) {
+    private TokenBundle rotate(TenantContext tenant, UUID userId, String role, UUID merchantId, String sid) {
         String accessJti = UUID.randomUUID().toString();
         String refreshJti = UUID.randomUUID().toString();
-        Map<String, Object> extra = new LinkedHashMap<>();
-        extra.put("role", role);
+        // The rotated token has to carry the same claims a fresh login would. Dropping `mer` here made a
+        // session lose its default workspace at the 15-minute refresh, which is the first thing a
+        // half-hour merchant demo hits.
+        Map<String, Object> extra = workspaceClaims(role, merchantId);
         String access = jwt.sign(jwt.claims("access", userId.toString(), tenant.idString(), sid, accessJti, extra));
         String refresh = jwt.sign(jwt.claims("refresh", userId.toString(), tenant.idString(), sid, refreshJti, extra));
         registry.rotate(sid, refreshJti, Duration.ofSeconds(jwt.refreshTtlSeconds()));
         return new TokenBundle(access, refresh, jwt.accessTtlSeconds(), hasher.randomToken(16), sid);
+    }
+
+    private static Map<String, Object> workspaceClaims(String role, UUID merchantId) {
+        Map<String, Object> extra = new LinkedHashMap<>();
+        extra.put("role", role);
+        if (merchantId != null) {
+            extra.put("mer", merchantId.toString());
+        }
+        return extra;
     }
 
     private static UUID RequestIdsOrNull(String raw) {

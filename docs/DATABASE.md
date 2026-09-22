@@ -1,13 +1,15 @@
 # NEXUS — Database Design
 
-Status: **schema contract exists (`infra/db/V1__init.sql`), nothing is populated or migrated yet — to be built.**
-This is the authoritative *rationale* for that file; if the two disagree, the migration wins and this doc is corrected.
+Status: **the schema exists and is live.** `infra/db/migrations/V1__init.sql` … `V4__tenant_scoped_identity.sql` are
+applied to the dev and test databases, and the demo tenant carries seeded data. This is the authoritative *rationale*
+for those files; if the two disagree, the migration wins and this doc is corrected.
 §n → `新建 文本文档.txt`; roles/shapes reference [`API_CONTRACT.md`](API_CONTRACT.md) §0/§2 and
 [`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §5.
 
-> Path note: the migration is at **`infra/db/V1__init.sql`** (Flyway V1). The kickoff brief referenced
-> `infra/db/migrations/V1__init.sql`; use the actual path. Flyway default location `classpath:db/migration` must be
-> configured to point here (see [ARCHITECTURE.md](ARCHITECTURE.md) §1, [ROADMAP.md](ROADMAP.md) M0).
+> Path note: the migrations live at **`infra/db/migrations/V*.sql`**, which is where the kickoff brief pointed and
+> where they actually are (an earlier revision of this doc claimed the brief was wrong about the path; the file has
+> since been moved to the documented one). `services/platform` copies them into `db/migration` at build time so
+> Flyway's `classpath:db/migration` resolves (see [ARCHITECTURE.md](ARCHITECTURE.md) §1).
 
 ## 1. Extensions & primitives
 
@@ -37,9 +39,13 @@ Grouped by domain; the ER overview in §10 shows relationships. "Owner role" = w
 
 ### 3.1 Identity & access
 - **`users`** — consumers + platform staff (`role consumer|platform_admin|platform_ops|creator`; `status`,
-  `marketing_opt_in`, soft `deleted_at`). Partial unique on non-null, non-deleted email.
-- **`user_identities`** — one row per `(provider, provider_id)`; `secret_ref` is a pointer into the secret store,
-  **never a raw token/secret** (§131). OAuth (google/apple) and password coexist.
+  `marketing_opt_in`, soft `deleted_at`). Partial unique on non-null, non-deleted email **within a tenant**
+  (`users_email_tenant_uniq`, V4): the address identifies a person *to one storefront*, and §2's whole premise is
+  that two tenants never see each other's rows.
+- **`user_identities`** — one row per `(tenant_id, provider, provider_id)` (`user_identities_tenant_uniq`, V4);
+  `secret_ref` is a pointer into the secret store, **never a raw token/secret** (§131). OAuth (google/apple) and
+  password coexist. Before V4 the column had no `tenant_id` and the unique key was global, which contradicted every
+  tenant-scoped read on top of it — see [`DECISIONS.md`](DECISIONS.md) D29.
 - **`permission_grants`** — declarative grants for humans **and** agents: `subject_type IN (user, merchant_user, agent,
   api_key)`, `permission`, nullable `merchant_id` (null = tenant/platform scope), `granted_by`, `expires_at`. Backs
   §48/§49/§52 ([`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §8). Indexed by `(subject_type, subject_id)`.
@@ -214,9 +220,13 @@ silent charges (§103). A background sweeper marks expired `facts.stale=true` us
 
 `facts` is the single source of truth a rendered number may cite. Design points:
 - **Write:** every merchant edit / import / observation upserts a fact with `source`
-  (`merchant|imported|observed|third_party|inferred`) and `confidence`; denormalised `merchant_id` scopes it.
-- **Read/conflict resolution:** source priority `merchant (fresh) > observed > imported > third_party > inferred`; a
+  (`merchant|imported|observed|third_party|inferred|demo`) and `confidence`; denormalised `merchant_id` scopes it.
+  `demo` is what the seed writes for synthetic rows (§109): the origin is stated, not laundered into a real one.
+- **Read/conflict resolution:** source priority `merchant (fresh) > observed > imported > third_party > inferred > demo`; a
   tie/conflict writes a `trust_signals` row instead of silently choosing ([`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §4).
+- **Hours mirror:** `business_hours` (one row per weekday × location, `weekday` 0=Mon…6=Sun) is what
+  `open` is computed from, and the merchant's `opening_hours` fact is the same statement in citable form.
+  A write to `business_hours` must upsert that fact, or the citation goes stale on its own TTL (D25).
 - **Render contract:** `EntityCard.facts[]` and `ai_match.reasons[].fact_id` must resolve here; a bullet without a
   `fact_id` does not render.
 - **Post-validation:** generated text is checked so each numeric/entity claim maps back to a fact; unmatched claims are
@@ -240,10 +250,22 @@ it calls the platform HTTP API with a scoped token ([`AGENT_CONTRACT.md`](AGENT_
 guarantee behind "no `LLM → database`" (§52): the *role* makes the forbidden path physically impossible, not just
 discouraged.
 
-**GAP (to be built):** `V1__init.sql` creates **no roles and no `GRANT`/`REVOKE` statements** — the split above is
-currently only a documented convention. A `V2__roles_grants.sql` (or `infra/db` bootstrap + Flyway `placeholders`) must
-create `nexus_app`/`nexus_ai` and grant accordingly, or the enforcement in §9/[ARCHITECTURE.md](ARCHITECTURE.md) §3 is
-unenforced. Tracked in [ROADMAP.md](ROADMAP.md) M0.
+**Correction (2026-09-23):** the paragraph this section used to carry said the split was "currently only a
+documented convention" and that `nexus_app`/`nexus_ai` had to be created by a future `V2__roles_grants.sql`. Both
+halves were stale. `infra/postgres/init/00_roles.sql` creates the roles, revokes everything from `nexus_ai`, then
+grants the §0 SELECT set and the read-write set table by table (fail-closed: an unknown table gets nothing), and
+`db_apply_migrations.sh` re-applies it. The `V2` migration is `V2__integrity.sql` — constraints, not grants.
+
+**Third credential: the one that migrates.** `nexus_app` has `CREATE` on the schema (so it can make a table) but owns
+no table, so it cannot `ALTER` one — `42501 must be owner of table …`. V3 got through only because
+`db_apply_migrations.sh` hands *view* ownership to the app role. `V4__tenant_scoped_identity.sql` was the first
+migration that had to change a table, and it failed the boot in both the host launcher and `infra/docker-compose.yml`,
+which had `SPRING_FLYWAY_USER: nexus_app`. Flyway now runs as the infra superuser in dev (`NEXUS_MIGRATION_DB_*`,
+defaulting to `postgres` + `NEXUS_DB_ROOT_PASSWORD` from the gitignored `.env`) while the runtime datasource stays
+`nexus_app`: the credential that changes schema is not the credential that serves requests
+([`DECISIONS.md`](DECISIONS.md) D30). Narrowing `nexus_app`'s leftover `CREATE` is deliberately *not* done here —
+`00_roles.sql` only runs on a first-boot volume, so the edit would silently fork fresh databases from the dev one
+that already exists.
 
 ## 10. ER overview (text, `PK`·`FK`)
 

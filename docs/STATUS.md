@@ -3,19 +3,29 @@
 Maintained by the lead agent. A line moves to `verified` only when the quoted command has been run and
 its output seen. Nothing here is aspirational.
 
-As of last update: **no work stream is finished.** Infra, SDK, docs, types, UI-kit and seed streams are
-done; the platform, AI-service and consumer-web streams each hit their turn budget mid-build (see
-"Stream states at the turn ceiling") and are being rebuilt in smaller increments.
+As of last update: **no work stream is finished, but the shape changed.** Infra (except the Postgres name
+collision, D22), SDK, docs, types, UI-kit and the consumer-web vertical slice are working; the platform's test
+suite is green; the AI service's HTTP layer is green offline **and**, for the first time, against the seeded
+database (D23). The seed is loaded and gated at 150 checks. Two streams are writing `/merchant` + `/admin`
+and the SEO read surface right now.
 
-## Running services (verified by `docker ps` / queries)
+## Running services (re-measured with `docker ps` + queries, 2026-09-22 03:30 — see D22)
 
 | What | Where | State |
 |---|---|---|
-| Postgres 16 + pgvector | container `nexus-postgres`, `127.0.0.1:5433` | running, roles `nexus_app` + `nexus_ai` created, `nexus` DB has 59 tables |
-| Redis 7 | container `nexus-redis`, `127.0.0.1:6380` | running (healthy) |
-| throwaway verify DB | container `nexus-seed-verify`, `127.0.0.1:55432` | seed agent's sandbox — must be removed at consolidation |
-| Row counts | merchants 0 / offerings 0 / reviews 0, tenants 0 | seed not loaded yet |
-| Platform :8080, AI :8000, Web :3000 | — | not up yet |
+| Postgres 16 + pgvector **for this repo** | container `nexus-platform-testpg`, `127.0.0.1:5433` | running, **manually provisioned by the platform stream, not compose-managed**. DBs: `nexus` (the seeded demo tenant — see the row below) and `nexus_test` (58 public tables, roles `nexus_app` + `nexus_ai` from `V1`/`V2`/`00_roles.sql`). |
+| Seed dataset | `nexus` DB on 5433, loaded by `data/seed/load.sh` with `RESEED_DEPENDENTS=1` | **loaded and gated** (re-measured 2026-09-22): tenants 1 / merchants 520 / offerings 5534 / reviews 11000 / documents 1040 / chunks 2118 / facts 3961 / availability_slots 32492 / review_summaries 0. `data/seed/quality.sql` → **all 150 checks passed**, exit 0. |
+| `nexus-postgres` (55433) | belongs to **another project** (`D:\内容创作平台\infra`), superuser `nexus`, 29 unrelated tables | NOT OURS. It squats the container name our compose file used to pin (D22). Never touch it. |
+| throwaway verify DB | container `nexus-seed-verify`, `127.0.0.1:55432` | running; user `nexus`, DB `nexus`, **0 public tables** — a clean sandbox, nothing was ever loaded into it |
+| Redis 7 | container `nexus-redis`, `127.0.0.1:6380` | running (healthy) — the only store our compose file has ever started successfully |
+| Platform :8080 | **another project** (`java -jar target/career-os-backend-0.1.0.jar`, confirmed via `Get-CimInstance Win32_Process`) | NOT OURS. Our platform runs on `NEXUS_PORT=8090` locally (D22 §7); `application.yml` keeps 8080 as the contract/CI default. |
+| AI :8000 | **another project** (`python -m uvicorn app.main:app --port 8000`) | NOT OURS. Same substitution: `--port 8010` locally (D22 §7). |
+| Web (prod, mock data plane) | `next start -p 3002`, log `/tmp/nexus-prod.log` | running; :3000 belongs to another project and :3001 is the dev port — never kill or bind 3000 |
+
+The previous revision of this table asserted "Postgres … container `nexus-postgres`, `127.0.0.1:5433`,
+`nexus` DB has 59 tables". That was measured against a container that is no longer on this machine, and the
+name has since been taken by a different project — so it was wrong in two directions at once. Ports and
+container names in this file must carry a re-measurement date (D22 §5).
 
 Ports are fixed by `docs/DECISIONS.md` §D9 because this machine already runs unrelated stacks on 5432/6379
 (`careeros-postgres`, `specproof-*`). Do not bind those.
@@ -24,8 +34,8 @@ Ports are fixed by `docs/DECISIONS.md` §D9 because this machine already runs un
 
 | Artifact | State | Evidence |
 |---|---|---|
-| `infra/db/migrations/V1__init.sql` | committed `7591852`, applied to `nexus` DB | `\dt` = 59 tables |
-| `docs/API_CONTRACT.md` | committed | consumed by platform/ai/web/sdk/e2e |
+| `infra/db/migrations/V1__init.sql` + `V2__integrity.sql` | committed `7591852`, applied to `nexus_test` on 127.0.0.1:5433 today | 58 public tables, `ON_ERROR_STOP=1`, roles `nexus_app`/`nexus_ai` connect (platform stream, 03:15). **The older "`nexus` DB has 59 tables" row is retracted** — that container is gone and the name is now another project's (D22). |
+| `docs/API_CONTRACT.md` | in tree, §0.1 BFF surface + §8 SEO reads + §11 telemetry added this pass | consumed by platform/ai/web/sdk/e2e |
 | `docs/AGENT_CONTRACT.md` | committed | consumed by ai/web/e2e |
 | `docs/DECISIONS.md` + `README.md` + `docs/TRACEABILITY.md` | committed / in tree | — |
 | `tests/e2e` harness (playwright config + 4 suites) | written by lead, **not yet executed** | needs :3000/:8000/:8080 |
@@ -69,41 +79,638 @@ Ports are fixed by `docs/DECISIONS.md` §D9 because this machine already runs un
 | D20 | D12 said the AI service should own `conversations`/`messages`/`handoffs`; the platform instead built one guarded write door (`POST /api/v1/internal/conversations/{id}/agent-message`, `X-Internal-Token`, 501 when unconfigured) and the AI service had not written any dialogue SQL yet | **The platform door wins; D12 is superseded for those three tables.** Rationale: the AI service executes LLM output and is the least trusted writer in the system (§51/§52), and a second SQL path around the door is exactly the unaudited write D12 was meant to prevent. `nexus_ai` therefore gets **no** grant on those tables (verified absent), and API_CONTRACT §7.0 documents the two service-to-service paths (`agent-message` in, `/ai/v1/imports/extract` out, which the platform's `HttpImportAdapter` already calls). |
 | D21 | AGENT_CONTRACT §1 lets the marketing agent draft coupons, but D19's grant list had no `coupons` | `coupons` added to the AI read-write set (drafts only — §27 publish still requires the human `approve-publish` call, which is platform-side). Found by cross-reading the roster table against the grant list, not by a runtime failure. |
 
+## CI pipeline state (2026-09-22)
+
+`.github/workflows/ci.yml` runs lint-type → platform → ai → e2e, plus `contract-drift` (new, report mode) and
+`security` (gitleaks hard-fail per §131), and `required` gates on all six.
+
+Two defects found by actually parsing the file rather than reading it:
+
+1. **The workflow could not be parsed by GitHub at all.** `docs/STATUS.md` line 124's step name contained an
+   unquoted `: `, which is a YAML `ScannerError` ("mapping values are not allowed here, line 124 column 38").
+   Every job in it would have failed before running a single step. Fixed by quoting that one scalar; verified
+   with `python -c "import yaml; yaml.safe_load(open('.github/workflows/ci.yml'))"` →
+   `OK jobs: [changes, lint-type, platform, ai, e2e, contract-drift, security, required]`.
+   Lesson written down because it generalises: an unverified YAML/JSON config is a claim, not an artifact —
+   parse it or say it is unverified (§156).
+2. `npm ci` is missing from the `contract-drift` job… it does not need it (the checker is dependency-free
+   Node), which is why it runs `node scripts/check_contract_drift.mjs` directly after `setup-node`.
+
+Still true: **no CI job has ever run.** The repo has 4 commits and **no remote** (`git remote -v` is empty), so
+GitHub Actions has never been triggered by anything. Every statement above is about the file's content and a
+local YAML parse, not about a green pipeline.
+
 ## Route coverage ledger (machine-generated, not opinion)
 
 `node scripts/check_contract_drift.mjs` parses every path in `docs/API_CONTRACT.md`, then looks for it in
-the real implementations. Last full run (lead, before the current build wave):
+the real implementations. **GitHub Actions runs it in report mode on every push** (`contract-drift` job in
+`.github/workflows/ci.yml`, output attached to the run summary); it flips to a hard gate at M4 (§156). Last
+full run (lead, 2026-09-22 06:20, after the §4 reads landed — the AI stream is still adding `/ai/v1/**`
+handlers, so the counts move):
 
 | Bucket | Count | Meaning |
 |---|---|---|
-| Documented routes parsed | 92 | every row of §3-§10 |
-| Served by platform/ai | 45 | a handler exists in `services/platform` or `apps/ai` |
-| **CLIENT-ONLY** | 39 | SDK/web calls it, no service answers — a working-looking button that 404s |
-| **MISSING** | 4 | nobody references it at all |
-| **UNDOCUMENTED** | 1 | code names a path the contract never defines |
+| Documented routes parsed | 99 | every row of §3-§11 plus the §0.1 BFF surface |
+| Served by platform/ai | 63 | a handler exists in `services/platform` or `apps/ai` (was 45; +6 from §4, the rest from the growth/SEO/referral and AI streams) |
+| **CLIENT-ONLY** | 32 | SDK/web calls it, no service answers — a working-looking button that 404s |
+| **MISSING** | 0 | was 4 — the referral and merchant-customer family is now built |
+| **UNDOCUMENTED** | 0 | was 5 → 3 → 0: `GET /ai/v1/conversations/{id}` and `GET /ai/v1/health` are now documented in §7 with the payloads the running service actually returns |
 
-The 4 MISSING are one family, and that family has no builder since the platform stream stopped:
-`/api/v1/referrals/invite`, `/api/v1/referrals/me`, `/api/v1/referrals/me/stats` (§61-62 growth),
-`/api/v1/merchant/customers` (§23/§56). The 1 UNDOCUMENTED is `POST /api/v1/events` — the SDK batches
-telemetry there (§58) and the contract never gave it a row. Lead owns all six; CI runs the checker in
-report mode now and must flip to failing mode at M4 (§156).
+Closed this pass:
 
-## Stream states at the turn ceiling (2026-09-22, measured not claimed)
+- The web BFF's own paths (`/api/nexus/ai/{search,stream,compare}`, `/api/nexus/platform/**`) are now a
+  documented surface of their own — **API_CONTRACT §0.1** — and `documentedProxies()` in the checker knows a
+  proxy is a proxy: it is matched in the reverse direction only, because searching the services for
+  `/api/nexus/ai/stream` would report a false CLIENT-ONLY row for a route that is supposed to be forwarded.
+  A guard against the obvious mistake is in `toMatcher`: `**` is expanded to a mount **inside**
+  `documentedProxies()` only. Widening it globally was tried first and it made the contract's topology row
+  `` `/api/v1/**` `` swallow every documented path, so the "undocumented" check silently found nothing
+  (`/api/v1/events` stopped being reported). Measured, reverted, re-measured.
+- `POST /api/v1/events` (§58 telemetry batch the SDK has always called) is now documented in §11 with its
+  honest limits — append-only, idempotent per batch, never a write path for anything a user sees, never an
+  input to organic ranking (§66). It moved from UNDOCUMENTED to CLIENT-ONLY, which is the true state: no
+  service implements it. Owner: platform stream.
 
-Three build streams stopped because they hit their 150-turn budget, not because the work was done:
+The 4 MISSING closed this wave: `/api/v1/referrals/invite`, `/api/v1/referrals/me`,
+`/api/v1/referrals/me/stats` (§61-62 growth) and `/api/v1/merchant/customers` (§23/§56) are now served by
+`com.nexus.growth` and the merchant workspace. `POST /api/v1/events` is served too. What is left of the
+platform's M1 backlog is the 32 CLIENT-ONLY rows: the admin console (§9), commerce carts/orders/payments
+(§6), guides and collections (§8 reads), and the merchant-side campaign/import/knowledge-base/member routes.
 
-| Stream | State on disk | Verified by |
+## Stream states (re-measured 2026-09-22 03:30; previous revision was a turn-ceiling snapshot)
+
+| Stream | State on disk, measured | Verified by |
 |---|---|---|
-| platform | 76 main sources, compiles (`mvn -o compile` BUILD SUCCESS), 5 test classes, **`mvn -o test` fails 17 of 22** — 422 channel enum mismatch, a 500 on the internal agent-message door, notification preference validation + an unauthenticated inbox call | lead run at 01:05 |
-| ai-service | 29 python modules: config/contract/models (router+mock+embeddings)/nlu/search SQL — stopped before the trust layer and before any HTTP router | drift scan + file listing |
-| web | `package.json`, tailwind/eslint/vitest config, 64 SVG media assets, and `src/lib/**` (types, api base, env, facts, format, mock) — **zero pages, zero components** | `find apps/web/src` |
+| platform | 76 main sources, `mvn -o test` → **Tests run: 22, Failures: 0, Errors: 0 — BUILD SUCCESS**, with `git status services/platform` empty. The 17-of-22 failures this row carried an hour ago were never four bug families: all of them were `ApplicationContext` load failures against a Postgres that did not exist (D22). Provisioning `127.0.0.1:5433` from the unmodified `V1`/`V2`/`00_roles.sql` fixed every one, and no production code or test expectation changed. | lead re-ran the suite, 03:27 |
+| ai-service | 29 modules of config/contract/nlu/search SQL, **no HTTP router yet** — `/ai/v1/search` and `/ai/v1/search/stream` are still CLIENT-ONLY in the drift ledger. Being built now. | drift scan 03:20 |
+| consumer web | 18 routes (`/`, `/search`, `/m/{slug}`, `/o/{slug}`, `/{city}[/category[/facet]]`, `/guides*`, `/collections*`, `/robots.txt`, `/sitemap.xml`, BFF under `/api/nexus/**`), 27 unit tests green, `tsc` clean, prod build serving on :3002 in mock mode | lead, this section + the SEO table above |
+| consoles | `/merchant` + `/admin` not on disk yet; another stream is writing them now | — |
+| db / seed | still **0 rows** in every candidate container: `nexus_test` has schema only, `nexus-seed-verify` has 0 public tables, and no `nexus` DB exists on 5433. A stream is loading it now. | `docker exec … count(*)` 03:25 |
 
-Consequence for the plan: the vertical slice (§166-168) cannot be browser-verified until web has pages and
-the AI service has a routable `/ai/v1/search/stream`. The lead rebuilds those two in small, provable
-increments rather than one long stream.
+Consequence for the plan: the vertical slice (§166-168) still cannot be closed end-to-end, but the blockers
+narrowed to two — the AI service's HTTP layer and a seeded database. The consumer web is no longer one of them:
+it runs, it degrades honestly, and it is the reference every other stream can integrate against.
 
 
 ## Definition of done for the vertical slice (§170)
 
 `make dev-stack` then `npm test` in `tests/e2e` green, with screenshots of `/`, `/search`, `/m/[slug]`,
 `/merchant`, `/admin` in `tests/evidence/`, plus one eval run report showing hallucination rate < 2%.
+
+**Half of that is not achievable on this machine right now:** the in-app browser reports
+`NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`, so no screenshot evidence can be produced by any agent here. The
+substitute is a machine-checkable HTTP walk (next section); it is stated as a substitute, not as the
+§170 gate satisfied.
+
+## The consumer slice, walked end to end over HTTP (2026-09-22, task #18)
+
+`scripts/verify_consumer_slice.py` is the repeatable gate: it walks directory → AI search → merchant page
+→ reservation → readback and prints one verdict per assertion (`13 passed, 0 blocked, 0 failed` on the run
+that wrote this line). It composes two deeper legs, each runnable on its own:
+`scripts/verify_merchant_page.py` (20 assertions on the rendered HTML of `/m/basil-still-0014`) and
+`scripts/verify_reservation.py` (12 assertions on the booking write). It starts nothing and stops nothing;
+a service that is not answering is reported `BLOCKED`, never marked green.
+
+What the walk asserts, because those are the four ways this slice can lie:
+
+- **§19 on the listing** — every printed price has a `price` fact, every `open.source_fact_id` names one of
+  that same card's facts (8/8 after D25), an expired fact arrives with `stale` set, and `X-Demo-Data` is on
+  the response.
+- **§18 on the AI path** — all 15 `ai_match.reasons[]` bullets carry a `fact_id` that resolves to a fact on
+  the card they decorate (`missing=[] dangling=[]`), with `strategy=hybrid_v1+postgres+vector` and
+  `degraded=false` stated rather than assumed. `provider=mock, offline=true` is reported as-is: no LLM key
+  is configured, and the walk does not pretend otherwise.
+- **§20 on the seat** — availability is `no-store` while listings are `s-maxage=300`.
+- **The booking itself** — `POST /api/v1/reservations` now exists (`ReservationController` +
+  `ReservationService` + `ReservationRepository`, 8 tests in `ReservationApiTest`, suite **70/70**). The slot
+  decides the terms: `starts_at`, `ends_at` and `total_amount` are copied from the `availability_slots` row
+  and a client that sends none of them still cannot name its own time or price. Capacity is claimed by an
+  `update … where capacity_left >= :party_size` inside one transaction, so a double-tapped confirm replays
+  the same `NX-RES-…` code at 200 instead of taking a second table (observed live on the second run of the
+  walk: `5 -> 3`, then `3 -> 3`, one row). `status` stays `pending` because nothing here may claim a merchant
+  accepted. Contact is an allowlist (`name`/`phone`/`email`), so a `card_number` field in the request body is
+  dropped rather than stored (§42). Cross-tenant slot → `404 slot_not_found`, draft merchant → `404
+  merchant_not_found`, no channel to confirm by → `422`, full slot → `409 slot_full` with capacity unchanged,
+  anonymous → `401`.
+
+The walk's two runs left one demo booking in the developer database (`NX-RES-A5DMBX`, slot
+`0fe208f0-dd2a-508f-b0f9-fa79a9ecd7fd`, merchant `basil-leaf-0419`, 2 seats taken out of 5). There is no
+cancel route yet, so it is recorded here rather than hidden; a cancel/retrieve surface is part of task #17.
+
+## SEO discovery surface (2026-09-22)
+
+`app/robots.ts` + `app/sitemap.ts` serve the §29 crawl contract for every public page. Discovery is closed
+by default behind a new server-only knob `SEO_DISCOVERY_ENABLED` (`NEXUS_SEO_DISCOVERY_ENABLED`, default
+`false`, deliberately not in `publicEnv`), because §27 treats publishing to search engines as a human
+action; the pure selection logic lives in `src/lib/seo.ts` and is covered by `src/lib/seo.test.ts`. Flag off
+(verified on a throwaway dev server): `/robots.txt` answers 200 `Disallow: /` with no `sitemap:` line, and
+`/sitemap.xml` answers 404 via `notFound()`. Flag on: robots advertises the sitemap and disallows `/search`
++ `/api/`, and the sitemap emits only `/`, `/m/{slug}`, `/o/{slug}`, `/{city}[/category[/facet]]`,
+`/guides*` and `/collections*`, with each programmatic page gated by the §30 `indexable` bar (in the seed
+that admits `/hong-kong` and `/hong-kong/restaurants` and nothing thinner), `lastModified` sourced only from
+a real `updated_at`/`published_at`, and every URL built from `SITE_URL`. `npx tsc --noEmit` is clean for
+these files.
+
+## Consumer web: programmatic SEO + growth surface (2026-09-22, verified on the prod build)
+
+The §29 URL grammar and the §30 quality bar are now implemented end to end, and the navigation reaches them.
+
+| Layer | Files | What it guarantees |
+|---|---|---|
+| Pure grammar + numbers | `src/lib/directory.ts`, `src/lib/directory.test.ts` (10 tests) | `/{city}`, `/{city}/{category}`, `/{city}/{category}/{facet}` built from slugs only; `facetsOf` re-derives every count from the cards actually rendered, so a page cannot state a number its own list contradicts (§19); `labelFor` falls back to the raw slug rather than inventing a translation |
+| Server resolver | `src/lib/directory-server.ts` | Returns `null` outside the grammar (→ `notFound()`), derives `robots` index/follow from `page.indexable`, drops zero-listing categories from the city landing |
+| Views | `src/components/directory-view.tsx`, `growth-view.tsx`, `locale-badges.tsx`, `json-ld.tsx` | Visible thin-page warning when `!indexable`, AI disclosure on guides, `CollectionPage`+`ItemList` JSON-LD with **no** `aggregateRating` |
+| Routes | `app/[city]/page.tsx`, `app/[city]/[category]/page.tsx`, `app/[city]/[category]/[facet]/page.tsx`, `app/guides/page.tsx`, `app/guides/[slug]/page.tsx`, `app/collections/page.tsx`, `app/collections/[slug]/page.tsx` | Unreviewed AI guides stay `noindex` and out of the sitemap until a human approves (§27/§30) |
+| Navigation | `src/components/site-chrome.tsx` | Header + footer link `/{city}`, `/guides`, `/collections`, `/search` |
+
+Measured on `next start` :3002 (fresh build, mock data plane; `tsc` clean, 27 unit tests pass, build ✓ 7/7 static
+pages, **0** `⨯` lines in the server log):
+
+```
+200 /hong-kong              香港的真實商家與服務          index, follow
+200 /hong-kong/restaurants  香港餐廳                    index, follow   (8 distinct /m/ links, 2 ld+json blocks)
+200 /hong-kong/shopping     香港購物                    noindex, follow (§30 thin-page notice visible)
+200 /guides · /collections                             index, follow, no degrade notice in mock mode
+200 /guides/rainy-day-hong-kong                        noindex, follow + "尚未經人工審核" + "本文由 AI 生成"
+404 /hong-kong/restaurants/nope-facet · /hong-kong/nonsense · /nonsense-city
+404 /m/does-not-exist · /o/nope-xyz   (hard 404 — see the no-`loading.tsx` rule below)
+404 /sitemap.xml  (SEO_DISCOVERY_ENABLED=false)  ·  200 /robots.txt → "User-Agent: *\nDisallow: /"
+```
+
+Two rules this pass established, both recorded where the next engineer will hit them:
+
+1. **No `apps/web/app/loading.tsx`.** A root-segment loading file creates a Suspense boundary that flushes the
+   document shell at HTTP 200 before a dynamic segment can call `notFound()` — measured: with the file present
+   `/m/does-not-exist` answers 200, without it 404. Route skeletons belong inside a segment below the decision.
+2. **§155 nav rule.** The chrome advertises only URLs it knows it can answer. `/guides` and `/collections` are
+   always safe because their list reads degrade to an honest empty state plus a visible notice
+   (`guideList`/`collectionList` now return `degraded(pageOf([]))` rather than throwing); the `/{city}` directory
+   is linked only while its data plane can answer. `directoryLink()` in `site-chrome.tsx` is the single place to
+   flip. It was written when `services/platform` had no `/api/v1/seo/*` handler at all; that handler has since
+   landed (see "SEO discovery surface"), so the remaining condition is the page route's own 404 rule, not a
+   missing controller.
+
+Known gaps, stated as gaps: `/api/v1/guides*` and `/api/v1/collections/{slug}` still 404 with
+`"No such endpoint"` (no growth read controller exists yet, so those web pages degrade by design), and
+`GET /api/v1/offerings/{id}` has never been exercised. The `SeoController` claim in the paragraph above this one
+was stale and is corrected here — `/api/v1/seo/routes` answers 200 and `/api/v1/seo/page` answers 404
+for a stated reason, both measured in the "SEO discovery surface" section above (D24 records the §4 reads).
+Screenshot inspection remains unavailable
+in this environment (`NATIVE_BROWSER_VIEWPORT_UNAVAILABLE: In-app Browser did not provide a visible surface with a
+positive viewport`), so every web claim above is an HTTP status plus a parsed-HTML assertion, not a visual check.
+
+## Consumer catalog reads — API_CONTRACT §4 (2026-09-22, verified against the seeded database)
+
+`com.nexus.catalog` now answers all six merchant reads the contract lists; the slice's "open a real merchant page"
+step is no longer blocked on the platform. `mvn -o test`: **61 tests, 0 failures** (14 of them
+`CatalogReadTest`). Then restarted the local platform on `:8090` and re-read every route over the seed:
+
+```
+GET /api/v1/merchants?district=Sha%20Tin&limit=2   200  total_estimate=179, sort=popularity, as_of stamped,
+                                                      cards carry price/rating/open/facts, Cache-Control public +
+                                                      s-maxage=300, Vary: X-Tenant, X-Demo-Data: true
+GET /api/v1/merchants/basil-still-0014             200  朗澗小廚 · Hot Pot · Sha Tin, 36 keys, 2 locations,
+                                                      20 hour rows, 6 top offerings, menu_count=20,
+                                                      rating 3.62 (column) vs average_rating 3.63 (recomputed),
+                                                      review_summary null, `plan` absent
+GET …/menu?sort=-price                             200  20 active offerings, Angus Short Rib Slices HK$276.00 first
+GET …/reviews                                      200  8 published rows + recomputed aggregate and distribution
+GET …/reviews/summary                              404  review_summary_not_found — review_summaries is empty
+GET …/availability?party_size=2                    200  Cache-Control: no-store, slots joined to their pool
+                                                      (Table A — demo pool), capacity_left respected
+GET /api/v1/merchants?sort=bogus                   422  validation_error
+GET /api/v1/merchants/nobody-here                  404  merchant_not_found
+```
+
+Three behaviours worth stating because they are the ones a reviewer would call a bug:
+
+- `?category=Hot%20Pot` and `?category=hotpot` both return 25 merchants, and the first card prints
+  `category: "Indian"`. That merchant's own `merchant_categories` link points at the `hotpot` leaf, so it belongs
+  in the aisle; the card still labels itself honestly. A slug nobody seeded (`hot-pot`, with the hyphen) returns 0
+  rather than being fuzzy-matched into a result.
+- `rating_agg` and `popularity_score` are `NOT NULL DEFAULT 0`, so "best rated" is `sort=-rating` (descending) and a
+  bare token is ascending — the platform-wide `Paging.orderBy` convention, now asserted rather than assumed. Every
+  explicit sort carries `nulls last`, and no whitelist fragment reads `plan`, campaign, coupon or spend (§66); the
+  profile does not echo `plan` at all.
+- Availability slots from the seed have `price: null` and `offering: null` — the slot rows genuinely carry neither,
+  so the fields stay null instead of borrowing the pool's price (§19).
+
+### Web: the §4 payload reaches `MerchantDetail` through a projection (2026-09-22, task #16, verified over HTTP on the prod build)
+
+`data.ts:merchantBySlug` used to cast the profile into its own view-model. The §4 detail is a §2 card plus extras
+(`title`/`price` not `name`/`avg_price`; `praise`/`complaints` not `themes`; canonical slot rows not `slot_id`/`status`),
+so live mode rendered blank fields next to a full mock page. `apps/web/src/lib/platform-catalog.ts` is now the only
+place that crosses those conventions — weekday remap (`0=Mon` wire → `0=Sun` UI), primary-location hours scoping,
+currency-required money, `from_price → 'from'`, bullets-without-narrative summaries, capacity-derived slots — and it
+casts nothing: every field is narrowed through a helper that returns `null` when the wire does not say it.
+`npx tsc --noEmit` clean, `npx eslint src --max-warnings=0` clean, **70/70 vitest** (20 new cases on a verbatim
+capture of the live profile), `mvn -o test` **62/62**, `pytest` **71 passed / 4 skipped**, `@nexus/sdk` **42 passed**.
+
+Verified against `:3002` (`next start`, `NEXT_PUBLIC_DATA_MODE=live`) over HTTP with a 20-assertion script —
+20/20: name, price, category, address, MTR, menu titles, review quote, hours text, `示範數據` provenance chip,
+fact ids present, `open.source_fact_id` equal to the `opening_hours` fact the platform just emitted, no degraded
+banner despite `/reviews/summary` answering 404, and the rating deliberately *absent* (no rating fact exists, so
+the card shows 未验证 rather than the bare column). This is HTTP + parsed-HTML evidence only: the in-app browser
+cannot produce a viewport here, so nothing about layout or colour was checked.
+
+Three defects the verification itself turned up, all now fixed:
+
+1. **`reasonOf(cause) === 'not_found'` was dead code in live mode.** `base.ts` synthesises that literal only for a
+   non-JSON body; the platform's §1 envelope names each 404 after its subject (`merchant_not_found`,
+   `review_summary_not_found`), so six call sites never matched. Consequences: every absent AI summary marked the
+   merchant page degraded, and an unknown merchant slug 500d instead of rendering not-found. "Absent" is now read
+   from the status (`data.ts:isNotFound`); `/m/nobody-here` → 404, `/m/basil-still-0014` → 200 not degraded.
+2. **`@nexus/types` did not build**: `SCHEMA_ENUM_BINDINGS` had an unquoted `unknowns[]` key (TS1109), so the package
+   was shipping a stale `dist/`. Quoted; build green. `packages/types/src/schemas/fact.json` also still listed five
+   `FactSource` values after the TS union grew `demo` — the schema and the union are required to be equal, so both
+   now carry `demo`, as do `packages/sdk`, both trust test fixtures and AGENT_CONTRACT §4.
+3. **`env.ts` defaulted to `:8080`/`:8000`**, which on this machine belong to another project (D9): a live-mode start
+   that forgot the env vars would have talked to a foreign service. Defaults are now `:8090`/`:8010`.
+
+Still open on this page, in order of what they cost: no `rating` fact row exists for any seeded merchant, so the
+rating stays 未验证 until that data decision is made (D25); `MerchantService.addHours` mirrored the wrong shape into
+its fact (fixed here — it now writes the whole week, D25 §2), and until today it had **no HTTP route to be reached
+through** — `com.nexus.merchant` has now gained `MerchantContentController` (businesses, verification, publish,
+offerings, imports, dashboard, export), so the mirror is reachable, but the whole §23 write surface still has no
+integration test of any kind;
+`offerings.attributes` amenity booleans (`opens_late`, `wheelchair_access`, …) reach no chip because
+`facts.attributes` has no dictionary copy for them, so an unknown key would render its own snake_case name;
+`/api/v1/offerings/{slug}` has no platform handler, so `/o/[slug]` in live mode 404s; and `liveSearchRail` sends
+`filters:{sort}`, which strict `SearchRequestFilters` rejects. One scope mismatch is recorded rather than fixed:
+`OPEN_NOW` is true if *any* location of the merchant is open, while the profile prints the primary location's week
+(a union of two schedules would be a third, fictional one), so on a two-location merchant the badge can be open while
+the printed week shows closed at that hour.
+
+
+## Parallel wave in flight (2026-09-22) — ownership map so streams do not collide
+
+| Stream | Owns | Task |
+|---|---|---|
+| platform repair | `services/platform/**` | `mvn -o test` green (last lead run 2026-09-22: 61 tests, 0 failures) |
+| ai http layer | `apps/ai/**` | `POST /ai/v1/search` + `/search/stream` SSE per D13, `GET /ai/v1/conversations/{id}` |
+| db consolidation | `infra/db/**`, `infra/postgres/**`, `scripts/db_*` | seed is loaded into `nexus` on `:5433` (directory reads over it are quoted in the §4 section above); `v_merchant_funnel.revenue` still to be fixed in a **new** `V<n>` `CREATE OR REPLACE VIEW`; `nexus-platform-testpg` still holds the port the compose-managed postgres wants |
+| consoles | `apps/web/app/merchant/**`, `app/admin/**`, `src/components/console/**`, `src/lib/console-*`, appended `dict.console` | §23 merchant console + §27 human review queue |
+| lead | `docs/**`, shared `apps/web` files, prod :3002 | verification, this ledger, §157 self-review |
+
+## Reservations can be released — and the platform build is red on another stream's in-flight package (2026-09-22, task #17)
+
+Task #17's premise went stale under the work: `com.nexus.merchant` no longer ships without a controller (a parallel
+stream landed `MerchantContentController`, which reaches `addHours` and so makes the D25 whole-week fact mirror
+reachable over HTTP). What was actually missing was §6's `PATCH /api/v1/reservations/{id}` — the way out of a booking,
+and the reason the demo hold `NX-RES-A5DMBX` still holds two of five seats. Ruled and implemented in D26:
+
+- `PATCH /api/v1/reservations/{id}` — `{status:"cancelled", reason?}`, holder-only, 404 for anyone else's booking,
+  guarded state machine in `ReservationService.cancel`, seats back in the same transaction, `completed`/`no_show`
+  refused with 409, `reason` written to `audit_logs.metadata` because `reservations` has no column for it.
+- `GET /api/v1/reservations/{id}` — the SDK already advertised this method, so the choice was to serve it or delete a
+  promised capability. Served: the holder, or a workspace holding `read_orders` on that merchant; 404 otherwise.
+- The booking replay guard keyed on `(user, slot, party_size)` while V2's partial unique index is `(user, slot)`, so
+  changing party size passed the guard, claimed seats and hit the index — a 500 with a rolled-back claim. Same size
+  replays, different size is now 409 `reservation_exists` naming the code to cancel.
+- `@nexus/sdk`: `ReservationPatch` narrows `status` to `"cancelled"` at compile time, `cancel(id, reason?)` added,
+  and the fake API's reservation fixture now answers `pending`. Two fixture lies went with it: the SDK's own
+  idempotency test asserted `status === "confirmed"` (a state no route produces), and
+  `apps/ai/nexus_ai/adapters/platform.py`'s offline stub returned `confirmed` from `create_reservation` while
+  `nexus_ai/trust/injection.py` treats "the table is confirmed" as a claim to filter out of untrusted text.
+
+Verified: `javac` over the three changed `com.nexus.catalog` files and `ReservationApiTest` with the Maven-resolved
+classpath — exit 0, no diagnostics; `npm test` in `packages/sdk` — **43 passed / 0 failed** (including the new
+reservation read/release/422 test); `.venv/Scripts/python.exe -m pytest -q` in `apps/ai` — **71 passed, 4 skipped**.
+
+**Not verified, and it would be false to say otherwise: the eight new reservation assertions have never run.**
+`mvn -o test` cannot compile the source set. Four errors, all in files this stream does not own:
+`com/nexus/commerce/CartService.java:585` and `OrderService.java:159` reference a `PaymentService` that does not
+exist yet (the package is untracked and still being written — only `PaymentRepository` is on disk),
+`OrderService.java:89` calls a two-argument `ApiException.conflict` overload that does not exist, and
+`merchant/MerchantContentController.java:304` calls `audit.record(request, …)` with seven arguments where the
+request overload takes eight. The first three belong to the commerce stream's in-flight work and are deliberately not
+touched: inventing `PaymentService` would collide with whoever is writing it. The fourth is a one-argument omission in
+the merchant console, which is this task's own surface, and is left unfixed only because the build stays red without
+the other three. Consequence for the live loop: the server on `:8090` is still the last green build, so it has no
+cancel route — `scripts/verify_reservation.py` would pass its 12 existing checks and cannot yet exercise the release.
+
+Next, in order, once `com.nexus.commerce` compiles: `mvn -o test` (62 + the 8 new); the one-argument
+`MerchantContentController:304` fix; restart `:8090` from the green build; add the cancel leg to
+`scripts/verify_reservation.py` and re-run `scripts/verify_consumer_slice.py`; then the gap that made this task
+outlive its own title — `com.nexus.merchant` has a full write surface and still zero integration tests, so the D25
+hours mirror is reachable and unproven at the same time.
+
+## The contract layer can now check itself (2026-09-22, `packages/types`)
+
+`@nexus/types` is the file every other stream copies shapes from, and until now nothing executed the claim:
+`package.json` pointed at `scripts/validate_conformance.mjs` and `src/tests/*.test.ts`, and none of them existed. Both
+are real now, and the gate they form is what paid for this increment.
+
+`npm test` in `packages/types` runs **build → gen:schemas → conformance → test:unit**, all offline, on
+`typescript` + `tsx` + `@types/node` only (the validator is hand-written for the same reason `ajv` is not a
+dependency). Result: 7 schemas, 28 schema↔enum bindings, 48 fixture cases (29 negative), 21 cross-object rules,
+**429 checks**, plus **30 unit tests** in `src/tests/{enums,schemas,types}.test.ts` — which are themselves typechecked
+(`tsconfig.test.json`) because `tsconfig.json` excludes them to keep `.mjs` imports out of `dist/`.
+
+What the gate found, all of it fixed:
+
+- **`entity_card.tenant_id` was unsatisfiable.** `oneOf` over *uuid or slug*: a lowercase uuid matches the slug pattern
+  too, so every valid tenant id matched two branches and the field could only ever be `null`. Now `anyOf`, with the
+  reason in the schema description so nobody "tightens" it back.
+- **A fixture invented an agent.** `fixtures/tool_spec.json` listed `merchant_onboarding` among the agents allowed to
+  call `search_web`; no such name exists in `AGENT_NAME`. A fixture that names a component the roster lacks is how a
+  contract grows a fiction.
+- **The trust order was misquoted.** A rule comment in `scripts/rules.mjs` quoted AGENT §4's conflict order in
+  `FACT_SOURCE`'s *declaration* order (`imported` before `observed`) instead of its priority order, so the file that
+  enforces the order documented it wrong. Now verbatim, and a test asserts the first five entries against the sentence.
+- **A rule would have rejected valid specs.** `tool_spec_permission_matches_scope` also refused any merchant-scoped
+  tool; `refund_payment` and `configure_ai` are legitimate merchant grants (§8/§27), so the heuristic is gone and the
+  rule asserts only what §8 says — a tenant-scope tool needs a tenant-level permission.
+- **`facts.attribute` could not express two of §5's TTLs.** `review_summary` and `popularity` have freshness windows
+  (§20) and `apps/web` already seeds a `review_summary` fact, but neither name was in `FACT_ATTRIBUTE` — the two most
+  cache-sensitive claims on a card had no attribute to be stored under. Registry extended, recorded as CONTRACT NOTE 10
+  (the column is free text, so no migration is blocked), and pinned by a test that fails if a TTL key has no vocabulary.
+- **~90 comments cited `V1 line NNNN`, and two were wrong.** `messages.content_type` pointed one line early and
+  `notifications.channel` one line late. The new test parses the V1 DDL, takes the table/column named on the citing
+  line, and requires the cited line to contain it — which is the only way a mirror of someone else's artefact stays
+  honest as that artefact moves. `src/index.ts` also claimed `DECISIONS.md` and disk disagreed on the migration path;
+  both say `infra/db/migrations/`, and the claim is now a test rather than a comment.
+
+**Boundary, stated plainly:** this gate checks schemas, enums and fixtures. It does not observe a running service, so
+it cannot say the platform or the AI service emits conformant payloads — only that anything which does not will fail
+against the same published rules. The Java tree is unchanged and still red on `com.nexus.commerce` (see above), so
+task #17's eight assertions remain unrun.
+
+## Live payloads against the published contract (first run 2026-09-23, `scripts/verify_payload_conformance.mjs`)
+
+The boundary above was answered the same day it was written. The script reads the *published* artefacts
+(`packages/types/dist/schemas/` via `manifest.json`, so a stale `gen:schemas` cannot flatter a run), issues six
+documented reads against :8090 and :8010, and validates every returned object with **the same validator and the same
+21 cross-object rules the fixtures are held to** — rules are wired in as of this run, which is what surfaced the last
+two rows of each class below. 38 payloads: **59 violations, 20 platform / 39 AI, zero of them in an error envelope
+after D27.** An unreachable service is reported `NOT VERIFIED`, never as a pass.
+
+Every row is classified by who must move, and the classification was made by reading the payload, not the message:
+
+| # | Violation | Count | Owner | Verdict |
+|---|---|---|---|---|
+| P1 | Directory cards render `rating` (e.g. `{value:5,count:4}`) with **no `rating` fact** on the card — `facts[]` carries only `price` + `opening_hours` | 5 | platform `com.nexus.catalog` + seed (tasks #4/#15/#8) | **§19 breach, service side.** The number is real (`rating_agg`/`review_count`) and unbaked into the provenance layer. Either the projection writes the `rating` fact it is reading, or the card sends `rating: null`. |
+| P2 | `avg_price_hkd: 81.43` on a closed `EntityCard`, duplicating `price.amount: "81.43"` as a bare float | 5 | platform `com.nexus.catalog` | **Service side.** §1 says money is a decimal *string* + currency; the card already carries it correctly in `price`. Drop the duplicate. |
+| P3 | `city: "Hong Kong"` on a closed card — `GeoPoint` has `lat/lng`, the card has `district`, and no §4 query takes a city | 5 | platform `com.nexus.catalog` | **Service side.** HK is the tenant, not a field. A second city is a contract edit request, not an extra key. |
+| P4 | `category: "Tea House"` where the field's own pattern demands a snake_case code | 5 | platform `com.nexus.catalog` | **Service side.** The card carries the *slug*; the display name comes from the taxonomy dictionary, which is what makes one card render in three locales (§2's single render contract for consumer + AI + MCP). |
+| A1 | `organic_rank` and `score_breakdown` (eight scoring components) on consumer cards | 10 | AI `nexus_ai/search/cards.py` | **§66/§116 leak, service side, the most serious row here.** Ranking internals — including the paid/organic separation inputs — in the render contract that also feeds MCP and UCP. If it belongs anywhere it is a debug rung behind an explicit flag. |
+| A2 | `availability: {status: null, next_slot: null, source_fact_id: null}` — `AvailabilityStatus` is not nullable and the field is `fact_id`, not `source_fact_id` | 5 | AI `search/cards.py` | **Service side.** "No availability signal" must be the documented `unknown`, and the rule behind it agrees: the card *also* renders availability with no backing fact and no `as_of` (A5). |
+| A3 | `rating: {value, count, fact_id}` — `RatingInfo` is closed at `{value, count, smoothed?}` | 5 | AI `search/cards.py` | **Service side, ruled in D28.** The citation belongs to `facts[]`; a per-field id on one object and a differently-named one on another is how the two drift. |
+| A4 | `actions[].type` `"view"` / `"ask"`, outside `CARD_ACTION_TYPE` | 7 | AI `search/cards.py` | **Service side.** `view_menu`/`view_reviews`/`compare`/`message` are the documented verbs. A CTA whose verb the renderer does not know renders as an unlabelled button. |
+| A5 | `actions[].endpoint` `/ai/v1/compare` — a mutation-shaped path on the AI origin | 7 | AI `search/cards.py` | **Service side, against D5**, and the schema field's own description says so. `compare` takes `endpoint: null` (client-side action) exactly as §2's CardAction documents. |
+| A6 | Cards render `availability` and an `open` verdict with no backing fact, no `as_of`, and `source_fact_id: null` while an `open_state` fact **is on the same card** | 5 | AI `search/cards.py` | **Service side.** AGENT §4's renderer contract. This is the same root as the `stable_fact_id` refactor already sitting uncommitted in that stream's working tree — the fix is in flight, not missing. |
+
+Also from the same run, unchanged and still open: `POST /ai/v1/search` with an empty query returns **0 items**, and
+`SearchRequestFilters` has no `sort`, so all four live home rails (`apps/web/src/lib/data.ts` asks for
+`{sort: 'distance' | 'rating' | 'trending' | 'price_low'}`) answer 422 and fall back to empty. There is **no
+documented live source for a query-less "near you" rail**; the honest options are a §4 directory sort by distance or a
+contracted query-less search, and the rails must not be quietly left on mock data — §166's vertical slice is a live
+slice. `GET /api/v1/merchants/{slug}` (the merchant profile, 36 top-level keys) has **no published schema**, so the
+run records it as `NO SCHEMA` rather than pretending the count is a pass.
+
+**What D27 did and did not settle.** §1's example code is now legal, the three error-envelope probes validate, and
+`error_http_status_matches_code` gained real power it never had — a `slot_not_found` served with 403 fails the
+contract instead of being skipped as an unknown name (pinned by fixture `09_invalid_resource_code_status_disagrees_with_suffix`,
+and by `ladderErrorCode`'s sixteen-case table, which answers `null` rather than a guess for `validation_failed`,
+`merchant__not_found` and `Merchant_not_found`). Nothing else in the table above became legal because a service
+happened to send it: 59 rows, one ruling, and the other 58 stay filed with owners.
+
+## The drift checker was under-matching, and the two gaps it hid (2026-09-23, `scripts/check_contract_drift.mjs`)
+
+The §5 row added for `GET /api/v1/merchant/reservations` triggered the first real audit of the checker itself: the
+route is documented and called by `web`/`web-lib`/`sdk`, and no controller serves it — yet the run said *served*.
+The forward match searched a source corpus for the **last one word** of a documented path, so `reservations` matched
+`PATCH /api/v1/reservations/{id}` and the gap vanished. A gate that cannot tell two routes apart is not a gate
+(§156: build, then look at what the build actually asserted).
+
+Three changes, each covering a distinct way to be wrong:
+
+1. **`serverSignature` + `declares`** — a service-side hit is now the *last two* segments as a anchored regex
+   (`/{id}/reindex` cannot be satisfied by `/reindex` alone), and because Spring splits a route across
+   `@RequestMapping` base path and `@GetMapping`, a hit may also be any *pair* of literals in the same file.
+   Without the pair rule the tightening falsely demoted 16 routes (`/api/v1/me/favorites`, `/api/v1/seo/page`, …).
+2. **Wildcard shorthand is excluded from both directions.** `/api/v1/me/*`, `/ai/v1/**` and friends are prose for a
+   family the same section lists one row at a time; matching them asks a file to contain a literal asterisk, and
+   whatever it hits is an accident. They are printed as `wildcard shorthand, not treated as endpoints` and never
+   counted either way.
+3. **Reverse direction kept** — a path literal in code that the contract never defines is still drift, with class-level
+   base paths accepted as strict prefixes and *extensions* (`/x/{id}/reindex`) still reported.
+
+Current ledger: **101 routes parsed · 64 served · 29 client-only · 0 missing · 0 undocumented**, over a 270-file
+corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:202` runs it with `--report`, so
+CI stays advisory while the 29 rows are worked off; the split is by owner, not by excuse.
+
+Two of those 30 were true gaps that the old matcher hid, and both became visible rather than passed (that count is
+from the run that found them; the ledger has since moved to 29 and is re-measured above rather than back-filled
+here, because the route that left the list did so in another section's wave):
+
+| Route | Evidence | Verdict |
+|---|---|---|
+| `GET /api/v1/admin/system/health` | `SystemController` serves `/api/v1/health` and `/api/v1/ready` only | **Contract or BFF mount, not a missing handler.** The admin surface has no health of its own; either the SDK's admin client targets `/api/v1/health`, or the §9 admin route must be written. Do not satisfy the checker by renaming a route nobody authorised. |
+| `GET /api/v1/merchant/reservations` | `com/nexus/commerce/` contains **no controllers at all** (`CartRepository/CartService/OrderRepository/OrderService/PaymentRepository`) | **Was §23's unbuilt booking inbox; built the same day** — see the next section. Left in the table because the finding, not the route, is the point: the AI tool `read_orders` and the merchant console had both been calling a path nobody served, and only the corrected matcher said so. |
+
+
+## The inbox, and a filter that made valid requests illegal (2026-09-23, task #17)
+
+Closing the second row above meant writing the §23 booking inbox, and writing it found a defect that had nothing to
+do with reservations. Four things landed:
+
+**`GET /api/v1/merchant/reservations` is served** (`MerchantContentController#reservationInbox`, backed by
+`ReservationRepository#inbox/#inboxCount` and `ReservationService#inbox`). What the tests pin is not the JSON shape
+but the honesty of the numbers: an inbox with no bookings is empty rather than seeded (§109); rows come back ordered
+by `starts_at`, so a merchant reading at 18:00 sees tonight before tomorrow; the date window is half-open
+(`>= from`, `< to`) because an inclusive `to` double-counts a booking that spans midnight; `status` is validated
+against the five stored values instead of silently matching nothing; and a denied read leaves exactly one
+`permission_denied` audit row, which is the only proof that the 403 came from the interceptor and not from a filter
+that gave up earlier. `contact` is projected in full — the merchant has to call the guest back — while `user_id` is
+not, because it identifies a person to the platform, not to the café (§46/§47). No route accepts a booking, so
+`inboxOrdersByArrivalAndFiltersStatus` sets `confirmed` by direct SQL and says so in a comment; pretending otherwise
+would document a capability D26 withheld.
+
+**`PaymentService` existed only as a name.** `CartService` and `OrderService` both referenced it and the package did
+not compile (`mvn -o compile` failed four times before anything could be tested). The class is a projection, not a
+payment flow: `client_secret_ref`, `idempotency_key` and `provider_ref` are columns that exist and are deliberately
+never selected, because for a provider we do not integrate with, field selection *is* the control (§42). Every
+intent carries `card_data_stored: false` and a notice saying no money has moved.
+
+**The filter that decided by framing.** `CachedBodyFilter` buffers the JSON body so the permission interceptor can
+read `merchant_id` out of it before the controller consumes the stream. It only did so when a `Content-Length` was
+present — and the Jackson converter streams, so a `RestTemplate`/`fetch` POST with a `Map` body sends chunked. The
+result: a perfectly valid `POST /api/v1/merchant/offerings` was answered 422 `validation_error`, while the identical
+bytes sent with a length returned 201. `WorkspaceAccess` had drained the stream and the controller then saw EOF. The
+diagnosis came from a scratch probe test, not from reading the filter again, which had already looked correct twice.
+The cap now applies to the bytes actually read rather than to the advertised length, chunked JSON is cached, a
+declared `0` is treated as the empty body it is, and an over-cap body is refused with a 422 that names the 256 KiB
+limit instead of pretending the payload was malformed. **Authorization must not depend on how the client framed the
+request** — that is the same bug class as a tenant guard that trusts a header the SDK chose to send. Both regressions
+are permanent tests (`bodyFramingDoesNotDecideWhetherTheRequestWorks`, `oversizedBodyStatesTheLimit`).
+
+**One test was asserting the wrong thing.** `ReservationApiTest.foreignBookingCannotBeReleased` expected 404 for a
+cross-tenant cancel and started failing with 401 after the filter change. The fixture, not the code, was wrong: the
+`patch()` helper hardcodes `X-Tenant` for the *home* tenant, so the "attacker" was really a request whose token and
+tenant header disagreed — `AuthFilter:82` rejected it before any scoping logic ran, so the test had passed for three
+weeks without ever touching tenant isolation. It now sends the other tenant's header *and* that tenant's own token,
+and asserts the error code is `reservation_not_found` rather than only the status, so a future 404 from an unrelated
+cause will not be read as a pass.
+
+Also fixed in passing: `archiveOffering`'s audit `before` image was taken *after* the update, which could only ever
+record `archived → archived`; it now reads first, and `archiveAuditsWhatItReplaced` asserts on the JSONB columns.
+
+`mvn -o test`: **90 tests, 0 failures, 0 errors** (MerchantConsoleTest 10/10, ReservationApiTest 18/18). Drift
+ledger moved from 63/30 to **64 served / 29 client-only**, corpus 267 → 269 files. Still open from this wave: the
+`:8090` instance has not been restarted from the new build, so the inbox has not been curl-verified live yet, and
+`/api/v1/admin/system/health` remains a contract-or-mount decision rather than a handler.
+
+## The seeded demo database had zero usable permissions (2026-09-23, task #19)
+
+The first live curl of the new inbox answered **403**, and it was not the inbox's fault. Signing in as the
+seeded merchant owner and asking for its own booking list returned:
+
+```
+{"error":{"code":"forbidden","message":"You do not have permission 'read_orders' for this merchant",
+ "details":{"permission":"read_orders","merchant_id":"8fcdeff4-…-12a456055e99"}}}
+```
+
+Counting the rows explained it: `permission_grants` has 15 `merchant_user` grants and **all 15 point at the
+`merchant_users` row id**, while `PermissionService` resolves a grant by joining `users u on u.id =
+g.subject_id` — the column has no foreign key, so the wrong id loads cleanly and is simply unreachable
+forever. Meanwhile the three `owner` memberships carry no grants at all. So of the 520 seeded merchants, the
+three that have a staff row at all are locked out of every permission-checked console route, and the other 517
+nobody can sign into; §87's "sign in as a merchant" demo included. `data/seed/quality.sql` sweeps every
+declared FK dynamically across its 54 checks, and this pair has none, which is exactly why the gate never saw
+it.
+
+Three fixes, in order of durability:
+
+1. `data/seed/generate.py` now writes `user_id` into `subject_id` for owner grants.
+2. Two new quality checks so the class cannot return: *merchant_user grants reach a membership* (joins the
+   same way the service does) and *every seeded owner membership has grants* (the inverse case — a
+   membership nobody can use). Measured against the loaded dev database they report `15 unreachable of 15`
+   before the repair and `0 of 15` after.
+3. The already-loaded `:5433` dev database was repaired in place with the equivalent `UPDATE` (15 rows), so
+   the demo console works before the next full reload.
+
+`GET /api/v1/merchant/reservations` then answered **200** live with one real row, whose projection matches
+the tests: `contact` present (`{"name": "Verify Run", "phone": "2345 6789"}`), `user_id` absent, `status`
+`pending`, and `price` `null` because the slot it was booked into has no price.
+
+## The workspace claim survived login and died at the 15-minute mark
+
+While writing the live walk for the inbox, the merchant session turned out to carry its workspace in a claim
+named `mer`, not `merchant_id`. Fixing the walk exposed the real bug: `AuthService.rotate()` built its claims
+map by hand and included only `role`, so **every refreshed token lost `mer`** — a console that opens its
+default business from the token works for 15 minutes and then stops, which no test could have caught because
+**nothing in the suite had ever called `/api/v1/auth/*`**. Related: only the demo login resolved the
+workspace; `login` and `oauth` passed `null`, so a merchant who registers with a password gets a thinner
+session than one who clicks a demo button.
+
+`issueTokens` and `rotate` now share `workspaceClaims(role, merchantId)`, and the password/OAuth paths resolve
+`defaultMerchantId` the way the demo path always did. `com.nexus.identity.AuthTokenTest` (3 tests) pins the
+outcome: no `mer` before a membership exists, `mer` present after rotation, the rotated token accepted by a
+real route, reuse of a spent refresh token answering `refresh_reuse_detected` **and killing the family**,
+`HttpOnly` + `no-store` on the session cookies, and the register validation/409 shapes. §3 of the contract now
+documents both claims (`role` is the account role; the workspace role stays on `merchant_users`) and the
+re-resolution on rotation.
+
+## Two default ports pointed at other projects, and the dev launch is now written down
+
+`application.yml` defaulted `nexus.redis.url` to `:6379` and `nexus.ai.base-url` to `:8000`; on this machine
+both are live listeners belonging to other stacks (the walk of `docker ps` shows `careeros-*` and friends),
+and D9 pins NEXUS to 5433/6380 with the AI service on 8010. Left alone, a plain restart would have written
+rate-limit keys into someone else's Redis and posted query text plus the internal token to a service that is
+not ours. Defaults (and the two `@Value` fallbacks in `KeyValueStore`/`HttpImportAdapter`, which carried the
+same wrong numbers) now point at the pinned ports; `application-dev.yml` no longer names `:5432` and no longer
+ships a password default. Evidence from the restarted instance: the boot log prints
+`key_value_backend backend=redis url=redis://127.0.0.1:6380/0` and `/api/v1/ready` reports
+`{"database":"up","schema_version":"3","key_value_backend":"redis"}`.
+
+`scripts/run_platform_dev.sh` exists because the launch command lived only in a previous session's scrollback:
+it sources the (gitignored) `.env`, states every port out loud, refuses to trust the profile defaults, and
+prints a warning rather than silently disabling the agent's conversation writes when
+`NEXUS_AI_INTERNAL_TOKEN` is absent. **Still not aligned** — deliberately, because those files are dirty in
+another stream's working set: `Makefile`'s `dev-web/dev-ai/dev-platform` targets still say `:3000/:8000/:8080`
+and `.env` still carries `NEXT_PUBLIC_PLATFORM_URL=http://localhost:8080`,
+`NEXT_PUBLIC_AI_URL=http://localhost:8000`, `PLATFORM_INTERNAL_URL=http://localhost:8080`. Whoever owns the
+infra wave should retarget them to 3001/8010/8090.
+
+Filed from the same walk, with numbers: **23,979 of 32,492 seeded `availability_slots` rows have no
+`price_amount`** (and 1,172 are already at `capacity_left = 0`), so three bookings in four read `price: null`
+end to end. Null is honest — the merchant never priced the slot — but it means the "this booking costs HKD X"
+demo cannot be shown on most seeded slots, and any UI that renders `null` as `0.00` would be lying; the
+distinction between *free* and *not stated* needs to survive into the card. Also filed: there is **no
+"list my merchants" route**, so a console must read its workspace from the token claim; the walk decodes the
+JWT it was handed to find out which business it is allowed to query, which is a reasonable client but a thin
+contract.
+
+## A migration that could not boot, and the seed it broke on the way in (2026-09-23, task #19)
+
+`V4__tenant_scoped_identity.sql` was written, tested against `nexus_test`, and then refused to start the service:
+
+```
+Script V4__tenant_scoped_identity.sql failed
+SQL State  : 42501
+Message    : ERROR: must be owner of table user_identities
+```
+
+Not a bug in V4. `infra/docker-compose.yml` pinned `SPRING_FLYWAY_USER: nexus_app`, and `nexus_app` owns no table —
+`00_roles.sql` gives it `USAGE, CREATE` on the schema, which lets it make new objects and nothing else. Every
+migration before it had slipped past that: V1/V2 were applied out of band by the infra script, and V3 is a
+`CREATE OR REPLACE VIEW`, which works only because that same script hands view ownership to the app role. V4 was
+the first migration that had to change a table, so the assumption that the service migrates itself at boot died
+with it. Ruled in **D30**: the credential that migrates is not the credential that serves. `application-dev.yml`
+now carries `spring.flyway.url/user/password` from `NEXUS_MIGRATION_DB_*` (defaulting to `postgres` +
+`NEXUS_DB_ROOT_PASSWORD`, which is in the gitignored `.env`), compose says the same thing explicitly, and the
+runtime datasource stays `nexus_app`. `/api/v1/ready` then reported `schema_version: 4`.
+
+The same file also revealed that `application-dev.yml` had **never been active on a host launch**. Nothing set
+`SPRING_PROFILES_ACTIVE` except compose, so `scripts/run_platform_dev.sh` was running the base defaults while
+everyone believed the dev block's port pins were in force. The launcher now names the profile and the migration
+credential out loud.
+
+Then the checksum incident, which is worth remembering: V4's header cited "D28", but D28 had been taken by the
+card-citation ruling while V4 was in flight, so the reference was renumbered to D29 — after the migration had
+already been applied. The next boot refused with `Migration checksum mismatch for migration version 4`, because
+Flyway hashes the file's text, comments included. The way out was to delete the V4 row from
+`flyway_schema_history` and let the migration re-run, which was safe *only* because V4 was written resumable
+(`ADD COLUMN IF NOT EXISTS`, `DROP CONSTRAINT IF EXISTS`, backfill guarded on `IS NULL`). Measured after the
+re-apply: `user_identities_tenant_uniq` and `users_email_tenant_uniq` present, 5 identity rows, 0 with a null
+tenant, 5 live users, 4 reservations still in place. **Lesson: an applied migration's text is frozen; the header
+comment is part of its identity.**
+
+Two follow-on fixes the boot did not catch:
+
+* `scripts/db_apply_migrations.sh` and Flyway keep separate ledgers (`schema_migrations` holds
+  `V1__init, V2__integrity, V3__merchant_funnel_no_fanout`; Flyway held `2(baseline) → 3 → 4`). The infra script
+  would have re-run V4 over a database Flyway had already migrated. It now reads Flyway's history too:
+  `= skip  V4__tenant_scoped_identity (applied by the service's Flyway)`, and records it in its own bookkeeping.
+* **V4 broke the seeder**, and only a fresh database could show it: `data/seed/out/03_user_identities_*.sql`
+  copies the columns the file lists, `tenant_id` was not one of them, and the load died with
+  `null value in column "tenant_id" of relation "user_identities" violates not-null constraint`. The dev database
+  could never have surfaced that — its identity rows predate V4 and were backfilled. `generate.py` now emits the
+  column and adds it to the self-check's FK map.
+
+To prove the pair, the seed was rebuilt from scratch in a throwaway database (`nexus_qc_lead19` on
+`nexus-platform-testpg`: create → `db_apply_migrations.sh` → `RESEED_DEPENDENTS=1 load.sh` → `quality.sql`), which
+is the first time the seeded dataset has been validated against a V4 schema. Result: **153 checks, all pass**,
+including `orphan: permission_grants.merchant_user — 0 unresolvable subject_id of 15 grant(s)` and
+`no seeded orders/reservations`. That orphan check is where **D31** came from: it had been passing while the demo
+console 403'd on every workspace route, because it resolved a `merchant_user` grant against `merchant_users.id`
+while `AuthorizationInterceptor` looks the subject up by the *person's* id (`principal.subjectId()` /
+`userId()`, both ids on `users`). The probe now joins the way the interceptor does — person plus active membership
+at the same merchant — so it can no longer certify a shape the service cannot read.
+
+Live walk against the restarted service (`PYTHONIOENCODING=utf-8 python scripts/verify_reservation.py`):
+**29/29**, first green run that covers the consumer hold, the §23 merchant inbox and the cancel leg in one pass.
+One assertion was wrong rather than the server: the inbox leg books the same slot the first leg already holds
+(the demo merchant *is* the first merchant in the directory), and one-live-hold-per-person-per-slot (V2) returns
+that earlier row with 200 and a `status_note` saying so — so the contact the merchant sees legitimately belongs to
+the first booking. The check now compares the inbox row against the booking response instead of a literal this
+script typed, and the leg prefers a slot it has not already claimed. `mvn -o test`: **94 tests, 0 failures** on
+`nexus_test`.
+
+Still open from this wave: `nexus_app` keeps the leftover `CREATE` on the schema (revoking it needs a migration,
+not an edit to a first-boot initdb file — D30 point 1); the test database runs with `spring.flyway.enabled=false`,
+so migrations applied to it by hand are validated by nothing; the scratch gate database was dropped after the run
+and has no automated trigger yet — `make` still does not build a fresh DB and gate it; and the drift ledger reads
+101 routes parsed · 64 served · 29 client-only · 0 missing · 0 undocumented over a 270-file corpus (platform 114,
+up one from another stream's file).

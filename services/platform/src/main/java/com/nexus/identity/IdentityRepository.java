@@ -49,6 +49,19 @@ public class IdentityRepository {
         return findUser(tenant, userId).orElseThrow(() -> ApiException.notFound("user_not_found", "No such user"));
     }
 
+    /**
+     * The merchant a membership row ties this user to, for the default scope of a freshly minted
+     * token. Users with several merchants choose a workspace per request; this is only the first one.
+     */
+    public Optional<UUID> defaultMerchantId(TenantContext tenant, UUID userId) {
+        return jdbc.firstForTenant(tenant, """
+                select mu.merchant_id from merchant_users mu
+                join merchants m on m.id = mu.merchant_id
+                where mu.user_id = :user_id and m.tenant_id = :tenant_id and mu.status = 'active'
+                order by mu.created_at
+                """, Json.map("user_id", userId)).map(r -> Json.uuid(r, "merchant_id"));
+    }
+
     public UUID insertUser(TenantContext tenant, String email, String passwordHash, String displayName,
                            String locale, String role, boolean marketingOptIn) {
         Map<String, Object> row = jdbc.insertForTenant(tenant, """
@@ -157,25 +170,26 @@ public class IdentityRepository {
 
     public Optional<Map<String, Object>> findIdentity(TenantContext tenant, String provider, String providerId) {
         return jdbc.firstForTenant(tenant, """
-                select ui.id, ui.user_id, ui.provider, ui.provider_id, ui.verified_at, u.tenant_id
-                from user_identities ui join users u on u.id = ui.user_id
-                where ui.provider = :provider and ui.provider_id = :provider_id and u.tenant_id = :tenant_id
+                select ui.id, ui.user_id, ui.provider, ui.provider_id, ui.verified_at, ui.tenant_id
+                from user_identities ui
+                where ui.provider = :provider and ui.provider_id = :provider_id and ui.tenant_id = :tenant_id
                 """, Json.map("provider", provider, "provider_id", providerId));
     }
 
     public void linkIdentity(TenantContext tenant, UUID userId, String provider, String providerId) {
         jdbc.crossTenantUpdate("""
-                insert into user_identities (user_id, provider, provider_id, verified_at)
-                values (:user_id, :provider, :provider_id, now())
-                on conflict (provider, provider_id) do nothing
-                """, Json.map("user_id", userId, "provider", provider, "provider_id", providerId));
+                insert into user_identities (user_id, tenant_id, provider, provider_id, verified_at)
+                values (:user_id, :tenant_id, :provider, :provider_id, now())
+                on conflict (tenant_id, provider, provider_id) do nothing
+                """, Json.map("user_id", userId, "tenant_id", tenant.tenantId(), "provider", provider,
+                "provider_id", providerId));
     }
 
     public List<Map<String, Object>> identitiesOf(TenantContext tenant, UUID userId) {
         return jdbc.forTenant(tenant, """
-                select ui.provider, ui.provider_id, ui.verified_at, u.tenant_id
-                from user_identities ui join users u on u.id = ui.user_id
-                where ui.user_id = :user_id and u.tenant_id = :tenant_id
+                select ui.provider, ui.provider_id, ui.verified_at, ui.tenant_id
+                from user_identities ui
+                where ui.user_id = :user_id and ui.tenant_id = :tenant_id
                 order by ui.created_at
                 """, Json.map("user_id", userId));
     }

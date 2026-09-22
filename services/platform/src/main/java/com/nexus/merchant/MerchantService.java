@@ -214,11 +214,18 @@ public class MerchantService {
             throw ApiException.validation("Add a location before opening hours", Json.map("field", "location_id"));
         }
         merchants.upsertBusinessHours(tenant, merchantId, locationId, weekday, opens, closes, crosses);
+        List<Map<String, Object>> rows = merchants.businessHours(tenant, merchantId);
+        // D25: the mirror is the merchant's whole week, not the interval just edited — a card's `open`
+        // cites this fact, so a one-row value would cite something narrower than the claim it supports.
         facts.record(tenant, "merchant", merchantId, merchantId, "opening_hours",
-                Json.map("weekday", weekday, "opens_at", opens, "closes_at", closes, "crosses_midnight", crosses),
+                Json.map("zones", rows.stream()
+                        .map(h -> Json.map("weekday", Json.integer(h, "weekday"),
+                                "opens", Json.time(h, "opens_at"), "closes", Json.time(h, "closes_at")))
+                        .toList(),
+                        "closed_weekday", null),
                 null, null, "merchant", 1.0, FactRepository.HOURS_TTL);
         return Json.map("merchant_id", merchantId.toString(),
-                "hours", merchants.businessHours(tenant, merchantId).stream()
+                "hours", rows.stream()
                         .map(h -> Json.map("weekday", Json.integer(h, "weekday"),
                                 "opens_at", Json.time(h, "opens_at"), "closes_at", Json.time(h, "closes_at"),
                                 "crosses_midnight", Json.bool(h, "crosses_midnight"),

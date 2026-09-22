@@ -11,6 +11,12 @@
 #   scripts/db_apply_migrations.sh --force        # re-apply everything (TRUNCATE-free; assumes scripts are idempotent)
 #   scripts/db_apply_migrations.sh --file x.sql    # apply one arbitrary SQL file (relative to repo root)
 #
+# Environment overrides (an exported value wins over .env, so a scratch/target DB is addressable
+# without editing .env, which other streams read):
+#   NEXUS_PG_CONTAINER=nexus-platform-postgres   NEXUS_DB_NAME=nexus   NEXUS_DB_SUPERUSER=postgres
+#   (a container booted with POSTGRES_USER != postgres needs NEXUS_DB_SUPERUSER set to its superuser,
+#    otherwise every psql call fails with `FATAL: role "postgres" does not exist`.)
+#
 # Windows/Git Bash notes:
 #   * CRLF is stripped before piping (git checkout may use CRLF on Windows).
 #   * `set -euo pipefail`, no bash-4-only features, no GNU-unless-present assumptions.
@@ -19,12 +25,22 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-CONTAINER="${NEXUS_PG_CONTAINER:-nexus-postgres}"
+CONTAINER="${NEXUS_PG_CONTAINER:-nexus-platform-postgres}"
 DBNAME="${NEXUS_DB_NAME:-nexus}"
 PGUSER="${NEXUS_DB_SUPERUSER:-postgres}"
+# Variables the CALLER exported win over .env (see the "if the caller has not exported" note below):
+# .env pins NEXUS_DB_NAME=nexus, so without capturing these first, a scratch/target database chosen on
+# the command line (`NEXUS_DB_NAME=nexus_scratch scripts/db_apply_migrations.sh`) would be silently
+# ignored and the migrations would land in the real database.
+CALLED_CONTAINER="${NEXUS_PG_CONTAINER:-}"
+CALLED_DBNAME="${NEXUS_DB_NAME:-}"
+CALLED_PGUSER="${NEXUS_DB_SUPERUSER:-}"
 MIG_DIR="$ROOT/infra/db/migrations"
 SEED_DIR="$ROOT/infra/db/seed"
 ROLES_SQL="$ROOT/infra/postgres/init/00_roles.sql"
+# The role the platform service connects as, and therefore the role that must own anything a later
+# Flyway migration has to replace in place (views). Same default as application.yml.
+APP_ROLE="${NEXUS_PLATFORM_DB_USERNAME:-nexus_app}"
 APPLY_ONLY=""
 RUN_SEED=0
 FORCE=0
@@ -43,8 +59,9 @@ done
 # Load .env if the caller has not exported the variables (compose may already have done it).
 if [ -f "$ROOT/.env" ]; then
   set -a; . "$ROOT/.env"; set +a
-  CONTAINER="${NEXUS_PG_CONTAINER:-$CONTAINER}"
-  DBNAME="${NEXUS_DB_NAME:-$DBNAME}"
+  CONTAINER="${CALLED_CONTAINER:-${NEXUS_PG_CONTAINER:-$CONTAINER}}"
+  DBNAME="${CALLED_DBNAME:-${NEXUS_DB_NAME:-$DBNAME}}"
+  PGUSER="${CALLED_PGUSER:-${NEXUS_DB_SUPERUSER:-$PGUSER}}"
 fi
 
 psql_exec() {
@@ -60,6 +77,23 @@ apply_file() {
     local done_row
     done_row="$(psql_exec "SELECT 1 FROM schema_migrations WHERE version = '$version'")"
     if [ "$done_row" = "1" ]; then echo "= skip  $version (already applied)"; return 0; fi
+    # The service runs Flyway too, and keeps its own ledger. A database migrated by the platform at boot has
+    # V4 in flyway_schema_history and nothing in schema_migrations, so without this the script would re-run a
+    # migration that already happened — harmless only because V4 was written to be resumable. Any migration
+    # that is NOT idempotent would be corrupted by that second pass (DECISIONS D30).
+    local flyway_row
+    flyway_row="$(psql_exec "SELECT 1 FROM information_schema.tables WHERE table_name = 'flyway_schema_history'")"
+    if [ "$flyway_row" = "1" ]; then
+      local vnum already
+      vnum="${version#V}"; vnum="${vnum%%__*}"
+      already="$(psql_exec "SELECT 1 FROM flyway_schema_history WHERE version = '$vnum' AND success")"
+      if [ "$already" = "1" ]; then
+        echo "= skip  $version (applied by the service's Flyway)"
+        psql_exec "INSERT INTO schema_migrations(version, applied_at) VALUES ('$version', now())
+                   ON CONFLICT (version) DO NOTHING" >/dev/null
+        return 0
+      fi
+    fi
   fi
   echo "> apply $version  <- $(basename "$file")"
   # --single-transaction: a migration that fails half-way leaves NO partial schema behind.
@@ -109,7 +143,45 @@ shopt -u nullglob
 echo "OK: $count migration file(s) considered from infra/db/migrations"
 
 # ------------------------------------------------------------------ role grants bind to real tables
-apply_file "$ROLES_SQL" ""
+# 00_roles.sql reads the two dev passwords with psql `\getenv`, and psql runs INSIDE the container, so
+# the host .env values must be passed through with `docker exec -e` — otherwise `\getenv` leaves the
+# variables undefined and `SET x = :'nexus_app_password'` dies with a syntax error.
+apply_roles_file() {
+  local env_args=""
+  [ -n "${NEXUS_DB_APP_PASSWORD:-}" ] && env_args="$env_args -e NEXUS_DB_APP_PASSWORD=$NEXUS_DB_APP_PASSWORD"
+  [ -n "${NEXUS_DB_AI_PASSWORD:-}" ]  && env_args="$env_args -e NEXUS_DB_AI_PASSWORD=$NEXUS_DB_AI_PASSWORD"
+  # shellcheck disable=SC2086  # intentional word splitting of the -e pairs
+  sed 's/\r$//' "$ROLES_SQL" | docker exec -i $env_args "$CONTAINER" \
+    psql -v ON_ERROR_STOP=1 --single-transaction -U "$PGUSER" -d "$DBNAME" -q -f -
+}
+echo "> apply role grants  <- $(basename "$ROLES_SQL")"
+apply_roles_file
+
+# ------------------------------------------------------------------ hand the views to the app role
+# The platform ships Flyway and baselines an already-provisioned database at V2 (application.yml), so the
+# NEXT `V<n>__*.sql` runs as `nexus_app` — and V3 is a `CREATE OR REPLACE VIEW v_merchant_funnel`, which
+# Postgres refuses from a non-owner ("must be owner of view ...") because this script created every object
+# as the superuser. Views are the only objects a later migration has to replace in place, so ownership of
+# exactly those moves to the role that will have to rewrite them. Tables stay with the superuser.
+echo "> transfer view ownership to $APP_ROLE"
+psql_exec "do \$\$
+declare r record;
+begin
+  if not exists (select 1 from pg_roles where rolname = '$APP_ROLE') then
+    raise notice 'role $APP_ROLE absent, leaving view ownership with the superuser';
+    return;
+  end if;
+  for r in select c.relname from pg_class c
+             join pg_namespace n on n.oid = c.relnamespace
+            where n.nspname = 'public' and c.relkind in ('v','m')
+              and pg_get_userbyid(c.relowner) <> '$APP_ROLE'
+            order by 1
+  loop
+    execute format('alter view public.%I owner to $APP_ROLE', r.relname);
+    raise notice 'view % owned by $APP_ROLE', r.relname;
+  end loop;
+end
+\$\$;"
 
 # ------------------------------------------------------------------ seeds
 if [ "$RUN_SEED" -eq 1 ]; then

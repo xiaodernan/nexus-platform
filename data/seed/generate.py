@@ -73,6 +73,13 @@ def sha256_of(*parts: str) -> str:
     return h.hexdigest()
 
 
+def _moderation_status(review_id: str, seed: int) -> str:
+    """Publish most reviews, hold a few for moderation — keyed off the review id so the mix is
+    stable when unrelated generator phases move around in the RNG stream (95/4/1)."""
+    h = int(sha256_of("moderation", str(seed), review_id)[:8], 16) / 0xFFFFFFFF
+    return "flagged" if h < 0.01 else ("pending" if h < 0.05 else "published")
+
+
 class Arr(list):
     """Marker: emit as a Postgres text[] literal."""
 
@@ -139,9 +146,13 @@ def clean_body(s: str) -> str:
 
 
 def approx_tokens(text: str) -> int:
+    """Rough token count for chunk sizing only (the AI service does the real tokenisation).
+    Chinese costs ~1 token per character on cl100k-class tokenisers, Latin ~4 chars per token;
+    the previous cjk/1.4 estimator under-shot CJK-heavy menus by ~40% and produced chunks that
+    broke the §7 240-400 window, so it is deliberately conservative here."""
     cjk = sum(1 for c in text if "\u4e00" <= c <= "\u9fff")
     other = len(text) - cjk
-    return max(1, int(cjk / 1.4 + other / 5.0))
+    return max(1, int(cjk + other / 4.0))
 
 
 CJK_RE = re.compile(r"[\u4e00-\u9fff]")
@@ -164,7 +175,8 @@ TABLES: list[tuple[str, list[str]]] = [
                  "locales", "status", "config", "created_at", "updated_at"]),
     ("users", ["id", "tenant_id", "email", "phone", "password_hash", "display_name", "avatar_url",
                "locale", "role", "status", "marketing_opt_in", "last_login_at", "created_at", "updated_at"]),
-    ("user_identities", ["id", "user_id", "provider", "provider_id", "secret_ref", "verified_at", "created_at"]),
+    ("user_identities", ["id", "user_id", "tenant_id", "provider", "provider_id", "secret_ref", "verified_at",
+                         "created_at"]),
     ("user_preferences", ["id", "user_id", "kind", "key", "value", "weight", "source", "scope",
                           "conversation_id", "expires_at", "created_at", "updated_at"]),
     ("categories", ["id", "tenant_id", "slug", "name", "name_zh", "parent_id", "kind", "sort_order"]),
@@ -222,6 +234,10 @@ DEPENDENT_TABLES = [
     "recommendation_sets", "feedback_events", "moderation_cases", "trust_signals", "seo_pages",
     "agent_profiles", "api_keys", "external_principals", "deletion_requests",
     "saved_searches",
+    # the request-time observability ledger. Left behind, a previous verification run's
+    # events/agent_runs survive the reset and quality.sql reads them as fabricated traffic
+    # (its "no seeded orders/reservations" check counts `events` too).
+    "events", "agent_runs", "llm_calls",
 ]
 
 
@@ -486,25 +502,28 @@ class Gen:
                 off = self.pick(m["offerings"]) if m["offerings"] and self.rng.random() < 0.18 else None
                 age_d = min(540.0, abs(self.rng.paretovariate(1.35)) * 55)
                 created = self.now - timedelta(days=age_d, hours=self.rng.randint(0, 23))
+                rid = uid("review", f"{m['slug']}:{ri}")
                 self.reviews.append(dict(
-                    id=uid("review", f"{m['slug']}:{ri}"), merchant=m, offering=off, rating=rating,
+                    id=rid, merchant=m, offering=off, rating=rating,
                     body=body, lang=("zh-HK" if lang == "mixed" else lang), mixed=(lang == "mixed"),
                     aspects=aspects_json, title=self.review_title(m, rating, lb, ctx) if self.rng.random() < 0.45 else None,
                     helpful=max(0, int(self.rng.gauss(3.5, 5.5))),
                     created=created, vp=self.rng.random() < 0.22, vr=self.rng.random() < 0.12,
+                    # Moderation is decided per review id, not from the shared RNG stream and not at
+                    # emission time: the merchant/offering aggregates below are computed from the
+                    # published subset only, so a rating_agg that quietly counted flagged reviews
+                    # could not be reproduced from what a consumer sees (§19).
+                    status=_moderation_status(rid, self.a.seed),
                 ))
-                if off:
-                    off["review_count"] += 1
         for m in self.merchants:
-            rs = [r for r in self.reviews if r["merchant"] is m]
+            rs = [r for r in self.reviews if r["merchant"] is m and r["status"] == "published"]
             m["rating_agg"] = round(sum(r["rating"] for r in rs) / len(rs), 2) if rs else 0.0
             m["review_count"] = len(rs)
         for o in self.offerings:
-            if o["review_count"]:
-                linked = [r["rating"] for r in self.reviews if r["offering"] is o]
-                o["rating"] = round(sum(linked) / len(linked), 2) if linked else 0.0
-            else:
-                o["rating"] = 0.0
+            linked = [r["rating"] for r in self.reviews
+                      if r["offering"] is o and r["status"] == "published"]
+            o["review_count"] = len(linked)
+            o["rating"] = round(sum(linked) / len(linked), 2) if linked else 0.0
 
     def review_ctx(self, m):
         d = m["district"]
@@ -573,10 +592,15 @@ class Gen:
         if not spec["book"] or not spec["pool"]:
             return
         kind, clo, chi = spec["pool"]
+        # A pool is merchant-level unless exactly one bookable offering can claim it: binding it to
+        # the single service makes per-offering capacity meaningful without inventing a many-to-one
+        # mapping the schema cannot express.
+        bookable = [o for o in m["offerings"] if o["bookable"] and o["status"] == "active"]
+        only = bookable[0]["id"] if len(bookable) == 1 else None
         n_pools = 1 if kind in ("table", "seat", "lane") else self.rng.randint(1, 2)
         for pi in range(n_pools):
             cap = self.rng.randint(clo, chi)
-            pool = dict(id=uid("pool", f"{m['slug']}:{pi}"), kind=kind, cap=cap,
+            pool = dict(id=uid("pool", f"{m['slug']}:{pi}"), kind=kind, cap=cap, offering_id=only,
                         name=(f"{kind.replace('_', ' ').title()} {'A' if pi == 0 else 'B'}"
                               f" — demo pool"))
             m["pools"].append(pool)
@@ -785,8 +809,9 @@ class Gen:
                 uid_, TENANT_ID, email, phone, PASSWORD_HASH_PLACEHOLDER, name,
                 f"/demo/img/avatar-{i + 1}.svg", locale, role, "active", i == 0,
                 self.now - timedelta(hours=i + 1), self.now - timedelta(days=200 - i), self.now]))
+        # tenant_id is not optional since V4: the COPY failed on a NOT NULL the first fresh seed after it.
         self.rows["user_identities"] = [row([
-            uid("identity", u), u, "password", f"demo:{slug}", f"demo-secret-store/{slug}",
+            uid("identity", u), u, TENANT_ID, "password", f"demo:{slug}", f"demo-secret-store/{slug}",
             self.now - timedelta(days=100), self.now - timedelta(days=100)])
             for u, slug in [(U_CONSUMER, "consumer"), (U_OWNERS[0], "merchant1"),
                             (U_OWNERS[1], "merchant2"), (U_OWNERS[2], "merchant3"),
@@ -846,7 +871,9 @@ class Gen:
                 "demo_login_role": ("merchant" if m["id"] in owner_ids else None),
                 "weak_aspects": m["weak"],
             }
-            primary = f"{LEAF_CUISINE_EN[m['leaf']]} · {d[1]}"
+            # category label only: `MerchantCards.subtitleOf` appends the district itself, and the
+            # web console prints this column raw, so a "Ramen · Sha Tin" value rendered twice.
+            primary = LEAF_CUISINE_EN[m["leaf"]]
             display = m["zh_name"] if m["lang"] != "en" else m["en_name"]
             if m["lang"] == "mixed":
                 display = f"{m['en_name']} {m['zh_name']}"
@@ -875,12 +902,16 @@ class Gen:
             m["owner_user"], m["owner_mu"] = user_id, mu
             self.rows["merchant_users"].append(row([
                 mu, m["id"], user_id, "owner", "active", m["created"]]))
+            # `subject_id` is the *user*, not the membership row. PermissionService joins
+            # `users u on u.id = g.subject_id`, so a merchant_users id here loads fine (the column has
+            # no FK) and then silently 403s every workspace route — which is exactly what the seeded
+            # demo console did: three owners, fifteen grants, zero reachable permissions.
             self.rows["permission_grants"].append(row([
-                uid("grant", f"owner:{mu}"), "merchant_user", mu, m["id"], "write_products",
+                uid("grant", f"owner:{mu}"), "merchant_user", user_id, m["id"], "write_products",
                 user_id, None, m["created"]]))
             for i, perm in enumerate(("read_products", "read_orders", "read_analytics", "send_message")):
                 self.rows["permission_grants"].append(row([
-                    uid("grant", f"ai:{mu}:{i}"), "merchant_user", mu, m["id"], perm,
+                    uid("grant", f"ai:{mu}:{i}"), "merchant_user", user_id, m["id"], perm,
                     user_id, self.now + timedelta(days=90), m["created"]]))
 
         self.rows["locations"] = []
@@ -970,7 +1001,7 @@ class Gen:
         for m in self.merchants:
             for p in m["pools"]:
                 self.rows["resource_pools"].append(row([
-                    p["id"], m["id"], None, p["kind"], p["name"], p["cap"],
+                    p["id"], m["id"], p["offering_id"], p["kind"], p["name"], p["cap"],
                     {"data_origin": "demo", "demo": True, "sessions_per_day": len(m["slots"])},
                     "active", m["created"]]))
                 for s in m["slots"]:
@@ -987,8 +1018,7 @@ class Gen:
                 r["id"], TENANT_ID, m["id"], (r["offering"]["id"] if r["offering"] else None),
                 (U_CONSUMER if self.rng.random() < 0.02 else None),
                 self.author_label(m, r), r["rating"], r["title"], r["body"], r["lang"],
-                [], r["vp"], r["vr"], "demo",
-                self.rng.choices(["published", "pending", "flagged"], weights=[95, 4, 1])[0],
+                [], r["vp"], r["vr"], "demo", r["status"],
                 {"data_origin": "demo", "script_mix": (r["mixed"] and "zh-en") or None,
                  "synthetic": True},
                 r["helpful"], r["aspects"], r["created"], r["created"]]))
@@ -1002,13 +1032,16 @@ class Gen:
                     "text/plain; charset=utf-8", doc["text"], sha256_of(doc["text"]), doc["lang"],
                     "indexed", None,
                     {"data_origin": "demo", "synthetic": True, "merchant_slug": m["slug"],
-                     "sections": len(doc["chunks"]), "disclaimer": DISCLAIMER},
+                     "chunk_count": len(doc["chunks"]),
+                     "sections": [c["section"] for c in doc["chunks"]], "disclaimer": DISCLAIMER},
                     m["created"], self.now]))
                 for i, ch in enumerate(doc["chunks"]):
                     self.rows["chunks"].append(row([
                         ch["id"], doc["id"], m["id"], TENANT_ID, i, ch["text"],
                         approx_tokens(ch["text"]), ch["section"], "pending",
                         {"data_origin": "demo", "embedding": None,
+                         "sections": ch.get("sections") or [ch["section"]],
+                         "overlap_ratio": 0.12,
                          "note": "embedding left NULL; the AI service fills vector(1024)"},
                         self.now]))
 
@@ -1112,39 +1145,220 @@ class Gen:
         return self.rows
 
 
-def chunk_sections(text: str, min_tokens=90, max_tokens=420):
-    """Split section-marked document text into 90-420 token chunks (AGENT_CONTRACT §7)."""
+LINE_SPLITTERS = " 、,，。;；:：|/（）()"
+
+
+def _wrap_line(ln: str, limit: int) -> list[str]:
+    """Hard-wrap one line so no line costs more than `limit` tokens. Menu/policy text is line-based,
+    so an unwrappable long paragraph would otherwise be un-cuttable by the line-boundary splitter and
+    would force a short chunk mid-document."""
+    if approx_tokens(ln) <= limit:
+        return [ln]
+    out, rest = [], ln
+    while rest:
+        lo, hi = 0, len(rest)
+        while lo < hi:                              # largest prefix that still fits
+            mid = (lo + hi + 1) // 2
+            if approx_tokens(rest[:mid]) <= limit:
+                lo = mid
+            else:
+                hi = mid - 1
+        cut = lo or 1
+        for sep in LINE_SPLITTERS:                  # prefer breaking on a separator
+            j = rest.rfind(sep, 0, cut)
+            if j > cut * 0.5:
+                cut = j + 1
+                break
+        out.append(rest[:cut].rstrip())
+        rest = rest[cut:].lstrip()
+    return [o for o in out if o]
+
+
+def _split_lines_at(text: str, tokens: int):
+    """Cut a block of lines into (head, tail) where head costs <= tokens. Returns ("", text) only if
+    a single line cannot fit — the caller avoids that by wrapping lines first (see _wrap_line).
+    The cost is measured on the joined string, not as a sum of per-line costs: joining re-inserts
+    separators, so summing under-counts and the chunk would overshoot max_tokens."""
+    lines = text.split("\n")
+    keep = []
+    for ln in lines:
+        if keep and approx_tokens("\n".join(keep + [ln])) > tokens:
+            return "\n".join(keep), "\n".join(lines[len(keep):])
+        if not keep and approx_tokens(ln) > tokens:
+            return ln[:max(1, len(ln) // 2)], ln[max(1, len(ln) // 2):]
+        keep.append(ln)
+    return text, ""
+
+
+def _tail_lines(text: str, tokens: int) -> str:
+    """Last ~tokens worth of lines — the 12% overlap window §7 asks a chunker to repeat."""
+    lines = text.split("\n")
+    keep, acc = [], 0
+    for ln in reversed(lines):
+        t = approx_tokens(ln)
+        if keep and acc + t > tokens:
+            break
+        keep.insert(0, ln)
+        acc += t
+    return "\n".join(keep)
+
+
+def heads_in(text: str, src: dict) -> list[str]:
+    """The section heads actually present in `text`. After a re-split the packed `sections` list no
+    longer matches the body, and the AI service filters citations on this metadata (§19)."""
+    found = [h.strip() for h in re.findall(r"^\[(.+?)\]$", text, flags=re.M) if h.strip()]
+    return found or list(src.get("sections") or [src["section"]])
+
+
+def chunk_sections(text: str, min_tokens=240, max_tokens=400, overlap=0.12, hard_floor=200):
+    """Section-aware chunker per AGENT_CONTRACT §7: 240-400 tokens, ~12% overlap.
+
+    `text` uses `== Section / 標題 ==` markers (see menu_doc/policy_doc). Packing works on a queue
+    of (head, body) items so that a chunk never exceeds max_tokens: an item that does not fit the
+    open chunk is split on a line boundary, the remainder is requeued with the previous tail
+    repeated as overlap. Small sections are therefore packed together (one chunk can carry two
+    heads; `sections` in the row metadata records them all).
+
+    Packing aims at min_tokens; the balance pass below accepts anything at or above `hard_floor`,
+    which is the smallest split two neighbouring chunks can both reach when their combined text just
+    exceeds one window. self_check() asserts `hard_floor` for every interior chunk of a split
+    document, so a fragment that retrieval could never rank fails the gate.
+    """
     parts = re.split(r"^== (.+?) ==$", text, flags=re.M)
-    out, default = [], "preamble"
+    raw: list[list[str]] = []
+    line_limit = max(20, int(max_tokens * 0.4))     # a line must always fit the smallest fill window
+    def norm(body: str) -> str:
+        return "\n".join(w for ln in body.split("\n") for w in _wrap_line(ln, line_limit))
     if parts[0].strip():
-        out.append((default, parts[0].strip()))
+        raw.append(["preamble", norm(parts[0].strip())])
     for i in range(1, len(parts), 2):
         head = parts[i].strip()
         body = parts[i + 1].strip() if i + 1 < len(parts) else ""
         if body:
-            out.append((head, body))
-    chunks = []
-    for head, body in out:
-        if approx_tokens(body) <= max_tokens:
-            chunks.append(dict(section=head, text=f"[{head}]\n{body}"))
+            raw.append([head, norm(body)])
+
+    # pre-split: no queue item may be wider than a chunk, or packing cannot honour the 240-400 window
+    queue: list[list[str]] = []
+    for head, body in raw:
+        head_txt = f"[{head}]"
+        if approx_tokens(f"{head_txt}\n{body}") <= max_tokens:
+            queue.append([head, body])
             continue
-        lines = body.split("\n")
-        buf, tokens = [], 0
-        for ln in lines:
-            buf.append(ln)
-            tokens += approx_tokens(ln)
-            if tokens >= max_tokens * 0.8:
-                chunks.append(dict(section=head, text=f"[{head}]\n" + "\n".join(buf)))
-                buf, tokens = [], 0
-        if buf:
-            chunks.append(dict(section=head, text=f"[{head}]\n" + "\n".join(buf)))
-    merged = []
-    for ch in chunks:
-        if merged and approx_tokens(merged[-1]["text"]) < min_tokens and merged[-1]["section"] == ch["section"]:
-            merged[-1]["text"] += "\n" + ch["text"]
-        else:
-            merged.append(ch)
-    return merged
+        cur: list[str] = []
+        for ln in body.split("\n"):
+            if cur and approx_tokens("\n".join([head_txt] + cur + [ln])) > max_tokens:
+                queue.append([head, "\n".join(cur)])
+                keep = _tail_lines("\n".join(cur), int(max_tokens * overlap))
+                cur = (keep.split("\n") if keep else []) + [ln]
+            else:
+                cur.append(ln)
+        if cur:
+            queue.append([head, "\n".join(cur)])
+
+    out: list[dict] = []
+    cur_head, cur_sections, cur_lines, cur_tokens = None, [], [], 0
+
+    def flush():
+        nonlocal cur_head, cur_sections, cur_lines, cur_tokens
+        if cur_lines:
+            out.append(dict(section=cur_head, sections=list(cur_sections),
+                            text="\n".join(cur_lines)))
+        cur_head, cur_sections, cur_lines, cur_tokens = None, [], [], 0
+
+    while queue:
+        head, body = queue.pop(0)
+        block = f"[{head}]\n{body}"
+        if cur_lines and approx_tokens("\n".join(cur_lines + [block])) > max_tokens:
+            room = max_tokens - cur_tokens - 2                 # -2 for the separator the join adds
+            if cur_tokens < min_tokens and room > int(max_tokens * (overlap + 0.05)):
+                # short open chunk: cut this block on a line boundary and requeue the remainder with
+                # the §7 overlap tail repeated at its head (tail budget reserved so it still fits)
+                fill, rest = _split_lines_at(block, room - int(max_tokens * overlap))
+                if fill and rest:
+                    cur_lines.append(fill)
+                    cur_tokens = approx_tokens("\n".join(cur_lines))
+                    tail = _tail_lines(fill, int(max_tokens * overlap))
+                    queue.insert(0, [head, f"{tail}\n{rest}" if tail else rest])
+                    # Keep the chunk open: a line-boundary cut undershoots its budget, so closing
+                    # here is what produced a pile of 200-239 token chunks just under the §7 floor.
+                    # The requeued remainder carries the overlap tail and fits the reserved room.
+                    continue
+                if not rest:
+                    cur_lines, cur_tokens = [block], approx_tokens(block)   # rounding: it fits whole
+                    cur_head, cur_sections = head, [head]
+                    continue
+            flush()                                             # chunk is full enough (>= min_tokens)
+        if cur_head is None:
+            cur_head = head
+        if head not in cur_sections:
+            cur_sections.append(head)
+        cur_lines.append(block)
+        cur_tokens = approx_tokens("\n".join(cur_lines))
+    flush()
+
+    # Balance: an *interior* chunk under hard_floor is a chunker artefact — retrieval has to rank it
+    # against chunks that carry whole sections — so it is re-joined with its neighbour and cut again.
+    # Cut budgets are searched upward because a single CJK line can be 100+ tokens: the first budget
+    # that leaves both halves inside [hard_floor, max_tokens] wins, and a pair with no such cut is
+    # skipped rather than abandoning the rest of the document. A document's own tail is not rebalanced
+    # here; it is as short as the shortest authored section, and the tail pass below handles it.
+    skip: set[int] = set()
+    for _ in range(2 * len(out) + 8):
+        short = next((i for i, ch in enumerate(out[:-1])
+                      if i not in skip and approx_tokens(ch["text"]) < hard_floor), None)
+        if short is None or len(out) < 2:
+            break
+        j = short + 1 if short + 1 < len(out) else short - 1
+        a, b = (short, j) if short < j else (j, short)
+        prev, nxt = out[a], out[b]
+        combined = prev["text"] + "\n" + nxt["text"]
+        total = approx_tokens(combined)
+        if total <= max_tokens:
+            out[a] = dict(section=prev["section"], sections=prev["sections"] + nxt["sections"],
+                          text=combined)
+            out.pop(b)
+            skip.clear()
+            continue
+        overlap_n = int(max_tokens * overlap)
+        best = None
+        # budgets run up to the largest legal head, not to `total - hard_floor`: one CJK line can
+        # overshoot a tight budget, and the legality check below rejects what does not work.
+        hi = min(max_tokens - overlap_n - 2, total - 2)
+        for budget in range(hard_floor, hi + 1, 20):
+            head_txt, tail_txt = _split_lines_at(combined, budget)
+            if not head_txt or not tail_txt:
+                continue
+            overlap_txt = _tail_lines(head_txt, overlap_n)
+            head_n = approx_tokens(head_txt)
+            tail_n = approx_tokens(tail_txt) + approx_tokens(overlap_txt) + 1
+            if not (hard_floor <= head_n <= max_tokens and hard_floor <= tail_n <= max_tokens):
+                continue
+            if best is None or abs(head_n - tail_n) < best[0]:
+                best = (abs(head_n - tail_n), head_txt, tail_txt, overlap_txt)
+        if best is None:
+            skip.add(short)
+            continue
+        _, head_txt, tail_txt, overlap_txt = best
+        b_text = (overlap_txt + "\n" if overlap_txt else "") + tail_txt
+        head_secs, tail_secs = heads_in(head_txt, prev), heads_in(b_text, nxt)
+        out[a] = dict(section=head_secs[0], sections=head_secs, text=head_txt)
+        out[b] = dict(section=tail_secs[0], sections=tail_secs, text=b_text)
+
+    # A tail below the window still belongs to its document: fold it into the previous chunk when the
+    # pair fits one window, otherwise leave the shortest authored section on its own — self_check()
+    # draws that line at 40 tokens, the size of the smallest contact block in the seed scripts.
+    while len(out) > 1 and approx_tokens(out[-1]["text"]) < hard_floor:
+        prev, last = out[-2], out[-1]
+        combined = prev["text"] + "\n" + last["text"]
+        if approx_tokens(combined) > max_tokens:
+            break
+        out[-2] = dict(section=prev["section"], sections=prev["sections"] + last["sections"],
+                       text=combined)
+        out.pop()
+    for ch in out:
+        if "sections" not in ch:
+            ch["sections"] = [ch["section"]]
+    return out
 
 
 # --------------------------------------------------------------------------- writers
@@ -1264,7 +1478,7 @@ def self_check(gen: Gen, out_dir: Path, args) -> int:
           "documents.merchant_id": "merchants.id", "documents.tenant_id": "tenants.id",
           "chunks.document_id": "documents.id", "chunks.merchant_id": "merchants.id",
           "facts.merchant_id": "merchants.id", "user_preferences.user_id": "users.id",
-          "user_identities.user_id": "users.id", "favorites.user_id": "users.id",
+          "user_identities.user_id": "users.id", "user_identities.tenant_id": "tenants.id", "favorites.user_id": "users.id",
           "collections.tenant_id": "tenants.id", "collections.author_id": "users.id",
           "categories.parent_id": "categories.id",
           "permission_grants.merchant_id": "merchants.id"}
@@ -1323,14 +1537,70 @@ def self_check(gen: Gen, out_dir: Path, args) -> int:
                 errs.append(f"merchant name collides with real HK chain: {r['slug']} ~ {bad}")
         if r["data_origin"] != "demo":
             errs.append(f"merchant {r['slug']}: data_origin not demo")
+    # Stored aggregates must agree with the *published* reviews they summarise (§19): the merchant
+    # and offering rows are what search and cards render, and an average that quietly counts pending
+    # or flagged reviews cannot be reproduced from the data a consumer sees.
+    pub_by_merchant: dict[str, list[float]] = {}
+    pub_by_offering: dict[str, list[float]] = {}
+    for r in tables["reviews"][1]:
+        if r["status"] != "published":
+            continue
+        pub_by_merchant.setdefault(r["merchant_id"], []).append(float(r["rating"]))
+        if r["offering_id"] not in ("", NULL):
+            pub_by_offering.setdefault(r["offering_id"], []).append(float(r["rating"]))
+    for r in tables["merchants"][1]:
+        vals = pub_by_merchant.get(r["id"], [])
+        want = round(sum(vals) / len(vals), 2) if vals else 0.0
+        if abs(float(r["rating_agg"]) - want) > 0.01 or int(r["review_count"]) != len(vals):
+            errs.append(f"merchant {r['slug']}: rating_agg/review_count {r['rating_agg']}/"
+                        f"{r['review_count']} != published {want}/{len(vals)}")
+    for r in tables["offerings"][1]:
+        vals = pub_by_offering.get(r["id"], [])
+        want = round(sum(vals) / len(vals), 2) if vals else 0.0
+        if abs(float(r["rating_agg"] or 0) - want) > 0.01 or int(r["review_count"]) != len(vals):
+            errs.append(f"offering {r['slug']}: rating_agg/review_count {r['rating_agg']}/"
+                        f"{r['review_count']} != published {want}/{len(vals)}")
     for r in tables["documents"][1]:
         if DISCLAIMER_UNI not in r["raw_text"]:
             errs.append(f"document {r['title']}: missing disclaimer inside text")
+    doc_chunks = {}
     for r in tables["chunks"][1]:
+        doc_chunks.setdefault(r["document_id"], []).append(r)
         if r["embed_model"] != "pending":
             errs.append(f"chunk {r['id']}: embed_model should be pending")
         if not r["text"].strip():
             errs.append(f"chunk {r['id']}: empty text")
+    # AGENT_CONTRACT §7 asks for 240-400 token semantic chunks. Three claims, checked separately:
+    #   * ceiling 400 — always, an embedding input cannot be allowed to overflow;
+    #   * floor 200 for every *interior* chunk of a split document — those are the chunker's own
+    #     closing decisions, so a short one is a chunker artefact (the balance pass removes them);
+    #   * floor 40 for a document's last chunk: that is the shortest authored section in the corpus
+    #     (a five-line policy contact block), and a real ingest pipeline gets arbitrary documents.
+    # The 240-400 share is reported for the interior chunks, where it is a real shape target.
+    total_chunks = single_chunk_docs = 0
+    interior = interior_window = 0
+    for doc_id, chs in sorted(doc_chunks.items()):
+        chs.sort(key=lambda c: int(c["ordinal"]))
+        single_chunk_docs += 1 if len(chs) == 1 else 0
+        for pos, ch in enumerate(chs):
+            n = int(ch["token_count"])
+            total_chunks += 1
+            is_last = pos == len(chs) - 1
+            floor = (20 if len(chs) == 1 else (40 if is_last else 200))
+            if not is_last and len(chs) > 1:
+                interior += 1
+                interior_window += 1 if 240 <= n <= 400 else 0
+            if n > 400:
+                errs.append(f"chunk {ch['id']}: {n} tokens > 400 (§7 ceiling)")
+            elif n < floor:
+                errs.append(f"chunk {ch['id']}: {n} tokens < {floor} "
+                            f"({pos + 1}/{len(chs)} of its document)")
+    if interior and interior_window / interior < 0.85:
+        errs.append(f"only {interior_window}/{interior} interior chunks sit in the §7 240-400 "
+                    f"window (want >= 85%)")
+    mean_chunks = sum(len(v) for v in doc_chunks.values()) / max(1, len(doc_chunks))
+    if mean_chunks < 1.5:
+        errs.append(f"documents too thin for RAG: {mean_chunks:.2f} chunks/document (want >= 1.5)")
 
     # cold-start density (spec §94): >=300 merchants within 3 km of the Sha Tin centroid
     def haversine(a, b, c, d):
@@ -1372,6 +1642,9 @@ def self_check(gen: Gen, out_dir: Path, args) -> int:
     print(f"  merchants within 3km  : {near} of Sha Tin centroid (target >= {density_min})")
     print(f"  review language mix   : " + ", ".join(f"{k}={v / total:.0%}" for k, v in sorted(langs.items())))
     print(f"  availability day span : {len(days_used)} days")
+    print(f"  chunk shapes          : {total_chunks} chunks / {len(doc_chunks)} docs, "
+          f"{single_chunk_docs} single-chunk docs, {interior_window}/{interior} interior chunks "
+          f"in the §7 240-400 window")
     print(f"  district spread       : " + ", ".join(f"{k}:{v}" for k, v in sorted(
         dist_count.items(), key=lambda kv: -kv[1])))
     if errs:

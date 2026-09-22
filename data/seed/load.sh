@@ -10,7 +10,7 @@
 # Usage:
 #   data/seed/load.sh                     # default container/db/user (see the vars)
 #   CONTAINER=nexus-seed-verify DB=nexus USER=nexus data/seed/load.sh
-#   RESEED_DEPENDENTS=1 data/seed/load.sh  # also empty the 25 V1 tables that FK into the
+#   RESEED_DEPENDENTS=1 data/seed/load.sh  # also empty the 28 V1 tables that FK into the
 #                                          # demo tables (orders/carts/conversations/...).
 #                                          # Needed when the platform already wrote rows
 #                                          # referencing the demo merchants. Destructive.
@@ -29,7 +29,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUT="${SEED_OUT:-$HERE/out}"
 
-CONTAINER="${CONTAINER:-nexus-postgres}"
+CONTAINER="${CONTAINER:-nexus-platform-postgres}"
 DB="${DB:-nexus}"
 USER="${USER:-${PGUSER:-postgres}}"
 PSQL="${PSQL:-psql}"
@@ -75,6 +75,11 @@ else
 fi
 for f in "$OUT"/[0-9][0-9]_*.sql; do
   base="$(basename "$f")"
+  # The 00_ truncate scripts are chosen explicitly just above (plain vs. dependents). Without this
+  # skip the glob re-adds out/00_truncate.sql AFTER out/optional/00_truncate_dependents.sql, so
+  # RESEED_DEPENDENTS=1 always died on "cannot truncate a table referenced in a foreign key
+  # constraint" — the dependents list was already applied and the plain list cannot be.
+  case "$base" in 00_*.sql) continue ;; esac
   if [ -n "$ONLY" ]; then
     stem="${base%.sql}"
     stem="${stem%%_*}"                      # 09_locations -> 09

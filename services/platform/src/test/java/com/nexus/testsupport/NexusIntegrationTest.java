@@ -181,6 +181,17 @@ public abstract class NexusIntegrationTest {
         return exchange(HttpMethod.GET, tenant, token, path, null);
     }
 
+    /**
+     * A GET whose path is taken literally — no URI-template expansion. A real client percent-encodes a
+     * query value ({@code district=Sha%20Tin}); sending that through the template form re-encodes the
+     * {@code %}, so the server would see a value with a literal {@code %20} in it and the test would
+     * assert against a request nobody makes.
+     */
+    protected ResponseEntity<String> getRaw(Tenant tenant, String token, String path) {
+        return http.exchange(java.net.URI.create(url(path)), HttpMethod.GET,
+                new HttpEntity<>(json(tenant, token)), String.class);
+    }
+
     protected ResponseEntity<String> post(Tenant tenant, String token, String path, Object body) {
         return exchange(HttpMethod.POST, tenant, token, path, body);
     }

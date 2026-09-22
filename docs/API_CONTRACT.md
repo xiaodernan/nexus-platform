@@ -18,7 +18,11 @@ Data access rules (no `LLM → database` path, §52):
 - AI service: `nexus_ai` DB role, and the grant set is **exactly** the list below (enforced in
   `infra/postgres/init/00_roles.sql`, verified against the live DB — 23 tables, nothing wider):
   - **SELECT only**: merchants, offerings, locations, reviews, business_hours, availability_slots,
-    tenants, user_preferences, external_principals
+    tenants, user_preferences, external_principals, categories, merchant_categories
+    (the last two are the taxonomy a categorised search has to resolve: an intent bucket such as
+    `escape_room` names a coarse node while merchants are tagged with leaves, so the read path
+    joins `merchant_categories`/`categories` instead of matching the denormalised
+    `merchants.category_primary` label)
   - **read-write**: documents, chunks, facts, recommendation_sets, feedback_events, agent_runs,
     llm_calls, eval_suites/eval_cases/eval_runs, review_summaries, seo_pages, campaigns, coupons
     (`coupons` is the marketing agent's draft workspace — §27 keeps publish behind a human)
@@ -41,9 +45,34 @@ Data access rules (no `LLM → database` path, §52):
 ```json
 { "error": { "code": "merchant_not_found", "message": "...", "details": {}, "request_id": "..." } }
 ```
-  Codes: `validation_error(422) unauthorized(401) forbidden(403) not_found(404) conflict(409) rate_limited(429) ai_unavailable(503) internal(500)`.
+  Ladder codes: `validation_error(422) unauthorized(401) forbidden(403) not_found(404) conflict(409) rate_limited(429) ai_unavailable(503) internal(500)`.
+  A ladder code may be **specialised by the resource that failed** (D27): `merchant_not_found`, `slot_not_found`,
+  `idempotency_key_conflict`. The suffix is normative and fixes the status, so a client that has never heard of the
+  resource still resolves the right rung (§4 uses this vocabulary, and `/api/v1/merchants/{slug}` answers with it).
+  Only `not_found`, `conflict` and `forbidden` take a prefix — the other five carry their meaning in `details`
+  (`Retry-After`, the ladder rung, the field map), and a prefix there would hide which `error_envelope.json` branch
+  applies. `details.resource` is required for a bare `not_found` only, because that is the code that names no subject.
 - Failure ladder (§105): LLM error → fallback model → deterministic search endpoint → human handoff. `ai_unavailable` must
   never break `/ai/v1/search` (pure deterministic path).
+
+## 0.1 Web BFF surface (`/api/nexus/**`, Next.js only — never a service contract)
+
+The browser talks to the Next server, not to :8080/:8000. These paths exist so the client can stay
+same-origin (cookies, CORS, streaming) and **forward** to the routes above; they add no new semantics,
+and any response shape they return is the upstream shape verbatim. `scripts/check_contract_drift.mjs`
+treats a path in this table as documented.
+
+| Method | BFF path | Forwards to | Why the hop exists |
+|---|---|---|---|
+| POST | `/api/nexus/ai/search` | `POST /ai/v1/search` | keeps the AI service server-side (internal token never reaches the browser) |
+| POST | `/api/nexus/ai/stream` | `POST /ai/v1/search/stream` | SSE pass-through; §7 / D13 framing is unchanged by the proxy |
+| POST | `/api/nexus/ai/compare` | `POST /ai/v1/compare` | same as search: server-side credentials, §105 degrade handled in the browser |
+| GET/POST | `/api/nexus/platform/**` | `/api/v1/**` on the platform | generic proxy (e.g. `/api/nexus/platform/me/favorites` → `GET /api/v1/me/favorites`) |
+
+`/api/nexus/ucp/**` additionally proxies the host-root `/.well-known/ucp` profile for the same
+same-origin reason (§10). No BFF path may compute, filter, enrich or invent anything: presentation
+belongs to the pages, truth belongs to the two services.
+
 
 ## 2. Core shared objects
 
@@ -61,14 +90,17 @@ Data access rules (no `LLM → database` path, §52):
   "subject_id": "uuid",
   "attribute": "price",
   "value": { "amount": "128.00", "currency": "HKD" },
-  "source": "merchant",          // merchant|imported|observed|third_party|inferred
+  "source": "merchant",          // merchant|imported|observed|third_party|inferred|demo
   "confidence": 0.98,
   "observed_at": "2026-09-22T02:00:00Z",
   "expires_at": "2026-09-22T08:00:00Z",
   "stale": false
 }
 
-// Opening state (computed, never guessed)
+// Opening state (computed, never guessed). `source_fact_id` names the merchant's hours fact —
+// stored as `facts.attribute = 'opening_hours'`, which the render contract spells
+// `business_hours`; the two resolve to each other (D25), and an unresolved name is why the
+// badge renders 未验证.
 { "is_open": true, "opens_at": "...", "closes_at": "...", "as_of": "...", "source_fact_id": "uuid" }
 
 // MatchExplanation (§18) — every bullet must trace to a fact id
@@ -90,18 +122,22 @@ Data access rules (no `LLM → database` path, §52):
   "ai_match": { "score": 0.91, "reasons": [ /* MatchExplanation[] */ ] },
   "actions": [ { "type": "reserve", "label": "预订", "endpoint": "/api/v1/reservations" } ],
   "facts": [ /* Fact[] backing every rendered number */ ],
-  "flags": { "sponsored": false, "demo": true, "unverified": false }
+  "flags": { "sponsored": false, "demo": true, "unverified": false }   // + "estimated_price" on offerings, "verified_visit" on reviews
 }
 ```
 
 `flags.demo` is `true` for all seeded/synthetic data and must be surfaced in the UI (§109, §155).
+The three above are the card-wide set; two projections add one flag of their own:
+`estimated_price` on offering cards (`offerings.price_source = 'estimated'`) and `verified_visit` on
+review cards (the reviewer transacted). Consumers may ignore flags they do not render; a new flag name
+belongs here, not in a private type.
 
 ## 3. Auth & account
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/api/v1/auth/register` | `{email,password,display_name,locale,accept_terms}` → `{user,access_token,refresh_token}`; password Argon2id |
-| POST | `/api/v1/auth/login` | `{email,password}` → same shape |
+| POST | `/api/v1/auth/register` | `{email,password,display_name,locale,accept_terms}` → `{user,access_token,refresh_token}`; password Argon2id. `409 email_taken` means taken **in this tenant** (D29): the same address is a separate account in another tenant, and a 409 must never be readable as "someone else owns this address globally". |
+| POST | `/api/v1/auth/login` | `{email,password}` → same shape. The lookup is tenant-scoped, so an address registered in two tenants is not ambiguous here; which tenant you reach is decided by the `X-Tenant`/host header, not by the credentials. |
 | POST | `/api/v1/auth/oauth/{provider}` | `{id_token}` verified against provider JWKS (google/apple) |
 | POST | `/api/v1/auth/refresh` | `{refresh_token}` → new pair (rotation, reuse detection) |
 | POST | `/api/v1/auth/logout` | clears session |
@@ -117,20 +153,45 @@ Data access rules (no `LLM → database` path, §52):
 | GET | `/api/v1/notifications` · POST `/api/v1/notifications/{id}/read` | in-app inbox for the acting subject (§123-125); merchant notifications are read through the same route with the merchant membership |
 | GET | `/api/v1/users/{id}` | **admin/ops only** — consumer support tooling (§68). Merchant staff must never reach this; merchant-side customer data goes through `/api/v1/merchant/customers` and is RBAC-scoped (§46, §47). The `/api/v1/me/*` routes are the self-service surface and stay separate on purpose. |
 
-JWT claims: `sub, tid (tenant), typ(access|refresh), sid, jti, iat, exp`. Access 15m, refresh 30d rotating.
-Demo login (§87): `POST /api/v1/auth/demo {role: consumer|merchant|admin}` returns a scoped demo session.
+JWT claims: `sub, tid (tenant), typ(access|refresh), sid, jti, iat, exp`, plus `role` (the *account* role —
+`consumer|platform_admin`; the workspace role lives on `merchant_users`, never in the token) and `mer` — the
+caller's default workspace, i.e. the `merchant_id` a console should open. `mer` is resolved from membership at
+issue time **and again on every rotation**, so joining a workspace is visible without signing out and a session
+does not lose its workspace at the 15-minute mark. Access 15m, refresh 30d rotating with reuse detection
+(reusing a spent refresh token revokes the whole `sid` family → 401 `refresh_reuse_detected`).
+Demo login (§87): `POST /api/v1/auth/demo {role: consumer|merchant|admin}` returns a scoped demo session,
+flagged by `demo_notice` and the `X-Demo-Data: true` response header (§155).
 
 ## 4. Merchants (consumer-facing reads are public, cacheable)
 
 | Method | Path |
 |---|---|
-| GET | `/api/v1/merchants?district=&category=&max_price=&open_now=&rating=&cursor=` |
+| GET | `/api/v1/merchants?district=&category=&max_price=&open_now=&rating=&sort=&limit=&cursor=` |
 | GET | `/api/v1/merchants/{id_or_slug}` — profile + locations + hours + top offerings + review summary |
-| GET | `/api/v1/merchants/{id}/menu` | paginated offerings |
-| GET | `/api/v1/merchants/{id}/reviews?sort=recent|helpful&cursor=` |
+| GET | `/api/v1/merchants/{id}/menu?kind=&sort=&limit=&cursor=` | paginated active offerings |
+| GET | `/api/v1/merchants/{id}/reviews?sort=&limit=&cursor=` | published reviews + recomputed `aggregate` |
 | GET | `/api/v1/merchants/{id}/reviews/summary` | AI summary **with review_ids as evidence** (§55) |
-| GET | `/api/v1/merchants/{id}/availability?starts_at&ends_at&party_size` | real-time, no cache (§20) |
+| GET | `/api/v1/merchants/{id}/availability?starts_at&ends_at&party_size&limit` | real-time, no cache (§20) |
 | GET | `/api/v1/locations/geo?bbox=&zoom=` | marker clustering payload |
+
+`{id}` and `{id_or_slug}` accept either form; a slug and an id name the same merchant. Every list above is a
+`Paging` page — `{ items, next_cursor, total_estimate }` — and carries `sort` (the token actually applied, not the
+one typed), plus the directory page's `as_of`, `filters` and `unit`.
+
+- `sort` is a whitelist; a bare token is ascending and a `-` prefix descending (`-rating`, `-helpful`). Unknown
+  tokens are `422 validation_error` with `details.allowed`. No sort fragment reads `plan`, campaign, coupon or
+  spend (§66), and the profile deliberately does not echo `plan` either. `rating_agg`/`popularity_score` are
+  `NOT NULL DEFAULT 0`, and every explicit sort appends `nulls last` so a value the data does not have cannot win.
+- `district` filters the primary location's district (the column the card prints); `category` resolves the printed
+  `category_primary` name, a taxonomy leaf slug/name and a parent aisle (§D23), so a chip from a card always
+  returns listings. `max_price`/`rating` are `<=`/`>=` comparisons and an unknown price or rating never satisfies
+  them. `open_now=true` is computed from `business_hours` at `as_of`.
+- Only `published` merchants and `published` reviews are readable. Absent reads are `404`, not empty `200`s:
+  `merchant_not_found` (draft, suspended, other tenant, unknown slug) and `review_summary_not_found` (the review
+  agent has not run — different from "this place has no reviews", whose real answer is `review_stats.published_reviews
+  = 0`).
+- Cached as `public, max-age=60, s-maxage=300, stale-while-revalidate=86400` with `Vary: X-Tenant`; availability is
+  `no-store`. `X-Demo-Data` badges a page as soon as one row in it is synthetic (§109).
 
 ## 5. Merchant workspace (tenant + RBAC enforced; role from `merchant_users`)
 
@@ -147,6 +208,7 @@ Demo login (§87): `POST /api/v1/auth/demo {role: consumer|merchant|admin}` retu
 | GET | `/api/v1/merchant/dashboard/overview` | `read_analytics` |
 | GET | `/api/v1/merchant/businesses/{id}/overview` | `read_analytics` — same funnel scoped to one business (D15; the multi-business workspace needs the per-business form) |
 | GET | `/api/v1/merchant/analytics?from&to&metric` | `read_analytics` |
+| GET | `/api/v1/merchant/reservations?status&from&to&merchant_id&limit&cursor` | `read_orders` — the merchant's booking inbox (§23). Scoped to the businesses the caller is a member of (D5), `no-store`: a booking list is stale the moment one is written. Returns the holder's own rows with the contact fields needed to serve the guest, nothing wider (§46/§47). Served by `MerchantContentController#reservationInbox` on the `com.nexus.merchant` base path (the inbox is a workspace screen, so it lives with the console rather than with `com.nexus.commerce`, which holds only the checkout repositories). `user_id` is deliberately absent from the projection: it names a person to us, not to the merchant. Nothing moves a booking to `confirmed` — acceptance has no route yet (D26), which the response's own `definitions` say. |
 | POST | `/api/v1/merchant/ai-agent/config` | `configure_ai` |
 | GET | `/api/v1/merchant/conversations` · POST `/{id}/reply` · POST `/{id}/handoff-resolve` | `send_message` |
 | POST | `/api/v1/merchant/campaigns` (AI drafts land in `draft`) | `create_draft_campaign` |
@@ -182,7 +244,7 @@ Nothing is published without merchant review.
 | GET | `/api/v1/orders/{id}` | status machine |
 | POST | `/api/v1/orders/{id}/cancel` | |
 | POST | `/api/v1/reservations` | `{merchant_id,offering_id?,slot_id,party_size,contact,notes}` → `201` with code |
-| PATCH | `/api/v1/reservations/{id}` | `status` transitions guarded |
+| PATCH | `/api/v1/reservations/{id}` | `status` transitions guarded — `{status:"cancelled", reason?}` by the holder only; `404` for anyone else's booking (D5), `409` once the evening is `completed`/`no_show`, seats return to the slot in the same transaction, and `reason` lands in `audit_logs.metadata`. No route advances a hold to `confirmed` (D26). |
 | POST | `/api/v1/payments/{order_id}/confirm` | demo provider; real provider via webhook |
 | POST | `/api/v1/webhooks/payments/{provider}` | signature verified, idempotent |
 | POST | `/api/v1/merchants/{id}/reviews` | verified purchase/reservation flags computed server-side |
@@ -202,6 +264,8 @@ Nothing is published without merchant review.
 | POST | `/ai/v1/merchant-agent/chat` | `{merchant_id, message, conversation_id}` → SSE; grounded only in merchant KB, low confidence → handoff (§24-26) |
 | POST | `/ai/v1/feedback` | `{subject_type,subject_id,signal,value,session_id}` (§99) |
 | GET | `/ai/v1/tools` | tool registry manifest (§11) with schema + permission |
+| GET | `/ai/v1/conversations/{id}` | the §52 audit view of one conversation: `{conversation_id, agent_runs:[…], count, degraded, reason?}`. Each run is its `agent_runs` row (`agent_run_id, agent, model, provider, status, plan — the agent's execution plan, not a merchant's subscription tier — input_summary, output_summary, tool_calls, retrieval, fact_ids, tokens, cost_usd, latency_ms, error, fallback_used, started_at, finished_at, parent_run_id`) plus `persisted:true`, oldest first, capped at 100. Not a transcript: the browser reads the platform's `/api/v1/conversations/{id}` above. A non-UUID id is a 422; a failed timeline read degrades to this process's in-flight ledger rather than a 500. Note: the read is keyed on the conversation UUID alone, with no tenant predicate — acceptable for an internal audit surface, and the first thing to revisit if it is ever exposed to a browser. |
+| GET | `/ai/v1/health` | liveness/readiness: `{status, service, version, provider, offline, demo_data, database:{configured,available}, embeddings:{provider,dim}, adapters, now}`. Reports only whether each dependency answered — never a row and never a query result. |
 | POST | `/ai/v1/imports/extract` | service-to-service only (§7.0): `{source_type,source_ref,raw_text}` → `{proposals:[{kind,name,price,currency,category,confidence,source_span}], extractor, degraded}` (§22). Called by the platform's import worker, never by a browser. |
 | POST | `/api/v1/conversations/{id}/reply` | `{content}` → persisted consumer/agent turn (the browser path; the agent path is §7.0) |
 | GET | `/api/v1/conversations` | the acting user's threads, newest first |
@@ -254,10 +318,59 @@ Conversation state merges successive turns: "太贵了" → `budget.max *= 0.7`;
 
 ## 8. Growth & creator
 
-`GET /api/v1/referrals/me` · `POST /api/v1/referrals/invite {kind,email}` · `GET /api/v1/referrals/me/stats` ·
-`GET /api/v1/collections` · `POST /api/v1/collections` · `GET /api/v1/guides/{slug}` (SSR + JSON-LD) ·
+There is **no `guides` table** — that is deliberate (DATABASE.md §3.9: "`collections` (`kind
+collection|guide|itinerary`…)"). A guide is `collections WHERE kind = 'guide'`, so the storage rules below
+apply to both objects:
+
+| Response field | Column / derivation | Honesty rule |
+| --- | --- | --- |
+| `Guide.slug`, `title`, `description` | `collections.slug`, `title` (+ `title_zh` for the zh-HK locale) | direct |
+| `Guide.body_blocks` | `collections.items` jsonb — an ordered array of `{type: paragraph\|heading\|list\|cards}` blocks; a `cards` block carries entity **ids**, and the platform resolves them into `EntityCard`s on the same read | a block may not cite a merchant that does not exist; unresolvable ids drop the item, they never render a placeholder card |
+| `Guide.generated_by` (`ai\|editor\|creator`) | `collections.seo->>'generated_by'` | required; absent provenance is served as `creator` **only** when `author_id` is a real user, otherwise the row is not publishable |
+| `Guide.reviewed_by_human` | `collections.seo->>'reviewed_by_human'` = `'true'` | this is the §27 gate: `false` ⇒ the web layer noindexes the page and the sitemap omits it |
+| `Collection.curated_by.{type,name}` | `collections.seo->>'curated_by'` (`editorial\|creator\|model\|ai`) + `users.display_name` for `author_id`, or the model's own name for `model` | the name is a real account's name, a real model version, or the literal `"AI curation"` — never a person who did not curate it |
+| `Collection.cover_image.{url,alt,credit}` | `collections.cover_url`, `collections.seo->'cover'` | `credit` is nullable and stays nullable — an uncredited photo must not gain a photographer |
+| `flags.demo` | `collections.data_origin = 'demo'` | the column is the source of the badge; the UI may not decide it |
+| `Guide.city`, `Guide.category` | `collections.seo->>'city'`, `collections.seo->>'category'` — `collections` has no such columns and none is being added | both are optional context for the breadcrumb and the internal links; a guide with no `city` is a real, honest state, so the web layer must not synthesise one from the slug |
+| `published_at`, `updated_at` | same columns | the platform never stamps `published_at` for a row that is still a draft: `visibility = 'public' AND published_at IS NOT NULL` is the list filter |
+
+`GET /api/v1/guides` · `GET /api/v1/referrals/me` · `POST /api/v1/referrals/invite {kind,email}` · `GET /api/v1/referrals/me/stats` ·
+`GET /api/v1/collections` · `POST /api/v1/collections` · `GET /api/v1/collections/{slug}` ·
+`GET /api/v1/guides/{slug}` (SSR + JSON-LD) ·
 `POST /api/v1/share {subject_type,subject_id}` → short link + OG payload.
 Referral rewards are recorded only on genuine conversion events (§110 forbids fake growth).
+
+Programmatic SEO (§29/§30) reads the `seo_pages` projection, which the platform owns — the web edge never
+decides by itself which URLs deserve an index slot:
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/api/v1/seo/routes?city=` | `[{city, category, subcategory, listings}]` — the route grammar a city can answer, with real listing counts |
+| GET | `/api/v1/seo/page?city=&category=&subcategory=` | `ProgrammaticPage`: heading, derived facets, cards, `updated_at`, and `indexable` + `reason` (§30 quality bar computed server-side) |
+
+Both are public, cacheable reads (`s-maxage`, `stale-while-revalidate`); they never accept a session cookie,
+and they answer 404 for a city/category pair outside the grammar rather than rendering an empty page.
+
+`indexable` is a **derived verdict, computed here and nowhere else**, from real columns:
+
+```
+indexable = status = 'published'
+            AND listings >= <tenant threshold>
+            AND (quality_score IS NULL OR quality_score >= 0.6)
+            AND (generated_by <> 'ai_seo_agent' OR reviewed_by IS NOT NULL)
+reason    = 'enough_listings' when indexable
+          | 'too_few_listings' | 'below_quality_bar' | 'not_published' | 'unreviewed_ai'
+```
+
+- `listings` is `COUNT(DISTINCT merchant)` from the live catalogue for that city/category(/subcategory) — the
+  number on the page and the number in the route listing are the same query, so a page cannot show three
+  cards while claiming eight (§19/§155).
+- `quality_score` and `reviewed_by` come from the `seo_pages` row; a missing `seo_pages` row means the page is
+  **not** indexable (absence is not a pass), while the listings themselves still render.
+- The listing threshold is tenant configuration, not a code constant: the web layer has its own
+  `MIN_LISTINGS_FOR_INDEX = 5` **only** inside `src/lib/mock`, which is the stand-in for this endpoint. When
+  this endpoint is live the web value is unused, and the two must not be reconciled by making the web layer
+  compute the bar.
 
 ## 9. Admin console (§68, §126-127)
 
@@ -283,6 +396,13 @@ All admin routes require `role IN (platform_admin, platform_ops)` and write `aud
 ## 11. Non-functional contract
 
 - p95 `/ai/v1/search` < 250ms warm; AI search first-stream-event < 1.2s; LLM full answer < 6s.
+- **Telemetry ingest**: `POST /api/v1/events {events:[{name, properties, occurred_at, session_id}]}` →
+  `202 {accepted, rejected}`. The SDK batches here (§58); `Idempotency-Key` is required and de-dupes a
+  flushed batch, not an individual event. It appends to the `events` table through the platform only
+  (`nexus_ai` keeps its INSERT-only grant, D19), never validates a business invariant, and must not be
+  used as a write path for anything a user can see — an event is an observation, not a record.
+  Unauthenticated calls are allowed only with an anonymous `session_id`; no free-text field is stored
+  and nothing collected here may influence organic ranking (§66).
 - All list endpoints support `ETag`/`Cache-Control` except availability/inventory/price (no-store, §103).
 - OpenAPI is generated from code annotations at `/v3/api-docs` and `/ai/openapi.json` — this document is the design
   input, generated specs are the build output; they must agree (contract test in CI).

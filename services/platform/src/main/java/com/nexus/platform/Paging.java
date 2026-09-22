@@ -98,6 +98,15 @@ public class Paging {
         return fragment + (descending ? " desc" : " asc");
     }
 
+    /**
+     * {@link #orderBy} with an explicit null placement. Postgres sorts NULL first when descending, so a
+     * merchant with no rating would top a "best rated" page: a value the data does not have must sink,
+     * not win. Same whitelist rule, same 422 for an unknown token.
+     */
+    public String orderByNullsLast(Map<String, String> whitelist, String token, String fallbackKey) {
+        return orderBy(whitelist, token, fallbackKey) + " nulls last";
+    }
+
     /** Whitelisted enum filter (returns null for "no filter"). */
     public static String enumFilter(String raw, List<String> allowed, String field) {
         if (raw == null || raw.isBlank()) {

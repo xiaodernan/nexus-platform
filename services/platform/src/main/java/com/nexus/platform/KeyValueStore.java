@@ -34,7 +34,7 @@ public class KeyValueStore {
     private final Map<String, String> memoryValues = new ConcurrentHashMap<>();
 
     public KeyValueStore(@Value("${nexus.redis.enabled:true}") boolean redisEnabled,
-                         @Value("${nexus.redis.url:redis://localhost:6379}") String url,
+                         @Value("${nexus.redis.url:redis://127.0.0.1:6380/0}") String url,
                          @Value("${nexus.redis.timeout-ms:400}") long timeoutMs) {
         this.redisEnabled = redisEnabled;
         this.url = url;

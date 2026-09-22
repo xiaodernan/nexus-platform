@@ -1,13 +1,29 @@
-# Local development profile. These are throwaway localhost values for the dev Postgres/Redis
-# containers, not secrets — never reuse this file outside localhost, and never put real
-# credentials in it (they belong in the environment / secret store).
+# Local development profile. These are throwaway localhost *addresses*, not secrets — never reuse this
+# file outside localhost, and never put credentials in it (they live in the root `.env`, which is not
+# tracked — §131). The previous default here pointed at :5432, which on this machine is another
+# project's Postgres (D9); connecting a dev profile to a database nobody here owns is how a test
+# migration ends up running against someone else's data, so the port is pinned to the nexus container
+# and the password is deliberately left unset so the service fails closed instead of guessing.
 spring:
   datasource:
-    url: ${NEXUS_DB_URL:jdbc:postgresql://localhost:5432/nexus}
-    username: ${NEXUS_DB_USER:nexus_app}
-    password: ${NEXUS_DB_PASSWORD:nexus_dev_pw}
+    # The same variable chain as the base file, so the launcher's NEXUS_PLATFORM_DB_* exports are the
+    # values the dev profile actually reads. They were not: this block looked only at NEXUS_DB_URL, so
+    # `NEXUS_PLATFORM_DB_URL=… scripts/run_platform_dev.sh` silently kept hitting the default database.
+    url: ${NEXUS_PLATFORM_DB_URL:${NEXUS_DB_URL:jdbc:postgresql://127.0.0.1:5433/nexus}}
+    username: ${NEXUS_PLATFORM_DB_USERNAME:${NEXUS_DB_USER:nexus_app}}
+    password: ${NEXUS_PLATFORM_DB_PASSWORD:${NEXUS_DB_PASSWORD:}}
+  flyway:
+    # Migrations run as the infra superuser, not as the runtime role. `00_roles.sql` gives `nexus_app`
+    # DML and nothing else, so a pending table-level migration aborts the boot with
+    # `42501 must be owner of table …` — which is exactly how V4 first landed. (V3 survived only because
+    # db_apply_migrations.sh transfers *view* ownership to the app role.) Same split as compose below.
+    url: ${NEXUS_MIGRATION_DB_URL:${NEXUS_PLATFORM_DB_URL:${NEXUS_DB_URL:jdbc:postgresql://127.0.0.1:5433/nexus}}}
+    user: ${NEXUS_MIGRATION_DB_USER:postgres}
+    password: ${NEXUS_MIGRATION_DB_PASSWORD:${NEXUS_DB_ROOT_PASSWORD:}}
 
 nexus:
+  redis:
+    url: ${NEXUS_REDIS_URL:redis://127.0.0.1:6380/0}
   jwt:
     secret: ${NEXUS_JWT_SECRET:dev-only-insecure-jwt-secret-change-me-0123456789}
   demo:

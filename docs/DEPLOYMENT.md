@@ -75,12 +75,21 @@ make, run the commands shown in each recipe directly.
 
 ## 5. Database: migrations, seeds, roles
 
-* **Migrations** `infra/db/migrations/V1__init.sql`, `V2__integrity.sql` (additive constraints + one index). Applied by
-  `scripts/db_apply_migrations.sh` in lexicographic order into `public.schema_migrations(version, applied_at)`; re-runs
+* **Migrations** `infra/db/migrations/V1__init.sql`, `V2__integrity.sql` (additive constraints + one index),
+  `V3__merchant_funnel_no_fanout.sql` (view rewrite), `V4__tenant_scoped_identity.sql` (identity uniqueness follows
+  the tenant, D29). Applied by `scripts/db_apply_migrations.sh` in lexicographic order into
+  `public.schema_migrations(version, applied_at)`; re-runs
   skip already-applied versions (`--force` re-applies, `--file <path>` applies one file). Each file runs
   `--single-transaction -v ON_ERROR_STOP=1`, and CRLF is stripped before piping (Windows checkouts).
-* **No psql on the host**: everything runs as `docker exec -i nexus-postgres psql … -f -` (the image's client is the
-  supported path) or `docker run --rm --network nexus_default <image> psql -h postgres …` for network tests.
+  That script is the *infra* path and it connects as the superuser. The service also runs Flyway at boot — as the
+  superuser in dev, never as `nexus_app`, which has no DDL on tables it must alter (D30) — and the two bookkeeping
+  tables are separate (`schema_migrations` vs `flyway_schema_history`), which is why `--file` on a live database
+  leaves Flyway unaware of it.
+* **No psql on the host**: everything runs as `docker exec -i nexus-platform-postgres psql … -f -` (the image's
+  client is the
+  supported path) or `docker run --rm --network nexus-platform_default <image> psql -h postgres …` for network tests
+  (the compose project is `nexus-platform`, not `nexus` — D22; `nexus_default` on this machine belongs to another
+  stack's containers).
 * **Seed** `infra/db/seed/00_tenant.sql` — idempotent, creates tenant **`hong-kong` =
   `00000000-0000-0000-0000-000000000001`** with `zh-HK`/`HKD`/`Asia/Hong_Kong`, the HK bbox + 17 districts and
   `config.demo = true`. Use that literal UUID in every fixture/test.
