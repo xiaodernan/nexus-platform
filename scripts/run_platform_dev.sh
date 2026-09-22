@@ -18,10 +18,25 @@ cd "$root"
 
 if [ -f .env ]; then
     # Local-only environment file (gitignored at .gitignore:5). Sourced, never echoed.
+    #
+    # The caller's own assignments have to survive this, so they are captured and restored: `.env` sets
+    # NEXUS_PLATFORM_DB_URL, and with `set -a` a plain source silently re-points a run at the live
+    # database no matter what the caller exported first. Every `${VAR:-default}` below then reads as if
+    # the caller had chosen it. A throwaway verification run would have been proving the wrong database
+    # — which is exactly what it did before this block existed.
+    OVERRIDDEN=""
+    for key in NEXUS_PORT NEXUS_TENANT NEXUS_PLATFORM_DB_URL NEXUS_PLATFORM_DB_USERNAME \
+               NEXUS_PLATFORM_DB_PASSWORD NEXUS_MIGRATION_DB_URL NEXUS_FLYWAY_BASELINE_VERSION \
+               NEXUS_REDIS_URL NEXUS_REDIS_ENABLED NEXUS_AI_BASE_URL SPRING_PROFILES_ACTIVE; do
+        [ -n "${!key:-}" ] && OVERRIDDEN="$OVERRIDDEN $key=${!key}"
+    done
     set -a
     # shellcheck disable=SC1091
     . ./.env
     set +a
+    for pair in $OVERRIDDEN; do export "${pair%%=*}"="${pair#*=}"; done
+    [ -n "$OVERRIDDEN" ] || OVERRIDDEN=" none"
+    echo "caller overrides kept over .env:$OVERRIDDEN" >&2
 else
     echo "note: no .env — falling back to the pinned local container ports in application.yml" >&2
 fi
@@ -53,9 +68,14 @@ echo "platform: http://127.0.0.1:${NEXUS_PORT}  tenant=${NEXUS_TENANT}  db=:5433
      "  profile=${SPRING_PROFILES_ACTIVE}  migrate-as=postgres" >&2
 
 if [ "${1:-}" = "--log" ]; then
-    nohup mvn -o -q -DskipTests -f services/platform/pom.xml spring-boot:run > .platform-dev.log 2>&1 &
-    echo $! > .platform-dev.pid
-    echo "started in background, maven pid $(cat .platform-dev.pid); log: .platform-dev.log" >&2
+    # The log and pid paths are overridable because this file is how *every* session on this machine
+    # starts the service: a throwaway verification run that inherits `.platform-dev.log` truncates the
+    # log the running instance's owner is reading, and overwrites the pid file they would kill by.
+    LOG="${NEXUS_DEV_LOG:-$ROOT/.platform-dev.log}"
+    PID="${NEXUS_DEV_PID:-$ROOT/.platform-dev.pid}"
+    nohup mvn -o -q -DskipTests -f services/platform/pom.xml spring-boot:run > "$LOG" 2>&1 &
+    echo $! > "$PID"
+    echo "started in background, maven pid $(cat "$PID"); log: $LOG" >&2
 else
     exec mvn -o -q -DskipTests -f services/platform/pom.xml spring-boot:run
 fi

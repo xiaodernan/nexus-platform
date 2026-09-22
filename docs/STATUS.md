@@ -940,3 +940,53 @@ Still open:
   this repository — including a whole `services/ai/` tree and `docs/PRD.md`. Every claim was checked against the
   tree before use and none was folded into the ledger; a report whose paths do not resolve here is not evidence
   about this project.
+
+
+## 24. The seam no gate was watching (2026-09-23)
+
+`quality.sql` proves the rows. `mvn -o test` proves the projection, against fixtures each test inserts by
+hand. Neither looked at the pair — so the §19 rating gap survived *both* gates for as long as it existed:
+520 merchants rendered a rating, `facts` held no `rating` row for one of them, 153 quality checks passed,
+94 tests passed. A gate that stops at a boundary cannot see a defect standing on it.
+
+`scripts/e2e_fresh.sh` crosses it: create an empty database from `template0`, apply `V*.sql` +
+`00_roles.sql`, generate and load the seed, boot the platform against *that* database on a free port with
+Redis off, then run `scripts/verify_served_reads.mjs` over HTTP and shut everything down. 57 tables,
+5,688 facts, 1,727 of them `rating`.
+
+```
+=== 6/6  probe the served consumer reads
+  · directory cards probed: 20
+  · menu offerings probed: 7 (2 rated)
+  · published guides: 1
+RESULT: PASS — 194 served-read checks passed against http://127.0.0.1:8092
+```
+
+Every printed rating on every probed card now carries a fact whose `value` and `count` equal the printed
+ones — directory, profile, menu, and the cards embedded in a guide. On top of that the probes hold
+`item_count == items + dropped` (§8/D34), that an unreviewed guide answers `noindex` with a reason (§27),
+that attribution never invents a curator, and that kind pinning and the 422 vocabulary behave over the
+wire rather than in a test harness.
+
+Two defects the run found in its own making, both real and both now fixed:
+
+- **The launcher let `.env` win over the caller.** `run_platform_dev.sh` sources `.env` with `set -a` and
+  only *then* applies `${VAR:-default}`, so an exported `NEXUS_PLATFORM_DB_URL` was silently replaced by
+  the file's value. The first end-to-end run therefore booted against the live `nexus` database and
+  reported 1,727 seeded rating facts as zero — a false FAIL, and it would have been a false PASS on
+  whichever database happened to be answering. The launcher now captures the caller's assignments,
+  restores them after the source, and prints what it kept; `e2e_fresh.sh` additionally refuses to probe
+  unless the running service says it kept *this* run's URL.
+- `set -e` aborted the boot wait: the listener probe inside the loop is *expected* to find nothing for
+  its first iterations, and a failed command substitution in an assignment is fatal. It needs `|| true`,
+  and the nohup'd child's `> "$LOG"` truncated the launcher's own banner away, so the two now log
+  separately.
+
+Also fixed while here: `NEXUS_DEV_LOG` / `NEXUS_DEV_PID` are overridable, because this file is how every
+session on this machine starts the service and a verification run inheriting `.platform-dev.log` truncates
+the log the running instance's owner is reading.
+
+Still open: this is a read seam, not the §168 journey — writing a reservation, confirming it as the
+merchant and reading it back as the consumer is still `scripts/verify_reservation.py` against a hand-run
+instance, and no browser has ever been driven against a throwaway database. The `make` target for either
+gate still waits on the `Makefile`'s uncommitted edits.

@@ -1,0 +1,190 @@
+#!/usr/bin/env bash
+# End-to-end read proof on a database nobody has ever used: empty → migrated → seeded → served.
+#
+# Why this exists next to the two gates that already do (D33's `db_gate_fresh.sh` and the unit suite):
+# each of them stops at a boundary. `quality.sql` proves the *rows* are honest; `mvn -o test` proves the
+# *projection* turns a row into the documented shape with test fixtures that are inserted by hand.
+# Nothing checked the pair — so a seeded fact could be perfectly formed in the table and still never
+# reach a card, which is exactly how the §19 rating gap survived every gate until D35: 520 merchants
+# rendered a rating, `facts` held no `rating` row for any of them, and both suites stayed green.
+#
+# This script crosses that seam. It creates a throwaway database, applies the infra migrations and the
+# role split, generates and loads the synthetic dataset, boots the platform against *that* database on a
+# free port, probes the served consumer reads over HTTP, then shuts down and drops everything.
+#
+#   scripts/e2e_fresh.sh                 # full run, cleans up after itself
+#   scripts/e2e_fresh.sh --keep          # leave the database (and the service) up for psql/curl
+#   scripts/e2e_fresh.sh --skip-generate # load data/seed/out/ as found
+#   E2E_PORT=8093 scripts/e2e_fresh.sh
+#
+# The live `nexus` and `nexus_test` databases are never opened, and neither is the running :8090
+# instance: this starts its own process on its own port with its own log file.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+KEEP=0
+SKIP_GENERATE=0
+PORT="${E2E_PORT:-8092}"
+
+if [ -f "$ROOT/.env" ]; then
+  set -a; . "$ROOT/.env"; set +a
+fi
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --keep)          KEEP=1 ;;
+    --skip-generate) SKIP_GENERATE=1 ;;
+    -h|--help)       sed -n '2,25p' "$0"; exit 0 ;;
+    *) echo "e2e_fresh.sh: unknown option: $1" >&2; exit 2 ;;
+  esac
+  shift
+done
+
+die() { printf 'e2e_fresh.sh: ERROR: %s\n' "$*" >&2; exit 2; }
+step() { printf '\n=== %s\n' "$*"; }
+
+LIVE_DB="${NEXUS_DB_NAME:-nexus}"
+[ "$PORT" != "${NEXUS_PORT:-8090}" ] || die "refusing: E2E_PORT equals the running instance's port"
+
+# --------------------------------------------------------------------------- container
+# Same resolution as the fresh gate: two names have ever served this project's Postgres on this host,
+# and guessing wrong creates a database inside another project's server (D22).
+CANDIDATES="${NEXUS_PG_CONTAINER:-} nexus-platform-postgres nexus-platform-testpg"
+CONTAINER=""
+for c in $CANDIDATES; do
+  [ -n "$c" ] || continue
+  if docker inspect -f '{{.State.Running}}' "$c" 2>/dev/null | grep -qx true; then CONTAINER="$c"; break; fi
+done
+[ -n "$CONTAINER" ] || die "no running Postgres container among: $CANDIDATES"
+
+PGUSER="${NEXUS_DB_SUPERUSER:-postgres}"
+E2E_DB="${E2E_DB_PREFIX:-nexus_e2e}_$$_$(date +%s)"
+case "$E2E_DB" in
+  nexus|nexus_test|nexus_dev|postgres) die "refusing to use '$E2E_DB' as a throwaway name" ;;
+esac
+
+LOG="${TMPDIR:-/tmp}/nexus-e2e-platform.$$.log"
+RUN_PID=""
+LISTEN_PID=""
+
+psql_maint() { printf '%s\n' "$1" | docker exec -i "$CONTAINER" psql -v ON_ERROR_STOP=1 -qtA -U "$PGUSER" -d postgres; }
+psql_e2e()   { printf '%s\n' "$1" | docker exec -i "$CONTAINER" psql -v ON_ERROR_STOP=1 -qtA -U "$PGUSER" -d "$E2E_DB"; }
+
+stop_service() {
+  # Kill only what this run started: the maven wrapper pid and the JVM actually holding the port.
+  # `spring-boot:run` forks, so killing the parent alone leaves a server listening behind us.
+  if [ -n "$LISTEN_PID" ]; then
+    taskkill //PID "$LISTEN_PID" //T //F >/dev/null 2>&1 || kill "$LISTEN_PID" 2>/dev/null || true
+  fi
+  if [ -n "$RUN_PID" ]; then
+    kill "$RUN_PID" 2>/dev/null || true
+    wait "$RUN_PID" 2>/dev/null || true
+  fi
+}
+
+cleanup() {
+  rc=$?
+  if [ "$KEEP" = "1" ]; then
+    [ "$rc" = "0" ] || echo "!! failed; leaving $E2E_DB in place for inspection" >&2
+    echo "e2e database kept: docker exec -it $CONTAINER psql -U $PGUSER -d $E2E_DB"
+    echo "log: $LOG"
+    return
+  fi
+  stop_service
+  if [ -n "${E2E_DB:-}" ]; then
+    psql_maint "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$E2E_DB'" >/dev/null 2>&1 || true
+    psql_maint "DROP DATABASE IF EXISTS \"$E2E_DB\"" >/dev/null 2>&1 \
+      || echo "!! could not drop $E2E_DB — remove it by hand" >&2
+  fi
+  rm -f "$LOG" "$LOG.app" "$LOG.pid" 2>/dev/null || true
+  return $rc
+}
+trap cleanup EXIT
+
+echo "e2e_fresh.sh  container=$CONTAINER db=$E2E_DB port=$PORT keep=$KEEP"
+echo "              live databases this run must NOT touch: $LIVE_DB, nexus_test"
+
+# --------------------------------------------------------------------------- 1/6 empty database
+step "1/6  create $E2E_DB from template0"
+psql_maint "CREATE DATABASE \"$E2E_DB\" TEMPLATE template0 ENCODING 'UTF8'" >/dev/null
+[ "$(psql_e2e "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
+                AND table_name NOT LIKE 'pg_%'")" = "0" ] \
+  || die "the fresh database is not empty"
+
+# --------------------------------------------------------------------------- 2/6 schema + roles
+step "2/6  apply infra/db/migrations/V*.sql + 00_roles.sql"
+NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_NAME="$E2E_DB" NEXUS_DB_SUPERUSER="$PGUSER" \
+  "$SCRIPT_DIR/db_apply_migrations.sh" | sed -e 's/^/    /'
+TABLES="$(psql_e2e "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
+                     AND table_type='BASE TABLE'")"
+MIGRATIONS="$(psql_e2e "SELECT count(*) FROM schema_migrations")"
+echo "    -> tables=$TABLES migrations=$MIGRATIONS"
+
+# --------------------------------------------------------------------------- 3/6 dataset
+if [ "$SKIP_GENERATE" = "1" ]; then
+  step "3/6  seed generation skipped (--skip-generate)"
+else
+  step "3/6  generate the synthetic dataset"
+  PYTHON="${PYTHON:-python}"
+  ( cd "$ROOT" && "$PYTHON" data/seed/generate.py ) 2>&1 | tail -3 | sed -e 's/^/    /'
+fi
+
+step "4/6  load the seed into the fresh database"
+CONTAINER="$CONTAINER" DB="$E2E_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 \
+  "$ROOT/data/seed/load.sh" | tail -6 | sed -e 's/^/    /'
+FACTS="$(psql_e2e "SELECT count(*) FROM facts WHERE attribute='rating'")"
+echo "    -> rating facts loaded: $FACTS"
+
+# --------------------------------------------------------------------------- 5/6 boot
+step "5/6  boot the platform against $E2E_DB on :$PORT"
+# baseline-version has to name the migrations the infra script already ran: Flyway would otherwise
+# replay V1..V4 over a schema that has them (D30/D32 are what made that failure loud instead of silent).
+# Redis is switched off so this run cannot write rate-limit or session keys into the shared instance.
+NEXUS_PORT="$PORT" \
+NEXUS_PLATFORM_DB_URL="jdbc:postgresql://127.0.0.1:5433/$E2E_DB" \
+NEXUS_MIGRATION_DB_URL="jdbc:postgresql://127.0.0.1:5433/$E2E_DB" \
+NEXUS_FLYWAY_BASELINE_VERSION="$MIGRATIONS" \
+NEXUS_REDIS_ENABLED=false \
+NEXUS_DEV_LOG="$LOG.app" NEXUS_DEV_PID="$LOG.pid" \
+  "$SCRIPT_DIR/run_platform_dev.sh" --log >> "$LOG" 2>&1
+RUN_PID="$(cat "$LOG.pid")"
+
+printf '    waiting for /api/v1/health on :%s ' "$PORT"
+UP=0
+# `|| true` on the listener probe is not decoration: `set -e` makes a failed command substitution abort
+# the assignment, and the probe is *expected* to find nothing on the first iterations — which is the
+# normal case, not an error. Without it the wait loop exits before the service ever gets to boot.
+for _ in $(seq 1 90); do
+  if curl -fsS -m 2 "http://127.0.0.1:$PORT/api/v1/health" >/dev/null 2>&1; then UP=1; break; fi
+  LISTEN_PID="$( { netstat -ano 2>/dev/null | grep -aE "TCP +[0-9.]+:$PORT +.*LISTENING" || true; } \
+    | awk '{print $NF}' | head -1)"
+  printf '.'
+  sleep 2
+done
+echo
+[ "$UP" = "1" ] || { tail -40 "$LOG.app" 2>/dev/null | sed -e 's/^/    | /'
+  die "service did not come up on :$PORT (logs kept: $LOG, $LOG.app)"; }
+LISTEN_PID="$( { netstat -ano 2>/dev/null | grep -aE "TCP +[0-9.]+:$PORT +.*LISTENING" || true; } \
+  | awk '{print $NF}' | head -1)"
+echo "    -> serving on :$PORT (maven pid $RUN_PID, listener pid ${LISTEN_PID:-unknown})"
+
+# --------------------------------------------------------------------------- the proof needs a target
+# Assert the process we are about to grade is reading the database we just built. `.env` sets
+# NEXUS_PLATFORM_DB_URL, and a launcher that sources it after the caller's exports silently re-points a
+# "throwaway" run at the live database — which the first run of this script did, and then reported 1,727
+# seeded rating facts as zero. The launcher now prints what it kept; this fails if that line is wrong,
+# because a PASS against the wrong database is worse than no measurement at all.
+if ! grep -aq "NEXUS_PLATFORM_DB_URL=jdbc:postgresql://127.0.0.1:5433/$E2E_DB" "$LOG"; then
+  grep -a "caller overrides\|platform: http" "$LOG" | sed -e 's/^/    | /' || true
+  grep -a "HikariPool\|jdbc:postgresql" "$LOG.app" 2>/dev/null | head -3 | sed -e 's/^/    app| /' || true
+  die "the service is not reading $E2E_DB — refusing to probe another database"
+fi
+echo "    -> datasource confirmed: the launcher kept our URL over .env"
+
+# --------------------------------------------------------------------------- 6/6 probes
+step "6/6  probe the served consumer reads"
+node "$SCRIPT_DIR/verify_served_reads.mjs" --base "http://127.0.0.1:$PORT" --tenant "${NEXUS_TENANT:-hong-kong}"
+echo
+echo "RESULT: PASS — seeded rows and served payloads agree on :$PORT"
