@@ -1281,3 +1281,10 @@ e2e_fresh.sh       8/8 · 525 served-read checks · 0 5xx · 30/30 reservation c
 Both migrations were also applied to the shared `nexus_test` incrementally through `db_apply_migrations.sh`
 (the script skipped V1-V4 and reported `migrations=6`); the suite cannot see V5/V6 otherwise, since the
 tests run with Flyway off.
+
+Operational note, because this changes what the *running* `:8090` can do: that process is an older jar and its
+`record` is still a bare INSERT, so a second edit of the same claim (a merchant saving opening hours twice) now
+hits `facts_one_row_per_claim_uidx` and answers 500 where it used to quietly grow a second row. The failure is
+loud, correct and temporary — restarting `:8090` onto this commit replaces the INSERT with the upsert. Until
+someone who owns that instance restarts it, do not exercise merchant edits against `nexus`.
+
