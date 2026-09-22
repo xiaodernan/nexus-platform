@@ -61,6 +61,20 @@ public class FactRepository {
         return Json.uuid(row, "id");
     }
 
+    /**
+     * Retire a claim that stopped existing: a subject whose published evidence is now empty must not
+     * keep a card citing a rating it no longer has. Leaving the row behind is the false citation in
+     * its least visible form — the number disappears from the card while its provenance stays live.
+     */
+    public void drop(TenantContext tenant, String subjectType, UUID subjectId, String attribute) {
+        jdbc.updateForTenant(tenant, "delete from facts f using merchants m"
+                + " where f.merchant_id = m.id and m.tenant_id = :tenant_id"
+                + " and f.subject_type = :subject_type and f.subject_id = :subject_id"
+                + " and f.attribute = :attribute",
+                Json.map("tenant_id", tenant.tenantId(), "subject_type", subjectType,
+                        "subject_id", subjectId, "attribute", attribute));
+    }
+
     public Optional<Map<String, Object>> latest(TenantContext tenant, String subjectType, UUID subjectId,
                                                 String attribute) {
         // facts.merchant_id is the tenant anchor for merchant-owned subjects.

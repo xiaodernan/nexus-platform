@@ -401,6 +401,19 @@ reason    = 'enough_listings' when indexable
 ## 9. Admin console (§68, §126-127)
 
 `GET /api/v1/admin/{users|merchants|orders|reservations|reviews|reports}` ·
+`GET /api/v1/admin/moderation?status&subject_type&limit&cursor` ·
+`POST /api/v1/admin/moderation/{case_id}/resolve {decision,note}` (D39, served).
+
+The two moderation routes are served by `com.nexus.catalog.ModerationController` (`platform_admin` /
+`platform_ops` only); build the rest of §9 around them rather than re-declaring them. A case resolves by
+writing two rows at once — the case (who, when, with what note) and the subject (what it now is) — because a
+queue that records decisions while the content stays pending is a log, not a control. `decision` is one of
+the review's own states (`published|rejected|flagged`), not a verdict word; a closed case answers
+`409 case_already_resolved`, and the close is guarded in the statement (`where status = 'open'`) so two
+simultaneous reviewers cannot both win. Publishing moves an aggregate, so the same call recomputes it from
+the published rows and restates the `rating` fact beside it (D35/D38); the response lists what it restated
+in `aggregate_restated`. Merchant staff have no route here — a shop approving its own reviews is the
+conflict §55 exists to avoid.
 `GET /api/v1/admin/moderation` + `POST /api/v1/admin/moderation/{case_id}/resolve {action,note}` ·
 `GET /api/v1/admin/ai/runs` · `GET /api/v1/admin/ai/costs?group_by=agent|model|day` ·
 `GET /api/v1/admin/search/analytics` · `POST /api/v1/admin/merchants/{id}/suspend` ·

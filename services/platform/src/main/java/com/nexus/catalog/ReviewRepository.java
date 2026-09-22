@@ -3,6 +3,7 @@ package com.nexus.catalog;
 import com.nexus.platform.Json;
 import com.nexus.platform.TenantContext;
 import com.nexus.platform.TenantJdbc;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,6 +39,10 @@ public class ReviewRepository {
     /** Money that moved and was not given back. */
     static final String PAID_STATUSES = "'paid','preparing','completed'";
 
+    /** A rating is derived from rows that change rarely enough to re-check daily (AGENT_CONTRACT §5). */
+    static final Duration RATING_TTL = Duration.ofHours(24);
+
+    /** The review columns, in the order {@link CatalogController#reviewView} reads them. */
     private static final String COLUMNS = """
             select r.id, r.tenant_id, r.merchant_id, r.offering_id, r.user_id, r.rating, r.title, r.body,
                    r.language, r.photos, r.aspects, r.verified_purchase, r.verified_reservation, r.data_origin,
@@ -144,5 +149,65 @@ public class ReviewRepository {
                 select count(*) from offerings o join merchants m on m.id = o.merchant_id
                 where o.id = :offering_id and o.merchant_id = :merchant_id and m.tenant_id = :tenant_id
                 """, Json.map("offering_id", offeringId, "merchant_id", merchantId)) > 0;
+    }
+
+    /**
+     * Recompute the rating of a subject from the rows that actually count, and restate the fact beside it.
+     *
+     * <p>This is the step D35's whole rule depends on and the one D38 only made possible: an aggregate
+     * column and its citation are not two facts to keep in sync by hand, they are one claim, so they are
+     * derived together, here, from {@code status = 'published'} rows. The SQL is deliberately
+     * {@code round(avg(rating), 2)} — the same expression {@code quality.sql} re-derives and the same
+     * half-away-from-zero rounding the seed now uses (D35), so a live recompute and a seeded value cannot
+     * come apart by a cent.
+     *
+     * <p>A subject with no published reviews gets {@code 0.00 / 0} and no fact: absence is not a rating of
+     * zero. The upsert keeps one row per claim, which V5 now enforces and D36 checks.
+     */
+    public void refreshRating(TenantContext tenant, FactRepository facts, String subjectType, UUID subjectId,
+                              UUID merchantId) {
+        boolean isMerchant = "merchant".equals(subjectType);
+        String column = isMerchant ? "merchant_id" : "offering_id";
+        String target = isMerchant ? "merchants" : "offerings";
+        Map<String, Object> aggregate = jdbc.oneForTenant(tenant, """
+                select coalesce(round(avg(r.rating), 2), 0) as value, count(r.id) as n,
+                       max(r.created_at) as through_at
+                from reviews r join merchants m on m.id = r.merchant_id
+                where r.""" + column + """
+                   = :subject_id and m.tenant_id = :tenant_id and r.status = 'published'
+                """, Json.map("subject_id", subjectId), "subject_not_found");
+        jdbc.updateForTenant(tenant, "update " + target
+                + " set rating_agg = :value, review_count = :n"
+                + " where id = :subject_id and tenant_id = :tenant_id",
+                Json.map("subject_id", subjectId, "tenant_id", tenant.tenantId(),
+                        "value", aggregate.get("value"), "n", aggregate.get("n")));
+
+        long n = ((Number) aggregate.get("n")).longValue();
+        if (n == 0) {
+            facts.drop(tenant, subjectType, subjectId, "rating");
+            return;
+        }
+        facts.record(tenant, subjectType, subjectId, merchantId, "rating",
+                Json.map("value", aggregate.get("value"), "count", n, "max_score", 5,
+                        "method", "mean_of_published_reviews",
+                        // An ISO instant, the same shape every read surfaces timestamps in; the raw
+                        // driver's Timestamp would serialise as a JVM-localised string.
+                        "reviewed_through", aggregate.get("through_at") instanceof java.sql.Timestamp at
+                                ? at.toInstant().toString() : null),
+                null, null, "observed", confidenceFor((int) n), RATING_TTL);
+    }
+
+    /**
+     * How much a mean over {@code n} reviews is worth — the same three bands the seeded corpus writes
+     * (D35), because a confidence that depends on who wrote the row is not a confidence.
+     */
+    static double confidenceFor(int n) {
+        if (n < 5) {
+            return 0.7;
+        }
+        if (n < 50) {
+            return 0.8;
+        }
+        return 0.9;
     }
 }
