@@ -986,7 +986,12 @@ Also fixed while here: `NEXUS_DEV_LOG` / `NEXUS_DEV_PID` are overridable, becaus
 session on this machine starts the service and a verification run inheriting `.platform-dev.log` truncates
 the log the running instance's owner is reading.
 
-Still open: this is a read seam, not the §168 journey — writing a reservation, confirming it as the
-merchant and reading it back as the consumer is still `scripts/verify_reservation.py` against a hand-run
-instance, and no browser has ever been driven against a throwaway database. The `make` target for either
-gate still waits on the `Makefile`'s uncommitted edits.
+Step 7 then runs `scripts/verify_reservation.py` against the same throwaway instance, because that walk
+leaves rows behind and the run that proves a state machine should not mutate the demo data another
+session is looking at: `29/29 checks passed`, `reservation: NX-RES-YFAW8M`, capacity `10 -> 8 -> 10`.
+Choosing a *priced* slot is what made that leg mean something — both price checks used to compare null
+with null off `slots[0]`, and now read `slot=328.00 reservation=328.00` and `slot=328.00 inbox=328.00`.
+`--reads-only` skips it.
+
+Still open: no browser has been driven against a throwaway database, so §168's UI journey and the §171
+screenshot step remain unproven; the cart/checkout leg has no HTTP surface to walk at all.

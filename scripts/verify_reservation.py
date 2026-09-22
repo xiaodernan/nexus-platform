@@ -1,19 +1,24 @@
-"""Live walk of the reservation write path on :8090 — the terminal step of the consumer slice (§40).
+"""Live walk of the reservation write path — the terminal step of the consumer slice (§40, §168).
 
-Runs against the developer database with the demo login, books one real seeded slot, reads it back, then
-walks the merchant's side: the §23 booking inbox must show the hold the consumer just made, and the
-cancel leg must give the seats back exactly once. It writes rows; that is the point, and every id it
-created is printed so the same command can be audited afterwards.
+Books one real seeded slot with the demo login, reads it back, then walks the merchant's side: the §23
+booking inbox must show the hold the consumer just made, and the cancel leg must give the seats back
+exactly once. It writes rows; that is the point, and every id it created is printed so the same command
+can be audited afterwards.
+
+Defaults to the developer instance on :8090. `scripts/e2e_fresh.sh` points it at a throwaway database on
+its own port instead — which is the only honest place for a walk that leaves rows behind, because the
+run that proves a state machine should not be the run that mutates someone else's demo data.
 """
 
 import base64
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
 
-PLATFORM = 'http://127.0.0.1:8090'
-TENANT = 'hong-kong'
+PLATFORM = os.environ.get('NEXUS_PLATFORM_URL', 'http://127.0.0.1:8090').rstrip('/')
+TENANT = os.environ.get('NEXUS_TENANT', 'hong-kong')
 
 
 def call(method, path, body=None, token=None):
@@ -48,7 +53,13 @@ check('directory listing', status == 200 and merchant is not None, merchant and 
 
 mid = merchant['id']
 status, avail = call('GET', f'/api/v1/merchants/{mid}/availability?party_size=2')
-slot = next((s for s in avail.get('slots', []) if (s.get('capacity_left') or 0) >= 2), None)
+# Prefer a slot that carries a price. The two checks below compare the slot's price with the
+# reservation's and the reservation's with the merchant inbox's, and on an unpriced slot both of those
+# can only ever be `null == null` — the honest answer for that slot, and no test of the money path at
+# all. Falling back to any slot with room keeps the walk running where nothing is priced.
+bookable = [s for s in avail.get('slots', []) if (s.get('capacity_left') or 0) >= 2]
+slot = next((s for s in bookable if s.get('price') is not None),
+            bookable[0] if bookable else None)
 check('a slot with room for two', status == 200 and slot is not None,
       slot and f"{slot['id'][:8]} left={slot['capacity_left']} {slot['starts_at']}")
 
@@ -104,7 +115,12 @@ status, avail = call('GET', f'/api/v1/merchants/{own}/availability?party_size=2'
 # (V2), so re-booking the leg-1 slot comes back as a 200 replay of that earlier row — which is honest,
 # but then the inbox leg would be checking a booking it never made.
 slots = [s for s in avail.get('slots', []) if (s.get('capacity_left') or 0) >= 2]
-own_slot = next((s for s in slots if s['id'] != (slot or {}).get('id')), slots[0] if slots else None)
+fresh = [s for s in slots if s['id'] != (slot or {}).get('id')]
+# Prefer a *priced* slot among the candidates. The invariant this walk checks is "the inbox restates the
+# slot's own price, it does not invent one", and on an unpriced slot that check can only ever compare
+# null to null — a PASS that never touched the branch worth touching.
+priced = [s for s in (fresh or slots) if s.get('price') is not None]
+own_slot = (priced or fresh or slots or [None])[0]
 check('the demo merchant has a bookable slot', own_slot is not None,
       own_slot and f"{own_slot['id'][:8]} {own_slot['starts_at']}"
       + ('' if own_slot is None or own_slot['id'] != (slot or {}).get('id') else ' (reused leg-1 slot)'))
