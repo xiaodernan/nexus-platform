@@ -1075,3 +1075,54 @@ still unreviewed (§27 does not default open).
 
 `mvn -o test`: 107/107. The whole run again from an empty database: 1,727 rating facts loaded, datasource
 guard green, 525 read checks, 30/30 reservation checks against a priced slot (`slot=473.11`).
+
+
+## 27. What the contract promises versus what the process answers (2026-09-23)
+
+`scripts/verify_contract_runtime.mjs` compares `docs/API_CONTRACT.md` against `/v3/api-docs` of a running
+service — the OpenAPI document springdoc generates from the annotations the router actually registered.
+The drift ledger answers "does any client call this?", which is necessary and not sufficient: a path
+literal in a Javadoc comment counts as "served" there. This is the other question — "if a consumer follows
+the contract to this URL, is there a handler?" — and it runs against a throwaway instance from
+`e2e_fresh.sh --keep`, never a stale jar.
+
+```
+contract routes in scope : 79 of 95 documented      (/api/v1 only; §0's /api/nexus BFF rows are proxies)
+declared by the service  : 51
+absent                   : 28   §3 1 · §5 9 · §6 12 · §8 1 · §9 5
+served, not documented   : 27
+RESULT: PASS — every documented phase-1 §4/§8 *read* is declared
+```
+
+The gate is on reads, deliberately: an undocumented §4/§8 *read* is a page a consumer can be sent to with
+nothing behind it, while an unbuilt *write* is a decision — §8's `POST /api/v1/collections` stays absent
+until the §27 authorization path exists (D34), and failing on it every run would train people to ignore
+the exit code. The 28 absent rows are the §5 workspace surface, the §6 cart/checkout family (its services
+exist; no controller has been wired yet), and the §9 admin reads — all roadmap facts, now listed rather
+than remembered.
+
+Two things this measurement caught about itself:
+
+- The first version of the parser gave every inline route mention without a verb a `GET`, which invented a
+  phantom second method for nearly every documented write: the ledger claimed the service served
+  `GET /api/v1/auth/login` and the contract did not. 116 routes in scope and 63 absent were mostly that
+  bug; requiring an explicit verb takes it to 79 and 28.
+- The report capped the served-but-undocumented list at 12 rows, hiding 15. A ledger that truncates is how
+  a gap survives being measured.
+
+**The 27 undocumented routes are the honest next doc task, and they are not one owner's.** They are
+`POST /api/v1/events`, `GET/POST /api/v1/me/favorites`, `POST /api/v1/me/preferences`,
+`POST /api/v1/me/saved-searches`, `GET/PUT /api/v1/notifications/preferences`,
+`POST /api/v1/notifications/{id}/read`, `POST /api/v1/notifications/read-all`,
+`POST /api/v1/referrals/invite`, the conversation `reply`/`handoff` family and the merchant-content
+photo/hours writes — endpoints whose handlers are in the tree and whose responses are real, documented
+nowhere.
+
+That last sentence led to the larger finding of this section: **five platform modules were running green
+while git did not have them.** `com.nexus.growth` (mine, tasks #10-#12 — 1,191 lines and two test classes),
+plus `com.nexus.admin`, `com.nexus.commerce`, `com.nexus.seo` and three `com.nexus.merchant` files were
+untracked, so `mvn -o test` reported 107/107 on a checkout that could not reproduce any of it. A green
+suite whose inputs are uncommitted is not a gate; it is a local mood. `com.nexus.growth` is committed by
+this section's change. The rest belongs to the waves that wrote them, and is listed here with its paths so
+whoever owns each can land it — nobody should have to guess whether the service they are testing matches
+the source they are reading.
