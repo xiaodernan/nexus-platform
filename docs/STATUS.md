@@ -1320,3 +1320,94 @@ e2e_fresh.sh                      525 read checks · 30/30 booking · 15/15 revi
 scan over every published card    470 scanned · 0 printed-vs-cited mismatches
 ```
 
+## 34. The workspace had locks, and nothing had a handle (2026-09-23)
+
+§5 documented three routes the platform had machinery for and never answered: who belongs to a business,
+which keys it has issued, and whether its AI agent is on. `PermissionService` wrote grant rows,
+`ApiKeyService` hashed and listed keys, `MerchantPermissions` held the role presets, and `WorkspaceAccess`
+already resolved `member:` and `apikey:` — no controller had called any of them, so §5 documented three doors
+and the service answered none of them.
+
+The rule the doors are built on is D5 said a second time: **a membership row is a record, and
+`permission_grants` is the access.** So every write here reconciles the two. `permission_grants` has no
+foreign key to `merchant_users`, which means the schema will not notice a grant that outlived the person it
+was written for — a removal that deleted only the row would leave a signed-in stranger with `write_products`.
+`PATCH` moves the rows with the role, `disabled` deletes them while keeping the membership for the trail, and
+`DELETE` removes them under both spellings a human grant can be filed as, because the authoriser accepts
+either. `MerchantWorkspaceTest` (10 tests) therefore asserts on grant rows in SQL and not only on the status
+code: a role change is proved by calling an unrelated route that needs the new permission
+(`/api/v1/merchant/customers`), which a no-op reconciliation cannot pass.
+
+Three refusals carry the design, and each is a different kind of harm: demoting, disabling or deleting the
+last active `owner`/`admin` answers 409 `last_admin`, because a workspace nobody can administer is only
+discoverable when you need it; adding a person who is already a member answers 409 `member_exists` and names
+their current role and `PATCH`, because silently re-rolling a role on a typo is how a `staff` becomes an
+`admin`; and a `user_id` from another tenant answers 404 `user_not_found` and writes no row — that id is not a
+person here, and a 403 would tell an attacker it is somebody's.
+
+Two latent defects surfaced, both in tracked code that had never been executed:
+
+- `PermissionService.grant` guarded itself by asking whether the **subject** held `admin_members` — it asked
+  the person being granted to authorise their own granting. It now checks the **operator**, under either
+  spelling, keeping the exemption that lets a new owner seed themselves. Its only caller in the whole build
+  had been that self-seed, so no second-person grant had ever been attempted to notice.
+- `MerchantRepository.updateMember` had no caller either, and its first one produced a 500
+  `BadSqlGrammarException`: in an `update … from merchants`, the unqualified `status` was ambiguous against
+  `merchants.status`. Qualifying it is the one-line fix; the interesting part is that a documented `PATCH`
+  route can be written, compiled and reviewed while returning 500 forever, because no test ever called it.
+
+On the key door: the secret is printed once and only its SHA-256 is kept, each scope is also a
+`permission_grants` row for `subject_type='api_key'`, and revoking deletes those rows with it — a revoked key
+that still authorised something is a label over a live secret. The controller writes no audit row for
+creation, because `ApiKeyService.create` already writes `create_api_key` (name, prefix, scopes; never the
+secret), and a second row for the same act makes the trail read as two keys issued. For members the audit
+write sits *inside* the idempotent work block, so a replayed `Idempotency-Key` is answered from the stored
+response and leaves one `add_workspace_member` row — now asserted, since the flag-on-the-body alternative
+would have kept passing if the guard moved outside the block.
+
+Ledger corrections, four of them and two of them mine. `DECISIONS.md` gained
+the **D39** heading that commit `492b740` never wrote — the decision was in the tree with no entry beside it.
+A row I had added to §5 an hour earlier claimed a `PATCH /api-keys/{id}` that exists nowhere; self-review
+caught it, and the row now lists the methods actually served. One pre-existing §5 row had a literal `|`
+inside its cell (`all|repeat|new`), which splits that row into five columns when anything renders the table;
+escaped, and the pattern is now worth knowing before a row is written.
+
+The fourth is the one worth writing down, because it is about the reader rather than the document.
+`verify_contract_runtime.mjs` reads verbs from the method cell and
+applies them to every bare path span, and it accepts a relative span only if it starts with `/merchant`,
+`/me`, `/admin`, `/ai` or `/notifications`. So a row written the way §5 had always written them — `` POST
+`/members` · PATCH/DELETE `/members/{id}` `` — documented *nothing*: the relative span matched no prefix rule
+and the item form was never reached. All seven workspace routes I had just built therefore appeared in the
+report under **"served, not documented"**, which is precisely the shape the script's own closing warning says
+a hole in the reader takes ("this parser has been wrong twice, and a hole in the reader looks exactly like a
+hole in the document"). Each span now carries its own verb and a full path, the documented total moved from
+118 to 121, and the seven parse with the methods they are. A contract that a tool cannot read is not a
+contract the build can be audited against, whatever the prose says.
+
+```
+mvn -o test                     138 run · MerchantWorkspaceTest 10/10 · 1 red, untracked com.nexus.admin
+scripts/e2e_fresh.sh            8/8 · 525 served-read checks · 0 5xx · 30/30 booking · 15/15 review · contract PASS
+verify_contract_runtime.mjs     121 documented (was 118) · 84 declared (was 80) · 16 → 12 "served, not documented"
+```
+
+None of the seven appears in either mismatch list, which is what "documented and served" has to mean before
+it can be claimed.
+
+The `com.nexus.admin` failure is not this work's: `AdminConsoleApiTest.searchAnalyticsReportsRealCounts` is
+untracked (`git ls-files` on that test directory returns nothing), fails in isolation, and its repository
+mixes `sum(v.sessions)` from a view with `count(distinct session_id)` — an owner-side count disagreement,
+reported to whoever is writing that package rather than fixed from outside it.
+
+No migration changed this round, which is also why `db_gate_fresh.sh` was not re-run: the schema is the one
+§31 certified, and `ai_agent_enabled` is the only AI setting it carries. That is why the config route refuses
+a persona, model or temperature it has nowhere to put and says so in `scope_note`, rather than adding a
+column to make the request look good.
+
+This surface has been verified the way a backend surface can be: HTTP against a booted Spring context, on a
+database built for the run and thrown away after it. There is no merchant-console screen calling these routes
+yet, so the browser leg (§156) is still open and belongs with task #9, not here.
+
+One numbering note, so nobody wastes a minute on it: this entry is §34 because §33 is the last section the
+file holds — there has never been a §32 in `STATUS.md`, and `DECISIONS.md`, which numbers independently and
+is up to D40, is the authoritative ledger.
+

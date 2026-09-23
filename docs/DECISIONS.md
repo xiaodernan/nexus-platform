@@ -761,6 +761,35 @@ Both are the assertions that would have failed loudly before V6 and could not be
 
 Gate: V1..V6 from an empty database, `RESULT: PASS — 163 quality checks (tables=57, migrations=6)`.
 
+## D39 A consumer review ends at a human door, and the door is not the merchant's — 2026-09-23
+
+D37 stored a consumer review as `pending` and D38 made a fact restatable. Neither had a way to finish, so
+"a human decides" was an honest answer with no route a human could take, while API_CONTRACT §9 documented
+`GET /api/v1/admin/moderation` and `POST /api/v1/admin/moderation/{case_id}/resolve` and nothing served them.
+
+**The door is a platform surface, deliberately.** Both routes take `@RequiresPlatformRole`
+(`platform_admin`/`platform_ops`) and neither takes a merchant scope. Routing a merchant's own review
+decision through `permission_grants` would be reachable by `admin_members`, which means a business could
+publish the five-star review of itself and reject the one-star — which is precisely the thing §109 forbids
+the rating from becoming. So the reviewer is a platform operator, and the queue is one list across tenants.
+
+**What a read must show.** A case carries its subject's projection (the same one the public page uses, D24)
+plus `merchant.status`, because publishing content for a shop nobody can open is a different decision from
+publishing it, and it should look different in the queue.
+
+**What a decision must be.** `decision ∈ published|rejected|flagged` — the three states a review row can
+hold, not the friendlier-sounding `approve`, which is refused with a 422 naming the allowed set. An optional
+`note` up to 500 characters is stored on the case. The case close is guarded on `status = 'open'` in its own
+statement, so two reviewers who both click get one winner and a 409 `case_already_resolved` for the other —
+the loser's decision is not quietly written over the winner's. Publishing restates the merchant's rating and
+its fact, and the offering's too when the review cites a dish (D35/D38); rejecting changes no number, and the
+response says which of the two happened in `aggregate_restated`. Every decision writes an `audit_logs` row
+with before and after.
+
+_(Recorded 2026-09-23 by D40's commit: the D39 commit itself wrote this decision only into its own message,
+which is why this file had a `### Follow-up` about D39 and no D39 to follow. A ledger that cannot answer
+"what is D39?" by number is not a ledger.)_
+
 ### Follow-up: the queue, the transaction, and a verifier that blamed the wrong thing
 
 D39's door needed three more things before it could be trusted with the demo dataset, and the middle one is
@@ -794,3 +823,78 @@ A verifier that reports a missing page as a missing citation is the same failure
 keeps finding, one layer up: a green or red signal computed from the wrong evidence. Four walks on a
 pristine queue after the fix: **15/15 each**, and the suite is **121/121** with the new
 `subject.merchant.status` assertion.
+
+## D40 A membership row is a record; the grants are the access — 2026-09-23
+
+API_CONTRACT §5 documented `GET/POST/PATCH/DELETE /api/v1/merchant/members`,
+`POST/DELETE /api/v1/merchant/api-keys` and `POST /api/v1/merchant/ai-agent/config`. None of them was
+served — by tracked code or by any of the in-flight waves' untracked files — even though every part needed to
+serve them already existed: `MerchantRepository` had `members/addMember/updateMember/removeMember`,
+`ApiKeyService` had `create/list/revoke`, and `WorkspaceAccess` had `member:` and `apikey:` merchant
+resolvers waiting for a route to declare them. What §5 lacked was not machinery but doors.
+
+**The rule the doors have to honour is D5.** `permission_grants` is what authorises; `merchant_users.role`
+is a convenience for choosing a set of grant rows. That has a consequence nobody had written down: *assigning
+a role is a write to `permission_grants`*, and so is taking one away. A screen that shows "removed" while
+the removed person's grant rows are still answering authorisation checks is not a slightly stale screen, it is
+a lie about who can read the orders and issue the keys. The schema will not catch this — `permission_grants`
+has no foreign key to `merchant_users`, and `subject_id` is a bare uuid — so these methods do it
+themselves, in one transaction with the row:
+
+- a role assignment writes that role's default set (under `subject_type='user'`, the spelling the owner path
+  uses, D31);
+- a role change adds what the new role has and deletes what it does not;
+- `status = 'disabled'` deletes every grant and keeps the membership row, so the audit trail survives and the
+  access does not;
+- removal deletes the rows under **both** spellings a human's grant can be filed under (`user`,
+  `merchant_user`), because the interceptor accepts either, and revoking only one would leave the other
+  working;
+- the roster reads the **union** over both spellings, so a person's listed permissions are what they can
+  actually do, not what one of two possible filing choices happens to say.
+
+**Two refusals that are easier than the truth.** The last active `owner`/`admin` of a business cannot be
+demoted, disabled or deleted (`409 last_admin`): a workspace whose only administrator is removed has no
+door left that the platform's own RBAC can open, and unblocking it would mean writing grant rows by hand.
+`admin` counts alongside `owner` because both receive `admin_members` by default — checking only the word
+`owner` would strand a business whose single `admin` steps down. And an unknown `role` or `scope` is a
+422 that names the allowed set rather than being coerced: `"superuser"` is not a role this platform can
+honour, and pretending otherwise would write a membership row whose grants are the staff defaults.
+
+**Two real defects fell out of wiring routes to code that had never been reached.**
+
+1. `PermissionService.grant()` had a guard rail that asked whether the **subject** already held
+   `admin_members` — asking the person being granted to authorise their own granting. Its only caller had
+   ever been the self-seed at business creation (`grantedBy == subjectId`), so no first real second-person
+   grant had happened to reveal that every one of them would have been refused with 403. It now checks the
+   **operator**, under either spelling, and still allows the self-seed path.
+2. `MerchantRepository.updateMember()` was an `UPDATE merchant_users mu ... FROM merchants m` with
+   unqualified `status` in its own `coalesce` — and `merchants` has a `status` column too, so Postgres
+   answered `ambiguous column`. The method had never been called: the 500 was its first call ever, raised by
+   the first test that reached it. A statement that has never run is not "unused but working"; it is untested.
+
+**API keys: the secret is shown once, on purpose.** `ApiKeyService` stored only a SHA-256 and had `list()`
+that no route called. `GET /api-keys` is now documented in §5 (it was missing from the row that names the
+method paths, though a console that cannot see its keys cannot pick the right one to revoke), and its
+projection carries `prefix` and `scopes` and no secret field at all. Revocation sets `revoked_at` and
+deletes the `api_key` grant rows, so "revoked" and "inert" are the same event.
+
+**The AI switch refuses to grow a schema.** `merchants.ai_agent_enabled` is the only AI setting V1 has, so
+`POST /ai-agent/config` takes `{merchant_id, enabled}` and writes that column, and its `scope_note` says
+that is all there is — rather than accepting `persona` or `model` fields into a `Map` that goes nowhere.
+`enabled` must be a JSON boolean; `"yes"` is a 422, not a truthy string.
+
+**What the tests insist on.** `MerchantWorkspaceTest` (10) asserts on the grant rows in SQL, not on the
+write's own 200, and checks a role change through an *unrelated* route: `GET /api/v1/merchant/customers`
+(`read_analytics`, `com.nexus.growth`) is 403 for a staff member, 200 after the PATCH to `manager`, and
+403 again after `disabled`. A grant reconciliation that returned 200 and wrote nothing would fail that
+sequence. Removal is asserted as "0 grant rows left, and the ex-member's own call is refused". The last-admin
+guard is asserted in all three directions and then *released* by adding a second admin, so it cannot be
+passing because the guard is unconditional. `idempotency_keys` is keyed by a literal string and is not
+cleaned between tests, so every key in this class carries a per-instance nonce — a fixed key would make the
+replay assertion a coin toss against an earlier run's owner, which is exactly how two of these tests failed
+before they were fixed.
+
+Suite: **131** tests of this wave's own code pass (121 + 10). `mvn -o test` across the whole working tree
+reports **138 run, 1 failure**, and that one is `com.nexus.admin.AdminConsoleApiTest` — controller, test and
+package all untracked, another wave's in-flight Admin Console, deterministic when run on its own, untouched
+by anything here.

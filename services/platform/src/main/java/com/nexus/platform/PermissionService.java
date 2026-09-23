@@ -103,12 +103,16 @@ public class PermissionService {
                     "permission", permission, "granted_by", grantedBy));
             return;
         }
-        if (!hasMerchantGrant(tenant, "user", subjectId, merchantId, "admin_members") && grantedBy != null
-                && !grantedBy.equals(subjectId)) {
-            // Guard rail: granting inside a merchant requires admin_members unless it is the self-seeding
-            // owner path (grantedBy == subjectId) performed at business creation.
+        if (!hasMerchantGrant(tenant, "user", grantedBy, merchantId, "admin_members")
+                && !hasMerchantGrant(tenant, "merchant_user", grantedBy, merchantId, "admin_members")
+                && grantedBy != null && !grantedBy.equals(subjectId)) {
+            // Guard rail: granting inside a merchant requires the *operator* to hold admin_members there,
+            // unless it is the self-seeding owner path (grantedBy == subjectId) performed at business
+            // creation. Reading this as a check on the *subject* asks the person being granted to already
+            // hold the permission that lets them be granted — which no new member ever does, so every real
+            // second-person grant would be refused and no first one had happened yet to reveal it.
             throw ApiException.forbidden("Granting workspace permissions requires admin_members",
-                    Json.map("permission", "admin_members"));
+                    Json.map("permission", "admin_members", "operator", grantedBy));
         }
         jdbc.crossTenantUpdate("""
                 insert into permission_grants (subject_type, subject_id, merchant_id, permission, granted_by)
@@ -131,5 +135,22 @@ public class PermissionService {
                 """;
         return jdbc.updateForTenant(tenant, sql, Json.map("subject_type", subjectType, "subject_id", subjectId,
                 "merchant_id", merchantId, "permission", permission));
+    }
+
+    /**
+     * Every grant a subject holds inside one merchant. Leaving a workspace has to be this, and not only a
+     * deleted membership row: {@code permission_grants} carries no foreign key to {@code merchant_users}, so
+     * an untouched grant keeps answering {@link #has} for a person who is no longer anybody's staff.
+     */
+    public int revokeAll(TenantContext tenant, String subjectType, UUID subjectId, UUID merchantId) {
+        return jdbc.updateForTenant(tenant, """
+                delete from permission_grants g
+                using merchants m
+                where g.merchant_id = m.id
+                  and m.tenant_id = :tenant_id
+                  and g.subject_type = :subject_type
+                  and g.subject_id = :subject_id
+                  and g.merchant_id = :merchant_id
+                """, Json.map("subject_type", subjectType, "subject_id", subjectId, "merchant_id", merchantId));
     }
 }

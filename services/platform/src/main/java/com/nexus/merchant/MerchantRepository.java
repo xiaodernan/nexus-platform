@@ -211,9 +211,12 @@ public class MerchantRepository {
     }
 
     public int updateMember(TenantContext tenant, UUID memberId, String role, String status) {
+        // Both SET sources are qualified: this UPDATE carries `from merchants m` for the tenant predicate,
+        // and merchants has a `status` column of its own — an unqualified reference is ambiguous to
+        // Postgres, which is what this statement used to be.
         return jdbc.updateForTenant(tenant, """
-                update merchant_users mu set role = coalesce(cast(:role as text), role),
-                                               status = coalesce(cast(:status as text), status)
+                update merchant_users mu set role = coalesce(cast(:role as text), mu.role),
+                                               status = coalesce(cast(:status as text), mu.status)
                 from merchants m
                 where mu.id = :id and m.id = mu.merchant_id and m.tenant_id = :tenant_id
                 """, Json.map("id", memberId, "role", role, "status", status));
@@ -234,6 +237,40 @@ public class MerchantRepository {
                 join users u on u.id = mu.user_id
                 where mu.merchant_id = :merchant_id and m.tenant_id = :tenant_id
                 order by mu.created_at
+                """, Json.map("merchant_id", merchantId));
+    }
+
+    /** One membership row with the human behind it — what a patch needs in order to report a before-state. */
+    public Optional<Map<String, Object>> memberRow(TenantContext tenant, UUID memberId) {
+        return jdbc.firstForTenant(tenant, """
+                select mu.id, mu.merchant_id, mu.user_id, mu.role, mu.status, mu.created_at,
+                       u.display_name, u.email, m.tenant_id
+                from merchant_users mu join merchants m on m.id = mu.merchant_id
+                join users u on u.id = mu.user_id
+                where mu.id = :id and m.tenant_id = :tenant_id
+                """, Json.map("id", memberId));
+    }
+
+    /**
+     * `merchant_users` has no tenant column of its own, and {@link #addMember} predicates on the
+     * <em>merchant</em> row. Without this check a caller could attach a person from another tenant to a
+     * business of theirs — the foreign key would be satisfied and nothing else would notice.
+     */
+    public boolean userInTenant(TenantContext tenant, UUID userId) {
+        return !jdbc.forTenant(tenant, "select u.id from users u where u.id = :id and u.tenant_id = :tenant_id",
+                Json.map("id", userId)).isEmpty();
+    }
+
+    /**
+     * Active owners, so the workspace can refuse the change that would leave a business with nobody able to
+     * administer it. {@code owner} and {@code admin} both hold {@code admin_members} by default; counting
+     * only one spelling would strand a merchant whose single {@code admin} demotes themselves.
+     */
+    public long activeAdmins(TenantContext tenant, UUID merchantId) {
+        return jdbc.countForTenant(tenant, """
+                select count(*) from merchant_users mu join merchants m on m.id = mu.merchant_id
+                where mu.merchant_id = :merchant_id and m.tenant_id = :tenant_id
+                  and mu.status = 'active' and mu.role in ('owner', 'admin')
                 """, Json.map("merchant_id", merchantId));
     }
 
