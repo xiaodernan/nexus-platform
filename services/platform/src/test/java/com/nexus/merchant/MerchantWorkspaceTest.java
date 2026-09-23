@@ -108,6 +108,42 @@ class MerchantWorkspaceTest extends NexusIntegrationTest {
     }
 
     @Test
+    @DisplayName("The workspace's own refusals name themselves, not just their status")
+    void refusalsCarryTheirOwnCode() {
+        // D55: the code is the part a client branches on. A 409 that could be "already a member" or "you are
+        // the last administrator" is not an answer, and both of those exist behind this door.
+        UUID person = newUser(tenant, "named-" + tag(), "consumer");
+        ResponseEntity<String> added = postKey("/api/v1/merchant/members",
+                Json.map("merchant_id", merchant.toString(), "user_id", person.toString(), "role", "staff"),
+                "first-" + person, tenant, ownerToken);
+        assertThat(added.getStatusCode()).as(body(added)).isEqualTo(HttpStatus.CREATED);
+
+        ResponseEntity<String> twice = postKey("/api/v1/merchant/members",
+                Json.map("merchant_id", merchant.toString(), "user_id", person.toString(), "role", "manager"),
+                "second-" + person, tenant, ownerToken);
+        assertThat(twice.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(Json.tree(twice.getBody()).path("error").path("code").asText()).isEqualTo("member_exists");
+        assertThat(Json.tree(twice.getBody()).path("error").path("details").path("role").asText())
+                .as("the refusal says what is there, so the caller can change it rather than guess")
+                .isEqualTo("staff");
+        assertThat(Json.tree(twice.getBody()).path("error").path("details").path("member_id").asText())
+                .isNotBlank();
+
+        ResponseEntity<String> noMember = patch("/api/v1/merchant/members/" + UUID.randomUUID(),
+                Json.map("role", "analyst"), tenant, ownerToken);
+        assertThat(noMember.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(Json.tree(noMember.getBody()).path("error").path("code").asText())
+                .isEqualTo("member_not_found");
+
+        ResponseEntity<String> noKey = delete("/api/v1/merchant/api-keys/" + UUID.randomUUID()
+                + "?merchant_id=" + merchant, tenant, ownerToken);
+        assertThat(noKey.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(Json.tree(noKey.getBody()).path("error").path("code").asText())
+                .as("the authoriser resolves the key's merchant before anything else, and says which link failed")
+                .isEqualTo("api_key_not_found");
+    }
+
+    @Test
     @DisplayName("A role change and a disable move the real access, checked through a route neither owns")
     void changingARoleChangesWhatTheCallerCanCall() {
         UUID person = newUser(tenant, "moving-" + tag(), "consumer");

@@ -194,6 +194,32 @@ class FavoriteDoorTest extends NexusIntegrationTest {
     }
 
     @Test
+    @DisplayName("A /me refusal names which thing is missing, and only which thing")
+    void refusalsSayWhatIsAbsent() {
+        Tenant tenant = newTenant("fav-codes");
+        UUID person = newUser(tenant, "codes@fav.test", "consumer");
+
+        // subject_not_found: the favourite door's own absence code, named here rather than only compared
+        // against another 404 (D50) — a client needs the string to know its save did not half-work.
+        ResponseEntity<String> absent = save(tenant, person, "merchant", UUID.randomUUID(), null);
+        assertThat(absent.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(Json.tree(absent.getBody()).path("error").path("code").asText()).isEqualTo("subject_not_found");
+
+        // preference_not_found: the same door family, a different absent row, a different code.
+        ResponseEntity<String> patch = http.exchange(
+                java.net.URI.create(url("/api/v1/me/preferences/" + UUID.randomUUID())), HttpMethod.PATCH,
+                new HttpEntity<>(Json.map("kind", "food", "key", "quiet", "value", Json.map("note", "n"),
+                        "weight", 0.5), json(tenant, token(tenant, person, "consumer"))),
+                String.class);
+        assertThat(patch.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(Json.tree(patch.getBody()).path("error").path("code").asText())
+                .isEqualTo("preference_not_found");
+        assertThat(Json.tree(patch.getBody()).path("error").path("code").asText())
+                .as("absent is absent; the two refusals must not share a code and confuse a client")
+                .isNotEqualTo(Json.tree(absent.getBody()).path("error").path("code").asText());
+    }
+
+    @Test
     @DisplayName("The fourth documented subject_type is honoured, and pinned to the kind it names")
     void guideIsASubjectTypeAndNotACollection() {
         Tenant tenant = newTenant("fav-guide");

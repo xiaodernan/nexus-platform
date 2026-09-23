@@ -1759,6 +1759,65 @@ so §3 now says which parts of "logout" are immediate and which are 900 seconds 
 revocation is a deployment decision (it means requiring Redis, or accepting per-node divergence, or moving to
 opaque tokens), not a side effect of a documentation unit.
 
+## D55 A 401 is not an answer — the codes no request ever produced — 2026-09-24
+
+### 1. The census
+
+The platform emits 61 distinct error codes. Counting how many are *named* anywhere under `src/test/java` or the
+`scripts/` verifiers said: **33 had never been produced by a request anyone checked.** Each of those 33 rides
+behind a status some test may already assert — so the suite can be green on `401` while the client cannot tell
+"your token expired" (refresh it) from "that is a refresh token" (do not) from "this session belongs to another
+tenant" (sign in elsewhere). Three repairs, one status, and the code is the only one of the three that says which.
+
+### 2. What this unit named
+
+Eleven of the 33, each by doing the thing rather than calling a factory: a truncated token and a tampered
+signature (both `invalid_token`, and the messages differ while the code deliberately does not); a token signed
+with the real key and an `exp` in the past (`token_expired` — signed on purpose, because an unsigned token is
+refused for the wrong reason and the test would still pass); a refresh token held up as a bearer
+(`wrong_token_type`); a session minted for another tenant (`tenant_mismatch`, with the same token proved still
+working at home, so the refusal is about the `tid` and not the fixture); a second registration of one address
+(`email_taken`); an access token at the refresh door (`invalid_refresh_token`). Then the workspace and `/me`
+family: `member_exists`, whose details are asserted to name *which role is in the way* — a 409 a screen cannot
+act on is not a refusal, it is a shrug — plus `member_not_found`, `api_key_not_found`, `subject_not_found` and
+`preference_not_found`, the last two checked against each other so two different absences cannot share one code.
+
+Four mutations, all red: expiry answering the generic code; cross-tenant answering the generic code; the 409
+dropping its `role` detail; the key authoriser falling back to bare `not_found`.
+
+### 3. What is left, and where it lives
+
+22 codes are still unnamed. Thirteen exist only in untracked files — `cart_*`, `order_*`,
+`insufficient_stock`, `reservation_not_addable`, `offering_not_purchasable`, `listing_not_publishable`, one
+`conflict` in the admin console — so they belong to the commerce and admin streams: reported, not walked. Nine
+sit in code this lane owns behind real doors: `moderation_case_not_found`, `review_not_found`,
+`conversation_not_found`, `no_open_handoff`, `notification_not_found`, `offering_not_found`, `slug_taken`,
+`invalid_id_token` and `not_implemented`. Two of those nine are config-gated rather than hard to reach:
+`not_implemented` fires when `NEXUS_AI_INTERNAL_TOKEN` is *unset*, which the shared harness always sets, so
+witnessing it needs its own context; and the OAuth `dev` verifier raises `invalid_id_token` only for a token it
+can parse at all. That is a queue with reasons attached, not a mystery.
+
+One method note, because it nearly shipped a false statement. The first census split "this lane vs another
+stream" by matching walked paths against `git ls-files`, and on Windows `os.walk` yields backslashes where
+`ls-files` prints forward slashes — so it reported *zero* codes in this lane, including `subject_not_found`,
+which this session had committed hours earlier. The error was in the convenient direction (nothing left to do),
+and it is the same failure the project keeps meeting: a measurement that matches nothing reports success.
+Normalising separators moved the number from 0 to nine.
+
+```
+AuthRefusalCodesTest   new · 7 tests · the auth family by doing, plus §1's envelope on a refusal
+MerchantWorkspaceTest  13 → 14 · the three workspace absences named, and the 409's role detail
+FavoriteDoorTest       5 → 6 · subject_not_found and preference_not_found, distinct from each other
+mutations run          4
+codes                  emitted 61 · unnamed before 33 · unnamed after 22 (13 in other streams' files, 9 queued)
+suite                  178 → 187 run · the 1 red stays com.nexus.admin's
+```
+
+What this does not do. It does not assert message *text* anywhere: codes are the contract surface, prose is for
+humans, and pinning wording only makes wording harder to fix. It does not add a gate that every code is named —
+that would freeze a list which legitimately grows — and it does not change any ladder rung: §1's eight statuses
+have all been produced by a request since D47 and D49.
+
 ```
 LogoutDoorTest        new · 3 tests · cookies + family + audit, the surviving bearer, the anonymous call
 SavedSearchDoorTest   new · 3 tests · save/list/remove, the defaults (notify false, intent {}), the two 404s

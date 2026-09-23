@@ -2273,3 +2273,46 @@ typo is still a typo. It does not touch `Makefile`'s `dev-platform` target — a
 :8080, which is what `run_platform_dev.sh`'s own header says it exists to avoid. And it does not change
 `.env`, which stays what it is: a
 gitignored, per-machine file that now definitively sits *below* whoever typed the command.
+
+## 50. A 401 is not an answer: the codes no request had ever produced (2026-09-24)
+
+The platform emits 61 error codes; 33 of them were named nowhere under `src/test/java` or the `scripts/`
+verifiers. Each hides behind a status a test may already assert, so the suite can be green on `401` while a client
+cannot tell "expired — refresh it" from "that is a refresh token — don't" from "this session belongs to another
+tenant — sign in elsewhere". Three repairs, one status: the code is the only part that says which.
+
+D55 named eleven, each by doing the thing rather than calling a factory. A truncated token and a tampered
+signature (same `invalid_token`, different messages, deliberately); a token signed with the real key whose `exp`
+is in the past (`token_expired` — real signature, because an unsigned token is refused for the wrong reason and
+the test would still pass); a refresh token presented as a bearer (`wrong_token_type`); a session whose `tid`
+belongs to another tenant (`tenant_mismatch`, with the same token proved still working at home so the refusal is
+about the claim and not the fixture); `email_taken`; `invalid_refresh_token`; then `member_exists` — whose details
+are asserted to name the role already in place, because a 409 a screen cannot act on is a shrug — plus
+`member_not_found`, `api_key_not_found`, `subject_not_found` and `preference_not_found`, the last two compared
+against each other so two different absences cannot share a code. Four mutations, all red: expiry and
+cross-tenant each reduced to the generic code, the 409 dropping its `role`, and the key authoriser falling back to
+bare `not_found`.
+
+22 remain unnamed. Thirteen live only in untracked files (`cart_*`, `order_*`, `insufficient_stock`,
+`reservation_not_addable`, `offering_not_purchasable`, `listing_not_publishable`, one admin `conflict`) —
+reported, not walked. Nine are this lane's with real doors, and two of those are config-gated rather than hard to
+reach: `not_implemented` fires only when `NEXUS_AI_INTERNAL_TOKEN` is unset, which the shared harness always
+sets, and `invalid_id_token` needs a token the dev OAuth verifier can parse. A queue with reasons, not a mystery.
+
+The census nearly lied once: splitting "this lane vs another stream" by matching walked paths against
+`git ls-files` returned *zero* for this lane on Windows, because `os.walk` yields backslashes and `ls-files`
+forward ones — it called `subject_not_found`, committed hours earlier, somebody else's code. The mistake pointed
+in the convenient direction, which is exactly how the project's own rule puts it: a measurement that matches
+nothing reports success. Normalising separators turned 0 into nine.
+
+```
+AuthRefusalCodesTest  new · 7 tests · the auth family by doing it, and §1's envelope on a refusal
+MerchantWorkspaceTest 13 → 14 · three workspace absences named; the 409 says which role
+FavoriteDoorTest      5 → 6 · subject_not_found vs preference_not_found, distinct
+mutations run         4 · codes: 61 emitted, 33 unnamed before, 22 after
+suite                 178 → 187 run · the 1 red stays com.nexus.admin's AdminConsoleApiTest:289
+```
+
+What this does not do: it asserts no message prose anywhere (codes are the contract surface; pinning wording just
+makes wording hard to fix), it does not gate "every code must be named" — that freezes a list which legitimately
+grows — and it changes no ladder rung: every §1 status has been produced by a real request since §42 and §44.
