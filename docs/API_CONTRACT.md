@@ -41,7 +41,19 @@ Data access rules (no `LLM → database` path, §52):
 - Auth: `Authorization: Bearer <jwt>` **or** `nexus_session` HttpOnly cookie. `X-CSRF-Token` required for state-changing cookie requests.
 - Tenant: `X-Tenant: hong-kong` (else derived from hostname). Every query is tenant-scoped server-side.
 - Request id: `X-Request-Id` echoed and attached to logs, `agent_runs`, `audit_logs`.
-- Idempotency: `Idempotency-Key` **required** on checkout, payment, reservation create, review create, campaign publish.
+- Idempotency: `Idempotency-Key` is **required** on the five writes that store their own answer for replay —
+  `review`, `events`, `member`, `api_key`, `moderation_resolve`. Each is declared twice inside the same handler,
+  and both halves are load-bearing (D45): `@Idempotent(scope = …)` is what makes the interceptor demand the
+  header, `IdempotencyService.run(scope, …)` in the body is what makes that header decide whether the work
+  executes. A route with the second half and not the first does not merely lose an optimisation — the claim row
+  is keyed by scope and header together, so every caller that sent no header lands on the same row, the same
+  account is handed back somebody else's stored answer, and a different account is refused until the TTL ends.
+  `IdempotencyPairingTest` reads the handlers and refuses that pairing; `IdempotencyService.run` refuses a blank
+  key rather than deriving one. Two other §4/§6 writes keep their replay protection elsewhere: a retried
+  **reservation create** is settled by `reservations_slot_user_uniq` (V2 — one live hold per person per slot) and
+  answers with the same code, at 200 rather than 201 and with a `status_note` that says so, so it demands no
+  header; **checkout**, **payment** and
+  **campaign publish** are documented here while no route in this build serves them, so nothing declares them.
 - Rate limits: `429` + `Retry-After` + `X-RateLimit-Remaining`.
 - Pagination: cursor-based — request `?limit=20&cursor=...`; response `{ "items": [...], "next_cursor": "...", "total_estimate": 123 }`.
 - Error envelope (always):

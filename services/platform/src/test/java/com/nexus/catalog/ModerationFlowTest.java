@@ -179,6 +179,51 @@ class ModerationFlowTest extends NexusIntegrationTest {
                 .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
+    @Test
+    @DisplayName("A resolve needs the key its replay is stored under: two cases, one admin, no shared answer")
+    void keylessResolveIsRefusedAndLeavesItsCaseOpen() {
+        String tag = tag();
+        // The last assertion here counts rows for one literal key, so the count starts from empty rather than
+        // from whatever an older build of this service left behind.
+        jdbc.update("delete from idempotency_keys where key = :k", Map.of("k", "moderation_resolve|null"));
+        merchant("keyed-" + tag);
+        merchant("keyless-" + tag);
+        postReview("keyed-" + tag, "4.0");
+        postReview("keyless-" + tag, "1.0");
+        JsonNode open = Json.tree(getRaw(tenant, adminToken, "/api/v1/admin/moderation?status=open").getBody());
+        assertThat(open.path("items")).hasSize(2);
+        String first = caseOf(open, "keyed-" + tag);
+        String second = caseOf(open, "keyless-" + tag);
+
+        assertThat(resolve(first, "published", "Useful.").getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // The route closed its case with IdempotencyService.run and never required the header, so a keyless
+        // resolve did not skip idempotency — it used the literal `moderation_resolve|null`, which the call
+        // above had already claimed. The second case therefore answered with the first one's JSON: a 200
+        // printing `case_id: first, decision: published` while the second review stayed invisible and open.
+        ResponseEntity<String> keyless = postJson(second, "rejected", null);
+        assertThat(keyless.getStatusCode()).as(Json.tree(keyless.getBody()).toString())
+                .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        JsonNode error = Json.tree(keyless.getBody()).path("error");
+        assertThat(error.path("details").path("header").asText()).isEqualTo("Idempotency-Key");
+        assertThat(error.path("details").path("scope").asText()).isEqualTo("moderation_resolve");
+
+        // Refused means nothing happened: the case is still in the open queue, and the audit trail still
+        // holds one resolve for this admin rather than two.
+        JsonNode stillOpen = Json.tree(getRaw(tenant, adminToken, "/api/v1/admin/moderation?status=open").getBody());
+        assertThat(stillOpen.path("items")).hasSize(1);
+        assertThat(caseOf(stillOpen, "keyless-" + tag)).isEqualTo(second);
+        assertThat(count("""
+                select count(*) from audit_logs where action = 'moderation_resolve' and actor_id = :admin
+                """, Map.of("admin", adminId))).isEqualTo(1);
+        // And the row the collision needs was never written: with no marker and no guard this request created
+        // a claim keyed `moderation_resolve|null`, which is the one row every keyless caller of the route
+        // shares — the first writer's stored answer is what the next one is handed back.
+        assertThat(count("select count(*) from idempotency_keys where key = :k",
+                Map.of("k", "moderation_resolve|null")))
+                .as("the shared literal claim row").isZero();
+    }
+
     // ---------------------------------------------------------------- fixtures
 
     private UUID postReview(String slug, String rating) {
@@ -197,8 +242,25 @@ class ModerationFlowTest extends NexusIntegrationTest {
                 "res-" + caseId + "-" + System.nanoTime());
     }
 
-    private ResponseEntity<String> postWithKey(Tenant t, String bearer, String path, Object body, String key) {
-        HttpHeaders headers = json(t, bearer);
+    /** The open case for one merchant's review, found by slug so the queue's order does not matter. */
+    private static String caseOf(JsonNode queue, String slug) {
+        for (JsonNode item : queue.path("items")) {
+            if (slug.equals(item.path("subject").path("merchant").path("slug").asText())) {
+                return item.path("case_id").asText();
+            }
+        }
+        throw new AssertionError("no open case for " + slug + " in " + queue);
+    }
+
+    /** The same request {@link #resolve} makes, with no {@code Idempotency-Key} header at all. */
+    private ResponseEntity<String> postJson(String caseId, String decision, String note) {
+        Map<String, Object> body = note == null ? Json.map("decision", decision)
+                : Json.map("decision", decision, "note", note);
+        return http.exchange(java.net.URI.create(url("/api/v1/admin/moderation/" + caseId + "/resolve")),
+                HttpMethod.POST, new HttpEntity<>(body, json(tenant, adminToken)), String.class);
+    }
+
+    private ResponseEntity<String> postWithKey(Tenant t, String bearer, String path, Object body, String key) {        HttpHeaders headers = json(t, bearer);
         headers.add("Idempotency-Key", key);
         return http.exchange(java.net.URI.create(url(path)), HttpMethod.POST, new HttpEntity<>(body, headers),
                 String.class);

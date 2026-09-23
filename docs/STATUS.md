@@ -1730,3 +1730,55 @@ reverts; that is D41's empty-router trap in reverse, and `create_reservation`, `
 contract row changed in this section, so the two fresh gates were not re-run — a SQL gate cannot observe a new
 unit test or a corrected comment, and `mvn -o test` is the gate that covers both. :8090 and its database are
 untouched, and the browser leg is still task #9.
+
+## 40. A route that stored its answer for replay never required the key the replay is stored under (2026-09-24)
+
+`POST /api/v1/admin/moderation/{id}/resolve` wraps its decision in `IdempotencyService.run`, which claims a row
+keyed by scope plus the caller's `Idempotency-Key` and, on a conflict, returns what the first claimer stored. It
+did not carry `@Idempotent`, the annotation that makes `AuthorizationInterceptor` demand that header. So a
+resolve with no header was not un-idempotent: it claimed `moderation_resolve|null`, and every keyless caller of
+the route shares that one row. All three consequences were run against the shipped code rather than reasoned
+about — the first answered 200 and wrote the shared claim; a later keyless resolve by a different platform
+account answered 409 `idempotency_key_conflict`, locking a second reviewer out for the TTL; and the same
+account's next keyless resolve is answered from the stored row without executing, which `IdempotencyPairingTest`
+measures at the service because the HTTP door no longer admits it. That last face is the one that would have
+hurt: a console printing a decision, a `resolved_at` and a before/after pair for a case nobody decided.
+
+```
+marker on the route            422 naming the header and the scope; nothing claimed, closed or audited
+guard in run()                 null or blank key → 500 that names the declaration it wants (measured with the
+                               marker deleted: the same request answers 500, loud instead of shared)
+IdempotencyPairingTest         new · 2 tests · the scan walks src/main/java, not the router
+ModerationFlowTest             4 → 5 · suite 142 → 145 · the 1 red is com.nexus.admin's, unchanged and theirs
+replays in this build          5 (review, events, member, api_key, moderation_resolve) · all paired
+§1's five named doors            1 of 5 is served and requires the key · 4 served replays were not in the list
+```
+
+`mvn -o test` is 145 run with the one external red, and because a live door's requirement changed the fresh walk
+was re-run too: `scripts/e2e_fresh.sh` PASS on :8092, its review phase still publishing and still refusing a
+second decision (`scripts/verify_review_flow.py` sends a key on every resolve, which is why the new 422 is a
+guard rather than a breakage), and the ledger unchanged at 121 of 133 documented in scope, 96 declared, 25
+documented-not-served, 0 served-undocumented.
+
+The gate is a source scan, which is the one place this project deliberately does not ask the router: which
+handler wraps its body in `run` is a fact about a method body, invisible to reflection, and the two halves of the
+promise sit centimetres apart inside one file. It opens by asserting the source directory exists — a scan whose
+root moved would otherwise pass by finding nothing — and it runs in one direction on purpose. A `@Idempotent`
+with no `run` asks for a token it does not use; `POST /api/v1/reservations` is the served, honest neighbour of
+that shape, since `reservations_slot_user_uniq` (V2) settles a retried booking: the route returns the same code
+at 200 instead of 201, and `reused` is recorded in its audit payload. A `run` with no `@Idempotent` corrupts an
+answer, and only that is refused.
+
+`docs/API_CONTRACT.md` §1 was where the wrong list came from: it named checkout, payment, reservation create,
+review create and campaign publish, and `Idempotent`'s javadoc had copied those five verbatim (D44's mechanism
+with a section number instead of a decision number). The paragraph now states the five replays this build
+answers, where a retried booking gets its protection, and which three doors are still unserved.
+
+Two things this does not touch. `IdempotencyService.headerOnly` builds a string, not a claim, so it is unguarded
+by design: when `com.nexus.commerce` grows the checkout route it will need this marker or its own decision about
+a null key, and that is that stream's call. And `AuthorizationInterceptor` was not edited — the enforcement it
+already performs is what this unit builds on, and it belongs to the other wave. What is *not* a code question is
+the row the shipped route wrote into whichever database it ran against: `idempotency_keys` can still hold a
+`moderation_resolve|null` claim, and it expires on its own within the TTL. The new test deletes that literal
+before it counts rows, so the gate measures its own request rather than history; nothing here rewrites a deployed
+table.

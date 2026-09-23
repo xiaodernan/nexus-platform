@@ -3,6 +3,7 @@ package com.nexus.catalog;
 import com.nexus.platform.ApiException;
 import com.nexus.platform.AuditService;
 import com.nexus.platform.IdempotencyService;
+import com.nexus.platform.Idempotent;
 import com.nexus.platform.Json;
 import com.nexus.platform.Paging;
 import com.nexus.platform.Req;
@@ -102,6 +103,11 @@ public class ModerationController {
 
     @PostMapping("/moderation/{id}/resolve")
     @RequiresPlatformRole
+    // The scope has to match the string passed to IdempotencyService.run below: this annotation is what makes
+    // the header arrive, and that call is what makes the header mean anything. Without it a keyless resolve
+    // was stored under the shared literal `moderation_resolve|null`, so the same admin closing a second case
+    // got the first case's answer replayed and the second case stayed open (D45).
+    @Idempotent(scope = "moderation_resolve")
     public Map<String, Object> resolve(@PathVariable String id, @RequestBody ResolveBody body,
                                        HttpServletRequest request) {
         TenantContext tenant = Req.tenant(request);

@@ -1204,3 +1204,77 @@ be on disk would flip verdicts when that wave commits or reverts, which is D41's
 router" in reverse. `create_reservation`, `create_draft_campaign` and `publish_campaign` are those three, and
 §5's campaigns rows are already in the "documented, not served" ledger their owner works from. And no new route
 was added, so the contract ledger is §38's, unchanged.
+
+## D45 A key nobody required is not an absent key — it is one shared literal, and the promise has two halves — 2026-09-24
+
+### 1. What shipped
+
+`IdempotencyService.run(scope, key, owner, work)` claims a row keyed by the scope and the caller's header
+together, and on a conflict it hands back whatever the first claimer stored. `@Idempotent(scope = …)` is what
+makes `AuthorizationInterceptor` demand that header. `POST /api/v1/admin/moderation/{id}/resolve` had the first
+half and not the second: it wrapped its decision in `run` and never declared the marker. So a resolve that
+arrived without a header was not "un-idempotent" — it claimed the literal `moderation_resolve|null`, one row
+shared by every keyless caller of that route.
+
+Three faces, measured by running the shipped code with the marker deleted and the guard neutralised
+(`ModerationFlowTest.keylessResolveIsRefusedAndLeavesItsCaseOpen`):
+
+- the first keyless resolve answered **200** and did its own work — and wrote the shared claim, which is the
+  whole problem, since nothing about that response says a second caller will be answered from it;
+- a keyless resolve by a **different** platform account afterwards answered **409
+  `idempotency_key_conflict`**: a reviewer who never touched the queue is locked out of the route until the
+  24-hour TTL ends;
+- a keyless resolve by the **same** account is answered from the stored row without executing anything
+  (`idempotent_replay: true`). That face is measured at the service, in `IdempotencyPairingTest` — over HTTP it
+  is unreachable once the marker exists — and it is the one that matters most: the console would print a
+  decision, a `resolved_at` and a `before`/`after` pair for a case nobody decided (§109).
+
+### 2. Two halves of a fix, because two halves failed
+
+The route now carries `@Idempotent(scope = "moderation_resolve")`, so a keyless resolve is a 422 naming the
+header and the scope, and nothing is claimed, closed or audited. And `run` refuses a null or blank key with a
+500 that names the declaration it wants, because the marker is one line a later edit can lose: with the marker
+deleted and only the guard in place, the same request answers **500**, measured — loud and specific instead of
+quietly shared. The 500 is deliberate. No client can reach it by what it sends; what it reports is a handler
+that asked for a replay without asking for the key.
+
+### 3. The gate reads the source, which is the opposite of D44
+
+D44's rule was *ask the resolver rather than copy its vocabulary*, and here there is no resolver to ask: which
+handler wraps its body in `run` is a fact about a method body, invisible to reflection, and the two halves of
+the promise sit centimetres apart in one file. So `IdempotencyPairingTest` walks `src/main/java` and asks the
+mechanical question — every `.run("<scope>", …)` has an `@Idempotent(scope = "<same>")` above it in the same
+file — and names what it finds: `ModerationController.java:143 runs scope 'moderation_resolve' with no
+@Idempotent`. The walk opens with an assertion that the source directory exists, because a scan whose root had
+moved would pass by finding nothing (D44's non-zero guard again).
+
+One direction only, on purpose. A marker with no `run` asks a caller for a token it does not use: wasteful,
+harmless, and `POST /api/v1/reservations` is the served example of the shape — it demands no header because
+`reservations_slot_user_uniq` (V2) already settles a retry, answering 200 instead of 201 with the same code and a
+`status_note` that says the hold was reused. A
+`run` with no marker corrupts an answer. Only the second is refused.
+
+### 4. And §1's list, copied
+
+`API_CONTRACT` §1 said the header is required "on checkout, payment, reservation create, review create, campaign
+publish", and `Idempotent`'s javadoc reproduced those five verbatim — D44's mechanism with a decision number
+replaced by a section number. Measured: one of those five is served and requires it (review create); checkout,
+payment and campaign publish have no route in this build at all — nothing in `src/main/java` references
+`CartService` — and reservation create asks for no key by design. Four served replays are not in the list
+because the list predates them. §1 now names the five this build answers a replay for, says what guards a
+retried booking, and says which three are waiting for their routes.
+
+```
+IdempotencyPairingTest              new · 2 tests · ModerationFlowTest 4 → 5 · suite 142 → 145
+mutations that reddened them        3 (marker off / guard off / both = the shipped code) · 0 left in the tree
+recorded replays in src/main/java   5 · paired before this unit 4 · after 5
+§1's five doors                     served 2 of 5 · requiring the key 1 of 5 · 4 unlisted doors already required
+faces measured                      200 + shared claim · 409 for the second account · replay for the first
+```
+
+What this does not do: it does not gate the reverse pairing, for the reason above. It does not require a key on
+reservation create, which is protected by an index rather than by a stored response — §1 now says so instead of
+the code pretending otherwise. And it does not guard `IdempotencyService.headerOnly`, which builds a string
+rather than a claim: the checkout route, when `com.nexus.commerce` grows one, will need either this marker or
+its own decision about a null key, and that is that stream's call to make. `com.nexus.admin`'s one red test and
+the 25 documented-not-served rows are unchanged and still theirs.

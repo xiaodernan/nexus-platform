@@ -15,6 +15,13 @@ import org.springframework.stereotype.Service;
  * proves the header exists; the handler knows the response shape, so it wraps its work here:
  * first caller executes and records the response, a replay returns the recorded response without
  * re-executing (no double charge).
+ *
+ * <p>The two halves are one promise: a handler that calls {@link #run} must also carry
+ * {@code @Idempotent(scope = <the same string>)}, because {@code run} is what makes the header
+ * meaningful and {@code @Idempotent} is what makes it arrive. {@link #run} refuses a null or blank key
+ * rather than deriving one — see the guard there for what a shared {@code <scope>|null} row would do to
+ * the second caller. {@code IdempotencyPairingTest} checks the pairs against the source; both exist
+ * because neither half is visible from the other.
  */
 @Service
 public class IdempotencyService {
@@ -33,6 +40,18 @@ public class IdempotencyService {
     @SuppressWarnings("unchecked")
     public Map<String, Object> run(String scope, String key, UUID ownerId,
                                    java.util.function.Supplier<Map<String, Object>> work) {
+        if (key == null || key.isBlank()) {
+            // The claim row is keyed by scope + '|' + key, so a missing header is not "no key" — it is the
+            // literal '<scope>|null', one row every keyless caller of this route shares. The first caller's
+            // stored answer then replays onto a second, unrelated operation of the same account, and a
+            // different account is locked out with idempotency_key_conflict until the TTL ends. Reaching this
+            // line means the handler wrapped its work here without declaring @Idempotent, so the interceptor
+            // never demanded the header; fix it there rather than relaxing this check.
+            throw ApiException.internal("IdempotencyService.run(\"" + scope + "\", ...) reached a caller with no "
+                    + "Idempotency-Key, so the claim row would be the literal '" + scope + "|null'; declare "
+                    + "@Idempotent(scope = '" + scope + "') on the handler so the interceptor refuses the "
+                    + "request before this runs", null);
+        }
         MapSqlParameterSource claim = new MapSqlParameterSource()
                 .addValue("key", scope + "|" + key)
                 .addValue("scope", scope)
