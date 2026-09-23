@@ -2045,3 +2045,51 @@ comment — rather than by raising `max_connections` on a Postgres container tha
 share. That leaves the suite at 192 tests, one red, and the red is `com.nexus.admin`'s. What it does not leave is
 a guard: nothing stops a future class from being the twenty-fifth context, and the honest statement of this
 section is that the ceiling is now further away, not gone.
+
+## D57 Counting the thing D56 said was not gone — 2026-09-24
+
+### 1. The promise, then the gate
+
+D56 ended with a sentence that was true and useless: the connection ceiling "is now further away, not gone, and
+nothing yet counts the contexts." This unit counts them.
+
+`TestConnectionBudgetTest` asks the container what its limit is — `select current_setting('max_connections')`,
+currently **100** — counts the test classes that will each take a cached Spring context of their own (anything
+carrying `@TestPropertySource`, `@ActiveProfiles`, `@MockitoBean` or `@MockBean`: **eight** today), reads the
+pool size the running service actually bound (**5**, the harness pin from D56), and asserts the arithmetic that
+follows: `pool ≤ (max − 1) / contexts`, which today allows 12 per context and leaves the suite at 40 of 100. The
+gate itself adds no context: it overrides nothing, so it joins the shared one, which is the whole etiquette the
+measurement is about.
+
+### 2. Why the shape, and where it is soft
+
+The ceiling is read rather than written down because it is not this repository's fact to keep: it belongs to a
+container another stream may resize, and a remembered "100" would age into a wrong constant the same way the
+deadline column in D46 did. The pool is read from the live `Environment` rather than trusted from the harness for
+the same reason — the file that sets it and the test that checks it are not allowed to drift apart silently, which
+is D44's failure with the roles reversed.
+
+Two assertions, deliberately ordered: the derived allowance first, so a raised pool fails for the reason that
+matters, and the pin second, so lowering the pin in one place without the other fails too. The first has a
+witness that bites (pool 13 → "no context may hold more than 12"); the second's is the same file with the value
+changed to 4, which passes the budget and fails the tie.
+
+Where it is soft, stated plainly rather than hidden in a caveat: the count is an upper bound on *distinct*
+context keys, because two classes overriding identical properties share one — so it will over-count before it
+under-counts, which is the safe direction for a ceiling. A `@SpringBootTest` class that does not extend the shared
+harness would be missed entirely; none exists today, and the list of counted classes is printed in the failure
+message so a future miss is at least visible. And a class that *removes* its property overrides would lower the
+count by merging into the shared context, which is not a failure but a real saving, so the gate lets it through.
+
+What the number is actually for: not to forbid new witness classes — D50 through D56 added six of them, each
+because a promise had no proof — but to make the cost of one visible at the moment it is added, next to the
+headroom that remains. A budget nobody reads is spent until something fails, and the way it failed in D56 was
+seven errors in somebody else's run.
+
+```
+TestConnectionBudgetTest   new · 1 test · ceiling from the container, pool from the Environment, classes from source
+measured                   contexts 8 · max_connections 100 · pool 5 · allowance 12 each · worst case 40 of 100
+mutations run              2 · pool raised to 13 (allowance red, with the arithmetic in the message) ·
+                           pool lowered to 4 (pin red, budget satisfied)
+suite                      192 → 193 run · the 1 red stays com.nexus.admin's
+```

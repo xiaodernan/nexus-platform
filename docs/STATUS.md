@@ -2366,3 +2366,43 @@ Contract text is unchanged: these codes were always §1-conformant, what was mis
 note for the record — the first version of this section's decision entry landed mid-file, leaving
 `docs/DECISIONS.md` ordered D51, D55, D52, because the anchor I inserted on sat inside a section that was not the
 last. No gate catches that; `grep -n '^## D5'` does.
+
+## 52. Counting the budget D56 said was not gone (2026-09-24)
+
+§51's last line admitted the connection ceiling was only further away, with nothing measuring it. There is now
+something measuring it. `TestConnectionBudgetTest` asks the container for its limit
+(`current_setting('max_connections')` → **100**), counts the test classes that take a context of their own —
+anything carrying `@TestPropertySource`, `@ActiveProfiles`, `@MockitoBean` or `@MockBean`, **eight** today — reads
+the pool the running service actually bound (**5**, the D56 pin) from the live `Environment`, and asserts the
+arithmetic: no context may hold more than `(100 − 1) / 8 = 12`, and the suite currently sits at 40 of 100. The
+gate adds no context itself — it overrides nothing, so it joins the shared one, which is the etiquette the whole
+measurement is about.
+
+Two choices worth the reason. The ceiling is *read*, not written down, because it belongs to a container other
+streams can resize and a remembered number ages into a wrong constant (D46's deadline column, in prose form); the
+pool is read from the environment rather than trusted from the harness, so the file that sets it and the test that
+checks it cannot drift apart unnoticed (D44, roles reversed). The assertions are ordered on purpose: the derived
+allowance comes first so a raised pool fails for the reason that matters, and the pin comes second so a pin
+changed in only one place still fails. Both have their own witness — pool 13 → "no context may hold more than
+12" (red), pool 4 → the tie is red while the budget is satisfied.
+
+Softness, stated rather than buried: the count is an upper bound on *distinct* context keys, since two classes
+overriding identical properties share one — it over-counts before it under-counts, which is the safe direction for
+a ceiling; a `@SpringBootTest` class that didn't extend the harness would be missed (none today, and the failure
+message prints the list, so a miss is at least visible); and a class that *drops* its property overrides lowers the
+count by merging into the shared context, which is a real saving, not a failure to hide. The number exists to make
+the cost of a new witness class visible at the moment it is added — D50 through D56 added six such classes, each
+because a promise had no proof — and not to forbid them. The way it was paid for before was seven errors in
+somebody else's run.
+
+```
+TestConnectionBudgetTest   new · 1 test · ceiling from the container, pool from the Environment, classes from source
+measured                   contexts 8 · max_connections 100 · pool 5 · allowance 12 each · worst case 40 of 100
+mutations run              2 · pool 13 → allowance red · pool 4 → pin red with the budget satisfied
+suite                      192 → 193 run · the 1 red stays com.nexus.admin's AdminConsoleApiTest:289
+```
+
+What this does not do. It does not raise or reserve anything on the container — that is shared infrastructure other
+streams use, and resizing it is a decision for whoever owns it. It does not gate the *e2e* boot, which opens its
+own short-lived platform and has its own datasource. And it does not retire the standing reports; the two
+decisions still parked (§45's §8 writes, and §48's §42 text that no client can reach yet) are unchanged.
