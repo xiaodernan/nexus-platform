@@ -140,6 +140,28 @@ class AuthRefusalCodesTest extends NexusIntegrationTest {
     }
 
     @Test
+    @DisplayName("An id token from an unknown provider is a refusal that lists what exists")
+    void unknownProviderIsNamedAndEnumerates() {
+        // The dev verifier is registered only under the dev/test profiles (OAuthVerifierRegistry), so under the
+        // default test profile "dev" is not a provider at all: that must be a 422 naming the supported set,
+        // not a 401 that sends a client to re-authenticate against a provider nobody configured.
+        Tenant tenant = newTenant("codes-oauth");
+
+        ResponseEntity<String> res = post(tenant, null, "/api/v1/auth/oauth/dev",
+                Json.map("id_token", "not-a-jwt-at-all"));
+
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(code(res)).isEqualTo("validation_error");
+        assertThat(Json.tree(res.getBody()).path("error").path("details").path("provider").asText())
+                .isEqualTo("dev");
+        assertThat(Json.tree(res.getBody()).path("error").path("details").path("supported").isArray())
+                .as("the refusal says which providers this deployment wired up, and dev is not among them here")
+                .isTrue();
+        assertThat(Json.tree(res.getBody()).path("error").path("details").path("supported").toString())
+                .doesNotContain("dev");
+    }
+
+    @Test
     @DisplayName("Every refusal above is a §1 envelope, not a bare status")
     void everyRefusalCarriesTheEnvelope() {
         Tenant tenant = newTenant("codes-envelope");

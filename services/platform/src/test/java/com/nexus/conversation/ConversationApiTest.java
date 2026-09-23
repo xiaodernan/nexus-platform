@@ -50,6 +50,28 @@ class ConversationApiTest extends NexusIntegrationTest {
     // ---------------------------------------------------------------- (b) open a thread
 
     @Test
+    @DisplayName("An absent conversation is a named 404 at both doors that take one")
+    void absentThreadNamesItself() {
+        // The consumer door and the merchant door resolve the id differently — a read by subject and an
+        // authoriser lookup by conversation ownership — and both have to say the same thing (D5), because a
+        // 403 at either would confirm the thread exists to someone who cannot see it.
+        UUID absent = java.util.UUID.randomUUID();
+
+        ResponseEntity<String> mine = get(tenant, token(tenant, consumer, "consumer"),
+                "/api/v1/conversations/" + absent);
+        assertThat(mine.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(Json.tree(mine.getBody()).path("error").path("code").asText())
+                .isEqualTo("conversation_not_found");
+
+        ResponseEntity<String> staffDoor = post(tenant, token(tenant, staff, "consumer"),
+                "/api/v1/merchant/conversations/" + absent + "/handoff-resolve", Map.of("action", "resolved"));
+        assertThat(staffDoor.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(Json.tree(staffDoor.getBody()).path("error").path("code").asText())
+                .as("the authoriser's absence, not a permission refusal, so the two 404s read alike")
+                .isEqualTo("conversation_not_found");
+    }
+
+    @Test
     @DisplayName("POST /conversations opens a tenant-scoped thread and requires a subject")
     void opensThread() {
         ResponseEntity<String> anon = post(tenant, null, "/api/v1/conversations",
@@ -234,10 +256,12 @@ class ConversationApiTest extends NexusIntegrationTest {
         assertThat(row("select status from conversations where id = :id", Map.of("id", conversation)).get("status"))
                 .isEqualTo("closed");
 
-        // Resolving twice is a conflict, not a silent no-op.
-        assertThat(post(tenant, token(tenant, staff, "consumer"),
-                "/api/v1/conversations/" + conversation + "/handoff-resolve", Map.of("action", "resolved"))
-                .getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        // Resolving twice is a conflict, not a silent no-op — and the code is what tells the merchant's screen
+        // that there is nothing left to resolve, as opposed to a collision it could retry (D56).
+        ResponseEntity<String> twice = post(tenant, token(tenant, staff, "consumer"),
+                "/api/v1/conversations/" + conversation + "/handoff-resolve", Map.of("action", "resolved"));
+        assertThat(twice.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(Json.tree(twice.getBody()).path("error").path("code").asText()).isEqualTo("no_open_handoff");
 
         // The consumer can read their own thread and sees the resolution trail.
         JsonNode thread = Json.tree(get(tenant, token(tenant, consumer, "consumer"),

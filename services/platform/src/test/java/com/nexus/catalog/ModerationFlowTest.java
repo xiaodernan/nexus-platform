@@ -235,6 +235,17 @@ class ModerationFlowTest extends NexusIntegrationTest {
         return UUID.fromString(Json.tree(res.getBody()).path("review_id").asText());
     }
 
+    @Test
+    @DisplayName("A resolve against a case that is not there is a named 404, before any decision is taken")
+    void absentCaseNamesItself() {
+        // D56: the queue answers 409 case_already_resolved and 422 on a bad decision, so a bare 404 here has to
+        // say "no such case" rather than leave a client guessing which of the three it hit.
+        ResponseEntity<String> res = resolve(java.util.UUID.randomUUID().toString(), "rejected", null);
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(Json.tree(res.getBody()).path("error").path("code").asText())
+                .isEqualTo("moderation_case_not_found");
+    }
+
     private ResponseEntity<String> resolve(String caseId, String decision, String note) {
         Map<String, Object> body = note == null ? Json.map("decision", decision)
                 : Json.map("decision", decision, "note", note);

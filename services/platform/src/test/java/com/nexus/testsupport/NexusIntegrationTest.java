@@ -37,6 +37,12 @@ import org.springframework.web.client.RestTemplate;
         "spring.datasource.url=jdbc:postgresql://127.0.0.1:5433/nexus_test",
         "spring.datasource.username=nexus_app",
         "spring.datasource.password=nexus_dev_app_only",
+        // Every @SpringBootTest with a distinct property set gets its own cached context, and every context holds
+        // its own Hikari pool. At the base file's 20 the suite reached the container's connection ceiling and
+        // began failing with "remaining connection slots are reserved for roles with the SUPERUSER attribute" —
+        // not a broken test, an exhausted budget (D56). Five per context leaves room for the classes that
+        // override properties, which is the point of this harness.
+        "spring.datasource.hikari.maximum-pool-size=5",
         "spring.flyway.enabled=false",
         "nexus.redis.enabled=false",
         "nexus.ratelimit.enabled=false",

@@ -108,6 +108,14 @@ class NotificationApiTest extends NexusIntegrationTest {
         assertThat(read.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(Json.tree(read.getBody()).path("read_at").asText()).isNotBlank();
 
+        // A notification the caller cannot see is the same 404 as one that never existed (D5), and it is named:
+        // "you may not read this" and "there is no such thing" would be two different repairs (D56).
+        ResponseEntity<String> absent = post(tenant, token(tenant, consumer, "consumer"),
+                "/api/v1/notifications/" + java.util.UUID.randomUUID() + "/read", Map.of());
+        assertThat(absent.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(Json.tree(absent.getBody()).path("error").path("code").asText())
+                .isEqualTo("notification_not_found");
+
         JsonNode after = Json.tree(get(tenant, token(tenant, consumer, "consumer"),
                 "/api/v1/notifications?unread=true").getBody());
         assertThat(findTemplate(after, "handoff_resolved", "in_app")).isNull();

@@ -1759,85 +1759,6 @@ so §3 now says which parts of "logout" are immediate and which are 900 seconds 
 revocation is a deployment decision (it means requiring Redis, or accepting per-node divergence, or moving to
 opaque tokens), not a side effect of a documentation unit.
 
-## D55 A 401 is not an answer — the codes no request ever produced — 2026-09-24
-
-### 1. The census
-
-The platform emits 61 distinct error codes. Counting how many are *named* anywhere under `src/test/java` or the
-`scripts/` verifiers said: **33 had never been produced by a request anyone checked.** Each of those 33 rides
-behind a status some test may already assert — so the suite can be green on `401` while the client cannot tell
-"your token expired" (refresh it) from "that is a refresh token" (do not) from "this session belongs to another
-tenant" (sign in elsewhere). Three repairs, one status, and the code is the only one of the three that says which.
-
-### 2. What this unit named
-
-Eleven of the 33, each by doing the thing rather than calling a factory: a truncated token and a tampered
-signature (both `invalid_token`, and the messages differ while the code deliberately does not); a token signed
-with the real key and an `exp` in the past (`token_expired` — signed on purpose, because an unsigned token is
-refused for the wrong reason and the test would still pass); a refresh token held up as a bearer
-(`wrong_token_type`); a session minted for another tenant (`tenant_mismatch`, with the same token proved still
-working at home, so the refusal is about the `tid` and not the fixture); a second registration of one address
-(`email_taken`); an access token at the refresh door (`invalid_refresh_token`). Then the workspace and `/me`
-family: `member_exists`, whose details are asserted to name *which role is in the way* — a 409 a screen cannot
-act on is not a refusal, it is a shrug — plus `member_not_found`, `api_key_not_found`, `subject_not_found` and
-`preference_not_found`, the last two checked against each other so two different absences cannot share one code.
-
-Four mutations, all red: expiry answering the generic code; cross-tenant answering the generic code; the 409
-dropping its `role` detail; the key authoriser falling back to bare `not_found`.
-
-### 3. What is left, and where it lives
-
-22 codes are still unnamed. Thirteen exist only in untracked files — `cart_*`, `order_*`,
-`insufficient_stock`, `reservation_not_addable`, `offering_not_purchasable`, `listing_not_publishable`, one
-`conflict` in the admin console — so they belong to the commerce and admin streams: reported, not walked. Nine
-sit in code this lane owns behind real doors: `moderation_case_not_found`, `review_not_found`,
-`conversation_not_found`, `no_open_handoff`, `notification_not_found`, `offering_not_found`, `slug_taken`,
-`invalid_id_token` and `not_implemented`. Two of those nine are config-gated rather than hard to reach:
-`not_implemented` fires when `NEXUS_AI_INTERNAL_TOKEN` is *unset*, which the shared harness always sets, so
-witnessing it needs its own context; and the OAuth `dev` verifier raises `invalid_id_token` only for a token it
-can parse at all. That is a queue with reasons attached, not a mystery.
-
-One method note, because it nearly shipped a false statement. The first census split "this lane vs another
-stream" by matching walked paths against `git ls-files`, and on Windows `os.walk` yields backslashes where
-`ls-files` prints forward slashes — so it reported *zero* codes in this lane, including `subject_not_found`,
-which this session had committed hours earlier. The error was in the convenient direction (nothing left to do),
-and it is the same failure the project keeps meeting: a measurement that matches nothing reports success.
-Normalising separators moved the number from 0 to nine.
-
-```
-AuthRefusalCodesTest   new · 7 tests · the auth family by doing, plus §1's envelope on a refusal
-MerchantWorkspaceTest  13 → 14 · the three workspace absences named, and the 409's role detail
-FavoriteDoorTest       5 → 6 · subject_not_found and preference_not_found, distinct from each other
-mutations run          4
-codes                  emitted 61 · unnamed before 33 · unnamed after 22 (13 in other streams' files, 9 queued)
-suite                  178 → 187 run · the 1 red stays com.nexus.admin's
-```
-
-What this does not do. It does not assert message *text* anywhere: codes are the contract surface, prose is for
-humans, and pinning wording only makes wording harder to fix. It does not add a gate that every code is named —
-that would freeze a list which legitimately grows — and it does not change any ladder rung: §1's eight statuses
-have all been produced by a request since D47 and D49.
-
-```
-LogoutDoorTest        new · 3 tests · cookies + family + audit, the surviving bearer, the anonymous call
-SavedSearchDoorTest   new · 3 tests · save/list/remove, the defaults (notify false, intent {}), the two 404s
-                      that read alike, the owner's row surviving someone else's delete, a refused save storing
-                      nothing
-FavoriteDoorTest      +1 test (5 now) · the favourites door's identical 404, with the same survivor check
-mutations run         5 · both 404 guards reverted (2 tests red) · revoke() dropped (refresh refusal red) ·
-                      cookie clearing dropped (headers red) · logout audit dropped (red) · accept() fails open
-                      (the revoked family mints again)
-suite                 166 → 173 · the 1 red stays com.nexus.admin's
-```
-
-What this does not do. It does not close the bearer's 900-second window, for the reason in §3 — and it no longer
-lets prose imply otherwise. It does not walk the two untracked merchant doors or `ucp.json`, which are reported
-with their counts rather than borrowed. It does not connect `notify` to any notification mechanism: the column
-stores the caller's wish and §7 now says only that, because nothing in this build reads it — the door's remaining
-half-promise, reported rather than wired. And it does not turn "is there a test naming this route?" into a gate:
-a route count is the wrong thing to freeze into a build rule, because a path can be named by a test that asserts
-nothing about it, so the audit stays a method run by hand.
-
 ## D52 A seam covered by mocks, and the pointer its own document prints — 2026-09-24
 
 ### 1. The third door, and why it looked already covered
@@ -1980,3 +1901,147 @@ What this does not do. It does not validate that an exported name is one the con
 stream's and carries its own dev-platform target with the older ports. And it does not decide anything about
 `.env`'s contents: the file is gitignored, per-machine, and now simply later in the precedence chain than the
 person who typed the command.
+
+## D55 A 401 is not an answer — the codes no request ever produced — 2026-09-24
+
+### 1. The census
+
+The platform emits 61 distinct error codes. Counting how many are *named* anywhere under `src/test/java` or the
+`scripts/` verifiers said: **33 had never been produced by a request anyone checked.** Each of those 33 rides
+behind a status some test may already assert — so the suite can be green on `401` while the client cannot tell
+"your token expired" (refresh it) from "that is a refresh token" (do not) from "this session belongs to another
+tenant" (sign in elsewhere). Three repairs, one status, and the code is the only one of the three that says which.
+
+### 2. What this unit named
+
+Eleven of the 33, each by doing the thing rather than calling a factory: a truncated token and a tampered
+signature (both `invalid_token`, and the messages differ while the code deliberately does not); a token signed
+with the real key and an `exp` in the past (`token_expired` — signed on purpose, because an unsigned token is
+refused for the wrong reason and the test would still pass); a refresh token held up as a bearer
+(`wrong_token_type`); a session minted for another tenant (`tenant_mismatch`, with the same token proved still
+working at home, so the refusal is about the `tid` and not the fixture); a second registration of one address
+(`email_taken`); an access token at the refresh door (`invalid_refresh_token`). Then the workspace and `/me`
+family: `member_exists`, whose details are asserted to name *which role is in the way* — a 409 a screen cannot
+act on is not a refusal, it is a shrug — plus `member_not_found`, `api_key_not_found`, `subject_not_found` and
+`preference_not_found`, the last two checked against each other so two different absences cannot share one code.
+
+Four mutations, all red: expiry answering the generic code; cross-tenant answering the generic code; the 409
+dropping its `role` detail; the key authoriser falling back to bare `not_found`.
+
+### 3. What is left, and where it lives
+
+22 codes are still unnamed. Thirteen exist only in untracked files — `cart_*`, `order_*`,
+`insufficient_stock`, `reservation_not_addable`, `offering_not_purchasable`, `listing_not_publishable`, one
+`conflict` in the admin console — so they belong to the commerce and admin streams: reported, not walked. Nine
+sit in code this lane owns behind real doors: `moderation_case_not_found`, `review_not_found`,
+`conversation_not_found`, `no_open_handoff`, `notification_not_found`, `offering_not_found`, `slug_taken`,
+`invalid_id_token` and `not_implemented`. Two of those nine are config-gated rather than hard to reach:
+`not_implemented` fires when `NEXUS_AI_INTERNAL_TOKEN` is *unset*, which the shared harness always sets, so
+witnessing it needs its own context; and the OAuth `dev` verifier raises `invalid_id_token` only for a token it
+can parse at all. That is a queue with reasons attached, not a mystery.
+
+One method note, because it nearly shipped a false statement. The first census split "this lane vs another
+stream" by matching walked paths against `git ls-files`, and on Windows `os.walk` yields backslashes where
+`ls-files` prints forward slashes — so it reported *zero* codes in this lane, including `subject_not_found`,
+which this session had committed hours earlier. The error was in the convenient direction (nothing left to do),
+and it is the same failure the project keeps meeting: a measurement that matches nothing reports success.
+Normalising separators moved the number from 0 to nine.
+
+```
+AuthRefusalCodesTest   new · 7 tests · the auth family by doing, plus §1's envelope on a refusal
+MerchantWorkspaceTest  13 → 14 · the three workspace absences named, and the 409's role detail
+FavoriteDoorTest       5 → 6 · subject_not_found and preference_not_found, distinct from each other
+mutations run          4
+codes                  emitted 61 · unnamed before 33 · unnamed after 22 (13 in other streams' files, 9 queued)
+suite                  178 → 187 run · the 1 red stays com.nexus.admin's
+```
+
+What this does not do. It does not assert message *text* anywhere: codes are the contract surface, prose is for
+humans, and pinning wording only makes wording harder to fix. It does not add a gate that every code is named —
+that would freeze a list which legitimately grows — and it does not change any ladder rung: §1's eight statuses
+have all been produced by a request since D47 and D49.
+
+```
+LogoutDoorTest        new · 3 tests · cookies + family + audit, the surviving bearer, the anonymous call
+SavedSearchDoorTest   new · 3 tests · save/list/remove, the defaults (notify false, intent {}), the two 404s
+                      that read alike, the owner's row surviving someone else's delete, a refused save storing
+                      nothing
+FavoriteDoorTest      +1 test (5 now) · the favourites door's identical 404, with the same survivor check
+mutations run         5 · both 404 guards reverted (2 tests red) · revoke() dropped (refresh refusal red) ·
+                      cookie clearing dropped (headers red) · logout audit dropped (red) · accept() fails open
+                      (the revoked family mints again)
+suite                 166 → 173 · the 1 red stays com.nexus.admin's
+```
+
+What this does not do. It does not close the bearer's 900-second window, for the reason in §3 — and it no longer
+lets prose imply otherwise. It does not walk the two untracked merchant doors or `ucp.json`, which are reported
+with their counts rather than borrowed. It does not connect `notify` to any notification mechanism: the column
+stores the caller's wish and §7 now says only that, because nothing in this build reads it — the door's remaining
+half-promise, reported rather than wired. And it does not turn "is there a test naming this route?" into a gate:
+a route count is the wrong thing to freeze into a build rule, because a path can be named by a test that asserts
+nothing about it, so the audit stays a method run by hand.
+
+## D56 The nine that were left, and the three that turned out to have no door — 2026-09-24
+
+### 1. Working the queue D55 left
+
+D55's census closed with nine codes in tracked code and "real doors", by its own count. Six now have a witness
+produced by a request; three do not, and the reason they do not is the finding, not a shortfall:
+
+- `conversation_not_found` — GET an absent thread, and the same absence through the merchant authoriser's
+  `conversation:id` lookup, asserted to answer identically (D5: a 403 would confirm the thread exists).
+- `no_open_handoff` — an existing assertion checked only `409`; it now names the code, because that 409 has a
+  sibling on the same route (`case_already_resolved`-style collisions) and a client cannot retry what is already
+  settled.
+- `notification_not_found`, `moderation_case_not_found` — same upgrade: a 404 that used to be only a status.
+- `invalid_id_token` — unreachable under the default test profile, because `OAuthVerifierRegistry` registers the
+  dev verifier only under dev/test. `DevOauthRefusalTest` turns the profile on to produce it; and
+  `AuthRefusalCodesTest` now asserts the *other* half, which is what the default profile actually does: a 422
+  naming the provider and listing what is wired up. §42's finding, arriving from the opposite direction — a
+  refusal that depends on configuration the shared harness never sets is a refusal no test has ever seen.
+- `not_implemented` — the internal conversation door with `NEXUS_AI_INTERNAL_TOKEN` unset, which the harness
+  always sets. `InternalDoorUnconfiguredTest` overrides it blank, which is also the honest way in: the guard's
+  rule is "shorter than 16 characters means unconfigured", so a short token would take the 401 branch instead and
+  the 501 would still never have been produced.
+
+### 2. The three that have no door in this build
+
+`offering_not_found` is raised through `WorkspaceAccess` only for routes scoped by `merchant = "offering:id"`,
+and both such routes live in `MerchantContentController` — untracked, another stream's. `slug_taken` is raised by
+`MerchantService.createBusiness`, whose only caller is that same controller. `review_not_found` sits behind a
+state nothing in this build can make: a moderation case whose `subject_id` points at no review row — cases and
+reviews are written together, so the branch is an internal-consistency guard, not a reachable refusal.
+
+That is a correction to D55 as much as a result: its "nine with real doors" was a count of files in this lane,
+not of doors a test can knock on. Three of the nine were tracked code behind an untracked door or a state no door
+creates, and the census cannot tell those apart — only reading the caller does.
+
+```
+new                 ConversationApiTest +1 method, AuthRefusalCodesTest +1, ModerationFlowTest +1,
+                    NotificationApiTest, InternalDoorUnconfiguredTest (new class), DevOauthRefusalTest (new class)
+mutations run       4 · no_open_handoff → generic conflict · moderation_case_not_found → bare not_found ·
+                      configured() always true (the 501 becomes a 401, which is the ordering proved) ·
+                      notification_not_found → bare not_found
+codes               unnamed in this lane: 9 → 3, all three reported with the reason they are unreachable
+```
+
+Two process notes, both about this unit's own writing. The entry above was nearly wrong twice: once by
+trusting D55's file-based count as a door-based one, and once because the first version of these docs inserted
+this section's predecessor in the middle of the sequence, leaving the file ordered D51, D55, D52 — caught by
+reading `grep -n '^## D5'` rather than by any gate, which is a reminder that the ordering rule in this file is
+also an unwritten promise.
+
+### 4. And a budget the suite had been spending without saying
+
+Between the first green run of this unit and the second, the full suite came back with **seven errors** — not
+assertion failures — with `FATAL: remaining connection slots are reserved for roles with the SUPERUSER
+attribute`. The cause was this unit's own shape: `InternalDoorUnconfiguredTest` and `DevOauthRefusalTest` each
+override properties, so each gets its own cached Spring context, and each context keeps its own Hikari pool at
+the base file's `maximum-pool-size: 20`. Contexts cost connections. Nothing in the tree said that, so the suite
+had been growing toward the container's limit one witness class at a time, and the first failure was mine.
+
+Fixed where it belongs — `NexusIntegrationTest` now pins five connections per context, with the reason in its
+comment — rather than by raising `max_connections` on a Postgres container that other streams and other runs
+share. That leaves the suite at 192 tests, one red, and the red is `com.nexus.admin`'s. What it does not leave is
+a guard: nothing stops a future class from being the twenty-fifth context, and the honest statement of this
+section is that the ceiling is now further away, not gone.

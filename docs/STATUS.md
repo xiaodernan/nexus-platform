@@ -2316,3 +2316,53 @@ suite                 178 → 187 run · the 1 red stays com.nexus.admin's Admin
 What this does not do: it asserts no message prose anywhere (codes are the contract surface; pinning wording just
 makes wording hard to fix), it does not gate "every code must be named" — that freezes a list which legitimately
 grows — and it changes no ladder rung: every §1 status has been produced by a real request since §42 and §44.
+
+## 51. Six of the nine, and the three that turned out to have no door (2026-09-24)
+
+§50 left a queue of nine codes "in this lane, behind real doors". Six now have a request behind them, and the
+three that do not are the part worth reading, because the reason is absence rather than effort:
+`offering_not_found` and `slug_taken` are raised only for routes that live in `MerchantContentController`
+(untracked, another stream's), and `review_not_found` needs a moderation case whose `subject_id` matches no
+review row — cases and reviews are written together, so that branch is an internal-consistency guard, not a door.
+Which means §50's count was of *files in this lane*, not of *doors a test can knock on*; a census cannot tell
+those apart, only reading the callers can. That is recorded here rather than quietly rewritten in §50.
+
+The six that did land:
+
+- `conversation_not_found`, asserted twice on purpose — the consumer's read, and the merchant authoriser's
+  `conversation:id` lookup — both the same 404, because a 403 at either tells a stranger the thread exists (D5).
+- `no_open_handoff`, where the assertion already existed and checked only the 409. Naming the code is the
+  difference between "nothing left to resolve" and "someone else wrote first", which are two different button
+  states on a merchant's screen.
+- `notification_not_found` and `moderation_case_not_found`, the same upgrade from status to code.
+- `invalid_id_token`, which the default test profile cannot reach at all: `OAuthVerifierRegistry` registers the
+  dev verifier only under dev/test, so the honest pair is a 422 naming the provider and listing what *is* wired
+  (§50's class), plus `DevOauthRefusalTest` turning the profile on to produce the 401. §42's finding from the
+  other direction: a refusal gated on configuration the shared harness always supplies has never been seen.
+- `not_implemented`, the internal conversation door with `NEXUS_AI_INTERNAL_TOKEN` blank — blank being the honest
+  way in, since the guard treats "shorter than 16 characters" as unconfigured and a short token would have taken
+  the 401 branch instead. Mutating `configured()` to always true turns the answer into `internal_token_missing`,
+  which is the ordering proof: the 501 exists to come first.
+
+The unit also caught a resource the suite had been quietly spending. Adding two more property-overriding classes
+pushed the run past the container's connection limit and seven tests errored with
+`remaining connection slots are reserved for roles with the SUPERUSER attribute` — every distinct
+`@SpringBootTest` property set is its own cached context, each holding its own Hikari pool at the base file's
+`maximum-pool-size: 20`, so contexts are bought with connections and the container only has so many. Fixed in the
+harness (`maximum-pool-size=5`), not by resizing shared infrastructure: the full suite is 192 run, one red, and
+that red is `com.nexus.admin`'s, unchanged and not this lane's. A suite that grows by adding contexts has a
+connection budget to go with them, and nothing said so until it failed.
+
+```
+new witnesses     ConversationApiTest +1 · ModerationFlowTest +1 · NotificationApiTest +1 assertion ·
+                  AuthRefusalCodesTest +1 · InternalDoorUnconfiguredTest · DevOauthRefusalTest (both new classes)
+harness           NexusIntegrationTest now pins hikari.maximum-pool-size=5, with the reason in its comment
+mutations run     4 · each turned a named code back into a generic one; the configured() mutation shows 501 > 401
+codes unnamed     9 → 3 in this lane, each with the reason it is unreachable; 13 others are other streams'
+suite             187 → 192 run · 1 red, com.nexus.admin's, pre-existing
+```
+
+Contract text is unchanged: these codes were always §1-conformant, what was missing was a request. One process
+note for the record — the first version of this section's decision entry landed mid-file, leaving
+`docs/DECISIONS.md` ordered D51, D55, D52, because the anchor I inserted on sat inside a section that was not the
+last. No gate catches that; `grep -n '^## D5'` does.
