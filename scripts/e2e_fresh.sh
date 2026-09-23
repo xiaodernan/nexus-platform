@@ -250,7 +250,7 @@ RUNG=0
 LIMIT=0
 while :; do
   attempt=$((attempt + 1))
-  HEADERS=$(curl -s -m 10 -D - -o "$LADDER_BODY" -X POST "http://127.0.0.1:$PORT/api/v1/auth/login"       -H 'content-type: application/json'       -d '{"email":"ladder@example.test","password":"not-the-password"}' | tr -d '')
+  HEADERS=$(curl -s -m 10 -D - -o "$LADDER_BODY" -X POST "http://127.0.0.1:$PORT/api/v1/auth/login"       -H 'content-type: application/json'       -d '{"email":"ladder@example.test","password":"not-the-password"}' | tr -d '\r')
   CODE=$(printf '%s
 ' "$HEADERS" | awk '/^HTTP\//{c=$2} END{print c}')
   if [ "$attempt" = "1" ]; then

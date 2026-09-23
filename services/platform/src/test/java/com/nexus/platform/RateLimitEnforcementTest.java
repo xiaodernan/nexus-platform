@@ -47,7 +47,8 @@ import org.springframework.test.context.TestPropertySource;
         // inlined test property loses its backslashes before the valve sees it.
         "server.tomcat.remoteip.internal-proxies=192.168.*",
         "nexus.ratelimit.auth-requests=3",
-        "nexus.ratelimit.write-requests=1"
+        "nexus.ratelimit.write-requests=1",
+        "nexus.ratelimit.ai-requests=2"
 })
 class RateLimitEnforcementTest extends NexusIntegrationTest {
 
@@ -172,5 +173,36 @@ class RateLimitEnforcementTest extends NexusIntegrationTest {
         assertThat(get(tenant, token(tenant, person, "consumer"), "/api/v1/me").getStatusCode())
                 .as("a spent write budget does not starve a read")
                 .isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @DisplayName("The AI scope is a principal's window, charged at the one AI-ish door this service serves")
+    void aiScopeCountsPerPrincipal() {
+        Tenant tenant = newTenant("rl-ai");
+        UUID first = newUser(tenant, "ai-a@example.test", "merchant");
+        UUID second = newUser(tenant, "ai-b@example.test", "merchant");
+        // A GET on purpose. This prefix is a mutating path, so a POST would be charged to the write scope too —
+        // 1 per window in this class — and the second attempt would be refused for the wrong reason. The ai
+        // scope is charged for any method, so the bucket still fills while the router answers what it answers
+        // (405 here, and the assertion only needs it to be the router rather than the limiter).
+        // The point is §1's "per principal" for this scope, and that the door is the one that exists: the
+        // prefix `/api/v1/ai/**` used to sit in the filter and serve nothing (D49).
+        String path = "/api/v1/merchant/ai-agent/config";
+
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            ResponseEntity<String> answered = get(tenant, token(tenant, first, "merchant"), path);
+            assertThat(answered.getStatusCode())
+                    .as("attempt " + attempt + " got past the limiter and answered " + answered.getStatusCode())
+                    .isNotEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        }
+
+        ResponseEntity<String> third = get(tenant, token(tenant, first, "merchant"), path);
+        assertThat(third.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(third.getHeaders().getFirst("X-RateLimit-Limit")).isEqualTo("2");
+        assertThat(Json.tree(third.getBody()).path("error").path("code").asText()).isEqualTo("rate_limited");
+
+        assertThat(get(tenant, token(tenant, second, "merchant"), path).getStatusCode())
+                .as("a second principal's first attempt is not charged to the first one's window")
+                .isNotEqualTo(HttpStatus.TOO_MANY_REQUESTS);
     }
 }

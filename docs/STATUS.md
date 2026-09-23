@@ -2004,3 +2004,66 @@ reach `spring.*` or `server.*` leaves, only the `nexus:` tree. And it leaves the
 them: `com.nexus.admin`'s red test, §106's retention job, `@RequiresPlatformRole`'s thin admin coverage, the 25
 documented-not-served rows, `RateLimiter.require` with no caller, `rate_limit_buckets` cited by another stream's
 types and written by nothing here, task #9's browser leg and task #17's reservation transitions.
+
+## 44. A filter line that could only ever meter a 404, and the rung behind another stream's door (2026-09-24)
+
+`RateLimitFilter` charged its `ai` scope on two prefixes. One is served — `POST /api/v1/merchant/ai-agent/config`
+— and the other, `/api/v1/ai/`, is a path family this service disclaims twice in its own tree: `OpenApiConfig`
+names the AI surfaces as `(/ai/v1/**, /mcp, /api/v1/ai/**)` "belong to the AI service", and §7 of the contract
+states "the platform service never serves `/api/v1/ai/**`". Asking the running router for its registered patterns
+says the same. So the line could meter nothing but requests that then 404, while §1's phrase "AI-ish endpoints
+per principal" read as if there were AI endpoints here to protect. D47 propagated that reading: its §1 sentence
+listed both prefixes because it copied them from the filter instead of asking the router — D44's failure arriving
+in prose — and §43 caught the copy. This unit removed the source and gated the shape.
+
+The gate is `RateLimitScopeRoutesTest`: it reads every `path.startsWith("…")` literal out of the filter's source
+rather than keeping a list of its own, asks `RequestMappingHandlerMapping` what is registered, and refuses a
+prefix with no route behind it. It guards against its own vacuity twice over — the literal list must be
+non-empty, the router must report more than fifty registered paths — because the obvious way for this gate to stop meaning
+anything is a refactor that moves the strings into constants, where the reader would find none.
+
+Writing the scope's HTTP witness produced a fact no document had: **a mutating request to the AI-agent door is
+charged to two windows at once**, `ai` and `write`. The first version of the test POSTed there and was refused on
+attempt two — by the write window (`1` per window in that class), not by the `ai` window it set out to measure.
+It now uses a non-mutating request so the scopes cannot collide, and §1 states the overlap, since "one request,
+two budgets" is otherwise something a client learns by hitting it.
+
+`ai_unavailable(503)` — §1's other rung — had never been produced anywhere either, for a different reason than
+the 429 had. Its only raisers are two `catch` blocks in `HeuristicImportAdapter.fetch` (tracked, this build's),
+and every door that reaches them is an untracked file belonging to another live stream. So it gets a seam
+witness instead: an unroutable source answers 503 `ai_unavailable`, an internal host answers 422 before anything
+is dialed, and a non-http scheme answers 422 — all three in one test, so the 503 cannot be satisfied by a
+DNS-rebind guard that grew teeth enough to refuse everything. The reachability gap is reported, not closed by
+editing somebody else's controller.
+
+```
+RateLimitScopeRoutesTest      new · 1 test · literals from the filter, paths from the router, two vacuity guards
+ImportSourceRungTest          new · 1 test · 503 / 422 / 422 at the adapter seam
+aiScopeCountsPerPrincipal     new method in RateLimitEnforcementTest · the scope is a principal's window
+mutations run                 5 · prefix re-added · ai line deleted · ai bucket keyed per address · 503 branch
+                              answers a different rung · all prefixes moved to constants (the guard's witness)
+suite                         159 → 162 run · the 1 red is com.nexus.admin's AdminConsoleApiTest:289, theirs
+e2e                           PASS with the dead line gone: 525 reads, the three walks at 30/30 + 15/15
+                              + 22/22, the rung refused on attempt 95 of the service's own 100-wide window,
+                              and the contract ledger unmoved at 121 of 133 / 96 / 25 / 0
+```
+
+Two of the five mutations misfired before they fired, and both are worth keeping in the record: the first 503
+mutation did not compile (`ApiException.validation` takes a details map), and the constants mutation stayed green
+twice — once because only one of three literals had moved, once because the mutation had not moved any. A green
+you did not expect is a measurement you have not finished.
+
+The same file got one piece of hygiene, and it came from asking a question rather than assuming the answer:
+D47's ladder step pipes curl's headers through a character-deletion whose operand had become a **real** carriage
+return byte instead of the two-character escape — the backslash was lost on the way through the script that
+wrote it. It worked (which is why two green runs never noticed), but it is invisible to a reader and it makes a
+line-ending audit of a script that `.gitattributes` pins to LF come back dirty. The operand is now the
+backslash-and-letter form, checked by a byte count of zero and by re-running the whole gate.
+
+What this does not do. It does not decide whether this service *should* serve `/api/v1/ai/**` — that is a routing
+question about the §7 BFF split, and a filter line is not the place it gets answered. It does not produce the 503
+over HTTP, for the reason above. It does not change how a two-scope request is charged, only says so out loud.
+And the standing reports are unchanged from §43's: `com.nexus.admin`'s red test, §106's retention job,
+`@RequiresPlatformRole`'s thin admin coverage, the 25 documented-not-served rows, `RateLimiter.require` with no
+caller, `rate_limit_buckets` written by nothing here, task #9's browser leg (`:8090` still not listening) and
+task #17's reservation transitions.

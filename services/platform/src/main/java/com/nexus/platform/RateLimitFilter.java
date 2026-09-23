@@ -12,6 +12,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 /**
  * Rate limits the three scopes the contract cares about (§1, §47): auth endpoints per client IP,
  * AI-ish endpoints per principal, and every write per principal (or IP when anonymous).
+ *
+ * <p>A scope is declared here as a path prefix, and {@code RateLimitScopeRoutesTest} refuses a prefix this
+ * service's own router does not serve. Until D49 that rule had no teeth, and the AI scope carried
+ * {@code /api/v1/ai/} — a prefix this service's OpenAPI description and {@code API_CONTRACT} §7 both disclaim to
+ * the AI service, so the line could only ever charge a bucket to a request that then 404s. The AI-ish door this
+ * build does serve is {@code /api/v1/merchant/ai-agent}. A future route elsewhere has to say so here, which is
+ * what the gate is for; leaving a dead prefix in place would have been the same unread promise from the other
+ * side.
  */
 public class RateLimitFilter extends OncePerRequestFilter {
 
@@ -58,7 +66,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             if (path.startsWith("/api/v1/auth/")) {
                 apply(response, limiter.check("auth-ip", Req.clientIp(request), authRequests, authWindow));
             }
-            if (path.startsWith("/api/v1/ai/") || path.startsWith("/api/v1/merchant/ai-agent")) {
+            if (path.startsWith("/api/v1/merchant/ai-agent")) {
                 apply(response, limiter.check("ai", actor, aiRequests, aiWindow));
             }
             if (mutating && !path.startsWith("/api/v1/auth/")) {

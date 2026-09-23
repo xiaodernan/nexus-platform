@@ -1576,3 +1576,69 @@ pay for theirs; there is no exemption list yet because none is needed. It does n
 leaves — the gate walks the `nexus:` tree, which is where this build's own offers live. And the `:8090` instance
 another session may restart from this working tree keeps demo login on, because the default it now honors is
 `true`; turning it off is an export away rather than an edit, which is the whole point, but nobody has done it.
+
+## D49 A filter line that could only ever meter a 404 — and the rung behind another stream's door — 2026-09-24
+
+### 1. What shipped
+
+§1 promises three scopes, and `RateLimitFilter` declares two of its prefixes as paths. Only one of them is
+served. The AI scope charged `path.startsWith("/api/v1/ai/")` as well as `/api/v1/merchant/ai-agent`, while both
+of this service's own descriptions say the first is somebody else's surface: `OpenApiConfig` describes the
+document as covering commerce and adds that "AI surfaces (`/ai/v1/**`, `/mcp`, `/api/v1/ai/**`) belong to the AI
+service", and `API_CONTRACT` §7's own row says "the platform service never serves `/api/v1/ai/**`". Asking the
+running router for its registered patterns agrees — none begins with that prefix.
+
+So the line did exactly one thing: meter traffic that then 404s. Not harmless-neutral, either — it is what made
+§1's "AI-ish endpoints per principal" read as coverage of AI endpoints, and D47 fell for it: §42's sentence about
+the scopes copied both prefixes straight out of the filter, which is D44's failure (a citation copied is a
+citation multiplied) arriving in prose rather than in code. §43 caught it; this unit removes the source of it.
+
+### 2. The change, the gate, and the fact the first version of the witness was wrong
+
+The dead prefix is gone, the door stays. `RateLimitScopeRoutesTest` is the durable half: it reads the
+`path.startsWith("…")` literals out of the filter's source — not from a list kept here, because a list drifts —
+asks `RequestMappingHandlerMapping` what is actually registered, and refuses any prefix nothing is served behind.
+It checks the `/api/v1/` routing guard the same way, since a prefix is a claim about traffic whatever it is used
+for. Two guards keep it honest: the literal list must be non-empty and the router must report more than fifty registered paths,
+because a refactor that moves those strings into constants would otherwise leave the gate comparing nothing and
+passing.
+
+The HTTP witness for the scope is `RateLimitEnforcementTest.aiScopeCountsPerPrincipal`, and writing it produced a
+fact nobody had written down: a mutating request to the AI-agent door is charged to **two** windows at once, `ai`
+and `write`. The first version POSTed there and was refused on attempt two — by this class's `write-requests=1`,
+not by the `ai` window it was meant to measure. The test now uses a non-mutating request so the two scopes cannot
+collide, and §1 states the overlap out loud, because "one request, two budgets" is the kind of thing a client
+finds out the hard way.
+
+`ai_unavailable(503)` is §1's other rung and had never been produced anywhere either — the same silence D47 found
+behind `429`, with a different cause. Its only raisers are two `catch` blocks in `HeuristicImportAdapter.fetch`
+(tracked, in this build), and the doors that reach them — `MerchantImportController`, `MerchantContentController`
+— are untracked files owned by another live stream. So the rung gets a seam witness at the boundary this build
+does own: an unroutable source answers 503 `ai_unavailable`, an internal host answers 422 before anything is
+dialed (the DNS-rebind rule the code cites as AGENT_CONTRACT §3's), and a non-http scheme answers 422. Asserting
+all three together is what stops the first from being satisfied by a guard that refuses everything. That the
+rung is unreachable over HTTP from tracked code stays a report, not an invitation to edit somebody else's
+controller to make a test pass.
+
+```
+mutations run    5 · prefix re-added (gate red on its own line) · ai line deleted (HTTP witness red) ·
+                   ai bucket keyed per address (the per-principal assertion red) · 503 branch answers a
+                   different rung (seam witness red) · prefixes moved into constants (reader guard red)
+tests            3 new · suite 159 → 162 run · the 1 red is com.nexus.admin's, unchanged and theirs
+e2e              PASS with the line deleted: 525 served reads, the three walks at 30/30, 15/15 and 22/22,
+                 the rung refused on attempt 95 of the service's own 100-wide window, ledger unmoved at 121
+                 of 133 in scope / 96 declared / 25 documented-not-served / 0 served-undocumented
+```
+
+Two of those five took more than one try, and the record is worth more than the count. The 503 mutation did not
+compile — `ApiException.validation` takes a details map and the first attempt passed a bare string. The reader
+guard stayed green twice running: first because only one of the file's three literals had moved, then because
+the mutation I had written did not actually move any; it took constants for all three before the guard spoke. A
+green you did not expect is a measurement you have not finished, which is the same lesson D43 wrote about
+predicates, applied to mutations.
+
+What this does not do: it does not add an AI surface to this service — whether `/api/v1/ai/**` should exist here
+at all is a routing decision about the BFF split §7 documents, not something a filter line can settle. It does
+not reach the `503` over HTTP; that needs another stream's controller, so the seam gets the witness and the gap
+gets this sentence. It does not make the two-scope charge nicer — a request that matches two scopes still spends
+two windows, now documented rather than discovered. And it leaves the standing reports where §43 put them.
