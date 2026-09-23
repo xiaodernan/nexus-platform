@@ -35,6 +35,10 @@ import org.junit.jupiter.api.Test;
  * no declaration still works through its {@code @Value} default and its own comment, and several
  * ({@code nexus.llm.api-key}, {@code nexus.oauth.*}) are meant to arrive from the environment rather than
  * from a file in the repository.
+ *
+ * <p>{@link #profilesKeepTheEnvironmentInPlay} asks the same question of a second layer: a key can have a
+ * reader and still be unreachable, because a profile sits above the base file and can quietly close the
+ * {@code ${ENV:default}} offer it advertises.
  */
 class ConfigDecorationTest extends NexusIntegrationTest {
 
@@ -59,7 +63,7 @@ class ConfigDecorationTest extends NexusIntegrationTest {
         }
         Set<String> declared = new LinkedHashSet<>();
         for (Path config : configs) {
-            declared.addAll(nexusLeaves(Files.readAllLines(config, StandardCharsets.UTF_8)));
+            declared.addAll(nexusLeaves(Files.readAllLines(config, StandardCharsets.UTF_8)).keySet());
         }
         assertThat(declared).as("the " + RESOURCES + " tree was parsed into leaves; a moved file must not "
                 + "pass this gate by finding nothing").isNotEmpty();
@@ -98,12 +102,62 @@ class ConfigDecorationTest extends NexusIntegrationTest {
     }
 
     /**
-     * Leaf paths under the top-level {@code nexus:} block, by indentation: a {@code key:} line with a value
-     * is a leaf, one without is a branch. No anchor, no flow mapping, no multi-line scalar appears under
-     * {@code nexus:} in this build — if one is added, this parser has to be taught before the gate is trusted.
+     * The second question a declared key can be asked: who else can still reach it. {@code application.yml}
+     * offers {@code NEXUS_RL_AUTH}, {@code NEXUS_DEMO_LOGIN} and the rest by writing them as
+     * {@code ${ENV:default}}; a profile that re-declares the same leaf as a bare literal outranks the base file
+     * for that whole environment, so the operator's variable sets nothing and the file that mentions it never
+     * says it has been overruled. D47 found this by asking a live dev instance what its login window was and
+     * being told 100 while {@code application.yml} advertises 10.
+     *
+     * <p>Deliberate pinning is a legitimate thing a profile may have to do — but then it has to be written down
+     * here with a reason, which is the rule {@link #UNREAD_BY_DESIGN} already enforces one level down. No leaf
+     * needs that today, so there is no exemption list yet either.
      */
-    private static Set<String> nexusLeaves(List<String> lines) {
-        Set<String> leaves = new LinkedHashSet<>();
+    @Test
+    @DisplayName("A profile may not close an offer the base file makes")
+    void profilesKeepTheEnvironmentInPlay() throws IOException {
+        Map<String, String> base = nexusLeaves(
+                Files.readAllLines(RESOURCES.resolve("application.yml"), StandardCharsets.UTF_8));
+        assertThat(base).as("the base file parsed into nexus.* leaves; a moved file must not pass this gate by "
+                + "finding nothing").isNotEmpty();
+
+        List<String> closed = new ArrayList<>();
+        int overlapping = 0;
+        List<Path> profiles;
+        try (var paths = Files.walk(RESOURCES)) {
+            profiles = paths.filter(p -> p.getFileName().toString().matches("application-[A-Za-z0-9_-]+\\.yml"))
+                    .sorted().toList();
+        }
+        for (Path profile : profiles) {
+            for (Map.Entry<String, String> leaf : nexusLeaves(
+                    Files.readAllLines(profile, StandardCharsets.UTF_8)).entrySet()) {
+                String offered = base.get(leaf.getKey());
+                if (offered == null || !offered.startsWith("${")) {
+                    continue;   // the base file makes no environment offer on this leaf
+                }
+                overlapping++;
+                if (!leaf.getValue().startsWith("${")) {
+                    closed.add(profile + " pins " + leaf.getKey() + " to '" + leaf.getValue()
+                            + "', which overrules the " + offered + " the base file offers");
+                }
+            }
+        }
+        assertThat(profiles).as("profile files exist under " + RESOURCES + " to be checked at all").isNotEmpty();
+        assertThat(overlapping)
+                .as("profiles re-declaring an env-backed base leaf — if this reaches 0 the gate is green "
+                        + "because it stopped comparing anything, not because nothing is closed")
+                .isPositive();
+        assertThat(closed).as("settings an operator can export with no effect under a profile").isEmpty();
+    }
+
+    /**
+     * Leaf paths under the top-level {@code nexus:} block, by indentation, mapped to the text after the colon:
+     * a {@code key:} line with a value is a leaf, one without is a branch. No anchor, no flow mapping, no
+     * multi-line scalar appears under {@code nexus:} in this build — if one is added, this parser has to be
+     * taught before either gate is trusted.
+     */
+    private static Map<String, String> nexusLeaves(List<String> lines) {
+        Map<String, String> leaves = new LinkedHashMap<>();
         LinkedHashMap<Integer, String> pathByIndent = new LinkedHashMap<>();
         boolean inside = false;
         for (String raw : lines) {
@@ -133,7 +187,7 @@ class ConfigDecorationTest extends NexusIntegrationTest {
             }
             pathByIndent.put(indent, name);
             if (!value.isEmpty()) {
-                leaves.add("nexus." + String.join(".", pathByIndent.values()));
+                leaves.put("nexus." + String.join(".", pathByIndent.values()), value);
             }
         }
         return leaves;

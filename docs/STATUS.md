@@ -1938,8 +1938,69 @@ makes choosing a tenant public; choosing an *address* is not). It does not delet
 has no caller in this build. It does not touch `rate_limit_buckets`, the V1 table no SQL and no Java here writes
 while another stream's types cite it as provenance twice (`packages/types/src/admin.ts` for an admin metric,
 `packages/types/src/errors.ts` for a bucket scope key that in this build is a `KeyValueStore` key and never a
-row). It does not narrow the dev profile's 100-per-address window it just learned about — that is task #32, with
-a gate for the class of it, not only a patch for these three lines. And it leaves the standing
+row). It does not narrow the dev profile's 100-per-address window it just learned about — §43 is that follow-up,
+env-backing all four closed offers and gating the class of them. And it leaves the standing
 reports where they were: `com.nexus.admin`'s red test, §106's missing retention job,
 `@RequiresPlatformRole`'s thin coverage of the newer admin doors, the 25 documented-not-served rows, task #9's
 browser leg (`:8090` still not listening — re-checked for this section) and task #17's reservation transitions.
+
+## 43. A profile that closes an offer the base file makes (2026-09-24)
+
+§42's new e2e step failed on its first run, and the failure is the reason this section exists. It laddered
+twelve failed logins against the 10-per-300s window `application.yml` advertises, waited for the 11th to be
+refused, and was not; asked for its own window through `X-RateLimit-Limit`, the running service said **100**.
+`application-dev.yml` — the profile `run_platform_dev.sh` defaults to, so the profile every local instance runs
+under — re-declares the rate-limit quantities as bare literals. A profile document outranks the base file for the
+whole environment, so `auth-requests: 100` silently beats `${NEXUS_RL_AUTH:10}`, and the operator who exports the
+name the base file prints gets the literal with nothing said about it. D46 was a key no code read; this is a key
+code reads through a file the operator cannot reach.
+
+Walking the profile's whole `nexus:` tree, measured rather than estimated: six leaves, all six re-declaring
+something the base file backs with an environment name, and four of them closing the offer — the three rate
+windows and `demo.login-enabled`. The fourth is the one that matters beyond tuning: `nexus.demo.login-enabled`
+is the switch that turns §87's passwordless demo sessions off, the base file offers it as
+`${NEXUS_DEMO_LOGIN:true}`, and dev pinned it to `true` — so on the machine that runs the demo, the switch that
+disables the demo could not be disabled. Nothing caught that, because the pinned value equals the default; a
+closed offer is invisible until somebody tries to take it up.
+
+The four are now `${NEXUS_RL_AUTH:100}`, `${NEXUS_RL_WRITE:300}`, `${NEXUS_RL_AI:100}` and
+`${NEXUS_DEMO_LOGIN:true}` — same defaults, dev's generosity kept, environment back in play. Two gates hold it
+open. `ConfigDecorationTest` gained a second test that walks every profile file and refuses a leaf which the base
+file offers as `${ENV:…}` being re-declared as a bare literal, with a non-empty-profile guard and a
+positive-overlap guard so it cannot go green by comparing nothing. The overlap guard needed its own witness and
+finding it took two tries: the first mutation, stripping `${}` from the four base leaves, left the gate green,
+because `nexus.redis.url` and `nexus.jwt.secret` overlap too and the guard still had two comparisons to stand on;
+renaming the profile's whole `nexus:` block is what makes it speak, on its own line with its own message.
+`DevProfileRateLimitTest` boots with `@ActiveProfiles("dev")`
+and `NEXUS_RL_AUTH=2` and asks the service instead of the file: it printed `X-RateLimit-Limit: 2`, refused the
+third attempt, and recorded two handler visits for three requests. Reverting one dev line reddens both classes
+together.
+
+```
+ConfigDecorationTest       1 test → 2 · profilesKeepTheEnvironmentInPlay + two vacuity guards
+DevProfileRateLimitTest    new · 1 test · the dev profile and an operator's variable, measured over HTTP
+mutations run              3 · dev leaf → literal (both classes red) · demo switch → literal (gate red) ·
+                           profile's nexus: block renamed (overlap guard red, on its own message)
+suite                      157 → 159 run · the 1 red is com.nexus.admin's AdminConsoleApiTest:289, unchanged and theirs
+e2e                        PASS on the restored config: the service still declares its own window as 100 per
+                           address (defaults untouched), refused the ladder on attempt 95, reads 525 checks,
+                           walks 30/30 + 15/15 + 22/22, ledger unmoved at 121 of 133 in scope / 96 declared /
+                           25 documented-not-served / 0 served-undocumented
+```
+
+One correction made on the way, and it is worth its own sentence because the mistake is the house's oldest: §42's
+new §1 sentence named both prefixes the `ai` scope matches, and a citation copied is a citation multiplied (D44).
+`/api/v1/ai/**` is a path family this service documents as never served — §7's own row for
+`/ai/v1/search/stream` says so in as many words — so that scope is charged by exactly one reachable door,
+`/api/v1/merchant/ai-agent`. §1 now says that, and what the unreachable prefix is doing in a shipped filter, plus
+the related fact that `ai_unavailable(503)` — §1's other rung — has no witness anywhere in `src/test/java` either,
+is D49's opening rather than a fix to smuggle into this one.
+
+What this does not do. It changes no default: a dev boot still starts at 100/300/100 and demo login is still on,
+so nothing served moves for anyone who exports nothing. It does not decide that a profile may never pin a value —
+a deliberate pin is legitimate, and when one arrives it has to be added to the gate with a reason, the way
+`UNREAD_BY_DESIGN` makes its exemptions pay; there is no exemption list yet because none is needed. It does not
+reach `spring.*` or `server.*` leaves, only the `nexus:` tree. And it leaves the standing reports where §42 put
+them: `com.nexus.admin`'s red test, §106's retention job, `@RequiresPlatformRole`'s thin admin coverage, the 25
+documented-not-served rows, `RateLimiter.require` with no caller, `rate_limit_buckets` cited by another stream's
+types and written by nothing here, task #9's browser leg and task #17's reservation transitions.

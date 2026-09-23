@@ -62,9 +62,12 @@ Data access rules (no `LLM → database` path, §52):
   `in_progress` claim a killed process left behind: before D46 nothing compared the deadline, so such a key
   answered `request_in_progress` on every later attempt without end.
 - Rate limits: `429` + `Retry-After` + `X-RateLimit-Remaining` (+ `X-RateLimit-Limit`), over three fixed windows —
-  `auth-ip` on `/api/v1/auth/**` (default 10 per address per 300s), `ai` per principal on `/api/v1/ai/**` and
-  `/api/v1/merchant/ai-agent` (20 per 60s), `write` per principal on every mutating request outside auth
-  (60 per 60s). A refused request is answered by the filter, so the route never runs: no handler, no audit row,
+  `auth-ip` on `/api/v1/auth/**` (default 10 per address per 300s), `ai` per principal (20 per 60s) on
+  `/api/v1/merchant/ai-agent` — the filter also matches `/api/v1/ai/**`, a prefix §7 states outright that this
+  service never serves — and `write` per principal on every mutating request outside auth (60 per 60s). The `dev`
+  profile starts these at 100/300/100 so a manual curl session is not throttled, and each stays reachable through
+  the same `NEXUS_RL_*` names (D48). A refused request is answered by the filter, so the route never runs: no
+  handler, no audit row,
   no idempotency claim — and `error.details.retry_after` carries the same number as the header.
   **The address is the socket peer, never a header** (D47). `Req.clientIp` used to return the first
   `X-Forwarded-For` entry whenever one was sent, and `server.forward-headers-strategy: framework` made the

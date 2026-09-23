@@ -1478,7 +1478,7 @@ into a one-word edit.
   profile that script boots under — re-declares `auth-requests` as a bare literal `100`. A step that counts on a
   number another file may overrule quietly stops testing anything, and the failure is worth more than the pass
   would have been: it is D46's defect one layer up, with the base file offering `${NEXUS_RL_AUTH:10}` and a
-  profile silently overruling it, and it is task #32 now rather than a footnote here.
+  profile silently overruling it, and it is D48 rather than a footnote here.
 
 ```
 mutations  5, each caught red, each restored and the restore verified against git; the final suite re-greened
@@ -1507,3 +1507,72 @@ delete `RateLimiter.require`, which has no caller in this build. And `rate_limit
 and no Java in the repository writes, while another stream's types cite it as provenance twice over
 (`packages/types/src/admin.ts` for an admin metric, `packages/types/src/errors.ts` for a "scope key the bucket is
 charged to", which in this build is a `KeyValueStore` key and never a row) — stays reported, not reconciled.
+
+## D48 A profile that closes an offer the base file makes — 2026-09-24
+
+### 1. How it was found
+
+By being wrong loudly. The rung step D47 added to `e2e_fresh.sh` laddered twelve failed logins against the
+10-per-300s window `application.yml` advertises, expected a refusal inside that, and got none — so its own `die`
+fired on a real boot. The service was not ignoring the limiter: asked for its own window through
+`X-RateLimit-Limit`, it said **100**. `application-dev.yml` — the profile `run_platform_dev.sh` defaults to, and
+therefore the profile every local instance and this script runs under — re-declares the three rate-limit
+quantities as bare literals, "generous, so manual curl sessions do not get throttled".
+
+That phrasing is fine. The way it was written is not: a profile document outranks the base file for the whole
+environment, so a bare `auth-requests: 100` silently beats the base file's `${NEXUS_RL_AUTH:10}`. An operator who
+exported the variable the base file names got the literal, and nothing said so — the same defect D46 named one
+layer up. D46 was a key no code read; this is a key code reads, through a file the operator cannot reach.
+
+Measured over the whole `nexus:` tree of that profile: six leaves, all six re-declaring a leaf the base file
+backs with an environment name, and **four** of them closed the offer — `ratelimit.auth-requests`,
+`ratelimit.write-requests`, `ratelimit.ai-requests`, and `demo.login-enabled`.
+
+The last is the one that earns the unit. `nexus.demo.login-enabled` is the switch that turns §87's passwordless
+demo sessions off (`AuthController` refuses the door and names the setting), the base file offers it as
+`${NEXUS_DEMO_LOGIN:true}`, and the dev profile pinned it to `true`. On the profile that runs the demo, the
+switch that disables the demo could not be disabled. The value was already `true`, which is exactly why no
+behavioural test, no gate and no reader noticed: closing an offer is invisible as long as nobody tries to take
+it up.
+
+### 2. The fix, and why reading the file is not enough
+
+The four literals became `${NEXUS_RL_AUTH:100}`, `${NEXUS_RL_WRITE:300}`, `${NEXUS_RL_AI:100}` and
+`${NEXUS_DEMO_LOGIN:true}`: same defaults, dev's generosity intact, the environment back in play.
+
+`ConfigDecorationTest` gained a second gate for the class of it rather than for these four lines — every leaf a
+profile re-declares must keep the base file's `${ENV:…}` shape — with two guards against the gate going green by
+inspecting nothing: the profile list must be non-empty, and the count of overlapping leaves must be positive.
+That count is not decoration. The first mutation aimed at it (stripping the `${}` from the four base leaves)
+left the gate green, because `nexus.redis.url` and `nexus.jwt.secret` overlap too and the guard still had two
+comparisons to stand on; the guard only speaks when the profile stops declaring anything the base file offers,
+which is the second mutation and does turn it red, on its own line, with its own message.
+
+A file-shape gate proves the placeholder came back, not that the value arrives. `DevProfileRateLimitTest` boots
+with `@ActiveProfiles("dev")` and `NEXUS_RL_AUTH=2` and asks the service: the filter printed
+`X-RateLimit-Limit: 2`, spent the window on the second attempt and refused the third, and the audit table counted
+two handler visits for three requests. Reverting one dev line to a literal reddens both classes at once — the
+gate reading the file and the measurement reading the wire — which is the pairing this project asks for before it
+calls a configuration fixed.
+
+```
+mutations run    3 · one dev leaf back to a literal (red in the gate AND in the runtime class) ·
+                   the demo switch likewise (red in the gate) · the profile's nexus block renamed (red on the
+                   overlap guard, which is the guard's own witness)
+tests            2 new (ConfigDecorationTest's second gate + DevProfileRateLimitTest) · suite 157 → 159
+contract         §1's rate-limit bullet now says what a dev boot starts at, that the `NEXUS_RL_*` names still
+                 work, and which doors the `ai` scope can actually reach — §42's sentence had copied the filter's
+                 two prefixes without asking the router, and §7 says `/api/v1/ai/**` is never served here
+e2e              PASS on the restored config: the service's own header still says 100 per address (defaults
+                 untouched), the ladder was refused on attempt 95, and the ledger is unmoved at 121 of 133 in
+                 scope / 96 declared / 25 documented-not-served / 0 served-undocumented
+```
+
+What this does not do: it does not change a default — dev still starts at 100/300/100 and demo login is still on
+locally, so no served behaviour moves for anyone who sets nothing, and the §87 demo walk in the e2e is unchanged.
+It does not decide whether a profile should ever be allowed to pin a value: a deliberate pin is legitimate, and
+when one arrives it has to be added to this gate with a reason, the way `UNREAD_BY_DESIGN` makes its exemptions
+pay for theirs; there is no exemption list yet because none is needed. It does not reach `spring.*` or `server.*`
+leaves — the gate walks the `nexus:` tree, which is where this build's own offers live. And the `:8090` instance
+another session may restart from this working tree keeps demo login on, because the default it now honors is
+`true`; turning it off is an export away rather than an edit, which is the whole point, but nobody has done it.

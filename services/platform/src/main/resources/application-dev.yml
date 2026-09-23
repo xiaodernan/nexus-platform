@@ -27,12 +27,18 @@ nexus:
   jwt:
     secret: ${NEXUS_JWT_SECRET:dev-only-insecure-jwt-secret-change-me-0123456789}
   demo:
-    login-enabled: true
+    # The same offer the base file makes, kept open: this line said `true` outright, which overruled
+    # NEXUS_DEMO_LOGIN=false on exactly the profile a local boot uses (run_platform_dev.sh defaults both to
+    # dev and :8090), so the one way to turn §87's passwordless demo sessions off could not be taken here (D48).
+    login-enabled: ${NEXUS_DEMO_LOGIN:true}
   ratelimit:
-    # Kept on in dev but generous, so manual curl sessions do not get throttled.
-    auth-requests: 100
-    write-requests: 300
-    ai-requests: 100
+    # Kept on in dev but generous, so manual curl sessions do not get throttled. Generous, not fixed: the base
+    # file backs these same leaves with NEXUS_RL_*, and a bare literal here silently wins over that offer, so
+    # `NEXUS_RL_AUTH=3` on a dev boot did nothing at all (D47 found this by asking a live dev instance for its
+    # window and being told 100 when application.yml advertises 10). Same values, now overridable.
+    auth-requests: ${NEXUS_RL_AUTH:100}
+    write-requests: ${NEXUS_RL_WRITE:300}
+    ai-requests: ${NEXUS_RL_AI:100}
 logging:
   level:
     com.nexus: DEBUG
