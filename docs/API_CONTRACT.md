@@ -54,6 +54,13 @@ Data access rules (no `LLM → database` path, §52):
   answers with the same code, at 200 rather than 201 and with a `status_note` that says so, so it demands no
   header; **checkout**, **payment** and
   **campaign publish** are documented here while no route in this build serves them, so nothing declares them.
+  The replay lasts a window, not forever: the claim row carries `expires_at = now() + nexus.idempotency.ttl-seconds`
+  (86400 by default) and `run` compares that column with `now()` whenever its insert loses to a row that is
+  already there. An expired claim answers nobody — it is dropped and re-claimed by whichever caller notices —
+  so a retried key outside its window runs the work again, and what stops that second run from duplicating
+  anything is the resource's own integrity rules, not this table. That read is also the only recovery from an
+  `in_progress` claim a killed process left behind: before D46 nothing compared the deadline, so such a key
+  answered `request_in_progress` on every later attempt without end.
 - Rate limits: `429` + `Retry-After` + `X-RateLimit-Remaining`.
 - Pagination: cursor-based — request `?limit=20&cursor=...`; response `{ "items": [...], "next_cursor": "...", "total_estimate": 123 }`.
 - Error envelope (always):

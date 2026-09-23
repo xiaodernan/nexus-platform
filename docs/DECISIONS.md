@@ -1278,3 +1278,101 @@ the code pretending otherwise. And it does not guard `IdempotencyService.headerO
 rather than a claim: the checkout route, when `com.nexus.commerce` grows one, will need either this marker or
 its own decision about a null key, and that is that stream's call to make. `com.nexus.admin`'s one red test and
 the 25 documented-not-served rows are unchanged and still theirs.
+
+## D46 A window nothing reads is not a window — and a config key nothing reads is an offer withdrawn in silence — 2026-09-24
+
+### 1. What shipped
+
+`IdempotencyService.run` wrote `expires_at = now() + nexus.idempotency.ttl-seconds` onto every claim and nothing
+in the build ever compared that column with `now()`. Measured at D45's own commit: four files name
+`idempotency_keys`, and exactly one line among them mentions its `expires_at` — that insert. The pattern was
+already in the house for `facts`, whose §20 freshness TTL has its companion read in `FactRepository`
+(`f.expires_at is not null and f.expires_at < now()`); this table simply never got one. So the window was a value
+stored for a reader that did not exist,
+and three things followed, each measured by deleting the read again (mutation 1, i.e. the code as it stood at
+D45):
+
+- an `in_progress` row left by a process that died between claiming and completing had one exit — the delete in
+  `run`'s own `catch`, which a dead process never reaches. Every later retry of that key answered **409
+  `request_in_progress`** with no end: the measured third attempt said so in those words, and the only way out
+  was an operator's `delete`.
+- a `completed` row replayed for as long as it existed, so the setting moved nothing. `NEXUS_IDEMPOTENCY_TTL=60`
+  and `=600000` were the same service.
+- a second account colliding on a key was refused **409 `idempotency_key_conflict`** forever, not "until the TTL
+  ends" — which is the phrase `API_CONTRACT` §1 prints, the phrase D45 §1 printed, and the phrase D45's own
+  `STATUS` closing paragraph repeated as something that happens *on its own*. D45 wrote those sentences about a
+  read that did not exist. They are true from this commit; D45 is left as written, because the behaviour it
+  describes is now the behaviour the code has, and §40's sentence is corrected where it stands.
+
+### 2. The fix is a comparison, not a janitor
+
+```java
+int inserted = claim(claim);
+if (inserted == 0 && jdbc.update("delete from idempotency_keys where key = :key and expires_at < now()") > 0) {
+    inserted = claim(claim);
+}
+```
+
+An insert that loses to an existing row asks whether that row is still inside its window; if it is not, the row
+is dropped — it answers no one, which is the whole content of being expired — and the caller tries to own the key
+again. Concurrency is settled by the same statement that settled it before: the re-insert is `on conflict do
+nothing`, so the retrier that wins runs the work and the one that loses falls into the existing branch, where the
+fresh row says `in_progress` and it is refused. Nothing about a *live* claim changed, and mutation 2 (the same
+reclaim with `and expires_at < now()` deleted, so any conflicting row is dropped) reddens all three new tests
+precisely because that is the one thing that must not happen: a live claim stolen mid-flight is the double
+execution this table exists to prevent.
+
+There is no sweeper. This service has no `@Scheduled` method, no scheduler bean and no job table, and a timer that
+deletes rows behind a request's back is the same species of promise this increment is about — one whose firing
+nothing witnesses. So the window is enforced lazily, by whoever touches the key next, which removes every
+correctness face above and leaves one operational face: a claim for a key nobody ever retries stays on disk past
+its window and costs storage. It cannot cost an answer.
+
+### 3. What the window is traded for
+
+Inside it, a retried key is an answer. Outside it, a retried key is just a string, and the work runs again — that
+is what §1's TTL *means*, and it is the reason the reclaim was safe to write. What keeps the second run from
+duplicating anything is the resource's own integrity, which this project has been building row by row:
+`moderation_cases` refuses a second decision (`case_already_resolved`, D39), `reservations_slot_user_uniq` (V2)
+refuses a second live hold per person per slot, and `reviews` guards nothing — a review reposted after its key
+expired is a second review, which is also exactly what a day-later second post is.
+
+### 4. The second gate: `ConfigDecorationTest`
+
+The same shape of defect sits in `application.yml`: a key is an offer to an operator, and a key nothing reads is
+that offer withdrawn in silence. The gate walks the top-level `nexus:` tree in `src/main/resources/*.yml` by
+indentation and asks, of each leaf, whether any `@Value` in `src/main/java` names it. Its first run found
+`nexus.deletion.grace-days` unread — and the reason is the interesting part: `DELETE /api/v1/me` tells its caller
+"a deletion_request row was created for the retention job (§106)", and this build has no retention job, so the
+30-day grace is an intention recorded in a file nothing opens. Implementing it means **scheduling irreversible
+data destruction**, which is a human decision and not a default, so the key is exempted with that reason written
+into the test and the gap is reported here rather than quietly built. Exemptions are not free: each must carry a
+non-blank reason, must still be declared, and must still be unread — an exemption that outlives its key, or that
+a later wiring-up makes stale, is a comment about a file that no longer exists (D43's lesson about a dated row,
+applied to an allowlist). Mutation 3 misnames the exemption (red: "config an operator can set with no effect"),
+mutation 4 renames the parser's root so it finds nothing (red: the non-zero guard), and the gate reads one
+direction on purpose — a read key with no declaration still works through its own default, and several
+(`nexus.llm.api-key`, `nexus.oauth.*`) are meant to arrive from the environment rather than from a file in the
+repository.
+
+```
+IdempotencyWindowTest            new · 3 tests · all red with the read deleted, all red with the predicate widened
+ConfigDecorationTest             new · 1 test · nexus.* leaves declared 25 · of them read 24 · exempted 1, with a reason
+                                 and 10 read by code but declared nowhere (a default, or the environment)
+mutations run                    4 (read off / predicate off / exemption misnamed / parser root renamed) · 0 left in the tree
+abandoned-claim witness          an in_progress row written by the test in the shape run writes it, then aged by hand
+suite                            145 → 149 run · the 1 red is com.nexus.admin's, unchanged and theirs
+```
+
+The tests age a claim with `update … set expires_at = now() - interval '1 hour'` rather than by sleeping or by
+configuring the TTL to one second, because the window is a fact about that column: sleeping is not a test, and a
+one-second TTL would measure the property binding instead of the read. `age` asserts it updated exactly one row,
+since an update that matches nothing is silent — the same objection D43 raised against a predicate with no witness
+that can fail.
+
+What this does not do: it does not sweep abandoned rows, as §2 says. It does not add a `CHECK` on
+`idempotency_keys.status` (V1 has none), though the reclaim makes a stuck status non-terminal for the first time:
+a row that says anything but `completed` now stops refusing callers at its deadline instead of permanently. It
+does not touch `AuthorizationInterceptor` or `headerOnly`, both another wave's. It does not build the retention
+job, and its absence — like `@RequiresPlatformRole`'s thin coverage of the newer admin doors, `com.nexus.admin`'s
+red test and the 25 documented-not-served rows — stays in `STATUS` as somebody else's decision to make.

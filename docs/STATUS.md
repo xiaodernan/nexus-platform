@@ -1779,6 +1779,71 @@ by design: when `com.nexus.commerce` grows the checkout route it will need this 
 a null key, and that is that stream's call. And `AuthorizationInterceptor` was not edited — the enforcement it
 already performs is what this unit builds on, and it belongs to the other wave. What is *not* a code question is
 the row the shipped route wrote into whichever database it ran against: `idempotency_keys` can still hold a
-`moderation_resolve|null` claim, and it expires on its own within the TTL. The new test deletes that literal
-before it counts rows, so the gate measures its own request rather than history; nothing here rewrites a deployed
-table.
+`moderation_resolve|null` claim, and nothing in the build deletes it. §40 wrote that the row "expires on its own
+within the TTL", and §41 is the unit that found the sentence had no code behind it: no reader compared
+`expires_at` with the clock, in this table or in the deployment. The new test deletes that literal before it
+counts rows, so the gate measures its own request rather than history; nothing here rewrites a deployed table.
+
+## 41. A deadline nobody reads is not a deadline, and a config key nobody opens is an offer withdrawn in silence (2026-09-24)
+
+`IdempotencyService.run` writes `expires_at = now() + nexus.idempotency.ttl-seconds` onto every claim. Before this
+section nothing compared that deadline with a clock: at D45's commit four files name `idempotency_keys` and exactly
+one line mentions its `expires_at`, the insert (the pattern the project already uses for `facts` — §20's freshness
+TTL is a companion read, `f.expires_at is not null and f.expires_at < now()` in `FactRepository` — this table simply
+never got one). D45's §1 sentence ("refused until the TTL ends"), D45's own decision entry and §40's closing
+paragraph all described the deadline as if it did something. It did not, and the consequences were run against the
+code as it then stood by deleting the new read again:
+
+- a claim left `in_progress` by a process that died between the insert and the update has only one exit — the
+  delete inside `run`'s `catch` — so every later retry of that key answered 409 `request_in_progress` for the life
+  of the row, and the only way out was an operator's `delete`;
+- a `completed` claim replayed past its window, so `NEXUS_IDEMPOTENCY_TTL=60` and `=600000` were one service;
+- a second account colliding on a key was refused `idempotency_key_conflict` forever, not "until the TTL ends".
+
+The fix is three lines and no janitor: an insert that loses to an existing row asks whether that row is still
+inside its window, drops it if not, and tries to own the key again; the re-insert is still `on conflict do nothing`,
+so a concurrent retrier that loses falls into the branch that already existed and reads `in_progress`. A live claim
+behaves exactly as before, which is the half mutation 2 checked — with `and expires_at < now()` deleted, all three
+new tests go red, because a stealable live claim is the double execution the table exists to prevent. There is no
+sweeper: this service has no `@Scheduled` method or scheduler bean at all, and a timer that deletes rows behind a
+request's back is the same species of unhoused promise this unit is about. So the window is enforced lazily by
+whoever touches the key next — every correctness face is closed, and what is left is that an abandoned row stays on
+disk past its window and costs storage. It cannot cost an answer. What a retried expired key then runs again is
+guarded by the resource: `case_already_resolved` (D39), `reservations_slot_user_uniq` (V2), and for `reviews`,
+nothing — a review reposted after its key expired is a second review, which is what a day-later second post is.
+
+`ConfigDecorationTest` is the same defect one level up. It walks the top-level `nexus:` tree in
+`src/main/resources/*.yml` by indentation and asks, per leaf, whether any `@Value` in `src/main/java` names it. The
+first run found `nexus.deletion.grace-days` unread, and the reason matters more than the key: `DELETE /api/v1/me`
+tells its caller "a deletion_request row was created for the retention job (§106)" while this build has no
+retention job, so the 30 days record an intention nothing holds. Building that job means scheduling irreversible
+data destruction, which is a human decision rather than a default, so the key is exempted with that reason written
+into the test and the gap is reported here. An exemption has to keep paying for itself: non-blank reason, still
+declared, still unread.
+
+```
+IdempotencyWindowTest            new · 3 tests · red ×3 with the read deleted (M1) · red ×3 with the predicate widened (M2)
+ConfigDecorationTest             new · 1 test · 25 nexus.* leaves declared · 24 of them read · 1 exempted with a reason
+                                 and 10 keys read by code but declared nowhere, which the gate lets stand on purpose
+mutations run                    4 (M1 read off · M2 predicate off · M3 exemption misnamed · M4 parser root renamed)
+suite                            145 → 149 run · the 1 red is com.nexus.admin's AdminConsoleApiTest:289, unchanged and theirs
+```
+
+The tests age a claim with `update … set expires_at = now() - interval '1 hour'` instead of sleeping or of
+configuring a one-second TTL, because the window is a fact about that column: a sleep is not a test and a short TTL
+measures the property binding, not the read. `age` asserts it updated exactly one row, since an update matching
+nothing is silent — D43's rule that a predicate needs a witness that can fail, applied to the test's own plumbing.
+And the `in_progress` row the abandoned-claim test writes is written in the shape `run` writes, which is what makes
+it a faithful stand-in for a killed process: `run` is the only thing in this build that inserts that status.
+
+Two things this does not do. It does not add a `CHECK` on `idempotency_keys.status` — V1 has none, and a hand-typed
+status now stops refusing callers at the deadline rather than permanently, which is the same deadlock removed one
+layer down instead of the vocabulary fixed. It does not build §106's retention job, does not touch
+`AuthorizationInterceptor` or `headerOnly` (another wave's), and does not change a route, a seed row or a schema,
+so the contract ledger is §39's, unchanged — which is what the fresh walk confirmed after the read landed:
+`scripts/e2e_fresh.sh` PASS on :8092, 121 of 133 documented routes in scope, 96 declared by the running service, 0
+served without being documented, and the reservation, review and workspace walks green (each sends its own
+`Idempotency-Key` per run, so no walk ever crossed an expiry). The four suites that exercise a stored replay over
+HTTP — moderation resolve, review write, workspace members and api-keys, events ingest — were run again with the
+three platform gates above after the last edit: 40 tests, 0 failures. `:8090` is still not listening — nothing on this machine runs the platform right now — and the browser
+leg is still task #9.

@@ -16,6 +16,14 @@ import org.springframework.stereotype.Service;
  * first caller executes and records the response, a replay returns the recorded response without
  * re-executing (no double charge).
  *
+ * <p>That guarantee has a window, and the window is enforced on the read side rather than by a sweeper:
+ * {@code expires_at} is compared against {@code now()} every time an insert loses to an existing row, so
+ * a claim outside its window stops answering and the key becomes available again. The trade is the one
+ * §1 describes — after {@code nexus.idempotency.ttl-seconds} a retried key runs the work again, and what
+ * keeps the second run honest is the resource's own integrity rules, not this table. The other thing an
+ * expired claim used to do was nothing: an {@code in_progress} row left by a process that died mid-request
+ * had no deadline anyone read, so every later retry was a 409 forever (D46).
+ *
  * <p>The two halves are one promise: a handler that calls {@link #run} must also carry
  * {@code @Idempotent(scope = <the same string>)}, because {@code run} is what makes the header
  * meaningful and {@code @Idempotent} is what makes it arrive. {@link #run} refuses a null or blank key
@@ -44,9 +52,10 @@ public class IdempotencyService {
             // The claim row is keyed by scope + '|' + key, so a missing header is not "no key" — it is the
             // literal '<scope>|null', one row every keyless caller of this route shares. The first caller's
             // stored answer then replays onto a second, unrelated operation of the same account, and a
-            // different account is locked out with idempotency_key_conflict until the TTL ends. Reaching this
-            // line means the handler wrapped its work here without declaring @Idempotent, so the interceptor
-            // never demanded the header; fix it there rather than relaxing this check.
+            // different account is locked out with idempotency_key_conflict until the claim's window ends and
+            // someone next reaches for that literal reclaims it (D46). Reaching this line means the handler
+            // wrapped its work here without declaring @Idempotent, so the interceptor never demanded the
+            // header; fix it there rather than relaxing this check.
             throw ApiException.internal("IdempotencyService.run(\"" + scope + "\", ...) reached a caller with no "
                     + "Idempotency-Key, so the claim row would be the literal '" + scope + "|null'; declare "
                     + "@Idempotent(scope = '" + scope + "') on the handler so the interceptor refuses the "
@@ -59,11 +68,19 @@ public class IdempotencyService {
                 .addValue("ttl", ttlSeconds);
         // NOTE: idempotency_keys is keyed by (scope|key) + owner and has no tenant column in V1 — the
         // owner binding below is what stops cross-account replays. Cross-tenant statement by design.
-        int inserted = jdbc.update("""
-                insert into idempotency_keys (key, scope, owner_id, status, response, expires_at)
-                values (:key, :scope, :owner_id, 'in_progress', null, now() + make_interval(secs => :ttl))
-                on conflict (key) do nothing
-                """, claim);
+        int inserted = insertClaim(claim);
+        if (inserted == 0 && jdbc.update("""
+                delete from idempotency_keys where key = :key and expires_at < now()
+                """, claim) > 0) {
+            // The row that held this key is outside its window, so it answers no one: an expired `completed`
+            // claim is past the period §1 promises it for, and an expired `in_progress` claim is the shape a
+            // killed process leaves behind — a request that never finished and never released its key. Without
+            // this the second reads `in_progress` and returns request_in_progress on every retry forever.
+            // Dropping it costs nothing the window had not already taken, and the re-insert below decides who
+            // runs next: a concurrent retrier that loses the insert falls through to the replay/refuse branch,
+            // where the fresh row is `in_progress` again (D46).
+            inserted = insertClaim(claim);
+        }
 
         if (inserted == 0) {
             Map<String, Object> existing = jdbc.queryForMap("""
@@ -112,5 +129,18 @@ public class IdempotencyService {
     /** Keys are stored as {@code scope|key}; the raw header value is what clients send. */
     public static String headerOnly(String scope, String key) {
         return scope + "|" + key;
+    }
+
+    /**
+     * Claims {@code scope|key} for this caller, or returns 0 when a row already holds it. The claim carries
+     * {@code expires_at = now() + ttl}: the window is what makes a replay an answer rather than an
+     * archive, so {@link #run} reads that column as well as writing it (D46).
+     */
+    private int insertClaim(MapSqlParameterSource claim) {
+        return jdbc.update("""
+                insert into idempotency_keys (key, scope, owner_id, status, response, expires_at)
+                values (:key, :scope, :owner_id, 'in_progress', null, now() + make_interval(secs => :ttl))
+                on conflict (key) do nothing
+                """, claim);
     }
 }
