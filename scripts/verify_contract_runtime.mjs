@@ -42,7 +42,24 @@ function forms(rawPath) {
   return [`${base}${tail}`, `${base}${opt}${tail}`].filter((v, i, a) => a.indexOf(v) === i);
 }
 
-/** `{a|b|c}` alternations and `[optional]` suffixes are documentation shorthand, not extra routes. */
+/**
+ * `{a|b}` in a *path* is several routes written compactly, and each of them is a separate promise.
+ *
+ * `norm` below collapses a `{…}` group to `{}` because a parameter is a hole — `/users/{id}` and
+ * `/users/{slug}` are the same handler. An alternation is the opposite: `{users|merchants}` names two
+ * literal paths, so collapsing it into one `{}` both retires the second promise and invents a first one
+ * (`/admin/{}`, a path no router can hold). Split before that happens, then recurse so `{a|b|c…}` of any
+ * length works. `[…]` by contrast really is one route with two spellings, and stays with `forms`.
+ */
+function alternatives(rawPath) {
+  const m = rawPath.match(/\{([^{}|]*(?:\|[^{}|]*)+)\}/);
+  if (!m) return [rawPath];
+  const head = rawPath.slice(0, m.index);
+  const tail = rawPath.slice(m.index + m[0].length);
+  return m[1].split('|').flatMap((a) => alternatives(`${head}${a}${tail}`));
+}
+
+/** A `{param}` is a hole, not a value: every parameterised path reads as one shape on both sides. */
 const norm = (p) => p.replace(/\{[^}]*\}/g, '{}').replace(/\/+$/, '').replace(/\?.*$/, '');
 
 /**
@@ -66,38 +83,58 @@ function documented() {
     if (heading) section = Number(heading[1]);
     const cell = line.match(new RegExp('^\\|\\s*(?:' + VERBS + ')(?:/(?:' + VERBS + '))*\\s*\\|', 'i'));
     const verbs = cell ? cell[0].replace(/\||\s/g, '').toUpperCase().split('/') : [];
+    let rowBase = null;
     const push = (method, rawPath) => {
       // Split on whitespace, because a body sketch follows the path (`POST /api/v1/events {events:[…]}`).
       // Not on `[` — that is where the contract's optional-id shorthand (`…/offerings[/{id}]`) used to be
       // cut off, which left `forms()` with nothing to expand and reported three served item routes as
       // "served, not documented" while inventing a DELETE on their collection. Not on `{` either: that is
       // how every parameterised route once came to be truncated to its prefix, turning 26 gaps into 47.
-      const p = rawPath.split(/\s+/)[0].replace(/[.,;]$/, '');
-      if (/^\/api\/v1\b/.test(p) || /^\/ai\/v1\b/.test(p) || /^\/well-known\b/.test(p)) {
+      let p = rawPath.split(/\s+/)[0].replace(/[.,;]$/, '');
+      if (/^\/api\/v1\b/.test(p) || /^\/ai\/v1\b/.test(p) || /^\/\.?well-known\b/.test(p)) {
+        if (/^\/api\/v1\b/.test(p)) rowBase = p;      // later spans may hang off this one
+        if (p.startsWith('/well-known')) p = `/.${p.slice(1)}`;   // the document writes the host root with its dot
         rows.push({ method, raw: p, section });
       } else if (/^\/(me|merchant|merchants|admin|ai|notifications)\b/.test(p) && verbs.length) {
         rows.push({ method, raw: `/api/v1${p}`, section });
+      } else if (/^\/\{/.test(p) && rowBase) {
+        // A continuation: `` POST `/{id}/reply` `` on the row whose first path is
+        // `/api/v1/merchant/conversations`. Relative to that base, not to the API root — and it is only a
+        // route at all because the verb in front of it says so.
+        rows.push({ method, raw: `${rowBase}${p}`, section });
       }
       // anything else (`/api/nexus/**`, prose) is a proxy or a sentence, not a service route
     };
-    for (const span of line.match(/`[^`\n]+`/g) ?? []) {
-      const body = span.slice(1, -1).trim();
+    // Walk the spans, keeping the text between them: a verb written *outside* the backticks
+    // (`· POST \`/api/v1/me/favorites\``) belongs to the span that follows it, and used to be discarded —
+    // which both lost that POST and left the row's own verb attached to every other span, inventing a
+    // `GET /api/v1/me/favorites/{type}/{id}` nobody promised. `own` below is the same notation with the
+    // verb inside the span, which the reader has always honoured.
+    const spanRe = /`[^`\n]+`/g;
+    let hit;
+    while ((hit = spanRe.exec(line))) {
+      const lead = line.slice(0, hit.index).match(new RegExp('(?:^|[^\\w|])(' + VERBS + ')[\\s·]*$', 'i'));
+      const body = hit[0].slice(1, -1).trim();
       const own = body.match(new RegExp('^(' + VERBS + ')\\s+(\\S.*)$', 'i'));
       if (own) { push(own[1].toUpperCase(), own[2]); continue; }
-      if (body.startsWith('/')) for (const v of verbs) push(v, body);
+      if (body.startsWith('/')) for (const v of (lead ? [lead[1].toUpperCase()] : verbs)) push(v, body);
     }
   }
   // One documented route, keyed by method and its *written* form, holding every path spelling the
-  // notation permits. `served` is then "at least one spelling answers".
+  // notation permits. `served` is then "at least one spelling answers" — which is right for an optional
+  // `[/{id}]` suffix and wrong for a `{users|merchants}` alternation, so the alternation is split into
+  // separate routes here and each of them has to answer on its own.
   const seen = new Map();
   for (const r of rows) {
-    const written = norm(r.raw);
-    const spellings = forms(r.raw).map(norm).filter((p) => p.length >= 8 && !p.includes('*'));
-    if (!spellings.length) continue;                   // `/api/v1/**` is a BFF mount, not a handler
-    const key = `${r.method} ${written.replace(/\[[^\]]*\]/g, '')}`;
-    const row = seen.get(key) ?? { ...r, spellings: new Set() };
-    for (const p of spellings) row.spellings.add(p);
-    seen.set(key, row);
+    for (const raw of alternatives(r.raw)) {
+      const written = norm(raw);
+      const spellings = forms(raw).map(norm).filter((p) => p.length >= 8 && !p.includes('*'));
+      if (!spellings.length) continue;                 // `/api/v1/**` is a BFF mount, not a handler
+      const key = `${r.method} ${written.replace(/\[[^\]]*\]/g, '')}`;
+      const row = seen.get(key) ?? { ...r, spellings: new Set() };
+      for (const p of spellings) row.spellings.add(p);
+      seen.set(key, row);
+    }
   }
   return [...seen.values()].map((r) => ({ ...r, path: [...r.spellings][0], spellings: [...r.spellings] }));
 }
@@ -118,7 +155,10 @@ try {
   const docs = documented();
   const live = await served();
   const answers = (d) => d.spellings.some((p) => live.has(`${d.method} ${p}`));
-  const scope = docs.filter((d) => d.path.startsWith('/api/v1'));
+  // The host-root profile is a route the service declares and UCP discovery fetches, so it is in scope for
+  // the reconciliation like any `/api/v1` path — reporting it as undocumented is only ever noise.
+  const inScope = (p) => p.startsWith('/api/v1') || p.startsWith('/.well-known');
+  const scope = docs.filter((d) => inScope(d.path));
   const matched = scope.filter(answers);
   const missing = scope.filter((d) => !answers(d));
   const hardMissing = missing.filter((d) => PHASE1.has(d.section) && d.method === 'GET');

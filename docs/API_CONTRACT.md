@@ -144,6 +144,7 @@ belongs here, not in a private type.
 | POST | `/api/v1/auth/oauth/{provider}` | `{id_token}` verified against provider JWKS (google/apple) |
 | POST | `/api/v1/auth/refresh` | `{refresh_token}` → new pair (rotation, reuse detection) |
 | POST | `/api/v1/auth/logout` | clears session |
+| POST | `/api/v1/auth/session` | the caller's own **resolved** principal: `{subject_type, user_id, tenant_id, role, session_id, auth_method}`, read straight off the credentials that authenticated this request. The login response is a claim about who you were a moment ago; this is what the RBAC chain acts on now, which is the only difference that matters when a session was issued before a role changed. Read-only: it changes nothing, so it needs no `Idempotency-Key` and writes no audit row. |
 | GET | `/api/v1/me` | profile + memberships + preferences summary |
 | PATCH | `/api/v1/me` | profile |
 | DELETE | `/api/v1/me` | creates `deletion_request` (§106) |
@@ -251,6 +252,7 @@ Nothing is published without merchant review.
 | GET | `/api/v1/orders/{id}` | status machine |
 | POST | `/api/v1/orders/{id}/cancel` | |
 | POST | `/api/v1/reservations` | `{merchant_id,offering_id?,slot_id,party_size,contact,notes}` → `201` with code |
+| GET | `/api/v1/reservations/{id}` | the booking as it reads now — same projection the `PATCH` on this row answers with, including `updated_at`, so a caller can tell the two apart by the clock rather than by re-asking. Readable by the person the booking is on, or by a subject holding `read_orders` on its merchant (§5). **Anyone else gets `404`, not `403`** (D5): a `403` would confirm that this code exists, and a booking code is a bearer-ish capability. |
 | PATCH | `/api/v1/reservations/{id}` | `status` transitions guarded — `{status:"cancelled", reason?}` by the holder only; `404` for anyone else's booking (D5), `409` once the evening is `completed`/`no_show`, seats return to the slot in the same transaction, and `reason` lands in `audit_logs.metadata`. No route advances a hold to `confirmed` (D26). |
 | POST | `/api/v1/payments/{order_id}/confirm` | demo provider; real provider via webhook |
 | POST | `/api/v1/webhooks/payments/{provider}` | signature verified, idempotent |
@@ -288,6 +290,7 @@ judgement about that text and not a permanent silence.
 | GET | `/ai/v1/health` | liveness/readiness: `{status, service, version, provider, offline, demo_data, database:{configured,available}, embeddings:{provider,dim}, adapters, now}`. Reports only whether each dependency answered — never a row and never a query result. |
 | POST | `/ai/v1/imports/extract` | service-to-service only (§7.0): `{source_type,source_ref,raw_text}` → `{proposals:[{kind,name,price,currency,category,confidence,source_span}], extractor, degraded}` (§22). Called by the platform's import worker, never by a browser. |
 | POST | `/api/v1/conversations/{id}/reply` | `{content}` → persisted consumer/agent turn (the browser path; the agent path is §7.0) |
+| POST | `/api/v1/conversations/{id}/handoff-resolve` | `{action?, note?}` — the merchant team closing out an escalation raised under §24-26. `action` is `accepted` or `resolved` (default `resolved`); either moves the thread's `owner_type` to `human`, and only `resolved` closes it. With no handoff waiting the route answers `409 no_open_handoff` rather than reporting a quiet success, and the act is audited as `conversation_handoff_resolve` carrying the handoff's own `reason` as the before-state. Guarded by `send_message` on the thread's merchant, so a consumer cannot end their own escalation — §5 answers the same act through the merchant inbox alias. |
 | GET | `/api/v1/conversations` | the acting user's threads, newest first |
 | POST | `/api/v1/internal/conversations/{id}/agent-message` | service-to-service only (§7.0): the AI service's single audited door for persisting an agent turn. |
 

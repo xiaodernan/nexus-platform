@@ -1480,3 +1480,79 @@ fails in the direction that makes *other people's* work look wrong: the defect h
 three shipped routes as undocumented and three nonexistent routes as unbuilt promises. When a ledger disagrees
 with the build, the cheapest hypothesis to test is the ledger's own reading of the document — which is the
 sentence the script prints at the bottom of exactly that list, and which has now been right a third time.
+
+## 36. The gate learned four notations, and the document had nowhere left to hide (2026-09-23)
+
+§35 stopped at a boundary on purpose: six of the nine "served, not documented" entries were the reader
+failing to parse the contract, three were the contract genuinely missing rows, and *who should move* — the
+gate or the document — was left as an open question rather than settled by whoever happened to be fixing
+something else. This round settles it, in **D41**, and then does both halves of the work.
+
+Four notations API_CONTRACT.md already uses were invisible to `verify_contract_runtime.mjs`. All four were
+found by running the reader against an empty router, where its own extraction is the only variable:
+
+- **A verb outside the backticks.** `` | GET | `/api/v1/me/favorites` · POST `/api/v1/me/favorites` · DELETE
+  `/api/v1/me/favorites/{type}/{id}` | `` — the reader only honoured a verb *inside* a span, so it handed the
+  row's `GET` to all three paths. That lost a POST and a DELETE the document promises and invented
+  `GET /api/v1/me/favorites/{type}/{id}`, a gap nobody wrote. `POST /api/v1/notifications/{id}/read` was
+  hidden by the same rule, and mis-labelled as a GET.
+- **A continuation.** Line 220 is `` `/api/v1/merchant/conversations` · POST `/{id}/reply` · POST
+  `/{id}/handoff-resolve` ``. `/{id}/reply` matches none of the reader's absolute-prefix rules, so the two
+  write doors of the merchant inbox documented nothing — the same failure §34 hit in the workspace rows, this
+  time in a file that was not mine.
+- **The leading dot of a host root.** The absolute test was `/^\/well-known\b/`. UCP discovery fetches
+  `/.well-known/ucp`, dot included, so the pattern could not match the only spelling that exists; §20's
+  bullet was invisible to the reconciliation, and since the service does declare it, the route sat in the
+  bucket that accuses the document.
+- **A brace alternation.** §9 writes `` `GET /api/v1/admin/{users|merchants|orders|reservations|reviews|
+  reports}` `` — six literal paths, compactly. `norm` collapsed every `{…}` group to `{}`, which is exactly
+  right for a parameter (`/users/{id}` and `/users/{slug}` are one handler) and exactly wrong here: it
+  retired five of the six promises and left the reconciliation reporting a gap on `/api/v1/admin/{}`, a path
+  no router can hold. `alternatives()` now splits the group before `norm` sees it, so each of the six has to
+  answer on its own. This is also why the two notations must not share a rule: `[/{id}]` is one route with
+  two spellings and passes if *either* answers; `{a|b}` is two routes and both do.
+
+The safety leg is the part worth re-reading before trusting a single number below, because "the gate was
+wrong" is the most convenient thing to say when a gate catches you. Every one of these four changes can move
+the verdict in **one direction only**: a newly recognised documented path is an extra route the build must
+answer for, and a retired phantom is a promise the document never made. None of them lets one route satisfy
+another's promise — the any-spelling rule stayed confined to bracket optionals, and the only two bracketed
+rows in the whole document are §3 and §5. The hard gate still fails only on a phase-1 §4/§8 **GET**, and none
+of the four notations appears in §4 or §8; checked against the document, not assumed from the size of the
+diff.
+
+Then the residual, which is the point of repairing a gate at all: three routes the platform serves and the
+contract did not document. All three are in tracked code, which makes them this ledger's job rather than a
+note to a neighbour, and each row was drafted by reading the method that answers rather than from the
+report's line:
+
+- `GET /api/v1/reservations/{id}` (§6) — the holder, or a subject holding `read_orders` on the booking's
+  merchant; anyone else gets `404` and not `403`, because a `403` would let a booking code be probed.
+- `POST /api/v1/auth/session` (§3) — the resolved principal of the credentials that just authenticated. No
+  write, no audit row, no idempotency key, which is the whole difference from `/me`.
+- `POST /api/v1/conversations/{id}/handoff-resolve` (§7) — `accepted` or `resolved`, `409 no_open_handoff`
+  when there is nothing to close, audited against the handoff's own `reason`.
+
+```
+mvn -o test                       138 run · 1 red (untracked com.nexus.admin, unchanged from §34) · 0 of them here
+scripts/e2e_fresh.sh              8/8 · 525 served-read checks · 0 5xx · 30/30 booking · 15/15 review · contract PASS
+verify_contract_runtime.mjs       121→133 documented · 109→121 in scope · 87→96 answered · 22→25 gaps · 9→0 undocumented
+```
+
+The gate is honest in one direction and that is the whole point of repairing it rather than editing it: the
+gap list got **longer** by three on the run that closed the other list to zero, because splitting §9's
+alternation replaced one collapsed entry with six routes and all six are unbuilt. The single
+`GET /api/v1/admin/{}` line had been both a phantom promise and an excuse for six missing handlers, and every
+earlier run of this gate had counted it as one gap.
+
+What the twenty-five remaining "documented, not served" rows are not claimed to be: correct by inspection.
+They are what the reader extracts and the router does not answer, and this time the six §5 entries were
+checked at the source rather than excused — `grep` across every controller in the tree, tracked and untracked
+alike, finds no mapping at all for the merchant analytics, campaign, approve-publish, coupon, knowledge-base
+or reindex routes, so they are unbuilt, not mis-read. §6's eleven cart and payment doors, §9's six admin
+reads and §8's two writes are the same kind of fact with a count on it, which is the honest shape for a
+roadmap.
+
+The two lists are no longer symmetric in usefulness, and this round is the reason to say it plainly:
+"served, not documented" went to zero, so the document now accounts for every route the running service
+declares. What remains on the other side is work, and it is now safe to read as work.

@@ -898,3 +898,67 @@ Suite: **131** tests of this wave's own code pass (121 + 10). `mvn -o test` acro
 reports **138 run, 1 failure**, and that one is `com.nexus.admin.AdminConsoleApiTest` — controller, test and
 package all untracked, another wave's in-flight Admin Console, deterministic when run on its own, untouched
 by anything here.
+
+## D41 When the gate and the artifact disagree, the gate is fixed first — and the fix must be provably one-way — 2026-09-23
+
+`verify_contract_runtime.mjs` reconciles `docs/API_CONTRACT.md` against the OpenAPI document a running
+platform publishes. Three rounds in a row it found, in some mix: routes the document promised in a notation
+the reader could not parse, routes the reader parsed into paths the document never wrote, and routes the
+service serves with no row anywhere. Each round posed the same question, and §35 deliberately left it open
+rather than let it be answered by whoever happened to be fixing something else: **who moves — the gate or the
+artifact?**
+
+It cannot stay open, because "the gate is wrong" is also the most convenient sentence available to anyone a
+gate catches. So the rule, written down before the next holder of a red gate has to invent one:
+
+**1. Fix the reader only when the fix can move the verdict in one direction.** Teaching the reader a notation
+may only ever add a documented path that the build then has to answer, or retire a documented path the
+document does not in fact contain. It may never let one route satisfy another route's promise. This is a
+check with teeth, not a sentiment, and it is how each of the four notations admitted this round was judged:
+`/api/v1/me/favorites` gained a POST and a DELETE the build then had to answer for — and does, which is why
+they appear in neither list now; `/.well-known/ucp` came *into* scope,
+which added an obligation and removed nothing from the failing bucket; §9's
+`{users|merchants|orders|reservations|reviews|reports}` went from one collapsed entry to six that each have
+to answer on their own. §35's bracket expansion passed the same test only after confirming the two bracketed
+rows in the whole document are §3 and §5, so no phase-1 §4/§8 read can be satisfied by "another spelling of
+mine answered" — and the hard gate has never been widened.
+
+**2. Two shorthand notations that look alike are not alike, and the gate must not average them.**
+`…/offerings[/{id}]` is **one** route written with its optional suffix, so it is served when either spelling
+answers. `{users|merchants}` is **six** routes written compactly, so all six are owed. Collapsing both into
+"documentation shorthand" is what produced a phantom gap on `/api/v1/admin/{}` — a path no router can hold —
+while quietly deleting five promises. A reader that cannot tell a hole from an enumeration is not reconciling
+anything; it is guessing at a rate.
+
+**3. Where the artifact is the wrong side, the builder of the route writes the row.** Three served routes had
+no contract row at all — `GET /api/v1/reservations/{id}`, `POST /api/v1/auth/session`,
+`POST /api/v1/conversations/{id}/handoff-resolve` — and all three live in tracked code, which makes them this
+ledger's job rather than a message to a neighbour. They are now in §6, §3 and §7, each drafted by reading the
+handler rather than the report: the reservation read answers `404` to a stranger so a booking code cannot be
+probed, `/session` answers the resolved principal with no write and no audit row, and the handoff resolve
+refuses (`409 no_open_handoff`) when there is nothing to close. The gate was not touched to make these three
+disappear; §35's "reported, not repaired" list is closed, not extended.
+
+**4. Say which bucket a line is in, out loud, and measure against an empty router when you are not sure.**
+The report's two lists look symmetric and are not: "documented, not served" accuses the build, "served, not
+documented" accuses the document, and a reader bug produces *both at once* — one innocent party per list.
+Against `{paths: {}}` the extraction is the only variable in the run, so a number that moves there is a claim
+about the reader and not about anybody's code. Every classification in this round was made that way first and
+confirmed live second.
+
+```
+documented  121 → 133 · in scope 109 → 121 · documented-and-answered 87 → 96
+documented, not served   22 → 25        served, not documented   9 → 0
+```
+
+Rule 1 earns its keep in that third line. The gap count went **up**, by three, on the run that closed the
+other list to zero — because splitting §9's alternation replaced one collapsed entry with six routes, and all
+six turned out to be unbuilt. The collapsed `{}` had not been reporting a gap on a real promise; it had been
+hiding six false ones *and* excusing six missing handlers at once. A rule that only ever flatters the build
+would have produced a shorter list here, and the shorter list would have been a lie.
+
+The residual twenty-five are therefore safe to read as work rather than as noise, and six of the §5 entries
+were checked at the source rather than assumed: no mapping exists anywhere in the tree, tracked or untracked,
+for the merchant analytics, campaign, approve-publish, coupon, knowledge-base or reindex routes. That is the
+payoff of the rule. A gate the build trusts has to be wrong in only one direction: it may miss a promise
+nobody made, and it may not forgive one that was.
