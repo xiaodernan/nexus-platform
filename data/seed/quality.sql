@@ -838,6 +838,34 @@ SELECT 'every seeded owner membership has grants',
                              AND g.subject_id = mu.user_id AND g.merchant_id = mu.merchant_id))
        || ' silent membership(s)';
 
+-- A role row is a label; the grants are the access (D5, D40). "Has grants" above is therefore not the
+-- question a console screen can be built on: the seeded owner used to hold five of the twelve permissions
+-- the `owner` preset names, and none of them was `admin_members`, so every one of §5's nine workspace
+-- routes answered 403 for the only merchant humans in the demo — a screen that renders "Owner" over an
+-- account that cannot open the owner's own door. Assert the permission that gates the door by name.
+WITH bad AS (SELECT mu.id FROM merchant_users mu
+              WHERE mu.role IN ('owner', 'admin') AND mu.status = 'active'
+                AND NOT EXISTS (SELECT 1 FROM permission_grants g
+                                 WHERE g.subject_type = 'merchant_user'
+                                   AND g.subject_id = mu.user_id AND g.merchant_id = mu.merchant_id
+                                   AND g.permission = 'admin_members'))
+INSERT INTO qc
+SELECT 'owner can administer workspace',
+       NOT EXISTS (SELECT 1 FROM bad) AND (SELECT count(*) FROM merchant_users
+                                             WHERE role IN ('owner', 'admin') AND status = 'active') > 0,
+       (SELECT count(*) FROM bad) || ' active owner/admin membership(s) lacking admin_members, of '
+       || (SELECT count(*) FROM merchant_users WHERE role IN ('owner', 'admin') AND status = 'active');
+
+-- ...and a human grant with a deadline is a role that quietly disappears one day, which no reader of the
+-- membership row would predict. Human access here is assigned, not rented; only a key or an agent leases.
+INSERT INTO qc
+SELECT 'human grants carry no deadline',
+       NOT EXISTS (SELECT 1 FROM permission_grants
+                    WHERE subject_type = 'merchant_user' AND expires_at IS NOT NULL),
+       (SELECT count(*) FROM permission_grants
+          WHERE subject_type = 'merchant_user' AND expires_at IS NOT NULL)
+       || ' lapsing human grant(s)';
+
 -- ============================================================ C  hard gate
 \echo ''
 SELECT CASE WHEN ok THEN '  PASS ' ELSE '  FAIL ' END AS status,

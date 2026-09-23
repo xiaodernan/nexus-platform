@@ -53,6 +53,17 @@ U_OWNERS = ["00000000-0000-0000-0000-00000000d002",
 U_ADMIN = "00000000-0000-0000-0000-00000000d005"
 DEMO_PASSWORD = "nexus-demo-2026"          # documented demo login; never stored as a hash here
 
+# The `owner` preset from com.nexus.merchant.MerchantPermissions.OWNER, copied because this generator and
+# that class cannot share a build. The copy is checked rather than trusted: quality.sql fails the fresh-data
+# gate if an owner membership lacks `admin_members`, and scripts/verify_workspace_flow.py signs in as a
+# seeded owner and calls the routes it gates — so a preset the dataset does not carry surfaces as a red
+# check in the harness instead of as a 403 in someone's demo.
+OWNER_PERMISSIONS = [
+    "write_profile", "publish_listing", "read_products", "write_products", "read_orders",
+    "read_analytics", "configure_ai", "send_message", "create_draft_campaign", "publish_campaign",
+    "admin_members", "create_reservation",
+]
+
 # TTLs per AGENT_CONTRACT.md §5
 TTL_HOURS = {"price": 6, "inventory": 0.25, "opening_hours": 24, "description": 24 * 7,
              "review_summary": 24, "popularity": 1, "address": 24 * 30, "cuisine": 24 * 30,
@@ -1009,13 +1020,19 @@ class Gen:
             # `users u on u.id = g.subject_id`, so a merchant_users id here loads fine (the column has
             # no FK) and then silently 403s every workspace route — which is exactly what the seeded
             # demo console did: three owners, fifteen grants, zero reachable permissions.
-            self.rows["permission_grants"].append(row([
-                uid("grant", f"owner:{mu}"), "merchant_user", user_id, m["id"], "write_products",
-                user_id, None, m["created"]]))
-            for i, perm in enumerate(("read_products", "read_orders", "read_analytics", "send_message")):
+            #
+            # The set itself is the role's preset, not a hand-picked subset (D5, D40). This used to
+            # write five permissions — one grant plus four that lapsed after 90 days — and omitted
+            # seven of the preset's twelve, among them `admin_members`, `configure_ai` and
+            # `publish_listing`. So the demo's only merchant humans could read a dashboard and could
+            # not open any of §5's nine workspace routes, publish a listing of their own, or answer the
+            # "who is in this business" screen the console renders for an owner. A role label the data
+            # does not carry is the same fiction as a review count no row backs. Human grants carry no
+            # `expires_at`: a role assignment is not a TTL.
+            for perm in OWNER_PERMISSIONS:
                 self.rows["permission_grants"].append(row([
-                    uid("grant", f"ai:{mu}:{i}"), "merchant_user", user_id, m["id"], perm,
-                    user_id, self.now + timedelta(days=90), m["created"]]))
+                    uid("grant", f"owner:{mu}:{perm}"), "merchant_user", user_id, m["id"], perm,
+                    user_id, None, m["created"]]))
 
         self.rows["locations"] = []
         self.rows["business_hours"] = []

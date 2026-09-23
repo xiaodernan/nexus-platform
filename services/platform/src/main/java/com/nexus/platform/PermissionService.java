@@ -1,7 +1,9 @@
 package com.nexus.platform;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +15,32 @@ import org.springframework.stereotype.Service;
 @Service
 public class PermissionService {
 
+    /**
+     * The two spellings a human being's grants are filed under. A membership can be recorded either way —
+     * {@code 'user'} is what the owner-seed and D40's writes use, {@code 'merchant_user'} is what the seed
+     * and older callers use — and authorisation accepts both, so any read that answers for a person has to
+     * union them or it will report a different access depending on who wrote the row.
+     */
+    public static final List<String> HUMAN_SUBJECT_TYPES = List.of("user", "merchant_user");
+
     private final TenantJdbc jdbc;
 
     public PermissionService(TenantJdbc jdbc) {
         this.jdbc = jdbc;
+    }
+
+    /**
+     * Everything this person holds at this merchant, under either spelling — the answer {@code /me} and
+     * {@code GET /members} both give, so two doors cannot describe one subject's access differently.
+     * Expired rows are excluded here as they are by every other read: a lapsed grant authorises nothing,
+     * and listing it would advertise an access the caller has already lost.
+     */
+    public List<String> grantedToHuman(TenantContext tenant, UUID userId, UUID merchantId) {
+        Set<String> all = new LinkedHashSet<>();
+        for (String subjectType : HUMAN_SUBJECT_TYPES) {
+            all.addAll(grantedPermissions(tenant, subjectType, userId, merchantId));
+        }
+        return List.copyOf(all);
     }
 
     /** Merchant-scoped grant: joined through {@code merchants} so another tenant's grant can never match. */

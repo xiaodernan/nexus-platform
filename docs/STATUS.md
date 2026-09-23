@@ -1556,3 +1556,60 @@ roadmap.
 The two lists are no longer symmetric in usefulness, and this round is the reason to say it plainly:
 "served, not documented" went to zero, so the document now accounts for every route the running service
 declares. What remains on the other side is work, and it is now safe to read as work.
+
+## 37. The doors were built, tested and documented, and nobody in the demo could open one (2026-09-24)
+
+D40 wrote the workspace doctrine and §34 built the nine §5 routes that apply it. What nobody had done was ask
+the one table that decides access whether the demo had any rows in it. On the live `nexus` database, measured
+before this round touched anything: **3** active `owner` memberships, **0** holding a live `admin_members`,
+**15** human grant rows, **12** of them carrying an `expires_at`. Every one of §5's doors — members, api-keys,
+the AI switch — answered 403 for the only merchant humans the dataset contains, and `MerchantWorkspaceTest`
+stayed green throughout, because each of its tests seeds the permissions it needs. A fixture that supplies its
+own access can prove what happens when access exists. It cannot prove that it does.
+
+The seed now writes the role's preset rather than a hand-picked five, so a seeded owner holds all twelve
+permissions `MerchantPermissions.OWNER` names: **15 → 36** human grant rows, **0** of them expiring, **3/3**
+owners able to administer their own business. That is D42, and the part of it worth carrying forward is the
+reading of an existing check rather than the new one: `quality.sql` has asked *"does every seeded owner
+membership have grants?"* since it was written, it has been passing the whole time, and it was telling the
+truth about a dataset nobody could use. A check for the presence of something cannot catch the wrong thing
+being present. The new check names the permission the door needs.
+
+The second finding is smaller and worse. `GET /api/v1/me` has printed `"permissions": []` for every membership
+since the route was written — a placeholder in a position where a consumer expects a list, which is more
+damaging than the field being absent, because absent is a question and empty is an answer. It now reads from
+`PermissionService.grantedToHuman`, the union over both spellings a human's grants are filed under, which is
+also what the roster reads; `MerchantWorkspaceService`'s private copy of that union and of the spelling list
+is deleted, so a screen and a roster cannot drift into describing one person's access differently. Human
+grants carry no `expires_at` at all now, and a quality check refuses any that do: a role is assigned, only a
+key or an agent leases.
+
+The new `scripts/verify_workspace_flow.py` (22 checks, wired into `e2e_fresh.sh` step 7 as the third walk)
+starts from the button a visitor presses — `/api/v1/auth/demo`, role `merchant` — and ends on the claim D5 has
+always made: the key that walk creates answers 200 on a `read_analytics` route, `last_used_at` is stamped, the
+stored row shows only a prefix, and one request after revocation the *same* bearer token answers 401
+`invalid_api_key` while the human roster is untouched. Access lived in the grant rows, and that sentence is
+now measured rather than asserted. Also measured, because a permission system is mostly a list of refusals: a
+foreign workspace answers 403, a stranger's `user_id` answers 404 and writes no row, and disabling the last
+admin answers 409 `last_admin` without having disabled anything.
+
+```
+mvn -o test                       139 run · MerchantWorkspaceTest 11/11 · 1 red, untracked com.nexus.admin
+scripts/db_gate_fresh.sh          166 → 168 quality checks · PASS on a from-scratch schema
+data/seed permission_grants       15 → 36 rows · owners with admin_members 0/3 → 3/3 · lapsing human grants 12 → 0
+scripts/e2e_fresh.sh              8/8 · 525 served-read checks · 30/30 booking · 15/15 review · 22/22 workspace · contract PASS
+verify_contract_runtime.mjs       133 documented · 121 in scope · 96 answered · 25 gaps · 0 undocumented (unchanged from §36)
+```
+
+The one red is the same one §34 and §36 reported — `AdminConsoleApiTest.searchAnalyticsReportsRealCounts`,
+untracked, another wave's in-flight Admin Console, and an `expected 2L but was 3L` count disagreement that no
+permission change this round can reach. The contract ledger did not move either: this round added no route and
+changed no mapping, so the reader's numbers are §36's, and the 25 rows still standing there are still each
+owner's work rather than noise.
+
+Two things this round did **not** do. It did not reload the demo data: the instance on :8090 and the `nexus`
+database behind it still hold the old fifteen rows, so the console someone is looking at right now is still
+the locked one — restarting a service this session does not own is that owner's call, and the two fresh gates
+build their own databases precisely so this is the only honest sentence available. And it did not open a
+browser: there is still no merchant-console screen calling these routes, so §156's visual leg stays with
+task #9 and `apps/web`'s dirty state, rather than being claimed here on the strength of an HTTP walk.

@@ -962,3 +962,64 @@ were checked at the source rather than assumed: no mapping exists anywhere in th
 for the merchant analytics, campaign, approve-publish, coupon, knowledge-base or reindex routes. That is the
 payoff of the rule. A gate the build trusts has to be wrong in only one direction: it may miss a promise
 nobody made, and it may not forgive one that was.
+
+## D42 A route nobody can reach is unbuilt, and a field that prints nothing is a field that lies — 2026-09-24
+
+D40 settled what authorises (`permission_grants`, not the role string) and D41 settled what the document owes
+(every route the router declares). Neither of them looked at the third party in the arrangement: the dataset.
+§5's nine workspace doors are built, unit-tested against their own fixtures and documented in the contract —
+and every human in the demo was locked out of all of them. Measured on the demo database before this change:
+**3** active `owner` memberships, **0** of them holding a live `admin_members`, **15** grant rows in total,
+**12** of them carrying an `expires_at`. The console renders "Owner" for an account that cannot ask who else
+is in the business.
+
+**1. A permission is not held because a role is labelled, and a check for "some rows" cannot catch the wrong
+rows.** The seed wrote five hand-picked permissions per owner — dashboard reads, no door — and `quality.sql`
+already asked *"does every seeded owner membership have grants?"*, which five wrong answers satisfy. So the
+dataset now writes the preset, and the check names what the door needs: every active `owner`/`admin`
+membership must hold `admin_members` specifically, guarded by a `count(*) > 0` on memberships so an empty
+dataset cannot pass by having nothing to check. `OWNER_PERMISSIONS` in `generate.py` is a copy of
+`MerchantPermissions.OWNER`, because a Python generator and a Java class share no build; the copy is checked
+by two readers that are not the copy — that SQL check, and `scripts/verify_workspace_flow.py`, which signs in
+as the account the demo hands a visitor and calls the gated route.
+
+**2. A printed field is a promise, and an empty placeholder breaks it more loudly than an absent one.**
+`GET /api/v1/me` had answered `"permissions": []` for every membership since the route was written. A field
+that is missing can be handled; a field that is present, well-formed, and false is consumed by every screen
+that trusts it, and nothing in the payload said it was a placeholder. It now reads from the same method the
+roster reads — `PermissionService.grantedToHuman`, which unions the two spellings a human's grants are filed
+under — because a `/me` that read one spelling and a `/members` that read both would describe one person
+differently through two doors, which is D35's failure mode wearing a different hat. Where the same list is
+now printed twice, it is produced once: `MerchantWorkspaceService`'s private copy of the union, and its
+private copy of the spelling list, are gone, so the two cannot drift.
+
+**3. Human access is assigned, not rented.** Twelve of those fifteen rows had a deadline. A TTL on an API key
+means something — a scope that ends — and a TTL on a person's role means a role that quietly vanishes on some
+Tuesday, with nothing on the membership row predicting it and no reader able to tell that the "owner" in front
+of them stopped being one. Human grants carry no `expires_at`, and `quality.sql` fails any that do. Deadlines
+stay where they mean something: `api_key` and `agent` subjects.
+
+**4. Reachability is proven by the account the demo hands out, over HTTP.** Ten unit tests in
+`MerchantWorkspaceTest` were green the whole time the demo could not use a single one of those routes, because
+each test seeded the grants it needed. A fixture that supplies its own permissions can only prove what happens
+when permissions exist; it cannot prove that they do. So the new walk starts from `/api/v1/auth/demo` with
+role `merchant` — the same button a visitor presses — and its 22 checks end on the claim D5 has always made
+and nothing has ever observed: a key created there answers 200 on a `read_analytics` route, and the same call
+answers 401 `invalid_api_key` one request after the key is revoked. Access lived in the grant rows, and that
+is now a measured sentence rather than a design claim.
+
+```
+seeded grant rows              15 → 36      owners holding admin_members   0/3 → 3/3
+lapsing human grants           12 → 0       quality.sql checks            166 → 168
+MerchantWorkspaceTest          10 → 11      e2e workspace walk             22/22
+```
+
+The `166 → 168` is arithmetic with a witness, not a remembered number: both new checks are single-row
+`INSERT INTO qc SELECT`, and the fresh gate reported 168 green after them.
+
+What this does **not** claim to have fixed: the instance running on :8090 and the `nexus` database it reads
+were built before this change and still hold the old fifteen rows, so the demo console somebody is looking at
+right now is still the locked one. Reloading it means restarting a service this session does not own, and the
+shared-workspace rule puts that decision with whoever runs :8090. The fresh gates — `db_gate_fresh.sh` and
+`e2e_fresh.sh`, which build their own database every run — are what certify the dataset. And there is still no
+merchant-console screen in a browser calling these routes, so §156's browser leg stays open with task #9.

@@ -2,6 +2,7 @@ package com.nexus.identity;
 
 import com.nexus.platform.AuditService;
 import com.nexus.platform.Json;
+import com.nexus.platform.PermissionService;
 import com.nexus.platform.Req;
 import com.nexus.platform.RequiresAuth;
 import com.nexus.platform.TenantContext;
@@ -68,11 +69,14 @@ public class MeController {
     private final IdentityRepository users;
     private final TenantJdbc jdbc;
     private final AuditService audit;
+    private final PermissionService permissions;
 
-    public MeController(IdentityRepository users, TenantJdbc jdbc, AuditService audit) {
+    public MeController(IdentityRepository users, TenantJdbc jdbc, AuditService audit,
+                        PermissionService permissions) {
         this.users = users;
         this.jdbc = jdbc;
         this.audit = audit;
+        this.permissions = permissions;
     }
 
     // ---- profile --------------------------------------------------------
@@ -332,7 +336,14 @@ public class MeController {
                         "status", Json.str(r, "status"),
                         "merchant", Json.map("id", Json.str(r, "merchant_id"), "slug", Json.str(r, "slug"),
                                 "display_name", Json.str(r, "display_name"), "status", Json.str(r, "merchant_status")),
-                        "permissions", List.of()))
+                        // Read from the grant rows, not from the role string (D5). This used to answer a
+                        // hard-coded empty list, which is worse than omitting the field: a console that
+                        // trusted it rendered an owner with no capabilities, and nothing about the payload
+                        // said the list was a placeholder. Same source and same spelling union as
+                        // `GET /members`, so the two doors cannot describe one person differently.
+                        "permissions", "active".equals(Json.str(r, "status"))
+                                ? permissions.grantedToHuman(tenant, userId, Json.uuid(r, "merchant_id"))
+                                : List.of()))
                 .toList();
     }
 

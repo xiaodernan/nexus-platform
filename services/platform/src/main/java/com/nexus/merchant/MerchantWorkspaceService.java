@@ -33,12 +33,6 @@ public class MerchantWorkspaceService {
 
     public static final List<String> MEMBER_STATUSES = List.of("active", "disabled");
 
-    /**
-     * A human's grants can be filed under either spelling — the interceptor accepts both for the same
-     * subject id — so taking access away has to delete both, or a row under the other name survives.
-     */
-    private static final List<String> HUMAN_SUBJECT_TYPES = List.of("user", "merchant_user");
-
     private final MerchantRepository merchants;
     private final PermissionService permissions;
 
@@ -59,7 +53,7 @@ public class MerchantWorkspaceService {
             out.put("role", Json.str(r, "role"));
             out.put("status", Json.str(r, "status"));
             out.put("joined_at", Json.ts(r, "created_at"));
-            out.put("permissions", heldGrants(tenant, userId, merchantId));
+            out.put("permissions", permissions.grantedToHuman(tenant, userId, merchantId));
             return out;
         }).toList();
     }
@@ -106,7 +100,7 @@ public class MerchantWorkspaceService {
         }
         merchants.updateMember(tenant, memberId, role, status);
 
-        List<String> current = heldGrants(tenant, userId, merchantId);
+        List<String> current = permissions.grantedToHuman(tenant, userId, merchantId);
         List<String> effective = reconcileGrants(tenant, operatorId, merchantId, userId, nextRole, nextStatus);
         List<String> removed = new ArrayList<>(current);
         removed.removeAll(effective);
@@ -133,9 +127,9 @@ public class MerchantWorkspaceService {
                             + "with nobody who can administer it",
                     Json.map("member_id", memberId.toString(), "merchant_id", merchantId.toString()));
         }
-        List<String> current = heldGrants(tenant, userId, merchantId);
+        List<String> current = permissions.grantedToHuman(tenant, userId, merchantId);
         int revoked = 0;
-        for (String subjectType : HUMAN_SUBJECT_TYPES) {
+        for (String subjectType : PermissionService.HUMAN_SUBJECT_TYPES) {
             revoked += permissions.revokeAll(tenant, subjectType, userId, merchantId);
         }
         merchants.removeMember(tenant, memberId);
@@ -166,19 +160,6 @@ public class MerchantWorkspaceService {
     // ---- grant reconciliation --------------------------------------------
 
     /**
-     * What the subject can actually do in this merchant — the union over both spellings a human's grant row
-     * can carry, because the interceptor accepts either. Reading only one would let a screen show a person as
-     * powerless while they could still call the API.
-     */
-    private List<String> heldGrants(TenantContext tenant, UUID userId, UUID merchantId) {
-        Set<String> all = new LinkedHashSet<>();
-        for (String subjectType : HUMAN_SUBJECT_TYPES) {
-            all.addAll(permissions.grantedPermissions(tenant, subjectType, userId, merchantId));
-        }
-        return List.copyOf(all);
-    }
-
-    /**
      * Make the subject's grants in this merchant equal the role's default set, and return that set. An empty
      * set is what {@code disabled} means: the membership row stays for the audit trail, the access goes.
      *
@@ -189,7 +170,7 @@ public class MerchantWorkspaceService {
     private List<String> reconcileGrants(TenantContext tenant, UUID operatorId, UUID merchantId, UUID userId,
                                          String role, String status) {
         List<String> wanted = "active".equals(status) ? MerchantPermissions.defaultsForRole(role) : List.of();
-        List<String> current = heldGrants(tenant, userId, merchantId);
+        List<String> current = permissions.grantedToHuman(tenant, userId, merchantId);
         Set<String> wantedSet = new LinkedHashSet<>(wanted);
         for (String permission : wantedSet) {
             if (!current.contains(permission)) {
@@ -198,7 +179,7 @@ public class MerchantWorkspaceService {
         }
         for (String permission : current) {
             if (!wantedSet.contains(permission)) {
-                for (String subjectType : HUMAN_SUBJECT_TYPES) {
+                for (String subjectType : PermissionService.HUMAN_SUBJECT_TYPES) {
                     permissions.revoke(tenant, subjectType, userId, merchantId, permission);
                 }
             }

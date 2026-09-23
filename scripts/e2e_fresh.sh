@@ -15,7 +15,7 @@
 #   scripts/e2e_fresh.sh                 # full run, cleans up after itself
 #   scripts/e2e_fresh.sh --keep          # leave the database (and the service) up for psql/curl
 #   scripts/e2e_fresh.sh --skip-generate # load data/seed/out/ as found
-#   scripts/e2e_fresh.sh --reads-only    # skip the reservation walk that writes rows
+#   scripts/e2e_fresh.sh --reads-only    # skip the three walks that write rows
 #   E2E_PORT=8093 scripts/e2e_fresh.sh
 #
 # The live `nexus` and `nexus_test` databases are never opened, and neither is the running :8090
@@ -209,8 +209,8 @@ echo
 if [ "$READS_ONLY" = "1" ]; then
   step "7/8  skipped (--reads-only): no rows written"
 else
-  step "7/8  walk the two write paths against $E2E_DB"
-  # The reason these run here rather than against :8090: both leave rows behind. A state machine is best
+  step "7/8  walk the three write paths against $E2E_DB"
+  # The reason these run here rather than against :8090: all three leave rows behind. A state machine is best
   # proved on a database that can be thrown away with the run that proved it, not on the demo data another
   # session is looking at.
   NEXUS_PLATFORM_URL="http://127.0.0.1:$PORT" NEXUS_TENANT="${NEXUS_TENANT:-hong-kong}" \
@@ -221,6 +221,12 @@ else
   # described and none of them could observe on its own.
   NEXUS_PLATFORM_URL="http://127.0.0.1:$PORT" NEXUS_TENANT="${NEXUS_TENANT:-hong-kong}" \
     "${PYTHON:-python}" "$SCRIPT_DIR/verify_review_flow.py" 2>&1 | tail -30 | sed -e 's/^/    /'
+  # The workspace: sign in as the merchant the seed actually hands a visitor, open §5's doors, issue a key and
+  # use it. A third walk because its failure mode is neither of the above — it is the dataset and the code
+  # disagreeing about who can act (D40 found routes no seeded grant could reach), and only an HTTP call from
+  # that account's own token can tell a reachable permission from a row that merely looks right.
+  NEXUS_PLATFORM_URL="http://127.0.0.1:$PORT" NEXUS_TENANT="${NEXUS_TENANT:-hong-kong}" \
+    "${PYTHON:-python}" "$SCRIPT_DIR/verify_workspace_flow.py" 2>&1 | tail -30 | sed -e 's/^/    /'
 fi
 echo
 
@@ -231,4 +237,4 @@ step "8/8  reconcile docs/API_CONTRACT.md against what this build declares"
 # that is absent here is a page a consumer can be sent to with nothing behind it — and that fails the run.
 node "$SCRIPT_DIR/verify_contract_runtime.mjs" --base "http://127.0.0.1:$PORT" | sed -e 's/^/    /'
 echo
-echo "RESULT: PASS — seeded rows, served payloads, the reservation walk and the contract agree on :$PORT"
+echo "RESULT: PASS — seeded rows, served payloads, the reservation, review and workspace walks, and the contract agree on :$PORT"

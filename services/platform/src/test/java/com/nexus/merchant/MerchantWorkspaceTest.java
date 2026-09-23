@@ -189,6 +189,33 @@ class MerchantWorkspaceTest extends NexusIntegrationTest {
     }
 
     @Test
+    @DisplayName("GET /me answers with the grant rows, under either spelling, and stops when access ends")
+    void myWorkspacesPrintTheirGrants() {
+        // `/me` used to answer `"permissions": []` for every membership. A console that trusted it rendered an
+        // owner with no capabilities, and nothing about the payload said the list was a placeholder — so the
+        // fiction survived a full stack of correct-looking screens. It is now the same reader the roster uses.
+        JsonNode mine = Json.tree(get(tenant, ownerToken, "/api/v1/me").getBody()).path("memberships");
+        assertThat(mine).as("the owner has exactly this one workspace").hasSize(1);
+        assertThat(mine.get(0).path("merchant").path("id").asText()).isEqualTo(merchant.toString());
+        assertThat(names(mine.get(0).path("permissions")))
+                .as("what /me prints is what the table holds")
+                .isEqualTo(grants(ownerId));
+
+        // The other spelling has to be visible here too, or the two doors would disagree about one person.
+        UUID person = newUser(tenant, "me-staff-" + tag(), "consumer");
+        staff(tenant, merchant, person, "read_analytics");
+        assertThat(names(Json.tree(get(tenant, token(tenant, person, "consumer"), "/api/v1/me").getBody())
+                .path("memberships").get(0).path("permissions"))).contains("read_analytics");
+
+        // And when the access ends, the print ends with it — the membership row staying behind on purpose.
+        assertThat(patch("/api/v1/merchant/members/" + memberIdOf(person), Json.map("status", "disabled"), tenant,
+                ownerToken).getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode after = Json.tree(get(tenant, token(tenant, person, "consumer"), "/api/v1/me").getBody());
+        assertThat(after.path("memberships").get(0).path("status").asText()).isEqualTo("disabled");
+        assertThat(names(after.path("memberships").get(0).path("permissions"))).isEmpty();
+    }
+
+    @Test
     @DisplayName("The doors are RBAC and tenant scoped: staff is refused, another market gets 404")
     void doorsAreAuthorisedAndTenantScoped() {
         UUID person = newUser(tenant, "peeker-" + tag(), "consumer");
@@ -361,6 +388,13 @@ class MerchantWorkspaceTest extends NexusIntegrationTest {
                 select permission from permission_grants
                 where merchant_id = ? and subject_id = ? order by permission
                 """, String.class, merchant, userId);
+    }
+
+    /** A printed permission array as a list, so it can be compared with the SQL the screen claims to show. */
+    private static List<String> names(JsonNode array) {
+        List<String> out = new java.util.ArrayList<>();
+        array.forEach(node -> out.add(node.asText()));
+        return out;
     }
 
     private UUID memberIdOf(UUID userId) {
