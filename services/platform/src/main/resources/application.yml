@@ -2,7 +2,13 @@
 # The `dev` profile (application-dev.yml) supplies localhost credentials; nothing here holds a secret.
 server:
   port: ${NEXUS_PORT:8080}
-  forward-headers-strategy: framework
+  # D47: `native`, not `framework`. Framework had Spring's forwarded-header filter rewrite the peer address
+  # from *whoever sent it*, so the login brute-force bucket and audit_logs.ip were keyed by a value the caller
+  # chose. Native honours the header only when the socket peer itself matches
+  # server.tomcat.remoteip.internal-proxies (by default the loopback and private ranges) — correct for a proxy
+  # on this network, and inert for a client that merely types the header. Narrow that list if this port is ever
+  # exposed directly.
+  forward-headers-strategy: ${NEXUS_FORWARD_HEADERS_STRATEGY:native}
   error:
     whitelabel:
       enabled: false

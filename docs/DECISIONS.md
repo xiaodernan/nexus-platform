@@ -1376,3 +1376,134 @@ a row that says anything but `completed` now stops refusing callers at its deadl
 does not touch `AuthorizationInterceptor` or `headerOnly`, both another wave's. It does not build the retention
 job, and its absence — like `@RequiresPlatformRole`'s thin coverage of the newer admin doors, `com.nexus.admin`'s
 red test and the 25 documented-not-served rows — stays in `STATUS` as somebody else's decision to make.
+
+## D47 A rung no request ever produced — and the identity the caller was allowed to type — 2026-09-24
+
+### 1. What shipped
+
+`API_CONTRACT` §1 has printed `429` + `Retry-After` + `X-RateLimit-Remaining` since that document's first commit
+(`7591852`, line 29), and `RateLimitFilter` has been registered on `/api/v1/*` since the day it was written
+(`e237f6d`, `FilterChainConfig.rateLimitFilter`). The rung had still never happened anywhere this build is
+checked: `rg -n "429|TOO_MANY_REQUESTS|rate_limited" services/platform/src/test/java`, taken from the tree this
+unit started in, returned **zero** hits across its 149 tests, and the only place the word `ratelimit` appeared
+under `src/test/java` at all was `NexusIntegrationTest` setting `nexus.ratelimit.enabled=false`. A promise that
+the shared harness switches off is a promise no test can see, which is how a contract line and a filter can both
+be true and the behaviour still go unwitnessed for every increment since.
+
+The 429 was the easy half to fix. What it guards is the reason it mattered.
+
+### 2. Two layers of the same trust, and the third thing it touched
+
+The login gate's entire value is that it stands in front of the password check. Its bucket key was
+`Req.clientIp(request)` — and that method answered with the first entry of `X-Forwarded-For` whenever a caller
+sent one, falling back to the socket peer only when they did not. One line of configuration then did the same
+thing underneath the application: `server.forward-headers-strategy: framework` in `application.yml`, which
+registers Spring's `ForwardedHeaderFilter` and rewrites `getRemoteAddr()` from that same header, for any peer,
+declared or not. So fixing the Java and leaving the config alone would have produced a fix that changed nothing
+a client could observe.
+
+Three consequences. The first and third are met directly on the pre-D47 configuration — `ForwardedHeaderTrustTest`
+runs `framework` deliberately, with a limit of one — and the second is met up to the point where proving the rest
+of it would need a second machine:
+
+- a spent budget refills for whoever types a new address. Four failed logins → one refusal and three handler
+  visits, because the window refilled every time the claimed address changed. The only attempt the gate stopped
+  was the one reusing an address it had already spent.
+- the same header lets one caller spend **another client's** budget: two attempts naming `203.0.113.11` and the
+  second is refused. What follows for the address's real holder — arriving later, from the socket that actually
+  belongs to it, into the window the spoof already drained — is an inference from the key being a string, because
+  no test on one machine can arrive from anywhere else; §4 is why that limit is written down rather than hidden.
+- `audit_logs.ip` recorded the typed string. This one is worse than bad attribution: the column is `inet`, the
+  insert is `cast(:ip as inet)`, and `AuditService.record` catches every exception by design (a broken audit
+  write must not turn a successful action into a 500). So `X-Forwarded-For: anything-not-an-ip` destroyed the
+  audit row for whatever had just happened, logged nothing but `audit_write_failed`, and still returned the
+  response — including for `permission_denied`, which `AGENT_CONTRACT` §8 makes part of the denial itself. An
+  untrusted header was therefore both the identity and a switch for whether the trail exists: the framework
+  class sends `X-Forwarded-For: not-an-ip` and asserts the login answered 401 while **no row at all** is left for
+  its tenant, and the fixed configuration sends that same value and asserts the row is there, holding the peer.
+  The witness rides the login path because that is the door an anonymous caller can reach; `denied` passes the
+  same argument through the same insert, so a denial's row was one header away from the same fate.
+
+### 3. The fix is two lines, and one of them is not code
+
+`Req.clientIp` now returns `request.getRemoteAddr()` and reads no header. `application.yml` now declares
+`${NEXUS_FORWARD_HEADERS_STRATEGY:native}`. The choice between those two words is the whole decision, and it was
+measured rather than recalled: asking the running container with the strategy set to `native` shows
+`RemoteIpValve` in the engine pipeline, and the default `server.tomcat.remoteip.internal-proxies` value (read out
+of Boot 3.5.16's own configuration metadata, matching the regex compiled into tomcat-embed-core 10.1.55) is the
+loopback, private, CGNAT and link-local ranges. `framework` honours `X-Forwarded-For` from whoever sends it;
+`native` honours it from a peer the operator declared to be a proxy, and rewrites the address once for every
+reader of it — the rate bucket, `audit_logs.ip`, whatever comes next — instead of each reader deciding for
+itself whether to believe a string.
+
+`DeclaredProxyTest` is the counterweight, because "untrusted" that nobody can switch on is a broken feature
+rather than a policy: with localhost declared as the proxy, the named client does get its own bucket and does
+land in the audit row. The same four requests answer differently in those two classes, and the only difference
+between them is that declaration. And a third gate reads the shipped files
+(`shippedDefaultRefusesTheHeaderFromAnyoneButAProxy`): any `forward-headers-strategy` declaration in
+`src/main/resources` must resolve to `native` or `none`, and must be `${ENV:default}` so an operator behind a
+proxy can say so without editing a file. That gate is what stops the config half of this fix from rotting back
+into a one-word edit.
+
+### 4. What witnessing a 429 took
+
+- **A probe before the promises.** Every assertion in `RateLimitEnforcementTest` is silently true if
+  `nexus.ratelimit.enabled=false` wins the precedence fight against the subclass's `@TestPropertySource`, so the
+  class opens by asking the limiter itself to refuse one request on a private scope, and that assertion's failure
+  message says exactly what a green-means-nothing outcome would be. (It does win: the inlined properties of a
+  test class outrank the parent harness's `@SpringBootTest(properties = …)`.)
+- **A count of what did not happen.** The refusal is proven to sit in front of the route by the audit table —
+  seven attempts, three `login_failed` rows — not by the status code alone. A 429 that still reached the handler
+  would look identical to a client and identical to this test if the count had not been taken.
+- **Two traps, both of them this unit's own reds, both of them worth writing down.** `@TestPropertySource`
+  inlined properties lose their backslashes on the way to the container: the proxy pattern
+  `127\.\d{1,3}\.\d{1,3}\.\d{1,3}` arrived as `127.d{1,3}…`, matched nothing, and the test that was meant to
+  prove a declared proxy works went red for the test's own syntax rather than for the product. The patterns in
+  these classes are escape-free (`127.*`) for that reason. And an `inet` rendered with `ip::text` is
+  `127.0.0.1/32`, not `127.0.0.1` — the assertions read `host(ip)`.
+- **Three more Spring contexts**, one per (strategy, proxy-list) pair, because these are facts about the
+  container and a container cannot be reconfigured between two methods of one class. One in-memory
+  `KeyValueStore` per context is also why each class spends a distinct scope: the buckets are shared by every
+  method in the same class.
+- **Why the tests have to declare the proxy list themselves.** Every test here connects over loopback, and
+  loopback is inside `native`'s default internal range — so a loopback client sees the *same* behaviour under
+  `native` as under the old `framework` default, and only the declared pattern (`192.168.*`, which these
+  requests never arrive from, versus `127.*`) separates "the header is inert" from "the header names me". The
+  distinction this unit is about lives in what a *remote* peer's header does, and no test on one machine can
+  produce a remote peer; it can produce the declaration, and it can refuse a shipped file that trusts without
+  one. A walk from `127.0.0.1` could never have caught this bug, and the rung step added to `e2e_fresh.sh` says
+  so in its own comment rather than claiming a proof it cannot give. It also reads the window from the service's
+  own `X-RateLimit-Limit` instead of assuming it, because the first version assumed: twelve attempts against the
+  10-per-300s the base file advertises produced no refusal, and the reason was that `application-dev.yml` — the
+  profile that script boots under — re-declares `auth-requests` as a bare literal `100`. A step that counts on a
+  number another file may overrule quietly stops testing anything, and the failure is worth more than the pass
+  would have been: it is D46's defect one layer up, with the base file offering `${NEXUS_RL_AUTH:10}` and a
+  profile silently overruling it, and it is task #32 now rather than a footnote here.
+
+```
+mutations  5, each caught red, each restored and the restore verified against git; the final suite re-greened
+           the whole tree (clientIp→header · strategy→framework · Retry-After deleted · write bucket per IP ·
+           window one request late)
+tests      8 new across 4 classes · suite 149 → 157 run · the 1 red is com.nexus.admin's, unchanged and theirs
+e2e        a 9th step; the running service declared its own auth window as 100 per address — not the 10 the
+           base file advertises — and refused the ladder on its 95th attempt, envelope and headers intact
+```
+
+The five: `Req.clientIp` back to reading the header (red in `ClientIpTest` **and** in the ladder's audit
+assertion); the shipped strategy back to `framework` (red in the config gate **and** in the ladder, which is the
+proof that the config line is load-bearing and not just the Java); the `Retry-After` header deleted from the
+filter's refusal (red on §1's own words); the write bucket re-keyed onto the client address instead of the
+principal (red on "the second person's first write is not the first person's fourth"); the window made to
+refuse one request late (red in all three methods of the class, including the vacuity probe).
+
+What this does not do: it does not witness the `ai` scope — no test drives `/api/v1/ai/**` with the limiter on,
+so those 20-per-60s numbers are read from the config and not from a refusal. It does not remove the trust that
+`native` still gives to a peer inside the private ranges, which is what the declaration means; `infra/` runs no
+proxy, so an operator who exposes this port directly and keeps the default list is making a choice this unit
+documents in the file rather than one it can prevent from here. It does not touch `TenantFilter`'s use of
+`X-Forwarded-Host`, which is a sibling read of an untrusted header but not the same kind of thing: choosing a
+tenant is public in §1 (`X-Tenant` exists precisely to name one), choosing an *address* is not. It does not
+delete `RateLimiter.require`, which has no caller in this build. And `rate_limit_buckets` — the V1 table no SQL
+and no Java in the repository writes, while another stream's types cite it as provenance twice over
+(`packages/types/src/admin.ts` for an admin metric, `packages/types/src/errors.ts` for a "scope key the bucket is
+charged to", which in this build is a `KeyValueStore` key and never a row) — stays reported, not reconciled.

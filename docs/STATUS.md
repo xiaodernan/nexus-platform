@@ -1847,3 +1847,99 @@ served without being documented, and the reservation, review and workspace walks
 HTTP — moderation resolve, review write, workspace members and api-keys, events ingest — were run again with the
 three platform gates above after the last edit: 40 tests, 0 failures. `:8090` is still not listening — nothing on this machine runs the platform right now — and the browser
 leg is still task #9.
+
+## 42. A rung no request ever produced, and the identity the caller was allowed to type (2026-09-24)
+
+§1 has printed `429` + `Retry-After` + `X-RateLimit-Remaining` since that document's first commit (`7591852`) and
+`RateLimitFilter` has sat on `/api/v1/*` since the day it was written (`e237f6d`). Neither had ever
+happened where this build is checked. The measurement, taken before anything was added:
+`rg -n "429|TOO_MANY_REQUESTS|rate_limited" services/platform/src/test/java` → **zero hits** in 149 tests, and the only
+occurrence of `ratelimit` under `src/test/java` at all was `NexusIntegrationTest` setting
+`nexus.ratelimit.enabled=false`. Every test that ever walked through that filter did so with the filter disarmed,
+which is the whole reason a promise can survive unnoticed: the gate is not missing, it is
+switched off by the fixture that was supposed to exercise it.
+
+The 429 was the easy half. What made this a security unit is the bucket's key.
+
+- `Req.clientIp` returned the first `X-Forwarded-For` entry whenever a caller sent one, and that value keyed the
+  login brute-force window — so the gate that exists to stop a password guess did not stop the guess, only the
+  address the guesser chose to name. Met on the pre-D47 configuration, which
+  `ForwardedHeaderTrustTest` keeps running on purpose (limit 1): four failed logins → one refusal and three
+  handler visits, the window refilling every time the claimed address changed, and two attempts naming
+  `203.0.113.11` enough to spend that address's window before its real holder arrives. How much of that last
+  clause is measurement and how much inference, and why one machine cannot close the difference, is D47 §4's. A
+  header was both an escape hatch and a way to spend someone else's budget.
+- One line of configuration did the same thing underneath the application: `application.yml:5` declared
+  `server.forward-headers-strategy: framework`, which registers Spring's `ForwardedHeaderFilter` and overwrites
+  `getRemoteAddr()` with that header for **any** peer. Had this unit only fixed the Java, the fix would have
+  been cosmetic. Nothing in `docs/`, no comment and no test explained why that word was there.
+- And the same string was written into `audit_logs.ip`, a Postgres `inet` column, by
+  `AuditService.record` — a method that catches every exception on purpose, because a broken audit write must not
+  turn a real action into a 500. So `X-Forwarded-For: not-an-ip` made `cast(:ip as inet)` fail, the row for the
+  event that had just happened disappeared, the caller still got their response, and the only trace was one
+  `audit_write_failed` log line. That is measured in both directions now: the framework class asserts the login
+  answered 401 and its tenant has **zero** audit rows; the fixed path sends the same value and asserts the row
+  exists and holds `127.0.0.1`. An untrusted header had been both the identity and the switch for whether the
+  trail exists.
+
+The fix is two lines, one of them in a config file: `clientIp` answers with the socket peer and reads no header,
+and the strategy becomes `${NEXUS_FORWARD_HEADERS_STRATEGY:native}`. The word was chosen from the mechanism, not
+from memory — asking the running container with `native` set shows `RemoteIpValve` in the engine pipeline, and
+the default `server.tomcat.remoteip.internal-proxies` (read out of Boot 3.5.16's own configuration metadata,
+matching the regex compiled into tomcat-embed-core 10.1.55) is the loopback, private, CGNAT and link-local
+ranges. So a caller on the public internet typing an address gets nothing, while a proxy the operator declared
+still names clients — which is what `DeclaredProxyTest` keeps true, so that "untrusted" remains a policy and not
+an accidentally removed feature. The two classes send the same requests and get different answers, and the only
+difference between them is that declaration. A third gate reads the shipped files: any
+`forward-headers-strategy` in `src/main/resources/*.yml` must resolve to `native` or `none` and must be
+`${ENV:default}`, because that is the only thing standing between this fix and a one-word edit back.
+
+```
+ClientIpTest                     new · 1 test · reads the method directly, so no header can be a peer
+RateLimitEnforcementTest         new · 3 tests · first 429 this repository ever produced; 7 attempts → 3 audit
+                                 rows proves the refusal sat in front of the route; opens with a probe that
+                                 fails loudly if the parent harness's enabled=false ever wins the precedence
+ForwardedHeaderTrustTest         new · 3 tests · pre-D47 default reproduced (bucket refills, trail disappears)
+                                 + the shipped-config gate
+DeclaredProxyTest                new · 1 test · what a declared proxy still buys, both in the bucket and in ip
+mutations run                    5 · clientIp→header · strategy→framework · Retry-After deleted ·
+                                 write bucket keyed per IP · window refuses one late
+suite                            149 → 157 run · the 1 red is com.nexus.admin's AdminConsoleApiTest:289, unchanged and theirs
+e2e                              9 steps now. The service declared its own auth window as 100 per address (not
+                                 the 10 application.yml advertises) and refused the ladder on attempt 95. The
+                                 ledger is §41's, unchanged: 121 of 133 documented routes in scope, 96 declared
+                                 by the running service, 25 documented-not-served, 0 served-undocumented
+```
+
+Three reds in this unit belonged to the unit's own tests rather than to the product, and all three are worth
+keeping in mind. A `@TestPropertySource` value loses its backslashes on the way to the container, so the proxy
+pattern `127\.\d{1,3}…` arrived as `127.d{1,3}…` and matched nothing (these patterns are now escape-free). An
+`inet` cast to text renders `127.0.0.1/32`, so the address assertions read `host(ip)`. And the rung step added to
+`scripts/e2e_fresh.sh` laddered twelve attempts against the 10-per-300s window `application.yml` advertises, saw
+no refusal, and died — because the profile that script boots under, `application-dev.yml`, re-declares
+`auth-requests` as a bare literal `100` ("generous, so manual curl sessions do not get throttled"). The step now
+asks the running service for its window via its own `X-RateLimit-Limit` header instead of assuming one. That
+third red is the find of the unit: under the dev profile, `NEXUS_RL_AUTH`, `NEXUS_RL_WRITE` and `NEXUS_RL_AI` set
+nothing at all, which is §41's "offer withdrawn in silence" one layer up — the key is read by code, but a profile
+overrules the environment without saying so — and it is now task #32, with a gate for the class of it rather than
+a patch for these three lines.
+
+What this does not do. It does not witness the `ai` scope — no test drives `/api/v1/ai/**` with the limiter on,
+so those 20-per-60s numbers are read from the config rather than from a refusal. It does not remove the trust
+`native` gives to peers inside the private ranges — that is what the declaration means, `infra/` runs no proxy,
+and an operator who exposes this port directly while keeping the default list is making a choice this section
+documents rather than one it can prevent from here. It does not harden the audit path itself: `AuditService`
+still swallows a failed write, so any future untrusted value that reaches a typed column can still delete a row
+quietly — the fix was to stop feeding it caller-chosen addresses. The sibling header reads were checked and
+judged different in kind, all four bounded or public by design: `X-Request-Id` is `[A-Za-z0-9._-]{1,64}`,
+`X-Session-Id` is `[A-Za-z0-9_-]{8,64}` and names a cart, `User-Agent` lands in a truncated `text` column, and
+`TenantFilter`'s use of `X-Forwarded-Host` only ever selects a tenant that `X-Tenant` can select outright (§1
+makes choosing a tenant public; choosing an *address* is not). It does not delete `RateLimiter.require`, which
+has no caller in this build. It does not touch `rate_limit_buckets`, the V1 table no SQL and no Java here writes
+while another stream's types cite it as provenance twice (`packages/types/src/admin.ts` for an admin metric,
+`packages/types/src/errors.ts` for a bucket scope key that in this build is a `KeyValueStore` key and never a
+row). It does not narrow the dev profile's 100-per-address window it just learned about — that is task #32, with
+a gate for the class of it, not only a patch for these three lines. And it leaves the standing
+reports where they were: `com.nexus.admin`'s red test, §106's missing retention job,
+`@RequiresPlatformRole`'s thin coverage of the newer admin doors, the 25 documented-not-served rows, task #9's
+browser leg (`:8090` still not listening — re-checked for this section) and task #17's reservation transitions.

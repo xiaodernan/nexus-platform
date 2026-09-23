@@ -61,7 +61,21 @@ Data access rules (no `LLM → database` path, §52):
   anything is the resource's own integrity rules, not this table. That read is also the only recovery from an
   `in_progress` claim a killed process left behind: before D46 nothing compared the deadline, so such a key
   answered `request_in_progress` on every later attempt without end.
-- Rate limits: `429` + `Retry-After` + `X-RateLimit-Remaining`.
+- Rate limits: `429` + `Retry-After` + `X-RateLimit-Remaining` (+ `X-RateLimit-Limit`), over three fixed windows —
+  `auth-ip` on `/api/v1/auth/**` (default 10 per address per 300s), `ai` per principal on `/api/v1/ai/**` and
+  `/api/v1/merchant/ai-agent` (20 per 60s), `write` per principal on every mutating request outside auth
+  (60 per 60s). A refused request is answered by the filter, so the route never runs: no handler, no audit row,
+  no idempotency claim — and `error.details.retry_after` carries the same number as the header.
+  **The address is the socket peer, never a header** (D47). `Req.clientIp` used to return the first
+  `X-Forwarded-For` entry whenever one was sent, and `server.forward-headers-strategy: framework` made the
+  container do the same to `getRemoteAddr()` underneath it — so the login brute-force budget refilled for
+  whoever typed a new address, and that typed string was what `audit_logs.ip` recorded. A deployment behind a
+  proxy declares the proxy instead (`server.forward-headers-strategy` + `server.tomcat.remoteip.internal-proxies`)
+  and the container then rewrites the address once, for every reader. `RateLimitEnforcementTest` switches the
+  limiter on to produce the first `429` this repository ever observed; `ForwardedHeaderTrustTest` keeps the
+  pre-D47 configuration running as a reproduction and refuses a trust-anyone default in the shipped config
+  files; `DeclaredProxyTest` is what a declared proxy still buys. `nexus.ratelimit.enabled=false` (which the
+  test harness sets) skips the check entirely — that switch, not a missing route, is why the rung went unseen.
 - Pagination: cursor-based — request `?limit=20&cursor=...`; response `{ "items": [...], "next_cursor": "...", "total_estimate": 123 }`.
 - Error envelope (always):
 ```json

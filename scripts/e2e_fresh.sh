@@ -119,14 +119,14 @@ listener_on_port() {
 [ -z "$(listener_on_port)" ] || die "port $PORT is already in use — choose another with E2E_PORT=..."
 
 # --------------------------------------------------------------------------- 1/7 empty database
-step "1/8  create $E2E_DB from template0"
+step "1/9  create $E2E_DB from template0"
 psql_maint "CREATE DATABASE \"$E2E_DB\" TEMPLATE template0 ENCODING 'UTF8'" >/dev/null
 [ "$(psql_e2e "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
                 AND table_name NOT LIKE 'pg_%'")" = "0" ] \
   || die "the fresh database is not empty"
 
 # --------------------------------------------------------------------------- 2/7 schema + roles
-step "2/8  apply infra/db/migrations/V*.sql + 00_roles.sql"
+step "2/9  apply infra/db/migrations/V*.sql + 00_roles.sql"
 NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_NAME="$E2E_DB" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/db_apply_migrations.sh" | sed -e 's/^/    /'
 TABLES="$(psql_e2e "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
@@ -136,21 +136,21 @@ echo "    -> tables=$TABLES migrations=$MIGRATIONS"
 
 # --------------------------------------------------------------------------- 3/7 dataset
 if [ "$SKIP_GENERATE" = "1" ]; then
-  step "3/8  seed generation skipped (--skip-generate)"
+  step "3/9  seed generation skipped (--skip-generate)"
 else
-  step "3/8  generate the synthetic dataset"
+  step "3/9  generate the synthetic dataset"
   PYTHON="${PYTHON:-python}"
   ( cd "$ROOT" && "$PYTHON" data/seed/generate.py ) 2>&1 | tail -3 | sed -e 's/^/    /'
 fi
 
-step "4/8  load the seed into the fresh database"
+step "4/9  load the seed into the fresh database"
 CONTAINER="$CONTAINER" DB="$E2E_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 \
   "$ROOT/data/seed/load.sh" | tail -6 | sed -e 's/^/    /'
 FACTS="$(psql_e2e "SELECT count(*) FROM facts WHERE attribute='rating'")"
 echo "    -> rating facts loaded: $FACTS"
 
 # --------------------------------------------------------------------------- 5/7 boot
-step "5/8  boot the platform against $E2E_DB on :$PORT"
+step "5/9  boot the platform against $E2E_DB on :$PORT"
 # baseline-version has to name the migrations the infra script already ran: Flyway would otherwise
 # replay V1..V4 over a schema that has them (D30/D32 are what made that failure loud instead of silent).
 # Redis is switched off so this run cannot write rate-limit or session keys into the shared instance.
@@ -201,15 +201,15 @@ if ! tasklist //FI "PID eq $LISTEN_PID" //FO CSV 2>/dev/null | grep -qi java; th
 fi
 
 # --------------------------------------------------------------------------- 6/7 probes
-step "6/8  probe the served consumer reads"
+step "6/9  probe the served consumer reads"
 node "$SCRIPT_DIR/verify_served_reads.mjs" --base "http://127.0.0.1:$PORT" --tenant "${NEXUS_TENANT:-hong-kong}"
 echo
 
 # --------------------------------------------------------------------------- 7/7 the write leg
 if [ "$READS_ONLY" = "1" ]; then
-  step "7/8  skipped (--reads-only): no rows written"
+  step "7/9  skipped (--reads-only): no rows written"
 else
-  step "7/8  walk the three write paths against $E2E_DB"
+  step "7/9  walk the three write paths against $E2E_DB"
   # The reason these run here rather than against :8090: all three leave rows behind. A state machine is best
   # proved on a database that can be thrown away with the run that proved it, not on the demo data another
   # session is looking at.
@@ -230,11 +230,61 @@ else
 fi
 echo
 
-# --------------------------------------------------------------------------- 8/8 the contract itself
-step "8/8  reconcile docs/API_CONTRACT.md against what this build declares"
+# --------------------------------------------------------------------------- 8/9 the rung §1 promises
+step "8/9  the rate-limit rung, on the window the running service says it has"
+# Why here and not only in the suite: NexusIntegrationTest sets nexus.ratelimit.enabled=false, so every unit
+# test that walks this filter does it disarmed. This is the one place a real jar, on real configuration, meets a
+# real HTTP client and has to answer 429 with the three headers §1 lists.
+# The window is read from the service's own X-RateLimit-Limit rather than assumed. That is not caution for its
+# own sake: the first version of this step laddered twelve attempts against the 10-per-300s the base config
+# advertises, saw no refusal, and the reason was that the dev profile re-declares auth-requests as a literal
+# 100 (application-dev.yml, "generous, so manual curl sessions do not get throttled"). A step that counts on a
+# number another file can overrule is a step that quietly stops testing anything — see docs/STATUS.md §42.
+# What this does NOT claim: the client here is 127.0.0.1, and native's default internal-proxies range includes
+# loopback — so a walk from this machine cannot tell native from the framework default it replaced, and proves
+# nothing about a forged X-Forwarded-For. RateLimitEnforcementTest does that, by declaring a proxy list these
+# requests never arrive from. A rung is all this step can honestly ask for.
+LADDER_BODY="${TMPDIR:-/tmp}/nexus-e2e-ladder.$$.json"
+attempt=0
+RUNG=0
+LIMIT=0
+while :; do
+  attempt=$((attempt + 1))
+  HEADERS=$(curl -s -m 10 -D - -o "$LADDER_BODY" -X POST "http://127.0.0.1:$PORT/api/v1/auth/login"       -H 'content-type: application/json'       -d '{"email":"ladder@example.test","password":"not-the-password"}' | tr -d '')
+  CODE=$(printf '%s
+' "$HEADERS" | awk '/^HTTP\//{c=$2} END{print c}')
+  if [ "$attempt" = "1" ]; then
+    LIMIT=$(printf '%s
+' "$HEADERS" | awk -F': ' 'tolower($1)=="x-ratelimit-limit"{print $2}' | head -1)
+    case "$LIMIT" in
+      ''|*[!0-9]*) die "the first login carried no numeric X-RateLimit-Limit (code $CODE) — §1's header is not being printed by the running service" ;;
+    esac
+    echo "    the service says its auth window is $LIMIT requests per address"
+  fi
+  case "$CODE" in
+    401) : ;;
+    429)
+      printf '%s
+' "$HEADERS" | grep -q '^Retry-After: [0-9]'         || die "attempt $attempt answered 429 without a Retry-After"
+      printf '%s
+' "$HEADERS" | grep -q '^X-RateLimit-Remaining: 0'         || die "attempt $attempt answered 429 without saying the window is empty"
+      grep -q '"code" *: *"rate_limited"' "$LADDER_BODY"         || die "the 429 envelope does not say rate_limited: $(head -c 200 "$LADDER_BODY")"
+      echo "    rung: refused on attempt $attempt of a $LIMIT window — envelope, Retry-After and X-RateLimit-Remaining present"
+      RUNG=1; break ;;
+    5*)  die "the login ladder hit a $CODE on attempt $attempt" ;;
+    *)   die "unexpected HTTP $CODE on ladder attempt $attempt (expected 401 until the window spends)" ;;
+  esac
+  [ "$attempt" -le "$((LIMIT + 1))" ] || break
+done
+rm -f "$LADDER_BODY"
+[ "$RUNG" = "1" ] || die "$attempt failed logins from one address against its own $LIMIT-wide window and not one 429"
+echo
+
+# --------------------------------------------------------------------------- 9/9 the contract itself
+step "9/9  reconcile docs/API_CONTRACT.md against what this build declares"
 # Same instance, same build, one question the other two ledgers cannot answer: does the document describe
 # the router? `/v3/api-docs` is generated from the annotations that registered, so a documented §4/§8 read
 # that is absent here is a page a consumer can be sent to with nothing behind it — and that fails the run.
 node "$SCRIPT_DIR/verify_contract_runtime.mjs" --base "http://127.0.0.1:$PORT" | sed -e 's/^/    /'
 echo
-echo "RESULT: PASS — seeded rows, served payloads, the reservation, review and workspace walks, and the contract agree on :$PORT"
+echo "RESULT: PASS — seeded rows, served payloads, the reservation, review and workspace walks, the rate-limit rung the service itself declared, and the contract agree on :$PORT"

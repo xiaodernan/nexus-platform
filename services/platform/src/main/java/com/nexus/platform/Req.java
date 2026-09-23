@@ -57,11 +57,18 @@ public final class Req {
         return v == null ? "unknown" : String.valueOf(v);
     }
 
+    /**
+     * The address the request actually arrived on — which is not a value the caller chooses. Reading
+     * {@code X-Forwarded-For} here instead (until D47) handed every caller its own identity: that string keyed
+     * the login brute-force bucket, so one header per attempt bought a fresh bucket, and it was written into
+     * {@code audit_logs.ip}, whose {@code inet} cast silently dropped the row whenever the caller put
+     * something that is not an address there.
+     *
+     * <p>A deployment behind a proxy declares the proxy instead — {@code server.forward-headers-strategy}
+     * plus {@code server.tomcat.remoteip.internal-proxies} — and the valve then rewrites the address returned
+     * here, once, for every reader of it, and only for a request that really came from that address.
+     */
     public static String clientIp(HttpServletRequest request) {
-        String fwd = request.getHeader("X-Forwarded-For");
-        if (fwd != null && !fwd.isBlank()) {
-            return fwd.split(",")[0].trim();
-        }
         return request.getRemoteAddr();
     }
 
