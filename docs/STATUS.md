@@ -2158,5 +2158,43 @@ suite                 166 → 173 run · the 1 red stays com.nexus.admin's Admin
 
 What this does not do. It does not close the bearer window, and no longer writes as though it did. It does not
 walk `ucp.json` (tracked, service-tested, never HTTP-tested) or the two untracked merchant routes — counted, not
-borrowed. It does not connect the saved search's `notify` to anything: nothing in this build reads that column,
+borrowed. (§47 walks the UCP one the same day.) It does not connect the saved search's `notify` to anything: nothing in this build reads that column,
 so §7 records the wish and stops there, which is the door's remaining half-promise. Standing reports unchanged.
+
+## 47. The seam that was covered by mocks (2026-09-24)
+
+§46's count left one in-lane route: `GET /api/v1/merchants/{slug}/ucp.json`. It did not look untested —
+`UcpProfileServiceTest` runs four green cases — but all four stub `jdbc.firstForTenant(…)` with a hand-built row,
+including the one that produces the 200 document, so the service that owns the door had never answered for it.
+D49 was a filter line matching no route; this is its milder cousin, a promise with tests that cannot fail.
+
+Asked over HTTP against the real database, the seam is honest and empty. `/.well-known/ucp` returns
+`status: not_integrated`, empty `capabilities` and empty `payment_handlers`, and a `merchant_profiles` pointer
+that resolves against a route this build serves — the part a mock cannot check. The merchant door answers
+`404 ucp_profile_not_published` with the row an integrating agent would need, so the absence explains itself.
+Underneath both: **nothing in this repository can turn that 404 into a 200.** No migration, seed file, service or
+endpoint writes `agent_profiles`; the table is empty in a migrated database and the only "published" profile in
+the build is a stub. That is consistent with the documented Phase-4 hand-off, so no behaviour was wrong — three
+sentences in `docs/UCP.md` were: "Nothing here is live today" (true of the adapter plan, false of the endpoints),
+and §2's per-merchant path spelled `/api/v1/merchants/{slug}/.well-known/ucp` where §1, §10 and the code all say
+`ucp.json` — an agent integrating from that document would fetch a path nothing serves. Both now say what the
+build does; the *choice* of canonical spelling stays the open decision it was, with a test binding the printed
+pointer so the two cannot drift silently.
+
+The third case asserts `select count(*) from agent_profiles` is zero. It reads oddly — proof that something does
+not exist — and it is the mirror of §46's overlap guard: the claim "this seam has no publisher" is the kind that
+stops being true without announcing itself, and the morning it does, the door's 200 case is the one that must get
+written. An assertion chosen to break at that moment is cheaper than a mock that keeps passing through it.
+
+```
+UcpDoorsTest    new · 3 tests · origin honesty + the pointer followed, the explaining 404, the empty table
+mutations run   3 · pointer renamed (red) · status claims "integrated" (red) · 404 details stripped (red)
+suite           173 → 176 run · the 1 red stays com.nexus.admin's AdminConsoleApiTest:289
+```
+
+No production code changed here, so `scripts/e2e_fresh.sh` is not owed: its own rule is a live route's behaviour
+or requirement, and §1's route table, the served payloads and the ledger are exactly as §46 left them. What this
+does not do: it does not choose the discovery path, does not build the publisher, and does not touch
+`toProfile`'s published-but-empty-capabilities 500 — unreachable from any door today, and a question to settle
+with the publisher rather than in passing. One new standing report: `UcpProfileServiceTest` is four honest unit
+tests of a document builder, and must not be read as coverage of the endpoints.

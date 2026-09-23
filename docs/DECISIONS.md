@@ -1778,3 +1778,57 @@ stores the caller's wish and §7 now says only that, because nothing in this bui
 half-promise, reported rather than wired. And it does not turn "is there a test naming this route?" into a gate:
 a route count is the wrong thing to freeze into a build rule, because a path can be named by a test that asserts
 nothing about it, so the audit stays a method run by hand.
+
+## D52 A seam covered by mocks, and the pointer its own document prints — 2026-09-24
+
+### 1. The third door, and why it looked already covered
+
+D51's count left one route in this lane: `GET /api/v1/merchants/{slug}/ucp.json`. It did not look neglected —
+`UcpProfileServiceTest` has four cases, and the suite runs them green. Every one of them stubs
+`jdbc.firstForTenant(…)` with a hand-built row, including the row that produces the 200 document, so the door had
+never once been answered by the service that owns it. That is the milder-looking cousin of D49's dead prefix: a
+promise with tests that cannot fail, because the thing under test is the mock's own fixture.
+
+### 2. What the walk found
+
+Asked over HTTP against the real database, the seam is honest and empty, in that order. `GET /.well-known/ucp`
+answers `status: not_integrated` with `capabilities` and `payment_handlers` both empty, cached an hour, and its
+`merchant_profiles` field prints `/api/v1/merchants/{slug}/ucp.json` — a pointer that resolves against a route
+this build really serves, which is the part no stub can check (D42: a printed field is a promise). The merchant
+door answers `404 ucp_profile_not_published` carrying the row an integrating agent would need
+(`expected: an agent_profiles row with protocol='ucp' and status='published'`, and the Phase-4 note), so the
+absence explains itself instead of shrugging.
+
+And the finding under those: **nothing in this repository can make that 404 into a 200.** No migration, seed file,
+service or endpoint inserts into `agent_profiles`; the table is empty in a freshly migrated database and stays
+empty, so the only published-profile row anywhere in the build is a Mockito stub. That is consistent with
+"reserved seam, hand-off in Phase 4" — but UCP.md said "Nothing here is live today", which is true of the adapter
+plan and false of the endpoints, and its §2 spelled the per-merchant path as
+`/api/v1/merchants/{slug}/.well-known/ucp` where §1, §10 and the code all say `ucp.json`. An agent reading that
+document and integrating against it would fetch a path nothing serves. Both statements are corrected to what the
+build does, and the path question — which spelling is the contract — is left as the open decision it already was,
+now with the pointer test that keeps the two from drifting silently.
+
+### 3. The gate that asserts an absence
+
+`UcpDoorsTest`'s third case asserts `select count(*) from agent_profiles` is zero, with a message saying who has
+to notice it. It reads as an odd test — proof of nothing existing — but it is the mirror of D48's overlap guard
+and D43's rule: the claim "this seam has no publisher" is the kind that silently stops being true the day someone
+adds one, and then the door's 200 path is the case that has to be written. An assertion that must break at that
+moment is cheaper than a mock that keeps passing through it.
+
+```
+UcpDoorsTest     new · 3 tests · origin honesty + the printed pointer followed, the explaining 404, the empty table
+mutations run    3 · the pointer renamed to a path nothing serves (its case red) · status changed to
+                 `integrated` (red) · the 404's details stripped (red)
+docs             UCP.md's opening "nothing is live", its §2 path, and its open-questions bullet corrected to the
+                 two endpoints and the one spelling the build serves; the decision is left open, the facts are not
+suite            173 → 176 · no main-code change, so the e2e leg is not owed by the rule (§47 says why)
+```
+
+What this does not do. It does not pick the discovery path — that is a protocol decision with an external spec
+attached, and UCP.md's open-questions bullet keeps it open; what changed is that the bullet now states which
+spelling is real. It does not build the publisher, and does not pretend the 200 branch is covered by anything
+other than a stub. It does not delete the `capabilities.isEmpty()` 500 in `toProfile`: with no publisher that
+branch is unreachable from any door, and whether a published-but-empty profile should be a 500, a 409, or
+unconstructable is a question to answer together with the publisher rather than in passing.
