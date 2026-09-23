@@ -2160,6 +2160,12 @@ machine starts the service, and a broken default path is a broken onboarding pat
 It is now step 0 of `e2e_fresh.sh`, which is the gate that depends on the launcher and the file that always set
 those variables — the automated caller checking the manual one.
 
+One side effect had to be designed out, because using the defaults *is* the test: those default paths are the
+files a running instance appends to. So the smoke saves the log and pid file first and puts them back on every
+exit path — or removes them if they were absent — verified with a sentinel line rather than asserted. A
+verification that truncates a live session's log to prove a point costs more than the point is worth, and the
+first version of this script did exactly that before it was reviewed.
+
 ### 3. What the live boot showed
 
 With the path fixed, the demo instance came up on :8090 against the seeded `nexus` database (520 merchants,
