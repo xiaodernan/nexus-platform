@@ -760,3 +760,37 @@ and still exactly one row; and the second observation is the *same row id*, with
 Both are the assertions that would have failed loudly before V6 and could not be written at all before it.
 
 Gate: V1..V6 from an empty database, `RESULT: PASS — 163 quality checks (tables=57, migrations=6)`.
+
+### Follow-up: the queue, the transaction, and a verifier that blamed the wrong thing
+
+D39's door needed three more things before it could be trusted with the demo dataset, and the middle one is
+a lesson about reading a failure.
+
+**The seed had no queue.** 544 reviews are stored `pending`/`flagged` and `moderation_cases` was empty, so
+the endpoint answered `[]` — and `quality.sql` said nothing, because it had never had a reason to look. The
+seeder now opens one open case per non-terminal review (`none` for a first publication, `flag` for an
+auto-caught one), and three checks bind the pair in both directions: every waiting review has exactly one
+open case, no case points at a review consumers can already read, and — the part that makes an empty inbox
+visible — the queue is non-empty. 163 checks became **166**.
+
+**A decision is one transaction.** The resolve path writes four things (review status, case closure,
+merchant aggregate + fact, offering aggregate + fact) and they were four statements. Moving them into
+`ModerationService` under `@Transactional` is right on its own terms — a reader must not see a review
+published against a citation that still describes the previous set — and it is also how I *thought* I had
+explained the intermittent failures below. It had nothing to do with them.
+
+**The verifier was wrong, twice.** Running the lifecycle walk against fresh databases failed 2 times in 6,
+always at "the published review is counted, printed and cited identically". The transaction looked like the
+cause; it wasn't. The evidence, once the walk printed the slug and the HTTP status, was
+`bramble-foundry-0108: no rating fact beside the printed rating {}` — and `{}` was an **error envelope**:
+the profile had answered 404. That merchant is `pending_review`, so publishing its review is a correct
+decision about a page no consumer can open. Two separate fixes fell out of it, neither of them the
+transaction: the queue now carries each case's `merchant.status` (a reviewer should see they are approving
+content for an invisible shop), and the walk distinguishes "no citation" from "no page", picking a readable
+case and asserting the unreadable kind really is 404. The scan of all 470 published cards found **zero**
+card/fact disagreements, which is what proved the data was never the problem.
+
+A verifier that reports a missing page as a missing citation is the same failure this whole line of work
+keeps finding, one layer up: a green or red signal computed from the wrong evidence. Four walks on a
+pristine queue after the fix: **15/15 each**, and the suite is **121/121** with the new
+`subject.merchant.status` assertion.

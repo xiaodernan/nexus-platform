@@ -263,6 +263,11 @@ TABLES: list[tuple[str, list[str]]] = [
                  "title", "body", "language", "photos", "verified_purchase", "verified_reservation",
                  "data_origin", "status", "moderation", "helpful_count", "aspects", "created_at",
                  "updated_at"]),
+    # A review that is not readable yet and not decided yet is waiting on a named human, so the queue
+    # has to contain it. ModerationController opens one case per submission; a dataset that claims to
+    # have a queue has to show one (D39).
+    ("moderation_cases", ["id", "tenant_id", "subject_type", "subject_id", "reason", "policy",
+                          "auto_action", "status", "resolution", "created_at"]),
     ("documents", ["id", "tenant_id", "merchant_id", "offering_id", "kind", "source_uri", "title",
                    "mime_type", "raw_text", "content_hash", "lang", "status", "error", "metadata",
                    "created_at", "updated_at"]),
@@ -285,7 +290,7 @@ DEMO_TABLES = TABLE_ORDER + ["review_summaries"]   # review_summaries is truncat
 DEPENDENT_TABLES = [
     "reservations", "orders", "order_items", "payments", "refunds", "carts", "cart_items", "coupons",
     "campaigns", "referrals", "subscriptions", "conversations", "messages", "handoffs", "notifications",
-    "recommendation_sets", "feedback_events", "moderation_cases", "trust_signals", "seo_pages",
+    "recommendation_sets", "feedback_events", "trust_signals", "seo_pages",
     "agent_profiles", "api_keys", "external_principals", "deletion_requests",
     "saved_searches",
     # the request-time observability ledger. Left behind, a previous verification run's
@@ -1143,6 +1148,26 @@ class Gen:
                          "note": "embedding left NULL; the AI service fills vector(1024)"},
                         self.now]))
 
+        # Every non-terminal seeded review is somebody's pending decision, and the queue is where that
+        # is recorded: `pending` awaits a first publication, `flagged` was auto-caught and awaits a look.
+        # A case for a review consumers can already read would be the lie in the other direction, so
+        # these two statuses are the only ones that get one.
+        self.rows["moderation_cases"] = []
+        for r in self.reviews:
+            if r["status"] not in ("pending", "flagged"):
+                continue
+            flagged = r["status"] == "flagged"
+            self.rows["moderation_cases"].append(row([
+                uid("moderation_case", r["id"]), TENANT_ID, "review", r["id"],
+                ("review flagged for a human look" if flagged
+                 else "user_submitted review awaiting first publication"),
+                ("\u00a755: content that reads as hostile or off-topic is not shown until a person "
+                 "agrees" if flagged
+                 else "\u00a755/\u00a7127: user-generated content is shown only after a human decision"),
+                "flag" if flagged else "none", "open",
+                {"decision": "", "note": "seeded queue entry; no decision recorded yet"},
+                r["created"]]))
+
         self.rows["facts"] = []
         for f in self.facts:
             self.rows["facts"].append(row([
@@ -1581,7 +1606,7 @@ def self_check(gen: Gen, out_dir: Path, args) -> int:
           "reviews.user_id": "users.id", "reviews.tenant_id": "tenants.id",
           "documents.merchant_id": "merchants.id", "documents.tenant_id": "tenants.id",
           "chunks.document_id": "documents.id", "chunks.merchant_id": "merchants.id",
-          "facts.merchant_id": "merchants.id", "user_preferences.user_id": "users.id",
+          "facts.merchant_id": "merchants.id", "moderation_cases.tenant_id": "tenants.id", "user_preferences.user_id": "users.id",
           "user_identities.user_id": "users.id", "user_identities.tenant_id": "tenants.id", "favorites.user_id": "users.id",
           "collections.tenant_id": "tenants.id", "collections.author_id": "users.id",
           "categories.parent_id": "categories.id",

@@ -57,17 +57,15 @@ public class ModerationController {
 
     private final AuditService audit;
     private final ModerationRepository queue;
-    private final ReviewRepository reviews;
-    private final FactRepository facts;
+    private final ModerationService service;
     private final IdempotencyService idempotency;
     private final Paging paging;
 
-    public ModerationController(AuditService audit, ModerationRepository queue, ReviewRepository reviews,
-                                FactRepository facts, IdempotencyService idempotency, Paging paging) {
+    public ModerationController(AuditService audit, ModerationRepository queue, ModerationService service,
+                                IdempotencyService idempotency, Paging paging) {
         this.audit = audit;
         this.queue = queue;
-        this.reviews = reviews;
-        this.facts = facts;
+        this.service = service;
         this.idempotency = idempotency;
         this.paging = paging;
     }
@@ -146,30 +144,13 @@ public class ModerationController {
                                       String decision, String note) {
         Map<String, Object> before = Json.map("review_status", Json.str(review, "status"),
                 "case_status", "open");
-        queue.decideReview(tenant, reviewId, decision, resolverId, note, decision);
-        // Guarded on `status = 'open'` in the statement: the second of two simultaneous reviewers gets 0 and
-        // must not believe they decided anything.
-        int closed = queue.closeCase(tenant, caseId, resolverId, Json.map(
-                "decision", decision, "note", note == null ? "" : note, "by", resolverId.toString()));
-        if (closed == 0) {
-            throw ApiException.conflict("case_already_resolved",
-                    "Another reviewer closed this case first; the decision on the review is theirs",
-                    Json.map("case_id", caseId.toString()));
-        }
-
+        // One transaction (ModerationService): the review's status, the case's closure, and the aggregate
+        // with the fact beside it commit together, so no reader ever sees a card printing one mean while
+        // its citation still carries the previous one.
+        Map<String, Object> done = service.resolve(tenant, caseId, review, reviewId, resolverId, decision, note);
+        @SuppressWarnings("unchecked")
+        List<String> restated = (List<String>) done.get("aggregate_restated");
         UUID merchantId = Json.uuid(review, "merchant_id");
-        List<String> restated = new ArrayList<>();
-        if ("published".equals(decision)) {
-            // The number a card prints and the fact that cites it are one claim: recompute together, from
-            // the published rows, in the same call that made those rows change (D35/D38).
-            reviews.refreshRating(tenant, facts, "merchant", merchantId, merchantId);
-            restated.add("merchant rating");
-            UUID offeringId = Json.uuid(review, "offering_id");
-            if (offeringId != null) {
-                reviews.refreshRating(tenant, facts, "offering", offeringId, merchantId);
-                restated.add("offering rating");
-            }
-        }
 
         audit(request, caseId, merchantId, before, reviewId, decision, note, restated);
         Map<String, Object> after = Json.map("review_status", decision, "case_status", "resolved");
@@ -225,7 +206,12 @@ public class ModerationController {
                     "data_origin", Json.str(row, "review_origin"),
                     "merchant", Json.map("id", Json.str(row, "review_merchant_id"),
                             "slug", Json.str(row, "merchant_slug"),
-                            "name", Json.str(row, "merchant_name"))));
+                            "name", Json.str(row, "merchant_name"),
+                            // Whether the shop behind the review is on any consumer page at all. A reviewer
+                            // publishing content for a merchant that is still `pending_review` or is
+                            // suspended is making a correct decision about a page nobody can open, and the
+                            // queue should say so rather than let them find out from the response.
+                            "status", Json.str(row, "merchant_status"))));
         }
         return out;
     }

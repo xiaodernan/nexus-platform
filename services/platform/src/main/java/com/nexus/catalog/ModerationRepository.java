@@ -43,7 +43,7 @@ public class ModerationRepository {
                        r.rating as review_rating, left(r.body, 280) as review_excerpt, r.language,
                        r.data_origin as review_origin, r.status as review_status,
                        r.merchant_id as review_merchant_id, r.offering_id as review_offering_id,
-                       m.slug as merchant_slug, m.display_name as merchant_name
+                       m.slug as merchant_slug, m.display_name as merchant_name, m.status as merchant_status
                 from moderation_cases c
                 left join reviews r on c.subject_type = 'review' and r.id = c.subject_id
                 left join merchants m on m.id = r.merchant_id
@@ -86,15 +86,14 @@ public class ModerationRepository {
      * review row is what the rest of the system reads, so a resolve that only touched the case would leave
      * the content pending forever while the queue looked clean.
      */
-    public void decideReview(TenantContext tenant, UUID reviewId, String status, UUID moderatorId, String note,
-                             String decision) {
+    public void decideReview(TenantContext tenant, UUID reviewId, String status, UUID moderatorId, String note) {
         jdbc.updateForTenant(tenant, """
                 update reviews r set status = :status, updated_at = now(),
                        moderation = moderation || cast(:decision as jsonb)
                 from merchants m
                 where r.id = :id and r.merchant_id = m.id and m.tenant_id = :tenant_id
                 """, Json.map("id", reviewId, "status", status, "tenant_id", tenant.tenantId(),
-                "decision", Json.write(Json.map("decision", decision, "by", moderatorId.toString(),
+                "decision", Json.write(Json.map("decision", status, "by", moderatorId.toString(),
                         "at", java.time.Instant.now().toString(), "note", note == null ? "" : note))));
     }
 

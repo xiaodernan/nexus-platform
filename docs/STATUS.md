@@ -1288,3 +1288,35 @@ hits `facts_one_row_per_claim_uidx` and answers 500 where it used to quietly gro
 loud, correct and temporary — restarting `:8090` onto this commit replaces the INSERT with the upsert. Until
 someone who owns that instance restarts it, do not exercise merchant edits against `nexus`.
 
+
+## 33. The review lifecycle, end to end, on data nobody had looked at (2026-09-23)
+
+`scripts/verify_review_flow.py` walks the whole review story over HTTP — sign in as the demo consumer, post
+a review, find it in the queue, publish it as a platform admin, and then compare three numbers that must be
+one: the rating the card prints, the rating fact that cites it, and the aggregate the reviews endpoint
+recomputes live over the published rows. It runs as part of step 7 of the harness, next to the booking
+walk, against the database that gets thrown away afterwards.
+
+To make it possible at all, the seed had to grow the thing it was missing: **544 waiting reviews and zero
+moderation cases**, so the queue the write path fills answered `[]` on the demo dataset. The seeder now
+opens a case per non-terminal review and `quality.sql` binds the pair in both directions, including a check
+that the queue is simply non-empty — an empty inbox passes every "nothing is orphaned" assertion while the
+product's review process is a fiction. 163 checks became 166.
+
+The interesting part is what the failures taught, because I read them wrong first. Two of six fresh runs
+failed the triple-agreement check; the writes were four separate statements, so I wrapped them in
+`ModerationService` under `@Transactional` — correct on its own terms, and not the cause. Printing the HTTP
+status alongside the numbers showed the profile had answered **404**: the merchant was `pending_review`, and
+`{}` (an error envelope) had been read as "a card with no citation". Two real fixes fell out: the queue now
+names each case's `merchant.status`, and the walk distinguishes a missing page from a missing citation and
+asserts that a review of an unpublished merchant really does stay off the consumer surface. A scan of all
+470 published cards found zero card/fact disagreements, which is what proved the data had been fine and my
+instrument had not.
+
+```
+mvn -o test                       121/121 (incl. the merchant.status assertion)
+scripts/db_gate_fresh.sh          166 checks PASS · tables=57 migrations=6
+e2e_fresh.sh                      525 read checks · 30/30 booking · 15/15 review lifecycle · contract PASS
+scan over every published card    470 scanned · 0 printed-vs-cited mismatches
+```
+

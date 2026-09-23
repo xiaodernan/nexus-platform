@@ -47,7 +47,7 @@ SELECT format(
   string_agg(format('(%L, (SELECT count(*) FROM public.%I))', t, t), ', ' ORDER BY ord))
 FROM unnest(ARRAY['tenants','users','user_identities','user_preferences','categories','merchants',
  'merchant_users','permission_grants','locations','business_hours','merchant_categories','offerings',
- 'offering_relations','resource_pools','availability_slots','reviews','documents','chunks','facts',
+ 'offering_relations','resource_pools','availability_slots','reviews','moderation_cases', 'documents','chunks','facts',
  'favorites','collections','review_summaries']) WITH ORDINALITY AS u(t, ord) \gexec
 \o
 \t off
@@ -445,6 +445,45 @@ SELECT 'everything hangs off the single demo tenant',
        || ' row(s) outside tenant 00000000-0000-0000-0000-000000000001';
 
 -- AGENT_CONTRACT §5 freshness
+-- D39: the moderation queue is only real if it contains what is waiting. A pending or flagged review with
+-- no case is content nobody will ever read; a case whose review is already published or rejected describes a
+-- decision that has nothing left to decide. Both directions are checked, and the queue is checked non-empty,
+-- because an empty inbox passes a "nothing is orphaned" test while the demo claims to have a review process.
+WITH waiting AS (
+  SELECT r.id FROM reviews r WHERE r.status IN ('pending', 'flagged')
+), with_case AS (
+  SELECT w.id, (SELECT count(*) FROM moderation_cases c
+                 WHERE c.subject_type = 'review' AND c.subject_id = w.id) AS cases
+  FROM waiting w
+)
+INSERT INTO qc
+SELECT 'every waiting review has exactly one open case',
+       NOT EXISTS (SELECT 1 FROM with_case WHERE cases <> 1)
+       AND NOT EXISTS (SELECT 1 FROM with_case wc
+                        WHERE NOT EXISTS (SELECT 1 FROM moderation_cases c
+                                            WHERE c.subject_id = wc.id AND c.status = 'open')),
+       (SELECT count(*) FROM with_case WHERE cases <> 1) || ' waiting review(s) without exactly one case'
+       || ', ' || (SELECT count(*) FROM moderation_cases mc WHERE mc.subject_type = 'review'
+                     AND mc.status = 'open'
+                     AND NOT EXISTS (SELECT 1 FROM reviews r
+                                      WHERE r.id = mc.subject_id
+                                        AND r.status IN ('pending','flagged')))
+       || ' open case(s) over nothing waiting';
+
+INSERT INTO qc
+SELECT 'no case points at a review consumers can already read',
+       NOT EXISTS (SELECT 1 FROM moderation_cases c JOIN reviews r ON r.id = c.subject_id
+                    WHERE c.subject_type = 'review' AND r.status IN ('published','rejected')),
+       (SELECT count(*) FROM moderation_cases c JOIN reviews r ON r.id = c.subject_id
+          WHERE c.subject_type = 'review' AND r.status IN ('published','rejected'))
+       || ' case(s) whose subject is already decided';
+
+INSERT INTO qc
+SELECT 'the queue has something in it (an empty inbox is not proof of a process)',
+       (SELECT count(*) FROM moderation_cases WHERE subject_type = 'review' AND status = 'open') > 0,
+       (SELECT count(*) FROM moderation_cases WHERE subject_type = 'review' AND status = 'open')
+       || ' open review case(s)';
+
 INSERT INTO qc
 SELECT 'facts all carry expires_at (TTL per §5)',
        NOT EXISTS (SELECT 1 FROM facts WHERE expires_at IS NULL),

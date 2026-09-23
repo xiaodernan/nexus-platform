@@ -42,8 +42,12 @@ die() { printf 'load.sh: ERROR: %s\n' "$*" >&2; exit 2; }
 [ -d "$OUT" ] || die "no such directory $OUT — run: python $HERE/generate.py --out $OUT"
 
 # --------------------------------------------------------------------------- preflight
-if [ "${SKIP_GENERATE:-0}" != "1" ] && [ ! -f "$OUT/21_collections.sql" ]; then
-  die "$OUT looks incomplete (no 21_collections.sql). Run generate.py first."
+# The dataset is complete when the *last* table in load order is present — but its filename is not a
+# stable way to say that. The prefix is the position, and the position moves whenever a table is added
+# anywhere before it (seeding moderation_cases pushed collections from 21_ to 22_ and this check failed on
+# a complete directory). Match the table, not the number.
+if [ "${SKIP_GENERATE:-0}" != "1" ] && ! ls "$OUT"/*_collections.sql >/dev/null 2>&1; then
+  die "$OUT looks incomplete (no *_collections.sql). Run generate.py first."
 fi
 if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   log "load.sh: container '$CONTAINER' is not running."

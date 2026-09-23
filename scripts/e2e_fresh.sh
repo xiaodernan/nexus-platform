@@ -209,11 +209,18 @@ echo
 if [ "$READS_ONLY" = "1" ]; then
   step "7/8  skipped (--reads-only): no rows written"
 else
-  step "7/8  walk the reservation write path against $E2E_DB"
-  # The reason this runs here rather than against :8090: the walk books a real slot and cancels it, so
-  # it leaves rows behind. A state machine is best proved on a database that can be thrown away with
-  # the run that proved it, not on the demo data another session is looking at.
-  NEXUS_PLATFORM_URL="http://127.0.0.1:$PORT" NEXUS_TENANT="${NEXUS_TENANT:-hong-kong}"     "${PYTHON:-python}" "$SCRIPT_DIR/verify_reservation.py" 2>&1 | tail -40 | sed -e 's/^/    /'
+  step "7/8  walk the two write paths against $E2E_DB"
+  # The reason these run here rather than against :8090: both leave rows behind. A state machine is best
+  # proved on a database that can be thrown away with the run that proved it, not on the demo data another
+  # session is looking at.
+  NEXUS_PLATFORM_URL="http://127.0.0.1:$PORT" NEXUS_TENANT="${NEXUS_TENANT:-hong-kong}" \
+    "${PYTHON:-python}" "$SCRIPT_DIR/verify_reservation.py" 2>&1 | tail -40 | sed -e 's/^/    /'
+  # The review lifecycle: write it, queue it, publish it — and check that the number a card prints moved
+  # together with the fact that cites it. A separate walk because the invariant is different: this one is
+  # about two representations of one claim staying equal, which is the failure mode D35/D38/D37 each
+  # described and none of them could observe on its own.
+  NEXUS_PLATFORM_URL="http://127.0.0.1:$PORT" NEXUS_TENANT="${NEXUS_TENANT:-hong-kong}" \
+    "${PYTHON:-python}" "$SCRIPT_DIR/verify_review_flow.py" 2>&1 | tail -30 | sed -e 's/^/    /'
 fi
 echo
 

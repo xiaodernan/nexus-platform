@@ -63,6 +63,11 @@ class ModerationFlowTest extends NexusIntegrationTest {
         assertThat(queue.path("items").get(0).path("subject").path("rating").asDouble()).isEqualTo(5.0);
         assertThat(queue.path("items").get(0).path("subject").path("merchant").path("slug").asText())
                 .isEqualTo("publish-" + tag);
+        // A reviewer must be able to see whether the shop behind a review is on any consumer page at all.
+        // Without the status, publishing content for a `pending_review` or suspended merchant looks exactly
+        // like publishing content people will read.
+        assertThat(queue.path("items").get(0).path("subject").path("merchant").path("status").asText())
+                .isEqualTo("published");
 
         ResponseEntity<String> res = resolve(queue.path("items").get(0).path("case_id").asText(), "published",
                 "Detailed and about the actual visit.");
