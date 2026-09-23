@@ -2077,10 +2077,16 @@ it — save, list, re-save, remove, cross-tenant refusal, unsupported type, unau
 two defects that reading a response shape would never have surfaced.
 
 A favourite may now only point at something the caller could actually open. `assertSubjectInTenant` used to accept
-any collection in the tenant, while §8's read path hides rows that are not published *and* attributable — and the
-demo data is full of those rows: 31 public collections with no `published_at`, and 31 more stamped but with
-neither an author nor a provenance token, out of 576. Sixty-two links the site will not honour, each savable in
-one POST. Second: `FavoriteBody`'s pattern advertises `guide` while the validator had no guide branch, so the
+any collection in the tenant, while §8's read path hides rows that are not published *and* attributable, so the
+favourites list could hold a card whose link answers 404. Correction, self-reported, because the first version of
+this paragraph claimed those rows were demo data: the 31 public-with-no-`published_at` and 31 stamped-but-
+unattributable collections I counted (of 576) live in `nexus_test`, the shared test database the suites write
+into — the same residue that caught §41. The seed's own number is in the file that loads it,
+`data/seed/out/22_collections.sql`: **4 rows**, all stamped, all with an author. So this was a guard missing on a
+shape the demo does not currently produce, and it matters because `collections` still accepts that shape today
+(`visibility` defaults to `public`, `published_at` is nullable, and D34's gate is a read filter rather than a
+constraint): the first write path that lands — §8's own `POST /api/v1/collections` — makes a saved 404 reachable
+without anything else changing. Second: `FavoriteBody`'s pattern advertises `guide` while the validator had no guide branch, so the
 fourth documented value answered 422 — a DTO promising what the code beneath it denies.
 
 The rule was not copied, it was asked. `CollectionsRepository` already composes its list, its count and its

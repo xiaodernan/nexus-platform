@@ -1661,9 +1661,20 @@ Walking it found two defects, neither of which is about the response shape.
 before it saves — accepted *any* collection in the caller's tenant. §8's own read path hides rows that are not
 `visibility='public' AND published_at is not null` and attributable, so the saved item and the directory disagree
 by construction, and the disagreement is a user-visible one: a card in the favourites list whose link answers
-404. This is not a hypothetical shape in a corner of the data — measured against the loaded seed, 31 collections
-are public with no `published_at` and another 31 are stamped but carry neither an author nor a provenance token,
-out of 576 rows. Sixty-two things the site will not show that the door will happily save.
+404.
+
+One correction, self-reported, because the sentence I first wrote here overstated it. I measured 31 public
+collections with no `published_at` and 31 more stamped but with neither an author nor a provenance token, out of
+576 rows — in `nexus_test`, which is the **shared test database**, and those rows are fixtures the suites leave
+behind, not demo data. The seed's own count is in the file that loads it: `data/seed/out/22_collections.sql`
+says "loads public.collections (4 rows)", and all four carry a stamp and an author. So the missing guard was
+latent, not live: no demo user has a broken favourite today, and `POST /api/v1/collections` does not exist to
+create one. What it is worth is the truth of the shape — `collections` accepts a draft row today (the column
+default for `visibility` is `public` and `published_at` is nullable, and D34's gate is a read-side filter, not a
+constraint), so the first write path that lands — §8's own `POST /api/v1/collections` — turns a saved pointer to a
+404 from latent into reachable without anything else changing. `nexus_test` is the same shared database
+whose mutation residue caught D46, and the lesson is the same one: count rows in the file that loads them, not in
+a database that several suites write into.
 
 **`guide` was advertised and then refused.** `FavoriteBody`'s own `@Pattern` accepts
 `merchant|offering|guide|collection`; the validator had branches for merchant and offering, one for collection,

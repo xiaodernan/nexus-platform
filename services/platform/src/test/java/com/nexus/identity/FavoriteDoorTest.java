@@ -24,11 +24,15 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
  * <ul>
  *   <li><b>A saved item could point at a row nothing can open.</b> {@code assertSubjectInTenant} accepted any
  *       collection in the caller's tenant, while §8's own read filter hides rows that are not
- *       {@code visibility='public' AND published_at is not null} <em>and</em> attributable — a shape the demo
- *       data is full of (measured on the loaded seed: 31 public rows with no {@code published_at}, and 31 more
- *       stamped but with neither an author nor a provenance token, out of 576). A favorite for one of those saves
- *       successfully, renders in the list, and links to a 404. The fix asks {@code CollectionsRepository}, which
- *       owns the rule, rather than copying a predicate that would drift from it (D44).</li>
+ *       {@code visibility='public' AND published_at is not null} <em>and</em> attributable, so such a favourite
+ *       renders in the list and links to a 404. Scope, stated honestly: the demo seed produces none of those rows
+ *       ({@code data/seed/out/22_collections.sql} loads four, all stamped, all authored — the 62 I first counted
+ *       were fixtures left in the shared {@code nexus_test}), so this was a guard missing on a shape the shipped
+ *       data does not make. It is still worth guarding: {@code visibility} defaults to {@code public},
+ *       {@code published_at} is nullable, and §8's gate is a read filter rather than a constraint, so the first
+ *       write path that lands — §8's own create — makes a saved 404 reachable with nothing else changed. The fix
+ *       asks {@code CollectionsRepository}, which owns the rule, rather than copying a predicate that would drift
+ *       from it (D44).</li>
  *   <li><b>{@code guide} was advertised and then refused.</b> {@code FavoriteBody}'s own pattern accepts
  *       {@code merchant|offering|guide|collection}, but the validator had no guide branch, so the fourth
  *       documented value answered 422 {@code Unsupported subject_type} — a DTO promising what the code under it
