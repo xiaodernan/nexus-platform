@@ -246,7 +246,12 @@ public class MeController {
     @DeleteMapping("/favorites/{type}/{id}")
     public Map<String, Object> removeFavorite(@PathVariable String type, @PathVariable UUID id,
                                               HttpServletRequest request) {
-        users.removeFavorite(Req.tenant(request), Req.userId(request), type, id);
+        // The count was discarded until D51: an unsave of something the caller never saved — or of another
+        // person's row — answered {@code removed} anyway, which is a fake success and D5's oracle turned
+        // around. Zero rows now reads like any other absent record.
+        if (users.removeFavorite(Req.tenant(request), Req.userId(request), type, id) == 0) {
+            throw com.nexus.platform.ApiException.notFound("favorite_not_found", "No such record");
+        }
         return Json.map("status", "removed");
     }
 
@@ -271,7 +276,9 @@ public class MeController {
 
     @DeleteMapping("/saved-searches/{id}")
     public Map<String, Object> deleteSavedSearch(@PathVariable UUID id, HttpServletRequest request) {
-        users.deleteSavedSearch(Req.tenant(request), Req.userId(request), id);
+        if (users.deleteSavedSearch(Req.tenant(request), Req.userId(request), id) == 0) {
+            throw com.nexus.platform.ApiException.notFound("saved_search_not_found", "No such record");
+        }
         return Json.map("status", "removed");
     }
 

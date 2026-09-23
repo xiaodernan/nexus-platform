@@ -1713,3 +1713,68 @@ workspace permission chain is itself wrong, because `collections` has `tenant_id
 column at all — no chain can guard a row the schema cannot attribute. §8 now states that measured reason instead
 of the imagined one, and the question of who may publish a guide (platform, author, or a merchant once the table
 can name one) is left open with `POST /api/v1/share`'s missing link table beside it.
+
+## D51 Two doors that reported success they had not earned, and the logout nobody had asked — 2026-09-24
+
+### 1. The method, this time as a count
+
+D50 found its defects by accident, so this unit went looking: enumerate every `@Get/Post/Put/Patch/DeleteMapping`
+in `services/platform/src/main/java`, take each route's last literal segment, and ask whether that string appears
+anywhere under `src/test/java`. Of 87 registered `/api/v1` paths, **80 are named by a test and 7 are not**:
+`POST /api/v1/auth/logout`, `GET`/`POST`/`DELETE /api/v1/me/saved-searches`,
+`GET /api/v1/merchants/{slug}/ucp.json`, `GET /api/v1/merchant/imports/{job_id}` and
+`POST /api/v1/merchant/offerings/bulk`. The last two are another stream's untracked files; `ucp.json` is tracked
+and has a service-level test but no HTTP one; the four identity doors are this lane, and all four are walked here.
+
+### 2. What walking them found
+
+**Both delete handlers lied about success.** `removeFavorite` and `deleteSavedSearch` call their repository, get
+back the number of rows deleted, discard it, and answer `{"status":"removed"}`. So un-saving an id you never
+saved reported a removal, and — the case that matters — un-saving *someone else's* row reported a removal while
+their row stayed exactly where it was. That is D7's rule inverted: a silent no-op dressed as an accomplishment.
+D5 says the honest answer for a record you cannot see is the same 404 whether the row does not exist or belongs
+to somebody else, so both handlers now check the count and throw `favorite_not_found` / `saved_search_not_found`
+with the "No such record" message the tenant-scoped lookups already use, and neither can be used to probe whose
+items exist.
+
+**Logout's promise was three words covering three mechanisms.** §3 said "clears session". Asked over HTTP: the two
+cookies come back cleared; `TokenRegistry.revoke(sid)` really does end the refresh family, so the next
+`/auth/refresh` is a 401 and cannot mint; the `logout` audit row is written for a principal and skipped for an
+anonymous call. And the **access token keeps working to its own `exp`** — 900 seconds by default — because no
+request path consults revocation state for a JWT. None of that was written down, and "logged out" is exactly the
+phrase a reader takes to mean "this credential is dead now", on a shared browser, at the one moment it matters.
+
+**The comment that described the opposite behaviour.** `TokenRegistry.accept`'s inline comment said an unknown
+family is accepted once and adopted, "so a store flush does not lock users out silently"; the code returns false,
+which is what the class javadoc and the README's fail-closed trade-off state. The comment was the outlier, and
+mutation 5 is what proves which one the build runs: make `accept` fail open and a revoked family mints a new
+token pair again, which is the refusal this unit exists to hold.
+
+### 3. The window stays open, on purpose
+
+Closing the access-token gap needs a server-side denylist, and in this build the store behind it is Redis when
+reachable and per-process memory when not — a denylist there would be enforced on one JVM and forgotten on the
+next, which is D46's silent offer with a security label on it. Short expiry is the mechanism that actually holds,
+so §3 now says which parts of "logout" are immediate and which are 900 seconds away. Deciding to add real token
+revocation is a deployment decision (it means requiring Redis, or accepting per-node divergence, or moving to
+opaque tokens), not a side effect of a documentation unit.
+
+```
+LogoutDoorTest        new · 3 tests · cookies + family + audit, the surviving bearer, the anonymous call
+SavedSearchDoorTest   new · 3 tests · save/list/remove, the defaults (notify false, intent {}), the two 404s
+                      that read alike, the owner's row surviving someone else's delete, a refused save storing
+                      nothing
+FavoriteDoorTest      +1 test (5 now) · the favourites door's identical 404, with the same survivor check
+mutations run         5 · both 404 guards reverted (2 tests red) · revoke() dropped (refresh refusal red) ·
+                      cookie clearing dropped (headers red) · logout audit dropped (red) · accept() fails open
+                      (the revoked family mints again)
+suite                 166 → 173 · the 1 red stays com.nexus.admin's
+```
+
+What this does not do. It does not close the bearer's 900-second window, for the reason in §3 — and it no longer
+lets prose imply otherwise. It does not walk the two untracked merchant doors or `ucp.json`, which are reported
+with their counts rather than borrowed. It does not connect `notify` to any notification mechanism: the column
+stores the caller's wish and §7 now says only that, because nothing in this build reads it — the door's remaining
+half-promise, reported rather than wired. And it does not turn "is there a test naming this route?" into a gate:
+a route count is the wrong thing to freeze into a build rule, because a path can be named by a test that asserts
+nothing about it, so the audit stays a method run by hand.

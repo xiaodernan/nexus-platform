@@ -39,7 +39,10 @@ public class TokenRegistry {
     /** @return true when {@code jti} is the token this family expects right now. */
     public boolean accept(String family, String jti) {
         Optional<String> current = store.get(familyKey(family));
-        // Unknown family: accept once and adopt it, so a store flush does not lock users out silently.
+        // An unknown family is refused, not adopted: that is what makes logout's revoke() final and what the
+        // class javadoc's fail-closed trade-off means. The comment here used to say the opposite ("accept once
+        // and adopt it, so a store flush does not lock users out"), which described a behaviour this method
+        // does not have (D51).
         if (current.isEmpty()) {
             return false;
         }

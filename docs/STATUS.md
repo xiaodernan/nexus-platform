@@ -2119,3 +2119,44 @@ a decision to make, not a route to wire.
 Standing reports unchanged: `com.nexus.admin`'s red test, §106's retention job, `@RequiresPlatformRole`'s thin
 admin coverage, the 25 documented-not-served rows, `RateLimiter.require`, `rate_limit_buckets`, task #9's browser
 leg and task #17's reservation transitions.
+
+## 46. Two doors that reported success they had not earned (2026-09-24)
+
+§45's door method was an accident, so this time it was a count: every `@*Mapping` path in the platform, its last
+literal segment, and whether that string appears anywhere under `src/test/java`. 87 `/api/v1` paths, **80 named,
+7 not** — `POST /api/v1/auth/logout`, the three `/api/v1/me/saved-searches` verbs, `ucp.json`, and two merchant
+routes that belong to other streams. The four identity doors are now walked; the numbers above are the audit, and
+the audit is not a gate (a route can be "named" by a test that asserts nothing about it).
+
+Two of the four were reporting successes they had not earned. `removeFavorite` and `deleteSavedSearch` took the
+row count from their repositories, threw it away, and answered `{"status":"removed"}` either way — so un-saving
+an id you never saved was a success, and un-saving somebody else's row was a success *while their row stayed*.
+Both now answer the same `404 …_not_found` / "No such record" that an absent id gets, which is what D5 requires
+and what stops the doors being used to ask whose items exist. `FavoriteDoorTest` and `SavedSearchDoorTest` each
+carry the survivor check: the owner's row must still be there after the attempt.
+
+`logout` was the other kind of gap — three mechanisms behind three words ("clears session"). Measured: both
+cookies return cleared, the refresh family really is revoked so the next `/auth/refresh` is a 401, the audit row
+is written for a principal and skipped for an anonymous caller, and **the access token keeps authenticating until
+its own `exp`**, because nothing consults revocation for a JWT. §3 now states all of that, including the part
+nobody closes: a server-side denylist would live in Redis when reachable and in one JVM's memory when not, which
+is D46's silent offer wearing a security label, so the 900-second expiry is the mechanism and the contract says
+so instead of implying a kill switch.
+
+Along the way, `TokenRegistry.accept`'s inline comment described the opposite of its code ("accept once and
+adopt it, so a store flush does not lock users out") where the code refuses an unknown family — which is what the
+class javadoc, the README and mutation 5 all agree on. The comment went; the behaviour was already right.
+
+```
+LogoutDoorTest        new · 3 tests · family+cookies+audit, the bearer that survives its logout, the anonymous call
+SavedSearchDoorTest   new · 3 tests · the door, its defaults, and 404s that read alike
+FavoriteDoorTest      4 → 5 tests · the favourites door's matching 404
+mutations run         5 · 404 guards reverted · revoke() dropped · cookie clearing dropped · logout audit
+                      dropped · accept() made to fail open
+suite                 166 → 173 run · the 1 red stays com.nexus.admin's AdminConsoleApiTest:289
+```
+
+What this does not do. It does not close the bearer window, and no longer writes as though it did. It does not
+walk `ucp.json` (tracked, service-tested, never HTTP-tested) or the two untracked merchant routes — counted, not
+borrowed. It does not connect the saved search's `notify` to anything: nothing in this build reads that column,
+so §7 records the wish and stops there, which is the door's remaining half-promise. Standing reports unchanged.

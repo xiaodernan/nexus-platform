@@ -134,6 +134,36 @@ class FavoriteDoorTest extends NexusIntegrationTest {
     }
 
     @Test
+    @DisplayName("Unsaying nothing is a 404, not a success (D51)")
+    void unsavingWhatIsNotThereIsAFourOhFour() {
+        Tenant tenant = newTenant("fav-404");
+        UUID owner = newUser(tenant, "owner@fav.test", "consumer");
+        UUID other = newUser(tenant, "other2@fav.test", "consumer");
+        UUID merchant = newMerchant(tenant, "fav-404-m-" + System.nanoTime(), "active");
+        String id = Json.tree(save(tenant, owner, "merchant", merchant, null).getBody()).path("id").asText();
+
+        ResponseEntity<String> neverSaved = http.exchange(
+                java.net.URI.create(url("/api/v1/me/favorites/merchant/" + UUID.randomUUID())), HttpMethod.DELETE,
+                new HttpEntity<>(json(tenant, token(tenant, other, "consumer"))), String.class);
+        assertThat(neverSaved.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(Json.tree(neverSaved.getBody()).path("error").path("code").asText())
+                .isEqualTo("favorite_not_found");
+
+        ResponseEntity<String> notYours = http.exchange(
+                java.net.URI.create(url("/api/v1/me/favorites/merchant/" + merchant)), HttpMethod.DELETE,
+                new HttpEntity<>(json(tenant, token(tenant, other, "consumer"))), String.class);
+        assertThat(notYours.getStatusCode())
+                .as("one answer for both absences, so the door cannot be probed for whose favourites exist")
+                .isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(Json.tree(notYours.getBody()).path("error").path("message").asText())
+                .isEqualTo(Json.tree(neverSaved.getBody()).path("error").path("message").asText());
+        assertThat(list(tenant, owner)).as("the owner's row survived the attempt").hasSize(1);
+
+        assertThat(remove(tenant, owner, "merchant", merchant).getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(list(tenant, owner)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Nothing unsavable: the door and the §8 directory agree about each of the three row shapes")
     void onlyPublishableRowsCanBeSaved() {
         Tenant tenant = newTenant("fav-pub");
