@@ -70,13 +70,15 @@ public class MeController {
     private final TenantJdbc jdbc;
     private final AuditService audit;
     private final PermissionService permissions;
+    private final com.nexus.catalog.CollectionsRepository collections;
 
     public MeController(IdentityRepository users, TenantJdbc jdbc, AuditService audit,
-                        PermissionService permissions) {
+                        PermissionService permissions, com.nexus.catalog.CollectionsRepository collections) {
         this.users = users;
         this.jdbc = jdbc;
         this.audit = audit;
         this.permissions = permissions;
+        this.collections = collections;
     }
 
     // ---- profile --------------------------------------------------------
@@ -383,12 +385,23 @@ public class MeController {
     }
 
     private void assertSubjectInTenant(TenantContext tenant, String subjectType, UUID subjectId) {
+        if ("collection".equals(subjectType) || "guide".equals(subjectType)) {
+            // §8's rule, asked rather than copied: a draft, an unattributable row or another tenant's collection
+            // is something the directory will not show, so saving it would be saving a link to a 404 (D50). The
+            // subject is also pinned to its kind, because {@code guide} is a row of this table labelled
+            // otherwise — and the request pattern has advertised that type since §7, so an id saved under the
+            // wrong label has to be refused rather than resolve later as something else. The refusal is the
+            // same code and message the merchant branch gives, because D5 says an unreadable thing reads absent.
+            if (!collections.isPublishable(tenant, subjectId, subjectType)) {
+                throw com.nexus.platform.ApiException.notFound("subject_not_found", "No such record");
+            }
+            return;
+        }
         String sql = switch (subjectType) {
             case "merchant" -> "select id from merchants where id = :id and tenant_id = :tenant_id";
             case "offering" -> """
                     select o.id from offerings o join merchants m on m.id = o.merchant_id
                     where o.id = :id and m.tenant_id = :tenant_id""";
-            case "collection" -> "select id from collections where id = :id and tenant_id = :tenant_id";
             default -> throw com.nexus.platform.ApiException.validation("Unsupported subject_type",
                     Json.map("field", "subject_type"));
         };

@@ -1642,3 +1642,63 @@ at all is a routing decision about the BFF split §7 documents, not something a 
 not reach the `503` over HTTP; that needs another stream's controller, so the seam gets the witness and the gap
 gets this sentence. It does not make the two-scope charge nicer — a request that matches two scopes still spends
 two windows, now documented rather than discovered. And it leaves the standing reports where §43 put them.
+
+## D50 A door no test ever opened, and the two things it hid — 2026-09-24
+
+### 1. What shipped
+
+`grep -rn "favorites" services/platform/src/test/java` returned **nothing**: three documented handlers —
+`GET`, `POST` and `DELETE /api/v1/me/favorites` — had never been called by a test, and the §7 row that documents
+them had an empty description cell. That is the shape D42 keeps returning to: an undocumented row and an
+unwalked door are the same gap seen from opposite sides, and each one lets the other stay invisible, because a
+row that promises nothing is never contradicted by a handler that does something.
+
+Walking it found two defects, neither of which is about the response shape.
+
+### 2. What the door hid
+
+**A favourite could point at a row nothing can open.** `assertSubjectInTenant` — the validator the POST calls
+before it saves — accepted *any* collection in the caller's tenant. §8's own read path hides rows that are not
+`visibility='public' AND published_at is not null` and attributable, so the saved item and the directory disagree
+by construction, and the disagreement is a user-visible one: a card in the favourites list whose link answers
+404. This is not a hypothetical shape in a corner of the data — measured against the loaded seed, 31 collections
+are public with no `published_at` and another 31 are stamped but carry neither an author nor a provenance token,
+out of 576 rows. Sixty-two things the site will not show that the door will happily save.
+
+**`guide` was advertised and then refused.** `FavoriteBody`'s own `@Pattern` accepts
+`merchant|offering|guide|collection`; the validator had branches for merchant and offering, one for collection,
+and none for guide — so the fourth documented value fell through to `422 Unsupported subject_type`. A request DTO
+promising what the code under it denies is a smaller copy of the same failure the empty doc row was.
+
+### 3. The fix, and who owns the rule
+
+The publishability check moved to where the rule already lives: `CollectionsRepository` composes its listing
+filter, its count and its by-slug read out of the same three fragments, and now exposes the same composition as
+`isPublishable(tenant, id, kind)` for the one caller that must not hand out a dead pointer. `MeController` asks
+it. The alternative — a second SQL predicate in the identity package that happens to match today — is D44's
+defect with a timer on it: two owners of one rule, agreeing by luck, drifting by silence. The kind is passed
+through, so a guide id saved as a collection (or the reverse) is refused rather than resolving later as something
+else, and the refusal reuses the merchant branch's exact code and message, because D5 says an unreadable row must
+be indistinguishable from an absent one.
+
+Both directions are now witnessed by one test that asks the door and the directory about the *same three rows* —
+publishable, draft, unattributable — and requires them to agree, plus the kind-pinning case.
+
+```
+FavoriteDoorTest          new · 4 tests · save/list/re-save/update-of-same-row/remove, absent-vs-foreign 404s
+                          indistinguishable, the three publishability shapes agreed with §8's reads, guide
+                          pinned to kind; §7's empty row is now a written contract
+mutations run             4 · publishability and kind check switched off (two tests red) · wrong kind passed
+                          (guide red) · audit call deleted (red) · on-conflict update → do nothing (red)
+suite                     162 → 166 · the 1 red stays com.nexus.admin's
+```
+
+Two things this does not do, and both are decisions rather than omissions. It does not change the POST's **200**:
+`/reviews` and `/api-keys` answer 201 for a created row and this door answers 200 with none of §7 ever having
+said which; the row now says 200, and flipping the status under a client that has been reading 200 since the
+route landed is a contract change, not a cleanup (§45 carries it as an open inconsistency). And it does not
+resolve the §8 write it exposed on the way: the sentence in §8 claiming `POST /api/v1/collections` waits on the
+workspace permission chain is itself wrong, because `collections` has `tenant_id` and `author_id` and no merchant
+column at all — no chain can guard a row the schema cannot attribute. §8 now states that measured reason instead
+of the imagined one, and the question of who may publish a guide (platform, author, or a merchant once the table
+can name one) is left open with `POST /api/v1/share`'s missing link table beside it.

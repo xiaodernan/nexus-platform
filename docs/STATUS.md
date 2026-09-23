@@ -2067,3 +2067,49 @@ And the standing reports are unchanged from §43's: `com.nexus.admin`'s red test
 `@RequiresPlatformRole`'s thin admin coverage, the 25 documented-not-served rows, `RateLimiter.require` with no
 caller, `rate_limit_buckets` written by nothing here, task #9's browser leg (`:8090` still not listening) and
 task #17's reservation transitions.
+
+## 45. A door no test ever opened, and the two things it hid (2026-09-24)
+
+`grep -rn "favorites" services/platform/src/test/java` → nothing. Three documented handlers and a §7 row whose
+description cell was empty: the row promised nothing, so the handlers could not contradict it, and the door stayed
+unopened from the commit that wrote it (`e237f6d`, the platform's first wave) to today. `FavoriteDoorTest` walks
+it — save, list, re-save, remove, cross-tenant refusal, unsupported type, unauthenticated — and the walk turned up
+two defects that reading a response shape would never have surfaced.
+
+A favourite may now only point at something the caller could actually open. `assertSubjectInTenant` used to accept
+any collection in the tenant, while §8's read path hides rows that are not published *and* attributable — and the
+demo data is full of those rows: 31 public collections with no `published_at`, and 31 more stamped but with
+neither an author nor a provenance token, out of 576. Sixty-two links the site will not honour, each savable in
+one POST. Second: `FavoriteBody`'s pattern advertises `guide` while the validator had no guide branch, so the
+fourth documented value answered 422 — a DTO promising what the code beneath it denies.
+
+The rule was not copied, it was asked. `CollectionsRepository` already composes its list, its count and its
+by-slug read from one scope, one ordering and one provenance gate, so it now answers the same question for
+`MeController` as `isPublishable(tenant, id, kind)`; the kind is part of the question, which is what makes
+saving a collection id as a guide a refusal rather than a promise kept by accident. The refusal carries the
+merchant branch's exact code and message, because D5 forbids a 404 that leaks existence. The test asks the door
+and the directory about the same three rows and requires them to agree — one rule, two callers, no drift.
+
+```
+FavoriteDoorTest    new · 4 tests · the whole door, plus the publishability and kind agreement with §8's reads
+mutations run       4 · check switched off (2 red) · wrong kind passed (guide red) · audit deleted (red) ·
+                    on-conflict refresh removed (red)
+suite               162 → 166 run · the 1 red stays com.nexus.admin's AdminConsoleApiTest:289
+e2e                 PASS, ledger unmoved (121 of 133 in scope, 96 declared, 25 not served, 0 undocumented) —
+                    this unit added no route, it closed a validator and filled an empty contract row
+§7's row            the empty description is now a written contract, including that the POST answers 200
+```
+
+Two things this unit deliberately left alone. The **200**: `/reviews` and `/merchant/api-keys` answer 201 for a
+created row and this door answers 200, silently, with nothing in §7 saying which — the row now records what the
+code does, and changing a status a client has been reading since the route landed is a contract decision, not a
+cleanup, so it is reported rather than fixed under foot. And the **§8 write** it stumbled into: the sentence
+explaining why `POST /api/v1/collections` is unserved blamed its absence on the workspace permission chain, which
+the schema cannot express — `collections` has `tenant_id` and `author_id` and no merchant column at all. §8 now
+carries the measured reason, and the question behind it (who owns a published guide: platform, author, or a
+merchant once the table can name one) sits next to `POST /api/v1/share`'s missing link table as task #34, which is
+a decision to make, not a route to wire.
+
+Standing reports unchanged: `com.nexus.admin`'s red test, §106's retention job, `@RequiresPlatformRole`'s thin
+admin coverage, the 25 documented-not-served rows, `RateLimiter.require`, `rate_limit_buckets`, task #9's browser
+leg and task #17's reservation transitions.

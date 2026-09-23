@@ -106,6 +106,24 @@ public class CollectionsRepository {
     }
 
     /**
+     * §8's publishability rule as one callable question, composed from the same fragments the directory reads
+     * with. Needed by anything that must not hand out a pointer to a row the reader can never open —
+     * {@code POST /api/v1/me/favorites} took any collection in the tenant until D50, which let a saved item link
+     * straight at the 404 the listing filter had already produced. {@code kind} pins the subject to what the
+     * caller said it was saving: a guide is {@code kind='guide'} here and nowhere else, so an id cannot be
+     * saved under the wrong label.
+     */
+    public boolean isPublishable(TenantContext tenant, java.util.UUID collectionId, String kind) {
+        return jdbc.countForTenant(tenant, String.join("\n",
+                "select count(*)",
+                FROM,
+                SCOPE,
+                "  and c.id = :id",
+                "  and c.kind = :kind",
+                PUBLISHABLE), Json.map("id", collectionId, "kind", kind)) == 1;
+    }
+
+    /**
      * One row by public slug, already scoped to published + provenance-gated. {@code requiredKind} pins
      * {@code /guides/{slug}} to {@code guide}; pass null for {@code /collections/{slug}}, which serves
      * any kind. Absent — including a slug that exists but is a draft, another tenant's, or fails the gate —

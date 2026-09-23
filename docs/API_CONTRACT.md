@@ -195,7 +195,7 @@ belongs here, not in a private type.
 | POST | `/api/v1/notifications/read-all` | marks the caller's whole inbox read; returns `{marked_read}` — the count it reports is rows this call actually changed |
 | GET/PUT | `/api/v1/notifications/preferences` | the §123-125 channel switches. The read answers `in_app`, `email`, `push` with the tenant default where nothing was ever stored, and names what the caller may change in `editable_channels`; the write takes one or more of exactly those booleans and 422s an unknown channel or a non-boolean rather than ignoring it, because a silently dropped preference is a notification that never arrives. |
 | POST | `/api/v1/me/personalization/reset` | wipes inferred memory |
-| GET | `/api/v1/me/favorites` · POST `/api/v1/me/favorites` · DELETE `/api/v1/me/favorites/{type}/{id}` | |
+| GET | `/api/v1/me/favorites` · POST `/api/v1/me/favorites` · DELETE `/api/v1/me/favorites/{type}/{id}` | The saved-item door, walked for the first time in D50 — until then no test had touched it and the row said nothing. `POST` takes `{subject_type, subject_id, note}` and answers **200** with the saved row (`status: saved`); the two create doors nearby answer 201, this one never declared a status, and §45 reports the inconsistency rather than changing a code under a client. Saving the same subject again refreshes `note` on the same row — the unique index is `(user_id, subject_type, subject_id)` and the insert turns the conflict into an update — and every accepted save writes a `favorite` audit row. The subject must be the caller's to *read*: a merchant or offering from another tenant 404s, and so does any collection or guide that §8's listing filter would hide (no `published_at`, or neither an author nor a provenance token), all with the same `subject_not_found` and the same message, because D5 forbids a 404 that leaks existence. `guide` and `collection` are one table pinned by `kind`, so an id cannot be saved under a label the directory would not file it under; any other `subject_type` answers 422 from the request pattern before the validator runs. `GET` is the caller's own list, newest first; `DELETE` removes by type and subject id. |
 | GET/POST/DELETE | `/api/v1/me/saved-searches[/{id}]` | |
 | GET | `/api/v1/me/orders` · `/me/reservations` · `/me/conversations` | |
 | GET | `/api/v1/notifications` · POST `/api/v1/notifications/{id}/read` | in-app inbox for the acting subject (§123-125); merchant notifications are read through the same route with the merchant membership |
@@ -406,8 +406,13 @@ apply to both objects:
 The four §8 reads above are served by `CollectionsController` (`com.nexus.catalog`): public, no session,
 `Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=86400`, `Vary: X-Tenant`, and every one
 of them answers only rows that are `visibility='public'`, `published_at IS NOT NULL` **and** attributable (D34).
-`POST /api/v1/collections` is not: a consumer-facing read is not where a publishable row gets created, and the
-write belongs behind the workspace permission chain with the §27 authorization recorded on it.
+`POST /api/v1/collections` is not served, and the reason is now measured rather than asserted: the sentence used
+to be that the write "belongs behind the workspace permission chain", but `collections` carries `tenant_id` and
+`author_id` and **no merchant column** (verified against the live table), so no workspace permission can guard a
+row this schema cannot attribute to a workspace. The open question is therefore which authority owns a published
+guide — the platform, the author, or a merchant once the table can name one — not how to wire a door that has no
+frame. `POST /api/v1/share` needs a link table that V1–V6 never created (§45 records both as a decision, not as
+backlog).
 Referral rewards are recorded only on genuine conversion events (§110 forbids fake growth).
 
 Programmatic SEO (§29/§30) reads the `seo_pages` projection, which the platform owns — the web edge never
