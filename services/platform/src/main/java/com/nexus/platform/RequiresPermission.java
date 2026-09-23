@@ -6,7 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declarative RBAC against {@code permission_grants} — the source of truth (D5, AGENT_CONTRACT §8).
+ * Declarative RBAC against {@code permission_grants}, which is what the interceptor asks (D40) — for a human
+ * member or a merchant API key, not for a platform role or the AI service's internal door. See
+ * {@link PermissionService} for what this annotation does and does not decide.
  *
  * <p>{@link #merchant()} says how the target merchant is resolved for the grant check:
  * <ul>

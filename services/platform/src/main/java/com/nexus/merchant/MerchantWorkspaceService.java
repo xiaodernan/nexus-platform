@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Membership and AI-switch operations for the merchant workspace (API_CONTRACT §5).
  *
- * <p>The rule that shapes every method here is D5: {@code permission_grants} is what authorises, and a role
+ * <p>The rule that shapes every method here is D40: {@code permission_grants} is what authorises, and a role
  * string in {@code merchant_users} is only a convenient way of <em>choosing</em> a set of grant rows. So
  * assigning a role writes those rows, changing a role moves them, and disabling or removing a member deletes
  * them. A membership row that says {@code disabled} while its grants still answer authorisation checks would

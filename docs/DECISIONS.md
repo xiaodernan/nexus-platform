@@ -833,6 +833,11 @@ serve them already existed: `MerchantRepository` had `members/addMember/updateMe
 `ApiKeyService` had `create/list/revoke`, and `WorkspaceAccess` had `member:` and `apikey:` merchant
 resolvers waiting for a route to declare them. What §5 lacked was not machinery but doors.
 
+**Amended by D44 (2026-09-24), before the sentence below.** D5 is "Auth & tenancy": JWT, the tenant predicate,
+and 404-instead-of-403. It never mentions `permission_grants`. So the attribution in the next line is wrong — the
+rule is this decision's own — and the interesting part is how far a wrong citation travelled: five comments in
+three packages had copied it from here, and D44 corrected all five to say D40.
+
 **The rule the doors have to honour is D5.** `permission_grants` is what authorises; `merchant_users.role`
 is a convenience for choosing a set of grant rows. That has a consequence nobody had written down: *assigning
 a role is a write to `permission_grants`*, and so is taking one away. A screen that shows "removed" while
@@ -1106,3 +1111,96 @@ decision belongs, which §8's owner holds. It does not touch the instance on :80
 reads, still on D42-era rows. It leaves the merchant-console browser leg open with task #9. And
 `AdminConsoleApiTest.searchAnalyticsReportsRealCounts` is still red in the untracked `com.nexus.admin` work
 (`expected 2L but was 3L` at line 289) — reported, untouched, and not this session's to fix.
+
+## D44 A citation copied is a citation multiplied — and the door that guards a permission nobody can hold — 2026-09-24
+
+Two halves, and the second one is the reason for the first.
+
+### 1. The gate
+
+`PermissionVocabularyTest` asks the running router, through the handler methods Spring registered, which
+permissions its `@RequiresPermission` guards name — and asserts that every one of them is inside the union of
+the seven role presets plus `API_KEY_SCOPES`. That is the D42 failure mode stated as a subset relation: a route
+guarding a permission no preset contains answers 403 to everyone forever, with a 200-shaped contract row, a
+working controller and a green suite beside it, because `reconcileGrants` copies a preset, `ApiKeyService.create`
+422s an unknown scope, and the seed writes the owner preset — so there is no write path from that string to a
+grant row.
+
+The assertion is reflection rather than a grep for a reason worth repeating: the same claim is written two ways
+in this codebase — `value = "read_analytics"` and `value = MerchantPermissions.READ_ANALYTICS` — and only the
+evaluated annotation says what the interceptor will compare. It is a Java test rather than a `quality.sql` row
+because the vocabulary lives in Java, and a SQL check could only re-derive it by hand-copying twelve strings into
+the seed directory. That is how D42 found two doors printing one person's access differently; a third copy would
+have been the same defect wearing a different hat.
+
+And the subset check is guarded the way D42's rules said a check has to be: the four permissions whose absence
+broke the demo — `admin_members`, `configure_ai`, `read_analytics`, `send_message` — must be *observed* before
+the containment is believed. Against a router that registered nothing (a failed component scan, a wrong profile,
+an exception earlier in the same run) `enforced` is empty, `containsAll` passes, and the gate certifies the
+vocabulary as sound. D41 met that trap from the outside — a reconciliation measured against an empty router
+proves only that the router was empty — and a subset assertion is the same trap one level in.
+
+Whether either assertion can fail was then measured, by mutating a route annotation and the file restored the way
+D43's mutations were (absolute paths, backup, restore in the same shell, and a `grep -c` proving the markers
+were gone):
+
+```
+"configure_ai" → "configure_ai_unheld" on POST /ai-agent/config   → enforcedPermissionsAreAllGrantable red
+merchant = "apikey:id" → "keyid:id" on DELETE /api-keys/{id}      → merchantScopesResolveOrFailAsAClientError red
+```
+
+That second test is the other half of the same table, and the mutation shows what it catches: `WorkspaceAccess`
+answers a `merchant()` kind it does not recognise with `ApiException.internal`, so one mistyped prefix in an
+annotation converts a documented, RBAC-declared, working-looking route into a 500. Twenty-seven specs across
+eight kinds are in the working tree now. The test does not carry a list of the kinds it accepts — it calls the
+resolver with an empty request and requires the failure to be a 4xx, which makes `WorkspaceAccess` the source of
+truth for its own vocabulary. A copied prefix list would have gone stale the first time someone added a ninth
+kind, and would have gone stale by *passing*.
+
+### 2. The citation
+
+Five comments in three packages said, in one form or another, that `permission_grants` is authorisation's source
+of truth **because D5 says so**: `RequiresPermission`, `PermissionService`, `MerchantWorkspaceController`,
+`MerchantWorkspaceService`, `MeController`. `grep` of D5 for the word `permission_grants`: **0 matches in its
+five lines.** D5 is "Auth & tenancy" — stateless JWT plus the session cookie, no card data ever, the
+`tenant_id` predicate on every repository, and 404-instead-of-403 — which is why the other sixteen D5 citations
+in this service are all correct: every one of them is about tenancy, enumeration or card data.
+
+Where the wrong one came from is the part to keep. This decision's own entry, D40, opens its rules section with
+"**The rule the doors have to honour is D5.**" The comments were faithfully copying their parent. Nothing
+verifies a citation; copying one multiplies it, and a wrong number in a decision log becomes a wrong number in
+code the first time somebody writes the door it describes. D43 is the proof: it deleted one of these five —
+`PermissionService`'s "(D5, AGENT_CONTRACT §8)" — and its replacement sentence added a sixth, "(D5's preset
+reading)", in the same file in the same edit. The mechanism kept running while the mechanism was being described.
+
+All five now cite D40, whose rule it is. The sentence in D40 was **not** edited away: an amendment line was
+placed directly above it, saying what is wrong with the line below and what replaced it. The log keeps what was
+believed on 2026-09-23, and the correction sits at the exact place a copier would pick up the error — which is
+the only property that makes an amendment useful.
+
+One overreach in the same sweep was not a citation at all. `Principal`'s javadoc declared its `subjectType`
+"matches the `permission_grants.subject_type` domain: `user` | `merchant_user` | `agent` | `api_key`" — the
+column's whole domain, as if every value in it were a subject this build authenticates. Measured: exactly two
+`new Principal(...)` sites exist, `AuthFilter` (`user`) and `ApiKeyService.verify` (`api_key`).
+`merchant_user` is a spelling a *row* is filed under, not a principal — which is why D40's union is over rows —
+and `agent` has no reader (D43). The comment now says which two authenticate, which two are row vocabulary, and
+why. What that leaves visible is `AuthorizationInterceptor`'s branch for a principal whose `subjectType` is
+already `merchant_user`, which no authenticator can produce: dead today, harmless, and left alone — narrowing
+the authoriser on the strength of a comment is how a gate quietly starts accepting less than it appears to.
+
+```
+PermissionVocabularyTest            new · 2 tests · suite 140 → 142
+mutations that reddened it          2 markers, 2 distinct assertions, 0 left in the tree
+grants claims citing D5             5 sites → 0   (4 copied from D40's own line, 1 re-created by D43)
+16 other D5 citations               left alone — every one is about tenancy, enumeration or card data
+merchant() specs the resolver must understand   27 across 8 kinds
+```
+
+What this does not do: it does not gate the *reverse* direction — "every permission a preset can grant is asked
+for by some route" — because that check would be a lie in this tree. Five of the twelve are today enforced only
+by untracked files (`MerchantContentController`, `MerchantImportController` and the rest of another wave's
+in-flight work), and three more are enforced by no file at all; an expected-set table built from what happens to
+be on disk would flip verdicts when that wave commits or reverts, which is D41's "measure against an empty
+router" in reverse. `create_reservation`, `create_draft_campaign` and `publish_campaign` are those three, and
+§5's campaigns rows are already in the "documented, not served" ledger their owner works from. And no new route
+was added, so the contract ledger is §38's, unchanged.

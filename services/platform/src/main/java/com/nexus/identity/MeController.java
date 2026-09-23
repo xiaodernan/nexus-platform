@@ -336,7 +336,7 @@ public class MeController {
                         "status", Json.str(r, "status"),
                         "merchant", Json.map("id", Json.str(r, "merchant_id"), "slug", Json.str(r, "slug"),
                                 "display_name", Json.str(r, "display_name"), "status", Json.str(r, "merchant_status")),
-                        // Read from the grant rows, not from the role string (D5). This used to answer a
+                        // Read from the grant rows, not from the role string (D40, D42). This used to answer a
                         // hard-coded empty list, which is worse than omitting the field: a console that
                         // trusted it rendered an owner with no capabilities, and nothing about the payload
                         // said the list was a placeholder. Same source and same spelling union as

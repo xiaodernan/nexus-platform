@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
  * The workspace doors of API_CONTRACT §5: who is in a business, what keys it has issued, and whether its AI
  * agent is on. Every route here is declared against {@code permission_grants} — {@code admin_members} for
  * people and keys, {@code configure_ai} for the switch — because "is this person a member" is not an
- * authorisation question this codebase asks of the membership table (D5).
+ * authorisation question this codebase asks of the membership table (D40).
  *
  * <p>These are the highest-consequence reads and writes a merchant has: adding a member is handing somebody
  * the ability to read orders and publish listings, and creating an API key is handing them a secret that

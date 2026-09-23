@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
  * the §3 distinction {@code POST /api/v1/auth/session} exists to close — and never reads a grant; and the AI
  * service reaches the platform through the shared-secret internal door ({@code AiServiceTokenGuard}, D12), not
  * as a subject holding grants. The {@code ai_agent} <em>role</em> is real, but a member given it is granted as a
- * human (D5's preset reading), and no read in this service asks for a row filed as
+ * human (the preset reading D40 records), and no read in this service asks for a row filed as
  * {@code subject_type = 'agent'}.
  *
  * <p>Roles in {@code merchant_users} are a convenience for <em>assigning</em> grants; nothing is authorised

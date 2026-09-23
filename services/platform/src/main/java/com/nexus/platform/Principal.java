@@ -3,9 +3,13 @@ package com.nexus.platform;
 import java.util.UUID;
 
 /**
- * Authenticated subject. {@code subjectType} matches the {@code permission_grants.subject_type}
- * domain: {@code user} | {@code merchant_user} | {@code agent} | {@code api_key}
- * (AGENT_CONTRACT §8 — authorisation is per subject, not per model).
+ * Authenticated subject. {@code subjectType} is the value the interceptor looks grants up under, and today two
+ * authenticators produce one: {@code user} for a bearer or cookie session ({@code AuthFilter}) and {@code
+ * api_key} for an {@code nx_} secret ({@code ApiKeyService.verify}). The other two names in
+ * {@code permission_grants.subject_type} are grant-row spellings rather than subjects this build authenticates:
+ * a human's rows may be filed as {@code merchant_user}, which is why every human read unions both (D40, D42),
+ * and {@code agent} is named in V1's column comment and AGENT_CONTRACT §8 while the AI service still enters
+ * through its own token door (D12) and no read asks for a row filed that way.
  */
 public record Principal(
         String subjectType,

@@ -1668,3 +1668,65 @@ D34's precedent says record that rather than build it, and §8's sentence is tha
 :8090 instance and the `nexus` database behind it are still on pre-D42 rows. The browser leg is still task #9.
 And `AdminConsoleApiTest.searchAnalyticsReportsRealCounts` is red again, same `expected 2L but was 3L` at line
 289, in the untracked `com.nexus.admin` work — reported, untouched, and unreachable from anything here.
+
+## 39. Five comments cited a decision that never said it, and a gate now exists for the door nobody can open (2026-09-24)
+
+Two things moved in the platform's permission layer since §38, one forward and one backward.
+
+Forward: `PermissionVocabularyTest` asks the running Spring router which permissions its guarded routes name,
+and requires each to be inside the union of the seven role presets and `API_KEY_SCOPES`. That is D42's failure
+mode expressed as a subset relation — a route guarding a permission no preset contains can never be opened by
+anyone, and every other signal around it (a 200-able controller, a contract row, a green unit test) stays quiet.
+It is reflection, not grep, because the claim is written two ways in this codebase (`"read_analytics"` and
+`MerchantPermissions.READ_ANALYTICS`) and only the evaluated annotation is what the interceptor compares. The
+assertion carries the four permissions whose absence broke the demo as its non-zero guard, so a router that
+registered nothing cannot pass it.
+
+```
+mutation                                                   test reddened
+"configure_ai" → "configure_ai_unheld" on a route          enforcedPermissionsAreAllGrantable
+merchant = "apikey:id" → "keyid:id" on a route             merchantScopesResolveOrFailAsAClientError (a 500)
+```
+
+Both were run against the file in place and restored, with a `grep -c` on the tree afterwards. The second row is
+the one that justifies the second test: `WorkspaceAccess` answers an unknown `merchant()` kind with
+`ApiException.internal`, so a mistyped prefix in an annotation turns a documented, RBAC-declared route into a
+500 — 27 specs across 8 kinds are declared in the working tree, and the test checks them by asking the resolver
+itself rather than by carrying a copied list of prefixes, which would go stale by passing.
+
+Backward, and the reason this section is mostly about prose: five comments in three packages
+(`RequiresPermission`, `PermissionService`, `MerchantWorkspaceController`, `MerchantWorkspaceService`,
+`MeController`) stated that `permission_grants` is authorisation's source of truth **because D5 says so**. D5 is
+"Auth & tenancy" — JWT and the session cookie, no card data, the `tenant_id` predicate, 404-instead-of-403 — and
+the string `permission_grants` appears in it **zero** times. The other sixteen D5 citations in the service are
+correct, and every one of them is about tenancy, enumeration or card data, which is exactly what makes the five
+wrong ones hard to see in a review: they look like the other sixteen. The source is D40's own sentence "**The
+rule the doors have to honour is D5.**", which the comments were faithfully copying; §38's commit re-created a
+copy in the same edit that removed one. All five now cite D40, and D40 carries an amendment line directly above
+the offending sentence rather than having it rewritten, so the log keeps what was believed on 2026-09-23 and the
+correction sits where a copier would pick it up.
+
+```
+mvn -o test                       142 run (140 → 142) · PermissionVocabularyTest 2/2 · MerchantWorkspaceTest 12/12
+                                  1 red, untracked com.nexus.admin, unchanged
+principal construction sites      2 (`user` in AuthFilter, `api_key` in ApiKeyService.verify) — `Principal`'s
+                                  javadoc had been claiming all four grant-table spellings were subjects
+routes guarded by a permission    9 of the 12 vocabulary names in the working tree · 4 of them from tracked code
+```
+
+`Principal`'s comment went the same way as §38's `PermissionService` one: it declared its `subjectType` domain
+as `user | merchant_user | agent | api_key`, which is the column's vocabulary, not the set of subjects this
+build authenticates. `merchant_user` is a spelling a row is filed under — which is why D40's union is over rows,
+not principals — and `agent` has no reader. What that measurement also exposes is `AuthorizationInterceptor`'s
+branch for a principal that already reports `merchant_user`: no authenticator can produce one. It is left in
+place and named here, because narrowing the authoriser on the strength of a comment is how a gate starts
+accepting less than it appears to.
+
+Two deliberate omissions. The reverse check — "every permission a preset grants is guarded by some route" — was
+not written: five of the twelve are enforced today only by another wave's untracked controllers, so an
+expected-set table built from this shared tree's disk state would change verdicts when that work commits or
+reverts; that is D41's empty-router trap in reverse, and `create_reservation`, `create_draft_campaign` and
+`publish_campaign` stay in §5's "documented, not served" ledger with their owner. And no seed, schema, route or
+contract row changed in this section, so the two fresh gates were not re-run — a SQL gate cannot observe a new
+unit test or a corrected comment, and `mvn -o test` is the gate that covers both. :8090 and its database are
+untouched, and the browser leg is still task #9.
