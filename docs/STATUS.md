@@ -2406,3 +2406,26 @@ What this does not do. It does not raise or reserve anything on the container �
 streams use, and resizing it is a decision for whoever owns it. It does not gate the *e2e* boot, which opens its
 own short-lived platform and has its own datasource. And it does not retire the standing reports; the two
 decisions still parked (§45's §8 writes, and §48's §42 text that no client can reach yet) are unchanged.
+
+## 53. A favourite is a link, and the seed ships the links (2026-09-24)
+
+D50 fixed the write door; the demo data predates it. All 18 seeded favourites were checked against what the
+readers actually show: 12 published merchants, 4 active offerings, 2 collections that clear §8's publish-and-
+attribute gate — clean today, which is exactly why it went into `data/seed/quality.sql` instead of staying a nice
+observation: the generator gets edited more often than this file gets read.
+
+Two checks added. `favourites point at a renderable row` re-derives each target through the readers' own
+predicates — merchant published, offering active, collection published *and* attributable — and requires
+`count(favorites) > 0`, because a check over an empty table is a pass that means nothing (D44's non-zero guard).
+`favourite subject_type is one the API can save` is the quieter half: a seeded type outside `FavoriteBody`'s
+pattern would load cleanly and then be re-creatable through no door, which is D49's shape arriving through the
+seed rather than the filter. `scripts/db_gate_fresh.sh`: 168 → 170 checks, PASS on a from-scratch schema and a
+freshly generated dataset.
+
+Both were then made to fail on purpose rather than assumed good: a favourite aimed at a merchant that does not
+exist (the predicate reported 7 bad rows) and a `subject_type='voucher'` row (1 bad), inside a transaction that
+was rolled back — with a residue query confirming the shared `nexus_test` kept neither.
+
+Standing reports unchanged — §45's §8 writes, §48's unreachable §42 text — plus one more for whoever owns
+`infra/db/migrations`: `favorites.subject_type` carries no CHECK and no FK, which is why the vocabulary needs a
+seed gate rather than a constraint, and adding the constraint is a migration decision, not this unit's to make.

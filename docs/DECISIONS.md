@@ -2093,3 +2093,43 @@ mutations run              2 · pool raised to 13 (allowance red, with the arith
                            pool lowered to 4 (pin red, budget satisfied)
 suite                      192 → 193 run · the 1 red stays com.nexus.admin's
 ```
+
+## D58 A favourite is a link, and the seed ships the links — 2026-09-24
+
+### 1. What D50 left half-done
+
+D50 closed a write door: `POST /api/v1/me/favorites` no longer accepts a collection the §8 readers would hide.
+It did nothing about the rows already in the demo data, and the seed is older than that door — 18 favourites,
+loaded by the generator, never re-checked against what the screens will actually render. So the same defect D35
+found from the other side (a rating displayed with no fact behind it) was live here as a *bookmark that clicks
+into a 404*, and only the write path had been fixed.
+
+Measured first, before writing anything: all 18 seeded favourites point at rows a reader can show — 12 published
+merchants, 4 active offerings, 2 collections that clear §8's own `visibility='public' AND published_at IS NOT
+NULL` plus attribution gate. No bug in the data as it stands today. Which is exactly why it belongs in
+`quality.sql`: a pairing nobody asserts is a pairing that decays, and the generator is edited more often than the
+gate is read.
+
+### 2. The two checks, and the vocabulary one with them
+
+`favourites point at a renderable row` re-derives each row's target through the same predicates the readers use —
+merchant published, offering active, collection publishable including the author-or-provenance branch — and names
+the count in its detail, with `count(favorites) > 0` required so an empty table can never satisfy it (D44's
+non-zero guard, because a check over nothing is a pass that means nothing).
+
+`favourite subject_type is one the API can save` is the quieter half of the same finding: `FavoriteBody`'s pattern
+accepts `merchant|offering|guide|collection`, and a seeded row outside that set would load cleanly and then be
+re-creatable by nobody — data the write path does not know about, the D49 species arriving through the seed
+instead of the filter.
+
+`scripts/db_gate_fresh.sh`: 168 checks → **170, PASS** on a from-scratch schema and a freshly generated dataset.
+Both were then falsified rather than assumed, inside a transaction that was rolled back: a favourite aimed at a
+non-existent merchant makes the renderable predicate report 7 bad rows, and a `subject_type='voucher'` row makes
+the vocabulary predicate report 1 — with the residue query confirming afterwards that the shared `nexus_test`
+kept neither.
+
+What this does not do. It does not make the seed's favourites *saveable-through-the-API-by-construction* — the
+generator writes rows directly, and the same asymmetry exists for any table it loads; these two checks are the
+guard, not a rewrite of how the seed is produced. It does not add a `CHECK` or FK on `favorites.subject_type`
+(that is V1 schema, infra-owned, and a migration is a shared-state decision, reported rather than taken). And it
+leaves the standing reports where §48 and §52 put them.

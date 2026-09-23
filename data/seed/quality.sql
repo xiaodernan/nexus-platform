@@ -866,6 +866,40 @@ SELECT 'human grants carry no deadline',
           WHERE subject_type = 'merchant_user' AND expires_at IS NOT NULL)
        || ' lapsing human grant(s)';
 
+-- D58: a favourite is a link the consumer screen renders. D50 closed the *write* door (POST
+-- /api/v1/me/favorites now refuses a row the §8/§4 readers would hide), but the demo data is older than that
+-- door and was loaded by the generator, so the pairing is asserted here: a saved merchant must be published, a
+-- saved offering active, a saved collection publishable by §8's own rule. A seed that fails this ships a
+-- bookmark whose click is a 404, which is the same §35/§D35 failure in the opposite direction.
+WITH bad AS (
+  SELECT f.id FROM favorites f
+  LEFT JOIN merchants   m ON f.subject_type = 'merchant'   AND m.id = f.subject_id
+  LEFT JOIN offerings   o ON f.subject_type = 'offering'   AND o.id = f.subject_id
+  LEFT JOIN collections c ON f.subject_type = 'collection' AND c.id = f.subject_id
+  WHERE (f.subject_type = 'merchant'   AND (m.id IS NULL OR m.status <> 'published'))
+     OR (f.subject_type = 'offering'   AND (o.id IS NULL OR o.status <> 'active'))
+     OR (f.subject_type = 'collection' AND (c.id IS NULL OR c.visibility <> 'public'
+                                            OR c.published_at IS NULL
+                                            OR (c.author_id IS NULL
+                                                AND lower(btrim(coalesce(c.seo->>'generated_by','')))
+                                                    NOT IN ('ai','editor','creator')))))
+INSERT INTO qc
+SELECT 'favourites point at a renderable row',
+       NOT EXISTS (SELECT 1 FROM bad) AND (SELECT count(*) FROM favorites) > 0,
+       (SELECT count(*) FROM bad) || ' unreachable of '
+       || (SELECT count(*) FROM favorites) || ' favourite(s)';
+
+-- ...and the vocabulary a favourite may use has to be the vocabulary the API will accept. A seeded
+-- subject_type outside FavoriteBody's pattern loads cleanly and can never be re-created or fixed through
+-- the door, so it is data the write path does not know about.
+INSERT INTO qc
+SELECT 'favourite subject_type is one the API can save',
+       NOT EXISTS (SELECT 1 FROM favorites
+                    WHERE subject_type NOT IN ('merchant','offering','guide','collection')),
+       (SELECT count(*) FROM favorites
+          WHERE subject_type NOT IN ('merchant','offering','guide','collection'))
+       || ' unsavable row(s); the door accepts merchant|offering|guide|collection';
+
 -- ============================================================ C  hard gate
 \echo ''
 SELECT CASE WHEN ok THEN '  PASS ' ELSE '  FAIL ' END AS status,
