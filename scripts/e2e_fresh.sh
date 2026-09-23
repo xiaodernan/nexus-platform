@@ -119,14 +119,21 @@ listener_on_port() {
 [ -z "$(listener_on_port)" ] || die "port $PORT is already in use — choose another with E2E_PORT=..."
 
 # --------------------------------------------------------------------------- 1/7 empty database
-step "1/9  create $E2E_DB from template0"
+step "0/10 the launcher this gate boots through still works for a bare caller"
+# This script always exports NEXUS_DEV_LOG and NEXUS_DEV_PID, which is exactly why it could not see that
+# run_platform_dev.sh --log was broken for a human who sets neither ($ROOT expanded where the script defines
+# root, fatal under set -u). D59: check the caller the automated path hides, before relying on that path.
+"${PYTHON:-bash}" "$SCRIPT_DIR/check_launcher_log_mode.sh" | sed -e 's/^/    /'
+echo
+
+step "1/10 create $E2E_DB from template0"
 psql_maint "CREATE DATABASE \"$E2E_DB\" TEMPLATE template0 ENCODING 'UTF8'" >/dev/null
 [ "$(psql_e2e "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
                 AND table_name NOT LIKE 'pg_%'")" = "0" ] \
   || die "the fresh database is not empty"
 
 # --------------------------------------------------------------------------- 2/7 schema + roles
-step "2/9  apply infra/db/migrations/V*.sql + 00_roles.sql"
+step "2/10 apply infra/db/migrations/V*.sql + 00_roles.sql"
 NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_NAME="$E2E_DB" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/db_apply_migrations.sh" | sed -e 's/^/    /'
 TABLES="$(psql_e2e "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
@@ -136,21 +143,21 @@ echo "    -> tables=$TABLES migrations=$MIGRATIONS"
 
 # --------------------------------------------------------------------------- 3/7 dataset
 if [ "$SKIP_GENERATE" = "1" ]; then
-  step "3/9  seed generation skipped (--skip-generate)"
+  step "3/10 seed generation skipped (--skip-generate)"
 else
-  step "3/9  generate the synthetic dataset"
+  step "3/10 generate the synthetic dataset"
   PYTHON="${PYTHON:-python}"
   ( cd "$ROOT" && "$PYTHON" data/seed/generate.py ) 2>&1 | tail -3 | sed -e 's/^/    /'
 fi
 
-step "4/9  load the seed into the fresh database"
+step "4/10 load the seed into the fresh database"
 CONTAINER="$CONTAINER" DB="$E2E_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 \
   "$ROOT/data/seed/load.sh" | tail -6 | sed -e 's/^/    /'
 FACTS="$(psql_e2e "SELECT count(*) FROM facts WHERE attribute='rating'")"
 echo "    -> rating facts loaded: $FACTS"
 
 # --------------------------------------------------------------------------- 5/7 boot
-step "5/9  boot the platform against $E2E_DB on :$PORT"
+step "5/10 boot the platform against $E2E_DB on :$PORT"
 # baseline-version has to name the migrations the infra script already ran: Flyway would otherwise
 # replay V1..V4 over a schema that has them (D30/D32 are what made that failure loud instead of silent).
 # Redis is switched off so this run cannot write rate-limit or session keys into the shared instance.
@@ -203,15 +210,15 @@ if ! tasklist //FI "PID eq $LISTEN_PID" //FO CSV 2>/dev/null | grep -qi java; th
 fi
 
 # --------------------------------------------------------------------------- 6/7 probes
-step "6/9  probe the served consumer reads"
+step "6/10 probe the served consumer reads"
 node "$SCRIPT_DIR/verify_served_reads.mjs" --base "http://127.0.0.1:$PORT" --tenant "${NEXUS_TENANT:-hong-kong}"
 echo
 
 # --------------------------------------------------------------------------- 7/7 the write leg
 if [ "$READS_ONLY" = "1" ]; then
-  step "7/9  skipped (--reads-only): no rows written"
+  step "7/10 skipped (--reads-only): no rows written"
 else
-  step "7/9  walk the three write paths against $E2E_DB"
+  step "7/10 walk the three write paths against $E2E_DB"
   # The reason these run here rather than against :8090: all three leave rows behind. A state machine is best
   # proved on a database that can be thrown away with the run that proved it, not on the demo data another
   # session is looking at.
@@ -233,7 +240,7 @@ fi
 echo
 
 # --------------------------------------------------------------------------- 8/9 the rung §1 promises
-step "8/9  the rate-limit rung, on the window the running service says it has"
+step "8/10 the rate-limit rung, on the window the running service says it has"
 # Why here and not only in the suite: NexusIntegrationTest sets nexus.ratelimit.enabled=false, so every unit
 # test that walks this filter does it disarmed. This is the one place a real jar, on real configuration, meets a
 # real HTTP client and has to answer 429 with the three headers §1 lists.
@@ -283,7 +290,7 @@ rm -f "$LADDER_BODY"
 echo
 
 # --------------------------------------------------------------------------- 9/9 the contract itself
-step "9/9  reconcile docs/API_CONTRACT.md against what this build declares"
+step "9/10 reconcile docs/API_CONTRACT.md against what this build declares"
 # Same instance, same build, one question the other two ledgers cannot answer: does the document describe
 # the router? `/v3/api-docs` is generated from the annotations that registered, so a documented §4/§8 read
 # that is absent here is a page a consumer can be sent to with nothing behind it — and that fails the run.

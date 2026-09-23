@@ -83,8 +83,8 @@ if [ "${1:-}" = "--log" ]; then
     # The log and pid paths are overridable because this file is how *every* session on this machine
     # starts the service: a throwaway verification run that inherits `.platform-dev.log` truncates the
     # log the running instance's owner is reading, and overwrites the pid file they would kill by.
-    LOG="${NEXUS_DEV_LOG:-$ROOT/.platform-dev.log}"
-    PID="${NEXUS_DEV_PID:-$ROOT/.platform-dev.pid}"
+    LOG="${NEXUS_DEV_LOG:-$root/.platform-dev.log}"
+    PID="${NEXUS_DEV_PID:-$root/.platform-dev.pid}"
     nohup mvn -o -q -DskipTests -f services/platform/pom.xml spring-boot:run > "$LOG" 2>&1 &
     echo $! > "$PID"
     echo "started in background, maven pid $(cat "$PID"); log: $LOG" >&2

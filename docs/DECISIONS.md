@@ -2133,3 +2133,55 @@ generator writes rows directly, and the same asymmetry exists for any table it l
 guard, not a rewrite of how the seed is produced. It does not add a `CHECK` or FK on `favorites.subject_type`
 (that is V1 schema, infra-owned, and a migration is a shared-state decision, reported rather than taken). And it
 leaves the standing reports where §48 and §52 put them.
+
+## D59 A documented command that only worked for the one caller who hid it — 2026-09-24
+
+### 1. What broke, and why nothing saw it
+
+`scripts/run_platform_dev.sh` is `set -euo pipefail`, and its `--log` branch expanded `$ROOT` where the script
+defines `root` (lowercase, sixteen lines earlier). With `set -u` that is fatal, so the command the script's own
+usage comment tells a person to type — `scripts/run_platform_dev.sh --log` — died with `ROOT: unbound variable`
+before starting anything. It is in `HEAD` as it stands, not damage from D54's rewrite of the block above it.
+
+Nothing caught it because the only automated caller is `e2e_fresh.sh`, which exports `NEXUS_DEV_LOG` and
+`NEXUS_DEV_PID` — so the `$ROOT` half of `${NEXUS_DEV_LOG:-$ROOT/.platform-dev.log}` was never evaluated in any
+run anyone ever scripted. The bug lived precisely in the path the tests take for granted: the human's. Found
+because D59 went to look at the live demo through the documented route instead of trusting the gate that had
+already booted it a dozen times.
+
+### 2. The fix, and the witness that keeps it
+
+`$root`, and `scripts/check_launcher_log_mode.sh`: run the real script with `mvn` stubbed and both overrides
+*absent*, which is the human path, and assert it reports a background start rather than a shell error. The
+witness is proven in both directions — reintroduce `$ROOT` and it fails with the exact line and message; leave
+the fix in and it passes. That matters more than the one-line edit: the script is how every session on this
+machine starts the service, and a broken default path is a broken onboarding path that no Java test can see.
+
+It is now step 0 of `e2e_fresh.sh`, which is the gate that depends on the launcher and the file that always set
+those variables — the automated caller checking the manual one.
+
+### 3. What the live boot showed
+
+With the path fixed, the demo instance came up on :8090 against the seeded `nexus` database (520 merchants,
+11,000 reviews, 18 favourites, 4 collections, 60 tables — in the *5433* container; the other Postgres container
+on this host has an unrelated `nexus` database with none of these tables, which is worth knowing before anyone
+points a verifier at the wrong one). Read slice, real data, no fixtures: directory cards with Chinese titles;
+`GET /api/v1/collections` and `GET /api/v1/guides/sha-tin-date-night` → 200; `/.well-known/ucp` → the honest
+`not_integrated` payload with empty capabilities; a seeded merchant's `/ucp.json` → 404
+`ucp_profile_not_published`, which is D52's "no publisher exists" seen on the running service rather than in a
+test; the demo consumer's favourites → the seeded merchant and offering rows, through the door D50 and D51
+hardened; `/me/saved-searches` → `[]`. Then the instance was stopped and :8090 returned to not listening, the
+state before this unit.
+
+```
+launcher              $ROOT → $root at run_platform_dev.sh:86-87 (pre-existing, confirmed against HEAD)
+new witness           scripts/check_launcher_log_mode.sh · red with the bug restored, green with the fix
+e2e                   one more step (0/10, the launcher smoke); step 10's rate-limit rung and ledger unchanged
+live verification     :8090 against the demo DB: reads above, then stopped; the demo login wrote its usual rows
+```
+
+What this does not do. It does not wire the smoke into CI — `.github/workflows/ci.yml` is dirty with another
+stream's work, so the gate it now belongs to is the e2e, and widening CI is theirs to do. It does not complete
+task #9's browser leg either: the read slice above is HTTP against live data, not a rendered page, and the web
+app is still another stream's dirty tree. And it does not reconcile the two `nexus` databases on this host —
+which container is authoritative is documented in `STATUS.md` §54 rather than changed here.

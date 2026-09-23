@@ -2429,3 +2429,45 @@ was rolled back — with a residue query confirming the shared `nexus_test` kept
 Standing reports unchanged — §45's §8 writes, §48's unreachable §42 text — plus one more for whoever owns
 `infra/db/migrations`: `favorites.subject_type` carries no CHECK and no FK, which is why the vocabulary needs a
 seed gate rather than a constraint, and adding the constraint is a migration decision, not this unit's to make.
+
+## 54. The command only the automated caller could run (2026-09-24)
+
+`scripts/run_platform_dev.sh` is `set -euo pipefail`, and its `--log` branch expanded `$ROOT` where the script
+defines `root` — so the command its own usage comment tells a person to type died with `ROOT: unbound variable`
+before starting anything. Present in `HEAD` as it stands, not damage from §49's rewrite of the block above it. It
+went unseen for as long as it has existed because the only scripted caller, `e2e_fresh.sh`, exports
+`NEXUS_DEV_LOG` and `NEXUS_DEV_PID`, so the `$ROOT` half of the default was never evaluated in a run anyone
+automated. The bug lived exactly in the path the gate takes for granted: the human's.
+
+Fixed to `$root`, and `scripts/check_launcher_log_mode.sh` is the witness: it runs the real script with `mvn`
+stubbed and both overrides *absent* — the human path — and asserts it reports a background start instead of a
+shell error. Proven both directions: reintroduce `$ROOT` and it fails quoting the line and the message; leave
+the fix and it passes. It is now step 0 of `e2e_fresh.sh`, the gate that depends on that launcher and the file
+that always set those variables — the automated caller checking the manual path. Not added to CI:
+`.github/workflows/ci.yml` is dirty with another stream's work, so that wiring is theirs.
+
+With the path fixed, the live demo was read the way §18's task wants: :8090 against the seeded `nexus` database
+(520 merchants, 11,000 reviews, 18 favourites, 4 collections, 60 tables). Directory cards with Chinese titles;
+`/api/v1/collections` and `/api/v1/guides/sha-tin-date-night` → 200; `/.well-known/ucp` → the honest
+`not_integrated` payload with empty capabilities; a seeded merchant's `/ucp.json` → 404
+`ucp_profile_not_published`, which is §47's "no publisher exists" observed on the running service rather than in
+a test; the demo consumer's seeded favourites → through the door §45 and §46 hardened; `/me/saved-searches` →
+`[]`. The instance was then stopped and :8090 returned to not listening, the state before the check. That is the
+read slice of task #9 over HTTP on real data — not its browser leg, which still waits on `apps/web`.
+
+One host fact worth recording because it cost a wasted query: this machine has **two** Postgres containers, and
+both have a database called `nexus`. The seeded demo data lives in `nexus-platform-testpg` (host 5433), which is
+what `.env`'s `NEXUS_DB_HOST`/`NEXUS_PG_HOST_PORT` and the launcher's banner point at. `nexus-postgres`
+(55433→5432) has an unrelated `nexus` with none of these tables — querying it for `favorites` returns "relation
+does not exist", which reads like a broken seed and is not one. Nothing here reconciles them; pointing a verifier
+at the wrong one is the failure to avoid.
+
+```
+launcher              $ROOT → $root at run_platform_dev.sh:86-87; smoke red with the bug, green without
+e2e                   gains step 0/10 (the launcher smoke); rung, walks and ledger unchanged from §51
+live check            :8090 read slice above, then stopped; :8090 is not listening again
+```
+
+Standing reports unchanged, plus this one: whoever owns CI should run `scripts/check_launcher_log_mode.sh` there
+too, and the two-`nexus` ambiguity on this host is a decision for whoever owns `infra/`, not something this unit
+quietly merges.
