@@ -2198,3 +2198,38 @@ does not do: it does not choose the discovery path, does not build the publisher
 `toProfile`'s published-but-empty-capabilities 500 — unreachable from any door today, and a question to settle
 with the publisher rather than in passing. One new standing report: `UcpProfileServiceTest` is four honest unit
 tests of a document builder, and must not be read as coverage of the endpoints.
+
+## 48. A sentence the payload printed and nobody read (2026-09-24)
+
+The census for "printed but never asserted" says the obvious metric is useless: 563 snake_case keys come out of
+`Json.map(`/`out.put(` in the platform, 272 of them named by no test and no verifier — but payload conformance
+covers many of those and internal metadata inflates the rest, so the ratio is not 272 defects. Picked by meaning
+instead: the fields whose only job is to assert a compliance fact.
+
+`authorisation_basis` is one of those. Every member write answers with "permission_grants (admin_members checked
+against the caller before this write ran); roles only choose which grant rows exist" — D40's doctrine shipped in
+a body so a screen need not infer it from status codes — and nothing tested it. The sentence lived in one helper,
+`withBasis`, which two of the three doors called; `DELETE /members/{id}` built its own response and never went
+through it, although it checks the same permission as the add and the edit. One caller therefore learned the rule
+and two did not.
+
+The string is now a single constant, the removal answers with it too, and
+`MerchantWorkspaceTest.theStatedBasisIsTheEnforcedOne` asserts it on all three doors and ends by reading the
+removed member's `permission_grants`: empty. That ending is the part that matters — a payload that preaches
+"grants are the access" while the rows outlive the membership would pass every string-only check in the file. Two
+mutations (drop it from the removal; rewrite the sentence to blame the role column) both went red. §5's member row
+names the field, which it never had.
+
+The sweep's second find is a report, not a change: `PaymentService` prints `card_data_stored: false` with the
+§42 notice, in another stream's untracked package, and no controller in this build serves a payment route — which
+is exactly why §6 lists `POST /api/v1/checkout` and `POST /api/v1/payments/{}/confirm` as
+documented-not-served. The reassurance currently reaches no client. That is not wrong behaviour; it is a
+compliance statement waiting for the doors that would carry it, and it belongs to whoever builds them.
+
+```
+MerchantWorkspaceTest   12 → 13 tests · the basis on all three member writes, and the grants really gone
+mutations run           2 · sentence dropped from the removal · sentence rewritten to blame the role column
+suite                   176 → 177 run · the 1 red stays com.nexus.admin's AdminConsoleApiTest:289
+```
+
+Standing reports unchanged, plus this one line for §6's side of the payment seam.

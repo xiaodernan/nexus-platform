@@ -82,6 +82,32 @@ class MerchantWorkspaceTest extends NexusIntegrationTest {
     }
 
     @Test
+    @DisplayName("Every member write says what authorised it, and the removal shows it meant it")
+    void theStatedBasisIsTheEnforcedOne() {
+        // D53: `authorisation_basis` is §40's doctrine printed in a payload — "a printed field is a promise"
+        // (D42) — and until now no test named it, and the removal door did not carry it at all even though it
+        // checks the same permission. All three now answer the same sentence, and the last one has to prove the
+        // sentence's second half by taking the grant rows with the membership row.
+        UUID person = newUser(tenant, "basis-" + tag(), "consumer");
+        ResponseEntity<String> added = postKey("/api/v1/merchant/members",
+                Json.map("merchant_id", merchant.toString(), "user_id", person.toString(), "role", "staff"),
+                "basis-" + person, tenant, ownerToken);
+        assertThat(added.getStatusCode()).as(body(added)).isEqualTo(HttpStatus.CREATED);
+        assertThat(body(added)).contains("permission_grants")
+                .contains("roles only choose which grant rows exist");
+
+        UUID memberId = memberIdOf(person);
+        assertThat(body(patch("/api/v1/merchant/members/" + memberId, Json.map("role", "manager"), tenant,
+                ownerToken))).contains("permission_grants").contains("roles only choose which grant rows exist");
+
+        ResponseEntity<String> removed = delete("/api/v1/merchant/members/" + memberId, tenant, ownerToken);
+        assertThat(removed.getStatusCode()).as(body(removed)).isEqualTo(HttpStatus.OK);
+        assertThat(body(removed)).contains("permission_grants")
+                .contains("roles only choose which grant rows exist");
+        assertThat(grants(person)).as("the access really lived in the rows the sentence names").isEmpty();
+    }
+
+    @Test
     @DisplayName("A role change and a disable move the real access, checked through a route neither owns")
     void changingARoleChangesWhatTheCallerCanCall() {
         UUID person = newUser(tenant, "moving-" + tag(), "consumer");

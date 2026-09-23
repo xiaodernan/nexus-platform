@@ -1832,3 +1832,37 @@ spelling is real. It does not build the publisher, and does not pretend the 200 
 other than a stub. It does not delete the `capabilities.isEmpty()` 500 in `toProfile`: with no publisher that
 branch is unreachable from any door, and whether a published-but-empty profile should be a 500, a 409, or
 unconstructable is a question to answer together with the publisher rather than in passing.
+
+## D53 The sentence a payload printed and no one read — 2026-09-24
+
+D52 left a question: which printed fields are promises nobody checks? The blunt census says the metric is wrong
+— 563 snake_case keys are emitted by `Json.map(`/`out.put(` in the platform, 272 of them named by no test and no
+verifier, and that ratio is payload-conformance coverage plus internal metadata, not 272 defects. So this unit
+picked by meaning instead: the fields whose whole job is to assert a compliance fact.
+
+`authorisation_basis` is one. Every member write answers with the sentence "permission_grants (admin_members
+checked against the caller before this write ran); roles only choose which grant rows exist" — that is D40's
+doctrine, shipped in a response body so a screen does not have to infer it from status codes. Nothing tested it,
+and it lived in one helper, `withBasis`, that only two of the three doors
+called — `DELETE /members/{id}`, which checks the same permission as the other two, never went through it. So a caller who removed a member got the removal's effects without the
+explanation the add and the edit both gave, and the explanation itself could drift away from the mechanism with
+only a route-behaviour test, somewhere else, noticing.
+
+Now the string is one constant, the removal carries it, and `MerchantWorkspaceTest.theStatedBasisIsTheEnforcedOne`
+asserts it on all three doors and finishes by reading `permission_grants` for the removed person: empty. That last
+assertion is what makes the test about the claim rather than about the text — a payload that says "the grants are
+the access" while the rows outlive the membership would otherwise pass every string check in the file.
+
+```
+mutations run   2 · the removal stops carrying the sentence (red) · the sentence rewritten to blame the role
+                column instead of the grant rows (red)
+docs            §5's member row now names the field, which it never did
+suite           176 → 177 · 13 tests in MerchantWorkspaceTest · the 1 red stays com.nexus.admin's
+```
+
+The second field this sweep found is a report, not a fix: `PaymentService` prints `card_data_stored: false` and
+the §42 "no card data is held anywhere" notice — in `com.nexus.commerce`, another stream's untracked package —
+and no controller in this build exposes a payment route, which is why §6 lists `POST /api/v1/checkout` and
+`POST /api/v1/payments/{}/confirm` as documented-not-served. The reassurance is therefore currently unreachable
+by any client: not a wrong behaviour, but a compliance statement waiting on the doors that would carry it. Worth
+one line in §6 when those routes are built, and worth not editing another stream's file to add it now.

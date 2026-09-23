@@ -138,6 +138,7 @@ public class MerchantWorkspaceController {
                 mapOrEmpty(result.get("before")), Json.map(
                         "removed", true, "grants_revoked", result.get("grants_revoked")), Json.map());
         Map<String, Object> out = new LinkedHashMap<>(result);
+        out.put("authorisation_basis", AUTHORISATION_BASIS);
         out.put("note", "The membership row and every grant it carried are gone. A person who also holds "
                 + "another business in this tenant can still sign in there.");
         if (Json.uuid(result, "user_id").equals(operatorId)) {
@@ -305,11 +306,19 @@ public class MerchantWorkspaceController {
         return out;
     }
 
+    /**
+     * The sentence every member write answers with, in one place so the three doors cannot carry three slightly
+     * different versions of it (D44), and printed on the removal as well as the two writes — the permission
+     * checked is the same one, and a caller told "grants are the access" on adding a person should not have to
+     * infer it when removing one (D53).
+     */
+    private static final String AUTHORISATION_BASIS = "permission_grants (admin_members checked against the "
+            + "caller before this write ran); roles only choose which grant rows exist";
+
     private Map<String, Object> withBasis(Map<String, Object> result, UUID merchantId) {
         Map<String, Object> out = new LinkedHashMap<>(result);
         out.put("merchant_id", merchantId.toString());
-        out.put("authorisation_basis", "permission_grants (admin_members checked against the caller before "
-                + "this write ran); roles only choose which grant rows exist");
+        out.put("authorisation_basis", AUTHORISATION_BASIS);
         return out;
     }
 
