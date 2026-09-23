@@ -8,9 +8,25 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 /**
- * {@code permission_grants} is the single source of truth for authorisation (D5, AGENT_CONTRACT §8) —
- * for humans, merchant API keys and AI agents alike. Roles in {@code merchant_users} are a
- * convenience for *assigning* grants; nothing is authorised from a role string.
+ * {@code permission_grants} is what authorises a call to a merchant door (D40, D42). The interceptor asks this
+ * table for every {@code @RequiresPermission}, and a human's access can be filed under either spelling it has
+ * ever been written with — so {@link #grantedToHuman} and {@code has} both look at {@link #HUMAN_SUBJECT_TYPES}
+ * rather than at one guess. {@code api_key} subjects are grant rows too, which is why revoking a key is a
+ * delete here and not a flag elsewhere. A non-null {@code expires_at} in the past ends the access for the gate
+ * and for every screen that prints it; {@link #grantedToHuman} is the only reader the screens use, so the two
+ * cannot disagree about a lapsed row.
+ *
+ * <p>Two doors are deliberately not here, which an earlier version of this comment got wrong by citing §8 for
+ * "AI agents alike": a platform staff member is gated by {@code @RequiresPlatformRole}, which compares the
+ * {@code role} claim the bearer token carries — copied from the {@code users} row when it was issued, which is
+ * the §3 distinction {@code POST /api/v1/auth/session} exists to close — and never reads a grant; and the AI
+ * service reaches the platform through the shared-secret internal door ({@code AiServiceTokenGuard}, D12), not
+ * as a subject holding grants. The {@code ai_agent} <em>role</em> is real, but a member given it is granted as a
+ * human (D5's preset reading), and no read in this service asks for a row filed as
+ * {@code subject_type = 'agent'}.
+ *
+ * <p>Roles in {@code merchant_users} are a convenience for <em>assigning</em> grants; nothing is authorised
+ * from a role string.
  */
 @Service
 public class PermissionService {

@@ -145,7 +145,7 @@ belongs here, not in a private type.
 | POST | `/api/v1/auth/refresh` | `{refresh_token}` → new pair (rotation, reuse detection) |
 | POST | `/api/v1/auth/logout` | clears session |
 | POST | `/api/v1/auth/session` | the caller's own **resolved** principal: `{subject_type, user_id, tenant_id, role, session_id, auth_method}`, read straight off the credentials that authenticated this request. The login response is a claim about who you were a moment ago; this is what the RBAC chain acts on now, which is the only difference that matters when a session was issued before a role changed. Read-only: it changes nothing, so it needs no `Idempotency-Key` and writes no audit row. |
-| GET | `/api/v1/me` | profile + memberships + preferences summary |
+| GET | `/api/v1/me` | profile + memberships + preferences summary. `memberships[].permissions` names the access (D42): that member's live `permission_grants` rows for that merchant, read through the same reader `GET /api/v1/merchant/members` uses, so the two doors cannot print a different access for one person. A grant that has lapsed (`expires_at` in the past) or been revoked appears in neither, while the membership row itself stays and reports `status`. |
 | PATCH | `/api/v1/me` | profile |
 | DELETE | `/api/v1/me` | creates `deletion_request` (§106) |
 | GET | `/api/v1/me/export` | streaming JSON of all personal data |

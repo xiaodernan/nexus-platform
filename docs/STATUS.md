@@ -1613,3 +1613,58 @@ the locked one — restarting a service this session does not own is that owner'
 build their own databases precisely so this is the only honest sentence available. And it did not open a
 browser: there is still no merchant-console screen calling these routes, so §156's visual leg stays with
 task #9 and `apps/web`'s dirty state, rather than being claimed here on the strength of an HTTP walk.
+
+## 38. Four authorisation reads branched on a clock that nothing in the repository could set (2026-09-24)
+
+D42 deleted twelve `permission_grants.expires_at` values from the seed, on the argument that a deadline nobody
+assigns is a role that quietly vanishes on a Tuesday. The deletion was right, and it left something behind that
+only a measurement shows: `expires_at` now appears in **four** authorisation reads — `hasMerchantGrant`,
+`hasTenantGrant`, and both arms of `grantedPermissions`, each carrying
+`(g.expires_at is null or g.expires_at > now())` — and in **none** of the four writers: three
+`insert into permission_grants` statements in the service and the seed's COPY row, which passes `None`. The
+table where a deadline would make the most sense cannot hold one: V1's `api_keys` has `last_used_at`,
+`revoked_at` and no expiry column, so a merchant key is revoked, never expired. `AGENT_CONTRACT` §8 nonetheless
+states "Grants expire (`expires_at`)" as a requirement — a sentence that was, until this section, untestable in
+either direction.
+
+So the predicate was mutated, twice, on a throwaway copy of `PermissionService`, with `MerchantWorkspaceTest`
+run against each edit and the file restored immediately after:
+
+```
+drop `g.expires_at is null or` from all 4 reads   → 11 of 12 tests red (the load-bearing arm: it gates everyone)
+invert the comparison at all 4 reads              → 1 of 12 red — and that one is the test D43 adds
+```
+
+The second row is the reason for the section. A reversed deadline still admits every grant whose `expires_at` is
+null, and every grant the whole system had ever produced had exactly that, so the mutation survived all eleven
+tests that existed an hour ago while serving 200 to a call that should have been refused and 403 to a key with a
+day left on it. `MerchantWorkspaceTest.anExpiredGrantOpensNothingAndIsNotPrinted` now dates a grant in both
+directions — past, present and future — and asserts the same row both stops opening doors and stops being
+printed by the two doors that print access, then revives with no write in between; its fixture at
+`MerchantWorkspaceTest.java:446` is the only place in the repository that puts a non-null deadline on a grant,
+and it fails if the row it aimed at was not there.
+
+What that measurement corrected, beyond the missing test: `PermissionService`'s class javadoc claimed the table
+is authorisation's single source of truth "for humans, merchant API keys and AI agents alike". The AI half is
+not how this build works — the agent path is `AiServiceTokenGuard`'s shared `X-Internal-Token` (D12), a platform
+staff call is `@RequiresPlatformRole` reading the token's `role` claim, and no read anywhere asks for a row
+filed as `subject_type = 'agent'`, though V1's column comment and §8 both name it. The comment now says which
+doors this table opens and which two it does not, which also supersedes D42's closing clause about where
+deadlines "mean something". Two printed surfaces follow: §3's `/api/v1/me` row names `memberships[].permissions`
+and the reader behind it (D42 made that field load-bearing while the row still read "summary"), and
+`GET /api/v1/merchant/api-keys` now says in its own `note` that nothing but a revocation ends a key.
+
+```
+mvn -o test                       140 run · MerchantWorkspaceTest 11 → 12/12 · 1 red, untracked com.nexus.admin
+mutation witness                  is-null arm 11/12 red · inverted comparison 0/11 → 1/12 red
+grants carrying a deadline        0 → 1 writer, in a test fixture (nothing in main or seed sets one)
+scripts/db_gate_fresh.sh          168 quality checks · PASS on a from-scratch schema (unchanged)
+scripts/e2e_fresh.sh              8/8 · 22/22 workspace · contract PASS, ledger unchanged from §37
+```
+
+What stays open, deliberately: no TTL was invented. Putting an expiry on a key needs a migration `api_keys` has
+no column for, a write path, and a product decision about a secret that stops working on a clock nobody set —
+D34's precedent says record that rather than build it, and §8's sentence is that document owner's to amend. The
+:8090 instance and the `nexus` database behind it are still on pre-D42 rows. The browser leg is still task #9.
+And `AdminConsoleApiTest.searchAnalyticsReportsRealCounts` is red again, same `expected 2L but was 3L` at line
+289, in the untracked `com.nexus.admin` work — reported, untouched, and unreachable from anything here.

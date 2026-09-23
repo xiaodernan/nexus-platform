@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.nexus.platform.Json;
+import com.nexus.platform.PermissionService;
 import com.nexus.testsupport.NexusIntegrationTest;
 import java.util.List;
 import java.util.Map;
@@ -216,6 +217,42 @@ class MerchantWorkspaceTest extends NexusIntegrationTest {
     }
 
     @Test
+    @DisplayName("A lapsed grant opens nothing and is printed by nobody; a future one still opens")
+    void anExpiredGrantOpensNothingAndIsNotPrinted() {
+        UUID person = newUser(tenant, "lapsed-" + tag(), "consumer");
+        staff(tenant, merchant, person, "read_analytics");
+        String bearer = token(tenant, person, "consumer");
+        assertThat(getRaw(tenant, bearer, "/api/v1/merchant/customers?merchant_id=" + merchant).getStatusCode())
+                .isEqualTo(HttpStatus.OK);
+        assertThat(names(Json.tree(get(tenant, bearer, "/api/v1/me").getBody()).path("memberships").get(0)
+                .path("permissions"))).contains("read_analytics");
+
+        // AGENT_CONTRACT §8 promises grants expire, and four authorisation reads carry the predicate for it —
+        // while D42 left the seed writing no deadline at all, which made this the only row in the repository
+        // that answers the question. A flipped comparison and a dropped `is null` arm look identical until one
+        // of them is called: the first would turn every future-dated grant into a lockout, the second would
+        // lock out every human in the product, and neither is reachable by a test that only ever sees nulls.
+        expire(person, "read_analytics", "-1 minute");
+        assertThat(getRaw(tenant, bearer, "/api/v1/merchant/customers?merchant_id=" + merchant).getStatusCode())
+                .as("a row that has lapsed authorises nothing").isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(names(Json.tree(get(tenant, bearer, "/api/v1/me").getBody()).path("memberships").get(0)
+                .path("permissions"))).as("and no door advertises an access the caller has lost")
+                .doesNotContain("read_analytics");
+        assertThat(names(memberNode(Json.tree(get(tenant, ownerToken,
+                "/api/v1/merchant/members?merchant_id=" + merchant).getBody()), person)
+                .path("permissions"))).as("the roster agrees with the authoriser, not with the surviving row")
+                .doesNotContain("read_analytics");
+
+        // Back-dating the deadline to the future has to give the access straight back, with no write and no
+        // re-grant — which is what separates "the predicate rejected a lapsed row" from "the row went away".
+        expire(person, "read_analytics", "+1 day");
+        assertThat(getRaw(tenant, bearer, "/api/v1/merchant/customers?merchant_id=" + merchant).getStatusCode())
+                .as("a grant with time left is not a lapse").isEqualTo(HttpStatus.OK);
+        assertThat(names(Json.tree(get(tenant, bearer, "/api/v1/me").getBody()).path("memberships").get(0)
+                .path("permissions"))).contains("read_analytics");
+    }
+
+    @Test
     @DisplayName("The doors are RBAC and tenant scoped: staff is refused, another market gets 404")
     void doorsAreAuthorisedAndTenantScoped() {
         UUID person = newUser(tenant, "peeker-" + tag(), "consumer");
@@ -395,6 +432,24 @@ class MerchantWorkspaceTest extends NexusIntegrationTest {
         List<String> out = new java.util.ArrayList<>();
         array.forEach(node -> out.add(node.asText()));
         return out;
+    }
+
+    /**
+     * Move one grant's deadline to a relative offset, and fail if the row it aimed at was not there to aim at.
+     * Both spellings a human's grant can carry are offered the update, and the sum has to be exactly one: two
+     * would mean the same permission is held twice over and the test could not say which row lapsed, zero
+     * would mean the assertion below had been watching a grant that never had an expiry to lose.
+     */
+    private void expire(UUID userId, String permission, String offset) {
+        int moved = 0;
+        for (String subjectType : PermissionService.HUMAN_SUBJECT_TYPES) {
+            moved += jdbc.update("update permission_grants set expires_at = now() + cast(:offset as interval) "
+                            + "where subject_type = :t and subject_id = :u and merchant_id = :m "
+                            + "and permission = :p",
+                    new MapSqlParameterSource("t", subjectType).addValue("u", userId).addValue("m", merchant)
+                            .addValue("p", permission).addValue("offset", offset));
+        }
+        assertThat(moved).as("grant %s for %s", permission, userId).isEqualTo(1);
     }
 
     private UUID memberIdOf(UUID userId) {

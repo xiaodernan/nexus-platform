@@ -163,7 +163,8 @@ public class MerchantWorkspaceController {
         out.put("count", rows.size());
         out.put("allowed_scopes", MerchantPermissions.API_KEY_SCOPES);
         out.put("note", "Only the SHA-256 of a secret is stored, so a key that was not copied when it was "
-                + "created cannot be shown again — revoke it and issue another.");
+                + "created cannot be shown again — revoke it and issue another. Nothing else ends a key: the "
+                + "row stores `revoked_at` and no deadline, so it authenticates until someone revokes it.");
         return out;
     }
 

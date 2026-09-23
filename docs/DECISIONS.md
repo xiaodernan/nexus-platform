@@ -1023,3 +1023,86 @@ right now is still the locked one. Reloading it means restarting a service this 
 shared-workspace rule puts that decision with whoever runs :8090. The fresh gates — `db_gate_fresh.sh` and
 `e2e_fresh.sh`, which build their own database every run — are what certify the dataset. And there is still no
 merchant-console screen in a browser calling these routes, so §156's browser leg stays open with task #9.
+
+## D43 An expiry every gate honors and nothing can set — a predicate earns its place by being able to fail — 2026-09-24
+
+D42 removed twelve deadlines from the seed on purpose, and writing them down was the last honest thing in that
+decision — because it left behind a column that no authorisation is decided by and nothing can reach.
+
+Measuring first. `permission_grants.expires_at` appears in **four** reads: `PermissionService.hasMerchantGrant`,
+`hasTenantGrant`, `grantedPermissions` (both arms) — every one carrying the same
+`(g.expires_at is null or g.expires_at > now())`. It appears in **zero** of the four writers: three
+`insert into permission_grants` statements in the service (`ApiKeyService.create`, and `PermissionService.grant`'s
+tenant and merchant arms) and the seed's one COPY row, which passes `None` for that column since D42. And the
+table a deadline would most plausibly live on cannot hold one at all — V1's `api_keys` has `last_used_at` and
+`revoked_at` and no expiry column, so a merchant key does not age out, it is revoked. `AGENT_CONTRACT` §8 still
+states, as a requirement, that "Grants expire (`expires_at`)". So the platform had four pieces of SQL branched
+on a clock that nothing in the repository could start, and one sentence in a contract that only a test could
+say whether it was true.
+
+**1. A test for a predicate is a mutation that the test must survive.** Two single-token edits to those four
+reads, run against `MerchantWorkspaceTest` (12 tests, and the class that owns this table):
+
+```
+drop the `is null` arm            → 11 of 12 red, the new expiry test among them at its first assertion
+invert the comparison             → 1 of 12 red — and that one is the test this decision adds
+```
+
+The second line is the whole decision. An inverted deadline still passes every grant whose `expires_at` is null,
+which is every grant the seed, the service and eleven of the twelve tests had ever produced — so the mutation
+survived everything that existed a minute earlier, while answering 200 to a call that should have been refused
+and refusing a key that has a day left on it. The predicate was not merely unexercised; it was unloadable.
+(The rest of the suite is in the same blind spot by construction rather than by measurement: any test that
+grants something with `staff()` or `own()` also hands it a null deadline.)
+
+**2. Dating a row is the only way to tell "rejected" from "gone".** The new test asserts four states, not two:
+a fresh grant opens the door, a back-dated one opens nothing *and* stops being printed by either door that
+prints access, and moving the deadline to tomorrow gives the whole thing back **with no write in between**. That
+last step is what separates the assertion from the neighbouring bug — a read that dropped lapsed rows and a read
+that dropped all rows look identical from a 403. It is also why the fixture refuses to be silent: it updates
+both human spellings, and asserts that exactly one row moved, so a grant that had never existed would fail the
+test that was about to claim it lapsed. `MerchantWorkspaceTest.java:446` is now the only place in this
+repository — seed, service, migration or test — that puts a non-null `expires_at` on a grant row.
+
+**3. A comment that overreaches is a bug report nobody filed yet.** `PermissionService`'s class javadoc claimed
+`permission_grants` is "the single source of truth for authorisation (D5, AGENT_CONTRACT §8) — for humans,
+merchant API keys and AI agents alike." Three of those four words are load-bearing and one is not true here,
+measured at HEAD: `@RequiresPermission` does read grants for `user`, `merchant_user` and `api_key` subjects;
+but a platform staff member is gated by `@RequiresPlatformRole`, which compares the `role` claim the bearer
+token carries through `Principal.hasPlatformRole` — a copy of `users.role` taken when the token was issued, not
+a row read per request, which is the gap `POST /api/v1/auth/session` exists to close — and never reads a grant;
+and the AI *service* is not a subject at all —
+it reaches the platform through `AiServiceTokenGuard`'s shared `X-Internal-Token` (D12). `subject_type='agent'`
+is named in V1's column comment and in §8's list, and no read in the service asks for a row filed that way; an
+`ai_agent` *role* on a membership is granted as a human, which is D5's own reading of the preset table. So §8
+names a vocabulary the model may grow into, not a behavior it depends on — and that distinction is the
+document-owner's to make, not something to quietly implement here. The javadoc now states which doors this table
+opens and which two it does not, and cites D40/D42 rather than D5, which never mentioned grants at all.
+
+**4. This supersedes one clause of D42.** D42's rule 3 closed with "Deadlines stay where they mean something:
+`api_key` and `agent` subjects." Both halves are wrong in the same direction, for the reason above: an API key
+has no deadline column and `agent` has no reader. What the measurement supports is narrower and still worth
+printing where an operator will read it — the `GET /api/v1/merchant/api-keys` note now says outright that
+nothing but a revocation ends a key. A console that lists `revoked_at` and `last_used_at` invites the question
+"when does this stop working?", and the answer is a fact about the schema rather than a policy someone chose.
+
+```
+MerchantWorkspaceTest                        11 → 12
+grant rows anywhere carrying a deadline      0 → 1   (the fixture; nothing in main or seed writes one)
+invert-the-comparison mutation, red tests    0/11 → 1/12
+is-null-arm removal, red tests               11/12
+documented surface corrected                 §3 `/api/v1/me` names `memberships[].permissions`; §5 key note says a key is revoked, not expired
+```
+
+§3's row is D41's rule about the builder of an undocumented served thing, applied one level down: D42 made
+`memberships[].permissions` a field a person's access is judged by, and the contract still described `/me` as a
+"profile + memberships + preferences summary" — accurate, and useless to anyone deciding whether to trust it.
+The row now says where the array comes from and which other door reads the same source.
+
+What this does **not** do: it does not add expiry. A TTL on a key would be a migration (`api_keys` has no column
+to hold it), a write path, and a product decision about whether a secret should stop working on a clock nobody
+set — D34's precedent is to record that gap rather than build through it, and §8's sentence is the place a
+decision belongs, which §8's owner holds. It does not touch the instance on :8090 or the `nexus` database it
+reads, still on D42-era rows. It leaves the merchant-console browser leg open with task #9. And
+`AdminConsoleApiTest.searchAnalyticsReportsRealCounts` is still red in the untracked `com.nexus.admin` work
+(`expected 2L but was 3L` at line 289) — reported, untouched, and not this session's to fix.
