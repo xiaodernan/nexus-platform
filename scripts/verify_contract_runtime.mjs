@@ -67,10 +67,12 @@ function documented() {
     const cell = line.match(new RegExp('^\\|\\s*(?:' + VERBS + ')(?:/(?:' + VERBS + '))*\\s*\\|', 'i'));
     const verbs = cell ? cell[0].replace(/\||\s/g, '').toUpperCase().split('/') : [];
     const push = (method, rawPath) => {
-      // Split on whitespace (a body sketch follows the path) and on `[` (the contract writes an optional
-      // id suffix as `…/offerings[/{id}]`). Not on `{` — that is how every parameterised route in the
-      // ledger came to be truncated to its prefix, turning 26 gaps into a spurious 47.
-      const p = rawPath.split(/[\s[]/)[0].replace(/[.,;]$/, '');
+      // Split on whitespace, because a body sketch follows the path (`POST /api/v1/events {events:[…]}`).
+      // Not on `[` — that is where the contract's optional-id shorthand (`…/offerings[/{id}]`) used to be
+      // cut off, which left `forms()` with nothing to expand and reported three served item routes as
+      // "served, not documented" while inventing a DELETE on their collection. Not on `{` either: that is
+      // how every parameterised route once came to be truncated to its prefix, turning 26 gaps into 47.
+      const p = rawPath.split(/\s+/)[0].replace(/[.,;]$/, '');
       if (/^\/api\/v1\b/.test(p) || /^\/ai\/v1\b/.test(p) || /^\/well-known\b/.test(p)) {
         rows.push({ method, raw: p, section });
       } else if (/^\/(me|merchant|merchants|admin|ai|notifications)\b/.test(p) && verbs.length) {
@@ -89,11 +91,12 @@ function documented() {
   // notation permits. `served` is then "at least one spelling answers".
   const seen = new Map();
   for (const r of rows) {
-    const p = norm(r.raw);
-    if (p.length < 8 || p.includes('*')) continue;   // `/api/v1/**` is a BFF mount, not a handler
-    const key = `${r.method} ${p.replace(/\[[^\]]*\]/g, '')}`;
+    const written = norm(r.raw);
+    const spellings = forms(r.raw).map(norm).filter((p) => p.length >= 8 && !p.includes('*'));
+    if (!spellings.length) continue;                   // `/api/v1/**` is a BFF mount, not a handler
+    const key = `${r.method} ${written.replace(/\[[^\]]*\]/g, '')}`;
     const row = seen.get(key) ?? { ...r, spellings: new Set() };
-    row.spellings.add(p);
+    for (const p of spellings) row.spellings.add(p);
     seen.set(key, row);
   }
   return [...seen.values()].map((r) => ({ ...r, path: [...r.spellings][0], spellings: [...r.spellings] }));

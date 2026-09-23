@@ -1411,3 +1411,72 @@ One numbering note, so nobody wastes a minute on it: this entry is §34 because 
 file holds — there has never been a §32 in `STATUS.md`, and `DECISIONS.md`, which numbers independently and
 is up to D40, is the authoritative ledger.
 
+## 35. A gate that could not read the notation the contract is written in (2026-09-23)
+
+§34 ended with a documentation bug found by reading a report. This one is the same bug seen from the other
+side, and it was larger.
+
+`verify_contract_runtime.mjs` defines `forms()` — the function that expands the contract's optional-id
+shorthand, `…/offerings[/{id}]`, into the collection form and the item form, with a comment explaining that a
+documented route counts as served when *any* spelling answers. Nothing called it. The line above had already
+cut the path at `[`, so by the time `forms()` might have run there was no bracket left to expand.
+
+What that cost, measured against a live instance rather than reasoned about: `PATCH` and
+`DELETE /api/v1/merchant/offerings/{id}` and `DELETE /api/v1/me/saved-searches/{id}` — three routes that are
+annotated, registered and answering — sat in **"served, not documented"**, while the reader invented
+`PATCH /api/v1/merchant/offerings` and `DELETE /api/v1/merchant/offerings` and `DELETE
+/api/v1/me/saved-searches` — a patch and a delete against an entire collection, which nobody wrote and nobody
+can serve — and reported *those* in **"documented, not served"**, as a broken promise by the service. Two
+wrong lists with one cause, and each of them points at a different innocent party: the first at whoever
+"forgot" to document their route, the second at whoever "forgot" to build it.
+
+Splitting on whitespace only, and letting `forms()` do the job its own comment describes, moves the same
+run from 84 declared / 25 gaps / 12 undocumented to **87 / 22 / 9** with the documented totals unchanged
+(121, 109 in scope) — three routes recognised, three phantoms retired. None of the three offerings or
+saved-searches paths appears in either list any more.
+
+The safety leg did not get weaker, and that is worth pinning because loosening a reconciliation is exactly
+what an improvement like this can smuggle in: the run fails only on a phase-1 §4/§8 **GET** that is documented
+and not served, and the only two bracketed rows in the whole document are §3 and §5. So no §4/§8 read can now
+be satisfied by "some other spelling of mine answered". Verified by checking which rows the notation touches,
+not by assuming the change was small.
+
+The remaining nine "served, not documented" entries are reported, not repaired, and that is a deliberate
+stop — but they were classified rather than guessed, by running the reader against an empty router so its
+own extraction is all that shows. Six of the nine are the reader failing on two more notations the document
+actually uses. `| GET | \`/api/v1/me/favorites\` · POST \`/api/v1/me/favorites\` · DELETE
+\`/api/v1/me/favorites/{type}/{id}\` |` puts the second and third verbs *outside* the backticks, and the
+reader only recognises a verb that is inside them — so it attributes `GET` to all three spans, loses the POST
+and the DELETE, and invents a `GET /api/v1/me/favorites/{type}/{id}` gap that nobody promised. The same
+mechanism hides `POST /api/v1/notifications/{id}/read`. The third case is a continuation:
+`` POST `/{id}/reply` `` on the merchant conversations row is relative to the base path above it, and matches
+none of the reader's prefix rules, which is why `reply` and both `handoff-resolve` routes come out as
+undocumented. And `/.well-known/ucp` is served, documented in §20's bullet list, and dropped because the
+absolute-path test is `/^\/well-known\b/` — with no leading dot, so it can never match the host-root path UCP
+discovery actually fetches.
+
+Three are the document's own gaps, and they belong to whoever owns the route: `GET /api/v1/reservations/{id}`
+(§5 documents only the `PATCH`), `POST /api/v1/auth/session`, and `POST /api/v1/conversations/{id}/handoff-resolve`
+on the consumer side, where §7 documents `reply` and not the resolve. Those rows — and the four notation
+classes above them — sit with streams whose files are still uncommitted in this working tree. Whether the gate
+should learn continuations and out-of-span verbs, or whether those authors should write each path out in full
+the way §5's workspace rows now do, is a decision to make on purpose; a bystander making it silently while
+fixing something else is how a reconciliation quietly stops reconciling.
+
+```
+verify_contract_runtime.mjs, live :8094     84→87 declared · 25→22 gaps · 12→9 undocumented · 121 documented unchanged
+scripts/e2e_fresh.sh after the fix          8/8 · 525 served reads · 0 5xx · 30/30 booking · 15/15 review · step 8 87/22/9
+```
+
+One read-back worth recording from the same hour: `@Idempotent` was checked in `AuthorizationInterceptor` to
+confirm the interceptor only *requires* the header and never claims the key itself. The claim
+`MerchantWorkspaceController` makes inside `idempotency.run` is therefore the only one — had the interceptor
+inserted the row too, its own `in_progress` status would have made the controller's second insert lose, and
+every workspace write would have answered 409 `request_in_progress` on its first call.
+
+The lesson generalises the D40 one, which is why it gets its own section rather than a line in §34. A helper
+that is defined, commented and never called is indistinguishable from a feature that was never built, and it
+fails in the direction that makes *other people's* work look wrong: the defect here spent its time reporting
+three shipped routes as undocumented and three nonexistent routes as unbuilt promises. When a ledger disagrees
+with the build, the cheapest hypothesis to test is the ledger's own reading of the document — which is the
+sentence the script prints at the bottom of exactly that list, and which has now been right a third time.
