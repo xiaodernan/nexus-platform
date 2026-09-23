@@ -2233,3 +2233,43 @@ suite                   176 → 177 run · the 1 red stays com.nexus.admin's Adm
 ```
 
 Standing reports unchanged, plus this one line for §6's side of the payment seam.
+
+## 49. The launcher's list of names to keep, and the three it forgot (2026-09-24)
+
+D48 ended with a claim that an operator's `NEXUS_RL_AUTH` now reaches a dev boot. One layer up, the same question
+was still unanswered: `scripts/run_platform_dev.sh` sources `.env` with `set -a`, and protects the caller's own
+exports by capturing a hand-typed list of names and re-exporting them afterwards. The list held eleven names. The
+config reads thirty-four. Of the 24 it missed, three are set in this machine's `.env` right now —
+`NEXUS_JWT_SECRET`, `NEXUS_LOG_LEVEL`, `NEXUS_DB_ROOT_PASSWORD` — so `NEXUS_JWT_SECRET=… 
+scripts/run_platform_dev.sh` printed `caller overrides kept over .env: none` and booted on the file's secret.
+Demonstrated against the real launcher with `mvn` stubbed: before, the JVM-to-be saw `.env`'s 64-character
+value; after, it sees the caller's. The variable in the whole tree whose silent substitution is a security
+event was the one the list forgot.
+
+Widening the list also exposed a second problem in the same eight lines: the diagnostic printed the captured
+pairs as `KEY=value` on stderr, which `e2e_fresh.sh` redirects into its log — so a guard standing between an
+exported password and `.env` was busy writing that password to a file. Nothing leaked on this machine, because
+nobody here exports a password on the command line; the mechanism was the finding.
+
+Both halves are fixed by removing the list: the names are read out of `application.yml` and
+`application-dev.yml` with one `grep -hoE '\$\{[A-Z][A-Z0-9_]{2,}'`, and the echo prints names only.
+`ConfigDecorationTest.launcherKeepsEveryConfiguredOverride` reads the real script and refuses either regression —
+a hand-typed `for key in NEXUS_…` block coming back, or the printed variable being given values again. Two
+mutations, both red: the previous launcher fails the derive assertion, and re-adding `=${!key}` to the printed
+variable fails the echo assertion.
+
+```
+ConfigDecorationTest   2 tests → 3 · the launcher's keep-list must come from the config, and print no values
+launcher               names derived from the two yml files; 11 hand-typed → 34 readable; values no longer echoed
+mutations run          2 · old launcher (derive red) · printed variable given values (echo guard red)
+e2e                    PASS — and it is what caught the one thing this change took away: the datasource check read
+                       the old `KEY=value` echo as its evidence, so the launcher now prints `datasource=…` in
+                       its banner (a JDBC URL with no credential in it) and the gate greps that instead
+suite                  177 → 178 run · the 1 red stays com.nexus.admin's AdminConsoleApiTest:289
+```
+
+What this does not do: it does not check that an exported name exists — `NEXUS_RL_AUT=5` is still silence, and a
+typo is still a typo. It does not touch `Makefile`'s `dev-platform` target — another stream's file, still on
+:8080, which is what `run_platform_dev.sh`'s own header says it exists to avoid. And it does not change
+`.env`, which stays what it is: a
+gitignored, per-machine file that now definitively sits *below* whoever typed the command.

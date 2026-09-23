@@ -24,19 +24,30 @@ if [ -f .env ]; then
     # database no matter what the caller exported first. Every `${VAR:-default}` below then reads as if
     # the caller had chosen it. A throwaway verification run would have been proving the wrong database
     # — which is exactly what it did before this block existed.
-    OVERRIDDEN=""
-    for key in NEXUS_PORT NEXUS_TENANT NEXUS_PLATFORM_DB_URL NEXUS_PLATFORM_DB_USERNAME \
-               NEXUS_PLATFORM_DB_PASSWORD NEXUS_MIGRATION_DB_URL NEXUS_FLYWAY_BASELINE_VERSION \
-               NEXUS_REDIS_URL NEXUS_REDIS_ENABLED NEXUS_AI_BASE_URL SPRING_PROFILES_ACTIVE; do
-        [ -n "${!key:-}" ] && OVERRIDDEN="$OVERRIDDEN $key=${!key}"
+    # The names come out of the service's own config, not a list kept here. The list used to be eleven
+    # hand-typed variables, and D54 measured three it missed — NEXUS_DB_ROOT_PASSWORD, NEXUS_JWT_SECRET and
+    # NEXUS_LOG_LEVEL — each of them set in .env, read by application*.yml, and therefore silently clobbered
+    # for whoever exported it believing the opposite. A list somebody has to remember is the same defect as a
+    # deadline nobody reads (D46), and the clobbered one here was the JWT signing secret.
+    KEPT=""
+    RESTORE=""
+    for key in $(grep -hoE '\$\{[A-Z][A-Z0-9_]{2,}' \
+                       services/platform/src/main/resources/application.yml \
+                       services/platform/src/main/resources/application-dev.yml \
+                   | sed -E 's/^\$\{//' | sort -u) SPRING_PROFILES_ACTIVE; do
+        [ -n "${!key:-}" ] || continue
+        KEPT="$KEPT $key"
+        RESTORE="$RESTORE $key=${!key}"
     done
     set -a
     # shellcheck disable=SC1091
     . ./.env
     set +a
-    for pair in $OVERRIDDEN; do export "${pair%%=*}"="${pair#*=}"; done
-    [ -n "$OVERRIDDEN" ] || OVERRIDDEN=" none"
-    echo "caller overrides kept over .env:$OVERRIDDEN" >&2
+    for pair in $RESTORE; do export "${pair%%=*}"="${pair#*=}"; done
+    # Names only, never values: the kept list used to be echoed as KEY=value, which wrote the platform
+    # database password into .platform-dev.log for anyone who had exported it (§131).
+    [ -n "$KEPT" ] || KEPT=" none"
+    echo "caller overrides kept over .env:$KEPT" >&2
 else
     echo "note: no .env — falling back to the pinned local container ports in application.yml" >&2
 fi
@@ -65,6 +76,7 @@ if [ -z "${NEXUS_AI_INTERNAL_TOKEN:-}" ]; then
 fi
 
 echo "platform: http://127.0.0.1:${NEXUS_PORT}  tenant=${NEXUS_TENANT}  db=:5433  redis=:6380  ai=:8010" \
+     "  datasource=${NEXUS_PLATFORM_DB_URL}" \
      "  profile=${SPRING_PROFILES_ACTIVE}  migrate-as=postgres" >&2
 
 if [ "${1:-}" = "--log" ]; then

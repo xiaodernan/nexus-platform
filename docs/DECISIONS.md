@@ -1866,3 +1866,58 @@ and no controller in this build exposes a payment route, which is why §6 lists 
 `POST /api/v1/payments/{}/confirm` as documented-not-served. The reassurance is therefore currently unreachable
 by any client: not a wrong behaviour, but a compliance statement waiting on the doors that would carry it. Worth
 one line in §6 when those routes are built, and worth not editing another stream's file to add it now.
+
+## D54 The launcher's list of names to keep, and the three it forgot — 2026-09-24
+
+### 1. Where D48 stopped short
+
+D48 restored an operator's ability to set `NEXUS_RL_*` and `NEXUS_DEMO_LOGIN` on a dev boot, and reported that as
+the whole fix. It was not: the same question one layer up — *does the value you exported survive the start of
+this process?* — had its own answer sitting in `scripts/run_platform_dev.sh`. That launcher sources `.env` under
+`set -a`, and to stop the file from trampling a caller's own exports it captures a list of variables first and
+re-exports them after. The list was eleven hand-typed names. The config reads thirty-four.
+
+Measured, not inferred: of the 24 names the keep-list missed, **three are set in this machine's `.env` today** —
+`NEXUS_JWT_SECRET`, `NEXUS_LOG_LEVEL`, `NEXUS_DB_ROOT_PASSWORD`. So `NEXUS_JWT_SECRET=some-one-else's-value
+scripts/run_platform_dev.sh` printed `caller overrides kept over .env: none` and then booted on the `.env`
+secret, with the operator's value gone and nothing on the console to say so. The one variable in the whole tree
+whose silent substitution is a security event is exactly the one the list forgot. (The behavioural half of that
+sentence was demonstrated by running the launcher with a stubbed `mvn` and reading the environment the JVM would
+have received: `caller-wins` before this change, `.env`'s 64-character value with the old list.)
+
+And the reason the list exists at all made a second defect obvious once it was widened: the diagnostic printed
+the kept pairs, `KEY=value`, on stderr — and stderr is redirected by whoever calls the script
+(`scripts/e2e_fresh.sh` runs it with `>> "$LOG" 2>&1`), so an exported `NEXUS_PLATFORM_DB_PASSWORD`, one of the
+original eleven, reached that run's log file. A guard against a credential being *overridden* that was busy
+logging the credential. Nothing was leaking on this machine today, because no caller here exports a password on
+the command line; the mechanism is the finding, not an incident.
+
+### 2. The fix, and what it refuses to be
+
+The names now come out of the two files the service reads, so there is nothing left to remember:
+
+```bash
+for key in $(grep -hoE '\$\{[A-Z][A-Z0-9_]{2,}' \
+                   services/platform/src/main/resources/application.yml \
+                   services/platform/src/main/resources/application-dev.yml \
+               | sed -E 's/^\$\{//' | sort -u) SPRING_PROFILES_ACTIVE; do
+```
+
+— and the echo prints names only. `ConfigDecorationTest.launcherKeepsEveryConfiguredOverride` is what keeps it
+that way: it reads the real script, requires it to derive from those two files, refuses a re-appearing
+hand-typed `for key in NEXUS_…` list, and checks that the variable the diagnostic interpolates is never given
+values. Both halves have mutations that go red: swap in the previous launcher and the derive assertion fails;
+put `=$`{`!key`} back into the printed variable and the value-echo assertion fails.
+
+Suppressing the values also removed a piece of evidence someone else was reading: `e2e_fresh.sh` proves a
+throwaway run is talking to its own database by grepping the launcher's log for the kept-pairs line — exactly
+what the redaction took away, and the fresh gate found it on its first run. The banner now carries
+`datasource=${NEXUS_PLATFORM_DB_URL}`, a JDBC URL with no credential in it, and the check greps that instead: the
+caller's URL is still proven to have survived `.env`, and nothing secret is printed to earn the proof.
+
+What this does not do. It does not validate that an exported name is one the config reads — a caller typing
+`NEXUS_RL_AUT=5` still gets nothing, and nothing says so; the change only guarantees that a name the service
+*does* read cannot be dropped by the launcher's own bookkeeping. It does not touch `Makefile`, which is another
+stream's and carries its own dev-platform target with the older ports. And it does not decide anything about
+`.env`'s contents: the file is gitignored, per-machine, and now simply later in the precedence chain than the
+person who typed the command.

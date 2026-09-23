@@ -151,6 +151,40 @@ class ConfigDecorationTest extends NexusIntegrationTest {
     }
 
     /**
+     * The launcher protects a caller's exported variables from {@code .env} by capturing and re-exporting them.
+     * It used to do that for a hand-typed list of eleven names, and D54 measured three names the service reads
+     * from {@code application*.yml}, that {@code .env} sets on this machine, and that the list missed —
+     * {@code NEXUS_JWT_SECRET}, {@code NEXUS_LOG_LEVEL}, {@code NEXUS_DB_ROOT_PASSWORD} — so exporting the
+     * signing secret produced a boot that used the dev one and printed nothing about it. The list is now
+     * derived from the same config files, which is the only version of this that cannot rot; this gate
+     * refuses the shape it had before. It also refuses the diagnostic printing values: the kept names are
+     * echoed, never {@code KEY=value}, because the old line wrote the platform database password into
+     * {@code .platform-dev.log} for anyone who had exported it (§131).
+     */
+    @Test
+    @DisplayName("The dev launcher keeps every variable the config can read, and prints no values")
+    void launcherKeepsEveryConfiguredOverride() throws IOException {
+        Path launcher = Path.of("..", "..", "scripts", "run_platform_dev.sh");
+        assertThat(launcher).as("the gate is about the real launcher, not a copy of it").exists();
+        String script = Files.readString(launcher, StandardCharsets.UTF_8);
+
+        assertThat(script)
+                .as("the keep-list must come out of the config files the service actually reads")
+                .contains("application.yml").contains("application-dev.yml")
+                .contains("grep");
+        assertThat(script)
+                .as("a hand-typed list of NEXUS_* names is the thing that drifted; do not add one back")
+                .doesNotContainPattern("(?s)for key in NEXUS_[A-Z0-9_ ]{20,};")
+                .contains("SPRING_PROFILES_ACTIVE");
+        // Whatever variable the echo prints must hold names only: the old one accumulated KEY=value pairs and
+        // printed them, so an exported NEXUS_PLATFORM_DB_PASSWORD landed in .platform-dev.log (§131).
+        String printed = script.replaceAll("(?s).*echo \"caller overrides kept over \\.env:\\$(\\w+).*", "$1");
+        assertThat(script).as("the kept-line must interpolate one variable").contains("env:$" + printed);
+        assertThat(script).as("$" + printed + " is what the launcher prints; it must never be given values")
+                .doesNotContainPattern("(?s)" + printed + "=[^\\n]*\\$\\{!key\\}");
+    }
+
+    /**
      * Leaf paths under the top-level {@code nexus:} block, by indentation, mapped to the text after the colon:
      * a {@code key:} line with a value is a leaf, one without is a branch. No anchor, no flow mapping, no
      * multi-line scalar appears under {@code nexus:} in this build — if one is added, this parser has to be

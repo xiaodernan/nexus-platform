@@ -188,7 +188,9 @@ echo "    -> serving on :$PORT (maven pid $RUN_PID, listener pid ${LISTEN_PID:-u
 # "throwaway" run at the live database — which the first run of this script did, and then reported 1,727
 # seeded rating facts as zero. The launcher now prints what it kept; this fails if that line is wrong,
 # because a PASS against the wrong database is worse than no measurement at all.
-if ! grep -aq "NEXUS_PLATFORM_DB_URL=jdbc:postgresql://127.0.0.1:5433/$E2E_DB" "$LOG"; then
+# Since D54 the launcher prints the kept variable *names* rather than KEY=value pairs (the old echo wrote an
+# exported platform DB password into this log), so the evidence is the banner's own `datasource=` field.
+if ! grep -aq "datasource=jdbc:postgresql://127.0.0.1:5433/$E2E_DB" "$LOG"; then
   grep -a "caller overrides\|platform: http" "$LOG" | sed -e 's/^/    | /' || true
   grep -a "HikariPool\|jdbc:postgresql" "$LOG.app" 2>/dev/null | head -3 | sed -e 's/^/    app| /' || true
   die "the service is not reading $E2E_DB — refusing to probe another database"
