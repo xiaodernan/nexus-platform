@@ -2471,3 +2471,30 @@ live check            :8090 read slice above, then stopped; :8090 is not listeni
 Standing reports unchanged, plus this one: whoever owns CI should run `scripts/check_launcher_log_mode.sh` there
 too, and the two-`nexus` ambiguity on this host is a decision for whoever owns `infra/`, not something this unit
 quietly merges.
+
+## 55. The consumer slice, walked in a browser this time (2026-09-24)
+
+Task #9's read half is now evidence rather than intent. With the platform on :8090 (dev profile, seeded
+`nexus` database) and `apps/web` built and served on :3000 — both started for this check and stopped
+afterwards, nothing in `apps/web` edited, its own `typecheck` and `next build` run as they stood with the
+other stream's work in the tree — a real browser was pointed at the two consumer surfaces:
+
+- `/` → 325 KB of server-rendered HTML; the a11y tree shows the seeded merchants with `示例数据` badges on
+  every card, `商户自报 · 高置信 · 更新于 今天` provenance lines, `未验证` and `可能已过期` states where the data
+  says so, distances and walk times, `营业中`/`休息中` computed open-state, and the four ranking rails each
+  naming their own ordering ("按评价数量而非人为推荐", "以已验证的均价排序"). No console messages.
+- `/m/bauhinia-cafe` → title `洋紫荊咖啡 — 咖啡 · 中環 · Central · NEXUS`, h1, `4.7 (331 条评价)`, `HK$78 每人`,
+  provenance + confidence + freshness, open status, demo declaration. No console messages.
+
+That closes the part of #9 that kept being assumed: the seed→platform→web chain renders, the trust
+affordances of §19/§20/§109 survive the trip into a browser, and organic ranking text is separated from
+paid placement in the copy the page actually shows. What #9 still lacks is the automated half — a Playwright
+suite over these flows (the app has no test-runner wired for it), and the same walk through the merchant
+console and admin screens, which are another stream's in-flight files. So #9 stays open, with the read slice
+now demonstrated instead of argued.
+
+One process note, because a wide filter is a real risk and this one was too wide: stopping the two servers
+used a command-line match that also named `next-server`, which any other project's dev server would share.
+It killed 18 PIDs; afterwards the other servers on this machine were checked and are alive (vite on 5199, the
+football-os previews, `next dev` on 3100, the containers on 5433/55433/6380/16380/19000), so no collateral
+damage is visible — but the lesson is to stop what you started by the PIDs you recorded, not by pattern.
