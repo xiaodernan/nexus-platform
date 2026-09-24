@@ -2677,3 +2677,69 @@ somewhere else.
   edit this file — which is the property the four-name list never had, and the reason the floor is written as a
   fraction of a measured number rather than as whatever the list happens to name today.
 
+## D65 A polymorphic column no check had ever resolved — 2026-09-25
+
+### 1. The hole in the middle of two working shapes
+
+D64 left a remainder it could not close: columns that name a reference and carry no constraint, so neither the
+loader's closure nor the traffic sweep can see them. Counting them by hand first gave "eleven", which is why §60's
+`next` pointer names that number; counting them from the catalogue (below, §4) gives 25. Either way
+`facts.subject_id` is the largest — 5,688 rows —
+and every existing check around it reads `JOIN merchants` or `JOIN offerings`. Both of those
+shapes are sound *for the types they join*, and both have the same hole in the middle: a fact whose `subject_type`
+is a type nobody joins is invisible to all of them at once. Measured, that hole had an occupant: **684** facts are
+`location` observations (`address`), and no check in the file had ever asked whether a location fact points at a
+location.
+
+### 2. The set is closed, and the fifth name is a finding
+
+`favorites` and `permission_grants` already had probes for this: build a `(type, key)` set out of the tables each
+type names, group the facts by their declared type, and let a type the probe does not know be an orphan by
+definition. The same shape went into `facts`, over four types: `merchant`, `offering`, `location`, `review`.
+
+It is closed and named for the same reason D62's describer list is: closing it is what turns an unknown into a
+report. V1's own comment declares the set as `merchant|offering|location|review|policy`, and `policy` resolves to
+no table in the schema — there is nothing a policy id could point at — so the probe deliberately leaves it out and
+the check's comment says why. A fact keyed to a policy is unresolvable by construction; whoever wants to write one
+has to decide what it refers to first, and that decision belongs in a check's comment and a migration, not in a
+JOIN that quietly narrows the claim.
+
+### 3. Two plants, both red, and the groups that stayed green
+
+Run on the gate's own freshly loaded database (`--keep`), against the rows that had just passed 176 checks:
+
+| | Verdict |
+| --- | --- |
+| clean | `PASS=176 FAIL=0`, exit 0 — 173 → 176 as the probe adds one row per type present (`facts.merchant` 2,080, `facts.offering` 2,924, `facts.location` 684 = the whole 5,688-row table) |
+| plant a `merchant` fact whose id is random | **RED** `orphan: facts.merchant — 1 unresolvable of 2081 fact(s)` — the 2,080 seeded merchant facts plus the plant, while `location` and `offering` print `0 unresolvable` on the same run |
+| plant a fact with the invented type `policy` | **RED** `orphan: facts.policy — 1 unresolvable of 1 fact(s)`: a type nobody joins gets its own row instead of being dropped by a join that never mentions it |
+| delete both | `PASS=176` again, `facts` back to 5,688 rows, exit 0 |
+
+The two plants were run twice. The first fixture was written in a hurry and broke two other checks on its way
+through the door (`every source_uri is demo://`, `facts all carry expires_at`), so the run reported three reds and
+proved nothing about which arm caught what. Re-planting with `demo://` provenance and a TTL left exactly one
+witness per plant and nothing else — `2 check(s) failed`, both of them `orphan: facts.*`. That is the version
+counted above. Two things fall out of it: a fixture has to be legal except in the one dimension under test, and
+`facts all carry expires_at` is alive — it caught a fact row written without a TTL on its own account, the third
+independent witness in this file that a fact row has to be a complete claim, not just a resolvable one.
+
+### 4. What D65 does not claim
+
+- The probe resolves *types*, it does not vouch for *meaning*. A location fact that points at a real location can
+  still carry a wrong address; that is what §19/§20's `source`/`confidence`/`expires_at` are for, and this check
+  is not a substitute for them.
+- Measuring the remainder properly changed its shape. Replacing "eleven, by hand" with a catalogue predicate
+  (`*_id`, no foreign key, not its own table's single-column PK or UNIQUE) gives **25** unconstrained reference
+  columns in the schema. Of those, the seed writes **five** — `facts.subject_id` 5,688, `moderation_cases.subject_id`
+  544, `permission_grants.subject_id` 36, `favorites.subject_id` 18, `user_identities.provider_id` 5 — and D65's
+  probe now covers the largest. `favorites` and `permission_grants` already had the same shape. That leaves the
+  five seeded columns in two groups: this probe reaches `facts`, and `user_identities.provider_id` is *not* a
+  reference at all — it is an external opaque subject id that points outside the database, so a `JOIN` would be
+  wrong; `moderation_cases.subject_id` has a `JOIN reviews` but is scoped to the one type the generator emits
+  (`review`, 544 rows), so the check is sound for the shape the seed actually writes and blind to types nobody
+  ships. Twenty of the 25 columns live in tables D64's sweep already refuses to seed over.
+- Measured while writing this: `moderation_cases` holds **0 rows** in the long-lived `nexus` database while the
+  fresh gate database has 544 open cases (that is the `the queue has something in it` row red on `nexus`). The seed
+  writes them, so something consumed or deleted them out of band. Reported, not chased — it is the same drift D64
+  §5 records, seen from a different table.
+

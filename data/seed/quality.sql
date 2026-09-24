@@ -274,6 +274,30 @@ FROM g LEFT JOIN probe q ON q.parent = g.subject_type AND q.k = g.sid
      AND (q.m IS NULL OR q.m = g.merchant_id)
 GROUP BY g.subject_type;
 
+-- facts is the third polymorphic table, and until now nobody had asked the general question of it.
+-- Every existing fact check reads `JOIN merchants` or `JOIN offerings`, so a fact keyed to a
+-- `location` — 684 of them in the demo dataset, `address` observations — could point at no row at all
+-- and each of those checks would still have held. V1's comment declares the subject set as
+-- `merchant|offering|location|review|policy`; the probe below resolves four of those, and the fifth is
+-- reported rather than papered over: `policy` names no table in the schema, so a fact keyed to a
+-- policy cannot resolve to anything and goes red as an orphan — which is the honest verdict, and a
+-- coinage of that type is therefore a decision somebody has to make explicitly (generate.py's
+-- `self.fact(...)` call sites emit merchant/location/offering only).
+INSERT INTO qc
+WITH probe AS (
+  SELECT 'merchant'::text t, id::text k FROM merchants
+  UNION ALL SELECT 'offering', id::text FROM offerings
+  UNION ALL SELECT 'location', id::text FROM locations
+  UNION ALL SELECT 'review', id::text FROM reviews),
+ g AS (
+  SELECT f.subject_type t, (q.k IS NULL) bad
+  FROM facts f
+  LEFT JOIN probe q ON q.t = f.subject_type AND q.k = f.subject_id::text)
+SELECT 'orphan: facts.' || t,
+       count(*) FILTER (WHERE bad) = 0,
+       count(*) FILTER (WHERE bad) || ' unresolvable of ' || count(*) || ' fact(s)'
+FROM g GROUP BY t;
+
 -- product rules / honesty markers
 INSERT INTO qc
 SELECT 'merchant has a location',

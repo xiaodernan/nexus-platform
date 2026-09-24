@@ -2691,3 +2691,56 @@ next              task #40: eleven columns are named as references and carry no 
                     them — measure which of them the seed actually writes, and whether a probe like the
                     favorites/permission_grants ones already covers each one.
 ```
+
+
+## 61. A check that resolves a type, and the remainder that turned out to be twenty-five columns (2026-09-25)
+
+`quality.sql` has always asked whether a `facts` row points at a merchant or an offering — by `JOIN merchants`,
+`JOIN offerings`. Both joins are sound for the type they name and both have the same hole in the middle: a fact
+whose `subject_type` is a type nobody joins is invisible to every one of them at once. `favorites` and
+`permission_grants` already had the shape that cannot miss — build a `(type, key)` set out of the tables each type
+names, group by the declared type, and let an unknown type be an orphan by definition. `facts` did not. Measured,
+the hole had an occupant the file had never counted: **684** location facts.
+
+§60's `next` pointer said "eleven columns name a reference and carry no constraint". That was a hand count of the
+ones I had looked at — the same mistake D64 caught in the traffic check. Counted from the catalogue instead
+(`pg_attribute`: every `public` `*_id` column with no foreign key that is not its own table's single-column PK or
+UNIQUE) the schema has **25**, and the seeded dataset writes **five** of them. Two of the five were already
+probed, one is now, one is a column that is not a reference at all, and one is this hole one level down.
+
+```
+new/changed       data/seed/quality.sql — an orphan probe for facts over merchant|offering|location|review,
+                    grouped by the declared type so an unprobed type produces its own row.
+                  docs/DECISIONS.md D65 — why `policy` is deliberately left out of the probe set rather than
+                    JOINed to something it does not point at.
+measured          25 unconstrained `*_id` columns; the seed writes 5 — facts.subject_id 5,688 /
+                    moderation_cases.subject_id 544 / permission_grants.subject_id 36 / favorites.subject_id 18 /
+                    user_identities.provider_id 5. The other 20 live in tables D64's sweep refuses to seed over.
+                  facts by type: merchant 2,080 + offering 2,924 + location 684 = the whole table.
+                  user_identities.provider_id is not a reference — V1:53 calls it "subject / opaque id (never a
+                    token)", an external string; a JOIN would be the wrong check, so the naming predicate's 25
+                    contains at least one column with nothing to resolve.
+mutations         4 verdicts on the gate's own freshly loaded database (--keep):
+                    (a) clean                        176 PASS / 0 FAIL, exit 0
+                    (b) plant a merchant fact with a random id   RED `orphan: facts.merchant — 1 unresolvable
+                        of 2081 fact(s)`; location/offering print 0 on the same run
+                    (c) plant a fact with the invented type `policy`  RED `orphan: facts.policy — 1 unresolvable
+                        of 1 fact(s)` — the fifth name in V1's comment has no table to point at, and says so
+                    (d) delete both                   176 PASS again, facts back to 5,688
+                    The first fixture was illegal in two other dimensions (non-demo:// source, no expires_at) and
+                    so came back with three reds, which proved nothing about the arm under test. Re-planted with
+                    legal provenance and a TTL: exactly `2 check(s) failed`, both orphan rows. Side witness kept
+                    anyway — `facts all carry expires_at` caught the sloppy fixture on its own account.
+gates             db_gate_fresh.sh: RESULT: PASS — 176 quality checks on a from-scratch schema (tables=58,
+                    migrations=7), plus the truncate probe as step 6/6; exit 0. Check total 173 → 176.
+                  Kept database dropped after the cleanup run; the shared `nexus` demo database was read, never
+                    written — it holds 3,961 facts and 0 moderation cases against the gate's 5,688 and 544, the
+                    same drift D64 §5 records, now from a second table.
+next              task #41 (D66): make the file name its own blind spots. The 25-column census above was written
+                    by a throwaway python script against `pg_attribute`; it belongs in `quality.sql` as a derived
+                    list LEFT JOINed against a registry of the (table, column) pairs the probes actually resolve,
+                    so a new unconstrained `*_id` column the seed starts writing shows up as a named row instead
+                    of as silence — and a census row that has to say how many columns it opened, D64's floor of
+                    two-thirds applying. `moderation_cases.subject_id` is the one already-known case: V1:574
+                    declares five types, the generator emits `review`, and the queue check `JOIN reviews`, so the
+                    other four would be invisible exactly the way `location` was.
