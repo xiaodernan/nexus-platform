@@ -2648,3 +2648,46 @@ next                task #39: quality.sql keeps its own hand list of dependent t
                       orders/reservations" check counts 4 of the 27, while the truncate now knows 47. Either the
                       gate learns the same closure or the difference gets a reason written next to it.
 ```
+
+## 60. A gate that reads the schema in one half and remembers it in the other (2026-09-25)
+
+`quality.sql` discovers every foreign key in the demo graph from `pg_constraint`, so a migration nobody has read
+is checked the day it lands — and then asserted "no fabricated traffic" over **four tables named by hand**. The
+two halves of one file disagreed about what the schema is. Measured before writing anything, three places held
+their own copy of the answer, and part B's was a name short of part A's. The check is now the same closure
+D63's loader uses: every table the catalogue hangs off the seed's own tables is counted at run time, and two rows
+come out of it — a census that has to say how many tables it opened (measured 29 of 52, floor at two thirds) and
+the claim itself, which is only allowed to pass when `swept > 0`, because a sweep that reached nothing must not be
+able to report a clean database.
+
+```
+new/changed       data/seed/quality.sql — one seed_anchor list feeding parts A and B, the catalogue traffic
+                    sweep and its census row; the four-name "no seeded orders/reservations" row is gone
+                  data/seed/generate.py — two comments that pointed at the removed check name
+                    (comment-only: the regenerated out/00_truncate.sql is md5-identical to the committed one)
+measured          three copies of the anchor existed: part A 23 == generate.py's DEMO_TABLES, part B's sweep 22,
+                    missing `moderation_cases` — which costs nothing today, because nothing in V1–V7 references
+                    that table (91 `fk:` rows before the change and after). Silent drift until the day it isn't.
+mutations         4 verdicts, run against the gate's own freshly loaded database (--keep):
+                    (a) clean                          173 PASS / 0 FAIL
+                    (b) closure arm blinded            RED 2 — census "0 of 23 … were counted", claim "the
+                        closure reaches nothing outside the anchor … not a clean bill of health"
+                    (c) one row planted in share_links RED 1 — "written elsewhere: share_links (1 row(s))",
+                        census still green at 29; the four-name row this replaces would have printed PASS
+                    (d) that row deleted               173 PASS again (every revert md5-verified)
+gates             db_gate_fresh.sh: RESULT: PASS — 173 quality checks on a from-scratch schema (tables=58,
+                    migrations=7), plus the truncate probe as step 6/6; exit 0. Check total 172 → 173
+                    (−1 hand row, +2 catalogue rows).
+reported          the long-lived `nexus` database is no longer the seeded dataset: the new row reads
+                    agent_runs (40), audit_logs (53), events (35), referrals (1), reservations (6) there and
+                    seven other checks are red for the same kind of reason (1,727 reviewed subjects with no
+                    rating fact, an empty moderation queue, 171 undeclared fact sources). STATUS's "all 150
+                    checks passed" line for `nexus` was measured 2026-09-22 against a database that has been
+                    used since. Repairing it means RESEED_DEPENDENTS=1 on a shared demo database, which would
+                    delete another stream's walk evidence — reported, not executed. The file's header now says
+                    what it gates and what it is when pointed somewhere else.
+next              task #40: eleven columns are named as references and carry no constraint (polymorphic
+                    subject_id, actor/user/merchant ids). Neither the loader's closure nor this sweep can see
+                    them — measure which of them the seed actually writes, and whether a probe like the
+                    favorites/permission_grants ones already covers each one.
+```

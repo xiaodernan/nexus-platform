@@ -4,6 +4,13 @@
 --
 -- Run after data/seed/load.sh:
 --   docker exec -i nexus-platform-postgres psql -U postgres -d nexus -v ON_ERROR_STOP=1 < data/seed/quality.sql
+--   # Read that line for what it is: this is a gate on the *artifact*, so the supported invocation is
+--   # a database the seed just wrote (scripts/db_gate_fresh.sh does it end to end). Pointed at a
+--   # database that has served traffic, most of part B is a diagnostic and the run is red — measured
+--   # on the demo `nexus` DB on 2026-09-25: 8 checks failing, one of them this file's own
+--   # "no traffic outside the seeded tables", naming agent_runs (40), audit_logs (53), events (35),
+--   # referrals (1) and reservations (6). Correct verdicts for a DB that is the seed plus traffic;
+--   # not a gate result. Use scripts/seed_truncate_probe.sh or db_gate_fresh.sh for the gate.
 --   # CI scale-down example:
 --   ... psql -v ON_ERROR_STOP=1 -v MIN_MERCHANTS=100 -v MIN_OFFERINGS=800 \
 --          -v MIN_REVIEWS=1200 -v MIN_NEAR_SHA_TIN=60 < data/seed/quality.sql
@@ -41,14 +48,23 @@ CREATE TEMP TABLE qc ("check" text PRIMARY KEY, ok boolean, detail text);
 \echo '== A. per-table row counts =='
 \t on
 \o /dev/null
+-- One answer to "which tables does the seed own?" (D64). Part A's counts, the FK sweep and the
+-- traffic sweep in part B all ask that question, and until now each carried its own copy of the
+-- list. Measured before this was written: part A and `generate.py`'s DEMO_TABLES agreed on 23 names,
+-- part B's sweep had 22 and was silently missing `moderation_cases`, so every key *into* that table
+-- went unchecked while the file claimed the demo graph was swept.
+CREATE TEMP TABLE seed_anchor AS
+  SELECT u.t, u.ord FROM unnest(ARRAY[
+    'tenants','users','user_identities','user_preferences','categories','merchants',
+    'merchant_users','permission_grants','locations','business_hours','merchant_categories','offerings',
+    'offering_relations','resource_pools','availability_slots','reviews','moderation_cases','documents',
+    'chunks','facts','favorites','collections','review_summaries']) WITH ORDINALITY AS u(t, ord);
+
 -- exact counts, one row per table, in load order
 SELECT format(
   'CREATE TEMP TABLE counts AS SELECT * FROM (VALUES %s) v(t, n)',
   string_agg(format('(%L, (SELECT count(*) FROM public.%I))', t, t), ', ' ORDER BY ord))
-FROM unnest(ARRAY['tenants','users','user_identities','user_preferences','categories','merchants',
- 'merchant_users','permission_grants','locations','business_hours','merchant_categories','offerings',
- 'offering_relations','resource_pools','availability_slots','reviews','moderation_cases', 'documents','chunks','facts',
- 'favorites','collections','review_summaries']) WITH ORDINALITY AS u(t, ord) \gexec
+FROM seed_anchor \gexec
 \o
 \t off
 
@@ -125,11 +141,10 @@ INSERT INTO qc VALUES
    (SELECT n FROM counts WHERE t='facts') || ' facts'),
  -- review_summaries is AI-generated later (AGENT_CONTRACT §7); a seeded summary would be a lie.
  ('review_summaries stays empty', (SELECT n FROM counts WHERE t='review_summaries') = 0,
-   (SELECT n FROM counts WHERE t='review_summaries') || ' rows (must be 0 until the AI job runs)'),
- -- no fabricated transactions / traffic (§109, §110)
- ('no seeded orders/reservations', (SELECT (SELECT count(*) FROM public.orders) +
-   (SELECT count(*) FROM public.reservations) + (SELECT count(*) FROM public.events) +
-   (SELECT count(*) FROM public.feedback_events)) = 0, 'orders+reservations+events+feedback_events must stay 0');
+   (SELECT n FROM counts WHERE t='review_summaries') || ' rows (must be 0 until the AI job runs)');
+-- The §109/§110 "no fabricated traffic" claim used to be a row here naming four tables by hand
+-- (orders, reservations, events, feedback_events). It is now the catalogue-driven pair in part B,
+-- which reaches 29 tables on V1–V7 instead of four.
 
 -- referential integrity: every declared FK in the demo graph, swept from the catalogue.
 -- The sweep needs per-FK dynamic SQL, so it runs in plpgsql and writes the qc table.
@@ -137,16 +152,12 @@ DO $$
 DECLARE r record; n bigint; ok boolean;
 BEGIN
   FOR r IN
-    WITH demo(t) AS (SELECT unnest(ARRAY['tenants','users','user_identities','user_preferences','categories',
-      'merchants','merchant_users','permission_grants','locations','business_hours','merchant_categories',
-      'offerings','offering_relations','resource_pools','availability_slots','reviews','documents','chunks',
-      'facts','favorites','collections','review_summaries']))
     SELECT c.conrelid::regclass::text AS child, a.attname AS col,
            c.confrelid::regclass::text AS parent, ca.attname AS pcol
     FROM pg_constraint c
     JOIN pg_attribute a  ON a.attrelid = c.conrelid   AND a.attnum = ANY (c.conkey)
     JOIN pg_attribute ca ON ca.attrelid = c.confrelid AND ca.attnum = ANY (c.confkey)
-    WHERE c.contype = 'f' AND c.confrelid::regclass::text IN (SELECT t FROM demo)
+    WHERE c.contype = 'f' AND c.confrelid::regclass::text IN (SELECT t FROM seed_anchor)
     ORDER BY 1,2
   LOOP
     EXECUTE format(
@@ -159,6 +170,74 @@ BEGIN
     ON CONFLICT ("check") DO UPDATE SET ok = EXCLUDED.ok, detail = EXCLUDED.detail;
   END LOOP;
 END $$;
+
+-- §109/§110, written as a property of the schema rather than of a list. The claim is not "orders and
+-- reservations happen to be empty" but "no table that refers to the seed's own tables holds a row the
+-- seed did not write". The set is read from `pg_constraint` at run time — the same closure
+-- `out/00_truncate.sql` uses (D63), so the loader and the gate ask the same question of the same
+-- catalogue and neither can drift ahead of the other. Counting an arbitrary table needs dynamic SQL,
+-- so this runs in plpgsql and leaves its arithmetic behind for the census row to read.
+CREATE TEMP TABLE traffic_sweep (swept int, reached int, blockers text);
+DO $$
+DECLARE
+  anchor    text[] := ARRAY(SELECT t FROM seed_anchor);
+  closure   text[];
+  tbl       text;
+  rows_now  bigint;
+  swept     int := 0;
+  reached   int := 0;
+  bad       text := '';
+BEGIN
+  WITH RECURSIVE closed(oid) AS (
+        SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+         WHERE n.nspname = 'public' AND c.relname = ANY (anchor)
+      UNION
+        SELECT fk.conrelid FROM pg_constraint fk JOIN closed p ON fk.confrelid = p.oid
+         WHERE fk.contype = 'f'
+  )
+  SELECT array_agg(c.relname ORDER BY c.relname) INTO closure
+    FROM closed JOIN pg_class c ON c.oid = closed.oid JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public';
+
+  IF closure IS NULL THEN
+    INSERT INTO traffic_sweep VALUES (0, 0, 'the anchor names no table in this database');
+    RETURN;
+  END IF;
+
+  FOREACH tbl IN ARRAY closure LOOP
+    reached := reached + 1;
+    IF tbl = ANY (anchor) THEN
+      CONTINUE;                     -- the seed wrote these; part A already counts them
+    END IF;
+    swept := swept + 1;
+    EXECUTE format('SELECT count(*) FROM public.%I', tbl) INTO rows_now;
+    IF rows_now > 0 THEN
+      bad := bad || tbl || ' (' || rows_now || ' row(s)), ';
+    END IF;
+  END LOOP;
+  INSERT INTO traffic_sweep VALUES (swept, reached, rtrim(bad, ', '));
+END $$;
+
+INSERT INTO qc
+-- The census, and it runs before the verdict means anything: "all clear" and "looked at nothing" are
+-- the same shape, so the sweep has to say how many tables it actually opened. Measured 29 on V1–V7;
+-- the floor is two thirds of that, so a narrowed anchor or a dead closure arm goes red on the count.
+SELECT 'traffic sweep reaches the whole closure, not a hand list', swept >= 20,
+       swept || ' of ' || reached || ' closure table(s) lie outside the anchor and were counted '
+       || '(the hand list this replaces named 4)'
+FROM traffic_sweep;
+
+INSERT INTO qc
+SELECT 'no traffic outside the seeded tables', blockers = '' AND swept > 0,
+       CASE WHEN swept = 0 THEN
+              'the closure reaches nothing outside the anchor, so this row has no evidence either way '
+              || '— that is a defect in the sweep, not a clean bill of health'
+            WHEN blockers = '' THEN swept || ' referencing table(s) all empty'
+            ELSE 'written elsewhere: ' || blockers
+            || ' — this database is the seed plus traffic, so quality.sql is reading it as a '
+            || 'diagnostic and not as a gate on the artifact'
+       END
+FROM traffic_sweep;
 
 -- referential integrity, part 2: polymorphic references the schema cannot express. A subject_type
 -- the probe does not know about is an orphan by definition, so an invented type cannot pass.

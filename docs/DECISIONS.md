@@ -2579,3 +2579,101 @@ generated artifact.
 - Whether a stranger's rows *should* be discarded is a product question. This change turns it into a named,
   countable one; it does not answer it.
 
+## D64 A check that can only pass in one direction — 2026-09-25
+
+### 1. Four names against twenty-nine
+
+`data/seed/quality.sql` has always had two ways of answering "is this dataset honest?". Part B sweeps
+referential integrity *from the catalogue*: every declared foreign key in the demo graph is discovered at run
+time, so a migration nobody has read yet is checked the day it lands. And then there was the §109/§110 row:
+
+```sql
+('no seeded orders/reservations', (SELECT (SELECT count(*) FROM public.orders) +
+  (SELECT count(*) FROM public.reservations) + (SELECT count(*) FROM public.events) +
+  (SELECT count(*) FROM public.feedback_events)) = 0, '…');
+```
+
+Four tables, spelled by hand. The asymmetry is the whole defect: one half of the same file learns the schema
+and the other half remembers it. V7 is the case in point — `share_links` is reached from `users`, holds 20 rows
+in the test database, and is named nowhere in this file, so a fabricated link would have passed a check whose
+sentence claims to forbid exactly that.
+
+### 2. And a third copy of the same answer
+
+Measured before anything was written, three places in this lane answered the question "which tables does the
+seed own?":
+
+```
+part A (row counts)      23 names   == generate.py's DEMO_TABLES
+part B (FK sweep)        22 names   missing `moderation_cases`
+generate.py DEMO_TABLES  23 names
+```
+
+The missing name cost nothing today: no table in V1–V7 references `moderation_cases`, so the sweep had no row
+to lose. That is precisely the shape of the problem — a drift like that is invisible until the migration that
+makes it visible arrives, and the file keeps printing "every FK in the demo graph" while quietly narrowing the
+graph. `seed_anchor` is now the file's single answer, and parts A and B and the traffic sweep all read it.
+
+### 3. The pair of rows that replaced the list
+
+The sweep is the same closure D63's loader uses — anchored at `seed_anchor`, walked over `pg_constraint`, `UNION`
+so a cycle terminates — and it writes its arithmetic to a temp table that two checks read:
+
+- **the census**: `swept >= 20`, where `swept` is the number of closure members outside the anchor the sweep
+  actually counted (measured **29 of 52** on V1–V7, floor at two thirds — D62's rule, for the same reason: "all
+  clear" and "looked at nothing" are the same shape);
+- **the claim**: `blockers = '' AND swept > 0`. The second conjunct is not decoration. Without it, a sweep that
+  reached nothing reports a clean database, which is the failure this file exists to catch.
+
+`blockers` names every table outside the anchor that holds rows, with its count, and the detail says what kind of
+finding that is: *this database is the seed plus traffic, so quality.sql is reading it as a diagnostic and not as
+a gate on the artifact.*
+
+### 4. Four verdicts, in both directions
+
+Run against the gate's own freshly-loaded database (`--keep`, so the same rows the gate passed are the rows
+mutated):
+
+| | Verdict |
+| --- | --- |
+| **(a)** clean | `PASS=173 FAIL=0` — census: `29 of 52 closure table(s) lie outside the anchor and were counted (the hand list this replaces named 4)`; claim: `29 referencing table(s) all empty` |
+| **(b)** closure arm blinded (`SELECT fk.conrelid` → `SELECT NULL::oid`) | **RED 2** — census `0 of 23 … were counted`, claim `the closure reaches nothing outside the anchor, so this row has no evidence either way — that is a defect in the sweep, not a clean bill of health` |
+| **(c)** one row planted in `share_links` | **RED 1** — claim `written elsewhere: share_links (1 row(s))`, while the census stays green at 29. The old four-name row would have printed PASS. |
+| **(d)** that row deleted | `PASS=173` again |
+
+(b) and (c) are the two directions a check has to be able to fail in: going blind, and seeing something the
+previous check could not. Each mutation was reverted from a byte-for-byte backup and the file's `md5sum` re-checked
+before (d) ran. The gate's total went 172 → 173 checks (−1 hand row, +2 catalogue rows), and adding
+`moderation_cases` to the anchor's FK sweep introduced no new row because nothing points at it — 91 `fk:` rows
+before and after.
+
+### 5. What the sweep said about the demo database, reported rather than repaired
+
+Pointed at the long-lived `nexus` database the new check is red, and honestly so:
+
+```
+no traffic outside the seeded tables — written elsewhere:
+  agent_runs (40), audit_logs (53), events (35), referrals (1), reservations (6)
+```
+
+`docs/STATUS.md` still carries a row claiming "all 150 checks passed" there, measured 2026-09-22 against a
+database that has been used since. Seven other checks are red on `nexus` for the same kind of reason (1,727
+reviewed subjects without a rating fact, 544 waiting reviews without an open case, 171 facts with an undeclared
+source, 12 lapsing human grants, 3 owner memberships lacking `admin_members`, an empty moderation queue) — rows
+written out of band, or part of the artifact reloaded on top of traffic. Repairing that means
+`RESEED_DEPENDENTS=1` against a shared demo database, which would delete another stream's walk evidence, so it is
+reported here and not executed; the file's header now states what it is a gate on, and what it is when pointed
+somewhere else.
+
+### 6. What D64 does not claim
+
+- The sweep sees foreign keys, nothing more. The eleven unconstrained reference columns D63 §6 lists are outside
+  its reach, so a row fabricated into one of those tables still passes — a polymorphic `subject_id` is invisible
+  to any catalogue.
+- **Empty means "no rows", not "no rows that matter".** A table in the closure that legitimately carries
+  non-seed content in a given environment (a live deployment's `audit_logs`) makes this check red by construction.
+  That is the intended reading of a *seed* gate, and it is why the census row and the claim row are separate.
+- `swept >= 20` is a floor, not a ceiling. If V8 adds a child of `users`, the census counts 30 and nobody has to
+  edit this file — which is the property the four-name list never had, and the reason the floor is written as a
+  fraction of a measured number rather than as whatever the list happens to name today.
+

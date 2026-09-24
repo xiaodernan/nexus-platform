@@ -297,8 +297,9 @@ DEMO_TABLES = TABLE_ORDER + ["review_summaries"]   # review_summaries is truncat
 
 # V1 tables that point INTO DEMO_TABLES (transitively) but are not seeded here — there is deliberately
 # no fake order/event/traffic data (§109/§110). They are why a plain TRUNCATE of merchants/users/
-# offerings needs RESEED_DEPENDENTS=1. The narrowest of them is what quality.sql counts: its check
-# "no seeded orders/reservations" (data/seed/quality.sql) fails if any of these survives a reset.
+# offerings needs RESEED_DEPENDENTS=1. Every one of them is now counted by quality.sql itself: its
+# "no traffic outside the seeded tables" check sweeps the whole foreign-key closure, so a row
+# surviving a reset in any of these names the table and its count (D63, D64).
 DEPENDENT_TABLES = [
     "reservations", "orders", "order_items", "payments", "refunds", "carts", "cart_items", "coupons",
     "campaigns", "referrals", "subscriptions", "conversations", "messages", "handoffs", "notifications",
@@ -307,7 +308,7 @@ DEPENDENT_TABLES = [
     "saved_searches",
     # the request-time observability ledger. Left behind, a previous verification run's
     # events/agent_runs survive the reset and quality.sql reads them as fabricated traffic
-    # (its "no seeded orders/reservations" check counts `events` too).
+    # (its traffic sweep counts `events`, and reaches these three only through `tenants`).
     "events", "agent_runs", "llm_calls",
 ]
 
