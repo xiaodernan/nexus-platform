@@ -2465,3 +2465,117 @@ the two methods of the new gate ran green inside that run.
 - The walk is `services/platform/src/test/java`, which is where this lane's tests live. `apps/web`, `apps/ai` and
   `packages/*` have their own gates and their own assertion libraries; nothing here claims their shape is sound.
 
+## D63 A truncate list that cannot know the schema — 2026-09-25
+
+### 1. What broke, in the words the failure used
+
+Every fresh-database gate went red tree-wide on the same three lines, before any of them could run a check:
+
+```
+ERROR:  cannot truncate a table referenced in a foreign key constraint
+DETAIL:  Table "share_links" references "users".
+HINT:  Truncate table "share_links" at the same time, or use TRUNCATE ... CASCADE.
+```
+
+`share_links` is V7's table — another stream's migration, still untracked — and it held **zero rows** in the demo
+database (`520` merchants, `5534` offerings, `11000` reviews, `0` share links). So the reset that died was one that
+would have destroyed nothing: Postgres refuses to truncate a parent while *any* foreign key points at it, empty or
+not, and `out/00_truncate.sql` was a hand-written list of 22 table names with no way to learn about a migration
+written after it.
+
+### 2. Both obvious answers were wrong
+
+- **Add `share_links` to the list.** The list is `generate.py`'s claim about the tables *it* seeds. Putting another
+  stream's table in it means V8 reproduces the same death, and it makes a generator responsible for resetting rows
+  it never writes.
+- **`TRUNCATE ... CASCADE`.** One word, permanently green, and the loudest way this file could silently empty
+  tables nobody listed — orders, carts, conversations, whoever's rows they are. The seed has always kept a line
+  between "demo data" and "data the platform wrote" (§109/§110: no fake orders, no fake traffic). CASCADE deletes
+  the line.
+
+So the decision is not in the list at all. It moves to load time, where the schema is available to be asked.
+
+### 3. The rule that replaced it
+
+`emit_truncate()` now writes one guard that decides per table, in this order:
+
+- **anchor** — the tables the generator owns: 22 in plain mode (`DEMO_TABLES` minus the shared `tenants` row), 49
+  with `RESEED_DEPENDENTS=1` (that plus `DEPENDENT_TABLES`);
+- **closure** — the anchor plus every table that refers to it, at any depth, read from `pg_constraint` with
+  `WITH RECURSIVE … UNION`. `UNION`, not `UNION ALL`, so an FK cycle terminates instead of walking forever;
+- **permission = emptiness** — a closure member inside the anchor is cleared; one outside it is cleared *only*
+  while `count(*) = 0`. A non-empty stranger raises with its name and its row count and a hint naming the
+  operator's way out. `load.sh` pipes the file under `--single-transaction`, so a refusal costs nothing: the
+  database it refuses is the database it found.
+- **an empty anchor is an error, not a success** — if none of the named tables exist yet the guard says "apply
+  `infra/db/migrations/V*.sql` before loading the seed", because the same empty result means two different things.
+- **the arithmetic is printed** — `seed truncate: 49 table(s) cleared -- 22 named by generate.py, 27 found by the
+  schema's own foreign keys`. The split is the reviewable part; a bare "cleared 49" hides who decided.
+
+### 4. What the catalog said when it was asked, on a from-scratch schema
+
+```
+plain anchor    22 named  ->  closure 47   25 strangers: 24 of DEPENDENT_TABLES + share_links
+wide anchor     49 named  ->  closure 50    1 stranger:  share_links
+schema          58 tables in public, migrations=7
+```
+
+Three findings in that, none of them guesses:
+
+- **The lists agree where both speak.** 24 of the 27 tables a human had named as "points into the demo data" are
+  reachable by foreign key from the demo tables, and the closure's only *extra* is `share_links` — the table the
+  human list could not have known. The closure did not contradict the hand list; it caught up with it.
+- **It disagrees usefully.** `events`, `agent_runs` and `llm_calls` are *not* reachable from the plain anchor: they
+  hang off `tenants`, which plain mode excludes on purpose. Those three are cleared only under
+  `RESEED_DEPENDENTS=1` — which is the honest reading of "wider reset", not a hole in the closure.
+- **Plain mode's reach went from 22 to 47**, so a *fresh* database no longer needs the flag at all. Its job
+  changed from "know the blast radius" to "permit the blast radius", which is what step 4 of `db_gate_fresh.sh`
+  had been guessing at when it justified `RESEED_DEPENDENTS=1` by saying the schema might have grown.
+
+### 5. Falsification: both branches planted, each observed to fail
+
+A run that only ever succeeds proves neither of its claims, so `scripts/seed_truncate_probe.sh` builds a throwaway
+database, loads the real seed, plants one child of `merchants` of each kind, and puts the same file `load.sh` puts
+to work:
+
+| | |
+| --- | --- |
+| **step 3** | the truncate must **refuse** while `probe_row_child` holds a row — `ERROR: seed truncate refused: a table outside generate.py's list refers to the demo data and is not empty: public.probe_row_child (1 row(s) written elsewhere)`, `HINT: Re-run data/seed/load.sh with RESEED_DEPENDENTS=1 …` — and leave `merchants` at 520 rows and the planted row at 1 |
+| **step 4** | with the planted row deleted, the same script must **clear** both strangers: `merchants` 0, `probe_empty_child` 0, `share_links` 0 |
+
+Two mutations of `emit_truncate()` — each applied to the generator, rebuilt into `out/00_truncate.sql` (a diff of
+one line, checked), and reverted from a byte-for-byte backup with `md5sum` re-verified:
+
+| Mutation | Verdict |
+| --- | --- |
+| **M1′** — `IF blockers <> ''` → `IF false AND blockers <> ''`: refusal dead, closure kept | **RED** step 3 — `the truncate SUCCEEDED with rows in probe_row_child — it cleared a table nobody listed`, printed beside `49 table(s) cleared -- 22 named by generate.py, 27 found by the schema's own foreign keys`. That is `CASCADE` wearing a generator's clothes, and the only thing standing between it and a silent data loss was a line nobody had ever seen fail. |
+| **M2′** — closure arm `WHERE fk.contype = 'f'` → `… AND false`: list kept, closure dead | **RED** step 3 — `cannot truncate a table referenced in a foreign key constraint / DETAIL: Table "reservations" references "availability_slots"`, i.e. the 22-name list cannot even truncate **its own** tables. |
+
+M2′ is the more instructive failure: same sentence shape as the original bug, different table — `reservations`,
+named by the wide list and not by the plain one. So plain-mode loading had always depended on
+`RESEED_DEPENDENTS=1` for a reason nobody had written down, and the reason was not "the schema might have grown"
+but "the demo tables reference each other".
+
+After each revert the probe ran green again (`RESULT: PASS — the empty child is cleared, the child with rows
+refuses by name, and the refusal costs nothing`, exit 0). Integrated: `db_gate_fresh.sh` is 6/6 with **172** quality
+checks against a from-scratch schema (tables=58, migrations=7) and the probe as its last step, and `e2e_fresh.sh`
+passes **526** served reads plus the reservation, review, workspace, rate-limit and contract walks against the same
+generated artifact.
+
+### 6. What D63 does not claim
+
+- **The closure sees foreign keys and nothing else.** Measured: 11 columns in this schema are named as references
+  and carry no constraint — `favorites.subject_id`, `facts.subject_id`, `share_links.subject_id`,
+  `audit_logs.subject_id/merchant_id`, `agent_runs.merchant_id/user_id`, `events.subject_id`,
+  `feedback_events.subject_id`, `moderation_cases.subject_id`, `permission_grants.subject_id`. Polymorphic
+  `subject_type`/`subject_id` pairs cannot have an FK, and `pg_constraint` cannot read the intent behind them.
+  A table reachable only that way survives a reset holding rows, invisibly.
+- **`audit_logs` is in neither list and reached by neither anchor** (it points at `tenants` and at actors), so rows
+  a verification run wrote there outlive a reseed in both modes. For an audit trail that is plausibly correct.
+  Nothing here decides it, so the table is reported rather than quietly added to a list.
+- **The loader now refuses where it used to succeed by accident.** `nexus_test` carries 20 rows in `share_links`,
+  so a plain `load.sh` into that database stops with `public.share_links (20 row(s) written elsewhere)`. That
+  message is the feature; the previous behaviour was to fail earlier, on a different table, with no hint.
+- Whether a stranger's rows *should* be discarded is a product question. This change turns it into a named,
+  countable one; it does not answer it.
+

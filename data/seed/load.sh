@@ -10,10 +10,11 @@
 # Usage:
 #   data/seed/load.sh                     # default container/db/user (see the vars)
 #   CONTAINER=nexus-seed-verify DB=nexus USER=nexus data/seed/load.sh
-#   RESEED_DEPENDENTS=1 data/seed/load.sh  # also empty the 28 V1 tables that FK into the
-#                                          # demo tables (orders/carts/conversations/...).
-#                                          # Needed when the platform already wrote rows
-#                                          # referencing the demo merchants. Destructive.
+#   RESEED_DEPENDENTS=1 data/seed/load.sh  # also name the 27 V1 tables that FK into the
+#                                          # demo tables (orders/carts/conversations/...) in the
+#                                          # reset. Needed when the platform has already written rows
+#                                          # into them: without this, the truncate refuses that table
+#                                          # by name rather than emptying it. Destructive either way.
 #   SKIP_GENERATE=1 data/seed/load.sh     # load the files as they are on disk
 #   ONLY=09_locations,12_offerings data/seed/load.sh   # partial reload, FK order preserved
 #

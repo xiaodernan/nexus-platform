@@ -2600,3 +2600,51 @@ suite               Tests run: 214, Failures: 7 — all seven com.nexus.commerce
 next                task #38: the seed loader's truncate list vs. the migration set — fresh-DB gates are red tree-wide
 ```
 
+
+## 59. A truncate that only ever succeeded, and the two branches that had to be planted (2026-09-25)
+
+`out/00_truncate.sql` was a list of 22 table names maintained by hand, and V7 arrived with a foreign key from
+`share_links` to `users`. Postgres refuses to truncate a parent while any key points at it — empty or not — so every
+fresh-database gate died on that line, on a table holding zero rows, blocking a reset that would have destroyed
+nothing. Neither obvious answer survives scrutiny: adding V7's table to the list makes the next migration reproduce
+the death, and `TRUNCATE … CASCADE` buys a permanent green by deleting the line between "demo data" and "rows the
+platform wrote" (§109/§110). The rule that replaced them decides at load time — anchor = the tables the generator
+owns, closure = every table the live `pg_constraint` hangs off them, permission outside the anchor = **emptiness** —
+and a non-empty stranger stops the load by name and row count instead of being emptied behind somebody's back
+(`docs/DECISIONS.md` D63).
+
+The new part is `scripts/seed_truncate_probe.sh`, because a script whose only observable outcome is success proves
+neither half of that claim. It builds its own throwaway database, loads the real seed, plants two children of
+`merchants` — one empty, one holding a row — and puts the same file `load.sh` puts to work: the row-holder must
+refuse, name itself, quote the way out, and leave the dataset untouched; then, with the row deleted, the same script
+must clear both strangers.
+
+```
+new                 scripts/seed_truncate_probe.sh (4 steps, its own database, dropped on exit)
+changed             data/seed/generate.py emit_truncate(): FK closure, emptiness as the only permission outside
+                      the anchor, refusal by name+count, operator hint, "no tables exist yet" guard, NOTICE that
+                      prints the named/found split. load.sh's usage text was the only thing edited there (27
+                      dependents, not 28; and what happens without the flag). db_gate_fresh.sh is now 6/6.
+measured            plain anchor 22 named -> closure 47: 25 strangers, 24 of them DEPENDENT_TABLES + share_links
+                    wide anchor 49 named -> closure 50: 1 stranger, share_links
+                    events/agent_runs/llm_calls hang off `tenants`, which plain mode excludes on purpose, so only
+                    the wide anchor reaches them — and a fresh database needs no flag at all now
+mutations           2 run, both red at step 3, each reverted by md5 and re-verified green:
+                      M1' refusal neutralised  RED — "the truncate SUCCEEDED with rows in probe_row_child — it
+                        cleared a table nobody listed", beside "49 table(s) cleared -- 22 named, 27 found"
+                      M2' closure arm dead     RED — `cannot truncate a table referenced in a foreign key
+                        constraint / Table "reservations" references "availability_slots"`, i.e. the 22-name list
+                        cannot truncate even its own tables; the flag was never about strangers
+gates               db_gate_fresh.sh: RESULT: PASS — 172 quality checks on a from-scratch schema (tables=58,
+                      migrations=7), plus the truncate shown clearing an empty stranger and refusing a full one
+                    e2e_fresh.sh: RESULT: PASS — 526 served reads, the reservation/review/workspace walks, the
+                      100-request rung, the contract ledger
+reported            `audit_logs` is named by neither list and reached by neither anchor (it points at `tenants`),
+                      so verification-run rows there outlive a reseed in both modes — plausibly right for an audit
+                      trail, so it is reported rather than quietly added. 11 columns are named as references and
+                      carry no constraint (polymorphic subject_id, actor/user ids): invisible to any closure.
+                      `nexus_test` now refuses a plain reload by design — public.share_links holds 20 rows there.
+next                task #39: quality.sql keeps its own hand list of dependent tables — its "no seeded
+                      orders/reservations" check counts 4 of the 27, while the truncate now knows 47. Either the
+                      gate learns the same closure or the difference gets a reason written next to it.
+```

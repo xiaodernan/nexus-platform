@@ -297,7 +297,8 @@ DEMO_TABLES = TABLE_ORDER + ["review_summaries"]   # review_summaries is truncat
 
 # V1 tables that point INTO DEMO_TABLES (transitively) but are not seeded here — there is deliberately
 # no fake order/event/traffic data (§109/§110). They are why a plain TRUNCATE of merchants/users/
-# offerings needs RESEED_DEPENDENTS=1. Keep in sync with quality.sql's §dependency check.
+# offerings needs RESEED_DEPENDENTS=1. The narrowest of them is what quality.sql counts: its check
+# "no seeded orders/reservations" (data/seed/quality.sql) fails if any of these survives a reset.
 DEPENDENT_TABLES = [
     "reservations", "orders", "order_items", "payments", "refunds", "carts", "cart_items", "coupons",
     "campaigns", "referrals", "subscriptions", "conversations", "messages", "handoffs", "notifications",
@@ -309,6 +310,79 @@ DEPENDENT_TABLES = [
     # (its "no seeded orders/reservations" check counts `events` too).
     "events", "agent_runs", "llm_calls",
 ]
+
+
+# --------------------------------------------------------------------------- truncate emission
+def emit_truncate(f, tables: "list[str]", header: "str", hint: "str") -> None:
+    """Write one idempotency guard: the tables the generator owns, plus whatever the schema says
+    now hangs off them by a foreign key.
+
+    A hand list cannot know about a table a later migration adds. `share_links` (V7) references
+    `users`, and Postgres refuses to truncate a parent even when the child is empty, so every
+    fresh-database gate died on the line `Table "share_links" references "users"` — a table this
+    file had never heard of, holding no rows, blocking a reset that would have destroyed nothing.
+
+    So the list below stays the generator's own claim about what it owns, and the closure around it
+    is read from `pg_constraint` at load time. A closure member outside the list is cleared only
+    while it is empty — an empty child holds nobody's data — and a non-empty one stops the load by
+    name with its row count, because deciding what happens to somebody else's rows is not this
+    loader's call to make quietly.
+    """
+    f.write(header)
+    f.write("DO $$\n")
+    f.write("declare\n")
+    f.write("  listed   text[] := array[" + ", ".join(f"'public.{t}'" for t in tables) + "];\n")
+    f.write("  hint     text   := " + "'" + hint.replace("'", "''") + "';\n")
+    f.write("  closure  text[];\n")
+    f.write("  tbl      text;\n")
+    f.write("  rows_now bigint;\n")
+    f.write("  blockers text   := '';\n")
+    f.write("  targets  text;\n")
+    f.write("  claimed  int    := 0;\n")
+    f.write("begin\n")
+    f.write("  -- Everything the seed owns, plus every table that refers to it, at any depth, read from\n")
+    f.write("  -- the catalog rather than from a list that cannot know what the next migration adds.\n")
+    f.write("  -- UNION (not UNION ALL) terminates on an FK cycle instead of walking it forever.\n")
+    f.write("  WITH RECURSIVE closed(oid) AS (\n")
+    f.write("          SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace\n")
+    f.write("           WHERE n.nspname || '.' || c.relname = ANY (listed)\n")
+    f.write("        UNION\n")
+    f.write("          SELECT fk.conrelid FROM pg_constraint fk JOIN closed p ON fk.confrelid = p.oid\n")
+    f.write("           WHERE fk.contype = 'f'\n")
+    f.write("      )\n")
+    f.write("      SELECT array_agg(n.nspname || '.' || c.relname ORDER BY n.nspname, c.relname)\n")
+    f.write("        INTO closure\n")
+    f.write("      FROM closed JOIN pg_class c ON c.oid = closed.oid\n")
+    f.write("           JOIN pg_namespace n ON n.oid = c.relnamespace;\n")
+    f.write("  IF closure IS NULL THEN\n")
+    f.write("    RAISE EXCEPTION 'seed truncate: none of the tables generate.py names exist in schema "
+          "public yet'\n")
+    f.write("      USING HINT = 'apply infra/db/migrations/V*.sql before loading the seed';\n")
+    f.write("  END IF;\n")
+    f.write("  FOREACH tbl IN ARRAY closure LOOP\n")
+    f.write("    IF tbl = ANY (listed) THEN\n")
+    f.write("      claimed := claimed + 1;\n")
+    f.write("      CONTINUE;                        -- the generator owns this reset\n")
+    f.write("    END IF;\n")
+    f.write("    EXECUTE format('SELECT count(*) FROM %s', tbl::regclass) INTO rows_now;\n")
+    f.write("    IF rows_now > 0 THEN\n")
+    f.write("      blockers := blockers || tbl || ' (' || rows_now || ' row(s) written elsewhere), ';\n")
+    f.write("    END IF;\n")
+    f.write("  END LOOP;\n")
+    f.write("  IF blockers <> '' THEN\n")
+    f.write("    RAISE EXCEPTION 'seed truncate refused: a table outside generate.py''s list refers to the "
+          "demo data and is not empty: %', rtrim(blockers, ', ')\n")
+    f.write("      USING HINT = hint;\n")
+    f.write("  END IF;\n")
+    f.write("  SELECT string_agg(quote_ident(split_part(t, '.', 1)) || '.' ||\n")
+    f.write("                 quote_ident(split_part(t, '.', 2)), ', ' ORDER BY t)\n")
+    f.write("    INTO targets FROM unnest(closure) AS u(t);\n")
+    f.write("  EXECUTE 'TRUNCATE TABLE ' || targets || ' RESTART IDENTITY';\n")
+    f.write("  RAISE NOTICE 'seed truncate: % table(s) cleared -- % named by generate.py, % found by the "
+          "schema''s own foreign keys',\n")
+    f.write("    array_length(closure, 1), claimed, array_length(closure, 1) - claimed;\n")
+    f.write("end\n")
+    f.write("$$;\n")
 
 
 # --------------------------------------------------------------------------- generator
@@ -1555,38 +1629,43 @@ def write_outputs(gen: Gen, out_dir: Path):
     # `tenants` is deliberately absent (shared row, see above). review_summaries is truncated but never
     # seeded: summaries are AI-generated later, so a stale summary must not survive a reseed.
     with (out_dir / "00_truncate.sql").open("w", encoding="utf-8", newline="") as f:
-        f.write(f"-- {DISCLAIMER}\n")
-        f.write("-- Idempotency guard for load.sh: empties exactly the demo tables listed in generate.py\n")
-        f.write("-- (DEMO_TABLES minus the shared tenants row) so a reseed never duplicates rows.\n")
-        f.write("--\n")
-        f.write(f"-- SCHEMA FRICTION (flag, not workaround): V1 lets {len(DEPENDENT_TABLES)} tables outside "
-                "this list\n")
-        f.write("-- reference merchants/users/offerings/availability_slots (see the companion file in\n")
-        f.write("-- out/optional/). Postgres refuses a plain TRUNCATE of a referenced table even when the\n")
-        f.write("-- child is empty, so on a database where the platform has already written dependent\n")
-        f.write("-- rows this statement errors out (ON_ERROR_STOP) instead of silently deleting someone\n")
-        f.write("-- else's data. Re-run load.sh with RESEED_DEPENDENTS=1 to apply\n")
-        f.write("-- out/optional/00_truncate_dependents.sql and accept the wider reset.\n")
-        f.write("SET client_min_messages = warning;\n")
-        f.write("TRUNCATE TABLE " + ", ".join(
-            f"public.{t}" for t in DEMO_TABLES if t != "tenants")
-            + " RESTART IDENTITY;\n")
+        emit_truncate(
+            f,
+            [t for t in DEMO_TABLES if t != "tenants"],
+            header=(f"-- {DISCLAIMER}\n"
+                    "-- Idempotency guard for load.sh: empties the demo tables listed in generate.py\n"
+                    "-- (DEMO_TABLES minus the shared tenants row) so a reseed never duplicates rows,\n"
+                    "-- plus any table the live schema hangs off them by a foreign key *while it holds\n"
+                    "-- no rows* — see emit_truncate(). A non-empty one stops the load with its name and\n"
+                    "-- its count rather than being emptied behind somebody's back; that is the case this\n"
+                    f"-- file has always refused, and {len(DEPENDENT_TABLES)} of the tables it refuses are\n"
+                    "-- spelled out in out/optional/00_truncate_dependents.sql.\n"),
+            hint=("Re-run data/seed/load.sh with RESEED_DEPENDENTS=1 to reset the tables that hold "
+                  "demo-tenant rows, or empty the named table yourself first."),
+        )
 
-    # Companion reset for a DB that already holds rows referencing the demo rows. Explicit list, never
-    # CASCADE: an operator reading this file sees exactly which transactional tables are emptied.
+    # Companion reset for a DB that already holds rows referencing the demo rows. Explicit list, and
+    # still never CASCADE: an operator reading this file sees exactly which transactional tables the
+    # seed claims. The closure adds only empty strangers — a new migration's table with rows in it is
+    # refused by name, because this list is already the widest one load.sh offers.
     # Lives in out/optional/ so `out/*.sql` (the default load set) never picks it up by accident.
     opt_dir = out_dir / "optional"
     opt_dir.mkdir(exist_ok=True)
     with (opt_dir / "00_truncate_dependents.sql").open("w", encoding="utf-8", newline="") as f:
-        f.write(f"-- {DISCLAIMER}\n")
-        f.write("-- Optional wider reset (load.sh RESEED_DEPENDENTS=1). Demo tables above + the V1 tables\n")
-        f.write("-- that reference them. Explicit instead of TRUNCATE ... CASCADE so the blast radius is\n")
-        f.write("-- reviewable; these rows are all demo-tenant rows, but they are NOT seeded by this\n")
-        f.write("-- generator, so anything the platform wrote here is lost. That is why it is opt-in.\n")
-        f.write("SET client_min_messages = warning;\n")
-        f.write("TRUNCATE TABLE " + ", ".join(
-            f"public.{t}" for t in [x for x in DEMO_TABLES if x != "tenants"] + DEPENDENT_TABLES)
-            + " RESTART IDENTITY;\n")
+        emit_truncate(
+            f,
+            [t for t in [x for x in DEMO_TABLES if x != "tenants"] + DEPENDENT_TABLES],
+            header=(f"-- {DISCLAIMER}\n"
+                    "-- Optional wider reset (load.sh RESEED_DEPENDENTS=1). Demo tables above + the V1\n"
+                    "-- tables that reference them. Explicit instead of TRUNCATE ... CASCADE so the blast\n"
+                    "-- radius is reviewable; these rows are all demo-tenant rows, but they are NOT seeded\n"
+                    "-- by this generator, so anything the platform wrote here is lost. That is why it is\n"
+                    "-- opt-in. A table a later migration adds is cleared only while it is empty; with rows\n"
+                    "-- in it this script refuses and names it, and the fix is DEPENDENT_TABLES in\n"
+                    "-- generate.py if the seed owns its reset, not a wider cascade.\n"),
+            hint=("This is the widest list load.sh offers: add the named table to DEPENDENT_TABLES in "
+                  "data/seed/generate.py if the seed owns its reset, or empty it by hand."),
+        )
     written.insert(0, ("00_truncate", "(truncate)", 0))
     return written
 
