@@ -2856,3 +2856,72 @@ construction. That is a product question, not a seed bug.
   the four types the door accepts, not over four names someone remembered.
 - `moderation_cases` still carries the one remaining `join-one-type` waiver, watched every run by D66's census
   rather than probed. Giving it a real `(type,key)` probe over V1:574's five types is the next task.
+## D68 The moderation queue's other four types — 2026-09-25
+
+### 1. A waiver watched is not a waiver answered
+
+D66 registered `moderation_cases.subject_id` as `join-one-type` and built a row that re-reads the waiver's
+assumption every run — `moderation_cases.subject_id ships 1 subject_type(s)`. That is honest, and it is still only
+a thermometer: the day the generator emits a second type, the row turns red and somebody has to write the probe
+anyway. D67's lesson was that a gap written down tends to stay open, so the probe got written now and the waiver
+retired; the registry line prints `probe 4, not-a-reference 1` and no `join-one-type` at all.
+
+The hole was the same size as the one D65 closed. V1:574 declares `review|merchant|document|message|listing`; the
+seed emits 544 cases, every one of them `review`; and every queue check in the file reads `JOIN reviews`. Four
+declared types had never been resolved by anything.
+
+### 2. `listing` is the fifth name again
+
+The arms are `review` → `reviews`, `merchant` → `merchants`, `document` → `documents`, `message` → `messages`.
+`listing` is deliberately absent, for the reason D65 gave about `policy`: no table in this schema is a listing, so
+there is nothing a listing case could point at. Including an arm for it would mean inventing a meaning —
+`listing` → `offerings`? — and a check is not the place to decide a contract question. Left out, a seeded listing
+case is an orphan by construction and prints its own red row, which is the honest reading and the one that forces
+the decision into a migration where it belongs.
+
+Worth naming so nobody reads more into it than it holds: on a database with an empty queue the probe contributes
+**no** rows, because it groups by the types actually present. An empty queue is not this row's to judge, and the
+file already refuses it by name (`the queue has something in it (an empty inbox is not …)`), which is red on the
+long-lived `nexus` database for the third decision running.
+
+### 3. Plants
+
+Every plant is inserted into the kept gate database, schema-legal in every dimension except the one under test:
+the CHECK at V1:574 accepts all five declared names, `subject_id` has no foreign key to violate, and the tenant
+id is the seeded one.
+
+| # | planted | expected |
+| --- | --- | --- |
+| A | one `merchant` case, `subject_id = gen_random_uuid()` | red: the arm exists, the key resolves to nothing |
+| B | one `listing` case, likewise | red: no arm at all, so an orphan by construction |
+| gate | both plants present | the file refuses, and counts its refusals |
+| C | control: one case on a real `merchants.id`, one on a real `documents.id` | green, with two more rows than before |
+| — | plants removed | back to the shipped number |
+
+Measured, in order — the gate prints one row per (type actually present), so A and B arrive as two named rows:
+
+```
+FAIL  | orphan: moderation_cases.listing     | 1 unresolvable of 1 case(s)
+FAIL  | orphan: moderation_cases.merchant    | 1 unresolvable of 1 case(s)
+psql:<stdin>:1132: ERROR:  quality gate: 2 check(s) failed:
+    - orphan: moderation_cases.listing
+    - orphan: moderation_cases.merchant
+NOTICE:  quality gate: all 184 checks passed          (control: two legal cases, two new type groups)
+NOTICE:  quality gate: all 182 checks passed          (plants removed)
+```
+
+A and B are the two halves D61's rule asks for: A fails because a **key** does not resolve, B because a **type**
+has no resolver. A probe that only ever failed would pass neither test usefully — B would look like success for
+the wrong reason and A like a broken join — so C is the load-bearing row. It shows `merchant` and `document`
+*can* resolve, and it shows the probe groups by type rather than lumping the queue into one number.
+
+The registry census, which is what D66 built to make this visible:
+
+```
+PASS  | the registry names no column the schema has lost  | 0 stale of 5 registered (not-a-reference 1, probe 4)
+PASS  | a join-one-type waiver is only true while the table | no waiver of that kind is registered
+```
+
+That second row now guards an empty set, which is the shape §63's pointer predicted. It stays because the
+alternative — deleting the row when its set empties — would make the next `join-one-type` waiver nobody bothers
+to answer invisible again. It says "none registered" rather than going quiet.

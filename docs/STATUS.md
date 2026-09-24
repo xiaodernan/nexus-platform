@@ -2827,3 +2827,46 @@ next              task #42's second half (D68): `moderation_cases` still carries
                     waiver. Give it a real (type,key) probe over V1:574's five declared types so D66's
                     waiver-scope row becomes a probe row — the registry line should print `probe 4` and no
                     `join-one-type` when that lands.
+## 64. The waiver that was only a thermometer (2026-09-25)
+
+D66 registered `moderation_cases.subject_id` as a `join-one-type` waiver and added a row that re-reads the
+waiver's own assumption each run. D67 had just shown that a gap written down stays open, so the assumption got
+answered instead of watched: a `(type,key)` probe over four of V1:574's five declared types, and the waiver
+retired. Four of the five types had never been resolved by any check in the file — every queue check reads
+`JOIN reviews`, and the generator emits 544 review cases.
+
+```
+new/changed       data/seed/quality.sql — orphan probe for moderation_cases over review, merchant, document,
+                    message; the registry entry becomes `probe`, so `join-one-type` now has zero entries.
+                  `listing` is left out on purpose: no table in this schema is a listing (the D65 `policy` habit),
+                    and adding an arm would mean inventing that `listing` means `offering`.
+measured          seeded queue: 544 cases, all `subject_type='review'`; four declared types with no rows, one
+                    declared type with no table. An empty queue contributes no probe rows — that state is refused
+                    by name by the existing `the queue has something in it` row, red on `nexus` again.
+                  registry census: `0 stale of 5 registered (not-a-reference 1, probe 4)`, and the waiver-scope
+                    row reporting `no waiver of that kind is registered` — it guards an empty set and says so.
+mutations         A: one `merchant` case with `subject_id = gen_random_uuid()` — red, 1 unresolvable of 1.
+                  B: one `listing` case — red as an orphan by construction, the type has no arm.
+                  with both: ERROR quality gate: 2 check(s) failed, and the RAISE names both.
+                  C (control, the load-bearing one): one case on a real `merchants.id`, one on a real
+                    `documents.id` — green, and 184 rows checked instead of 182, so the probe resolves
+                    positives and reports per type rather than always failing.
+                  plants removed: 182.
+gates             db_gate_fresh.sh: RESULT: PASS — 182 quality checks on a from-scratch schema (tables=58,
+                    migrations=7), plus the seed truncate shown clearing an empty stranger and refusing one
+                    that holds rows. SYNTHETIC DEMO DATA. The live databases were not opened by this run.
+                  Kept gate database used for the plants, dropped after the restore.
+next              the registry has no `join-one-type` entry left, so D66's waiver-scope row now guards an empty
+                    set — it still has to say so truthfully (`no waiver of that kind is registered`) rather than
+                    disappear. Remaining work in this lane: the served `/api/v1/me` surface still reads
+                    `saved_searches.notify` nowhere (open report). And the `updated_at` standing report (six
+                    tables without a `*_updated_at` trigger) is now resolved enough to stop being a number:
+                    measured against the fresh schema, 21 tables carry the column and 15 have a trigger; of the
+                    other six, three are written by exactly one hand-written statement each that does set
+                    `updated_at = now()` (`reviews` at ModerationRepository.java:91, `availability_slots` at
+                    ReservationRepository.java:48 and :196, `user_preferences` at
+                    IdentityRepository.java:252), and three (`business_hours`, `collections`,
+                    `review_summaries`) have no UPDATE anywhere under `services/platform/src/main`. So nothing
+                    is currently stale — what is missing is a witness for the day someone adds a second writer
+                    and forgets the literal. That witness cannot live in quality.sql, which reads the seed and
+                    never sees an application UPDATE, so this stays a report rather than becoming a gate here.

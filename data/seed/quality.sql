@@ -241,6 +241,26 @@ FROM traffic_sweep;
 
 -- referential integrity, part 2: polymorphic references the schema cannot express. A subject_type
 -- the probe does not know about is an orphan by definition, so an invented type cannot pass.
+-- The moderation queue is the same shape one table over: V1:574 declares review|merchant|document|message|
+-- listing, every existing queue check joins `reviews`, and the generator emits only review rows — so four of
+-- the five types had never been resolved by anything. `listing` stays out of the arms on purpose: no table in
+-- this schema is a listing, so a case of that type is unresolvable by construction and prints its own red row
+-- rather than disappearing into a join that never mentions it (the D65 `policy` habit).
+INSERT INTO qc
+WITH probe AS (
+  SELECT 'review'::text t, id::text k FROM reviews
+  UNION ALL SELECT 'merchant', id::text FROM merchants
+  UNION ALL SELECT 'document', id::text FROM documents
+  UNION ALL SELECT 'message', id::text FROM messages),
+ g AS (
+  SELECT c.subject_type t, (q.k IS NULL) bad
+  FROM moderation_cases c
+  LEFT JOIN probe q ON q.t = c.subject_type AND q.k = c.subject_id::text)
+SELECT 'orphan: moderation_cases.' || t,
+       count(*) FILTER (WHERE bad) = 0,
+       count(*) FILTER (WHERE bad) || ' unresolvable of ' || count(*) || ' case(s)'
+FROM g GROUP BY t;
+
 INSERT INTO qc
 WITH probe AS (
   -- the arms are the door's own vocabulary (MeController.FavoriteBody: merchant|offering|guide|collection),
@@ -1052,9 +1072,9 @@ INSERT INTO ref_registry VALUES
  ('permission_grants.subject_id', 'probe',
   'orphan probe over merchant|user|merchant_user; an agent or api_key grant would be an orphan by '
   || 'construction, because the probe groups by the type actually present'),
- ('moderation_cases.subject_id', 'join-one-type',
-  'the queue checks JOIN reviews, and V1:574 declares five types; the waiver holds only while the '
-  || 'generator emits one of them, which the row below watches'),
+ ('moderation_cases.subject_id', 'probe',
+  'orphan probe over review|merchant|document|message; `listing` is in V1:574 and resolves to no table '
+  || 'in this schema, so a case of that type is an orphan by construction (D68)'),
  ('user_identities.provider_id', 'not-a-reference',
   'V1:53 declares it an opaque external subject id, never a token — no table in this schema resolves it');
 
