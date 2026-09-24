@@ -2784,3 +2784,46 @@ next              task #42 (D67): settle the two vocabularies for `favorites`, t
                     (type,key) probe over review|merchant|document|message|listing so the join-one-type waiver can
                     be retired instead of merely watched — the census row should print 4 probe / 0 join-one-type
                     when that lands.
+
+
+## 63. A seeded row the write path refuses to re-create (2026-09-25)
+
+D66 registered the favourites probe as `probe` while its own `why` text admitted the probe's type set was not the
+vocabulary the door accepts — a `user` arm for a type no `FavoriteBody` can carry, no `guide` arm for one it can.
+Writing a gap down is not closing it. The arms were rebuilt against `MeController` instead of against the migration
+comment, and `guide`/`collection` were pinned to the row's `kind` exactly the way `assertSubjectInTenant` pins them
+(`CollectionsRepository.isPublishable` ends in `and c.kind = :kind`).
+
+That pinning is what found the defect: the seed had 18 favourites, and of the two typed `collection`, one pointed
+at `sha-tin-date-night`, which is `kind='guide'` — a pair the door answers with `404 subject_not_found`, so the
+dataset shipped a row the API could never re-create. The generator was the only party disagreeing:
+`build_collections()` returned `dict(id, slug)` with no `kind`, and the favourites loop hard-coded `"collection"`.
+Now the kind is threaded through and emitted per row.
+
+```
+new/changed       data/seed/quality.sql — the favourites probe's arms are the door's four types, with guide and
+                    collection resolved against collections by kind; registry entry rewritten to say what it now is
+                  data/seed/generate.py — build_collections() carries `kind`; the favourites loop emits g["kind"]
+                    instead of a constant (out/ is a generated artifact and gitignored: data/seed/out is in
+                    .gitignore:21, so the change ships as generator source, not as SQL)
+measured          seeded favourites before: merchant 12 / offering 4 / collection 2 — one of the two on a guide row.
+                    after: merchant 12 / offering 4 / collection 1 / guide 1, each matching its row's kind.
+                  collections is guide 1, collection 2, itinerary 1 — and `itinerary` is in neither FavoriteBody's
+                    pattern nor V1:619's comment, so that row is unshareable through /me/favorites by construction.
+                    Reported, not fixed: deciding it should be saveable is a contract change.
+mutations         4 verdicts on the gate's own loaded database (--keep):
+                    (a) clean                       181 PASS / 0 FAIL, exit 0 (180 → 181: the probe prints a row
+                        per type *present*, and a fourth type is present now that guide resolves on its own)
+                    (b) yesterday's label restored  RED — `orphan: favorites.collection — 1 unresolvable of 2
+                        row(s)`, and nothing else. The pre-fix dataset is the fixture
+                    (c) an invented `itinerary`     RED ×2 — the orphan row (no arm knows the type) and the
+                        vocabulary row (the door refuses it), from one planted label
+                    (d) labels re-derived from kind 181 PASS again
+gates             db_gate_fresh.sh: -> 181 quality checks against a from-scratch schema (tables=58, migrations=7).
+                    e2e_fresh.sh not re-run, with the reason measured: it names favourites nowhere
+                    (grep -rn "favorite|favourite" scripts/e2e_fresh.sh -> no output) and listFavorites has no
+                    subject_type branch, so no served read depends on the label that changed.
+next              task #42's second half (D68): `moderation_cases` still carries the only remaining join-one-type
+                    waiver. Give it a real (type,key) probe over V1:574's five declared types so D66's
+                    waiver-scope row becomes a probe row — the registry line should print `probe 4` and no
+                    `join-one-type` when that lands.

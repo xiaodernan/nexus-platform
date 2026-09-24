@@ -1280,8 +1280,11 @@ class Gen:
                 uid("favorite", f"consumer:{o['id']}"), U_CONSUMER, "offering", o["id"],
                 "想試", self.now - timedelta(days=self.rng.randint(1, 40))]))
         for g in guides[:2]:
+            # the subject_type is the row's own kind, not a constant: a favourite saved as `collection`
+            # against a guide row is one the door refuses to re-create (assertSubjectInTenant pins the
+            # kind), so the seed has to say what it actually points at.
             self.rows["favorites"].append(row([
-                uid("favorite", f"consumer:{g['id']}"), U_CONSUMER, "collection", g["id"], None,
+                uid("favorite", f"consumer:{g['id']}"), U_CONSUMER, g["kind"], g["id"], None,
                 self.now - timedelta(days=5)]))
         return self.rows
 
@@ -1338,7 +1341,7 @@ class Gen:
             cid = uid("collection", slug)
             items = [{"subject_type": "merchant", "subject_id": m["id"],
                       "note": f"{m['district'][1]} · {m['price_band']}"} for m in members]
-            guides.append(dict(id=cid, slug=slug))
+            guides.append(dict(id=cid, slug=slug, kind=kind))
             self.rows["collections"].append(row([
                 cid, TENANT_ID, U_CONSUMER, kind, slug, title, title_zh,
                 desc + " " + DISCLAIMER, f"/demo/img/{('restaurant' if kind != 'itinerary' else 'experience')}.svg",

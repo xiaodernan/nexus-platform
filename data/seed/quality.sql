@@ -243,10 +243,13 @@ FROM traffic_sweep;
 -- the probe does not know about is an orphan by definition, so an invented type cannot pass.
 INSERT INTO qc
 WITH probe AS (
-  SELECT 'user'::text t, id::text k FROM users
-  UNION ALL SELECT 'merchant', id::text FROM merchants
+  -- the arms are the door's own vocabulary (MeController.FavoriteBody: merchant|offering|guide|collection),
+  -- and guide/collection are pinned to the row's kind exactly the way assertSubjectInTenant pins them: a
+  -- favourite saved under the wrong label is refused at the door, so the seed may not carry one either.
+  SELECT 'merchant'::text t, id::text k FROM merchants
   UNION ALL SELECT 'offering', id::text FROM offerings
-  UNION ALL SELECT 'collection', id::text FROM collections),
+  UNION ALL SELECT 'collection', id::text FROM collections WHERE kind = 'collection'
+  UNION ALL SELECT 'guide', id::text FROM collections WHERE kind = 'guide'),
  g AS (
   SELECT f.subject_type t, (q.k IS NULL) bad
   FROM favorites f
@@ -1044,8 +1047,8 @@ INSERT INTO ref_registry VALUES
  ('facts.subject_id', 'probe',
   'orphan probe over merchant|offering|location|review, grouped by the declared type (D65)'),
  ('favorites.subject_id', 'probe',
-  'orphan probe over the arms it builds; its type set is not the vocabulary the door accepts '
-  || '(the probe has a `user` arm for a type no API body can carry, and no `guide` arm for a type it can)'),
+  'orphan probe over exactly the four types MeController.FavoriteBody accepts, with guide and '
+  || 'collection pinned to the collections row kind the way assertSubjectInTenant pins them (D67)'),
  ('permission_grants.subject_id', 'probe',
   'orphan probe over merchant|user|merchant_user; an agent or api_key grant would be an orphan by '
   || 'construction, because the probe groups by the type actually present'),

@@ -2798,3 +2798,61 @@ be illegal in two other dimensions.
   vocabularies is authoritative is a contract decision, not a check edit — task #42.
 - The registry's `why` text is written but not printed; the row prints kind *counts*. A reader who wants the reason
   has to open the file, which is acceptable for five entries and would not be for fifty.
+
+
+## D67 A seeded row the write path refuses to re-create — 2026-09-25
+
+### 1. What the census found on its second run
+
+D66 registered the favourites probe as `probe` but said in its own `why` text that the probe's type set was *not*
+the vocabulary the door accepts: it built a `user` arm for a subject type no `FavoriteBody` can carry, and had no
+`guide` arm for a type it can. A gap written down as a known weakness is still a gap, so the arms were rebuilt
+against the door rather than against the migration comment.
+
+`MeController.FavoriteBody` is `^(merchant|offering|guide|collection)$`, and `assertSubjectInTenant` resolves
+`guide` and `collection` against the same `collections` table while **pinning the subject to its kind** — the code
+says it out loud: "`guide` is a row of this table labelled otherwise … an id saved under the wrong label has to be
+refused rather than resolve later as something else". The probe now joins the way the door joins: four arms,
+`collection` only matching `kind = 'collection'`, `guide` only matching `kind = 'guide'`, no `user` arm. The same
+house habit as the `permission_grants` probe, which joins the way `AuthorizationInterceptor` does (D31).
+
+### 2. The row that was already in the seed
+
+Pinning the arms is not a refactor, because the dataset did not satisfy it. Measured on the seeded rows:
+
+| | |
+| --- | --- |
+| `favorites` by type | merchant 12, offering 4, collection 2 — and of the two `collection` rows, **one points at `sha-tin-date-night`, which is `kind='guide'`** (measured against `collections`: 4 rows = guide 1, collection 2, itinerary 1) |
+| what the door would do | `POST /api/v1/me/favorites` with that pair is a `404 subject_not_found`: `CollectionsRepository.isPublishable` ends in `and c.kind = :kind` (CollectionsRepository.java:175), so asking for a guide row under the label `collection` counts zero and `assertSubjectInTenant` refuses — a favourite the seed ships and the API cannot re-create |
+| what the read side does | nothing different: `IdentityRepository.listFavorites` selects the rows with no `subject_type` branch, so the served list keeps the same 18 rows either way — the defect was in the label, and only the label |
+| the generator | `build_collections()` returned `dict(id, slug)` with no `kind`, and the favourites loop hard-coded `"collection"` for `guides[:2]`, so a guide could only ever be emitted as a collection |
+
+The fix is one field threaded through (`kind=kind`) and the loop emitting `g["kind"]`, with the reason in the
+comment beside it: the seed has to say what a row actually points at. Nothing was invented — the type was already
+declared in V1:619, the door's pattern, and `FavoriteBody`; the generator was the only party disagreeing.
+
+Reported rather than fixed: `weekend-family-sha-tin` is `kind='itinerary'`, and no favourite type exists for an
+itinerary in either the door's pattern or V1's comment, so that row is unshareable through `/me/favorites` by
+construction. That is a product question, not a seed bug.
+
+### 3. Falsification, including yesterday's dataset
+
+| | Verdict |
+| --- | --- |
+| clean, freshly loaded by the gate | `PASS=181 FAIL=0`, exit 0 — the probe now prints one row per type *present*, so 180 → 181: `favorites.merchant` 12, `favorites.offering` 4, `favorites.collection` 1, `favorites.guide` 1 |
+| put yesterday's label back (`UPDATE favorites SET subject_type='collection'` on the guide row) | **RED**, one row only: `orphan: favorites.collection — 1 unresolvable of 2 row(s)`. The dataset as it stood before this decision is the fixture, which is the strongest form of the demonstration — the new arm catches the shape the old one could not see |
+| invent a fifth type (`itinerary`, which does exist as a `collections.kind`) | **RED ×2**: `orphan: favorites.itinerary — 1 unresolvable of 1 row(s)` *and* `favourite subject_type is one the API can save — 1 unsavable row(s); the door accepts merchant, offering, guide, collection`. Two independent arms, one because no probe knows the type and one because the door refuses it |
+| restore the labels from the row's own `kind` | `PASS=181` again, exit 0 |
+| e2e surface | not re-run, and the reason is measured rather than assumed: `grep -rn "favorite\|favourite" scripts/e2e_fresh.sh` returns nothing, and `listFavorites` has no `subject_type` branch, so no served read in that gate reads the label this change touches |
+
+
+### 4. What D67 does not claim
+
+- The probe resolves the id *and* the label. It does not decide whether a guide should be saveable as a
+  collection — the door already refused that, and this check now refuses the data. If someone later widens
+  `FavoriteBody`'s pattern, both the probe arms and the `favourite subject_type is one the API can save` row have
+  to move together, and the second one will go red first.
+- The registry entry for `favorites.subject_id` still says `probe`, and now says so truthfully: it is a probe over
+  the four types the door accepts, not over four names someone remembered.
+- `moderation_cases` still carries the one remaining `join-one-type` waiver, watched every run by D66's census
+  rather than probed. Giving it a real `(type,key)` probe over V1:574's five types is the next task.
