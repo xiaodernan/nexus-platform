@@ -1427,6 +1427,139 @@ SELECT 'the arm registry agrees with the probed-pair counts',
                 (SELECT string_agg(tbl || '=' || arms, ', ' ORDER BY tbl) FROM poly_probed)
                 || ' as declared, and the registry counts the same');
 
+-- ============================================================ D74  door vocabularies
+--
+-- WHY THIS EXISTS: D69 counted the schema's polymorphic (type,id) pairs and found one bounded by a CHECK.
+-- Read the other way round the same census says more: `public` carries 12 CHECK constraints, and
+-- `share_links.subject_type` is the only column anywhere whose value set the database itself defends — the
+-- other 11 compare numbers, timestamps or a code format. Every other enumerated column is bounded in exactly
+-- one place: a `Set.of(...)` / `List.of(...)` behind a controller door. The seed writes those columns
+-- straight from CSV, through none of those doors, so nothing on the write path reconciles the two lists —
+-- the shape D67 caught for `favorites.subject_type`. `door_vocab` below is a hand transcription of what the
+-- doors accept, each row naming the file and line a reviewer can go check; `vocab_live` is what the shipped
+-- data actually carries; `check_vocab` is what the schema defends, parsed live so a CHECK added tomorrow is
+-- seen tomorrow without anyone editing a list here.
+--
+-- WHAT THIS DOES NOT CLAIM: there is no census of text columns whose *data* happens to be bounded, so a
+-- column the seed confines to four values while no door names them (users.role, merchants.status,
+-- moderation_cases.auto_action, documents.kind, resource_pools.kind …) stays outside this block by
+-- construction. D74 records that as its blind spot rather than pretending the catalogue is complete.
+
+CREATE TEMP TABLE door_vocab (
+  tbl text NOT NULL, col text NOT NULL, allowed text[] NOT NULL, door_source text NOT NULL,
+  why text NOT NULL, PRIMARY KEY (tbl, col));
+
+INSERT INTO door_vocab VALUES
+ ('offerings', 'kind', ARRAY['product', 'service', 'experience'], 'CatalogController.java:221',
+  'the consumer list filter; a fifth kind answers 422 before SQL sees it'),
+ ('offerings', 'status', ARRAY['draft', 'active', 'archived', 'out_of_stock'],
+  'MerchantContentController.java:68', 'the console filter, and OfferingRepository.java:203 writes archived'),
+ ('collections', 'kind', ARRAY['collection', 'guide', 'itinerary'], 'CollectionsController.java:61',
+  'KINDS, applied through Paging.enumFilter at :85; the same list CollectionsWriteController accepts on POST'),
+ ('moderation_cases', 'status', ARRAY['open', 'resolved'], 'ModerationController.java:51',
+  'CASE_STATUSES; closeCase writes resolved and guards on status = ''open'' in the statement'),
+ ('merchant_users', 'status', ARRAY['active', 'disabled'], 'MerchantWorkspaceService.java:34',
+  'MEMBER_STATUSES, the only two values a PATCH /members can set'),
+ ('share_links', 'subject_type', ARRAY['merchant', 'offering', 'collection', 'guide'],
+  'ShareController.java:55', 'the one column with both a door list and a CHECK (V7:40-41)'),
+ ('reservations', 'status', ARRAY['pending', 'confirmed', 'cancelled', 'completed', 'no_show'],
+  'MerchantContentController.java:458', 'the booking inbox filter; V1:306 declares the same five'),
+ ('agent_runs', 'status', ARRAY['running', 'succeeded', 'failed', 'fallback', 'cancelled'],
+  'AdminAiController.java:52-53', 'RUN_STATUSES, used as the admin AI filter'),
+ ('conversations', 'status', ARRAY['open', 'handoff', 'closed', 'archived'],
+  'ConversationService.java:52', 'THREAD_STATUSES — the thread of that name is the conversations table');
+
+-- An entry naming a table or column the schema does not have would otherwise read as "zero rows, nothing to
+-- complain about" below, so existence is asserted before anything is censused.
+INSERT INTO qc
+SELECT 'a door vocabulary names a column the schema has',
+       (SELECT count(*) FROM door_vocab) > 0
+       AND NOT EXISTS (SELECT 1 FROM door_vocab d WHERE to_regclass('public.' || d.tbl) IS NULL
+                        OR NOT EXISTS (SELECT 1 FROM pg_attribute a
+                                        WHERE a.attrelid = ('public.' || d.tbl)::regclass
+                                          AND a.attname = d.col AND a.attnum > 0 AND NOT a.attisdropped)),
+       (SELECT count(*) FROM door_vocab) || ' column(s) transcribed from a door list, '
+       || coalesce((SELECT string_agg(d.tbl || '.' || d.col, ', ' ORDER BY d.tbl, d.col) FROM door_vocab d
+                    WHERE to_regclass('public.' || d.tbl) IS NULL
+                       OR NOT EXISTS (SELECT 1 FROM pg_attribute a
+                                      WHERE a.attrelid = ('public.' || d.tbl)::regclass
+                                        AND a.attname = d.col AND a.attnum > 0 AND NOT a.attisdropped)),
+                   'all of them present in pg_attribute');
+
+-- What the data carries, per catalogued column. Only entries the schema has are censused; a mis-typed one is
+-- caught by the row above rather than censued into silence here.
+CREATE TEMP TABLE vocab_live (tbl text NOT NULL, col text NOT NULL, v text, n bigint NOT NULL);
+DO $d74$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT d.tbl, d.col FROM door_vocab d
+            WHERE to_regclass('public.' || d.tbl) IS NOT NULL
+              AND EXISTS (SELECT 1 FROM pg_attribute a
+                          WHERE a.attrelid = ('public.' || d.tbl)::regclass AND a.attname = d.col)
+  LOOP
+    EXECUTE format('INSERT INTO vocab_live SELECT %L, %L, x.v, x.n FROM '
+                 || '(SELECT %I::text AS v, count(*)::bigint AS n FROM public.%I GROUP BY 1) x',
+                   r.tbl, r.col, r.col, r.tbl);
+  END LOOP;
+END $d74$;
+
+-- What the database defends, read back out of pg_constraint: the CHECK shape Postgres prints for an
+-- `IN (…)` list of text literals is `CHECK ((col = ANY (ARRAY['a'::text, 'b'::text])))`.
+CREATE TEMP TABLE check_vocab (tbl text NOT NULL, col text, labels text[], conname text NOT NULL);
+INSERT INTO check_vocab
+SELECT DISTINCT c.relname, (regexp_match(x.d, 'CHECK \(\((\w+) = ANY'))[1],
+       (SELECT array_agg(m[1]) FROM regexp_matches(x.d, '''([a-z0-9_]+)''::text', 'g') m), con.conname
+FROM pg_constraint con JOIN pg_class c ON c.oid = con.conrelid
+     CROSS JOIN LATERAL (SELECT regexp_replace(pg_get_constraintdef(con.oid), '\s+', ' ', 'g') AS d) x
+WHERE con.contype = 'c' AND con.connamespace = 'public'::regnamespace
+  AND x.d LIKE '%= ANY (ARRAY[%::text%';
+
+INSERT INTO qc
+SELECT 'a door vocabulary admits every value the data carries',
+       (SELECT count(*) FROM door_vocab) > 0
+       -- non-vacuous: at least one catalogued column must carry rows, or containment is true of nothing
+       AND (SELECT count(DISTINCT tbl || '.' || col) FROM vocab_live) > 0
+       AND NOT EXISTS (SELECT 1 FROM vocab_live l WHERE l.v IS NOT NULL
+                        AND NOT EXISTS (SELECT 1 FROM door_vocab d
+                                        WHERE d.tbl = l.tbl AND d.col = l.col AND l.v = ANY (d.allowed))),
+       (SELECT count(DISTINCT tbl || '.' || col) FROM vocab_live) || ' of ' || (SELECT count(*) FROM door_vocab)
+       || ' catalogued column(s) carry rows; '
+       || (SELECT count(*) FROM vocab_live WHERE v IS NOT NULL) || ' distinct value(s) measured, '
+       || (SELECT count(*) FROM vocab_live WHERE v IS NULL) || ' NULL group(s), '
+       || coalesce((SELECT string_agg(l.tbl || '.' || l.col || '=''' || l.v || ''' (' || l.n || ')', ', '
+                               ORDER BY l.tbl, l.col, l.v)
+                    FROM vocab_live l WHERE l.v IS NOT NULL
+                      AND NOT EXISTS (SELECT 1 FROM door_vocab d
+                                      WHERE d.tbl = l.tbl AND d.col = l.col AND l.v = ANY (d.allowed))),
+                    'none of them outside the list its door accepts')
+       || '; the ' || (SELECT count(DISTINCT d.tbl || '.' || d.col) FROM door_vocab d
+                       WHERE NOT EXISTS (SELECT 1 FROM vocab_live l
+                                         WHERE l.tbl = d.tbl AND l.col = d.col))
+       || ' catalogued column(s) no row exercises are named in the detail of the CHECK row';
+
+INSERT INTO qc
+SELECT 'a CHECK-bounded column is a door vocabulary too',
+       (SELECT count(*) FROM check_vocab) > 0
+       -- an unparsable CHECK must not drop out of the census silently
+       AND NOT EXISTS (SELECT 1 FROM check_vocab c WHERE c.col IS NULL OR c.labels IS NULL)
+       AND NOT EXISTS (SELECT 1 FROM check_vocab c WHERE NOT EXISTS
+                       (SELECT 1 FROM door_vocab d WHERE d.tbl = c.tbl AND d.col = c.col
+                         AND NOT EXISTS (SELECT 1 FROM unnest(d.allowed) x WHERE NOT (x = ANY (c.labels)))
+                         AND NOT EXISTS (SELECT 1 FROM unnest(c.labels) y WHERE NOT (y = ANY (d.allowed))))),
+       (SELECT count(*) FROM check_vocab) || ' text column(s) the schema bounds to a literal list, namely '
+       || coalesce((SELECT string_agg(tbl || '.' || col || ' [' || (SELECT count(*) FROM unnest(labels))
+                                      || ' label(s)]', ', ' ORDER BY tbl, col) FROM check_vocab), '-')
+       || ', and each of them agrees label for label with the transcribed door list or this row is red; '
+       || (SELECT count(*) FROM door_vocab d WHERE NOT EXISTS (SELECT 1 FROM check_vocab c
+                                                               WHERE c.tbl = d.tbl AND c.col = d.col))
+       || ' of ' || (SELECT count(*) FROM door_vocab) || ' catalogued column(s) rest on the door alone: '
+       || coalesce((SELECT string_agg(d.tbl || '.' || d.col
+                                      || CASE WHEN (SELECT count(*) FROM vocab_live l
+                                                   WHERE l.tbl = d.tbl AND l.col = d.col) = 0
+                                              THEN ' (no rows)' ELSE '' END, ', ' ORDER BY d.tbl, d.col)
+                    FROM door_vocab d WHERE NOT EXISTS (SELECT 1 FROM check_vocab c
+                                                        WHERE c.tbl = d.tbl AND c.col = d.col)), '-');
+
 -- ============================================================ C  hard gate
 \echo ''
 SELECT CASE WHEN ok THEN '  PASS ' ELSE '  FAIL ' END AS status,

@@ -3459,3 +3459,156 @@ database was dropped afterwards and 0 `nexus_gate*` remain.
 Worth keeping the reason in prose: a green row whose detail restates a constant is a row that trains its reader
 to ignore the detail. The detail is the only part of a census row that says what the schema looks like today, so
 it either prints measurements or it says nothing.
+
+## D74 The only vocabulary the database defends is the one no row exercises — 2026-09-25
+
+### 1. Two enforcement sides, and a count that came back as one
+
+D69 counted the schema's polymorphic pairs and found one of twelve bounded by a CHECK. Reading the same
+catalogue from the constraint side says something the pair side could not. `public` has 12 CHECK constraints:
+
+```
+availability_slots  3   ends_at > starts_at (twice) and capacity_left within [0, capacity_total]
+cart_items          2   quantity > 0, and an offering_id/reservation_id either-or
+coupons             1   ends_at > starts_at
+merchants           1   rating_agg within [0, 5]
+offerings           2   rating_agg within [0, 5], price_amount >= 0 or null
+reviews             1   rating within [1, 5]
+share_links         2   subject_type = ANY (ARRAY[…]) , and code ~ '^[0-9A-HJKMNP-TV-Z]{6,16}$'
+```
+
+Eleven of them compare numbers, timestamps, nullity or a code format. One bounds a *set of words*. So
+`share_links.subject_type` is the only column on the platform whose vocabulary the database itself defends;
+every other enumerated column is bounded in exactly one place, and that place is a Java literal behind a door:
+
+```
+ModerationController.java:51   CASE_STATUSES      = open | resolved
+MerchantContentController.java:68 OFFERING_STATUSES = draft | active | archived | out_of_stock
+MerchantWorkspaceService.java:34 MEMBER_STATUSES   = active | disabled
+AdminAiController.java:52-53    RUN_STATUSES       = running | succeeded | failed | fallback | cancelled
+ConversationService.java:52     THREAD_STATUSES    = open | handoff | closed | archived
+```
+
+The seed writes all of those columns straight from CSV, through none of those doors — which is the exact seam
+D67 caught for `favorites.subject_type`, generalised. `data/seed/quality.sql` is the only place the two lists
+can be reconciled, so that is where the reconciliation now lives.
+
+### 2. What the reconciliation measured, before any of it was a gate
+
+Nine columns got transcribed (each row of `door_vocab` names the file and line a reviewer can go and read).
+Then the live census printed what the shipped data actually carries:
+
+```
+5 of 9 catalogued column(s) carry rows; 11 distinct value(s) measured, 0 NULL group(s), none of them outside
+the list its door accepts; the 4 catalogued column(s) no row exercises are named in the detail of the CHECK row
+```
+
+The containment direction is clean today — the generator never writes a value a door would refuse — and that is
+the point of having the row: it is a tripwire on a seam no code path watches. The findings are in the other
+two numbers.
+
+**The one defended vocabulary has no data behind it.** The 4 unexercised columns are
+`share_links.subject_type`, `reservations.status`, `agent_runs.status`, `conversations.status` — so the only
+CHECK on a vocabulary in the entire schema guards a table the shipped dataset never loads. D74 does not call
+that a defect (a share code is minted by a request, not seeded, and minting demo links would be inventing
+traffic); it is the shape of the enforcement surface, and it is now printed on every gate run.
+
+**`moderation_cases.status` has one arm and no other.** The door says `open | resolved`, the queue's own
+`closeCase` writes `resolved`, and all 544 seeded cases are `open`. Two consequences follow, both measured
+rather than argued: a fresh install's resolved view is empty, and the losing branch of the concurrency guard
+(`where status = 'open'` matching zero rows, which ModerationController.java:137 turns into
+`case_already_resolved`) cannot be produced from shipped data by any sequence of clicks. Reported, not fixed:
+a resolved case means inventing a reviewer identity and a resolution note, and §127 reserves that for a human
+decision.
+
+**`auto_action` is a vocabulary that lives in a comment.** V1:578 declares
+`auto_action text, -- none|hide|flag|reject` inside `CREATE TABLE`, which the parser discards (D73's
+meta-fact: no `pg_description` row survives it), so the four words exist in the migration's prose and in the
+generator's choice, and nowhere else. The only writer in the build emits `'none'`
+(ReviewRepository.java:120-127), the seed carries `none` and `flag`, and ModerationController.java:198 serves
+the column verbatim to clients. `hide` and `reject` can be produced by nothing in this build. That is a
+design decision about §55 that D74 does not have the authority to make, so it is named here and in the gate's
+blind-spot paragraph instead.
+
+### 3. The gate: `door_vocab`, and both sides read live
+
+```
+door_vocab    9 hand-transcribed (tbl, col, allowed[], door_source file:line, why)   — the door side
+vocab_live    a DO loop's per-column GROUP BY over the real table                     — the data side
+check_vocab   pg_constraint read live, the ANY(ARRAY[…]) labels parsed back out       — the schema side
+```
+
+Three rows, each answering a different question:
+
+| row | question |
+| --- | --- |
+| a door vocabulary names a column the schema has | is the transcription about this database at all |
+| a door vocabulary admits every value the data carries | does the generator stay inside the door |
+| a CHECK-bounded column is a door vocabulary too | do the two enforcement mechanisms agree label for label |
+
+The third is the one that keeps the first honest. It reads `pg_constraint` rather than a remembered count, so
+the day someone adds `moderation_cases_status_known` the row starts asking about it, and an entry whose labels
+differ from the CHECK's is red in either direction. An unparsable CHECK shape reddens it too, rather than
+dropping out of the census silently — a check that can only pass one way is not a check.
+
+`db_gate_fresh.sh` counts went 192 → 195.
+
+### 4. Falsification, seven runs on a kept gate database
+
+The first run of P1 is in this table because it failed: `select min(id)` over a `uuid` column is
+`ERROR: function min(uuid) does not exist` on Postgres 16, so the plant never applied and the run's green was
+about nothing. Re-planted with `order by id limit 1`.
+
+```
+P1  update offerings set kind='bundle' …(one row)…
+      FAIL |a door vocabulary admits every value the data carrie|5 of 9 … 12 distinct value(s) measured,
+             0 NULL group(s), offerings.kind='bundle' (1)
+    restore -> kind='service', 195 green
+P2  transcription stale: 'out_of_stock' removed from the offerings.status list in a copy of the file
+      FAIL |a door vocabulary admits every value the data carrie|… offerings.status='out_of_stock' (249)
+P3  alter table moderation_cases add check (status in ('open','resolved','closed'))
+      FAIL |a CHECK-bounded column is a door vocabulary too     |2 text column(s) the schema bounds to a
+             literal list, namely moderation_cases.status [3 label(s)], share_links.subject_type [4 label(s)] …
+P4  the same constraint with the SAME labels: green, and the census count moves 1 -> 2
+      PASS |a CHECK-bounded column is a door vocabulary too     |2 text column(s) … moderation_cases.status
+             [2 label(s)], share_links.subject_type [4 label(s)] … 7 of 9 catalogued column(s) rest on the
+             door alone: agent_runs.status (no rows), collections.kind, conversations.status (no rows), …
+P5a insert into door_vocab ('threadz','status',…)      FAIL |a door vocabulary names a column the schema has|
+             10 column(s) transcribed from a door list, threadz.status
+P5b insert into door_vocab ('offerings','kinddom',…)   same row, naming offerings.kinddom
+final unmutated file over an untouched database:        195 checks passed
+```
+
+P2 is the interesting pair with P1: the same red can come from the data moving or from the list going stale,
+and the detail distinguishes them by naming the column *and* the row count (`(249)` — the seed's own
+out_of_stock population) where P1 named `(1)`. P4 is the positive control: nothing in the file was edited,
+only the schema gained a constraint, and the row noticed.
+
+### 5. What D74 does not claim, stated as its own blind spot
+
+- **There is no census of data-bounded columns that no door names.** `users.role`, `merchants.status`,
+  `reviews.status`, `documents.kind`, `resource_pools.kind`, `categories.kind`, `tenants.status`,
+  `user_preferences.kind|source|scope`, `offerings.price_source`, `moderation_cases.auto_action` and the
+  `data_origin`/`source` provenance columns are each confined to a handful of values by the shipped data, and
+  none of them is in `door_vocab`, because no door enumerates them. A column can therefore be bounded in
+  practice and invisible to this gate by construction — the same class of hole D66 named for the reference
+  census, and left named rather than papered over with a list of values nobody authorised.
+- **A transcription over an empty table is checked only for existence.** Four of the nine entries carry no
+  rows, so containment cannot complain about them and the CHECK row has nothing to compare; if their door
+  lists drift, nothing in this gate notices. Naming them in the detail (`(no rows)`) is what makes the
+  weakness visible rather than implied.
+- **The polymorphic pairs stay in `poly_vocab`.** `facts.subject_type`, `favorites.subject_type`,
+  `moderation_cases.subject_type` and `permission_grants.subject_type` are owned by the D71 registry, which
+  probes them against their referent tables — a stronger check than membership in a word list. Duplicating
+  them here would create two hand lists of one vocabulary and need a third check to keep them honest.
+- `pg_get_constraintdef`'s printed shape is the parse target, so a Postgres version that formats
+  `IN (…)` differently would be caught by the row reddening on an unparsable census, not by silence.
+
+### 6. A transcription error, and the row that was written for it
+
+`THREAD_STATUSES` was first transcribed against `threads.status`. There is no `threads` table — the class
+reads and writes `conversations.status`. Measured while checking: `conversations` also has a `state` column,
+which is not a rival vocabulary but a jsonb object (`ConversationService.java:337` serves it through
+`Json.jsonObject`), so the two columns answer different questions and only one of them is a word list. The
+mistake was caught in the `pg_attribute` lookup before the entry shipped; `door_vocab`'s existence row exists
+because of it, and P5a/P5b are its proof.

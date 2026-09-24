@@ -3124,3 +3124,56 @@ next              the reason worth carrying forward: a green row whose detail re
                     nothing; CommerceApiTest belongs to another stream; the drifted shared `nexus` demo database
                     remains diagnostic-only and unreseeded; the events subject seam (D70) still waits on a
                     contract decision rather than a check.
+
+## 70. The vocabulary the database defends has no data behind it (2026-09-25)
+
+D69 read the schema from the pair side and found one CHECK in twelve. D74 read it from the constraint side:
+12 CHECK constraints exist in `public`, eleven compare numbers, timestamps, nullity or a code format, and
+exactly one — `share_links.subject_type` — bounds a set of words. Every other enumerated column on the
+platform is bounded in one place only: a `Set.of(...)` / `List.of(...)` behind a controller door. The seed
+writes those same columns straight from CSV, through none of those doors.
+
+```
+new/changed       data/seed/quality.sql only, +133 lines: door_vocab (9 columns transcribed with the file:line
+                    of the door that owns each list), vocab_live (a DO loop's per-column GROUP BY over the real
+                    table), check_vocab (pg_constraint read live, the ANY(ARRAY[…]) labels parsed back out) and
+                    3 rows — does the transcription name columns this schema has, does the generator stay
+                    inside the door, do the two enforcement mechanisms agree label for label. 192 -> 195.
+measured          5 of the 9 catalogued columns carry rows, over 11 distinct values, none outside its door
+                    list; the other 4 (share_links.subject_type, reservations.status, agent_runs.status,
+                    conversations.status) carry none — so the only vocabulary the database itself defends
+                    guards a table the shipped dataset never loads. moderation_cases.status: door says
+                    open|resolved, all 544 seeded cases are open, which also means closeCase's zero-rows branch
+                    (ModerationController.java:137 case_already_resolved) cannot be produced from shipped data.
+                    auto_action: V1:578 declares none|hide|flag|reject in a comment the parser discards, the
+                    build's only writer emits 'none', the seed carries none|flag, and the door serves the
+                    column verbatim — hide and reject are producible by nothing here. Reported, not fixed:
+                    closing a seeded case would mean inventing a reviewer and a note, and §127 reserves that.
+plants            7 runs on the kept gate database. P1 offerings.kind='bundle' -> the containment row red,
+                    naming offerings.kind='bundle' (1) · the FIRST P1 attempt is in the record because it was
+                    invalid: min(uuid) does not exist on Postgres 16, the plant never applied, and the green it
+                    produced was about nothing · P2 drop 'out_of_stock' from the transcription (a copy of the
+                    file, data untouched) -> same row red naming offerings.status='out_of_stock' (249), so the
+                    detail separates a moving data set from a stale list by its row count · P3 add
+                    check (status in ('open','resolved','closed')) -> the CHECK row red, printing both bounded
+                    columns and their label counts · P4 the same constraint with the SAME labels -> green with
+                    the census count moved 1 -> 2 and nothing edited in the file, which is the live read
+                    working · P5a threadz.status and P5b offerings.kinddom -> the existence row red, naming
+                    each · final unmutated run: 195 green.
+gates             scripts/db_gate_fresh.sh (full, background): RESULT: PASS — 195 quality checks on a
+                    from-scratch schema (tables=58, migrations=7), plus the truncate probe's two branches. Kept
+                    database dropped afterwards, 0 nexus_gate* remain. No Java touched, so mvn -o test and
+                    e2e_fresh.sh were not in scope for this change: nothing served, rendered or authorised
+                    moved — the gate reads the same seed bytes and the same schema.
+next              the residue worth carrying: (a) there is no census of text columns whose *data* is bounded
+                    while no door names them (users.role, merchants.status, reviews.status, documents.kind,
+                    resource_pools.kind, categories.kind, tenants.status, user_preferences.kind|source|scope,
+                    offerings.price_source, moderation_cases.auto_action and the provenance columns) — bounded
+                    in practice, invisible to this gate by construction, and named rather than listed with
+                    values nobody authorised; (b) a transcription over an empty table answers only to its
+                    existence row, so 4 of the 9 door lists could drift unnoticed; (c) the polymorphic
+                    subject_type columns stay in poly_vocab on purpose — two hand lists of one vocabulary would
+                    need a third check to keep them honest. Standing reports unchanged: `saved_searches.notify`
+                    read by nothing; CommerceApiTest belongs to another stream; the drifted shared `nexus` demo
+                    database stays diagnostic-only and unreseeded; the events subject seam (D70) waits on a
+                    contract decision, not a check.
