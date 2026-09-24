@@ -15,7 +15,8 @@
  * declared by the service — that is a page a consumer can be sent to with nothing behind it. Everything
  * else is reported rather than judged: the contract also documents workspace, admin and later-phase
  * surfaces, and an absent one of those is a roadmap fact. A documented *write* that is unbuilt is a
- * decision (D34 keeps §8's POST unbuilt), so it is listed and not failed on.
+ * decision (that was §8's collection POST until D61 served it as a draft; the publish verb is still unbuilt,
+ * still on purpose), so a write is listed and not failed on either way.
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';

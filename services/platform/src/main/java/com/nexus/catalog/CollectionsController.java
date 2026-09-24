@@ -23,8 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * API_CONTRACT §8 — the public reads over collections and guides. There is no {@code guides} table: a guide
  * is {@code collections WHERE kind = 'guide'}, so all four endpoints answer from {@link CollectionsRepository}
- * and differ only in the {@code kind} they pin. The §8 write ({@code POST /api/v1/collections}) is not here:
- * this controller holds no session, and a consumer-facing read is not where a row gets created.
+ * and differ only in the {@code kind} they pin. The §8 write is in {@link CollectionsWriteController}: this
+ * class holds no session, and every projection here is built for an anonymous reader — which is why nothing in
+ * it is allowed to depend on who is asking.
  *
  * <p>What the handlers add over the repository is the resolution and the attribution:
  * <ul>
@@ -52,8 +53,12 @@ public class CollectionsController {
     /** Same TTL as the §4 directory: cached cards age, and {@code as_of} is what makes that visible. */
     private static final String CACHE = "public, max-age=60, s-maxage=300, stale-while-revalidate=86400";
 
-    /** The kinds §8 and DATABASE.md §3.9 define. */
-    private static final List<String> KINDS = List.of("collection", "guide", "itinerary");
+    /**
+     * The kinds §8 and DATABASE.md §3.9 define — and the one list both sides read: the directory narrows
+     * {@code ?kind=} through it, and the draft write refuses anything outside it, so a kind nobody can read can
+     * never be created.
+     */
+    static final List<String> KINDS = List.of("collection", "guide", "itinerary");
 
     private static final List<String> GENERATED_BY = List.of("ai", "editor", "creator");
     private static final List<String> CURATED_BY = List.of("editorial", "creator", "model", "ai");
@@ -192,8 +197,12 @@ public class CollectionsController {
 
     // ---- the §8 view ------------------------------------------------------
 
-    /** The columns both surfaces render: identity, provenance and counts, with no item resolution. */
-    private static Map<String, Object> summary(Map<String, Object> row) {
+    /**
+     * The columns both surfaces render: identity, provenance and counts, with no item resolution.
+     * Package-private so {@link CollectionsWriteController} answers a create with this same projection: two
+     * copies of a view are two things that can disagree about what {@code generated_by} means (D44).
+     */
+    static Map<String, Object> summary(Map<String, Object> row) {
         Map<String, Object> seo = Json.jsonObject(row, "seo");
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("id", Json.str(row, "id"));
@@ -255,7 +264,7 @@ public class CollectionsController {
     }
 
     /** The author as stored — a real account or nothing. Never a persona. */
-    private static Map<String, Object> authorOf(Map<String, Object> row) {
+    static Map<String, Object> authorOf(Map<String, Object> row) {
         String id = Json.str(row, "author_id");
         String name = Json.str(row, "author_display_name");
         if (id == null || name == null) {

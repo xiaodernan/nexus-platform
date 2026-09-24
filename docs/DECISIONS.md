@@ -576,6 +576,13 @@ invented by the platform.** §8 now states it that way.
 page, so it belongs behind the workspace permission chain with the §27 authorization recorded on the row, not
 beside four anonymous cacheable reads.
 
+**Corrected by D61, in part.** The route is served now, and what it serves is a draft: `visibility='private'`,
+`published_at` null, so it creates no publishable consumer page and therefore needs none of the authority this
+paragraph is waiting for. The wait itself was also mis-described — `collections` carries `tenant_id` and
+`author_id` and no merchant column, so there is no workspace permission chain that *could* guard a row this schema
+cannot attribute to a workspace (D50 measured that). What remains unbuilt is the verb that publishes, and D61
+asserts its absence off the running router rather than off this sentence.
+
 ## D35 One rounding convention, and the rating behind every rendered rating — 2026-09-23
 
 §19 says a number a consumer can see must carry the fact behind it. The card renders
@@ -2012,6 +2019,11 @@ and both such routes live in `MerchantContentController` — untracked, another 
 state nothing in this build can make: a moderation case whose `subject_id` points at no review row — cases and
 reviews are written together, so the branch is an internal-consistency guard, not a reachable refusal.
 
+**Corrected by D61, in part:** `slug_taken` now has a door in this lane too — `POST /api/v1/collections` answers
+it from `collections_tenant_id_slug_key`, and `CollectionDraftWriteTest.theIndexIsTheReplayGuard` is the witness.
+What is not corrected is the other two: the `MerchantService` caller named above is still the only producer of that
+code on a merchant row, and it is still unserved here.
+
 That is a correction to D55 as much as a result: its "nine with real doors" was a count of files in this lane,
 not of doors a test can knock on. Three of the nine were tracked code behind an untracked door or a state no door
 creates, and the census cannot tell those apart — only reading the caller does.
@@ -2191,6 +2203,158 @@ stream's work, so the gate it now belongs to is the e2e, and widening CI is thei
 task #9's browser leg either: the read slice above is HTTP against live data, not a rendered page, and the web
 app is still another stream's dirty tree. And it does not reconcile the two `nexus` databases on this host —
 which container is authoritative is documented in `STATUS.md` §54 rather than changed here.
+
+## D61 The write that needed a decision, and the half that did not — 2026-09-25
+
+### 1. What was actually blocked
+
+Task #34 carried §8's two writes as "needs a design decision first", and for one of them that was true. Measured
+rather than argued: `collections` has `tenant_id`, `author_id` and **no merchant column** (V1's own DDL, re-read
+before writing this), so there is no `@RequiresPermission` that could guard a row the schema cannot attribute to a
+business — the workspace chain guards merchant-scoped rows and this table is not one. §27 reserves publication for
+a human decision. So the open question is which authority owns a published guide — platform, author, or a merchant
+once the table can name one — and inventing a permission string to satisfy an interceptor would have been
+inventing product semantics, which is not mine to do.
+
+What the block conflated was **create** and **publish**. A row that no read serves settles none of those
+questions: it is not a ranking input (§66/§67's organic order takes no placement input), not a claim shown to a
+stranger, not demo content (§109), and not a publication (§27). It is a person's own text in a private state — the
+one state a §8 write can occupy without anybody having agreed on ownership first. So this unit ships that half and
+leaves the other open, with the line between them now enforced by code rather than by a comment.
+
+### 2. What landed
+
+`CollectionsWriteController` — `POST /api/v1/collections`, `@RequiresAuth`, `201` — and three rules whose teeth are
+named:
+
+- **The trust-bearing columns are literals in the `INSERT`, not body fields.** `author_id` is the session's
+  subject; `visibility='private'`, `published_at` null, `data_origin='user'`, `seo='{}'`, `tenant_id` the
+  request's tenant. Provenance, publication and the demo badge are all things that *happened* to this row rather
+  than things its author declared. A body sending any of those six gets `422` naming the reason for that key; any
+  key the route does not read gets the same refusal with the accepted list, because a silently-dropped field is
+  how `titel` comes back as "the API lost my title".
+- **Publication is not routed.** No verb in this build stamps `published_at`, so §27 holds by construction. That
+  sentence used to be prose in `API_CONTRACT`; it is now a question put to the running
+  `RequestMappingHandlerMapping`, which enumerates every `(method, path)` under `/api/v1/collections*` and
+  `/api/v1/guides*` and refuses anything beyond the four reads plus this create — compared for equality, because a
+  handler with no declared verbs answers every verb, which is exactly how a publish would sneak in.
+- **Replay is settled by the index.** `collections_tenant_id_slug_key` (V1's `UNIQUE (tenant_id, slug)`) makes a
+  retried slug one row and a `409 slug_taken` naming the id, kind, visibility, publication state and ownership of
+  the row it hit. That is D45's choice for a retried reservation, and the reason this route demands no
+  `Idempotency-Key`: a stored answer would be a second record of a fact the constraint already guarantees.
+
+Two reuse decisions, both D44's "ask the owner, don't copy the predicate": `kind` is checked against
+`CollectionsController.KINDS`, the same list the directory filters `?kind=` with, so a kind nobody can read cannot
+be created; and the response is that controller's own `summary()`/`authorOf()` projection of the stored row plus
+the fields only a write can state (`status`, `status_note`, `authorisation_basis`, `publish_requires`, `replay`,
+`as_of`), so the author sees the draft exactly as a directory will see it once published — including the parts that
+are still null. `items` is stored as written after shape validation, and a typed `{type,text}` block passes through
+untouched, because §8's read is what resolves ids and already names the ones it could not on `dropped_item_ids`.
+
+### 3. The mutation run, and the three corners it caught
+
+Nine ways to break a promise, each applied to the real source, each reverted. These are the verdicts of the pass
+run against the repaired class; the pass before it differs in two rows, and that difference is the section below.
+
+```
+M1 SCOPE loses `published_at is not null`             RED 1/6 — aDraftIsNotAPublication
+M2 SCOPE loses `visibility = 'public'`                RED 1/6 — aDraftIsNotAPublication
+M3 the INSERT writes 'public' instead of 'private'    RED 3/6 — aDraftIsNotAPublication, authAndTenantAreBothLoadBearing,
+                                                          theIndexIsTheReplayGuard
+M4 refuseUnsettable() never called                    RED 1/6 — theTrustBearingColumnsAreNotBodyFields
+M5 the INSERT badges a person's draft 'demo'          RED 2/6 — aDraftIsNotAPublication, authAndTenantAreBothLoadBearing
+M6 a @PatchMapping(/collections/{slug}) lands on the create handler
+                                                      RED 6/6 — every method in the class
+M7 @RequiresAuth deleted from the route               RED 1/6 — authAndTenantAreBothLoadBearing   (green on the two passes before)
+M8 the cover_url scheme check switched off            RED 1/6 — refusalsAreSpecific
+M9 the 409 always claims the row is the caller's      RED 1/6 — theIndexIsTheReplayGuard
+```
+
+Three of those nine had to be earned, because the class that was supposed to catch them was itself broken three
+different ways, and each breakage was invisible in a different manner.
+
+**M2, green on pass 2: an AND tested on one corner is half an AND.** §8's publishability is
+`visibility='public' AND published_at IS NOT NULL`, and the original walk went created → flip `visibility` alone →
+stamp `published_at`. Every state it visited had `published_at IS NULL` or both facts true, so deleting the
+visibility half of `SCOPE` — for the directory, the by-slug page, `/guides`, and the favourites door — changed
+nothing observable and the class stayed green. The walk now covers all four corners on the row it created: neither
+(hidden), dated but still private (hidden, and the favourites door says so too), public-flagged but never dated
+(hidden), both (served). That third state is what M2 needed to find anything.
+
+**M7, green on pass 2: a 401 with two independent causes.** Deleting `@RequiresAuth` left the anonymous call
+answering `401 unauthorized` and writing no row, because `Req.userId` throws the same code with the same message
+one line later inside the handler. The HTTP leg witnesses the outcome; it cannot witness which half refused. So
+the test should also ask the method — the one mapped `POST` in that class must declare `@RequiresAuth` — which is
+the same two-halved claim `IdempotencyPairingTest` makes about `@Idempotent` and `IdempotencyService.run`: a door
+that happens to be shut is not a door.
+
+**M7, green again on pass 3: an assertion object is not an assertion.** The fix above was written as
+`assertThat(method.isAnnotationPresent(RequiresAuth.class)).as("%s is §8's only write…", name)` inside a stream
+`peek`, terminated by `.count()`. That compiles, reads like a gate, and decides *nothing* — `assertThat` returns an
+object and `as` returns the same object with a nicer message attached; only the calls further down a chain
+(`isTrue`, `isEqualTo`, `hasSize`) assert anything. Pass 3 therefore reproduced pass 2's green, and the difference
+between "the gate holds" and "there is no gate" was visible as nothing at all. The check now collects the mapped
+methods, asserts the list's size, and calls `.isTrue()` on each element in a loop. A mutation that survives two
+passes is not evidence about the source; it is evidence about the test — and on the second pass that was the only
+thing it was evidence about.
+
+**M9 is the same finding applied before it had to be caught.** `owned_by_caller` has two values, and the original
+class visited only one: the retry against the caller's own row. Hard-coding the field to `true` therefore passed
+every assertion that touched it. The test now clashes with a draft written by a *second* account in the same
+tenant, and asserts the false branch, the id it names, the visibility it names, and that the clash wrote nothing.
+In the seeded demo tenant this is the ordinary case rather than the edge one — `select visibility, data_origin,
+count(*) from collections group by 1,2` there is four rows, all `public`/`demo`, so anyone typing one of those four
+slugs is clashing with a row they do not own.
+
+Because "a chain that never reaches a terminal assertion" is a *shape* rather than a typo, the whole test tree was
+swept for it: every `assertThat(` / `assertThatThrownBy(` / `assertThatCode(` / `assertThatExceptionOfType(` in
+all 40 files under `src/test/java`, flagged when its following chain contains no call other than
+`as`/`describedAs`/`withFailMessage`. The result is zero beyond the one already repaired — which counts for
+something only because the sweeper was falsified first on a planted file, where it named all four vacuous cases
+(including `assertThat(map.get("k)"))`, whose string holds an unmatched bracket) and left the two real assertions
+alone. It is a reading aid, not a gate: it cannot see a chain that ends in a *wrong* terminal, and it does not
+pretend to. Turning it into one is D62's job.
+
+M6 is worth reading carefully, because it failed harder than designed. Adding a second mapping annotation to the
+create handler does not add a verb to the route: Spring refuses the pair, `POST /api/v1/collections` stops being
+mapped at all, and the six tests fall down together — the 405 form of "a publish sneaked in" is also the form of
+"the create disappeared", and only the router-set assertion tells those two apart.
+
+### 4. Corrections this forces in the docs
+
+- `API_CONTRACT` §8's "`POST /api/v1/collections` is not served" is now false and reads *served, and what it serves
+  is a draft*; the reason the route was held open stays printed, because it is exactly true of publication.
+- §1's list of writes whose replay lives in an index: this unit's first patch rewrote that sentence's opening
+  numeral ("Two" → "Three") and then named two, which is the defect I report in other people's prose. The numeral
+  is gone — the sentence now says "writes outside that list", the one thing this unit can vouch for. Two separate
+  reasons not to restate a count there: the census belongs to `IdempotencyPairingTest`, and another stream's
+  commerce routes are sitting in a dirty tree right now, so any number written this morning would be a number about
+  a build that does not exist yet.
+- D56 §2 said `slug_taken` "has no door in this build". It has one now, and it is in this lane.
+
+```
+new                 CollectionsWriteController · CollectionsRepository +insertDraft/anyRowById/anyRowBySlug
+                    CollectionDraftWriteTest (6 methods)
+changed             CollectionsController: KINDS / summary() / authorOf() opened to package use, no behaviour edit
+witnesses           the §8 invariant in four states · the router asked, not the prose · 6 reserved keys + a typo
+                    · 10 refusals that write nothing · the 409 that names the row it hit · per-tenant slugs
+mutations run       9, all red on the pass after the repairs. Before the repairs: M2 green (one corner of an AND
+                    unvisited), M7 green twice — the second time because the fix's AssertJ chain ended at `.as(…)`
+                    with no terminal call, i.e. it asserted nothing
+```
+
+What this does not do. It does not decide who publishes a guide, and it does not ship the verb that would: the row
+becomes readable by a stranger through SQL a publisher runs, which is the honest shape of "a human decides" while
+the authority question is open. It does not resolve `items` at write time — a draft citing an unpublished shop is an
+honest draft, and §8's read names what it cannot resolve. It does not touch `POST /api/v1/share`, the other half of
+task #34: that one was settled by another stream, in a `V7__share_links.sql` and a `com.nexus.growth.ShareController`
+that are still untracked in this working tree as of this writing, so their verdict is their own commit's to make.
+And it notes, without fixing, that `collections` is one of six tables carrying an `updated_at` column with no
+`*_updated_at` trigger (measured against the live schema: `business_hours`, `availability_slots`, `reviews`,
+`collections`, `user_preferences`, `review_summaries`) — the two writers that exist today set the column by hand in
+their `UPDATE`, so nothing lies right now, and nothing guards the writer that forgets. A migration is shared state,
+so it is reported rather than taken.
+
 
 ## D60 Nobody had ever asked who was signed in — 2026-09-24
 

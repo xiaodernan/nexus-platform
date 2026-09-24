@@ -106,6 +106,59 @@ public class CollectionsRepository {
     }
 
     /**
+     * The author's own row by id, with <b>no</b> publishability predicate. Two different questions use this:
+     * the write response reads back what it just stored (a draft fails {@link #PUBLISHABLE} by design, so the
+     * directory's scope would hide the row from the person who owns it), and the collision answer names the
+     * live slug before the unique index has been explained. Never a consumer read.
+     */
+    public Optional<Map<String, Object>> anyRowById(TenantContext tenant, java.util.UUID id) {
+        return jdbc.firstForTenant(tenant, String.join("\n",
+                "select " + COLUMNS,
+                FROM,
+                "where c.tenant_id = :tenant_id",
+                "  and c.id = :id",
+                "limit 1"), Json.map("id", id));
+    }
+
+    /**
+     * The row a {@code POST /api/v1/collections} collides with, whatever its visibility. {@code UNIQUE
+     * (tenant_id, slug)} is V1's, so this is at most one row, and it is the only way the 409 can name the id
+     * the caller has to reason about instead of guessing whether their own write went through.
+     */
+    public Optional<Map<String, Object>> anyRowBySlug(TenantContext tenant, String slug) {
+        return jdbc.firstForTenant(tenant, String.join("\n",
+                "select c.id, c.kind, c.slug, c.visibility, c.data_origin, c.author_id, c.published_at",
+                "from collections c",
+                "where c.tenant_id = :tenant_id",
+                "  and c.slug = :slug",
+                "limit 1"), Json.map("slug", slug));
+    }
+
+    /**
+     * Store a draft. Every trust-bearing column is a literal here rather than a parameter, because this route
+     * can only be reached by an authenticated person and the row's own facts follow from that:
+     * {@code author_id} is the session's subject, {@code visibility='private'} and {@code published_at is
+     * null} together keep §8's directory from serving an unfinished page, {@code data_origin='user'} is what
+     * §109 means by not passing a person's writing off as synthetic (and the same token the review write uses),
+     * and {@code seo} stays {@code {}} because provenance and human-review claims belong to the publisher.
+     * There is deliberately no {@code update} beside this: stamping {@code published_at} is §27's human
+     * decision, and this build routes that to no one.
+     */
+    public Map<String, Object> insertDraft(TenantContext tenant, java.util.UUID authorId, String kind,
+                                           String slug, String title, String titleZh, String description,
+                                           String coverUrl, String itemsJson) {
+        return jdbc.insertForTenant(tenant, String.join("\n",
+                "insert into collections (tenant_id, author_id, kind, slug, title, title_zh, description,",
+                "                       cover_url, items, visibility, data_origin, seo)",
+                "values (:tenant_id, :author_id, :kind, :slug, :title, :title_zh, :description, :cover_url,",
+                "        cast(:items as jsonb), 'private', 'user', '{}'::jsonb)",
+                "returning id"),
+                Json.map("author_id", authorId, "kind", kind, "slug", slug, "title", title,
+                        "title_zh", titleZh, "description", description, "cover_url", coverUrl,
+                        "items", itemsJson));
+    }
+
+    /**
      * §8's publishability rule as one callable question, composed from the same fragments the directory reads
      * with. Needed by anything that must not hand out a pointer to a row the reader can never open —
      * {@code POST /api/v1/me/favorites} took any collection in the tenant until D50, which let a saved item link

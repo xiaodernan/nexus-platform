@@ -49,10 +49,12 @@ Data access rules (no `LLM → database` path, §52):
   is keyed by scope and header together, so every caller that sent no header lands on the same row, the same
   account is handed back somebody else's stored answer, and a different account is refused until the TTL ends.
   `IdempotencyPairingTest` reads the handlers and refuses that pairing; `IdempotencyService.run` refuses a blank
-  key rather than deriving one. Two other §4/§6 writes keep their replay protection elsewhere: a retried
+  key rather than deriving one. Writes outside that list keep their replay protection elsewhere: a retried
   **reservation create** is settled by `reservations_slot_user_uniq` (V2 — one live hold per person per slot) and
   answers with the same code, at 200 rather than 201 and with a `status_note` that says so, so it demands no
-  header; **checkout**, **payment** and
+  header; §8's **collection draft create** does the same, settled by `collections_tenant_id_slug_key`
+  (V1's `UNIQUE (tenant_id, slug)`) and answers a retried slug with `409 slug_taken` naming the row it hit,
+  so it too demands no header; **checkout**, **payment** and
   **campaign publish** are documented here while no route in this build serves them, so nothing declares them.
   The replay lasts a window, not forever: the claim row carries `expires_at = now() + nexus.idempotency.ttl-seconds`
   (86400 by default) and `run` compares that column with `now()` whenever its insert loses to a row that is
@@ -408,13 +410,32 @@ apply to both objects:
 The four §8 reads above are served by `CollectionsController` (`com.nexus.catalog`): public, no session,
 `Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=86400`, `Vary: X-Tenant`, and every one
 of them answers only rows that are `visibility='public'`, `published_at IS NOT NULL` **and** attributable (D34).
-`POST /api/v1/collections` is not served, and the reason is now measured rather than asserted: the sentence used
+`POST /api/v1/collections` **is served, and what it serves is a draft** (D61) — and the reason it was held
+open is worth keeping, because it is still exactly true of *publication*: the sentence used
 to be that the write "belongs behind the workspace permission chain", but `collections` carries `tenant_id` and
 `author_id` and **no merchant column** (verified against the live table), so no workspace permission can guard a
 row this schema cannot attribute to a workspace. The open question is therefore which authority owns a published
 guide — the platform, the author, or a merchant once the table can name one — not how to wire a door that has no
-frame. `POST /api/v1/share` needs a link table that V1–V6 never created (§45 records both as a decision, not as
+frame. `POST /api/v1/share` needs a link table that V1–V6 never created (§45 records it as a decision, not as
 backlog).
+**What that write does (D61).** `@RequiresAuth` and nothing more, because that is the only authority this
+route needs and inventing a permission for a row the schema cannot attribute to a business would be the §27
+failure in a new costume. `author_id` is the session's subject and the other five trust-bearing columns are
+literals in the `INSERT` — `visibility='private'`, no `published_at`, `data_origin='user'`, `seo={}`,
+`tenant_id` the request's tenant — so a body that sends `visibility`, `published_at`, `data_origin`,
+`author_id`, `tenant_id` or `seo` is answered `422` naming the reason for that key, and any key the route
+does not read is refused the same way with the accepted list: a silently-dropped field is how `titel` comes
+back as 「the API lost my title」. `kind` is checked against the same `KINDS` list the directory filters
+`?kind=` with, so a kind nobody can read cannot be created. `items` is stored as written — every element an
+object, `subject_type` one of `merchant|offering|guide|collection` with a uuid `subject_id`, and a typed
+`{type,text}` block passing through untouched, because §8's read is what resolves ids and it already names
+the ones it could not on `dropped_item_ids`. Publication is still not a verb: no route stamps
+`published_at`, and `CollectionDraftWriteTest` asks the running router for every `(method, path)` under
+`/api/v1/collections` and `/api/v1/guides` and refuses anything beyond the four reads plus this create, so
+§27's human decision is a checked fact about the routing table rather than a comment. The same test then walks every corner of that AND on the row it created:
+dated but still private stays hidden, public-flagged but never dated stays hidden, both appears.
+The favourites door is checked in the same three states, because it asks the same predicate rather than a copy of it. The audit action is `create_collection_draft`.
+
 Referral rewards are recorded only on genuine conversion events (§110 forbids fake growth).
 
 Programmatic SEO (§29/§30) reads the `seo_pages` projection, which the platform owns — the web edge never

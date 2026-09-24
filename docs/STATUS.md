@@ -2524,3 +2524,50 @@ e2e                      PASS end to end: 525 reads, three walks, 15 signed-in c
 ```
 
 Standing reports unchanged.
+
+## 57. §8's write opens, and stops short of the publish button (2026-09-25)
+
+`POST /api/v1/collections` has been in the contract since the contract was written and unserved since then,
+because the decision behind it — who owns a *published* guide — is not this lane's to make: `collections` carries
+`tenant_id` and `author_id` and no merchant column, so the workspace permission chain cannot guard it either. D61
+separates the two halves of that sentence. A draft settles nothing, because §8 serves a row only when
+`visibility='public'`, `published_at` is set, and the row is attributable. So the door is open now:
+`@RequiresAuth`, one row per accepted call, `author_id` read off the session while the other five trust-bearing
+columns are literals in the `INSERT`, six reserved body keys refused by name with the reason, and a retried slug
+answered `409 slug_taken` from V1's `collections_tenant_id_slug_key` — naming the row it hit and whether that row
+is the caller's own. No verb in this build stamps `published_at`, and the test asks the running router whether that
+is still true rather than reading this file.
+
+Nine ways to break a promise were applied to the real source and reverted, one at a time: each half of the
+publishability AND, both `INSERT` literals, the reserved-key refusal, the auth annotation, the cover-scheme check,
+the 409's ownership field, and a publish verb sneaking in as a second mapping annotation. Three of the nine had to
+be earned. Two came back **green** on the first pass — the class had walked only one corner of an AND, and it had
+only ever clashed with its own row. The auth one then came back green a *second* time after being "fixed", because
+the fix was `assertThat(…isAnnotationPresent(RequiresAuth…)).as("…")` with no terminal assertion at the end of the
+chain: an assertion object, discarded. That shape is a class of bug rather than a typo, so all 40 platform test
+files were swept for it (zero, with the sweeper falsified on a planted file first). The run that matters is the one
+after the repair.
+
+```
+new                 CollectionsWriteController · CollectionsRepository +3 · CollectionDraftWriteTest (6 methods)
+suite               212 run · 7 failing, all of them `CommerceApiTest` (another stream's untracked package —
+                    reported, not touched) · this unit's 6 green
+e2e                 blocked tree-wide at step 4/10 by another stream's untracked `V7__share_links.sql`: the
+                    loader's checked-in `out/00_truncate.sql` names 22 tables, `share_links` FKs into one of
+                    them, so `load.sh` dies on "cannot truncate a table referenced in a foreign key constraint".
+                    Steps 0–3 green. §8's served set is therefore witnessed by the suite's own router read,
+                    not by this gate. D62 is that gap.
+```
+
+```
+mutations           9 applied, 9 red on the pass that followed the repairs (D61 §3 names both greens: an AND
+                    missing a corner, and a chain that never reached a terminal assertion)
+swept               all 40 src/test/java files for that chain shape: one case, the M7 one; the sweeper was
+                    falsified on a planted file before its zero was quoted
+```
+
+Standing reports unchanged, plus one new: `collections` is one of six tables with an `updated_at` column and **no**
+`*_updated_at` trigger (`business_hours`, `availability_slots`, `reviews`, `collections`, `user_preferences`,
+`review_summaries`). The two writers that exist today set the column by hand in their `UPDATE`, so nothing renders
+a stale timestamp now; what guards the writer that forgets is nothing. A migration is shared state, so this is
+reported rather than taken.
