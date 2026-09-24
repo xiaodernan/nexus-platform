@@ -2914,3 +2914,52 @@ next              two ways to close the 11-unbounded finding and neither is mine
                     `audit_logs` rows, so the honest home for that is the Java suite (a test that writes an
                     event and asserts its subject_type resolves), not this file. Recorded as a report; also
                     still open: `saved_searches.notify` read by nothing.
+## 66. A telemetry door's second half, witnessed (2026-09-25)
+
+`EventsIngestTest` had three tests proving `actor_type` is a server fact and **none** touching the other half of
+the same pair rule — `subject_type` / `subject_id`. Walking that half found a live seam: an unauthenticated
+`POST /api/v1/events` (anonymous + `session_id`, which §11 allows) may claim any `subject_type` bounded only by
+`^[a-z][a-z0-9_]{0,31}$` and any `subject_id` uuid; nothing resolves the key, checks the tenant, or consults a
+declared vocabulary. `v_merchant_funnel` (V1:1015) joins on exactly that pair and is what the merchant-facing
+overview answers with, so a merchant's displayed `views` count can be moved by an outside caller that names the
+merchant id — which the consumer catalogue publishes.
+
+```
+new/changed       services/platform/src/test/java/com/nexus/growth/EventsIngestTest.java — three tests: a claimed
+                    `merchant` subject is stored as claimed and takes v_merchant_funnel.views 0 -> 1; a type name
+                    that resolves to nothing is accepted and stored (with the merchant row count asserted zero to
+                    prove the id resolves nowhere); and the pair rule itself, pinned so a future fix reads as a
+                    change rather than a regression. No production behaviour changed.
+measured          API_CONTRACT.md:516 documents the batch body as {name, properties, occurred_at, session_id} —
+                    subject_type/subject_id are read by the controller and named by the contract nowhere.
+                    Who consumes the pair, from a grep of `src/main/java` for `from events|join events|
+                    v_merchant_funnel|v_north_star`: the merchant-facing side (AnalyticsRepository:41,
+                    MerchantOverviewController, MerchantContentController:410, MerchantAnalyticsRepository,
+                    CustomerRepository) via the funnel view; admin reports (AdminAiRepository,
+                    AdminSearchAnalyticsRepository); and MeController:158, whose export selects on the
+                    *actor* (server-computed) and echoes the claimed subject back to its own owner. No ranking or
+                    search-scoring query appears in that set, so the contract's §66 promise holds —
+                    search *analytics* is a report, not a rank input.
+                    Contract coverage, sentence by sentence: "never validates a business invariant" (an
+                    unresolved subject is therefore consistent with the design, not a violation of it);
+                    "must not be used as a write path for anything a user can see" (the event row is not
+                    displayed, but the derived count is — the purpose is breached in spirit, the letter is not);
+                    "no free-text field is stored" (subject_type is bounded by the same kind of shape rule as
+                    `name`, so calling one free text and the other not would be arbitrary — stated as a question
+                    about the clause, not as a defect).
+mutations         M1 (subject_type must be one of the declared names) reddened only `undeclaredSubjectTypeIsAccepted` and left
+                    the funnel test GREEN: `merchant` is a declared name and the id is a real merchant, so the
+                    merchant-visible count still moved on an anonymous caller's claim. Narrowing what a subject
+                    may be CALLED does not touch who may claim one or whether it resolves.
+                    M2 (drop the client's subject pair) reddened all three, including the pair-rule test — the
+                    one guard the door has today, so a test surviving that would have pinned nothing.
+                    After both restores: 12/12 green, `git status` clean for the mutated file.
+gates             mvn -o test -Dtest=EventsIngestTest: Tests run: 12, Failures: 0 (was 9 before this unit).
+                  No gate file changed; quality.sql and the seed are untouched by this unit.
+next              the decision, which is not mine to make silently: resolve the key at the door, drop
+                    client-claimed subjects for anonymous callers, or document `subject_type`/`subject_id` in the
+                    body and label the funnel as unverified telemetry. The M1/M2 split below is the argument for
+                    choosing deliberately rather than "adding validation": a declared vocabulary alone leaves the
+                    merchant-visible count open. Two open reports unchanged: `saved_searches.notify` read by
+                    nothing; the drifted shared `nexus` demo database (11 quality.sql checks red there for drift
+                    reasons, including D69's new pair row naming the 5 application-written pairs).

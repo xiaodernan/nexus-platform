@@ -3040,3 +3040,87 @@ while a schema that grows does not.
 Restored (both plants removed, table dropped): `all 185 checks passed`, and the row's own detail says so in
 plain terms — `4 of 12 pair(s) carry seeded rows; 1 is bounded by a CHECK; each seeded one is resolved by a
 probe here`.
+## D70 The events door checks who acts, and never asks what is acted on — 2026-09-25
+
+### 1. The half that was already witnessed
+
+`EventsIngestTest` had three tests about `actor_type`, and they are good ones: an anonymous batch is stored with
+forced anonymous attribution; a signed-in caller's actor is the principal "never whatever the payload claimed"
+(that test posts `actor_type:"anonymous"` + a random `actor_id` under a user token and reads back `user`); and
+the pair/dedup/idempotency limits. D61's rule is that a two-sided thing needs *both* sides visited, and the
+other side of this door — `subject_type` / `subject_id` — had no test at all. Not a weak one. None.
+
+### 2. What the door actually does with a claimed subject
+
+`API_CONTRACT.md:516` documents the ingest body as `{events:[{name, properties, occurred_at, session_id}]}`. The
+controller reads two more fields from that object — `subject_type`, validated only against
+`^[a-z][a-z0-9_]{0,31}$`, and `subject_id`, read as a uuid — and the only thing they must satisfy together is
+`subject_type_and_id_must_pair`. Nothing asks whether the type is one this system has, whether the id exists
+anywhere, or whether the caller could name that row if it did. So an **unauthenticated** call (anonymous +
+`session_id`, which §11 allows) can append an event claiming `subject_type='merchant'` and any merchant's id.
+
+That would be a bookkeeping curiosity except for one join:
+
+```sql
+-- V1:1015, inside v_merchant_funnel
+LEFT JOIN events e ON e.subject_type='merchant' AND e.subject_id = m.id
+```
+
+and that view is what `MerchantOverviewController`, `AnalyticsRepository:41` and `MerchantContentController:410`
+answer the merchant-facing funnel with. Measured, in the new tests: a published merchant starts at
+`views = 0`, one anonymous POST naming it puts `views` at **1**. The counts a merchant reads are, in that
+direction, client-assertable.
+
+### 3. Where the contract already covers this, and where it does not
+
+Read fairly, the contract's own sentences cover less than hoped and more than feared:
+
+- "never validates a business invariant" — so accepting an unresolved subject is *consistent* with the design,
+  not a violation of it. This is not a bug report against the door; it is a gap the contract does not close.
+- "must not be used as a write path for anything a user can see — an event is an observation, not a record." The
+  event row itself is not displayed, so this clause is not breached; but the clause's whole purpose is that
+  nothing a user sees should be constructible through this door, and a funnel number shown to a merchant is
+  something a user sees, built out of what this door accepted.
+- "no free-text field is stored and nothing collected here may influence organic ranking (§66)." The §66 half
+  holds, and it is worth being exact about how that was checked: grepping `src/main/java` for
+  `from events|join events|v_merchant_funnel|v_north_star` returns the merchant-facing side
+  (`AnalyticsRepository:41`, `MerchantOverviewController`, `MerchantContentController:410`,
+  `MerchantAnalyticsRepository`, `CustomerRepository`), two admin report readers (`AdminAiRepository`,
+  `AdminSearchAnalyticsRepository`) and `MeController:158`, whose export selects on the *actor* — which is the
+  server-computed half — and echoes the claimed subject back to its own owner. No ranking or search-scoring query
+  is in that set; search **analytics** is a report, not a rank input. The free-text half is a reading question,
+  not a finding: `subject_type` is bounded by the same kind of shape rule as `name`, so calling one free text and
+  the other not would be arbitrary. Stated as a question, not as a defect.
+
+So the honest summary is: a documented-as-append-only telemetry door accepts an unvalidated `(type, key)` pair
+that a shipped view turns into a merchant-visible count, and no rule anywhere says that is allowed or forbidden.
+Deciding it — resolve the key, or drop client-claimed subjects for anonymous callers, or document the pair in the
+body and mark the metric as unverified — is a contract change and is left as an open decision, not implemented
+here. What ships today is the witness, so that whoever decides knows which way the tests will move.
+
+### 4. Mutations: two candidate fixes, and they do not catch the same thing
+
+
+Two candidate fixes, applied one at a time to `EventsController.validate`, each with the source restored before
+the next. Both were chosen because they are the two *different* things someone might mean by "validate the
+subject"; the matrix is what makes them different.
+
+| # | mutation | what it simulates | red | green |
+| --- | --- | --- | --- | --- |
+| M1 | the shape check becomes a declared set (`merchant`, `offering`, `location`, `review`) | reject a type the system does not have | `undeclaredSubjectTypeIsAccepted:177` | the funnel test, the pair test |
+| M2 | the pair is dropped on ingest (`subjectType`/`subjectId` forced to null) | ignore what the caller claims | all three new tests | none of them |
+
+M1's **green** is the finding, and it is the reason this unit stops at a witness. Under a declared vocabulary,
+`claimedSubjectIsStoredAndMovesTheFunnel` still passes: `merchant` is one of the four names, and the id it names
+is a real merchant's — so the funnel count still moved on an anonymous caller's say-so. Narrowing the type
+vocabulary closes the loud half (the `not_a_declared_type` row) and leaves the half that reaches a merchant's
+screen exactly where it was. Any fix that resolves the *key*, or restricts who may claim a subject, is a
+different change than any fix that restricts what a subject may be called, and the two are not interchangeable.
+
+M2 is the mirror: it kills all three, including `subjectMustArriveAsAPair` — dropping the pair unconditionally
+also drops the pair *rule*, which is the one guard this door has today. A test that had survived that would have
+been pinning nothing.
+
+Run on the restored tree afterwards: `Tests run: 12, Failures: 0`. `git status` shows no residue; the driver
+refused to start if a mutation string was already present, restored each case from an absolute-path backup, and
+the final `grep -c mutated` over the source printed `0`.

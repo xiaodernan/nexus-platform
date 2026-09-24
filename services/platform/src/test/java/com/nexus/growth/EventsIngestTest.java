@@ -128,6 +128,86 @@ class EventsIngestTest extends NexusIntegrationTest {
         assertThat(String.valueOf(row.get("actor_id"))).isEqualTo(user.toString());
     }
 
+    // ---------------------------------------------------------------- the subject half (D70)
+
+    /**
+     * Pins what the door does today with a caller-supplied <em>subject</em>, which is the half of the pair
+     * {@code authenticatedAttributionIsServerComputed} does not visit. Measured, not endorsed: the actor is a
+     * server fact, but a subject is accepted on shape alone — no declared vocabulary (V1:769 comments one, no
+     * CHECK exists), no resolution against any table, no tenant test — and {@code v_merchant_funnel} counts
+     * {@code subject_type='merchant'} rows as views/clicks/actions. The class-level javadoc and STATUS §66 name
+     * the open decision; this test is the witness that would go red if the door ever starts checking, which is
+     * the point of writing it down rather than leaving it to a comment.
+     */
+    @Test
+    @DisplayName("A claimed subject is stored as claimed and moves the merchant funnel; the pair rule still bites")
+    void claimedSubjectIsStoredAndMovesTheFunnel() {
+        UUID merchant = newMerchant(tenant, "funnel" + tag(), "published");
+        assertThat(funnelViews(merchant)).isZero();
+
+        String sid = session();
+        JsonNode body = Json.tree(postBatch(tenant, null, "evt-" + tag(), Map.of("events", List.of(
+                Map.of("name", "view", "session_id", sid,
+                        "subject_type", "merchant", "subject_id", merchant.toString())))).getBody());
+        assertThat(body.path("accepted").asInt()).isEqualTo(1);
+        assertThat(body.path("rejected").asInt()).isZero();
+
+        Map<String, Object> row = row("select subject_type, subject_id::text as subject_id, actor_type"
+                + " from events where session_id = :s", Map.of("s", sid));
+        assertThat(row.get("subject_type")).isEqualTo("merchant");
+        assertThat(row.get("subject_id")).isEqualTo(merchant.toString());
+        assertThat(row.get("actor_type")).isEqualTo("anonymous");
+        assertThat(funnelViews(merchant)).isEqualTo(1L);
+    }
+
+    /**
+     * The vocabulary is a shape, not a declaration: a type name that resolves to nothing in this schema is
+     * stored anyway. The funnel does not count it (its join names {@code merchant} specifically), which is why
+     * this half is loud and that half is quiet — and why the census in {@code quality.sql} cannot see either,
+     * because it only reads the seed.
+     */
+    @Test
+    @DisplayName("An undeclared subject_type passes the shape gate and is stored unresolved")
+    void undeclaredSubjectTypeIsAccepted() {
+        String sid = session();
+        UUID nowhere = UUID.randomUUID();
+        JsonNode body = Json.tree(postBatch(tenant, null, "evt-" + tag(), Map.of("events", List.of(
+                Map.of("name", "view", "session_id", sid,
+                        "subject_type", "not_a_declared_type", "subject_id", nowhere.toString())))).getBody());
+        assertThat(body.path("accepted").asInt()).isEqualTo(1);
+        assertThat(body.path("rejected").asInt()).isZero();
+
+        Map<String, Object> row = row("select subject_type, subject_id::text as subject_id"
+                + " from events where session_id = :s", Map.of("s", sid));
+        assertThat(row.get("subject_type")).isEqualTo("not_a_declared_type");
+        assertThat(row.get("subject_id")).isEqualTo(nowhere.toString());
+        assertThat(count("select count(*) from merchants where id = :m", Map.of("m", nowhere))).isZero();
+    }
+
+    /** The one real guard on this half: the two columns must arrive together. Pinned so a later fix reads as a change, not a regression. */
+    @Test
+    @DisplayName("subject_type without subject_id (or the reverse) is rejected, never stored half")
+    void subjectMustArriveAsAPair() {
+        String sid = session();
+        JsonNode typeOnly = Json.tree(postBatch(tenant, null, "evt-a-" + tag(), Map.of("events", List.of(
+                Map.of("name", "view", "session_id", sid, "subject_type", "merchant")))).getBody());
+        assertThat(typeOnly.path("rejected").asInt()).isEqualTo(1);
+        assertThat(typeOnly.path("reject_reasons").get(0).path("reason").asText())
+                .isEqualTo("subject_type_and_id_must_pair");
+        assertThat(rowsFor(sid)).isZero();
+
+        JsonNode idOnly = Json.tree(postBatch(tenant, null, "evt-b-" + tag(), Map.of("events", List.of(
+                Map.of("name", "view", "session_id", sid, "subject_id", UUID.randomUUID().toString())))).getBody());
+        assertThat(idOnly.path("rejected").asInt()).isEqualTo(1);
+        assertThat(rowsFor(sid)).isZero();
+    }
+
+    private long funnelViews(UUID merchant) {
+        Map<String, Object> r = row("select views from v_merchant_funnel where merchant_id = :m",
+                Map.of("m", merchant));
+        return ((Number) r.get("views")).longValue();
+    }
+
     // ---------------------------------------------------------------- honest limits
 
     @Test
