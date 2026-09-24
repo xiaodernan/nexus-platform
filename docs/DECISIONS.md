@@ -2376,3 +2376,92 @@ measured first      one seeded user owns all 18 favourites: demo.consumer@exampl
 proofs              positive against :8090 on the demo DB · negative against an unknown tenant (rc=1, two failures)
 e2e                 PASS end to end with the new step: 525 reads, three walks, 15 signed-in checks, rung, ledger
 ```
+
+## D62 An assertion that decides nothing, and the gate that refuses it — 2026-09-25
+
+### 1. The lesson D61 recorded is not about that route
+
+D61's mutation table carries `M7 … (green on the two passes before)` and a paragraph explaining it. That paragraph
+describes a shape that cannot be fixed by remembering it, so it is repeated here in its own words and then made
+unenforceable-by-accident rather than unmissable-by-care.
+
+`assertThat(x)` hands back an `AbstractAssert` object. `.as("…")` hands back **the same object** with a nicer
+failure message attached. `isTrue()`, `isEqualTo(…)`, `hasSize(…)` are the calls that decide something. So the
+statement
+
+    assertThat(method.isAnnotationPresent(RequiresAuth.class)).as("%s declares its own door", name);
+
+inside a stream `peek` is not a weak assertion — it is not an assertion. It builds an object, describes it,
+discards it. It is green under every possible source, including the one where the annotation is gone, and it is
+typographically indistinguishable from the check it replaced. Two mutation passes passed before anyone read the
+line instead of the run.
+
+### 2. The shape is now refused across the module
+
+`AssertionChainShapeTest` is a plain JUnit class: it opens no context, so `TestConnectionBudgetTest`'s arithmetic
+is untouched (that gate skips any class naming neither `NexusIntegrationTest` nor `@SpringBootTest` — re-read
+before claiming it, D56's ceiling is easy to spend by accident). It walks `src/test/java` off disk in the house
+pattern of `IdempotencyPairingTest`, so the input is the tree rather than a list of files someone remembered.
+Measured over the tree as it stands: **41 test files, 1,505 `assertThat*(` entry points read, 0 chains that stop
+at a describer** — including the untracked packages this lane does not own.
+
+Three parts of the reader each had a defect in the first draft, which is why they are written down:
+
+- **Comment and literal bodies are blanked, never removed.** Positions, newlines and the delimiters themselves
+  survive, because `lineOf()` reports the line the developer sees and because a `)` inside `"a ) in a string"` is
+  not the end of an expression. A chain living in a `//` note is not a chain, and the gate must not ask anybody to
+  delete a comment.
+- **A qualifier decides whose method it is.** `Assertions.assertThat(x)` is ours; `helper.assertThat(x)` is
+  somebody else's and its contract is not this gate's business. The identifier before the dot is read, not
+  guessed from the method name.
+- **The describer set is closed and named:** `as`, `describedAs`, `withFailMessage`, `because`, `over`. Everything
+  else a chain calls is treated as a decision, including calls this file has never heard of. The rule errs toward
+  silence, which is the failure mode a mutation run can find; the other direction — inventing terminals — would
+  fail the tree walk on the next honest test anyone writes.
+
+### 3. "Found nothing" and "read nothing" print the same thing
+
+An empty list is the gate's passing output and its broken output, so two guards make the emptiness mean
+something:
+
+- **The census.** `assertThat(entries).isGreaterThan(1000)` runs before the verdict, where `entries` is what the
+  reader counted as it walked. The real number is 1,505, so the floor sits at two thirds of the tree: a narrowed
+  entry list, a failed walk or an over-aggressive mask goes red on the count before it can go green on the result.
+- **The planted cases.** `readerSeesWhatItClaims()` hands the reader ten fixtures and requires the exact verdict on
+  each. Four shapes must be flagged: a chain ending at `as`, a bare `assertThat(x)` with no chain at all, a chain
+  whose string literal holds a `)` and which ends at `describedAs`, and an `assertThatThrownBy(…).because(…)` with
+  no verdict. Six must not: the second case's own chain with `isTrue()` appended, an `Assertions.`-qualified chain
+  that decides with `containsExactly`, `helper.assertThat(…)` as somebody else's method, a chain inside a `//`
+  note, a `satisfies(…)` whose inner chain decides, and a text block full of unbalanced brackets. The reader is
+  therefore only trusted on the tree because it was tested against cases where it is known to be right or wrong —
+  the same reason a `WHERE` clause is verified by asking for rows that must not come back.
+
+### 4. Four ways to break the new gate, and the verdict each time
+
+| Mutation | Verdict |
+| --- | --- |
+| **M-a** — plant `assertThat(slug).as("planted for the mutation run");` in `CollectionDraftWriteTest:182` | **RED** 1/2 — `noTestStopsShortOfADecision`, reporting `CollectionDraftWriteTest.java:182: chain=[as]` |
+| **M-b** — drop `assertThat(` from the entry list, leaving only the three exception entry points | **RED** 2/2 — census reads `Expecting actual: 8 to be greater than: 1000` (1,505 entry points become 8), then the planted-case test |
+| **M-c** — `mask()` erases the whole file instead of blanking bodies (`new char[len]`) | **RED** 2/2 — same two guards |
+| **M-d** — declare `isEqualTo` a describer, i.e. over-report | **RED** 2/2 — planted cases first (`Expecting empty but was: ["2: chain=[isEqualTo]"]`), then 361 distinct real chains named |
+
+Each mutation was reverted from a byte-for-byte backup taken before the run and the gate re-verified green
+afterwards (`Tests run: 2, Failures: 0`). M-b and M-c are the two that matter most: they are the mutations where a
+gate would otherwise be **green forever and say nothing about itself**, and both die on the census rather than on
+the emptiness of its result list.
+
+Full suite after the change: `Tests run: 214, Failures: 7` — all seven in
+`com.nexus.commerce.CommerceApiTest`, an untracked package this lane does not own and the same seven D61 reported;
+the two methods of the new gate ran green inside that run.
+
+### 5. What D62 does not claim
+
+- A chain can reach a terminal and pick the wrong one: `isTrue()` on the wrong boolean, `isEqualTo()` against a
+  value the test computes from the same source it is checking. This gate reads shape, and shape is not meaning —
+  that difference is what a mutation run is for, which is why D61's table exists.
+- A describer this file has never seen is treated as a decision, so `assertThat(x).someNewDecorator()` passes. The
+  closed list in §2 is the known soft edge; adding to it is a deliberate act, and the census keeps anybody who
+  edits it honest about how much of the tree the reader still covers.
+- The walk is `services/platform/src/test/java`, which is where this lane's tests live. `apps/web`, `apps/ai` and
+  `packages/*` have their own gates and their own assertion libraries; nothing here claims their shape is sound.
+

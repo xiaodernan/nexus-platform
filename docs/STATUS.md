@@ -2571,3 +2571,32 @@ Standing reports unchanged, plus one new: `collections` is one of six tables wit
 `review_summaries`). The two writers that exist today set the column by hand in their `UPDATE`, so nothing renders
 a stale timestamp now; what guards the writer that forgets is nothing. A migration is shared state, so this is
 reported rather than taken.
+
+## 58. A green gate that asserted nothing, found by reading the line (2026-09-25)
+
+`assertThat(x)` returns an object, `.as("…")` returns the same object with a better message attached, and only
+calls like `isTrue()` / `isEqualTo()` / `hasSize()` decide anything. D61's own repair for mutation M7 was written in
+precisely that broken shape — a describer-terminated chain inside a stream `peek` — so it sat green through two
+mutation runs. The general finding is not about that route: **a statement that decides nothing is
+indistinguishable, on every possible source, from the gate it replaced.** Memory cannot hold that open, so a gate
+does: `AssertionChainShapeTest` walks `src/test/java` off disk (41 files, 1,505 `assertThat*(` entry points read,
+0 chains that stop at a describer, other streams' untracked packages included) and reports the file and line of
+anything it flags.
+
+Because an empty finding list is exactly what a clean tree and a blind reader both print, the gate is not allowed
+to testify on its own emptiness: it asserts its own census (over 1,000 entry points actually read, floor at two
+thirds of the tree) and it checks its reader against ten planted fixtures — four shapes that must be flagged, six
+that must not — before anything it says about the tree counts.
+
+```
+new                 AssertionChainShapeTest (2 methods; plain JUnit, so no context and no pool against D56's ceiling)
+mutations           4 run, all red, each reverted from a byte-for-byte backup and re-verified green:
+                      plant a describer-only chain in a real test   RED — CollectionDraftWriteTest.java:182, chain=[as]
+                      blind the reader to `assertThat(`              RED x2 — census reads `Expecting actual: 8` (1,505 entry points are 8 without it), then the planted cases
+                      mask() erases instead of blanking bodies       RED x2 — same two guards
+                      declare `isEqualTo` a describer                RED x2 — 361 real chains named
+suite               Tests run: 214, Failures: 7 — all seven com.nexus.commerce.CommerceApiTest (untracked, another
+                      stream, the same seven D61 reported); the new gate ran green inside that run
+next                task #38: the seed loader's truncate list vs. the migration set — fresh-DB gates are red tree-wide
+```
+
