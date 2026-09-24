@@ -3612,3 +3612,146 @@ which is not a rival vocabulary but a jsonb object (`ConversationService.java:33
 `Json.jsonObject`), so the two columns answer different questions and only one of them is a word list. The
 mistake was caught in the `pg_attribute` lookup before the entry shipped; `door_vocab`'s existence row exists
 because of it, and P5a/P5b are its proof.
+
+## D75 The census that asks the data instead of the code — 2026-09-25
+
+### 1. D74's residue paragraph, turned into a row
+
+D74 ended by naming what it could not see: "there is no census of text columns whose *data* is bounded while no
+door names them". That sentence is a to-do, so this unit went and measured exactly it — for every text column of
+every base table, how many distinct values does the shipped dataset actually carry?
+
+```
+232 text columns over 58 base tables, ~5 seconds of wall time on the gate database
+     — 57 tables this build writes, plus the gate's own `schema_migrations`: the census has no exclusion
+       list, so it scans the ledger too and finds one text column there (`version`, 7 values over 7 rows)
+ 75 carry <= 12 distinct values
+ 40 survive a window worth defending
+ 19 more carry 2..12 values but sit below the window's row floor
+  2 carry nothing at all: documents.error over 1040 rows, tenants.region_code over 1
+```
+
+The ledger is the window's best argument: it satisfies `n <= 12` with room to spare, and only the row floor
+keeps a gate from being required to answer for the tool that counts migrations.
+
+### 2. The window is the finding, not the plumbing
+
+`n <= 12` alone is not a vocabulary test, and the 75-column list shows why: four collections give
+`collections.title` four values and five users give `users.phone` five. Cardinality there is a fact about how
+many rows the demo has, not about the column's meaning — a gate over that window would demand an explanation
+for half the text columns in the schema and get 35 of them wrong.
+
+A vocabulary is a column whose values *repeat*, so the window is three terms together:
+
+```sql
+n <= 12 AND total >= 20 AND n * 4 <= total
+```
+
+Measured effect of each term, in order: 75 → 41 (the row floor) → 40 (the repeat term). The two numbers are
+close here because this dataset's small tables are small in a way that the row floor already catches; the
+repeat term earns its place on the columns the row floor misses, e.g. `offerings.price_source` with 3 values
+over 5,534 rows. A future `favorites` table with three rows and three values will not pass, which is the
+point.
+
+Two columns answer **0** distinct values over their rows and both stay inside the window (`0 * 4 <= total`).
+That is deliberate: an all-NULL column is the strongest form of "bounded", and `documents.error` — the place a
+chunking failure is supposed to be recorded, NULL on all 1,040 rows — is precisely the kind of fact a gate
+should keep visible rather than filter out as "no values to look at".
+
+### 3. Four kinds of answer, each re-reading its own assumption
+
+`vocab_answer` gives every windowed column a name and a kind. What makes the list a gate rather than a comment
+is that each kind is checked against a live mechanism, so an answer cannot outlive the fact it describes:
+
+| kind | still true when |
+| --- | --- |
+| `door` | the column is in `door_vocab` (D74's transcription of a Java list) |
+| `poly` | the column is a type column of a `poly_cat` pair (D71's registry) |
+| `none` | nothing bounds it, the window still catches it, and the reason is non-blank |
+| `below` | nothing bounds it and the window has *stopped* catching it — it reddens if the window starts again |
+
+`below` exists because of the first run: `collections.visibility` was written as a `none` row and the staleness
+term refused it — 4 rows in `collections` is below the row floor, so the column is not windowed and a `none`
+answer claiming it was an answer to a question that is not being asked. The honest fix was a fourth kind, not
+a relaxed predicate; the rule now reads the window in both directions.
+
+Of the 44 answers, 9 name a mechanism — 6 inside the window (3 door, 3 poly) and 3 more over tables too small
+for the window to catch — while 35 say plainly that nothing in this build bounds the column: 34 `none` and 1
+`below`. That is the honest census result: **34 bounded text columns carry values no door, no probe and no
+constraint has any claim on.**
+
+### 4. What the list of "nothing bounds it" turned up
+
+Three of the 34 are not neutral:
+
+- **`offering_relations` is a table nothing reads.** `grep -rn offering_relations` returns zero hits in
+  `services/platform/src` (main *and* test), zero in `apps/ai` and `apps/web`, and its only other appearance
+  is V1's DDL — so 1,162 seeded rows and 3 relation kinds live in a table the shipped build never names.
+  D75 reports that; making the platform read it (or not seeding it) is a design call outside this lane.
+- **`chunks.embed_model` is named by zero occurrences in `services/platform/src`.** The seed fills it; no code
+  reads it back — the usual shape of an audit column that will silently keep the value the generator invented.
+- **`reviews.status` and the moderation door are two 3-word lists sharing 2 words.** The seed carries
+  `pending|published|flagged`; `ModerationController.java:50` DECISIONS is `published|rejected|flagged`. So
+  `pending` is a state no door can write (it exists only because the generator wrote it), and `rejected` never
+  appears in demo data at all. D74 measured the same asymmetry one column over (`moderation_cases.status`: 544
+  open, 0 resolved) and this is its second instance.
+
+The rest of the 34 are worth the line they cost — `merchants.status` is a four-state machine moved between by
+string literals in `MerchantService.java:141-147` with no set behind it, `resource_pools.kind` carries eight
+kinds over its 452 rows (chair, class_slot, lane, room, seat, station, table, treatment_room) and the column's
+only appearance in Java is a join on `p.id` at `CatalogRepository.java:239` — nothing in the build reads
+`kind` at all — and the four market constants (`*.currency`, `*.postcode`, `locations.city`) are bounded
+because the demo has one market, which is a fact about the fixture rather than the schema.
+
+**And a fourth, found while measuring the census's own blind spot.** To state the size of the gap the
+`atttypid = 'text'::regtype` filter leaves, the shared `nexus_test` database was read (no writes): it holds
+232 text columns — exactly the gate database's number — plus 5 `character varying` and 0 `character`. All five
+belong to `flyway_schema_history`, i.e. a bookkeeping table, so the census loses nothing a business row can
+sit in. That table is itself the finding: `nexus_test` carries **two migration ledgers that disagree with its
+schema**. `schema_migrations` — written by `scripts/db_apply_migrations.sh` — lists V1…V6 and never V7, while
+`share_links` (V7's table) is present in that database; `flyway_schema_history` holds one hand-written row,
+version `6`, script text "infra-owned V1/V2 applied by scripts/db_apply_migrations.sh", installed
+2026-09-24. So "how migrated is this database?" has three answers there — 6 in the loader's book, 6 for another
+tool's benefit, 7 in the objects actually present — against the fresh gate database's single ledger reading
+`migrations=7`. Reported, not fixed: both ledgers, the loader and the app's Flyway config belong to the
+infrastructure lane, and the row that reconciles them is a decision about which tool owns the sequence.
+
+### 5. Falsification
+
+Six runs on the kept gate database, plus a re-run of the first plant because it was half-invalid:
+
+```
+Q1  alter table categories add column d75_flavour text          (first attempt: the UPDATE died on
+    ERROR:  function min(uuid) does not exist — D74's own lesson, repeated one unit later. The red that run
+    printed was real but about an all-NULL column, so the plant was re-applied with
+    `case when id > (select id from categories order by id limit 1) then 'a' else 'b' end`):
+      FAIL |a bounded text column is answered by name|41 of 233 text columns are bounded by the data
+             (window: <=12 distinct, >=20 rows, <=1 value per 4 rows), 3 of them by a door list and 3 by the
+             polymorphic registry; categories.d75_flavour (2 value(s) over 77 rows)
+Q5  update categories set kind = kind || id::text   (77 values: out of the window)
+      FAIL |a vocabulary answer is still an answer|… 34 none, 1 below the window … categories.kind (none)
+Q2  an answer claims a door the transcription does not carry (merchants.plan as door)
+      FAIL |a vocabulary answer is still an answer|… merchants.plan (door)
+Q3  an answer of a kind nothing reads ('maybe')     FAIL … favorites.subject_type (maybe)
+Q4  door_vocab's offerings.status renamed to offeringz.status
+      FAIL |a door vocabulary names a column the schema has|9 column(s) transcribed…, offeringz.status
+      FAIL |a vocabulary answer is still an answer|… offerings.status (door)
+final unmutated file over an untouched database: 197 checks passed
+```
+
+Q5 is the run that distinguishes D75 from a static exemption list: no list was edited, the *data* moved a
+column out of the window, and the answer written about it went red by itself. Q4 reddening two rows is the
+expected shape — the transcription and the answer about the transcription fail together.
+
+### 6. Non-claims
+
+- The window is a judgement, stated as three numbers, and the 19 columns below the row floor are invisible to
+  R1 by construction; the four that have a mechanism are answered as `below`/catalogued so the gap is named,
+  but the other 15 (tiny tables like `user_preferences`, `tenants`, `users`) are simply not asked about.
+- `n` is measured with `count(DISTINCT col)` over the whole table, exact and un-analysed — which is why the
+  census costs ~5 seconds and why it cannot be fooled by a stale `pg_stats`.
+- Text columns on tables the seed never loads are scanned too (they carry 0 rows and fail the row floor), so
+  this census is about the *shipped dataset*, not the schema; the schema-side question remains D74's
+  `check_vocab` and D66/D72's reference census.
+- Nothing here changes what any door accepts: the gate gained rows, the build gained none, and no seeded value
+  was edited to make a check pass.

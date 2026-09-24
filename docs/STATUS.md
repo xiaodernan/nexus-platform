@@ -3177,3 +3177,77 @@ next              the residue worth carrying: (a) there is no census of text col
                     read by nothing; CommerceApiTest belongs to another stream; the drifted shared `nexus` demo
                     database stays diagnostic-only and unreseeded; the events subject seam (D70) waits on a
                     contract decision, not a check.
+
+## 71. Forty columns the data bounds and no door names (2026-09-25)
+
+D74 closed by naming what it could not see: the gate catalogued the nine columns a Java door enumerates, and
+had no way to say which *other* text columns the shipped dataset bounds by habit. So the two new rows ask the
+data instead of the code — for every text column of every base table, how many distinct values does the seed
+actually carry? — and require an answer by name for each column the data bounds. The answer, measured here for
+the first time: 40 columns are bounded by the dataset, and only 6 of them are bounded by anything a program
+wrote.
+
+```
+new/changed       data/seed/quality.sql only, +175 lines: vocab_data (a DO loop over pg_attribute, one
+                    count(DISTINCT)/count(*)/max(length) GROUP BY per text column), vocab_win (the window's
+                    three terms written in one place, so both rows and both details read the same predicate),
+                    vocab_answer (44 hand rows: table, column, one of four kinds, and the file:line or probe it
+                    leans on) and is_door/is_poly/in_win computed every run from D74's door_vocab, D71's
+                    poly_cat and vocab_win — an answer is never trusted to its own label. 195 -> 197 checks.
+measured          232 text columns over 58 base tables, ~5 seconds: the 57 this build writes plus the gate's
+                    own schema_migrations, which the census scans and counts like any other (its `version` is
+                    text, 7 values over 7 rows) and asks nothing of, because the row floor rejects it. `n<=12`
+                    alone catches 75 columns, and most are free text that only looks bounded in a small table —
+                    four collections give collections.title four values, five users give users.phone five — so
+                    the window is three terms together (>=20 rows, <=12 values, <=1 value per 4 rows): 40
+                    columns. 19 more carry 2..12 values below the row floor. Of the 44 answers, 9 name a
+                    mechanism (6 inside the window: 3 door, 3 poly; 3 more over demo tables too small for the
+                    window to catch) while 35 say plainly that nothing in this build bounds the column. Two
+                    columns are NULL on every row they sit on — documents.error across 1040 rows, which the
+                    window therefore catches and answers, and tenants.region_code across 1 row, which it does
+                    not — and both stay in the count rather than being filtered out. Reported, not fixed:
+                    offering_relations (1,162 rows, 3 relation kinds) is named by zero code paths outside V1's
+                    DDL and the seed; chunks.embed_model has zero occurrences in services/platform/src;
+                    reviews.status (pending|published|flagged) and ModerationController's DECISIONS
+                    (published|rejected|flagged) are two 3-word lists sharing 2 words, so `pending` is a state
+                    no door can write and `rejected` a state no row has — D74's moderation_cases asymmetry,
+                    second instance. Narrowing the census's own blind spot by reading nexus_test (no writes):
+                    the same 232 text columns there, plus 5 character varying and 0 character — all five
+                    belonging to flyway_schema_history, which is itself a finding: that database carries two
+                    migration ledgers (schema_migrations listing V1..V6, one hand-written flyway row at
+                    version 6 saying "infra-owned V1/V2 applied by scripts/db_apply_migrations.sh") while
+                    share_links from V7 is present, so "how migrated is this database?" answers 6, 6-for-
+                    another-tool's-sake and 7-in-objects.
+plants            6 runs on the kept gate database. Q1 add a text column to categories (77 rows) -> the window
+                    row red naming categories.d75_flavour, census 40 of 232 -> 41 of 233 with nothing else
+                    edited. The first Q1 attempt is in the record because it was only half valid: its UPDATE
+                    died on `function min(uuid) does not exist` — D74's lesson, repeated one unit later — so
+                    the red it printed was about an all-NULL column and the plant was re-applied with two real
+                    values · Q5 update categories.kind to 77 distinct values -> the answer row red naming
+                    categories.kind (none): no list was edited, the *data* moved a column out of the window and
+                    the hand answer written about it went red by itself, which is what separates this from a
+                    static exemption list · Q2 merchants.plan answered 'door' with no door holding it -> red,
+                    with the counts shifting 5->6 door and 34->33 none · Q3 favorites.subject_type answered
+                    'maybe', a kind nothing reads -> red · Q4 drop offerings.status from D74's door_vocab ->
+                    TWO rows red, the existence row naming offeringz.status and the answer row refusing the
+                    orphan, i.e. the two catalogues answering to each other · final unmutated run over an
+                    untouched database: 197 green.
+gates             scripts/db_gate_fresh.sh (full, background) twice: once for the block as planted, once after
+                    the comment-only correction above — RESULT: PASS — 197 quality checks on a from-scratch
+                    schema (tables=58, migrations=7), plus the seed truncate shown clearing an empty stranger
+                    and refusing one that holds rows. Kept database dropped afterwards, 0 nexus_gate* remain.
+                    No Java touched, so mvn -o test and e2e_fresh.sh were not in scope for this change: the
+                    gate reads the same seed bytes and the same schema, and nothing served or rendered moved.
+next              residue worth carrying: (a) the window is a judgement written as three numbers — move them
+                    and a different set of columns must be answered — and 19 columns sit just under the row
+                    floor, of which 4 are answered by name because a door or a probe already names them and 15
+                    are simply not asked about; (b) vocab_answer is a transcription again: it reddens for a
+                    mechanism that vanished, a kind nothing reads, or a windowed column left silent, but a
+                    column whose type stops being text leaves the census and takes its answer with it —
+                    measured, so the size of that gap is 5 columns and all five are another tool's bookkeeping;
+                    (c) widest is computed for all 232 columns and asserted by no row: this gate counts
+                    values, not widths. Standing reports unchanged: `saved_searches.notify` read by nothing;
+                    CommerceApiTest belongs to another stream; the drifted shared `nexus` demo database stays
+                    diagnostic-only and unreseeded; the events subject seam (D70) waits on a contract decision,
+                    not a check; and now the split migration ledger in `nexus_test`, reported to the
+                    infrastructure lane rather than reconciled here.

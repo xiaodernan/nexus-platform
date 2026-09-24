@@ -1560,6 +1560,181 @@ SELECT 'a CHECK-bounded column is a door vocabulary too',
                     FROM door_vocab d WHERE NOT EXISTS (SELECT 1 FROM check_vocab c
                                                         WHERE c.tbl = d.tbl AND c.col = d.col)), '-');
 
+-- ============================================================ D75  the data side of the same question
+--
+-- WHY THIS EXISTS: D74 ended by naming its own blind spot — nine columns are transcribed from doors, but the
+-- seed writes text columns that nothing in this build enumerates, and the gate could not say which ones were
+-- left unasked. So ask the data instead of the code: for every text column of every base table, how many
+-- distinct values does the shipped dataset actually carry?
+--
+-- THE WINDOW, and why it is not just "few values". Measured over this schema, `n <= 12` alone catches 75
+-- columns, and most of them are free text that only looks bounded because the table is small: four
+-- collections give collections.title four values, five users give users.phone five. A vocabulary is a column
+-- whose values REPEAT, so the window is three terms together — at least 20 rows, at most 12 distinct values,
+-- and no more than one distinct value per four rows — which is 40 columns here. 19 further columns carry
+-- 2..12 values below the row floor; four of them are catalogued vocabularies over tables the demo barely
+-- populates, and `vocab_answer` says so rather than letting the window drop them quietly.
+--
+-- COST, measured not assumed: 232 text columns over 58 base tables — the 57 this build writes, plus the
+-- gate's own `schema_migrations`, whose `version` column is text and whose 7 rows fall below the window's row
+-- floor (so the ledger is scanned, counted and not asked for an answer: the census has no exclusion list).
+-- About 5 seconds of wall time on the gate database. Two columns answer 0 distinct values over their rows:
+-- documents.error across 1040 rows, which IS in the window and is answered below, and tenants.region_code
+-- across 1 row, which is not. A column that is NULL everywhere is exactly what a census should make visible,
+-- so neither is filtered out of the count.
+
+CREATE TEMP TABLE vocab_data (tbl text NOT NULL, col text NOT NULL, n bigint NOT NULL, total bigint NOT NULL,
+                              widest bigint NOT NULL, PRIMARY KEY (tbl, col));
+DO $d75$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT c.relname AS tbl, a.attname AS col
+             FROM pg_attribute a
+             JOIN pg_class c ON c.oid = a.attrelid
+            WHERE c.relnamespace = 'public'::regnamespace
+              AND c.relkind = 'r'
+              AND a.attnum > 0 AND NOT a.attisdropped
+              AND a.atttypid = 'text'::regtype
+            ORDER BY 1, 2
+  LOOP
+    EXECUTE format('INSERT INTO vocab_data SELECT %L, %L, count(DISTINCT %I), count(*), '
+                 || 'coalesce(max(length(%I)), 0) FROM public.%I', r.tbl, r.col, r.col, r.col, r.tbl);
+  END LOOP;
+END $d75$;
+
+-- The window, written once so both rows and both details read it from the same place.
+CREATE TEMP VIEW vocab_win AS
+SELECT * FROM vocab_data WHERE n <= 12 AND total >= 20 AND n * 4 <= total;
+
+-- Every column the window catches, and every catalogued vocabulary the window does NOT catch, answered by
+-- name. Four kinds, and each one is re-read against the mechanism it names rather than trusted:
+--   door   the column must still be in door_vocab (the D74 transcription of a Java list)
+--   poly   the column must still be a type column of a poly_cat pair (the D71 registry)
+--   none   nothing bounds it; the window must still catch it, and the reason must be non-blank
+--   below  nothing bounds it either, but the window no longer catches it (a small demo table); it reddens if
+--          the window starts catching it, because then the column deserves a real answer
+CREATE TEMP TABLE vocab_answer (tbl text NOT NULL, col text NOT NULL, answer text NOT NULL,
+                                why text NOT NULL, PRIMARY KEY (tbl, col));
+INSERT INTO vocab_answer VALUES
+ -- the two that answer themselves from the live catalogues, so they re-read those lists every run
+ ('offerings', 'kind', 'door', 'CatalogController.java:221'),
+ ('offerings', 'status', 'door', 'MerchantContentController.java:68'),
+ ('moderation_cases', 'status', 'door', 'ModerationController.java:51'),
+ ('facts', 'subject_type', 'poly', 'the D71 probe over merchant|offering|location|review'),
+ ('moderation_cases', 'subject_type', 'poly', 'the D68/D71 probe over V1:574''s declared types'),
+ ('permission_grants', 'subject_type', 'poly', 'the D71 probe over user|merchant_user|api_key'),
+ -- catalogued by a door or a probe, outside the window because the demo table is tiny: answered so a stale
+ -- answer cannot outlive the fact it was written about
+ ('collections', 'kind', 'door', 'CollectionsController.java:61; 4 rows in the demo table, so the repeat term'
+  || ' never sees it'),
+ ('collections', 'visibility', 'below', 'public on all 4 seeded rows; CollectionsWriteController publishes by'
+  || ' visibility, but the table is below the window''s row floor'),
+ ('merchant_users', 'status', 'door', 'MerchantWorkspaceService.java:34; 3 membership rows in the demo'),
+ ('favorites', 'subject_type', 'poly', 'the D67 probe; 18 rows, so the window''s row floor never sees it'),
+ -- the columns nothing in this build bounds
+ ('availability_slots', 'currency', 'none', 'a market constant (one currency, 3 chars), not a per-row choice'),
+ ('availability_slots', 'source', 'none', 'the D64 provenance word; demo on every row'),
+ ('business_hours', 'source', 'none', 'the D64 provenance word; demo on every row'),
+ ('categories', 'kind', 'none', 'every seeded category is a merchant category; no door filters on kind here'),
+ ('chunks', 'embed_model', 'none', 'filled by the seed and named by zero occurrences in services/platform/src'
+  || ' — nothing in the build reads it back'),
+ ('documents', 'error', 'none', '0 distinct values over 1040 rows: the indexing failures it exists to hold'
+  || ' never happened in the shipped data'),
+ ('documents', 'kind', 'none', 'menu|policy from the seed CSV; no door enumerates either'),
+ ('documents', 'lang', 'none', 'one language tag across the corpus (5 chars)'),
+ ('documents', 'mime_type', 'none', 'text/plain; charset=utf-8 everywhere the seed reaches'),
+ ('documents', 'status', 'none', 'indexed on all 1040 rows: a promise the generator makes about its own'
+  || ' corpus, not a pipeline state anything transitions'),
+ ('facts', 'attribute', 'none', 'the attribute half of a fact key, 6 of them; D65/D67 probe facts by'
+  || ' subject_type and never by attribute'),
+ ('facts', 'currency', 'none', 'a market constant beside the fact value'),
+ ('facts', 'source', 'none', 'demo|inferred|merchant|observed — the D64 provenance vocabulary, which is'
+  || ' checked for fabrication rather than for membership'),
+ ('facts', 'unit', 'none', 'the unit of measure beside the fact value; nothing bounds it'),
+ ('locations', 'area', 'none', '3 values over 684 rows — district labels of one demo city'),
+ ('locations', 'city', 'none', 'one city across the dataset'),
+ ('locations', 'label', 'none', 'a display label, 4 values; free text by design'),
+ ('locations', 'postcode', 'none', 'one postcode across the dataset — a constant of the demo market'),
+ ('merchants', 'data_origin', 'none', 'the D64 provenance word'),
+ ('merchants', 'plan', 'none', 'a commercial tier label, 3 values; no door in the build filters on it'),
+ ('merchants', 'price_band', 'none', 'a display facet, 4 values; nothing bounds it'),
+ ('merchants', 'status', 'none', 'draft|pending_review|published|suspended, moved between by string literals'
+  || ' in MerchantService.java:141-147 — a state machine with no enumerated set behind it'),
+ ('moderation_cases', 'auto_action', 'none', 'V1:578 declares none|hide|flag|reject in a comment the parser'
+  || ' discards; the build''s only writer emits none (D74)'),
+ ('moderation_cases', 'policy', 'none', 'a free-text §55/§127 sentence, 2 distinct over 544 rows; §19 asks'
+  || ' source+confidence of a fact, and this is not a fact row'),
+ ('moderation_cases', 'reason', 'none', 'free text the queue displays, 2 distinct over 544 rows'),
+ ('offering_relations', 'relation', 'none', 'the whole table is named by zero code paths in'
+  || ' services/platform, apps/ai or apps/web — only V1''s DDL and the seed know it exists (D75 measured)'),
+ ('offerings', 'currency', 'none', 'a market constant'),
+ ('offerings', 'price_model', 'none', 'the shape of a price, 4 values; nothing bounds it'),
+ ('offerings', 'price_source', 'none', 'estimated|merchant|observed from the seed CSV — the D53'
+  || ' authorisation_basis lane reads facts, not this column'),
+ ('resource_pools', 'kind', 'none', '8 kinds from the seed CSV (chair, class_slot, lane, room, seat, station,'
+  || ' table, treatment_room); no door enumerates them'),
+ ('resource_pools', 'status', 'none', 'active on all 452 rows'),
+ ('reviews', 'data_origin', 'none', 'the D64 provenance word'),
+ ('reviews', 'language', 'none', 'en|zh-HK; generate.py self-checks the language mix, which is a density'
+  || ' promise rather than a bound on the value set'),
+ ('reviews', 'status', 'none', 'the seed carries pending|published|flagged while the resolve door''s DECISIONS'
+  || ' is published|rejected|flagged — two 3-word lists sharing 2 words, so pending is a state no door can'
+  || ' write and rejected never appears in demo data');
+
+-- Is each answer's claim still true, read from the live catalogues rather than trusted from the prose. The
+-- three flags are computed here, once, so the two rows below can be read without a subquery per term.
+ALTER TABLE vocab_answer ADD COLUMN is_door boolean, ADD COLUMN is_poly boolean, ADD COLUMN in_win boolean;
+UPDATE vocab_answer a
+   SET is_door = EXISTS (SELECT 1 FROM door_vocab d WHERE d.tbl = a.tbl AND d.col = a.col),
+       is_poly = EXISTS (SELECT 1 FROM poly_cat p WHERE p.tbl = a.tbl AND p.tcol = a.col),
+       in_win  = EXISTS (SELECT 1 FROM vocab_win w WHERE w.tbl = a.tbl AND w.col = a.col);
+
+INSERT INTO qc
+SELECT 'a bounded text column is answered by name',
+       (SELECT count(*) FROM vocab_win) > 0
+       AND NOT EXISTS (SELECT 1 FROM vocab_win w
+                        WHERE NOT EXISTS (SELECT 1 FROM vocab_answer a
+                                          WHERE a.tbl = w.tbl AND a.col = w.col)),
+       (SELECT count(*) FROM vocab_win) || ' of ' || (SELECT count(*) FROM vocab_data)
+       || ' text columns are bounded by the data (window: <=12 distinct, >=20 rows, <=1 value per 4 rows), '
+       || (SELECT count(*) FROM vocab_win w WHERE EXISTS (SELECT 1 FROM door_vocab d
+                                                          WHERE d.tbl = w.tbl AND d.col = w.col))
+       || ' of them by a door list and '
+       || (SELECT count(*) FROM vocab_win w WHERE EXISTS (SELECT 1 FROM poly_cat p
+                                                          WHERE p.tbl = w.tbl AND p.tcol = w.col))
+       || ' by the polymorphic registry; '
+       || coalesce((SELECT string_agg(w.tbl || '.' || w.col || ' (' || w.n || ' value(s) over '
+                               || w.total || ' rows)', ', ' ORDER BY w.tbl, w.col)
+                    FROM vocab_win w WHERE NOT EXISTS (SELECT 1 FROM vocab_answer a
+                                                       WHERE a.tbl = w.tbl AND a.col = w.col)),
+                   'every one of them answered above');
+
+INSERT INTO qc
+SELECT 'a vocabulary answer is still an answer',
+       (SELECT count(*) FROM vocab_answer) > 0
+       AND NOT EXISTS (SELECT 1 FROM vocab_answer a WHERE a.answer = 'door' AND NOT a.is_door)
+       AND NOT EXISTS (SELECT 1 FROM vocab_answer a WHERE a.answer = 'poly' AND NOT a.is_poly)
+       AND NOT EXISTS (SELECT 1 FROM vocab_answer a
+                       WHERE a.answer = 'none' AND (btrim(a.why) = '' OR NOT a.in_win))
+       AND NOT EXISTS (SELECT 1 FROM vocab_answer a
+                       WHERE a.answer = 'below' AND (btrim(a.why) = '' OR a.in_win))
+       AND NOT EXISTS (SELECT 1 FROM vocab_answer a
+                       WHERE a.answer NOT IN ('door', 'poly', 'none', 'below')),
+       (SELECT count(*) FROM vocab_answer) || ' answer(s): '
+       || (SELECT count(*) FROM vocab_answer WHERE answer = 'door') || ' door, '
+       || (SELECT count(*) FROM vocab_answer WHERE answer = 'poly') || ' poly, '
+       || (SELECT count(*) FROM vocab_answer WHERE answer = 'none') || ' none, '
+       || (SELECT count(*) FROM vocab_answer WHERE answer = 'below') || ' below the window — and an answer is'
+       || ' only worth what it says while the mechanism it names still holds, so each re-reads its own'
+       || ' assumption here: '
+       || coalesce((SELECT string_agg(a.tbl || '.' || a.col || ' (' || a.answer || ')', ', '
+                             ORDER BY a.tbl, a.col) FROM vocab_answer a
+                    WHERE (a.answer = 'door' AND NOT a.is_door) OR (a.answer = 'poly' AND NOT a.is_poly)
+                       OR (a.answer = 'none' AND (btrim(a.why) = '' OR NOT a.in_win))
+                       OR (a.answer = 'below' AND (btrim(a.why) = '' OR a.in_win))
+                       OR a.answer NOT IN ('door', 'poly', 'none', 'below')),
+                   'every answer still applies');
+
 -- ============================================================ C  hard gate
 \echo ''
 SELECT CASE WHEN ok THEN '  PASS ' ELSE '  FAIL ' END AS status,
