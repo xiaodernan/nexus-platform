@@ -2743,3 +2743,58 @@ independent witness in this file that a fact row has to be a complete claim, not
   writes them, so something consumed or deleted them out of band. Reported, not chased — it is the same drift D64
   §5 records, seen from a different table.
 
+
+## D66 The census of a file's own blind spots — 2026-09-25
+
+### 1. The remainder moved into the file
+
+D65 measured its own remainder with a throwaway python script: 25 columns in `public` name a reference and carry
+no constraint (any `*_id` with no foreign key that is not its own table's single-column PK or UNIQUE), and the
+seeded dataset writes five of them. A measurement that lives in a script in `AppData\Local\Temp` is a fact about
+one afternoon, so the measurement moved into `quality.sql`: a plpgsql pass over `pg_attribute` counts rows and
+non-empty values per candidate column, and a four-row group joins that census against a registry that says why
+each answered column is answered.
+
+The registry is a hand list, and that is the point. What the catalogue decides is **who has to answer**; the list
+only supplies answers. A new unconstrained `*_id` column that the seed starts writing has to be registered with a
+reason before the gate goes green, which is the opposite of the old shape, where the file asked about the columns
+someone happened to think of and printed nothing about the rest.
+
+### 2. Three kinds of answer, and the one that watches itself
+
+`kind` is `probe` (an orphan probe resolves the column by declared type), `join-one-type` (a `JOIN` covers the one
+type the generator happens to emit), or `not-a-reference`. Today: 3 probe, 1 join-one-type, 1 not-a-reference.
+
+The middle kind is the interesting one, because a waiver is exactly as good as the assumption under it.
+`moderation_cases.subject_id` is waived as `join-one-type` — the queue checks `JOIN reviews`, while V1:574 declares
+`review|merchant|document|message|listing`. So the fourth row re-reads the assumption every run: for every waived
+column, how many distinct `subject_type` values does that table actually ship? While it is one the waiver is true.
+The moment the generator emits a second type the row goes red by itself, and the waiver cannot quietly outlive the
+fact that made it honest.
+
+### 3. Three falsifications, on the gate's own loaded database
+
+| | Verdict |
+| --- | --- |
+| clean | `PASS=180 FAIL=0`, exit 0 — 176 → 180. Census row prints `25 unconstrained *_id column(s)`; the registry row prints `0 stale of 5 registered (join-one-type 1, not-a-reference 1, probe 3)`; the waiver row prints `moderation_cases.subject_id ships 1 subject_type(s)` |
+| blind the census predicate (one added `AND a.attname = 'no column is ever called this'`) | **RED ×3** — `0 unconstrained *_id column(s) measured`, `0 of 0 carry values, each registered — this row cannot pass on an empty census`, and `5 stale of 5 registered`. The conjunct D64 added for a sweep that reaches nothing is what keeps an empty census from printing as a clean bill of health |
+| create `probe_d66(thing_id uuid)` with one row | **RED** `every reference the seed writes is probed or explained — probe_d66.thing_id (1 row(s))`, and nothing else |
+| plant a second `subject_type` (`merchant`) into `moderation_cases`, pointing at a real merchant | **RED** `a join-one-type waiver … — moderation_cases.subject_id ships 2 subject_type(s)`, and nothing else — the new case is invisible to every review-joining check in the file, which is the hole the waiver row exists to notice |
+| revert all three | `PASS=180`, restored file md5-identical |
+
+The last two plants each lit exactly one arm, which is the standard D65 set after the first fixture turned out to
+be illegal in two other dimensions.
+
+### 4. What D66 does not claim
+
+- The census is a naming heuristic, and it knows one of its own members is a false positive: `user_identities.provider_id`
+  is registered `not-a-reference` because V1:53 declares it an opaque external subject id. Twenty of the 25 columns
+  are in tables the seed never writes, so on the database this gate runs against they carry no rows to be wrong about —
+  D64's traffic sweep is what keeps that true.
+- Two of the three `probe` arms disagree with the vocabulary the file asserts next to them, and that is reported
+  rather than fixed: the favourites probe builds a `user` arm for a subject type no `FavoriteBody` can carry, and has
+  no `guide` arm for a type the door does accept (a guide is a `collections` row with `kind='guide'`, so the id would
+  resolve but the type string would not, and the row would print an orphan that is not one). Deciding which of the two
+  vocabularies is authoritative is a contract decision, not a check edit — task #42.
+- The registry's `why` text is written but not printed; the row prints kind *counts*. A reader who wants the reason
+  has to open the file, which is acceptable for five entries and would not be for fifty.

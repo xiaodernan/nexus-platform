@@ -2744,3 +2744,43 @@ next              task #41 (D66): make the file name its own blind spots. The 25
                     two-thirds applying. `moderation_cases.subject_id` is the one already-known case: V1:574
                     declares five types, the generator emits `review`, and the queue check `JOIN reviews`, so the
                     other four would be invisible exactly the way `location` was.
+
+
+## 62. The file that counted its own blind spots (2026-09-25)
+
+D65 measured its remainder with a throwaway script in a temp directory, which makes the measurement a fact about
+one afternoon. It moved into `quality.sql`: a `pg_attribute` pass enumerates every `public` `*_id` column that
+carries no foreign key and is not its own table's single-column PK or UNIQUE, counts the rows and the non-empty
+values in each, and joins that against a five-entry registry saying *why* each answered column is answered —
+`probe`, `join-one-type`, or `not-a-reference`. The catalogue decides who has to answer; the hand list only
+supplies answers, which is the direction that makes a new column go red instead of quiet.
+
+```
+new/changed       data/seed/quality.sql — ref_cat census + ref_registry + four rows (census reach, every seeded
+                    column probed-or-explained, no stale registry entry, and the waiver-scope row).
+measured          25 unconstrained *_id columns; the seed writes 5 of them (facts 5,688 / moderation_cases 544 /
+                    permission_grants 36 / favorites 18 / user_identities.provider_id 5). Registry holds
+                    3 probe + 1 join-one-type + 1 not-a-reference; `user_identities.provider_id` is a *false
+                    positive of the naming heuristic* — V1:53: an opaque external id no table could resolve.
+                  The waiver row re-reads its own assumption every run: `moderation_cases.subject_id ships
+                    1 subject_type(s)` while the generator emits one of V1:574's five.
+mutations         3 plants + 1 blinded predicate, on the gate's own loaded database (--keep):
+                    (a) clean                              180 PASS / 0 FAIL, exit 0 (was 176)
+                    (b) census predicate blinded            RED ×3 — 0 measured, "0 of 0 carry values … this row
+                        cannot pass on an empty census", 5 stale of 5
+                    (c) probe_d66(thing_id) with one row    RED — names probe_d66.thing_id (1 row(s)) and nothing else
+                    (d) a merchant-typed moderation case    RED — the waiver row alone: "ships 2 subject_type(s)",
+                        while every review-joining check stays green over the new case (that is the hole)
+                    (e) revert all                           180 PASS; mutated file restored md5-identical
+gates             db_gate_fresh.sh: -> 180 quality checks passed against a from-scratch schema (tables=58,
+                    migrations=7); RESULT: PASS with the truncate probe as step 6/6. Check total 176 → 180.
+reported          the favourites probe and the favourites vocabulary row disagree in both directions: the probe
+                    builds a `user` arm no API body can carry, and has no `guide` arm for a type the door accepts
+                    (a guide is a collections row with kind='guide', so its id resolves while its type string
+                    would print an orphan that is not one). Choosing the authoritative vocabulary is a contract
+                    decision — task #42, not a check edit. The registry's `why` strings are written but not
+                    printed (kind counts are), acceptable at five entries and not at fifty.
+next              task #42 (D67): settle the two vocabularies for `favorites`, then give `moderation_cases` a real
+                    (type,key) probe over review|merchant|document|message|listing so the join-one-type waiver can
+                    be retired instead of merely watched — the census row should print 4 probe / 0 join-one-type
+                    when that lands.

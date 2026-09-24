@@ -1003,6 +1003,94 @@ SELECT 'favourite subject_type is one the API can save',
           WHERE subject_type NOT IN ('merchant','offering','guide','collection'))
        || ' unsavable row(s); the door accepts merchant|offering|guide|collection';
 
+-- --------------------------------------------------------------- D66: ask the catalogue who is unanswered
+-- Every row above asks a question about columns this file already knows about. The census below asks the
+-- schema which of its `*_id` columns name a reference and carry no constraint at all, so a column nobody had
+-- thought to check cannot stay unmentioned just because nobody thought to check it. The registry is a hand
+-- list on purpose — what the catalogue decides is *who has to answer*, and a new column the seed starts
+-- writing goes red until someone registers a reason for it.
+CREATE TEMP TABLE ref_cat (name text, rows_n bigint, vals_n bigint, types_n int);
+DO $$
+DECLARE r record; n bigint; v bigint; tn int;
+BEGIN
+  FOR r IN
+    SELECT c.relname || '.' || a.attname AS name, c.relname AS tbl, a.attname AS col,
+           EXISTS (SELECT 1 FROM pg_attribute s
+                    WHERE s.attrelid = c.oid AND s.attname = 'subject_type' AND NOT s.attisdropped) AS has_st
+      FROM pg_attribute a
+      JOIN pg_class c ON c.oid = a.attrelid AND c.relkind = 'r'
+      JOIN pg_namespace ns ON ns.oid = c.relnamespace AND ns.nspname = 'public'
+     WHERE a.attnum > 0 AND NOT a.attisdropped AND a.attname LIKE '%\_id' AND a.attname <> 'id'
+       AND NOT EXISTS (SELECT 1 FROM pg_constraint f
+                        WHERE f.conrelid = c.oid AND f.contype = 'f' AND a.attnum = ANY (f.conkey))
+       AND NOT EXISTS (SELECT 1 FROM pg_constraint u
+                        WHERE u.conrelid = c.oid AND u.contype IN ('p','u')
+                          AND array_length(u.conkey, 1) = 1 AND a.attnum = u.conkey[1])
+     ORDER BY 1
+  LOOP
+    EXECUTE format('SELECT count(*), count(nullif(%I::text, %L)) FROM public.%I', r.col, '', r.tbl) INTO n, v;
+    -- the column test is static SQL, so it cannot name a column the table does not have
+    IF r.has_st THEN
+      EXECUTE format('SELECT count(DISTINCT subject_type) FROM public.%I', r.tbl) INTO tn;
+    ELSE
+      tn := 0;
+    END IF;
+    INSERT INTO ref_cat VALUES (r.name, n, v, coalesce(tn, 0));
+  END LOOP;
+END $$;
+
+CREATE TEMP TABLE ref_registry (name text PRIMARY KEY, kind text NOT NULL, why text NOT NULL);
+INSERT INTO ref_registry VALUES
+ ('facts.subject_id', 'probe',
+  'orphan probe over merchant|offering|location|review, grouped by the declared type (D65)'),
+ ('favorites.subject_id', 'probe',
+  'orphan probe over the arms it builds; its type set is not the vocabulary the door accepts '
+  || '(the probe has a `user` arm for a type no API body can carry, and no `guide` arm for a type it can)'),
+ ('permission_grants.subject_id', 'probe',
+  'orphan probe over merchant|user|merchant_user; an agent or api_key grant would be an orphan by '
+  || 'construction, because the probe groups by the type actually present'),
+ ('moderation_cases.subject_id', 'join-one-type',
+  'the queue checks JOIN reviews, and V1:574 declares five types; the waiver holds only while the '
+  || 'generator emits one of them, which the row below watches'),
+ ('user_identities.provider_id', 'not-a-reference',
+  'V1:53 declares it an opaque external subject id, never a token — no table in this schema resolves it');
+
+INSERT INTO qc
+SELECT 'the reference census reads the catalogue',
+       (SELECT count(*) FROM ref_cat) >= 17,
+       (SELECT count(*) FROM ref_cat) || ' unconstrained *_id column(s) measured from pg_attribute '
+       || '(25 on this schema; the floor is two thirds of what was measured)';
+
+INSERT INTO qc
+SELECT 'every reference the seed writes is probed or explained',
+       (SELECT count(*) FROM ref_cat WHERE vals_n > 0) > 0
+       AND NOT EXISTS (SELECT 1 FROM ref_cat c WHERE c.vals_n > 0
+                        AND NOT EXISTS (SELECT 1 FROM ref_registry r WHERE r.name = c.name)),
+       coalesce((SELECT string_agg(c.name || ' (' || c.vals_n || ' row(s))', ', ')
+                   FROM ref_cat c WHERE c.vals_n > 0
+                     AND NOT EXISTS (SELECT 1 FROM ref_registry r WHERE r.name = c.name)),
+                (SELECT count(*) FROM ref_cat WHERE vals_n > 0) || ' of '
+                || (SELECT count(*) FROM ref_cat) || ' carry values, each registered — '
+                || 'this row cannot pass on an empty census');
+
+INSERT INTO qc
+SELECT 'the registry names no column the schema has lost',
+       NOT EXISTS (SELECT 1 FROM ref_registry r
+                    WHERE NOT EXISTS (SELECT 1 FROM ref_cat c WHERE c.name = r.name)),
+       (SELECT count(*) FROM ref_registry r
+          WHERE NOT EXISTS (SELECT 1 FROM ref_cat c WHERE c.name = r.name))
+       || ' stale of ' || (SELECT count(*) FROM ref_registry) || ' registered ('
+       || (SELECT string_agg(k, ', ') FROM (SELECT kind || ' ' || count(*) FROM ref_registry GROUP BY kind ORDER BY 1) x(k))
+       || ')';
+
+INSERT INTO qc
+SELECT 'a join-one-type waiver is only true while the table ships one type',
+       NOT EXISTS (SELECT 1 FROM ref_registry r JOIN ref_cat c ON c.name = r.name
+                    WHERE r.kind = 'join-one-type' AND c.types_n > 1),
+       coalesce((SELECT string_agg(r.name || ' ships ' || c.types_n || ' subject_type(s)', '; ')
+                   FROM ref_registry r JOIN ref_cat c ON c.name = r.name
+                  WHERE r.kind = 'join-one-type'), 'no waiver of that kind is registered');
+
 -- ============================================================ C  hard gate
 \echo ''
 SELECT CASE WHEN ok THEN '  PASS ' ELSE '  FAIL ' END AS status,
