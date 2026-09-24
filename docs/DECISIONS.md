@@ -3416,3 +3416,46 @@ other answer the schema gives is invisible by construction. The candidate that w
 every uuid column that is not its own key and has no FK — is too wide to gate (it names generated ids, payload
 refs and dead columns alike), so the honest form is a widening that stays falsifiable: two shapes now, each with
 a plant that proves the other one is not the only thing the file can see.
+
+## D73 A detail line that contradicts its own measurement — 2026-09-25
+
+D72 §4 named this and this is it. Two census rows printed a remembered count inside a message about a fresh
+measurement:
+
+```
+25 unconstrained *_id column(s) measured from pg_attribute (26 on this schema; …)   <- D72's M1 run
+27 unconstrained reference column(s) measured from pg_attribute (26 on this schema; …) <- D72's P3 run
+```
+
+Both halves of the same sentence were true at once and the sentence read as a contradiction, because the second
+number was a fact about the day the row was written while the first was a fact about the database in front of it.
+The assertion itself was never wrong — it compares against a floor (`>= 17`, `>= 8`), and a floor is *supposed*
+to be a remembered number; that is how it can catch a census that stops seeing half the schema. What was wrong
+was putting a second remembered number in the prose as if it were a measurement.
+
+A sweep of every integer inside a quoted detail string in the file turned up 75 hits, and the class is exactly
+two. Everything else is a different kind of number: a requirement citation (§55, §111, §155), a threshold the row
+itself enforces (`(0, 20000)`, `> 20 chars`, `21-day horizon`, `ceiling 400`), a `file:line` pointer, or a uuid
+literal. The line `'category tree: 10 roots, …'` looks like a member and is not — `10` there is the name of the
+contract the row asserts (`= 10`), and its detail already prints `roots=` with the measured value.
+
+Both rows now print the measured count, then the floor, then label the floor's provenance as history:
+
+```
+12 (type, key) pair(s) measured from pg_attribute, over every table holding a *_type beside its *_id
+   sibling; the floor this row asserts is 8 — two thirds of the count measured when D69 wrote it, and the
+   detail prints the measured number, never a remembered one
+26 unconstrained reference column(s) measured from pg_attribute, over two naming shapes (*_id, and uuid *_by
+   — D72); the floor this row asserts is 17, two thirds of the 25 measured when D66 wrote it, …
+```
+
+Measured on a kept gate database, four runs, nothing else changed: shipped 12 pairs / 26 columns / 192 green ·
+plus a `d72_planted(actor_by uuid)` row → 27 columns, the unregistered-column red, the census row green on its
+own floor · plus a `d73_planted_pair(thing_type, thing_id)` row → 13 pairs *and* 27 columns, two reds naming the
+new pair and the new key · both dropped → 12 / 26 / 192 green. The full
+`scripts/db_gate_fresh.sh` run that built that database reported `RESULT: PASS — 192 quality checks`; the
+database was dropped afterwards and 0 `nexus_gate*` remain.
+
+Worth keeping the reason in prose: a green row whose detail restates a constant is a row that trains its reader
+to ignore the detail. The detail is the only part of a census row that says what the schema looks like today, so
+it either prints measurements or it says nothing.

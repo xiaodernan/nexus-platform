@@ -1135,9 +1135,9 @@ INSERT INTO ref_registry VALUES
 INSERT INTO qc
 SELECT 'the reference census reads the catalogue',
        (SELECT count(*) FROM ref_cat) >= 17,
-       (SELECT count(*) FROM ref_cat) || ' unconstrained reference column(s) measured from pg_attribute '
-       || '(26 on this schema, over two naming shapes: *_id and uuid *_by; the floor is two thirds of what '
-       || 'was measured)';
+       (SELECT count(*) FROM ref_cat) || ' unconstrained reference column(s) measured from pg_attribute, over '
+       || 'two naming shapes (*_id, and uuid *_by — D72); the floor this row asserts is 17, two thirds of the '
+       || '25 measured when D66 wrote it, and what prints here is the measured count, not a remembered one';
 
 INSERT INTO qc
 SELECT 'every reference the seed writes is probed or explained',
@@ -1219,8 +1219,9 @@ INSERT INTO poly_probed VALUES
 INSERT INTO qc
 SELECT 'the polymorphic-pair census reads the catalogue',
        (SELECT count(*) FROM poly_cat) >= 8,
-       (SELECT count(*) FROM poly_cat) || ' (type, key) pair(s) measured from pg_attribute '
-       || '(12 on this schema; the floor is two thirds of what was measured)';
+       (SELECT count(*) FROM poly_cat) || ' (type, key) pair(s) measured from pg_attribute, over every table '
+       || 'holding a *_type beside its *_id sibling; the floor this row asserts is 8 — two thirds of the count '
+       || 'measured when D69 wrote it, and the detail prints the measured number, never a remembered one';
 
 INSERT INTO qc
 SELECT 'the pairs declared probed are pairs the schema has',

@@ -3084,3 +3084,43 @@ next              the new row's detail carries a hand literal — "(26 on this s
                     decision, another stream's applied file); `saved_searches.notify` read by nothing;
                     CommerceApiTest belongs to another stream; the drifted shared `nexus` demo database stays
                     diagnostic and unreseeded.
+
+## 69. A detail line that contradicts its own measurement (2026-09-25)
+
+D72's own plant output caught it. Reverting the census broadening printed
+
+```
+25 unconstrained *_id column(s) measured from pg_attribute (26 on this schema; the floor is two thirds …)
+```
+
+and planting an unregistered column printed the same sentence with 27. Both halves were true and the line read as
+a lie, because the second number was a fact about the day the row was written while the first was a fact about the
+database in front of it. The floor (`>= 17`, D69's `>= 8`) is correctly a remembered number — that is the whole
+mechanism by which a census catches a schema it has stopped seeing — but a *second* remembered number in the prose
+was not measuring anything.
+
+```
+new/changed       data/seed/quality.sql only, +6/-5 lines, still 192 checks. Both census rows now print the
+                    measured count, then the floor they assert, then label the floor's provenance as history
+                    ("two thirds of the 25 measured when D66 wrote it"), so no sentence in the output can be a
+                    constant dressed as a measurement.
+measured          a sweep of every integer inside a quoted detail string in the file: 75 hits, and the class is
+                    exactly two. The rest are requirement citations (§55, §111, §155), thresholds the row itself
+                    enforces ((0, 20000), > 20 chars, the 21-day horizon, ceiling 400), file:line pointers and
+                    uuid literals. `category tree: 10 roots` looks like a member and is not — 10 there is the
+                    contract the row asserts (= 10) and its detail already prints roots= with the measured value.
+plants            four runs on the kept gate database, nothing else changed: shipped 12 pairs / 26 columns /
+                    192 green · + d72_planted(actor_by uuid) -> 27 columns, the unregistered-column red, the
+                    census row green on its own floor · + d73_planted_pair(thing_type, thing_id) -> 13 pairs AND
+                    27 columns, two reds naming the new pair and the new key (the pair table contributes an *_id
+                    column too, which is the two censuses agreeing rather than overlapping) · both dropped ->
+                    12 / 26 / 192 green.
+gates             scripts/db_gate_fresh.sh (full, background): RESULT: PASS — 192 quality checks on a
+                    from-scratch schema (tables=58, migrations=7) plus the truncate probe's two branches. Kept
+                    database dropped; 0 nexus_gate* remain. No Java touched.
+next              the reason worth carrying forward: a green row whose detail restates a constant trains its
+                    reader to ignore the detail, and the detail is the only part of a census row that says what
+                    the schema looks like today. Standing reports unchanged: `saved_searches.notify` read by
+                    nothing; CommerceApiTest belongs to another stream; the drifted shared `nexus` demo database
+                    remains diagnostic-only and unreseeded; the events subject seam (D70) still waits on a
+                    contract decision rather than a check.
