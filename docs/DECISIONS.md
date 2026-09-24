@@ -3300,3 +3300,119 @@ back off itself. The equality row catches the registry drifting from that copy; 
 drifting from the UNIONs. The alternative — one UNION generated from `poly_arms` by `format()` — would put the
 probe's joins in a string and take the readable SQL out of the file, which is a worse trade for a five-table
 list. If the list grows past a dozen, that trade flips and D71's residue becomes the next decision's subject.
+
+**Corrected by D72 the same day: that threshold had already been crossed when I wrote it.** `poly_arms` holds
+**15** arms over four tables, so "past a dozen" describes the file as it stands, which makes the sentence a
+deadline that is simultaneously already due and impossible to notice. A count is the wrong trigger anyway — the
+thing a flat (table, type) list cannot carry is an arm whose *join shape* differs from the others: **four of the
+fifteen** already need more than `id::text` (`favorites.collection` and `favorites.guide` each pin
+`collections.kind`, `permission_grants.merchant_user` joins through an active membership, and
+`permission_grants.api_key` filters on `revoked_at IS NULL`), and a fifth arm of a *different* kind — one the
+registry cannot express at all, e.g. a two-column referent — is what would force generating the UNION from the
+registry. Stated as a number it was both wrong and unfalsifiable; stated as a shape it can be checked the next
+time an arm is added.
+
+## D72 A census that only spoke one suffix — 2026-09-25
+
+### 1. The column the blind-spot census could not name
+
+D66 built a census so that "nobody thought to check it" stopped being a reason a column went unexamined, and it
+works — with one flaw: the census asks the catalogue a question in a *naming* vocabulary, `attname LIKE '%_id'`.
+D69's pair census had already shown the better shape, where a rule about structure (`stem_type` beside `stem_id`)
+drops `mime_type` on its own without anybody maintaining an exception. A suffix is not a property of references;
+it is a property of the person who chose the name. So the census was only ever going to find columns named the
+way its author named things.
+
+The schema turned out to be explicit about this, in a way nobody had read. Over `public`:
+
+```
+11  columns whose name ends in _by
+ 7  of them uuid
+ 6  of those 7 carry REFERENCES users(id)
+ 1  carries nothing
+```
+
+The six: `campaigns.approved_by`, `coupons.created_by`, `coupons.published_by`, `refunds.approved_by`,
+`seo_pages.reviewed_by`, `share_links.created_by`. The seventh: `permission_grants.granted_by`, V1:136, written
+as `granted_by uuid,` with no constraint after it — and it is not that the meaning is unclear, it is that six
+of its same-named siblings say exactly what it means. The other four `%_by` columns are text (`campaigns.generated_by`,
+`seo_pages.generated_by`, `trust_signals.detected_by`, flyway's `installed_by`): provenance labels, not people.
+
+Nothing else asked either. Both writers supply a real person — `MerchantService.java:63` passes
+`principal.userId()`, `MerchantWorkspaceService.java:177` passes `operatorId`, `ApiKeyService.java:67` passes the
+owner — and the seed fills the column on all 36 grants with ids that do resolve (measured off the generated CSV:
+3 distinct operators, 0 nulls, 0 outside the seeded `users` set). But `generate.py`'s own FK self-check map lists
+`permission_grants.merchant_id` and does not list `granted_by`, so the artifact that ships the rows never checks
+the one column the schema forgot to bind. On the drifted demo database the application's own 15 grants resolve
+too (0 null, 0 unresolvable, 3 distinct) — which is a report about live data, not a gate on the artifact.
+
+### 2. The fix, and what the type condition buys
+
+The census predicate became a union of two naming shapes with a type condition on the second:
+
+```sql
+AND ((a.attname LIKE '%\_id' AND a.attname <> 'id')
+     OR (a.attname LIKE '%\_by' AND a.atttypid = 'uuid'::regtype))
+```
+
+so the count of unconstrained reference columns moves **25 → 26 with no list edited anywhere**, and the four
+text columns fall out on their own — the same self-excluding behaviour D69 valued in the pair rule. `granted_by`
+is then registered in `ref_registry` under the existing `probe` kind (an orphan probe resolves it, which is
+what now exists) rather than a fourth kind invented for one row; and the probe itself is a plain
+`LEFT JOIN users`, no type arms, because an operator is not a polymorphic subject. It refuses an empty set: zero
+grants, or grants with no operator on them, cannot produce a green, which is D64's rule and the reason the
+detail prints the three counts separately (rows carrying an operator, rows carrying none, unresolvable ones).
+
+Two things deliberately did not happen. No migration adds the missing `REFERENCES users(id)` — that is a schema
+decision on an already-applied file owned by another stream, and it is reported here instead. And no `not-a-reference`
+waiver for `granted_by`, which would have been the cheap green: the column is a person, six siblings prove it, and
+the seed and the application both write real ids.
+
+### 3. Falsifications
+
+Run on the kept gate database (`nexus_gate_63484_1790282836`, built by a full `db_gate_fresh.sh` that reported
+`RESULT: PASS — 192 quality checks`), then dropped; 0 `nexus_gate*` databases remain.
+
+```
+P0   D72 file, clean      192 passed    census detail: 26 unconstrained reference column(s) …
+P0b  HEAD file, same db    191 passed    census detail: 25 unconstrained *_id column(s) …
+M1   predicate reverted to the *_id shape only
+        FAIL |the registry names no column the schema has lost |1 stale of 6 registered (not-a-reference 1, probe 5)
+M2   granted_by's registry entry renamed to a column the census does not see
+        FAIL |every reference the seed writes is probed or expla… |permission_grants.granted_by (36 row(s))
+        FAIL |the registry names no column the schema has lost    |1 stale of 6 registered …
+P3   create public.d72_planted (id uuid primary key, actor_by uuid not null) + 1 row
+        FAIL |every reference the seed writes is probed or expla… |d72_planted.actor_by (1 row(s))
+        census detail after the create: 27 unconstrained reference column(s)
+     after drop table                                        192 passed, 26 measured
+P1   update every seeded grant's granted_by to a uuid no users row has
+        FAIL |every grant names an operator that exists |36 unresolvable granted_by of 36 grant(s)
+                                                             carrying an operator (0 carry none), filed by
+                                                             1 distinct operator(s); granted_by has no FK
+     after restoring a real operator back                   192 passed
+```
+
+M1 is the one worth reading twice: reverting the broadening does **not** make the census quiet — it makes the
+registry *stale*, because the census and the registry are bound to each other in both directions. That is the
+difference between a list with a check next to it and a list that can be contradicted.
+
+P1's plant is coarser than intended and the doc says so: `WHERE subject_type = 'merchant_user'` was meant to
+move a handful of rows, and the shipped seed's 36 grants are all `merchant_user`, so it moved every one — 36 of
+36 unresolvable rather than a subset. A single-row plant would have needed a predicate on `permission`, and the
+verdict would have been the same row; the plant tests resolution, not proportionality.
+
+### 4. What this leaves standing, including about itself
+
+The new row's own detail carries a hand number — `(26 on this schema …)` — and the run printed it beside
+measured values of 25 (M1) and 27 (P3). A literal inside a message about measurement is the smell this lane has
+been chasing since D69's census row, which has the identical shape (`(12 on this schema; …)`); the numbers are
+not load-bearing (the assertion is `count >= 17`, and the count printed first is the measured one), but the
+sentence contradicts itself whenever the schema moves. Named here as the next pass's edit, with D69's row
+included in it, rather than quietly reworded now: a wording change re-opens the green run this entry is citing.
+
+And `%_by` is still a naming rule, found by a person who happened to think of it. What generalizes out of D66,
+D69 and this is not a predicate but a duty: a census must state which naming conventions it covers, because any
+other answer the schema gives is invisible by construction. The candidate that would be actually exhaustive —
+every uuid column that is not its own key and has no FK — is too wide to gate (it names generated ids, payload
+refs and dead columns alike), so the honest form is a widening that stays falsifiable: two shapes now, each with
+a plant that proves the other one is not the only thing the file can see.

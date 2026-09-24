@@ -309,6 +309,24 @@ FROM g LEFT JOIN probe q ON q.parent = g.subject_type AND q.k = g.sid
      AND (q.m IS NULL OR q.m = g.merchant_id)
 GROUP BY g.subject_type;
 
+-- D72: the same table's *other* unbounded uuid column, and the one the naming census could not see because it
+-- is called `granted_by` rather than `granted_id`. Six of this schema's seven uuid `*_by` columns carry
+-- `REFERENCES users(id)`; this one carries nothing (V1:136 `granted_by uuid,`), the seed fills it on all 36
+-- rows, and generate.py's FK self-check map covers permission_grants.merchant_id while naming granted_by
+-- nowhere. So the resolution lives here, and only here: a direct join, no type arms, because an operator is
+-- not a polymorphic subject. It refuses an empty set — a grant table with no operator id on any row would tell
+-- nothing about whether the join works, which is D64's rule.
+INSERT INTO qc
+SELECT 'every grant names an operator that exists',
+       count(*) > 0 AND count(*) FILTER (WHERE g.granted_by IS NOT NULL) > 0
+       AND count(*) FILTER (WHERE g.granted_by IS NOT NULL AND u.id IS NULL) = 0,
+       count(*) FILTER (WHERE g.granted_by IS NOT NULL AND u.id IS NULL) || ' unresolvable granted_by of '
+       || count(*) FILTER (WHERE g.granted_by IS NOT NULL) || ' grant(s) carrying an operator ('
+       || count(*) FILTER (WHERE g.granted_by IS NULL) || ' carry none), filed by '
+       || (SELECT count(DISTINCT granted_by) FROM permission_grants)
+       || ' distinct operator(s); granted_by has no FK in the schema'
+FROM permission_grants g LEFT JOIN users u ON u.id = g.granted_by;
+
 -- facts is the third polymorphic table, and until now nobody had asked the general question of it.
 -- Every existing fact check reads `JOIN merchants` or `JOIN offerings`, so a fact keyed to a
 -- `location` — 684 of them in the demo dataset, `address` observations — could point at no row at all
@@ -1044,6 +1062,16 @@ SELECT 'favourite subject_type is one the API can save',
 -- thought to check cannot stay unmentioned just because nobody thought to check it. The registry is a hand
 -- list on purpose — what the catalogue decides is *who has to answer*, and a new column the seed starts
 -- writing goes red until someone registers a reason for it.
+--
+-- D72 found the predicate's own blind spot: `*_id` is not what makes a column a reference, and a census keyed
+-- to one suffix silently promises it has found the shape. The schema holds eleven `*_by` columns; seven are
+-- uuid and **six of those seven carry `REFERENCES users(id)`** (campaigns.approved_by, coupons.created_by,
+-- coupons.published_by, refunds.approved_by, seo_pages.reviewed_by, share_links.created_by). The seventh —
+-- `permission_grants.granted_by`, V1:136, `granted_by uuid,` with nothing after it — carries no bound, and the
+-- census never saw it because of its name. So the predicate now asks for either suffix, with a type condition
+-- doing the exclusion the old file did by hand: `*_by` counts only when it is uuid, which drops
+-- campaigns.generated_by / seo_pages.generated_by / trust_signals.detected_by (free-text provenance labels)
+-- and flyway's installed_by without an exception list, exactly the way D69's pair rule dropped mime_type.
 CREATE TEMP TABLE ref_cat (name text, rows_n bigint, vals_n bigint, types_n int);
 DO $$
 DECLARE r record; n bigint; v bigint; tn int;
@@ -1055,7 +1083,9 @@ BEGIN
       FROM pg_attribute a
       JOIN pg_class c ON c.oid = a.attrelid AND c.relkind = 'r'
       JOIN pg_namespace ns ON ns.oid = c.relnamespace AND ns.nspname = 'public'
-     WHERE a.attnum > 0 AND NOT a.attisdropped AND a.attname LIKE '%\_id' AND a.attname <> 'id'
+     WHERE a.attnum > 0 AND NOT a.attisdropped
+       AND ((a.attname LIKE '%\_id' AND a.attname <> 'id')
+            OR (a.attname LIKE '%\_by' AND a.atttypid = 'uuid'::regtype))
        AND NOT EXISTS (SELECT 1 FROM pg_constraint f
                         WHERE f.conrelid = c.oid AND f.contype = 'f' AND a.attnum = ANY (f.conkey))
        AND NOT EXISTS (SELECT 1 FROM pg_constraint u
@@ -1091,13 +1121,23 @@ INSERT INTO ref_registry VALUES
   'orphan probe over review|merchant|document|message; `listing` is in V1:574 and resolves to no table '
   || 'in this schema, so a case of that type is an orphan by construction (D68)'),
  ('user_identities.provider_id', 'not-a-reference',
-  'V1:53 declares it an opaque external subject id, never a token — no table in this schema resolves it');
+  'V1:53 declares it an opaque external subject id, never a token — no table in this schema resolves it'),
+ ('permission_grants.granted_by', 'probe',
+  'the operator''s user id, resolved by a direct JOIN users below — not polymorphic, so no type arms are '
+  || 'involved. D72 measured it as the only uuid *_by column in public with no REFERENCES: its six siblings '
+  || '(campaigns.approved_by, coupons.created_by, coupons.published_by, refunds.approved_by, '
+  || 'seo_pages.reviewed_by, share_links.created_by) are all bounded to users, and the census missed this one '
+  || 'because it asked only about the *_id suffix. The writers supply principal.userId() '
+  || '(MerchantService.java:63) and operatorId (MerchantWorkspaceService.java:177, ApiKeyService.java:67); '
+  || 'generate.py''s own FK self-check map names permission_grants.merchant_id and not granted_by, so this '
+  || 'probe is the only thing on either side that asks whether an operator id resolves.');
 
 INSERT INTO qc
 SELECT 'the reference census reads the catalogue',
        (SELECT count(*) FROM ref_cat) >= 17,
-       (SELECT count(*) FROM ref_cat) || ' unconstrained *_id column(s) measured from pg_attribute '
-       || '(25 on this schema; the floor is two thirds of what was measured)';
+       (SELECT count(*) FROM ref_cat) || ' unconstrained reference column(s) measured from pg_attribute '
+       || '(26 on this schema, over two naming shapes: *_id and uuid *_by; the floor is two thirds of what '
+       || 'was measured)';
 
 INSERT INTO qc
 SELECT 'every reference the seed writes is probed or explained',

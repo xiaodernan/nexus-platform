@@ -3027,3 +3027,60 @@ next              poly_arms is a hand copy of the four UNIONs, so the equality r
                     trade. Unchanged reports: `saved_searches.notify` read by nothing; CommerceApiTest belongs to
                     another stream; the drifted shared `nexus` demo database (15 merchant_user grants, 0 api_keys,
                     3,961 facts against the gate's 5,688) is diagnostic only and was not reseeded.
+
+## 68. A census that only spoke one suffix (2026-09-25)
+
+D66's reference census exists so that a column nobody thought to check cannot stay unmentioned — and it asked
+the catalogue in a naming vocabulary: `attname LIKE '%_id'`. The schema answers that question about actor
+attribution in a different suffix. Measured over `public`: 11 columns end in `_by`, 7 of them uuid, and **6 of
+those 7 carry `REFERENCES users(id)`** — `campaigns.approved_by`, `coupons.created_by`, `coupons.published_by`,
+`refunds.approved_by`, `seo_pages.reviewed_by`, `share_links.created_by`. The seventh is
+`permission_grants.granted_by` (V1:136, `granted_by uuid,` with nothing after it), and the census could not see
+it because of its name.
+
+```
+new/changed       data/seed/quality.sql only, +43/-4 lines, 191 -> 192 checks. The census predicate is now a union
+                    of two naming shapes, the second one type-gated:
+                      (%_id AND <> 'id') OR (%_by AND atttypid = 'uuid'::regtype)
+                    The type condition drops campaigns.generated_by / seo_pages.generated_by /
+                      trust_signals.detected_by / flyway's installed_by on its own — no exception list, the way
+                      D69's pair rule dropped mime_type.
+                    granted_by enters ref_registry under the existing `probe` kind (a fourth kind invented for one
+                      row would have been a vocabulary for its own sake), and the new check resolves it with a
+                      plain LEFT JOIN users — no type arms, an operator is not a polymorphic subject — refusing an
+                      empty set on three separate counts (rows carrying an operator, rows carrying none,
+                      unresolvable ones).
+measured          the census moves 25 -> 26 with no list edited anywhere; the HEAD file on the same database still
+                    prints 25 and passes 191. Seed side: 36 grants, all merchant_user, all with a non-null
+                    granted_by, 3 distinct operators, 0 outside the seeded users set — and generate.py's own FK
+                    self-check map names permission_grants.merchant_id while never naming granted_by, so the
+                    artifact that ships the rows was not asking. App side: MerchantService.java:63 passes
+                    principal.userId(), MerchantWorkspaceService.java:177 passes operatorId, ApiKeyService.java:67
+                    the owner. The drifted demo database resolves too (15 rows, 0 null, 0 unresolvable) — a report
+                    about live data, not a gate on the artifact.
+plants            P0 D72 clean 192 · P0b HEAD file on the same db 191 · M1 revert the broadening -> 1 red, and it
+                    is `the registry names no column the schema has lost | 1 stale of 6 registered`, i.e. the
+                    census does not go quiet, the registry goes stale · M2 rename granted_by's registry entry ->
+                    `every reference the seed writes is probed or explained | permission_grants.granted_by
+                    (36 row(s))` + the stale row · P3 create public.d72_planted(actor_by uuid not null) + 1 row ->
+                    census prints 27 with no list edited and the same unregistered-column red, green again after
+                    the drop · P1 point every seeded grant's granted_by at a uuid no users row has -> exactly 1
+                    red, `36 unresolvable granted_by of 36 grant(s) … granted_by has no FK in the schema`, green
+                    after restoring a real operator.
+                  P1's plant is coarser than intended and recorded as such: WHERE subject_type='merchant_user'
+                    was meant to move a handful of rows, but all 36 seeded grants are merchant_user, so it moved
+                    every one. The verdict tests resolution, not proportionality.
+gates             scripts/db_gate_fresh.sh (full, background): RESULT: PASS — 192 quality checks on a
+                    from-scratch schema (tables=58, migrations=7) plus the truncate probe's two branches. Kept
+                    database dropped after the series; 0 nexus_gate* remain. No Java touched.
+also              D71's own §5 set a threshold ("past a dozen arms") that this file had already crossed at 15 —
+                    corrected in D71's text, marked, with the real trigger restated as an arm whose join shape
+                    cannot be expressed by a flat (table, type) list: four of the fifteen already need more than
+                    id::text (two collections.kind pins, the active-membership join, the revoked-key filter).
+next              the new row's detail carries a hand literal — "(26 on this schema)" printed next to measured 25
+                    and 27 in two of the plants — which contradicts itself whenever the schema moves. Same shape
+                    as D69's census row. Named for the next pass with its own green witness rather than reworded
+                    mid-commit. Unchanged reports: no migration was added for granted_by's missing FK (schema
+                    decision, another stream's applied file); `saved_searches.notify` read by nothing;
+                    CommerceApiTest belongs to another stream; the drifted shared `nexus` demo database stays
+                    diagnostic and unreseeded.
