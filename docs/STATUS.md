@@ -3339,3 +3339,94 @@ next              residue worth carrying: (a) the `const 0` answers are true of 
                     another stream; the drifted shared `nexus` demo database stays diagnostic-only and
                     unreseeded; the events subject seam (D70) waits on a contract decision, not a check; and
                     the split migration ledger in `nexus_test` belongs to the infrastructure lane.
+
+## 73. A view column's kind is read from the census, not chosen by the author (2026-09-25)
+
+§72 shipped three hand-set kinds for the 13 columns of the two served views and refused a fourth. This unit
+tested the half of that claim nobody had measured — not *can an invented kind be refused* (it can) but **does
+every shape the data can take have a name**. It does not: on the (rows, distinct values) plane the three kinds
+cover three cells of five, and the two homeless ones are produced by exactly the change §72 defers to §109. So
+the kind is now *derived* from the census, a hand answer must name the kind the data puts its column in, and the
+two kinds the demo does not exercise are exempted by name with a reason that is re-read against the derivation
+every run.
+
+```
+measured          the plane first, before any edit. Shipped funnel: merchant_id (520 rows, 520 values) and
+                    seven single-valued columns. Plant 1 — one 'view' event for 260 of the 520 merchants —
+                    puts v_merchant_funnel.views at (520 rows, 2 values), where §72's block reports
+                    `const=NO varying=NO norows=NO`: no legal answer exists, and the answer row goes red
+                    accusing that column. Plant 2 — a view column written as NULL::text over the same 520 rows
+                    — sits at (520 rows, 0 values) and reddened the answer row under ALL THREE kinds, three
+                    separate attempts naming the same column each time. The only remedy a future maintainer
+                    could reach for was deleting the check. Both plants are reachable by the very change §72
+                    says someone may decide to make (seed transactions/traffic), which is what made this a
+                    defect rather than a taste question. One false start, same class as D65's plants: the first
+                    probe view was created AFTER the census ran, so the reds printed `no such column` — they
+                    tested the dangling-answer conjunct, not the empty cell — and the fixture had to move to
+                    the pre-census seam to be legal in every dimension except the one under test.
+new/changed       data/seed/quality.sql only, +143/-52. The three materialised flags (is_const/is_var/is_empty)
+                    are gone; view_kind derives the kind from nothing but (total, n):
+                    norows | allnull | const | varying | sparse, plus an ELSE that prints
+                    'UNNAMED-'||n||'-of-'||total. `sparse` and `allnull` are the two cells §72 had no word
+                    for. Kept from §72 rather than traded away: a closed vocabulary (an invented label simply
+                    never matches the derivation) and `const` answers still carrying the literal they claim, so
+                    a column whose single value moves reddens its row. Gained with the derivation: one fewer
+                    seam — labels are read at check time, so an answer moved after the derivation is red (W8),
+                    which is the exact plant that stayed green in §72 until a third seam existed. New row 3
+                    'a view kind is exercised or exempted' over view_vocab (5 names; allnull and sparse exempt
+                    with written reasons): four refusals — a derived kind no vocab row names, a vocab name the
+                    CASE can never produce, an exemption whose cell is NOT empty, an unexercised name with a
+                    blank reason. 199 -> 200 checks; re-timed on the kept database, the block costs 0.49s.
+                    The ELSE branch is unreachable by arithmetic (n is never negative nor strictly between 0 and
+                    1) and no qc row asserts it empty — it is a tripwire inside the derivation, not a check
+                    about it, because a predicate that can only pass is the thing §72 deleted one unit earlier.
+plants            11 runs against the shipped text (the drive slices the block out of quality.sql itself), on a
+                    kept from-scratch gate database, over three seams, with a footer that refuses to report
+                    anything unless all three rows exist. W1 the 260-event plant with no edit to the answer list
+                    -> TWO rows red: `v_merchant_funnel.views answered const, the census derives sparse` and the
+                    vocab row's `norows = UNUSED, no reason` / `sparse = 1 column(s)` — seeding withdraws an
+                    exemption by itself · W2 the same plant with that answer rewritten -> row 1 green, views no
+                    longer an offender · W3 an all-NULL column answered `allnull` -> rows 1 and 2 green over 15
+                    columns ("allnull 1, const 7, norows 5, varying 2 — offenders: none") and ONLY row 3 red for
+                    the exemption it withdrew: the new home fits, the stale exemption does not · W4 'maybe' ->
+                    `answered maybe, the census derives const` · W5 a blanked reason -> `orders gives no reason`
+                    · W6 the sparse exemption blanked while its cell is still empty -> `sparse = UNUSED, no
+                    reason` · W7 'const' deleted from the vocabulary while every answer still matches its
+                    derived kind -> only the vocab row red, `4 kind(s) in the vocabulary, 3 of them actually
+                    derived` · W8 a label moved AFTER the derivation -> red, the seam §72 needed a third of ·
+                    W9 an answer deleted -> `1 column(s) left unanswered: v_merchant_funnel.clicks (520 row(s),
+                    1 value(s))` · W10 the north star renamed away -> BOTH rows red naming opposite directions:
+                    row 1 `5 column(s) left unanswered … d77_moved.day (0 row(s), 0 value(s))` and row 2
+                    `v_north_star.day answered norows, the census derives no such column`. W10 is what §72's
+                    residue (d) asked for: a view that stops being a view was caught there only because a
+                    `norows`/`const` *value claim* went stale; now the census enumerates views by name, so a
+                    rename arrives as a stranger to row 1 and as a dangling answer to row 2. Baseline and final
+                    unmutated: three rows green; state after the drive `events=0 public views=2 named
+                    v_merchant_funnel+v_north_star leftover-d77_moved=0`.
+gates             scripts/db_gate_fresh.sh --keep twice green over this block — `RESULT: PASS — 200 quality
+                    checks on a from-scratch schema (tables=58, migrations=7)` — once before a comment
+                    de-duplication pass and once over the text that ships (the second block had one repeated
+                    comment deleted, no SQL moved). The three rows were read off the kept database and print
+                    PASS there: `13 column(s) across 2 view(s) the app reads; 0 column(s) left unanswered` /
+                    `13 answer(s) over 13 census column(s) … const 7, norows 5, varying 1 — offenders: none` /
+                    `5 kind(s) in the vocabulary, 3 of them actually derived by the census: allnull = exempted
+                    with a reason, const = 7 column(s), norows = 5 column(s), sparse = exempted with a reason,
+                    varying = 1 column(s) … offenders: none`. All kept gate databases dropped (0 nexus_gate*
+                    remain); `nexus_funnel_probe` in the same container is not this lane's and was left alone.
+                    No Java, migration or seeded value changed, so mvn -o test and e2e_fresh.sh were not in
+                    scope: the gate reads the same bytes and nothing served or rendered moved.
+next              residue worth carrying: (a) the derivation reads only `count(*)` and `count(DISTINCT col::text)`
+                    — `nulls`, `low`/`high` and the declared type are collected and asserted by no row except
+                    `low`, which `const` answers must name, so §72's "counts values, not widths" residue stands;
+                    (b) the ELSE tripwire has no witness, because no legal plant can reach it — it is defended
+                    by arithmetic and by its own offender string, and saying so is the honest version of
+                    leaving it; (c) a view *swapped for a table* should redden row 2 by W10's mechanism (the
+                    census filters `relkind = 'v'`) but that swap was reasoned, not performed; (d) the sparse
+                    and allnull exemptions are live the moment the seed carries traffic — the next mover on the
+                    §109 question must withdraw them and rewrite the 13 answers in the same commit, which is now
+                    enforced by row 3 rather than by this sentence. Standing reports unchanged: `saved_searches.notify`
+                    read by nothing; `no_show` named once by a door list with no reader; CommerceApiTest belongs
+                    to another stream; the drifted shared `nexus` demo database stays diagnostic-only and
+                    unreseeded; the events subject seam (D70) waits on a contract decision; the split migration
+                    ledger in `nexus_test` belongs to the infrastructure lane.
+```

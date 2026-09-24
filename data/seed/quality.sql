@@ -1755,7 +1755,8 @@ SELECT 'a vocabulary answer is still an answer',
 -- knowing: the funnel is anchored on `merchants` (520 seeded rows), the north star on `events` (0 rows) — a
 -- GROUP BY over nothing produces no groups, not a row of zeros.
 --
--- COST, measured: 13 aggregates over 2 views, 0.6s on a kept gate database (against D75's ~5s for 232 columns).
+-- COST, measured: 13 aggregates over 2 views, 0.6s on a kept gate database (against D75's ~5s for 232 columns);
+-- re-measured after D77's derivation and the extra vocabulary row, 0.49s on the same database.
 --
 -- CAUSE, and it is not an oversight: D64's fabrication guard requires every table outside the seed's own
 -- anchor to be EMPTY, and events/orders/reservations/carts/payments are all in that swept set. So these arms
@@ -1791,19 +1792,38 @@ BEGIN
   END LOOP;
 END $d76$;
 
--- Three kinds of answer, each re-read against the census it describes rather than trusted:
---   const    one value over rows that exist; the answer must name THAT value, so a column that starts
---            varying — or whose constant moves — reddens the row rather than quietly ageing
---   varying  distinct values = rows, i.e. the column is the view's own grain (the per-business key)
---   norows   the view produces no rows at all, which is a different fact from "a row full of zeros"
--- There is deliberately no fourth kind. A column that is none of the three (two values over five rows, say)
--- has no honest one-word answer here, and any string invented for it reddens the row: the block refuses
--- vocabulary it does not read, the way D75's registry does.
+-- FIVE KINDS, AND THE CENSUS PICKS WHICH ONE APPLIES (D77, superseding D76's three hand-labelled kinds).
 --
--- ONE CONJUNCT THE FIRST DRAFT LOSED: row one used to also require pg_class's view count to equal the
--- census's own distinct-view count. That is the same query counted twice, so no mutation could have
--- failed it — the view count now appears in the detail as a fact instead of hiding in the predicate as a
--- tautology.
+-- D76 shipped const/varying/norows and called refusing a fourth kind a virtue. Measuring that claim (D77's
+-- first run, on a kept gate database) shows two cells of the (rows, distinct values) plane that no shipped
+-- kind can name — and both are reachable by exactly the change D76 defers to §109:
+--
+--   rows > 0, 1 < distinct < rows    measured: giving 260 of the 520 merchants one 'view' event each puts
+--                                    v_merchant_funnel.views at (520 rows, 2 values), where the old block
+--                                    reported const=fits, varying=NO, norows=NO — no legal answer existed, so
+--                                    the only way to satisfy the gate was to delete it
+--   rows > 0, distinct = 0           measured: a probe view column written as NULL::text over 520 rows
+--                                    reddened the answer row under ALL THREE kinds, each attempt naming the
+--                                    same column
+--
+-- So the kind is now DERIVED below from the census and a hand answer must name the kind the data puts its
+-- column in. Two things are kept from D76 by that change rather than lost: the vocabulary stays closed (an
+-- invented label is still a red — it simply never matches the derivation), and a `const` answer still carries
+-- the literal it claims, so a column whose single value moves reddens the row. What is gained is a home for
+-- every shape, and one less seam: D76 needed a plant to land between the answer INSERTs and the flag UPDATE
+-- because its flags were materialised per answer; a derived kind is read at check time, so moving a label is a red
+-- wherever in the run it moves.
+--
+-- The two kinds the shipped dataset does not exercise (allnull, sparse) are exempted BY NAME, with a reason,
+-- and the exemption re-reads the derivation every run — the shape D75's `below` and D71's `no-referent`
+-- already use. Seeding traffic does not just change a number: it withdraws an exemption, which is the point of
+-- recording them here.
+--
+-- The final ELSE branch of the derivation is unreachable by arithmetic (a distinct count is never negative
+-- and never between 0 and 1). It stays because an edit that opens a hole in the CASE above should print a
+-- named red rather than derive NULL, and NO qc row asserts the branch is empty: a predicate that can only
+-- pass is the thing D76 deleted one unit earlier.
+
 CREATE TEMP TABLE view_answer (vw text NOT NULL, col text NOT NULL, answer text NOT NULL,
                                claimed text, why text NOT NULL, PRIMARY KEY (vw, col));
 INSERT INTO view_answer VALUES
@@ -1832,16 +1852,40 @@ INSERT INTO view_answer VALUES
  ('v_north_star', 'fulfilled_intents', 'norows', NULL, 'the intent arm the north-star chart headlines is '
   || 'never reached either — §56''s customer list reads the same way ("completed transactions only")');
 
--- Both flags come from the census, not from the hand list: an answer may not assert what the view stopped
--- doing. (Temp functions are not valid Postgres, so this is one UPDATE reading three sources.)
-ALTER TABLE view_answer ADD COLUMN is_const boolean, ADD COLUMN is_var boolean, ADD COLUMN is_empty boolean;
-UPDATE view_answer a
-   SET is_const = EXISTS (SELECT 1 FROM view_data d WHERE d.vw = a.vw AND d.col = a.col
-                            AND d.total > 0 AND d.n = 1 AND d.low = a.claimed),
-       is_var   = EXISTS (SELECT 1 FROM view_data d WHERE d.vw = a.vw AND d.col = a.col
-                            AND d.total > 0 AND d.n = d.total AND d.n > 1),
-       is_empty = EXISTS (SELECT 1 FROM view_data d WHERE d.vw = a.vw AND d.col = a.col
-                            AND d.total = 0);
+-- THE CENSUS, NOT THE AUTHOR, DECIDES THE KIND. The header above carries the measurements that made this a
+-- derivation rather than a choice -- the (520 rows, 2 values) cell and the (520 rows, 0 values) cell, neither
+-- of which D76's three hand labels could name -- and the CASE below reads nothing but (total, n) from the
+-- census, so the two cells now have homes ('sparse', 'allnull') instead of a gate that gets deleted.
+CREATE TEMP TABLE view_kind (vw text NOT NULL, col text NOT NULL, kind text NOT NULL,
+                             total bigint NOT NULL, n bigint NOT NULL, PRIMARY KEY (vw, col));
+INSERT INTO view_kind
+SELECT d.vw, d.col,
+       CASE WHEN d.total = 0   THEN 'norows'
+            WHEN d.n = 0       THEN 'allnull'
+            WHEN d.n = 1       THEN 'const'
+            WHEN d.n = d.total THEN 'varying'
+            WHEN d.n > 1       THEN 'sparse'
+            ELSE 'UNNAMED-' || d.n || '-of-' || d.total END,
+       d.total, d.n
+  FROM view_data d;
+
+-- The vocabulary is closed at five names, and a name is only allowed to sit unused while the cell it describes
+-- is empty — the same re-read-the-exemption rule D75's `below` row and D71's `no-referent` kind follow.
+CREATE TEMP TABLE view_vocab (kind text PRIMARY KEY, exempt text);
+INSERT INTO view_vocab VALUES
+ ('const',   NULL),
+ ('varying', NULL),
+ ('norows',  NULL),
+ ('allnull', 'no view column in the shipped demo is NULL on every row it sits on: the funnel left-joins its '
+             || 'counters but coalesces each to 0, and v_north_star produces no rows at all. The exemption is '
+             || 'worthless the moment a view column starts carrying only NULLs — that answer must then be '
+             || 'written and this reason withdrawn in the same commit.'),
+ ('sparse',  'no view column in the shipped demo has between 2 and rows-1 distinct values: seven funnel '
+             || 'columns are single-valued, merchant_id is the grain, and the five north-star columns have no '
+             || 'rows — all because D64''s fabrication guard keeps events/orders/reservations/carts/payments '
+             || 'empty, which pins six funnel counters at one value (0). Seed any traffic and this cell goes '
+             || 'live (measured: events for 260 of 520 merchants puts v_merchant_funnel.views at 2 values over '
+             || '520 rows), so the exemption must be withdrawn in the commit that seeds it.');
 
 INSERT INTO qc
 SELECT 'a served view answers every column it exposes',
@@ -1862,38 +1906,85 @@ SELECT 'a served view answers every column it exposes',
                    'none');
 
 INSERT INTO qc
-SELECT 'a view answer is still an answer',
+SELECT 'a view answer names the kind the census derives',
        (SELECT count(*) FROM view_answer) > 0
        AND NOT EXISTS (SELECT 1 FROM view_answer a
-                       WHERE NOT EXISTS (SELECT 1 FROM view_data d
-                                         WHERE d.vw = a.vw AND d.col = a.col))
-       AND NOT EXISTS (SELECT 1 FROM view_answer a WHERE a.answer = 'const' AND NOT a.is_const)
-       AND NOT EXISTS (SELECT 1 FROM view_answer a WHERE a.answer = 'varying' AND NOT a.is_var)
-       AND NOT EXISTS (SELECT 1 FROM view_answer a WHERE a.answer = 'norows' AND NOT a.is_empty)
-       AND NOT EXISTS (SELECT 1 FROM view_answer a
-                       WHERE a.answer NOT IN ('const', 'varying', 'norows'))
+                       WHERE NOT EXISTS (SELECT 1 FROM view_kind k
+                                         WHERE k.vw = a.vw AND k.col = a.col))
+       AND NOT EXISTS (SELECT 1 FROM view_answer a JOIN view_kind k
+                         ON k.vw = a.vw AND k.col = a.col WHERE a.answer <> k.kind)
+       AND NOT EXISTS (SELECT 1 FROM view_answer a JOIN view_data d
+                         ON d.vw = a.vw AND d.col = a.col
+                        WHERE a.answer = 'const'
+                          AND coalesce(d.low, '<none>') <> coalesce(a.claimed, '<none>'))
        AND NOT EXISTS (SELECT 1 FROM view_answer a WHERE btrim(a.why) = ''),
-       (SELECT count(*) FROM view_answer) || ' answer(s): '
-       || (SELECT count(*) FROM view_answer WHERE answer = 'const') || ' const, '
-       || (SELECT count(*) FROM view_answer WHERE answer = 'varying') || ' varying, '
-       || (SELECT count(*) FROM view_answer WHERE answer = 'norows') || ' over no rows — and each is only '
-       || 'worth what it says while the view still does it, so all three are re-read from the census above: '
-       || coalesce((SELECT string_agg(a.vw || '.' || a.col || ' (' || a.answer
-                                      || coalesce(' claims ' || a.claimed, '')
-                                      || CASE WHEN NOT EXISTS (SELECT 1 FROM view_data d
-                                                               WHERE d.vw = a.vw AND d.col = a.col)
-                                               THEN ' ·no such column' ELSE '' END
-                                      || CASE WHEN btrim(a.why) = '' THEN ' ·no reason' ELSE '' END
-                                      || ')', ', ' ORDER BY a.vw, a.col)
-                    FROM view_answer a
-                    WHERE NOT EXISTS (SELECT 1 FROM view_data d
-                                      WHERE d.vw = a.vw AND d.col = a.col)
-                       OR (a.answer = 'const' AND NOT a.is_const)
-                       OR (a.answer = 'varying' AND NOT a.is_var)
-                       OR (a.answer = 'norows' AND NOT a.is_empty)
-                       OR btrim(a.why) = ''
-                       OR a.answer NOT IN ('const', 'varying', 'norows')),
-                   'every answer still holds');
+       (SELECT count(*) FROM view_answer) || ' answer(s) over '
+       || (SELECT count(*) FROM view_kind) || ' census column(s), and the kind each one must name is derived '
+       || 'above rather than chosen here: '
+       || coalesce((SELECT string_agg(x.kind || ' ' || x.n, ', ' ORDER BY x.kind)
+                    FROM (SELECT k.kind, count(*) AS n FROM view_kind k GROUP BY k.kind) x),
+                   'nothing derived')
+       || ' — offenders: '
+       || coalesce((SELECT string_agg(f, ' · ' ORDER BY f) FROM (
+              SELECT a.vw || '.' || a.col || ' answered ' || a.answer
+                     || ', the census derives ' || coalesce(k.kind, 'no such column') AS f
+                FROM view_answer a LEFT JOIN view_kind k ON k.vw = a.vw AND k.col = a.col
+               WHERE k.kind IS NULL OR a.answer <> k.kind
+              UNION ALL
+              SELECT a.vw || '.' || a.col || ' claims ' || coalesce(a.claimed, '<nothing>')
+                     || ' while the column''s only value is ' || coalesce(d.low, '<null>')
+                FROM view_answer a JOIN view_data d ON d.vw = a.vw AND d.col = a.col
+               WHERE a.answer = 'const' AND coalesce(d.low, '<none>') <> coalesce(a.claimed, '<none>')
+              UNION ALL
+              SELECT a.vw || '.' || a.col || ' gives no reason'
+                FROM view_answer a WHERE btrim(a.why) = ''
+                     ) x), 'none');
+
+INSERT INTO qc
+SELECT 'a view kind is exercised or exempted',
+       (SELECT count(*) FROM view_vocab) > 0
+       AND NOT EXISTS (SELECT 1 FROM view_kind k
+                       WHERE NOT EXISTS (SELECT 1 FROM view_vocab v WHERE v.kind = k.kind))
+       AND NOT EXISTS (SELECT 1 FROM view_vocab v
+                       WHERE v.kind NOT IN ('const', 'varying', 'norows', 'allnull', 'sparse'))
+       AND NOT EXISTS (SELECT 1 FROM view_vocab v
+                       WHERE v.exempt IS NOT NULL
+                         AND EXISTS (SELECT 1 FROM view_kind k WHERE k.kind = v.kind))
+       AND NOT EXISTS (SELECT 1 FROM view_vocab v
+                       WHERE (v.exempt IS NULL OR btrim(v.exempt) = '')
+                         AND NOT EXISTS (SELECT 1 FROM view_kind k WHERE k.kind = v.kind)),
+       (SELECT count(*) FROM view_vocab) || ' kind(s) in the vocabulary, '
+       || (SELECT count(DISTINCT k.kind) FROM view_kind k) || ' of them actually derived by the census: '
+       || coalesce((SELECT string_agg(v.kind || ' = '
+                                      || CASE WHEN (SELECT count(*) FROM view_kind k WHERE k.kind = v.kind) > 0
+                                              THEN (SELECT count(*) FROM view_kind k WHERE k.kind = v.kind)
+                                                   || ' column(s)'
+                                              WHEN btrim(coalesce(v.exempt, '')) = '' THEN 'UNUSED, no reason'
+                                              ELSE 'exempted with a reason' END,
+                                     ', ' ORDER BY v.kind) FROM view_vocab v), 'none')
+       || ' — an exemption is only honest while its cell stays empty, so every one re-reads the derivation '
+       || 'above; offenders: '
+       || coalesce((SELECT string_agg(f, ' · ' ORDER BY f) FROM (
+              SELECT 'the census derives ' || k.kind || ', which no vocabulary row names' AS f
+                FROM view_kind k WHERE NOT EXISTS (SELECT 1 FROM view_vocab v WHERE v.kind = k.kind)
+              UNION ALL
+              SELECT 'a kind nobody can derive: ' || v.kind
+                FROM view_vocab v
+               WHERE v.kind NOT IN ('const', 'varying', 'norows', 'allnull', 'sparse')
+              UNION ALL
+              SELECT v.kind || ' is exercised by '
+                     || (SELECT count(*) FROM view_kind k WHERE k.kind = v.kind)
+                     || ' column(s) and still carries an exemption'
+                FROM view_vocab v
+               WHERE v.exempt IS NOT NULL
+                 AND EXISTS (SELECT 1 FROM view_kind k WHERE k.kind = v.kind)
+              UNION ALL
+              SELECT v.kind || ' has no column in its cell and no reason to say why'
+                FROM view_vocab v
+               WHERE (v.exempt IS NULL OR btrim(v.exempt) = '')
+                 AND NOT EXISTS (SELECT 1 FROM view_kind k WHERE k.kind = v.kind)
+                     ) x), 'none');
+
 
 -- ============================================================ C  hard gate
 \echo ''

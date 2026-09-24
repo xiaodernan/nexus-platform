@@ -3896,3 +3896,164 @@ direction from V6, where a rename reddened both rows at once.
   block's; the two rows would fail together if the guard were loosened without touching the answers.
 - Nothing here changes a line of Java, a migration or a seeded value: the gate gained two rows (197 → 199), the
   build gained none. The §109 question in §3 is reported for a decision, not decided.
+
+## D77 A view column's kind is read from the data, not chosen by the author — 2026-09-25
+
+### 1. The claim worth testing in D76's block
+
+D76 answered 13 view columns with three hand-set kinds and wrote that refusal of a fourth was a virtue: *"There
+is no `other` kind: a column that is none of the three has no honest one-word answer here, and an invented one
+fails the `answer NOT IN ('const','varying','norows')` term."* Its V5 plant proved the second half — an invented
+label goes red. It never proved the first half, which is the stronger claim: **that every shape the data can
+actually take has one of the three names.** That is arithmetic away from a measurement, and the measurement was
+not made before D76 shipped.
+
+The plane to measure is (rows the view produces, distinct values the column carries). Three kinds can name at
+most three cells. So D77's first act was not an edit but a probe: print the cell each shipped and each planted
+column sits in, and ask which cells no shipped kind can answer.
+
+### 2. Two cells had no home, and both are reachable by the change D76 defers
+
+```
+=== A  the shipped funnel, before any plant
+   CELL v_merchant_funnel.merchant_id | total=520 n=520 | const=NO varying=fits norows=NO
+   CELL v_merchant_funnel.views       | total=520 n=1   | const=fits varying=NO norows=NO
+=== B  260 events rows added (one 'view' event for 260 of the 520 merchants)
+   CELL v_merchant_funnel.views       | total=520 n=2   | const=NO varying=NO norows=NO
+=== C3 a probe view column written as NULL::text over the 520 merchants
+   CELL v_d77_probe.one_val           | total=520 n=520 | const=NO varying=fits norows=NO
+   CELL v_d77_probe.all_null          | total=520 n=0   | const=NO varying=NO norows=NO
+```
+
+`total=520 n=2` and `total=520 n=0` are legal shapes of a projection — and D76's block has no word for either.
+Worse, the block did not fail quietly on them, it failed *accusingly*:
+
+```
+B2  the shipped block over the same plant
+    FAIL a view answer is still an answer  |… v_merchant_funnel.views (const claims 0), v_north_star.day (norows) …
+C2  the all-NULL column answered 'const'    |… v_d77_probe.all_null (const claims 0) …
+C2  the all-NULL column answered 'varying'  |… v_d77_probe.all_null (varying) …
+C2  the all-NULL column answered 'norows'   |… v_d77_probe.all_null (norows) …
+```
+
+Three attempts, three reds, the same column named each time: a column that is NULL on every row it sits on
+cannot be answered by any kind D76 shipped. So a maintainer who later seeded traffic — the exact change D76's
+§3 says is a product decision someone may make — would face a gate that is *unsatisfiable except by deleting
+it*. A check whose only answer to a legitimate future schema is "wrong" is a check with an expiry date written
+by nobody.
+
+One false start is recorded because it is the same trap as D65's plants: the first all-NULL probe was created
+**after** the census had run, so its columns were not in the census at all and the reds printed `no such column`
+— which tested the dangling-answer conjunct, not the empty cell. The probe was moved to the pre-census seam and
+re-measured (the `C2`/`C3` lines above are that run). A falsifying fixture has to be legal in every dimension
+except the one under test, and "created before the thing that enumerates it" is one of those dimensions.
+
+### 3. The change: the census decides the kind, the answer must name it
+
+`view_kind` derives the kind from the census's own two numbers and nothing else:
+
+```sql
+CASE WHEN d.total = 0   THEN 'norows'     -- a GROUP BY over nothing
+     WHEN d.n = 0       THEN 'allnull'    -- NULL on every row it sits on      (D76: no word)
+     WHEN d.n = 1       THEN 'const'
+     WHEN d.n = d.total THEN 'varying'    -- the column is the view's grain
+     WHEN d.n > 1       THEN 'sparse'     -- some rows share, some differ      (D76: no word)
+     ELSE 'UNNAMED-' || d.n || '-of-' || d.total END
+```
+
+Two virtues of D76 are kept by the rewrite rather than traded away: the vocabulary stays **closed** (an answer
+that names something the derivation cannot produce simply never matches — W4 below), and a `const` answer still
+carries the literal it claims, so a column whose single value moves reddens the row (D76's V2 survives this
+unit unchanged). What is gained is a home for every cell. What is lost is a seam: D76 needed a plant to land
+*between* the answer list and the flag `UPDATE`, because its `is_const`/`is_var`/`is_empty` were materialised
+per answer and froze whatever the answers said at that moment. A derived kind is read at check time, so moving
+a label is a red wherever in the run it moves — W8 is that claim tested, and it is red.
+
+The `ELSE` branch is unreachable by arithmetic (`n` is never negative and never strictly between 0 and 1), and
+it stays anyway so that an edit which opens a hole in the `CASE` above prints a named offender instead of
+deriving NULL. **No qc row asserts that the branch is empty**, because a predicate that can only pass is the
+exact thing D76 deleted one unit earlier; this is a tripwire inside the derivation, not a check about it.
+
+### 4. The two kinds the demo does not exercise are exempted by name, and the exemption reads the derivation
+
+`view_vocab` holds the five names; `allnull` and `sparse` carry a written reason for sitting empty (the funnel
+coalesces its counters to 0 rather than leaving them NULL; seven funnel columns are single-valued, `merchant_id`
+is the grain, and the five north-star columns have no rows — all because D64's fabrication guard keeps
+events/orders/reservations/carts/payments empty). The third row then refuses four things: a derived kind no
+vocabulary row names, a vocabulary name the derivation can never produce, an exemption whose cell is *not*
+empty, and an unexercised name with a blank or missing reason.
+
+The consequence is deliberate and worth stating plainly: **seeding traffic does not only change a number, it
+withdraws an exemption.** W1 shows the machinery doing that with no hand editing at all — one `events` plant
+moved `sparse` from "exempted with a reason" to "1 column(s)" and emptied `norows`' cell, and the row went red
+for both reasons at once.
+
+### 5. Falsification: eleven plants over the shipped text, on a kept from-scratch gate database
+
+The drive slices the block out of `data/seed/quality.sql` itself, so these verdicts are about the shipped text,
+not about a copy. Seams: *pre* (before the census, so the census sees the change), *mid* (after the answer
+INSERTs), *post* (after the derivation). Its footer refuses to report anything when fewer than three rows exist,
+so a `qc` INSERT that dies mid-run cannot be read as green.
+
+```
+W0  none   baseline                                                     all three rows green
+W1  pre    events for 260 of 520 merchants                              2 rows red
+         FAIL a view answer names the kind the census derives
+              offenders: v_merchant_funnel.views answered const, the census derives sparse
+                         · v_north_star.day answered norows, the census derives const
+         FAIL a view kind is exercised or exempted
+              const = 11 column(s), norows = UNUSED no reason, sparse = 1 column(s)
+W2  pre+mid  the same plant, `views` rewritten to the derived kind     row 1 green, row 2 no longer names views
+W3  pre+mid  an all-NULL view column answered `allnull`                rows 1-2 green over 15 columns,
+                                                                    only row 3 red: allnull = 1 column(s)
+                                                                    (the new home fits; the stale exemption does not)
+W4  post   an invented kind ('maybe') on tenant_id                    FAIL answered maybe, the census derives const
+W5  post   a reason blanked on the orders answer                      FAIL v_merchant_funnel.orders gives no reason
+W6  post   the sparse exemption blanked while its cell is empty       FAIL sparse = UNUSED, no reason
+W7  post   the 'const' name deleted from the vocabulary               FAIL 4 kind(s) in the vocabulary, 3 derived
+         (every answer still matched its derived kind — only the bookkeeping row could see this)
+W8  mid    an answer's label changed AFTER the derivation ran         FAIL answered sparse, the census derives const
+W9  post   an answer deleted                                          FAIL 1 column(s) left unanswered:
+                                                                         v_merchant_funnel.clicks (520 row(s), 1 value(s))
+W10 pre    v_north_star renamed away                                  FAIL BOTH rows, naming opposite directions:
+         FAIL a served view answers every column it exposes
+              5 column(s) left unanswered …: d77_moved.day (0 row(s), 0 value(s)), …
+         FAIL a view answer names the kind the census derives
+              v_north_star.day answered norows, the census derives no such column, …
+final none  unmutated block, untouched database                       all three rows green
+state after the drive: events=0 public views=2 named v_merchant_funnel+v_north_star leftover-d77_moved=0
+```
+
+W10 is the row that pays a debt. §72's residue list ended with *"(d) a view that stops being a view (a table
+swap, a rename into another schema) leaves the census with its answer, exactly D75's residue (b) one layer up,
+and only a `norows`/`const` claim that no longer matches would notice."* Under D76 that was true — the rename
+was caught by a *value* claim going stale. Under D77 it is caught structurally: the census enumerates views by
+name, so the renamed view arrives as a stranger (row 1: five columns unanswered under `d77_moved`) and the
+hand answers arrive as dangling (row 2: five answers naming a column the census does not have). Two rows, two
+directions, one plant.
+
+W3 is the one that keeps this honest about the refactor's *own* cost: giving `allnull` a home immediately made
+two rows green that D76 could not have made green at all, and the only remaining red was the exemption the new
+kind withdrew. Growing a gate grows its bookkeeping, and that bookkeeping is enforced rather than hoped for.
+
+The official gate ran twice over this block — once before a comment de-duplication pass, once over the text that
+ships — and both printed `RESULT: PASS — 200 quality checks` (199 → 200: one D76 row became two). The three rows
+were read off the kept from-scratch database and print `PASS` there with the details quoted in §4 and §5.
+
+### 6. What this does not claim
+
+- The derivation reads only `count(*)` and `count(DISTINCT col::text)`. `nulls`, `low` and `high` are still
+  carried by the census and asserted by no row except `low`, which `const` answers must name. D75's residue
+  about widths and distributions applies here unchanged.
+- The kind names describe the shipped dataset. `const 0` on the funnel counters means "0 across these 520
+  synthetic businesses because D64's guard keeps the base tables empty", not "always 0". W1 is the measurement
+  that says what happens if that stops being true.
+- The `ELSE` branch has no witness: no plant reaches it, because reaching it would require a distinct count that
+  is neither 0, 1, nor greater than 1. It is defended by arithmetic and by the offender string, not by a test —
+  and it is stated here rather than left for a reader to assume.
+- A view **swapped for a table** (`relkind` moves from `v` to `r`) should redden row 2 by the same mechanism as
+  W10, since the census filters on `relkind = 'v'`. That is reasoning from W10, not a plant: the swap was not
+  performed. It is listed as residue, not as evidence.
+- Nothing in this unit changed a line of Java, a migration, or a seeded value; the §109 question D76 raised —
+  whether the shipped demo should stay empty or carry marked synthetic transactions — is still not decided here.
+  The gate got one row (199 → 200), the build got none.
