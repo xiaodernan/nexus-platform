@@ -2952,6 +2952,16 @@ listing` at V1:574, `-- merchant|offering|location|review|policy` at V1:539, `--
 api_key` at V1:130 — and never turns one of them into a constraint. `share_links.subject_type`, added later in
 V7, is the only pair in the schema with a real CHECK.
 
+**Corrected by D71, which measured the weaker half of that first sentence.** "V1 writes these domains as column
+comments" is true of the migration's *source text* and false of the database. A join of `pg_attribute` against
+`pg_description` over every public column whose name ends in `_type` returns 14 columns and a description on
+none of them — the `--` marks inside `CREATE TABLE` are SQL comments, and Postgres discards them at parse time.
+So the finding is not "documented but unenforced"; it is that the schema holds neither enforcement *nor*
+documentation for eleven of its twelve vocabularies, and the only place any of them is written down outside a
+Java constant is lines a reader has to go find in a migration. That is why D71 puts the vocabularies in a table
+in this file and re-reads what a database can re-read, instead of citing V1:539/:574/:130 from prose a third
+time. The rest of §2 stands unchanged, including the CHECK count.
+
 It would be wrong to conclude from that that nothing bounds them, and the first draft of this section said
 almost exactly that, so here is the measured version. The bounding lives in whichever door writes the row, in
 constants that have no relationship to one another: `EventsController:63` holds
@@ -3124,3 +3134,169 @@ been pinning nothing.
 Run on the restored tree afterwards: `Tests run: 12, Failures: 0`. `git status` shows no residue; the driver
 refused to start if a mutation string was already present, restored each case from an absolute-path backup, and
 the final `grep -c mutated` over the source printed `0`.
+
+## D71 An arm no door can fill, and a type every key fills — 2026-09-25
+
+### 1. Three vocabularies for one column, and the probe was the odd one out
+
+`permission_grants.subject_type` is named in three places, and before this decision no two of them agreed:
+
+| where | the list it holds |
+| --- | --- |
+| `V1__init.sql:130` (source comment only — see D69 §2's correction) | `user\|merchant_user\|agent\|api_key` |
+| `PermissionService.java:40` `HUMAN_SUBJECT_TYPES` | `user`, `merchant_user` — and its javadoc says so: "the two spellings a human being's grants are filed under" |
+| `quality.sql`'s probe arms, since D31 | `merchant`, `user`, `merchant_user` |
+
+`merchant` appears in exactly one of the three: the one that is a check. It is in no migration comment, no Java
+constant, and no call site. `PermissionService.grant()` is type-parameterised (:133), and the three places that
+supply a subject type to a write are `MerchantService.java:63` and `MerchantWorkspaceService.java:177` (both
+`"user"`) and `ApiKeyService.java:67`'s own insert (`"api_key"`); the only other subject literals in that file
+are :146-147, which read the *operator's* grant under `user`/`merchant_user` as a guard rail. Nothing files a
+grant as `merchant`. So the old arm resolved a row that cannot exist: a green that answers a question nobody is
+allowed to ask.
+
+`api_key` appears in two of the three and not in the probe. That is the expensive direction. `PermissionService
+.has/grantedPermissions` are type-agnostic — they take `subject_type` and `subject_id` from the principal — and
+`Principal` can be authenticated as `api_key` with `subjectId = api_keys.id`. Every key the merchant console
+creates therefore writes one grant per scope, and `MerchantWorkspaceTest.java:404` counts those rows after a
+real `POST /api/v1/merchant/api-keys`. An orphan probe with no `api_key` arm reports each of those legal rows
+as an unresolvable subject. Nothing in the shipped seed writes api keys, which is the only reason that false red
+never reached a gate run.
+
+The two errors are the same error D67 found in `favorites` — a probe's arm list written from what seemed
+plausible rather than from what the door produces — recurring in a table nobody had re-read. That is the only
+interesting thing about it, and it is why the fix here is not just the arm list.
+
+### 2. The arms now answer to the interceptor, and to nothing else
+
+```sql
+SELECT 'user'::text parent, id::text k, NULL::uuid m FROM users
+UNION ALL SELECT 'merchant_user', u.id::text, mu.merchant_id
+  FROM merchant_users mu JOIN users u ON u.id = mu.user_id WHERE mu.status = 'active'
+UNION ALL SELECT 'api_key', id::text, NULL FROM api_keys WHERE revoked_at IS NULL
+```
+
+Three arms for the three types this build files grants under, each resolved the way the code that would consume
+the grant resolves it: the person plus an active membership at that merchant (D31's finding — a grant keyed to a
+`merchant_users` row id is unreachable, because both interceptor lookups are ids on `users`), and live keys only,
+because `ApiKeyService.verify` looks a key up with `k.revoked_at is null` — a grant filed under a revoked key
+authorises nothing, so it is filtered exactly like the membership. `merchant` is gone, and its absence is argued
+in the file's own comment rather than left for the next reader to rediscover.
+
+Two things deliberately did not ship. No `agents`/`policies`-style arm was invented for `agent`: `agent_profiles`
+holds a workspace's AI configuration, not an authenticatable subject, and the AI service enters through
+`AiServiceTokenGuard` (D12), so a row filed as `agent` stays an orphan by construction and prints its own red.
+And no api_key row was added to the seed: that would mean shipping a credential-shaped fixture, which is a
+product-data decision this lane does not own. The arm's reachability is instead witnessed by the Java test above.
+
+### 3. The vocabulary written down as data, and the four halves a database can re-read
+
+`quality.sql` now carries `poly_vocab` — 18 rows, one per (table, type) this file's probes and the migration
+comments name across `facts`, `favorites`, `moderation_cases` and `permission_grants` — with two declared
+dimensions and a reason per row:
+
+- `kind` is `arm` (the probe resolves it against `referent`) or `no-referent` (the migration names it and no
+  table spells it, so a row of that type is unresolvable *by construction* and must print red rather than be
+  handed an invented join).
+- `filled` is `seed` (the shipped generator emits it — re-checked against the live census), `door` (the
+  application writes it at the cited file:line — this file cannot see that), or `declared` (only the migration's
+  source text names it, and no writer was found).
+
+Plus `poly_arms` (15 rows: what the four `WITH probe AS (…)` UNIONs actually resolve) and `poly_types`, a census
+of which types the loaded data actually carries per probed pair, built through the same `pg_attribute` join D69
+used so no column name is retyped. Six checks, 185 → **191**:
+
+| row | the question | what it can catch |
+| --- | --- | --- |
+| `a probe arm is a declared type and every armed type has an arm` | two-way set equality between the registry and the UNION list | a hand edit to one list that the other does not follow |
+| `an armed type resolves in a table the schema has` | `to_regclass(referent)` for every `arm` row | a referent renamed or dropped by a migration |
+| `a no-referent waiver still names a table the schema lacks` | `to_regclass IS NULL` for every waiver | the day someone ships `policies` — the waiver stops being true by itself |
+| `an arm claimed seeded is a type the data still carries` | every `filled='seed'` row appears in `poly_types` with `n > 0` | the generator dropping a type the file still claims exercises an arm |
+| `no unlisted type rides in the seeded data` | every type the data carries has a vocabulary row | a new type value arriving that neither list mentions |
+| `the arm registry agrees with the probed-pair counts` | `poly_probed.arms = count(poly_arms)` per table | D69's hand counts drifting from D71's registry |
+
+Each of the first four refuses an empty set, which is D64's rule: a row that can only pass one way is not a
+check. The `door` rows' file:line justifications are the residue a reader must re-verify in Java — a Java
+constant is not in `pg_*`, and pretending otherwise would be the D68 §3 mistake wearing a different hat.
+
+### 4. Falsifications
+
+Eleven cases, run twice: once on the gate database kept from the first build, then re-run end to end on a second
+freshly built one (`nexus_gate_60241_1790281956`, `--keep`) so nothing here rests on a single afternoon's output.
+The HEAD file and the D71 file are run against the *same* planted rows, so the pair of verdicts is the finding
+rather than either one alone.
+
+| # | setup | file | measured |
+| --- | --- | --- | --- |
+| P0 | no plant | HEAD | green, 185 |
+| P1 | 1 live `api_keys` row + 2 `api_key` grants, written the way `ApiKeyService.create` writes them | HEAD | **false red** — 2 reds: the legal rows print as orphans, plus D64's traffic sweep |
+| P2 | the same plant | D71 | **1 red** — only the traffic sweep, correctly reporting a row the seed did not write |
+| P3 | 1 `merchant`-typed grant keyed to a *real* merchant | HEAD | **false green, and it grew**: 186 checks passed |
+| P4 | the same plant | D71 | 2 reds — the orphan row, and the new registry row naming the type the lists do not cover |
+| P5 | no plant | D71 | green, 191 |
+| M1 | `poly_arms` loses the `api_key` row (the registry still calls it armed) | mutated copy | 2 reds — the two-way equality row and the count-agreement row |
+| M2 | `poly_probed`'s grants count 3 → 2 | mutated copy | 1 red — the count-agreement row, and only it |
+| M3 | the `policy` waiver's referent `policies` → `reviews` (a table that exists) | mutated copy | 1 red — the waiver row |
+| P6 | `create table public.policies (id uuid primary key)` | D71 | the waiver goes red with no edit to any list; after `drop table`, 191 green |
+| P7 | `delete from facts where subject_type='location'` | D71 | 1 red — the claimed-seeded arm is no longer exercised |
+
+```
+%_type columns measured: 14   with a stored description: 0   without: 14     <- the D69 §2 correction, re-measured
+P0  exit=0 reds=0   NOTICE: quality gate: all 185 checks passed
+P1  exit=3 reds=2   ERROR:  quality gate: 2 check(s) failed:
+      FAIL |no traffic outside the seeded tables   |written elsewhere: api_keys (1 row(s)) — …
+      FAIL |orphan: permission_grants.api_key      |2 unresolvable subject_id of 2 grant(s)
+P2  exit=3 reds=1   ERROR:  quality gate: 1 check(s) failed:
+      FAIL |no traffic outside the seeded tables   |written elsewhere: api_keys (1 row(s)) — …
+P3  exit=0 reds=0   NOTICE: quality gate: all 186 checks passed
+P4  exit=3 reds=2   ERROR:  quality gate: 2 check(s) failed:
+      FAIL |no unlisted type rides in the seeded data |not in the vocabulary: permission_grants.merchant (1 row(s))
+      FAIL |orphan: permission_grants.merchant        |1 unresolvable subject_id of 1 grant(s)
+P5  exit=0 reds=0   NOTICE: quality gate: all 191 checks passed
+M1  FAIL |a probe arm is a declared type and every armed type … |14 arm(s) and 15 armed vocabulary row(s);
+                                                                   disagreement: permission_grants.api_key is armed
+                                                                   in the vocabulary with no UNION arm
+    FAIL |the arm registry agrees with the probed-pair counts   |disagreement: permission_grants declared 3
+                                                                   arm(s), registry has 2
+M2  FAIL |the arm registry agrees with the probed-pair counts   |disagreement: permission_grants declared 2
+                                                                   arm(s), registry has 3
+M3  FAIL |a no-referent waiver still names a table the schema … |3 waiver(s) of that kind;
+                                                                   now exists: facts.policy -> reviews
+P6  FAIL |a no-referent waiver still names a table the schema … |3 waiver(s) of that kind;
+                                                                   now exists: facts.policy -> policies
+    after DROP: exit=0 reds=0  NOTICE: quality gate: all 191 checks passed
+P7  FAIL |an arm claimed seeded is a type the data still carri… |unexercised: facts.location
+```
+
+P1/P2 and P3/P4 are the two halves D61's rule asks for: the same rows, the same database, two files, each file
+wrong in the opposite direction. P2 is the positive control that keeps P1 honest — the plant is legal in every
+dimension the schema guards (`key_hash`, `prefix`, `scopes`, the `granted_by` person, an active membership as
+anchor), so the only red it may earn is the traffic sweep's, and it earns exactly that one.
+
+P3 deserves the emphasis it got: the invented arm did not merely pass, it *added a check that passed*. The probe
+groups by the types actually present, so a row nobody can write raised the file's own green count 185 → 186. A
+gate that gets more impressive as you feed it fiction is the failure mode this whole lane has been circling since
+D64 — and it is the reason `no unlisted type rides in the seeded data` prints in P4 rather than staying quiet:
+the orphan row says "this key resolves to nothing", which is true but not the point, while the registry row says
+"nobody told me this type exists", which is the point.
+
+M1 through M3 are mutations of the registry itself, not of the data — each one edits only one of the two lists so
+the row that compares them is the thing under test. M2 reddens one row only, which is the proof the two
+comparison rows are not the same question twice.
+
+### 5. What this closes and what it leaves open
+
+D66 §4 deferred this on purpose: "two of the three `probe` arms disagree with the vocabulary the file asserts
+next to them … Deciding which of the two vocabularies is authoritative is a contract decision, not a check edit
+— task #42." The favourites half was decided by D67 (arms aligned to the four types `MeController.FavoriteBody`
+accepts, `guide`/`collection` pinned to the `collections` row kind the way `assertSubjectInTenant` pins them).
+This decides the grants half, and it decides it by asking the *door* rather than the comment: `merchant` loses
+because no writer can produce it, `api_key` gains an arm because every key produces one, `agent` stays out
+because the type has no subject table. Where the migration names more than the door writes, the registry says so
+in `filled` rather than quietly arming or dropping.
+
+Left open, named: `poly_arms` is a hand copy of the UNION arms, because SQL cannot read its own `UNION` clauses
+back off itself. The equality row catches the registry drifting from that copy; nothing catches the copy
+drifting from the UNIONs. The alternative — one UNION generated from `poly_arms` by `format()` — would put the
+probe's joins in a string and take the readable SQL out of the file, which is a worse trade for a five-table
+list. If the list grows past a dozen, that trade flips and D71's residue becomes the next decision's subject.

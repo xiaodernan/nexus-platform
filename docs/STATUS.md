@@ -2963,3 +2963,67 @@ next              the decision, which is not mine to make silently: resolve the 
                     merchant-visible count open. Two open reports unchanged: `saved_searches.notify` read by
                     nothing; the drifted shared `nexus` demo database (11 quality.sql checks red there for drift
                     reasons, including D69's new pair row naming the 5 application-written pairs).
+
+## 67. An arm no door can fill, and a type every key fills (2026-09-25)
+
+`permission_grants.subject_type` has three vocabulary lists and no two agreed. `V1__init.sql:130` names
+`user|merchant_user|agent|api_key`; `PermissionService.java:40` holds `HUMAN_SUBJECT_TYPES = user, merchant_user`;
+and the file's own orphan probe — unchanged since D31 — resolved `merchant|user|merchant_user`. `merchant` is in
+only the probe: no migration comment, no constant, and no call site produces it (`grant()` is type-parameterised
+at :133; the subject-typed writers are `MerchantService.java:63` and `MerchantWorkspaceService.java:177` with
+`"user"`, and `ApiKeyService.java:67` with `"api_key"`). `api_key` is in the migration *and* in the code that
+writes a grant per scope for every key the console creates — and was in no arm.
+
+So the probe was wrong in both directions at once, and the two directions have different costs. A `merchant`
+grant keyed to a real merchant resolved GREEN on the HEAD file — and because the probe groups by the types
+present, it added a passing check: **185 → 186**, the gate getting more impressive as it is fed fiction. The
+missing `api_key` arm would have turned every legitimate key's grants red: `2 unresolvable subject_id of
+2 grant(s)`. Nothing in the shipped seed writes api keys, which is the only reason that second one never reached
+a run.
+
+```
+new/changed       data/seed/quality.sql only, +203/-11 lines, 185 -> 191 checks. The grants probe now carries
+                    user | merchant_user | api_key, each joined the way the consuming lookup joins: the person plus
+                    an ACTIVE membership (D31 — a grant keyed to a merchant_users row id is unreachable), and live
+                    keys only, because ApiKeyService.verify looks a key up with `k.revoked_at is null`. No merchant
+                    arm; the absence is argued in the file. D66's registry entry for the column is corrected in
+                    place — it claimed "an agent or api_key grant would be an orphan by construction", and half of
+                    that was wrong.
+                  poly_vocab: 18 rows, one per (table, type) across the four probed pairs, each with kind
+                    (arm | no-referent), a referent table, filled (seed | door | declared) and a reason.
+                    poly_arms: 15 rows — the same list as data, because a UNION clause is not readable back off
+                    SQL. poly_types: which types the loaded data actually carries, through D69's pg_attribute join.
+                  Six checks: arms<->vocabulary two-way equality; every armed referent exists (to_regclass); every
+                    no-referent waiver's table still absent; every arm claimed seeded still carries rows; no type
+                    in the data that no list names; poly_probed's hand counts == the registry's counts. The first
+                    four refuse an empty set (D64's rule).
+measured          pg_description over the schema's 14 public `%_type` columns: 0 carry a stored description. The
+                    vocabularies exist in migration SOURCE text and Java constants and nowhere else, so D69 §2's
+                    "column comments" sentence is corrected in D69 itself — the schema holds neither enforcement
+                    nor documentation for eleven of its twelve pairs.
+plants            two files, one database, the same rows: P0 HEAD clean 185 · P1 HEAD + legal api_key grant =
+                    2 reds (the false orphan red, + traffic) · P2 D71 file + the same rows = 1 red (traffic only,
+                    the positive control) · P3 HEAD + merchant-typed grant = 186 GREEN (the false green, and it
+                    grew) · P4 D71 + the same row = 2 reds, one of them `no unlisted type rides in the seeded
+                    data | not in the vocabulary: permission_grants.merchant` · P5 D71 clean = 191.
+                  Registry mutations: M1 drop api_key from poly_arms = 2 reds (equality + count) · M2 change
+                    poly_probed's 3 to 2 = 1 red (count only — the two comparison rows ask different questions) ·
+                    M3 point the policy waiver at `reviews` = 1 red (the waiver row).
+                  Live re-reads: P6 create table public.policies -> the waiver goes red with no list edited, and
+                    green again after the drop at 191 · P7 delete the location facts -> `unexercised: facts.location`.
+                  All eleven re-run end to end on a SECOND freshly built gate database, so none of it rests on one
+                    afternoon's output. Kept database dropped afterwards; 0 `nexus_gate*` remain.
+gates             scripts/db_gate_fresh.sh (full, background): RESULT: PASS — 191 quality checks on a
+                    from-scratch schema (tables=58, migrations=7), plus the truncate probe's two branches. The live
+                    databases were not opened. No Java changed; mvn -o test is not affected by this unit.
+deliberately not  No api_keys row added to the seed: that would ship a credential-shaped fixture, which is a
+                    product-data decision this lane does not own. The arm's reachability is witnessed by
+                    MerchantWorkspaceTest.java:404, which counts the grants after a real
+                    POST /api/v1/merchant/api-keys. No arm invented for `agent` either — agent_profiles is a
+                    workspace's AI configuration, not an authenticatable subject (D12).
+next              poly_arms is a hand copy of the four UNIONs, so the equality row catches the registry drifting
+                    from the copy and nothing catches the copy drifting from the UNIONs. Named as D71's residue:
+                    if the list grows past a dozen arms, generating the probe from the registry becomes the better
+                    trade. Unchanged reports: `saved_searches.notify` read by nothing; CommerceApiTest belongs to
+                    another stream; the drifted shared `nexus` demo database (15 merchant_user grants, 0 api_keys,
+                    3,961 facts against the gate's 5,688) is diagnostic only and was not reseeded.

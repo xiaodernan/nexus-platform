@@ -242,7 +242,9 @@ FROM traffic_sweep;
 -- referential integrity, part 2: polymorphic references the schema cannot express. A subject_type
 -- the probe does not know about is an orphan by definition, so an invented type cannot pass.
 -- The moderation queue is the same shape one table over: V1:574 names review|merchant|document|message|
--- listing in its column comment (D69 measured: no CHECK bounds it), every existing queue check joins
+-- listing in its CREATE TABLE source comment — which is the only place it names them (D71 measured
+-- pg_description: none of the schema's 14 public %_type columns carries a database-side comment, and no CHECK
+-- bounds any of them except share_links'), every existing queue check joins
 -- `reviews`, and the generator emits only review rows — so four of the five types had never been resolved by
 -- anything. `listing` stays out of the arms on purpose: no table in this schema is a listing, so a case of
 -- that type is unresolvable by construction and prints its own red row rather than disappearing into a join
@@ -283,14 +285,23 @@ FROM g GROUP BY t;
 INSERT INTO qc
 WITH g AS (SELECT subject_type, subject_id::text sid, merchant_id FROM permission_grants),
  probe AS (
-  -- `subject_id` names a row in whatever table `subject_type` spells — except for a workspace grant.
-  -- AuthorizationInterceptor asks for `principal.subjectId()` and `principal.userId()`, and both of those
-  -- are ids on `users`, so a grant keyed to a `merchant_users` row id is unreachable at runtime (D31).
-  -- The probe joins the way the interceptor does: the person, plus an active membership at that merchant.
-  SELECT 'merchant'::text parent, id::text k, NULL::uuid m FROM merchants
-  UNION ALL SELECT 'user', id::text, NULL FROM users
+  -- The arms are the three subject types this build can file a grant under, each resolved the way the
+  -- interceptor reads it. `subject_id` names a row in whatever table `subject_type` spells — except for a
+  -- workspace grant. AuthorizationInterceptor asks for `principal.subjectId()` and `principal.userId()`,
+  -- and both of those are ids on `users`, so a grant keyed to a `merchant_users` row id is unreachable at
+  -- runtime (D31). The probe joins the way the interceptor does: the person, plus an active membership at
+  -- that merchant. `api_key` is ApiKeyService.java:67's own write — subject_id is the api_keys row id — and
+  -- it is filtered to live keys because ApiKeyService.verify looks a key up `and k.revoked_at is null`, so
+  -- a grant filed under a revoked key authorises nothing; the same reading that gives merchant_users a
+  -- `status = 'active'` filter. There is deliberately no `merchant` arm: V1:130 does not name one, the only
+  -- three insert sites in the build write 'user' (MerchantService.java:63, MerchantWorkspaceService.java:177)
+  -- and 'api_key', the seed emits merchant_user, and no interceptor lookup ever passes a merchant id as a
+  -- subject — so such a row is not a reachable grant, and resolving it green against `merchants` was the
+  -- D67 error in a new table (an arm the door cannot produce).
+  SELECT 'user'::text parent, id::text k, NULL::uuid m FROM users
   UNION ALL SELECT 'merchant_user', u.id::text, mu.merchant_id
-    FROM merchant_users mu JOIN users u ON u.id = mu.user_id WHERE mu.status = 'active')
+    FROM merchant_users mu JOIN users u ON u.id = mu.user_id WHERE mu.status = 'active'
+  UNION ALL SELECT 'api_key', id::text, NULL FROM api_keys WHERE revoked_at IS NULL)
 SELECT 'orphan: permission_grants.' || g.subject_type,
        count(*) FILTER (WHERE q.k IS NULL) = 0,
        count(*) FILTER (WHERE q.k IS NULL) || ' unresolvable subject_id of ' || count(*) || ' grant(s)'
@@ -1071,8 +1082,11 @@ INSERT INTO ref_registry VALUES
   'orphan probe over exactly the four types MeController.FavoriteBody accepts, with guide and '
   || 'collection pinned to the collections row kind the way assertSubjectInTenant pins them (D67)'),
  ('permission_grants.subject_id', 'probe',
-  'orphan probe over merchant|user|merchant_user; an agent or api_key grant would be an orphan by '
-  || 'construction, because the probe groups by the type actually present'),
+  'orphan probe over user|merchant_user|api_key, the three types the build files grants under. D66 wrote '
+  || 'this as "an agent or api_key grant would be an orphan by construction" and that was half wrong (D71 '
+  || 'measured): `agent` has no writer so an orphan verdict is right, while `api_key` is written by '
+  || 'ApiKeyService.java:67 for every key the console creates, so the un-armed type made a legal row red. '
+  || '`merchant` was the invented arm and is gone.'),
  ('moderation_cases.subject_id', 'probe',
   'orphan probe over review|merchant|document|message; `listing` is in V1:574 and resolves to no table '
   || 'in this schema, so a case of that type is an orphan by construction (D68)'),
@@ -1159,7 +1173,8 @@ INSERT INTO poly_probed VALUES
  ('facts', 4, 'the D65 probe over merchant|offering|location|review'),
  ('favorites', 4, 'the D67 probe over the four types MeController.FavoriteBody accepts'),
  ('moderation_cases', 4, 'the D68 probe over review|merchant|document|message'),
- ('permission_grants', 3, 'the probe over merchant|user|merchant_user');
+ ('permission_grants', 3, 'the D71 probe over user|merchant_user|api_key — the types this build files grants '
+  || 'under, with the live-key and active-membership filters the interceptor''s own lookups carry');
 
 INSERT INTO qc
 SELECT 'the polymorphic-pair census reads the catalogue',
@@ -1193,6 +1208,183 @@ SELECT 'a seeded polymorphic vocabulary is bounded or probed',
                           AND NOT EXISTS (SELECT 1 FROM poly_probed p WHERE p.tbl = c.tbl)),
                    'each seeded one is resolved by a probe here')
        || '; pairs with no rows are written only by the application, which this file cannot see';
+
+-- ================================================== D71: the arms answer to a vocabulary
+-- D69 counted the (type, key) pairs and which of them this file resolves, and stopped there. The permission_grants
+-- probe is what that blind spot had already cost: its UNION carried a `merchant` arm, a type V1:130 never names
+-- and no door writes (the three insert sites in the build are MerchantService.java:63 and
+-- MerchantWorkspaceService.java:177, both 'user', and ApiKeyService.java:67, 'api_key'), while the type the
+-- console really does write — one grant per scope for every API key — had no arm at all, so a perfectly legal
+-- row would have loaded red as an orphan. That is D67's mistake (an arm the door cannot produce, and no arm for
+-- one it can) in a new table, which is the only interesting thing about it: the habit does not generalize by
+-- itself, so this time the arm list is written down as data with a justification per type, and the parts of
+-- those justifications that a database can re-read are re-read on every run.
+--
+--   kind    'arm'          the probe resolves this type against `referent`
+--           'no-referent'  the migration names the type and no table spells it, so a row of that type is an
+--                          orphan by construction and prints its own red rather than getting an invented join
+--   filled  'seed'         the shipped generator emits rows of this type — checked against the live census
+--           'door'         the application writes them at the file:line in `why` — this file cannot see that
+--           'declared'     only the migration's source comment names the type; no writer was found
+CREATE TEMP TABLE poly_vocab (
+  tbl text NOT NULL, t text NOT NULL,
+  kind text NOT NULL CHECK (kind IN ('arm', 'no-referent')),
+  referent text NOT NULL,
+  filled text NOT NULL CHECK (filled IN ('seed', 'door', 'declared')),
+  why text NOT NULL, PRIMARY KEY (tbl, t));
+INSERT INTO poly_vocab VALUES
+ ('facts', 'merchant', 'arm', 'merchants', 'seed',
+  'V1:539 names it; the generator records merchant observations'),
+ ('facts', 'offering', 'arm', 'offerings', 'seed',
+  'V1:539 names it; the generator records offering observations'),
+ ('facts', 'location', 'arm', 'locations', 'seed',
+  'V1:539 names it; the generator records one address fact per location'),
+ ('facts', 'review', 'arm', 'reviews', 'declared',
+  'V1:539 names it; the seed emits no review fact and the two refreshRating call sites pass merchant or '
+  || 'offering (ModerationService.java:57,61), so this arm resolves rows nothing writes today'),
+ ('facts', 'policy', 'no-referent', 'policies', 'declared',
+  'V1:539 names it and no policies table exists, so a policy fact is an orphan by construction and says so '
+  '(D65) — inventing a referent for it would be coinage'),
+ ('favorites', 'merchant', 'arm', 'merchants', 'seed',
+  'V1:619 and MeController.FavoriteBody both name it, and the seed saves merchants'),
+ ('favorites', 'offering', 'arm', 'offerings', 'seed',
+  'V1:619 and FavoriteBody both name it, and the seed saves offerings'),
+ ('favorites', 'guide', 'arm', 'collections', 'seed',
+  'the arm is pinned to collections.kind = ''guide'' the way MeController.assertSubjectInTenant pins it (D67), '
+  'so a mislabelled row cannot pass here either'),
+ ('favorites', 'collection', 'arm', 'collections', 'seed',
+  'pinned to collections.kind = ''collection'' for the same reason (D67)'),
+ ('moderation_cases', 'review', 'arm', 'reviews', 'seed',
+  'the one type ReviewRepository.java:122 files, and every seeded case is one'),
+ ('moderation_cases', 'merchant', 'arm', 'merchants', 'declared',
+  'V1:574 names it; no writer was found in this build (D68 armed the declared set on purpose)'),
+ ('moderation_cases', 'document', 'arm', 'documents', 'declared',
+  'V1:574 names it; no writer was found'),
+ ('moderation_cases', 'message', 'arm', 'messages', 'declared',
+  'V1:574 names it; no writer was found'),
+ ('moderation_cases', 'listing', 'no-referent', 'listings', 'declared',
+  'V1:574 names it; no listings table exists, so a listing case is unresolvable by construction (D68)'),
+ ('permission_grants', 'user', 'arm', 'users', 'door',
+  'MerchantService.java:63 and MerchantWorkspaceService.java:177 file owner and member grants as user'),
+ ('permission_grants', 'merchant_user', 'arm', 'users', 'seed',
+  'the seed''s owner preset; the referent is `users` because D31 makes the person, not the membership row, the '
+  'key, so the arm joins through merchant_users and requires an active membership at the grant''s merchant'),
+ ('permission_grants', 'api_key', 'arm', 'api_keys', 'door',
+  'ApiKeyService.java:67 writes one grant per scope for every key the console creates, and '
+  'MerchantWorkspaceTest.java:404 counts them after a real POST /api/v1/merchant/api-keys; the arm drops '
+  'revoked keys because ApiKeyService.verify looks a key up with `k.revoked_at is null`'),
+ ('permission_grants', 'agent', 'no-referent', 'agents', 'declared',
+  'V1:130 names it and AGENT_CONTRACT 8 mentions it, but no agents table exists: agent_profiles holds a '
+  'workspace''s AI configuration, not an authenticatable subject, and PermissionService records that no read '
+  'asks for a row filed as agent, because the AI service enters through AiServiceTokenGuard (D12)');
+
+-- The same list a second time, because it is the only way to ask the question at all: `poly_arms` says what the
+-- four `WITH probe AS (…)` UNIONs above resolve, and a UNION clause is not something SQL can read back off
+-- itself. That is a hand copy and the residue it leaves is named in D71 rather than argued away; what the
+-- catalogue decides is who has to be on the list, which referents exist, and which types the data carries.
+CREATE TEMP TABLE poly_arms (tbl text NOT NULL, arm text NOT NULL, PRIMARY KEY (tbl, arm));
+INSERT INTO poly_arms VALUES
+ ('facts', 'merchant'), ('facts', 'offering'), ('facts', 'location'), ('facts', 'review'),
+ ('favorites', 'merchant'), ('favorites', 'offering'), ('favorites', 'collection'), ('favorites', 'guide'),
+ ('moderation_cases', 'review'), ('moderation_cases', 'merchant'),
+ ('moderation_cases', 'document'), ('moderation_cases', 'message'),
+ ('permission_grants', 'user'), ('permission_grants', 'merchant_user'), ('permission_grants', 'api_key');
+
+-- Which types each probed pair actually carries, read from the pair's own type column (the same
+-- pg_attribute join D69 used, so the column name is never retyped here).
+CREATE TEMP TABLE poly_types (tbl text NOT NULL, t text NOT NULL, n bigint NOT NULL, PRIMARY KEY (tbl, t));
+DO $d71$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT c.tbl, c.tcol FROM poly_cat c JOIN poly_probed p ON p.tbl = c.tbl ORDER BY 1 LOOP
+    EXECUTE format('INSERT INTO poly_types SELECT %L, x.t, x.n FROM '
+                 || '(SELECT %I AS t, count(*)::bigint AS n FROM public.%I GROUP BY 1) x',
+                   r.tbl, r.tcol, r.tbl);
+  END LOOP;
+END $d71$;
+
+INSERT INTO qc
+WITH dis AS (
+  SELECT a.tbl || '.' || a.arm || ' has no vocabulary row' AS x
+    FROM poly_arms a
+   WHERE NOT EXISTS (SELECT 1 FROM poly_vocab v
+                      WHERE v.tbl = a.tbl AND v.t = a.arm AND v.kind = 'arm')
+  UNION ALL
+  SELECT v.tbl || '.' || v.t || ' is armed in the vocabulary with no UNION arm'
+    FROM poly_vocab v
+   WHERE v.kind = 'arm'
+     AND NOT EXISTS (SELECT 1 FROM poly_arms a WHERE a.tbl = v.tbl AND a.arm = v.t))
+SELECT 'a probe arm is a declared type and every armed type has an arm',
+       (SELECT count(*) FROM poly_vocab) > 0
+       AND NOT EXISTS (SELECT 1 FROM dis),
+       (SELECT count(*) FROM poly_arms) || ' arm(s) and '
+       || (SELECT count(*) FROM poly_vocab WHERE kind = 'arm') || ' armed vocabulary row(s); '
+       || coalesce('disagreement: ' || (SELECT string_agg(x, ' / ' ORDER BY x) FROM dis),
+                   'the two lists name each other exactly');
+
+INSERT INTO qc
+SELECT 'an armed type resolves in a table the schema has',
+       (SELECT count(*) FROM poly_vocab WHERE kind = 'arm') > 0
+       AND NOT EXISTS (SELECT 1 FROM poly_vocab v WHERE v.kind = 'arm'
+                        AND to_regclass('public.' || v.referent) IS NULL),
+       coalesce('referent missing: ' || (SELECT string_agg(v.tbl || '.' || v.t || ' -> ' || v.referent, ', ')
+                   FROM poly_vocab v WHERE v.kind = 'arm'
+                     AND to_regclass('public.' || v.referent) IS NULL),
+                (SELECT count(DISTINCT referent) FROM poly_vocab WHERE kind = 'arm')
+                || ' distinct referent table(s) measured present for '
+                || (SELECT count(*) FROM poly_vocab WHERE kind = 'arm') || ' armed type(s)');
+
+-- The live re-read D69 asked for of every waiver: 'no-referent' is only honest while that table is still
+-- absent, so the day someone ships a `policies` table this row goes red and a policy fact has to be armed or
+-- the waiver re-argued.
+INSERT INTO qc
+SELECT 'a no-referent waiver still names a table the schema lacks',
+       NOT EXISTS (SELECT 1 FROM poly_vocab v WHERE v.kind = 'no-referent'
+                     AND to_regclass('public.' || v.referent) IS NOT NULL),
+       (SELECT count(*) FROM poly_vocab WHERE kind = 'no-referent') || ' waiver(s) of that kind; '
+       || coalesce('now exists: ' || (SELECT string_agg(v.tbl || '.' || v.t || ' -> ' || v.referent, ', ')
+                   FROM poly_vocab v WHERE v.kind = 'no-referent'
+                     AND to_regclass('public.' || v.referent) IS NOT NULL),
+                   'each candidate table measured absent this run');
+
+INSERT INTO qc
+SELECT 'an arm claimed seeded is a type the data still carries',
+       (SELECT count(*) FROM poly_vocab WHERE filled = 'seed') > 0
+       AND NOT EXISTS (SELECT 1 FROM poly_vocab v WHERE v.filled = 'seed'
+                        AND NOT EXISTS (SELECT 1 FROM poly_types t
+                                         WHERE t.tbl = v.tbl AND t.t = v.t AND t.n > 0)),
+       coalesce('unexercised: ' || (SELECT string_agg(v.tbl || '.' || v.t, ', ')
+                   FROM poly_vocab v WHERE v.filled = 'seed'
+                     AND NOT EXISTS (SELECT 1 FROM poly_types t
+                                      WHERE t.tbl = v.tbl AND t.t = v.t AND t.n > 0)),
+                (SELECT count(*) FROM poly_vocab WHERE filled = 'seed') || ' seeded arm(s), each carrying rows ('
+                || coalesce((SELECT string_agg(tbl || '.' || t || '=' || n::text, ', ' ORDER BY tbl, t)
+                               FROM poly_types WHERE n > 0), 'none') || ')');
+
+-- And the type the data carries that no list names: the probe would already print it red as an orphan, so this
+-- row is not new coverage — it is the message that says *which* of the two lists has to grow.
+INSERT INTO qc
+SELECT 'no unlisted type rides in the seeded data',
+       (SELECT count(*) FROM poly_types WHERE n > 0) > 0
+       AND NOT EXISTS (SELECT 1 FROM poly_types t WHERE t.n > 0 AND NOT EXISTS
+                       (SELECT 1 FROM poly_vocab v WHERE v.tbl = t.tbl AND v.t = t.t)),
+       coalesce('not in the vocabulary: ' || (SELECT string_agg(t.tbl || '.' || t.t || ' (' || t.n || ' row(s))', ', ')
+                   FROM poly_types t WHERE t.n > 0
+                     AND NOT EXISTS (SELECT 1 FROM poly_vocab v WHERE v.tbl = t.tbl AND v.t = t.t)),
+                (SELECT count(DISTINCT t.tbl || '.' || t.t) FROM poly_types t WHERE t.n > 0)
+                || ' type(s) present in the data, each named by the vocabulary row');
+
+INSERT INTO qc
+SELECT 'the arm registry agrees with the probed-pair counts',
+       (SELECT count(*) FROM poly_probed) > 0
+       AND NOT EXISTS (SELECT 1 FROM poly_probed p WHERE p.arms <>
+                       (SELECT count(*) FROM poly_arms a WHERE a.tbl = p.tbl)),
+       coalesce('disagreement: ' || (SELECT string_agg(p.tbl || ' declared ' || p.arms
+                   || ' arm(s), registry has ' || (SELECT count(*) FROM poly_arms a WHERE a.tbl = p.tbl), '; ')
+                   FROM poly_probed p WHERE p.arms <>
+                     (SELECT count(*) FROM poly_arms a WHERE a.tbl = p.tbl)),
+                (SELECT string_agg(tbl || '=' || arms, ', ' ORDER BY tbl) FROM poly_probed)
+                || ' as declared, and the registry counts the same');
 
 -- ============================================================ C  hard gate
 \echo ''
