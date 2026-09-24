@@ -3755,3 +3755,144 @@ expected shape — the transcription and the answer about the transcription fail
   `check_vocab` and D66/D72's reference census.
 - Nothing here changes what any door accepts: the gate gained rows, the build gained none, and no seeded value
   was edited to make a check pass.
+
+
+## D76 The projections the app reads through carry nothing, and now says so — 2026-09-25
+
+### 1. The question one layer up
+
+D75 counted distinct values in the stored data. The shipped build does not only read stored data: two views are
+its analytics surfaces, and nothing had ever asked what *they* carry over the demo dataset. The read sites are
+few enough to name exactly, measured rather than recalled:
+
+```
+from v_merchant_funnel            AnalyticsRepository.java:41            (1 site)
+from v_north_star                 AdminSearchAnalyticsRepository.java:38,48  (2 sites)
+funnel_source = "v_merchant_funnel"  MerchantOverviewController.java:68, MerchantContentController.java:410
+source = "… + v_north_star …"        AdminSearchAnalyticsController.java:85
+```
+
+So the view names reach the client as *declared provenance* — a response field that tells a consumer which
+projection the numbers came from — while `MerchantAnalyticsRepository`, the file that mentions the funnel most
+often in prose, reads `events`/`reservations`/`orders` directly and is not a consumer of the view at all. That
+combination is why the layer deserved its own census: the answer a client reads (`funnel_source`) is a claim
+about a projection nobody in the gate had measured.
+
+The block therefore does for views what D75 does for text columns: enumerate every column of every view in
+`public` from `pg_class`/`pg_attribute`, aggregate it over the shipped rows, and require an answer by name.
+
+### 2. What the two views actually carry
+
+| view | rows | columns | what they hold |
+| --- | --- | --- | --- |
+| `v_merchant_funnel` | 520 | `merchant_id` | the only varying column — the view's own grain |
+| | | `tenant_id` | one value: the single demo tenant `00000000-…-0001` |
+| | | `views`, `clicks`, `actions`, `reservations`, `orders`, `revenue` | the constant `0`, each on all 520 rows |
+| `v_north_star` | **0** | all five (`day`, `tenant_id`, `sessions`, `searches`, `fulfilled_intents`) | no rows at all |
+
+The two shapes differ for a structural reason worth stating: the funnel is anchored on `merchants` (520 seeded
+businesses) and left-joins its counters, so it produces a row per business full of zeros; the north star is a
+`GROUP BY` over `events` (0 rows), and a grouping over nothing produces **no groups, not a row of zeros**. The
+admin dashboard's headline chart therefore reads an empty list, which is a different fact from "a series of
+zeros" and is answered as its own kind (`norows`) rather than being folded into `const`.
+
+### 3. The zeros are by rule, and the rule sits next to a clause that is not settled here
+
+`events`, `orders`, `reservations`, `carts`, `payments` are empty because D64's fabrication guard *requires*
+them to be: it computes the FK closure of the seed's own anchor, sweeps the 29 tables outside it, and fails if
+any of them holds a row. So every counter the funnel aggregates is 0 **by construction**, and the gate that
+forbids fabricated traffic is the same mechanism that makes the analytics surfaces structurally empty.
+
+On top of that, the funnel's `reservations` arm stacks a second cause: V3's predicate counts only
+`confirmed|completed`, and D26 established that no route in this build moves a booking into either state — so
+that column would stay 0 even with traffic in `events`.
+
+§109 forbids fake transactions, fake availability and fake prices outright, and the sentence after it allows
+demo data that says "Demo / Synthetic" on its face. Seeding a plausible order history would make both views
+non-empty and would also be the exact thing the guard exists to prevent; leaving them empty means every
+analytics surface in the product ships showing nothing. **That is a product decision and this lane does not
+make it.** What the gate does instead is make the consequence visible with the reason attached per arm, so the
+day anyone decides to seed transactions, the answers that claim `const 0` go red by themselves rather than
+ageing quietly.
+
+### 4. Three kinds of answer, and deliberately no fourth
+
+| kind | still true when |
+| --- | --- |
+| `const` | one distinct value over rows that exist **and the answer names that exact value** |
+| `varying` | distinct values = row count and more than one value, i.e. the column is the view's grain |
+| `norows` | the view produces no rows at all |
+
+The `const` answer carries the literal it claims (`0`, or the tenant uuid), so a column that starts varying or
+whose constant moves reddens the row without anyone re-reading the prose. There is no `other` kind: a column
+that is none of the three has no honest one-word answer here, and an invented one fails the
+`answer NOT IN ('const','varying','norows')` term — V5 below proves the block refuses vocabulary it does not
+read, the same way D75's registry does.
+
+### 5. Three defects the drive found in the block's own text
+
+The gate's prose is an assertion too, and three of its claims failed before the block was committed:
+
+- **A FAIL row that said "every one answered"** while naming the column that was not. D73's class, arrived at
+  again: the detail's fixed phrase contradicted its own aggregation. The phrase now reports a measured count
+  (`0 column(s) left unanswered by this block: none` green; `1 column(s) … : v_merchant_funnel.clicks (…)` red).
+- **A conjunct that could only pass.** The first draft required `pg_class`'s view count to equal the census's
+  own distinct-view count — the same query counted twice, so no mutation could ever have failed it. It is gone,
+  and the view count appears in the detail as a fact instead of hiding in the predicate as a tautology.
+- **A header comment that named a file which never mentions the views** (`AdminAiRepository`) and called grep
+  hits "call sites". The numbers in §1 above replaced it. This is the same failure as a stale gate: prose
+  written from memory instead of from the measurement.
+
+And one the *plants* taught: `is_const`/`is_var`/`is_empty` are materialised once, so a plant that edited a
+`claimed` literal **after** that UPDATE stayed green — the flags had already frozen the old truth. The drive
+needed a third seam (see §6), and with it the run became a real witness. The lesson generalises: a gate that
+measures into columns can only be falsified at the moment it measures, so the falsifier must know where the
+measurement happens and plant on the correct side of it.
+
+### 6. Falsification
+
+Nine plants against a kept gate database, over three seams — *pre* (before the census, so the census sees the
+change), *mid* (between the hand answers and the flag UPDATE, so the recompute sees the claim change), *post*
+(after the flags, so only the rows themselves moved). The first drive version had two seams and produced a
+green V2, which is what forced the third.
+
+```
+V1 post  delete the clicks answer              FAIL a served view answers every column it exposes
+       13 column(s) across 2 view(s) …; 1 column(s) left unanswered by this block: v_merchant_funnel.clicks
+V2 mid   claimed '0' -> '1' on tenant_id       FAIL a view answer is still an answer
+       v_merchant_funnel.tenant_id (const claims 1)
+V3 pre   one events row named 'view'           FAIL a view answer is still an answer
+       v_merchant_funnel.views (const claims 0), and all five v_north_star columns (norows)
+V4 pre   create v_d76_stranger(1, 'x')         FAIL a served view answers every column it exposes
+       15 column(s) across 3 view(s) …: v_d76_stranger.alpha, .beta
+V5 post  answer = 'maybe'                     FAIL a view answer is still an answer: v_north_star.sessions (maybe)
+V6 pre   rename v_north_star away              FAIL BOTH rows: the census now answers nothing for the moved
+       columns, and five answers carry `·no such column`
+V7 post  why = '' on the orders answer         FAIL a view answer is still an answer
+       v_merchant_funnel.orders (const claims 0 ·no reason)
+V8 mid   views answered 'varying'              FAIL a view answer is still an answer: v_merchant_funnel.views
+       (varying claims 0), with the kind counts shifting 7->6 const and 1->2 varying
+V9 post  an answer for a column no view exposes, every exposed column still answered
+       FAIL a view answer is still an answer: v_north_star.d76_gone (const claims 0 ·no such column)
+baseline and final, unmutated block over an untouched database: both rows green; official gate 199 checks
+```
+
+V3 is the row that makes this gate more than a transcription: nothing was edited in the answer list, one
+`events` row was inserted, and six answers went red because the mechanisms they describe moved. V3 also had a
+false start recorded honestly — the first attempt planted `name='d76_view'`, which the funnel's `FILTER (WHERE
+e.name = 'view')` never matches, so it reddened only the north star's `norows` answers and left `views` green.
+A plant that misses the predicate it means to disturb is a weak witness, so it was re-run with the name the arm
+actually counts. V8 is the mirror image of V2 (the claim moves the other way), and V9 isolates the dangling
+direction from V6, where a rename reddened both rows at once.
+
+### 7. Non-claims
+
+- The census reads the shipped dataset, so `const 0` means "zero for these 520 synthetic businesses", not "this
+  column is always zero". If the seed starts producing traffic, the row goes red and the answer must be rewritten.
+- Only `count(*)`, `count(DISTINCT col::text)`, `count(col)`, `min`/`max` are taken per column: no width, no
+  distribution, no timing. D75's residue about widths applies here unchanged, and the `nulls`/`high` columns the
+  census collects are carried but asserted by no row.
+- The `norows` answers are correct only while `events` stays empty, which is D64's guard's job to keep, not this
+  block's; the two rows would fail together if the guard were loosened without touching the answers.
+- Nothing here changes a line of Java, a migration or a seeded value: the gate gained two rows (197 → 199), the
+  build gained none. The §109 question in §3 is reported for a decision, not decided.

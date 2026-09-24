@@ -1735,6 +1735,166 @@ SELECT 'a vocabulary answer is still an answer',
                        OR a.answer NOT IN ('door', 'poly', 'none', 'below')),
                    'every answer still applies');
 
+-- ============================================================ D76  what the served projections carry
+--
+-- WHY THIS EXISTS: D75 asked the stored data which of its columns are bounded. The next question is one layer
+-- up, on the side the app actually reads: the schema ships two views — v_merchant_funnel (V1, replaced by V3)
+-- and v_north_star (V1) — and the shipped build SELECTs from them at exactly three sites: `from v_merchant_funnel`
+-- at AnalyticsRepository.java:41, `from v_north_star` twice at AdminSearchAnalyticsRepository.java:38 and :48.
+-- Two response fields then publish the view's own name to the client (`funnel_source` at
+-- MerchantOverviewController.java:68 and MerchantContentController.java:410, `source` at
+-- AdminSearchAnalyticsController.java:85). The file that mentions the funnel most — MerchantAnalyticsRepository —
+-- reads the base tables instead, so the view is not its source. What do these columns carry over the shipped
+-- dataset? Census every column of every view in `public` and require an answer by name, the way D75 does for
+-- the text columns of every base table.
+--
+-- MEASURED on a kept gate database, before any of this was written down: the funnel is 520 rows and SIX of its
+-- eight columns are the constant 0 (views, clicks, actions, reservations, orders, revenue); the seventh is the
+-- one demo tenant's id, constant; only merchant_id varies. `v_north_star` has ZERO rows, so all five of its
+-- columns are NULL by emptiness rather than by value. The two views differ in shape for a reason worth
+-- knowing: the funnel is anchored on `merchants` (520 seeded rows), the north star on `events` (0 rows) — a
+-- GROUP BY over nothing produces no groups, not a row of zeros.
+--
+-- COST, measured: 13 aggregates over 2 views, 0.6s on a kept gate database (against D75's ~5s for 232 columns).
+--
+-- CAUSE, and it is not an oversight: D64's fabrication guard requires every table outside the seed's own
+-- anchor to be EMPTY, and events/orders/reservations/carts/payments are all in that swept set. So these arms
+-- are 0 BY RULE. §109 forbids "fake transactions" outright while the sentence after it allows demo data that
+-- says so on its face; which reading the shipped demo should follow is a decision, and this gate does not
+-- make it — it makes the consequence visible, with the reason attached to each arm.
+--
+-- A LESSON THE CENSUS TAUGHT BY ITSELF: the first measurement printed v_north_star's five columns as BLANK
+-- lines, because text concatenation with a NULL yields NULL — a detail line disappears rather than showing
+-- its emptiness. Every string below is coalesced for that reason.
+
+CREATE TEMP TABLE view_data (vw text NOT NULL, col text NOT NULL, ord int NOT NULL, typ text NOT NULL,
+                             total bigint NOT NULL, n bigint NOT NULL, nulls bigint NOT NULL,
+                             low text, high text, PRIMARY KEY (vw, col));
+DO $d76$
+DECLARE v record; c record;
+BEGIN
+  FOR v IN SELECT c2.relname AS vw FROM pg_class c2
+            WHERE c2.relnamespace = 'public'::regnamespace AND c2.relkind = 'v'
+            ORDER BY 1
+  LOOP
+    FOR c IN SELECT a.attname AS col, a.attnum AS ord, format_type(a.atttypid, a.atttypmod) AS typ
+               FROM pg_attribute a
+              WHERE a.attrelid = to_regclass('public.' || v.vw)
+                AND a.attnum > 0 AND NOT a.attisdropped
+              ORDER BY a.attnum
+    LOOP
+      EXECUTE format('INSERT INTO view_data SELECT %L, %L, %L, %L, count(*), '
+                  || 'count(DISTINCT %I::text), count(*) - count(%I), min(%I::text), max(%I::text) '
+                  || 'FROM public.%I',
+                     v.vw, c.col, c.ord, c.typ, c.col, c.col, c.col, c.col, v.vw);
+    END LOOP;
+  END LOOP;
+END $d76$;
+
+-- Three kinds of answer, each re-read against the census it describes rather than trusted:
+--   const    one value over rows that exist; the answer must name THAT value, so a column that starts
+--            varying — or whose constant moves — reddens the row rather than quietly ageing
+--   varying  distinct values = rows, i.e. the column is the view's own grain (the per-business key)
+--   norows   the view produces no rows at all, which is a different fact from "a row full of zeros"
+-- There is deliberately no fourth kind. A column that is none of the three (two values over five rows, say)
+-- has no honest one-word answer here, and any string invented for it reddens the row: the block refuses
+-- vocabulary it does not read, the way D75's registry does.
+--
+-- ONE CONJUNCT THE FIRST DRAFT LOSED: row one used to also require pg_class's view count to equal the
+-- census's own distinct-view count. That is the same query counted twice, so no mutation could have
+-- failed it — the view count now appears in the detail as a fact instead of hiding in the predicate as a
+-- tautology.
+CREATE TEMP TABLE view_answer (vw text NOT NULL, col text NOT NULL, answer text NOT NULL,
+                               claimed text, why text NOT NULL, PRIMARY KEY (vw, col));
+INSERT INTO view_answer VALUES
+ ('v_merchant_funnel', 'tenant_id', 'const', '00000000-0000-0000-0000-000000000001',
+  'the shipped demo is one tenant (the same literal the tenant row above asserts); every analytics row '
+  || 'belongs to it'),
+ ('v_merchant_funnel', 'merchant_id', 'varying', NULL,
+  'the view''s grain: one row per business, so the funnel is per-merchant by construction (V3)'),
+ ('v_merchant_funnel', 'views', 'const', '0',
+  'events is swept EMPTY by D64''s fabrication guard (§109/§110), so the exposure counter has nothing to count'),
+ ('v_merchant_funnel', 'clicks', 'const', '0', 'same arm of the same predicate over the same empty table'),
+ ('v_merchant_funnel', 'actions', 'const', '0', 'reserve|cart_add over events, which is empty by the guard'),
+ ('v_merchant_funnel', 'reservations', 'const', '0',
+  'TWO causes stack: reservations is empty by the guard, AND V3''s predicate counts only '
+  || 'confirmed|completed — states no route in this build writes (D26: acceptance has no route yet)'),
+ ('v_merchant_funnel', 'orders', 'const', '0', 'orders/carts/payments lie outside the anchor and the guard '
+  || 'requires them empty, so a fresh install has no completed transaction to aggregate'),
+ ('v_merchant_funnel', 'revenue', 'const', '0', 'sum over the same empty order set; the funnel''s money arm '
+  || 'and its orders arm can only move together'),
+ ('v_north_star', 'day', 'norows', NULL,
+  'anchored on events (0 rows): a GROUP BY over nothing yields NO rows, which is not the same claim as a '
+  || 'row of zeros — the admin dashboard reads an empty list'),
+ ('v_north_star', 'tenant_id', 'norows', NULL, 'same empty grouping source'),
+ ('v_north_star', 'sessions', 'norows', NULL, 'count(DISTINCT session_id) is never reached'),
+ ('v_north_star', 'searches', 'norows', NULL, 'the name=filter is never reached'),
+ ('v_north_star', 'fulfilled_intents', 'norows', NULL, 'the intent arm the north-star chart headlines is '
+  || 'never reached either — §56''s customer list reads the same way ("completed transactions only")');
+
+-- Both flags come from the census, not from the hand list: an answer may not assert what the view stopped
+-- doing. (Temp functions are not valid Postgres, so this is one UPDATE reading three sources.)
+ALTER TABLE view_answer ADD COLUMN is_const boolean, ADD COLUMN is_var boolean, ADD COLUMN is_empty boolean;
+UPDATE view_answer a
+   SET is_const = EXISTS (SELECT 1 FROM view_data d WHERE d.vw = a.vw AND d.col = a.col
+                            AND d.total > 0 AND d.n = 1 AND d.low = a.claimed),
+       is_var   = EXISTS (SELECT 1 FROM view_data d WHERE d.vw = a.vw AND d.col = a.col
+                            AND d.total > 0 AND d.n = d.total AND d.n > 1),
+       is_empty = EXISTS (SELECT 1 FROM view_data d WHERE d.vw = a.vw AND d.col = a.col
+                            AND d.total = 0);
+
+INSERT INTO qc
+SELECT 'a served view answers every column it exposes',
+       (SELECT count(*) FROM view_data) > 0
+       AND NOT EXISTS (SELECT 1 FROM view_data d
+                        WHERE NOT EXISTS (SELECT 1 FROM view_answer a
+                                          WHERE a.vw = d.vw AND a.col = d.col)),
+       (SELECT count(*) FROM view_data) || ' column(s) across '
+       || (SELECT count(DISTINCT vw) FROM view_data) || ' view(s) the app reads; '
+       || (SELECT count(*) FROM view_data d
+           WHERE NOT EXISTS (SELECT 1 FROM view_answer a
+                             WHERE a.vw = d.vw AND a.col = d.col))
+       || ' column(s) left unanswered by this block: '
+       || coalesce((SELECT string_agg(d.vw || '.' || d.col || ' (' || d.total || ' row(s), '
+                               || d.n || ' value(s))', ', ' ORDER BY d.vw, d.ord)
+                    FROM view_data d WHERE NOT EXISTS (SELECT 1 FROM view_answer a
+                                                       WHERE a.vw = d.vw AND a.col = d.col)),
+                   'none');
+
+INSERT INTO qc
+SELECT 'a view answer is still an answer',
+       (SELECT count(*) FROM view_answer) > 0
+       AND NOT EXISTS (SELECT 1 FROM view_answer a
+                       WHERE NOT EXISTS (SELECT 1 FROM view_data d
+                                         WHERE d.vw = a.vw AND d.col = a.col))
+       AND NOT EXISTS (SELECT 1 FROM view_answer a WHERE a.answer = 'const' AND NOT a.is_const)
+       AND NOT EXISTS (SELECT 1 FROM view_answer a WHERE a.answer = 'varying' AND NOT a.is_var)
+       AND NOT EXISTS (SELECT 1 FROM view_answer a WHERE a.answer = 'norows' AND NOT a.is_empty)
+       AND NOT EXISTS (SELECT 1 FROM view_answer a
+                       WHERE a.answer NOT IN ('const', 'varying', 'norows'))
+       AND NOT EXISTS (SELECT 1 FROM view_answer a WHERE btrim(a.why) = ''),
+       (SELECT count(*) FROM view_answer) || ' answer(s): '
+       || (SELECT count(*) FROM view_answer WHERE answer = 'const') || ' const, '
+       || (SELECT count(*) FROM view_answer WHERE answer = 'varying') || ' varying, '
+       || (SELECT count(*) FROM view_answer WHERE answer = 'norows') || ' over no rows — and each is only '
+       || 'worth what it says while the view still does it, so all three are re-read from the census above: '
+       || coalesce((SELECT string_agg(a.vw || '.' || a.col || ' (' || a.answer
+                                      || coalesce(' claims ' || a.claimed, '')
+                                      || CASE WHEN NOT EXISTS (SELECT 1 FROM view_data d
+                                                               WHERE d.vw = a.vw AND d.col = a.col)
+                                               THEN ' ·no such column' ELSE '' END
+                                      || CASE WHEN btrim(a.why) = '' THEN ' ·no reason' ELSE '' END
+                                      || ')', ', ' ORDER BY a.vw, a.col)
+                    FROM view_answer a
+                    WHERE NOT EXISTS (SELECT 1 FROM view_data d
+                                      WHERE d.vw = a.vw AND d.col = a.col)
+                       OR (a.answer = 'const' AND NOT a.is_const)
+                       OR (a.answer = 'varying' AND NOT a.is_var)
+                       OR (a.answer = 'norows' AND NOT a.is_empty)
+                       OR btrim(a.why) = ''
+                       OR a.answer NOT IN ('const', 'varying', 'norows')),
+                   'every answer still holds');
+
 -- ============================================================ C  hard gate
 \echo ''
 SELECT CASE WHEN ok THEN '  PASS ' ELSE '  FAIL ' END AS status,

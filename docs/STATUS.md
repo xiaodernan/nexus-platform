@@ -3251,3 +3251,91 @@ next              residue worth carrying: (a) the window is a judgement written 
                     diagnostic-only and unreseeded; the events subject seam (D70) waits on a contract decision,
                     not a check; and now the split migration ledger in `nexus_test`, reported to the
                     infrastructure lane rather than reconciled here.
+
+
+## 72. The projections the app reads through carry nothing, and now say so (2026-09-25)
+
+D75 counted values in stored columns; the shipped build also reads through two views, and nothing had measured
+what they carry. The new rows census every column of every view in `public`, exactly as D75 does every text
+column of every base table, and require an answer by name that is re-read against the census each run. The
+answer, measured for the first time: `v_merchant_funnel` is 520 rows whose only varying column is the
+merchant id — six counters sit at the constant 0 and `tenant_id` at the one demo tenant — while `v_north_star`
+has **zero rows**, so its five columns are empty by absence rather than by value.
+
+```
+new/changed       data/seed/quality.sql only, +160 lines: view_data (a nested DO loop over pg_class
+                    relkind='v' x pg_attribute, one count(*)/count(DISTINCT col::text)/count(col)/min/max
+                    aggregate per view column), view_answer (13 hand rows: view, column, one of three kinds,
+                    the literal a `const` claims, and a non-blank reason) and is_const/is_var/is_empty
+                    recomputed every run from the census. 197 -> 199 checks; the block itself costs 0.6s
+                    against D75's ~5s.
+measured          the read sites are few enough to name: `from v_merchant_funnel` at
+                    AnalyticsRepository.java:41 and `from v_north_star` at
+                    AdminSearchAnalyticsRepository.java:38 and :48 — three SQL sites — while two response
+                    fields publish the projection's name to the client (`funnel_source` at
+                    MerchantOverviewController.java:68 and MerchantContentController.java:410, `source` at
+                    AdminSearchAnalyticsController.java:85). MerchantAnalyticsRepository, the file that
+                    mentions the funnel most in prose, selects from events/reservations/orders and is not a
+                    consumer of it. The zeros are by rule, not by oversight: D64's fabrication guard computes
+                    the seed anchor's FK closure, sweeps the 29 tables outside it and fails if any holds a
+                    row, so events/orders/reservations/carts/payments are empty by construction and every
+                    counter that aggregates them is 0; the funnel's `reservations` arm stacks a second cause,
+                    because V3 counts only confirmed|completed and D26 established that no route moves a
+                    booking into either. §109 forbids fake transactions outright while the next sentence
+                    allows clearly-marked demo data — seeding a plausible order history would fill both views
+                    and would be the thing the guard exists to prevent, and leaving them empty ships every
+                    analytics surface showing nothing. That is a product decision and this lane does not make
+                    it; the gate makes the consequence visible with the reason attached per arm, so the day
+                    traffic is seeded, six `const` answers and five `norows` answers go red by themselves.
+plants            9 runs on a kept gate database, over three seams — pre (before the census), mid (between
+                    the hand answers and the flag UPDATE), post (after the flags). V1 delete an answer -> the
+                    exposure row red naming v_merchant_funnel.clicks · V2 move a claimed literal -> the answer
+                    row red, tenant_id (const claims 1) · V3 insert ONE events row named 'view' -> the answer
+                    row red over six columns: funnel views (const claims 0) and all five north-star (norows),
+                    nothing edited in the answer list itself · V4 create a third view -> the exposure row red
+                    naming both of its columns and the census saying 15 column(s) across 3 view(s) · V5 an
+                    answer of kind 'maybe' -> red, a vocabulary the block refuses to read · V6 rename the
+                    north star away -> BOTH rows red, the moved columns unanswered and the orphaned answers
+                    marked ·no such column · V7 blank an answer's reason -> red, marked ·no reason · V8 the
+                    mirror of V2, a `varying` claim on a constant column -> red with the kind counts shifting
+                    7->6 const, 1->2 varying · V9 an answer for a column no view exposes while every exposed
+                    column stays answered -> only the answer row red, marking v_north_star.d76_gone
+                    (const claims 0 ·no such column) · baseline and final unmutated: both rows green.
+                    Three of the nine were written because the block's own text was wrong, and the drive is
+                    where that surfaced: the first V1 detail read "every one answered" next to the column that
+                    was not (D73's class, arrived at again), the first draft's exposure row carried a conjunct
+                    comparing pg_class's view count with the census's own distinct-view count — the same query
+                    counted twice, so no mutation could ever have failed it — and the header comment named a
+                    repository that never mentions either view and called grep hits "call sites". The plants
+                    taught one more: is_const/is_var/is_empty are materialised once, so V2 stayed GREEN until
+                    the third seam existed — a gate that measures into columns can only be falsified at the
+                    moment it measures, and the falsifier has to plant on the correct side of that moment.
+                    V3's first attempt planted name='d76_view', which the funnel's FILTER (WHERE e.name =
+                    'view') never matches, so it reddened the north star only; a plant that misses the
+                    predicate it means to disturb is a weak witness, and it was re-run with the name the arm
+                    counts.
+gates             scripts/db_gate_fresh.sh three times green: RESULT: PASS — 199 quality checks on a
+                    from-scratch schema (tables=58, migrations=7), once as planted and once after the
+                    comment-only corrections; the third run used --keep to give the drive a database, and the
+                    two new rows print green in the official stream's own output ("13 column(s) across 2
+                    view(s) the app reads; 0 column(s) left unanswered by this block: none" / "13 answer(s):
+                    7 const, 1 varying, 5 over no rows … every answer still holds"). Both kept databases
+                    dropped afterwards, 0 nexus_gate* remain. No Java, migration or seeded value touched, so
+                    mvn -o test and e2e_fresh.sh were not in scope: the gate reads the same bytes and nothing
+                    served or rendered moved.
+next              residue worth carrying: (a) the `const 0` answers are true of the shipped dataset and of
+                    nothing else — they are the visible half of a §109 decision this lane will not make alone,
+                    so the next mover on that question should answer whether the demo seed carries transactions
+                    and then re-write these 13 rows in the same commit; (b) `norows` is correct only while
+                    D64's guard keeps `events` empty — the two rows would fail together if that guard were
+                    loosened without touching the answers, which is the intended coupling, not a coincidence;
+                    (c) the census collects `nulls`, `low`/`high` and the column's declared type and asserts
+                    none of them — no row here cares whether a column is NULL-heavy or what a date column
+                    spans, so the same "counts values, not widths" residue D75 left stands; (d) a view that
+                    stops being a view (a table swap, a rename into another schema) leaves the census with its
+                    answer, exactly D75's residue (b) one layer up, and only a `norows`/`const` claim that no
+                    longer matches would notice. Standing reports unchanged: `saved_searches.notify` read by
+                    nothing; `no_show` named once by a door list with no reader; CommerceApiTest belongs to
+                    another stream; the drifted shared `nexus` demo database stays diagnostic-only and
+                    unreseeded; the events subject seam (D70) waits on a contract decision, not a check; and
+                    the split migration ledger in `nexus_test` belongs to the infrastructure lane.
