@@ -2870,3 +2870,47 @@ next              the registry has no `join-one-type` entry left, so D66's waive
                     is currently stale — what is missing is a witness for the day someone adds a second writer
                     and forgets the literal. That witness cannot live in quality.sql, which reads the seed and
                     never sees an application UPDATE, so this stays a report rather than becoming a gate here.
+## 65. Twelve pairs, four probes, one CHECK (2026-09-25)
+
+The schema holds 12 `(type, key)` polymorphic pairs; `quality.sql` resolved 4 of them and had never asked how
+many there were. D64/D65/D66/D68 each closed one instance of "a check reads a hand list where the schema could
+be asked"; this one asks the schema the pair question by shape — a table holding both `stem_type` and `stem_id` —
+so `mime_type` and `content_type` drop out with no exception list, and a pair added tomorrow is counted tomorrow.
+Measuring the second half of the question produced the finding: **11 of the 12 type columns are bounded by no
+constraint at all.** V1 writes those vocabularies as column comments. Only `share_links.subject_type` (V7) has a
+CHECK. It is not true that nothing else bounds them — `EventsController:63`, `PermissionService:40`,
+`MeController.FavoriteBody:59`, `CollectionsWriteController:325` and `ModerationController:130` each hold their
+own list, and D69 §2 says so because the first draft of that section over-claimed in exactly the direction a
+reader would repeat.
+
+```
+new/changed       data/seed/quality.sql — poly_cat (pairs + rows + distinct types + whether a CHECK bounds the
+                    type column, all from pg_attribute/pg_constraint), poly_probed (the 4 pairs this file
+                    resolves), and three rows: the census, a stale-pair check, and
+                    `a seeded polymorphic vocabulary is bounded or probed`.
+                  D68's section and its SQL comment corrected in place: both said V1:574 `declares` the five
+                    queue types behind a CHECK. It does not; the plants were legal because nothing touches the
+                    column — a stronger reason than the one written, and the same class of error D50 caught
+                    (a doc sentence about a guard the schema cannot express).
+measured          fresh gate DB: 12 pairs; 4 carry seeded rows (facts 5,688 / favorites 18 / moderation_cases 544
+                    / permission_grants 36 — the loader's own headers); those 4 are the 4 probed, so the new row
+                    is green by equality, and says so. Drifted `nexus` DB: the same row red, naming 5
+                    application-written pairs (audit_logs x2, events x2, referrals) — including
+                    `events.subject_type (35 row(s), 0 type(s))`, because that column is nullable (V1:769) and
+                    NULL on all 35 rows: a pair can carry rows and hold no type at all.
+mutations         P1: one `referrals` row, referrer_id a real users.id (so not an orphan) — red, naming
+                    referrals.referrer_type; two older censuses (D66's columns, D64's traffic) agreed on the
+                    same row. P2: `create table d69_planted_pair (id, thing_type, thing_id)` + one row, with no
+                    list edited anywhere — the census printed 13 and stayed PASS on its own floor row while the
+                    bounded-or-probed row named the new pair. Restore: 185 green, detail
+                    `4 of 12 pair(s) carry seeded rows; 1 is bounded by a CHECK; each seeded one is resolved`.
+gates             db_gate_fresh.sh: RESULT: PASS — 185 quality checks on a from-scratch schema (tables=58,
+                    migrations=7), plus the seed truncate probe. Kept gate database used for both plants,
+                    dropped after the restore. The live databases were not opened by this run.
+next              two ways to close the 11-unbounded finding and neither is mine to pick: add CHECKs (a contract
+                    change to V1's declared vocabulary, and V1 is already applied wherever the demo DB lives) or
+                    leave the vocabulary enforced only here. What is missing regardless is a witness for the
+                    application-written pairs — quality.sql reads the seed and cannot see `events` or
+                    `audit_logs` rows, so the honest home for that is the Java suite (a test that writes an
+                    event and asserts its subject_type resolves), not this file. Recorded as a report; also
+                    still open: `saved_searches.notify` read by nothing.

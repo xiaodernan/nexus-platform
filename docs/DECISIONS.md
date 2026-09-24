@@ -2886,9 +2886,12 @@ long-lived `nexus` database for the third decision running.
 
 ### 3. Plants
 
-Every plant is inserted into the kept gate database, schema-legal in every dimension except the one under test:
-the CHECK at V1:574 accepts all five declared names, `subject_id` has no foreign key to violate, and the tenant
-id is the seeded one.
+Every plant is inserted into the kept gate database, schema-legal in every dimension except the one under
+test. As first written this paragraph said the CHECK at V1:574 accepts all five names — **there is no CHECK
+there**. D69 measured 11 of the schema's 12 polymorphic type columns as bounded by nothing at all; only
+`share_links.subject_type`, added in V7, carries a constraint. The plants were legal for a stronger reason than
+the one recorded here: no database rule touches the column, which is exactly why a probe has to. The measured
+rows below are unchanged.
 
 | # | planted | expected |
 | --- | --- | --- |
@@ -2925,3 +2928,115 @@ PASS  | a join-one-type waiver is only true while the table | no waiver of that 
 That second row now guards an empty set, which is the shape §63's pointer predicted. It stays because the
 alternative — deleting the row when its set empties — would make the next `join-one-type` waiver nobody bothers
 to answer invisible again. It says "none registered" rather than going quiet.
+## D69 Twelve polymorphic pairs, four probes, and one CHECK — 2026-09-25
+
+### 1. The census, and the two numbers it gave back
+
+D64, D65, D66 and D68 all closed the same species of gap one instance at a time: a check that reads a hand list
+where the schema could be asked. This one asks the schema a question nobody had asked it — which columns come in
+a `(type, key)` pair — by shape rather than by memory: every table holding both `stem_type` and `stem_id`. The
+shape rule drops `documents.mime_type` and `messages.content_type` on their own, with no exception list, because
+neither has an `id` sibling.
+
+Two numbers came back, and the second was not expected:
+
+```
+12  (type, key) pairs in public
+ 1  of them bounded by a CHECK constraint on the type column
+```
+
+### 2. Twelve vocabularies, one constraint, and several unrelated lists
+
+V1 writes these domains as column comments — `subject_type text NOT NULL,  -- review|merchant|document|message|
+listing` at V1:574, `-- merchant|offering|location|review|policy` at V1:539, `-- user|merchant_user|agent|
+api_key` at V1:130 — and never turns one of them into a constraint. `share_links.subject_type`, added later in
+V7, is the only pair in the schema with a real CHECK.
+
+It would be wrong to conclude from that that nothing bounds them, and the first draft of this section said
+almost exactly that, so here is the measured version. The bounding lives in whichever door writes the row, in
+constants that have no relationship to one another: `EventsController:63` holds
+`user|merchant_user|agent|system|anonymous` for `events.actor_type`; `PermissionService:40` holds
+`HUMAN_SUBJECT_TYPES` for grants; `MeController.FavoriteBody:59` holds the four favourite types, which is the
+list D67 built its probe's arms from; `CollectionsWriteController:325` validates
+`collections.items[].subject_type`; `ModerationController:130` refuses any queue case that is not a `review`.
+`facts` and `referrals` matched no such constant in the grep that found those five — which is the absence of a
+grep hit, not a proof, and is written that way on purpose.
+
+So the finding is not "the schema is the only guard" and not "the code is". It is that a question with one
+answer — what types may this column hold — currently has twelve answers spread over migrations, five Java
+classes and this SQL file, and **no single place that can be asked whether every pair is bounded somewhere**.
+That is the question the census row answers, and why it prints both counts instead of asserting either.
+
+This corrected a sentence D68 had written an hour earlier. Its §3 claimed the plants were legal because "the
+CHECK at V1:574 accepts all five declared names". There is no CHECK at V1:574. The claim was false in the
+direction that matters least (the plants really were legal, really did go red) and it was still a claim about
+who guards a column that the schema does not guard — the same mistake D50 caught in an §8 sentence about a
+permission the table could not express. The correction is in D68's own §3, marked, because a doc that quietly
+rewrites itself is worse than one that records being wrong.
+
+### 3. Where the row is green and where it is red — the same row, two databases
+
+On the fresh gate database the row passes, and it is worth being exact about why: the seed writes 4 of the 12
+pairs (facts, favorites, moderation_cases, permission_grants — the loader's own headers, 5,688 / 18 / 544 / 36
+rows), and those are the same 4 this file probes. Seeded set equals probed set, so no pair is simultaneously
+populated, unbounded by the database and unprobed here — which is exactly the sentence the row checks, and no
+wider. Its detail prints both counts so nobody has to trust the equality.
+
+On the long-lived `nexus` demo database — the one that has real traffic in it from every E2E run — the same row
+named five pairs on the spot:
+
+```
+FAIL | a seeded polymorphic vocabulary is bounded or probed | 8 of 12 pair(s) carry seeded rows;
+       1 is bounded by a CHECK; unresolved: audit_logs.subject_type (53 row(s), 4 type(s)),
+       audit_logs.actor_type (53 row(s), 1 type(s)), events.actor_type (35 row(s), 1 type(s)),
+       events.subject_type (35 row(s), 0 type(s)), referrals.referrer_type (1 row(s), 1 type(s))
+```
+
+That is the census doing its job in both directions: it can tell "nothing in the demo data is unprobed" apart
+from "the application has been writing five unbounded vocabularies for weeks". `events.subject_type` printing
+`0 type(s)` is not a bug in the count — the column is nullable (V1:769) and every one of those 35 rows has it
+NULL, so `count(DISTINCT)` sees nothing. A pair can carry rows and hold no type at all, and the row says so
+rather than rounding it up to one.
+
+The boundary worth stating plainly: pairs the application writes are invisible to this file, which reads the
+seed on a throwaway database. `quality.sql` is a gate on the artifact, and on the drifted database it is a
+diagnostic — which is the same seam §64 recorded for `updated_at`, and why that finding was left as a report.
+
+### 4. Plants
+
+
+Two plants, both run against the kept gate database after the green run, and the load-bearing one is P2.
+
+**P1 — a populated pair this file does not probe.** One `referrals` row with `referrer_type='user'` and a
+`referrer_id` taken from a real `users.id`: legal under every constraint the schema has (it is the *key*, so it
+resolves), so nothing about it is an orphan. The new row is the one that notices it is unprobed and populated:
+
+```
+FAIL | a seeded polymorphic vocabulary is bounded or probed | 5 of 12 pair(s) carry seeded rows;
+       1 is bounded by a CHECK; unresolved: referrals.referrer_type (1 row(s), 1 type(s)); …
+FAIL | every reference the seed writes is probed or explained | referrals.referrer_id (1 row(s))
+FAIL | no traffic outside the seeded tables | written elsewhere: referrals (1 row(s)) — …
+ERROR:  quality gate: 3 check(s) failed
+```
+
+Three rows, three different questions — the pair census, D66's column census, D64's traffic sweep. Worth having
+in writing that they agree: three censuses built at four different decisions, on the same inserted row.
+
+**P2 — a pair nobody listed.** `create table d69_planted_pair (id, thing_type, thing_id)` plus one row pointing
+at a real merchant. No list was edited anywhere, and the file still found it:
+
+```
+PASS | the polymorphic-pair census reads the catalogue  | 13 (type, key) pair(s) measured from pg_attribute
+                                                        (12 on this schema; the floor is two thirds of what was measured)
+FAIL | a seeded polymorphic vocabulary is bounded or probed | 5 of 13 pair(s) carry seeded rows;
+                                                             … unresolved: d69_planted_pair.thing_type (1 row(s), 1 type(s))
+```
+
+The first line is the point of the whole unit: the count moved 12 → 13 and the row stayed green, because it
+reports what it measured instead of asserting a number it remembers. The floor is the only literal, and it is
+deliberately two thirds of the measured value so a census that quietly stopped seeing half the schema goes red
+while a schema that grows does not.
+
+Restored (both plants removed, table dropped): `all 185 checks passed`, and the row's own detail says so in
+plain terms — `4 of 12 pair(s) carry seeded rows; 1 is bounded by a CHECK; each seeded one is resolved by a
+probe here`.

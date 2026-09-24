@@ -241,11 +241,12 @@ FROM traffic_sweep;
 
 -- referential integrity, part 2: polymorphic references the schema cannot express. A subject_type
 -- the probe does not know about is an orphan by definition, so an invented type cannot pass.
--- The moderation queue is the same shape one table over: V1:574 declares review|merchant|document|message|
--- listing, every existing queue check joins `reviews`, and the generator emits only review rows — so four of
--- the five types had never been resolved by anything. `listing` stays out of the arms on purpose: no table in
--- this schema is a listing, so a case of that type is unresolvable by construction and prints its own red row
--- rather than disappearing into a join that never mentions it (the D65 `policy` habit).
+-- The moderation queue is the same shape one table over: V1:574 names review|merchant|document|message|
+-- listing in its column comment (D69 measured: no CHECK bounds it), every existing queue check joins
+-- `reviews`, and the generator emits only review rows — so four of the five types had never been resolved by
+-- anything. `listing` stays out of the arms on purpose: no table in this schema is a listing, so a case of
+-- that type is unresolvable by construction and prints its own red row rather than disappearing into a join
+-- that never mentions it (the D65 `policy` habit).
 INSERT INTO qc
 WITH probe AS (
   SELECT 'review'::text t, id::text k FROM reviews
@@ -1113,6 +1114,85 @@ SELECT 'a join-one-type waiver is only true while the table ships one type',
        coalesce((SELECT string_agg(r.name || ' ships ' || c.types_n || ' subject_type(s)', '; ')
                    FROM ref_registry r JOIN ref_cat c ON c.name = r.name
                   WHERE r.kind = 'join-one-type'), 'no waiver of that kind is registered');
+
+-- ------------------------------- D69: the same question one level up — which columns are a (type, key) PAIR
+-- ref_cat above asks about single `*_id` columns. A polymorphic reference is a *pair*, `<x>_type` beside
+-- `<x>_id`, and a pair can be half-answered: the key column registered while nothing asks which types it may
+-- hold, or the reverse. The census below enumerates pairs by shape (a table holding both `stem_type` and
+-- `stem_id`, so `mime_type` and `content_type` fall out on their own) and records the two facts that matter
+-- about each: does the seed write it, and does any CHECK constrain its vocabulary.
+--
+-- The second question had a surprise in it. V1 writes these vocabularies as *comments* — `subject_type text
+-- NOT NULL,  -- review|merchant|document|message|listing` — not as constraints, so 11 of the 12 pairs are
+-- bounded by nothing in the database; only share_links.subject_type (V7) carries a CHECK. The doors hold the
+-- rest of the answers, each in its own constant (MeController.FavoriteBody, EventsController:63,
+-- PermissionService:40, ModerationController:130 — see D69 §2), which is why this census counts pairs rather
+-- than trusting any one of them to cover the set.
+CREATE TEMP TABLE poly_cat (
+  tbl text, tcol text, icol text, rows_n bigint, types_n bigint, vocabulary_checked bool);
+DO $d69$
+DECLARE r record; n bigint; t bigint; vc bool;
+BEGIN
+  FOR r IN
+    SELECT c.oid AS rel, c.relname AS tbl, ta.attname AS tcol, ia.attname AS icol
+      FROM pg_attribute ta
+      JOIN pg_class c ON c.oid = ta.attrelid AND c.relkind = 'r'
+      JOIN pg_namespace ns ON ns.oid = c.relnamespace AND ns.nspname = 'public'
+      JOIN pg_attribute ia
+        ON ia.attrelid = c.oid AND ia.attnum > 0 AND NOT ia.attisdropped
+       AND ia.attname = left(ta.attname, length(ta.attname) - 5) || '_id'
+     WHERE ta.attnum > 0 AND NOT ta.attisdropped AND ta.attname LIKE '%\_type'
+     ORDER BY 1, 2
+  LOOP
+    EXECUTE format('SELECT count(*), count(DISTINCT %I) FROM public.%I', r.tcol, r.tbl) INTO n, t;
+    SELECT EXISTS (SELECT 1 FROM pg_constraint k
+                    WHERE k.conrelid = r.rel AND k.contype = 'c'
+                      AND pg_get_constraintdef(k.oid) ~ ('\m' || r.tcol || '\M')) INTO vc;
+    INSERT INTO poly_cat VALUES (r.tbl, r.tcol, r.icol, n, coalesce(t, 0), vc);
+  END LOOP;
+END $d69$;
+
+-- Which pairs this file resolves is a hand list — the census cannot know that a UNION over four tables *is*
+-- the answer to a question about one of them. What the catalogue decides is who has to be on the list.
+CREATE TEMP TABLE poly_probed (tbl text PRIMARY KEY, arms int NOT NULL, why text NOT NULL);
+INSERT INTO poly_probed VALUES
+ ('facts', 4, 'the D65 probe over merchant|offering|location|review'),
+ ('favorites', 4, 'the D67 probe over the four types MeController.FavoriteBody accepts'),
+ ('moderation_cases', 4, 'the D68 probe over review|merchant|document|message'),
+ ('permission_grants', 3, 'the probe over merchant|user|merchant_user');
+
+INSERT INTO qc
+SELECT 'the polymorphic-pair census reads the catalogue',
+       (SELECT count(*) FROM poly_cat) >= 8,
+       (SELECT count(*) FROM poly_cat) || ' (type, key) pair(s) measured from pg_attribute '
+       || '(12 on this schema; the floor is two thirds of what was measured)';
+
+INSERT INTO qc
+SELECT 'the pairs declared probed are pairs the schema has',
+       NOT EXISTS (SELECT 1 FROM poly_probed p WHERE NOT EXISTS
+                     (SELECT 1 FROM poly_cat c WHERE c.tbl = p.tbl)),
+       (SELECT count(*) FROM poly_probed p WHERE NOT EXISTS
+          (SELECT 1 FROM poly_cat c WHERE c.tbl = p.tbl))
+       || ' stale of ' || (SELECT count(*) FROM poly_probed)
+       || ' declared (' || (SELECT string_agg(tbl, ', ' ORDER BY tbl) FROM poly_probed) || ')';
+
+-- The row that gives the census teeth: a pair the seed writes whose type column no CHECK bounds and whose keys
+-- no probe resolves is a vocabulary enforced by a comment nobody executes.
+INSERT INTO qc
+SELECT 'a seeded polymorphic vocabulary is bounded or probed',
+       (SELECT count(*) FROM poly_cat WHERE rows_n > 0) > 0
+       AND NOT EXISTS (SELECT 1 FROM poly_cat c
+                        WHERE c.rows_n > 0 AND NOT c.vocabulary_checked
+                          AND NOT EXISTS (SELECT 1 FROM poly_probed p WHERE p.tbl = c.tbl)),
+       (SELECT count(*) FROM poly_cat WHERE rows_n > 0) || ' of ' || (SELECT count(*) FROM poly_cat)
+       || ' pair(s) carry seeded rows; ' || (SELECT count(*) FROM poly_cat WHERE vocabulary_checked)
+       || ' is bounded by a CHECK; '
+       || coalesce('unresolved: ' || (SELECT string_agg(c.tbl || '.' || c.tcol || ' (' || c.rows_n || ' row(s), '
+                                              || c.types_n || ' type(s))', ', ' ORDER BY c.tbl)
+                        FROM poly_cat c WHERE c.rows_n > 0 AND NOT c.vocabulary_checked
+                          AND NOT EXISTS (SELECT 1 FROM poly_probed p WHERE p.tbl = c.tbl)),
+                   'each seeded one is resolved by a probe here')
+       || '; pairs with no rows are written only by the application, which this file cannot see';
 
 -- ============================================================ C  hard gate
 \echo ''
