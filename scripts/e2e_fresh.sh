@@ -218,7 +218,7 @@ echo
 if [ "$READS_ONLY" = "1" ]; then
   step "7/10 skipped (--reads-only): no rows written"
 else
-  step "7/10 walk the three write paths against $E2E_DB"
+  step "7/10 walk the write paths and the seeded signed-in surface against $E2E_DB"
   # The reason these run here rather than against :8090: all three leave rows behind. A state machine is best
   # proved on a database that can be thrown away with the run that proved it, not on the demo data another
   # session is looking at.
@@ -236,6 +236,13 @@ else
   # that account's own token can tell a reachable permission from a row that merely looks right.
   NEXUS_PLATFORM_URL="http://127.0.0.1:$PORT" NEXUS_TENANT="${NEXUS_TENANT:-hong-kong}" \
     "${PYTHON:-python}" "$SCRIPT_DIR/verify_workspace_flow.py" 2>&1 | tail -30 | sed -e 's/^/    /'
+  # The seeded account's own surface. The 525 public-read checks never ask who is signed in, and the Java suite
+  # builds its own tenants, so until D60 nothing had crossed seed → API → the demo consumer's saved list. It runs
+  # here rather than against :8090 because the demo login has to be the seeded one, and this database is the
+  # only one this script owns outright.
+  "${PYTHON:-python}" "$SCRIPT_DIR/verify_seed_surface.py" \
+    --base "http://127.0.0.1:$PORT" --tenant "${NEXUS_TENANT:-hong-kong}" 2>&1 | tail -22 | sed -e 's/^/    /' \
+    || die "the seeded signed-in surface did not hold up"
 fi
 echo
 

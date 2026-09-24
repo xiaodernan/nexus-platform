@@ -2191,3 +2191,24 @@ stream's work, so the gate it now belongs to is the e2e, and widening CI is thei
 task #9's browser leg either: the read slice above is HTTP against live data, not a rendered page, and the web
 app is still another stream's dirty tree. And it does not reconcile the two `nexus` databases on this host —
 which container is authoritative is documented in `STATUS.md` §54 rather than changed here.
+
+## D60 Nobody had ever asked who was signed in — 2026-09-24
+
+### 1. The seam that fell between two gates
+
+`verify_served_reads.mjs` checks 525 public reads against the throwaway seeded database, and the Java suite checks the authenticated `/api/v1/me/**` doors against tenants each test builds for itself. Between them, no automated run had ever asked the question a user would notice first: does the **seeded account's own saved list** survive the trip from `data/seed` through the API to a caller with a token? D58 had just asserted in `quality.sql` that every seeded favourite points at a renderable row — an invariant about data. Nothing asserted it about the door.
+
+`scripts/verify_seed_surface.py` does, inside `e2e_fresh.sh` step 7 where the throwaway database is this script's own: the favourites door answers 401 without a token; the demo login reaches `demo.consumer@example.hk` (the one account that owns all 18 seeded favourites — measured before writing the check, because a demo login to an empty inbox would have been a green nothing); `GET /me/favorites` returns 18 rows each with a `subject_type`, a uuid `subject_id` and a `created_at`, 15 of them carrying their seeded note text; the two saved collections resolve through the public list to their slugs and open at 200; four saved merchants open on their public pages; and `/me/saved-searches` answers `[]` because the seed stores none, which is stated rather than skipped.
+
+### 2. What it deliberately does not claim
+
+Offering favourites are counted and typed, not dereferenced: an offering has no public by-id page — it is reachable through its merchant, which the favourites row does not carry — so resolving four ids would mean walking 520 merchant pages to find them, and the check would be a benchmark, not an assertion. That gap is the same one §8's missing `GET /api/v1/offering/{id}` raises generally, reported rather than papered over.
+
+The check refuses to pass on an empty list (`len(favs) > 0`) and the step `die`s if the script exits non-zero, so neither a seed that stops shipping favourites nor a login that starts returning nothing can slide through as a pass. Its own failure path was exercised the same session: pointed at a tenant with no demo account it reports two failures and exits 1, which is what makes the fifteen passes mean something.
+
+```
+new                 scripts/verify_seed_surface.py (15 checks), wired as part of e2e step 7
+measured first      one seeded user owns all 18 favourites: demo.consumer@example.hk; 2 collections, 12 merchants, 4 offerings
+proofs              positive against :8090 on the demo DB · negative against an unknown tenant (rc=1, two failures)
+e2e                 PASS end to end with the new step: 525 reads, three walks, 15 signed-in checks, rung, ledger
+```

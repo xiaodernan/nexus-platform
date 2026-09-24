@@ -2498,3 +2498,29 @@ used a command-line match that also named `next-server`, which any other project
 It killed 18 PIDs; afterwards the other servers on this machine were checked and are alive (vite on 5199, the
 football-os previews, `next dev` on 3100, the containers on 5433/55433/6380/16380/19000), so no collateral
 damage is visible — but the lesson is to stop what you started by the PIDs you recorded, not by pattern.
+
+## 56. The seam between "public reads work" and "my list works" (2026-09-24)
+
+525 public-read checks run against the seeded throwaway database; the Java suite checks the signed-in doors
+against tenants it creates itself. Nobody joined them. The question that falls in the gap is the one a user
+meets: does the **seeded account's own saved list** survive seed → API? D58 asserted that data in
+`quality.sql`; §56's sibling now asserts the door, in `scripts/verify_seed_surface.py`, run from
+`e2e_fresh.sh` step 7 where the database belongs to the run.
+
+It checks that the favourites door is 401 without a token; that the demo login reaches
+`demo.consumer@example.hk` — measured first, because that one account owns all 18 seeded favourites and a
+green check against an empty inbox would have proved nothing; that the list returns 18 rows with types, uuids
+and dates, 15 carrying their seeded note text; that the two saved collections resolve through the public list
+to slugs that open at 200, and four saved merchants open on their public pages; and that saved-searches answers
+`[]`, because the seed stores none. Saved offerings are typed and counted but not dereferenced — an offering
+has no public by-id page, only a route through its merchant, which the favourites row does not carry; that
+missing page is reported, same as §8's other gaps. The check refuses an empty list and the step dies on a
+non-zero exit, and its failure path was exercised in the same session (pointed at an unknown tenant: two
+failures, rc=1), which is what makes the passes mean something.
+
+```
+verify_seed_surface.py   15 checks · part of e2e step 7 · positive on :8090 and negative on a bad tenant
+e2e                      PASS end to end: 525 reads, three walks, 15 signed-in checks, rung, ledger unchanged
+```
+
+Standing reports unchanged.
