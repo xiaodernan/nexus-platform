@@ -4649,3 +4649,81 @@ re-counted — the rule §78 and §81 both had to learn the hard way.
   deliberately rather than discover the gap by accident.
 - Nothing here changes `generate.py`, the consumer payload or the admin view: 210 → 212 checks, and the §109/§19
   decision is filed as task #56's open question for the streams that own those files.
+
+## D83 76 numeric and timestamp columns, 24 of which cannot vary, and one that varies with the wall clock — 2026-09-25
+
+### 1. What the census found
+
+§75 counted distinct values for strings, §81 for array elements, §82 for booleans. The numeric/date/timestamp
+plane had never been counted. Measured on the kept from-scratch database, of 76 columns in categories N/D/T
+(uuid excluded):
+
+* **4 are NULL on every row** — `chunks.embedded_at` (2118 rows), `moderation_cases.resolved_at` (544),
+  `permission_grants.expires_at` (36), `users.deleted_at` (5). Each is a promise the demo does not keep: no
+  embedding is recorded, no case in the queue is resolved, no grant ever expires (§43's finding), no user is
+  deleted.
+* **20 hold a single value** — 18 fully populated and 2 with the value only on part of the rows
+  (`offerings.min_party_size` = 1 on exactly the 804 bookable offerings, `offerings.stock_updated_at` on 232
+  of 5534).
+* **0 corrupt** — every range and ordering rule came back clean: no review older than its edit, no fact
+  expiring before it was observed, no merchant updated before created, no negative price, no slot booked beyond
+  capacity. The `CONSTANT` list is not a bug list; it is a list of columns that cannot discriminate.
+
+One of them is different in kind. `facts.updated_at` holds the load instant (measured `2026-09-25 10:39:53`
+while the seed's pinned base date is `2026-09-22 11:00`) because V6 added that column
+`NOT NULL DEFAULT now()` to satisfy the V1 `set_updated_at()` trigger that had been assigning a field `facts`
+did not have. Its COMMENT promises "when this claim was last restated", so a freshly seeded demo reports all
+5688 of its claims as restated at load time — and the value differs between two runs of the same seed. Every
+other constant is the pinned instant or a deliberate backdate.
+
+### 2. The change
+
+`spread_cat` classifies each such column (`all-null`, `constant`, `sparse-constant`, `varying`) with rows,
+nulls, distinct values and the single value itself; `spread_answer` is the hand list naming the kind of each
+degenerate column — `never-written`, `all-open-queue`, `uniform-by-design`, `single-instant-pinned`,
+`history-date`, `generation-clock` — with a reason; `spread_clock` is a view that derives, from the data, which
+answered columns really do sit within ten minutes of `now()`. Two rows then read them:
+
+* **'every column that cannot vary is answered for why it cannot'** — census↔answers both directions, a known
+  kind, a non-blank reason, and the staleness term: an answer whose column has started varying is refused.
+* **'the columns stamped from the generation clock are exactly the ones answered so'** — both directions of the
+  clock set: an unanswer column holding a load-time value reddens, and so does an answer left behind after the
+  value stops being the clock.
+
+214 checks, `RESULT: PASS — 214 quality checks on a from-scratch schema (tables=58, migrations=7)`.
+
+### 3. Plants, and what is and is not falsified
+
+Nine runs at three seams, `W0` and `final` green at 214. Proven, on a freshly built database:
+
+* **C4** — `spread_cat` says `offerings.min_party_size` now holds 2 distinct values → row 1 red: the exemption
+  re-reads its own data. (This term was also caught by real data, before the plant was written correctly: an
+  `UPDATE offerings SET min_party_size = 2` moved `offerings.updated_at` as well, because V1:961-970 installs
+  `set_updated_at()` as a BEFORE UPDATE trigger on every table with that column, so the census found
+  `offerings.updated_at` varying and refused its `single-instant-pinned` answer. A plant that reaches a column
+  under audit through a trigger is a plant that cannot be undone: the census copy is mutated now, never the
+  rows.)
+* **C6** — `facts.updated_at` pinned to the base date while the answer still says `generation-clock` → row 2
+  red, with the offender naming the column and its value.
+* **C7** — `ALTER TABLE merchants ADD COLUMN dormant_years smallint` (NULL on all rows, no answer) → row 1 red.
+
+**Not yet shown able to fail** — and this is the residue, not a claim: the unknown-kind term, the blank-reason
+term, the "answer deleted" direction of the coverage term, and row 2's clock-growth direction. The runs that
+were supposed to cover them aborted on a drive-side bug (a mutation injected at a seam before the hand list
+existed, and a python escape that put a newline inside a string literal), so the drive reported `checks emitted:
+0` — INVALID, never counted as a pass, and still open. They are the first work of the next session on this row,
+and none of them should be believed until it reddens on purpose.
+
+### 4. What this does not claim
+
+* Naming `facts.updated_at` the load instant does not say the seed is wrong. V6 documents why the column exists
+  and what it means; the row only refuses to let a per-run-varying value in a supposedly pinned demo be invisible.
+  Whether to pin it, or to accept the drift and say so, is a decision about the seed that this unit leaves alone.
+* The `min_party_size` answer is `uniform-by-design`, not "wrong": 804 bookable offerings with one party size is
+  a data choice. The value of the row is that a facet which cannot discriminate is now stated, so a filter built
+  on it is understood before someone is surprised by it.
+* `spread_cat` reads the same `pg_attribute` catalogue as §75/§78's censuses, so a column in a table the seed
+  never fills is skipped (`CONTINUE WHEN n = 0`), which is what D64's guard makes normal and §75's window makes
+  explicit: no claim is made about a column with no rows to look at.
+* No Java, migration or seeded value changed. 212 → 214 checks; `mvn -o test` and `e2e_fresh.sh` stay out of
+  scope for a file the gate reads from disk.

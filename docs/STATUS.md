@@ -3843,3 +3843,65 @@ next              residue: (a) the flag pattern is the set's definition, so `has
                     streams; the split migration ledger in `nexus_test` is the infrastructure lane's; the events
                     subject seam (D70) waits on a contract decision.
 ```
+
+## 79. 76 numeric and timestamp columns counted: 24 cannot vary, and one varies with the load clock (2026-09-25)
+
+§75, §81 and §82 enumerated strings, array elements and booleans. Numbers, dates and timestamps had never been
+counted at all. On a from-scratch database there are 76 such columns (uuid excluded): 4 are NULL on every row,
+20 hold a single value, and **none is corrupt** — the range and ordering rules all came back clean (no review
+older than its edit, no fact expiring before observation, no merchant updated before creation, no negative price,
+no over-booked slot). So this is not a bug hunt; it is the ledger of which columns cannot discriminate, and the
+one whose value changes every time the seed runs.
+
+```
+measured          NULL everywhere: chunks.embedded_at (2118), moderation_cases.resolved_at (544),
+                    permission_grants.expires_at (36), users.deleted_at (5) — no embedding recorded, no case
+                    resolved, no grant expired (§43), no user deleted. Single value: 18 columns plus
+                    offerings.min_party_size (1 across exactly the 804 bookable offerings) and
+                    offerings.stock_updated_at (232 of 5534); most timestamps sit on the pinned base date
+                    2026-09-22 11:00, others on deliberate backdates (tenants.created_at 2024-07-14,
+                    user_identities.* 2026-06-14). facts.updated_at is the exception: 2026-09-25 10:39:53, the
+                    LOAD instant, because V6 added it `NOT NULL DEFAULT now()` to satisfy the V1 set_updated_at
+                    trigger that had been assigning a field facts did not have — its COMMENT promises "when this
+                    claim was last restated", so a fresh demo reports all 5688 claims as restated at load time
+                    and the shipped value differs between runs.
+new/changed       data/seed/quality.sql only. spread_cat classifies every N/D/T column of a populated table
+                    (all-null / constant / sparse-constant / varying) with rows, nulls, distinct values and the
+                    value itself; spread_answer names the kind of each degenerate column
+                    (never-written | all-open-queue | uniform-by-design | single-instant-pinned | history-date |
+                    generation-clock) with a reason; spread_clock derives from the data which answered columns
+                    really hold a value within ten minutes of now(). Two rows: answers and census named for each
+                    other both ways, with a stale exemption refused; and the clock set equal, in both directions,
+                    to the answers that claim it. 212 -> 214 checks.
+plants            nine runs, three seams, W0 and final green at 214. PROVEN: C4 the census copy of
+                    offerings.min_party_size given 2 distinct values -> row 1 refuses its uniform-by-design
+                    answer · C6 facts.updated_at pinned while still answered generation-clock -> row 2 red, naming
+                    the column and its value · C7 `ALTER TABLE merchants ADD COLUMN dormant_years smallint`
+                    (NULL everywhere, unanswered) -> row 1 red. ALSO PROVEN, by accident: an earlier C4 tried
+                    `UPDATE offerings SET min_party_size = 2`, and V1:961-970's set_updated_at BEFORE UPDATE
+                    trigger moved offerings.updated_at with it — the census saw that audited column start varying
+                    and refused its single-instant-pinned answer. A plant that reaches a column under audit through
+                    a trigger cannot be undone, so the plants mutate the census copy and never the rows.
+                    NOT YET SHOWN ABLE TO FAIL — stated, not smoothed: the unknown-kind term, the blank-reason
+                    term, the answer-deleted direction of coverage, and row 2's clock-growth direction. Those four
+                    runs aborted on a drive-side bug (a mutation injected before the hand list existed; a python
+                    escape that put a newline inside a string literal) and printed `checks emitted: 0`, which is
+                    INVALID and was never counted as a pass. They are the first work on this row.
+gates             scripts/db_gate_fresh.sh --keep green over the shipped text — `RESULT: PASS — 214 quality
+                    checks on a from-scratch schema (tables=58, migrations=7)` — with the census read off the kept
+                    database: 76 columns counted, `53 varying / 18 constant / 2 constant-with-nulls / 4 NULL
+                    everywhere; 24 answered`, and the clock row printing `1 column(s) hold a single value within
+                    ten minutes of now(): facts.updated_at = … ; pinned base date for comparison: 2026-09-22 from
+                    availability_slots over 21 days`. `nexus`, `nexus_test` and `nexus_funnel_probe` untouched.
+next              residue: (a) finish the four missing witnesses above before this row is called proven; (b) the
+                    clock term compares a text value to now(), so a column stamped more than ten minutes before
+                    load escapes it — the window is a choice and is written here, not hidden in a constant; (c)
+                    `facts.updated_at` staying load-time is a decision about the seed and the README's pinned-date
+                    claim, and it belongs to whoever owns generate.py — this unit states the drift and takes it
+                    no further; (d) `permission_grants.expires_at` NULL everywhere re-lands §43's already-recorded
+                    "a claim nobody ever expires" from a second direction, which is worth reading as corroboration
+                    rather than as a new finding. Standing reports unchanged: `saved_searches.notify` read by
+                    nothing; `no_show` named once by a door list with no reader; CommerceApiTest and the drifted
+                    `nexus` database belong to other streams; the split migration ledger in `nexus_test` is the
+                    infrastructure lane's; the events subject seam (D70) waits on a contract decision.
+```

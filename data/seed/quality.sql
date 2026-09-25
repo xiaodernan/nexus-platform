@@ -2183,6 +2183,203 @@ SELECT 'a verification badge stays unresolvable only while its evidence and its 
                      || 'flag is now a checkable claim'
                 FROM badge_live s WHERE s.state = 'no-evidence-table' AND s.link_cols > 0) o), 'none');
 
+-- ============================================================ D83  columns whose values never vary, and the one that varies with the wall clock
+--
+-- WHY THIS EXISTS: §75 counted distinct values for strings, §81 for arrays, §82 for booleans. The numeric and
+-- timestamp plane had never been counted at all. Measured on the kept from-scratch database — 76 columns of
+-- category N/D/T (uuid excluded), of which 4 are NULL on every row, 20 hold one single value, and the range and
+-- ordering rules came back spotless (no review older than its edit, no fact expiring before it was observed, no
+-- merchant updated before it was created, no negative price, no over-booked slot). So there is no corruption to
+-- fix here. What there is, is a set of columns that cannot discriminate, and one that cannot be reproduced:
+--
+--   chunks.embedded_at            NULL on all 2118 rows      the embeddings were never stamped
+--   moderation_cases.resolved_at  NULL on all 544  rows      every case in the queue is still open
+--   permission_grants.expires_at  NULL on all  36  rows      no grant in the demo ever expires (§43's finding)
+--   users.deleted_at              NULL on all   5  rows      nothing in the demo has been soft-deleted
+--   offerings.min_party_size      = 1 on the 804 non-null    exactly the bookable offerings; a party-size
+--                                                                            filter can never discriminate
+--   facts.updated_at              = 2026-09-25 10:29:54+08   V6 added this column `NOT NULL DEFAULT now()` to
+--                                                                            satisfy the V1 updated_at trigger, so
+--                                                                            on a freshly loaded demo it holds the
+--                                                                            LOAD instant — the only such column
+--
+-- That last one is the finding worth a gate. §71's slot row prints "21 distinct days, from 2026-09-22 (pinned
+-- base date, see README)", and every other constant timestamp is that instant or a chosen backdate — except
+-- `facts.updated_at`, whose DEFAULT makes it the moment the seed ran. V6 documents why the column exists (the
+-- V1 trigger assigned a field `facts` did not have, so no fact row could be updated anywhere) and its COMMENT
+-- promises "when this claim was last restated"; a freshly seeded demo therefore reports every one of its 5688
+-- claims as restated at load time, and the value differs between two runs of the same seed. The row takes no
+-- position on whether that is wrong — it names the columns whose single value is within ten minutes of now(),
+-- so the next person who asks "is the shipped seed reproducible?" reads a list instead of discovering it twice.
+-- An answer that no longer matches the data reddens in both directions: a second clock-stamped column, or this
+-- one pinned while the answer still claims it moves.
+--
+-- WHAT THE ANSWERS ARE AND WHAT THE ROWS REFUSE. Every degenerate column gets a kind — all-open-queue,
+-- never-written, generation-clock, uniform-by-design, single-instant-pinned, history-date — and a reason. The
+-- coverage row refuses a new degenerate column joining the set unanswered, and refuses an answer whose column
+-- has started varying (a stale exemption is the same failure §77 and §80 both had to guard). The clock row is
+-- mechanical: the set of columns answered generation-clock must equal the set whose value is within ten minutes
+-- of now(), and neither side may be empty — so writing a fresh timestamp into another column reddens it, and so
+-- does pinning facts.updated_at and leaving the answer behind.
+
+CREATE TEMP TABLE spread_cat (tbl text NOT NULL, col text NOT NULL, ty text NOT NULL, rows bigint NOT NULL,
+                              nulls bigint NOT NULL, distincts int NOT NULL, val text, class text NOT NULL,
+                              PRIMARY KEY (tbl, col));
+DO $d83a$
+DECLARE r record; n bigint; nn bigint; d int; v text; cl text;
+BEGIN
+  FOR r IN SELECT c.relname AS tbl, a.attname AS col, t.typname AS ty
+             FROM pg_attribute a
+             JOIN pg_class c ON c.oid = a.attrelid AND c.relkind = 'r'
+             JOIN pg_namespace ns ON ns.oid = c.relnamespace AND ns.nspname = 'public'
+             JOIN pg_type t ON t.oid = a.atttypid
+            WHERE a.attnum > 0 AND NOT a.attisdropped
+              AND t.typcategory IN ('N', 'D', 'T') AND t.typname <> 'uuid'
+            ORDER BY 1, 2
+  LOOP
+    BEGIN
+      EXECUTE format('SELECT count(*), count(*) FILTER (WHERE %I IS NULL), count(DISTINCT %I)::int FROM public.%I',
+                     r.col, r.col, r.tbl) INTO n, nn, d;
+      CONTINUE WHEN n = 0;
+      IF d = 1 THEN
+        EXECUTE format('SELECT %I::text FROM public.%I WHERE %I IS NOT NULL LIMIT 1', r.col, r.tbl, r.col) INTO v;
+      ELSE
+        v := '-';
+      END IF;
+      -- nn counts NULL rows, so a column with no NULLs at all has nn = 0, not nn = rows: the
+      -- constant tests are against n - nn (the non-null count), which is what §75's wording blurred.
+      cl := CASE WHEN nn = n THEN 'all-null'
+                 WHEN d = 1 AND nn = 0 THEN 'constant'
+                 WHEN d = 1 AND nn < n THEN 'sparse-constant'
+                 ELSE 'varying' END;
+      INSERT INTO spread_cat VALUES (r.tbl, r.col, r.ty, n, nn, d, v, cl);
+    EXCEPTION WHEN OTHERS THEN NULL;   -- a type that will not cast for min/max is not a spread claim
+    END;
+  END LOOP;
+END $d83a$;
+
+CREATE TEMP TABLE spread_answer (tbl text NOT NULL, col text NOT NULL, kind text NOT NULL, why text NOT NULL,
+                                 PRIMARY KEY (tbl, col));
+INSERT INTO spread_answer VALUES
+ ('chunks', 'embedded_at', 'never-written', 'the chunk table is written with an embed_model and no embedding run '
+  || 'is recorded; §75 already found embed_model read by zero occurrences in services/platform, and this is the '
+  || 'same column family''s other half'),
+ ('moderation_cases', 'resolved_at', 'all-open-queue', 'all 544 shipped cases are open, so the resolve route has '
+  || 'nothing to resolve in the seed — the queue row in §71 prints the same 544'),
+ ('permission_grants', 'expires_at', 'never-written', '§43: the expiry witness found no grant in the demo ever '
+  || 'expires, so the column exists for a runtime path the seed never takes'),
+ ('users', 'deleted_at', 'never-written', 'no seeded user is soft-deleted; the five accounts are the login '
+  || 'presets and deleting one would delete the demo'),
+ ('offerings', 'min_party_size', 'uniform-by-design', '1 on all 804 bookable offerings (and NULL on the other '
+  || '4730), which is the same 804 §82 measured for offerings.bookable — a party-size facet cannot discriminate '
+  || 'anything in this dataset'),
+ ('offerings', 'stock_updated_at', 'single-instant-pinned', '232 non-null rows all at 2026-09-22 11:00, the '
+  || 'pinned base date; stock is a demo column and was never moved'),
+ ('facts', 'updated_at', 'generation-clock', 'the one constant stamped from the wall clock instead of the pinned '
+  || 'base date, which is why two runs of generate.py differ in shipped output'),
+ ('availability_slots', 'updated_at', 'single-instant-pinned', '32492 rows at 2026-09-22 11:00: the 21-day '
+  || 'horizon is generated in one pass'),
+ ('business_hours', 'updated_at', 'single-instant-pinned', '5472 rows at the pinned base date'),
+ ('chunks', 'created_at', 'single-instant-pinned', '2118 rows at the pinned base date'),
+ ('collections', 'created_at', 'history-date', 'all four collections share 2026-08-23, a chosen backdate rather '
+  || 'than the base date; one value because four rows is one editorial moment'),
+ ('collections', 'updated_at', 'single-instant-pinned', 'the four rows at the pinned base date'),
+ ('documents', 'updated_at', 'single-instant-pinned', '1040 rows at the pinned base date'),
+ ('locations', 'updated_at', 'single-instant-pinned', '684 rows at the pinned base date'),
+ ('merchants', 'updated_at', 'single-instant-pinned', '520 rows at the pinned base date, so a recently-updated '
+  || 'sort over merchants is a tie across the whole demo'),
+ ('offerings', 'updated_at', 'single-instant-pinned', '5534 rows at the pinned base date'),
+ ('tenants', 'created_at', 'history-date', 'the one tenant is backdated to 2024-07-14 so the demo has an age'),
+ ('tenants', 'updated_at', 'single-instant-pinned', 'the single row at the pinned base date'),
+ ('user_identities', 'created_at', 'history-date', 'all five seeded identities share 2026-06-14 — the accounts '
+  || 'were created together in the demo, so created_at cannot order them'),
+ ('user_identities', 'verified_at', 'history-date', 'verified_at equals created_at on all five rows: verification '
+  || 'is stamped at signup, so no demo identity shows a gap between joining and being verified'),
+ ('user_preferences', 'created_at', 'history-date', 'seven rows at 2026-09-02, one editorial moment'),
+ ('user_preferences', 'expires_at', 'uniform-by-design', 'all seven preferences expire 2026-12-21, so a '
+  || '"nearly expired" warning has nothing to rank'),
+ ('user_preferences', 'updated_at', 'history-date', 'seven rows at 2026-09-19'),
+ ('users', 'updated_at', 'single-instant-pinned', 'the five preset accounts at the pinned base date');
+
+-- The clock set, derived from the data rather than from the answer list: a degenerate column whose single value
+-- is within ten minutes of now() is stamped from the generation run.
+CREATE TEMP VIEW spread_clock AS
+SELECT c.tbl, c.col, c.val, abs(extract(epoch FROM ((c.val)::timestamptz - now()))) AS delta_s
+  FROM spread_cat c
+ WHERE c.class IN ('constant', 'sparse-constant') AND c.ty LIKE 'timestamp%'
+   AND abs(extract(epoch FROM ((c.val)::timestamptz - now()))) < 600;
+
+INSERT INTO qc
+SELECT 'every column that cannot vary is answered for why it cannot',
+       (SELECT count(*) FROM spread_cat WHERE class <> 'varying') > 0
+       AND NOT EXISTS (SELECT 1 FROM spread_cat c WHERE c.class <> 'varying'
+                        AND NOT EXISTS (SELECT 1 FROM spread_answer a
+                                        WHERE a.tbl = c.tbl AND a.col = c.col))
+       AND NOT EXISTS (SELECT 1 FROM spread_answer a
+                        WHERE NOT EXISTS (SELECT 1 FROM spread_cat c WHERE c.tbl = a.tbl AND c.col = a.col
+                                            AND c.class <> 'varying'))
+       AND NOT EXISTS (SELECT 1 FROM spread_answer a WHERE btrim(a.why) = ''
+                        OR a.kind NOT IN ('never-written', 'all-open-queue', 'uniform-by-design',
+                                          'single-instant-pinned', 'history-date', 'generation-clock')),
+       (SELECT count(*) FROM spread_cat) || ' numeric/date/timestamp column(s) counted: '
+       || (SELECT count(*) FROM spread_cat WHERE class = 'varying') || ' varying, '
+       || (SELECT count(*) FROM spread_cat WHERE class = 'constant') || ' constant, '
+       || (SELECT count(*) FROM spread_cat WHERE class = 'sparse-constant') || ' constant-with-nulls, '
+       || (SELECT count(*) FROM spread_cat WHERE class = 'all-null') || ' NULL everywhere; '
+       || (SELECT count(*) FROM spread_answer) || ' answered: '
+       || coalesce((SELECT string_agg(c.tbl || '.' || c.col || ' [' || a.kind || ']', ', ' ORDER BY c.class, c.tbl, c.col)
+                      FROM spread_cat c JOIN spread_answer a ON a.tbl = c.tbl AND a.col = c.col
+                     WHERE c.class <> 'varying'), 'none')
+       || ' — offenders: ' || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT c.tbl || '.' || c.col || ' holds one value across ' || c.rows || ' row(s) (or none at all) '
+                     || 'and nothing answers why' AS x
+                FROM spread_cat c WHERE c.class <> 'varying'
+                  AND NOT EXISTS (SELECT 1 FROM spread_answer a
+                                  WHERE a.tbl = c.tbl AND a.col = c.col)
+              UNION ALL
+              SELECT a.tbl || '.' || a.col || ' is answered ' || a.kind || ' but its column now holds '
+                     || c.distincts || ' distinct values, so the exemption is stale'
+                FROM spread_answer a JOIN spread_cat c ON c.tbl = a.tbl AND c.col = a.col
+                 WHERE c.class = 'varying'
+              UNION ALL
+              SELECT 'the answer for ' || tbl || '.' || col || ' names kind ''' || kind
+                     || ''', not one of the six this block knows'
+                FROM spread_answer WHERE kind NOT IN ('never-written', 'all-open-queue', 'uniform-by-design',
+                                                      'single-instant-pinned', 'history-date', 'generation-clock')
+              UNION ALL
+              SELECT 'the answer for ' || tbl || '.' || col || ' gives no reason'
+                FROM spread_answer WHERE btrim(why) = '') o), 'none');
+
+INSERT INTO qc
+SELECT 'the columns stamped from the generation clock are exactly the ones answered so',
+       (SELECT count(*) FROM spread_clock) > 0
+       AND (SELECT count(*) FROM spread_clock) = (SELECT count(*) FROM spread_answer WHERE kind = 'generation-clock')
+       AND NOT EXISTS (SELECT 1 FROM spread_clock k WHERE NOT EXISTS
+                        (SELECT 1 FROM spread_answer a WHERE a.tbl = k.tbl AND a.col = k.col
+                          AND a.kind = 'generation-clock'))
+       AND NOT EXISTS (SELECT 1 FROM spread_answer a WHERE a.kind = 'generation-clock'
+                        AND NOT EXISTS (SELECT 1 FROM spread_clock k
+                                        WHERE k.tbl = a.tbl AND k.col = a.col)),
+       (SELECT count(*) FROM spread_clock) || ' column(s) hold a single value within ten minutes of now(): '
+       || coalesce((SELECT string_agg(tbl || '.' || col || ' = ' || val || ' ('
+                                      || round(delta_s / 60.0) || ' min old)', ', ' ORDER BY tbl, col)
+                      FROM spread_clock), 'none')
+       || '; pinned base date for comparison: ' || (SELECT min(starts_at::date)::text || ' from availability_slots'
+                                                    || ' over ' || count(DISTINCT starts_at::date) || ' days'
+                                                    FROM availability_slots)
+       || ' — offenders: ' || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT k.tbl || '.' || k.col || ' is stamped from the clock (' || k.val || ') and no answer says so'
+                     AS x
+                FROM spread_clock k WHERE NOT EXISTS (SELECT 1 FROM spread_answer a
+                                                      WHERE a.tbl = k.tbl AND a.col = k.col
+                                                        AND a.kind = 'generation-clock')
+              UNION ALL
+              SELECT a.tbl || '.' || a.col || ' is answered generation-clock but no longer holds a value '
+                     || 'anywhere near now(), so the seed stopped stamping it from the clock'
+                FROM spread_answer a WHERE a.kind = 'generation-clock'
+                  AND NOT EXISTS (SELECT 1 FROM spread_clock k WHERE k.tbl = a.tbl AND k.col = a.col)) o),
+                   'none');
+
 -- ============================================================ D74  door vocabularies
 --
 -- WHY THIS EXISTS: D69 counted the schema's polymorphic (type,id) pairs and found one bounded by a CHECK.
