@@ -21,20 +21,35 @@
  * invisible. It errs toward reporting, not toward silence: an unmatched accessor is listed with its site so
  * a human can judge it, and the run prints its own limits rather than implying completeness.
  *
+ * THE SECOND THING IT CHECKS — `site` citations (D87). Both answer tables (`read_answer`, `shape_answer`)
+ * carry a hand-written `site` column of `File.java:NNN` citations, and until now the gate refused a *blank*
+ * site and nothing more. D86 shipped three sites that were false while its row was green, so the citations
+ * are now read back out of the shipped source and judged: a cited file has to exist and be unambiguous, its
+ * line has to be inside the file, the line has to mention the table/column/key the row is about, the file has
+ * to name the row's table at all, and any source text quoted inside a site has to be on the line it cites.
+ * See `checkSites` below for the arms and their stated limits.
+ *
  * USAGE
- *   node scripts/check_jsonb_reads.mjs            # report; exit 1 if a read is undeclared
+ *   node scripts/check_jsonb_reads.mjs            # report; exit 1 if a read is undeclared or a site is false
  *   node scripts/check_jsonb_reads.mjs --report   # report only, always exit 0
  *
- * `scripts/db_gate_fresh.sh` runs this as its seventh step, so a widening of the build's jsonb reads reddens
- * the same one-command gate that reddens a broken seed. A missing `node` fails that step rather than skipping
- * it: a census whose second reader silently did not start is greener than it is.
+ * `scripts/db_gate_fresh.sh` runs this as its seventh step, so a widening of the build's jsonb reads — or a
+ * site citation that the source contradicts — reddens the same one-command gate that reddens a broken seed. A
+ * missing `node` fails that step rather than skipping it: a census whose second reader silently did not start
+ * is greener than it is.
  */
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 
 const ROOT = process.cwd();
-const QUALITY_SQL = 'data/seed/quality.sql';
+/**
+ * `--quality=<path>` points the census at a different copy of the seed gate. It exists for this script's own
+ * witnesses: a plant has to change an answer row, and a plant that edits the tracked file races any gate that
+ * is loading it. Nothing in the gate itself passes the flag.
+ */
+const QUALITY_ARG = process.argv.find((a) => a.startsWith('--quality='));
+const QUALITY_SQL = QUALITY_ARG ? QUALITY_ARG.slice('--quality='.length) : 'data/seed/quality.sql';
 const SOURCE_ROOTS = ['services/platform/src/main/java', 'apps/ai/nexus_ai'];
 const REPORT_ONLY = process.argv.includes('--report');
 const VERBOSE = process.argv.includes('--verbose');
@@ -52,7 +67,7 @@ function sliceTo(sql, from, marker) {
  * `DO` block, plus each triple's kind from the answer table below it.
  */
 function declaredReads() {
-  const sql = readFileSync(join(ROOT, QUALITY_SQL), 'utf8');
+  const sql = readFileSync(resolve(ROOT, QUALITY_SQL), 'utf8');
   // The list lives in the `FOR p IN SELECT * FROM (VALUES …) v(tbl, col, key)`, not in an INSERT: the INSERT is
   // inside the loop and takes the loop's variables. Anchoring on the loop is what makes this parse the
   // literals rather than the placeholders.
@@ -166,9 +181,304 @@ function accessorReads(text) {
   return found;
 }
 
+/* ------------------------------------------------------------------ sites */
+
+/** Directories that ship no first-party source, so a citation into one is a bug in the citation. */
+const VENDOR_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.venv', 'target', 'build', 'dist',
+  '.next', 'out', 'coverage']);
+
+/** Every source-ish file in the repo, so a citation to any of them can be resolved — not just the two roots. */
+function sourceIndex(dir = '', out = []) {
+  let entries;
+  try {
+    entries = readdirSync(join(ROOT, dir));
+  } catch {
+    return out;
+  }
+  for (const name of entries) {
+    if (VENDOR_DIRS.has(name)) continue;
+    const rel = dir ? `${dir}/${name}` : name;
+    if (statSync(join(ROOT, rel)).isDirectory()) sourceIndex(rel, out);
+    else if (/\.(java|py|ts|tsx|mjs|cjs|sql|sh)$/.test(name)) out.push(rel);
+  }
+  return out;
+}
+
+/**
+ * `-- comment` text is stripped before parsing, but only outside a string literal: a comment's semicolon
+ * would otherwise read as the end of the VALUES list and silently drop every row after it. This is not
+ * hypothetical — the `-- The mirror of every row above: … as `reachable`; D84 then …` comment inside the
+ * read_answer list ends with a `;`, and a comment-blind first version of this parser lost the 17th row.
+ */
+function stripSqlComments(text) {
+  let out = '';
+  let inLit = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const c = text[i];
+    if (inLit) {
+      out += c;
+      if (c === "'") {
+        if (text[i + 1] === "'") {
+          out += text[i + 1];
+          i += 1;
+        } else {
+          inLit = false;
+        }
+      }
+      continue;
+    }
+    if (c === "'") {
+      inLit = true;
+      out += c;
+      continue;
+    }
+    if (c === '-' && text[i + 1] === '-') {
+      const nl = text.indexOf('\n', i);
+      if (nl < 0) break;
+      i = nl - 1;
+      continue;
+    }
+    out += c;
+  }
+  return out;
+}
+
+/** The top-level `( … )` rows of a VALUES list, as cell arrays with the SQL string literals concatenated. */
+function valuesRows(sql, insertMarker, table) {
+  const text = stripSqlComments(sql);
+  const at = text.indexOf(insertMarker);
+  if (at < 0) throw new Error(`Could not find "${insertMarker}" in ${QUALITY_SQL}`);
+  let i = text.indexOf('VALUES', at) + 'VALUES'.length;
+  const rows = [];
+  let depth = 0;
+  let from = 0;
+  let inLit = false;
+  let closeAt = -1;
+  let endAt = -1;
+  while (i < text.length) {
+    const c = text[i];
+    if (inLit) {
+      if (c === "'") {
+        if (text[i + 1] === "'") i += 1;
+        else inLit = false;
+      }
+      i += 1;
+      continue;
+    }
+    if (c === "'") {
+      inLit = true;
+    } else if (c === '(') {
+      if (depth === 0) from = i + 1;
+      depth += 1;
+    } else if (c === ')') {
+      depth -= 1;
+      if (depth === 0) {
+        rows.push(text.slice(from, i));
+        closeAt = i;
+      }
+    } else if (c === ';' && depth === 0) {
+      endAt = i;
+      break;
+    }
+    i += 1;
+  }
+  // A list that ended anywhere other than just after a row's own `)` means this parse stopped early — which
+  // would silently check fewer rows than the file ships. Report the count rather than the smaller green.
+  if (endAt >= 0 && text.slice(closeAt + 1, endAt).trim() !== '') {
+    throw new Error(`The ${table} VALUES list in ${QUALITY_SQL} ended somewhere a row was not closing — `
+      + 'the parser cannot trust its own row count');
+  }
+  return rows.map((row) => {
+    const cells = [];
+    let cur = '';
+    let cd = 0;
+    let cl = false;
+    for (const c of row) {
+      if (cl) {
+        cur += c;
+        if (c === "'") cl = false;
+        continue;
+      }
+      if (c === "'") {
+        cl = true;
+        cur += c;
+        continue;
+      }
+      if (c === '(') cd += 1;
+      if (c === ')') cd -= 1;
+      if (c === ',' && cd === 0) {
+        cells.push(cur);
+        cur = '';
+        continue;
+      }
+      cur += c;
+    }
+    cells.push(cur);
+    // `'a' || <newline> || 'b'` is one value: concatenate its literals and unquote `''`.
+    return cells.map((cell) => [...cell.matchAll(/'((?:[^']|'')*)'/g)].map((m) => m[1].replace(/''/g, "'"))
+      .join(''));
+  });
+}
+
+/** A citation token: `File.java:12`, `dir/File.java:78-84`, `File.java`, or a bare `:34` after a file. */
+const CITE_RE = /(?:[a-z_]+\/)*[A-Za-z0-9_]+\.(?:java|py|ts|tsx|mjs|cjs|sql|sh)(?::\d+(?:-\d+)?(?:\s*,\s*:\d+(?:-\d+)?)*)?|:\d+(?:-\d+)?(?:\s*,\s*:\d+(?:-\d+)?)?/g;
+
+/** Every `file[:lines]` mention in a site string, bare `:NN` continuations carrying the file before them. */
+function citations(text) {
+  const out = [];
+  let file = null;
+  for (const m of text.matchAll(CITE_RE)) {
+    const tok = m[0];
+    if (tok.startsWith(':')) {
+      if (file) file.spans.push(...tok.match(/\d+(?:-\d+)?/g));
+      continue;
+    }
+    const cut = tok.indexOf(':');
+    const name = cut < 0 ? tok : tok.slice(0, cut);
+    const spans = cut < 0 ? [] : [...tok.slice(cut + 1).matchAll(/\d+(?:-\d+)?/g)].map((s) => s[0]);
+    file = { name, spans, raw: tok };
+    out.push(file);
+  }
+  return out;
+}
+
+/**
+ * The seven ways a site citation can be false, all of them checked against the shipped source rather than
+ * against another hand-written list. Rules 1-3 run over `site` AND `why`; 4-7 over `site` only, because a
+ * `why` may legitimately point at neighbouring code that is not the row's own subject (and one does: the
+ * `offerings.options` answer cites `order_items.options` precisely to say it is a different column).
+ */
+function checkSites() {
+  const sql = readFileSync(resolve(ROOT, QUALITY_SQL), 'utf8');
+  const files = sourceIndex();
+  const byName = new Map();
+  for (const rel of files) {
+    const base = rel.split('/').pop();
+    if (!byName.has(base)) byName.set(base, []);
+    byName.get(base).push(rel);
+  }
+  const lines = new Map();
+  const read = (rel) => {
+    if (!lines.has(rel)) lines.set(rel, readFileSync(join(ROOT, rel), 'utf8').split(/\r?\n/));
+    return lines.get(rel);
+  };
+  const mentions = (rel, word) => new RegExp(`\\b${word}\\b`).test(read(rel).join('\n'));
+
+  const answerTables = [
+    { table: 'read_answer', marker: 'INSERT INTO read_answer VALUES', width: 6 },
+    { table: 'shape_answer', marker: 'INSERT INTO shape_answer VALUES', width: 5 },
+  ];
+  const offenders = [];
+  const stats = { rows: 0, cited: 0, files: new Set(), linesRead: new Set(), numbered: 0 };
+  const counts = {};
+
+  for (const spec of answerTables) {
+    const rows = valuesRows(sql, spec.marker, spec.table);
+    counts[spec.table] = rows.length;
+    for (const cells of rows) {
+      if (cells.length !== spec.width) {
+        offenders.push(`${spec.table} row parsed as ${cells.length} cells, not ${spec.width}: `
+          + `"${cells.slice(0, 3).join('.')}" — the parse cannot be trusted, so the site is not checked`);
+        continue;
+      }
+      stats.rows += 1;
+      const [tbl, col] = cells;
+      const key = spec.width === 6 ? cells[2] : null;
+      const subject = key ? [tbl, col, key] : [tbl, col];
+      const site = spec.width === 6 ? cells[4] : cells[3];
+      const why = spec.width === 6 ? cells[5] : cells[4];
+      const rowId = `${spec.table} ${subject.join('.')}`;
+
+      for (const [field, text, content] of [['site', site, true], ['why', why, false]]) {
+        const cites = citations(text);
+        const resolved = [];
+        for (const cite of cites) {
+          stats.cited += 1;
+          const cands = cite.name.includes('/')
+            ? files.filter((rel) => rel === cite.name || rel.endsWith(`/${cite.name}`))
+            : (byName.get(cite.name.split('/').pop()) ?? []);
+          if (cands.length === 0) {
+            offenders.push(`${rowId} cites ${cite.name} in ${field} — no file in the ${files.length}-file source `
+              + 'index has that path or that name');
+            continue;
+          }
+          if (cands.length > 1) {
+            offenders.push(`${rowId} cites ${cite.name} in ${field} — the name is ambiguous, ${cands.length} `
+              + `files hold it: ${cands.slice(0, 4).join(', ')}${cands.length > 4 ? ', …' : ''}`);
+            continue;
+          }
+          const rel = cands[0];
+          const file = read(rel);
+          stats.files.add(rel);
+          resolved.push({ rel, cite, file });
+          // Structure first, and it runs over `why` too: a range that runs backwards or past the end of the
+          // file is false wherever it is written. (A first version put these checks behind the `content`
+          // guard below, and two plants against the `why` column came back green.)
+          for (const span of cite.spans) {
+            const [a, b] = span.split('-').map(Number);
+            const lo = a;
+            const hi = b ?? a;
+            if (b !== undefined && b < a) {
+              offenders.push(`${rowId} cites ${rel}:${span} in ${field} — the range runs backwards`);
+              continue;
+            }
+            if (hi > file.length) {
+              offenders.push(`${rowId} cites ${rel}:${span} in ${field} — the file has ${file.length} lines`);
+              continue;
+            }
+            if (!content) continue;
+            const body = file.slice(lo - 1, hi).join('\n');
+            const hit = subject.some((word) => new RegExp(`\\b${word}\\b`).test(body));
+            if (!hit) {
+              offenders.push(`${rowId} cites ${rel}:${span} but that line mentions none of ${subject.join('/')}`
+                + `  [${file[lo - 1].trim().slice(0, 90)}]`);
+            }
+            for (let n = lo; n <= hi; n += 1) stats.linesRead.add(`${rel}:${n}`);
+            stats.numbered += 1;
+          }
+          // Content next, and this is a claim only a `site` makes: a `why` may name neighbouring code on
+          // purpose, which is how the `offerings.options` answer says `order_items.options` is not it.
+          if (!content) continue;
+          if (!mentions(rel, tbl)) {
+            offenders.push(`${rowId} answers for the table ${tbl} but cites ${rel} in ${field}, which never `
+              + `names "${tbl}" anywhere in its ${file.length} lines`);
+          }
+          if (cite.spans.length === 0) {
+            offenders.push(`${rowId} cites ${rel} in ${field} with no line number, so nothing here can be `
+              + 'checked against it — a file alone is not a site');
+          }
+        }
+        if (content) {
+          if (cites.length === 0) {
+            offenders.push(`${rowId} gives the site "${site}" — no source citation in it at all`);
+          } else if (!cites.some((c) => c.spans.length > 0)) {
+            offenders.push(`${rowId} names ${cites.map((c) => c.name).join(', ')} as its site and not one of `
+              + 'them carries a line number, so the claim cannot be checked');
+          }
+          for (const quoted of [...site.matchAll(/"([a-z_]+)"/g)].map((m) => m[1])) {
+            const text2 = resolved.map(({ rel, cite }) => {
+              const file = read(rel);
+              return cite.spans.flatMap((s) => {
+                const [a, b] = s.split('-').map(Number);
+                return file.slice(a - 1, b ?? a);
+              }).join('\n');
+            }).join('\n');
+            if (!new RegExp(`"${quoted}"`).test(text2)) {
+              offenders.push(`${rowId} quotes "${quoted}" in its site but none of the lines it cites contains `
+                + `"${quoted}"  [${site.slice(0, 110)}]`);
+            }
+          }
+        }
+      }
+    }
+  }
+  return { offenders, stats, counts };
+}
+
 /* ------------------------------------------------------------------ run */
 
 const declared = declaredReads();      // Map 'tbl.col.key' -> kind (null when the answer table has no row)
+const sites = checkSites();            // { offenders, stats, counts } — every file:line the answers cite
 const files = SOURCE_ROOTS.flatMap((root) => walk(join(ROOT, root)));
 const found = new Map();               // 'col.key' -> { col, key, tables:Set, sites:Set }
 let total = 0;
@@ -294,11 +604,40 @@ if (unseen.length > 0) {
   console.log('');
 }
 
+if (sites.counts.read_answer !== declared.size) {
+  sites.offenders.push(`this script parsed ${sites.counts.read_answer} read_answer rows while its read census `
+    + `parsed ${declared.size} read_cat triples — the two are meant to agree, so one of the two parses stopped `
+    + 'early and the sites it skipped went unchecked');
+}
+
+console.log(`ANSWER SITES — ${sites.stats.rows} answer row(s) cite ${sites.stats.cited} source location(s) `
+  + `in ${sites.stats.files.size} file(s); ${sites.stats.linesRead.size} distinct source line(s) read back`);
+console.log(`  rows parsed          ${sites.counts.read_answer} read_answer + ${sites.counts.shape_answer}`
+  + ` shape_answer`);
+console.log(`  line spans checked   ${sites.stats.numbered} across ${sites.stats.cited} citation token(s) — a`
+  + ' citation naming a file with no line has nothing to compare against, so it is reported too');
+console.log(`  citations resolved   ${sites.stats.files.size} file(s) under a ${VENDOR_DIRS.size}-dir vendor`
+  + ' exclusion');
+if (sites.offenders.length > 0) {
+  console.log(`FALSE SITES (${sites.offenders.length}):`);
+  for (const row of sites.offenders) console.log(`  - ${row}`);
+} else {
+  console.log('  every cited line names the table, column or key its row is about');
+}
+console.log('');
+
 console.log('LIMITS, stated rather than implied: this is a textual scan. A key reached through a helper,');
 console.log('named by a constant, or built in another file is invisible to it, and a variable reused for two');
 console.log('columns attributes both key sets to both columns. Table attribution is resolved only for SQL');
 console.log('reads whose alias appears in a FROM/JOIN in the same file; an accessor read is matched on');
 console.log('(column, key) alone, so one answer covers that key on any table. It errs toward reporting.');
+console.log('');
+console.log('On the sites: a line that mentions the row\'s table, column or key is consistent with the claim,');
+console.log('not proof of it — the check refutes a site pointing at unrelated code, a missing or ambiguous');
+console.log('file, a line past the end of the file, a file that never names its row\'s table, a file named');
+console.log('with no line at all, and source text quoted in a site that the cited line does not hold. It does');
+console.log('not read control flow, so a citation to the right file and line for the wrong reason passes, and');
+console.log('a `why` that cites a neighbouring table is trusted because naming that table is its point.');
 
-process.exit((undeclared.length + contradicted.length + neverReadRead.length + kindless.length) > 0
-  && !REPORT_ONLY ? 1 : 0);
+process.exit((undeclared.length + contradicted.length + neverReadRead.length + kindless.length
+  + sites.offenders.length) > 0 && !REPORT_ONLY ? 1 : 0);

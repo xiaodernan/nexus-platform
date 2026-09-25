@@ -163,16 +163,17 @@ NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/seed_truncate_probe.sh" 2>&1 | tail -8 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 7. the read census and the source
-step "7/7  scripts/check_jsonb_reads.mjs — every jsonb key the build reads is in step 5's answered list"
-# Step 5's read list is a transcription of source text, and a transcription drifts silently: the D84 list was
-# built by grepping `col->>'key'` in SQL strings and missed eleven reads made through a Java map accessor. This
-# is that grep, run as a reader rather than as a note, so the next read nobody answered for reddens here
-# instead of returning nothing at runtime. node missing is a FAIL, not a skip — see the script's own LIMITS.
+step "7/7  scripts/check_jsonb_reads.mjs — the build's jsonb reads and both answers' site citations"
+# Step 5's read list is a transcription of source text, and a transcription drifts silently: the D84 list named
+# reads the build does not make and missed the ones made through a Java map accessor, which D85's scanner then
+# counted. So the scanner runs as a reader rather than as a note, and since D87 it reads the `site` column of
+# both answer tables too — every `File.java:NNN` is opened and compared with what the row claims. node missing
+# is a FAIL, not a skip — see the script's own LIMITS.
 command -v node >/dev/null 2>&1 || die "step 7 needs node on PATH; a skipped census step is not a passed one"
 ( cd "$ROOT" && node scripts/check_jsonb_reads.mjs ) 2>&1 | sed -e 's/^/    /'
 
 printf '\nRESULT: PASS — %s quality checks on a from-scratch schema (tables=%s, migrations=%s), plus the\n' \
   "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"
 printf '        seed truncate shown clearing an empty stranger and refusing one that holds rows, and the\n'
-printf '        build'"'"'s jsonb reads reconciled against that list of answered keys.\n'
+printf '        build'"'"'s jsonb reads and answered sites reconciled against that list of keys.\n'
 printf '        SYNTHETIC DEMO DATA. The live databases were not opened by this run.\n'

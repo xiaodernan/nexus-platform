@@ -2490,6 +2490,13 @@ END $d84a$;
 
 -- The hand answers: why each read is or is not reachable, naming the site. `reachable` needs no excuse, so the
 -- answers exist precisely for the reads that resolve to nothing today.
+--
+-- The `site` column is an assertion, and gate step 7 reads it back: scripts/check_jsonb_reads.mjs parses every
+-- `File.java:NNN` below and in shape_answer, opens the shipped source at that line, and refuses a file that does
+-- not exist or is ambiguous, a line past the end of its file or a range running backwards, a line naming none of
+-- the table/column/key the row is about, a file that never names the row's table, a site whose files carry no
+-- line at all, and source text quoted in a site the cited line does not hold. D86 shipped three false sites
+-- across this table and shape_answer while both rows were green — that is why the citations are checked.
 CREATE TEMP TABLE read_answer (tbl text NOT NULL, col text NOT NULL, key text NOT NULL, kind text NOT NULL,
                                site text NOT NULL, why text NOT NULL, PRIMARY KEY (tbl, col, key));
 INSERT INTO read_answer VALUES
@@ -3407,22 +3414,26 @@ CREATE TEMP TABLE shape_answer (tbl text NOT NULL, col text NOT NULL, kind text 
                                 why text NOT NULL, PRIMARY KEY (tbl, col));
 INSERT INTO shape_answer VALUES
  ('collections', 'items', 'array-only',
-  'generate.py writes the guide item list; CollectionsController.java:145 reads it with Json.jsonArray(row, "items")',
+  'generate.py:292 lists the items column and :1342 builds the guide item list; CollectionsController.java:145 '
+  || 'reads it with Json.jsonArray(row, "items")',
   'a guide''s ordered items are a list, so the build consumes it as an array and resolves each element into an '
   || 'EntityCard on the same read; no clause asks collections.items for a key, and none could'),
  ('merchants', 'images', 'array-only',
-  'generate.py; merchant/MerchantRepository.java:306 (Json.jsonArray(row, "images")), selected whole at :22',
+  'generate.py:251 lists the images column; merchant/MerchantRepository.java:306 (Json.jsonArray(row, "images")),'
+  || ' selected whole at :22',
   'an ordered gallery, read whole and projected by position — the url/alt/credit content lives in the elements, '
   || 'which is D81''s census, not this one'),
- ('offerings', 'images', 'array-only', 'generate.py; catalog/OfferingRepository.java:270, selected whole at :25',
+ ('offerings', 'images', 'array-only', 'generate.py:266 lists the images column;'
+  || ' catalog/OfferingRepository.java:270, selected whole at :25',
   'the same gallery shape on the offering side'),
- ('offerings', 'options', 'array-only', 'generate.py; catalog/OfferingRepository.java:273, selected whole at :25',
+ ('offerings', 'options', 'array-only', 'generate.py:266 lists the options column;'
+  || ' catalog/OfferingRepository.java:273, selected whole at :25',
   'choice groups (name + values), so it is a list by design; 2,936 of 5,534 payloads are [] — an offering with no '
   || 'options, a real state and not an unreadable one. Named against the column, not the word: order_items.options '
   || 'is a different column, written by commerce/OrderRepository.java:78-84'),
  ('reviews', 'photos', 'array-only',
-  'generate.py; CatalogController.java:388 (Json.jsonArray(row, "photos")), selected by ReviewRepository.java:48 '
-  || 'and CatalogRepository.java:59',
+  'generate.py:274 lists the photos column; CatalogController.java:388 (Json.jsonArray(row, "photos")),'
+  || ' selected by ReviewRepository.java:48 and CatalogRepository.java:59',
   'every one of the 11,000 payloads is [] — the column exists to hold review photos and no seeded review has '
   || 'one, which D81 counted from the other side');
 
