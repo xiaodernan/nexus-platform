@@ -1548,6 +1548,234 @@ SELECT 'every probe family resolves at least one armed type',
        || ' — a family whose seed rows all vanish would resolve nothing, and its orphan checks would disappear '
        || 'from the ledger rather than fail; this row is what makes that visible';
 
+-- ============================================================ D80  the synthetic stamp lives in more columns than the row that reads it
+--
+-- WHY THIS EXISTS: the file has one row about the §109 promise that everything shipped is marked as synthetic,
+-- and it is a hand list of three columns: 'jsonb data_origin marker (offerings/documents/chunks)' below the
+-- D63/D64 sections reads offerings.attributes, documents.metadata and chunks.metadata. Asked of the data, the
+-- marker's real footprint is much wider. A census over every jsonb column the seed fills (62 of them; 40 are
+-- never filled at all, sitting in the tables D64 keeps empty) finds keys whose names claim a provenance or
+-- synthetic axis in **20 (column, key) pairs**: `data_origin` in 12 columns, `synthetic` in 4, `demo` in 3,
+-- and `demo_login_role` in 1 — and the row that is supposed to enforce the promise covers 3 of the 12.
+-- reviews.moderation carries the stamp on all 11000 reviews, facts.value on 5004 of 5688 facts,
+-- locations.geo_properties on all 684, merchants.{attributes,contact,seo}, resource_pools.attributes,
+-- collections.seo and tenants.config on theirs: unchecked, not because anyone chose to skip them, but because
+-- the list is shorter than the schema.
+--
+-- THE SECOND FINDING, which is the one that needs an axis rather than a count: on `facts` the two names are
+-- NOT the same thing, and 4484 rows say so. `facts.source` is §19's provenance — measured: merchant 3197,
+-- observed 1800, demo 520, inferred 171 — while `facts.value->>'data_origin'` is the §109 synthetic stamp, the
+-- literal `demo` on all 5004 rows that carry it. generate.py writes them in the same call (line 900 ends
+-- `"data_origin": "demo"}, None, None, "merchant", ttl_h=24*30`), so the disagreement is correct by design.
+-- What was not correct is that nothing in the file said which axis is which: a consumer that answers
+-- "where did this price come from?" by reading the key inside the price payload gets `demo` for every
+-- observed and merchant-supplied fact. So the axis is declared per (column, key) below, and the row refuses
+-- the day a stamp starts carrying provenance — which is the shape the bug takes if anyone "fixes" it the wrong
+-- way round.
+--
+-- WHAT IS MEASURED AND NOT CLAIMED: `merchants.attributes.demo_login_role` = 'merchant' matches the name
+-- pattern and is not a marker of either axis; it is answered as 'not-a-marker' rather than filtered out of the
+-- census by a narrower pattern, because the only honest filter is the one that says why. And
+-- CollectionsRepository.java:68 tests `seo->>'generated_by'` against ('ai','editor','creator') while no jsonb
+-- payload in the shipped dataset carries a `generated_by` key at all (measured: 0 of 62 columns) — that read
+-- and what it implies for the §8 collection gate belongs to the stream that owns that door, so it is reported
+-- here and left alone.
+
+CREATE TEMP TABLE marker_cat (tbl text NOT NULL, col text NOT NULL, key text NOT NULL, rows bigint NOT NULL,
+                              on_rows bigint NOT NULL, vals text, PRIMARY KEY (tbl, col, key));
+DO $d80$
+DECLARE r record; n bigint; n2 bigint; v text;
+BEGIN
+  FOR r IN SELECT c.relname AS tbl, a.attname AS col
+             FROM pg_attribute a
+             JOIN pg_class c ON c.oid = a.attrelid AND c.relkind = 'r'
+             JOIN pg_namespace ns ON ns.oid = c.relnamespace AND ns.nspname = 'public'
+             JOIN pg_type t ON t.oid = a.atttypid
+            WHERE a.attnum > 0 AND NOT a.attisdropped AND t.typname = 'jsonb'
+            ORDER BY 1, 2
+  LOOP
+    EXECUTE format('SELECT count(*) FROM public.%I', r.tbl) INTO n;
+    CONTINUE WHEN n = 0;
+    -- one row per provenance-shaped key the payloads of this column actually carry
+    EXECUTE format('INSERT INTO marker_cat SELECT %L, %L, x.k, %L, count(*), '
+                 || '       coalesce(left(string_agg(DISTINCT x.v, '','' ORDER BY x.v), 80), ''(no value)'') '
+                 || '  FROM (SELECT o.%I AS p FROM public.%I o WHERE jsonb_typeof(o.%I) = ''object'') s, '
+                 || '       LATERAL (SELECT q AS k, (s.p ->> q) AS v FROM jsonb_object_keys(s.p) q '
+                 || '                 WHERE q ~* ''origin|synth|demo|generat'') x '
+                 || ' GROUP BY x.k', r.tbl, r.col, n, r.col, r.tbl, r.col);
+  END LOOP;
+END $d80$;
+
+-- The axis each census-found key belongs to. This list is hand-written on purpose — SQL cannot know that
+-- `demo` in a pool's attributes is the §109 stamp while `demo_login_role` in a merchant's attributes is a
+-- login role — and what the catalogue decides is who has to be on it.
+CREATE TEMP TABLE marker_axis (tbl text NOT NULL, col text NOT NULL, key text NOT NULL, axis text NOT NULL,
+                               why text NOT NULL, PRIMARY KEY (tbl, col, key));
+INSERT INTO marker_axis VALUES
+ ('chunks', 'metadata', 'data_origin', 'synthetic-stamp', 'read by the row below and by the D63 chunk provenance'
+  || ' assertions; the third of the three columns the hand list knew about'),
+ ('collections', 'seo', 'data_origin', 'synthetic-stamp', 'found by the census; the §8 read side does not look at'
+  || ' this key, so the marker here exists to be believed, not to be branched on'),
+ ('documents', 'metadata', 'data_origin', 'synthetic-stamp', 'the second of the three hand-listed columns'),
+ ('documents', 'metadata', 'synthetic', 'synthetic-stamp', 'a boolean twin of the same promise on the same rows'
+  || ' — two names, one axis, both required to say the same thing'),
+ ('facts', 'value', 'data_origin', 'synthetic-stamp', 'NOT the §19 provenance: `facts.source` is that axis'
+  || ' (merchant|observed|inferred|demo) and this key is the literal demo on every row carrying it, stamped in'
+  || ' the same generate.py call that passes source — see the row that refuses a stamp carrying provenance'),
+ ('facts', 'value', 'synthetic', 'synthetic-stamp', 'the address-shape payload uses the boolean twin instead of'
+  || ' data_origin; measured on the 684 rows whose attribute is address'),
+ ('locations', 'geo_properties', 'data_origin', 'synthetic-stamp', 'found by the census on all 684 rows'),
+ ('locations', 'geo_properties', 'synthetic', 'synthetic-stamp', 'the boolean twin, same rows'),
+ ('merchants', 'attributes', 'data_origin', 'synthetic-stamp', 'found by the census; the merchants.data_origin'
+  || ' COLUMN is checked by the D64-era row, and the payload repeats it'),
+ ('merchants', 'attributes', 'demo_login_role', 'not-a-marker', 'the value is the login role the demo account'
+  || ' signs in as (measured: merchant); it matches the name pattern and means neither axis, and answering it'
+  || ' is cheaper than narrowing the pattern and losing the next one'),
+ ('tenants', 'config', 'demo', 'synthetic-stamp', 'the boolean spelling, on the one row that configures the'
+  || ' market'),
+ ('merchants', 'contact', 'data_origin', 'synthetic-stamp', 'found by the census on all 520 rows'),
+ ('merchants', 'seo', 'data_origin', 'synthetic-stamp', 'found by the census; §155 keeps these pages noindex,'
+  || ' and the stamp is what says why their content is not real'),
+ ('offerings', 'attributes', 'data_origin', 'synthetic-stamp', 'the first of the three hand-listed columns'),
+ ('offerings', 'attributes', 'demo', 'synthetic-stamp', 'the boolean twin on the same 5534 rows'),
+ ('resource_pools', 'attributes', 'data_origin', 'synthetic-stamp', 'found by the census on all 452 pools'),
+ ('resource_pools', 'attributes', 'demo', 'synthetic-stamp', 'the boolean twin, same rows'),
+ ('reviews', 'moderation', 'data_origin', 'synthetic-stamp', 'found by the census on ALL 11000 reviews — the'
+  || ' biggest marker home in the dataset and absent from the hand list it is supposed to be checked by'),
+ ('reviews', 'moderation', 'synthetic', 'synthetic-stamp', 'the boolean twin on the same rows'),
+ ('tenants', 'config', 'data_origin', 'synthetic-stamp', 'one row, the market configuration; stamped like'
+  || ' everything else because the whole tenant is synthetic');
+
+-- Does every row of a stamped column actually carry a stamp, under ANY of the names that column uses? The
+-- key list comes from the answered axis table, so `demo_login_role` cannot count as coverage.
+CREATE TEMP TABLE marker_cov (tbl text NOT NULL, col text NOT NULL, rows bigint NOT NULL,
+                              stamped bigint NOT NULL, PRIMARY KEY (tbl, col));
+DO $d80c$
+DECLARE r record; k text[]; n bigint; st bigint;
+BEGIN
+  FOR r IN SELECT DISTINCT c.tbl, c.col FROM marker_cat c JOIN marker_axis a
+             ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key AND a.axis = 'synthetic-stamp'
+            ORDER BY 1, 2 LOOP
+    SELECT array_agg(DISTINCT c.key) INTO k FROM marker_cat c JOIN marker_axis a
+      ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key AND a.axis = 'synthetic-stamp'
+     WHERE c.tbl = r.tbl AND c.col = r.col;
+    EXECUTE format('SELECT count(*), count(*) FILTER (WHERE jsonb_typeof(t.%I) = ''object'' AND EXISTS '
+                 || '(SELECT 1 FROM jsonb_object_keys(t.%I) q WHERE q = ANY(%L::text[]))) FROM public.%I t',
+                 r.col, r.col, k, r.tbl) INTO n, st;
+    INSERT INTO marker_cov VALUES (r.tbl, r.col, n, st);
+  END LOOP;
+END $d80c$;
+
+INSERT INTO qc
+SELECT 'every jsonb key whose name claims an axis is answered for which axis it is',
+       (SELECT count(*) FROM marker_cat) > 0
+       -- both directions, so neither list can drift away from the other
+       AND NOT EXISTS (SELECT 1 FROM marker_cat c WHERE NOT EXISTS
+                        (SELECT 1 FROM marker_axis a WHERE a.tbl = c.tbl AND a.col = c.col AND a.key = c.key))
+       AND NOT EXISTS (SELECT 1 FROM marker_axis a
+                        WHERE a.axis <> 'not-a-marker' AND NOT EXISTS
+                          (SELECT 1 FROM marker_cat c WHERE c.tbl = a.tbl AND c.col = a.col AND c.key = a.key))
+       AND NOT EXISTS (SELECT 1 FROM marker_axis a WHERE btrim(a.why) = ''
+                        OR a.axis NOT IN ('synthetic-stamp', 'provenance', 'not-a-marker'))
+       AND NOT EXISTS (SELECT 1 FROM marker_axis a WHERE a.axis = 'not-a-marker' AND NOT EXISTS
+                        (SELECT 1 FROM marker_cat c WHERE c.tbl = a.tbl AND c.col = a.col AND c.key = a.key)),
+       (SELECT count(*) FROM marker_cat) || ' (column, key) pair(s) measured across '
+       || (SELECT count(DISTINCT tbl || '.' || col) FROM marker_cat) || ' jsonb column(s): '
+       || coalesce((SELECT string_agg(k || '=' || n, ', ' ORDER BY k)
+                      FROM (SELECT key AS k, count(*) AS n FROM marker_cat GROUP BY 1) g), 'none') || '; '
+       || (SELECT count(*) FROM marker_axis) || ' answered by the axis list, '
+       || coalesce((SELECT string_agg(c.tbl || '.' || c.col || '.' || c.key || ' [' || c.vals || ']', ', '
+                                    ORDER BY c.tbl, c.col)
+                     FROM marker_cat c WHERE NOT EXISTS (SELECT 1 FROM marker_axis a
+                                                         WHERE a.tbl = c.tbl AND a.col = c.col AND a.key = c.key)),
+                   'each by name') || ' — offenders: '
+       || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT 'the data carries ' || c.tbl || '.' || c.col || '.' || c.key || ' (' || c.on_rows
+                     || ' row(s), values ' || c.vals || ') and no axis answers for it' AS x
+                FROM marker_cat c WHERE NOT EXISTS (SELECT 1 FROM marker_axis a
+                                                    WHERE a.tbl = c.tbl AND a.col = c.col AND a.key = c.key)
+              UNION ALL
+              SELECT a.tbl || '.' || a.col || '.' || a.key || ' is answered as ' || a.axis
+                     || ' but the payloads no longer carry that key at all'
+                FROM marker_axis a WHERE a.axis <> 'not-a-marker' AND NOT EXISTS
+                  (SELECT 1 FROM marker_cat c WHERE c.tbl = a.tbl AND c.col = a.col AND c.key = a.key)
+              UNION ALL
+              SELECT a.tbl || '.' || a.col || '.' || a.key || ' claims axis ''' || a.axis
+                     || ''', which is not one of the three this block knows'
+                FROM marker_axis a WHERE a.axis NOT IN ('synthetic-stamp', 'provenance', 'not-a-marker')
+              UNION ALL
+              SELECT 'the axis of ' || tbl || '.' || col || '.' || key || ' carries no reason'
+                FROM marker_axis WHERE btrim(why) = ''
+                    ) x), 'none');
+
+INSERT INTO qc
+SELECT 'the synthetic stamp says demo, or true, on every row of every column that carries it',
+       (SELECT count(*) FROM marker_axis WHERE axis = 'synthetic-stamp'
+         AND EXISTS (SELECT 1 FROM marker_cat c
+                      WHERE c.tbl = marker_axis.tbl AND c.col = marker_axis.col AND c.key = marker_axis.key)) > 0
+       -- universal within the column, over the union of the names that column stamps with
+       AND NOT EXISTS (SELECT 1 FROM marker_cov v WHERE v.stamped <> v.rows)
+       -- and the value is the stamp, never something that reads like provenance
+       AND NOT EXISTS (SELECT 1 FROM marker_cat c JOIN marker_axis a
+                         ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key
+                        WHERE a.axis = 'synthetic-stamp'
+                          AND c.vals NOT IN ('demo', 'true', 'demo,true', 'true,demo')),
+       (SELECT count(*) FROM marker_cat c JOIN marker_axis a
+          ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key
+         WHERE a.axis = 'synthetic-stamp') || ' stamped (column, key) pair(s) over '
+       || (SELECT count(DISTINCT c.tbl || '.' || c.col) FROM marker_cat c JOIN marker_axis a
+             ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key WHERE a.axis = 'synthetic-stamp')
+       || ' column(s) — the hand list this replaces named 3 — carrying '
+       || (SELECT sum(c.on_rows) FROM marker_cat c JOIN marker_axis a
+             ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key WHERE a.axis = 'synthetic-stamp')
+       || ' marker(s) in all; coverage per column: '
+       || coalesce((SELECT string_agg(tbl || '.' || col || ' on ' || stamped || ' of ' || rows || ' row(s)',
+                                      ', ' ORDER BY rows - stamped DESC, tbl, col)
+                      FROM marker_cov WHERE stamped <> rows), 'every stamped column is complete')
+       || '; values: ' || coalesce((SELECT string_agg(c.tbl || '.' || c.col || '.' || c.key || ' = ' || c.vals,
+                                      ', ' ORDER BY c.tbl, c.col)
+                       FROM marker_cat c JOIN marker_axis a
+                         ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key
+                        WHERE a.axis = 'synthetic-stamp'
+                          AND c.vals NOT IN ('demo','true','demo,true','true,demo')),
+                       'each key says demo, or true, wherever it appears')
+       || ' — offenders: ' || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT c.tbl || '.' || c.col || ' is stamped on only ' || c.stamped || ' of ' || c.rows
+                     || ' row(s): ' || (c.rows - c.stamped) || ' row(s) carry no stamp key under any name' AS x
+                FROM marker_cov c WHERE c.stamped <> c.rows
+              UNION ALL
+              SELECT c.tbl || '.' || c.col || '.' || c.key || ' carries value(s) ' || c.vals
+                     || ', which is not the §109 stamp'
+                FROM marker_cat c JOIN marker_axis a ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key
+               WHERE a.axis = 'synthetic-stamp'
+                 AND c.vals NOT IN ('demo', 'true', 'demo,true', 'true,demo')) x), 'none');
+
+INSERT INTO qc
+SELECT 'the §19 provenance axis and the §109 stamp axis stay separate on facts',
+       (SELECT count(*) FROM facts WHERE source IS NOT NULL) > 0
+       -- every fact's own provenance is one of the four words this build writes
+       AND NOT EXISTS (SELECT 1 FROM facts WHERE source NOT IN ('merchant', 'observed', 'inferred', 'demo'))
+       -- the payload key stays the stamp: constant, and never one of the provenance words
+       AND NOT EXISTS (SELECT 1 FROM facts WHERE value ? 'data_origin'
+                        AND (value->>'data_origin') <> 'demo')
+       AND NOT EXISTS (SELECT 1 FROM facts WHERE value ? 'data_origin'
+                        AND (value->>'data_origin') = source AND source <> 'demo'),
+       (SELECT count(*) FROM facts) || ' fact(s): source = ' || coalesce((SELECT string_agg(source || '=' || n, ', '
+          ORDER BY n DESC) FROM (SELECT source, count(*) AS n FROM facts GROUP BY source) s), '-')
+       || '; value->>data_origin on ' || (SELECT count(*) FROM facts WHERE value ? 'data_origin')
+       || ' row(s), ' || (SELECT count(*) FROM facts WHERE value ? 'data_origin'
+                           AND value->>'data_origin' = 'demo') || ' of them say demo'
+       || '; the two axes disagree on ' || (SELECT count(*) FROM facts WHERE value ? 'data_origin'
+                           AND (value->>'data_origin') IS DISTINCT FROM source)
+       || ' row(s) BY DESIGN (generate.py stamps the payload and passes provenance positionally, e.g. line 900)'
+       || ' — offenders: ' || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT 'facts.source = ' || coalesce(source, '(null)') || ' is not a word this build writes' AS x
+                FROM facts WHERE source NOT IN ('merchant','observed','inferred','demo')
+              UNION ALL
+              SELECT 'a fact payload carries data_origin = ' || (value->>'data_origin')
+                     || ', which is a provenance word in the column that holds the synthetic stamp'
+                FROM facts WHERE value ? 'data_origin' AND (value->>'data_origin') <> 'demo') x), 'none');
+
 -- ============================================================ D74  door vocabularies
 --
 -- WHY THIS EXISTS: D69 counted the schema's polymorphic (type,id) pairs and found one bounded by a CHECK.

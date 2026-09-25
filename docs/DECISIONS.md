@@ -4329,3 +4329,137 @@ no vocabulary row claims and no probe emits, which is what row 1 and the waiver 
   type still surfaces — as the orphan probe's own red, which is the older and stronger half of this seam.
 - Nothing here changes the §109 traffic question, and no Java, migration or seeded value moved: 202 → 204
   checks, with the two new rows reading the same dataset the probes do.
+
+## D80 The synthetic stamp lives in twelve columns; the row enforcing it read three — 2026-09-25
+
+### 1. The claim worth testing in a D63-era row
+
+The file has carried, since the seed's first provenance work, two hand lists about the §109 promise that
+everything shipped says it is synthetic:
+
+```sql
+SELECT 'data_origin = demo everywhere the column exists', … merchants, reviews, collections          -- columns
+SELECT 'jsonb data_origin marker (offerings/documents/chunks)', …                                    -- payloads
+```
+
+Six names, chosen when those were the columns that existed in the author's head. The question D80 asks is the
+one D64 asked of its own fabrication guard and D74 of its door lists: **ask the data how big the set is.** A
+promise about *every* synthetic thing is worth one row per place the thing is claimed, and no row yet counted
+the places.
+
+### 2. The measurement, before any edit
+
+Every jsonb column of every base table, its rows opened with `jsonb_object_keys`, keys filtered on the shape a
+provenance or synthetic marker has (`origin|synth|demo|generat`):
+
+```
+62 jsonb columns in `public`
+  40 never filled at all — every one in a table D64's fabrication guard keeps EMPTY
+  20 (column, key) pairs that claim an axis, across 12 columns:
+       data_origin       12   chunks.metadata collections.seo documents.metadata facts.value
+                             locations.geo_properties merchants.attributes merchants.contact
+                             merchants.seo offerings.attributes resource_pools.attributes
+                             reviews.moderation tenants.config
+       synthetic          4   documents.metadata facts.value locations.geo_properties reviews.moderation
+       demo               3   merchants.attributes offerings.attributes resource_pools.attributes
+       demo_login_role    1   merchants.attributes
+```
+
+The row that is supposed to enforce the promise covers **3** of those 12 columns. The nine it does not include
+`reviews.moderation` — the stamp on **all 11000 reviews**, the largest single home of the marker in the dataset —
+`facts.value` on 5004 facts, `locations.geo_properties` on 684, and six more. Nothing about that was a decision;
+the list was simply shorter than the schema.
+
+### 3. The finding underneath: two axes wear one name
+
+Inside `facts`, `data_origin` is not one thing across the schema. Measured pair by pair:
+
+```
+source=merchant | value->>'data_origin'=demo  2513     source=observed | demo   1800
+source=merchant | (no key in the payload)      684     source=inferred | demo    171
+                                                     source=demo     | demo    520
+```
+
+`facts.source` is §19's provenance — the four words this build writes — and `facts.value->>'data_origin'` is
+§109's synthetic stamp, the literal `demo` on all 5004 rows that carry it. `generate.py` writes both in one
+call: line 900 ends `"data_origin": "demo"}, None, None, "merchant", ttl_h=24*30`. So 4484 rows disagree
+**correctly**, and 684 more (every `address`-shaped fact) keep the promise under the other spelling,
+`synthetic: true` — which is also why a per-key universality term is wrong and a per-column one is right:
+5004 + 684 = all 5688 rows stamped, no single key on all of them.
+
+What was missing was not a fix but a statement. Nothing in the file said which name carries which axis, so a
+consumer that answers "where did this price come from?" by reading the key inside the price payload gets `demo`
+for every observed and merchant-supplied fact. `merchants.attributes.demo_login_role` = 'merchant' is the same
+collision from the other side: it matches the marker pattern and is a login role, not a marker of either axis.
+Also measured and **not** touched: `CollectionsRepository.java:68` tests `seo->>'generated_by'` against
+('ai','editor','creator') while no jsonb payload in the shipped dataset carries a `generated_by` key at all (0
+of 62 columns) — that read belongs to the §8 door's owner, so it is reported here and left alone.
+
+### 4. The change: a census, a coverage count, and a declared axis per name
+
+Three new structures, all read from the catalogue and the data rather than written out:
+
+* `marker_cat` — one row per (column, key) the pattern finds in a filled jsonb column, with the column's row
+  count, how many rows carry that key, and the distinct values it holds.
+* `marker_cov` — one row per **column** that claims a stamp, counting rows carrying *any* of the answered stamp
+  keys for that column. `facts.value` is stamped on 5688 of 5688 under this definition and on 5004 of 5688 under
+  any single key's; the promise is about rows, and a column may keep it in more than one spelling.
+* `marker_axis` — the hand list, and it has to stay hand-written: SQL cannot know that `demo` in a pool's
+  attributes is the §109 stamp while `demo_login_role` in a merchant's attributes is a role. The catalogue
+  decides who must be on it. Each answer carries `axis ∈ {synthetic-stamp, provenance, not-a-marker}` and a
+  non-blank reason.
+
+Three rows then read them: **'every jsonb key whose name claims an axis is answered for which axis it is'**
+(census→answer and answer→census, a blank reason, an axis outside the three, and an answer for a key the
+payloads no longer carry); **'the synthetic stamp says demo, or true, on every row of every column that carries
+it'** (per-column coverage plus per-key value discipline — 19 stamped pairs over 12 columns, 46792 markers, each
+column complete); and **'the §19 provenance axis and the §109 stamp axis stay separate on facts'**, which prints
+the pair counts and refuses a stamp slot holding a provenance word. 204 → 207 checks.
+
+### 5. Plants — nine runs of the shipped bytes, three seams
+
+Sliced at `CREATE TEMP TABLE marker_cat` (data plants, which the census has not yet seen), at `DO $d80c$`
+(mutate the key census after it ran but before coverage) and at the new rows (mutate the answer list). Each run
+prints the number of checks emitted and the gate's own verdict, and every data plant restores the row it
+touched and re-reads it afterwards.
+
+| # | plant | red | what it said |
+|---|---|---|---|
+| W0 | none | — | 207 green; `20 (column, key) pair(s) measured across 12 jsonb column(s): data_origin=12, demo=3, demo_login_role=1, synthetic=4; 20 answered by the axis list, each by name — offenders: none` |
+| P1 | one chunk gains a third spelling (`synthetic_data`) | row 1 | `the data carries chunks.metadata.synthetic_data (1 row(s), values true) and no axis answers for it` — the vocabulary outgrew the list |
+| P2 | the census loses a key an answer still names | row 1 | `tenants.config.data_origin is answered as synthetic-stamp but the payloads no longer carry that key at all` — the exemption re-reads its own assumption |
+| P3 | one review loses both spellings of the stamp | row 2 | `reviews.moderation is stamped on only 10999 of 11000 row(s): 1 row(s) carry no stamp key under any name` |
+| P4 | one fact's stamp slot set to `merchant` — the wrong-way-round "fix" | rows 2 **and** 3 | `facts.value.data_origin carries value(s) demo,merchant, which is not the §109 stamp` and `a fact payload carries data_origin = merchant …`; the axes-disagree count stays 4484 while the stamp count drops to 5003 |
+| P5 | an answer's axis renamed to `maybe` | row 1 | `facts.value.data_origin claims axis 'maybe', which is not one of the three this block knows` (both facts.value answers caught, one term) |
+| P6 | an answer's reason blanked | row 1 | `the axis of reviews.moderation.data_origin carries no reason` |
+| P7 | `facts.source = 'scraper'` on one row | row 3 | `facts.source = scraper is not a word this build writes` — and `source = merchant=3197, observed=1800, demo=520, inferred=171, scraper=1` shows the census noticing it in its own text |
+| final | none, restored | — | 207 green; `reviews=11000 chunks=2118 facts=5688 merchants=520 tenants=1 unstamped_reviews=0 non_demo_stamps=0 d80_schema=0` |
+
+P4 is the plant that justifies the unit's framing: a single row, edited the way a well-meaning maintainer would
+edit it — "the payload should say where the value came from" — reddens the value discipline *and* the axis row,
+and says in its own detail that the two axes still disagree on 4484 rows by design.
+
+One false start belongs in the record, and it was the drive's bug rather than the gate's. The first P4 read
+`UPDATE facts SET value = jsonb_set(f.value, …) FROM facts f WHERE f.id = (SELECT id FROM d80.snap)`, and in
+Postgres the source of an `UPDATE … FROM` is not chained to the target unless the WHERE says so: the whole
+5688-row table was written from one row's value, and the restore could not undo it. **The new rows caught the
+damage** — the run after it printed six reds where zero were expected, which is the accident that proves the
+terms read live data. The plant now names the target row directly, and each plant's cleanup is followed by a
+probe that re-counts what it changed (`chunks with synthetic_data=0`, `unstamped=0`, `non_demo_stamps=0`,
+`d80_schema=0`) rather than trusting the SQL to have worked.
+
+### 6. What this does not claim
+
+- The census pattern is `origin|synth|demo|generat`. A marker spelled without any of those substrings is
+  invisible to it, which is why the near-miss is answered (`demo_login_role`, `not-a-marker`) instead of
+  filtered out by narrowing the pattern: a narrower pattern does not make the next name miss louder.
+- `rows` in the coverage count is the table's row count, not the count of object-valued rows. A jsonb column
+  holding `[]` on every row would report 0 of N stamped — true, and today's array-shaped columns
+  (`merchants.images`, `offerings.options`, `reviews.photos`, `collections.items`, `offerings.images`) carry no
+  marker keys and so are not stamped columns at all.
+- Which axis `data_origin` *should* carry inside a fact payload is a contract decision about the seed's output,
+  and this unit takes none: it states the measured split, refuses the swap, and leaves `generate.py` untouched.
+  If the product later wants provenance in the payload, row 3 reddens first and says why.
+- No Java, migration or seeded value changed. 204 → 207 checks; `mvn -o test` and `e2e_fresh.sh` were not in
+  scope, and the §109 question the marker exists to answer — is marked demo data acceptable traffic — is still
+  the same undecided product call D64 and D76 recorded.

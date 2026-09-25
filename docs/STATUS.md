@@ -3610,3 +3610,89 @@ next              residue worth carrying: (a) `poly_arms` is a hand copy of what
                     ledger in `nexus_test` belongs to the infrastructure lane; the events subject seam (D70)
                     waits on a contract decision.
 ```
+
+## 76. The synthetic stamp lives in twelve columns and the row enforcing it read three (2026-09-25)
+
+§75's drive kept pointing at the same shape of hole — a check whose subjects come from the data can silently
+have fewer subjects than its name implies. This unit turns that on the §109 promise itself: the file has
+carried since the seed's first provenance work two hand lists naming where the synthetic marker lives, six
+names in all. Opened against the shipped data, the marker lives in **twelve jsonb columns across twenty
+(column, key) pairs** — and the enforcing row reads three of them.
+
+```
+measured          62 jsonb columns; 40 never filled (every one in a table D64's fabrication guard keeps empty);
+                    20 pairs claiming a provenance-or-synthetic axis across 12 columns: data_origin=12
+                    (chunks.metadata, collections.seo, documents.metadata, facts.value, locations.geo_properties,
+                    merchants.attributes, merchants.contact, merchants.seo, offerings.attributes,
+                    resource_pools.attributes, reviews.moderation, tenants.config), synthetic=4, demo=3,
+                    demo_login_role=1. The unchecked nine include reviews.moderation — the stamp on ALL 11000
+                    reviews, the biggest home in the dataset — and facts.value on 5004. The axis collision was
+                    then measured pair by pair rather than assumed: source=merchant 2513, observed 1800,
+                    inferred 171 rows whose payload says data_origin=demo (that is the §19 column and the §109
+                    stamp disagreeing, correctly, on 4484 rows), 520 where source is itself demo, and 684
+                    address-shaped facts that keep the promise under `synthetic: true` instead — so 5004+684 =
+                    every fact row stamped, no single key on all of them. generate.py is the witness that this
+                    is one call, two axes: line 900 ends `"data_origin": "demo"}, None, None, "merchant",
+                    ttl_h=24*30`. Also measured, reported, NOT touched: CollectionsRepository.java:68 tests
+                    `seo->>'generated_by'` against ai|editor|creator while no shipped payload carries
+                    `generated_by` at all (0 of 62 columns) — that read belongs to the §8 door's stream.
+new/changed       data/seed/quality.sql only, +228/-0. `marker_cat` (one row per pattern-matching key a filled
+                    jsonb column carries: the column's rows, how many carry that key, the values it holds),
+                    `marker_cov` (per COLUMN, counting rows carrying any of that column's answered stamp keys —
+                    because the promise is about rows and a column may keep it in two spellings) and
+                    `marker_axis` (the hand list that has to stay hand-written: SQL cannot tell `demo` in a
+                    pool's attributes from `demo_login_role` in a merchant's; each answer names an axis in
+                    {synthetic-stamp, provenance, not-a-marker} plus a non-blank reason). Three rows: the census
+                    and the answers named for each other in both directions, with a stale answer reddening; the
+                    stamp's value discipline and per-column coverage (19 stamped pairs over 12 columns, 46792
+                    markers, every stamped column complete); and the facts term, which prints the pair counts
+                    and refuses a stamp slot holding a provenance word. 204 -> 207 checks.
+plants            9 runs of the shipped bytes at three seams (before the census, between the key census and the
+                    coverage census, and after both), each printing the checks emitted and the gate's verdict,
+                    every data plant restoring its row and being re-read afterwards. W0 207 green ·
+                    P1 one chunk gains `synthetic_data` -> row 1 `the data carries chunks.metadata.synthetic_data
+                    (1 row(s), values true) and no axis answers for it` · P2 the census loses a key an answer
+                    names -> `tenants.config.data_origin is answered as synthetic-stamp but the payloads no
+                    longer carry that key at all` · P3 one review loses both spellings -> row 2 `reviews.
+                    moderation is stamped on only 10999 of 11000 row(s): 1 row(s) carry no stamp key under any
+                    name` · P4 the stamp slot set to `merchant` on one fact — the well-meaning wrong-way fix ->
+                    rows 2 AND 3, `facts.value.data_origin carries value(s) demo,merchant, which is not the §109
+                    stamp` and `a fact payload carries data_origin = merchant`, with the by-design 4484 still
+                    printed · P5 an axis renamed `maybe` -> `claims axis 'maybe', which is not one of the three
+                    this block knows` · P6 a reason blanked -> `the axis of reviews.moderation.data_origin
+                    carries no reason` · P7 `facts.source='scraper'` -> row 3, and its own text now reads
+                    `source = merchant=3197, observed=1800, demo=520, inferred=171, scraper=1` · final 207 green
+                    with `unstamped_reviews=0 non_demo_stamps=0 d80_schema=0`. One false start is in the record
+                    and the new rows caught it: the first P4 wrote `UPDATE facts … FROM facts f WHERE f.id =
+                    (SELECT id FROM snap)` — an `UPDATE … FROM` source is not chained to the target unless the
+                    WHERE says so — so all 5688 rows were rewritten from one row's value and the restore could
+                    not undo it. The next run printed SIX reds where none were expected: terms that read live
+                    data are the only reason a damaged database is visible at all. The plant now names its
+                    target row, and each cleanup is followed by a probe that re-counts what it changed.
+gates             scripts/db_gate_fresh.sh --keep green over the shipped text — `RESULT: PASS — 207 quality
+                    checks on a from-scratch schema (tables=58, migrations=7)` — and the three rows read off the
+                    kept database: `20 (column, key) pair(s) measured across 12 jsonb column(s): data_origin=12,
+                    demo=3, demo_login_role=1, synthetic=4; 20 answered by the axis list, each by name —
+                    offenders: none` / `19 stamped (column, key) pair(s) over 12 column(s) — the hand list this
+                    replaces named 3 — carrying 46792 marker(s) in all; coverage per column: every stamped
+                    column is complete; values: each key says demo, or true, wherever it appears` / `5688
+                    fact(s): source = merchant=3197, observed=1800, demo=520, inferred=171; value->>data_origin
+                    on 5004 row(s), 5004 of them say demo; the two axes disagree on 4484 row(s) BY DESIGN`. Kept
+                    gate databases dropped (0 nexus_gate* remain); the drifted `nexus` demo database and
+                    `nexus_funnel_probe` were read from and never written. No Java, migration or seeded value
+                    changed, so mvn -o test and e2e_fresh.sh were out of scope.
+next              residue worth carrying: (a) a marker spelled without `origin|synth|demo|generat` is invisible
+                    to the census — the pattern is the definition of the set, and the near-miss is answered
+                    (`demo_login_role` → not-a-marker) rather than filtered by narrowing it; (b) `rows` in the
+                    coverage count is the table's rows, so an array-valued column that ever gained a stamp key
+                    would show 0 of N — today's five array-shaped columns carry none; (c) which axis the
+                    product wants INSIDE a fact payload is a contract call about generate.py's output and this
+                    unit takes none: row 3 reddens first if anyone moves provenance into the stamp slot, and
+                    the §8 `seo->>'generated_by'` read with no writer anywhere stays with its own stream;
+                    (d) `merchants.tags` is still a 100-value vocabulary bounded by nothing (§75's window sees
+                    arrays not at all), which is the next un-enumerated value space in this schema. Standing
+                    reports unchanged: `saved_searches.notify` read by nothing; `no_show` named once by a door
+                    list with no reader; CommerceApiTest belongs to another stream; the split migration ledger
+                    in `nexus_test` belongs to the infrastructure lane; the events subject seam (D70) waits on
+                    a contract decision.
+```
