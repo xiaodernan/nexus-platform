@@ -4734,3 +4734,46 @@ reads the gate file directly and injects the plants after the answer table is po
   explicit: no claim is made about a column with no rows to look at.
 * No Java, migration or seeded value changed. 212 → 214 checks; `mvn -o test` and `e2e_fresh.sh` stay out of
   scope for a file the gate reads from disk.
+
+## D84 Eleven jsonb keys the build reads, ten of which no shipped payload carries — 2026-09-25
+
+§75–§83 enumerated what the seed writes, one type plane at a time. This unit reads the same payloads from the
+other side: which jsonb keys does the build reach for, and is the key there? A read against an absent key is
+invisible to a test suite — the expression returns nothing and the branch around it decides in silence.
+
+Measured per (table, column, key) on a from-scratch database, over every `col->>'key'` in `services/platform`:
+`collections.seo ? generated_by` on 0 of 4 rows and `merchants.seo ? generated_by` on 0 of 520, though
+`CollectionsRepository.java:23` documents a collection as publishable when that token "carries a real
+provenance" and `:68` encodes it as an IN list over `lower(btrim(coalesce(...,'')))` — so on shipped data the
+clause never selects and the other branch always decides. `MerchantImportRepository.java:37` selects drafts with
+`o.attributes->>'import_job' is not null`: 0 of 5534 offerings, 0 of 1040 documents, 0 of 2118 chunks. Five
+further reads (`seo_pages.data`, `seo_pages.jsonld`, `orders.metadata ? session_id`, `referrals.reward ? amount`,
+`referrals.reward ? currency`) sit on tables D64 keeps empty by rule — §109 forbids the transactions that would
+fill them. Exactly one read resolves against data that carries its key: `tenants.config ? currency_default`, 1 of 1.
+
+So 10 of 11 reads reach for something the seed does not produce, and one of those ten gates a publishability
+decision. The distinction the row keeps is between *cannot contain* (empty-by-guard) and *asks for what is never
+written* (dead-reader) — the first is a consequence of the no-fake-traffic rule, the second is a mismatch between
+two files that each look correct alone.
+
+`read_cat` counts, per read, the rows shipped and the rows carrying the key; `read_answer` is the hand list
+naming kind (reachable | dead-reader | empty-by-guard), the site as `file:line`, and a reason. One row refuses
+five things, in both directions: a read nobody answered for; an answer for a column the catalogue no longer has;
+a reachability that changed since the answer was written (a dead reader whose key starts being carried, a
+reachable read that stops being carried, an empty-by-guard table that starts holding rows); an unknown kind; a
+blank reason or site. 214 → 215 checks.
+
+Five plants, on the freshly built database, each reddening that row: delete an answer (the kind histogram prints
+`dead-reader=4`); set a kind to `unused` (prints `unused=1`); give `collections.seo` 7 carrying rows (the counts
+move to `9 resolve to nothing, 2 carry a key`); give `orders` 12 rows (the empty-by-guard term); blank a reason.
+The official run printed `RESULT: PASS — 215 quality checks on a from-scratch schema (tables=58, migrations=7)`
+over the shipped text, and the file was re-run green after the plants.
+
+One bug was mine, not the gate's: `string_agg(kind, count(*))` over a `GROUP BY` inside a scalar subquery is a
+nested aggregate and aborts the whole file under `ON_ERROR_STOP=1` — grouped counts now come from a subselect.
+Recorded because it is the same lesson as §79 and §82: an aborted run is INVALID, never a pass.
+
+What is deliberately not decided: whether `generate.py` should stamp a provenance token, whether
+`CollectionsRepository` should read a different key, or whether the import selector should match the seeded shape.
+Those files belong to other streams; the finding, with counts and sites, is parked at task #59 — the same posture
+as §78's verification badges: state it, refuse to let it drift, report rather than edit.

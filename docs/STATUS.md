@@ -3910,3 +3910,46 @@ next              residue: (a) finish the four missing witnesses above before th
                     `nexus` database belong to other streams; the split migration ledger in `nexus_test` is the
                     infrastructure lane's; the events subject seam (D70) waits on a contract decision.
 ```
+
+## 81. Eleven jsonb keys the build reads; ten resolve to nothing in the shipped payloads (2026-09-25)
+
+The previous five units enumerated what the seed writes. This one asks what the build READS out of the jsonb
+payloads, and finds the two sides disagree — including in a clause that decides whether a collection is
+publishable.
+
+```
+measured          collections.seo ? generated_by 0 of 4 rows; merchants.seo ? generated_by 0 of 520; the same
+                    key on seo_pages.data and seo_pages.jsonld, orders.metadata ? session_id, referrals.reward ?
+                    amount and ? currency — all four on tables D64 keeps EMPTY; offerings.attributes ?
+                    import_job 0 of 5534, documents.metadata 0 of 1040, chunks.metadata 0 of 2118; the only
+                    reachable read is tenants.config ? currency_default, 1 of 1. Two are load-bearing:
+                    CollectionsRepository.java:23 documents publishability as seo->>'generated_by' carrying a real
+                    provenance token and :68 encodes it as an IN list, so on shipped data the test is always false
+                    and the other branch always decides; MerchantImportRepository.java:37 selects drafts by
+                    attributes->>'import_job' is not null and matches nothing, so the import lane reports no
+                    imports. Five unreachable for a rule-bound reason (§109 keeps their tables empty), five dead
+                    readers on populated tables, one reachable.
+new/changed       data/seed/quality.sql only, +161/-0. read_cat (rows shipped, rows carrying the key, per read) x
+                    read_answer (kind in reachable | dead-reader | empty-by-guard, the site as file:line, a
+                    non-blank reason); one row refusing an unanswered read, an answered column the catalogue
+                    dropped, a reachability change in either direction, an unknown kind, and a blank reason or
+                    site. 214 -> 215 checks.
+plants            five, all on a freshly built database, all reddening the row: delete an answer (histogram prints
+                    dead-reader=4) · kind 'unused' (prints unused=1) · collections.seo given 7 carrying rows
+                    (counts move to 9 resolve to nothing, 2 carry a key) · orders given 12 rows (the
+                    empty-by-guard term) · a blanked reason. My own bug found first: a string_agg over a GROUP BY
+                    count inside a scalar subquery is a nested aggregate and aborts the file under
+                    ON_ERROR_STOP=1 — grouped counts now come from a subselect, and an aborted run is reported as
+                    INVALID rather than counted as green.
+gates             scripts/db_gate_fresh.sh --keep over the shipped text: `RESULT: PASS — 215 quality checks on a
+                    from-scratch schema (tables=58, migrations=7)`, and the gate file re-run green after the
+                    plants. Kept database dropped afterwards (0 nexus_gate* remain); `nexus`, `nexus_test` and
+                    `nexus_funnel_probe` never opened. No Java, migration or seeded value changed.
+next              residue: (a) the read list is a transcription of `col->>'key'` occurrences — a read made through
+                    `Json.str(row.get(...))` or a Java-side constant is invisible to it, so widening the grep is
+                    owed to this row; (b) if the import feature is meant to seed documents rather than offerings,
+                    then it is the seed that is short, not the selector; (c) the decision itself — stamp a
+                    provenance token, or change the §8 test — belongs to #59 and that door's owner, and is
+                    reported here with counts and sites rather than taken. Nine units now sit on the branch
+                    (D77–D84): gate 199 -> 215 checks.
+```
