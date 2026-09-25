@@ -1567,13 +1567,19 @@ SELECT 'a CHECK-bounded column is a door vocabulary too',
 -- left unasked. So ask the data instead of the code: for every text column of every base table, how many
 -- distinct values does the shipped dataset actually carry?
 --
--- THE WINDOW, and why it is not just "few values". Measured over this schema, `n <= 12` alone catches 75
--- columns, and most of them are free text that only looks bounded because the table is small: four
--- collections give collections.title four values, five users give users.phone five. A vocabulary is a column
--- whose values REPEAT, so the window is three terms together — at least 20 rows, at most 12 distinct values,
--- and no more than one distinct value per four rows — which is 40 columns here. 19 further columns carry
--- 2..12 values below the row floor; four of them are catalogued vocabularies over tables the demo barely
--- populates, and `vocab_answer` says so rather than letting the window drop them quietly.
+-- THE WINDOW, and why it is not just "few values". Measured over the shipped schema, `n <= 12` alone catches
+-- 204 of the 233 string columns. D75 wrote 75 in this sentence, and D78 could not reproduce that figure under
+-- any of four readings (`n <= 12`, `1..12`, `2..12`, the window itself) on a from-scratch database or on the
+-- drifted demo one, so the number here is the measured one and the remembered one is named as the thing that
+-- was corrected. The 204 are not 204 vocabularies: 128 of them answer 0 because their table is EMPTY (35 such
+-- tables, none of them populated by the shipped seed), and most of the rest only look bounded because the
+-- table is small — four collections give collections.title four values, five users give users.phone five. A
+-- vocabulary is a column whose values REPEAT, so the window is three terms together — at least 20 rows, at
+-- most 12 distinct values, and no more than one distinct value per four rows — which is 40 columns here, and
+-- 40 is the number the row prints. 20 further columns carry 2..12 values below the row floor (19 when D75 wrote
+-- it; D78's widened predicate made users.email the twentieth), two of them are catalogued vocabularies over
+-- tables the demo barely populates — collections.kind by a door, favorites.subject_type by the D67 probe — and
+-- `vocab_answer` answers them by name rather than letting the window drop them quietly.
 --
 -- COST, measured not assumed: 232 text columns over 58 base tables — the 57 this build writes, plus the
 -- gate's own `schema_migrations`, whose `version` column is text and whose 7 rows fall below the window's row
@@ -1581,24 +1587,52 @@ SELECT 'a CHECK-bounded column is a door vocabulary too',
 -- About 5 seconds of wall time on the gate database. Two columns answer 0 distinct values over their rows:
 -- documents.error across 1040 rows, which IS in the window and is answered below, and tenants.region_code
 -- across 1 row, which is not. A column that is NULL everywhere is exactly what a census should make visible,
--- so neither is filtered out of the count.
+-- so neither is filtered out of the count. (D78 measured the rest of that sentence's silence: the other 128
+-- columns that answer 0 do so because their TABLE is empty — the 35 tables named above — and it is the window's
+-- row floor, not its distinct count, that sets them aside.)
+--
+-- D78 WIDENED THE PREDICATE, and the widening is a defect fix rather than a taste: this block shipped reading
+-- `atttypid = 'text'::regtype`, which is one of the string types the schema uses. Measured against
+-- `pg_type.typcategory = 'S'` (a domain's base type resolved through `typbasetype`), a from-scratch schema
+-- carries 232 text columns and 1 citext column — `users.email`, created citext by V1:6 "for case-insensitive
+-- emails" — so the census never saw the one column whose idea of "the same value" differs from the cast its
+-- own details print. 232 is a true count of `text` columns; what was wrong is the sentence above it, which
+-- reads "every text column of every base table" as though that were every string column. It is not, and the
+-- difference has a name and a type. The loop now records each
+-- column's base type, and for every column that is not plain `text` it takes a second reading (distinct values
+-- under `::text`) plus how many rows carry an uppercase letter at all — D78's two rows answer for the type
+-- instead of trusting this prose.
 
 CREATE TEMP TABLE vocab_data (tbl text NOT NULL, col text NOT NULL, n bigint NOT NULL, total bigint NOT NULL,
-                              widest bigint NOT NULL, PRIMARY KEY (tbl, col));
+                              widest bigint NOT NULL, btype text NOT NULL, n_txt bigint, n_upper bigint,
+                              PRIMARY KEY (tbl, col));
 DO $d75$
 DECLARE r record;
 BEGIN
-  FOR r IN SELECT c.relname AS tbl, a.attname AS col
-             FROM pg_attribute a
-             JOIN pg_class c ON c.oid = a.attrelid
-            WHERE c.relnamespace = 'public'::regnamespace
-              AND c.relkind = 'r'
-              AND a.attnum > 0 AND NOT a.attisdropped
-              AND a.atttypid = 'text'::regtype
-            ORDER BY 1, 2
+  FOR r IN SELECT c.relname AS tbl, a.attname AS col, coalesce(bt.typname, t.typname) AS btype
+              FROM pg_attribute a
+              JOIN pg_class c ON c.oid = a.attrelid
+              JOIN pg_type t ON t.oid = a.atttypid
+              LEFT JOIN pg_type bt ON bt.oid = t.typbasetype
+             WHERE c.relnamespace = 'public'::regnamespace
+               AND c.relkind = 'r'
+               AND a.attnum > 0 AND NOT a.attisdropped
+               AND (t.typcategory = 'S' OR bt.typcategory = 'S')
+             ORDER BY 1, 2
   LOOP
     EXECUTE format('INSERT INTO vocab_data SELECT %L, %L, count(DISTINCT %I), count(*), '
-                 || 'coalesce(max(length(%I)), 0) FROM public.%I', r.tbl, r.col, r.col, r.col, r.tbl);
+                 || 'coalesce(max(length(%I)), 0), %L, NULL, NULL FROM public.%I',
+                 r.tbl, r.col, r.col, r.col, r.btype, r.tbl);
+    -- `n` counts under the COLUMN'S OWN equality. For a plain text column that is the same question as
+    -- count(DISTINCT col::text), so the extra aggregate is not paid for; for any other string type the two
+    -- readings can differ, and the census takes both numbers instead of choosing one.
+    IF r.btype = 'text' THEN
+      UPDATE vocab_data SET n_txt = n, n_upper = 0 WHERE tbl = r.tbl AND col = r.col;
+    ELSE
+      EXECUTE format('UPDATE vocab_data SET n_txt = (SELECT count(DISTINCT %I::text) FROM public.%I), '
+                  || 'n_upper = (SELECT count(*) FROM public.%I WHERE %I::text <> lower(%I::text)) '
+                  || 'WHERE tbl = %L AND col = %L', r.col, r.tbl, r.tbl, r.col, r.col, r.tbl, r.col);
+    END IF;
   END LOOP;
 END $d75$;
 
@@ -1690,13 +1724,13 @@ UPDATE vocab_answer a
        in_win  = EXISTS (SELECT 1 FROM vocab_win w WHERE w.tbl = a.tbl AND w.col = a.col);
 
 INSERT INTO qc
-SELECT 'a bounded text column is answered by name',
+SELECT 'a bounded string column is answered by name',
        (SELECT count(*) FROM vocab_win) > 0
        AND NOT EXISTS (SELECT 1 FROM vocab_win w
                         WHERE NOT EXISTS (SELECT 1 FROM vocab_answer a
                                           WHERE a.tbl = w.tbl AND a.col = w.col)),
        (SELECT count(*) FROM vocab_win) || ' of ' || (SELECT count(*) FROM vocab_data)
-       || ' text columns are bounded by the data (window: <=12 distinct, >=20 rows, <=1 value per 4 rows), '
+       || ' string column(s) are bounded by the data (window: <=12 distinct, >=20 rows, <=1 value per 4 rows), '
        || (SELECT count(*) FROM vocab_win w WHERE EXISTS (SELECT 1 FROM door_vocab d
                                                           WHERE d.tbl = w.tbl AND d.col = w.col))
        || ' of them by a door list and '
@@ -1734,6 +1768,110 @@ SELECT 'a vocabulary answer is still an answer',
                        OR (a.answer = 'below' AND (btrim(a.why) = '' OR a.in_win))
                        OR a.answer NOT IN ('door', 'poly', 'none', 'below')),
                    'every answer still applies');
+
+-- ============================================================ D78  the census above spoke exactly one string type
+--
+-- WHY THIS EXISTS: D75 counts distinct values for "every text column of every base table", and that claim was
+-- true of its WHERE clause rather than of the schema. Measured on the fresh gate database, `public` holds 233
+-- string columns — 232 text and 1 citext, users.email — created citext because V1:6 turns the extension on
+-- "for case-insensitive emails". A citext column compares values WITHOUT case, so the number the census takes
+-- (count(DISTINCT col) — the type's own equality) and the number a ::text cast would give are different
+-- questions, and D75 measured only the first while its prose reads like the second.
+--
+-- WHAT THE SHIPPED DATA DOES WITH IT, measured rather than assumed: users.email carries 5 rows, 5 distinct
+-- under citext, 5 under the cast, widest 24, narrowest 21, and 0 of those values contain an uppercase letter
+-- at all (every seeded address is lowercase, demo.admin@example.hk through demo.owner3@example.hk). So the two
+-- readings agree here only because the demo never exercises the difference the type exists to make, and
+-- users.email also sits below the window's row floor (5 < 20) so D75's window asks nothing of it. Both facts
+-- are worth a row that re-reads them every run, not a comment that remembers them.
+--
+-- WHAT IS NOT CLAIMED, and why the row is still two-directional: while V4:44's unique partial index on
+-- (tenant_id, email) holds — it replaced V1:46's global one — two addresses differing only by case cannot both
+-- be inserted, so the agreement is enforced OUTSIDE this block. The agreement conjunct is therefore falsified
+-- in the drive by removing that
+-- enforcement in the throwaway database (P5), not by arguing it — a second citext column without such an
+-- index, in any real schema, makes the readings differ and this row would say so.
+--
+-- COST, measured rather than assumed: the widening is one extra two-aggregate query per string column that is
+-- not plain text — one query over a five-row table here, against the 233 the census already pays for. Timed on
+-- the kept gate database twice each way, the census with the second reading took 3.1s and 5.2s and without it
+-- 4.2s and 4.9s, which is the same number wearing different clothes: the widening is inside the noise.
+
+CREATE TEMP TABLE str_type (btype text PRIMARY KEY, reads text NOT NULL, why text NOT NULL);
+INSERT INTO str_type VALUES
+ ('text',   'one',  'a text column compares exactly what it stores, so count(DISTINCT col) and '
+                 || 'count(DISTINCT col::text) are the same question and only one is paid for'),
+ ('citext', 'two',  'V1:6 creates citext "for case-insensitive emails": the type folds case, the ::text cast '
+                 || 'the details print does not, so a citext column is measured under BOTH readings and the '
+                 || 'gap between them is reported rather than smoothed over');
+
+INSERT INTO qc
+SELECT 'the string census declares a reading for every type it catches',
+       (SELECT count(*) FROM str_type) > 0
+       AND NOT EXISTS (SELECT 1 FROM vocab_data d
+                       WHERE NOT EXISTS (SELECT 1 FROM str_type s WHERE s.btype = d.btype))
+       AND NOT EXISTS (SELECT 1 FROM str_type s WHERE s.reads NOT IN ('one', 'two'))
+       AND NOT EXISTS (SELECT 1 FROM str_type s
+                       WHERE NOT EXISTS (SELECT 1 FROM vocab_data d WHERE d.btype = s.btype)),
+       (SELECT count(*) FROM vocab_data) || ' string column(s) over '
+       || (SELECT count(DISTINCT d.btype) FROM vocab_data d) || ' base type(s), declared under '
+       || (SELECT count(*) FROM str_type) || ' reading rule(s): '
+       || coalesce((SELECT string_agg(x.btype || ' ' || x.cols || ' column(s), read ' || x.reads, ', '
+                                   ORDER BY x.btype)
+                    FROM (SELECT d.btype, count(*) AS cols, max(s.reads) AS reads
+                            FROM vocab_data d JOIN str_type s ON s.btype = d.btype
+                           GROUP BY d.btype) x), 'nothing caught')
+       || ' — offenders: '
+       || coalesce((SELECT string_agg(f, ' · ' ORDER BY f) FROM (
+              SELECT 'the census caught a ' || d.btype || ' column (' || d.tbl || '.' || d.col
+                     || ') and no reading declares that type' AS f
+                FROM vocab_data d WHERE NOT EXISTS (SELECT 1 FROM str_type s WHERE s.btype = d.btype)
+              UNION ALL
+              SELECT s.btype || ' is declared but no column carries it — the census lost a type the '
+                     || 'vocabulary still answers for'
+                FROM str_type s WHERE NOT EXISTS (SELECT 1 FROM vocab_data d WHERE d.btype = s.btype)
+              UNION ALL
+              SELECT s.btype || ' claims a reading the census cannot take: ' || s.reads
+                FROM str_type s WHERE s.reads NOT IN ('one', 'two')
+                     ) x), 'none');
+
+INSERT INTO qc
+SELECT 'a census that folds case reports both readings and which one the demo exercises',
+       (SELECT count(*) FROM vocab_data d JOIN str_type s ON s.btype = d.btype
+         WHERE s.reads = 'two') > 0
+       AND NOT EXISTS (SELECT 1 FROM vocab_data d JOIN str_type s ON s.btype = d.btype
+                        WHERE s.reads = 'two' AND (d.n_txt IS NULL OR d.n_upper IS NULL))
+       AND NOT EXISTS (SELECT 1 FROM vocab_data d JOIN str_type s ON s.btype = d.btype
+                        WHERE s.reads = 'two' AND d.n <> d.n_txt)
+       AND NOT EXISTS (SELECT 1 FROM vocab_data d JOIN str_type s ON s.btype = d.btype
+                        WHERE s.reads = 'two' AND d.n_upper > 0),
+       (SELECT count(*) FROM vocab_data d JOIN str_type s ON s.btype = d.btype
+         WHERE s.reads = 'two') || ' column(s) measured twice: '
+       || coalesce((SELECT string_agg(d.tbl || '.' || d.col || ' (' || d.total || ' row(s), '
+                               || d.n || ' distinct under ' || d.btype || ', ' || d.n_txt
+                               || ' distinct under ::text, ' || d.n_upper
+                               || ' row(s) carrying an uppercase letter)', ', '
+                                   ORDER BY d.tbl, d.col)
+                    FROM vocab_data d JOIN str_type s ON s.btype = d.btype
+                   WHERE s.reads = 'two'), 'none')
+       || ' — offenders: '
+       || coalesce((SELECT string_agg(f, ' · ' ORDER BY f) FROM (
+              SELECT d.tbl || '.' || d.col || ' was never measured under ' || d.btype
+                     || ', the pair is missing' AS f
+                FROM vocab_data d JOIN str_type s ON s.btype = d.btype
+               WHERE s.reads = 'two' AND (d.n_txt IS NULL OR d.n_upper IS NULL)
+              UNION ALL
+              SELECT d.tbl || '.' || d.col || ': ' || d.btype || ' sees ' || d.n
+                     || ' value(s) while the cast sees ' || d.n_txt
+                FROM vocab_data d JOIN str_type s ON s.btype = d.btype
+               WHERE s.reads = 'two' AND d.n <> d.n_txt
+              UNION ALL
+              SELECT d.tbl || '.' || d.col || ': ' || d.n_upper
+                     || ' row(s) carry an uppercase letter, so the readings no longer agree by default'
+                FROM vocab_data d JOIN str_type s ON s.btype = d.btype
+               WHERE s.reads = 'two' AND d.n_upper > 0
+                     ) x), 'none');
+
 
 -- ============================================================ D76  what the served projections carry
 --

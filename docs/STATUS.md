@@ -3430,3 +3430,102 @@ next              residue worth carrying: (a) the derivation reads only `count(*
                     unreseeded; the events subject seam (D70) waits on a contract decision; the split migration
                     ledger in `nexus_test` belongs to the infrastructure lane.
 ```
+
+## 74. The census said "every text column" and spoke one string type (2026-09-25)
+
+§71's census counted distinct values for *"every text column of every base table"* — 232 of them — and the
+predicate behind that sentence was `atttypid = 'text'::regtype`, which is one type rather than a kind of data.
+Measured against `pg_type.typcategory = 'S'` (domains resolved through `typbasetype`), a from-scratch schema
+carries **233 string columns: 232 text and 1 citext — `users.email`**, the column V1:6 turns citext on "for
+case-insensitive emails" to make case-insensitive. So the census skipped the one string column whose idea of
+"the same value" is not the idea its own details print: citext folds case, `col::text` does not, and
+`count(DISTINCT col)` is the first while the printed numbers read like the second. This unit measured the type
+plane before editing, widened the predicate to it, and turned "which reading was taken" into two rows.
+
+```
+measured          233 string columns over 58 base tables: 232 text, 1 citext (users.email), 0 typed on a
+                    domain. users.email carries 5 rows, 5 distinct under citext, 5 under the cast, widest 24,
+                    narrowest 21, 0 rows with an uppercase letter — demo.consumer@example.hk through
+                    demo.admin@example.hk, every one lowercase. The two readings agree here for two reasons
+                    outside this block: the seed never writes case variance, and V4:44's unique partial index
+                    on (tenant_id, email) (which replaced V1:46's global one) makes two addresses differing
+                    only by case impossible to insert. The column also sits below the window's row floor
+                    (5 < 20), so §71's window asked nothing of it either way. Re-measuring the census also
+                    killed two remembered counts in §71's own header and one silence: `n <= 12` alone catches
+                    204 of 233 columns, not the 75 that sentence printed (75 was not reproducible under any
+                    of four readings on a fresh or a drifted database); the below-the-floor 2..12 set is 20
+                    columns, not 19, because users.email is the twentieth; and of the 130 columns answering 0
+                    distinct values, 128 are 0 because their TABLE is empty — 35 such tables, none populated
+                    by the shipped seed. §70's lesson about detail text applies to prose one layer up.
+new/changed       data/seed/quality.sql only. The census gains `btype`, `n_txt`, `n_upper` and a
+                    typcategory/typbasetype predicate; for a column that is not plain `text` it takes a second
+                    reading (`count(DISTINCT col::text)`) plus a count of rows carrying an uppercase letter,
+                    and pays nothing extra where the two questions are one. `str_type` declares the readings
+                    owed per base type with the reason written next to it (`text` = one, `citext` = two). Two
+                    new rows: 'the string census declares a reading for every type it catches' refuses a
+                    caught-but-undeclared type, a declared-but-absent type (a stale vocabulary surviving a
+                    schema change) and a reading name the census cannot take; 'a census that folds case reports
+                    both readings and which one the demo exercises' requires the pair to exist, the two
+                    readings to AGREE, and no uppercase letter anywhere in a twice-read column. §71's row was
+                    renamed from `a bounded text column...` to `a bounded string column...` in both directions
+                    (grep: 0 old hits, 1 new) because the window now spans 233 columns. 200 -> 202 checks. The
+                    widening's cost is one two-aggregate query over one five-row column: timed twice each way
+                    on the kept database, the census took 3.1s and 5.2s with the second reading and 4.2s and
+                    4.9s without it, i.e. inside its own noise.
+plants            7 runs of the shipped file — sliced out of quality.sql at the census and at str_type, so
+                    every line is bytes that ship — on a kept from-scratch gate database named on the drive's
+                    command line, each with its full red detail printed. P1 `DELETE FROM vocab_data WHERE
+                    btype <> 'text'` (D75's predicate restored) -> both rows red: `citext is declared but no
+                    column carries it — the census lost a type the vocabulary still answers for` and `0
+                    column(s) measured twice` · P2 users.email typed as `varchar` -> row 1 red with BOTH
+                    offender kinds at once (`the census caught a varchar column (users.email) and no reading
+                    declares that type` plus the now-stale citext term) · P3 one seeded address uppercased
+                    before the census ran -> ONLY row 2 red, `5 distinct under citext, 5 distinct under ::text,
+                    1 row(s) carrying an uppercase letter` — the readings still agree, so the third term is the
+                    one with teeth · P4 the second reading blanked -> `users.email was never measured under
+                    citext, the pair is missing`, i.e. a missing measurement is never read as agreement · P5
+                    V4:44's index dropped and the first user given the last user's address folded to uppercase
+                    -> `citext sees 4 value(s) while the cast sees 5` AND the uppercase term: the conjunct that
+                    the index enforced outside the gate is falsified inside the data, which is the only way to
+                    show that term has teeth. W0 and final: 202 green. Two false starts are in the record:
+                    row 2's `string_agg(expr, ', ' FROM …)` closed the aggregate after its FROM, died with
+                    `syntax error at or near "FROM"`, and — because psql with ON_ERROR_STOP=0 exits 3 without
+                    running the file's hard gate — that state is INVALID, not green, which is now what the
+                    drive asserts; and P5's first cleanup ran `lower(email)` over the whole table, collapsing
+                    the case-variant pair into a genuine duplicate so the index could not be recreated, while
+                    the drive's own `final` run printed 202 green over that damaged database
+                    (`distinct_citext=4 uniq_index=0`). The restore now writes the planted row's original
+                    address back verbatim and says so: `users=5 distinct_citext=5 distinct_text=5 uppercase=0
+                    uniq_index=1`, `P5 planted on demo.consumer@example.hk, restored to
+                    demo.consumer@example.hk -> VERBATIM`.
+gates             scripts/db_gate_fresh.sh --keep three times green over this block — `RESULT: PASS — 202
+                    quality checks on a from-scratch schema (tables=58, migrations=7)` — 200 -> 202 because two
+                    rows were added and none removed (§71's row was renamed, not replaced). The first two runs
+                    were before four header-comment corrections that moved no SQL; the third, whose database is
+                    `nexus_gate_102747_…`, ran over the text that ships and is the same database the seven-plant
+                    matrix above ran against. The three rows were read off it and print there: `40 of 233 string
+                    column(s)
+                    are bounded by the data (window: <=12 distinct, >=20 rows, <=1 value per 4 rows), 3 of them
+                    by a door list and 3 by the polymorphic registry; every one of them answered above` /
+                    `233 string column(s) over 2 base type(s), declared under 2 reading rule(s): citext 1
+                    column(s), read two, text 232 column(s), read one — offenders: none` / `1 column(s)
+                    measured twice: users.email (5 row(s), 5 distinct under citext, 5 distinct under ::text, 0
+                    row(s) carrying an uppercase letter) — offenders: none`. All kept gate databases dropped
+                    (0 nexus_gate* remain); `nexus_funnel_probe` and the drifted `nexus` demo database belong
+                    to other streams and were read from, never written to. No Java, migration or seeded value
+                    changed, so mvn -o test and e2e_fresh.sh were not in scope.
+next              residue worth carrying: (a) the census still stops at the `S` category — `name`-type and
+                    composite columns are uncounted, as is any column an ad-hoc DDL adds to the drifted demo
+                    database; (b) `n_upper = 0` is DECLARED for plain text columns, not measured, so nobody
+                    should read that column as "has no uppercase letters" — row 2 reads it only where
+                    `reads = 'two'`; (c) the agreement on users.email is an accident of lowercase seed data
+                    plus a unique index, so the first mixed-case address in a future seed reddens row 2 by P3
+                    and the fix is to answer for the divergence, not to delete the term; (d) D74's
+                    CHECK-bounded census still prints "text column(s)" for whatever its constraint parser
+                    finds — the widened census now knows the type of every string column, so that label is one
+                    measured term away from being an assertion, and no citext column carries such a CHECK
+                    today. Standing reports unchanged: `saved_searches.notify` read by nothing; `no_show` named
+                    once by a door list with no reader; CommerceApiTest belongs to another stream; the split
+                    migration ledger in `nexus_test` belongs to the infrastructure lane; the events subject
+                    seam (D70) waits on a contract decision.
+```
