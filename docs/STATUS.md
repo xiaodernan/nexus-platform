@@ -3529,3 +3529,84 @@ next              residue worth carrying: (a) the census still stops at the `S` 
                     migration ledger in `nexus_test` belongs to the infrastructure lane; the events subject
                     seam (D70) waits on a contract decision.
 ```
+
+## 75. A probe over an empty table is not green — it is absent (2026-09-25)
+
+D65–D71 built the polymorphic resolution: declare the types a `<stem>_id` may hold, write one UNION arm per
+type, resolve each against the table that type names. §71's census counted 26 unprotected reference columns and
+§72's registry named what resolves them. What nobody asked of the probes themselves is the question §70 and §71
+asked of every other check: **is there a row behind it**. The orphan probes are `… FROM g GROUP BY t`, so a type
+the seed does not file emits not a green check but no check at all. Measured on the kept from-scratch database:
+15 arms are declared, 9 `orphan: …` checks exist, and six arms — `facts.review`,
+`moderation_cases.merchant|document|message`, `permission_grants.user|api_key` — are resolution rules asserted
+over zero rows, nameable by nothing in the ledger.
+
+```
+measured          poly_arms 15 declared; qc carries 9 rows named `orphan: …`; the exercised nine are facts
+                    location=684 / merchant=2080 / offering=2924, favorites merchant=12 / offering=4 /
+                    collection=1 / guide=1, moderation_cases review=544, permission_grants merchant_user=36.
+                    The same seam was walked from the reference side first and killed a planned unit: of the 26
+                    unprotected columns, 7 have a column of the same name on the child side of a real FK
+                    somewhere in this schema and 19 do not — and all 7 of the walkable ones sit in the 19 whose
+                    tables D64's fabrication guard keeps EMPTY, while the 6 that carry values are exactly the
+                    ones with no schema-named twin (the polymorphic subject_ids, granted_by, provider_id).
+                    Walking by name would have accused user_identities.provider_id — `password/demo:admin`,
+                    an identity that lives outside this database by V4's design — of dangling. The target a
+                    name implies is not the target a column means, so no target row was written.
+new/changed       data/seed/quality.sql only. `arm_seen` joins the declared arms to poly_types (the census the
+                    probes group over) and left-joins the hand list `arm_idle(tbl, arm, writer, why)`, where
+                    `writer` is what makes each waiver checkable: `none` = no code path in the build files such
+                    a row (no literal `review` subject type reaches facts.record; ModerationController.java:130
+                    refuses every non-review case), `build` = the build files it and the demo never does
+                    (MerchantService.java:63, MerchantWorkspaceService.java:177, ApiKeyService.java:67). Two
+                    rows: 'an arm the seed never files is waived by name and by writer' refuses an unwaived
+                    silence, a waiver whose arm now carries rows (the exemption re-reads its own data, §73's
+                    rule), a blank `why`, a `writer` outside the two states, and a waiver naming an arm no
+                    longer declared; 'every probe family resolves at least one armed type' prints the per-family
+                    reading no other row carries. 202 -> 204 checks.
+plants            8 runs of the shipped bytes, three seams (before every probe, after the waiver list, after the
+                    ledger), each printing the gate's verdict and the number of orphan rows it emitted.
+                    A1 `facts.review` given 7 rows -> row 1 red, `10 exercised … 5 waived`: filing a review fact
+                    withdraws its own waiver · A2 the `permission_grants.user` waiver deleted -> row 1 red, an
+                    unwaived silence · A3 all four favourites arms forced to zero -> BOTH rows red, `4 idle and
+                    unwaived` and `favorites ships 18 row(s) across 0 of 4 arm(s)` · A4 `writer='maybe'` ->
+                    `facts.review (writer maybe)` · A5 `why=''` -> an exemption with no reason · A6 the
+                    `facts.review` waiver renamed to `facts.policy` -> both halves at once: not a declared arm,
+                    and review now idle and unwaived · **A7 the data plant: all 18 favourite rows deleted before
+                    the probes ran — checks emitted 204 -> 200, orphan rows 9 -> 5, and four rows red: D71's
+                    `an arm claimed seeded is a type the data still carries` (`unexercised: favorites.guide,
+                    favorites.merchant, favorites.collection, favorites.offering`), `favourites point at a
+                    renderable row` (`0 unreachable of 0 favourite(s)`), and both rows written here.** Baseline
+                    and final 204 green, 9 orphan rows, database restored
+                    (`favorites=18 by type=collection=1,guide=1,offering=4,merchant=12 | stray d79 schema=0`).
+                    One false start is in the record and it is the same trap as §73's late probe view: the first
+                    A7 deleted the favourites AFTER the probes had run, so the ledger still showed 204 checks and
+                    the plant tested nothing — a fixture has to be reachable in every dimension except the one
+                    under test, and "the probes see the same data as the census" is one of them.
+gates             scripts/db_gate_fresh.sh --keep green over the shipped text — `204 quality checks passed
+                    against a from-scratch schema (tables=58, migrations=7)` — with the two new rows read off
+                    the kept database: `15 declared arm(s): 9 exercised by the shipped seed, 6 idle and waived,
+                    0 idle and unwaived: … | facts.review (writer none), moderation_cases.document (writer none),
+                    moderation_cases.merchant (writer none), moderation_cases.message (writer none),
+                    permission_grants.api_key (writer build), permission_grants.user (writer build) —
+                    offenders: none` and `facts ships 5688 row(s) across 3 of 4 arm(s), favorites ships 18
+                    row(s) across 4 of 4 arm(s), moderation_cases ships 544 row(s) across 1 of 4 arm(s),
+                    permission_grants ships 36 row(s) across 1 of 3 arm(s)`. Kept gate databases dropped when
+                    this unit closes; the drifted `nexus` demo database and `nexus_funnel_probe` belong to other
+                    streams and were read from, never written to. No Java, migration or seeded value changed, so
+                    mvn -o test and e2e_fresh.sh were out of scope.
+next              residue worth carrying: (a) `poly_arms` is a hand copy of what each probe's UNION actually
+                    reads — §71 named that and this unit inherits it, so an arm added to a probe without being
+                    declared here stays invisible to row 1 (the orphan probe itself would still resolve its
+                    rows, which is the stronger half of the seam); (b) `writer='none'` is a claim about the Java
+                    sources, re-read here only through the data: the day a `review` fact is filed, row 1 reddens
+                    whether or not the sentence about the writers was still true; (c) the family row overlaps
+                    D71's claimed-seed row and A7 shows both firing — it is kept for the per-family sentence,
+                    stated rather than hidden; (d) the 19 unprotected references in D64-empty tables remain
+                    unwalkable by construction, which is the same §109 line D76 drew: traffic is absent by rule,
+                    so every check that reads traffic-shaped columns is reading an emptiness someone chose.
+                    Standing reports unchanged: `saved_searches.notify` read by nothing; `no_show` named once by
+                    a door list with no reader; CommerceApiTest belongs to another stream; the split migration
+                    ledger in `nexus_test` belongs to the infrastructure lane; the events subject seam (D70)
+                    waits on a contract decision.
+```

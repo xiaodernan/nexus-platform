@@ -4212,3 +4212,120 @@ the two.
 - Nothing in this unit changed a line of Java, a migration, or a seeded value: the gate went 200 → 202 and the
   build did not move, so `mvn -o test` and `e2e_fresh.sh` were out of scope. The §109 question D76 raised is
   still undecided here, and the 35 empty tables this unit counted are the shape of that decision.
+
+## D79 A probe over an empty table does not pass — it is not asked — 2026-09-25
+
+### 1. The question nobody had asked about the probes
+
+D65, D67, D68 and D71 built the polymorphic resolution machinery: a `<stem>_type` beside its `<stem>_id` is a
+pair, the pairs are enumerated from `pg_attribute` (`poly_cat`), the types each may hold are declared
+(`poly_arms`, 15 of them, copied by hand from what each probe's UNION actually reads), and each arm is resolved
+against the table that type names. D71 then checked the arms against the vocabulary and against the schema. The
+question left unasked is the one D74 and D75 learned to ask of every other check: **is there a row behind it?**
+
+The probes are shaped
+
+```sql
+SELECT 'orphan: ' || …, count(*) FILTER (WHERE bad) = 0, … FROM g GROUP BY t;
+```
+
+so a type that ships no rows produces no group, and therefore no check. Measured on the kept from-scratch gate
+database: `poly_arms` declares 15 arms, `qc` contains **9** rows named `orphan: …`, and the 9 are exactly the
+arms the shipped dataset files rows under. Six arms are resolution rules this gate asserts over nothing:
+
+```
+facts.review  moderation_cases.merchant  moderation_cases.document  moderation_cases.message
+permission_grants.user                   permission_grants.api_key
+```
+
+That is arithmetic, not taste: 15 declared, 9 emitted, 6 silent, and until this unit the ledger had no way to
+name which six.
+
+### 2. What the walk of the unprotected references said, and what it did not
+
+The same seam was measured from the other side first, because "nobody walks these columns" is the kind of
+sentence D66 wrote and D72 widened without testing. `ref_cat` enumerates the columns that look like references
+and carry no FOREIGN KEY; `twin` asks a narrower question than a name guess — does *this schema* use that
+column name on the child side of a real FK anywhere else:
+
+```
+SUM cols=26 inEmptyTables=19 carryingValues=6 withSchemaTwin=7 twinlessButPopulated=6
+REF facts.subject_id             rows=5688 values=5688 twin=NONE     (probe, D65)
+REF favorites.subject_id         rows=  18 values=  18 twin=NONE     (probe, D67)
+REF moderation_cases.subject_id  rows= 544 values= 544 twin=NONE     (probe, D68)
+REF permission_grants.subject_id rows=  36 values=  36 twin=NONE     (probe, D71)
+REF permission_grants.granted_by rows=  36 values=  36 twin=NONE     (probe, D72)
+REF user_identities.provider_id  rows=   5 values=   5 twin=NONE     (not-a-reference, D66)
+```
+
+Two things follow, and they point in opposite directions. The 6 columns that carry values are covered: each is
+registered in `ref_registry` and resolved by a probe or explained. The 7 columns that DO have a schema-named
+twin all sit in the 19 columns whose tables are empty by D64's fabrication guard, so walking them is a query
+over zero rows — the vacuity is structural, produced by the same rule that keeps synthetic traffic out of the
+demo. Nothing was invented here, and no new row was written about it: the finding is that the interesting half
+of the reference seam is the polymorphic one, and its interesting failure mode is silence rather than error.
+
+One candidate unit died at this measurement, and the record is that it died: the plan was to declare a target
+per populated unprotected reference and walk them. The measurement showed the populated ones are already
+registered, already probed, and that a name-based twin would have accused `user_identities.provider_id`
+(`password/demo:admin`, an identity that lives outside this database by V4's design) of 5 dangling values. The
+target the schema names for a column is not always the target the column means.
+
+### 3. The change: the arms are counted against the data, and the silence is waived by name
+
+`arm_seen` joins the declared arms to `poly_types` (the same census the probes group over) and left-joins a new
+hand list `arm_idle(tbl, arm, writer, why)`. `writer` is the fact that makes each waiver re-checkable: `none`
+means no code path in the build files that kind of row, `build` means the build does, the demo does not.
+
+* **'an arm the seed never files is waived by name and by writer'** — four refusals. An arm the data never
+  files and nobody waives (the six, before this unit existed). A waiver whose arm now carries rows — the
+  exemption re-reads the data that justified it, exactly D77's rule for the view kinds, so filing a
+  `review` fact withdraws `facts.review`'s waiver by itself. A waiver with a blank `why`, or a `writer` outside
+  the two states this file knows. A waiver naming an arm no longer declared. Baseline detail:
+  `15 declared arm(s): 9 exercised by the shipped seed, 6 idle and waived, 0 idle and unwaived`.
+* **'every probe family resolves at least one armed type'** — a family whose rows all vanish resolves nothing.
+  Its detail is the per-family sentence no other row prints:
+  `facts ships 5688 row(s) across 3 of 4 arm(s), favorites ships 18 row(s) across 4 of 4 arm(s),
+   moderation_cases ships 544 row(s) across 1 of 4 arm(s), permission_grants ships 36 row(s) across 1 of 3 arm(s)`.
+
+### 4. Plants: eight runs of the shipped bytes, three seams
+
+The drive slices the file at `INSERT INTO qc` (before every probe, for a data plant), at
+`CREATE TEMP TABLE arm_seen` (after the hand waiver list) and at the new rows (after the ledger). Each run
+prints the gate's own verdict, the number of `orphan: …` rows it emitted, and every red row in full.
+
+| # | plant | red | measured effect |
+|---|---|---|---|
+| W0 | none | — | 204 checks, 9 orphan rows, both new rows green |
+| A1 | `arm_seen` says `facts.review` carries 7 rows | row 1 | `10 exercised … 5 waived` — filing a review fact withdraws its own waiver |
+| A2 | the `permission_grants.user` waiver deleted | row 1 | `… 5 waived` with the arm still idle: an unwaived silence |
+| A3 | all four `favorites` arms forced to `n = 0` | rows 1+2 | `4 idle and unwaived` and `favorites ships 18 row(s) across 0 of 4 arm(s)` |
+| A4 | `writer = 'maybe'` | row 1 | `facts.review (writer maybe)` — a waiver that names no state this file can check |
+| A5 | `why = ''` | row 1 | an exemption with no reason |
+| A6 | the `facts.review` waiver renamed to `facts.policy` | row 1 | both halves of the seam: `policy` is not a declared arm **and** `facts.review` is now idle and unwaived |
+| A7 | **data plant, before the probes**: all 18 favourite rows deleted | 4 rows | **checks emitted 204 → 200, orphan rows 9 → 5**; red: D71's `an arm claimed seeded is a type the data still carries` (`unexercised: favorites.guide, favorites.merchant, favorites.collection, favorites.offering`), `favourites point at a renderable row` (`0 unreachable of 0 favourite(s)`), and both rows written here |
+| final | none, restored database | — | 204 green, 9 orphan rows, `state after cleanup: favorites=18 by type=collection=1,guide=1,offering=4,merchant=12 \| stray d79 schema=0` |
+
+A7 is the run the unit exists for. It is also the one that corrected this unit's own thesis on the way in: the
+first attempt planted the same `DELETE` after the probes had already run, which produced a state no build can
+reach (probes seeing 18 rows, the census seeing 0) and left the check count at 204 — a plant that quietly tests
+nothing. Moved to the head seam, the four checks really do leave the ledger, which is the claim.
+
+A7 also says what D79 does **not** add. A vanishing that touches a *claimed* arm was already covered twice over
+(D71's row and the favourites row that predates this unit), so the family term is partly a restatement. What was
+not covered, and is not covered by any plant here except in combination, is the unclaimed silence: six arms that
+no vocabulary row claims and no probe emits, which is what row 1 and the waiver list exist to make sayable.
+
+### 5. What this does not claim
+
+- `poly_arms` is a hand copy of each probe's UNION arms — D71 names that residue and this unit inherits it. The
+  ledger can only ask whether the *copy* is exercised; if a probe gains an arm and `poly_arms` does not, the
+  check is asked and the arm stays invisible here, exactly as it did before.
+- A waiver whose `writer` is `none` asserts a fact about the Java sources (no code path files such a row). The
+  gate re-reads the *data* half of every waiver every run; the writer half is a file:line citation that rots
+  with the code, and `writer = 'build'` on `permission_grants.user` is already a claim about a runtime path the
+  demo never reaches.
+- `arm_seen.n` is `poly_types.n`, which counts rows grouped by the type column. A row filed under an undeclared
+  type still surfaces — as the orphan probe's own red, which is the older and stronger half of this seam.
+- Nothing here changes the §109 traffic question, and no Java, migration or seeded value moved: 202 → 204
+  checks, with the two new rows reading the same dataset the probes do.

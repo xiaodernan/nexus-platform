@@ -1427,6 +1427,127 @@ SELECT 'the arm registry agrees with the probed-pair counts',
                 (SELECT string_agg(tbl || '=' || arms, ', ' ORDER BY tbl) FROM poly_probed)
                 || ' as declared, and the registry counts the same');
 
+-- ============================================================ D79  an arm the seed never files resolves nothing
+--
+-- WHY THIS EXISTS: D65, D67, D68 and D71 each made a polymorphic reference resolvable by declaring the types it
+-- may hold and writing one UNION arm per type, and D71 checked those arms against the vocabulary and against
+-- the schema. What nobody asked is whether a single shipped row ever goes through an arm. The orphan probes are
+-- shaped `SELECT 'orphan: ' || t, … FROM <table> GROUP BY subject_type`, so a type the seed does not file emits
+-- not a green check but NO check — the gate cannot print "0 unresolvable of 0" because the GROUP BY has no row
+-- to group. Measured on the gate database, `poly_arms` declares 15 arms, the probes print 9 orphan checks, and
+-- the 9 are exactly the arms the shipped dataset files rows under: facts location=684 / merchant=2080 /
+-- offering=2924, favorites merchant=12 / offering=4 / collection=1 / guide=1, moderation_cases review=544,
+-- permission_grants merchant_user=36. Six arms — facts.review, moderation_cases.merchant,
+-- moderation_cases.document, moderation_cases.message, permission_grants.user, permission_grants.api_key — are
+-- resolution rules asserted over zero rows, and their only trace is a total that quietly omits them.
+--
+-- WHY THAT IS A DEFECT, AND WHERE IT OVERLAPS ONE THAT IS ALREADY FIXED: D71 already watches the arms the
+-- vocabulary claims the seed files — 'an arm claimed seeded is a type the data still carries' goes red if the
+-- favourites stop shipping. The plant in this unit's drive deleted all 18 favourite rows before the probes ran,
+-- and that run is the whole mechanism in one line: the four `orphan: favorites.*` checks left the ledger with
+-- them (204 checks emitted, then 200), while four rows reddened — D71's, a favourites row that predates this
+-- unit, and the two written here. So nothing in the file was blind to a vanishing that touches a CLAIMED arm;
+-- what nothing could answer was the other question. An arm nobody claims is a resolution rule with no witness
+-- and no statement, and the ledger had no way to say "these six of the fifteen declared arms resolve over zero
+-- rows" — the answer lived only in a total that happened to omit them. This is the accounting of the silent
+-- six, plus a waiver rule with the property every other exemption in this file has: it re-reads the data that
+-- justified it, so an arm that starts being exercised withdraws its own waiver. The family row is a partial
+-- restatement of D71's and says so rather than hiding it; what it adds is the per-family reading — 5688 facts
+-- across 3 of 4 arms, 36 grants across 1 of 3 — which no other row prints, and which is the sentence a
+-- maintainer needs before deciding whether a given silence is the design or the bug.
+--
+-- WHAT THE WAIVERS SAY, each re-read against the data every run: three of the six name no writer anywhere in
+-- the build (no literal `review` subject type reaches `facts.record` — the 22 literal subject types across
+-- services/platform are merchant 13, offering 8, location 1 — and ModerationController.java:130 refuses every
+-- case that is not a review case with "the other subject types have no decision state to write back to without
+-- their own routes (§127)"). Two name a writer that exists in the product but is never reached by the seed:
+-- `permission_grants.user` is filed by MerchantService.java:63 and MerchantWorkspaceService.java:177, and
+-- `permission_grants.api_key` by ApiKeyService.java:67 when a merchant creates a key. `build` and `none` are
+-- those two states, and a waiver whose arm starts carrying rows goes red by itself — the exemption has to
+-- re-read its own assumption, which is the rule D77 wrote for the view kinds.
+
+CREATE TEMP TABLE arm_idle (tbl text NOT NULL, arm text NOT NULL, writer text NOT NULL, why text NOT NULL,
+                            PRIMARY KEY (tbl, arm));
+INSERT INTO arm_idle VALUES
+ ('facts', 'review', 'none', 'D65 armed this type because EventsController''s vocabulary allows it, but the '
+  || 'review write path files the rating of the thing reviewed (ReviewRepository.java:190 passes that '
+  || 'subject''s own type), and generate.py emits no fact about a review'),
+ ('moderation_cases', 'merchant', 'none', 'ModerationController.java:130 refuses to resolve a non-review case, '
+  || 'so a merchant-typed case could be opened and never closed; the seed opens 544 review cases and no other'),
+ ('moderation_cases', 'document', 'none', 'the same door: documents have no decision state to write back to '
+  || '(§127), so the D68 arm resolves nothing the seed or the build produces'),
+ ('moderation_cases', 'message', 'none', 'the same door, for the fourth type V1:574 lists in a comment the '
+  || 'parser discards'),
+ ('permission_grants', 'user', 'build', 'the two insert sites D71 found — MerchantService.java:63 and '
+  || 'MerchantWorkspaceService.java:177 — file user grants at runtime, and generate.py seeds none: all 36 '
+  || 'shipped grants are merchant_user'),
+ ('permission_grants', 'api_key', 'build', 'ApiKeyService.java:67 files an api_key grant when a merchant '
+  || 'creates a key (D71), a path the seed never takes, so the arm exists for rows none of this build ships');
+
+-- The exercised/idle split, read from the same poly_types the probes group over.
+CREATE TEMP TABLE arm_seen AS
+SELECT a.tbl, a.arm, coalesce(t.n, 0) AS n, w.why IS NOT NULL AS waived, coalesce(w.writer, '-') AS writer
+  FROM poly_arms a
+  LEFT JOIN poly_types t ON t.tbl = a.tbl AND t.t = a.arm
+  LEFT JOIN arm_idle w ON w.tbl = a.tbl AND w.arm = a.arm;
+
+INSERT INTO qc
+SELECT 'an arm the seed never files is waived by name and by writer',
+       (SELECT count(*) FROM poly_arms) > 0
+       -- an unexercised arm with no waiver is a silent hole
+       AND NOT EXISTS (SELECT 1 FROM arm_seen WHERE n = 0 AND NOT waived)
+       -- a waiver whose arm now carries rows is stale: the exemption must re-read its own assumption
+       AND NOT EXISTS (SELECT 1 FROM arm_seen WHERE n > 0 AND waived)
+       -- every waiver has to name the writer it waits on, and only in the two states this file knows
+       AND NOT EXISTS (SELECT 1 FROM arm_seen WHERE waived AND (btrim(writer) = '' OR writer NOT IN ('build', 'none')))
+       -- and every waiver has to say why, because an unexplained exemption is the hole with a label on it
+       AND NOT EXISTS (SELECT 1 FROM arm_idle w WHERE btrim(w.why) = '')
+       AND NOT EXISTS (SELECT 1 FROM arm_idle w WHERE NOT EXISTS
+                        (SELECT 1 FROM poly_arms a WHERE a.tbl = w.tbl AND a.arm = w.arm)),
+       (SELECT count(*) FROM poly_arms) || ' declared arm(s): '
+       || (SELECT count(*) FROM arm_seen WHERE n > 0) || ' exercised by the shipped seed, '
+       || (SELECT count(*) FROM arm_seen WHERE n = 0 AND waived) || ' idle and waived, '
+       || (SELECT count(*) FROM arm_seen WHERE n = 0 AND NOT waived) || ' idle and unwaived: '
+       || coalesce((SELECT string_agg(tbl || '.' || arm || '=' || n, ', ' ORDER BY tbl, arm)
+                      FROM arm_seen WHERE n > 0), 'none') || ' | '
+       || coalesce((SELECT string_agg(tbl || '.' || arm || ' (writer ' || writer || ')', ', '
+                               ORDER BY tbl, arm) FROM arm_seen WHERE n = 0), 'none')
+       || ' — offenders: '
+       || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT 'the seed files no ' || tbl || '.' || arm || ' row and no waiver names it — the probe for '
+                     || 'that arm emits no check at all' AS x
+                FROM arm_seen WHERE n = 0 AND NOT waived
+              UNION ALL
+              SELECT tbl || '.' || arm || ' carries ' || n || ' row(s) while still waived — the exemption is '
+                     || 'stale and the arm is resolved by the probe again'
+                FROM arm_seen WHERE n > 0 AND waived
+              UNION ALL
+              SELECT 'the waiver of ' || w.tbl || '.' || w.arm || ' gives no reason at all'
+                FROM arm_idle w WHERE btrim(w.why) = ''
+              UNION ALL
+              SELECT 'the waiver of ' || tbl || '.' || arm || ' names writer ''' || writer
+                     || ''', which is neither build nor none'
+                FROM arm_seen WHERE waived AND (btrim(writer) = '' OR writer NOT IN ('build', 'none'))
+              UNION ALL
+              SELECT w.tbl || '.' || w.arm || ' is waived but no longer declared as an arm'
+                FROM arm_idle w WHERE NOT EXISTS (SELECT 1 FROM poly_arms a
+                                                   WHERE a.tbl = w.tbl AND a.arm = w.arm)
+                    ) o), 'none');
+
+-- The family term: the row that speaks when a whole probe stops being asked.
+INSERT INTO qc
+SELECT 'every probe family resolves at least one armed type',
+       (SELECT count(*) FROM poly_probed) > 0
+       AND NOT EXISTS (SELECT 1 FROM poly_probed p WHERE NOT EXISTS
+                        (SELECT 1 FROM arm_seen s WHERE s.tbl = p.tbl AND s.n > 0)),
+       coalesce((SELECT string_agg(p.tbl || ' ships ' || (SELECT c.rows_n FROM poly_cat c WHERE c.tbl = p.tbl)
+                                      || ' row(s) across '
+                                      || (SELECT count(*) FROM arm_seen s WHERE s.tbl = p.tbl AND s.n > 0)
+                                      || ' of ' || (SELECT count(*) FROM poly_arms a WHERE a.tbl = p.tbl)
+                                      || ' arm(s)', ', ' ORDER BY p.tbl) FROM poly_probed p), 'no family')
+       || ' — a family whose seed rows all vanish would resolve nothing, and its orphan checks would disappear '
+       || 'from the ledger rather than fail; this row is what makes that visible';
+
 -- ============================================================ D74  door vocabularies
 --
 -- WHY THIS EXISTS: D69 counted the schema's polymorphic (type,id) pairs and found one bounded by a CHECK.
