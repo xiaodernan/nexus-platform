@@ -4895,8 +4895,9 @@ one-element arrays and 2 empty ones; `events.properties->>'query'` is NULL on 35
 route. The two encodings have writers: `persist_event` is the only `INSERT INTO events` in the AI service and it
 binds `json.dumps(...)` **text** into `$10::jsonb` (`apps/ai/nexus_ai/api/runs.py:144,:158`) over an asyncpg pool
 (`db/pool.py:222`) that quotes a `str` parameter a second time — all 34 string-valued events rows are named
-`search`, that call's default — whereas the Java lane casts (`services/platform/.../growth/EventRepository.java:39`),
-which parses. One `events` column therefore carries both encodings today, 34 rows this way and 1 that way, and no
+`search`, that call's default — whereas the Java lane casts
+(`services/platform/src/main/java/com/nexus/growth/EventRepository.java:39`), which parses. One `events` column
+therefore carries both encodings today, 34 rows this way and 1 that way, and no
 CHECK says which is meant. (The name alone does not attribute the object row, since both lanes may use `view`;
 the file says so rather than inferring it.)
 
@@ -4987,9 +4988,9 @@ about it. One scanner, both censuses.
 
 **What the census actually holds, measured before the rule was written.** 22 answer rows (17 `read_answer`, 5
 `shape_answer`) carry 31 citation tokens spanning 41 line spans over 12 files; 38 distinct source lines are read
-back per run. The citation grammar turned out to be six shapes, not one: `File.java:12`, `File.java:217,:289,:294`,
-`merchant/File.java:306` (a directory prefix that resolves by path suffix), `commerce/File.java:78-84` (a range),
-bare `:22` continuing the file before it, and `generate.py` naming a file with no line at all. A parser that
+back per run. The citation grammar turned out to be six shapes, not one: `File.java:NN`, `File.java:NN,:NN,:NN`,
+`merchant/File.java:NN` (a directory prefix that resolves by path suffix), `commerce/File.java:NN-NN` (a range),
+bare `:NN` continuing the file before it, and `generate.py` naming a file with no line at all. A parser that
 handled only the first shape would have silently checked a fraction of the census, so the run prints its own row
 count and compares it against the read list's: 17 and 17, or it says so.
 
@@ -5011,7 +5012,7 @@ was tested by replaying the mistakes rather than by asserting they would be caug
     line back so the reader can see the mistake without opening anything.
   - `OrderRepository.java` cited for `offerings.options` — the word `options` is on those lines (it is
     `order_items.options`), so rule 4 alone would have let it through. Rule 7 catches it: `answers for the table
-    offerings but cites …commerce/OrderRepository.java in site, which never names "offerings" anywhere in its 144
+    offerings but cites …commerce/OrderRepository.java in site, which never names "offerings" anywhere in its 145
     lines` (the count the message prints is that file's length at run time). This plant was chosen to fire *only* that arm, and it fires rule 4 as well only because the
     continuation `:25` moved with it — the table-attribution arm is doing work the line-content arm cannot.
   - `CollectionsController.java` with no line at all — rule 5, `not one of them carries a line number, so the
@@ -5045,7 +5046,8 @@ witnesses cannot race another lane's gate the way D86's data plants had to.
     shows up and a bug that looks like success.
   - `P6`/`P7` came back GREEN on the first run, which was not a plant failure but a rule placement one: the
     range and end-of-file checks sat behind the `content` guard, so a `why` column citation was checked for
-    existence only and `commerce/OrderRepository.java:78-99999` passed. The bounds checks moved above the guard
+    existence only and P7's range — the shipped `commerce/OrderRepository.java` pair stretched to line 99999 of a
+    file that has 145 — passed. The bounds checks moved above the guard
     — a backwards range is false wherever it is written — and both plants redden now with `in why` in the
     message, which is also how the reader knows that column is scanned.
   - `P12` is the parser's own terminator rule: a `;` that ends the list somewhere no row is closing must not
@@ -5065,10 +5067,16 @@ names every table in the dataset — the writer citations are checked for line c
 is checked for structure and deliberately not for content, because a reason may name neighbouring code on
 purpose: the `offerings.options` answer cites `order_items.options` precisely to say it is a different column,
 and a rule that enforced the row's own table there would be wrong. (4) The scanner sees `File.ext:NNN`; the
-ledger's prose also cites `EventsController:63` and `V1:574` shapes, which no rule here touches — measured rather
-than conceded, because a limit guessed at is a limit that hides something: 114 prose mention tokens, 71 distinct
-targets over 33 files, all 71 resolving, none naming a file that does not hold the claim, and 3 adjacent-line
-cases a stricter rule would have to judge by hand.
+ledger's prose also cites `EventsController:63` and `V1:574` shapes, which no rule here touches.
+
+**A sentence this row shipped is not true, and D88 is the row that says so.** The paragraph above used to close
+with a measurement of that prose plane — "114 mention tokens, 71 distinct targets over 33 files, all 71
+resolving, and 3 adjacent-line cases" — and it had never been measured. It was a second-hand count copied into a
+doc without anyone re-deriving it, and D88's checker, which reads the same two ledgers line by line, found the
+shipped text holding **162 citation-shaped tokens over 48 files, 13 of which do not resolve** — nine to files
+that do not exist, two past a file's end of file, two to a name the repo holds more than once. The limit itself
+still stands (this scanner really is blind to `EventsController:63`), and the plane it describes now has its own
+checker; what is being retracted is the claim of having counted it.
 
 **Reported to their own lanes, not edited here.** The AI service binds `json.dumps(…)` into eight `$n::jsonb`
 placeholders in `apps/ai/nexus_ai/api/runs.py` (:118, :120, :121, :158, :159, :182, :207, :208) through asyncpg,
@@ -5077,3 +5085,135 @@ demo database, 34 of them `events.properties`. And the web lane's `Guide` type d
 (`apps/web/src/lib/types.ts:266`), `growth-view.tsx:72` maps over it, `lib/mock/index.ts:740` synthesises it, and
 the string `body_blocks` does not occur anywhere in `services/platform/src/main/java` — so a live §8 guide cannot
 satisfy the type the reader assumes. Both are cited here and left for their owners.
+
+## D88 The ledgers carry 162 source citations between them; 13 were false, and a gate row now reads every one back — 2026-09-26
+
+§84's residue list named this unit in one sentence and, in the sentence after it, published a count of the same
+plane that had never been taken. `data/seed/quality.sql` answers had got a site reader in D87 — resolve the name,
+open the file, look at the line — and the prose that describes those answers, holding an order of magnitude more
+citations than the answer table does, had none. So `scripts/check_ledger_citations.mjs` is now gate step 8, the
+same operation pointed at `docs/DECISIONS.md` and `docs/STATUS.md`, and the first run contradicted the number
+above it.
+
+**What the census is, measured before any rule was softened.** Over the committed text (`e028297`): 256
+`name:number` tokens, 162 of them citation-shaped, 127 bare `:NN` continuations, resolving into 48 distinct
+files. **13 of the 162 do not resolve**, and every one of the 13 was this lane's own sentence — nine `FILE NOT
+FOUND`, two `PAST EOF`, two `AMBIGUOUS`. `BACKWARDS` and `ZERO` had no false cite to find: the shipped text holds
+neither, so those two arms are witnessed by plant only and labelled as such here rather than claimed as cover.
+Nine were the same four invented grammar tokens — D87 wrote `File.java` at 12, `File.java` at 217 with
+continuations 289 and 294, `merchant/File.java` at 306 and `commerce/File.java` over 78-84 to *stand for* the
+six shapes, and wrote them into both
+ledgers. A checker cannot tell a placeholder from a claim; nothing in this repo is called `File.java`. The
+illustrations now read `File.java:NN`, which is not number-shaped, and the real examples beside them are real.
+Two were D87 quoting its own plant (`commerce/OrderRepository.java` over 78 to 99999) as if it were a site; the
+sentence now says it is a plant. One was D86's `services/platform/.../growth/EventRepository.java` at 39 — an
+elided path is a citation to a file that does not exist, and the unelided path is 68 characters, which fits.
+Two were ambiguity: `.gitignore` at 21, held by the repo root *and* by `packages/sdk`, and `__init__.py` at
+line 1, held eight times. The first now uses a form the checker accepts (`./.gitignore:21`, root-relative); the
+second is written without a line number and names how many copies it means.
+
+**A row reporting a false cite is a row committing one.** The paragraph above is the second version of itself.
+The first version named each offender in the grammar the ledgers use, and when it was fed to the checker on its
+own — `--text=`, so no tracked ledger was written — it came back with 8 offenders here and 10 in the STATUS
+counterpart, every one of them a quotation. The grammar is context-free: `name:digits` means "this points at a
+file" whether the sentence is asserting it or listing it as a mistake, and there is no markup that says
+"quote". The fix is in this row's own text, not in the gate: a ledger that catalogues false citations has to
+write them as "`File.java` at 12" rather than as citations, which keeps every fact — the file name, the line,
+the shape — and moves the digits off the colon. A third arm is therefore implicit in the design and stated
+here rather than added to the checker: an exemption for quoted citations would need a marker, the marker would
+be a way to make the gate not look at a token, and the whole point of D88 is that a token in the ledgers is a
+claim.
+
+**A count this lane published without taking it.** D87's limits paragraph closed with "114 prose mention tokens,
+71 distinct targets over 33 files, all 71 resolving, and 3 adjacent-line cases", in the voice of a measurement,
+and §84's residue (d) repeated it. It had never been measured: it is a second-hand report that was copied into a
+doc and then quoted back out of it. The true numbers are 162 citation-shaped tokens over 48 files, 13 of them
+false. The mechanism worth keeping is not the arithmetic but the direction — the prose plane got its arithmetic
+wrong until something *outside* the prose read it. This lane has now shipped a wrong number about unverified
+citations in a unit whose entire subject is unverified citations.
+
+**What is not a citation, because a rule that fires on everything checks nothing.** 94 of the 256 tokens are not
+citations and must stay green: `127.0.0.1:5433` and `redis:6379` (a host and a port), `NEXUS_RL_AUTH:10` (an
+environment variable and its value), `§84`, `D84`, and prose such as `page 12:34`. Two shapes that look like
+prose are checked, because they are how this repo actually cites: a Java class stem with no extension
+(`EventsController:63`, which resolves to the one `EventsController.java` in 171), and a Flyway line (`V1:574`,
+which resolves to `infra/db/migrations/V1__init.sql` and its 1,026 lines). An outer class and a nested record
+(`MeController.FavoriteBody:59`) resolve through the outer file. A bare `:22` inherits the file before it, so it
+is counted — 127 of them — and never judged on its own; plant `N3` puts a `:99999` with no file in front of it
+and requires green, which is the same plant saying out loud that the EOF arm is only as wide as the name each
+token carries itself.
+
+**One index, two scanners.** `scripts/source_index.mjs` now holds the directory exclusion both census walkers
+use, 14 names, and it grew by four on this unit's first run: with the old 10 names, `.pytest_cache` put two more
+`README.md` and two more `.gitignore` into the ledger index — both basenames already held by other files, so a
+`README.md:NN` cite would have read as ambiguous across a tool cache. The reason this unit *remembered* for that
+change was different, and false. Both scripts carried a comment saying `PermissionService:40` had resolved to a
+`.class` file under a build directory as well as to its source. Measurement says that cannot happen:
+`services/platform/.tmp-out/` holds 25 files and all 25 are `.class`, and `.class` matches neither `SOURCE_EXT`
+nor `LEDGER_EXT`, so no version of either predicate can put one in an index — and `resolve()` looks
+`PermissionService` up as `PermissionService.java` and finds exactly one. So the second claim this row retracts
+is its own tooling's: the list did grow by four, for a plain reason that memory had replaced with a colourful one.
+The ledger index is 569 files — 171 `.java`, 114 `.ts`, 75 `.tsx`, 66 `.py`, and 143
+more: `.md` 34, `.sql` 33, `.json` 30, `.mjs` 15 and 31 across ten suffixes down to one `.pid` — where D87's site
+index measures 481 today (171 `.java`, 66 `.py`, 244 of everything else) against the 479 §84 printed, because
+other lanes added two source files in between and a census number in a ledger is a photograph, not a promise. A
+ledger cites `docs/DATABASE.md:88` and `.github/workflows/ci.yml:24`, and a checker that could not see them would
+call them missing. §84's residue (e) is half closed by this: one hand list instead of two, still a hand list.
+
+**Which snapshot the gate reads, decided from a measurement.** The script is strict on HEAD by default and only
+*reports* the working copy, because three lanes append to `docs/STATUS.md` at once and a bare run over committed
+text is the one two of them can compare. Gate step 8 runs `--worktree` instead: the other seven steps all read
+the tree they are standing in, and a green run has to certify the text about to be committed, not the text before
+it. That trade — another lane's unwritten paragraph can now redden this lane's gate — was taken because the tree
+holding three lanes' uncommitted sections measures 151 citations and 0 offenders, and printed in the script's own
+LIMITS so the cost is visible in the output rather than only in this ledger.
+
+**Fifteen plants, twelve of which say something.** `P0` baseline green → five arms each reddened by a plant that
+fires it and nothing else (`P1`/`P2` missing by name and by path, `P3`/`P4` ambiguous, `P6` past EOF, `P7`
+backwards, `P8` line 0) → `P5` requires the root-relative `./.gitignore:21` to be green, which is the fix for
+`P4` and the proof that the arm is not a demand to delete the claim → four classifier greens (`N1` non-citations,
+`N2` the four accepted shapes, `N3` the inheritance limit, `N4` a real line cited for the wrong reason, which
+must pass because no textual rule can see it) → `G1`/`G2` throw the two whole-census guards. 15/15 MATCH, and
+`docs/DECISIONS.md`/`docs/STATUS.md` sha256s re-verified after every case, since this is the first unit whose
+plants are aimed at those files. The first version of `G1`/`G2` came back green, and it was not the guards
+failing: appending one section to a 5,087-line ledger cannot reach a guard that counts the whole census, so those
+two plants replace the file instead of appending to it. `scripts/check_jsonb_reads.mjs` was rewired to the shared
+index in the same diff, so D87's 14-case matrix was re-run over it: 14/14 MATCH, with the tracked
+`data/seed/quality.sql` still `9deda9b3a845bb01…`.
+
+**Gates.** **Gates.** Not a green official run, and this row does not claim one. The 8-step fresh-database gate
+(`scripts/db_gate_fresh.sh`) reached step 5 and stopped there: 215 of its 216 quality rows passed on a
+from-scratch schema (tables=58, migrations=7) and the 216th — the generation-clock row D83 wrote — failed,
+which aborts steps 6, 7 and 8. That row selects a column by `abs(val - now()) < 600` seconds, so it measures
+the machine's speed as much as the seed it reads; STATUS 85's item (e) owns the finding and the re-anchor is
+the next unit. This unit's own steps are certified by running their scripts over the shipped text: step 7 is
+unchanged in behaviour after the shared-index refactor (14/14 witness cases MATCH, tracked
+`data/seed/quality.sql` still sha256 `9deda9b3a845bb01…`, 22 answer rows over 31 citation tokens, 41 spans in
+12 files), step 8 refuses 0 offenders under `--worktree` — and its citation count is deliberately not quoted
+here, because it counts the tree it stands in, which three lanes are writing. Each of the two ledger sections
+written for this unit was measured on its own text at 0 offenders. `bash -n` passes on the gate script and
+`node --check` on both census scripts.
+
+**Limits, printed by the script and repeated here.** (1) A citation to a real line for the wrong reason passes —
+`N4` plants it and requires green; the seed answers have three row identifiers to compare a line against and the
+ledgers have none, which is the difference between D87's rule 4 and this row. (2) It is blind to a name written
+without an extension *and* without a unique stem, and to a misspelled extension: `Foo.jva:12` is not
+file-shaped, so it is not a citation, so it is not checked. (3) It re-reads the file as it stands today, so a cite
+that was true when written reddens only when the line number falls outside — a refactor that moves the sentence
+to another line leaves the claim stale and green. (4) A file another lane deletes or renames reddens this lane's
+gate, and the fix belongs to whoever moved it. (5) Code spans and prose are scanned identically, so a citation
+inside a quoted gate message is judged like a claim — that is what caught D87's plant number, and it is also why
+quoting a false message requires naming it a plant. (6) Two ledgers only, and that scope is a measurement rather
+than a convenience: the tree's other 32 `.md` files carry 61 `name:number` tokens between them and not one of them
+is file-shaped, so nothing is being lost today. What is not read is the same grammar inside code — 36
+`file.ext:NN` cites sit on 30 comment lines in three files, 34 of them in `data/seed/quality.sql`'s own `--` notes
+beside the answers D87 *does* check — and D87 strips those comments before parsing on purpose (its `P11` plants
+one and requires the run to stay green), so a citation written in a comment is checked by neither row. The
+checker is blind to its own text in the same way: one of the illustrative cites in this script's header comment is
+a real `docs/DATABASE.md:88`, and nothing would notice if it stopped being real.
+
+**Residue this row owes.** The guard against a *wrong-for-the-wrong-reason* cite is the D87 rule-4 analogue:
+compare the cited line against the words of the sentence that cites it. That rule needs a measurement first — how
+many of the 151 shipped citations have a sentence keyword on the line they point at — because a rule that
+reddens an eighth of the ledgers is a different unit than a rule that reddens none. And the vendor list stays
+hand-written: `source_index.mjs` is one place to be wrong instead of two.
