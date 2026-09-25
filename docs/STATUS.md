@@ -3953,3 +3953,71 @@ next              residue: (a) the read list is a transcription of `col->>'key'`
                     reported here with counts and sites rather than taken. Nine units now sit on the branch
                     (D77–D84): gate 199 -> 215 checks.
 ```
+
+## 82. The read census gets a second reader, and it refutes six of D84's nine lines (2026-09-26)
+
+§81's own residue said its read list was a transcription of one grep, and that widening the grep was owed to
+the row. The widening is a scanner of a different principle — it parses Java text blocks for the SQL form, and
+it parses map accessors for keys read out of a jsonb object — and it runs inside the gate rather than beside it.
+It found eleven reads the SQL grep could not see, and it refuted six of the nine lines D84 had carried.
+
+```
+measured          scanner over services/platform: 174 files, 26 read sites, 19 distinct (column, key) pairs,
+                    3 of them resolved to a table by the FROM/JOIN alias in the same file. The census behind
+                    it now answers 17 reads and the from-scratch database reads them as
+                    `17 read(s) measured against the shipped payloads: 15 resolve to nothing, 2 carry a key;
+                    dead-reader=12, empty-by-guard=3, never-read=1, reachable=1`. The two that resolve:
+                    collections.seo ? noindex on 4 of 4, tenants.config ? currency_default on 1 of 1.
+                    Newly visible (accessor reads, invisible to a `col->>'key'` grep): collections.seo
+                    reviewed_by_human / noindex / curated_by / model / city / category / cover (7 keys,
+                    CollectionsController.java:217-313, `reviewed_by_human` being the §27 human-review gate)
+                    and documents.metadata extractor / degraded / note / proposals (ImportService.java:193-197,
+                    one of them through getOrDefault).
+refuted           five answers named no read site anywhere in the scanned source — seo_pages.data and
+                    seo_pages.jsonld ? generated_by, and documents.metadata and chunks.metadata ? import_job
+                    were one clause copied sideways onto sibling jsonb columns ("the doc lane", "the chunk
+                    lane"); merchants.seo ? generated_by named a real clause over the wrong table (the FROM at
+                    CollectionsRepository.java:52 is `from collections c`); and tenants.config ?
+                    currency_default was called `reachable` with a write site in the read column, for a key
+                    D46 had already reported unread. The first four are gone from the census; the last stays
+                    under a new mirror kind, `never-read` — a key that ships and no read names, refused by the
+                    gate row if it stops shipping and by step 7 if a read for it appears.
+new/changed       scripts/check_jsonb_reads.mjs (new, 304 lines; four fatal blocks — UNDECLARED, WRONG TABLE,
+                    CALLED NEVER-READ IS READ, NO KIND — and one report-only block, an answer the scan finds no
+                    read for, because that is either a stale answer or one of its declared blind spots).
+                    scripts/db_gate_fresh.sh +12/-2: step 7, and it dies rather than skipping when node is
+                    absent; the step labels are now all /7 (five of them had been left saying /6).
+                    data/seed/quality.sql +125/-28: the census list rebuilt to 17 triples with the site of each
+                    read verified by hand, the fourth kind accepted, and the never-read term added.
+                    215 checks — D85 adds a step and corrects what a row asserted, it adds no row.
+plants            eight. Five on the scanner, each restoring the file byte-for-byte and re-checking its sha:
+                    drop collections.seo.city -> UNDECLARED naming the site · put merchants.seo.generated_by
+                    back -> WRONG TABLE "reads this at collections, not merchants" · re-kind noindex as
+                    never-read -> CALLED NEVER-READ, IS READ · orphan a list entry from its answer -> NO KIND
+                    (that plant also trips UNDECLARED and the report list, so it proves the block fires, not
+                    that it fires alone) · a clean run prints exit 0. Three on the gate row, on the kept
+                    database with the payloads snapshotted into a scratch schema and replayed afterwards:
+                    strip noindex from every collection -> `16 resolve to nothing, 1 carry a key` · set
+                    reviewed_by_human on all four -> `14 resolve to nothing, 3 carry` · drop currency_default
+                    -> the never-read term. All three returned the payloads to `15 / 2`.
+gates             scripts/db_gate_fresh.sh over the shipped text: `RESULT: PASS — 215 quality checks on a
+                    from-scratch schema (tables=58, migrations=7), plus the seed truncate shown clearing an
+                    empty stranger and refusing one that holds rows, and the build's jsonb reads reconciled
+                    against that list of answered keys`, step 7 printing `declared in quality.sql 17 triple(s)`
+                    and `tables resolved from FROM 3 of 19 read pair(s)`; exit 0, and the run's own database was
+                    dropped (`nexus`, `nexus_test`, `nexus_funnel_probe` never opened). `mvn -o test` not re-run:
+                    no Java changed in this unit.
+next              residue: (a) accessor reads are matched on (column, key) alone, so an answer covers that key
+                    on any table — merchants.seo carrying no provenance token on 520 rows is a true measurement
+                    that now has no owner row, and it becomes census-able when the scan resolves accessors to
+                    tables; (b) a key reached through a helper, named by a constant, or built in another file is
+                    still invisible, which the script prints on every run instead of implying; (c) a witness
+                    that UPDATEs jsonb moves `updated_at` through the set_updated_at() trigger, so a restore can
+                    leave another row red — the shipped state is the one the gate re-establishes, not the one
+                    the probe leaves behind; (d) the product question from §81 (stamp the token, or change the
+                    publishability test) is still #59's and still reported rather than taken. Standing reports
+                    unchanged: another lane's working-tree §36-§37 describe this script at an earlier revision
+                    and its `.github/workflows/ci.yml` runs it hard-fail — both uncommitted and not this
+                    stream's to correct; CommerceApiTest and the drifted `nexus` database belong to other
+                    streams; the events subject seam (D70) waits on a contract decision.
+```

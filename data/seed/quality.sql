@@ -2388,21 +2388,21 @@ SELECT 'the columns stamped from the generation clock are exactly the ones answe
 -- on the kept from-scratch database, one at a time, for every `col->>'key'` in services/platform:
 --
 --   collections.seo        ? generated_by    0 of        4 row(s)   CollectionsRepository.java:68
---   merchants.seo          ? generated_by    0 of      520 row(s)   the same clause, merchant pages
---   seo_pages.data/jsonld  ? generated_by    0 of        0 row(s)   (table kept empty by D64)
+--   merchants.seo          ? generated_by    0 of      520 row(s)   (D85: NOT a read — see below)
+--   seo_pages.data/jsonld  ? generated_by    0 of        0 row(s)   (D85: NOT a read — see below)
 --   offerings.attributes   ? import_job      0 of     5534 row(s)   MerchantImportRepository.java:37
---   documents.metadata     ? import_job      0 of     1040 row(s)   (same read, the doc lane)
---   chunks.metadata        ? import_job      0 of     2118 row(s)   (same read, the chunk lane)
+--   documents.metadata     ? import_job      0 of     1040 row(s)   (D85: NOT a read — see below)
+--   chunks.metadata        ? import_job      0 of     2118 row(s)   (D85: NOT a read — see below)
 --   orders.metadata         ? session_id     0 of        0 row(s)   OrderRepository.java:97 (empty by D64)
 --   referrals.reward        ? amount/currency 0 of       0 row(s)   ReferralRepository.java:89,91 (empty by D64)
---   tenants.config          ? currency_default  1 of      1 row(s)  the only reachable read found
+--   tenants.config          ? currency_default  1 of      1 row(s)  (D85: NOT a read — see below)
 --
 -- Two of those are load-bearing, not incidental. `CollectionsRepository.java:23` documents that a collection is
 -- publishable when "seo->>'generated_by' carries a real provenance token", and :68 encodes it as
 -- `lower(btrim(coalesce(c.seo->>'generated_by',''))) in ('ai','editor','creator')` — on shipped data that test is
--- false for every one of the 4 collections and all 520 merchant rows, so it always falls through to its other
--- branch. `MerchantImportRepository.java:37` selects drafts with `o.attributes->>'import_job' is not null`, which
--- matches no seeded offering, no document and no chunk: the import lane has nothing to import.
+-- false for every one of the 4 collections, so the clause always falls through to its other branch.
+-- `MerchantImportRepository.java:37` selects drafts with `o.attributes->>'import_job' is not null`, which matches
+-- no seeded offering: the import lane has nothing to import.
 --
 -- WHAT THIS UNIT DOES NOT DECIDE. Whether the seed should start stamping those keys, or the reads should name a
 -- different key, is each door owner's call — the §8 publishability rule belongs to whoever owns
@@ -2410,6 +2410,50 @@ SELECT 'the columns stamped from the generation clock are exactly the ones answe
 -- a report, mirroring §78's badge posture). What the gate can own is that the mismatch is named, counted, and
 -- cannot quietly grow: a new read nobody answered for reddens, an answer whose key starts being shipped reddens
 -- as stale, and an unknown kind or blank reason reddens.
+--
+-- D85 — WHERE THE LIST COMES FROM, AND WHAT IT COST WHEN THAT WAS ONLY ASSERTED. The table above was compiled
+-- by grepping `col->>'key'` inside the SQL strings the Java carries, and §81 recorded that as the row's own
+-- residue: a read made through `Json.jsonObject(row, "seo")` and then `seo.get("city")` never spells a key
+-- beside a column, so the grep could not see it. Writing the scanner to widen the grep (that is the ELEVEN
+-- additions below — seven on collections.seo: the §27 human-review gate, the §8 curation attribution, city and
+-- category, the nested cover object; four on documents.metadata: what an import job reports back) turned up
+-- something the widening was not looking for. Five of the nine lines above name no read site at all, and a
+-- sixth names a real clause over the wrong table:
+--
+--   * `seo_pages.data/jsonld ? generated_by`, `documents.metadata ? import_job`, `chunks.metadata ? import_job`
+--     were one read projected sideways onto sibling jsonb columns of tables the same lane touches. Grep found
+--     `attributes->>'import_job'` once; the transcription wrote it three times, and the answer text invented
+--     "the doc lane" and "the chunk lane" for clauses that do not exist.
+--   * `merchants.seo ? generated_by` — the clause is `c.seo->>'generated_by'` and FROM at
+--     CollectionsRepository.java:52 is `from collections c`. merchants.seo is SELECTED whole
+--     (CatalogRepository.java:53) and echoed whole (MerchantRepository.java:307); nothing asks it for
+--     generated_by. The measurement that 0 of 520 merchant payloads carry the key stays true; what was false
+--     is calling it a read. It is dropped from this census and reported in §82 rather than kept as a row that
+--     answers a question nobody asks.
+--   * `tenants.config ? currency_default` was answered `reachable` with the site "generate.py:979 writes it" —
+--     a write site in the read column. Nothing in services/platform or apps/ai reads that key (D46 said so
+--     first; D84 re-buried it by mis-kinding it). It stays here as the census's mirror kind, `never-read`.
+--
+-- So the census is now reconciled against the source by a reader of a different principle, as a step of the
+-- gate rather than as a note: `scripts/check_jsonb_reads.mjs` is step 7 of `scripts/db_gate_fresh.sh`
+-- (`--verbose` prints every read it found and which answer covers it). What it can fail on, and what it can
+-- only report:
+--
+--   * FAIL — a read the source makes that this list does not answer for (the direction that would otherwise
+--     return nothing at runtime and decide quietly).
+--   * FAIL — an answer whose table the source contradicts. A SQL read's alias is resolved through the FROM/JOIN
+--     in the same file, so `merchants.seo ? generated_by` reddens with "read at collections.seo, not
+--     merchants" instead of surviving as a plausible sentence. Measured on the shipped tree that rule can reach
+--     3 of the 19 read pairs the scan sees; an accessor read has no table in its own text, so it is matched on
+--     (column, key) alone.
+--   * FAIL — a `never-read` answer while a read for that key exists (currency_default's claim is only honest
+--     while nobody adds the read), and an answer with no kind at all.
+--   * REPORT — an answer the scan finds no read for. That is either a stale answer or one of the scan's blind
+--     spots (a key reached through a helper, named by a constant, read from the web client, or built in another
+--     file), and telling those apart needs the source, not a set difference. This is the list that surfaced
+--     four of the five lines above: it named them, and reading the file is what decided they were inventions.
+--     Measured on the shipped tree the list is now empty: of the 17 answers, 16 have a visible read site and
+--     one is the never-read mirror, which must not have one.
 
 CREATE TEMP TABLE read_cat (tbl text NOT NULL, col text NOT NULL, key text NOT NULL, rows bigint NOT NULL,
                             carried bigint NOT NULL, PRIMARY KEY (tbl, col, key));
@@ -2417,11 +2461,21 @@ DO $d84a$
 DECLARE p record; n bigint; tot bigint;
 BEGIN
   FOR p IN SELECT * FROM (VALUES
-      ('collections', 'seo', 'generated_by'), ('merchants', 'seo', 'generated_by'),
-      ('seo_pages', 'data', 'generated_by'), ('seo_pages', 'jsonld', 'generated_by'),
-      ('offerings', 'attributes', 'import_job'), ('documents', 'metadata', 'import_job'),
-      ('chunks', 'metadata', 'import_job'), ('orders', 'metadata', 'session_id'),
+      -- The five reads the D84 grep found: a `col->>'key'` spelled inside a Java text block. Each is now
+      -- re-checked against the source by gate step 7 (scripts/check_jsonb_reads.mjs), which also resolves the
+      -- FROM alias, so a triple here must name a table the read actually runs over.
+      ('collections', 'seo', 'generated_by'), ('offerings', 'attributes', 'import_job'),
+      ('orders', 'metadata', 'session_id'),
       ('referrals', 'reward', 'amount'), ('referrals', 'reward', 'currency'),
+      -- D85: reads made through a Java map accessor — `Json.jsonObject(row, 'seo')` then `seo.get('city')` —
+      -- which never spell a key beside a column, so the first list could not see them.
+      ('collections', 'seo', 'reviewed_by_human'), ('collections', 'seo', 'noindex'),
+      ('collections', 'seo', 'curated_by'), ('collections', 'seo', 'model'),
+      ('collections', 'seo', 'city'), ('collections', 'seo', 'category'), ('collections', 'seo', 'cover'),
+      ('documents', 'metadata', 'extractor'), ('documents', 'metadata', 'note'),
+      ('documents', 'metadata', 'degraded'), ('documents', 'metadata', 'proposals'),
+      -- Not a read at all: shipped in a payload, named by no source read anywhere. Kept because D84's own
+      -- residue said the mirror defect deserves a row, and step 7 reddens if a read for it ever appears.
       ('tenants', 'config', 'currency_default')
     ) v(tbl, col, key)
   LOOP
@@ -2439,30 +2493,60 @@ END $d84a$;
 CREATE TEMP TABLE read_answer (tbl text NOT NULL, col text NOT NULL, key text NOT NULL, kind text NOT NULL,
                                site text NOT NULL, why text NOT NULL, PRIMARY KEY (tbl, col, key));
 INSERT INTO read_answer VALUES
- ('collections', 'seo', 'generated_by', 'dead-reader', 'CollectionsRepository.java:23,:68',
+ ('collections', 'seo', 'generated_by', 'dead-reader',
+  'CollectionsRepository.java:68 (over from collections c at :52), CollectionsController.java:237',
   'the publishability test wants a provenance token and no seeded collection carries one, so the clause is '
   || 'always false and the other branch always decides'),
- ('merchants', 'seo', 'generated_by', 'dead-reader', 'CollectionsRepository.java:68',
-  'the same clause over 520 merchant seo payloads, none of which carries the key'),
- ('seo_pages', 'data', 'generated_by', 'empty-by-guard', 'CollectionsRepository.java:68',
-  'seo_pages is swept EMPTY by D64, so the read has nothing to resolve against either way'),
- ('seo_pages', 'jsonld', 'generated_by', 'empty-by-guard', 'CollectionsRepository.java:68',
-  'the same, on the jsonld twin column'),
  ('offerings', 'attributes', 'import_job', 'dead-reader', 'MerchantImportRepository.java:37',
   'the import selector wants draft rows carrying an import job and no seeded offering does, so the lane '
   || 'reports no imports'),
- ('documents', 'metadata', 'import_job', 'dead-reader', 'MerchantImportRepository.java:37 (doc lane)',
-  '0 of 1040 documents carry it; D75 already found documents.metadata holds a data_origin/synthetic pair only'),
- ('chunks', 'metadata', 'import_job', 'dead-reader', 'MerchantImportRepository.java:37 (chunk lane)',
-  '0 of 2118 chunks carry it, beside the same embed_model D75 named as read by nothing'),
  ('orders', 'metadata', 'session_id', 'empty-by-guard', 'OrderRepository.java:97',
   'guest-order lookup by session; orders is EMPTY by D64 because §109 forbids fabricated transactions'),
  ('referrals', 'reward', 'amount', 'empty-by-guard', 'ReferralRepository.java:89',
   'the earned-reward aggregate; referrals is EMPTY by the same guard'),
  ('referrals', 'reward', 'currency', 'empty-by-guard', 'ReferralRepository.java:91',
   'min(reward->>''currency'') on the same empty table'),
- ('tenants', 'config', 'currency_default', 'reachable', 'generate.py:979 writes it',
-  'the one read measured against a payload that actually carries the key, so the set is not all dead ends');
+ -- The accessor reads, found by scanning Java rather than by transcribing SQL. Same rule: the ones that
+ -- resolve to nothing say why, and the one that resolves says so.
+ ('collections', 'seo', 'reviewed_by_human', 'dead-reader', 'CollectionsController.java:217,:289,:294',
+  'the §27 gate asks whether a human reviewed the row and no seeded collection answers; the fall-through '
+  || 'is the honest answer here (the row is treated as unreviewed, hence noindex), and the seed says the '
+  || 'same thing a second way with seo.noindex = true — the two agree, which is why this is a dead reader '
+  || 'and not a bug'),
+ ('collections', 'seo', 'noindex', 'reachable', 'CollectionsController.java:289,:297',
+  'the seed writes noindex on every collection row, so the second half of the same clause is a read that '
+  || 'resolves'),
+ ('collections', 'seo', 'curated_by', 'dead-reader', 'CollectionsController.java:251',
+  'the curation attribution (§8 curated_by.type); absent on all four rows, so the field is served null '
+  || 'rather than as a person or a model that did not curate it'),
+ ('collections', 'seo', 'model', 'dead-reader', 'CollectionsController.java:253',
+  'the model name beside curated_by = model; absent, so nothing is attributed to a model version'),
+ ('collections', 'seo', 'city', 'dead-reader', 'CollectionsController.java:218',
+  '§8 keeps city/category optional context and forbids synthesising them from the slug; the seed states '
+  || 'neither, so both are honestly absent rather than derived'),
+ ('collections', 'seo', 'category', 'dead-reader', 'CollectionsController.java:219',
+  'the same read as city, on the category half of the pair'),
+ ('collections', 'seo', 'cover', 'dead-reader', 'CollectionsController.java:305, nested at :307,:312,:313',
+  'the cover.url/alt/credit reads hang off this one and are not separately ?-testable; the seed carries '
+  || 'the image in the collections.cover_url COLUMN instead and coverOf() reads the column first, so the '
+  || 'picture reaches the API while alt/credit stay null — measured, not assumed'),
+ ('documents', 'metadata', 'extractor', 'dead-reader', 'ImportService.java:193 (from documents d)',
+  'the import lane reads back the extractor that produced a job; no seeded document carries one, because '
+  || 'no import has ever run in this dataset (the same reason import_job above matches nothing)'),
+ ('documents', 'metadata', 'degraded', 'dead-reader', 'ImportService.java:194',
+  'read through getOrDefault, which is the same absent key with a fallback — the fallback (false) is what '
+  || 'is served, and false is the truth for a job that never ran'),
+ ('documents', 'metadata', 'note', 'dead-reader', 'ImportService.java:195',
+  'the extractor''s own note on the same absent payload'),
+ ('documents', 'metadata', 'proposals', 'dead-reader', 'ImportService.java:197',
+  'the extracted proposals of a job; absent, so the lane reports an empty list rather than invented rows'),
+ -- The mirror of every row above: not a read that resolves to nothing, a payload key no read names. D46
+ -- found this one and its answer was never wired into a census; D84 then mis-filed it as `reachable`
+ -- because a write site was read as a read site. step 7 of the gate reddens if a read for it appears.
+ ('tenants', 'config', 'currency_default', 'never-read', 'generate.py:979 writes it; no read site found',
+  'the seed stamps a default currency on the tenant config and nothing in services/platform or apps/ai '
+  || 'asks for it, so the key is served-invisible: it is not a broken read, it is an unread write, and '
+  || 'making a door own that is the point of naming it here');
 
 INSERT INTO qc
 SELECT 'every jsonb key the build reads is answered for what the shipped payloads carry',
@@ -2474,13 +2558,19 @@ SELECT 'every jsonb key the build reads is answered for what the shipped payload
                         (SELECT 1 FROM read_cat c
                           WHERE c.tbl = a.tbl AND c.col = a.col AND c.key = a.key))
        AND NOT EXISTS (SELECT 1 FROM read_answer a WHERE btrim(a.why) = '' OR btrim(a.site) = ''
-                        OR a.kind NOT IN ('reachable', 'dead-reader', 'empty-by-guard'))
+                        OR a.kind NOT IN ('reachable', 'dead-reader', 'empty-by-guard', 'never-read'))
        -- an answer is allowed to claim reachability only while the payload really carries the key, and to call a
        -- read dead only while it carries none: both directions are re-read from the data every run
        AND NOT EXISTS (SELECT 1 FROM read_cat c JOIN read_answer a
                          ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key
                         WHERE (a.kind = 'reachable' AND c.carried = 0)
                            OR (a.kind = 'dead-reader' AND c.carried > 0))
+       -- `never-read` is the mirror kind: a key that ships and that no read names. It is only a fact while the
+       -- key really ships — an answer of this kind on a payload nobody writes would be describing nothing.
+       -- Whether a read exists is what step 7 of scripts/db_gate_fresh.sh checks; this database cannot.
+       AND NOT EXISTS (SELECT 1 FROM read_cat c JOIN read_answer a
+                         ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key
+                        WHERE a.kind = 'never-read' AND c.carried = 0)
        -- empty-by-guard answers are only honest while D64 still keeps that table empty
        AND NOT EXISTS (SELECT 1 FROM read_cat c JOIN read_answer a
                          ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key
@@ -2517,9 +2607,16 @@ SELECT 'every jsonb key the build reads is answered for what the shipped payload
                   ON c.tbl = a.tbl AND c.col = a.col AND c.key = a.key
                  WHERE a.kind = 'empty-by-guard' AND c.rows > 0
               UNION ALL
+              SELECT a.tbl || '.' || a.col || '.' || a.key
+                     || ' is answered never-read while ' || c.carried
+                     || ' row(s) carry it: there is no shipped key there to be unread'
+                FROM read_answer a JOIN read_cat c
+                  ON c.tbl = a.tbl AND c.col = a.col AND c.key = a.key
+                 WHERE a.kind = 'never-read' AND c.carried = 0
+              UNION ALL
               SELECT 'the answer for ' || tbl || '.' || col || '.' || key || ' names kind ''' || kind
-                     || ''', not one of the three known'
-                FROM read_answer WHERE kind NOT IN ('reachable', 'dead-reader', 'empty-by-guard')
+                     || ''', not one of the four known'
+                FROM read_answer WHERE kind NOT IN ('reachable', 'dead-reader', 'empty-by-guard', 'never-read')
               UNION ALL
               SELECT 'the answer for ' || tbl || '.' || col || '.' || key || ' gives no reason or no site'
                 FROM read_answer WHERE btrim(why) = '' OR btrim(site) = '') o), 'none');

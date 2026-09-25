@@ -4737,6 +4737,14 @@ reads the gate file directly and injects the plants after the answer table is po
 
 ## D84 Eleven jsonb keys the build reads, ten of which no shipped payload carries — 2026-09-25
 
+> **Six of the nine census lines below were wrong, and D85 refuted them.** Four named reads the build
+> does not make (one `attributes->>'import_job'` clause copied sideways onto sibling jsonb columns, and a
+> `seo->>'generated_by'` clause that only exists over `collections`), one named a real clause over the wrong
+> table (`merchants.seo` — the FROM at `CollectionsRepository.java:52` is `from collections c`), and
+> `tenants.config ? currency_default` was called `reachable` from a write site. The list was a transcription
+> of one grep; D85 replaced the transcription with a scanner and the census is 17 reads, not 11. Read the
+> lines below as what the grep printed, which is not what the build does.
+
 §75–§83 enumerated what the seed writes, one type plane at a time. This unit reads the same payloads from the
 other side: which jsonb keys does the build reach for, and is the key there? A read against an absent key is
 invisible to a test suite — the expression returns nothing and the branch around it decides in silence.
@@ -4777,3 +4785,86 @@ What is deliberately not decided: whether `generate.py` should stamp a provenanc
 `CollectionsRepository` should read a different key, or whether the import selector should match the seeded shape.
 Those files belong to other streams; the finding, with counts and sites, is parked at task #59 — the same posture
 as §78's verification badges: state it, refuse to let it drift, report rather than edit.
+
+## D85 A second reader for the read census, and what it refuted in D84 — 2026-09-26
+
+D84's list of jsonb keys the build reads was compiled by one method: grep `col->>'key'` inside the SQL strings
+the Java carries, then transcribe what it printed. §81 recorded that method as the row's own residue, and D85
+pays the debt with `scripts/check_jsonb_reads.mjs` — a scan of the same source for three shapes of read (the SQL
+form, a `Json.jsonObject(row, "col")` map read by key, and a nested object lifted out of such a map) run as
+**step 7 of `scripts/db_gate_fresh.sh`**, so the reconciliation happens on every gate run rather than whenever
+someone remembers to widen a grep. Measured over 174 files: 26 read sites, 19 distinct (column, key) pairs, of
+which 3 resolve to a table through the FROM/JOIN alias in the same file.
+
+The widening found eleven reads the SQL grep could not see — seven on `collections.seo` (`reviewed_by_human`
+at `CollectionsController.java:217,:289,:294`, the §27 human-review gate; `noindex` at :289,:297; `curated_by`
+at :251 with its `model` beside it at :253; `city`/`category` at :218,:219; the nested `cover` object at :305
+with its url/alt/credit leaves) and four on `documents.metadata` (what an import job reports back,
+`ImportService.java:193,:194,:195,:197`, one of them through `getOrDefault`, which is the same absent key with
+a fallback and would have been missed by a narrower pattern).
+
+It also refuted six of D84's nine lines, which is the part worth writing down. Five of the answers name no read
+site anywhere in the scanned source: `seo_pages.data ? generated_by`, `seo_pages.jsonld ? generated_by`,
+`documents.metadata ? import_job`, `chunks.metadata ? import_job` were one clause projected sideways onto the
+sibling jsonb columns of tables the same lane touches — grep found `attributes->>'import_job'` once and the
+transcription wrote it three times, inventing "the doc lane" and "the chunk lane" in the answer text.
+`merchants.seo ? generated_by` names a real clause over the wrong table: `CollectionsRepository.java:68` reads
+`c.seo->>'generated_by'` and the `FROM` at :52 is `from collections c`; merchants.seo is selected whole
+(`CatalogRepository.java:53`) and echoed whole (`MerchantRepository.java:307`), and nothing asks it for a
+provenance token. And `tenants.config ? currency_default` was answered `reachable` with the site
+"generate.py:979 writes it" — a write site standing in the read column, for a key D46 had already reported as
+unread. All four projections are dropped from the census. `currency_default` stays, under a new mirror kind,
+`never-read`: a key that ships and that no read names, which is only an honest answer while the key really
+ships (the gate row refuses `never-read` at carried = 0) and only while nobody adds the read (step 7 refuses
+`never-read` on a key the scan does find).
+
+So the census is 17 answers now, and the row's own reading on the from-scratch data is
+`17 read(s) measured against the shipped payloads: 15 resolve to nothing, 2 carry a key; dead-reader=12,
+empty-by-guard=3, never-read=1, reachable=1`. Two carry: `collections.seo ? noindex` on 4 of 4 rows — the one
+read among the accessor set that resolves — and `tenants.config ? currency_default` on 1 of 1. 215 checks is
+unchanged: D85 adds no row, it adds a step and it corrects what a row asserted.
+
+What step 7 can refuse, and what it can only report, is stated in the file because the row's authority rests on
+the difference. **Fatal:** a read the source makes that the list does not answer for; an answer whose table the
+FROM clause contradicts; a `never-read` answer the source refutes; an answer with no kind. **Reported, not
+fatal:** an answer the scan finds no read for — that is either a stale answer or one of the scan's blind spots
+(a key reached through a helper, named by a constant, read by the web client, or built in another file), and
+telling those apart needs the source, not a set difference. Four of the five refuted lines surfaced through that
+report list and were decided by reading the files; the fifth is caught by a fatal rule now. `--verbose` prints
+every read the scan found and which answer covers it, so a human adjudicating the report list is not guessing.
+
+Witnesses, five on the scanner and three on the gate row. The scanner's: drop `collections.seo.city` from the
+list → `UNDECLARED` with the site named; put `merchants.seo.generated_by` back with its answer row → `WRONG
+TABLE` reading "the source reads this column and key at collections, not at merchants"; re-kind `noindex` as
+`never-read` → `CALLED NEVER-READ, IS READ`; rename a list entry so its answer row no longer exists → `NO KIND`
+(unsplittable at that plant: the same edit also trips `UNDECLARED` and the report list, so it proves the block
+fires, not that it fires alone). The gate row's, on the kept database with the payloads snapshotted first:
+strip `noindex` from every collection → the row reddens on `16 resolve to nothing, 1 carry a key` (the stale
+`reachable` half); set `reviewed_by_human` on all four → reddens on `14 resolve to nothing, 3 carry` (the dead
+reader that started being answered); drop `currency_default` from `tenants.config` → reddens on the `never-read`
+rule. Each restore replays the snapshot rather than an invented value, and all three returned the payloads to
+`15 resolve to nothing, 2 carry a key`. One post-restore artifact is worth naming: the mass UPDATEs collapsed
+`collections.updated_at`'s four distinct instants into one instant near `now()` (the `set_updated_at()` trigger
+at `V1__init.sql:961-970` fires on every write), which reddened D83's generation-clock row on the post-restore
+runs while the read row itself came back green. A witness that writes through a trigger changes what another row
+measures; the shipped state is the one the official run re-establishes.
+
+The official run printed `RESULT: PASS — 215 quality checks on a from-scratch schema (tables=58, migrations=7)`
+with step 7 green over the shipped text. No Java changed, so `mvn -o test` was not re-run for this unit. What
+the same run caught about the harness itself: five of its seven steps still announced `/6`, because the
+renumbering had been applied to the two new steps and not to the old ones — a cosmetic defect, but the step
+labels are the only thing telling a reader which parts of the gate ran, and only the output shows them.
+
+One collision, reported rather than edited. The working tree carries another lane's STATUS sections (§36–§37)
+describing this same script at an earlier revision — `22 triples · 19 matched`, a six-step gate, and eleven rows
+"added" to the census, of which four are the inventions this entry records as dropped. They were true when that
+lane measured them and are stale now; `docs/STATUS.md`'s tail and `.github/workflows/ci.yml` are not this
+stream's files to correct, so the discrepancy is named here instead of quietly rewritten. The CI wiring those
+sections describe is real in that uncommitted file — its `contract-drift` job runs
+`node scripts/check_jsonb_reads.mjs` hard-fail — which means the script will be enforced in two places once that
+lane commits. What the committed tree evidences today is step 7 of `db_gate_fresh.sh`, and nothing more.
+
+Left standing on purpose: `merchants.seo` carrying no provenance token on 520 rows is a true measurement that no
+longer has an owner row — the read census was the wrong home for it, and the write-side mirror ("a payload key
+nobody reads") is only census-able once the scan can resolve accessor reads to tables, which it cannot yet.
+That, plus the helper-and-constant blind spots above, is what D85 owes the next reader.
