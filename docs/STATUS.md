@@ -4095,3 +4095,97 @@ next              reported, not edited: whether runs.py should stop double-encod
                     a regression: quality.sql is green only on a recently loaded database — D83's generation-clock
                     row reddens once facts.updated_at is more than ten minutes old, so re-running this file against
                     a kept gate DB later is not the official run.
+
+## 84. A `site` is an assertion: 31 citations read back out of the source, seven ways of being wrong (2026-09-26)
+
+§83's residue (b) was two sentences: the gate refused a blank `site` and nothing more, and the row that refused it
+was a row whose own `site` column had shipped three false citations while green. This unit opens the files.
+`scripts/check_jsonb_reads.mjs` — step 7's second reader, the one that already censuses the build's jsonb reads —
+now parses both answer tables out of `data/seed/quality.sql`, resolves every citation to a shipped source line,
+and refuses seven ways of being wrong about it.
+
+```
+measured          Before the rule was written, from the shipped text: 22 answer rows (17 read_answer +
+                    5 shape_answer) carry 31 citation tokens, which expand to 41 line spans in 12 files; 38
+                    distinct source lines are read back per run. The site index is 479 files (171 .java, 66 .py,
+                    242 .ts/.tsx/.mjs/.cjs/.sql/.sh) under a 10-dir vendor exclusion; the read census walks only
+                    its two roots, 174 java/py files, and finds 26 read sites over 19 distinct (column, key)
+                    pairs, of which 3 have a table resolved from a FROM/JOIN alias. Six citation grammars, not one: `File.java:12`, `File.java:217,:289,:294`,
+                    `merchant/File.java:306` (a directory prefix resolved by path suffix),
+                    `commerce/File.java:78-84` (a range), bare `:22` continuing the previous file, and
+                    `generate.py` naming a file with no line. A parser written for the first shape would have
+                    checked a fraction of the census and printed a green number, so the run prints the row count
+                    it parsed and compares it against a second parse of the same block (17 and 17, or it says so).
+                    The one rule that had to be measured rather than guessed: `__init__.py` is the ONLY basename
+                    those 237 java/py files hold twice (8 copies), so the ambiguous-name arm is unreachable by
+                    the shipped text and is witnessed by a plant and labelled as such. Widening that sentence to
+                    the whole 479-file index: 14 basenames are held by more than one file — `page.tsx` by 31 of
+                    them — so the arm is far from unreachable in general, and no shipped answer happens to cite one.
+new/changed       scripts/check_jsonb_reads.mjs — stripSqlComments (literal-aware, `''` aware), valuesRows
+                    (paren/quote-aware row and cell split, literal concatenation, and a terminator rule that
+                    refuses a `;` where no row is closing), CITE_RE/citations (bare `:NN` inherits the last
+                    file), sourceIndex over the repo minus the vendor dirs, checkSites with the seven arms and
+                    an `in site`/`in why` field name in every message. data/seed/quality.sql — five shape_answer
+                    sites gained their writer line (`generate.py:292` and `:1342` for collections.items, `:251`
+                    merchants.images, `:266` both offerings arrays, `:274` reviews.photos) plus a header comment
+                    saying step 7 reads every `File.java:NNN` back and what it refuses. scripts/db_gate_fresh.sh —
+                    step 7's label and the RESULT footer now name the site census; the "missed eleven reads"
+                    claim in that comment is gone because it was never measured. No Java, migration or seeded
+                    value changed; the gate's check count stays 216.
+plants            fourteen cases, replayed over the final shipped text: P0 baseline green, P1-P12 twelve plants,
+                    P13 green again — 14/14 MATCH, and the tracked quality.sql sha256 (9deda9b3…) re-verified
+                    after every run because the plants write a copy and pass it with `--quality=`. The three
+                    mistakes §83 shipped are replayed as three plants, each caught by a different arm:
+                    images `:306 -> :307` (rule 4, the line reads merchants.seo), offerings.options pointed at
+                    commerce/OrderRepository.java (rule 7 — `options` really is on those lines, as
+                    order_items.options, so only table attribution can see it), and a filename with no line
+                    (rule 5). The rest: rule 1 CatalogRepositori.java, rule 2 `__init__.py:1`, rule 3
+                    `:99999` past EOF and `:84-78` backwards — the latter two in the `why` column, which is
+                    where they were hiding, see mistake (3); rule 6 quoting "photos" at a line that reads
+                    "items"; the non-vacuity guard with an answer row deleted; and P11/P12 on the parser itself —
+                    P11 (a `;` inside a `-- comment` mid-list) is required to stay GREEN, P12 (a bare `;` where
+                    no row closes) must throw. Each red is attributed to the named arm whose message the driver
+                    matched, not to an exit code.
+mistakes          six, all mine, one of them found by my own guard. (1) The measurement script I used to write
+                    the rules silently lost the 17th read_answer row: a `;` inside a `-- comment` ended the
+                    VALUES list for a comment-blind scanner, so the census it printed was smaller and greener than
+                    the file. That hazard became stripSqlComments and plant P11. (2) The shipped parser then had
+                    the same class of bug from the other side — both quote loops advanced twice after a closing
+                    quote, skipping the last row's `)`, so **zero** rows parsed and the sites went unchecked while
+                    the read census printed green. What caught it was the non-vacuity guard written for exactly
+                    this: `this script parsed 0 read_answer rows while its read census parsed 17 read_cat triples
+                    — the two are meant to agree`. (3) P6/P7 came back GREEN on the first run: the range and EOF
+                    checks sat behind the `content` guard, so a `why` citation's line numbers were never
+                    validated and `OrderRepository.java:78-99999` passed. Bounds moved above the guard — a
+                    backwards range is false wherever it is written. (4) The new rule reddened five shipped rows
+                    at once, all of them `generate.py;` with no line; the answers were under-specified, so the
+                    claims changed and the rule did not (the D64 posture, arrived at in the citation column).
+                    (5) A remembered count in this unit's own task title said 25 file:line pairs; the shipped
+                    text has 31 tokens over 41 spans. (6) The rule-1 message printed the whole field's citation
+                    list in a parenthetical, which read as if every file named there was missing; it now names
+                    only the one file and the index size it searched.
+gates             scripts/db_gate_fresh.sh over the shipped text: `RESULT: PASS — 216 quality checks on a
+                    from-scratch schema (tables=58, migrations=7)`, all seven steps green, step 7 printing the
+                    site census and `every cited line names the table, column or key its row is about`. `node
+                    scripts/check_jsonb_reads.mjs` alone exits 0 on the shipped tree. Same caveat as §83: this is
+                    green on a freshly loaded database — D83's generation-clock row reddens once facts.updated_at
+                    is more than ten minutes old, so a kept gate DB is never the official run.
+next              reported to their lanes, not edited: the AI service binds json.dumps(…) into eight $n::jsonb
+                    placeholders in apps/ai/nexus_ai/api/runs.py (:118, :120, :121, :158, :159, :182, :207, :208)
+                    through asyncpg, which quotes a str again — 188 string-valued jsonb rows on the live demo
+                    database, 34 of them events.properties (task #62); and the web lane declares Guide.body_blocks
+                    required (apps/web/src/lib/types.ts:266), maps over it at growth-view.tsx:72, synthesises it
+                    in lib/mock/index.ts:740, while the string body_blocks does not occur anywhere in
+                    services/platform/src/main/java — a live §8 guide cannot satisfy the type its reader assumes.
+                    Residue this row owns: (a) "the cited line mentions the row's table, column or key" is a
+                    disjunction over three identifiers, so a citation to the right line for the wrong reason
+                    passes and no textual check can see that; (b) rule 7 has no teeth against generate.py, which
+                    names every table in the dataset — writer citations are checked for line content only;
+                    (c) `why` is checked for structure and deliberately not for content, because a reason may
+                    name neighbouring code on purpose (offerings.options cites order_items.options precisely to
+                    say it is a different column); (d) the ledger's own prose citations — 114 mention tokens,
+                    71 distinct targets, 33 files — are outside this scanner, which reads `File.ext:NNN` but not
+                    `EventsController:63` or `V1:574`; all 71 resolved by hand and 3 sit one line off, so a
+                    checker for the prose plane is owed to this row; (e) the 10-dir vendor exclusion is a hand
+                    list, and a new vendored directory silently joins the source index.
+```

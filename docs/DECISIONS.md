@@ -4942,7 +4942,7 @@ same lesson D78 wrote down about its own 75.
 
 A fourth, found by reading my own `site` column after the gate had already gone green. A site is an assertion, and
 three of the five answered `file:line` pairs were false: `MerchantRepository.java:307` is the line that reads
-`merchants.seo`, two lines below the `images` accessor at :306; `offerings.options` was answered with
+`merchants.seo`, the line directly below the `images` accessor at :306; `offerings.options` was answered with
 `OrderRepository.java`, which does read a column named `options` — but into `order_items`, a different table's
 column that merely shares the word (D82's "a column name is not the target", arriving on schedule); and
 `collections.items` was answered with a bare filename and no line at all. All five now name the accessor that
@@ -4975,3 +4975,105 @@ thing this row cannot check is its own `site` column: the gate refuses a blank s
 exactly the gap mistake (4) above fell into while the row was green. `scripts/check_jsonb_reads.mjs` already parses
 `Json.jsonArray(row, "col")`, so pointing it at `shape_answer` as well — one scanner, both censuses — is the next
 unit this one hands over.
+
+## D87 A site is an assertion, and 31 of them now get read back out of the source — 2026-09-26
+
+D86's residue named this unit in two sentences: the gate refused a blank `site` and nothing more, and the row it
+refused it in was a row whose `site` column had already shipped three false citations while green. The column is
+the answer's evidence — `MerchantRepository.java:306` is the claim "this is where the shape is consumed" — and
+nothing in the gate opened the file. So `scripts/check_jsonb_reads.mjs`, step 7's second reader, now parses both
+answer tables, resolves every citation in them to a shipped source line, and refuses seven ways of being wrong
+about it. One scanner, both censuses.
+
+**What the census actually holds, measured before the rule was written.** 22 answer rows (17 `read_answer`, 5
+`shape_answer`) carry 31 citation tokens spanning 41 line spans over 12 files; 38 distinct source lines are read
+back per run. The citation grammar turned out to be six shapes, not one: `File.java:12`, `File.java:217,:289,:294`,
+`merchant/File.java:306` (a directory prefix that resolves by path suffix), `commerce/File.java:78-84` (a range),
+bare `:22` continuing the file before it, and `generate.py` naming a file with no line at all. A parser that
+handled only the first shape would have silently checked a fraction of the census, so the run prints its own row
+count and compares it against the read list's: 17 and 17, or it says so.
+
+**Every rule was set from a measurement that is green today**, not from what a citation ought to say. The rule
+that had to be derived rather than guessed is the one about which *table* a file belongs to: `__init__.py` is the
+only basename this repo's 237 first-party `.java`/`.py` files hold twice, so an ambiguous-name rule is
+unreachable by the shipped text and had to be witnessed by a plant. And "the cited line must mention the row's
+column" would have reddened five shipped rows if it had been written as "must mention the key" — `CollectionsController.java:307`
+is `url = blankToNull(cover.get("url"))`, which names `cover` (the row's key) and neither `seo` nor `url`'s parent,
+while `CollectionsRepository.java:52` is `from collections c`, which names only the table. The rule is
+therefore a disjunction over the row's three identifiers, and its weakness is stated in the same breath.
+
+**The three false sites D86 shipped, each now caught by a different arm.** That is the unit's real claim, and it
+was tested by replaying the mistakes rather than by asserting they would be caught:
+
+  - `MerchantRepository.java:307` cited for `merchants.images` — the line is `out.put("seo",
+    Json.jsonObject(row, "seo"));`. Rule 4 reddens it: `shape_answer merchants.images cites
+    …MerchantRepository.java:307 but that line mentions none of merchants/images`, and the message quotes the
+    line back so the reader can see the mistake without opening anything.
+  - `OrderRepository.java` cited for `offerings.options` — the word `options` is on those lines (it is
+    `order_items.options`), so rule 4 alone would have let it through. Rule 7 catches it: `answers for the table
+    offerings but cites …commerce/OrderRepository.java in site, which never names "offerings" anywhere in its 144
+    lines` (the count the message prints is that file's length at run time). This plant was chosen to fire *only* that arm, and it fires rule 4 as well only because the
+    continuation `:25` moved with it — the table-attribution arm is doing work the line-content arm cannot.
+  - `CollectionsController.java` with no line at all — rule 5, `not one of them carries a line number, so the
+    claim cannot be checked`.
+
+**The new rule reddened five shipped rows, and the answers changed rather than the rule.** Every `shape_answer`
+site began `generate.py; …` — the writer, unlineated. That is not a site, and the gate said so five times on text
+that had been green an hour earlier. The fix was to go and find the lines: `generate.py:292` lists the
+`collections.items` column and `:1342` builds the guide item list, `:251` lists `merchants.images`, `:266` lists
+both `offerings` array columns, `:274` lists `reviews.photos`. Each of those lines does name its column, so the
+writer claim is now checked like every other claim. This is the D64 posture arriving at the citation column: when
+a gate reddens something honest-looking, find out whether the claim was under-specified before touching the gate.
+
+**Twelve plants, one of them required to stay green, and two defects they found in the checker itself.** The
+matrix ran `P0` baseline green → twelve plants, each judged against the one named arm it is supposed to move →
+`P13` green again, with the shipped `quality.sql` sha256 (`9deda9b3…`) re-verified after every run. The plants write a modified *copy* to a temp path
+and pass it with `--quality=`, which is why the flag exists: the tracked file is never written, so this unit's
+witnesses cannot race another lane's gate the way D86's data plants had to.
+
+  - The first version of the parser lost the 17th `read_answer` row. Not the shipped one — the measurement
+    script I used to write the rules, which found a `;` inside a `-- comment` in the middle of the VALUES list
+    and stopped there. `-- The mirror of every row above: … D84 then mis-filed it as \`reachable\`; D84 …` is a
+    comment whose semicolon ends a statement for any comment-blind scanner. `stripSqlComments` exists because of
+    that, and `P11` plants the semicolon-comment again and requires GREEN.
+  - The shipped parser then had its own bug: both quote-scanning loops advanced twice after a closing quote, so
+    the `)` ending the last row was skipped and **zero** rows parsed. The gate went on printing a green read
+    census while checking no site at all, and what caught it was the non-vacuity guard written for exactly this:
+    `this script parsed 0 read_answer rows while its read census parsed 17 read_cat triples — the two are meant
+    to agree, so one of the two parses stopped early and the sites it skipped went unchecked`. A checker that
+    reports its own row count against a second parse of the same block is the difference between a bug that
+    shows up and a bug that looks like success.
+  - `P6`/`P7` came back GREEN on the first run, which was not a plant failure but a rule placement one: the
+    range and end-of-file checks sat behind the `content` guard, so a `why` column citation was checked for
+    existence only and `commerce/OrderRepository.java:78-99999` passed. The bounds checks moved above the guard
+    — a backwards range is false wherever it is written — and both plants redden now with `in why` in the
+    message, which is also how the reader knows that column is scanned.
+  - `P12` is the parser's own terminator rule: a `;` that ends the list somewhere no row is closing must not
+    yield a shorter, quieter census. It is not valid SQL, which is the point — the checker is reading a file the
+    database may never have seen.
+
+**Gates.** `scripts/db_gate_fresh.sh` over the shipped text: `RESULT: PASS — 216 quality checks on a
+from-scratch schema (tables=58, migrations=7)`, all seven steps green, step 7 printing `ANSWER SITES — 22 answer
+row(s) cite 31 source location(s) in 12 file(s); 38 distinct source line(s) read back` and `every cited line names
+the table, column or key its row is about`. `node scripts/check_jsonb_reads.mjs` alone exits 0 on the shipped
+tree and 1 on each of the eleven reddening plants.
+
+**Limits, printed by the script and repeated here because three of them cut short.** (1) A line that mentions
+the row's table, column or key is *consistent* with the claim, not proof of it: a citation to the right line for
+the wrong reason passes, and no textual check can see that. (2) Rule 7 has no teeth against `generate.py`, which
+names every table in the dataset — the writer citations are checked for line content only. (3) The `why` column
+is checked for structure and deliberately not for content, because a reason may name neighbouring code on
+purpose: the `offerings.options` answer cites `order_items.options` precisely to say it is a different column,
+and a rule that enforced the row's own table there would be wrong. (4) The scanner sees `File.ext:NNN`; the
+ledger's prose also cites `EventsController:63` and `V1:574` shapes, which no rule here touches — measured rather
+than conceded, because a limit guessed at is a limit that hides something: 114 prose mention tokens, 71 distinct
+targets over 33 files, all 71 resolving, none naming a file that does not hold the claim, and 3 adjacent-line
+cases a stricter rule would have to judge by hand.
+
+**Reported to their own lanes, not edited here.** The AI service binds `json.dumps(…)` into eight `$n::jsonb`
+placeholders in `apps/ai/nexus_ai/api/runs.py` (:118, :120, :121, :158, :159, :182, :207, :208) through asyncpg,
+whose codec quotes a `str` a second time — D86 measured the result at 188 string-valued jsonb rows on the live
+demo database, 34 of them `events.properties`. And the web lane's `Guide` type declares `body_blocks` required
+(`apps/web/src/lib/types.ts:266`), `growth-view.tsx:72` maps over it, `lib/mock/index.ts:740` synthesises it, and
+the string `body_blocks` does not occur anywhere in `services/platform/src/main/java` — so a live §8 guide cannot
+satisfy the type the reader assumes. Both are cited here and left for their owners.
