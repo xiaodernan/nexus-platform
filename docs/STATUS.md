@@ -4285,17 +4285,23 @@ mistakes          (1) Publishing a count that was never taken: D87's limits para
                     which swallows every digit, so the split returned empty strings and `Number('')` is 0. The
                     shipped checker splits on `[:,]` and was never affected. The tell was the impossible
                     number, and it is the same tell that made a line-0 arm worth writing in the first place.
-gates             gates             NOT a green official gate, and this section does not claim one. The 8-step run reached step 5
-                    and stopped: 215 of 216 quality rows passed on a from-scratch schema (tables=58,
+gates             gates             Two official 8-step runs, one red and one green, over a quality.sql that did not change
+                    between them — the pair is the finding, and this section does not quietly keep only the
+                    green one. The first run reached step 5 and stopped: 215 of 216 quality rows passed on a
+                    from-scratch schema (tables=58,
                     migrations=7) and the generation-clock row D83 wrote failed, which aborts steps 6 to 8.
-                    That row is item (e) below; it selects on `abs(val - now()) < 600` seconds and so measures
-                    the machine, not the seed. This unit's own steps were certified by running their scripts
-                    over the shipped text: step 7 unchanged after the shared-index refactor (14/14 witness
-                    cases MATCH, quality.sql still sha 9deda9b3a845bb01, 22 rows over 31 tokens, 41 spans in
-                    12 files), step 8 refusing 0 offenders under `--worktree` — its citation count is not
-                    quoted because it counts the tree it stands in, which three lanes are writing — and each
-                    new ledger section measured on its own text at 0 offenders. `bash -n` on the gate script,
-                    `node --check` on both census scripts.
+                    The second run, 25 minutes later over a tree unchanged in everything steps 1 to 5 read,
+                    printed RESULT: PASS with 216 checks and ran steps 6, 7 and 8 — step 8 refusing nothing.
+                    Nothing was fixed in between; what changed is how long the host took between the load and
+                    the gate, which is item (e) below: that row selects on `abs(val - now()) < 600` seconds and
+                    so measures the machine, not the seed. A row whose verdict depends on the wall clock is
+                    retracted here as a gate and left standing as a finding. This unit's own steps were
+                    certified by running their scripts over the shipped text: step 7 unchanged after the
+                    shared-index refactor (14/14 witness cases MATCH, quality.sql still sha 9deda9b3a845bb01,
+                    22 rows over 31 tokens, 41 spans in 12 files), step 8 refusing 0 offenders both over the
+                    working tree (157 citation-shaped tokens there) and over the committed pair in HEAD — and
+                    each new ledger section measured on its own text at 0 offenders. `bash -n` on the gate
+                    script, `node --check` on both census scripts.
 next              (a) the wrong-for-the-wrong-reason arm, sized by a throwaway probe during this unit — the
                     probe is not shipped, so these are a photograph the next run has to retake. Of the 162
                     citation-shaped tokens at HEAD: 41 have an identifier from their own sentence on the line

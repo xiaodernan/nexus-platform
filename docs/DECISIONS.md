@@ -5181,18 +5181,25 @@ two plants replace the file instead of appending to it. `scripts/check_jsonb_rea
 index in the same diff, so D87's 14-case matrix was re-run over it: 14/14 MATCH, with the tracked
 `data/seed/quality.sql` still `9deda9b3a845bb01…`.
 
-**Gates.** **Gates.** Not a green official run, and this row does not claim one. The 8-step fresh-database gate
-(`scripts/db_gate_fresh.sh`) reached step 5 and stopped there: 215 of its 216 quality rows passed on a
+**Gates.** Two official 8-step runs of `scripts/db_gate_fresh.sh`, one red and one green, on a
+`data/seed/quality.sql` that did not change between them — and the pair, not the green one, is what this row
+records. The first run reached step 5 and stopped there: 215 of its 216 quality rows passed on a
 from-scratch schema (tables=58, migrations=7) and the 216th — the generation-clock row D83 wrote — failed,
-which aborts steps 6, 7 and 8. That row selects a column by `abs(val - now()) < 600` seconds, so it measures
-the machine's speed as much as the seed it reads; STATUS 85's item (e) owns the finding and the re-anchor is
-the next unit. This unit's own steps are certified by running their scripts over the shipped text: step 7 is
+which aborts steps 6, 7 and 8. The second run, 25 minutes later over a tree unchanged in everything steps 1
+to 5 read, printed `RESULT: PASS — 216 quality checks on a from-scratch schema (tables=58, migrations=7)` and
+went on to run steps 6, 7 and 8, with step 8 refusing nothing. Nothing was repaired in between: the only
+difference is how long that host took between finishing the load and evaluating the gate, because the row
+selects a column by `abs(val - now()) < 600` seconds, which measures the machine's speed as much as the seed
+it reads. STATUS 85's item (e) owns the finding and the re-anchor is the next unit. The sentence this row
+shipped 20 minutes earlier — that this was not a green official run — is corrected by this paragraph, and the
+red run is kept in the text rather than edited out, since a retracted claim and the measurement that retracted
+it are both evidence. This unit's own steps are certified by running their scripts over the shipped text: step 7 is
 unchanged in behaviour after the shared-index refactor (14/14 witness cases MATCH, tracked
 `data/seed/quality.sql` still sha256 `9deda9b3a845bb01…`, 22 answer rows over 31 citation tokens, 41 spans in
-12 files), step 8 refuses 0 offenders under `--worktree` — and its citation count is deliberately not quoted
-here, because it counts the tree it stands in, which three lanes are writing. Each of the two ledger sections
-written for this unit was measured on its own text at 0 offenders. `bash -n` passes on the gate script and
-`node --check` on both census scripts.
+12 files), step 8 refuses 0 offenders both under `--worktree` over the tree it stands in — 157 citation-shaped
+tokens there — and over the committed pair in HEAD, where the count is a photograph of a live tree and is
+therefore not the number to remember. Each of the two ledger sections written for this unit was measured on its
+own text at 0 offenders. `bash -n` passes on the gate script and `node --check` on both census scripts.
 
 **Limits, printed by the script and repeated here.** (1) A citation to a real line for the wrong reason passes —
 `N4` plants it and requires green; the seed answers have three row identifiers to compare a line against and the
