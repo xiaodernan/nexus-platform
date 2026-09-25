@@ -4707,13 +4707,20 @@ Nine runs at three seams, `W0` and `final` green at 214. Proven, on a freshly bu
   red, with the offender naming the column and its value.
 * **C7** — `ALTER TABLE merchants ADD COLUMN dormant_years smallint` (NULL on all rows, no answer) → row 1 red.
 
-**Not yet shown able to fail** — and this is the residue, not a claim: the unknown-kind term, the blank-reason
-term, the "answer deleted" direction of the coverage term, and row 2's clock-growth direction. The runs that
-were supposed to cover them aborted on a drive-side bug (a mutation injected at a seam before the hand list
-existed, and a python escape that put a newline inside a string literal), so the drive reported `checks emitted:
-0` — INVALID, never counted as a pass, and still open. They are the first work of the next session on this row,
-and none of them should be believed until it reddens on purpose.
+All seven refusals now have a witness, run on a freshly built gate database with a green 214-check baseline
+before them and another after (`W0` and `W9` both `emitted=214 red=0`, so the plants were the only difference):
+**P1** an answer deleted — the coverage row red, printing `23 answered` against the census's 24 degenerate
+columns, which is the count doing the naming rather than a claim in prose; **P2** an answer's kind set to
+`immutable` — same row red; **P3** an answer's reason blanked — same row red; **P4** `merchants.updated_at`
+given a load-time value in the census — the clock row red with `2 column(s) hold a single value within ten
+minutes of now(): facts.updated_at = … (3 min old), merchants.updated_at = … (0 min old)`, because the set
+stopped equalling the answers the moment a second column began looking like the clock.
 
+Getting those four to fail took two attempts, and both failures were in the drive, not the gate: the
+mutations were first injected at a seam where the hand answer list did not exist yet, and a bash-heredoc
+escape turned an escaped newline inside a Python string literal into a real one. Both runs printed
+`checks emitted: 0` — INVALID, recorded as such and never counted as a pass — and the witness script now
+reads the gate file directly and injects the plants after the answer table is populated.
 ### 4. What this does not claim
 
 * Naming `facts.updated_at` the load instant does not say the seed is wrong. V6 documents why the column exists

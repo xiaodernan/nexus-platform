@@ -3882,11 +3882,16 @@ plants            nine runs, three seams, W0 and final green at 214. PROVEN: C4 
                     trigger moved offerings.updated_at with it — the census saw that audited column start varying
                     and refused its single-instant-pinned answer. A plant that reaches a column under audit through
                     a trigger cannot be undone, so the plants mutate the census copy and never the rows.
-                    NOT YET SHOWN ABLE TO FAIL — stated, not smoothed: the unknown-kind term, the blank-reason
-                    term, the answer-deleted direction of coverage, and row 2's clock-growth direction. Those four
-                    runs aborted on a drive-side bug (a mutation injected before the hand list existed; a python
-                    escape that put a newline inside a string literal) and printed `checks emitted: 0`, which is
-                    INVALID and was never counted as a pass. They are the first work on this row.
+PROVEN TOO, on a freshly built database with green 214-check baselines either side (W0 and W9 emitted=214
+                    red=0): P1 delete an answer -> row 1 red, printing `23 answered` against 24 degenerate
+                    columns · P2 kind 'immutable' -> row 1 red · P3 blank reason -> row 1 red ·
+                    P4 merchants.updated_at given a load-time value in the census -> row 2 red with
+                    `2 column(s) hold a single value within ten minutes of now(): facts.updated_at … (3 min
+                    old), merchants.updated_at … (0 min old)`. The first two attempts at those four printed
+                    `checks emitted: 0` — a mutation injected before the hand list existed, and a heredoc
+                    escape turning an escaped newline into a real one — recorded at the time as INVALID rather
+                    than as a pass, and now closed: the driver reads the gate file directly and injects after
+                    the answer table is populated.
 gates             scripts/db_gate_fresh.sh --keep green over the shipped text — `RESULT: PASS — 214 quality
                     checks on a from-scratch schema (tables=58, migrations=7)` — with the census read off the kept
                     database: 76 columns counted, `53 varying / 18 constant / 2 constant-with-nulls / 4 NULL
