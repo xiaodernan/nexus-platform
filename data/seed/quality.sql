@@ -1776,6 +1776,238 @@ SELECT 'the §19 provenance axis and the §109 stamp axis stay separate on facts
                      || ', which is a provenance word in the column that holds the synthetic stamp'
                 FROM facts WHERE value ? 'data_origin' AND (value->>'data_origin') <> 'demo') x), 'none');
 
+-- ============================================================ D81  the arrays hold the vocabularies the string census cannot reach
+--
+-- WHY THIS EXISTS: §78 widened the string census to `pg_type.typcategory = 'S'`, which was the right fix for
+-- the wrong plane — an array of strings is category `A`, so no `text[]` column has ever been in the 233, and
+-- the two most vocabulary-shaped things in the demo are exactly there. Measured on the kept from-scratch
+-- database: `merchants.tags` carries 2428 elements over 520 merchants, **100 distinct values**, the rarest on
+-- 2 merchants and the commonest on all 520 — a vocabulary by §71's own repetition test, and bounded by nothing:
+-- the SEO directory filters on it (`SeoRepository.java:151`, `:tag = any(coalesce(m.tags,'{}'::text[]))`)
+-- through a door that validates only a slug *pattern* (`SLUG_PATTERN`, `SeoRepository.java:50`), so no list
+-- anywhere says what a tag may be. On the other side of the same column type, `tenants.locales` is bounded by
+-- exactly one thing no check reads: its column DEFAULT, `ARRAY['en','zh-HK','zh-CN']`, which the one seeded
+-- tenant happens to match. A bound that lives in `pg_attrdef` is still a bound.
+--
+-- The jsonb arrays need a different question. Their elements are objects, so "how many distinct values" is
+-- meaningless; what the renderers actually depend on is that every element has the same keys. Measured:
+-- merchants.images and offerings.images carry 520 and 5534 objects all keyed alt/credit/url, offerings.options
+-- 4409 objects keyed name/values, collections.items 38 objects on one signature — `keysets = 1` everywhere, an
+-- invariant nobody asserted. And `reviews.photos` is an empty array on all 11000 rows: the array twin of §71's
+-- `documents.error`, known only because this probe looked.
+--
+-- WHAT IS ANSWERED AND WHAT IS LEFT ALONE. Each array column gets a kind — nothing-bounds-it,
+-- column-default, payload-shape, never-populated — and `column-default` is the strong one: the answer names the
+-- elements the bound allows, and the row compares them against the elements the data carries AND against the
+-- DEFAULT text in the catalog, so a fourth locale, a dropped locale and a removed DEFAULT each redden their own
+-- term. `nothing-bounds-it` is only allowed where the catalog really offers no bound: if someone adds a DEFAULT
+-- to merchants.tags, the answer that said "nothing bounds this" goes red by itself. Whether the 100 tags
+-- SHOULD become a controlled list is a decision about the SEO grammar and belongs to the stream that owns that
+-- door — this unit states the absence, and takes no position on it.
+
+CREATE TEMP TABLE arr_cat (tbl text NOT NULL, col text NOT NULL, kind text NOT NULL, rows bigint NOT NULL,
+                           with_rows bigint NOT NULL, elements bigint NOT NULL, distincts int, keysets int,
+                           keys text, rarest int, commonest int, deftext text, PRIMARY KEY (tbl, col));
+
+-- The text[] columns first: their elements are values, so the census counts distinct ones and how widely each
+-- one is spread.
+DO $d81a$
+DECLARE r record; n bigint; w bigint; el bigint; ds int; mn int; mx int; df text;
+BEGIN
+  FOR r IN SELECT c.relname AS tbl, a.attname AS col, TRUE AS is_plain_array
+             FROM pg_attribute a
+             JOIN pg_class c ON c.oid = a.attrelid AND c.relkind = 'r'
+             JOIN pg_namespace ns ON ns.oid = c.relnamespace AND ns.nspname = 'public'
+            WHERE a.attnum > 0 AND NOT a.attisdropped AND a.atttypid = 'text[]'::regtype
+            ORDER BY 1, 2
+  LOOP
+    EXECUTE format('SELECT count(*), count(*) FILTER (WHERE coalesce(array_length(%I, 1), 0) > 0), '
+                 || 'coalesce(sum(array_length(%I, 1)), 0) FROM public.%I', r.col, r.col, r.tbl)
+        INTO n, w, el;
+    EXECUTE format('SELECT count(*), min(c), max(c) FROM (SELECT e, count(*) AS c FROM '
+                 || '(SELECT unnest(%I) AS e FROM public.%I WHERE %I IS NOT NULL) v GROUP BY e) x',
+                 r.col, r.tbl, r.col) INTO ds, mn, mx;
+    SELECT pg_get_expr(d.adbin, d.adrelid) INTO df
+      FROM pg_class c
+      JOIN pg_attribute a ON a.attrelid = c.oid AND a.attname = r.col
+      LEFT JOIN pg_attrdef d ON d.adrelid = c.oid AND d.adnum = a.attnum
+     WHERE c.relname = r.tbl;
+    INSERT INTO arr_cat VALUES (r.tbl, r.col, 'text[]', n, w, el, coalesce(ds, 0), 0, '-',
+                                coalesce(mn, 0), coalesce(mx, 0), df);
+  END LOOP;
+END $d81a$;
+
+-- Then the jsonb columns that actually hold arrays: their elements are objects, so the census counts distinct
+-- key signatures instead of pretending the objects are values.
+DO $d81b$
+DECLARE r record; n bigint; w bigint; el bigint; ds int; ks int; ky text; df text;
+BEGIN
+  FOR r IN SELECT c.relname AS tbl, a.attname AS col
+             FROM pg_attribute a
+             JOIN pg_class c ON c.oid = a.attrelid AND c.relkind = 'r'
+             JOIN pg_namespace ns ON ns.oid = c.relnamespace AND ns.nspname = 'public'
+             JOIN pg_type t ON t.oid = a.atttypid AND t.typname = 'jsonb'
+            WHERE a.attnum > 0 AND NOT a.attisdropped
+            ORDER BY 1, 2
+  LOOP
+    EXECUTE format('SELECT count(*), count(*) FILTER (WHERE jsonb_typeof(%I) = ''array''), '
+                 || 'coalesce(sum(jsonb_array_length(%I)) FILTER (WHERE jsonb_typeof(%I) = ''array''), 0) '
+                 || 'FROM public.%I', r.col, r.col, r.col, r.tbl) INTO n, w, el;
+    CONTINUE WHEN w = 0;
+    EXECUTE format('SELECT count(DISTINCT e)::int FROM (SELECT jsonb_array_elements(%I) AS e FROM public.%I '
+                 || 'WHERE jsonb_typeof(%I) = ''array'') q', r.col, r.tbl, r.col) INTO ds;
+    EXECUTE format('SELECT count(DISTINCT sig)::int FROM (SELECT (SELECT string_agg(k, '','' ORDER BY k) '
+                 || 'FROM jsonb_object_keys(e) k) AS sig FROM (SELECT jsonb_array_elements(%I) AS e FROM public.%I '
+                 || 'WHERE jsonb_typeof(%I) = ''array'') o WHERE jsonb_typeof(e) = ''object'') s',
+                 r.col, r.tbl, r.col) INTO ks;
+    EXECUTE format('SELECT coalesce(string_agg(k, '', '' ORDER BY k), ''-'') FROM (SELECT DISTINCT '
+                 || 'jsonb_object_keys(e) AS k FROM (SELECT jsonb_array_elements(%I) AS e FROM public.%I '
+                 || 'WHERE jsonb_typeof(%I) = ''array'') q2 WHERE jsonb_typeof(e) = ''object'') w2',
+                 r.col, r.tbl, r.col) INTO ky;
+    SELECT pg_get_expr(d.adbin, d.adrelid) INTO df
+      FROM pg_class c
+      JOIN pg_attribute a ON a.attrelid = c.oid AND a.attname = r.col
+      LEFT JOIN pg_attrdef d ON d.adrelid = c.oid AND d.adnum = a.attnum
+     WHERE c.relname = r.tbl;
+    INSERT INTO arr_cat VALUES (r.tbl, r.col, 'jsonb[]', n, w, el, coalesce(ds, 0), coalesce(ks, 0), ky,
+                                0, 0, df);
+  END LOOP;
+END $d81b$;
+
+-- The hand answers. `elements` is the declared bound: a comma-separated list for the one column bounded by a
+-- DEFAULT, '-' where the answer says there is no such list.
+CREATE TEMP TABLE arr_bound (tbl text NOT NULL, col text NOT NULL, kind text NOT NULL, elements text NOT NULL,
+                             why text NOT NULL, PRIMARY KEY (tbl, col));
+INSERT INTO arr_bound VALUES
+ ('merchants', 'tags', 'nothing-bounds-it', '-', '100 distinct slugs over 2428 elements; the door validates a '
+  || 'slug pattern only (SeoRepository.java:50) and filters with `:tag = any(m.tags)` (:151), so the value set '
+  || 'is whatever generate.py''s word lists happen to contain'),
+ ('tenants', 'locales', 'column-default', 'en, zh-CN, zh-HK', 'V1:21 declares DEFAULT '
+  || 'ARRAY[''en'',''zh-HK'',''zh-CN''] and the one seeded tenant carries exactly those three'),
+ ('api_keys', 'scopes', 'never-populated', '-', 'the table ships 0 rows (D64), so the element vocabulary is '
+  || 'undefined by anything in this build'),
+ ('campaigns', 'channel', 'never-populated', '-', '0 rows; §33 campaigns are created at runtime'),
+ ('eval_cases', 'tags', 'never-populated', '-', '0 rows; the eval corpus is not part of the demo seed'),
+ ('external_principals', 'scopes', 'never-populated', '-', '0 rows'),
+ ('merchants', 'images', 'payload-shape', '-', '520 image objects, all keyed alt/credit/url — the contract is '
+  || 'the shape, not the values'),
+ ('offerings', 'images', 'payload-shape', '-', '5534 objects on the same alt/credit/url signature'),
+ ('offerings', 'options', 'payload-shape', '-', '4409 variant objects, all name/values'),
+ ('collections', 'items', 'payload-shape', '-', '38 objects across 4 collections, one signature'),
+ ('reviews', 'photos', 'never-populated', '-', 'an empty array on all 11000 reviews: §109 does not invent '
+  || 'photographs, so the column exists and stays empty');
+
+INSERT INTO qc
+SELECT 'every array column is answered for what bounds its elements',
+       (SELECT count(*) FROM arr_cat) > 0
+       AND NOT EXISTS (SELECT 1 FROM arr_cat c WHERE NOT EXISTS
+                        (SELECT 1 FROM arr_bound b WHERE b.tbl = c.tbl AND b.col = c.col))
+       AND NOT EXISTS (SELECT 1 FROM arr_bound b WHERE NOT EXISTS
+                        (SELECT 1 FROM arr_cat c WHERE c.tbl = b.tbl AND c.col = b.col))
+       AND NOT EXISTS (SELECT 1 FROM arr_bound b WHERE btrim(b.why) = ''
+                        OR b.kind NOT IN ('nothing-bounds-it', 'column-default', 'payload-shape',
+                                          'never-populated'))
+       -- a column-default answer has to match BOTH the data and the catalog's DEFAULT
+       AND NOT EXISTS (SELECT 1 FROM arr_cat c JOIN arr_bound b ON b.tbl = c.tbl AND b.col = c.col
+                        WHERE b.kind = 'column-default'
+                          AND (c.distincts <> (SELECT count(*) FROM unnest(string_to_array(b.elements, ', ')) x
+                                                WHERE b.elements <> '-')
+                               OR c.deftext IS NULL))
+       AND NOT EXISTS (SELECT 1 FROM arr_cat c JOIN arr_bound b ON b.tbl = c.tbl AND b.col = c.col
+                        WHERE b.kind = 'column-default'
+                          AND NOT (SELECT bool_and(position(x.v IN coalesce(c.deftext, '')) > 0)
+                                   FROM unnest(string_to_array(b.elements, ', ')) x(v)))
+       -- and nothing-bounds-it has to stay true: no DEFAULT may exist for a column answered that way
+       AND NOT EXISTS (SELECT 1 FROM arr_cat c JOIN arr_bound b ON b.tbl = c.tbl AND b.col = c.col
+                        WHERE b.kind = 'nothing-bounds-it'
+                          AND position('ARRAY' in coalesce(c.deftext, '')) > 0),
+       (SELECT count(*) FROM arr_cat) || ' array column(s) measured ('
+       || (SELECT count(*) FROM arr_cat WHERE kind = 'text[]') || ' text[], '
+       || (SELECT count(*) FROM arr_cat WHERE kind = 'jsonb[]') || ' jsonb holding arrays), each answered: '
+       || coalesce((SELECT string_agg(b.tbl || '.' || b.col || ' = ' || b.kind, ', ' ORDER BY b.tbl, b.col)
+                      FROM arr_bound b), 'none')
+       || ' — elements: ' || (SELECT string_agg(tbl || '.' || col || ' ' || elements || '/' || distincts, ', '
+                                 ORDER BY kind, tbl) FROM arr_cat WHERE elements > 0)
+       || ' — offenders: ' || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT 'the data has an array column ' || c.tbl || '.' || c.col || ' (' || c.elements
+                     || ' element(s)) and no answer says what bounds it' AS x
+                FROM arr_cat c WHERE NOT EXISTS (SELECT 1 FROM arr_bound b
+                                                 WHERE b.tbl = c.tbl AND b.col = c.col)
+              UNION ALL
+              SELECT b.tbl || '.' || b.col || ' is answered ' || b.kind || ' but the catalog has no array '
+                     || 'column by that name'
+                FROM arr_bound b WHERE NOT EXISTS (SELECT 1 FROM arr_cat c
+                                                   WHERE c.tbl = b.tbl AND c.col = b.col)
+              UNION ALL
+              SELECT 'the answer for ' || tbl || '.' || col || ' names kind ''' || kind
+                     || ''', not one of the four this block knows'
+                FROM arr_bound WHERE kind NOT IN ('nothing-bounds-it', 'column-default', 'payload-shape',
+                                                  'never-populated')
+              UNION ALL
+              SELECT 'the answer for ' || tbl || '.' || col || ' gives no reason'
+                FROM arr_bound WHERE btrim(why) = ''
+              UNION ALL
+              SELECT 'the elements bound for ' || c.tbl || '.' || c.col || ' (' || c.distincts
+                     || ' distinct in the data, [' || b.elements || '] declared) no longer match, or the column '
+                     || 'lost its DEFAULT'
+                FROM arr_cat c JOIN arr_bound b ON b.tbl = c.tbl AND b.col = c.col
+                WHERE b.kind = 'column-default'
+                  AND (c.distincts <> (SELECT count(*) FROM unnest(string_to_array(b.elements, ', ')) x
+                                       WHERE b.elements <> '-') OR c.deftext IS NULL)
+              UNION ALL
+              SELECT 'a declared bound element of ' || c.tbl || '.' || c.col || ' is missing from the DEFAULT '
+                     || 'the catalog now carries: ' || coalesce(c.deftext, '(no default)')
+                FROM arr_cat c JOIN arr_bound b ON b.tbl = c.tbl AND b.col = c.col
+                WHERE b.kind = 'column-default'
+                  AND NOT (SELECT bool_and(position(x.v IN coalesce(c.deftext, '')) > 0)
+                           FROM unnest(string_to_array(b.elements, ', ')) x(v))
+              UNION ALL
+              SELECT c.tbl || '.' || c.col || ' is answered nothing-bounds-it but now carries a DEFAULT of '
+                     || c.deftext
+                FROM arr_cat c JOIN arr_bound b ON b.tbl = c.tbl AND b.col = c.col
+                WHERE b.kind = 'nothing-bounds-it' AND position('ARRAY' in coalesce(c.deftext, '')) > 0) o),
+                   'none');
+
+INSERT INTO qc
+SELECT 'the elements of an object-array column all carry the same keys',
+       (SELECT count(*) FROM arr_cat WHERE kind = 'jsonb[]' AND keysets = 1) > 0
+       AND NOT EXISTS (SELECT 1 FROM arr_cat c WHERE c.kind = 'jsonb[]' AND c.keysets > 1)
+       AND NOT EXISTS (SELECT 1 FROM arr_cat c JOIN arr_bound b ON b.tbl = c.tbl AND b.col = c.col
+                        WHERE b.kind = 'payload-shape' AND c.elements = 0)
+       AND NOT EXISTS (SELECT 1 FROM arr_cat c JOIN arr_bound b ON b.tbl = c.tbl AND b.col = c.col
+                        WHERE b.kind = 'never-populated' AND c.elements > 0),
+       coalesce((SELECT string_agg(tbl || '.' || col || ' keysets=' || keysets || ' [' || keys || '] over '
+                                      || elements || ' element(s)', ', ' ORDER BY tbl, col)
+                   FROM arr_cat WHERE kind = 'jsonb[]'), 'no jsonb arrays')
+       || ' — offenders: ' || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT c.tbl || '.' || c.col || ' elements carry ' || c.keysets || ' different key signatures '
+                     || '(union [' || c.keys || ']): the renderers read one shape' AS x
+                FROM arr_cat c WHERE c.kind = 'jsonb[]' AND c.keysets > 1
+              UNION ALL
+              SELECT b.tbl || '.' || b.col || ' is answered payload-shape but carries no elements at all'
+                FROM arr_cat c JOIN arr_bound b ON b.tbl = c.tbl AND b.col = c.col
+                 WHERE b.kind = 'payload-shape' AND c.elements = 0
+              UNION ALL
+              SELECT b.tbl || '.' || b.col || ' is answered never-populated and now carries ' || c.elements
+                     || ' element(s), so the bound has to be answered for real'
+                FROM arr_cat c JOIN arr_bound b ON b.tbl = c.tbl AND b.col = c.col
+                 WHERE b.kind = 'never-populated' AND c.elements > 0) o), 'none');
+
+INSERT INTO qc
+SELECT 'a text[] value that appears on exactly one row is named, not averaged',
+       (SELECT count(*) FROM arr_cat WHERE kind = 'text[]' AND rows >= 20) > 0
+       AND NOT EXISTS (SELECT 1 FROM arr_cat c WHERE c.kind = 'text[]' AND c.rows >= 20 AND c.rarest = 1),
+       coalesce((SELECT string_agg('the rarest element of ' || tbl || '.' || col || ' is on 1 row', ', ')
+                   FROM arr_cat WHERE kind = 'text[]' AND rows >= 20 AND rarest = 1),
+                (SELECT string_agg('text[] column ' || tbl || '.' || col || ' = ' || rows || ' row(s), '
+                                   || elements || ' elements, ' || distincts || ' distinct, rarest on '
+                                   || rarest || ' row(s), commonest on ' || commonest, ' / ' ORDER BY tbl)
+                   FROM arr_cat WHERE kind = 'text[]' AND rows >= 20)
+                || ' — repetition holds, so these are vocabularies rather than per-row free text')
+       || ' | below §71''s row floor: '
+       || coalesce((SELECT string_agg(tbl || '.' || col || ' (' || rows || ' row(s))', ', ')
+                      FROM arr_cat WHERE kind = 'text[]' AND rows < 20), 'none');
+
 -- ============================================================ D74  door vocabularies
 --
 -- WHY THIS EXISTS: D69 counted the schema's polymorphic (type,id) pairs and found one bounded by a CHECK.

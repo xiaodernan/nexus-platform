@@ -4463,3 +4463,99 @@ probe that re-counts what it changed (`chunks with synthetic_data=0`, `unstamped
 - No Java, migration or seeded value changed. 204 → 207 checks; `mvn -o test` and `e2e_fresh.sh` were not in
   scope, and the §109 question the marker exists to answer — is marked demo data acceptable traffic — is still
   the same undecided product call D64 and D76 recorded.
+
+## D81 The arrays held the two most vocabulary-shaped columns in the demo, and no census could see them — 2026-09-25
+
+### 1. What D78's fix still excluded
+
+D78 replaced `atttypid = 'text'::regtype` with `pg_type.typcategory = 'S'`, and the sentence it corrected was
+"every text column of every base table". That is now true of *strings*. It was never true of **strings inside a
+container**: an array is category `A`, and a jsonb column is category `U`. So the two columns in this schema
+whose value sets most look like vocabularies have been outside every census since the day the censuses started
+— `merchants.tags` and `tenants.locales` — along with four object arrays whose shape no row compares.
+
+The measurement, on the kept from-scratch database:
+
+```
+text[]      merchants.tags      520 merchants, 2428 elements, 100 distinct slugs,
+                                rarest on 2 merchants, commonest on all 520
+            tenants.locales       1 tenant,   3 elements,   3 distinct  (en, zh-CN, zh-HK)
+            api_keys.scopes | campaigns.channel | eval_cases.tags | external_principals.scopes
+                                                            0 rows each (D64 keeps these tables empty)
+jsonb arrays  merchants.images    520 elements,  10 distinct, keysets=1 [alt, credit, url]
+              offerings.images   5534 elements,  10 distinct, keysets=1 [alt, credit, url]
+              offerings.options  4409 elements,   3 distinct, keysets=1 [name, values]
+              collections.items    38 elements,  25 distinct, keysets=1 [note, subject_id, subject_type]
+              reviews.photos        0 elements on all 11000 rows — every review carries an empty array
+```
+
+`merchants.tags` passes §71's own definition of a vocabulary — a value set that REPEATS (24.3 occurrences per
+value; not one value appears on a single merchant). And it is the one facet the SEO directory filters on:
+`SeoRepository.java:151` runs `:tag = any(coalesce(m.tags,'{}'::text[]))`, while the door in front of it
+validates only `SLUG_PATTERN` (`SeoRepository.java:50`) — a *shape* rule, not a list. So the 100 values are
+bounded by nothing anywhere: not the schema, not a door, not a check.
+
+`tenants.locales` is the mirror case. It is bounded — by a column DEFAULT, `ARRAY['en','zh-HK','zh-CN']` from
+V1:21 — and the one seeded tenant happens to match it. A bound that lives in `pg_attrdef` is a real bound, and
+nothing in the file was reading it.
+
+### 2. The change: a census of elements, an answer per column, and the DEFAULT read back
+
+`arr_cat` measures every `text[]` column and every jsonb column that actually holds arrays: rows, rows with
+elements, elements, distinct elements, and — for object elements — the number of DISTINCT key signatures plus
+their union. `arr_bound` is the hand answer per column, and its `kind` is one of four states:
+
+* `nothing-bounds-it` — allowed only while the catalog offers no bound: the row checks that the column really
+  has no `ARRAY` DEFAULT, so if someone adds one to `merchants.tags`, the answer that said "nothing bounds
+  this" reddens by itself.
+* `column-default` — the strong kind. The answer names the elements the bound allows, and the row compares them
+  both against the distinct elements the data carries (a count match, plain SQL) and against the DEFAULT text
+  read from `pg_attrdef` (every declared element must still appear in it). Three separate facts have to hold
+  for one green.
+* `payload-shape` — for object arrays, where the contract is the key set, not the values.
+* `never-populated` — an assertion that the column carries no elements anywhere, which is what makes
+  `reviews.photos`' 11000 empty arrays a stated fact rather than an accident.
+
+Three rows: **'every array column is answered for what bounds its elements'** (census↔answers both ways, a
+non-blank reason, a known kind, and the two `column-default`/`nothing-bounds-it` catalog terms);
+**'the elements of an object-array column all carry the same keys'** (`keysets > 1` reddens, and an answer's kind
+must agree with whether the column has elements at all); and **'a text[] value that appears on exactly one row is
+named, not averaged'** — §71's row floor applied to elements, so `merchants.tags` is allowed to be a vocabulary
+(rarest 2) and a value on a single merchant is called out by name. 207 → 210 checks.
+
+### 3. Plants — nine runs, three seams, and two of them data plants
+
+| # | plant | red | what it said |
+|---|---|---|---|
+| W0 | none | — | 210 green; the three rows print the census above verbatim |
+| Q1 | the `merchants.tags` answer deleted | RA | an array column with 2428 elements and no answer for what bounds it |
+| Q2 | its kind set to `free-text` | RA | `the answer for merchants.tags names kind 'free-text', not one of the four this block knows` |
+| Q3 | the declared DEFAULT set gains `und` | RA | declared 4 against 3 in the data — and the same element is missing from the catalog's DEFAULT, so both `column-default` terms fire on one plant |
+| Q4 | `tenants.locales` answered `nothing-bounds-it` | RA | `is answered nothing-bounds-it but now carries a DEFAULT of ARRAY['en'::text, …]` — the catalog refutes the answer |
+| Q5 | `merchants.tags` answered `never-populated` | RB | the element count contradicts the kind |
+| Q6 | one image element gains a `caption` key | RB | `merchants.images keysets=2` where 6053 other objects carry three |
+| Q7 | one merchant carries a tag nobody else has | RC | `the rarest element of merchants.tags is on 1 row` |
+| final | none, restored | — | 210 green; `merchants=520 with a 1-row tag=0`, `merchants with a caption key=0`, no `d81` schema left |
+
+Q6 and Q7 are the plants that matter: they change shipped data, not the answer list, and each restores the row
+it touched from a snapshot table created in a schema the gate does not scan — then re-counts, because D78 taught
+this lane that a green final run is not a state proof.
+
+### 4. What this does not claim
+
+- `nothing-bounds-it` for `merchants.tags` states where the values come from (`generate.py`'s word lists) and
+  that no door enumerates them. Whether the SEO grammar **should** carry a controlled facet list is a product
+  decision about another stream's door; this unit makes the absence readable and takes no position on it.
+- A count match is not a set match: `column-default` compares the *number* of distinct elements against the
+  number declared, plus each declared element's presence in the DEFAULT text. A data value substituted for
+  another (zh-HK → zh-TW, same count) would slip through the first term and be caught by the second only if it
+  removed a declared element. Stated rather than smoothed over; a full set equality over two dynamic sources was
+  the part of this block that kept reading worse than it worked.
+- `arr_cat` looks at `text[]` and jsonb only. No other array type is shipped — measured through
+  `pg_type.typcategory = 'A'` in the same database — and composite types (category `C`) are absent, so the
+  container blind spot is now bounded by a measurement rather than by luck.
+- `keysets = 1` is a statement about elements that are objects. `reviews.photos` reports `keysets=0` because it
+  has no elements at all, which is what its `never-populated` answer claims; if it ever gains one, the kind
+  reddens before the shape does.
+- No Java, migration or seeded value changed: 207 → 210 checks, and `mvn -o test` / `e2e_fresh.sh` stay out of
+  scope for a unit the gate reads from disk.

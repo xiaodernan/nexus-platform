@@ -3696,3 +3696,79 @@ next              residue worth carrying: (a) a marker spelled without `origin|s
                     in `nexus_test` belongs to the infrastructure lane; the events subject seam (D70) waits on
                     a contract decision.
 ```
+
+## 77. The arrays held the two most vocabulary-shaped columns in the demo, invisible to every census (2026-09-25)
+
+§75 widened the string census to a *category*, which was the right answer to the wrong plane: `text[]` is
+category `A` and jsonb is `U`, so the containers have been outside every value-set check since §71 began
+counting them. Measured on a from-scratch database, that hid exactly the two things a vocabulary check exists
+for — a facet list with no bound anywhere (`merchants.tags`: 520 merchants, 2428 elements, **100 distinct
+slugs**, rarest on 2 merchants, commonest on all 520) and a value set bounded only by something no check reads
+(`tenants.locales`: 3 elements, matching V1:21's `DEFAULT ARRAY['en','zh-HK','zh-CN']` in `pg_attrdef`) — plus
+four object arrays whose elements all turn out to share one key signature, and `reviews.photos`, an empty array
+on all 11000 rows.
+
+```
+measured          arr_cat finds 11 array columns (6 text[], 5 jsonb holding arrays). text[]: merchants.tags
+                    2428/100 (rows 520), tenants.locales 3/3 (1 row), and api_keys.scopes, campaigns.channel,
+                    eval_cases.tags, external_principals.scopes with 0 rows — all four DEFAULT '{}'::text[].
+                    jsonb arrays, elements / distinct / keysets: merchants.images 520/10/1 [alt, credit, url],
+                    offerings.images 5534/10/1 [alt, credit, url], offerings.options 4409/3/1 [name, values],
+                    collections.items 38/25/1 [note, subject_id, subject_type], reviews.photos 0/0/0 over 11000
+                    rows. The door side was read rather than assumed: SeoRepository.java:151 filters
+                    `:tag = any(coalesce(m.tags,'{}'::text[]))` behind a slug PATTERN (:50) and no list, so
+                    100 tags are bounded by nothing the gate can read; §71's repetition test says they are a
+                    vocabulary (24.3 occurrences per value, nothing on a single merchant).
+new/changed       data/seed/quality.sql only, +232/-0. arr_cat (rows, rows-with-elements, elements, distinct
+                    elements, distinct key signatures and their union, plus the column's catalog DEFAULT text);
+                    arr_bound (one hand answer per column, kind ∈ nothing-bounds-it | column-default |
+                    payload-shape | never-populated, with the declared element list and a reason). Three rows:
+                    the census and the answers named for each other both ways, a blank reason or unknown kind
+                    refused, `column-default` checked against the data's element count AND against the DEFAULT
+                    text in pg_attrdef, `nothing-bounds-it` allowed only while no ARRAY DEFAULT exists; the
+                    object-array row requiring one key signature per column and refusing a payload-shape answer
+                    over zero elements or a never-populated answer over 2428; and §71's row floor applied to
+                    elements, so a tag on exactly one merchant is named. 207 -> 210 checks.
+plants            9 runs at three seams (before the censuses for data, after them for the answers, before the
+                    rows), each printing the checks emitted and the gate's verdict. Q1 delete the tags answer ->
+                    `the data has an array column merchants.tags (2428 element(s)) and no answer says what
+                    bounds it` · Q2 kind='free-text' -> `names kind 'free-text', not one of the four this block
+                    knows` · Q3 declare a fourth locale -> both column-default terms fire at once (3 in the data
+                    against 4 declared, and `und` missing from the catalog's DEFAULT) · Q4 answer locales as
+                    nothing-bounds-it -> `is answered nothing-bounds-it but now carries a DEFAULT of
+                    ARRAY['en'::text, …]`, the catalog refuting the answer · Q5 answer tags as never-populated ->
+                    the object-array row, on element count alone · Q6 (data) one image element gains a `caption`
+                    key -> `merchants.images keysets=2` · Q7 (data) one merchant gains a tag nobody else has ->
+                    `the rarest element of merchants.tags is on 1 row` · W0 and final 210 green with the data
+                    plants restored and re-counted: `merchants=520 with a 1-row tag=0`,
+                    `merchants with a caption key=0`, `d81 schema=0`. The two data plants restore the row they
+                    touched from a snapshot table in a schema the gate does not scan, because §75's and §76's
+                    lessons both say a restore is only evidence when it is re-read.
+gates             scripts/db_gate_fresh.sh --keep green over the shipped text — `RESULT: PASS — 210 quality
+                    checks on a from-scratch schema (tables=58, migrations=7)` — with the three rows read off
+                    the kept database: `11 array column(s) measured (6 text[], 5 jsonb holding arrays), each
+                    answered: … merchants.tags = nothing-bounds-it … tenants.locales = column-default —
+                    elements: collections.items 38/25, merchants.images 520/10, offerings.images 5534/10,
+                    offerings.options 4409/3, merchants.tags 2428/100, tenants.locales 3/3 — offenders: none` /
+                    `collections.items keysets=1 [note, subject_id, subject_type] over 38 element(s), …
+                    reviews.photos keysets=0 [-] over 0 element(s) — offenders: none` /
+                    `text[] column merchants.tags = 520 row(s), 2428 elements, 100 distinct, rarest on 2 row(s),
+                    commonest on 520 — repetition holds … | below §71's row floor: api_keys.scopes (0 row(s)),
+                    campaigns.channel (0 row(s)), eval_cases.tags (0 row(s)), external_principals.scopes
+                    (0 row(s)), tenants.locales (1 row(s))`. Kept gate databases dropped when this unit closes;
+                    the drifted `nexus` database and `nexus_funnel_probe` belong to other streams and were
+                    never opened. No Java, migration or seeded value changed.
+next              residue worth carrying: (a) the `column-default` comparison is a count match plus a presence
+                    test against the DEFAULT text, not a set equality — swapping zh-HK for zh-TW at the same
+                    count is caught only if it drops a declared element, and that is stated rather than papered
+                    over; (b) whether the SEO grammar SHOULD carry a controlled facet list is another stream's
+                    product decision, recorded here as an absence the gate now describes; (c) the census covers
+                    text[] and jsonb because those are the only containers shipped — composite types (category
+                    `C`) are absent by measurement, not by assumption, and would need their own element rule;
+                    (d) `reviews.photos` empty on all 11000 rows is now a claimed state, so the first seed that
+                    writes a photo path has to answer for it — and §109 is the reason nobody should. Standing
+                    reports unchanged: `saved_searches.notify` read by nothing; `no_show` named once by a door
+                    list with no reader; CommerceApiTest belongs to another stream; the split migration ledger in
+                    `nexus_test` belongs to the infrastructure lane; the events subject seam (D70) waits on a
+                    contract decision.
+```
