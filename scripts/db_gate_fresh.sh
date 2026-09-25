@@ -102,13 +102,13 @@ cleanup() {
 trap cleanup EXIT
 
 # --------------------------------------------------------------------------- 1. empty database
-step "1/7  create $GATE_DB from template0 (empty, no inherited objects)"
+step "1/8  create $GATE_DB from template0 (empty, no inherited objects)"
 psql_maint "CREATE DATABASE \"$GATE_DB\" TEMPLATE template0 ENCODING 'UTF8'" >/dev/null
 [ "$(psql_gate "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name NOT LIKE 'pg_%'")" = "0" ] \
   || die "the fresh database is not empty — template1 pollution would make this gate meaningless"
 
 # --------------------------------------------------------------------------- 2. migrations + roles
-step "2/7  apply infra/db/migrations/V*.sql + 00_roles.sql"
+step "2/8  apply infra/db/migrations/V*.sql + 00_roles.sql"
 NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_NAME="$GATE_DB" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/db_apply_migrations.sh" | sed -e 's/^/    /'
 TABLES="$(psql_gate "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")" \
@@ -118,15 +118,15 @@ echo "    -> gate database now has tables=$TABLES migrations=$SCHEMA_VERSION"
 
 # --------------------------------------------------------------------------- 3. generate the dataset
 if [ "$SKIP_GENERATE" = "1" ]; then
-  step "3/7  seed generation skipped (--skip-generate): loading data/seed/out/ as found"
+  step "3/8  seed generation skipped (--skip-generate): loading data/seed/out/ as found"
 else
-  step "3/7  generate the synthetic dataset from the CSVs (generate.py self-checks FK integrity)"
+  step "3/8  generate the synthetic dataset from the CSVs (generate.py self-checks FK integrity)"
   PYTHON="${PYTHON:-python}"
   ( cd "$ROOT" && "$PYTHON" data/seed/generate.py ) 2>&1 | tail -4 | sed -e 's/^/    /'
 fi
 
 # --------------------------------------------------------------------------- 4. load
-step "4/7  load the seed into the fresh database"
+step "4/8  load the seed into the fresh database"
 # RESEED_DEPENDENTS=1 states the blast radius rather than discovering it. The truncate script now
 # closes itself over the live foreign keys (D63), so it would clear these 27 tables on a fresh
 # database anyway — they are empty there. The gate names them because a from-scratch proof should not
@@ -135,7 +135,7 @@ CONTAINER="$CONTAINER" DB="$GATE_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 \
   "$ROOT/data/seed/load.sh" | tail -12 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 5. gate
-step "5/7  data/seed/quality.sql (the hard gate)"
+step "5/8  data/seed/quality.sql (the hard gate)"
 VARS=""
 for v in MIN_MERCHANTS MIN_OFFERINGS MIN_REVIEWS MIN_NEAR_SHA_TIN; do
   if [ -n "${!v:-}" ]; then VARS="$VARS -v $v=${!v}"; fi
@@ -155,7 +155,7 @@ else
 fi
 
 # --------------------------------------------------------------------------- 6. the truncate's two branches
-step "6/7  scripts/seed_truncate_probe.sh — an empty stranger is cleared, one holding rows refuses"
+step "6/8  scripts/seed_truncate_probe.sh — an empty stranger is cleared, one holding rows refuses"
 # The probe builds its own throwaway database, so the gate's loaded dataset stays the way step 4 left
 # it. Running it here is the point: a truncate that only ever succeeds proves nothing, and the branch
 # that protects somebody else's rows is the branch nobody waits to see.
@@ -163,17 +163,30 @@ NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/seed_truncate_probe.sh" 2>&1 | tail -8 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 7. the read census and the source
-step "7/7  scripts/check_jsonb_reads.mjs — the build's jsonb reads and both answers' site citations"
+step "7/8  scripts/check_jsonb_reads.mjs — the build's jsonb reads and both answers' site citations"
 # Step 5's read list is a transcription of source text, and a transcription drifts silently: the D84 list named
 # reads the build does not make and missed the ones made through a Java map accessor, which D85's scanner then
 # counted. So the scanner runs as a reader rather than as a note, and since D87 it reads the `site` column of
 # both answer tables too — every `File.java:NNN` is opened and compared with what the row claims. node missing
 # is a FAIL, not a skip — see the script's own LIMITS.
-command -v node >/dev/null 2>&1 || die "step 7 needs node on PATH; a skipped census step is not a passed one"
+command -v node >/dev/null 2>&1 || die "steps 7 and 8 need node on PATH; a skipped census step is not a passed one"
 ( cd "$ROOT" && node scripts/check_jsonb_reads.mjs ) 2>&1 | sed -e 's/^/    /'
+
+# --------------------------------------------------------------------------- 8. the ledger's own citations
+step "8/8  scripts/check_ledger_citations.mjs — every File.java:NNN the ledgers claim, opened and read back"
+# D87's site census stopped at the seed directory: it checked what the answer tables assert and left the prose
+# above them unverified, while §84 had already shipped a hand count of "71 prose citations, all resolved" that
+# nobody had ever measured. This step reads docs/DECISIONS.md and docs/STATUS.md and resolves every citation
+# the same way step 7 resolves a `site` column. It runs with --worktree rather than the script's default HEAD
+# for one reason: the other seven steps all read the working tree, so a step 8 pinned to HEAD would let a green
+# run certify a ledger that this tree no longer holds. The cost is stated in the checker's own LIMITS — a
+# citation in another lane's uncommitted paragraph can redden this run; the message names the file and line so
+# the claim goes to its owner rather than being edited here.
+( cd "$ROOT" && node scripts/check_ledger_citations.mjs --worktree ) 2>&1 | sed -e 's/^/    /'
 
 printf '\nRESULT: PASS — %s quality checks on a from-scratch schema (tables=%s, migrations=%s), plus the\n' \
   "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"
-printf '        seed truncate shown clearing an empty stranger and refusing one that holds rows, and the\n'
-printf '        build'"'"'s jsonb reads and answered sites reconciled against that list of keys.\n'
+printf '        seed truncate shown clearing an empty stranger and refusing one that holds rows, the\n'
+printf '        build'"'"'s jsonb reads and answered sites reconciled against that list of keys, and the\n'
+printf '        ledgers'"'"' own source citations resolved against the files they name.\n'
 printf '        SYNTHETIC DEMO DATA. The live databases were not opened by this run.\n'

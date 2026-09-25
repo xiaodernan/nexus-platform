@@ -41,6 +41,7 @@
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { SOURCE_EXT, VENDOR_DIRS, walkFiles } from './source_index.mjs';
 
 const ROOT = process.cwd();
 /**
@@ -183,26 +184,13 @@ function accessorReads(text) {
 
 /* ------------------------------------------------------------------ sites */
 
-/** Directories that ship no first-party source, so a citation into one is a bug in the citation. */
-const VENDOR_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.venv', 'target', 'build', 'dist',
-  '.next', 'out', 'coverage']);
-
-/** Every source-ish file in the repo, so a citation to any of them can be resolved — not just the two roots. */
-function sourceIndex(dir = '', out = []) {
-  let entries;
-  try {
-    entries = readdirSync(join(ROOT, dir));
-  } catch {
-    return out;
-  }
-  for (const name of entries) {
-    if (VENDOR_DIRS.has(name)) continue;
-    const rel = dir ? `${dir}/${name}` : name;
-    if (statSync(join(ROOT, rel)).isDirectory()) sourceIndex(rel, out);
-    else if (/\.(java|py|ts|tsx|mjs|cjs|sql|sh)$/.test(name)) out.push(rel);
-  }
-  return out;
-}
+/**
+ * The file index the site census resolves against. It lives in `source_index.mjs` because D88's ledger checker
+ * asks the same question of the same repository, and §84's residue (e) named two hand lists drifting as the
+ * hazard: the checker's first run resolved `PermissionService` to a `.class` file under a build directory the
+ * old local list had never heard of.
+ */
+const sourceIndex = () => walkFiles(ROOT, (name) => SOURCE_EXT.test(name));
 
 /**
  * `-- comment` text is stripped before parsing, but only outside a string literal: a comment's semicolon
