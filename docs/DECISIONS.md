@@ -4868,3 +4868,110 @@ Left standing on purpose: `merchants.seo` carrying no provenance token on 520 ro
 longer has an owner row — the read census was the wrong home for it, and the write-side mirror ("a payload key
 nobody reads") is only census-able once the scan can resolve accessor reads to tables, which it cannot yet.
 That, plus the helper-and-constant blind spots above, is what D85 owes the next reader.
+
+## D86 The jsonb payload shape plane: 22,592 rows no key read can reach, and one column that carries two encodings — 2026-09-26
+
+D84 and D85 ask which keys the build names and whether the shipped payloads carry them. That question presupposes
+the payload has keys. Against a jsonb **array**, and against a jsonb **string whose own text is JSON**, a key read
+returns nothing at all — and `arr ? 'k'` and `str ? 'k'` answer `false`, which is the same answer a genuinely
+absent key gives, so no read census can tell "not present" from "not the right kind of document to contain one".
+D86 counts that plane: `shape_cat` measures every jsonb column's `jsonb_typeof` distribution from the data, the
+`shape_kind` **view** derives the shape from the measurement (D77's posture — the answer table never chooses a
+kind), and one hand answer is required per shape a key read cannot reach.
+
+On the from-scratch schema the row reads `22 jsonb column(s) carry a payload here: 17 reachable by a key read,
+array-only=5; payload rows by type: 45,686 object, 22,592 array, 0 string … key navigation reaches 45,686 of
+68,278 row(s)` — a third of this database's payload rows are unreachable by a key read, and all five are lists:
+`collections.items` (4), `merchants.images` (520), `offerings.images` (5,534), `offerings.options` (5,534, of
+which 2,936 are `[]`), `reviews.photos` (11,000, all of them `[]`). D81 censused what lives *inside* those arrays;
+this row is about the fact that no top-level key read reaches them.
+
+The string arm only exists where the writers have actually run, so it was measured on the live demo database
+(read-only): 62 jsonb columns exist, 32 hold a payload — 43,516 object rows, 22,592 array rows, 188 string rows,
+and `str_json = 188`, i.e. every one of those strings holds text that looks like JSON. Key navigation reaches none
+of them: `agent_runs.plan->>'steps'` is NULL on 40 of 40 while re-parsing (`plan #>> '{}'` then cast) reaches
+`steps` on 38 (2 rows hold `{}`); `agent_runs.tool_calls->'0'` is NULL on 40 of 40 while the re-parse shows 38
+one-element arrays and 2 empty ones; `events.properties->>'query'` is NULL on 35 of 35 and reaches 34 by the same
+route. The two encodings have writers: `persist_event` is the only `INSERT INTO events` in the AI service and it
+binds `json.dumps(...)` **text** into `$10::jsonb` (`apps/ai/nexus_ai/api/runs.py:144,:158`) over an asyncpg pool
+(`db/pool.py:222`) that quotes a `str` parameter a second time — all 34 string-valued events rows are named
+`search`, that call's default — whereas the Java lane casts (`services/platform/.../growth/EventRepository.java:39`),
+which parses. One `events` column therefore carries both encodings today, 34 rows this way and 1 that way, and no
+CHECK says which is meant. (The name alone does not attribute the object row, since both lanes may use `view`;
+the file says so rather than inferring it.)
+
+The seeded database cannot exercise the string arm — D64 keeps `agent_runs` and `events` EMPTY — so the row's
+non-vacuity on that shape comes from a plant. The plant's *width* turned into the unit's best finding: turning a
+whole populated column into strings (`UPDATE collections SET items = to_jsonb(items::text)`, 4 rows, snapshotted
+and replayed) does not redden the new row, it **aborts quality.sql** — `JOIN jsonb_array_elements(c.items)` in the
+guide-item check, some 2,400 lines earlier, raises `cannot extract elements from a scalar` and `ON_ERROR_STOP=1`
+kills the file before any check prints. So the gate that measures this shape is itself a SQL-side consumer of it,
+and the same payload that the Java readers swallow into an empty list (`Json.jsonArray`, `Json.java:207-233`) is
+fatal on the SQL side. Silent-empty and fatal, one document.
+
+`data/seed/quality.sql` only, +169/-0: `shape_cat`, a `$d86a$` loop over `information_schema` jsonb columns whose
+per-column `EXECUTE` counts rows, non-null, and one `FILTER` per type plus the JSON-text proxy, `shape_kind`,
+`shape_answer` (the five list columns, each naming where its shape is consumed and why it is not a bug), and the
+qc row. Its five refusal terms reject an unanswered shape, an answer for a column with no such payload here, an
+answer whose kind the data contradicts, an unknown kind, and a blank reason or site. 215 → 216 checks.
+
+Witnesses, seven runs on the kept database plus the official run. P1 drop an answer row →
+`reviews.photos ships array-only on 11000 row(s) and nobody answers for it`. P2 contradict one →
+`merchants.images is answered double-encoded while the data now says array-only (0 object, 520 array, 0 string of
+520 payload row(s))`. P3 make one `reviews.photos` payload an object → `answered array-only while the data now
+says mixed-object-and-array (1 object, 10999 array …)`, restored exactly (0 object-valued rows before, 0 after;
+`reviews` carries no `set_updated_at()` trigger, so this plant left no clock residue). P4 insert one double-encoded
+`events.properties` row → `events.properties ships double-encoded on 1 row(s) and nobody answers for it`, with the
+histogram moving to `array-only=5, double-encoded=1` — and, as expected of a row written into a guard-empty table,
+six other rows reddened with it (the traffic guard, the polymorphic vocabulary, D83's clock row), all of which came
+back green after the plant was deleted by its own name. P5/P6/P7 are the split offender arms: blanking a reason
+prints `the answer for collections.items (array-only) gives no reason for why the shape is not a bug`, blanking a
+site prints `… gives no site for where the shape is consumed`, and a bogus kind prints both
+`is answered unused while the data now says array-only` and `names kind 'unused', which is not one of the seven
+this file derives`.
+
+Three of my own mistakes, each caught by running rather than by reading. The first version of the offender list
+merged "kind not in the seven" with "reason/site blank" into one sentence, so P5's blank-reason plant printed an
+accusation against a perfectly valid kind (`names kind 'array-only', not one of the seven known`) — the arms are
+separate now and each names its own complaint. The witness driver's first revision passed `-f d86_run.sql` to psql
+*inside the container*, where that file does not exist; it produced five runs that reported `No such file or
+directory`, and the classifier called them INVALID instead of green (D79's rule doing its job). And a remembered
+number in the section header — "every one of those rows carries a 3-element array" — was wrong: the re-measurement
+says 38 hold one element and 2 hold none. Recalled counts get re-measured before they get committed, which is the
+same lesson D78 wrote down about its own 75.
+
+A fourth, found by reading my own `site` column after the gate had already gone green. A site is an assertion, and
+three of the five answered `file:line` pairs were false: `MerchantRepository.java:307` is the line that reads
+`merchants.seo`, two lines below the `images` accessor at :306; `offerings.options` was answered with
+`OrderRepository.java`, which does read a column named `options` — but into `order_items`, a different table's
+column that merely shares the word (D82's "a column name is not the target", arriving on schedule); and
+`collections.items` was answered with a bare filename and no line at all. All five now name the accessor that
+actually consumes the array — `CollectionsController.java:145`, `MerchantRepository.java:306`,
+`OfferingRepository.java:270` and `:273`, `CatalogController.java:388` — with the whole-column `SELECT` line beside
+each, and the `offerings.options` answer says out loud that `order_items.options` is not this column. The
+correction also sharpened the answers themselves: these five shapes are not bugs precisely *because* the build
+reads them with `Json.jsonArray`, which is the consumer the key-read census was blind to.
+
+Gates: `scripts/db_gate_fresh.sh --keep` over the shipped text printed
+`RESULT: PASS — 216 quality checks on a from-scratch schema (tables=58, migrations=7)` with all seven steps green,
+including step 7's read reconciliation. Because the `site` corrections below landed after the first plant run, the
+whole matrix was replayed against the shipped text (`quality.sql` sha256 `69b49acc…`) on a freshly built database:
+W0 green, W1–W7 each reddening exactly the intended arm, W8 green again — and W4's six collateral reds are the
+guard rows that a row written into a guard-empty table is supposed to trip. The kept databases were dropped
+afterwards and `nexus`, `nexus_test` and `nexus_funnel_probe` were not opened for writing by this unit — only read,
+and only to measure the string arm. No Java, migration or seeded value changed.
+
+One reported side-effect belongs to D83 rather than here: quality.sql is only fully green on a database loaded
+minutes ago. `facts.updated_at is answered generation-clock but no longer holds a value anywhere near now()` fires
+once that column is more than ten minutes old, which is by construction, so re-running this file against a kept
+gate DB later is not a reproduction of the official run. Stated so nobody reads that red as a regression.
+
+Left standing on purpose: whether `runs.py` should stop double-encoding is the AI lane's decision, reported at
+task #62 and not edited here; whether a CHECK should pin one encoding for `events.properties` is a schema decision
+that would need the traffic that writes both; and the *per-column* derivation is the widening this row still owes —
+`events.properties` is reported as a column, so the 34/1 split is visible only in this ledger, not in a gate row,
+and a per-(column × type × row-count) census is what would let a future answer say "one writer of two". The second
+thing this row cannot check is its own `site` column: the gate refuses a blank site and nothing more, which is
+exactly the gap mistake (4) above fell into while the row was green. `scripts/check_jsonb_reads.mjs` already parses
+`Json.jsonArray(row, "col")`, so pointing it at `shape_answer` as well — one scanner, both censuses — is the next
+unit this one hands over.

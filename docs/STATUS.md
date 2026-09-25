@@ -4021,3 +4021,77 @@ next              residue: (a) accessor reads are matched on (column, key) alone
                     stream's to correct; CommerceApiTest and the drifted `nexus` database belong to other
                     streams; the events subject seam (D70) waits on a contract decision.
 ```
+
+## 83. 22,592 payload rows sit in jsonb documents a key read cannot reach; one column carries two encodings (2026-09-26)
+
+D84/D85 census which jsonb *keys* the build names. This counts the plane below keys: the document type each payload
+column actually holds, because against an array — or against a string whose text is JSON — a key read returns
+nothing, and a `?` test says `false` exactly as it does for a genuinely absent key.
+
+```
+measured          From-scratch schema: 22 jsonb columns carry a payload — 45,686 object rows, 22,592 array rows,
+                    0 string rows, out of 68,278 payload rows. So key navigation reaches 45,686 of them: a third of
+                    this database's jsonb is unreachable by the reads D84/D85 censused. All five unreachable
+                    columns are lists: collections.items 4, merchants.images 520, offerings.images 5,534,
+                    offerings.options 5,534 (2,936 of them []), reviews.photos 11,000 (all []).
+                    Live demo database, where the agent and event writers have run (read-only): 62 jsonb columns,
+                    32 holding payloads — 43,516 object, 22,592 array, 188 string, and str_json = 188, i.e. every
+                    string payload is JSON text. agent_runs.plan->>'steps' NULL on 40 of 40, re-parsing reaches 38
+                    (2 hold {}); agent_runs.tool_calls->'0' NULL on 40 of 40, re-parse: 38 one-element arrays, 2
+                    empty; events.properties->>'query' NULL on 35 of 35, re-parse reaches 34. Two writers, two
+                    encodings, one column: runs.py:144,:158 binds json.dumps text into $10::jsonb over asyncpg
+                    (pool.py:222), which quotes a str again — all 34 string rows are named search, that call's
+                    default — while EventRepository.java:39 casts, which parses. The 35th row is an object named
+                    view; its name does not prove which lane sent it, and the file says that rather than guessing.
+                    The finding this unit did not plan for: double-encoding a whole populated column (all four
+                    collections.items payloads) does not redden the new row, it ABORTS quality.sql — the guide-item
+                    check's `JOIN jsonb_array_elements(c.items)` ~2,400 lines earlier raises
+                    `cannot extract elements from a scalar` and ON_ERROR_STOP=1 kills the file before any check
+                    prints. The Java readers of the same payload fall through to an empty list (Json.java:207-233).
+new/changed       data/seed/quality.sql only, +169/-0. shape_cat (per jsonb column: rows, non-null, one FILTER per
+                    jsonb_typeof, plus the JSON-text proxy) filled by a $d86a$ loop over information_schema;
+                    shape_kind VIEW deriving object-only | array-only | double-encoded | mixed-* | scalar-* from
+                    that measurement, so no answer chooses its own kind; shape_answer with the five list columns,
+                    each naming where the shape is consumed and why it is not a bug. One qc row, five refusal terms:
+                    unanswered shape, answer for a column with no such payload here, kind the data contradicts,
+                    unknown kind, blank reason or site. 215 -> 216 checks.
+plants            seven, replayed against the shipped text on a freshly built database after the site corrections
+                    below (W0 green, W1-W7 red, W8 green): drop an answer -> `reviews.photos ships array-only on
+                    11000 row(s) and nobody answers for it`. Re-kind merchants.images -> `answered double-encoded while the data
+                    now says array-only (0 object, 520 array, 0 string of 520 payload row(s))`. One reviews.photos
+                    payload becomes an object -> `mixed-object-and-array (1 object, 10999 array …)`, restored
+                    exactly (0 object rows before and after; reviews has no set_updated_at trigger, so no clock
+                    residue). One inserted double-encoded events.properties row -> `ships double-encoded on 1 row(s)
+                    and nobody answers for it`, histogram to array-only=5 + double-encoded=1, and six guard rows
+                    reddening with it because events is a guard-empty table — all seven back to green after the
+                    delete. Then the three offender arms separately: blank reason -> `gives no reason for why the
+                    shape is not a bug`; blank site -> `gives no site for where the shape is consumed`; kind
+                    'unused' -> both `the data now says array-only` and `names kind 'unused', which is not one of
+                    the seven this file derives`.
+mistakes          four, all mine, none found by the gate. (1) The first offender list merged "kind not in the seven"
+                    with "reason/site blank", so a blank reason printed an accusation against a valid kind — split
+                    into three arms, each witnessed. (2) The witness driver passed `-f` a host path into psql
+                    running inside the container: five runs reported `No such file or directory` and the classifier
+                    called them INVALID, not green. (3) A remembered header number ("3-element array in every
+                    tool_calls string") was wrong: 38 one-element, 2 empty — re-measured before committing, the same
+                    failure D78 wrote about its recalled 75. (4) Three of the five answer SITES were false while the
+                    row was green: MerchantRepository.java:307 is the merchants.seo line (images is :306),
+                    offerings.options was answered with OrderRepository.java whose `options` belongs to
+                    order_items (D82's "a column name is not the target"), and collections.items had a filename with
+                    no line. All five now name the `Json.jsonArray` accessor that consumes the array plus its whole-
+                    column SELECT — which is also why they are not bugs.
+gates             scripts/db_gate_fresh.sh over the shipped text: `RESULT: PASS — 216 quality checks on a
+                    from-scratch schema (tables=58, migrations=7)`, all seven steps green including step 7's read
+                    reconciliation. Kept gate databases dropped afterwards; the live databases were opened
+                    read-only, to measure the string arm. No Java, migration or seeded value changed.
+next              reported, not edited: whether runs.py should stop double-encoding is the AI lane's call (task
+                    #62), and whether a CHECK should pin one encoding for events.properties is a schema decision
+                    that has to reckon with two live writers. Residue this row owns: (a) the derivation is per
+                    COLUMN, so the 34/1 split inside events.properties is visible in this entry and not in a gate
+                    row — a per-(column, type) census with row counts is the widening that would let an answer say
+                    "one writer of two"; (b) the `site` column is checked only for being non-blank, and mistake (4)
+                    is exactly what that costs — scripts/check_jsonb_reads.mjs already parses these accessors, so
+                    feeding shape_answer's sites through it is the next unit. Also stated so it is not mistaken for
+                    a regression: quality.sql is green only on a recently loaded database — D83's generation-clock
+                    row reddens once facts.updated_at is more than ten minutes old, so re-running this file against
+                    a kept gate DB later is not the official run.

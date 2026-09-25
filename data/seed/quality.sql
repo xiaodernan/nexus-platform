@@ -3318,6 +3318,175 @@ SELECT 'a view kind is exercised or exempted',
                      ) x), 'none');
 
 
+-- ============================================================ D86  the shape a jsonb payload has, and which shapes a key read cannot reach
+--
+-- WHY THIS EXISTS: §75–§85 asked what keys the payloads carry and who reads them. Every one of those questions
+-- is asked with an operator — `col->>'key'`, `col ? 'key'` — that only works on a payload that IS an object. A
+-- jsonb column may hold an array, or (the case this section exists for) a jsonb *string whose own text is JSON*,
+-- and against both of those a key read returns nothing at all: not false, not empty — nothing. The shape is set
+-- by the writer, not by the column type: `cast(:properties as jsonb)` over JSON text (`EventRepository.java:39`)
+-- yields an object, while binding a pre-serialised string yields a string-wrapped payload.
+--
+-- Measured on the live demo database, where the agent and event writers have actually run: 62 jsonb columns
+-- exist, 32 hold a payload — 43,516 object rows, 22,592 array rows, 188 string rows, and all 188 of those
+-- strings hold text that looks like JSON. On those 188, key navigation reaches nothing:
+-- `agent_runs.plan->>'steps'` is NULL on 40 of 40 rows while re-parsing the text (`plan #>> '{}'` then cast)
+-- reaches `steps` on 38 of them (the other 2 hold `{}`); `events.properties->>'query'` is NULL on 35 of 35 and
+-- reaches 34 through the same re-parse. `agent_runs.tool_calls->'0'` is NULL on 40 of 40, and the re-parse shows
+-- why: 38 of those strings hold a one-element array and 2 hold `[]`. The split is by writer. All 34
+-- string-valued events rows are named `search`, and `persist_event` is the only `INSERT INTO events` in the AI
+-- service — it passes the payload as `json.dumps(...)` text into `$10::jsonb` (`runs.py:144,:158`) over asyncpg
+-- (`db/pool.py:222`), which quotes a str parameter a second time. The one object-valued row is named `view`;
+-- its shape is what `cast(:properties as jsonb)` at `EventRepository.java:39` yields, though the name alone
+-- does not prove which lane sent it, since both lanes may use that name. So a dashboard that reads a key out
+-- of these columns is not showing an empty state, it is showing an unreadable one — and no read census can see
+-- the difference, because a `?` against a string payload is simply false.
+--
+-- The seeded database cannot show that half: D64 keeps agent_runs and events EMPTY, so the string arm has no
+-- rows here and its falsifier is a plant, not the seed (D79's rule: an empty table is absence, not green). And
+-- the plant has to be one row wide: turning a whole populated column into strings aborts this file before any
+-- row prints, because `JOIN jsonb_array_elements(c.items)` at the guide-item check (about 2,400 lines above)
+-- raises `cannot extract elements from a scalar` under ON_ERROR_STOP=1. That is the finding restated as an
+-- accident — a string payload is not merely unreachable to a key read, it is fatal to a SQL-side array reader,
+-- while the Java readers swallow it into an empty list. So the double-encoded arm is witnessed by one inserted
+-- events row, which is also the shape the AI service writes today.
+--
+-- What the seed does ship is the array arm — five columns whose every payload is an array: collections.items (4 rows),
+-- merchants.images (520), offerings.images (5,534), offerings.options (5,534, of which 2,936 are []),
+-- reviews.photos (11,000, all of them []). D81 already censused what lives INSIDE those arrays; this row is
+-- about the fact that a top-level key read cannot reach them at all.
+--
+-- So: measure each payload column's type distribution from the data, derive the shape from the measurement
+-- (D77's posture — the answer never chooses the kind), and require an answer for every shape that a key read
+-- cannot reach. Kinds: object-only, array-only, double-encoded (every payload is a string whose text is JSON),
+-- mixed-object-and-string, mixed-object-and-array, scalar. A column answered array-only that later carries a
+-- string is stale, and so is one that becomes reachable again; both directions re-read the data every run.
+
+CREATE TEMP TABLE shape_cat (tbl text NOT NULL, col text NOT NULL, rows bigint NOT NULL, nonnull bigint NOT NULL,
+                             obj bigint NOT NULL, arr bigint NOT NULL, str bigint NOT NULL,
+                             str_json bigint NOT NULL, PRIMARY KEY (tbl, col));
+DO $d86a$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT c.table_name AS tbl, c.column_name AS col
+             FROM information_schema.columns c
+             JOIN information_schema.tables t
+               ON t.table_schema = 'public' AND t.table_name = c.table_name AND t.table_type = 'BASE TABLE'
+            WHERE c.table_schema = 'public' AND c.data_type = 'jsonb'
+            ORDER BY 1, 2
+  LOOP
+    BEGIN
+      EXECUTE format('INSERT INTO shape_cat SELECT %L, %L, count(*), '
+                     || 'count(*) FILTER (WHERE %I IS NOT NULL), '
+                     || 'count(*) FILTER (WHERE jsonb_typeof(%I) = ''object''), '
+                     || 'count(*) FILTER (WHERE jsonb_typeof(%I) = ''array''), '
+                     || 'count(*) FILTER (WHERE jsonb_typeof(%I) = ''string''), '
+                     || 'count(*) FILTER (WHERE jsonb_typeof(%I) = ''string'' '
+                     || 'AND substr(%I #>> ''{}'', 1, 1) IN (''{'', ''['')) '
+                     || 'FROM public.%I',
+                     r.tbl, r.col, r.col, r.col, r.col, r.col, r.col, r.col, r.tbl);
+    EXCEPTION WHEN OTHERS THEN NULL;   -- a column this database lacks has no shape to report
+    END;
+  END LOOP;
+END $d86a$;
+
+-- The derivation, in one place: the answer table never states a shape, it answers for the one measured here.
+CREATE TEMP VIEW shape_kind AS
+  SELECT s.*,
+         CASE WHEN s.str = s.nonnull AND s.str_json = s.str THEN 'double-encoded'
+              WHEN s.str > 0 AND s.obj > 0 THEN 'mixed-object-and-string'
+              WHEN s.str > 0 THEN 'scalar-string'
+              WHEN s.arr > 0 AND s.obj > 0 THEN 'mixed-object-and-array'
+              WHEN s.arr > 0 THEN 'array-only'
+              WHEN s.obj = s.nonnull THEN 'object-only'
+              ELSE 'scalar-other' END AS kind
+    FROM shape_cat s
+   WHERE s.nonnull > 0;      -- a column with no payload has no shape: absence, not a fact about types
+
+CREATE TEMP TABLE shape_answer (tbl text NOT NULL, col text NOT NULL, kind text NOT NULL, site text NOT NULL,
+                                why text NOT NULL, PRIMARY KEY (tbl, col));
+INSERT INTO shape_answer VALUES
+ ('collections', 'items', 'array-only',
+  'generate.py writes the guide item list; CollectionsController.java:145 reads it with Json.jsonArray(row, "items")',
+  'a guide''s ordered items are a list, so the build consumes it as an array and resolves each element into an '
+  || 'EntityCard on the same read; no clause asks collections.items for a key, and none could'),
+ ('merchants', 'images', 'array-only',
+  'generate.py; merchant/MerchantRepository.java:306 (Json.jsonArray(row, "images")), selected whole at :22',
+  'an ordered gallery, read whole and projected by position — the url/alt/credit content lives in the elements, '
+  || 'which is D81''s census, not this one'),
+ ('offerings', 'images', 'array-only', 'generate.py; catalog/OfferingRepository.java:270, selected whole at :25',
+  'the same gallery shape on the offering side'),
+ ('offerings', 'options', 'array-only', 'generate.py; catalog/OfferingRepository.java:273, selected whole at :25',
+  'choice groups (name + values), so it is a list by design; 2,936 of 5,534 payloads are [] — an offering with no '
+  || 'options, a real state and not an unreadable one. Named against the column, not the word: order_items.options '
+  || 'is a different column, written by commerce/OrderRepository.java:78-84'),
+ ('reviews', 'photos', 'array-only',
+  'generate.py; CatalogController.java:388 (Json.jsonArray(row, "photos")), selected by ReviewRepository.java:48 '
+  || 'and CatalogRepository.java:59',
+  'every one of the 11,000 payloads is [] — the column exists to hold review photos and no seeded review has '
+  || 'one, which D81 counted from the other side');
+
+INSERT INTO qc
+SELECT 'every jsonb payload that a key read cannot reach is answered for what it is',
+       (SELECT count(*) FROM shape_kind) > 0
+       AND NOT EXISTS (SELECT 1 FROM shape_kind k WHERE k.kind <> 'object-only'
+                        AND NOT EXISTS (SELECT 1 FROM shape_answer a
+                                         WHERE a.tbl = k.tbl AND a.col = k.col))
+       AND NOT EXISTS (SELECT 1 FROM shape_answer a WHERE NOT EXISTS
+                        (SELECT 1 FROM shape_kind k WHERE k.tbl = a.tbl AND k.col = a.col))
+       AND NOT EXISTS (SELECT 1 FROM shape_answer a JOIN shape_kind k
+                         ON k.tbl = a.tbl AND k.col = a.col WHERE a.kind <> k.kind)
+       AND NOT EXISTS (SELECT 1 FROM shape_answer a
+                        WHERE a.kind NOT IN ('object-only', 'array-only', 'double-encoded',
+                                             'mixed-object-and-string', 'mixed-object-and-array',
+                                             'scalar-string', 'scalar-other')
+                           OR btrim(a.why) = '' OR btrim(a.site) = '')
+       -- the string arm is the one this database cannot exercise: D64 keeps agent_runs and events EMPTY, so the
+       -- row's non-vacuity on that shape comes from a plant, and the live-demo measurement is in the header above.
+       ,
+       (SELECT count(*) FROM shape_kind) || ' jsonb column(s) carry a payload here: '
+       || (SELECT count(*) FROM shape_kind WHERE kind = 'object-only') || ' reachable by a key read, '
+       || coalesce((SELECT string_agg(k || '=' || cnt, ', ' ORDER BY k) FROM
+                     (SELECT kind AS k, count(*) AS cnt FROM shape_kind WHERE kind <> 'object-only'
+                       GROUP BY kind) g), 'none')
+       || '; payload rows by type: ' || (SELECT sum(obj) FROM shape_cat) || ' object, '
+       || (SELECT sum(arr) FROM shape_cat) || ' array, ' || (SELECT sum(str) FROM shape_cat)
+       || ' string (' || (SELECT sum(str_json) FROM shape_cat) || ' of them text that looks like JSON) — '
+       || 'key navigation reaches ' || (SELECT sum(obj) FROM shape_cat) || ' of '
+       || (SELECT sum(nonnull) FROM shape_cat) || ' row(s); offenders: '
+       || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT k.tbl || '.' || k.col || ' ships ' || k.kind || ' on ' || k.nonnull
+                     || ' row(s) and nobody answers for it' AS x
+                FROM shape_kind k WHERE k.kind <> 'object-only'
+                  AND NOT EXISTS (SELECT 1 FROM shape_answer a
+                                  WHERE a.tbl = k.tbl AND a.col = k.col)
+              UNION ALL
+              SELECT a.tbl || '.' || a.col || ' is answered ' || a.kind
+                     || ' but no payload of that shape exists in this database'
+                FROM shape_answer a WHERE NOT EXISTS (SELECT 1 FROM shape_kind k
+                                                      WHERE k.tbl = a.tbl AND k.col = a.col)
+              UNION ALL
+              SELECT a.tbl || '.' || a.col || ' is answered ' || a.kind || ' while the data now says '
+                     || k.kind || ' (' || k.obj || ' object, ' || k.arr || ' array, ' || k.str
+                     || ' string of ' || k.nonnull || ' payload row(s))'
+                FROM shape_answer a JOIN shape_kind k ON k.tbl = a.tbl AND k.col = a.col
+               WHERE a.kind <> k.kind
+              UNION ALL
+              SELECT 'the answer for ' || tbl || '.' || col || ' names kind ''' || kind
+                     || ''', which is not one of the seven this file derives'
+                FROM shape_answer a
+               WHERE kind NOT IN ('object-only', 'array-only', 'double-encoded', 'mixed-object-and-string',
+                                  'mixed-object-and-array', 'scalar-string', 'scalar-other')
+              UNION ALL
+              -- kept separate from the arm above: a valid kind with a blank excuse is a different complaint,
+              -- and the D86 plant that blanks a reason showed the two-in-one message accusing a good kind.
+              SELECT 'the answer for ' || tbl || '.' || col || ' (' || kind || ') gives '
+                     || CASE WHEN btrim(site) = '' AND btrim(why) = '' THEN 'neither a site nor a reason'
+                             WHEN btrim(site) = '' THEN 'no site for where the shape is consumed'
+                             ELSE 'no reason for why the shape is not a bug' END
+                FROM shape_answer a
+               WHERE btrim(why) = '' OR btrim(site) = '') o), 'none');
+
 -- ============================================================ C  hard gate
 \echo ''
 SELECT CASE WHEN ok THEN '  PASS ' ELSE '  FAIL ' END AS status,
