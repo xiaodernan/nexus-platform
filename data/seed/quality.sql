@@ -2008,6 +2008,181 @@ SELECT 'a text[] value that appears on exactly one row is named, not averaged',
        || coalesce((SELECT string_agg(tbl || '.' || col || ' (' || rows || ' row(s))', ', ')
                       FROM arr_cat WHERE kind = 'text[]' AND rows < 20), 'none');
 
+-- ============================================================ D82  four booleans claim a verification the schema cannot evidence
+--
+-- WHY THIS EXISTS: the census work of §75–§81 has been about value sets. This one is about a claim. A boolean
+-- whose name says "verified" or "opted in" is a statement that something happened elsewhere, and §19 requires
+-- such a claim to carry a source. Measured on the kept from-scratch database, four columns make that kind of
+-- statement:
+--
+--   reviews.verified_purchase       true on  2456 of 11000 rows
+--   reviews.verified_reservation    true on  1289 of 11000 rows   (300 rows carry both)
+--   merchants.ownership_verified    true on   193 of   520 rows
+--   users.marketing_opt_in          true on     1 of     5 rows
+--
+-- and the tables that would hold their evidence are `orders` (0 rows), `payments` (0), `reservations` (0),
+-- `carts` (0) — empty because D64's fabrication guard REQUIRES them empty, the rule §76 and §77 already had to
+-- work around. So a "verified purchase" flag is asserted on 2456 reviews in a database that is not allowed to
+-- contain a purchase. This is not a marker with the wrong name either: `reviews` has no column that could point
+-- at an order or a reservation — the only column matching '%reservation%' is the flag itself — so the badge
+-- cannot be resolved even if the evidence existed.
+--
+-- WHY THAT MATTERS OUTSIDE THE DATABASE: `CatalogController.java:391-397` puts both booleans into the consumer
+-- payload and derives `"verified_visit": verified_purchase || verified_reservation` from them, and :441-442
+-- publish `verified_purchase_reviews` / `verified_reservation_reviews` as merchant-facing statistics;
+-- `AdminListRepository.java:126` carries both into the admin view. A badge shown to a user is the strongest
+-- form of the claim, which is why this is worth a row rather than a comment.
+--
+-- WHAT THIS UNIT DELIBERATELY DOES NOT DECIDE. Two readings are consistent with everything measured: the flags
+-- are demo decoration (§109's fake-engagement prohibition is exactly about that), or they are provenance
+-- markers being rendered as trust signals. Choosing between them means changing either generate.py's output or
+-- the consumer payload, and both belong to other streams. What the gate can do honestly is state the shape and
+-- refuse to let it improve silently: `never-resolvable` is a live claim — it reddens the day evidence rows
+-- appear OR someone adds the column that would link them — because a check that can only pass while the demo
+-- stays hollow is the thing §75 and §79 both deleted.
+
+-- The census: every boolean whose name claims a verification or a consent, with how many rows carry it.
+CREATE TEMP TABLE badge_cat (tbl text NOT NULL, col text NOT NULL, rows bigint NOT NULL,
+                             flagged bigint NOT NULL, stem text NOT NULL, PRIMARY KEY (tbl, col));
+DO $d82a$
+DECLARE r record; n bigint; f bigint; st text;
+BEGIN
+  FOR r IN SELECT c.relname AS tbl, a.attname AS col
+             FROM pg_attribute a
+             JOIN pg_class c ON c.oid = a.attrelid AND c.relkind = 'r'
+             JOIN pg_namespace ns ON ns.oid = c.relnamespace AND ns.nspname = 'public'
+             JOIN pg_type t ON t.oid = a.atttypid AND t.typname = 'bool'   -- the catalog spells it bool, not boolean
+            WHERE a.attnum > 0 AND NOT a.attisdropped
+              AND a.attname ~* 'verif|opt_in|consent|ownership'
+            ORDER BY 1, 2
+  LOOP
+    EXECUTE format('SELECT count(*), count(*) FILTER (WHERE %I) FROM public.%I', r.col, r.tbl) INTO n, f;
+    -- the word a key column would have to carry: verified_purchase -> purchase, ownership_verified -> ownership
+    st := CASE WHEN r.col LIKE 'verified%' THEN split_part(r.col, '_', 2) ELSE split_part(r.col, '_', 1) END;
+    INSERT INTO badge_cat VALUES (r.tbl, r.col, n, f, st);
+  END LOOP;
+END $d82a$;
+
+-- What would evidence each flag. The list is hand-written because SQL cannot know that verified_purchase is
+-- about `orders`; everything the rows then check is read back out of the catalog and the data.
+CREATE TEMP TABLE badge_answer (tbl text NOT NULL, col text NOT NULL, evidence text NOT NULL,
+                                state text NOT NULL, why text NOT NULL, PRIMARY KEY (tbl, col));
+INSERT INTO badge_answer VALUES
+ ('reviews', 'verified_purchase', 'orders', 'never-resolvable', 'true on 2456 of 11000 rows while orders and '
+  || 'payments are swept EMPTY by D64, and no column of reviews could name an order — '
+  || 'CatalogController.java:396 still derives the consumer-facing verified_visit from it'),
+ ('reviews', 'verified_reservation', 'reservations', 'never-resolvable', 'true on 1289 rows; the only '
+  || 'reservation-shaped column on reviews is the flag itself, so the badge has no path to a reservation even '
+  || 'if one were shipped'),
+ ('merchants', 'ownership_verified', '-', 'no-evidence-table', '193 of 520 merchants carry it and nothing in the '
+  || 'schema records a verification event: §5 makes ownership a status the merchant-verification door moves, so '
+  || 'the boolean is a projection of a status rather than a claim with its own evidence'),
+ ('users', 'marketing_opt_in', '-', 'no-evidence-table', '1 of 5 seeded users; §19 wants a timestamped consent '
+  || 'and no consent table or timestamp column exists, so the boolean stands alone on a demo account');
+
+-- The two facts each answer depends on, re-read every run. A link cannot be a boolean flag, which is why
+-- verified_reservation does not count as a path to the reservations table.
+CREATE TEMP TABLE badge_state (tbl text NOT NULL, col text NOT NULL, evidence text NOT NULL, state text NOT NULL,
+                               evidence_rows bigint NOT NULL, link_cols int NOT NULL, implied text NOT NULL,
+                               PRIMARY KEY (tbl, col));
+DO $d82b$
+DECLARE r record; er bigint; lc int; imp text;
+BEGIN
+  FOR r IN SELECT c.tbl, c.col, a.evidence, a.state, c.stem FROM badge_cat c
+             JOIN badge_answer a ON a.tbl = c.tbl AND a.col = c.col ORDER BY 1, 2
+  LOOP
+    IF r.evidence = '-' THEN er := 0; ELSE
+      EXECUTE format('SELECT count(*) FROM public.%I', r.evidence) INTO er;
+    END IF;
+    -- the column that could carry the key is named after the EVIDENCE table (orders -> order_id), not after
+    -- the flag; only where no evidence table is named does the flag's own stem get used
+    EXECUTE format('SELECT count(*) FROM pg_attribute a2 WHERE a2.attrelid = %L::regclass AND a2.attnum > 0 '
+                || 'AND NOT a2.attisdropped AND a2.atttypid <> ''bool''::regtype '
+                || 'AND a2.attname <> %L AND a2.attname LIKE ''%%'' || %L || ''%%''',
+                format('public.%I', r.tbl), r.col,
+                CASE WHEN r.evidence = '-' THEN r.stem ELSE rtrim(r.evidence, 's') END) INTO lc;
+    imp := CASE WHEN lc > 0 THEN 'linkable'
+                WHEN er > 0 THEN 'evidence-exists'
+                WHEN r.evidence = '-' THEN 'no-evidence-table'
+                ELSE 'never-resolvable' END;
+    INSERT INTO badge_state VALUES (r.tbl, r.col, r.evidence, r.state, er, lc, imp);
+  END LOOP;
+END $d82b$;
+
+INSERT INTO qc
+SELECT 'every boolean that claims a verification is answered for its evidence',
+       (SELECT count(*) FROM badge_cat) > 0
+       AND NOT EXISTS (SELECT 1 FROM badge_cat c WHERE NOT EXISTS
+                        (SELECT 1 FROM badge_answer a WHERE a.tbl = c.tbl AND a.col = c.col))
+       AND NOT EXISTS (SELECT 1 FROM badge_answer a WHERE NOT EXISTS
+                        (SELECT 1 FROM badge_cat c WHERE c.tbl = a.tbl AND c.col = a.col))
+       AND NOT EXISTS (SELECT 1 FROM badge_answer a WHERE btrim(a.why) = ''
+                        OR a.state NOT IN ('never-resolvable', 'no-evidence-table', 'resolved', 'unresolved'))
+       AND NOT EXISTS (SELECT 1 FROM badge_state s WHERE s.evidence <> '-'
+                        AND to_regclass('public.' || s.evidence) IS NULL),
+       (SELECT count(*) FROM badge_cat) || ' verification-shaped boolean(s): '
+       || coalesce((SELECT string_agg(s.tbl || '.' || s.col || ' true on ' || c.flagged || ' of ' || c.rows
+                                      || ', evidence ' || s.evidence || ' holds ' || s.evidence_rows
+                                      || ' row(s), ' || s.link_cols || ' link column(s) -> ' || s.implied,
+                                      ' | ' ORDER BY c.flagged DESC, s.tbl)
+                      FROM badge_state s JOIN badge_cat c ON c.tbl = s.tbl AND c.col = s.col), 'none')
+       || ' — offenders: ' || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT c.tbl || '.' || c.col || ' is a boolean that claims evidence and nothing answers for it' AS x
+                FROM badge_cat c WHERE NOT EXISTS (SELECT 1 FROM badge_answer a
+                                                   WHERE a.tbl = c.tbl AND a.col = c.col)
+              UNION ALL
+              SELECT a.tbl || '.' || a.col || ' is answered but the schema no longer has that boolean column'
+                FROM badge_answer a WHERE NOT EXISTS (SELECT 1 FROM badge_cat c
+                                                      WHERE c.tbl = a.tbl AND c.col = a.col)
+              UNION ALL
+              SELECT 'the answer ' || s.tbl || '.' || s.col || ' names evidence table ' || s.evidence
+                     || ', which the catalog does not have'
+                FROM badge_state s WHERE s.evidence <> '-' AND to_regclass('public.' || s.evidence) IS NULL
+              UNION ALL
+              SELECT s.tbl || '.' || s.col || ' claims state ''' || s.state || ''', not one of the four known'
+                FROM badge_state s
+                 WHERE s.state NOT IN ('never-resolvable', 'no-evidence-table', 'resolved', 'unresolved')
+              UNION ALL
+              SELECT 'the answer for ' || tbl || '.' || col || ' gives no reason'
+                FROM badge_answer WHERE btrim(why) = '') o), 'none');
+
+-- The state an answer claims, recomputed from the numbers the census measured rather than from the copy the
+-- census stored: a check that compares two of its own columns can never be refuted by a changed world.
+CREATE TEMP VIEW badge_live AS
+SELECT s.tbl, s.col, s.evidence, s.state, s.evidence_rows, s.link_cols,
+       CASE WHEN s.link_cols > 0 THEN 'linkable'
+            WHEN s.evidence_rows > 0 AND s.evidence <> '-' THEN 'evidence-exists'
+            WHEN s.evidence = '-' THEN 'no-evidence-table'
+            ELSE 'never-resolvable' END AS implied
+  FROM badge_state s;
+
+INSERT INTO qc
+SELECT 'a verification badge stays unresolvable only while its evidence and its link both stay absent',
+       (SELECT count(*) FROM badge_live WHERE state = 'never-resolvable') > 0
+       AND NOT EXISTS (SELECT 1 FROM badge_live s WHERE s.state <> s.implied),
+       coalesce((SELECT string_agg(s.tbl || '.' || s.col || ' answered ' || s.state || ', the data now implies '
+                                      || s.implied || ' (' || s.evidence_rows || ' row(s) in ' || s.evidence
+                                      || ', ' || s.link_cols || ' link column(s))', ' | ')
+                   FROM badge_live s WHERE s.state <> s.implied),
+                'all ' || (SELECT count(*) FROM badge_live) || ' answer(s) agree with what the data supports ('
+                || (SELECT string_agg(DISTINCT implied, '/' ORDER BY implied) FROM badge_live) || '): '
+                || (SELECT sum(c.flagged) FROM badge_cat c JOIN badge_live s
+                      ON s.tbl = c.tbl AND s.col = c.col WHERE s.state = 'never-resolvable')
+                || ' flagged rows carry a badge that cannot point at an order or a reservation, and this row '
+                || 'reddens if either becomes reachable')
+       || ' — offenders: ' || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT s.tbl || '.' || s.col || ' is answered ' || s.state || ' but ' || s.evidence
+                     || ' now holds ' || s.evidence_rows || ' row(s), so a flagged review must resolve' AS x
+                FROM badge_live s WHERE s.state = 'never-resolvable' AND s.evidence_rows > 0
+              UNION ALL
+              SELECT s.tbl || '.' || s.col || ' is answered ' || s.state || ' but the table now carries '
+                     || s.link_cols || ' non-boolean column(s) that could name the evidence'
+                FROM badge_live s WHERE s.state = 'never-resolvable' AND s.link_cols > 0
+              UNION ALL
+              SELECT s.tbl || '.' || s.col || ' is answered no-evidence-table yet a link column appeared, so the '
+                     || 'flag is now a checkable claim'
+                FROM badge_live s WHERE s.state = 'no-evidence-table' AND s.link_cols > 0) o), 'none');
+
 -- ============================================================ D74  door vocabularies
 --
 -- WHY THIS EXISTS: D69 counted the schema's polymorphic (type,id) pairs and found one bounded by a CHECK.

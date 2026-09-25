@@ -3772,3 +3772,74 @@ next              residue worth carrying: (a) the `column-default` comparison is
                     `nexus_test` belongs to the infrastructure lane; the events subject seam (D70) waits on a
                     contract decision.
 ```
+
+## 78. Four booleans claim a verification the schema cannot evidence, and two reach the user (2026-09-25)
+
+§77 ended with a clean negative — no boolean in the schema is degenerate — so this unit asks the other question
+about the same columns: four of them assert that something happened elsewhere, and the database is guarded so
+that it cannot have. `reviews.verified_purchase` is true on 2456 of 11000 rows and `verified_reservation` on
+1289 (300 rows carry both), while `orders`, `payments`, `reservations` and `carts` hold 0 rows each because D64's
+fabrication guard demands it. The flag is also structurally untraceable: `reviews` has no non-boolean column
+naming an order or a reservation — the only `%reservation%` column on the table is the flag itself.
+
+```
+measured          12 boolean columns, 9 in populated tables, none never-true and none always-true; the four
+                    name-shaped claims are reviews.verified_purchase 2456/11000,
+                    reviews.verified_reservation 1289/11000, merchants.ownership_verified 193/520,
+                    users.marketing_opt_in 1/5 — 3745 flags over 3445 distinct reviews. Evidence: orders=0,
+                    payments=0, reservations=0, carts=0. Served, not dormant: CatalogController.java:391-397
+                    derives the consumer-facing `verified_visit` from the two flags and :441-442 publishes
+                    verified_purchase_reviews / verified_reservation_reviews as merchant statistics;
+                    AdminListRepository.java:126 carries both into the admin view. Two readings stay open —
+                    demo decoration (§109's fake engagement) or a provenance marker rendered as a trust signal
+                    (§19) — and this unit takes neither: the fix would be generate.py or the payload, both owned
+                    by other streams. What the gate now says is that the badge cannot be traced, and that it must
+                    stop being able to say so once tracing becomes possible.
+new/changed       data/seed/quality.sql only, +175/-0. badge_cat (every boolean matching
+                    verif|opt_in|consent|ownership: rows, flagged rows, and the word a key column would carry);
+                    badge_answer (the hand list: evidence table or '-', state in never-resolvable |
+                    no-evidence-table | resolved | unresolved, non-blank reason); badge_state (per answered flag:
+                    rows in the named evidence table, and non-boolean columns of the flagged table carrying the
+                    key word — excluding booleans is what stops verified_reservation counting as a path to
+                    reservations); badge_live, a view that RECOMPUTES the implied state from those two numbers.
+                    Two rows: the census and the answers named for each other both ways with a known state and a
+                    table that still exists; and the answered state required to equal the recomputed one, so
+                    `never-resolvable` holds only while evidence rows = 0 AND link columns = 0.
+                    210 -> 212 checks.
+plants            9 runs at three seams (before the censuses for DDL, between them for the answer list, after
+                    both for the measured counts), every DDL plant reverted and re-counted. W0 212 green ·
+                    B1 delete the purchase answer -> RA only, and RB stayed green because three remaining
+                    never-resolvable answers still satisfy its non-vacuity term (recorded, not smoothed) ·
+                    B2 state='probably-fine' -> RA **and** RB · B3 blank reason -> RA ·
+                    B4 the purchase answer says 'resolved' -> RB · B5 evidence_rows 520 -> RB ·
+                    B6 `ALTER TABLE reviews ADD COLUMN order_id uuid` -> RB (the badge is now a checkable claim)
+                    · B7 `users.verified_identity boolean DEFAULT true` -> RA (a fifth flag, unanswered) ·
+                    final 212 green with `link-shaped non-boolean columns on reviews=0` and
+                    `users.verified_identity=0`. One false start is the unit's real finding about the gate: the
+                    first version stored `implied` in badge_state and compared `state <> implied` — two of the
+                    check's own columns — so no world could refute it and the plants came back green; recomputing
+                    the state in badge_live is what made B4-B6 able to fail.
+gates             scripts/db_gate_fresh.sh --keep green over the shipped text — `RESULT: PASS — 212 quality
+                    checks on a from-scratch schema (tables=58, migrations=7)` — with both rows read off the kept
+                    database: `4 verification-shaped boolean(s): reviews.verified_purchase true on 2456 of 11000,
+                    evidence orders holds 0 row(s), 0 link column(s) -> never-resolvable | …
+                    merchants.ownership_verified … evidence - … -> no-evidence-table | users.marketing_opt_in
+                    true on 1 of 5 … — offenders: none` and `all 4 answer(s) agree with what the data supports
+                    (never-resolvable/no-evidence-table): 3745 flagged rows carry a badge that cannot point at an
+                    order or a reservation, and this row reddens if either becomes reachable`. Kept gate databases
+                    dropped; `nexus`, `nexus_test` and `nexus_funnel_probe` were not opened. No Java, migration or
+                    seeded value changed, so mvn -o test and e2e_fresh.sh stay out of scope.
+next              residue: (a) the flag pattern is the set's definition, so `has_receipt` or
+                    `trusted_reviewer` would be invisible to it — stated so the next reader widens it on purpose;
+                    (b) row 2's non-vacuity term is per-state, not per-answer: B1 proved losing one answer leaves
+                    the row green, so a future seed that empties `reviews` entirely would need the term tied to
+                    the flagged count rather than to the answer count; (c) `ownership_verified`'s
+                    `no-evidence-table` answer rests on the §5 reading that ownership is a status the
+                    verification door moves — and those transitions are #17's unfinished work, not this row's;
+                    (d) the open product question stays open and is filed as #56: either the badges stop being
+                    served, or the demo stops stamping them, and §109 is why the second is the honest default.
+                    Standing reports unchanged: `saved_searches.notify` read by nothing; `no_show` named once by
+                    a door list with no reader; CommerceApiTest and the drifted `nexus` database belong to other
+                    streams; the split migration ledger in `nexus_test` is the infrastructure lane's; the events
+                    subject seam (D70) waits on a contract decision.
+```

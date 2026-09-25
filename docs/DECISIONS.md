@@ -4559,3 +4559,93 @@ this lane that a green final run is not a state proof.
   reddens before the shape does.
 - No Java, migration or seeded value changed: 207 → 210 checks, and `mvn -o test` / `e2e_fresh.sh` stay out of
   scope for a unit the gate reads from disk.
+
+## D82 Four booleans claim a verification the schema cannot evidence, and two of them are served to users — 2026-09-25
+
+### 1. What the boolean plane turned out to be
+
+§81 left a clean negative that this unit starts from: of the 12 boolean columns in the schema (9 in populated
+tables) none is degenerate — none is never-true or always-true. So there was no bug to find in booleans as a
+type. What there was, is what their *names* promise. Four columns assert that something happened somewhere
+else, and §19 requires such a claim to carry a source:
+
+```
+reviews.verified_purchase       true on  2456 of 11000 rows
+reviews.verified_reservation    true on  1289 of 11000 rows        (300 rows carry both)
+merchants.ownership_verified    true on   193 of   520 rows
+users.marketing_opt_in          true on     1 of     5 rows
+```
+
+3745 flags over 3445 distinct reviews. And the tables that would hold their evidence — `orders`, `payments`,
+`reservations`, `carts` — are at 0 rows each, because D64's fabrication guard requires them empty and
+`seed_truncate_probe.sh` proves that guard is live. `reviews` has no column that could name an order or a
+reservation either: the only column matching `%reservation%` on that table is the flag itself. So the badge is
+not merely unevidenced in today's data, it is **structurally unresolvable** — no reservation could ever be
+pointed at.
+
+### 2. Why this is not just a seed curiosity
+
+The flags leave the database. `CatalogController.java:391-397` puts both booleans into the consumer payload and
+derives `"verified_visit": verified_purchase || verified_reservation`; `:441-442` publish
+`verified_purchase_reviews` and `verified_reservation_reviews` as merchant-facing statistics;
+`AdminListRepository.java:126` carries both into the admin view. A badge rendered to a user is the strongest form
+of the claim, which is why the gate — which already asserts things like "every rendered rating is backed by a
+fact" — should not be silent about a badge backed by nothing.
+
+Two readings remain open, and this unit picks neither. Either the flags are demo decoration, which is exactly
+what §109's ban on fabricated engagement is about; or `verified_*` is a provenance marker being rendered as a
+trust signal, which is a §19 mistake in the presentation layer. Deciding means changing `generate.py` or the
+consumer payload, both owned elsewhere. What the gate can say, and now does, is that the badge cannot be traced,
+and that it must stop being able to say so the day tracing becomes possible.
+
+### 3. The change: an answer per flag, and a state the data re-derives
+
+* `badge_cat` — every boolean whose name claims a verification or a consent (`verif|opt_in|consent|ownership`),
+  with rows, flagged rows, and the word a key column would have to carry (`verified_purchase → purchase`,
+  `ownership_verified → ownership`).
+* `badge_answer` — the hand list, because SQL cannot know that `verified_purchase` is about `orders`. Each answer
+  names an evidence table (or `-`), a state in {`never-resolvable`, `no-evidence-table`, `resolved`,
+  `unresolved`}, and a non-blank reason.
+* `badge_state` — per answered flag, the two facts the answer depends on, read from the database each run: how
+  many rows the named evidence table holds, and how many **non-boolean** columns of the flagged table carry the
+  key word. Excluding booleans is what stops `verified_reservation` counting as a path to `reservations`.
+* `badge_live` — a view that **recomputes** the implied state from those two numbers. That view is the second
+  version of this row: the first compared `state` to a stored `implied` column, i.e. two of the check's own
+  columns, and the plants found it unfailable. A check that compares its own memory to its own memory is not a
+  check.
+
+Two rows: **'every boolean that claims a verification is answered for its evidence'** (census↔answers both ways,
+non-blank reason, a state from the four known, and a named evidence table that the catalog still has) and
+**'a verification badge stays unresolvable only while its evidence and its link both stay absent'** (the answered
+state must equal the recomputed one, so `never-resolvable` survives only while evidence rows = 0 **and**
+link columns = 0). 210 → 212 checks.
+
+### 4. Plants — nine runs, and the one that exposed the first version of the row
+
+| # | plant | red |
+|---|---|---|
+| W0 | none | 212 green |
+| B1 | the purchase-badge answer deleted | RA — and note RB stayed green: three remaining `never-resolvable` answers still satisfy its non-vacuity term |
+| B2 | an answer's state set to `probably-fine` | RA **and** RB, because an unknown state is also a mismatch |
+| B3 | an answer's reason blanked | RA |
+| B4 | the purchase answer says `resolved` while nothing is reachable | RB |
+| B5 | the census's evidence-row count moved to 520 | RB — the recomputed state, not the stored one, is what reddens |
+| B6 | `ALTER TABLE reviews ADD COLUMN order_id uuid` before the censuses | RB — the link column that would make the badge a checkable claim |
+| B7 | `users.verified_identity boolean DEFAULT true` added | RA — a fifth flag with no answer |
+| final | none, both DDL plants reverted | 212 green, `link-shaped non-boolean columns on reviews=0`, `users.verified_identity=0` |
+
+B6 and B7 are DDL against a throwaway gate database and are reverted by the same script that applied them, then
+re-counted — the rule §78 and §81 both had to learn the hard way.
+
+### 5. What this does not claim
+
+- The row does not decide what the badge means. It records, per flag, which axis the answer claims and whether
+  the database could confirm it, and it reddens on the two ways that could change.
+- `no-evidence-table` for `ownership_verified` and `marketing_opt_in` rests on a schema reading (no table or
+  column holds the event) plus the §5 note that ownership is a status the verification door moves. The status
+  transitions themselves are §17's unfinished work, not this row's.
+- The pattern `verif|opt_in|consent|ownership` is the definition of the set, so a flag named something else —
+  `has_receipt`, `trusted_reviewer` — is invisible to it. The pattern is stated so the next reader can widen it
+  deliberately rather than discover the gap by accident.
+- Nothing here changes `generate.py`, the consumer payload or the admin view: 210 → 212 checks, and the §109/§19
+  decision is filed as task #56's open question for the streams that own those files.
