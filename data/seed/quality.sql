@@ -2380,6 +2380,150 @@ SELECT 'the columns stamped from the generation clock are exactly the ones answe
                   AND NOT EXISTS (SELECT 1 FROM spread_clock k WHERE k.tbl = a.tbl AND k.col = a.col)) o),
                    'none');
 
+-- ============================================================ D84  the jsonb keys the build reads, against the payloads that ship
+--
+-- WHY THIS EXISTS: §79 finished the type planes (strings, arrays, markers, booleans, numbers). What none of it
+-- had ever compared is the OTHER side of a jsonb payload: the keys the build READS. A read against a key nobody
+-- writes is not a bug the tests can see — it returns nothing and the branch around it decides quietly. Measured
+-- on the kept from-scratch database, one at a time, for every `col->>'key'` in services/platform:
+--
+--   collections.seo        ? generated_by    0 of        4 row(s)   CollectionsRepository.java:68
+--   merchants.seo          ? generated_by    0 of      520 row(s)   the same clause, merchant pages
+--   seo_pages.data/jsonld  ? generated_by    0 of        0 row(s)   (table kept empty by D64)
+--   offerings.attributes   ? import_job      0 of     5534 row(s)   MerchantImportRepository.java:37
+--   documents.metadata     ? import_job      0 of     1040 row(s)   (same read, the doc lane)
+--   chunks.metadata        ? import_job      0 of     2118 row(s)   (same read, the chunk lane)
+--   orders.metadata         ? session_id     0 of        0 row(s)   OrderRepository.java:97 (empty by D64)
+--   referrals.reward        ? amount/currency 0 of       0 row(s)   ReferralRepository.java:89,91 (empty by D64)
+--   tenants.config          ? currency_default  1 of      1 row(s)  the only reachable read found
+--
+-- Two of those are load-bearing, not incidental. `CollectionsRepository.java:23` documents that a collection is
+-- publishable when "seo->>'generated_by' carries a real provenance token", and :68 encodes it as
+-- `lower(btrim(coalesce(c.seo->>'generated_by',''))) in ('ai','editor','creator')` — on shipped data that test is
+-- false for every one of the 4 collections and all 520 merchant rows, so it always falls through to its other
+-- branch. `MerchantImportRepository.java:37` selects drafts with `o.attributes->>'import_job' is not null`, which
+-- matches no seeded offering, no document and no chunk: the import lane has nothing to import.
+--
+-- WHAT THIS UNIT DOES NOT DECIDE. Whether the seed should start stamping those keys, or the reads should name a
+-- different key, is each door owner's call — the §8 publishability rule belongs to whoever owns
+-- CollectionsRepository and the import selector to whoever owns MerchantImportRepository (task #59 records it as
+-- a report, mirroring §78's badge posture). What the gate can own is that the mismatch is named, counted, and
+-- cannot quietly grow: a new read nobody answered for reddens, an answer whose key starts being shipped reddens
+-- as stale, and an unknown kind or blank reason reddens.
+
+CREATE TEMP TABLE read_cat (tbl text NOT NULL, col text NOT NULL, key text NOT NULL, rows bigint NOT NULL,
+                            carried bigint NOT NULL, PRIMARY KEY (tbl, col, key));
+DO $d84a$
+DECLARE p record; n bigint; tot bigint;
+BEGIN
+  FOR p IN SELECT * FROM (VALUES
+      ('collections', 'seo', 'generated_by'), ('merchants', 'seo', 'generated_by'),
+      ('seo_pages', 'data', 'generated_by'), ('seo_pages', 'jsonld', 'generated_by'),
+      ('offerings', 'attributes', 'import_job'), ('documents', 'metadata', 'import_job'),
+      ('chunks', 'metadata', 'import_job'), ('orders', 'metadata', 'session_id'),
+      ('referrals', 'reward', 'amount'), ('referrals', 'reward', 'currency'),
+      ('tenants', 'config', 'currency_default')
+    ) v(tbl, col, key)
+  LOOP
+    BEGIN
+      EXECUTE format('SELECT count(*) FILTER (WHERE %I ? %L), count(*) FROM public.%I',
+                     p.col, p.key, p.tbl) INTO n, tot;
+      INSERT INTO read_cat VALUES (p.tbl, p.col, p.key, tot, n);
+    EXCEPTION WHEN OTHERS THEN NULL;   -- a table this database lacks is not a read the build can make
+    END;
+  END LOOP;
+END $d84a$;
+
+-- The hand answers: why each read is or is not reachable, naming the site. `reachable` needs no excuse, so the
+-- answers exist precisely for the reads that resolve to nothing today.
+CREATE TEMP TABLE read_answer (tbl text NOT NULL, col text NOT NULL, key text NOT NULL, kind text NOT NULL,
+                               site text NOT NULL, why text NOT NULL, PRIMARY KEY (tbl, col, key));
+INSERT INTO read_answer VALUES
+ ('collections', 'seo', 'generated_by', 'dead-reader', 'CollectionsRepository.java:23,:68',
+  'the publishability test wants a provenance token and no seeded collection carries one, so the clause is '
+  || 'always false and the other branch always decides'),
+ ('merchants', 'seo', 'generated_by', 'dead-reader', 'CollectionsRepository.java:68',
+  'the same clause over 520 merchant seo payloads, none of which carries the key'),
+ ('seo_pages', 'data', 'generated_by', 'empty-by-guard', 'CollectionsRepository.java:68',
+  'seo_pages is swept EMPTY by D64, so the read has nothing to resolve against either way'),
+ ('seo_pages', 'jsonld', 'generated_by', 'empty-by-guard', 'CollectionsRepository.java:68',
+  'the same, on the jsonld twin column'),
+ ('offerings', 'attributes', 'import_job', 'dead-reader', 'MerchantImportRepository.java:37',
+  'the import selector wants draft rows carrying an import job and no seeded offering does, so the lane '
+  || 'reports no imports'),
+ ('documents', 'metadata', 'import_job', 'dead-reader', 'MerchantImportRepository.java:37 (doc lane)',
+  '0 of 1040 documents carry it; D75 already found documents.metadata holds a data_origin/synthetic pair only'),
+ ('chunks', 'metadata', 'import_job', 'dead-reader', 'MerchantImportRepository.java:37 (chunk lane)',
+  '0 of 2118 chunks carry it, beside the same embed_model D75 named as read by nothing'),
+ ('orders', 'metadata', 'session_id', 'empty-by-guard', 'OrderRepository.java:97',
+  'guest-order lookup by session; orders is EMPTY by D64 because §109 forbids fabricated transactions'),
+ ('referrals', 'reward', 'amount', 'empty-by-guard', 'ReferralRepository.java:89',
+  'the earned-reward aggregate; referrals is EMPTY by the same guard'),
+ ('referrals', 'reward', 'currency', 'empty-by-guard', 'ReferralRepository.java:91',
+  'min(reward->>''currency'') on the same empty table'),
+ ('tenants', 'config', 'currency_default', 'reachable', 'generate.py:979 writes it',
+  'the one read measured against a payload that actually carries the key, so the set is not all dead ends');
+
+INSERT INTO qc
+SELECT 'every jsonb key the build reads is answered for what the shipped payloads carry',
+       (SELECT count(*) FROM read_cat) > 0
+       AND NOT EXISTS (SELECT 1 FROM read_cat c WHERE NOT EXISTS
+                        (SELECT 1 FROM read_answer a
+                          WHERE a.tbl = c.tbl AND a.col = c.col AND a.key = c.key))
+       AND NOT EXISTS (SELECT 1 FROM read_answer a WHERE NOT EXISTS
+                        (SELECT 1 FROM read_cat c
+                          WHERE c.tbl = a.tbl AND c.col = a.col AND c.key = a.key))
+       AND NOT EXISTS (SELECT 1 FROM read_answer a WHERE btrim(a.why) = '' OR btrim(a.site) = ''
+                        OR a.kind NOT IN ('reachable', 'dead-reader', 'empty-by-guard'))
+       -- an answer is allowed to claim reachability only while the payload really carries the key, and to call a
+       -- read dead only while it carries none: both directions are re-read from the data every run
+       AND NOT EXISTS (SELECT 1 FROM read_cat c JOIN read_answer a
+                         ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key
+                        WHERE (a.kind = 'reachable' AND c.carried = 0)
+                           OR (a.kind = 'dead-reader' AND c.carried > 0))
+       -- empty-by-guard answers are only honest while D64 still keeps that table empty
+       AND NOT EXISTS (SELECT 1 FROM read_cat c JOIN read_answer a
+                         ON a.tbl = c.tbl AND a.col = c.col AND a.key = c.key
+                        WHERE a.kind = 'empty-by-guard' AND c.rows > 0),
+       (SELECT count(*) FROM read_cat) || ' read(s) measured against the shipped payloads: '
+       || (SELECT count(*) FROM read_cat WHERE carried = 0) || ' resolve to nothing, '
+       || (SELECT count(*) FROM read_cat WHERE carried > 0) || ' carry a key; '
+       || coalesce((SELECT string_agg(k || '=' || cnt, ', ' ORDER BY k)
+                      FROM (SELECT kind AS k, count(*) AS cnt FROM read_answer GROUP BY kind) g),
+                   'none') || '; on rows: '
+       || coalesce((SELECT string_agg(c.tbl || '.' || c.col || '.' || c.key || ' on ' || c.carried || ' of '
+                                      || c.rows || ' row(s)', ', ' ORDER BY c.rows DESC, c.tbl)
+                      FROM read_cat c WHERE c.rows > 0), 'none')
+       || ' — offenders: ' || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT 'the build reads ' || c.tbl || '.' || c.col || ' ? ' || c.key || ' and nobody answers for it'
+                     AS x
+                FROM read_cat c WHERE NOT EXISTS (SELECT 1 FROM read_answer a
+                                                  WHERE a.tbl = c.tbl AND a.col = c.col AND a.key = c.key)
+              UNION ALL
+              SELECT a.tbl || '.' || a.col || '.' || a.key || ' is answered ' || a.kind
+                     || ' but the catalog has no such column for the build to read'
+                FROM read_answer a WHERE NOT EXISTS (SELECT 1 FROM read_cat c
+                                                     WHERE c.tbl = a.tbl AND c.col = a.col AND c.key = a.key)
+              UNION ALL
+              SELECT a.tbl || '.' || a.col || '.' || a.key || ' is answered ' || a.kind
+                     || ' while the payloads now carry it on ' || c.carried || ' row(s): the answer is stale'
+                FROM read_answer a JOIN read_cat c
+                  ON c.tbl = a.tbl AND c.col = a.col AND c.key = a.key
+                 WHERE (a.kind = 'reachable' AND c.carried = 0) OR (a.kind = 'dead-reader' AND c.carried > 0)
+              UNION ALL
+              SELECT a.tbl || '.' || a.col || '.' || a.key || ' is answered empty-by-guard while '
+                     || c.rows || ' row(s) are now shipped there'
+                FROM read_answer a JOIN read_cat c
+                  ON c.tbl = a.tbl AND c.col = a.col AND c.key = a.key
+                 WHERE a.kind = 'empty-by-guard' AND c.rows > 0
+              UNION ALL
+              SELECT 'the answer for ' || tbl || '.' || col || '.' || key || ' names kind ''' || kind
+                     || ''', not one of the three known'
+                FROM read_answer WHERE kind NOT IN ('reachable', 'dead-reader', 'empty-by-guard')
+              UNION ALL
+              SELECT 'the answer for ' || tbl || '.' || col || '.' || key || ' gives no reason or no site'
+                FROM read_answer WHERE btrim(why) = '' OR btrim(site) = '') o), 'none');
+
 -- ============================================================ D74  door vocabularies
 --
 -- WHY THIS EXISTS: D69 counted the schema's polymorphic (type,id) pairs and found one bounded by a CHECK.
