@@ -162,6 +162,47 @@ ARMS = [
     ("no merchant name collides", "a merchant renamed to a real HK chain on the §109 blocklist",
      "UPDATE merchants SET display_name_zh = '翠華餐廳' "
      "WHERE id = (SELECT id FROM merchants ORDER BY id LIMIT 1);"),
+    # Batch D119: the VOLUME family. Six of these names could not be reached by any fabricated value,
+    # because every one of them reads `counts` -- a snapshot of `count(*)` taken at the top of the gate --
+    # so the only deception that moves them is the size of a table. Each was aimed from `pg_constraint`
+    # first, exactly as D118's were aimed from `pg_attribute`: which tables point at the target, and with
+    # which ON DELETE rule. Measured on a loaded seed (merchants 520 against a floor of 500, offerings
+    # 5,534/5,000, reviews 11,000/10,000, documents 1,040 vs merchants 520, chunks 2,118, facts 5,688),
+    # with carts/cart_items/order_items/reservations/handoffs all at zero rows -- so the NO ACTION
+    # referencers of merchants and offerings cannot refuse these deletes. The aim is chosen to keep every
+    # OTHER volume row green, which is what makes each arm a witness for one assertion: far-from-Sha-Tin
+    # merchants (a bbox of lat < 22.30 or lng > 114.25 is at least 7 km from 22.3831/114.1876, so the
+    # density row cannot notice) with the fewest reviews; offerings no review, fact or document references;
+    # reviews deleted in the table's own 31/69 language split so the mix row cannot notice; documents
+    # ordered by their chunk count with at least one left per merchant so `chunks > 0` survives.
+    # The last two arms have no such aim: `> 0` can only be falsified by emptying the table, so their
+    # collateral is expected to be wide and is printed rather than minimised.
+    ("volume: merchants", "21 of the 520 merchants removed, the count under the declared floor",
+     "DELETE FROM merchants WHERE id IN (SELECT m.id FROM merchants m "
+     "JOIN locations l ON l.merchant_id = m.id AND l.is_primary "
+     "WHERE l.lat < 22.30 OR l.lng > 114.25 "
+     "ORDER BY (SELECT count(*) FROM reviews r WHERE r.merchant_id = m.id) ASC, m.id ASC LIMIT 21);"),
+    ("volume: offerings", "535 offerings removed, none of them referenced by anything",
+     "DELETE FROM offerings o WHERE o.id IN (SELECT o2.id FROM offerings o2 "
+     "WHERE NOT EXISTS (SELECT 1 FROM reviews r WHERE r.offering_id = o2.id) "
+     "AND NOT EXISTS (SELECT 1 FROM facts f WHERE f.subject_id = o2.id) "
+     "AND NOT EXISTS (SELECT 1 FROM documents d WHERE d.offering_id = o2.id) "
+     "ORDER BY o2.id LIMIT 535);"),
+    ("volume: reviews", "1,001 reviews removed in the table's own language ratio",
+     "DELETE FROM reviews WHERE id IN (SELECT id FROM reviews WHERE language = 'en' ORDER BY id LIMIT 310); "
+     "DELETE FROM reviews WHERE id IN (SELECT id FROM reviews WHERE language = 'zh-HK' ORDER BY id LIMIT 691);"),
+    ("volume: documents >= merchants", "521 documents removed, so one fewer than the merchant count",
+     "DELETE FROM documents WHERE id IN (SELECT d.id FROM documents d "
+     "WHERE NOT (d.id = (SELECT d2.id FROM documents d2 WHERE d2.merchant_id = d.merchant_id ORDER BY d2.id LIMIT 1)) "
+     "ORDER BY (SELECT count(*) FROM chunks c WHERE c.document_id = d.id) ASC, d.id LIMIT 520); "
+     # documents(1,040) >= merchants(520) has a margin of exactly the merchant count, so the protected sweep
+     # above lands on 520 = 520 -- legal, and not a falsification. Breaking the tie needs one merchant to
+     # lose its last document; the lowest id takes it deterministically.
+     "DELETE FROM documents WHERE id = (SELECT id FROM documents ORDER BY id LIMIT 1);"),
+    ("volume: chunks > 0", "every chunk removed -- a presence row has no narrower falsifier",
+     "DELETE FROM chunks;"),
+    ("volume: facts > 0", "every fact removed -- the same presence row on the table with no CHECKs",
+     "DELETE FROM facts;"),
 ]
 
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
