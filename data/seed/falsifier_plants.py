@@ -47,6 +47,15 @@ not there. D119's facts-delete arm filed 213 rows against a 216 baseline and the
 because the only trace was a number in a printed column. An arm may now declare the names it unfiles (an
 optional fourth tuple element); an undeclared disappearance fails the drive.
 
+The `fk: ` sweep needed a third case, because no legal write can falsify it: the constraint the row names is
+the same thing that refuses the write. Nine arms (D122) therefore open with `SET LOCAL
+session_replication_role = replica` and say so in their label -- measured to silence foreign keys and triggers
+while leaving CHECKs and NOT NULLs in force, so the SET reaches the referential state and nothing else, and the
+same SET with nothing moved leaves 216 rows and 0 red. What such an arm witnesses is that the ASSERTION detects
+an orphan, never that a door could produce one. The tenth arm takes the route a deployment can take instead --
+drop the constraint, then orphan a row -- and it is not a falsifier of an `fk: ` row at all: the sweep is
+generated from `pg_constraint`, so that edge's name stops existing and D66's census row is what reddens.
+
 The exit code is 0 only when the baseline matches the two declared known-reds, every arm's assertion
 reddened on the plant, no arm's assertion was already red at baseline, no assertion stopped being filed
 without being declared, and the closing baseline equals the opening one -- which is how this file knows it
@@ -237,6 +246,75 @@ ARMS = [
      "UPDATE facts SET subject_id = (SELECT id FROM offerings ORDER BY id LIMIT 1) "
      "WHERE id = (SELECT id FROM facts WHERE subject_type = 'merchant' AND attribute = 'opening_hours' "
      "ORDER BY id LIMIT 1);"),
+
+    # Batch D122: the `fk: ` sweep, which no legal write can reach because the constraint enforces every one of
+    # it. The route is to write the row the constraint refuses, and the only thing that must be true of such a
+    # plant is that it says so on its own face: each arm below opens with `SET LOCAL session_replication_role =
+    # replica`, and the label repeats it, because the witness is about what the ASSERTION detects, not about
+    # what a door can produce. Measured before filing (scratch sessions, each rolled back): the SET alone with
+    # nothing moved leaves 216 rows and 0 red, so the mechanism is not what reddens anything; and the role
+    # silences foreign keys and triggers only -- `SET LOCAL ... replica` then rating=9.9 is still refused by
+    # reviews_rating_check and body=NULL still by the not-null constraint, both measured -- so the arms cannot
+    # smuggle a value-plane deception past a value-plane assertion. Eight of these nine edges were measured to
+    # redden exactly their own name with zero collateral and no name born or vanished; the ninth,
+    # moderation_cases.assigned_to, is different in kind: 544 cases and 0 of them carry an assignee, so the
+    # sweep row is green for want of data and the arm has to file the column before it can dangle it.
+    #
+    # The tenth arm is the failure a deployment CAN take -- a migration that stops enforcing the edge -- and it
+    # does not falsify an `fk: ` row at all. Dropping the constraint and orphaning a row leaves 215 assertions:
+    # the sweep is generated from pg_constraint, so the name for that edge stops existing, and what goes red
+    # instead is D66's census row, which reads the same catalogue and notices the edge left the probed set. The
+    # vanished name is therefore declared here rather than filed, which is exactly the case D120's fourth tuple
+    # was built for.
+    ("fk: business_hours.location_id -> locations.id",
+     "fk checks off (replica role): a business_hours row loses its location",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE business_hours SET location_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM business_hours ORDER BY id LIMIT 1);"),
+    ("fk: categories.parent_id -> categories.id",
+     "fk checks off (replica role): a child category loses its parent",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE categories SET parent_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM categories WHERE parent_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: collections.author_id -> users.id",
+     "fk checks off (replica role): a collection loses its author",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE collections SET author_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM collections WHERE author_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: user_preferences.user_id -> users.id",
+     "fk checks off (replica role): a preference loses its user",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE user_preferences SET user_id = gen_random_uuid() WHERE (user_id, key) = "
+     "(SELECT user_id, key FROM user_preferences ORDER BY 1, 2 LIMIT 1);"),
+    ("fk: merchant_categories.category_id -> categories.id",
+     "fk checks off (replica role): a merchant-category link loses its category",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE merchant_categories SET category_id = gen_random_uuid() WHERE (merchant_id, category_id) = "
+     "(SELECT merchant_id, category_id FROM merchant_categories ORDER BY 1, 2 LIMIT 1);"),
+    ("fk: availability_slots.pool_id -> resource_pools.id",
+     "fk checks off (replica role): a slot loses its resource pool",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE availability_slots SET pool_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM availability_slots ORDER BY id LIMIT 1);"),
+    ("fk: chunks.tenant_id -> tenants.id",
+     "fk checks off (replica role): a chunk loses its tenant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE chunks SET tenant_id = gen_random_uuid() WHERE id = (SELECT id FROM chunks ORDER BY id LIMIT 1);"),
+    ("fk: favorites.user_id -> users.id",
+     "fk checks off (replica role): a favourite loses its owner",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE favorites SET user_id = gen_random_uuid() WHERE id = (SELECT id FROM favorites ORDER BY id LIMIT 1);"),
+    ("fk: moderation_cases.assigned_to -> users.id",
+     "fk checks off: a case gains an assignee that is nobody (0 of 544 carry one)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE moderation_cases SET assigned_to = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM moderation_cases ORDER BY id LIMIT 1);"),
+    ("every reference the seed writes",
+     "fk: enforcement dropped, then one row lands on the unenforced edge",
+     "ALTER TABLE user_preferences DROP CONSTRAINT user_preferences_user_id_fkey; "
+     "UPDATE user_preferences SET user_id = gen_random_uuid() WHERE (user_id, key) = "
+     "(SELECT user_id, key FROM user_preferences ORDER BY 1, 2 LIMIT 1);",
+     ("fk: user_preferences.user_id -> users.id",)),
 ]
 
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
