@@ -41,3 +41,11 @@ merchant has a primary location	D104	plant: merchant loses its location	nexus-d6
 orphan: facts.location	D104	plant: merchant loses its location	nexus-d63/d104_plants.py
 every column that cannot vary is answered for why it cannot	D104	plant: an offering priced out of range	nexus-d63/d104_plants.py
 offerings.price_amount in (0, 20000)	D104	plant: an offering priced out of range	nexus-d63/d104_plants.py
+slots: capacity_left within capacity_total	D105	plant: slots: capacity_left within capacity_total held without the schema's own constraint	nexus-d63/d105_noconstraint.py
+merchants.rating_agg matches its reviews	D105	plant: reviews.rating 1..5 held without the schema's own constraint	nexus-d63/d105_noconstraint.py
+rating fact restates the recomputed mean	D105	plant: reviews.rating 1..5 held without the schema's own constraint	nexus-d63/d105_noconstraint.py
+reviews.rating 1..5	D105	plant: reviews.rating 1..5 held without the schema's own constraint	nexus-d63/d105_noconstraint.py
+every column that cannot vary is answered for why it cannot	D105	plant: one fact per (subject, attribute) held without the schema's own constraint	nexus-d63/d105_noconstraint.py
+one fact per (subject, attribute)	D105	plant: one fact per (subject, attribute) held without the schema's own constraint	nexus-d63/d105_noconstraint.py
+rating: every reviewed subject has exactly one rating fact	D105	plant: one fact per (subject, attribute) held without the schema's own constraint	nexus-d63/d105_noconstraint.py
+the columns stamped from the generation clock are exactly the ones answered so	D105	plant: one fact per (subject, attribute) held without the schema's own constraint	nexus-d63/d105_noconstraint.py
