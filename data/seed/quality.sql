@@ -2209,8 +2209,9 @@ SELECT 'a verification badge stays unresolvable only while its evidence and its 
 -- V1 trigger assigned a field `facts` did not have, so no fact row could be updated anywhere) and its COMMENT
 -- promises "when this claim was last restated"; a freshly seeded demo therefore reports every one of its 5688
 -- claims as restated at load time, and the value differs between two runs of the same seed. The row takes no
--- position on whether that is wrong — it names the columns whose single value is within ten minutes of now(),
--- so the next person who asks "is the shipped seed reproducible?" reads a list instead of discovering it twice.
+-- position on whether that is wrong — it names the columns whose single value falls inside the window the
+-- loader recorded for its own run, so the next person who asks "is the shipped seed reproducible?" reads a
+-- list instead of discovering it twice.
 -- An answer that no longer matches the data reddens in both directions: a second clock-stamped column, or this
 -- one pinned while the answer still claims it moves.
 --
@@ -2218,9 +2219,9 @@ SELECT 'a verification badge stays unresolvable only while its evidence and its 
 -- never-written, generation-clock, uniform-by-design, single-instant-pinned, history-date — and a reason. The
 -- coverage row refuses a new degenerate column joining the set unanswered, and refuses an answer whose column
 -- has started varying (a stale exemption is the same failure §77 and §80 both had to guard). The clock row is
--- mechanical: the set of columns answered generation-clock must equal the set whose value is within ten minutes
--- of now(), and neither side may be empty — so writing a fresh timestamp into another column reddens it, and so
--- does pinning facts.updated_at and leaving the answer behind.
+-- mechanical: the set of columns answered generation-clock must equal the set whose value falls inside the
+-- recorded load window, and neither side may be empty — so writing a fresh timestamp into another column
+-- reddens it, and so does pinning facts.updated_at and leaving the answer behind.
 
 CREATE TEMP TABLE spread_cat (tbl text NOT NULL, col text NOT NULL, ty text NOT NULL, rows bigint NOT NULL,
                               nulls bigint NOT NULL, distincts int NOT NULL, val text, class text NOT NULL,
@@ -2301,13 +2302,47 @@ INSERT INTO spread_answer VALUES
  ('user_preferences', 'updated_at', 'history-date', 'seven rows at 2026-09-19'),
  ('users', 'updated_at', 'single-instant-pinned', 'the five preset accounts at the pinned base date');
 
--- The clock set, derived from the data rather than from the answer list: a degenerate column whose single value
--- is within ten minutes of now() is stamped from the generation run.
+-- The clock set, derived from the data plus one thing the data cannot carry: the instant the loader ran.
+--
+-- WHY NOT `now()`. `facts.updated_at` is `NOT NULL DEFAULT now()` inside load.sh's single transaction, so it
+-- holds that transaction's own start stamp — the only degenerate timestamp column whose value is a property of
+-- WHEN the seed was loaded rather than of what the seed says. This view used to test that by asking whether the
+-- value was within ten minutes of now(), and D88 measured what that costs: the same unmodified
+-- `data/seed/quality.sql` was red at this row in one official 8-step run and green in the next 25 minutes
+-- later, because on a host where the load spends twenty minutes after stamping `facts` and the gate reaches
+-- this file only afterwards, `now()` reports how fast the machine was. The question the row means to ask is
+-- "did this value come from the load", so the load now answers it: `SEED_ANCHOR=1` makes `data/seed/load.sh`
+-- stamp `nexus.seed_started` and `nexus.seed_finished` — epoch seconds read from the SERVER's clock, so host
+-- and container skew cannot enter — onto the database it loads, and the predicate below asks whether a value
+-- falls inside that window widened by 600 s at each end. Nothing is measured against now() any more, and the
+-- width of the load no longer matters: the value is inside the window whether the load takes two minutes or two
+-- hours, which is the difference between a gate and a stopwatch.
+--
+-- MEASURED BEFORE WRITING THIS, on the live demo database (a seed loaded 2026-09-23 07:31), for every
+-- degenerate timestamp column: 22 hold one value, and the distances from that load instant are 0 min
+-- (facts.updated_at, the anchor itself), then 138 min (idempotency_keys.expires_at, a runtime write that a
+-- from-scratch database does not hold), then 1,231 min for every column pinned to the base date. A ±10-minute
+-- window around the load separates the clock-stamped column from the rest by a factor of 13.8 in the nearest
+-- case — 138 min out against a 10-min margin — so the margin is not what makes this row pass.
+--
+-- A database the loader never stamped is not evidence, and this row does not pretend otherwise: with no window
+-- the derived set is empty, the row is red, and its text names the missing window instead of blaming the seed.
+-- That is not a change of colour anywhere — under the old rule the live demo database was already red here,
+-- its facts.updated_at reading 4,273 minutes from now() when this was measured (2026-09-26 06:44), a gap that
+-- only grows, against a bound of ten.
+CREATE TEMP VIEW spread_window AS
+  SELECT g.s, g.f, (g.s IS NOT NULL AND g.f IS NOT NULL AND g.s <= g.f) AS recorded,
+         g.s - 600 AS lower, g.f + 600 AS upper
+    FROM (SELECT nullif(current_setting('nexus.seed_started', true), '')::bigint AS s,
+                 nullif(current_setting('nexus.seed_finished', true), '')::bigint AS f) g;
+
 CREATE TEMP VIEW spread_clock AS
-SELECT c.tbl, c.col, c.val, abs(extract(epoch FROM ((c.val)::timestamptz - now()))) AS delta_s
-  FROM spread_cat c
- WHERE c.class IN ('constant', 'sparse-constant') AND c.ty LIKE 'timestamp%'
-   AND abs(extract(epoch FROM ((c.val)::timestamptz - now()))) < 600;
+  SELECT c.tbl, c.col, c.val,
+         round(extract(epoch FROM (c.val)::timestamptz) - w.s) AS offset_s
+    FROM spread_cat c CROSS JOIN spread_window w
+   WHERE w.recorded
+     AND c.class IN ('constant', 'sparse-constant') AND c.ty LIKE 'timestamp%'
+     AND extract(epoch FROM (c.val)::timestamptz) BETWEEN w.lower AND w.upper;
 
 INSERT INTO qc
 SELECT 'every column that cannot vary is answered for why it cannot',
@@ -2360,22 +2395,36 @@ SELECT 'the columns stamped from the generation clock are exactly the ones answe
        AND NOT EXISTS (SELECT 1 FROM spread_answer a WHERE a.kind = 'generation-clock'
                         AND NOT EXISTS (SELECT 1 FROM spread_clock k
                                         WHERE k.tbl = a.tbl AND k.col = a.col)),
-       (SELECT count(*) FROM spread_clock) || ' column(s) hold a single value within ten minutes of now(): '
+       (SELECT count(*) FROM spread_clock) || ' column(s) hold a single value inside the window the loader'
+       || ' recorded for itself (±10 min at each end), which is '
+       || CASE WHEN (SELECT recorded FROM spread_window)
+               THEN '[' || to_timestamp((SELECT s FROM spread_window))::text || ' .. '
+                    || to_timestamp((SELECT f FROM spread_window))::text || ']'
+               ELSE 'NOT RECORDED on this database — stamp it with data/seed/load.sh under SEED_ANCHOR=1, or'
+                    || ' run scripts/db_gate_fresh.sh, which does'
+          END
+       || ': '
        || coalesce((SELECT string_agg(tbl || '.' || col || ' = ' || val || ' ('
-                                      || round(delta_s / 60.0) || ' min old)', ', ' ORDER BY tbl, col)
+                                      || abs(offset_s) || ' s ' || CASE WHEN offset_s >= 0
+                                                                      THEN 'after' ELSE 'before' END
+                                      || ' the window opened)', ', ' ORDER BY tbl, col)
                       FROM spread_clock), 'none')
        || '; pinned base date for comparison: ' || (SELECT min(starts_at::date)::text || ' from availability_slots'
                                                     || ' over ' || count(DISTINCT starts_at::date) || ' days'
                                                     FROM availability_slots)
        || ' — offenders: ' || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT 'this database carries no load window (nexus.seed_started / nexus.seed_finished are'
+                     || ' unset), so the clock set cannot be derived from it and nothing here is evidence' AS x
+                FROM spread_window WHERE NOT recorded
+              UNION ALL
               SELECT k.tbl || '.' || k.col || ' is stamped from the clock (' || k.val || ') and no answer says so'
-                     AS x
                 FROM spread_clock k WHERE NOT EXISTS (SELECT 1 FROM spread_answer a
                                                       WHERE a.tbl = k.tbl AND a.col = k.col
                                                         AND a.kind = 'generation-clock')
               UNION ALL
-              SELECT a.tbl || '.' || a.col || ' is answered generation-clock but no longer holds a value '
-                     || 'anywhere near now(), so the seed stopped stamping it from the clock'
+              SELECT a.tbl || '.' || a.col || ' is answered generation-clock but no derived clock value covers'
+                     || ' it (window recorded: ' || (SELECT recorded FROM spread_window)
+                     || '), so either the seed stopped stamping it or this database cannot be asked'
                 FROM spread_answer a WHERE a.kind = 'generation-clock'
                   AND NOT EXISTS (SELECT 1 FROM spread_clock k WHERE k.tbl = a.tbl AND k.col = a.col)) o),
                    'none');

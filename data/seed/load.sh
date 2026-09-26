@@ -17,6 +17,13 @@
 #                                          # by name rather than emptying it. Destructive either way.
 #   SKIP_GENERATE=1 data/seed/load.sh     # load the files as they are on disk
 #   ONLY=09_locations,12_offerings data/seed/load.sh   # partial reload, FK order preserved
+#   SEED_ANCHOR=1 data/seed/load.sh       # stamp this database with the window the load ran inside
+#                                         # (nexus.seed_started / nexus.seed_finished, epoch seconds). It is
+#                                         # what quality.sql's generation-clock row reads instead of now();
+#                                         # see D89. Off by default because it is a write to the DATABASE
+#                                         # entry, not to a table: on the throwaway gate database that is
+#                                         # free, on a shared one it is somebody else's server setting.
+#                                         # scripts/db_gate_fresh.sh turns it on for its own database.
 #
 # Design notes:
 #   * One psql invocation, one transaction (--single-transaction), ON_ERROR_STOP=1: the seed
@@ -35,10 +42,16 @@ DB="${DB:-nexus}"
 USER="${USER:-${PGUSER:-postgres}}"
 PSQL="${PSQL:-psql}"
 RESEED_DEPENDENTS="${RESEED_DEPENDENTS:-0}"
+SEED_ANCHOR="${SEED_ANCHOR:-0}"
 ONLY="${ONLY:-}"
 
 log() { printf '%s\n' "$*"; }
 die() { printf 'load.sh: ERROR: %s\n' "$*" >&2; exit 2; }
+
+[ "${SEED_ANCHOR}" != "1" ] || [ -z "$ONLY" ] \
+  || die "SEED_ANCHOR=1 with ONLY= would record a load window around a partial reload: quality.sql's" \
+         "generation-clock row reads that window as 'everything the seed stamped', and a partial reload" \
+         "leaves columns it skipped holding their old values — outside the window, for the wrong reason."
 
 [ -d "$OUT" ] || die "no such directory $OUT — run: python $HERE/generate.py --out $OUT"
 
@@ -105,8 +118,30 @@ trap cleanup EXIT
 : > "$stream"
 for f in "${files[@]}"; do cat "$f" >> "$stream"; done
 
+seed_window_record() {  # $1 = started | finished
+  case "$1" in started|finished) ;; *) die "seed_window_record: '$1' is not a bound name" ;; esac
+  # `now()` is read by the SERVER, so a host/container clock disagreement cannot enter the window, and the
+  # value goes out through ALTER DATABASE because a session cannot see its own new database-level setting:
+  # quality.sql evaluates in the NEXT session, and that is the one which needs the window.
+  docker exec -i "$CONTAINER" "$PSQL" -U "$USER" -d "$DB" -v ON_ERROR_STOP=1 -q -c \
+    "DO \$\$
+     DECLARE e bigint;
+     BEGIN
+       SELECT floor(extract(epoch FROM now()))::bigint INTO e;
+       EXECUTE format('ALTER DATABASE %I SET nexus.seed_$1 = %L', current_database(), e);
+       RAISE NOTICE 'load.sh  seed window $1 = % (epoch %)', now(), e;
+     END
+     \$\$;"
+}
+
+if [ "$SEED_ANCHOR" = "1" ]; then seed_window_record started; fi
+
 docker exec -i "$CONTAINER" "$PSQL" -U "$USER" -d "$DB" \
   -v ON_ERROR_STOP=1 --single-transaction -q < "$stream"
+
+# The window's other bound is taken immediately after the commit, before ANALYZE and the count report: those
+# open sessions of their own, and the row's claim is about the transaction that wrote the rows.
+if [ "$SEED_ANCHOR" = "1" ]; then seed_window_record finished; fi
 
 # --------------------------------------------------------------------------- post
 # Planner stats for the geo/price/rating filters the recommendation service leans on (D3).
@@ -131,4 +166,8 @@ end
 
 log ""
 log "next: docker exec -i $CONTAINER $PSQL -U $USER -d $DB -v ON_ERROR_STOP=1 < $HERE/quality.sql"
+if [ "$SEED_ANCHOR" != "1" ]; then
+  log "      ...but its generation-clock row will refuse this database: the row reads the window this loader"
+  log "      ran inside, and SEED_ANCHOR was off. Re-run with SEED_ANCHOR=1, or use scripts/db_gate_fresh.sh."
+fi
 

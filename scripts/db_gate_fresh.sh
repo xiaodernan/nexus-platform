@@ -131,7 +131,13 @@ step "4/8  load the seed into the fresh database"
 # closes itself over the live foreign keys (D63), so it would clear these 27 tables on a fresh
 # database anyway — they are empty there. The gate names them because a from-scratch proof should not
 # depend on nothing having been written yet.
-CONTAINER="$CONTAINER" DB="$GATE_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 \
+# SEED_ANCHOR=1 records the window this load runs inside, which is how step 5's generation-clock row
+# tells a load-stamped timestamp from a pinned one. Without it that row asks "within ten minutes of
+# now()", and D88 measured two official runs of one unchanged seed file — red in the morning, green
+# 25 minutes later — separated by nothing but how long this host took to get here. Only this
+# database is stamped: the gate owns it and drops it, and the live demo database's settings are not
+# this script's to change.
+CONTAINER="$CONTAINER" DB="$GATE_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 SEED_ANCHOR=1 \
   "$ROOT/data/seed/load.sh" | tail -12 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 5. gate
