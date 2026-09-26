@@ -5110,3 +5110,53 @@ next              (a) #73: the 162. Ordered deliberately — group by which prod
                     #44, D91's served leg until :8090 is up, §87's next (c). §89's (b) is closed by D92 and
                     §93's repeat of it is corrected above.
 ```
+
+## 95. D98: the 216 held up under a corrected read, and 103 of the names turned out not to exist in the source at all (2026-09-26)
+
+```
+plane             Method, not behaviour: can the gate's assertions be enumerated and classified from the
+                    shipped text? No shipped file changed; the reads are SELECTs against the kept gate database
+                    and the demo database (counts only), plus opening quality.sql.
+
+what held         Coverage re-measured after fixing two defects in D97's read: 42 named exactly, 12 by
+                    fragment, 162 not named anywhere in HEAD's ledgers — identical to D97's numbers, which is
+                    the reason to keep saying them out loud rather than trust the derivation that produced them.
+
+what broke        Two things, both mine.  psql without a pinned client encoding mangles section signs and em
+                    dashes, which is what made 98 of D97's names "unfindable" — a property of my terminal, not
+                    of the gate.  And a name carrying an embedded newline makes a line-oriented read count 219
+                    lines for 216 rows; fixed by having the database return the list in one aggregated row and
+                    asserting its size against qc's own count in the same session.
+
+the real finding  Of the 216 names: 111 occur exactly once as a literal in quality.sql, 2 occur twice, and
+                    103 never occur as text. They are built at run time — the foreign-key sweep walks
+                    pg_constraint and files a row per edge — so D64's catalogue-driven sweep and D72's widening
+                    have made two thirds of the gate's assertions invisible to any source-text enumeration.
+
+what that costs   The producer classification #73 asked for reached only the locatable third: 51 seed-only, 0
+                    runtime-watched, 0 empty-both, and 111 not classified. The 111 is a statement about this
+                    method, not about those assertions, and it is reported that way instead of being renamed
+                    into a result. Where the remainder lives is inferable and unproven here: the sweep's edges
+                    point at tables empty by design in a fresh database, which is D79's class, and reaching it
+                    needs the catalog rather than the text.
+
+what #73 should do  Split by how the name is made, not by what it says. Literal-named rows can be planted by
+                    reading their statement out of the file. Catalogue-named rows are ONE assertion with 103
+                    instantiations: orphan a single child row and the sweep reddens on that edge — one act,
+                    witnessed once. Enumerating 103 plants would raise a coverage number and prove nothing.
+
+mistakes          (a) Trusting a count that happened to match. (b) Calling 98 names unreadable when my own
+                    invocation was corrupting them. (c) Letting a locator's failure become a bucket of
+                    assertions — the rename is the seductive part, and it is the error.
+
+gates             Nothing to certify: no shipped byte changed. D96's nine-step `GATE_RC=0` run remains the one
+                    covering the tree; step 8 is re-run after this append because an append changes the plane
+                    it reads. Artifacts: d98b.py, d98_qc_names.txt, d98_unrecorded.txt, d98_seed_only.txt
+                    alongside D97's d97_* files, so the before-and-after of one measurement is kept.
+
+next              (a) #73 rewritten by this result: one plant for the sweep, one per locatable assertion where a
+                    producer exists, and the 2 newline-carrying names checked across lines before their coverage
+                    is called.
+                  (b) Carried and re-read this time: #71, #72, #68, #58, #62, #64, #44, D91's served leg until
+                    :8090 is up, §87's next (c).
+```

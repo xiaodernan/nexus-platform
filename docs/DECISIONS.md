@@ -5901,3 +5901,51 @@ left behind, read with `SELECT`s after the assertions. `d97_qc_names.txt`, `d97_
 it reproduces 216 / 42 / 12 / 162 from one command. Task #73 carries what follows, with the ordering constraint
 written down before the work: a plant predicted from an assertion's wording rather than from a producer that
 could violate it is D79's and D91's failure performed 162 times.
+
+## D98 The coverage number held; the classification I went for worked on a third of it, and the reason is the gate's own design
+
+D97 reported 42 named / 12 fragment / 162 un-named of the gate's 216 assertions. The number came out of a read
+with two soft spots, so this unit set out to break it and then to classify the 162 by the producer that could
+violate them — #73's ordering, no plants predicted from wording.
+
+**The number held. The read was still wrong in two ways, and fixing them changed nothing.** Three check names
+carry an embedded newline, which is why a line-oriented read counted 219 lines for 216 rows; the fix is to have
+the database return the list in one row (`string_agg` on a tab) and to assert the count against `count(*)` from
+`qc` in the same session. And `psql` without a pinned client encoding mangles § and em dash, which is what made
+98 of D97's names unfindable in the file — a wrong answer that looks like a property of the data and is a
+property of the terminal. Re-measured with both fixed: **42 / 12 / 162, identical**. A number that survives two
+of its three derivations being corrected is worth keeping; a number that would not have survived being checked
+at all is the thing to worry about.
+
+**Then the classification failed on two thirds of the list, and that is the finding.** Of the 216 names, only
+**111 occur exactly once as a string literal in `data/seed/quality.sql`**, **2 occur twice**, and **103 do not
+appear as text at all**. Those 103 are built at run time: the FK sweep walks `pg_constraint` and files a row per
+edge, so names like `orphan: facts.merchant_id` exist only in `qc` — D64's "one answer to which tables the seed
+owns" and D72's widening past the suffix are precisely what makes them unsearchable in the source. So:
+
+  * the producer classification landed on **51 seed-only, 0 runtime-watched, 0 empty-both** for the rows whose
+    statement could be located, and **111 unclassified** — where "unclassified" means *this method could not
+    reach them*, not that they read no table. Reporting the 111 as a class of assertions would be the same
+    mistake as reporting an un-parseable row as a passing one.
+  * the 0 for runtime-watched and empty-both is a real result for the locatable third: every assertion there
+    reads tables the seed fills. The un-locatable remainder is where D79's "silence, not green" class lives —
+    the FK sweep's edges point at tables that are empty by design in a fresh database — and it needs the sweep's
+    own inputs to answer, which are in the catalog rather than in the text.
+
+**What #73 should therefore do**, refined by measurement rather than by taste: split the 216 by how the name is
+made. Literal-named rows (111) can be classified and planted by reading their statement out of the file, which
+is what worked here. Catalogue-named rows (103) are one assertion with 103 instantiations — the FK sweep — so a
+plant for them is a single act (orphan one child row in a table that has a foreign key) witnessed by the sweep
+reddening on that one edge; enumerating 103 plants would be theatre. The 2 with embedded newlines need their
+mentions checked across lines, or the coverage join under-reports them forever.
+
+**Mistakes owned.** (a) D97's headline number was right for partly wrong reasons: the tail-line read happened to
+land on 216, and it was the assertion-equality test — not the count — that exposed it. Counting is not checking.
+(b) My first classifier pass reported 98 "unreadable" names as if the file were the problem; the mangling was in
+my own invocation. (c) A "no-table-read" bucket of 111 was about my locator, not about the assertions, and the
+honest fix was to say so rather than rename the bucket until it looked like a result.
+
+**Gates.** No shipped byte changed: the reads are `SELECT`s against the stamped, kept gate database and the
+live demo database (counts only), and the file is opened, not edited. Artifacts: `d98b.py`, `d98_qc_names.txt`,
+`d98_unrecorded.txt`, `d98_seed_only.txt`, plus the earlier `d97_*` pair kept for the before-and-after of the
+same measurement.
