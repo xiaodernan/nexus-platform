@@ -4339,3 +4339,265 @@ next              (a) the wrong-for-the-wrong-reason arm, sized by a throwaway p
                     §76(a)/D80, §78(b), §77(a), §77(c), §82(a), D86(a), and the four open reports (#58, #62,
                     #64, #44).
 ```
+
+## 86. The generation-clock row was measuring how fast the host is; it now reads the load's own window, and four plants say so (2026-09-26)
+
+```
+plane             `data/seed/quality.sql`'s generation-clock row — the one §79 added, §85's run (e) reported
+                    as red-for-the-wrong-reason, and this unit re-anchored. The gate's 216 rows now include
+                    one whose verdict does not depend on how fast the host is.
+measured          Before any predicate was written, on the live demo database (a loaded seed of the same
+                    shape as the gate's), for every timestamp column holding one value: 22 of them. Their
+                    distances from that database's own load instant are 0 min (`facts.updated_at`, which is
+                    the instant), then 138 min (`idempotency_keys.expires_at`, a runtime write a
+                    from-scratch database does not hold), then 1,231 min for every column pinned to the
+                    seed's base date — so a ±10-min window separates the clock-stamped column from its
+                    nearest competitor by 13.8x, and the margin is not what makes the row pass. Why `facts`
+                    holds the *transaction's* start: V6 added it `NOT NULL DEFAULT now()`, load.sh loads in
+                    one transaction, and `now()` inside a transaction is its start timestamp. That is also
+                    why the anchor became a two-bound window instead of the instant §85's plan sketched —
+                    the bounds belong to the load, so the load's own duration cannot move the verdict.
+                    Why the loader's session cannot certify itself: `ALTER DATABASE ... SET` applies to new
+                    sessions, and quality.sql is a different session minutes later, so propagation was
+                    probed separately (plants, P5).
+                  A number in this lane's own ledger turned out not to be drift. §85 next (b) says 36
+                    `file.ext:NN` cites sit on 30 comment lines, "(34 of them in quality.sql's own `--`
+                    notes)". Re-counted three ways on this tree: 41 occurrences on 33 comment lines (32
+                    distinct cites, 4 files) when a cited name may carry any extension, 38 on 31 when it must
+                    be a source extension, and quality.sql's own 34 — reproducing §85's parenthetical exactly.
+                    `git log` over those four files from §85's commit to HEAD is empty, and the committed tree
+                    and the working tree return the same numbers under both grammars, so the plane has not
+                    moved: 36-on-30 is a fourth definition that cannot now be recovered, not a stale
+                    photograph. §84's residue (d) said a drifting census number is answered by "a re-run, not
+                    a smaller claim" — a re-run that does not name its grammar cannot check the number it
+                    re-runs, so every count here carries its unit and its plane.
+plants            The harness slices the region out of the shipped file at run time instead of carrying a
+                    copy, so the file cannot drift from what was tested. P1 window planted around the seed's
+                    own load instant -> GREEN, derived set exactly 1, printed "60 s after the window opened",
+                    offenders none. P2 window in 2020 -> RED naming `facts.updated_at`, the answered column
+                    that no longer falls inside. P3 window around the base date -> RED naming ten date-pinned
+                    columns that joined the clock set unanswered; that is the arm the row must be able to
+                    catch, and it is the P2 shape with the failure on the other side of the set-equality.
+                    P4 no window at all -> RED, text names the missing window instead of blaming the seed.
+                    All four re-run over the final shipped text after the last wording fix, on the live demo
+                    database: P1 -> PASS 1 column, offenders none; P2 -> FAIL 0 derived, naming the answered
+                    column it can no longer cover; P3 -> FAIL 10 derived, naming the date-pinned columns that
+                    joined unanswered; P4 -> FAIL 0 derived with the no-window text. Those are printed-row
+                    verdicts, and the exit code is a separate measurement: psql returns 0 from this file
+                    whether the clock row is green or red unless it is invoked with `-v ON_ERROR_STOP=1`, the
+                    flag that turns the verdict block's RAISE into rc=3 — which is how the gate itself calls
+                    it (`scripts/db_gate_fresh.sh:153`) and how load.sh tells the operator to call it
+                    (`data/seed/load.sh:168`). Measured on the shipped text at 08:00 with the artifact kept:
+                    P4 gives rc=0 unflagged and rc=3 flagged, and P1 gives that same pair. So with the flag the
+                    exit code reports "this database has an offender", not "my row failed" — the offender on
+                    the demo database is one the coverage row names, `agent_runs.completion_tokens`, a runtime
+                    column a from-scratch database does not hold. Only the printed row separates the four arms.
+                    The gate's step 5, on a database it built itself, is the venue where the whole file is
+                    green, and it was.
+                  P5 propagation, because P1..P4 set the GUCs in their own session and therefore prove
+                    nothing about the mechanism between the two scripts: a throwaway database in the test
+                    container, the DO block at `data/seed/load.sh:127-133` extracted verbatim and writing both
+                    bounds, then a SECOND session reading `1790379918 / 1790379926 / recorded=true` across the
+                    two writes, eight seconds apart — the gate's own pair is 190 apart — then the database
+                    dropped, and the whole exchange kept in a file rather than only on a terminal.
+                    `scripts/db_gate_fresh.sh:140` turns the recording
+                    on for the gate's own database and only there.
+mistakes          (a) The first propagation probe reported the shipped SQL as a syntax error and the error was
+                    the probe's: it rebuilt the statement from a regex match and rstripped the semicolon
+                    plpgsql needs. A reconstructed statement is a different statement, so the harnesses slice
+                    text out of the shipped file now. (b) Reading a witness's message rather than only its
+                    colour caught this unit's own new offenders arm accusing a column of falling outside "the
+                    recorded load window" on a database with no window recorded — true of one branch, false of
+                    the branch that ran; it now prints `window recorded: true|false`. (c) §85's plan for this
+                    unit sketched a single `seed_instant` and a fallback to `now()` when unset; both changed.
+                    A fallback is two checks in one row and the weaker of the two is the one that already
+                    produced a red run, and one bound cannot express "stamped during the load". Named here
+                    rather than quietly redesigned. (d) This draft first wrote §85 next (b)'s 36-on-30 off as
+                    "already 5 off", comparing it with 41 — which are two different units, 41 being occurrences
+                    and 36 a claim that cannot now be pinned to one. Re-measured against the tree §85 was
+                    written on, which has not moved, the honest statement is that no recoverable grammar
+                    reproduces 36-on-30 while the parenthetical 34 reproduces exactly; that is what measured
+                    and next (a) now say, and §85's line is left standing as written rather than edited.
+                  (e) The new `SEED_ANCHOR`/`ONLY` guard was written with its polarity inverted: it refused
+                    the documented `ONLY=` partial reload, which is harmless, and allowed the anchoring of a
+                    partial reload, which is the thing it exists to block. Nothing in this unit could have
+                    caught it — the gate runs step 4 with `SEED_ANCHOR=1` and no `ONLY`, so the branch is
+                    never taken there, and a `bash -n` pass says nothing about which branch dies. It was
+                    caught by running the three combinations on purpose against a container name that cannot
+                    connect: `SEED_ANCHOR=1 ONLY=09_locations` -> rc=2, refused by name; `ONLY=09_locations`
+                    -> rc=3, reaching the container preflight, so the guard no longer fires; `SEED_ANCHOR=1`
+                    -> rc=3 likewise. A precondition that lives outside the gate needs its own named test,
+                    and the test has to include the case that must NOT refuse.
+                  (g) The age pair this draft first reported — the clock row printing PASS at 06:30 and again
+                    at 06:42 while the same database sat 1,762 and then 1,814 seconds from `now()` — was read
+                    off a terminal and never written to a file: of its two verdicts one has a kept output and
+                    the other has none, and neither age was written down at all. Because nothing was kept the
+                    pairing was wrong as well, two verdicts eleven minutes apart quoted against two ages taken
+                    within a minute of each other. A witness with no artifact is an
+                    anecdote. What is quoted under gates is three readings of the same sliced region against
+                    two kept databases, each printing the row's verdict and the `now()`-age of the same column
+                    from the same statement at the same instant, and every one of them kept as a file.
+                  (h) A read-only fact-check pass over these two drafts, run against the tree rather than
+                    against the drafts, found six claims that were wrong before any of them shipped: two
+                    off-by-one line cites (the window predicate is one line below where this draft put it, and
+                    the epoch statement in load.sh one line above), the section number the clock row was born
+                    in (§79, not §83), a file-gap decomposition that attributed 24 generated scripts to a
+                    directory the shared walker never enters when the real 21 live in the one it does, a 13x
+                    that is 13.8x, and the pair in (g). Every one of the six is fixed above; none of them was
+                    caught by re-reading, which is the point of paying for the check.
+                  (i) Fixing one of those six — the margin is 138 minutes against a ten-minute window, so the
+                    factor is 13.8 and not the 13 both this draft and the shipped comment said — meant editing
+                    `data/seed/quality.sql` after the certification run had already read it. A comment cannot
+                    move a verdict, and that is exactly why it is not the argument: the gate certifies bytes,
+                    and "I only changed a comment" is a claim about intent, which is the kind this lane has
+                    been refusing all unit. So a third run was launched over the final file and its numbers,
+                    not the second run's, are the ones quoted above.
+                  (f) Two claims in this draft died by measuring instead of by argument, before the file
+                    shipped. next (a) first said the scripts' comment plane holds 3 offenders, which was true of
+                    the probe written for it and 5 under the checker a third reader has to share; and next (b)
+                    first owed the flag's documentation to a seed README that does not exist. The
+                    first is a unit error of exactly the kind (d) names — a count without its resolver — and
+                    the second was a remembered file name, the same failure D73 removed from census text.
+                  (j) The plants field claimed all four runs "still exit non-zero", and the measurement that
+                    answers it is six seconds long: over the same shipped text at 08:00, the no-window arm and
+                    the green arm both return rc=0, because the verdict block's RAISE is one more statement
+                    error to psql unless `ON_ERROR_STOP` is set, and rc=3 reports the database's offender rather
+                    than this row's. Nothing was recorded beside the original claim saying which of the two
+                    invocations produced it — which is the whole failure: an exit code, like a count, is not a
+                    number without the condition it was read under, and the draft had a condition in mind
+                    without writing it down. The artifacts of that measurement are kept (`w5_rc.txt`), and the
+                    plants field now carries the flag, both readings of both arms, and what each does and does
+                    not report.
+gates             Three official 8-step runs of `scripts/db_gate_fresh.sh --keep`, all ending RESULT PASS —
+                    216 quality checks on a from-scratch schema (tables=58, migrations=7). The first finished
+                    at 06:38:27, 48 min 18 s after the epoch its own database is named with; this unit then
+                    wrote `data/seed/quality.sql` at 06:44:39 and `data/seed/load.sh` at 06:46:23, so that run
+                    certifies a file that is not the one that ships — which is why a second was launched. The
+                    second covers the bytes then in the file: database created 06:51:23, log's last write
+                    07:41:21, 49 min 58 s; step 4 recording its own window as 1790377745 to 1790377935, which
+                    is 07:09:05 to 07:12:15 and therefore a 190-second load; step 6 clearing an empty stranger,
+                    refusing one holding rows by name, and finding V7's share_links in the truncate closure;
+                    step 7 scanning 174 source files, 26 read sites, 19 distinct (column, key) reads, 22 answer
+                    rows citing 31 locations in 12 files over 41 line spans; step 8 resolving 157
+                    citation-shaped tokens out of 266 name:number mentions across 165 sections and 48 distinct
+                    files, no offender. The third run exists because of mistakes (i) — a comment edit at
+                    07:49:55, launched 07:50:27, log's last write 08:24:50, 34 min 23 s — and it turned out to
+                    carry the unit's best evidence. Its step 4 recorded 1790381320 to 1790382127, 08:08:40.705
+                    to 08:22:07.729: an **807-second load**, 4.3 times the second run's, on identical bytes,
+                    because three subagent lanes were sharing the host. `facts.updated_at` in that database is
+                    08:09:45.77236+08 — 66 s after the window opened — so the distance from that stamp to the
+                    first moment step 5 could have run is 742 s, which is more than the 600 s the replaced
+                    predicate measured against. D88's failure mode therefore happened again by itself, inside
+                    this unit, with no plant and no edit to cause it, and the row printed PASS. Run 3's steps
+                    6, 7 and 8 read as run 2's did, including step 7's 38 distinct source lines read back
+                    against the 31 cited locations and step 8's 157 tokens over 165 sections with no offender.
+                    Both step-8 readings censised the ledgers as the working tree holds them, so no run
+                    certifies the sections this commit appends; those are cite-checked as exact bytes before
+                    staging, which is the only honest order.
+                  The anchor as measurement rather than argument, on the two kept certification databases, each
+                    reading printing the row's verdict and the column's `now()`-age out of one statement at one
+                    instant and into a kept file, the region sliced from the shipped text at run time by
+                    `d89_cert.py` so it cannot drift from the file it certifies. On run 2's database: at
+                    07:25:05 PASS, derived set 1 column, `facts.updated_at` 23 s after the window opened,
+                    offenders none, and 937 s from `now()` — 1.56 times the replaced bound; at 07:32:56 the same
+                    PASS text at 1,408 s, 2.35 times. On run 3's database, untouched since its own load: at
+                    11:24:39 the same PASS again, 66 s after the window opened, and 11,693 s from `now()` —
+                    19.5 times the bound, three hours and a quarter after the check that used to be time
+                    critical. The old rule is red at every one of those three readings and at the moment step 5
+                    of run 3 actually ran. The four plants in §86 stay the directions it can still fail.
+                    Run 1's kept database was read once more at 06:30:01, 18 s after its own window opened, and
+                    that output is kept too. Must-stay-green: the other 215 rows, which this unit did not touch,
+                    and which were green beside this one in all three step-5 prints, plus `bash -n` on both
+                    scripts this unit edits.
+next              (a) §85's prose-overlap arm stays unbuilt and stays falsified; §85's own next (a) keeps that
+                    measurement. The comment plane is now measured rather than guessed, and run over both
+                    planes instead of one — under the basename grammar of the probe written for it: 481 source
+                    files scanned on the working tree against 296 in the
+                    committed tree, and the 185-file gap decomposes exactly: 164 source files are untracked and
+                    21 are generated scripts under `data/seed/out_smoke` that git ignores, which the walker
+                    reads anyway because `out_smoke` is not one of its 14 vendor names. The 24 ignored scripts
+                    under `data/seed/out` are not read, because `out` is. So a comment-plane reader inherits a
+                    generated-output directory in its own plane, and must either name it or exclude it on
+                    purpose. That grammar counts 105 citation-shaped tokens on either plane, 41 of them on 33
+                    comment lines held by 4 files, 32 distinct cites. §85 next (b)
+                    printed "36 cites on 30 comment lines" for what is the same plane; see measured, where the
+                    three recoverable units come back 41/33, 38/31 and 34 and none of them is 36-on-30.
+                  The plane has since been read a second time, with the resolver the gate actually ships rather
+                    than the basename grammar of the probe above: every comment line of every source file the
+                    shared walker names, into one temp file carrying one `## ` heading per source file, handed to
+                    `check_ledger_citations.mjs --text=`, with original line numbers recovered from a
+                    temp-line-to-source-line map the probe keeps. That reading is 458 of the 481 files hold
+                    comment lines, 12,599 comment lines, 459 sections, 46 citation-shaped tokens, 5 offenders —
+                    3 FILE NOT FOUND and 2 AMBIGUOUS. The same bytes give 3 or 5 depending on who resolves them,
+                    so neither number is the plane's size without its resolver named beside it, and §87's number
+                    is the shipped one: 5.
+                  Four of the 5 are the ones the first probe saw plus the one it was built to miss: two
+                    illustrative placeholders in `scripts/check_jsonb_reads.mjs:311` (`File.java` at 12 and
+                    `dir/File.java` at 78 — the invented-token family D88 fixed in the ledgers and had never
+                    looked for in source comments), the elided path at `scripts/check_ledger_citations.mjs:12`,
+                    which the basename probe passes and the shipped resolver refuses, and the AMBIGUOUS
+                    `package.json` example at `scripts/check_ledger_citations.mjs:66`, one of three such examples
+                    in that docblock — two resolve only because their basenames happen to be unique. The fifth
+                    is new, and it is new because of what the first probe opened rather than how it resolved:
+                    `scripts/run_platform_dev.sh:20` cites `.gitignore` line 5, and two files hold that name, so a
+                    claim that may well be true sits behind a name that names neither. Judging illustrations by
+                    whether their filenames are lucky is not a verdict about the text; neither is a reader whose
+                    plane is defined by which four files it happens to open.
+                  The same basename probe, with its resolution index built from the committed tree instead of
+                    the working tree, reddens 13, and 10 of those 13 are NOT FOUND cites to code that exists only
+                    as untracked work — `SeoRepository.java`, `AdminListRepository.java`,
+                    `MerchantImportRepository.java`, `OrderRepository.java`, `runs.py` and three more, all in
+                    the `com.nexus.{seo,admin,commerce,merchant}` packages and `apps/ai/nexus_ai/api/` that
+                    this lane does not own and cannot commit. D88's default mode is HEAD-strict, so a comment
+                    reader that inherited that default would report ten failures that are nobody's lie: the
+                    cites are true of the tree the author was looking at and uncheckable in the commit. So the
+                    reader needs two numbers and must say which plane each was taken on, exactly as this
+                    section now does.
+                  What the second reading costs to build, stated before anyone builds it. The two readers cannot
+                    share code today: `check_ledger_citations.mjs` has no `export` statement at all (counted:
+                    zero), and the index both it and D87's reader walk, `source_index.mjs`, exports three
+                    symbols — the vendor list, the extension test, the walker — none of which resolves a name.
+                    `--text=` also forces worktree mode, and the non-vacuity guard refuses a file that carries
+                    no `## ` heading, which is why this measurement went through a temp file holding one heading
+                    per source file rather than by pointing the checker at a directory. And the checker's index
+                    is the working tree in both of its modes (`const FILES = walkFiles(ROOT, …)` reads the tree
+                    it is standing in; only the *cited text* switches between HEAD and worktree), so the
+                    committed-tree plane measured above is not a mode the shipped checker can be run in at all —
+                    building a reader that has both planes is §87's work, not a flag. Four of the five offenders
+                    sit in files the gate reads, as steps 7 and 8, so they can move only when no run is in
+                    flight; the fifth sits in `scripts/run_platform_dev.sh`, which the gate never runs, and it is
+                    the shape the docblock above it warns about in the abstract: a true root cite made AMBIGUOUS
+                    because a second file shares the name. Every one of the five is an illustration, a shorthand,
+                    or a name that is not unique — none is a lie about behavior — and a reader that cannot tell
+                    those apart has to make the text unambiguous rather than excuse the prose.
+                  (b) The row refuses any database the loader never stamped, which is the honest answer and
+                    also means the reseed-the-demo workflow load.sh prints a hint about is red on this row
+                    unless it passes SEED_ANCHOR=1. This draft first owed that to "one line in the seed
+                    README"; there is no seed README — `data/seed` holds generate.py, load.sh, quality.sql,
+                    seed_pools.py and two out directories — and load.sh's own header is where every loader
+                    flag is documented, `SEED_ANCHOR=1` now sitting at :20 beside `RESEED_DEPENDENTS`,
+                    `SKIP_GENERATE` and `ONLY`. Measured: `docs/DATABASE.md` names none of those four, and
+                    `docs/DEPLOYMENT.md` only RESEED_DEPENDENTS. So the documentation home exists and already
+                    carries the flag; the residue is that no docs page lists the loader's environment at all,
+                    which is not this row's problem and not a claim this unit makes.
+                  (c) A kept gate database carries its window forever, so this row can be re-passed on a
+                    stale database as many times as anyone likes. That is the point — the claim is about the
+                    seed, not about the run — but it means no row here certifies that a gate ran *recently*,
+                    and nothing else does either.
+                  (d) carried over and untouched: §85 (c) the hand-written vendor list, §85 (d) census drift,
+                    §78(a), §76(a)/D80, §78(b), §77(a), §77(c), §82(a), D86(a), and the four open reports
+                    (#58, #62, #64, #44).
+                  (e) A report this lane will not fix, found while cite-checking the staging blob at 08:09: the
+                    working copy of `docs/STATUS.md` (mtime 03:19:46) is not the committed file. It carries 236
+                    insertions and 145 deletions against HEAD, it removes the committed §85 heading and body
+                    outright — "162 source citations" is not in that file at all any more — and it inserts four
+                    sections numbered §34 to §37 (route ledger reaches zero, §34 pass measured 217/217, the
+                    jsonb census stops being a transcription, §36's gate run measured) whose titles appear in no
+                    commit on any ref: `git log -S "The route ledger reaches zero" --all` returns nothing. One of
+                    the four lands at line 1324 and three at 4056 to 4161, so the file now carries two sections
+                    under each of the numbers §34, §35, §36 and §37, one from HEAD and one from the draft. The
+                    account that draft gives is nowhere else, and committing the file as it stands would delete
+                    §85 with it; §85 survives only because this
+                    lane builds its ledger blobs from `git show HEAD:docs/STATUS.md` rather than from the tree it
+                    is standing in. Recorded as task #68; not touched.
+```

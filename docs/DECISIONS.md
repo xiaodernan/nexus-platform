@@ -5224,3 +5224,133 @@ compare the cited line against the words of the sentence that cites it. That rul
 many of the 151 shipped citations have a sentence keyword on the line they point at — because a rule that
 reddens an eighth of the ledgers is a different unit than a rule that reddens none. And the vendor list stays
 hand-written: `source_index.mjs` is one place to be wrong instead of two.
+
+## D89 The row that measured the machine, not the seed: the generation clock now reads the load's own window — 2026-09-26
+
+D88 shipped a red gate and named the reason in a clause: two official runs of one unchanged
+`data/seed/quality.sql`, red in the morning and green 25 minutes later, separated by how fast the host got
+from the load to the check. Naming that and leaving it is the same failure as a `TODO` in code, so this unit
+is the measurement D88's row (e) owed, carried out. What was wrong is small and specific: the
+generation-clock row derived its set by asking whether a column's single value was within ten minutes of
+`now()`. The claim that row makes — "this column holds one value because the generator's clock wrote it, not
+because the domain has one value" — does not contain the wall clock anywhere in it, so the predicate was
+measuring something the sentence never promised. On a machine where the load spends twenty minutes after
+stamping `facts` and the gate then reads this file, `now()` is a fact about the machine.
+
+What the row asks now is the question the sentence means. `data/seed/load.sh:121` records the window the load
+itself runs inside — `nexus.seed_started` and `nexus.seed_finished`, epoch seconds read from the server's
+clock by a statement at `data/seed/load.sh:130`, so a host/container clock disagreement cannot widen or narrow
+the window — and `data/seed/quality.sql:2345` keeps a degenerate timestamp column when its value falls between
+the two bounds widened by 600 seconds at each end. Nothing in the row is measured against `now()` any more, and
+the width of the load stops mattering: the value is inside the window whether the load takes two minutes or two
+hours. That last clause was an argument when this unit first wrote it and is now a measurement — the third
+certification run's load took 807 seconds against the second run's 190, on identical bytes, and the row was green
+in both, where the replaced predicate was red in the slower one by at least 142 seconds of pure machine.
+Recording is opt-in (`SEED_ANCHOR=1`) for a reason that is not backwards-compatibility: writing
+a database-level setting is a write to the *database entry*, not to a table, so the throwaway gate database
+gets stamped by `scripts/db_gate_fresh.sh:140` and a shared one does not get stamped unless whoever owns it
+asks. The loader says so out loud when it did not stamp, because an unrecorded database used to be able to
+pass this row by accident of timing and now cannot pass it at all.
+
+That last sentence is worth its own clause, because the easy design was a fallback — read the window if it is
+there, otherwise do what was always done. A row whose verdict depends on which of two questions it happened to
+be able to ask is not one check but two, and the weaker of the two is the one that had already produced a red
+run. So an unrecorded database is answered directly: the derived set is empty, the row is red, and its text
+names the missing window rather than blaming the seed. That is not a regression anywhere — the live demo
+database holds `facts.updated_at` at one value, 2026-09-23 07:31:23+08, which is what that database's own load
+instant looks like and therefore exactly what this row exists to notice. The old rule could not see it, because
+it measured the column against the `now()` of whichever minute the file happened to run — 4,273 minutes after
+that load as measured at 06:44, and 4,298 by 07:09 the same morning, so the number grows by the minute and the
+row's verdict with it. The new rule does not guess: it asks that database's owner to stamp it, and until then
+says the database carries no window.
+
+Measured before writing the predicate, on the live demo database (a loaded seed of the same shape), for every
+timestamp column that holds one value: 22 of them, and their distances from that database's own load instant
+are 0 minutes (`facts.updated_at`, which *is* the instant), 138 minutes (`idempotency_keys.expires_at`, a
+runtime write a from-scratch database does not even hold), then 1,231 minutes for the whole family pinned to
+the seed's base date. A ten-minute margin therefore separates the clock-stamped column from its nearest
+competitor by a factor of 13.8; the margin is not what makes the row pass. Why `facts` holds the
+transaction's start rather than a mid-load moment is the other half of that finding: `V6` added the column
+`NOT NULL DEFAULT now()`, load.sh loads in one transaction, and `now()` inside a transaction is its start
+timestamp — which is also why a single anchor instant became a two-bound window: the bounds are the load's,
+so they hold whatever the loader's timing does, and they say so.
+
+Witnesses, all of them run over the text as it ships — a harness slices the region out of
+`data/seed/quality.sql` at run time rather than carrying a copy of it, so the file cannot drift from what was
+tested: with the window planted around the seed's own load instant the row is green and the derived set is
+exactly one column, 60 seconds after the window opened, offenders none; with a 2020 window it is red naming
+the answered column that no longer falls inside; with a window around the base date it is red naming *ten*
+date-pinned columns that joined the clock set with no answer claiming them, which is the arm this row needs to
+be able to catch; and with no window at all it is red with the text saying the database carries none. The one
+thing those four cannot prove is the mechanism between the two scripts — `ALTER DATABASE ... SET` reaches only
+*new* sessions, and the loader's session is not the gate's — so that was probed on its own against a
+throwaway database, writing with the extracted `data/seed/load.sh` statement verbatim and reading
+`1790379918 / 1790379926 / recorded=true` back from a second session before dropping the database, the whole
+exchange kept in a file because a witness nobody can re-open is an anecdote.
+
+Four things about the measuring are worth keeping as rules. The first probe run reported the shipped statement
+as a syntax error, and the error was the probe's: it rebuilt the SQL out of a regex match and `rstrip(";")`
+ate the semicolon `plpgsql` needs. Nothing had been wrong in the tree, and nothing would have been found if
+the probe had been believed — a reconstructed statement is a different statement, so the harnesses now slice
+text out of the shipped file instead of composing it. The second: reading a witness's *message*, not only its
+colour, caught a wording defect in this unit's own new arm — it accused an answered column of falling outside
+"the recorded load window" on a database where no window is recorded, which is the same class of thing this
+lane keeps finding: a message that is true of one branch and false of the branch that actually ran. The same
+discipline extends to the artifact rather than only the reading: this unit first reported an age pair it had
+read off a terminal and never written to a file, and because nothing was kept the pairing turned out to be
+wrong as well — two verdicts eleven minutes apart quoted against two ages taken within a minute of each other.
+A witness nobody can re-run is an anecdote, so the pair quoted under the gate line prints the row's verdict
+and the column's distance from `now()` out of one statement at one instant, into files that stay.
+
+The third came from a test written for another reason. The loader's new guard against anchoring a *partial*
+reload went in with its polarity inverted: it refused `ONLY=` on its own, which is the documented and
+harmless case, and allowed the combination it was written to block. No gate run could have shown it, because
+step 4 runs with `SEED_ANCHOR=1` and no `ONLY`, and `bash -n` is silent about which branch dies; the guard
+only speaks in a branch nothing walks down. It was found by running the three combinations against a
+container name that cannot connect — rc=2 refusing the anchored partial reload by name, rc=3 reaching the
+container preflight for the other two — and it leaves the rule attached: an outer precondition outside the
+gate needs its own named test, and the test has to assert the case that must NOT refuse as well as the one
+that must.
+
+The fourth came from a claim in this unit's own drafts rather than from the database. The plants were first
+reported as "all four still exit non-zero", which is untestable as written: psql treats the verdict block's
+RAISE as one more statement error unless `ON_ERROR_STOP` is set, and the drafts never said which invocation had
+produced the number. Run over the same shipped text at 08:00, the no-window arm and the green arm both return
+rc=0 without the flag and rc=3 with it — and with the flag rc=3 reports only that the database has an offender,
+which on the demo database the coverage row names eleven of, four of them in `agent_runs`; it does not report
+this row's verdict. So the only reading that
+separates the four arms is the printed row, and a verdict carried by an exit code has to carry the invocation
+beside it; `data/seed/load.sh:168` already tells the operator which invocation that is, and
+`scripts/db_gate_fresh.sh:153` is the gate using it.
+
+**Gates.** Three official 8-step runs of `scripts/db_gate_fresh.sh --keep`, all ending `RESULT: PASS — 216 quality
+checks on a from-scratch schema (tables=58, migrations=7)`. The first is the run this unit set out to make; the
+file it read is not the file that ships, because comment edits landed after it finished at 06:38:27 (48 min 18 s
+after the epoch its own database is named with), so two more were launched over the shipped bytes. The second,
+database created 06:51:23 and log's last write 07:41:21, 49 min 58 s, recorded 1790377745 to 1790377935 for
+itself — 07:09:05 to 07:12:15, a 190-second load. The third exists because a comment changed at 07:49:55 and §86's
+mistake (i) refuses to treat that as free: launched 07:50:27, log's last write 08:24:50, 34 min 23 s, and its step
+4 recorded 1790381320 to 1790382127, which is an **807-second load** — 4.3 times the second run's, on identical
+bytes, with three subagent lanes sharing the host. In that database `facts.updated_at` is 08:09:45.77236+08, 66
+seconds after the window opened, so the distance from the stamp to the first moment step 5 could have run is 742
+seconds: more than the 600 the replaced predicate measured against. D88's failure — a red row caused by how fast
+the machine is — therefore recurred on its own inside this unit, unasked, with no plant behind it, and the row
+printed PASS. Steps 6, 7 and 8 read the same in both shipped runs: an empty stranger cleared, a stranger holding
+rows refused by name, V7's share_links found in the truncate closure; 174 source files scanned, 26 read sites, 19
+distinct (column, key) reads, 22 answer rows citing 31 locations in 12 files over 41 line spans with 38 distinct
+lines read back; 157 citation-shaped tokens resolved out of 266 name:number mentions across 165 sections and 48
+distinct files, no offender. Neither step-8 reading covers the sections this commit appends, because both censised
+the ledgers as the working tree held them at the moment they ran; the appended text is cite-checked as exact bytes
+before it is staged, which is the only order that says something true.
+
+The anchor as measurement, on the two kept certification databases: three readings, each printing the row's verdict
+and the column's distance from `now()` out of one statement at one instant into a kept file, the region sliced from
+the shipped text at run time so it cannot drift from what it certifies. On the second run's database, 07:25:05 says
+PASS with a derived set of one column, 23 s after the window opened and offenders none, at an age of 937 seconds —
+1.56 times the replaced bound — and 07:32:56 says the same PASS at 1,408 seconds, 2.35 times. On the third run's
+database, untouched since its own load, 11:24:39 says the same PASS again, 66 s after the window opened, at
+11,693 seconds: 19.5 times the bound, three hours and a quarter after the check that used to be time-critical. The
+old rule is red at all three of those readings and at the instant step 5 of the third run actually ran. The row
+that used to go red as the machine got slower is green on identical bytes while the machine got slower, which is
+the claim this unit set out to make; the four plants in §86 stay the directions it can still fail, the other 215
+rows are untouched, and `bash -n` passed on both scripts it edits.
