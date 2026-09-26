@@ -40,9 +40,17 @@ saying "the assertion named here does not read what this SQL moves" -- an arm th
 run would have called that green. Each arm therefore names the assertion its own SQL reaches, and the two
 `data_origin` arms are the same deception stated on the two planes that watch it.
 
+Existence is the third thing a session is judged on, and it was found by being missed. A sweep that builds
+its names with `GROUP BY` files *nothing* when the table it groups over is emptied, so such an assertion
+neither goes green nor goes red -- it stops existing, and a comparison of red sets cannot see a row that is
+not there. D119's facts-delete arm filed 213 rows against a 216 baseline and the drive still reported PASS,
+because the only trace was a number in a printed column. An arm may now declare the names it unfiles (an
+optional fourth tuple element); an undeclared disappearance fails the drive.
+
 The exit code is 0 only when the baseline matches the two declared known-reds, every arm's assertion
-reddened on the plant, no arm's assertion was already red at baseline, and the closing baseline equals
-the opening one -- which is how this file knows it left the database as it found it.
+reddened on the plant, no arm's assertion was already red at baseline, no assertion stopped being filed
+without being declared, and the closing baseline equals the opening one -- which is how this file knows it
+left the database as it found it.
 """
 
 import argparse
@@ -201,8 +209,13 @@ ARMS = [
      "DELETE FROM documents WHERE id = (SELECT id FROM documents ORDER BY id LIMIT 1);"),
     ("volume: chunks > 0", "every chunk removed -- a presence row has no narrower falsifier",
      "DELETE FROM chunks;"),
+    # This arm is the one that empties a table a sweep builds its NAMES from, so three assertions stop
+    # existing rather than going red (D119): quality.sql:381 files `orphan: facts.<type>` one row per
+    # subject_type present, and with no facts there is no subject_type. Declaring them is what keeps
+    # "the plane shrank" a fact about this arm instead of a number nobody read.
     ("volume: facts > 0", "every fact removed -- the same presence row on the table with no CHECKs",
-     "DELETE FROM facts;"),
+     "DELETE FROM facts;",
+     ("orphan: facts.location", "orphan: facts.merchant", "orphan: facts.offering")),
 ]
 
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
@@ -229,20 +242,47 @@ def run(container, database, sql):
     return proc.stdout.decode("utf-8", "replace"), proc.stderr.decode("utf-8", "replace").strip(), proc.returncode
 
 
-def gate_under(body, plant, pre=None):
-    """One whole run of the shipped gate, optionally after a plant that this transaction undoes."""
+def sql_lit(s):
+    return "'" + s.replace("'", "''") + "'"
+
+
+def gate_under(body, plant, pre=None, expect=(), baseline=False):
+    """One whole run of the shipped gate, optionally after a plant that this transaction undoes.
+
+    The report is read back as aggregated single rows wherever a name can appear, because a `qc` name is
+    built by whoever wrote the assertion: one name per line would let a newline inside a name change what
+    this file counts. chr(31) is the separator, and the X| row is the precondition for that -- the
+    baseline run refuses to proceed if any live name carries a control character this protocol would
+    split on. `expect` is the baseline name list; the M| row comes back holding the names this session
+    stopped filing altogether.
+    """
+    vals = ", ".join("(" + sql_lit(n) + ")" for n in expect)
     sql = ("BEGIN;\n" + (pre + "\n" if pre else "") + (plant + "\n" if plant else "") + body + "\n"
            + "SELECT 'K|' || count(*) FROM qc;\n"
-           + "SELECT 'R|' || \"check\" FROM qc WHERE NOT ok;\nROLLBACK;\n")
-    return sql
+           + 'SELECT \'R|\' || "check" FROM qc WHERE NOT ok;\n')
+    if baseline:
+        sql += ("SELECT 'X|' || count(*) FROM qc WHERE"
+                " position(chr(31) in \"check\") + position(chr(10) in \"check\")"
+                " + position(chr(13) in \"check\") + position(chr(9) in \"check\") > 0;\n"
+                + 'SELECT \'N|\' || string_agg("check", chr(31) ORDER BY "check") FROM qc;\n')
+    if expect:
+        sql += ("SELECT 'M|' || coalesce(string_agg(x, chr(31) ORDER BY x), '') FROM"
+                " (SELECT v.x FROM (VALUES " + vals + ") v(x)"
+                ' WHERE NOT EXISTS (SELECT 1 FROM qc WHERE qc."check" = v.x)) s;\n')
+    return sql + "ROLLBACK;\n"
 
 
 def parse(out):
-    rows = [l[2:] for l in out.split("\n") if l.startswith("K|")]
+    def one(tag):
+        rows = [l[2:] for l in out.split("\n") if l.startswith(tag)]
+        return rows[0] if rows else None
+
+    count, unsafe = one("K|"), one("X|")
     reds = sorted(l[2:] for l in out.split("\n") if l.startswith("R|"))
-    if not rows:
-        return None, []
-    return int(rows[0]), reds
+    split = lambda v: [x for x in v.split(chr(31)) if x.strip()] if v else []
+    if count is None:
+        return None, [], [], [], unsafe
+    return int(count), reds, split(one("N|")), split(one("M|")), unsafe
 
 
 def main():
@@ -250,9 +290,13 @@ def main():
     ap.add_argument("--db", required=True)
     ap.add_argument("--container", default="nexus-platform-postgres")
     ap.add_argument("--emit-rows", default=None,
-                    help="append falsifiers.tsv rows for the arms that reddened and are not already filed")
+                    help="append falsifiers.tsv rows for every assertion this drive reddened -- the arm's own "
+                         "and the collateral ones -- that is not already filed under that arm")
     ap.add_argument("--unit", default=None, help="ledger number to write into the emitted rows' unit column")
     ap.add_argument("--witness", default=None, help="commit or artifact the emitted rows point at")
+    ap.add_argument("--only", default=None,
+                    help="run just the arms whose marker or label contains this string: a whole-gate session "
+                         "is the expensive half of a drive, and aiming one arm should not cost thirty-five")
     args = ap.parse_args()
     body = gate_body()
     filed = set()
@@ -264,34 +308,56 @@ def main():
                 if len(parts) >= 3:
                     filed.add((parts[0], parts[2]))
 
-    def gate(plant=None, pre=None):
-        out, err, rc = run(args.container, args.db, gate_under(body, plant, pre))
-        count, reds = parse(out)
+    sessions = 0
+
+    def gate(plant=None, pre=None, expect=(), baseline=False):
+        nonlocal sessions
+        out, err, rc = run(args.container, args.db, gate_under(body, plant, pre, expect, baseline))
+        count, reds, names, missing, unsafe = parse(out)
         if rc != 0 or count is None:
             print(f"  run ABORTED rc={rc}: {err[:200]}")
-        return count, reds
+        else:
+            sessions += 1
+        return count, reds, names, missing, unsafe
 
-    base_count, base_reds = gate()
+    base_count, base_reds, base_names, _, unsafe = gate(baseline=True)
+    if base_count is None:
+        sys.exit("FATAL: the baseline session returned nothing to read")
+    if unsafe and int(unsafe):
+        sys.exit(f"FATAL: {unsafe} live check name(s) carry a tab, newline or chr(31), so the aggregated"
+                 " report rows this drive parses would not survive the transport")
     print(f"baseline, unmutated data: {base_count} assertions, red = {len(base_reds)}")
     for n in base_reds:
         print(f"   {'declared (D108)' if n in KNOWN_RED else 'UNDECLARED   '} {n}")
     failed = [f"baseline red {n} is not declared" for n in base_reds if n not in KNOWN_RED]
 
-    print(f"\n{'arm planted':<54} {'rows':<6} {'target':<8} {'collateral':<11} reddened")
-    witnessed = []
-    for marker, label, plant in ARMS:
-        count, reds = gate(plant)
+    arms = [a for a in ARMS if args.only is None or args.only in a[0] or args.only in a[1]]
+    if not arms:
+        sys.exit(f"FATAL: --only {args.only!r} selected none of the {len(ARMS)} arms")
+    print(f"\n{'arm planted':<54} {'rows':<6} {'target':<8} {'collateral':<11} unfiled  reddened")
+    witnessed, collateral_witnessed = [], []
+    for arm in arms:
+        marker, label, plant = arm[0], arm[1], arm[2]
+        declared = arm[3] if len(arm) > 3 else ()
+        count, reds, _, missing, _ = gate(plant, expect=base_names)
         if count is None:
             failed.append(f"{label}: run unread")
             continue
         hit = [n for n in reds if marker in n]
         collateral = [n for n in reds if n not in base_reds and n not in hit]
+        undeclared = [n for n in missing if n not in declared]
         print(f"{label:<54} {count:<6} {'RED' if hit else 'green':<8} "
-              f"{len(collateral):<11} {'; '.join(hit)[:60]}")
+              f"{len(collateral):<11} {len(missing):<8} {'; '.join(hit)[:60]}")
         for c in collateral:
             print(f"{'':<54}   collateral: {c[:90]}")
+        for n in missing:
+            print(f"{'':<54}   {'unfiled, declared: ' if not undeclared else 'UNFILED, UNDECLARED: '}{n[:80]}")
+        if undeclared:
+            failed.append(f"{label}: {len(undeclared)} assertion(s) stopped being filed and the arm declares "
+                          f"none: {'; '.join(undeclared)}")
         if len(hit) == 1:
             witnessed.append((hit[0], label))
+            collateral_witnessed += [(c, label) for c in collateral]
         elif not hit:
             failed.append(f"{label}: the assertion naming it stayed green")
         else:
@@ -299,44 +365,67 @@ def main():
                           "the arm is not identified by name")
 
     idx, pre = CONTROL
-    marker, label, plant = ARMS[idx]
-    count, reds = gate(plant, pre)
-    hit = [n for n in reds if marker in n]
-    collateral = [n for n in reds if n not in base_reds and n not in hit]
-    spread = [n for n in collateral if CONTROL_SPREAD in n]
-    print(f"\ncontrol: arm {idx} ({label}) replanted, triggers off")
-    print(f"  target {'RED' if len(hit) == 1 else 'not red'} · collateral {len(collateral)} ·"
-          f" spread row {'gone (as predicted: the trigger wrote it)' if not spread else 'STILL RED'}")
-    if count is None:
-        failed.append("control run unread")
-    if len(hit) != 1:
-        failed.append("control: the plant stopped falsifying its own assertion when the trigger was disabled")
-    if spread:
-        failed.append("control: the spread collateral survived without the trigger, so the trigger is not its cause")
+    marker, label, plant = ARMS[idx][:3]
+    ran_control = any(a[0] == marker for a in arms)
+    if ran_control:
+        count, reds, _, missing, _ = gate(plant, pre, expect=base_names)
+        hit = [n for n in reds if marker in n]
+        collateral = [n for n in reds if n not in base_reds and n not in hit]
+        spread = [n for n in collateral if CONTROL_SPREAD in n]
+        print(f"\ncontrol: arm {idx} ({label}) replanted, triggers off")
+        print(f"  target {'RED' if len(hit) == 1 else 'not red'} · collateral {len(collateral)} ·"
+              f" unfiled {len(missing)} ·"
+              f" spread row {'gone (as predicted: the trigger wrote it)' if not spread else 'STILL RED'}")
+        if count is None:
+            failed.append("control run unread")
+        if len(hit) != 1:
+            failed.append("control: the plant stopped falsifying its own assertion when the trigger was disabled")
+        if spread:
+            failed.append("control: the spread collateral survived without the trigger, so the trigger is not its cause")
+        if missing:
+            failed.append(f"control: {len(missing)} assertion(s) stopped being filed, which no arm declared")
+    else:
+        print(f"\ncontrol: skipped, because --only {args.only!r} excluded arm {idx}")
 
-    end_count, end_reds = gate()
-    same = (end_count, end_reds) == (base_count, base_reds)
-    print(f"\nclosing baseline: {end_count} assertions, red = {len(end_reds)} "
+    end_count, end_reds, _, end_missing, _ = gate(expect=base_names)
+    # The name list itself only comes back on the baseline session; what the closing one proves is that
+    # every baseline name is still being filed, which is the same claim read the cheap way.
+    same = (end_count, end_reds) == (base_count, base_reds) and not end_missing
+    print(f"\nclosing baseline: {end_count} assertions, red = {len(end_reds)}"
+          f"{', ' + str(len(end_missing)) + ' name(s) no longer filed' if end_missing else ''} "
           f"({'identical to opening' if same else 'DIFFERS -- the drive left residue'})")
     if not same:
         failed.append("the database changed under the drive")
-    print(f"arms run          {len(ARMS)} plus one control, against one loaded database, "
-          f"{2 * len(ARMS) + 3} whole-gate sessions, every one rolled back")
+    print(f"arms run          {len(arms)} of {len(ARMS)}"
+          f"{' plus one control' if ran_control else ''}, against one loaded database, "
+          f"{sessions} whole-gate sessions, every one counted and rolled back")
     if failed:
         print("RESULT: FAIL -- " + "; ".join(failed))
         return 1
     print("RESULT: PASS -- each planted deception reddened exactly the assertion that names it, "
-          "no arm found an undeclared red, and the data is as the loader wrote it")
+          "no arm found an undeclared red, no assertion left the plane undeclared, "
+          "and the data is as the loader wrote it")
     if args.emit_rows:
-        # Filed only here: a row enters the registry only for an arm that reddened its own assertion
-        # under a drive that has now proved it left the database alone.
-        new = [(n, label) for n, label in witnessed if (n, label) not in filed and n not in base_reds]
+        # Filed only here: a row enters the registry only for an assertion reddened under a drive that has
+        # now proved it left the database alone. Collateral counts too, because D103's standard is "shown
+        # able to fail" and a red the gate filed for a reason the arm also moves is a demonstration -- the
+        # arm column says honestly which arm it was, since it is the arm that ran.
         if not args.unit or not args.witness:
             sys.exit("--emit-rows also needs --unit and --witness")
+        pairs = [(n, label) for n, label in witnessed + collateral_witnessed
+                 if (n, label) not in filed and n not in base_reds]
+        seen, new = set(), []
+        for pair in pairs:
+            if pair[0] not in seen:
+                seen.add(pair[0])
+                new.append(pair)
         with Path(args.emit_rows).open("a", encoding="utf-8", newline="") as fh:
             for n, label in new:
                 fh.write(f"{n}\t{args.unit}\t{label}\t{args.witness}\n")
-        print(f"registry rows appended: {len(new)} (of {len(witnessed)} arms witnessed)")
+        targets = {n for n, _ in witnessed}
+        print(f"registry rows appended: {len(new)} "
+              f"({sum(1 for n, _ in new if n in targets)} from the arm's own target, "
+              f"{sum(1 for n, _ in new if n not in targets)} from its collateral)")
     return 0
 
 
