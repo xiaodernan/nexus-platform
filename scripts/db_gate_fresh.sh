@@ -19,6 +19,8 @@
 #   NEXUS_PG_CONTAINER   the container to build in (default: whichever of the known names is running)
 #   NEXUS_DB_SUPERUSER   superuser inside it (default: postgres)
 #   GATE_DB_PREFIX       naming for the throwaway database (default: nexus_gate)
+#   LEDGER_SECTIONS_DIR  step 10 only: compare HEAD's ledgers against this checkout instead of this one
+#                        (inert when unset; the reachability arm, not a way to skip the check)
 #
 # Safety: this creates and DESTROYS a database. It refuses to run if the target resolves to `nexus`
 # or `nexus_test` — the developer database and the integration-test one — and it never touches a
@@ -102,13 +104,13 @@ cleanup() {
 trap cleanup EXIT
 
 # --------------------------------------------------------------------------- 1. empty database
-step "1/9  create $GATE_DB from template0 (empty, no inherited objects)"
+step "1/10  create $GATE_DB from template0 (empty, no inherited objects)"
 psql_maint "CREATE DATABASE \"$GATE_DB\" TEMPLATE template0 ENCODING 'UTF8'" >/dev/null
 [ "$(psql_gate "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name NOT LIKE 'pg_%'")" = "0" ] \
   || die "the fresh database is not empty — template1 pollution would make this gate meaningless"
 
 # --------------------------------------------------------------------------- 2. migrations + roles
-step "2/9  apply infra/db/migrations/V*.sql + 00_roles.sql"
+step "2/10  apply infra/db/migrations/V*.sql + 00_roles.sql"
 NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_NAME="$GATE_DB" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/db_apply_migrations.sh" | sed -e 's/^/    /'
 TABLES="$(psql_gate "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")" \
@@ -118,15 +120,15 @@ echo "    -> gate database now has tables=$TABLES migrations=$SCHEMA_VERSION"
 
 # --------------------------------------------------------------------------- 3. generate the dataset
 if [ "$SKIP_GENERATE" = "1" ]; then
-  step "3/9  seed generation skipped (--skip-generate): loading data/seed/out/ as found"
+  step "3/10  seed generation skipped (--skip-generate): loading data/seed/out/ as found"
 else
-  step "3/9  generate the synthetic dataset from the CSVs (generate.py self-checks FK integrity)"
+  step "3/10  generate the synthetic dataset from the CSVs (generate.py self-checks FK integrity)"
   PYTHON="${PYTHON:-python}"
   ( cd "$ROOT" && "$PYTHON" data/seed/generate.py ) 2>&1 | tail -4 | sed -e 's/^/    /'
 fi
 
 # --------------------------------------------------------------------------- 4. load
-step "4/9  load the seed into the fresh database"
+step "4/10  load the seed into the fresh database"
 # RESEED_DEPENDENTS=1 states the blast radius rather than discovering it. The truncate script now
 # closes itself over the live foreign keys (D63), so it would clear these 27 tables on a fresh
 # database anyway — they are empty there. The gate names them because a from-scratch proof should not
@@ -145,7 +147,7 @@ CONTAINER="$CONTAINER" DB="$GATE_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 SEED_ANC
   "$ROOT/data/seed/load.sh" | tail -12 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 5. gate
-step "5/9  data/seed/quality.sql (the hard gate)"
+step "5/10  data/seed/quality.sql (the hard gate)"
 VARS=""
 for v in MIN_MERCHANTS MIN_OFFERINGS MIN_REVIEWS MIN_NEAR_SHA_TIN; do
   if [ -n "${!v:-}" ]; then VARS="$VARS -v $v=${!v}"; fi
@@ -165,7 +167,7 @@ else
 fi
 
 # --------------------------------------------------------------------------- 6. the truncate's two branches
-step "6/9  scripts/seed_truncate_probe.sh — an empty stranger is cleared, one holding rows refuses"
+step "6/10  scripts/seed_truncate_probe.sh — an empty stranger is cleared, one holding rows refuses"
 # The probe builds its own throwaway database, so the gate's loaded dataset stays the way step 4 left
 # it. Running it here is the point: a truncate that only ever succeeds proves nothing, and the branch
 # that protects somebody else's rows is the branch nobody waits to see.
@@ -173,22 +175,22 @@ NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/seed_truncate_probe.sh" 2>&1 | tail -8 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 7. the read census and the source
-step "7/9  scripts/check_jsonb_reads.mjs — the build's jsonb reads and both answers' site citations"
+step "7/10  scripts/check_jsonb_reads.mjs — the build's jsonb reads and both answers' site citations"
 # Step 5's read list is a transcription of source text, and a transcription drifts silently: the D84 list named
 # reads the build does not make and missed the ones made through a Java map accessor, which D85's scanner then
 # counted. So the scanner runs as a reader rather than as a note, and since D87 it reads the `site` column of
 # both answer tables too — every `File.java:NNN` is opened and compared with what the row claims. node missing
 # is a FAIL, not a skip — see the script's own LIMITS.
-command -v node >/dev/null 2>&1 || die "steps 7 and 8 need node on PATH; a skipped census step is not a passed one"
+command -v node >/dev/null 2>&1 || die "steps 7, 8, 9 and 10 need node on PATH; a skipped census step is not a passed one"
 ( cd "$ROOT" && node scripts/check_jsonb_reads.mjs ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 8. the ledger's own citations
-step "8/9  scripts/check_ledger_citations.mjs — every File.java:NNN the ledgers claim, opened and read back"
+step "8/10  scripts/check_ledger_citations.mjs — every File.java:NNN the ledgers claim, opened and read back"
 # D87's site census stopped at the seed directory: it checked what the answer tables assert and left the prose
 # above them unverified, while §84 had already shipped a hand count of "71 prose citations, all resolved" that
 # nobody had ever measured. This step reads docs/DECISIONS.md and docs/STATUS.md and resolves every citation
 # the same way step 7 resolves a `site` column. It runs with --worktree rather than the script's default HEAD
-# for one reason: the other eight steps all read the working tree, so a step 8 pinned to HEAD would let a green
+# for one reason: the other nine steps all read the working tree, so a step 8 pinned to HEAD would let a green
 # run certify a ledger that this tree no longer holds. The cost is stated in the checker's own LIMITS — a
 # citation in another lane's uncommitted paragraph can redden this run; the message names the file and line so
 # the claim goes to its owner rather than being edited here.
@@ -196,7 +198,7 @@ step "8/9  scripts/check_ledger_citations.mjs — every File.java:NNN the ledger
 
 
 # --------------------------------------------------------------------------- 9. the comment plane
-step "9/9  scripts/check_comment_citations.mjs — the citations that live inside source comments"
+step "9/10  scripts/check_comment_citations.mjs — the citations that live inside source comments"
 # Step 8 reads docs/. Source comments make the same kind of claim — quality.sql's notes cite lines of
 # load.sh, the two scanners cite Java sites — and nothing read that plane until D93 measured it: 68
 # citation-shaped tokens, 5 offenders, every offender an example of the grammar written inside the sentence
@@ -204,6 +206,19 @@ step "9/9  scripts/check_comment_citations.mjs — the citations that live insid
 # plane drifting back: it slices step 8's token grammar out of the checker instead of copying it, scores the
 # comments through that same resolver, and refuses to treat a scan that found nothing as green.
 ( cd "$ROOT" && node scripts/check_comment_citations.mjs ) 2>&1 | sed -e 's/^/    /'
+
+# --------------------------------------------------------------------------- 10. the two planes of one ledger
+step "10/10 scripts/check_ledger_sections.mjs — every numbered section at HEAD is still in the file on disk"
+# Steps 1-9 all read one plane: step 8 reads the working tree on purpose. This step's subject IS the relation
+# between the two planes, so pinning it to either would make it vacuous — it compares `git show HEAD:docs/...`
+# with the file as it stands. It exists because D114 found nine sections of this ledger that no commit had
+# ever held, stranded there by the lane that wrote §109-§114 staging from HEAD, and because §86 (e) had
+# named that exact cost three days earlier with nothing executing on it. A heading present at HEAD and absent
+# on disk is the failure (the next `git add` deletes committed history); a heading only on disk is printed
+# and allowed, because writing an entry starts there. LEDGER_SECTIONS_DIR points the comparison at another
+# checkout: inert on a normal run, and the arm that shows this step can redden inside the gate without
+# editing a tracked file while nine other steps are reading it (D98's shape).
+( cd "$ROOT" && node scripts/check_ledger_sections.mjs ${LEDGER_SECTIONS_DIR:+--dir "$LEDGER_SECTIONS_DIR"} ) 2>&1 | sed -e 's/^/    /'
 printf '\nRESULT: PASS — %s quality checks on a from-scratch schema (tables=%s, migrations=%s), plus the\n' \
   "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"
 printf '        seed truncate shown clearing an empty stranger and refusing one that holds rows, the\n'
@@ -211,4 +226,6 @@ printf '        build'"'"'s jsonb reads and answered sites reconciled against th
 printf '        ledgers'"'"' own source citations resolved against the files they name.\n'
 printf '        the citations inside source comments, scored by that same resolver rather than by a\n'
 printf '        second one: the comment plane is censused, its token count reported, an empty scan a FAIL.\n'
+printf '        the ledger'"'"'s two planes compared, so a committed section cannot go missing from the tree\n'
+printf '        that is about to be committed from.\n'
 printf '        SYNTHETIC DEMO DATA. The live databases were not opened by this run.\n'
