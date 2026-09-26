@@ -6204,3 +6204,64 @@ statement inserted, not retyped here — the §-bearing name
 log kept as `gate-d107-official.log` with `GATE_RC` written inside it rather than inferred from a
 notification. Plants: `d107_plants.txt`, exit 0, `PLANTS_RC=0` echoed from the python process itself.
 Registry validator against the same kept database: `RESULT: PASS`, 47 rows, 27 of 214.
+
+## D109 The plants stop being single-row splices: the whole gate runs behind each one, and the biggest collateral row turns out to be a trigger
+
+**Asked.** D108 left two things open: six arms is a small fraction of 214, and a spliced single assertion
+answers only "did this predicate move". The question that matters when a row is planted is *which* rows
+moved -- so the drive was changed to run the shipped gate whole inside each plant's transaction, print the
+collateral, and judge an arm only on its own assertion. Seven more arms were written on producers no
+earlier arm touched: a counter, a price band, a text floor, a lorem body, a coverage floor, a disclaimer
+marker.
+
+**Measured** (`data/seed/falsifier_plants.py` at `4503424`, against the kept gate database
+`nexus_gate_270354_1790448961`, log `d109_final.txt` with `PLANTS_RC=0` written by the process itself):
+baseline 214 assertions, red = 2, both the D108-declared pair; **13 of 13 arms reddened exactly the
+assertion that names them**; 29 whole-gate sessions in one transaction each, closing baseline identical to
+the opening one (that equality is how the run knows it left the data as the loader wrote it). Registry
+`data/seed/falsifiers.tsv` 47 -> 54 rows; validator `RESULT: PASS`, **33 of 214 (15.4%)** assertions now
+carry a machine-checkable witness. Rows and covered assertions differ by one because
+`price_min <= price_max` was already filed by D105's schema-rejection arm: the registry keys on
+(check, arm), and a check falsified two different ways has two witnesses.
+
+**The collateral, and what it was.** Ten of the twelve arms reddened
+`every column that cannot vary is answered for why it cannot` without being written to, which looked like
+over-sensitivity in the assertion. It is not. The seed schema attaches `public.set_updated_at()` -- a
+BEFORE UPDATE trigger, `NEW.updated_at = now()` -- to fifteen tables (measured through `pg_trigger` joined
+on `tgfoid`, not inferred), and `spread_cat` classifies each numeric/date/timestamp column by
+`count(DISTINCT)`: a column answered `single-instant-pinned` that gains a second instant is a stale
+exemption, which is precisely what that row exists to notice. Two facts pin the explanation down:
+
+  * the two arms that produced *no* collateral are the two `reviews.body` plants, and `reviews` is not one
+    of the fifteen trigger tables -- its `updated_at` already holds 10,495 distinct values across 11,000
+    rows, so nothing can un-pin it;
+  * the control re-ran arm 0's identical plant with `SET LOCAL session_replication_role = replica`, and
+    the collateral went to zero while the target stayed red. Same deception, one variable.
+
+So the answer to D108's open question is *companion row by design*, and the drive now says so in its own
+output rather than leaving a reader to chase eleven unexplained reds.
+
+**Arm 13, stated on its own.** Having established the mechanism, the row deserves a witness that is not an
+accident of another arm: the thirteenth plant moves only a timestamp
+(`UPDATE merchants SET updated_at = now() ...`), reddens the spread row, and reports collateral 0. This is
+the fourth case in three units where a check that was already firing as a side effect was worth promoting
+to a deliberate arm (D96's window row, D105's schema backstops, D108's rename A/B, now this).
+
+**A claim taken back -- four ledger entries that never existed.** Writing "as recorded in D103" for this
+unit's context prompted a check, and `git log -S'## D103' -- docs/DECISIONS.md` returns nothing, same for
+D104, D105 and D106. Those four units exist as commits (`476324d`, `9ba17f4`, `0d802be`, `9591d54`) and as
+rows appended to `data/seed/falsifiers.tsv`, and as nothing else -- `git show --stat` on each lists only the
+tsv (plus `scripts/check_falsifier_registry.mjs` at D103), so neither ledger holds a word about them. The habit this lane states out loud -- work commit,
+then a ledger commit writing DECISIONS and STATUS -- silently stopped after D102's ledger commit, and four
+units of *why* were not written down even though four units of *what* were. Nothing in the four commits is
+nowhere in the tree, so this is a missing record, not a lost change; #76 is re-scoped from "STATUS lags
+DECISIONS" to "DECISIONS is missing D103–D106, to be reconstructed from those commits".
+
+**Limits of this run.** The gate body is read from the working copy, and the working copy holds another
+lane's uncommitted `data/seed/quality.sql` citation edits and `infra/db/migrations/V7__share_links.sql`;
+214 assertions and 2 reds are therefore the *committed-migrations / dirty-vocabulary* plane, exactly as in
+D108. The drive needs a kept loaded seed (`scripts/db_gate_fresh.sh --keep`); it does not build one. And a
+plant into any of the fifteen trigger tables is no longer single-dimension -- D65's rule now holds "except
+for `updated_at`, which the schema writes for you", an exception that is named in the harness docstring
+instead of being hidden by disabling the trigger for every arm.
+

@@ -62,3 +62,10 @@ every source_uri is demo:// (trust layer provenance)	D108	a fact sourced from a 
 images are local placeholders, never hotlinks	D108	a merchant image pointed at a third-party host	111d5de
 SEO pages are noindex (demo must not rank, §155)	D108	a merchant page indexable by search engines	111d5de
 password_hash is the placeholder, never a real hash	D108	a user carrying a real password hash	111d5de
+merchants.review_count matches its reviews	D109	a merchant's published-review counter moved by one	4503424
+price_min <= price_max	D109	an offering whose price band is inverted	4503424
+review body length > 20 chars	D109	a review body shortened below the floor	4503424
+review bodies are not lorem/placeholder	D109	a review body that is lorem ipsum	4503424
+at least 10 districts covered	D109	six of the fifteen districts folded into one	4503424
+disclaimer text is inside every menu document	D109	a menu whose synthetic-data disclaimer was removed	4503424
+every column that cannot vary is answered for why it cannot	D109	one merchant's updated_at moved off the single seeded instant	4503424

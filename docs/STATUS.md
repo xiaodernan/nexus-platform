@@ -5383,3 +5383,37 @@ next            (a) Task #75 — whoever owns V7 commits it with the loader's tr
                   (d) Carried: #71, #68, #58, #62, #64, #44, §87's session-time-zone seam, D91's served leg
                     until :8090 is up.
 ```
+
+## 109. The plants now run the whole gate behind them, and eleven unexplained reds turn out to be a trigger (2026-09-27)
+
+`data/seed/falsifier_plants.py` at `4503424` no longer splices one assertion out of the shipped file: each
+arm runs `BEGIN; plant; the whole gate; ROLLBACK` and reports which rows moved. Thirteen arms, 29
+whole-gate sessions against the kept database `nexus_gate_270354_1790448961`, every one rolled back, and
+the closing baseline byte-identical to the opening one (214 assertions, the 2 D108-declared reds). All 13
+reddened exactly the assertion that names them; `RESULT: PASS` with `PLANTS_RC=0` in `d109_final.txt`.
+Registry `data/seed/falsifiers.tsv`: 47 -> 54 rows, validator `RESULT: PASS`, **33 of 214 assertions
+(15.4%) carry a machine-checkable witness** — grammar: rows counted per (check, arm) pair, covered
+assertions counted per name, on the committed-migrations plane D108 defined. The two counts differ because
+`price_min <= price_max` was already witnessed by D105's schema-rejection arm.
+
+Ten of the twelve earlier arms reddened `every column that cannot vary is answered for why it cannot` as
+collateral. Measured cause, not assumed: `public.set_updated_at()` is attached to fifteen tables (read off
+`pg_trigger`), so any single-row UPDATE un-pins that table's `updated_at`, and the spread row is the
+assertion that notices an answer saying "single instant" while the column holds two. Two checks hold the
+explanation in place — the only arms with zero collateral are the two `reviews.body` plants, and `reviews`
+has no trigger and 10,495 distinct `updated_at` values across 11,000 rows — and the control re-ran one
+identical plant with `SET LOCAL session_replication_role = replica`: target still red, collateral 0. D108's
+open question is answered as *companion row by design*, and the row got its own deliberate arm (13: move a
+timestamp and nothing else, collateral 0).
+
+**Taken back:** four units of this lane — D103, D104, D105, D106 — have no decision entry and no status
+section, in the working copy or at HEAD (`git log -S'## D103' -- docs/DECISIONS.md` and the same for
+D104–D106 return nothing; `git show --stat` on each touches only `data/seed/falsifiers.tsv`). The
+work-then-ledger habit this lane states out loud stopped after D102's ledger commit. Task #76 is re-scoped
+from "STATUS lags DECISIONS" to "DECISIONS is missing D103–D106, reconstruct them from those commits".
+
+**Why this section is numbered 109 and not 101:** HEAD's `docs/STATUS.md` ends at §100, while the working
+copy already holds another lane's uncommitted §101–§108 (110 `## ` headings against HEAD's 101), so the
+next free number that cannot collide when their commit lands is 109. The section was staged from a
+`git show HEAD:docs/STATUS.md` blob with only this text appended, and appended to the working copy as
+well, so neither plane can silently drop it.
