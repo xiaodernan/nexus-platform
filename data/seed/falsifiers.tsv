@@ -92,3 +92,25 @@ volume: reviews	D119	1,001 reviews removed in the table's own language ratio	f59
 volume: documents >= merchants	D119	521 documents removed, so one fewer than the merchant count	f59f8ed
 volume: chunks > 0	D119	every chunk removed -- a presence row has no narrower falsifier	f59f8ed
 volume: facts > 0	D119	every fact removed -- the same presence row on the table with no CHECKs	f59f8ed
+every column that cannot vary is answered for why it cannot	D120	a merchant given a phone outside the reserved range	f0e0718
+the columns stamped from the generation clock are exactly the ones answered so	D120	a fact sourced from a real URL	f0e0718
+the synthetic stamp says demo, or true, on every row of every column that carries it	D120	a fact whose stamp axis says human	f0e0718
+a text[] value that appears on exactly one row is named, not averaged	D120	21 of the 520 merchants removed, the count under the declared floor	f0e0718
+favourites point at a renderable row	D120	21 of the 520 merchants removed, the count under the declared floor	f0e0718
+orphan: favorites.merchant	D120	21 of the 520 merchants removed, the count under the declared floor	f0e0718
+orphan: favorites.offering	D120	21 of the 520 merchants removed, the count under the declared floor	f0e0718
+orphan: moderation_cases.review	D120	21 of the 520 merchants removed, the count under the declared floor	f0e0718
+merchants.rating_agg matches its reviews	D120	1,001 reviews removed in the table's own language ratio	f0e0718
+merchants.review_count matches its reviews	D120	1,001 reviews removed in the table's own language ratio	f0e0718
+rating confidence tracks the sample size (§19 hedge floor)	D120	1,001 reviews removed in the table's own language ratio	f0e0718
+rating fact is observed after the newest review it averages	D120	1,001 reviews removed in the table's own language ratio	f0e0718
+rating fact restates the recomputed mean	D120	1,001 reviews removed in the table's own language ratio	f0e0718
+rating: every reviewed subject has exactly one rating fact	D120	1,001 reviews removed in the table's own language ratio	f0e0718
+merchant has a menu document (RAG feed)	D120	521 documents removed, so one fewer than the merchant count	f0e0718
+a vocabulary answer is still an answer	D120	every chunk removed -- a presence row has no narrower falsifier	f0e0718
+every jsonb key whose name claims an axis is answered for which axis it is	D120	every chunk removed -- a presence row has no narrower falsifier	f0e0718
+an arm claimed seeded is a type the data still carries	D120	every fact removed -- the same presence row on the table with no CHECKs	f0e0718
+an arm the seed never files is waived by name and by writer	D120	every fact removed -- the same presence row on the table with no CHECKs	f0e0718
+every probe family resolves at least one armed type	D120	every fact removed -- the same presence row on the table with no CHECKs	f0e0718
+some facts are deliberately stale (UI must show 已過時)	D120	every fact removed -- the same presence row on the table with no CHECKs	f0e0718
+the §19 provenance axis and the §109 stamp axis stay separate on facts	D120	every fact removed -- the same presence row on the table with no CHECKs	f0e0718

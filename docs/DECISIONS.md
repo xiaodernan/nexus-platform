@@ -6301,7 +6301,7 @@ marker.
 **Measured** (`data/seed/falsifier_plants.py` at `4503424`, against the kept gate database
 `nexus_gate_270354_1790448961`, log `d109_final.txt` with `PLANTS_RC=0` written by the process itself):
 baseline 214 assertions, red = 2, both the D108-declared pair; **13 of 13 arms reddened exactly the
-assertion that names them**; 29 whole-gate sessions in one transaction each, closing baseline identical to
+assertion that names them**; 16 whole-gate sessions (the harness printed 29; D120) in one transaction each, closing baseline identical to
 the opening one (that equality is how the run knows it left the data as the loader wrote it). Registry
 `data/seed/falsifiers.tsv` 47 -> 54 rows; validator `RESULT: PASS`, **33 of 214 (15.4%)** assertions now
 carry a machine-checkable witness. Rows and covered assertions differ by one because
@@ -6993,7 +6993,7 @@ its 50% floor, a grant filed by an operator id no user holds, and a merchant ren
 the §109 blocklist. Each was probed against `pg_constraint` first, because a plant the schema refuses is
 evidence about the schema, not the assertion: none of those five columns carries a CHECK, so all five
 deceptions reach the gate alive, and the assertions that catch them are the last line rather than a
-backstop. The drive ran 26 arms plus the trigger control across 55 whole-gate sessions on one kept loaded
+backstop. The drive ran 26 arms plus the trigger control across 29 whole-gate sessions (printed 55; D120) on one kept loaded
 database: baseline 216 assertions red 0, every arm's own assertion RED, collateral 1/2/2/0/0/1 with every
 line of it one of the two known `updated_at`-spread rows, closing baseline identical to opening, exit 0 —
 and the rows entered `data/seed/falsifiers.tsv` only from that drive's own `--emit-rows`, which is the
@@ -7079,7 +7079,7 @@ session and a red-looking drive.
 **Decision (c): what the drive filed.** Baseline 216 assertions red 0. The six volume arms reddened their own
 row with collateral 5, 0, 7, 1, 3, 10; the control re-ran arm 0 with the triggers off and returned target RED,
 collateral 0, spread row gone; the closing baseline is identical to the opening one; 32 arms plus the control
-across 67 whole-gate sessions, every one rolled back; `RESULT: PASS`. The rows entered `data/seed/falsifiers.tsv`
+across 35 whole-gate sessions (printed 67; D120), every one rolled back; `RESULT: PASS`. The rows entered `data/seed/falsifiers.tsv`
 only from that run's own `--emit-rows`: **67 → 73 rows, 46 → 52 of 216 names witnessed (24.1%)**. Collateral on
 this plane is structural rather than incidental — a delete removes rows from other assertions' denominators, so
 the merchants arm necessarily reddens the favourites and moderation orphans its CASCADE reached — and the two
@@ -7128,3 +7128,80 @@ that is the next batch, and it is one UPDATE per name. The queue recomputed off 
 **164 unwitnessed = 68 literal + 96 assembled**, i.e. all six new witnesses came out of the literal bucket and
 the assembled half did not move — which is what a volume batch should do, since every `volume: ` constant is
 written out in quality.sql. Remaining families: fk 91, no-prefix 66, orphan 4, and chunks/density/slots 1 each.
+
+## D120 An assertion can stop existing instead of going red, a collateral red turns out to be a witness, and the harness's own session count was arithmetic — 2026-09-27
+
+**Why this is a tool unit.** D119 closed with three findings, two of them about the plant harness rather than
+the seed: an arm that made assertions *stop existing* had passed the drive unnoticed, and the record of what
+had been shown able to fail dropped every collateral red. Both are verdicts now. The third — a session count
+that came from arithmetic — reached further back into the ledgers than the unit that found it. A fourth found
+this unit's own printout wrong, and it is here because the check that caught it is the same one as (a) and (b):
+read the tool's output back against the artifact it writes.
+
+**Decision (a): existence is judged, not assumed.** An arm may declare the names it unfiles (an optional
+fourth tuple element); an undeclared disappearance fails the drive. The mechanism is one more aggregated row
+per session: the baseline name list is passed back into each arm's transaction and the session reports which
+of those names `qc` no longer holds. Shown red before green, on the facts arm exactly as D119 left it —
+without the declaration `RESULT: FAIL` naming `orphan: facts.location`, `orphan: facts.merchant` and
+`orphan: facts.offering`, exit 1; with it the same three print as `unfiled, declared`, the closing baseline
+reads identical, exit 0. The transport states its own precondition instead of trusting it: names ride one row
+separated by chr(31), so the baseline session counts names carrying a tab, newline or that separator (measured
+today: 0 of 216) and stops the run on a non-zero answer rather than mis-splitting a name.
+
+**Decision (b): a collateral red is a witness, so it can be filed.** D103's standard is that the registry
+records assertions *shown able to fail*, and an assertion the gate reddened because a plant also moved
+something it watches has been shown. `--emit-rows` files those names too, deduplicated by check, with the arm
+column naming the arm that ran — which is the honest sentence, because the arm does not claim it was aimed
+there. Shown first on one merchants-delete session against a scratch copy of the registry: 5 rows appended, 0
+of them the arm's own target (already filed), the validator over that file answering `RESULT: PASS` at 54 of
+216, and the same session run again appending 0.
+
+**Decision (c): the session count was a formula, and the correction is backwards.** The closing line printed
+`2 * len(ARMS) + 3` whole-gate sessions while the loop calls the gate once per arm — the true figure is
+`arms + 3` (baseline, one per arm, control, closing). Four drives of this lane quoted the inflated number, and
+every ledger line that repeated it inherited the error: 13 arms said 29 and ran 16, 20 said 43 and ran 23, 26
+said 55 and ran 29, 32 said 67 and ran 35. Seven lines across the two ledgers are corrected in place here, the
+oldest from D109. Nothing else in those entries depended on the count, which is why it survived eleven units:
+a number that only ever appears in prose has no reader to disagree with it.
+
+**Decision (d): the row-split the emission prints was a name test dressed as provenance.** (b) shipped with a
+closing line — `registry rows appended: 22 (4 from the arm's own target, 18 from its collateral)` — and reading
+the file it wrote says 0 of those 22 rows came from a target. Every one came from `collateral_witnessed`; the
+four "targets" were collateral rows that happen to name an assertion some *other* arm was aimed at, because the
+line tested `name in {every arm's marker}` instead of which list the row was emitted from. Same shape as (a):
+a verdict computed from the wrong set, printed in a run that exited 0, in a sentence nothing downstream parses.
+Provenance now travels with the pair (`own` / `collateral`) rather than being re-derived from names, and the
+line states both currencies, because rows and assertions are not the same count: a row keys on
+(check, arm) so a second arm can witness an already-witnessed name, while coverage counts distinct names.
+Shown on one arm with `--only` against a scratch copy of the HEAD registry — 5 rows appended, `0 emitted from
+an arm's own RED row, 5 from collateral · 2 of them name an assertion that carried no witness before`. The
+discriminating evidence is the file itself, read back: of the 22 rows that drive appended, **0** carry a name
+containing their own arm's marker, so not one came from the target list, and the four the old line named as
+targets are four collateral rows whose assertion another arm happens to be aimed at.
+
+**The drive that certified all four.** The same 32 arms plus the trigger control, re-run against the kept
+loaded seed with `--emit-rows` pointing at the shipped registry: baseline 216 assertions red 0; every arm's own
+row RED; the facts arm still filing 213 and now declaring the three names it unfiles, so the run that would
+have failed a commit ago passes with the disappearance on the record instead of in a column; control target
+RED, collateral 0, unfiled 0, spread row gone; closing baseline identical; **35 whole-gate sessions counted**;
+`RESULT: PASS`; **22 rows appended**, all of them from collateral (decision (d) — the line that ran printed
+"4 from the arm's own target", which the file contradicts).
+`data/seed/falsifiers.tsv` 73 → **95 rows**, coverage **52 → 63 of 216 (29.2%)**: eleven assertions gained a
+witness from a drive that planted nothing new — 22 rows bought 11 names, because a row keys on (check, arm) and
+coverage counts names — which is the whole argument for the emission rule.
+
+**What the harvest did to the queue.** Recomputed off the same 216-name dump: 164 unwitnessed → **153 = 58
+literal + 95 assembled** — the first time the assembled bucket moved (96 → 95), because collateral does not
+care how a name was produced. Families left: `fk ` 91, no-prefix 56, `orphan ` 3, chunks/density/slots 1 each.
+Three of the four `orphan: favorites.*` names §128 named as the next batch are already witnessed — witnessed by
+accident, by a delete aimed at a merchant count. That is what filing what the gate showed buys, and what
+filing only what was aimed for loses; the cost is that a row's arm column can describe a plant that happens to
+have moved the assertion rather than one designed to defeat it, and the reader has to keep that distinction.
+
+**Limits, stated rather than implied.** The guard reads one direction: it reports baseline names a session
+stopped filing, and says nothing about a name that appears only under a plant. D119 measured the born-set on
+the one arm that moved the plane and found 0, so no mechanism is known — if one turns up, the reversed
+predicate is the same query, not a new tool. And coverage is counted by *name*, so an arm filing a name
+another arm already filed adds a second witness without moving the percentage: right for a record of
+demonstrations, wrong as a budget. Step 11 still computes its percentage from whatever `--registry` it is
+handed (§127's residue), so the scratch runs quoted above are refusals to be read with their file, not totals.

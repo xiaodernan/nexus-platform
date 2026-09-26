@@ -412,20 +412,24 @@ def main():
         # arm column says honestly which arm it was, since it is the arm that ran.
         if not args.unit or not args.witness:
             sys.exit("--emit-rows also needs --unit and --witness")
-        pairs = [(n, label) for n, label in witnessed + collateral_witnessed
-                 if (n, label) not in filed and n not in base_reds]
+        # Provenance travels with the row, not with the name: a collateral red that happens to name another
+        # arm's target was still emitted from collateral, and a reader of this line must not be told otherwise.
+        pairs = ([(n, label, "own") for n, label in witnessed]
+                 + [(n, label, "collateral") for n, label in collateral_witnessed])
+        pairs = [p for p in pairs if (p[0], p[1]) not in filed and p[0] not in base_reds]
         seen, new = set(), []
-        for pair in pairs:
-            if pair[0] not in seen:
-                seen.add(pair[0])
-                new.append(pair)
+        for p in pairs:
+            if p[0] not in seen:
+                seen.add(p[0])
+                new.append(p)
         with Path(args.emit_rows).open("a", encoding="utf-8", newline="") as fh:
-            for n, label in new:
+            for n, label, _ in new:
                 fh.write(f"{n}\t{args.unit}\t{label}\t{args.witness}\n")
-        targets = {n for n, _ in witnessed}
+        novel = [p for p in new if p[0] not in {c for c, _ in filed}]
         print(f"registry rows appended: {len(new)} "
-              f"({sum(1 for n, _ in new if n in targets)} from the arm's own target, "
-              f"{sum(1 for n, _ in new if n not in targets)} from its collateral)")
+              f"({sum(1 for p in new if p[2] == 'own')} emitted from an arm's own RED row, "
+              f"{sum(1 for p in new if p[2] == 'collateral')} from collateral) · "
+              f"{len(novel)} of them name an assertion that carried no witness before")
     return 0
 
 

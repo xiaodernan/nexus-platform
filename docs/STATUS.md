@@ -5409,8 +5409,8 @@ next            (a) Task #75 — whoever owns V7 commits it with the loader's tr
 ## 109. The plants now run the whole gate behind them, and eleven unexplained reds turn out to be a trigger (2026-09-27)
 
 `data/seed/falsifier_plants.py` at `4503424` no longer splices one assertion out of the shipped file: each
-arm runs `BEGIN; plant; the whole gate; ROLLBACK` and reports which rows moved. Thirteen arms, 29
-whole-gate sessions against the kept database `nexus_gate_270354_1790448961`, every one rolled back, and
+arm runs `BEGIN; plant; the whole gate; ROLLBACK` and reports which rows moved. Thirteen arms, 16
+whole-gate sessions (printed 29; D120) against the kept database `nexus_gate_270354_1790448961`, every one rolled back, and
 the closing baseline byte-identical to the opening one (214 assertions, the 2 D108-declared reds). All 13
 reddened exactly the assertion that names them; `RESULT: PASS` with `PLANTS_RC=0` in `d109_final.txt`.
 Registry `data/seed/falsifiers.tsv`: 47 -> 54 rows, validator `RESULT: PASS`, **33 of 214 assertions
@@ -5497,7 +5497,7 @@ Falsifier drive, whole-gate mode, batch `D112`. Harness `data/seed/falsifier_pla
 against the kept loaded seed `nexus_gate_270354_1790448961`; registry rows at `2c27dbe`.
 
 - **Opened the run** at the committed-HEAD plane: 214 assertions, red = 2, both the D108-declared
-  door-vocabulary pair. **20 arms plus one control, 43 whole-gate sessions, every one rolled back**, and the
+  door-vocabulary pair. **20 arms plus one control, 23 whole-gate sessions (printed 43; D120), every one rolled back**, and the
   closing baseline is identical to the opening one.
 - **Plants were queued, not remembered.** The unwitnessed names were read off `qc` (214 names, 109 of them
   literal rather than built by a sweep), and every column a plant touches was confirmed against
@@ -6504,7 +6504,7 @@ changed           20 → 26 plant arms. Every earlier arm fabricated something t
                     LEDGER_SECTIONS_DIR, so the step can be shown red without editing a tracked file mid-run.
 
 measured          python data/seed/falsifier_plants.py           216 assertions, red = 0 at baseline · 26
-                    --db … --container …                          arms + 1 control · 55 whole-gate sessions ·
+                    --db … --container …                          arms + 1 control · 29 sessions (printed 55; D120) ·
                                                                   every arm's own assertion RED · collateral
                                                                   1,2,2,0,0,1 and all of it the two known
                                                                   spread rows · control: target RED,
@@ -6619,7 +6619,7 @@ changed           26 → 32 plant arms, and the first arms that delete rows inst
                     failed arm.
 
 measured          python data/seed/falsifier_plants.py            baseline 216 assertions red 0 · 32 arms +
-                    --db … --container … --emit-rows                1 control · 67 whole-gate sessions · every
+                    --db … --container … --emit-rows                1 control · 35 sessions (printed 67; D120) · every
                                                                   arm's own row RED · collateral 5,0,7,1,3,10
                                                                   on the six volume arms · control: target
                                                                   RED, collateral 0, spread row gone ·
@@ -6677,7 +6677,7 @@ gates             The eleven-step script was not re-run for this unit, because n
                     migration changed. The two shipped readers that could be affected were run on the final
                     bytes of this text: step 11 over the 73-row registry (PASS, 52 of 216) and the two ledger
                     readers, steps 8 and 10 (check_ledger_citations.mjs, check_ledger_sections.mjs). The
-                    drive's 67 sessions are
+                    drive's 35 sessions (printed 67; D120) are
                     themselves the gate body sliced out of quality.sql and executed against mutated data, each
                     in a transaction that rolled back — that is what the closing baseline certifies.
 
@@ -6691,4 +6691,118 @@ next             (a) D120, from found (b) and (c): a session's filed NAME SET co
                     backstops, or the lane says why the table wants the freedom.
                   (d) Carried: #73 (52 of 216 witnessed, 164 unwitnessed with fk 91 the bulk), #75, #62, #64,
                     #58, #44, #17, #19, #34, #79, #80, §87's session-time-zone seam, D91's served leg.
+```
+
+## 129. Four verdicts on the plant harness — an assertion can stop existing, a collateral red turns out to be a witness, and two of the tool's own numbers were arithmetic (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (f0e0718, plus the provenance fix measured here) and the
+                    registry it writes, `data/seed/falsifiers.tsv` (73 → 95 rows). The database plane is the
+                    same kept loaded seed as §128, `nexus_gate_283340_1790454442`, so every figure below is
+                    comparable with §128's — 216 assertions on this working copy, 214 at HEAD.
+
+changed           Four verdicts the harness did not make before, the first three shown red before green.
+                  (a) EXISTENCE: a session reports which baseline names it stopped filing, and an arm must
+                    declare them (an optional fourth tuple element) or the drive fails. Shown on the facts arm
+                    exactly as §128 left it: without the declaration `RESULT: FAIL`, exit 1, naming orphan:
+                    facts.location/.merchant/.offering; with it the same three print `unfiled, declared`, the
+                    closing baseline reads identical, exit 0. The transport states its own precondition
+                    instead of trusting it: names ride one row separated by chr(31), so the baseline session
+                    counts names carrying a tab, a newline or that separator (measured 0 of 216) and stops the
+                    run on a non-zero answer rather than mis-splitting a name.
+                  (b) EMISSION: --emit-rows files collateral reds as well as targets, because D103's standard
+                    is "shown able to fail" and the arm column names the arm that ran. Shown first on one
+                    merchants-delete session against a scratch copy of the registry: 5 rows appended, the
+                    validator over that file answering PASS at 54 of 216, and the same session again
+                    appending 0.
+                  (c) COUNTING: the closing line printed `2 * arms + 3` whole-gate sessions while the loop
+                    calls the gate once per arm, so every session count in this lane's ledgers since D109 was
+                    arithmetic — 29/43/55/67 were really 16/23/29/35. Seven lines corrected in place.
+                  (d) PROVENANCE: the split (b) prints was a name test wearing a source — found (c).
+                  Also `--only SUBSTR`, which made all four affordable: one arm costs 3 whole-gate sessions
+                    instead of 35.
+
+measured          python data/seed/falsifier_plants.py            baseline 216 assertions, red 0 · 32 arms
+                    --db … --container …                            plus 1 control · 35 whole-gate sessions
+                                                                  counted, not computed · every arm's own row
+                                                                  RED · the rows column reads 216 on 31 arms
+                                                                  and 213 on the facts arm, which declares
+                                                                  the 3 names it unfiles · unfiled 0 on every
+                                                                  other arm · collateral 49 reddens over 22
+                                                                  distinct names · control: target RED,
+                                                                  collateral 0, unfiled 0, spread row gone ·
+                                                                  closing baseline identical · RESULT: PASS
+                  the same drive with --emit-rows                 22 rows appended. The line it printed said
+                                                                  "4 from the arm's own target, 18 from its
+                                                                  collateral"; the file it wrote says 0 and 22
+                                                                  (found (c)), and 11 of the 22 name an
+                                                                  assertion that carried no witness before.
+                  the same drive again, after (d)                 the two 95-line outputs differ in ONE line,
+                                                                  the printout: `22 (0 emitted from an arm's
+                                                                  own RED row, 22 from collateral) · 11 of them
+                                                                  name an assertion that carried no witness
+                                                                  before`. Every verdict, every count and the
+                                                                  closing baseline are byte-identical, which is
+                                                                  what a print-only fix has to look like.
+                  node scripts/check_falsifier_registry.mjs       PASS · 95 rows · 56 commit + 39 file
+                    --db …                                          witnesses · 63 of 216 (29.2%), up from 52
+                  the same 22 rows against HEAD's registry        73 rows / 52 names → 95 rows / 63 names, so
+                                                                  11 rows land on an already-witnessed name:
+                                                                  a row keys on (check, arm) while coverage
+                                                                  counts names — two different currencies
+                  unwitnessed census over the final bytes          153 = 58 literal + 95 assembled · families
+                                                                  left fk 91, no-prefix 56, orphan 3, and
+                                                                  chunks / density / slots 1 each
+                  one arm, --only, against a scratch registry      3 sessions · 5 rows appended · 0 emitted
+                    copied from HEAD                                from an arm's own RED row, 5 from
+                                                                  collateral · 2 a name with no prior witness
+
+found             (a) A tool that prints a number in a column and asserts nothing about it is a tool that
+                    will be read correctly by exactly one person. The 213 sat in D119's output and meant
+                    nothing to the verdict; the fix is not "read the table harder" but "make the comparison
+                    the verdict already runs for redness apply to existence too".
+                  (b) The self-correction came out of writing the fix. While wiring a real session counter the
+                    old one turned out to be a formula, which had put a wrong number into four earlier ledger
+                    entries that no run since had any reason to re-read.
+                  (c) The same shape, one line further down. The split printed by (b) was computed as "name in
+                    {every arm's marker}", so it counted collateral rows whose assertion another arm happens to
+                    be aimed at and called them aimed-at. The check that catches it is reading the artifact
+                    back: of the 22 rows that drive appended, 0 carry a name containing their own arm's marker.
+                    A green exit code is no evidence about a sentence nothing downstream parses.
+                  (d) Twenty-two rows bought eleven assertions. The row count and the percentage answer
+                    different questions and only one of them is coverage — which is also why a second witness
+                    for an already-witnessed name is cheap, and worth recording anyway.
+                  (e) Three of the four `orphan: favorites.*` names §128 named as the next batch are already
+                    witnessed — witnessed by accident, by a delete aimed at a merchant count. What is left is
+                    three names (orphan: facts.merchant, favorites.collection, favorites.guide) and each keys
+                    on the polymorphic (subject_type, subject_id) pair the probe assembles at quality.sql:312
+                    and :381, not on a foreign-key column: measured over pg_constraint, `favorites` carries
+                    only its user_id FK and `facts` only merchant_id CASCADE. So all three are one UPDATE with
+                    no schema resistance — the cheapest batch this lane has had.
+
+gates             The eleven-step script was not re-run for this unit, because no gate file, checker or
+                    migration changed and the plants harness is not one of its steps. The four shipped readers
+                    that could be affected were run directly on the final bytes of this text: step 8
+                    check_ledger_citations.mjs --worktree, step 9 check_comment_citations.mjs, step 10
+                    check_ledger_sections.mjs, step 11 check_falsifier_registry.mjs --db …. All four exit 0 on
+                    the final bytes: step 8 sees 230 headings and 272 citation-shaped tokens across 64 files
+                    with no offender named, step 9 PASS at 69 comment-plane citations across 21 files, step 10
+                    PASS with STATUS at 97 sections on disk and DECISIONS at 108, both counting this unit as
+                    uncommitted work rather than a gap, step 11 at the registry numbers in measured above. The
+                    drive's 35 sessions are themselves the gate body sliced out of quality.sql and executed
+                    against mutated data, each in a transaction that rolled back — that is what the closing
+                    baseline certifies.
+
+next              (a) The born-direction is still unjudged: the guard reports names a session stopped filing,
+                    not a name that appears only under a plant. D119 measured 0 born on the one arm that moved
+                    the plane, so no mechanism is known — if one turns up, the reversed predicate is the same
+                    query, not a new tool.
+                  (b) Next plant batch, three names instead of five: the orphan arms of found (e), one UPDATE
+                    each, legality already measured.
+                  (c) #71, third time standing on it: `facts` has no CHECK, so the TTL and stale rows are the
+                    only thing between a wrong expiry and a served page; a V8 bound would demote them to
+                    backstops, or the lane says why the table wants the freedom.
+                  (d) Carried: #73 (63 of 216 witnessed, 153 unwitnessed with fk 91 the bulk), #75, #62, #64,
+                    #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage residue, §87's
+                    session-time-zone seam, D91's served leg.
 ```
