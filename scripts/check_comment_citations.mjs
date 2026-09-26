@@ -23,8 +23,31 @@ import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// Flags are read here rather than assumed, and an unrecognised one stops the run: a scan that quietly ignored
+// `--plane=/some/dir` reported the repository as clean twice in a row while the operator believed it was
+// looking at something else. An option that fails to fail is worse than one that is missing.
+const argv = process.argv.slice(2);
+const VERBOSE = argv.includes('--verbose');
+let planeArg = null;
+for (let i = 0; i < argv.length; i++) {
+  const a = argv[i];
+  if (a === '--verbose') continue;
+  if (a === '--plane') { planeArg = argv[++i]; if (planeArg === undefined) fail('--plane needs a directory'); continue; }
+  if (a.startsWith('--plane=')) { planeArg = a.slice('--plane='.length); if (!planeArg) fail('--plane= needs a directory'); continue; }
+  fail(`unknown option ${a} — a flag this tool does not read must not be silently accepted`);
+}
+function fail(msg) { console.error(`check_comment_citations.mjs: ${msg}`); process.exit(2); }
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CHECKER = join(ROOT, 'scripts', 'check_ledger_citations.mjs');
+
+// Which tree's comments are censused. It defaults to the repository the script is installed in, and can be
+// pointed at another directory — a worktree, a subproject, or an empty one — while the resolver stays the
+// checker this file slices its grammar from. The reason a real flag exists rather than a constant: the
+// "nothing was read" guard below is only trustworthy if the empty case can be reached without editing the
+// shipped bytes. `--plane` is also the shape D96 named as the acceptable seam: an interface someone would use
+// for a reason, which happens to be testable.
+const PLANE = planeArg ? resolve(planeArg) : ROOT;
 
 // Comment marker(s) per extension, tested anywhere on the line so a trailing `# see x.py:NN` counts. The cost
 // is that a string containing `--` or `//` can read as a comment: this over-reports rather than hides.
@@ -63,8 +86,8 @@ function* walk(dir) {
 
 function collect(rx) {
   const rows = [];
-  for (const [abs, ext] of walk(ROOT)) {
-    const rel = relative(ROOT, abs).replace(/\\/g, '/');
+  for (const [abs, ext] of walk(PLANE)) {
+    const rel = relative(PLANE, abs).replace(/\\/g, '/');
     if (EXCLUDE_PREFIX.some((p) => rel.startsWith(p))) continue;
     let lines;
     try { lines = readFileSync(abs, 'utf8').replace(/\r\n/g, '\n').split('\n'); } catch { continue; }
@@ -82,8 +105,9 @@ function collect(rx) {
 
 const rows = collect(grammar());
 if (rows.length === 0) {
-  console.error('COMMENT CITATIONS: 0 tokens found in the comment plane. A scan that reads nothing is not a'
-    + ' green scan — check the extension and skip lists before believing this run.');
+  console.error(`COMMENT CITATIONS: 0 tokens found in the comment plane of ${PLANE}. A scan that reads`
+    + ' nothing is not a green scan — check the extension and skip lists, or the --plane argument, before'
+    + ' believing this run.');
   process.exit(2);
 }
 
@@ -102,6 +126,7 @@ writeFileSync(file, [
 ].join('\n'), 'utf8');
 
 const files = new Set(rows.map((r) => r.rel)).size;
+console.log(`  plane censised   ${PLANE}`);
 console.log(`  tokens found     ${rows.length} in ${files} file(s) of the comment plane`);
 console.log(`  scored by        scripts/check_ledger_citations.mjs --text=${file}`);
 
