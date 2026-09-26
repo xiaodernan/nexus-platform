@@ -2,10 +2,14 @@
 /**
  * NEXUS D103 — validate data/seed/falsifiers.tsv against the assertions the gate actually files.
  *
- * The denominator is qc, not the text: the polymorphic sweeps build most of the names at run time (measured
- * 101 of the 216 by the recomputable rule "the name's quoted constant does not appear in quality.sql"; D103
- * recorded 103 and that number has not been reproduced since), so a name checked against quality.sql alone
- * would reject real rows and accept invented ones. The live
+ * The denominator is qc, not the text: most names are built at run time, by the rule "a name is assembled iff
+ * its quoted constant does not appear in quality.sql" — 101 of the 216 on today's plane. D98 recorded 103 by
+ * that same rule on the same-size plane, and the difference is not reconstructible: one name is D107's renamed
+ * documents row, the last is a sweep row that existed on D98's catalogue read and not on this one. A total that
+ * stays 216 does not mean the set stayed the same, which is why the rule is stated here and a count is not.
+ * A prefix test would be the cheaper classifier and is the wrong one: `density: >= 300 merchants within 3km of
+ * Sha Tin` is assembled from a bound variable (quality.sql:524) yet has no sweep-shaped prefix, while 14 names
+ * are written-out constants that merely begin with one (`volume: chunks > 0`, quality.sql:170).
  * list is obtained the way D99/D100's harnesses get it — slice the shipped assertions at the hard-gate marker
  * (the verdict's RAISE would end the session, since the file sets ON_ERROR_STOP for itself), run them, read
  * the table back as one aggregated row so a name containing a newline cannot change the count.

@@ -7010,12 +7010,30 @@ without editing the shipped file while ten other steps read it — the shape `LE
 
 **What the measurement corrected.** `check_falsifier_registry.mjs`'s own header asserted that "103 of the
 216 names are built at run time by the polymorphic sweeps". The claim is checkable with one rule — a name is
-assembled iff its quoted constant is absent from `quality.sql` — and that rule gives 101, all 101 carrying a
-`: ` prefix, 0 exceptions. Both numbers cannot be right and there is no way to reconstruct which tree 103
-was counted on, so the file now states the rule and marks the old count as unreproduced. The same rule
-settled the other number in play: #73's "74 literal names unwitnessed" reproduced exactly (170 unwitnessed
-= 74 literal + 96 assembled), which is the rare direction — a remembered count surviving contact with a
-measurement that did not need it.
+assembled iff its quoted constant is absent from `quality.sql` — and that rule gives 101 today, all 101 carrying
+a `: ` prefix, 0 exceptions. The 103 is D98's, measured by that same rule on the same 216-name plane (D98
+records 111 occurring once, 2 twice, 103 absent), so this unit's first correction was itself wrong: a note here
+blamed the gap on the 214 plane, and 214 was never D98's denominator. Reproducing it as far as the tree allows:
+D98's own committed file text against today's live names gives 102 assembled (112 · 2 · 102, against the
+recorded 111 · 2 · 103) and the working copy gives 101, so one name is D107's rename of the `documents` row and
+the last one cannot be reconstructed at all — D98's live name set is not in the repository, and because the
+sweeps build names from the catalogue, an equal total is not the same total. That is the whole reason the file
+now states the rule and leaves the count out.
+
+The other number in play was a mirage of the same kind. #73 carries "74 literal names unwitnessed", which is
+D117's queue read off a 214-name dump: 109 literal-named, 35 witnessed, 74 unwitnessed. This unit's 74 is
+115 literal minus 41 witnessed on a 216 plane. Two numerators, two subtrahends, one coincident difference — and
+putting the candidate rules on the same 216 names at the same moment removes the coincidence: constant-presence
+splits them **115 / 101** (41 of the literal ones witnessed → 74 unwitnessed), the sweep-prefix literals mined
+from the file **116 / 100** (75), and "any name beginning `<word>: `" **101 / 115** (66). 74 is a true reading
+of exactly one rule, so calling it a reproduction claimed arithmetic, not the gate. The disagreements carry
+their own mechanism: the prefix rule files `density: >= 300 merchants within 3km of Sha Tin` as literal, but
+quality.sql:524 builds it as `'density: >= ' || :MIN_NEAR_SHA_TIN || ' merchants within 3km of Sha Tin'`, so it
+*is* assembled and only constant-presence sees that; the other 14 disagreements run the other way — whole
+constants at quality.sql:170, :888 and :939 that merely begin with a colon-prefixed word (`volume: chunks > 0`,
+`slots: 21-day horizon…`, `chunks: token size…`). Constant-presence is the rule the checker states because it is
+the only one that asks how a name was produced. Rule to keep: report the split *and* the rule that produced it,
+and never let equal differences stand in for equal measurements.
 
 **Consequences, and the limits of them.** Two of the six arms land on `facts`, the one table with no CHECKs
 that #71 keeps reporting, so `price facts respect the 6h TTL` and `some facts are deliberately stale` went

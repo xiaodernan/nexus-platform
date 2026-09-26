@@ -6524,17 +6524,29 @@ measured          python data/seed/falsifier_plants.py           216 assertions,
                    temporary directory, so not reproducible      "literal" = the name's quoted constant is
                    from the repository; the rule is)             in quality.sql; 0 of the 96 assembled names
                                                                   lacks a ': ' prefix — the classifier's own
-                                                                  self-check, and the reason to trust the 74
+                                                                  self-check; that 74 is a reading of this
+                                                                  rule and this plane only (found (a))
                   Before this unit: the ten-step gate green at the D117 text (GATE_EXIT=0, 216 checks,
                     tables=58, migrations=7).
 
-found             (a) One remembered number reproduced and one did not. #73's "74 literal names unwitnessed"
-                    came back exactly under a rule that does not need the memory — constant-presence in
-                    quality.sql gives 74 today, 46 witnessed names. But `check_falsifier_registry.mjs`'s own
-                    docstring claimed 103 of 216 names are built at run time; the same rule yields 101, and
-                    no reconstruction of 103 is available here. The docstring now states the rule and marks
-                    the old count as unreproduced, which is the only honest place left for a number that
-                    drifted between two measurements and nobody can say which one was wrong.
+found             (a) A number that matched for the wrong reason, and one that matched no rule at all.
+                    #73's "74 literal names unwitnessed" is D117's queue read off a 214-name dump (109 literal
+                    · 35 witnessed · 74 unwitnessed); this unit's 74 is 115 · 41 · 74 on a 216 plane. Equal
+                    differences, different subtractions — a cancellation, not a reproduction. Three rules on
+                    this one plane settle it: constant-presence 115 literal / 101 assembled (74 unwitnessed
+                    literal), sweep-prefix literals mined from the file 116 / 100 (75), "any name beginning
+                    `prefix: `" 101 / 115 (66). 14 of those disagreements are whole written-out constants that
+                    merely look sweep-shaped (quality.sql:170, :888, :939 — `volume: chunks > 0`,
+                    `slots: 21-day horizon…`, `chunks: token size…`); one runs the other way,
+                    `density: >= 300 merchants within 3km of Sha Tin`, which quality.sql:524 builds from the
+                    bound variable :MIN_NEAR_SHA_TIN, so only constant-presence sees it as assembled. Rule to
+                    keep: report the split *and* the rule that produced it. Separately, the checker's "103 of
+                    the 216 built at run time" is D98's, by that same constant-presence rule and on this same
+                    216 plane — not, as this unit first wrote, a 214-plane number. Against D98's own committed
+                    text it yields 102 on today's names (D107's renamed `documents` row is the difference),
+                    against the working copy 101, and the last name is unrecoverable because the sweeps take
+                    their names from the catalogue, so an equal total is not the same total. The docstring now
+                    states the rule and drops the count.
                   (b) The registry's validator had never been executed by anything. Written in D103,
                     tightened in D113, and `grep` finds no gate step, no Makefile target, no CI file that
                     calls it — its correctness depended on a person remembering to pass --db. That is the
@@ -6555,11 +6567,19 @@ found             (a) One remembered number reproduced and one did not. #73's "7
                     row reddening, so those 91 are not free — they are cheap-but-not-free, and the 74
                     literal names remain the expensive half.
 
-gates             The eleven-step gate gets two runs after this text is committed, and neither is claimed
-                    here: one with NEXUS_FALSIFIERS aimed at the scratch copy, which must exit 1 naming both
-                    planted rows at step 11, and one clean run, which must exit 0 on this tree. Both results
-                    land in D118's addendum. Nothing else in the tree changed shape — no CI file, no
-                    Makefile target, and `scripts/e2e_fresh.sh` keeps its own 0-10 numbering untouched.
+gates             Both runs of the eleven-step gate happened, on ca6e6b9, and each answered as aimed.
+                    Planted: NEXUS_FALSIFIERS at the scratch copy → steps 1-10 green, step 11
+                      "RESULT: FAIL — the registry is inconsistent with the gate" naming BOTH rows ("is
+                      nowhere — neither in the repository nor at HEAD", "names a path outside the
+                      repository") · RED_EXIT=1 (--skip-generate).
+                    Clean: eleven steps green · 216 checks on tables=58 migrations=7 · step 11 PASS over 67
+                      rows, 46 of 216 witnessed · GREEN_EXIT=0 (generated, not skipped).
+                    The found-(a) correction and this paragraph landed AFTER those runs, and both are prose
+                      in the two ledgers; the two steps that read ledger text were re-run on the final
+                      bytes — check_ledger_citations.mjs exit 0, check_ledger_sections.mjs exit 0. Step 9
+                      scans source comments, which no word above touched.
+                    Nothing else changed shape: no CI file, no Makefile target, and `scripts/e2e_fresh.sh`
+                      keeps its own 0-10 numbering untouched.
 
 next             (a) Next plant batch from the 74: `volume: chunks > 0`, `volume: documents >= merchants`,
                     `volume: facts > 0` and the four `orphan: ` rows are one-line plants (a DELETE, an
