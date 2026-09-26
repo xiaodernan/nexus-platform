@@ -1815,7 +1815,7 @@ nothing — a review reposted after its key expired is a second review, which is
 `ConfigDecorationTest` is the same defect one level up. It walks the top-level `nexus:` tree in
 `src/main/resources/*.yml` by indentation and asks, per leaf, whether any `@Value` in `src/main/java` names it. The
 first run found `nexus.deletion.grace-days` unread, and the reason matters more than the key: `DELETE /api/v1/me`
-tells its caller "a deletion_request row was created for the retention job (§106)" while this build has no
+tells its caller "a deletion_request row was created for the retention job (TRACEABILITY §100)" while this build has no
 retention job, so the 30 days record an intention nothing holds. Building that job means scheduling irreversible
 data destruction, which is a human decision rather than a default, so the key is exempted with that reason written
 into the test and the gap is reported here. An exemption has to keep paying for itself: non-blank reason, still
@@ -1838,7 +1838,7 @@ it a faithful stand-in for a killed process: `run` is the only thing in this bui
 
 Two things this does not do. It does not add a `CHECK` on `idempotency_keys.status` — V1 has none, and a hand-typed
 status now stops refusing callers at the deadline rather than permanently, which is the same deadlock removed one
-layer down instead of the vocabulary fixed. It does not build §106's retention job, does not touch
+layer down instead of the vocabulary fixed. It does not build TRACEABILITY §100's retention job, does not touch
 `AuthorizationInterceptor` or `headerOnly` (another wave's), and does not change a route, a seed row or a schema,
 so the contract ledger is §39's, unchanged — which is what the fresh walk confirmed after the read landed:
 `scripts/e2e_fresh.sh` PASS on :8092, 121 of 133 documented routes in scope, 96 declared by the running service, 0
@@ -1940,7 +1940,7 @@ while another stream's types cite it as provenance twice (`packages/types/src/ad
 `packages/types/src/errors.ts` for a bucket scope key that in this build is a `KeyValueStore` key and never a
 row). It does not narrow the dev profile's 100-per-address window it just learned about — §43 is that follow-up,
 env-backing all four closed offers and gating the class of them. And it leaves the standing
-reports where they were: `com.nexus.admin`'s red test, §106's missing retention job,
+reports where they were: `com.nexus.admin`'s red test, TRACEABILITY §100's missing retention job,
 `@RequiresPlatformRole`'s thin coverage of the newer admin doors, the 25 documented-not-served rows, task #9's
 browser leg (`:8090` still not listening — re-checked for this section) and task #17's reservation transitions.
 
@@ -2001,7 +2001,7 @@ so nothing served moves for anyone who exports nothing. It does not decide that 
 a deliberate pin is legitimate, and when one arrives it has to be added to the gate with a reason, the way
 `UNREAD_BY_DESIGN` makes its exemptions pay; there is no exemption list yet because none is needed. It does not
 reach `spring.*` or `server.*` leaves, only the `nexus:` tree. And it leaves the standing reports where §42 put
-them: `com.nexus.admin`'s red test, §106's retention job, `@RequiresPlatformRole`'s thin admin coverage, the 25
+them: `com.nexus.admin`'s red test, TRACEABILITY §100's retention job, `@RequiresPlatformRole`'s thin admin coverage, the 25
 documented-not-served rows, `RateLimiter.require` with no caller, `rate_limit_buckets` cited by another stream's
 types and written by nothing here, task #9's browser leg and task #17's reservation transitions.
 
@@ -2063,7 +2063,7 @@ backslash-and-letter form, checked by a byte count of zero and by re-running the
 What this does not do. It does not decide whether this service *should* serve `/api/v1/ai/**` — that is a routing
 question about the §7 BFF split, and a filter line is not the place it gets answered. It does not produce the 503
 over HTTP, for the reason above. It does not change how a two-scope request is charged, only says so out loud.
-And the standing reports are unchanged from §43's: `com.nexus.admin`'s red test, §106's retention job,
+And the standing reports are unchanged from §43's: `com.nexus.admin`'s red test, TRACEABILITY §100's retention job,
 `@RequiresPlatformRole`'s thin admin coverage, the 25 documented-not-served rows, `RateLimiter.require` with no
 caller, `rate_limit_buckets` written by nothing here, task #9's browser leg (`:8090` still not listening) and
 task #17's reservation transitions.
@@ -2116,7 +2116,7 @@ carries the measured reason, and the question behind it (who owns a published gu
 merchant once the table can name one) sits next to `POST /api/v1/share`'s missing link table as task #34, which is
 a decision to make, not a route to wire.
 
-Standing reports unchanged: `com.nexus.admin`'s red test, §106's retention job, `@RequiresPlatformRole`'s thin
+Standing reports unchanged: `com.nexus.admin`'s red test, TRACEABILITY §100's retention job, `@RequiresPlatformRole`'s thin
 admin coverage, the 25 documented-not-served rows, `RateLimiter.require`, `rate_limit_buckets`, task #9's browser
 leg and task #17's reservation transitions.
 
@@ -6396,4 +6396,89 @@ next             (a) #80: the 81 in-range gap tokens in §123/D115/§124 and the
                     untracked, so the gate's 216 is 214 at HEAD), #71 (`facts` has no CHECK constraints),
                     #62, #64, #58, #44, #17, #19, #34, §87's session-time-zone seam, D91's served leg (needs
                     `:8090`, which this lane will not start).
+```
+
+## 126. The only ledger citation grammar that can be judged mechanically, and the retention comments turning out to point six rows away from their own subject (2026-09-27)
+
+```
+plane             `scripts/check_status_citations.mjs` and `scripts/falsify_status_citations.mjs` (new,
+                    committed in 2a1b412), `docs/STATUS.md` §41–§45 (6 citations re-aimed here), and the
+                    citation's target plane: `docs/TRACEABILITY.md`'s requirement matrix.
+
+changed           `STATUS §NN` outside a backtick span is a citation and must be a `## N. ` heading at HEAD;
+                    the same string inside a span is a mention, counted and printed, not judged. Bare `§NN`
+                    is still unjudged — three planes, D116's 528 non-resolving tokens.
+                  6 tokens in §41–§45's standing-report lines went from bare `§106` to `TRACEABILITY §100`,
+                    each line asserted to contain both `retention` and the token, the section bounds taken
+                    from the heading lines rather than guessed at, and the count asserted exactly 6.
+                  Shipped **unwired**: `db_gate_fresh.sh` has no step 11, because the checker's first run on
+                    the real tree is red with two offenders in another lane's committed files. Wiring is
+                    conditional on #79 closing — a step nobody can make green teaches running the gate with
+                    the step skipped.
+
+measured          node scripts/check_status_citations.mjs            files scanned 564 · citations 4 (2
+                                                                      resolve) · mentions 9 (2 would) ·
+                                                                      BAD CollectionsController.java:186,
+                                                                      BAD CollectionsReadTest.java:188 ·
+                                                                      exit 1
+                  node scripts/falsify_status_citations.mjs          6 arms · 6 held · 0 missed · exit 0 —
+                                                                      this tree red naming both files, the
+                                                                      fix (both say §121) green, §99999 red,
+                                                                      the same token inside backticks green
+                                                                      as a mention, a token-free tree NOT
+                                                                      CHECKED, an unresolvable --head-rev
+                                                                      NOT CHECKED
+                  After the re-aim, §41–§45 contains 0 bare `§106` and the other three checkers still pass
+                    over the shipped bytes: check_ledger_sections.mjs PASS (93/93, 104/104),
+                    check_ledger_citations.mjs PASS (234 citation-shaped tokens, 0 offenders),
+                    falsify_ledger_sections.mjs 8 arms held · 0 missed. `git diff --numstat` for the re-aim: 6 lines
+                    changed in one file, all inside §41–§45.
+
+found             (a) The `§` plane has an owner and it is not the contract documents.
+                    `docs/TRACEABILITY.md:1` — "§ numbering = `新建 文本文档.txt`" — makes the file a
+                    requirement matrix numbered §0…§171, and the source comments cite it, not the ledger:
+                    614 `§N` tokens in 134 Java files, with §100–§171 ordinary there. `§127`, `§131`,
+                    `§155`–`§171` in the ledgers are the same matrix, which is why D116 refused a general
+                    resolver rather than deferring it.
+                  (b) Nine bare `§106` citations in the identity lane describe deletion and retention, and
+                    row 106 is "AI transparency: show why, show uncertainty"; the row they mean is 100,
+                    "Privacy: export/delete/reset; merchant data ownership | `/me/export`,
+                    `deletion_requests` | api | todo" (`TRACEABILITY.md:86` against `:92`). Sites:
+                    `IdentityRepository.java:106/339/360`, `MeController.java:33/111/122/125`,
+                    `ConfigDecorationTest.java:27/52`. Reported to that lane, not edited.
+                  (c) The same off-by-six is in four design documents, three of them on the frozen list:
+                    `DATABASE.md:191` ("`deletion_requests` — §106 data-retention workflow"),
+                    `API_CONTRACT.md:193` (`DELETE /api/v1/me` → "creates `deletion_request` (§106)"),
+                    `CONSUMER.md:59` and `SECURITY.md:57` ("Privacy & data rights (§106)"). So a reader who
+                    follows the pointer from the code lands on a row about model uncertainty, and the row
+                    that actually governs the code — §100 — still reads `todo`, which is the same fact §41
+                    has been reporting as "this build has no retention job".
+                  (d) #79's plan is corrected rather than executed. §125 found (d) proposed that the two
+                    `STATUS §106` comments want §121 and the bare ones want the matrix; the sweep that
+                    follows from that is still wrong in the second half, because the bare ones want
+                    `TRACEABILITY §100`, not §121. Nine comments would have been moved from a real plane to
+                    the wrong row of it.
+                  (e) The harness reddened on its own writing before anyone else's defect could do it: the
+                    control arm pinned `citations 4 · mentions 8`, and the census walks `scripts/*.mjs`, so
+                    the file containing the arm contributed a mention and the arm went MISS on the tree it
+                    was describing. D116's addendum, one unit later, in a different script. Counts over
+                    this tree are now asserted nowhere except the two offender lines.
+
+gates             `node scripts/check_status_citations.mjs` is the artifact #79 needs: it exits 1 naming
+                    both files and lines today, and exits 0 the moment they say `STATUS §121` — the arm
+                    that holds the green side is a fixture with exactly that diff. Not wired into the ten
+                    steps; no CI file touched (frozen).
+
+next             (a) #79, re-pointed: two comments → `STATUS §121`; nine comments → `TRACEABILITY §100`;
+                    four design-doc citations → the matrix row 100. Then wire step 11.
+                  (b) #80 unchanged in substance, 6 tokens smaller: the remaining bare `§NN` residue in the
+                    ledgers is event records (§123/D115/§124) plus §28's `§103`, §84's `§105`/`§108` and
+                    §99's two `§108`, each needing a sentence read rather than a regex.
+                  (c) A convention worth deciding before it is needed: if the matrix is the plane the
+                    source cites, then a citation to it should say so. Nothing enforces `TRACEABILITY §`
+                    spelling yet — 614 Java tokens write it bare, and this lane will not sweep another's
+                    comments. The rule binds this ledger, which is where the 6 re-aims above came from.
+                  (d) Carried: #73 (40 of 214 assertions witnessed), #75 (`V7__share_links.sql` untracked →
+                    the gate's 216 is 214 at HEAD), #71, #62, #64, #58, #44, #17, #19, #34, §87's
+                    session-time-zone seam, D91's served leg (needs `:8090`, which this lane will not start).
 ```

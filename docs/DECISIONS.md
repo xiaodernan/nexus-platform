@@ -6901,3 +6901,76 @@ to another stream (the frozen list), so the CI arm is a report, not an edit. The
 cover is the mirror of the HARD case: a section that exists at HEAD, on disk, and is *changed in place*
 into different text is not a fork and cannot be caught this way — D115 met that one as a renumbering
 question, and it stays a review question.
+
+## D117 A bare `§NN` is three planes and a spelled one is one, so only the spelled form gets judged — and the retention citations turn out to be off by six requirement rows — 2026-09-27
+
+**Context.** D116 shipped the heading guard and refused, with numbers, a citation gate: 1,100 `§N` tokens
+in the two ledgers, 528 non-resolving, across three planes. §79 was still open as "two Java comments cite
+`STATUS §106`, which resolves to nothing (means §121)". Writing the smallest mechanical version of the
+refused idea — *the tokens that name their own plane* — turned out to be writable, and chasing what those
+two tokens meant turned out to be the larger finding.
+
+**What `§NN` actually is in this repository, measured.** `docs/TRACEABILITY.md:1` says it outright:
+"§ numbering = `新建 文本文档.txt`" — the file is a requirement matrix whose rows are numbered §0…§171, and
+that matrix, not the contract documents, is the plane the source comments overwhelmingly cite (614 `§N`
+tokens in 134 Java files; §100–§171 appear there routinely). Against that matrix:
+
+```
+TRACEABILITY.md:86   | 100 | Privacy: export/delete/reset; merchant data ownership | /me/export,
+                     deletion_requests | api | todo |
+TRACEABILITY.md:92   | 106 | AI transparency: show why, show uncertainty | MatchExplanations,
+                     degraded badge | visual | building |
+```
+
+**The finding, stated as a defect report and not as a fix.** Nine bare `§106` citations in the identity
+lane describe the deletion/retention workflow: `IdentityRepository.java:106/339/360`,
+`MeController.java:33/111/122/125`, `ConfigDecorationTest.java:27/52`. Their subject is row **§100**, not
+row §106 — §106 is the AI-transparency row. The same off-by-six is in the design docs, which are on the
+frozen list and so are reported rather than edited: `DATABASE.md:191` ("`deletion_requests` — §106
+data-retention workflow"), `API_CONTRACT.md:193` (the `DELETE /api/v1/me` row, "creates
+`deletion_request` (§106)"), `CONSUMER.md:59` and `SECURITY.md:57` ("Privacy & data rights (§106)").
+Two consequences worth naming: the matrix says §100's verification is `api` and its status `todo`, so the
+code comment at `MeController.java:122` tells a caller about a retention job whose requirement row is
+officially unimplemented — which this ledger has said since §41 — and every reader who follows the §106
+pointer lands on a row about model uncertainty instead.
+
+**Decision.** `scripts/check_status_citations.mjs` judges only `STATUS §NN`, the one grammar that names its
+plane, and splits citation from mention mechanically: outside a backtick span the token is a pointer a
+reader follows and must be a `## N. ` heading at HEAD; inside one it is a quotation of the string and is
+counted and printed but not judged. That second half is not a convenience — six spelled tokens in the
+repository are the ledgers reporting the defect (§123 twice, §124 twice, §125 once, D115 once), each of
+them writing `STATUS §106` precisely to name it, so a checker that judged quotations would make the
+reporting of a defect a defect, and the exemption is therefore witnessed by its own arm rather than
+assumed.
+
+**Rejected.**
+- *Wiring it as gate step 11 today.* Its first run on the real tree is red with two offenders that belong
+  to another lane's committed files. A step that reddens a gate nobody can fix teaches people to run the
+  gate with the step disabled. It ships unwired, and the wiring is conditional on #79 closing — the same
+  order D102 used for the jsonb scanner (report first, gate when the tree can be green).
+- *A sweep of §106 → §121 across the source.* That was §124's plan and it is wrong: it would have
+  rewritten nine comments that are on the requirement-matrix plane (albeit citing the wrong row) into the
+  ledger plane, replacing one defect with another. The two files that spell `STATUS` need §121; the bare
+  ones need `TRACEABILITY §100`.
+- *A hand list of exempted lines.* Every exemption list this project has shipped (D84's 10-name vendor
+  list, §84's 14-name directory list) is documented as a residue that has to be kept current by hand. The
+  backtick rule is a grammar, and grammars do not need maintaining.
+
+**Witness.** `scripts/falsify_status_citations.mjs` — 6 arms, 6 held, over the shipped checker as a
+subprocess with its own fixture directory: this tree (exit 1, both Java files named by path and line), the
+fix §79 asks for (both comments rewritten to §121 → exit 0), a citation to §99999 (exit 1), the identical
+token inside backticks (exit 0 as a mention, which is the arm that proves the exemption is real), a tree
+with no spelled token (exit 2, D79's silence-is-not-green), an unresolvable `--head-rev` (exit 2).
+
+**The lesson this unit caught twice, having been told it once.** The control arm of that harness first
+pinned this tree's counts — `citations 4 · mentions 8` — and went MISS when the harness itself was written,
+because the census walks `scripts/*.mjs` and the harness contains the string it tests. It is D116's addendum
+in new clothes: an arm whose fixture is the current tree is a claim about today, and any count it pins is a
+date. The control arm now asserts only the two offender lines, which are other lanes' committed files, and
+it will go green exactly when #79 closes.
+
+**Residue.** Bare `§NN` in the ledgers still has three possible planes and no mechanical resolver; D116's
+81-token surface and its event-record/content-pointer split stand as #80. This unit re-aimed 6 of them —
+§41–§45's bare `§106` retention citations — to `TRACEABILITY §100`, so §125 found (d)'s "6 tokens" is now
+a then-statement about text this unit changed; the sentence is left verbatim for the reason D115 established
+(a section that records a measurement is an event, not a pointer).
