@@ -5617,3 +5617,64 @@ pin — control, the stale-while-live plant and the 9-day-late base all behave a
 roll back, the harness is a witness script outside the tree, and `git diff 989baca..HEAD -- data/seed
 scripts/db_gate_fresh.sh` is empty, which is the evidence that D90's passing 8-step run still certifies the
 seed plane rather than a memory of it. Step 8 is re-run after this commit, as it was after D89's and D90's.
+
+## D93 The comment plane carries 68 citations the ledger gate never reads — and all five offenders are the checkers' own examples
+
+`scripts/check_ledger_citations.mjs` opens every `file:line` the ledgers claim, and it reads `docs/*.md`.
+Source comments make the same kind of claim — `data/seed/quality.sql`'s own notes cite `load.sh` and
+`generate.py` lines, the two scanners cite Java sites — and nothing reads them. Task #67 has carried that gap
+since D87 with a remembered number ("5 offenders") and a remembered list. Both are now measured, and the list
+is right in count and wrong in detail.
+
+**The reader, built out of the gate rather than beside it.** `d93_census.py` slices the token grammar out of
+`check_ledger_citations.mjs` at run time — it matches the one line containing `matchAll(`, asserts exactly one
+such line exists, and compiles the literal it finds — then extracts the citation-shaped tokens from comment
+lines of every `.sql`/`.sh`/`.py`/`.java`/`.mjs`/`.ts`/`.tsx`/`.yml` file in the tree, excluding `docs/` (step
+8 already owns that plane) and the generated and vendored directories. It writes them into a markdown file —
+one bullet per token — and runs the shipped checker over that file with `--text=`, which is the mode D88
+already uses to score text that is not yet committed. So the resolution is done by step 8's resolver, over the
+working tree, with no second implementation to drift. Writing the provenance as `file:2345` would have made
+the checker score the census's own bookkeeping; provenance is spelled `at line 2345` for exactly that reason.
+
+**Measured.** 68 citation-shaped tokens in the comment plane, across 18 files, naming 25 distinct files; the
+shipped checker exits 1 with 5 offenders:
+
+| offender | where it actually sits | what it is |
+| --- | --- | --- |
+| `File.java` line 12 | `scripts/check_jsonb_reads.mjs:311` | a JSDoc example of the grammar |
+| `dir/File.java` lines 78-84 | `scripts/check_jsonb_reads.mjs:311` | the same sentence's second example |
+| `services/platform/.../growth/EventRepository.java` line 39 | `scripts/check_ledger_citations.mjs:12` | an elided path, cited as a shape |
+| `package.json` line 9 | `scripts/check_ledger_citations.mjs:66` | an example of an AMBIGUOUS cite |
+| `.gitignore` line 5 | `scripts/run_platform_dev.sh:20` | an example of a dotfile held twice |
+
+Task #67's note named the fourth one `package.json` line 66; measured, the cite inside that comment is
+`package.json` line 9, and 66 is the *line the comment sits on*. A remembered cite conflated the two, which is the
+reason this lane re-measures before it re-states.
+
+**The finding is not "five false citations".** Every one of the five is an illustrative example inside the
+sentence that explains the grammar — prose about what a bad citation looks like, written in citation shape. A
+comment-plane gate wired up today would go red on the two files whose job is defining citation shape, which is
+a gate that punishes honesty. So the missing piece is a convention, not a checker: a placeholder has to be
+written in a form that reads as an example (`File.java line 12`, `File.java:NN`, or fenced so it is not
+token-shaped), and the plane has to be scanned for it. The census reports 63 citations that resolve and 5 that
+are examples pretending to be claims — the ratio is the argument for adding the gate, and the convention is
+the precondition.
+
+**One filter nearly lost an offender silently.** The first run found 67 tokens and 4 offenders: my
+file-shaped-name guard required a `.suffix` of up to six characters, so `.gitignore` — extension `gitignore`,
+nine characters — was dropped before the checker ever saw it, while the checker itself special-cases dotfiles
+precisely because the ledgers cite them. Accepting the checker's two shapes (a suffixed name, or a leading dot)
+moved the count to 68 and the offenders to 5. A filter written narrower than the thing it feeds does not report
+a smaller number; it reports a wrong one, in the direction of green.
+
+**Gates.** Nothing in the tree's shipped behaviour changed: the census is a new untracked witness script, and
+step 8's committed behaviour is untouched. `scripts/` is not read by the database gate's steps 1-7 — but step 7
+(`check_jsonb_reads.mjs`) and step 8 are executable files in that directory, and neither was edited, so
+D90's passing 8-step run still certifies the tree. Step 8 is re-run after this commit and its numbers recorded.
+
+**The convention proved itself on this entry.** The first draft of the table above wrote those five
+placeholders in claim shape — a bare name, a colon, a line number — and the staging check refused to commit
+it: "citations do not resolve over the exact committed bytes", naming all five as offenders in the
+ledger's own text. Rewriting them as `File.java` line 12 kept the sentence true and stopped it reading
+as a claim about a file that does not exist, which is the whole proposal in one edit. A section about a
+gate that reddens honest prose was reddened by that gate, and the fix was the prose, not the gate.

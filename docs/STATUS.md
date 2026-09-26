@@ -4837,3 +4837,54 @@ next              (a) Task #71: the `facts` CHECK decision (V8 migration vs. gat
                   (c) Carried: the served leg of D91 until :8090 is next up, §87's next (c)-(f), and the open
                     reports #58, #62, #64, #44.
 ```
+
+## 90. 68 citations live in source comments and no gate reads them; the reader exists, and the five offenders turn out to be the checkers' own examples (2026-09-26)
+
+```
+plane             Comment lines of `.sql`/`.sh`/`.py`/`.java`/`.mjs`/`.ts`/`.tsx`/`.yml` outside docs/ — the
+                    prose that cites `load.sh:121`, `generate.py:966` and Java sites by line, and that step 8
+                    never opens because step 8 reads the ledgers. No shipped file was edited.
+
+reader            `d93_census.py` slices the token grammar out of `check_ledger_citations.mjs` at run time
+                    (asserts exactly one `matchAll(` line, compiles the literal found), pulls citation-shaped
+                    tokens from comment lines, and scores them by running the SHIPPED checker with `--text=`
+                    over a generated markdown file. One resolver, two planes — no second implementation to
+                    drift from the first, which is the D85 objection to a hand list.
+
+measured          68 tokens, 18 files, 25 distinct cited files. The checker exits 1 with 5 offenders, and the
+                    offenders are not claims about the codebase:
+                      scripts/check_jsonb_reads.mjs:311  -> `File.java` line 12 and `dir/File.java` lines 78-84
+                      scripts/check_ledger_citations.mjs:12 -> `services/platform/.../growth/EventRepository.java` line 39
+                      scripts/check_ledger_citations.mjs:66 -> `package.json` line 9   (AMBIGUOUS, 6 holders)
+                      scripts/run_platform_dev.sh:20     -> `.gitignore` line 5         (AMBIGUOUS, 2 holders)
+                    All five sit inside the sentence that explains what a bad citation looks like. 63 of the
+                    68 resolve; the plane is not full of lies, it is full of examples written in claim shape.
+
+                  Task #67's note said the  cite at line 66 was AMBIGUOUS. Half right in the way remembered cites
+                    always are: 66 is where the comment lives, 9 is the line the example cites. Verified from
+                    the census output, not from the note.
+
+not yet a gate    Wiring this as a step would redden the two files that define citation shape, so a gate that
+                    punishes honest prose. The precondition is a convention — a placeholder written so it is
+                    not token-shaped (`File.java line 12`, or `:NN`) — and only then the step. Recorded as
+                    task #72 rather than done: the convention reaches into another lane's files, and picking it
+                    silently is not this lane's call.
+
+mistakes          (a) The first census reported 67 tokens / 4 offenders. My file-shape guard demanded a
+                    dot-suffix of at most six characters, so `.gitignore` — whose extension is nine characters
+                    long — was filtered out before the checker saw it, while the checker itself special-cases
+                    dotfiles because the ledgers cite them. A filter narrower than the resolver it feeds does
+                    not produce a smaller number, it produces a wrong one pointing toward green. Fixed by
+                    accepting the checker's two shapes; the missing offender is exactly the delta.
+                  (b) Writing provenance as `file:2345` in the census file would have had the checker score the
+                     census's own bookkeeping and reported an inflated, meaningless count. The provenance
+                     spelling is part of the design, not cosmetics.
+
+gates             Steps 1-7 untouched (no shipped file edited); D90's passing 8-step run still covers the
+                    tree. Step 8 re-run after this commit: the numbers land in DECISIONS D93's tail, printed
+                    by the checker rather than recited from the previous run.
+
+next              (a) Task #72: the placeholder convention, then the comment-plane step — and the step needs
+                    the same kind of pinned-ref discipline D92 learned, not a `HEAD` read.
+                  (b) #71 (facts CHECK), #67 closes with #72, plus §87's and §89's carried items.
+```
