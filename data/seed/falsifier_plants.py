@@ -315,6 +315,68 @@ ARMS = [
      "UPDATE user_preferences SET user_id = gen_random_uuid() WHERE (user_id, key) = "
      "(SELECT user_id, key FROM user_preferences ORDER BY 1, 2 LIMIT 1);",
      ("fk: user_preferences.user_id -> users.id",)),
+
+    # Batch D123: the ten next names on §131's populated-child list. Before aiming, each column was read out of
+    # the kept database (rows total, rows carrying a value, the constraints it sits in, any CHECK naming it) --
+    # scratch d123_aim.sql. Two things came out of that census and both are this batch's business. First, no
+    # column in the ten carries a CHECK and none is a primary key, so `WHERE id = (SELECT id ... LIMIT 1)` is a
+    # legal handle for every one of them; the seven that are part of some UNIQUE constraint are safe for the
+    # same reason the D122 arms were, since a gen_random_uuid() cannot collide with an existing composite key.
+    # Second, "populated child table" turned out to be the wrong plane to count on: two of the thirty-two names
+    # §131 called reachable sit on columns that carry no value at all -- categories.tenant_id on 77 rows and
+    # documents.offering_id on 1040, both 0 non-null -- so their sweep row is green for want of data, not for
+    # want of an orphan, and they need a D122-style value-filing plant rather than an UPDATE. Those two wait
+    # for their own batch. The ten here all carry a value in every row, so each is one UPDATE.
+    ("fk: availability_slots.merchant_id -> merchants.id",
+     "fk checks off (replica role): a slot loses its merchant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE availability_slots SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM availability_slots ORDER BY id LIMIT 1);"),
+    ("fk: business_hours.merchant_id -> merchants.id",
+     "fk checks off (replica role): a set of opening hours loses its merchant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE business_hours SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM business_hours ORDER BY id LIMIT 1);"),
+    ("fk: chunks.document_id -> documents.id",
+     "fk checks off (replica role): a chunk loses its document",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE chunks SET document_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM chunks ORDER BY id LIMIT 1);"),
+    ("fk: chunks.merchant_id -> merchants.id",
+     "fk checks off (replica role): a chunk loses its merchant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE chunks SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM chunks ORDER BY id LIMIT 1);"),
+    ("fk: collections.tenant_id -> tenants.id",
+     "fk checks off (replica role): a collection loses its tenant (4 rows in the table)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE collections SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM collections ORDER BY id LIMIT 1);"),
+    ("fk: documents.merchant_id -> merchants.id",
+     "fk checks off (replica role): a document loses its merchant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE documents SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM documents ORDER BY id LIMIT 1);"),
+    ("fk: documents.tenant_id -> tenants.id",
+     "fk checks off (replica role): a document loses its tenant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE documents SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM documents ORDER BY id LIMIT 1);"),
+    ("fk: facts.merchant_id -> merchants.id",
+     "fk checks off (replica role): a fact loses its merchant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE facts SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM facts ORDER BY id LIMIT 1);"),
+    ("fk: locations.merchant_id -> merchants.id",
+     "fk checks off (replica role): a location loses its merchant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE locations SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM locations ORDER BY id LIMIT 1);"),
+    ("fk: locations.tenant_id -> tenants.id",
+     "fk checks off (replica role): a location loses its tenant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE locations SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM locations ORDER BY id LIMIT 1);"),
 ]
 
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
