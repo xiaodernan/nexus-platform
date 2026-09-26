@@ -6132,3 +6132,75 @@ least 57 times" and "shown able to fail some number of times that nobody has wri
 database and `git show` of two committed documents. The fix is to how this lane asks a question of its own
 artifacts, so the artifacts are named — `d102_qc_names.tsv`, `d102_unnamed.tsv` — and the lossy
 `d98_qc_names.txt` stays where it is, beside the entry that says what it was wrong about.
+
+## D107 An assertion named a check it never ran, and the rename had to be A/B'd on one database to prove the reds beside it were not mine
+
+`documents: content_hash matches the raw_text it carries` read only `raw_text`: its predicate is
+`NOT EXISTS (SELECT 1 FROM documents WHERE raw_text = '' OR length(raw_text) < 200)`, at
+`data/seed/quality.sql:955` before and after the rename. Nothing in the row touched `content_hash`,
+and adding the named check was ruled out by measurement rather than by argument: on a loaded gate
+database, 0 of 1,040 stored hashes equal `encode(digest(raw_text,'sha256'),'hex')` with pgcrypto
+working (`digest` returned the expected value for a known string). The generator hashes a joined
+payload, not the column it ships, so the claim is unrecoverable without a reseed that would move the
+committed assertion count. The row stays and the name now says what it tests: `documents: raw_text is
+substantial enough to feed RAG`.
+
+**The commit went in through the index, not the working copy.** Another stream holds eight uncommitted
+citation lines in this same file — the `CollectionsController.java` line numbers it shifted by six when
+it edited that controller — so a pathspec-limited commit would have swept their work into my unit and a
+plain commit would have committed their text as mine. `git show HEAD:data/seed/quality.sql` plus my one
+line, hashed and staged, gave a commit whose diff is exactly one line; the worktree copy was edited to
+carry both changes so the next commit from that stream cannot undo mine by accident.
+
+**Gates.** The nine-step gate could not certify this lane's numbers, and D108 says why. The rename's own
+innocence is proven by an A/B on one kept database (`nexus_gate_270354_1790448961`): the text at `9591d54`
+and the text at `c1e0878` return the same 214 assertions, the same 2 red rows, the same names. One
+database, two shipped texts, identical verdicts — the difference between them is a string literal.
+
+## D108 The committed repository does not pass its own seed gate: 214 assertions at HEAD, 216 only while an uncommitted migration sits on disk
+
+Measured in a clean linked worktree at `c1e0878`, because the shared working copy had stopped being
+evidence: migrations applied 6, tables 57, `qc` rows 214, and **two assertions red** —
+`a door vocabulary names a column the schema has` (offender named in its own detail:
+`share_links.subject_type`) and `a CHECK-bounded column is a door vocabulary too`. The gate exited 1.
+
+The cause is a dependency nothing had written down. `infra/db/migrations/V7__share_links.sql` exists in
+the working copy and has never been committed — `git log` for that path is empty — while this lane's door
+vocabulary has named `share_links.subject_type` since D69 through D74 (`git log -S` on
+`data/seed/quality.sql` returns `b51c043`, `6097d3b`, `99151f6`, `2d9e279`). So every number this lane
+printed this session as if it were the project's — 216 checks, 58 tables, 7 migrations, and every
+"x of 216 witnessed" ratio beside them — is a working-copy number, true only while another stream's
+uncommitted file happens to be on disk. That is a retraction, named as one rather than edited out of the
+earlier entries: the counts were real measurements of a tree that is not the committed tree.
+
+**No code change is honest here, so none was made.** Dropping `share_links.subject_type` from the
+vocabulary turns HEAD green and reddens the working copy instead, because the second assertion demands
+every schema-bounded column be catalogued and the uncommitted migration is exactly what bounds it.
+Committing V7 is not this lane's file. The only sound action is to say which plane a count belongs to and
+to hand the decision to whoever can commit the migration — filed as a report task, with the A/B above as
+its evidence. The assertion that caught it is itself witnessed in `data/seed/falsifiers.tsv` by other
+arms, so it was not distrusted: it was believed.
+
+**Six more arms, and the first witness that is a commit.** `data/seed/falsifier_plants.py` plants a
+phone outside the reserved 2xxx-0000 range, a document and a fact sourced from a live URL, a merchant
+image on a third-party host, a merchant page made indexable, and a user carrying a real password hash.
+Each arm runs in its own `BEGIN ... ROLLBACK`, so twelve sessions share one loaded database and the last
+one still sees what the loader wrote; each is paired with an unmutated control, because a plant that
+reddens an assertion whose control is already red has shown nothing. All six: control green, plant red,
+one row read each. The registry grows from 41 rows / 22 assertions to 47 rows / **27 of 214 (12.6%)** —
+plane stated, because at HEAD the denominator is 214. The witness column now names a commit
+(`111d5de`) instead of a path under a temp directory, which is the branch the validator has supported
+since D103 and this lane never used: a commit cannot be swept by a disk clean-up.
+
+**And the harness failed before it passed, in the way worth recording.** Its first run died on
+`function max(boolean) does not exist` in its own reporting query, and printed `ABORTED` /
+`a run read 0 rows, not 1 -- UNREAD, not green` / `RESULT: FAIL` for all twelve sessions. Zero rows read
+is not a green gate; the file knew that before it produced a single verdict, which is the only reason the
+first PASS is trustworthy. The check names it reports are read back out of the `qc` row the shipped
+statement inserted, not retyped here — the §-bearing name
+`SEO pages are noindex (demo must not rank, §155)` came through intact for exactly that reason.
+
+**Gates.** `scripts/db_gate_fresh.sh --keep` in a clean worktree at `c1e0878`: exit 1, the two reds above,
+log kept as `gate-d107-official.log` with `GATE_RC` written inside it rather than inferred from a
+notification. Plants: `d107_plants.txt`, exit 0, `PLANTS_RC=0` echoed from the python process itself.
+Registry validator against the same kept database: `RESULT: PASS`, 47 rows, 27 of 214.

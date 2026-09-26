@@ -56,3 +56,9 @@ coordinates inside the HK bbox (D3 geo prefilter)	D106	plant: a merchant moved o
 every column that cannot vary is answered for why it cannot	D106	plant: a merchant moved out of the HK box	nexus-d63/d106_plants.py
 every column that cannot vary is answered for why it cannot	D106	plant: a seeded row stamped with today	nexus-d63/d106_plants.py
 the columns stamped from the generation clock are exactly the ones answered so	D106	plant: a seeded row stamped with today	nexus-d63/d106_plants.py
+phones stay in the reserved 2xxx-0000 demo range	D108	a merchant given a phone outside the reserved range	111d5de
+every source_uri is demo:// (trust layer provenance)	D108	a document sourced from a real URL	111d5de
+every source_uri is demo:// (trust layer provenance)	D108	a fact sourced from a real URL	111d5de
+images are local placeholders, never hotlinks	D108	a merchant image pointed at a third-party host	111d5de
+SEO pages are noindex (demo must not rank, §155)	D108	a merchant page indexable by search engines	111d5de
+password_hash is the placeholder, never a real hash	D108	a user carrying a real password hash	111d5de
