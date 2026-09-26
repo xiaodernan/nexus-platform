@@ -1,0 +1,39 @@
+# NEXUS — assertions that have been SHOWN able to fail, one row per witnessed arm.
+#
+# WHY THIS FILE EXISTS. The gate has 216 assertions; D102 measured that the ledgers name somewhere between 53
+# and 57 of them depending on how the text is matched, and that a mention is only an upper bound on being
+# witnessed. What has never existed is a machine-readable record of the stronger claim — "this row was seen red"
+# — because every plant this lane has run lives in a temp-dir harness and a paragraph of prose. A count of
+# witnesses that cannot be recomputed is a story, so this is the record, and scripts/check_falsifier_registry.mjs
+# checks it against the gate's own list of rows rather than against anyone's memory.
+#
+# RULES, enforced by the checker:
+#   * `check` must be an assertion the gate actually files, read back from `qc` in a loaded database. The
+#     polymorphic sweeps build their names at run time, so a name here that is not in qc is a transcription.
+#   * `witness` is an artifact that still exists or a commit that still resolves — not a description.
+#   * One row per (check, arm). A check witnessed by three arms is three rows; the claim being recorded is
+#     per-arm, and collapsing arms is how a number starts meaning less than it says.
+#
+# check	unit	arm	witness
+the columns stamped from the generation clock are exactly the ones answered so	D89	plant: no window stamped	nexus-d63/w5_none.txt
+the columns stamped from the generation clock are exactly the ones answered so	D89	plant: window around the load	nexus-d63/w5_load.txt
+the columns stamped from the generation clock are exactly the ones answered so	D89	plant: window in 2020	nexus-d63/w5_past.txt
+the columns stamped from the generation clock are exactly the ones answered so	D89	plant: window around the pinned base date	nexus-d63/w5_basedate.txt
+confidence within 0..1 and a TTL that runs forward	D90	plant: row marked stale inside its TTL	nexus-d63/w_h_plants.txt
+confidence within 0..1 and a TTL that runs forward	D92	plant: confidence set to 1.5	nexus-d63/w_l_d92.txt
+confidence within 0..1 and a TTL that runs forward	D92	plant: expires_at pulled back to observed_at	nexus-d63/w_l_d92.txt
+confidence within 0..1 and a TTL that runs forward	D92	plant: both defects on one row	nexus-d63/w_l_d92.txt
+confidence within 0..1 and a TTL that runs forward	D90	plant: database never stamped	nexus-d63/w_d_nostamp.txt
+slots: 21-day horizon with coverage every day	D90	plant: base moved 9 days later	nexus-d63/w_h_plants.txt
+slots: 21-day horizon with coverage every day	D90	plant: base moved 12 days earlier	nexus-d63/w_h_plants.txt
+slots: 21-day horizon with coverage every day	D90	plant: database never stamped	nexus-d63/w_d_nostamp.txt
+every column that cannot vary is answered for why it cannot	D83	plant: an answer deleted for one column	f5c26f2
+every column that cannot vary is answered for why it cannot	D83	plant: an unknown answer kind	f5c26f2
+every column that cannot vary is answered for why it cannot	D99	plant: a write made a constant column vary	nexus-d63/d99_sweep_plant.py
+orphan: facts.offering	D99	plant: one fact repointed to a uuid no offering holds	nexus-d63/d99_sweep_plant.py
+orphan: favorites.merchant	D100	plant: one favourite repointed	nexus-d63/d100_three_sweeps.py
+orphan: permission_grants.merchant_user	D100	plant: one grant repointed	nexus-d63/d100_three_sweeps.py
+orphan: moderation_cases.review	D100	plant: one case repointed	nexus-d63/d100_three_sweeps.py
+favourites point at a renderable row	D100	companion of the favourites sweep, same plant	nexus-d63/d100_three_sweeps.py
+merchant_user grants reach a membership	D100	companion of the grant sweep, same plant	nexus-d63/d100_three_sweeps.py
+every waiting review has exactly one open case	D100	companion of the case sweep, same plant	nexus-d63/d100_three_sweeps.py
