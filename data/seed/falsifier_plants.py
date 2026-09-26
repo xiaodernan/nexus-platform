@@ -179,8 +179,10 @@ ARMS = [
     # with carts/cart_items/order_items/reservations/handoffs all at zero rows -- so the NO ACTION
     # referencers of merchants and offerings cannot refuse these deletes. The aim is chosen to keep every
     # OTHER volume row green, which is what makes each arm a witness for one assertion: far-from-Sha-Tin
-    # merchants (a bbox of lat < 22.30 or lng > 114.25 is at least 7 km from 22.3831/114.1876, so the
-    # density row cannot notice) with the fewest reviews; offerings no review, fact or document references;
+    # merchants (the bbox lat < 22.30 OR lng > 114.25 lies at least 6.4 km from 22.3831/114.1876 in the
+    # limit, and the 62 rows it actually selects measure 10.51-18.23 km out over pg_temp.haversine_m, so
+    # the density row's own 3 km radius cannot notice) with the fewest reviews; offerings no review, fact
+    # or document references;
     # reviews deleted in the table's own 31/69 language split so the mix row cannot notice; documents
     # ordered by their chunk count with at least one left per merchant so `chunks > 0` survives.
     # The last two arms have no such aim: `> 0` can only be falsified by emptying the table, so their
@@ -216,6 +218,25 @@ ARMS = [
     ("volume: facts > 0", "every fact removed -- the same presence row on the table with no CHECKs",
      "DELETE FROM facts;",
      ("orphan: facts.location", "orphan: facts.merchant", "orphan: facts.offering")),
+
+    # Batch D121: the polymorphic seam. Both earlier planes move a value or a row count; these three move the
+    # TARGET of a (subject_type, subject_id) pair, which no CHECK and no foreign key covers -- measured over
+    # pg_constraint, `favorites` carries one FK (user_id, CASCADE) and `facts` one (merchant_id, CASCADE), and
+    # `subject_id` is in neither. The two favourite arms are the deception the probe at quality.sql:302 is
+    # written for: a favourite saved under the wrong label, which assertSubjectInTenant refuses at the door,
+    # so the id stays a real row and only the type lies. The facts arm is the same lie on the other side --
+    # a merchant fact whose subject_id names an offering -- aimed at attribute='opening_hours' so the price
+    # TTL and rating rows keep their own witnesses uncontested.
+    ("orphan: favorites.collection", "the one collection favourite pointed at the guide row",
+     "UPDATE favorites SET subject_id = (SELECT id FROM collections WHERE kind = 'guide' ORDER BY id LIMIT 1) "
+     "WHERE subject_type = 'collection';"),
+    ("orphan: favorites.guide", "the one guide favourite pointed at a collection row",
+     "UPDATE favorites SET subject_id = (SELECT id FROM collections WHERE kind = 'collection' ORDER BY id LIMIT 1) "
+     "WHERE subject_type = 'guide';"),
+    ("orphan: facts.merchant", "one merchant fact re-keyed onto an offering's id",
+     "UPDATE facts SET subject_id = (SELECT id FROM offerings ORDER BY id LIMIT 1) "
+     "WHERE id = (SELECT id FROM facts WHERE subject_type = 'merchant' AND attribute = 'opening_hours' "
+     "ORDER BY id LIMIT 1);"),
 ]
 
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
