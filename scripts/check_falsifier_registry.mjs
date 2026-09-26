@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
-const DB = arg('--db', null), CONTAINER = arg('--container', 'nexus-platform-testpg');
+const DB = arg('--db', null), CONTAINER = arg('--container', 'nexus-platform-postgres');
 const TMPROOT = process.env.TMPDIR || 'C:/Users/18414/AppData/Local/Temp';
 const notChecked = (why) => { console.error(`RESULT: NOT CHECKED — ${why}`); process.exit(2); };
 
