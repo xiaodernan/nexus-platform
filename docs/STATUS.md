@@ -5513,3 +5513,42 @@ Artifacts: `RESULT: PASS` and the per-arm table in `d112b_plants.txt`, the queue
 and `d112b_queue.txt` — all in `nexus-d63/` under the machine's Temp directory, i.e. **outside the
 repository**, so the durable witnesses are `975e0a5` (the arms) and `2c27dbe` (the rows they filed).
 Full reasoning in `docs/DECISIONS.md`, `## D112`.
+
+## 113. 39 witness rows lived in one machine's Temp directory; they are in the repository now, and the checker refuses any path it cannot resolve from a clean checkout (2026-09-27)
+
+D112 recorded the problem; this unit pays for it. Code and data at `3d237f8`.
+
+- **Measured first.** With `TMPDIR` pointed at an empty directory, the then-shipped checker reported
+  `witness cannot be opened` for **39 of 61** registry rows and exited 1, leaving the 22 commit witnesses
+  untouched — the same count a column scan of `data/seed/falsifiers.tsv` gives independently (22 sha, 39
+  paths, over 12 distinct files under `nexus-d63/`). The registry's `RESULT: PASS` had been a property of this
+  laptop's temp folder, not of the repository.
+- **Moved.** Those 12 artifacts — five one-off plant harnesses (`d99_sweep_plant.py`,
+  `d100_three_sweeps.py`, `d104_plants.py`, `d105_noconstraint.py`, `d106_plants.py`) and seven run excerpts
+  (`w5_none.txt`, `w5_load.txt`, `w5_basedate.txt`, `w5_past.txt`, `w_d_nostamp.txt`, `w_l_d92.txt`,
+  `w_h_plants.txt`) — now live in `data/seed/falsifier_witnesses/` under their original filenames, so existing
+  prose citations still resolve. **Twelve of twelve byte-identical** to the originals (`md5sum` over each
+  pair), and scanned first for credentials and encoded blobs: only gate report lines and table names like
+  `api_keys` matched. 856 lines, ~92 KB.
+- **Narrowed rule.** A witness is now either a commit that resolves or a path that is a **blob tracked at
+  HEAD**; the temp-directory branch is deleted, not kept as a fallback. HEAD rather than "some commit",
+  because what a stranger can check out is HEAD.
+- **Four refusal states, told apart** — outside the repository, tracked as a tree not a file, present in the
+  working copy but untracked, nowhere — because "the file is right there and the registry is still wrong" is
+  D110's defect and a checker that conflates them is a checker that waves it through.
+- **Both sides, without dirtying the artifact.** `--registry <path>` was added so the refusals could be
+  planted in scratch copies instead of by editing the shipped registry. Five runs, all with an empty `TMPDIR`:
+  the shipped file PASSes at `22 commit(s) · 39 file(s) tracked at HEAD`; and four planted rows each FAIL with
+  their own reason — a nonexistent in-repo path, `../outside_the_repository.txt`, the witness *directory*
+  itself, and `scripts/list_routes.js` (another stream's untracked helper, which the file *does* open, so the
+  old rule would have accepted it).
+- **A stale claim corrected in the same diff:** the registry header said "The gate has 216 assertions". The
+  committed tree files 214; 216 exists only with another stream's uncommitted `V7__share_links.sql` on disk
+  (D108). The header now states which plane the percentage is over.
+- **Limits.** Durability is not reproducibility — the seven excerpts cannot be re-run, the five scripts could
+  in principle but were written against the D99-D106 gate and were not re-run here. Coverage is deliberately
+  unchanged: **61 rows, 40 of 214 (18.7%)**. What changed is that the number now means the same thing on every
+  machine.
+
+Artifacts: the five-arm table in `d113_arms.txt` (Temp, outside the repository — the durable witnesses are
+`3d237f8` and the checker's own output). Full reasoning in `docs/DECISIONS.md`, `## D113`.

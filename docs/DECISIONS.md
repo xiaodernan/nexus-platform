@@ -6518,3 +6518,72 @@ machine's Temp directory (`d99_sweep_plant.py`, `d100_three_sweeps.py`, `d104_pl
 registry reads PASS today and would read `witness cannot be opened` for 39 rows the moment the Temp
 directory is cleared — a witness that only opens on the machine that wrote it is an anecdote with a
 filename. Recorded as the next unit's problem, not solved here.
+
+## D113 A witness you can only open on the machine that wrote it is an anecdote with a filename — so 39 of the registry's 61 rows moved into the repository, and the checker now refuses a path it cannot resolve from a clean checkout — 2026-09-27
+
+D112 closed by recording that the registry's older half was not durable. This unit measures how untrue
+"an artifact that still opens" was, fixes the grammar, and shows the fix on both sides.
+
+**The defect, measured before touching anything.** The shipped checker resolved a non-sha witness under
+`process.env.TMPDIR || C:/Users/18414/AppData/Local/Temp`, so 39 rows pointed at `nexus-d63/…` — five one-off
+harness scripts (`d99_sweep_plant.py`, `d100_three_sweeps.py`, `d104_plants.py`, `d105_noconstraint.py`,
+`d106_plants.py`) and seven run excerpts (`w5_none.txt`, `w5_load.txt`, `w5_basedate.txt`, `w5_past.txt`,
+`w_d_nostamp.txt`, `w_l_d92.txt`, `w_h_plants.txt`). Two independent readings agree on the count: a column
+scan of the file (61 rows = 22 commit witnesses + 39 path witnesses over 12 distinct files), and the checker
+itself run with `TMPDIR` pointed at an empty directory, which reported `witness cannot be opened` for exactly
+**39** rows and exited 1 while leaving the other 22 rows untouched. The green `RESULT: PASS` the registry had
+been printing was therefore a property of this laptop's temp folder, not of the repository — the same class of
+"measured on a tree that is not the committed tree" that D108 recorded for the assertion count, one level
+further down.
+
+**The move.** All twelve artifacts are copied into `data/seed/falsifier_witnesses/` under their original
+filenames, so every prose citation to `w5_none.txt` or `d104_plants.py` in DECISIONS and STATUS still resolves.
+A copy is only a witness if it is the same bytes, so each of the twelve was compared against the Temp original
+by `md5sum`: twelve of twelve identical, no file differing. Before copying, the artifacts were scanned for
+credentials and encoded blobs (`sk-…`, `password=`, `api_key`, `BEGIN RSA`, 40+ base64-ish runs, `C:/Users/…`
+machine paths): the only hits are gate report lines and column names such as `fk: api_keys.merchant_id`, which
+is a table name, not a key. Total added: 856 lines / ~92 KB (the twelve files as staged: 60+44+75+37+98+21+20
++19+21+379+41+41).
+
+**The narrowed grammar** (`scripts/check_falsifier_registry.mjs`, committed at `3d237f8`): a witness is either
+a commit that resolves (`git cat-file -e <sha>^{commit}`) or a path that is a **blob tracked at HEAD**
+(`git cat-file -t HEAD:<path>` == `blob`). The temporary-directory branch is gone rather than kept as a
+fallback — a rule with an escape hatch in the same expression is how a guard ends up decorative. HEAD
+specifically, not "any commit", because what a stranger can check out is HEAD: a witness that exists only in
+some unreachable object is the same failure one step earlier.
+
+**The refusal says which state it found**, because "the file is right there and the registry is still wrong"
+is a distinction this lane has already been burned by (D110's anonymous working-copy hunk). Four states, four
+messages: outside the repository, tracked at HEAD as a non-blob, present in the working copy but untracked,
+nowhere.
+
+**Both sides, without dirtying the shipped data.** `--registry <path>` was added so the refusals could be
+planted in scratch copies of the file instead of by editing `data/seed/falsifiers.tsv` — a guard demonstrated
+by temporarily corrupting the artifact it guards also risks leaving the corruption behind, and D109's rule is
+that a new validator's first run must not be its own test. Five runs against the live gate assertions
+(`nexus_gate_270354_1790448961`), every one with `TMPDIR` pointed at an empty directory so nothing could hide
+in the Temp folder:
+
+  * **shipped registry (must stay green)** — `RESULT: PASS`, `22 commit(s) · 39 file(s) tracked at HEAD`.
+    This is the claim that matters: the registry now validates on a machine whose temp directory is empty.
+  * witness `data/seed/falsifier_witnesses/does_not_exist.txt` — FAIL, "is nowhere — neither in the repository
+    nor at HEAD", kinds drop to 38.
+  * witness `../outside_the_repository.txt` — FAIL, "names a path outside the repository".
+  * witness `data/seed/falsifier_witnesses` (the directory) — FAIL, "is tracked at HEAD as a tree, not a file".
+  * witness `scripts/list_routes.js` (another stream's untracked helper, present on disk) — FAIL, "exists in
+    the working copy but is not tracked at HEAD". This is the row a lazy rule would have waved through, because
+    the file *does* open.
+
+**A claim corrected in the same diff.** The registry's own header comment opened with "The gate has 216
+assertions". That is the other plane: the committed tree files 214 (D108), and 216 appears only while another
+stream's uncommitted `infra/db/migrations/V7__share_links.sql` sits on disk. The header now says which plane a
+percentage is taken over, because the file's headline number — 40 of 214 — is computed against `qc`, and a
+reader comparing it to a run on a dirty tree would otherwise conclude the checker was wrong.
+
+**Limits, stated.** Durability is not reproducibility. The seven `.txt` excerpts witness runs that happened
+before this migration and cannot be re-executed; the five `.py` harnesses are re-runnable in principle but were
+written against the gate as of D99-D106, and re-running them was not attempted here. What the unit does
+guarantee is narrower and checkable: anyone with a clean checkout can open every one of the 61 witnesses, and
+the checker's verdict is now a function of the repository plus a loaded seed — not of one user's temp
+directory. Coverage is unchanged by design: **40 of 214 (18.7%)**, 61 rows; this unit bought the number's
+meaning, not its size.
