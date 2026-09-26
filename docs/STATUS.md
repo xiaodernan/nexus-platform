@@ -6188,9 +6188,90 @@ next              (a) #68's class still has no check, and this section is the pr
 > renumbered §115–§123: HEAD already holds a §100 (D108's plane correction), this lane's newest number
 > is §114, and a section that is cited by later text keeps its number. The chain from the first merge
 > still resolves — draft §34/§35/§36/§37/§85/§86/§87/§88 became §100/§101/§102/§103/§104/§105/§106/§107
-> in the section above, and become §115/§116/§117/§118/§119/§120/§121/§122 here. Body text is verbatim
+> in the section above, and become §115/§116/§117/§118/§119/§120/§121/§122 here.
+> Pair table for the numbering statements inside this section — they report an event, so they are
+> left as written and read through this: §100→§115 · §101→§116 · §102→§117 · §103→§118 · §104→§119 ·
+> §105→§120 · §106→§121 · §107→§122 · §108→§123 (this section). Body text is verbatim
 > except references that point a reader at a sibling recovered section, which were re-aimed at the new
 > numbers; statements *about* numbering inside the section above are left exactly as written, because
 > they record an event rather than point at content. Two source comments still say `STATUS §106`
 > (`CollectionsController.java:186`, `CollectionsReadTest.java:188`) and name nothing at HEAD; that is
 > reported to the platform lane, not edited here.
+
+## 124. Nine sections stranded by this lane's own staging technique come back as §115–§123; the commit that does it is 618 up and 21 down, and the two planes of the ledger print the same census for the first time in four units (2026-09-27)
+
+```
+plane             `docs/STATUS.md`, both of them: the 99e5b0c bytes and the working copy D114 found to hold
+                    nine sections no commit had. Task #68's class, and this lane's own mechanism — the
+                    `git show HEAD:docs/STATUS.md` + one appended section staging that §109 and §111
+                    explain their numbering with.
+
+changed           Working-copy §100–§108 → §115–§123, appended after §114. The incoming numbers move, not
+                    HEAD's, on §108's precedent: a committed number has dependents in DECISIONS and in
+                    later sections, an uncommitted one has only its siblings — so the `## 100` collision
+                    (the route-ledger section at worktree 5350 against D108's plane correction at 5912)
+                    dissolves instead of being adjudicated. Each title keeps its body and carries
+                    `[recovered by D115 from the working copy's §NNN]`.
+                  15 sibling references re-aimed at the new numbers, each asserted to match exactly once;
+                    8 statements *about* the earlier renumbering left verbatim inside §123, because they
+                    record an event rather than point at content, and the pair table that resolves them
+                    added in this commit rather than the last one — the re-measurement below is what
+                    showed 50 more old-number tokens had come in with the block.
+                  19 of this lane's own lines replaced by the merge lane's annotated versions of them
+                    (§81/§84 residue, the §85–§100 `next` "(b) Carried: … #68 …" lines); 2 glossed here.
+                    Nothing another lane authored is deleted, and none of the block's 562 lines is lost.
+                  3 blank lines restored at the §112/§113/§114 seams; the 3 headings that lack one in HEAD
+                    itself (§64–§66, lines 2830/2873/2917) named, not reformatted. 1 CRLF line in the
+                    block (§108's closing fence) became LF — the only byte exception to "verbatim".
+
+measured          99e5b0c: 618 insertions, 21 deletions, one file. HEAD's numbered sections 82 → 91, max
+                    §123, duplicates none, gaps §32/§80/§101–§108. The working copy is now byte-identical
+                    to the committed file (545,129 bytes, 0 CR, clean in `git status`), and DECISIONS was
+                    already clean — so #68's class is closed *for these two files today*, not made
+                    impossible: nothing reddens if the next section is written but not staged.
+                  Both planes of every checker this lane owns, over the committed bytes:
+                    check_ledger_citations.mjs (and --worktree)  218 headings · 433 tokens · 224
+                      citation-shaped · 58 files · 0 offenders · RC 0 — the two printings agreeing is the
+                      recovery's own evidence, since before it they could not both be run on one text
+                    check_comment_citations.mjs   PASS · 65 citations · 18 files
+                    check_jsonb_reads.mjs         RC 0
+                    check_falsifier_registry.mjs --db nexus_gate_270354_1790448961
+                                                  214 assertions · 61 rows · 40 witnessed (18.7%) · PASS
+                    check_contract_drift.mjs      114 routes parsed · 106 served · corpus 354 files
+                    infra/db/migrations/V7__share_links.sql  still untracked; #75 stands
+
+found             (a) `§N` in these ledgers is THREE planes, not one: API_CONTRACT/AGENT_CONTRACT sections
+                    (§0–§20), AGENT_CONTRACT spec items (up to §171) and STATUS sections. 958 `§N` tokens
+                    across 112 numbers, 475 of them not resolving to a STATUS heading — counted over the
+                    99e5b0c bytes, since this section and §123's pair table add tokens of their own, which
+                    is why the number carries its plane. §8×86, §131×4, §155×6, §156×6, §171×2, and §32×1
+                    in a sentence that says out loud that no §32 ever existed. So the obvious "every
+                    section reference must resolve" gate is not written: it would red on 475 legitimate
+                    tokens. The disambiguating spelling already exists in the source — `STATUS §106` —
+                    which is how (b) was found.
+                  (b) `CollectionsController.java:186` and `CollectionsReadTest.java:188` cite `STATUS
+                    §106`; the section they mean is now §121 and no §106 exists. Reported to the platform
+                    lane, not edited. `EventsIngestTest.java:138` cites `STATUS §66`, which does resolve.
+                  (c) `check_contract_drift.mjs` prints a gap class only when it is non-empty, so
+                    "CLIENT-ONLY 0" is an *absence* rather than a zero — the D79/D96 shape (silence is not
+                    green, and a pass that prints nothing cannot be distinguished from a step that did not
+                    run) in a ledger this lane cites in §115 and §123 as `CLIENT-ONLY 1 → 0`.
+
+gates             No gate was run for this unit beyond the five read-only checkers above; §116's and
+                    §122's `mvn -o test 217/217`, §119's binding probe and §121's tsc/vitest runs are
+                    recorded as NOT re-measured, which is not the same claim as "still true" — re-running
+                    them would put this lane's write footprint on another lane's `target/` and on
+                    `nexus_test` for a witness this unit cannot cite.
+
+next              (a) D116, and it now has a free regression case: the missing check is "every numbered
+                    `## N.` heading at HEAD is still present on disk, `exit 2` when `git show` cannot
+                    spawn" — the arm that must redden is a committed heading the working copy lacks, the
+                    arm that must stay green is this tree. §123's `next` (a) has been overtaken twice by
+                    the event it asked for.
+                  (b) Report to the platform lane: the two `STATUS §106` comments (→ §121). Report to the
+                    drift-ledger owner: print `CLIENT-ONLY 0` as a count, not as silence.
+                  (c) Carried, re-read: #73 (40 of 214 witnessed, 74 literal names unwitnessed), #71
+                    (`facts` CHECKs), #58, #62, #64, #75, #44, §87's session-time-zone seam, D91's served
+                    leg until :8090 is up. #68 stays closed for these two files and is not a guard.
+```
+

@@ -6676,3 +6676,132 @@ ls-tree HEAD`, `git show HEAD:<path> | grep -c`, `grep -rn body_blocks` over `se
 and `docs/API_CONTRACT.md`, the surefire XML's own attributes, and `grep -n "^## 85\|^## 100"` against both copies
 of `docs/STATUS.md`. No test suite, build, gate or database write was run for this unit, and no file outside
 `docs/DECISIONS.md` and `docs/STATUS.md` was touched.
+
+## D115 A recovery commit is not a purely additive one: nine sections stranded by this lane's own staging technique come back as §115–§123, and what it cost to put them in — 2026-09-27
+
+**Question.** D114 found that eight STATUS sections — nine including the one that records the finding —
+live in `docs/STATUS.md`'s working copy and nowhere in any commit, and named the mechanism without
+naming the owner. This unit asks the owner's question first: what exactly did this lane's staging
+technique strand, and what does putting it back cost in lines that are not additions?
+
+**The mechanism, stated as a rule rather than an accident.** A commit built from
+`git show HEAD:docs/STATUS.md` plus one appended section cannot rescue a section that never got staged,
+by construction. The technique was introduced to avoid a worse error — committing the worktree copy of a
+file that holds another lane's uncommitted edits deletes theirs — and it has that property in both
+directions: it never picks up what it did not write, and what it did not pick up stays unpicked up
+forever. §109's and §111's own sentences explain numbering choices by reference to the uncommitted
+sections; four later units read those sentences and did nothing about the sections themselves. D111 paid
+this debt for `docs/DECISIONS.md` (D103–D106, reconstructed from commits) and, at the time, for STATUS —
+and the same omission then recurred for the working copy, which no `git log -S` can reach because those
+lines were never in any commit at all.
+
+**What was on disk, measured before the splice.**
+
+```
+docs/STATUS.md   HEAD before the recovery  5,599 lines · 82 numbered sections · 107 `## ` headings
+                 the working copy that day  6,180 lines · 116 `## ` headings  (= HEAD + 603 − 22 by
+                 `git diff --numstat`, i.e. 581 net lines more, of which 562 are the nine stranded ones)
+                 §100 appears twice: the working copy's route-ledger section at 5350, HEAD's D108 plane
+                 correction at 5912 — a duplicate number inside one file, not two files disagreeing
+                 the two planes differ in 13 further places, all of them small: §81/§84 residue lines and
+                 the §85–§100 `next` blocks, where the merge lane had replaced this lane's
+                 "Carried: … #68 …" lines with annotated versions that call #68 closed
+docs/DECISIONS.md  clean against HEAD — no worktree-only content
+                     one line of the stranded block (worktree 5910, §108's closing fence) ends CRLF;
+                     every other line of the file is LF
+```
+
+The working copy's own line count is derived, not re-measured: `99e5b0c` moved HEAD from 5,599 to 6,196
+lines, and the file the splice read was that result minus the 12-line recovery note, the 3 restored blank
+lines and the 1 line the first gloss added — 6,180, which is HEAD-before plus the 581 net lines
+`git diff --numstat` printed against it before it was overwritten. Every other number in this entry was
+printed by a command run for it.
+
+**The numbering decision, and the rule it followed.** The incoming sections move, not HEAD's. That is
+§108's own precedent, stated there as "HEAD's numbers are cited by DECISIONS, from their own `next`
+blocks and from later sections; the draft's numbers were cited by its own sections", and it is the
+asymmetry that matters: a committed number has dependents, an uncommitted one has only its siblings. So
+working-copy §100→§115 … §108→§123, chosen above HEAD's max of §114 so no committed section changes
+number, and the `## 100` collision dissolves instead of being adjudicated. Each recovered title keeps its
+body verbatim and carries `[recovered by D115 from the working copy's §NNN]` in its heading, so the
+number the section was is on the page next to the number it is.
+
+**References: two kinds, treated differently.** Fifteen references inside the block point a reader at a
+*sibling recovered section*; those were re-aimed at the new numbers (§101→§116, §102→§117, §103→§118,
+§100→§115, §106→§121, §107→§122, §108→§123), each replacement asserted to match exactly once, so a
+second or absent match stops the build rather than silently mapping the wrong text. Eight other
+references are *statements about a numbering event* — §123's body is a record of the earlier merge, and
+lines like "§34→§100, §35→§101 …" and "max §108 · duplicate numbers none" report what happened, not where
+to read. Rewriting those would have destroyed the record to protect the citation, and §108 itself is the
+section that warns against exactly that ("a cross-reference that is wrong in the source is wrong after a
+renumber, and renumbering is the only step that would have hidden it"). They stay verbatim, and the
+recovery note ends §123 with the pair table that resolves them — added in the ledger commit rather than
+the recovery commit, because the re-measurement below is what showed the cost. Two of this lane's own
+committed sentences that pointed at the old working-copy numbering (§109's "numbered 109 and not 101"
+paragraph, §111's "uncommitted sections up to §108") carry a dated inline gloss for the same reason.
+
+**What a recovery commit costs.** `99e5b0c` is 618 insertions and **21 deletions**, and a ledger whose
+house rule is "append" should not let that pass without a name. All 21 are lines this lane wrote: 19 of
+them are §81/§84's residue text and §85–§100's `next` "(b) Carried: … #68 …" lines, each replaced by the
+merge lane's annotated version of the same sentence; the other two are the two sentences this unit
+glossed. No line authored by another lane is deleted, and no line of the stranded block is dropped — its
+562 lines are in the file, plus the note and §124. The three blank lines the working copy had lost at the
+§112/§113/§114 seams (this lane's own appending, again) were restored; three older headings (§64–§66, at
+lines 2830/2873/2917) sit without a preceding blank line in HEAD itself and are named rather than
+reformatted, because a formatting sweep of a 6.7k-line shared file is not part of a recovery. The one
+CRLF line became LF, which is the only byte-level exception to "verbatim" in the block.
+
+**Re-measured over the committed bytes.** `docs/STATUS.md` is now 91 numbered sections, max §123, no
+duplicate numbers; the working copy is byte-identical to the committed file (545,129 bytes, 0 CR, clean
+in `git status`), so the two planes cannot disagree about a ledger line again until somebody writes one
+without staging it. Every checker this lane owns was run against those bytes:
+
+```
+node scripts/check_ledger_citations.mjs            218 headings · 433 name:number tokens ·
+node scripts/check_ledger_citations.mjs --worktree 224 citation-shaped · 58 files · 0 offenders · RC 0
+  (the two planes print the same census — the recovery's own evidence, since before it they could not)
+node scripts/check_comment_citations.mjs           PASS — 65 comment-plane citations, 18 files
+node scripts/check_jsonb_reads.mjs                 RC 0 — every cited line names its table/column/key
+node scripts/check_falsifier_registry.mjs --db nexus_gate_270354_1790448961
+                                                   214 assertions · 61 rows · 40 witnessed (18.7%) · PASS
+node scripts/check_contract_drift.mjs              114 contract routes parsed · 106 served · corpus 354
+                                                   files; the CLIENT-ONLY / MISSING / UNDOCUMENTED
+                                                   sections are absent, which is how it prints an empty class
+infra/db/migrations/V7__share_links.sql            still untracked — #75 stands as written
+```
+
+**Two findings the recovery turned up, neither of which is about the block.** (1) A bare `§N` in these
+ledgers serves **three planes**: API_CONTRACT/AGENT_CONTRACT *sections* (§0–§20ish), AGENT_CONTRACT *spec
+items* (up to §171), and STATUS *sections*. Measured: 958 `§N` tokens across 112 numbers, of which 475
+would not resolve to a STATUS heading — `§131×4`, `§155×6`, `§156×6`, `§171×2` are spec items, `§8×86` is
+the contract's collections section, and `§32×1` is a sentence that says out loud that no §32 ever
+existed. So the obvious "every section reference must resolve" checker is **not** written: on this text
+it would red on 475 legitimate tokens, and the only fix is to make refs resolvable by convention. That
+convention already exists in the source: the two Java comments spell `STATUS §106`. Which is also how
+this unit found (2) those two comments now name a number that no longer exists — the section they mean is
+§121 — reported to the platform lane, not edited.
+
+**Not measured here.** §116's and §122's `mvn -o test 217/217`, §119's binding probe, §121's `tsc`/vitest
+runs and §123's whole gate suite are another lane's artifacts on another lane's build tree, and re-running
+them for a ledger entry would put this lane's write footprint on `services/platform/target/` and
+`nexus_test` for no witness this unit can cite. They are recorded as *not re-measured*, which is a
+different statement from "still true" and is written as the former.
+
+**The guard still missing, now with a name and a first regression case.** #68's class — "every numbered
+`## N.` at HEAD still present on disk, `exit 2` when `git show` cannot run" — is still unwritten, and
+§123's `next` (a) has now been overtaken twice by the same event. D116 writes it, and D115 is the test
+that comes free: the mechanism is this lane's own staging technique, so the arm that must redden is one
+where the committed file holds a heading the working copy lacks, and the arm that must stay green is the
+tree as it now stands. Until that check exists, every STATUS commit this lane makes re-opens the same
+hole, and the pair table above is the only thing standing between a reader and a number that moved.
+
+**Witnesses.** `wc -l` and `grep -c '^## '` over `git show 99e5b0c^{,^}:docs/STATUS.md`,
+`git diff --numstat`, `git diff --cached --numstat`, `git status --porcelain`, the §-plane census script
+(`d115_secplane.mjs`, Temp: 958 tokens / 112 numbers / 475 non-STATUS-heading over the 99e5b0c bytes — that
+census is *of* those bytes, since §124 and the pair table add tokens of their own and are the text this
+entry is committed with), `git grep -n 'STATUS §'`, `git ls-files infra/db/migrations`, and the five
+checkers above, each run against the committed tree. One line was deleted to make this entry's own pair
+table resolvable: §123's recovery note, which this lane wrote minutes earlier. No build, test suite, seed
+gate or database write was run for this unit, and no file outside `docs/DECISIONS.md` and `docs/STATUS.md`
+was touched.
+
