@@ -1,0 +1,41 @@
+##### ARM control
+2026-09-22 11:00:00+08|t|2026-09-22 11:00:00+08|160015
+t|confidence within 0..1 and a TTL that runs forward|0 bad confidence, 0 non-forward TTL, 0 marked stale inside the TTL they carry, against the dataset's own now = 2026-09-22 11:00:00+08
+t|OLD RULE (HEAD): horizon arm read current_date|21 distinct days, from 2026-09-22 (pinned base date, see README)
+t|OLD RULE (HEAD): TTL arm read the wall clock|0 bad confidence, 0 non-forward TTL, 0 stale-while-live
+t|slots: 21-day horizon with coverage every day|21 distinct days, first slot 2026-09-22 07:00:00+08 against the dataset's own now = 2026-09-22 11:00:00+08; the bounds are a day before it and 8 days after it, and that now is nexus.seed_base — stamped by data/seed/load.sh from the -- seed-base: line data/seed/generate.py writes
+0|4
+rc=0
+##### ARM truebase
+2026-09-22 11:00:00+08|t|2026-09-22 11:00:00+08|160015
+t|confidence within 0..1 and a TTL that runs forward|0 bad confidence, 0 non-forward TTL, 0 marked stale inside the TTL they carry, against the dataset's own now = 2026-09-22 11:00:00+08
+t|OLD RULE (HEAD): horizon arm read current_date|21 distinct days, from 2026-09-22 (pinned base date, see README)
+t|OLD RULE (HEAD): TTL arm read the wall clock|0 bad confidence, 0 non-forward TTL, 0 stale-while-live
+t|slots: 21-day horizon with coverage every day|21 distinct days, first slot 2026-09-22 07:00:00+08 against the dataset's own now = 2026-09-22 11:00:00+08; the bounds are a day before it and 8 days after it, and that now is nexus.seed_base — stamped by data/seed/load.sh from the -- seed-base: line data/seed/generate.py writes
+0|4
+rc=0
+##### ARM staleplant
+216fb47c-9e39-52f6-9a62-a02adba85739|merchant|price|2026-09-22 05:30:39+08|2026-09-22 11:30:39+08|t
+2026-09-22 11:00:00+08|t|2026-09-22 11:00:00+08|160015
+f|confidence within 0..1 and a TTL that runs forward|0 bad confidence, 0 non-forward TTL, 1 marked stale inside the TTL they carry, against the dataset's own now = 2026-09-22 11:00:00+08
+t|OLD RULE (HEAD): horizon arm read current_date|21 distinct days, from 2026-09-22 (pinned base date, see README)
+t|OLD RULE (HEAD): TTL arm read the wall clock|0 bad confidence, 0 non-forward TTL, 0 stale-while-live
+t|slots: 21-day horizon with coverage every day|21 distinct days, first slot 2026-09-22 07:00:00+08 against the dataset's own now = 2026-09-22 11:00:00+08; the bounds are a day before it and 8 days after it, and that now is nexus.seed_base — stamped by data/seed/load.sh from the -- seed-base: line data/seed/generate.py writes
+1|4
+rc=0
+##### ARM latebase
+2026-10-01 11:00:00+08|t|2026-10-01 11:00:00+08|160015
+t|confidence within 0..1 and a TTL that runs forward|0 bad confidence, 0 non-forward TTL, 0 marked stale inside the TTL they carry, against the dataset's own now = 2026-10-01 11:00:00+08
+t|OLD RULE (HEAD): horizon arm read current_date|21 distinct days, from 2026-09-22 (pinned base date, see README)
+t|OLD RULE (HEAD): TTL arm read the wall clock|0 bad confidence, 0 non-forward TTL, 0 stale-while-live
+f|slots: 21-day horizon with coverage every day|21 distinct days, first slot 2026-09-22 07:00:00+08 against the dataset's own now = 2026-10-01 11:00:00+08; the bounds are a day before it and 8 days after it, and that now is nexus.seed_base — stamped by data/seed/load.sh from the -- seed-base: line data/seed/generate.py writes
+1|4
+rc=0
+##### ARM earlybase
+2026-09-10 11:00:00+08|t|2026-09-10 11:00:00+08|160015
+f|confidence within 0..1 and a TTL that runs forward|0 bad confidence, 0 non-forward TTL, 72 marked stale inside the TTL they carry, against the dataset's own now = 2026-09-10 11:00:00+08
+t|OLD RULE (HEAD): horizon arm read current_date|21 distinct days, from 2026-09-22 (pinned base date, see README)
+t|OLD RULE (HEAD): TTL arm read the wall clock|0 bad confidence, 0 non-forward TTL, 0 stale-while-live
+f|slots: 21-day horizon with coverage every day|21 distinct days, first slot 2026-09-22 07:00:00+08 against the dataset's own now = 2026-09-10 11:00:00+08; the bounds are a day before it and 8 days after it, and that now is nexus.seed_base — stamped by data/seed/load.sh from the -- seed-base: line data/seed/generate.py writes
+2|4
+rc=0

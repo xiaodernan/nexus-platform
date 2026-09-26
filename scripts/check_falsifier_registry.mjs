@@ -8,19 +8,27 @@
  * (the verdict's RAISE would end the session, since the file sets ON_ERROR_STOP for itself), run them, read
  * the table back as one aggregated row so a name containing a newline cannot change the count.
  *
- * Usage: node scripts/check_falsifier_registry.mjs --db <loaded seed> [--container <name>]
+ * Usage: node scripts/check_falsifier_registry.mjs --db <loaded seed> [--container <name>] [--registry <path>]
  * Exit: 0 consistent · 1 a registry row is wrong · 2 not checkable. "Not checkable" is its own answer (D96):
  *       a reader that did not run is not a pass, and a registry validated against nothing is not green.
+ *
+ * D113 narrowed what a witness may be. 39 of the 61 rows then pointed at files under one machine's temporary
+ * directory, and the check passed only while that machine kept them: measured by running this same script with
+ * `TMPDIR` pointed at an empty directory, which reddened exactly those 39 rows and nothing else. A witness you
+ * cannot open from a clean checkout is an anecdote with a filename, so a path witness is now resolved inside the
+ * repository and must be a blob tracked at HEAD — the refusal says which of the three states it found (absent,
+ * present but untracked, tracked), because "the file is there and the registry is still wrong" is the D110 case.
+ * `--registry` exists so those refusals can be planted in a scratch copy instead of by editing the shipped file.
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
 const DB = arg('--db', null), CONTAINER = arg('--container', 'nexus-platform-postgres');
-const TMPROOT = process.env.TMPDIR || 'C:/Users/18414/AppData/Local/Temp';
+const REGISTRY = resolve(ROOT, arg('--registry', join('data', 'seed', 'falsifiers.tsv')));
 const notChecked = (why) => { console.error(`RESULT: NOT CHECKED — ${why}`); process.exit(2); };
 
 const lines = readFileSync(join(ROOT, 'data', 'seed', 'quality.sql'), 'utf8').replace(/\r\n/g, '\n').split('\n');
@@ -40,12 +48,31 @@ try {
   if (Number(count) !== live.size) notChecked(`qc declares ${count} rows, names came back as ${live.size} — lossy read`);
 } catch (e) { notChecked(`live assertion list unreadable: ${String(e.message).split('\n')[0]}`); }
 
-const rows = readFileSync(join(ROOT, 'data', 'seed', 'falsifiers.tsv'), 'utf8').split(/\r?\n/)
+if (!existsSync(REGISTRY)) notChecked(`registry file not found: ${REGISTRY}`);
+const rows = readFileSync(REGISTRY, 'utf8').split(/\r?\n/)
   .filter((l) => l.trim() && !l.startsWith('#'))
   .map((l) => l.split('\t'));
 
+// A path witness has to be readable by someone who only has the repository. Three states, told apart, because
+// the second one is the defect this machine has already been caught with once (D110).
+const fileState = (witness) => {
+  const abs = resolve(ROOT, witness);
+  const rel = relative(ROOT, abs);
+  if (witness.startsWith('/') || /^[A-Za-z]:/.test(witness) || rel === '' || rel.startsWith('..')) {
+    return { ok: false, why: 'names a path outside the repository' };
+  }
+  let type = null;
+  try { type = execFileSync('git', ['cat-file', '-t', `HEAD:${witness}`], { cwd: ROOT, encoding: 'utf8' }).trim(); }
+  catch { /* not tracked at HEAD */ }
+  if (type === 'blob') return { ok: true, kind: 'file' };
+  if (type) return { ok: false, why: `is tracked at HEAD as a ${type}, not a file` };
+  if (existsSync(abs)) return { ok: false, why: 'exists in the working copy but is not tracked at HEAD' };
+  return { ok: false, why: 'is nowhere — neither in the repository nor at HEAD' };
+};
+
 const bad = [];
 const keys = new Set();
+const kinds = { commit: 0, file: 0 };
 for (const r of rows) {
   const [check, unit, arm, witness] = r;
   if (r.length !== 4 || !check || !unit || !arm || !witness) { bad.push(`row is not check/unit/arm/witness: ${JSON.stringify(r)}`); continue; }
@@ -53,18 +80,25 @@ for (const r of rows) {
   const k = `${check}|${arm}`;
   if (keys.has(k)) bad.push(`duplicated (check, arm): ${k}`);
   keys.add(k);
-  const ok = /^[0-9a-f]{7,40}$/.test(witness)
-    ? (() => { try { execFileSync('git', ['cat-file', '-e', `${witness}^{commit}`], { cwd: ROOT }); return true; } catch { return false; } })()
-    : existsSync(join(TMPROOT, witness)) || existsSync(resolve(TMPROOT, witness));
-  if (!ok) bad.push(`witness cannot be opened (${witness}) for ${check}`);
+  if (/^[0-9a-f]{7,40}$/.test(witness)) {
+    try { execFileSync('git', ['cat-file', '-e', `${witness}^{commit}`], { cwd: ROOT }); kinds.commit++; }
+    catch { bad.push(`witness is not a commit that exists (${witness}) for ${check}`); }
+    continue;
+  }
+  const st = fileState(witness);
+  if (st.ok) kinds.file++;
+  else bad.push(`witness cannot be opened (${witness}: ${st.why}) for ${check}`);
 }
 
 for (const b of bad) console.error(`  registry problem: ${b}`);
 const covered = new Set(rows.map((r) => r[0]).filter((c) => live.has(c)));
 console.log(`  gate assertions   ${live.size}`);
+console.log(`  registry read     ${relative(ROOT, REGISTRY).split('\\').join('/')} (${rows.length} rows)`);
 console.log(`  registry rows     ${rows.length} (check, arm) pairs witnessed`);
+console.log(`  witness kinds     ${kinds.commit} commit(s) · ${kinds.file} file(s) tracked at HEAD`
+  + ' — nothing outside the repository counts, which is what makes the count reproducible');
 console.log(`  assertions with a machine-checkable witness: ${covered.size} of ${live.size}`
   + ` (${(100 * covered.size / live.size).toFixed(1)}%) — grammar: a registry row naming the check,`
-  + ' an arm that reddened it, and an artifact that still opens');
+  + ' an arm that reddened it, and an artifact that is in the repository and still opens');
 if (bad.length) { console.log('\nRESULT: FAIL — the registry is inconsistent with the gate'); process.exit(1); }
 console.log('\nRESULT: PASS — every registry row names a live assertion, an arm, and an openable witness');

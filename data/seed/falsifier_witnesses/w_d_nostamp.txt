@@ -1,0 +1,379 @@
+
+== A. per-table row counts ==
+
+table|rows
+availability_slots|   32492
+business_hours|    5472
+categories|      77
+chunks|    2118
+collections|       4
+documents|    1040
+facts|    5688
+favorites|      18
+locations|     684
+merchant_categories|    1485
+merchants|     520
+merchant_users|       3
+moderation_cases|     544
+offering_relations|    1162
+offerings|    5534
+permission_grants|      36
+resource_pools|     452
+reviews|   11000
+review_summaries|       0
+tenants|       1
+user_identities|       5
+user_preferences|       7
+users|       5
+(23 rows)
+
+== merchants by district (primary location) ==
+district|merchants|avg_rating|published
+Sha Tin|201|3.85|179
+Tai Wai|133|3.81|120
+Ma On Shan|27|3.94|26
+Tsim Sha Tsui|22|3.76|21
+Kwun Tong|19|3.58|16
+Mong Kok|18|3.58|17
+Wan Chai|15|3.91|13
+Tsuen Wan|14|3.96|12
+Causeway Bay|14|3.83|13
+Central|12|3.93|12
+Kowloon Bay|12|3.61|12
+Sheung Shui|11|4.01|9
+Tai Po|10|4.14|9
+Tuen Mun|6|3.71|5
+Stanley|6|3.72|6
+(15 rows)
+
+== merchant rating histogram (spec §55: not everything is 5.0) ==
+bucket|band|merchants
+4|1.5-2.0|1
+5|2.0-2.5|6
+6|2.5-3.0|37
+7|3.0-3.5|99
+8|3.5-4.0|147
+9|4.0-4.5|185
+10|4.5-5.0|44
+11|5.0-5.5|1
+(8 rows)
+
+== review star distribution ==
+stars|reviews|pct
+5.0|2538|23.1
+4.9|300|2.7
+4.8|283|2.6
+4.7|294|2.7
+4.6|323|2.9
+4.5|297|2.7
+4.4|327|3.0
+4.3|337|3.1
+4.2|352|3.2
+4.1|354|3.2
+4.0|344|3.1
+3.9|320|2.9
+3.8|345|3.1
+3.7|333|3.0
+3.6|328|3.0
+3.5|310|2.8
+3.4|344|3.1
+3.3|312|2.8
+3.2|283|2.6
+3.1|254|2.3
+3.0|250|2.3
+2.9|239|2.2
+2.8|230|2.1
+2.7|205|1.9
+2.6|204|1.9
+2.5|163|1.5
+2.4|147|1.3
+2.3|126|1.1
+2.2|106|1.0
+2.1|96|0.9
+2.0|109|1.0
+1.9|79|0.7
+1.8|67|0.6
+1.7|66|0.6
+1.6|66|0.6
+1.5|53|0.5
+1.4|43|0.4
+1.3|26|0.2
+1.2|32|0.3
+1.1|29|0.3
+1.0|86|0.8
+(41 rows)
+
+== review language mix (target ~60% zh-HK / ~30% en / ~10% code-switched) ==
+language|count|pct
+zh-HK|7601|69.1
+en|3399|30.9
+(2 rows)
+
+== offering price sanity ==
+min_hkd|max_hkd|avg_hkd|null_price|priced
+6.00|5230.00|320|0|5170
+(1 row)
+
+== availability horizon (slots per day, next 21 days) ==
+day|slots|pools|capacity|booked
+2026-09-22|1389|404|7546|3407
+2026-09-23|1372|392|7416|3310
+2026-09-24|1428|418|7625|3531
+2026-09-25|1777|427|9741|2106
+2026-09-26|1762|424|9518|2058
+2026-09-27|1702|403|9332|1995
+2026-09-28|1383|386|7448|3375
+2026-09-29|1421|399|7689|3405
+2026-09-30|1382|394|7346|3324
+2026-10-01|1459|416|7949|3630
+2026-10-02|1749|428|9610|2074
+2026-10-03|1756|429|9481|2016
+2026-10-04|1699|411|9170|1976
+2026-10-05|1369|395|7412|3289
+2026-10-06|1441|408|7828|3570
+2026-10-07|1347|386|7340|3258
+2026-10-08|1485|409|8049|3649
+2026-10-09|1771|429|9563|2035
+2026-10-10|1747|425|9508|2186
+2026-10-11|1692|405|9167|1997
+2026-10-12|1361|398|7253|3249
+(21 rows)
+
+== facts freshness (AGENT_CONTRACT §5 TTLs) ==
+attribute|facts|marked_stale|past_expiry|min_ttl|max_ttl
+address|684|0|0|30 days|30 days
+capacity|157|0|157|1 day|1 day
+cuisine|520|0|0|30 days|30 days
+opening_hours|520|0|520|1 day|1 day
+price|2080|72|2080|06:00:00|06:00:00
+rating|1727|0|1727|1 day|1 day
+(6 rows)
+
+== RAG chunks awaiting embedding (embedding NULL + embed_model=pending) ==
+embed_model|embedding_null|chunks|avg_tokens|min_tokens|max_tokens
+pending|t|2118|268|42|400
+(1 row)
+
+== B. assertions ==
+
+status|check|detail
+  FAIL |confidence within 0..1 and a TTL that runs forward  |0 bad confidence, 0 non-forward TTL, 0 marked stale inside the TTL they carry, against the dataset's own now = NO BASE STAMPED — re-run data/seed/load.sh with SEED_ANCHOR=1
+  FAIL |slots: 21-day horizon with coverage every day       |21 distinct days, first slot 2026-09-22 07:00:00+08 against the dataset's own now = NO BASE STAMPED — re-run data/seed/load.sh with SEED_ANCHOR=1; the bounds are a day before it and 8 days after it, and that now is nexus.seed_base — stamped by data/seed/load.sh from the -- seed-base: line data/seed/generate.py writes
+  PASS |a bounded string column is answered by name         |40 of 233 string column(s) are bounded by the data (window: <=12 distinct, >=20 rows, <=1 value per 4 rows), 3 of them by a door list and 3 by the polymorphic registry; every one of them answered above
+  PASS |a census that folds case reports both readings and w|1 column(s) measured twice: users.email (5 row(s), 5 distinct under citext, 5 distinct under ::text, 0 row(s) carrying an uppercase letter) — offenders: none
+  PASS |a CHECK-bounded column is a door vocabulary too     |1 text column(s) the schema bounds to a literal list, namely share_links.subject_type [4 label(s)], and each of them agrees label for label with the transcribed door list or this row is red; 8 of 9 catalogued column(s) rest on the door alone: agent_runs.status (no rows), collections.kind, conversations.status (no rows), merchant_users.status, moderation_cases.status, offerings.kind, offerings.status, reservations.status (no rows)
+  PASS |a door vocabulary admits every value the data carrie|5 of 9 catalogued column(s) carry rows; 11 distinct value(s) measured, 0 NULL group(s), none of them outside the list its door accepts; the 4 catalogued column(s) no row exercises are named in the detail of the CHECK row
+  PASS |a door vocabulary names a column the schema has     |9 column(s) transcribed from a door list, all of them present in pg_attribute
+  PASS |a join-one-type waiver is only true while the table |no waiver of that kind is registered
+  PASS |an arm claimed seeded is a type the data still carri|9 seeded arm(s), each carrying rows (facts.location=684, facts.merchant=2080, facts.offering=2924, favorites.collection=1, favorites.guide=1, favorites.merchant=12, favorites.offering=4, moderation_cases.review=544, permission_grants.merchant_user=36)
+  PASS |an armed type resolves in a table the schema has    |9 distinct referent table(s) measured present for 15 armed type(s)
+  PASS |an arm the seed never files is waived by name and by|15 declared arm(s): 9 exercised by the shipped seed, 6 idle and waived, 0 idle and unwaived: facts.location=684, facts.merchant=2080, facts.offering=2924, favorites.collection=1, favorites.guide=1, favorites.merchant=12, favorites.offering=4, moderation_cases.review=544, permission_grants.merchant_user=36 | facts.review (writer none), moderation_cases.document (writer none), moderation_cases.merchant (writer none), moderation_cases.message (writer none), permission_grants.api_key (writer build), permission_grants.user (writer build) — offenders: none
+  PASS |an estimated price is facted as inferred, not as mer|0 estimate(s) claiming another provenance
+  PASS |a no-referent waiver still names a table the schema |3 waiver(s) of that kind; each candidate table measured absent this run
+  PASS |a probe arm is a declared type and every armed type |15 arm(s) and 15 armed vocabulary row(s); the two lists name each other exactly
+  PASS |a seeded polymorphic vocabulary is bounded or probed|4 of 12 pair(s) carry seeded rows; 1 is bounded by a CHECK; each seeded one is resolved by a probe here; pairs with no rows are written only by the application, which this file cannot see
+  PASS |a served view answers every column it exposes       |13 column(s) across 2 view(s) the app reads; 0 column(s) left unanswered by this block: none
+  PASS |a text[] value that appears on exactly one row is na|text[] column merchants.tags = 520 row(s), 2428 elements, 100 distinct, rarest on 2 row(s), commonest on 520 — repetition holds, so these are vocabularies rather than per-row free text | below §71's row floor: api_keys.scopes (0 row(s)), campaigns.channel (0 row(s)), eval_cases.tags (0 row(s)), external_principals.scopes (0 row(s)), tenants.locales (1 row(s))
+  PASS |at least 10 districts covered                       |15 districts
+  PASS |a verification badge stays unresolvable only while i|all 4 answer(s) agree with what the data supports (never-resolvable/no-evidence-table): 3745 flagged rows carry a badge that cannot point at an order or a reservation, and this row reddens if either becomes reachable — offenders: none
+  PASS |a view answer names the kind the census derives     |13 answer(s) over 13 census column(s), and the kind each one must name is derived above rather than chosen here: const 7, norows 5, varying 1 — offenders: none
+  PASS |a view kind is exercised or exempted                |5 kind(s) in the vocabulary, 3 of them actually derived by the census: allnull = exempted with a reason, const = 7 column(s), norows = 5 column(s), sparse = exempted with a reason, varying = 1 column(s) — an exemption is only honest while its cell stays empty, so every one re-reads the derivation above; offenders: none
+  PASS |a vocabulary answer is still an answer              |44 answer(s): 5 door, 4 poly, 34 none, 1 below the window — and an answer is only worth what it says while the mechanism it names still holds, so each re-reads its own assumption here: every answer still applies
+  PASS |bookable offerings resolve to a pool                |0 bookable offering(s) with no merchant pool; 6 bound to a specific offering
+  PASS |category_primary is one of the merchant's own catego|0 merchant(s) with a label outside their own categories
+  PASS |category tree: 10 roots, all leaves have a parent   |roots=10 total=77
+  PASS |chunks: embedding NULL and embed_model=pending      |0 chunk(s) already embedded or mislabelled
+  PASS |chunks: ordinal contiguous per document             |
+  PASS |chunks: token size inside the §7 window             |0 chunk(s) outside the bounds (ceiling 400; interior of a split doc >= 200; a doc tail >= 40 because that is the shortest authored section in the seed scripts)
+  PASS |collections/guides reference live merchants         |0 dangling guide item(s)
+  PASS |coordinates inside the HK bbox (D3 geo prefilter)   |0 point(s) outside Hong Kong
+  PASS |data_origin = demo everywhere the column exists     |0 merchants + 0 reviews + 0 collections not marked
+  PASS |demo identities exist for /api/v1/auth/demo         |consumer=4 platform_admin=1 owner_links=3
+  PASS |density: >= 300 merchants within 3km of Sha Tin     |334 merchants inside 3km
+  PASS |disclaimer text is inside every menu document       |0 document(s) missing the disclaimer
+  PASS |documents: content_hash matches the raw_text it carr|0 thin document(s); menus must feed RAG with real dish/price/session text
+  PASS |emails/domains are example.hk only                  |0 merchant + 0 user email(s)
+  PASS |every array column is answered for what bounds its e|11 array column(s) measured (6 text[], 5 jsonb holding arrays), each answered: api_keys.scopes = never-populated, campaigns.channel = never-populated, collections.items = payload-shape, eval_cases.tags = never-populated, external_principals.scopes = never-populated, merchants.images = payload-shape, merchants.tags = nothing-bounds-it, offerings.images = payload-shape, offerings.options = payload-shape, reviews.photos = never-populated, tenants.locales = column-default — elements: collections.items 38/25, merchants.images 520/10, offerings.images 5534/10, offerings.options 4409/3, merchants.tags 2428/100, tenants.locales 3/3 — offenders: none
+  PASS |every boolean that claims a verification is answered|4 verification-shaped boolean(s): reviews.verified_purchase true on 2456 of 11000, evidence orders holds 0 row(s), 0 link column(s) -> never-resolvable | reviews.verified_reservation true on 1289 of 11000, evidence reservations holds 0 row(s), 0 link column(s) -> never-resolvable | merchants.ownership_verified true on 193 of 520, evidence - holds 0 row(s), 0 link column(s) -> no-evidence-table | users.marketing_opt_in true on 1 of 5, evidence - holds 0 row(s), 0 link column(s) -> no-evidence-table — offenders: none
+  PASS |every column that cannot vary is answered for why it|76 numeric/date/timestamp column(s) counted: 52 varying, 18 constant, 2 constant-with-nulls, 4 NULL everywhere; 24 answered: chunks.embedded_at [never-written], moderation_cases.resolved_at [all-open-queue], permission_grants.expires_at [never-written], users.deleted_at [never-written], availability_slots.updated_at [single-instant-pinned], business_hours.updated_at [single-instant-pinned], chunks.created_at [single-instant-pinned], collections.created_at [history-date], collections.updated_at [single-instant-pinned], documents.updated_at [single-instant-pinned], facts.updated_at [generation-clock], locations.updated_at [single-instant-pinned], merchants.updated_at [single-instant-pinned], offerings.updated_at [single-instant-pinned], tenants.created_at [history-date], tenants.updated_at [single-instant-pinned], user_identities.created_at [history-date], user_identities.verified_at [history-date], user_preferences.created_at [history-date], user_preferences.expires_at [uniform-by-design], user_preferences.updated_at [history-date], users.updated_at [single-instant-pinned], offerings.min_party_size [uniform-by-design], offerings.stock_updated_at [single-instant-pinned] — offenders: none
+  PASS |every grant names an operator that exists           |0 unresolvable granted_by of 36 grant(s) carrying an operator (0 carry none), filed by 3 distinct operator(s); granted_by has no FK in the schema
+  PASS |every jsonb key the build reads is answered for what|17 read(s) measured against the shipped payloads: 15 resolve to nothing, 2 carry a key; dead-reader=12, empty-by-guard=3, never-read=1, reachable=1; on rows: offerings.attributes.import_job on 0 of 5534 row(s), documents.metadata.extractor on 0 of 1040 row(s), documents.metadata.note on 0 of 1040 row(s), documents.metadata.degraded on 0 of 1040 row(s), documents.metadata.proposals on 0 of 1040 row(s), collections.seo.city on 0 of 4 row(s), collections.seo.category on 0 of 4 row(s), collections.seo.cover on 0 of 4 row(s), collections.seo.generated_by on 0 of 4 row(s), collections.seo.reviewed_by_human on 0 of 4 row(s), collections.seo.noindex on 4 of 4 row(s), collections.seo.curated_by on 0 of 4 row(s), collections.seo.model on 0 of 4 row(s), tenants.config.currency_default on 1 of 1 row(s) — offenders: none
+  PASS |every jsonb key whose name claims an axis is answere|20 (column, key) pair(s) measured across 12 jsonb column(s): data_origin=12, demo=3, demo_login_role=1, synthetic=4; 20 answered by the axis list, each by name — offenders: none
+  PASS |every jsonb payload that a key read cannot reach is |22 jsonb column(s) carry a payload here: 17 reachable by a key read, array-only=5; payload rows by type: 45686 object, 22592 array, 0 string (0 of them text that looks like JSON) — key navigation reaches 45686 of 68278 row(s); offenders: none
+  PASS |every probe family resolves at least one armed type |facts ships 5688 row(s) across 3 of 4 arm(s), favorites ships 18 row(s) across 4 of 4 arm(s), moderation_cases ships 544 row(s) across 1 of 4 arm(s), permission_grants ships 36 row(s) across 1 of 3 arm(s) — a family whose seed rows all vanish would resolve nothing, and its orphan checks would disappear from the ledger rather than fail; this row is what makes that visible
+  PASS |every reference the seed writes is probed or explain|6 of 26 carry values, each registered — this row cannot pass on an empty census
+  PASS |every seeded owner membership has grants            |0 silent membership(s)
+  PASS |every source_uri is demo:// (trust layer provenance)|0 docs + 0 facts not demo://
+  PASS |everything hangs off the single demo tenant         |0 row(s) outside tenant 00000000-0000-0000-0000-000000000001
+  PASS |every waiting review has exactly one open case      |0 waiting review(s) without exactly one case, 0 open case(s) over nothing waiting
+  PASS |facts all carry expires_at (TTL per §5)             |0 timeless fact(s)
+  PASS |facts.source is a documented provenance (§2)        |0 fact(s) with an undeclared source
+  PASS |favourites point at a renderable row                |0 unreachable of 18 favourite(s)
+  PASS |favourite subject_type is one the API can save      |0 unsavable row(s); the door accepts merchant|offering|guide|collection
+  PASS |fk: agent_profiles.merchant_id -> merchants.id      |0 orphan row(s)
+  PASS |fk: agent_runs.tenant_id -> tenants.id              |0 orphan row(s)
+  PASS |fk: api_keys.merchant_id -> merchants.id            |0 orphan row(s)
+  PASS |fk: audit_logs.tenant_id -> tenants.id              |0 orphan row(s)
+  PASS |fk: availability_slots.merchant_id -> merchants.id  |0 orphan row(s)
+  PASS |fk: availability_slots.pool_id -> resource_pools.id |0 orphan row(s)
+  PASS |fk: business_hours.location_id -> locations.id      |0 orphan row(s)
+  PASS |fk: business_hours.merchant_id -> merchants.id      |0 orphan row(s)
+  PASS |fk: campaigns.approved_by -> users.id               |0 orphan row(s)
+  PASS |fk: campaigns.merchant_id -> merchants.id           |0 orphan row(s)
+  PASS |fk: campaigns.tenant_id -> tenants.id               |0 orphan row(s)
+  PASS |fk: cart_items.offering_id -> offerings.id          |0 orphan row(s)
+  PASS |fk: carts.merchant_id -> merchants.id               |0 orphan row(s)
+  PASS |fk: carts.tenant_id -> tenants.id                   |0 orphan row(s)
+  PASS |fk: carts.user_id -> users.id                       |0 orphan row(s)
+  PASS |fk: categories.parent_id -> categories.id           |0 orphan row(s)
+  PASS |fk: categories.tenant_id -> tenants.id              |0 orphan row(s)
+  PASS |fk: chunks.document_id -> documents.id              |0 orphan row(s)
+  PASS |fk: chunks.merchant_id -> merchants.id              |0 orphan row(s)
+  PASS |fk: chunks.tenant_id -> tenants.id                  |0 orphan row(s)
+  PASS |fk: collections.author_id -> users.id               |0 orphan row(s)
+  PASS |fk: collections.tenant_id -> tenants.id             |0 orphan row(s)
+  PASS |fk: conversations.merchant_id -> merchants.id       |0 orphan row(s)
+  PASS |fk: conversations.tenant_id -> tenants.id           |0 orphan row(s)
+  PASS |fk: conversations.user_id -> users.id               |0 orphan row(s)
+  PASS |fk: coupons.created_by -> users.id                  |0 orphan row(s)
+  PASS |fk: coupons.merchant_id -> merchants.id             |0 orphan row(s)
+  PASS |fk: coupons.published_by -> users.id                |0 orphan row(s)
+  PASS |fk: coupons.tenant_id -> tenants.id                 |0 orphan row(s)
+  PASS |fk: deletion_requests.user_id -> users.id           |0 orphan row(s)
+  PASS |fk: documents.merchant_id -> merchants.id           |0 orphan row(s)
+  PASS |fk: documents.offering_id -> offerings.id           |0 orphan row(s)
+  PASS |fk: documents.tenant_id -> tenants.id               |0 orphan row(s)
+  PASS |fk: events.tenant_id -> tenants.id                  |0 orphan row(s)
+  PASS |fk: external_principals.linked_user_id -> users.id  |0 orphan row(s)
+  PASS |fk: external_principals.merchant_id -> merchants.id |0 orphan row(s)
+  PASS |fk: facts.merchant_id -> merchants.id               |0 orphan row(s)
+  PASS |fk: favorites.user_id -> users.id                   |0 orphan row(s)
+  PASS |fk: feedback_events.tenant_id -> tenants.id         |0 orphan row(s)
+  PASS |fk: feedback_events.user_id -> users.id             |0 orphan row(s)
+  PASS |fk: handoffs.merchant_id -> merchants.id            |0 orphan row(s)
+  PASS |fk: locations.merchant_id -> merchants.id           |0 orphan row(s)
+  PASS |fk: locations.tenant_id -> tenants.id               |0 orphan row(s)
+  PASS |fk: merchant_categories.category_id -> categories.id|0 orphan row(s)
+  PASS |fk: merchant_categories.merchant_id -> merchants.id |0 orphan row(s)
+  PASS |fk: merchants.tenant_id -> tenants.id               |0 orphan row(s)
+  PASS |fk: merchant_users.merchant_id -> merchants.id      |0 orphan row(s)
+  PASS |fk: merchant_users.user_id -> users.id              |0 orphan row(s)
+  PASS |fk: moderation_cases.assigned_to -> users.id        |0 orphan row(s)
+  PASS |fk: moderation_cases.tenant_id -> tenants.id        |0 orphan row(s)
+  PASS |fk: notifications.merchant_id -> merchants.id       |0 orphan row(s)
+  PASS |fk: notifications.tenant_id -> tenants.id           |0 orphan row(s)
+  PASS |fk: notifications.user_id -> users.id               |0 orphan row(s)
+  PASS |fk: offering_relations.from_offering -> offerings.id|0 orphan row(s)
+  PASS |fk: offering_relations.to_offering -> offerings.id  |0 orphan row(s)
+  PASS |fk: offerings.category_id -> categories.id          |0 orphan row(s)
+  PASS |fk: offerings.merchant_id -> merchants.id           |0 orphan row(s)
+  PASS |fk: offerings.tenant_id -> tenants.id               |0 orphan row(s)
+  PASS |fk: order_items.offering_id -> offerings.id         |0 orphan row(s)
+  PASS |fk: orders.merchant_id -> merchants.id              |0 orphan row(s)
+  PASS |fk: orders.tenant_id -> tenants.id                  |0 orphan row(s)
+  PASS |fk: orders.user_id -> users.id                      |0 orphan row(s)
+  PASS |fk: permission_grants.merchant_id -> merchants.id   |0 orphan row(s)
+  PASS |fk: recommendation_sets.tenant_id -> tenants.id     |0 orphan row(s)
+  PASS |fk: recommendation_sets.user_id -> users.id         |0 orphan row(s)
+  PASS |fk: referrals.invitee_id -> users.id                |0 orphan row(s)
+  PASS |fk: referrals.tenant_id -> tenants.id               |0 orphan row(s)
+  PASS |fk: refunds.approved_by -> users.id                 |0 orphan row(s)
+  PASS |fk: reservations.merchant_id -> merchants.id        |0 orphan row(s)
+  PASS |fk: reservations.offering_id -> offerings.id        |0 orphan row(s)
+  PASS |fk: reservations.slot_id -> availability_slots.id   |0 orphan row(s)
+  PASS |fk: reservations.tenant_id -> tenants.id            |0 orphan row(s)
+  PASS |fk: reservations.user_id -> users.id                |0 orphan row(s)
+  PASS |fk: resource_pools.merchant_id -> merchants.id      |0 orphan row(s)
+  PASS |fk: resource_pools.offering_id -> offerings.id      |0 orphan row(s)
+  PASS |fk: reviews.merchant_id -> merchants.id             |0 orphan row(s)
+  PASS |fk: reviews.offering_id -> offerings.id             |0 orphan row(s)
+  PASS |fk: reviews.tenant_id -> tenants.id                 |0 orphan row(s)
+  PASS |fk: review_summaries.merchant_id -> merchants.id    |0 orphan row(s)
+  PASS |fk: reviews.user_id -> users.id                     |0 orphan row(s)
+  PASS |fk: saved_searches.user_id -> users.id              |0 orphan row(s)
+  PASS |fk: seo_pages.reviewed_by -> users.id               |0 orphan row(s)
+  PASS |fk: seo_pages.tenant_id -> tenants.id               |0 orphan row(s)
+  PASS |fk: share_links.created_by -> users.id              |0 orphan row(s)
+  PASS |fk: share_links.tenant_id -> tenants.id             |0 orphan row(s)
+  PASS |fk: subscriptions.merchant_id -> merchants.id       |0 orphan row(s)
+  PASS |fk: trust_signals.merchant_id -> merchants.id       |0 orphan row(s)
+  PASS |fk: user_identities.tenant_id -> tenants.id         |0 orphan row(s)
+  PASS |fk: user_identities.user_id -> users.id             |0 orphan row(s)
+  PASS |fk: user_preferences.user_id -> users.id            |0 orphan row(s)
+  PASS |fk: users.tenant_id -> tenants.id                   |0 orphan row(s)
+  PASS |hours facts respect the 24h TTL                     |0 hours fact(s) with a wrong TTL
+  PASS |human grants carry no deadline                      |0 lapsing human grant(s)
+  PASS |images are local placeholders, never hotlinks       |0 external image URL(s)
+  PASS |jsonb data_origin marker (offerings/documents/chunks|0 offerings + 0 docs + 0 chunks unmarked
+  PASS |language mix ~60% zh-HK / rest en (§111)            |zh-HK share=69%
+  PASS |merchant has >=1 offering                           |0 merchant(s) with no offering
+  PASS |merchant has a location                             |0 merchant(s) with 0 locations
+  PASS |merchant has a menu document (RAG feed)             |0 published merchants without menu text
+  PASS |merchant has a primary location                     |0 merchant(s) without exactly one primary branch
+  PASS |merchants map to >=1 leaf category                  |0 uncategorised merchant(s)
+  PASS |merchants.rating_agg matches its reviews            |0 drifted aggregate(s)
+  PASS |merchants.review_count matches its reviews          |0 miscounted merchant(s)
+  PASS |merchant_user grants reach a membership             |0 unreachable of 36
+  PASS |no case points at a review consumers can already rea|0 case(s) whose subject is already decided
+  PASS |no merchant name collides with a real HK chain      |0 collisions against 47 real brands
+  PASS |no traffic outside the seeded tables                |29 referencing table(s) all empty
+  PASS |no unlisted type rides in the seeded data           |9 type(s) present in the data, each named by the vocabulary row
+  PASS |offering belongs to a merchant                      |0 orphan offering(s)
+  PASS |offerings.price_amount in (0, 20000)                |0 bad price(s); max=5230.00
+  PASS |one fact per (subject, attribute)                   |0 competing row(s); the reader would have to guess which is true
+  PASS |orphan: facts.location                              |0 unresolvable of 684 fact(s)
+  PASS |orphan: facts.merchant                              |0 unresolvable of 2080 fact(s)
+  PASS |orphan: facts.offering                              |0 unresolvable of 2924 fact(s)
+  PASS |orphan: favorites.collection                        |0 unresolvable of 1 row(s)
+  PASS |orphan: favorites.guide                             |0 unresolvable of 1 row(s)
+  PASS |orphan: favorites.merchant                          |0 unresolvable of 12 row(s)
+  PASS |orphan: favorites.offering                          |0 unresolvable of 4 row(s)
+  PASS |orphan: moderation_cases.review                     |0 unresolvable of 544 case(s)
+  PASS |orphan: permission_grants.merchant_user             |0 unresolvable subject_id of 36 grant(s)
+  PASS |owner can administer workspace                      |0 active owner/admin membership(s) lacking admin_members, of 3
+  PASS |password_hash is the placeholder, never a real hash |0 user(s) with a non-placeholder hash
+  PASS |phones stay in the reserved 2xxx-0000 demo range    |0 merchant(s) with a non-demo phone
+  PASS |popularity_score within [0,1]                       |0 merchant(s) with missing/zero popularity
+  PASS |price facts respect the 6h TTL                      |0 price fact(s) with a wrong TTL
+  PASS |price_min <= price_max                              |0 inverted band(s)
+  PASS |price_updated_at present for priced offerings       |0 priced offering(s) with no price provenance timestamp
+  PASS |rating confidence tracks the sample size (§19 hedge |0 rating fact(s) whose confidence ignores n
+  PASS |rating: every reviewed subject has exactly one ratin|0 reviewed subject(s) without one fact, 0 rating fact(s) over no published review
+  PASS |rating fact agrees with the rendered aggregate colum|0 merchant and 0 offering fact(s) off their own column
+  PASS |rating fact is observed after the newest review it a|0 rating fact(s) with an impossible evidence window
+  PASS |rating fact restates the recomputed mean            |0 rating fact(s) disagreeing with their reviews
+  PASS |rating facts respect the 24h TTL and cite their own |0 mis-shaped rating fact(s)
+  PASS |ratings realistically spread (not all 5.0)          |distinct stars=41, 5-star share=23%, weak merchants=217
+  PASS |review bodies are not lorem/placeholder             |0 placeholder body(ies)
+  PASS |review body length > 20 chars                       |0 short body(ies); min=32 avg=108
+  PASS |reviews carry aspect scores for weak-aspect demos   |0 review(s) without aspects jsonb
+  PASS |reviews cite concrete aspects (§55 inputs)          |6019 of 11000 reviews name an aspect
+  PASS |reviews.rating 1..5                                 |0 out-of-range review(s)
+  PASS |review_summaries stays empty                        |0 rows (must be 0 until the AI job runs)
+  PASS |SEO pages are noindex (demo must not rank, §155)    |0 merchant page(s) + 0 collection page(s) without an explicit noindex
+  PASS |slots: capacity_left within capacity_total          |0 over-booked slot(s)
+  PASS |slots: every slot has a pool in the same merchant   |0 cross-merchant slot(s)
+  PASS |slots marked source=demo (never real availability)  |0 slot(s) not marked demo
+  PASS |some facts are deliberately stale (UI must show 已過時)|stale=72 fresh=5616
+  PASS |the §19 provenance axis and the §109 stamp axis stay|5688 fact(s): source = merchant=3197, observed=1800, demo=520, inferred=171; value->>data_origin on 5004 row(s), 5004 of them say demo; the two axes disagree on 4484 row(s) BY DESIGN (generate.py stamps the payload and passes provenance positionally, e.g. line 900) — offenders: none
+  PASS |the arm registry agrees with the probed-pair counts |facts=4, favorites=4, moderation_cases=4, permission_grants=3 as declared, and the registry counts the same
+  PASS |the columns stamped from the generation clock are ex|1 column(s) hold a single value inside the window the loader recorded for itself (±10 min at each end), which is [2026-09-26 08:08:40+08 .. 2026-09-26 08:22:07+08]: facts.updated_at = 2026-09-26 08:09:45.77236+08 (66 s after the window opened); pinned base date for comparison: 2026-09-22 from availability_slots over 21 days — offenders: none
+  PASS |the elements of an object-array column all carry the|collections.items keysets=1 [note, subject_id, subject_type] over 38 element(s), merchants.images keysets=1 [alt, credit, url] over 520 element(s), offerings.images keysets=1 [alt, credit, url] over 5534 element(s), offerings.options keysets=1 [name, values] over 4409 element(s), reviews.photos keysets=0 [-] over 0 element(s) — offenders: none
+  PASS |the pairs declared probed are pairs the schema has  |0 stale of 4 declared (facts, favorites, moderation_cases, permission_grants)
+  PASS |the polymorphic-pair census reads the catalogue     |12 (type, key) pair(s) measured from pg_attribute, over every table holding a *_type beside its *_id sibling; the floor this row asserts is 8 — two thirds of the count measured when D69 wrote it, and the detail prints the measured number, never a remembered one
+  PASS |the queue has something in it (an empty inbox is not|544 open review case(s)
+  PASS |the reference census reads the catalogue            |26 unconstrained reference column(s) measured from pg_attribute, over two naming shapes (*_id, and uuid *_by — D72); the floor this row asserts is 17, two thirds of the 25 measured when D66 wrote it, and what prints here is the measured count, not a remembered one
+  PASS |the registry names no column the schema has lost    |0 stale of 6 registered (not-a-reference 1, probe 5)
+  PASS |the string census declares a reading for every type |233 string column(s) over 2 base type(s), declared under 2 reading rule(s): citext 1 column(s), read two, text 232 column(s), read one — offenders: none
+  PASS |the synthetic stamp says demo, or true, on every row|19 stamped (column, key) pair(s) over 12 column(s) — the hand list this replaces named 3 — carrying 46792 marker(s) in all; coverage per column: every stamped column is complete; values: each key says demo, or true, wherever it appears — offenders: none
+  PASS |traffic sweep reaches the whole closure, not a hand |29 of 52 closure table(s) lie outside the anchor and were counted (the hand list this replaces named 4)
+  PASS |volume: chunks > 0                                  |2118 chunks
+  PASS |volume: documents >= merchants                      |1040 docs for 520 merchants
+  PASS |volume: facts > 0                                   |5688 facts
+  PASS |volume: merchants                                   |520 rows, gate >= 500
+  PASS |volume: offerings                                   |5534 rows, gate >= 5000
+  PASS |volume: reviews                                     |11000 rows, gate >= 10000
+(216 rows)
+ERROR:  quality gate: 2 check(s) failed:\n    - confidence within 0..1 and a TTL that runs forward
+    - slots: 21-day horizon with coverage every day
+CONTEXT:  PL/pgSQL function inline_code_block line 6 at RAISE
