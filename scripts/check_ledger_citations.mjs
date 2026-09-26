@@ -147,11 +147,30 @@ function citeTokens(line) {
   return out;
 }
 
+/**
+ * The text of one ledger, or `null` with a reason when it cannot be read.
+ *
+ * The `git show` half used to be a bare `execFileSync`, which meant a sandbox that refuses to spawn `git`
+ * (this machine's does, with `EBUSY`) took the whole checker down as an uncaught `spawnSync` stack trace —
+ * a tool reporting a crash where it owed a verdict. Reading a ledger is not the thing being checked, so a
+ * failure here is now data the report carries, not an exception it throws.
+ */
 function ledgerText(ledger, committed) {
   if (committed) {
-    return execFileSync('git', ['show', `HEAD:${ledger}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 });
+    try {
+      return {
+        text: execFileSync('git', ['show', `HEAD:${ledger}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 }),
+        reason: null,
+      };
+    } catch (error) {
+      return { text: null, reason: `git show HEAD:${ledger} failed — ${error.code ?? error.message}` };
+    }
   }
-  return readFileSync(isAbsolute(ledger) ? ledger : join(ROOT, ledger), 'utf8');
+  try {
+    return { text: readFileSync(isAbsolute(ledger) ? ledger : join(ROOT, ledger), 'utf8'), reason: null };
+  } catch (error) {
+    return { text: null, reason: `could not read ${ledger} — ${error.code ?? error.message}` };
+  }
 }
 
 /**
@@ -160,9 +179,15 @@ function ledgerText(ledger, committed) {
  * non-vacuity floor: a scan that reaches zero sections has not read the file it claims to have read.
  */
 function census(committed) {
-  const stats = { tokens: 0, citations: 0, continuations: 0, sections: 0, files: new Set(), offenders: [] };
+  const stats = { tokens: 0, citations: 0, continuations: 0, sections: 0, files: new Set(), offenders: [], unread: [] };
   for (const ledger of LEDGERS) {
-    const text = ledgerText(ledger, committed);
+    const { text, reason } = ledgerText(ledger, committed);
+    if (text === null) {
+      // A ledger nobody could open is not a ledger with no offenders: it is an unmeasured one, and the two
+      // must not print the same way.
+      stats.unread.push({ ledger, reason });
+      continue;
+    }
     let section = '(before the first heading)';
     text.split(/\r?\n/).forEach((line, i) => {
       if (/^## /.test(line)) { stats.sections += 1; section = line.replace(/^##+ /, '').slice(0, 46); }
@@ -207,6 +232,22 @@ function census(committed) {
 
 const head = census(!WORKTREE);
 const work = WORKTREE ? head : census(false);
+
+// UNCHECKED comes before the vacuity guards: "I could not read the ledger" and "the ledger had nothing in
+// it" are different failures, and a crash (the behaviour this replaced) said neither. Both planes are
+// tested, because in the default mode the working copy is *reported*, and a report line that reads
+// "0 citations, 0 offenders" for a file nobody opened is a clean verdict invented out of a missing read.
+const unread = [
+  ...head.unread.map((u) => ({ ...u, plane: WORKTREE ? 'working copy' : 'HEAD' })),
+  ...(WORKTREE ? [] : work.unread.map((u) => ({ ...u, plane: 'working copy' }))),
+];
+if (unread.length > 0) {
+  console.log('NEXUS — ledger citation census');
+  console.log(`  RESULT: UNCHECKED — ${unread.length} ledger read(s) failed across the ${LEDGERS.length} ledger file(s)`);
+  for (const { ledger, reason, plane } of unread) console.log(`    ${plane} ${ledger}: ${reason}`);
+  console.log('  Nothing is claimed about the citations in those files. Re-run where `git show` can spawn.');
+  process.exit(2);
+}
 
 // Non-vacuity, in the same spirit as D87's row-count guard: a scan that resolves nothing is not a green scan.
 if (FILES.length < 100) throw new Error(`the source index holds ${FILES.length} files; a walk that finds almost nothing cannot check a citation`);

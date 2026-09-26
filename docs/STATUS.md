@@ -5417,3 +5417,25 @@ copy already holds another lane's uncommitted §101–§108 (110 `## ` headings 
 next free number that cannot collide when their commit lands is 109. The section was staged from a
 `git show HEAD:docs/STATUS.md` blob with only this text appended, and appended to the working copy as
 well, so neither plane can silently drop it.
+
+## 110. A guard that existed only as an anonymous edit in the working copy, paid for after the fact (2026-09-27)
+
+`scripts/check_ledger_citations.mjs` has carried an uncommitted hunk since the D106 window: `ledgerText`
+returning `{text, reason}`, the census collecting `unread`, and a `RESULT: UNCHECKED` block placed ahead of
+the vacuity guards. No DECISIONS entry, no STATUS section, no commit — the same defect D109 named for
+D103–D106, one floor lower. It is now committed with both sides of its witness run over the shipped bytes.
+
+Arm: `--text=docs/NOPE_SUCH_LEDGER.md`. HEAD's version dies with an uncaught `Error: ENOENT` stack and
+exit 1 — the same exit code a red verdict uses, which is the whole problem (`d110_head_crash.txt`). The
+committed version prints `RESULT: UNCHECKED`, names the plane, the file and the OS reason, and exits 2
+(`d110_unread_arm.txt`). Controls, both green: HEAD-strict 212 citation-shaped tokens from 405
+`name:number` tokens across 195 sections, working copy reported 218 / 204 / 0 offenders
+(`d110_ledger_head.txt`); `--worktree` 218 / 204 / 0 offenders (`d110_ledger_worktree.txt`).
+
+Two things written down rather than glossed. The hunk tested only the strict census; the default mode also
+*reports* the working copy, and "218 citations, 0 offenders" for a file nobody opened is the invention the
+guard exists to refuse, so `unread` now covers both planes — while the specific combination "readable at
+HEAD, missing on disk" stays **unwitnessed**, because reaching it means renaming a tracked file two other
+lanes are appending to. And the hunk's motivating claim (this machine refuses to spawn `git` with `EBUSY`)
+was not reproduced here: what is witnessed is the `ENOENT` spelling, and the guard prints whatever
+`error.code` arrives, so it does not distinguish a sandbox refusal from a ledger that is not in HEAD.

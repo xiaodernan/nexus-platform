@@ -6265,3 +6265,41 @@ plant into any of the fifteen trigger tables is no longer single-dimension -- D6
 for `updated_at`, which the schema writes for you", an exception that is named in the harness docstring
 instead of being hidden by disabling the trigger for every arm.
 
+## D110 A checker that crashed where it owed a verdict gets its guard committed -- with the reason and the one arm that was never witnessed written down
+
+**What was found.** Clearing D109's retraction led to a hunk in `scripts/check_ledger_citations.mjs` that
+is in neither ledger and in no commit: `ledgerText` had been rewritten to return `{text, reason}`, the
+census had started collecting `unread`, and a `RESULT: UNCHECKED` block had been placed ahead of the
+vacuity guards. So this lane has twice now produced an artifact whose *bytes* were in the tree and whose
+*reason* was nowhere: D103-D106 left their evidence in commits and skipped both ledgers, and this hunk
+skipped the commit as well. The unit below is that hunk paid for after the fact, and the defect class is
+the same one D96 named for the seed gate -- a crashed reader reporting as a verdict.
+
+**Measured, both ways, against the committed bytes.** The arm is `--text=docs/NOPE_SUCH_LEDGER.md`, the
+flag D101 added so a witness does not have to write into a ledger two other lanes are appending to:
+
+  * HEAD's version, same argv: an uncaught `Error: ENOENT ... at readFileSync` stack and exit 1
+    (`d110_head_crash.txt`). Exit 1 is also what a *red* verdict exits, so a reader who did not open the
+    stack could not tell "the ledgers mis-cite" from "the reader could not read".
+  * The working copy's version: `RESULT: UNCHECKED -- 1 ledger read(s) failed across the 1 ledger file(s)`,
+    naming the plane and the file and carrying the OS reason, exit 2 (`d110_unread_arm.txt`).
+  * Controls that must stay green: HEAD-strict 212 citation-shaped tokens out of 405 `name:number` tokens,
+    195 sections, working copy reported at 218 citations / 204 sections / 0 offenders, exit 0
+    (`d110_ledger_head.txt`); `--worktree` 218 / 204 / 0 offenders, exit 0 (`d110_ledger_worktree.txt`).
+
+**Widened while committing.** The unwritten hunk tested only the strict census. In the default mode the
+working copy is *reported*, and a report line reading "218 in 204 section(s), 0 offender(s)" is exactly
+the invention the hunk existed to refuse -- so `unread` now concatenates both planes, each entry labelled
+`HEAD` or `working copy`. The reachable arm exercises the accounting path; the specific combination
+"readable at HEAD, missing on disk" is **not witnessed**, because reaching it means renaming a tracked
+file that two other lanes are appending to, which this lane does not do. That limit is written here rather
+than left as an unwitnessed green.
+
+**One claim in the hunk's own comment is not reproducible right now.** It says this machine refuses to
+spawn `git` with `EBUSY` and that the refusal is what took the checker down. What is witnessed here is the
+`ENOENT` spelling; the `git show` half is unchanged in behaviour and the guard prints whatever
+`error.code` the failed read carries, so a spawn refusal and a missing file produce the same verdict text
+with different reasons. The guard therefore does not distinguish "git cannot run" from "the ledger is not
+in HEAD", and does not claim to.
+
+
