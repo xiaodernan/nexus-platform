@@ -5847,3 +5847,57 @@ re-measuring all week, and it got me again.
 
 **Gates.** Step 9's shipped bytes changed, so the whole gate was re-run rather than the changed step alone —
 see §93 for the nine-step result and its `GATE_RC`, read from the log after the run rather than asserted here.
+
+## D97 162 of the gate's 216 assertions are never named in this lane's ledgers — and the carry-on that said otherwise was three sections stale
+
+Three consecutive STATUS sections — §89's next (b), §92's, §93's — told the next unit that two arms of
+`data/seed/quality.sql:830` still needed a working falsifier. D92 supplied both, plus the pair-on-one-row arm
+that proves the counts are independent. Nobody re-read the carry before writing it again, so the plan grew
+work that was done and the ledger quoted a number nobody had looked at. That is the reason to measure coverage
+rather than remember it.
+
+**The denominator came from the gate, not from a reader of it.** Two attempts to get the list of assertions out
+of the SQL text failed before the right way was found:
+
+  * A regex over `quality.sql` returned 115 names of 216 and produced junk rows — tuples split in the wrong
+    place, a fragment that began `|| (SELECT count(DISTINCT rating)`. This is the failure mode the lane keeps
+    being shown: a hand transcription does not under-count honestly, it invents entries.
+  * Running the whole shipped file and querying after it printed nothing at all. `quality.sql` sets
+    `ON_ERROR_STOP` for itself at its top, so the hard gate's `RAISE` aborts the session before a trailing
+    `SELECT` can run — the file's own directives outrank the flags on the psql command line, and an attempt
+    that ignores them reports emptiness as a result.
+
+What works is the pattern this lane already uses for witnesses: slice the assertions out of the shipped file up
+to the verdict marker (line 3595), run that, and ask `qc` for its own rows. 216 rows read back, 216 unique, none
+of them shorter than six characters — the last check being the one that says the tail slice is aligned with the
+query rather than with part A's printed reports.
+
+**The number, with its grammar.** For each of the 216 names: does the exact string, or a fragment of it at
+least twelve characters long, appear anywhere in `HEAD:docs/DECISIONS.md` or `HEAD:docs/STATUS.md`.
+
+| | count | share |
+| --- | --- | --- |
+| named exactly | 42 | 19% |
+| named by fragment | 12 | 6% |
+| **not named anywhere** | **162** | **75%** |
+
+**What this does not say, stated first.** A mention is not a witness. The 54 named rows are an *upper bound* on
+how many assertions have ever been shown able to fail, and the true count is smaller — of a size this script
+cannot determine, because the ledgers record plants in prose and there is no machine-readable claim attached to
+a row. So the finding is not "75% are untested" and never should be written that way: it is that three quarters
+of the gate's assertions have not been *talked about* by eighteen units of witness-building, and that the
+remaining quarter's status is asserted by sentences rather than by anything a script can check.
+
+**The correction, named as one.** §89 next (b), §92 and §93 each carried the claim that the confidence and
+forward-TTL arms of the TTL row wanted a falsifier. They were planted in D92, with the counts shown moving
+independently. Nothing in the tree was wrong — the carry-on was — so the fix here is not an edit of those
+sections, which record what was believed when they were written, but this sentence: the item was stale from
+§92 onward and was copied twice more without being read.
+
+**Gates.** No shipped byte changed in this unit: the census is a script in the temp dir, its input is the
+committed `quality.sql` sliced at run time, and the only database it touches is the stamped one D90's gate run
+left behind, read with `SELECT`s after the assertions. `d97_qc_names.txt`, `d97_unrecorded.txt` and
+`d97_coverage.py` are the kept artifacts; the script prints the grammar above its own numbers, and re-running
+it reproduces 216 / 42 / 12 / 162 from one command. Task #73 carries what follows, with the ordering constraint
+written down before the work: a plant predicted from an assertion's wording rather than from a producer that
+could violate it is D79's and D91's failure performed 162 times.

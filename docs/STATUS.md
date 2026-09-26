@@ -5056,3 +5056,57 @@ next              (a) #72 stays open for the named-untested line above; the cate
                   (b) Carried: #71 (`facts` CHECK), #68, #58, #62, #64, #44, D91's served leg until :8090 is up,
                     §87's next (c), and §89's two dead arms of the TTL row that still want plants.
 ```
+
+## 94. The gate's own table says 216 assertions; the ledgers name 54 of them, and a stale carry-on survived three sections because nobody re-read it (2026-09-26)
+
+```
+plane             Coverage, not behaviour: which of `data/seed/quality.sql`'s 216 assertions this lane's own
+                    ledgers have ever mentioned. No shipped file changed. Found while re-reading the carried
+                    list rather than copying it again.
+
+why it started    §89, §92 and §93 each told the next unit that two arms of the TTL row still needed a plant.
+                    D92 planted them. The item was stale from the section after the one that wrote it, and was
+                    copied twice before anyone looked — which is what a carried list is for, apparently, and
+                    not what it does.
+
+how it was read   The denominator came from the gate, twice refused from a reader of the text: a regex over
+                    quality.sql returned 115 of 216 plus junk rows, and running the shipped file to query
+                    afterwards printed nothing, because quality.sql sets ON_ERROR_STOP itself and its hard-gate
+                    RAISE ends the session before a trailing SELECT runs. What works is the witness pattern:
+                    slice the assertions at the verdict marker (line 3595), run them, ask `qc` for its rows.
+                    216 back, 216 unique, none under six characters — the last being the check that the tail
+                    slice lands on the query and not on part A's printed reports.
+
+measured          Grammar: exact name, or a fragment of at least 12 characters, present in HEAD's
+                    docs/DECISIONS.md or docs/STATUS.md.
+                      named exactly 42 (19%) · named by fragment 12 (6%) · not named anywhere 162 (75%)
+                    A mention is not a witness. 54 is an upper bound on "ever shown able to fail", and the
+                    real figure is lower and unrecorded in any machine-checkable form: the ledgers describe
+                    plants in prose, and nothing ties a plant to a row. So the honest headline is not
+                    "75% untested" — it is that eighteen units of witness-building left three quarters of the
+                    gate un-named, and that the named quarter's status rests on sentences.
+
+corrected         §89 next (b) onward claimed the confidence and forward-TTL arms wanted falsifiers; D92
+                    supplied both plus the both-on-one-row arm that proves the counts are independent. The
+                    three sections stand as written — they record what was believed then — and the correction is
+                    this line plus the one in DECISIONS D97, not a quiet edit of history.
+
+gates             Nothing to certify: the census reads committed text and a kept, stamped database with
+                    SELECTs, so D96's nine-step `GATE_RC=0` run remains the one that covers the tree. Artifacts
+                    kept: d97_coverage.py, d97_partB.sql, d97_qc_names.txt, d97_unrecorded.txt; re-running the
+                    script reproduces 216 / 42 / 12 / 162 from one command, grammar printed above the numbers.
+
+mistakes          (a) Trusting a carried list three times over. A carry-on is a claim with an expiry date, and
+                    the previous four units each established that on some other subject.
+                  (b) The first attempt at the name list was a transcription of the SQL text — the exact move
+                    D93's filter and D85's read census both warn about. It failed by under-counting and
+                    inventing at once, which is the signature of the class.
+
+next              (a) #73: the 162. Ordered deliberately — group by which producer could ever violate the
+                    assertion (generator / runtime / none in this tree), plant only where a producer exists,
+                    and say so in the detail text where the answer is "no writer today". A batch of 162
+                    predicted-from-wording plants would raise the coverage number and be worth nothing.
+                  (b) Carried, now re-read: #71 (`facts` CHECK), #72's zero-token line, #68, #58, #62, #64,
+                    #44, D91's served leg until :8090 is up, §87's next (c). §89's (b) is closed by D92 and
+                    §93's repeat of it is corrected above.
+```
