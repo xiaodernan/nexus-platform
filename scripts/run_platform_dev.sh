@@ -17,7 +17,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 
 if [ -f .env ]; then
-    # Local-only environment file (gitignored at .gitignore:5). Sourced, never echoed.
+    # Local-only environment file (gitignored at ./.gitignore:5). Sourced, never echoed.
     #
     # The caller's own assignments have to survive this, so they are captured and restored: `.env` sets
     # NEXUS_PLATFORM_DB_URL, and with `set -a` a plain source silently re-points a run at the live

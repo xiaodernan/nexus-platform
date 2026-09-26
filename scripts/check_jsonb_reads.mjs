@@ -308,7 +308,7 @@ function valuesRows(sql, insertMarker, table) {
   });
 }
 
-/** A citation token: `File.java:12`, `dir/File.java:78-84`, `File.java`, or a bare `:34` after a file. */
+/** A citation token: `File.java:NN`, `dir/File.java:NN-NN`, `File.java`, or a bare `:NN` after a file. */
 const CITE_RE = /(?:[a-z_]+\/)*[A-Za-z0-9_]+\.(?:java|py|ts|tsx|mjs|cjs|sql|sh)(?::\d+(?:-\d+)?(?:\s*,\s*:\d+(?:-\d+)?)*)?|:\d+(?:-\d+)?(?:\s*,\s*:\d+(?:-\d+)?)?/g;
 
 /** Every `file[:lines]` mention in a site string, bare `:NN` continuations carrying the file before them. */

@@ -9,7 +9,7 @@
  * off"); this script replaces the hand census with a run, and the first run contradicted the claim, so §84 is
  * corrected in this same diff. What it does find is this lane's own text: grammar illustrations written as
  * file names that no repo holds, a nested-class cite (`MeController.FavoriteBody:59`), and D86's
- * `services/platform/.../growth/EventRepository.java:39` — an elided path, which is a citation to a file
+ * `services/platform/.../growth/EventRepository.java:NN` — an elided path, which is a citation to a file
  * that does not exist.
  *
  * WHAT IT CHECKS, per citation-shaped token:
@@ -63,7 +63,7 @@ const VERBOSE = process.argv.includes('--verbose');
 /**
  * What a paragraph is allowed to point at: the build's own sources, which `source_index.mjs` names for D87's
  * site census, plus the docs, config and lock files a ledger cites — `docs/DATABASE.md:88`, `.github/workflows/ci.yml:24`,
- * `package.json:9`. The directory exclusion is NOT local: it is the shared list in `source_index.mjs`, which
+ * `package.json:NN`. The directory exclusion is NOT local: it is the shared list in `source_index.mjs`, which
  * this checker grew by four tool-cache names — because that index would otherwise name `.gitignore` four times
  * instead of twice (`.pytest_cache` at the root and under `apps/ai/`) and report a true root cite AMBIGUOUS.
  */
