@@ -5244,3 +5244,40 @@ next              (a) #73's remainder is now only the 111 literal-named assertio
                   (b) Carried and re-read: #71, #72, #68, #58, #62, #64, #44, D91's served leg until :8090 is up,
                     §87's next (c).
 ```
+
+## 98. Step 9's read-nothing guard is reachable at last, and the flag that made it reachable shipped two silent failures first (2026-09-26)
+
+```
+plane             `scripts/check_comment_citations.mjs` only: a `--plane <dir>` option and strict option
+                    parsing. The database gate's steps 1-8 and the seed are untouched.
+
+why it took a unit  D96 named the exit-2 branch untested and named the two dishonest ways to close it (a copy
+                    that is no longer the shipped bytes, or a switch whose only user is the test). `--plane` is
+                    the honest third: scan another tree, keep this repo's resolver, reach the empty case without
+                    editing anything.
+
+arms              default plane            64 tokens / 17 files / PASS rc 0
+                    --plane <empty dir>    "0 tokens found in the comment plane of <dir> … a scan that reads
+                                           nothing is not a green scan", rc 2   ← the branch, witnessed
+                    --plane=<empty dir>    same, rc 2 (both spellings parse)
+                    --plane <off-repo dir> RESULT: NOT RUN, rc 2 — the child cannot report on citations outside
+                                           the tree it indexes, and D96's classification says so instead of
+                                           claiming a citation failed. One unit old, first use.
+                    --plan <dir>           refused: "unknown option --plan", rc 2. Not silently clean.
+
+the two defects    The first cut read only the space form, so three arms reported the repository as a clean
+                    64/17 while believed to be reading an empty directory; and any unrecognised option was
+                    ignored. Both were caught by arming the flag and reading what it printed rather than by
+                    trusting the edit — a silently-unread option is a false witness with good manners.
+
+gates             Nine-step official run over these bytes: all step markers present, `-> 216 quality checks
+                    passed against a from-scratch schema (tables=58, migrations=7)`, step 9
+                    `plane censised … tokens found 64 in 17 file(s) … RESULT: PASS`, `GATE_RC=0`. This replaces
+                    D96's run as the certification of the current tree. Step 8 is re-run after the append below.
+
+next              (a) #72 is closed by this entry: its last item was the untested empty-scan branch, now
+                    witnessed in both spellings, with the off-repo limitation written down rather than probed.
+                  (b) #73 keeps the rest: the 111 literal-named assertions (plant where a producer exists, say so
+                    in the detail text where none does) and the 2 names carrying newlines. Then #71, #68, #58,
+                    #62, #64, #44, and D91's served leg until :8090 is up.
+```

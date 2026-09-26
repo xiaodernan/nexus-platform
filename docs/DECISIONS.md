@@ -6048,3 +6048,40 @@ append changes the plane it reads. Artifacts: `d100_three_sweeps.py`, `d99_sweep
 the 103 run-time-built rows are no longer a coverage debt — they are one assertion per sweep, each with a witness.
 What remains there is the 111 literal-named assertions (plants where a producer exists; a changed detail text
 where none does), the two names carrying newlines, and #71/#72 beside them.
+
+## D101 The "read nothing" guard becomes reachable: a real `--plane`, and the flag shipped with two silent failures of its own
+
+D96 recorded one branch of step 9 as untested — exit 2 when the comment plane yields no tokens — and said why
+reaching it honestly looked impossible: either the copied scripts stopped being byte-identical, or a switch
+existed only so a test could turn the scan off. Both are the same trade. This unit supplies the third shape:
+`--plane <dir>`, which scans another tree while the resolver stays the checker the file slices its grammar from.
+That is an option someone would want for a real reason — a worktree, a subproject — and it happens to make the
+empty case reachable without touching a shipped byte.
+
+**Armed, not trusted.** Five arms, and the first pass produced two false results that the flag itself caused:
+
+  * The first implementation read only `--plane <dir>` and quietly ignored `--plane=<dir>`. Three arms then
+    reported `64 tokens / 17 files / PASS`, naming the repository, while the operator believed them were looking
+    at an empty directory. A silently-unread option is not a missing feature; it is a false witness with good
+    manners. Parsing now accepts both spellings and exits 2 on any option it does not recognise — arm 5 shows
+    `--plan` refusing rather than reading as clean.
+  * Re-pointed at an off-repo plane, the tool returns `RESULT: NOT RUN`: the child checker cannot produce a
+    report about citations outside the tree it indexes. That is D96's classification doing its job on its first
+    outing — a unit ago this arm would have printed "at least one citation does not resolve", which is a claim
+    about citations nobody examined.
+
+With the parsing fixed, the branch is witnessed: `--plane` at an empty directory gives
+`0 tokens found in the comment plane of <dir>. A scan that reads nothing is not a green scan …` and exit 2, in
+both spellings; the default plane still reads 64 tokens across 17 files and passes; and the message names the
+plane it read, so no arm can be mistaken for another.
+
+**Scope, stated.** `--plane` is for trees the resolver can index — directories inside this repository, or a
+worktree sharing it. It is not a way to audit some unrelated directory: there the reader will say NOT RUN, and
+that answer is correct rather than inconvenient. The guard's other half — a plane that holds files but no
+citations — is the same code path as the empty directory and is witnessed by it, not separately.
+
+**Gates.** The nine-step gate was re-run over these bytes and passed: all nine step markers present, 216 quality
+checks on a from-scratch schema (tables=58, migrations=7), step 9 reading
+`plane censised D:\获客平台 · tokens found 64 in 17 file(s) · RESULT: PASS`, `GATE_RC=0`. That run, not the
+earlier D96 one, is the certification this unit's tree carries; the ledger append that follows re-runs step 8,
+which is the step the append touches.
