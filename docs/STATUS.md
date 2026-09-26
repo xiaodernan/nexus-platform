@@ -6594,3 +6594,101 @@ next             (a) Next plant batch from the 74: `volume: chunks > 0`, `volume
                   (d) Carried: #73 (46 of 216 witnessed, 74 literal names unwitnessed), #75, #71, #62, #64,
                     #58, #44, #17, #19, #34, #79, #80, §87's session-time-zone seam, D91's served leg.
 ```
+
+## 128. Six DELETEs where every earlier arm wrote a value, and the discovery that the assertion plane has a size that depends on the data (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (6 volume arms, committed f59f8ed) and
+                    `data/seed/falsifiers.tsv` (67 → 73 rows, appended by the drive's own --emit-rows).
+                    Nothing else changed shape: no gate step, no checker, no migration. Every measurement
+                    below is against the kept loaded seed `nexus_gate_283340_1790454442` — 216 assertions on
+                    this working copy, 214 at HEAD while another stream's V7__share_links.sql stays
+                    uncommitted, so the plane is named with each number.
+
+changed           26 → 32 plant arms, and the first arms that delete rows instead of writing values. The six
+                    names are the whole `volume: ` family, and each reads the `counts` snapshot
+                    (quality.sql:97, asked again at quality.sql:160-174), so the only deception that moves one
+                    is the size of a table. Aiming them needed the referential closure rather than
+                    pg_attribute: which tables point at the target and with which ON DELETE, plus the five
+                    NO ACTION referencers (carts, cart_items, order_items, reservations, handoffs) measured
+                    empty in the seed — a delete refused by the schema would be evidence about the schema.
+                  One arm is two statements. `volume: documents >= merchants` is 1,040 against 520, a margin
+                    of exactly the merchant count, so the protected sweep lands on 520 = 520 — legal, green,
+                    worth nothing — and the tie-breaker delete is what makes the plant illegal at all. A
+                    rolled-back probe found that in seconds; a whole-gate drive would have found it as a
+                    failed arm.
+
+measured          python data/seed/falsifier_plants.py            baseline 216 assertions red 0 · 32 arms +
+                    --db … --container … --emit-rows                1 control · 67 whole-gate sessions · every
+                                                                  arm's own row RED · collateral 5,0,7,1,3,10
+                                                                  on the six volume arms · control: target
+                                                                  RED, collateral 0, spread row gone ·
+                                                                  closing baseline identical to opening ·
+                                                                  RESULT: PASS · 6 rows appended (of 32 arms
+                                                                  witnessed)
+                  node scripts/check_falsifier_registry.mjs       PASS · 73 rows · 52 of 216 assertions
+                    --db …                                          witnessed (24.1%), up from 46 (21.3%)
+                  unwitnessed census, constant-presence rule,     164 = 68 literal + 96 assembled. Families:
+                    recomputed off the same 216 dump                fk 91 · (no prefix) 66 · orphan 4 ·
+                                                                  chunks 1 · density 1 · slots 1. All six
+                                                                  new witnesses came out of the literal
+                                                                  bucket and the assembled half did not
+                                                                  move — expected, since every `volume: `
+                                                                  constant is written out in the file.
+                  the facts arm's plane, re-read in one           213 names filed, not 216: orphan:
+                    rolled-back transaction                         facts.location / .merchant / .offering
+                                                                  leave, because quality.sql:381 builds them
+                                                                  with GROUP BY subject_type — a type with no
+                                                                  rows files no row.
+                  the merchant arm's clearance, measured with     62 merchants eligible outside the bbox, the
+                    the gate's own pg_temp.haversine_m              21 deleted sitting 10.51–18.23 km from
+                                                                  (22.3831, 114.1876). f59f8ed's message says
+                                                                  "at least 7 km" and this unit's draft said
+                                                                  6.4 km; both were arithmetic on the bbox
+                                                                  corner (114.25 − 114.1876° at cos 22.38°
+                                                                  = 6.42 km), not a reading of the rows
+                                                                  inside it. The arm was always safe — the
+                                                                  density radius is 3 km — but the number
+                                                                  written down was invented twice.
+
+found             (a) The assertion plane is data-dependent, which is a second axis under D118's lesson. That
+                    unit established that an equal total is not the same set of names; here the total itself
+                    moved, by three, on an arm nobody had to think about. A coverage denominator quoted
+                    without its plane is a reading of the data as much as of the file.
+                  (b) The plants harness polices redness, not existence, so (a) passed it by. Collateral is
+                    computed as `reds not in base_reds` (data/seed/falsifier_plants.py:288) and base_reds is
+                    the set of RED rows on unmutated data, so a name that stops being filed matches nothing
+                    the drive tests: the 213 sat in the printed `rows` column and only a person reading the
+                    table caught it. A drive can report PASS while three assertions leave the plane under it.
+                  (c) 22 distinct names went red as collateral in this run. 11 already carried a witness; the
+                    other 11 are recorded nowhere, because --emit-rows files only the matched target
+                    (data/seed/falsifier_plants.py:293). Among the eleven is `orphan: favorites.offering`,
+                    which reddened because the merchants delete cascade-killed the offering its unenforced
+                    reference pointed at — the exact deception that row exists to watch, shown able to fail by
+                    an arm aimed elsewhere and dropped by the tool that writes the record.
+                  (d) `facts` has exactly one outbound FK (merchant_id → merchants ON DELETE CASCADE) and 0
+                    CHECKs, which is why the empty-table plant needed no closure measurement at all: nothing
+                    references that table. #71's subject is now the ground under two volume witnesses.
+                  (e) `favorites` carries exactly one FK (user_id → users CASCADE), so the four
+                    `orphan: favorites.*` names left in the queue meet no schema resistance. Their legality is
+                    measured before the next batch is aimed, and the batch is one UPDATE per name.
+
+gates             The eleven-step script was not re-run for this unit, because no gate file, checker or
+                    migration changed. The two shipped readers that could be affected were run on the final
+                    bytes of this text: step 11 over the 73-row registry (PASS, 52 of 216) and the two ledger
+                    readers, steps 8 and 10 (check_ledger_citations.mjs, check_ledger_sections.mjs). The
+                    drive's 67 sessions are
+                    themselves the gate body sliced out of quality.sql and executed against mutated data, each
+                    in a transaction that rolled back — that is what the closing baseline certifies.
+
+next             (a) D120, from found (b) and (c): a session's filed NAME SET compared against the baseline
+                    set, so a vanished assertion is a verdict rather than a column; and --emit-rows offering
+                    its collateral names, with the arm column saying which arm reddened them.
+                  (b) Next plant batch: the four `orphan: favorites.*` (found (e)) plus `orphan: facts.merchant`
+                    — five UPDATEs against references the schema does not enforce, all one line each.
+                  (c) #71, third time standing on it: `facts` has no CHECK, so the TTL and stale rows are the
+                    only thing between a wrong expiry and a served page; a V8 bound would demote them to
+                    backstops, or the lane says why the table wants the freedom.
+                  (d) Carried: #73 (52 of 216 witnessed, 164 unwitnessed with fk 91 the bulk), #75, #62, #64,
+                    #58, #44, #17, #19, #34, #79, #80, §87's session-time-zone seam, D91's served leg.
+```

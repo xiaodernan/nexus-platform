@@ -7049,3 +7049,82 @@ plant that survives the constraint. And one honesty note about this decision's o
 computes its coverage percentage from whatever registry file it is handed, so the planted scratch run
 reported "1 of 216" while naming both defects — correct as a refusal, misleading if a log line is quoted
 without the `--registry` that produced it.
+
+## D119 The volume plane: six assertions no fabricated value can reach, because they read a snapshot of `count(*)` — 2026-09-27
+
+D118 aimed at values; this unit aimed at sizes. All six `volume: ` assertions read `counts`, the temp table
+quality.sql fills with `count(*)` at its own top (quality.sql:97) and asks again at quality.sql:160-174, so no
+fabricated URL, marker, stamp or name can move one — the only deception available on that plane is the size of a
+table. A DELETE is also a different promise than an UPDATE: an UPDATE has to survive the schema's CHECKs, while
+a DELETE has to survive the referential closure, and those are read out of different catalogue columns.
+
+**Decision (a): legality measured one table over, before anything was aimed.** `pg_constraint` grouped by
+`confrelid` gives the inbound keys and their `confdeltype`: every referencer of `merchants` is CASCADE except
+four NO ACTION keys (carts, handoffs, orders, reservations), and every referencer of `offerings` is CASCADE
+except cart_items, order_items, reservations and reviews. Those NO ACTION tables are empty in the seed —
+measured 0/0/0/0 for carts/cart_items/reservations/handoffs, orders and reservations being required-empty by
+§109 — so no delete can be refused for a reason the gate would then be blamed for. `reviews` and `chunks` have
+no inbound FK at all. With the closure settled, each arm is aimed so that only its own volume row moves: 21
+merchants taken fewest-reviews-first from a pool lying outside a bbox of lat < 22.30 or lng > 114.25; 535
+offerings referenced by no review, no fact and no document; 1,001 reviews deleted in the table's own 31/69
+language ratio so the mix row reads 69.10% → 69.11%; documents protected to one per merchant.
+
+**Decision (b): the margin that had to be broken before the run.** `volume: documents >= merchants` is 1,040
+against 520 — a margin of exactly the merchant count — so the protected sweep lands on 520 = 520, which is
+legal, green and worth nothing. Breaking the tie means one merchant losing its last document, so the arm is
+two statements and the second one is the finding. A probe in one rolled-back transaction (BEGIN/plant/SELECT/
+ROLLBACK against the kept loaded seed) caught that in seconds; without it the same lesson costs a whole-gate
+session and a red-looking drive.
+
+**Decision (c): what the drive filed.** Baseline 216 assertions red 0. The six volume arms reddened their own
+row with collateral 5, 0, 7, 1, 3, 10; the control re-ran arm 0 with the triggers off and returned target RED,
+collateral 0, spread row gone; the closing baseline is identical to the opening one; 32 arms plus the control
+across 67 whole-gate sessions, every one rolled back; `RESULT: PASS`. The rows entered `data/seed/falsifiers.tsv`
+only from that run's own `--emit-rows`: **67 → 73 rows, 46 → 52 of 216 names witnessed (24.1%)**. Collateral on
+this plane is structural rather than incidental — a delete removes rows from other assertions' denominators, so
+the merchants arm necessarily reddens the favourites and moderation orphans its CASCADE reached — and the two
+arms that came back with low or zero collateral are the two whose deletes touch nothing that anything counts.
+
+**Found (a): the plane is data-dependent — the facts arm filed 213 assertions, not 216.** Measured after the
+run in one rolled-back transaction: the three names that leave are `orphan: facts.location`,
+`orphan: facts.merchant` and `orphan: facts.offering`, because quality.sql:381 builds them as
+`'orphan: facts.' || t … GROUP BY subject_type`, so a subject type with no rows files no row at all. D118's
+lesson was that an equal total is not the same set; this is the same lesson on a second axis — the total itself
+moves with the data, so a coverage denominator is a reading of the plane as much as of the file.
+
+**Found (b): the harness polices redness, not existence, so (a) passed it by.** Reading the shipped arithmetic
+(data/seed/falsifier_plants.py:287-299): collateral is `reds not in base_reds`, and `base_reds` is the set of
+*red* rows on unmutated data. A name that stops being filed is therefore invisible to every test the drive
+makes — the 213 was printed in the `rows` column and caught by a person reading it, not by the verdict. A drive
+whose arm deletes the table a sweep groups over can report PASS while three assertions leave the plane, and
+nothing in the record says so. Queue: compare each session's filed name SET against the baseline name set, the
+way the red set is already compared.
+
+**Found (c): a distance number that was invented twice, then measured.** The plants commit message says the 62
+eligible merchants are "at least 7 km from Sha Tin", and this unit's own draft said 6.4 km. Neither was a
+measurement: 6.42 km is the geometric bound at the bbox corner (114.25 − 114.1876° at cos 22.38°), 7 was that
+rounded up, and the data's nearest eligible merchant is **10.51 km** from the gate's own anchor, with the 21
+deleted spanning 10.51–18.23 km — measured with `pg_temp.haversine_m` exactly as quality.sql:36-42 defines it
+against (22.3831, 114.1876). The claim that matters (the density row's 3 km radius cannot notice) holds with
+3.5× the clearance either figure claimed, so the plant was never at risk — but the number written down was
+arithmetic on a box, not on the rows inside it. Rule: when a plant's safety rests on a geometric margin, run
+the gate's distance function over the candidate pool; a bbox corner bounds the box, not the data.
+
+**Found (d): eleven assertions were shown red by this drive and the record does not say so.** Crossing the
+drive's collateral lines against the registry: 22 distinct names reddened as collateral, 11 of them already
+witnessed by their own arm, **11 with no row** — among them `orphan: favorites.offering`, which went red
+because the merchants delete cascade-killed the offering its unenforced reference pointed at, which is the
+precise deception that assertion was written to watch. By D103's own standard — a witness records an assertion
+*shown able to fail* — those are witnesses, and `--emit-rows` drops them because it files only the matched
+target (falsifier_plants.py:293-294). D120's candidate: let a drive offer its collateral names too, with the
+arm column naming the arm that happened to redden them, so the record says what the run showed.
+
+**Consequences, and what they cost.** One more mechanism note on `facts`, the table #71 keeps reporting: it has
+exactly one outbound FK (`facts.merchant_id → merchants` ON DELETE CASCADE) and 0 CHECKs, which is why the
+empty-table plant reached the gate alive — nothing references `facts`, so no closure had to be measured for that
+arm at all. Conversely `favorites` carries exactly one FK (`user_id → users`), so the four `orphan: favorites.*`
+names in the queue have no schema resistance either, and their legality is now measured rather than assumed —
+that is the next batch, and it is one UPDATE per name. The queue recomputed off the same 216-name dump:
+**164 unwitnessed = 68 literal + 96 assembled**, i.e. all six new witnesses came out of the literal bucket and
+the assembled half did not move — which is what a volume batch should do, since every `volume: ` constant is
+written out in quality.sql. Remaining families: fk 91, no-prefix 66, orphan 4, and chunks/density/slots 1 each.
