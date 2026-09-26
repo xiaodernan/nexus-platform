@@ -952,7 +952,7 @@ SELECT 'chunks: ordinal contiguous per document',
           OR max(ordinal) <> count(*)::int - 1) || ' document(s) with gaps';
 
 INSERT INTO qc
-SELECT 'documents: content_hash matches the raw_text it carries',
+SELECT 'documents: raw_text is substantial enough to feed RAG',
        NOT EXISTS (SELECT 1 FROM documents WHERE raw_text = '' OR length(raw_text) < 200),
        (SELECT count(*) FROM documents WHERE raw_text = '' OR length(raw_text) < 200)
        || ' thin document(s); menus must feed RAG with real dish/price/session text';
