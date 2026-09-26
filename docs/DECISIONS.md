@@ -6587,3 +6587,92 @@ guarantee is narrower and checkable: anyone with a clean checkout can open every
 the checker's verdict is now a function of the repository plus a loaded seed — not of one user's temp
 directory. Coverage is unchanged by design: **40 of 214 (18.7%)**, 61 rows; this unit bought the number's
 meaning, not its size.
+
+## D114 Five standing cross-stream reports re-verified: one still true as written, one fixed but uncommitted, one contradicted by its own newest artifact, one whose claim was simply wrong, and one about a file that does not exist at HEAD — 2026-09-27
+
+This lane keeps a list of defects belonging to other streams, which it may report and must not edit. Reports
+about someone else's files decay faster than reports about the seed, because their plane moves underneath them.
+Five were re-read against current HEAD (`f077afa`) and the working copy, and three of the five changed state.
+Nothing here edits another stream's file.
+
+**1. The double-encoded `events.properties` write (#62) — still true, and it takes two committed layers to
+make.** `apps/ai/nexus_ai/api/runs.py` builds the INSERT with `$10::jsonb, $11::jsonb` and binds
+`json.dumps(event.get("properties") or {}, ensure_ascii=False)` (lines 158-159 of the working copy), while
+`apps/ai/nexus_ai/db/pool.py:64` registers `encoder=json.dumps` for `jsonb`/`json` on every connection. Either
+one alone would be correct; together they store a JSON *string* in a jsonb column, which is the payload-shape
+plane D86 counted from the other end. The aggravating fact is trackedness, not encoding:
+`git ls-files apps/ai/nexus_ai/api/` returns **0 files** — the writer is untracked, so the defect cannot be
+seen from a clean checkout at all, and pool.py's `M` state means the codec's *surroundings* are also moving.
+Report: pick one encoder. The committed codec is the one that also protects every other insert, so the
+`json.dumps` call in the writer is the half to drop.
+
+**2. `Guide.body_blocks` (#64) — true at HEAD, already fixed in the working copy by its owner.** At HEAD the
+web type requires the field (`apps/web/src/lib/types.ts:261`, no `?`) and the platform's
+`services/platform/src/main/java/com/nexus/catalog/CollectionsController.java` contains **zero** occurrences of
+the string. On disk the same file emits it (`out.put("body_blocks", bodyBlocks(items))`, working-copy line 188)
+and `CollectionsReadTest` asserts it, so the drift is closed as uncommitted work. The live residue is
+documentation: `grep -n body_blocks docs/API_CONTRACT.md` is 0 hits on disk **and** 0 at HEAD, so a field the
+consumer type requires and the producer now emits is named in no contract this lane's checkers can read — the
+same shape as D87's `site` finding, one level smaller.
+
+**3. `CommerceApiTest` (#58) — the report needs downgrading, not closing.** The package is still untracked
+(`git ls-files services/platform/src/test/java/com/nexus/commerce` → 0 files, while the `.java` is on disk; the
+same is true of the `admin/` and `seo/` test directories and `growth/ShareLinkTest.java`), and
+`services/platform/pom.xml` configures **no** surefire includes, so selection is Maven's naming convention and a
+clean checkout silently runs none of it. What changed is the count: the only artifact for that class on this
+machine is `services/platform/target/surefire-reports/TEST-com.nexus.commerce.CommerceApiTest.xml`, and it reads
+`tests="8" errors="0" skipped="0" failures="0"`. The seven failures recorded in earlier STATUS sections were
+observed runs of an untracked file; they are not a present-tense property of this tree, and this lane has no
+business re-running another stream's test suite to find out. **The claim as carried in the task list — "7/8 reds
+at HEAD" — is therefore withdrawn as a standing claim** and replaced with what is verifiable: an untracked test
+package whose result cannot be reproduced from the repository in either direction. Note the second order of the
+same disease: that evidence file lives under gitignored `target/`, so even the stream that wrote it will lose it
+on a clean — which is D113's witness argument applied to somebody else's artifact.
+
+**4. The worktree `docs/STATUS.md` claim (#68) — wrong, and it is this lane's own claim, so it is retracted by
+name.** D89's entry explains a citation-count difference with the parenthetical *"the working copy being minus
+committed §85, minus §86, plus four uncommitted draft sections, and minus D89"*. Re-measured: §85 **is** in the
+working copy — at line 4208 of that
+file, with the same heading text as the one copy HEAD carries. Nothing on disk can
+distinguish "the other stream restored it" from "it was never missing", and the 165 = 89 + 76 arithmetic D89 was
+explaining belongs to a run that is not re-checkable, so the honest statement is the narrow one: *the parenthetical
+is false as of this reading, and a working-copy inventory written as a present-tense list of missing sections
+goes stale the moment its owner saves the file.* What *is* live is a different defect: `## 100` appears twice in
+the working copy — line 5350 (`The route ledger reaches zero…`, 2026-09-24) and line 5912 (`The gate was measured
+on a tree that is not the committed tree…`, 2026-09-27) — while HEAD carries only the second. An older section was
+inserted above the current one under a number HEAD already uses. The gaps at `## 32` and `## 80` are *not* part of
+this: they exist identically in HEAD and on disk, so they are pre-existing numbering holes, not working-copy
+damage. This lane's mitigation keeps working and is worth naming: every STATUS commit here is built from
+`git show HEAD:docs/STATUS.md` plus exactly one appended section, so nothing another stream's draft is doing in
+the working copy can enter a commit by accident. Measured over the heading sets now: HEAD carries **106**
+sections, the working copy **115**, and no number present in HEAD is absent from the working copy.
+
+**…but that same habit stranded eight sections, and the ledger owes a recovery.** The sets differ in a way the
+"104 vs 113" phrasing hides. HEAD's numbers run 23-100, then jump to 109-113; the working copy additionally
+holds a **second `## 100`** and **`## 101` through `## 108`**. So eight STATUS sections exist only in the
+uncommitted copy, and the number 100 is used twice for two different units — the first (dated 2026-09-24,
+"The route ledger reaches zero…") is the one only on disk, the second (dated 2026-09-27, "The gate was measured
+on a tree that is not the committed tree…") is the one HEAD carries. Whether they were written under an older
+numbering convention that let DECISIONS' `D*` and STATUS' `§*` drift eight apart, or were mirrored to the
+working copy and never staged, cannot be told from the file: what the file does show is that a technique which
+builds each commit from HEAD plus one section can never, by construction, rescue a section that lives only in
+the working copy. D111 recovered exactly this class of debt for DECISIONS' D103-D106 by reading the commits and
+re-measuring every claim still measurable; the same treatment is owed for `## 101`-`## 108`, including the
+`## 100` collision, and is recorded as D115 rather than fixed inside a report about other streams.
+
+**5. `V7__share_links.sql` (#75) — still true.** `git ls-tree HEAD infra/db/migrations/` lists V1-V6 only and
+`git log -- …/V7__share_links.sql` is empty, while the door-vocabulary assertions name `share_links` columns; so
+the seed gate reddens 2 assertions at HEAD and 214/2 is the plane to quote, not 216. Re-verified this session
+because D112 and D113 both quote 214 and a reader is entitled to know it is not a remembered number.
+
+**The generalisation, stated as a rule for this lane.** A cross-stream report must carry its plane in its own
+sentence — *at HEAD*, *in the working copy of a file its owner has not committed*, or *in a run whose artifact is
+under gitignored `target/`* — because a report without a plane silently becomes a false claim the next time that
+stream saves. Two of the five above would have stayed correct for a week longer if they had been written that
+way, and the third (D89's parenthetical) was about a file this lane does not own at all.
+
+**Witnesses.** Every number above is from a read-only command re-run for this entry: `git ls-files`, `git
+ls-tree HEAD`, `git show HEAD:<path> | grep -c`, `grep -rn body_blocks` over `services/platform/src`, `apps/web/src`
+and `docs/API_CONTRACT.md`, the surefire XML's own attributes, and `grep -n "^## 85\|^## 100"` against both copies
+of `docs/STATUS.md`. No test suite, build, gate or database write was run for this unit, and no file outside
+`docs/DECISIONS.md` and `docs/STATUS.md` was touched.

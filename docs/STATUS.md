@@ -5552,3 +5552,48 @@ D112 recorded the problem; this unit pays for it. Code and data at `3d237f8`.
 
 Artifacts: the five-arm table in `d113_arms.txt` (Temp, outside the repository — the durable witnesses are
 `3d237f8` and the checker's own output). Full reasoning in `docs/DECISIONS.md`, `## D113`.
+
+## 114. Five cross-stream reports re-read against HEAD and the working copy: two still true, one fixed but uncommitted, one contradicted by its own newest artifact, and one this lane had to take back (2026-09-27)
+
+Reports about somebody else's files decay fastest, because their plane moves underneath them. Re-measured at
+`f077afa`; no other stream's file was edited, and no build, test suite, gate or database write was run.
+
+- **`events.properties` double-encoded (#62) — live, and it takes two layers.** The AI writer binds
+  `json.dumps(event.get("properties") or {})` into `$10::jsonb` (working copy of
+  `apps/ai/nexus_ai/api/runs.py`, lines 158-159) while the committed pool already registers
+  `encoder=json.dumps` for jsonb — `apps/ai/nexus_ai/db/pool.py:64`. Either alone is correct; together they
+  store a JSON string in a jsonb column, which is the shape D86 counted from the data side. Aggravating fact:
+  `git ls-files apps/ai/nexus_ai/api/` → 0 files, so the writer is untracked and a clean checkout sees neither
+  half of the pair. Report: drop the `json.dumps` in the writer, keep the codec.
+- **`Guide.body_blocks` (#64) — real at HEAD, closed in the working copy by its owner.** At HEAD the consumer
+  requires the field (`apps/web/src/lib/types.ts:261`) and the producer never names it
+  (`…/catalog/CollectionsController.java`, 0 occurrences at HEAD). On disk the same controller emits it at its
+  line 188 and `CollectionsReadTest` asserts it. Residue worth reporting: `docs/API_CONTRACT.md` has 0 hits for
+  the field on disk **and** 0 at HEAD, so a field both sides now honour is documented in no text this lane's
+  checkers read.
+- **`CommerceApiTest` (#58) — downgraded, not closed.** Still untracked (`git ls-files …/com/nexus/commerce` →
+  0, with `admin/` and `seo/` likewise and `growth/ShareLinkTest.java` untracked), and `services/platform/pom.xml`
+  configures no surefire includes, so a clean checkout runs none of it by naming convention. The count is gone:
+  the only artifact on this machine reads `tests="8" errors="0" skipped="0" failures="0"`, and it sits under
+  gitignored `target/`, so it is a machine-local witness of the exact class D113 just removed from this lane's
+  own registry. **The standing "7/8 reds at HEAD" framing is withdrawn** — those failures were observed runs of
+  an untracked file, not a property of this tree.
+- **The worktree STATUS claim (#68) — this lane's own claim, retracted by name.** D89's entry asserted the
+  working copy was "minus committed §85, minus §86". False as of this reading: §85 is on disk at line 4208 with
+  the same heading HEAD carries. The live defect is different: `## 100` appears twice on disk (line 5350, dated
+  2026-09-24, and line 5912, dated 2026-09-27) while HEAD has only the latter. The `## 32`/`## 80` gaps are in
+  both planes and are not working-copy damage.
+- **Found while checking it: eight sections are stranded outside HEAD.** HEAD carries 106 sections, the working
+  copy 115, and no committed number is missing from disk — but HEAD's sequence jumps 100 → 109, with `## 101`
+  through `## 108` existing only in the uncommitted copy. A commit built from `git show HEAD:docs/STATUS.md` plus
+  one appended section cannot rescue a section that never got staged, by construction. D111 paid this debt for
+  DECISIONS' D103-D106; the same treatment is owed here, collision and all — recorded as D115, not patched inside
+  a report about other streams.
+- **`V7__share_links.sql` (#75) — still true**, re-verified because D112 and D113 both quote 214: HEAD's
+  migrations are V1-V6 and `git log -- …/V7__share_links.sql` is empty, so the seed gate reddens 2 assertions at
+  HEAD.
+- **The rule this buys:** a cross-stream report has to carry its plane in its own sentence — *at HEAD*, *in an
+  uncommitted working copy*, or *in an artifact under gitignored `target/`* — because one without a plane turns
+  into a false claim the next time the owning stream saves.
+
+Full reasoning in `docs/DECISIONS.md`, `## D114`.
