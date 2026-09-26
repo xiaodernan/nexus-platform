@@ -58,11 +58,14 @@ const preRecoveryTree = () => {
            headings: [...nine.matchAll(/^## (\d+)\. /gm)].length };
 };
 
+// A draft number is derived, never written down: this arm said `125` until the day §125 was committed,
+// and then it was a duplicate rather than a draft and reddened for the wrong reason.
+const FREE = 1 + Math.max(...[...headStatus.matchAll(/^## (\d+)\. /gm)].map((m) => +m[1]));
 const ARMS = [
   { name: 'control: this tree as it stands', dir: ROOT, expect: 0, must: [/RESULT: PASS/] },
   { name: 'a committed section deleted from the working copy', status: headStatus.replace('## 124. Nine sections stranded', '## 999. Nine sections stranded'), expect: 1, must: [/FORK docs\/STATUS\.md: 1 section\(s\) committed/, /absent/] },
   { name: 'the same section duplicated on disk', status: headStatus + '\n## 124. A second claim on one number\n\nbody\n', expect: 1, must: [/FORK docs\/STATUS\.md: duplicated section numbers/, /on disk: 124×2/] },
-  { name: 'a draft section on disk, not yet committed', status: headStatus + '\n## 125. A section being written right now\n\nbody\n', expect: 0, must: [/RESULT: PASS/, /NOTE docs\/STATUS\.md: 1 section\(s\) on disk and not at/] },
+  { name: `a draft section on disk, not yet committed (§${FREE} does not exist at HEAD)`, status: headStatus + `\n## ${FREE}. A section being written right now\n\nbody\n`, expect: 0, must: [/RESULT: PASS/, /NOTE docs\/STATUS\.md: 1 section\(s\) on disk and not at/] },
   { name: 'the DECISIONS plane, same rule', decisions: diskDecisions.replace('## D115 A recovery commit', '## D999 A recovery commit'), expect: 1, must: [/FORK docs\/DECISIONS\.md: 1 decision\(s\) committed/] },
   { name: 'a ledger whose heading pattern matches nothing', status: headStatus.split('\n').slice(0, 40).join('\n'), expect: 2, must: [/NOT CHECKED/] },
   { name: 'a HEAD revision that does not resolve', headRev: 'no-such-revision-9b4c1', expect: 2, must: [/NOT CHECKED/] },
@@ -100,8 +103,12 @@ for (const arm of ARMS) {
   let out, code;
   try { out = execFileSync('node', [CHECKER, '--head-rev', `${RECOVERY}^`, '--dir', dir], { encoding: 'utf8', cwd: ROOT }); code = 0; }
   catch (e) { out = `${e.stdout || ''}${e.stderr || ''}`; code = e.status === undefined ? -1 : e.status; }
+  // The DECISIONS NOTE count is deliberately not pinned: `99e5b0c^` predates every decision written since
+  // the recovery, so the arm's own fixture grows by one disk-only decision each time this lane lands an
+  // entry. Pinning it to `1` made this arm MISS the day D116 was committed — a rot the check itself
+  // predicts. `missing 0` is the property that the reconstruction lost nothing.
   const want = [/FORK docs\/STATUS\.md: duplicated section numbers/, /on disk: 100×2/,
-    /8 section\(s\) on disk and not at/, /missing 0/, /1 decision\(s\) on disk and not at/];
+    /8 section\(s\) on disk and not at/, /missing 0/, /decision\(s\) on disk and not at/];
   results.push({
     arm: { name: `the working copy D115 recovered (rebuilt: ${tree.headings} headings put back as §100–§108, 8 of them new to ${RECOVERY}^)`, expect: 1, must: want },
     code, missed: want.filter((re) => !re.test(out)), out,
@@ -120,6 +127,7 @@ for (const r of results) {
 console.log(`\n  ${results.length} arms · ${results.length - fails} held · ${fails} missed`);
 console.log('  grammar: every arm runs the shipped checker as a subprocess on its own fixture directory, so');
 console.log('           no arm can redden another; the only cross-plane noise is the reconstructed arm\'s');
-console.log('           --head-rev, which predates D115 and so also prints one uncommitted DECISIONS entry.');
+console.log('           --head-rev, which predates D115 and so prints every DECISIONS entry written since');
+console.log('           the recovery as disk-only — a count this harness deliberately does not pin.');
 if (fails) { console.log('\nRESULT: FAIL — the fork guard does not do what its arms claim'); process.exit(1); }
 console.log('\nRESULT: PASS — the guard reddens on every way a committed heading can go missing, and stays green on a draft');

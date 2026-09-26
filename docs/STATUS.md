@@ -6362,6 +6362,17 @@ found             (a) The guard's own worst defect was in its first witness, not
                     contract plane spelled bare inside a STATUS section, 6 tokens. The other 9 §106 gap
                     tokens are in §123 and §124 and were not read here, so #80 inherits 15 §106 tokens with
                     three possible planes and no way to tell them apart from the number alone.
+                  (f) Corrected in this same file's next diff, because the harness lied about itself the
+                    moment this section was committed: two of its eight arms went MISSED on the first
+                    re-run over the shipped bytes. Both were fixtures built from HEAD that pinned a number
+                    to *this* unit — the draft arm wrote `## 125.`, which was free while §125 was uncommitted
+                    and became a duplicate (exit 1, not the expected 0) the second this section landed; the
+                    reconstruction arm asserted `1 decision(s) on disk and not at`, and its own `--head-rev`
+                    predates every decision written since, so that count grows by one per unit forever. The
+                    draft number is now derived (`FREE = 1 + max heading at HEAD`) and the decision count is
+                    unpinned, with the reason in the code. 8 arms · 8 held again over the fixed bytes, and
+                    the failure mode is worth keeping as the lesson: an arm whose fixture is the current tree
+                    is a claim about today, so anything it hardcodes is a date, not a constant.
 
 gates             `bash -n scripts/db_gate_fresh.sh` clean; the ten-step gate green end to end and red at
                     step 10 on the stranded fixture, both with the exit code printed into the kept log;
