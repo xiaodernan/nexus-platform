@@ -7038,3 +7038,99 @@ next              (a) The 32 populated-child names in batches of about ten. Each
                     bulk), #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage
                     residue, §87's session-time-zone seam, D91's served leg.
 ```
+
+## 132. Ten more plants behind the same switched-off check, a queue that was counted on the wrong plane, and a witness commit that did not yet contain what it testified to (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (45 → 55 arms, committed 499bfa4) and the registry it writes,
+                    `data/seed/falsifiers.tsv` (116 → 132 rows). Same kept loaded seed as §128–§131,
+                    `nexus_gate_283340_1790454442` — 216 assertions on this working copy.
+
+changed           The ten next names on §131's populated-child list, all of D122's shape: `SET LOCAL
+                    session_replication_role = replica;` then one UPDATE of one foreign-key column to a
+                    `gen_random_uuid()` (falsifier_plants.py:330-379). Each is keyed on `WHERE id = (SELECT id
+                    FROM t ORDER BY id LIMIT 1)` because the column census below found no primary key and no
+                    CHECK among the ten. No gate file, checker or migration changed; `data/seed/quality.sql`
+                    was read and not touched.
+
+measured          the column census before aiming               a rolled-back DO block over the 32 candidate
+                    (32 columns × rows, values, constraints,     columns: rows total, `count(col)`, the
+                    checks)                                      constraints naming the column. It removed two
+                    names from this batch — `categories.tenant_id` (77 rows, 0 carrying a value) and
+                    `documents.offering_id` (1040, 0) — and found three sparse ones (`resource_pools.offering_id`
+                    7 of 452, `reviews.user_id` 245 of 11000, `reviews.offering_id` 2055 of 11000). Of the ten
+                    aimed: 32492/32492 slots, 5472/5472 hours, 2118/2118 chunks ×2, 4/4 collections,
+                    1040/1040 documents ×2, 5688/5688 facts, 684/684 locations ×2 — every row carries a value,
+                    so every arm is one UPDATE.
+                  `--only 'fk checks off (replica role)'`       18 arms of 55 · 20 whole-gate sessions ·
+                    (the aimed subset: this batch's ten plus     baseline 216 red 0 · all 18 own rows RED ·
+                    D122's eight that share the label grammar)   collateral 1 on exactly four arms and 0 on the
+                    other fourteen · unfiled 0 everywhere · control skipped by the filter · closing baseline
+                    identical · RESULT: PASS
+                  the full drive, run twice                      55 arms of 55 plus one control · 58 whole-gate
+                    (run 1, then run 2) · both PASS · the four collateral reds are the same four companions ·
+                    the control still shows target RED, collateral 0, unfiled 0, spread row gone · both runs
+                    file 16 rows (10 own, 6 collateral) over 16 distinct names, 11 of them novel ·
+                    the two transcripts diff to ZERO apart from the `--witness` value
+                  node scripts/check_falsifier_registry.mjs      PASS · 216 gate assertions · 132 rows ·
+                    --db …                                         93 commit + 39 file witnesses · 87 of 216
+                    (40.3%), up from 76
+                  unwitnessed census over the final bytes        live 216 · registry rows 132 · covered names 87
+                    · unwitnessed 129 = 56 literal + 73 assembled · families fk 72, (no prefix) 55, chunks 1,
+                    density 1 — `slots` left the list, witnessed from collateral by this batch
+                  how the 72 split, counted per table            filed `fk: ` names 91 · witnessed 19 ·
+                    exactly                                      remaining 72 = 50 on a child table the seed
+                    leaves empty (27 tables) + 22 on a populated one, and 2 of those 22 are the zero-value
+                    columns above, so 20 names are left on the one-UPDATE route
+
+found             (a) §131's split was measured on the child TABLE and the reachability question is about the
+                    COLUMN. "The table has rows" bought an arm nothing could move: on `categories.tenant_id` and
+                    `documents.offering_id` the sweep has never resolved a single value, because its predicate is
+                    `WHERE c.col IS NOT NULL AND p.col IS NULL`. Same lesson D79 taught for a GROUP BY probe that
+                    emits no check, arriving one plane over: the number to read before aiming an arm is
+                    `count(col)`, never `count(*)`.
+                  (b) Four of the ten arms reddened one companion each, and all four companions reach the child's
+                    MERCHANT (or its document) through the column being danglinged: `slots: every slot has a pool
+                    in the same merchant`, `chunks: ordinal contiguous per document`, `merchant has a menu
+                    document (RAG feed)`, `merchant has a primary location`. The six others — including all three
+                    `.tenant_id` arms — reddened nothing else, so the seam is specific: no companion in the file
+                    joins those tables on `tenant_id`. One of the four had no witness before and got one from
+                    collateral, which is the third batch running where the by-product names something new.
+                  (c) The rows were filed by the second drive, not the first. Run 1 was handed the ledgers'
+                    commit (c6b1018) as its witness, and that commit does not contain the arms — a witness has to
+                    carry the thing it testifies to. The registry was restored from HEAD, the harness committed
+                    alone as 499bfa4, and the drive re-run. The zero-diff between the two transcripts is the
+                    first chance this lane has had to test its own rollback discipline at scale: 116 write
+                    sessions in one day on one kept database, and the second drive's baseline and per-arm
+                    verdicts are byte-identical to the first's.
+                  (d) Reported, not edited: a `fk: ` row prints its orphan count and nothing else, so a column
+                    that is NULL on 10950 of 11000 rows answers exactly like one that is fully populated. The
+                    honest detail would state what it resolved — `n of m non-null` — and that is a
+                    `quality.sql` change, i.e. another lane's working copy (` M`), so the claim goes here
+                    instead of an edit there.
+
+gates             The eleven-step script was not re-run, because no gate file, checker or migration changed;
+                    the shipped code touched is the plant harness, and its 58 whole-gate sessions per drive are
+                    the gate body itself executed against mutated data inside a transaction the harness rolls
+                    back — the identical closing baseline on both runs is what certifies that. The four readers
+                    were run on the final bytes of this text: step 8 `check_ledger_citations.mjs --worktree`
+                    (exit 0 — 236 headings seen, 497 name:number tokens, 286 citation-shaped, strict on the
+                    working copy), step 9
+                    `check_comment_citations.mjs` (PASS, 70 comment-plane citations across 21 files), step 10
+                    `check_ledger_sections.mjs` (PASS — STATUS HEAD 99 · on disk 100 · missing 0 · duplicates 0
+                    · §132 the one uncommitted section; DECISIONS HEAD 110 · on disk 111 · D123 the same note),
+                    step 11 `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442` (PASS, 132 rows,
+                    87 of 216).
+
+next              (a) The 20 remaining one-UPDATE names, in two batches of ten, now aimed from the column
+                    census rather than the table one — plus a value-filing arm for each of the two zero-value
+                    columns, which is D122's `moderation_cases` shape and cheap.
+                  (b) The two decisions that grow bigger every batch: the 50 empty-child names (synthetic INSERT
+                    arms, or D79's silence said once for fifty), and whether a `fk: ` row should print how many
+                    values it resolved — the second is another lane's file, so it may end as a report.
+                  (c) #71, sixth time standing on it: `facts` is still the only seeded table with no CHECK.
+                  (d) Carried from §130: the renderability companion's missing `guide` branch and its kind-blind
+                    join, reported and not edited; #73 (87 of 216 witnessed, 129 unwitnessed with fk 72 the
+                    bulk), #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage
+                    residue, §87's session-time-zone seam, D91's served leg.
+```

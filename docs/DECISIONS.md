@@ -7368,3 +7368,70 @@ role (measured above), so each needs a complete legal row built from a table tha
 never populates worth witnessing with a synthetic INSERT, or is the honest record D79's — silence, not green — and
 the lane should say so once for 50 names instead of fifty times. (c) #71, fifth time standing on it. (d) Carried
 from §130: the renderability companion's missing `guide` branch, reported and not edited.
+
+## D123 The falsification queue is per COLUMN, not per child table — and four of the ten plants found a companion that reads the same column — 2026-09-27
+
+§131's next(a) was a batch plan read off a table-level split: "the 32 populated-child names in batches of about
+ten, each one UPDATE behind the same SET". This unit takes ten of them, and the measurement done before aiming
+shows the split was the wrong plane to plan from.
+
+**Decision (a): aim from the column, not the child table.** All 32 candidate columns were read off the kept
+database first — rows total, rows carrying a value, the constraints naming the column, any CHECK bounding it (a
+rolled-back DO block, scratch `d123_aim.sql`). Two of the 32 cannot be falsified by an UPDATE at all:
+`categories.tenant_id` has 77 rows and **0** carry a value, and `documents.offering_id` has 1040 rows and **0**
+carry one. The sweep counts `WHERE c.col IS NOT NULL AND p.col IS NULL`, so on those columns it has never
+resolved anything — an UPDATE has nothing to move, and the honest arm is D122's shape (file the value, then
+dangle it). They stayed out of this batch. Three more are sparse rather than empty: `resource_pools.offering_id`
+7 of 452, `reviews.user_id` 245 of 11000, `reviews.offering_id` 2055 of 11000 — an UPDATE reaches those, but the
+row resolves a fraction of the column while its detail prints only the orphan count, so a 98%-NULL column and a
+fully-populated one print identically. That is D79's "silence, not green" arriving on the enforcement plane with
+a new twist: there the probe emitted *no check*, here it emits a check whose coverage is invisible from its own
+answer. Reported, not edited — `data/seed/quality.sql` is another lane's working copy, and the fix would be to
+print `n resolved of m non-null` in the detail, not to weaken the verdict.
+
+What the census did buy is the handle: no column in the batch is a primary key and none is bounded by a CHECK, so
+`WHERE id = (SELECT id FROM t ORDER BY id LIMIT 1)` is legal for all ten (falsifier_plants.py:330-379), and the
+seven columns that sit inside some composite UNIQUE cannot collide with it, because the new value is a random
+uuid. This also retires §129's failed probe: `offering_relations` has no `id` column at all, and both of its
+names are still in the queue, keyed on the pair.
+
+**Decision (b): four of the ten arms are not single-row witnesses, and the collateral they found is a witness
+for real.** `availability_slots.merchant_id`, `chunks.document_id`, `documents.merchant_id` and
+`locations.merchant_id` each reddened exactly one companion besides their own name — `slots: every slot has a
+pool in the same merchant`, `chunks: ordinal contiguous per document`, `merchant has a menu document (RAG feed)`,
+`merchant has a primary location` — while the other six arms, including all three `.tenant_id` ones, reddened
+nothing else. The pattern is that the companion reaches the child's *merchant* (or its *document*) through the
+very column being danglinged, so the same-scope predicate stops holding the moment the id becomes a ghost; the
+tenant-scoped arms find nothing because no companion in the file joins on `tenant_id` for those tables. One of
+the four, `slots: every slot has a pool in the same merchant`, had never carried a witness before this drive and
+now has one, filed from collateral — the third consecutive batch where the by-product is the more interesting
+row (D121's phone arm, D122's stamp arms, this one).
+
+**Decision (c): the rows were filed by the second, identical drive, because the first one's witness was the
+wrong commit.** The first drive PASSed with the same 55 arms and the same 16 rows, but it was handed `--witness
+c6b1018` — the ledgers' commit, which does not contain the arms. A witness has to be an artifact that carries
+the thing it testifies to, so the registry was restored from HEAD, the harness was committed on its own as
+`499bfa4`, and the drive was re-run against that sha. The two transcripts then diff to **zero** apart from the
+witness column: 58 whole-gate sessions each on one kept database, same per-arm verdicts, same closing baseline.
+That is also the first chance this lane has had to check its own rollback discipline across two full drives —
+116 write sessions in one day, and the second drive sees the same 216 assertions and 0 baseline reds as the
+first.
+
+**Numbers.** Arms 45 → 55. `data/seed/falsifiers.tsv` 116 → **132 rows**, 16 appended (10 from an arm's own RED
+row, 6 from collateral) over 16 distinct names, **11 of them a name that carried no witness before**. Coverage 76
+→ **87 of 216 (40.3%)**; witness kinds 93 commit + 39 file; step 11 PASS. Unwitnessed 140 → **129 = 56
+literal + 73 assembled**; the `fk ` family 82 → **72 = 50 on an empty child table + 22 on a populated one**, and
+of those 22 the two zero-value columns above are not reachable by an UPDATE, so **20** names are left on the
+cheap route.
+
+**Limits.** D122's still stand: these rows demonstrate detection, not reachability, and the state exists only in
+a session the `nexus_app` role is refused. New limit from this batch: a companion witnessed from collateral was
+witnessed under a checks-off state, so it testifies that the companion notices a broken merchant link — it says
+nothing about whether a *legal* write can produce a same-merchant mismatch, which is the risk that companion was
+written against. Reading those four rows as door tests would over-claim exactly as D122 warned.
+
+**next.** (a) The 20 genuinely UPDATE-reachable names in two batches, and the two zero-value columns folded into
+a value-filing arm each. (b) The decision the 50 empty-child names raise, plus a second question the sparse
+columns raise: whether a `fk: ` row should print how many values it resolved, which is a `quality.sql` change and
+therefore another lane's file. (c) #71, sixth time standing on it. (d) Carried from §130: the renderability
+companion's missing `guide` branch, reported and not edited.

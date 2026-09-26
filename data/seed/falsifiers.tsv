@@ -135,3 +135,19 @@ fk: moderation_cases.assigned_to -> users.id	D122	fk checks off: a case gains an
 every reference the seed writes is probed or explained	D122	fk: enforcement dropped, then one row lands on the unenforced edge	bd433a8
 every column that cannot vary is answered for why it cannot	D122	a fact sourced from a real URL	bd433a8
 the columns stamped from the generation clock are exactly the ones answered so	D122	a price fact stamped with the hours TTL instead of the six-hour one	bd433a8
+fk: availability_slots.merchant_id -> merchants.id	D123	fk checks off (replica role): a slot loses its merchant	499bfa4
+fk: business_hours.merchant_id -> merchants.id	D123	fk checks off (replica role): a set of opening hours loses its merchant	499bfa4
+fk: chunks.document_id -> documents.id	D123	fk checks off (replica role): a chunk loses its document	499bfa4
+fk: chunks.merchant_id -> merchants.id	D123	fk checks off (replica role): a chunk loses its merchant	499bfa4
+fk: collections.tenant_id -> tenants.id	D123	fk checks off (replica role): a collection loses its tenant (4 rows in the table)	499bfa4
+fk: documents.merchant_id -> merchants.id	D123	fk checks off (replica role): a document loses its merchant	499bfa4
+fk: documents.tenant_id -> tenants.id	D123	fk checks off (replica role): a document loses its tenant	499bfa4
+fk: facts.merchant_id -> merchants.id	D123	fk checks off (replica role): a fact loses its merchant	499bfa4
+fk: locations.merchant_id -> merchants.id	D123	fk checks off (replica role): a location loses its merchant	499bfa4
+fk: locations.tenant_id -> tenants.id	D123	fk checks off (replica role): a location loses its tenant	499bfa4
+every column that cannot vary is answered for why it cannot	D123	a merchant image pointed at a third-party host	499bfa4
+the columns stamped from the generation clock are exactly the ones answered so	D123	the stale-marking cleared, so the UI would never show 已過時	499bfa4
+slots: every slot has a pool in the same merchant	D123	fk checks off (replica role): a slot loses its merchant	499bfa4
+chunks: ordinal contiguous per document	D123	fk checks off (replica role): a chunk loses its document	499bfa4
+merchant has a menu document (RAG feed)	D123	fk checks off (replica role): a document loses its merchant	499bfa4
+merchant has a primary location	D123	fk checks off (replica role): a location loses its merchant	499bfa4
