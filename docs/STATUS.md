@@ -5281,3 +5281,46 @@ next              (a) #72 is closed by this entry: its last item was the unteste
                     in the detail text where none does) and the 2 names carrying newlines. Then #71, #68, #58,
                     #62, #64, #44, and D91's served leg until :8090 is up.
 ```
+
+## 99. Two claims taken back: no check name has a newline, and the coverage count moves with the join (2026-09-26)
+
+```
+plane             Claims about the gate's 216 assertions, and the matcher that counted them. No shipped file
+                    changed; one SELECT against the kept stamped database and two git shows.
+
+refuted           D98 and §95 said the read counted 219 lines for 216 rows because two check names carry an
+                    embedded newline. Re-fetched as one tab-separated row: exactly 216 names, and 0 of them
+                    contain a newline. The three extra lines are part A's own report rows — `(1 row)`,
+                    `string_agg`, `(1 row)` — identified by set difference against the 216, not by a story.
+                    Two of them had already been printed in D98's output as "0 occurrences in the file": the
+                    alarm went off, was labelled an artefact of the locator, and was not read. Three extra
+                    lines for a claim about two names was the arithmetic that should have stopped it.
+
+what is unaffected  D99 and D100's plants ran on the aggregated read, which is the correct one, so their
+                    verdicts stand: 216 rows per arm, the sweep and companion rows they reported flipping were
+                    real names. The damage is a sentence about the file and a task item, not a witness.
+
+coverage, honestly  Same 216 names, same corpus (HEAD DECISIONS + STATUS, 954,043 chars):
+                      unfolded exact-or-fragment join      57 named / 159 un-named
+                      whitespace-folded-both-sides join    53 named / 163 un-named
+                    D98's 54-seen was a third reading, against an older HEAD: my own later ledgers name more
+                    checks, so the number is a function of the corpus as well as the grammar. The claim that
+                    survives is the floor — at least 159 of 216 are never named in the ledgers under any join
+                    tried — and the point estimate is ±4 depending on a knob nobody had inspected.
+
+caveat, sharper     A mention is an upper bound on being witnessed. Folding made the question answerable; it
+                    converted no mention into a plant. The gap between ">=57 named" and "shown able to fail,
+                    a number nobody has written down" is the remaining work in #73, and a cleverer join does
+                    not narrow it.
+
+gates             Nothing to certify: no shipped byte changed since D101's nine-step `GATE_RC=0` run, which
+                    stays the tree's certification. Step 8 is re-run after this append because an append
+                    changes the plane it reads. Artifacts: d102_qc_names.tsv, d102_unnamed.tsv; the lossy
+                    d98_qc_names.txt is left in place next to the entry naming what it got wrong.
+
+next              (a) #73 corrected: no newline work to do; what remains is the literal-named half of the gate
+                    (plant where a producer exists, change the detail text where none does) and shrinking the
+                    mention-to-witness gap, which is the number that actually matters.
+                  (b) Carried: #71, #68, #58, #62, #64, #44, §87's session-time-zone seam, D91's served leg
+                    until :8090 is up.
+```

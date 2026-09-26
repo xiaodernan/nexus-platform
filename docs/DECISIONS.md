@@ -6085,3 +6085,50 @@ checks on a from-scratch schema (tables=58, migrations=7), step 9 reading
 `plane censised D:\获客平台 · tokens found 64 in 17 file(s) · RESULT: PASS`, `GATE_RC=0`. That run, not the
 earlier D96 one, is the certification this unit's tree carries; the ledger append that follows re-runs step 8,
 which is the step the append touches.
+
+## D102 A wrong claim survived four units because its symptoms were on screen and read as noise: no check name has a newline, and the coverage number depends on the join
+
+D98 reported two things this unit has to take back. Both were plausible, both were used, and one of them is now
+an item of work in #73 that should never have existed.
+
+**The refuted claim.** D98 said the line-oriented read counted 219 lines for 216 rows "because two check names
+carry an embedded newline", and §95 repeated it. Re-read with the names fetched as one tab-separated row and
+written to a `.tsv`, the count is exactly 216 and **no name contains a newline at all**. The three extra lines
+are identified by set difference against the 216: they are part A's printed report rows — `(1 row)` twice and
+`string_agg` once — leaking into the tail of the slice, which is where a reader of a `psql` transcript should
+expect the informational section's own noise. The arithmetic was the tell and I did not use it: three extra
+lines is not two names, and a claim that does not fit its own numbers was on the page.
+
+Worse, `string_agg` and `(1 row)` had already appeared in D98's output under "0 occurrences in the file" — a
+line that should have been the alarm, since no real check name is a function call. They were read as artefacts of
+the locator, which is what I called them in the ledger, and the deeper cause was the read itself. That is how a
+measurement becomes a story: the anomaly is named, and naming it feels like handling it.
+
+**What that costs elsewhere.** §96's method note and D99/D100's harnesses were built on the aggregated-row read,
+which is the correct one, so no plant or verdict in those units is affected — they were computed from 216
+genuine names. What is affected is a claim about the file and a task item.
+
+**The coverage number is grammar-dependent, and must be quoted that way.** Same 216 names, same corpus (HEAD's
+two ledgers, 954,043 characters), two joins:
+
+| join | checks seen as named | un-named |
+| --- | --- | --- |
+| unfolded exact string, or a fragment of 18/20/30 characters | 57 | 159 |
+| whitespace folded on both sides, then whole name or a 24-character prefix | 53 | 163 |
+
+So the honest statement is not "162 of 216 are un-named" — that was one grammar's answer against an older HEAD,
+which is also why it differs from D98's 54 seen (my own ledgers since D98 have named more checks). It is: **under
+every grammar tried, at least 159 of the 216 assertions are never named in the ledgers**, and the exact count
+moves by 4 either way — an 8% swing from a knob nobody had looked at. The floor is the claim; the point estimate
+needs its grammar and its corpus beside it, which is the same rule the seed census has been repeating since D73,
+applied to my own matcher.
+
+**And the caveat got sharper, not softer.** A mention is an upper bound on being witnessed. Folding whitespace
+made the question answerable; it did not convert one mention into one plant. The distance between "named at
+least 57 times" and "shown able to fail some number of times that nobody has written down" is the actual work in
+#73, and it is not narrowed by a cleverer join.
+
+**Gates.** Nothing shipped changed: the reads are one `SELECT string_agg(...)` against the stamped, kept gate
+database and `git show` of two committed documents. The fix is to how this lane asks a question of its own
+artifacts, so the artifacts are named — `d102_qc_names.tsv`, `d102_unnamed.tsv` — and the lossy
+`d98_qc_names.txt` stays where it is, beside the entry that says what it was wrong about.
