@@ -4860,7 +4860,7 @@ measured          68 tokens, 18 files, 25 distinct cited files. The checker exit
                     All five sit inside the sentence that explains what a bad citation looks like. 63 of the
                     68 resolve; the plane is not full of lies, it is full of examples written in claim shape.
 
-                  Task #67's note said the  cite at line 66 was AMBIGUOUS. Half right in the way remembered cites
+                  Task #67's note said the `package.json` cite at line 66 was AMBIGUOUS. Half right in the way remembered cites
                     always are: 66 is where the comment lives, 9 is the line the example cites. Verified from
                     the census output, not from the note.
 
