@@ -4607,3 +4607,119 @@ next              (a) §85's prose-overlap arm stays unbuilt and stays falsified
                     lane builds its ledger blobs from `git show HEAD:docs/STATUS.md` rather than from the tree it
                     is standing in. Recorded as task #68; not touched.
 ```
+
+## 87. Two more rows were measuring the machine: one had a date in it, the other could not fail — the gate now reads the dataset's own now (2026-09-26)
+
+```
+plane             `data/seed/quality.sql`'s fact-TTL row (:830) and slot-horizon row (:888) — the last two
+                    verdicts in the file that asked their questions of the reading clock. Both now read
+                    `seed_now` (:72), a temp view over `nexus.seed_base`, which `generate.py` publishes
+                    (:1654), `load.sh` validates in preflight (:65) and stamps (:171), and
+                    `scripts/db_gate_fresh.sh:144` turns on. No table added: the gate still lands on
+                    tables=58, migrations=7, 216 checks.
+
+measured          On D89's kept gate database, before any predicate in this unit was written:
+                  The horizon arm compared `min(starts_at)::date` — fixed at 2026-09-22 by the pinned base
+                    — against `current_date - 7`. On 2026-09-26 that threshold read 2026-09-19: 3 days of
+                    slack, and the row reddens 2026-09-30 with the tree unchanged. The gate had an expiry
+                    date in it that nobody wrote down, and CI inherits expiry dates.
+                  The TTL arm counted `stale AND expires_at > now()`. 72 stale rows, the newest expiring
+                    2026-09-22 09:30+08 — 90 min before the 11:00 base — because
+                    `data/seed/generate.py:966` sets the flag only where the expiry already precedes its own
+                    instant. At the 11:41 reading that arm had been unable to fail for 4 days and 35
+                    minutes, and it had been unable to fail for every seed loaded after the base.
+                  Margins of the new arms, on the same data: the first slot sits 20 h above the lower bound
+                    and 196 h below the upper one; the newest stale expiry sits 90 min below the base. None
+                    of the three is what makes the rows pass, and the 20 h one is tight enough to fail for
+                    real reasons.
+
+changed           One carrier line, one validator, one stamp, two re-anchored rows. The carrier is a comment
+                    in `out/00_truncate.sql` — `-- seed-base: 2026-09-22 11:00:00+08` — written by the same
+                    `write_outputs()` call that writes the CSVs it belongs to, into a file that call deletes
+                    first, so it cannot outlive its own data. `load.sh` reads it in preflight, ahead of the
+                    container check and the connection, and refuses a wrong shape there rather than after ten
+                    minutes of loading. `quality.sql` reads it with no `now()` fallback: unstamped means
+                    `known` is false, both rows are red, and `shown` says `NO BASE STAMPED — re-run
+                    data/seed/load.sh with SEED_ANCHOR=1`. Each row leads with `known` so `ok` stays a
+                    boolean — a NULL `ok` walks past the verdict's `WHERE NOT ok` and reports nothing. The
+                    horizon arm became two-sided (`>= base - 1 day`, `< base + 8 days`) because the single
+                    `>=` it replaced could only be broken from one end.
+
+plants            Six states, on the database the run that ships these bytes left behind; the full table is
+                    in DECISIONS D90. The shipped rows are sliced out of `quality.sql` at run time and the
+                    superseded ones out of the same file at `HEAD`, renamed — no rule is re-typed here.
+                      control and same-instant-re-SET: both shipped rows green.
+                      one price fact marked stale while its TTL runs 31 min past the base
+                        (`216fb47c-9e39-52f6-9a62-a02adba85739`, observed 05:30:39, expires 11:30:39):
+                        the shipped TTL row fails with 1 offender, HEAD's TTL row passes with 0 — the dead
+                        arm, shown catching the same lie it could not have caught before. Planted inside a
+                        transaction the harness rolls back; the residue check reads 72 stale rows and 0
+                        offenders, which is what it read before.
+                      base moved 9 days later (computed by the server, not typed): horizon row red.
+                      base moved 12 days earlier: both shipped rows red, TTL with 72 offenders.
+                    Across all six, HEAD's two rows never moved once. That column is the unit's evidence.
+                  The unstamped case needed no plant: D89's kept database carries the window and not the
+                    base, and the shipped file run against it exits 3 with exactly two failures, naming both
+                    re-anchored rows and the missing stamp.
+                  The new validator was driven through the shipped `load.sh` over nine carrier shapes — four
+                    it must take (`+08`, `+0800`, `+08:00`, `-0500`) and five it must refuse (no offset, ISO
+                    `T`, a quote with a `DROP DATABASE`, an empty value, a file from before carriers existed).
+                    9/9, exit codes as the classifier: 2 = refused in preflight, 3 = accepted and moved on.
+                  D89's four clock arms re-run over the changed bytes on a stamped database: the two that
+                    inherit the recorded window pass, the two that override it fail naming the clock row.
+
+gates             Run one FAILED and was kept as one: `gate-d90-official.log` ends `GATE_RC=2` with the
+                    loader refusing `2026-09-22 11:00:00+08` — the exact string the generator had just
+                    written. The guard, not the data, was wrong. Its empty database was dropped once the
+                    cause was read.
+                  Run two passes all 8 steps: `-> 216 quality checks passed against a from-scratch schema
+                    (tables=58, migrations=7)`, the truncate probe's both-branches PASS, the jsonb read
+                    census and the ledgers' citations. All three anchors stamped
+                    (started 1790395434, finished 1790395448 — a 14 s load — and the base byte-identical to
+                    the carrier line on disk). D89's claim gets a second data point for free: the same
+                    clock row green on an 807 s load and on a 14 s one.
+                  Every tracked file's mtime precedes the run's start, checked after it rather than
+                    remembered: generate.py 11:52:10, db_gate_fresh.sh 11:56:58, quality.sql 11:57:46,
+                    load.sh 12:00:59 against a launch at 12:02:50 and a log last written 12:05:43.
+
+mistakes          (a) A validator whose first execution is its first test, and the test it failed was a
+                    correct input: bash's ERE read `[0-9]{2}?` as "these two digits are optional", so the
+                    regex demanded a colon `ts()` never emits. Fixed with an explicit alternation, then
+                    driven over both directions because "it rejects the bad case" is one half of a guard.
+                  (b) The background launch ended with `; echo rc=$? >> log`, so the task reported exit 0
+                    for a run that exited 2 — a wrapper was the last command in the measurement of the
+                    exit code. Read the log, not the notification.
+                  (c) `SET x = (SELECT ...)` is not SQL: psql's SET takes a literal. The arm whose prelude
+                    used it printed four green rows and an ERROR line, because ON_ERROR_STOP was off and
+                    the verdict never reads the failing statement. A broken arm and a passing one have to
+                    be distinguishable; that is what the flag is for.
+                  (d) Expected D89's `none` plant to go red on the stamped database and was wrong about
+                    what `none` means there: with the window stamped at database level, emitting no SET
+                    inherits it. Two green, two red is the correct shape for a stamped DB; the red `none`
+                    lives in D89's own record against an unstamped one.
+                  (e) `print()` on Windows writes CRLF, so a line equal to `INSERT INTO qc` arrived as
+                    `INSERT INTO qc\r` and did not compare equal to anything. Cross-plane formatting
+                    assumptions belong in the failure list, not in a comment.
+
+next              (a) Task #70, the served twin of this defect and the worse one — already past its trip
+                    date rather than three days from it: `scripts/verify_consumer_slice.py:77` asserts every
+                    past-expiry fact arrives marked stale, and on the pure seed 4,412 of the 4,484
+                    past-expiry facts arrive with `stale=false` by construction, while
+                    `markExpiredStale` (`FactRepository.java:102`) has no callers in the repo. The fix is a
+                    decision about the product rule, not a code edit; do not tune the verifier until it
+                    passes.
+                  (b) Task #57 still owes a working plant for the two other dead arms in the same row —
+                    `expires_at <= observed_at` and the confidence bounds — where the honest answer is a
+                    plant per arm, not a deletion.
+                  (c) The horizon row's `count(DISTINCT starts_at::date)` still casts through the session
+                    time zone, which the container pins to Asia/Hong_Kong and nothing in the gate asserts.
+                    Counted days, not an instant, so a uniform shift cannot change it — but that is an
+                    argument, and this lane's rule is that an argument becomes a row or a number.
+                  (d) Kept for the readings above and droppable once they are re-derived:
+                    `nexus_gate_225101_1790395370` (this unit's stamped full dataset) and
+                    `nexus_gate_217782_1790380257` (D89's).
+                  (e) Carried over and untouched: §86 (b)(c)(d)(e) — including the divergent working copy
+                    of this file, task #68 — and the open reports #58, #62, #64, #44.
+                  (f) Task #67's title says "§87 next unit"; §87 is this one, so that unit is §88. Fix the
+                    title when it is picked up rather than the numbering of this section.
+```

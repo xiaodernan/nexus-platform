@@ -5365,3 +5365,138 @@ line says what the sentence claims. The same invocation's working-copy line read
 sections, and the arithmetic of that difference is §86(e)'s divergent file rather than anything here: 165 is 89
 plus 76 against the committed 87 plus 77, the working copy being minus committed §85, minus §86, plus four
 uncommitted draft sections, and minus D89. Must-stay-green is unchanged: 216 checks, one of which is this row.
+
+## D90 Two verdict rows measured the machine, not the data — one had a date in it, the other could not fail
+
+`data/seed/quality.sql` raises unless all 216 of its checks pass, and D89 fixed the one row that reported how
+fast the build host was. Two more were still reading the wall clock. Neither was hypothetical: both were
+measured on the database D89's third gate run left behind (`nexus_gate_217782_1790380257`), on 2026-09-26,
+before anything in this unit was written.
+
+**The horizon row had an expiry date nobody wrote down.** Its second arm read
+`(SELECT min(starts_at)::date FROM availability_slots) >= current_date - 7`. The seeded horizon is pinned to
+`2026-09-22T11:00:00+08:00` (`data/seed/generate.py:1990`), so `min(starts_at)` is fixed at
+2026-09-22 07:00+08 while `current_date - 7` walks forward one step a day. On 2026-09-26 the threshold read
+2026-09-19 and the arm had 3 days of slack; on 2026-09-30 it reddens with the source tree unchanged and every
+decision it encodes still true. A gate that fails on a Tuesday for no reason but Tuesday is not a gate; CI
+running this file was scheduled to go red in its sleep.
+
+**The TTL arm could not fail.** Its third arm read `stale AND expires_at > now()`. The generator sets the flag
+only where the expiry already precedes its own instant — `stale = bool(exp and exp < self.now and ...)` at
+`data/seed/generate.py:966` — so every stale row in the dataset expires before the base instant, and the
+newest of the 72 stale rows read 2026-09-22 09:30:00+08, which is 90 minutes *before* the 11:00 base. Any
+`now()` that has not been wound backwards reads later than that. The count it reports is 0 and, for a seed
+loaded after the base instant, has to be: at the 11:41 reading it had been unable to fail for 4 days and
+35 minutes. A predicate no input can satisfy is not checking the input; it is decoration around a `NOT EXISTS`.
+
+Both rows ask the same question — *is this data self-consistent?* — so both now ask the data, and the answer
+travels with the dataset.
+
+**The anchor is published by the thing that knows it.** `data/seed/generate.py:1654` writes the resolved base
+into `out/00_truncate.sql` as one comment line, `-- seed-base: 2026-09-22 11:00:00+08`, in the same
+`write_outputs()` call that writes the CSVs beside it, in a file that call deletes before it starts. That
+placement is the whole design: the carrier cannot outlive the data it describes, because the only way to have
+data is to have run the call that rewrote the carrier. `data/seed/load.sh:65` reads the line back in
+preflight — before the container check, before the connection, before the load — and refuses with
+`SEED_ANCHOR=1 needs a '-- seed-base: <instant>' line` if the shape is wrong, so a dataset whose base cannot
+be published is refused in the second it is noticed rather than after ten minutes of loading it.
+`data/seed/load.sh:90` gates that read on the same `SEED_ANCHOR=1` that D89 introduced, and
+`data/seed/load.sh:171` records it as `ALTER DATABASE … SET nexus.seed_base`, called beside the window bounds
+at `data/seed/load.sh:190`. `scripts/db_gate_fresh.sh:144` turns all three on for the database it owns. One
+flag, one carrier, one stamp, no new table: `tables=58` is unchanged.
+
+**The gate reads it and refuses to guess.** `data/seed/quality.sql:72` defines `seed_now` — `known`, `ts`, and
+a `shown` string that says `NO BASE STAMPED — re-run data/seed/load.sh with SEED_ANCHOR=1` — through the same
+`nullif(current_setting(...), '')` form D89 used, with no fallback to `now()`. The TTL arm is now
+`stale AND expires_at > (SELECT ts FROM seed_now)` (`data/seed/quality.sql:836`), and the horizon arm is a
+window around the same instant (`data/seed/quality.sql:892`): the first slot may be no earlier than a day
+before the dataset's own now and no later than 8 days after it. Both rows lead with `known`, which keeps `ok`
+a boolean instead of a NULL the verdict's `WHERE NOT ok` would walk past, and the two-sided horizon bound is
+what replaces the single `>=`: an arm that can be broken from either end is an arm that is watching.
+
+Measured on the shipped bytes, against the database the run that ships them left behind:
+
+| condition | `seed_now` reads | shipped TTL row | shipped horizon row | HEAD's TTL row | HEAD's horizon row |
+| --- | --- | --- | --- | --- | --- |
+| nothing touched | 2026-09-22 11:00+08 | pass, 0 | pass | pass, 0 | pass |
+| same instant re-SET by the session | 2026-09-22 11:00+08 | pass, 0 | pass | pass, 0 | pass |
+| one row marked stale while its TTL runs 31 min past the base | 2026-09-22 11:00+08 | **fail, 1** | pass | pass, 0 | pass |
+| base moved 9 days later | 2026-10-01 11:00+08 | pass, 0 | **fail** | pass, 0 | pass |
+| base moved 12 days earlier | 2026-09-10 11:00+08 | **fail, 72** | **fail** | pass, 0 | pass |
+| database never stamped | NO BASE STAMPED | fail, names it | fail, names it | — | — |
+
+The last column is the point of the exercise: HEAD's two rows did not move on any of the six states, including
+the one where a fact is labelled stale while the data itself says it still had half an hour to live. That row
+is `216fb47c-9e39-52f6-9a62-a02adba85739`, a price fact observed 05:30:39 and expiring 11:30:39 against an
+11:00 base, planted inside a transaction the harness rolls back; the residue check after the run reads 72
+stale rows and 0 offenders, which is what it read before. The re-anchored rows are sliced out of
+`data/seed/quality.sql` at run time, and the two HEAD rows are sliced out of the same file at `HEAD` and
+renamed — nothing in the table above is a hand-copy of a rule.
+
+The margins are reported rather than assumed: the first slot sits 20 h above the lower bound and 196 h below
+the upper one, and the newest stale expiry sits 90 min below the base. The bounds are not what makes these
+rows pass, and the 20 h one is tight enough to be interesting.
+
+**What this does not buy.** The TTL arm still cannot be tripped by any dataset `generate.py` writes, for the
+same reason `now()` could not trip it: `data/seed/generate.py:966` forbids the combination at the source. What
+changed is *which* producer the arm watches. `MerchantContentRepository.expireFacts` and the row's own
+`stale` column are written by the platform at read time, and 4,484 of the seed's facts are past expiry while
+4,412 of those carry `stale=false` — so the guard is real for a served database and the plant above is its
+witness for the predicate. Recorded as a limitation here, and as task #70, rather than papered over: the same
+census found `scripts/verify_consumer_slice.py:77` asserting that every past-expiry fact arrives marked
+stale, which the seed refutes by construction and which nothing has ever swept
+(`markExpiredStale` at `FactRepository.java:102` has no callers in the repo).
+
+**Two claims corrected, named rather than quietly edited.** The horizon row's detail text used to end with
+`(pinned base date, see README)`. There is no README to see: `data/seed` holds `generate.py`, `load.sh`,
+`quality.sql`, `seed_pools.py`, `out/`, `out_smoke/` and `__pycache__`, and the only README under it is
+`out/images/README.md`, about SVG placeholders. The sentence shipped in a committed file and pointed at
+nothing; the text now names the chain it actually reads. Second, D89's block at `data/seed/quality.sql` said
+"Nothing is measured against now() any more", which was true of the clock set and readable as a claim about
+the file; it now reads "Nothing in this set…", and the file says which remaining `now()` is deliberate —
+part A's `past_expiry` column is a report about the reading instant, and the reading instant is what it
+reports on.
+
+**Four things about the measuring.** (a) A validator's first execution must not be its first test: this one's
+was, and it refused a *correct* carrier line on a real gate run — see the gate section, where that run is
+named as the red it was. (b) A shape guard is about shape. The regex now takes an explicit alternation of the
+three offset spellings `ts()` can produce; it does not validate the calendar, and that is the right division
+of labour, because `::timestamptz` on the read side raises for an impossible date and says so in step 5. (c)
+`SET x = (SELECT …)` is not SQL: psql's `SET` takes a literal, and a plant whose prelude errors still prints
+green, because the failure is in a statement the verdict never reads. `ON_ERROR_STOP=1` in the plant driver is
+not decoration — it is what makes a broken arm distinguishable from a passing one. (d) An arm that can only
+move one way is worth auditing, and so is a table that only runs one way: the six states above include two
+that must stay green, and the two HEAD columns exist to be *unable* to move.
+
+**Gates.** The first official 8-step run of this unit's bytes FAILED, and it failed on the loader's new
+preflight: `load.sh` refused `2026-09-22 11:00:00+08`, the exact string `generate.py` had just written,
+because bash read `[0-9]{2}?` as "these two digits are optional" and so required a colon the generator never
+emits. `gate-d90-official.log` keeps that run, ending `GATE_RC=2`, and the empty database it left behind was
+dropped after the cause was read; the refusal was correct behaviour on incorrect input, and the input was the
+generator's own output.
+The guard was fixed, and then driven through the shipped `load.sh` over nine carrier shapes — four it must
+accept (`+08`, `+0800`, `+08:00`, `-0500`) and five it must refuse (no offset, ISO `T` separator, a quote with
+a `DROP DATABASE`, an empty value, a file written before carriers existed) — 9/9 as expected, exit codes read
+as the classifier (2 = refused in preflight, 3 = accepted and gone on to look for a container).
+
+The second official run passes end to end in about three minutes on a warm cache: migrations to `tables=58`,
+`migrations=7`, generate's own self-check, the load stamped with all three anchors
+(`nexus.seed_started=1790395434`, `nexus.seed_finished=1790395448`, a 14-second load, and
+`nexus.seed_base=2026-09-22 11:00:00+08`, byte-identical to the carrier line on disk), `-> 216 quality checks
+passed against a from-scratch schema`, the truncate probe's both-branches PASS, the jsonb read census, and
+the ledgers' own citations resolved. That a run this short passed matters less than what it proves about
+D89's row: the same predicate on a 14-second load and an 807-second load, both green, which is the claim that
+unit bought. The 807 s load in run #3 and this 14 s one are the two ends of the width the row no longer
+cares about. Every tracked file's mtime precedes the run's start, so the bytes the gate certified are the
+bytes that ship.
+
+D89's four clock arms were re-run over the new bytes on the stamped database: the two arms that inherit the
+recorded window pass, and the two that override it with a 2020 window or a window around the pinned base date
+fail, naming the generation-clock row — the separation still holds after the file changed under it.
+
+**Next.** The unit's own residue: `nexus_gate_225101_1790395370` (stamped, full dataset) and
+`nexus_gate_217782_1790380257` (D89's, stamped for the window only) are kept for the readings above; drop
+them when the numbers have been re-derived. Task #70 carries the served-plane twin of this defect, which is
+worse: it is already past its trip date rather than three days from it. Task #57 still owes a plant witness
+for the two arms D90's census found dead in the same row — `expires_at <= observed_at` and the confidence
+bounds — where the honest fix is a plant per arm, not a deletion.
