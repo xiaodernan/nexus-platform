@@ -5324,3 +5324,62 @@ next              (a) #73 corrected: no newline work to do; what remains is the 
                   (b) Carried: #71, #68, #58, #62, #64, #44, §87's session-time-zone seam, D91's served leg
                     until :8090 is up.
 ```
+
+## 100. The gate was measured on a tree that is not the committed tree: HEAD runs 214 assertions and reddens 2 (2026-09-27)
+
+```
+covers          DECISIONS D107 (c1e0878) and D108 (harness 111d5de, ledger + registry a304947).
+                D99–D106 still have no section here — their reasoning is in commit messages
+                476324d, 9ba17f4, 0d802be, 9591d54 and in DECISIONS; the debt is task #76.
+
+what landed     data/seed/quality.sql:955 renamed. The row was called
+                `documents: content_hash matches the raw_text it carries` and read only raw_text; the check it
+                named is not addable either — 0 of 1,040 stored hashes equal sha256(raw_text). It is now
+                `documents: raw_text is substantial enough to feed RAG`.
+
+                data/seed/falsifier_plants.py, a reusable falsifier drive: six planted deceptions (a phone
+                outside the reserved range, a document and a fact sourced from a live URL, an image on a
+                third-party host, a merchant page made indexable, a user carrying a real password hash), each
+                in its own BEGIN ... ROLLBACK so one loaded database serves twelve sessions, each paired with
+                an unmutated control. All six: control green, plant red, one row read. Names and assertion
+                bodies are spliced out of quality.sql and read back out of qc, never retyped here.
+
+                data/seed/falsifiers.tsv +6 rows: 27 of 214 assertions now carry a machine-checkable witness
+                (41 rows to 47), and for the first time the witness is a commit rather than a temp path.
+
+the finding     `scripts/db_gate_fresh.sh --keep` run in a clean linked worktree at c1e0878: 6 migrations
+                applied, 57 tables, 214 assertions, 2 RED, gate exit 1 —
+                `a door vocabulary names a column the schema has` (offender: share_links.subject_type) and
+                `a CHECK-bounded column is a door vocabulary too`. infra/db/migrations/V7__share_links.sql
+                has never been committed, and this lane's door vocabulary has named that column since D69.
+
+                So every 216 / 58 / 7 figure printed today is a working-copy figure: true while another
+                stream's uncommitted migration is on disk, false at HEAD. Retraction named rather than edited
+                out. Nothing was "fixed": dropping the vocabulary entry greens HEAD and reddens the working
+                copy instead, because the second assertion demands every schema-bounded column be catalogued,
+                and committing V7 is not this lane's file. Filed as task #75 with the evidence attached.
+
+                The rename's innocence is an A/B, not an argument: one kept database
+                (nexus_gate_270354_1790448961), the texts at 9591d54 and c1e0878, identical verdicts — 214
+                rows, the same 2 red names.
+
+how it shipped  c1e0878 went in as an index blob (git show HEAD:path + this lane's one line, hash-object -w
+                --no-filters, update-index --cacheinfo, plain commit), because another stream holds eight
+                uncommitted citation lines in that same file; the working copy was edited to carry both so
+                their next commit cannot silently revert mine.
+
+also            The drive's first run died inside its own reporting query (function max(boolean) does not
+                exist) and printed ABORTED / read 0 rows, not 1 -- UNREAD, not green / RESULT: FAIL for all
+                twelve sessions. That is why its second PASS is believable: the instrument could not read a
+                row and call it a pass.
+
+next            (a) Task #75 — whoever owns V7 commits it with the loader's truncate list and 00_roles
+                    updated, then re-runs the gate in a clean worktree and reports 58 tables / 7 migrations /
+                    216 assertions with 0 red. Until then this lane states the plane with the number.
+                  (b) #73 continues at 27 of 214: 82 literal-named assertions still have no witness. The six
+                    candidates used here were chosen in producer order and took one gate run plus twelve
+                    sessions; the same loop covers the density, language-mix, disclaimer and review-body rows.
+                  (c) #76: write STATUS sections for D99–D106, which exist only as commit messages.
+                  (d) Carried: #71, #68, #58, #62, #64, #44, §87's session-time-zone seam, D91's served leg
+                    until :8090 is up.
+```
