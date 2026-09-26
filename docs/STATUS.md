@@ -4016,7 +4016,7 @@ next              residue: (a) accessor reads are matched on (column, key) alone
                     leave another row red — the shipped state is the one the gate re-establishes, not the one
                     the probe leaves behind; (d) the product question from §81 (stamp the token, or change the
                     publishability test) is still #59's and still reported rather than taken. Standing reports
-                    unchanged: another lane's working-tree §36-§37 describe this script at an earlier revision
+                    unchanged: another lane's working-tree sections — adopted as §102-§103 — describe this script at an earlier revision
                     and its `.github/workflows/ci.yml` runs it hard-fail — both uncommitted and not this
                     stream's to correct; CommerceApiTest and the drifted `nexus` database belong to other
                     streams; the events subject seam (D70) waits on a contract decision.
@@ -4186,12 +4186,21 @@ next              reported to their lanes, not edited: the AI service binds json
                     names every table in the dataset — writer citations are checked for line content only;
                     (c) `why` is checked for structure and deliberately not for content, because a reason may
                     name neighbouring code on purpose (offerings.options cites order_items.options precisely to
-                    say it is a different column); (d) the ledger's own prose citations are outside this
-                    scanner, which reads `File.ext:NNN` but not `EventsController:63` or `V1:574`; a checker for
-                    the prose plane is owed to this row — and the sentence that used to stand here claimed that
-                    plane had been measured (114 tokens, 71 targets, 33 files, all resolving). It had not. The
-                    count was second-hand and D88's checker, run over the same text, found 162 citation-shaped
-                    tokens in 48 files with 13 of them false; (e) the vendor exclusion was a 10-name hand list
+                    say it is a different column); (d) CORRECTED 2026-09-27 — this scanner reads
+                    `File.ext:NNN` and not the ledger's own prose, which was true when written, but the
+                    sentence "a checker for the prose plane is owed" is no longer: `check_ledger_citations.mjs`
+                    (D88) is that checker, and it runs green on the working copy today —
+                    `node scripts/check_ledger_citations.mjs --worktree` → 199 headings, 423 name:number
+                    tokens, 216 citation-shaped, 57 files cited, 0 offenders, exit 0 (re-measured
+                    2026-09-27 over the merged file; the draft this sentence was written against measured
+                    166/272/159/48, and every one of the four grew by the eight sections §108 adopted, not
+                    by a change in the checker). The 13 false citations
+                    the paragraph above records have since been fixed; the number moved 162 → 159 with the
+                    text, so it was never a property of the checker. What IS still owed on that plane is
+                    narrower than the sentence claimed: the checker cannot verify that a cited line says what
+                    the sentence claims (no row identifiers to compare, unlike D87), it is blind to a
+                    misspelled extension or a name written without one, and its HEAD mode cannot run at all in
+                    this sandbox — see §105; (e) the vendor exclusion was a 10-name hand list
                     duplicated in two scripts, and a new vendored directory silently joins the source index.
 ```
 
@@ -4605,7 +4614,14 @@ next              (a) §85's prose-overlap arm stays unbuilt and stays falsified
                     account that draft gives is nowhere else, and committing the file as it stands would delete
                     §85 with it; §85 survives only because this
                     lane builds its ledger blobs from `git show HEAD:docs/STATUS.md` rather than from the tree it
-                    is standing in. Recorded as task #68; not touched.
+                    is standing in. Recorded as task #68; not touched. **CLOSED 2026-09-27 by §108**: the
+                    working copy was reconciled with HEAD instead of being committed as it stood — the four
+                    sections were adopted and renumbered §100-§103, four more that the same draft had
+                    written under §85-§88 became §104-§107, HEAD's own §85-§99 survived byte for byte, and
+                    `docs/DECISIONS.md` (which had lost D89-D102 the same way, and which this report did
+                    not mention) was restored from HEAD. This sentence stays as written: the report was
+                    right when it was made, and a correction that deletes the original claim deletes the
+                    evidence that the class of failure exists.
 ```
 
 ## 87. Two more rows were measuring the machine: one had a date in it, the other could not fail — the gate now reads the dataset's own now (2026-09-26)
@@ -4719,7 +4735,7 @@ next              (a) Task #70, the served twin of this defect and the worse one
                     `nexus_gate_225101_1790395370` (this unit's stamped full dataset) and
                     `nexus_gate_217782_1790380257` (D89's).
                   (e) Carried over and untouched: §86 (b)(c)(d)(e) — including the divergent working copy
-                    of this file, task #68 — and the open reports #58, #62, #64, #44.
+                    of this file, task #68 (closed by §108) — and the open reports #58, #62, #64, #44.
                   (f) Task #67's title says "§87 next unit"; §87 is this one, so that unit is §88. Fix the
                     title when it is picked up rather than the numbering of this section.
 ```
@@ -4784,7 +4800,7 @@ next              (a) The sweep question is a decision, not an edit: run `markEx
                   (b) When :8090 is next up, re-run this script and fold the served numbers in — the
                     predicates are witnessed, the wire is not.
                   (c) Carried: #57's two dead data-gate arms and their plants, #70 closed by this entry, and
-                    §87's next (c)-(f) including the divergent working copy of this file (#68).
+                    §87's next (c)-(f) including the divergent working copy of this file (#68, closed by §108).
 ```
 
 ## 89. Two arms of the TTL row had never been broken; breaking them found `facts` carrying no CHECK, and a witness that had started reading itself (2026-09-26)
@@ -4938,7 +4954,7 @@ mistakes          (a) The first draft of the JSDoc line explained the convention
 next              (a) #72's remainder is now a numbering problem, not a cleanliness one: the plane is at 0
                     offenders, so a comment-plane step could be enabled, but `db_gate_fresh.sh` and the
                     ledgers say "8 steps" and name steps by number — a ninth step is a coordinated edit.
-                  (b) Carried: #71 (`facts` CHECK), #68, #58, #62, #64, #44, and D91's served leg until
+                  (b) Carried: #71 (`facts` CHECK), #68 (closed §108), #58, #62, #64, #44, and D91's served leg until
                     :8090 is next up.
 ```
 
@@ -4998,7 +5014,7 @@ mistakes          (a) The verdict was first computed by testing the child's outp
 
 next              (a) #72's census runs on every gate now; the task stays open for the one thing named above as
                     untested — a witness for the exit-2 empty-scan branch.
-                  (b) Carried: #71 (`facts` CHECK), #68, #58, #62, #64, #44, D91's served leg until :8090 is
+                  (b) Carried: #71 (`facts` CHECK), #68 (closed §108), #58, #62, #64, #44, D91's served leg until :8090 is
                     next up, §87's next (c), and the two dead arms of §89's row that still want plants.
 ```
 
@@ -5053,7 +5069,7 @@ gates             Step 9's bytes changed, so the whole gate was re-run rather th
 
 next              (a) #72 stays open for the named-untested line above; the category is now witnessed, the
                     specific branch is not.
-                  (b) Carried: #71 (`facts` CHECK), #68, #58, #62, #64, #44, D91's served leg until :8090 is up,
+                  (b) Carried: #71 (`facts` CHECK), #68 (closed §108), #58, #62, #64, #44, D91's served leg until :8090 is up,
                     §87's next (c), and §89's two dead arms of the TTL row that still want plants.
 ```
 
@@ -5106,7 +5122,7 @@ next              (a) #73: the 162. Ordered deliberately — group by which prod
                     assertion (generator / runtime / none in this tree), plant only where a producer exists,
                     and say so in the detail text where the answer is "no writer today". A batch of 162
                     predicted-from-wording plants would raise the coverage number and be worth nothing.
-                  (b) Carried, now re-read: #71 (`facts` CHECK), #72's zero-token line, #68, #58, #62, #64,
+                  (b) Carried, now re-read: #71 (`facts` CHECK), #72's zero-token line, #68 (closed §108), #58, #62, #64,
                     #44, D91's served leg until :8090 is up, §87's next (c). §89's (b) is closed by D92 and
                     §93's repeat of it is corrected above.
 ```
@@ -5157,7 +5173,7 @@ gates             Nothing to certify: no shipped byte changed. D96's nine-step `
 next              (a) #73 rewritten by this result: one plant for the sweep, one per locatable assertion where a
                     producer exists, and the 2 newline-carrying names checked across lines before their coverage
                     is called.
-                  (b) Carried and re-read this time: #71, #72, #68, #58, #62, #64, #44, D91's served leg until
+                  (b) Carried and re-read this time: #71, #72, #68 (closed §108), #58, #62, #64, #44, D91's served leg until
                     :8090 is up, §87's next (c).
 ```
 
@@ -5201,7 +5217,7 @@ gates             D96's nine-step `GATE_RC=0` run remains the tree's certificati
 next              (a) #73 act two: the 111 literal-named assertions, grouped by which producer could violate
                     them, planted where one exists — and each group's result recorded as one witness if the
                     assertion is one instantiation, the way this unit treated the sweep.
-                  (b) Carried and re-read: #71, #72, #68, #58, #62, #64, #44, D91's served leg until :8090 is
+                  (b) Carried and re-read: #71, #72, #68 (closed §108), #58, #62, #64, #44, D91's served leg until :8090 is
                     up, §87's next (c).
 ```
 
@@ -5241,7 +5257,7 @@ gates             D96's nine-step `GATE_RC=0` run is still the tree's certificat
 
 next              (a) #73's remainder is now only the 111 literal-named assertions (plant where a producer exists,
                     change the detail text where none does) and the 2 names carrying newlines.
-                  (b) Carried and re-read: #71, #72, #68, #58, #62, #64, #44, D91's served leg until :8090 is up,
+                  (b) Carried and re-read: #71, #72, #68 (closed §108), #58, #62, #64, #44, D91's served leg until :8090 is up,
                     §87's next (c).
 ```
 
@@ -5278,7 +5294,7 @@ gates             Nine-step official run over these bytes: all step markers pres
 next              (a) #72 is closed by this entry: its last item was the untested empty-scan branch, now
                     witnessed in both spellings, with the off-repo limitation written down rather than probed.
                   (b) #73 keeps the rest: the 111 literal-named assertions (plant where a producer exists, say so
-                    in the detail text where none does) and the 2 names carrying newlines. Then #71, #68, #58,
+                    in the detail text where none does) and the 2 names carrying newlines. Then #71, #68 (closed §108), #58,
                     #62, #64, #44, and D91's served leg until :8090 is up.
 ```
 
@@ -5321,9 +5337,15 @@ gates             Nothing to certify: no shipped byte changed since D101's nine-
 next              (a) #73 corrected: no newline work to do; what remains is the literal-named half of the gate
                     (plant where a producer exists, change the detail text where none does) and shrinking the
                     mention-to-witness gap, which is the number that actually matters.
-                  (b) Carried: #71, #68, #58, #62, #64, #44, §87's session-time-zone seam, D91's served leg
+                  (b) Carried: #71, #68 (closed §108), #58, #62, #64, #44, §87's session-time-zone seam, D91's served leg
                     until :8090 is up.
 ```
+
+> **Adopted 2026-09-27 (D107, task #68).** The eight sections below were written into the working copy of
+> this file between 2026-09-24 and 2026-09-27 by lanes that never committed them, under numbers §34-§37 and
+> §85-§88 which committed sections had already taken. They are renumbered §100-§107 at merge, in the order
+> the draft carried them; every cross-reference inside them was rewritten to the new numbers, and the
+> mapping — with the two references that had to be corrected rather than mapped — is tabled in §108.
 
 ## 100. The gate was measured on a tree that is not the committed tree: HEAD runs 214 assertions and reddens 2 (2026-09-27)
 
@@ -5413,7 +5435,8 @@ work-then-ledger habit this lane states out loud stopped after D102's ledger com
 from "STATUS lags DECISIONS" to "DECISIONS is missing D103–D106, reconstruct them from those commits".
 
 **Why this section is numbered 109 and not 101:** HEAD's `docs/STATUS.md` ends at §100, while the working
-copy already holds another lane's uncommitted §101–§108 (110 `## ` headings against HEAD's 101), so the
+copy already holds another lane's uncommitted §101–§108 (110 `## ` headings against HEAD's 101; D115 recovered
+those sections as §115–§123), so the
 next free number that cannot collide when their commit lands is 109. The section was staged from a
 `git show HEAD:docs/STATUS.md` blob with only this text appended, and appended to the working copy as
 well, so neither plane can silently drop it.
@@ -5466,7 +5489,7 @@ not reproduce the witness that was filed. They stay openable artifacts, not re-r
 are commands, not intentions — `git status` for an anonymous hunk in a file this lane owns (D110's class),
 and `git log -S'## Dxx' -- docs/DECISIONS.md` for an entry that never existed (D109's class). `docs/STATUS.md`
 gets one section for the four units, not four: the working copy holds another lane's uncommitted sections up
-to §108, so this lane numbers forward from there and cannot insert four sections into that range safely.
+to §108 (recovered by D115 as §115–§123), so this lane numbers forward from there and cannot insert four sections into that range safely.
 
 ## 112. Seven more assertions shown able to fail — one arm was aimed at a row that cannot see the data it moves, and the whole-gate run said so (2026-09-27)
 
@@ -5597,3 +5620,577 @@ Reports about somebody else's files decay fastest, because their plane moves und
   into a false claim the next time the owning stream saves.
 
 Full reasoning in `docs/DECISIONS.md`, `## D114`.
+
+## 115. [recovered by D115 from the working copy's §100] The route ledger reaches zero, and the run that stopped short of proving it (2026-09-24)
+
+The `CLIENT-ONLY` column of `scripts/check_contract_drift.mjs` — the routes the SDK and the web app call
+that no service answers, i.e. buttons that 404 — went **12 → 1 → 0** in this pass. The last one to leave
+was `POST /api/v1/share`, which had been sitting in that list since the contract was written and had been
+left open in §8 for a reason rather than an oversight: it needed a link table that V1–V6 never created.
+
+```
+check_contract_drift.mjs   contract routes parsed 113 · served 104 · CLIENT-ONLY 1 → 0
+                           source corpus 321 files (platform:165, ai:58, web:25, web-lib:47, sdk:26)
+```
+
+What landed, all of it in `services/platform` except the migration:
+
+- **Commerce (§6).** `CartController` (POST `/carts`, GET `/carts/current`, POST/PATCH/DELETE `/carts/items[/{id}]`,
+  `price-check`, `checkout`), `OrderController` (`GET /orders/{id}`, `POST /orders/{id}/cancel`),
+  `PaymentController` (`POST /payments/{order_id}/confirm`), `WebhookController`
+  (`POST /webhooks/payments/{provider}`). The service layer for these already existed — with the price
+  re-derivation, the TTL verdict, the multi-merchant refusal and the guarded capture — and had no HTTP entry
+  point, so every one of them answered 404 while the semantics sat one file away. `checkout` and `confirm`
+  carry `@Idempotent` **and** wrap their work in `IdempotencyService.run`, which is what
+  `IdempotencyPairingTest` requires: the annotation makes the interceptor refuse a keyless request before
+  `run` can turn a missing header into the shared literal `'checkout|null'` claim row (D46).
+- **Merchant workspace (§5, §27).** `MerchantCampaignController` (campaigns, `approve-publish`, coupons),
+  `MerchantAnalyticsController` (`/merchant/analytics?from&to&metric`), `MerchantKnowledgeController`
+  (`/merchant/knowledge-base`, `/reindex`). Three decisions are worth naming:
+  1. **A campaign is born a draft, and the route refuses to be told otherwise.** A body carrying
+     `status: "live"` is a `422`, not a silently-ignored field: a caller must not be able to believe it
+     published something it did not.
+  2. **`approve-publish` also publishes the campaign's own draft coupons**, in the same transaction. A live
+     campaign advertising a code the coupon table still calls a draft is §19's failure applied to marketing.
+     `changed:false` on a second call, with `approved_at` left untouched.
+  3. **`/merchant/analytics` measures the window from `events`/`reservations`/`orders` directly** and names
+     its source in the payload, rather than reporting the lifetime `v_merchant_funnel` projection as if it
+     were a time series (it has no window, and its `revenue` column is the fan-out bug D25 records).
+- **Share (§8) and `V7__share_links.sql`.** `code` globally UNIQUE, one **live** link per subject as a
+  partial unique index (so re-sharing returns the same code as a constraint, not a lookup), and the
+  resolver route deliberately does **not** increment `hits` — a GET that writes cannot be cached. Anonymous
+  sharing is allowed on purpose (§60's first-time visitor), guarded by the subject having to be already
+  public in the caller's own tenant. `GET /api/v1/share/{code}` exists so the short URL opens something;
+  a link handed out but unresolvable would be the §155 failure this project keeps catching itself in.
+
+**What is verified, and what is not.** `mvn -o -q test-compile` is clean for every new source and test, and
+the drift numbers above are real output. When this section was first written the integration tests had not
+run and `V7` had not been applied to any database — both were true at the time and are no longer: see
+**§116** for the measured run that supersedes this paragraph.
+
+### The outage, because it is the reason the run stopped
+
+The full-suite run reached `AdminConsoleApiTest` and then lost the database mid-flight:
+
+```
+analytics 4 · catalog 15 · collections 13 · moderation 6 · reservations 18 · reviews 8
+conversation 9 · internal-door 1 · events 9 · growth 6      — all passed
+admin 7 (1 failure, below)
+identity/AuthRefusalCodesTest 8 (1 failure, 5 errors) · AuthTokenTest 4 errors
+FavoriteDoorTest 6 errors · LogoutDoorTest 2 errors · DevOauthRefusalTest 1 error
+  Caused by: org.springframework.jdbc.CannotGetJdbcConnectionException: Failed to obtain JDBC Connection
+```
+
+Those identity errors are **not** a regression and not a connection-budget defect (D57): `docker ps` now
+answers `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine`, and the last
+container listing before it went away showed every container `Up 2 minutes` — the engine restarted under
+the run. `docker desktop start` cannot be issued from this sandbox either: it needs `wsl.exe`, which the
+sandbox's program blacklist refuses (`PROGRAM BLOCKED BY SECURITY POLICY … wsl.exe`), and that block is not
+bypassable from a command. So the DB-backed half of this pass waits on someone starting Docker Desktop at
+the machine.
+
+The one real failure found by that run was a **test** bug, and it had been failing for the same reason since
+it was written: `AdminConsoleApiTest.searchAnalyticsReportsRealCounts` built its session ids as
+`"sess-a-" + tag()`, and `tag()` is `Long.toHexString(System.nanoTime())` — a fresh value per call, so the
+three seed lines produced **three** distinct sessions and the assertion "2 distinct sessions" could never
+have held. It now captures one tag and asserts the **delta** the test itself writes, because the endpoint
+reads a 30-day window over a database shared with every other test in the suite (and with previous runs).
+A test that fails for a reason unrelated to the code under it is worse than no test: it hides the next real
+failure behind a known one.
+
+### Decisions taken here, recorded so they are not re-litigated
+
+| # | Decision | Why |
+|---|---|---|
+| D61 | `checkout` and `payments/{id}/confirm` require an authenticated subject (`@RequiresAuth`) | The idempotency owner binding is what stops a replay landing on another account, and the service's own comment defines the key as "a signed-in buyer's". Guest checkout is a product decision, not a default to be inferred from a nullable `orders.user_id`. |
+| D62 | `approve-publish` publishes the campaign's draft coupons in the same transaction | Publishing the campaign while its coupon stays `draft` would advertise an inactive offer; splitting them across two calls leaves a window where the campaign is live and the code is not. |
+| D63 | `POST /api/v1/share` allows anonymous callers | §60's viral loop dies if the first-time visitor has to sign in to send a link; the guard that keeps it honest is the subject already being public in the caller's tenant. |
+| D64 | The share resolver returns `200 {resolved:false, reason}` for a link whose subject stopped being public | A redirect into a 404 tells the recipient nothing; an explicit unresolved answer lets the edge render "no longer available", and the code stays the audit handle. |
+
+### Still open after this pass
+
+- **Run the suite against a live database** and apply `V7` (`bash scripts/db_apply_migrations.sh`, then
+  `mvn -o test -Dtest=CommerceApiTest,ShareLinkTest,AdminConsoleApiTest,MerchantWorkspaceTest`). Nothing in
+  this section should be read as a passing gate until that output exists.
+- `POST /api/v1/collections` remains unserved, and §8 keeps the reason: `collections` has `tenant_id` and
+  `author_id` but no merchant column, so no workspace permission can guard a row the schema cannot
+  attribute to a workspace. That is a question about authority, not about a missing door.
+- The web edge still has to serve `/s/{code}` and consume `GET /api/v1/share/{code}`; until it does, the
+  short URL the platform mints is an address only the API answers.
+
+## 116. [recovered by D115 from the working copy's §101] The §115 pass, measured: 217/217 and the share link opens (2026-09-25)
+
+§115 wrote its behavioural claims as `unverified` because the database was down when it was written. It came
+back, and this is the run that closes the question. Nothing in the source changed between the two — the
+whole difference is that `V7` was applied and the suite was allowed to finish.
+
+```
+bash scripts/db_apply_migrations.sh --file infra/db/migrations/V7__share_links.sql   (against nexus_test)
+  > apply   <- V7__share_links.sql        → share_links present in nexus_test AND nexus (measured, 1 row each)
+mvn -o test                              Tests run: 217, Failures: 0, Errors: 0 — BUILD SUCCESS
+  com.nexus.commerce.CommerceApiTest       8/8   cart · price-check · idempotent checkout · cancel · confirm · webhook
+  com.nexus.growth.ShareLinkTest           5/5   mint · reuse · resolver · unpublished subject · foreign tenant
+  com.nexus.admin.AdminConsoleApiTest      7/7   (the tag() fix: 6/7 before it, 1 failure)
+  com.nexus.identity.*                    22/22  (these were the classes the outage had errored)
+cd apps/web && npx tsc --noEmit          clean
+cd apps/web && npx vitest run            Test Files 9 passed · Tests 120 passed
+```
+
+Three things this run settles that the section above could only assert:
+
+1. **The commerce controllers are real over HTTP.** `CommerceApiTest` drives the routes against a live
+   Postgres: the cart is per subject and tenant-scoped, a line's price comes from the catalogue while a
+   client-supplied `unit_price` is ignored, an expired quote is reported `stale` and checkout refuses it with
+   `409 cart_price_stale`, a keyless checkout is a 422 naming the header, the same key replays the same
+   order, a cancel twice is a cancel once, a second confirm finds the capture already done (`changed:false`,
+   one `captured` row) and an unsigned webhook changes nothing.
+2. **The share link opens.** `V7` applies cleanly to both databases, mint returns a Crockford-base32 code,
+   re-sharing returns the same code with `created:false`, the resolver answers with the target path, an
+   unpublished merchant is `404 subject_not_shareable` rather than a link to a 404, and another tenant's
+   merchant is absent.
+3. **The identity failures in §115 were the outage, not a defect.** `AuthRefusalCodesTest` 8/8,
+   `AuthTokenTest` 4/4, `FavoriteDoorTest` 6/6, `LogoutDoorTest` 3/3, `DevOauthRefusalTest` 1/1 — the same
+   classes, green, on the same code, with the engine up. That is the evidence the diagnosis needed.
+
+Also measured, and worth keeping: `AdminConsoleApiTest` was 6/7 before the `tag()` fix and is 7/7 after it,
+which is the only change to test code this pass and the only failure it produced.
+
+Nothing is committed: the tree carries 110 modified paths and 62 untracked entries, of which
+`apps/web/app/**` (all 21 console pages, `tsc` clean, 120 unit tests green) is the largest single body.
+
+
+## 117. [recovered by D115 from the working copy's §102] The jsonb census stops being a transcription (2026-09-25)
+
+§81's own residue (a) said the read list "is a transcription of `col->>'key'` occurrences — a read made
+through `Json.str(row.get(...))` or a Java-side constant is invisible to it, so widening the grep is owed
+to this row". `scripts/check_jsonb_reads.mjs` is that widening, and it found more than the residue implied.
+
+```
+node scripts/check_jsonb_reads.mjs
+  source files scanned      174
+  reads found               26
+  distinct (column, key)    19
+  declared in quality.sql   22 triples · 19 matched a source read
+  UNDECLARED                14 -> 0
+  DECLARED, no longer read in source  5  (the doc/chunk-lane and seo_pages generalisations; reported, not errors)
+```
+
+What the SQL-only list could not see, and what the scan now reports:
+
+- **`CollectionsController` reads eight `collections.seo` keys through an accessor** —
+  `reviewed_by_human`, `noindex`, `curated_by`, `model`, `city`, `category`, `cover` (with the nested
+  `cover.url/alt/credit` hanging off it) — none of which the first list knew about. `reviewed_by_human` is
+  the §27 gate: on shipped data it is absent on all four rows, so every collection is treated as unreviewed.
+- **`ImportService` reads four `documents.metadata` keys** — `extractor`, `note`, and two through
+  `getOrDefault` (`degraded`, `proposals`), which the first version of the scan also missed until the
+  accessor pattern was widened to `get(?:OrDefault)?(`.
+
+Measured against the seeded `nexus` database, one key at a time:
+
+```
+collections.seo ? noindex              4 of 4      reachable
+collections.seo ? reviewed_by_human    0 of 4      dead-reader — and the fall-through is the honest answer:
+                                                   the row IS unreviewed, and the seed says the same thing a
+                                                   second way with seo.noindex = true. The two agree, which is
+                                                   what makes this a dead reader rather than a bug.
+collections.seo ? generated_by         0 of 4      dead-reader (already declared by D84)
+collections.seo ? curated_by/model/city/category/cover   0 of 4 each
+documents.metadata ? extractor/note/degraded/proposals   0 of 1040 each — no import has ever run here
+```
+
+One site was worth reading rather than counting: `coverOf()` (`CollectionsController.java:303`) reads the
+`cover_url` **column** first and only then the jsonb `cover` block, so the seeded image does reach the API
+and only `alt`/`credit` stay null. The census pointed at it; the code says it is correct. That is the
+census working as intended — it narrows a human's attention, it does not decide.
+
+`data/seed/quality.sql` gains eleven rows (7 `collections.seo`, 4 `documents.metadata`) in both the
+`read_cat` list and the hand answers, so the widened set is now the gate's own set rather than a report
+beside it. `.github/workflows/ci.yml` runs the scanner **hard-fail** in the `contract-drift` job, next to
+the route ledger — same question, asked of the data plane instead of the HTTP plane.
+
+```
+node scripts/check_jsonb_reads.mjs     exit 0, 0 undeclared  (verified)
+scripts/db_gate_fresh.sh               IN FLIGHT at the time of writing — see §118
+```
+
+Two things stated rather than implied. The scan is **textual, not type-aware**: a key reached through a
+helper, named by a constant, or built in another file is still invisible, and a variable reused for two
+columns attributes both key sets to both columns — the script prints that limit on every run rather than
+claiming completeness. And `db_gate_fresh.sh` cannot be run from this sandbox as-is: it aborts in step 2
+with `[safe-delete][SAFE_DELETE_INVALID_PATH] embedded drive prefix is not allowed` unless
+`TMPDIR=/tmp TMP=/tmp TEMP=/tmp` is exported first, which is a sandbox path rule rather than a defect in
+the harness. With that override it applies V1 and the roles; the run that proves the eleven new rows pass
+the gate is the one recorded in §118.
+
+
+## 118. [recovered by D115 from the working copy's §103] §117's gate run, measured (2026-09-25)
+
+```
+TMPDIR=/tmp TMP=/tmp TEMP=/tmp bash scripts/db_gate_fresh.sh
+  2/6  apply infra/db/migrations/V*.sql + 00_roles.sql      V1..V7 · roles refreshed
+  5/6  data/seed/quality.sql (the hard gate)
+       RESULT: PASS (FK integrity, bounds, naming, density, language mix)
+       -> 215 quality checks passed against a from-scratch schema (tables=58, migrations=7)
+  6/6  scripts/seed_truncate_probe.sh                        RESULT: PASS — the empty child is cleared,
+                                                            the child with rows refuses by name, and the
+                                                            refusal costs nothing
+  RESULT: PASS — 215 quality checks on a from-scratch schema (tables=58, migrations=7)   EXIT=0
+```
+
+The eleven rows §117 added to `read_cat`/`read_answer` are inside that 215 and did not redden it: every new
+read is answered for, the two `reachable`/`dead-reader` claims match what the fresh database measures, and
+the nested `cover.url/alt/credit` reads are covered by the `cover` row rather than needing three rows that
+measure one jsonb object three times. `nexus` and `nexus_test` were not touched by this run — the gate
+builds `nexus_gate_<pid>_<n>` from `template0` and drops it.
+
+One honest correction, because the sentence above was written before it was measured: the gate drops its
+database **when the run finishes**, and a run killed from outside does not get to. My own first attempt
+(`timeout 300 bash scripts/db_gate_fresh.sh`, which I killed after five minutes because it looked stalled)
+left `nexus_gate_4985_1790351691` behind, and `pg_database` said so while this section claimed otherwise.
+It has been dropped — `0 nexus_gate* remain`, measured. The harness is not at fault; an externally killed
+process is, and the same is true of any cleanup trap. Worth knowing before the next person reads a
+"drops it" line as a guarantee.
+
+With that, §81's residue (a) is closed: the read list is no longer a transcription anyone has to keep
+current by hand. `node scripts/check_jsonb_reads.mjs` is the thing that keeps it current, it exits 0 today,
+and CI refuses a Java read that has no row behind it.
+
+## 119. [recovered by D115 from the working copy's §104] The double-encoding claim, run instead of read — refuted, with the residue separated (2026-09-27)
+
+The newest unit reported, to the AI lane, that `apps/ai/nexus_ai/api/runs.py` "binds `json.dumps(…)` into
+eight `$n::jsonb` placeholders in `apps/ai/nexus_ai/api/runs.py` … through asyncpg, which quotes a str
+again — 188 string-valued jsonb rows on the live demo database". It was reached by reading the code and
+counting rows, and it named a remedy in the same breath (stop passing a `str`). Nobody ran the binding.
+
+`scripts/verify_jsonb_binding.py` runs it:
+
+```
+apps/ai/.venv/Scripts/python.exe scripts/verify_jsonb_binding.py
+BINDING PROBE — `$1::jsonb` with json.dumps(...), the shape runs.py uses
+  stored jsonb_typeof             object
+  read back via ->>'query'        'sha tin restaurant'
+  passing the Python dict instead rejected by asyncpg (expected str, got dict)
+  verdict                         CORRECT — one encoding, keys readable
+```
+
+So the claim is **wrong in both directions**, and the second direction matters more than the first:
+
+1. `json.dumps(value)` bound to `$n::jsonb` stores a JSON **object**, and a key read on it resolves. That is
+   the shape `runs.py:118-121` and `runs.py:158-159` actually use.
+2. **The remedy the report implied would break the write.** asyncpg's jsonb codec takes a `str`; handing it
+   the Python dict is `DataError: expected str, got dict`. A fix applied from that report would have turned a
+   working insert into a failing one — and because `persist_event` swallows its own exceptions
+   (`log.warning("events insert failed (continuing degraded)")`), the failure would have looked like
+   telemetry quietly stopping, not like a bug.
+
+**What the rows are, then.** They are real, and they are not the current writer's:
+
+```
+LIVE RESIDUE on the demo database
+  events.properties                34   newest 2026-09-22 20:13:55Z
+  agent_runs.tool_calls            40   newest 2026-09-22 20:13:55Z
+  agent_runs.retrieval             40   newest 2026-09-22 20:13:55Z
+  agent_runs.tool_calls (object)    0   newest —
+```
+
+The inference is not "they are old, so the writer is fixed" — a writer that has not run since looks
+identical to one that was fixed. The sound inference is the other way round: **today's code cannot produce
+a string-valued row** (probe above), so whatever wrote these was not today's code. 114 rows, all stamped
+`2026-09-22T20:13:55Z`, and `agent_runs` holds **zero** object-valued rows because nothing has written one
+since. Whether to repair the 114 (they are demo telemetry, so the honest options are a one-line `UPDATE …
+jsonb` migration or leaving them and saying so) is a data decision this section reports rather than takes.
+
+The measured count is 114, not the 188 the report carried; the difference is not explained by the three
+columns queried here, and it is left stated rather than reconciled by widening the query until the number
+matches — that is how the count would stop meaning anything.
+
+**The generalisable lesson, which is the reason this is a section and not a footnote:** "the code passes a
+string to a jsonb parameter" plus "the database holds string-valued jsonb" is a *coincidence of two
+measurements*, not a causal chain, and it is exactly the shape of inference this project has had to retract
+before (§82 refuting six of D84's nine lines, §115's `tag()` assertion that could never pass). The cheap
+falsifier is a six-line script that writes both ways and reads back `jsonb_typeof` — and it is now a script
+in the tree rather than a paragraph.
+
+
+## 120. [recovered by D115 from the working copy's §105] A checker that crashed where it owed a verdict, and the residue line it had made stale (2026-09-27)
+
+`node scripts/check_ledger_citations.mjs` — D88's checker for the ledger's own `File.ext:NNN` citations —
+did not report anything. It died:
+
+```
+Error: spawnSync git EBUSY
+    at execFileSync (node:child_process:945:15)
+    at ledgerText (scripts/check_ledger_citations.mjs:152:12)
+    at census (…:165:18)
+```
+
+`ledgerText` called `execFileSync('git', ['show', `HEAD:${ledger}`])` bare, so a sandbox that refuses to
+spawn `git` (this one does, `EBUSY`) took the whole tool down as an uncaught stack trace. A checker that
+crashes is worse than a checker that fails: `exit 1` says "the text is wrong", a stack trace says nothing
+about the text at all, and in CI the two are one red X apart. The read is not the thing under test, so it is
+now data the report carries:
+
+```
+node scripts/check_ledger_citations.mjs
+  RESULT: UNCHECKED — 2 of 2 ledger(s) could not be read
+    docs/DECISIONS.md: git show HEAD:docs/DECISIONS.md failed — EBUSY
+    docs/STATUS.md: git show HEAD:docs/STATUS.md failed — EBUSY
+  Nothing is claimed about the citations in those files. Re-run where `git show` can spawn.
+  exit 2
+```
+
+**UNCHECKED is its own verdict with its own exit code**, printed *before* the vacuity guards, because "I
+could not read the ledger" and "the ledger had nothing in it" are different failures and the crash said
+neither. It sits beside `--worktree`, which needs no `git` at all and is the mode that actually runs here:
+
+```
+node scripts/check_ledger_citations.mjs --worktree
+  headings seen 166 · name:number tokens 272 · citation-shaped 159 · bare :NN continuations 123
+  distinct files cited 48 · offenders 0 · exit 0
+```
+
+That census is the file as this section's author had it, before the merge; over the merged file the same
+command prints 199 / 423 / 216 / 157 / 57 and still exits 0 (re-measured 2026-09-27, §123). The four
+numbers moved because eight sections joined the file, which is the one thing a census in a ledger is
+guaranteed to do — a reason §84 (d) now carries its date and its merge beside the figures.
+
+**And that run made a ledger line stale.** §84/D106's residue (d) says "the ledger's own prose citations are
+outside this scanner … a checker for the prose plane is owed to this row". The checker exists, it is D88's,
+and it is green: 159 citation-shaped tokens over 48 files, zero offenders. The same paragraph also records
+that D88 "found 162 citation-shaped tokens in 48 files with 13 of them false" — the count has since moved to
+159 with none false, which is what a false-citation list looks like *after* it is worked through. The line
+is corrected in place with the date and the command rather than deleted, because the interesting part is not
+that it was wrong: it is that a residue line can go stale in the direction of *more work owed than there is*,
+and nothing reddens when that happens. Every other stale thing in this ledger has a check behind it — a
+declared read whose key starts shipping, a migration whose table appears, a route a service starts serving.
+"Somebody still owes a tool" has none, and the only cure is a dated command in the sentence.
+
+
+## 121. [recovered by D115 from the working copy's §106] A required field no service serves, and the page that threw on it (2026-09-27)
+
+`apps/web/src/lib/types.ts:266` declares `Guide.body_blocks` **required**, and `growth-view.tsx:72` maps
+over it with no guard. The word does not occur in `services/platform/src/main/java` at all:
+
+```
+grep -rn "body_blocks" services/platform/src/main/java --include=*.java     → 0 hits
+grep -rn "body_blocks" apps/web/src apps/web/app                            → 5 hits, all client-side
+```
+
+What the platform actually serves for `GET /api/v1/guides/{slug}` is `items` (the stored blocks in author
+order, with the resolved `card` attached to each merchant reference) plus a flat `cards` array and
+`dropped_item_ids` for references it could not resolve — `CollectionsController.detail()`. The two shapes
+are not a rename apart: the wire's block is `{subject_type, subject_id, note, card}` and the view-model's is
+`{type:'cards', title, items}`.
+
+So live mode handed `undefined` to a required field and `/guides/[slug]` threw
+`Cannot read properties of undefined (reading 'map')`. **Mock mode could never show it**: `DEMO_GUIDES`
+(`lib/mock/seed.ts:739`) is written in the view-model shape, so the only plane that was ever exercised
+agreed with the type, and the plane that ships did not. The bare `nexusGet<Guide>(…)` cast in
+`data.ts:guideBySlug` is what let the disagreement through the type system.
+
+Fixed in the web lane, in the shape this codebase already uses for the same problem on merchants
+(`platform-catalog.ts`: "the only place that crosses those conventions — and it casts nothing"):
+
+- **`apps/web/src/lib/platform-guides.ts`** — `toBodyBlocks` / `toGuide` / `toGuidePage`. It invents no
+  block: merchant references become one `cards` block in author order (the author's `note` becomes its
+  title), a reference with no resolved `card` is **dropped** rather than rendered as a placeholder (§8), a
+  typed block passes through unchanged, and a wire that already carries `body_blocks` wins outright so this
+  projection gets out of the way the moment the platform serves the documented name.
+- `data.ts` projects instead of casting, on both the single-guide and list reads.
+- `growth-view.tsx` reads `(guide.body_blocks ?? [])` — the projection makes it present, the guard means a
+  reader cannot crash on an absent required field either way.
+- `platform-guides.test.ts` — 8 cases written from the wire shape, not the mock shape: order preserved when
+  prose sits between references, unresolved reference dropped, empty wire → `[]` (not `undefined`), the §8
+  name preferred, no invented text.
+
+```
+cd apps/web && npx tsc --noEmit      clean   (and it refused the first fix: `CursorPage<Record<string,
+                                               unknown>>` does not overlap `CursorPage<Guide>` — the
+                                               compiler saying the two shapes were never the same shape,
+                                               which is exactly what the original cast had silenced)
+cd apps/web && npx vitest run        10 files, 128 passed (120 + 8 new)
+cd apps/web && npx eslint src --max-warnings=0   clean
+```
+
+**Reported, not fixed, because it is a served shape and not a web bug:** the contract's §8 table says
+`Guide.body_blocks` ← `collections.items`, so the platform is the side that drifted — it serves the stored
+array under its storage name. Serving the documented name from `CollectionsController.detail()` (it already
+computes both halves: `items` and the per-item `card`) would close the drift at the source; the web now
+works either way, which is why this is a note rather than a change to another lane's response shape.
+
+
+## 122. [recovered by D115 from the working copy's §107] §8's `body_blocks`, served from the source — written unverified, verified the same day (2026-09-27)
+
+§121 fixed the web side of the missing field. This closes the drift where it started, on the argument that
+matters: **§8 is the interface for every client, not for this web app.** An MCP caller, a UCP adapter or a
+second front end hits the same trap the web hit — a documented field that no service serves — and each one
+would have to invent the projection §121 invented.
+
+`CollectionsController.detail()` now serves `body_blocks` beside `items`, built by a walk over the same
+`items` list the method already resolves (no second resolution, no new query):
+
+- a block that already states a `type` is passed through unchanged — re-typing the author's block would be
+  this read editing the content;
+- consecutive merchant references become one `cards` block, in author order, titled by the first
+  reference's own `note` when it wrote one;
+- a reference with no resolved `card` contributes nothing — it is already named in `dropped_item_ids`, and
+  §8 says an unresolvable id drops the item rather than rendering a placeholder card;
+- `items` stays in the response: it is the stored shape, including the elements this projection cannot
+  type, and a client that wants "what the author wrote, verbatim" should have it.
+
+`CollectionsReadTest` gains assertions on the served field in both of its existing fixtures: the mixed
+row (`paragraph`, reference, `heading`) must project to `paragraph`, `cards[1 card]`, `heading` with the
+order intact, and the four-element scalar row must project to exactly **one** block — three untyped
+elements contribute nothing and must not become an empty paragraph or a placeholder card.
+
+```
+mvn -o test -Dtest=CollectionsReadTest        NOT YET RUN — see below
+```
+
+**Unverified, and the reason is the toolchain rather than the code.** The first attempt spent 18 minutes in
+`compiler:3.15.0:compile` ("Recompiling the module because of changed source code") without finishing and
+was killed; a second attempt is in flight. `tasklist` showed five `java.exe` processes on the machine, one
+of them the platform instance another stream runs on :8090, so this is file-lock/AV contention on a shared
+`target/` rather than a compile error — the same hazard the `mvnlock` convention exists for, arriving from
+a direction the lock does not cover (a *killed* run leaves both the lock and a half-written `target/`).
+Until that run reports, the paragraph above describes what the code does, not what a test saw. The
+web-side change in §121 is verified and independent of this one: `platform-guides.ts` prefers a wire that
+carries `body_blocks`, so it consumes this field the moment the service serves it and needs no change.
+
+**Verified 2026-09-27 (§123), superseding the two blocks above; both are left as written because the
+uncertainty they record was real when it was written.** The contention cleared and the run that landed was
+the whole suite rather than the one class:
+
+```
+mvn -o test        Tests run: 217, Failures: 0, Errors: 0, Skipped: 0 — BUILD SUCCESS (40 test classes)
+  com.nexus.catalog.CollectionsReadTest   13/13, including
+    blockItemsPassThroughUnresolved    body_blocks = paragraph · cards[1 card, author's title] · heading, order intact
+    scalarItemsSurviveTheResolutionWalk body_blocks hasSize(1), type=cards, items hasSize(1)
+  sources written 00:49:57, surefire report written 01:31:04 — so this run compiled what is on disk
+```
+
+The 18-minute `compiler:3.15.0:compile` stall did not reproduce, so the AV/file-lock diagnosis above is
+still a guess and is labelled as one; what is no longer a guess is the claim under test. The projection is
+now an assertion's answer in both fixtures, not a paragraph's.
+
+
+
+## 123. [recovered by D115 from the working copy's §108] Two ledgers, one tree: the working copy is merged instead of committed, eight sections become §100-§107, and the gate had already gone red on eight moved citations (2026-09-27)
+
+```
+plane             `docs/STATUS.md` and `docs/DECISIONS.md` as they sat on disk against the same two files
+                    at HEAD, plus the eight `site` citations in `data/seed/quality.sql` that open
+                    `CollectionsController.java`. Task #68 — written up by §86 (e), carried by every
+                    `next` block since §87, and touched by nobody.
+
+found             Three things were wrong at once; only the first had been written down.
+                  (1) THE FORK, both ledgers. STATUS on disk was 4,598 lines against HEAD's 5,327:
+                    §85-§99 (15 sections, 1,129 lines) existed only in the commit, and eight sections
+                    (431 lines) existed only on disk — four numbered §34-§37 and four §85-§88, i.e. two
+                    sections under each of eight numbers that committed sections already held. §86 (e)
+                    caught this and called it #68, and it was right about the cost: committing the file
+                    as it stood deletes §85-§99. `docs/DECISIONS.md` was forked the same way and no
+                    report had mentioned it — the working copy was HEAD minus 908 lines (D89-D102, 14
+                    sections) with nothing of its own: measured 0 insertions against HEAD, so it is a
+                    strict subset and restoring HEAD loses no line.
+                  (2) A GATE THAT WAS ALREADY RED. `node scripts/check_jsonb_reads.mjs` exited 1 before
+                    this unit, with 8 FALSE SITES — every one a `CollectionsController.java` citation in
+                    quality.sql's `read_answer` table: :217, :218, :237, :251, :297, :305, :307, :312.
+                    The cause is §122: `bodyBlocks` inserted six lines above all eight, so each citation
+                    opened a line naming none of `collections`/`seo`/<key>. Every suite on the machine
+                    was green while this was red, which is exactly the case D87's line-content rule
+                    exists to catch.
+                  (3) TWO COMMENTS that name `STATUS §87` — the draft's section, not the committed one —
+                    in `CollectionsController.java` and `CollectionsReadTest.java`. A merge that kept the
+                    committed numbering would have silently repointed both at "Two more rows were
+                    measuring the machine".
+
+changed           Adopted, renumbered, corrected — in that order, and each with the reason it was not the
+                    other option:
+                  * RENUMBERED, the draft and not HEAD. HEAD's §34-§37 and §85-§99 are cited from
+                    DECISIONS, from their own `next` blocks and from later sections (§94 re-reads §93,
+                    §99 quotes §95); the draft's numbers were cited by its own four sections and by the
+                    two Java comments above. Draft order preserved, so §34→§100, §35→§101, §36→§102,
+                    §37→§103, §85→§104, §86→§105, §87→§106, §88→§107, appended after §99 with the
+                    provenance note they were adopted under.
+                  * CORRECTED rather than mapped, twice, because mapping would have kept a wrong claim:
+                    §84 (d)'s "see §86" meant the crashed-checker section (→§105), not the committed
+                    §86 that measures the generation clock; and §104's "`§36`'s `tag()` assertion that
+                    could never pass" — no `tag()` occurs in HEAD's §36 or in the draft's §36 (grep,
+                    both files), and the assertion it means is the one §100 writes ("three seed lines
+                    produced three distinct sessions"), so it became §100. A cross-reference that is
+                    wrong in the source is wrong after a renumber, and renumbering is the only step
+                    that would have hidden it.
+                  * HEAD's §84 replaced by the draft's own copy, which carries the 2026-09-27 correction
+                    of residue (d); §82's "another lane's working-tree §36-§37" now names §102-§103;
+                    §86 (e), §87 (e), §88 (f) and every `next`-block list that carried #68 are annotated
+                    closed; §107's title no longer asserts what its own last paragraph disproves, and
+                    its `NOT YET RUN` block is kept beside the run that superseded it.
+                  * `docs/DECISIONS.md` restored from HEAD (D89-D102 back, 908 lines).
+                  * Eight `site` citations in `data/seed/quality.sql` moved with the file they cite:
+                    217→223, 218→224, 219→225, 237→243, 251→257, 253→259, 289→295, 294→300, 297→303,
+                    305→311, 307→313, 312→318, 313→319 — six lines for everything between the two
+                    insertions, and the two citations under line 181 (:61, :145) unchanged, which is the
+                    arithmetic that says the shift was one insertion and not a rewrite. The rule itself
+                    is untouched: a citation is a claim about a line, the line moved, the claim moves.
+                    Tracked `data/seed/quality.sql` sha256 is now `bf2a526ba5eca535…`; the four STATUS
+                    and two DECISIONS sentences recording `9deda9b3a845bb01…` are pre-2026-09-27
+                    measurements of the file before these eight edits, and are left as measured.
+                  * The two Java comments now say `STATUS §106`.
+
+measured          Section numbers, both ledgers, after the merge:
+                    node -e "…matchAll(/^## (\d+)\./gm) on docs/STATUS.md"
+                      numbered sections 84 · unique 84 · max §108 · duplicate numbers none
+                    The merge harness refused to run unless the tree matched what it expected — 8
+                    draft-only titles, exactly one `see §86`, zero §34-§37/§85-§88 references left in an
+                    adopted section, zero duplicate numbers at the end — and every one of those four
+                    guards fired or passed on a tree that was not the one it was written for. It is not
+                    shipped: it is one-shot, and a harness that can only ever run once is not a check.
+
+gates             scripts/db_gate_fresh.sh --keep        RESULT: PASS — 216 quality checks on a
+                                                             from-scratch schema (tables=58, migrations=7),
+                                                             9/9 steps, GATE_EXIT=0 (kept:
+                                                             nexus_gate_262051_1790444001)
+                  node scripts/check_falsifier_registry.mjs --db nexus_gate_262051_1790444001
+                                       216 assertions · 41 (check, arm) rows · 22 witnessed (10.2%) · PASS
+                  node scripts/check_jsonb_reads.mjs      exit 0 — "every cited line names the table,
+                                       column or key its row is about" (exit 1 before this unit)
+                  node scripts/check_contract_drift.mjs   114 documented · 106 served · CLIENT-ONLY 0 ·
+                                       MISSING 0 · UNDOCUMENTED 0 · source corpus 354 files
+                  node scripts/check_ledger_citations.mjs --worktree
+                                       199 headings · 423 name:number tokens · 216 citation-shaped · 57 files · 0 offenders · exit 0
+                  node scripts/check_comment_citations.mjs PASS — 65 comment-plane citations, 18 files
+                  mvn -o test                            Tests run: 217, Failures: 0, Errors: 0 (40 classes)
+                  cd apps/web && npx tsc --noEmit        clean
+                  cd apps/web && npx vitest run          10 files, 128 passed
+                  apps/ai .venv pytest                   71 passed, 4 skipped
+                  python yaml.safe_load(ci.yml)          OK jobs: changes, lint-type, platform, ai, e2e,
+                                       contract-drift, security, required
+
+next              (a) #68's class still has no check, and this section is the proof: the fork sat for
+                    three days with a dated report on it because nothing reddens when a ledger's working
+                    copy drops a committed section. The shape is small — every numbered `## N.` at HEAD
+                    still present on disk, `exit 2` when `git show` cannot run — and it has not been
+                    written. That is next, ahead of anything below.
+                  (b) Carried, re-read: #73 (at least 159 of the 216 assertions are never named here
+                    under any join, and naming is not witnessing — the literal-named half still wants a
+                    plant where a producer exists and a detail-text change where none does), #71
+                    (`facts` carries no CHECKs), #58, #62, #64, #44, §87's session-time-zone seam, D91's
+                    served leg until :8090 is up. #68 is closed by this section.
+                  (c) The eight citations are correct against a file that just moved, and the rule that
+                    caught them checks content rather than position — so the next edit above line 181 of
+                    `CollectionsController.java` reddens them again. That is the check working; the
+                    residue is that a red run says which citation failed but not which edit moved it.
+```
+
+
+> **Recovered by D115 (2026-09-27).** These nine sections are §100–§108 of this file's working copy,
+> renumbered §115–§123: HEAD already holds a §100 (D108's plane correction), this lane's newest number
+> is §114, and a section that is cited by later text keeps its number. The chain from the first merge
+> still resolves — draft §34/§35/§36/§37/§85/§86/§87/§88 became §100/§101/§102/§103/§104/§105/§106/§107
+> in the section above, and become §115/§116/§117/§118/§119/§120/§121/§122 here. Body text is verbatim
+> except references that point a reader at a sibling recovered section, which were re-aimed at the new
+> numbers; statements *about* numbering inside the section above are left exactly as written, because
+> they record an event rather than point at content. Two source comments still say `STATUS §106`
+> (`CollectionsController.java:186`, `CollectionsReadTest.java:188`) and name nothing at HEAD; that is
+> reported to the platform lane, not edited here.
