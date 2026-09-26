@@ -37,3 +37,7 @@ orphan: moderation_cases.review	D100	plant: one case repointed	nexus-d63/d100_th
 favourites point at a renderable row	D100	companion of the favourites sweep, same plant	nexus-d63/d100_three_sweeps.py
 merchant_user grants reach a membership	D100	companion of the grant sweep, same plant	nexus-d63/d100_three_sweeps.py
 every waiting review has exactly one open case	D100	companion of the case sweep, same plant	nexus-d63/d100_three_sweeps.py
+merchant has a primary location	D104	plant: merchant loses its location	nexus-d63/d104_plants.py
+orphan: facts.location	D104	plant: merchant loses its location	nexus-d63/d104_plants.py
+every column that cannot vary is answered for why it cannot	D104	plant: an offering priced out of range	nexus-d63/d104_plants.py
+offerings.price_amount in (0, 20000)	D104	plant: an offering priced out of range	nexus-d63/d104_plants.py
