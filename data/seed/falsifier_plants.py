@@ -33,6 +33,13 @@ collateral a measured property of the mutation mechanism rather than an unexplai
 thirteenth arm is then that finding stated on its own: it changes a timestamp column and nothing else, and
 is judged on the spread row itself.
 
+Whole-gate mode also polices the aim, not just the plant. A `target green` line is this file's way of
+saying "the assertion named here does not read what this SQL moves" -- an arm that set
+`facts.value->>'data_origin'` did redden four rows, none of them the one it claimed, because the plain
+`data_origin` columns and the jsonb key of the same name are watched by different assertions. A spliced
+run would have called that green. Each arm therefore names the assertion its own SQL reaches, and the two
+`data_origin` arms are the same deception stated on the two planes that watch it.
+
 The exit code is 0 only when the baseline matches the two declared known-reds, every arm's assertion
 reddened on the plant, no arm's assertion was already red at baseline, and the closing baseline equals
 the opening one -- which is how this file knows it left the database as it found it.
@@ -119,9 +126,18 @@ ARMS = [
     ("category_primary is one of the merchant", "a merchant claiming a category it is not mapped to",
      "UPDATE merchants SET category_primary = 'Sichuan-Portuguese fusion' "
      "WHERE id = (SELECT id FROM merchants ORDER BY id LIMIT 1);"),
-    ("data_origin = demo everywhere", "a fact whose provenance axis says human",
+    # D112's first aim at this row was wrong and the whole-gate run said so: the plant moved
+    # facts.value->>'data_origin' while `data_origin = demo everywhere the column exists` predicates only
+    # over the three plain columns, so it stayed green and the deception landed on a different row. This is
+    # that other row -- the one that actually watches the jsonb key.
+    ("provenance axis and the §109 stamp axis stay separate", "a fact whose stamp axis says human",
      "UPDATE facts SET value = jsonb_set(value, '{data_origin}', '\"human\"'::jsonb) "
      "WHERE id = (SELECT id FROM facts ORDER BY id LIMIT 1);"),
+    # ...and the row that was first aimed at is now aimed at properly: one plain merchant column off
+    # 'demo'. pg_attribute shows no CHECK on merchants.data_origin, so the schema will not refuse this,
+    # which is exactly why the plain-column assertion has to be the thing that catches it.
+    ("data_origin = demo everywhere", "a merchant stamped human instead of demo",
+     "UPDATE merchants SET data_origin = 'human' WHERE id = (SELECT id FROM merchants ORDER BY id LIMIT 1);"),
 ]
 
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
