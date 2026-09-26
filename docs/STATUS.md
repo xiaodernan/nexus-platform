@@ -4494,6 +4494,12 @@ gates             Three official 8-step runs of `scripts/db_gate_fresh.sh --keep
                     Both step-8 readings censised the ledgers as the working tree holds them, so no run
                     certifies the sections this commit appends; those are cite-checked as exact bytes before
                     staging, which is the only honest order.
+                  That order has since been overtaken, not contradicted: step 8's default mode is HEAD-strict, so
+                    the reading became available the moment the append was committed, and at 11:37 over these
+                    two commits it resolves 172 citation-shaped tokens over 164 sections and 53 distinct files
+                    with no offender (`d89_step8_after_commit.txt`). The same invocation still prints 157 in 165
+                    sections for the working copy, because the tree's `docs/STATUS.md` is the divergent file
+                    §86(e) reports: 165 is 89 plus 76 there against the committed 87 plus 77.
                   The anchor as measurement rather than argument, on the two kept certification databases, each
                     reading printing the row's verdict and the column's `now()`-age out of one statement at one
                     instant and into a kept file, the region sliced from the shipped text at run time by

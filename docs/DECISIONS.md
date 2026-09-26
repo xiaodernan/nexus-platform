@@ -5354,3 +5354,14 @@ old rule is red at all three of those readings and at the instant step 5 of the 
 that used to go red as the machine got slower is green on identical bytes while the machine got slower, which is
 the claim this unit set out to make; the four plants in §86 stay the directions it can still fail, the other 215
 rows are untouched, and `bash -n` passed on both scripts it edits.
+**After the commit.** §86's gate line says that no gate run certifies the sections the commit appends, and that
+is the honest order of business — but it is not the last word available, because step 8's default mode is
+HEAD-strict and can simply be re-run once the commit exists. Run at 11:37 over the two D89 commits
+(`0a1e99e` and `0e274e3`) and kept as `d89_step8_after_commit.txt`, it reports 164 sections — `docs/STATUS.md`
+holding 87 of them and `docs/DECISIONS.md` 77 — 319 name:number tokens of which 172 are citation-shaped, 53
+distinct files cited, and no offender. So the appended text resolves against the source as it ships; the seam
+closes for citations and stays open for what the checker itself says it cannot see, which is whether a cited
+line says what the sentence claims. The same invocation's working-copy line reads 157 citations in 165
+sections, and the arithmetic of that difference is §86(e)'s divergent file rather than anything here: 165 is 89
+plus 76 against the committed 87 plus 77, the working copy being minus committed §85, minus §86, plus four
+uncommitted draft sections, and minus D89. Must-stay-green is unchanged: 216 checks, one of which is this row.
