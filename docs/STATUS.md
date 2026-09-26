@@ -5001,3 +5001,58 @@ next              (a) #72's census runs on every gate now; the task stays open f
                   (b) Carried: #71 (`facts` CHECK), #68, #58, #62, #64, #44, D91's served leg until :8090 is
                     next up, §87's next (c), and the two dead arms of §89's row that still want plants.
 ```
+
+## 93. A gate step that reported a false citation was really a crashed reader; five arms now separate "did not run" from "does not resolve" (2026-09-26)
+
+```
+plane             `scripts/check_comment_citations.mjs` — step 9, shipped one unit ago. Its verdict logic
+                    conflated two outcomes it had never been asked to tell apart. This is the fix, and the
+                    arms that hold it. The commit is +12/−3 in one file; nothing else in the gate changed.
+
+how it was found  Chasing the branch D95 recorded as untested: exit 2 when the plane contains no tokens. Built
+                    a scratch tree of byte-identical copies (sha256 prefixes c4770675901e5a4b and
+                    51971a1b597b2b94, matching the repo files, because the script derives its root from its own
+                    path and no other way points it at a smaller plane without touching what it gates). The
+                    isolated step-8 checker could not load `source_index.mjs` and died with
+                    `ERR_MODULE_NOT_FOUND` — and step 9 printed that its citations did not resolve.
+
+the defect        `RESULT: FAIL — 3 comment-plane citation(s) across 1 file(s), at least one does not` was a
+                    claim about citations nobody had examined. The same category D91 found in the consumer
+                    verifier — a verdict phrased as a fact about the data when it is a fact about the
+                    machinery — sitting in the tool whose job is catching that phrasing. It surfaced only
+                    because an untested branch was attempted; the attempt paid for itself before reaching its
+                    target, which is the argument for making these attempts at all.
+
+arms              A  real tree, clean plane            child reported, 0 offenders   PASS     rc 0  (64 / 17)
+                  B  scratch tree, import missing      child crashed, no report       NOT RUN  rc 2
+                  C  same tree, import supplied        child reported, 3 resolved     PASS     rc 0  (3 / 1)
+                  D  real tree, offender planted       child reported, 1 offender     FAIL     rc 1  (65 / 18)
+                  E  plant removed                     child reported, 0 offenders    PASS     rc 0
+                    C is what makes B a verdict about the crash rather than about the tree: same copy of the
+                    script, one file added to the environment, the outcome moves from "not run" to "pass".
+                    The plant for D is an untracked comment — a cite to `nothing_here.py`, a file that exists
+                    nowhere — removed afterwards, `ls` reporting no such file.
+
+still untested    The zero-token trigger of exit 2. B reaches the same exit code through a different condition
+                    (a reader that failed to start, not a plane that held nothing) and the two print different
+                    messages. Reaching the first would mean stripping the citation comments out of the copied
+                    checkers — at which point the copy is not the shipped bytes — or adding a parameter that
+                    narrows the scan purely so a test can turn it off. Both trade a guard for a row, so the
+                    line stays named rather than claimed.
+
+numbers           D95's commit message stated its ledger append as "DECISIONS +62, STATUS +55";
+                    `git show --numstat 905d1f8` reads 62/0 and 60/0. One figure right, one wrong, and the
+                    wrong one lived only in a message — history, so it is corrected in prose here rather than
+                    amended. A remembered count caught this lane again, the fourth time this week.
+
+gates             Step 9's bytes changed, so the whole gate was re-run rather than the step alone: nine steps,
+                    `GATE_RC=0` at 13:11 local, and step 9's own block in that log reading
+                    `tokens found 64 in 17 file(s)` with 25 distinct cited files. The ledger commit that
+                    follows re-runs step 8 standalone, since appending to the ledgers is a change to the plane
+                    it reads.
+
+next              (a) #72 stays open for the named-untested line above; the category is now witnessed, the
+                    specific branch is not.
+                  (b) Carried: #71 (`facts` CHECK), #68, #58, #62, #64, #44, D91's served leg until :8090 is up,
+                    §87's next (c), and §89's two dead arms of the TTL row that still want plants.
+```

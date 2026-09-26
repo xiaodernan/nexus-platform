@@ -5787,3 +5787,63 @@ rather than asserted.
 `migrations=7`, truncate probe both branches, jsonb reads and sites reconciled, ledgers resolved, comment
 plane censused at 64 tokens / 0 offenders. Run 2, over the fixed RESULT block, is what certifies the bytes that
 ship; its verdict is recorded in §92 rather than predicted here.
+
+## D96 Trying to witness one untested branch found a worse one: the comment gate called a crashed reader a false citation
+
+D95 shipped its own exit code 2 — "the plane contains no tokens, so this scan read nothing" — and recorded it as
+untested. This unit went to test it. It turned out the branch is unreachable with byte-identical copies of the
+shipped scripts, and the attempt to reach it exposed something worth more than the original target: step 9
+reported a reader that could not start as a citation that failed.
+
+**The attempt.** A scratch tree (`Temp\d96tree\scripts`) holding copies of `check_comment_citations.mjs` and
+`check_ledger_citations.mjs` plus one source file whose comments make no citation-shaped claim. The copies are
+byte-identical — sha256 prefix `c4770675901e5a4b` and `51971a1b597b2b94`, matching the repo files — which is
+what makes the run a witness rather than a rehearsal: the script derives its repository root from its own path,
+so an isolated copy is the only way to point it at a smaller plane without touching the tree it gates.
+
+**What it found instead.** The copied step-8 checker imports `source_index.mjs`, which the scratch tree did not
+have. The child died on `ERR_MODULE_NOT_FOUND` — no report at all — and step 9 printed:
+
+```
+RESULT: FAIL — 3 comment-plane citation(s) across 1 file(s), at least one does not — see the report above
+```
+
+That sentence says a citation does not resolve. Nothing was examined: the reader never ran. The same category
+error D91's verifier made about a `stale` stamp — a verdict phrased as a fact about the data when it is really
+a fact about the machinery — in the tool that exists to catch such phrasing. It was found only because the
+witness was attempted; a guard nobody has seen fire is not evidence the guard works, and here the attempt paid
+for itself before reaching its target.
+
+**The fix, and the arms that hold it.** Step 9 now asks whether the child produced a report before it claims
+anything about citations, and separates the two outcomes:
+
+| arm | plane | what step 8's child did | verdict line | exit |
+| --- | --- | --- | --- | --- |
+| A | the real tree, clean | reported, 0 offenders | `RESULT: PASS … 64 tokens / 17 files` | 0 |
+| B | scratch tree, checker's import missing | crashed, no report | `RESULT: NOT RUN — step 8 produced no report … a reader that crashed is not a citation that failed` | 2 |
+| C | same scratch tree, import supplied | reported, 3 tokens resolved | `RESULT: PASS … 3 comment-plane citation(s) across 1 file(s)` | 0 |
+| D | real tree, one unresolvable cite planted | reported, 1 offender | `RESULT: FAIL … 65 tokens / 18 files, at least one does not` | 1 |
+| E | plant removed | reported, 0 offenders | `RESULT: PASS` | 0 |
+
+C is the arm that makes B mean something: the same tree, the same copy of the script, one file added to the
+environment, and the verdict moves from "not run" to "pass". Without C, B is just another red. The plant for D
+is an untracked scratch comment — a cite to `nothing_here.py`, a file that exists nowhere — and it is gone after
+the run: `ls` reports `No such file or directory`.
+
+**What is still untested, named exactly.** The zero-token trigger of exit 2 is not covered by any arm here.
+B reaches the same exit code through a different condition — a reader that failed to start, not a plane that
+held nothing — and the two print different messages. Reaching the empty-plane branch would mean stripping the
+citation comments out of the copied checkers, at which point the copy is no longer the shipped bytes, or adding
+a parameter that controls which extensions are scanned purely so a test can turn the scan off. Both trade a real
+guard for a green row, so the branch stays recorded as untested: the category it belongs to (a scan that read
+nothing must not report a clean plane) is now witnessed at B, and the specific line is not.
+
+**Two numbers corrected, neither edited away.** D95's commit message states the ledger append as "DECISIONS
++62, STATUS +55". `git show --numstat 905d1f8` says `62 / 0` and `60 / 0`: the second figure was wrong and the
+first was right. The committed §92 text carries no size claim, so no line in the tree needed changing — the
+error lives in a commit message, which is history and stays as it is, corrected here rather than amended away.
+Writing that down matters more than the digit: a remembered count is exactly what this lane has been
+re-measuring all week, and it got me again.
+
+**Gates.** Step 9's shipped bytes changed, so the whole gate was re-run rather than the changed step alone —
+see §93 for the nine-step result and its `GATE_RC`, read from the log after the run rather than asserted here.
