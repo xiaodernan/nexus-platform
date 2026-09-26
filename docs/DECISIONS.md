@@ -6133,6 +6133,90 @@ database and `git show` of two committed documents. The fix is to how this lane 
 artifacts, so the artifacts are named — `d102_qc_names.tsv`, `d102_unnamed.tsv` — and the lossy
 `d98_qc_names.txt` stays where it is, beside the entry that says what it was wrong about.
 
+## D103 (backfilled by D111) A machine-checkable record of which assertions have been SHOWN able to fail — 11 of 216, against 53-to-57 merely named in prose
+
+D102 measured the ledgers' coverage and admitted the number it produced was the wrong kind: "named in the
+ledgers" is an upper bound on being witnessed, and it moved between 53 and 57 depending on whether
+whitespace was folded and on which HEAD was read. What never existed was a record of the stronger claim.
+`data/seed/falsifiers.tsv` is that record -- one row per (assertion, arm), each naming a unit, the plant or
+companion flip that reddened it, and an artifact that must still open or a commit that must still resolve.
+
+`scripts/check_falsifier_registry.mjs` checks it against `qc` rather than against the text, because 103 of
+the names are built at run time by the polymorphic sweeps (D98) and cannot be enumerated from
+`quality.sql` at all: it slices the shipped assertions at the hard-gate marker, runs them in one session,
+and reads the table back as a single aggregated row so a lossy read cannot silently shrink the denominator.
+Four arms, including its own non-vacuity: no `--db` gives NOT CHECKED and exit 2 (a reader that did not run
+is not a pass, per D96); the registry as written passes at 22 rows covering 11 distinct assertions; one
+invented name (`orphan: facts.invented`, a sweep name that looks entirely plausible) is refused with exit 1
+naming it; and the file restored passes again. The first honest ratio was therefore 11 of 216 -- 5.1%.
+
+**Re-verified while backfilling.** The no-argument spelling still holds: `node
+scripts/check_falsifier_registry.mjs` with no `--db` prints `RESULT: NOT CHECKED -- no --db given` and
+exits 2. The 22-row / 11-assertion state is not reproducible without rewinding the registry, and is not
+claimed as current: the current numbers are 54 rows and 33 of 214 (D109), on the 214-assertion plane D108
+defined.
+
+## D104 (backfilled by D111) Four more assertions shown red -- and three arms the database refused before the gate ever saw them
+
+Deleting a merchant's location reddened `merchant has a primary location` and the sweep row
+`orphan: facts.location`; a 25,000-HKD price reddened `offerings.price_amount in (0, 20000)` and the
+degenerate-column census row that watches that column. All four inside transactions the harness rolled
+back, validator re-run over the file after the append with its denominator read from `qc`. The registry
+reached 14 of 216 (6.5%).
+
+The finding is in the arms that failed. Three others -- a capacity bound, a rating of 6, a duplicate fact --
+never reached the gate: the database rejected the write with `availability_slots_capacity_bounds`,
+`reviews_rating_check` and `facts_one_row_per_claim_uidx`. That is a finding about the schema, not a
+witness -- and it is not a green read either, because the aborted plant's transaction took the rest of the
+session down with it (`current transaction is aborted`), so an unread arm is recorded as unread. The harness
+shape that follows: plant in its own transaction, report the refusal as the schema's answer, read the
+assertions in a clean session.
+
+**Re-verified while backfilling**, against the kept gate database: `reviews_rating_check` and
+`availability_slots_capacity_bounds` are live CHECK constraints (`convalidated = true`), but
+`facts_one_row_per_claim_uidx` appears in `pg_indexes` and not in `pg_constraint` -- it is a UNIQUE
+**index**, so the third refusal is a uniqueness violation rather than a CHECK. The distinction matters for
+#71, which is specifically about `facts` carrying no CHECKs.
+
+## D105 (backfilled by D111) The three arms the schema refused are live backstops, not decoration -- with the constraint dropped, the gate caught all three
+
+D104 could not read these arms at all: the database rejected the write and the aborted transaction took the
+session with it. The question worth answering is what the gate would do if the schema had not, so each arm
+drops the constraint inside a transaction (Postgres rolls DDL back too -- verified afterwards: both
+constraints in place), makes the write, runs the shipped assertions, and rolls back.
+
+All three CAUGHT: capacity bounds, `reviews.rating 1..5`, and one fact per (subject, attribute) each went
+false on their own row. The rating arm also reddened `merchants.rating_agg matches its reviews` and
+`rating fact restates the recomputed mean`; the facts arm also reddened the degenerate-column census row
+and `rating: every reviewed subject has exactly one rating fact`. Eight new registry rows over five
+distinct assertions, moving the count that matters from 14 to 19 of 216.
+
+This reverses the tempting reading of #71 rather than confirming it: three gate rows that restate a schema
+guarantee are still the only thing that notices when the guarantee is gone, which is a reason to keep them
+and a reason the V8 decision should be taken as consistency (`facts` alone has no CHECKs -- re-measured
+while backfilling: zero rows in `pg_constraint` with `contype = 'c'` for that table), not as tidying.
+
+## D106 (backfilled by D111) Five more plants -- two new assertions caught, D89's clock row catches a runtime stamp on purpose this time, and two loose ends written down
+
+`emails/domains are example.hk only` and `coordinates inside the HK bbox (D3 geo prefilter)` each reddened
+on a single allowed write. The fifth arm -- stamping one facts row with `now()` -- reddened the
+generation-clock row again, but deliberately this time: D90 had recorded "this row watches rows the
+platform writes" as a limitation witnessed only by accident (D99), and here it is a planned arm with a
+rolled-back write and zero residue. Seven rows appended.
+
+Two loose ends, recorded rather than tidied. One arm is UNREAD: the plant wrote `UPDATE documents SET
+text = ...`, and there is no column called `text` -- a guess at the schema that the harness reported as an
+unread arm instead of letting it look like a green one. The other is the interesting one: appending to
+`documents.raw_text` did NOT redden `documents: content_hash matches the raw_text it carries`, which is what
+that row's name promises. Either the hash covers a different column, or the row is not watching what it
+says it watches. **Closed two units later by D107**: the predicate reads only `raw_text` and never
+`content_hash`, zero of 1,040 stored hashes equal `sha256(raw_text)`, and the row was renamed to what it
+tests in `c1e0878`. A backfilled entry can afford to end where the thread actually ended; writing it at the
+time would not have known.
+
+D103-D106 are the last four units this lane shipped without a decision entry. D107 and D108 were written
+contemporaneously, and #76 is closed by this insert plus the D111 note at the end of the file.
+
 ## D107 An assertion named a check it never ran, and the rename had to be A/B'd on one database to prove the reds beside it were not mine
 
 `documents: content_hash matches the raw_text it carries` read only `raw_text`: its predicate is
@@ -6301,5 +6385,39 @@ spawn `git` with `EBUSY` and that the refusal is what took the checker down. Wha
 `error.code` the failed read carries, so a spawn refusal and a missing file produce the same verdict text
 with different reasons. The guard therefore does not distinguish "git cannot run" from "the ledger is not
 in HEAD", and does not claim to.
+
+## D111 Four units were reconstructed from their own commits -- and the re-measurable half of each claim was measured again rather than copied
+
+**Why the insert above exists.** D109 found that D103-D106 have no decision entry anywhere, so their
+*reason* survived only in four commit messages. Commit messages are evidence, but they are evidence written
+on the day: they carry the number that was current then, and a backfill that only copies them would turn
+four contemporaneous measurements into four unverifiable quotations. So each reconstructed entry above ends
+with a bolded re-verification, and what it says is fixed by a run today rather than by memory:
+
+  * D103's non-vacuity arm -- `node scripts/check_falsifier_registry.mjs` with no `--db` -- still prints
+    `RESULT: NOT CHECKED` and exits 2. Its 22-row / 11-assertion state is *not* claimed current; the
+    registry is at 54 rows / 33 of 214 since D109.
+  * D104's three refusals: `reviews_rating_check` and `availability_slots_capacity_bounds` are live CHECKs
+    (`convalidated = true`), and `facts_one_row_per_claim_uidx` is a UNIQUE index, not a CHECK -- a
+    correction the original message did not make, because it did not need to: it was describing a refusal,
+    not the shape of the object that refused. #71 is about CHECKs, so the distinction now matters.
+  * D105's constraint state after its rollback: still in place, same two queries.
+  * D106's second loose end is closed rather than left open, because the backfill is written after D107:
+    the row was renamed in `c1e0878`. An entry written on the day would have stopped at the puzzle.
+
+**What a backfill cannot recover.** The contemporaneous run logs stay in `nexus-d63/` (Temp) as the
+registry's witnesses -- `d104_plants.py`, `d105_noconstraint.py`, `d106_plants.py` and their outputs -- and
+they are only *openable*, not re-runnable to the same numbers: the assertion denominator has moved twice
+since (216 -> 214 with D108's plane discovery). Re-running those drivers now would produce a different
+count and would not be the witness D104 filed. The entries above therefore keep the historical number and
+label the current one, in the same paragraph.
+
+**The standing rule this unit writes down.** A unit is not closed when its artifact is committed; it is
+closed when both ledgers carry it, and the check is mechanical: `git status` for an anonymous hunk in a
+file this lane owns (that was D110's finding -- a guard with no commit and no entry), and
+`git log -S'## Dxx' -- docs/DECISIONS.md` for an entry that never existed (D109's finding, four units).
+`docs/STATUS.md` gets one section for these four units rather than four, because the working copy already
+holds another lane's uncommitted sections numbered up to §108 and this lane numbers forward from there.
+
 
 

@@ -5439,3 +5439,31 @@ HEAD, missing on disk" stays **unwitnessed**, because reaching it means renaming
 lanes are appending to. And the hunk's motivating claim (this machine refuses to spawn `git` with `EBUSY`)
 was not reproduced here: what is witnessed is the `ENOENT` spelling, and the guard prints whatever
 `error.code` arrives, so it does not distinguish a sandbox refusal from a ledger that is not in HEAD.
+
+## 111. D103–D106 backfilled: four commit messages became four decisions, and the half of each that can be measured today was measured again (2026-09-27)
+
+DECISIONS.md now carries `## D103 (backfilled by D111)` … `## D106 (backfilled by D111)` in their rightful
+place between D102 and D107, so the file reads in order and says which entries were written late. #76 is
+closed by that insert. What was reconstructed is the four commit messages; what was *re-measured* is each
+entry's still-checkable half, and both are labelled in the text:
+
+  * D103's non-vacuity arm reproduces today: `node scripts/check_falsifier_registry.mjs` with no `--db` →
+    `RESULT: NOT CHECKED`, exit 2. Its 22 rows / 11 assertions stay a historical number; the registry is at
+    54 rows / 33 of 214 since D109 — and all 12 distinct path-witnesses in the file still exist on disk
+    (checked by resolving column 4, the one `MISS` being the header's own label).
+  * D104's three refusals: `reviews_rating_check` and `availability_slots_capacity_bounds` are live CHECKs
+    (`convalidated = true`); `facts_one_row_per_claim_uidx` is in `pg_indexes`, not `pg_constraint` — a
+    UNIQUE index, which the original message described as a refusal without naming its kind. #71 is about
+    CHECKs, so the correction is recorded. `facts` still has zero CHECK constraints.
+  * D106's unresolved loose end is resolved in the backfill, because D107 already read that row's SQL: the
+    predicate never touched `content_hash`, 0 of 1,040 hashes are over `raw_text`, renamed in `c1e0878`.
+
+Not recoverable, and written as such: the contemporaneous runs' assertion denominator (216 then, 214 now —
+D108's plane discovery), so re-running `d104_plants.py` / `d105_noconstraint.py` / `d106_plants.py` would
+not reproduce the witness that was filed. They stay openable artifacts, not re-runnable ones.
+
+**The mechanical close-out this unit adopts:** a unit is closed when both ledgers carry it, and the checks
+are commands, not intentions — `git status` for an anonymous hunk in a file this lane owns (D110's class),
+and `git log -S'## Dxx' -- docs/DECISIONS.md` for an entry that never existed (D109's class). `docs/STATUS.md`
+gets one section for the four units, not four: the working copy holds another lane's uncommitted sections up
+to §108, so this lane numbers forward from there and cannot insert four sections into that range safely.
