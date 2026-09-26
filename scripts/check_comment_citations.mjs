@@ -112,13 +112,22 @@ try {
   code = err.status ?? 1;
   out = `${err.stdout ?? ''}${err.stderr ?? ''}`;
 }
-console.log(out.split('\n').filter((l) => /citations|offender|headings|tokens|files cited|NOT FOUND|AMBIGUOUS|PAST|BACKWARDS|ZERO/.test(l)).join('\n'));
+console.log(out.split('\n').filter((l) => /citations|offender|headings|tokens|files cited|NOT FOUND|AMBIGUOUS|PAST|BACKWARDS|ZERO|Error|Cannot find/.test(l)).join('\n'));
 if (process.argv.includes('--verbose')) console.log(out);
+// A child that never produced a report has not refuted anything: it failed to run. Collapsing that into the
+// offender branch — as the first version did, reporting `RESULT: FAIL … at least one does not` for a step 8
+// that could not even load its own import — states a claim about a citation that was never examined.
+const reported = /headings seen/.test(out);
+if (!reported) {
+  console.error(`\nRESULT: NOT RUN — step 8 produced no report (exit ${code}). A reader that crashed is not a`
+    + ' citation that failed, and the two must not share a verdict line.');
+  process.exit(2);
+}
 // The exit code is the verdict, not a phrase in the report: step 8 prints its offender counts differently in
 // `--text` mode than in its HEAD-strict default, and a green claimed from wording is a green that can be
 // renamed out from under the check. A count that is not zero is still caught here, as a belt to that braces.
-const reported = [...out.matchAll(/(\d+)\s+offender\(s\)/g)].map((m) => Number(m[1]));
-const clean = code === 0 && reported.every((n) => n === 0);
+const seen = [...out.matchAll(/(\d+)\s+offender\(s\)/g)].map((m) => Number(m[1]));
+const clean = code === 0 && seen.every((n) => n === 0);
 console.log(`\nRESULT: ${clean ? 'PASS' : 'FAIL'} — ${rows.length} comment-plane citation(s) across ${files} file(s), `
   + `${clean ? 'all resolving' : 'at least one does not — see the report above'} (step 8 exit ${code})`);
 process.exit(clean ? 0 : 1);
