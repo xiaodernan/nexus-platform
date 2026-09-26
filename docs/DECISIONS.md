@@ -5569,3 +5569,51 @@ question with three answers: run the sweep the repository already has, drop the 
 rule that is not one, or keep the column as a load-time opinion only — which is what the UI already assumes.
 This unit changes what it owns and files the question; it does not wire a write into a read path to make a
 tally go green.
+
+## D92 The two arms D90 shipped without a falsifier get one each — and `facts` turns out to have no CHECK at all
+
+D90 re-anchored a row and gave one of its three arms a working plant. The other two shipped in the same
+statement with no witness that they can fail, which is the same hole D83's task line had been describing since
+it was written: §88's next (c) carried them, attributing them to task #57 — imprecise, since #57 closed with
+witnesses for its own census arms long before this row existed. They are named here as what they are: two arms
+of `confidence within 0..1 and a TTL that runs forward` (`data/seed/quality.sql:830`) that nobody had broken.
+
+**The plants.** Both go through the shipped text — the harness slices the row out of the working copy at run
+time — inside a transaction that is rolled back, and both pick their victim with a subquery that can only
+match a row the arm does not already count, so an UPDATE that changed nothing cannot print a green table.
+
+| arm | planted row | detail text the shipped row then printed | verdict |
+| --- | --- | --- | --- |
+| none (control) | — | `0 bad confidence, 0 non-forward TTL, 0 marked stale…` | pass |
+| `confidence = 1.5` | `00079ece-…d375`, a rating fact | `1 bad confidence, 0 non-forward TTL, 0 marked stale…` | **fail** |
+| `expires_at = observed_at` | the same row, in a separate run | `0 bad confidence, 1 non-forward TTL, 0 marked stale…` | **fail** |
+| both at once | the same row again | `1 bad confidence, 1 non-forward TTL, 0 marked stale…` | **fail** |
+
+The last two rows are the point of doing the pair. A detail string that reported "1 problem" would be one flag
+with three names on it; these three counts moved independently, including when the offender was a single row
+carrying both defects. Residue after each arm: 0 out-of-range confidences, 0 backwards TTLs, the planted row
+back at its seed value of 0.700.
+
+**What the first plant found next to it.** The database accepted `confidence = 1.5` without complaint, because
+nothing stops it: `facts.confidence` is `numeric(4,3)` — a type that can hold anything to 9.999 — and
+`pg_constraint` reports **zero** CHECK constraints on `facts`. So this arm is not a restatement of something
+the schema already guarantees, which is the criticism that makes most defensive range checks decoration: it is
+the only thing between a stored 1.500 and a rendered claim, and D80's census shows the readers do trust that
+column. The corresponding decision — add a CHECK in a V8 migration so the database refuses it, or keep the
+gate as the only bound and say so — is filed rather than taken: a new migration changes the shared schema
+plane, the `tables=`/`migrations=` figures every gate line quotes, and `docs/DATABASE.md`, which belongs to
+another lane.
+
+**A witness that reads `HEAD` starts reading itself, and this one did.** The D90 harness pulled the
+superseded rule out of `HEAD:data/seed/quality.sql` so the old and new predicates could be scored against one
+state without anything being retyped. That was correct until D90 was committed: `HEAD` then contained the *new*
+row, the `stale-while-live` text it searched for was gone, and the next call failed — loudly, this time, on an
+end-marker assert, having earlier come within one commit of quietly slicing the rule it was meant to compare
+against. It is pinned to `989baca^` now, the last commit before that change, with two guards: the superseded
+text must be present at the ref, and must be absent from the working copy. D90's arms were re-run after the
+pin — control, the stale-while-live plant and the 9-day-late base all behave as first recorded.
+
+**Gates.** Nothing shipped by this unit is a byte the database gate reads: the plants are transactions that
+roll back, the harness is a witness script outside the tree, and `git diff 989baca..HEAD -- data/seed
+scripts/db_gate_fresh.sh` is empty, which is the evidence that D90's passing 8-step run still certifies the
+seed plane rather than a memory of it. Step 8 is re-run after this commit, as it was after D89's and D90's.

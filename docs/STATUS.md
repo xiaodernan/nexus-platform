@@ -4786,3 +4786,54 @@ next              (a) The sweep question is a decision, not an edit: run `markEx
                   (c) Carried: #57's two dead data-gate arms and their plants, #70 closed by this entry, and
                     §87's next (c)-(f) including the divergent working copy of this file (#68).
 ```
+
+## 89. Two arms of the TTL row had never been broken; breaking them found `facts` carrying no CHECK, and a witness that had started reading itself (2026-09-26)
+
+```
+plane             `data/seed/quality.sql:830`'s first two arms — the confidence range and the forward-running
+                    TTL. Both shipped in D90 with the row they share, and neither had a plant. No shipped byte
+                    changed in this unit: the witnesses, and the finding.
+
+plants            Four states over the sliced row, each inside a transaction that rolls back, each victim
+                    picked by a subquery that cannot match a row the arm already counts:
+                      control                        -> 0 bad confidence, 0 non-forward TTL, 0 marked stale
+                      confidence = 1.5               -> 1 / 0 / 0, row FAIL
+                      expires_at = observed_at       -> 0 / 1 / 0, row FAIL
+                      both at once, one row          -> 1 / 1 / 0, row FAIL
+                    The fourth is the one that matters: three counts that move independently are three checks,
+                    where a single "something is wrong" flag would have been one check wearing a name. Row
+                    00079ece-2689-5d4f-a6d8-284d0facd375 read 0.700 before and after; residue 0/0/0.
+
+found             The database accepted `confidence = 1.5` because nothing forbids it: `facts.confidence` is
+                    `numeric(4,3)`, and `pg_constraint` holds zero CHECK rows for `facts`. So this arm is not
+                    decoration restating a schema guarantee — it is the only bound between a stored 1.500 and
+                    a rendered claim. Whether a V8 migration should add the CHECK and make the gate's arm a
+                    backstop instead of the only line is a decision, not an edit: it moves the shared schema,
+                    the `migrations=7` figure every gate line quotes, and a doc that is not this lane's.
+
+                  A witness of D90's was reading `HEAD` for the superseded rule. Once D90 was committed,
+                    `HEAD` contained the new rule instead, and the next run failed on an end-marker assert —
+                    after having come within one commit of slicing the thing it was written to compare. Pinned
+                    to `989baca^` (the last commit before the change) with both directions guarded: the old
+                    text must exist at the ref and must be absent from the working copy. D90's control,
+                    stale-while-live and late-base arms re-run after the pin: unchanged verdicts.
+
+gates             The seed plane is provably untouched this unit: `git diff 989baca..HEAD -- data/seed
+                    scripts/db_gate_fresh.sh` is empty, so D90's passing 8-step run (216 checks, tables=58,
+                    migrations=7) is still the run that certifies these bytes. Step 8 is re-run after this
+                    commit and its numbers are recorded rather than recited.
+
+mistakes          (a) §88 next (c) carried these two arms as "#57's"; #57 closed long before this row existed
+                    and its own witnesses are intact. Named here as the imprecision it is rather than quietly
+                    rewritten.
+                  (b) A witness that reads a moving ref is a witness with an expiry date — D90's horizon arm
+                    was the same lesson wearing a predicate. `HEAD` is not a place to store the thing under
+                    test; a commit that no longer moves is.
+
+next              (a) Task #71: the `facts` CHECK decision (V8 migration vs. gate-only bound) — reported, not
+                    taken.
+                  (b) Task #67's citation reader is now §90 / D93, and would itself need a pinned ref rather
+                    than `HEAD`, for the reason above.
+                  (c) Carried: the served leg of D91 until :8090 is next up, §87's next (c)-(f), and the open
+                    reports #58, #62, #64, #44.
+```
