@@ -138,6 +138,30 @@ ARMS = [
     # which is exactly why the plain-column assertion has to be the thing that catches it.
     ("data_origin = demo everywhere", "a merchant stamped human instead of demo",
      "UPDATE merchants SET data_origin = 'human' WHERE id = (SELECT id FROM merchants ORDER BY id LIMIT 1);"),
+    # Batch D118: the VALUE plane. Every earlier arm fabricates something textual -- a URL, a marker, a
+    # name, a body -- but most of the gate is numeric doors (bounds, TTLs, ratios, referential counts),
+    # and a bound that has only ever been watched while the data obeyed it is untested in the direction
+    # that matters. Each plant here was first measured legal: `pg_constraint` shows no CHECK touching
+    # merchants.popularity_score, facts.expires_at, facts.stale, reviews.language or
+    # permission_grants.granted_by, so the schema lets all five through and only the gate can notice.
+    # That is the point of the batch -- these assertions are the last line, not a backstop.
+    ("popularity_score within", "a merchant popularity score above the declared ceiling",
+     "UPDATE merchants SET popularity_score = 1.4 "
+     "WHERE id = (SELECT id FROM merchants ORDER BY id LIMIT 1);"),
+    ("price facts respect", "a price fact stamped with the hours TTL instead of the six-hour one",
+     "UPDATE facts SET expires_at = observed_at + interval '12 hours' "
+     "WHERE id = (SELECT id FROM facts WHERE attribute = 'price' ORDER BY id LIMIT 1);"),
+    ("some facts are deliberately stale", "the stale-marking cleared, so the UI would never show 已過時",
+     "UPDATE facts SET stale = false WHERE stale;"),
+    ("language mix ~60%", "2,500 Cantonese reviews relabelled English, dropping the share under 50%",
+     "UPDATE reviews SET language = 'en' WHERE id IN "
+     "(SELECT id FROM reviews WHERE language = 'zh-HK' ORDER BY id LIMIT 2500);"),
+    ("every grant names an operator", "a grant filed by an operator id that no user holds",
+     "UPDATE permission_grants SET granted_by = '00000000-0000-4000-8000-0000000000d1' "
+     "WHERE id = (SELECT id FROM permission_grants WHERE granted_by IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("no merchant name collides", "a merchant renamed to a real HK chain on the §109 blocklist",
+     "UPDATE merchants SET display_name_zh = '翠華餐廳' "
+     "WHERE id = (SELECT id FROM merchants ORDER BY id LIMIT 1);"),
 ]
 
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
