@@ -5509,3 +5509,63 @@ merely the ones it will re-read. The numbers are printed by the checker, not tra
 memory of an earlier one, which is the mistake class §86 (j) names: a count without the condition it was read
 under is not a number. What step 8 still cannot see is stated in its own output: it proves a cited line
 exists, never that the line says what the sentence claims.
+
+## D91 The consumer verifier asserted a stamp no producer writes; the UI derives freshness from `expires_at` instead
+
+D90's census did not stop at the data gate. The same shape — an assertion whose predicate no input can
+satisfy — was sitting in `scripts/verify_consumer_slice.py`, one of the three lines that check the served
+promise about fact freshness.
+
+**Measured first.** On the database D90's passing gate run left behind, and again on the live demo database:
+every one of the 520 `opening_hours` facts is past expiry and none of them carries `stale=true` — 0 of 520.
+The price facts read 2,080 past expiry with 72 marked, the rating facts 1,727 with none. The reason is
+arithmetic, not sloppiness: `stale` is set at the instant the row is written, and `data/seed/generate.py:966`
+marks a row only where its expiry already precedes that instant. A TTL of 24 hours is never already-expired
+when it is stamped, so no 24-hour fact can ever be marked at load; and 24 hours after the pinned base every
+one of them is expired to a client while the column still says "no". Nothing re-stamps them either:
+`markExpiredStale` (`FactRepository.java:102`) is defined and has no callers anywhere in the repository.
+
+**What the arm claimed, and what it could see.** `expired facts arrive marked stale` compared each served
+fact's `expires_at` against `datetime.now(timezone.utc)` and required `stale is True` on the ones past it. On
+the live leg that has been unsatisfiable since 2026-09-23 11:00+08 — three days before D90 was even written —
+and on the offline demo catalogue the same line is vacuously true, because that builder derives
+`expires_at` from its own `now`, so nothing is ever past it. One assertion, both failure classes, and which
+one you got depended on which backend happened to be up. §87's next (a) recorded the aggregate ratio
+(4,412 of 4,484); the sharper number is this one, because `opening_hours` is exactly what the walk's cards
+carry: 100 percent past, 0 percent marked.
+
+**The promise is real; the column is not the promise.** The consumer's "may have changed" comes from
+`packages/ui/src/trust/fact.ts:66` — `isStale()` is `fact.stale === true || isExpired(fact, now)` — so the
+flag is one input and the client's own clock the other. That makes `expires_at` the only freshness signal a
+served fact actually owes, and it rewrites the check as two properties that can both fail:
+
+  * every served fact carries an `expires_at` the client can compare. A missing or unparseable one is the
+    dangerous direction: `isExpired()` can never fire, the column says no, and an expired number is presented
+    as live forever. `parse_instant` in the verifier names the assumption it makes to answer this — a naive
+    stamp is read as UTC, because the alternative is a verdict that depends on where the script ran.
+  * no fact is marked stale while its own TTL still runs. This is the milder direction (a live number
+    presented as doubtful), and it is the one that keeps the flag honest as an input.
+
+Neither is the old arm's question, and neither is empty: 24 of the 32 facts in the witness fixture are past
+expiry, and the two verdicts disagree about which side of the derivation each of them is on.
+
+**Falsifiers, offline, over the shipped text.** `d91_witness.py` reads `parse_instant` and
+`freshness_defects` out of the verifier at run time rather than restating them, builds its fixture by querying
+the loaded database (8 cards, 32 facts, `expires_at` rendered the way the API renders it), pins NOW to
+2026-09-26 04:00Z so no plant is an accident of the clock, and runs five arms: the seed as served (0/0), one
+`expires_at` removed (1 unageable), one unreadable (1), one live fact marked stale (1 early), and one naive
+stamp (0/0 — it parses, and it is past). 5/5 as expected. The fixture asserts it contains both sides of NOW
+before any arm runs: an arm that passes because its plant is impossible is D90's dead arm in a new costume,
+and the witness would otherwise have printed a green table over it.
+
+**The live leg is BLOCKED, not skipped.** With `:8090` down the two fact verdicts are now filed as BLOCKED
+naming the HTTP status that starved them, and that path was run rather than described: the shipped script
+against a stopped stack prints `FAIL directory listing -> HTTP 0` followed by the two BLOCKED lines.
+Restarting the developer platform is not this lane's call, so the served payload itself remains unwitnessed
+today — the predicates are witnessed, the wire is not, and the distinction is the entry, not a footnote.
+
+**Left as a decision, not edited away.** Whether anything should ever set the column after load is a product
+question with three answers: run the sweep the repository already has, drop the method so nothing looks like a
+rule that is not one, or keep the column as a load-time opinion only — which is what the UI already assumes.
+This unit changes what it owns and files the question; it does not wire a write into a read path to make a
+tally go green.

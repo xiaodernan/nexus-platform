@@ -4723,3 +4723,66 @@ next              (a) Task #70, the served twin of this defect and the worse one
                   (f) Task #67's title says "§87 next unit"; §87 is this one, so that unit is §88. Fix the
                     title when it is picked up rather than the numbering of this section.
 ```
+
+## 88. The consumer verifier was asserting a stale stamp no producer writes; it now asserts what the UI derives, and files the unwitnessed leg as BLOCKED (2026-09-26)
+
+```
+plane             `scripts/verify_consumer_slice.py`'s fact-freshness leg — one of the three checks that
+                    police the served freshness promise (AGENT_CONTRACT §5). The other D90 finding, in the
+                    plane a browser reads: the previous arm asked whether every past-expiry fact arrives
+                    `stale=true`, and nothing in the system writes that stamp after the load.
+
+measured          On the database D90's passing gate run left behind, and on the live demo database:
+                    520 of 520 `opening_hours` facts are past expiry with none marked; price 2,080 past with
+                    72 marked; rating 1,727 past with none. The cause is arithmetic —
+                    `data/seed/generate.py:966` marks a row only where its expiry already precedes the
+                    instant it is written, so a 24-hour TTL can never be marked at load and is expired for
+                    every reader 24 hours later. `markExpiredStale` (`FactRepository.java:102`) has no
+                    callers in the repository.
+                  The UI does not depend on that column alone: `packages/ui/src/trust/fact.ts:66` is
+                    `fact.stale === true || isExpired(fact, now)`, which makes `expires_at` the owed field
+                    and the flag one input. So the old arm was both unsatisfiable (live leg, since
+                    2026-09-23 11:00+08) and vacuous (offline catalogue, where `expires_at` is built from the
+                    reader's own `now`) — one line, two failure classes, chosen by which backend was up.
+                  §87 next (a) quoted the whole-table ratio, 4,412 of 4,484. Sharpened, not contradicted:
+                    the attributes the walk actually reads are 100 percent past and 0 percent marked.
+
+changed           Two verdicts replace one, over `parse_instant` + `freshness_defects`: every served fact
+                    carries an `expires_at` the client can compare (the dangerous direction is a missing
+                    one — `isExpired()` can then never fire and an expired number prints as live forever),
+                    and no fact is marked stale while its own TTL still runs (the mild one, which keeps the
+                    flag honest as an input). A naive stamp is read as UTC by stated rule, so the verdict
+                    does not depend on where the script ran. With no payload at all both are filed BLOCKED
+                    naming the HTTP status, because D79's rule is that an arm that never ran is not green.
+
+plants            The two functions are sliced out of the shipped verifier at run time and driven over a
+                    fixture DERIVED from the loaded database (8 cards, 32 facts, `expires_at` rendered as the
+                    API renders it), with NOW pinned to 2026-09-26 04:00Z so no plant is an accident of the
+                    clock: seed as served 0/0, one expiry removed 1 unageable, one unreadable 1, one live
+                    fact marked stale 1 early, one naive stamp 0/0. 5/5 as expected. The witness asserts the
+                    fixture has facts on both sides of NOW before running, so an arm whose plant is
+                    impossible cannot pass by default.
+
+gates             The shipped script was run against the stopped stack: `FAIL directory listing -> HTTP 0`,
+                    then the two BLOCKED lines, then the AI leg's own BLOCKED and the two sub-legs' FAILs.
+                    Not a pass, and not claimed as one — the served payload leg stays unwitnessed until
+                    someone with the platform's reins starts it. Restarting :8090 is not this lane's call.
+                  The data gate is unaffected: no seed file changed in this unit, so D90's passing 8-step run
+                    still certifies the tree it ran on.
+
+mistakes          (a) The first fixture query returned one card, then the first attribute set returned a card
+                    whose every fact was already past expiry — which would have made the "marked early" arm
+                    unplantable and still printed a table. Caught by asserting the population before the
+                    arms, not by reading a result that happened to look right.
+                  (b) Almost shipped two predicates that can only run with a live backend and said nothing
+                    about the case where it is down; the BLOCKED filing is the fix, and it is itself the
+                    cheapest arm in the unit.
+
+next              (a) The sweep question is a decision, not an edit: run `markExpiredStale` somewhere, delete
+                    it so nothing reads like a rule that never runs, or keep `stale` as a load-time opinion
+                    (what the UI already assumes). This unit changed only what it owns.
+                  (b) When :8090 is next up, re-run this script and fold the served numbers in — the
+                    predicates are witnessed, the wire is not.
+                  (c) Carried: #57's two dead data-gate arms and their plants, #70 closed by this entry, and
+                    §87's next (c)-(f) including the divergent working copy of this file (#68).
+```
