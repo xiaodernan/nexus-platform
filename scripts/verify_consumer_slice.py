@@ -47,11 +47,59 @@ def get(url: str):
         return 0, str(err), {}
 
 
+# ---------------------------------------------------------------- the fact-freshness leg (§5, AGENT_CONTRACT §5)
+
+def parse_instant(text):
+    """A served instant as a comparable datetime, or None when there is nothing to compare.
+
+    None is the failure this leg reports: a fact with no parseable `expires_at` can never be derived as
+    expired, so `isStale()` falls back on a column nothing re-stamps after the load and the number prints as
+    fresh forever. A naive stamp is read as UTC rather than as the reader's own zone — a stated assumption,
+    because the alternative is a check whose verdict depends on where it ran.
+    """
+    if not text or not isinstance(text, str):
+        return None
+    try:
+        stamp = datetime.fromisoformat(text.strip().replace('Z', '+00:00'))
+    except ValueError:
+        return None
+    return stamp.replace(tzinfo=timezone.utc) if stamp.tzinfo is None else stamp
+
+
+def freshness_defects(cards, now):
+    """Two lists of `merchant:attribute` strings: facts the client cannot age, and facts marked early.
+
+    The consumer's "may have changed" is derived, not stamped — packages/ui/src/trust/fact.ts `isStale()` is
+    `fact.stale === true || isExpired(fact, now)`. So a served fact owes exactly two things: an `expires_at`
+    the client can compare, and a `stale` flag that does not contradict the TTL the fact itself carries.
+    A missing expiry is the dangerous one (an expired number presented as live); a flag set while the TTL
+    still runs is the milder one (a live number presented as doubtful), and both are checkable here rather
+    than in a browser.
+    """
+    unageable, early = [], []
+    for c in cards:
+        who = c.get('slug') or c.get('id') or '?'
+        for f in c.get('facts', []):
+            label = f"{who}:{f.get('attribute')}"
+            stamp = parse_instant(f.get('expires_at'))
+            if stamp is None:
+                unageable.append(label)
+            elif f.get('stale') is True and stamp > now:
+                early.append(f"{label} (expires {f.get('expires_at')})")
+    return unageable, early
+
+
 # ---------------------------------------------------------------- the directory leg (§4, §19, §20)
 
 status, raw, headers = get(f'{PLATFORM}/api/v1/merchants?district=Sha%20Tin&limit=8&sort=-rating')
 if status != 200:
     record('directory listing', 'FAIL', f'HTTP {status}')
+    # Silence is not green (D79), and a leg that never ran is neither: the two freshness verdicts below live
+    # inside the payload branch, so with no payload they are filed here as BLOCKED, naming why, instead of
+    # disappearing from the tally.
+    for nm in ('every served fact carries an expires_at the client can compare',
+               'no fact is marked stale while its own TTL still runs'):
+        record(nm, 'BLOCKED', f'no card payload to judge: the directory request returned HTTP {status}')
 else:
     page = json.loads(raw)
     cards = page.get('items', [])
@@ -72,12 +120,23 @@ else:
     record('every card prints the district it was filtered on',
            all(c.get('district') == 'Sha Tin' for c in cards))
 
-    # An expired fact must arrive marked, so the UI can say "may have changed" instead of "is".
-    now = datetime.now(timezone.utc).isoformat()
-    expired = [f for c in cards for f in c.get('facts', [])
-               if (f.get('expires_at') or '') <= now and f.get('expires_at')]
-    record('expired facts arrive marked stale',
-           all(f.get('stale') is True for f in expired), f'{len(expired)} past-expiry facts')
+    # What the consumer's "may have changed" actually rests on. The UI does not read the `stale` column as
+    # the whole answer: packages/ui/src/trust/fact.ts `isStale()` returns `fact.stale === true ||
+    # isExpired(fact, now)`, so a fact is flagged either because something stamped it or because the client
+    # can compare its own clock against `expires_at`. Nothing in this system ever re-stamps the column after
+    # the load — `markExpiredStale` (FactRepository.java:102) has no callers — so `expires_at` is the only
+    # freshness signal a served fact has. That makes two things worth asserting, and the old one
+    # (`every past-expiry fact arrives marked stale`) was neither: it asks for a stamp no producer writes,
+    # and D91 measured it against 520 opening_hours facts, all of them past expiry and none of them marked,
+    # because a 24-hour TTL is never already-expired at the instant the row is written.
+    missing, marked_live = freshness_defects(cards, datetime.now(timezone.utc))
+    record('every served fact carries an expires_at the client can compare', not missing,
+           (f'{len(missing)} fact(s) without a usable expiry: ' + ', '.join(missing[:3])) if missing
+           else f'{len([f for c in cards for f in c.get("facts", [])])} facts, all with a parseable'
+                ' expires_at — isExpired() can fire on every one of them')
+    record('no fact is marked stale while its own TTL still runs', not marked_live,
+           (f'{len(marked_live)} fact(s) marked early: ' + ', '.join(marked_live[:3])) if marked_live
+           else f'0 of {sum(1 for c in cards for f in c.get("facts", []))} served facts')
 
 # ---------------------------------------------------------------- the AI leg (§7, §18, D13)
 
