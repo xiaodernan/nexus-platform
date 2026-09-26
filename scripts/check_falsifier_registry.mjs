@@ -2,11 +2,16 @@
 /**
  * NEXUS D103 — validate data/seed/falsifiers.tsv against the assertions the gate actually files.
  *
- * The denominator is qc, not the text: 103 of the 216 names are built at run time by the polymorphic sweeps
- * (D98), so a name checked against quality.sql alone would reject real rows and accept invented ones. The live
+ * The denominator is qc, not the text: the polymorphic sweeps build most of the names at run time (measured
+ * 101 of the 216 by the recomputable rule "the name's quoted constant does not appear in quality.sql"; D103
+ * recorded 103 and that number has not been reproduced since), so a name checked against quality.sql alone
+ * would reject real rows and accept invented ones. The live
  * list is obtained the way D99/D100's harnesses get it — slice the shipped assertions at the hard-gate marker
  * (the verdict's RAISE would end the session, since the file sets ON_ERROR_STOP for itself), run them, read
  * the table back as one aggregated row so a name containing a newline cannot change the count.
+ *
+ * D118 wired this file into the gate as step 11 of scripts/db_gate_fresh.sh. Before that it ran only when a
+ * person remembered to pass --db, which made the record's correctness a habit rather than a check.
  *
  * Usage: node scripts/check_falsifier_registry.mjs --db <loaded seed> [--container <name>] [--registry <path>]
  * Exit: 0 consistent · 1 a registry row is wrong · 2 not checkable. "Not checkable" is its own answer (D96):

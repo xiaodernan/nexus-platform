@@ -6974,3 +6974,60 @@ it will go green exactly when #79 closes.
 §41–§45's bare `§106` retention citations — to `TRACEABILITY §100`, so §125 found (d)'s "6 tokens" is now
 a then-statement about text this unit changed; the sentence is left verbatim for the reason D115 established
 (a section that records a measurement is an event, not a pointer).
+
+## D118 Six plants that move a number, and the discovery that the record of shown redness had never been executed by anything — 2026-09-27
+
+**Context.** #73 asks which of the gate's assertions have been *shown* able to fail, and D113 made that a
+file with a checker. The count was 40 witnessed of 216 on this plane. Twenty plant arms existed, and every
+one of them fabricated something textual: a URL where `demo://` belongs, a stamp that says `human`, a name
+on a blocklist, a body shortened below a floor. The gate's other half — the numeric doors, bounds and TTLs
+and ratios and joins — had been watched only while the data obeyed it. Reaching for those arms is what this
+unit did, and running them required reading the registry's own validator, which is where the larger finding
+sat.
+
+**Decision (a): plant on the value plane, and measure legality before aiming.** Six arms joined
+`data/seed/falsifier_plants.py`, committed as d680d24: a merchant popularity score at 1.4 against a
+declared `[0,1]`, a price fact stamped with the *hours* TTL instead of the six-hour one, the stale marking
+cleared so the UI would never show 已過時, 2,500 Cantonese reviews relabelled English to drop the mix below
+its 50% floor, a grant filed by an operator id no user holds, and a merchant renamed to a real chain from
+the §109 blocklist. Each was probed against `pg_constraint` first, because a plant the schema refuses is
+evidence about the schema, not the assertion: none of those five columns carries a CHECK, so all five
+deceptions reach the gate alive, and the assertions that catch them are the last line rather than a
+backstop. The drive ran 26 arms plus the trigger control across 55 whole-gate sessions on one kept loaded
+database: baseline 216 assertions red 0, every arm's own assertion RED, collateral 1/2/2/0/0/1 with every
+line of it one of the two known `updated_at`-spread rows, closing baseline identical to opening, exit 0 —
+and the rows entered `data/seed/falsifiers.tsv` only from that drive's own `--emit-rows`, which is the
+file's rule: 61 → 67 rows, 40 → 46 of 216 names witnessed.
+
+**Decision (b): a guard nobody can reach is not a guard, so it becomes step 11.** `grep` for
+`check_falsifier_registry` across the gate script, the Makefile and CI returns the checker itself and
+nothing else: D103 wrote it, D113 tightened it, and in between it ran when a person remembered to pass
+`--db` — which is the same defect this lane fixed for the truncate probe (step 6), for the comment plane
+(step 9) and for the two-ledger comparison (step 10). The gate now runs it against `$GATE_DB` while that
+database still exists, with `NEXUS_FALSIFIERS` as the reachability knob so the step can be shown red
+without editing the shipped file while ten other steps read it — the shape `LEDGER_SECTIONS_DIR` gives step
+10. Its first shipped word on the matter is that a green gate now means every witness row still opens.
+
+**What the measurement corrected.** `check_falsifier_registry.mjs`'s own header asserted that "103 of the
+216 names are built at run time by the polymorphic sweeps". The claim is checkable with one rule — a name is
+assembled iff its quoted constant is absent from `quality.sql` — and that rule gives 101, all 101 carrying a
+`: ` prefix, 0 exceptions. Both numbers cannot be right and there is no way to reconstruct which tree 103
+was counted on, so the file now states the rule and marks the old count as unreproduced. The same rule
+settled the other number in play: #73's "74 literal names unwitnessed" reproduced exactly (170 unwitnessed
+= 74 literal + 96 assembled), which is the rare direction — a remembered count surviving contact with a
+measurement that did not need it.
+
+**Consequences, and the limits of them.** Two of the six arms land on `facts`, the one table with no CHECKs
+that #71 keeps reporting, so `price facts respect the 6h TTL` and `some facts are deliberately stale` went
+from never-seen-red to seen-red twice; that strengthens #71's case rather than settling it, because the
+option now has a measured cost (without the CHECK those two rows are the only thing between a wrong TTL and
+a served page). Collateral split by a mechanism for the first time: the four arms touching
+`merchants`/`facts` carried spread rows and the two touching `reviews`/`permission_grants` carried none, and
+`pg_trigger` says why — 15 tables carry `set_updated_at` and those two are not among them — so the spread
+census is now predictable from the trigger list instead of only explicable afterwards. The 91 `fk: ` names
+are the bulk of what is left, and they are cheap-but-not-free: D105 reddened FK guards through the schema's
+own constraints, which is a different mechanism from a `qc` row going red, so witnessing those names needs a
+plant that survives the constraint. And one honesty note about this decision's own artifact: the checker
+computes its coverage percentage from whatever registry file it is handed, so the planted scratch run
+reported "1 of 216" while naming both defects — correct as a refusal, misleading if a log line is quoted
+without the `--registry` that produced it.

@@ -6482,3 +6482,95 @@ next             (a) #79, re-pointed: two comments → `STATUS §121`; nine comm
                     the gate's 216 is 214 at HEAD), #71, #62, #64, #58, #44, #17, #19, #34, §87's
                     session-time-zone seam, D91's served leg (needs `:8090`, which this lane will not start).
 ```
+
+## 127. Six arms on the value plane, and the falsifier record getting the first thing that ever executed it (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (batch of 6 arms, committed d680d24), `data/seed/falsifiers.tsv`
+                    (61 → 67 rows, appended by the drive itself), `scripts/db_gate_fresh.sh` (10 steps → 11,
+                    labels renumbered), `scripts/check_falsifier_registry.mjs` (one claim restated as a rule),
+                    and the database plane they all read: the kept loaded seed `nexus_gate_283340_1790454442`,
+                    which files 216 assertions — 214 at HEAD while another stream's V7 stays untracked.
+
+changed           20 → 26 plant arms. Every earlier arm fabricated something textual (a URL, a marker, a
+                    stamp, a name, a body); these six move a NUMBER the gate watches — a [0,1] ceiling, a 6
+                    hour TTL, the stale marking, a 50% language floor, an operator join, a blocklist join.
+                  Each plant was measured schema-legal before its first gate run: `pg_constraint` shows no
+                    CHECK touching merchants.popularity_score, facts.expires_at, facts.stale,
+                    reviews.language or permission_grants.granted_by, so the schema lets all five through and
+                    the assertion is the last line rather than a backstop.
+                  Step 11 of the gate now runs the registry checker against "$GATE_DB", with NEXUS_FALSIFIERS
+                    pointing it at a scratch copy — the reachability shape step 10 gets from
+                    LEDGER_SECTIONS_DIR, so the step can be shown red without editing a tracked file mid-run.
+
+measured          python data/seed/falsifier_plants.py           216 assertions, red = 0 at baseline · 26
+                    --db … --container …                          arms + 1 control · 55 whole-gate sessions ·
+                                                                  every arm's own assertion RED · collateral
+                                                                  1,2,2,0,0,1 and all of it the two known
+                                                                  spread rows · control: target RED,
+                                                                  collateral 0, spread row gone · closing
+                                                                  baseline identical to opening · exit 0
+                  the same drive with --emit-rows                registry rows appended: 6 (of 26 arms
+                                                                  witnessed) — a row enters the file only
+                                                                  after a run that proved it left the
+                                                                  database alone
+                  node scripts/check_falsifier_registry.mjs      PASS · 67 rows · 28 commit + 39 file
+                    --db …                                        witnesses · 46 of 216 assertions witnessed
+                                                                  (21.3%), up from 40
+                  node scripts/check_falsifier_registry.mjs      FAIL exit 1, both planted rows named: a
+                    --db … --registry <scratch copy>              name the gate never files, a witness that
+                                                                  "names a path outside the repository"
+                  unwitnessed census (scratch script, in a       170 = 74 literal + 96 assembled, where
+                   temporary directory, so not reproducible      "literal" = the name's quoted constant is
+                   from the repository; the rule is)             in quality.sql; 0 of the 96 assembled names
+                                                                  lacks a ': ' prefix — the classifier's own
+                                                                  self-check, and the reason to trust the 74
+                  Before this unit: the ten-step gate green at the D117 text (GATE_EXIT=0, 216 checks,
+                    tables=58, migrations=7).
+
+found             (a) One remembered number reproduced and one did not. #73's "74 literal names unwitnessed"
+                    came back exactly under a rule that does not need the memory — constant-presence in
+                    quality.sql gives 74 today, 46 witnessed names. But `check_falsifier_registry.mjs`'s own
+                    docstring claimed 103 of 216 names are built at run time; the same rule yields 101, and
+                    no reconstruction of 103 is available here. The docstring now states the rule and marks
+                    the old count as unreproduced, which is the only honest place left for a number that
+                    drifted between two measurements and nobody can say which one was wrong.
+                  (b) The registry's validator had never been executed by anything. Written in D103,
+                    tightened in D113, and `grep` finds no gate step, no Makefile target, no CI file that
+                    calls it — its correctness depended on a person remembering to pass --db. That is the
+                    same class as the truncate probe before it became step 6: a guard with no reachable entry
+                    point proves nothing about the tree it was written for. It is now step 11, so the gate
+                    cannot go green while a witness row points at an artifact that no longer opens.
+                  (c) `pg_trigger` lists 15 tables carrying `set_updated_at`, and reviews/permission_grants
+                    are not among them — which is what collateral 0,0 on those two arms was measuring. Until
+                    this run the spread census could explain a plant's collateral after the fact but could
+                    not predict it from the trigger list; now there are two arms on each side of that list.
+                  (d) Two of the six arms are the first evidence ever produced about `facts`' value plane:
+                    that table has no CHECK at all (#71), so `price facts respect the 6h TTL` and
+                    `some facts are deliberately stale` were assertions nobody had seen red. They have now,
+                    twice each — once in the aiming drive, once in the drive that wrote the rows.
+                  (e) The queue's shape changed: the fk sweep is 91 of the 170 unwitnessed names and all one
+                    template, so one planted FK violation could witness a batch. But D105 already showed FK
+                    redness through the schema's own constraints, which is a different mechanism from a qc
+                    row reddening, so those 91 are not free — they are cheap-but-not-free, and the 74
+                    literal names remain the expensive half.
+
+gates             The eleven-step gate gets two runs after this text is committed, and neither is claimed
+                    here: one with NEXUS_FALSIFIERS aimed at the scratch copy, which must exit 1 naming both
+                    planted rows at step 11, and one clean run, which must exit 0 on this tree. Both results
+                    land in D118's addendum. Nothing else in the tree changed shape — no CI file, no
+                    Makefile target, and `scripts/e2e_fresh.sh` keeps its own 0-10 numbering untouched.
+
+next             (a) Next plant batch from the 74: `volume: chunks > 0`, `volume: documents >= merchants`,
+                    `volume: facts > 0` and the four `orphan: ` rows are one-line plants (a DELETE, an
+                    INSERT) against tables whose sweep names are cheap to aim; 10 names in one drive is the
+                    claim to test.
+                  (b) #71 again, now with two arms standing on it: a V8 CHECK bounding
+                    expires_at = observed_at + ttl per attribute would demote the TTL assertion from last
+                    line to backstop — or the lane says why `facts` wants the freedom.
+                  (c) Step 11's residue: the checker prints its coverage percentage from whatever registry
+                    file it was handed, so the planted scratch run reported "1 of 216". Harmless in a log
+                    that already says which file it read; one line to fix if it ever gets quoted.
+                  (d) Carried: #73 (46 of 216 witnessed, 74 literal names unwitnessed), #75, #71, #62, #64,
+                    #58, #44, #17, #19, #34, #79, #80, §87's session-time-zone seam, D91's served leg.
+```

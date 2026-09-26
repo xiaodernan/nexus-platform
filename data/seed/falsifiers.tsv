@@ -80,3 +80,9 @@ category tree: 10 roots, all leaves have a parent	D112	a leaf promoted to an ele
 category_primary is one of the merchant's own category names	D112	a merchant claiming a category it is not mapped to	975e0a5
 the §19 provenance axis and the §109 stamp axis stay separate on facts	D112	a fact whose stamp axis says human	975e0a5
 data_origin = demo everywhere the column exists	D112	a merchant stamped human instead of demo	975e0a5
+popularity_score within [0,1]	D118	a merchant popularity score above the declared ceiling	d680d24
+price facts respect the 6h TTL	D118	a price fact stamped with the hours TTL instead of the six-hour one	d680d24
+some facts are deliberately stale (UI must show 已過時)	D118	the stale-marking cleared, so the UI would never show 已過時	d680d24
+language mix ~60% zh-HK / rest en (§111)	D118	2,500 Cantonese reviews relabelled English, dropping the share under 50%	d680d24
+every grant names an operator that exists	D118	a grant filed by an operator id that no user holds	d680d24
+no merchant name collides with a real HK chain	D118	a merchant renamed to a real HK chain on the §109 blocklist	d680d24
