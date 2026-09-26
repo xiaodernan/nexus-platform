@@ -4888,3 +4888,56 @@ next              (a) Task #72: the placeholder convention, then the comment-pla
                     the same kind of pinned-ref discipline D92 learned, not a `HEAD` read.
                   (b) #71 (facts CHECK), #67 closes with #72, plus §87's and §89's carried items.
 ```
+
+## 91. The placeholder convention is chosen and applied: the comment plane goes 68 tokens / 5 offenders to 64 / 0, and the one real cite is disambiguated rather than deleted (2026-09-26)
+
+```
+plane             Comment lines of the two citation checkers and `scripts/run_platform_dev.sh` — the files
+                    whose own prose defines what a citation is. Three files, four lines changed, no line
+                    counts moved. D93 built the reader; this is the convention that makes its output usable
+                    as a gate.
+
+convention        A comment showing the grammar writes digits as `NN` — `File.java:NN`,
+                    `dir/File.java:NN-NN`, a bare `:NN`. The resolver requires digits after the colon, so the
+                    example stays legible as the shape it names and stops being a claim. Chosen over the
+                    "`File.java` line 12" spelling D93's own sections had to use under the staging check,
+                    because in a grammar comment the colon is the thing being shown. Two forms, two jobs:
+                    quoting a string that exists (a census) versus showing a shape that does not (a grammar).
+
+applied           `scripts/check_jsonb_reads.mjs`'s citation-token JSDoc line; two examples in
+                    `scripts/check_ledger_citations.mjs`'s header (an elided path, a name six files share);
+                    and — not a placeholder — `scripts/run_platform_dev.sh`'s `(gitignored at ` + a bare `.gitignore` with a colon and a line number),
+                    which is a true claim that the checker flagged AMBIGUOUS because the root and
+                    packages/sdk both hold a `.gitignore`. It became `./.gitignore:5`, the root-relative form
+                    the checker documents for exactly this case. Writing `NN` there would have bought a clean
+                    census by deleting a claim: the third time this lane has found that move, and the reason
+                    the convention has a "when NOT to use it" clause.
+
+measured          Before: 68 tokens, 18 files, 5 offenders. After: 64 tokens, 17 files, 0 offenders, the
+                    shipped checker exiting 0 on the same generated census file. 68 − 4 = 64 checks against
+                    the four retired placeholders, and the file count falls because
+                    `check_jsonb_reads.mjs`'s only two comment-plane tokens were both grammar examples — it
+                    now cites no file's line at all, which is correct for a file that only ever talks about
+                    the shape of citing.
+
+gates             `node --check` on both scripts, `bash -n` on the shell one. Steps 7 and 8 re-run over the
+                    changed bytes rather than assumed unaffected — the edited files are read by the gate, so
+                    "I only changed a comment" is not an argument here. Step 7 exits 0; step 8 HEAD-strict:
+                    172 sections, 396 tokens, 56 distinct files, 0 offenders. Steps 1-6 of the database gate
+                    are untouched (no seed file edited), so D90's passing 8-step run still covers them.
+                    `scripts/check_contract_drift.mjs` is modified in this working tree by another lane and
+                    was neither read nor committed by this unit — the commit is pathspec-limited to the three
+                    files named above.
+
+mistakes          (a) The first draft of the JSDoc line explained the convention in three extra comment lines
+                    and, in doing so, quoted an offending example in claim shape — reintroducing the very
+                    token being retired, and shifting every line below it in a file other text cites by line
+                    number. Both problems went away by keeping the edit to one line: the arithmetic of a
+                    citation plane is line numbers, so a "comment-only" change is never only cosmetic here.
+
+next              (a) #72's remainder is now a numbering problem, not a cleanliness one: the plane is at 0
+                    offenders, so a comment-plane step could be enabled, but `db_gate_fresh.sh` and the
+                    ledgers say "8 steps" and name steps by number — a ninth step is a coordinated edit.
+                  (b) Carried: #71 (`facts` CHECK), #68, #58, #62, #64, #44, and D91's served leg until
+                    :8090 is next up.
+```

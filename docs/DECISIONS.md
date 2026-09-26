@@ -5678,3 +5678,50 @@ it: "citations do not resolve over the exact committed bytes", naming all five a
 ledger's own text. Rewriting them as `File.java` line 12 kept the sentence true and stopped it reading
 as a claim about a file that does not exist, which is the whole proposal in one edit. A section about a
 gate that reddens honest prose was reddened by that gate, and the fix was the prose, not the gate.
+
+## D94 Four grammar examples stop reading as claims: the placeholder convention is `:NN`, and it went into the plane that produced the offenders
+
+D93 measured the comment plane at 68 citation-shaped tokens and 5 offenders, all five of them illustrative
+examples written in claim shape inside the sentences that define claim shape. It filed the convention as task
+#72 rather than inventing one in passing. This is the convention, chosen and applied, with the plane re-scored
+after it.
+
+**The rule.** A comment that *shows* the grammar writes digits as `NN`: `` `File.java:NN` ``,
+`` `dir/File.java:NN-NN` ``, a bare `` `:NN` ``. The checker's token grammar requires digits after the colon,
+so the placeholder stays readable as the shape it names and cannot be mistaken for an assertion about a file.
+The alternative — spelling it as "`File.java` line 12", which is what D93's own ledger sections had to fall
+back on under the staging check — loses the thing being illustrated: the colon is the point of the example.
+So D93's prose and D94's code use different forms for different jobs, and the difference is worth naming: in a
+census table you are quoting a string that exists, and in a grammar comment you are showing a shape that does
+not.
+
+**Applied.** `scripts/check_jsonb_reads.mjs`'s JSDoc line defining a citation token, and two examples in
+`scripts/check_ledger_citations.mjs`'s header — one of an elided path, one of a name six files share. All line
+counts were preserved, because a shifted line in a checker silently invalidates every `file:line` cite that
+crosses it; the edits replace a line with a line.
+
+**The fifth was not a placeholder, and treating it like one would have been a lie.**
+`scripts/run_platform_dev.sh`'s `(gitignored at ` + a bare `.gitignore` with a colon and a line number) is a true claim about a real line in a real
+file — the checker flagged it AMBIGUOUS because two `.gitignore` files exist, the root's and
+`packages/sdk`'s. Rewriting the number to `NN` would have made the census clean by deleting the claim. It
+became `./.gitignore:5` instead, the root-relative form `check_ledger_citations.mjs` documents as exactly the
+disambiguation for a file the repo owns twice. That is also the third time this lane has met the same failure:
+make a check pass by removing the thing it was checking. The fix for an ambiguous cite is the path that
+resolves it.
+
+**Measured after.** 64 tokens in 17 files, 0 offenders, the shipped checker exiting 0 on the same census file
+D93 ran. The arithmetic is checkable: four placeholders retired (68 − 4 = 64), one disambiguated and still
+counted, and the file count dropping 18 → 17 because `check_jsonb_reads.mjs`'s only two comment-plane tokens
+were both grammar examples — that file now says nothing about any file's line, which is correct for it.
+
+**Gates.** Both executable checkers still parse (`node --check`), and because the edited files are themselves
+read by the gate, steps 7 and 8 were re-run over the changed bytes rather than argued about: step 7 exits 0,
+step 8 in its HEAD-strict default reports 172 sections, 396 tokens, 56 files, 0 offenders. The database
+gate's steps 1-6 are untouched — no seed file changed, and D90's passing 8-step run still covers them.
+`scripts/check_contract_drift.mjs` also shows as modified in this working tree; it belongs to another lane, was
+not read or written by this unit, and the commit is pathspec-limited so it stayed out.
+
+**Next.** Task #72's second half is now unblocked in substance: a comment plane with 0 offenders can be made a
+gate step, and the remaining cost is the step-number change — `db_gate_fresh.sh` and the ledgers quote "8
+steps" and "step 7/8" in prose, so a ninth step is a coordinated edit with a blast radius, not a bolt-on.
+Recorded there rather than started here.
