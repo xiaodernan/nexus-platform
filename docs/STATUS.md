@@ -5204,3 +5204,43 @@ next              (a) #73 act two: the 111 literal-named assertions, grouped by 
                   (b) Carried and re-read: #71, #72, #68, #58, #62, #64, #44, D91's served leg until :8090 is
                     up, §87's next (c).
 ```
+
+## 97. The other three sweeps each reddened twice on one broken edge; two hand-written residue queries reddened nothing but themselves (2026-09-26)
+
+```
+plane             The remaining polymorphic reference sweeps — favourites, permission grants, moderation cases.
+                    D99 did `facts`. Nothing shipped changed; four arms over sliced assertions, every write
+                    rolled back.
+
+arms              control 216 rows / 0 failing · favorites 216 rows / 2 flipped · permission_grants 216 / 2 ·
+                    moderation_cases 216 / 2. Same 216 names in every arm: nothing appeared or disappeared.
+
+both directions   Each plant reddened its sweep AND the consumer-side assertion over the same seam:
+                    orphan: favorites.merchant            +  favourites point at a renderable row
+                    orphan: permission_grants.merchant_user +  merchant_user grants reach a membership
+                    orphan: moderation_cases.review       +  every waiting review has exactly one open case
+                    "Does this reference resolve?" and "is everything I would render backed by a row?" are two
+                    questions about one edge, and both moved. Until this was broken deliberately, the pairing that
+                    D67 and D79 built was a claim in a comment.
+
+no cascade, on purpose  D99's facts plant also tripped two census rows because the update trigger made
+                    `facts.updated_at` two-valued. None of these three tables has that trigger, and no census row
+                    moved here — the absence confirms the mechanism was about a stamp, not about orphans.
+
+the two false alarms   My residue checks, not the gate. First query reported 14 orphan favourites: it filtered
+                    the subject type *inside* the NOT EXISTS, so it counted the complement — 14 is just the number
+                    of non-offering favourites. Second, corrected, reported 36 for permission_grants — all of
+                    them — because I joined subject_id to merchant_users.id while the shipped probe resolves it
+                    through merchant_users JOIN users onto the USER id. Two alarming numbers, both properties of a
+                    restatement. The witness that survived is the shipped assertions re-run after the rollbacks:
+                    216 rows, 0 failing.
+
+gates             D96's nine-step `GATE_RC=0` run is still the tree's certification; the post-plant re-run of the
+                    assertions is the residue check this unit trusts. Artifacts: d100_three_sweeps.py alongside
+                    d99_sweep_plant.py. Step 8 re-run after this append.
+
+next              (a) #73's remainder is now only the 111 literal-named assertions (plant where a producer exists,
+                    change the detail text where none does) and the 2 names carrying newlines.
+                  (b) Carried and re-read: #71, #72, #68, #58, #62, #64, #44, D91's served leg until :8090 is up,
+                    §87's next (c).
+```

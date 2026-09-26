@@ -5998,3 +5998,53 @@ exists.
 stamped one D90's gate run kept, every write was inside a transaction the harness rolled back, and the residue
 query agrees (0 orphan offering-facts). The tree's certification remains D96's nine-step `GATE_RC=0` run; step 8
 is re-run after this append because an append changes the plane it reads.
+
+## D100 Each of the other three sweeps reddened on its own broken edge — and reddened twice, because each seam is guarded from both sides
+
+D99 established that the polymorphic sweep class can go red, on `facts`. It also said, in its own
+"what this does not buy" paragraph, that a plant in one table is not a plant in another: each sweep resolves its
+own subject-type vocabulary through its own probe. This unit does the other three, one broken edge each.
+
+**Method unchanged from D99, and deliberately so.** Four arms, one session each, the shipped assertions sliced at
+the hard-gate marker, every write inside a transaction the harness rolls back: control, then `favorites`,
+`permission_grants`, `moderation_cases`, each moving one row's `subject_id` to a freshly generated uuid no target
+holds. Each arm filed 216 rows — the same 216, no row appearing or disappearing — and control filed 0 failures.
+
+| arm | rows that flipped | the sweep | the companion that moved with it |
+| --- | --- | --- | --- |
+| favorites | 2 | `orphan: favorites.merchant` | "favourites point at a renderable row" |
+| permission_grants | 2 | `orphan: permission_grants.merchant_user` | "merchant_user grants reach a membership" |
+| moderation_cases | 2 | `orphan: moderation_cases.review` | "every waiting review has exactly one open case" |
+
+**The part worth more than the pass.** Each plant reddened *two* assertions, and the second is not an accident of
+the census: it is the same seam read from the other direction. The sweep asks "does this reference resolve?"; the
+companion asks the consumer-side question "does every row the UI would render point at something renderable?". One
+broken edge answers both, and both answered. That is D67 and D79's "align the two directions" work turning out to
+be load-bearing: until it was broken on purpose, the pairing was a claim in a comment.
+
+Also unlike D99: no generation-clock or degenerate-column cascade appeared here, because none of these three
+tables carries the `set_updated_at` trigger that made the `facts` plant change a column's distinct-count. The
+absence is itself a confirmation of the mechanism D99 traced — the cascade was about a stamp, not about orphans,
+and it did not follow the orphans here.
+
+**Two false residue numbers, both from re-deriving a join by hand.** The witness script's own residue query
+reported 14 orphan favourites. It counted the complement of what it named: the predicate filtered
+`subject_type='offering'` *inside* the `NOT EXISTS`, so every favourite of another type satisfied it — 14 is
+simply the number of non-offering favourites. Re-run with the type filter outside, it reported 0 for favourites and
+cases but **36 for `permission_grants`** — all of them. That too was my join, not the gate: the shipped probe
+resolves a `merchant_user` grant through `merchant_users JOIN users` onto the **user** id, so joining
+`subject_id` to `merchant_users.id` directly is a different question with an alarming answer.
+
+The lesson is the same one the file's assertion list taught two units ago, in the other direction: a hand-written
+restatement of shipped logic reports on the restatement. The residue witness that survives is the shipped
+assertions themselves, re-run after the rollbacks: **216 rows, 0 failing** — the database the plants touched is
+the database the gate passed.
+
+**Gates.** Nothing shipped changed: harnesses in the temp dir, one stamped database, rolled-back writes. D96's
+nine-step `GATE_RC=0` run remains the tree's certification, and step 8 is re-run after this append because an
+append changes the plane it reads. Artifacts: `d100_three_sweeps.py`, `d99_sweep_plant.py`.
+
+**Where that leaves #73.** All four polymorphic sweeps have now been broken on purpose and named themselves, so
+the 103 run-time-built rows are no longer a coverage debt — they are one assertion per sweep, each with a witness.
+What remains there is the 111 literal-named assertions (plants where a producer exists; a changed detail text
+where none does), the two names carrying newlines, and #71/#72 beside them.
