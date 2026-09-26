@@ -5160,3 +5160,47 @@ next              (a) #73 rewritten by this result: one plant for the sweep, one
                   (b) Carried and re-read this time: #71, #72, #68, #58, #62, #64, #44, D91's served leg until
                     :8090 is up, §87's next (c).
 ```
+
+## 96. One broken edge reddened three rows: the FK sweep as intended, and D89's window row refusing a runtime write nobody planted it for (2026-09-26)
+
+```
+plane             `data/seed/quality.sql`'s polymorphic reference sweeps, whose 103 run-time-built names D98
+                    found unreadable from the source. No shipped byte changed; the reads and writes all happen
+                    inside rolled-back transactions against the stamped database D90's gate run kept.
+
+arms              3,594 lines sliced at the hard-gate marker (the file sets ON_ERROR_STOP for itself and its
+                    verdict RAISE would end the session before anything could be read back), run twice:
+                      control   216 rows filed, 0 failing
+                      plant     216 rows filed, 3 flipped true to false, +0 / -0 rows between arms
+                    The plant: one `facts` row's `subject_id` moved to a uuid no offering holds.
+
+the three reds    1. the sweep itself, naming `orphan: facts.offering` — the intended edge, and the reason the
+                       103-row class needs one plant rather than 103.
+                    2. and 3. the two census rows over degenerate columns, which moved because the write made
+                       `facts.updated_at` two-valued (measured in-session: distinct = 2 where the seed holds one)
+                       and a varying column leaves the class they answer for. Not noise: a cascade explained to
+                       its mechanism is a fact, and left unexplained it is a suspicious coincidence.
+
+the accidental witness  The new stamp sits at 1790400332 against the recorded bounds 1790395434..1790395448:
+                    4,884 s after the load finished, 4,284 s past the upper bound even after D89's ±600 s
+                    widening. So the generation-clock row — built to tell a load-stamped value from a pinned one,
+                    and asserted in D90's docblock to be watching rows the platform writes — refused a runtime
+                    write here, in a run aimed at the foreign-key sweep and not at it. That is the first witness
+                    of the assertion D90 recorded as a limitation ("the seed cannot produce it; the plant is the
+                    evidence"), and it arrived unbidden.
+
+not bought        A plant in `facts` is not a plant in `favorites`, `permission_grants` or `moderation_cases`:
+                    each sweep has its own type vocabulary and its own edges. What is established is that the
+                    class reddens on a broken edge and names it. The 111 literal-named rows #73 also lists still
+                    need per-assertion plants where a producer exists.
+
+gates             D96's nine-step `GATE_RC=0` run remains the tree's certification; nothing in the seed, the
+                    gate script or the checkers was edited. Residue checked after both rollbacks: 0 orphan
+                    offering-facts in the database. Artifacts: d99_sweep_plant.py, d99_plant_out.txt.
+
+next              (a) #73 act two: the 111 literal-named assertions, grouped by which producer could violate
+                    them, planted where one exists — and each group's result recorded as one witness if the
+                    assertion is one instantiation, the way this unit treated the sweep.
+                  (b) Carried and re-read: #71, #72, #68, #58, #62, #64, #44, D91's served leg until :8090 is
+                    up, §87's next (c).
+```

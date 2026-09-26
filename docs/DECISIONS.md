@@ -5949,3 +5949,52 @@ honest fix was to say so rather than rename the bucket until it looked like a re
 live demo database (counts only), and the file is opened, not edited. Artifacts: `d98b.py`, `d98_qc_names.txt`,
 `d98_unrecorded.txt`, `d98_seed_only.txt`, plus the earlier `d97_*` pair kept for the before-and-after of the
 same measurement.
+
+## D99 One plant, one edge, three reds — and the third red is D89's window catching a runtime write it was never tested against
+
+D98 ended with the plan changed by the measurement: 103 of the gate's assertions have names built at run time by
+the polymorphic reference sweeps, so they are one assertion instantiated per (table, subject type) the data
+carries, and enumerating a plant for each would be theatre. What is worth doing is breaking one edge and
+watching which rows move. This unit does exactly that, against the shipped text, twice, in transactions that roll
+back.
+
+**The arms.** The assertions are sliced out of `data/seed/quality.sql` at the hard-gate marker (the file sets
+`ON_ERROR_STOP` for itself, and the verdict's `RAISE` would end the session and take the temp table with it, so
+a read has to stop before that line). Both arms run the same 3,594 sliced lines in one session:
+
+  * control — `BEGIN; <assertions>; report; ROLLBACK`: **216 rows filed, 0 failing**.
+  * plant — the same, after `UPDATE facts SET subject_id = gen_random_uuid()` on one offering fact: **216 rows
+    filed, 3 flipping from true to false**, no row appearing or disappearing between arms, and 0 orphan
+    offering-facts left in the database afterwards.
+
+**The three that moved, each explained to the mechanism rather than just named.**
+
+  1. `orphan: facts.offering` — the intended one. The sweep pointed a name at a UUID no `offerings` row holds,
+     and it reddened on the edge it names. The class is live; 103 instantiations need no individual theatre.
+  2. `every column that cannot vary is answered for why it cannot` and
+  3. `the columns stamped from the generation clock are exactly the ones answered so` — these two are the
+     cascade, and the reason is arithmetic: `facts.updated_at` is maintained by the schema's
+     `set_updated_at` trigger, so writing one row made the column **two-valued** (measured inside the same
+     transaction: `distinct(updated_at) = 2` where the seed holds one value). A column that varies is no longer
+     in the degenerate class the census answers for, so both census rows move with it.
+
+Arm 3 carries the interesting part. The new stamp is not merely different, it is *outside the window*: the
+recorded load bounds on this database are `1790395434..1790395448`, and the row the write produced reads
+`1790400332` — 4,884 s after the load finished, or 4,284 s past the upper bound once D89's ±600 s widening is
+applied. So the generation-clock row, re-anchored three units ago to stop measuring the host, has just refused a
+runtime write to seeded data. That was never its stated purpose — D89 built it to separate a load-stamped
+timestamp from a pinned one, and D90's docblock asserted in passing that the row watches rows the platform
+writes — and here is a witness of that assertion, obtained by a plant aimed at something else. A guard that only
+ever fires at the test built for it has not been shown to guard anything.
+
+**What this does not buy.** Two of the three reds are the census reacting to a changed distinct-count, not the
+sweep: a plant in `facts` is not a plant in `favorites` or `permission_grants` or `moderation_cases`, whose
+sweeps have their own type vocabularies. This shows the sweep class is *capable of going red on a broken edge*
+— which is the claim #73 needed — not that every instantiated edge has been individually falsified. Nor does it
+cover the 111 literal-named rows #73 also lists: those need their own plants, one per assertion, where a producer
+exists.
+
+**Gates.** Nothing shipped changed: the witness scripts live in the temp dir, the only database touched is the
+stamped one D90's gate run kept, every write was inside a transaction the harness rolled back, and the residue
+query agrees (0 orphan offering-facts). The tree's certification remains D96's nine-step `GATE_RC=0` run; step 8
+is re-run after this append because an append changes the plane it reads.
