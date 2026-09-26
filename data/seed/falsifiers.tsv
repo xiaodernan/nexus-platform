@@ -69,3 +69,10 @@ review bodies are not lorem/placeholder	D109	a review body that is lorem ipsum	4
 at least 10 districts covered	D109	six of the fifteen districts folded into one	4503424
 disclaimer text is inside every menu document	D109	a menu whose synthetic-data disclaimer was removed	4503424
 every column that cannot vary is answered for why it cannot	D109	one merchant's updated_at moved off the single seeded instant	4503424
+documents: raw_text is substantial enough to feed RAG	D112	a menu document thinned below the RAG floor, disclaimer kept	975e0a5
+chunks: token size inside the §7 window	D112	a chunk counted far above the §7 ceiling	975e0a5
+chunks: ordinal contiguous per document	D112	a document's first chunk renumbered out of the sequence	975e0a5
+category tree: 10 roots, all leaves have a parent	D112	a leaf promoted to an eleventh root	975e0a5
+category_primary is one of the merchant's own category names	D112	a merchant claiming a category it is not mapped to	975e0a5
+the §19 provenance axis and the §109 stamp axis stay separate on facts	D112	a fact whose stamp axis says human	975e0a5
+data_origin = demo everywhere the column exists	D112	a merchant stamped human instead of demo	975e0a5
