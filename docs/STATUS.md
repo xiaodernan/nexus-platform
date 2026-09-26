@@ -6275,3 +6275,114 @@ next              (a) D116, and it now has a free regression case: the missing c
                     leg until :8090 is up. #68 stays closed for these two files and is not a guard.
 ```
 
+
+## 125. #68's guard exists, is step 10 of the gate, and was shown red on the tree that motivated it rather than on a synthetic one (2026-09-27)
+
+```
+plane             `scripts/check_ledger_sections.mjs`, `scripts/falsify_ledger_sections.mjs`,
+                    `scripts/db_gate_fresh.sh` step 10, and the two ledgers' heading sets as both HEAD and
+                    the working copy state them. Task #68, open since §86 (e) found it at 08:09 on
+                    2026-09-26 and §123 and D115 each wrote it up again without writing the check.
+
+changed           A new checker with an asymmetric verdict — HARD (exit 1) on a numbered heading at HEAD
+                    that is absent from the file on disk, or a number claimed twice there; NAMED and
+                    allowed (exit 0) on a heading on disk and not at HEAD, printed with its numbers,
+                    because that is where writing an entry starts and refusing it would refuse this
+                    lane's own staging technique; NOT CHECKED (exit 2) when `git show` cannot spawn, a
+                    ledger is unreadable, or the heading pattern matches nothing (D96's answer: a reader
+                    that saw no headings did not check the headings).
+                  `db_gate_fresh.sh` 9 steps → 10, with `LEDGER_SECTIONS_DIR` so the red arm inside the
+                    gate is reachable without deleting a committed section from the real tree — the
+                    destructive act the check exists to prevent.
+                  One stale line of the gate's own prose corrected on the way: "steps 7 and 8 need node on
+                    PATH" is now "steps 7, 8, 9 and 10" (D98 left it when step 9 arrived; nothing reddened,
+                    because a comment about the node steps is not itself a node step).
+
+measured          Both gate sides, run, not asserted:
+                    scripts/db_gate_fresh.sh                                        steps 1–10 print ·
+                                                                                      step 10 PASS (STATUS
+                                                                                      HEAD 92 · disk 92 ·
+                                                                                      missing 0 · dupes 0;
+                                                                                      DECISIONS 103/103) ·
+                                                                                      216 quality checks ·
+                                                                                      GATE_EXIT=0
+                    LEDGER_SECTIONS_DIR=<stranded fixture> … --skip-generate          steps 1–9 identical,
+                                                                                      step 10 FORK naming
+                                                                                      section 124 ·
+                                                                                      GATE_EXIT=1
+                  The harness, over the shipped checker as a subprocess per arm (so no arm can redden
+                    another): 8 arms · 8 held · 0 missed · RC 0 — control green, committed section deleted
+                    red, section duplicated on disk red (`on disk: 124×2`), draft section green with the
+                    NOTE, DECISIONS plane red, pattern-matches-nothing exit 2, unresolvable `--head-rev`
+                    exit 2, and the reconstructed 2026-09-26 tree red.
+                  `pg_database` after both runs: 2 `nexus_gate*` rows, both from `--keep` runs
+                    (`nexus_gate_270354_1790448961`, `nexus_gate_283340_1790454442`). The red run left
+                    none, which is §103's caution tested on the branch it had not tested: a nonzero step
+                    is not an external kill and the cleanup trap does fire.
+
+found             (a) The guard's own worst defect was in its first witness, not in its code: the
+                    reconstruction arm spliced the nine sections into the fixture instead of inserting
+                    them, dropping §100–§114 with the tail it cut, so the arm reported "6 committed
+                    sections absent" and no duplicate — a red for the wrong reason, which is the exact
+                    class D116 exists to catch, produced by D116's harness on its first run. Fixed by
+                    keeping the tail (`slice(0,cut) + nine + slice(cut)`), asserting `headings === 9`, and
+                    correcting the three predictions to what D115 measured on the real tree: duplicated
+                    `100×2`, 8 disk-only, 0 missing.
+                  (b) The citation gate the same idea suggests is unwritable, and the reason is now a
+                    number rather than an impression. Over HEAD's two ledgers: 1,100 `§N` tokens across 115
+                    numbers, 572 resolving to a STATUS heading, 528 not — 381 of them ≤ §20 (contract
+                    sections; `§8` appears 88 times), 42 above §124 (AGENT_CONTRACT spec items, to §171),
+                    105 gap numbers inside STATUS's own sequence. §124's 958/475 pair is the same census on
+                    an earlier plane (the `99e5b0c` blob, before §124 and D115 added their own tokens);
+                    both are quoted with the bytes they were counted over.
+                  (c) The residue inside those 105 is 81 tokens once the nine
+                    `[recovered by D115 from the working copy's §NNN]` title brackets and the `§101-§108`
+                    range spellings are excluded, and attributing them to the section that wrote them
+                    changes what they mean. §123 writes 28 of them (§101×3, §102×3, §103×3, §104×4, §105×4,
+                    §106×5, §107×4, §108×2), D115 16, §124 10 — and those three are *describing the merge
+                    and the recovery*, so their old numbers are the event, which is precisely why §124
+                    chose to leave §123's statements verbatim. The tokens that are content pointers rather
+                    than event records are the ones spread over the older sections: §28's `§103`, §41's two
+                    `§106`, §84's `§105` and `§108`, §99's two `§108`, §34's `§32` (which is written in a
+                    sentence saying out loud that no §32 ever existed). So 81 is the measured surface, not
+                    the work list, and the work list is only knowable by reading each sentence — which is
+                    #80. D115 re-aimed the 15 references it edited and never claimed the residue was zero;
+                    it is not zero, and the number belongs to the next unit rather than to a flag.
+                  (d) A refinement of #79 that changes what the platform lane should do with it. The two
+                    files that spell `STATUS §106` (`CollectionsController.java:186`,
+                    `CollectionsReadTest.java:188`) do mean §121 — read §121 to confirm it, it is the
+                    `body_blocks` required-but-unserved section, which is what those comments describe. But
+                    five other Java sites use bare `§106` for a different plane entirely:
+                    `IdentityRepository.java:106/339/360`, `MeController.java:33/111/122/125` and
+                    `ConfigDecorationTest.java:27/52` mean the `deletion_requests` retention workflow,
+                    which `DATABASE.md:191` documents as "§106 data-retention workflow" and
+                    `API_CONTRACT.md:193` cites in the `DELETE /api/v1/me` row. A blanket "§106 → §121"
+                    sweep would corrupt nine correct comments to fix two. And the ledgers carry the same
+                    ambiguity themselves: §41–§45's standing-report lines write "§106's retention job" — the
+                    contract plane spelled bare inside a STATUS section, 6 tokens. The other 9 §106 gap
+                    tokens are in §123 and §124 and were not read here, so #80 inherits 15 §106 tokens with
+                    three possible planes and no way to tell them apart from the number alone.
+
+gates             `bash -n scripts/db_gate_fresh.sh` clean; the ten-step gate green end to end and red at
+                    step 10 on the stranded fixture, both with the exit code printed into the kept log;
+                    the harness's control arm runs the checker against this tree, so the committed scripts
+                    are covered by their own green.
+
+next             (a) #80: the 81 in-range gap tokens in §123/D115/§124 and the older sections, re-aimed by
+                    reading each sentence (some are range spellings that are correct as prose), then widened
+                    into a gate arm only once the residue is zero — a guard that is red on day one is
+                    ignored by day two.
+                  (b) #79 stays a report, now with the plane split from (d) attached, so the platform lane
+                    edits two comments and not nine.
+                  (c) Step 10 fires when someone runs `db_gate_fresh.sh`. It is not in
+                    `.github/workflows/ci.yml` — that file is on the frozen list and belongs to another
+                    stream, so the CI arm is a request, not an edit. A working copy that is never gated is
+                    still not checked.
+                  (d) The mirror of the HARD case is not covered and cannot be, this way: a section present
+                    on both planes whose text was edited in place is a fork in content, not in numbering.
+                    D115 met that as a renumbering question and it stays a review question.
+                  (e) Carried: #73 (40 of 214 assertions witnessed), #75 (`V7__share_links.sql` still
+                    untracked, so the gate's 216 is 214 at HEAD), #71 (`facts` has no CHECK constraints),
+                    #62, #64, #58, #44, #17, #19, #34, §87's session-time-zone seam, D91's served leg (needs
+                    `:8090`, which this lane will not start).
+```

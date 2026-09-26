@@ -6805,3 +6805,99 @@ table resolvable: §123's recovery note, which this lane wrote minutes earlier. 
 gate or database write was run for this unit, and no file outside `docs/DECISIONS.md` and `docs/STATUS.md`
 was touched.
 
+
+## D116 The ledger's two planes are now compared by a step of the gate, because §123 recorded the fork three times and nobody wrote the check — 2026-09-27
+
+**Context.** Task #68 has been open since §86 (e) found it at 08:09 on 2026-09-26, and it was written up
+twice more after that: §123 (the working copy merged instead of committed, eight sections under eight
+numbers committed sections already held) and D115 (nine sections committed nowhere, three days stranded,
+the `## 100` collision dissolved by renumbering the incoming nine as §115–§123). Every one of those
+accounts ends in the same confession: the loss was detectable by a mechanical comparison of two files,
+and the mechanical comparison did not exist. D115's own `next` block named it as the thing to write, and
+wrote the guard's absence as the reason to distrust every future "nothing is lost" claim.
+
+**Decision.** Ship `scripts/check_ledger_sections.mjs` as gate step 10 of 10, with an asymmetric verdict:
+
+- **HARD** (exit 1) — a numbered heading present at HEAD but absent from the file on disk, or a number
+  claimed twice on disk. Both are the class that deletes committed history when someone commits the tree
+  as it stands, which is what §123 measured: STATUS on disk was 4,598 lines against HEAD's 5,327.
+- **NAMED, allowed** (exit 0) — a heading on disk and not at HEAD. That is what the middle of writing an
+  entry looks like, and refusing it would refuse this lane's own staging technique, which is the only
+  reason DECISIONS has ever grown. It is printed with its numbers anyway, because D115's nine sat in that
+  state for three days and a name is what makes the state visible.
+- **NOT CHECKED** (exit 2) — `git show` cannot spawn, a ledger is unreadable, or the heading pattern
+  matches nothing. D96's answer to its own question: a reader that saw no headings did not check the
+  headings, and an empty set is exactly what a renamed house convention looks like from here.
+
+**Rejected, with the reason it was rejected.** A check over `§N` *citations* — "every §NNN in the ledgers
+must resolve to a heading." It was the obvious generalisation of #79, and it is unwritable. Counted over
+HEAD's two files as they stand: **1,100 `§N` tokens across 115 distinct numbers, of which 572 resolve to a
+STATUS heading and 528 do not** — 381 of those are ≤ §20 (contract sections; `§8` alone appears 88 times),
+42 are above §124 (`AGENT_CONTRACT` spec items, which run to §171), and 105 are numbers that are gaps in
+STATUS's own sequence (§32, §80, §101–§108). §124 carried the same measurement on its own plane (958
+tokens / 475 non-resolving, counted over the `99e5b0c` blob before this section's and §124's text added
+their share); the two pairs differ by the text written after the counting, which is why each carries its
+plane. A gate that reddens on 528 of them is not a gate. So citations stay the business of step 8/9
+(`check_ledger_citations.mjs`, which resolves `File.ext:NNN` and says what it cannot), and #68's narrower,
+fully mechanical question — heading at HEAD, heading on disk — is what gets a witness.
+
+The 105 gap-tokens are not free, though, and D116 measures them rather than filing them: 81 survive once
+the nine `[recovered by D115 from the working copy's §NNN]` title brackets and `§101-§108` range spellings
+are excluded (28 written by §123 itself, 16 by D115, 10 by §124, the rest by older sections). §124's claim
+that D115 re-aimed 15 references was true of the references *it* edited; it never claimed the residue was
+zero, and it is not. Widening the guard to that residue is a content decision about 81 sentences, not a
+flag — so it goes to #80, with the count attached.
+
+**Witness.** `scripts/falsify_ledger_sections.mjs`: eight arms, each running the *shipped* checker as a
+subprocess against its own fixture directory, so no arm can redden another.
+
+```
+node scripts/falsify_ledger_sections.mjs
+  held  exit 0  control: this tree as it stands
+  held  exit 1  a committed section deleted from the working copy
+  held  exit 1  the same section duplicated on disk            (on disk: 124×2)
+  held  exit 0  a draft section on disk, not yet committed     (the NAMED arm)
+  held  exit 1  the DECISIONS plane, same rule
+  held  exit 2  a ledger whose heading pattern matches nothing
+  held  exit 2  a HEAD revision that does not resolve
+  held  exit 1  the working copy D115 recovered (rebuilt: 9 headings put back as §100–§108,
+                8 of them new to 99e5b0c^)
+  8 arms · 8 held · 0 missed
+```
+
+The last arm is the one worth the decision. It does not assert a synthetic deletion; it **reconstructs the
+real 2026-09-26 working copy from two commits** (`99e5b0c^`'s file, with the nine recovered sections
+de-bracketed and re-inserted under the numbers they were written with) and predicts, from D115's own
+measured properties, the three things the checker would say about it: a duplicated `100×2`, eight
+disk-only, and nothing committed missing. It is a guard shown red on the tree that motivated it, and the
+reconstruction lives in the repository rather than in Temp — so the next person can re-run it without
+believing this entry. (D113's rule, applied to my own harness for once.)
+
+**Both sides of the gate step, run inside the gate.** Not only inside the harness:
+
+```
+scripts/db_gate_fresh.sh                              steps 1–10 all print · step 10 PASS (92/92, 103/103)
+                                                      RESULT: PASS — 216 quality checks … GATE_EXIT=0
+LEDGER_SECTIONS_DIR=<fixture> bash scripts/db_gate_fresh.sh --skip-generate
+                                          steps 1–9 unchanged, step 10 prints
+                                            FORK docs/STATUS.md: 1 section(s) committed at HEAD and absent
+                                              from the working copy — … : 124
+                                          GATE_EXIT=1 — the gate dies at step 10, as a gate should
+```
+
+and the fact that the second run left **no** database behind: `pg_database` counts 2 `nexus_gate*` rows,
+both from `--keep` runs, none from the failed one. §103's caution ("the gate drops its database when the
+run finishes, and a run killed from outside does not get to") is confirmed on the branch it had not tested
+— a nonzero step is not an external kill, and the trap fires.
+
+**The knob, and what it is for.** `LEDGER_SECTIONS_DIR=<dir>` points step 10 at another checkout. It
+exists so the in-gate red arm is reachable at all: without it the only way to show step 10 failing inside
+the gate is to delete a committed section from the real tree, which is the destructive act the check
+guards against. Its demonstrated use is the falsifier and the red run in §125; nothing in CI sets it.
+
+**Residue, stated rather than implied.** Step 10 fires when someone runs `db_gate_fresh.sh`. It does not
+fire on a working copy that is never gated, and it is not in `.github/workflows/ci.yml` — that file belongs
+to another stream (the frozen list), so the CI arm is a report, not an edit. The gap the check does not
+cover is the mirror of the HARD case: a section that exists at HEAD, on disk, and is *changed in place*
+into different text is not a fork and cannot be caught this way — D115 met that one as a renumbering
+question, and it stays a review question.
