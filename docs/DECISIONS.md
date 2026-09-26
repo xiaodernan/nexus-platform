@@ -6421,3 +6421,100 @@ holds another lane's uncommitted sections numbered up to §108 and this lane num
 
 
 
+
+## D112 Seven more plants filed, one of them aimed at the wrong row — and the whole-gate run is what caught the mis-aimment — 2026-09-27
+
+D109 left the falsifier drive running on the whole gate: one transaction per arm, the shipped
+`data/seed/quality.sql` body executed inside it, `qc` read back, then rolled back. This unit added arms
+chosen from a computed queue and found, on the first attempt, that the drive can now tell the difference
+between *the data is fine* and *the plant does not reach the row it claims to reach*.
+
+**The queue was computed, not remembered.** Before writing any SQL, the unwitnessed names were read off
+`qc` on the kept gate database and filtered (`names read off qc 214`, distinct 214; `registry check names`
+33 at that moment; names built at run time by the D98 sweeps — the `fk:`/`orphan:`/`shape:`/`volume:` and
+similar prefixes — excluded, leaving **109 literal-named** assertions; of those, 28 already witnessed and
+**81 without a witness**). The script and its dump live in the machine's Temp directory
+(`nexus-d63/queue.py`, `names_all.txt`, `d112_queue.txt`), not in the repository, so those four numbers are
+a reading of one plane at one moment — 214 is the committed-HEAD count, and D108's warning still holds:
+with another stream's uncommitted `infra/db/migrations/V7__share_links.sql` on disk the same gate files 216.
+What is durable is the recipe: slice `quality.sql` at its own hard-gate marker, run it in the same session
+`qc` belongs to (`qc` is a TEMP table, so a fresh psql cannot list it), aggregate the names out in one row.
+
+**Every column a plant touches was checked against `pg_attribute` first.** That is the direct product of
+D106, whose plant wrote `UPDATE documents SET text = ...` when the column is `raw_text` — and the harness
+reported it as *an unread arm* instead of letting a psql error look like a green one. This batch's seven SQL statements were written only after the columns were confirmed
+(`documents.raw_text`, `chunks.token_count`, `chunks.ordinal`, `chunks.document_id`, `categories.parent_id`,
+`merchants.category_primary`, `facts.value`), and `merchants.data_origin` was additionally checked for
+schema bounds: `pg_constraint` lateral-joined on `conkey` returns **no CHECK on the `data_origin` column of
+any of the three tables that carry it** (`collections`, `merchants`, `reviews` — all plain `text`). The
+schema will not refuse the deception, which is exactly why the assertion has to be the thing that catches
+it — the same shape of finding D105 recorded for the three arms the schema *did* refuse, read from the
+other side.
+
+**The arm that did not land.** The first version of the seventh arm planted
+`UPDATE facts SET value = jsonb_set(value, '{data_origin}', '"human"'::jsonb)` and claimed the assertion
+`data_origin = demo everywhere the column exists`. The run reported it as `green` with four reddened rows
+besides it, and `RESULT: FAIL`. Reading the claimed row: it predicates `data_origin <> 'demo'` over the
+three **plain columns** (`merchants`, `reviews`, `collections`) and nothing else — it cannot see a jsonb
+key of the same name, so a fact payload stamped `human` leaves it truthfully green. Whole-gate mode is what
+made that diagnosable rather than merely red: the four collateral names are the report of where the
+deception actually landed (`the synthetic stamp says demo, or true, on every row of every column that
+carries it`, `the §19 provenance axis and the §109 stamp axis stay separate on facts`, plus D83's spread
+and clock rows). A run that executes only the claimed assertion would have said "target stayed green" and
+left the reader to guess.
+
+**Split into two arms, one per plane.** The batch now ships both: the jsonb plant claims
+`the §19 provenance axis and the §109 stamp axis stay separate on facts` (collateral 3), and a plain-column
+plant — `UPDATE merchants SET data_origin = 'human'` — claims `data_origin = demo everywhere the column
+exists` (collateral 1, the trigger row). The two arms together establish a layering claim that neither
+could make alone: **each row watches exactly one plane.** Under the jsonb plant the plain-column row stayed
+green; under the plain-column plant both jsonb rows stayed green. The mechanism is readable in the shipped
+file: `marker_cat`'s build loop (`DO $d80$`) iterates columns whose predicate is `t.typname = 'jsonb'` and
+keys matching `origin|synth|demo|generat`, so a plain `text` column named `data_origin` is not in its
+universe at all, while the 558 row reads only the three named plain columns. Neither row is a redundant
+copy of the other and neither can substitute for it — which is worth stating because "two assertions about
+data_origin" looks like duplication until someone plants each plane.
+
+**Zero-collateral arms confirm D83's mechanism a second time.** Six of the twenty arms produced no
+collateral. Five plant into `reviews`, `chunks` and `categories` — and those are precisely the three tables
+in this batch that are not among the fifteen carrying `set_updated_at()`, so nothing but the claimed column
+moves. The sixth is the arm whose target *is* the spread row (`UPDATE merchants SET updated_at = now()`),
+which absorbs by definition what the other merchant-table arms show as collateral. Measured over twenty
+arms rather than the twelve D109 saw, the collateral pattern tracks the trigger set with no exception in
+either direction.
+
+**A claim taken back.** D109's entry introduces the collateral as though the mechanism were found by that
+unit's measurement ("which looked like over-sensitivity in the assertion. It is not. The seed schema
+attaches `public.set_updated_at()`…"). It was not new. `grep -n set_updated_at docs/DECISIONS.md` puts the
+same mechanism in **D83** (2026-09-25) — *an `UPDATE offerings SET min_party_size = 2` moved
+`offerings.updated_at` as well, because V1:961-970 installs `set_updated_at()` as a BEFORE UPDATE trigger
+on every table with that column, so the census found `offerings.updated_at` varying and refused its
+`single-instant-pinned` answer. A plant that reaches a column under audit through a trigger is a plant that
+cannot be undone* — and D86 (2026-09-26) states the corollary actually used by the plants, that `reviews`
+carries no such trigger and therefore leaves no clock residue. What D109 legitimately added on top of that
+is the fifteen-table count read through `pg_trigger` rather than inferred from the migration text, and the
+reverse control (`SET LOCAL session_replication_role = replica` → collateral 0, target still red). The
+lesson is the one this lane keeps re-learning and keeps failing to apply: **grep this lane's own ledger
+before writing "measured, not inferred"**, because a claim of novelty about something the ledger already
+records is a false citation, and D88/D87's machinery exists precisely to catch those.
+
+**Measured** (`data/seed/falsifier_plants.py` at `975e0a5`, against `nexus_gate_270354_1790448961`; log
+`d112b_plants.txt`, whose `RESULT: PASS` and 43-session count are the process's own output): opening
+baseline 214 assertions with red = 2, both the D108-declared door-vocabulary pair; **20 of 20 arms reddened
+exactly the assertion that names them**, no arm found an undeclared red, the control re-ran arm 0 with the
+triggers off and got `target RED · collateral 0 · spread row gone`, and the closing baseline is identical
+to the opening one. `data/seed/falsifiers.tsv` 54 → **61 rows** at `2c27dbe`; the validator
+(`node scripts/check_falsifier_registry.mjs --db nexus_gate_270354_1790448961`) reports `RESULT: PASS` and
+**40 of 214 (18.7%)** assertions carrying a machine-checkable witness. The queue recomputed from the same
+214-name dump after the batch: 109 literal-named, **35 witnessed, 74 still without a witness** — seven
+fewer than before, because all seven new names were unwitnessed ones.
+
+**What the batch did not buy.** All seven new rows point their witness at `975e0a5`, the commit that
+contains the arms themselves, so they are reproducible by anyone who can check out the repository and
+build a seed. That is not true of the registry's older half: counted over the shipped file, **22 rows carry
+a commit witness and 39 carry a path witness**, those 39 spread over 12 files under `nexus-d63/` in this
+machine's Temp directory (`d99_sweep_plant.py`, `d100_three_sweeps.py`, `d104_plants.py`,
+`d105_noconstraint.py`, `d106_plants.py`, and seven log excerpts). The validator accepts both forms, so the
+registry reads PASS today and would read `witness cannot be opened` for 39 rows the moment the Temp
+directory is cleared — a witness that only opens on the machine that wrote it is an anecdote with a
+filename. Recorded as the next unit's problem, not solved here.

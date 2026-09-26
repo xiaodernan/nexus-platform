@@ -5467,3 +5467,49 @@ are commands, not intentions — `git status` for an anonymous hunk in a file th
 and `git log -S'## Dxx' -- docs/DECISIONS.md` for an entry that never existed (D109's class). `docs/STATUS.md`
 gets one section for the four units, not four: the working copy holds another lane's uncommitted sections up
 to §108, so this lane numbers forward from there and cannot insert four sections into that range safely.
+
+## 112. Seven more assertions shown able to fail — one arm was aimed at a row that cannot see the data it moves, and the whole-gate run said so (2026-09-27)
+
+Falsifier drive, whole-gate mode, batch `D112`. Harness `data/seed/falsifier_plants.py` at `975e0a5`,
+against the kept loaded seed `nexus_gate_270354_1790448961`; registry rows at `2c27dbe`.
+
+- **Opened the run** at the committed-HEAD plane: 214 assertions, red = 2, both the D108-declared
+  door-vocabulary pair. **20 arms plus one control, 43 whole-gate sessions, every one rolled back**, and the
+  closing baseline is identical to the opening one.
+- **Plants were queued, not remembered.** The unwitnessed names were read off `qc` (214 names, 109 of them
+  literal rather than built by a sweep), and every column a plant touches was confirmed against
+  `pg_attribute` before writing SQL. `merchants/collections/reviews.data_origin` carry **no CHECK**, so the
+  schema will not refuse that deception and only the assertion can catch it — D105's finding read from the
+  opposite side.
+- **The batch's own mistake, caught by the mode.** The first version planted
+  `facts.value->>'data_origin' = 'human'` and claimed `data_origin = demo everywhere the column exists`,
+  which predicates only over the three plain columns: target green, four other rows red, `RESULT: FAIL`. The
+  four collateral names are what made it diagnosable — a run that executed only the claimed assertion would
+  have reported a green and given no account of where the write landed.
+- **Split into one arm per plane**, and the pair now proves a layering claim: `marker_cat`'s loop selects
+  columns on `t.typname = 'jsonb'`, so a plain text column named `data_origin` is outside its universe,
+  while the plain-column row reads only `merchants/reviews/collections`. Under the jsonb plant the
+  plain-column row stayed green; under the plain-column plant both jsonb rows stayed green. Neither is a
+  duplicate of the other; both are now witnessed.
+- **D83's trigger mechanism confirmed a second way.** Six arms left no collateral: five of them plant into
+  `reviews`, `chunks`, `categories` — the three tables in this batch that are not among the fifteen carrying
+  `set_updated_at()` — and the sixth is the arm whose target *is* the spread row. The control again ran
+  arm 0 with `session_replication_role = replica`: `target RED · collateral 0 · spread row gone`.
+- **A claim taken back, in D112's own diff.** D109 introduces the collateral as if that unit's measurement
+  found the mechanism. It did not: **D83** (2026-09-25) already recorded `V1:961-970 installs
+  `set_updated_at()` as a BEFORE UPDATE trigger` together with the conclusion that a plant reaching a
+  trigger-audited column cannot be undone, and **D86** recorded that `reviews` has no such trigger. What
+  D109 added is the fifteen-table count read through `pg_trigger` and the reverse control. The rule this
+  re-earns: grep this lane's own ledger before writing "measured, not inferred".
+- **Closed** at 54 → **61 registry rows**, validator `RESULT: PASS`, **40 of 214 (18.7%)** assertions with a
+  machine-checkable witness; queue recomputed to 109 literal names, **35 witnessed, 74 still unwitnessed**.
+- **Left open on purpose.** The seven new rows point their witness at the commit that contains the arms, so
+  they are reproducible anywhere. 22 of the registry's 61 rows do that; **39 point at files under this
+  machine's Temp directory** (five one-off harness scripts, seven run logs), which the validator happily
+  opens today and would reject after a Temp clean-up. A witness that only opens on the machine that wrote it
+  is an anecdote with a filename — carried as the next unit, not fixed here.
+
+Artifacts: `RESULT: PASS` and the per-arm table in `d112b_plants.txt`, the queue readings in `d112_queue.txt`
+and `d112b_queue.txt` — all in `nexus-d63/` under the machine's Temp directory, i.e. **outside the
+repository**, so the durable witnesses are `975e0a5` (the arms) and `2c27dbe` (the rows they filed).
+Full reasoning in `docs/DECISIONS.md`, `## D112`.
