@@ -6921,3 +6921,120 @@ next              (a) D122, and it is a decision before it is a batch. The `fk` 
                     #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage residue, §87's
                     session-time-zone seam, D91's served leg.
 ```
+
+## 131. Ten plants that switch the mechanism off before lying to it, and the drop-constraint arm finding that it reddens a different assertion than the one it aimed (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (35 → 45 arms, committed bd433a8) and the registry it writes,
+                    `data/seed/falsifiers.tsv` (104 → 116 rows). Same kept loaded seed as §128–§130,
+                    `nexus_gate_283340_1790454442` — 216 assertions on this working copy, so the counts below
+                    are still comparable with §130's.
+
+changed           The first arms whose deception has two halves: a mechanism state, then a value. Nine are
+                    `SET LOCAL session_replication_role = replica;` followed by one UPDATE of one foreign-key
+                    column to a `gen_random_uuid()` (falsifier_plants.py:269-311); the tenth (:312-317) drops
+                    the constraint instead of evading it, and declares the assertion name that goes with the
+                    constraint. No gate file, checker or migration changed. `data/seed/quality.sql` was read
+                    and not touched — the sweep in question is a plpgsql loop over `pg_constraint`
+                    (quality.sql:186-193) that assembles its own names at :200, and that self-assembly is
+                    exactly what the tenth arm turns on.
+
+measured          the SET alone, nothing moved                     216 assertions, red = 0. The mechanism
+                    (three probes, each                       reddens nothing by itself; the dangling id does.
+                     rolled back in its own                      the same SET carrying a value-plane lie
+                    transaction)                 → `UPDATE reviews SET rating = 9.9` refused by
+                    `reviews_rating_check`, `UPDATE documents SET body = NULL` refused by the not-null
+                    constraint. So `session_replication_role` silences foreign keys and triggers, not CHECKs
+                    and not NOT NULLs — an `fk: ` arm cannot smuggle a value-plane lie past a value-plane
+                    assertion. (The first attempt at that probe was `rating = 99`, which died on
+                    `numeric field overflow` before ever reaching its CHECK: the column is numeric(2,1).)
+                    the same SET as the deployment role            `SET ... permission denied to set parameter
+                    (`nexus_app`, not `postgres`)                  "session_replication_role""` — the plant's
+                    power is precisely the application's missing power.
+                  `--only 'fk: '` against a registry copy          10 arms of 45 · 12 whole-gate sessions ·
+                    taken from cd6c029 (104 rows) so the            baseline 216 red 0 · all ten own rows RED ·
+                    novelty line means something                   collateral 0 on every one of the ten · the
+                    drop arm 215 rows, 1 name unfiled and declared
+                    · closing baseline identical · RESULT: PASS ·
+                    rows appended: 10 (10 from an arm's own RED row, 0 from collateral) · 10 of them a name
+                    that carried no witness before
+                  the full drive plus control                      45 arms of 45 plus one control · 48
+                    whole-gate sessions · every arm's own row RED · the nine replica arms 0 collateral each ·
+                    control target RED, collateral 0, unfiled 0, spread row gone · closing baseline identical ·
+                    RESULT: PASS · rows appended: 12 (10 own, 2 collateral) · 10 novel
+                  node scripts/check_falsifier_registry.mjs        PASS · 216 gate assertions · 116 rows ·
+                    --db …                                         77 commit + 39 file witnesses · 76 of 216
+                    (35.2%), up from 66
+                  unwitnessed census over the final bytes          live 216 · registry rows 116 · covered names
+                    76 · unwitnessed 140 = 57 literal + 83 assembled · families fk 82, (no prefix) 55,
+                    chunks / density / slots 1 each
+                  how the 82 split, counted per table rather       filed `fk: ` names 91 · witnessed 9 ·
+                    than read off `n_live_tup`                     remaining 82 = 50 on a child table the seed
+                    leaves empty (27 tables: agent_profiles, api_keys, audit_logs, campaigns, carts,
+                    conversations, coupons, deletion_requests, events, orders, reservations, share_links,
+                    subscriptions, trust_signals …) + 32 on a populated one. The nine witnessed all fall in
+                    the populated half, so §130's 41 → 32 and the empty half is untouched at 50.
+                  two of the 32 are not one-line arms               `fk: offering_relations.from_offering` and
+                    `.to_offering` — the table's columns are (from_offering, to_offering, relation, weight),
+                    so there is no `id` to key on. This is the same shape that aborted a probe in §129's
+                    batch; the arm must key on the pair.
+
+found             (a) §130's question answers *yes, conditionally*, and the price is the label. An assertion
+                    whose job is to watch a write the schema refuses is falsified by a data state the schema
+                    forbids, because that is the state it was written about — what it is not is a demonstration
+                    that a door can produce it. The distinction survives in exactly one place, the registry's
+                    arm column, so the nine labels say `(replica role)` on their face and the `--only` line
+                    above is the proof that the claim was checked rather than asserted.
+                  (b) The route a deployment can actually take does not falsify an `fk: ` row at all. Dropping
+                    `user_preferences_user_id_fkey` and then orphaning a row leaves the gate filing 215
+                    assertions: the sweep builds its names from `pg_constraint`, so the name for that edge
+                    stops existing — D120's disappearance reached deliberately for the first time, declared
+                    with the fourth tuple element instead of filed. What goes red is D66's
+                    `every reference the seed writes is probed or explained`, which reads the same catalogue
+                    and notices an edge left the probed set. So the 91 were two claims under one prefix:
+                    *"does every value in this column resolve?"* is about data and only a checks-off session
+                    can produce the forbidden state, while *"is this edge still enforced?"* is about the
+                    schema, and then the census row is the thing watching, not the sweep row.
+                  (c) An assertion green for want of data is recorded as such, in the label.
+                    `moderation_cases.assigned_to` has 544 rows and 0 carry an assignee, so the sweep row has
+                    never resolved a single value; the first attempt — move an existing assignee to a ghost —
+                    moved nothing and stayed green for the right reason. The filed plant files the column
+                    first, and its label says `(0 of 544 carry one)`. That is D79's "a probe arm the seed never
+                    files is silence, not green" arriving on the enforcement plane, and it is 50 of the
+                    remaining 82 names one table-level up: those children have no rows to move at all.
+                  (d) A novelty line printed by a drive is only honest against a registry that predates the
+                    drive, so the aimed subset was re-run above against a copy of cd6c029's file rather than
+                    the working copy that already carries these rows. It reproduced the original run exactly —
+                    same ten arms, same 12 sessions, same 10 novel — which is the first time this lane has had
+                    a batch it could replay and check against itself.
+
+gates             The eleven-step script was not re-run, because no gate file, checker or migration changed;
+                    the only shipped code touched is the plant harness, and its 48 whole-gate sessions are the
+                    gate body itself, sliced out of quality.sql and executed against mutated data inside a
+                    transaction the harness rolls back — which is what the identical closing baseline
+                    certifies. The four readers were run on the final bytes of this text: step 8
+                    `check_ledger_citations.mjs --worktree` (exit 0 — 234 headings seen, 495 name:number
+                    tokens, 284 of them citation-shaped, strict on the working copy), step 9 `check_comment_citations.mjs` (PASS, 70
+                    comment-plane citations across 21 files, all resolving), step 10
+                    `check_ledger_sections.mjs` (PASS — STATUS HEAD 98 sections · on disk 99 · missing 0 ·
+                    duplicates 0 · §131 the one uncommitted section; DECISIONS HEAD 109 · on disk 110 · D122
+                    the same note), step 11 `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442`
+                    (PASS, 116 rows, 76 of 216).
+
+next              (a) The 32 populated-child names in batches of about ten. Each is one UPDATE behind the
+                    same SET, and nine of them share a parent (`merchants`, `users`, `offerings`,
+                    `categories`, `documents`, `tenants`, `resource_pools`), so the batch is mechanical — with
+                    two exceptions measured above: the `offering_relations` pair needs a composite key, and
+                    any all-NULL column needs its value filed first, as `moderation_cases.assigned_to` did.
+                  (b) Then the decision the empty tables raise before their arms are written: is an `fk: ` row
+                    over a table the seed never populates worth witnessing with a synthetic INSERT — NOT NULL
+                    and CHECK survive the role, so each would need a complete legal row built from a table with
+                    no rows to copy — or is the honest record D79's, said once for 50 names instead of fifty
+                    times? This is a decision, so it goes in DECISIONS before it goes in the harness.
+                  (c) #71, fifth time standing on it: `facts` is still the only seeded table with no CHECK, so
+                    the TTL and stale rows are the only thing between a wrong expiry and a served page.
+                  (d) Carried from §130: the renderability companion's missing `guide` branch and its kind-blind
+                    join, reported and not edited; #73 (76 of 216 witnessed, 140 unwitnessed with fk 82 the
+                    bulk), #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage
+                    residue, §87's session-time-zone seam, D91's served leg.
+```

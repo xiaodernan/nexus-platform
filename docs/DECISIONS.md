@@ -7299,3 +7299,72 @@ applied under replica role (`UPDATE 1`, the new id returned). So every one of th
 question is not mechanism. That is D122's decision, and it is a question before it is a batch: is an assertion
 whose whole job is to watch a write the database refuses falsified by a database the database cannot produce —
 or only by one a restore, a legacy import or a dump-from-another-instance could put in the loader's chair?
+
+## D122 The `fk: ` family cannot be falsified by a legal write, so the plant says on its face that the checks are off — and the route a deployment can take falsifies a different assertion — 2026-09-27
+
+§130 put the question before the batch. This unit answers it with three measurements, and the answer is *yes,
+conditionally* — followed by a finding that splits the family in two.
+
+**Decision (a): a witness may be produced with the checks disabled, provided the arm's own label says so.** Nine
+arms went into `data/seed/falsifier_plants.py` (:269-317), each `SET LOCAL session_replication_role = replica;`
+followed by one UPDATE of one foreign-key column to a `gen_random_uuid()`. Three conditions were measured rather
+than argued, because "the tool disabled the thing the assertion watches" is exactly the sentence that needs
+evidence attached to it:
+
+| measurement | result | what it buys |
+| --- | --- | --- |
+| the SET alone, nothing moved | 216 rows, 0 red | the mechanism reddens nothing on its own — the dangling id does |
+| `rating = 9.9` and `body = NULL` under the same SET | both refused (`reviews_rating_check`, not-null violation) | the role silences foreign keys and triggers, **not** CHECKs or NOT NULLs, so an `fk: ` arm cannot smuggle a value-plane lie past a value-plane assertion |
+| each of the nine arms | 216 rows, exactly 1 red, 0 collateral, 0 names born, 0 names vanished | the aim is as exact as the polymorphic batch's |
+
+The label carries `(replica role)` because the label is what lands in the registry's arm column: a reader of
+`data/seed/falsifiers.tsv` must not be able to mistake the row for a demonstration that some door can produce an
+orphan. It cannot, and that is measured too — as `nexus_app`, the role the services connect with, the same `SET`
+is refused: `permission denied to set parameter "session_replication_role"`. The plant's power is precisely the
+application's missing power, which is what makes these rows backstops on the data plane rather than tests of a
+write path.
+
+**Decision (b): the route a deployment CAN take is filed as a witness for a different name.** A migration that
+stops enforcing an edge is reachable, so a tenth arm does that: `ALTER TABLE user_preferences DROP CONSTRAINT
+user_preferences_user_id_fkey`, then the same orphaning UPDATE, then ROLLBACK (the DDL is transactional — the
+constraint counts 1 again afterwards, measured). It does **not** falsify `fk: user_preferences.user_id ->
+users.id`. That session files **215** assertions: the sweep builds its names from `pg_constraint`, so when the
+constraint goes, the name goes — D120's disappearance, reached deliberately this time — and the row that turns
+red instead is D66's `every reference the seed writes is probed or explained`, which reads the same catalogue and
+notices that an edge left the probed set. The arm therefore declares the vanished name rather than filing it,
+and files the census row, which is what the drop actually demonstrates.
+
+So the ninety-one names were two claims in one prefix, and the split is the useful part: *"does every value in
+this column resolve?"* is a question about data, and only a checks-off session can produce a data state the
+schema forbids; *"is this edge still enforced?"* is a question about the schema, and a migration can answer it —
+but then the sweep row is not the thing watching, the census row is.
+
+**Decision (c): an assertion that is green for want of data is recorded as such, in the label.**
+`moderation_cases.assigned_to` has 544 rows and **0** carry an assignee, so the sweep row has never resolved a
+single value: the first attempt — move an existing assignee to a ghost — moved nothing and the arm stayed green
+for the right reason. The filed plant files the column first (`SET assigned_to = gen_random_uuid()` on a row
+that had none) and its label says `(0 of 544 carry one)`. That is D79's "probe arms the seed never files are
+silence, not green" arriving on the enforcement plane, and it is the same shape as 50 of the remaining 82 names,
+whose child tables have no rows at all.
+
+**Numbers.** Aimed subset (`--only 'fk: '`) 10 arms, 12 whole-gate sessions, PASS; the full drive 45 arms plus the
+control, 48 sessions, PASS. `data/seed/falsifiers.tsv` 104 → **116 rows**, **12 appended** (10 from an arm's own
+RED row, 2 from collateral) · **10 of them a name that carried no witness before** — the first batch this lane has
+run where every appended target row is a novel name, because the family had none. Coverage 66 → **76 of 216
+(35.2%)**, witness kinds 77 commit + 39 file, step 11 PASS. Unwitnessed 150 → **140 = 57 literal + 83 assembled**;
+the `fk ` family 91 → **82 left, and the remainder splits 50 on a child table the seed leaves empty and 32 on a
+populated one**.
+
+**Limits, stated rather than implied.** These ten rows demonstrate detection, not reachability, and no wording in
+the registry should be read as claiming otherwise — the arm column is the only place that distinction survives,
+which is why the labels are as long as they are. The `SET` is available only to a superuser session in the
+container, so the witness cannot be reproduced by the deployment role; that is the point of the mechanism and the
+reason the family stays a backstop. And the cheap part is nearly over: the 32 populated-child names are one-line
+arms of this exact shape, while the 50 empty-child names need an INSERT each — NOT NULL and CHECK survive the
+role (measured above), so each needs a complete legal row built from a table that has no rows to copy.
+
+**next.** (a) The 32 remaining populated-child names in batches of about ten, each one UPDATE behind the same SET.
+(b) Then the question the empty tables raise before their arms are written: is an `fk: ` row over a table the seed
+never populates worth witnessing with a synthetic INSERT, or is the honest record D79's — silence, not green — and
+the lane should say so once for 50 names instead of fifty times. (c) #71, fifth time standing on it. (d) Carried
+from §130: the renderability companion's missing `guide` branch, reported and not edited.

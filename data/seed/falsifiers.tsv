@@ -123,3 +123,15 @@ orphan: moderation_cases.review	D121	1,001 reviews removed in the table's own la
 a vocabulary answer is still an answer	D121	every fact removed -- the same presence row on the table with no CHECKs	fcb6988
 every jsonb key whose name claims an axis is answered for which axis it is	D121	every fact removed -- the same presence row on the table with no CHECKs	fcb6988
 rating: every reviewed subject has exactly one rating fact	D121	every fact removed -- the same presence row on the table with no CHECKs	fcb6988
+fk: business_hours.location_id -> locations.id	D122	fk checks off (replica role): a business_hours row loses its location	bd433a8
+fk: categories.parent_id -> categories.id	D122	fk checks off (replica role): a child category loses its parent	bd433a8
+fk: collections.author_id -> users.id	D122	fk checks off (replica role): a collection loses its author	bd433a8
+fk: user_preferences.user_id -> users.id	D122	fk checks off (replica role): a preference loses its user	bd433a8
+fk: merchant_categories.category_id -> categories.id	D122	fk checks off (replica role): a merchant-category link loses its category	bd433a8
+fk: availability_slots.pool_id -> resource_pools.id	D122	fk checks off (replica role): a slot loses its resource pool	bd433a8
+fk: chunks.tenant_id -> tenants.id	D122	fk checks off (replica role): a chunk loses its tenant	bd433a8
+fk: favorites.user_id -> users.id	D122	fk checks off (replica role): a favourite loses its owner	bd433a8
+fk: moderation_cases.assigned_to -> users.id	D122	fk checks off: a case gains an assignee that is nobody (0 of 544 carry one)	bd433a8
+every reference the seed writes is probed or explained	D122	fk: enforcement dropped, then one row lands on the unenforced edge	bd433a8
+every column that cannot vary is answered for why it cannot	D122	a fact sourced from a real URL	bd433a8
+the columns stamped from the generation clock are exactly the ones answered so	D122	a price fact stamped with the hours TTL instead of the six-hour one	bd433a8
