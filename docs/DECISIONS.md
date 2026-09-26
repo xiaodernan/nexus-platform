@@ -7205,3 +7205,97 @@ predicate is the same query, not a new tool. And coverage is counted by *name*, 
 another arm already filed adds a second witness without moving the percentage: right for a record of
 demonstrations, wrong as a budget. Step 11 still computes its percentage from whatever `--registry` it is
 handed (§127's residue), so the scratch runs quoted above are refusals to be read with their file, not totals.
+
+## D121 Three arms move a PAIR instead of a value, the two cheap ones reddened nothing else, and that turned out to be two probes disagreeing — 2026-09-27
+
+Why this is a data unit. §129's next(b) named three assertions and measured their legality before aiming: over
+`pg_constraint`, `favorites` carries exactly one foreign key (`user_id` → users CASCADE) and `facts` exactly one
+(`merchant_id` → merchants CASCADE), and `subject_id` is in neither; neither column carries a CHECK. So each of
+the three deceptions is one UPDATE. They are the first arms in this lane whose falsehood is the **pairing**
+rather than a value, a count or a stamp: the `subject_type` string keeps its meaning and the `subject_id` names
+a row that really exists, in another table's role.
+
+**Decision (a): the two favourite arms lie by label.** `data/seed/falsifier_plants.py:230-235` points the one
+`collection` favourite at the `kind='guide'` row and the one `guide` favourite at a `kind='collection'` row.
+`collections` is 4 rows — guide 1, collection 2, itinerary 1 — all four `visibility='public'` with
+`published_at` set and an `author_id`; `favorites` is 18 rows (merchant 12, offering 4, collection 1, guide 1).
+quality.sql:306-307 pins each label to the row's own kind exactly the way `assertSubjectInTenant` pins it, so a
+mislabelled favourite is precisely what that probe was written to catch, and it is a different deception from
+pointing at nothing: the join resolves, the row is publishable, only the type lies.
+
+**Decision (b): the facts arm lies by table.** One merchant fact is re-keyed onto an offering's id
+(`falsifier_plants.py:236-239`), chosen at `attribute='opening_hours'` so the price-TTL and rating witnesses
+stay uncontested. `facts_one_row_per_claim_uidx` is on `(subject_type, subject_id, attribute)` and does not
+object, because the triple is still unique; nothing references the table.
+
+**Decision (c): the batch is cheap because `--only` exists.** Three arms plus the two baseline sessions are
+**5 whole-gate sessions**; the 35-arm harvest is 38. A three-arm batch run on its own is a test, and the full
+drive afterwards is a harvest rather than a re-test — the order matters for the cost, and it is the reason this
+unit's numbers came from both.
+
+**The finding: zero collateral on the two favourite arms is a disagreement, not cleanliness.** The drive printed
+`collateral 0` for both, which reads like a perfectly aimed plant. The renderability companion
+(`favourites point at a renderable row`, quality.sql:1073-1089) joins `collections` on the id with **no `kind`
+condition** (quality.sql:1077), and its WHERE (quality.sql:1078-1084) branches only on `merchant`, `offering`
+and `collection` — there is no `guide` clause at all. So a mislabelled collection favourite still lands on a
+public, published, authored row and stays green, and a guide favourite is invisible to the probe in every
+direction. Measured on the kept loaded seed, four plants, each rolled back, the gate body sliced from the shipped
+file rather than re-derived:
+
+| plant | `orphan: favorites.*` | `favourites point at a renderable row` |
+| --- | --- | --- |
+| nothing planted (control) | all four true | true |
+| collection favourite → the guide row | collection **false** | true |
+| guide favourite → a collection row | guide **false** | true |
+| collection favourite → a uuid nothing holds | collection **false** | **false** |
+| guide favourite → a uuid nothing holds | guide **false** | true |
+
+The fourth row reproduces D100's claim — "one broken edge answers both, and both answered" — for the
+`collection` type. The fifth is the correction: the companion answers for three of the four types the door
+accepts, because it has no `guide` branch, and the first two rows show the other half of the boundary — it
+answers for a missing target, not for a mislabelled one. D100 wrote the pairing as a property of the seam, and
+it is a property of that probe's arm list, which is the same class of statement D119 had to make about the
+volume plane: a companion is load-bearing only where its own WHERE reaches.
+
+**The fix shape, reported and not made.** Give the CTE a `guide` branch carrying the same publishability
+predicates, and `AND c.kind = 'collection'` on the collection branch. Both would be green on today's seed — the
+two kind-pinned orphan arms are green unmutated, which is D67's generator fix (`kind=kind` threaded through)
+still holding. So this is a falsifiability gap, not a live lie, and it is not edited here: `data/seed/quality.sql`
+is another lane's working copy right now (` M` in `git status`). D67 reported that the favourites probe "has no
+`guide` arm for a type the door does accept"; that half is now closed on the sweep side — the probe assembles
+its names from the data (quality.sql:312) and `orphan: favorites.guide` exists and reddens — while the open half
+has moved to the companion.
+
+**The other six rows, and what the arm column actually means.** 9 rows were appended: 3 carry a D121 arm label,
+6 carry an older arm's. Read back off the file, that is exactly what the `(check, arm)` key D120 chose predicts:
+the `facts.merchant` arm reddened two further assertions, and neither row names it, because the phone arm and
+the fact-stamp arm reddened those same names earlier in the same drive and had not been filed at HEAD. The
+column means "an arm that has been shown to move this name", not "the arm this unit added" — which is what D120
+said a row is for, and worth stating again because a reader counting witnesses per unit would otherwise count
+these six against D121's cost.
+
+**Numbers.** `data/seed/falsifiers.tsv` 95 → **104 rows**, names covered 63 → **66 of 216 (30.6%)**, witness
+kinds 65 commit + 39 file, step 11 RESULT PASS on the final bytes. Unwitnessed 153 → **150 = 58 literal + 92
+assembled**. By family: `fk ` 91, no-prefix 56, chunks/density/slots 1 each, and **`orphan ` 3 → 0** — the
+family D65 opened is now fully witnessed. Three arms bought three names; six rows bought none, so this is the
+lowest marginal-witness rate the lane has run per row (1 name per 3 rows) and the highest per arm (1 name per
+arm, D120's 22-for-11 included nothing aimed).
+
+**Limits, stated rather than implied.** The guide-blindness result is measured against this working copy's 216
+assertions; if the other lane's `quality.sql` edit adds a branch to that CTE the probe has to be re-run before
+the table above is quoted again. The four plants above are diagnostic sessions, not registry rows — nothing was
+filed from them, and the two that reddened no new name could not be.
+
+**next.** The `fk ` family is 91 of the remaining 150 and none of them is plantable by a legal write, because
+the schema enforces every one. Measured split: 50 of the 91 sit on a **child table the seed leaves empty**
+(27 distinct tables — orders, carts, reservations, api_keys, audit_logs, share_links…), so an arm there must
+INSERT; 41 sit on a populated table, where an UPDATE would do if the constraint let it. The only mechanism that
+reaches either is `SET LOCAL session_replication_role = replica` inside the plant string, which the harness
+already runs (its control arm uses it to silence the `set_updated_at` triggers). Whether that also silences a
+foreign key was measured rather than assumed, on the kept loaded seed, one rolled-back transaction each: the
+same statement — move one review's `merchant_id` onto a fresh uuid — is refused in an ordinary session
+(`ERROR: insert or update on table "reviews" violates foreign key constraint "reviews_merchant_id_fkey"`) and
+applied under replica role (`UPDATE 1`, the new id returned). So every one of the 91 is reachable, and the
+question is not mechanism. That is D122's decision, and it is a question before it is a batch: is an assertion
+whose whole job is to watch a write the database refuses falsified by a database the database cannot produce —
+or only by one a restore, a legacy import or a dump-from-another-instance could put in the loader's chair?

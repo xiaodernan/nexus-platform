@@ -6806,3 +6806,118 @@ next              (a) The born-direction is still unjudged: the guard reports na
                     #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage residue, §87's
                     session-time-zone seam, D91's served leg.
 ```
+
+## 130. Three arms move a (type, id) PAIR instead of a value, and the two that reddened nothing else turned out to be two probes disagreeing (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (32 → 35 arms, committed fcb6988) and the registry it writes,
+                    `data/seed/falsifiers.tsv` (95 → 104 rows). Same kept loaded seed as §128/§129,
+                    `nexus_gate_283340_1790454442` — 216 assertions on this working copy, 214 at HEAD, so the
+                    counts below stay comparable with §129's.
+
+changed           The first arms whose deception is the PAIRING rather than a value, a count or a stamp:
+                  `subject_type` keeps its meaning and `subject_id` names a row that really exists, in another
+                  table's role. Two favourites swap labels (falsifier_plants.py:230-235) and one merchant fact
+                  is re-keyed onto an offering's id (:236-239). Three UPDATEs, legality measured over
+                  `pg_constraint` before aiming: `favorites` carries one FK (user_id, CASCADE) and `facts` one
+                  (merchant_id, CASCADE), and `subject_id` is in neither; neither carries a CHECK.
+
+measured          python data/seed/falsifier_plants.py --only   5 whole-gate sessions (3 of 35 arms + the two
+                                                                  baselines) · baseline 216 red 0 · all three
+                                                                  own rows RED · collateral 0, 0, 2 · unfiled 0
+                                                                  · closing baseline identical · RESULT: PASS
+                  the full 35-arm drive plus the control        38 whole-gate sessions · every arm's own row RED
+                                                                  · the three new arms 0 / 0 / 2 collateral ·
+                                                                  the only unfiled names the three the facts-
+                                                                  emptied arm declares · control target RED,
+                                                                  collateral 0, unfiled 0, spread row gone ·
+                                                                  closing baseline identical · RESULT: PASS ·
+                                                                  registry rows appended: 9 (3 emitted from an
+                                                                  arm's own RED row, 6 from collateral) · 3 of
+                                                                  them a name that carried no witness before
+                  the 9 rows read back for provenance            3 carry a D121 arm label, 6 carry an older
+                                                                  arm's; the facts arm's own two collateral reds
+                                                                  are filed under the phone arm and the fact-
+                                                                  stamp arm, because the key is (check, arm) and
+                                                                  those two arms reached the same names earlier
+                                                                  in the same drive. Shown, not argued: the
+                                                                  `--only` re-run above, aimed at a scratch copy
+                                                                  of the registry, appended 2 rows and both name
+                                                                  the facts arm — same plant, different session.
+                  node scripts/check_falsifier_registry.mjs      PASS · 104 rows · 65 commit + 39 file witnesses
+                                                                  · 66 of 216 (30.6%), up from 63
+                    --db …
+                  the four diagnostic plants on the kept seed  control: every favourites row true. collection
+                                                                  favourite → the guide row: `orphan: favorites
+                                                                  .collection` false, `favourites point at a
+                                                                  renderable row` TRUE. guide favourite → a
+                                                                  collection row: its orphan row false, the
+                                                                  companion TRUE. collection favourite → a uuid
+                                                                  nothing holds: both false. So D100's "one
+                                                                  broken edge answers both" reproduces for the
+                                                                  collection type and fails for `guide`, which
+                                                                  the companion's WHERE never mentions.
+                  unwitnessed census over the final bytes         150 = 58 literal + 92 assembled · the `orphan`
+                                                                  family moved 3 → 0, so every name D65 opened
+                                                                  on that sweep now carries a witness · fk 91,
+                                                                  no-prefix 56, chunks / density / slots 1 each
+                  does replica role reach a foreign key?          the same statement, one rolled-back transaction
+                                                                  each: without it, `ERROR: … violates foreign
+                                                                  key constraint "reviews_merchant_id_fkey"`;
+                                                                  under `SET LOCAL session_replication_role =
+                                                                  replica`, `UPDATE 1` with the new id returned
+
+found             (a) `collateral 0` on two arms is not a well-aimed plant, it is two probes that disagree about
+                    what a favourite points at. The kind-pinned sweep (quality.sql:306-307) pins each label to
+                    the row's own `kind` and caught both lies. The renderability companion (quality.sql:1073-1089)
+                    joins `collections` on the id with no `kind` condition (:1077), and its WHERE (:1078-1084)
+                    branches only on merchant, offering and collection — there is no `guide` clause at all. All
+                    four `collections` rows (guide 1, collection 2, itinerary 1) are `visibility='public'` with
+                    `published_at` set and an `author_id`, so a mislabel still resolves to a publishable row and
+                    the row cannot tell. D100 recorded the pairing as a property of the seam; measured here it is
+                    a property of that probe's arm list — true for three of the four types the door accepts, and
+                    only for a missing target, never for a mislabelled one.
+                  (b) The fix shape is reported, not made: a `guide` branch carrying the same publishability
+                    predicates, and `AND c.kind = 'collection'` on the collection branch. Both would be green on
+                    today's seed — the two kind-pinned orphan arms are green unmutated, which is D67's generator
+                    fix still holding — so this is a falsifiability gap, not a live lie. `data/seed/quality.sql`
+                    is another lane's working copy (` M`), so nothing was edited in it. D67's open half has
+                    moved: the sweep does now produce `orphan: favorites.guide` (measured, and it reddens).
+                  (c) A row's arm column means "an arm shown to move this name", not "the arm this unit added" —
+                    and the scratch re-run shows the same plant filing a different label when the session
+                    contains fewer arms. That is D120's (check, arm) key behaving correctly; it is worth stating
+                    because a reader counting witnesses per unit would otherwise charge these 6 rows to D121's
+                    cost, when 3 of the 9 rows are what the unit aimed and 6 are second witnesses.
+                  (d) The batch is cheap because `--only` exists: 5 sessions for the three arms, 38 for the
+                    harvest. The order matters — the aimed run is the test, the full drive afterwards is the
+                    harvest — and `--only` prints what it skips rather than pretending: `control: skipped,
+                    because --only 'orphan: ' excluded arm 0`.
+
+gates             The eleven-step script was not re-run for this unit, because no gate file, checker or
+                    migration changed. The only shipped code touched is the plant harness, and its 38 whole-gate
+                    sessions are themselves the gate body sliced out of quality.sql and executed against mutated
+                    data, each in a transaction the harness rolls back — that is what the closing baseline
+                    certifies. The four readers were run on the final bytes of this text: step 8
+                    `check_ledger_citations.mjs --worktree` (exit 0 — 232 headings seen, 493 name:number tokens,
+                    strict on the working copy), step 9 `check_comment_citations.mjs` (PASS, 70 comment-plane
+                    citations across 21 files, all resolving), step 10 `check_ledger_sections.mjs` (PASS —
+                    STATUS HEAD 97 sections · on disk 98 · missing 0 · duplicates 0 · §130 printed as the one
+                    uncommitted section; DECISIONS HEAD 108 · on disk 109 · D121 the same note), step 11
+                    `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442` (PASS, 104 rows, 66 of 216).
+
+next              (a) D122, and it is a decision before it is a batch. The `fk` family is 91 of the remaining
+                    150 and none is plantable by a legal write, because the schema enforces every one; the
+                    mechanism to reach them is measured above and works. So the question is what counts: is an
+                    assertion whose whole job is to watch a write the database refuses falsified by a database
+                    the database cannot produce, or only by one a restore, a legacy import or a
+                    dump-from-another-instance could put in the loader's chair? The 91 split 50 on a child table
+                    the seed leaves empty (27 distinct tables — orders, carts, reservations, api_keys,
+                    audit_logs, share_links …) so those arms must INSERT, and 41 on a populated table where an
+                    UPDATE would do.
+                  (b) #71, fourth time standing on it: `facts` has no CHECK, so the TTL and stale rows are the
+                    only thing between a wrong expiry and a served page; a V8 bound would demote them to
+                    backstops, or the lane says why the table wants the freedom.
+                  (c) Carried: #73 (66 of 216 witnessed, 150 unwitnessed with fk 91 the bulk), #75, #62, #64,
+                    #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage residue, §87's
+                    session-time-zone seam, D91's served leg.
+```

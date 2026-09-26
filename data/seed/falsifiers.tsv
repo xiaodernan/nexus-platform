@@ -114,3 +114,12 @@ an arm the seed never files is waived by name and by writer	D120	every fact remo
 every probe family resolves at least one armed type	D120	every fact removed -- the same presence row on the table with no CHECKs	f0e0718
 some facts are deliberately stale (UI must show 已過時)	D120	every fact removed -- the same presence row on the table with no CHECKs	f0e0718
 the §19 provenance axis and the §109 stamp axis stay separate on facts	D120	every fact removed -- the same presence row on the table with no CHECKs	f0e0718
+orphan: favorites.collection	D121	the one collection favourite pointed at the guide row	fcb6988
+orphan: favorites.guide	D121	the one guide favourite pointed at a collection row	fcb6988
+orphan: facts.merchant	D121	one merchant fact re-keyed onto an offering's id	fcb6988
+every column that cannot vary is answered for why it cannot	D121	a document sourced from a real URL	fcb6988
+the columns stamped from the generation clock are exactly the ones answered so	D121	a fact whose stamp axis says human	fcb6988
+orphan: moderation_cases.review	D121	1,001 reviews removed in the table's own language ratio	fcb6988
+a vocabulary answer is still an answer	D121	every fact removed -- the same presence row on the table with no CHECKs	fcb6988
+every jsonb key whose name claims an axis is answered for which axis it is	D121	every fact removed -- the same presence row on the table with no CHECKs	fcb6988
+rating: every reviewed subject has exactly one rating fact	D121	every fact removed -- the same presence row on the table with no CHECKs	fcb6988
