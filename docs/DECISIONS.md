@@ -5500,3 +5500,12 @@ them when the numbers have been re-derived. Task #70 carries the served-plane tw
 worse: it is already past its trip date rather than three days from it. Task #57 still owes a plant witness
 for the two arms D90's census found dead in the same row — `expires_at <= observed_at` and the confidence
 bounds — where the honest fix is a plant per arm, not a deletion.
+
+**After the commit.** Step 8 then ran in its HEAD-strict default, over the committed text rather than a blob:
+166 headings seen, 371 `name:number` tokens resolving to 55 distinct files, and the working copy's 157
+citations in 165 sections read back with 0 offenders. Two of those headings are this unit's — D90 here and §87
+in STATUS.md — so the citations this entry makes are the ones a later gate run will be able to check, not
+merely the ones it will re-read. The numbers are printed by the checker, not transcribed from this run's
+memory of an earlier one, which is the mistake class §86 (j) names: a count without the condition it was read
+under is not a number. What step 8 still cannot see is stated in its own output: it proves a cited line
+exists, never that the line says what the sentence claims.
