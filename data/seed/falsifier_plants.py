@@ -102,6 +102,26 @@ ARMS = [
     ("every column that cannot vary", "one merchant's updated_at moved off the single seeded instant",
      "UPDATE merchants SET updated_at = now() "
      "WHERE id = (SELECT id FROM merchants ORDER BY id LIMIT 1);"),
+    # Batch D112: the queue is computed, not remembered -- names taken off `qc` and every column the
+    # plants touch checked against `pg_attribute` first, so a plant cannot fail as D106's did (a guessed
+    # `documents.text` that is an unread arm, not a red one).
+    ("raw_text is substantial enough", "a menu document thinned below the RAG floor, disclaimer kept",
+     "UPDATE documents SET raw_text = 'Menu listing. NOT REAL BUSINESSES. ' || repeat('dish ', 20) "
+     "WHERE id = (SELECT id FROM documents ORDER BY id LIMIT 1);"),
+    ("token size inside the", "a chunk counted far above the §7 ceiling",
+     "UPDATE chunks SET token_count = 4000 WHERE id = (SELECT id FROM chunks ORDER BY id LIMIT 1);"),
+    ("ordinal contiguous per document", "a document's first chunk renumbered out of the sequence",
+     "UPDATE chunks SET ordinal = 99 WHERE document_id = "
+     "(SELECT document_id FROM chunks ORDER BY document_id LIMIT 1) AND ordinal = 0;"),
+    ("category tree: 10 roots", "a leaf promoted to an eleventh root",
+     "UPDATE categories SET parent_id = NULL "
+     "WHERE id = (SELECT id FROM categories WHERE parent_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("category_primary is one of the merchant", "a merchant claiming a category it is not mapped to",
+     "UPDATE merchants SET category_primary = 'Sichuan-Portuguese fusion' "
+     "WHERE id = (SELECT id FROM merchants ORDER BY id LIMIT 1);"),
+    ("data_origin = demo everywhere", "a fact whose provenance axis says human",
+     "UPDATE facts SET value = jsonb_set(value, '{data_origin}', '\"human\"'::jsonb) "
+     "WHERE id = (SELECT id FROM facts ORDER BY id LIMIT 1);"),
 ]
 
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
