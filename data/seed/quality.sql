@@ -43,6 +43,38 @@ $$;
 
 CREATE TEMP TABLE qc ("check" text PRIMARY KEY, ok boolean, detail text);
 
+-- THE DATASET'S OWN "NOW", AND WHY A GATE HAS TO USE IT INSTEAD OF THE REAL ONE.
+--
+-- Two rows below — the fact-TTL row and the availability-horizon row — asked their questions of the reading
+-- machine until now: `expires_at > now()` and `min(starts_at)::date >= current_date - 7`. Both were measured
+-- on the fresh-database gate run kept as nexus_gate_217782_1790380257, on 2026-09-26, before this view
+-- existed, and each number below is from that reading:
+--
+--   * The horizon arm carried a date nobody wrote down. `current_date - 7` moves every day while the seeded
+--     horizon does not: min(starts_at) is 2026-09-22, and on 2026-09-26 the threshold read 2026-09-19, so
+--     the arm had 3 days of slack left and reddens on 2026-09-30 with the source tree unchanged. A gate that
+--     expires on its own is not a gate — the same bytes would have gone red, and CI with them, for no
+--     decision anyone made.
+--   * The TTL arm had the opposite problem: it could no longer fail at all. `stale` is set in generate.py
+--     only where the expiry already precedes the generator's own now (`exp < self.now` at the `stale =`
+--     assignment), so every stale row expires before the base instant — newest among the 72 stale rows read
+--     2026-09-22 09:30:00+08 — while `now()` on any machine that has not been wound backwards reads later
+--     every day. The count it reports is 0 and structurally has to be: the arm has been unable to fail since
+--     the base instant, 4 days and 35 minutes by that reading. A predicate that cannot be satisfied by any
+--     input is not checking the input.
+--
+-- Both rows mean "is this data self-consistent?", so both now ask the data. `nexus.seed_base` is the instant
+-- generate.py built the rows around, carried out of the generator as a comment line in out/00_truncate.sql
+-- and stamped onto the database by load.sh under the same SEED_ANCHOR=1 that records the load window (D89).
+-- A database that was never stamped gets no fallback here either: `known` is false, both rows go red, and the
+-- detail text names the missing stamp rather than accusing the seed. That is the difference between a row
+-- that can be lied to by a clock and a row that reports what it actually read.
+CREATE TEMP VIEW seed_now AS
+  SELECT b IS NOT NULL AS known, b AS ts,
+         coalesce(to_char(b, 'YYYY-MM-DD HH24:MI:SSOF'),
+                  'NO BASE STAMPED — re-run data/seed/load.sh with SEED_ANCHOR=1') AS shown
+    FROM (SELECT nullif(current_setting('nexus.seed_base', true), '')::timestamptz AS b) s;
+
 -- =========================================================== A  counts & shape
 \echo ''
 \echo '== A. per-table row counts =='
@@ -796,14 +828,18 @@ SELECT 'one fact per (subject, attribute)',
 
 INSERT INTO qc
 SELECT 'confidence within 0..1 and a TTL that runs forward',
-       NOT EXISTS (SELECT 1 FROM facts WHERE confidence < 0 OR confidence > 1)
+       (SELECT known FROM seed_now)
+       AND NOT EXISTS (SELECT 1 FROM facts WHERE confidence < 0 OR confidence > 1)
        AND NOT EXISTS (SELECT 1 FROM facts
                         WHERE expires_at IS NOT NULL AND expires_at <= observed_at)
-       AND NOT EXISTS (SELECT 1 FROM facts WHERE stale AND expires_at > now()),
+       AND NOT EXISTS (SELECT 1 FROM facts
+                        WHERE stale AND expires_at > (SELECT ts FROM seed_now)),
        (SELECT count(*) FROM facts WHERE confidence < 0 OR confidence > 1) || ' bad confidence, '
        || (SELECT count(*) FROM facts WHERE expires_at IS NOT NULL AND expires_at <= observed_at)
        || ' non-forward TTL, '
-       || (SELECT count(*) FROM facts WHERE stale AND expires_at > now()) || ' stale-while-live';
+       || (SELECT count(*) FROM facts WHERE stale AND expires_at > (SELECT ts FROM seed_now))
+       || ' marked stale inside the TTL they carry, against the dataset''s own now = '
+       || (SELECT shown FROM seed_now);
 
 -- An estimate is not a merchant statement. `offerings.price_source` keeps the word (the profile's
 -- `flags.estimated_price` reads it); the fact that carries the same number says `inferred`, or the
@@ -850,10 +886,17 @@ SELECT 'slots: capacity_left within capacity_total',
 
 INSERT INTO qc
 SELECT 'slots: 21-day horizon with coverage every day',
-       (SELECT count(DISTINCT starts_at::date) FROM availability_slots) >= 21
-       AND (SELECT min(starts_at)::date FROM availability_slots) >= current_date - 7,
-       (SELECT count(DISTINCT starts_at::date) FROM availability_slots) || ' distinct days, from '
-       || (SELECT min(starts_at)::date FROM availability_slots) || ' (pinned base date, see README)';
+       (SELECT known FROM seed_now)
+       AND (SELECT count(DISTINCT starts_at::date) FROM availability_slots) >= 21
+       AND (SELECT min(starts_at) FROM availability_slots)
+             >= (SELECT ts FROM seed_now) - interval '1 day'
+       AND (SELECT min(starts_at) FROM availability_slots)
+             <  (SELECT ts FROM seed_now) + interval '8 days',
+       (SELECT count(DISTINCT starts_at::date) FROM availability_slots) || ' distinct days, first slot '
+       || (SELECT min(starts_at) FROM availability_slots) || ' against the dataset''s own now = '
+       || (SELECT shown FROM seed_now)
+       || '; the bounds are a day before it and 8 days after it, and that now is nexus.seed_base'
+       || ' — stamped by data/seed/load.sh from the -- seed-base: line data/seed/generate.py writes';
 
 INSERT INTO qc
 SELECT 'slots: every slot has a pool in the same merchant',
@@ -2314,9 +2357,11 @@ INSERT INTO spread_answer VALUES
 -- "did this value come from the load", so the load now answers it: `SEED_ANCHOR=1` makes `data/seed/load.sh`
 -- stamp `nexus.seed_started` and `nexus.seed_finished` — epoch seconds read from the SERVER's clock, so host
 -- and container skew cannot enter — onto the database it loads, and the predicate below asks whether a value
--- falls inside that window widened by 600 s at each end. Nothing is measured against now() any more, and the
--- width of the load no longer matters: the value is inside the window whether the load takes two minutes or two
--- hours, which is the difference between a gate and a stopwatch.
+-- falls inside that window widened by 600 s at each end. Nothing in this set is measured against now() any
+-- more, and the width of the load no longer matters: the value is inside the window whether the load takes two
+-- minutes or two hours, which is the difference between a gate and a stopwatch. Two other rows asked their
+-- questions of the reading clock until D90 re-anchored them the same way — `seed_now` above is that anchor —
+-- and part A's `past_expiry` column keeps now() on purpose, because that one reports the reading instant.
 --
 -- MEASURED BEFORE WRITING THIS, on the live demo database (a seed loaded 2026-09-23 07:31), for every
 -- degenerate timestamp column: 22 hold one value, and the distances from that load instant are 0 min

@@ -131,11 +131,15 @@ step "4/8  load the seed into the fresh database"
 # closes itself over the live foreign keys (D63), so it would clear these 27 tables on a fresh
 # database anyway — they are empty there. The gate names them because a from-scratch proof should not
 # depend on nothing having been written yet.
-# SEED_ANCHOR=1 records the window this load runs inside, which is how step 5's generation-clock row
-# tells a load-stamped timestamp from a pinned one. Without it that row asks "within ten minutes of
-# now()", and D88 measured two official runs of one unchanged seed file — red in the morning, green
-# 25 minutes later — separated by nothing but how long this host took to get here. Only this
-# database is stamped: the gate owns it and drops it, and the live demo database's settings are not
+# SEED_ANCHOR=1 records the three anchors step 5 reads instead of the host clock: the window this load runs
+# inside (nexus.seed_started / nexus.seed_finished, from the server's clock) and the instant the dataset calls
+# "now" (nexus.seed_base, carried in from generate.py). Without them the generation-clock row asks whether a
+# timestamp is near the reading instant — and D88 measured two official runs of one unchanged seed file, red
+# in the morning and green 25 minutes later, separated by nothing but how long this host took to get here —
+# while the fact-TTL and slot-horizon rows ask the same question of now() and current_date, which is how a
+# gate ends up carrying a date it never wrote down: the horizon row reddened on 2026-09-30 with the tree
+# unchanged, and the TTL arm had been unable to fail for days before that. See D89 and D90.
+# Only this database is stamped: the gate owns it and drops it, and the live demo database's settings are not
 # this script's to change.
 CONTAINER="$CONTAINER" DB="$GATE_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 SEED_ANCHOR=1 \
   "$ROOT/data/seed/load.sh" | tail -12 | sed -e 's/^/    /'

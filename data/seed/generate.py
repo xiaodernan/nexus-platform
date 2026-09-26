@@ -1632,6 +1632,13 @@ def write_outputs(gen: Gen, out_dir: Path):
     # 00_truncate.sql: reset only the tables this generator owns, in FK-safe order, identity included.
     # `tenants` is deliberately absent (shared row, see above). review_summaries is truncated but never
     # seeded: summaries are AI-generated later, so a stale summary must not survive a reseed.
+    #
+    # The `-- seed-base:` line below is this dataset's own claim about what instant it calls "now" — the
+    # value `self.now` was when the rows were built. It travels as a comment in a file load.sh executes and
+    # write_outputs deletes before every run, so a carrier cannot outlive the data it describes: the two are
+    # written in the same call or not at all. load.sh reads it back off the disk under SEED_ANCHOR=1 and
+    # records it as `nexus.seed_base`, which is what quality.sql's TTL and horizon rows then measure against
+    # instead of the reading machine's clock (D90).
     with (out_dir / "00_truncate.sql").open("w", encoding="utf-8", newline="") as f:
         emit_truncate(
             f,
@@ -1643,7 +1650,8 @@ def write_outputs(gen: Gen, out_dir: Path):
                     "-- no rows* — see emit_truncate(). A non-empty one stops the load with its name and\n"
                     "-- its count rather than being emptied behind somebody's back; that is the case this\n"
                     f"-- file has always refused, and {len(DEPENDENT_TABLES)} of the tables it refuses are\n"
-                    "-- spelled out in out/optional/00_truncate_dependents.sql.\n"),
+                    "-- spelled out in out/optional/00_truncate_dependents.sql.\n"
+                    f"-- seed-base: {ts(gen.now)}\n"),
             hint=("Re-run data/seed/load.sh with RESEED_DEPENDENTS=1 to reset the tables that hold "
                   "demo-tenant rows, or empty the named table yourself first."),
         )

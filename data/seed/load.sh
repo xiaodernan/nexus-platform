@@ -18,11 +18,14 @@
 #   SKIP_GENERATE=1 data/seed/load.sh     # load the files as they are on disk
 #   ONLY=09_locations,12_offerings data/seed/load.sh   # partial reload, FK order preserved
 #   SEED_ANCHOR=1 data/seed/load.sh       # stamp this database with the window the load ran inside
-#                                         # (nexus.seed_started / nexus.seed_finished, epoch seconds). It is
-#                                         # what quality.sql's generation-clock row reads instead of now();
-#                                         # see D89. Off by default because it is a write to the DATABASE
-#                                         # entry, not to a table: on the throwaway gate database that is
-#                                         # free, on a shared one it is somebody else's server setting.
+#                                         # (nexus.seed_started / nexus.seed_finished, epoch seconds) and with
+#                                         # the instant the data itself calls "now" (nexus.seed_base, from
+#                                         # generate.py's carrier line). Those are what quality.sql's
+#                                         # generation-clock, TTL and horizon rows read instead of now() and
+#                                         # current_date; see D89 and D90. Off by default because it is a write
+#                                         # to the DATABASE entry, not to a table: on the throwaway gate
+#                                         # database that is free, on a shared one it is somebody else's
+#                                         # server setting.
 #                                         # scripts/db_gate_fresh.sh turns it on for its own database.
 #
 # Design notes:
@@ -54,6 +57,37 @@ die() { printf 'load.sh: ERROR: %s\n' "$*" >&2; exit 2; }
          "leaves columns it skipped holding their old values — outside the window, for the wrong reason."
 
 [ -d "$OUT" ] || die "no such directory $OUT — run: python $HERE/generate.py --out $OUT"
+
+# The instant the DATA calls "now", as the generator itself wrote it. Read here, in preflight, because the
+# answer is on disk before any connection is made and a dataset whose base cannot be published should be
+# refused before the loader has spent ten minutes loading it — not after, with the rows already written.
+seed_base_instant=""
+seed_base_read() {  # publish the instant the DATA calls "now", exactly as the generator wrote it
+  # This one is not a clock reading. `nexus.seed_base` is the dataset's own claim — the instant generate.py
+  # built its rows around — carried as a comment line in out/00_truncate.sql. The carrier lives inside a
+  # script write_outputs() deletes before every run, so it cannot outlive the data it describes, and under
+  # RESEED_DEPENDENTS=1 the line is still read from out/00_truncate.sql: that is the file the same
+  # generate.py call wrote the loaded CSVs next to, whichever truncate the load then executes.
+  # quality.sql's TTL and horizon rows measure against this instead of now()/current_date, which is what
+  # makes them say the same thing on 2026-09-26 and on 2027-03-01 (D90).
+  local v
+  v=$(sed -n 's/^-- seed-base: //p' "$OUT/00_truncate.sql" 2>/dev/null | head -1)
+  # The shape below is what generate.py's ts() emits — date, one space, time, offset — and it is also the
+  # reason the string is safe to place inside SQL quotes: no quote, semicolon or backslash can match it.
+  # Written as an alternation rather than as `{2}?`: bash's ERE took the latter as "the two digits are
+  # optional", so a well-formed `+08` failed it — and the first time this check ever ran on a real gate
+  # run, it refused a correct carrier line. The offset is required; its colon is not.
+  local re='^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}[+-]([0-9]{2}:[0-9]{2}|[0-9]{4}|[0-9]{2})$'
+  if [[ ! "$v" =~ $re ]]; then
+    die "SEED_ANCHOR=1 needs a '-- seed-base: <instant>' line in $OUT/00_truncate.sql and found" \
+        "'${v:-nothing}'. That line is written by data/seed/generate.py; the files on disk predate it," \
+        "so regenerate them (drop SKIP_GENERATE=1) before stamping. Guessing the base from this host's" \
+        "clock is the thing D90 exists to refuse."
+  fi
+  seed_base_instant="$v"
+}
+
+if [ "$SEED_ANCHOR" = "1" ]; then seed_base_read; fi
 
 # --------------------------------------------------------------------------- preflight
 # The dataset is complete when the *last* table in load order is present — but its filename is not a
@@ -134,14 +168,26 @@ seed_window_record() {  # $1 = started | finished
      \$\$;"
 }
 
+seed_base_record() {  # stamp the instant seed_base_read() validated, beside the load window
+  docker exec -i "$CONTAINER" "$PSQL" -U "$USER" -d "$DB" -v ON_ERROR_STOP=1 -q -c \
+    "DO \$\$
+     BEGIN
+       EXECUTE format('ALTER DATABASE %I SET nexus.seed_base = %L', current_database(),
+                      '$seed_base_instant');
+       RAISE NOTICE 'load.sh  seed base = %', '$seed_base_instant';
+     END
+     \$\$;"
+}
+
 if [ "$SEED_ANCHOR" = "1" ]; then seed_window_record started; fi
 
 docker exec -i "$CONTAINER" "$PSQL" -U "$USER" -d "$DB" \
   -v ON_ERROR_STOP=1 --single-transaction -q < "$stream"
 
 # The window's other bound is taken immediately after the commit, before ANALYZE and the count report: those
-# open sessions of their own, and the row's claim is about the transaction that wrote the rows.
-if [ "$SEED_ANCHOR" = "1" ]; then seed_window_record finished; fi
+# open sessions of their own, and the row's claim is about the transaction that wrote the rows. The base
+# instant is stamped beside them so one flag records everything quality.sql needs from outside the data.
+if [ "$SEED_ANCHOR" = "1" ]; then seed_window_record finished; seed_base_record; fi
 
 # --------------------------------------------------------------------------- post
 # Planner stats for the geo/price/rating filters the recommendation service leans on (D3).
@@ -167,7 +213,9 @@ end
 log ""
 log "next: docker exec -i $CONTAINER $PSQL -U $USER -d $DB -v ON_ERROR_STOP=1 < $HERE/quality.sql"
 if [ "$SEED_ANCHOR" != "1" ]; then
-  log "      ...but its generation-clock row will refuse this database: the row reads the window this loader"
-  log "      ran inside, and SEED_ANCHOR was off. Re-run with SEED_ANCHOR=1, or use scripts/db_gate_fresh.sh."
+  log "      ...but three of its rows will refuse this database: the generation-clock, fact-TTL and slot-"
+  log "      horizon rows read the anchors this loader can stamp (nexus.seed_started / nexus.seed_finished"
+  log "      from the server clock, nexus.seed_base from generate.py's carrier), and SEED_ANCHOR was off."
+  log "      Re-run with SEED_ANCHOR=1, or use scripts/db_gate_fresh.sh."
 fi
 
