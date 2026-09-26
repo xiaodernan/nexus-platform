@@ -5725,3 +5725,65 @@ not read or written by this unit, and the commit is pathspec-limited so it staye
 gate step, and the remaining cost is the step-number change — `db_gate_fresh.sh` and the ledgers quote "8
 steps" and "step 7/8" in prose, so a ninth step is a coordinated edit with a blast radius, not a bolt-on.
 Recorded there rather than started here.
+
+## D95 The comment plane becomes a gate step: nine steps now, and the reader's first three verdicts were green, red-by-plant, green
+
+D93 built a reader for the citations that live in source comments; D94 set the convention that made the plane
+clean enough to enforce. Neither is worth much while running it is something a person remembers to do. This
+unit ships `scripts/check_comment_citations.mjs` and makes it step 9 of `scripts/db_gate_fresh.sh`.
+
+**One resolver, delegated.** The new script resolves nothing itself. It reads
+`scripts/check_ledger_citations.mjs`, finds the single line where the token grammar lives — asserting exactly
+one line matches, so a refactor that duplicates or moves the pattern stops the scan rather than silently
+scoring a different grammar — compiles the literal out of it, and then hands the list it collected to that same
+checker with `--text=`. The alternative, a second implementation of the same rules, is the failure D85 named
+for hand lists and D93 named for filters: two readers of one plane disagree silently, and the disagreement is
+always found in the direction that lets more through.
+
+**What the step owes a verdict, and what it actually printed.** Three arms, in order, against the real tree:
+
+| arm | tokens | files | step 8 exit | step 9 result |
+| --- | --- | --- | --- | --- |
+| the plane as it stands | 64 | 17 | 0 | PASS, rc 0 |
+| one unresolvable cite planted in `scripts/.d95_plant.py` | 65 | 18 | 1 | FAIL, rc 1, naming a cite to `nothing_here.py`, a file that exists nowhere |
+| plant removed | 64 | 17 | 0 | PASS, rc 0 |
+
+The plant is an untracked scratch file with a comment, and it is gone: `ls` after the third arm reports
+`No such file or directory`. A scan that never went red has not been shown to be reading anything.
+
+**Two independent readers, agreeing.** D93's witness (`d93_census.py`, python, the temp-dir artifact this
+section's numbers came from originally) and the shipped script now report the same census: 64 tokens, 17 files,
+25 distinct cited files, 0 offenders. The shipped one is authoritative from here; the python stays where it is
+as D93's evidence, and the agreement is the cross-check rather than a second opinion to maintain.
+
+**The numbering, stated honestly.** Nine `step "n/…"` labels became `/9`, and step 8's rationale sentence —
+"the other seven steps all read the working tree" — became eight, because after this unit it is false. The
+ledgers' older sentences about "the official 8-step run" are left exactly as written: they describe runs made
+before this one, and those had eight steps. A run on 2026-09-26 at 12:57 local — recorded here as
+`gate-d95-official.log`, `GATE_RC=0` — is the first to execute nine, and it printed step 9's own block:
+`tokens found 64 in 17 file(s)`, `RESULT: PASS … (step 8 exit 0)`.
+
+**What this does not buy.** The scan's third exit code — 2, reserved for "the plane contains no tokens at all",
+which is the shape of a broken scan pretending to be a clean one — has no witness. Every way to reach it needs
+either a temporary edit to the shipped extension list or a parameter that does not exist yet, and inventing one
+to test the other is the kind of seam that outlives its purpose. Recorded as untested rather than passed. The
+step also still ignores anything in `docs/` (step 8's plane, deliberately excluded so a citation is attributed
+to one reader and not two), and it reads comment markers by position, so a string literal containing `--` or
+`//` can be scanned as prose; it over-reports, which is the direction that hides nothing.
+
+**Three things the measuring gave back.** (a) A green claimed from wording is a green that gets renamed out
+from under you: the first version of the verdict line tested the child's output for the phrase
+`0 offender(s)`, which step 8 does not print in `--text` mode at all — so the clean tree reported FAIL with the
+child exiting 0. The exit code is the verdict; a non-zero offender count is only a belt on it. (b) The
+newest file in the tree nearly carried the defect the previous two units retired: its own header comment
+illustrated a trailing cite as `x.py` with a colon and a digit, which is exactly a claim-shaped token, and it would have reddened the
+step on its first run. D90's rule again — a guard's first execution must not be its first test. (c) The RESULT
+block's two added lines printed as one run-on sentence, because they were written without their trailing
+`\n`, and `bash -n` — which is what this lane reaches for to check a shell edit — passed anyway. A syntax check
+is not a read of the output; the defect was found in the log, and the fix is certified by the re-run below
+rather than asserted.
+
+**Gates.** Run 1 (nine steps, before the newline fix): `GATE_RC=0`, 216 quality checks, `tables=58`,
+`migrations=7`, truncate probe both branches, jsonb reads and sites reconciled, ledgers resolved, comment
+plane censused at 64 tokens / 0 offenders. Run 2, over the fixed RESULT block, is what certifies the bytes that
+ship; its verdict is recorded in §92 rather than predicted here.

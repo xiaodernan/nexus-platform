@@ -4941,3 +4941,63 @@ next              (a) #72's remainder is now a numbering problem, not a cleanlin
                   (b) Carried: #71 (`facts` CHECK), #68, #58, #62, #64, #44, and D91's served leg until
                     :8090 is next up.
 ```
+
+## 92. The gate has nine steps: the comment plane is censused on every run, the new step was shown going red, and the shell check that passed hid a broken output line (2026-09-26)
+
+```
+plane             `scripts/check_comment_citations.mjs` (new) wired in as step 9 of
+                    `scripts/db_gate_fresh.sh`. Steps 1-8 relabelled `/9`; step 8's rationale sentence about
+                    "the other seven steps" became eight; the RESULT block gained two lines. No seed file, no
+                    schema, no check logic changed.
+
+one resolver      The new step resolves nothing itself: it reads the token grammar out of
+                    `scripts/check_ledger_citations.mjs` — asserting exactly one line matches, so a refactor
+                    that moves or duplicates the pattern stops the scan instead of quietly scoring a different
+                    grammar — and hands its collected list to that same checker with `--text`. Two readers of
+                    one plane is how D85 and D93 both got their findings; this is one reader with a second
+                    caller.
+
+plants            Three arms on the real tree, in order: the plane as it stands 64 tokens / 17 files /
+                    step-8 exit 0 → PASS rc 0; one unresolvable cite planted in an untracked scratch file
+                    `scripts/.d95_plant.py` → 65 / 18 / exit 1 → FAIL rc 1, the report naming the planted
+                    token; plant removed → 64 / 17 / PASS rc 0. Residue checked with `ls` (absent). A scan
+                    that has never gone red has not been shown to read anything, so the red arm is the one
+                    that makes the other two mean something.
+
+                  The step's third exit code — 2, reserved for "zero tokens found", the shape of a broken scan
+                    posing as a clean one — is UNTESTED. Reaching it needs either a temporary edit to the
+                    shipped extension list or a parameter that does not exist. Named as a gap rather than
+                    counted as a guard: this lane's own rule is that a check nobody has seen fire is an
+                    anecdote.
+
+agreement         D93's python witness and the shipped script report the same census — 64 tokens, 17 files, 25
+                    distinct cited files, 0 offenders. The shipped script is authoritative from here; the
+                    python stays in the temp dir as D93's evidence, and the match between them is the
+                    cross-check, not a second list to maintain.
+
+gates             Run 1 (`gate-d95-official.log`, 12:57 local): the first nine-step execution of the gate,
+                    `GATE_RC=0`, 216 quality checks, tables=58, migrations=7, truncate probe both branches,
+                    jsonb reads reconciled, ledgers resolved, and step 9 printing its own block.
+                  Run 2 (`gate-d95-run2.log`, 13:02): the same verdict after the output defect below was
+                    fixed — all nine step markers present (`1/9` through `9/9`), step 9 again
+                    `tokens found 64 in 17 file(s)` and `RESULT: PASS … (step 8 exit 0)`, three
+                    `RESULT: PASS` lines, `GATE_RC=0`. Run 2 is what certifies the bytes that ship.
+
+mistakes          (a) The verdict was first computed by testing the child's output for the phrase
+                    `0 offender(s)` — which step 8 does not print in `--text` mode — so a clean tree reported
+                    FAIL while the child exited 0. The exit code is the verdict; a non-zero offender count is
+                    only a belt on it. A green claimed from wording gets renamed out from under you.
+                  (b) The new file's own header illustrated a trailing cite as `x.py` with a colon and a
+                    digit: exactly the claim-shaped token D94 had just retired, and it would have reddened the
+                    new step on its first run. D90's rule, third appearance: a guard's first execution must
+                    not be its first test.
+                  (c) The two added RESULT lines printed as one run-on sentence because they were written
+                    without their trailing newline — and `bash -n`, the check this lane reaches for after a
+                    shell edit, passed anyway. Found by reading the log, not by validating the script. A
+                    syntax check says the file is legal, not that its output is legible.
+
+next              (a) #72's census runs on every gate now; the task stays open for the one thing named above as
+                    untested — a witness for the exit-2 empty-scan branch.
+                  (b) Carried: #71 (`facts` CHECK), #68, #58, #62, #64, #44, D91's served leg until :8090 is
+                    next up, §87's next (c), and the two dead arms of §89's row that still want plants.
+```
