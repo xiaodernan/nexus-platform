@@ -7759,3 +7759,41 @@ next              (a) Re-run WITH generation once the generated CSVs are clean o
                     #34, step 11's --registry residue, §87's session-time-zone seam, D91's served leg,
                     §130's missing `guide` branch.
 ```
+
+## 144. Two full runs of the same script on two planes, one day apart by nothing: the working copy is green with the generator included, HEAD is still red on the two door-vocabulary rows (2026-09-27)
+
+```
+plane             `scripts/db_gate_fresh.sh`, run twice with no flags -- once in this working copy, once
+                    inside a detached worktree of HEAD (`git worktree add --detach`, removed after;
+                    `git worktree list` shows only the main checkout again). Neither run opened the kept
+                    loaded seed; both created and dropped their own throwaway database. Nothing shipped
+                    was edited by this unit.
+
+changed           Verification only. D134 had skipped step 3 and cited D107/D108 for HEAD; both of those
+                    holes are filled with runs instead of references.
+
+found               (a) Working copy, full pipeline: steps 1-11 PASS, exit 0, 216 quality checks /
+                      tables=58 / migrations=7. generate.py's own self-check PASSed
+                      (FK integrity, bounds, naming, density, language mix) and the truncate probe
+                      reported "49 table(s) cleared -- 49 named by generate.py, 0 found by the schema's
+                      own foreign keys", which is the D62/D63 class ruled out for today's schema.
+                    (b) HEAD, same script: 6 migrations, 57 tables, rc=1, failing on exactly
+                      `a door vocabulary names a column the schema has` and
+                      `a CHECK-bounded column is a door vocabulary too` -- #75's pair, reproduced today
+                      rather than remembered. The generator self-check passed there too, so the red is
+                      vocabulary-naming-a-missing-column, not a seeder disagreement.
+                    (c) A defect in the gate's error path: the passing run prints its assertion total and
+                      the failing one does not -- the log dumps a tail of PASS lines (21 here) and the two
+                      red names, so "214 at HEAD" cannot be re-read from it and had to come from D108.
+                      Noted for whoever next edits the script: print the count on the failure side too.
+
+gates             This section is the two runs; their transcripts are
+                      `.../nexus-d63/gate_gen.log` (gate rc=0) and `.../gate_head.log` (gate rc=1).
+                      Steps 8/9/10/11 of run 1 reported PASS inside it (73 comment-plane citations over
+                      21 files; 326 registry rows reconciled). After this edit the readers were run again
+                      on the final bytes and resolved.
+
+next              (a) #92 is closed as measured; its remaining half -- re-running with generation after a
+                      future migration -- is a standing action, not a queue item. (b) #71, #75 (re-confirmed
+                      on both planes today), #79, #80 and the carried list unchanged.
+```

@@ -8199,3 +8199,54 @@ concurrency: other lanes may have been writing during it, and the run reads thei
 lane agrees, so step 3's self-check is back in the evidence. (b) Re-measure the HEAD plane (a clean
 checkout, expected 6 migrations / 214 checks / 2 reds per D107-D108) and file it as a number rather than
 a remembered one. (c) #71, #75, #91, #79, #80 unchanged; carried list unchanged.
+
+## D135 Both planes of the seed gate, measured on the same day: the working copy passes with generation, HEAD still reddens the two door-vocabulary rows — 2026-09-27
+
+D134 named two gaps in its own evidence: step 3 had been skipped, and the HEAD numbers were quoted from
+D107/D108 rather than re-measured. This unit closes both with two full runs of `scripts/db_gate_fresh.sh`
+-- and finds a small defect in the gate's failure path on the way.
+
+**Measurement (a): the generator agrees with the current schema, on both planes.** Run 1 was the shipped
+script with no flags: it regenerated `data/seed/out/` (a gitignored directory, so no tracked file was
+touched and no other lane's work was at risk), loaded it into `nexus_gate_337966_1790480778`, and passed
+all eleven steps -- `RESULT: PASS -- 216 quality checks on a from-scratch schema (tables=58,
+migrations=7)`, exit 0, with generate.py's own FK-integrity self-check reading `PASS (FK integrity,
+bounds, naming, density, language mix)` and the truncate probe reporting `49 table(s) cleared -- 49
+named by generate.py, 0 found by the schema's own foreign keys`. That is the D62/D63 defect class actively
+ruled out for today's schema, which is what step 3 skipping had left open.
+
+**Measurement (b): HEAD is still red, and the two reds are the same two.** Run 2 executed the same script
+inside a detached worktree of HEAD (`git worktree add --detach`, removed afterwards; `git worktree list`
+now shows the one entry it showed before). The script resolves its own root from its path, so the run
+used HEAD's six migrations and HEAD's `quality.sql`: **tables=57, migrations=6, gate rc=1**, failing on
+`a door vocabulary names a column the schema has` and `a CHECK-bounded column is a door vocabulary too`
+-- verbatim the pair D108 attributed to `V7__share_links.sql` never having been committed (#75). The
+generator self-check passed there too, so the red is not a seeder/migration disagreement: it is the
+vocabulary naming a column that HEAD's schema does not have. Nothing here is a defect this lane may fix
+-- the file that would settle it is another stream's migration.
+
+**Finding (c): the gate's failure path reports less than its success path.** A passing run prints the
+assertion total ("216 quality checks…"); a failing one prints the offending names and the
+`tables=`/`migrations=` counts, but never the total it filed -- and the log's PASS lines are truncated to
+a tail dump (21 in this transcript), so "214 assertions at HEAD" is not derivable from this run. It had
+to be carried from D108's measurement instead of re-read. The cheap fix belongs to whoever next touches
+the script: print `CHECKS` in the failure summary too, the way step 5's `RESULT:` line does on success.
+
+**Numbers.** Two runs, one container, ~4 minutes each, both against throwaway databases created and
+dropped by the script; the kept loaded seed `nexus_gate_283340_1790454442` was not opened by either.
+Run 1 (working copy, full): steps 1-11 PASS, exit 0, 216 checks / 58 tables / 7 migrations, step 9 at 73
+comment-plane citations over 21 files, step 11 over 326 registry rows. Run 2 (HEAD worktree, full):
+6 migrations / 57 tables / rc=1 / 2 named reds, generation self-check PASS, steps 6-11 never reached
+because step 5 aborts the script. Registry, harness and migrations unchanged by this unit; only the two
+ledgers gained these entries.
+
+**Limits.** (i) Two runs on one day prove agreement today, not a rule: the next migration touching a
+NOT NULL or a COPY column list can reopen the D62 class, and only the same from-scratch run closes it.
+(ii) Run 2 read HEAD's ledgers as its own working copy, so its steps 8-10 were not exercised (step 5
+aborted first); whether HEAD's ledgers cite working-copy files is therefore still unmeasured. (iii) The
+`0 found by the schema's own foreign keys` half of the truncate line is a statement about that load, not
+about FK coverage generally -- D64's catalogue-driven guard is what makes it true.
+
+**next.** (a) The gate's own failure-path total (finding (c)) if this lane touches
+`db_gate_fresh.sh` again. (b) #92 closes as measured. (c) #71, #75 (now re-confirmed today on both
+planes), #79, #80, #62, #64, #58, #44, #17, #19, #34 and the carried list stand as written.
