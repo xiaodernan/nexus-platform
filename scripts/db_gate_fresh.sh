@@ -238,6 +238,12 @@ step "11/12 scripts/check_falsifier_registry.mjs — every falsifier row names a
 # this script has a loaded database for steps 5-10 and drops it on exit. `NEXUS_FALSIFIERS` points the step at
 # another registry copy, which is how the step is shown red without editing the shipped file mid-run (the same
 # reachability move step 10 makes with LEDGER_SECTIONS_DIR).
+#
+# D150: the text plane's arms are only as good as the rule that their anchor matches exactly one sentence of
+# this file, and until `--self-test` existed that rule had never been asked to refuse anything. It needs no
+# database, so it runs first inside this step: a drifted or doubly-matching anchor reddens the gate here rather
+# than turning a later drive's red into a red about the wrong row.
+( cd "$ROOT" && "${PYTHON:-python}" data/seed/falsifier_plants.py --self-test ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/check_falsifier_registry.mjs --db "$GATE_DB" --container "$CONTAINER" \
   ${NEXUS_FALSIFIERS:+--registry "$NEXUS_FALSIFIERS"} ) 2>&1 | sed -e 's/^/    /'
 # ------------------------------------------------------------------------ 12. the spelled §-citations

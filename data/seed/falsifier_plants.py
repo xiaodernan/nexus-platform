@@ -1152,9 +1152,66 @@ def apply_edits(body, edits):
     return body
 
 
+def self_test():
+    """Run the text plane's own guard against the shipped body: one process, zero psql sessions.
+
+    The seven arms produce reds, and a red is only worth what the anchor is worth: a plant that aimed at a
+    phrase's second occurrence would print the same table and mean something else. `apply_edits` is the only
+    thing standing between the two, and until this function existed nothing in the repository had ever tried to
+    make it refuse. Both refusals are built from the shipped text rather than from an invented string, so the
+    probe cannot pass because its own fixture is easy, and the accepted case is checked too -- an arm whose
+    anchor no longer applies is a drift a drive would discover expensively.
+    """
+    body = gate_body()
+    print(f"text-plane self-test, against the sliced gate body ({len(body)} chars), 0 sessions opened")
+    failed = []
+
+    for arm in TEXT_ARMS:
+        try:
+            if apply_edits(body, arm[4]) == body:
+                failed.append(f"{arm[0]}: its edits left the body unchanged")
+        except AssertionError as e:
+            failed.append(f"{arm[0]}: {e}")
+    print(f"  accepted  {len(TEXT_ARMS)} shipped arm anchor set(s), each matching exactly once")
+
+    # A 0-occurrence anchor: the name has to be one this file could never contain.
+    try:
+        apply_edits(body, [("INSERT INTO plant_no_such_table VALUES", "x")])
+        failed.append("a 0-occurrence anchor was accepted")
+    except AssertionError as e:
+        print(f"  refused   0x: {e}")
+
+    # A repeated anchor, taken from phrases the sliced body really does repeat: rewriting the first match of
+    # one of these is the silent failure mode, so the case has to be attempted, not assumed.
+    tried = 0
+    for frag in ("INSERT INTO qc", "ORDER BY 1, 2", "jsonb_typeof(", "SELECT count(*) FROM"):
+        n = body.count(frag)
+        if n < 2:
+            continue
+        tried += 1
+        try:
+            apply_edits(body, [(frag, frag)])
+            failed.append(f"a {n}-occurrence anchor ({frag!r}) was accepted")
+        except AssertionError as e:
+            print(f"  refused  {n:>3}x: {str(e)[:96]}")
+    if tried == 0:
+        failed.append("no repeated phrase was found in the sliced body: the multi-match case was never attempted")
+
+    if failed:
+        print("RESULT: FAIL -- " + "; ".join(failed))
+        return 1
+    print("RESULT: PASS -- every shipped anchor applies once, and both ways an anchor can stop being aimable "
+          "(gone, or true of more than one sentence) are refused before a session exists")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--db", required=True)
+    ap.add_argument("--db", default=None, help="the loaded gate database to plant against (required to drive)")
+    ap.add_argument("--self-test", action="store_true",
+                    help="check the text plane's anchor guard against the shipped gate body and exit: no "
+                         "database, no container, no session, seconds rather than a drive")
+
     ap.add_argument("--container", default="nexus-platform-postgres")
     ap.add_argument("--emit-rows", default=None,
                     help="append falsifiers.tsv rows for every assertion this drive reddened -- the arm's own "
@@ -1165,6 +1222,10 @@ def main():
                     help="run just the arms whose marker or label contains this string: a whole-gate session "
                          "is the expensive half of a drive, and aiming one arm should not cost thirty-five")
     args = ap.parse_args()
+    if args.self_test:
+        return self_test()
+    if not args.db:
+        sys.exit("FATAL: a drive needs --db (or run --self-test, which opens no database at all)")
     body = gate_body()
     filed = set()
     if args.emit_rows:
