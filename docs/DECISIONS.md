@@ -8793,3 +8793,85 @@ An abort measured is a disposition; an untested claim is not, and that measureme
 **Gates, on the final bytes of this text** (§151 carries the census): `check_ledger_citations.mjs --worktree` exit 0 at 277 headings / 568 name:number tokens / 344 citation-shaped / 0 offenders; `check_comment_citations.mjs` PASS at 73 citations across 21 files (28 distinct files cited) — this unit touched no source comment; `check_ledger_sections.mjs` PASS with STATUS 118 at HEAD / 119 on disk and DECISIONS 132 / 133, D146 and §151 the only disk-only headings, 0 missing and 0 numbers claimed twice; `check_status_citations.mjs` PASS, every spelled `STATUS §NN` resolving to a heading at HEAD; `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442` PASS at 343 rows, 204 of 216 witnessed (94.4%), 304 commit and 39 file witnesses.
                     
                     `db_gate_fresh.sh` was not re-run, because no gate file, reader or migration changed; the shipped code touched is the plant harness, and its 158 whole-gate sessions are the gate body sliced out of `quality.sql` executed against a mutated schema inside a transaction that is rolled back — the identical closing baseline is what certifies that. `mvn -o -B test` stays 217 / 11 failures / 38 errors, which is #94's divergent `nexus_test`, unchanged by a harness-only unit.
+
+## D147 The schema plane reaches the last three plantable rows, and the first of them turns out to watch a key the project never writes — 2026-09-27
+
+**Why this unit.** D146 opened the schema plane and left twelve named rows. `STATUS §151`'s next (a) spent three of
+them by mechanism — *a jsonb element, a trailing view column and a citext cast* — and next (b) said the three
+candidates behind static `WITH probe AS (...)` UNIONs have to be *measured* rather than written off. Both ran.
+204 becomes 207 of 216 (95.8%), the registry goes 343 -> 348 rows, and the plantable queue is now empty: every one
+of the nine that remain sits in a group with a stated reason, and three of those nine have an error message behind
+the reason instead of a prediction.
+
+**Three arms, three single-arm drives, one loaded database.** Each drive is its own `BEGIN; plant; whole gate
+body; report; ROLLBACK` session set against `nexus_gate_283340_1790454442`, and each printed the same shape:
+baseline 216 assertions and 0 red, target RED, 0 assertions unfiled, closing baseline identical.
+
+| arm | plane | target | collateral | rows |
+| --- | --- | --- | --- | --- |
+| a real guide item gains a `merchant_id` pointing at nothing | data (jsonb element) | `collections/guides reference live merchants` | `the elements of an object-array column all carry the same keys` | 216 |
+| `users.email` cast from citext to text | schema | `a census that folds case reports both readings and which one the demo exercises` | `the string census declares a reading for every type it catches` | 216 |
+| `v_merchant_funnel` gains a trailing column no answer block explains | schema | `a served view answers every column it exposes` | none | 216 |
+
+Three drives to validate, three re-run with `--emit-rows` (arm commit `dc3ac65`, row commit `e9ec80b`), each at
+rc=0: 2 + 2 + 1 rows appended, three of them the first witness an assertion of that name ever carried. `--only`
+was used deliberately: a single-arm drive costs three whole-gate sessions, and the fleet is 158 arms.
+
+**The finding, which is the reason this unit is not just three rows.** The first arm was aimed by D132's note and
+then measured, and the measurement says the row is aimed at the wrong key. Two planes agree: on the gate database
+and on `nexus`, 4 collections carry items, **0** of those element objects carry a `merchant_id` key, and all 38
+elements carry `subject_id` with `subject_type = 'merchant'` (19 `collection`, 10 `guide`, 9 `itinerary`). The seed
+therefore never writes the key the row reads. The read path does not either: `CollectionsController.merchantIdOf()`
+resolves `subject_type` then `subject_id` and never looks at `merchant_id`, and `CollectionsWriteController.
+requireItems()` copies every key as written while validating only that a cited `subject_id` is a uuid — existence is
+explicitly the read's job, reported on `dropped_item_ids`. So the state the row is *named for* is reachable by a
+door, and the row does not see it. Measured, not argued: a scratch probe (not an arm) repointed all four
+collections' first merchant-typed element at a ghost uuid — a payload the door accepts by design — and **0 of the
+216 assertions moved**, while the same transaction confirms `dangling=4`. The plant that does redden the row works
+because it introduces a key the project does not use, which is exactly why its registry label says so out loud.
+This is a report for `data/seed/quality.sql`'s owner, not an edit: re-aiming the row at
+`subject_type = 'merchant'` + `subject_id` would make it read the 38 references that exist and would catch what the
+probe could not.
+
+**The three candidates written off, with the abort that writes them off.** D146 predicted these would error out of
+the whole-gate replay; the drive was run to collect the text instead of assuming it. `ALTER TABLE permission_grants
+DROP COLUMN subject_id` aborts with `column "subject_id" does not exist` inside `WITH g AS (SELECT subject_type,
+subject_id::text sid, ...)`, and `DROP TABLE api_keys` aborts with `relation "api_keys" does not exist` inside the
+same probe's own `UNION ALL SELECT 'api_key', id::text, NULL FROM api_keys`. That disposes of
+`an armed type resolves in a table the schema has`, `the pairs declared probed are pairs the schema has` and
+`the registry names no column the schema has lost`: the objects they watch are the objects the report is computed
+FROM, so no rolled-back DDL plant can witness them from a whole-gate replay. Reaching them means splicing a single
+assertion, which is the plane D65 gave up on deliberately — a spliced row answers "did this predicate move" and
+hides every collateral, and a harness that hides collateral cannot tell a good plant from a broken fixture.
+
+**Two claims this unit retires.** (i) D132 grouped `a census that folds case reports both readings…` under *three
+rows that are true because the schema or the seed forbids the state they watch for*, and said its red "needs two
+citext values differing only by case". It does not: the row went red when the citext **type left the census**,
+which is the direction that matters — a declared reading for a type no column any longer has. (ii) That same group
+of three is now closed outright, because all of `price_updated_at present for priced offerings` (D146 dropped its
+NOT NULL), `a census that folds case…` and `collections/guides reference live merchants` have witnesses. A write-off
+that a later plane overtakes has to be corrected in the ledger, not left standing as a superseded fact.
+
+**What the three new witnesses do not buy.** The collections row's witness shows the *predicate* detects a dangling
+`merchant_id`; it buys nothing about the 38 references that exist, and the probe above shows the gate is blind to
+those. The citext arm shows the fold row and the string-census reading row both detect a type leaving the schema —
+it does not show the demo exercises case folding, which is the second half of that row's name. The view arm shows
+the answered-column census notices an unexplained column; it says nothing about whether the view is correct. And all
+three are schema/data-plane plants inside a transaction: they witness detection by the assertion, never that a door
+could produce the state — D122's distinction, unchanged.
+
+**The nine the reader still names.** `a join-one-type waiver is only true while the table ships one type`,
+`a probe arm is a declared type and every armed type has an arm`, `the arm registry agrees with the probed-pair
+counts`, `the polymorphic-pair census reads the catalogue`, `the reference census reads the catalogue` and
+`traffic sweep reaches the whole closure, not a hand list` have both sides written inside `quality.sql` or count a
+whole-schema floor, so a data/schema plant cannot reach them without editing the file under test — D132's nine,
+minus the served-view row this unit landed. The other three are the aborts above. Nothing here is a "no more ideas"
+list: the six file-plane rows say what a *fourth* mechanism would have to be (plant the sliced gate body's own text
+in memory, never the tracked file), and that is a decision, not a leftover.
+
+**Gates.** `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442` PASS at 348 rows, 207 of 216 witnessed
+(95.8%), 309 commit and 39 file witnesses, 9 gaps named. No gate file, reader or migration changed, so
+`db_gate_fresh.sh` was not re-run; the shipped code touched is the plant harness and its eighteen whole-gate sessions
+are the evidence. `mvn -o -B test` is untouched by a harness-only unit and stays at #94's 217 / 11 failures / 38
+errors on the divergent `nexus_test`.
+

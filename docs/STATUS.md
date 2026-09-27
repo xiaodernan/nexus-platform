@@ -8230,3 +8230,63 @@ next              (a) The remaining twelve rows split three ways, and the split 
                     #79's other halves, #17, #19, §87's session-time-zone seam, D91's served leg, §130's
                     missing `guide` branch.
 ```
+
+## 152. Three more arms close the plantable queue; the row named for guide merchants turns out to read a key nothing writes, and a ghost reference moves 0 of 216 (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (three arms) and `data/seed/falsifiers.tsv` (five rows).
+                    No gate file, reader, migration or product source touched. Run against the kept loaded seed
+                    database `nexus_gate_283340_1790454442` in `nexus-platform-postgres`; every one of the
+                    eighteen whole-gate sessions in this unit reported 216 assertions / red = 0 at baseline and
+                    an identical closing baseline.
+
+changed           - three arms, taking the fleet from 155 to 158: a jsonb element gains a `merchant_id` key the
+                    seed never writes; `users.email` is cast citext -> text; `v_merchant_funnel` gains a trailing
+                    column, its new definition composed from `pg_get_viewdef` rather than transcribed here.
+                  - the two D146 leftovers the whole-gate replay cannot reach are recorded with the abort text
+                    that says so (`column "subject_id" does not exist`, `relation "api_keys" does not exist`).
+
+measured            arm                                                     rows  target  coll.  unfiled
+                    guide item gains a ghost `merchant_id` -> the row names it    RED    1      0
+                    citext -> text                                 -> fold census RED    1      0
+                    view gains `plant_unanswered`                    -> view census RED   0      0
+
+                    Each line above is a single-arm drive (`--only`, 3 sessions) run twice: once to validate,
+                    once with `--emit-rows`. Six drives, rc=0 on all six, 5 rows appended (3 from an arm's own
+                    RED, 2 from collateral) under arm commit `dc3ac65` and row commit `e9ec80b`.
+
+                  - Step 11 re-read the record on the final bytes: 348 rows, **207 of 216 assertions witnessed
+                    (95.8%)**, 309 commit / 39 file witnesses, 9 gaps still named, `RESULT: PASS`.
+                  - The collections row was aimed and then measured, and the measurement is the finding: on both
+                    the gate database and `nexus`, 4 collections carry items, **0** elements carry a `merchant_id`
+                    key, and all 38 elements carry `subject_id` with `subject_type = 'merchant'`. The §8 read
+                    resolves `subject_type`/`subject_id` (`CollectionsController.merchantIdOf()`), and the §8 write
+                    validates a cited id's shape but never its existence (`requireItems()`), reporting unresolvable
+                    ids on `dropped_item_ids`. A probe that repointed all four collections' first merchant-typed
+                    element at a ghost uuid — `dangling=4` confirmed inside the same transaction — moved
+                    **0 of 216** assertions. The row is therefore falsifiable only through a key the project does
+                    not use; its registry label says so, and the fix belongs to `quality.sql`'s owner.
+                  - D132's *three rows that are true because the schema or the seed forbids the state* is now an
+                    empty group: `price_updated_at present for priced offerings` fell to D146's DROP NOT NULL, and
+                    this unit took the other two. D132's stated reason for the fold row ("its red needs two citext
+                    values differing only by case") is superseded — the row goes red when the citext **type**
+                    leaves the census, which is the direction that matters.
+
+found               (a) The plantable queue is empty. The nine remaining names divide into the three whole-gate
+                    aborts measured above and six whose both sides are written inside `quality.sql` (the two
+                    catalogue floors, the arm-registry count, the probe-arm declaration row, the join-one-type
+                    waiver, the traffic-closure floor). Reaching those six is a decision about a fourth mechanism
+                    — plant the sliced gate body's own text in memory — not a leftover.
+                  - (b) A green row can watch a key nobody writes. `collections/guides reference live merchants`
+                    has now been witnessed reddening and is still blind to every reference the demo ships.
+
+gates               `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442` PASS at 348 rows / 207 of 216
+                    (95.8%). `db_gate_fresh.sh` not re-run: no gate file, reader or migration changed.
+                    `mvn -o -B test` untouched by a harness-only unit — still #94's 217 / 11 failures / 38 errors.
+
+next                (a) Report (do not edit) to the seed lane: re-aim `collections/guides reference live merchants`
+                    at `subject_type = 'merchant'` + `subject_id`, which turns a row that reads nothing into one
+                    that covers the 38 references the demo actually serves.
+                  - (b) #73's residue is now characterised, so either close it by decision (the six file-plane rows
+                    as a named, reasoned write-off) or build the fourth mechanism; and #94 still needs the user's
+                    authorization before `nexus_test` is rebuilt.
