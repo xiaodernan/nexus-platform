@@ -34,11 +34,17 @@
  * already holding three lanes' uncommitted STATUS sections, the worktree census is 151 citations, 0 offenders.
  *
  * USAGE
- *   node scripts/check_ledger_citations.mjs              # strict on HEAD, working copy reported
- *   node scripts/check_ledger_citations.mjs --worktree    # strict on the working copy — what gate step 8 runs
- *   node scripts/check_ledger_citations.mjs --report      # never exit non-zero
- *   node scripts/check_ledger_citations.mjs --verbose     # list every citation and where it resolved
- *   node scripts/check_ledger_citations.mjs --text=<file> # census one file instead of both ledgers (plants)
+ *   node scripts/check_ledger_citations.mjs                # strict on HEAD, working copy reported
+ *   node scripts/check_ledger_citations.mjs --worktree     # strict on the working copy — what gate step 8 runs
+ *   node scripts/check_ledger_citations.mjs --report       # never exit non-zero
+ *   node scripts/check_ledger_citations.mjs --verbose      # list every citation and where it resolved
+ *   node scripts/check_ledger_citations.mjs --text=<file>  # census one file instead of both ledgers (plants)
+ *   node scripts/check_ledger_citations.mjs --text <file>  # the same request; both spellings are parsed
+ *
+ * A flag this reader does not know is refused with `RESULT: NOT CHECKED` and exit 2, never ignored. D157
+ * measured why that matters: the old parser read only `--text=`, so `--text <plant>` was not an error, it was
+ * a census of the two real ledgers that believed it had been aimed at a plant — 297 sections, 377
+ * citation-shaped tokens, 0 offenders, exit 0.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -47,16 +53,65 @@ import { join, isAbsolute } from 'node:path';
 import { VENDOR_DIRS, walkFiles } from './source_index.mjs';
 
 const ROOT = process.cwd();
-const TEXT_ARG = process.argv.find((a) => a.startsWith('--text='));
+
 /**
- * `--text=<path>` replaces the ledger list with one file, read as written. It exists for the same reason
+ * The vocabulary for "this run is not a verdict". Exit 2 already meant it in the ledger-read path below; D157
+ * extends it to the argument path and the non-vacuity guards, which used to `throw` — a stack trace and exit 1,
+ * the same code as "the ledgers hold a false citation", which is a claim about the citations and was not true.
+ */
+const notCheckable = (m) => {
+  console.log('NEXUS — ledger citation census');
+  console.log(`  RESULT: NOT CHECKED — ${m}`);
+  process.exit(2);
+};
+
+/**
+ * D157 — the argument grammar, in one place. Two spellings have ever been pointed at this reader:
+ * `--text=<path>` (gate step 8, and `check_comment_citations.mjs:135`) and `--text <path>` (what a person types
+ * from the USAGE line). Only the first was parsed, so the second did not fail — it silently censused the wrong
+ * plane and printed a truthful-looking green about it. Both are parsed now, and a request that cannot be aimed
+ * is refused rather than dropped: unknown flag, missing value, empty value, a value that reads as another flag,
+ * and a flag given twice are each a refusal. That last one is this reader's own rule; D156 gave
+ * `check_jsonb_reads.mjs` the equals-vs-space half but not this, and #102 owns making the two readers share one
+ * parser instead of two dialects that differ in their fine print.
+ */
+const FLAGS = { '--text': 'value', '--report': 'switch', '--worktree': 'switch', '--verbose': 'switch' };
+const FLAG_NAMES = Object.keys(FLAGS).join(', ');
+function parseArgs() {
+  const argv = process.argv.slice(2);
+  const out = { text: null, report: false, worktree: false, verbose: false };
+  let values = 0;
+  for (let i = 0; i < argv.length; i += 1) {
+    const a = argv[i];
+    if (!a.startsWith('--')) notCheckable(`unexpected argument ${a} — this reader takes only ${FLAG_NAMES}`);
+    const name = `--${a.slice(2).split('=')[0]}`;
+    if (FLAGS[name] === undefined) notCheckable(`unknown option ${a} — flags this reader parses: ${FLAG_NAMES}`);
+    if (FLAGS[name] === 'switch') {
+      if (a.includes('=')) notCheckable(`${name} is a switch and was given a value: ${a}`);
+      out[name.slice(2)] = true;
+      continue;
+    }
+    const eq = a.indexOf('=');
+    const value = eq >= 0 ? a.slice(eq + 1) : argv[++i];
+    if (value === undefined || value === '') notCheckable(`${name} was given without a path`);
+    if (value.startsWith('--')) notCheckable(`${name} was followed by ${value}, which reads as another flag — there is no file for the census`);
+    values += 1;
+    if (values > 1) notCheckable(`${name} was given ${values} times — which copy is the census?`);
+    out.text = value;
+  }
+  return out;
+}
+
+const ARGS = parseArgs();
+/**
+ * `--text` replaces the ledger list with one file, read as written. It exists for the same reason
  * D87's `--quality=` does: a witness must be able to show an arm failing without writing a tracked file that
  * two other lanes are appending to.
  */
-const LEDGERS = TEXT_ARG ? [TEXT_ARG.slice('--text='.length)] : ['docs/DECISIONS.md', 'docs/STATUS.md'];
-const REPORT_ONLY = process.argv.includes('--report');
-const WORKTREE = process.argv.includes('--worktree') || Boolean(TEXT_ARG);
-const VERBOSE = process.argv.includes('--verbose');
+const LEDGERS = ARGS.text === null ? ['docs/DECISIONS.md', 'docs/STATUS.md'] : [ARGS.text];
+const REPORT_ONLY = ARGS.report;
+const WORKTREE = ARGS.worktree || ARGS.text !== null;
+const VERBOSE = ARGS.verbose;
 
 /* ------------------------------------------------------------------ the source index */
 
@@ -250,10 +305,14 @@ if (unread.length > 0) {
 }
 
 // Non-vacuity, in the same spirit as D87's row-count guard: a scan that resolves nothing is not a green scan.
-if (FILES.length < 100) throw new Error(`the source index holds ${FILES.length} files; a walk that finds almost nothing cannot check a citation`);
-if (head.sections === 0) throw new Error(`the census read ${LEDGERS.join(', ')} and saw no "## " heading — it did not read the ledger it claims to have censised`);
-if (head.citations === 0) throw new Error(`no citation-shaped token in ${head.tokens} name:number tokens — either the classifier or the index broke, and a run that checks nothing is the reddest kind of green`);
-if (head.citations > 0 && head.files.size === 0) throw new Error(`${head.citations} citation(s) found and ${head.files.size} file(s) resolved — the index cannot see any file the ledgers name`);
+// These refuse (exit 2) rather than throw, and the difference is the whole point of D157's second half: a
+// `throw` printed a stack trace and exit 1, which is the code this reader uses for "the ledgers name a file
+// that is not there". A census that cannot certify its own input has said nothing about the citations, so the
+// red code would have been a claim about the ledgers invented out of a broken run.
+if (FILES.length < 100) notCheckable(`the source index holds ${FILES.length} files; a walk that finds almost nothing cannot check a citation`);
+if (head.sections === 0) notCheckable(`the census read ${LEDGERS.join(', ')} and saw no "## " heading — it did not read the ledger it claims to have censised`);
+if (head.citations === 0) notCheckable(`no citation-shaped token in ${head.tokens} name:number tokens — either the classifier or the index broke, and a run that checks nothing is the reddest kind of green`);
+if (head.files.size === 0) notCheckable(`${head.citations} citation(s) found and ${head.files.size} file(s) resolved — the index cannot see any file the ledgers name`);
 
 console.log('NEXUS — every file:line citation in docs/DECISIONS.md and docs/STATUS.md, read back out of the source');
 console.log(`  text censised            ${WORKTREE ? 'the working copy (strict)' : 'HEAD (strict); the working copy is reported'}`);

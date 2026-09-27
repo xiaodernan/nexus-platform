@@ -9435,3 +9435,82 @@ D86 filed live in the same file's other blocks, and #102 keeps the dialect's rem
 `--name` with `indexOf` and fall back to a default when the value is glued on (`verify_contract_runtime.mjs`,
 `verify_served_reads.mjs`, and step 11's `check_falsifier_registry.mjs`, which is another lane's file and is
 reported rather than edited here). The real fix is one shared parser, not a fifth two-line patch.
+
+## D157 — Step 8's `--text` seam was claimed by D152 and never tested: the space spelling censused the two real ledgers and exited 0
+
+CONTEXT. D152 gave gate step 8 the `GATE_LEDGER_TEXT` knob and recorded that it "aims the step at one file
+instead of the two ledgers". D156 gave step 7 the same shape and, unlike D152, put a harness inside the gate so
+the claim is re-asked on every run instead of trusted. Step 8 had no harness: the paragraph was the evidence.
+Reading the reader in order to write one found the same class of defect, on the half of the sentence D156 had
+just fixed.
+
+MEASURED FIRST, ON THE BYTES AT HEAD (which equalled the working copy for this file, `cmp` before the probe).
+The parser was one `process.argv.find` over a `--text=` prefix, so the two spellings of the same request were
+not two ways of asking the same question:
+
+  * `--text=<plant>`, the spelling gate step 8 passes, printed `headings seen 1 section(s)`,
+    `citation-shaped 1` and `FALSE LEDGER CITATIONS (1)`, and exited 1;
+  * `--text <plant>`, the spelling the USAGE line invites a person to type, printed `headings seen
+    297 section(s)`, `citation-shaped 377`, `every citation-shaped token resolves to one file, by name, within
+    its bounds`, and exited 0. It had censused the two real ledgers.
+  * `--tex=<plant>` — a mistyped flag — did exactly the same.
+
+Every one of those lines is true about the plane it read; none of them read the plane the operator named. That
+is what makes this a defect rather than a cosmetic one: a green that is a silent re-aim is indistinguishable, in
+the log, from a green that is a result. The same `find` also kept the first of two `--text` arguments and let
+`--text=` with nothing after the sign fall through to `join(ROOT, '')`, which exited 2 for the wrong reason
+(`EISDIR` on the repository directory, not "you gave me no file").
+
+SECOND DEFECT, SAME FILE. The four non-vacuity guards were `throw new Error`. A fixture holding no `## ` heading
+— the exact case a guard exists for — printed a stack trace (which included the guard's own source line) and
+exited 1, and exit 1 is this step's code for "a ledger names a file that is not there". A census that had
+certified nothing was reporting a finding about the ledgers.
+
+THE TWO FIXES. `scripts/check_ledger_citations.mjs` now takes its flags from one table and parses both
+spellings of `--text`: an unknown option, a bare positional, a missing value, an empty value, a value that reads
+as another flag, a switch given a value, and `--text` given twice each print `RESULT: NOT CHECKED` and exit 2 —
+refused rather than dropped. The four guards refuse in that same vocabulary. The fourth guard's
+`head.citations > 0` conjunct is gone, because the guard above it already exits when the citation count is 0: a
+condition that can never be false is not a guard.
+
+WHAT THE HARNESS CAUGHT WAS THIS LANE'S OWN TEXT. `scripts/falsify_ledger_text.mjs` runs inside step 8 before
+the reader, over Temp fixtures, and its first draft carried a literal past-the-end example inside a comment
+explaining the plant. Gate step 9, which scores source comments through step 8's own grammar sliced out of the
+checker rather than copied, reddened on that line inside the minute — correctly. The number is now read out of
+the checker's own length instead of written down, which also means the plant cannot drift back inside the file
+it cites. D94's placeholder convention with a fresh case: a plant may hold a false citation; a comment about a
+plant may not.
+
+TWO MISSED PREDICTIONS, KEPT AS ARMS. (a) A plant whose only citation names a file the index does not hold does
+not print `FILE NOT FOUND`. It exits 2 saying the census found citations and resolved none of them, because the
+vacuity guard cannot tell "every cite in this file is broken" from "the index is broken", and it refuses rather
+than guessing. So the `FILE NOT FOUND` arm is only observable next to a cite that resolves — the fixture now
+cites `scripts/source_index.mjs:1` beside the plant, and the refusal is pinned as its own arm. (b) A cite that
+names only the basename `package.json`, with a line number after it, is AMBIGUOUS: six files in this
+repository hold that name, so a citation that looks precise names none of them in particular. That is a third
+refusal, now reached too. The sentence is written without the citation grammar on purpose — this lane's own
+first draft wrote the shape, and step 8 reddened on the ledger for describing it.
+
+MEASURED AFTER. The harness reports 18 arms · 18 held · 0 missed, and the two spellings of the same
+plant now print verdict lines that are identical, which the harness checks as text rather than as
+two independent reds. On the bytes of this entry: step 8 --worktree sees 299 headings · 608
+name:number tokens · 378 citation-shaped · 73 distinct files · exit 0; HEAD-strict 297 headings ·
+377 citation-shaped, working copy 378 citations · 0 offenders · exit 0; step 9 74 comment-plane
+citations across 21 files · exit 0; step 10 8 arms · exit 0; step 12 11 spelled citations · exit 0;
+and the three sibling harnesses 0/0/0. The ledgers at HEAD hold 143 decisions and 129 sections
+against 144 and 130 on disk, which is this entry and the next one being written, not a fork.
+
+TWO LEGS, ONE WORKING TREE. Leg 1 is the full neutral gate — generate, migrate, seed and all twelve
+steps — exit 0 with 12 step headers, carrying this harness's 18 arms inside step 8. Leg 2 runs with
+`GATE_LEDGER_TEXT` aimed at a Temp plant whose one citation is past the end of the checker, and
+exits 1 after 8 step headers, printing `FALSE LEDGER CITATIONS (1)` and naming the file, the section
+and the line that wrote it — so the claim D152 made about this step is now measurable from inside
+the gate, on the plane the gate runs. Leg 2 was started with --skip-generate because generation is
+not the seam under test and leg 1 had re-verified it minutes earlier on the same tree; the
+twelve-step header count of leg 1 is what covers generation, the seed and steps 1-7.
+
+WHAT IS LEFT. #102's other half: two readers now parse both spellings, but they are two parsers, and only this
+one refuses a value that reads as a flag; one shared argument parser, plus a gate arm that feeds every checker an
+unknown flag and requires exit 2, is the real fix and will not be invented inside a two-line commit. #100 stays
+report-only: CI's `required` job asserts the e2e result alone, and its census steps run through `| tee` without
+`pipefail`, so a checker that exited 1 would have to be read out of the log rather than out of the job status.

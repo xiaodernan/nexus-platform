@@ -23,7 +23,8 @@
 #                        (inert when unset; the reachability arm, not a way to skip the check)
 #   NEXUS_FALSIFIERS     step 11 only: validate this registry copy instead of data/seed/falsifiers.tsv
 #                        (inert when unset; the same kind of reachability arm)
-#   GATE_LEDGER_TEXT     step 8 only: census this file instead of both ledgers (inert when unset)
+#   GATE_LEDGER_TEXT     step 8 only: census this file instead of both ledgers (inert when unset; the fifth
+#                        instance of the same arm, and step 8's harness re-asks it on every run — see step 8)
 #   GATE_COMMENT_PLANE   step 9 only: read comments out of this directory instead of the repository
 #                        (inert when unset; both are the same reachability arm, see steps 8-9)
 #   GATE_STATUS_DIR      step 12 only: scan this directory for spelled §-citations instead of the repository
@@ -50,7 +51,11 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --keep)          KEEP=1 ;;
     --skip-generate) SKIP_GENERATE=1 ;;
-    -h|--help)       sed -n '2,26p' "$0"; exit 0 ;;
+    -h|--help)       # Print the whole header block rather than a hand-counted line range: the header grew by
+                     # three knob paragraphs after the range was written (D152, D156) and `--help` stopped
+                     # naming GATE_COMMENT_PLANE, GATE_STATUS_DIR and GATE_QUALITY_SQL while the script still
+                     # honoured all three (D157). An undocumented arm is an arm nobody drives.
+                     awk 'NR>1 { if ($0 ~ /^$/) { print ""; next } if ($0 !~ /^#/) exit; sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
     *) echo "db_gate_fresh.sh: unknown option: $1" >&2; exit 2 ;;
   esac
   shift
@@ -227,6 +232,19 @@ step "8/12  scripts/check_ledger_citations.mjs — every File.java:NNN the ledge
 # has NEXUS_FALSIFIERS (D98's shape: prove a guard reachable without editing a tracked file mid-run). The
 # checker already read the flag; what it never had was a path from the gate to it, so the only way to witness
 # a red here was to run the checker by hand, which is a claim about a different invocation.
+#
+# D157: that paragraph claimed the seam without measuring it, and the measurement found the same hole D156
+# found one step earlier — the checker parsed only `--text=`, so a space-separated `--text <path>` was not an
+# error, it was a census of the two real ledgers that believed it had been aimed at a plant: 1 section and
+# `FALSE LEDGER CITATIONS (1)` from the equals spelling, 297 sections, 377 citation-shaped tokens and exit 0
+# from the space spelling of the same file. Step 8 passes the equals form, so the gate was never broken; what
+# was unprovable was that this step can stop the gate at all. `scripts/falsify_ledger_text.mjs` now shows it in
+# both directions on Temp fixtures (the plant reddens, an unknown flag and an unaimable `--text` refuse with
+# exit 2 rather than silently censusing the ledgers), and it checks the two things that let the defect hide:
+# that both spellings print the same verdict, and that `--help` still names every knob the header documents —
+# the old `sed -n '2,26p'` stopped short of the three most recent ones, so an arm added after line 26 was
+# reachable by environment but undiscoverable by reading.
+( cd "$ROOT" && node scripts/falsify_ledger_text.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/check_ledger_citations.mjs --worktree ${GATE_LEDGER_TEXT:+--text="$GATE_LEDGER_TEXT"} ) 2>&1 | sed -e 's/^/    /'
 
 
