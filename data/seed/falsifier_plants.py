@@ -70,14 +70,13 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 QUALITY = HERE / "quality.sql"
 
-# The two assertions that are red on a database built from the committed migration set, for a reason
-# this lane does not own: D108 -- `share_links.subject_type` is named by this file's door vocabulary
-# while the migration that creates it has never been committed. An arm that reddens one of these has
-# not done anything; an arm that reddens them additionally is a sign the plant moved the schema.
-KNOWN_RED = (
-    "a CHECK-bounded column is a door vocabulary too",
-    "a door vocabulary names a column the schema has",
-)
+# Empty since D146. These two were declared red by D108 because `share_links` was named by this file's door
+# vocabulary while the migration that creates it had never been committed; `d7c2d57` committed V7 and D143
+# measured the gate building it (migrations=7, tables=58), so the baseline now reads 216 assertions / 0 red
+# and a declaration that no longer describes the plane is worse than no declaration -- it would let those
+# two rows come back red and be filed as someone else's. The pair is now witnessed by the D146 schema-plane
+# arms instead, which is the same claim made from the side of the detector rather than the side of the gap.
+KNOWN_RED = ()
 
 # (marker inside the shipped check name, what the arm plants, the plant)
 ARMS = [
@@ -609,6 +608,7 @@ _NOUN = {
     "handoffs": "a handoff", "notifications": "a notification", "order_items": "an order line",
     "orders": "an order", "recommendation_sets": "a recommendation set", "referrals": "a referral",
     "refunds": "a refund", "reservations": "a reservation", "seo_pages": "an SEO page",
+    "share_links": "a share link",
 }
 
 _MUST = {
@@ -637,10 +637,18 @@ _MUST = {
     "reservations": {"code": "'PLANT-D125'", "merchant_id": ("ref", "merchants"),
                      "tenant_id": ("ref", "tenants"), "starts_at": "now() + interval '7 days'"},
     "seo_pages": {"kind": "'category'", "path": "'/plant/d125'", "tenant_id": ("ref", "tenants")},
+    # D146: `code` carries the migration's own Crockford CHECK (`^[0-9A-HJKMNP-TV-Z]{6,16}$`, so no I, L, O
+    # or U anywhere in a planted value), and subject_type/subject_id are the polymorphic pair -- 'merchant'
+    # beside a real merchant id is the shape every seeded share row has.
+    "share_links": {"code": "'D125SHR'", "subject_id": ("ref", "merchants"),
+                    "subject_type": "'merchant'", "tenant_id": ("ref", "tenants")},
 }
 
-# (child, the FK column the sweep names, its parent) -- the 38 names quality.sql assembles for a child
-# table the seed leaves empty, minus share_links' two, which exist only on an uncommitted migration.
+# (child, the FK column the sweep names, its parent) -- the 40 names quality.sql assembles for a child
+# table the seed leaves empty. share_links' two joined at D146: they were excluded from D125 because the
+# table existed only on an uncommitted migration, and `d7c2d57` landed V7 (D143 measured the gate building
+# it: migrations=7, tables=58), so the two names are on the plane now and an empty child table is exactly
+# the case D125's insert-then-dangle mechanism was written for.
 _EMPTY_CHILD_FKS = [
     ("campaigns", "approved_by", "users"), ("campaigns", "merchant_id", "merchants"),
     ("campaigns", "tenant_id", "tenants"), ("cart_items", "offering_id", "offerings"),
@@ -662,6 +670,7 @@ _EMPTY_CHILD_FKS = [
     ("reservations", "offering_id", "offerings"), ("reservations", "slot_id", "availability_slots"),
     ("reservations", "tenant_id", "tenants"), ("reservations", "user_id", "users"),
     ("seo_pages", "reviewed_by", "users"), ("seo_pages", "tenant_id", "tenants"),
+    ("share_links", "created_by", "users"), ("share_links", "tenant_id", "tenants"),
 ]
 
 
@@ -877,6 +886,57 @@ ARMS += [
     ("a bounded string column is answered by name",
      "a legal write the schema accepts: 1040 document titles collapsed into twelve buckets",
      "UPDATE documents SET title = 'plant bucket ' || (abs(hashtext(title)) % 12);"),
+]
+
+# Batch D146: the third mutation plane. Every arm above moves a ROW, and the two mechanisms D122 and D126
+# name differ only in whether the schema accepts that write. Fifteen of the twenty rows #73 had left
+# unwitnessed cannot be reached that way at all: the state they forbid is one the SCHEMA blocks, so no
+# legal or ill-legal INSERT, UPDATE or DELETE can put the database into it while the constraint stands.
+# These arms change the schema instead -- inside the same single transaction, so `ROLLBACK` un-does the
+# DDL exactly as it un-does a row, and the closing baseline still proves the database came back.
+#
+# What such an arm witnesses is narrower than what a data plant witnesses, and the labels say so: a
+# schema-plane plant proves the ASSERTION detects a state, never that a deployment could reach it. The
+# state is reachable in principle (a migration that drops a NOT NULL, a CREATE TABLE that collides with a
+# waiver this file wrote off as absent) and unreachable through the application, which is precisely the
+# seam these rows exist to watch -- they are census rows about the schema, so the only honest falsifier of
+# one is a schema.
+#
+# Each was predicted before it ran, and the prediction is what the ledger records:
+#   * `agents` is named by a no-referent waiver, so creating it reddens the waiver re-read and nothing else;
+#   * a CHECK whose label list no longer equals the transcribed door list reddens the CHECK/door agreement
+#     row, and dropping the column under a door entry reddens the entry-exists row with the CHECK row as
+#     its collateral (the CHECK census loses its only member, so its `count > 0` floor fails);
+#   * a new `verif*-shaped` boolean on a censused table is caught by the badge census and unanswered by
+#     the badge answers;
+#   * a `character varying` column is caught by the string census (its type filter is typcategory 'S', not
+#     the two names the seed happens to use) and has no declared reading rule;
+#   * `price_updated_at` is NOT NULL and CHECK-free, so the row that asks "does every priced offering
+#     carry provenance" can only fail once the NOT NULL is off -- the door is the schema's own.
+ARMS += [
+    ("a no-referent waiver still names a table the schema lacks",
+     "schema plane: the table a no-referent waiver calls absent is created",
+     "CREATE TABLE agents (id uuid PRIMARY KEY, name text);"),
+    ("a CHECK-bounded column is a door vocabulary too",
+     "schema plane: share_links' own CHECK narrowed to three of the four door labels",
+     "ALTER TABLE share_links DROP CONSTRAINT share_links_subject_type_known; "
+     "ALTER TABLE share_links ADD CONSTRAINT share_links_subject_type_known CHECK "
+     "(subject_type IN ('merchant', 'offering', 'collection'));"),
+    ("a door vocabulary names a column the schema has",
+     "schema plane: the column a transcribed door vocabulary names is dropped",
+     "ALTER TABLE share_links DROP COLUMN subject_type;"),
+    ("every boolean that claims a verification is answered for its evidence",
+     "schema plane: a new verification-shaped boolean on a censused table, unanswered",
+     "ALTER TABLE merchants ADD COLUMN address_verified boolean;"),
+    ("the string census declares a reading for every type it catches",
+     "schema plane: a string column of a base type the reading rules never declared",
+     "ALTER TABLE documents ADD COLUMN doc_lang character varying(32);"),
+    ("price_updated_at present for priced offerings",
+     "schema plane: the NOT NULL that made this state unreachable is dropped, then one priced row loses "
+     "its provenance timestamp",
+     "ALTER TABLE offerings ALTER COLUMN price_updated_at DROP NOT NULL; "
+     "UPDATE offerings SET price_updated_at = NULL WHERE price_amount IS NOT NULL "
+     "AND id = (SELECT id FROM offerings WHERE price_amount IS NOT NULL ORDER BY id LIMIT 1);"),
 ]
 
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
