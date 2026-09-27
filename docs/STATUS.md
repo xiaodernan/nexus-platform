@@ -7797,3 +7797,45 @@ next              (a) #92 is closed as measured; its remaining half -- re-runnin
                       future migration -- is a standing action, not a queue item. (b) #71, #75 (re-confirmed
                       on both planes today), #79, #80 and the carried list unchanged.
 ```
+
+## 145. Counting the §-citation queue instead of reading it: 1,253 of 1,353 bare citations are ambiguous, 98 are unambiguously spec, and the only "residue" is two deliberate fake fixtures (2026-09-27)
+
+```
+plane             Measurement over `docs/STATUS.md` (through §144) and `docs/DECISIONS.md` (through D135)
+                    at `ceffeb9`, against `新建 文本文档.txt`'s 173 numbered headings. Nothing shipped
+                    changed and no citation was rewritten; the census script is
+                    `.../nexus-d63/plane_census.py`.
+
+changed           #80 asked for the 81-token residue to be read and re-aimed. It is counted instead,
+                    because D133 showed the premise (bare `§NN` = a ledger pointer) was wrong.
+
+measured          1,900 tokens: 1,353 outside an inline code span, 547 inside.   Planes defined by their
+                    Outside a span: **1,253 (92.6%) resolve in 2 or 3 planes**,   own heading syntax: SPEC
+                    772 all three, 455 SPEC+DECISION, 26 SPEC+STATUS; **98          `# NN.`, STATUS `## NN.`,
+                    SPEC-only; 0 STATUS-only; 0 DECISION-only.** 2 hit no plane.   DECISION `## DNN `.
+
+found               (a) There is no residue to fix. Both no-plane hits are `§99999`, the negative fixture
+                      the citation reader's falsifier uses to prove a citation to a missing section reddens
+                      (STATUS §126's own text). The 81-token number came from a grammar that assumed bare
+                      `§NN` means a ledger section; it mostly means the spec, exactly as D133 found for
+                      `§106`.
+                    (b) The measurable defect is ambiguity, not absence: nine bare tokens in ten name a
+                      heading in two or three documents at once, because the three numbering spaces cover
+                      the same integers. Any future reader has to match the spelled plane, not the number.
+                    (c) The convention already in use is the cheap fix: 20 `STATUS §NN` and 21 `spec §NN`
+                      spelled citations exist and are all checkable, so §145 states the rule -- a ledger
+                      pointer names its plane; a bare `§NN` is the spec -- rather than churning 1,253
+                      historical tokens into a form they do not mean.
+
+gates             Nothing shipped that the eleven steps execute changed. `check_status_citations.mjs` still
+                    reports the same 2 BAD sites it named before this section (D133's spelled-plane
+                    mistakes) and the readers re-run on the final bytes of this text resolved: step 8 exit
+                    0, step 10 PASS with §145 and D136 the only uncommitted headings, step 11 PASS over
+                    326 registry rows / 196 of 216.
+
+next              (a) #80 closes as measured. (b) A guard, if ever built, must count ambiguity per new
+                      paragraph and warn -- failing on 1,253 historical tokens is a guard that gets
+                      switched off. (c) Carried: #71, #73, #75, #79, #62, #64, #58, #44, #17, #19, #34,
+                      step 11's --registry residue, §87's session-time-zone seam, D91's served leg, §130's
+                      missing `guide` branch.
+```

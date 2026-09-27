@@ -8250,3 +8250,61 @@ about FK coverage generally -- D64's catalogue-driven guard is what makes it tru
 **next.** (a) The gate's own failure-path total (finding (c)) if this lane touches
 `db_gate_fresh.sh` again. (b) #92 closes as measured. (c) #71, #75 (now re-confirmed today on both
 planes), #79, #80, #62, #64, #58, #44, #17, #19, #34 and the carried list stand as written.
+
+## D136 The §-citation "residue" is two deliberate fake fixtures and the real defect is that 1,253 of 1,353 bare citations are ambiguous by construction — 2026-09-27
+
+Task #80 inherited a number from D116: 1,100 `§N` tokens in the ledgers, 528 non-resolving, 81 surviving
+after the recovered-title brackets are excluded, "to be split by reading each one". D133 broke the premise
+under it -- if a bare `§NN` names a section of the product spec, most of those tokens were never broken.
+This unit counts instead of reading one by one, over a fresh census of both ledgers.
+
+**Grammar, because the count is nothing without it.** A token is `§` plus 1-3 digits, optionally a range
+(second number folded into the same token); lines are scanned twice, once with inline code spans stripped
+("outside", where a citation is a claim) and once as written ("inside", where the shipped readers report
+mentions and do not judge them). A number resolves in a plane if the plane has that heading: **SPEC** =
+`# NN. Title` in `新建 文本文档.txt` (173 headings, up to 172), **STATUS** = `## NN. ` in
+`docs/STATUS.md` (112), **DECISION** = `## DNN ` in `docs/DECISIONS.md` (123). A token is ambiguous when
+its number exists in more than one of those.
+
+**Result: there is no residue, and there is an ambiguity problem nobody had measured.** 1,900 tokens:
+1,353 outside a code span, 547 inside one. Outside a span, **1,253 (92.6%) resolve in two or three
+planes** -- 772 in all three, 455 in SPEC+DECISION, 26 in SPEC+STATUS -- while **98 (7.2%) are
+unambiguously SPEC and zero are unambiguously STATUS-only or DECISION-only**. The remaining 2 are
+`§99999`, which is not residue but a deliberate negative fixture: it appears inside the falsifier text
+that proves `check_status_citations.mjs` reddens a citation to a section that does not exist
+(STATUS §126's "a citation to §99999 (exit 1)"), and my 3-digit regex clipped it to `§999`. So the
+81-token queue in #80 is not a queue of errors: the ledgers already use the spec plane as the default
+referent for a bare `§NN`, which is what D133 found when it checked §106 against the spec.
+
+**Decision (a): do not wire a guard for this, and record the reason.** An arm that refuses ambiguous bare
+citations would be red on 1,253 tokens on the day it ships, which is D116's stated failure mode for new
+guards ("a guard that is red on day one gets ignored by day two"). The useful asymmetry is that the
+readers already judge the only form that *cannot* be ambiguous: a spelled plane. Those forms are
+counted here at **20 `STATUS §NN`** across the two ledgers and **21 `spec §NN`** across docs and
+`quality.sql` -- small, and every one of them checkable, which is the property the 1,900 bare tokens
+lack.
+
+**Decision (b): the convention is stated where it will be read, not retro-fitted.** Going forward, a
+ledger citation meant as a ledger pointer spells its plane (`STATUS §121`, `D133`), and a bare `§NN` is
+read as the spec unless context says otherwise. That is what §142's retraction, §141's dispositions and
+the `spec §55` / `§94` comments in `quality.sql` have all been doing implicitly; writing it down is the
+cheapest fix available, because the alternative -- disambiguating 1,253 historical tokens -- would churn
+every paragraph this lane has ever cited and would silently convert spec citations into ledger ones.
+
+**Numbers.** Script: `.../nexus-d63/plane_census.py`, run over the two ledgers as of `ceffeb9`
+(STATUS through §144, DECISIONS through D135). Counts above; per-section attribution shows the heaviest
+writers as the preamble (192 tokens), STATUS §123 (137), D115 (87), STATUS §124/§125 (69 each), which are
+the recovery-era sections D116 already flagged as verbatim-by-choice. Nothing shipped changed: no gate
+file, checker, harness or registry row, and no ledger citation was rewritten by this unit.
+
+**Limits.** (i) Resolution is existence, not intent: `§106` in `CollectionsController.java`'s
+`STATUS §106` is both a STATUS-106 non-heading and a SPEC-106 section, and only the spelled prefix tells
+you which was meant -- which is the whole argument of this unit, and why 2 real BADs survive (D133).
+(ii) Ranges are counted once and attributed by their first number, so `§101-§108` is a SPEC+STATUS+DECISION
+token, not two. (iii) The 3-digit cap in the regex mis-clipped `§99999`; fixed by recognizing it as a
+fixture rather than by re-running, since the count of such cases is 2 and both are named here.
+
+**next.** (a) #80 closes: no residue to re-aim, and the ambiguity finding is recorded instead. (b) If a
+guard is ever wanted, the honest shape is one that counts ambiguous bare tokens per new paragraph and
+warns without failing, so history is not red. (c) #71, #75, #79, #62, #64, #58, #44, #17, #19, #34 and
+the carried list stand as written.
