@@ -8372,3 +8372,43 @@ rows are.
 loses its witness, since that is the condition under which schema enforcement becomes the better trade.
 (b) Carried: #73 (196 of 216), #75, #79, #62, #64, #58, #44, #17, #19, #34, step 11's `--registry`
 percentage residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.
+
+## D138 The §8 share write is committed, and the HEAD plane answers with a different red than the one it removed — 2026-09-27
+
+Task #34 held two §8 writes. The first landed long ago (D61 `4d931b8`: `CollectionDraftWriteTest` asserts
+the draft both ways -- 201, `status=draft`, `visibility=private`, `published_at` never stamped, and the
+publishability corner read from `isPublishable` rather than restated). This unit lands the second. The
+share write existed only as untracked files -- `V7__share_links.sql` (64 lines), `ShareController.java`
+(196), `ShareRepository.java` (121), `ShareLinkTest.java` (152) -- which is the same gap #75 had been
+reporting as a HEAD-plane red, and both #34 and #75 were waiting on somebody else for it. Nobody was:
+the session list shows exactly one open session in this repo, this one, and the code imports nothing
+outside `com.nexus.platform.*` and `com.nexus.testsupport` -- 36 tracked files, 0 untracked -- while
+`admin`, `commerce` and `seo` (0/8, 0/10, 0/2 tracked) are imported by none of it. So it can land alone,
+and does, as `d7c2d57`: four files, 533 lines, no other stream's work swept in. The
+`POST /api/v1/share` row at `API_CONTRACT.md:411` is deliberately left out of the commit -- that file is
+another lane's dirty working copy, and a contract promise is not this lane's to stage.
+
+The measurement that mattered came after. A detached worktree at the new HEAD running
+`scripts/db_gate_fresh.sh` now builds **7 migrations and 58 tables** where it built 6 and 57, and it still
+exits **1** -- but the failure has moved. It is no longer step 5's two door-vocabulary reds; it is
+**step 7, `check_jsonb_reads.mjs`, reporting 3 FALSE SITES**: `read_answer` rows for
+`offerings.attributes.import_job` and `orders.metadata.session_id`, and a `shape_answer` row for
+`offerings.options`, citing `MerchantImportRepository.java`, `OrderRepository.java` and
+`commerce/OrderRepository.java` -- none of which exists in the 312-file HEAD source index, because they
+live in the untracked `merchant`/`commerce` packages while the answer rows that name them are committed
+in `quality.sql`. That is #58's shape and #75's shape, one plane over: a committed assertion pointing at
+uncommitted code is green for whoever holds the worktree and red for everyone who checks out.
+
+**Limits.** (i) Step 5's verdict at the new HEAD is in the same transcript but is not quoted here, because
+the script reports its assertion total only on the success path (D135's finding) and step 7 aborted before
+any summary. So "the two door-vocabulary reds are gone" is not claimed as measured -- what is measured is
+the migration/table counts and the moved failure. (ii) `ShareLinkTest` was not run: `mvn -o test` today
+carries the 7 pre-existing failures inside those same untracked packages (#58), so its result would not be
+attributable. (iii) Landing the write also makes this lane the owner of the next question -- whether those
+packages get committed or the three answer sites get re-pointed -- which is not a decision to leave
+implicit.
+
+**next.** (a) #34 closes for the collections half, re-scoped to the share test's own green run once the
+untracked packages land or the sites are re-pointed. (b) #75 re-stated: HEAD is still red, now at step 7,
+for a better-understood reason. (c) Carried: #73 (196 of 216), #58 (now with a gate run behind it), #79,
+#62, #64, #44, #17, #19, step 11's `--registry` residue, §87's seam, D91's served leg.
