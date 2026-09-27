@@ -1,7 +1,10 @@
 # NEXUS — assertions that have been SHOWN able to fail, one row per witnessed arm.
 #
-# WHY THIS FILE EXISTS. The gate files 214 assertions at the committed tree (D108: 216 only while another
-# stream's uncommitted V7__share_links.sql is on disk, so a count off this file is a count of one plane); D102
+# WHY THIS FILE EXISTS. The gate files 216 assertions on the plane this lane measures (the 214-with-two-reds
+# reading D108 recorded here was the committed tree WITHOUT V7__share_links.sql, which `d7c2d57` has since
+# landed: §149 measured a from-scratch 12-step gate at 216 checks / tables=58 / migrations=7 / RESULT PASS,
+# and D146's drives read the same 216 with red = 0 off the kept loaded database — so a count off this file is
+# still a count of one plane, and the plane's name is part of the count); D102
 # measured that the ledgers name somewhere between 53 and 57 of them depending on how the text is matched, and
 # that a mention is only an upper bound on being witnessed. What has never existed is a machine-readable record
 # of the stronger claim — "this row was seen red" — because every plant this lane has run lives in a temp-dir
@@ -345,3 +348,20 @@ every reference the seed writes is probed or explained	D132	synthetic traffic ro
 a verification badge stays unresolvable only while its evidence and its link both stay absent	D132	synthetic traffic row (a reservation): the written row's merchant_id is a ghost id (0 rows in the table at seed)	43091a2
 every array column is answered for what bounds its elements	D132	synthetic traffic row (an SEO page): the written row's reviewed_by is a ghost id (0 rows in the table at seed)	43091a2
 every jsonb payload that a key read cannot reach is answered for what it is	D132	synthetic traffic row (an SEO page): the written row's reviewed_by is a ghost id (0 rows in the table at seed)	43091a2
+fk: share_links.created_by -> users.id	D146	synthetic traffic row (a share link): the written row's created_by is a ghost id (0 rows in the table at seed)	be23d1f
+fk: share_links.tenant_id -> tenants.id	D146	synthetic traffic row (a share link): the written row's tenant_id is a ghost id (0 rows in the table at seed)	be23d1f
+a no-referent waiver still names a table the schema lacks	D146	schema plane: the table a no-referent waiver calls absent is created	be23d1f
+a CHECK-bounded column is a door vocabulary too	D146	schema plane: share_links' own CHECK narrowed to three of the four door labels	be23d1f
+a door vocabulary names a column the schema has	D146	schema plane: the column a transcribed door vocabulary names is dropped	be23d1f
+every boolean that claims a verification is answered for its evidence	D146	schema plane: a new verification-shaped boolean on a censused table, unanswered	be23d1f
+the string census declares a reading for every type it catches	D146	schema plane: a string column of a base type the reading rules never declared	be23d1f
+price_updated_at present for priced offerings	D146	schema plane: the NOT NULL that made this state unreachable is dropped, then one priced row loses its provenance timestamp	be23d1f
+every column that cannot vary is answered for why it cannot	D146	a merchant claiming a category it is not mapped to	be23d1f
+no traffic outside the seeded tables	D146	synthetic traffic row: a saved search is nobody's (0 rows in the table)	be23d1f
+a seeded polymorphic vocabulary is bounded or probed	D146	synthetic traffic row (a referral): the written row's tenant_id is a ghost id (0 rows in the table at seed)	be23d1f
+every jsonb key the build reads is answered for what the shipped payloads carry	D146	synthetic traffic row (a refund): the written row's approved_by is a ghost id (0 rows in the table at seed)	be23d1f
+a verification badge stays unresolvable only while its evidence and its link both stay absent	D146	synthetic traffic row (a reservation): the written row's offering_id is a ghost id (0 rows in the table at seed)	be23d1f
+every array column is answered for what bounds its elements	D146	synthetic traffic row (an SEO page): the written row's tenant_id is a ghost id (0 rows in the table at seed)	be23d1f
+every jsonb payload that a key read cannot reach is answered for what it is	D146	synthetic traffic row (an SEO page): the written row's tenant_id is a ghost id (0 rows in the table at seed)	be23d1f
+every reference the seed writes is probed or explained	D146	synthetic traffic row (a share link): the written row's created_by is a ghost id (0 rows in the table at seed)	be23d1f
+a bounded string column is answered by name	D146	schema plane: a string column of a base type the reading rules never declared	be23d1f
