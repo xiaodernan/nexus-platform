@@ -8457,3 +8457,50 @@ D138's step-7 finding needed a green step 5 to surface at all.
 citing untracked `merchant`/`commerce` code. (b) If a HEAD-plane claim ever matters again, run the script
 and read its line rather than citing an entry. (c) Carried: #73 (196 of 216), #58, #79, #62, #64, #44,
 #17, #19, step 11's `--registry` residue, §87's seam, D91's served leg.
+
+## D140 A migration is not landed when it is committed; it is landed when every plane that runs it has it -- which the share write did not — 2026-09-27
+
+D138 committed `V7__share_links.sql` with the share controller, repository and test, and recorded that
+the test had not been run. This unit ran it, and the answer is not what the commit suggested.
+
+**Measurement (a): the module compiles clean, and the test says otherwise.** `mvn -o -B clean
+test-compile` in `services/platform` rebuilt 130 main and 41 test sources with BUILD SUCCESS --
+`ShareController.class`, `ShareRepository.class` and `ShareLinkTest.class` all present. Then
+`mvn -o -B test -Dtest=ShareLinkTest` ran **5 tests, 3 failures**, each an
+`BadSqlGrammarException ... relation "share_links" does not exist`. So the feature is compiled, wired and
+reachable over HTTP -- and its three database-touching corners are red, because the integration-test
+database never received the migration this lane committed an hour earlier.
+
+**Measurement (b): the gap is specific to one plane, and closing it is one command.** A fresh-database run
+already has it (`db_gate_fresh.sh` applies `infra/db/migrations/V*.sql`, which is why HEAD reports 7
+migrations and 216 checks), and `e2e_fresh.sh` builds its own. What no script rebuilds is the long-lived
+`nexus_test` that surefire talks to. `NEXUS_DB_NAME=nexus_test
+scripts/db_apply_migrations.sh --file infra/db/migrations/V7__share_links.sql` applied it -- one file,
+additive, no re-run of V1-V6, no `--force` over anything already present -- and the same test command then
+reported **Tests run: 5, Failures: 0, Errors: 0** with BUILD SUCCESS.
+
+**Decision (c): what this lane now owes whenever it commits a migration.** A migration commit is two
+planes: the from-scratch gate, which proves it builds, and each live database that is *not* rebuilt by a
+script -- here `nexus_test`, and by the same logic the developer `nexus` -- which need it applied or their
+tests will read a schema that no longer matches the code. That is the D79/"silence, not green" family
+wearing a different hat: a compiled, wired endpoint whose table exists only in some databases is not
+broken code, it is a partially-landed change, and only running the plane's own test says which it is.
+This lane's `db_gate_fresh.sh` also keeps `schema_migrations` while the service keeps Flyway's
+`flyway_schema_history` (the script's own D32 caveat), so a hand-built live database can be behind both
+ledgers at once.
+
+**Numbers.** One targeted migration apply, one module clean-compile (~30 s), two single-test runs; the
+before/after is 5 run / 3 failed -> 5 run / 0 failed on
+`com.nexus.growth.ShareLinkTest`. No source file changed, so nothing new is committed except this entry;
+no other test class was run (the module's full `mvn -o test` still carries the untracked-package failures
+#58 reports, which is why the single-class invocation was the attributable form).
+
+**Limits.** (i) `nexus` -- the developer database -- was not checked; it may equally lack V7, and the
+running :8090 service would fail the same three ways if asked. (ii) The `schema_migrations` bookkeeping for
+that `--file` apply was not read back; the evidence is behavioural, not ledger-based. (iii) The three red
+corners were the database-backed ones; two green tests in the same class were the argument that the
+routing and validation layers were fine all along.
+
+**next.** (a) Apply V7 to the developer database (or rebuild it) before anyone reads a :8090 share call as
+a defect. (b) #34's open half is now "run in CI", not "wait for a lane". (c) Carried: #75's step-7 half,
+#58, #73, #79, #44, #62, #64, #17, #19, step 11's residue, §87's seam, D91's served leg.
