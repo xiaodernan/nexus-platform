@@ -174,12 +174,27 @@ class CollectionsReadTest extends NexusIntegrationTest {
                 of(block("paragraph", "A demo route, written for synthetic merchants."), item(shop),
                         block("heading", "Where to eat")));
 
-        JsonNode items = Json.tree(body("/api/v1/collections/has-blocks-" + tag)).path("items");
+        JsonNode page = Json.tree(body("/api/v1/collections/has-blocks-" + tag));
+        JsonNode items = page.path("items");
         assertThat(items).hasSize(3);
         assertThat(items.get(0).path("type").asText()).isEqualTo("paragraph");
         assertThat(items.get(0).has("card")).isFalse();
         assertThat(items.get(1).path("card").path("id").asText()).isEqualTo(shop.toString());
         assertThat(items.get(2).path("type").asText()).isEqualTo("heading");
+
+        // §8's own name for the body, served beside the stored shape: prose stays prose, the reference
+        // becomes a `cards` block carrying the resolved card rather than an id, and the author's order —
+        // prose, cards, prose — survives the walk. The web layer crashed in live mode for want of exactly
+        // this field (STATUS §121), so it is pinned here rather than left to the client.
+        JsonNode blocks = page.path("body_blocks");
+        assertThat(blocks).hasSize(3);
+        assertThat(blocks.get(0).path("type").asText()).isEqualTo("paragraph");
+        assertThat(blocks.get(0).path("text").asText()).contains("demo route");
+        assertThat(blocks.get(1).path("type").asText()).isEqualTo("cards");
+        assertThat(blocks.get(1).path("title").isTextual()).isTrue();
+        assertThat(blocks.get(1).path("items")).hasSize(1);
+        assertThat(blocks.get(1).path("items").get(0).path("id").asText()).isEqualTo(shop.toString());
+        assertThat(blocks.get(2).path("type").asText()).isEqualTo("heading");
     }
 
     @Test
@@ -201,6 +216,13 @@ class CollectionsReadTest extends NexusIntegrationTest {
         assertThat(page.path("items").get(3).path("card").path("id").asText()).isEqualTo(shop.toString());
         assertThat(page.path("cards")).hasSize(1);
         assertThat(page.path("dropped_item_ids")).isEmpty();
+        // Four stored elements, one rendered block: a bare string, 42 and null are not references and not
+        // typed blocks, so they contribute nothing to `body_blocks` — and crucially they do not become an
+        // empty paragraph or a placeholder card. `items` still carries all four for a client that wants
+        // what the author actually wrote.
+        assertThat(page.path("body_blocks")).hasSize(1);
+        assertThat(page.path("body_blocks").get(0).path("type").asText()).isEqualTo("cards");
+        assertThat(page.path("body_blocks").get(0).path("items")).hasSize(1);
     }
 
     @Test

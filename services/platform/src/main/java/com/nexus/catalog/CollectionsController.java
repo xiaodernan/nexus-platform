@@ -180,6 +180,12 @@ public class CollectionsController {
         Map<String, Object> out = new LinkedHashMap<>(summary(row));
         out.put("items", items);
         out.put("cards", resolved);
+        // §8 names this field `body_blocks` and describes it as an ordered array of typed blocks whose
+        // `cards` blocks carry resolved EntityCards. The row stores merchant references instead, so the
+        // name was never served and every client had to invent the projection — the web one threw
+        // `undefined.map` in live mode (STATUS §121). Both halves are already computed above, so the
+        // documented shape costs a walk, not a second resolution.
+        out.put("body_blocks", bodyBlocks(items));
         out.put("dropped_item_ids", dropped);
         out.put("visibility", Json.str(row, "visibility"));
         out.put("data_origin", Json.str(row, "data_origin"));
@@ -311,6 +317,59 @@ public class CollectionsController {
         }
         return Json.map("url", url, "alt", blankToNull(cover.get("alt")),
                 "credit", blankToNull(cover.get("credit")));
+    }
+
+    /**
+     * §8's `body_blocks`: the ordered body in the shape the contract documents, built from {@code items}
+     * (which already carry their resolved {@code card}) without resolving anything a second time.
+     *
+     * <p>Three rules, each the honest reading of the row rather than a convenience:
+     *
+     * <ul>
+     *   <li><strong>A block that already states a {@code type} is passed through unchanged.</strong> The
+     *       author wrote a typed block; re-typing it here would be this read editing the content.</li>
+     *   <li><strong>Consecutive merchant references become one {@code cards} block</strong>, in author
+     *       order, titled by the first reference's own {@code note} when it wrote one — the note is the
+     *       author's caption, and inventing a title for it is not this layer's call. Order is preserved
+     *       because the references and the prose interleave; that interleaving is the guide.</li>
+     *   <li><strong>A reference with no resolved {@code card} contributes nothing.</strong> It is already
+     *       named in {@code dropped_item_ids}, and §8 is explicit that an unresolvable id drops the item
+     *       rather than rendering a placeholder card.</li>
+     * </ul>
+     *
+     * <p>{@code items} stays in the response beside it: it is the stored shape, including the elements this
+     * projection cannot type, and a client that wants "what the author wrote, verbatim" should have it.
+     */
+    private static List<Map<String, Object>> bodyBlocks(List<Object> items) {
+        List<Map<String, Object>> blocks = new ArrayList<>();
+        List<Map<String, Object>> cards = new ArrayList<>();
+        String title = null;
+        for (Object element : items) {
+            if (!(element instanceof Map<?, ?> raw)) {
+                continue;
+            }
+            Map<String, Object> item = asMap(raw);
+            if (Json.str(item, "type") != null) {
+                if (!cards.isEmpty()) {
+                    blocks.add(Json.map("type", "cards", "title", title == null ? "" : title, "items", cards));
+                    cards = new ArrayList<>();
+                    title = null;
+                }
+                blocks.add(item);
+                continue;
+            }
+            Object card = item.get("card");
+            if (card instanceof Map<?, ?> cardMap) {
+                if (cards.isEmpty() && title == null) {
+                    title = Json.str(item, "note");
+                }
+                cards.add(asMap(cardMap));
+            }
+        }
+        if (!cards.isEmpty()) {
+            blocks.add(Json.map("type", "cards", "title", title == null ? "" : title, "items", cards));
+        }
+        return blocks;
     }
 
     private static List<UUID> merchantIdsOf(List<Object> items) {
