@@ -7923,3 +7923,50 @@ next              (a) #75 keeps only the step-7 half open now. (b) Re-measure ra
                       HEAD-plane number. (c) Carried: #73, #58, #79, #62, #64, #44, #17, #19, step 11's
                       --registry residue, §87's seam, D91's served leg, §130's missing `guide` branch.
 ```
+
+## 148. Two reds, two different causes, both measured on the plane that ran them: one database behind its own migrations, one verifier behind its own door (2026-09-27)
+
+```
+plane             Nothing in this section was inferred from a previous run's text. `mvn -o -B test`
+                    (services/platform, 82 s), `scripts/e2e_fresh.sh` twice (~2.5 min each, throwaway
+                    DB + its own service), and read-only information_schema probes of `nexus` and
+                    `nexus_test`. No live database was written by this section's work except the single
+                    additive migration apply recorded in §145, and no other lane's file was staged.
+
+changed           One product-adjacent file: `scripts/verify_seed_surface.py:89`, the favourite-shape
+                  check, widened from three accepted subject types to the four the door itself takes.
+                  Plus two ledger entries (D142 + its same-day amendment) recording the suite diagnosis.
+
+measured          mvn -o test: 217 run / 13 failures / 21 errors. Causes: 4 x "column                 e2e_fresh.sh
+                  ui.tenant_id does not exist" + 7 bad-grammar inserts into                 before: 70 PASS
+                  user_identities -> `nexus_test.user_identities` really has no             / 1 FAIL / rc=2.
+                  tenant_id column, while `nexus` does (probed). But the same probe found    After the verifier
+                  `nexus_test` DOES have share_links and a users_email_uniq index that       fix: 73 PASS /
+                  `nexus` does NOT -- 59 tables vs 61, 80 pk/unique constraints. So the two  0 FAIL / rc=0, with
+                  live databases diverged in opposite directions, not one lagging the         stages 30/30, 15/15,
+                  other. That is why #94 asks for a re-convergence, not a version bump.       22/22.
+
+found               (a) The suite's 34 reds are mostly one stale database, and the failing classes are
+                      tracked in-lane code, so #58's "untracked packages, count withdrawn" explanation is
+                      retired as a complete answer.
+                    (b) The e2e red was a verifier narrowed below its own door: quality.sql's ref_registry
+                      and MeController's literals both name merchant|offering|guide|collection, and a
+                      seeded `guide` favourite could never satisfy the old set. Reading what the code
+                      accepts -- rather than remembering that D50 once found `guide` refused -- is the
+                      difference between fixing a test and "fixing" a product that was never broken.
+                    (c) Both reds were reproduced and re-measured on the same plane before and after, so
+                      neither claim rests on a single run.
+
+gates               Unchanged and still green where this section touched: step 11 PASS at 326 registry
+                    rows / 196 of 216 witnessed (90.7%); HEAD's fresh-database gate green at step 5 with
+                    216 checks / 58 tables / 7 migrations; `check_status_citations.mjs` still reporting its
+                    two known spelled-plane defects and nothing new. Readers re-run on the final bytes of
+                    this text: step 8 exit 0, step 10 PASS with §148 the one uncommitted section.
+
+next                (a) #94 -- rebuild `nexus_test` from the migration set and re-apply what it legitimately
+                      gained by hand, then take the first attributable `mvn -o test` baseline since D50.
+                      Destructive on a shared database: needs its owner's go-ahead. (b) #9's remaining
+                      half is the browser layer; the HTTP slice is now attested end to end. (c) Carried:
+                      #73, #75 (step-7), #44, #58, #62, #64, #79, #17, #19, step 11's residue, §87's seam,
+                      D91's served leg.
+```
