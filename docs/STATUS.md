@@ -8428,3 +8428,59 @@ next                (a) New report-only task #96, for the seed lane: assert that
                         migration set; #9's Playwright half, #17, #19 and #44 are the other open build lanes.
 
 ```
+## 155. Step 11 now prints the anchor guard before the registry reader, and two full runs of that plane agree — while the run that would prove the guard can STOP the gate is still owed (2026-09-28)
+
+```
+plane             HEAD 46d6b74 (D150: `falsifier_plants.py --self-test` + gate step 11 wiring). Two independent
+                    full twelve-step `scripts/db_gate_fresh.sh` runs of that same plane, on the shared container
+                    nexus-platform-postgres, against databases of their own (…1790536937, then …1790537097). The
+                    second dropped its database at exit (gate databases 5 -> 4). Nothing tracked was edited by
+                    this unit except the two ledgers.
+
+changed           - no source, gate, reader, harness, registry or migration file. This entry records the plane
+                    D150 landed on.
+
+measured          - run 1: every step PASS, `RESULT: PASS — 216 quality checks on a from-scratch schema
+                    (tables=58, migrations=7)`, launcher-reported `gate rc=0`.
+                  - run 2: the same `RESULT: PASS` block, byte-for-byte the same step 11 and step 12 numbers.
+                  - step 11's block, both runs, in this order: `text-plane self-test, against the sliced gate
+                    body (250701 chars), 0 sessions opened` / `accepted  7 shipped arm anchor set(s), each
+                    matching exactly once` / five refusals — `0x` (a table name the file never had), `115x`
+                    (`INSERT INTO qc`), `10x` (`ORDER BY 1, 2`), `13x` (`jsonb_typeof(`), `231x`
+                    (`SELECT count(*) FROM`) — and only then `gate assertions 216`, `registry read … (359 rows)`,
+                    `witness kinds 320 commit(s) · 39 file(s)`, `216 of 216 (100.0%)`.
+                  - step 9 73 comment-plane citations over 21 files; step 10 no heading missing or claimed twice;
+                    step 12 `citations 10 (outside a code span) · 10 resolve`, with 30 code-span mentions of which
+                    14 would resolve — the mentions stay exempt because a code span is a quotation, not a pointer.
+
+found             (a) The wiring prints inside the gate, which is what D150's `--self-test` was built to be
+                    reachable by. The 216/216 registry did not move when the guard was added, so the guard costs
+                    the shipped gate sessions it does not open: seconds, zero connections.
+                  - (b) What run 1's green does NOT buy, written before anyone reads it as proof: a run in which
+                    the guard passes cannot tell "armed" from "its exit code is thrown away". The call is piped
+                    into `sed`, and a pipe is where an exit code goes to die unless `pipefail` holds it. The
+                    script does set `-euo pipefail` at its line 30, but reading a `set` line is an argument about
+                    shell semantics, not a measurement of this gate. The claim "step 11 can stop the gate" needs
+                    a run where the guard returns 1 and the gate dies at step 11 without reaching step 12. That
+                    run is #97; its instrument (a `PYTHON` shim that returns 1 only for `--self-test` and passes
+                    every other python call through) is built and its premise measured in seconds: passthrough
+                    rc=0, mutated rc=1.
+
+mistakes          I declared run 1 dead and launched a duplicate. Its log had stopped at the step 6 header for
+                    four minutes, and `pg_stat_activity` showed no backend on its database when I sampled it —
+                    both readings were true and both misled me, because the gate pipes its own output through
+                    `sed`, so the log buffer lags the run by a whole step, and between steps a run legitimately
+                    has no sessions open. The duplicate cost nothing but container time (its RESULT matches
+                    run 1, so it became a second sample), and the lesson is the check order: watch the log for
+                    growth over a minute, then the database list, and only then treat a gate as dead.
+
+gates             Both runs above ARE the gate, at 216 checks. Steps 8 / 9 / 10 / 12 re-run on the final bytes of
+                    this entry, after the append: reported in the commit that carries it.
+
+next              (a) #97: run the real gate with the shim in `PYTHON`, predict death inside step 11, and keep
+                        run 1 as the unmutated control on the same plane. Until it exists, D150's wiring claim
+                        is "the guard runs in step 11", not "step 11 depends on the guard".
+                  - (b) #95 / #96 remain report-only for the seed lane; the working copy's quality.sql is dirty
+                        from that lane and its 8-changed-line delta is site re-aims only (`INSERT INTO qc` occurs
+                        115 times at both refs), which is why 216 is not this tree's accident.
+```

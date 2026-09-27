@@ -9029,3 +9029,55 @@ merchants: it shows the row cannot be right about the shipped payloads, which is
 **Gates.** `scripts/db_gate_fresh.sh --keep` full twelve steps PASS (above). The four ledger readers were re-run
 after this entry and `STATUS §154` landed: step 8 (`--worktree`), step 9 (73 comment-plane citations across 21
 files), step 10 (`HEAD 122 sections · on disk 122 · missing 0 · duplicate 0`), step 12 — all rc=0.
+
+## D150 The text plane's anchor rule had never been asked to refuse: `--self-test` witnesses the guard, and gate step 11 arms it — 2026-09-28
+
+**Why this unit.** D148 gave the harness a rule — an anchor must match exactly one sentence of the sliced gate
+body — and stated that a plant aiming at a phrase's second occurrence "would report a red the shipped text never
+contained". Nothing in the repository had ever made that rule refuse anything, and this project has a written
+standard for that shape of artifact: D103's record was only worth anything once step 11 executed the checker,
+because "a record validated only when someone remembers to pass `--db` is a claim with a script next to it". A
+guard that has never refused is the same claim in code.
+
+**What landed.** `self_test()` in `data/seed/falsifier_plants.py` and a `--self-test` flag that runs it and
+exits: no database, no container, no psql session, seconds instead of a drive. It does three things — re-applies
+every shipped arm's edits against the body as it is on disk now (which is also a drift check: an anchor broken
+by a later seed edit is named before anyone pays nine whole-gate sessions to find out), refuses an anchor the
+body cannot contain, and refuses anchors the body genuinely repeats. The refusals are built from phrases the
+sliced file really does carry rather than from an invented string, so the probe cannot pass because its own
+fixture is easy. Then `scripts/db_gate_fresh.sh` step 11 runs it immediately before the registry reader, so an
+anchor that stops being aimable reddens the gate.
+
+**Measured.** Against the shipped body (250,701 chars, 3,593 lines): all **7** arm anchor sets accepted, each
+matching exactly once; **five** refusals, each printing its own count — `0x` for a table name the file never had,
+and `115x` (`INSERT INTO qc`), `10x` (`ORDER BY 1, 2`), `13x` (`jsonb_typeof(`), `231x`
+(`SELECT count(*) FROM`). Self-test rc=0.
+
+**The mutation control.** Weakening the guard in a scratch copy — `if n != 1:` → `if False:`, the tracked file
+untouched — makes `self_test()` return 1 naming five acceptances, including
+`a 0-occurrence anchor was accepted` and `a 115-occurrence anchor ('INSERT INTO qc') was accepted`; the unmutated
+control in the same process returns 0. One mutant, caught 1/1. And the consequence the guard actually prevents was
+measured separately, with the permissive version standing in for the shipped one: the same doubly-true anchor
+lands its plant at **line 161** — one of 115 sites — while the other 114 look identical to the one the arm names.
+The drive's table would print an ordinary red about an ordinary row, and the sentence it rewrote would be a
+different sentence. That is why this guard is behavioral rather than cosmetic, and why the check is "raises"
+rather than "the body changed".
+
+**What this does not buy.** It witnesses the *anchor rule*, not any assertion: the 216 / 216 registry (§153) is
+what shows rows can redden, and a self-test that merely ran the arms' `apply_edits` would prove only that. It also
+cannot catch an anchor that matches exactly once but in the wrong sentence — unique-and-misaimed is invisible to
+counting, and is caught only by the arm's own predicted red, which is why `--emit-rows` still refuses to write a
+single row from a drive where any arm failed. And `--db` becoming optional is a CLI relaxation with a measured
+backstop: a drive with no `--db` exits 1 with `FATAL: a drive needs --db (or run --self-test…)`.
+
+**Gates.** The full twelve-step `scripts/db_gate_fresh.sh` was re-run after this wiring: `gate rc=0`, 216 checks on
+a from-scratch schema (tables=58, migrations=7), and step 11's block prints the self-test ahead of the registry
+reader — 7 accepted, five refusals — before that reader opens its first session. `STATUS §155` quotes that log.
+
+**What the PASS does not prove, stated before anyone reads it as proof.** A run in which the guard passes cannot
+distinguish "the guard is armed" from "the guard's return code is thrown away". The call is piped
+(`… --self-test ) 2>&1 | sed`), and a pipe is where an exit code goes to die unless `pipefail` holds it. The
+script does set `-euo pipefail` at its line 30, but reading a `set` line is not a measurement of it: the claim
+"step 11 can stop the gate" is only witnessed by a run in which the guard returns 1 and the gate dies there,
+never reaching step 12. That run is the next unit, and until it exists this entry's wiring claim is a shell-
+semantics argument, not a red.
