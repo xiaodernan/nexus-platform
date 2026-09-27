@@ -1060,6 +1060,14 @@ def main():
         pairs = ([(n, label, "own") for n, label in witnessed]
                  + [(n, label, "collateral") for n, label in collateral_witnessed])
         pairs = [p for p in pairs if (p[0], p[1]) not in filed and p[0] not in base_reds]
+        # A name has to be on the plane before anything can witness it. Some census rows assemble their names
+        # from the VALUES they find -- the reference census files `orphan: <table>.<subject_type>` -- so a
+        # plant can mint an assertion that exists only inside its own transaction and rolls away with it.
+        # That happened twice with `orphan: favorites.restaurant`, and both times the registry reader
+        # answered FAIL; deleting the row afterwards is not a fix, because the next drive mints it again
+        # from the same arm. So the refusal lives here, and prints what it refused.
+        off_plane = sorted({p[0] for p in pairs if p[0] not in base_names})
+        pairs = [p for p in pairs if p[0] in base_names]
         seen, new = set(), []
         for p in pairs:
             if p[0] not in seen:
@@ -1072,7 +1080,9 @@ def main():
         print(f"registry rows appended: {len(new)} "
               f"({sum(1 for p in new if p[2] == 'own')} emitted from an arm's own RED row, "
               f"{sum(1 for p in new if p[2] == 'collateral')} from collateral) · "
-              f"{len(novel)} of them name an assertion that carried no witness before")
+              f"{len(novel)} of them name an assertion that carried no witness before"
+              + (f" · refused {len(off_plane)} name(s) the unmutated gate does not file: "
+                 + "; ".join(off_plane) if off_plane else ""))
     return 0
 
 
