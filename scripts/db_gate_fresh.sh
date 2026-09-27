@@ -163,7 +163,15 @@ if printf '%s\n' "$(sed 's/\r$//' "$ROOT/data/seed/quality.sql")" \
   printf '    -> %s quality checks passed against a from-scratch schema (tables=%s, migrations=%s)\n' \
     "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"
 else
-  printf '\nRESULT: FAIL — last lines of the gate:\n' >&2
+  # D139: a gate that dies at step 5 used to report no numbers at all, which is how "214 assertions at
+  # HEAD" became a figure quoted from a ledger entry instead of one read from a run. The success path
+  # already prints its count; the failure path now prints the same census it was reading, plus the two
+  # planes it was built on, before the tail.
+  CHECKS="$(grep -ac '^  PASS' "$GATE_OUT" || true)"
+  REDS="$(grep -ac '^  FAIL' "$GATE_OUT" || true)"
+  printf '\nRESULT: FAIL — step 5 filed %s assertion(s), %s red (tables=%s, migrations=%s).\n' \
+    "${CHECKS:-?}" "${REDS:-?}" "$TABLES" "$SCHEMA_VERSION" >&2
+  printf 'Last lines of the gate:\n' >&2
   tail -25 "$GATE_OUT" >&2 || true
   exit 1
 fi

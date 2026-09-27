@@ -7886,3 +7886,40 @@ next              (a) #71 closes as answered; it re-opens only on the condition 
                     (b) Carried: #73, #75, #79, #62, #64, #58, #44, #17, #19, #34, step 11's --registry
                     residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.
 ```
+
+## 147. A red gate now says how many assertions it filed, and the first time it got to answer, the number was 212 -- not the 214 every entry had been quoting (2026-09-27)
+
+```
+plane             `scripts/db_gate_fresh.sh`, 12-line change to step 5's failure branch. Two full
+                    from-scratch runs against throwaway databases (added worktree, removed;
+                    `git worktree list` = the main checkout only). The kept loaded seed was not opened.
+                    Registry unchanged: 326 rows / 196 of 216 witnessed.
+
+changed           Before: a run that died at step 5 printed the tail of the gate and no counts, so the
+                  only plane with a number was the green one. Now: the same census is counted from the
+                  file it came from and printed with tables/migrations, then the tail, then exit 1.
+
+measured          red plane, `944c0b1` (before the share write): "step 5 filed 212 assertion(s),        green
+                  2 red (tables=57, migrations=6)", reds = the two door-vocabulary                  plane,
+                  rows #75 names.  Control, `d7c2d57`: "216 quality checks",                        `d7c2d57`:
+                  tables=58 migrations=7, step 5 passing, failure moved to step 7.                   unchanged
+                                                                                                     wording.
+
+found               (a) The fix works on the plane that needs it, and its first output corrected the
+                      ledger: three entries quoted 214 assertions at a clean HEAD (D107/D108, #75), the
+                      measured figure today is 212. The committed quality.sql has lost two rows since
+                      a304947 and nobody re-counted, because the red plane is exactly the plane where the
+                      script had never printed a total. A number that only appears on success ages quietly.
+                    (b) D138's unclaimed point is now claimed with evidence: the two door-vocabulary reds
+                      are gone at `d7c2d57` -- step 5 passes there with 216 checks -- and HEAD's remaining
+                      red is the step-7 answer sites naming untracked merchant/commerce files.
+
+gates             This section is two gate runs; their transcripts are
+                    `.../nexus-d63/gate_old2.log` (rc=1, step 5) and `.../gate_head2.log` (rc=1, step 7).
+                    The ledger readers were re-run on the final bytes of this text: step 8 exit 0,
+                    step 10 PASS with §147/D139 the uncommitted pair, step 11 PASS at 326 rows / 196 of 216.
+
+next              (a) #75 keeps only the step-7 half open now. (b) Re-measure rather than re-cite any
+                      HEAD-plane number. (c) Carried: #73, #58, #79, #62, #64, #44, #17, #19, step 11's
+                      --registry residue, §87's seam, D91's served leg, §130's missing `guide` branch.
+```

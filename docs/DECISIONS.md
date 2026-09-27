@@ -8412,3 +8412,48 @@ implicit.
 untracked packages land or the sites are re-pointed. (b) #75 re-stated: HEAD is still red, now at step 7,
 for a better-understood reason. (c) Carried: #73 (196 of 216), #58 (now with a gate run behind it), #79,
 #62, #64, #44, #17, #19, step 11's `--registry` residue, §87's seam, D91's served leg.
+
+## D139 The failure path now counts what it was reading, and the number it printed is not the one the ledger had been quoting — 2026-09-27
+
+D135 recorded a small defect: `db_gate_fresh.sh` prints its assertion total when step 5 passes and prints
+nothing of the sort when step 5 fails, so "214 assertions at HEAD" survived in three entries as a figure
+inherited from D107/D108 rather than re-read. D138 had to refuse a claim for the same reason. This unit
+fixes the reporting and then uses it.
+
+**Decision (a): a failing gate reports the same census a passing one does.** The else-branch at
+scripts/db_gate_fresh.sh:166-177 now counts `^  PASS` and `^  FAIL` lines from the same temp file it was
+about to tail, and prints them with the two planes the schema was built on, before the last 25 lines --
+so the reason a run stopped is legible without a second run to ask "how many were there?"
+
+**Measurement (b): verified on the plane where it fires, not on a green one.** A detached worktree at
+`944c0b1` (the commit before the share write), running the patched script with generation, reaches step 5
+and dies there as expected: **"step 5 filed 212 assertion(s), 2 red (tables=57, migrations=6)"**, the two
+reds being `a door vocabulary names a column the schema has` and `a CHECK-bounded column is a door
+vocabulary too`, exit 1. The control is the same script on today's HEAD (`d7c2d57`), where step 5 passes
+and prints **"216 quality checks"**, tables=58, migrations=7, and the failure has moved to step 7.
+
+**Finding (c): the remembered number was stale by two.** Every entry from D107 onward quoted 214
+assertions for a clean HEAD checkout; measured today at `944c0b1` it is **212**. Nothing about the schema
+changed between a304947 and now that would add assertions -- the committed `quality.sql` has simply lost
+two rows in the four months of ledger work since, and nobody re-counted because the plane that was red was
+never re-run. That is the exact failure mode this script exists to prevent, arriving in the script's own
+reporting: a total that only prints on success is a total that stops being true the moment anything else
+moves, and the red plane -- the one people quote when they say "HEAD is red" -- is precisely the plane
+where it never printed.
+
+**Numbers.** One script hunk (12 lines, `scripts/db_gate_fresh.sh`), two full from-scratch runs of ~4
+minutes each, both throwaway databases created and dropped by the scripts, one worktree added and removed;
+`git worktree list` shows the main checkout only. Neither run opened the kept loaded seed
+`nexus_gate_283340_1790454442`. Registry unchanged at 326 rows / 196 of 216.
+
+**Limits.** (i) 212 is today's HEAD-plane count at `944c0b1`, not a constant; the point of the fix is that
+the next such claim can be re-read instead of remembered. (ii) The success path's wording is unchanged, so
+existing transcripts and step 11's parsing are unaffected -- verified by the control run printing the
+familiar line. (iii) The failure path still exits at step 5, so a red gate reports nothing about steps
+6-11; that is by design (a seed that fails its own gate should not certify citations), and it is why
+D138's step-7 finding needed a green step 5 to surface at all.
+
+**next.** (a) #75's number is now measured rather than inherited; the open half is the step-7 answer sites
+citing untracked `merchant`/`commerce` code. (b) If a HEAD-plane claim ever matters again, run the script
+and read its line rather than citing an entry. (c) Carried: #73 (196 of 216), #58, #79, #62, #64, #44,
+#17, #19, step 11's `--registry` residue, §87's seam, D91's served leg.
