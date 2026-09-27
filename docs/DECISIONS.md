@@ -8968,3 +8968,64 @@ was not re-run for the drive: no gate file, reader, migration or product source 
 artifact step 11 reads — this harness and the registry — was re-read on the final bytes. The citation steps were
 re-run after this entry and `STATUS §153` landed, because a ledger append is where the spelled-§ reader has
 before now caught every new red.
+## D149 A vacuity census that refuted its own draft finding: the gate already measures every element key the build reads — what it never asks is whether a predicate's key is one of them — 2026-09-28
+
+**Why this unit.** `STATUS §153`'s next (a) named the question that the saturated witness percentage cannot answer:
+not *can this row be reddened* but *does this row read a key the product writes*. #95 was one such case found by
+accident; this unit went looking for the rest with a census, and the census turned against its own hypothesis.
+
+**What was measured.** First the plane: the whole twelve-step fresh gate re-run on the post-D148 tree —
+`RESULT: PASS — 216 quality checks on a from-scratch schema (tables=58, migrations=7)`, rc=0, gate database kept
+as `nexus_gate_369684_1790536129`, and step 11 green there with the 359-row registry (the first full-gate
+measurement *after* the text plane landed, which is the run that shows the new arms cost the shipped gate nothing).
+Then presence: every jsonb key that appears in a `quality.sql` read was counted on two planes (`nexus` and the
+kept gate database) — rows carrying the key out of rows in the container, and, for array-topped columns, elements
+carrying it out of elements. The `nexus` numbers: `merchants.contact.phone` 520/520, `offerings.attributes.data_origin`
+5534/5534, `facts.value.value` 1727/5688, `facts.value.estimated` 1560/5688, and five keys resolving to nothing —
+`offerings.attributes ? 'import_job'` 0 of 5,534, `collections.seo ? 'generated_by'` 0 of 4,
+`collections.items[] ? 'merchant_id'` 0 of 38 elements (all 38 carry `subject_id`), `agent_runs.plan ? 'steps'`
+0 of 4, `events.properties ? 'query'` 0 of 4.
+
+**The draft finding, and the file that killed it.** Those last two looked like a mechanism gap: the read census's
+own predicate is `format('%I ? %L', col, key)` over a *column*, and on an array-topped column that returns false
+for every key no matter what the elements hold — measured directly, `collections.items ? 'subject_id'` is 0 of 4
+rows while 38 of 38 elements carry it, and `merchants.images ? 'url'` is 0 of 520 rows while 520 of 520 elements
+carry it. From there the hypothesis was that element keys sit outside the census plane altogether. `quality.sql`
+says otherwise, two sections later: `$d81b$` (quality.sql:1885-1920) walks every jsonb column, keeps the ones with
+array-topped rows (`CONTINUE WHEN w = 0`), and files rows, array-topped rows, element count, distinct element
+signatures and — decisively — **the union of the element keys** into `arr_cat`; `arr_bound` answers each such
+column by name (quality.sql:1939 files `('collections','items','payload-shape','-', '38 objects across 4
+collections, one signature')`), and assertions at quality.sql:1945-1969 count and cross-check that census. D81
+built this in the same file whose row #95 is about. The hypothesis is withdrawn, and the withdraw is the entry's
+point: a census built from a hand grep over `->>'key'` had already been told in this project's own ledger that the
+grep is the wrong instrument, and it was the shipped `arr_cat` walk, not my regex, that settled it.
+
+**What survives, narrower and sharper.** Re-derive #95 against the plane that now exists. The element key union
+is measured, and on `nexus` it reads `collections.items → note, subject_id, subject_type` and
+`merchants.images → alt, credit, url`. So the gate *knows* `merchant_id` is not a key of any `items` element —
+and the row at quality.sql:1003 still asks `it->>'merchant_id' IS NOT NULL AND NOT EXISTS (…)`, which is false by
+construction over that vocabulary. The missing piece is not a census but a join: **no assertion anywhere asks
+whether a key that a *predicate* reads is one of the keys the same column's elements actually carry.** The two
+planes hold the answer and are never compared, which is exactly why a row can be witnessed red (D147), be counted
+by an element census (D81), and still read a key nothing writes. That is a report for the seed lane, not an edit,
+and it is a cheap one: one row joining the predicate-named keys to `arr_cat.keys`, and the D148 text plane can
+then witness it the way it witnessed the other seven, since its both-sides-live-in-the-file shape is precisely
+what that plane was built for.
+
+**Two shipped classifications independently confirmed, and a grammar lesson.** The two `dead-reader` rows in
+`read_answer` are right as measured: `import_job` 0 of 5,534 and `generated_by` 0 of 4, matching the reason each
+row states. And of the 15 keys my grep collected, 3 (`steps`, `query`, and one `key`) were never reads at all —
+they are prose inside `--` comment lines (quality.sql:2482, :2498, :2509, :2519, :2558, :3425, :3434, :3435), two
+of which *already record* that the read they mention resolves to nothing. A census that does not exclude the
+comment plane invents reads; the shipped readers (`scripts/check_jsonb_reads.mjs`, which parses the answer tables,
+and `$d81b$`, which parses the catalogue) do, and a hand grep does not.
+
+**What this unit does not buy.** No shipped artifact changed, so no gate number moved: 216 assertions and 359
+registry rows before and after. The measurement is read-only over two planes, and the presence counts are a
+property of those planes — `nexus` carries 4 `agent_runs` where the comment at quality.sql:3434 reports 40, so a
+count quoted from one is not a count of the other. Nothing here shows the guide-merchant row is *wrong* about
+merchants: it shows the row cannot be right about the shipped payloads, which is the weaker and provable claim.
+
+**Gates.** `scripts/db_gate_fresh.sh --keep` full twelve steps PASS (above). The four ledger readers were re-run
+after this entry and `STATUS §154` landed: step 8 (`--worktree`), step 9 (73 comment-plane citations across 21
+files), step 10 (`HEAD 122 sections · on disk 122 · missing 0 · duplicate 0`), step 12 — all rc=0.

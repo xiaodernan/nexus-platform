@@ -8368,3 +8368,63 @@ next                (a) The registry metric is done, so the next measurement on 
                         migration set; #9's Playwright half, #17's reservation transitions, #19's RBAC
                         reachability wave and #44's events subject seam are the other open build lanes.
 ```
+
+## 154. The whole gate re-measured after the text plane, and a vacuity census that deleted its own hypothesis: the element key union is already censused, so #95 is a missing join, not a missing measurement (2026-09-28)
+
+```
+plane             Read-only. Nothing tracked was edited by this unit except the two ledgers. Two databases
+                    measured: the developer `nexus` (20 live app connections, untouched by the run) and the kept
+                    from-scratch gate database `nexus_gate_369684_1790536129`.
+
+changed           - no source, gate, reader, harness, registry or migration file.
+
+measured            - `scripts/db_gate_fresh.sh --keep`, all twelve steps, rc=0: `RESULT: PASS — 216 quality
+                      checks on a from-scratch schema (tables=58, migrations=7)`, and step 11 green against the
+                      359-row registry. This is the first full-gate run whose tree contains the text plane, so it
+                      is the number that shows the new arms cost the shipped gate nothing.
+                  - key presence, per container, on `nexus`: contact.phone 520/520 · contact.email 520/520 ·
+                      offerings.attributes.data_origin 5534/5534 · documents.metadata.data_origin 1040/1040 ·
+                      chunks.metadata.data_origin 2118/2118 · images[].url 520/520 elements · seo.noindex 520/520
+                      and 4/4 · facts.value.{value,count,reviewed_through} 1727/5688, estimated 1560/5688,
+                      data_origin 5004/5688 · items[].subject_id 38/38 elements.
+                  - five keys resolve to nothing: offerings.attributes ? import_job 0/5534 ·
+                      collections.seo ? generated_by 0/4 · items[].merchant_id 0/38 elements (all 38 carry
+                      subject_id) · agent_runs.plan ? steps 0/4 · events.properties ? query 0/4. The first two
+                      match `read_answer`'s own `dead-reader` kinds, and the last two are recorded in
+                      quality.sql's own comments — confirming shipped classifications rather than finding new ones.
+
+found               (a) The hypothesis this unit set out to prove is withdrawn. Array-topped jsonb columns are 5
+                      of 62 (collections.items 4/4, merchants.images 520/520, offerings.images and .options
+                      5534/5534, reviews.photos 11000/11000), and the read census's predicate `%I ? %L` over a
+                      column answers 0 for them no matter what their elements hold — measured:
+                      `items ? 'subject_id'` is 0 of 4 rows while 38 of 38 elements carry it. From that the draft
+                      claim was "element keys are outside the census plane". They are not: $d81b$
+                      (quality.sql:1885-1920) walks every jsonb column with array-topped rows and files rows,
+                      elements, distinct signatures and the **element key union** into `arr_cat`, `arr_bound`
+                      answers each column by name (:1939 for collections/items), and :1945-1969 asserts over the
+                      census. D81 already built the instrument.
+                      - What survives is one level narrower: no assertion asks whether a key a *predicate* reads
+                        is one of the keys that column's elements carry. `arr_cat.keys` for items is
+                        `note, subject_id, subject_type` — the gate knows `merchant_id` is not there — while
+                        quality.sql:1003 still asks `it->>'merchant_id' IS NOT NULL`. #95 is therefore a missing
+                        join between two planes that already hold the answer, not a missing measurement, and the
+                        cheap form of the fix is a row comparing predicate-named keys to `arr_cat.keys`.
+                      - (b) A hand grep over `->>'key'` is the wrong instrument twice over: it counted 3 of its 15
+                        "reads" from `--` comment lines (quality.sql:2482, :2498, :2509, :2519, :2558, :3425,
+                        :3434, :3435 — two of which already say the read resolves to nothing), and it cannot see
+                        an element read at all. The shipped readers parse the answer tables and the catalogue
+                        instead, which is what makes their counts trustworthy.
+
+gates               Full twelve-step `db_gate_fresh.sh --keep` PASS at 216 checks (above). Steps 8 / 9 / 10 / 12
+                    re-run on the final bytes of this entry: step 9 PASS at 73 comment-plane citations over 21
+                    files, step 10 PASS with no missing or duplicated heading, step 12 PASS. No artifact changed,
+                    so no gate number moved: 216 assertions and 359 registry rows before and after.
+
+next                (a) New report-only task #96, for the seed lane: assert that every element key a predicate
+                        reads is in that column's `arr_cat.keys` (or state, per predicate, why not). #95 stays as
+                        its first instance. A row of that shape is witnessed by the D148 text plane, which was
+                        built for both-sides-in-the-file rows.
+                      - (b) #94 still needs the user's authorization before `nexus_test` is rebuilt from the
+                        migration set; #9's Playwright half, #17, #19 and #44 are the other open build lanes.
+
+```
