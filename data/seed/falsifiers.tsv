@@ -370,3 +370,14 @@ the elements of an object-array column all carry the same keys	D147	a legal writ
 a census that folds case reports both readings and which one the demo exercises	D147	schema plane: the citext column is cast to text, so the case-folding type leaves the census	dc3ac65
 the string census declares a reading for every type it catches	D147	schema plane: the citext column is cast to text, so the case-folding type leaves the census	dc3ac65
 a served view answers every column it exposes	D147	schema plane: the served funnel view gains a trailing column no answer block explains, wrapped out of pg_get_viewdef so the shipped column list is never transcribed	dc3ac65
+an armed type resolves in a table the schema has	D148	text plane: the hand vocabulary gains an armed type whose referent table this schema does not have	c5ba5af
+the pairs declared probed are pairs the schema has	D148	text plane: the probe list declares a probe over a table this schema does not have	c5ba5af
+a join-one-type waiver is only true while the table ships one type	D148	text plane: a registered column is re-classified as a join-one-type waiver while its table ships more than one subject_type -- the name is chosen from ref_cat, not transcribed	c5ba5af
+the registry names no column the schema has lost	D148	text plane: the registry gains a name no column of this schema carries	c5ba5af
+the reference census reads the catalogue	D148	text plane: the reference census mistakes itself for the polymorphic probe and enumerates only tables carrying a subject_type column (26 measured columns, 14 left, floor 17)	c5ba5af
+the polymorphic-pair census reads the catalogue	D148	text plane: the pair census enumerates only the four tables the hand list already names (12 measured pairs, 4 left, floor 8)	c5ba5af
+traffic sweep reaches the whole closure, not a hand list	D148	text plane: the closure walk's recursive arm stops following any edge, so the sweep sees only the tables the anchor names by hand (29 measured, floor 20)	c5ba5af
+a probe arm is a declared type and every armed type has an arm	D148	text plane: the hand vocabulary gains an armed type whose referent table this schema does not have	c5ba5af
+every probe family resolves at least one armed type	D148	text plane: the probe list declares a probe over a table this schema does not have	c5ba5af
+the arm registry agrees with the probed-pair counts	D148	text plane: the probe list declares a probe over a table this schema does not have	c5ba5af
+no traffic outside the seeded tables	D148	text plane: the closure walk's recursive arm stops following any edge, so the sweep sees only the tables the anchor names by hand (29 measured, floor 20)	c5ba5af
