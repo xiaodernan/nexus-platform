@@ -8542,3 +8542,46 @@ whoever owns the dev environment, not a step to slip in. (b) The `nexus_test` no
 one line in the gate docs the next time this lane touches them: the only check that plane gets is the
 tests that run against it. (c) Carried: #73, #75 (step-7 half), #58, #79, #44, #62, #64, #17, #19,
 step 11's residue, §87's seam, D91's served leg.
+
+## D142 The platform suite's 34 reds are one plane, not fourteen defects: `nexus_test` is running a schema from before V4 — 2026-09-27
+
+D140 and D141 established that `nexus_test` keeps no migration ledger and that its only check is whatever
+runs against it. This unit exercises that claim at scale, because the standing answer to "is the build
+green?" had become a shrug: #58 carries "commerce/admin/seo test packages are untracked; red count
+withdrawn", and the last honest baseline in the ledger was 206 run / 7 failures from the D50 era.
+
+**Measurement.** `mvn -o -B test` in `services/platform`, 82 seconds: **Tests run: 217, Failures: 13,
+Errors: 21**, BUILD FAILURE. The failing classes are mostly tracked, in-lane code --
+`CollectionsReadTest` (13 errors), `CollectionDraftWriteTest` (5), `ModerationFlowTest`, three identity
+door tests, `FactWriteTest`, `MerchantWorkspaceTest`, `RateLimitEnforcementTest` -- which is why counting
+them as "other streams' untracked packages" is no longer a sufficient answer.
+
+**The causes are two, and both are schema-plane, not code.** 18 distinct `duplicate key value violates
+unique constraint` reports, 5 `there is no unique or exclusion constraint matching the ON CONFLICT
+specification`, and the rest BadSqlGrammar: `insert into user_identities (user_id, tenant...)` and
+`column ui.tenant_id does not exist`. Read together they say the database surefire runs against predates
+`V4__tenant_scoped_identity.sql` (the migration that adds `user_identities.tenant_id`) and is also missing
+unique constraints that later migrations added -- `users_email_uniq` firing on a test fixture's second
+insert, and an `ON CONFLICT` target no longer present. The first failure of the run cascades: a test class
+that cannot seed its rows reports a dozen errors in tenths of a millisecond each, which is what the 13-error
+`CollectionsReadTest` block looks like.
+
+**Why this lane did not fix it in place.** The honest repair is to rebuild `nexus_test` from
+`infra/db/migrations/V*.sql` -- which is a destructive act on a database other streams' tests read, and
+applying V4 forward by hand is worse: partial application against a schema that already diverged in both
+directions produces exactly the silent drift D141 described. So the finding is filed and the decision is
+put where it belongs, with the evidence to make it quickly. One data point in favour of the rebuild being
+safe rather than merely possible: the 5 tests in the `com.nexus.growth` package and the whole
+`SeoReadTest`/`UcpDoorsTest`/`platform.*` block pass against the same database, so nothing in the red set
+looks like lost data; it looks like an old schema.
+
+**Numbers.** One full suite run: 217 tests, 13 failures, 21 errors, 82 s; 9 failing classes named above;
+18 duplicate-key + 5 ON-CONFLICT + 7 user_identities-grammar causes. Registry and gate state unchanged:
+326 rows, 196 of 216 assertions witnessed, HEAD's step 5 green at 216 checks. No source file was edited by
+this unit, and no database was modified.
+
+**next.** (a) #94 asks whoever owns `nexus_test` to rebuild it from the migration set (or authorise this
+lane to), then re-run `mvn -o test` for the first honest baseline since D50. (b) #58's "red count
+withdrawn" should be replaced by that baseline rather than by an attribution to untracked packages, which
+this run shows is only part of the story. (c) Carried: #73, #75 (step-7 half), #44, #79, #62, #64, #17,
+#19, step 11's residue, §87's seam, D91's served leg.
