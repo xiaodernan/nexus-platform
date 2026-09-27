@@ -325,3 +325,14 @@ every jsonb key the build reads is answered for what the shipped payloads carry	
 every array column is answered for what bounds its elements	D129	synthetic traffic row (a recommendation set): the written row's tenant_id is a ghost id (0 rows in the table at seed)	8256983
 every jsonb payload that a key read cannot reach is answered for what it is	D129	synthetic traffic row (a recommendation set): the written row's tenant_id is a ghost id (0 rows in the table at seed)	8256983
 the columns stamped from the generation clock are exactly the ones answered so	D129	a legal write the schema accepts: an estimated price's fact re-labelled as the merchant's own claim	8256983
+every column that cannot vary is answered for why it cannot	D130	a menu whose synthetic-data disclaimer was removed	aca885b
+no traffic outside the seeded tables	D130	synthetic traffic row: a deletion request is nobody's (0 rows in the table)	aca885b
+a seeded polymorphic vocabulary is bounded or probed	D130	synthetic traffic row (a feedback event): the written row's user_id is a ghost id (0 rows in the table at seed)	aca885b
+every array column is answered for what bounds its elements	D130	synthetic traffic row (a recommendation set): the written row's user_id is a ghost id (0 rows in the table at seed)	aca885b
+every jsonb payload that a key read cannot reach is answered for what it is	D130	synthetic traffic row (a recommendation set): the written row's user_id is a ghost id (0 rows in the table at seed)	aca885b
+every jsonb key the build reads is answered for what the shipped payloads carry	D130	synthetic traffic row (a referral): the written row's invitee_id is a ghost id (0 rows in the table at seed)	aca885b
+every reference the seed writes is probed or explained	D130	synthetic traffic row (a referral): the written row's invitee_id is a ghost id (0 rows in the table at seed)	aca885b
+a verification badge stays unresolvable only while its evidence and its link both stay absent	D130	synthetic traffic row (a refund): the written row's approved_by is a ghost id (0 rows in the table at seed)	aca885b
+a view answer names the kind the census derives	D130	synthetic traffic row (a refund): the written row's approved_by is a ghost id (0 rows in the table at seed)	aca885b
+a view kind is exercised or exempted	D130	synthetic traffic row (a refund): the written row's approved_by is a ghost id (0 rows in the table at seed)	aca885b
+the columns stamped from the generation clock are exactly the ones answered so	D130	a legal write the schema accepts: one fact sourced to an undeclared string	aca885b

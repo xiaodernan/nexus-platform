@@ -7542,3 +7542,44 @@ next              (a) 21 names left, of which two are worth a plant (`a bounded 
                       percentage residue, §87's session-time-zone seam, D91's served leg, §130's missing
                       `guide` branch.
 ```
+
+## 139. A witness row whose assertion is not on the plane is now refused where it is built, not deleted after the reader complains (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (the emission block at :1051-1075, committed aca885b).
+                    No arm, assertion, gate file or migration changed; the registry went
+                    306 -> 317 rows with coverage unchanged at 195 of 216, on the same kept loaded seed as §128–§138.
+
+changed           Two lines and a print: a candidate row is appended only if its check name is in the name
+                    list the unmutated baseline session filed, and the summary says how many were refused.
+                    The drive already had that list -- it is the same `N|` row the missing-name guard rides
+                    on -- so nothing new is measured, only enforced one stage earlier.
+
+found               (a) The minting arm still behaves exactly as before -- target RED, one collateral named,
+                      identical closing baseline -- and files nothing:
+                      `refused 1 name(s) the unmutated gate does not file: orphan: favorites.restaurant`.
+                    (b) Deleting §136's row had not fixed anything: D129's drive re-minted it. The lesson is
+                      general -- a wrong row has to be made unproducible, not removed.
+                    (c) Step 11's invariant (every row names a live assertion) is now a precondition of the
+                      writer instead of an audit of its output; the reader still checks it, and can no
+                      longer be the first to notice.
+
+gates             Nothing in the eleven steps changed, so the script was not re-run; the shipped code
+                    touched is the file whose 149-session regression drive this section reports:
+                    RESULT PASS, 11 rows appended -- 0 own, 0 novel, all second witnesses for (check, arm)
+                    pairs the fleet had not filed before -- and one refusal, closing baseline 216
+                    assertions / 0 red identical to opening, and `quality.sql`'s md5 `4d3a707eff55971b0a2198e2a1b56777` unchanged. The four
+                    readers were run on the final bytes of this text: step 8 `check_ledger_citations.mjs
+                    --worktree` (exit 0 — 250 headings seen, 523 name:number tokens, 312 citation-shaped),
+                    step 9 `check_comment_citations.mjs` (71 citations across 21 files), step 10
+                    `check_ledger_sections.mjs` (PASS — STATUS HEAD 106 · on disk 107 · duplicates 0 ·
+                    §139 the one uncommitted section; DECISIONS HEAD 117 · on disk 118 · D130 the same
+                    note), step 11 `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442`
+                    (PASS, 317 rows, 195 of 216).
+
+next              (a) D131 plants the two remaining data-reachable rows and then writes off the rest of the
+                    21 line by line. (b) #71, eleventh time standing on it. (c) Carried: #73 (195 of 216
+                    witnessed, 21 unwitnessed), #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's
+                    --registry residue, §87's session-time-zone seam, D91's served leg, §130's missing
+                    `guide` branch.
+```

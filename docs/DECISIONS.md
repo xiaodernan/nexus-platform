@@ -7895,3 +7895,56 @@ get the per-row disposition §137 began, now corrected: a row no data state fals
 (c) #71, eleventh time standing on it. (d) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80,
 step 11's `--registry` percentage residue, §87's session-time-zone seam, D91's served leg, §130's missing
 `guide` branch.
+
+## D130 The drive now refuses to file a witness for an assertion the unmutated gate does not file, so the reader's invariant became a precondition — 2026-09-27
+
+§136 recorded the first time `check_falsifier_registry.mjs` refused this lane's file: a plant that files a
+favourite under an invented subject type also makes the reference census emit
+`orphan: favorites.restaurant`, because that family builds its names from the values it finds, and after
+`ROLLBACK` no such assertion is on the plane. The row was deleted. D129's drive minted it again under a
+new unit, and the drive's own summary line counted it as a novel name -- so the deletion was never a fix,
+only a re-finding of the same hole one batch later.
+
+**Decision (a): the refusal belongs in the emission, and the drive already holds the fact it needs.** The
+first session of every run is unmutated, and its name list is what the report protocol carries back as
+the `N|` row and the loop passes onward as `expect`. So the filter is two lines at the one place rows are
+built (falsifier_plants.py:1051-1075): a candidate row is dropped unless its assertion name is in the
+baseline plane, and the summary prints what it refused. `orphan: favorites.restaurant` was the only name
+in the fleet that fell to it -- every other name this lane files was named by a `qc` INSERT before any
+plant ran.
+
+**Decision (b): the plant still shows what it showed; only the filing changes.** Re-running the minting
+arm alone gives the identical verdict -- target `favourite subject_type is one the API can save` RED, one
+collateral named, closing baseline 216 assertions / 0 red -- while appending **0** rows and printing
+`refused 1 name(s) the unmutated gate does not file: orphan: favorites.restaurant`. That distinction is
+the point of the whole unit: the reference census noticing an invented type is a real observation about
+the gate and it stays in the arm's text; it is not a demonstration that an assertion which exists can
+fail, and the registry holds only the second kind of claim.
+
+**Decision (c): an invariant moved from audit to precondition.** Step 11 reads the registry against the
+plane and answered FAIL twice; after this change the harness cannot produce the file it refuses. The
+second gain is arithmetic that used to land on the reader: D129 printed "3 novel names" where 2 were on
+the plane, and a future drive's summary now prints the refusal beside the append count.
+
+**Numbers.** Harness `aca885b`; no assertion, arm, gate file or migration changed. Targeted re-run of the
+minting arm: 3 sessions, RESULT PASS, appended 0, refused 1. Full regression drive: **146 arms + the control, 149 whole-gate
+sessions, RESULT PASS**, every arm reddening its own assertion, **11 rows appended** against a 327-line
+copy of the registry -- 0 from an arm's own RED row and 0 naming an assertion that carried no witness
+before, so all 11 are second witnesses for (check, arm) pairs the fleet had never filed together -- plus
+the same single refusal. Registry 306 -> **317 rows**, coverage unchanged at **195 of 216 (90.3%)**,
+21 unwitnessed; `quality.sql` md5 `4d3a707eff55971b0a2198e2a1b56777` before
+and after.
+
+**Limits.** (i) The filter's denominator is this working copy's plane -- 216 assertions, two of them from
+another lane's uncommitted migration (#75) -- so it refuses plant-minted names, not names belonging to
+another stream. (ii) A data-derived name that is also on the baseline plane stays witnessable:
+`orphan: favorites.merchant` is assembled by the same census from a value the seed really writes, and
+D120's witness for it stands. The line is "was this assertion filed before the plant ran", which is
+exactly the reproducibility requirement. (iii) The per-arm table still lists minted names as collateral,
+and should -- they were reddened -- so the ledger keeps reading collateral as observation.
+
+**next.** (a) D131: the two plantable rows left -- `a bounded string column is answered by name`, which
+needs a text-column inventory before an arm can be aimed, and `a served view answers every column it
+exposes` -- then a one-line disposition per row for the rest of the 21. (b) #71, eleventh time standing on
+it. (c) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's `--registry` percentage
+residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.
