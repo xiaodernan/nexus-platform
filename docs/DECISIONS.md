@@ -8150,3 +8150,52 @@ appears in a mapping table is usually the table's, and "fixing" the citations pr
 eleventh time standing on it. (e) Carried: #75, #91, #62, #64, #58, #44, #17, #19, #34, #79, #80,
 step 11's `--registry` percentage residue, §87's session-time-zone seam, D91's served leg, §130's
 missing `guide` branch.
+
+## D134 The whole shipped gate, run end to end on a from-scratch database, with the two-plane consequence spelled out — 2026-09-27
+
+Ten commits of registry and ledger work (D124-D133) had each been checked reader by reader -- step 8,
+step 9, step 10, step 11 run by hand against the working copy. That is the lane's habit, but it leaves
+one question unanswered: does the gate as shipped still pass from nothing? This unit runs
+`scripts/db_gate_fresh.sh` and reports what the eleven steps said.
+
+**Decision (a): run it for real, and skip only the step that would write another lane's files.**
+`--skip-generate` was passed, so step 3 did not regenerate `data/seed/out/` and the fresh database was
+loaded from the CSVs as they stand on disk. The reason is the shared-tree rule, not convenience: the
+working copy carries another stream's uncommitted edits (quality.sql, four contract docs, a V7
+migration), and a generator run would overwrite generated artifacts this lane does not own. The rest of
+the script ran unchanged: it created `nexus_gate_336563_1790480323` from `template0`, applied
+`infra/db/migrations/V*.sql` + `00_roles.sql`, loaded the seed, gated it, probed the truncate guard, and
+dropped the database at the end. **Exit 0, all eleven steps PASS**, closing with "216 quality checks on a
+from-scratch schema (tables=58, migrations=7)".
+
+**Decision (b): `migrations=7` is the two-plane claim from D107/D108, now demonstrated by the shipped
+script rather than asserted in prose.** A from-scratch build of THIS working copy applies seven
+migrations and files 216 assertions -- including the `share_links` ones -- because
+`V7__share_links.sql` exists on disk while remaining uncommitted (#75). So the green this lane reports
+every session is a green of the working copy, and a checkout at HEAD would build six migrations and
+214 checks with two reds, which is what D107/D108 measured on a clean worktree. Two consequences are
+recorded rather than argued: the seed gate is currently coupled to another lane's uncommitted file, and
+any claim of the form "the gate is green" has to name its plane. This unit did not re-run the HEAD plane
+(it needs a separate checkout and another full build); it cites D107/D108 for that number and flags it
+as the obvious next verification, not as something re-confirmed today.
+
+**Numbers.** Steps and verdicts as the script printed them: 1 create, 2 migrations+roles, 3 skipped by
+flag, 4 load, 5 `quality.sql` -- 216 checks, 0 red; 6 truncate probe PASS ("the empty child is cleared,
+the child with rows refuses by name, and the refusal costs nothing"); 7 jsonb reads PASS; 8
+`check_ledger_citations.mjs --worktree` PASS; 9 `check_comment_citations.mjs` PASS -- **73 comment-plane
+citations across 21 files**, up from 70 before D125-D131 were written, i.e. the new arms' own comments are
+being resolved; 10 `check_ledger_sections.mjs` PASS; 11 `check_falsifier_registry.mjs` PASS over **326
+rows**, every row naming a live assertion and an openable witness. Registry, harness and docs were not
+modified by this unit.
+
+**Limits.** (i) With step 3 skipped, this run does NOT prove the generator agrees with the current
+schema -- that is exactly the defect class D21/D62 built the script to surface (a fresh deploy dying on
+first load), and it remains unproven today. The generator's own FK self-check would be the thing to
+trust, and it was not run. (ii) The fresh database was built from the working copy's migration
+directory, so its green is a working-copy green, not a HEAD green. (iii) One run, one container, no
+concurrency: other lanes may have been writing during it, and the run reads their files as found.
+
+**next.** (a) Re-run the gate WITH generation once `data/seed/out/` is unowned-and-clean or the owning
+lane agrees, so step 3's self-check is back in the evidence. (b) Re-measure the HEAD plane (a clean
+checkout, expected 6 migrations / 214 checks / 2 reds per D107-D108) and file it as a number rather than
+a remembered one. (c) #71, #75, #91, #79, #80 unchanged; carried list unchanged.

@@ -7721,3 +7721,41 @@ next              (a) #79 rewritten to report the two spelled-plane sites and th
                     read the file that DEFINES the numbering before correcting anything that uses it.
                     (d) #71, #75, #91 and the rest of the carried list unchanged.
 ```
+
+## 143. The eleven-step gate run end to end on a database built from nothing: exit 0, 216 checks, seven migrations -- and the two things that run does not prove (2026-09-27)
+
+```
+plane             `scripts/db_gate_fresh.sh --skip-generate`, run once. It created
+                    `nexus_gate_336563_1790480323` from `template0`, applied
+                    `infra/db/migrations/V*.sql` + `00_roles.sql` (7 migrations), loaded
+                    `data/seed/out/` as found, gated, probed, and dropped the database.
+                    Nothing shipped was edited by this unit; the live databases were not opened.
+
+changed           Verification, not mechanism: the lane had been checking steps 8-11 by hand after every
+                    unit for ten commits. This is the shipped script being run as shipped.
+
+found               (a) All eleven steps PASS, exit 0, "216 quality checks on a from-scratch schema
+                      (tables=58, migrations=7)". Step 6 cleared an empty stranger and refused one holding
+                      rows by name; step 9 resolved 73 comment-plane citations across 21 files -- three
+                      more than before D125-D131, which is those arms' own comments being read back;
+                      step 11 reconciled 326 registry rows against the assertions step 5 filed.
+                    (b) `migrations=7` spells out the plane: the fresh build includes the uncommitted
+                      V7__share_links.sql (#75), so a working-copy green is not a HEAD green. D107/D108
+                      measured the HEAD plane at 6 migrations / 214 checks / 2 reds; that number was
+                      cited here, not re-measured.
+                    (c) Two things this run does NOT prove, named so nobody reads them as covered:
+                      step 3 was skipped, so the generator's agreement with the current schema is
+                      unverified -- the exact defect class the script exists to surface -- and nothing
+                      about a HEAD checkout was re-run today.
+
+gates             This section IS the gate run, so its evidence is the transcript
+                    (`.../nexus-d63/gate_run.log`, `gate rc=0`) rather than a re-run of parts. The four
+                    readers report inside it as steps 8, 9, 10 and 11 above; the section numbering and
+                    citation checks that follow this edit were run again on its final bytes and resolved.
+
+next              (a) Re-run WITH generation once the generated CSVs are clean or their owner agrees.
+                    (b) Re-measure the HEAD plane in a clean checkout and file the number. (c) Carried:
+                    #71, #73 (196 of 216 witnessed), #75, #79, #80, #91, #62, #64, #58, #44, #17, #19,
+                    #34, step 11's --registry residue, §87's session-time-zone seam, D91's served leg,
+                    §130's missing `guide` branch.
+```
