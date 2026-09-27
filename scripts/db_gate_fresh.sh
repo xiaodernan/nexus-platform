@@ -26,6 +26,8 @@
 #   GATE_LEDGER_TEXT     step 8 only: census this file instead of both ledgers (inert when unset)
 #   GATE_COMMENT_PLANE   step 9 only: read comments out of this directory instead of the repository
 #                        (inert when unset; both are the same reachability arm, see steps 8-9)
+#   GATE_STATUS_DIR      step 12 only: scan this directory for spelled §-citations instead of the repository
+#                        (inert when unset; the third instance of the same arm, see step 12)
 #
 # Safety: this creates and DESTROYS a database. It refuses to run if the target resolves to `nexus`
 # or `nexus_test` — the developer database and the integration-test one — and it never touches a
@@ -268,7 +270,15 @@ step "12/12 scripts/check_status_citations.mjs — every STATUS §NN written out
 # the heading reds it while every file:line citation in the same sentence still resolves. It reads HEAD, matching
 # §126's grammar ("must be a `## N. ` heading at HEAD"). `scripts/falsify_status_citations.mjs` is the arm that
 # shows this step can fail — 6 of 6 held at D117 — so the wiring is proved rather than assumed.
-( cd "$ROOT" && node scripts/check_status_citations.mjs ) 2>&1 | sed -e 's/^/    /'
+#
+# D154: that falsifier ran the checker as its own subprocess, which proves the reader reddens but not that THIS
+# step stops the run — the same gap D152 closed for steps 8 and 9 and D150/D151 for step 11. `GATE_STATUS_DIR`
+# is the in-gate seam: aimed at a directory holding one planted `STATUS §NNN`, it makes step 12 exit 1 and the
+# gate print no RESULT: PASS line. The flag reached the checker as `--dir=<path>`, a spelling
+# `check_status_citations.mjs` did not parse and did not complain about: it scanned the repository, printed
+# "568 candidates under D:\获客平台" and called that a PASS. Both spellings are parsed now and an unrecognised
+# flag is a NOT CHECKED refusal, which is what made this arm honest to run rather than merely runnable.
+( cd "$ROOT" && node scripts/check_status_citations.mjs ${GATE_STATUS_DIR:+--dir="$GATE_STATUS_DIR"} ) 2>&1 | sed -e 's/^/    /'
 
 printf '\nRESULT: PASS — %s quality checks on a from-scratch schema (tables=%s, migrations=%s), plus the\n' \
   "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"

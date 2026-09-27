@@ -9288,3 +9288,62 @@ second run can take a first run's fixture only inside the gap between one arm's 
 a per-arm window, not a per-run certainty, and sixteen shared-root runs found it shut every time. Whether it can
 be forced open is a question for whoever owns the next visit to this file, and the answer needs a rate from a
 loop, not a single try — the standard the paragraph above now holds itself to.
+
+## D154 — The last citation step gets an in-gate arm, and the knob that exposed a flag nobody parsed
+
+**Context.** D152 gave gate steps 8 and 9 an env-supplied arm so a reader could see the step stop the run from
+inside the gate rather than from a hand-run of a different invocation. Step 12 — `check_status_citations.mjs`,
+the spelled `STATUS §NN` reader added at D144 — was the remaining citation step with no such seam: its gate
+line is a bare `node scripts/check_status_citations.mjs`, and the proof it cites
+(`scripts/falsify_status_citations.mjs`, 6 of 6 held at D117) runs the checker as *its own* subprocess. That
+proves the reader reddens. It does not prove this step can halt this gate — the same gap D150 and D151 closed
+for step 11.
+
+**Decision.** Add `GATE_STATUS_DIR`, documented beside the other three knobs in the header, and forward it as
+`${GATE_STATUS_DIR:+--dir="$GATE_STATUS_DIR"}`. Then, before claiming the arm works, run the checker by hand on
+the spelling the shell makes easiest.
+
+**What that found.** `--dir=<path>` was not parsed at all. The reader had one shape,
+`const arg = (name, dflt) => { const i = process.argv.indexOf(`--${name}`); return i < 0 ? dflt : process.argv[i + 1]; }`,
+so `--dir=C:\...\d154_fixture` was an argument it never looked at: the run printed
+"files scanned 568 of 568 candidates under D:\获客平台" and `RESULT: PASS`, while the operator believed they were
+scoring a two-file fixture. `--head-rev=435d388` was the same story. An option that fails to fail, in D96's
+vocabulary — worse than a missing option, because the green line is real output from a plane nobody aimed at.
+The saving grace, and the reason this was catchable at all: the reader prints which revision and which root it
+scored, so the wrong plane is visible in the report rather than only inferable from a suspiciously large count.
+
+**The fix.** Both spellings parse now, an empty value is refused, and a flag this file does not read is a
+`RESULT: NOT CHECKED` with exit 2 — the file's existing refusal vocabulary, not a new one. The usage block says
+so. The gate forwards the `=` form, which dogfoods the shape that used to be silently dropped.
+
+**Measured.** (1) bare: 568 files, 11 spelled citations, 11 resolve, 31 mentions of which 15 would resolve,
+exit 0. (2) `--dir <fixture>`: 2 files, one BAD plant at line 1 of the fixture (`STATUS §1700`), exit 1 — unchanged,
+which is the regression half of the fix. (3) `--dir=<fixture>`: the same 2-file plane and the same exit 1, where it used to
+read the repository and pass. (4) `--head-rev=435d388`: 116 headings (max §148) and 1 BAD,
+`docs/DECISIONS.md:9087: STATUS §155`, exit 1. (5) `--verbose`: `unknown option --verbose — flags this reader
+parses: dir, head-rev`, exit 2. (6) `scripts/falsify_status_citations.mjs` still holds 6 arms / 6 / 0, exit 0 —
+it passes the space form, so no arm of D117 was ever faked by this defect; read off `falsify_status_citations.mjs:70-71`
+rather than assumed.
+
+**The in-gate half.** Two legs, back to back in about twenty minutes, on the same working tree (which holds
+other lanes' uncommitted files — the comparison is between the two legs, not against a clean checkout).
+Neutral, no knob: 12 step headers and 7 `RESULT: PASS` lines — step 6's truncate probe, step 9's comment census,
+step 10's two-plane reader, step 11's two (anchor self-test, then the registry), step 12, and the gate's own
+closing `RESULT: PASS — 216 quality checks on a from-scratch schema (tables=58, migrations=7)`; exit 0. (Steps 7
+and 8 report in their own words, not with a `RESULT: PASS`, so the count is six inner plus the closing line.)
+Armed, `GATE_STATUS_DIR` at the two-file fixture: the same 12 headers and the same five inner PASSes, then step
+12 printing "files scanned 2 of 2 candidates under the fixture root", one BAD pointer and `RESULT: FAIL` —
+exit 1, with the gate's closing PASS line printed 0 times. Both runs' databases were dropped; the four
+`nexus_gate_*` names that predate this session are untouched. So the step's reachability is now shown the way
+steps 8 through 11 show theirs: from inside the gate, through a variable the operator can set.
+
+**Limits, stated.** Step 12 still scores disk files against HEAD's headings — that is §126's grammar, and it
+means an untracked file from another lane citing a section only it has written reddens this gate for everyone;
+that is the step's job, not a defect to smooth over. `scripts/check_ledger_sections.mjs:34` has the identical
+bare-`indexOf` shape and is step 10's reader, so a hand-typed `--dir=<checkout>` there also reads the repository
+and prints PASS; it is not fixed in this commit because the gate is running and must not have its checker
+changed under it — the rule D153 wrote for the fixture root applies to the reader too. The wider finding, that
+this repository has two flag dialects (`check_jsonb_reads.mjs:52` parses only `--quality=`) and no gate enforces
+one, is #102. And the probe script written for the expansion check printed `rc=0` on the armed case: its
+`|| true` clobbered `PIPESTATUS`, so that number is the probe's bug, not the checker's — case (3) above is where
+exit 1 was measured.

@@ -24,7 +24,10 @@
  * quotation of a string in a language that has no backtick convention is judged as a citation. Both are
  * printed with counts so the next reader can see which side a token was sorted to.
  *
- * Usage: node scripts/check_status_citations.mjs [--head-rev <rev>] [--dir <root>]
+ * Usage: node scripts/check_status_citations.mjs [--head-rev <rev>|--head-rev=<rev>]
+ *                                                 [--dir <root>|--dir=<root>]
+ *        A flag this reader does not parse is a refusal with exit 2, not a silence: the silent form reads as
+ *        a green run on the plane the operator believed they had aimed at.
  * Exit: 0 every citation resolves · 1 a citation points at a section that is not there (or a heading was
  *       renumbered out from under it) · 2 not checkable — `git show` cannot spawn, no files could be
  *       read, or the scan saw no `STATUS §NN` token at all in either shape (D79: a reader that found
@@ -36,7 +39,35 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const arg = (name, dflt) => { const i = process.argv.indexOf(`--${name}`); return i < 0 ? dflt : process.argv[i + 1]; };
+const notCheckable = (m) => { console.log(`RESULT: NOT CHECKED — ${m}`); process.exit(2); };
+
+// D154: the reader had one flag shape, `--dir <root>`, and no answer for anything else. `--dir=<root>` — the
+// spelling `check_comment_citations.mjs` documents and the shell makes easy to type — was silently ignored, so
+// a run aimed at a fixture printed the repository's own 568 files and a PASS: an option that fails to fail.
+// Both spellings are parsed now, and a flag this file does not read stops the run in the same vocabulary as
+// every other refusal below.
+const FLAGS = new Set(['dir', 'head-rev']);
+function arg(name, dflt) {
+  const argv = process.argv.slice(2);
+  let got;
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === `--${name}`) {
+      got = argv[++i];
+      if (got === undefined) notCheckable(`--${name} was given no value`);
+    } else if (a.startsWith(`--${name}=`)) {
+      got = a.slice(`--${name}=`.length);
+      if (!got) notCheckable(`--${name}= was given no value`);
+    }
+  }
+  return got === undefined ? dflt : got;
+}
+for (const a of process.argv.slice(2)) {
+  if (!a.startsWith('--')) continue;
+  const name = a.slice(2).split('=')[0];
+  if (!FLAGS.has(name)) notCheckable(`unknown option ${a} — flags this reader parses: ${[...FLAGS].join(', ')}`);
+}
+
 const ROOT = resolve(arg('dir', join(HERE, '..')));
 const REV = arg('head-rev', 'HEAD');
 const SKIP = new Set(['node_modules', 'target', '.next', 'dist', 'out', 'build', '.venv', '__pycache__', '.mvn']);
@@ -44,7 +75,7 @@ const isSkipped = (name) => SKIP.has(name) || name.startsWith('.');
 const EXT = /\.(java|kt|ts|tsx|js|mjs|cjs|py|sql|sh|md|mustache)$/;
 const TOKEN = /STATUS §(\d+)/g;
 
-const fail = (m) => { console.log(`RESULT: NOT CHECKED — ${m}`); process.exit(2); };
+const fail = notCheckable;
 
 // `git show` always reads from this script's own repository, never from --dir: a fixture directory is a
 // tree of files under review, not a checkout with a HEAD.

@@ -8671,3 +8671,41 @@ name. Fired as eight simultaneous pairs — sixteen runs on one root — that pr
 and no missed arm, so the sentence was a hazard wearing a measurement's clothes and it is withdrawn here; D153
 carries the withdrawal with the narrower window read off the code. A next visit may ask whether that window can
 be forced open, and should answer with a rate rather than a try.
+
+## 159. D154: gate step 12 gets an in-gate arm, and the knob shows a flag spelling that never parsed
+
+arm             `GATE_STATUS_DIR` — step 12 only, documented beside `GATE_LEDGER_TEXT`, `GATE_COMMENT_PLANE`,
+                `LEDGER_SECTIONS_DIR` and `NEXUS_FALSIFIERS`. A directory is scanned for spelled
+                `STATUS §NN` citations instead of the repository; inert when unset.
+defect          `check_status_citations.mjs` parsed its two flags through `process.argv.indexOf('--dir')`, so
+                `--dir=<path>` was invisible: the run censused 568 repository files and printed
+                `RESULT: PASS` while the operator believed they were scoring a two-file fixture. Same for
+                `--head-rev=<rev>`. The report line names the root and the revision it scored, which is the
+                only reason this was catchable rather than invisible.
+fix             Both spellings parse; an empty value is refused; a flag the reader does not know is
+                `RESULT: NOT CHECKED` with exit 2, the file's existing refusal vocabulary. The gate forwards
+                the `=` form, so the shape that used to be dropped is the one the gate exercises.
+measured        bare: 568 files · 11 citations · 11 resolve · 31 mentions (15 would) · exit 0 ·
+                `--dir <fixture>`: 2 files · 1 BAD · exit 1 (unchanged) ·
+                `--dir=<fixture>`: the same 2-file plane, exit 1 (was: repository, PASS) ·
+                `--head-rev=435d388`: 116 headings, max §148, 1 BAD pointing at a section that revision has no
+                heading for, exit 1 · `--verbose`: unknown-option refusal, exit 2 ·
+                `scripts/falsify_status_citations.mjs`: 6 arms, 6 held, 0 missed, exit 0 — it passes the space
+                form, so no D117 arm was faked by this defect.
+gate            two legs on one working tree, ~20 min. Neutral: 12 step headers · 7 `RESULT: PASS` (step 6,
+                step 9, step 10, step 11 twice, step 12, and the gate's closing
+                `RESULT: PASS — 216 quality checks … tables=58, migrations=7`) · exit 0. Armed with
+                `GATE_STATUS_DIR` at the two-file fixture: the same 12 headers · the same five inner PASSes ·
+                step 12 "files scanned 2 of 2 candidates under the fixture root" · one BAD pointer ·
+                `RESULT: FAIL` · exit 1 · the gate's closing line printed 0 times. Both run databases dropped,
+                the four pre-existing `nexus_gate_*` names untouched.
+still open      #102 names the dialect problem this exposed: `check_jsonb_reads.mjs` speaks only `--quality=`,
+                `scripts/check_ledger_sections.mjs` has the identical bare-`indexOf` shape and is step 10's
+                reader, and no gate enforces one convention. Not patched in this commit: the gate was running
+                and its checker must not change under it, which is the same rule D153 wrote about a fixture
+                root. #101 is closed by measurement: five archived witness scripts under
+                `data/seed/falsifier_witnesses/` pin one repository path, one long-dropped gate database and,
+                in three of them, one account's Temp directory — 27 registry rows name those five files, and
+                step 11's contract (D113) is that a witness is tracked and openable, never that a plant
+                re-runs. The archive stays; the claim the row certifies is now written down instead of
+                assumed.
