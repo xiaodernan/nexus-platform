@@ -7839,3 +7839,50 @@ next              (a) #80 closes as measured. (b) A guard, if ever built, must c
                       step 11's --registry residue, §87's session-time-zone seam, D91's served leg, §130's
                       missing `guide` branch.
 ```
+
+## 146. #71 answered with a measurement: `facts` could carry six CHECKs and every one of them would delete a witness this lane has already filed (2026-09-27)
+
+```
+plane             Read-only over `facts` in the kept loaded seed
+                    `nexus_gate_283340_1790454442`, plus the registry as committed at `e450131`
+                    (326 rows). No migration written, no tracked file outside the two ledgers changed.
+
+changed           Nothing shipped. The change is that task #71 stops being a standing mention: its
+                    "V8, or say why not" gets the second option, with the numbers attached.
+
+measured          5,688 rows, 6 attributes, 3 subject types,          the table's whole constraint set is
+                    value an object on every row, source never         `PRIMARY KEY (id)` +
+                    NULL and always in the six documented values,      `FOREIGN KEY (merchant_id)` --
+                    expires_at never NULL and always later than        so every invariant to the left is
+                    observed_at.                                       enforced only by the gate.
+
+found               (a) A candidate V8 was drafted and counted against the data instead of asserted:
+                      `jsonb_typeof(value)='object'`, `source IN (…)`, `expires_at > observed_at`,
+                      `expires_at IS NOT NULL` all show 0 violations -- they could ship today. And the
+                      first guess at a vocabulary CHECK failed in the drafting: the subject_type list I
+                      wrote omitted `location`, and the query reported 684 "violations" that were simply
+                      the address facts. A hand-authored `CHECK (col IN (…))` freezes what the author
+                      listed and kills the load when a seventh value appears; D105's backstops are the
+                      precedent for deriving such lists from `pg_constraint` instead.
+                    (b) The decisive cost is falsification, not flexibility. Four qc rows over these
+                      invariants have ONLY legal-write witnesses -- `one fact made timeless`,
+                      `one opening-hours fact given a 25-hour TTL`, `one fact sourced to an undeclared
+                      string`, `a price fact stamped with the hours TTL instead of the six-hour one` --
+                      and a CHECK cannot be switched off: `session_replication_role = replica` silences
+                      FKs and triggers, never CHECKs or NOT NULLs, which is precisely why §135's
+                      `price_updated_at present…` became unfalsifiable once its column was NOT NULL.
+                      Shipping those four constraints would turn four shown-failable assertions into
+                      rows no data state can redden.
+                    (c) So the answer to eleven turns of #71 is: CHECK-free by design, with the
+                      re-open condition named -- if any of those four rows loses its witness, the trade
+                      flips and V8 becomes the better side.
+
+gates             The eleven steps execute nothing new here; the registry reader still PASSes at 326 rows /
+                    196 of 216 witnessed (90.7%), and the readers re-run on the final bytes of this text
+                    resolved (step 8 exit 0, step 10 PASS with §146/D137 the uncommitted pair,
+                    `check_status_citations.mjs` unchanged at its 2 known spelled-plane defects).
+
+next              (a) #71 closes as answered; it re-opens only on the condition in found (c).
+                    (b) Carried: #73, #75, #79, #62, #64, #58, #44, #17, #19, #34, step 11's --registry
+                    residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.
+```

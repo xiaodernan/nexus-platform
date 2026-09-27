@@ -8308,3 +8308,67 @@ fixture rather than by re-running, since the count of such cases is 2 and both a
 guard is ever wanted, the honest shape is one that counts ambiguous bare tokens per new paragraph and
 warns without failing, so history is not red. (c) #71, #75, #79, #62, #64, #58, #44, #17, #19, #34 and
 the carried list stand as written.
+
+## D137 #71, answered: `facts` is CHECK-free by design, and the measurement says why -- four of the lane's legal-write witnesses live in the space a CHECK would close — 2026-09-27
+
+Task #71 has been re-stated eleven times: "`facts` is the only seeded table with no CHECK -- V8, or say
+why not." This unit says why not, and the saying is a measurement rather than a preference.
+
+**Measurement (a): what the table actually is.** 5,688 rows, six `attribute` values (price 2080, rating
+1727, address 684, cuisine 520, opening_hours 520, capacity 157), three `subject_type` values (offering
+2924, merchant 2080, location 684), `value` an object on every row (0 non-objects, 0 empty), `source`
+never NULL and always inside the six documented provenance values, `expires_at` never NULL and later than
+`observed_at` on all 5,688 rows. `pg_constraint` for the table returns exactly two entries:
+`PRIMARY KEY (id)` and `FOREIGN KEY (merchant_id) REFERENCES merchants(id) ON DELETE CASCADE`. So every
+invariant named above is currently enforced nowhere but the gate.
+
+**Measurement (b): a candidate CHECK list, and the number that caught me writing it.** The obvious V8 is
+`CHECK (jsonb_typeof(value) = 'object')`, `CHECK (source IN (…six…))`, `CHECK (expires_at > observed_at)`,
+`CHECK (expires_at IS NOT NULL)`, `CHECK (attribute IN (…))`, `CHECK (subject_type IN (…))`. Counted
+against the live data, the first four have **0 violations**, and the fifth would have too -- but my
+guessed `subject_type` list omitted `location`, so the query reported 684 "violations" and those 684 rows
+were exactly the address facts. That is the failure mode a CHECK turns a guess into: the seeder's own
+`generate.py` FK self-check and this table's qc rows read the vocabulary from the schema or the data,
+while a hand-authored `CHECK (… IN (…))` freezes whatever the author happened to list, and the load dies
+on the day a seventh value appears. `merchant_categories` and friends already show what that costs: it is
+why D105's three backstop constraints were named from `pg_constraint` rather than transcribed.
+
+**Decision (c): the cost that settles it is falsification, not flexibility.** Four of the rows above are
+asserted by qc rows whose ONLY witnesses are legal writes the schema itself accepts -- D126's arms
+`one fact made timeless`, `one opening-hours fact given a 25-hour TTL`,
+`one fact sourced to an undeclared string`, and `a price fact stamped with the hours TTL instead of the
+six-hour one`, with `the §19 provenance axis and the §109 stamp axis stay separate on facts` carrying a
+fifth. A CHECK silences none of those plants: `session_replication_role = replica` suppresses FKs and
+triggers but not CHECKs or NOT NULLs, which is exactly why §135's `price_updated_at present for priced
+offerings` became unfalsifiable once the column was NOT NULL. Shipping V8 with the four 0-violation
+constraints would convert four demonstrated-failable assertions into rows no data state can redden --
+documentation wearing a check's clothes, the category §141 spends three entries on. The lane's own end
+state (196 of 216 witnessed, 20 explained by kind) would get worse on two axes at once: fewer witnessed
+names, and more names with no possible witness.
+
+**Decision (d): what would change the answer.** A CHECK earns its place where the gate has NO row, or
+where the row's witness is a role switch that a CHECK would not have to defeat. `facts` has neither gap:
+each invariant above has a live qc row, and each of those rows has a legal-write or declared-disappearance
+witness already filed. If a future unit wants schema enforcement here, the honest version is the one that
+derives its vocabulary from the catalogues -- and D105's three backstops are the precedent for what that
+costs in flexibility.
+
+**Numbers.** Facts plane: 5,688 rows / 6 attributes / 3 subject types / 0 non-object values / 0 NULL or
+out-of-list `source` / 0 NULL `expires_at` / 0 non-future TTL, read from
+`nexus_gate_283340_1790454442` (scratch `d137_facts.sql`, `d137_b.sql`); 5 facts-related qc rows with
+13 witness rows total in `data/seed/falsifiers.tsv` (326 rows at `e450131`). No migration was written, no
+tracked file outside the two ledgers changed, and no gate step was affected. #71 closes as answered --
+"or say why not" being the option the task offered.
+
+**Limits.** (i) The 0-violation counts are of THIS seed at THIS load; a CHECK's value is precisely to hold
+when a future load differs, so this argument weighs the loss of falsifiability against a protection the qc
+rows already provide per run -- it is not a claim that CHECKs are wrong in general. (ii) `value`'s internal
+shape per attribute (which keys a price fact must carry) is enforced by D86's payload-shape census and was
+not re-audited here. (iii) The 684-row false positive above is reported because it is the interesting
+number in the measurement, not because the vocabulary question is settled -- the gate's door-vocabulary
+rows are.
+
+**next.** (a) The `facts` question is closed; re-open it only if a qc row covering one of these invariants
+loses its witness, since that is the condition under which schema enforcement becomes the better trade.
+(b) Carried: #73 (196 of 216), #75, #79, #62, #64, #58, #44, #17, #19, #34, step 11's `--registry`
+percentage residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.
