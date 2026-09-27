@@ -8569,3 +8569,52 @@ next              (a) #98 / D152: pass `GATE_LEDGER_TEXT` and `GATE_COMMENT_PLAN
                   - (c) #95 / #96 stay report-only for the seed lane; #94 still needs the user's authorization
                         before `nexus_test` is rebuilt.
 ```
+
+## 157. Steps 8 and 9 are now armed from inside the gate, and the two arms die differently: one prints a false-citation table and exits 1, the other refuses to certify and exits 2 (2026-09-28)
+
+**Plane.** `scripts/db_gate_fresh.sh`, edited while nothing was running; three full twelve-step runs of the
+gate on this working copy (a dirty tree holding other lanes' uncommitted files), plus the scratch fixtures under
+the session's Temp directory. No live database was opened; every run built and destroyed its own gate database.
+
+**Changed.** Two environment knobs on the two ledger-facing steps: the text-aiming flag now reaches step 8
+through `GATE_LEDGER_TEXT`, and the plane-aiming flag reaches step 9 through `GATE_COMMENT_PLANE`. Both
+invocations keep the `${VAR:+…}` shape the two existing arms use, and the header's overrides block names both
+as inert when unset. `data/seed/falsifiers.tsv` gained nothing: its rows name quality.sql assertions, and these
+steps are gate steps rather than checks.
+
+**Measured.** Neutral run `gate rc=0` with the 216-check `RESULT: PASS` line; step 8 printed 594 name-number
+tokens, 366 citation-shaped over 69 files, step 9 printed 73 comment-plane citations across 21 files — the same
+figures both checkers printed by hand on this tree before the knobs existed, which is the inertness claim.
+Armed at step 8: a plant paragraph citing line 99999 of a 287-line script made step 8 print its false-citation
+table with one PAST EOF row, gate rc=1, log headers stop at 8/12 and steps 9-12 never start. Armed at step 9:
+an empty plane directory made step 8 pass on the real ledgers and step 9 print `COMMENT CITATIONS: 0 tokens
+found` with its refusal sentence, gate rc=2, headers stop at 9/12 and steps 10-12 never start. All three
+databases were dropped: four gate names remain in the container and none of the three from this driver is
+among them.
+
+**Found.** (a) A missed prediction, and it is the interesting one: the driver's comment sheet said the empty
+plane would exit 1 and it exited 2. The checkers distinguish "a citation is false" (1) from "this run cannot
+certify anything" (2) and the gate forwards whatever the step returns — so an armed step's code is the
+checker's vocabulary, not the gate's, and anyone reading a gate rc has to read the step too. (b) Whether that
+matters was answered by census rather than assumption: 18 lines across 9 code or config files mention the gate
+at HEAD, 11 of them outside the gate script, and every one of those 11 is a comment, docstring or printed hint
+— no script, no Makefile target among its 23, no CI job invokes the gate. Its exit code has no automated
+consumer. (c) My first attempt at that census used a regex that dropped any job name containing a digit and
+reported the CI workflow's e2e job as missing; re-measured with a digit-tolerant pattern the job is there at
+line 132. (d) Reading the CI workflow for that question found a real weakness that is not mine to edit: its
+`required` job has `if: always()` and asserts only that the e2e result is not `failure`, so a red Java build,
+a red type-check or a failed secret scan prints and passes. Task 100.
+
+**Mistakes.** The truncated census in (b) nearly shipped as "10 hits, all prose" because the command ended in
+`head` — the count was 18, and the claim had to be rebuilt from the full list before it went into D152. The
+first draft of this entry wrote the plant's false citation in the very grammar step 8 judges, which would have
+reddened the gate documenting the gate; it is now described in words instead.
+
+**Gates.** `bash -n` clean. The four ledger-facing steps were re-run on this entry's final bytes, and the two
+hand falsifiers were re-run after the append because both read the plane this entry edits: 6 arms for the
+spelled-citation harness and 8 for the heading harness.
+
+**Next.** Task 99 — the one tracked script that still resolves its fixture directory through a user's home
+path, measurable in seconds without a gate run. Then the two report-only seed-lane findings (95, 96) and task
+100's CI report, all of which need their owners rather than an edit from here. Task 94 still needs explicit
+authorisation before anything rebuilds a shared database.

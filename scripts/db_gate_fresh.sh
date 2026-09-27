@@ -23,6 +23,9 @@
 #                        (inert when unset; the reachability arm, not a way to skip the check)
 #   NEXUS_FALSIFIERS     step 11 only: validate this registry copy instead of data/seed/falsifiers.tsv
 #                        (inert when unset; the same kind of reachability arm)
+#   GATE_LEDGER_TEXT     step 8 only: census this file instead of both ledgers (inert when unset)
+#   GATE_COMMENT_PLANE   step 9 only: read comments out of this directory instead of the repository
+#                        (inert when unset; both are the same reachability arm, see steps 8-9)
 #
 # Safety: this creates and DESTROYS a database. It refuses to run if the target resolves to `nexus`
 # or `nexus_test` — the developer database and the integration-test one — and it never touches a
@@ -204,7 +207,13 @@ step "8/12  scripts/check_ledger_citations.mjs — every File.java:NNN the ledge
 # run certify a ledger that this tree no longer holds. The cost is stated in the checker's own LIMITS — a
 # citation in another lane's uncommitted paragraph can redden this run; the message names the file and line so
 # the claim goes to its owner rather than being edited here.
-( cd "$ROOT" && node scripts/check_ledger_citations.mjs --worktree ) 2>&1 | sed -e 's/^/    /'
+#
+# D152: `GATE_LEDGER_TEXT` aims the step at one file instead of the two ledgers, which is the arm that shows
+# step 8 can stop the run from inside the gate — the same reason step 10 has LEDGER_SECTIONS_DIR and step 11
+# has NEXUS_FALSIFIERS (D98's shape: prove a guard reachable without editing a tracked file mid-run). The
+# checker already read the flag; what it never had was a path from the gate to it, so the only way to witness
+# a red here was to run the checker by hand, which is a claim about a different invocation.
+( cd "$ROOT" && node scripts/check_ledger_citations.mjs --worktree ${GATE_LEDGER_TEXT:+--text="$GATE_LEDGER_TEXT"} ) 2>&1 | sed -e 's/^/    /'
 
 
 # --------------------------------------------------------------------------- 9. the comment plane
@@ -215,7 +224,10 @@ step "9/12  scripts/check_comment_citations.mjs — the citations that live insi
 # explaining the grammar. D94 retired those under the placeholder convention, so this step is what stops the
 # plane drifting back: it slices step 8's token grammar out of the checker instead of copying it, scores the
 # comments through that same resolver, and refuses to treat a scan that found nothing as green.
-( cd "$ROOT" && node scripts/check_comment_citations.mjs ) 2>&1 | sed -e 's/^/    /'
+# D152: `GATE_COMMENT_PLANE` points that scan at another directory, which is what makes the refusal reachable
+# from the gate — an empty plane is the case the guard exists for, and reaching it by editing shipped bytes
+# mid-run is not a way to test a gate that runs nine steps against those same bytes.
+( cd "$ROOT" && node scripts/check_comment_citations.mjs ${GATE_COMMENT_PLANE:+--plane="$GATE_COMMENT_PLANE"} ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 10. the two planes of one ledger
 step "10/12 scripts/check_ledger_sections.mjs — every numbered section at HEAD is still in the file on disk"

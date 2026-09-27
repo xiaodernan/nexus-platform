@@ -9146,3 +9146,68 @@ rather than assumed intact: `falsify_status_citations.mjs` **6 arms · 6 held ·
 harness pins no heading count — its own grammar line says the reconstructed arm prints every DECISIONS entry
 written since `99e5b0c` as disk-only and that the count is deliberately not held — which is why adding §155
 needed no negotiation with it.
+
+## D152 Gate steps 8 and 9 get the same reachability arm steps 10 and 11 already had, and both are shown able to stop the run — 2026-09-28
+
+**Why this unit.** D151 answered the question for step 11 — the guard's exit code can end the gate — and named
+the two steps still without an answer. Both checkers had long carried an aiming flag: step 8's checker has read
+a `--text=<file>` option since it was written, so a plant can be shown to it without touching the ledgers
+another lane is appending to, and step 9's grew `--plane` in D101 for exactly the reason D96 states — the guard
+that refuses a scan which read nothing has to be reachable without editing shipped bytes. What neither had was
+a path from the gate. Every witness for those two steps was therefore a hand-run, and a hand-run measures an
+invocation nobody else makes: the thing that protects the tree is step 8 as the gate calls it, not step 8 as I
+call it from a shell.
+
+**What landed.** Two environment knobs in `scripts/db_gate_fresh.sh`, documented in its overrides block and used
+on the two invocation lines — `db_gate_fresh.sh:216` and `db_gate_fresh.sh:230`: `GATE_LEDGER_TEXT` becomes the
+text-aiming flag and `GATE_COMMENT_PLANE` becomes the plane-aiming flag. Both use the same shell shape the two
+existing arms use rather than a bash array, because steps 10 and 11 already set that shape, and the shape was
+measured before it was written: with the variable unset the expansion adds zero argv elements even under the
+strict-mode flags, with it set to a path containing a space it arrives as exactly one element with the space
+intact, and a failing node call behind the step's filter returns its code because the pipefail option is set at
+`db_gate_fresh.sh:33`.
+
+**Measured.** Three full runs of the twelve-step gate, driven in sequence by a scratch script, each log read to
+its own echoed return code:
+
+- **Neutral, both knobs unset** — `gate rc=0`, ending in the run's own `RESULT: PASS` line for 216 quality
+  checks on a from-scratch schema (tables=58, migrations=7). Step 8 censised 594 name-number tokens, 366 of them
+  citation-shaped, resolving to 69 distinct files; step 9 found 73 comment-plane citations across 21 files.
+  Those are the same figures the same two checkers printed by hand on this tree before the knobs existed, which
+  is what makes the unset case inert rather than merely green.
+- **Armed at step 8** — the text knob pointed at a one-paragraph plant holding one citation that resolves and
+  one that names line 99999 of the gate script, which has 287. Step 8 printed its false-citation table with one
+  row, kind PAST EOF, and the gate exited 1. The log carries step headers 1/12 through 8/12 and nothing after
+  them: steps 9, 10, 11 and 12 never started.
+- **Armed at step 9** — the plane knob pointed at an empty directory. Step 8 ran first and printed its full
+  green census of the real ledgers, then step 9 refused: zero tokens found in that plane, with its own words
+  that a scan which reads nothing is not a green scan. The gate exited 2 and headers 10/12 through 12/12 never
+  appear.
+
+The prediction sheet was written before the runs and lives in the driver's own comments (file on disk at
+03:51:17, first run started 03:51:33). It predicted the third run would exit 1. It exited 2, and the difference
+is the checker's own vocabulary rather than the gate's: 1 means a citation is false, 2 means this run cannot
+certify anything, and the gate forwards whichever the step returns. Whether that distinction reaches anybody
+was measured rather than assumed: the gate's file name appears on 18 lines across 9 code or config files at
+HEAD, and of the 11 that sit outside the gate script itself every one is a comment, a docstring or a printed
+hint — none is an invocation. The committed `Makefile` holds 23 targets and none of them mentions the gate, and
+the CI workflow never names it. No automation consumes the gate's exit code at all, so 2 versus 1 breaks nothing
+and also protects nothing. That is D151's finding about the falsifier scripts, now measured against the gate
+itself; the CI workflow's own weakness is filed separately as task 100.
+
+All three run databases are gone. The container holds four gate database names and none of the three this
+driver created is among them, which is the cleanup trap at `db_gate_fresh.sh:109` and `db_gate_fresh.sh:162`
+dropping a run that died at step 8 or step 9 as reliably as one that finished.
+
+**What this does not buy.** Neither arm is evidence that a real ledger citation ever drifted; the plants are
+planted, and step 8's green census over 366 genuine citations is the separate claim, unchanged here. The two
+arms are not even the same kind of red: the step 8 arm is the checker finding a false citation, while the step
+9 arm is the checker refusing to certify, and the comment plane's false-citation path has witnesses in D93 and
+D94 that were not re-shown. And an environment knob is only as good as someone's willingness to set it — no CI
+job, Makefile target or script in the repository runs the gate, so these arms serve whoever runs it by hand,
+which is the audience the ledgers already describe.
+
+**Gates.** `bash -n` clean on the edited file. Steps 8, 9, 10 and 12 on this entry's final bytes are reported
+in the commit that carries it, and the two hand falsifiers — 6 arms for the spelled citation plane and 8 arms
+for the ledger heading plane — were re-run after the append, because this entry adds sections to the plane they
+read.
