@@ -365,3 +365,8 @@ every array column is answered for what bounds its elements	D146	synthetic traff
 every jsonb payload that a key read cannot reach is answered for what it is	D146	synthetic traffic row (an SEO page): the written row's tenant_id is a ghost id (0 rows in the table at seed)	be23d1f
 every reference the seed writes is probed or explained	D146	synthetic traffic row (a share link): the written row's created_by is a ghost id (0 rows in the table at seed)	be23d1f
 a bounded string column is answered by name	D146	schema plane: a string column of a base type the reading rules never declared	be23d1f
+collections/guides reference live merchants	D147	a legal write no door mentions: a real guide item gains a merchant_id pointing at nothing (the seeded items carry subject_id and no merchant_id at all)	dc3ac65
+the elements of an object-array column all carry the same keys	D147	a legal write no door mentions: a real guide item gains a merchant_id pointing at nothing (the seeded items carry subject_id and no merchant_id at all)	dc3ac65
+a census that folds case reports both readings and which one the demo exercises	D147	schema plane: the citext column is cast to text, so the case-folding type leaves the census	dc3ac65
+the string census declares a reading for every type it catches	D147	schema plane: the citext column is cast to text, so the case-folding type leaves the census	dc3ac65
+a served view answers every column it exposes	D147	schema plane: the served funnel view gains a trailing column no answer block explains, wrapped out of pg_get_viewdef so the shipped column list is never transcribed	dc3ac65
