@@ -377,6 +377,137 @@ ARMS = [
      "SET LOCAL session_replication_role = replica; "
      "UPDATE locations SET tenant_id = gen_random_uuid() WHERE id = "
      "(SELECT id FROM locations ORDER BY id LIMIT 1);"),
+
+    # Batch D124: the rest of the populated-child list, so this closes that half of the `fk: ` family and leaves
+    # only the 50 names whose child table the seed never writes. The census behind the aim is scratch
+    # d124_aim.sql, run against the kept loaded database, and it printed rows / non-null / the primary key /
+    # every UNIQUE index containing the column / every CHECK on the table. Four findings shaped the batch:
+    #   * no CHECK on any of the thirteen tables names one of these 22 columns, so none of these plants carries a
+    #     value-plane lie alongside the reference lie (the D122 `rating = 99` confound cannot recur here);
+    #   * three columns are sparse -- resource_pools.offering_id on 7 of 452, reviews.offering_id on 2055 of
+    #     11000, reviews.user_id on 245 of 11000 -- so `ORDER BY id LIMIT 1` can land on a NULL and quietly turn
+    #     "an existing edge is cut" into "a value was invented". Every dense arm here therefore selects its row
+    #     with `<col> IS NOT NULL`, which the D122/D123 arms did not need;
+    #   * two tables have no `id` column at all -- merchant_categories' key is (merchant_id, category_id) and
+    #     offering_relations' is (from_offering, to_offering, relation) -- and in three cases the column IS part
+    #     of that key, so the handle is the whole tuple and the new value must be fresh, which gen_random_uuid()
+    #     is;
+    #   * the two columns §123 deferred are here as value-FILING plants, D122's moderation_cases shape:
+    #     categories.tenant_id is NULL on all 77 rows and documents.offering_id on all 1040, so their sweep row
+    #     is green for want of data, and the only plant that reaches them invents the first value. Each label
+    #     says so, because a witness that files a value proves less than one that moves a value.
+    ("fk: categories.tenant_id -> tenants.id",
+     "fk checks off (replica role): a category gains a tenant that is nobody (0 of 77 carry one)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE categories SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM categories WHERE tenant_id IS NULL ORDER BY id LIMIT 1);"),
+    ("fk: documents.offering_id -> offerings.id",
+     "fk checks off (replica role): a document gains an offering that is nobody (0 of 1040 carry one)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE documents SET offering_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM documents WHERE offering_id IS NULL ORDER BY id LIMIT 1);"),
+    ("fk: merchant_categories.merchant_id -> merchants.id",
+     "fk checks off (replica role): a merchant-category link loses its merchant (keyed on the PK pair, no id)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE merchant_categories SET merchant_id = gen_random_uuid() WHERE (merchant_id, category_id) = "
+     "(SELECT merchant_id, category_id FROM merchant_categories ORDER BY 1, 2 LIMIT 1);"),
+    ("fk: merchants.tenant_id -> tenants.id",
+     "fk checks off (replica role): a merchant loses its tenant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE merchants SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM merchants WHERE tenant_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: merchant_users.merchant_id -> merchants.id",
+     "fk checks off (replica role): a workspace member loses its merchant (3 rows in the table)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE merchant_users SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM merchant_users WHERE merchant_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: merchant_users.user_id -> users.id",
+     "fk checks off (replica role): a workspace member stops being anybody (3 rows in the table)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE merchant_users SET user_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM merchant_users WHERE user_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: moderation_cases.tenant_id -> tenants.id",
+     "fk checks off (replica role): a moderation case loses its tenant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE moderation_cases SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM moderation_cases WHERE tenant_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: offering_relations.from_offering -> offerings.id",
+     "fk checks off (replica role): a related-offering edge loses its near end (PK column, keyed on the pair)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE offering_relations SET from_offering = gen_random_uuid() WHERE (from_offering, to_offering) = "
+     "(SELECT from_offering, to_offering FROM offering_relations WHERE from_offering IS NOT NULL "
+     "ORDER BY 1, 2 LIMIT 1);"),
+    ("fk: offering_relations.to_offering -> offerings.id",
+     "fk checks off (replica role): a related-offering edge loses its far end (PK column, keyed on the pair)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE offering_relations SET to_offering = gen_random_uuid() WHERE (from_offering, to_offering) = "
+     "(SELECT from_offering, to_offering FROM offering_relations WHERE to_offering IS NOT NULL "
+     "ORDER BY 1, 2 LIMIT 1);"),
+    ("fk: offerings.category_id -> categories.id",
+     "fk checks off (replica role): an offering loses its category",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE offerings SET category_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM offerings WHERE category_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: offerings.merchant_id -> merchants.id",
+     "fk checks off (replica role): an offering loses its merchant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE offerings SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM offerings WHERE merchant_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: offerings.tenant_id -> tenants.id",
+     "fk checks off (replica role): an offering loses its tenant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE offerings SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM offerings WHERE tenant_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: permission_grants.merchant_id -> merchants.id",
+     "fk checks off (replica role): a grant stops being a grant over anyone's data (36 rows in the table)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE permission_grants SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM permission_grants WHERE merchant_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: resource_pools.merchant_id -> merchants.id",
+     "fk checks off (replica role): a resource pool loses its merchant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE resource_pools SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM resource_pools WHERE merchant_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: resource_pools.offering_id -> offerings.id",
+     "fk checks off (replica role): a resource pool loses the offering it is stocked for (7 of 452 carry one)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE resource_pools SET offering_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM resource_pools WHERE offering_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: reviews.merchant_id -> merchants.id",
+     "fk checks off (replica role): a review loses its merchant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE reviews SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM reviews WHERE merchant_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: reviews.offering_id -> offerings.id",
+     "fk checks off (replica role): a review stops being about anything sellable (2055 of 11000 carry one)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE reviews SET offering_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM reviews WHERE offering_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: reviews.tenant_id -> tenants.id",
+     "fk checks off (replica role): a review loses its tenant",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE reviews SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM reviews WHERE tenant_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: reviews.user_id -> users.id",
+     "fk checks off (replica role): a review stops being anyone's (245 of 11000 carry one)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE reviews SET user_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM reviews WHERE user_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: user_identities.tenant_id -> tenants.id",
+     "fk checks off (replica role): an identity loses its tenant (5 rows in the table)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE user_identities SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM user_identities WHERE tenant_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: user_identities.user_id -> users.id",
+     "fk checks off (replica role): an identity stops belonging to a user (5 rows in the table)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE user_identities SET user_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM user_identities WHERE user_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    ("fk: users.tenant_id -> tenants.id",
+     "fk checks off (replica role): a user loses their tenant (5 rows in the table)",
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE users SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM users WHERE tenant_id IS NOT NULL ORDER BY id LIMIT 1);"),
 ]
 
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
