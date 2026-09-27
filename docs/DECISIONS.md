@@ -7598,3 +7598,83 @@ count row, `a served view answers every column it exposes`), and the 2 D108 rows
 HEAD-built database. Plan from that list, not from a table split. (b) #71, eighth time standing on it.
 (c) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's `--registry` percentage
 residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.
+
+## D126 Eleven arms the schema itself accepts -- the first witnesses this lane has produced without switching a check off — 2026-09-27
+
+D125 closed the `fk: ` family and, reading its own registry backwards, found the shape of the remaining
+queue: 101 of the 171 witnessed names had no witness that did not `SET LOCAL
+session_replication_role = replica`. That says more about this lane than about the gate -- every one of
+D123/D124/D125's plants asks the database to stop enforcing something. D122 had already drawn the line:
+a role-switched plant demonstrates detection, not reachability. So this unit asks the opposite question
+of the 45 names left: which of them can an assertion lose to a write the database lets through?
+
+**Decision (a): eleven of them can, and the plant is one statement with the checks ON.** A merchant's
+whole portfolio moved to another merchant, a one-location merchant's primary location moved away, the
+least categorised merchant stripped of every category link, all 544 open review cases closed in one
+statement, one queued review published to everyone, every human grant given an expiry date, one fact
+made timeless, one opening-hours fact given a 25-hour TTL, an unembedded chunk labelled as embedded,
+one slot marked `'live'`, and a feedback event filed under a subject type nobody declared
+(falsifier_plants.py:716-776). No ghost uuid appears in any of them -- every id referenced is a row that
+exists. Each was legal-tested before aiming: `feedback_events.subject_type` carries no CHECK (D69's
+census found the schema bounds only `share_links.subject_type`), `moderation_cases` and
+`permission_grants` carry none at all, and `availability_slots` bounds only its times and capacity, so
+`source = 'live'` is a value the schema has never heard of and accepts.
+
+**Decision (b): two candidates were dropped or re-aimed while aiming, and both are findings about the
+gate.**
+  - `price_updated_at present for priced offerings` cannot be reddened by any write, legal or illegal:
+    `offerings.price_updated_at` is NOT NULL, and a role switch does not silence NOT NULL either. The
+    assertion is implied by the column, so no data state falsifies it. That is D90's "an arm that cannot
+    fail" arriving from the other direction -- not a missing plant but a qc row that is documentation
+    wearing a check's clothes. Reported; it stays on the 33.
+  - the invented subject type slid straight past `no unlisted type rides in the seeded data`, which is
+    the row that claims to catch exactly that, because the census only walks the pairs the arm registry
+    arms and `feedback_events` is not one of them. The row that DID notice is `a seeded polymorphic
+    vocabulary is bounded or probed`, so the arm now testifies for that one (:764-776). Read together
+    the two rows say something nobody had measured: an unlisted type on an unarmed pair is invisible to
+    the census that names the risk and visible to the one that does not.
+
+**Decision (c): the mass-move shape was forced by measurement, not taste.** No merchant has exactly one
+offering (0 of 520) and none has exactly one category link (0 of 520), so a single-row legal write
+cannot empty a merchant; those arms move WHOLE portfolios with `WHERE merchant_id = (SELECT …)` -- one
+statement, many rows, still a write the schema accepts, and closer to the real failure mode (a
+mis-scoped admin query re-parenting everything) than a one-row edit would have been. 520 merchants do
+have exactly one primary location, so that arm stayed single-row. The census that decided this is the
+same read-only query shape D124 insisted on, run before writing rather than after.
+
+**Numbers.** Arms 125 → **136**; harness `11642b7`. Pre-flight: 11 arms, 13 whole-gate sessions, 10 hit,
+1 green (re-aimed above). Full drive: **136 arms + the control, 139 sessions, RESULT PASS** -- every
+target RED, nothing undeclared, closing baseline 216 assertions / 0 red identical to opening, and
+`quality.sql` md5 `4d3a707eff55971b0a2198e2a1b56777` unchanged. Registry 236 → **267 rows** (31
+appended: 11 from an arm's own RED row, 20 from collateral; **12 names carrying no witness before**).
+Coverage 171 → **183 of 216 (84.7%)**; witness kinds 228 commit + 39 file; step 11 PASS. Unwitnessed
+45 → **33**, of which 2 are share_links' (#75), 1 is the NOT NULL-implied row above, and 1 is the row
+the invented type slid past. Companion rows: 12 distinct names, including `merchant has a primary
+location`, `category_primary is one of the merchant's own category names`, `every waiting review has
+exactly one open case`, `a door vocabulary admits every value the data carries`, both review counters
+and the rating-fact restatement, and `no traffic outside the seeded tables` -- once, by the one arm that
+writes outside the anchor, which is D125's finding reproduced from the other side.
+
+**Limits.** (i) A legal-write witness is the strongest kind this lane can produce, but it still is not
+an application trace: it says the assertion can be lost to a write the database accepts, not that any
+endpoint writes that way. (ii) The mechanism census is re-measured here by plant text rather than by arm
+label -- 80 of the 183 witnessed names have a witness that touches no `session_replication_role`, and
+103 have only ones that do. By that definition D125's 101 is 103, because two arms with prose labels
+outside the `checks off` family also issue the SET. (iii) Eleven of the 20 collateral rows were also
+produced by a legal write, so their companions inherit claim (i); the `every column that cannot vary…`
+row reddened 5 times for the same reason D125 records -- the census's demand list grows with data.
+(iv) The 20 collateral rows are witnesses under a state that includes the target's own breakage; they
+testify that a companion notices, not that the companion's own risk case is reachable.
+
+**next.** (a) The 33 left fall into three kinds, and only the first has an obvious plant: the
+census-and-registry rows about the registry itself (`the reference census reads the catalogue`, `the
+polymorphic-pair census…`, `the arm registry agrees with the probed-pair counts`, `the registry names no
+column the schema has lost`, `the pairs declared probed are pairs the schema has`) -- which a data write
+cannot reach, because they read files and the catalogue; the demo-property rows (`ratings realistically
+spread`, `density: >= 300 merchants within 3km of Sha Tin`, `reviews cite concrete aspects`, the jsonb
+`data_origin` marker, `bookable offerings resolve to a pool`, `collections/guides reference live
+merchants`, …) -- most of which are legal-write reachable in principle and should be aimed next in this
+lane's order; and the two D108 door-vocabulary rows that are green on this kept database and red only on
+one built from HEAD. (b) #71, ninth time standing on it. (c) Carried: #75, #62, #64, #58, #44, #17, #19,
+#34, #79, #80, step 11's `--registry` percentage residue, §87's session-time-zone seam, D91's served
+leg, §130's missing `guide` branch.

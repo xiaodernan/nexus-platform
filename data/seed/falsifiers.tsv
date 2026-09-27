@@ -255,3 +255,34 @@ review_summaries stays empty	D125	synthetic traffic row: a review summary belong
 every reference the seed writes is probed or explained	D125	synthetic traffic row (an external principal): the written row's linked_user_id is a ghost id (0 rows in the table at seed)	4092240
 a verification badge stays unresolvable only while its evidence and its link both stay absent	D125	synthetic traffic row (an order line): the written row's offering_id is a ghost id (0 rows in the table at seed)	4092240
 every jsonb key the build reads is answered for what the shipped payloads carry	D125	synthetic traffic row (an order line): the written row's offering_id is a ghost id (0 rows in the table at seed)	4092240
+merchant has >=1 offering	D126	a legal write the schema accepts: one merchant's whole portfolio moved to another	11642b7
+merchant has a location	D126	a legal write the schema accepts: a one-location merchant's primary location moved away	11642b7
+merchants map to >=1 leaf category	D126	a legal write the schema accepts: the least categorised merchant lost every category link	11642b7
+the queue has something in it (an empty inbox is not proof of a process)	D126	a legal write the schema accepts: every open review case closed in one statement	11642b7
+no case points at a review consumers can already read	D126	a legal write the schema accepts: a review still in the queue published to everyone	11642b7
+human grants carry no deadline	D126	a legal write the schema accepts: every human grant given an expiry date	11642b7
+facts all carry expires_at (TTL per §5)	D126	a legal write the schema accepts: one fact made timeless	11642b7
+hours facts respect the 24h TTL	D126	a legal write the schema accepts: one opening-hours fact given a 25-hour TTL	11642b7
+chunks: embedding NULL and embed_model=pending	D126	a legal write the schema accepts: an unembedded chunk labelled as embedded	11642b7
+slots marked source=demo (never real availability)	D126	a legal write the schema accepts: one slot marked as real availability	11642b7
+a seeded polymorphic vocabulary is bounded or probed	D126	a legal write the schema accepts: a feedback event filed under a subject type nobody declared	11642b7
+every column that cannot vary is answered for why it cannot	D126	a merchant's published-review counter moved by one	11642b7
+merchant_user grants reach a membership	D126	fk checks off (replica role): a grant stops being a grant over anyone's data (36 rows in the table)	11642b7
+orphan: permission_grants.merchant_user	D126	fk checks off (replica role): a grant stops being a grant over anyone's data (36 rows in the table)	11642b7
+every array column is answered for what bounds its elements	D126	synthetic traffic row: an agent run belongs to a tenant that is nobody (0 rows in the table)	11642b7
+every jsonb payload that a key read cannot reach is answered for what it is	D126	synthetic traffic row: an agent run belongs to a tenant that is nobody (0 rows in the table)	11642b7
+no traffic outside the seeded tables	D126	synthetic traffic row: an agent run belongs to a tenant that is nobody (0 rows in the table)	11642b7
+every reference the seed writes is probed or explained	D126	synthetic traffic row (an external principal): the written row's merchant_id is a ghost id (0 rows in the table at seed)	11642b7
+a view answer names the kind the census derives	D126	synthetic traffic row (an order line): the written row's offering_id is a ghost id (0 rows in the table at seed)	11642b7
+a view kind is exercised or exempted	D126	synthetic traffic row (an order line): the written row's offering_id is a ghost id (0 rows in the table at seed)	11642b7
+a verification badge stays unresolvable only while its evidence and its link both stay absent	D126	synthetic traffic row (an order): the written row's merchant_id is a ghost id (0 rows in the table at seed)	11642b7
+every jsonb key the build reads is answered for what the shipped payloads carry	D126	synthetic traffic row (an order): the written row's merchant_id is a ghost id (0 rows in the table at seed)	11642b7
+merchant has a primary location	D126	a legal write the schema accepts: a one-location merchant's primary location moved away	11642b7
+category_primary is one of the merchant's own category names	D126	a legal write the schema accepts: the least categorised merchant lost every category link	11642b7
+a door vocabulary admits every value the data carries	D126	a legal write the schema accepts: every open review case closed in one statement	11642b7
+every waiting review has exactly one open case	D126	a legal write the schema accepts: every open review case closed in one statement	11642b7
+merchants.rating_agg matches its reviews	D126	a legal write the schema accepts: a review still in the queue published to everyone	11642b7
+merchants.review_count matches its reviews	D126	a legal write the schema accepts: a review still in the queue published to everyone	11642b7
+rating fact restates the recomputed mean	D126	a legal write the schema accepts: a review still in the queue published to everyone	11642b7
+rating facts respect the 24h TTL and cite their own reviews	D126	a legal write the schema accepts: one fact made timeless	11642b7
+the columns stamped from the generation clock are exactly the ones answered so	D126	a legal write the schema accepts: one fact made timeless	11642b7

@@ -7290,3 +7290,74 @@ next              (a) The queue is now 45 unwitnessed names and none of them is 
                       --registry percentage residue, §87's session-time-zone seam, D91's served leg, §130's
                       missing `guide` branch.
 ```
+
+## 135. Eleven plants the database itself lets through -- the first assertions this lane has been able to redden without switching a check off (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (125 → 136 arms, committed 11642b7) and the registry it
+                    writes, `data/seed/falsifiers.tsv` (236 → 267 rows). Same kept loaded seed as §128–§134,
+                    `nexus_gate_283340_1790454442` — 216 assertions on this working copy.
+
+changed           Eleven single statements, constraint checks ON, no `SET LOCAL`, no ghost id: three merchants
+                    re-parented whole (offerings / a primary location / category links), all 544 open review
+                    cases closed, one queued review published, every human grant given an expiry, one fact made
+                    timeless, one hours fact given a 25-hour TTL, an unembedded chunk labelled embedded, one
+                    slot marked `'live'`, and a feedback event filed under an invented subject type
+                    (falsifier_plants.py:716-776). No gate file, checker or migration changed;
+                    `data/seed/quality.sql` read and not touched.
+
+measured          what the schema forbids before writing        a savepoint-per-statement legality run over the
+                    the arms: 18 non-internal triggers, all      eleven, rolled back to the point where
+                    either `_updated_at` stamps or `tsv` search  merchants 520 / offerings 5534 / open review
+                    vectors — none maintains a value an arm      cases 544 / timeless facts 0; and the
+                    changes. `moderation_cases`,                 per-table CHECK list, which bounds only
+                    `permission_grants` and `chunks` carry no    slots' times and capacity and nothing at all
+                    CHECK; `reviews` bounds only `rating`.       on the six tables the arms write.
+                    the shape of three arms was chosen by        0 of 520 merchants have exactly one offering
+                    counting, not by taste:                      and 0 have exactly one category link, so a
+                                                                 one-row write cannot empty a merchant; 520
+                                                                 do have exactly one primary location.
+
+found               (a) The eleven legal writes reddened eleven assertions, and no check was switched off to do
+                      it. That is the first witness this lane has produced of the kind D122 asked for: the
+                      database accepts the write, the gate loses.
+                    (b) One candidate is unreachable by any write at all. `offerings.price_updated_at` is NOT
+                      NULL, and a role switch does not silence NOT NULL, so `price_updated_at present for
+                      priced offerings` has no data state that falsifies it — a qc row implied by the column.
+                      Reported; the same category as D90's arm that cannot fail, arriving from the other side.
+                    (c) The invented subject type slid past the row that claims to catch it. `no unlisted type
+                      rides in the seeded data` stayed green while `a seeded polymorphic vocabulary is bounded
+                      or probed` went red, because the first walks only the pairs the arm registry arms and
+                      feedback_events is not one of them; the arm was re-aimed at the row that notices. Two
+                      rows, one risk, and the named one is the blind one.
+                    (d) 20 of the 31 emitted rows are companions: `merchant has a primary location`,
+                      `category_primary is one of the merchant's own category names`, `every waiting review has
+                      exactly one open case`, `a door vocabulary admits every value the data carries`, both
+                      review counters and the rating-fact restatement, the generation-clock pair, and `no
+                      traffic outside the seeded tables` — the last by the one arm writing outside the anchor,
+                      §134's finding reproduced from the other side of the same boundary.
+
+gates             The eleven-step script was not re-run, because no gate file, checker or migration changed; the
+                    shipped code touched is the plant harness, whose 139 whole-gate sessions (plus 13 in the
+                    pre-flight) are the gate body sliced out of `quality.sql` executed against mutated data
+                    inside a transaction that is rolled back. `quality.sql`'s md5 is
+                    `4d3a707eff55971b0a2198e2a1b56777` before and after. The four readers were run on the final
+                    bytes of this text: step 8 `check_ledger_citations.mjs --worktree` (exit 0 — 242 headings
+                    seen, 515 name:number tokens, 304 citation-shaped, strict on the working copy), step 9
+                    `check_comment_citations.mjs` (PASS, 70 comment-plane citations across 21 files), step 10
+                    `check_ledger_sections.mjs` (PASS — STATUS HEAD 102 · on disk 103 · missing 0 · duplicates
+                    0 · §135 the one uncommitted section; DECISIONS HEAD 113 · on disk 114 · D126 the same
+                    note), step 11 `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442` (PASS,
+                    267 rows, 183 of 216).
+
+next              (a) 33 names left, in three kinds: the rows about the registry and the catalogues themselves
+                      (a data write cannot reach them — they read files and `pg_constraint`), the demo-property
+                      rows (ratings realistically spread, the Sha Tin density, review aspect text, the jsonb
+                      data_origin marker, bookable offerings resolving to a pool, collections referencing live
+                      merchants …), most of which are legal-write reachable and are the next unit's aim, and
+                      the two D108 door-vocabulary rows that need a database built from HEAD. (b) #71, ninth
+                      time standing on it. (c) Carried: #73 (183 of 216 witnessed, 33 unwitnessed, 103 resting
+                      only on a role switch), #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's
+                      --registry percentage residue, §87's session-time-zone seam, D91's served leg, §130's
+                      missing `guide` branch.
+```
