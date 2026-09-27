@@ -7583,3 +7583,55 @@ next              (a) D131 plants the two remaining data-reachable rows and then
                     --registry residue, §87's session-time-zone seam, D91's served leg, §130's missing
                     `guide` branch.
 ```
+
+## 140. The last plantable assertion is planted, and the runner-up turns out to enumerate over view definitions rather than rows (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (146 -> 147 arms, committed 43091a2) and the registry it
+                    writes, `data/seed/falsifiers.tsv` (317 -> 326 rows). Same kept loaded seed as
+                    §128–§139, `nexus_gate_283340_1790454442` — 216 assertions on this working copy.
+
+changed           One arm: `UPDATE documents SET title = 'plant bucket ' || (abs(hashtext(title)) % 12)`
+                    (:877-880) — a legal write, checks ON, no role switch, no ghost id, that folds a
+                    934-distinct column into twelve values so it enters the bounded-string window with no
+                    answer beside it. A second arm was removed at the pre-flight (see found (b)). No gate
+                    file, checker or migration changed; `quality.sql` read and not touched.
+
+measured          the served-view row's demand list is the set of (view, column) pairs the shipped views     events has no
+                    expose (quality.sql:3324-3340 matches on `vw`/`col`), while the counts that decide        merchant_id
+                    a column's KIND come from the rows — so a write can move a kind and cannot               column: the
+                    add a column.                                                                            funnel reaches
+                                                                                                             a merchant via
+                                                                                                             `subject_type =
+                                                                                                             'merchant'` and
+                                                                                                             `subject_id`.
+
+found               (a) `a bounded string column is answered by name` reddened with **zero collateral** — the
+                      cleanest witness of the lane's life, because no companion reads document titles. The
+                      census's window is computed from the data (`vocab_win`, :2935), so a column can walk in
+                      unlabelled and the answers written for the previous members say nothing about it.
+                    (b) `a served view answers every column it exposes` is not the data plane's after all —
+                      D129's residual guess. Its predicate enumerates over view definitions, so only a
+                      migration widens it; the kind-level rows next to it are already witnessed, and the
+                      traffic write that would move a kind aborted because `events` has no merchant_id
+                      column. Dropped rather than fudged.
+                    (c) The regression drive that filed this also re-ran all 147 arms: PASS, closing
+                      baseline 216 assertions / 0 red, and the off-plane refusal §139 added fired exactly once again.
+
+gates             The eleven-step script was not re-run: no gate file, checker or migration changed. The
+                    shipped code touched is the plant harness, whose 150 whole-gate sessions are the gate
+                    body sliced out of `quality.sql` run against mutated data inside a transaction that is
+                    rolled back, with `quality.sql`'s md5 `4d3a707eff55971b0a2198e2a1b56777` unchanged
+                    before and after. The four readers were run on the final bytes of this text: step 8
+                    (exit 0 — 252 headings seen, 527 name:number tokens, 316 citation-shaped), step 9 (73
+                    citations across 21 files), step 10 (PASS — STATUS HEAD 107 · on disk 108 ·
+                    duplicates 0 · §140 the one uncommitted section; DECISIONS HEAD 118 · on disk 119 ·
+                    D131 the same note), step 11 (PASS, 326 rows, 196 of 216).
+
+next              (a) 20 unwitnessed rows and none of them plantable from data: catalogue-bound,
+                      vacuous by construction, implied by a constraint, indexed away, or waiting on #75 —
+                      they need a per-row disposition, not another batch. (b) #71, eleventh time standing
+                      on it. (c) Carried: #73 (196 of 216 witnessed, 20 unwitnessed), #75, #62, #64,
+                      #58, #44, #17, #19, #34, #79, #80, step 11's --registry residue, §87's
+                      session-time-zone seam, D91's served leg, §130's missing `guide` branch.
+```

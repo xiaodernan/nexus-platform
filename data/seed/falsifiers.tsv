@@ -336,3 +336,12 @@ a verification badge stays unresolvable only while its evidence and its link bot
 a view answer names the kind the census derives	D130	synthetic traffic row (a refund): the written row's approved_by is a ghost id (0 rows in the table at seed)	aca885b
 a view kind is exercised or exempted	D130	synthetic traffic row (a refund): the written row's approved_by is a ghost id (0 rows in the table at seed)	aca885b
 the columns stamped from the generation clock are exactly the ones answered so	D130	a legal write the schema accepts: one fact sourced to an undeclared string	aca885b
+a bounded string column is answered by name	D132	a legal write the schema accepts: 1040 document titles collapsed into twelve buckets	43091a2
+every column that cannot vary is answered for why it cannot	D132	a menu document thinned below the RAG floor, disclaimer kept	43091a2
+no traffic outside the seeded tables	D132	synthetic traffic row: an event is counted for a tenant that is nobody (0 rows in the table)	43091a2
+a seeded polymorphic vocabulary is bounded or probed	D132	synthetic traffic row (a referral): the written row's invitee_id is a ghost id (0 rows in the table at seed)	43091a2
+every jsonb key the build reads is answered for what the shipped payloads carry	D132	synthetic traffic row (a referral): the written row's tenant_id is a ghost id (0 rows in the table at seed)	43091a2
+every reference the seed writes is probed or explained	D132	synthetic traffic row (a referral): the written row's tenant_id is a ghost id (0 rows in the table at seed)	43091a2
+a verification badge stays unresolvable only while its evidence and its link both stay absent	D132	synthetic traffic row (a reservation): the written row's merchant_id is a ghost id (0 rows in the table at seed)	43091a2
+every array column is answered for what bounds its elements	D132	synthetic traffic row (an SEO page): the written row's reviewed_by is a ghost id (0 rows in the table at seed)	43091a2
+every jsonb payload that a key read cannot reach is answered for what it is	D132	synthetic traffic row (an SEO page): the written row's reviewed_by is a ghost id (0 rows in the table at seed)	43091a2

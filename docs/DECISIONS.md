@@ -7948,3 +7948,62 @@ needs a text-column inventory before an arm can be aimed, and `a served view ans
 exposes` -- then a one-line disposition per row for the rest of the 21. (b) #71, eleventh time standing on
 it. (c) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's `--registry` percentage
 residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.
+
+## D131 The last plantable row is planted, and the one that looked plantable turns out to have a demand list written in SQL, not in data — 2026-09-27
+
+D129 reduced the queue to two candidates: `a bounded string column is answered by name` and
+`a served view answers every column it exposes`. This unit settles both -- one becomes a witness, the
+other becomes a disposition -- and the difference was decided by reading what each census enumerates
+over.
+
+**Decision (a): the bounded-string row is data's, and the arm is a collapse.** Its predicate (
+quality.sql:3022-3030) is `vocab_win NOT IN vocab_answer`, where `vocab_win` is derived from the rows:
+a string column with <= 12 distinct values over >= 20 rows and <= 1 value per 4 rows. So a column can
+*enter* the window by a write, and an answer that exists for the old window members says nothing about
+the newcomer. The arm takes `documents.title` -- 1040 rows over 934 distinct values, no CHECK, no unique
+index, absent from the answer list -- and folds it into 12 buckets (falsifier_plants.py:877-880,
+committed 43091a2):
+
+    UPDATE documents SET title = 'plant bucket ' || (abs(hashtext(title)) % 12);
+
+Pre-flight: 3 whole-gate sessions, target RED, **zero collateral** -- the cleanest single-row witness
+this lane has filed, because the write touches a column no companion reads. Coverage after the drive:
+**196 of 216 (90.7%)**.
+
+**Decision (b): the served-view row cannot be reached from data, and the reason is structural.** Its
+predicate (quality.sql:3324-3340) is `view_data NOT IN view_answer` matched on `(vw, col)` -- the demand
+list is the set of columns the shipped views expose, which is fixed by their definitions in the
+migration set, while the *counts* come from the rows. A write can change a column's derived kind (the
+`const` -> `sparse` move the exemption text at :3318-3323 advertises, and which
+`a view kind is exercised or exempted` and `a view answer names the kind the census derives` do notice --
+both already witnessed), but no write adds a column a view does not have. So the row joins the
+catalogue-bound group: falsifiable only by a migration that widens a view.
+
+**Measurement (c): the arm that would have tested it was dropped because the schema refused the guess.**
+The exemption says "events for 260 of 520 merchants puts `v_merchant_funnel.views` at 2 values over 520
+rows", and the obvious `INSERT INTO events (tenant_id, merchant_id, …)` aborted at the pre-flight:
+**`events` has no merchant_id column**. The funnel reaches a merchant through the polymorphic pair
+instead -- `WHERE e.subject_type = 'merchant' … GROUP BY e.subject_id`, with the counter keyed on
+`e.name IN ('view','click','reserve','cart_add')`. That is written down for two reasons: it is the fact
+the next traffic-shaped arm needs, and it shows the exemption text naming a measurement (`260 merchants`)
+rather than the column the measurement actually rides on.
+
+**Numbers.** Arms 146 -> **147** (one added, one dropped after aborting); harness `43091a2`. Pre-flight:
+3 sessions for the collapse arm (PASS), 2 sessions for the events arm (run unread -> removed). Full
+drive: **150 whole-gate sessions, RESULT PASS**, 9 rows appended against a 338-line copy of the
+registry, closing baseline 216 assertions / 0 red. Registry 317 -> **326 rows**; coverage 195 -> **196 of 216
+(90.7)**; unwitnessed 21 -> **20**. `quality.sql` md5 `4d3a707eff55971b0a2198e2a1b56777` unchanged.
+
+**Limits.** (i) The collapse arm's RED is a witness that the census notices an unlabelled bounded column;
+it is not a claim that the demo ships collapsed titles. (ii) D126's limit stands for every legal-write
+witness: the database accepts the write, which is not the same as an endpoint performing it. (iii) The
+served-view disposition is a claim about which set the predicate enumerates over -- the (vw, col) pairs
+-- and would be falsified by a view that gains a column from data, which SQL does not do.
+
+**next.** (a) 20 unwitnessed names, of which none is now plantable from data: the catalogue-bound
+group, the vacuous-by-construction group (`collections/guides reference live merchants`, the
+join-one-type waiver), the NOT NULL-implied row, the citext-indexed row, the 2 share_links names (#75),
+and the ones needing a migration. (b) Write the per-row disposition into TRACEABILITY or a short section
+so the queue reads as closed-by-kind rather than as pending work. (c) #71, eleventh time standing on it.
+(d) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's `--registry` percentage residue,
+§87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.
