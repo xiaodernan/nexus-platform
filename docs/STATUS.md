@@ -8618,3 +8618,43 @@ spelled-citation harness and 8 for the heading harness.
 path, measurable in seconds without a gate run. Then the two report-only seed-lane findings (95, 96) and task
 100's CI report, all of which need their owners rather than an edit from here. Task 94 still needs explicit
 authorisation before anything rebuilds a shared database.
+
+## 158. The heading harness no longer resolves its fixtures through one account's home directory, and the proof is a hostile environment rather than a second machine (2026-09-28)
+
+**Plane.** `scripts/falsify_ledger_sections.mjs`, edited while nothing was running; five harness invocations in
+scratch copies under the session's Temp directory. No database, no container, no gate run — this harness speaks
+to the heading checker only.
+
+**Changed.** The fixture root is now `join(tmpdir(), …)` from `node:os`, which is what the sibling spelled-
+citation harness already did, so the two harnesses of one family resolve the same way; the summary line prints
+the root it resolved.
+
+**Measured.** Shipped on a plain environment: 8 arms held, 0 missed, rc=0, root in the account's Temp
+directory. Shipped with `TMPDIR` pointing at a drive that does not exist: identical, because the platform
+resolver does not read that variable here. Mutant carrying the old line under the same variable: rc=1 and no
+arm printed — `Error: ENOENT: no such file or directory, mkdir 'Q:\nope\nexus-d116-falsify\a_committed_section_deleted_from_the_wor\docs'`.
+Shipped with `TEMP` pointing at a scratch directory: root moved there, six named arm directories appeared under
+it, 8 arms held. Mutant with its fallback home renamed to an absent account: rc=1 with `EPERM` on that path,
+which stands in for the machines this one cannot test.
+
+**Found.** (a) The two harnesses in this family read different variables — one the platform's resolver, one a
+POSIX variable that resolver does not consult on this operating system — so one operator setting could send the
+fixtures to two different places, and the second place fell back to a hard-coded account. That asymmetry was
+the defect; nothing had crashed yet, which is exactly how a literal of that shape survives a review. (b) An environment claim has to name
+the variable the resolver actually reads: `TEMP` moves it on this platform, `TMP` and `TMPDIR` do not, measured
+by printing the resolver's answer under each. (c) The old failure mode is the bad kind for a witness harness:
+it dies in `mkdir` before any prediction is evaluated, so the operator sees a broken script instead of a wrong
+claim, and nothing in the output says which guard was being tested.
+
+**Mistakes.** The first `TEMP`-redirect case was written as a `TMP` override, printed the unchanged root and
+read like the fix having failed. Re-measured as (b) before it went anywhere near the record; the probe was
+wrong, the code was right.
+
+**Gates.** Both hand falsifiers re-run on the final bytes: 8 arms held for the heading harness, 6 for the
+spelled-citation harness, both rc=0, and gate steps 8, 9, 10 and 12 re-run over the appended ledgers. The
+twelve-step gate was not re-run — no step of it executes either harness, which D152 measured directly.
+
+**Next.** The reports that need their owners rather than an edit from here: 95 and 96 for the seed lane, 100
+for the CI workflow's `required` job, 79 and 64 and 75 for their lanes. Task 94 still waits on explicit
+authorisation. If turns remain after that, the next measurable unit is the one this entry names in passing: the
+harness writes fixtures into a shared temporary directory, so two concurrent runs collide by name.

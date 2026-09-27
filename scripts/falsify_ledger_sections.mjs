@@ -20,11 +20,15 @@
  */
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const FIX = join(process.env.TMPDIR || 'C:/Users/18414/AppData/Local/Temp', 'nexus-d116-falsify');
+// D153: this line named one developer's home directory as the fallback, so on any other account the harness
+// wrote fixtures into a path that does not exist. `tmpdir()` is the resolver the sibling harness
+// (`falsify_status_citations.mjs`) already uses, and it is environment-derived on every platform.
+const FIX = join(tmpdir(), 'nexus-d116-falsify');
 const CHECKER = join(ROOT, 'scripts', 'check_ledger_sections.mjs');
 const RECOVERY = '99e5b0c';
 
@@ -125,6 +129,7 @@ for (const r of results) {
   for (const m of r.missed) console.log(`        expected text missing: ${m}   — printed: ${r.out.split('\n').filter((l) => /RESULT|FORK|NOTE/.test(l)).slice(0, 3).join(' | ')}`);
 }
 console.log(`\n  ${results.length} arms · ${results.length - fails} held · ${fails} missed`);
+console.log(`  fixture root: ${FIX}`);
 console.log('  grammar: every arm runs the shipped checker as a subprocess on its own fixture directory, so');
 console.log('           no arm can redden another; the only cross-plane noise is the reconstructed arm\'s');
 console.log('           --head-rev, which predates D115 and so prints every DECISIONS entry written since');

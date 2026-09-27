@@ -9211,3 +9211,57 @@ which is the audience the ledgers already describe.
 in the commit that carries it, and the two hand falsifiers — 6 arms for the spelled citation plane and 8 arms
 for the ledger heading plane — were re-run after the append, because this entry adds sections to the plane they
 read.
+
+## D153 The heading harness resolved its fixtures through one developer's home directory, and the fix is shown by making the environment hostile — 2026-09-28
+
+**Why this unit.** §156 (e) counted the paths in shipped bytes that name one account rather than a platform,
+and found exactly one code site: the heading falsifier built its fixture root as an environment variable
+defaulting to a literal under `C:\Users\18414\…`. The sibling harness in the same family already used the
+documented resolver from `node:os`, so the two harnesses for the same gate family wrote their fixtures under two
+different conventions, and only one of them could be steered by the environment at all. Nothing was broken on
+this machine, which is the whole problem with a literal of that shape: it works precisely where it was written
+and says nothing about anywhere else.
+
+**What landed.** `scripts/falsify_ledger_sections.mjs` resolves its fixture root through `tmpdir()` from
+`node:os`, the way its sibling does, and prints the root it resolved on the summary line — because a harness
+that writes 8 fixture directories somewhere is a harness whose claims cannot be checked without knowing where,
+and because the next reader should not have to re-derive it from a comment. The line it replaces is quoted in
+the ledgers already — D116's own entry and the census in §156 that found it — so the old shape is on the record
+rather than deleted silently.
+
+**Measured.** Five cases, the mutants being the shipped file with its ROOT pinned to this repository and only
+the fixture line swapped back, so an arm's verdict differs from the shipped one by that line alone:
+
+| case | fixture root resolved | arms | rc |
+| --- | --- | --- | --- |
+| shipped, plain environment | the account's Temp directory | 8 held · 0 missed | 0 |
+| shipped, `TMPDIR` set to a drive that does not exist | same as above | 8 held · 0 missed | 0 |
+| mutant with the old line, same hostile `TMPDIR` | — | no arm printed | 1 |
+| shipped, `TEMP` set to a scratch directory | that scratch directory | 8 held · 0 missed | 0 |
+| mutant with the old line, its fallback home renamed to an absent account | — | no arm printed | 1 |
+
+The third case dies before the table exists: `Error: ENOENT: no such file or directory, mkdir
+'Q:\nope\nexus-d116-falsify\a_committed_section_deleted_from_the_wor\docs'`. That is the old code honouring an
+environment variable the platform resolver ignores, and it is the worse kind of failure for a harness — not a
+missed prediction but an OS crash with no prediction in it, which reads as "the harness is broken" rather than
+"the guard is wrong". The fifth dies the same way with `EPERM` on
+`C:\Users\nobody-on-this-machine\AppData\Local\Temp\…`; it is a stand-in for the real defect and is named here
+as one, because this machine has one account and the claim is about the others.
+
+**The prediction that missed.** The fourth case was first written as a `TMP` override and it printed the usual
+root, which looked like the fix not working. Measuring `tmpdir()` directly under each variable answered it:
+overriding `TMP` alone does not move it, overriding `TEMP` does, and `TMPDIR` does not either — so the probe
+used the wrong variable, not the wrong code, and the re-run with `TEMP` moved the fixtures to the scratch
+directory named on the summary line while all 8 arms held. The lesson is the census lesson again: an
+environment claim has to name the variable that platform's resolver actually reads.
+
+**What this does not buy.** It does not make the harness portable by testing it on another account — no such
+account exists here, and the EPERM case is a simulation of that machine, not the machine. It also does not
+remove the literal from the repository: the mentions that remain are prose about the defect, which is where
+they belong, and the claim is only that no code or config file resolves a path through one user's home any
+more. And a printed root is a printed root, not a guarantee: the harness still writes into a shared temporary
+directory, so two runs of it on one account collide by name, exactly as they did before.
+
+**Gates.** Both harnesses re-run after the append for the same reason as D152: this entry adds sections to the
+plane the heading arms read. The twelve-step gate itself was not re-run, because no step of it executes either
+harness — the finding D151 census named and D152 measured against the gate.
