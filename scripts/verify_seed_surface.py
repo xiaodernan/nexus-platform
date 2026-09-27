@@ -86,7 +86,7 @@ def main():
     if not ok or not favs:
         return finish()
 
-    shapes = all(isinstance(f, dict) and f.get("subject_type") in ("merchant", "offering", "collection")
+    shapes = all(isinstance(f, dict) and f.get("subject_type") in ("merchant", "offering", "guide", "collection")
                  and UUID_RE.match(str(f.get("subject_id", ""))) and f.get("created_at")
                  for f in favs)
     report("  every row has subject_type, a uuid id and a date", shapes,
