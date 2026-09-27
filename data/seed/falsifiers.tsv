@@ -151,3 +151,41 @@ slots: every slot has a pool in the same merchant	D123	fk checks off (replica ro
 chunks: ordinal contiguous per document	D123	fk checks off (replica role): a chunk loses its document	499bfa4
 merchant has a menu document (RAG feed)	D123	fk checks off (replica role): a document loses its merchant	499bfa4
 merchant has a primary location	D123	fk checks off (replica role): a location loses its merchant	499bfa4
+fk: categories.tenant_id -> tenants.id	D124	fk checks off (replica role): a category gains a tenant that is nobody (0 of 77 carry one)	13603da
+fk: documents.offering_id -> offerings.id	D124	fk checks off (replica role): a document gains an offering that is nobody (0 of 1040 carry one)	13603da
+fk: merchant_categories.merchant_id -> merchants.id	D124	fk checks off (replica role): a merchant-category link loses its merchant (keyed on the PK pair, no id)	13603da
+fk: merchants.tenant_id -> tenants.id	D124	fk checks off (replica role): a merchant loses its tenant	13603da
+fk: merchant_users.merchant_id -> merchants.id	D124	fk checks off (replica role): a workspace member loses its merchant (3 rows in the table)	13603da
+fk: merchant_users.user_id -> users.id	D124	fk checks off (replica role): a workspace member stops being anybody (3 rows in the table)	13603da
+fk: moderation_cases.tenant_id -> tenants.id	D124	fk checks off (replica role): a moderation case loses its tenant	13603da
+fk: offering_relations.from_offering -> offerings.id	D124	fk checks off (replica role): a related-offering edge loses its near end (PK column, keyed on the pair)	13603da
+fk: offering_relations.to_offering -> offerings.id	D124	fk checks off (replica role): a related-offering edge loses its far end (PK column, keyed on the pair)	13603da
+fk: offerings.category_id -> categories.id	D124	fk checks off (replica role): an offering loses its category	13603da
+fk: offerings.merchant_id -> merchants.id	D124	fk checks off (replica role): an offering loses its merchant	13603da
+fk: offerings.tenant_id -> tenants.id	D124	fk checks off (replica role): an offering loses its tenant	13603da
+fk: permission_grants.merchant_id -> merchants.id	D124	fk checks off (replica role): a grant stops being a grant over anyone's data (36 rows in the table)	13603da
+fk: resource_pools.merchant_id -> merchants.id	D124	fk checks off (replica role): a resource pool loses its merchant	13603da
+fk: resource_pools.offering_id -> offerings.id	D124	fk checks off (replica role): a resource pool loses the offering it is stocked for (7 of 452 carry one)	13603da
+fk: reviews.merchant_id -> merchants.id	D124	fk checks off (replica role): a review loses its merchant	13603da
+fk: reviews.offering_id -> offerings.id	D124	fk checks off (replica role): a review stops being about anything sellable (2055 of 11000 carry one)	13603da
+fk: reviews.tenant_id -> tenants.id	D124	fk checks off (replica role): a review loses its tenant	13603da
+fk: reviews.user_id -> users.id	D124	fk checks off (replica role): a review stops being anyone's (245 of 11000 carry one)	13603da
+fk: user_identities.tenant_id -> tenants.id	D124	fk checks off (replica role): an identity loses its tenant (5 rows in the table)	13603da
+fk: user_identities.user_id -> users.id	D124	fk checks off (replica role): an identity stops belonging to a user (5 rows in the table)	13603da
+fk: users.tenant_id -> tenants.id	D124	fk checks off (replica role): a user loses their tenant (5 rows in the table)	13603da
+every column that cannot vary is answered for why it cannot	D124	a merchant page indexable by search engines	13603da
+the columns stamped from the generation clock are exactly the ones answered so	D124	every fact removed -- the same presence row on the table with no CHECKs	13603da
+a view answer names the kind the census derives	D124	fk checks off (replica role): a merchant loses its tenant	13603da
+a view kind is exercised or exempted	D124	fk checks off (replica role): a merchant loses its tenant	13603da
+everything hangs off the single demo tenant	D124	fk checks off (replica role): a merchant loses its tenant	13603da
+every seeded owner membership has grants	D124	fk checks off (replica role): a workspace member loses its merchant (3 rows in the table)	13603da
+merchant_user grants reach a membership	D124	fk checks off (replica role): a workspace member loses its merchant (3 rows in the table)	13603da
+orphan: permission_grants.merchant_user	D124	fk checks off (replica role): a workspace member loses its merchant (3 rows in the table)	13603da
+owner can administer workspace	D124	fk checks off (replica role): a workspace member loses its merchant (3 rows in the table)	13603da
+demo identities exist for /api/v1/auth/demo	D124	fk checks off (replica role): a workspace member stops being anybody (3 rows in the table)	13603da
+offering belongs to a merchant	D124	fk checks off (replica role): an offering loses its merchant	13603da
+slots: every slot has a pool in the same merchant	D124	fk checks off (replica role): a resource pool loses its merchant	13603da
+merchants.rating_agg matches its reviews	D124	fk checks off (replica role): a review loses its merchant	13603da
+merchants.review_count matches its reviews	D124	fk checks off (replica role): a review loses its merchant	13603da
+rating fact restates the recomputed mean	D124	fk checks off (replica role): a review loses its merchant	13603da
+rating: every reviewed subject has exactly one rating fact	D124	fk checks off (replica role): a review loses its merchant	13603da

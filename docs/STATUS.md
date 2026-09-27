@@ -7134,3 +7134,83 @@ next              (a) The 20 remaining one-UPDATE names, in two batches of ten, 
                     bulk), #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage
                     residue, §87's session-time-zone seam, D91's served leg.
 ```
+
+## 133. Twenty-two plants finish the cheap half of the `fk: ` family, and the row selector learns to ask whether the column has a value on *that* row (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (55 → 77 arms, committed 13603da) and the registry it writes,
+                    `data/seed/falsifiers.tsv` (132 → 170 rows). Same kept loaded seed as §128–§132,
+                    `nexus_gate_283340_1790454442` — 216 assertions on this working copy, and
+                    `data/seed/quality.sql` md5 `4d3a707e…` identical before and after both drives, so the two
+                    witnesses below read the same file.
+
+changed           22 arms, all of D122's shape: `SET LOCAL session_replication_role = replica;` then one UPDATE of
+                    one foreign-key column to `gen_random_uuid()` (falsifier_plants.py:399-510). 20 cut an edge
+                    that already exists and say so by selecting the row with `<col> IS NOT NULL`; 2 invent the
+                    first value in a column that has none (`categories.tenant_id` 0 of 77,
+                    `documents.offering_id` 0 of 1040) and their labels print that fraction. Two arms key on a
+                    composite primary key because `merchant_categories` and `offering_relations` have no `id`.
+                    No gate file, checker or migration changed.
+
+measured          the pre-aim census                        the 22 (table, column) pairs read out of the kept
+                    (22 pairs × rows, values, keys,          database in one shell step, scratch
+                    checks)                                  `d124_aim.sql`: `count(*)` and `count(col)` per
+                    column, the primary key, every UNIQUE index containing the column, and every CHECK on the
+                    thirteen tables. No CHECK names any of the 22 — so none of these arms carries a value-plane
+                    lie next to the reference lie, which is the confound D122 hit. Three sparse columns, two
+                    zero-value columns, three arms whose column is itself key material.
+                  the 27 empty-child tables                  exactly 0 rows each, 7–25 columns, and 1 to 5
+                    (read-only, for D125)                    NOT NULL columns with no default to satisfy before
+                    an INSERT resolves anything; 57 foreign keys leave them and 50 of those are swept names, the
+                    other 7 pointing at parents that are themselves empty.
+                  two drives                                   a targeted pre-flight over the 40 checks-off arms
+                    (42 sessions, then 80)                   — PASS, 12 of the 22 new arms reddening nothing but
+                    their own name, the control skipped because `--only` excluded arm 0 — then the full drive: 77
+                    arms + 1 control, PASS, control's spread collateral gone as predicted, closing baseline 216
+                    assertions and 0 reds, identical to opening.
+
+found             (a) The half of the family that one UPDATE reaches is now closed: of the 91 swept `fk: ` names,
+                    41 carry a witness and the remaining 50 all sit on a child table the seed leaves empty. The
+                    next one is not a batch but a decision, and §132's next(b) has already had to grow up.
+                  (b) D123's "count the column" lesson moved from the table to the row. On `reviews.user_id`
+                    (245 of 11000) an `ORDER BY id LIMIT 1` selector has a 98% chance of hitting a NULL, and the
+                    arm would then have invented a value and danglinged it while its label claimed it cut an edge.
+                    Every cut-arm here carries `IS NOT NULL`; the two file-arms carry the opposite and say so.
+                  (c) `merchants.tenant_id` reddened three companions, two of which had never been witnessed:
+                    `everything hangs off the single demo tenant` (quality.sql:628 compares the column against
+                    the one demo uuid, so it sees the write directly) and, less obviously,
+                    `a view answer names the kind the census derives` and `a view kind is exercised or exempted`
+                    (quality.sql:3342, :3377) — the view census *derives* a served column's kind by counting its
+                    values, so unresolvable tenant ⇒ a `const` column stops being one and the hand-written answer
+                    contradicts the derivation. Reported as a limit in D124: a companion caught by a value
+                    predicate testifies to less than one caught by the join it was written against.
+                  (d) Concentration. These 22 make 41 of the 91 witnessed, and 41 of 41 of them were witnessed
+                    by the same single mechanism. No other family in the registry is that exposed to one GUC.
+                  (e) A full drive harvests what a targeted run cannot see: 2 of the 38 emitted rows name a
+                    companion reddened by an arm from an earlier batch, whose (check, arm) pair had never been
+                    filed because every earlier run of that arm was aimed somewhere else.
+
+gates             The eleven-step script was not re-run, because no gate file, checker or migration changed; the
+                    shipped code touched is the plant harness, whose 122 whole-gate sessions across the two drives
+                    are the gate body sliced out of `quality.sql` and executed against mutated data inside a
+                    transaction that is rolled back — the identical closing baseline is what certifies that. The
+                    four readers were run on the final bytes of this text: step 8 `check_ledger_citations.mjs
+                    --worktree` (exit 0 — 238 headings seen, 504 name:number tokens, 293 citation-shaped, strict
+                    on the working copy), step 9 `check_comment_citations.mjs` (PASS, 70 comment-plane citations
+                    across 21 files), step 10 `check_ledger_sections.mjs` (PASS — STATUS HEAD 100 · on disk 101 ·
+                    missing 0 · duplicates 0 · §133 the one uncommitted section; DECISIONS HEAD 111 · on disk 112
+                    · D124 the same note), step 11 `check_falsifier_registry.mjs --db
+                    nexus_gate_283340_1790454442` (PASS, 170 rows, 116 of 216).
+
+next              (a) D125, the empty-child decision, with one measurement already made for it: an INSERT into any
+                    closure table outside the anchor also reddens `no traffic outside the seeded tables`, whose
+                    own detail text (quality.sql:263-272) says such a database is "the seed plus traffic, so
+                    quality.sql is reading it as a diagnostic and not as a gate on the artifact". So the plant
+                    cannot be clean — two reds, one of them the gate calling the state illegal — and the honest
+                    options are to file both and label them, or to record the 50 as unreachable by a demo row and
+                    spend the next batches on the 49 literal names.
+                  (b) #71, seventh time standing on it: `facts` is still the only seeded table with no CHECK.
+                  (c) Carried: #73 (116 of 216 witnessed, 100 unwitnessed = 49 literal + 51 assembled), #75,
+                    #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage residue, §87's
+                    session-time-zone seam, D91's served leg, §130's missing `guide` branch.
+```

@@ -7435,3 +7435,72 @@ a value-filing arm each. (b) The decision the 50 empty-child names raise, plus a
 columns raise: whether a `fk: ` row should print how many values it resolved, which is a `quality.sql` change and
 therefore another lane's file. (c) #71, sixth time standing on it. (d) Carried from §130: the renderability
 companion's missing `guide` branch, reported and not edited.
+
+## D124 The cheap half of the `fk: ` family is closed, so a row selector now has to know whether the column carries a value on *that* row — 2026-09-27
+
+D123's next(a) was "the 20 genuinely UPDATE-reachable names in two batches, and the two zero-value columns folded
+into a value-filing arm each". This unit does all 22 in one batch, because the two things that made ten the right
+size last time — the cost of aiming and the cost of driving — both fell: the census is a read-only query set run
+in one shell step, and a drive of three whole-gate sessions timed at **11 s** here, so 80 of them are minutes, not
+a milestone.
+
+**Decision (a): close the half, then say what the remaining half actually is.** After these 22 arms the family
+reads 91 filed names, **41 witnessed, 50 left, and 0 of the 50 sit on a populated child table** — every one of
+them is on a table the seed leaves empty (27 tables, exactly 0 rows each). So the queue is no longer "keep aiming
+the same plant at the next column": what is left needs an INSERT, which is a different claim about a different
+reachability, and it goes to D125 as a decision rather than staying here as a remainder.
+
+**Decision (b): the row selector inherits D123's per-column lesson, and the arms are written to match.** Three of
+the 20 dense columns are sparse — `resource_pools.offering_id` 7 of 452, `reviews.offering_id` 2055 of 11000,
+`reviews.user_id` 245 of 11000 — so `ORDER BY id LIMIT 1` is overwhelmingly likely to pick a row where the column
+is NULL. An UPDATE there is not "an edge is cut"; it is "a value was invented, then an edge was cut", two claims
+in one arm, and the second one is exactly what the two zero-value arms are for. Therefore all 20 cut-arms select
+with `<col> IS NOT NULL` and the 2 file-arms select with `<col> IS NULL`, and each label prints the fraction
+(`falsifier_plants.py:399-510`). Two of the 22 also needed a handle that is not `id`: `merchant_categories` is
+keyed `(merchant_id, category_id)` and `offering_relations` `(from_offering, to_offering, relation)`, and in
+three cases the danglinged column is itself a key member, which is only safe because the new value is a random
+uuid. The 2 value-filing arms reddened nothing else, which is the cleanest witness this family can produce: one
+write, one assertion noticing.
+
+**Decision (c): the merchant-tenant arm reddened two assertions whose names never mention merchants.** 13 of the
+22 arms are clean; 9 reddened 22 companion lines over 14 distinct names. The interesting three come from
+`merchants.tenant_id`: `everything hangs off the single demo tenant`, plus `a view answer names the kind the
+census derives` and `a view kind is exercised or exempted` — the last two had **never** carried a witness before.
+Read out of the file (quality.sql:628 and :3342, :3377) the mechanism is not a join: the tenant row compares
+`tenant_id <> '0000…0001'`, so it sees the new value directly, and the view census *derives* each served column's
+kind by counting its values, so a write that makes one merchant's tenant unresolvable flips a column from `const`
+to something else and the hand-written answer no longer matches the derived kind. Worth stating plainly as a limit
+(below): a companion caught by a value predicate is a weaker witness than one caught by the join the companion was
+written for.
+
+**Numbers.** Arms 55 → **77**. Two drives, both read here: a targeted pre-flight over the 40 checks-off arms
+(42 whole-gate sessions, PASS, control skipped because `--only` excluded arm 0) run first so that a bad new arm
+fails in three minutes instead of five, then the full drive — 77 arms + 1 control, **80 sessions**, PASS, control
+target red with its spread collateral gone, closing baseline 216 assertions and 0 reds, identical to opening.
+`data/seed/quality.sql` md5 `4d3a707e…` identical before and after, so the whole drive read the file this lane
+read. Registry 132 → **170 rows**: 38 appended (22 from an arm's own RED row, 16 from collateral) over 38 distinct
+names — the drive dedups by name, so a companion three arms reddened in one run is filed once — of which **29**
+carried no witness before. 14 of those 16 collateral rows come from this batch's arms; the other 2 name an
+assertion reddened by an arm from an earlier batch that the full drive re-ran, whose `(check, arm)` pair no targeted
+run had ever emitted — so a full drive harvests second witnesses a targeted one structurally cannot see. Coverage 87 → **116 of 216 = 53.7%**, past half for the first time; witness kinds 131
+commit + 39 file; step 11 PASS. Unwitnessed 129 → **100 = 49 literal + 51 assembled**. `fk` family 72 → **50**,
+all on an empty child; those 27 tables carry 57 outgoing FKs in total, of which 7 are not even swept because their
+parent is another empty table.
+
+**Limits.** D122's and D123's stand: these rows demonstrate detection under a state the `nexus_app` role is
+refused, and a companion witnessed from collateral says nothing about whether a legal write could produce what it
+catches. New to this batch: **41 of 91, and 41 of 41 by one mechanism.** No other family in the registry is that
+concentrated — a Postgres upgrade that stopped `session_replication_role` from silencing FKs, or a managed instance
+that refuses the GUC entirely, would invalidate all 41 rows at once. And the two filing arms testify on columns
+the demo never writes: `categories.tenant_id` and `documents.offering_id` have no tenant-scoped or offering-scoped
+data to be wrong about, so what they prove is that the sweep would notice the first value if it ever arrived.
+
+**next.** (a) D125, the empty-child decision, informed by one measurement made here rather than argued: an INSERT
+into any closure table outside the anchor also reddens `no traffic outside the seeded tables`, whose own detail
+text for that case reads "this database is the seed plus traffic, so quality.sql is reading it as a diagnostic and
+not as a gate on the artifact" (quality.sql:263-272). So a synthetic-INSERT arm cannot be a clean witness — it
+buys two reds, one of which is the gate declaring the state illegal — and the honest options are to file both and
+say so, or to record those 50 as reachable-in-principle-but-not-by-a-legal-demo-row and move to the 49 literal
+names. (b) #71, seventh time standing on it. (c) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80,
+step 11's `--registry` percentage residue, §87's session-time-zone seam, D91's served leg, §130's missing
+`guide` branch.
