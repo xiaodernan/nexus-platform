@@ -7423,3 +7423,60 @@ next              (a) 23 left, in three named kinds: 8 rows about the registry a
                       #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage residue, §87's
                       session-time-zone seam, D91's served leg, §130's missing `guide` branch.
 ```
+
+## 137. The 23 rows nobody has falsified, read one at a time: nine are the data plane's, ten ask for a migration, one reads a key the seed never writes (2026-09-27)
+
+```
+plane             No artifact changed. `data/seed/falsifier_plants.py` stands at 144 arms (c8c2f84) and
+                    `data/seed/falsifiers.tsv` at 293 rows (9c3563d), on the same kept loaded seed as
+                    §128–§136, `nexus_gate_283340_1790454442` — 216 assertions, 0 baseline reds. What this
+                    section adds is a disposition per remaining row, cited to the SQL that produces it.
+
+changed           nothing shipped. The work was reading: each of the 23 unwitnessed names was traced to the
+                    predicate behind it in `data/seed/quality.sql` (working copy, dirty from another lane —
+                    every line number below is re-read against that plane by step 8) and asked what would
+                    have to be true for it to go red.
+
+measured          the 23 resolved against their own SQL                 the hand-written `ref_registry`
+                    into: 9 falsifiable by a data write, 10 that                 (quality.sql:1150-1176) is one
+                    read `pg_constraint` / `to_regclass` /             side of ten of the 23 rows, so a plant
+                    column lists / that hand list, 1 vacuous by        for those would have to edit the file
+                    construction, and 2 blocked on #75.               under test.
+
+found               (a) Nine have a data-plane shape. `a join-one-type waiver is only true while the table
+                      ships one type` (:1208-1213) is decided by `c.types_n > 1` over a census built from
+                      rows, so one legal INSERT of a second subject type reddens it; the two catalogue
+                      floors (`:1178-1180`, `:1263`, `ref_cat >= 17`) only fall to a DELETE taking a counted
+                      pair to zero; five demand-list rows (:3022, :3104, :3134, :2015, :3324) enumerate from
+                      the data, which §134/§135 already demonstrated when adding rows reddened the
+                      cannot-vary, array and jsonb census rows 48, 7 and 7 times; and the Sha Tin density is
+                      a lat/lng threshold.
+                    (b) Ten cannot be lost from data at all. They compare catalogues — a column dropped, a
+                      table shipped, a CHECK added, a hand list edited. Where the row's other side is
+                      `quality.sql`'s own `ref_registry`, both sides of the gate are written by the gate: a
+                      green there proves the file agrees with itself, and the honest verdict is "no
+                      data-plane witness exists", not "covered".
+                    (c) One is vacuous by construction. `collections/guides reference live merchants`
+                      (:1002-1007) reads `it->>'merchant_id'`, and §136 counted 0 of the seed's collection
+                      items carrying that key — the items write `note`, `subject_id`, `subject_type`. Its
+                      PASS is not evidence about referential integrity; only re-pointing the row is.
+
+gates             Nothing to re-run: no gate file, checker, migration or harness changed, and no arm was
+                    planted, so no session touched the database. The four readers were run on the final
+                    bytes of this text: step 8 `check_ledger_citations.mjs --worktree` (exit 0 — 246
+                    headings seen, 520 name:number tokens, 309 citation-shaped, strict on the working copy),
+                    step 9 `check_comment_citations.mjs` (70 comment-plane citations across 21 files),
+                    step 10 `check_ledger_sections.mjs` (PASS — STATUS HEAD 104 · on disk 105 · missing 0
+                    · duplicates 0 · §137 the one uncommitted section; DECISIONS HEAD 115 · on disk 116 ·
+                    D128 the same note), step 11 `check_falsifier_registry.mjs --db
+                    nexus_gate_283340_1790454442` (PASS, 293 rows, 193 of 216).
+
+next              (a) D129 plants the nine — the join-one-type second type, a counted pair emptied, a new
+                      bounded string column, a case variant, a mixed-key object-array element, a
+                      served-view column left unanswered, a coordinate cluster moved. (b) The ten get a
+                      written disposition per row rather than a plant. (c) #71, eleventh time standing on
+                      it. (d) Carried: #73 (193 of 216, 23 left: 9 plantable, 10 not, 1 vacuous, 2 on #75),
+                      #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage
+                      residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide`
+                      branch.
+```

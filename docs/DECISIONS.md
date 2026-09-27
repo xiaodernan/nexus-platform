@@ -7747,3 +7747,72 @@ column it exposes`, the string-census and join-one-type waiver rows), most of wh
 reachable and are the next unit's aim; and the 2 share_links names (#75). (b) #71, tenth time standing
 on it. (c) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's `--registry` percentage
 residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.
+
+## D128 The last 23 rows sorted by what could possibly falsify them -- nine are data, ten need a migration, one is vacuous, two wait on #75 — 2026-09-27
+
+Three units of plants (D125's 48, D126's 11, D127's 8) took the registry from 116 witnessed names to 193
+and left 23. A queue that size invites "more of the same", but every arm this lane has shipped writes
+data, and reading the 23 against their own SQL shows most of them cannot be lost that way. This unit
+plants nothing; it decides what each row would take, so the queue stops being a count and becomes named
+planes.
+
+**Decision (a): nine are falsifiable from the data plane and are the next batch's real aim.**
+`a join-one-type waiver is only true while the table ships one type` (quality.sql:1208-1213) is the one
+row whose own detail text advertises the date it will go red -- the predicate is `c.types_n > 1` over the
+data-derived `ref_cat`, so a single legal INSERT of a second subject type falsifies it, the shape D127's
+favourites arm used. Two catalogue floors, `the reference census reads the catalogue`
+(`count(*) FROM ref_cat >= 17`, :1178-1180) and `the polymorphic-pair census reads the catalogue`
+(:1263), fall the other way: writes only add pairs, so these need a DELETE taking a counted pair to zero
+rows -- D120 already planted that mechanism for a different row. Five demand-list rows --
+`a bounded string column is answered by name` (:3022), `the string census declares a reading for every
+type it catches` (:3104), `a census that folds case reports both readings…` (:3134),
+`the elements of an object-array column all carry the same keys` (:2015) and
+`a served view answers every column it exposes` (:3324) -- enumerate from the rows, which §134/§135
+already proved experimentally: those arms reddened the cannot-vary, array and jsonb census rows 48, 7 and
+7 times just by adding data. And `density: >= 300 merchants within 3km of Sha Tin` is a threshold over
+lat/lng, so a legal mass UPDATE of coordinates reaches it.
+
+**Decision (b): ten cannot be lost from data, and naming the input each reads is the whole point.**
+`the registry names no column the schema has lost` (:1198), `the pairs declared probed are pairs the
+schema has` (:1270), `an armed type resolves in a table the schema has` (:1410),
+`a no-referent waiver still names a table the schema lacks` (:1425),
+`a probe arm is a declared type and every armed type has an arm` (:1401),
+`traffic sweep reaches the whole closure, not a hand list` (:257),
+`a CHECK-bounded column is a door vocabulary too` (:2836), `a door vocabulary names a column the schema
+has` (:2770), `every boolean that claims a verification is answered for its evidence` (:2156) and
+`price_updated_at present for priced offerings` (:482) compare `pg_constraint`, `to_regclass`, column
+lists, or `quality.sql`'s own hand-written `ref_registry` (:1150-1176) against the data. Reddening one
+means dropping a column, shipping a table, adding a CHECK, or editing the hand list -- a migration or the
+file under test, not a row. Two consequences are recorded rather than argued: a plant for any of these
+would have to edit `data/seed/quality.sql`, another lane's working copy; and where the row's *other* side
+is that same hand list, both sides of the gate are written by the gate -- so a green there proves the
+file agrees with itself, and the honest verdict is "no data-plane witness exists", not "covered".
+
+**Decision (c): one row is vacuous in a way no plant can fix, and two wait on another lane.**
+`collections/guides reference live merchants` (:1002-1007) reads `it->>'merchant_id'` from collection
+items; D127 counted 4 collections, 4 with an object at `items[0]`, and 0 items carrying that key anywhere
+(`note`, `subject_id`, `subject_type` are what the seed writes). Its PASS says nothing about referential
+integrity; the fix is to point the row at the keys that exist, which is another lane's edit.
+`fk: share_links.created_by` and `fk: share_links.tenant_id` wait on #75 -- the migration creating the
+table is uncommitted, so a witness there could not reopen from the committed tree.
+
+**Numbers.** Nothing shipped changed: no gate file, checker, migration, harness or registry row -- the
+registry stands where D127 left it, **293 rows, 193 of 216 (89.4%), 23 unwitnessed**, step 11 PASS on
+`nexus_gate_283340_1790454442` with 216 assertions and 0 baseline reds. The triage resolves the 23 as
+9 data-reachable + 10 schema-or-file + 1 vacuous + 2 blocked on #75 + 1 density (counted with the nine in
+decision (a) and named here because its plant is a different shape: a coordinate cluster moved). Every
+line number is read off the working copy of `data/seed/quality.sql`, which is dirty from another lane, and
+step 8 re-reads each citation against that same plane.
+
+**Limits.** (i) This is a reading unit, not a measuring one; the only experiments cited are earlier
+units'. (ii) "Reachable by a write" is not "performed by the application" -- D122's gap survives intact.
+(iii) The ten schema-or-file rows stay unwitnessed on this lane's books; recording that they cannot be
+witnessed from data is the entry, not a substitute for a witness.
+
+**next.** (a) D129 plants the nine, legal-write only, in one batch: the join-one-type second type, a
+counted pair emptied (both census floors at once), a new bounded string column, a case variant, a
+mixed-key object-array element, a served-view column left unanswered, and a coordinate cluster moved.
+(b) The ten get a written disposition per row, so a future reader does not count them as pending work.
+(c) #71, eleventh time standing on it. (d) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80,
+step 11's `--registry` percentage residue, §87's session-time-zone seam, D91's served leg, §130's missing
+`guide` branch.
