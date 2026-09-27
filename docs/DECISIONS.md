@@ -9265,3 +9265,15 @@ directory, so two runs of it on one account collide by name, exactly as they did
 **Gates.** Both harnesses re-run after the append for the same reason as D152: this entry adds sections to the
 plane the heading arms read. The twelve-step gate itself was not re-run, because no step of it executes either
 harness — the finding D151 census named and D152 measured against the gate.
+
+**Amendment, same day, forced by a wider pattern.** The sentence above that §156 found exactly one code site is
+wrong, and it was wrong because that census searched one spelling of a path separator. Re-measured at the
+revision this entry was committed as, with a pattern tolerating both separators, the account path appears in 6
+tracked files: three code and three prose. The three code sites are archived witness scripts under
+`data/seed/falsifier_witnesses/` — a sweep plant and two drivers, each opening its own result file at a Temp
+path under one account — and they are named by 17 rows of the falsifier registry, so they are live witnesses
+rather than dead artifacts. They were not touched here, and that is a decision rather than an oversight: an
+archived run's output path is part of what that run did, and editing a witness to make a census read clean is
+the same mistake in a new costume. Task 101 owns the question of what should happen to them. What survives of
+this entry's claim is narrower and still measured: no file under `scripts/`, no build file and no workflow
+resolves a path through a user's home any more, and the one that did is fixed.

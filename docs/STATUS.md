@@ -8658,3 +8658,10 @@ twelve-step gate was not re-run — no step of it executes either harness, which
 for the CI workflow's `required` job, 79 and 64 and 75 for their lanes. Task 94 still waits on explicit
 authorisation. If turns remain after that, the next measurable unit is the one this entry names in passing: the
 harness writes fixtures into a shared temporary directory, so two concurrent runs collide by name.
+
+**Corrects.** D153's opening paragraph repeats a count this lane wrote earlier, and the count is wrong: §156 (d)
+searched the account path in one spelling of the separator and reported one code site. A separator-tolerant
+re-measure of the same revision finds 3 code files and 3 prose files, the code ones being archived witness
+scripts that the falsifier registry names in 17 rows — so they are live witnesses, deliberately left alone, and
+the open question is filed as task 101. The fix D153 landed is unaffected: the harness it corrected is still the
+only file under `scripts/` that ever carried such a path, and it no longer does.
