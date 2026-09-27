@@ -861,6 +861,24 @@ ARMS += [
      "AND lat BETWEEN 22.3561 AND 22.4101 AND lng BETWEEN 114.1584 AND 114.2168;"),
 ]
 
+# Batch D131: the last two rows D129 left as "worth a plant", aimed from a column inventory rather than
+# from a guess. `a bounded string column is answered by name` counts string columns inside a window
+# (<= 12 distinct, >= 20 rows, <= 1 value per 4 rows) and demands a named answer per column, so the arm
+# collapses a column that sits just OUTSIDE that window -- `documents.title`, 1040 rows over 934
+# distinct values, no CHECK and no unique index -- into 12 buckets, which is what a re-labelled corpus
+# looks like. The second arm takes `a served view answers every column it exposes` at its own word: the
+# exemption text at quality.sql:3318-3323 claims that seeding traffic puts `v_merchant_funnel.views` at
+# two values over 520 rows, so this writes events for 260 merchants with the checks ON and asks whether
+# the served-view row notices. That second arm was REMOVED at the pre-flight: `events` has no
+# merchant_id column, so "seed events for 260 merchants" reaches the funnel by a route this file has not
+# found, and the exemption's own claim (quality.sql:3318-3323) stays untested rather than guessed at.
+# The collapse arm reddened its target with zero collateral -- 3 sessions, RESULT PASS.
+ARMS += [
+    ("a bounded string column is answered by name",
+     "a legal write the schema accepts: 1040 document titles collapsed into twelve buckets",
+     "UPDATE documents SET title = 'plant bucket ' || (abs(hashtext(title)) % 12);"),
+]
+
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
 # the only difference between this run and that arm's. If the collateral is what the D108 measurement
 # says it is, the target stays red and the collateral goes to zero.
