@@ -774,6 +774,56 @@ ARMS += [
      "(SELECT id FROM merchants ORDER BY id LIMIT 1), 'up');"),
 ]
 
+# Batch D127: nine more legal writes, aimed at the demo-property rows D126 left on the 33. Same rule as
+# D126 -- one statement, constraint checks ON, no role switch, no ghost id -- and each one is the shape
+# the assertion actually claims to guard against: a rating distribution smoothed out, a price fact
+# re-labelled from inferred to merchant, a document's provenance marker pointed at the real web, a
+# collection card referencing a merchant id that is not in the table, a review stripped of its aspects
+# or of its concrete wording, a favourite filed under a type the API cannot save, a bookable offering
+# whose merchant has no active pool. Two rows in the census are jsonb-internal, so the deception has to
+# be written INTO the payload -- an FK column cannot reach them and neither can a ghost uuid, because
+# nothing in the schema claims those ids in the first place.
+ARMS += [
+    ("ratings realistically spread (not all 5.0)",
+     "a legal write the schema accepts: every below-average merchant rating lifted to 4.5",
+     "UPDATE merchants SET rating_agg = 4.5 WHERE rating_agg < 3.8;"),
+    ("an estimated price is facted as inferred, not as merchant",
+     "a legal write the schema accepts: an estimated price's fact re-labelled as the merchant's own claim",
+     "UPDATE facts SET source = 'merchant' WHERE id = (SELECT f.id FROM facts f "
+     "JOIN offerings o ON o.id = f.subject_id WHERE f.subject_type = 'offering' "
+     "AND f.attribute = 'price' AND o.price_source = 'estimated' ORDER BY f.id LIMIT 1);"),
+    ("jsonb data_origin marker (offerings/documents/chunks)",
+     "a legal write the schema accepts: a document's provenance marker pointed at the real web",
+     "UPDATE documents SET metadata = jsonb_set(metadata, '{data_origin}', to_jsonb('real'::text)) "
+     "WHERE id = (SELECT id FROM documents ORDER BY id LIMIT 1);"),
+    # Dropped after the pre-flight: writing a ghost merchant id into a collection's items left BOTH the
+    # target and every companion green -- the statement touched nothing the check reads. Measured in
+    # §135's `measured` block, and reported rather than papered over: the row claims to guard
+    # collection/guide item references, and this seed's items array does not carry the shape the write
+    # assumed, so no `SET LOCAL`-free arm reaches it from that side.
+    ("reviews carry aspect scores for weak-aspect demos",
+     "a legal write the schema accepts: one review's aspect scores emptied",
+     "UPDATE reviews SET aspects = '{}'::jsonb WHERE id = "
+     "(SELECT id FROM reviews WHERE aspects <> '{}'::jsonb ORDER BY id LIMIT 1);"),
+    ("reviews cite concrete aspects (§55 inputs)",
+     "a legal write the schema accepts: every review rewritten to a bare opinion",
+     "UPDATE reviews SET body = '食物不錯，下次再來。' WHERE body ~* "
+     "'候位|等咗|排隊|quiet|噪音|嘈|份量|分量大|平貴|性價比|抵|MTR|港鐵|步行|分钟|分鐘|service|staff|slow|fast|clean|乾淨';"),
+    ("favourite subject_type is one the API can save",
+     "a legal write the schema accepts: a favourite filed under a type the API has never heard of",
+     "UPDATE favorites SET subject_type = 'restaurant' WHERE id = "
+     "(SELECT id FROM favorites ORDER BY id LIMIT 1);"),
+    ("facts.source is a documented provenance (§2)",
+     "a legal write the schema accepts: one fact sourced to an undeclared string",
+     "UPDATE facts SET source = 'walked past and looked' WHERE id = "
+     "(SELECT id FROM facts ORDER BY id LIMIT 1);"),
+    ("bookable offerings resolve to a pool",
+     "a legal write the schema accepts: an offering made bookable for a merchant with no active pool",
+     "UPDATE offerings SET bookable = true WHERE id = (SELECT o.id FROM offerings o WHERE NOT o.bookable "
+     "AND o.status = 'active' AND NOT EXISTS (SELECT 1 FROM resource_pools p "
+     "WHERE p.merchant_id = o.merchant_id AND p.status = 'active') ORDER BY o.id LIMIT 1);"),
+]
+
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
 # the only difference between this run and that arm's. If the collateral is what the D108 measurement
 # says it is, the target stays red and the collateral goes to zero.
