@@ -312,3 +312,16 @@ review body length > 20 chars	D127	a legal write the schema accepts: every revie
 no unlisted type rides in the seeded data	D127	a legal write the schema accepts: a favourite filed under a type the API has never heard of	c8c2f84
 rating facts respect the 24h TTL and cite their own reviews	D127	a legal write the schema accepts: one fact sourced to an undeclared string	c8c2f84
 the §19 provenance axis and the §109 stamp axis stay separate on facts	D127	a legal write the schema accepts: one fact sourced to an undeclared string	c8c2f84
+the elements of an object-array column all carry the same keys	D129	a legal write the schema accepts: one merchant's first image given a key none of the others carry	8256983
+density: >= 300 merchants within 3km of Sha Tin	D129	a legal write the schema accepts: every primary location inside the Sha Tin ring moved out of it	8256983
+every column that cannot vary is answered for why it cannot	D129	six of the fifteen districts folded into one	8256983
+no traffic outside the seeded tables	D129	synthetic traffic row: an audit entry is filed under a tenant that is nobody (0 rows in the table)	8256983
+a seeded polymorphic vocabulary is bounded or probed	D129	synthetic traffic row (a feedback event): the written row's tenant_id is a ghost id (0 rows in the table at seed)	8256983
+every reference the seed writes is probed or explained	D129	synthetic traffic row (a feedback event): the written row's user_id is a ghost id (0 rows in the table at seed)	8256983
+a verification badge stays unresolvable only while its evidence and its link both stay absent	D129	synthetic traffic row (an order): the written row's user_id is a ghost id (0 rows in the table at seed)	8256983
+a view answer names the kind the census derives	D129	synthetic traffic row (an order): the written row's user_id is a ghost id (0 rows in the table at seed)	8256983
+a view kind is exercised or exempted	D129	synthetic traffic row (an order): the written row's user_id is a ghost id (0 rows in the table at seed)	8256983
+every jsonb key the build reads is answered for what the shipped payloads carry	D129	synthetic traffic row (an order): the written row's user_id is a ghost id (0 rows in the table at seed)	8256983
+every array column is answered for what bounds its elements	D129	synthetic traffic row (a recommendation set): the written row's tenant_id is a ghost id (0 rows in the table at seed)	8256983
+every jsonb payload that a key read cannot reach is answered for what it is	D129	synthetic traffic row (a recommendation set): the written row's tenant_id is a ghost id (0 rows in the table at seed)	8256983
+the columns stamped from the generation clock are exactly the ones answered so	D129	a legal write the schema accepts: an estimated price's fact re-labelled as the merchant's own claim	8256983

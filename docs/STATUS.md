@@ -7480,3 +7480,65 @@ next              (a) D129 plants the nine — the join-one-type second type, a 
                       residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide`
                       branch.
 ```
+
+## 138. Going to plant nine rows found two of them plantable: the other seven are counted over columns, registered nowhere, or forbidden by a unique index (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (144 → 146 arms, committed 8256983) and the registry it
+                    writes, `data/seed/falsifiers.tsv` (293 → 306 rows). Same kept loaded seed as
+                    §128–§137, `nexus_gate_283340_1790454442` — 216 assertions on this working copy.
+
+changed           Two arms, both legal writes with the checks ON and no role switch: a `source` key added
+                    to one merchant's first `images` element (every one of the 520 merchants otherwise
+                    carries exactly `alt`, `credit`, `url`), and every primary location inside the Sha Tin
+                    3km ring moved to (22.20, 114.30) — outside the ring, inside the HK bbox. No gate file,
+                    checker or migration changed; `data/seed/quality.sql` read and not touched.
+
+measured          what each of §137's nine censuses counts its list FROM — the question a plant has to    the
+                    answer before it can write: `ref_cat` is one row per unconstrained 3km ring turned into a
+                    `*_id`/`*_by` COLUMN (quality.sql:1119-1141), so no write                bounding box,
+                    deletes one; `ref_registry` registers no `join-one-type`                  because
+                    waiver at all; the only citext columns are `users.email` and              `pg_temp`'s
+                    its unique index.                                                         haversine
+                                                                                              does not exist
+                                                                                              yet (§138's
+                                                                                              decision (b)).
+
+found               (a) Seven of the nine are not the data plane's. Two count columns, one compares a hand
+                      type list against `pg_type`, one is vacuous because the waiver it polices was never
+                      registered, one is prevented by a unique index over the case-insensitive type whose
+                      collision it watches for, one needs a column inventory nobody has taken, and one
+                      (`a served view answers every column it exposes`) is aimed at next. §137's
+                      classification was read from the same SQL and was still wrong about the unit each
+                      census counts — which is the point of trying to build the write.
+                    (b) The plant runs before the gate body, so it cannot call `pg_temp.haversine_m`; the
+                      ring had to be restated as a bounding box, and the destination chosen so that the row
+                      that goes red is the density row and not the one that keeps coordinates in the
+                      territory. The pre-flight is what says whether that claim held.
+                    (c) Both arms reddened their own row and nothing else but the demand-list companion
+                      §134 records, so the two witnesses are as clean as any this lane has filed.
+
+gates             The eleven-step script was not re-run, because no gate file, checker, migration or
+                    checker-adjacent file changed; the shipped code touched is the plant harness, whose 149
+                    whole-gate sessions (plus 6 in the two pre-flights) are the gate body sliced out of
+                    `quality.sql` run against mutated data inside a transaction that is rolled back — 216
+                    assertions and 0 red at the close, identical to the opening, and `quality.sql`'s md5
+                    `4d3a707eff55971b0a2198e2a1b56777` unchanged. The four readers were run on the final
+                    bytes of this text: step 8 `check_ledger_citations.mjs --worktree` (exit 0 — 248
+                    headings seen, 522 name:number tokens, 311 citation-shaped, strict on the working copy),
+                    step 9 `check_comment_citations.mjs` (71 citations across 21 files), step 10
+                    `check_ledger_sections.mjs` (PASS — STATUS HEAD 105 · on disk 106 · missing 0 ·
+                    duplicates 0 · §138 the one uncommitted section; DECISIONS HEAD 116 · on disk 117 ·
+                    D129 the same note), step 11 `check_falsifier_registry.mjs --db
+                    nexus_gate_283340_1790454442` (PASS, 306 rows, 195 of 216).
+
+next              (a) 21 names left, of which two are worth a plant (`a bounded string column is
+                      answered by name` once a text-column inventory is taken, and `a served view answers
+                      every column it exposes`); the rest are counted over catalogues, vacuous by
+                      construction, or waiting on #75. (b) Each of those gets a one-line disposition rather
+                      than a queue entry, so a future reader does not spend a batch discovering it.
+                      (c) #71, eleventh time standing on it. (d) Carried: #73 (195 of 216 witnessed,
+                      21 left), #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's --registry
+                      percentage residue, §87's session-time-zone seam, D91's served leg, §130's missing
+                      `guide` branch.
+```

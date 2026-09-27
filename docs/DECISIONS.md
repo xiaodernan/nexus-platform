@@ -7816,3 +7816,82 @@ mixed-key object-array element, a served-view column left unanswered, and a coor
 (c) #71, eleventh time standing on it. (d) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80,
 step 11's `--registry` percentage residue, §87's session-time-zone seam, D91's served leg, §130's missing
 `guide` branch.
+
+## D129 Aiming is the test of a classification: nine "data-reachable" rows became two, and the seven that fell away say more than the arms that survived — 2026-09-27
+
+§137 sorted the last 23 unwitnessed rows by reading the predicate behind each name, and put nine of them
+on the data plane. This unit went to plant those nine. Writing an arm forces a second kind of reading --
+not what the predicate says, but what its lists are built *from* -- and seven of the nine did not survive
+it. Two arms remain, both legal writes, and the corrections are the entry.
+
+**Decision (a): four of the nine are catalogue-derived, one is vacuous by registration, one is forbidden
+by a unique index, one still needs an inventory nobody has taken.**
+  - `a join-one-type waiver is only true while the table ships one type` (quality.sql:1208-1213) is the
+    clearest: its predicate is `ref_registry JOIN ref_cat … WHERE r.kind = 'join-one-type' AND
+    c.types_n > 1`, and the file registers exactly one INSERT into `ref_registry` (:1150-1176), whose
+    kinds are `probe` and `not-a-reference`. No waiver of that kind exists, so the row is true over the
+    empty set and its own detail says `no waiver of that kind is registered`. It is not awaiting a
+    plant; it is awaiting a waiver nobody has written.
+  - `the reference census reads the catalogue` (`count(*) FROM ref_cat >= 17`, :1178-1180) and
+    `the polymorphic-pair census reads the catalogue` (:1263) count COLUMNS: `ref_cat` is filled by a
+    loop over `pg_attribute` (:1119-1141), one row per unconstrained `*_id`/`*_by` column, whatever
+    those columns carry. A DELETE cannot shrink a column list, so the floor falls only to a migration --
+    §137's reasoning ("writes only add pairs, so these need a DELETE taking a pair to zero") was wrong
+    about the unit the census counts.
+  - `the string census declares a reading for every type it catches` (:3104) compares the hand-written
+    `str_type` list against base types caught from the catalogues -- a new column type, not a new value.
+  - `a census that folds case reports both readings and which one the demo exercises` (:3134) watches
+    for a column whose distinct count differs between the folded and unfolded readings, i.e. two values
+    differing only by case. The only citext columns are `users.email` and `users_email_tenant_uniq.email`
+    -- and a unique index over a case-insensitive type is precisely the constraint that forbids such a
+    pair. The row is guarded by a schema object on the same column it measures.
+  - `a bounded string column is answered by name` (:3022) genuinely is a data-plane target -- collapse a
+    many-distinct text column into the window (≤ 12 distinct, ≥ 20 rows, ≤ 1 value per 4 rows) and the
+    demand list gains an unanswered entry -- but the first candidate measured (`locations.address`) does
+    not exist, so the arm waits for a column inventory rather than a guess. Left open on purpose.
+
+**Decision (b): the plant cannot call the gate's own helpers, so geometry has to be stated in the plant's
+own terms.** `density: >= N merchants within 3km of Sha Tin` (:524-529) decides by
+`pg_temp.haversine_m(22.3831, 114.1876, lat, lng) <= 3000`, and that function exists only while
+`quality.sql` runs -- the plant executes before the gate body, so it cannot call it. The ring is
+therefore reproduced as a bounding box from the same centroid (±0.027° lat, ±0.0292° lng at 22.4° N), and
+the destination (22.20, 114.30) was chosen INSIDE the Hong Kong bbox :531-535 guards, so the row that goes
+red is the density row and not the one that says every coordinate is in the territory. That is a claim
+about the geometry, and the pre-flight is what tests it: the density row reddened, the bbox row did not
+appear among the collateral.
+
+**Decision (c): two arms survived, and both are legal writes.** One merchant's first `images` element is
+given a `source` key none of the other 520 merchants' elements carry -- all of them hold exactly `alt`,
+`credit`, `url` -- which takes `the elements of an object-array column all carry the same keys`
+(:2015-2022) from `keysets = 1` to `keysets = 2`; and every primary location inside the Sha Tin ring is
+moved out of it. Both reddened exactly their own row in the pre-flight, each with one companion
+(`every column that cannot vary is answered for why it cannot`, §134's demand-list growth repeating on
+the write plane).
+
+**Numbers.** Arms 144 → **146**; harness `8256983`. Pre-flight: two single-arm runs, 3 sessions each, both
+RESULT PASS, closing baseline 216 assertions / 0 red. Full drive: **146 arms + the control, 149
+whole-gate sessions, RESULT PASS**. Registry 293 → **306 rows** (13 appended: 2 from an arm's
+own RED row, 11 from collateral; 2 names carrying no witness before). Coverage 193 → **195 of
+216 (90.3%)**; unwitnessed 23 → **21**. `quality.sql` md5 `4d3a707eff55971b0a2198e2a1b56777`
+unchanged.
+
+**Limits.** (i) The correction is of a classification made by reading, not of a measurement -- but it is
+the same failure the lane keeps finding: a row's SQL can be read correctly and its *inputs* still
+misunderstood, and only the attempt to build a write reveals which is which. (ii) The bounding box is an
+approximation of a circle; the arm's honesty rests on which row reddened and which stayed green, not on
+the geometry being exact. (iii) Both arms are legal writes, so D126's limit applies unchanged: the
+database accepts them, which is not the same as an endpoint performing them. (iv) §136's phantom row came
+back. This drive re-emitted `orphan: favorites.restaurant` under unit D129 for D127's arm, and the count
+it printed -- "3 of them name an assertion that carried no witness before" -- includes that off-plane name,
+so the real harvest is 2 novel names on the plane (193 → 195). Deleting the row once was not a fix: the
+arm still mints it every drive, so the filter belongs in the harness -- emitted names must be a subset of
+the baseline plane the first session measured -- and filing this unit's rows without that change would
+simply re-file the same violation next time.
+
+**next.** (a) The queue is 21 names and only a handful are plantable: `a bounded string column is
+answered by name` once a column inventory is taken, and `a served view answers every column it exposes`
+(:3324) -- the rest are catalogue-bound, vacuous by construction, or waiting on #75. (b) Those rows should
+get the per-row disposition §137 began, now corrected: a row no data state falsifies is not pending work.
+(c) #71, eleventh time standing on it. (d) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80,
+step 11's `--registry` percentage residue, §87's session-time-zone seam, D91's served leg, §130's missing
+`guide` branch.
