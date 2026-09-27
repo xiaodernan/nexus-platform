@@ -106,13 +106,13 @@ cleanup() {
 trap cleanup EXIT
 
 # --------------------------------------------------------------------------- 1. empty database
-step "1/11  create $GATE_DB from template0 (empty, no inherited objects)"
+step "1/12  create $GATE_DB from template0 (empty, no inherited objects)"
 psql_maint "CREATE DATABASE \"$GATE_DB\" TEMPLATE template0 ENCODING 'UTF8'" >/dev/null
 [ "$(psql_gate "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name NOT LIKE 'pg_%'")" = "0" ] \
   || die "the fresh database is not empty — template1 pollution would make this gate meaningless"
 
 # --------------------------------------------------------------------------- 2. migrations + roles
-step "2/11  apply infra/db/migrations/V*.sql + 00_roles.sql"
+step "2/12  apply infra/db/migrations/V*.sql + 00_roles.sql"
 NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_NAME="$GATE_DB" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/db_apply_migrations.sh" | sed -e 's/^/    /'
 TABLES="$(psql_gate "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")" \
@@ -122,15 +122,15 @@ echo "    -> gate database now has tables=$TABLES migrations=$SCHEMA_VERSION"
 
 # --------------------------------------------------------------------------- 3. generate the dataset
 if [ "$SKIP_GENERATE" = "1" ]; then
-  step "3/11  seed generation skipped (--skip-generate): loading data/seed/out/ as found"
+  step "3/12  seed generation skipped (--skip-generate): loading data/seed/out/ as found"
 else
-  step "3/11  generate the synthetic dataset from the CSVs (generate.py self-checks FK integrity)"
+  step "3/12  generate the synthetic dataset from the CSVs (generate.py self-checks FK integrity)"
   PYTHON="${PYTHON:-python}"
   ( cd "$ROOT" && "$PYTHON" data/seed/generate.py ) 2>&1 | tail -4 | sed -e 's/^/    /'
 fi
 
 # --------------------------------------------------------------------------- 4. load
-step "4/11  load the seed into the fresh database"
+step "4/12  load the seed into the fresh database"
 # RESEED_DEPENDENTS=1 states the blast radius rather than discovering it. The truncate script now
 # closes itself over the live foreign keys (D63), so it would clear these 27 tables on a fresh
 # database anyway — they are empty there. The gate names them because a from-scratch proof should not
@@ -149,7 +149,7 @@ CONTAINER="$CONTAINER" DB="$GATE_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 SEED_ANC
   "$ROOT/data/seed/load.sh" | tail -12 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 5. gate
-step "5/11  data/seed/quality.sql (the hard gate)"
+step "5/12  data/seed/quality.sql (the hard gate)"
 VARS=""
 for v in MIN_MERCHANTS MIN_OFFERINGS MIN_REVIEWS MIN_NEAR_SHA_TIN; do
   if [ -n "${!v:-}" ]; then VARS="$VARS -v $v=${!v}"; fi
@@ -177,7 +177,7 @@ else
 fi
 
 # --------------------------------------------------------------------------- 6. the truncate's two branches
-step "6/11  scripts/seed_truncate_probe.sh — an empty stranger is cleared, one holding rows refuses"
+step "6/12  scripts/seed_truncate_probe.sh — an empty stranger is cleared, one holding rows refuses"
 # The probe builds its own throwaway database, so the gate's loaded dataset stays the way step 4 left
 # it. Running it here is the point: a truncate that only ever succeeds proves nothing, and the branch
 # that protects somebody else's rows is the branch nobody waits to see.
@@ -185,17 +185,17 @@ NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/seed_truncate_probe.sh" 2>&1 | tail -8 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 7. the read census and the source
-step "7/11  scripts/check_jsonb_reads.mjs — the build's jsonb reads and both answers' site citations"
+step "7/12  scripts/check_jsonb_reads.mjs — the build's jsonb reads and both answers' site citations"
 # Step 5's read list is a transcription of source text, and a transcription drifts silently: the D84 list named
 # reads the build does not make and missed the ones made through a Java map accessor, which D85's scanner then
 # counted. So the scanner runs as a reader rather than as a note, and since D87 it reads the `site` column of
 # both answer tables too — every `File.java:NNN` is opened and compared with what the row claims. node missing
 # is a FAIL, not a skip — see the script's own LIMITS.
-command -v node >/dev/null 2>&1 || die "steps 7, 8, 9 and 10 need node on PATH; a skipped census step is not a passed one"
+command -v node >/dev/null 2>&1 || die "steps 7-12 need node on PATH; a skipped census step is not a passed one"
 ( cd "$ROOT" && node scripts/check_jsonb_reads.mjs ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 8. the ledger's own citations
-step "8/11  scripts/check_ledger_citations.mjs — every File.java:NNN the ledgers claim, opened and read back"
+step "8/12  scripts/check_ledger_citations.mjs — every File.java:NNN the ledgers claim, opened and read back"
 # D87's site census stopped at the seed directory: it checked what the answer tables assert and left the prose
 # above them unverified, while §84 had already shipped a hand count of "71 prose citations, all resolved" that
 # nobody had ever measured. This step reads docs/DECISIONS.md and docs/STATUS.md and resolves every citation
@@ -208,7 +208,7 @@ step "8/11  scripts/check_ledger_citations.mjs — every File.java:NNN the ledge
 
 
 # --------------------------------------------------------------------------- 9. the comment plane
-step "9/11  scripts/check_comment_citations.mjs — the citations that live inside source comments"
+step "9/12  scripts/check_comment_citations.mjs — the citations that live inside source comments"
 # Step 8 reads docs/. Source comments make the same kind of claim — quality.sql's notes cite lines of
 # load.sh, the two scanners cite Java sites — and nothing read that plane until D93 measured it: 68
 # citation-shaped tokens, 5 offenders, every offender an example of the grammar written inside the sentence
@@ -218,7 +218,7 @@ step "9/11  scripts/check_comment_citations.mjs — the citations that live insi
 ( cd "$ROOT" && node scripts/check_comment_citations.mjs ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 10. the two planes of one ledger
-step "10/11 scripts/check_ledger_sections.mjs — every numbered section at HEAD is still in the file on disk"
+step "10/12 scripts/check_ledger_sections.mjs — every numbered section at HEAD is still in the file on disk"
 # Steps 1-9 all read one plane: step 8 reads the working tree on purpose. This step's subject IS the relation
 # between the two planes, so pinning it to either would make it vacuous — it compares `git show HEAD:docs/...`
 # with the file as it stands. It exists because D114 found nine sections of this ledger that no commit had
@@ -231,7 +231,7 @@ step "10/11 scripts/check_ledger_sections.mjs — every numbered section at HEAD
 ( cd "$ROOT" && node scripts/check_ledger_sections.mjs ${LEDGER_SECTIONS_DIR:+--dir "$LEDGER_SECTIONS_DIR"} ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 11. the record of shown redness
-step "11/11 scripts/check_falsifier_registry.mjs — every falsifier row names a live assertion and an openable witness"
+step "11/12 scripts/check_falsifier_registry.mjs — every falsifier row names a live assertion and an openable witness"
 # D103 wrote this file as the record of which assertions have been SHOWN able to fail, and D113 tightened what
 # a witness may be — but nothing executed the checker. A record validated only when someone remembers to pass
 # --db is a claim with a script next to it, so the validation goes where the precondition already exists:
@@ -240,6 +240,18 @@ step "11/11 scripts/check_falsifier_registry.mjs — every falsifier row names a
 # reachability move step 10 makes with LEDGER_SECTIONS_DIR).
 ( cd "$ROOT" && node scripts/check_falsifier_registry.mjs --db "$GATE_DB" --container "$CONTAINER" \
   ${NEXUS_FALSIFIERS:+--registry "$NEXUS_FALSIFIERS"} ) 2>&1 | sed -e 's/^/    /'
+# ------------------------------------------------------------------------ 12. the spelled §-citations
+step "12/12 scripts/check_status_citations.mjs — every STATUS §NN written outside a code span names a heading"
+# §126 shipped this checker unwired and said why: its first run on the real tree was red with two offenders in
+# another lane's committed files, and "a step nobody can make green teaches running the gate with the step
+# skipped". The condition was the two offenders, not the wiring; §149 repointed them to §121 and the checker has
+# been green since, so the step goes in. This is a plane steps 8 and 9 do not cover: a ledger citation written as
+# prose (`STATUS §106`) rather than as `File.java:NNN` is resolved against a heading, and a renumber that moves
+# the heading reds it while every file:line citation in the same sentence still resolves. It reads HEAD, matching
+# §126's grammar ("must be a `## N. ` heading at HEAD"). `scripts/falsify_status_citations.mjs` is the arm that
+# shows this step can fail — 6 of 6 held at D117 — so the wiring is proved rather than assumed.
+( cd "$ROOT" && node scripts/check_status_citations.mjs ) 2>&1 | sed -e 's/^/    /'
+
 printf '\nRESULT: PASS — %s quality checks on a from-scratch schema (tables=%s, migrations=%s), plus the\n' \
   "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"
 printf '        seed truncate shown clearing an empty stranger and refusing one that holds rows, the\n'
@@ -251,4 +263,6 @@ printf '        the ledger'"'"'s two planes compared, so a committed section can
 printf '        that is about to be committed from.\n'
 printf '        the falsifier registry reconciled with the assertions step 5 filed, so a row claiming a shown\n'
 printf '        redness names an assertion that exists and a witness that still opens.\n'
+printf '        the spelled §-citations in code and docs resolved against the headings that exist at HEAD,\n'
+printf '        so a renumber that leaves a pointer behind reddens the gate instead of a manual run.\n'
 printf '        SYNTHETIC DEMO DATA. The live databases were not opened by this run.\n'

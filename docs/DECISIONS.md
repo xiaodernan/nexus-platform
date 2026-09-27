@@ -8608,3 +8608,110 @@ hand -- starting with V7, which that plane only ever received from this lane.
 
 Nothing here changes the counts D142 reported (217 / 13 / 21 / 82 s), the classes named, or the
 recommendation. It narrows its premise: the test database is not simply behind, it is different.
+
+## D144 Repoint two comments at the section the renumber moved, and decline the two cheaper fixes for a red that is a superseded schema
+
+A renumber is a local operation with a non-local blast radius: D115 brought the working copy'"'"'s stranded
+sections back into `docs/STATUS.md` as §120-§123 (they had been §105-§108), and two Java comments that
+had been written against the old numbers kept them. `scripts/check_status_citations.mjs` therefore exited 1
+with exactly two offenders, which §148 had already written down as "its two known spelled-plane defects".
+The section exists; only the pointer rotted.
+
+**Three ways to make that checker green, and only one of them is honest.** Restore a `## 106.` heading so the
+old pointer resolves again: that resurrects a number two ledgers and a recovery note now describe as
+renumbered, and it gives every future reader two names for one section. Teach the checker to follow a
+renumber history: now the checker carries a table that has to be maintained by hand, which is the same
+class of debt §84 residue (e) owns for the directory exclusion list. Or repoint the two comments at the
+section that actually holds the claim -- `STATUS §121`, "A required field no service serves, and the page
+that threw on it", which is where "the web one threw `undefined.map` in live mode" moved. The third is two
+edits, `CollectionsController.java:186` and `CollectionsReadTest.java:188`, and it is the only one where
+the checker stays a checker. `§121` and not `§122`: §121 is the account of the crash; §122 is the account of
+serving the field.
+
+**The red that was left after that, and the fix this lane declined to make.** `mvn -o -B test` files 217 run
+with 11 failures and 38 errors across 11 classes. 35 of the 38 errors are `DuplicateKeyException` on
+`users_email_uniq`, and every one of the 11 failures is a downstream sound of the same thing -- a register
+that answers 409 `email_taken`, a register that answers 500, a workspace list of size 0. Read-only probes
+say why: `nexus_test.users` holds 1157 rows including `curator@example.test` and `writer@fav.test`, its
+`users` indexes are `users_pkey, users_email_uniq, users_tenant_idx`, and it has no `schema_migrations`
+table at all.
+
+The cheap reading is "the fixtures reuse fixed addresses; make them unique". That reading is wrong, and the
+evidence for it is in the migration that already fixed this. Every red class opens a new tenant first --
+`newTenant` takes a random slug -- and then inserts the fixed address **into that new tenant**, which is
+correct under `V4__tenant_scoped_identity.sql:44` (`users_email_tenant_uniq ON users(tenant_id, email)`)
+and fatal under `V1__init.sql:46` (`users_email_uniq ON users(email)`), dropped at V4:43. A new tenant
+cannot rescue a fixed address when the index does not look at the tenant. V4'"'"'s own header describes the
+exact experiment -- "reproduced in the dev/test databases by simply running the demo login twice" -- and
+`AuthService`'"'"'s "already registered in this tenant" is the V4 message being served by a V1 index. So the
+tests are written for the shipped schema and the database is running the superseded one. Making the
+addresses unique would turn this green while leaving a retired index in place, and the next divergence
+would arrive the same way, without a red to announce it.
+
+**Gates.** Measured on the final bytes of this text; §149 holds the full table. `db_gate_fresh.sh` 11/11
+`RESULT: PASS`, 216 checks / 58 tables / 7 migrations; step 8 exit 0, step 9 PASS (73 comment citations,
+21 files), step 10 PASS with §149 the one uncommitted section, step 11 PASS at 326 rows and 196 of 216
+witnessed (90.7%); `check_status_citations.mjs` exit 0 at 8 of 8; contract drift 114/106 with 0 in every
+drift category; jsonb exit 0; web `tsc --noEmit` clean and `vitest run` 128 passed; ai `pytest` 71 passed,
+4 skipped. The one red is the suite above, reproduced as 217 / 11 / 38 with each of
+`nexus-platform-postgres` and `nexus-platform-testpg` holding `127.0.0.1:5433` -- the two compose services
+cannot run at once, and the number did not move with the container.
+
+**Where that leaves #94.** Narrowed rather than started: bring `nexus_test` onto the migration set (V4 is
+the load-bearing one), then re-apply what that plane legitimately grew by hand -- share_links, V7 -- as
+D142 says, because the two databases diverged in opposite directions. Nothing in this unit argues for doing
+that quietly; it is destructive on a database other streams read, and the ledger'"'"'s job here was to remove
+every explanation that is not it. One numbering note while the numbers are open: `435d388`'"'"'s subject says
+"D143/148" but `docs/DECISIONS.md` has no `## D143 ` heading, so D143 is claimed and unwritten -- the same
+gap D103-D106 left, one unit long instead of four, and deliberately not filled by this entry.
+
+## D145 Wire the spelled §-citation checker into the gate, and rewrite the arm that had recorded the defect it was created for
+
+§126 wrote the checker, proved it could fail (D117, six arms), and then shipped it unwired, with the reason
+in its own words: its first run on the real tree was red at two offenders in another lane'"'"'s committed files,
+and "a step nobody can make green teaches running the gate with the step skipped." That was the right call
+then. The condition it named — #79'"'"'s two comments pointing at a `§106` that D115'"'"'s renumber had moved to
+`§121` — closed in §149, so this unit does the second half: the checker becomes step 12, and eleven becomes
+twelve.
+
+**Why this step and not another.** Steps 8 and 9 resolve `File.java:NNN` against a file that exists and has
+that many lines. A spelled `STATUS §NN` is a different claim — it resolves against a *heading*, and a heading
+can be renumbered away while every file:line citation in the same sentence still resolves. That is not
+hypothetical: it is exactly what happened to the two comments, and §148 recorded the resulting FAIL as a known
+defect across four ledger sections before anyone fixed it, because nothing ran the reader. The gate now runs
+it, and it reads HEAD — matching §126'"'"'s grammar ("must be a `## N. ` heading at HEAD") rather than the
+working tree, which is the same choice step 10 makes for a different reason.
+
+**Two things went wrong on the way and both are recorded rather than smoothed over.**
+
+The step banner was written with backticks inside a double-quoted shell string — `` every `STATUS §NN` ... ``
+— and bash performs command substitution on backticks inside double quotes. The first 12-step run therefore
+printed `=== 12/12 ... — every  written outside a code span names a heading`, having executed `STATUS §NN` as
+a command and printed nothing in its place. The step itself ran correctly; only its title was eaten. Dropping
+the backticks is the fix, and it was found by reading the log, not by a check — a banner that prints nothing
+is the same class of silent-empty that step 9'"'"'s "an empty scan is a FAIL" exists for, one plane over.
+
+The falsifier reddened on a green tree. Arm 1 asserted the two offenders were BAD with `expect: 1`, and its
+own comment said the arm "goes green only when the platform lane fixes them, which is #79 closing." §149
+closed that half, so the arm reported `6 arms · 5 held · 1 missed` and `RESULT: FAIL` — a harness whose
+control arm had encoded the defect as its expectation. The arm now asserts the positive form: an `ok` line
+naming each file, line and the heading it points at, `expect: 0`. That holds while the fix holds, reddens if
+either comment reverts to §106, and stops the harness from needing the tree to stay broken. It is the same
+move D116 made one unit earlier when its own control arm reddened on its own writing, one plane along.
+
+**What was not done, and why it is not covered by a green step 12.** #79 has two more halves: nine bare
+`§106` comments in the identity lane, and four design-doc citations of which three sit on the frozen list.
+Neither is read by this checker — it judges spelled `STATUS §NN` outside a code span and counts the rest as
+mentions — so step 12 passing says nothing about them. §126 (d) also showed the obvious sweep would be wrong
+in its second half: those nine want `TRACEABILITY §100`, not §121. Wiring a step that cannot see a residue is
+not closing it, and the ledger says so instead of letting the green stand in for the rest.
+
+**Gates, on the final bytes of this text** (§150 carries the census): `db_gate_fresh.sh` 12/12 `gate_rc=0`,
+`RESULT: PASS — 216 quality checks on a from-scratch schema (tables=58, migrations=7)`; step 12 PASS at 10 of
+10 spelled citations; `falsify_status_citations.mjs` 6 arms, 6 held, exit 0; `check_falsifier_registry.mjs`
+PASS at 326 rows and 196 of 216 witnessed (90.7%); `check_ledger_citations.mjs --worktree` exit 0 with 0
+offenders; `check_comment_citations.mjs` PASS at 73 across 21 files; `check_ledger_sections.mjs` PASS with
+§149-§150 and D144-D145 the only uncommitted headings; `check_contract_drift.mjs` 114/106 and 0 in every
+drift category; `check_jsonb_reads.mjs` exit 0; web `tsc --noEmit` clean and `vitest run` 128 passed; ai
+`pytest` 71 passed, 4 skipped. `mvn -o -B test` remains 217 / 11 failures / 38 errors — this unit touched two
+comments and a shell script, and the suite'"'"'s red is #94'"'"'s schema divergence, measured in §149 (b)-(c).

@@ -39,13 +39,16 @@ const ARMS = [
   // The control arm deliberately does not pin this tree's token counts. The census includes the harness
   // that runs it — writing a line that mentions `STATUS §NN` in a script adds a mention to the very
   // count an arm would assert — so a pinned count here would be a date, not a constant (D116 found that
-  // the same way, one unit ago). The two named offenders are the stable claim: they are other lanes'
-  // committed files, and this arm goes green only when the platform lane fixes them, which is #79 closing.
-  { name: 'this tree: two real defects, both named', dir: ROOT, expect: 1,
-    must: [/BAD\s+services\/platform\/src\/main\/java\/com\/nexus\/catalog\/CollectionsController\.java:186/,
-      /BAD\s+services\/platform\/src\/test\/java\/com\/nexus\/catalog\/CollectionsReadTest\.java:188/,
-      /RESULT: FAIL/] },
-  { name: 'the fix §79 asks for: both comments say §121', fix: tree('fixed', {
+  // the same way, one unit ago). What it pins is the two sites §149 repointed. Until §149 this arm
+  // asserted they were BAD and said so in this comment: "this arm goes green only when the platform lane
+  // fixes them, which is #79 closing." The first half of #79 has now closed, so the claim flipped with
+  // it — an `ok` line naming each file, line and the heading it now points at. That is the stable form:
+  // it is green while the fix holds and reddens the moment either comment reverts to §106.
+  { name: 'this tree: both offenders repointed at §121', dir: ROOT, expect: 0,
+    must: [/RESULT: PASS/,
+      /ok\s+services\/platform\/src\/main\/java\/com\/nexus\/catalog\/CollectionsController\.java:186: STATUS §121/,
+      /ok\s+services\/platform\/src\/test\/java\/com\/nexus\/catalog\/CollectionsReadTest\.java:188: STATUS §121/] },
+  { name: 'a two-file fixture whose comments say §121: green, with its counts pinned', fix: tree('fixed', {
       'services/catalog/Ctrl.java': CTRL.replace('%s', '121'),
       'services/catalog/CtrlTest.java': CTRL.replace('%s', '121') }), expect: 0,
     must: [/RESULT: PASS/, /citations\s+2\b/, /mentions\s+0\b/] },
