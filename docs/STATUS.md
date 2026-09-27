@@ -8484,3 +8484,88 @@ next              (a) #97: run the real gate with the shim in `PYTHON`, predict 
                         from that lane and its 8-changed-line delta is site re-aims only (`INSERT INTO qc` occurs
                         115 times at both refs), which is why 216 is not this tree's accident.
 ```
+## 156. Step 11's guard is armed, measured as a death: a tracked shim makes the gate stop at step 11 with the registry reader never started — and the same question is still open for steps 8 and 9 (2026-09-28)
+
+```
+plane             HEAD ced8a9f plus one new file. Two mutation probes of the shipped
+                    `scripts/db_gate_fresh.sh`, each on its own database (…1790537491, then …1790537807), on the
+                    container nexus-platform-postgres. Controls are §155's two green runs of the same gate.
+
+changed           - `scripts/falsify_gate_selftest.sh`, new and tracked: returns 1 when and only when an argument
+                    is `--self-test`, otherwise `exec python "$@"`. Used as the gate's own `PYTHON` knob
+                    (`db_gate_fresh.sh:128`, `:246`), so arming it edits no tracked file.
+                  - no gate, checker, harness, registry, seed or migration file.
+
+measured          - probe A (Temp copy of the shim): 132 log lines, `=== 11/12` followed by the shim's
+                    `text-plane self-test, MUTATED: the guard returns 1 without looking at the body`, then
+                    nothing. `gate assertions   216` and `=== 12/12` together: **0** occurrences. `gate rc=1`.
+                    Gate databases 4 before, 4 after — the EXIT trap dropped the run's own database anyway.
+                  - probe B (tracked file, `PYTHON=$PWD/scripts/falsify_gate_selftest.sh`): the same six
+                    predictions again, and the two probes are the same run twice — after normalising the
+                    generated database name they differ in **2 lines**, both step 4 seed-window timestamps
+                    (`03:32:47` vs `03:38:03`). Step headers 1/12 … 11/12, no 12/12.
+                  - the shim's premise, checked on the tracked file in seconds: real call → output `1`, rc=0;
+                    `--self-test` → MUTATED, rc=1.
+                  - steps 1-10 of probe A against §155's control: 14 step/RESULT lines, **0 differing lines**.
+                  - because D150 appended to both ledgers, the hand falsifiers were re-run instead of assumed:
+                    `falsify_status_citations.mjs` 6 arms · 6 held · exit 0;
+                    `falsify_ledger_sections.mjs` 8 arms · 8 held · exit 0.
+
+found             (a) The claim §155 refused to make is now made by measurement, not by reading line 30:
+                    `-euo pipefail` does hold the piped exit code, so a drifted anchor reddens the gate. What the
+                    guard detects is a separate matter, already witnessed in D150's mutant (1/1, control green).
+                  - (b) Steps 8 and 9 are not yet in that class, and the reason is plumbing rather than logic.
+                    `check_ledger_citations.mjs:50` takes `--text=<path>` — its comment says the flag exists so a
+                    witness can fail an arm "without writing a tracked file that two other lanes are appending
+                    to" — and `check_comment_citations.mjs:35` takes `--plane <dir>`, while the gate calls them
+                    with fixed arguments at `db_gate_fresh.sh:208` and `:217`. Both arms were pre-flight-verified
+                    standalone before any gate minute was spent: a Temp ledger that cites line 99999 of
+                    `CollectionsController.java` exits 1 and names the file's real 453 lines; a Temp plane with the same
+                    citation inside a comment prints
+                    `RESULT: FAIL — 1 comment-plane citation(s) across 1 file(s)`, rc=1; and the same `| sed`
+                    shape under `set -euo pipefail` in a scratch harness propagates both. The `--text` path
+                    refused two invalid fixtures before accepting one (no `## ` heading, then
+                    `1 citation(s) found and 0 file(s) resolved`) — vacuity guards working as written.
+                  - (c) `grep -rn falsify` over `.github/workflows/`, `Makefile`, `scripts/*.sh`, `scripts/*.mjs`
+                    and `data/seed/*.py` returns 11 lines, every one a comment, usage string or prose: no gate
+                    step and no CI job runs a falsifier. They are hand-run and quoted here. D151's guard differs:
+                    it now also runs unbidden.
+                  - (d) A tracked script whose fallback is the normal path. `falsify_ledger_sections.mjs:27`
+                    resolves its fixture directory as `process.env.TMPDIR || 'C:/Users/18414/AppData/Local/Temp'`,
+                    and `TMPDIR` is **UNSET** on this host (`TEMP=/tmp`) — so that literal is what every run here
+                    actually uses, and it is a user's home directory inside a tracked file. Its sibling
+                    `git grep -nF "C:/Users/18414" HEAD` → **2 lines in 2
+                  files**: this script’s own `:27`, and `docs/DECISIONS.md:6528`, which is D113’s record of
+                    in 2 files**: this script’s own `:27`, and `docs/DECISIONS.md:6528`, which is D113’s record of
+                    removing that very expression from `check_falsifier_registry.mjs`. The class was fixed once,
+                    in the checker where the consequence was expensive; the identical pattern in a falsifier
+                    harness two files away was never in that unit’s scope. Nothing in the repository rejects a
+                    host absolute path in tracked code.
+                  - (e) Method, re-earned: the first version of that census used a regex alternation with escaped
+                    backslashes and returned **0 files**, which reads as "no host paths anywhere". The
+                    fixed-string re-run found a match, and `git grep` on HEAD found two. An empty grep from a pattern that never compiled to
+                    what I meant is not a measurement.
+
+                  - (f) D94's defect came back in my own draft and was caught before it landed. §156 and D151 both
+                    explained the `--text` arm with a worked example written in the citation grammar, so the
+                    entry would have reddened the gate that documents it: one offender, `line 99999 … has 453
+                    lines`. The checker ran over the draft file itself answers that in two seconds
+                    (`--text=<draft>`), which is the same instrument #98 is about to wire into the gate — so
+                    the arm was useful once before it was plumbed. The fix rewords the example to
+                    "line 99999 of `CollectionsController.java`", which says the same thing and does not
+                    parse as a pointer. After that all three drafts read clean: 5, 9 and 3 name:number tokens,
+                    rc=0.
+gates             The two probes ARE gate runs; neither is a release gate (that is §155's pair, 216 checks,
+                    rc=0). Steps 8 / 9 / 10 / 12 on this entry's final bytes: reported in the commit that carries
+                    it, and the falsifier pair above is that entry's own pre-append state.
+
+next              (a) #98 / D152: pass `GATE_LEDGER_TEXT` and `GATE_COMMENT_PLANE` through to steps 8 and 9 the
+                        way `PYTHON` reaches step 11, then two armed gate runs — predict death at 8 with steps
+                        9-12 never running, and death at 9 with 10-12 never running. The neutral path is already
+                        measured in the scratch harness (both steps PASS, rc=0), so the shipped edit needs one
+                        confirmation run plus the two armed ones.
+                  - (b) New task: make `falsify_ledger_sections.mjs` resolve its fixture dir the way its sibling
+                        does, and prove the change flips which directory the arms write to.
+                  - (c) #95 / #96 stay report-only for the seed lane; #94 still needs the user's authorization
+                        before `nexus_test` is rebuilt.
+```

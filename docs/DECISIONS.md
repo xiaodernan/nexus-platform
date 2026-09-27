@@ -9081,3 +9081,68 @@ script does set `-euo pipefail` at its line 30, but reading a `set` line is not 
 "step 11 can stop the gate" is only witnessed by a run in which the guard returns 1 and the gate dies there,
 never reaching step 12. That run is the next unit, and until it exists this entry's wiring claim is a shell-
 semantics argument, not a red.
+
+## D151 Step 11's guard is armed, not merely printed: a tracked `PYTHON` shim makes the gate die at step 11 and the death is attributable to the guard alone — 2026-09-28
+
+**Why this unit.** D150 wired `--self-test` into `scripts/db_gate_fresh.sh` step 11 and STATUS §155 recorded two
+full runs of that plane, both `RESULT: PASS`. Its own text named what those runs cannot show: the call is piped
+into `sed`, and a pipe is where an exit code goes to die unless `pipefail` holds it. The script does set
+`-euo pipefail` at line 30 — but a run in which the guard passes is equally consistent with "the guard's return
+code is thrown away", and reading a `set` line is an argument about shell semantics rather than a measurement of
+this gate. §155 left the claim unproven on purpose. This unit pays it.
+
+**What landed.** `scripts/falsify_gate_selftest.sh`, joining the repository's existing falsifier family
+(`falsify_ledger_sections.mjs`, `falsify_status_citations.mjs`). It returns 1 when and only when one of its
+arguments is `--self-test`, and otherwise `exec python "$@"`, so the interpreter every other step uses is the
+real one. It is invoked the way the gate already invites invocation — through the `PYTHON` knob at
+`db_gate_fresh.sh:128` and `:246` — which means no tracked file is edited to arm the mutation, the shape D98's
+`LEDGER_SECTIONS_DIR` and D101's `--plane` established.
+
+**Measured, against predictions written before the log was read** (`D151.predictions.md`). Two probes, so the
+tracked file is the one that stops the gate and not only a Temp copy of it:
+
+  - probe A (Temp copy of the shim): log 132 lines. `=== 11/12` present, then the shim's own line
+    `text-plane self-test, MUTATED: the guard returns 1 without looking at the body`, then nothing.
+    `grep -c "gate assertions   216\|=== 12/12"` = **0** — the registry reader never started and step 12 never
+    ran. `gate rc=1`, the predicted value. Gate databases before and after: **4**, so the EXIT trap at line 101
+    still dropped the run's own database on a failed step.
+  - probe B (tracked `scripts/falsify_gate_selftest.sh` via `PYTHON=$PWD/…`): all six predictions hold again, and
+    the two logs are the same run twice — normalising only the generated database name, they differ in **2 lines**,
+    both seed-window timestamps at step 4 (`03:32:47` vs `03:38:03`). Step headers present: 1/12 through 11/12,
+    no 12/12.
+  - the shim's two behaviors, checked on the tracked file in seconds before either gate run: as `PYTHON` for a
+    real call it passes through (`print(1)` → `1`, rc=0); for `--self-test` it prints MUTATED and exits 1.
+
+**The control is a green run of the same gate, read the same session.** The two runs recorded in §155 —
+`RESULT: PASS — 216 quality checks on a from-scratch schema (tables=58, migrations=7)` and `gate rc=0` — share
+the shim's steps 1-10 line for line: comparing the probe's 14 step and RESULT lines against the control's, with
+the run's own database name normalised, gives **0 differing lines**. So the death at step 11 is not a seed step
+breaking, not another lane's tree moving, and not the shim leaking into `generate.py`.
+
+**What this does not buy.** It witnesses one step's entry point. The same question for steps 8 and 9 is still
+open and has a measured shape: `check_ledger_citations.mjs:50` accepts `--text=<path>` and its own comment says
+that flag exists so "a witness must be able to show an arm failing without writing a tracked file that two other
+lanes are appending to", and `check_comment_citations.mjs:35` accepts `--plane <dir>` — yet the gate calls them
+with hardcoded arguments at `:208` and `:217`, so the capability is in the checker and unreachable from the gate.
+Both arms were pre-flight-verified standalone in seconds before any long run was spent on them: a Temp ledger
+citing line 99999 of `CollectionsController.java` exits 1 and names the file's real 453 lines, and a Temp plane holding
+the same fake citation in a comment exits 1 likewise. Along the way the `--text` path refused two invalid
+fixtures before it accepted one — no `## ` heading, then "1 citation(s) found and 0 file(s) resolved" — which is
+the checker's own vacuity guard working, not a defect.
+
+**And a census fact about the falsifier family itself.** `grep -rn falsify` over `.github/workflows/`,
+`Makefile`, `scripts/*.sh`, `scripts/*.mjs` and `data/seed/*.py` returns eleven lines, every one of them a
+comment, a usage string or prose — including this file's own header. No gate step and no CI job executes any
+falsifier script. They are run by hand and quoted in the ledgers. D103's sentence about a
+record applies to them exactly — a witness validated only when someone remembers to run it is a claim with a
+script next to it — and the difference between this family and step 11's guard is that the guard now also runs
+unbidden, inside the gate. Whether the family should be wired the same way is the next question, not this one's
+answer.
+
+**Gates.** The two §155 runs (216 checks, `gate rc=0`) are the baseline and the two probes above are the
+mutation. Because D150 appended to both ledgers, the two hand-run falsifiers that read those ledgers were re-run
+rather than assumed intact: `falsify_status_citations.mjs` **6 arms · 6 held · 0 missed**, exit 0, and
+`falsify_ledger_sections.mjs` **8 arms · 8 held · 0 missed**, exit 0, both on the post-append plane. The second
+harness pins no heading count — its own grammar line says the reconstructed arm prints every DECISIONS entry
+written since `99e5b0c` as disk-only and that the count is deliberately not held — which is why adding §155
+needed no negotiation with it.
