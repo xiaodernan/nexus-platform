@@ -508,6 +508,87 @@ ARMS = [
      "SET LOCAL session_replication_role = replica; "
      "UPDATE users SET tenant_id = gen_random_uuid() WHERE id = "
      "(SELECT id FROM users WHERE tenant_id IS NOT NULL ORDER BY id LIMIT 1);"),
+    # Batch D125: the 50 `fk: ` names D124 leaves behind are on child tables the seed leaves EMPTY, so
+    # the sweep resolves 0 of 0 there and no UPDATE can reach them. This shape reaches them: a legal
+    # INSERT first -- constraint checks still ON, so the row satisfies every FK, CHECK and NOT NULL the
+    # schema has -- and then the same dangle behind the switched-off role. Two things follow and the
+    # ledger states both. The insert is not a falsification; it is a reachability claim about the
+    # schema, and it is the first one this lane has ever been able to make on these tables. The dangle
+    # happens in a state quality.sql forbids on the artifact: any row outside the anchor reddens
+    # `no traffic outside the seeded tables` in every session below, so each of these arms carries two
+    # reds, and the second one is that assertion's own door test rather than noise. share_links is left
+    # out of the batch: its 2 names exist only on another lane's uncommitted migration (#75), so a
+    # witness there would not reopen on the committed schema.
+    ("fk: agent_profiles.merchant_id -> merchants.id",
+     "synthetic traffic row: an agent profile points at a merchant that is nobody (0 rows in the table)",
+     "INSERT INTO agent_profiles (merchant_id, protocol, version) VALUES "
+     "((SELECT id FROM merchants ORDER BY id LIMIT 1), 'a2a', '1.0'); "
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE agent_profiles SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM agent_profiles ORDER BY id LIMIT 1);"),
+    ("fk: agent_runs.tenant_id -> tenants.id",
+     "synthetic traffic row: an agent run belongs to a tenant that is nobody (0 rows in the table)",
+     "INSERT INTO agent_runs (tenant_id, agent) VALUES "
+     "((SELECT id FROM tenants ORDER BY id LIMIT 1), 'research'); "
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE agent_runs SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM agent_runs ORDER BY id LIMIT 1);"),
+    ("fk: api_keys.merchant_id -> merchants.id",
+     "synthetic traffic row: an API key is issued by a merchant that is nobody (0 rows in the table)",
+     "INSERT INTO api_keys (merchant_id, name, key_hash, prefix) VALUES "
+     "((SELECT id FROM merchants ORDER BY id LIMIT 1), 'plant key', '0123456789abcdef', 'nx_'); "
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE api_keys SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM api_keys ORDER BY id LIMIT 1);"),
+    ("fk: audit_logs.tenant_id -> tenants.id",
+     "synthetic traffic row: an audit entry is filed under a tenant that is nobody (0 rows in the table)",
+     "INSERT INTO audit_logs (tenant_id, actor_type, action) VALUES "
+     "((SELECT id FROM tenants ORDER BY id LIMIT 1), 'user', 'plant.d125'); "
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE audit_logs SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM audit_logs ORDER BY id LIMIT 1);"),
+    ("fk: deletion_requests.user_id -> users.id",
+     "synthetic traffic row: a deletion request is nobody's (0 rows in the table)",
+     "INSERT INTO deletion_requests (user_id, kind) VALUES "
+     "((SELECT id FROM users ORDER BY id LIMIT 1), 'account'); "
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE deletion_requests SET user_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM deletion_requests ORDER BY id LIMIT 1);"),
+    ("fk: events.tenant_id -> tenants.id",
+     "synthetic traffic row: an event is counted for a tenant that is nobody (0 rows in the table)",
+     "INSERT INTO events (tenant_id, name) VALUES "
+     "((SELECT id FROM tenants ORDER BY id LIMIT 1), 'plant.d125'); "
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE events SET tenant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM events ORDER BY id LIMIT 1);"),
+    ("fk: review_summaries.merchant_id -> merchants.id",
+     "synthetic traffic row: a review summary belongs to a merchant that is nobody (0 rows in the table)",
+     "INSERT INTO review_summaries (merchant_id, overall) VALUES "
+     "((SELECT id FROM merchants ORDER BY id LIMIT 1), 4.20); "
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE review_summaries SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM review_summaries ORDER BY id LIMIT 1);"),
+    ("fk: saved_searches.user_id -> users.id",
+     "synthetic traffic row: a saved search is nobody's (0 rows in the table)",
+     "INSERT INTO saved_searches (user_id, query) VALUES "
+     "((SELECT id FROM users ORDER BY id LIMIT 1), 'tee near central'); "
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE saved_searches SET user_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM saved_searches ORDER BY id LIMIT 1);"),
+    ("fk: subscriptions.merchant_id -> merchants.id",
+     "synthetic traffic row: a subscription bills a merchant that is nobody (0 rows in the table)",
+     "INSERT INTO subscriptions (merchant_id, plan) VALUES "
+     "((SELECT id FROM merchants ORDER BY id LIMIT 1), 'pro'); "
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE subscriptions SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM subscriptions ORDER BY id LIMIT 1);"),
+    ("fk: trust_signals.merchant_id -> merchants.id",
+     "synthetic traffic row: a trust signal vouches for a merchant that is nobody (0 rows in the table)",
+     "INSERT INTO trust_signals (merchant_id, kind) VALUES "
+     "((SELECT id FROM merchants ORDER BY id LIMIT 1), 'verified'); "
+     "SET LOCAL session_replication_role = replica; "
+     "UPDATE trust_signals SET merchant_id = gen_random_uuid() WHERE id = "
+     "(SELECT id FROM trust_signals ORDER BY id LIMIT 1);"),
 ]
 
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
