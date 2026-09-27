@@ -939,6 +939,59 @@ ARMS += [
      "AND id = (SELECT id FROM offerings WHERE price_amount IS NOT NULL ORDER BY id LIMIT 1);"),
 ]
 
+# Batch D147: three more rows, and the two candidates this file has to write off as unreachable.
+#
+# MEASURED, NOT ASSUMED -- the drive replays the gate body whole, so a plant that removes something a
+# static read names does not produce a red: it produces an error, and the session ends before the report.
+# Two of D146's twelve leftovers were aimed at exactly that and the abort text names the read that dies:
+#   * `ALTER TABLE permission_grants DROP COLUMN subject_id` -> `column "subject_id" does not exist`,
+#     inside `WITH g AS (SELECT subject_type, subject_id::text sid, ...)`, the permission_grants probe;
+#   * `DROP TABLE api_keys` -> `relation "api_keys" does not exist`, inside the probe's own
+#     `UNION ALL SELECT 'api_key', id::text, NULL FROM api_keys`.
+# So `an armed type resolves in a table the schema has`, `the pairs declared probed are pairs the schema
+# has` and `the registry names no column the schema has lost` have no witness this mechanism can produce:
+# the columns and tables they watch are the ones the report is computed FROM. Reaching them needs a
+# per-assertion splice, which is the plane D65 gave up on deliberately (a spliced row answers "did this
+# predicate move" and hides everything else). That is a disposition with an error message behind it, not a
+# guess -- and the same three rows are already answered for by D66's registry, which is what the gate
+# reads when it says a reference is probed or explained.
+#
+# The three that did land, and what they say:
+#   * `collections/guides reference live merchants` turned out to be VACUOUS on the shipped seed, and the
+#     measurement is in the ledger: 4 collections carry items, and 0 of those element objects carry a
+#     `merchant_id` key at all -- the seed writes `subject_id` beside `subject_type`. So the row's own
+#     guard, `it->>'merchant_id' IS NOT NULL`, is false everywhere and the row prints "0 dangling guide
+#     item(s)" while reading nothing. The arm therefore plants the key the assertion is written against:
+#     it adds a `merchant_id` carrying a ghost uuid to a real item. That is a write the database accepts
+#     (jsonb has no key schema) and no door mentions, and it reddens the target with one collateral that
+#     independently confirms the shape -- D81's `the elements of an object-array column all carry the same
+#     keys`, which notices the odd key the same plant introduces.
+#   * `a census that folds case reports both readings and which one the demo exercises` counts columns of a
+#     case-folding type; the shipped schema has exactly one (`users.email`, citext), so the plant is the
+#     cast that removes the type. It reddens the fold row and, as collateral, D146's string-census reading
+#     row -- which is the same fact seen from the other side: a declared reading for a type that no longer
+#     has a column is as much a drift as a column whose type has no reading.
+#   * `a served view answers every column it exposes` cannot be planted with `SELECT * FROM the_view`,
+#     because replacing a view with a query over itself is an infinite recursion in its own rules; the
+#     plant reads the definition out of `pg_get_viewdef` and wraps THAT, so the column list the census
+#     sees is derived from the shipped view rather than transcribed here.
+ARMS += [
+    ("collections/guides reference live merchants",
+     "a legal write no door mentions: a real guide item gains a merchant_id pointing at nothing "
+     "(the seeded items carry subject_id and no merchant_id at all)",
+     "UPDATE collections SET items = jsonb_set(items, '{0,merchant_id}', to_jsonb(gen_random_uuid()::text)) "
+     "WHERE jsonb_array_length(items) > 0;"),
+    ("a census that folds case reports both readings and which one the demo exercises",
+     "schema plane: the citext column is cast to text, so the case-folding type leaves the census",
+     "ALTER TABLE users ALTER COLUMN email TYPE text;"),
+    ("a served view answers every column it exposes",
+     "schema plane: the served funnel view gains a trailing column no answer block explains, wrapped out of "
+     "pg_get_viewdef so the shipped column list is never transcribed",
+     "DO $d147$ DECLARE d text; BEGIN SELECT rtrim(pg_get_viewdef('public.v_merchant_funnel', true), ';' ||"
+     " chr(10)) INTO d; EXECUTE 'CREATE OR REPLACE VIEW public.v_merchant_funnel AS SELECT s.*, 1::bigint"
+     " AS plant_unanswered FROM (' || d || ') s'; END $d147$;"),
+]
+
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
 # the only difference between this run and that arm's. If the collateral is what the D108 measurement
 # says it is, the target stays red and the collateral goes to zero.
