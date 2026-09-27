@@ -703,6 +703,77 @@ def _traffic_arm(child, col, parent):
 
 ARMS += [_traffic_arm(c, col, p) for c, col, p in _EMPTY_CHILD_FKS]
 
+# Batch D126: arms the schema ACCEPTS. Every arm above switches `session_replication_role` to `replica`
+# somewhere in its plant, and after D125 that mechanism carries 101 of the 171 witnessed names -- so what
+# this lane had never shown is an assertion reddened by a write the database itself lets through. These 12
+# are single statements, constraint checks ON, no role switch, no ghost id: a portfolio moved to another
+# merchant, a queued review published, a TTL written wrong, a provenance timestamp nulled, an invented
+# subject type inserted. Each was checked for legality against pg_constraint first -- moderation_cases and
+# permission_grants carry no CHECK at all, availability_slots bounds only its times and capacity, so
+# `source = 'live'` is a value the schema never hears of. Two census rows had to be dropped before aiming:
+# no merchant has exactly one offering and none has exactly one category link, so the row-moving arms move
+# WHOLE portfolios (`WHERE merchant_id = …`, one statement, many rows) rather than one row each.
+ARMS += [
+    ("merchant has >=1 offering",
+     "a legal write the schema accepts: one merchant's whole portfolio moved to another",
+     "UPDATE offerings SET merchant_id = (SELECT id FROM merchants ORDER BY id DESC LIMIT 1) "
+     "WHERE merchant_id = (SELECT id FROM merchants ORDER BY id LIMIT 1);"),
+    ("merchant has a location",
+     "a legal write the schema accepts: a one-location merchant's primary location moved away",
+     "UPDATE locations SET merchant_id = (SELECT id FROM merchants ORDER BY id DESC LIMIT 1) "
+     "WHERE merchant_id = (SELECT merchant_id FROM locations WHERE is_primary GROUP BY 1 "
+     "HAVING count(*) = 1 AND merchant_id <> (SELECT id FROM merchants ORDER BY id DESC LIMIT 1) "
+     "ORDER BY 1 LIMIT 1);"),
+    ("merchants map to >=1 leaf category",
+     "a legal write the schema accepts: the least categorised merchant lost every category link",
+     "UPDATE merchant_categories SET merchant_id = (SELECT id FROM merchants ORDER BY id DESC LIMIT 1) "
+     "WHERE merchant_id = (SELECT merchant_id FROM merchant_categories GROUP BY 1 "
+     "HAVING merchant_id <> (SELECT id FROM merchants ORDER BY id DESC LIMIT 1) "
+     "ORDER BY count(*) ASC LIMIT 1);"),
+    ("the queue has something in it (an empty inbox is not proof of a process)",
+     "a legal write the schema accepts: every open review case closed in one statement",
+     "UPDATE moderation_cases SET status = 'closed' WHERE subject_type = 'review' AND status = 'open';"),
+    ("no case points at a review consumers can already read",
+     "a legal write the schema accepts: a review still in the queue published to everyone",
+     "UPDATE reviews SET status = 'published' WHERE id = "
+     "(SELECT c.subject_id FROM moderation_cases c WHERE c.subject_type = 'review' AND c.status = 'open' "
+     "ORDER BY c.id LIMIT 1);"),
+    ("human grants carry no deadline",
+     "a legal write the schema accepts: every human grant given an expiry date",
+     "UPDATE permission_grants SET expires_at = now() + interval '30 days' "
+     "WHERE subject_type = 'merchant_user';"),
+    ("facts all carry expires_at (TTL per",
+     "a legal write the schema accepts: one fact made timeless",
+     "UPDATE facts SET expires_at = NULL WHERE id = (SELECT id FROM facts ORDER BY id LIMIT 1);"),
+    ("hours facts respect the 24h TTL",
+     "a legal write the schema accepts: one opening-hours fact given a 25-hour TTL",
+     "UPDATE facts SET expires_at = observed_at + interval '25 hours' WHERE id = "
+     "(SELECT id FROM facts WHERE attribute = 'opening_hours' ORDER BY id LIMIT 1);"),
+    # Dropped while aiming, and the reason is the finding: `offerings.price_updated_at` is NOT NULL in the
+    # schema, so no write -- legal or not -- can leave a priced offering without it, and
+    # `session_replication_role = replica` does not silence NOT NULL either. The assertion is implied by
+    # the column, which makes it the one kind of qc row no plant can falsify.
+    ("chunks: embedding NULL and embed_model=pending",
+     "a legal write the schema accepts: an unembedded chunk labelled as embedded",
+     "UPDATE chunks SET embed_model = 'text-embedding-3-small' WHERE id = "
+     "(SELECT id FROM chunks ORDER BY id LIMIT 1);"),
+    ("slots marked source=demo (never real availability)",
+     "a legal write the schema accepts: one slot marked as real availability",
+     "UPDATE availability_slots SET source = 'live' WHERE id = "
+     "(SELECT id FROM availability_slots ORDER BY id LIMIT 1);"),
+    # Aimed at `no unlisted type rides in the seeded data` and re-aimed after the pre-flight: the invented
+    # subject type slid straight past it, because that census only walks the pairs the arm registry arms,
+    # and feedback_events is not one of them. The row that DID notice is the vocabulary row below, so this
+    # legal INSERT now testifies for it -- D79's silence, arriving on the polymorphic plane: an unlisted
+    # type on an unarmed pair is not unseen by every census, but it is unseen by the one that claims to
+    # catch it.
+    ("a seeded polymorphic vocabulary is bounded or probed",
+     "a legal write the schema accepts: a feedback event filed under a subject type nobody declared",
+     "INSERT INTO feedback_events (tenant_id, subject_type, subject_id, signal) VALUES "
+     "((SELECT id FROM tenants ORDER BY id LIMIT 1), 'plant', "
+     "(SELECT id FROM merchants ORDER BY id LIMIT 1), 'up');"),
+]
+
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
 # the only difference between this run and that arm's. If the collateral is what the D108 measurement
 # says it is, the target stays red and the collateral goes to zero.
