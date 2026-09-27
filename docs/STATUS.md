@@ -7635,3 +7635,45 @@ next              (a) 20 unwitnessed rows and none of them plantable from data: 
                       #58, #44, #17, #19, #34, #79, #80, step 11's --registry residue, §87's
                       session-time-zone seam, D91's served leg, §130's missing `guide` branch.
 ```
+
+## 141. Twenty rows named and none of them plantable: the falsification queue closed by kind, with the reason beside each name (2026-09-27)
+
+```
+plane             Nothing changed on disk except these two ledger entries. Harness `43091a2` at 147 arms,
+                    registry `f6881b4` at 326 rows / 196 of 216 witnessed (90.7%) / 20 unwitnessed, on the
+                    kept loaded seed `nexus_gate_283340_1790454442`; no session touched the database.
+
+changed           Disposition, not mechanism: each of the 20 remaining rows is named with the predicate it
+                    files and what that predicate enumerates over.
+
+found               (a) 6 rows read the schema catalogues (`pg_constraint`, `to_regclass`, column lists) --
+                      only a migration moves them.
+                    (b) 9 rows compare the data against a hand list living inside `quality.sql`
+                      (`ref_registry`, `poly_vocab`, `str_type`) or against the shipped view definitions --
+                      a plant would have to edit the file under test, so a green proves the file agrees with
+                      itself. One of the nine polices a waiver kind the file never registers, making it true
+                      over an empty set.
+                    (c) 3 rows cannot be reddened by any admitted state: a NOT NULL column
+                      (`price_updated_at present...`), a unique citext index (the case-folding census), and a
+                      payload key the seed never writes (`collections/guides reference live merchants` -- a
+                      defect to report, not a witness to chase).
+                    (d) 2 rows are share_links' and wait on #75.
+                    (e) Since D123 the registry went 116 -> 326 rows and 87 -> 196 witnessed names; 93 of
+                      those names now carry a witness that switches no check off.
+
+gates             Nothing to re-run: no gate file, checker, migration, harness or arm changed and no drive
+                    was launched. The readers were run on the final bytes of this text: step 8 `exit 0` —
+                    254 headings seen, 527 name:number tokens, 316 citation-shaped, strict on the working
+                    copy; step 9 `check_comment_citations.mjs` (73 citations across 21 files); step 10
+                    `check_ledger_sections.mjs` (PASS — STATUS HEAD 108 · on disk 109 · duplicates 0 ·
+                    §141 the one uncommitted section; DECISIONS HEAD 119 · on disk 120 · D132 the same
+                    note); step 11 `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442`
+                    (PASS, 326 rows, 196 of 216).
+
+next              (a) Either build the schema-plane or file-plane falsifier, or record that this lane stops
+                    at 196 of 216 with the residue explained -- the queue re-opens only with a named
+                    mechanism. (b) Report the three unreddenable rows and the vacuous predicate to
+                    `quality.sql`'s owner. (c) #71, eleventh time standing on it. (d) Carried: #73, #75,
+                    #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's --registry residue, §87's
+                    session-time-zone seam, D91's served leg, §130's missing `guide` branch.
+```

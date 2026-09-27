@@ -8007,3 +8007,74 @@ and the ones needing a migration. (b) Write the per-row disposition into TRACEAB
 so the queue reads as closed-by-kind rather than as pending work. (c) #71, eleventh time standing on it.
 (d) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's `--registry` percentage residue,
 §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.
+
+## D132 The twenty rows this lane will not plant, named one by one with the reason each one has -- closing the falsification arc by kind rather than by count — 2026-09-27
+
+D131 planted the last row the queue believed was reachable, which left 20 and no candidate mechanism. A
+queue in that state should be closed by naming each row, not by shrinking the claim, because "we ran out
+of ideas" and "these are not the data plane's" read identically a month later. Each line below is the
+shipped predicate plus what it enumerates over, all citations from the working copy of
+`data/seed/quality.sql`.
+
+**Six need a schema change, not a write.** `a CHECK-bounded column is a door vocabulary too` (:2836) and
+`a door vocabulary names a column the schema has` (:2770) read `pg_constraint`; `a no-referent waiver
+still names a table the schema lacks` (:1425) and `an armed type resolves in a table the schema has`
+(:1410) read `to_regclass` -- the first goes red the day someone ships the table it says is absent, and
+its own comment says the waiver must then be re-argued; `every boolean that claims a verification is
+answered for its evidence` (:2156) enumerates boolean columns; `traffic sweep reaches the whole closure,
+not a hand list` (:257) counts the closure `pg_constraint` yields. None of these can be moved by a row.
+
+**Nine have both sides written inside the gate's own file.** `the reference census reads the catalogue`
+(`count(*) FROM ref_cat >= 17`, built at :1119-1141, asserted at :1178-1180) and
+`the polymorphic-pair census reads the catalogue` (:1263) enumerate COLUMNS from `pg_attribute`;
+`the registry names no column the schema has lost` (:1198), `the pairs declared probed are pairs the
+schema has` (:1270), `the arm registry agrees with the probed-pair counts` (:1462),
+`a probe arm is a declared type and every armed type has an arm` (:1401) and
+`a join-one-type waiver is only true while the table ships one type` (:1208-1213) compare the data
+against the hand-written `ref_registry` and `poly_vocab` lists at :1150-1176 -- and the join-one-type row
+additionally polices a waiver kind the file never registers, so it is true over an empty set and prints
+`no waiver of that kind is registered`; `the string census declares a reading for every type it catches`
+(:3104) compares the hand `str_type` list against `pg_type`; and
+`a served view answers every column it exposes` (:3324-3340) matches on the (view, column) pairs that the
+shipped view definitions fix. For all nine, a plant would have to edit the file under test, and a green
+there proves the file agrees with itself -- worth saying out loud about a gate even when it is this
+lane's own ledger.
+
+**Three are true because the schema or the seed forbids the state they watch for.**
+`price_updated_at present for priced offerings` (:482): `offerings.price_updated_at` is NOT NULL and a
+role switch does not silence NOT NULL, so no data state falsifies it.
+`a census that folds case reports both readings and which one the demo exercises` (:3134): its red needs
+two citext values differing only by case, and the only citext columns are `users.email` behind
+`users_email_tenant_uniq`, a unique index over a case-insensitive type that forbids exactly that pair.
+`collections/guides reference live merchants` (:1002-1007): it reads `it->>'merchant_id'` and the seed
+writes no such key into any collection item -- §136 counted 0 of 4 collections, the item keys being
+`note`, `subject_id`, `subject_type` -- so its PASS is not evidence about references at all, and the
+finding belongs to the file's owner rather than to this queue.
+
+**Two wait on another lane.** `fk: share_links.created_by -> users.id` and
+`fk: share_links.tenant_id -> tenants.id` exist only on the uncommitted `V7__share_links.sql` (#75); on a
+database built from HEAD they are red for a reason this lane does not own (D108), which is also why they
+cannot be witnessed from this working copy without describing another stream's artifact.
+
+**Numbers.** Nothing shipped changed -- no harness, arm, registry row or gate file -- and no session
+touched the database. The registry stands at **326 rows, 196 of 216 assertions witnessed (90.7%), 20
+unwitnessed** (step 11 PASS on `nexus_gate_283340_1790454442`), the fleet at **147 arms** (`43091a2`).
+Across the arc since D123 the registry went 116 -> 326 rows and 87 -> 196 witnessed names; of those 196,
+93 have at least one witness whose plant switches no check off, and the remainder are essentially the
+`fk: ` family, whose witness is a dangling reference by definition. The residue resolves as
+6 + 9 + 3 + 2 = 20, with no row counted twice.
+
+**Limits.** (i) This is a disposition, not a measurement: each claim is a predicate read together with an
+earlier unit's experiment (§134's demand-list growth, §136's item-key count, §138's refusal), and nothing
+was re-derived by a new plant, because none was possible. (ii) "No data-plane witness exists" is a claim
+about this lane's mechanism set: a schema-plane falsifier (mutating the schema inside a rolled-back
+session) could reach the six, and a file-plane falsifier the nine -- different harnesses, different risks,
+neither built. (iii) The three forbidden-state rows are the interesting ones for the gate's owner: a row
+that no admitted state can redden is documentation wearing a check's clothes.
+
+**next.** (a) The lane's remaining product is either those two harnesses or a decision not to build them;
+the queue should re-open only with a named mechanism, not a count. (b) Report the three unreddenable rows
+and the vacuous `collections/guides` predicate to `quality.sql`'s owner -- this lane reads that file and
+does not edit it. (c) #71, eleventh time standing on it: `facts` is still the only seeded table with no
+CHECK. (d) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's `--registry` percentage
+residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.
