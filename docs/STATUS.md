@@ -8732,3 +8732,45 @@ gates           steps 8/9/10/12 re-run on the bytes this section is written into
                 STATUS sections present on disk with missing 0 and duplicate numbers 0, and 11 of 11
                 spelled citations resolving; `falsify_status_citations.mjs` 6 arms · 6 held, and
                 `falsify_ledger_sections.mjs` 8 arms · 8 held.
+## 161. D156: gate step 7 is armed from inside the gate, and its seam was proved to reach the `site` census
+
+before          `--quality=<path>` existed only to be handed to the checker by hand: gate step 7 called
+                `node scripts/check_jsonb_reads.mjs` with no flag, and the checker's own header said so. Its flag
+                dialect was D154's: `--quality <path>` was never looked at, so a plant aimed that way censused
+                the tracked seed file and printed `every cited line names the table, column or key its row is
+                about` with exit 0.
+first-probe     six occurrences of one citation replaced in a Temp copy, passed through the seam: 22 rows / 31
+                locations / 12 files / 38 lines identical before and after, exit 0. The census walks only the
+                rows inside the two `INSERT INTO read_answer VALUES` / `INSERT INTO shape_answer VALUES` blocks,
+                and five of the six hits were comment lines — so this probe measured the aim, not the seam.
+after           four plants aimed at parsed rows, each against an unmutated copy through the same flag, on the
+                tracked plane's own census of 174 source files and 26 read sites:
+                a cited line moved past the end of the file → `FALSE SITES (1)` naming
+                `read_answer collections.seo.generated_by`, 38 → 37 distinct lines and 41 → 40 spans,
+                exit 1; the same citation stripped of its line number → two offenders (the cite and the row),
+                exit 1; an answered row deleted → 21 rows and 30 locations plus the parse-vs-census
+                reconciliation offender, exit 1; the `read_answer` marker renamed → the reader throws naming the
+                fixture path, which is the proof that the file the seam names is the file the census opens.
+                Untouched control through the flag: every number equal to the tracked plane's.
+fix             `check_jsonb_reads.mjs` reads `--quality=<path>` and `--quality <path>`, refuses an empty value
+                and an unknown flag with `RESULT: NOT CHECKED` exit 2 (the shape
+                `check_comment_citations.mjs` already carried), and `scripts/falsify_quality_seam.mjs` —
+                8 arms over Temp copies, no database, ~8s — runs inside step 7 ahead of the census.
+gate            two legs of `scripts/db_gate_fresh.sh` on one working tree. Neutral: 12 step headers, 8
+                `RESULT: PASS` lines, exit 0, step 7 reporting 8/8 arms held with the census green.
+                Armed at the past-the-end plant: `FALSE SITES (1)` (`the file has 453 lines`), 37
+                distinct lines against the neutral leg's 38, the drive stopping after 7 of 12 headers with
+                exit 1, and the harness inside it still 8/8 held. The first armed attempt died of
+                ENOENT instead — its plant path came from `$TEMP` as the shell wrote it and node resolved it
+                against the repository's drive — so the leg was re-run with the spelling node reads, because a
+                red for the wrong reason certifies nothing.
+harness         `falsify_status_citations.mjs` and `falsify_ledger_sections.mjs` re-run on the bytes this section
+                is written into, together with the new seam harness.
+why             D152/D153/D154 each armed a census step so a guard is reachable from a drive; step 7 was the last
+                one whose own comment said nobody passes its flag. #102's remaining half is step 8's reader
+                `check_ledger_citations.mjs`, measured here for the first time — `--text=<fixture>` gave 1 heading
+                and `FALSE LEDGER CITATIONS (1)` · exit 1, `--text <fixture>` gave 295 headings of the real
+                ledgers and exit 0 — plus three space-only parsers (`verify_contract_runtime.mjs`,
+                `verify_served_reads.mjs`, `check_falsifier_registry.mjs`, the last in another lane's file and
+                reported rather than edited). A shared argument parser is the real fix and is not invented in a
+                two-line commit.

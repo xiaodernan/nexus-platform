@@ -30,8 +30,16 @@
  * See `checkSites` below for the arms and their stated limits.
  *
  * USAGE
- *   node scripts/check_jsonb_reads.mjs            # report; exit 1 if a read is undeclared or a site is false
- *   node scripts/check_jsonb_reads.mjs --report   # report only, always exit 0
+ *   node scripts/check_jsonb_reads.mjs                  # report; exit 1 if a read is undeclared or a site is false
+ *   node scripts/check_jsonb_reads.mjs --report          # report only, always exit 0
+ *   node scripts/check_jsonb_reads.mjs --verbose         # print every read the scan found, with its sites
+ *   node scripts/check_jsonb_reads.mjs --quality=<path>  # census this copy of the seed gate instead of
+ *   node scripts/check_jsonb_reads.mjs --quality <path>  # data/seed/quality.sql — BOTH spellings work (D156)
+ *
+ * A flag this reader does not parse, and a `--quality` whose value is empty, are a refusal with exit 2 and not a
+ * silence. Before D156 only the `=` spelling was read, so `--quality <plant>` censused the SHIPPED file and
+ * printed a truthful PASS about a plane nobody aimed at — the defect D154 fixed in `check_status_citations.mjs`
+ * and D155 in `check_ledger_sections.mjs`, here in its third instance.
  *
  * `scripts/db_gate_fresh.sh` runs this as its seventh step, so a widening of the build's jsonb reads — or a
  * site citation that the source contradicts — reddens the same one-command gate that reddens a broken seed. A
@@ -45,12 +53,36 @@ import { SOURCE_EXT, VENDOR_DIRS, walkFiles } from './source_index.mjs';
 
 const ROOT = process.cwd();
 /**
- * `--quality=<path>` points the census at a different copy of the seed gate. It exists for this script's own
- * witnesses: a plant has to change an answer row, and a plant that edits the tracked file races any gate that
- * is loading it. Nothing in the gate itself passes the flag.
+ * `--quality=<path>` / `--quality <path>` points the census at a different copy of the seed gate. It exists for
+ * this script's own witnesses: a plant has to change an answer row, and a plant that edits the tracked file
+ * races any gate that is loading it. D156 made the second spelling work, gave the step an in-gate knob
+ * (`GATE_QUALITY_SQL` in `scripts/db_gate_fresh.sh`), and turned an unread flag into a refusal — the flag was
+ * documented here as "Nothing in the gate itself passes the flag" for exactly one reason: nothing did.
  */
-const QUALITY_ARG = process.argv.find((a) => a.startsWith('--quality='));
-const QUALITY_SQL = QUALITY_ARG ? QUALITY_ARG.slice('--quality='.length) : 'data/seed/quality.sql';
+const notCheckable = (m) => { console.log(`RESULT: NOT CHECKED — ${m}`); process.exit(2); };
+const FLAGS = new Set(['quality', 'report', 'verbose']);
+
+/** The one `--quality` value, from either spelling; empty or repeated is a refusal, not a default. */
+function qualityPath() {
+  const argv = process.argv.slice(2);
+  const given = [];
+  for (let i = 0; i < argv.length; i += 1) {
+    const a = argv[i];
+    const name = a.startsWith('--') ? a.slice(2).split('=')[0] : null;
+    if (name === null) notCheckable(`unexpected argument ${a} — this reader takes only --quality, --report, --verbose`);
+    if (!FLAGS.has(name)) {
+      notCheckable(`unknown option ${a} — flags this reader parses: ${[...FLAGS].join(', ')}`);
+    }
+    if (name !== 'quality') continue;
+    const value = a.includes('=') ? a.slice(a.indexOf('=') + 1) : argv[++i];
+    if (value === undefined || value === '') notCheckable('--quality was given without a path');
+    given.push(value);
+  }
+  if (given.length > 1) notCheckable(`--quality was given ${given.length} times — which copy is the census?`);
+  return given[0];
+}
+
+const QUALITY_SQL = qualityPath() ?? 'data/seed/quality.sql';
 const SOURCE_ROOTS = ['services/platform/src/main/java', 'apps/ai/nexus_ai'];
 const REPORT_ONLY = process.argv.includes('--report');
 const VERBOSE = process.argv.includes('--verbose');

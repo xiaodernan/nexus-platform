@@ -28,6 +28,9 @@
 #                        (inert when unset; both are the same reachability arm, see steps 8-9)
 #   GATE_STATUS_DIR      step 12 only: scan this directory for spelled §-citations instead of the repository
 #                        (inert when unset; the third instance of the same arm, see step 12)
+#   GATE_QUALITY_SQL     step 7 only: run its read census over this copy of data/seed/quality.sql instead of
+#                        the tracked one (inert when unset; the fourth instance, see step 7 — and it moves only
+#                        the census reader, never the loader that seeded the database)
 #
 # Safety: this creates and DESTROYS a database. It refuses to run if the target resolves to `nexus`
 # or `nexus_test` — the developer database and the integration-test one — and it never touches a
@@ -197,7 +200,16 @@ step "7/12  scripts/check_jsonb_reads.mjs — the build's jsonb reads and both a
 # both answer tables too — every `File.java:NNN` is opened and compared with what the row claims. node missing
 # is a FAIL, not a skip — see the script's own LIMITS.
 command -v node >/dev/null 2>&1 || die "steps 7-12 need node on PATH; a skipped census step is not a passed one"
-( cd "$ROOT" && node scripts/check_jsonb_reads.mjs ) 2>&1 | sed -e 's/^/    /'
+# D156: the seam this script now forwards (`GATE_QUALITY_SQL`) existed for four days as a note in the checker's
+# own header — "Nothing in the gate itself passes the flag" — which was true, and meant the step's redness could
+# only ever be shown by hand-running an invocation nobody else makes. Two things changed. The checker learned to
+# read `--quality <path>` as well as `--quality=<path>`, because the equals-only parse silently ignored the
+# other spelling and censused the tracked file while the operator believed they were scoring a plant (D154's
+# defect, in its third reader); and `scripts/falsify_quality_seam.mjs` — 8 arms, no database needed, ~8 seconds
+# — runs here so every drive re-asks whether the site census is reachable, rather than leaving that as a claim
+# in a comment. The arms are counted, because a census that found nothing did not check anything.
+( cd "$ROOT" && node scripts/falsify_quality_seam.mjs ) 2>&1 | sed -e 's/^/    /'
+( cd "$ROOT" && node scripts/check_jsonb_reads.mjs ${GATE_QUALITY_SQL:+--quality="$GATE_QUALITY_SQL"} ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 8. the ledger's own citations
 step "8/12  scripts/check_ledger_citations.mjs — every File.java:NNN the ledgers claim, opened and read back"
@@ -293,4 +305,6 @@ printf '        the falsifier registry reconciled with the assertions step 5 fil
 printf '        redness names an assertion that exists and a witness that still opens.\n'
 printf '        the spelled §-citations in code and docs resolved against the headings that exist at HEAD,\n'
 printf '        so a renumber that leaves a pointer behind reddens the gate instead of a manual run.\n'
+printf '        the read census'"'"'s own seam shown able to stop this script, so the step that reads the seed\n'
+printf '        answers is reachable from a drive and not only from a hand-run of an invocation nobody makes.\n'
 printf '        SYNTHETIC DEMO DATA. The live databases were not opened by this run.\n'

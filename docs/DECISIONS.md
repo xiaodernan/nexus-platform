@@ -9380,3 +9380,58 @@ missed, exit 0, and it passes the space form, so — as with D117's arms — no 
 accepts only one spelling, and `check_contract_drift.mjs:36` and the `verify_*.mjs` readers parse only the bare
 form. The rule this lane now follows when writing a checker is in both files' usage blocks; promoting it to a
 gate needs a shared argument parser, which is a larger seam than a two-line fix and is not invented here.
+## D156 — Step 7's `--quality` seam really does reach the site census, so the step got the arm steps 8-12 already had
+
+**Context.** `scripts/check_jsonb_reads.mjs` has carried `--quality=<path>` since D87 with the sentence "Nothing
+in the gate itself passes the flag", and that sentence was true: steps 8, 9, 10, 11 and 12 each got an in-gate
+knob in D150-D154 so that a witness no longer has to be a hand-run of an invocation nobody else makes, and step
+7 was the last census step still in that position. Before giving it one, the claim had to be executed — the seam
+might have reached only the declared-reads half, leaving the `site` column (the thing D87 added, and the thing
+D86 shipped three false instances of) unverifiable through it.
+
+**Measured first, and the first measurement measured nothing.** The initial probe replaced six occurrences of one
+citation in a Temp copy of `data/seed/quality.sql` and passed that copy through the seam: `ANSWER SITES` printed
+22 rows / 31 locations / 12 files / 38 lines before and after, with exit 0. The reason is not a hole in
+the seam, it is where the census looks: the site reader walks only the rows inside the two
+`INSERT INTO read_answer VALUES` / `INSERT INTO shape_answer VALUES` blocks, and five of the six occurrences were
+comment lines while the sixth sat in a tuple of a third table. Re-aimed at a row the census does parse, four
+plants each reddened the run and an unmutated copy through the same flag left every number where the tracked file
+put it — which is what makes the four plants evidence rather than a coincidence of counts.
+
+**The two fixes.** (1) The reader parsed one spelling: `--quality=<path>` only, via a `find` on the `=` prefix, so
+`--quality <path>` was silently ignored and the run censused the tracked file and printed a PASS — D154's defect
+in a fourth reader, and the third inside this gate. Both spellings now parse, an empty value is refused, and an
+unknown flag is a `RESULT: NOT CHECKED` exit 2 naming the flags the file does read, which is the shape
+`check_comment_citations.mjs` already had. (2) `scripts/falsify_quality_seam.mjs` — 8 of 8 arms over Temp
+copies, no database, ~8s — now runs inside step 7, and `GATE_QUALITY_SQL` forwards the seam into the step, inert
+when unset. The knob moves only the census reader: steps 3-5 load the tracked seed file, so an armed leg is a red
+on the text plane while the dataset stays the shipped one.
+
+**Measured after.** `scripts/falsify_quality_seam.mjs`: 8 arms / 8 held / exit 0, and its control arm pins
+the tracked plane's own numbers (22 rows citing 31 locations in 12 files, 38 distinct lines, 41 spans
+across 31 tokens) so a plant's delta is a prediction, not a recollection. On the pre-patch checker at HEAD,
+over a Temp copy: the space spelling of the same plant exited 0 with the tracked numbers (38 lines), the equals
+spelling exited 1 with `FALSE SITES (1)` and one line fewer — the defect and its fix measured on one invocation.
+`--qualit=<plant>` on the pre-patch file printed the whole report and exited 0; on the patched file it exits 2.
+
+**GATE_LEG_TOKENS**
+
+**Two legs, one working tree.** Neutral (`GATE_QUALITY_SQL` unset): 12 step headers, 8 `RESULT: PASS`
+lines including the closing one, exit 0 — with step 7's seam harness reporting 8 of 8 arms held
+while the census itself stayed green. Armed (the same variable set to a Temp copy whose cited line runs past the
+end of the source file): step 7's census printed `FALSE SITES (1)` — `the file has 453 lines` — and
+37 distinct lines instead of 38, the drive stopped after 7 of 12 step headers, exit 1. The
+harness still reported 8 of 8 held inside that red leg, which is the shape worth having: the step that
+proves the guard reachable is not the step being reddened. One driver defect is recorded because the invocation is
+part of the measurement — the first armed attempt took the plant path from `$TEMP` as the shell wrote it, node
+resolved it against the repository's drive, and the leg died of ENOENT at step 7 rather than of a false site; leg
+2b re-ran the same plant with the spelling node reads.
+
+**What is left.** The step's arm now covers the census half of the seed answers; the payload-shape answers that
+D86 filed live in the same file's other blocks, and #102 keeps the dialect's remaining half: step 8's reader
+`check_ledger_citations.mjs` is the fourth instance of the equals-only shape — measured for the first time here,
+`--text=<fixture>` printed 1 heading and `FALSE LEDGER CITATIONS (1)` · exit 1 while `--text <fixture>` printed
+295 headings of the real ledgers and exit 0 — and three readers take the space form only, because they find
+`--name` with `indexOf` and fall back to a default when the value is glued on (`verify_contract_runtime.mjs`,
+`verify_served_reads.mjs`, and step 11's `check_falsifier_registry.mjs`, which is another lane's file and is
+reported rather than edited here). The real fix is one shared parser, not a fifth two-line patch.
