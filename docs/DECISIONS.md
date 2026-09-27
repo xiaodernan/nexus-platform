@@ -8585,3 +8585,26 @@ lane to), then re-run `mvn -o test` for the first honest baseline since D50. (b)
 withdrawn" should be replaced by that baseline rather than by an attribution to untracked packages, which
 this run shows is only part of the story. (c) Carried: #73, #75 (step-7 half), #44, #79, #62, #64, #17,
 #19, step 11's residue, §87's seam, D91's served leg.
+
+### D142 amendment, measured the same day: `nexus_test` is not merely old, it is divergent in both directions — 2026-09-27
+
+D142 concluded from the suite's own errors that `nexus_test` "runs a schema from before V4". A read-only
+query now says that half-true, and the fuller shape matters for whoever acts on #94.
+
+`nexus_test.user_identities` columns are `id, user_id, provider, provider_id, secret_ref, verified_at,
+created_at` -- no `tenant_id`, where the developer database `nexus` has it: the V4 claim is confirmed.
+But the same probe found `nexus_test` **does** hold `share_links` (D140's apply), holds 80
+primary/unique constraints, and **has** an index named `users_email_uniq` -- while `nexus`, the database
+that Flyway migrates, **does not** (`users_email_uniq` count 0; 61 tables there against 59 there). So the
+two live databases are not "new and old"; each carries objects the other lacks, in opposite directions,
+and the 18 duplicate-key errors are the sound of the *extra* constraint firing in a database whose columns
+are also missing some.
+
+That converts D141's warning from a prediction into an observation: a plane with no migration ledger
+drifts both ways at once, and neither `db_gate_fresh.sh` (which builds a third schema from scratch and
+passes) nor a single suite run can see it. #94's rebuild is therefore not a version bump but a
+re-convergence: after it, the honest next step is to re-apply whatever `nexus_test` legitimately grew by
+hand -- starting with V7, which that plane only ever received from this lane.
+
+Nothing here changes the counts D142 reported (217 / 13 / 21 / 82 s), the classes named, or the
+recommendation. It narrows its premise: the test database is not simply behind, it is different.
