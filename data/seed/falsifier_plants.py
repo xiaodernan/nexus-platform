@@ -824,6 +824,43 @@ ARMS += [
      "WHERE p.merchant_id = o.merchant_id AND p.status = 'active') ORDER BY o.id LIMIT 1);"),
 ]
 
+# Batch D129: D128 said nine of the last 23 rows were falsifiable from the data plane. Aiming at them --
+# which means reading each census far enough to know what its list is built FROM -- reduced that nine to
+# two, and the two arms below are the survivors. The seven that fell away are not plants, they are
+# corrections to §137, and they are listed here so the next reader does not re-derive them:
+#   * `a join-one-type waiver is only true while the table ships one type` -- the predicate is over
+#     `ref_registry WHERE kind = 'join-one-type'`, and the file registers exactly one INSERT into that
+#     table (quality.sql:1150-1176), whose kinds are 'probe' and 'not-a-reference'. No waiver of that
+#     kind exists, so the row's own detail says so and the NOT EXISTS is vacuously true: nothing reddens
+#     it, and writing one would mean editing the file under test.
+#   * `the reference census reads the catalogue` (`count(*) FROM ref_cat >= 17`, :1178-1180) and
+#     `the polymorphic-pair census reads the catalogue` (:1263) -- `ref_cat` gets one row per COLUMN
+#     enumerated from pg_attribute (:1119-1141), independent of how many rows those columns carry. A
+#     DELETE cannot shrink a column list; only a migration can.
+#   * `the string census declares a reading for every type it catches` (:3104) is `str_type` (a hand list
+#     of base types) against `pg_type` caught by the census -- a new column type, not a new value.
+#   * `a census that folds case reports both readings and which one the demo exercises` (:3134) needs two
+#     citext values differing only by case in one column, and the only citext columns are `users.email`
+#     and its index `users_email_tenant_uniq` -- a unique index over a case-insensitive type forbids
+#     exactly that pair, so the collision the row watches for is the one write the schema refuses.
+#   * `a bounded string column is answered by name` (:3022) is reachable in principle (collapse a
+#     many-distinct text column into the <=12-distinct window), but every candidate measured so far needs
+#     a column inventory this lane has not taken -- left open rather than guessed at.
+ARMS += [
+    ("the elements of an object-array column all carry the same keys",
+     "a legal write the schema accepts: one merchant's first image given a key none of the others carry",
+     "UPDATE merchants SET images = jsonb_set(images, '{0,source}', to_jsonb('plant'::text)) "
+     "WHERE id = (SELECT id FROM merchants ORDER BY id LIMIT 1);"),
+    # The 3km ring is measured here as a bounding box because `pg_temp.haversine_m` exists only while
+    # quality.sql is running, and the plant executes before the gate body -- the plant cannot call a
+    # function the gate has not created yet. The destination stays inside the HK bbox so the row that
+    # guards the bbox is not the one that goes red.
+    ("density: >= ",
+     "a legal write the schema accepts: every primary location inside the Sha Tin ring moved out of it",
+     "UPDATE locations SET lat = 22.20, lng = 114.30 WHERE is_primary "
+     "AND lat BETWEEN 22.3561 AND 22.4101 AND lng BETWEEN 114.1584 AND 114.2168;"),
+]
+
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
 # the only difference between this run and that arm's. If the collateral is what the D108 measurement
 # says it is, the target stays red and the collateral goes to zero.
