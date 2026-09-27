@@ -8504,3 +8504,41 @@ routing and validation layers were fine all along.
 **next.** (a) Apply V7 to the developer database (or rebuild it) before anyone reads a :8090 share call as
 a defect. (b) #34's open half is now "run in CI", not "wait for a lane". (c) Carried: #75's step-7 half,
 #58, #73, #79, #44, #62, #64, #17, #19, step 11's residue, §87's seam, D91's served leg.
+
+## D141 The developer database was never the gap -- and the test database has no migration ledger at all, which is a different finding than the one #93 expected — 2026-09-27
+
+D140 left a suspicion with a number attached to it: if `nexus_test` had been quietly missing
+`V7__share_links.sql`, the developer database `nexus` and the running :8090 service might be in the same
+state, and the share write would be a demo that only passes in the places someone remembered to migrate.
+This unit checks that, read-only, without touching a live database.
+
+**Measurement (a): the developer plane is ahead, not behind.** In `nexus`, `to_regclass('public.share_links')`
+is non-null among 61 tables, and `flyway_schema_history` ends at `version 7, success = t` with 6, 5, 4
+below it. So the service's own migrator has already applied V7 -- the commit landed, the running
+application's schema followed, and the D140 worry does not extend to this plane. Nothing was applied here;
+there was nothing to apply.
+
+**Measurement (b): the test plane has no ledger, so "did the --file apply record itself?" has no
+answer.** `nexus_test` holds `share_links` (the count is 1), confirming D140's apply is still in place --
+and `schema_migrations`, the table `db_apply_migrations.sh` keeps, does not exist in that database at all.
+That refines the script's own D32 caveat rather than confirming it: the two ledgers it warns about
+(Flyway's `flyway_schema_history`, the scripts' `schema_migrations`) are not both behind on `nexus_test`,
+they are both absent. Whatever migrates that database -- surefire's own setup, or a person -- keeps no
+ledger there, so the only evidence that a migration reached it is behavioural. That is exactly why the
+D140 fix had to be proven by running the test rather than by reading a table, and it is the reason a
+migration to `nexus_test` can silently drift: nothing there would notice.
+
+**Not done, deliberately.** No call was made against :8090 -- the service is not running (`curl` to
+`/actuator/health` returns no response), and starting another stream's developer service to satisfy my own
+curiosity is a shared-environment action, not a verification I was owed. The schema question it would have
+answered is answered by (a) instead, from the ledger the service itself maintains.
+
+**Numbers.** Three read-only probes and one HTTP attempt; zero writes, zero DDL, zero service state
+changed. `nexus`: table present, 61 tables, Flyway at 7/success. `nexus_test`: table present,
+`schema_migrations` absent. :8090: down. #93 closes on that, with its live-call half left explicitly open.
+
+**next.** (a) If a share call must be attested over HTTP, it needs the service up -- a decision for
+whoever owns the dev environment, not a step to slip in. (b) The `nexus_test` no-ledger finding is worth
+one line in the gate docs the next time this lane touches them: the only check that plane gets is the
+tests that run against it. (c) Carried: #73, #75 (step-7 half), #58, #79, #44, #62, #64, #17, #19,
+step 11's residue, §87's seam, D91's served leg.
