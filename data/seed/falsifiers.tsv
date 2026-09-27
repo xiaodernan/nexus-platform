@@ -286,3 +286,29 @@ merchants.review_count matches its reviews	D126	a legal write the schema accepts
 rating fact restates the recomputed mean	D126	a legal write the schema accepts: a review still in the queue published to everyone	11642b7
 rating facts respect the 24h TTL and cite their own reviews	D126	a legal write the schema accepts: one fact made timeless	11642b7
 the columns stamped from the generation clock are exactly the ones answered so	D126	a legal write the schema accepts: one fact made timeless	11642b7
+ratings realistically spread (not all 5.0)	D127	a legal write the schema accepts: every below-average merchant rating lifted to 4.5	c8c2f84
+an estimated price is facted as inferred, not as merchant	D127	a legal write the schema accepts: an estimated price's fact re-labelled as the merchant's own claim	c8c2f84
+jsonb data_origin marker (offerings/documents/chunks)	D127	a legal write the schema accepts: a document's provenance marker pointed at the real web	c8c2f84
+reviews carry aspect scores for weak-aspect demos	D127	a legal write the schema accepts: one review's aspect scores emptied	c8c2f84
+reviews cite concrete aspects (§55 inputs)	D127	a legal write the schema accepts: every review rewritten to a bare opinion	c8c2f84
+favourite subject_type is one the API can save	D127	a legal write the schema accepts: a favourite filed under a type the API has never heard of	c8c2f84
+facts.source is a documented provenance (§2)	D127	a legal write the schema accepts: one fact sourced to an undeclared string	c8c2f84
+bookable offerings resolve to a pool	D127	a legal write the schema accepts: an offering made bookable for a merchant with no active pool	c8c2f84
+every column that cannot vary is answered for why it cannot	D127	an offering whose price band is inverted	c8c2f84
+no traffic outside the seeded tables	D127	synthetic traffic row: an API key is issued by a merchant that is nobody (0 rows in the table)	c8c2f84
+a seeded polymorphic vocabulary is bounded or probed	D127	synthetic traffic row: an event is counted for a tenant that is nobody (0 rows in the table)	c8c2f84
+every array column is answered for what bounds its elements	D127	synthetic traffic row: a review summary belongs to a merchant that is nobody (0 rows in the table)	c8c2f84
+every jsonb payload that a key read cannot reach is answered for what it is	D127	synthetic traffic row: a review summary belongs to a merchant that is nobody (0 rows in the table)	c8c2f84
+every reference the seed writes is probed or explained	D127	synthetic traffic row (a feedback event): the written row's tenant_id is a ghost id (0 rows in the table at seed)	c8c2f84
+a verification badge stays unresolvable only while its evidence and its link both stay absent	D127	synthetic traffic row (an order): the written row's tenant_id is a ghost id (0 rows in the table at seed)	c8c2f84
+a view answer names the kind the census derives	D127	synthetic traffic row (an order): the written row's tenant_id is a ghost id (0 rows in the table at seed)	c8c2f84
+a view kind is exercised or exempted	D127	synthetic traffic row (an order): the written row's tenant_id is a ghost id (0 rows in the table at seed)	c8c2f84
+every jsonb key the build reads is answered for what the shipped payloads carry	D127	synthetic traffic row (an order): the written row's tenant_id is a ghost id (0 rows in the table at seed)	c8c2f84
+the columns stamped from the generation clock are exactly the ones answered so	D127	a legal write the schema accepts: one opening-hours fact given a 25-hour TTL	c8c2f84
+merchants.rating_agg matches its reviews	D127	a legal write the schema accepts: every below-average merchant rating lifted to 4.5	c8c2f84
+rating fact agrees with the rendered aggregate column	D127	a legal write the schema accepts: every below-average merchant rating lifted to 4.5	c8c2f84
+the synthetic stamp says demo, or true, on every row of every column that carries it	D127	a legal write the schema accepts: a document's provenance marker pointed at the real web	c8c2f84
+review body length > 20 chars	D127	a legal write the schema accepts: every review rewritten to a bare opinion	c8c2f84
+no unlisted type rides in the seeded data	D127	a legal write the schema accepts: a favourite filed under a type the API has never heard of	c8c2f84
+rating facts respect the 24h TTL and cite their own reviews	D127	a legal write the schema accepts: one fact sourced to an undeclared string	c8c2f84
+the §19 provenance axis and the §109 stamp axis stay separate on facts	D127	a legal write the schema accepts: one fact sourced to an undeclared string	c8c2f84

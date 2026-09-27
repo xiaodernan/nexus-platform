@@ -7678,3 +7678,72 @@ lane's order; and the two D108 door-vocabulary rows that are green on this kept 
 one built from HEAD. (b) #71, ninth time standing on it. (c) Carried: #75, #62, #64, #58, #44, #17, #19,
 #34, #79, #80, step 11's `--registry` percentage residue, §87's session-time-zone seam, D91's served
 leg, §130's missing `guide` branch.
+
+## D127 Eight more legal writes, a census row that reads a key the seed never writes, and the registry's own reader refusing a witness this lane minted — 2026-09-27
+
+D126 opened the legal-write family and left 33 names. This unit aims at the demo-property rows among
+them: a merchant's every below-average rating lifted to 4.5, an estimated price's fact re-labelled from
+`inferred` to `merchant`, a document's `data_origin` marker pointed at `'real'`, one review's aspect
+jsonb emptied, every concrete-aspect review rewritten to a bare opinion, a favourite filed under
+`'restaurant'`, one fact sourced to `'walked past and looked'`, and an offering made bookable for a
+merchant with no active pool (falsifier_plants.py:786-828). Same rule as D126: one statement, checks ON,
+no `SET LOCAL`, no ghost id.
+
+**Decision (a): eight of the nine aimed arms reddened their assertion, and one arm minted a name that
+died with its transaction -- the registry refused the file for it.** The favourites arm's write also
+made the reference census emit `orphan: favorites.restaurant`, because that family assembles its names
+from the *values* it finds; the row was filed, and step 11 then read the registry against the plane and
+answered `RESULT: FAIL -- the registry is inconsistent with the gate`. After rollback the plane does not
+carry that name, so no witness can. The row was taken back -- registry 267 → **293 rows**, not the 294
+the drive emitted -- and the arm's honest witness is the one it names,
+`favourite subject_type is one the API can save`. This is D105's class arriving inside the registry, and
+the reader caught it rather than my reading of it: a plant must not file an assertion whose identity is
+a function of the data the plant itself wrote.
+
+**Decision (b): `collections/guides reference live merchants` reads a jsonb key the seed never writes.**
+The dropped arm was meant to write a ghost merchant id into a collection's items and the target stayed
+green with no collateral, so the shape was counted: 4 collections, all 4 with an object at `items[0]`,
+**0 items carrying `merchant_id` anywhere** -- the keys the seed actually writes are `note`,
+`subject_id`, `subject_type` (the check is quality.sql:1002-1007). The predicate is therefore vacuous on
+the artifact, and no legal write aimed at the shape the check assumes reaches it: an FK column cannot
+touch it, because nothing in the schema claims those ids inside a jsonb array. Kept on the 23, reported.
+
+**Decision (c): D126's blind-census finding closed from the other side.** The invented type on
+`feedback_events` slid past `no unlisted type rides in the seeded data` (an unarmed pair), while the
+invented type on `favorites` -- an armed pair -- reddened exactly that row, and it now carries a
+witness. So the row is not broken, it is scoped: it guards the pairs the registry arms, which is what
+its own name quietly promises and what this pair of arms measured from both sides.
+
+**Numbers.** Arms 136 → **144**; harness `c8c2f84`. Pre-flight: 20 arms (the D126 family re-run plus the
+nine new), 22 sessions, 19 hit, 1 green → dropped (decision (b)). Full drive: **144 arms + the control,
+147 sessions, RESULT PASS** -- every target RED, nothing undeclared, closing baseline 216 / 0 identical
+to opening, `quality.sql` md5 `4d3a707eff55971b0a2198e2a1b56777` unchanged. Registry 267 → **293 rows**
+(27 emitted, 1 taken back per decision (a); 8 from an arm's own RED row, 19 from collateral). Coverage
+183 → **193 of 216 (89.4%)**; witness kinds 254 commit + 39 file; step 11 PASS. Unwitnessed 33 → **23**.
+Mechanism mix, measured from plant text: with the phantom row counted, 194 names / 91 with a witness
+that switches nothing off / 103 with only switching witnesses; after taking it back, **193 / 90 / 103**
+-- so three units of legal writes moved the non-switching half from 80 to 90 and the role-switch-only
+group has stopped shrinking, because 103 of them are the `fk: ` family, whose plant is a dangling
+reference by definition.
+
+**Limits.** (i) Same as D126: a legal write is not an application trace; it says the assertion can be
+lost to something the database accepts. (ii) 19 of the 27 rows are companions witnessed under a write
+that also breaks the target, so they testify that a companion notices, not that the companion's own risk
+case is reachable. (iii) The `every column that cannot vary…` row reddened 10 times in this family for
+the reason §134 records -- its demand list is derived from data -- and the rating arms likewise moved
+the counters and the rating-fact rows; those are scope-change witnesses. (iv) The count above is taken
+from the working copy's 216 assertions, of which two belong to another lane's uncommitted migration.
+
+**next.** (a) 23 left and they are now three named kinds: 8 rows about the registry and catalogues
+themselves (`the reference census reads the catalogue`, `the polymorphic-pair census…`, `the arm
+registry agrees…`, `the registry names no column…`, `the pairs declared probed…`, `a probe arm…`, `an
+armed type resolves…`, `traffic sweep reaches the whole closure`), which a data write cannot reach --
+they read files and `pg_constraint`; 4 rows whose predicate is vacuous or key-shaped
+(`collections/guides…`, decision (b); `price_updated_at present…`, D126's NOT NULL case; `every boolean
+that claims a verification…` and `the elements of an object-array column…`, which need a column or a key
+the seed does not have); the demo-distribution rows (`density: >= 300 merchants within 3km of Sha Tin`,
+`a bounded string column is answered by name`, `a census that folds case…`, `a served view answers every
+column it exposes`, the string-census and join-one-type waiver rows), most of which are legal-write
+reachable and are the next unit's aim; and the 2 share_links names (#75). (b) #71, tenth time standing
+on it. (c) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's `--registry` percentage
+residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.

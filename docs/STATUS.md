@@ -7361,3 +7361,65 @@ next              (a) 33 names left, in three kinds: the rows about the registry
                       --registry percentage residue, §87's session-time-zone seam, D91's served leg, §130's
                       missing `guide` branch.
 ```
+
+## 136. Eight more plants the database accepts, and the registry's own reader refuses a witness the plant minted (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (136 → 144 arms, committed c8c2f84) and the registry it
+                    writes, `data/seed/falsifiers.tsv` (267 → 293 rows). Same kept loaded seed as §128–§135,
+                    `nexus_gate_283340_1790454442` — 216 assertions on this working copy.
+
+changed           Eight single statements with the checks ON and no role switch: every below-average merchant
+                    rating lifted to 4.5, an estimated price's fact re-labelled `merchant`, a document's
+                    `data_origin` marker pointed at `real`, one review's aspects emptied, every
+                    concrete-aspect review rewritten to a bare opinion, a favourite filed under
+                    `restaurant`, one fact sourced to an undeclared string, an offering made bookable for a
+                    merchant with no active pool (falsifier_plants.py:786-828). No gate file, checker or
+                    migration changed; `data/seed/quality.sql` read and not touched.
+
+measured          why the ninth arm stayed green, counted rather than guessed:     the mechanism mix, read
+                    4 collections, 4 with an object at `items[0]`, **0 items carrying                 from plant
+                    `merchant_id` anywhere** — the keys the seed writes inside an                    text rather
+                    item are `note`, `subject_id`, `subject_type`.                                  than arm
+                                                                                                     labels.
+
+found               (a) Eight legal writes reddened eight assertions. The favourites arm also made the
+                      reference census emit `orphan: favorites.restaurant` — a name assembled from the value
+                      the plant wrote — and the drive filed it. Step 11 then read the registry against the
+                      plane and answered `RESULT: FAIL — the registry is inconsistent with the gate`: after
+                      ROLLBACK no assertion of that name exists. The row was taken back (293 filed, not 294),
+                      and this is §105's class of runtime-named assertions arriving in the witness record,
+                      caught by the reader rather than by my reading of it.
+                    (b) `collections/guides reference live merchants` is vacuous on the artifact — decision by
+                      the measurement above. It stays on the 23; no legal write aimed at the shape it assumes
+                      reaches it, because nothing in the schema claims ids inside that array.
+                    (c) §135's blind-census finding closed from the other side: an invented type on the armed
+                      pair `favorites` reddened `no unlisted type rides in the seeded data`, which now carries
+                      a witness, where the same trick on the unarmed `feedback_events` pair slid past it. The
+                      row is scoped, not broken — and it took both arms to say so.
+                    (d) 19 of the 27 emitted rows are companions, including the two review counters, the
+                      rating-fact restatement and `no traffic outside the seeded tables`.
+
+gates             The eleven-step script was not re-run, because no gate file, checker or migration changed; the
+                    shipped code touched is the plant harness, whose 147 whole-gate sessions (plus 22 in the
+                    pre-flight) are the gate body sliced out of `quality.sql` run against mutated data inside a
+                    transaction that is rolled back — 216 assertions and 0 red at the close, identical to the
+                    opening, and `quality.sql`'s md5 `4d3a707eff55971b0a2198e2a1b56777` unchanged. The four
+                    readers were run on the final bytes of this text: step 8 `check_ledger_citations.mjs
+                    --worktree` (exit 0 — 244 headings seen, 518 name:number tokens, 307 citation-shaped,
+                    strict on the working copy), step 9 `check_comment_citations.mjs` (PASS, 70 comment-plane
+                    citations across 21 files), step 10 `check_ledger_sections.mjs` (PASS — STATUS HEAD 103
+                    · on disk 104 · missing 0 · duplicates 0 · §136 the one uncommitted section; DECISIONS
+                    HEAD 114 · on disk 115 · D127 the same note), step 11 `check_falsifier_registry.mjs --db
+                    nexus_gate_283340_1790454442` (PASS, 293 rows, 193 of 216).
+
+next              (a) 23 left, in three named kinds: 8 rows about the registry and the catalogues themselves,
+                      which a data write cannot reach; 4 rows whose predicate is vacuous or key-shaped
+                      (this section's (b), D126's NOT NULL case, and two that need a column the seed lacks);
+                      the demo-distribution rows, most of which are legal-write reachable and are the next
+                      unit's aim; and share_links' two (#75). (b) #71, tenth time standing on it. (c) Carried:
+                      #73 (193 of 216 witnessed, 23 unwitnessed, 90 with a witness that switches nothing off,
+                      103 resting only on a role switch — the `fk: ` family by definition), #75, #62, #64,
+                      #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage residue, §87's
+                      session-time-zone seam, D91's served leg, §130's missing `guide` branch.
+```
