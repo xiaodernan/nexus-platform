@@ -566,8 +566,8 @@ ARMS = [
      "INSERT INTO review_summaries (merchant_id, overall) VALUES "
      "((SELECT id FROM merchants ORDER BY id LIMIT 1), 4.20); "
      "SET LOCAL session_replication_role = replica; "
-     "UPDATE review_summaries SET merchant_id = gen_random_uuid() WHERE id = "
-     "(SELECT id FROM review_summaries ORDER BY id LIMIT 1);"),
+     "UPDATE review_summaries SET merchant_id = gen_random_uuid() WHERE merchant_id = "
+     "(SELECT merchant_id FROM review_summaries ORDER BY 1 LIMIT 1);"),
     ("fk: saved_searches.user_id -> users.id",
      "synthetic traffic row: a saved search is nobody's (0 rows in the table)",
      "INSERT INTO saved_searches (user_id, query) VALUES "
@@ -590,6 +590,118 @@ ARMS = [
      "UPDATE trust_signals SET merchant_id = gen_random_uuid() WHERE id = "
      "(SELECT id FROM trust_signals ORDER BY id LIMIT 1);"),
 ]
+
+# Batch D125 (continued): the other 38 empty-child names. The ten above were written out one by one to
+# find the shape; these 38 are that one shape, so it is stated once as a function and an arm differs
+# from its neighbour only in the row it inserts and the column it dangles.
+# `_MUST` is the census: every column the schema forces an INSERT to carry (NOT NULL, no default), read
+# off pg_attribute for the kept database, not guessed. A value that is a table name is filled with a
+# live id from it, and four parents are themselves empty at seed -- carts, conversations, orders and
+# payments -- so the chain rows are inserted first in the same session with checks still ON, which is
+# what makes the whole row legal rather than merely tolerated. payments is a chain row nobody asked
+# for: the pre-flight refused `refunds` because payments is empty, and the sweep never names payments
+# at all, because its one FK points at orders, which is outside quality.sql's 23-table anchor. The
+# dangle itself is the D123 mechanism unchanged.
+_NOUN = {
+    "campaigns": "a campaign", "cart_items": "a cart line", "carts": "a cart",
+    "conversations": "a conversation", "coupons": "a coupon",
+    "external_principals": "an external principal", "feedback_events": "a feedback event",
+    "handoffs": "a handoff", "notifications": "a notification", "order_items": "an order line",
+    "orders": "an order", "recommendation_sets": "a recommendation set", "referrals": "a referral",
+    "refunds": "a refund", "reservations": "a reservation", "seo_pages": "an SEO page",
+}
+
+_MUST = {
+    "campaigns": {"merchant_id": ("ref", "merchants"), "title": "'plant campaign'"},
+    "cart_items": {"cart_id": ("chain", "carts"), "unit_price": "12.00"},
+    "carts": {"tenant_id": ("ref", "tenants")},
+    "conversations": {"tenant_id": ("ref", "tenants")},
+    "coupons": {"tenant_id": ("ref", "tenants"), "code": "'PLANT-D125'", "value": "12.00",
+                "starts_at": "now() - interval '1 day'", "ends_at": "now() + interval '1 day'"},
+    "external_principals": {"protocol": "'a2a'", "client_id": "'plant-client'",
+                            "name": "'plant principal'"},
+    "feedback_events": {"subject_type": "'merchant'", "subject_id": ("ref", "merchants"),
+                        "signal": "'up'"},
+    "handoffs": {"conversation_id": ("chain", "conversations"), "merchant_id": ("ref", "merchants"),
+                 "reason": "'plant handoff'"},
+    "notifications": {"audience": "'merchant'", "template": "'plant notification'"},
+    "order_items": {"order_id": ("chain", "orders"), "name_snapshot": "'plant item'",
+                    "unit_price": "12.00", "total_price": "12.00"},
+    "orders": {"code": "'PLANT-D125'", "merchant_id": ("ref", "merchants"),
+               "tenant_id": ("ref", "tenants")},
+    "payments": {"amount": "12.00", "idempotency_key": "'plant-d125'", "order_id": ("chain", "orders")},
+    "recommendation_sets": {"tenant_id": ("ref", "tenants")},
+    "referrals": {"kind": "'invite'", "referrer_type": "'user'", "referrer_id": ("ref", "users"),
+                  "code": "'PLANT-D125'"},
+    "refunds": {"amount": "12.00", "payment_id": ("chain", "payments")},
+    "reservations": {"code": "'PLANT-D125'", "merchant_id": ("ref", "merchants"),
+                     "tenant_id": ("ref", "tenants"), "starts_at": "now() + interval '7 days'"},
+    "seo_pages": {"kind": "'category'", "path": "'/plant/d125'", "tenant_id": ("ref", "tenants")},
+}
+
+# (child, the FK column the sweep names, its parent) -- the 38 names quality.sql assembles for a child
+# table the seed leaves empty, minus share_links' two, which exist only on an uncommitted migration.
+_EMPTY_CHILD_FKS = [
+    ("campaigns", "approved_by", "users"), ("campaigns", "merchant_id", "merchants"),
+    ("campaigns", "tenant_id", "tenants"), ("cart_items", "offering_id", "offerings"),
+    ("carts", "merchant_id", "merchants"), ("carts", "tenant_id", "tenants"),
+    ("carts", "user_id", "users"), ("conversations", "merchant_id", "merchants"),
+    ("conversations", "tenant_id", "tenants"), ("conversations", "user_id", "users"),
+    ("coupons", "created_by", "users"), ("coupons", "merchant_id", "merchants"),
+    ("coupons", "published_by", "users"), ("coupons", "tenant_id", "tenants"),
+    ("external_principals", "linked_user_id", "users"),
+    ("external_principals", "merchant_id", "merchants"),
+    ("feedback_events", "tenant_id", "tenants"), ("feedback_events", "user_id", "users"),
+    ("handoffs", "merchant_id", "merchants"), ("notifications", "merchant_id", "merchants"),
+    ("notifications", "tenant_id", "tenants"), ("notifications", "user_id", "users"),
+    ("order_items", "offering_id", "offerings"), ("orders", "merchant_id", "merchants"),
+    ("orders", "tenant_id", "tenants"), ("orders", "user_id", "users"),
+    ("recommendation_sets", "tenant_id", "tenants"), ("recommendation_sets", "user_id", "users"),
+    ("referrals", "invitee_id", "users"), ("referrals", "tenant_id", "tenants"),
+    ("refunds", "approved_by", "users"), ("reservations", "merchant_id", "merchants"),
+    ("reservations", "offering_id", "offerings"), ("reservations", "slot_id", "availability_slots"),
+    ("reservations", "tenant_id", "tenants"), ("reservations", "user_id", "users"),
+    ("seo_pages", "reviewed_by", "users"), ("seo_pages", "tenant_id", "tenants"),
+]
+
+
+def _insert(table, extra=None):
+    """A legal INSERT: the columns the schema demands, plus the column the arm will dangle."""
+    must = dict(_MUST.get(table, {}))
+    for col, value in (extra or {}).items():
+        must.setdefault(col, value)
+    cols, vals = [], []
+    for col in sorted(must):
+        value = must[col]
+        cols.append(col)
+        vals.append("(SELECT id FROM %s ORDER BY id LIMIT 1)" % value[1]
+                    if isinstance(value, tuple) else value)
+    return "INSERT INTO %s (%s) VALUES (%s)" % (table, ", ".join(cols), ", ".join(vals))
+
+
+def _inserts_for(table, extra=None, seen=()):
+    """The table's legal INSERT, preceded by every empty table it has to reference first."""
+    if table in seen:
+        return []
+    out = []
+    for dep in [v[1] for k, v in sorted(_MUST.get(table, {}).items())
+                if isinstance(v, tuple) and v[0] == "chain"]:
+        out += _inserts_for(dep, None, seen + (table,))
+    return out + [_insert(table, extra)]
+
+
+def _traffic_arm(child, col, parent):
+    plant = _inserts_for(child, {col: ("ref", parent)}) + [
+        "SET LOCAL session_replication_role = replica",
+        "UPDATE %s SET %s = gen_random_uuid() WHERE id = "
+        "(SELECT id FROM %s ORDER BY id LIMIT 1)" % (child, col, child)]
+    return ("fk: %s.%s -> %s.id" % (child, col, parent),
+            "synthetic traffic row (%s): the written row's %s is a ghost id (0 rows in the table at seed)"
+            % (_NOUN[child], col),
+            "; ".join(plant) + ";")
+
+
+ARMS += [_traffic_arm(c, col, p) for c, col, p in _EMPTY_CHILD_FKS]
 
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
 # the only difference between this run and that arm's. If the collateral is what the D108 measurement
