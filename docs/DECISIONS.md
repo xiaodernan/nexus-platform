@@ -7504,3 +7504,97 @@ say so, or to record those 50 as reachable-in-principle-but-not-by-a-legal-demo-
 names. (b) #71, seventh time standing on it. (c) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80,
 step 11's `--registry` percentage residue, §87's session-time-zone seam, D91's served leg, §130's missing
 `guide` branch.
+
+## D125 The last 48 `fk: ` names have to be WRITTEN before they can be dangled, and writing one reddens the assertion that calls the result a non-artifact — 2026-09-27
+
+D124 closed the 41 `fk: ` names whose child table carries rows and left 50 whose child table the seed
+leaves empty, over 27 tables. On those the sweep has never resolved anything: it counts
+`WHERE c.col IS NOT NULL AND p.col IS NULL` (quality.sql:181-203), and with 0 rows both sides are
+empty, so its `0 orphan row(s)` is a statement about nothing. D124's next(a) named the choice — write
+a row, or record the 50 as unreachable and spend the batches on the literal names. This unit writes
+rows, and files them.
+
+**Decision (a): an empty-child witness is two claims, and only one of them is a falsification.** The
+arm is `INSERT …; SET LOCAL session_replication_role = replica; UPDATE … SET col = gen_random_uuid()`.
+The INSERT runs while the checks are still ON: every column the schema forces is supplied from a
+pg_attribute census rather than from memory (`_MUST`, falsifier_plants.py:614-643), every FK points at
+a live id, so the row is legal, not merely tolerated. That half is not a deception at all — it is a
+reachability claim, and it is the first one this lane has ever been able to make about 27 tables. The
+dangle after it is the D123 mechanism unchanged. D122's limit said a `fk: ` row demonstrates detection
+and not reachability; here one arm carries both, and the registry keeps only the second claim's name
+next to the row.
+
+**Decision (b): the state is one quality.sql forbids on the artifact, and that is filed rather than
+worked around.** 47 of the 48 sessions also redden `no traffic outside the seeded tables`
+(quality.sql:263-272), whose own detail then says such a database "is the seed plus traffic, so
+quality.sql is reading it as a diagnostic and not as a gate on the artifact". The exception is
+instructive: `review_summaries` is one of the 23 anchor tables, so a row there is not traffic outside
+the seed — and the dedicated `review_summaries stays empty` reddens instead. Two different assertions
+say the same thing about the same state: the demo is not supposed to contain it. So the 48 rows testify
+"on a database that carries traffic in this table, the sweep opens it and notices a broken link", not
+"a screen can show this". Where the app does write those tables (orders, carts, events, api_keys,
+subscriptions…) the assertion is doing real work and the row is worth having; the ledger says which is
+which by naming the mechanism in the arm column.
+
+**Decision (c): the derived censuses demand answers as data arrives, so 27 tables contribute nothing to
+them at seed.** Across the 48 traffic arms: `every column that cannot vary is answered for why it
+cannot` reddened 48 of 48, the two jsonb censuses and the array-element census 7 each,
+`every reference the seed writes is probed or explained` and `a seeded polymorphic vocabulary is
+bounded or probed` 6 each, `a view kind is exercised or exempted` and `a view answer names the kind the
+census derives` 5 each, `a verification badge stays unresolvable…` 10. None of those broke: each
+enumerates from the rows, so a table going from 0 to 1 adds columns and pairs to its demand list, and
+the list of answers has never been widened for a table the seed does not populate. This is D79's
+"silence, not green" again, on the census plane — an assertion that answers every column the demo
+carries is silent about 27 tables' worth of schema. Reported, not edited: `data/seed/quality.sql` is
+another lane's working copy, and the change would be to answer those columns or to have each census
+print how many tables it never opened.
+
+**Decision (d): two names are left out on purpose.** `fk: share_links.created_by -> users.id` and
+`fk: share_links.tenant_id -> tenants.id` are 2 of the 50, but share_links exists only on another
+lane's uncommitted V7 migration (#75); a witness naming them could not be reopened from a committed
+tree. Reachable here: 48, all planted.
+
+**Measurement (e): "tables the seed leaves empty" is not "tables an `fk: ` assertion covers".**
+`refunds` needed a payment row to be legal, payments is empty too, and payments needs an order — a
+chain three rows deep, which is why `_inserts_for` (falsifier_plants.py:682-691) walks chain deps
+transitively instead of one level. `payments` never appeared in the empty-child census at all: the
+sweep names only FKs whose parent is in the anchor (quality.sql:192), and payments' single FK points at
+orders, which is outside it. The two lists overlap without containing each other, so the census that
+plans a batch has to be read as a set difference, not as a description of the schema. The same
+discipline caught `review_summaries`: it has no `id` column — its primary key is the very column the
+arm dangles, so the row selector keys on it (falsifier_plants.py:541-546). That is D124's lesson about
+assuming columns, arriving on the new plane.
+
+**Numbers.** Arms 87 → **125** (ten hand-written at falsifier_plants.py:511-593 to find the shape, 38
+generated from it at :594-704). Pre-flight 1: 10 arms, 11 sessions, 9 hit, 1 unread. Pre-flight 2:
+38 arms, 39 sessions, 37 hit, 1 unread. Full drive: **125 arms + the control, 128 whole-gate sessions,
+RESULT PASS** — every target RED, no arm found an undeclared red, no assertion left the plane
+undeclared, closing baseline 216 assertions / 0 red, identical to opening, and
+`quality.sql` md5 `4d3a707eff55971b0a2198e2a1b56777` unchanged across all of it. Registry
+170 → **236 rows** (66 appended: 48 from an arm's own RED row, 18 from collateral; **55 of them name an
+assertion that carried no witness before**). Coverage 116 → **171 of 216 (79.2%)**; witness kinds
+197 commit + 39 file; step 11 PASS. Unwitnessed 100 → **45**, of which 2 are share_links, so **43**
+are reachable and none of them is a one-UPDATE plant. The `fk: ` family: 91 names, **89 witnessed, 2
+left** — both share_links — which closes the family on the committed schema.
+
+**Limits.** (i) Concentration got worse in absolute terms while coverage jumped: of the 171 witnessed
+names, **101 have no witness that does not switch the replication role off** (46 whose every witness is
+a bare checks-off dangle, 55 whose every witness is a traffic-row arm, which also uses it). No
+assertion in that set has been shown to fail by a write the schema itself refuses. (ii) Every row from
+this batch is witnessed under a state the gate calls a diagnostic — decision (b). (iii) A companion
+reddened by a traffic arm (the 18 rows) was witnessed while the census's scope was changing, not while
+its subject was broken, so those rows testify that the census notices new data, which is weaker than
+what an `fk: ` row testifies. (iv) 2 of the 45 unwitnessed are the D108 door-vocabulary rows, which are
+green on this kept database and red only on one built from HEAD: they cannot be witnessed here at all,
+and that is the artifact's defect, not the registry's.
+
+**next.** (a) The remaining 43 fall into three families and none of them needs a new plant mechanism:
+the census-and-registry rows (the reference census, the polymorphic-pair census, the arm registry, the
+string census, the object-array keys, the declared pairs, the two waivers, the door vocabularies), the
+demo-property rows (merchant has ≥1 offering / a location, ≥1 leaf category per merchant, ratings
+realistically spread, density in Sha Tin, aspect scores and concrete citations in reviews, the TTL and
+`price_updated_at` rows, `human grants carry no deadline`, the non-empty queue, the traffic sweep's own
+count row, `a served view answers every column it exposes`), and the 2 D108 rows that need a
+HEAD-built database. Plan from that list, not from a table split. (b) #71, eighth time standing on it.
+(c) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's `--registry` percentage
+residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.

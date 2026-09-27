@@ -189,3 +189,69 @@ merchants.rating_agg matches its reviews	D124	fk checks off (replica role): a re
 merchants.review_count matches its reviews	D124	fk checks off (replica role): a review loses its merchant	13603da
 rating fact restates the recomputed mean	D124	fk checks off (replica role): a review loses its merchant	13603da
 rating: every reviewed subject has exactly one rating fact	D124	fk checks off (replica role): a review loses its merchant	13603da
+fk: agent_profiles.merchant_id -> merchants.id	D125	synthetic traffic row: an agent profile points at a merchant that is nobody (0 rows in the table)	4092240
+fk: agent_runs.tenant_id -> tenants.id	D125	synthetic traffic row: an agent run belongs to a tenant that is nobody (0 rows in the table)	4092240
+fk: api_keys.merchant_id -> merchants.id	D125	synthetic traffic row: an API key is issued by a merchant that is nobody (0 rows in the table)	4092240
+fk: audit_logs.tenant_id -> tenants.id	D125	synthetic traffic row: an audit entry is filed under a tenant that is nobody (0 rows in the table)	4092240
+fk: deletion_requests.user_id -> users.id	D125	synthetic traffic row: a deletion request is nobody's (0 rows in the table)	4092240
+fk: events.tenant_id -> tenants.id	D125	synthetic traffic row: an event is counted for a tenant that is nobody (0 rows in the table)	4092240
+fk: review_summaries.merchant_id -> merchants.id	D125	synthetic traffic row: a review summary belongs to a merchant that is nobody (0 rows in the table)	4092240
+fk: saved_searches.user_id -> users.id	D125	synthetic traffic row: a saved search is nobody's (0 rows in the table)	4092240
+fk: subscriptions.merchant_id -> merchants.id	D125	synthetic traffic row: a subscription bills a merchant that is nobody (0 rows in the table)	4092240
+fk: trust_signals.merchant_id -> merchants.id	D125	synthetic traffic row: a trust signal vouches for a merchant that is nobody (0 rows in the table)	4092240
+fk: campaigns.approved_by -> users.id	D125	synthetic traffic row (a campaign): the written row's approved_by is a ghost id (0 rows in the table at seed)	4092240
+fk: campaigns.merchant_id -> merchants.id	D125	synthetic traffic row (a campaign): the written row's merchant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: campaigns.tenant_id -> tenants.id	D125	synthetic traffic row (a campaign): the written row's tenant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: cart_items.offering_id -> offerings.id	D125	synthetic traffic row (a cart line): the written row's offering_id is a ghost id (0 rows in the table at seed)	4092240
+fk: carts.merchant_id -> merchants.id	D125	synthetic traffic row (a cart): the written row's merchant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: carts.tenant_id -> tenants.id	D125	synthetic traffic row (a cart): the written row's tenant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: carts.user_id -> users.id	D125	synthetic traffic row (a cart): the written row's user_id is a ghost id (0 rows in the table at seed)	4092240
+fk: conversations.merchant_id -> merchants.id	D125	synthetic traffic row (a conversation): the written row's merchant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: conversations.tenant_id -> tenants.id	D125	synthetic traffic row (a conversation): the written row's tenant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: conversations.user_id -> users.id	D125	synthetic traffic row (a conversation): the written row's user_id is a ghost id (0 rows in the table at seed)	4092240
+fk: coupons.created_by -> users.id	D125	synthetic traffic row (a coupon): the written row's created_by is a ghost id (0 rows in the table at seed)	4092240
+fk: coupons.merchant_id -> merchants.id	D125	synthetic traffic row (a coupon): the written row's merchant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: coupons.published_by -> users.id	D125	synthetic traffic row (a coupon): the written row's published_by is a ghost id (0 rows in the table at seed)	4092240
+fk: coupons.tenant_id -> tenants.id	D125	synthetic traffic row (a coupon): the written row's tenant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: external_principals.linked_user_id -> users.id	D125	synthetic traffic row (an external principal): the written row's linked_user_id is a ghost id (0 rows in the table at seed)	4092240
+fk: external_principals.merchant_id -> merchants.id	D125	synthetic traffic row (an external principal): the written row's merchant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: feedback_events.tenant_id -> tenants.id	D125	synthetic traffic row (a feedback event): the written row's tenant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: feedback_events.user_id -> users.id	D125	synthetic traffic row (a feedback event): the written row's user_id is a ghost id (0 rows in the table at seed)	4092240
+fk: handoffs.merchant_id -> merchants.id	D125	synthetic traffic row (a handoff): the written row's merchant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: notifications.merchant_id -> merchants.id	D125	synthetic traffic row (a notification): the written row's merchant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: notifications.tenant_id -> tenants.id	D125	synthetic traffic row (a notification): the written row's tenant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: notifications.user_id -> users.id	D125	synthetic traffic row (a notification): the written row's user_id is a ghost id (0 rows in the table at seed)	4092240
+fk: order_items.offering_id -> offerings.id	D125	synthetic traffic row (an order line): the written row's offering_id is a ghost id (0 rows in the table at seed)	4092240
+fk: orders.merchant_id -> merchants.id	D125	synthetic traffic row (an order): the written row's merchant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: orders.tenant_id -> tenants.id	D125	synthetic traffic row (an order): the written row's tenant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: orders.user_id -> users.id	D125	synthetic traffic row (an order): the written row's user_id is a ghost id (0 rows in the table at seed)	4092240
+fk: recommendation_sets.tenant_id -> tenants.id	D125	synthetic traffic row (a recommendation set): the written row's tenant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: recommendation_sets.user_id -> users.id	D125	synthetic traffic row (a recommendation set): the written row's user_id is a ghost id (0 rows in the table at seed)	4092240
+fk: referrals.invitee_id -> users.id	D125	synthetic traffic row (a referral): the written row's invitee_id is a ghost id (0 rows in the table at seed)	4092240
+fk: referrals.tenant_id -> tenants.id	D125	synthetic traffic row (a referral): the written row's tenant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: refunds.approved_by -> users.id	D125	synthetic traffic row (a refund): the written row's approved_by is a ghost id (0 rows in the table at seed)	4092240
+fk: reservations.merchant_id -> merchants.id	D125	synthetic traffic row (a reservation): the written row's merchant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: reservations.offering_id -> offerings.id	D125	synthetic traffic row (a reservation): the written row's offering_id is a ghost id (0 rows in the table at seed)	4092240
+fk: reservations.slot_id -> availability_slots.id	D125	synthetic traffic row (a reservation): the written row's slot_id is a ghost id (0 rows in the table at seed)	4092240
+fk: reservations.tenant_id -> tenants.id	D125	synthetic traffic row (a reservation): the written row's tenant_id is a ghost id (0 rows in the table at seed)	4092240
+fk: reservations.user_id -> users.id	D125	synthetic traffic row (a reservation): the written row's user_id is a ghost id (0 rows in the table at seed)	4092240
+fk: seo_pages.reviewed_by -> users.id	D125	synthetic traffic row (an SEO page): the written row's reviewed_by is a ghost id (0 rows in the table at seed)	4092240
+fk: seo_pages.tenant_id -> tenants.id	D125	synthetic traffic row (an SEO page): the written row's tenant_id is a ghost id (0 rows in the table at seed)	4092240
+every column that cannot vary is answered for why it cannot	D125	a user carrying a real password hash	4092240
+the columns stamped from the generation clock are exactly the ones answered so	D125	one merchant fact re-keyed onto an offering's id	4092240
+every seeded owner membership has grants	D125	fk checks off (replica role): a workspace member stops being anybody (3 rows in the table)	4092240
+merchant_user grants reach a membership	D125	fk checks off (replica role): a workspace member stops being anybody (3 rows in the table)	4092240
+orphan: permission_grants.merchant_user	D125	fk checks off (replica role): a workspace member stops being anybody (3 rows in the table)	4092240
+owner can administer workspace	D125	fk checks off (replica role): a workspace member stops being anybody (3 rows in the table)	4092240
+rating: every reviewed subject has exactly one rating fact	D125	fk checks off (replica role): a review stops being about anything sellable (2055 of 11000 carry one)	4092240
+everything hangs off the single demo tenant	D125	fk checks off (replica role): a review loses its tenant	4092240
+every array column is answered for what bounds its elements	D125	synthetic traffic row: an agent profile points at a merchant that is nobody (0 rows in the table)	4092240
+every jsonb payload that a key read cannot reach is answered for what it is	D125	synthetic traffic row: an agent profile points at a merchant that is nobody (0 rows in the table)	4092240
+no traffic outside the seeded tables	D125	synthetic traffic row: an agent profile points at a merchant that is nobody (0 rows in the table)	4092240
+a seeded polymorphic vocabulary is bounded or probed	D125	synthetic traffic row: an audit entry is filed under a tenant that is nobody (0 rows in the table)	4092240
+a view answer names the kind the census derives	D125	synthetic traffic row: an event is counted for a tenant that is nobody (0 rows in the table)	4092240
+a view kind is exercised or exempted	D125	synthetic traffic row: an event is counted for a tenant that is nobody (0 rows in the table)	4092240
+review_summaries stays empty	D125	synthetic traffic row: a review summary belongs to a merchant that is nobody (0 rows in the table)	4092240
+every reference the seed writes is probed or explained	D125	synthetic traffic row (an external principal): the written row's linked_user_id is a ghost id (0 rows in the table at seed)	4092240
+a verification badge stays unresolvable only while its evidence and its link both stay absent	D125	synthetic traffic row (an order line): the written row's offering_id is a ghost id (0 rows in the table at seed)	4092240
+every jsonb key the build reads is answered for what the shipped payloads carry	D125	synthetic traffic row (an order line): the written row's offering_id is a ghost id (0 rows in the table at seed)	4092240

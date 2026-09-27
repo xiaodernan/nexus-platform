@@ -7214,3 +7214,79 @@ next              (a) D125, the empty-child decision, with one measurement alrea
                     #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's --registry percentage residue, §87's
                     session-time-zone seam, D91's served leg, §130's missing `guide` branch.
 ```
+
+## 134. Forty-eight plants reach the child tables the seed leaves empty by writing a legal row first, in a state two different assertions call a non-artifact (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (87 → 125 arms, committed 01c988a then 4092240) and the
+                    registry it writes, `data/seed/falsifiers.tsv` (170 → 236 rows). Same kept loaded seed as
+                    §128–§133, `nexus_gate_283340_1790454442` — 216 assertions on this working copy.
+
+changed           A new arm shape and no gate file, checker or migration. Where D123/D124 dangled a column of a
+                    row the seed already had, the 50 names D124 left sit on tables with 0 rows, so the arm first
+                    INSERTs a legal row -- with the constraint checks still ON, every column the schema demands
+                    supplied from a pg_attribute census (`_MUST`, falsifier_plants.py:614-643) and every FK at a
+                    live id -- then `SET LOCAL session_replication_role = replica;` and the same one-column
+                    dangle. Ten were written out by hand to find the shape (:511-593); the other 38 are that
+                    shape as a function over a list of names (:594-704). `data/seed/quality.sql` read, not
+                    touched.
+
+measured          the empty-child census before aiming              a read-only reproduction of the sweep's own
+                    (50 names over 27 tables, each with the             query and name grammar, plus per-table
+                    columns a legal INSERT must carry, its             row counts: 91 sweep names, 41 on a child
+                    checks, and its primary key).                      with rows and 50 on one the seed leaves
+                                                                       empty. It is what the batch was aimed at.
+                    the two repairs the pre-flights caught   `review_summaries` has no `id` column -- its primary
+                    before any registry row was written      key is the very column the arm dangles, so the row
+                                                             selector keys on that column instead (:541-546).
+                                                             `refunds` needs a payment to be legal, payments is
+                                                             empty too, and payments needs an order: three rows
+                                                             deep, which is why `_inserts_for` (:682-691) walks
+                                                             chain deps transitively. payments never appears in
+                                                             the empty-child census at all, because its one FK
+                                                             points at orders, outside the 23-table anchor the
+                                                             sweep reads (quality.sql:192).
+
+found               (a) An empty-child witness is two claims. The INSERT is not a deception -- it is a
+                      reachability statement about the schema, and the first this lane has been able to make on
+                      27 tables. The dangle after it is the same illegal write as in D123/D124. The registry
+                      names only the second claim.
+                    (b) 47 of the 48 sessions also redden `no traffic outside the seeded tables`, whose own
+                      detail calls such a database a diagnostic rather than a gate on the artifact. The one
+                      exception says the same thing from the other side: `review_summaries` IS an anchor table,
+                      so the row there reddens `review_summaries stays empty` instead. Two assertions, one
+                      state: the demo is not supposed to contain this. Filed, labelled, and read as "the sweep
+                      would notice a broken link in traffic" -- not as "a screen can show this".
+                    (c) The derived censuses grow their demand list with the data, so 27 tables contribute
+                      nothing to them at seed: across these 48 arms `every column that cannot vary is answered
+                      for why it cannot` reddened 48 of 48, the verification-badge row 10, the two jsonb censuses
+                      and the array-element census 7 each, the reference census and the polymorphic vocabulary 6
+                      each, and the two view-census rows 5 each. None broke; each simply noticed the new table.
+                      Reported -- quality.sql is another lane's working copy.
+                    (d) 2 of the 50 names are share_links', which exist only on an uncommitted migration (#75),
+                      so a witness there could not reopen from a committed tree. 48 planted, 48 reddened.
+                    (e) A full drive harvested 18 collateral rows, 2 of them for names no earlier arm had ever
+                      witnessed -- the third consecutive batch where the by-product is a second witness.
+
+gates             The eleven-step script was not re-run, because no gate file, checker or migration changed; the
+                    shipped code touched is the plant harness, whose 128 whole-gate sessions in the full drive
+                    (plus 50 in the two pre-flights) are the gate body sliced out of `quality.sql` executed
+                    against mutated data inside a transaction that is rolled back -- the identical closing
+                    baseline certifies that, and `quality.sql`'s md5 is `4d3a707eff55971b0a2198e2a1b56777`
+                    before and after. The four readers were run on the final bytes of this text: step 8
+                    `check_ledger_citations.mjs --worktree` (exit 0 — 240 headings seen, 513 name:number tokens,
+                    302 citation-shaped, strict on the working copy), step 9 `check_comment_citations.mjs`
+                    (PASS, 70 comment-plane citations across 21 files), step 10 `check_ledger_sections.mjs`
+                    (PASS — STATUS HEAD 101 · on disk 102 · missing 0 · duplicates 0 · §134 the one uncommitted
+                    section; DECISIONS HEAD 112 · on disk 113 · D125 the same note), step 11
+                    `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442` (PASS, 236 rows, 171 of 216).
+
+next              (a) The queue is now 45 unwitnessed names and none of them is a one-UPDATE plant: the
+                      census-and-registry rows, the demo-property rows, and the two D108 door-vocabulary rows
+                      that are green on this kept database and red only on one built from HEAD. Plan from that
+                      split. (b) #71, eighth time standing on it: `facts` is still the only seeded table with no
+                      CHECK. (c) Carried: #73 (171 of 216 witnessed, 45 unwitnessed, 101 of the witnessed ones
+                      resting on a role switch), #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's
+                      --registry percentage residue, §87's session-time-zone seam, D91's served leg, §130's
+                      missing `guide` branch.
+```
