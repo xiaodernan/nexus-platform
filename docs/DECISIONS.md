@@ -8875,3 +8875,96 @@ in memory, never the tracked file), and that is a decision, not a leftover.
 are the evidence. `mvn -o -B test` is untouched by a harness-only unit and stays at #94's 217 / 11 failures / 38
 errors on the divergent `nexus_test`.
 
+## D148 The fourth mutation plane is text: seven plants rewrite the sliced gate body in memory, and the falsifier registry closes at 216 of 216 — 2026-09-28
+
+**Why this unit.** `STATUS §152`'s next (b) put the choice in writing: close #73's residue by decision — six
+file-plane rows as a named, reasoned write-off — or build the mechanism the same section had named. The mechanism
+was built. Seven arms now rewrite the gate body this drive slices, in memory, and the fleet goes from 158 arms to
+165. `check_falsifier_registry.mjs` reports **216 of 216 (100.0%)** with an empty gap list where §152 left nine
+names, and the registry is 348 -> 359 rows.
+
+**What a text plant is.** A data plant changes rows, a schema plant changes DDL, and both leave the report's own
+SQL alone. A text plant changes the sentence: `apply_edits(body, edits)` takes the string `gate_body()` already
+sliced out of `data/seed/quality.sql`, applies `(anchor, replacement)` pairs to it in this process, and hands the
+result to `gate_under()`, which runs it in a `BEGIN … ROLLBACK` session exactly as the other three planes do. The
+tracked file is never written and the database is never touched outside the transaction, so the shipped artifact
+and the gate's own plane are the same bytes before and after. Three things make the aim auditable rather than
+convenient: the anchor has to occur **exactly once** in the shipped body or the drive raises before a session
+opens (a plant that silently aimed at a phrase's second occurrence would report a red the real file never
+contained); the judgment printed for the run is the same `target RED / collateral / unfiled` table a data arm is
+judged by; and the arm's name says which plane it ran on, so a reader of `falsifiers.tsv` cannot mistake a text
+witness for a data one.
+
+**The seven arms, and the row each one moves.**
+
+| target assertion | what the plant rewrites in the sliced body | own | collateral |
+| --- | --- | --- | --- |
+| `an armed type resolves in a table the schema has` | the hand vocabulary `poly_vocab` gains an `arm` row whose referent table does not exist | RED | `a probe arm is a declared type and every armed type has an arm` |
+| `the pairs declared probed are pairs the schema has` | the probe list `poly_probed` gains a probe over `plant_ghost_table` | RED | `every probe family resolves at least one armed type`, `the arm registry agrees with the probed-pair counts` |
+| `a join-one-type waiver is only true while the table ships one type` | a registered column is re-classified `kind = 'join-one-type'`, its name chosen by `SELECT … FROM ref_cat WHERE types_n > 1 …`, not transcribed | RED | none |
+| `the registry names no column the schema has lost` | `ref_registry` gains `plant.ghost_column` | RED | none |
+| `the reference census reads the catalogue` | the census's own enumeration is narrowed to tables carrying a `subject_type` column — the census mistaking itself for the polymorphic probe | RED | `the registry names no column the schema has lost` |
+| `the polymorphic-pair census reads the catalogue` | the pair census is narrowed to the four tables the hand list already names | RED | none |
+| `traffic sweep reaches the whole closure, not a hand list` | the recursive closure walk's `fk.contype = 'f'` becomes `'x'`, so the walk stops following any edge | RED | `no traffic outside the seeded tables` |
+
+**Aimed by measurement before any session was spent.** The two census plants and the traffic plant each had to
+land on the correct side of a published floor, and floors are the one place an off-by-one turns a designed red
+into a coincidence. So the shipped predicates were read out-of-process first: `ref_cat` enumerates **26** columns
+over both naming shapes, and narrowing it to tables that carry a `subject_type` column leaves **14** against a
+floor of `>= 17`; `poly_cat` enumerates **12** (type, id) pairs, and restricting it to the four tables
+`poly_probed` names leaves **4** against a floor of `>= 8`; the traffic sweep counts **29** in its closure walk
+against a floor of `>= 20`. Two of the three fall below their floor with margin, so a green would have been a
+real surprise. The traffic arm does not need to cross its floor — it removes edges from a closure the row claims
+is complete, and the row's own `no traffic outside the seeded tables` sibling moved with it, which is the
+collateral the harness exists to make visible.
+
+**The arm that went green first, and what that green measured.** The join-one-type arm's first design inserted a
+registry row for a column the census reports as multi-type but the registry had not listed. Through the real
+harness it produced a **green**, and the drive failed as designed: `RESULT: FAIL -- … the assertion naming it
+stayed green`, rc=1. That green is a finding, not a fluke: read the plane, and every column the census reports
+with `types_n > 1` is already registered, so the row is held by *exhaustion* — there is no unregistered
+multi-type column left for a plant to name. Re-aimed at a re-classification instead of an addition (change a
+real registered column's `kind` to a waiver its own table's data refutes), it reddened with zero collateral. Two
+lessons recorded rather than absorbed: an arm aimed at a row guarded by exhaustion has to attack the row's
+*meaning*, not its coverage; and a drive that refuses to emit rows unless every arm reddened is what turned a
+would-be silent false witness into a measurement.
+
+**Two anchors caught out of process.** Before the first session, a scratch probe re-ran the anchor rule against
+the shipped file: two entries carried `edits` as a flat `[anchor, replacement]` instead of `[(anchor,
+replacement)]`, and one anchor had been typed with its trailing period dropped, so it occurred 0 times. All three
+were fixed at zero session cost. The rule earns its place by that: the failure mode of a text plant is aiming at
+the wrong sentence, and the file — not the database — is the thing under test.
+
+**A claim this unit retires.** D147 wrote that reaching the three aborted rows "means splicing a single
+assertion, which is the plane D65 gave up on deliberately — a spliced row answers 'did this predicate move' and
+hides every collateral". It does not. Those runs aborted because a *schema* plant removed an object the report is
+computed FROM, so the session died before the report existed. A text plant removes the sentence, not the object:
+the whole gate body still runs, every one of the 216 assertions is still counted, and the collateral column is
+still full: four of the seven arms printed collateral rows, eleven rows came out of the drive, and step 11 still
+names no gap. Nothing was spliced in this unit, which also retires D132's standing
+objection that these rows are unreachable because "a plant would have to edit the file under test, and a green
+there proves the file agrees with itself": the objection is about a green, and every arm here produced a red
+against an unmutated baseline that stayed 216 / 0.
+
+**What 216 of 216 does not buy — stated before the number is quoted anywhere else.**
+(i) A text witness is narrower in kind than a data witness. It shows *this comparison is live: it moves when one
+side drifts*. It never shows the shipped seed is wrong — the shipped seed's claim rests entirely on the
+unmutated 216 / 0 baseline, which no text arm touches and which this drive printed at both ends.
+(ii) The percentage is now saturated, which means it has stopped being the interesting question. §152 proved a
+row can carry a witness and still read a key nothing in the project writes:
+`collections/guides reference live merchants` reddens under a plant that adds a `merchant_id` element key the
+demo ships **0** of, while a ghost `subject_id` — the key all 38 real references use — moves 0 of 216. That row
+is witnessed today, at 100.0%, and still blind. 100% witnessed means every assertion has *a* state that would
+make it answer differently; it does not mean every assertion reads the column the product writes. #95 stays open
+for exactly that reason, and closing the registry must not be read as closing it.
+(iii) Detection is not reachability. None of the seven shows a door can produce the state — D122's distinction,
+unchanged by a fourth plane.
+
+**Gates.** `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442 --container nexus-platform-postgres`
+PASS: 359 rows, 216 of 216 (100.0%), 320 commit / 39 file witnesses, no gap named. One seven-arm drive
+(`--only "text plane:"`, which selects exactly the seven), 9 whole-gate sessions, opening and closing baseline
+both 216 assertions / red = 0 and identical, arm commit `c5ba5af` and row commit `e228c56`. `db_gate_fresh.sh`
+was not re-run for the drive: no gate file, reader, migration or product source changed, and the only shipped
+artifact step 11 reads — this harness and the registry — was re-read on the final bytes. The citation steps were
+re-run after this entry and `STATUS §153` landed, because a ledger append is where the spelled-§ reader has
+before now caught every new red.

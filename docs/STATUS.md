@@ -8290,3 +8290,81 @@ next                (a) Report (do not edit) to the seed lane: re-aim `collectio
                   - (b) #73's residue is now characterised, so either close it by decision (the six file-plane rows
                     as a named, reasoned write-off) or build the fourth mechanism; and #94 still needs the user's
                     authorization before `nexus_test` is rebuilt.
+```
+
+## 153. The falsifier harness gets a fourth mutation plane — text: seven arms rewrite the sliced gate body in memory and the registry closes at 216 of 216, with the number's limits written down in the same entry (2026-09-28)
+
+```
+plane             `data/seed/falsifier_plants.py` (one new function, one new arm list, three plumbed call sites)
+                    and `data/seed/falsifiers.tsv` (eleven rows). No gate file, reader, migration or product
+                    source touched; `data/seed/quality.sql` is read and sliced, never written. Run against the
+                    kept loaded seed database `nexus_gate_283340_1790454442` in `nexus-platform-postgres`.
+                    A text plant's mutation lives in this process only: the tracked file and the database are
+                    the same bytes before and after, and the drive proves it by re-printing an identical
+                    baseline at both ends (216 assertions / red = 0, 9 whole-gate sessions).
+
+changed           - `apply_edits(body, edits)` rewrites the sliced gate body in memory. Each `(anchor,
+                    replacement)` must match exactly once in the shipped text or the drive raises before a
+                    session opens — the failure mode of a text plant is aiming at the wrong sentence.
+                  - `TEXT_ARMS`: seven arms, fleet 158 -> 165, selected as a set by `--only "text plane:"`
+                    (which matched exactly seven and no data arm).
+                  - `gate()` takes `use_body`, the arm loop takes a fifth tuple slot, and the closing print
+                    counts `ARMS + TEXT_ARMS`.
+                  - A formatting repair, not a claim: §152's block was left unclosed at EOF (one fence, where
+                    §147-§151 all carry two). This append closes it and §153 opens and closes.
+
+measured            arm (text plane)                                          rows  target  coll.
+                    poly_vocab gains an armed type with no referent table    216    RED      1
+                    poly_probed gains a probe over a ghost table             216    RED      2
+                    a real registered column re-classified as a waiver       216    RED      0
+                    ref_registry gains `plant.ghost_column`                  216    RED      0
+                    the reference census narrowed to `subject_type` tables   216    RED      1
+                    the pair census narrowed to the four hand-named tables   216    RED      0
+                    the closure walk stops following any edge                216    RED      1
+
+                    Sized before any session was spent, so a green would have been a surprise rather than an
+                    off-by-one: `ref_cat` enumerates 26 columns and the narrowed form leaves 14 against a floor
+                    of >= 17 (quality.sql:1180); `poly_cat` enumerates 12 (type,id) pairs and the narrowed form
+                    leaves 4 against a floor of >= 8 (quality.sql:1264); the traffic closure counts 29 against
+                    >= 20 (quality.sql:257). All three rows went red, as those numbers predict.
+
+                  - One drive, rc=0, `RESULT: PASS`: 11 rows appended (7 from an arm's own RED, 4 from
+                    collateral), 9 of them the first witness those assertions ever carried. The two that were
+                    not first witnesses are `every probe family resolves at least one armed type` (1 prior row)
+                    and `no traffic outside the seeded tables` (7 prior) — a fourth-plane witness on a row a
+                    data-plane plant had already moved, which is a second reader, not a duplicate.
+                  - The join-one-type arm went GREEN first and the drive failed exactly as designed
+                    (`RESULT: FAIL -- … the assertion naming it stayed green`, rc=1). The green is a measurement:
+                    every column the census reports with `types_n > 1` is already registered, so that row is
+                    held by exhaustion and no addition can name it. Re-aimed as a re-classification it reddened
+                    with zero collateral.
+                  - Two anchors and one malformed `edits` shape were caught by a scratch probe that opened no
+                    session (a dropped trailing period made one anchor occur 0 times).
+
+found               (a) The residue is closed and the percentage is now saturated — which means it has stopped
+                        being the interesting question. 216 of 216 says every assertion has a state that would
+                        make it answer differently. It does not say every assertion reads the column the product
+                        writes, and §152 already has the counterexample standing inside the 100%: the
+                        guide-merchant row reddens under a plant that adds a key the demo ships 0 of, while a
+                        ghost `subject_id` on the 38 references that do exist moves 0 of 216. #95 stays open.
+                      - (b) D147's claim that these rows were reachable only by splicing a single assertion is
+                        retired: the schema plants aborted because they removed an object the report reads FROM,
+                        and a text plant removes the sentence instead. Every session here is a whole-gate replay
+                        with the collateral column intact, and D132's "editing the file under test proves the
+                        file agrees with itself" objection is answered by the direction of the evidence — the
+                        arms produce reds, and the unmutated baseline is what carries the shipped seed.
+
+gates               `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442` PASS: 359 rows,
+                    **216 of 216 (100.0%)**, 320 commit / 39 file witnesses, no gap named. Arm commit
+                    `c5ba5af`, row commit `e228c56`. Steps 8 / 9 / 10 / 12 re-run on the final bytes after this
+                    entry landed; `db_gate_fresh.sh` not re-run in full, because no gate file, reader, migration
+                    or product source changed. `mvn -o -B test` untouched by a harness-only unit — still #94's
+                    217 / 11 failures / 38 errors on the divergent `nexus_test`.
+
+next                (a) The registry metric is done, so the next measurement on this plane is a different one:
+                        ask of each assertion whether it reads the key the build actually writes. #95 is the
+                        first such case and it is a report to the seed lane, not an edit.
+                  - (b) #94 still needs the user's authorization before `nexus_test` is rebuilt from the
+                        migration set; #9's Playwright half, #17's reservation transitions, #19's RBAC
+                        reachability wave and #44's events subject seam are the other open build lanes.
+```
