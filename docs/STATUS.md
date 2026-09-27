@@ -7677,3 +7677,47 @@ next              (a) Either build the schema-plane or file-plane falsifier, or 
                     #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's --registry residue, §87's
                     session-time-zone seam, D91's served leg, §130's missing `guide` branch.
 ```
+
+## 142. Nine citations I had reported as wrong are correct: the spec defines §106 as Privacy, and it is the traceability table's own numbering that drifts (2026-09-27)
+
+```
+plane             Docs only. `docs/DECISIONS.md` D133 and this section; nothing shipped changed -- no gate
+                    file, checker, harness or registry row -- and no session opened a database. Registry
+                    stands at 326 rows / 196 of 216 witnessed (90.7%).
+
+changed           A retraction, measured rather than remembered. Task #79 accused 13 sites of citing a
+                    phantom §106 for deletion/retention, on the strength of `docs/TRACEABILITY.md` row 106
+                    reading "AI transparency". The authority that row points at was then read: the spec
+                    file `新建 文本文档.txt` numbers its own sections, and :2773 is `# 106. Privacy`
+                    (:2793 `107. Merchant Data Ownership`, :2807 `108. AI Transparency`).
+
+measured          the spec's headings 96-110                TRACEABILITY's § column in the same band:
+                    straight from the file its own header     13 comparable rows, 0 agreeing with the
+                    names as the source of the numbering.     spec; rows 98/99 absent while the spec has
+                                                              `98. Data Flywheel` / `99. Feedback`.
+
+found               (a) The 13 accused sites -- nine in Java (`IdentityRepository` :106/:339/:360,
+                      `MeController` :33/:111/:122/:125, `ConfigDecorationTest` :27/:52) plus
+                      `application.yml:100` and the four design docs (`DATABASE.md:191`,
+                      `API_CONTRACT.md:193`, `CONSUMER.md:59`, `SECURITY.md:57`) -- cite the spec, where
+                      §106 is Privacy. They are right; the accusation came from a mapping table.
+                    (b) What is actually broken is narrower: two sites spell the plane wrongly,
+                      `CollectionsController.java:186` and `CollectionsReadTest.java:188` both write
+                      `STATUS §106`, and `node scripts/check_status_citations.mjs` still exits FAIL naming
+                      exactly those two (4 spelled citations, 2 resolving, 2 BAD, 565 files scanned).
+                    (c) #80's residue changes meaning: if bare `§NN` is a spec citation, most of the 81
+                      tokens are correct and re-aiming them at ledger sections would be the defect. The
+                      task is re-scoped to classifying by plane.
+
+gates             The eleven-step script was not re-run (nothing it executes changed). The readers were run
+                    on the final bytes of this text: step 8 (exit 0 — 256 headings seen, 552 name:number
+                    tokens, 335 citation-shaped, strict on the working copy), step 9 (73 across 21
+                    files), step 10 (PASS — STATUS HEAD 109 · on disk 110 · duplicates 0 · §142 the one
+                    uncommitted section; DECISIONS HEAD 120 · on disk 121 · D133 the same note),
+                    step 11 (PASS, 326 rows, 196 of 216), and `check_status_citations.mjs` (FAIL, 2 BAD).
+
+next              (a) #79 rewritten to report the two spelled-plane sites and the `TRACEABILITY.md:1`
+                    over-claim. (b) #80 re-scoped. (c) The rule: when a citation looks off by a constant,
+                    read the file that DEFINES the numbering before correcting anything that uses it.
+                    (d) #71, #75, #91 and the rest of the carried list unchanged.
+```

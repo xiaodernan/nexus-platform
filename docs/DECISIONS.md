@@ -8078,3 +8078,75 @@ and the vacuous `collections/guides` predicate to `quality.sql`'s owner -- this 
 does not edit it. (c) #71, eleventh time standing on it: `facts` is still the only seeded table with no
 CHECK. (d) Carried: #75, #62, #64, #58, #44, #17, #19, #34, #79, #80, step 11's `--registry` percentage
 residue, §87's session-time-zone seam, D91's served leg, §130's missing `guide` branch.
+
+## D133 Nine citations I had accused of being wrong are right, and the file that misled me is the mapping table -- `TRACEABILITY.md`'s § column is not the spec's — 2026-09-27
+
+Task #79 has carried this sentence since D116: "nine sites use bare `§106` to describe
+deletion/retention and they cite the wrong TRACEABILITY requirement row: row 106 is *AI transparency*,
+the row they mean is 100." It was written from `docs/TRACEABILITY.md` -- a table whose first column is
+headed `§` and whose line 1 declares "§ numbering = `新建 文本文档.txt`" -- and never from the file it
+declares. This unit reads that file, and the claim collapses.
+
+**Decision (a): the nine sites are correct, in the plane they were written in.** The spec numbers its own
+top-level sections, and at `新建 文本文档.txt:2773` the heading is **`# 106. Privacy`**, followed by
+`# 107. Merchant Data Ownership` (:2793) and `# 108. AI Transparency` (:2807). So
+`IdentityRepository.java:106/339/360`, `MeController.java:33/111/122/125`,
+`ConfigDecorationTest.java:27/52` and `application.yml:100` -- all writing `§106` about erasure,
+deletion-request bookkeeping and export -- cite the section that is about exactly that. So do the four
+design docs I also put on the list: `DATABASE.md:191` ("`deletion_requests` — §106 data-retention
+workflow"), `API_CONTRACT.md:193` ("DELETE `/api/v1/me` creates `deletion_request` (§106)"),
+`CONSUMER.md:59` ("## 9. Privacy & data rights (§106)") and `SECURITY.md:57`. The convention is the one
+`quality.sql` uses out loud ("spec §55", "§94 cold-start density"): a bare `§NN` names a spec section,
+and the ledger citation reader lists `§NN` among the things that are *not* file citations
+(§120's own accounting).
+
+**Decision (b): the mapping table's § column does not carry the spec's numbers in this band, and that is
+the defect worth reporting.** Comparing `TRACEABILITY.md`'s rows with the spec headings in the 96-110
+window, **0 of 13 comparable rows agree**: TRACE row 100 is "Privacy: export/delete/reset; merchant data
+ownership" (spec §106 + §107), row 101 is i18n (spec §111), 102 Reliability (spec §104), 103 AI failure
+ladder (spec §105), 104 Caching (spec §103), 105 No fake reviews/traffic (spec §109/§110), 106 AI
+transparency (spec §108), 107 legal/compliance, 108 one-command dev env, 109 CI/CD, 110 git discipline
+(spec §109-§115 name none of those in those positions), and rows 98/99 are absent while the spec has
+`98. Data Flywheel` and `99. Feedback` there. The table's own header therefore over-claims: it says its
+numbering *is* the spec's, and in this band it is an independent sequence. That single line is what made
+nine correct citations look off by six and would have sent a fix through them that broke them.
+
+**Decision (c): what is actually still broken is narrower and already machine-checked.** Two sites spell
+the plane, and there the plane is wrong: `CollectionsController.java:186` and
+`CollectionsReadTest.java:188` both write `STATUS §106`, and STATUS has no `## 106. ` heading that means
+them -- `node scripts/check_status_citations.mjs` still exits FAIL naming exactly those two today, with
+`STATUS §28` and `STATUS §66` reported ok in the same run. The fix is theirs to make (both files are
+another lane's working copy); what the reader needs from this unit is nothing -- it already refuses the
+right thing, and this is the second time it has caught a claim my prose had already accepted.
+
+**Measurement note (d), which re-scopes #80.** The 81-token residue that task #80 wants "re-aimed" is
+probably not a residue of errors: if a bare `§NN` is a spec citation, most of those tokens are correctly
+pointing at a document that is not STATUS, and re-aiming them at ledger sections would be the actual
+defect. #80's first sub-question -- "does any document define section 106 for the deletion/retention
+workflow?" -- is answered **yes, at `新建 文本文档.txt:2773`**, and the task is re-scoped to
+counting how many of the 81 are spec-plane (correct) rather than ledger-plane (checkable), not re-aiming
+all of them.
+
+**Numbers.** Nothing shipped changed: no gate file, checker, harness, registry row or another lane's file
+was touched, and no session opened the database. The registry stands at 326 rows / 196 of 216 witnessed
+(90.7%); `check_status_citations.mjs` reports **4 spelled citations outside a code span, 2 resolving, 14
+mentions inside spans, 2 BAD**, over 565 scanned files at a HEAD where STATUS holds 109 headings (§23 to
+§141). The evidence read for this entry: `新建 文本文档.txt` is 4,340 lines with `# NN. Title` headings;
+`docs/TRACEABILITY.md` rows 96-110 (13 rows compared, 0 matching); the 13 citing sites listed above.
+
+**Limits.** (i) The 0-of-13 comparison covers the 96-110 band, which is where the accusation lived; the
+rest of TRACEABILITY's § column is not audited here, so the claim is "not in this band", not "never".
+(ii) `# 106. Privacy` is read from the spec's own heading text; whether the spec's *content* under it
+covers export/delete/reset was not compared line by line. (iii) The four design docs and the Java sites
+are cited from `grep` output with the file paths as the reader prints them (`services/platform/...`);
+task #79's text abbreviated them to `apps/platform/...`, which is another small way a remembered path
+differs from a measured one.
+
+**next.** (a) #79 is rewritten: report the two `STATUS §106` sites and the `TRACEABILITY.md:1` over-claim;
+withdraw the nine-and-four accusation. (b) #80 re-scoped as (d) says: classify the 81 by plane before
+touching any of them. (c) The rule this unit exists to leave behind: **when a citation looks off by a
+constant, read the file that defines the numbering, not the table that maps it** -- an off-by-N that
+appears in a mapping table is usually the table's, and "fixing" the citations propagates it. (d) #71,
+eleventh time standing on it. (e) Carried: #75, #91, #62, #64, #58, #44, #17, #19, #34, #79, #80,
+step 11's `--registry` percentage residue, §87's session-time-zone seam, D91's served leg, §130's
+missing `guide` branch.
