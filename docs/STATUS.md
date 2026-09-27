@@ -8136,3 +8136,97 @@ next              (a) #79'"'"'s two remaining halves are other lanes'"'"' nine b
                   (d) Carried: #73, #75 (step-7), #9 (browser half), #44, #58, #62, #64, #79, #17, #19,
                     step 11'"'"'s --registry residue, §87'"'"'s seam, D91'"'"'s served leg, §130'"'"'s `guide` branch.
 ```
+
+## 151. The falsifier harness gets a third mutation plane: seven arms that edit the schema, and eight of the last twenty rows leave the unwitnessed list (2026-09-27)
+
+```
+plane             `data/seed/falsifier_plants.py` (arms only; no gate file, reader or migration touched).
+                    One full drive of all 155 arms plus four targeted runs, against the kept loaded seed
+                    database `nexus_gate_283340_1790454442` in `nexus-platform-postgres`, whose unmutated
+                    baseline this unit re-read as 216 assertions / red = 0.
+
+changed           - `KNOWN_RED` emptied, with the reason next to it (D108 declared those two rows red while
+                    V7 was uncommitted; `d7c2d57` landed it and §149 measured the gate building 7 migrations
+                    over 58 tables).
+                  - `share_links` added to `_NOUN`, `_MUST` and `_EMPTY_CHILD_FKS`, so D125's
+                    insert-then-dangle mechanism now reaches its two `fk: ` names; the list comment's
+                    "minus share_links' two, which exist only on an uncommitted migration" retired with it.
+                  - a seventh arm family: DDL plants in the same rolled-back transaction, six arms.
+
+measured          Each arm is one whole run of the shipped gate body against a mutated schema, inside a transaction the
+session rolls back. The tables below are the drive's own columns: rows the gate filed, whether the named
+target reddened, collateral reds, and names that stopped being filed (every one of them 216 / 0, which is
+what makes a schema plant safe to replay against a shared database).
+
+  arm                                                     rows  target  coll.  unfiled
+  CREATE TABLE agents                            -> no-referent waiver    RED    0      0
+  CHECK 4 labels -> 3                            -> CHECK/door agreement  RED    0      0
+  DROP COLUMN share_links.subject_type           -> door vocab exists     RED    1      0
+  ADD COLUMN merchants.address_verified          -> boolean evidence      RED    0      0
+  ADD COLUMN documents.doc_lang varchar(32)      -> string census types   RED    1      0
+  DROP NOT NULL price_updated_at + NULL one row  -> priced provenance     RED    1      0
+  insert+dangle share_links.created_by / .tenant_id -> the two fk: names  RED    3      0  (each)
+
+All seven then ran again as part of the whole 155-arm drive: `RESULT: PASS`, 158 whole-gate sessions,
+closing baseline 216 assertions / red = 0, identical to the opening one. 17 registry rows appended (8 from
+an arm's own RED, 9 from collateral), and step 11 re-read the record at 343 rows and 204 of 216 assertions
+witnessed — 94.4%, up from the 196 (90.7%) every entry on this arc had been quoting.
+
+found             (a) THE PLANE, NOT THE WRITE. Fifteen of the twenty rows D129 left were census rows about
+                    the SCHEMA. No write reaches them while the constraint stands: `price_updated_at` is
+                    `NOT NULL`, so "a priced offering with no provenance timestamp" is not a row the
+                    database will hold, and `agents`/`listings`/`policies` are named by waivers precisely
+                    because no CREATE TABLE made them. DDL is transactional, so the whole-gate replay the
+                    data plants already use carries a schema mutation with no new mechanism — and the
+                    closing baseline coming back identical is still what certifies the session.
+                  (b) WHAT SUCH A WITNESS MEANS. Six of the seven arms say "schema plane" in their label and
+                    prove the ASSERTION detects a state, never that a door could produce one. The route in
+                    is a migration, not the application. This is D122's discipline restated for a stronger
+                    case: there the plant reached a referential state a deployment could reach only by
+                    silencing FKs; here it reaches a state no deployment reaches without editing the schema,
+                    which is exactly what the row is a claim about.
+                  (c) A TRANSCRIPTION THAT FAILED LOUDLY. The narrowed-CHECK arm was written against
+                    `share_links_subject_type_check`, the convention-spelled name; `pg_constraint` — which
+                    this lane had queried and printed minutes earlier — says `share_links_subject_type_known`.
+                    The session reported `run ABORTED rc=3`, the drive exited 1, and the arm was repointed at
+                    the plane. A plant naming nothing cannot reach anything; the failure shape is the point.
+                  (d) THE COLLATERAL THAT WAS PREDICTED AND THE ONE THAT WASN'T. The DROP COLUMN arm reddened
+                    its own row and dragged the CHECK/door agreement row with it (the census loses its only
+                    member, so its `count > 0` floor fails) — predicted, and it is the second witness for a
+                    row the narrowed-CHECK arm also reddens on its own. The ADD COLUMN varchar arm reddened
+                    `a bounded string column is answered by name` as collateral, which is the D131 window
+                    noticing a 0-value column; and the DROP NOT NULL arm reddened the `cannot vary` spread
+                    row, because one priced timestamp going NULL is exactly two values where there was one.
+
+gates             scripts/db_gate_fresh.sh (12 steps) NOT re-run: no gate file, checker or migration changed;
+                                        the touched artifact is the harness, whose 158 whole-gate sessions are the gate
+                                        body sliced out of quality.sql run against a mutated schema and rolled back --
+                                        the identical closing baseline (216 / 0 red) is what certifies the session.
+                                      step 8 check_ledger_citations --worktree  277 headings · 568 name:number tokens ·
+                                                                                 344 citation-shaped · 0 offenders · exit 0
+                                      step 9 check_comment_citations.mjs       PASS · 73 citations · 21 files · exit 0
+                                      step 10 check_ledger_sections.mjs        PASS · STATUS 118 HEAD / 119 disk ·
+                                                                                 DECISIONS 132 / 133 · 0 missing · 0 dup
+                                      step 11 check_falsifier_registry --db nexus_gate_283340_1790454442
+                                                                                 PASS · 343 rows · 204 of 216 (94.4%) ·
+                                                                                 304 commit + 39 file witnesses
+                                      step 12 check_status_citations.mjs       PASS · every spelled citation resolves
+                                      mvn -o -B test 217 / 11 failures / 38 errors — #94's plane, untouched here
+
+next              (a) The remaining twelve rows split three ways, and the split is now a claim about a
+                    mechanism rather than an untested hunch: file-plane (their falsifier is an edit to
+                    `quality.sql`'s own hand lists — `a join-one-type waiver…`, which is vacuous because the
+                    registry carries zero rows of that kind, plus the two arm/closure rows), whole-gate
+                    abort (a census whose columns a static `WITH probe AS (…)` UNION reads by name cannot be
+                    emptied without the gate body erroring first — `an armed type resolves in a table the
+                    schema has`, `the pairs declared probed…`, `the registry names no column the schema
+                    has lost`), and still-plantable (`collections/guides reference live merchants` is a
+                    jsonb element with no constraint on it at all, `a served view answers every column it
+                    exposes` takes a trailing `CREATE OR REPLACE VIEW` column, and the citext fold row takes
+                    `ALTER COLUMN email TYPE text`). Measure the middle group before writing it off: an
+                    abort is a measurement, an untested claim is not.
+                  (b) Carried: #94 (the suite is still 217 / 11 / 38 and rebuilding `nexus_test` needs the
+                    user's authorization), #75 (step-7 answer sites), #9's browser half, #44, #58, #62, #64,
+                    #79's other halves, #17, #19, §87's session-time-zone seam, D91's served leg, §130's
+                    missing `guide` branch.
+```

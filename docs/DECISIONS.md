@@ -8715,3 +8715,81 @@ offenders; `check_comment_citations.mjs` PASS at 73 across 21 files; `check_ledg
 drift category; `check_jsonb_reads.mjs` exit 0; web `tsc --noEmit` clean and `vitest run` 128 passed; ai
 `pytest` 71 passed, 4 skipped. `mvn -o -B test` remains 217 / 11 failures / 38 errors — this unit touched two
 comments and a shell script, and the suite'"'"'s red is #94'"'"'s schema divergence, measured in §149 (b)-(c).
+
+## D146 The third mutation plane: arms that change the schema, because fifteen of the last twenty unwitnessed rows are about the schema
+
+#73 closed its data era at 196 of 216. D128 had already sorted the remaining twenty by *what kind of
+mutation can reach them*, and D129 spent the nine that a row-write could reach, which left the count sitting
+on a claim this lane had never tested: that the other eleven are unreachable not because nobody looked hard
+enough but because the state they forbid is one the **schema** blocks. Every arm in
+`data/seed/falsifier_plants.py` up to now moves a row. D122's arms move a row the database refuses and say
+so (they open with `SET LOCAL session_replication_role = replica`, which reaches the referential state and
+nothing else); D126's arms move a row the database accepts. Neither family can produce a priced offering
+whose `price_updated_at` is NULL, because that column is `NOT NULL` — the door is the schema's own, and a
+census row about a door cannot be falsified from the side of the data.
+
+**The mechanism, and what it does not claim.** Postgres DDL is transactional, so the seventh family needs no
+new harness: `BEGIN; ALTER TABLE ...; <the whole shipped gate body>; ROLLBACK` puts the mutated schema in
+front of the same 216 assertions in the same session, and the rollback un-does the DDL exactly as it un-does
+a row. The closing baseline still has to come back identical, which is how the drive knows it left the
+database as it found it; the connection is the superuser, because the plant is a schema change and no
+application role can or should make one. What such an arm proves is *narrower* than what a data plant
+proves, and the arm labels say so in the same way D122's say it: a schema-plane plant witnesses that the
+assertion **detects** a state, never that a door could produce one. The route in is a migration — a `V9` that
+drops a `NOT NULL`, a table created beside a waiver that called it absent — which is precisely the seam
+these rows exist to watch.
+
+**Seven arms, and what each one moved.** Each arm is one whole run of the shipped gate body against a mutated schema, inside a transaction the
+session rolls back. The tables below are the drive's own columns: rows the gate filed, whether the named
+target reddened, collateral reds, and names that stopped being filed (every one of them 216 / 0, which is
+what makes a schema plant safe to replay against a shared database).
+
+  arm                                                     rows  target  coll.  unfiled
+  CREATE TABLE agents                            -> no-referent waiver    RED    0      0
+  CHECK 4 labels -> 3                            -> CHECK/door agreement  RED    0      0
+  DROP COLUMN share_links.subject_type           -> door vocab exists     RED    1      0
+  ADD COLUMN merchants.address_verified          -> boolean evidence      RED    0      0
+  ADD COLUMN documents.doc_lang varchar(32)      -> string census types   RED    1      0
+  DROP NOT NULL price_updated_at + NULL one row  -> priced provenance     RED    1      0
+  insert+dangle share_links.created_by / .tenant_id -> the two fk: names  RED    3      0  (each)
+
+All seven then ran again as part of the whole 155-arm drive: `RESULT: PASS`, 158 whole-gate sessions,
+closing baseline 216 assertions / red = 0, identical to the opening one. 17 registry rows appended (8 from
+an arm's own RED, 9 from collateral), and step 11 re-read the record at 343 rows and 204 of 216 assertions
+witnessed — 94.4%, up from the 196 (90.7%) every entry on this arc had been quoting.
+
+
+**One prediction that failed loudly, which is the right way to fail.** The narrowed-CHECK arm was written
+against a constraint name transcribed from the naming convention (`share_links_subject_type_check`) rather
+than from the plane; the real name, which this lane had queried and printed earlier in the same sitting, is
+`share_links_subject_type_known`. The session did not go green and did not report a MISS — it reported
+`run ABORTED rc=3: ERROR: constraint ... does not exist` and the drive exited 1. That is the shape a
+mistyped plant should have: a plant that names nothing cannot reach anything, and a harness that treated an
+unreadable run as a green arm would turn a transcription error into a witnessed assertion. The name was
+repointed at what `pg_constraint` says and the arm then reddened its target with zero collateral.
+
+**Two stale claims retired on the way in.** `KNOWN_RED` held the two rows D108 declared red because
+`share_links` existed only on an uncommitted migration; `d7c2d57` committed V7 and §149 measured the gate
+building it (migrations=7, tables=58), so the baseline is 216 assertions and 0 red, and an empty `KNOWN_RED`
+is the honest state. A declaration that no longer describes the plane is worse than no declaration at all:
+it would let either of those two rows come back genuinely red and be filed as the other lane's. The same
+reason retires the D125 list comment's "minus share_links' two, which exist only on an uncommitted
+migration" — those two names are on the plane, the child table is empty, so they are exactly D125's
+insert-then-dangle case, and both arms landed with the three collateral rows that mechanism always drags
+(`no traffic outside the seeded tables`, `every reference the seed writes is probed or explained`,
+`every column that cannot vary`) because the synthetic row is written outside the 23-table anchor.
+
+**What the eight new witnesses do not buy.** The eight new witnesses are the eighth, ninth and tenth of the twenty sorted by D128, not the eleven
+that remain. Two of the twelve left are now known to be vacuous-by-empty-census rather than untested
+(`a join-one-type waiver is only true while the table ships one type` reads a registry that carries zero
+rows of that kind, so the only plant that reddens it edits `quality.sql`'s own hand lists); and the
+strongest claim this unit can make about the rest is a *prediction* it did not spend: three of them
+(`an armed type resolves in a table the schema has`, `the pairs declared probed are pairs the schema has`,
+`the registry names no column the schema has lost`) sit behind static `WITH probe AS (...)` UNIONs that
+read the very columns a plant would have to remove, so the whole-gate replay is expected to error out
+before the report — which the drive would then report as `run ABORTED rc=3` rather than as a green arm.
+An abort measured is a disposition; an untested claim is not, and that measurement is the next unit.
+
+**Gates, on the final bytes of this text** (§151 carries the census): `check_ledger_citations.mjs --worktree` exit 0 at 277 headings / 568 name:number tokens / 344 citation-shaped / 0 offenders; `check_comment_citations.mjs` PASS at 73 citations across 21 files (28 distinct files cited) — this unit touched no source comment; `check_ledger_sections.mjs` PASS with STATUS 118 at HEAD / 119 on disk and DECISIONS 132 / 133, D146 and §151 the only disk-only headings, 0 missing and 0 numbers claimed twice; `check_status_citations.mjs` PASS, every spelled `STATUS §NN` resolving to a heading at HEAD; `check_falsifier_registry.mjs --db nexus_gate_283340_1790454442` PASS at 343 rows, 204 of 216 witnessed (94.4%), 304 commit and 39 file witnesses.
+                    
+                    `db_gate_fresh.sh` was not re-run, because no gate file, reader or migration changed; the shipped code touched is the plant harness, and its 158 whole-gate sessions are the gate body sliced out of `quality.sql` executed against a mutated schema inside a transaction that is rolled back — the identical closing baseline is what certifies that. `mvn -o -B test` stays 217 / 11 failures / 38 errors, which is #94's divergent `nexus_test`, unchanged by a harness-only unit.
