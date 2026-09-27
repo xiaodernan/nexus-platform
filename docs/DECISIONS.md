@@ -9277,3 +9277,14 @@ archived run's output path is part of what that run did, and editing a witness t
 the same mistake in a new costume. Task 101 owns the question of what should happen to them. What survives of
 this entry's claim is narrower and still measured: no file under `scripts/`, no build file and no workflow
 resolves a path through a user's home any more, and the one that did is fixed.
+
+**Amendment two, same day: the sentence about concurrent runs was a hazard statement wearing a measurement's
+clothes.** The paragraph above says two runs of this harness on one account "collide by name". Attacked as
+claimed — eight pairs fired simultaneously, sixteen runs sharing the fixture root — it produced 0 red pairs,
+0 non-zero exits and 0 missed arms, so the collision was never demonstrated and the wording is withdrawn. What
+is true is narrower and read off the code rather than measured: the harness removes the whole fixture root once,
+at its own start, and every arm re-creates its own directory immediately before running the checker on it, so a
+second run can take a first run's fixture only inside the gap between one arm's write and that arm's subprocess —
+a per-arm window, not a per-run certainty, and sixteen shared-root runs found it shut every time. Whether it can
+be forced open is a question for whoever owns the next visit to this file, and the answer needs a rate from a
+loop, not a single try — the standard the paragraph above now holds itself to.

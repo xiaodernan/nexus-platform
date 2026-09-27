@@ -8665,3 +8665,9 @@ re-measure of the same revision finds 3 code files and 3 prose files, the code o
 scripts that the falsifier registry names in 17 rows — so they are live witnesses, deliberately left alone, and
 the open question is filed as task 101. The fix D153 landed is unaffected: the harness it corrected is still the
 only file under `scripts/` that ever carried such a path, and it no longer does.
+
+**Corrects again.** The Next line above says the harness's shared fixture root makes concurrent runs collide by
+name. Fired as eight simultaneous pairs — sixteen runs on one root — that produced no red pair, no non-zero exit
+and no missed arm, so the sentence was a hazard wearing a measurement's clothes and it is withdrawn here; D153
+carries the withdrawal with the narrower window read off the code. A next visit may ask whether that window can
+be forced open, and should answer with a rate rather than a try.
