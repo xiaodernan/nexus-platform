@@ -992,6 +992,79 @@ ARMS += [
      " AS plant_unanswered FROM (' || d || ') s'; END $d147$;"),
 ]
 
+# Batch D148: the fourth mutation plane. Six arms that rewrite the sliced gate body in memory, aimed at the rows
+# D147 left -- the hand lists (`poly_vocab`, `poly_probed`, `ref_registry`) and the two census floors that read
+# `ref_cat` / `poly_cat`.
+#
+# WHY A FOURTH PLANE, AND WHAT IT CANNOT CLAIM. D147 measured that three of the nine cannot be reached by a
+# data or schema plant at all: the objects they watch are the objects the report is computed FROM, so removing
+# one ends the session before the report (`column "subject_id" does not exist`, `relation "api_keys" does not
+# exist`). The rest are rows whose both sides live inside `data/seed/quality.sql`, and D132 wrote the honest
+# objection down: "a plant would have to edit the file under test, and a green there proves the file agrees with
+# itself". That objection is about a *green*, and these arms produce *reds*. What a text plant witnesses is
+# narrow and has to be stated narrowly: `this comparison is live -- it moves when one side drifts`, never `the
+# shipped seed is wrong`. The shipped seed is exactly what the unmutated baseline already proved green, and the
+# database is untouched by a text arm, so the closing-baseline-identical rule is weaker here, not stronger: the
+# thing that changed is the SQL the session ran, and it never existed outside this process. The anchor rule is
+# what keeps the aim honest: an anchor that does not occur exactly once in the shipped body raises before the
+# session opens, so a plant cannot silently aim at a phrase's second occurrence and report a red the real file
+# never contained.
+#
+# Aimed by measurement, not by hope: the two census plants were sized against the shipped predicates read
+# out-of-process first. `ref_cat` measures 26 columns over both naming shapes; narrowing the enumeration to
+# tables that carry a `subject_type` column -- the census mistaking itself for the polymorphic probe, which is
+# exactly the blindness the row exists to catch -- leaves 14 against a floor of 17. `poly_cat` measures 12
+# pairs; restricting it to the four tables `poly_probed` already names leaves 4 against a floor of 8. Both fall
+# on the correct side of their floor with margin, so a green would be a real surprise rather than an off-by-one.
+TEXT_ARMS = [
+    ("an armed type resolves in a table the schema has",
+     "text plane: the hand vocabulary gains an armed type whose referent table this schema does not have",
+     "", (),
+     [("INSERT INTO poly_vocab VALUES",
+       "INSERT INTO poly_vocab VALUES\n ('facts', 'plant_ghost_type', 'arm', 'plant_ghost_referent', "
+       "'declared',\n  'text-plane plant: an armed type whose referent table this schema does not have'),")]),
+    ("the pairs declared probed are pairs the schema has",
+     "text plane: the probe list declares a probe over a table this schema does not have",
+     "", (),
+     [("INSERT INTO poly_probed VALUES",
+       "INSERT INTO poly_probed VALUES\n ('plant_ghost_table', 1, 'text-plane plant: a probe declared over "
+       "a table the schema does not have'),")]),
+    ("a join-one-type waiver is only true while the table ships one type",
+     "text plane: a registered column is re-classified as a join-one-type waiver while its table ships more than "
+     "one subject_type -- the name is chosen from ref_cat, not transcribed",
+     "", (),
+     [("asks whether an operator id resolves.');",
+       "asks whether an operator id resolves.');\n\nUPDATE ref_registry SET kind = 'join-one-type' WHERE name ="
+       " (SELECT c.name FROM ref_cat c WHERE c.types_n > 1 ORDER BY c.name LIMIT 1);")]),
+    ("the registry names no column the schema has lost",
+     "text plane: the registry gains a name no column of this schema carries",
+     "", (),
+     [("INSERT INTO ref_registry VALUES",
+       "INSERT INTO ref_registry VALUES\n ('plant.ghost_column', 'probe',\n"
+       "  'text-plane plant: a registered reference column this schema does not have'),")]),
+    ("the reference census reads the catalogue",
+     "text plane: the reference census mistakes itself for the polymorphic probe and enumerates only tables "
+     "carrying a subject_type column (26 measured columns, 14 left, floor 17)",
+     "", (),
+     [("            OR (a.attname LIKE '%\\_by' AND a.atttypid = 'uuid'::regtype))",
+      "            OR (a.attname LIKE '%\\_by' AND a.atttypid = 'uuid'::regtype))\n"
+      "       AND EXISTS (SELECT 1 FROM pg_attribute s\n"
+      "                WHERE s.attrelid = c.oid AND s.attname = 'subject_type' AND NOT s.attisdropped)")]),
+    ("the polymorphic-pair census reads the catalogue",
+     "text plane: the pair census enumerates only the four tables the hand list already names "
+     "(12 measured pairs, 4 left, floor 8)",
+     "", (),
+     [("     WHERE ta.attnum > 0 AND NOT ta.attisdropped AND ta.attname LIKE '%\\_type'\n     ORDER BY 1, 2",
+       "     WHERE ta.attnum > 0 AND NOT ta.attisdropped AND ta.attname LIKE '%\\_type'\n"
+       "       AND c.relname IN ('facts', 'favorites', 'moderation_cases', 'permission_grants')\n"
+       "     ORDER BY 1, 2")]),
+    ("traffic sweep reaches the whole closure, not a hand list",
+     "text plane: the closure walk's recursive arm stops following any edge, so the sweep sees only the tables "
+     "the anchor names by hand (29 measured, floor 20)",
+     "", (),
+     [("         WHERE fk.contype = 'f'", "         WHERE fk.contype = 'x'")]),
+]
+
 # The control: arm 0 re-planted with the BEFORE UPDATE trigger switched off, so the same deception is
 # the only difference between this run and that arm's. If the collateral is what the D108 measurement
 # says it is, the target stays red and the collateral goes to zero.
@@ -1059,6 +1132,26 @@ def parse(out):
     return int(count), reds, split(one("N|")), split(one("M|")), unsafe
 
 
+def apply_edits(body, edits):
+    """Rewrite the sliced gate body in memory -- the text plane's plant.
+
+    The shipped file is never written: the slice this drive already read is rewritten here and the session runs
+    that. Each edit is `(anchor, replacement)` and the anchor has to occur exactly once, because a plant that
+    silently aimed at a phrase's second occurrence would report a red the shipped text never contained.
+
+    What a text plant can witness is narrower than what a data or schema plant can. The hand lists these arms
+    grow and shrink are the gate's own, so the claim is `this comparison is live: it moves when one side
+    drifts`, never `the shipped seed is wrong`. The shipped seed is exactly what the unmutated session already
+    proved green, and an arm that contradicts its own baseline would be a broken fixture, not a falsifier.
+    """
+    for anchor, replacement in edits:
+        n = body.count(anchor)
+        if n != 1:
+            raise AssertionError(f"text plant anchor occurs {n} times, not once: {anchor[:70]!r}")
+        body = body.replace(anchor, replacement, 1)
+    return body
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", required=True)
@@ -1084,9 +1177,10 @@ def main():
 
     sessions = 0
 
-    def gate(plant=None, pre=None, expect=(), baseline=False):
+    def gate(plant=None, pre=None, expect=(), baseline=False, use_body=None):
         nonlocal sessions
-        out, err, rc = run(args.container, args.db, gate_under(body, plant, pre, expect, baseline))
+        out, err, rc = run(args.container, args.db,
+                           gate_under(body if use_body is None else use_body, plant, pre, expect, baseline))
         count, reds, names, missing, unsafe = parse(out)
         if rc != 0 or count is None:
             print(f"  run ABORTED rc={rc}: {err[:200]}")
@@ -1105,15 +1199,20 @@ def main():
         print(f"   {'declared (D108)' if n in KNOWN_RED else 'UNDECLARED   '} {n}")
     failed = [f"baseline red {n} is not declared" for n in base_reds if n not in KNOWN_RED]
 
-    arms = [a for a in ARMS if args.only is None or args.only in a[0] or args.only in a[1]]
+    arms = [a for a in ARMS + TEXT_ARMS if args.only is None or args.only in a[0] or args.only in a[1]]
     if not arms:
-        sys.exit(f"FATAL: --only {args.only!r} selected none of the {len(ARMS)} arms")
+        sys.exit(f"FATAL: --only {args.only!r} selected none of the {len(ARMS) + len(TEXT_ARMS)} arms")
     print(f"\n{'arm planted':<54} {'rows':<6} {'target':<8} {'collateral':<11} unfiled  reddened")
     witnessed, collateral_witnessed = [], []
     for arm in arms:
         marker, label, plant = arm[0], arm[1], arm[2]
         declared = arm[3] if len(arm) > 3 else ()
-        count, reds, _, missing, _ = gate(plant, expect=base_names)
+        edits = arm[4] if len(arm) > 4 else ()
+        # A text plant moves the body the session runs, not the data underneath it; the judgment is the same.
+        if edits:
+            count, reds, _, missing, _ = gate(None, expect=base_names, use_body=apply_edits(body, edits))
+        else:
+            count, reds, _, missing, _ = gate(plant, expect=base_names)
         if count is None:
             failed.append(f"{label}: run unread")
             continue
@@ -1170,7 +1269,7 @@ def main():
           f"({'identical to opening' if same else 'DIFFERS -- the drive left residue'})")
     if not same:
         failed.append("the database changed under the drive")
-    print(f"arms run          {len(arms)} of {len(ARMS)}"
+    print(f"arms run          {len(arms)} of {len(ARMS) + len(TEXT_ARMS)}"
           f"{' plus one control' if ran_control else ''}, against one loaded database, "
           f"{sessions} whole-gate sessions, every one counted and rolled back")
     if failed:
