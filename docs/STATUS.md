@@ -8709,3 +8709,26 @@ still open      #102 names the dialect problem this exposed: `check_jsonb_reads.
                 step 11's contract (D113) is that a witness is tracked and openable, never that a plant
                 re-runs. The archive stays; the claim the row certifies is now written down instead of
                 assumed.
+
+## 160. D155: step 10's reader stopped guessing which spelling the operator meant
+
+before          `node scripts/check_ledger_sections.mjs --dir=<fixture>` printed "docs/STATUS.md HEAD 127
+                sections · on disk 127 · missing 0" and `RESULT: PASS`, exit 0 — the repository censused while
+                the operator read a fixture's verdict. `--report`, a flag of steps 7 and 8, was swallowed the
+                same way.
+after           same command on the same fixture: "on disk 2 · missing 127" · `RESULT: FAIL` · exit 1, i.e. the
+                plane asked for is the plane scored. The space spelling is unchanged (`--dir <fixture>` gave
+                the same FAIL before and after), an empty `--dir=` is `RESULT: NOT CHECKED` exit 2, and an
+                unknown flag is refused with the flag list named.
+control         bare run on the repository: HEAD 127 · disk 127 · missing 0 · exit 0.
+harness         `scripts/falsify_ledger_sections.mjs`: 8 arms · 8 held · 0 missed · exit 0. It passes the space
+                form, so no D116 arm was resting on the defect.
+why             D154 fixed this shape in one of the two readers that had it; the census that found the second is
+                #102, and the remaining bare-form-only parsers are `check_contract_drift.mjs:36`,
+                `verify_contract_runtime.mjs`, `verify_served_reads.mjs`. A shared argument parser is the real
+                fix and is not invented in a two-line commit.
+gates           steps 8/9/10/12 re-run on the bytes this section is written into: 377 citation-shaped tokens
+                with 0 offenders, 73 comment-plane citations across 21 files, HEAD 141 decisions and 127
+                STATUS sections present on disk with missing 0 and duplicate numbers 0, and 11 of 11
+                spelled citations resolving; `falsify_status_citations.mjs` 6 arms · 6 held, and
+                `falsify_ledger_sections.mjs` 8 arms · 8 held.

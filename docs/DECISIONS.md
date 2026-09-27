@@ -9347,3 +9347,36 @@ this repository has two flag dialects (`check_jsonb_reads.mjs:52` parses only `-
 one, is #102. And the probe script written for the expansion check printed `rc=0` on the armed case: its
 `|| true` clobbered `PIPESTATUS`, so that number is the probe's bug, not the checker's — case (3) above is where
 exit 1 was measured.
+
+## D155 — The flag D154 fixed was not a one-off: step 10's reader had the same blind half, and now neither does
+
+**Context.** D154 found `check_status_citations.mjs` parsing `--dir <x>` but not `--dir=<x>`, and the search for
+other copies of that shape came back with the `arg` helper in `scripts/check_ledger_sections.mjs` —
+`const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; }`, the
+reader gate step 10 runs. (Its line number is not cited because this patch moved it, and a pointer that only
+the pre-patch file satisfies is the kind of claim step 8 exists to catch.) It was left alone in that commit on
+purpose: the gate was mid-flight and a checker must not change under the run that is certifying it. That
+constraint lifted when the two legs finished.
+
+**Measured first, on the unpatched file.** `node scripts/check_ledger_sections.mjs --dir=<fixture>` — a fixture
+holding two STATUS sections and two DECISIONS entries — printed
+"docs/STATUS.md HEAD 127 sections · on disk 127 · missing 0 · duplicate numbers 0" and `RESULT: PASS`, exit 0.
+That is the repository being censused while the operator reads a fixture's result. The same fixture through the
+spelling the file does parse (`--dir <fixture>`) prints "on disk 2 · missing 127" and `RESULT: FAIL`, exit 1.
+The equals form was not a rarer typo either: `check_jsonb_reads.mjs` documents only `--quality=<x>`, so both
+dialects are live in one gate, and `--report` — a real flag of steps 7 and 8 — was silently accepted here too.
+
+**Fix.** Same shape as D154: both spellings parse, an empty value is refused, and a flag this reader does not
+know is a `RESULT: NOT CHECKED` exit 2 rather than a silence. One helper now, defined above its first use, which
+removed a duplicate `notChecked` definition that the patch would otherwise have had to shadow.
+
+**Measured after.** Bare: HEAD 127 · disk 127 · PASS · exit 0. `--dir <fixture>`: missing 127 · FAIL · exit 1
+(unchanged — the regression half). `--dir=<fixture>`: the same fixture plane, missing 127 · FAIL · exit 1.
+`--report`: `unknown option --report — flags this reader parses: --head-rev, --dir` · exit 2. `--dir=`: `--dir=
+was given no value` · exit 2. Its harness `scripts/falsify_ledger_sections.mjs` still holds 8 arms / 8 / 0
+missed, exit 0, and it passes the space form, so — as with D117's arms — no existing arm was faked by this.
+
+**What is left of #102.** The dialect itself is still a convention, not a gate: nothing reddens a checker that
+accepts only one spelling, and `check_contract_drift.mjs:36` and the `verify_*.mjs` readers parse only the bare
+form. The rule this lane now follows when writing a checker is in both files' usage blocks; promoting it to a
+gate needs a shared argument parser, which is a larger seam than a two-line fix and is not invented here.

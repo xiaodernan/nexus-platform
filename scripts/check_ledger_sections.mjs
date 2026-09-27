@@ -16,7 +16,8 @@
  *         middle of writing an entry — but D115's nine sections sat in that state for three days, so it
  *         is printed with its numbers on every run instead of being silently allowed.
  *
- * Usage: node scripts/check_ledger_sections.mjs [--head-rev <rev>] [--dir <checkout root>]
+ * Usage: node scripts/check_ledger_sections.mjs [--head-rev <rev>|--head-rev=<rev>] [--dir <root>|--dir=<root>]
+ *        A flag this reader does not parse is a NOT CHECKED refusal with exit 2, not a silence (D155).
  * Exit: 0 the planes are consistent · 1 a committed heading is missing or a number is duplicated ·
  *       2 not checkable (D96's own answer: `git show` cannot spawn, a ledger cannot be read, or the
  *       heading pattern matches nothing — a reader that saw no headings did not check the headings).
@@ -31,14 +32,39 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
+
+// D155: the same one-spelling bug D154 found in `check_status_citations.mjs`, found by the census that file
+// prompted: `process.argv.indexOf('--dir')` never sees `--dir=<checkout>`, so an operator who typed the equals
+// form got the REPOSITORY censused and a `RESULT: PASS` printed for a plane they were not looking at. Both
+// spellings parse now, and a flag this reader does not read is a NOT CHECKED refusal rather than a silence.
+const notChecked = (why) => { console.error(`RESULT: NOT CHECKED — ${why}`); process.exit(2); };
+const FLAGS = ['--head-rev', '--dir'];
+function arg(name, d) {
+  const argv = process.argv.slice(2);
+  let got;
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === name) {
+      got = argv[++i];
+      if (got === undefined) notChecked(`${name} was given no value`);
+    } else if (argv[i].startsWith(`${name}=`)) {
+      got = argv[i].slice(name.length + 1);
+      if (!got) notChecked(`${name}= was given no value`);
+    }
+  }
+  return got === undefined ? d : got;
+}
+for (const a of process.argv.slice(2)) {
+  if (a.startsWith('--') && !FLAGS.some((f) => a === f || a.startsWith(`${f}=`))) {
+    notChecked(`unknown option ${a} — flags this reader parses: ${FLAGS.join(', ')}`);
+  }
+}
+
 const REV = arg('--head-rev', 'HEAD');
 const DIR = resolve(arg('--dir', ROOT));
 const LEDGERS = [
   { path: 'docs/STATUS.md', re: /^## (\d+)\. /gm, kind: 'section' },
   { path: 'docs/DECISIONS.md', re: /^## (D\d+) /gm, kind: 'decision' },
 ];
-const notChecked = (why) => { console.error(`RESULT: NOT CHECKED — ${why}`); process.exit(2); };
 
 const headings = (text, re) => {
   const seen = new Map();
