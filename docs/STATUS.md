@@ -9016,3 +9016,31 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     tokens over 303 sections with 0 offenders, 80 comment-plane citations across 22 files,
                     HEAD 146 decisions and 132 STATUS sections against the same on disk with missing 0 and
                     duplicates 0, and every spelled section citation resolving.
+
+## 166. D161: a citation onto a blank line is now an offender on the plane where rows are new, and the comment plane's first red was this checker's own header
+
+                    The class D160 measured is armed where it costs nothing: `BLANK LINE` offends under
+                    `--text`, which is what the falsifier plants and gate step 9's generated census both use,
+                    and is counted-without-offence on the two real ledgers, where 14 span starts sit on empty
+                    lines and four of the oldest cannot be repaired because a committed row is corrected by
+                    appending. The reading plane prints its count on every run, so the exemption is a reported
+                    backlog (#108) rather than a silent one.
+
+                    Arming it reddened step 9 immediately, and the offender was the header comment of
+                    `check_ledger_citations.mjs` — D94's
+                    "example of the grammar inside the sentence explaining the grammar", and the line it named
+                    was blank at HEAD as well as on disk, so this was a live false claim in a source comment,
+                    not another lane's drift. Written under the placeholder convention now: the comment plane
+                    goes from 80 citations to 78 and its blank count to zero.
+
+                    `falsify_ledger_text.mjs` holds 20 of 20 with two new arms. The red arm plants one blank
+                    cite and one text cite in the same file and requires exactly `BLANK LINE (1)` naming the
+                    blank one, with both numbers derived from the file at run time so a stale fixture cannot
+                    fake the witness. The green arm runs the real ledgers and requires the count to print with
+                    no offence — the arm that turns the exemption into something a future reader can see.
+
+                    What it does not do: it reads only whether the span's first line is empty, so a citation
+                    onto `}` still passes, and D160's refused predicate (an anchor on the cited line 18 times
+                    out of 64) is still refused. Readers on these bytes: 650 tokens over 305 sections, 416
+                    working-copy citations, 0 offenders; 78 comment-plane citations across 22 files; steps 10
+                    and 12 PASS; sibling harnesses 20 · 8 · 13 · 8 · 6 arms, all held.

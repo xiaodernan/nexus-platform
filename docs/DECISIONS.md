@@ -9770,3 +9770,49 @@ in the first pass, because the first pass counted tokens whose line number runs 
 this one does not — the 51-token difference is the past-EOF and unresolvable-name class step 8 already
 scores, not a hidden set. The blank-line census reads the working copy, so another lane's uncommitted append
 can change it between two runs of this same script; every figure above names the tree it was taken from.
+
+## D161 — The blank-line class is armed where a row is new, and the first thing it caught was a false citation in the file that hosts the convention against false citations
+
+**The predicate.** Step 8 has scored `FILE NOT FOUND`, `AMBIGUOUS`, `BACKWARDS`, `ZERO` and `PAST EOF` since
+D88, and every one of them asks a question of the *name*, never of the line. D160 measured the gap and found
+one class inside it with signal: a citation whose span starts on a line holding nothing. That is now an
+offender kind, `BLANK LINE`, with the detail line naming the emptiness rather than the expected content — the
+reader already knows what it meant, and this checker has never claimed to know what a line should say.
+
+**Where it judges, and why that is not a loophole.** The class offends in `--text` mode and is counted-only on
+the reading plane, and the split was chosen from D160's own numbers: the ledgers hold 14 span starts on blank
+lines today, and a committed row can only be corrected by appending, which leaves the old number standing. The
+plane where every row is new by construction is `--text` — what the falsifier plants use, and what gate step 9
+funnels the whole comment plane through. So the comment plane is judged from this commit forward and the ledger
+plane is not, which is the asymmetry D160 said the design needed; the backlog to close it is #108, and the
+count is printed on the reading plane every run so the exemption cannot be forgotten.
+
+**What it caught first was in `scripts/check_ledger_citations.mjs` itself.** Step 9 went red the moment the
+class was armed: one comment-plane citation landing on an empty line, attributed to the census file's own
+section. The site was this checker's header comment, listing example cites of the shapes it accepts — written
+with real line numbers rather than under the placeholder convention D94 established for exactly that mistake,
+which is "an example of the grammar written inside the sentence explaining the grammar". One of the two
+examples pointed at a blank line, and the blank line was blank at HEAD too, so this was not another lane's
+drift: it was a false claim in a source comment that had been passing because nothing had ever asked what the
+cited line contains. The examples are now written the way D94 prescribes, which takes the comment plane from 80
+citations to 78 and the blank count on that plane to zero.
+
+**Armed from both ends.** `scripts/falsify_ledger_text.mjs` grew two arms and holds 20 of 20. The red arm
+plants two citations, one onto a blank line and one onto a line of text in the same file, and requires exit 1
+with `BLANK LINE (1)` naming the blank one — so the arm cannot pass by flagging both, and cannot pass by
+flagging neither. The line numbers are derived from the cited file at run time, the way D157's past-EOF number
+is, because a fixture written with a hand-counted line number proves the checker is reading a stale file rather
+than reading correctly. The green arm runs the real ledgers and requires the count to print with no offence,
+which is the sentence that stops someone from quietly turning the exemption into an amnesty: it can only stay
+green while the count is reported.
+
+**Measured on the bytes this entry describes.** Reading plane: 650 citation-shaped tokens over 305 sections,
+416 working-copy citations, 0 offenders, 14 blank starts counted. Comment plane: 78 citations across 22 files,
+0 blank, `RESULT: PASS`. Steps 10 and 12 PASS. Sibling harnesses on the same bytes: flag dialect 20 of 20,
+quality seam 8 of 8, ledger sections 8 of 8, status citations 6 of 6, comment plane 13 of 13.
+
+**Limits, stated.** The predicate asks only whether the span's first line is empty, so a citation onto a line
+of `}` or a stray `else` still passes — this closes "nothing is there", not "what is there is wrong". The
+counted-but-not-judged split means a fresh false citation can still be written into either ledger and stay
+unpunished until #108 lands, and #108 has to answer the self-reference D160 documented first: this census's
+population includes the sentences written about it.

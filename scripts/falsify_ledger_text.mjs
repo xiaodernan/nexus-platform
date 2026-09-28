@@ -110,6 +110,24 @@ const PLANT_AMBIG = fixture('plant_ambiguous.md', [
 // Not a ledger: no `## ` heading anywhere, which the census reads as "I did not read what I claim to have".
 const HEADLESS = fixture('plant_headless.md', ['# D157 plant', '', 'a citation-shaped token: package.json:1']);
 
+// D161 — the blank-line class, aimed at the plane that judges it. Both numbers are derived from the cited file
+// at run time for the same reason PAST_END is: a written-down line goes stale at the next edit. Here staleness
+// would not merely rot the arm, it would empty it — the claim being pinned is that an EMPTY line offends while
+// a line carrying text beside it does not, which needs one of each from the same file in the same run.
+const TARGET = readFileSync(join(ROOT, 'scripts', 'cli_args.mjs'), 'utf8').replace(/\r\n/g, '\n').split('\n');
+const BLANK_AT = TARGET.findIndex((l, i) => i > 0 && !l.trim() && TARGET[i - 1].trim()) + 1;
+const TEXT_AT = TARGET.findIndex((l) => l.includes('export function parseFlags')) + 1;
+if (BLANK_AT < 1 || TEXT_AT < 1) {
+  throw new Error(`cannot derive the blank-line fixture from scripts/cli_args.mjs (blank ${BLANK_AT}, parseFlags ${TEXT_AT})`);
+}
+const PLANT_BLANK = fixture('plant_blank_line.md', [
+  '# D161 plant',
+  '',
+  '## D995 A citation that lands on an empty line',
+  '',
+  `The empty one is at scripts/cli_args.mjs:${BLANK_AT} and the real one is at scripts/cli_args.mjs:${TEXT_AT}.`,
+]);
+
 const run = (args) => {
   const r = spawnSync(process.execPath, [CHECKER, ...args], { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26 });
   return { code: r.status, out: `${r.stdout || ''}${r.stderr || ''}` };
@@ -137,6 +155,14 @@ const ARMS = [
     // The count and the candidate list are not pinned: which three of the six `package.json` files the walk
     // reports first is the index's business, and a floor of "some number, and the word hold it" is the claim.
     must: [/FALSE LEDGER CITATIONS \(1\)/, /AMBIGUOUS/, /[1-9]\d* files hold it: /] },
+  { name: 'a citation onto an empty line offends on the --text plane, and it is the only offender there',
+    args: [`--text=${PLANT_BLANK}`], expect: 1,
+    must: [/name:number tokens\s+2/, /FALSE LEDGER CITATIONS \(1\)/, /BLANK LINE \(1\)/,
+      new RegExp(`scripts/cli_args.mjs:${BLANK_AT} is empty`), /a blank line cannot hold the claim this cite makes/] },
+  { name: 'the reading plane counts the blank class and refuses to offend on it (D161 backlog)',
+    args: ['--worktree'], expect: 0,
+    must: [/blank-line cites\s+\d+ span start\(s\) on an empty line/, /counted, not judged, on the reading plane/],
+    absent: [/BLANK LINE \(\d+\):/, /FALSE LEDGER CITATIONS/] },
   { name: 'an unparseable flag is refused, not dropped', args: [`--tex=${PLANT_EOF}`], expect: 2,
     must: [/RESULT: NOT CHECKED — unknown option --tex/] },
   { name: '--text= with nothing after the sign', args: ['--text='], expect: 2,

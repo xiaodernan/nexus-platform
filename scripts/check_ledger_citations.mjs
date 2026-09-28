@@ -16,6 +16,8 @@
  *   FILE NOT FOUND   the name carries a source extension or a directory path and the index holds no such file
  *   AMBIGUOUS        the basename is held by more than one file, so the cite names none of them in particular
  *   PAST EOF         the cited line is beyond the file's last line (and the whole range is printed)
+ *   BLANK LINE       the span starts on a line that holds nothing — offended in `--text` mode, counted on the
+ *                    reading plane, because a committed row can only be corrected by appending (D161)
  *   BACKWARDS        a `78-84` range written `84-78`
  *   ZERO             line 0, which no editor can show
  *
@@ -104,12 +106,24 @@ const LEDGERS = ARGS.text === null ? ['docs/DECISIONS.md', 'docs/STATUS.md'] : [
 const REPORT_ONLY = ARGS.report;
 const WORKTREE = ARGS.worktree || ARGS.text !== null;
 const VERBOSE = ARGS.verbose;
+/**
+ * D161 — the blank-line class is judged in `--text` mode and not on the two real ledgers, and the reason is a
+ * measured count rather than convenience. `scripts/citation_blank_census.mjs` found 12 citations in the ledgers
+ * landing on a line that holds nothing (D160): 6 existed before D160 was written and 6 are the sentences D160
+ * itself wrote to name those 6. This project corrects a committed row by appending, and an append cannot move
+ * the number the older row printed, so arming the class on the reading plane would red the gate on history;
+ * a hand-typed `file:line` allow list is the exemption shape §-conventions already rejected, because an
+ * exemption keyed on a line number expires silently on the next edit. The plane a run is WRITING is where the
+ * predicate has no backlog: `--text` is what the falsifier plants use and what gate step 9 feeds its generated
+ * comment-plane census through, so every row scored there is new by construction.
+ */
+const BLANK_JUDGED = ARGS.text !== null;
 
 /* ------------------------------------------------------------------ the source index */
 
 /**
  * What a paragraph is allowed to point at: the build's own sources, which `source_index.mjs` names for D87's
- * site census, plus the docs, config and lock files a ledger cites — `docs/DATABASE.md:88`, `.github/workflows/ci.yml:24`,
+ * site census, plus the docs, config and lock files a ledger cites — `docs/DATABASE.md:NN`, `.github/workflows/ci.yml:NN`,
  * `package.json:NN`. The directory exclusion is NOT local: it is the shared list in `source_index.mjs`, which
  * this checker grew by four tool-cache names — because that index would otherwise name `.gitignore` four times
  * instead of twice (`.pytest_cache` at the root and under `apps/ai/`) and report a true root cite AMBIGUOUS.
@@ -132,10 +146,14 @@ for (const rel of FILES) {
   if (m) MIGRATIONS.set(m[1], [...(MIGRATIONS.get(m[1]) ?? []), rel]);
 }
 
-const LENGTH = new Map();
+const TEXT = new Map();
+/** The cited file's lines, read once per file: a census asks for the same file dozens of times. */
+function fileText(rel) {
+  if (!TEXT.has(rel)) TEXT.set(rel, readFileSync(join(ROOT, rel), 'utf8').split(/\r?\n/));
+  return TEXT.get(rel);
+}
 function fileLines(rel) {
-  if (!LENGTH.has(rel)) LENGTH.set(rel, readFileSync(join(ROOT, rel), 'utf8').split(/\r?\n/).length);
-  return LENGTH.get(rel);
+  return fileText(rel).length;
 }
 
 /**
@@ -226,7 +244,7 @@ function ledgerText(ledger, committed) {
  * non-vacuity floor: a scan that reaches zero sections has not read the file it claims to have read.
  */
 function census(committed) {
-  const stats = { tokens: 0, citations: 0, continuations: 0, sections: 0, files: new Set(), offenders: [], unread: [] };
+  const stats = { tokens: 0, citations: 0, continuations: 0, sections: 0, blanks: 0, files: new Set(), offenders: [], unread: [] };
   for (const ledger of LEDGERS) {
     const { text, reason } = ledgerText(ledger, committed);
     if (text === null) {
@@ -270,6 +288,17 @@ function census(committed) {
             stats.offenders.push({ kind: 'PAST EOF', where, cite, detail: `${cite.name}:${span.join('-')} — ${rel} has ${n} lines` });
             break;
           }
+          // D161 — counted on both planes, offended on one. A span that starts on a line holding nothing
+          // cannot be the line its sentence describes, whichever plane the sentence sits in; the reading
+          // plane just cannot afford the verdict yet, because four of the twelve blank cites there are in
+          // committed rows whose correction channel is an append that leaves the old number standing.
+          if (!fileText(rel)[a - 1].trim()) {
+            stats.blanks += 1;
+            if (BLANK_JUDGED) {
+              stats.offenders.push({ kind: 'BLANK LINE', where, cite,
+                detail: `${rel}:${a} is empty — a blank line cannot hold the claim this cite makes` });
+            }
+          }
         }
       }
     });
@@ -308,6 +337,7 @@ if (head.files.size === 0) notCheckable(`${head.citations} citation(s) found and
 
 console.log('NEXUS — every file:line citation in docs/DECISIONS.md and docs/STATUS.md, read back out of the source');
 console.log(`  text censised            ${WORKTREE ? 'the working copy (strict)' : 'HEAD (strict); the working copy is reported'}`);
+console.log(`  blank-line cites         ${head.blanks} span start(s) on an empty line — ${BLANK_JUDGED ? 'every one is an offender on this plane' : 'counted, not judged, on the reading plane (D161)'}`);
 console.log(`  headings seen            ${head.sections} section(s) — an offender is attributed to the one that wrote it`);
 console.log(`  name:number tokens       ${head.tokens}`);
 console.log(`  citation-shaped          ${head.citations} (the rest are host:port, ENV:value, §NN or prose)`);
