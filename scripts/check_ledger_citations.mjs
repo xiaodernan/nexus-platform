@@ -80,7 +80,7 @@ const notCheckable = (m) => {
 
 /**
  * D157 — the argument grammar, in one place. Two spellings have ever been pointed at this reader:
- * `--text=<path>` (gate step 8, and `check_comment_citations.mjs:142`) and `--text <path>` (what a person types
+ * `--text=<path>` (gate step 8, and `check_comment_citations.mjs:164`) and `--text <path>` (what a person types
  * from the USAGE line). Only the first was parsed, so the second did not fail — it silently censused the wrong
  * plane and printed a truthful-looking green about it. Both are parsed now, and a request that cannot be aimed
  * is refused rather than dropped: unknown flag, missing value, empty value, a value that reads as another flag,
@@ -438,6 +438,13 @@ console.log(`  name:number tokens       ${strict.tokens}`);
 console.log(`  citation-shaped          ${strict.citations} (the rest are host:port, ENV:value, §NN or prose)`);
 console.log(`  bare :NN continuations   ${strict.continuations} — they inherit the file before them, so nothing is judged on them alone`);
 console.log(`  distinct files cited     ${strict.files.size}`);
+// D192 — this number used to print only as the working-copy line below, and only when this run was NOT strict
+// there. Step 9's belt (`check_comment_citations.mjs`) reads an offender count out of the report, and step 9
+// always runs this reader in `--text` mode, where WORKTREE is true and that line is suppressed: the belt's
+// regex matched 0 characters on every plane step 9 uses (measured: 0 on --text, 0 on --worktree, 1 on the
+// default plane). A count with no carrier is not a check, so the strict plane's own number prints here, once,
+// in every mode.
+console.log(`  strict offenders         ${strict.offenders.length} offender(s) on the plane this run judges`);
 if (!WORKTREE) {
   console.log(`  working copy citations   ${work.citations} in ${work.sections} section(s), ${work.offenders.length} offender(s)`);
 }

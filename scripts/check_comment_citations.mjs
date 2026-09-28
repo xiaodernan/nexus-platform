@@ -13,6 +13,9 @@
  * WHAT IT DOES NOT DO: resolve anything itself. The token grammar is sliced out of the step-8 checker at run
  * time, and the scoring is done by running that same checker over the generated list. One resolver, so this
  * script cannot drift from the gate it feeds — the D85 objection to a second hand list, applied to a regex.
+ * The directory exclusion comes from `scripts/source_index.mjs` for the same reason (D180); the one file
+ * predicate this script still owns is which extensions carry comments, which is a different question from
+ * which directories are the repository's own text.
  *
  * Usage: node scripts/check_comment_citations.mjs [--verbose]
  * Exit:  0 the plane is clean; 1 a citation does not resolve; 2 the scan itself is not trustworthy.
@@ -23,6 +26,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFlags } from './cli_args.mjs';
+import { VENDOR_DIRS } from './source_index.mjs';
 
 // Flags are read here rather than assumed, and an unrecognised one stops the run: a scan that quietly ignored
 // `--plane=/some/dir` reported the repository as clean twice in a row while the operator believed it was
@@ -38,6 +42,7 @@ function fail(msg) { console.error(`check_comment_citations.mjs: ${msg}`); proce
 // to ask `process.argv` again, which is how a third dialect gets born).
 const FLAGS = {
   '--plane': { kind: 'value', unit: 'directory' },
+  '--checker': { kind: 'value', unit: 'reader file' },
   '--verbose': { kind: 'switch' },
 };
 const parsed = parseFlags(process.argv.slice(2), FLAGS);
@@ -46,7 +51,12 @@ const VERBOSE = parsed.switches.includes('--verbose');
 const planeArg = parsed.value['--plane'] ?? null;
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const CHECKER = join(ROOT, 'scripts', 'check_ledger_citations.mjs');
+// D192 — the resolver below can be aimed at another copy of step 8, for the same reason `--plane` exists: the
+// floor that this file's offender count answers to is only trustworthy if the case where the count is absent
+// can be reached without editing the shipped bytes. falsify_comment_plane.mjs plants a step 8 whose carrier
+// line is renamed; without this seam the floor would have shipped untested, which is the D165 lesson repeated.
+const CHECKER = parsed.value['--checker'] ? resolve(parsed.value['--checker'])
+  : join(ROOT, 'scripts', 'check_ledger_citations.mjs');
 
 // Which tree's comments are censused. It defaults to the repository the script is installed in, and can be
 // pointed at another directory — a worktree, a subproject, or an empty one — while the resolver stays the
@@ -64,15 +74,27 @@ const COMMENT = {
   '.java': [/\/\//, /^\s*\*/, /\/\*/], '.mjs': [/\/\//, /^\s*\*/, /\/\*/], '.cjs': [/\/\//, /^\s*\*/, /\/\*/],
   '.js': [/\/\//, /^\s*\*/, /\/\*/], '.ts': [/\/\//, /^\s*\*/, /\/\*/], '.tsx': [/\/\//, /^\s*\*/, /\/\*/],
 };
-const SKIP = new Set(['.git', 'node_modules', 'out', 'out_smoke', '__pycache__', '.next', 'target', 'dist',
-  'coverage', '.venv', 'vendor', '.qoder', '.specraft', 'build', 'logs']);
+// The directory exclusion is `source_index.mjs`'s one list, imported rather than copied. Until D180 this
+// file kept its own 15-name SKIP that shared 10 names with that list and differed in both directions: it
+// carried `out_smoke`, `vendor`, `.qoder`, `.specraft` and `logs`, and it lacked `.pytest_cache`,
+// `.mypy_cache`, `.ruff_cache` and `.tmp-out`. So steps 7 and 8 walked `.tmp-p4/` and the gitignored
+// `data/seed/out_smoke/` while step 9 skipped them, and step 9 walked the pytest caches while they
+// skipped those. One list, so a directory that is not the repository's own text is excluded by all
+// three readers or by none of them (section 84 residue (e)).
 // docs/ is step 8's own plane; scoring it from here too would count its citations twice and blame the wrong
 // section when one fails.
 const EXCLUDE_PREFIX = ['docs/'];
 
 /** The step-8 grammar, read out of the shipped file rather than copied into this one. */
 function grammar() {
-  const lines = readFileSync(CHECKER, 'utf8').split(/\r?\n/);
+  // D192: `--checker` makes this open a file the operator named, and an unreadable one threw out of the reader
+  // at exit 1 — a crash wearing this file's code for "a citation is wrong", which is D159's defect arriving at
+  // a brand-new seam. Refuse with 2 and say which file could not be opened.
+  let text;
+  try { text = readFileSync(CHECKER, 'utf8'); } catch (e) {
+    fail(`the step-8 reader named by --checker could not be opened (${e.code ?? e.message}): ${CHECKER}`);
+  }
+  const lines = text.split(/\r?\n/);
   const hit = lines.filter((l) => l.includes('matchAll(') && l.includes('(['));
   if (hit.length !== 1) throw new Error(`step 8's token grammar moved or multiplied: ${hit.length} lines match`);
   const lit = hit[0].match(/matchAll\((\/.*\/g)\)/);
@@ -84,7 +106,7 @@ function grammar() {
 
 function* walk(dir) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
-    if (e.isDirectory()) { if (!SKIP.has(e.name)) yield* walk(join(dir, e.name)); continue; }
+    if (e.isDirectory()) { if (!VENDOR_DIRS.has(e.name)) yield* walk(join(dir, e.name)); continue; }
     if (!e.isFile()) continue;
     const ext = e.name.slice(e.name.lastIndexOf('.'));
     if (COMMENT[ext]) yield [join(dir, e.name), ext];
@@ -148,7 +170,7 @@ try {
 // plant whose every citation pointed outside the index, step 9 reported `NOT RUN (exit 2)` — correctly — and
 // printed nothing explaining it, because the only line the child had written was filtered out here. A guard that
 // says "the reader failed" while hiding the reader's sentence about why leaves the operator to re-derive it.
-console.log(out.split('\n').filter((l) => /citations|offender|headings|tokens|files cited|NOT FOUND|AMBIGUOUS|PAST|BACKWARDS|ZERO|Error|Cannot find|NOT CHECKED|RESULT:/.test(l)).join('\n'));
+console.log(out.split('\n').filter((l) => /citations|offender|headings|tokens|files cited|NOT FOUND|AMBIGUOUS|PAST|BACKWARDS|ZERO|is empty|Error|Cannot find|NOT CHECKED|RESULT:/.test(l)).join('\n'));
 if (VERBOSE) console.log(out);
 // A child that never produced a report has not refuted anything: it failed to run. Collapsing that into the
 // offender branch — as the first version did, reporting `RESULT: FAIL … at least one does not` for a step 8
@@ -159,11 +181,19 @@ if (!reported) {
     + ' citation that failed, and the two must not share a verdict line.');
   process.exit(2);
 }
-// The exit code is the verdict, not a phrase in the report: step 8 prints its offender counts differently in
-// `--text` mode than in its HEAD-strict default, and a green claimed from wording is a green that can be
-// renamed out from under the check. A count that is not zero is still caught here, as a belt to that braces.
-const seen = [...out.matchAll(/(\d+)\s+offender\(s\)/g)].map((m) => Number(m[1]));
-const clean = code === 0 && seen.every((n) => n === 0);
+// The exit code is the verdict, but not the only one: this reader also answers to the count the child printed.
+// D192 found the belt hanging on a nail that was never in the wall — it read `N offender(s)`, a wording only
+// the DEFAULT plane prints, while every run here goes through `--text`, so the match list was empty on every
+// plane and `[].every(n => n === 0)` is true for any report at all. Now the count comes from the one line step 8
+// prints in every mode, and a report carrying no such count, or two of them, is a refusal: a belt that read no
+// number is not a green, and one that read two has lost track of which plane it is judging.
+const carriers = [...out.matchAll(/strict offenders\s+(\d+) offender\(s\)/g)];
+if (carriers.length !== 1) {
+  console.error(`\nRESULT: NOT RUN — step 8 printed ${carriers.length} strict-offender count(s) and this belt`
+    + ` answers to exactly one (exit ${code}). Absence is not cleanliness, and ambiguity is not agreement.`);
+  process.exit(2);
+}
+const clean = code === 0 && Number(carriers[0][1]) === 0;
 console.log(`\nRESULT: ${clean ? 'PASS' : 'FAIL'} — ${rows.length} comment-plane citation(s) across ${files} file(s), `
   + `${clean ? 'all resolving' : 'at least one does not — see the report above'} (step 8 exit ${code})`);
 process.exit(clean ? 0 : 1);

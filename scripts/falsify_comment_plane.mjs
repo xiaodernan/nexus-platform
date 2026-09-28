@@ -44,11 +44,20 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { walkFiles } from './source_index.mjs';
+import { parseFlags } from './cli_args.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const READER = join(ROOT, 'scripts', 'check_comment_citations.mjs');
 const GATE = join(ROOT, 'scripts', 'db_gate_fresh.sh');
+const CHECKER = join(ROOT, 'scripts', 'check_ledger_citations.mjs');
 const refuse = (m) => { console.error(`RESULT: NOT CHECKED — ${m}`); process.exit(2); };
+
+// D192 — this harness takes a checker now, mirroring the `--reader` seam D165 had to add before its mutant arm
+// could exist at all: without a way to aim every arm at a planted step 8, the floor that step 9 answers to
+// would have shipped as a sentence with no run behind it.
+const SELF = parseFlags(process.argv.slice(2), { '--checker': { kind: 'value', unit: 'reader file' } });
+if (!SELF.ok) refuse(SELF.reason);
+const PLANTED = SELF.value['--checker'] ?? null;
 
 const BASENAME = 'cli_args.mjs';
 const matches = walkFiles(ROOT, (n) => n === BASENAME);
@@ -105,7 +114,8 @@ const NO_FILE = plane('no-file', 3, MISSING);
 const MIXED = mixedPlane('mixed', 12, MISSING);
 const SILENT = emptyPlane('silent');
 
-const run = (...args) => spawnSync(process.execPath, [READER, ...args], { cwd: ROOT, encoding: 'utf8' });
+const run = (...args) => spawnSync(process.execPath,
+  [READER, ...(PLANTED ? [`--checker=${PLANTED}`] : []), ...args], { cwd: ROOT, encoding: 'utf8' });
 
 // --------------------------------------------------------------------------- the arms
 const results = [];
@@ -141,6 +151,62 @@ await arm('an unknown option refuses and names the flags this reader takes', 2,
   [/unknown option --planex/, /flags this reader parses/], CRASH, ['--planex', CONTROL]);
 await arm('a bare positional refuses rather than becoming the plane', 2,
   [/unexpected argument/], CRASH, [CONTROL]);
+
+// --------------------------------------------------------------------------- D192: the offender belt
+await arm('the belt answers to a count the child prints, once, on the plane step 9 runs', 0,
+  [/RESULT: PASS/, /strict offenders\s+0 offender\(s\)/], [/printed 0 strict-offender count/],
+  ['--plane', CONTROL]);
+await arm('`--checker` with no file refuses instead of scoring nothing', 2,
+  [/--checker was given without a reader file/], CRASH, ['--checker']);
+await arm('`--checker` aimed at a file that does not exist refuses with 2, not a stack at 1', 2,
+  [/could not be opened \(ENOENT\)/, /check_comment_citations\.mjs: the step-8 reader/],
+  [/\bError:/, /at .*check_comment_citations\.mjs:\d+/, /Node\.js v\d+/],
+  ['--checker=/no/such/reader.mjs', '--plane', CONTROL]);
+
+// The floor's own witness: rename the carrier out of a copy of step 8 and every verdict arm must turn into the
+// refusal it used to skip. Skipped when `--checker` already aims this run at a plant — there is nothing to
+// plant inside a plant.
+if (PLANTED === null) {
+  const MDIR = join(tmpdir(), `nexus-d192-mutant-${process.pid}`);
+  mkdirSync(MDIR, { recursive: true });
+  const src = readFileSync(CHECKER, 'utf8');
+  const anchor = '  strict offenders         ${strict.offenders.length} offender(s) on the plane this run judges';
+  const hits = src.split(anchor).length - 1;
+  let code = -1;
+  let out = '';
+  if (hits !== 1) {
+    out = `the carrier line appears ${hits} times in step 8 — the mutant has no anchor`;
+  } else {
+    try {
+      writeFileSync(join(MDIR, 'check_ledger_citations.mjs'),
+        src.replace(anchor, '  strict offenders renamed ${strict.offenders.length} count(s) on the plane this run judges'),
+        'utf8');
+      for (const sib of ['cli_args.mjs', 'source_index.mjs']) {
+        writeFileSync(join(MDIR, sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
+      }
+      const child = spawnSync(process.execPath,
+        [join(ROOT, 'scripts', 'falsify_comment_plane.mjs'), `--checker=${join(MDIR, 'check_ledger_citations.mjs')}`],
+        { cwd: ROOT, encoding: 'utf8', timeout: 300000 });
+      code = child.status ?? -1;
+      out = `${child.stdout ?? ''}${child.stderr ?? ''}`;
+    } catch (e) {
+      out = `the mutant could not be run: ${e.message}`;
+    }
+  }
+  rmSync(MDIR, { recursive: true, force: true });
+  results.push({
+    name: 'a step 8 whose carrier line is renamed reddens every verdict arm — the floor, not the wording',
+    expect: 1, code,
+    missed: [/MISSED\s+exit 0 expected, \d+ printed\s+control —/,
+      /MISSED\s+exit 1 expected, \d+ printed\s+one resolvable cite plus one phantom/,
+      /MISSED\s+exit 0 expected, \d+ printed\s+the belt answers to/,
+      /printed 2 strict-offender count|printed 0 strict-offender count/,
+      /RESULT: FAIL/, /\(skipped\) the floor's own witness/].filter((re) => !re.test(out)),
+    unwanted: [], out,
+  });
+} else {
+  console.log(`  (skipped) the floor's own witness: this run is already aimed at a planted checker (${PLANTED})`);
+}
 
 // --------------------------------------------------------------------------- the seam, inside the runner
 {

@@ -351,7 +351,7 @@ step "13/13  scripts/check_jsonb_reads.mjs + check_ledger_citations.mjs + check_
 # D178: THE LEGS THAT MOVED, AND WHY. The first version of this step pointed the three readers at the worktree
 # with the plane knobs — `--dir`/`--head-dir` for step 8, `--plane` for step 9, `--quality` for step 7 — and
 # reported a committed plane those knobs cannot certify. Each reader builds its SOURCE INDEX from its own tree
-# (`check_ledger_citations.mjs:58` is `process.cwd()`, `check_comment_citations.mjs:52` is the script's
+# (`check_ledger_citations.mjs:58` is `process.cwd()`, `check_comment_citations.mjs:53` is the script's
 # location, and step 9's child inherits that cwd), so the knobs moved the LEDGERS into the worktree while the
 # files the ledgers cite were still indexed out of this directory, including the untracked ones. Measured on
 # the same commit both ways: from the main tree with the knobs, 77 distinct files cited and 0 offenders; inside
