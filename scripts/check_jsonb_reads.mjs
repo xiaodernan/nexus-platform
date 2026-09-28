@@ -43,7 +43,15 @@
  * A flag this reader does not parse, and a `--quality` whose value is empty, are a refusal with exit 2 and not a
  * silence. Before D156 only the `=` spelling was read, so `--quality <plant>` censused the SHIPPED file and
  * printed a truthful PASS about a plane nobody aimed at — the defect D154 fixed in `check_status_citations.mjs`
- * and D155 in `check_ledger_sections.mjs`, here in its third instance.
+ * and D155 in `check_ledger_sections.mjs`, here in its third instance. A `--quality` that names a path with no
+ * file behind it, or a directory, is the same class of refusal (D194): it used to travel forty lines to
+ * `readFileSync` and die there, exit 1 with a stack, which is this step's code for a read or a site that is wrong.
+ *
+ * WHAT THE LAST LINE IS FOR (D194). A finished run prints `REPORT COMPLETE — N reason(s) to redden, --report b,
+ * this run exits C` as its last line, naming the reason count and the code it then takes. The header at the top of
+ * the report is not the end of it: an arm scoring this output needed one line stating that the census reached its
+ * verdict. Alongside it the unused answer kinds joined the exit term — that block had spent its whole life printing
+ * a sentence and exiting 0, which is what D193 stopped doing for the out-of-roots coverage block.
  *
  * `scripts/db_gate_fresh.sh` runs this as its seventh step, so a widening of the build's jsonb reads — or a
  * site citation that the source contradicts — reddens the same one-command gate that reddens a broken seed. A
@@ -83,6 +91,21 @@ const parsed = parseFlags(process.argv.slice(2), FLAGS);
 if (!parsed.ok) notCheckable(parsed.reason);
 
 const QUALITY_SQL = parsed.value['--quality'] ?? 'data/seed/quality.sql';
+// D194: a `--quality` that names nothing readable used to reach `readFileSync` fifty lines later and die there,
+// which is exit 1 wearing a stack trace — this directory's code for "a read or a site is wrong". D159 had made
+// the request legal (a mistyped flag value now refuses), so nothing between a legal request and the verdict said
+// the file is simply not there. Measured before this guard: a missing path and a directory both exit 1 with
+// `node:fs` frames, and only a file that exists but holds no answers refused at 2.
+const QUALITY_PATH = resolve(ROOT, QUALITY_SQL);
+const qualityEntry = statSync(QUALITY_PATH, { throwIfNoEntry: false });
+if (!qualityEntry) {
+  notCheckable(`${QUALITY_PATH} is not there — the census was pointed at a path with no file behind it, so it has`
+    + ' no answers to read and can neither agree nor disagree with any');
+}
+if (!qualityEntry.isFile()) {
+  notCheckable(`${QUALITY_PATH} is a ${qualityEntry.isDirectory() ? 'directory' : 'thing that is not a regular'
+    + ' file'}, not the seed gate — the census reads one text file and was handed something else`);
+}
 const SOURCE_ROOTS = ['services/platform/src/main/java', 'apps/ai/nexus_ai'];
 // D193: which directories the READ census walks. It is a flag now because the census's own coverage claim is
 // only testable if its population can be narrowed from outside the shipped bytes: `unseen` used to excuse every
@@ -599,8 +622,9 @@ const undeclared = [...found.keys()].filter((pair) => answersOf(pair).length ===
  * 0 on the working tree, 2 on a clean checkout of HEAD, both of them because the cited file is not committed).
  *
  * The keys are not a hand list of the vocabulary: `KINDS_SEEN` below is read out of the same parse of the shipped
- * answer rows, and a kind in that census with no entry here stops the run. An entry with no kind is reported,
- * because a branch of this table that no row answers for is a rule this plane does not have.
+ * answer rows, and a kind in that census with no entry here stops the run. D194 closed the other direction: an
+ * entry with no kind reddens it, because a branch of this table that no row answers for is a rule this plane does
+ * not have, and the run that prints the fact and then exits 0 is the pattern D193 made fatal for `--roots`.
  */
 const READ_EXPECTED = {
   reachable: true,        // the key is read by shipped code, so the scan should find the read
@@ -661,10 +685,12 @@ for (const [triple, kind] of declared) {
   }
 }
 
-// The two directions of drift between this reader's table and the shipped vocabulary. Both are refusals, not
-// verdicts: a kind with no branch would be answered by whichever branch happened to be last, which is the
-// defect this project has now named three times, and a run that cannot say which of its own classes a member
-// belongs to has no list to report on.
+// The two directions of drift between this reader's table and the shipped vocabulary, which are two different
+// facts. A kind on a row with no branch here is a refusal: the run would answer it by whichever branch happened
+// to be last, so it has no verdict to give (the defect this project has now named three times). A branch here
+// with no row on the plane is not a refusal — every row was judged, and what the judging found is that this
+// census carries a rule nothing files an answer under, which reddens the run below rather than being printed
+// above an exit 0.
 if (unkindedKinds.length > 0) {
   notCheckable(`${QUALITY_SQL} answers with ${unkindedKinds.length} kind(s) this census has no expectation for: `
     + `${unkindedKinds.join(', ')} — refusing to guess whether a read should have been found in the source`);
@@ -774,6 +800,20 @@ for (const reason of [...missesByReason.keys()].filter((r) => !MISS_WHY[r])) {
 }
 console.log('');
 
+// D194: the second direction of vocabulary drift, and it reddens. A branch of `READ_EXPECTED` that no answer row
+// on this plane is filed under means this census is asking a question nothing answers — the class is unfalsifiable
+// here, exactly as a read filed outside the walked roots is, so it joins the exit term instead of sitting in the
+// kinds line above as a sentence with no consequence.
+if (branchlessKinds.length > 0) {
+  console.log(`ANSWER KINDS UNUSED (${branchlessKinds.length}) — this census expects an answer filed under a kind`
+    + ` no row on this plane carries: ${branchlessKinds.join(', ')}`);
+  for (const k of branchlessKinds) {
+    console.log(`  - ${k} — a branch that classifies nothing decides nothing: the expectation it states cannot be`
+      + ' met or contradicted by this plane, and its absence was last noticed by this run rather than by a row');
+  }
+  console.log('  fix: file an answer of that kind, or retire the branch from READ_EXPECTED with the reason.\n');
+}
+
 if (sites.counts.read_answer !== declared.size) {
   sites.offenders.push(`this script parsed ${sites.counts.read_answer} read_answer rows while its read census `
     + `parsed ${declared.size} read_cat triples — the two are meant to agree, so one of the two parses stopped `
@@ -840,5 +880,12 @@ if (blindSpots.length > 0) {
   console.log('  fix: widen the roots this census walks, or the answers are unfalsifiable from this directory.\n');
 }
 
-process.exit((undeclared.length + contradicted.length + neverReadRead.length + kindless.length
-  + blindSpots.length + sites.offenders.length) > 0 && !REPORT_ONLY ? 1 : 0);
+// D194: the run states its own verdict and the exit code it takes, in one line a reader of this output can require.
+// Before it, a reader that died on the way to the end of this function looked finished to anything keying on the
+// header line, and an arm over it reported a moved census rather than a dead run. The harness requires this line
+// (or the refusal's own) and checks the number it declares against the code the process actually exited with.
+const verdictCount = undeclared.length + contradicted.length + neverReadRead.length + kindless.length
+  + blindSpots.length + branchlessKinds.length + sites.offenders.length;
+const exitCode = verdictCount > 0 && !REPORT_ONLY ? 1 : 0;
+console.log(`REPORT COMPLETE — ${verdictCount} reason(s) to redden, --report ${REPORT_ONLY}, this run exits ${exitCode}`);
+process.exit(exitCode);

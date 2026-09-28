@@ -9610,3 +9610,54 @@ section cites in docs/PLAN.md that exist on disk but not at HEAD — reported, n
 the read scan walks 174 files while sites resolve against a 322-file whole-repo index, and that
 asymmetry is exactly why site-file-ambiguous has a witness — no walked root holds a duplicate
 basename, yet the index holds `__init__.py` twice. Nothing pushed.
+
+## 200. D194: step 7's census could print a reason and exit 0 over it, and its harness called a death a verdict by the header line
+
+Three rules this unit moved from prose into the exit code, and one correction to this lane's own committed
+record. The gate's reading steps certify a directory, not a commit, and the same distinction runs inside a single
+run: a sentence that prints without changing the exit code certifies nothing.
+
+**(a) `ANSWER KINDS UNUSED`.** The census expects four answer kinds and already noticed when a kind no row on the
+plane carries was still expected — then exited 0 anyway. The branchless kinds now join the reason count
+(`scripts/check_jsonb_reads.mjs:887-890`, block at `:807-815`), so a branch that classifies no row reddens the
+gate instead of narrating itself. Its plant moves one row's kind word and nothing else; measured on it the census
+counts are unchanged and exactly one reason appears.
+
+**(b) A crash guard keyed on the last line instead of the first.** `scripts/falsify_quality_seam.mjs` decided
+"the reader died" from the census's header — the first thing a reader prints — so a reader that died mid-report
+was a finished run. The guard now reads a terminal sentinel that also declares the code the process intends
+(`scripts/falsify_quality_seam.mjs:198`, reader `scripts/check_jsonb_reads.mjs:890`), and a run whose declared
+code the process does not take is a crash, not a verdict. The `expectCrash` flag is policed both ways: an arm that
+declares a death over a run that finished reddens through the same predicate the loop uses
+(`scripts/falsify_quality_seam.mjs:331-333`).
+
+**(c) The `--quality` seam refuses instead of dying.** After D159 made a mistyped flag value a legal request, a
+path with no file behind it and a path that is a directory both reached `readFileSync` and ended in `node:fs`
+frames at exit 1 — the code for "a read or a site is wrong". Both are exit-2 refusals naming the thing handed to
+it (`scripts/check_jsonb_reads.mjs:99-107`), and their arms assert the sentence, not only the code.
+
+**(d) The correction: my own D193 citations were mis-aimed, and step 8 cannot see it.** D193's edits were
+line insertions, so all eight line numbers its entry cites in these two files moved. Step 8 checks that a cited
+file has the cited line — its printed LIMITS say it cannot check that the line says what the sentence claims — so
+the drift was invisible to the gate that certified the append. The re-aimed numbers were derived by reading
+HEAD's text at each cited line and matching it against the final bytes where the match is unique; one of them was
+a bare continuation (`(:557)`) inheriting its filename across a line wrap, and at HEAD it pointed at an empty
+line. The audit that found it carries filename state across lines, because a hard-wrapped ledger cannot otherwise
+be audited honestly. Nine further citations into these two files live in other lanes' sections and were already
+false at HEAD; they are named, not rewritten — the fix belongs to whoever owns the claim.
+
+Witnesses, all against the shipped bytes, one rule removed at a time (`.scratch/d194_meta.mjs`, run on the final
+code): the exit-term rule 34 of 35 with its own arm red; the seam guard 33 of 35 with exactly the two path arms
+red; the header-keyed guard 33 of 35 with the two death arms red; the removed inversion 34 of 35; the deleted
+sentinel 20 of 35 — fifteen arms, because a run with no terminal line cannot be certified as finished. The second
+version of the seam witness reddened 0 arms and proved nothing: its first mutation killed the harness's own
+control, which is the difference between a survivor count and a run that did not happen.
+
+Plane for these bytes: the two scripts this unit edits, and the two ledger sections it lands. Step 7 and its
+harness were measured on the final code bytes before the ledger went in; steps 8, 9, 10 and 12 and the committed
+plane are measured after the landing and are quoted from that run in this unit's commit message, so no number in
+this record is a remembered one. Residue this unit names and does not close: the sentinel's wording is duplicated
+by hand between reader and harness, so a one-sided rename is a loud crash rather than a derived check; and a run
+that prints the sentinel, exits as declared, and skips a verdict block that had nothing to say is
+indistinguishable from a healthy run — refuting that needs the reader to state which blocks it evaluated, which
+is a wider seam than this unit takes.

@@ -24,6 +24,16 @@
  * refuses an exemption it cannot attribute, and makes an out-of-roots answer fatal. The new arms below aim at each
  * of those, and the `--roots` seam is what makes the coverage class reachable without editing shipped bytes.
  *
+ * D194 ARMED THE GUARD ITSELF. Every arm above relies on the reader having finished, and the file checked that
+ * with a `crashed` flag no arm ever produced: nothing had died on purpose, so a guard that never fired and a
+ * guard that could not fire were the same line in the report. Three deaths and one inversion now — die at import,
+ * die after the verdict header (the case the old predicate, keying on that header, called a finished run), reach
+ * a terminal report and then take a different exit code than it declares, and declare a crash on a run that
+ * finished. The terminal report is the reader's own last line, carrying the reason count and the code; a run that
+ * reaches neither it nor a refusal has judged nothing. The same unit reddens the census's unused vocabulary branch,
+ * which printed `1 classify no row on this plane` and exited 0, and the seam's own path, which died inside
+ * `readFileSync` at the verdict code because every plant had always written a real file.
+ *
  * Usage: node scripts/falsify_quality_seam.mjs
  * Exit: 0 every arm held · 1 at least one did not · 2 a plant could not be built (a mutation that no longer
  *       matches its anchor is an arm that proves nothing).
@@ -109,6 +119,19 @@ function plantMany(name, pairs) {
 const UNKNOWN_KIND = plant('unknown_kind.sql',
   "'reachable', 'CollectionsController.java:295,:303',", "'maybe-read', 'CollectionsController.java:295,:303',");
 
+// D194 — the other direction of the same drift. This census expects four kinds; re-filing the plane's only
+// `reachable` row under `dead-reader` leaves a branch with no member. Both kinds expect a findable read, so the
+// read census' own numbers do not move and the single observable change is the unused branch. Measured on the
+// bytes before the rule existed: the run printed `1 classify no row on this plane (reachable)` and exited 0 — a
+// sentence with no consequence, which is what D193 stopped doing for `--roots`.
+const KIND_UNUSED = plant('kind_unused.sql', "('collections', 'seo', 'noindex', 'reachable'",
+  "('collections', 'seo', 'noindex', 'dead-reader'");
+
+// D194 — the seam's input itself. Every plant above writes a real file, so nothing ever pointed `--quality` at a
+// path that is absent or is a directory, and such a request died inside `readFileSync` about forty lines later:
+// exit 1 with `node:fs` frames, which is this step's code for a read or a site that is wrong.
+const NO_SUCH_FILE = join(FIX, 'no_such_file.sql');
+
 // The `read_cat` list is where a declared triple lives; `read_answer` is where its kind and its site live. A row
 // appended AFTER that list's closing semicolon is invisible to `valuesRows` (it stops at the first top-level `;`)
 // while `declaredReads`' line regex still reads its kind, so such a plant tests a parse mismatch instead of a
@@ -169,6 +192,10 @@ const CENSUS = /ANSWER SITES — (\d+) answer row\(s\) cite (\d+) source locatio
 const SPANS = /line spans checked\s+(\d+) across (\d+) citation token/;
 const SCANNED = /source files scanned\s+(\d+)/;
 const COVERAGE = /CENSUS COVERAGE — (\d+) answer\(s\)/;
+// D194: the reader's own last line states how many reasons it found and which code it is about to exit with. An
+// arm is only a measurement when the run it scored reached that line: a reader that died halfway used to look
+// finished to a guard keying on the header, because the header is printed before the verdict blocks.
+const TERMINAL = /REPORT COMPLETE — (\d+) reason\(s\) to redden, --report (true|false), this run exits (\d+)/;
 
 /** The count the shipped checker prints for one miss class, or null when the run refused before printing. */
 function reason(out, name) {
@@ -188,11 +215,18 @@ function runReader(reader, ...argv) {
   const s = SPANS.exec(out);
   const scanned = SCANNED.exec(out);
   const coverage = COVERAGE.exec(out);
+  const terminal = TERMINAL.exec(out);
+  const refused = out.includes('RESULT: NOT CHECKED');
+  // A reader that died on the way to its verdict has not judged anything: an arm over it must be reported as a
+  // crash, not as the red or the green its rc would otherwise look like (D165's mutant taught this). D194 moved
+  // the test from the header line to the terminal one, because a mutant that printed the header and then threw
+  // was read as a finished run by the old predicate (measured: rc 1, header present, no census line, and
+  // `crashed` false), and a terminal line whose declared code the process did not take is a run that cannot say
+  // what it decided either.
   const base = { rc: r.status, scanned: scanned ? +scanned[1] : null,
     coverage: coverage ? +coverage[1] : null, out,
-    // A reader that died on the way to its verdict has not judged anything: an arm over it must be reported as
-    // a crash, not as the red or the green its rc would otherwise look like (D165's mutant taught this).
-    crashed: !out.includes('NEXUS — jsonb key reads') && !out.includes('RESULT: NOT CHECKED') };
+    reasons: terminal ? +terminal[1] : null,
+    crashed: terminal ? (terminal[3] !== `${r.status}` || refused) : !refused };
   if (!c || !s) return { ...base, census: null, spans: null };
   return { ...base, census: { rows: +c[1], cited: +c[2], files: +c[3], lines: +c[4] },
     spans: { checked: +s[1], tokens: +s[2] } };
@@ -235,6 +269,19 @@ const NO_FILE_RULE = [
 ];
 const READER_NO_FILE_RULE = mutantReader('reader_no_file_rule.mjs', NO_FILE_RULE);
 
+// D194 — the crash guard's own witnesses. `crashed` was read by every arm below and produced by none of them: the
+// guard refused a run that died, and no run had ever died on purpose, so a guard that never fired and a guard
+// that could not fire looked identical in the report. Three deaths, each the only route to one clause: die at
+// import (no output at all), die after the verdict header (the case the old predicate called finished), and
+// reach the terminal line but not the exit code it declares.
+const HEADER_LINE = `console.log("NEXUS — jsonb key reads found in source, against the gate's declared list");`;
+const READER_BROKEN = mutantReader('reader_broken.mjs',
+  ['function declaredReads() {', 'function declaredReads() { ] }']);
+const READER_AFTER_HEADER = mutantReader('reader_after_header.mjs',
+  [HEADER_LINE, `${HEADER_LINE}\n  throw new Error('mutant: died after the verdict header');`]);
+const READER_WRONG_EXIT = mutantReader('reader_wrong_exit.mjs',
+  ['process.exit(exitCode);', 'process.exit(exitCode === 0 ? 1 : 0);']);
+
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 /* --------------------------------------------------------------------- arms */
@@ -265,18 +312,54 @@ const onlyClass = (name) => (r) => {
 };
 
 // A parse refusal is total: the reader stops before its header, so nothing it reports can be read as an answer.
-// An arm that only checked exit 2 would also pass a run that refused AND answered.
-const noVerdictPrinted = (r) => (['NEXUS — jsonb key reads', 'ANSWER SITES', 'FALSE SITES', 'CENSUS COVERAGE']
-  .filter((h) => r.out.includes(h)).length
-  ? `the run printed ${['NEXUS — jsonb key reads', 'ANSWER SITES', 'FALSE SITES', 'CENSUS COVERAGE']
-    .filter((h) => r.out.includes(h)).join(', ')} alongside the refusal — a census that cannot parse its input `
-    + 'has no verdict to report' : null);
+// An arm that only checked exit 2 would also pass a run that refused AND answered. D194 added the two blocks a
+// refusal must not reach: the terminal report (a run cannot both refuse and answer) and the unused-kinds verdict.
+const VERDICT_MARKS = ['NEXUS — jsonb key reads', 'ANSWER SITES', 'FALSE SITES', 'CENSUS COVERAGE',
+  'REPORT COMPLETE', 'ANSWER KINDS UNUSED'];
+const noVerdictPrinted = (r) => (VERDICT_MARKS.filter((h) => r.out.includes(h)).length
+  ? `the run printed ${VERDICT_MARKS.filter((h) => r.out.includes(h)).join(', ')} alongside the refusal — a census`
+    + ' that cannot parse its input has no verdict to report' : null);
+
+/**
+ * Every reason one arm did not hold. D194 pulled it out of the reporting loop because the loop now has an arm
+ * that aims at this function's own crash clause: to prove `expectCrash` cannot wave a dead run past an arm, the
+ * inversion has to run the same decision, not a copy of it.
+ */
+function armReasons(arm, r) {
+  const why = [];
+  if (r.rc !== arm.expectRc) why.push(`rc ${r.rc}, expected ${arm.expectRc}`);
+  if (arm.expectCrash) {
+    if (!r.crashed) why.push('this arm declares expectCrash but the run reached a verdict or a refusal, so the'
+      + ' crash guard had nothing to refuse and the arm would have passed on a healthy run');
+  } else if (r.crashed) {
+    why.push(`the reader reached no terminal report it stands behind (rc ${r.rc}), so this arm measured a crash`
+      + ` rather than a verdict: ${r.out.split(/\r?\n/).filter((l) => l.trim() !== '')[0]?.slice(0, 160)
+        ?? '(no output at all)'}`);
+  }
+  for (const e of arm.evidence ?? []) if (!r.out.includes(e)) why.push(`does not print ${JSON.stringify(e)}`);
+  for (const e of arm.absent ?? []) if (r.out.includes(e)) why.push(`prints ${JSON.stringify(e)} — this arm is the`
+    + ' case where that sentence must stay quiet');
+  // A crashed run has no census to compare: scoring one would report a moved number where the truth is a death.
+  if (!(arm.expectCrash && r.crashed)) {
+    if (arm.check) { const claim = arm.check(r); if (claim) why.push(claim); }
+    if (arm.census && !arm.census(r.census ?? {})) why.push(`census ${JSON.stringify(r.census)}`);
+    if (arm.spans && !arm.spans(r.spans ?? {})) why.push(`spans ${JSON.stringify(r.spans)}`);
+  }
+  return why;
+}
 
 const ARMS = [
   {
     name: 'control — the seam over an unmutated copy leaves every census number where the tracked file put it',
     args: [`--quality=${CONTROL}`], expectRc: 0,
     census: (c) => same(c, N), spans: (s) => same(s, S),
+    // D194: the control is also the guard's positive case — a finished, green run reaches the terminal line, and
+    // states the reason count the run above reports. `crashed` false here is what keeps the guard from being a
+    // predicate that fires on everything.
+    evidence: ['REPORT COMPLETE — 0 reason(s) to redden, --report false, this run exits 0'],
+    absent: ['ANSWER KINDS UNUSED'],
+    check: (r) => (r.reasons !== 0 ? `the terminal report counts ${r.reasons} reason(s) on a plane that exits 0`
+      : null),
   },
   {
     name: 'cited line past the end of the file — the site census refutes it and the run reddens',
@@ -395,6 +478,72 @@ const ARMS = [
     evidence: ['RESULT: NOT CHECKED', 'no expectation for', 'maybe-read'],
   },
   {
+    name: 'a kind this census expects that no row on this plane carries reddens — a branch classifying nothing decides nothing',
+    args: [`--quality=${KIND_UNUSED}`], expectRc: 1,
+    evidence: ['ANSWER KINDS UNUSED (1)', 'classify no row on this plane', 'REPORT COMPLETE — 1 reason(s)'],
+    census: (c) => same(c, N), spans: (s) => same(s, S),
+    // It has to redden for THIS reason: the census numbers stay the control's and no miss class holds a member,
+    // so the single thing that moved is the vocabulary. A row that also invented a miss would let the arm pass
+    // on a different defect than its name claims.
+    check: (r) => {
+      const counts = classCounts(r);
+      return counts.some((x) => x !== 0)
+        ? `the plant invented a miss: ${MISS_CLASSES.map((c, i) => `${c}=${counts[i]}`).join(' ')}`
+        : (r.reasons !== 1
+          ? `the terminal report counts ${r.reasons} reason(s) while the verdict block names 1` : null);
+    },
+  },
+  {
+    name: 'a --quality path that is not there refuses at exit 2 instead of dying in readFileSync at the verdict code',
+    args: [`--quality=${NO_SUCH_FILE}`], expectRc: 2,
+    evidence: ['RESULT: NOT CHECKED', 'is not there', NO_SUCH_FILE],
+    check: (r) => (r.out.includes('ENOENT')
+      ? 'the run printed a filesystem stack where it should have refused' : noVerdictPrinted(r)),
+  },
+  {
+    name: 'a --quality path that is a directory is named as the thing it is, and refuses',
+    args: [`--quality=${FIX}`], expectRc: 2,
+    evidence: ['RESULT: NOT CHECKED', 'is a directory'],
+    check: (r) => (r.out.includes('EISDIR')
+      ? 'the run printed a filesystem stack where it should have refused' : noVerdictPrinted(r)),
+  },
+  // D194 — the crash guard, aimed at. Every arm above needs the reader to have finished; none of them could say
+  // what happens when it does not, because nothing had ever died on purpose. These three deaths are the three
+  // clauses of `crashed`: no report at all, a report that began and never ended, and a report that declares a
+  // code the process then refuses to take.
+  ...[
+    ['a reader that dies at import reaches no line the harness can score, so the arm is a crash and not a red',
+     READER_BROKEN, null],
+    ['a reader that prints the verdict header and then dies is still a crash — the guard keys on the terminal line',
+     READER_AFTER_HEADER, 'NEXUS — jsonb key reads'],
+    ['a terminal report whose declared exit code the process does not take is a crash, not a verdict',
+     READER_WRONG_EXIT, 'REPORT COMPLETE'],
+  ].map(([name, reader, printed]) => ({
+    name, expectRc: 1, expectCrash: true, evidence: printed ? [printed] : [],
+    run: () => runReader(reader, `--quality=${CONTROL}`),
+  })),
+  {
+    name: 'a refusal is not a crash: the NOT CHECKED marker is what excuses the missing terminal line',
+    args: [`--quality=${MARKER_GONE}`], expectRc: 2,
+    evidence: ['RESULT: NOT CHECKED'],
+    absent: ['REPORT COMPLETE'],
+    check: (r) => (r.crashed
+      ? 'a run that refused was scored as a crash, so the guard fires on the case it is meant to excuse' : null),
+  },
+  {
+    name: 'an arm that declares expectCrash over a run that finished is itself a miss — the flag cannot wave a death past',
+    run: () => {
+      // The same decision function the loop uses, aimed at the control's real result rather than a stub, so the
+      // inversion measures the guard and not a copy of it.
+      const reasons = armReasons({ name: 'meta', expectRc: 0, expectCrash: true }, CTRL);
+      return { rc: reasons.length === 1 && reasons[0].includes('expectCrash') ? 0 : 1,
+        census: null, spans: null,
+        out: `the guard decided a healthy run cannot witness a declared crash: ${reasons.join('; ') || '(no reason)'}` };
+    },
+    expectRc: 0,
+    evidence: ['the guard decided a healthy run cannot witness a declared crash'],
+  },
+  {
     name: 'a miss whose cited file is not in this index is named a plane fact, and the site census reddens the same row',
     args: [`--quality=${ABSENT_SITE}`], expectRc: 1,
     evidence: ['file-not-on-this-plane (1', 'NoSuchRepository.java',
@@ -484,16 +633,7 @@ let held = 0;
 const misses = [];
 for (const arm of ARMS) {
   const r = arm.run ? arm.run() : run(...arm.args);
-  const why = [];
-  if (r.rc !== arm.expectRc) why.push(`rc ${r.rc}, expected ${arm.expectRc}`);
-  if (r.crashed) why.push('the reader died before printing a verdict or a refusal, so this arm measured a crash:'
-    + ` ${r.out.split(/\r?\n/).filter((l) => l.trim() !== '')[0]?.slice(0, 160) ?? '(no output at all)'}`);
-  for (const e of arm.evidence ?? []) if (!r.out.includes(e)) why.push(`does not print ${JSON.stringify(e)}`);
-  for (const e of arm.absent ?? []) if (r.out.includes(e)) why.push(`prints ${JSON.stringify(e)} — this arm is the`
-    + ' case where that sentence must stay quiet');
-  if (arm.check) { const claim = arm.check(r); if (claim) why.push(claim); }
-  if (arm.census && !arm.census(r.census ?? {})) why.push(`census ${JSON.stringify(r.census)}`);
-  if (arm.spans && !arm.spans(r.spans ?? {})) why.push(`spans ${JSON.stringify(r.spans)}`);
+  const why = armReasons(arm, r);
   if (why.length === 0) {
     held += 1;
     console.log(`ok    ${arm.name}  [rc ${r.rc}]`);
@@ -501,7 +641,8 @@ for (const arm of ARMS) {
     misses.push(arm.name);
     console.log(`FAIL  ${arm.name}  — ${why.join('; ')}`);
     const interesting = (l) => l.includes('ANSWER SITES') || l.startsWith('  - ') || l.includes('RESULT: NOT CHECKED')
-      || l.includes('CENSUS COVERAGE') || MISS_CLASSES.some((c) => l.startsWith(`  ${c} (`));
+      || l.includes('CENSUS COVERAGE') || l.includes('ANSWER KINDS UNUSED') || l.includes('REPORT COMPLETE')
+      || MISS_CLASSES.some((c) => l.startsWith(`  ${c} (`));
     console.log(`      ${r.out.split(/\r?\n/).filter(interesting).join('\n      ')}`);
   }
 }

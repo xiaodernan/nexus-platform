@@ -10492,14 +10492,14 @@ not-read-in-the-file-where-it-should-be. Exactly one of them is fatal, and it is
 specific reason: a build that reads jsonb in a directory this scan was never told to walk makes
 every answer about that directory unfalsifiable, so the fix is to widen the roots, not to be
 excused for not seeing it. That one prints `CENSUS COVERAGE — N answer(s) cite a file outside the
-root(s)` (scripts/check_jsonb_reads.mjs:837) and its count joins the exit term. Exactly one is left
+root(s)` (scripts/check_jsonb_reads.mjs:877) and its count joins the exit term. Exactly one is left
 to a human — the site resolves inside the walked roots and the key text is not in the file — and
 that class is a report at exit 0, because a read through a helper is legal code and only a person
 can say whether the read went through one.
 
 The population became addressable, and two floors came with it. `--roots` narrows the read scan,
-and a census that opened nothing (scripts/check_jsonb_reads.mjs:534) or opened files and found no
-read at all (:557) is refused with exit 2. The second floor is the one that matters: a scanner that
+and a census that opened nothing (scripts/check_jsonb_reads.mjs:557) or opened files and found no
+read at all (scripts/check_jsonb_reads.mjs:580) is refused with exit 2. The second floor is the one that matters: a scanner that
 finds nothing cannot contradict an answer list, it can only agree with it, and before the floor
 existed a scan aimed at a directory with no jsonb in it would have printed a green over a census
 with no second reader.
@@ -10518,12 +10518,12 @@ stopped by it.
 The three plane-fact classes each promise, in the reader's own printed text, that the FALSE SITES
 block reddens the same row. That promise is now checked in-process: for every miss with a plane-fact
 reason, the run requires an offender naming that row, and adds one if none does
-(scripts/check_jsonb_reads.mjs:787,:788). Measured, the belt is silent on the shipped plane and on
+(scripts/check_jsonb_reads.mjs:827,:828). Measured, the belt is silent on the shipped plane and on
 every plant this harness files, because the site census already reddens an absent file, an ambiguous
 name and a citation-free site on its own — the belt's firing side is unreachable while the rule it
 polices is intact. So its witness is a mutant reader: the absent-file rule silenced in a copy of the
 checker, run through the `--reader` seam against the same planted row
-(scripts/falsify_quality_seam.mjs:236), which is the only arm that can make the belt speak. The
+(scripts/falsify_quality_seam.mjs:270), which is the only arm that can make the belt speak. The
 shipped-reader arms assert the opposite too — the belt's sentence must NOT print there — so a belt
 that fires on a healthy plane cannot pass either. It is policed in both directions and reachable in
 one, and the record says which.
@@ -10533,12 +10533,12 @@ Each of them was a `throw new Error`, which prints a stack and exits 1 — this 
 "a verdict about reads and sites". The harness had started flagging such a run as
 "the reader died before printing a verdict or a refusal", and it was right: an arm aimed at a parse
 refusal had been measuring a crash and passing on the stack's wording. All five are now refusals at
-exit 2 through one helper (scripts/check_jsonb_reads.mjs:67), each naming the file it could not
+exit 2 through one helper (scripts/check_jsonb_reads.mjs:75), each naming the file it could not
 parse, and each has its own plant: the read_cat loop header, its column alias, the read_answer
 INSERT, the shape_answer INSERT (only the row parser reads that one, so it is the sole route to the
 missing-marker refusal), and a last row that stops closing before the semicolon. The refusal arms
 also require the run to be total — no header, no ANSWER SITES, no FALSE SITES, no CENSUS COVERAGE
-alongside the refusal (scripts/falsify_quality_seam.mjs:269) — because exit 2 alone would also pass a
+alongside the refusal (scripts/falsify_quality_seam.mjs:317,:319) — because exit 2 alone would also pass a
 run that refused and then answered anyway.
 
 One plant was wrong before it was right, and its own red is the reason the arms name their phrase.
@@ -10570,3 +10570,85 @@ vendor exclusion. Two populations, deliberately different — a miss in the firs
 miss in the second is a stale answer — and it is why site-file-ambiguous has a witness at all:
 no walked root holds a duplicate basename, yet the index holds `__init__.py` more than once. Nothing
 pushed.
+
+## D194 — step 7's census could pronounce a reason and exit 0 over it, and the harness watching that census scored a death by its header line
+
+D192 and D193 closed one rule: a rule that cannot fire on the plane the gate reads is not a rule the gate has.
+This unit closes the next one, which the same two files were still carrying: **a rule that fires, prints, and
+reaches no exit code is not a rule the gate has either** — and, on the harness side, a crash guard that scores the
+wrong line is not a guard. Four findings, one of them in this lane's own committed record.
+
+**(a) A verdict sentence with no exit behind it.** The census expects every declared read's answer to be filed
+under one of four kinds, and it already noticed when a kind no row on the plane carries was still expected: the
+sentence printed, and the run exited 0. A reader that reports a condition and then takes the same exit code it
+takes for a healthy plane has not decided anything; the branch that classifies no row decides nothing, and the
+record saying so in prose is not a gate. `branchlessKinds` now enters the exit term with the other reasons
+(scripts/check_jsonb_reads.mjs:887-890) and the block prints `ANSWER KINDS UNUSED (N)` with the kind named and the
+fix stated (scripts/check_jsonb_reads.mjs:807-815). The plant is one row whose kind word moves from `reachable`
+to `dead-reader` (scripts/falsify_quality_seam.mjs:127), which is the smallest change that empties a kind:
+measured on it, the census's own numbers do not move (22 rows, 31 cited sites, 12 files, 38 line spans), all five
+miss classes stay at 0, and exactly one reason appears — so the reddening is this rule's and not collateral.
+The witness is M1 of `.scratch/d194_meta.mjs`: put `branchlessKinds.length` back out of the exit term and 34 of 35
+arms hold, the one red being the arm aimed at this sentence.
+
+**(b) A crash guard keyed on the line a dying reader still prints.** The harness decides whether a run crashed.
+It was deciding from the census's header line, and the header is the first thing the reader prints — so a reader
+that announced itself and then died mid-report was scored as a finished run. The guard now keys on a terminal
+sentinel the reader prints as its last act (scripts/falsify_quality_seam.mjs:198), and that sentinel declares the
+exit code the process intends (scripts/check_jsonb_reads.mjs:890), so a run whose last line says `this run exits 1`
+and whose process takes 0 is a crash too, not a verdict. Three witnesses, all on the shipped bytes: M3 puts the
+guard back on the header line and 33 of 35 hold, with exactly the two death arms red — the reader that dies after
+the header, and the reader whose declared exit code the process does not take; M4 removes the clause that refuses a
+finished run for an arm that declared a death (scripts/falsify_quality_seam.mjs:331-333) and 34 of 35 hold, red
+only on the arm that polices it; M5 deletes the sentinel line from the reader and the whole census goes to 20 of
+35 — fifteen arms red, because a run that prints no terminal line cannot be certified as having finished. The
+`expectCrash` inversion is checked by calling the same predicate the loop calls (scripts/falsify_quality_seam.mjs:328,
+arm at :534-539) against the control's real result, so the flag cannot be proved by a plant that only ever dies.
+
+**(c) The seam died where it should have refused.** D159 made a mistyped `--quality` value a legal request that
+refuses; nothing between that legality and the verdict ever said the file is simply not there. Pointed at a path
+with no file behind it, or at a directory, the census reached `readFileSync` about fifty lines later and ended in
+`node:fs` frames at exit 1 — this directory's code for "a read or a site is wrong" (measured before the guard:
+both paths exited 1 with a stack; only a file that exists and holds no answers refused at 2). Both are refusals
+now, naming what was handed to it (scripts/check_jsonb_reads.mjs:99-107), and the two arms assert the sentence,
+not just the code (scripts/falsify_quality_seam.mjs:497-508). Witness M2: neuter the two conditions and 33 of 35
+hold, red on exactly those two arms. M2's first version was a bad witness and is kept here as the lesson: it
+nulled the value the guards read instead of the conditions, which made the missing-file refusal fire for the
+*shipped* path too, so the copied harness died in its own pre-flight — "the shipped plane is not green (rc 2,
+control rc 2)" — and reddened zero arms. A mutation that kills the control proves nothing about the arms it aimed
+at; the arm count of 0 is not a survivor count, it is the run not having happened.
+
+**(d) My own committed citations were mis-aimed, and the gate cannot see it.** D193's edits to these two files
+were insertions, so every line number its own entry cites moved — eight of them, in `docs/DECISIONS.md` at
+10925, 10931, 10932, 10951, 10956, 10966 and 10971. Gate step 8 resolves a citation to "the cited file has that
+line"; its own printed LIMITS say it "cannot check that the line says what the sentence claims". So a moved
+citation is silent, and a green gate was not evidence that my record pointed anywhere. The re-aim was derived, not
+remembered: HEAD's text at each cited number was read out of `git show HEAD:scripts/...` and matched against the
+working bytes, and a number was taken only where the match was unique — 837→877, 534→557, 787/788→827/828,
+falsify 236→270, 67→75, falsify 269→317/319 (that helper's list moved into a named constant this unit widened).
+One more defect surfaced by the same arithmetic: the sentence's second floor was a bare continuation,
+`(:557)`, inheriting its file across a line wrap — invisible to a filename-keyed audit, and at HEAD pointing at an
+empty line (`git show HEAD:scripts/check_jsonb_reads.mjs`, line 557, one byte: the terminator). It is now an
+explicit citation to the line that holds the claim, and the audit that found it (`.scratch/d194_reaim3.mjs`)
+carries the state across lines, which is the only way a wrapped ledger can be audited honestly.
+
+**What this unit did not rewrite.** Nine further citations in other lanes' sections point into these two files —
+`:311` at DECISIONS 5644, 5645, 9690, 9733 and STATUS 4550, 4872, `:52` at DECISIONS 9346, `:343` and `:338` at
+DECISIONS 9691. All of them were already false at HEAD, before this unit touched a byte (D159 recorded that class
+of drift for `:311` in its own words), and correcting another unit's sentence is not this unit's call: the record
+says where they are and what HEAD holds at those numbers, and the fix belongs to whoever owns the claim.
+
+**Stated limits, because a census that hides its blind spots is the thing this project keeps catching.** The
+sentinel is a printed line, so the harness certifies totality from the reader's own claim: a run that prints the
+sentinel, takes the code it declared, and skipped a verdict block that had nothing to say is indistinguishable
+from a healthy run, and no arm here refutes that. The word `REPORT COMPLETE` is duplicated by hand between the
+reader and the harness's regex; a rename on one side is a crash report on the other — loud, but not derived. And
+rule (a) cannot fire on the committed plane: HEAD's seed carries all four kinds, so the reachable plane for it is
+this harness's plant, which is precisely what M1 shows and what the entry names as its plane.
+
+Numbers, working tree, final bytes: step 7 exits 0 with `REPORT COMPLETE — 0 reason(s) to redden, --report false,
+this run exits 0`; the harness prints `RESULT: PASS — 35 of 35 arms held` with a control census of
+`{"rows":22,"cited":31,"files":12,"lines":38}` and spans `{"checked":41,"tokens":31}`; the witness table holds all
+five legs, red only on the arms each leg aims at (34/35, 33/35, 33/35, 34/35, 20/35). Steps 8, 9, 10 and 12 and the
+committed plane are measured after these bytes land and are reported in STATUS §200's follow-up, not here — this
+entry quotes no number that was not read off a run it names.
