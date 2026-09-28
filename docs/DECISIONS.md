@@ -10177,3 +10177,40 @@ over 4 collections) come from the source text and from the census row D81 alread
 measured is whether any *served* code path reads `merchant_id` out of `items` — that is a Java and TypeScript
 question, and if a reader exists then the gate row is not merely vacuous but aimed at a field some other lane
 planned and never wrote, which is a different report with a different owner.
+
+## D169 — The gate's element-key reads are now joined to what the seed writes, and one of the two joins says what D168 said by hand
+
+**What landed.** `scripts/jsonb_key_guards.mjs` reads the shipped `data/seed/quality.sql` (or `--sql <path>`),
+splits it into statements the way the loader does while keeping dollar-quoted bodies whole, finds every
+`jsonb_array_elements(<rel>.<col>) <alias>` binding, maps that relation alias back to its table through the
+statement's own `FROM`/`JOIN`, and records each `<alias>->>'<key>'` read against `table.column · key`. Then it
+derives the other half from `data/seed/generate.py`: the first object literal that writes into a column of that
+name supplies the keys its elements carry. The verdict per pair is one of three strings — the read key is
+written, the read key is not written (vacuous suspect), or the writer is unknown and no join is claimed. It
+prints its own population and refuses an empty scan as a report rather than a green, takes exactly one flag, and
+refuses anything else at exit 2. Nothing is edited, nothing is asserted into a gate: `quality.sql` stays its
+owner's file.
+
+**What it found, and what I predicted wrong.** Two read sites exist in the whole seed check file:
+`collections.items · merchant_id` with four reads, and `merchants.images · url` with two. Against the guide
+column the join returns writer `note, subject_id, subject_type` and verdict READ-BUT-NOT-WRITTEN — D168's
+finding derived from the sources rather than read off them by hand, which is the difference between a report and
+a check someone else can re-run. Against the images column the join returns `writer unknown`, and that is where
+my prediction missed: I expected the derivation to answer `written`, because the census prose in the gate says
+those elements are keyed `alt/credit/url`. It did not, because no inline object literal writing an `images`
+element matched the rule — the elements are assembled elsewhere, and a literal-shaped probe cannot see a
+constructed one. The tool printed its blind spot instead of guessing at it, which is the behaviour I wanted; the
+blind spot is now the next thing to fix.
+
+**Why the miss is the interesting part.** This is the same failure the arc keeps meeting from the other side: a
+shape-based reader that silently under-counts a population. Here it is honest because the output says `unknown`
+and `the join is not made`, so a reader cannot mistake the two-line report for a complete audit — but a tool
+that reported only its successes would have printed one suspect and looked like it had finished.
+
+**Limits, stated.** Read sites are found only where the array is bound with an explicit alias in the same
+statement, so an element read through a sub-select or a CTE is invisible; the alias-to-table map is per
+statement and falls back to the relation alias when a statement uses a name the `FROM`/`JOIN` scan missed; the
+writer half looks at the first literal per column name, so a column written by two differently-shaped literals
+reports the first one's keys, and a constructed writer reports nothing at all — the images case. A `writer
+unknown` line is not a pass, and a `READ-BUT-NOT-WRITTEN` line is still a suspect until someone puts a dangling
+item in front of the gate row and shows which way it can go red.

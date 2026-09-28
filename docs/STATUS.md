@@ -9258,3 +9258,28 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     filed rather than improvised. Not measured here: whether any served Java or TypeScript path
                     reads `merchant_id` out of `items`, which would turn this from a vacuous check into a
                     predicate aimed at a field some lane planned and never wrote.
+
+## 174. D169: the element-key reads in the seed's checks are joined to what the generator writes — one suspect derived, one blind spot printed
+
+                    `scripts/jsonb_key_guards.mjs` splits `quality.sql` the way the loader does (dollar-quoted
+                    bodies kept whole), binds every `jsonb_array_elements` alias to its table through the
+                    statement's own FROM/JOIN, records each `->>'key'` read as `table.column · key`, and derives
+                    the written key set from the generator's first object literal per column. Two read sites
+                    exist: `collections.items · merchant_id` (four reads) and `merchants.images · url` (two).
+
+                    The guide column now returns writer `note, subject_id, subject_type` with verdict
+                    READ-BUT-NOT-WRITTEN — D168's hand finding, machine-derived and re-runnable. The images
+                    column returns `writer unknown`, and that is my prediction missing: I expected `written`,
+                    because the gate's own census prose says those elements carry alt/credit/url, but no inline
+                    literal matched, so a shape probe cannot see a constructed writer. The tool printed the blind
+                    spot instead of filling it in, which is what made the miss cheap to see.
+
+                    Limits as the tool states them: reads are found only where the array is aliased in the same
+                    statement, an alias that escapes the FROM/JOIN scan falls back to the relation name, the
+                    writer half reads the first literal per column name, and `writer unknown` is never a pass. A
+                    suspect still needs the dangling plant before anyone can say which way the gate row can go
+                    red. Plane for these bytes: step 8 0 offenders over 416 working-copy citations in 321
+                    sections, 12 blank span starts counted and none judged in this append's own sections; step 9
+                    78 across 22 PASS; steps 10 and 12 PASS; harnesses 29 · 13 · 20 · 8 · 8 · 6 = 84 arms, none
+                    missed. Next for this seam: reach a constructed writer (the images case), then the join
+                    becomes a check rather than a report.
