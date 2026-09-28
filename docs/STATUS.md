@@ -9283,3 +9283,27 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     78 across 22 PASS; steps 10 and 12 PASS; harnesses 29 · 13 · 20 · 8 · 8 · 6 = 84 arms, none
                     missed. Next for this seam: reach a constructed writer (the images case), then the join
                     becomes a check rather than a report.
+
+## 175. D170: the writer half of the key join learned a second route, and the two readers of the images shape now agree independently
+
+                    D169 could not see the images column because its elements are not assigned to a name — they
+                    sit in a positional slot of the row list — so the report said writer unknown and stopped.
+                    The join now has two routes and prints which one answered: by-name as before, and by-index
+                    through each table's declared column list, splitting a row call's top-level arguments and
+                    accepting it only when the argument count equals that list's length. Two read sites, one
+                    suspect (the guide column, keys derived as note / subject_id / subject_type against a read of
+                    merchant_id), one resolved (the images column, alt / credit / url, so that read can fire).
+
+                    The second line is the one worth the mechanism. The gate's own census prose has said those
+                    elements are keyed alt/credit/url since D81; this derives the same three names from a
+                    different file by a different route. Agreement between readers that do not read each other is
+                    the only agreement this project counts as evidence, and a single-route tool would have kept
+                    reporting its own blind spot as the seed's.
+
+                    Costs of the honest kind: the miss was not the wrong expectation but a tool unable to say
+                    why it declined, so the route is printed on every line; and a set measured with size after
+                    being spread into an array made the report's own population line print undefined for one
+                    run, caught by reading the output rather than the diff. Limits: the index route trusts the
+                    declared column lists and argument counts, a helper-built row would be missed, options and
+                    photos carry no element read so this join says nothing about them, and the guide-column
+                    suspect still needs its dangling-item plant before anyone can call the row merely vacuous.

@@ -10214,3 +10214,44 @@ writer half looks at the first literal per column name, so a column written by t
 reports the first one's keys, and a constructed writer reports nothing at all — the images case. A `writer
 unknown` line is not a pass, and a `READ-BUT-NOT-WRITTEN` line is still a suspect until someone puts a dangling
 item in front of the gate row and shows which way it can go red.
+
+## D170 — The writer half of the key join now has two routes, which closed D169's blind spot and made two readers agree by accident of honesty
+
+**What changed.** `scripts/jsonb_key_guards.mjs` asked the generator one question with one shape: a column's
+elements are written where a variable or key of that name is assigned a list of objects. D169 showed that only
+describes the guide column. So the derivation now has two routes and prints which one answered. The name route
+is unchanged; the index route reads each table's declared column list, splits the top-level arguments of every
+row-building call — commas inside nested brackets or strings do not separate arguments — and accepts a call as
+that column's writer only when its argument count equals the declared list's length, taking the element at the
+column's position. Where neither route resolves, the answer is still `no route resolved` and no join is claimed.
+
+**What it says now.** Two element-key reads exist in the seed's checks. The guide column resolves by name to
+`note, subject_id, subject_type`, so the four reads of `merchant_id` are READ-BUT-NOT-WRITTEN — D168's finding,
+derived. The images column resolves by index, through both tables that declare it, to `alt, credit, url`, so
+its two reads of `url` are written and the row can actually fire. That second line is worth the mechanism:
+the gate's own census prose has claimed the images elements are keyed alt/credit/url since D81, and this is a
+derivation from a different file reaching the same three names by a different route. Two readers agreeing where
+neither reads the other's output is the only kind of agreement this project treats as evidence.
+
+**The prediction that was chased instead of explained.** D169 recorded my expectation that the images column
+would join, and its failure: I had assumed a name-shaped rule covered the file. The miss was not that the
+expectation was wrong but that the tool could not say why it was — `writer unknown` was true and useless. The
+fix is the route that failed to be needed, plus printing the route that answered, so the next time this reports
+`no route resolved` a reader knows which of the two shapes it also could not see. The same edit exposed a
+cosmetic bug of mine in passing: a count printed `undefined` because a set was measured with `.size` after being
+spread into an array — the report's own population line was silently wrong for one run before it was caught by
+looking at the output rather than at the diff.
+
+**Limits, stated.** The index route trusts the declared column list and the argument count; a writer that builds
+its row through a helper, or a table whose list length coincidentally matches a different call, would be
+mis-attributed, which is why the route is printed on every line rather than hidden. Only the two columns the
+gate currently reads element keys for are exercised here — `options` and `photos` carry no `->>` read in the
+check file, so this join says nothing about them, and an empty result on a column is not a green on a column.
+The suspect from D168 still needs its dangling-item plant before anyone can say the guide row is only vacuous
+rather than also wrong.
+
+**Measured on the bytes this entry describes.** The join: two read sites, one by-name suspect, one by-index
+written, no unresolved routes. Step 8: 650 tokens over 311 committed sections, 416 working-copy citations, 0
+offenders, 12 blank span starts counted and 0 judged. Step 9: 78 comment-plane citations across 22 files, PASS.
+Harnesses: 29 ledger-text · 13 comment-plane · 20 flag-dialect · 8 quality-seam · 8 ledger-sections · 6
+status-citations, 84 arms, none missed.

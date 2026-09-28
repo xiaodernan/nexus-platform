@@ -98,24 +98,73 @@ for (const stmt of statements) {
 // `images`, `options`, `photos`). Where no literal is found the answer is `unknown`, printed as such — a
 // missing writer is a fact about this probe, not a green.
 const gen = readFileSync(join(ROOT, 'data', 'seed', 'generate.py'), 'utf8').replace(/\r\n/g, '\n');
-const written = new Map();
-for (const col of new Set([...rows.keys()].map((k) => k.split('.')[1].split(' ')[0]))) {
-  const lits = [...gen.matchAll(new RegExp(`["']?${col}["']?\\s*[:=]\\s*\\[\\s*\\{([\\s\\S]{0,400}?)\\}`, 'g'))]
-    .map((m) => [...m[1].matchAll(/["']([a-z_]+)["']\s*:/g)].map((k) => k[1]));
-  const keys = new Set(lits.flat());
-  if (keys.size) written.set(col, [...keys].sort());
-  else written.set(col, null);
+
+// The declared per-table column lists: ("merchants", [...]), which is what gives a column its POSITION.
+const schemaCols = new Map();
+for (const m of gen.matchAll(/\(\s*"([a-z_]+)"\s*,\s*\[([\s\S]{0,1400}?)\]\s*\)/g)) {
+  const cols = [...m[2].matchAll(/"([a-z_]+)"/g)].map((c) => c[1]);
+  if (cols.length) schemaCols.set(m[1], cols);
+}
+
+// Top-level split of a bracketed argument list: commas inside nested brackets or strings are not separators.
+function splitArgs(src, openIdx) {
+  const args = [];
+  let depth = 0, cur = '', quote = null;
+  for (let i = openIdx; i < src.length; i += 1) {
+    const ch = src[i];
+    if (quote) {
+      cur += ch;
+      if (ch === '\\') { cur += src[++i]; continue; }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'") { quote = ch; cur += ch; continue; }
+    if ('([{'.includes(ch)) depth += 1;
+    if (')]}'.includes(ch)) {
+      depth -= 1;
+      if (depth < 0) { if (cur.trim()) args.push(cur); return args; }
+    }
+    if (ch === ',' && depth === 1) { args.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  return args;
+}
+
+const literalKeys = (chunk) => {
+  const open = chunk.indexOf('{');
+  if (open < 0) return null;
+  const keys = [...chunk.slice(open).matchAll(/["']([a-z_]+)["']\s*:/g)].map((k) => k[1]);
+  return keys.length ? [...new Set(keys)].sort() : null;
+};
+
+function writtenKeys(col) {
+  const named = [...new Set([...gen.matchAll(new RegExp(`["']?${col}["']?\\s*[:=]\\s*\\[\\s*\\{([\\s\\S]{0,400}?)\\}`, 'g'))]
+    .flatMap((m) => [...m[1].matchAll(/["']([a-z_]+)["']\s*:/g)].map((k) => k[1])))].sort();
+  if (named.length) return { keys: named, route: 'by-name' };
+  const tables = [...schemaCols.entries()].filter(([, cols]) => cols.includes(col)).map(([t]) => t);
+  const found = new Set();
+  for (const m of gen.matchAll(/\brow\(\s*\[/g)) {
+    const args = splitArgs(gen, m.index + m[0].lastIndexOf('['));
+    for (const t of tables) {
+      const cols = schemaCols.get(t);
+      if (args.length !== cols.length) continue;
+      const keys = literalKeys(args[cols.indexOf(col)]);
+      if (keys) keys.forEach((k) => found.add(k));
+    }
+  }
+  if (found.size) return { keys: [...found].sort(), route: `by-index via ${tables.join(', ')}` };
+  return { keys: null, route: 'no route resolved' };
 }
 
 console.log(`  file               ${SQL.replace(ROOT + '/', '')}`);
-console.log(`  statements scanned ${statements.length} · array statements 2`);
+console.log(`  statements scanned ${statements.length} · columns with element reads ${new Set([...rows.keys()].map((k) => k.split(' · ')[0])).size}`);
 console.log(`  element key reads  ${rows.size} distinct (table.column · key) pairs`);
 for (const [id, v] of [...rows.entries()].sort()) {
   const col = id.split(' · ')[0], key = id.split(' · ')[1];
-  const w = written.get(col.split('.')[1]);
-  const verdict = w === null ? 'writer unknown — the join is not made'
-    : w.includes(key) ? 'written, so the read can fire' : 'READ-BUT-NOT-WRITTEN — suspect vacuous';
-  console.log(`  - ${col} · ${key} · reads ${v.reads} · ${v.guardedOnly ? 'every read guarded' : 'has unguarded use'} · writer [${w ? w.join(', ') : '—'}] · ${verdict} · "${[...v.labels][0]}"`);
+  const w = writtenKeys(col.split('.')[1]);
+  const verdict = w.keys === null ? 'writer unknown — the join is not made'
+    : w.keys.includes(key) ? 'written, so the read can fire' : 'READ-BUT-NOT-WRITTEN — suspect vacuous';
+  console.log(`  - ${col} · ${key} · reads ${v.reads} · ${v.guardedOnly ? 'every read guarded' : 'has unguarded use'} · writer [${w.keys ? w.keys.join(', ') : '—'}] via ${w.route} · ${verdict} · "${[...v.labels][0]}"`);
 }
 if (rows.size === 0) {
   console.log('  A scan that found nothing is not a green scan: check the split and the regex, not the seed.');
