@@ -8984,3 +8984,35 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     spelling only, and an untracked payload checker. Those three, the drift checker's
                     glued-value case needing a planted row and a rate, and #100's CI `required` job are what
                     this lane leaves open; #94 still needs the user's authorisation.
+
+## 165. D160: a citation that lands on a blank line is the content predicate that has signal, and the one that names the cited line's identifier does not
+
+                    Measured before building. Across the two ledgers' 149 resolvable citations, the
+                    identifier the citing sentence backticks sits on the cited line 18 times, within three
+                    lines 21 times, somewhere in the file 43 times — out of 64 citations that name one at all.
+                    A gate with that precision would spend its first run burying two real findings under four
+                    dozen rows that mean "the code around here", because a ledger cites a region and its
+                    sentence names the thing the region does. The content check is refused in writing rather
+                    than shipped as noise.
+
+                    The narrow predicate is clean: 6 of 149 citations land on a blank line, and a blank line
+                    cannot hold the claim its sentence makes. Three causes, all named in D160 — two rows into
+                    `docs/DATABASE.md:88` blanked by another lane's uncommitted append in this working copy,
+                    two into `scripts/db_gate_fresh.sh:144` blanked by D159's own step 9 wiring, and two into
+                    `scripts/check_ledger_sections.mjs:34` blanked by D159's parse migration, one of which is
+                    the row that was written to correct the other. That last pair is the third instance this
+                    arc has caught of a record drifting while describing a drift.
+
+                    It is not armed as a refusal yet, and the reason is a policy gap rather than an
+                    inconvenience: four of the six sit in committed rows this project corrects by append, and
+                    an append cannot move the number the old row printed, so arming the class today would red
+                    the gate on history. The follow-up names the design that avoids both a hand-typed allow
+                    list and a permanent amnesty — score blank lines in the plane a run is writing (the
+                    `--text` mode the harnesses already use, where every row is new), not in the plane it is
+                    reading.
+
+                    This entry touches prose only: no reader, no harness, no gate step. The readers were
+                    re-run on the bytes before it landed and stayed where D159 left them — 635 citation-shaped
+                    tokens over 303 sections with 0 offenders, 80 comment-plane citations across 22 files,
+                    HEAD 146 decisions and 132 STATUS sections against the same on disk with missing 0 and
+                    duplicates 0, and every spelled section citation resolving.

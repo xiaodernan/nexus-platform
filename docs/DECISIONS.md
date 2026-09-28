@@ -9714,3 +9714,59 @@ answering it needs a planted drift row and a rate. `check_falsifier_registry.mjs
 and another lane's file, so it is reported, not edited. #100 stays open for the same reason as before:
 CI's `required` job asserts only the e2e result, and its census steps run through `| tee` without
 `pipefail`.
+
+## D160 — The blank line a citation lands on: measured the content predicate this arc kept hinting at, shipped the half that has signal, and refused the half that does not
+
+**The question, asked with numbers instead of adjectives.** Step 8 checks that a cited file has the cited
+line. It has never checked what that line holds, and D159 gave two reasons to suspect the gap is paid for: a
+note inside `check_ledger_citations.mjs` pointed at `check_comment_citations.mjs:135` while the statement it
+describes had moved to `check_comment_citations.mjs:142`, and three older rows name lines that moved years
+of edits ago. So the pre-measurement asked, for every citation in the two ledgers that resolves to a real
+file and a real line, whether the identifier the citing sentence backticks actually appears on that line.
+
+**It does not, often enough to be useless as a gate.** Of 64 citations whose sentence names a backticked
+identifier, the identifier sits on the cited line 18 times, within three lines of it 21 times, anywhere in
+the file 43 times. A predicate with 18 hits and 46 misses over a population nobody disputes would spend its
+first run drowning two real findings under four dozen sentences that mean "the code around here". The
+reason is structural, not sloppy authorship: a ledger row cites a *region* — a SQL string literal, the body
+of a function, a line inside the sentence's paragraph — and the sentence's noun names the thing the region
+does. `check_jsonb_reads.mjs:311` is the same defect in miniature that D87 named for answer sites, and the
+fix for that one was a per-kind predicate, not a stricter global one. So the content check is refused here,
+in writing, with its measurements, rather than shipped as noise and renamed a guard later.
+
+**What does have signal: the line is empty.** Of 149 resolvable citations, exactly 6 land on a blank line,
+and a citation to a blank line cannot be what its sentence says it is — there is nothing there to hold a
+claim. They are not one cause but three:
+
+* `docs/DATABASE.md:88` from two rows (`docs/DECISIONS.md:5160` and `docs/DECISIONS.md:5220`) — that file is
+  dirty in this working copy with another lane's uncommitted 10-line append, which moved the line under the
+  citation. Reported, not edited: the row is mine to note and the file is not mine to touch.
+* `scripts/db_gate_fresh.sh:144` from two rows (`docs/DECISIONS.md:5405` and `docs/STATUS.md:4634`) — D159's
+  step 9 wiring added 8 lines above that number, so this lane's own change is what blanked it.
+* `scripts/check_ledger_sections.mjs:34` from two rows (`docs/DECISIONS.md:9342` and the D159 row that
+  corrects it, `docs/DECISIONS.md:9688`) — the parse migration deleted a line there, and the correcting
+  sentence inherited the staleness of the statement it was writing off. That is the second time this arc has
+  found its own record drift while describing a drift, which is the argument for a class of check rather than
+  a one-off repair.
+
+**Why the class is not armed as a refusal today.** A `BLANK LINE` offender would red the gate on six rows,
+four of which sit in committed history that this project's rules forbid rewriting — the correction channel is
+an append, and an append does not move the number the old row printed. So arming the predicate needs a
+stale-row policy first, and a hand-typed allowlist of `file:line` pairs is the shape this repo has already
+rejected: an exemption keyed on a line number is an exemption that expires on the next edit, silently. The
+predicate therefore ships as a measurement with a re-measure command, not as a verdict, and the follow-up is
+filed with its design constraint spelled out: count blanks in the plane a run is *writing* (the `--text`
+mode the harnesses already use), where every row is new, rather than in the plane it is *reading*.
+
+**Measured on the bytes this entry describes.** Readers before the append: step 8 resolved 635
+citation-shaped tokens over 303 sections with 0 offenders and 401 working-copy citations; step 9 printed 80
+comment-plane citations across 22 files; step 10 printed HEAD 146 decisions and 132 STATUS sections against
+disk 146 and 132, missing 0, uncommitted 0, duplicates 0; step 12 resolved every spelled section citation.
+The two gate legs of D159 are unchanged by this entry, which adds prose to the two ledgers and touches no
+reader, no harness and no gate step.
+
+**Limits, stated.** The probe's population is its own definition: 149 resolvable citations here against 200
+in the first pass, because the first pass counted tokens whose line number runs past the end of the file and
+this one does not — the 51-token difference is the past-EOF and unresolvable-name class step 8 already
+scores, not a hidden set. The blank-line census reads the working copy, so another lane's uncommitted append
+can change it between two runs of this same script; every figure above names the tree it was taken from.
