@@ -9530,3 +9530,26 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     registry); step 13 committed plane reports 8 FALSE SITES, 0 ledger offenders, 75/20
                     comment citations — all reported, none blocking. Appends pure addition, zero lone LF.
                     Nothing pushed.
+
+## 183. D177: citation_blank_census.mjs fixed to reconcile on the committed plane instead of crashing
+
+                    The blank-line census calls check_ledger_citations.mjs as a subprocess to read the
+                    blank-line count it prints, then compares it with its own walk. On the committed plane
+                    (a clean checkout of HEAD), step 8 exits 1 with 41 FILE NOT FOUND offenders — citations
+                    to files that exist only as other lanes' uncommitted work. The census used execFileSync,
+                    which throws on non-zero exit, so the subprocess's crash was reported as an unhandled
+                    exception rather than as a census result. D174 recorded this: an unread failure and a
+                    found problem are indistinguishable by exit code.
+
+                    The fix: catch the execFileSync error and extract stdout from the caught exception.
+                    The reader prints its blank-line count before exiting, so the census can still parse the
+                    number and reconcile. Working tree: census 12, step 8 prints 12, RESULT: PASS. Committed
+                    plane: census 12, step 8 prints 12, RESULT: PASS. The 41 offenders on the committed
+                    plane are FILE NOT FOUND for files that exist only in the working tree; they do not affect
+                    the blank-line count, which is 12 on both planes. No behavioural change on planes where
+                    the reader exits 0.
+
+                    Plane for these bytes: steps 7-12 working-tree PASS (216/216 registry, 78/22 comment
+                    citations, 0 ledger offenders). Step 13 committed plane: 8 FALSE SITES, 0 ledger
+                    offenders, 75 comment citations across 20 files. Blank-line census now reconciles on
+                    both planes without crashing. Appends pure addition, zero lone LF. Nothing pushed.
