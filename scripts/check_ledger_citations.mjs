@@ -51,6 +51,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join, isAbsolute } from 'node:path';
 import { VENDOR_DIRS, walkFiles } from './source_index.mjs';
+import { parseFlags } from './cli_args.mjs';
 
 const ROOT = process.cwd();
 
@@ -71,38 +72,29 @@ const notCheckable = (m) => {
  * from the USAGE line). Only the first was parsed, so the second did not fail — it silently censused the wrong
  * plane and printed a truthful-looking green about it. Both are parsed now, and a request that cannot be aimed
  * is refused rather than dropped: unknown flag, missing value, empty value, a value that reads as another flag,
- * and a flag given twice are each a refusal. That last one is this reader's own rule; D156 gave
- * `check_jsonb_reads.mjs` the equals-vs-space half but not this, and #102 owns making the two readers share one
- * parser instead of two dialects that differ in their fine print.
+ * and a flag given twice are each a refusal.
+ *
+ * D158 — the grammar itself moved to `cli_args.mjs`, because by then four readers had each grown the same
+ * table by hand and #102 named that as the debt: two dialects parsed by four copies differ in their fine
+ * print, and the fine print is where the defect lives. The refusal sentences this reader prints are the
+ * module's, and `scripts/falsify_ledger_text.mjs` pins several of them verbatim — which is how the move is
+ * shown to preserve behaviour rather than assumed.
  */
-const FLAGS = { '--text': 'value', '--report': 'switch', '--worktree': 'switch', '--verbose': 'switch' };
-const FLAG_NAMES = Object.keys(FLAGS).join(', ');
-function parseArgs() {
-  const argv = process.argv.slice(2);
-  const out = { text: null, report: false, worktree: false, verbose: false };
-  let values = 0;
-  for (let i = 0; i < argv.length; i += 1) {
-    const a = argv[i];
-    if (!a.startsWith('--')) notCheckable(`unexpected argument ${a} — this reader takes only ${FLAG_NAMES}`);
-    const name = `--${a.slice(2).split('=')[0]}`;
-    if (FLAGS[name] === undefined) notCheckable(`unknown option ${a} — flags this reader parses: ${FLAG_NAMES}`);
-    if (FLAGS[name] === 'switch') {
-      if (a.includes('=')) notCheckable(`${name} is a switch and was given a value: ${a}`);
-      out[name.slice(2)] = true;
-      continue;
-    }
-    const eq = a.indexOf('=');
-    const value = eq >= 0 ? a.slice(eq + 1) : argv[++i];
-    if (value === undefined || value === '') notCheckable(`${name} was given without a path`);
-    if (value.startsWith('--')) notCheckable(`${name} was followed by ${value}, which reads as another flag — there is no file for the census`);
-    values += 1;
-    if (values > 1) notCheckable(`${name} was given ${values} times — which copy is the census?`);
-    out.text = value;
-  }
-  return out;
-}
+const FLAGS = {
+  '--text': { kind: 'value' },
+  '--report': { kind: 'switch' },
+  '--worktree': { kind: 'switch' },
+  '--verbose': { kind: 'switch' },
+};
 
-const ARGS = parseArgs();
+const parsed = parseFlags(process.argv.slice(2), FLAGS);
+if (!parsed.ok) notCheckable(parsed.reason);
+const ARGS = {
+  text: parsed.value['--text'] ?? null,
+  report: Boolean(parsed.flag['--report']),
+  worktree: Boolean(parsed.flag['--worktree']),
+  verbose: Boolean(parsed.flag['--verbose']),
+};
 /**
  * `--text` replaces the ledger list with one file, read as written. It exists for the same reason
  * D87's `--quality=` does: a witness must be able to show an arm failing without writing a tracked file that

@@ -20,6 +20,15 @@
 #
 # The live `nexus` and `nexus_test` databases are never opened, and neither is the running :8090
 # instance: this starts its own process on its own port with its own log file.
+#
+# Environment overrides:
+#   E2E_PORT           the port this run boots its own service on (default 8092)
+#   E2E_DB_PREFIX      throwaway database name prefix (default nexus_e2e)
+#   NEXUS_PG_CONTAINER preferred container name for Postgres discovery
+#   NEXUS_TENANT       tenant the served-read probes ask for (default hong-kong)
+#   E2E_FLAG_PLANT     step 0 only: aim the flag-dialect harness at this planted reader file instead of
+#                      the shipped one (inert when unset; this is the arm that shows the pre-flight can
+#                      stop the run -- see scripts/falsify_flag_dialect.mjs)
 
 set -euo pipefail
 
@@ -39,7 +48,9 @@ while [ $# -gt 0 ]; do
     --keep)          KEEP=1 ;;
     --skip-generate) SKIP_GENERATE=1 ;;
     --reads-only)    READS_ONLY=1 ;;
-    -h|--help)       sed -n '2,25p' "$0"; exit 0 ;;
+    -h|--help)       # D158: the header IS the help, so a documented knob cannot be cut off the end of a
+                     # hand-counted line range (the fresh gate had the same defect until D157).
+                     awk 'NR>1 { if ($0 ~ /^$/) { print ""; next } if ($0 !~ /^#/) exit; sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
     *) echo "e2e_fresh.sh: unknown option: $1" >&2; exit 2 ;;
   esac
   shift
@@ -50,6 +61,18 @@ step() { printf '\n=== %s\n' "$*"; }
 
 LIVE_DB="${NEXUS_DB_NAME:-nexus}"
 [ "$PORT" != "${NEXUS_PORT:-8090}" ] || die "refusing: E2E_PORT equals the running instance's port"
+
+# --------------------------------------------------------------------------- 0. the readers' own flags
+step "preflight  scripts/falsify_flag_dialect.mjs — both flag spellings aim the e2e readers at one plane"
+# D158: the two readers this run shells out to below looked their own flags up with `argv.indexOf('--name')`,
+# which reads the spaced spelling and silently drops `--name=value`. Measured against the service that was
+# live while this was written: `--tenant d158-not-a-tenant` answered with one HTTP 404 and exit 1, while
+# `--tenant=d158-not-a-tenant` answered with 626 passing checks about a tenant nobody asked for. It runs here,
+# before the container is even looked for, because the harness needs no database and no service: it stands up
+# its own stub and points the shipped readers at it, so a caller that cannot aim a flag learns that in seconds
+# rather than after a generated dataset. `E2E_FLAG_PLANT` aims the harness at a planted reader -- the arm that
+# shows a non-zero rc from this step stops the run (the same shape as the fresh gate's GATE_* knobs, D152-D157).
+( cd "$ROOT" && node scripts/falsify_flag_dialect.mjs ${E2E_FLAG_PLANT:+--reader="$E2E_FLAG_PLANT"} ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- container
 # Same resolution as the fresh gate: two names have ever served this project's Postgres on this host,

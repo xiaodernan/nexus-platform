@@ -21,12 +21,26 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseFlags } from './cli_args.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONTRACT = path.join(ROOT, 'docs', 'API_CONTRACT.md');
-const argv = process.argv.slice(2);
-const arg = (n, f) => { const i = argv.indexOf(`--${n}`); return i >= 0 && argv[i + 1] ? argv[i + 1] : f; };
-const BASE = arg('base', 'http://127.0.0.1:8090').replace(/\/$/, '');
+
+/*
+ * D158 — `--base` is read by the shared parser. The local lookup here was `argv.indexOf('--base')`, which sees
+ * the spaced spelling and not `--base=<url>`; measured, the ignored form still printed
+ * "contract routes in scope : 123 of 135 documented" against whatever answered on the default port, while the
+ * spaced form aimed at a dead port exited 2. Neither line named which service replied, so a run could not be
+ * attributed to the build it came from -- the base is printed on every verdict path now.
+ */
+const SPEC = { '--base': { kind: 'value', unit: 'service URL' } };
+const parsed = parseFlags(process.argv.slice(2), SPEC);
+if (!parsed.ok) {
+  console.log('NEXUS — contract vs runtime');
+  console.log(`  RESULT: NOT CHECKED — ${parsed.reason}`);
+  process.exit(2);
+}
+const BASE = (parsed.value['--base'] ?? 'http://127.0.0.1:8090').replace(/\/$/, '');
 
 const VERBS = '(?:GET|POST|PATCH|PUT|DELETE|HEAD|OPTIONS)';
 
@@ -164,6 +178,7 @@ try {
   const missing = scope.filter((d) => !answers(d));
   const hardMissing = missing.filter((d) => PHASE1.has(d.section) && d.method === 'GET');
 
+  console.log(`service answering      : ${BASE} (the document describes the build it came from)`);
   console.log(`contract routes in scope : ${scope.length} of ${docs.length} documented`);
   console.log(`declared by the service  : ${matched.length}`);
   console.log(`documented, not served   : ${missing.length}`

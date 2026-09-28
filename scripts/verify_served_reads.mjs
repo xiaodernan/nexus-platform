@@ -16,13 +16,26 @@
  * Exit 0 when every probe passes; 1 otherwise. Read-only: nothing here issues a write.
  */
 
+import { parseFlags } from './cli_args.mjs';
+
+/*
+ * D158 — the flags come from the shared parser, because this reader used to look them up with
+ * `argv.indexOf('--base')`. That reads only the spaced spelling, so `--tenant=d158-not-a-tenant` measured the
+ * seeded tenant and printed `RESULT: PASS — 626 served-read checks passed against http://127.0.0.1:8090`: the
+ * run answered a question nobody asked it, and the one number a caller cannot see in that line is the tenant,
+ * which is why the tenant is printed on both verdict paths now. An option this reader does not name is refused
+ * with exit 2 instead of being dropped.
+ */
+const SPEC = { '--base': { kind: 'value', unit: 'service URL' }, '--tenant': { kind: 'value', unit: 'tenant id' } };
 const argv = process.argv.slice(2);
-const arg = (name, fallback) => {
-  const i = argv.indexOf(`--${name}`);
-  return i >= 0 && argv[i + 1] ? argv[i + 1] : fallback;
-};
-const BASE = arg('base', 'http://127.0.0.1:8090').replace(/\/$/, '');
-const TENANT = arg('tenant', 'hong-kong');
+const parsed = parseFlags(argv, SPEC);
+if (!parsed.ok) {
+  console.log('NEXUS — served consumer reads');
+  console.log(`  RESULT: NOT CHECKED — ${parsed.reason}`);
+  process.exit(2);
+}
+const BASE = (parsed.value['--base'] ?? 'http://127.0.0.1:8090').replace(/\/$/, '');
+const TENANT = parsed.value['--tenant'] ?? 'hong-kong';
 
 // What this run has actually managed to address things by, so the surface sweep fills real ids
 // rather than inventing ones it cannot resolve.
@@ -336,13 +349,13 @@ function cardsIn(body, found = []) {
 function finish() {
   for (const n of notes) console.log(`  · ${n}`);
   if (failures.length) {
-    console.log(`\n  ${failures.length} of ${checks} served-read checks FAILED:`);
+    console.log(`\n  ${failures.length} of ${checks} served-read checks FAILED (against ${BASE} as tenant ${TENANT}):`);
     for (const f of failures.slice(0, 40)) console.log(`    - ${f}`);
     if (failures.length > 40) console.log(`    … ${failures.length - 40} more`);
     console.log('\nRESULT: FAIL');
     process.exit(1);
   }
-  console.log(`\nRESULT: PASS — ${checks} served-read checks passed against ${BASE}`);
+  console.log(`\nRESULT: PASS — ${checks} served-read checks passed against ${BASE} as tenant ${TENANT}`);
 }
 
 main().catch((err) => {

@@ -9514,3 +9514,120 @@ one refuses a value that reads as a flag; one shared argument parser, plus a gat
 unknown flag and requires exit 2, is the real fix and will not be invented inside a two-line commit. #100 stays
 report-only: CI's `required` job asserts the e2e result alone, and its census steps run through `| tee` without
 `pipefail`, so a checker that exited 1 would have to be read out of the log rather than out of the job status.
+
+
+## D158 — D157's shared-parser residue landed, aimed first at the two readers that talk to a live service: one character of `--tenant=` had been answering a different tenant
+
+CONTEXT. D157 closed by naming its own residue: two readers then parsed both spellings, but they were *two
+parsers*, and only one of them refused a value that reads as a flag. "One shared argument parser, plus a gate arm
+that feeds every checker an unknown flag and requires exit 2, is the real fix and will not be invented inside a
+two-line commit." This entry is that parser. It went into the two readers that had not been fixed at all, because
+those two sit on the plane that speaks to a running service, where a silently-dropped flag does not re-aim a
+census at another file — it re-aims the whole run at another tenant and another port, and the output cannot say
+so.
+
+MEASURED FIRST, AGAINST A SERVICE THIS LANE FOUND LIVE. `verify_served_reads.mjs` and
+`verify_contract_runtime.mjs` looked every flag up with `argv.indexOf('--name')`, which is the spaced spelling
+and nothing else:
+
+  * `--tenant d158-not-a-tenant` → 1 check, HTTP 404, exit 1. The flag was read.
+  * `--tenant=d158-not-a-tenant` → 626 checks, `RESULT: PASS`. The flag was dropped, another tenant answered
+    every one of those 626 checks, and not one printed line named the tenant that had been asked for.
+  * `--base http://127.0.0.1:1` → `fetch failed`, exit 1. Read.
+  * `--base=http://127.0.0.1:1` → the same 626-check PASS. Dropped.
+  * `--bes <url>` and `--tesnant <id>` → exit 0 with the full report printed. An option the reader does not
+    implement is not a refusal here either; it is an ignore.
+  * `verify_contract_runtime.mjs --base=<dead port>` printed the identical report — 123 documented, 117 served,
+    6 gaps — as the run aimed at the live service, because the report describes the *contract* it reads from disk
+    and the address it believed it was probing was the default one all along.
+
+A PASS that cannot say which service answered, and which tenant it posed as, is not attributable to a plane.
+Then the live service went down — it belongs to another lane — so the equivalence proof below does not rest on
+`:8090`; it runs against a stub this harness owns.
+
+THE PARSER. `scripts/cli_args.mjs` exports `parseFlags(argv, spec)` and a `flagHelp(spec)` that prints the table
+rather than a hand-counted line range (D157 found a `--help` that had fallen three knobs behind its own header).
+A spec declares each knob as a value or a switch, with the unit named in prose so the refusal is about the
+operator's request: "was given without a path", "was given without a service URL". Both spellings of a value
+knob parse; both spellings of a switch parse; and a request that cannot be aimed is refused rather than dropped —
+unknown option, a switch given a value, a missing value, an empty value, a value that reads as another flag, the
+same knob twice, and a bare positional are seven separate refusals. The module prints nothing and never exits:
+each reader owns its own verdict vocabulary, because these files already disagree about what `RESULT: PASS` means
+and a shared parser must not silently harmonise that.
+
+THREE READERS MOVED ONTO IT. `verify_served_reads.mjs:30` and `verify_contract_runtime.mjs:37` lost their
+`indexOf` helpers. `check_ledger_citations.mjs:90` — step 8's reader, whose inline table D157 wrote — lost the
+table too and now imports the module. That move is only safe if the 18 arms D157 pinned still hold, and they do:
+`falsify_ledger_text.mjs` runs the shipped checker as a subprocess on every arm, both spellings of the same plant
+still print identical verdict lines, and all seven refusals still arrive in the wording those arms match on. The
+refactor is behaviour-preserving because a harness written the day before it says so, not because the diff looked
+equal.
+
+VERDICTS NAME THE PLANE THEY MEASURED. `verify_served_reads.mjs` now ends either
+`N of M served-read checks FAILED (against <base> as tenant <tenant>)` or
+`RESULT: PASS — M served-read checks passed against <base> as tenant <tenant>`;
+`verify_contract_runtime.mjs` prints `service answering : <base> (the document describes the build it came
+from)` in its report header. Its `RESULT:` sentences are deliberately untouched — other planes quote them.
+
+THE ARM, INSIDE THE RUNNER. `scripts/e2e_fresh.sh` gained a preflight step before container discovery, running
+`scripts/falsify_flag_dialect.mjs`, and a knob `E2E_FLAG_PLANT` that aims that harness at a planted reader file —
+the same shape as `GATE_LEDGER_TEXT` (D157), `GATE_QUALITY_SQL` (D156) and the rest: a seam is not wired until a
+run can be shown to stop *from inside the thing that wires it*. The harness owns its stub server and its fixtures,
+so the preflight costs seconds and touches no database, no Java process and no other lane's port. Its `--help`
+is now derived from the header block instead of a counted `sed` range.
+
+WHY THE READERS ARE AWAITED, NOT WAITED ON. The first draft called them with `spawnSync`, and every arm hung
+until its 120-second kill. `spawnSync` parks the parent's event loop, and the parent's event loop is the thing
+that answers the stub: the witness could not service the world it planted. Children are `execFile` promises now,
+and the request log fills while they run.
+
+HOW IT IS WITNESSED WITHOUT A SERVER. Every arm runs the SHIPPED reader as a subprocess against an in-process
+HTTP stub on an ephemeral port; the stub logs `{host, tenant, path}`. Which plane a run touched is therefore
+out-of-band evidence, not the run's own claim. One arm rebuilds the old one-dialect parser as a mutant copy of the
+reader in the OS temp dir and re-runs this harness against the mutant, predicting exit 1 — and it reddens with
+stub-derived reasons ("the glued spelling … the run addressed 0 host(s) and tenant(s) []", "a refused run still
+sent 2 request(s) to the stub"), which is the proof that the fifteen green arms above it are measuring something.
+
+THE CENSUS, AND ITS TWO FALSE STARTS. The last arm enumerates `scripts/*.mjs` rather than describing it. The
+first version counted any file whose *text* mentioned `process.argv`, which put `cli_args.mjs` — a parser that
+takes argv as a parameter, and whose header quotes the broken shape — in the population of readers. Keying on code
+use fixed that; the predicate then went too far the other way and matched only `= process.argv.slice(`, so the
+files that pass argv inline (`parseFlags(process.argv.slice(2), SPEC)`) vanished from the count — including two of
+the three this entry moves onto the shared parser. It reported 5 readers with 1 shared, and the arm that requires
+the shared-parser readers to be named reddened: the census had lost its own subjects. Comment lines are stripped
+first now, then any `process.argv.` use counts. On this tree that is 11 readers · 4 on the shared parser · 7
+hand-written.
+
+MEASURED AFTER. `falsify_flag_dialect.mjs` 20 arms · 20 held · 0 missed, then twice more on the bytes of this
+entry. Two legs of the runner's preflight on one working tree, both with docker kept out of the `PATH` so the run
+stops at the container guard and creates nothing: neutral `NEXUS_PG_CONTAINER=nosuchcontainer` printed the
+preflight, 20/20 held, `RESULT: PASS`, then the pre-existing `no running Postgres container among: …` and exit 2;
+armed `E2E_FLAG_PLANT=<the temp mutant>` printed 19 arms · 7 held · 12 missed, `RESULT: FAIL`, and exited 1 after
+exactly one step header — before any container is opened. The gate plane re-certified on these bytes: step 8
+HEAD-strict 299 headings · 608 name:number tokens · 378 citation-shaped · 73 distinct files, working copy 388
+citations in 301 sections · 0 offenders · exit 0, and the same reader on the working tree 301 headings · 622
+tokens · exit 0; step 9 80 comment-plane citations across 22 files · exit 0; step 10 HEAD 144 decisions and 130
+STATUS sections against 145 and 131 on disk, missing 0 · duplicates 0 · uncommitted 1 each, which is this entry
+and its neighbour; step 12 11 spelled citations · 11 resolve, against 130 headings at HEAD with max §162; and the
+four sibling falsifiers 18 · 8 · 8 · 6 arms, all held. The full neutral gate ran on these bytes to their final
+shape: generate, migrate, seed and all twelve steps, exit 0, 12 step headers, `216 quality checks on a
+from-scratch schema (tables=58, migrations=7)`, carrying step 7's 8 arms, step 8's 18 and step 11's registry
+reconciliation inside it, and closing with the databases dropped.
+
+WHAT IS LEFT, AND WHY IT IS NOT QUIETLY NARROWED. Seven readers still hand-write their argument handling, and
+they are not one problem. Four accept both spellings from their own tables and are pinned by their own harnesses
+(`check_jsonb_reads.mjs`, `check_comment_citations.mjs`, `check_ledger_sections.mjs`, `check_status_citations.mjs`)
+— migrating them is a behaviour-preserving change each harness can prove, and it is the next unit, not this one.
+Two decide behaviour by presence alone (`check_contract_drift.mjs:36` reads `argv.includes('--report')`, and
+the untracked `verify_payload_conformance.mjs` in this working copy keeps a `Set` of `--report` and `--json`),
+so `--report=1` is not "report mode with a value" but a token nothing matches. In the drift checker that
+switch is the difference between a report and a failed build — its line 248 exits 1 only when `reportOnly` is
+false — so a caller who typed the glued form asked for tolerance and would have got a red. That is the
+opposite direction from a false green, and it is why the finding is filed as a severity defect rather than a
+truthfulness one. Measured on this tree the two spellings are INDISTINGUISHABLE: the drift set is empty, both
+printed the same 5-line report and both exited 0. So what is on offer is a hazard read off the code plus the
+one plane where it cannot yet show, not a demonstration — answering it needs a planted drift row and a rate. One
+reader takes a value in the spaced form only, `check_falsifier_registry.mjs:38`, gate step 11's reader — another
+lane's file, so it is reported, not edited.
+And #100 stays open for the same reason as before: CI's `required` job asserts only the e2e result, and its census
+steps run through `| tee` without `pipefail`.

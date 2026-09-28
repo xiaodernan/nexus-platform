@@ -8839,3 +8839,95 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     parse both spellings, but they are two parsers and only this one refuses a value that reads
                     as a flag; and #100, where CI's `required` job asserts only the e2e result and its census
                     steps run through `| tee` without `pipefail`.
+
+
+## 163. D158: one shared flag parser, aimed first at the two readers that talk to a live service — `--tenant=` was answering a different tenant than the one asked for
+
+                    Measured first, against a service this lane found live. Both readers looked flags up with
+                    `argv.indexOf('--name')`, the spaced spelling only, so the same request asked two ways was
+                    not two ways of asking one question:
+
+                    * `--tenant d158-not-a-tenant` → 1 check, HTTP 404, exit 1 (the flag was read);
+                      `--tenant=d158-not-a-tenant` → 626 checks, `RESULT: PASS` (the flag was dropped, another
+                      tenant answered all 626, and no printed line named the tenant that had been asked for).
+                    * `--base http://127.0.0.1:1` → `fetch failed`, exit 1; `--base=http://127.0.0.1:1` → the
+                      same 626-check PASS.
+                    * `--bes <url>`, `--tesnant <id>` → exit 0 with the full report: an unimplemented option was
+                      an ignore, not a refusal.
+                    * `verify_contract_runtime.mjs --base=<dead port>` printed the report it prints against the
+                      live service — 123 documented · 117 served · 6 gaps — because the document comes from disk
+                      and the address it believed it probed was the default.
+
+                    `scripts/cli_args.mjs` is the fix: `parseFlags(argv, spec)` plus a `--help` that prints the
+                    spec instead of a hand-counted line range. Value and switch knobs, both spellings of each;
+                    seven refusals — unknown option, a switch given a value, a missing value, an empty value, a
+                    value that reads as another flag, the same knob twice, a bare positional — each in the unit
+                    the operator named ("without a service URL"). The module prints nothing and never exits,
+                    because these files disagree about what their `RESULT:` lines mean and a shared parser must
+                    not harmonise that silently. Three readers moved onto it: `verify_served_reads.mjs:30`,
+                    `verify_contract_runtime.mjs:37`, and step 8's `check_ledger_citations.mjs:90`, whose inline
+                    table D157 wrote the day before. That last move is behaviour-preserving because D157's 18
+                    arms still hold on the shipped subprocess — both spellings of one plant still print
+                    identical verdict lines and all seven refusals still arrive in the wording the arms match on.
+
+                    Both verdict lines now name their plane: `… N of M served-read checks FAILED (against <base>
+                    as tenant <tenant>)`, and `service answering : <base> (the document describes the build it
+                    came from)` in the contract report header. Its `RESULT:` sentences are untouched — other
+                    planes quote them.
+
+                    The arm lives inside the runner: `scripts/e2e_fresh.sh` gained a preflight step before
+                    container discovery that runs `scripts/falsify_flag_dialect.mjs`, and `E2E_FLAG_PLANT` aims
+                    that harness at a planted reader — the same shape as `GATE_LEDGER_TEXT` and `GATE_QUALITY_SQL`:
+                    a seam is not wired until a run can be shown to stop from inside the thing that wires it. The
+                    harness owns a stub HTTP server on an ephemeral port and logs `{host, tenant, path}`, so which
+                    plane a run touched is out-of-band evidence rather than the run's own claim, and the preflight
+                    touches no database, no Java process and no other lane's port. Its first draft called the
+                    readers with `spawnSync` and every arm hung to its 120-second kill: the parent's event loop is
+                    what answers the stub, and a witness that cannot service the world it planted measures nothing.
+                    Children are awaited now.
+
+                    The mutant arm rebuilds the old one-dialect parser in the temp dir and re-runs this harness
+                    against it: exit 1, with reasons the stub supplied — "the glued spelling … addressed 0 host(s)
+                    and tenant(s) []", "a refused run still sent 2 request(s) to the stub". Without that red the
+                    fifteen greens above it would be a table of predictions nobody tested.
+
+                    The population arm went wrong twice before it went right, and both ways are the same lesson.
+                    Counting any file whose *text* mentions `process.argv` put the parser module itself — which
+                    takes argv as a parameter and quotes the broken shape in its own header — in the population of
+                    readers. Keying on code use fixed that, then overcorrected to `= process.argv.slice(` and lost
+                    the files that pass argv inline, including two of the three this section moves onto the shared
+                    parser: it printed 5 readers · 1 shared, and the arm that requires the shared-parser readers to
+                    be named reddened. Comment lines are stripped first, then any `process.argv.` use counts: 11
+                    readers · 4 shared · 7 hand-written.
+
+                    Measured on the bytes of this section: the harness 20 arms · 20 held · 0 missed. Two legs of
+                    the runner's preflight on one working tree, with docker deliberately kept out of `PATH` so the
+                    run stops at the container guard and creates nothing — neutral printed the preflight, 20/20
+                    held, `RESULT: PASS`, then `no running Postgres container among: …` and exit 2; armed printed
+                    19 arms · 7 held · 12 missed, `RESULT: FAIL`, and exited 1 after exactly one step header,
+                    before any container is opened. Gate plane: step 8 HEAD-strict 299 headings · 608 name:number
+                    tokens · 378 citation-shaped · 73 distinct files, working copy 388 citations in 301 sections ·
+                    0 offenders · exit 0, and the reader on the working tree 301 headings · 622 tokens · exit 0;
+                    step 9 80 comment-plane citations across 22 files · exit 0; step 10 HEAD 144 decisions and 130
+                    STATUS sections against 145 and 131 on disk, missing 0 · duplicates 0 · uncommitted 1 each;
+                    step 12 11 spelled citations · 11 resolve, max §162 at HEAD; siblings 18 · 8 · 8 · 6 arms, all
+                    held. The full neutral gate then ran on these bytes to their final shape — generate, migrate,
+                    seed, twelve steps — exit 0, 12 step headers, `216 quality checks on a from-scratch schema
+                    (tables=58, migrations=7)`, with step 7's 8 arms, step 8's 18 and step 11's registry
+                    reconciliation inside it, and the run databases dropped.
+
+                    Left open and named, not narrowed. The seven hand-written readers are not one problem: four
+                    accept both spellings from their own tables and are pinned by their own harnesses, and
+                    migrating them is the next unit rather than this one; two decide behaviour by presence
+                    alone (`check_contract_drift.mjs:36`, and the untracked `verify_payload_conformance.mjs`
+                    in this working copy), so `--report=1` is a token nothing matches — and there that switch
+                    is the difference between a report and a failed build (line 248 exits 1 only when
+                    `reportOnly` is false), so a caller typing the glued form asked for tolerance and would
+                    have got a red: the opposite direction from a false green, which is why this is a
+                    severity finding and not a truthfulness one. Measured here the two spellings are
+                    indistinguishable — the drift set is empty, both printed the same 5-line report, both
+                    exited 0 — so the claim on offer is a hazard read off the code plus the one plane where it
+                    cannot yet show, not a demonstration. And one takes a value in the spaced form only,
+                    `check_falsifier_registry.mjs:38`, another lane's file, so it is reported and not edited. #100
+                    is unchanged: CI's `required` job asserts only the e2e result, and its census steps run
+                    through `| tee` without `pipefail`.
