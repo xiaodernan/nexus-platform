@@ -37,6 +37,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseFlags } from './cli_args.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const notCheckable = (m) => { console.log(`RESULT: NOT CHECKED — ${m}`); process.exit(2); };
@@ -46,30 +47,23 @@ const notCheckable = (m) => { console.log(`RESULT: NOT CHECKED — ${m}`); proce
 // a run aimed at a fixture printed the repository's own 568 files and a PASS: an option that fails to fail.
 // Both spellings are parsed now, and a flag this file does not read stops the run in the same vocabulary as
 // every other refusal below.
-const FLAGS = new Set(['dir', 'head-rev']);
-function arg(name, dflt) {
-  const argv = process.argv.slice(2);
-  let got;
-  for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (a === `--${name}`) {
-      got = argv[++i];
-      if (got === undefined) notCheckable(`--${name} was given no value`);
-    } else if (a.startsWith(`--${name}=`)) {
-      got = a.slice(`--${name}=`.length);
-      if (!got) notCheckable(`--${name}= was given no value`);
-    }
-  }
-  return got === undefined ? dflt : got;
-}
-for (const a of process.argv.slice(2)) {
-  if (!a.startsWith('--')) continue;
-  const name = a.slice(2).split('=')[0];
-  if (!FLAGS.has(name)) notCheckable(`unknown option ${a} — flags this reader parses: ${[...FLAGS].join(', ')}`);
-}
+//
+// D159: the parsing is the shared parser's. What this file's own loop did with a value it had swallowed was
+// nothing — `--dir --report` let the value loop bind the string `--report` to `--dir`, then a second sweep
+// rejected that same token, so the run exited 2 blaming an unknown option when the request's actual defect was
+// that `--dir` had no directory (measured on HEAD before the patch: `RESULT: NOT CHECKED — unknown option
+// --report — flags this reader parses: dir, head-rev`). Note too that this file's old sentence listed its
+// flags bare (`dir, head-rev`) while `check_ledger_sections.mjs` printed the same pair with their dashes; one
+// sentence, one shape, derived from the spec.
+const FLAGS = {
+  '--dir': { kind: 'value', unit: 'directory' },
+  '--head-rev': { kind: 'value', unit: 'revision' },
+};
+const parsed = parseFlags(process.argv.slice(2), FLAGS);
+if (!parsed.ok) notCheckable(parsed.reason);
 
-const ROOT = resolve(arg('dir', join(HERE, '..')));
-const REV = arg('head-rev', 'HEAD');
+const ROOT = resolve(parsed.value['--dir'] ?? join(HERE, '..'));
+const REV = parsed.value['--head-rev'] ?? 'HEAD';
 const SKIP = new Set(['node_modules', 'target', '.next', 'dist', 'out', 'build', '.venv', '__pycache__', '.mvn']);
 const isSkipped = (name) => SKIP.has(name) || name.startsWith('.');
 const EXT = /\.(java|kt|ts|tsx|js|mjs|cjs|py|sql|sh|md|mustache)$/;

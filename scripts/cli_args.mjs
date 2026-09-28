@@ -48,7 +48,10 @@ export function parseFlags(argv, spec) {
     if (!a.startsWith('--')) return { ok: false, reason: `unexpected argument ${a} — this reader takes only ${names.join(', ')}` };
     const eq = a.indexOf('=');
     const name = eq < 0 ? a : a.slice(0, eq);
-    if (!spec[name]) return { ok: false, reason: `unknown option ${name}` };
+    // The spec's own names belong in this sentence: `falsify_quality_seam.mjs` pins the phrase
+    // `flags this reader parses`, which every pre-D159 reader used to compose by hand from its own table. With
+    // one parser there is one place that knows the list, and it is this function.
+    if (!spec[name]) return { ok: false, reason: `unknown option ${name} — flags this reader parses: ${names.join(', ')}` };
     if (spec[name].kind === 'switch') {
       if (eq >= 0) return { ok: false, reason: `${name} is a switch and was given a value (${a.slice(eq + 1)})` };
       given[name] = (given[name] ?? 0) + 1;

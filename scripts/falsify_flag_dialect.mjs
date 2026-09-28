@@ -36,20 +36,24 @@
  * inside a plant), and says that it skipped.
  *
  * WHAT IT DOES NOT COVER, stated because a census that hides its blind spots is what this project keeps
- * catching. This file witnesses `--base` and `--tenant` for those two readers only, and the last arm enumerates
- * the population instead of describing it: 11 files in `scripts/` use `process.argv` in code, 4 of them on this
- * shared parser, 7 with hand-written argument handling. Of the hand-written seven, four accept both spellings
- * from their own tables and are pinned by their own harnesses (`check_jsonb_reads.mjs`,
- * `check_comment_citations.mjs`, `check_ledger_sections.mjs`, `check_status_citations.mjs`); two decide
- * behaviour by *presence* alone (`check_contract_drift.mjs:36` `argv.includes('--report')`, and the untracked
+ * catching. This file witnesses `--base` and `--tenant` for those two readers only; the other shared-parser
+ * readers are witnessed by harnesses of their own, one per gate step (7, 8, 9, 10 and 12). The last arm
+ * enumerates the population instead of describing it, and as of D159 it counts 11 files in `scripts/` using
+ * `process.argv` in code -- 8 on this shared parser, 3 still hand-written. D158 left that split at 4/7, and the
+ * four that moved were precisely the ones already accepting both spellings from private tables
+ * (`check_jsonb_reads.mjs`, `check_comment_citations.mjs`, `check_ledger_sections.mjs`,
+ * `check_status_citations.mjs`); each of them is pinned by a harness of its own, so the move could be proved
+ * behaviour-preserving rather than asserted. Of the three still hand-written, two decide behaviour by *presence*
+ * alone (`check_contract_drift.mjs:36` `argv.includes('--report')`, and the untracked
  * `verify_payload_conformance.mjs` in this working copy, a `Set` of `--report` and `--json`), so `--report=1` is
  * not "report mode with a value" but a token nothing matches. In the drift checker that switch is the difference
  * between a report and a failed build -- its line 248 exits 1 only when `reportOnly` is false -- so a caller who
  * typed the glued form asked for tolerance and would get a red. Measured on this tree the two spellings are
  * INDISTINGUISHABLE: the drift set is empty, and both printed the same 5-line report and exited 0. So what is on
  * offer is a hazard read off the code plus the one plane where it cannot yet show, not a demonstration; answering
- * it needs a planted drift row and a rate. One reader takes a value in the spaced form only -- the
- * step-11 registry checker, `check_falsifier_registry.mjs:38`, another lane's file, reported not edited.
+ * it needs a planted drift row and a rate, and `check_contract_drift.mjs` is another lane's file (reported, not
+ * edited). The third is `check_falsifier_registry.mjs:38`, which takes a value in the spaced form only -- also
+ * another lane's, also reported not edited.
  *
  * USAGE   node scripts/falsify_flag_dialect.mjs
  *         node scripts/falsify_flag_dialect.mjs --reader=<a planted reader>   (expect exit 1: the seam is live)
@@ -288,13 +292,20 @@ const RUNNER = readFileSync(E2E, 'utf8').replace(/\r\n/g, '\n').split('\n');
   }
   const shared = argvReaders.filter((r) => r.shared).map((r) => r.name).sort();
   const hand = argvReaders.filter((r) => !r.shared).map((r) => r.name).sort();
-  const want = ['verify_served_reads.mjs', 'verify_contract_runtime.mjs', 'check_ledger_citations.mjs'];
+  // Every reader the arc has moved onto the parser is named here, because the census is the place a silent
+  // revert to a private loop would show up: a reader that goes back to `argv.indexOf` keeps printing its old
+  // verdicts, so no other arm reddens. D159 added the last four gate checkers to this list.
+  const want = ['verify_served_reads.mjs', 'verify_contract_runtime.mjs', 'check_ledger_citations.mjs',
+    'check_jsonb_reads.mjs', 'check_comment_citations.mjs', 'check_ledger_sections.mjs',
+    'check_status_citations.mjs', 'falsify_flag_dialect.mjs'];
   await arm('the shared parser has readers, and the hand-written ones are named', {
     expect: shared.length >= want.length && want.every((n) => shared.includes(n)) ? 0 : 1,
-    must: [/shared-parser readers: .*verify_served_reads\.mjs/, /shared-parser readers: .*check_ledger_citations\.mjs/, /hand-written parsers: /],
+    must: [/shared-parser readers: .*verify_served_reads\.mjs/, /shared-parser readers: .*check_ledger_citations\.mjs/,
+      /shared-parser readers: .*check_comment_citations\.mjs/, /hand-written parsers: /],
     run: () => ({ code: 0, out: `shared-parser readers: ${shared.join(', ')}\nhand-written parsers: ${hand.join(', ')}` }),
   });
   console.log(`  argv readers in scripts/: ${argvReaders.length} — on the shared parser ${shared.length}, hand-written ${hand.length}`);
+  console.log(`  shared parser: ${shared.join(', ')}`);
   console.log(`  hand-written: ${hand.join(', ')}`);
 }
 

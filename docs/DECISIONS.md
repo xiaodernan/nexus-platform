@@ -9631,3 +9631,86 @@ reader takes a value in the spaced form only, `check_falsifier_registry.mjs:38`,
 lane's file, so it is reported, not edited.
 And #100 stays open for the same reason as before: CI's `required` job asserts only the e2e result, and its census
 steps run through `| tee` without `pipefail`.
+
+## D159 — Step 9 got the arm its four siblings already had, and the last four both-dialect readers moved onto the shared parser: a swallowed flag is a refusal, not a stack trace
+
+**What was measured before any of it moved.** Four checkers each read their own argv, and each one's
+failure had a different shape, which is what a shared parser is for:
+
+* `node scripts/check_jsonb_reads.mjs --quality --report` died with `path: 'D:\获客平台\--report'` and
+  exited 1 — and in that file exit 1 means "a site is false", so a mistyped request printed the verdict
+  of a check that never ran. `check_comment_citations.mjs --plane --verbose` had the identical shape at
+  the identical exit code, with `--verbose` taken for a directory name.
+* `--report=1` and `--verbose=1` each exited 0 with output byte-identical to a bare run of 25 lines; a
+  real `--verbose` prints 46. A glued value was not "the switch with a value", it was a token nothing
+  matched, so the run answered a different question than the one asked.
+* `check_status_citations.mjs` and `check_ledger_sections.mjs` already refused all seven cases (D154 and
+  D155 fixed their dialect) but each in its own sentence, and one of them named its flags bare —
+  `dir, head-rev` — while the other dashed them. An operator reading a refusal learned one of two
+  formats depending on which step reddened.
+
+**What landed.** Those four readers now call `parseFlags(argv, spec)` from `scripts/cli_args.mjs`, which
+accepts both spellings of every knob and refuses seven shapes: unknown option, a switch given a value, a
+missing value, an empty value, a value that reads as another flag, the same knob twice, a bare
+positional. What stays per-file is the verdict: each reader owns its own `RESULT:` vocabulary and its own
+exit codes (0 green · 1 a red verdict · 2 NOT CHECKED), because a shared parser that harmonised those
+silently would be a worse defect than the one it fixed. `check_comment_citations.mjs` needed its refusal
+helper moved above the parse so the sentence is printed in that file's voice, and it stopped reading argv
+a second time for the switch it had already parsed.
+
+**Step 9's arm, which had never existed.** `scripts/falsify_comment_plane.mjs` — 13 arms, all held — now
+runs inside gate step 9 before the reader does, forwarding `GATE_COMMENT_PLANE` the way steps 7, 8, 10, 11
+and 12 forward theirs. Its past-EOF line is derived from the cited file's own length at run time rather
+than written down, so it cannot rot into a green that means "no offence". Two of its arms read the gate
+text and the gate's own `--help`, which is what makes unwiring the step red without touching a database.
+
+**A missed prediction, and the two-layer hole behind it.** The arm expecting an unresolvable file to print
+`FILE NOT FOUND` at exit 1 got exit 2 and no explanation. Reading it rather than retrying it found two
+causes stacked: step 8 refuses a census in which `0 file(s) resolved` — its own non-vacuity guard, already
+pinned elsewhere — and step 9 filtered the child's output through a word list that dropped the line saying
+so. The filter now passes `NOT CHECKED` and `RESULT:` through, and the arm became two: an all-phantom
+plane that must exit 2 with its reason visible, and a mixed plane of one resolvable citation plus one
+phantom that must exit 1 and report `tokens found 2 in 1 file(s)`. A green run had been swallowing a
+child's refusal for as long as the filter existed.
+
+**My own patch produced the class this unit exists to close.** The first control run of the migrated
+`check_status_citations.mjs` died with `ReferenceError: parseFlags is not defined` at exit 1 — a crash
+where a refusal belongs, in the file that carries a comment explaining that a crash is not a refusal. The
+import was simply missing; that file's control arm caught it before anything downstream was believed.
+
+**A citation this patch broke, and the step that could not see it.** `check_ledger_citations.mjs`'s D157
+note named `check_comment_citations.mjs:135` as the site that passes `--text=` to step 8; the parse
+migration moved that statement to `check_comment_citations.mjs:142`. Step 8 kept resolving the old number,
+because it checks that a named file has the cited line and not that the line says what the sentence claims
+— its own documented blind spot, demonstrated by its own author's edit. Repaired here. Three committed
+rows name lines this change moved, and they stay as history corrected by this paragraph rather than
+rewritten: `check_comment_citations.mjs:35` was the `--plane` accept site and is a comment now (the accept
+sits at `check_comment_citations.mjs:39` and `check_comment_citations.mjs:46`); `check_ledger_sections.mjs:34`
+named the line beside a bare-`indexOf` parse that no longer exists in that file; and the two
+`check_jsonb_reads.mjs:311` rows were already 32 lines off at HEAD, where the JSDoc grammar examples they
+refer to sit at `check_jsonb_reads.mjs:343` — `check_jsonb_reads.mjs:338` in the working copy.
+
+**Measured on the bytes this entry describes.** Two legs of the fresh-database gate: neutral rc=0 with 12
+step headers and `216 quality checks on a from-scratch schema (tables=58, migrations=7)`; armed rc=1,
+stopped after 9 headers, step 9 censusing a 2-token plant outside the repository and reporting one PAST EOF
+offence against a file of 86 lines. Both run databases were dropped; the two product databases and the four
+pre-existing gate database names are untouched. The six harnesses on those bytes: flag dialect 20 of 20,
+quality seam 8 of 8, ledger text 18 of 18, comment plane 13 of 13, ledger sections 8 of 8, status
+citations 6 of 6. The readers after the citation repair: 622 citation-shaped tokens over 301 sections with
+0 offenders, 80 comment-plane citations across 22 files, HEAD 145 decisions against 145 on disk with
+missing 0 and duplicates 0, and every spelled section citation resolving. Both spellings reach one plane,
+printed rather than claimed: step 9's reader at a non-repository directory returned byte-identical output
+at rc=2 either way, and step 10's reader returned byte-identical output at rc=0 either way.
+
+**The population, printed not guessed.** 11 files in `scripts/` use `process.argv` in code: 8 on the
+shared parser, 3 still hand-written — `check_contract_drift.mjs` deciding by presence alone,
+`check_falsifier_registry.mjs:38` taking a value in the spaced form only, and the untracked
+`verify_payload_conformance.mjs`. D158 left that split at 4 shared, 7 hand-written.
+
+**Limits, stated.** This unit witnesses four readers and one gate seam. The drift checker's glued-value
+case is still a hazard read off code rather than a demonstrated red: on this tree the two spellings are
+indistinguishable because the drift set is empty, both print the same 5-line report and exit 0, so
+answering it needs a planted drift row and a rate. `check_falsifier_registry.mjs` is gate step 11's reader
+and another lane's file, so it is reported, not edited. #100 stays open for the same reason as before:
+CI's `required` job asserts only the e2e result, and its census steps run through `| tee` without
+`pipefail`.

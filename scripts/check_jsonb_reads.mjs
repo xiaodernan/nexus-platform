@@ -50,6 +50,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { SOURCE_EXT, VENDOR_DIRS, walkFiles } from './source_index.mjs';
+import { parseFlags } from './cli_args.mjs';
 
 const ROOT = process.cwd();
 /**
@@ -60,32 +61,26 @@ const ROOT = process.cwd();
  * documented here as "Nothing in the gate itself passes the flag" for exactly one reason: nothing did.
  */
 const notCheckable = (m) => { console.log(`RESULT: NOT CHECKED — ${m}`); process.exit(2); };
-const FLAGS = new Set(['quality', 'report', 'verbose']);
 
-/** The one `--quality` value, from either spelling; empty or repeated is a refusal, not a default. */
-function qualityPath() {
-  const argv = process.argv.slice(2);
-  const given = [];
-  for (let i = 0; i < argv.length; i += 1) {
-    const a = argv[i];
-    const name = a.startsWith('--') ? a.slice(2).split('=')[0] : null;
-    if (name === null) notCheckable(`unexpected argument ${a} — this reader takes only --quality, --report, --verbose`);
-    if (!FLAGS.has(name)) {
-      notCheckable(`unknown option ${a} — flags this reader parses: ${[...FLAGS].join(', ')}`);
-    }
-    if (name !== 'quality') continue;
-    const value = a.includes('=') ? a.slice(a.indexOf('=') + 1) : argv[++i];
-    if (value === undefined || value === '') notCheckable('--quality was given without a path');
-    given.push(value);
-  }
-  if (given.length > 1) notCheckable(`--quality was given ${given.length} times — which copy is the census?`);
-  return given[0];
-}
+// D159: this file kept TWO dialects in one reader — `--quality` was parsed by its own loop, while `--report` and
+// `--verbose` were answered by `process.argv.includes(...)`. Measured on HEAD before the patch, that made one
+// request behave four ways: `--quality --report` ended in an uncaught ENOENT for a file literally named
+// `--report` and exit 1 (a crash where a refusal belongs — a mistyped request reporting a finding it never
+// computed), `--report=1` and `--verbose=1` were both accepted silently and answered exit 0 with the
+// non-verbose report, and only a genuinely unknown name refused. The table below is the single source now, and
+// the parser is the shared one, so a reader cannot re-invent the bug by re-inventing the loop.
+const FLAGS = {
+  '--quality': { kind: 'value', unit: 'path' },
+  '--report': { kind: 'switch' },
+  '--verbose': { kind: 'switch' },
+};
+const parsed = parseFlags(process.argv.slice(2), FLAGS);
+if (!parsed.ok) notCheckable(parsed.reason);
 
-const QUALITY_SQL = qualityPath() ?? 'data/seed/quality.sql';
+const QUALITY_SQL = parsed.value['--quality'] ?? 'data/seed/quality.sql';
 const SOURCE_ROOTS = ['services/platform/src/main/java', 'apps/ai/nexus_ai'];
-const REPORT_ONLY = process.argv.includes('--report');
-const VERBOSE = process.argv.includes('--verbose');
+const REPORT_ONLY = parsed.switches.includes('--report');
+const VERBOSE = parsed.switches.includes('--verbose');
 
 /* ------------------------------------------------------------------ declared */
 

@@ -30,6 +30,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseFlags } from './cli_args.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -37,30 +38,21 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // prompted: `process.argv.indexOf('--dir')` never sees `--dir=<checkout>`, so an operator who typed the equals
 // form got the REPOSITORY censused and a `RESULT: PASS` printed for a plane they were not looking at. Both
 // spellings parse now, and a flag this reader does not read is a NOT CHECKED refusal rather than a silence.
+//
+// D159 moved the parsing itself onto the shared reader, which is what made this file's refusal honest. Its two
+// hand-written halves disagreed: the value loop took `--dir` followed by another flag and called `--report` a
+// checkout, then the unknown-option sweep rejected that same token — exit 2, this file's right vocabulary for
+// the wrong reason, and not one line saying which directory it had resolved. Measured on HEAD before the patch.
 const notChecked = (why) => { console.error(`RESULT: NOT CHECKED — ${why}`); process.exit(2); };
-const FLAGS = ['--head-rev', '--dir'];
-function arg(name, d) {
-  const argv = process.argv.slice(2);
-  let got;
-  for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === name) {
-      got = argv[++i];
-      if (got === undefined) notChecked(`${name} was given no value`);
-    } else if (argv[i].startsWith(`${name}=`)) {
-      got = argv[i].slice(name.length + 1);
-      if (!got) notChecked(`${name}= was given no value`);
-    }
-  }
-  return got === undefined ? d : got;
-}
-for (const a of process.argv.slice(2)) {
-  if (a.startsWith('--') && !FLAGS.some((f) => a === f || a.startsWith(`${f}=`))) {
-    notChecked(`unknown option ${a} — flags this reader parses: ${FLAGS.join(', ')}`);
-  }
-}
+const FLAGS = {
+  '--head-rev': { kind: 'value', unit: 'revision' },
+  '--dir': { kind: 'value', unit: 'checkout' },
+};
+const parsed = parseFlags(process.argv.slice(2), FLAGS);
+if (!parsed.ok) notChecked(parsed.reason);
 
-const REV = arg('--head-rev', 'HEAD');
-const DIR = resolve(arg('--dir', ROOT));
+const REV = parsed.value['--head-rev'] ?? 'HEAD';
+const DIR = resolve(parsed.value['--dir'] ?? ROOT);
 const LEDGERS = [
   { path: 'docs/STATUS.md', re: /^## (\d+)\. /gm, kind: 'section' },
   { path: 'docs/DECISIONS.md', re: /^## (D\d+) /gm, kind: 'decision' },

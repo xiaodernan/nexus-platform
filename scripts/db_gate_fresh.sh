@@ -259,6 +259,14 @@ step "9/12  scripts/check_comment_citations.mjs — the citations that live insi
 # D152: `GATE_COMMENT_PLANE` points that scan at another directory, which is what makes the refusal reachable
 # from the gate — an empty plane is the case the guard exists for, and reaching it by editing shipped bytes
 # mid-run is not a way to test a gate that runs nine steps against those same bytes.
+# D159: the knob existed for four days without a witness, which is the same gap D150/D151 closed for step 11,
+# D152 for steps 8 and 9's exit codes, D156 for step 7 and D157 for step 8's reader. `scripts/falsify_comment_plane.mjs`
+# is 13 arms over fixture planes in the OS temp dir, no database and a few seconds: it shows a false comment-plane
+# citation reddening the step, both `--plane` spellings reaching the same plane, and — the reason this harness
+# exists as much as any other — that `--plane --verbose` is now a refusal where it used to throw ENOENT and exit
+# 1, this file's own code for "a citation is wrong". Its last two arms read the text below, so the seam cannot be
+# unwired again without a step of the gate going red.
+( cd "$ROOT" && node scripts/falsify_comment_plane.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/check_comment_citations.mjs ${GATE_COMMENT_PLANE:+--plane="$GATE_COMMENT_PLANE"} ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 10. the two planes of one ledger

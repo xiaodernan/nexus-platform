@@ -8931,3 +8931,56 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     `check_falsifier_registry.mjs:38`, another lane's file, so it is reported and not edited. #100
                     is unchanged: CI's `required` job asserts only the e2e result, and its census steps run
                     through `| tee` without `pipefail`.
+
+## 164. D159: gate step 9 is armed from inside the gate, and the last four both-dialect readers answer to one parser — a swallowed flag now refuses instead of crashing
+
+                    Measured on the unpatched bytes, then on the patched ones. `check_jsonb_reads.mjs
+                    --quality --report` used to die with `path: 'D:\获客平台\--report'` at exit 1, which in
+                    that file is the code for "a site is false": a mistyped request printed a verdict it had
+                    never computed. `check_comment_citations.mjs --plane --verbose` crashed the same way on
+                    `--verbose` taken as a directory. `--report=1` and `--verbose=1` both exited 0 with bytes
+                    identical to a bare 25-line run, while a real `--verbose` prints 46 — a glued value was an
+                    ignore, not a refusal. The other two readers refused correctly but in two formats, one
+                    naming its flags bare and one dashed.
+
+                    All four now parse through `scripts/cli_args.mjs`, keeping their own `RESULT:` vocabulary
+                    and exit codes: 0 green, 1 a red verdict, 2 NOT CHECKED. The refusals on the patched
+                    bytes, read from the runs: `--quality was followed by --report, which reads as another
+                    flag — there is no path to read`, `--report is a switch and was given a value (1)`,
+                    `--dir was given without a directory`, `unexpected argument stray — this reader takes
+                    only --dir, --head-rev`. Both spellings reach one plane: step 9's reader at a
+                    non-repository directory printed byte-identical output at rc=2 either way, and step 10's
+                    printed byte-identical output at rc=0 either way.
+
+                    Step 9 gained `scripts/falsify_comment_plane.mjs` — 13 arms, all held — running inside the
+                    gate before the reader and forwarding `GATE_COMMENT_PLANE`, the shape steps 7, 8, 10, 11
+                    and 12 already had. Its past-EOF line comes from the cited file's own length at run time,
+                    and two arms read the gate's text and its `--help`, so an unwired step reddens with no
+                    database open. Two of its own predictions missed on the first draft and both were chased
+                    rather than relaxed: an unresolvable plane exited 2 with no stated reason because step 8
+                    refuses a census where `0 file(s) resolved` and step 9's output filter dropped the child's
+                    refusal line. The filter now passes it, and the arm is two arms — all-phantom exits 2 with
+                    its reason visible, mixed exits 1 naming the phantom.
+
+                    Two self-inflicted findings, recorded because they are the lesson and not an anecdote: the
+                    migrated `check_status_citations.mjs` died its first control run with
+                    `ReferenceError: parseFlags is not defined` at exit 1, a crash where a refusal belongs in
+                    the file that documents exactly that rule; and this patch moved a statement another file
+                    cites by number, so `check_ledger_citations.mjs`'s note pointing at
+                    `check_comment_citations.mjs:135` was repaired to `check_comment_citations.mjs:142` — step
+                    8 never noticed, because it checks that a file has the cited line and not that the line
+                    says what the sentence claims. Three committed rows name lines this change moved, and D159
+                    corrects them by append rather than by editing history.
+
+                    The gate, on these bytes: neutral rc=0, 12 step headers, `216 quality checks on a
+                    from-scratch schema (tables=58, migrations=7)`; armed rc=1, stopped after 9 headers with
+                    one PAST EOF offence in a 2-token plant. Both run databases dropped, the product databases
+                    and the four pre-existing gate names untouched. Harnesses: 20 · 8 · 18 · 13 · 8 · 6 arms,
+                    every one held. Readers: 622 citation-shaped tokens over 301 sections with 0 offenders, 80
+                    comment-plane citations across 22 files, HEAD 145 decisions against 145 on disk with
+                    missing 0 and duplicates 0. The argv population is now printed by a harness rather than
+                    written by hand: 11 readers in `scripts/`, 8 on the shared parser, 3 hand-written —
+                    `check_contract_drift.mjs` by presence alone, `check_falsifier_registry.mjs:38` in one
+                    spelling only, and an untracked payload checker. Those three, the drift checker's
+                    glued-value case needing a planted row and a rate, and #100's CI `required` job are what
+                    this lane leaves open; #94 still needs the user's authorisation.

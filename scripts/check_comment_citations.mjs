@@ -22,21 +22,28 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseFlags } from './cli_args.mjs';
 
 // Flags are read here rather than assumed, and an unrecognised one stops the run: a scan that quietly ignored
 // `--plane=/some/dir` reported the repository as clean twice in a row while the operator believed it was
 // looking at something else. An option that fails to fail is worse than one that is missing.
-const argv = process.argv.slice(2);
-const VERBOSE = argv.includes('--verbose');
-let planeArg = null;
-for (let i = 0; i < argv.length; i++) {
-  const a = argv[i];
-  if (a === '--verbose') continue;
-  if (a === '--plane') { planeArg = argv[++i]; if (planeArg === undefined) fail('--plane needs a directory'); continue; }
-  if (a.startsWith('--plane=')) { planeArg = a.slice('--plane='.length); if (!planeArg) fail('--plane= needs a directory'); continue; }
-  fail(`unknown option ${a} — a flag this tool does not read must not be silently accepted`);
-}
 function fail(msg) { console.error(`check_comment_citations.mjs: ${msg}`); process.exit(2); }
+
+// D159 closed the second half of that sentence for this reader. Its own loop accepted both spellings but never
+// checked what it had just swallowed, so `--plane --verbose` — a caller who asked for a directory and forgot to
+// name it — took `--verbose` as the directory, tried to scandir it, and died with an uncaught ENOENT at exit 1.
+// A crash is not a refusal: it prints a stack trace instead of a verdict, and exit 1 is this file's code for
+// "the citations are wrong", so a mistyped request reported a finding it never computed. The shared parser
+// refuses that request by name, and `--verbose` is now read once instead of twice (the tail of this file used
+// to ask `process.argv` again, which is how a third dialect gets born).
+const FLAGS = {
+  '--plane': { kind: 'value', unit: 'directory' },
+  '--verbose': { kind: 'switch' },
+};
+const parsed = parseFlags(process.argv.slice(2), FLAGS);
+if (!parsed.ok) fail(parsed.reason);
+const VERBOSE = parsed.switches.includes('--verbose');
+const planeArg = parsed.value['--plane'] ?? null;
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CHECKER = join(ROOT, 'scripts', 'check_ledger_citations.mjs');
@@ -137,8 +144,12 @@ try {
   code = err.status ?? 1;
   out = `${err.stdout ?? ''}${err.stderr ?? ''}`;
 }
-console.log(out.split('\n').filter((l) => /citations|offender|headings|tokens|files cited|NOT FOUND|AMBIGUOUS|PAST|BACKWARDS|ZERO|Error|Cannot find/.test(l)).join('\n'));
-if (process.argv.includes('--verbose')) console.log(out);
+// `NOT CHECKED` joins the pattern list because D159's own harness tripped over its absence: step 8 refused a
+// plant whose every citation pointed outside the index, step 9 reported `NOT RUN (exit 2)` — correctly — and
+// printed nothing explaining it, because the only line the child had written was filtered out here. A guard that
+// says "the reader failed" while hiding the reader's sentence about why leaves the operator to re-derive it.
+console.log(out.split('\n').filter((l) => /citations|offender|headings|tokens|files cited|NOT FOUND|AMBIGUOUS|PAST|BACKWARDS|ZERO|Error|Cannot find|NOT CHECKED|RESULT:/.test(l)).join('\n'));
+if (VERBOSE) console.log(out);
 // A child that never produced a report has not refuted anything: it failed to run. Collapsing that into the
 // offender branch — as the first version did, reporting `RESULT: FAIL … at least one does not` for a step 8
 // that could not even load its own import — states a claim about a citation that was never examined.
