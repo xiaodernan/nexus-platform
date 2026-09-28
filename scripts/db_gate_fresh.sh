@@ -38,6 +38,12 @@
 #                        the tracked one (inert when unset; the fourth instance, see step 7 — and it moves only
 #                        the census reader, never the loader that seeded the database)
 #
+# WHAT THESE PLANE KNOBS DO NOT MOVE (D178). Each of them relocates the TEXT being censused — the ledgers, the
+# comments, the seed file — while the reader's SOURCE INDEX stays on the directory it was started in, because
+# that index is built from `process.cwd()`. So `GATE_LEDGER_DIR=/tmp/x` asks "do /tmp/x's sentences name files
+# that exist HERE", which is the right question for a harness fixture and the wrong one for a clean-checkout
+# certification. Step 13 therefore runs its reader legs with `cd "$WT"` and no knob, and prints both counts.
+#
 # Safety: this creates and DESTROYS a database. It refuses to run if the target resolves to `nexus`
 # or `nexus_test` — the developer database and the integration-test one — and it never touches a
 # container it could not name on the command line first.
@@ -339,8 +345,28 @@ step "13/13  scripts/check_jsonb_reads.mjs + check_ledger_citations.mjs + check_
 # other lanes' uncommitted work makes the working-tree green. This step creates a detached worktree of HEAD,
 # runs the same three readers there, and reports the committed-plane results so the operator can compare.
 # The worktree is created read-only, its output captured, and removed immediately — no branch moves and no
-# tracked file in the main tree is touched. The environment knobs point the readers at the worktree:
-# GATE_QUALITY_SQL, GATE_LEDGER_DIR, GATE_LEDGER_HEAD_DIR, GATE_COMMENT_PLANE.
+# tracked file in the main tree is touched.
+#
+# D178: THE LEGS THAT MOVED, AND WHY. The first version of this step pointed the three readers at the worktree
+# with the plane knobs — `--dir`/`--head-dir` for step 8, `--plane` for step 9, `--quality` for step 7 — and
+# reported a committed plane those knobs cannot certify. Each reader builds its SOURCE INDEX from its own tree
+# (`check_ledger_citations.mjs:58` is `process.cwd()`, `check_comment_citations.mjs:52` is the script's
+# location, and step 9's child inherits that cwd), so the knobs moved the LEDGERS into the worktree while the
+# files the ledgers cite were still indexed out of this directory, including the untracked ones. Measured on
+# the same commit both ways: from the main tree with the knobs, 77 distinct files cited and 0 offenders; inside
+# the worktree with no knob, 65 cited and 41 `FILE NOT FOUND`. So step 13's reader legs now `cd "$WT"` and run
+# bare — the same invocation an operator would type after a clean checkout — and 13b prints both counts so the
+# difference is visible instead of being a claim in a comment. The harness legs stay at `$ROOT`: they witness
+# a reader's arms, and their fixtures cite real repository files on purpose, which is the very behaviour the
+# knobs exist to allow (D163's seam). The knobs themselves are still forwarded by steps 7-8 for a drive.
+# 13b's harness leg lost its `GATE_LEDGER_DIR`/`GATE_LEDGER_HEAD_DIR` prefix in the same pass: the harness reads
+# no environment variable (its only mention of those names is a grep of this file, in its wiring arms), so the
+# prefix was a label claiming a plane the arms never read. Measured 2026-09-28 with and without it: the same
+# 28 held / 1 missed, and the miss is the working copy's own — an uncommitted STATUS section in another lane's
+# paragraph cites a line of the seo controller that is empty. The default-mode arm judges the blank class in a
+# section this tree is writing, which is D162's rule working, and the row's owner is the only lane that can
+# move it. Step 13 does not fail the gate, so this prints there rather than stopping it.
+#
 # This step reports the committed plane but does NOT fail the gate — the committed plane's redness is
 # caused by other lanes' uncommitted work; the fix belongs to those lanes. The gate's RESULT: PASS still
 # requires the working-tree plane to be green (steps 7-12).
@@ -348,15 +374,24 @@ command -v git >/dev/null 2>&1 || die "step 13 needs git on PATH"
 WT="$(mktemp -d "${TMPDIR:-/tmp}/nexus-gate-wt.XXXXXX")"
 git worktree add --detach "$WT" HEAD 2>&1 | sed -e 's/^/    /'
 trap 'git worktree remove "$WT" 2>/dev/null || true; cleanup' EXIT
-step "13a/13  quality reads on the committed plane (GATE_QUALITY_SQL=$WT/data/seed/quality.sql)"
+step "13a/13  quality reads on the committed plane (cwd inside the worktree)"
 ( cd "$ROOT" && GATE_QUALITY_SQL="$WT/data/seed/quality.sql" node scripts/falsify_quality_seam.mjs ) 2>&1 | sed -e 's/^/    /' || true
-( cd "$ROOT" && GATE_QUALITY_SQL="$WT/data/seed/quality.sql" node scripts/check_jsonb_reads.mjs --quality="$WT/data/seed/quality.sql" ) 2>&1 | sed -e 's/^/    /' || true
-step "13b/13  ledger citations on the committed plane (GATE_LEDGER_DIR=$WT GATE_LEDGER_HEAD_DIR=$WT)"
-( cd "$ROOT" && GATE_LEDGER_DIR="$WT" GATE_LEDGER_HEAD_DIR="$WT" node scripts/falsify_ledger_text.mjs ) 2>&1 | sed -e 's/^/    /' || true
-( cd "$ROOT" && GATE_LEDGER_DIR="$WT" GATE_LEDGER_HEAD_DIR="$WT" node scripts/check_ledger_citations.mjs --dir="$WT" --head-dir="$WT" ) 2>&1 | sed -e 's/^/    /' || true
-step "13c/13  comment citations on the committed plane (GATE_COMMENT_PLANE=$WT)"
+( cd "$WT" && node scripts/check_jsonb_reads.mjs ) 2>&1 | sed -e 's/^/    /' || true
+step "13b/13  ledger citations on the committed plane (cwd inside the worktree; the knob leg printed for contrast)"
+( cd "$ROOT" && node scripts/falsify_ledger_text.mjs ) 2>&1 | sed -e 's/^/    /' || true
+# `--report` on both legs: these are measurements, and a reader that exits 1 inside a command substitution
+# would take the gate down through `set -e` on an assignment rather than on a verdict.
+KNOB_LINE="$( cd "$ROOT" && node scripts/check_ledger_citations.mjs --dir="$WT" --head-dir="$WT" --report 2>&1 || true )"
+WT_LINE="$( cd "$WT" && node scripts/check_ledger_citations.mjs --report 2>&1 || true )"
+printf '%s\n' "$WT_LINE" | sed -e 's/^/    /'
+knob() { printf '%s\n' "$1" | sed -n 's/^  distinct files cited  *\([0-9]*\).*/\1/p' | head -1; }
+red() { local n; n="$(printf '%s\n' "$1" | grep -oE 'FILE NOT FOUND \([0-9]+\)' | grep -oE '[0-9]+' | head -1)"; printf '%s' "${n:-0}"; }
+printf '    plane reconciliation  knob leg %s file(s) cited / %s FILE NOT FOUND — in-worktree leg %s / %s.\n' \
+  "$(knob "$KNOB_LINE")" "$(red "$KNOB_LINE")" "$(knob "$WT_LINE")" "$(red "$WT_LINE")"
+printf '    An untracked source in this directory answers a committed sentence in the knob leg and cannot in the other; that difference is what step 13 is for.\n'
+step "13c/13  comment citations on the committed plane (cwd inside the worktree)"
 ( cd "$ROOT" && GATE_COMMENT_PLANE="$WT" node scripts/falsify_comment_plane.mjs ) 2>&1 | sed -e 's/^/    /' || true
-( cd "$ROOT" && GATE_COMMENT_PLANE="$WT" node scripts/check_comment_citations.mjs --plane="$WT" ) 2>&1 | sed -e 's/^/    /' || true
+( cd "$WT" && node scripts/check_comment_citations.mjs ) 2>&1 | sed -e 's/^/    /' || true
 git worktree remove "$WT" 2>&1 | sed -e 's/^/    /'
 trap - EXIT
 trap cleanup EXIT
