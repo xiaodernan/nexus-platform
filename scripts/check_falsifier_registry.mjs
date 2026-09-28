@@ -109,5 +109,14 @@ console.log(`  witness kinds     ${kinds.commit} commit(s) · ${kinds.file} file
 console.log(`  assertions with a machine-checkable witness: ${covered.size} of ${live.size}`
   + ` (${(100 * covered.size / live.size).toFixed(1)}%) — grammar: a registry row naming the check,`
   + ' an arm that reddened it, and an artifact that is in the repository and still opens');
+
+// A percentage is not actionable: a gap is only work once you can name what is missing. Printed every run
+// and not behind a flag, because 90.7% was already the number this line printed while twenty assertions
+// were unaccounted for — a total that cannot say which lines are missing is a green hiding its own list.
+const gaps = [...live].filter((n) => !covered.has(n)).sort((a, b) => a.localeCompare(b));
+if (gaps.length) {
+  console.log(`  no witness yet     ${gaps.length} assertion(s) — named, not counted:`);
+  for (const g of gaps) console.log(`      · ${g}`);
+}
 if (bad.length) { console.log('\nRESULT: FAIL — the registry is inconsistent with the gate'); process.exit(1); }
 console.log('\nRESULT: PASS — every registry row names a live assertion, an arm, and an openable witness');

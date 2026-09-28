@@ -381,3 +381,37 @@ a probe arm is a declared type and every armed type has an arm	D148	text plane: 
 every probe family resolves at least one armed type	D148	text plane: the probe list declares a probe over a table this schema does not have	c5ba5af
 the arm registry agrees with the probed-pair counts	D148	text plane: the probe list declares a probe over a table this schema does not have	c5ba5af
 no traffic outside the seeded tables	D148	text plane: the closure walk's recursive arm stops following any edge, so the sweep sees only the tables the anchor names by hand (29 measured, floor 20)	c5ba5af
+every column that cannot vary is answered for why it cannot	D175	plant: a share link written by an author and a tenant no table holds	data/seed/falsifier_witnesses/d175_plants.py
+every reference the seed writes is probed or explained	D175	plant: a share link written by an author and a tenant no table holds	data/seed/falsifier_witnesses/d175_plants.py
+fk: share_links.created_by -> users.id	D175	plant: a share link written by an author and a tenant no table holds	data/seed/falsifier_witnesses/d175_plants.py
+fk: share_links.tenant_id -> tenants.id	D175	plant: a share link written by an author and a tenant no table holds	data/seed/falsifier_witnesses/d175_plants.py
+no traffic outside the seeded tables	D175	plant: a share link written by an author and a tenant no table holds	data/seed/falsifier_witnesses/d175_plants.py
+every column that cannot vary is answered for why it cannot	D175	plant: a priced offering is written with no price provenance	data/seed/falsifier_witnesses/d175_plants.py
+price_updated_at present for priced offerings	D175	plant: a priced offering is written with no price provenance	data/seed/falsifier_witnesses/d175_plants.py
+collections/guides reference live merchants	D175	plant: a guide item points at a merchant that is not in the table	data/seed/falsifier_witnesses/d175_plants.py
+the elements of an object-array column all carry the same keys	D175	plant: a guide item points at a merchant that is not in the table	data/seed/falsifier_witnesses/d175_plants.py
+a census that folds case reports both readings and which one the demo exercises	D175	plant: a string type no reading declares, and a folding column the demo exercises upper case on	data/seed/falsifier_witnesses/d175_plants.py
+the string census declares a reading for every type it catches	D175	plant: a string type no reading declares, and a folding column the demo exercises upper case on	data/seed/falsifier_witnesses/d175_plants.py
+every boolean that claims a verification is answered for its evidence	D175	plant: a verification-shaped boolean no answer in the file names	data/seed/falsifier_witnesses/d175_plants.py
+a CHECK-bounded column is a door vocabulary too	D175	plant: a CHECK bounded to a list no door transcribes	data/seed/falsifier_witnesses/d175_plants.py
+a bounded string column is answered by name	D175	plant: a CHECK bounded to a list no door transcribes	data/seed/falsifier_witnesses/d175_plants.py
+a no-referent waiver still names a table the schema lacks	D175	plant: the waiver's own table arrives: `policies` now exists	data/seed/falsifier_witnesses/d175_plants.py
+the reference census reads the catalogue	D175	plant: the reference census loses a column it used to count	data/seed/falsifier_witnesses/d175_plants.py
+the polymorphic-pair census reads the catalogue	D175	plant: the polymorphic-pair census loses a pair it used to count	data/seed/falsifier_witnesses/d175_plants.py
+every reference the seed writes is probed or explained	D175	plant: the hand list names a column the schema has lost	data/seed/falsifier_witnesses/d175_plants.py
+the registry names no column the schema has lost	D175	plant: the hand list names a column the schema has lost	data/seed/falsifier_witnesses/d175_plants.py
+a join-one-type waiver is only true while the table ships one type	D175	plant: the waiver kind is claimed for a column that ships four types	data/seed/falsifier_witnesses/d175_plants.py
+a seeded polymorphic vocabulary is bounded or probed	D175	plant: the probed-pair list declares a table the schema does not have	data/seed/falsifier_witnesses/d175_plants.py
+an arm claimed seeded is a type the data still carries	D175	plant: the probed-pair list declares a table the schema does not have	data/seed/falsifier_witnesses/d175_plants.py
+an arm the seed never files is waived by name and by writer	D175	plant: the probed-pair list declares a table the schema does not have	data/seed/falsifier_witnesses/d175_plants.py
+every probe family resolves at least one armed type	D175	plant: the probed-pair list declares a table the schema does not have	data/seed/falsifier_witnesses/d175_plants.py
+the arm registry agrees with the probed-pair counts	D175	plant: the probed-pair list declares a table the schema does not have	data/seed/falsifier_witnesses/d175_plants.py
+the pairs declared probed are pairs the schema has	D175	plant: the probed-pair list declares a table the schema does not have	data/seed/falsifier_witnesses/d175_plants.py
+a probe arm is a declared type and every armed type has an arm	D175	plant: a UNION arm is dropped from the arm list	data/seed/falsifier_witnesses/d175_plants.py
+an arm the seed never files is waived by name and by writer	D175	plant: a UNION arm is dropped from the arm list	data/seed/falsifier_witnesses/d175_plants.py
+the arm registry agrees with the probed-pair counts	D175	plant: a UNION arm is dropped from the arm list	data/seed/falsifier_witnesses/d175_plants.py
+an armed type resolves in a table the schema has	D175	plant: an armed type is pointed at a table the schema does not have	data/seed/falsifier_witnesses/d175_plants.py
+a door vocabulary names a column the schema has	D175	plant: a door list names a column the schema does not have	data/seed/falsifier_witnesses/d175_plants.py
+the arm registry agrees with the probed-pair counts	D175	plant: the declared arm count disagrees with the registry it is checked against	data/seed/falsifier_witnesses/d175_plants.py
+traffic sweep reaches the whole closure, not a hand list	D175	plant: the anchor list grows until the sweep outside it falls under its own floor	data/seed/falsifier_witnesses/d175_plants.py
+a served view answers every column it exposes	D175	plant: a view column loses the answer that was written for it	data/seed/falsifier_witnesses/d175_plants.py

@@ -9411,3 +9411,57 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     eleven between new files and drifted lines, which cannot be isolated without staging work that
                     is not this lane's; and the database-dependent steps, which were not re-run on the committed
                     plane because nothing in this finding turns on them.
+
+## 180. D175: step 11 now names the assertions it has no witness for instead of printing a percentage, and the twenty it would have named were witnessed in parallel
+
+                    The registry checker has reported `196 of 216 (90.7%)` for as long as anyone ran it, and a
+                    percentage is not actionable because it never said which assertions were missing. The verdict
+                    is unchanged and the list now sits in front of it: uncovered names are collected and printed
+                    as `no witness yet     N assertion(s) — named, not counted:` with one `· <assertion>` line
+                    each. Read against a copy of HEAD's registry with one row deleted by hand, the same command
+                    prints `215 of 216 (99.5%)`, then that header, then `· traffic sweep reaches the whole
+                    closure, not a hand list`, then `RESULT: PASS` at exit 0 — the new line costs a passing run
+                    nothing, and a gap now arrives as a name rather than a number.
+
+                    The gap this harness was written against had already closed by the time the plants ran.
+                    Measured on the committed registry at c025067 — `git show` written to a temp file and passed
+                    with `--registry`, because a PowerShell redirect emits UTF-16 and the reader then reports
+                    `row is not check/unit/arm/witness` on the header — it holds 359 rows, 320 commit witnesses
+                    and 39 file witnesses, and answers `216 of 216 (100.0%)`, `RESULT: PASS`, exit 0, with
+                    nothing under `no witness yet`. The twenty are witnessed by 17 rows of D146, 5 of D147 and
+                    11 of D148, landed from a parallel stream while these plants were being built. So these rows
+                    close nothing, and this section claims no gap; what stood at 90.7% when the harness started
+                    reads 100.0% when it lands, and the 34 rows below are a second showing.
+
+                    That second showing is executable where the first three units recorded prose and commit
+                    hashes: `python data/seed/falsifier_witnesses/d175_plants.py nexus_gate_357291_1790525628`
+                    prints `control: 216 rows, 0 failing`, then every arm's flipped checks, and exits 0 only if
+                    each arm reddened something — final run, `arms that went red: 18 of 18`, `red (check, arm)
+                    pairs written: 34 over 29 distinct assertion(s)`. Every arm runs the shipped quality.sql
+                    inside BEGIN … ROLLBACK on a live database, either mutating that transaction or patching the
+                    file's source in memory, and nine of the eighteen are source patches because the hand lists
+                    the file consults are data no database change can make disagree with the catalogue. Two are
+                    worth naming: a ghost row written with `session_replication_role = replica`, since dropping
+                    the foreign key would take the orphan check down with it, and the `price_updated_at` NOT
+                    NULL dropped first, because while it stands the state under test cannot be reached.
+
+                    `data/seed/falsifiers.tsv` goes 359 → 393 rows with `git diff --numstat` `34 0`, its 24
+                    comment lines intact and no `(check, unit, arm)` clash. Limits: several of the 34 land on
+                    assertions D146/D147/D148 already reddened by a coinciding mechanism, so they are
+                    independent routes rather than new reach, and the count of mechanisms that are genuinely
+                    new is a reading of two lists rather than a measurement, so no such count is printed. The
+                    harness reads quality.sql from the tree and that file is modified here by another lane, so
+                    the 216 it censuses is the kept database's count, not the file's. Two defects in this own
+                    tooling are recorded rather than cleaned up: the row swap rebuilt the TSV from a filter that
+                    dropped `#` lines, and `34 24` instead of `34 0` is what exposed the 24 header lines the
+                    script had deleted while reporting success; and the first registry run reported a grammar
+                    violation on a file it could not decode, because the copy came out of a PowerShell redirect
+                    as UTF-16 — an unread failure and a found problem are still indistinguishable by exit code.
+
+                    Plane for these bytes: step 8 `650 name:number tokens over 335 sections on the working copy (strict), 416 citation-shaped and 283 bare continuations, 0 offenders, 12 blank-line cites at HEAD counted rather than judged and 0 blanks among this append own sections, exit 0`; step 9 `78 comment-plane citations across 22 files, all resolving, PASS`; step 10 `PASS, STATUS 147 at HEAD against 148 on disk with missing 0, uncommitted 1 (180) and duplicates 0, DECISIONS 161 against 162 with missing 0, uncommitted 1 (D175) and duplicates 0`; step 12
+                    `11 citations outside a code span, 11 resolving, over 577 files scanned, PASS with HEAD still reading max 179 until this lands`; step 11 before this commit is `RESULT: FAIL` on
+                    `fatal: path 'data/seed/falsifier_witnesses/d175_plants.py' exists on disk, but not in
+                    'HEAD'`, the registry's own rule that a witness must be tracked at HEAD, so it is red on
+                    the working plane exactly until these bytes land and is re-run after. Steps 7 and 11 read
+                    the working tree; nothing here claims anything about the committed plane beyond D173 and
+                    D174. Appends pure addition, zero lone LF. Nothing pushed.
