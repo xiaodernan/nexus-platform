@@ -10589,3 +10589,51 @@ insertion can silently mis-aim — this unit measured that at 16 of 25 in its ow
 `verdictCount` is still seven hand-summed terms, so a new verdict block can print and go uncharged exactly as
 `branchlessKinds` and the unnamed class did; the derivation made the vocabulary impossible to lose sight of, not
 impossible to add. Nothing is pushed.
+## 203. D197: the directory exclusion had no name for the lane's own scratch, and the classifier dropped every path cite that began with a dot
+
+Two hiding places, one clause apart, both found while arming the first. `VENDOR_DIRS` never named `.scratch`,
+so the three readers walked a lane's working directory as part of the repository: D196 had left a stale copy of
+`cli_args.mjs` under `.scratch/d194_meta/`, the shared walker returned that basename twice, a citation naming
+exactly one shipped file read AMBIGUOUS, gate step 9's falsifier refused with exit 2, and because
+`db_gate_fresh.sh` runs under `set -euo pipefail` that refusal stops whichever session runs the gate next.
+The list is now the union of the two drifted lists (22 names, `scripts/source_index.mjs:62`), `.scratch` among
+them. D196's residue — "nothing charges the write" — is answered by `scripts/falsify_ledger_text.mjs:634`,
+which keeps out of the exclusion any file that turns out to be tracked, so the name cannot become a hiding
+place for a first-party claim.
+
+The bigger one was found by arming the smaller. `isCitation` (`scripts/check_ledger_citations.mjs:247`) asked
+its bare-dotfile rule about names that also carry a slash, and that rule consults `BY_BASENAME`, which is
+keyed on basenames and never on paths. It cannot hold one, so every citation whose path begins with a dot
+directory was dropped before reaching `resolve()` — not judged, not reported, invisible in the counts because
+a dropped token is still a token. Ten such tokens sit in the two ledgers at this commit: four to
+`.github/workflows/ci.yml` and six to `./.gitignore`, the root-relative form the resolver has a branch for and
+the CI form the arms cite. None had been judged by any run since D88 wrote the classifier. The path clause is
+now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:252`), so `./.gitignore:21`
+is a citation and `some/dir/notes` stays prose.
+
+Both halves were measured rather than argued. The ten-token count came out of this file's own tokenizer and
+its own `isCitation` read back off its bytes; a hand-written regex over the same two documents printed 4, which
+is the reason the number in the checker's comment says where it came from. Three checks had to pass before the
+name went into the list: `git grep -F '.scratch'` over tracked code returns nothing (the ten hits a first pass
+printed were the English phrase "from scratch", produced by an unescaped dot in a regex, not a path); the
+comment reader aimed at that directory prints `COMMENT CITATIONS: 0 tokens found`, which is this project's
+refusal for an empty plane and not a green; and excluding the directory costs 73 indexable files, all of them
+under a directory literally named `.scratch`, none tracked.
+
+Eight arms went into the harness (50 total, 50 held, exit 0): a cite into an excluded directory is charged even
+though the harness proves the file is on disk; the same plant text over two index roots that differ only in
+which directory the twin sits in comes out resolved on one and AMBIGUOUS on the other, which is D196's failure
+written as a prediction instead of a story; a basename whose twin is excluded resolves to the shipped file; a
+dot-directory path cite is counted and judged; the census prints the shared set's own size rather than a copy
+of it; the membership predicate reddens on the same list with D197's name lifted; and a mirror walk that must
+first reproduce the shipped index file for file (592 entries) before its radius claim is believed.
+
+Residue, stated because the arms do not close it. First, the harness is not stable under load: six runs of the
+50 arms, four green, two red on different arms, and in both reds the child process printed nothing at all —
+one exit 134, one empty — while the identical invocation standalone returns the expected verdict. `run()`
+reports an unread child as an arm result instead of refusing, so a loaded host can turn a green reader into a
+false statement about it; that is the same class as D194's "a death called a verdict", one level up, and it is
+the next unit here. Second, the write-time charge is partial: the index holds 592 files under 513 basenames,
+and 27 basenames are held by more than one file (31 of them `page.tsx`), so charging duplicates at write time
+means distinguishing a name a citation can actually land on from a name the tree structure repeats.
+

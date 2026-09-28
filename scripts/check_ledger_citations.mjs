@@ -28,6 +28,12 @@
  * name without its extension and IS checked when the stem resolves to exactly one file, and a bare `:22`
  * continues the file before it — a continuation inherits its file, so it is counted, never judged alone.
  *
+ * WHAT USED TO BE DROPPED WITHOUT BEING NAMED, and no longer is (D197): a path citation whose first segment is a
+ * dot directory — the root-relative form, and a path under the CI workflows directory — was handed to the
+ * bare-dotfile rule, which asks a basename-keyed table to hold a whole path. It never can, so those citations
+ * reached no resolver at all. The instances in the two ledgers turned out to be sound; the finding is that
+ * nothing had ever judged them, which is the same shape as a skip list that hides a file — see `isCitation`.
+ *
  * TWO SNAPSHOTS, AND WHICH ONE THE GATE READS. The default census is strict on HEAD and reads the working
  * copy only to report what the next commit will inherit: three lanes append to `docs/STATUS.md` at once, so
  * the bare run over committed text is the one two lanes can both run and compare. `--worktree` makes the
@@ -223,11 +229,30 @@ const SECTION = /^§?\d+$/;                                 // §81, D84 (no ext
 const FILE_SUFFIX = /\.[a-z][a-z0-9]{0,5}$/;              // something.java, generate.py, quality.sql
 const CLASS_NAME = /^[A-Z][A-Za-z0-9_]*(?:\.[A-Z][A-Za-z0-9_]*)?$/;   // EventsController, MeController.FavoriteBody
 
-/** True when the token is claiming to point at a file. */
+/**
+ * True when the token is claiming to point at a file.
+ *
+ * D197 — the path clause has to be asked before the bare-dotfile clause. The old order returned on
+ * `name.startsWith('.')` for a name that also carries a slash, and asked `BY_BASENAME` — which is keyed on
+ * basenames, never paths — to hold it. It cannot, so every citation whose path begins with a dot directory was
+ * dropped before it ever reached `resolve()`: ten such tokens in the two ledgers at this commit — four to
+ * `.github/workflows/ci.yml` and six to `./.gitignore`, the root-relative form this file's own resolver has a
+ * branch for and the CI form the arms cite — none of them judged by any run since D88 wrote the classifier. The
+ * count came out of this file's own tokenizer and its own `isCitation` read back off its bytes, because a hand
+ * copy of a scanner finds a different number (the first pass over this claim, with a regex of mine, printed 4).
+ * A rule the classifier never lets run is not a rule the census has
+ * (D193's chain), and the shape of the bug is the one this unit set out to arm: the skip list was the question,
+ * and the answer was that the hiding place was one clause earlier, in what counts as a citation at all.
+ */
 function isCitation(name) {
   if (HOST.test(name) || ENV.test(name) || SECTION.test(name)) return false;
+  if (name.includes('/')) {
+    // A path is judged on its last segment, and a segment that is itself a dot file (`.gitignore`) counts only
+    // when the index holds that name — so `./.gitignore` is a citation and `some/dir/notes` is prose.
+    const last = name.split('/').pop();
+    return FILE_SUFFIX.test(last) || LEDGER_EXT.test(last) || BY_BASENAME.has(last);
+  }
   if (name.startsWith('.')) return BY_BASENAME.has(name);   // .gitignore, .env.example
-  if (name.includes('/')) return FILE_SUFFIX.test(name.split('/').pop()) || LEDGER_EXT.test(name);
   if (MIGRATIONS.has(name)) return true;
   return LEDGER_EXT.test(name) || CLASS_NAME.test(name);
 }

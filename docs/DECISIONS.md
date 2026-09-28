@@ -11229,3 +11229,29 @@ keyed on filenames — and an unclassified bare token stops the run. The committ
 when the 16 STATUS and 15 DECISIONS sections were landed at 7f89d5e: D194's recipe asserted HEAD ended on its last
 content byte, and this unit's recipe asserts the opposite, so the tail byte is measured at every landing instead of
 remembered from the last one.
+## D197 — a skip list is a hiding place until something proves nothing reaches through it, and a classifier clause that never runs is not a rule the census has
+
+**Decided:** `.scratch` joins `VENDOR_DIRS`, and the shared list becomes the union of the two lists that had
+drifted apart (`source_index.mjs` and the comment census's own `SKIP`), and the path clause of `isCitation` is
+asked before the bare-dotfile clause, so a citation whose first segment is a dot directory reaches the resolver
+instead of being dropped.
+
+**Why:** two costs were paid in the same week. D196 hit the first: a lane's stale copy of `cli_args.mjs` inside
+an unexcluded `.scratch` made a shipped file's basename appear twice, and the resulting AMBIGUOUS refusal at
+gate step 9 stopped whichever session ran the gate next, because `db_gate_fresh.sh` is under
+`set -euo pipefail`. The classifier was the larger one, because it had no symptom: ten dot-path citations in
+the ledgers had never been judged by any reader since D88 wrote the clause, and a dropped token leaves no trace
+in the counts. Both are the same shape — an exclusion or an early return that is invisible from the outside.
+
+**Rule this establishes:** a directory may enter a skip list only beside a clause that charges it, and the
+charge must run over the real tree: reproduce the shipped index file for file, then refuse if any file the
+exclusion keeps out is tracked. An unexcluded name is a bug in the citation only if the walker can reach it,
+and an excluded name is a hiding place only if nothing proves it holds no claim — the two halves are the same
+test, read from opposite ends. Derived the same way as D196 decided: counts come out of the module that owns
+them (the checker's own tokenizer, the shared set's own `size`), never from a hand copy — the first regex
+written here by hand printed 4 against the shipped scanner's 10.
+
+**Not decided here:** whether a duplicate basename inside the repository should be charged when the citation is
+*written* rather than when it is read. The index holds 27 such names, most of them structurally legitimate, so
+the population needs a predicate before it can have a gate. Recorded as the next unit.
+

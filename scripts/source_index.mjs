@@ -22,9 +22,44 @@
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-/** Directories that hold no first-party claim: a citation into one is a bug in the citation. */
+/**
+ * Directories that hold no first-party claim: a citation into one is a bug in the citation.
+ *
+ * ONE LIST, THREE READERS (section 84 residue (e), closed). `check_jsonb_reads.mjs` (D87) and
+ * `check_ledger_citations.mjs` (D88) have imported this set since D85 made one list out of two;
+ * `check_comment_citations.mjs` kept its own SKIP and was never folded in, which is the residue section 84
+ * named. The two lists had drifted in both directions: this one lacked `out_smoke`, `vendor`, `.qoder`,
+ * `.specraft` and `logs`, and the comment census lacked `.pytest_cache`, `.mypy_cache`, `.ruff_cache` and
+ * `.tmp-out`. Measured on the working tree, the drift was not cosmetic -- steps 7 and 8 walked 21 generated
+ * `.sql` files under the gitignored `data/seed/out_smoke/`, and all three walked the six source files of
+ * `.tmp-p4/`, this project's documented scratch directory (PLAN.md: take `.tmp-p4/mvnlock` before any `mvn`),
+ * plus the three notes of `.workbuddy-ai/memory/`. None of those is a file the repository ships, so a citation
+ * into one is the bug this set exists to prevent. The set below is the UNION, so no reader lost a file another
+ * reader kept; the four names only the ledger census had are insurance against a build that leaves output
+ * behind, and `out_smoke` covers the seed smoke directory exactly as `out` already covered `data/seed/out`.
+ *
+ * D197 added `.scratch` — the name is spelled out here because the cost of NOT having it was measured, not
+ * guessed. `.scratch/` is a lane's working directory for witness scripts and drafts; it holds no tracked file, and
+ * until now the three readers walked it as if it were part of the repository. A D196 landing found what that
+ * means: a stale copy of `cli_args.mjs` left in `.scratch/d194_meta/` made the basename the shared walker returns
+ * appear twice, so a citation naming exactly one shipped file read AMBIGUOUS, gate step 9's falsifier refused
+ * with exit 2, and because `db_gate_fresh.sh` runs under `set -euo pipefail` that refusal stops whichever session
+ * runs the gate next. The residue D196 recorded — "nothing charges the write" — is the gap this name answers.
+ *
+ * A skip list is a hiding place unless a clause proves nothing reaches through it, so three measurements were
+ * taken before the name went in, and `scripts/falsify_ledger_text.mjs` arms the property both ways:
+ *   · no tracked code refers to it — `git grep -F '.scratch'` returns nothing (the ten hits a first measurement
+ *     printed were the English phrase "from scratch", produced by an unescaped `.` in a regex, not by a path);
+ *   · it holds no claim the comment plane reads — `check_comment_citations.mjs --plane` aimed at it prints
+ *     `COMMENT CITATIONS: 0 tokens found`, which is this project's refusal for an empty plane, not a green;
+ *   · excluding it costs nothing else — every file the shared walker loses sits under a directory named
+ *     `.scratch` (73 for `LEDGER_EXT`, 47 for `SOURCE_EXT` at landing; an arm prints the live count and the
+ *     predicate that a mirror walk reproduces the shipped index name for name), and no ledger citation names a
+ *     `.scratch` path or resolves today only through one.
+ */
 export const VENDOR_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.venv', 'target', 'build', 'dist',
-  '.next', 'out', 'coverage', '.pytest_cache', '.mypy_cache', '.ruff_cache', '.tmp-out']);
+  '.next', 'out', 'out_smoke', 'coverage', '.pytest_cache', '.mypy_cache', '.ruff_cache', '.tmp-out', '.tmp-p4',
+  '.workbuddy-ai', 'vendor', '.qoder', '.specraft', 'logs', '.scratch']);
 
 /** Files the build compiles or the seed runs — the site census's predicate. */
 export const SOURCE_EXT = /\.(java|py|ts|tsx|mjs|cjs|sql|sh)$/;

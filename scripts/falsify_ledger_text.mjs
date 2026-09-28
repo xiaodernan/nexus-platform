@@ -30,6 +30,11 @@
  *   · a file with no `## ` heading exits 2 rather than throwing;
  *   · `--report` over a true plant still prints the offence (report mode is a caller's choice about the exit
  *     code, not a way to be blind);
+ *   · D197 — the exclusion LIST is armed the same way as the seam: a citation naming a file that is on disk
+ *     inside a skipped directory is charged rather than resolved, one plant text gives two verdicts over two
+ *     index roots that differ only in where the twin sits, the census prints the shared set's own size rather
+ *     than a copy of it, and the radius the list costs the real tree is measured by a second walk that must
+ *     first reproduce the shipped index file for file and then refuse if any file it kept out is tracked;
  *   · the shipped gate's `--help` has to name every knob its own Environment-overrides block documents, and
  *     step 8 has to both run this harness and pass the knob to the reader — a knob nobody can discover, or a
  *     harness nobody runs, is an arm that does not exist.
@@ -51,11 +56,12 @@
  *         a mutant it had never opened because an unknown word used to be nothing at all
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFlags } from './cli_args.mjs';
+import { LEDGER_EXT, VENDOR_DIRS, walkFiles } from './source_index.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const FIX = join(tmpdir(), 'nexus-d157-falsify');
@@ -180,10 +186,77 @@ writeFileSync(join(EMPTY_HEAD, 'docs', 'DECISIONS.md'), CRLF([
 ]), 'utf8');
 writeFileSync(join(EMPTY_HEAD, 'docs', 'STATUS.md'), CRLF(['# D191 status fixture', '']), 'utf8');
 
-const run = (args) => {
-  const r = spawnSync(process.execPath, [CHECKER, ...args], { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26 });
+const run = (args, cwd = ROOT) => {
+  const r = spawnSync(process.execPath, [CHECKER, ...args], { cwd, encoding: 'utf8', maxBuffer: 1 << 26 });
   return { code: r.status, out: `${r.stdout || ''}${r.stderr || ''}` };
 };
+
+// D197 — the directory exclusion's teeth, on a supplied index root. `VENDOR_DIRS` now names `.scratch`, the
+// lane's own working directory, because a D196 landing showed a stale copy of `cli_args.mjs` sitting there and
+// making a citation about the shipped file read AMBIGUOUS — which stopped the gate at step 9 under
+// `set -euo pipefail`. A skip list is a hiding place unless something proves nothing reaches through it, and
+// neither half of that claim is observable over the real repository: the reader's index follows
+// `process.cwd()` (D188), and no harness may plant a tracked-basename twin inside the tree it is certifying.
+// So the checker stays the shipped one and only its ROOT moves. Each fixture holds 121 indexable files — the
+// census refuses an index under a hundred, so the filler is there to keep the run a verdict rather than a
+// refusal, and no plant cites it — one `probe/a/twin.mjs`, and one twin the two roots place differently: under
+// `.scratch` (excluded, and on disk — the harness checks that below, because "not indexed" and "not written"
+// must not be the same observation) and under `deep` (not excluded).
+const EXC_ROOT = join(FIX, 'excl-root');
+const KEEP_ROOT = join(FIX, 'keep-root');
+const mkIndexRoot = (dir, twinDir) => {
+  mkdirSync(join(dir, 'probe', 'a'), { recursive: true });
+  mkdirSync(join(dir, twinDir), { recursive: true });
+  mkdirSync(join(dir, 'deep'), { recursive: true });
+  for (let i = 0; i < 120; i += 1) {
+    writeFileSync(join(dir, 'probe', `f${String(i).padStart(3, '0')}.mjs`), CRLF(['// filler, uncited', '', 'export const v = 0;']), 'utf8');
+  }
+  writeFileSync(join(dir, 'probe', 'a', 'twin.mjs'), CRLF(['export const trackedTwin = 1;', '', '// second line']), 'utf8');
+  writeFileSync(join(dir, twinDir, 'twin.mjs'), CRLF(['export const scratchTwin = 2;', '', '// second line']), 'utf8');
+  writeFileSync(join(dir, 'deep', 'cited.mjs'), CRLF(['export const plainPathCite = 3;', '', '// second line']), 'utf8');
+  return dir;
+};
+mkIndexRoot(EXC_ROOT, '.scratch');
+mkIndexRoot(KEEP_ROOT, 'deep');
+if (!existsSync(join(EXC_ROOT, '.scratch', 'twin.mjs'))) {
+  throw new Error(`the excluded-directory fixture has no file to hide (${join(EXC_ROOT, '.scratch', 'twin.mjs')}) — a plant citing an absent path would prove absence, not exclusion`);
+}
+const PLANT_HIDDEN = fixture('plant_hidden_path.md', [
+  '# D197 plant',
+  '',
+  '## D993 A citation into a directory the census skips',
+  '',
+  'The hidden one is at .scratch/twin.mjs:1, the plain path one is at deep/cited.mjs:1 and the shipped one is at probe/a/twin.mjs:1.',
+]);
+// D197 found the bigger hole while arming the smaller one: `isCitation` asked its bare-dotfile rule about names
+// carrying a slash, so a PATH beginning with a dot directory was dropped before reaching the resolver — neither
+// judged nor reported, and invisible in the counts because a dropped token is still a token. Two such cites are
+// planted here, and both resolve. The arm reads `citation-shaped 2` rather than trusting a green, because under
+// the classifier this file shipped until D197 the census counts zero citations and refuses the run: the failure
+// mode of a dropped cite is a refusal, which is loud, and the failure mode of a wrongly-admitted one is a red,
+// which is honest — what was missing entirely was a clause that judged them at all.
+writeFileSync(join(EXC_ROOT, '.dotfile'), CRLF(['# a dot file the repository root owns', '', '// second line']), 'utf8');
+mkdirSync(join(EXC_ROOT, 'dotdir'), { recursive: true });
+writeFileSync(join(EXC_ROOT, 'dotdir', '.nested'), CRLF(['# a dot file under a dot-free directory', '', '// second line']), 'utf8');
+const PLANT_DOTPATH = fixture('plant_dot_paths.md', [
+  '# D197 plant',
+  '',
+  '## D990 Two path cites that begin with a dot',
+  '',
+  'The root-relative one is at ./.dotfile:1 and the nested one is at dotdir/.nested:1.',
+]);
+// The same two claims written the way a paragraph writes them when it does not spell the directory out: a bare
+// basename. Over the excluded root the twin is not in the index, so the name is held once and the cite resolves;
+// over the root that keeps its twin the same sentence reddens as AMBIGUOUS. That pair is the difference the
+// exclusion makes, and it is the shape of the failure D196 actually hit.
+const PLANT_BARE = fixture('plant_bare_twin.md', [
+  '# D197 plant',
+  '',
+  '## D992 A basename held by a twin',
+  '',
+  'The vague one is at twin.mjs:1 and the precise one is at probe/a/twin.mjs:1.',
+]);
+
 
 // Every line the census prints for a plant must be identical across the two spellings, or the pair proves
 // nothing about equivalence. Derived from the runs below rather than written down.
@@ -297,6 +370,29 @@ const ARMS = [
     must: [/RESULT: NOT CHECKED —/, /saw no "## " heading/], absent: [/at .*check_ledger_citations\.mjs:\d+/, /Error:/] },
   { name: '--report over a true plant still prints the offence', args: ['--report', `--text=${PLANT_EOF}`], expect: 0,
     must: [/FALSE LEDGER CITATIONS \(1\)/, /PAST EOF/] },
+  // D197 — the arms above judge what a plant says; these judge what the INDEX is allowed to contain. The first is
+  // the hiding-place charge: `.scratch/twin.mjs` is demonstrably on disk (the harness throws before this run if it
+  // is not), so a green would mean the census resolved bytes it was told to skip — and the same run resolves the
+  // cite under `deep/`, which is a path in a directory nobody skips, so the offence is the exclusion speaking and
+  // not a walker that sees no paths at all. The last two arms are ONE plant text over two roots whose only
+  // difference is which directory the twin sits in: excluded resolves, not-excluded is AMBIGUOUS. That pair is
+  // the failure D196 actually hit, written as a prediction instead of a story.
+  { name: 'a citation into an excluded directory is charged even though the file is on disk, beside a path cite that resolves',
+    args: [`--text=${PLANT_HIDDEN}`], cwd: EXC_ROOT, expect: 1,
+    must: [/FALSE LEDGER CITATIONS \(1\)/, /FILE NOT FOUND \(1\)/, /\.scratch\/twin\.mjs:1/,
+      /no indexed file has that name or path/, /distinct files cited\s+2/],
+    absent: [/every citation-shaped token resolves/, /RESULT: NOT CHECKED/] },
+  { name: 'a basename whose twin sits in the excluded directory resolves to the shipped file',
+    args: [`--text=${PLANT_BARE}`], cwd: EXC_ROOT, expect: 0,
+    must: [/every citation-shaped token resolves/, /citation-shaped\s+2/],
+    absent: [/FALSE LEDGER CITATIONS/, /AMBIGUOUS/] },
+  { name: 'the same sentence over a root that keeps its twin is AMBIGUOUS (D196\'s failure, witnessed)',
+    args: [`--text=${PLANT_BARE}`], cwd: KEEP_ROOT, expect: 1,
+    must: [/FALSE LEDGER CITATIONS \(1\)/, /AMBIGUOUS/, /2 files hold it: /] },
+  { name: 'a path citation beginning with a dot directory is counted and judged, not dropped by the classifier',
+    args: [`--text=${PLANT_DOTPATH}`], cwd: EXC_ROOT, expect: 0,
+    must: [/name:number tokens\s+2/, /citation-shaped\s+2/, /every citation-shaped token resolves/,
+      /strict offenders\s+0/], absent: [/RESULT: NOT CHECKED/, /FALSE LEDGER CITATIONS/] },
 ];
 
 // The wiring and discoverability arms read the shipped gate rather than the checker: what is being certified is
@@ -316,7 +412,7 @@ function gateKnobs() {
 
 const results = [];
 for (const arm of ARMS) {
-  const r = run(arm.args);
+  const r = run(arm.args, arm.cwd);
   results.push({ arm, ...r, printed: r.out });
 }
 
@@ -474,6 +570,82 @@ const runHelpers = (knobText, wtText) => {
     arm: { name: 'the two spellings of --text print the same verdict about the same plant', expect: 0,
       must: [], absent: [] },
     code: equal ? 0 : 1, out: `equals: exit ${a.code} [${digest(a.out)}]\nspace:    exit ${b.code} [${digest(b.out)}]`,
+  });
+}
+
+// D197 — four claims about the exclusion LIST, each read out of the module that owns it rather than retyped
+// here (D196's rule: a copy of another file's vocabulary is not that file's vocabulary). The size arm is the one
+// that keeps the census's own limits paragraph honest, the membership arms say the name is in the list and prove
+// the predicate can see its absence, and the last two measure the exclusion's radius over the REAL tree: the
+// harness walks it a second time with one name lifted, refuses to believe its own walk until it reproduces the
+// shipped index file for file, and then charges the census if any file it kept out turns out to be tracked — the
+// case in which a skip list would be hiding a first-party claim rather than a lane's scratch.
+{
+  const s = run(['--worktree', '--report']);
+  results.push({
+    arm: { name: `the census prints the shared list's own size (${VENDOR_DIRS.size} names), not a copy of it`,
+      expect: 0, must: [new RegExp(`The directory exclusion is ${VENDOR_DIRS.size} names`)], absent: [] },
+    ...s,
+  });
+}
+{
+  const lifted = new Set([...VENDOR_DIRS].filter((n) => n !== '.scratch'));
+  results.push({
+    arm: { name: 'the shared list holds the name D197 added, read out of the module this harness imports',
+      expect: 0, must: [], absent: [] },
+    code: VENDOR_DIRS.has('.scratch') ? 0 : 1,
+    out: `${VENDOR_DIRS.size} names in the set · .scratch present ${VENDOR_DIRS.has('.scratch')}`,
+  });
+  results.push({
+    arm: { name: 'that predicate reddens on the same list with D197\'s name lifted — it is a test, not a tautology',
+      expect: 1, must: [], absent: [] },
+    code: lifted.has('.scratch') ? 0 : 1, out: `lifted copy holds ${lifted.size} names`,
+  });
+}
+{
+  const accept = (name) => LEDGER_EXT.test(name) || name.startsWith('.');
+  // A mirror of `walkFiles`, differing in exactly one decision: whether `keep` is skipped. Its own arm below
+  // demands that the mirror reproduce the shipped walk when nothing is kept, so the radius printed after it is
+  // a measurement of the shipped list rather than of a traversal this file invented.
+  const walkKeeping = (keep, dir = '', out = []) => {
+    let entries;
+    try { entries = readdirSync(join(ROOT, dir)); } catch { return out; }
+    for (const name of entries) {
+      if (name !== keep && VENDOR_DIRS.has(name)) continue;
+      const rel = dir ? `${dir}/${name}` : name;
+      if (statSync(join(ROOT, rel)).isDirectory()) walkKeeping(keep, rel, out);
+      else if (accept(name)) out.push(rel);
+    }
+    return out;
+  };
+  const shipped = walkFiles(ROOT, accept);
+  const shippedSet = new Set(shipped);
+  const mirror = walkKeeping(null);
+  const reproduces = mirror.length === shipped.length && mirror.every((p) => shippedSet.has(p));
+  results.push({
+    arm: { name: `the harness's mirror walk reproduces the shipped index file for file (${shipped.length} entries)`,
+      expect: 0, must: [], absent: [] },
+    code: reproduces ? 0 : 1, out: `shipped ${shipped.length} · mirror ${mirror.length}`,
+  });
+  const tracked = new Set(execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' })
+    .split(/\r?\n/).filter((l) => l !== ''));
+  const extras = walkKeeping('.scratch').filter((p) => !shippedSet.has(p));
+  results.push({
+    arm: { name: `the exclusion keeps out no tracked file (${extras.length} file(s) untracked, index ${shipped.length})`,
+      expect: 0, must: [], absent: [] },
+    code: reproduces && shipped.length >= 100 && extras.every((p) => !tracked.has(p)) ? 0 : 1,
+    out: `radius ${extras.length} file(s) · tracked among them ${extras.filter((p) => tracked.has(p)).length}`
+      + ` · shipped index ${shipped.length} · tracked set ${tracked.size}`,
+  });
+  // The liveness half: the same predicate run over a population that certainly contains one tracked file has to
+  // call it, which needs no `.scratch` on disk and so also holds on a clean checkout.
+  const oneTracked = shipped.find((p) => tracked.has(p)) ?? null;
+  const caught = extras.concat(oneTracked === null ? [] : [oneTracked]).filter((p) => tracked.has(p));
+  results.push({
+    arm: { name: 'that predicate reddens when a file inside the excluded directory is tracked (D197 witnesses itself)',
+      expect: 1, must: [], absent: [] },
+    code: caught.length > 0 ? 1 : 0,
+    out: `population given to the charge: ${extras.length} excluded file(s) + ${oneTracked === null ? 'nothing derived' : oneTracked} → caught ${caught.length}`,
   });
 }
 
