@@ -9863,3 +9863,62 @@ and this checker now carries it too. A citation onto `}` or a lone `else` still 
 reads emptiness and not correctness — D160's refused anchor-on-line predicate (18 hits in 64) stays refused.
 And the exemption this unit shrinks is not gone: the 14 committed blanks remain, each needing an appending row
 that names it, which is what a later unit can spend its turns on instead of adding another predicate.
+
+## D163 — Step 8's two planes became addressable, which is what turns D162's one-off red into an arm that can be re-run, and the mutant says so
+
+**The seam.** `scripts/check_ledger_citations.mjs` now takes `--dir <checkout>` for the plane it reads as the
+working copy and `--head-dir <checkout>` for the plane it reads as committed, both as ordinary files instead of
+`git show`. That is all of it: the source index and the cited files stay in the repository the script is
+installed in, because the thing a fixture claims about is real code (`scripts/cli_args.mjs` and its line
+numbers), and a witness that moved the cited world too would be reading its own invention. Both spellings parse
+through the shared parser, an empty value is refused naming its unit, and a value that reads as another flag is
+refused rather than guessed — which is the same defect class D154 through D159 kept finding in other readers,
+now closed here before this file ever had a hand-written argument loop to grow.
+
+**Why it needed to exist.** D162 armed the blank-line class for "a section this run is writing" and could only
+report one observed red: this lane's own ledger draft cited a blank line and step 8 stopped it. A rule whose red
+side has been seen once, in prose, is a rule nobody downstream can re-check — and the next person to edit the
+predicate has no test that fails. Four arms now cover the seam: the red (a head plane with one section, a disk
+plane adding a second that cites a blank line, requiring the offence to be attributed to the new section and the
+run to exit 1), the control (the same head plane for both, green, which is what makes the claim about *newness*
+rather than about fixtures), and the two refusals. `scripts/falsify_ledger_text.mjs` holds 25 of 25.
+
+**The mutant, which is the part that says the arms are about the rule.** A Temp copy of the shipped reader with
+one predicate replaced by D162's — blanks judged only where `--text` was given — was run on the red arm's own
+command. It prints `0 blank(s) among 1 section(s) this run is writing, and a blank there offends` and exits 0:
+it still sees that the section is new, and refuses to judge it, which is exactly the difference the arm exists
+to catch. The shipped reader on the same command exits 1 and names the section. Two notes on how that was
+measured, because the first attempt got both wrong: the copy has to live inside `scripts/`, since the reader
+imports its siblings by relative path and a copy in a temp directory dies of `MODULE_NOT_FOUND` at exit 1 — a
+red from a crash, which is evidence about nothing; and this harness takes no `--reader` argument, so
+`node scripts/falsify_ledger_text.mjs --reader=<copy>` ran the SHIPPED checker and reported 25 of 25 held
+against a mutant it never touched. That flag is not a seam, it is an ignored word, and the fact that it looked
+like a result is the defect D154 through D159 have been closing one reader at a time. Giving this harness a
+real reader seam is #112.
+
+**A numbering finding, because it nearly became a false statement in this record.** While choosing a blank line
+for the plant, a python probe reported a line in `check_jsonb_reads.mjs` as empty and the checker disagreed —
+`str.splitlines()` cuts on form-feed and a handful of other separators that the census's own splitter
+(`/\r?\n/`) does not, so the two disagree on any file carrying one. The plant's number was derived from the
+shipped file with the checker's splitter after that, and every blank number in this lane's harnesses is derived
+that way. The general form is a question this lane has not answered yet: `.sh` files here are CRLF and `.mjs`
+files are LF, and a lone CR would shift a python-side line number out from under any cite a script files — so
+the next reader that counts lines should say which splitter it used, and a census that mixes languages should
+re-derive through the shipped reader rather than trusting a hand count from another runtime.
+
+**Measured on the bytes this entry describes.** Default plane unchanged: 650 citation-shaped tokens over 305
+committed sections, 416 working-copy citations, 0 offenders, 14 blank starts counted and 0 judged, exit 0. The
+seam's fixture: exit 1 with one offender named in the new section, exit 0 with none when no section is new.
+Against the mutant copy of the reader: the same request exits 0 and counts the new section without judging it. Step 9's reader stays at 78
+comment-plane citations across 22 files, PASS; step 10 reports HEAD 149 decisions and 135 STATUS sections
+against the same on disk, missing 0, duplicates 0; step 12 resolves every spelled section citation. Harnesses
+after the change: 25 ledger-text · 13 comment-plane · 20 flag-dialect · 8 quality-seam · 8 ledger-sections · 6
+status-citations, 80 arms, none missed.
+
+**Limits, stated.** `--dir` and `--head-dir` have no environment knob in `scripts/db_gate_fresh.sh`: the arms
+run inside gate step 8 through the harness, but an operator cannot point the gate's step 8 at another checkout
+the way steps 7 through 12 can point at theirs, so this seam is a witness interface, not a drive interface —
+naming it as the next unit's job (#111). The committed plane is supplied as files, so there is no `--head-rev`
+spelling here and a fixture cannot ask what three revisions ago said. And the source index stays at the
+repository, which means the seam cannot test index questions at all; that is deliberate, and the reason is in
+the paragraph above rather than in a comment in the code.

@@ -84,6 +84,16 @@ const notCheckable = (m) => {
  */
 const FLAGS = {
   '--text': { kind: 'value' },
+  // D163 — the two planes separately addressable. `--dir` is where the working-copy ledger files are read
+  // from and `--head-dir` where the committed ones come from, both as plain files instead of `git show`.
+  // WHY: D162 armed the blank-line class for "a section this run is writing", and its red side could only be
+  // observed once, by this lane's own ledger draft, because no harness may write a new section into the real
+  // `docs/`. A witness that cannot re-run its own red is a story, so the seam exists to make the arm possible
+  // — and, as D96 put it, because it is an interface someone would use for a reason that happens to be testable.
+  // WHAT STAYS AT THE REPOSITORY: the source index and the `git show` fallback. A fixture's citations point at
+  // real files (`scripts/cli_args.mjs:NN`), so the plane that moves is the ledgers, never the thing cited.
+  '--dir': { kind: 'value', unit: 'directory' },
+  '--head-dir': { kind: 'value', unit: 'directory' },
   '--report': { kind: 'switch' },
   '--worktree': { kind: 'switch' },
   '--verbose': { kind: 'switch' },
@@ -93,6 +103,8 @@ const parsed = parseFlags(process.argv.slice(2), FLAGS);
 if (!parsed.ok) notCheckable(parsed.reason);
 const ARGS = {
   text: parsed.value['--text'] ?? null,
+  dir: parsed.value['--dir'] ?? null,
+  headDir: parsed.value['--head-dir'] ?? null,
   report: Boolean(parsed.flag['--report']),
   worktree: Boolean(parsed.flag['--worktree']),
   verbose: Boolean(parsed.flag['--verbose']),
@@ -118,6 +130,10 @@ const VERBOSE = ARGS.verbose;
  * comment-plane census through, so every row scored there is new by construction.
  */
 const BLANK_JUDGED = ARGS.text !== null;
+/** Where a plane's ledger files live. An absolute path is taken as given; a relative one is the repository's. */
+const plane = (p) => (p === null ? null : (isAbsolute(p) ? p : join(ROOT, p)));
+const DIR = plane(ARGS.dir);
+const HEAD_DIR = plane(ARGS.headDir);
 
 /* ------------------------------------------------------------------ the source index */
 
@@ -221,6 +237,17 @@ function citeTokens(line) {
  * failure here is now data the report carries, not an exception it throws.
  */
 function ledgerText(ledger, committed) {
+  if (committed && HEAD_DIR !== null) {
+    // The committed plane supplied as files. This is the whole point of D163's seam: the red side of "a blank
+    // line inside a section this run is writing" needs a head plane with one section and a disk plane with
+    // two, and no harness may write that into the real `docs/`.
+    const p = join(HEAD_DIR, ledger);
+    try {
+      return { text: readFileSync(p, 'utf8'), reason: null };
+    } catch (error) {
+      return { text: null, reason: `the supplied committed plane ${p} could not be read — ${error.code ?? error.message}` };
+    }
+  }
   if (committed) {
     try {
       return {
@@ -232,7 +259,7 @@ function ledgerText(ledger, committed) {
     }
   }
   try {
-    return { text: readFileSync(isAbsolute(ledger) ? ledger : join(ROOT, ledger), 'utf8'), reason: null };
+    return { text: readFileSync(isAbsolute(ledger) ? ledger : join(DIR ?? ROOT, ledger), 'utf8'), reason: null };
   } catch (error) {
     return { text: null, reason: `could not read ${ledger} — ${error.code ?? error.message}` };
   }

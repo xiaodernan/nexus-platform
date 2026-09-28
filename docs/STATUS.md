@@ -9073,3 +9073,36 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     judged-clean, 0 strict offenders; 78 comment-plane citations across 22 files; steps 10 and 12
                     PASS; harnesses 21 ledger-text · 13 comment-plane · 20 flag-dialect · 8 quality-seam · 8
                     ledger-sections · 6 status-citations, 76 arms and none missed.
+
+## 168. D163: step 8's two planes are addressable, so the blank-line rule in a new section finally has a red arm that anyone can re-run
+
+                    `--dir` names the plane the census reads as the working copy and `--head-dir` the plane it
+                    reads as committed, both as files rather than `git show`, with the source index and the cited
+                    code deliberately left in the repository: a fixture's claim is about real lines of real
+                    code, and moving the cited world too would have the witness read its own invention. Four
+                    arms sit on the seam — red (head has one section, disk adds a second citing a blank line,
+                    exit 1 naming it), control (both planes the same, green: the rule judges newness, not
+                    fixtures), and the two refusals — and `falsify_ledger_text.mjs` holds 25 of 25.
+
+                    The mutant was measured rather than assumed: a Temp copy of the reader with the predicate
+                    reverted to D162's text-mode-only rule prints `0 blank(s) among 1 section(s) this run is
+                    writing` and exits 0 on the arm's own command, where the shipped reader exits 1. Getting
+                    there cost two false results and both are recorded in D163 — a copy outside `scripts/` dies
+                    of `MODULE_NOT_FOUND` at exit 1 (a crash, not a red), and this harness accepts no `--reader`
+                    flag, so asking it to test the copy ran the shipped checker and cheerfully reported 25 of 25
+                    against a mutant it never touched. A flag nobody parses is the defect this whole arc has
+                    been closing, arriving in a witness script: #112 gives the harness a real reader seam.
+
+                    Two smaller findings ride along. A python probe's line numbering is not the census's —
+                    `splitlines()` cuts on characters the checker's splitter does not, so a "blank line" chosen
+                    that way was not blank to the reader, and every plant number here is now derived with the
+                    shipped splitter. And `--dir`/`--head-dir` have no environment knob in the gate, so the seam
+                    is a witness interface rather than a drive interface; #111 is the follow-up that makes an
+                    operator able to point step 8 at another checkout the way steps 7 through 12 can.
+
+                    Plane for these bytes: default census 650 tokens over 305 committed sections, 416
+                    working-copy citations, 0 offenders, 14 blank starts counted and 0 judged; the seam's
+                    fixture red at exit 1 and green at exit 0; step 9 at 78 comment-plane citations across 22
+                    files; step 10 HEAD 149 decisions and 135 STATUS sections against the same on disk, missing
+                    0, duplicates 0; step 12 every spelled citation resolving. Six harnesses: 25 · 13 · 20 · 8 ·
+                    8 · 6 arms, 80 total, none missed.

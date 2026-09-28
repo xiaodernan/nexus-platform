@@ -128,6 +128,25 @@ const PLANT_BLANK = fixture('plant_blank_line.md', [
   `The empty one is at scripts/cli_args.mjs:${BLANK_AT} and the real one is at scripts/cli_args.mjs:${TEXT_AT}.`,
 ]);
 
+// D163 — the red D162 could only observe once, now reachable from here. Two supplied planes: a head plane with
+// one committed section, and a disk plane that adds a second section citing a blank line. Without `--head-dir`
+// and `--dir` this path is unwitnessable — no harness may write a new section into the real `docs/` — and a
+// rule that has never been seen reddening twice is a rule nobody can re-check.
+const planeFixture = (dir, extra) => {
+  mkdirSync(join(dir, 'docs'), { recursive: true });
+  writeFileSync(join(dir, 'docs', 'DECISIONS.md'), CRLF([
+    '# D163 fixture', '', '## D900 A committed section', '', `The parser is at scripts/cli_args.mjs:${TEXT_AT}.`, extra,
+  ]), 'utf8');
+  writeFileSync(join(dir, 'docs', 'STATUS.md'), CRLF([
+    '# D163 status fixture', '', '## 900. A committed status section', '', `The parser is at scripts/cli_args.mjs:${TEXT_AT}.`,
+  ]), 'utf8');
+  return dir;
+};
+const SEAM = join(FIX, 'seam');
+const HEAD_PLANE = planeFixture(join(SEAM, 'head'), '');
+const DISK_PLANE = planeFixture(join(SEAM, 'disk'),
+  `\n## D901 A section being written\n\nIt cites scripts/cli_args.mjs:${BLANK_AT}, which is a blank line.\n`);
+
 const run = (args) => {
   const r = spawnSync(process.execPath, [CHECKER, ...args], { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26 });
   return { code: r.status, out: `${r.stdout || ''}${r.stderr || ''}` };
@@ -172,6 +191,20 @@ const ARMS = [
     must: [/blank-line cites\s+\d+ at HEAD \(counted, not judged/, /section\(s\) this run is writing, and a blank there offends/,
       /0 blank\(s\) among \d+ section/],
     absent: [/BLANK LINE \(\d+\):/, /FALSE LEDGER CITATIONS/] },
+  // D163 — four faces of the new seam: red, control, and the two refusals that keep a mistyped request from
+  // quietly reading the repository instead of the plane the caller asked for.
+  { name: 'a new section citing a blank line reddens when both planes are supplied',
+    args: ['--head-dir', HEAD_PLANE, '--dir', DISK_PLANE], expect: 1,
+    must: [/FALSE LEDGER CITATIONS — BLANK LINE IN A NEW SECTION \(1\)/, new RegExp(`scripts/cli_args\\.mjs:${BLANK_AT}`),
+      /1 blank\(s\) among 1 section\(s\) this run is writing/] },
+  { name: 'the same head plane with no new section is green — the rule judges newness, not the fixture',
+    args: ['--head-dir', HEAD_PLANE, '--dir', HEAD_PLANE], expect: 0,
+    must: [/0 blank\(s\) among 0 section\(s\)/], absent: [/FALSE LEDGER CITATIONS/, /BLANK LINE \(\d+\):/] },
+  { name: '--dir= is refused with its unit named, not silently read as the repository', args: ['--dir='], expect: 2,
+    must: [/RESULT: NOT CHECKED — --dir was given without a directory/] },
+  { name: '--head-dir followed by another flag is refused, because a seam may not guess which plane',
+    args: ['--head-dir', '--dir', DISK_PLANE], expect: 2,
+    must: [/RESULT: NOT CHECKED — --head-dir was followed by --dir/, /there is no directory to read/] },
   { name: 'an unparseable flag is refused, not dropped', args: [`--tex=${PLANT_EOF}`], expect: 2,
     must: [/RESULT: NOT CHECKED — unknown option --tex/] },
   { name: '--text= with nothing after the sign', args: ['--text='], expect: 2,
