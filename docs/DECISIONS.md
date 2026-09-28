@@ -10475,6 +10475,7 @@ This makes `nexus_test` a true replica of `nexus` at HEAD, and the test suite's 
 
 **Plane for these bytes.** Steps 7-12: working-tree plane green (216/216 registry, 78/22 comment citations, 0 ledger offenders). Step 13: committed plane reports 8 FALSE SITES, 0 ledger offenders, 75 comment citations across 20 files. The blank-line census now reconciles on both planes without crashing. Appends pure addition, zero lone LF. Nothing pushed.
 
+
 ## D193 — step 7's read census excused every miss with one bucket, and its parse failures answered in the verdict's exit code
 
 D192's rule, one reader later: a rule that cannot fire on the plane the gate reads is not a rule the
@@ -10549,8 +10550,12 @@ The harness is 27 arms and all 27 held on the final bytes. Its control census is
 own: 22 answer rows citing 31 locations in 12 files, 38 distinct source lines read back over 41
 checked spans, 174 files walked under 2 roots, 26 read sites, 19 distinct pairs against 17 declared
 triples. Step 7 on this tree exits 0. Step 9 exits 0 with 88 comment-plane tokens in 27 files. Step
-10 passes: 151 STATUS headings at HEAD against 166 on disk, 165 decisions against 179, nothing
-missing, no number claimed twice.
+10 passes on the plane this section belongs to: 152 STATUS headings at HEAD against 167 on disk, 166
+decisions against 180, nothing missing, no number claimed twice — and that census includes its own
+counter, because the same command run before this append landed printed 151 against 166 and 165
+against 179. The first version of this entry quoted those pre-append numbers as if they described the
+committed bytes and the commit message next to it invented a third pair (168 against 181) that no run
+ever printed; both are corrected here, and the corrected pair is the one re-read after the commit.
 
 Two reading steps are red on this tree for bytes this lane did not write, and they are reported, not
 edited. Step 8 finds 2 blank-line offenders among the uncommitted sections: one in DECISIONS D188,

@@ -9554,6 +9554,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     offenders, 75 comment citations across 20 files. Blank-line census now reconciles on
                     both planes without crashing. Appends pure addition, zero lone LF. Nothing pushed.
 
+
 ## 199. D193: step 7's census excused every miss with one bucket and answered its own parse failures in the verdict's exit code
 
 D192's rule applied to the next reader: a rule that cannot fire on the plane the gate reads is not a
@@ -9598,8 +9599,12 @@ went green at rc 0, which is what the arm's red said.
 Twenty-seven arms, all held on the final bytes. Control census on this tree: 22 answer rows, 31
 cited locations, 12 files, 38 distinct lines over 41 checked spans; 174 files walked under 2 roots,
 26 read sites, 19 pairs against 17 declared triples. Step 7 exits 0, step 9 exits 0 (88 comment
-tokens in 27 files), step 10 passes (STATUS 151 at HEAD against 166 on disk, DECISIONS 165 against
-179, missing 0, duplicates 0). Steps 8 and 12 are red on bytes this lane did not write: 2 blank-line
+tokens in 27 files), step 10 passes on the plane this section is part of (STATUS 152 at HEAD against
+167 on disk, DECISIONS 166 against 180, missing 0, duplicates 0 — the run before this append printed
+151/166 and 165/179, and the census moved because it counts its own counter). The first draft of
+this entry quoted the pre-append pair as the committed plane's and the commit message beside it
+printed a pair no run ever produced; the numbers above are re-read after the commit. Steps 8 and 12
+are red on bytes this lane did not write: 2 blank-line
 ledger offenders in the uncommitted DECISIONS D188 and STATUS 191 sections, and 6 spelled STATUS
 section cites in docs/PLAN.md that exist on disk but not at HEAD — reported, not edited. Residue:
 the read scan walks 174 files while sites resolve against a 322-file whole-repo index, and that
