@@ -108,9 +108,16 @@ console.log(`  anchored sentences ${anchored} · anchor on the cited line ${exac
 
 // The reconciliation. Step 8 prints its committed-plane count; this walk got there by a different route (its
 // own resolution pass over the same index), so agreement is a finding and not a tautology.
-const reader = execFileSync(process.execPath, ['scripts/check_ledger_citations.mjs'],
-  { cwd: ROOT, encoding: 'utf8' });
-const printed = Number((reader.match(/blank-line cites\s+(\d+) at HEAD/) ?? [, 'nan'])[1]);
+// D174: on the committed plane step 8 exits 1 with 41 offenders (FILE NOT FOUND for other lanes' uncommitted
+// work). execFileSync throws on non-zero; catch and extract stdout so the census can still read the count.
+let readerOut = '';
+try {
+  readerOut = execFileSync(process.execPath, ['scripts/check_ledger_citations.mjs'],
+    { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 20 });
+} catch (e) {
+  readerOut = e.stdout || e.output?.[1] || '';
+}
+const printed = Number((readerOut.match(/blank-line cites\s+(\d+) at HEAD/) ?? [, 'nan'])[1]);
 const agree = Number.isFinite(printed) && printed === blanks;
 console.log(`  step 8 prints      ${Number.isFinite(printed) ? printed : 'no count it recognised'}`);
 console.log(`\nRESULT: ${agree ? 'PASS' : 'FAIL'} — the two readers ${agree ? 'agree on' : 'DISAGREE about'} ${blanks}/${Number.isFinite(printed) ? printed : '?'} blank-line citations on the ${WORKTREE ? 'working' : 'HEAD'} plane`);
