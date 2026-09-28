@@ -9201,3 +9201,32 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     six harnesses 29 · 13 · 20 · 8 · 8 · 6 = 84 arms,
                     none missed. Still open: arming the blank class on the reading plane (12 committed cites
                     want appending rows), and whether a lone `--dir` deserves its own name rather than a refusal.
+
+## 172. D167: the blank-line class gets its list, and the report shares step 8's grammar, index and skip rules so twelve is twelve in two independent ways
+
+                    D166 reconciled the count and still could not say what the twelve were, which is the
+                    difference between a statistic and a work queue — and its own limits said the reason: two
+                    readers agreeing on a number can still disagree on every site. `citation_blank_sites.mjs`
+                    now prints the sites, with the nearest line holding text for each one, reading its rows
+                    from the plane step 8 is strict on and resolving through the shared index, skipping
+                    ambiguous names exactly as the reader does. It refuses an unknown flag at exit 2 and
+                    asserts nothing.
+
+                    All twelve turn out to be one-line drifts across five targets: line 88 of the DATABASE
+                    doc (text at 87), line 140 of the gate script (text at 139 — blanked again by D164's own
+                    step 8 branch), line 34 of the section checker (text at 33 and 35, blanked by D159's parse
+                    migration, and two of the four rows naming it are the corrections), line 143 of the
+                    moderation controller (text at 142), and line 307 of the collections controller where the
+                    nearest text is a divider and the sentence is about the javadoc two lines further on. That
+                    last one is kept visible: the hint is a pointer for a human, not a repair.
+
+                    Nothing is armed on the committed plane, and the list is why: every site is in a row that
+                    can only be corrected by appending, so switching the predicate on would red the gate on
+                    sentences whose replacements already exist two lines away. What the list buys is the queue —
+                    one appended row per site — and a check D166 could not run: agreement now has to hold site
+                    by site, not digit by digit. The entry's own citations are written in prose form so it adds
+                    no sites to the class it lists, which is why the append's two new sections judge clean.
+
+                    Plane: step 8 650 tokens over 311 committed sections, 0 offenders, 12 blanks counted and 0
+                    judged; step 9 78 across 22 PASS; harnesses 29 · 13 · 20 · 8 · 8 · 6 = 84 arms, none
+                    missed.

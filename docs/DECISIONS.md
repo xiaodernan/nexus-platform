@@ -10087,3 +10087,55 @@ one module now, but the resolution rules are not shared: step 8's basename, stem
 still its own, and the census approximates it with suffix matching, which is why skipping ambiguity is
 explicit rather than inherited. And arming the class on the reading plane is still the open question — the 12
 committed blanks are counted, not judged, and the count is printed every run so the exemption stays visible.
+
+## D167 — The blank-line class gets a list: twelve sites, all of them one line off, and a report that shares the reader's index, grammar and skip rules
+
+**What was missing.** D160 through D166 all reported a count — 6, then 14, then 12 — and D166's own limits
+named the consequence: agreement between two readers was asserted on the number, so a pair of compensating
+differences would print a false PASS, and nothing on disk could be triaged because nothing printed the sites.
+`scripts/citation_blank_sites.mjs` is that missing artefact. It slices step 8's token grammar out of the
+shipped file, indexes through `source_index.mjs` with the shared extension predicate and the shared walk,
+reads its citing rows from HEAD (the plane step 8 is strict on), skips AMBIGUOUS names the same way the reader
+does before any line is opened, and for each blank target reports the nearest line that holds text — the
+candidate the sentence was reaching for. It takes one flag, `--worktree`, refuses anything else at exit 2, and
+asserts nothing: step 8 keeps the verdict. Both report 12 today, by independent routes.
+
+**The twelve, and what they actually are.** Every one is a one-line drift, and five distinct targets account
+for all twelve; the numbers below are written in the prose form so that this entry does not itself add sites
+to the class it is listing, which D166 established as a rule for anything written about the blank class:
+
+* line 88 of `docs/DATABASE.md`, cited by two rows in D88 and two more in D160's and D165's entries — the text
+  sits at 87, the reservation `source` enumeration those rows discuss.
+* line 140 of `scripts/db_gate_fresh.sh`, cited by D89 and by §86 and again by D160's list — the text is at
+  139, the line that prints the table and migration totals; D164's own step 8 branch added a line above it, so
+  this lane blanked its oldest cite a second time.
+* line 34 of `scripts/check_ledger_sections.mjs`, cited by D154, by D159 and by the two rows that were written
+  to correct them — text at 33 and 35; the parse migration removed the line those rows describe, and the
+  correcting sentences inherited the staleness while writing it off.
+* line 143 of `ModerationController.java`, whose text is at 142, the not-found throw the row is about, in a
+  file this lane has not edited.
+* line 307 of `CollectionsController.java` — the nearest text, at 306, is a section divider, and the sentence
+  is about the nullable-credit javadoc at 308. This is the one site where the mechanical hint does not point at
+  the intended line, and it is kept visible rather than tidied.
+
+**Why this does not arm the class on the history.** The list is what makes the answer visible rather than
+asserted: all twelve live in committed rows, the correction channel is an append, and an append cannot move a
+number already printed — so switching the predicate on would red the gate on sentences whose replacements sit
+two lines below them. What changes is that the exemption now has a work queue, one row per site, each naming
+the line its sentence should have pointed at. The same list answers D166's false-PASS worry: a compensating
+pair of differences now has to reproduce twelve matching lines, not twelve matching digits.
+
+**Measured on the bytes this entry describes.** Step 8: 650 citation-shaped tokens over 311 committed
+sections, 416 working-copy citations in 319 sections (317 before this append added its own two), 0 offenders,
+12 blank span starts counted and 0 judged,
+exit 0, and 0 judged among this append's own two new sections — the entry is written so it adds no sites.
+Site report: 12 listed, refusal at exit 2, exit 0 on the report path. Step 9: 78 comment-plane citations
+across 22 files, PASS, the new file's header carrying no live citation-shaped example, which is the rule D166
+had to learn a second time. Steps 10 and 12 PASS; harnesses 29 ledger-text · 13 comment-plane · 20
+flag-dialect · 8 quality-seam · 8 ledger-sections · 6 status-citations, 84 arms, none missed.
+
+**Limits, stated.** The nearest-text hint is mechanical and wrong in at least the one case above, so it is a
+pointer for a human and not a proposed repair. The report reads its citing rows from HEAD but its target files
+from the working tree, deliberately — the question is where a claim lives now — so a row of its output mixes
+planes, and the two readers agree here only because all twelve sites are blank on both planes. And arming
+`BLANK LINE` on the reading plane stays open, now with the list attached.
