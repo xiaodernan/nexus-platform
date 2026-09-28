@@ -9554,6 +9554,770 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     offenders, 75 comment citations across 20 files. Blank-line census now reconciles on
                     both planes without crashing. Appends pure addition, zero lone LF. Nothing pushed.
 
+## 184. D178: the platform suite's two named reds were one stale test database — `nexus_test` was missing V4, V5 and V6, and the repair is the migration script's own `--record` path
+
+                    `PLAN.md`'s P1 named two reds to be understood before anything was fixed:
+                    `MerchantWorkspaceTest#myWorkspacesPrintTheirGrants` (one assertion —
+                    `/api/v1/me` handed back zero memberships where the owner expected one
+                    workspace) and `CommerceApiTest` (7 failures in 184.6 s, which the plan read
+                    as one upstream stall rather than seven bugs). The plan's own hypothesis for
+                    the first was a divergence in the bound `user_id` between
+                    `MeController.memberships` and the test's `own()` helper. The log says
+                    otherwise: `mvn -o test -Dtest=MerchantWorkspaceTest#myWorkspacesPrintTheir
+                    Grants` reproduces the failure and prints `Caused by: org.postgresql.util.
+                    PSQLException: ERROR: column ui.tenant_id does not exist`, raised inside
+                    `IdentityRepository.identitiesOf` — the reader that selects `ui.tenant_id` —
+                    so the request never produced the response the test assumed. The assertion's
+                    printed node is empty rather than `[]`, which is a `MissingNode`: an empty
+                    `Iterable`, not an empty `memberships` array.
+
+                    The test database had drifted. Compared as sorted text against `nexus` —
+                    `information_schema.columns`, `pg_indexes`, `pg_constraint` and
+                    `information_schema.views`/`routines`/`triggers` — `nexus_test` was missing
+                    exactly the objects of three committed migrations and still carried the
+                    objects two of them replace: `user_identities.tenant_id` with its foreign
+                    key, `user_identities_tenant_uniq` and `users_email_tenant_uniq` (V4);
+                    `facts_one_row_per_claim_uidx` (V5); `facts.updated_at` (V6) — while keeping
+                    V1's `user_identities_provider_provider_id_key` and `users_email_uniq`. Views
+                    (2), routines (424) and triggers (21) were identical, and every remaining
+                    difference was `nexus`'s own `schema_migrations`/`flyway_schema_history`
+                    bookkeeping. It was a pre-V4 schema that had nevertheless acquired V7's
+                    `share_links` (28 rows). `NexusIntegrationTest` sets
+                    `spring.flyway.enabled=false`, so nothing migrates that database at test
+                    boot, and the drift could only have been found by asking the database rather
+                    than the suite.
+
+                    Which side is the outlier is not a matter of taste. `nexus` was built by
+                    `scripts/db_apply_migrations.sh` and then migrated by the service's own
+                    Flyway (`flyway_schema_history` ranks 3-7 = V3-V7, all `success = t`), and
+                    D29's V4 columns are what `IdentityRepository`, `AuthService` and
+                    `MeController` have read ever since they landed. #94 (D143, §181) had already
+                    named `nexus_test` as diverged and gated the re-convergence on authorization
+                    to drop the database.
+
+                    The repair that needed no authorization, in place, is the one the script
+                    documents for exactly this shape. Its header: "A database built by hand has
+                    neither, and then a run here fails on `already exists` rather than clobbering
+                    it — read that error and use `--record` once the content has been compared
+                    against a migrated database (DECISIONS D32)." So, after the comparison above:
+                    `NEXUS_DB_NAME=nexus_test scripts/db_apply_migrations.sh --record V1__init
+                    --record V2__integrity --record V3__merchant_funnel_no_fanout --record
+                    V7__share_links`. The run created `schema_migrations`, recorded the four
+                    versions whose content already matched, and applied the three that did not
+                    (`> apply V4__tenant_scoped_identity`, `> apply V5__facts_one_row_per_claim`,
+                    `> apply V6__facts_updated_at`), ending `migrations=7`. No database was
+                    dropped, recreated or reseeded, and no seed row moved. V4's designed effect
+                    is the removal of V1's two global unique indexes, and it was satisfiable
+                    because the table it constrains was empty: 0 `user_identities` rows, so the
+                    backfill and the `SET NOT NULL` had nothing to refuse.
+
+                    Re-measured afterwards: the columns/indexes/constraints comparison is now
+                    empty except `flyway_schema_history`, which the test plane does not use.
+                    `MerchantWorkspaceTest#myWorkspacesPrintTheirGrants` 1 test / 0 failures; the
+                    whole `MerchantWorkspaceTest` class 14 / 0; `CommerceApiTest` 8 / 0 in
+                    23.91 s — the 184.6 s was this same cause, not a stall to go looking for; and
+                    `AuthTokenTest`, `AuthRefusalCodesTest`, `DevOauthRefusalTest`,
+                    `FavoriteDoorTest`, `FactWriteTest` and `ReviewWriteTest` 29 / 0 together. P1
+                    closes with no source change at all.
+
+                    Limits, stated. The full suite was not run, so the count P1.3 asked for is
+                    not recorded here and a red outside the classes measured would not have been
+                    seen. The repaired database still carries the residue of earlier runs (1811
+                    `users`, 602 `merchant_users`, 30 `facts`, 28 `share_links`, a `hong-kong`
+                    tenant) because the tests clean up nothing; that was already its condition,
+                    and this unit neither changed nor fixed it. Plane for these bytes: no tracked
+                    source file changed — the artifact is the `nexus_test` schema plus this entry
+                    and D178. Not committed, nothing pushed.
+
+## 185. D179: the import lane's two empty reads get a witness instead of a fabricated marker — an import through the door, and the seed's own `read_answer` row is the one that stands
+
+                    PLAN.md's P2 asked for a data decision, made explicitly and written down: seed one real
+                    import (a document + a job + draft proposals) or reclassify the read as
+                    `empty-by-guard`. This unit did neither, and the measurement is why. On the seeded
+                    `nexus`: 5534 offerings of which 0 carry `attributes->>'import_job'`; 1040 documents of
+                    which 0 carry `metadata->>'extractor'`; 115 draft offerings that no import produced. The
+                    console's import page is empty, and honestly so — nothing has ever been imported.
+
+                    The kind the plan offered is not available for this read. `data/seed/quality.sql` keeps a
+                    `read_answer` table in which every jsonb key the build reads is answered `reachable`,
+                    `dead-reader`, `empty-by-guard` or `never-read`, and those two candidates have opposite
+                    predicates: `empty-by-guard` is only honest while the table is empty ("D64 keeps that
+                    table empty", and the offending rows are found by `a.kind = 'empty-by-guard' AND
+                    c.rows > 0`), while `offerings` holds 5534 rows. An answer of that kind would fail the
+                    gate that hosts it. The row already filed for this read — `dead-reader`, site
+                    `MerchantImportRepository.java` line 37 — is the correct kind for this state, and the
+                    gate re-reads the payloads every run to keep it honest.
+
+                    Seeding the marker was the other option, and it is the one this project has already
+                    refused once. `import_job` is a provenance claim: "an import produced this row". Writing
+                    it onto a row no import produced would assert an event that did not happen — the same
+                    reason §27's `collections.seo.generated_by` is answered `dead-reader` rather than
+                    stamped. A demo dataset is allowed to be synthetic; it is not allowed to claim that a
+                    pipeline ran when it did not.
+
+                    What the residue actually named — "the selector is untested against data" — was a
+                    missing witness, not missing data, so the unit adds the witness. The new
+                    `services/platform/src/test/java/com/nexus/merchant/MerchantImportDoorTest.java` drives
+                    a real import through the door: `POST /api/v1/merchant/imports` with
+                    `source.type=text` (offline — `nexus.imports.mode` defaults to the heuristic port, so the
+                    extraction is deterministic and no network is involved), three price-bearing lines, two
+                    of them Chinese — then polls the job door the way a client does and stops on the
+                    payload's own `terminal` flag rather than on a sleep.
+
+                    What it asserts, in the order the lane works: a draft no import wrote is not a pending
+                    proposal (the read's own claim, asserted before anything is imported); the accept
+                    answers 202 `queued` with `extractor=heuristic_local`; the poll reaches
+                    `status=succeeded` / `document_status=indexed` with 3 proposals and `degraded=false`;
+                    three draft offerings carry `attributes->>'import_job'` equal to the job id and exactly
+                    one draft does not; three `price` facts exist with `source='imported'`; the job's
+                    document row carries `metadata->>'extractor' = heuristic_local` — the second read the
+                    queue named — and the dashboard door's `pending_proposals` reads 3, which is what the
+                    import produced and only that.
+
+                    The witness was shown to be able to go red, not merely to pass. Dropping the marker
+                    predicate from `MerchantImportRepository.proposalCount` — a one-line patch to another
+                    lane's untracked file, backed up byte-exactly first — reddens the test at its first
+                    assertion with "a draft nothing imported is not a proposal ... but was: 1L". The file
+                    was then restored and its SHA-256 verified equal to the pre-plant hash
+                    (6D14306281ACBDD93086372AAEBF4E5F559EB1DC51B9BC26E5CB73C9FC4859B2) before the green run
+                    was repeated. Measured: 1 of 1 green, 1 of 1 red while the plant stood. Plane for these
+                    bytes: one new file in the platform test tree plus this entry; the seeded database is
+                    untouched, so the seed's `dead-reader` answers stay true and the quality gate is not
+                    asked to certify anything new. Not committed, nothing pushed.
+
+## 186. D180: the jsonb double-encoding was real and lived on the service plane — `pool.py` registered `encoder=json.dumps` while every writer already passes `json.dumps(...)` text
+
+                    §119 refuted the double-encoding report by running the binding, and its measurement is
+                    correct — about a plane the AI service does not run on. It opened a bare
+                    `asyncpg.connect`. The service's connections come from `db/pool.py::connect`, which
+                    passes `init=_init_connection`, and `_init_connection` registered `encoder=json.dumps`
+                    on `jsonb`. Every writer in the service already passes `json.dumps(...)` text
+                    (`api/runs.py:118-121,158-159`, `search/sql.py:137,297`), so that text was encoded a
+                    second time and stored as a jsonb *string*: `jsonb_typeof = 'string'`, every key read
+                    NULL, only `#>> '{}'` reaching the payload — the shape D86's quality.sql header
+                    describes from the data side.
+
+                    Measured, same statement, same payload, one connection each (temp tables only): on the
+                    `default` plane (bare asyncpg) the insert stores `object` and reads back
+                    `->>'query' = 'sha tin restaurant'; on the `service` plane (the same connection after
+                    `_init_connection`) it stores `string` and reads back `->>'query' = None`. Passing the
+                    Python dict instead is `rejected by asyncpg (expected str, got dict)` on the default
+                    plane and `accepted` on the service plane — which is how a codec written for a calling
+                    convention ("pass the object") that no call site uses stayed wrong.
+
+                    The trail that pointed away from it has moved, not merely been re-read. §119 read "no
+                    string-valued row is newer than 2026-09-22" and so dated the residue to a writer it had
+                    just exonerated. The rows standing today — 12 across `agent_runs.tool_calls`,
+                    `agent_runs.retrieval`, `agent_runs.plan`, `events.properties` and `events.context`, 5
+                    of the 62 jsonb columns censused — are stamped 2026-09-27T15:34:09Z, written the day
+                    *after* that measurement. A row count cannot say when; a timestamp can.
+
+                    The consequence is not telemetry only. `search/sql.py:137,297` builds
+                    `attributes @> {param}::jsonb` from a `json.dumps(...)` value, and `plan_from_intent`
+                    fills that filter from positive `intent.preferences` (`search/service.py:301-303`).
+                    Measured on `nexus`, one connection each: `attributes @> '{"data_origin":"demo"}'
+                    matched 5534 rows on the fixed plane and 0 on the pre-fix plane. End to end,
+                    `POST /ai/v1/search` with `filters={"attributes":{"data_origin":"demo"}}` answered 200
+                    with 5 items on the fixed plane and 200 with 0 items on the pre-fix plane — a silent
+                    empty result, which is the failure a 200 hides.
+
+                    The fix is one encoder at `apps/ai/nexus_ai/db/pool.py:61-69` (identity, with the
+                    reason in the code). No call site changed, because no call site was wrong.
+
+                    The falsifier was repaired, not replaced: `scripts/verify_jsonb_binding.py` now writes
+                    the same payload on both planes and reads the verdict off the service plane. Run
+                    against a detached worktree of HEAD (step 13's technique) it reddens —
+                    `verdict on the service plane DOUBLE-ENCODED`, exit 1 — and on the fixed tree it passes
+                    with `verdict on the service plane CORRECT — one encoding, keys readable`, exit 0.
+
+                    Verified on these bytes, narrow: `pytest -m "not integration"` 71 passed, 4 deselected;
+                    with `NEXUS_TEST_DATABASE_URL` pointed at `nexus`, `pytest tests/test_integration.py`
+                    4 passed. The demo database now holds 5 non-string `agent_runs.tool_calls` rows, newest
+                    2026-09-28T12:26:08Z, against 4 string rows that stop at 2026-09-27T15:34:09Z. The one
+                    string-valued row this unit's own pre-fix demonstration wrote was deleted afterwards
+                    (`DELETE 1`).
+
+                    Not done, stated. The 12 stale rows are left where they are: the seed never writes
+                    `agent_runs` or `events` (D64), so repairing them would be an unreproducible data edit
+                    that no gate could re-measure, and the writer is now fixed so they cannot grow. Named
+                    rather than fixed: `test_search_sql.py` and `test_search_endpoint.py` carry no
+                    `attributes`/`@>` case at all, so the filter this unit measured has no test; and
+                    nothing runs `scripts/verify_jsonb_binding.py` on a schedule (it is not in
+                    `data/seed/falsifiers.tsv`). Plane for these bytes: `apps/ai/nexus_ai/db/pool.py` and
+                    `scripts/verify_jsonb_binding.py`; the `SET TRANSACTION READ ONLY` hunk already
+                    standing in `pool.py` is another lane's and was not touched. Not committed, nothing
+                    pushed.
+
+
+## 187. D181: the directory exclusion is one list again, and the union is what proves §84 residue (e) was still open
+
+                    The comment census kept its own 15-name SKIP while steps 7 and 8 imported `source_index.mjs`'s
+                    14-name `VENDOR_DIRS`, and sorted text the two had drifted in both directions: the SKIP carried
+                    `out_smoke`, `vendor`, `.qoder`, `.specraft` and `logs`, and it lacked `.pytest_cache`,
+                    `.mypy_cache`, `.ruff_cache` and `.tmp-out`. Each reader was granted a different repository.
+                    Walked with each reader's own predicate the drift was live, not theoretical: steps 7 and 8
+                    indexed 21 generated `.sql` resources under the gitignored `data/seed/out_smoke/` plus the six
+                    source files of `.tmp-p4/`, the scratch directory PLAN.md takes a `mvnlock` in, and step 8 also
+                    indexed `.workbuddy-ai/memory/`'s three notes; step 9 walked `.tmp-p4/` and skipped `out_smoke`.
+                    There is one list now, the measured union, so no reader lost a file another reader kept; the
+                    four names only the ledger census had are insurance against a build that leaves output behind.
+
+                    Measured as a pair on frozen text -- the shared list was reverted and re-applied between runs,
+                    so no other lane's append (this tree grew two sections while the unit was being written) can be
+                    credited to the change:
+                      step 7  `citations resolved 12 file(s) under a 14-dir vendor exclusion` -> `21-dir`
+                      step 8  659 name:number tokens, 79 distinct files cited, `14 names` -> 659, 79, `21 names`
+                      step 9  80 tokens in 23 files of the comment plane -> 80 in 23, identical
+
+                    The residue is a check that could not fail, so it is made to fail once before it is called
+                    closed. A fixture plane whose sentence cites `data/seed/out_smoke/01_tenants_tenants.sql:NN`
+                    beside a control cite to `scripts/source_index.mjs:NN`: on the old list, 2 citation-shaped
+                    tokens, 2 resolved, 0 offenders, exit 0 -- the cite into build output was CERTIFIED; on the
+                    union, 2 citation-shaped tokens, 1 resolved, one FILE NOT FOUND naming
+                    `data/seed/out_smoke/01_tenants_tenants.sql:NN` as a name no indexed file holds, exit 1.
+
+                    Plane for these bytes, working tree, exit 0 each: step 7 (12 file(s) resolved under a 21-dir
+                    exclusion), step 8 (`--worktree`, 659 tokens, 79 distinct files, 0 offenders), step 9 (80
+                    citations across 23 files, PASS). Harnesses: `falsify_comment_plane.mjs` 13 arms · 13 held ·
+                    0 missed, `falsify_ledger_text.mjs` PASS, `falsify_quality_seam.mjs` 8 of 8 arms,
+                    `falsify_ledger_sections.mjs` PASS. Two reds were seen while measuring and neither is these
+                    bytes: the comment-plane harness misses its `bash db_gate_fresh.sh --help` arm in a shell where
+                    `bash` is the WSL relay (`execvpe(/bin/bash) failed`), and holds 13/13 with Git Bash first on
+                    PATH; and `falsify_status_citations.mjs` reports `docs/PLAN.md` line 65 citing a STATUS section
+                    that exists only in the working copy while that reader is strict on HEAD -- another lane's
+                    uncommitted PLAN edit, reported rather than touched. Appends pure addition, zero lone LF.
+                    Nothing pushed.
+
+## 188. D182: the residue stays — the census behind that ruling, the reconciliation with D180's twelve, and a repair that was made and then reversed to match the decision
+
+                    Two lanes picked up the same P2 item inside the hour and wrote their accounts into the
+                    same file. D180 rules that "the 12 string-valued rows on `nexus` stay ... a repair would
+                    be an invisible edit no gate could re-measure"; this unit had already run a repair and was
+                    appending its own account of it. File order is the only ordering these bytes have, and the
+                    ruling is the newer of the two, so the repair was reversed rather than left contradicting
+                    a published decision. What stands from this unit is the measurement, the reconciliation
+                    between the two counts, and an exact re-runnable record of both directions.
+
+                    The reconciliation first, because the two numbers look like a disagreement and are not.
+                    Twelve and twenty are the same population in two units: 4 `agent_runs` x 3 bound columns
+                    (plan, tool_calls, retrieval) = 12 cells, plus 4 `events` x 2 (properties, context) = 8,
+                    so 20 cells over 8 rows. A census over every jsonb column of every public table in
+                    `nexus` finds exactly those five columns and no others, every one of them written
+                    2026-09-27 23:29-23:34 — the day after §119's "no row newer than 2026-09-22" reading,
+                    which is why that reading dated the residue to a writer it had just cleared.
+
+                    The repair, and its reversal. Repair: eight UPDATEs in one transaction, one per column
+                    `apps/ai/nexus_ai/api/runs.py` binds to `$n::jsonb`, each guarded by
+                    `jsonb_typeof = 'string'`, by the inner text opening with `{` or `[` (a claim whose value
+                    really is a scalar string must never be rewritten) and by
+                    `pg_input_is_valid(..., 'jsonb')` (a string that merely starts with `{` cannot abort the
+                    transaction half-way). Output: `UPDATE 4` five times, 20 cells, and `UPDATE 0` for
+                    `feedback_events.value`, `recommendation_sets.intent` and `recommendation_sets.items` —
+                    evidence in its own right that the writer's blast radius and the columns that actually
+                    received rows are two different sets. Census after: `TOTAL string-valued jsonb cells = 0`.
+                    Reversal: `SET col = to_jsonb(col::text)` over the same five columns, restricted to the
+                    window those 4 + 4 rows occupy — `UPDATE 4` twice — after which the census reads 20 again
+                    and the rows are back in the state D180 describes. Both directions are lossless, which is
+                    what makes the whole exchange a sentence about the data rather than an irreversible edit.
+
+                    Two cells a repair would have had to leave alone, with the samples that decide it:
+                    `nexus_test` holds `facts.value = "150.00"` (6 cells) and `collections.seo =
+                    "not-an-object"` (1). The second is a fixture that says out loud what it is, the first a
+                    scalar a test wrote; neither is double-encoding, and the guard above would not have
+                    touched either — which is the argument for keeping that guard if the decision is ever
+                    revisited.
+
+                    Plane for these bytes: the rows on `nexus` are in the state D180's ruling describes; no
+                    schema change, no tracked file touched, no source change. The full suite was not run. Not
+                    committed, nothing pushed.
+
+                    Addendum, same unit, measured after the next lane's append landed. Step 10
+                    (`check_ledger_sections.mjs`) is PASS on the final plane: HEAD 151 STATUS sections against 156
+                    on disk and 165 decisions against 170, uncommitted 5 each (184-188 and D178-D182), missing 0,
+                    duplicate numbers 0 -- a transient `186 x2` printed by an earlier run was two sections landing
+                    at once, not a number claimed twice. Step 12 (`check_status_citations.mjs`) is FAIL, and it is
+                    the one red this unit contributes to: `docs/PLAN.md` lines 65, 74 and 80 spell `STATUS §185`,
+                    `§186` and `§187`, and that reader is strict on HEAD, where the newest section is 183. The
+                    first two are other lanes' bullets; the third is this unit's own, written the way the two
+                    bullets above it are written, because a claim written any other way would be a claim the
+                    checker cannot see. All three resolve as soon as these sections land at HEAD.
+
+## 189. D183: every answer surface carries the degraded label, and the census that says so is a test — the one surface without the boolean is the one whose contract does not name it
+
+                    P3 asked for this one with its own method: "every agent answer must carry `degraded` and its
+                    reason when it could not do the real thing. Check the live payloads, not the code." This is
+                    the census, read off payloads only — `TestClient` over `create_app`, `llm_provider=mock`,
+                    `embedding_provider=hashing` — on two planes: live (`NEXUS_DATABASE_URL` at the demo `nexus`)
+                    and offline (no URL at all).
+
+                    endpoint                      live   offline        reason field
+                    POST /ai/v1/search            false  true
+                    POST /ai/v1/query/understand  true   true           — (the mock model is not the real
+                                                                         thing even with a database)
+                    POST /ai/v1/recommend         true   true
+                    POST /ai/v1/compare           false  true
+                    POST /ai/v1/rag/retrieve      none   none           `note`
+                    POST /ai/v1/imports/extract   true   true
+                    GET  /ai/v1/conversations/{id} false true           `reason`
+                    POST /ai/v1/search/stream     true   true           (the `done` event)
+                    POST /ai/v1/merchant-agent/chat true true           (the `done` event)
+
+                    So the label half of P3 holds on all nine surfaces — none of them answers `degraded:false` on
+                    the plane where it cannot be doing the real thing. The reason half holds on two, and the
+                    contract is what decides the rest: API_CONTRACT.md:326, :334 and :336 name `degraded` for the
+                    search, conversations and imports shapes, `reason?` for the conversations read ALONE, and
+                    API_CONTRACT.md:330 gives `/ai/v1/rag/retrieve` `{chunks:[...]}` with no degradation field at
+                    all. Adding `reason` to the other six shapes would be inventing contract surface to satisfy a
+                    plan sentence — the move P2's `collections.seo` bullet refuses in its own words. D183 rules it
+                    a contract question and leaves the payloads unchanged.
+
+                    The census is now a test rather than a paragraph: `apps/ai/tests/test_degraded_labels.py`, 9
+                    tests, fully offline, in the default suite (not `integration`), so it runs wherever the AI
+                    unit suite runs. It asserts the boolean is present and true on the plane where the claim is
+                    strongest and the verdict is unambiguous, that the conversations read carries the `reason`
+                    the contract names for it, that both streaming `done` events carry `degraded`, and that rag
+                    has neither a boolean nor a silent empty list.
+
+                    It can go red. `data["degraded"] = False` planted at `routes_search.py:54` (file backed up
+                    byte-exact first) failed exactly one case,
+                    `test_every_json_answer_surface_labels_its_degradation[search]`: 1 failed / 8 passed. The file
+                    was restored and its SHA-256 verified equal to the pre-plant hash
+                    (4094D5D753D49876EEA59E26DF466EC9C70981536A1F02C1C6448F8C982DC643) before the green run was
+                    repeated: 9 passed. Narrow verification on these bytes: `pytest -m "not integration"` 80
+                    passed / 4 deselected — 71 before this file existed.
+
+                    Not done, stated: no `reason` was added anywhere, and nothing outside the AI test suite runs
+                    this file. Plane for these bytes: one new test file; no production source changed, the plant
+                    was reverted. Not committed, nothing pushed.
+## 190. D184: the console pages' copy and noindex promises get a reader -- one page held a second copy of a vocabulary the public page already owned
+
+                    P3's console item was two promises in one sentence -- "no hardcoded copy, and the operator surfaces stay
+                    `noindex`" -- and neither half had a reader. This unit adds one (`scripts/check_console_i18n.mjs`) and
+                    reports what it found rather than what it expected.
+
+                    WHAT IT READS. Every `page.tsx` under `apps/web/app`, in two passes. The noindex pass is console-only and
+                    asks the question the root layout makes necessary: `apps/web/app/layout.tsx` sets
+                    `robots: { index: true, follow: true }` site-wide, so a page under `app/admin/` or `app/merchant/` is
+                    offered to search engines unless it overrides that in its own `generateMetadata`. The copy pass runs over
+                    every page and reports a CJK ideograph that no comment covers. Measured: 31 `page.tsx` -- 20 console (9
+                    under `app/admin`, 11 under `app/merchant`) and 11 public -- 20 of 20 console pages declaring the
+                    override, and one offender.
+
+                    THE OFFENDER, AND WHY IT WAS ONE. `apps/web/app/merchant/settings/page.tsx` carried a private
+                    `WEEKDAY_LABELS` table holding two locales and a vocabulary of its own: it spelled the week 星期日 and
+                    `Sunday`, while the public merchant page renders the same `business_hours` rows through `weekdayLabel` in
+                    `apps/web/src/lib/format.ts`, which spells them 週日. So the same seven rows read one way on the
+                    console and another way on the public page, and the console's table was a second copy that nothing
+                    compared to the first. The page now calls the shared helper; the private table is gone.
+
+                    THE VISIBLE COST, stated rather than buried: the console's hours list reads 週日 where it read
+                    星期日. That is a copy change on an operator surface and it is deliberate -- it is the vocabulary the
+                    public page already renders -- but it is a change a reviewer should be able to reverse, which is why it
+                    is written down here rather than called a refactor.
+
+                    WITNESS. `apps/web/src/lib/format.test.ts` is new and is that module's first test: it pins the three
+                    locale tables, the wrap (7 -> the first day, -1 -> the last), the zh-HK default, the English fallback for
+                    a locale the table does not hold, and the empty label for a day that is not a number. Measured: 8 passed
+                    of 8 in 1.76 s. Without it the fix would be witnessed only by the absence of a character, which would not
+                    notice a helper that returned nothing at all.
+
+                    RE-MEASURED ON THESE BYTES. The census goes 1 offender -> 0 and exits 0; `npx tsc --noEmit` under
+                    `apps/web` exits 0; step 7 exits 0 (174 source files, 26 read sites, 12 cited files); step 8 exits 0;
+                    step 9 is unchanged at 80 tokens across 23 files, PASS -- the new files' docblocks contribute no
+                    citation-shaped token, which was checked rather than assumed, because step 9 censuses comments in exactly
+                    the extensions this unit added.
+
+                    THE REFUSAL ARMS, because a reader that cannot refuse is not a check: `--plane` pointed at an empty
+                    directory exits 2 with "no page.tsx was read ... nothing was censused, so nothing can be reported green";
+                    an unknown option exits 2 naming the two flags this reader takes; a bare positional exits 2. No arm
+                    prints a stack trace.
+
+                    RESIDUES, named not fixed. (a) `apps/web/src/lib/format.ts`'s own header says it is "unit-tested in
+                    ./facts.test.ts and ./format.test.ts". Only the second now exists; `facts.test.ts` is absent from the
+                    working tree and from every commit, so that sentence is still half-false. `format.ts` was not edited for
+                    it because the file carries another lane's uncommitted changes. (b) The accessibility half of the plan's
+                    item -- contrast, labels, landmarks, focus order -- is not measured by this unit or by anything else in
+                    the repository. (c) The copy rule is a CJK rule: hardcoded copy written in Latin script is invisible to
+                    it, and so is a string that is never user-visible. (d) `docs/PLAN.md` P3 says "21 pages now exist" for the
+                    console; the count this reader takes is 20, and which page the 21st was is not something this unit can
+                    say.
+
+                    Plane for these bytes: `apps/web/app/merchant/settings/page.tsx` (edited), `apps/web/src/lib/format.test.ts`
+                    and `scripts/check_console_i18n.mjs` (new). The full suite was not run -- the two commands that decide
+                    this unit are the type check and the one test file. Not committed, nothing pushed.
+
+## 191. D185: the §30 uniqueness guard is named by four documents and implemented by none — two doorway pages insert cleanly at a passing quality score
+
+                    P3's second item asked for two things to be confirmed against reality: `seo_pages.quality_score`
+                    and the `data` uniqueness guard, "the anti-spam promise". One holds, one does not, and the
+                    second is the finding.
+
+                    The quality bar holds. `SeoController`'s `indexable` is the four-term formula API_CONTRACT §8
+                    prints, evaluated in the order §8 states it (`SeoController.java:172-205`), including
+                    `quality_score IS NULL OR quality_score >= 0.6`; the bar is tenant configuration, echoed in the
+                    payload with its key (`nexus.seo.min-quality-score`); and `SeoReadTest.everyGateTermFlipsTheVerdict`
+                    flips each term, `below_quality_bar` among them at a score of 0.420. Measured on these bytes:
+                    `mvn -o test -Dtest=SeoReadTest` → `Tests run: 10, Failures: 0, Errors: 0, Skipped: 0` in 11.32 s.
+
+                    The uniqueness guard does not exist. It is named by four documents — GROWTH.md:33 ("no 100k pages
+                    differing only by city name"), DATABASE.md:171 ("`data` ... real listings backing the page"),
+                    MERCHANT.md:56 ("each page must carry unique real value"), and `SeoRepository.java:19` ("`data
+                    jsonb` ... the §30 anti-doorway guard") — and by no code. Measured: no migration V2-V7 mentions
+                    `seo_pages`; `pg_constraint` on that table holds exactly four rows (`seo_pages_pkey`,
+                    `seo_pages_tenant_id_path_lang_key`, and the two foreign keys) plus one trigger (`set_updated_at`);
+                    `SeoRepository.pageProjection` selects sixteen columns and `data` is not among them; and
+                    `rg` for `seo_pages|seo_agent` under `apps/ai` returns nothing, so AGENT_CONTRACT.md:23's `seo`
+                    generator row has no implementation either.
+
+                    The measurement that decides it, on `nexus_test` (schema only — the plane the Java tests use),
+                    inside a transaction that was rolled back:
+
+```
+insert into seo_pages (tenant_id, path, kind, status, quality_score, data)
+values (..., '/probe/restaurants', 'category', 'published', 0.900, '{"listings":[{"merchant_id":"aaa"}]}'),
+       (..., '/probe/cafes',       'category', 'published', 0.900, '{"listings":[{"merchant_id":"aaa"}]}');
+        path        | quality_score |             data_md5
+--------------------+---------------+----------------------------------
+ /probe/cafes       |         0.900 | 1201fed4db4f2df819d27153f3f6484f
+ /probe/restaurants |         0.900 | 1201fed4db4f2df819d27153f3f6484f
+```
+
+                    Two pages, different paths, both published, both above the bar, byte-identical `data`, and the
+                    insert is accepted (`INSERT 0 2`, no warning) — the doorway pair §30 says cannot ship. The
+                    transaction was rolled back and `seo_pages` on `nexus_test` was left as it was found.
+
+                    D185 rules it reported rather than built. The `quality_score` bar is a documented number; "unique"
+                    is not, and equal bytes is only the strictest of three readings the four documents leave open (a
+                    share of overlapping listings is another; "enough listings of its own" a third). Choosing one
+                    would be writing a policy the spec left open — the refusal D183 made about `reason`.
+
+                    Not done, stated: no migration, no constraint, no test. A guard that is not built cannot be
+                    falsified, so there is no plant to report — the absence is the finding. And the seed's half is
+                    vacuous by construction: `seo_pages` is empty there by design (D64; `generate.py:306` lists it in
+                    the truncate set and the seed writes no row), so "enforced against the shipped seed" has nothing
+                    to enforce against on either half. Plane for these bytes: no tracked file changed; the artifacts
+                    are the rolled-back probe, the constraint census, and this entry and D185. Not committed,
+                    nothing pushed.
+
+## 192. D186: the console accessibility half is measured by the linter that already shipped — 6 of 34 rules were on, the 2 findings were real, and the design system is still outside every linter
+
+                    PLAN.md called the accessibility half of the console item "unmeasured". It was half measured, by a
+                    tool nobody had run on purpose: the web app's ESLint config extends `next/core-web-vitals`, and
+                    `npx eslint --print-config` shows that brings exactly six jsx-a11y rules (`alt-text`, `aria-props`,
+                    `aria-proptypes`, `aria-unsupported-elements`, `role-has-required-aria-props`,
+                    `role-supports-aria-props`). `npx eslint .` under those six is green — 0 errors, 3 warnings, all
+                    three `import/no-anonymous-default-export` on config files — so the shallow measurement had been
+                    passing. The plugin ships 34 and the other 28 had never run over this tree.
+
+                    Run once with the plugin's whole recommended set: 2 errors, both `jsx-a11y/no-autofocus`, and both
+                    the same behaviour seen from two sides — the `<input>` in `search-box.tsx` that takes the prop
+                    (line 74) and the call site in `search-results.tsx` that passes it (line 295), which is the
+                    `/search` page's empty state claiming focus on mount. Removed at the call site and the prop
+                    deleted: no other caller passes it and nothing in `apps/web` tests focus. The honest case is
+                    untouched, because the component already moves focus from inside `submit()` when the query is
+                    empty — user-triggered focus stays, the page-load focus steal goes.
+
+                    The rule set is now enforced rather than remembered: `apps/web/eslint.config.mjs` extends
+                    `plugin:jsx-a11y/recommended` beside the two Next configs, so `npm run lint` and the CI job
+                    `lint-type` (`npm run lint --workspaces --if-present`) carry all 34. Re-measured after the fix:
+                    `npx eslint .` 0 errors / 3 warnings exit 0; `npx tsc --noEmit` reports nothing for any file this
+                    unit touched; `npx vitest run` 11 files / 136 tests passed.
+
+                    It can fail, shown rather than asserted. The `autoFocus` attribute was planted back on the
+                    `search-results.tsx` call site: the linter answered `295:71 error ... jsx-a11y/no-autofocus`, exit
+                    1, on a file whose sha256 was 1883d5aa...; the byte copy was restored and it answered exit 0 with
+                    the sha the pre-plant read gave (d18fa2db...). The rule the plant reddened is the rule this unit
+                    newly enabled — the mechanism under test, not a neighbouring one.
+
+                    Limits, stated rather than implied. The linter reads structure and attributes: contrast, focus
+                    order, dynamic states, live-region announcements and rendered text are outside it, and this
+                    repository has no axe, Playwright or Lighthouse run to cover them — so "measured" means measured
+                    by jsx-a11y's 34 rules, not audited. One boundary is one directory wide and worth naming:
+                    `packages/ui` carries no ESLint config at all (no `packages/ui/eslint.config.mjs`, none at the
+                    root), so the design system that renders every card, image, avatar and trust block is linted by
+                    nothing — the same shape of gap `check_console_i18n.mjs` found for copy on the console pages, one
+                    tree over, and the place where a missing `alt` would matter most. Seen and not touched:
+                    `npx tsc --noEmit` fails with five `TS2532`/`TS18048` errors, all of them in
+                    `apps/web/src/lib/format.test.ts`, another lane's uncommitted file (`vitest run` passes it
+                    because vitest does not typecheck). Plane for these bytes: three source files changed
+                    (`apps/web/eslint.config.mjs` tracked, the two components untracked), plus this entry and D186.
+                    Nothing pushed.
+
+## 193. D187: the accessibility axes the §192 linter names as outside itself get a reader — one console page rendered no nav, and eight of the palette's ten printed contrast ratios were not the measurement
+
+                    D186 measured the console's accessibility with `jsx-a11y`'s thirty-four rules and then named what
+                    the linter cannot see: "contrast, focus order, dynamic states, live-region announcements and
+                    rendered text are outside it". Three of those five are readable from source, and
+                    `scripts/check_console_a11y.mjs` now reads them, over a tree wider than `apps/web`: the console
+                    pages, the shell they render inside, the components under `apps/web/src/components/console/`, and
+                    every `@nexus/ui` module those files import -- directly, then through the package's own relative
+                    imports, which is how `button-classes.ts` and `field-classes.ts` (where the focus rings live) come
+                    in. A console file importing a `@nexus/ui` symbol the census does not know is a refusal, not a
+                    quietly narrower census.
+
+                    LANDMARKS. Exactly one `<main>` in the tree, and it is the shell's (`id="nexus-main"`, the id the
+                    skip link targets); no `role="main"`; every `<nav>` named (2 of 2). The fourth rule is a proxy and
+                    says so in the docblock: a console page must *render* the nav -- `ConsoleNav` itself, or a shell
+                    export whose body composes it -- and the test runs against the file with its imports stripped,
+                    because a page that imports the chrome and never composes it is exactly the defect. One of the
+                    twenty failed it: `apps/web/app/merchant/listings/page.tsx` built its own header and rendered no
+                    nav at all. Fixed by rendering `ConsoleNav` beside the header it already had, in both branches;
+                    the page keeps its bespoke header and its own `signInBlockNote`, so what changes visibly is the
+                    nav appearing. 20 of 20 now.
+
+                    NAMES. Every `Input`/`Textarea`/`Select` composed in the tree must pass `label` or
+                    `aria-label`/`aria-labelledby`; every raw `<input|select|textarea>` must carry one of those, an
+                    `id` that an `htmlFor` in the same file points at -- which is how `Input.tsx`'s own `<input>` and
+                    `Select.tsx`'s `SelectNative` are named -- or sit inside a `<label>`. 24 controls censused, 0
+                    unnamed. The first run flagged one and the fault was the scanner's: `Select.tsx` holds the words
+                    "Native `<select>`" in a doc comment, and a reader that censuses comments will eventually censor
+                    prose. The scanner now skips comments; string literals it still does not, and the docblock says
+                    which way that errs.
+
+                    FOCUS ORDER. 0 positive `tabIndex` (a positive tabindex reorders the whole page's tab sequence,
+                    which is why this is the one focus rule with no exception); 6 `outline-none` sites, every one
+                    answered inside the string that carries it. Building the plant found the rule answering for
+                    itself: `focus-visible:outline-none` contains `focus-visible:`, so a string whose ring tokens had
+                    been deleted still passed. The rule now strips the token's own variant prefix before asking
+                    whether anything else answers, and the arm holds both ways -- pre-fix predicate true, shipped
+                    predicate false, on the same mutated string.
+
+                    CONTRAST. `tokens.css` printed a ratio beside ten of its colours and cited
+                    `packages/ui/README.md` "for the measured ratios". Recomputed from the hex values in that same
+                    file, eight of the ten were not the measurement -- worst light `--nexus-ink`, printed 14.4:1,
+                    measured 16.21:1, and dark `--nexus-ink-strong`, printed 18.9:1, measured 17.40:1. All ten still
+                    cleared 4.5:1, the tightest being the light `--nexus-ink-faint` at 4.80:1, so the palette was
+                    sound and the numbers beside it were decoration. The eight comments now carry their
+                    measurements, and the cited README exists with the ten-row table and the command that regenerates
+                    it.
+
+                    Both sides, shown rather than asserted: `scripts/falsify_console_a11y.mjs`, 13 arms · 13 held · 0
+                    missed -- nine plants that must redden (one per axis and each sub-rule) and three refusals that
+                    must exit 2 (an unknown `@nexus/ui` symbol, a plane whose console subtrees are gone, a palette
+                    printing no ratio), each arm on its own copy of the render tree under the system temp directory.
+
+                    Not done, stated. Nothing here measures reading order, heading order, live regions or dynamic
+                    states -- §192's list minus the three this reader took. `packages/ui` carrying no ESLint config is
+                    §192's finding and this unit did not re-measure it. And `apps/web/src/lib/format.test.ts` still
+                    fails `npx tsc --noEmit` with the five `TS2532`/`TS18048` errors §192 reported; it is another
+                    lane's uncommitted file and was left alone.
+
+                    Plane for these bytes: `scripts/check_console_a11y.mjs`, `scripts/falsify_console_a11y.mjs` and
+                    `packages/ui/README.md` (new); `packages/ui/src/styles/tokens.css` and
+                    `apps/web/app/merchant/listings/page.tsx` (edited); plus this entry and D187. The reader exits 0
+                    on this tree; `npx tsc --noEmit` in `apps/web` reports nothing for the edited page. Not committed,
+                    nothing pushed.
+
+## 194. D188: step 13's committed plane was a directory verdict — a plane knob moves the ledgers, never the source index, so forty-one unresolved cites printed as zero
+
+The knob leg and the bare leg, one commit (`954463c`), one difference: started in the main tree with
+`--dir`/`--head-dir` aimed at a detached worktree of HEAD, step 8 reports 416 citation-shaped tokens, 77 distinct
+files cited, 0 offenders; started inside that worktree with no knob, the same 416 tokens resolve to 65 files and
+print 41 `FILE NOT FOUND`. Thirteen untracked names carry the difference — the merchant content controller (five
+sites), one line of an admin console test (twelve, one per STATUS section in the forties and fifties), the seo
+repository, the order service, the AI runs module and the growth view (three each), six more for the remainder.
+Step 7 moves the same way (11 false sites against 8) and step 9 with it (FAIL on 75 citations across 20 files
+against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:379` is the fixed leg: `cd "$WT"` and no
+knob, so the reader's `process.cwd()`-derived index — `scripts/check_ledger_citations.mjs:58` — lands in the
+committed tree with its ledgers. 13b prints `plane reconciliation knob leg 77 / 0 — in-worktree leg 65 / 41`
+because a step whose whole point is the difference should not ask the reader to trust a comment about it. The
+harness legs stay in the main tree on purpose: D163's fixtures cite real repository files, and an index that
+followed the ledgers would refuse every plant.
+
+Two reds on this tree belong to other lanes and are reported, not touched. `scripts/falsify_ledger_text.mjs` holds
+28 of 29 arms: its default-plane arm judges the blank class in a section this tree is writing, and an uncommitted
+STATUS section cites a line of the seo controller that holds nothing — D162's rule catching a row while its author
+can still move it. Gate step 12 prints six `BAD` rows: tracked-and-modified `docs/PLAN.md` cites `STATUS §185`
+through `§191`, which exist on disk and not at HEAD, so the §-plane and the file-plane are now the same finding
+read by two independent readers. Plane for these bytes: step 8 `--worktree` 438 tokens over 360 sections, 0
+offenders; step 8 default 13 blanks at HEAD counted-not-judged, 1 judged in a new section (not this lane's);
+step 9 PASS 88 across 27; step 10 STATUS 151 at HEAD against 161 on disk, DECISIONS 165 against 174, missing 0,
+duplicates 0; census and step 8 agree 13/13 on the HEAD plane. Appends pure addition, zero lone LF. Nothing pushed.
+
+## 195. D189: step 13's committed-plane legs are honest because a regex now says so, and the regex watches itself fail
+
+D188's fix is the word `cd` in three legs, and a word is the least protected thing in a shell script: reverting it
+to the repository's own path would still print a header claiming the committed plane, in a reporting step that
+cannot redden the gate. So `scripts/falsify_ledger_text.mjs` — the harness that already pins step 8's seam and
+already greps this gate for its own forwarding lines — gained two arms. One requires three distinct readers
+launched behind `cd "$WT"` inside step 13's region, and takes its floor from that same scan, printing the names it
+found in the arm's own label; the other runs the identical predicate over a copy with every `cd "$WT"` put back to
+`cd "$ROOT"` and expects red, which is what makes the first arm a prediction rather than a decoration. Measured:
+31 arms · 30 held · 1 missed, the miss being the pre-existing one D188 names — an uncommitted STATUS section in
+another lane cites a line of the seo controller that holds nothing, judged by the default-plane control arm because
+D162's rule fires on the section a tree is writing. Held: `check_jsonb_reads.mjs, check_ledger_citations.mjs,
+check_comment_citations.mjs` three of three, and the mutant copy red as predicted. Plane unchanged from D188's
+measurement — `scripts/db_gate_fresh.sh:379` is the leg, and the reconciliation line still prints knob leg 77 / 0
+against in-worktree 65 / 41. Rows stay uncommitted with D188's for the same reason: the disk holds nine DECISIONS
+and eleven STATUS sections from lanes whose sources are untracked, and committing the shared ledgers now would
+move those forty-one false cites onto the committed plane. Appends pure addition, zero lone LF. Nothing pushed.
+
+## 196. D190: step 13 stopped reporting one reader's pair and started reporting three, with the difference computed rather than remembered
+
+What D188 established was a rule — a plane knob relocates the text it censuses and never the source index,
+because every reader builds that index from the tree it was started in. What step 13 did with the rule was
+asymmetric: 13b ran the ledger reader twice and printed both counts, while 13a and 13c ran theirs once and
+printed one leg, so two of the three "committed plane" headings were a single measurement wearing a general
+claim. And 13b's own line printed `77 / 0` and `65 / 41` and asked the reader to notice the difference by eye.
+
+Now every leg runs its reader twice — this directory plus the step's own knob aimed at the worktree, and inside
+the worktree with no knob — and one line per leg prints both counts and their subtraction. Measured at the same
+commit: jsonb reads 12 files and 8 false sites against 10 and 11, so the index alone is worth 3 offenders there;
+ledger citations 77 and 0 against 65 and 41, worth 41; comment citations 21 files with 0 offenders against 21
+files with 10. Three readers, three pairs, one direction, and the direction is now a number the gate computes.
+
+The extraction is where the honesty lives, and it is deliberately fussy. A count is pulled out of a run's own
+census line, and when the line is absent the field prints `no-count` rather than 0 — 0 is a verdict about
+citations, `no-count` is a verdict about the tool. Offender headers (`FALSE SITES (N)`, `FILE NOT FOUND (N)`)
+are read when present; when they are absent the leg reports 0 only if the reader printed the sentence it prints
+instead of a header, and `no-verdict` otherwise, so a reader that died mid-run cannot be transcribed as a clean
+one. The subtraction refuses to operate on words and says so. A negative result would be printed as negative:
+that would mean the knob leg is redder than a clean checkout, which is an anomaly to go looking for, not a
+number to clamp.
+
+Witnesses, both kinds, because a text predicate is satisfiable by a helper that never computed anything:
+
+  · five arms in the harness that owns step 8's seam. The wiring arm asks for three knob captures, three bare
+    captures, three `reconcile` calls and a helper body holding no digit — a number typed into the reporting
+    line is a count the step remembers instead of one it measured. Four mutation arms run that identical
+    predicate over copies: legs put back to the main tree, a count replaced by a literal, one leg's call
+    deleted, a knob leg repointed inside the worktree. All four went red as predicted; the wiring arm holds.
+  · two behavioural arms that cut the helper text out of the shipped gate, write it under the gate's own
+    `set -euo pipefail`, and run it through bash over synthetic reader output. The header pair has to print
+    12/8 against 10/11 with a gap of 3; the crashed leg has to print `no-verdict` and stop the subtraction.
+    Both held. A separate probe of the helpers took every branch of the offender reader by hand: crash text,
+    three different clean sentences, a header, words in the subtraction, and a negative gap.
+
+Harness and step readings after the change, all on the working-copy plane: `falsify_ledger_text.mjs` 36 arms ·
+35 held · 1 missed; step 8 `--worktree` 366 sections, 84 distinct files cited, 0 offenders; step 9 PASS with 88
+comment-plane citations across 27 files and its own harness 13 of 13; step 7's seam harness 8 of 8; step 10
+PASS, STATUS 151 headings at HEAD against 164 on disk and DECISIONS 165 against 177, nothing missing, nothing
+duplicated; the blank-line census and step 8 agree on 14/14 at HEAD. Two reds are not this lane's and are
+reported rather than edited: the missed arm is another lane's uncommitted section citing an empty line, and
+`check_status_citations.mjs` names six spelled citations in the plan document that point at sections existing
+only on disk. Step 13 remains a reporting step: the committed plane's redness is other lanes' uncommitted
+sources, and only those lanes can move it. `bash -n` clean on the gate. Appends pure addition, zero lone LF.
+Nothing pushed.
+
+## 197. D191: step 8's own mode was the one that could not see its own blank-line rule — `--worktree` reads the committed plane for newness now, and the reader's verbose branch has been dead since its read stopped returning a string
+
+The rule is D162's and the seam that made its red side reachable is D163's, and both of them were written
+without asking which mode the gate runs. Step 8 runs `--worktree`. In that mode the reader skipped its
+committed read and fed one census object to both sides of the newness question, so the set difference that
+decides "is this section being written?" came to zero for every input, and the sentence printing beneath it —
+that a blank there offends — described a class the run had declined to judge. Same tree, same bytes, two
+planes: the default run counted fourteen blank cites at HEAD, judged one inside the twenty-five sections on
+disk, printed the offender and exited 1; the `--worktree` run labelled the working copy's fifteen "at HEAD",
+judged nothing, printed a clean resolution sentence and exited 0. Four units of green sat on that second line.
+
+WHAT WENT IN. The committed census now runs in every mode but `--text` (a plant has no second plane by design,
+and step 9's generated comment-plane census goes through it), the blank offenders print under the run's own
+false-citation header in `--worktree` because there they are the verdict, and two quiet failures are refused
+instead of guessed: an unreadable committed plane joins the entry-nobody-could-read list labelled by plane,
+and a committed plane that opens holding zero headings refuses outright — an empty HEAD makes every disk
+section look new, which inverts the counted backlog through a sandbox that would not spawn a process rather
+than through anybody's argument. `--worktree` combines with D163's two plane knobs for the first time, so the
+mode's red is re-runnable from a fixture: the seam pair reddens on a new section citing an empty line, its
+control stays green with nothing new, and the empty-committed-plane case exits with the not-a-verdict code.
+
+A SECOND DEFECT, FOUND BY WIRING AN ARM. The reader's verbose branch called a splitter on the object its
+ledger read has returned for units, so asking for a verbose run produced an uncaught TypeError and exit 1: a
+crash wearing a verdict's exit code, the shape D157 named and this reader refuses elsewhere. Measured on a
+detached worktree of the previous commit, so the claim is about shipped bytes and not about this lane's
+half-finished file, and the same request without the flag prints a verdict normally. No arm had ever run that
+branch, which is how it stayed broken quietly.
+
+WHAT IT COSTS AND WHO OWES IT. The mode now sees the offence the default plane has reported since D162: a
+disk-only row in another lane's §191 cites a range whose first line in `SeoController.java` holds nothing —
+read directly, the file runs to three hundred forty-two lines and that line is empty — so gate step 8 reddens
+on a row this lane may not rewrite. Append-only ledgers put the correction with its author, as a span start on
+a line carrying text; it is filed as a report, not fixed here. Predicted before measuring, and matched: the
+falsifier's two real-ledger cleanliness arms go red on that one site and nothing else does. The harness is
+forty arms now (one pin of the blind spot deleted, five added), thirty-eight held, two missed for that reason.
+Its rebuild-the-reader self-test had to be re-anchored when the code it anchored on moved; until it was, it
+reported its anchor appearing zero times and produced no red at all, which is the behaviour that makes the arm
+worth its cost. With the blind spot planted back, the child reddens exactly the two new arms — the seam pair
+and the empty-plane refusal — and the default-plane seam arm holds, which is the control proving the mutation
+is aimed at the mode rather than at the reader.
+
+WHAT DID NOT MOVE. Step 13's pairs measured the same as before this unit: 13a twelve files and eight false
+sites against ten and eleven, 13b seventy-seven and zero against sixty-five and forty-one, 13c twenty-one and
+zero against twenty-one and ten, its own harness eight of eight and thirteen of thirteen. The blank class adds
+nothing to the committed plane, because inside a clean checkout the disk and HEAD hold the same sections, so
+there is nothing new to judge — which is the same fact the old mode printed as a permanent zero, now printed
+as a measurement. The "at HEAD" label stayed, and it is worth knowing what it carries: the committed ledgers
+censised through this tree's index count fourteen blank cites, and through a clean checkout's index eleven,
+because whether a cited line is empty belongs to the tree standing around, not to the commit. D190's
+reconciliation prints that gap as arithmetic for the offender counts; this sentence is where the blank count's
+version of it is written down.
+
+PLANE, AND NOTHING SHARED. Two script files change: the reader and its falsifier. The fresh-database gate has
+not been re-run for them, and could not go green on this tree anyway — step 8 was already red through its own
+harness arm before this unit, and step 12 still names six sections in `docs/PLAN.md` that exist only on disk.
+The shared ledgers are appended and left uncommitted, so forty-one cites pointing at other lanes' untracked
+sources do not become this lane's committed plane. Nothing pushed.
+
+## 198. D192: step 9's offender belt read a count no plane it uses ever prints, so every green it gave was vacuous
+
+D191's rule, one reader later: a rule that cannot fire on the plane the gate reads is not a
+rule the gate has. Step 9 treats step 8's exit code as the verdict and claims a second reader as
+a belt — it scrapes an offender count out of the child's report and requires zero. That wording
+is produced by one line in step 8, guarded by "not the worktree mode", and every step 9 run goes
+through the text mode, which sets worktree mode internally.
+
+Measured before the change, matches per mode: zero on the text mode step 9 calls, zero on the
+worktree mode the gate runs, one on the default plane — the only one step 9 never asks for. An
+empty list passes every-style-true by construction, so the belt agreed with whatever step 8
+printed, while the comment above it claimed a nonzero count would be caught there.
+
+Fix in two halves: step 8 prints the strict plane's own count once in every mode, so the number
+behind the exit code is in the report that produced it; step 9 reads exactly that number and
+exits 2 — its code for "not a verdict" — unless it finds exactly one carrier. Zero means the
+producer renamed the line or died early; two means the report mixes planes. Neither is
+cleanliness now. The floor comes from the same scan it protects.
+
+The seam and its witness: step 9 takes a checker path, and the harness forwards it to every arm
+— D165's lesson that a mutant arm needs a real interface. Thirteen arms became seventeen, all
+held. Renaming the carrier out of a copy of step 8 turns the control, the other flag spelling,
+the past-EOF arm, the mixed plane and the carrier arm into the refusal they used to skip, while
+the refusal arms stay green. That is the behavioral witness: the floor fires on a
+runtime-equivalent mutation, not on a crash.
+
+Two defects arrived during wiring, each pinned by the arm that found it. The new seam crashed on
+a nonexistent file — throw out of the grammar slice, exit 1, this directory's code for "a
+citation is wrong", D159's class re-enacted minutes after the flag was added; it refuses with 2
+and names the file now. Step 9's pass-through filter dropped the offender detail, so a red run
+printed "see the report above" above a report whose only informative line had been filtered out;
+the FAIL was true and unreadable. The filter keeps the empty-line sentence now.
+
+The armed class caught this unit twice: moving lines inside a cited file put two real cites on
+blank lines — the gate script's note about where the reader's root comes from, and step 8's
+header note about which flag spelling the comment census uses. Both were reported by shipped
+readers, the second in the middle of the unit, and both repointed to derived numbers.
+
+Post-change, working tree. Step 8 default: seventeen blanks at HEAD counted not judged, two
+judged among twenty-seven sections disk-only, zero strict offenders on its certified plane, two
+on the working copy, exit 1. Step 8 worktree: the same two halves in the same words, four
+hundred forty-four citations in three hundred sixty-eight sections against three hundred
+forty-one at HEAD, two strict offenders named under its own header, exit 1 — both planes agree
+about the backlog. Carrier exactly once in each mode. The independent census agrees seventeen of
+seventeen. Step 9 on the real tree: eighty-eight comment citations across twenty-seven files,
+all resolving, exit 0. Step 10 PASS with fourteen STATUS and thirteen DECISIONS rows disk-only.
+Step 8's harness: forty arms, thirty-eight held, the same two misses it carried through D191,
+both another lane's uncommitted blanks — none added, none adopted.
+
+The fresh gate ran twice for these bytes and stopped at step 5: two hundred sixteen rows
+passing, one red — the registry-vs-schema row, on fifty-eight tables and eight migrations, over
+an untracked migration that is not this lane's to edit. Steps 6 through 13 were not reached, so
+no gate-wide number exists and none is quoted; the red is filed to its owner. Committed plane
+keeps its known gap: at the parent commit the carrier line does not exist, so a clean checkout
+reads zero carriers — D176's finding, closing when these bytes land on the plane being read.
+
+Residue owned: the belt's count and the exit code come from one expression, so the belt guards a
+future rename rather than observing the citations twice — recorded, not oversold. And the
+line-ending claim was measured by counting carriage-return pairs with the tool that reads the
+bytes; the shell idiom grepping for a carriage return reports the line count in this Git Bash
+because the escape arrives empty, so it is not a measurement and was not used as one.
 
 ## 199. D193: step 7's census excused every miss with one bucket and answered its own parse failures in the verdict's exit code
 
@@ -9661,3 +10425,72 @@ by hand between reader and harness, so a one-sided rename is a loud crash rather
 that prints the sentinel, exits as declared, and skips a verdict block that had nothing to say is
 indistinguishable from a healthy run — refuting that needs the reader to state which blocks it evaluated, which
 is a wider seam than this unit takes.
+## 201. D195: two readers nothing ran, three CI steps that could not fail, and two counts in this unit’s own
+prose that only a run could correct
+The rule this lane has now earned five times (D98, D150-D152, D191, D192) is that a rule which cannot fire on
+the plane it is read on is not a rule the gate has. This unit reads that rule back at the readers themselves, and
+at the two kinds of place that run them. Both classes were FALSE on the bytes this pass started from, and every
+number below is quoted out of the census’s own output rather than out of a plan.
+(A) REACHABILITY. `scripts/` holds ten first-party `check_*.mjs`; two were invoked by no surface at all — not
+`scripts/db_gate_fresh.sh`, not `.github/workflows/ci.yml`, not the `Makefile`. They were
+`scripts/check_console_i18n.mjs` (the copy and noindex promises: 31 `page.tsx` censused, 20 console, 20 declaring
+`index: false`, 0 inline-copy offenders) and `scripts/check_console_a11y.mjs` (landmarks, accessible names, focus
+order, printed contrast: 20 console pages, 1 `<main>` carrying `id="nexus-main"`, 2/2 named `<nav>`, 24 controls
+with a name, 0 positive `tabindex`, 10 ratios recomputed, tightest 4.80:1). Both PASSED and nothing ran either;
+`docs/PLAN.md` recorded the accessibility half of P3 as "unmeasured" while the census that measures it sat in the
+tree. Both run in gate step 14 and in the workflow now, and so does `scripts/falsify_console_a11y.mjs` (13 of 13
+arms). The census prints `invoked by 10 of 10 (unreached: 0)`.
+(B) PIPES. A reader whose exit code travels through a pipe is read through the pipe’s exit code, and a pipeline
+reports its LAST command unless the shell holds it. `scripts/db_gate_fresh.sh:51` is what holds this repository’s
+own pipes together, and D150/D151’s proof that step 11 can stop the run is a proof about that one line; GitHub
+Actions does not hold them, and its documented default for a `run:` step on Linux is `bash -e {0}`
+(workflow-syntax reference, the shell table: unspecified -> `bash -e {0}`; `shell: bash` -> `bash --noprofile
+--norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:207-256)
+so that the report is an artifact, and none of them declared a shell, so none of them could fail. Measured in a
+shell rather than argued: `false | tee /dev/null` exits 0 under `bash -e` and 1 under `bash -eo pipefail`. All three
+declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:196-206), and the census prints
+`7 step(s) pipe a checker into tee` with 0 UNPROTECTED.
+(C) TWO COUNTS IN THIS UNIT’S OWN PROSE WERE WRONG, AND RUNNING A FILE CORRECTED BOTH. The note written above the
+piped steps said three steps "carried Hard-fail in their own comments". One of the three does; one of the other two
+annotates itself "Report mode for now", which is the opposite claim; the third describes a verdict without that
+word. Rather than re-type the number it is DERIVED now: the census reads each step’s own comment and prints
+`hard-fail claims 1 of 7 piped step(s) say "hard fail" in their own comment: jsonb keys read by the build, against
+the declared list` (scripts/check_reader_reachability.mjs:155,:189-190). Writing that field exposed a second defect
+that reading the file had not: the step splitter put each step’s comment block at the TAIL of the PREVIOUS block,
+so the one step whose comment says "Hard-fail" was reported under the NAME of the step before it — an offender a
+person would go and fix, naming a different step. Each block’s trailing comment run is carried forward to the step
+it describes now (scripts/check_reader_reachability.mjs:121-137), and a blank line ends the run, which is how the
+job-level note stays a note about the job rather than about the next step.
+(D) THE OWED HALF OF D193. Step 13’s 13a and 13c legs carried plane-shaped environment prefixes
+(`GATE_QUALITY_SQL="$WT/data/seed/quality.sql"`, `GATE_COMMENT_PLANE="$WT"`) in front of harnesses that read no
+environment variable at all — verified by grepping all seven `scripts/falsify_*.mjs` for `process.env`: none of
+them reads any. The prefixes were labels, not planes, and no arm could see them because no arm reads a harness
+invocation line. Both are removed (scripts/db_gate_fresh.sh:413-419,:433-435) and `falsify_quality_seam.mjs`
+carries the arm that keeps them gone. This row was owed because two runs of this thread were appending to these two
+files concurrently; it had no earlier entry.
+(E) THE NEW READER’S OWN ARGUMENTS. `scripts/check_reader_reachability.mjs` parses its flags with
+`scripts/cli_args.mjs` rather than with a private loop; its first version was a second copy of the one thing that
+module exists to be the only copy of. Measured on that version: `--gate a --gate b` took b and said nothing, a
+repeated `--report` was accepted twice, and every refusal carried this file’s own wording. The migration was
+witnessed rather than assumed, and one arm then found that its own witness had been leaning on the defect — the
+"a surface that cannot be opened" arm aimed the census at a missing file by APPENDING a second `--gate`, which only
+worked because the private loop resolved last-wins (scripts/falsify_reader_reachability.mjs:152-158).
+`scripts/falsify_flag_dialect.mjs` names this reader among the ones on the shared parser
+(scripts/falsify_flag_dialect.mjs:303), so a silent revert to a private loop is a red in that census.
+WITNESSES, all against the shipped bytes. `node scripts/check_reader_reachability.mjs` exits 0.
+`node scripts/falsify_reader_reachability.mjs` prints `15 arms · 15 held · 0 missed`, including an arm that plants
+a COMMENTED-OUT `shell: bash` (the first version counted that as protection) and one that plants a mere mention
+where an invocation should be. `node scripts/falsify_flag_dialect.mjs` prints `20 arms · 20 held · 0 missed` under
+Git Bash, and its population census prints `19 readers / 13 on the shared parser / 6 hand-written`; its `--help` arm
+misses under this shell because `bash` resolves to a WSL shim that cannot start, which is why the quoted run is the
+Git Bash one. Gate step 14 ran end-to-end under `set -euo pipefail` with rc 0. Every touched file was checked
+LF-only after every write.
+STATED LIMITS, because a census that hides its blind spots is what this project keeps catching. The three surfaces
+are read as TEXT: no YAML parsing, a CI step found by the indentation of `      - `, and a step’s own comment taken
+as the unbroken run of `#` lines directly above it — so a blank line between a note and a step is what keeps the
+note from being read as that step’s claim. The hard-fail claim count is printed and decides nothing: a comment that
+overstates itself is a documentation defect, not an offender here. Only `| tee` is censused, not `| sed`. And on
+HEAD’s bytes before this unit the workflow held no piped step at all, so class B’s population there was zero and
+the census would have REFUSED at exit 2 rather than passed: the three steps it measures arrived in the working copy
+from another lane’s uncommitted job, which is why that job body is part of this unit’s commit and why the refusal
+is named here as the correct answer it was.

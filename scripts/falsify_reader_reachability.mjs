@@ -149,7 +149,7 @@ const ARMS = [
   },
   {
     name: 'a surface that cannot be opened is a refusal that names the flag, not a census of nothing',
-        // D195 — this arm used to aim the census at a missing surface by APPENDING a second --gate, which the
+    // D195 — this arm used to aim the census at a missing surface by APPENDING a second --gate, which the
     // reader's own argv loop resolved last-wins. The shared parser refuses a flag given twice, so the arm had
     // been passing through a defect it did not name: it is one --gate now, aimed at a path that is not there,
     // and the double-given case is an arm of its own rather than the mechanism of this one.

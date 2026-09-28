@@ -10475,6 +10475,436 @@ This makes `nexus_test` a true replica of `nexus` at HEAD, and the test suite's 
 
 **Plane for these bytes.** Steps 7-12: working-tree plane green (216/216 registry, 78/22 comment citations, 0 ledger offenders). Step 13: committed plane reports 8 FALSE SITES, 0 ledger offenders, 75 comment citations across 20 files. The blank-line census now reconciles on both planes without crashing. Appends pure addition, zero lone LF. Nothing pushed.
 
+## D178 — the platform suite's two named reds were one stale test database: `nexus_test` was missing V4, V5 and V6, and the repair is the migration script's own `--record` path
+
+**What the plan guessed, and what the log said.** `PLAN.md`'s P1 wanted two reds understood before fixing: `MerchantWorkspaceTest#myWorkspacesPrintTheirGrants` and `CommerceApiTest` (7 failures in 184.6 s). Its hypothesis for the first was a divergence in the bound `user_id` between `MeController.memberships` and the test's `own()` helper. The failing run's own log answers it instead: `Caused by: org.postgresql.util.PSQLException: ERROR: column ui.tenant_id does not exist`, raised inside `IdentityRepository.identitiesOf`, the reader that selects `ui.tenant_id`. The request never reached a 200, so the assertion's "size 0" is a `MissingNode` — an empty `Iterable` — not an empty `memberships` array; the hypothesis was about code that turned out to be correct.
+
+**The divergence, measured.** Compared as sorted text against `nexus`: `information_schema.columns`, `pg_indexes`, `pg_constraint`, `information_schema.views`/`routines`/`triggers`. `nexus_test` was missing exactly three committed migrations' objects — `user_identities.tenant_id` and its foreign key, `user_identities_tenant_uniq` and `users_email_tenant_uniq` (V4), `facts_one_row_per_claim_uidx` (V5), `facts.updated_at` (V6) — and still carried the two V1 objects V4 replaces (`user_identities_provider_provider_id_key`, `users_email_uniq`). Views (2), routines (424) and triggers (21) were identical, and the only other differences were `nexus`'s own migration ledgers. It was a pre-V4 schema that had somehow acquired V7's `share_links`.
+
+**The old side is the test database, not the code.** `nexus` was built by `scripts/db_apply_migrations.sh` and then migrated by the service's Flyway (ranks 3-7 = V3-V7, `success = t`), and D29's V4 columns are what the identity readers have selected ever since. `NexusIntegrationTest` sets `spring.flyway.enabled=false`, so nothing migrates the test database at boot, and it carried no `schema_migrations` at all — its version was unrecorded and unknowable from the database itself. #94 (D143, STATUS §181) had already named this divergence and gated the re-convergence on authorization to drop the database.
+
+**The repair that needed no authorization.** `scripts/db_apply_migrations.sh` documents the path for a ledger-less database whose content predates its ledger ("read that error and use `--record` once the content has been compared against a migrated database", DECISIONS D32), so after the comparison above: `NEXUS_DB_NAME=nexus_test scripts/db_apply_migrations.sh --record V1__init --record V2__integrity --record V3__merchant_funnel_no_fanout --record V7__share_links`. That recorded the four versions whose content already matched and applied the three that did not, ending `migrations=7`. It deliberately dropped, recreated and reseeded nothing: the point was convergence with the committed migrations, not a new database. V4 removes V1's two global unique indexes by design, and could do so here because `user_identities` held 0 rows, so the backfill and the `SET NOT NULL` had nothing to refuse.
+
+**Re-measured, and what stays open.** The schema comparison is now empty except `flyway_schema_history`, which the test plane does not use. `MerchantWorkspaceTest` 14 / 0; `CommerceApiTest` 8 / 0 in 23.91 s, so the 184.6 s was this same cause rather than the stall the plan suspected; `AuthTokenTest`, `AuthRefusalCodesTest`, `DevOauthRefusalTest`, `FavoriteDoorTest`, `FactWriteTest` and `ReviewWriteTest` 29 / 0. P1 closes with no source change at all. Open, and unchanged by this unit: the full suite was not run, so P1.3's count is not recorded, and the test database still accumulates fixtures between runs because the tests clean up nothing. #94's "rebuild from template0" is no longer required for the platform suite — the in-place convergence produced the same content and left a ledger behind — but `nexus_test` is still not built by any scripted path from empty.
+
+## D179 — the import lane's two empty reads get a witness, not a fabricated marker: the seed's `dead-reader` answer stands, and an import through the door is what closes the residue
+
+**What the queue asked, and what the data says.** P2 asked for an explicit data decision: seed one real import (a document + a job + draft proposals) or reclassify the read as `empty-by-guard`. Measured on the seeded `nexus`: 5534 offerings, 0 carrying `attributes->>'import_job'`; 1040 documents, 0 carrying `metadata->>'extractor'`; 115 draft offerings that no import produced. No import has run in this dataset, so the console's import page is empty — honestly.
+
+**`empty-by-guard` is not available here.** `data/seed/quality.sql`'s `read_answer` table classifies every jsonb key the build reads as `reachable` | `dead-reader` | `empty-by-guard` | `never-read`, and the gate defines `empty-by-guard` as "D64 keeps that table empty", reddening on `a.kind = 'empty-by-guard' AND c.rows > 0`. `offerings` holds 5534 rows, so that answer would fail the gate that hosts it. The row already filed for this read — `dead-reader`, site `MerchantImportRepository.java` line 37, "no seeded offering carries an import job" — is the correct kind, and the gate re-reads the payloads each run to keep it honest.
+
+**Why the marker is not seeded.** `import_job` is a provenance claim — "an import produced this row" — so writing it onto a fabricated row asserts an event that did not happen. That is the same rule already applied to §27's `collections.seo.generated_by`, which is answered `dead-reader` rather than stamped. A demo dataset may be synthetic; it may not claim a pipeline ran.
+
+**What was missing was a witness.** `services/platform/src/test/java/com/nexus/merchant/MerchantImportDoorTest.java` drives a real import through the door — `POST /api/v1/merchant/imports` with `source.type=text`, offline via the heuristic port (`nexus.imports.mode` default), three price-bearing lines, two Chinese — and asserts the lane end to end: a hand-made draft is not a pending proposal; the accept answers 202 `queued` with `extractor=heuristic_local`; the poll reaches `status=succeeded` / `document_status=indexed`, 3 proposals, `degraded=false`; three drafts carry `attributes->>'import_job'` equal to the job id and exactly one draft does not; three `price` facts carry `source='imported'`; the job document carries `metadata->>'extractor' = heuristic_local`; and the dashboard door's `pending_proposals` reads 3. It polls on the payload's own `terminal` flag, not on a sleep.
+
+**It can go red.** Dropping the marker predicate from `MerchantImportRepository.proposalCount` (a one-line patch to another lane's untracked file, backed up byte-exactly first) fails the test at its first assertion — "a draft nothing imported is not a proposal ... but was: 1L". The file was restored and its SHA-256 verified equal to the pre-plant hash (6D14306281ACBDD93086372AAEBF4E5F559EB1DC51B9BC26E5CB73C9FC4859B2) before the green run was repeated: 1 of 1 green, 1 of 1 red while planted. The seeded database is untouched, so the seed's answers and the quality gate are unaffected. Not committed, nothing pushed.
+
+## D180 — the AI service's jsonb codec re-encoded every payload it wrote, and the probe that cleared it had measured a plane the service does not run on
+
+`apps/ai/nexus_ai/db/pool.py::_init_connection` registered `encoder=json.dumps` on `jsonb` while every writer in the service passes `json.dumps(...)` text, so each payload landed as a jsonb *string* — unreachable to every key read, readable only through `#>> '{}'`. Measured: one insert of the same text stores `object` on a bare `asyncpg.connect` and `string` after `_init_connection`.
+
+**Ruling.** A codec is part of the plane. A probe that emulates "the shape the code writes" must open the connection the way the service opens it; `scripts/verify_jsonb_binding.py` now writes on both planes and takes its verdict from the service one. A measurement that names a service's behaviour without naming the plane it ran on is not a falsifier, and this project has now retracted two verdicts that came from exactly that omission (§119 here, and D174/D176 for the gate's three directory-reading steps).
+
+**The visible cost**, measured rather than argued: `search/sql.py:137,297`'s `attributes @> {param}::jsonb` matched 5534 rows on the fixed plane and 0 on the pre-fix plane, and `POST /ai/v1/search` with an `attributes` filter answered `items=5` against `items=0` — a 200 with an empty list, which no reader can distinguish from "no matches".
+
+**Not decided here:** the 12 string-valued rows on `nexus` stay. They are demo telemetry the seed never writes (D64), so a repair would be an invisible edit no gate could re-measure.
+
+
+## D181 — the directory exclusion is one list again: the comment census imports the shared set, and the union is measured rather than assumed
+
+**What stayed open.** §84's residue (e) read "the vendor exclusion is a hand list duplicated across scripts; a new
+vendored directory silently joins the source index". D85 made one list out of two by moving the set into
+`scripts/source_index.mjs`, and the readers of D87 and D88 have imported it ever since — but
+`scripts/check_comment_citations.mjs` kept a private 15-name `SKIP` and was never folded in, so a third reader went
+on deciding the question the residue is about. The residue was half closed, and the ledger said so.
+
+**The two lists had drifted in both directions.** Sorted, this set lacked `out_smoke`, `vendor`, `.qoder`,
+`.specraft` and `logs`; the comment census's `SKIP` lacked `.pytest_cache`, `.mypy_cache`, `.ruff_cache` and
+`.tmp-out`. Different readers were being granted different repositories.
+
+**The drift was live.** Walked with each reader's own predicate, steps 7 and 8 indexed 21 generated `.sql` files
+under the gitignored `data/seed/out_smoke/` and the six source files of `.tmp-p4/` — the scratch directory this
+project's own plan tells an agent to take a `mvnlock` in — and step 8 additionally indexed `.workbuddy-ai/memory/`'s
+three notes, while step 9 walked `.tmp-p4/` and skipped `out_smoke`. None of those is a file the repository ships,
+so each was a citation target the index would resolve and a reader would certify.
+
+**One list, and it is the union.** `VENDOR_DIRS` is 21 names and `check_comment_citations.mjs` imports it instead
+of copying it. The union is deliberate: no reader lost a file another reader kept, so this change cannot make any
+census quieter than it already was. The four names only the ledger census carried are insurance against a build
+that leaves output behind, and `out_smoke` covers the seed smoke directory exactly as `out` already covered
+`data/seed/out`.
+
+**Measured as a pair, on frozen text.** Reverting and re-applying the shared list between runs is what makes the
+comparison honest: the two ledgers grew two sections while this unit was being written, so a citation count that
+moved with them would have been credited here wrongly. Step 7 prints `12 file(s) under a 14-dir vendor exclusion`
+and then `21-dir`; step 8 prints 659 name:number tokens and 79 distinct files cited under both, with `14 names`
+becoming `21 names`; step 9 prints `80 tokens in 23 file(s)` under both. Every verdict is unchanged — what moved
+is which files each reader is entitled to see.
+
+**Made to fail before being called closed.** A fixture plane whose sentence cites
+`data/seed/out_smoke/01_tenants_tenants.sql:NN` beside a control cite to `scripts/source_index.mjs:NN`, run through
+`--dir` and `--head-dir`: under the old list, 2 citation-shaped tokens, 2 resolved, 0 offenders, exit 0 — the cite
+into build output CERTIFIED; under the union, 2 tokens, 1 resolved, one FILE NOT FOUND naming that path as a name
+no indexed file holds, exit 1. The class was a green that could not fail; it can now.
+
+**Limits, and what this does not fix.** The exclusion is still a hand list — one hand list, whose names are a
+measurement of this tree; the residue's alternative ("or a rule": walk by what git ignores) was not taken, because
+these readers also run on detached worktrees of HEAD where `git` is not reliably spawnable (`check_ledger_citations.mjs`
+cannot run in HEAD mode here: `spawnSync git EBUSY`). A directory new to the tree and holding no first-party claim
+still joins the index silently until someone adds its name; the difference is that it now joins all three readers
+or none, which is the invariant the residue asked for. One blind spot was met while planting this unit's own arm:
+the citation classifier tests a dot-prefixed name against basenames before it tests paths, so a cite into
+`.tmp-p4/` is not even citation-shaped. That is why the plant above names the `data/seed/out_smoke/` path, and the
+classifier is left as it is rather than widened inside a unit about the exclusion list.
+
+**Plane for these bytes.** Working tree, exit 0 each: step 7 `12 file(s) resolved under a 21-dir exclusion`, step 8
+`--worktree` 659 tokens / 79 distinct files / 0 offenders, step 9 80 citations across 23 files PASS. Harnesses:
+comment plane 13 arms · 13 held · 0 missed, ledger text PASS, quality seam 8 of 8, ledger sections PASS. Two reds
+were seen while measuring and neither belongs to these bytes: the comment-plane harness misses its
+`bash db_gate_fresh.sh --help` arm in a shell where `bash` is the WSL relay (and holds 13/13 with Git Bash first on
+PATH), and `falsify_status_citations.mjs` reports `docs/PLAN.md` line 65 citing a STATUS section that exists only
+in the working copy while that reader is strict on HEAD — another lane's uncommitted PLAN edit, reported rather
+than touched. Appends pure addition, zero lone LF. Nothing pushed.
+
+## D182 — the residue stays (D180's ruling), and this unit's contribution is the census behind it: 20 cells over five columns, the reconciliation with D180's twelve, and a repair reversed to match the decision
+
+**The same item, two lanes, one file.** D180 rules that "the 12 string-valued rows on `nexus` stay ... a repair would be an invisible edit no gate could re-measure". This unit had already run a repair and was appending its account when that ruling landed; file order is the only ordering these bytes have, and the newer ruling wins, so the repair was reversed rather than left standing against a published decision.
+
+**Twelve and twenty are one population, not two.** 4 `agent_runs` x 3 bound columns (plan, tool_calls, retrieval) = 12 cells, plus 4 `events` x 2 (properties, context) = 8: 20 cells over 8 rows. A census over every jsonb column of every public table in `nexus` finds exactly those five columns and no others, all written 2026-09-27 23:29-23:34 — the day after the reading §119 used to date the residue.
+
+**What the repair did, for the record.** Eight UPDATEs in one transaction, one per column `apps/ai/nexus_ai/api/runs.py` binds to `$n::jsonb`, guarded by `jsonb_typeof = 'string'`, by the inner text opening with `{` or `[` (a claim whose value really is a scalar string is never rewritten) and by `pg_input_is_valid(..., 'jsonb')` (a string that merely starts with `{` cannot abort the transaction). Output `UPDATE 4` five times and `UPDATE 0` for feedback_events.value, recommendation_sets.intent and recommendation_sets.items — the writer's blast radius and the columns that actually received rows are different sets. Reversal: `SET col = to_jsonb(col::text)` over the same columns inside that window, `UPDATE 4` twice, census back to 20. Both directions are lossless, so the pair is a sentence about the data, not an irreversible edit.
+
+**Left alone, with the samples that decide it.** `nexus_test` holds `facts.value = "150.00"` (6 cells) and `collections.seo = "not-an-object"` (1): a scalar a test wrote and a fixture that names itself. Neither is double-encoding and the guard above would not have touched either — worth keeping if the decision is revisited.
+
+**Ruling.** The residue stays, per D180; the evidence that would justify repairing it later lives in this entry rather than in a migration, because the gate plane has 0 such cells and no step could re-measure the change. No schema, source or tracked file changed. Not committed, nothing pushed.
+
+## D183 — the degraded *reason* is contract surface, not a plan sentence: `reason?` is named for the conversations read alone, and RAG keeps its `note`
+
+PLAN.md's P3 asked that "every agent answer must carry `degraded` and its reason when it could not do the real thing". Measured on the payloads across both planes, the boolean is on all nine answer surfaces, and a reason is on two of them: `reason` on the conversations read and `note` on RAG retrieval.
+
+**Ruling.** A payload field the contract does not name is not added to satisfy a plan sentence. `API_CONTRACT.md:326`, `:334` and `:336` name `degraded` for the search, conversations and imports shapes and `reason?` for conversations alone; `API_CONTRACT.md:330` gives `/ai/v1/rag/retrieve` `{chunks:[...]}` and nothing else. If the product wants a reason on the other six surfaces, that is a contract change first — the same order the `collections.seo` provenance bullet already uses when it refuses to stamp a token the content cannot honestly claim.
+
+**Why this is recorded as a decision rather than a finding:** the plan sentence and the contract disagree, and the next pass would otherwise "close" the bullet by stamping a field into six payloads that no document promises. The census that decides it is now `apps/ai/tests/test_degraded_labels.py`, so the next reader measures instead of re-deriving.
+## D184 — The console pages' copy promise gets a reader, and the one page that broke it was rendering a second copy of a vocabulary the public page already owned
+
+**Ruling.** "No hardcoded copy on the console pages, and the operator surfaces stay noindex" is only a claim until something reads it. `scripts/check_console_i18n.mjs` now does: every `page.tsx` under `apps/web/app` is censused for a CJK ideograph outside a comment, and every page under `app/admin/` and `app/merchant/` must override the root layout's `robots: { index: true, follow: true }` with an `index: false` of its own. Measured on the tree that wrote it: 31 pages, 20 of them console, 20 of 20 declaring the override, 1 breaking the copy rule.
+
+**What the one offender actually was.** `apps/web/app/merchant/settings/page.tsx` held a private weekday table, and the interesting part is not that the strings were hardcoded. It is that this page and the public merchant page render the same `business_hours` rows with two different vocabularies, because the page kept its own copy of a table that `apps/web/src/lib/format.ts` already exports and the public page already calls. A duplicated table is a table that can drift, and this one had: nothing in the repository compared the two.
+
+**The ruling that follows.** A shared helper is the vocabulary, not a suggestion. The page now calls `weekdayLabel(day.weekday, dict.locale)`, and the private table is gone. The visible cost is recorded rather than absorbed: the console's hours list prints the same abbreviated traditional forms the public page prints, where it used to print full ones. Reversing that is a change to one table in one file, which is the point of having one.
+
+**Why a test and not just a census.** `apps/web/src/lib/format.test.ts` is new and is that module's first test, because "the page no longer contains a CJK literal" is not evidence that the page still renders a weekday at all -- a helper returning an empty string would satisfy the census and empty the column. The test pins the three locale tables, the wrap, the zh-HK default, the English fallback and the non-numeric case; 8 of 8 pass in 1.76 s.
+
+**Not decided here.** The accessibility half of the same plan item -- contrast, labels, landmarks, focus order -- is unmeasured by this unit and by anything else in the repository. `apps/web/src/lib/format.ts`'s header names two test files and only `format.test.ts` exists; the file was left alone because it carries another lane's uncommitted changes, so that sentence is reported rather than made true. And the copy rule is a CJK rule: Latin-script copy is invisible to it, as is any string that never reaches a user.
+
+## D185 — the §30 `data` uniqueness guard is unbuilt, and "unique" has no threshold to implement against
+
+Measured on `nexus_test`, inside a rolled-back transaction: two `seo_pages` rows with different paths, both `status = 'published'`, both `quality_score = 0.900`, and byte-identical `data` insert without objection (`INSERT 0 2`). The `quality_score` half of §30 is built and tested (`SeoReadTest` 10/0); the `data` uniqueness half is named by GROWTH.md:33, DATABASE.md:171, MERCHANT.md:56 and `SeoRepository.java:19` and read by nothing — `pageProjection` does not select the column, and no migration constrains it.
+
+**Ruling.** Report it, do not implement it. The quality bar is a documented number (0.6) that the payload echoes with its configuration key; "unique" is not, and equal bytes is only the strictest of three readings the four documents leave open. A guard invented here would be a policy the spec did not state — the same reason D183 refuses to add `reason` to payloads the contract does not name. If the product wants the guard, the threshold is a contract decision first.
+
+**What this changes:** P3's bullet can no longer be closed by pointing at the seed. `seo_pages` is empty there by design (D64), so "enforced against the shipped seed" is vacuous for both halves, and this guard's absence is invisible to every gate step that exists.
+
+## D187 — the accessibility axes outside the linter get a census of their own, over the design system too; and a ratio printed beside a colour is a claim that has to survive recomputation
+
+**Ruling.** D186 put `jsx-a11y`'s thirty-four rules in front of `apps/web` and named five things no linter there can see. Landmarks, accessible names and focus order are readable from source, and so is the palette's contrast; `scripts/check_console_a11y.mjs` reads all four. The census covers the console *render tree*, not the console directory: the pages under `app/admin/**` and `app/merchant/**`, the shell they render inside, the components under `apps/web/src/components/console/`, and the `@nexus/ui` modules those files import (directly, then through the package's own relative imports, which is how the focus-ring classes come in). D186 named `packages/ui` as the tree where a missing `alt` would matter most and where nothing is linted; a census that stopped at `apps/web` would have measured only the half that already had a reader.
+
+**A page must render the nav, not merely import it.** The landmark rule is a proxy and is named as one: a console page must reference `ConsoleNav` or a shell export whose body composes it, and the test runs against the file with its import declarations stripped. A page that imports the chrome and never composes it is exactly what the rule is for, so counting the import would have made the rule vacuous -- which is the same reason the whole entry is a census rather than a spot check.
+
+**One page really had no nav, and that is a defect rather than a design.** `apps/web/app/merchant/listings/page.tsx` rendered a private header and no navigation landmark at all -- the only one of the twenty, on a route the nav itself advertises. Fixed by rendering `ConsoleNav` beside the header the page already had, in both branches; the page keeps its bespoke header, its demo banner and its own `signInBlockNote`, because the finding was the missing landmark, not the header's origin. That it is not `MerchantChrome` like its ten siblings stays a consistency residue, recorded rather than absorbed.
+
+**A ratio printed beside a colour is a claim.** `tokens.css` printed one for ten colours and cited `packages/ui/README.md` "for the measured ratios" -- a file that did not exist. Recomputed from the hex values in the same file, eight of the ten were not the measurement (worst: light `--nexus-ink` printed 14.4:1 against 16.21:1 measured). Every pair nevertheless cleared 4.5:1, the tightest being the light `--nexus-ink-faint` at 4.80:1, so the palette was sound and the numbers beside it were decoration. The numbers are corrected to their measurements rather than deleted, the README now carries the ten-row table, and the reader fails when a printed ratio and its recomputation disagree by more than 0.05 -- which is half a unit in the one decimal the comment prints.
+
+**The reader refuses rather than shrinking.** A console file importing a `@nexus/ui` symbol the census does not know exits 2 with the symbol named, instead of censusing a surface that quietly got smaller. The same rule governs the other two refusals the harness pins: a plane with no console pages, and a palette that prints no ratio to recompute. "Did not run" and "found nothing" are different answers (D93, D96), and a census that read nothing is a refusal.
+
+**Both sides are on disk.** `scripts/falsify_console_a11y.mjs` plants nine defects -- one per axis and per sub-rule, including a positive `tabIndex` and an `outline-none` whose ring tokens are stripped -- and three refusals, on copies of the render tree under the system temp directory: 13 arms, 13 held, 0 missed. The focus arm earned its keep on the first run: the rule as first written accepted `focus-visible:outline-none` as its own answer, so a string with no ring left still passed. The rule strips the token's own variant prefix before asking whether anything else answers, and the arm now holds both ways on the same mutated string.
+
+**What this does not decide.** Reading order, heading order, live-region announcements and dynamic states stay unmeasured -- the linter's own list, minus the three axes this reader took. Whether `packages/ui` should have an ESLint config is D186's question, not reopened here. And the ten corrected ratios are measurements of the pairs the palette prints, not of every text/background pair a page can compose.
+
+## D188 — step 13 moved the ledgers into the worktree and left the source index in the main tree, so its "committed plane" was a working-tree verdict wearing another directory's text
+
+WHY IT WAS BELIEVED. D176 wired step 13 with the plane knobs — `--dir`/`--head-dir` for step 8, `--plane` for step 9,
+`--quality` for step 7 — and recorded what they printed: "step 8 PASS with 0 offenders" on the committed plane,
+against the forty-one D174 had measured by hand in a clean checkout. Both numbers were correct and they were not
+the same question. A plane knob relocates the TEXT a reader censuses; every reader here builds its SOURCE INDEX
+from the directory it was started in — `scripts/check_ledger_citations.mjs:58` is `const ROOT = process.cwd();`,
+and `scripts/check_comment_citations.mjs:52` takes its ROOT from the script's own location but hands that cwd to
+the child it scores the comment plane with. So the knob leg was asking "do this clean checkout's sentences name
+files that exist HERE", and HERE is the shared working copy, where the other lanes' untracked `com.nexus.admin`,
+`com.nexus.seo`, `com.nexus.commerce` and `com.nexus.merchant` sources, the AI lane's untracked runs module and
+the web lane's untracked growth view answer every one of them.
+
+MEASURED, one commit, two starting directories. From the main tree with the knobs: 416 citation-shaped tokens,
+77 distinct files cited, 0 offenders. From inside a detached worktree of the same HEAD with no knob: the same 416
+tokens, 65 files cited, 41 `FILE NOT FOUND`. The difference is thirteen names, enumerated rather than asserted:
+the merchant content controller accounts for five sites, an admin console test line for twelve (one per STATUS
+section in the forties and fifties), the seo repository, the order service, the AI runs module and the growth view
+for three each, and six more names for the remainder. The other two legs move the same way — eleven false sites
+inside the worktree against eight on the shared tree, and a `RESULT: FAIL` on 75 comment-plane citations across 20
+files against 78 across 22 outside it. Step 13 as shipped therefore did not certify the commit at all; it
+certified the directory, with the commit's prose pasted in.
+
+WHAT CHANGED. The three reader legs now `cd` into the worktree and run bare, which is the invocation an operator
+types after a clean checkout, and 13b prints both counts on one line so the difference is visible in the gate's
+output instead of living in a comment about it (the reconciliation line reads `knob leg 77 file(s) cited / 0 FILE
+NOT FOUND — in-worktree leg 65 / 41` on this commit). The harness legs stay in the main tree, and deliberately so:
+their fixtures cite real repository files on purpose — that is D163's seam — so an index that followed the ledgers
+would refuse every plant the harness owns. 13b's harness call also lost its `GATE_LEDGER_DIR`/`GATE_LEDGER_HEAD_DIR`
+prefix: that harness reads no environment variable — its only use of those names is a grep of this script — so the
+prefix was a label claiming a plane the arms never opened, and it measured the same 28 held / 1 missed with and
+without it.
+
+WHAT THIS UNIT DOES NOT FIX. The 41 belong to the lanes holding those thirteen files, and the remedy is their
+commit, not a re-aim: this lane will not stage another lane's source to make a count move. `bash scripts/db_gate_fresh.sh --help`
+now states the limit above the knob list, because an operator who reads a knob's documentation is exactly the
+reader a half-moved plane misleads. And one arm of `scripts/falsify_ledger_text.mjs` is red on this tree right now
+for a finding in the same family and the opposite direction: an uncommitted STATUS section in another lane cites a
+line of the seo controller that holds nothing, which is D162's rule catching a row while its author can still move
+it — reported here, not edited here. Nothing in this entry claims the shared tree is clean; it claims the two
+planes are now two measurements.
+
+## D189 — the honesty D188 bought is one `cd` deep, so the harness that owns step 8's seam pins it and watches itself fail
+
+WHY A FIX THAT PRINTS A NUMBER STILL NEEDS AN ARM. D188 changed step 13 from `cd "$ROOT"` plus two plane knobs to
+`cd "$WT"` and no knob (`scripts/db_gate_fresh.sh:379` is the first of the three legs). Nothing in the gate holds
+that word in place: a later edit that "tidies" the legs back onto the repository's own path would still print a
+section header claiming the committed plane, and the only thing distinguishing the two runs is a number in a
+reporting step that cannot fail the gate. That is the same shape as every other seam this lane has had to arm —
+D150/D151 for step 11, D152 for steps 8-9, D154 for step 12 — and it is armed the same way: in the harness that
+already reads the gate's text.
+
+WHAT THE ARMS SAY. `scripts/falsify_ledger_text.mjs` grew two arms. The first scans the region from step 13's own
+header to the end of the file and requires three distinct readers to be launched behind `cd "$WT"` — the scan
+returns the names it found and prints them in the arm's own label, and the floor is the count that same scan
+produced, so a narrowed regex cannot certify a narrower world. The second runs the identical predicate over a
+copy of the gate in which every `cd "$WT"` has been put back to `cd "$ROOT"`, and expects red: the arm exists so
+that the first one is a prediction rather than a decoration, and it is the harness witnessing itself rather than
+a claim about a shell token.
+
+MEASURED. 31 arms, 30 held, 1 missed on this tree. The miss is D188's neighbour and not this unit's: the
+default-plane control arm judges the blank class in a section this tree is writing, and an uncommitted STATUS
+section in another lane cites a line of the seo controller that holds nothing. The wiring arms of both new legs
+held on the shipped file (`check_jsonb_reads.mjs`, `check_ledger_citations.mjs` and `check_comment_citations.mjs`,
+three of three) and the mutant copy went red as predicted. Step 13's reconciliation line is unchanged from D188's
+measurement: knob leg 77 files cited and 0 unresolved, in-worktree leg 65 and 41.
+
+## D190 — the committed plane is now certified three times over, and the reconciliation is arithmetic instead of a remembered number
+
+D188 moved step 13's reader legs inside the worktree and D189 pinned that move with a regex. What was left
+was a different shortfall in the same block: only 13b ran its reader twice, and 13a and 13c printed one leg
+each, so the sentence "a plane knob moves the text and never the source index" was one reader's measurement
+extended to three readers by a comment. Worse, even 13b's line printed two counts and asked nobody to compare
+them; the numbers were derived from runs but the finding was still prose.
+
+This unit makes all three legs answer the same question and puts the answer in the line. Each leg now runs its
+reader twice: once from this directory with that step's own knob aimed at the worktree (the plane the gate's
+steps 7-9 actually certify), and once from inside the worktree with no knob (the plane a clean checkout
+reaches). One `reconcile` helper prints both counts and subtracts them, so the reported finding is
+arithmetic — the offender count the source index alone is worth — rather than a claim about direction. Three
+small helpers do the extraction, and they are the part worth reading:
+
+  · `num` pulls the first number that a reader's own census line carries, and prints `no-count` when the text
+    has no such line. It does not print 0, because 0 is a verdict and `no-count` is not.
+  · `off` reads a reader's offender header (`FALSE SITES (N)`, `FILE NOT FOUND (N)`); when no header printed it
+    reports 0 only if the reader printed the sentence it prints instead of a header, and `no-verdict` if it
+    printed neither. A reader that crashed must not appear on this line as a clean one — the same rule D157
+    wrote for an unparseable flag and D174 wrote for a checker that exits 1 on somebody else's offenders.
+  · `gap` refuses to subtract words. If either leg has no verdict the line says the two legs are not
+    comparable; otherwise it prints the difference, including a negative one, which would mean the knob leg is
+    redder than the clean checkout — an anomaly worth seeing rather than hiding.
+
+Measured on one commit, three pairs, all in the same direction: the jsonb reader cites 12 files with 8 false
+sites when its seed comes from the worktree and its index from this directory, 10 files with 11 when both come
+from the worktree; the ledger reader 77/0 against 65/41; the comment reader 21 files with 0 offenders against
+21 files with 10. The `reconcile` body contains no digit, which is a checkable claim rather than a style rule.
+
+The witnesses come in two kinds, because text predicates alone are satisfiable by a function that never
+computed anything. The harness that owns step 8's seam grows five step-13 arms: the wiring arm now asks for
+three knob captures, three bare captures, three calls and a digit-free helper body; and four of the arms run
+that identical predicate over mutated copies — legs put back to the main tree, a count replaced by a literal,
+one leg's call deleted, a knob leg repointed inside the worktree — and each went red exactly as predicted. Two
+further arms cut the helper text out of the shipped gate, write it into a scratch script under the same
+`set -euo pipefail` the gate runs under, and feed it synthetic reader output: one pair with headers, which has
+to print 12/8 against 10/11 and a gap of 3, and one leg that printed a crash instead of a verdict, which has to
+print `no-verdict` and refuse the subtraction. The harness measured 36 arms · 35 held · 1 missed, and the miss
+is another lane's: an uncommitted STATUS section cites a line that is empty.
+
+What did not change is why step 13 does not fail the gate: the committed plane's redness is other lanes'
+uncommitted sources, and the remedy is their commit, not a re-aim. `check_status_citations.mjs` stays red on
+six spelled citations in `docs/PLAN.md` pointing at sections that exist only on disk, and the gate's headline
+green remains a property of the working tree. This lane's rows go on the working-copy plane only:
+`docs/DECISIONS.md` and `docs/STATUS.md` are shared append-only files with eleven and twelve disk-only rows
+from three other lanes, and committing them now would move forty-one unresolved cites onto the committed plane
+under my name. The code files are committed. Nothing pushed.
+
+## D191 — the mode the gate runs could not see the rule it was given: `--worktree` now reads the committed plane for newness, and a blank inside a section this tree is writing reddens it
+
+D162 wrote the rule and D163 made its red side reachable, and neither of them asked the question this unit
+answers: on which plane does the gate run the reader? Gate step 8 runs `--worktree`. And in that mode the two
+census calls collapsed into one object — the committed read was skipped entirely, so the predicate that was
+supposed to say "is this section new?" was handed one set and asked for its difference with itself. A set
+minused against itself is empty for any input, which is the whole reason the blind spot survived four units of
+green: it is not a bug in a branch nobody takes, it is arithmetic that always returns zero.
+
+MEASURED, SAME TREE, BEFORE THE CHANGE. The default plane printed fourteen blank cites counted at HEAD, one
+blank inside the twenty-five sections this tree is writing, a header naming the offender, and exited 1. The
+same bytes read through `--worktree` printed fifteen blank cites labelled "at HEAD", zero blanks among zero new
+sections, no header, the sentence that promises every citation resolves, and exit 0. Two of those claims were
+false in the same print: the count is not HEAD's (it is the working copy's fourteen plus one), and the promise
+is not the reader's to make about a class it declined to judge. Both were produced by the same three lines.
+
+WHAT CHANGED, AND WHAT IT WAS FORCED TO KEEP. The committed census now runs in every mode except `--text`,
+which has no second plane by design — step 9 feeds its generated comment-plane census through it, and a plant
+whose text happens to exist at HEAD would otherwise be compared with itself and judged old. `--worktree` is
+strict on the working copy as before, with newness taken from the committed titles; the blank offenders print
+under the run's own false-citation header instead of a special block, because under that mode they ARE the
+verdict. What the change deliberately did not move: the vacuity guards follow the plane the verdict is written
+on, which is what each mode already certified, and the committed backlog stays counted-not-judged on both
+planes — D161's reason (an append cannot move the number an older row printed) is a property of committed
+rows, not of a mode flag.
+
+TWO READS OF THE COMMITTED PLANE MUST NOT BE QUIET, AND BOTH FAILURES ARE NOW REFUSED. An unreadable HEAD
+under `--worktree` is added to the entry nobody could read list, labelled by plane, and refuses with the exit
+code reserved for "this run is not a verdict" — because a committed read that comes back empty holds no
+sections, and no sections means every section on disk looks like it is being written, which turns the counted
+backlog into judged offenders through a sandbox that refused to spawn a process. That inversion is quieter
+than a missing read, so it gets its own guard: a committed plane that opens and holds zero headings refuses too
+rather than reporting a disk full of new rows. The seam arms prove both, and D163's pair of knobs combines with
+`--worktree` for the first time, so the worktree mode's red is now re-runnable from a fixture instead of being
+observable once in a real ledger draft.
+
+A SECOND DEFECT, FOUND BY WIRING AN ARM FOR THE FIRST ONE. The verbose branch of this reader has been dead for
+as long as its ledger read has returned a reason alongside its text: it called a splitter on that object, so
+requesting a verbose run produced an uncaught TypeError and exit 1 — a crash wearing a verdict's exit code,
+which is the exact shape D157 named when the argument parser stopped throwing and started refusing. Measured
+on a detached worktree of the previous commit, so the claim is about the shipped bytes rather than about this
+lane's half-finished file: the failure line is inside the verbose loop, and the same request without the flag
+prints a verdict. Nothing had an arm for the verbose branch at all, which is how a branch stays broken quietly
+for units; there is one now, and it pins the list the branch was written to produce.
+
+WHAT THE CHANGE COSTS, AND WHO OWES IT. Step 8's mode now sees the offence the default plane has reported
+since D162: a disk-only row another lane wrote cites a range in `SeoController.java` whose first line holds
+nothing — verified directly, the file runs to three hundred forty-two lines and that line is empty — so the
+gate's ledger step reddens on a row this lane cannot edit. Append-only ledgers mean the correction belongs to
+the row's author, as a span start that names a line carrying text; it is reported, not fixed here, and this
+lane's own two real-ledger arms went red exactly as predicted rather than being re-aimed at the new reality.
+The falsifier went from thirty-six arms to forty (one pin of the blind spot deleted, five new: the
+real-ledger print pair, the worktree seam red, its green control, the empty-committed-plane refusal, the
+verbose branch), and reports thirty-eight held with the two named misses above. The self-test arm that rebuilds
+the reader to prove the seam arms are predictions had to be re-anchored, because the code it anchored on moved
+here; until it was, it printed that its anchor appeared zero times and declined to produce a red at all, which
+is the right behaviour and the reason the arm is worth its cost. With the blind spot planted back, the child
+run reddens two arms — the seam pair and the empty-plane refusal — both predicted before the measurement, and
+the default-plane seam arm holds, which is the control that says the mutation is aimed at `--worktree` rather
+than at the reader as a whole.
+
+ONE LABEL THIS UNIT DID NOT CHANGE, AND THE MEASUREMENT THAT MAKES IT LEGIBLE. "At HEAD" is a claim about the
+ledger text, not about the cited files: the same committed ledgers censised through the main tree's index
+fourteen blank cites, and through a clean checkout's index eleven, because the emptiness of a line in a
+referenced file is a property of the tree standing around. That gap is what step 13's ledger pair now prints as
+arithmetic instead of as a sentence, so the label no longer has to carry the whole caveat on its own.
+
+PLANE FOR THESE BYTES, AND NOTHING SHARED. This unit's code change is two files on the working-copy plane: the
+reader and its falsifier. The gate's fresh-database run has not been re-executed for them, and the gate cannot
+be green on this tree while another lane's uncommitted row reddens ledger citations and its untracked sources
+remain unresolvable from the commit. Nothing pushed.
+
+## D192 — step 9's offender belt was vacuous on its own plane; the count it reads now prints in every mode, and a report without exactly one of it refuses
+
+D191 stated the rule this unit is an instance of: a rule that cannot fire on the
+plane the gate reads is not a rule the gate has. D191 found it in step 8's own mode.
+Step 9, the comment-plane reader built the same week as step 8, had the same shape of
+hole in a different place: it treats step 8's exit code as the verdict, and then claims a
+second reader as a belt — it scrapes an offender count out of the report the child printed
+and requires that count to be zero. The scraping regex was written against the wording
+`N offender(s)`, and that wording is produced by exactly one line in step 8, a line guarded
+by "not the worktree mode". Every run step 9 makes goes through the text mode, and the text
+mode sets worktree mode internally (the assignment is near the top of the reader). So the
+match list was empty on every plane step 9 actually uses.
+
+Measured on one tree before the change, counting how many characters that regex matched per
+mode: zero on the text mode step 9 calls, zero on the worktree mode the gate runs step 8 in,
+one on the default plane — the only plane step 9 never asks for. An empty list passed the
+belt by construction, because every over the empty set is true: whatever step 8 printed,
+step 9 read zero counts, all of them equal to zero, and called that agreement. The comment
+above the line asserted the opposite — that a count that is not zero is still caught there —
+which is the same two-line pattern D191 recorded: the first line describes a check, the
+second describes what the run declined to judge, and green units sit on the second line.
+
+Fix, in two halves, because a belt needs a carrier before it needs a floor. Step 8 prints the
+strict plane's own offender count once in every mode, worded so it is the only line carrying
+that phrase, and names the plane it belongs to; the count that decides the exit code is now
+visible in the report that the exit code came from. Step 9 reads exactly that number and
+refuses — exit 2, its code for "this run is not a verdict" — unless it finds exactly one
+carrier. Zero carriers means the producer renamed the line or died before printing it; two
+means the reader is judging a report that mixes planes. Neither is cleanliness, and neither
+is now read as either. The floor is taken from the same scan it protects, not from a second
+loop over remembered text.
+
+The belt is honest about what kind of check it is. Its number and the child's exit code are
+produced by the same expression, so the belt is not a second observer of the citations; it is
+a guard against a future refactor that decouples the report from the code. The comment says
+that, instead of claiming an independence the wiring does not have — an over-claim of the kind
+this lane has been paid to retract before.
+
+To reach the floor at all, step 9 takes a checker path argument, and the harness forwards its
+own copy of that argument to every arm. That seam is D165's lesson applied one unit later: a
+mutant arm needs a real interface to aim at, not an edit of shipped bytes. The harness went
+from thirteen arms to seventeen, and all seventeen held: the carrier prints once through the
+shipped reader on a clean fixture plane; the seam refuses when given no file; the seam refuses
+when given a file that does not exist; and renaming the carrier out of a copy of step 8 turns
+control, the other flag spelling, the past-EOF arm, the mixed plane and the carrier arm itself
+into the refusal they used to skip, while every arm that already expected a refusal stays
+green. That last arm is the behavioral witness: it proves the floor fires on a runtime-
+equivalent mutation, not on a crash.
+
+Two defects arrived during the wiring, and each is now pinned by the arm that found it. First,
+the brand-new seam crashed: pointing it at a nonexistent file threw out of the grammar slice
+and exited 1, which in this directory is the code for "a citation is wrong" — a mistyped
+request reporting a finding it never computed, D159's class re-enacted inside the minutes it
+took to add a flag. It now refuses with 2 and names the file it could not open. Second, step 9
+filters the child's report down to the lines worth reprinting, and that filter did not include
+the offender detail's wording, so a red run printed "see the report above" above a report
+whose only informative line had been filtered out. The FAIL was true; it was just unreadable.
+The filter now keeps the line that says a cited line is empty.
+
+The class this unit arms then caught the unit itself, twice, which is the strongest evidence
+in it. Shifting lines inside a file that other files cite by line number moved two real cites
+onto blank lines: the gate script's sentence about where the reader's root comes from, and
+step 8's own header note about which flag spelling the comment-plane census uses. Both were
+reported by the shipped readers, not by me — the second one reddened step 9 in the middle of
+this unit — and both were repointed to line numbers derived from the call sites by grepping,
+never typed by hand, which is the rule that keeps a repoint from becoming a new stale cite.
+
+Post-change measurements, on the working tree. Step 8 default plane: seventeen blanks at HEAD
+counted and not judged, two judged among the twenty-seven sections on disk that HEAD does not
+have, zero strict offenders on the plane it certifies, two on the working copy, exit 1. Step 8
+worktree plane: the same two halves in the same words, four hundred forty-four citations in
+three hundred sixty-eight sections against three hundred forty-one at HEAD, two strict
+offenders named under its own header, exit 1 — the two planes now say the same thing about the
+same backlog. The carrier appears exactly once in each of the three modes. The independent blank
+census agrees with the reader: seventeen of seventeen, PASS. Step 9 over the real tree:
+eighty-eight comment-plane citations across twenty-seven files, all resolving, exit 0. Step 10
+PASS, with fourteen STATUS sections and thirteen DECISIONS entries on disk and not at HEAD —
+other lanes' unwritten rows, not this lane's. Step 8's harness: forty arms, thirty-eight held,
+and the same two misses it carried through D191, both real-ledger cleanliness arms reddened by
+another lane's uncommitted blank citations; this unit added none and adopted neither.
+
+The full fresh-database gate was run twice for these bytes and stopped at step 5 both times:
+two hundred sixteen rows passing, one red — the row that asks whether the reference registry
+names a column the schema has lost, against a schema of fifty-eight tables and eight
+migrations, sitting on top of an untracked permission-grants migration that is not this lane's
+to edit or commit. Steps 6 through 13 were therefore not reached, so there is no gate-wide
+number for this commit and none is quoted. That red is filed to its owner rather than fixed
+here, and the committed plane keeps its known gap: at the parent of this commit the carrier
+line does not exist yet, so a clean checkout reads zero carriers — D176's finding, unchanged,
+closing when these bytes are on the plane being read.
+
+Residue owned: the belt's number and the exit code come from one expression, so the belt is a
+rename guard, not a second reader — recorded rather than oversold. The line-ending claim in
+this unit was measured by counting carriage-return pairs in the bytes with the tool that reads
+them; the shell idiom that greps for a carriage return reports the file's line count here,
+because the escape arrives empty, so it is not a measurement and was not used as one.
 
 ## D193 — step 7's read census excused every miss with one bucket, and its parse failures answered in the verdict's exit code
 
@@ -10652,3 +11082,38 @@ this run exits 0`; the harness prints `RESULT: PASS — 35 of 35 arms held` with
 five legs, red only on the arms each leg aims at (34/35, 33/35, 33/35, 34/35, 20/35). Steps 8, 9, 10 and 12 and the
 committed plane are measured after these bytes land and are reported in STATUS §200's follow-up, not here — this
 entry quotes no number that was not read off a run it names.
+## D195 — a reader nothing runs is not a gate, and a pipe in a shell that cannot fail is not a gate either
+WHAT WAS RULED. Two censuses, one per half of the same question, both measured on the shipped bytes and both FALSE
+when this pass started. (A) Every first-party `scripts/check_*.mjs` must be INVOKED by a surface that runs checkers:
+`scripts/db_gate_fresh.sh`, `.github/workflows/ci.yml`, or the `Makefile`. Ten exist; two were invoked by nothing
+while both PASSED — `scripts/check_console_i18n.mjs` and `scripts/check_console_a11y.mjs` — and `docs/PLAN.md`
+recorded the accessibility half of P3 as "unmeasured" while the census that measures it sat in the tree. (B) Every CI
+step that pipes a checker into `tee` must declare `shell: bash`, because in GitHub Actions the default `run:` shell on
+Linux is `bash -e {0}` and a pipeline reports its LAST command: three such steps could not fail, measured rather than
+argued (`false | tee /dev/null` exits 0 under `bash -e`, 1 under `bash -eo pipefail`). All three declare it now. The
+same census asserts that `scripts/db_gate_fresh.sh` still carries `set -euo pipefail`, because that one line is what
+makes every `node ... | sed` below it able to stop the run — which is the whole of D150/D151’s proof about step 11,
+and a proof about a line is only a proof while the line is there.
+A COUNT IN PROSE DRIFTS, SO IT IS DERIVED. The note over the piped steps first said three steps "carried Hard-fail in
+their own comments". One does; one of the other two annotates itself "Report mode for now", the opposite claim; the
+third describes a verdict without that word. The count is read out of each step’s own comment and printed
+(`hard-fail claims 1 of 7 piped step(s) ...`) instead of being typed anywhere. Writing it found a second defect the
+reading had not: the step splitter attached each step’s comment block to the PREVIOUS step, so the one step whose
+comment says "Hard-fail" was named as a different step in the offender line. Comments are carried forward to the step
+they describe now.
+THE NEW READER IS HELD TO ITS OWN STANDARD. `scripts/check_reader_reachability.mjs` parses its flags through
+`scripts/cli_args.mjs`; its first version had a private loop, and measured on that version `--gate a --gate b` took b
+in silence. `scripts/falsify_flag_dialect.mjs` counts it among the readers on the shared parser, so a revert to a
+private loop reddens that census rather than being noticed by nobody.
+WITNESSES. `15 arms · 15 held · 0 missed` for the reachability census (including a planted commented-out
+`shell: bash` and a planted mere mention); `20 arms · 20 held · 0 missed` for the dialect census under Git Bash;
+13 of 13 for the accessibility arms; gate step 14 green end-to-end under `set -euo pipefail`.
+STATED LIMITS, because a census that hides its blind spots is the thing this project keeps catching. The surfaces are
+read as TEXT: no YAML parsing, steps found by the indentation of `      - `, and a step’s own comment taken as the
+unbroken run of `#` lines directly above it, so a blank line is what keeps a job-level note from being read as the
+next step’s claim. The claim count decides nothing — a comment that overstates itself is a documentation defect,
+not an offender here. Only `| tee` is censused, not `| sed`. The reachability rule covers `check_*.mjs` alone: the
+`verify_*.mjs` readers, the harnesses and the `falsify_*` files are not asked who runs them, which is a wider census
+than this unit takes. And the class-B population is other-lane work in flight: on HEAD’s bytes this unit started
+from the workflow held no piped step at all, so the census would have REFUSED at exit 2 — the correct answer, and
+why the refusal is named here rather than hidden.
