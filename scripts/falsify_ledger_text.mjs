@@ -170,6 +170,15 @@ const SEAM = join(FIX, 'seam');
 const HEAD_PLANE = planeFixture(join(SEAM, 'head'), '');
 const DISK_PLANE = planeFixture(join(SEAM, 'disk'),
   `\n## D901 A section being written\n\nIt cites scripts/cli_args.mjs:${BLANK_AT}, which is a blank line.\n`);
+// D191 — a committed plane that opens and holds no `## ` heading. The unread guard covers a HEAD nobody could
+// read; this covers the quieter failure, where the read succeeds and is empty, which makes every disk section
+// look new and turns D161's counted backlog into judged offenders — the exemption inverted by an empty file.
+const EMPTY_HEAD = join(SEAM, 'empty-head');
+mkdirSync(join(EMPTY_HEAD, 'docs'), { recursive: true });
+writeFileSync(join(EMPTY_HEAD, 'docs', 'DECISIONS.md'), CRLF([
+  '# D191 fixture', '', 'The parser is at scripts/cli_args.mjs:1.', '',
+]), 'utf8');
+writeFileSync(join(EMPTY_HEAD, 'docs', 'STATUS.md'), CRLF(['# D191 status fixture', '']), 'utf8');
 
 const run = (args) => {
   const r = spawnSync(process.execPath, [CHECKER, ...args], { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26 });
@@ -202,10 +211,17 @@ const ARMS = [
     args: [`--text=${PLANT_BLANK}`], expect: 1,
     must: [/name:number tokens\s+2/, /FALSE LEDGER CITATIONS \(1\)/, /BLANK LINE \(1\)/,
       new RegExp(`scripts/cli_args.mjs:${BLANK_AT} is empty`), /a blank line cannot hold the claim this cite makes/] },
-  { name: '--worktree counts the blank class and judges none of it (the committed backlog)',
-    args: ['--worktree'], expect: 0,
-    must: [/blank-line cites\s+\d+ at HEAD \(counted, not judged/],
-    absent: [/BLANK LINE \(\d+\):/, /FALSE LEDGER CITATIONS/] },
+  { name: '--worktree prints both blank halves over the real ledgers, and says what it reads HEAD for',
+    // D191 — this arm used to pin the blind spot: `absent: [/BLANK LINE \(\d+\):/, /FALSE LEDGER CITATIONS/]`
+    // was green only because `--worktree` collapsed its two census calls into one object, so
+    // `newSections(work, head)` was 0 by construction and the blank class could not offend on the plane the
+    // gate runs. It now pins the two sentences an operator reads, and it runs under `--report` on purpose:
+    // whether this tree's ledgers are clean is arm "control: the two ledgers of this tree" business, and an
+    // arm that mixes a print claim with a cleanliness claim reports one red for two reasons.
+    args: ['--worktree', '--report'], expect: 0,
+    must: [/text censised\s+the working copy \(strict\); HEAD is read only to say which sections are new/,
+      /blank-line cites\s+\d+ at HEAD \(counted, not judged/, /new section\(s\), and a blank there offends/],
+    absent: [/NOT CHECKED/, /UNCHECKED/] },
   // D162 — the reading plane's split, pinned as two printed halves: the committed count with its non-verdict,
   // and the new-section count with the sentence that says a blank THERE offends. D163 made the red side of this
   // rule reachable from a fixture (`--dir` / `--head-dir`, armed below), where before it could only be observed
@@ -224,6 +240,29 @@ const ARMS = [
   { name: 'the same head plane with no new section is green — the rule judges newness, not the fixture',
     args: ['--head-dir', HEAD_PLANE, '--dir', HEAD_PLANE], expect: 0,
     must: [/0 blank\(s\) among 0 new section\(s\)/], absent: [/FALSE LEDGER CITATIONS/, /BLANK LINE \(\d+\):/] },
+  // D191 — the same rule on the plane the gate actually runs. Before this unit `--worktree` read one census
+  // object for both of its planes, so these two arms could not exist: the red one printed
+  // `0 blank(s) among 0 new section(s)` and exited 0 over a fixture whose new section cites an empty line.
+  { name: '--worktree over a supplied pair reddens on a blank inside the new section',
+    args: ['--worktree', '--head-dir', HEAD_PLANE, '--dir', DISK_PLANE], expect: 1,
+    must: [/text censised\s+the working copy \(strict\); HEAD is read only to say which sections are new/,
+      /1 blank\(s\) among 1 new section\(s\)/, /FALSE LEDGER CITATIONS \(1\)/, /BLANK LINE \(1\)/,
+      new RegExp(`scripts/cli_args\\.mjs:${BLANK_AT} is empty`)],
+    absent: [/0 blank\(s\) among 0 new section/, /BLANK LINE IN A NEW SECTION/] },
+  { name: 'that same mode, with nothing new on disk, stays green — the arm that keeps the red one honest',
+    args: ['--worktree', '--head-dir', HEAD_PLANE, '--dir', HEAD_PLANE], expect: 0,
+    must: [/0 blank\(s\) among 0 new section\(s\)/, /every citation-shaped token resolves/],
+    absent: [/FALSE LEDGER CITATIONS/, /BLANK LINE \(\d+\):/] },
+  { name: 'a committed plane with no section is refused under --worktree, not read as "everything is new"',
+    args: ['--worktree', '--head-dir', EMPTY_HEAD, '--dir', DISK_PLANE], expect: 2,
+    must: [/RESULT: NOT CHECKED — the committed plane holds 0/, /no section on disk could be called old/] },
+  // D191 also found `--verbose` dead: `ledgerText` had long ago stopped returning a string, so the dump threw
+  // `ledgerText(...).split is not a function` — exit 1, the code of a verdict, for a crash (the exact shape
+  // D157 named and this reader has refused elsewhere). There was no arm for `--verbose` at all.
+  { name: '--verbose prints the resolved list for the plane being judged instead of crashing',
+    args: ['--verbose', '--report', `--text=${PLANT_BLANK}`], expect: 0,
+    must: [/EVERY CITATION AND WHERE IT RESOLVED \(working copy text\):/,
+      /scripts\/cli_args\.mjs:\d+ -> scripts\/cli_args\.mjs/, /BLANK LINE \(1\)/] },
   // D165 — the pair is enforced. Measured before the guard existed: `--head-dir` alone turned the 12 committed
   // blank citations into offenders and exited 1 — the exemption inverted by half a command line — and `--dir`
   // alone printed a NEGATIVE count of sections being written, which is two trees' heading totals being
@@ -439,11 +478,11 @@ const runHelpers = (knobText, wtText) => {
 }
 
 let fails = 0;
-// D165 — the arm that says the seam arms are predictions and not decoration: rebuild the reader with D162's
-// predicate (blanks judged only under `--text`) and run THIS harness against it, predicting exit 1. The planted
-// copy goes into a temp directory together with the two modules it imports relatively, because the first
-// attempt at this in D163 wrote the copy alone and the child died of MODULE_NOT_FOUND at exit 1 — a red that
-// belongs to the harness's own import, not to the predicate, and a mutant measured that way is worth nothing.
+// D165 — the arm that says the seam arms are predictions and not decoration: rebuild the reader with its
+// committed-plane read broken and run THIS harness against it, predicting exit 1. The planted copy goes into a
+// temp directory together with the two modules it imports relatively, because the first attempt at this in
+// D163 wrote the copy alone and the child died of MODULE_NOT_FOUND at exit 1 — a red that belongs to the
+// harness's own import, not to the predicate, and a mutant measured that way is worth nothing.
 // Skipped when `--reader` already aims this run at a plant: there is nothing to plant inside a plant.
 if (MUTATES) {
   // Its own root, NOT under FIX: the planted reader is a harness run, and every harness run clears FIX at its
@@ -451,15 +490,20 @@ if (MUTATES) {
   const MDIR = join(tmpdir(), `nexus-d165-mutant-${process.pid}`);
   mkdirSync(MDIR, { recursive: true });
   const src = readFileSync(CHECKER, 'utf8');
-  const anchor = 'census(false, (section) => BLANK_JUDGED || !head.titles.has(section))';
+  // D191 — the blind spot is the committed plane's census, so the mutant puts it back rather than the
+  // predicate that consumes it: under `--worktree` the committed read becomes a second read of the working
+  // copy, which is what the reader used to do. Runtime-equivalent, not a crash — every sentence above the
+  // mutation still prints, and the two arms that name the newness denominator are the ones that go red.
+  const anchor = 'census(true, () => false)';
   const hits = src.split(anchor).length - 1;
   let code = -1;
   let out = '';
   if (hits !== 1) {
-    out = `the new-section predicate appears ${hits} times in the reader — the mutant has no anchor`;
+    out = `the committed-plane census appears ${hits} times in the reader — the mutant has no anchor`;
   } else {
     try {
-      writeFileSync(join(MDIR, 'check_ledger_citations.mjs'), src.replace(anchor, 'census(false, () => BLANK_JUDGED)'), 'utf8');
+      writeFileSync(join(MDIR, 'check_ledger_citations.mjs'),
+        src.replace(anchor, 'WORKTREE ? census(false, () => false) : ' + anchor), 'utf8');
       for (const sib of ['cli_args.mjs', 'source_index.mjs']) {
         writeFileSync(join(MDIR, sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
       }
@@ -473,14 +517,18 @@ if (MUTATES) {
   }
   rmSync(MDIR, { recursive: true, force: true });
   results.push({
-    arm: { name: 'a reader rebuilt with D162\'s predicate reddens this harness', expect: 1,
+    arm: { name: 'a reader with D191\'s committed-plane read put back to the blind spot reddens this harness', expect: 1,
       // The child's own verdict is the evidence, not its exit code alone: the mutant reader must FAIL to
       // redden the seam's red arm, which the child reports as that arm missing with the heading named as the
       // text it never printed. (First version of this regex predicted `0 printed` for the arm's reader exit —
       // the child exits 1 because IT has a missed arm, which is a different 1.)
-      must: [/MISSED\s+exit 1 expected, \d+ printed\s+a new section citing a blank line reddens/,
-        /expected text missing: .*BLANK LINE IN A NEW SECTION/, /RESULT: FAIL/,
-        /\(skipped\) the mutant arm/] },
+      // D191 — two arms must go red, not one: the `--worktree` seam pair (its blank stops offending) and the
+      // empty-committed-plane refusal (a second disk read has sections in it, so nothing looks unread). The
+      // real-ledger arms are red in the child for the tree's own reason and are deliberately not pinned here.
+      must: [/MISSED\s+exit 1 expected, \d+ printed\s+--worktree over a supplied pair reddens/,
+        /expected text missing: .*FALSE LEDGER CITATIONS/,
+        /MISSED\s+exit 2 expected, \d+ printed\s+a committed plane with no section is refused/,
+        /RESULT: FAIL/, /\(skipped\) the mutant arm/] },
     code, out,
   });
 } else {

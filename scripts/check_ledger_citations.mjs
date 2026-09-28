@@ -16,8 +16,9 @@
  *   FILE NOT FOUND   the name carries a source extension or a directory path and the index holds no such file
  *   AMBIGUOUS        the basename is held by more than one file, so the cite names none of them in particular
  *   PAST EOF         the cited line is beyond the file's last line (and the whole range is printed)
- *   BLANK LINE       the span starts on a line that holds nothing — offended in `--text` mode, counted on the
- *                    reading plane, because a committed row can only be corrected by appending (D161)
+ *   BLANK LINE       the span starts on a line that holds nothing — judged in `--text` mode and inside a
+ *                    section the plane being read is writing (D162, D191), counted-not-judged for the
+ *                    committed backlog, because a committed row can only be corrected by appending (D161)
  *   BACKWARDS        a `78-84` range written `84-78`
  *   ZERO             line 0, which no editor can show
  *
@@ -34,6 +35,15 @@
  * steps all read the tree they are standing in, and a green run has to certify the text about to be
  * committed, not the text before it. The choice was made from a measurement, not a preference: over a tree
  * already holding three lanes' uncommitted STATUS sections, the worktree census is 151 citations, 0 offenders.
+ *
+ * D191 — both snapshots are read in both real-ledger modes, because the blank rule asks a two-plane question.
+ * `--worktree` used to answer it with one census object on both sides of the question, so "is this section
+ * new?" was always "no" there, and the sentence that promises a blank in a new section offends printed itself
+ * over a count of zero. Measured on the same tree either way: the default plane printed
+ * `1 blank(s) among 25 new section(s)` and exited 1, `--worktree` printed `0 blank(s) among 0 new section(s)`
+ * and exited 0 — the gate's own mode was the one that could not see the rule the gate was given. HEAD is now
+ * read under `--worktree` too, for newness only, and a HEAD it cannot read is refused as UNCHECKED rather
+ * than guessed at: an unreachable committed plane would make every section look new.
  *
  * USAGE
  *   node scripts/check_ledger_citations.mjs                # strict on HEAD, working copy reported
@@ -361,21 +371,35 @@ function census(committed, blankOffends) {
  */
 const newSections = (work, head) => [...work.titles].filter((t) => !head.titles.has(t)).length;
 
-const head = census(!WORKTREE, () => BLANK_JUDGED);
-// D162 — on the reading plane the blank class judges exactly the sections this tree is writing: a `## `
-// heading that does not exist at HEAD. That subset has no backlog (every one of the 14 blanks D161 counted
-// sits inside a committed section), it cannot be an allow list because it is derived from the two planes the
-// census already reads, and it is the same bargain step 12 spells out for its own disk plane — a row that
-// only this run has written is this run to answer for, including when the writer is another lane.
-const work = WORKTREE ? head : census(false, (section) => BLANK_JUDGED || !head.titles.has(section));
+/**
+ * D191 — the committed plane is read in every mode except `--text`, `--worktree` included. The two census
+ * calls below used to collapse into one object there (`const work = WORKTREE ? head : …`), which made
+ * `newSections(work, head)` 0 by construction: the same tree printed `1 blank(s) among 25 new section(s)`
+ * with exit 1 on the default plane and `0 blank(s) among 0 new section(s)` with exit 0 under `--worktree`,
+ * so the rule D162 wrote could not fire on the one plane gate step 8 runs. A rule that cannot fire on the
+ * plane the gate reads is not a rule the gate has.
+ */
+const committed = ARGS.text === null ? census(true, () => false) : null;
+const isNewSection = (section) => committed !== null && !committed.titles.has(section);
+// D162 — on either real-ledger plane the blank class judges exactly the sections this tree is writing: a
+// `## ` heading that does not exist at HEAD. That subset has no backlog (every one of the 14 blanks D161
+// counted sits inside a committed section), it cannot be an allow list because it is derived from the two
+// planes the census already reads, and it is the same bargain step 12 spells out for its own disk plane — a
+// row that only this run has written is this run to answer for, including when the writer is another lane.
+const work = census(false, (section) => BLANK_JUDGED || isNewSection(section));
+/** The plane a verdict is written on: the working copy when this run is strict there, HEAD otherwise. */
+const strict = WORKTREE ? work : committed;
 
 // UNCHECKED comes before the vacuity guards: "I could not read the ledger" and "the ledger had nothing in
 // it" are different failures, and a crash (the behaviour this replaced) said neither. Both planes are
 // tested, because in the default mode the working copy is *reported*, and a report line that reads
 // "0 citations, 0 offenders" for a file nobody opened is a clean verdict invented out of a missing read.
+// D191 — and because in `--worktree` mode the committed read is now load-bearing: a HEAD this run cannot
+// open would leave `committed.titles` holding nothing but the preamble, which makes every section on disk
+// look brand new and turns D161's counted backlog into judged offenders.
 const unread = [
-  ...head.unread.map((u) => ({ ...u, plane: WORKTREE ? 'working copy' : 'HEAD' })),
-  ...(WORKTREE ? [] : work.unread.map((u) => ({ ...u, plane: 'working copy' }))),
+  ...work.unread.map((u) => ({ ...u, plane: 'working copy' })),
+  ...(committed === null ? [] : committed.unread.map((u) => ({ ...u, plane: 'HEAD' }))),
 ];
 if (unread.length > 0) {
   console.log('NEXUS — ledger citation census');
@@ -391,29 +415,38 @@ if (unread.length > 0) {
 // that is not there". A census that cannot certify its own input has said nothing about the citations, so the
 // red code would have been a claim about the ledgers invented out of a broken run.
 if (FILES.length < 100) notCheckable(`the source index holds ${FILES.length} files; a walk that finds almost nothing cannot check a citation`);
-if (head.sections === 0) notCheckable(`the census read ${LEDGERS.join(', ')} and saw no "## " heading — it did not read the ledger it claims to have censised`);
-if (head.citations === 0) notCheckable(`no citation-shaped token in ${head.tokens} name:number tokens — either the classifier or the index broke, and a run that checks nothing is the reddest kind of green`);
-if (head.files.size === 0) notCheckable(`${head.citations} citation(s) found and ${head.files.size} file(s) resolved — the index cannot see any file the ledgers name`);
+if (strict.sections === 0) notCheckable(`the census read ${LEDGERS.join(', ')} and saw no "## " heading — it did not read the ledger it claims to have censised`);
+if (strict.citations === 0) notCheckable(`no citation-shaped token in ${strict.tokens} name:number tokens — either the classifier or the index broke, and a run that checks nothing is the reddest kind of green`);
+if (strict.files.size === 0) notCheckable(`${strict.citations} citation(s) found and ${strict.files.size} file(s) resolved — the index cannot see any file the ledgers name`);
+// D191 — the committed plane is a denominator now, not only a report. Measured against a supplied empty HEAD:
+// a committed read that holds no section makes every disk section new, so D161's counted backlog becomes
+// judged offenders and the run reddens on history it was never meant to answer for. `unread` above catches a
+// HEAD nobody could open; this catches one that opened and held nothing.
+if (committed !== null && committed.sections === 0) {
+  notCheckable(`the committed plane holds ${committed.sections} "## " section(s) over ${committed.tokens} name:number token(s), so no section on disk could be called old — a blank in the backlog would be judged as if it were being written`);
+}
 
 console.log('NEXUS — every file:line citation in docs/DECISIONS.md and docs/STATUS.md, read back out of the source');
-console.log(`  text censised            ${WORKTREE ? 'the working copy (strict)' : 'HEAD (strict); the working copy is reported'}`);
+console.log(`  text censised            ${WORKTREE
+  ? `the working copy (strict)${ARGS.text === null ? '; HEAD is read only to say which sections are new' : ' — a plant has no second plane'}`
+  : 'HEAD (strict); the working copy is reported'}`);
 console.log(`  blank-line cites         ${BLANK_JUDGED
-  ? `${head.blanks} span start(s) on an empty line — every one is an offender on this plane`
-  : `${head.blanks} at HEAD (counted, not judged — D161's backlog) · ${work.judged} blank(s) among ${newSections(work, head)} new section(s), and a blank there offends`}`);
-console.log(`  headings seen            ${head.sections} section(s) — an offender is attributed to the one that wrote it`);
-console.log(`  name:number tokens       ${head.tokens}`);
-console.log(`  citation-shaped          ${head.citations} (the rest are host:port, ENV:value, §NN or prose)`);
-console.log(`  bare :NN continuations   ${head.continuations} — they inherit the file before them, so nothing is judged on them alone`);
-console.log(`  distinct files cited     ${head.files.size}`);
+  ? `${work.blanks} span start(s) on an empty line — every one is an offender on this plane`
+  : `${committed.blanks} at HEAD (counted, not judged — D161's backlog) · ${work.judged} blank(s) among ${newSections(work, committed)} new section(s), and a blank there offends`}`);
+console.log(`  headings seen            ${strict.sections} section(s)${WORKTREE && committed !== null ? `, ${committed.sections} at HEAD` : ''} — an offender is attributed to the section that wrote it`);
+console.log(`  name:number tokens       ${strict.tokens}`);
+console.log(`  citation-shaped          ${strict.citations} (the rest are host:port, ENV:value, §NN or prose)`);
+console.log(`  bare :NN continuations   ${strict.continuations} — they inherit the file before them, so nothing is judged on them alone`);
+console.log(`  distinct files cited     ${strict.files.size}`);
 if (!WORKTREE) {
   console.log(`  working copy citations   ${work.citations} in ${work.sections} section(s), ${work.offenders.length} offender(s)`);
 }
 console.log('');
 
 if (VERBOSE) {
-  console.log('EVERY CITATION AND WHERE IT RESOLVED (HEAD text):');
+  console.log(`EVERY CITATION AND WHERE IT RESOLVED (${WORKTREE ? 'working copy' : 'HEAD'} text):`);
   for (const ledger of LEDGERS) {
-    for (const line of ledgerText(ledger, !WORKTREE).split(/\r?\n/)) {
+    for (const line of (ledgerText(ledger, !WORKTREE).text ?? '').split(/\r?\n/)) {
       for (const cite of citeTokens(line)) {
         if (!isCitation(cite.name)) continue;
         const c = resolve(cite.name);
@@ -425,7 +458,6 @@ if (VERBOSE) {
   console.log('');
 }
 
-const strict = WORKTREE ? work : head;
 if (strict.offenders.length > 0) {
   console.log(`FALSE LEDGER CITATIONS (${strict.offenders.length}):`);
   const byKind = new Map();
