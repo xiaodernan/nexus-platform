@@ -43,18 +43,42 @@
  * that plane is `check_comment_citations.mjs`'s slice, and step 8's green arm here is the guard against the
  * grammar silently stopping matching anything.
  *
- * USAGE   node scripts/falsify_ledger_text.mjs          (from the repo root)
- * EXIT    0 every prediction held · 1 an arm missed · 2 the harness could not start
+ * USAGE   node scripts/falsify_ledger_text.mjs                       (from the repo root)
+ *         node scripts/falsify_ledger_text.mjs --reader=<planted reader>   (expect exit 1: the seam is live)
+ *         node scripts/falsify_ledger_text.mjs --help
+ * EXIT    0 every prediction held · 1 an arm missed · 2 the harness could not start, or was asked for a
+ *         flag it does not parse — which is the case D163 caught this file in, printing a green tally about
+ *         a mutant it had never opened because an unknown word used to be nothing at all
  */
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseFlags } from './cli_args.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const FIX = join(tmpdir(), 'nexus-d157-falsify');
-const CHECKER = join(ROOT, 'scripts', 'check_ledger_citations.mjs');
+const HARNESS = join(ROOT, 'scripts', 'falsify_ledger_text.mjs');
+// D165 — this harness takes a reader now, because D163 caught it not taking one: `--reader=<mutant>` was an
+// unrecognised word, so the run that believed it was testing a mutant had run the SHIPPED checker and printed
+// "25 of 25 held" about a file it never opened. A harness that ignores a flag is the defect its own subjects
+// are watched for, and the parse goes through the same shared parser so this file cannot grow a private dialect.
+const SELF_SPEC = { '--reader': { kind: 'value', unit: 'reader file' }, '--help': { kind: 'switch' } };
+const selfParsed = parseFlags(process.argv.slice(2), SELF_SPEC);
+if (!selfParsed.ok) {
+  console.log(`RESULT: NOT CHECKED — ${selfParsed.reason}`);
+  process.exit(2);
+}
+if (selfParsed.switches.includes('--help')) {
+  console.log('usage: node scripts/falsify_ledger_text.mjs [--reader=<planted reader>] [--help]');
+  console.log('  every arm runs one reader; --reader aims them all at a planted copy, and the mutant arm');
+  console.log('  says that it skipped, because there is nothing to plant inside a plant');
+  process.exit(0);
+}
+const PLANTED = selfParsed.value['--reader'] ?? null;
+const MUTATES = PLANTED === null;
+const CHECKER = PLANTED ?? join(ROOT, 'scripts', 'check_ledger_citations.mjs');
 const GATE = readFileSync(join(ROOT, 'scripts', 'db_gate_fresh.sh'), 'utf8').split(/\r?\n/);
 
 rmSync(FIX, { recursive: true, force: true });
@@ -183,9 +207,9 @@ const ARMS = [
     must: [/blank-line cites\s+\d+ at HEAD \(counted, not judged/],
     absent: [/BLANK LINE \(\d+\):/, /FALSE LEDGER CITATIONS/] },
   // D162 — the reading plane's split, pinned as two printed halves: the committed count with its non-verdict,
-  // and the new-section count with the sentence that says a blank THERE offends. The red side of this rule is
-  // demonstrated by the ledger append that first tripped it (D162), because reaching it needs an uncommitted
-  // new section in the real `docs/`, which no harness may write; the seam to plant one is #110.
+  // and the new-section count with the sentence that says a blank THERE offends. D163 made the red side of this
+  // rule reachable from a fixture (`--dir` / `--head-dir`, armed below), where before it could only be observed
+  // once in a real ledger draft; this arm stays because it pins what an operator sees on the clean tree.
   { name: 'the default plane reports both blank halves and stays green while no new section cites one',
     args: [], expect: 0,
     must: [/blank-line cites\s+\d+ at HEAD \(counted, not judged/, /section\(s\) this run is writing, and a blank there offends/,
@@ -262,7 +286,11 @@ for (const arm of ARMS) {
   const from = GATE.findIndex((l) => l.includes('step "8/12'));
   const to = GATE.findIndex((l, i) => i > from && /^step /.test(l));
   const region = from < 0 ? '' : GATE.slice(from, to < 0 ? GATE.length : to).join('\n');
-  const want = [/node scripts\/falsify_ledger_text\.mjs/, /GATE_LEDGER_TEXT:\+--text=/];
+  const want = [/node scripts\/falsify_ledger_text\.mjs/, /GATE_LEDGER_TEXT:\+--text=/,
+    /GATE_LEDGER_DIR:\+--dir=/, /GATE_LEDGER_HEAD_DIR:\+--head-dir=/,
+    // The two modes are mutually exclusive BY TEXT: `--worktree` alongside a supplied plane would compare
+    // nothing and still print a verdict, so the branch itself is what is pinned here, not just the flags.
+    /if \[ -n "\$\{GATE_LEDGER_DIR:-\}" \]/, /node scripts\/check_ledger_citations\.mjs --worktree/];
   results.push({
     arm: { name: 'gate step 8 runs this harness AND passes the knob to the reader', expect: 0, must: want, absent: [] },
     code: want.every((re) => re.test(region)) ? 0 : 1, out: region,
@@ -284,6 +312,63 @@ for (const arm of ARMS) {
 }
 
 let fails = 0;
+// D165 — the arm that says the seam arms are predictions and not decoration: rebuild the reader with D162's
+// predicate (blanks judged only under `--text`) and run THIS harness against it, predicting exit 1. The planted
+// copy goes into a temp directory together with the two modules it imports relatively, because the first
+// attempt at this in D163 wrote the copy alone and the child died of MODULE_NOT_FOUND at exit 1 — a red that
+// belongs to the harness's own import, not to the predicate, and a mutant measured that way is worth nothing.
+// Skipped when `--reader` already aims this run at a plant: there is nothing to plant inside a plant.
+if (MUTATES) {
+  // Its own root, NOT under FIX: the planted reader is a harness run, and every harness run clears FIX at its
+  // start — the first version of this arm wrote the mutant into FIX and the child deleted it before opening it.
+  const MDIR = join(tmpdir(), `nexus-d165-mutant-${process.pid}`);
+  mkdirSync(MDIR, { recursive: true });
+  const src = readFileSync(CHECKER, 'utf8');
+  const anchor = 'census(false, (section) => BLANK_JUDGED || !head.titles.has(section))';
+  const hits = src.split(anchor).length - 1;
+  let code = -1;
+  let out = '';
+  if (hits !== 1) {
+    out = `the new-section predicate appears ${hits} times in the reader — the mutant has no anchor`;
+  } else {
+    try {
+      writeFileSync(join(MDIR, 'check_ledger_citations.mjs'), src.replace(anchor, 'census(false, () => BLANK_JUDGED)'), 'utf8');
+      for (const sib of ['cli_args.mjs', 'source_index.mjs']) {
+        writeFileSync(join(MDIR, sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
+      }
+      const child = spawnSync(process.execPath, [HARNESS, `--reader=${join(MDIR, 'check_ledger_citations.mjs')}`],
+        { cwd: ROOT, encoding: 'utf8', timeout: 300000, maxBuffer: 1 << 26 });
+      code = child.status ?? -1;
+      out = `${child.stdout || ''}${child.stderr || ''}`;
+    } catch (e) {
+      out = `the mutant could not be run: ${e.message}`;
+    }
+  }
+  rmSync(MDIR, { recursive: true, force: true });
+  results.push({
+    arm: { name: 'a reader rebuilt with D162\'s predicate reddens this harness', expect: 1,
+      // The child's own verdict is the evidence, not its exit code alone: the mutant reader must FAIL to
+      // redden the seam's red arm, which the child reports as that arm missing with the heading named as the
+      // text it never printed. (First version of this regex predicted `0 printed` for the arm's reader exit —
+      // the child exits 1 because IT has a missed arm, which is a different 1.)
+      must: [/MISSED\s+exit 1 expected, \d+ printed\s+a new section citing a blank line reddens/,
+        /expected text missing: .*BLANK LINE IN A NEW SECTION/, /RESULT: FAIL/,
+        /\(skipped\) the mutant arm/] },
+    code, out,
+  });
+} else {
+  console.log(`  (skipped) the mutant arm: this run is already aimed at a planted reader (${CHECKER})`);
+}
+// And the harness's own door, since D163 caught it standing open: a flag this file does not parse must refuse.
+{
+  const child = spawnSync(process.execPath, [HARNESS, '--readers=x'], { cwd: ROOT, encoding: 'utf8', timeout: 60000 });
+  results.push({
+    arm: { name: 'a flag this harness does not parse is refused rather than ignored', expect: 2,
+      must: [/RESULT: NOT CHECKED — unknown option --readers/, /flags this reader parses/] },
+    code: child.status ?? -1, out: `${child.stdout || ''}${child.stderr || ''}`,
+  });
+}
+
 for (const r of results) {
   const missed = (r.arm.must ?? []).filter((re) => !re.test(r.out));
   const unwanted = (r.arm.absent ?? []).filter((re) => re.test(r.out));

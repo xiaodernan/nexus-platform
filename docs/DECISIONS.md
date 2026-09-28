@@ -9922,3 +9922,124 @@ naming it as the next unit's job (#111). The committed plane is supplied as file
 spelling here and a fixture cannot ask what three revisions ago said. And the source index stays at the
 repository, which means the seam cannot test index questions at all; that is deliberate, and the reason is in
 the paragraph above rather than in a comment in the code.
+
+## D164 — Step 8's two planes became drivable, the harness learned to accept a reader, and the mutant that followed says the seam's red arm is a prediction
+
+**Two halves, one purpose.** `scripts/db_gate_fresh.sh` now forwards `GATE_LEDGER_DIR` and
+`GATE_LEDGER_HEAD_DIR` into step 8, and `scripts/falsify_ledger_text.mjs` parses `--reader` and `--help`
+through the same shared parser the readers use — so a flag it does not read is refused at exit 2 with the flags
+it does take named, instead of being ignored. D163 had made the two planes addressable on the command line and
+D165's own finding was that the harness still could not be aimed at anything: the arms ran, printed a green
+tally, and the mutant sat unread in a temp directory.
+
+**The branch is pinned by text, not by behaviour.** Step 8 runs either the old line, byte-for-byte unchanged,
+or a comparison-mode line carrying the two new flags, chosen by whether either knob is set — because
+`--worktree` reads one file and calls it strict, so a run that supplied a plane alongside it would compare
+nothing and still print a verdict that looks configured. The wiring arm reads step 8's block in the shipped
+gate and requires both branches to be present, which is what makes deleting either one red without running a
+database at all. The default path is untouched: an unset environment reaches the reader exactly as it did before
+this commit, and the neutral leg printed 12 step headers, 12 `RESULT: PASS` and `216 quality checks on a
+from-scratch schema (tables=58, migrations=7)` at exit 0. The committed blank count itself moved twice under
+this arc — 14 in D161 and D162's runs, 12 now — for the reason D160 named: the ledgers are the census's
+population, so a paragraph that repairs or re-wraps a citation changes the number the next run prints. Every
+count in this entry is therefore quoted with the plane and the moment it was read.
+
+**The drive, stopped by a plant.** With both knobs aimed at a temp fixture — a head plane holding one
+committed section, a disk plane adding a second whose citation lands on a blank line — step 8 printed
+`FALSE LEDGER CITATIONS — BLANK LINE IN A NEW SECTION (1)`, naming the section, the line and the emptiness, and
+the gate came back exit 1 after 8 headers with 3 passes before it. The run database was dropped and the four
+pre-existing gate names, along with the two product databases, were not opened. So the claim D162 could only
+make once by accident is now reachable on demand from the thing everyone runs.
+
+**The mutant arm, and the two false results it cost.** The arm rebuilds the reader with D162's predicate in a
+temp directory together with the two modules it imports relatively, then runs this harness against it and
+predicts the child reddens; the child answers that its own mutant arm is skipped, because there is nothing to
+plant inside a plant. Two of its first predictions were wrong for reasons worth keeping. The mutant's home was
+first the harness's own fixture root, which every harness run clears at startup — so the child deleted the file
+it had been asked to open and the parent's `out` filled with an `ENOENT` for its own subject. And the parent
+predicted the child's seam arm would print `exit 1 expected, 0 printed`, reading the child's exit code as the
+reader's verdict; the child exits 1 because *it* has a missed arm, which is a different 1 sitting one level up.
+Both are recorded rather than quietly repaired: a mutant measured through a crash or a conflated exit code is
+evidence about the harness, not the rule.
+
+**Measured on the bytes this entry describes.** Readers before the append: 650 citation-shaped tokens over 311
+sections, 416 working-copy citations, 0 offenders, 12 blank span starts counted on the committed plane and 0
+judged with no new section in the tree; step 9 at 78 comment-plane citations across 22 files, PASS; step 10 at
+HEAD 150 decisions and 136 STATUS sections against the same on disk, missing 0, uncommitted 0, duplicates 0;
+step 12 resolving every spelled section citation. Harnesses: 27 ledger-text (four seam arms, the mutant arm and
+the self-refusal added on top of D163's 21) · 13 comment-plane · 20 flag-dialect · 8 quality-seam · 8
+ledger-sections · 6 status-citations, 82 arms and none missed.
+
+**Limits, stated.** The two new gate names are documented in the header the `--help` derives from, and the
+wiring arm reads them as text — neither is proved by a red at the gate level beyond the one armed leg above,
+which I ran by hand rather than wired into a harness, because a leg that stops the gate is 3 minutes of
+database work and the seam arms already reach the same predicate. `--dir` and `--head-dir` do not refuse being
+given one without the other; supplied alone, `--dir` compares against the real `git HEAD`, which is a coherent
+question but not one I have written an arm for, and a refusal or an arm should decide that deliberately. And
+this unit adds nothing to what the blank class can see: D160's refused content predicate stays refused, a
+citation onto `}` still passes, and the 12 committed blank span starts are still counted rather than judged.
+
+## D164 — Step 8's two planes became drivable from the gate, its harness learned to take a reader, and the first armed attempt was caught by the guard rather than by me
+
+**What landed, in two halves.** `scripts/db_gate_fresh.sh` forwards `GATE_LEDGER_DIR` and
+`GATE_LEDGER_HEAD_DIR` into step 8, and `scripts/falsify_ledger_text.mjs` now parses `--reader` and `--help`
+through the same shared parser the readers use — so a flag this harness does not read is refused at exit 2 with
+the flags it does take named, instead of being ignored. D163 had made the planes addressable from the command
+line, and its own record said the harness could not be aimed at a planted reader; that gap was not cosmetic.
+The run that believed it had tested a mutant had tested the shipped checker and printed a green tally about a
+file nobody opened.
+
+**Step 8 keeps two branches, and the branch itself is what the arm reads.** With either knob set the step runs
+in comparison mode — `--dir` and `--head-dir`, no `--worktree`; otherwise it runs the old line, which is
+byte-for-byte what it was before this unit, so an unset environment reaches the reader exactly as it always
+did. That separation is not decoration: `--worktree` reads one plane and calls it strict, so a run that passed
+a supplied plane alongside it would compare nothing, judge nothing, and still print a verdict that looks
+configured. The wiring arm now requires both branches to be present in the shipped text, together with the
+harness call and all three knob forwardings, which is what makes silently unwiring one red without opening a
+database.
+
+**The drive, stopped by a plant.** With both knobs aimed at a temp fixture — a head plane holding one committed
+section, a disk plane adding a second whose citation lands on a blank line — step 8 printed `FALSE LEDGER
+CITATIONS — BLANK LINE IN A NEW SECTION (1)` naming the section, the line and the emptiness, and the gate came
+back exit 1 after 8 headers with 3 passes before it. The run database was dropped; the four pre-existing gate
+names and the two product databases were not opened. The neutral leg on the same bytes printed 12 step headers,
+12 `RESULT: PASS` lines and `216 quality checks on a from-scratch schema (tables=58, migrations=7)` at exit 0.
+So the state D162 reached once by accident is now reachable on demand from the script everyone runs.
+
+**The first armed attempt failed, and the guard is what said so.** Its fixture was built by a shell here-string
+whose template literals the shell had already interpolated away, so the census read a plant with no citation
+tokens in it at all — and step 8 answered `RESULT: NOT CHECKED — no citation-shaped token in 0 name:number
+tokens` and the gate stopped with exit 2 rather than reporting a clean sweep of a plane that held nothing. That
+is the non-vacuity guard earning its keep on a drive path, at the exact moment a driver defect was on the other
+side of the camera: it distinguished "the plant is empty" from "the plant is clean", which is the distinction
+D79 has been enforcing since it was written. Nothing about the predicate was wrong, so nothing in this unit was
+changed because of it; the fixture moved to a file written outside the shell.
+
+**The mutant arm, and the two wrong predictions that came before it.** The arm rebuilds the reader in a temp
+directory with D162's predicate — blanks judged only under `--text` — copies the two modules it imports
+relatively, and runs this harness against it, predicting the child comes back red. Its first version put that
+copy inside the harness's own fixture root, which every harness run clears at startup: the child deleted the
+file it had been told to read and reported an `ENOENT` about its own subject. Its second version predicted the
+child's seam arm would print `exit 1 expected, 0 printed`, having read the child's exit code as the reader's
+verdict — but the child exits 1 because IT has a missed arm, which is a different 1 one level up. The arm now
+predicts the child's own line, `MISSED … a new section citing a blank line reddens`, with the missing-heading
+diagnostic and the skip notice that a planted run does not plant inside itself.
+
+**Measured on the bytes this entry describes.** Readers before the append: 650 citation-shaped tokens over 311
+committed sections, 416 working-copy citations, 0 offenders, 12 blank span starts counted on the committed plane
+and 0 judged, exit 0; step 9 at 78 comment-plane citations across 22 files, PASS; step 10 at HEAD 150 decisions
+and 136 STATUS sections against the same on disk, missing 0, uncommitted 0, duplicates 0; step 12 resolving
+every spelled section citation. Harnesses on the same bytes: 27 ledger-text · 13 comment-plane · 20
+flag-dialect · 8 quality-seam · 8 ledger-sections · 6 status-citations, 82 arms, none missed. The committed
+blank count is 12 where D161 and D162 recorded 14 — the ledgers are this census's own population, so a
+paragraph that re-wraps a citation moves the number, which is why every figure above names its plane and its
+moment.
+
+**Limits, stated.** Giving one knob without its pair is not refused: `--dir` alone compares the supplied working
+copy against the real `git HEAD`, which is a coherent question and one no arm asks yet, so either the refusal
+or the arm should be written deliberately rather than inherited from this unit's silence. No harness leg reaches
+the gate's own forwarding: the armed drive above was run by hand, because a leg that stops the gate costs
+minutes of database work and the seam arms already reach the same predicate in seconds — what is missing is an
+arm that reads the branch text, which the wiring arm now partly supplies. The blank class itself gained nothing
+in reach: a citation onto `}` still passes, D160's content predicate stays refused on measurement, and the
+committed blanks still want appending rows rather than a new check.

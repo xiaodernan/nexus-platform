@@ -25,6 +25,11 @@
 #                        (inert when unset; the same kind of reachability arm)
 #   GATE_LEDGER_TEXT     step 8 only: census this file instead of both ledgers (inert when unset; the fifth
 #                        instance of the same arm, and step 8's harness re-asks it on every run — see step 8)
+#   GATE_LEDGER_DIR      step 8 only: read the working-copy ledgers from this directory instead of this tree
+#                        (inert when unset; D164's second half of the same reachability arm)
+#   GATE_LEDGER_HEAD_DIR step 8 only: read the COMMITTED plane from this directory instead of `git show`
+#                        (inert when unset; with GATE_LEDGER_DIR it is what makes "a section this run is
+#                        writing" a state a drive can reach, which is the point of D163's seam)
 #   GATE_COMMENT_PLANE   step 9 only: read comments out of this directory instead of the repository
 #                        (inert when unset; both are the same reachability arm, see steps 8-9)
 #   GATE_STATUS_DIR      step 12 only: scan this directory for spelled §-citations instead of the repository
@@ -245,7 +250,15 @@ step "8/12  scripts/check_ledger_citations.mjs — every File.java:NNN the ledge
 # the old `sed -n '2,26p'` stopped short of the three most recent ones, so an arm added after line 26 was
 # reachable by environment but undiscoverable by reading.
 ( cd "$ROOT" && node scripts/falsify_ledger_text.mjs ) 2>&1 | sed -e 's/^/    /'
-( cd "$ROOT" && node scripts/check_ledger_citations.mjs --worktree ${GATE_LEDGER_TEXT:+--text="$GATE_LEDGER_TEXT"} ) 2>&1 | sed -e 's/^/    /'
+# The two planes are addressable only as a pair: `--worktree` reads one file and calls it strict, so a run that
+# supplied `--dir`/`--head-dir` alongside it would compare nothing and judge nothing while looking configured.
+# With either knob set, step 8 runs in comparison mode instead — the default line below is byte-for-byte what it
+# was before D164, so an unset environment reaches the reader exactly as it always did.
+if [ -n "${GATE_LEDGER_DIR:-}" ] || [ -n "${GATE_LEDGER_HEAD_DIR:-}" ]; then
+  ( cd "$ROOT" && node scripts/check_ledger_citations.mjs ${GATE_LEDGER_DIR:+--dir="$GATE_LEDGER_DIR"} ${GATE_LEDGER_HEAD_DIR:+--head-dir="$GATE_LEDGER_HEAD_DIR"} ) 2>&1 | sed -e 's/^/    /'
+else
+  ( cd "$ROOT" && node scripts/check_ledger_citations.mjs --worktree ${GATE_LEDGER_TEXT:+--text="$GATE_LEDGER_TEXT"} ) 2>&1 | sed -e 's/^/    /'
+fi
 
 
 # --------------------------------------------------------------------------- 9. the comment plane

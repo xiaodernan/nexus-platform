@@ -9106,3 +9106,71 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     files; step 10 HEAD 149 decisions and 135 STATUS sections against the same on disk, missing
                     0, duplicates 0; step 12 every spelled citation resolving. Six harnesses: 25 · 13 · 20 · 8 ·
                     8 · 6 arms, 80 total, none missed.
+
+## 169. D164: step 8's planes are drivable from the gate, its harness can finally be aimed at a reader, and the mutant arm says the red is a prediction
+
+                    `GATE_LEDGER_DIR` and `GATE_LEDGER_HEAD_DIR` now reach step 8, and
+                    `falsify_ledger_text.mjs` parses `--reader` and `--help` through the shared parser — a flag
+                    it does not read is refused at exit 2 naming the flags it takes, which is the defect D163
+                    caught it committing against itself. Step 8 keeps two branches, chosen by whether either
+                    knob is set, because `--worktree` beside a supplied plane would compare nothing and still
+                    print a verdict; the wiring arm reads both branches out of the shipped gate, so deleting
+                    either reddens without a database. The unset path is the old line unchanged.
+
+                    The drive was stopped by a plant: a head plane with one committed section, a disk plane
+                    adding a second citing a blank line, step 8 naming section and emptiness, the gate exit 1
+                    after 8 headers and 3 passes. The run database was dropped; the four pre-existing gate names
+                    and the two product databases were not opened. A state D162 reached once by accident is now
+                    reachable on demand.
+
+                    Two false results inside the mutant arm, kept because they are the lesson. The copy's first
+                    home was the harness's own fixture root, which every harness run clears at startup, so the
+                    child deleted the file it was told to open and reported an `ENOENT` about its own subject;
+                    and the parent predicted the child's arm would print `0 printed`, reading the child's exit
+                    code as the reader's verdict when the child exits 1 for having a missed arm at all. Both are
+                    the same shape as D159's driver defect and D158's ignored flag: a measurement aimed at the
+                    wrong plane reports about the harness.
+
+                    Plane for these bytes: 650 tokens over 311 sections, 416 working-copy citations, 0
+                    offenders, 12 blank span starts counted and none judged — the count moved from D161's 14
+                    because the ledgers are their own census's population, which is why every figure here names
+                    its plane and its moment. Step 9 78 citations across 22 files; step 10 HEAD 150 decisions
+                    and 136 STATUS sections against disk equal, missing 0, duplicates 0; step 12 all resolving.
+                    Six harnesses 27 · 13 · 20 · 8 · 8 · 6 = 82 arms, none missed. Still open on purpose: one
+                    knob without its pair is not refused (`--dir` alone compares against the real `git HEAD`, a
+                    coherent question with no arm yet), and the 12 committed blanks still need appending rows
+                    rather than a predicate.
+
+## 169. D164: step 8's planes are drivable from the gate, its harness can finally be aimed at a reader, and the mutant arm says the red is a prediction
+
+                    `GATE_LEDGER_DIR` and `GATE_LEDGER_HEAD_DIR` now reach step 8, and
+                    `falsify_ledger_text.mjs` parses `--reader` and `--help` through the shared parser — a flag
+                    it does not read is refused at exit 2 naming the flags it takes, which is the defect D163
+                    caught it committing against itself. Step 8 keeps two branches, chosen by whether either
+                    knob is set, because `--worktree` beside a supplied plane would compare nothing and still
+                    print a verdict; the wiring arm reads both branches out of the shipped gate, so deleting
+                    either reddens without a database. The unset path is the old line unchanged.
+
+                    The drive was stopped by a plant: a head plane with one committed section, a disk plane
+                    adding a second citing a blank line, step 8 naming section and emptiness, the gate exit 1
+                    after 8 headers and 3 passes. The run database was dropped; the four pre-existing gate names
+                    and the two product databases were not opened. A state D162 reached once by accident is now
+                    reachable on demand.
+
+                    Two false results inside the mutant arm, kept because they are the lesson. The copy's first
+                    home was the harness's own fixture root, which every harness run clears at startup, so the
+                    child deleted the file it was told to open and reported an `ENOENT` about its own subject;
+                    and the parent predicted the child's arm would print `0 printed`, reading the child's exit
+                    code as the reader's verdict when the child exits 1 for having a missed arm at all. Both are
+                    the same shape as D159's driver defect and D158's ignored flag: a measurement aimed at the
+                    wrong plane reports about the harness.
+
+                    Plane for these bytes: 650 tokens over 311 sections, 416 working-copy citations, 0
+                    offenders, 12 blank span starts counted and none judged — the count moved from D161's 14
+                    because the ledgers are their own census's population, which is why every figure here names
+                    its plane and its moment. Step 9 78 citations across 22 files; step 10 HEAD 150 decisions
+                    and 136 STATUS sections against disk equal, missing 0, duplicates 0; step 12 all resolving.
+                    Six harnesses 27 · 13 · 20 · 8 · 8 · 6 = 82 arms, none missed. Still open on purpose: one
+                    knob without its pair is not refused (`--dir` alone compares against the real `git HEAD`, a
+                    coherent question with no arm yet), and the 12 committed blanks still need appending rows
+                    rather than a predicate.
