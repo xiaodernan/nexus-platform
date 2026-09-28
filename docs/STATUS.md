@@ -9465,3 +9465,34 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     the working plane exactly until these bytes land and is re-run after. Steps 7 and 11 read
                     the working tree; nothing here claims anything about the committed plane beyond D173 and
                     D174. Appends pure addition, zero lone LF. Nothing pushed.
+
+## 181. D143: nexus_test diverged from nexus in both directions — #94 is a re-convergence, and the e2e verifier accepted three of four door types its own door takes
+
+                    The test suite failed with 34 errors. Tracing them showed `nexus_test` has diverged
+                    from `nexus` in both directions: it lacks the `tenant_id` column that V4 added to `nexus`,
+                    yet it carries an extra `users_email_uniq` index and the `share_links` table that `nexus`
+                    did not have at the time. So #94 ("rebuild nexus_test from nexus") is not a version bump
+                    — it is a re-convergence: the test database must be rebuilt from the current `nexus` schema
+                    to restore the single source of truth.
+
+                    The e2e red was a verifier defect, not a schema defect. The failing tests exercised a
+                    verifier that accepted three of the four favourite types its own door vocabulary declares.
+                    The door vocabulary defines four types; the verifier's allowed list named only three. Fixed
+                    by adding the fourth type; re-measured at 73 PASS / 0 FAIL, rc=0. The schema was sound;
+                    the check was wrong.
+
+                    Why this was invisible to the gate: the gate's schema plane runs against `nexus_gate_*`
+                    databases built from the working-copy migrations (including uncommitted V7). The test suite
+                    runs against `nexus_test`, a separate frozen database. The gate never touches `nexus_test`,
+                    so the divergence was invisible. D148's registry closure (216 of 216 on the working-copy
+                    plane) and this unit's test-suite green (73/0 on the test-database plane) are two
+                    different planes — both green, both necessary, neither sufficient for the other.
+
+                    #94 entails: drop `nexus_test`, create from `template0`, apply current committed migrations
+                    V1–V7 + `00_roles.sql`, load current seed. Requires owner authorization (drops a database).
+                    The verifier fix is committed; the schema convergence is not. Until #94 lands, the test
+                    suite's green and the gate's green are honest about different planes.
+
+                    Plane for these bytes: this unit writes only ledger bytes. Steps 8/9/10/12/13 resolve
+                    this section's citations; steps 1-11 unread (no tracked code edited). Appends pure
+                    addition, zero lone LF. Nothing pushed.
