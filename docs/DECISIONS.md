@@ -10474,3 +10474,94 @@ This makes `nexus_test` a true replica of `nexus` at HEAD, and the test suite's 
 **No behavioural change on green planes.** The fix only affects the code path where the reader exits non-zero. On planes where the reader exits 0 (the working tree, and any plane with zero offenders), the try block succeeds and the behaviour is identical.
 
 **Plane for these bytes.** Steps 7-12: working-tree plane green (216/216 registry, 78/22 comment citations, 0 ledger offenders). Step 13: committed plane reports 8 FALSE SITES, 0 ledger offenders, 75 comment citations across 20 files. The blank-line census now reconciles on both planes without crashing. Appends pure addition, zero lone LF. Nothing pushed.
+
+## D193 — step 7's read census excused every miss with one bucket, and its parse failures answered in the verdict's exit code
+
+D192's rule, one reader later: a rule that cannot fire on the plane the gate reads is not a rule the
+gate has. Gate step 7 had the shape twice over. Every read its scan could not find went into one
+bucket — `unseen` — which is a bucket, not a verdict: it covered the file that is not in this index,
+the name two files hold, the site that cites no file at all, the file outside the roots the scan
+walks, and the one case a human genuinely has to judge, and it printed nothing that told those
+apart. Meanwhile the population the bucket talked about was hard-coded, so a sentence like "a
+narrowed scan reports its own blind spot" could not be made false from outside the shipped bytes.
+
+The bucket is now five named classes, each printed with its own count including the zeros:
+file-not-on-this-plane, site-file-ambiguous, site-names-no-file, outside-the-census-roots,
+not-read-in-the-file-where-it-should-be. Exactly one of them is fatal, and it is fatal for a
+specific reason: a build that reads jsonb in a directory this scan was never told to walk makes
+every answer about that directory unfalsifiable, so the fix is to widen the roots, not to be
+excused for not seeing it. That one prints `CENSUS COVERAGE — N answer(s) cite a file outside the
+root(s)` (scripts/check_jsonb_reads.mjs:837) and its count joins the exit term. Exactly one is left
+to a human — the site resolves inside the walked roots and the key text is not in the file — and
+that class is a report at exit 0, because a read through a helper is legal code and only a person
+can say whether the read went through one.
+
+The population became addressable, and two floors came with it. `--roots` narrows the read scan,
+and a census that opened nothing (scripts/check_jsonb_reads.mjs:534) or opened files and found no
+read at all (:557) is refused with exit 2. The second floor is the one that matters: a scanner that
+finds nothing cannot contradict an answer list, it can only agree with it, and before the floor
+existed a scan aimed at a directory with no jsonb in it would have printed a green over a census
+with no second reader.
+
+What narrowing measured, on this tree. The Java root alone — services/platform/src/main/java, 130
+files — reaches all 19 declared (column, key) pairs, so the second root contributes no read today.
+Aimed at apps/ai/nexus_ai alone, the census opens 44 files, finds 0 reads, and is refused by the
+second floor: the AI subtree is currently invisible to the read census in the strongest sense, and
+the root stays because a read appearing there must be caught the day it does. Aimed at data/seed,
+it opens 9 files and prints `CENSUS COVERAGE — 16 answer(s)` citing files outside the roots, and
+reddens. The `scripts` root — source files that hold no jsonb key read — is the coverage case at the
+other end: it reddens and the CENSUS COVERAGE number it prints is asserted by the same arm to equal
+the outside-the-census-roots class count, so a census cannot report a blind spot and forget to be
+stopped by it.
+
+The three plane-fact classes each promise, in the reader's own printed text, that the FALSE SITES
+block reddens the same row. That promise is now checked in-process: for every miss with a plane-fact
+reason, the run requires an offender naming that row, and adds one if none does
+(scripts/check_jsonb_reads.mjs:787,:788). Measured, the belt is silent on the shipped plane and on
+every plant this harness files, because the site census already reddens an absent file, an ambiguous
+name and a citation-free site on its own — the belt's firing side is unreachable while the rule it
+polices is intact. So its witness is a mutant reader: the absent-file rule silenced in a copy of the
+checker, run through the `--reader` seam against the same planted row
+(scripts/falsify_quality_seam.mjs:236), which is the only arm that can make the belt speak. The
+shipped-reader arms assert the opposite too — the belt's sentence must NOT print there — so a belt
+that fires on a healthy plane cannot pass either. It is policed in both directions and reachable in
+one, and the record says which.
+
+The reader's five setup failures were the second instance of the rule, and the crash guard found it.
+Each of them was a `throw new Error`, which prints a stack and exits 1 — this directory's code for
+"a verdict about reads and sites". The harness had started flagging such a run as
+"the reader died before printing a verdict or a refusal", and it was right: an arm aimed at a parse
+refusal had been measuring a crash and passing on the stack's wording. All five are now refusals at
+exit 2 through one helper (scripts/check_jsonb_reads.mjs:67), each naming the file it could not
+parse, and each has its own plant: the read_cat loop header, its column alias, the read_answer
+INSERT, the shape_answer INSERT (only the row parser reads that one, so it is the sole route to the
+missing-marker refusal), and a last row that stops closing before the semicolon. The refusal arms
+also require the run to be total — no header, no ANSWER SITES, no FALSE SITES, no CENSUS COVERAGE
+alongside the refusal (scripts/falsify_quality_seam.mjs:269) — because exit 2 alone would also pass a
+run that refused and then answered anyway.
+
+One plant was wrong before it was right, and its own red is the reason the arms name their phrase.
+The first version replaced the read_cat header with `(VALUES_X`, which still contains the literal the
+reader searches for as a prefix, so the run parsed, reported, and exited 0 — a green where a refusal
+was predicted. The arm's failure said exactly that: expected 2, got 0.
+
+The harness is 27 arms and all 27 held on the final bytes. Its control census is the tracked plane's
+own: 22 answer rows citing 31 locations in 12 files, 38 distinct source lines read back over 41
+checked spans, 174 files walked under 2 roots, 26 read sites, 19 distinct pairs against 17 declared
+triples. Step 7 on this tree exits 0. Step 9 exits 0 with 88 comment-plane tokens in 27 files. Step
+10 passes: 151 STATUS headings at HEAD against 166 on disk, 165 decisions against 179, nothing
+missing, no number claimed twice.
+
+Two reading steps are red on this tree for bytes this lane did not write, and they are reported, not
+edited. Step 8 finds 2 blank-line offenders among the uncommitted sections: one in DECISIONS D188,
+one in STATUS 191, each a citation whose cited line is empty. Step 12 finds 6 spelled STATUS section
+cites in docs/PLAN.md pointing at sections that exist on disk and not at HEAD. Neither names a file
+this unit touched; both are the same in-flight-lane class D176 opened step 13 to expose, and the
+numbers above are quoted from the run that judged my bytes.
+
+The residue worth keeping is a plane fact about one reader: the read scan walks 174 files under two
+roots while site citations resolve against a whole-repository index of 322 files under a 21-directory
+vendor exclusion. Two populations, deliberately different — a miss in the first is a coverage fact, a
+miss in the second is a stale answer — and it is why site-file-ambiguous has a witness at all:
+no walked root holds a duplicate basename, yet the index holds `__init__.py` more than once. Nothing
+pushed.

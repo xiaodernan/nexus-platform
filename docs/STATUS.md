@@ -9553,3 +9553,55 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     citations, 0 ledger offenders). Step 13 committed plane: 8 FALSE SITES, 0 ledger
                     offenders, 75 comment citations across 20 files. Blank-line census now reconciles on
                     both planes without crashing. Appends pure addition, zero lone LF. Nothing pushed.
+
+## 199. D193: step 7's census excused every miss with one bucket and answered its own parse failures in the verdict's exit code
+
+D192's rule applied to the next reader: a rule that cannot fire on the plane the gate reads is not a
+rule the gate has. Step 7's read census put every miss it could not find into one `unseen` sentence,
+which covered five different facts — the file is not in the index, the name is held by two files, the
+site cites no file, the file is outside the roots the scan walks, and the file is here and walked and
+the key text is not in it — and printed nothing that told them apart. The roots themselves were
+hard-coded, so a claim about what narrowing them would report could not be made false from outside
+the shipped bytes.
+
+Now: five named classes, each printed with its own count including the zeros; one of them fatal
+(outside-the-census-roots, via `CENSUS COVERAGE — N answer(s)`, whose number joins the exit term);
+one of them a report at exit 0 because only a human can say whether a read went through a helper.
+The population became addressable through `--roots`, and two non-vacuity floors came with it — a
+census that opened no file is refused, and a census that opened files and found no read is refused,
+because a scanner that finds nothing cannot contradict an answer list, it can only agree with it.
+
+Measured by narrowing. The Java root alone (130 files) reaches all 19 declared pairs, so the second
+root adds no read today; apps/ai/nexus_ai alone opens 44 files and finds 0 reads, which the second
+floor refuses rather than reports as clean; data/seed as a root opens 9 files and reddens with 16
+answers outside the roots; a scripts root reddens and the arm asserts the coverage number equals the
+class count, so a census cannot report a blind spot and forget to be stopped by it.
+
+The belt and its honest limit. Three classes are plane facts and each promises in print that the site
+census reddens the same row; the reader now requires an offender naming that row and writes one if
+none does. Measured, that belt is silent on the shipped plane and on every plant, because the site
+census already reddens those rows on its own — so its only witness is a mutant reader with the
+absent-file rule silenced, run through the harness's `--reader` seam, while the shipped arms assert
+the belt stays quiet. Reachable one way, policed both.
+
+The exit-code half of the unit. Five setup failures were `throw new Error`, which prints a stack and
+exits 1 — this directory's code for a verdict about reads; the harness's new crash guard correctly
+refused to call that a witness, and the arm that had been passing on a stack's wording was measuring
+a death. All five refuse at exit 2 now, naming the file they could not parse, and each has a plant:
+the read_cat loop header, its column alias, the read_answer INSERT, the shape_answer INSERT (only the
+row parser reads that one, so it is the sole route to the missing-marker refusal), and a row that
+stops closing. The arms also require the refusal to be total — no header, no sites block — since exit
+2 alone would pass a run that refused and answered anyway. One plant taught the prefix lesson:
+replacing the loop header with `(VALUES_X` left the searched literal intact as a prefix and the run
+went green at rc 0, which is what the arm's red said.
+
+Twenty-seven arms, all held on the final bytes. Control census on this tree: 22 answer rows, 31
+cited locations, 12 files, 38 distinct lines over 41 checked spans; 174 files walked under 2 roots,
+26 read sites, 19 pairs against 17 declared triples. Step 7 exits 0, step 9 exits 0 (88 comment
+tokens in 27 files), step 10 passes (STATUS 151 at HEAD against 166 on disk, DECISIONS 165 against
+179, missing 0, duplicates 0). Steps 8 and 12 are red on bytes this lane did not write: 2 blank-line
+ledger offenders in the uncommitted DECISIONS D188 and STATUS 191 sections, and 6 spelled STATUS
+section cites in docs/PLAN.md that exist on disk but not at HEAD — reported, not edited. Residue:
+the read scan walks 174 files while sites resolve against a 322-file whole-repo index, and that
+asymmetry is exactly why site-file-ambiguous has a witness — no walked root holds a duplicate
+basename, yet the index holds `__init__.py` twice. Nothing pushed.
