@@ -10255,3 +10255,51 @@ written, no unresolved routes. Step 8: 650 tokens over 311 committed sections, 4
 offenders, 12 blank span starts counted and 0 judged. Step 9: 78 comment-plane citations across 22 files, PASS.
 Harnesses: 29 ledger-text · 13 comment-plane · 20 flag-dialect · 8 quality-seam · 8 ledger-sections · 6
 status-citations, 84 arms, none missed.
+
+## D171 — The twelve blank citations get their appended row: eight are stale targets with known homes, four are sentences about staleness
+
+**What #114 asked for.** D167 produced the list; D162 armed the class only where a row is new; the exemption on
+the committed plane stayed because an append cannot move a printed number. What had not been done is the work
+the exemption presupposes — a written row per site, naming where each claim actually lives. This is that row.
+The line numbers below are the corrected targets as reported by the site tool, with the nearest text
+re-verified by eye; the stale cites themselves are written in prose so this entry adds none.
+
+* The DATABASE doc, line 88, cited by four rows: two in D88 and two in D160's and D165's listings. The claim in
+  question is the reservation provenance enumeration — the source values a booking may carry — whose opening is
+  at 86 and whose sentence closes at 87; line 88 is the blank before the next heading. The four cites are stale
+  by exactly that much.
+* The gate script, line 140, cited by D89 and by STATUS section 86, plus D160's list of them. The target is the
+  line that prints the table and migration totals, now at 139. D159's step 9 wiring added a line above it and
+  D164's step 8 branch added another, so this lane moved this target twice and each move aged two rows.
+* The section checker, line 34, cited by D154, by D159, and by the two rows written to correct them. The line
+  those rows describe is the root-of-the-repository constant, which the parse migration pushed to 35; line 34
+  is the blank after the import block.
+* The moderation controller, line 143, cited once by D45. Its subject is the not-found throw for a review,
+  which is at 142. This lane has not edited that file; the drift is from ordinary Java churn by another lane,
+  and correcting it means touching a number in a committed row rather than repairing code.
+* The collections controller, line 307, cited once by D87. Here the nearest-text hint was wrong and remains
+  so: 306 is a section divider, and the nullable-credit javadoc the row discusses is at 308. The corrected
+  target is therefore a judgement, not a measurement, and is recorded as such.
+
+**The split that matters more than the list.** Eight of the twelve are stale targets: a sentence reached for a
+line and missed it by a line, and each has a home that can be named. Four of them — the two D160 rows and the
+two D165 rows — are different in kind: their subject is the stale citation itself. They point at a blank line
+in order to report that the line is blank, which is the one use where judging them would be wrong: a predicate
+that reddened them would be reddening the record for describing the defect, and the fix would be to stop
+describing it. That is the shape of the boundary this lane keeps re-reaching: the blank class is sound where a
+row is new, and on the committed plane it separates into claims that were careless and claims that are about
+carelessness.
+
+**What follows, and what is deliberately not done here.** The eight stale targets are now named, so a future
+append can repair each with its number rather than re-deriving them; the four quotes are named as quotes, which
+is the information a rule would need to tell the two kinds apart. No such rule is implemented in this commit,
+because the only available test of it would be a plant that writes a declaring row into the real ledgers, and
+the harness that could do that honestly needs the same checkout seam step 8 already has for its own planes —
+filed rather than improvised. The general form is recorded once more because it keeps recurring: a checker that
+counts things must know which of its own sentences are data and which are claims about data.
+
+**Limits, stated.** This row corrects nothing in the files it names — every stale cite stays printed, and the
+count step 8 reports stays 12 by design. The corrected numbers are current as of this commit and will age the
+same way the ones above did: the DATABASE doc and the gate script are both files other lanes edit. And the
+collections-controller entry is a judgement about what a row meant, which is the one thing step 8's whole design
+refuses to check.

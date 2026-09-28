@@ -9307,3 +9307,28 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     declared column lists and argument counts, a helper-built row would be missed, options and
                     photos carry no element read so this join says nothing about them, and the guide-column
                     suspect still needs its dangling-item plant before anyone can call the row merely vacuous.
+
+## 176. D171: the twelve blank citations are now named one by one — eight stale targets with homes, four sentences whose subject is staleness
+
+                    D167 produced the list and D162 armed the class only where a row is new, but the work the
+                    exemption presupposes — a written row naming where each claim actually lives — had not been
+                    done. It is done now, with every corrected target line re-read rather than inherited from the
+                    tool's hint: the provenance sentence in the DATABASE doc spanning the lines just above the
+                    cited blank; the gate's totals echo line, moved twice by this lane's own step 8 and step 9
+                    edits; the repository-root constant in the section checker, pushed down by the parse
+                    migration; the review not-found throw in the moderation controller, drifted by another lane's
+                    Java churn; and the nullable-credit javadoc in the collections controller, where the tool's
+                    nearest-text hint pointed at a section divider and the correction is a judgement about what
+                    the row meant — recorded as a judgement, not as a measurement.
+
+                    The split matters more than the list. Four of the twelve are rows whose subject is a stale
+                    citation: they point at a blank line in order to report that it is blank. Judging those would
+                    redden the record for describing the defect, with the fix being to stop describing it — which
+                    is the boundary the blank class keeps re-reaching: sound where a row is new, and on the
+                    committed plane separating into carelessness and sentences about carelessness.
+
+                    Nothing is repaired in the files named, by design: the stale cites keep printing and step 8
+                    keeps reporting 12 counted and 0 judged. No declaring-rule is implemented either — its only
+                    honest test would be a plant writing a declaring row into the real ledgers, which needs the
+                    checkout seam step 8 already has for its own planes; filed rather than improvised. The numbers
+                    age like the ones they replace: two of the three target files belong to other lanes.
