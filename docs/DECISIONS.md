@@ -10339,3 +10339,39 @@ language, any case) catches only two of four, a narrower one catches fewer. What
 the cited range rather than the citing line, or a per-section declaration with an explicit syntax; both are more
 machinery than the twelve rows are worth, and the position without them is already safe: the class bites on
 every row a run writes, which is where new carelessness arrives.
+
+## D173 — The fresh gate's green is a shared-working-copy fact: step 7's site census cannot pass on a clean checkout of HEAD
+
+**The measurement, both directions, with the command held constant.** Inside a detached worktree of the current
+commit, the seed's own jsonb read-and-site census exits 1 and reports eleven false sites; the same command in the
+shared working copy exits 0 and reports none. Nothing about the tool changed between the two runs — the plane
+did. The worktree was created read-only for this purpose, its output captured to the temp directory, and the
+worktree removed immediately, so no branch moved and no tracked file in the main tree was touched.
+
+**What the eleven are.** Three of them name a source file that simply is not in the clean checkout's index at
+all: two reads attributed to the commerce order repository and one to the merchant import repository, each of
+which exists only as uncommitted work in this shared tree, among thirty-three untracked source files there. The
+other eight cite lines in the collections controller that exist but mention none of the key their answer row
+claims — the quoted line contents were a bare comment opener, a title-mapping statement, and an empty line — and
+the seed file whose rows make those claims is itself modified in this working copy, which is the likeliest place
+that half of the difference comes from.
+
+**Why this belongs in the ledger and not only in a task note.** Every lane that runs this gate quotes the same
+headline number as a property of a commit, and for step 7 it is a property of the directory. The finding is not
+that the seed's answers are wrong — on the plane where the work is being done they read clean — but that the
+committed plane cannot be certified by this gate as it stands, so a claim of the form "the gate is green,
+therefore this commit is sound" is unsupported for that step. The remedy this lane already uses for its own
+numbers, and which the next commit-time claim should use too, is to read the verdict from a worktree rather than
+from the shared tree, and to say which was used.
+
+**What is deliberately not claimed.** Which of the two uncommitted causes — the new source files, or the seed's
+own modified rows — accounts for each of the eleven, since isolating that would mean staging another lane's
+work, which this lane does not do. Whether the eight drifted sites also mislead the runtime reader or only the
+textual site check, which would need the java suite to run green first and that suite is red on this tree before
+any edit here. And whether other gate steps hide the same dependence, since only step 7 was tested this way and
+an untested step is not a passing one.
+
+**Limits, stated.** This is a report, not a repair: the seed file, the API contract, and the three untracked
+sources all belong to other lanes, and the fix — committing the work or re-aiming the rows at committed code —
+is theirs to make. What this lane has added is the measurement, the exact command, and the instruction to name
+the plane whenever a gate number is quoted.

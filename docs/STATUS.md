@@ -9355,3 +9355,31 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     checker's claim, and the class still bites wherever a run writes: that is where new
                     carelessness actually arrives, and it has been reddening rows since D162 including this
                     entry's own two, which judge clean.
+
+## 178. D173: step 7's site census is red on a clean checkout of HEAD and green in the shared tree, so the headline gate number belongs to the directory, not the commit
+
+                    Holding the command constant and moving only the plane — a detached worktree of the current
+                    commit, output captured to the temp directory, worktree removed straight after, nothing
+                    checked out or reset in the main tree — the seed's jsonb read-and-site census exits 1 with
+                    eleven false sites at HEAD and exits 0 with none in the working copy.
+
+                    Three of the eleven name source files absent from the clean checkout entirely: two reads
+                    attributed to the commerce order repository and one to the merchant import repository, part
+                    of thirty-three untracked source files in this shared tree. The other eight cite lines in the
+                    collections controller that exist but mention none of the key their answer row claims — a
+                    comment opener, a title-mapping statement, an empty line — and the seed file whose rows make
+                    those claims is itself modified here, which is where that half most likely comes from.
+
+                    The consequence is about language as much as code. This lane has spent fourteen units insisting
+                    that a count names its plane, and here the same rule bites a headline number: every report of
+                    "the fresh gate is green, therefore this commit is sound" is unsupported for step 7, because
+                    that step's green is a property of the directory. The practice already exists for ledger
+                    counts and needs to apply to gate claims too: read the verdict in a worktree, and say so.
+
+                    Not claimed, and left open rather than inferred: which uncommitted cause explains each of the
+                    eleven — separating them would mean staging another lane's work — whether the eight drifted
+                    sites mislead the runtime reader as well as the textual check, which would need the java suite
+                    green first and it is red on this tree before any edit here, and whether other gate steps hide
+                    the same dependence, since only this one was tested. It is a report, not a repair: the seed
+                    file, the API contract and the three untracked sources belong to other lanes, and the fix —
+                    commit the work or re-aim the rows at committed code — is theirs.
