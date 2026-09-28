@@ -9987,3 +9987,51 @@ minutes of database work and the seam arms already reach the same predicate in s
 arm that reads the branch text, which the wiring arm now partly supplies. The blank class itself gained nothing
 in reach: a citation onto `}` still passes, D160's content predicate stays refused on measurement, and the
 committed blanks still want appending rows rather than a new check.
+
+## D165 — One plane knob is not a question step 8 is willing to answer, and the numbers that proves it were printed before the guard existed
+
+**What was measured first.** D164 forwarded `GATE_LEDGER_DIR` and `GATE_LEDGER_HEAD_DIR` and left their pairing
+to prose. Each knob alone was then run against the seam fixture, and both produced verdicts that were not about
+anything:
+
+* `--head-dir <two-section fixture>` alone — the committed plane came from the fixture and the working copy from
+  this tree, so `blank-line cites 0 at HEAD … · 12 blank(s) among 311 section(s) this run is writing` printed,
+  the run exited 1, and the 12 committed blank citations D161 deliberately leaves counted became offenders. The
+  exemption was inverted by half a command line.
+* `--dir <fixture>` alone — the mirror image, and it printed `1 blank(s) among -310 section(s) this run is
+  writing`. A negative number of sections being written is the two planes' heading totals being subtracted
+  across trees, which is arithmetic, not a claim about newness.
+
+**The guard.** `scripts/check_ledger_citations.mjs` now refuses either flag without its partner through the
+shared parser's own refusal channel — `RESULT: NOT CHECKED` at exit 2, naming the missing flag and saying which
+tree the run would otherwise have compared against which. That is the same shape as the seven argument refusals,
+so an unusable request stops the gate exactly where a wrong tenant or an unaimed `--text` already does. The gate
+inherits it unchanged: with one of the two environment names set, step 8 exits 2 and the drive stops, which is
+the intended behaviour for a half-specified plane and not a regression to work around.
+
+**The count became a set difference.** The printed figure is now `newSections(work, head)` — the disk plane's
+section titles that the committed plane's titles do not hold — so it cannot go negative even for a pair that
+disagrees in both directions, and the sentence reads `0 blank(s) among 0 new section(s), and a blank there
+offends` on a clean tree. The subtraction it replaced was never wrong about the two numbers it subtracted; it
+was wrong about what their difference meant, which is the kind of defect a print line hides until a fixture
+makes it visible.
+
+**Arms.** `scripts/falsify_ledger_text.mjs` holds 29 of 29. Two are the refusals above, each pinned by its own
+sentence — including the fragment `against the ledgers of this tree`, so the second direction cannot be satisfied
+by the first's message — and three existing arms moved onto the new wording, which is the part of this change
+that touches nothing but prose. A planted `--dir=` still refuses with its unit named, the pair still reddens on a
+new-section blank and stays green when the head plane is used as both, and the mutant arm still reports D162's
+predicate reddening the harness.
+
+**Measured on the bytes this entry describes.** Default plane: 12 blank span starts counted and 0 judged among 0
+new sections, 416 working-copy citations in 315 sections, 0 offenders, exit 0, and the append that wrote this sentence was itself judged — 0 blank span starts among the 2 new sections
+at the moment it landed, which is the rule reading the paragraph that describes it; comment plane 78 citations across
+22 files, PASS; harnesses 29 ledger-text · 13 comment-plane · 20 flag-dialect · 8 quality-seam · 8
+ledger-sections · 6 status-citations, 84 arms, none missed; `bash -n` clean on the gate.
+
+**Limits, stated.** The guard rejects a half-pair, it does not decide whether a lone `--dir` is a question worth
+having — comparing a supplied working copy against this tree's committed ledgers is coherent for a drive that
+only wants to plant an entry, and no arm asks that yet, so if that mode is ever wanted it should be given its own
+name rather than a looser guard. The blank class's reach is unchanged here: emptiness is still the only content
+fact step 8 asserts, D160's anchor-on-line predicate stays refused on its measurement, and the 12 committed blank
+citations still want appending rows rather than a predicate that judges history.

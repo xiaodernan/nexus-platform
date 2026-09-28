@@ -134,6 +134,20 @@ const BLANK_JUDGED = ARGS.text !== null;
 const plane = (p) => (p === null ? null : (isAbsolute(p) ? p : join(ROOT, p)));
 const DIR = plane(ARGS.dir);
 const HEAD_DIR = plane(ARGS.headDir);
+/**
+ * The two planes are addressed as a pair, and one without the other is refused rather than guessed. Measured
+ * on the seam fixture before this guard existed: `--head-dir` alone compared a two-section committed plane
+ * against the REAL ledgers, so the 12 blank citations D161 deliberately leaves counted became `12 blank(s)
+ * among 311 section(s) this run is writing` and the run exited 1 — the exemption inverted by a typo. `--dir`
+ * alone ran the other way and printed `1 blank(s) among -310 section(s)`, a negative count of sections being
+ * written, which is the two planes' heading totals being subtracted across trees. Neither question is the one
+ * a caller means, and a verdict that silently mixes trees is worse than a refusal that names its partner.
+ */
+if ((DIR === null) !== (HEAD_DIR === null)) {
+  notCheckable(DIR === null
+    ? `--head-dir was given without --dir — the two planes are addressed as a pair, and this run would compare ${HEAD_DIR} against the ledgers of this tree`
+    : `--dir was given without --head-dir — the two planes are addressed as a pair, and this run would compare this tree's HEAD against ${DIR}`);
+}
 
 /* ------------------------------------------------------------------ the source index */
 
@@ -336,6 +350,15 @@ function census(committed, blankOffends) {
   return stats;
 }
 
+/**
+ * How many of the sections the disk plane holds are absent from the committed one. Counted by set difference
+ * rather than by subtracting the two heading totals, because a supplied pair of planes can hold sections the
+ * other does not in EITHER direction — `--head-dir` alone once printed "311 section(s) this run is writing"
+ * about a two-section fixture, and `--dir` alone printed a negative count, both of which are the subtraction
+ * being honest about two trees rather than about newness.
+ */
+const newSections = (work, head) => [...work.titles].filter((t) => !head.titles.has(t)).length;
+
 const head = census(!WORKTREE, () => BLANK_JUDGED);
 // D162 — on the reading plane the blank class judges exactly the sections this tree is writing: a `## `
 // heading that does not exist at HEAD. That subset has no backlog (every one of the 14 blanks D161 counted
@@ -374,7 +397,7 @@ console.log('NEXUS — every file:line citation in docs/DECISIONS.md and docs/ST
 console.log(`  text censised            ${WORKTREE ? 'the working copy (strict)' : 'HEAD (strict); the working copy is reported'}`);
 console.log(`  blank-line cites         ${BLANK_JUDGED
   ? `${head.blanks} span start(s) on an empty line — every one is an offender on this plane`
-  : `${head.blanks} at HEAD (counted, not judged — D161's backlog) · ${work.judged} blank(s) among ${work.sections - head.sections} section(s) this run is writing, and a blank there offends`}`);
+  : `${head.blanks} at HEAD (counted, not judged — D161's backlog) · ${work.judged} blank(s) among ${newSections(work, head)} new section(s), and a blank there offends`}`);
 console.log(`  headings seen            ${head.sections} section(s) — an offender is attributed to the one that wrote it`);
 console.log(`  name:number tokens       ${head.tokens}`);
 console.log(`  citation-shaped          ${head.citations} (the rest are host:port, ENV:value, §NN or prose)`);

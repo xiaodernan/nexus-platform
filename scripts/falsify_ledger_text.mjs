@@ -212,18 +212,29 @@ const ARMS = [
   // once in a real ledger draft; this arm stays because it pins what an operator sees on the clean tree.
   { name: 'the default plane reports both blank halves and stays green while no new section cites one',
     args: [], expect: 0,
-    must: [/blank-line cites\s+\d+ at HEAD \(counted, not judged/, /section\(s\) this run is writing, and a blank there offends/,
-      /0 blank\(s\) among \d+ section/],
+    must: [/blank-line cites\s+\d+ at HEAD \(counted, not judged/, /new section\(s\), and a blank there offends/,
+      /0 blank\(s\) among \d+ new section/],
     absent: [/BLANK LINE \(\d+\):/, /FALSE LEDGER CITATIONS/] },
   // D163 — four faces of the new seam: red, control, and the two refusals that keep a mistyped request from
   // quietly reading the repository instead of the plane the caller asked for.
   { name: 'a new section citing a blank line reddens when both planes are supplied',
     args: ['--head-dir', HEAD_PLANE, '--dir', DISK_PLANE], expect: 1,
     must: [/FALSE LEDGER CITATIONS — BLANK LINE IN A NEW SECTION \(1\)/, new RegExp(`scripts/cli_args\\.mjs:${BLANK_AT}`),
-      /1 blank\(s\) among 1 section\(s\) this run is writing/] },
+      /1 blank\(s\) among 1 new section\(s\)/] },
   { name: 'the same head plane with no new section is green — the rule judges newness, not the fixture',
     args: ['--head-dir', HEAD_PLANE, '--dir', HEAD_PLANE], expect: 0,
-    must: [/0 blank\(s\) among 0 section\(s\)/], absent: [/FALSE LEDGER CITATIONS/, /BLANK LINE \(\d+\):/] },
+    must: [/0 blank\(s\) among 0 new section\(s\)/], absent: [/FALSE LEDGER CITATIONS/, /BLANK LINE \(\d+\):/] },
+  // D165 — the pair is enforced. Measured before the guard existed: `--head-dir` alone turned the 12 committed
+  // blank citations into offenders and exited 1 — the exemption inverted by half a command line — and `--dir`
+  // alone printed a NEGATIVE count of sections being written, which is two trees' heading totals being
+  // subtracted rather than any claim about newness. Both refusals name the partner flag, and the count is now
+  // a set difference, so it cannot go negative even on a pair that disagrees in both directions.
+  { name: '--dir without --head-dir is refused, because one plane alone mixes two trees',
+    args: ['--dir', DISK_PLANE], expect: 2,
+    must: [/RESULT: NOT CHECKED — --dir was given without --head-dir/, /the two planes are addressed as a pair/] },
+  { name: '--head-dir without --dir is refused for the same reason, in the other direction',
+    args: ['--head-dir', HEAD_PLANE], expect: 2,
+    must: [/RESULT: NOT CHECKED — --head-dir was given without --dir/, /against the ledgers of this tree/] },
   { name: '--dir= is refused with its unit named, not silently read as the repository', args: ['--dir='], expect: 2,
     must: [/RESULT: NOT CHECKED — --dir was given without a directory/] },
   { name: '--head-dir followed by another flag is refused, because a seam may not guess which plane',

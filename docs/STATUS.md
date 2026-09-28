@@ -9140,3 +9140,30 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     knob without its pair is not refused (`--dir` alone compares against the real `git HEAD`, a
                     coherent question with no arm yet), and the 12 committed blanks still need appending rows
                     rather than a predicate.
+
+## 170. D165: step 8 refuses one plane knob without the other, because both half-commands were measured printing verdicts about no tree at all
+
+                    `--head-dir` alone took its committed plane from a two-section fixture and its working copy
+                    from this repository, printed `12 blank(s) among 311 section(s) this run is writing`, and
+                    exited 1 — the 12 committed blank citations D161 leaves counted became offenders through half
+                    a command line. `--dir` alone printed `1 blank(s) among -310 section(s) this run is writing`,
+                    a negative count that is two heading totals subtracted across trees rather than any claim
+                    about newness. Both are now `RESULT: NOT CHECKED` at exit 2 naming the partner flag, and the
+                    printed figure is a set difference that cannot go negative.
+
+                    Two refusal arms were added (29 of 29 held), one per direction, each pinned by its own
+                    sentence so the second cannot be satisfied by the first's message; three existing arms moved
+                    onto the new wording, which changes prose only. The gate inherits the guard: set one of
+                    `GATE_LEDGER_DIR`/`GATE_LEDGER_HEAD_DIR` and step 8 exits 2, stopping the drive — deliberate,
+                    since a half-specified plane is not a question this reader answers.
+
+                    What the guard does not settle: whether a lone `--dir` should be a supported question at all
+                    (comparing a supplied working copy against this tree's committed ledgers is coherent, and no
+                    arm asks it yet). If it is ever wanted it gets its own name, not a looser guard. The blank
+                    class gained no reach — emptiness is still the only content fact step 8 asserts, D160's
+                    anchor-on-line predicate stays refused, and the 12 committed blank citations still want
+                    appending rows.
+
+                    Plane on these bytes: default census 12 blanks counted and 0 judged among 0 new sections, 416
+                    working-copy citations in 315 sections, 0 offenders, exit 0, with the two sections this entry adds judged at 0 blanks; step 9 78 citations across 22
+                    files PASS; harnesses 29 · 13 · 20 · 8 · 8 · 6 = 84 arms, none missed; `bash -n` clean.
