@@ -410,7 +410,13 @@ reconcile() {
     "$(gap "$(off "$3")" "$(off "$4")")"
 }
 step "13a/13  quality reads on the committed plane (cwd inside the worktree; the knob leg printed for contrast)"
-( cd "$ROOT" && GATE_QUALITY_SQL="$WT/data/seed/quality.sql" node scripts/falsify_quality_seam.mjs ) 2>&1 | sed -e 's/^/    /' || true
+# D193: this leg used to carry `GATE_QUALITY_SQL="$WT/data/seed/quality.sql"` in front of the harness — the same
+# inert prefix 13b's paragraph above records removing, still standing two legs further along. Every
+# `scripts/falsify_*.mjs` was grepped for `process.env`: none of them reads any variable, and this harness builds
+# its fixtures from `join(ROOT, 'data/seed/quality.sql')`, this directory's file. The harness legs stay at `$ROOT`
+# by design (13b), so the label is what goes; `falsify_quality_seam.mjs` now carries the arm that keeps any such
+# prefix from coming back, on this leg and on the two others.
+( cd "$ROOT" && node scripts/falsify_quality_seam.mjs ) 2>&1 | sed -e 's/^/    /' || true
 # `--report` on both captured legs: these are measurements, and a reader that exits 1 inside a command
 # substitution would take the gate down through `set -e` on an assignment rather than on a verdict.
 Q7_KNOB="$( cd "$ROOT" && node scripts/check_jsonb_reads.mjs --quality="$WT/data/seed/quality.sql" --report 2>&1 || true )"
@@ -424,7 +430,9 @@ WT_LINE="$( cd "$WT" && node scripts/check_ledger_citations.mjs --report 2>&1 ||
 printf '%s\n' "$WT_LINE" | sed -e 's/^/    /'
 reconcile 13b "$FILES_LEDGER" "$KNOB_LINE" "$WT_LINE"
 step "13c/13  comment citations on the committed plane (cwd inside the worktree; the knob leg printed for contrast)"
-( cd "$ROOT" && GATE_COMMENT_PLANE="$WT" node scripts/falsify_comment_plane.mjs ) 2>&1 | sed -e 's/^/    /' || true
+# D193: the same inert prefix as 13a's note — `falsify_comment_plane.mjs` reads no environment variable either
+# (its seam is the `--checker=<path>` flag). The arm above covers every falsifier invocation in this file.
+( cd "$ROOT" && node scripts/falsify_comment_plane.mjs ) 2>&1 | sed -e 's/^/    /' || true
 C9_KNOB="$( cd "$ROOT" && node scripts/check_comment_citations.mjs --plane="$WT" 2>&1 || true )"
 C9_WT="$( cd "$WT" && node scripts/check_comment_citations.mjs 2>&1 || true )"
 printf '%s\n' "$C9_WT" | sed -e 's/^/    /'
@@ -434,6 +442,39 @@ git worktree remove "$WT" 2>&1 | sed -e 's/^/    /'
 trap - EXIT
 trap cleanup EXIT
 
+# --------------------------------------------------------------------------- 14. the console, and the readers nobody ran
+step "14/14  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_reader_reachability.mjs — the console's two promises, and whether every reader in scripts/ is reachable from a gate that can fail"
+# D195. Three things were true at once on the shipped bytes, and each one is the same shape this lane has now
+# closed four times (D98, D150-D152, D191, D192) — a rule that cannot fire on the plane the gate reads is not a
+# rule the gate has, and a reader nothing runs is not a gate either.
+#
+#   1. Two readers were named by no surface at all. `scripts/check_console_i18n.mjs` (the copy + noindex
+#      promises, 31 pages / 20 console / 0 offenders) and `scripts/check_console_a11y.mjs` (landmarks,
+#      accessible names, focus order, printed contrast; 13 of 13 arms held) both PASSED, and nothing ran
+#      either of them: not this script, not CI, not the Makefile. `docs/PLAN.md` recorded the accessibility
+#      half of P3 as "unmeasured" while the census that measures it sat in the tree.
+#   2. Three CI steps carried "Hard-fail" in their own comments and could not fail. They pipe a checker into
+#      `tee` for the artifact, and GitHub's documented default for a `run:` step on Linux is `bash -e {0}`
+#      (workflow-syntax reference, shell table: unspecified -> `bash -e {0}`; `shell: bash` ->
+#      `bash --noprofile --norc -eo pipefail {0}`). A pipeline reports its last command, so the runner read
+#      tee's 0 whatever the checker said. Measured in a shell rather than argued: `false | tee /dev/null`
+#      under `bash -e` exits 0, under `bash -eo pipefail` it exits 1. Every one of those steps now declares
+#      `shell: bash`, and `scripts/check_reader_reachability.mjs` censuses the workflow so the next one cannot
+#      be added without it.
+#   3. THIS script held its own pipes together and nothing said so. `set -euo pipefail` on line 51 is what
+#      makes every `node ... | sed` below it able to stop the run, and D150/D151's proof that step 11 can
+#      stop the gate is a proof about that one line. The census asserts the line is still there, because a
+#      pipe in a shell without it reports the last command on both planes.
+#
+# The three readers need no database and no browser — they read the render tree and the text of this
+# repository — so they run after step 13 rather than beside it, and the same pipe discipline applies to them.
+# `scripts/falsify_console_a11y.mjs` is run here for the reason every reader's arms are: the census is only
+# as good as the arms that show it reddening, and 13 of 13 held before this step existed.
+( cd "$ROOT" && node scripts/check_console_i18n.mjs ) 2>&1 | sed -e 's/^/    /'
+( cd "$ROOT" && node scripts/check_console_a11y.mjs ) 2>&1 | sed -e 's/^/    /'
+( cd "$ROOT" && node scripts/falsify_console_a11y.mjs ) 2>&1 | sed -e 's/^/    /'
+( cd "$ROOT" && node scripts/falsify_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
+( cd "$ROOT" && node scripts/check_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
 printf '\nRESULT: PASS — %s quality checks on a from-scratch schema (tables=%s, migrations=%s), plus the\n' \
   "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"
 printf '        seed truncate shown clearing an empty stranger and refusing one that holds rows, the\n'
@@ -449,4 +490,7 @@ printf '        the spelled §-citations in code and docs resolved against the h
 printf '        so a renumber that leaves a pointer behind reddens the gate instead of a manual run.\n'
 printf '        the read census'"'"'s own seam shown able to stop this script, so the step that reads the seed\n'
 printf '        answers is reachable from a drive and not only from a hand-run of an invocation nobody makes.\n'
+printf '        the console'"'"'s copy/noindex and accessibility promises, which two readers measured and no\n'
+printf '        surface ran until the step that runs them, and the readers themselves: every check_*.mjs here\n'
+printf '        named by a surface, every CI pipe that runs one declaring the shell that makes it able to fail.\n'
 printf '        SYNTHETIC DEMO DATA. The live databases were not opened by this run.\n'

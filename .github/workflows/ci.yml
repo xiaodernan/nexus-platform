@@ -114,16 +114,32 @@ jobs:
         working-directory: apps/ai
       - run: uv run ruff check . && uv run mypy nexus_ai
         working-directory: apps/ai
+      # D23: the read path, the audit-ledger INSERT and the category filter all failed against a real
+      # database while `pytest -q` stayed green, because the live-DB suite skipped without
+      # NEXUS_TEST_DATABASE_URL. So CI provisions the schema AND the role split and points the suite at
+      # the restricted `nexus_ai` role — superuser here would make the grant assertions vacuous.
+      - name: Apply schema + role grants
+        run: |
+          sudo apt-get update -y && sudo apt-get install -y postgresql-client
+          export PGPASSWORD=ci_secret
+          for f in $(ls infra/db/migrations/*.sql | sort -V); do
+            psql -h 127.0.0.1 -p 5433 -U postgres -d nexus_test -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+          NEXUS_DB_APP_PASSWORD=ci_nexus_app NEXUS_DB_AI_PASSWORD=ci_nexus_ai \
+            psql -h 127.0.0.1 -p 5433 -U postgres -d nexus_test -v ON_ERROR_STOP=1 -q \
+            -f infra/postgres/init/00_roles.sql
       - name: Tests + evaluation gate
         env:
-          NEXUS_DB_URL: postgresql://postgres:ci_secret@127.0.0.1:5433/nexus_test
+          NEXUS_DB_URL: postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test
+          NEXUS_TEST_DATABASE_URL: postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test
           NEXUS_REDIS_URL: redis://127.0.0.1:6380/0
           NEXUS_LLM_PROVIDER: mock
         run: uv run pytest -q
         working-directory: apps/ai
-      - name: Eval gate (blocks merge: hallucination < 2%, injection containment 100%)
+      - name: "Eval gate (blocks merge: hallucination < 2%, injection containment 100%)"
         env:
-          NEXUS_DB_URL: postgresql://postgres:ci_secret@127.0.0.1:5433/nexus_test
+          NEXUS_DB_URL: postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test
+          NEXUS_TEST_DATABASE_URL: postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test
           NEXUS_LLM_PROVIDER: mock
         run: uv run python -m nexus_ai.eval.cli --suite intent_v1 --fail-on-gate
         working-directory: apps/ai
@@ -170,6 +186,75 @@ jobs:
           path: tests/evidence
           retention-days: 14
 
+# ------------------------------------------------------------------ contract
+  contract-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      # D195 — THE SHELL IS PART OF THE GATE. Every step below pipes a reader into `tee` so the report is an
+      # artifact, and in GitHub Actions the default `run:` shell on Linux is `bash -e {0}` (workflow-syntax
+      # reference, "Supported platform / shell parameter": unspecified -> `bash -e {0}`, `bash` ->
+      # `bash --noprofile --norc -eo pipefail {0}`). Without `pipefail` a pipeline reports its LAST command,
+      # so a checker that exits 1 was reported as tee's 0: measured on this workflow, three steps pipe a
+      # checker into `tee`, none of them declared a shell, and none of them could fail — including the one
+      # whose own comment says "Hard-fail" and the one whose comment predicts a red for a false citation.
+      # How many of those steps describe themselves as a hard fail is PRINTED by
+      # `scripts/check_reader_reachability.mjs` and not typed here: the first draft of this note said "three
+      # steps carried Hard-fail", which was wrong by two.
+
+      # Report mode for now: the checker's own header says so, and M4 flips it to a hard gate
+      # (docs/STATUS.md "Route coverage ledger"). The summary is the artifact — a route a client
+      # names that no service serves is a working-looking button that 404s, and CI must show it
+      # even while it is allowed to pass.
+      - name: Documented routes vs implemented routes
+        shell: bash
+        run: |
+          node scripts/check_contract_drift.mjs --report | tee contract-drift.txt
+          { echo "## Contract drift"; echo '```'; cat contract-drift.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      # The jsonb read census (§81 residue (a)). It lives here rather than in a job of its own because it
+      # is the same question as the route ledger — does the build read something nothing provides — asked
+      # of the data plane instead of the HTTP plane. Hard-fail: the declared list in data/seed/quality.sql
+      # is the artifact, and a read added to Java without a row there is a branch that decides quietly.
+      - name: jsonb keys read by the build, against the declared list
+        shell: bash   # see the shell note above: this step calls itself a hard fail
+        run: |
+          node scripts/check_jsonb_reads.mjs | tee jsonb-reads.txt
+          { echo "## jsonb read census"; echo '```'; cat jsonb-reads.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      # The ledger's own `File.ext:NNN` citations, read back out of the source (D88). HEAD mode, which is
+      # the strict one and the reason this lives in CI: on a runner `git show` works, so the committed text
+      # is what gets censused. `exit 2` (UNCHECKED) is a distinct verdict from `exit 1` (a false citation) —
+      # a runner that cannot read the ledger must not be reported as a ledger with no offenders.
+      - name: Ledger citations resolve to real files and lines
+        shell: bash   # see the shell note above: this step's comment predicts a red for a false citation
+        run: |
+          node scripts/check_ledger_citations.mjs | tee ledger-citations.txt
+          { echo "## Ledger citations"; echo '```'; cat ledger-citations.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      # The console's two promises, and the reader that asks whether readers are reachable at all. All three
+      # are first-party `scripts/check_*.mjs` that no surface named before D195 — `docs/PLAN.md` recorded the
+      # accessibility half as "unmeasured" while `scripts/check_console_a11y.mjs` and its 13-arm harness sat
+      # in the tree, passing. They need no database and no browser: they read the render tree.
+      - name: Console copy + noindex census
+        shell: bash
+        run: |
+          node scripts/check_console_i18n.mjs | tee console-i18n.txt
+          { echo "## Console copy + noindex"; echo '```'; cat console-i18n.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Console accessibility census (landmarks, names, focus order, printed contrast)
+        shell: bash
+        run: |
+          node scripts/check_console_a11y.mjs | tee console-a11y.txt
+          { echo "## Console accessibility"; echo '```'; cat console-a11y.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: The accessibility census can still fail (its own arms)
+        shell: bash
+        run: |
+          node scripts/falsify_console_a11y.mjs | tee console-a11y-arms.txt
+      - name: Every reader is reachable, and every pipe that runs one can fail
+        shell: bash
+        run: |
+          node scripts/check_reader_reachability.mjs | tee reader-reachability.txt
+          { echo "## Reader reachability + pipe protection"; echo '```'; cat reader-reachability.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 # ------------------------------------------------------------------ security
   security:
     needs: changes
@@ -193,11 +278,12 @@ jobs:
           fi
 
   required:
-    needs: [lint-type, platform, ai, e2e, security]
+    needs: [lint-type, platform, ai, e2e, contract-drift, security]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: All gates green
         run: |
-          echo "results: lint-type=${{ needs.lint-type.result }} platform=${{ needs.platform.result }} ai=${{ needs.ai.result }} e2e=${{ needs.e2e.result }} security=${{ needs.security.result }}"
+          echo "results: lint-type=${{ needs.lint-type.result }} platform=${{ needs.platform.result }} ai=${{ needs.ai.result }} e2e=${{ needs.e2e.result }} contract-drift=${{ needs.contract-drift.result }} security=${{ needs.security.result }}"
           test "${{ needs.e2e.result }}" != "failure"
+          test "${{ needs.contract-drift.result }}" != "failure"
