@@ -42,7 +42,8 @@
 # comments, the seed file — while the reader's SOURCE INDEX stays on the directory it was started in, because
 # that index is built from `process.cwd()`. So `GATE_LEDGER_DIR=/tmp/x` asks "do /tmp/x's sentences name files
 # that exist HERE", which is the right question for a harness fixture and the wrong one for a clean-checkout
-# certification. Step 13 therefore runs its reader legs with `cd "$WT"` and no knob, and prints both counts.
+# certification. Step 13 therefore runs its reader legs with `cd "$WT"` and no knob, and prints both legs'
+# counts for each of its three readers (D190) rather than for one.
 #
 # Safety: this creates and DESTROYS a database. It refuses to run if the target resolves to `nexus`
 # or `nexus_test` — the developer database and the integration-test one — and it never touches a
@@ -374,24 +375,61 @@ command -v git >/dev/null 2>&1 || die "step 13 needs git on PATH"
 WT="$(mktemp -d "${TMPDIR:-/tmp}/nexus-gate-wt.XXXXXX")"
 git worktree add --detach "$WT" HEAD 2>&1 | sed -e 's/^/    /'
 trap 'git worktree remove "$WT" 2>/dev/null || true; cleanup' EXIT
-step "13a/13  quality reads on the committed plane (cwd inside the worktree)"
+# D190: THE RECONCILIATION IS ARITHMETIC, NOT A SENTENCE. 13b printed two counts and 13a/13c printed only the
+# bare leg, so "the knob relocates the text and not the source index" was one step's measurement generalised to
+# three steps by the same comment. All three legs now run their reader twice — from this directory with that
+# step's own knob aimed at the worktree, and from inside the worktree with no knob — and one `reconcile` line
+# prints what both runs said. Every number on the line comes out of a run: `num` pulls the first number that
+# reader's own census line carries, `off` its `FALSE SITES (N)` / `FILE NOT FOUND (N)` header, and a leg that
+# printed neither that header nor its own clean sentence reports `no-verdict` instead of a comfortable 0,
+# because a reader that crashed must not appear on this line as a clean one. `gap` subtracts the two offender
+# counts, and refuses to do arithmetic on words. Measured on one commit, three pairs, same direction: 13a 12
+# files / 8 false sites from the main tree against 10 / 11 from inside the worktree; 13b 77 / 0 against 65 / 41;
+# 13c 21 files / 0 offenders against 21 / 10. The `reconcile` body holds no digit, which is the claim
+# `scripts/falsify_ledger_text.mjs` now pins — along with the three call sites, so a leg cannot quietly stop
+# running its knob pair.
+FILES_READS='citations resolved[[:space:]]*[0-9]+'          # step 7's census line
+FILES_LEDGER='distinct files cited[[:space:]]*[0-9]+'       # step 8's
+FILES_COMMENT='citation\(s\) across[[:space:]]*[0-9]+'      # step 9's closing RESULT line
+# num <ERE pattern> <text> — the first number the pattern carries, or `no-count` when the text has no such line.
+num() { local n; n="$(printf '%s\n' "$2" | grep -oE "$1" | head -1 | grep -oE '[0-9]+' || true)"
+  printf '%s' "${n:-no-count}"; }
+# off <text> — a reader's offender count from its own header; 0 only when the reader printed the sentence it
+# prints instead of a header; `no-verdict` when it printed neither.
+off() { local n; n="$(num '(FALSE SITES|FILE NOT FOUND) \([0-9]+\)' "$1")"
+  if [ "$n" != no-count ]; then printf '%s' "$n"; return; fi
+  printf '%s\n' "$1" | grep -qE 'every cited line names|every citation-shaped token resolves|all resolving' \
+    && printf '0' || printf 'no-verdict'; }
+# gap <knob offenders> <worktree offenders> — the difference, or the reason there isn't one.
+gap() { case "$1 $2" in *no-count*|*no-verdict*) printf 'the two legs are not comparable' ;;
+    *) printf 'the source index alone moves the offender count by %s' "$(( $2 - $1 ))" ;; esac; }
+# reconcile <label> <census-line pattern> <knob-leg output> <in-worktree-leg output>
+reconcile() {
+  printf '    plane reconciliation %s — knob leg %s file(s) cited / %s offender(s), in-worktree leg %s / %s: %s.\n' \
+    "$1" "$(num "$2" "$3")" "$(off "$3")" "$(num "$2" "$4")" "$(off "$4")" \
+    "$(gap "$(off "$3")" "$(off "$4")")"
+}
+step "13a/13  quality reads on the committed plane (cwd inside the worktree; the knob leg printed for contrast)"
 ( cd "$ROOT" && GATE_QUALITY_SQL="$WT/data/seed/quality.sql" node scripts/falsify_quality_seam.mjs ) 2>&1 | sed -e 's/^/    /' || true
-( cd "$WT" && node scripts/check_jsonb_reads.mjs ) 2>&1 | sed -e 's/^/    /' || true
+# `--report` on both captured legs: these are measurements, and a reader that exits 1 inside a command
+# substitution would take the gate down through `set -e` on an assignment rather than on a verdict.
+Q7_KNOB="$( cd "$ROOT" && node scripts/check_jsonb_reads.mjs --quality="$WT/data/seed/quality.sql" --report 2>&1 || true )"
+Q7_WT="$( cd "$WT" && node scripts/check_jsonb_reads.mjs --report 2>&1 || true )"
+printf '%s\n' "$Q7_WT" | sed -e 's/^/    /'
+reconcile 13a "$FILES_READS" "$Q7_KNOB" "$Q7_WT"
 step "13b/13  ledger citations on the committed plane (cwd inside the worktree; the knob leg printed for contrast)"
 ( cd "$ROOT" && node scripts/falsify_ledger_text.mjs ) 2>&1 | sed -e 's/^/    /' || true
-# `--report` on both legs: these are measurements, and a reader that exits 1 inside a command substitution
-# would take the gate down through `set -e` on an assignment rather than on a verdict.
 KNOB_LINE="$( cd "$ROOT" && node scripts/check_ledger_citations.mjs --dir="$WT" --head-dir="$WT" --report 2>&1 || true )"
 WT_LINE="$( cd "$WT" && node scripts/check_ledger_citations.mjs --report 2>&1 || true )"
 printf '%s\n' "$WT_LINE" | sed -e 's/^/    /'
-knob() { printf '%s\n' "$1" | sed -n 's/^  distinct files cited  *\([0-9]*\).*/\1/p' | head -1; }
-red() { local n; n="$(printf '%s\n' "$1" | grep -oE 'FILE NOT FOUND \([0-9]+\)' | grep -oE '[0-9]+' | head -1)"; printf '%s' "${n:-0}"; }
-printf '    plane reconciliation  knob leg %s file(s) cited / %s FILE NOT FOUND — in-worktree leg %s / %s.\n' \
-  "$(knob "$KNOB_LINE")" "$(red "$KNOB_LINE")" "$(knob "$WT_LINE")" "$(red "$WT_LINE")"
-printf '    An untracked source in this directory answers a committed sentence in the knob leg and cannot in the other; that difference is what step 13 is for.\n'
-step "13c/13  comment citations on the committed plane (cwd inside the worktree)"
+reconcile 13b "$FILES_LEDGER" "$KNOB_LINE" "$WT_LINE"
+step "13c/13  comment citations on the committed plane (cwd inside the worktree; the knob leg printed for contrast)"
 ( cd "$ROOT" && GATE_COMMENT_PLANE="$WT" node scripts/falsify_comment_plane.mjs ) 2>&1 | sed -e 's/^/    /' || true
-( cd "$WT" && node scripts/check_comment_citations.mjs ) 2>&1 | sed -e 's/^/    /' || true
+C9_KNOB="$( cd "$ROOT" && node scripts/check_comment_citations.mjs --plane="$WT" 2>&1 || true )"
+C9_WT="$( cd "$WT" && node scripts/check_comment_citations.mjs 2>&1 || true )"
+printf '%s\n' "$C9_WT" | sed -e 's/^/    /'
+reconcile 13c "$FILES_COMMENT" "$C9_KNOB" "$C9_WT"
+printf '    A source this directory holds and HEAD does not answers a committed sentence in the knob leg and cannot in the other; three readers, three pairs, one direction — that difference is what step 13 is for.\n'
 git worktree remove "$WT" 2>&1 | sed -e 's/^/    /'
 trap - EXIT
 trap cleanup EXIT

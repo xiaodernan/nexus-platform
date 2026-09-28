@@ -319,14 +319,29 @@ const step13 = (lines) => {
   const from = lines.findIndex((l) => l.includes('step "13/13'));
   const region = from < 0 ? '' : lines.slice(from).join('\n');
   const readers = [...new Set([...region.matchAll(/cd "\$WT" && node scripts\/([\w.]+\.mjs)/g)].map((m) => m[1]))];
-  return { region, readers, ok: from >= 0 && readers.length === 3 && /plane reconciliation/.test(region) };
+  // D190 — step 13 runs each of its three readers twice now: once from this directory with that step's own
+  // plane knob aimed at the worktree, once from inside the worktree with no knob, and one `reconcile` line
+  // reports the pair. So the wiring arm asks for three knob captures, three bare captures and three calls, and
+  // reads the `reconcile` function body for digits — a count that lives in the body is a number the step
+  // remembers instead of one it measured, which is the failure this whole lane keeps tripping over.
+  const knob = (region.match(/="\$\( cd "\$ROOT" && node scripts\/([\w.]+\.mjs)/g) ?? []).length;
+  const bare = (region.match(/="\$\( cd "\$WT" && node scripts\/([\w.]+\.mjs)/g) ?? []).length;
+  const calls = [...region.matchAll(/^reconcile (\S+) "\$FILES_[A-Z]+" /gm)].map((m) => m[1]);
+  const body = (region.match(/^reconcile\(\) \{([\s\S]*?)^\}$/m) ?? [, ''])[1];
+  // `$1`-style positional reads are not counts, so they are stripped before the digit scan; what survives is a
+  // number that was typed into the reporting line.
+  const literal = (body.replace(/\$\w/g, '').match(/[0-9]/g) ?? []).length;
+  return { region, readers, knob, bare, calls, body, literal,
+    ok: from >= 0 && readers.length === 3 && knob === 3 && bare === 3
+      && calls.join(',') === '13a,13b,13c' && body.length > 0 && literal === 0 };
 };
 {
   const s = step13(GATE);
   results.push({
     arm: { name: `gate step 13 runs its three reader legs INSIDE the worktree (${s.readers.join(', ') || 'no bare leg found'})`,
       expect: 0, must: [], absent: [] },
-    code: s.ok ? 0 : 1, out: `readers ${s.readers.length} of 3 · reconciliation ${/plane reconciliation/.test(s.region) ? 'printed' : 'absent'}`,
+    code: s.ok ? 0 : 1,
+    out: `readers ${s.readers.length} of 3 · knob legs ${s.knob} of 3 · bare legs ${s.bare} of 3 · reconcile calls [${s.calls.join(' ')}] · literal digit(s) in the reconcile body ${s.literal}`,
   });
 }
 {
@@ -336,6 +351,76 @@ const step13 = (lines) => {
     arm: { name: 'the same predicate reddens when the legs are put back to the main tree (D189 witnesses itself)',
       expect: 1, must: [], absent: [] },
     code: s.ok ? 0 : 1, out: `mutated copy: readers ${s.readers.length} of 3`,
+  });
+}
+{
+  const mutated = GATE.map((l) => l.replace(/\$\(off "\$3"\)/g, '0'));
+  const s = step13(mutated);
+  results.push({
+    arm: { name: 'the same predicate reddens when a reconciliation count stops coming out of a run (D190 witnesses itself)',
+      expect: 1, must: [], absent: [] },
+    code: s.ok ? 0 : 1, out: `literal-injected copy: digits ${s.literal} · calls [${s.calls.join(' ')}]`,
+  });
+}
+{
+  const mutated = GATE.filter((l) => !/^reconcile 13a /.test(l));
+  const s = step13(mutated);
+  results.push({
+    arm: { name: 'the same predicate reddens when one leg stops reporting its pair (D190, the missing-call case)',
+      expect: 1, must: [], absent: [] },
+    code: s.ok ? 0 : 1, out: `13a-call-removed copy: calls [${s.calls.join(' ')}]`,
+  });
+}
+{
+  const mutated = GATE.map((l) => l.replace(/Q7_KNOB="\$\( cd "\$ROOT"/, 'Q7_KNOB="$( cd "$WT"'));
+  const s = step13(mutated);
+  results.push({
+    arm: { name: 'the same predicate reddens when a knob leg stops being driven from the main tree (D190, the contrast case)',
+      expect: 1, must: [], absent: [] },
+    code: s.ok ? 0 : 1, out: `knob-leg-repointed copy: knob ${s.knob} of 3 · bare ${s.bare} of 3`,
+  });
+}
+// The four arms above are text predicates, and a text predicate is satisfied by a function that never computed
+// anything. These two run the gate's own helpers — the lines from `FILES_READS=` to the closing brace of
+// `reconcile`, cut verbatim out of the shipped file into a scratch script bash really executes under the same
+// `set -euo pipefail` the gate runs — over synthetic reader output, so each branch of `off` is taken by a run
+// rather than asserted in a comment: two legs that printed their offender headers (the counts have to come out
+// of the texts and subtract to the printed gap), and a leg that printed a crash instead of a verdict, which has
+// to read `no-verdict` and refuse the subtraction, because a reader that died is not a reader that found nothing.
+const helpers = (lines) => {
+  const from = lines.findIndex((l) => l.startsWith('FILES_READS='));
+  const to = lines.findIndex((l, i) => i > from && l === '}');
+  return from < 0 || to < 0 ? '' : lines.slice(from, to + 1).join('\n');
+};
+const runHelpers = (knobText, wtText) => {
+  const src = helpers(GATE);
+  if (!src) return { code: -1, out: 'the reconcile helper block could not be cut out of db_gate_fresh.sh' };
+  const pa = join(FIX, 'd190-knob.txt'), pb = join(FIX, 'd190-wt.txt'), ps = join(FIX, 'd190-reconcile.sh');
+  writeFileSync(pa, knobText, 'utf8');
+  writeFileSync(pb, wtText, 'utf8');
+  const dir = FIX.replace(/\\/g, '/');
+  writeFileSync(ps, `set -euo pipefail\n${src}\nreconcile 13t "$FILES_READS" "$(cat '${dir}/d190-knob.txt')" "$(cat '${dir}/d190-wt.txt')"\n`, 'utf8');
+  try { return { code: 0, out: execFileSync('bash', [ps], { encoding: 'utf8' }) }; }
+  catch (e) { return { code: e.status ?? -1, out: `${e.stdout || ''}${e.stderr || ''}` }; }
+};
+{
+  const { code, out } = runHelpers(
+    '  citations resolved   12 file(s) under a 21-dir vendor exclusion\nFALSE SITES (8):\n',
+    '  citations resolved   10 file(s) under a 14-dir vendor exclusion\nFALSE SITES (11):\n');
+  results.push({
+    arm: { name: 'reconcile prints both runs\' counts and their difference, computed by the gate\'s own helpers',
+      expect: 0, must: [/knob leg 12 file\(s\) cited \/ 8 offender\(s\), in-worktree leg 10 \/ 11/,
+        /moves the offender count by 3/], absent: [/no-verdict/, /not comparable/] },
+    code, out,
+  });
+}
+{
+  const { code, out } = runHelpers('node:internal/errors:900\n  throw err;\n',
+    '  citations resolved   10 file(s) under a 14-dir vendor exclusion\nFALSE SITES (11):\n');
+  results.push({
+    arm: { name: 'a leg that printed neither an offender header nor its clean sentence reads no-verdict and stops the subtraction',
+      expect: 0, must: [/no-verdict/, /not comparable/], absent: [/moves the offender count by/] },
+    code, out,
   });
 }
 
