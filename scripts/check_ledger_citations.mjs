@@ -52,7 +52,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join, isAbsolute } from 'node:path';
-import { VENDOR_DIRS, walkFiles } from './source_index.mjs';
+import { LEDGER_EXT, VENDOR_DIRS, walkFiles } from './source_index.mjs';
 import { parseFlags } from './cli_args.mjs';
 
 const ROOT = process.cwd();
@@ -158,7 +158,9 @@ if ((DIR === null) !== (HEAD_DIR === null)) {
  * this checker grew by four tool-cache names — because that index would otherwise name `.gitignore` four times
  * instead of twice (`.pytest_cache` at the root and under `apps/ai/`) and report a true root cite AMBIGUOUS.
  */
-const LEDGER_EXT = /\.(java|py|ts|tsx|mjs|cjs|sql|sh|md|ya?ml|json|toml|txt|properties|cfg|ini)$/;
+// The predicate lives in `source_index.mjs` beside the exclusion list and `SOURCE_EXT`, because D166 found a
+// second reader of the same claim carrying its own copy — which is how one sentence came to be quoted with
+// three different counts.
 const FILES = walkFiles(ROOT, (name) => LEDGER_EXT.test(name) || name.startsWith('.'));
 
 const BY_BASENAME = new Map();

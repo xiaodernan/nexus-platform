@@ -30,6 +30,14 @@ export const VENDOR_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.ven
 export const SOURCE_EXT = /\.(java|py|ts|tsx|mjs|cjs|sql|sh)$/;
 
 /**
+ * What a ledger is allowed to cite: the build's sources plus the docs, config and lock files a paragraph
+ * points at. `check_ledger_citations.mjs` (gate step 8) is its only other user, and the reason it lives here
+ * is D166: a second reader of the same claim kept its own copy of this predicate, so the two resolved
+ * different file sets and the project quoted three different blank-citation counts for one sentence.
+ */
+export const LEDGER_EXT = /\.(java|py|ts|tsx|mjs|cjs|sql|sh|md|ya?ml|json|toml|txt|properties|cfg|ini)$/;
+
+/**
  * Every file under `root` that `accept` names, as forward-slash paths relative to it, skipping VENDOR_DIRS.
  * A directory it cannot read is skipped rather than thrown on: the walk runs over a working tree another
  * lane may be mid-write in.

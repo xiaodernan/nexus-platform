@@ -9167,3 +9167,37 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     Plane on these bytes: default census 12 blanks counted and 0 judged among 0 new sections, 416
                     working-copy citations in 315 sections, 0 offenders, exit 0, with the two sections this entry adds judged at 0 blanks; step 9 78 citations across 22
                     files PASS; harnesses 29 · 13 · 20 · 8 · 8 · 6 = 84 arms, none missed; `bash -n` clean.
+
+## 171. D166: one index, one plane rule, and a second reader that has to say it agrees — the blank-citation count had four definitions and the ledger had quoted three of them
+
+                    D160 said 6, D161 and D162 said 14, D165 said 12, and the census tool still printed 10 on
+                    the same repository. The gap was definitional four times over: working copy versus the HEAD
+                    plane step 8 is strict on, four hand-written candidate paths versus the shared index, the
+                    first number of a range versus the span's start, and no skip for the ambiguous names step 8
+                    dispatches before reading a line. Each choice was reasonable; none was written where a
+                    reader could see it, so three counts entered the record as if they measured one thing.
+
+                    `LEDGER_EXT` now lives in `source_index.mjs` beside the vendor list and `SOURCE_EXT`, step 8
+                    imports it, and `citation_blank_census.mjs` asks its questions on the same plane and span
+                    rules — then runs the shipped reader, parses the count it prints, and exits 1 unless the two
+                    agree. Both planes read 12/12 today, and `--nope` is refused at exit 2. Agreement is
+                    asserted on the count, not on the identity of the sites, which is stated as the tool's limit
+                    rather than left for the next person to discover.
+
+                    One correction the reconciliation forced: D160's refusal of a content predicate rested on
+                    18 anchor hits out of 64 anchored citations, and under the reconciled population the same
+                    question measures 50 of 145 — the old census had been dropping every citation its own
+                    resolver could not place. The conclusion stands (a third is not a gate), but the figure did
+                    not reproduce, so the entry that quoted it is corrected by this append and the numbers are
+                    re-derivable from a tracked tool.
+
+                    And the gate caught the author again: the new file's header carried an example range in the
+                    live citation form, so step 9 came back 79 citations across 23 files with one offender —
+                    the example of the grammar inside the sentence explaining it, D94's rule for the third time.
+                    Placeholder form, 78 across 22, 0 offenders. Plane for these bytes: step 8 650 tokens over
+                    311 committed sections, 416 working-copy citations in 317 sections, 0 offenders, 12 blanks
+                    counted and 0 judged, this append's own two sections judged and clean; steps 9/10/12 PASS
+                    (HEAD 152 decisions / 138 STATUS against 153 and 139 on disk, missing 0, duplicates 0);
+                    six harnesses 29 · 13 · 20 · 8 · 8 · 6 = 84 arms,
+                    none missed. Still open: arming the blank class on the reading plane (12 committed cites
+                    want appending rows), and whether a lone `--dir` deserves its own name rather than a refusal.

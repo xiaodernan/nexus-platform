@@ -10035,3 +10035,55 @@ only wants to plant an entry, and no arm asks that yet, so if that mode is ever 
 name rather than a looser guard. The blank class's reach is unchanged here: emptiness is still the only content
 fact step 8 asserts, D160's anchor-on-line predicate stays refused on its measurement, and the 12 committed blank
 citations still want appending rows rather than a predicate that judges history.
+
+## D166 — The blank-citation count had four definitions, and the two readers now have one index, one plane rule, and an agreement assertion
+
+**The inconsistency, in this lane's own record.** D160 reported "6 of 149 citations land on a blank line",
+D161 and D162 printed 14, D165's entry quotes 12, and the tool that produced the first number still printed 10
+on the same repository. Four figures, one sentence, and no reader could say whether they measured the same
+thing. They did not, in four separate ways: the census walked the working copy while step 8 is strict on HEAD;
+it resolved a cited name by trying four hand-written candidate paths while step 8 resolves through the shared
+index, so a name the index holds twice or a stem it matches specially was a different question in each tool;
+it read the first number of a range instead of the span's start; and it never skipped the ambiguous names step 8
+dispatches before any line is opened. Each of those is defensible in isolation. None of them was written down,
+so each count was quoted as if it were the same measurement.
+
+**What changed.** `LEDGER_EXT` moved into `scripts/source_index.mjs` beside the vendor list and `SOURCE_EXT`,
+and step 8 imports it, so there is one extension predicate for the citation plane. The census now takes its
+plane, its population and its span rule from the same definitions step 8 uses — HEAD unless `--worktree` says
+otherwise, `walkFiles` for the file set, a range contributing its start, ambiguous names skipped before a line
+is read — and it closes by running the shipped reader, parsing the count it prints, and exiting 1 unless the
+two agree. Both planes currently read 12/12 and the tool says so in one line; the disagreement it would report
+is a finding, not a nuisance, because the counts are produced by two walks that no longer share their
+resolution code path.
+
+**A number this entry has to correct.** D160's refusal of a content predicate rested on 18 anchor hits out of
+64 anchored citations. Under the reconciled definitions the same question measures 50 hits out of 145 — a
+different population, because the old census silently dropped every citation its four-path guess could not
+resolve. The conclusion survives the correction (a third is not a gate), but the figure quoted in D160 and
+D163's entries does not reproduce, and a refusal that cannot be re-derived is an opinion: it is now
+re-derivable from `scripts/citation_blank_census.mjs`, which prints both counts on the plane it names.
+
+**The gate caught the tool that documents the rule.** Arming this file's own header comment with an example
+range written in the live citation form — a `File.java` name carrying a concrete two-number range — made step 9
+exit 1 the next time it ran: 79 comment-plane citations across 23 files, the offender being the example of the
+grammar inside the sentence explaining the grammar, which is D94's rule restated for the third time and this
+time by the person writing about it. The example is now in the placeholder form, and the comment plane is back
+to 78 citations across 22 files with 0 offenders.
+
+**Measured on the bytes this entry describes.** Step 8: 650 citation-shaped tokens over 311 committed
+sections, 416 working-copy citations in 317 sections, 0 offenders, 12 blank span starts counted and 0 judged,
+with this entry's own two new sections judged and clean, exit 0. Census: 12/12 agreement on the HEAD plane and
+on the working plane, `--nope` refused at exit 2 naming the only flag it takes. Harnesses unchanged and
+holding: 29 ledger-text · 13 comment-plane · 20 flag-dialect · 8 quality-seam · 8 ledger-sections · 6
+status-citations, 84 arms, none missed. Step 9 PASS at 78 across 22; step 10 HEAD 152 decisions and 138 STATUS
+sections against 153 and 139 on disk, the two additions being this append, missing 0, duplicates 0; step 12
+every spelled citation resolving.
+
+**Limits, stated.** Agreement between the two readers is checked on the count, not on the identity of the
+sites, so a compensating pair of differences — one tool gaining a blank and losing another — would print a
+false PASS; the per-site list the census prints is what a human compares. The shared predicate is one regex in
+one module now, but the resolution rules are not shared: step 8's basename, stem and nested-record handling is
+still its own, and the census approximates it with suffix matching, which is why skipping ambiguity is
+explicit rather than inherited. And arming the class on the reading plane is still the open question — the 12
+committed blanks are counted, not judged, and the count is printed every run so the exemption stays visible.
