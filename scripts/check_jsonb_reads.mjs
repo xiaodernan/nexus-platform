@@ -793,10 +793,22 @@ for (const [reason, why] of Object.entries(MISS_WHY)) {
   console.log(`  ${reason} (${rows.length}${rows.length === 0 ? ' — none on this plane' : ''}): ${why}`);
   for (const m of rows) console.log(`    - ${m.triple}  kind ${m.kind}  ${m.detail}`);
 }
-for (const reason of [...missesByReason.keys()].filter((r) => !MISS_WHY[r])) {
-  console.log(`  ${reason} (${missesByReason.get(reason).length}): no stated reason — this class is new and the`
-    + ' sentence for it was not written');
-  for (const m of missesByReason.get(reason)) console.log(`    - ${m.triple}  kind ${m.kind}  ${m.detail}`);
+// D196 — the other direction of the drift D194 closed, and it was one line further down in the same block. A row
+// filed under a class this table has no sentence for used to print "no stated reason" and join no exit term: the
+// census pronounced a miss it had classified and exited 0 over it, which is the defect `branchlessKinds` had and
+// was fixed for, mirrored. The rows are misses either way, so they are charged as misses; the missing thing is
+// the sentence, and the fix line says so.
+const unnamedReasons = [...missesByReason.keys()].filter((r) => !MISS_WHY[r]);
+const unnamedRows = unnamedReasons.reduce((n, r) => n + missesByReason.get(r).length, 0);
+if (unnamedReasons.length > 0) {
+  console.log(`NO STATED REASON (${unnamedRows} row(s) across ${unnamedReasons.length} class(es)) — this census`
+    + ' filed a miss under a class it has no sentence for, so the classifier is newer than its explanation');
+  for (const reason of unnamedReasons) {
+    console.log(`  ${reason} (${missesByReason.get(reason).length}): no stated reason — this class is new and the`
+      + ' sentence for it was not written');
+    for (const m of missesByReason.get(reason)) console.log(`    - ${m.triple}  kind ${m.kind}  ${m.detail}`);
+  }
+  console.log('  fix: write that sentence into MISS_WHY, or retire the branch of the classifier that files it.\n');
 }
 console.log('');
 
@@ -885,7 +897,7 @@ if (blindSpots.length > 0) {
 // header line, and an arm over it reported a moved census rather than a dead run. The harness requires this line
 // (or the refusal's own) and checks the number it declares against the code the process actually exited with.
 const verdictCount = undeclared.length + contradicted.length + neverReadRead.length + kindless.length
-  + blindSpots.length + branchlessKinds.length + sites.offenders.length;
+  + blindSpots.length + branchlessKinds.length + unnamedRows + sites.offenders.length;
 const exitCode = verdictCount > 0 && !REPORT_ONLY ? 1 : 0;
 console.log(`REPORT COMPLETE — ${verdictCount} reason(s) to redden, --report ${REPORT_ONLY}, this run exits ${exitCode}`);
 process.exit(exitCode);

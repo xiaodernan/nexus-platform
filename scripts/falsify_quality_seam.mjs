@@ -194,8 +194,9 @@ const SCANNED = /source files scanned\s+(\d+)/;
 const COVERAGE = /CENSUS COVERAGE — (\d+) answer\(s\)/;
 // D194: the reader's own last line states how many reasons it found and which code it is about to exit with. An
 // arm is only a measurement when the run it scored reached that line: a reader that died halfway used to look
-// finished to a guard keying on the header, because the header is printed before the verdict blocks.
-const TERMINAL = /REPORT COMPLETE — (\d+) reason\(s\) to redden, --report (true|false), this run exits (\d+)/;
+// finished to a guard keying on the header, because the header is printed before the verdict blocks. The pattern
+// is not written here — see TERMINAL below, which builds it out of the reader's own template, because retyping
+// another file's wording is the same defect the two lists below used to have.
 
 /** The count the shipped checker prints for one miss class, or null when the run refused before printing. */
 function reason(out, name) {
@@ -239,6 +240,26 @@ const run = (...argv) => runReader(CHECKER, ...argv);
  * mutation is the one named below and nothing else about its runtime.
  */
 const READER_SRC = readFileSync(CHECKER, 'utf8');
+
+// D196 — the terminal line's wording used to be retyped here as a regex. That is the same act as copying a
+// class list by hand: reword the checker's last line and the copy stops matching, so every run — healthy ones
+// included — begins reading as a death, and the message an arm reports is about a crash that never happened.
+// The pattern is now the reader's own template with each interpolation turned into a capture group, so a reword
+// moves the pattern with it and only a reader that no longer states its exit code can break the arm.
+const escLit = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const terminalTemplate = (() => {
+  const prints = [...READER_SRC.matchAll(/console\.log\(\s*`([^`]*)`\s*\)/g)];
+  const last = prints[prints.length - 1];
+  if (!last) die('this reader prints no single-template line to read its terminal report off');
+  const groups = (last[1].match(/\$\{[^}]*\}/g) || []).length;
+  if (groups < 3) {
+    die(`the reader's last template line carries ${groups} interpolation(s); the crash predicate needs at`
+      + ' least three — a reason count, the report mode, and the exit code the run takes');
+  }
+  return last[1];
+})();
+const TERMINAL = new RegExp(terminalTemplate.split(/\$\{[^}]*\}/g)
+  .map((p, i, a) => escLit(p) + (i < a.length - 1 ? (i === a.length - 2 ? '(.*)' : '(.*?)') : '')).join(''), 'm');
 const SCRIPTS = (p) => pathToFileURL(join(ROOT, 'scripts', p)).href;
 function mutantReader(name, ...edits) {
   let text = READER_SRC;
@@ -282,6 +303,14 @@ const READER_AFTER_HEADER = mutantReader('reader_after_header.mjs',
 const READER_WRONG_EXIT = mutantReader('reader_wrong_exit.mjs',
   ['process.exit(exitCode);', 'process.exit(exitCode === 0 ? 1 : 0);']);
 
+// D196 — a classifier branch whose class the sentence table has no entry for. Renaming the key is the whole
+// mutation: the same fixture, the same row, the same site, and the reader now files the miss somewhere it has
+// not described. On the shipped reader this plant's row is the one class judged by hand and the run exits 0 over
+// it; charging the unnamed class is what makes that row's classification cost something.
+const READER_UNNAMED_CLASS = mutantReader('reader_unnamed_class.mjs',
+  ["  'not-read-in-the-file-where-it-should-be': 'its site resolves inside the walked roots",
+    "  'not-read-in-the-file-where-it-should-be-x': 'its site resolves inside the walked roots"]);
+
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 /* --------------------------------------------------------------------- arms */
@@ -298,24 +327,120 @@ const N = CTRL.census;
 const S = CTRL.spans;
 const SCANNED_CTRL = CTRL.scanned;
 
+// D196 — this list used to be typed by hand, which made it a copy of another file's output vocabulary: rename a
+// class in the checker and the copy keeps its old membership, `classCounts` stops counting the name that fires,
+// and every miss arm below still prints green. It is now read out of the reader this harness instance points at,
+// twice and by different means — the keys of its sentence table and the reasons its classifier pushes — and the
+// two readings must agree before any arm runs. They are the same two populations the checker compares at run
+// time when it charges an unnamed class; agreeing here is what lets the arms score against the reader's own
+// taxonomy rather than a remembered one.
+const classesFromSentences = () => {
+  const at = READER_SRC.indexOf('const MISS_WHY = {');
+  if (at < 0) die('this reader has no MISS_WHY table, so its class list cannot be read where this harness expects');
+  const end = READER_SRC.indexOf('\n};', at);
+  return [...READER_SRC.slice(at, end).matchAll(/^ {2}'([a-z][a-z0-9-]*)':/gm)].map((m) => m[1]);
+};
+const classesFromPushes = () => [...new Set([...READER_SRC.matchAll(/\breason: '([a-z][a-z0-9-]*)'/g)]
+  .map((m) => m[1]))];
+const MISS_CLASSES = classesFromSentences();
+const PUSHED_CLASSES = classesFromPushes();
+if (MISS_CLASSES.length === 0 || PUSHED_CLASSES.length === 0) {
+  die(`the class derivation read nothing (sentences ${MISS_CLASSES.length}, pushes ${PUSHED_CLASSES.length})`
+    + ' — a scan that found no class cannot contradict an arm that expects one');
+}
+const unnamed = PUSHED_CLASSES.filter((c) => !MISS_CLASSES.includes(c));
+const unfired = MISS_CLASSES.filter((c) => !PUSHED_CLASSES.includes(c));
+if (unnamed.length + unfired.length > 0) {
+  die(`this reader's classifier and its sentence table disagree — files ${unnamed.join(', ') || '(nothing)'}`
+    + ` with no sentence, states ${unfired.join(', ') || '(nothing)'} that no branch files`);
+}
 // The five classes the shipped reader says it can tell apart. Every miss arm below claims exactly ONE of them
 // holds the planted row: a run that printed all five sentences would otherwise let an arm pass on a classifier
 // that had decided nothing.
-const MISS_CLASSES = ['file-not-on-this-plane', 'site-file-ambiguous', 'site-names-no-file',
-  'outside-the-census-roots', 'not-read-in-the-file-where-it-should-be'];
 const classCounts = (r) => MISS_CLASSES.map((c) => reason(r.out, c));
-const onlyClass = (name) => (r) => {
-  const counts = classCounts(r);
-  const wrong = MISS_CLASSES.filter((c, i) => counts[i] !== (c === name ? 1 : 0));
-  return wrong.length
-    ? `${MISS_CLASSES.map((c, i) => `${c}=${counts[i]}`).join(' ')} — only ${name} should hold a member` : null;
+const onlyClass = (name) => {
+  // An arm aimed at a class this reader cannot file is not an arm: its expectation would be checked against a
+  // name no run can ever print, and the count it demands would stay absent forever.
+  if (!MISS_CLASSES.includes(name)) {
+    die(`an arm aims at class '${name}', which this reader's classifier never files — the derived list is`
+      + ` ${MISS_CLASSES.join(', ')}`);
+  }
+  return (r) => {
+    const counts = classCounts(r);
+    const wrong = MISS_CLASSES.filter((c, i) => counts[i] !== (c === name ? 1 : 0));
+    return wrong.length
+      ? `${MISS_CLASSES.map((c, i) => `${c}=${counts[i]}`).join(' ')} — only ${name} should hold a member` : null;
+  };
 };
 
 // A parse refusal is total: the reader stops before its header, so nothing it reports can be read as an answer.
 // An arm that only checked exit 2 would also pass a run that refused AND answered. D194 added the two blocks a
 // refusal must not reach: the terminal report (a run cannot both refuse and answer) and the unused-kinds verdict.
-const VERDICT_MARKS = ['NEXUS — jsonb key reads', 'ANSWER SITES', 'FALSE SITES', 'CENSUS COVERAGE',
-  'REPORT COMPLETE', 'ANSWER KINDS UNUSED'];
+// D196 — and the list of blocks used to be six strings typed under a checker that printed twelve, so a refusal
+// that answered anyway through one of the other six (`UNDECLARED —`, `WRONG TABLE —`, `NO KIND —`,
+// `CALLED NEVER-READ`, `EVERY READ THE SCAN FOUND`, `ANSWERS THE READ CENSUS DID NOT FIND`) still read as total.
+// The heads are now the reader's own `console.log` literals, and the one print a refusal is allowed to make is
+// excluded by a property of the source line rather than by a name typed here: the line whose own statement calls
+// process.exit(2) is what the refusal SAYS, so it cannot also be what the refusal must not say.
+// Measured on the first version of this derivation: it read thirteen "heads", and the thirteenth was the
+// reader's footer — `LIMITS, stated rather than implied: this is a textual scan.` — which begins in capitals and
+// continues in words. A prose line in a marks list is a false witness waiting for the run that prints its
+// disclaimer, so a head is the capitals run only: it ends at the first lower-case letter, and what is left must
+// not end on sentence punctuation. The verdicts this reader really prints survive that (`UNDECLARED`,
+// `FALSE SITES (`, `REPORT COMPLETE`); its disclaimer does not.
+const verdictHeads = (src) => src.split('\n').flatMap((l) => {
+  const m = /console\.log\(\s*([`'])((?:\\.|(?!\1)[^\\])*)\1/.exec(l);
+  if (!m) return [];
+  const prose = m[2].split('${')[0];
+  const word = prose.split(/[^\w-]/)[0] ?? '';
+  if (!/^[A-Z][A-Z0-9_-]{1,}$/.test(word)) return [];
+  const at = prose.search(/[a-z]/);
+  const head = (at < 0 ? prose : prose.slice(0, at)).replace(/\s*[-—:]\s*$/, '').trim();
+  return /process\.exit\(2\)/.test(l) || head.length < 5 || /[,;.]$/.test(head) ? [] : [head];
+}).filter((h, i, a) => a.indexOf(h) === i);
+const VERDICT_MARKS = verdictHeads(READER_SRC);
+if (VERDICT_MARKS.length < 6) {
+  die(`the verdict-head derivation read ${VERDICT_MARKS.length} header(s) out of this reader — a marks list that`
+    + ` short cannot tell a refusal from an answer: ${VERDICT_MARKS.join(' | ') || '(none)'}`);
+}
+// The counterfactual the rule above exists for: this reader's own prose line, found by a property of the print
+// that FOLLOWS it rather than by its own text — a `console.log` of one quoted literal beginning in a lower-case
+// letter can only be the second half of a sentence, so the line it continues is prose too. Measured: exactly one
+// such pair in this reader, the `LIMITS, stated rather than implied:` footer and its `named by a constant,`
+// tail. If the marks derivation accepted that first line, a run that printed nothing but its own disclaimer
+// would be scored as an answered census, which is the false witness the arms below are for.
+const proseFooter = (src) => {
+  const lines = src.split('\n');
+  const literal = (l) => {
+    const m = /^console\.log\(\s*'([^']*)'\s*\);?\s*$/.exec((l ?? '').trim());
+    return m ? m[1] : null;
+  };
+  const hits = lines.flatMap((l, i) => {
+    const here = literal(l), prev = i ? literal(lines[i - 1]) : null;
+    return here && prev && /^[a-z]/.test(here) && /^[A-Z][A-Z0-9_-]{1,}[ ,]/.test(prev) && !/process\.exit/.test(lines[i - 1])
+      ? [prev] : [];
+  });
+  return hits.length === 1 ? hits[0] : null;
+};
+const PROSE_FOOTER = proseFooter(READER_SRC);
+if (!PROSE_FOOTER) {
+  die(`this reader's prose-footer finder matched nothing or several lines, so the marks derivation has no`
+    + ` counterfactual to be scored against — retire or re-aim the finder in the same change that moves it`);
+}
+// The derivation-vs-footer test lives in an arm, not here: a `die` on the wide rule would preempt the arm that
+// names the case, and an arm no run can redden is a caption (D193).
+// D196 — the two plants the marks list is load-bearing for, in both directions: a refusal that answers through a
+// head no hand-typed copy carried, and a refusal that prints prose. The first is what the old six strings could
+// not see; the second is what an over-wide derivation cannot see, and the pair is what keeps the first from
+// meaning "any line the reader prints counts as an answer".
+const NOT_CHECKABLE = "const notCheckable = (m) => { console.log(`RESULT: NOT CHECKED — ${m}`); process.exit(2); };";
+const READER_REFUSAL_ANSWERS = mutantReader('reader_refusal_answers.mjs',
+  [NOT_CHECKABLE, 'const notCheckable = (m) => { console.log(`RESULT: NOT CHECKED — ${m}`);\n'
+    + "  console.log('ANSWERS THE READ CENSUS DID NOT FIND (0) — mutant: an answer block on the refusal path');\n"
+    + '  process.exit(2); };']);
+const READER_REFUSAL_PROSE = mutantReader('reader_refusal_prose.mjs',
+  [NOT_CHECKABLE, `const notCheckable = (m) => { console.log(\`RESULT: NOT CHECKED — \${m}\`);\n`
+    + `  console.log('${PROSE_FOOTER}');\n  process.exit(2); };`]);
 const noVerdictPrinted = (r) => (VERDICT_MARKS.filter((h) => r.out.includes(h)).length
   ? `the run printed ${VERDICT_MARKS.filter((h) => r.out.includes(h)).join(', ')} alongside the refusal — a census`
     + ' that cannot parse its input has no verdict to report' : null);
@@ -530,6 +655,28 @@ const ARMS = [
     check: (r) => (r.crashed
       ? 'a run that refused was scored as a crash, so the guard fires on the case it is meant to excuse' : null),
   },
+  // D196 — the marks list used to be six strings typed under a checker that printed twelve. These two arms are
+  // what that copy could not see, one in each direction, and both run a reader mutant rather than an answer
+  // plant because the vocabulary is the reader's own: no fixture on this plane can make a refusal also answer.
+  {
+    name: 'a refusal that answers through a head the old six-string list never carried is still seen',
+    run: () => runReader(READER_REFUSAL_ANSWERS, `--quality=${MARKER_GONE}`),
+    expectRc: 2,
+    evidence: ['RESULT: NOT CHECKED', 'mutant: an answer block on the refusal path'],
+    check: (r) => (noVerdictPrinted(r) ? null
+      : 'the derived marks read no answer block on a run that printed one — a vocabulary shorter than the'
+        + ' reader is blind in exactly this direction'),
+  },
+  {
+    name: 'a refusal that prints only this reader\'s own disclaimer stays a refusal — prose in the marks list would call it an answer',
+    run: () => runReader(READER_REFUSAL_PROSE, `--quality=${MARKER_GONE}`),
+    expectRc: 2,
+    evidence: ['RESULT: NOT CHECKED', PROSE_FOOTER],
+    check: (r) => {
+      const claim = noVerdictPrinted(r);
+      return claim ? `the marks list counted a sentence as a verdict, so the refusal reads as answered: ${claim}` : null;
+    },
+  },
   {
     name: 'an arm that declares expectCrash over a run that finished is itself a miss — the flag cannot wave a death past',
     run: () => {
@@ -585,7 +732,23 @@ const ARMS = [
     args: [`--quality=${NOT_IN_FILE}`], expectRc: 0,
     evidence: ['not-read-in-the-file-where-it-should-be (1', 'genuinely judged by hand'],
     // It stays a report, not a verdict: the row is on this plane, the census walked it, and only a human can say
-    // whether the read went through a helper. The other four classes are decidable, so the run reddens.
+    // whether the read went through a helper. The other four classes are decidable, so the run reddens. The
+    // unnamed verdict below must stay absent here: this row IS described, and a charge that fires on a named
+    // class would be the reader disagreeing with its own table.
+    check: onlyClass('not-read-in-the-file-where-it-should-be'),
+    absent: ['NO STATED REASON'],
+  },
+  {
+    name: 'the same row filed under a class the sentence table lost reddens — a classification with no sentence is still a miss',
+    // D196, and the two arms above and below are one measurement: the same fixture, the same source, the only
+    // difference being whether this reader has a sentence for the class its classifier chose. Renaming a key is
+    // a change no answer plant can make, so this is the mutant-reader arm for a charge that no data on this
+    // plane can reach — which is also why it had gone unnoticed: the unnamed branch prints a full sentence and
+    // exits 0 over it, the defect `branchlessKinds` had, mirrored one line further down.
+    run: () => runReader(READER_UNNAMED_CLASS, `--quality=${NOT_IN_FILE}`), expectRc: 1,
+    evidence: ['NO STATED REASON (1 row(s) across 1 class(es))',
+      'not-read-in-the-file-where-it-should-be (1): no stated reason',
+      'REPORT COMPLETE — 1 reason(s) to redden, --report false, this run exits 1'],
     check: onlyClass('not-read-in-the-file-where-it-should-be'),
   },
   {
@@ -648,6 +811,13 @@ for (const arm of ARMS) {
 }
 
 console.log(`\nCONTROL CENSUS — ${JSON.stringify(N)} line spans ${JSON.stringify(S)} (the tracked plane's own numbers)`);
+// The population the arms score against, printed rather than remembered: a verdict over a set nobody can see is
+// a number, not a measurement (D173's lesson, applied to this harness's own lists).
+console.log(`DERIVED VOCABULARY — ${MISS_CLASSES.length} miss class(es) · ${VERDICT_MARKS.length} verdict head(s) over`
+  + ` ${READER_SRC.split('\n').length} reader line(s) · terminal pattern from its last template line`);
+for (const c of MISS_CLASSES) console.log(`  class   ${c}`);
+for (const h of VERDICT_MARKS) console.log(`  verdict ${h}`);
+console.log(`  excluded ${PROSE_FOOTER.slice(0, 72)}… — the reader's own prose, matched by shape and kept out of the list`);
 console.log(ARMS.length - misses.length === ARMS.length
   ? `RESULT: PASS — ${held} of ${ARMS.length} arms held; the seam reaches the site census and the gate step that runs it`
   : `RESULT: FAIL — ${held} of ${ARMS.length} arms held; did not hold: ${misses.join(' | ')}`);

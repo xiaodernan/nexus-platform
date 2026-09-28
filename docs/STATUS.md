@@ -10383,17 +10383,17 @@ run: a sentence that prints without changing the exit code certifies nothing.
 
 **(a) `ANSWER KINDS UNUSED`.** The census expects four answer kinds and already noticed when a kind no row on the
 plane carries was still expected — then exited 0 anyway. The branchless kinds now join the reason count
-(`scripts/check_jsonb_reads.mjs:887-890`, block at `:807-815`), so a branch that classifies no row reddens the
+(`scripts/check_jsonb_reads.mjs:899-902`, block at `:819-827`), so a branch that classifies no row reddens the
 gate instead of narrating itself. Its plant moves one row's kind word and nothing else; measured on it the census
 counts are unchanged and exactly one reason appears.
 
 **(b) A crash guard keyed on the last line instead of the first.** `scripts/falsify_quality_seam.mjs` decided
 "the reader died" from the census's header — the first thing a reader prints — so a reader that died mid-report
 was a finished run. The guard now reads a terminal sentinel that also declares the code the process intends
-(`scripts/falsify_quality_seam.mjs:198`, reader `scripts/check_jsonb_reads.mjs:890`), and a run whose declared
+(`scripts/falsify_quality_seam.mjs:261`, reader `scripts/check_jsonb_reads.mjs:902`), and a run whose declared
 code the process does not take is a crash, not a verdict. The `expectCrash` flag is policed both ways: an arm that
 declares a death over a run that finished reddens through the same predicate the loop uses
-(`scripts/falsify_quality_seam.mjs:331-333`).
+(`scripts/falsify_quality_seam.mjs:456-458`).
 
 **(c) The `--quality` seam refuses instead of dying.** After D159 made a mistyped flag value a legal request, a
 path with no file behind it and a path that is a directory both reached `readFileSync` and ended in `node:fs`
@@ -10494,3 +10494,98 @@ HEAD’s bytes before this unit the workflow held no piped step at all, so class
 the census would have REFUSED at exit 2 rather than passed: the three steps it measures arrived in the working copy
 from another lane’s uncommitted job, which is why that job body is part of this unit’s commit and why the refusal
 is named here as the correct answer it was.
+
+## 202. D196: the harness scored the checker's vocabulary from three lists typed by hand, and the checker could file a miss under a class it had no sentence for and exit 0 over it
+
+The rule chain this unit extends: D193 — a rule that cannot fire on the plane the gate reads is not a rule the
+gate has; D194 — a rule that fires, prints, and reaches no exit code is not a rule the gate has either; D196 —
+**a copy of another file's vocabulary is not that file's vocabulary**, and it goes stale in silence, because the
+stale copy still prints green.
+
+Closed in the checker. Its classifier could file a row under a class `MISS_WHY` has no entry for, print
+`<class> (N): no stated reason`, and join nothing — the mirror of the defect D194 fixed one block further down,
+named by D194's own comment ("the second direction of vocabulary drift"), which is how it was found: reading the
+sentence the last unit wrote. It is now `NO STATED REASON (N row(s) across M class(es))` and its rows join the exit
+term beside the other six (scripts/check_jsonb_reads.mjs:801-812, scripts/check_jsonb_reads.mjs:899-900).
+
+Closed in the harness. `MISS_CLASSES` (5 typed names), `VERDICT_MARKS` (6 typed strings) and `TERMINAL` (a regex
+retyped from the checker's sentinel sentence) are now read out of the reader this harness instance points at: the
+class names come from its `MISS_WHY` block and are cross-checked against the reasons its classifier pushes, the two
+populations the checker itself compares at run time; the verdict heads are its `console.log` literal prefixes, with
+the refusal's own print excluded by the property of the source line that makes it a refusal (`process.exit(2)` on
+it) rather than by a name typed here; the terminal pattern is the reader's last template line with each
+interpolation turned into a capture group, floored at three groups. `onlyClass()` refuses to build an arm aimed at
+a class the reader never files, and the report prints the vocabulary it scored (`DERIVED VOCABULARY`), because a
+count over a set nobody can see is a number and not a measurement.
+
+Why each mattered, in one line each. A typed class list goes blind on a rename: the planted row counts as nothing,
+and the arm reports the miss it was written to catch as though it had caught it. A six-string marks list goes blind
+in the direction with teeth: the checker prints more verdict lines than six, so a refusal that also answered —
+through `UNDECLARED`, `WRONG TABLE`, `NO KIND`, `CALLED NEVER-READ`, `EVERY READ THE SCAN FOUND`,
+`ANSWERS THE READ CENSUS DID NOT FIND` — read as total. A retyped sentinel regex fails loudly but expensively: a
+reword stops the match, `crashed` becomes true for every run, and the arms report deaths that never happened.
+
+Reachability. No answer plant can unnamed a class, so the witness is a mutant reader with one `MISS_WHY` key
+renamed: the same fixture is rc 0 over the shipped reader and must not print the block; over the renamed reader it
+is rc 1 and must, with the sentinel declaring exactly one reason. The pre-existing hand-judged-class arm carries
+the absence half, so the charge cannot leak onto a described class: policed both ways, reachable in one.
+
+The derivation's first run printed one head too many — a prose footer (`LIMITS, stated rather than implied:`)
+shared the shape of a verdict — and the printed population is what made it visible. A hand list cannot be wrong in
+a way anyone can see; a derived list is wrong in public and gets fixed the same day, which is what happened here.
+A head is now the capitals run only: it ends at the first lower-case letter, and what is left must not end on
+sentence punctuation. The footer that broke the first version is kept as the arm's plant, found by a property of
+the print that *follows* it — a quoted `console.log` opening in a lower-case letter can only be the second half of
+a sentence — so the plant moves with the reader's prose instead of being a copy of it. Two arms run the pair: a
+refusal that answers through a head the six strings never carried must be seen (the hand-typed copy reddens here),
+and a refusal that prints only its disclaimer must not be (an over-wide derivation reddens here). The test lives
+in an arm and not in an import-time refusal because a `die` would preempt the arm that names the case, and an arm
+no run can redden is a caption.
+
+Witnesses, seven legs, each removing exactly one rule this unit added, run over the final bytes in
+`.scratch/d196_meta.mjs`, and every leg's prediction was written before it ran. Take the unnamed rows back out of
+the exit term and exactly the unnamed-class arm reddens (rc 1, 1 arm). Put the six hand-typed marks back and run
+over the shipped reader and exactly the answer-arm reddens (1 arm) — the short list is blind, not over-wide. Run
+the derived marks against a reader whose refusal also answers and all seven totality arms redden (7 arms), which
+is the measured size of the hole the six strings left. Re-type the terminal regex while rewording the reader's
+sentinel and 16 arms report deaths that never happened: the pre-D196 count exactly, because the two arms added
+here score rc-2 refusals, which a broken terminal cannot turn into a crash. Hand-type a class the reader never
+files and the harness refuses at import rather than run an unfalsifiable arm. Remove the capitals-run cut and
+exactly the prose arm reddens (1 arm). Aim the prose-footer finder away from the footer and it refuses at import,
+because a plant that cannot be built is not a witness. Seven of seven matched.
+
+The unit's own blast radius, because a rule that moves the ground under its own record is still a rule. This unit
+inserted 12 lines in the checker and 170 in its harness and deleted two named constants; of the 25 live citation
+numbers in D193, D194 and STATUS §200, 16 had slid off the sentence they belong to, 4 named a thing this unit
+deleted, and 5 were already right — 16 ledger lines rewritten to correct them. Step 8 only asks that a cited line
+exists, so the gate was green over every one of the 16. The corrections are derived at landing, not copied from a
+previous run: a number must match one line's content in the working copy, a range must match its whole block
+contiguously, and the one block that no longer sits contiguously is the exit term this unit edited from the inside,
+so it is placed by its ends and re-spelled as its new extent (scripts/check_jsonb_reads.mjs:899-902). Bare
+continuations are the residue that cannot be derived by shape — the D194 text quotes drift examples and JSON
+literals in exactly a citation's spelling — so 13 of them are classified by hand in the landing script, four live,
+one of which (`arm at :534-539`) the first version of this audit missed by keying on filenames. The committed
+ledgers also grew a final newline at 7f89d5e, the opposite of what D194's append recipe asserted, so the tail byte
+is measured at every landing rather than remembered.
+
+Caught during this landing, by a guard that worked. The step 9 falsifier refused this run with exit 2: a comment in
+the repository cites `cli_args.mjs`, and two files held that basename — the shipped one and
+`.scratch/d194_meta/cli_args.mjs`, the module copy a previous unit's witness run wrote inside the repository and
+never removed. The uniqueness rule turned a stale artifact into a refusal rather than a guess, and because this
+gate runs under `set -euo pipefail`, a refusal stops it: a witness script's leftovers can blind a reader that
+walks the repository. Moving both directories out to the OS temp dir — where this unit's own witness writes its
+copies, for the reason D194 wrote about copies in the repo — restored step 9 to 17 arms held, 0 missed. What is not
+fixed: nothing charges the *write*. The guard catches the duplicate at read time, in whichever step happens to run
+next, possibly in another lane's session, so the next unit that puts a tracked basename inside `.scratch/` reddens
+step 9 again for reasons nobody will recognise at first glance.
+
+Limits and residue, stated. The arms still quote the checker's output by hand in 31 literals — 16 of them the
+refusal marker `RESULT: NOT CHECKED`, which is by design not a verdict head, so the honest residue is 15 — because
+an arm's evidence string is a claim about a sentence, and deriving those would put the checker's prose in the arms
+instead of in the reader. The pair this unit adds plants one string that is not typed at all: the disclaimer comes
+out of the reader's own bytes (`PROSE_FOOTER`), so the arms gained 3 typed strings and 1 derived one. Step 8 checks
+that a cited line exists, never that it says what the sentence claims, so every line number above is one a later
+insertion can silently mis-aim — this unit measured that at 16 of 25 in its own sections. The checker's
+`verdictCount` is still seven hand-summed terms, so a new verdict block can print and go uncharged exactly as
+`branchlessKinds` and the unnamed class did; the derivation made the vocabulary impossible to lose sight of, not
+impossible to add. Nothing is pushed.
