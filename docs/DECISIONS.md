@@ -9816,3 +9816,50 @@ of `}` or a stray `else` still passes — this closes "nothing is there", not "w
 counted-but-not-judged split means a fresh false citation can still be written into either ledger and stay
 unpunished until #108 lands, and #108 has to answer the self-reference D160 documented first: this census's
 population includes the sentences written about it.
+
+## D162 — The blank-line class now judges the sections a run is writing, and the append that shipped the rule is the thing that proved it can redden
+
+**The rule.** Step 8's `BLANK LINE` class offends under `--text` (D161) and, from here, on the reading plane
+too — but only inside a section that does not exist at HEAD. That subset is derived from the two planes the
+census already reads, so it is not an allow list and cannot go stale the way one would: the committed headings
+are the ones `git show` prints, and a `## ` heading on disk that is absent from them is, by construction,
+being written now. The 14 span starts D161 counted all live inside committed sections, which is exactly why
+arming them there would have been an amnesty dressed as a check, and why the count stays printed on every run.
+
+**It has teeth.** A judged blank now affects the exit code, printed under its own heading
+(`FALSE LEDGER CITATIONS — BLANK LINE IN A NEW SECTION`) rather than folded into the strict HEAD list, because
+the two planes mean different things: one is "what the ledgers claim today", the other "what this paragraph
+claims, before anyone has reviewed it". The other working-copy offenders keep their old non-strict status and
+say so in a paragraph that now names the exception instead of covering it up. Two details that only matter when
+they go wrong: the text before the first heading is registered as a title in both planes, so a preamble cannot
+read as "new" on the disk side alone; and `--worktree` remains counted-only, which is what its own arm pins.
+
+**The red side was demonstrated by this entry's own first draft.** It cited line 88 of docs/DATABASE.md in prose, on purpose as a live citation, and
+that line is blank on both planes (D160's list), inside a section that exists only on disk. Step 8 exited 1
+naming this section, the line, and the file — the first time in this arc that the record's own draft was
+stopped by the reader the record is about. The committed version of this paragraph carries that citation in
+the placeholder form D94 prescribes, so what is on offer here is one observed event described in prose, not a
+re-runnable arm: reaching the same red from a harness needs step 8 to grow the `--dir`/`--head-rev` pair that
+steps 10 and 12 already have, and that is #110.
+
+**Arms, and what they pin.** `scripts/falsify_ledger_text.mjs` holds 21 of 21. The old reading-plane arm became
+two: `--worktree` must print the counted-only half and no verdict; the default plane must print both halves —
+the committed count, and the new-section count with the sentence saying a blank there offends — and exit 0
+while it holds none. A `--text` plant still reddens on one blank cite out of two, with the numbers derived from
+the cited file at run time. The wording the arms match is now load-bearing in a new way: the printed halves are
+the only visible sign that a limit exists, so renaming them reddens this harness, which is the point of pinning
+a sentence rather than a count.
+
+**Measured on the bytes this entry describes.** Default plane at the moment of the red demonstration: 14 blank
+starts inside committed sections, counted; 1 inside a new section, judged, exit 1. After the placeholder repair:
+14 counted, 0 judged, 0 offenders over 416 working-copy citations in 309 sections, exit 0. Comment plane: 78 citations
+across 22 files, PASS. Steps 10 and 12 PASS. Sibling harnesses 13 · 20 · 8 · 8 · 6 arms, all held.
+
+**Limits, stated.** An append *into* an existing committed section is still unjudged by this rule — the
+pattern this ledger almost never uses (an entry is a new `## ` heading), but nothing here proves that claim
+except D160/D161's own history, so treat it as measured-by-example. A new section written by another lane in
+a shared working tree reddens this gate for everyone; step 12 has carried that bargain in writing since D154
+and this checker now carries it too. A citation onto `}` or a lone `else` still passes, since the predicate
+reads emptiness and not correctness — D160's refused anchor-on-line predicate (18 hits in 64) stays refused.
+And the exemption this unit shrinks is not gone: the 14 committed blanks remain, each needing an appending row
+that names it, which is what a later unit can spend its turns on instead of adding another predicate.

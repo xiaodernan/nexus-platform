@@ -243,8 +243,8 @@ function ledgerText(ledger, committed) {
  * carried so an offender can be attributed to the entry that made it, and the section count doubles as the
  * non-vacuity floor: a scan that reaches zero sections has not read the file it claims to have read.
  */
-function census(committed) {
-  const stats = { tokens: 0, citations: 0, continuations: 0, sections: 0, blanks: 0, files: new Set(), offenders: [], unread: [] };
+function census(committed, blankOffends) {
+  const stats = { tokens: 0, citations: 0, continuations: 0, sections: 0, blanks: 0, judged: 0, titles: new Set(), files: new Set(), offenders: [], unread: [] };
   for (const ledger of LEDGERS) {
     const { text, reason } = ledgerText(ledger, committed);
     if (text === null) {
@@ -254,8 +254,10 @@ function census(committed) {
       continue;
     }
     let section = '(before the first heading)';
+    // The preamble exists in both planes, so it must never read as a section this run is writing.
+    stats.titles.add(section);
     text.split(/\r?\n/).forEach((line, i) => {
-      if (/^## /.test(line)) { stats.sections += 1; section = line.replace(/^##+ /, '').slice(0, 46); }
+      if (/^## /.test(line)) { stats.sections += 1; stats.titles.add(section = line.replace(/^##+ /, '').slice(0, 46)); }
       for (const m of line.matchAll(/(?:^|[^\w./-]):(\d+)/g)) stats.continuations += 1;
       for (const cite of citeTokens(line)) {
         stats.tokens += 1;
@@ -294,7 +296,8 @@ function census(committed) {
           // committed rows whose correction channel is an append that leaves the old number standing.
           if (!fileText(rel)[a - 1].trim()) {
             stats.blanks += 1;
-            if (BLANK_JUDGED) {
+            if (blankOffends(section)) {
+              stats.judged += 1;
               stats.offenders.push({ kind: 'BLANK LINE', where, cite,
                 detail: `${rel}:${a} is empty — a blank line cannot hold the claim this cite makes` });
             }
@@ -306,8 +309,13 @@ function census(committed) {
   return stats;
 }
 
-const head = census(!WORKTREE);
-const work = WORKTREE ? head : census(false);
+const head = census(!WORKTREE, () => BLANK_JUDGED);
+// D162 — on the reading plane the blank class judges exactly the sections this tree is writing: a `## `
+// heading that does not exist at HEAD. That subset has no backlog (every one of the 14 blanks D161 counted
+// sits inside a committed section), it cannot be an allow list because it is derived from the two planes the
+// census already reads, and it is the same bargain step 12 spells out for its own disk plane — a row that
+// only this run has written is this run to answer for, including when the writer is another lane.
+const work = WORKTREE ? head : census(false, (section) => BLANK_JUDGED || !head.titles.has(section));
 
 // UNCHECKED comes before the vacuity guards: "I could not read the ledger" and "the ledger had nothing in
 // it" are different failures, and a crash (the behaviour this replaced) said neither. Both planes are
@@ -337,7 +345,9 @@ if (head.files.size === 0) notCheckable(`${head.citations} citation(s) found and
 
 console.log('NEXUS — every file:line citation in docs/DECISIONS.md and docs/STATUS.md, read back out of the source');
 console.log(`  text censised            ${WORKTREE ? 'the working copy (strict)' : 'HEAD (strict); the working copy is reported'}`);
-console.log(`  blank-line cites         ${head.blanks} span start(s) on an empty line — ${BLANK_JUDGED ? 'every one is an offender on this plane' : 'counted, not judged, on the reading plane (D161)'}`);
+console.log(`  blank-line cites         ${BLANK_JUDGED
+  ? `${head.blanks} span start(s) on an empty line — every one is an offender on this plane`
+  : `${head.blanks} at HEAD (counted, not judged — D161's backlog) · ${work.judged} blank(s) among ${work.sections - head.sections} section(s) this run is writing, and a blank there offends`}`);
 console.log(`  headings seen            ${head.sections} section(s) — an offender is attributed to the one that wrote it`);
 console.log(`  name:number tokens       ${head.tokens}`);
 console.log(`  citation-shaped          ${head.citations} (the rest are host:port, ENV:value, §NN or prose)`);
@@ -378,10 +388,21 @@ if (strict.offenders.length > 0) {
   console.log('');
 }
 
-if (!WORKTREE && work.offenders.length > 0) {
-  console.log('The working copy is not strict, so these are what the NEXT commit will inherit — they are');
-  console.log('another lane\'s unwritten paragraph or this lane\'s own draft, and a gate that reddened on the');
-  console.log('first would be a gate two lanes could not run at the same time.');
+// A blank line inside a section this run is writing IS strict: it is listed here and it reddens the exit
+// code below, because that section has an author right now — D162's whole point being that the backlog of
+// committed blanks is the only reason the class is not strict on the plane it reads.
+if (!WORKTREE && work.judged > 0) {
+  console.log(`FALSE LEDGER CITATIONS — BLANK LINE IN A NEW SECTION (${work.judged}):`);
+  for (const o of work.offenders.filter((x) => x.kind === 'BLANK LINE')) {
+    console.log(`    - ${o.where}  ${o.cite.name}:${o.cite.spans.map((s) => s.join('-')).join(',')} — ${o.detail}`);
+  }
+  console.log('');
+}
+
+if (!WORKTREE && work.offenders.some((o) => o.kind !== 'BLANK LINE')) {
+  console.log('The other working-copy offenders are not strict, so what prints above is what the NEXT commit');
+  console.log('will inherit — they are another lane\'s unwritten paragraph or this lane\'s own draft, and a gate');
+  console.log('that reddened on the first would be a gate two lanes could not run at the same time.');
   console.log('');
 }
 
@@ -397,4 +418,4 @@ if (WORKTREE) {
   console.log('can redden it; the message names that file, section and line, and the claim goes to its owner.');
 }
 
-process.exit(strict.offenders.length > 0 && !REPORT_ONLY ? 1 : 0);
+process.exit((strict.offenders.length > 0 || work.judged > 0) && !REPORT_ONLY ? 1 : 0);

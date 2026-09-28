@@ -159,9 +159,18 @@ const ARMS = [
     args: [`--text=${PLANT_BLANK}`], expect: 1,
     must: [/name:number tokens\s+2/, /FALSE LEDGER CITATIONS \(1\)/, /BLANK LINE \(1\)/,
       new RegExp(`scripts/cli_args.mjs:${BLANK_AT} is empty`), /a blank line cannot hold the claim this cite makes/] },
-  { name: 'the reading plane counts the blank class and refuses to offend on it (D161 backlog)',
+  { name: '--worktree counts the blank class and judges none of it (the committed backlog)',
     args: ['--worktree'], expect: 0,
-    must: [/blank-line cites\s+\d+ span start\(s\) on an empty line/, /counted, not judged, on the reading plane/],
+    must: [/blank-line cites\s+\d+ at HEAD \(counted, not judged/],
+    absent: [/BLANK LINE \(\d+\):/, /FALSE LEDGER CITATIONS/] },
+  // D162 — the reading plane's split, pinned as two printed halves: the committed count with its non-verdict,
+  // and the new-section count with the sentence that says a blank THERE offends. The red side of this rule is
+  // demonstrated by the ledger append that first tripped it (D162), because reaching it needs an uncommitted
+  // new section in the real `docs/`, which no harness may write; the seam to plant one is #110.
+  { name: 'the default plane reports both blank halves and stays green while no new section cites one',
+    args: [], expect: 0,
+    must: [/blank-line cites\s+\d+ at HEAD \(counted, not judged/, /section\(s\) this run is writing, and a blank there offends/,
+      /0 blank\(s\) among \d+ section/],
     absent: [/BLANK LINE \(\d+\):/, /FALSE LEDGER CITATIONS/] },
   { name: 'an unparseable flag is refused, not dropped', args: [`--tex=${PLANT_EOF}`], expect: 2,
     must: [/RESULT: NOT CHECKED — unknown option --tex/] },

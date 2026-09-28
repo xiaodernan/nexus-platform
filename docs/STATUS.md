@@ -9044,3 +9044,32 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     out of 64) is still refused. Readers on these bytes: 650 tokens over 305 sections, 416
                     working-copy citations, 0 offenders; 78 comment-plane citations across 22 files; steps 10
                     and 12 PASS; sibling harnesses 20 · 8 · 13 · 8 · 6 arms, all held.
+
+## 167. D162: a blank-line citation inside a section that only this run has written now reddens step 8, and the paragraph that armed it is the proof
+
+                    The exemption D161 left behind is half closed. `BLANK LINE` offends wherever the cited
+                    section does not exist at HEAD — a subset derived from the two planes the census already
+                    reads, so there is no allow list to keep current and no amnesty to remember. The committed
+                    count (14 span starts) still prints every run, and the two halves of that line now carry
+                    their own arms in `falsify_ledger_text.mjs` (21 of 21): `--worktree` must show counted-only
+                    and no verdict, the default plane must show both halves and exit 0 while it holds no new
+                    blank. Judged blanks affect the exit code and print under their own heading, because "what
+                    the ledgers claim today" and "what this unwritten paragraph claims" are different verdicts.
+
+                    The red side came from this lane's own draft: the entry cited a line that is blank on both
+                    planes, inside a section that existed only on disk, and step 8 stopped it with exit 1 naming
+                    section, file and line — then the cite went to the placeholder form and the run went green.
+                    That is one observed event described in prose, not a re-runnable arm: a harness cannot write
+                    a new section into the real `docs/`, and the seam that would let it is step 8 growing the
+                    `--dir`/`--head-rev` pair steps 10 and 12 already have (#110).
+
+                    Still open, in this order of preference for whoever picks it up: the 14 committed blanks each
+                    need an appending row that names them (documentation work with no new predicate); an append
+                    into an existing committed section is unjudged by this rule; a cite onto `}` still passes,
+                    since emptiness is what is read and not correctness; and a new section from another lane in a
+                    shared tree reddens this gate for everyone, which step 12 has carried in writing since D154.
+
+                    Readers on these bytes: 650 citation-shaped tokens over 305 committed sections, working copy
+                    judged-clean, 0 strict offenders; 78 comment-plane citations across 22 files; steps 10 and 12
+                    PASS; harnesses 21 ledger-text · 13 comment-plane · 20 flag-dialect · 8 quality-seam · 8
+                    ledger-sections · 6 status-citations, 76 arms and none missed.
