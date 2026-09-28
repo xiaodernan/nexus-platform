@@ -308,6 +308,37 @@ for (const arm of ARMS) {
   });
 }
 
+// D189 — step 13's honesty is a `cd`, and a `cd` is exactly the thing a later edit loses. The leg that ran the
+// reader with `--dir`/`--head-dir` aimed at a worktree looked like a clean-checkout census and was not: the
+// knobs move the ledgers, the source index follows `process.cwd()` (D188's measurement: 77 files cited and 0
+// offenders from the main tree, 65 and 41 from inside the worktree, same commit). So the wiring arm pins the
+// three bare legs and the reconciliation line, and its floor is the same scan's output — a narrower regex can
+// never shrink the population it certifies. The pair arm runs that identical predicate over a copy where
+// `cd "$WT"` is put back to `cd "$ROOT"` and predicts the red, because an arm nobody has seen fail is a story.
+const step13 = (lines) => {
+  const from = lines.findIndex((l) => l.includes('step "13/13'));
+  const region = from < 0 ? '' : lines.slice(from).join('\n');
+  const readers = [...new Set([...region.matchAll(/cd "\$WT" && node scripts\/([\w.]+\.mjs)/g)].map((m) => m[1]))];
+  return { region, readers, ok: from >= 0 && readers.length === 3 && /plane reconciliation/.test(region) };
+};
+{
+  const s = step13(GATE);
+  results.push({
+    arm: { name: `gate step 13 runs its three reader legs INSIDE the worktree (${s.readers.join(', ') || 'no bare leg found'})`,
+      expect: 0, must: [], absent: [] },
+    code: s.ok ? 0 : 1, out: `readers ${s.readers.length} of 3 · reconciliation ${/plane reconciliation/.test(s.region) ? 'printed' : 'absent'}`,
+  });
+}
+{
+  const mutated = GATE.map((l) => l.replace(/cd "\$WT"/g, 'cd "$ROOT"'));
+  const s = step13(mutated);
+  results.push({
+    arm: { name: 'the same predicate reddens when the legs are put back to the main tree (D189 witnesses itself)',
+      expect: 1, must: [], absent: [] },
+    code: s.ok ? 0 : 1, out: `mutated copy: readers ${s.readers.length} of 3`,
+  });
+}
+
 // The equivalence claim, checked as text rather than as two independent predictions: the two spellings of the
 // same plant have to produce the same verdict lines, or arm 3 is only a second red, not a second reader.
 {
