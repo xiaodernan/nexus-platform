@@ -10139,3 +10139,41 @@ pointer for a human and not a proposed repair. The report reads its citing rows 
 from the working tree, deliberately — the question is where a claim lives now — so a row of its output mixes
 planes, and the two readers agree here only because all twelve sites are blank on both planes. And arming
 `BLANK LINE` on the reading plane stays open, now with the list attached.
+
+## D168 — A predicate guarded by a key nobody writes: the guide-item check cannot fail, and the census that would have said so already exists
+
+**The measurement, from source only.** Two rows in the seed's own files settle a suspicion this lane has
+carried since D66 and never read to the end. `data/seed/generate.py`, in `build_collections`, writes each
+element of `collections.items` with exactly three keys — `subject_type`, `subject_id` and `note` — for every
+member of every guide, collection and itinerary, and that is the whole shape. Meanwhile the quality gate's
+`collections/guides reference live merchants` row asks, four times across its two halves, for
+`it->>'merchant_id'`, and both halves begin with `IS NOT NULL`. So the predicate reads a key the writer never
+produces, the guard is false on every element the seed ships, and the row's count clause is therefore empty by
+construction: `0 dangling guide item(s)` is not an observation about the data, it is the shape of the SQL.
+
+**What that hides, specifically.** The relationship the row is named for is real and does need guarding —
+`subject_id` is a merchant id when `subject_type` is `merchant`, and nothing in the gate checks that join. So
+a seed that dangled every guide item's merchant would still print this row green. That is the difference between
+a check that cannot find the defect and a check that found none: the first is the case here.
+
+**Why the fix is not this lane's to make, and why the finding is still closed.** `data/seed/quality.sql` is one
+of the files this lane reports on and does not edit, so the landing is the measurement plus the two ways out for
+its owner: read the key that exists (`it->>'subject_id'`, with `it->>'subject_type' = 'merchant'` as the
+qualifier) and resolve it against `merchants`; or keep the current text and mark the row as not covering what
+its name claims. Either edit needs a plant on the other side — a deliberately dangling item — because today no
+data state can redden it, which is D79's rule about silence and D89's about a check that cannot fail.
+
+**The census that already knows.** D81's array-payload census records `collections.items` as 38 objects across 4
+collections on one signature with `keysets = 1`, which is a fact about exactly the key set the predicate gets
+wrong. The two halves of the gate — the census that enumerates element keys and the rows that read keys out of
+elements — have never been joined, and that join is the general shape of the bug: a file that measures a shape
+and a file that assumes one, both green, no reader comparing them. The join is cheap to write (the census table
+is `arr_cat`, and the predicate reads are parseable from the same file), and it belongs next to the read census
+rather than to either of these rows, so it is filed as a task rather than improvised here.
+
+**Limits, stated.** This was established from the shipped writer and the shipped SQL, not from a database: no
+product database was opened to count elements, and the numbers quoted here (three keys, four reads, 38 objects
+over 4 collections) come from the source text and from the census row D81 already files. What has NOT been
+measured is whether any *served* code path reads `merchant_id` out of `items` — that is a Java and TypeScript
+question, and if a reader exists then the gate row is not merely vacuous but aimed at a field some other lane
+planned and never wrote, which is a different report with a different owner.

@@ -9230,3 +9230,31 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     Plane: step 8 650 tokens over 311 committed sections, 0 offenders, 12 blanks counted and 0
                     judged; step 9 78 across 22 PASS; harnesses 29 · 13 · 20 · 8 · 8 · 6 = 84 arms, none
                     missed.
+
+## 173. D168: the guide-item check reads a key the seed never writes, so its green is the shape of the SQL and not a finding
+
+                    `build_collections` in the generator writes every `collections.items` element with three
+                    keys — subject type, subject id, note — and the gate's `collections/guides reference live
+                    merchants` row asks four times for `merchant_id`, each half behind an `IS NOT NULL`. The
+                    guard is false on every element the seed ships, so the count clause is empty by construction
+                    and `0 dangling guide item(s)` reports nothing about the data. The relationship the row is
+                    named for — a merchant `subject_id` that must resolve — is exactly the one left unchecked, so
+                    a seed with every guide item dangling would still print green here.
+
+                    Established from source rather than from a database: no product database was opened to count
+                    elements, and the figures (three keys, four reads, 38 objects across 4 collections on one
+                    signature) come from the writer, the gate row, and D81's own `arr_cat` census line.
+
+                    `data/seed/quality.sql` is a file this lane reports on and does not edit, so the landing is
+                    the measurement plus the two ways out for its owner — read `subject_id` with
+                    `subject_type = 'merchant'` as the qualifier and resolve it against `merchants`, or keep the
+                    text and mark that the row does not cover what its name claims. Either needs a dangling-item
+                    plant on the other side, because today no data state can redden it (D79's silence rule,
+                    D89's cannot-fail rule).
+
+                    The general shape is worth the naming: one file measures a payload's element keys, other rows
+                    assume keys when reading, both stay green, and nothing joins them. `arr_cat` already records
+                    `keysets = 1` for this very column, so the join is cheap and belongs beside the read census —
+                    filed rather than improvised. Not measured here: whether any served Java or TypeScript path
+                    reads `merchant_id` out of `items`, which would turn this from a vacuous check into a
+                    predicate aimed at a field some lane planned and never wrote.
