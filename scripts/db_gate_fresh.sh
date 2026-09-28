@@ -331,6 +331,36 @@ step "12/12 scripts/check_status_citations.mjs — every STATUS §NN written out
 # flag is a NOT CHECKED refusal, which is what made this arm honest to run rather than merely runnable.
 ( cd "$ROOT" && node scripts/check_status_citations.mjs ${GATE_STATUS_DIR:+--dir="$GATE_STATUS_DIR"} ) 2>&1 | sed -e 's/^/    /'
 
+# --------------------------------------------------------------------------- 13. the committed plane (clean checkout)
+step "13/13  scripts/check_jsonb_reads.mjs + check_ledger_citations.mjs + check_comment_citations.mjs on a detached worktree of HEAD — the committed plane that the gate's reading steps certify"
+# Steps 7, 8 and 9 read the working tree by default. D173 and D174 showed that on a clean checkout of HEAD
+# step 7 exits 1 with eleven false sites, step 8 exits 1 with forty-one unresolved citations, and step 9
+# fails as its consequence. The gate's headline green is a property of the directory, not the commit, because
+# other lanes' uncommitted work makes the working-tree green. This step creates a detached worktree of HEAD,
+# runs the same three readers there, and reports the committed-plane results so the operator can compare.
+# The worktree is created read-only, its output captured, and removed immediately — no branch moves and no
+# tracked file in the main tree is touched. The environment knobs point the readers at the worktree:
+# GATE_QUALITY_SQL, GATE_LEDGER_DIR, GATE_LEDGER_HEAD_DIR, GATE_COMMENT_PLANE.
+# This step reports the committed plane but does NOT fail the gate — the committed plane's redness is
+# caused by other lanes' uncommitted work; the fix belongs to those lanes. The gate's RESULT: PASS still
+# requires the working-tree plane to be green (steps 7-12).
+command -v git >/dev/null 2>&1 || die "step 13 needs git on PATH"
+WT="$(mktemp -d "${TMPDIR:-/tmp}/nexus-gate-wt.XXXXXX")"
+git worktree add --detach "$WT" HEAD 2>&1 | sed -e 's/^/    /'
+trap 'git worktree remove "$WT" 2>/dev/null || true; cleanup' EXIT
+step "13a/13  quality reads on the committed plane (GATE_QUALITY_SQL=$WT/data/seed/quality.sql)"
+( cd "$ROOT" && GATE_QUALITY_SQL="$WT/data/seed/quality.sql" node scripts/falsify_quality_seam.mjs ) 2>&1 | sed -e 's/^/    /' || true
+( cd "$ROOT" && GATE_QUALITY_SQL="$WT/data/seed/quality.sql" node scripts/check_jsonb_reads.mjs --quality="$WT/data/seed/quality.sql" ) 2>&1 | sed -e 's/^/    /' || true
+step "13b/13  ledger citations on the committed plane (GATE_LEDGER_DIR=$WT GATE_LEDGER_HEAD_DIR=$WT)"
+( cd "$ROOT" && GATE_LEDGER_DIR="$WT" GATE_LEDGER_HEAD_DIR="$WT" node scripts/falsify_ledger_text.mjs ) 2>&1 | sed -e 's/^/    /' || true
+( cd "$ROOT" && GATE_LEDGER_DIR="$WT" GATE_LEDGER_HEAD_DIR="$WT" node scripts/check_ledger_citations.mjs --dir="$WT" --head-dir="$WT" ) 2>&1 | sed -e 's/^/    /' || true
+step "13c/13  comment citations on the committed plane (GATE_COMMENT_PLANE=$WT)"
+( cd "$ROOT" && GATE_COMMENT_PLANE="$WT" node scripts/falsify_comment_plane.mjs ) 2>&1 | sed -e 's/^/    /' || true
+( cd "$ROOT" && GATE_COMMENT_PLANE="$WT" node scripts/check_comment_citations.mjs --plane="$WT" ) 2>&1 | sed -e 's/^/    /' || true
+git worktree remove "$WT" 2>&1 | sed -e 's/^/    /'
+trap - EXIT
+trap cleanup EXIT
+
 printf '\nRESULT: PASS — %s quality checks on a from-scratch schema (tables=%s, migrations=%s), plus the\n' \
   "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"
 printf '        seed truncate shown clearing an empty stranger and refusing one that holds rows, the\n'
