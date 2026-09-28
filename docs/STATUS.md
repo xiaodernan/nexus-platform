@@ -9332,3 +9332,26 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     honest test would be a plant writing a declaring row into the real ledgers, which needs the
                     checkout seam step 8 already has for its own planes; filed rather than improvised. The numbers
                     age like the ones they replace: two of the three target files belong to other lanes.
+
+## 177. D172: the declaration marker was measured before it was written, and it reads line wraps instead of intent — so nothing is implemented
+
+                    D171 left a clean-sounding rule: exempt a blank citation when the citing line declares it is
+                    reporting one, a phrase rather than a file list so it cannot expire quietly. #116 said to
+                    test that against both populations first, which turns out to have been the whole point. Of
+                    the twelve citing lines, two carry the word and ten do not — and the two that do are the
+                    status-ledger pair of the very claims whose decisions-ledger twins do not, because there the
+                    sentence wraps before the word arrives.
+
+                    So the marker does not separate careless from descriptive. It separates sentences that kept
+                    their wording on one line from sentences that broke early, and a checker built on it would
+                    exempt a claim in one ledger while reddening the identical claim in the other. The
+                    alternative — letting a section declare for its bullets — is document structure doing the
+                    work of intent, a move this project has declined every time it has met it. The reading plane
+                    therefore keeps counting the twelve and judging none, now with a stated reason rather than an
+                    inconvenience: the distinction the rule needs is not visible to any line-local predicate.
+
+                    D171's four descriptive rows stay four; the marker finds two of them, and that gap is the
+                    finding, not a tally to reconcile. The site report remains the human's queue and not a
+                    checker's claim, and the class still bites wherever a run writes: that is where new
+                    carelessness actually arrives, and it has been reddening rows since D162 including this
+                    entry's own two, which judge clean.

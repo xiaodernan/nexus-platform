@@ -10303,3 +10303,39 @@ count step 8 reports stays 12 by design. The corrected numbers are current as of
 same way the ones above did: the DATABASE doc and the gate script are both files other lanes edit. And the
 collections-controller entry is a judgement about what a row meant, which is the one thing step 8's whole design
 refuses to check.
+
+## D172 — A declaration marker cannot tell the two kinds apart, because it reads line wraps: measured, not implemented
+
+**What #116 asked for.** D171 split the twelve blank-citation sites into eight careless targets and four rows
+whose subject is the carelessness, and proposed that a rule could tell them apart if a citing line declared it
+was reporting a blank — a phrase marker rather than a file:line allow list, so it could not expire silently. The
+task said to measure the marker against both populations before writing it, and to stop if the split came out
+unclean, because a marker a careless row can satisfy by accident is an exemption with extra steps.
+
+**The measurement.** Testing each of the twelve citing lines for the words blank or empty: two declare, ten are
+silent. The two that declare are the pair in the status ledger's D160 section — the same two claims that, in the
+decisions ledger's D160 section, sit on bullets that do not carry the word at all, because there the sentence
+breaks before it. So the marker does not separate careless from descriptive: it separates sentences that happen
+to keep the word on the same line from sentences that wrap first. A rule built on it would exempt a claim in one
+ledger and reddened the identical claim in the other, which is a fact about text layout wearing a
+responsiveness disguise.
+
+**The decision, and what it costs.** Nothing is implemented. The reading plane keeps counting the twelve and
+judging none of them, which is the position D161 arrived at and D162 narrowed rather than closed. What is new is
+that the exemption now has a stated reason instead of an inconvenience: the two kinds the class would have to
+tell apart are not separable by anything a line-local predicate can see, and the alternative — making the marker
+section-scoped, so a bullet inherits its section's declaration — is a rule about document structure doing the
+work of a rule about intent, which is the move this project has refused every time it has met it. The site
+report stays as the review instrument: it is a human's queue, not a checker's claim.
+
+**Correction to D171 in passing.** That entry counted four rows as sentences about staleness. They are four,
+semantically — two in each ledger, all four in D160's and D165's sections — and the marker found two. The
+disagreement is the finding above, not a counting error to fix: the count of sites is twelve and stable, the
+count of detectable declarations depends on where the prose happens to break.
+
+**Limits, stated.** The marker tested here was one crude regular expression over one line, which is deliberately
+the strongest case for the proposal: if a generous test (any mention of emptiness in the citing line, either
+language, any case) catches only two of four, a narrower one catches fewer. What was not tried is a marker on
+the cited range rather than the citing line, or a per-section declaration with an explicit syntax; both are more
+machinery than the twelve rows are worth, and the position without them is already safe: the class bites on
+every row a run writes, which is where new carelessness arrives.
