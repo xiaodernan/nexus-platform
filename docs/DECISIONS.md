@@ -10375,3 +10375,43 @@ an untested step is not a passing one.
 sources all belong to other lanes, and the fix — committing the work or re-aiming the rows at committed code —
 is theirs to make. What this lane has added is the measurement, the exact command, and the instruction to name
 the plane whenever a gate number is quoted.
+
+## D174 — The clean-checkout dependence is not one step but three, and the number that matters is forty-one
+
+**What was measured, with the command held constant.** D173 reported a single red on a detached worktree of the
+committed tree and said plainly that other steps had not been tested. They have been now, the same way: same
+tool, same arguments, only the directory changed, worktree created read-only and removed afterwards, nothing
+checked out or reset where work is happening. Step 7 still reports eleven false sites on the committed plane and
+none in the shared tree. Step 8 exits 1 there with forty-one false citations, every one of them a name that
+does not resolve in a clean checkout. Step 9 then fails because it forwards step 8's verdict — seventy-five
+comment-plane citations across twenty files, one offender at least, and the reason string naming the other
+reader's exit code. Steps 10 and 12 pass on both planes, because they compare a commit against a commit and
+never lean on the directory.
+
+**The arithmetic that makes this a finding rather than a nuisance.** Four hundred and sixteen ledger citations
+resolve on the shared tree; forty-one of them do not resolve at the commit. That gap is not drift in the prose
+and cannot be repaired by prose: the committed record points at files that exist only as uncommitted work,
+thirty-three source files in another lane's packages among them. So the fresh gate's headline green is a property
+of the directory for three of its reading steps, and the sentence "the gate is green, therefore this commit is
+sound" is unsupported for those three. The two steps that are plane-stable are stable for a reason worth
+noticing, because it is the cheap fix: they ask both sides of a comparison to come from the same place.
+
+**What this lane can and cannot do about it.** Cannot: commit another lane's work, edit the seed's answer rows or
+the API contract, or decide that untracked code should be cited by committed prose. Can, and does: name the
+plane every time a number is quoted, and recommend the practice this measurement forced — read steps 7, 8 and 9
+from a clean checkout before a commit is called sound, and say which directory a number came from. The next
+concrete step for whoever owns the untracked files is small and unglamorous: land them, or re-aim the rows, and
+the gate's green starts meaning what it says.
+
+**A defect in this lane's own tooling, found because a red was read and not assumed.** The blank-citation census
+exits 1 on the committed plane by crashing inside the reader it imports — a Node stack, not a verdict. Had only
+the exit code been inspected, that would have looked like the tool successfully reporting a disagreement between
+two readers, which is the very thing it exists to detect. It is a bug in a file shipped two units ago, listed
+for repair, and a reminder of the rule this arc keeps relearning: an unread failure and a found problem are not
+distinguishable by their exit codes.
+
+**Limits, stated.** The forty-one are counted, not enumerated here, and the split between new source files and
+drifted line numbers among the eleven was not isolated, because isolating it means staging work that is not this
+lane's. The gate's database-dependent steps were not re-run on the committed plane — that costs minutes of
+container work and nothing in this finding turns on it. And the census crash was observed once, on one plane,
+from one command.

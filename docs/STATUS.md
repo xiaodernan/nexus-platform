@@ -9383,3 +9383,31 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     the same dependence, since only this one was tested. It is a report, not a repair: the seed
                     file, the API contract and the three untracked sources belong to other lanes, and the fix —
                     commit the work or re-aim the rows at committed code — is theirs.
+
+## 179. D174: three of the gate's reading steps certify the directory rather than the commit — eleven false sites, forty-one unresolved citations, and two steps that don't lean on the tree
+
+                    D173 tested one step and said so; this tested the rest the same way — same tool, same
+                    arguments, only the directory moving, a detached worktree created read-only and removed
+                    afterwards, nothing checked out where work is happening. On the commit: step 7 exits 1 with
+                    eleven false sites, step 8 exits 1 with forty-one citations whose names resolve nowhere in a
+                    clean checkout, and step 9 fails as its consequence across seventy-five comment-plane citations
+                    in twenty files. In the shared working copy all three are clean. Steps 10 and 12 pass on both
+                    planes because they compare a commit to a commit, which is the cheap lesson in the shape:
+                    ask both sides of a check to come from the same place.
+
+                    Four hundred and sixteen ledger citations resolve on the tree; forty-one of them are only true
+                    there. The committed record points at files that exist as uncommitted work, so the headline
+                    green is a property of the directory for three reading steps, and the sentence "the gate is
+                    green, therefore this commit is sound" needs the plane named in it. This lane cannot land
+                    another lane's sources, edit the seed's rows or the contract, or decide that committed prose
+                    should cite untracked code; what it can do is stop quoting a number without saying where it
+                    was read, and recommend reading steps 7, 8 and 9 from a clean checkout before a commit is
+                    called sound.
+
+                    A defect in this lane's own tooling surfaced precisely because a red was read rather than
+                    assumed: the blank-citation census exits 1 on the commit by crashing inside the reader it
+                    imports — a Node stack, not a verdict — which an exit code alone would have mis-filed as the
+                    disagreement the tool exists to report. It is listed for repair. Also open: the split of the
+                    eleven between new files and drifted lines, which cannot be isolated without staging work that
+                    is not this lane's; and the database-dependent steps, which were not re-run on the committed
+                    plane because nothing in this finding turns on them.
