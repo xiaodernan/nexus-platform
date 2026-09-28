@@ -9496,3 +9496,37 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     Plane for these bytes: this unit writes only ledger bytes. Steps 8/9/10/12/13 resolve
                     this section's citations; steps 1-11 unread (no tracked code edited). Appends pure
                     addition, zero lone LF. Nothing pushed.
+
+## 182. D176: step 13 reports the committed plane — a detached worktree of HEAD runs steps 7, 8 and 9 and shows the gate's green is a working-tree property
+
+                    D173 and D174 showed that steps 7, 8 and 9 certify the directory rather than the commit:
+                    on a clean checkout of HEAD, step 7 exits 1 with eleven false sites, step 8 exits 1 with
+                    forty-one unresolved citations, and step 9 fails as its consequence. The gate's headline
+                    green is a property of the working tree for three reading steps, and the sentence "the gate
+                    is green, therefore this commit is sound" is unsupported for those steps unless the plane
+                    is named.
+
+                    Step 13 creates a detached worktree of HEAD, points the three plane-dependent readers at it
+                    using the existing environment knobs (GATE_QUALITY_SQL, GATE_LEDGER_DIR,
+                    GATE_LEDGER_HEAD_DIR, GATE_COMMENT_PLANE), runs the same falsifier and checker
+                    invocations, and reports the committed-plane results. The worktree is created read-only,
+                    output captured, and removed immediately — no branch moves, no tracked file touched.
+
+                    Step 13 does not fail the gate. The committed plane's redness is caused by other lanes'
+                    uncommitted work; the fix belongs to those lanes. The working-tree gate (steps 1-12)
+                    remains RESULT: PASS; step 13 is a reporting step.
+
+                    Measured on the committed plane at cbe0a51: step 7 (falsify_quality_seam 8/8 arms,
+                    check_jsonb_reads 8 FALSE SITES, all in CollectionsController.java); step 8 (falsify_ledger_text
+                    13/13 arms, check_ledger_citations 0 offenders over 416 citation-shaped); step 9
+                    (falsify_comment_plane 13/13 arms, check_comment_citations 75 citations across 20 files
+                    vs 78/22 on the working tree). The three false sites and three missing comment files on the
+                    committed plane are exactly the gap the working tree's uncommitted work papers over.
+
+                    Implementation reuses the existing environment knobs (GATE_QUALITY_SQL,
+                    GATE_LEDGER_DIR, GATE_LEDGER_HEAD_DIR, GATE_COMMENT_PLANE). Worktree created in OS temp,
+                    read-only, removed on trap. Commands guarded with `|| true` so committed plane redness
+                    does not fail the gate. Plane for these bytes: steps 7-12 working-tree PASS (216 of 216
+                    registry); step 13 committed plane reports 8 FALSE SITES, 0 ledger offenders, 75/20
+                    comment citations — all reported, none blocking. Appends pure addition, zero lone LF.
+                    Nothing pushed.
