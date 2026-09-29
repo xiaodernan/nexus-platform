@@ -10445,10 +10445,10 @@ reports its LAST command unless the shell holds it. `scripts/db_gate_fresh.sh:51
 own pipes together, and D150/D151’s proof that step 11 can stop the run is a proof about that one line; GitHub
 Actions does not hold them, and its documented default for a `run:` step on Linux is `bash -e {0}`
 (workflow-syntax reference, the shell table: unspecified -> `bash -e {0}`; `shell: bash` -> `bash --noprofile
---norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:211-257)
+--norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:215-257)
 so that the report is an artifact, and none of them declared a shell, so none of them could fail. Measured in a
 shell rather than argued: `false | tee /dev/null` exits 0 under `bash -e` and 1 under `bash -eo pipefail`. All three
-declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:196-205), and the census prints
+declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:200-205), and the census prints
 `7 step(s) pipe a checker into tee` with 0 UNPROTECTED.
 (C) TWO COUNTS IN THIS UNIT’S OWN PROSE WERE WRONG, AND RUNNING A FILE CORRECTED BOTH. The note written above the
 piped steps said three steps "carried Hard-fail in their own comments". One of the three does; one of the other two
@@ -10793,3 +10793,9 @@ what would make that knob's absence visible instead of quiet.
 Not decided here: the 24 MOVED and 17 GONE citations stay as they are, and a ratchet that forbids new drift needs a
 baseline the scan itself produces rather than a number typed into a flag. Task #126 — reconciling a ledger's
 numeric claim about the code with the code — is this same missing reader aimed at figures instead of positions.
+One more, self-inflicted and caught by the reader on the commit that landed it. The 24 MOVED above was
+measured before the drift step's own job landed, and the four lines that job's fetch-depth note occupies in
+`.github/workflows/ci.yml` moved two citations in this ledger that name lines of that file — so the same command,
+re-run on the landing, prints 26 MOVED and 98 EXACT. Both were re-aimed in the same breath, which is the first time
+this lane has used the reader on its own commit, and it is the census counting its own counter one file further
+along: a drift census is not exempt from the drift it reports.
