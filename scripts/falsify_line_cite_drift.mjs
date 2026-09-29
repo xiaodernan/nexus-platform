@@ -13,7 +13,9 @@
  * `--repo`, never a reimplementation.
  *
  * The verdict vocabulary is DERIVED from the reader's bytes (D196): the harness reads the reader's own `counts`
- * declaration, so a class renamed or added in the reader cannot be silently unparsed here.
+ * declaration, so a class renamed or added in the reader cannot be silently unparsed here. `--reaim` is asserted
+ * as an arm too (D202): its rows are the list a lane applies to clear MOVED, so they are matched field by field
+ * rather than counted.
  */
 
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -57,7 +59,7 @@ function run(dir, extra) {
   if (!/^verdict /m.test(out)) {
     // A flag refusal happens before the census runs, so there are no verdict lines to assert — but that is only
     // a legitimate shape when the reader itself said NOT CHECKED and stopped the run.
-    if (r.status === 2 && /RESULT: NOT CHECKED/.test(out)) return { refusal: true, counts, judged: -1, verdict: 'NOT CHECKED', rc: r.status, out };
+    if (r.status === 2 && /RESULT: NOT CHECKED/.test(out)) return { refusal: true, counts, judged: -1, verdict: 'NOT CHECKED', rc: r.status, out, rows: [] };
     throw new Error(`the reader printed no \`verdict EXACT: N\` line and no pre-census refusal (rc ${r.status}):\n${out}${r.stderr}`);
   }
   for (const c of CLASSES) {
@@ -66,9 +68,11 @@ function run(dir, extra) {
     counts[c] = Number(hit[1]);
   }
   const judged = /^judged by content: (\d+)$/m.exec(out);
+  const frames = /^quoted error frames skipped \(file:LINE:COL\): (\d+)$/m.exec(out);
+  if (!frames) throw new Error('the reader prints no `quoted error frames skipped` line, so this harness cannot assert the skip count');
   const result = /RESULT: (\w+)/.exec(out);
   if (!result) throw new Error(`the reader printed no RESULT line (rc ${r.status}):\n${out}${r.stderr}`);
-  return { counts, judged: judged ? Number(judged[1]) : -1, verdict: result[1], rc: r.status, out };
+  return { counts, frames: Number(frames[1]), judged: judged ? Number(judged[1]) : -1, verdict: result[1], rc: r.status, out, rows: out.split('\n').filter((l) => l.startsWith('reaim\t')) };
 }
 
 const A_LINES = ['line one', 'line two', 'THE TARGET LINE', 'line four'];
@@ -77,6 +81,9 @@ const arm = (name, want, got, note) => cases.push({ name, want, got, note });
 /** The whole vector, always: a class the arm does not aim at must be asserted at zero too. */
 const vec = (a) => `${CLASSES.map((c) => `${c} ${a.counts[c]}`).join(' · ')} · judged ${a.judged} · rc ${a.rc}`;
 const want = (cls, n, judged = 1, rc = 0) => `${CLASSES.map((c) => `${c} ${c === cls ? n : 0}`).join(' · ')} · judged ${judged} · rc ${rc}`;
+/** A substring claim about the reader's own output, spelled so that a missing half is a MISMATCH line and not a
+ *  silent pass — the two NOT-UNIQUE reasons are one class, and one arm each is what keeps both branches alive. */
+const has = (a, s) => (a.out.includes(s) ? 'has' : 'MISSING');
 
 // 1 CONTROL — nothing moved. Every other arm is this plane plus one commit, so a mismatch here invalidates them.
 {
@@ -132,13 +139,19 @@ const want = (cls, n, judged = 1, rc = 0) => `${CLASSES.map((c) => `${c} ${c ===
   arm('NOT-AT-HEAD: rooted path absent at HEAD', `${want('NOT-AT-HEAD', 1, 0, 2)}`, vec(a),
     `named, not rejudged: ${a.out.split('\n').find((l) => l.startsWith('RESULT')) ?? '(no RESULT line)'}`);
 }
-// 7 The flag seams — a strict class the reader does not emit, and a flag it does not know, both refuse at exit 2.
+// 7 The flag seams — a strict class the reader does not emit, a flag it does not know, a comma-list it must
+// accept, and `--reaim` carrying a verdict it cannot give. All four are refusals or acceptances decided before
+// the census, so the shape asserted here is the exit code plus the RESULT word.
 {
   const dir = makeRepo('flags', { 'src/a.mjs': A_LINES, 'L.md': ['the target is src/a.mjs:3'] });
   const bad = run(dir, ['--strict', 'BLANK']);
   const unknown = run(dir, ['--strictt', 'MOVED']);
-  arm('refusals: unknown class, unknown flag', 'rc 2 · rc 2', `rc ${bad.rc} · rc ${unknown.rc}`,
-    `${bad.out.trim().split('\n')[0]} | ${unknown.out.trim().split('\n')[0]}`);
+  const combo = run(dir, ['--strict', 'MOVED,NOT-UNIQUE']);
+  const conflict = run(dir, ['--reaim', '--strict', 'MOVED']);
+  arm('refusals: unknown class, unknown flag, mode conflict, comma-list accepted',
+    'rc 2 · rc 2 · comma PASS rc 0 · rc 2',
+    `rc ${bad.rc} · rc ${unknown.rc} · comma ${combo.verdict} rc ${combo.rc} · rc ${conflict.rc}`,
+    `${bad.out.trim().split('\n')[0]} | ${unknown.out.trim().split('\n')[0]} | ${conflict.out.trim().split('\n')[0]}`);
 }
 
 // 8 The plane guard — CI's default checkout is a depth-1 clone, where blame dates every line to the grafted
@@ -162,8 +175,63 @@ const want = (cls, n, judged = 1, rc = 0) => `${CLASSES.map((c) => `${c} ${c ===
     `the shallow clone would otherwise have printed \`${vec(a)}\` — a confident verdict on a plane it cannot date: ${a.out.split('\n').find((l) => l.startsWith('RESULT')) ?? '(no RESULT line)'}`);
 }
 
-let matched = 0;
-for (const c of cases) {
+// 9 NOT-UNIQUE by duplication — the text the cite pointed at survives, but HEAD holds it twice, so naming one
+// occurrence would be the reader guessing which one the sentence meant. MOVED must stay empty for this shape:
+// a stale-but-aimable number and an unaimable one are different work for the lane that has to fix them.
+{
+  const dir = makeRepo('dup', { 'src/a.mjs': ['line one', 'DUP TEXT', 'line three'], 'L.md': ['the target is src/a.mjs:2'] },
+    { 'src/a.mjs': ['INSERT', 'line one', 'DUP TEXT', 'line three', 'DUP TEXT'] });
+  const a = run(dir, []);
+  const s = run(dir, ['--strict', 'NOT-UNIQUE']);
+  const m = run(dir, ['--strict', 'MOVED']);
+  arm('NOT-UNIQUE: two lines at HEAD hold the text', `${want('NOT-UNIQUE', 1)} · strict-NOT-UNIQUE FAIL rc 1 · strict-MOVED PASS rc 0 · dup-reason has`,
+    `${vec(a)} · strict-NOT-UNIQUE ${s.verdict} rc ${s.rc} · strict-MOVED ${m.verdict} rc ${m.rc} · dup-reason ${has(a, '2 lines at HEAD hold it (3, 5)')}`,
+    `the reason row: ${a.out.split('\n').find((l) => l.trim().startsWith('L.md:1 ->')) ?? '(none)'}`);
+}
+// 10 NOT-UNIQUE by blankness — the citation named a line that was EMPTY in the commit that wrote it, so the
+// number never pointed at text and no later move can make it do so. This is the second reason branch, and an
+// arm for it exists because a class with two reasons and one tested half is still a half-vacuous class.
+{
+  const dir = makeRepo('blank', { 'src/a.mjs': ['line one', '', 'line three'], 'L.md': ['the target is src/a.mjs:2'] },
+    { 'src/a.mjs': ['INSERT', 'line one', '', 'line three'] });
+  const a = run(dir, []);
+  arm('NOT-UNIQUE: the cited line was blank when written', `${want('NOT-UNIQUE', 1)} · blank-reason has`,
+    `${vec(a)} · blank-reason ${has(a, 'named a blank line when it was written')}`,
+    `the reason row: ${a.out.split('\n').find((l) => l.trim().startsWith('L.md:1 ->')) ?? '(none)'}`);
+}
+// 11 --reaim — the list a lane applies. Its numbers are derived by the same census that files the verdicts, it
+// carries one row per MOVED citation, and the `--limit` that trims the printed detail rows must not trim it: a
+// capped list would let a lane re-aim twelve citations and believe it had cleared twenty-four.
+{
+  const dir = makeRepo('reaim',
+    { 'src/a.mjs': ['ONE', 'TWO', 'THREE', 'FOUR'], 'L.md': ['first src/a.mjs:2', 'second src/a.mjs:3', 'third src/a.mjs:4'] },
+    { 'src/a.mjs': ['INS', 'ONE', 'TWO', 'THREE', 'FOUR'] });
+  const a = run(dir, []);
+  const b = run(dir, ['--reaim']);
+  const c = run(dir, ['--reaim', '--limit', '1']);
+  arm('--reaim prints every derived number, uncapped',
+    `${want('MOVED', 3, 3)} · reaim|L.md:1|src/a.mjs|2|3 / reaim|L.md:2|src/a.mjs|3|4 / reaim|L.md:3|src/a.mjs|4|5 · REAIM rc 0 · --limit 1 still 3`,
+    `${vec(a)} · ${b.rows.map((x) => x.replace(/\t/g, '|')).join(' / ')} · ${b.verdict} rc ${b.rc} · --limit 1 still ${c.rows.length}`,
+    `the RESULT line: ${b.out.split('\n').find((l) => l.startsWith('RESULT')) ?? '(none)'}`);
+}
+
+// 12 The quoted-frame skip — `file:LINE:COL` is how a runtime spells where it crashed, so a ledger quoting a
+// stack frame is not claiming anything about today's line numbers. Two planes: one built only of frames must
+// refuse with the frame sentence rather than report a clean census, and a frame sharing a plane with a real
+// citation must not take the real citation's judgement with it.
+{
+  const later = { 'src/a.mjs': ['INS', 'line one', 'line two', 'THE TARGET LINE', 'line four'] };
+  const only = makeRepo('frames_only', { 'src/a.mjs': A_LINES, 'L.md': ['at ledgerText (src/a.mjs:3:12)'] }, later);
+  const mixed = makeRepo('frames_mixed', { 'src/a.mjs': A_LINES, 'L.md': ['at ledgerText (src/a.mjs:3:12)', 'the target is src/a.mjs:3'] }, later);
+  const a = run(only, []);
+  const b = run(mixed, []);
+  arm('quoted error frames: skipped, counted, and not a hiding place',
+    `frames-only ${want('EXACT', 0, 0, 2)} · frames 1 · sentence has || mixed ${want('MOVED', 1)} · frames 1`,
+    `frames-only ${vec(a)} · frames ${a.frames} · sentence ${has(a, 'quoted error frame (file:LINE:COL)')} || mixed ${vec(b)} · frames ${b.frames}`,
+    `the frames-only refusal reads: ${a.out.split('\n').find((l) => l.startsWith('RESULT')) ?? '(no RESULT line)'}`);
+}
+
+let matched = 0;for (const c of cases) {
   const hit = c.got === c.want;
   matched += hit ? 1 : 0;
   console.log(`${hit ? 'MATCHED ' : 'MISMATCH'} ${c.name}\n      predicted: ${c.want}\n      measured : ${c.got}\n      ${c.note}`);
