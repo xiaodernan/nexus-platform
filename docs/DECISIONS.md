@@ -11327,3 +11327,30 @@ changes. 0418b22 moved `source_index.mjs` by ' + SHIFT + ' lines and silently in
 `VENDOR_DIRS` declaration — in bounds, non-blank, exempt from the strict census because the citing section is
 committed. Recorded as the pairing of task #126: a ledger claim about the code that nothing reconciles.
 
+## D201 — a line-number citation names a position, and no reader asked whether the position still holds the text it was chosen for
+
+**Decided.** `scripts/check_line_cite_drift.mjs` is that reader and CI runs it in report mode in the
+contract-drift job; `scripts/falsify_line_cite_drift.mjs` is its 8-case harness and runs as a hard-fail step
+beside it. Its verdict vocabulary is one counts object, printed one class per line and derived by the harness from
+that declaration. Its judged population is content equality between the commit blame names for the citing line and
+HEAD, over citations whose path is spelled from the repository root.
+
+**Why.** The four classes of the existing citation reader all ask whether the cited line is there. This lane's own
+STATUS §203 cited a declaration by a number that was wrong twice over — two lines at the commit that wrote it,
+nineteen after a later one — and passed every reader on both planes, because the strict census exempts a section
+that is already committed and a stale number is neither past EOF nor blank. A citation whose position moved is not
+a rarer accident than a citation whose file is missing; it was simply the one question no reader had been given.
+
+**Rule this establishes.** A new reader over a shared corpus must print its population and each verdict class as
+its own machine-parseable line, so the harness that asserts it cannot take a digit out of the prose explaining the
+class; it must state the plane on which its own predicate is meaningful and refuse any plane where the predicate is
+a lie (a shallow clone blames every line to the grafted commit, so a drift census there answers confidently about
+nothing); and where an arm depends on a mechanism the environment can silently decline to provide, the arm asserts
+the mechanism before it asserts the verdict — this harness throws when its test repository is not shallow, because
+the first version of that arm measured a full clone and called it a guard.
+
+**Not decided here.** Whether GONE may ever redden — it cannot while a reworded comment and a deleted target are
+one class, which is a meaning question and not a diff question. The 24 MOVED citations are the precondition for
+`--strict MOVED` and are listed as task #129. And the 262 basename-only citations: the shipped reader resolves
+those by basename against the shared index and could judge them, so this reader's population is smaller than the
+corpus, which it prints instead of hiding.

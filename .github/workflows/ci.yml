@@ -190,7 +190,11 @@ jobs:
   contract-drift:
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth 0 is required by the line-cite drift step below: blame needs the history, and on the default
+      # depth-1 clone it dates every ledger line to the grafted commit. The reader refuses a shallow plane
+      # rather than printing a confident row of EXACTs, so this knob is what makes the step able to answer.
       - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
       - uses: actions/setup-node@v4
         with: { node-version: 24 }
       # D195 — THE SHELL IS PART OF THE GATE. Every step below pipes a reader into `tee` so the report is an
@@ -231,6 +235,24 @@ jobs:
         run: |
           node scripts/check_ledger_citations.mjs | tee ledger-citations.txt
           { echo "## Ledger citations"; echo '```'; cat ledger-citations.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      # The class above cannot see (D201): a cited line that IS there but is not the line the sentence was
+      # written against. STATUS §203 named line 62 of `scripts/source_index.mjs` for a declaration standing at
+      # line 60 in the commit that wrote it, and a later commit added 19 lines above it — the number was wrong on
+      # both planes and no reader said so, because PAST EOF and BLANK LINE are about presence, not identity.
+      # Report mode, measured on this workflow's own plane (HEAD, both ledgers committed): 416 citation-shaped
+      # tokens, 142 judged by content, EXACT 100 · MOVED 24 · GONE 17 · NO-BASE 1. M-flip to `--strict MOVED`
+      # needs the 24 cleared first; the 262 basename-only cites are this reader's own resolution limit and are
+      # counted as UNPATHED, not judged.
+      - name: Ledger line-number citations, against the commit that wrote them
+        shell: bash
+        run: |
+          node scripts/check_line_cite_drift.mjs --limit 30 | tee line-cite-drift.txt
+          { echo "## Line-cite drift"; echo '```'; cat line-cite-drift.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: The line-cite drift reader can still see drift (its own arms)
+        shell: bash   # hard fail: 7 arms, each a one-property change on a throwaway repository
+        run: |
+          node scripts/falsify_line_cite_drift.mjs | tee line-cite-drift-arms.txt
+          { echo "## Line-cite drift arms"; echo '```'; tail -3 line-cite-drift-arms.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       # The console's two promises, and the reader that asks whether readers are reachable at all. All three
       # are first-party `scripts/check_*.mjs` that no surface named before D195 — `docs/PLAN.md` recorded the

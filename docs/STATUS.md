@@ -10755,3 +10755,41 @@ its failure conditions are about the line not being there rather than about it b
 close it is a shift report over the files a commit touches, which is the same missing reader as task #126 — a
 claim about the tree that nothing reconciles to the tree.
 
+## 206. D201: the reader that asks whether a cited line still holds the text it was chosen for
+
+Gate step 8 has four classes for a line-number citation and every one of them is about presence — the file is
+missing, the basename is ambiguous, the number is past EOF, the line is blank. STATUS §203 recorded this lane
+naming the `VENDOR_DIRS` declaration by a line number that stood two lines high on the day the sentence was
+written and nineteen lines high after 0418b22, and no class of step 8 can see that: the pointed-at line exists and
+still holds text. `scripts/check_line_cite_drift.mjs` is the reader for the class. It takes each citation in the
+committed ledgers, blames the ledger line that holds it to the commit which wrote it, reads the cited file at that
+commit and at HEAD, and compares the text of the cited line. Content equality between two refs is derivable;
+"does this sentence still describe that line" is not, and the reader never asks it.
+
+Measured on this lane's plane, before this section existed: 416 citation-shaped tokens in 22,088 ledger lines, all
+416 blamed to an author. 262 of them name a bare basename, which this reader counts as UNPATHED and refuses to
+resolve, and 12 name no file at HEAD — step 8's FILE NOT FOUND, reported as NOT-AT-HEAD and not judged twice. That
+leaves 142 judged by content: 100 EXACT, 24 MOVED, 17 GONE, 1 NO-BASE. MOVED is the unambiguous one — the text the
+citation named is still in the file, only at a different line, so the ledger's number is stale — and the reader's
+strict mode exits 1 on it, which is why the CI step runs in report mode: 24 stale numbers are a cleanup this lane
+did not make. GONE is where a reworded comment lands beside a deleted target, indistinguishable without reading
+meaning, so it is a queue. The single NO-BASE row cites a line of `scripts/falsify_ledger_text.mjs` that the
+committed file does not have, which is a citation committed against bytes that were still uncommitted — another
+lane's text, reported and not edited.
+
+`scripts/falsify_line_cite_drift.mjs` arms it in 8 cases, each a throwaway repository rather than a mutation of
+this tree, because `scripts/` belongs to two lanes at once: the control plane, MOVED by an insertion above the
+target, GONE by a reworded target, NO-BASE by a citation that predates its own code, the two counted-not-judged
+classes meeting the read-nothing floor, the flag refusals, and the plane guard. 8/8 MATCHED. Two of them were not
+free. The harness derives its verdict vocabulary from the reader's own counts declaration, and its first run read
+eight sites in a class that had none, because the summary sentence said "step 8 of the gate" and a per-class scan
+takes the first digit it finds — the printout is now one verdict line per class and a missing line stops the run.
+The shallow-plane arm passed at first for the wrong reason: a local `git clone --depth 1` silently ignores
+`--depth`, so the plane the arm believed was shallow was a full clone and the guard was never struck; with the
+transport forced, the reader computes a confident EXACT on a history it cannot date and exit 2 refuses it.
+`actions/checkout@v4` defaults to depth 1, so the drift step's job now fetches the whole history, and the guard is
+what would make that knob's absence visible instead of quiet.
+
+Not decided here: the 24 MOVED and 17 GONE citations stay as they are, and a ratchet that forbids new drift needs a
+baseline the scan itself produces rather than a number typed into a flag. Task #126 — reconciling a ledger's
+numeric claim about the code with the code — is this same missing reader aimed at figures instead of positions.
