@@ -11255,32 +11255,6 @@ written here by hand printed 4 against the shipped scanner's 10.
 *written* rather than when it is read. The index holds 27 such names, most of them structurally legitimate, so
 the population needs a predicate before it can have a gate. Recorded as the next unit.
 
-## D199 — one question, four private answers: the fold D181 ruled reaches the last reader that kept its own
-directory list, and an exclusion is only a rule when an arm runs the tree through both answers
-
-**Decided:** `check_status_citations.mjs` imports `VENDOR_DIRS` instead of keeping a nine-name list, keeps its
-dot-prefix clause as its own predicate, and gains two harness arms — one that requires the shipped reader not to
-read a planted file under an excluded directory, one that requires a reader with the private list put back to read
-it and redden.
-
-**Why:** D85 made one list out of two and D181 ruled that the fold is a union; D197 shipped that union and added
-`.scratch`. Step 12 had still not been asked, so the same directory answered "walked" to three readers and
-"skipped" to a fourth. The cost is asymmetric in a way only an arm can show: a reader with a narrower exclusion
-certifies citations into generated files, and a reader with a wider one drops citations the repository actually
-owns. Measured on this tree the fold narrows by 22 files and widens by 0.
-
-**Rule this establishes:** when a shared predicate replaces a private one, the change must come with (a) a mirror
-walk that reproduces the shipped reader's printed count before its difference is quoted, so the measurement is
-known to be the reader's and not an imitation of it; (b) a statement of which direction the plane moved, with the
-population named; (c) an arm that puts the private answer back and requires the reader to behave differently.
-A fold asserted from a comment is a preference. And: an `absent:` pattern in an arm table must be enforced by the
-runner, because a mutant that dies before printing anything can still hand back the predicted exit code.
-
-**Not decided here:** whether a line-number citation into a shipped file should be re-checked whenever that file
-changes. 0418b22 moved `source_index.mjs` by ' + SHIFT + ' lines and silently invalidated STATUS §203's cite to its
-`VENDOR_DIRS` declaration — in bounds, non-blank, exempt from the strict census because the citing section is
-committed. Recorded as the pairing of task #126: a ledger claim about the code that nothing reconciles.
-
 ## D198 — a reader that could not be read is not a verdict about the ledgers, and an arm whose evidence cannot hold what it predicts is a caption
 
 **Decided:** every arm that makes a statement about a reader's output runs through `runWith`, which makes three
@@ -11327,3 +11301,29 @@ the working-copy plane until the commit lands. Read rather than reasoned: the fi
 spelled it, and step 12 exited 1 over the one citation with 23 citations and 22 resolving — the paragraph had moved
 the population it was describing, which is this lane's recurring defect, and it is why the numbers above were
 re-taken after the sentence changed.
+## D199 — one question, four private answers: the fold D181 ruled reaches the last reader that kept its own
+directory list, and an exclusion is only a rule when an arm runs the tree through both answers
+
+**Decided:** `check_status_citations.mjs` imports `VENDOR_DIRS` instead of keeping a nine-name list, keeps its
+dot-prefix clause as its own predicate, and gains two harness arms — one that requires the shipped reader not to
+read a planted file under an excluded directory, one that requires a reader with the private list put back to read
+it and redden.
+
+**Why:** D85 made one list out of two and D181 ruled that the fold is a union; D197 shipped that union and added
+`.scratch`. Step 12 had still not been asked, so the same directory answered "walked" to three readers and
+"skipped" to a fourth. The cost is asymmetric in a way only an arm can show: a reader with a narrower exclusion
+certifies citations into generated files, and a reader with a wider one drops citations the repository actually
+owns. Measured on this tree the fold narrows by 22 files and widens by 0.
+
+**Rule this establishes:** when a shared predicate replaces a private one, the change must come with (a) a mirror
+walk that reproduces the shipped reader's printed count before its difference is quoted, so the measurement is
+known to be the reader's and not an imitation of it; (b) a statement of which direction the plane moved, with the
+population named; (c) an arm that puts the private answer back and requires the reader to behave differently.
+A fold asserted from a comment is a preference. And: an `absent:` pattern in an arm table must be enforced by the
+runner, because a mutant that dies before printing anything can still hand back the predicted exit code.
+
+**Not decided here:** whether a line-number citation into a shipped file should be re-checked whenever that file
+changes. 0418b22 moved `source_index.mjs` by ' + SHIFT + ' lines and silently invalidated STATUS §203's cite to its
+`VENDOR_DIRS` declaration — in bounds, non-blank, exempt from the strict census because the citing section is
+committed. Recorded as the pairing of task #126: a ledger claim about the code that nothing reconciles.
+
