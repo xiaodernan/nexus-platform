@@ -25,18 +25,37 @@ import { join } from 'node:path';
 /**
  * Directories that hold no first-party claim: a citation into one is a bug in the citation.
  *
- * ONE LIST, THREE READERS (section 84 residue (e), closed). `check_jsonb_reads.mjs` (D87) and
- * `check_ledger_citations.mjs` (D88) have imported this set since D85 made one list out of two;
- * `check_comment_citations.mjs` kept its own SKIP and was never folded in, which is the residue section 84
- * named. The two lists had drifted in both directions: this one lacked `out_smoke`, `vendor`, `.qoder`,
- * `.specraft` and `logs`, and the comment census lacked `.pytest_cache`, `.mypy_cache`, `.ruff_cache` and
- * `.tmp-out`. Measured on the working tree, the drift was not cosmetic -- steps 7 and 8 walked 21 generated
- * `.sql` files under the gitignored `data/seed/out_smoke/`, and all three walked the six source files of
- * `.tmp-p4/`, this project's documented scratch directory (PLAN.md: take `.tmp-p4/mvnlock` before any `mvn`),
- * plus the three notes of `.workbuddy-ai/memory/`. None of those is a file the repository ships, so a citation
- * into one is the bug this set exists to prevent. The set below is the UNION, so no reader lost a file another
- * reader kept; the four names only the ledger census had are insurance against a build that leaves output
- * behind, and `out_smoke` covers the seed smoke directory exactly as `out` already covered `data/seed/out`.
+ * ONE LIST, THREE READERS (section 84 residue (e)). `check_jsonb_reads.mjs` (D87) and
+ * `check_ledger_citations.mjs` (D88) have imported this set since D85 made one list out of two; the comment
+ * census folded in when `check_comment_citations.mjs` began importing it.
+ *
+ * D197 put a history claim in this paragraph that the refs contradict, so it is corrected here instead of being
+ * left for a later reader to disprove: it said the comment census "kept its own SKIP and was never folded in".
+ * `git log -S VENDOR_DIRS -- scripts/check_comment_citations.mjs` names one commit, 656ab7e, so the import landed
+ * there — eleven units after the ruling that ordered it, whose text is D181 (the comment inside that file numbers
+ * it D180, one ruling early). What D181 ruled and the bytes never carried is the second half: it states "`VENDOR_DIRS
+ * is 21 names", naming `out_smoke`, `vendor`, `.qoder`, `.specraft` and `logs` as the union's additions, and the set
+ * read from `5e5bfe3`, `656ab7e` and `af9bf2c` each holds 14 names with none of those five present. `f024260` (D197)
+ * is the first commit whose set is the ruled union — 21 names — and `.scratch` on top of it makes 22. So the fold
+ * unified on the SHORTER list, and between 656ab7e and D197 every reader walked the directories the ruled union
+ * excludes; no census has been reading the set D181 described for eleven units.
+ *
+ * The radius of that, measured on this working tree by the shared walker itself: with the 14 names it returns 735
+ * files for `LEDGER_EXT` against 592 for the union, and 591 against 496 for `SOURCE_EXT`. The 143 extra sit under
+ * `.scratch` (83), `.tmp-p4` (35), `data/seed/out_smoke` (22) and `.workbuddy-ai` (3), and of the 21 `.sql` files
+ * in the smoke directory none is tracked. This matters because the census resolves a citation against whatever the
+ * walker returned: a directory absent from this set is a directory whose files the readers certify as cite targets.
+ *
+ * D181's own measurements were the same three, and one of them has since grown: it walked 21 generated `.sql`
+ * files under the gitignored `data/seed/out_smoke/` (still 21, still untracked), the source files of `.tmp-p4/` —
+ * this project's documented scratch directory (PLAN.md: take `.tmp-p4/mvnlock` before any `mvn`), six when D181
+ * measured and 21 by `SOURCE_EXT` on this tree, which is what a scratch directory's size is — and the three notes
+ * of `.workbuddy-ai/memory/`. None of those is a file the repository ships, so a citation into one is the bug this
+ * set exists to prevent. The set below is the UNION of both hand lists, so no reader lost a directory another kept;
+ * it is also wider than either, because `.tmp-p4` and `.workbuddy-ai` were excluded by neither list before the
+ * fold. That direction was deliberate — a name added here makes a census refuse a citation, never certify one —
+ * and the four names only the ledger census had are insurance against a build that leaves output behind, with
+ * `out_smoke` covering the seed smoke directory exactly as `out` already covers `data/seed/out`.
  *
  * D197 added `.scratch` — the name is spelled out here because the cost of NOT having it was measured, not
  * guessed. `.scratch/` is a lane's working directory for witness scripts and drafts; it holds no tracked file, and

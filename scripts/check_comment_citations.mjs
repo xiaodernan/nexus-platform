@@ -74,13 +74,13 @@ const COMMENT = {
   '.java': [/\/\//, /^\s*\*/, /\/\*/], '.mjs': [/\/\//, /^\s*\*/, /\/\*/], '.cjs': [/\/\//, /^\s*\*/, /\/\*/],
   '.js': [/\/\//, /^\s*\*/, /\/\*/], '.ts': [/\/\//, /^\s*\*/, /\/\*/], '.tsx': [/\/\//, /^\s*\*/, /\/\*/],
 };
-// The directory exclusion is `source_index.mjs`'s one list, imported rather than copied. Until D180 this
-// file kept its own 15-name SKIP that shared 10 names with that list and differed in both directions: it
-// carried `out_smoke`, `vendor`, `.qoder`, `.specraft` and `logs`, and it lacked `.pytest_cache`,
-// `.mypy_cache`, `.ruff_cache` and `.tmp-out`. So steps 7 and 8 walked `.tmp-p4/` and the gitignored
-// `data/seed/out_smoke/` while step 9 skipped them, and step 9 walked the pytest caches while they
-// skipped those. One list, so a directory that is not the repository's own text is excluded by all
-// three readers or by none of them (section 84 residue (e)).
+// The directory exclusion is `source_index.mjs`'s one list, imported rather than copied. This file kept a
+// private 15-name SKIP until the fold ruled at D181 and landed in 656ab7e: the two lists shared 10 names and
+// drifted in both directions -- it carried `out_smoke`, `vendor`, `.qoder`, `.specraft` and `logs`, it lacked
+// `.pytest_cache`, `.mypy_cache`, `.ruff_cache` and `.tmp-out`, so steps 7 and 8 walked the gitignored
+// `data/seed/out_smoke/` while this step skipped it. The fold took the SHORTER list, so all three readers then
+// walked those five directories until D197 shipped the union; `source_index.mjs`'s header owns that measurement.
+// One list either way, so a directory that is not the repository's own text is excluded by all three or none.
 // docs/ is step 8's own plane; scoring it from here too would count its citations twice and blame the wrong
 // section when one fails.
 const EXCLUDE_PREFIX = ['docs/'];
