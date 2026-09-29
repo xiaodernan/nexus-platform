@@ -10596,8 +10596,8 @@ so the three readers walked a lane's working directory as part of the repository
 `cli_args.mjs` under `.scratch/d194_meta/`, the shared walker returned that basename twice, a citation naming
 exactly one shipped file read AMBIGUOUS, gate step 9's falsifier refused with exit 2, and because
 `db_gate_fresh.sh` runs under `set -euo pipefail` that refusal stops whichever session runs the gate next.
-The list is now the union of the two drifted lists (22 names, `scripts/source_index.mjs:62`), `.scratch` among
-them. D196's residue — "nothing charges the write" — is answered by `scripts/falsify_ledger_text.mjs:634`,
+The list is now the union of the two drifted lists (22 names, `VENDOR_DIRS` in `scripts/source_index.mjs`), `.scratch` among
+them. D196's residue — "nothing charges the write" — is answered by `scripts/falsify_ledger_text.mjs:682`,
 which keeps out of the exclusion any file that turns out to be tracked, so the name cannot become a hiding
 place for a first-party claim.
 
@@ -10636,4 +10636,122 @@ false statement about it; that is the same class as D194's "a death called a ver
 the next unit here. Second, the write-time charge is partial: the index holds 592 files under 513 basenames,
 and 27 basenames are held by more than one file (31 of them `page.tsx`), so charging duplicates at write time
 means distinguishing a name a citation can actually land on from a name the tree structure repeats.
+
+**Correction, landed by 0418b22.** The line cite above named the `scripts/source_index.mjs` set declaration
+by position, and the position is wrong twice over. Read off the refs: in f024260 — the commit that section
+describes — the declaration sat two lines ABOVE the number cited, so the figure was typed rather than derived,
+which is D195's finding in its plainest form. The D197-correction header edit then added 19 more lines above it,
+so the number names a comment paragraph at HEAD rather than the code it was chosen for.
+It is undetectable from the reading plane: the pointed-at line still exists and is still non-blank, so PAST EOF
+and BLANK LINE both stay silent, and the newness predicate exempts a section that is already committed — which
+is the whole of STATUS §203 by now. The reference is kept without a line number: a fact whose text this lane edits
+cannot be cited by position, so the symbol and the file carry it. This is D195's finding one commit later, and
+it is this lane's own making, which is why it is recorded as a correction rather than a new ruling.
+
+## 204. D198: a dead child was filed as a verdict about the reader, and the first guard written against it could not be falsified five ways
+
+D197 closed with this unit named: `run()` returned `{code, out}` and the reporting loop scored every arm from
+those two fields, so a child that died before printing anything — exit 134 from an abort, or an empty stdout —
+arrived as `MISSED exit 2 expected, 134 printed` with an empty verdict line, and again as `exit 0 expected, 0
+printed`: both of them findings about a reader no arm had reached. Six runs of the 50 arms on a loaded host had
+gone four green and two red, each red a different arm, while the same invocation standalone returned its expected
+verdict. Both halves of that sentence are armed now. A child gets three attempts (scripts/falsify_ledger_text.mjs:216), an exit code
+is believed only when stdout carried something, and the reporting loop refuses the whole run with exit 2 and
+`unread N of M arms` (scripts/falsify_ledger_text.mjs:858) rather than scoring an observation nobody made. The refusal is scoped by a
+`reading` tag (scripts/falsify_ledger_text.mjs:464) so the three stub arms that are deliberately aimed at silent children cannot trip it.
+The contract in the header says all three exit-2 causes out loud, because a harness whose exit codes are not in
+its own documentation is one more thing to rediscover (scripts/falsify_ledger_text.mjs:69).
+
+The structural half is what keeps "stdout is empty" from being a guess. An empty stdout is a death rather than a
+verdict only if the reader prints before it can exit, so that is read out of the reader's own bytes — every
+`process.exit(` in `scripts/check_ledger_citations.mjs` has a `console.log(` before it — and armed against a copy
+of the reader with an exit hoisted above its first print. Measured by hand against a silent stub, the refusal
+prints `unread 32 of 49 arms` and exits 2; the 49 is every arm in a non-mutant run, and the 32 is every arm that
+had a reader to hear from.
+
+Most of the work was that the guard arrived half-written in the working copy. Measured as it stood: 56 arms · 48
+held · 8 missed. Five of the eight were defects in that half-finished guard, and each is a shape this file exists
+to catch in other people's readers. (a) The attempt counter reported four attempts for three — the loop index was
+incremented by the loop and then incremented again on the way out — and the arm that names `attempts 3`, the only
+arm that could see it, was red. (b) The arm pinning that stderr is not the verdict channel demanded
+`a death rattle on stderr` in its must-list while printing a summary string that could not contain it, so it
+reddened on its own wording; the child's own text is carried in the arm's evidence now. (c) The "prints before it
+exits" arm compared the byte offsets of the first print and the first exit and printed a line its own regex could
+not match, so its evidence and its prediction were two different claims; it asks what the claim means now, with
+the number of exits that have no print before them as the measurement. (d) The copy that is supposed to witness
+that predicate had its ternary inverted, so it could only be red when the predicate was TRUE — a mutation witness
+that cannot redden on the mutation it plants. (e) The refusal those six arms predict did not exist, which is the
+one arm that was red for the right reason.
+
+Finished and re-measured: 56 arms · 56 held · 0 missed, exit 0, three consecutive runs over the same bytes with
+Git's bash first on `PATH`. The three remaining misses in the as-found run were not defects in this file and are
+not fixed here: `bash` on this host resolves to `C:\WINDOWS\system32\bash.exe`, the WSL launcher, which cannot
+exec `/bin/bash` (`execvpe(/bin/bash) failed`) even though Git's bash 5.2.37 is installed beside the `git` that
+`PATH` does carry through `C:\Program Files\Git\cmd`. The three arms that run the gate's own shell helpers — the
+`--help` knob census and the two `reconcile` branches — reported MISSED: an absent instrument wearing the shape of
+a wrong subject, which is the same confusion this unit's guard exists to stop one level down. The harness does not
+yet refuse when no working bash can be found, so that refusal is recorded as the next unit rather than claimed
+here.
+
+One blast radius, measured rather than assumed. This unit inserts 160 lines and deletes 9 in
+`scripts/falsify_ledger_text.mjs`, and exactly one citation already in the ledgers pointed into that file:
+`docs/STATUS.md:10600`. It named line 634, which at HEAD is the arm whose predicate charges the exclusion
+against the tracked set, and the insertion moved that arm's name line to scripts/falsify_ledger_text.mjs:682; the ledger line was
+repointed at landing. Step 8 was green over the stale number before and after — the census asks that a cited line
+exist, never that it holds what the sentence claims, which is the standing residue D194 and §202 both name.
+
+The class is not unique to this harness. Two others spawn a reader and read its exit code the same way —
+`scripts/falsify_comment_plane.mjs:117` and
+`scripts/falsify_quality_seam.mjs:213` — and both are left alone here, because a fix belongs in
+a unit that can witness it in both directions. One of them is covered already by an earlier rule rather than by
+luck: `falsify_quality_seam`'s crash predicate reads the reader's terminal sentinel (D194), so a silent child
+there is refused as a crash and never scored as a reading. The other has no such guard, and its arm helper also
+carries a branch that fabricates a clean exit with empty output for the two arms that deliberately never spawn the
+reader, which is a different thing again: a run that did not happen, standing in for an exit code.
+Plane for these bytes, working copy, taken after this append: step 8 sees 380 section(s) at HEAD against 382 on
+disk, 759 name:number token(s) of which 516 are citation-shaped, 92 distinct file(s) cited, 0 strict offender(s),
+19 blank(s) counted at HEAD and 0 among the 2 new section(s); step 9 88 comment-plane citation(s) across 27
+file(s) with 0 offenders; step 10 STATUS 171 sections at HEAD against 172 on disk and DECISIONS 184 against 185,
+missing 0, duplicate numbers 0; step 12 22 of 22 spelled section citations resolving over 587 candidate file(s);
+the harness 56 arms · 56 held · 0 missed, exit 0. Every one of those was read out of a run made after this text
+landed, and the harness tally is the third of three consecutive runs over the same bytes — with Git's bash first
+on `PATH`, which is the plane the tally belongs to and is named because the same command without it reports three
+arms MISSED for an instrument this host does not put there.
+## 205. D199: gate step 12 was the fourth reader still deciding the directory question for itself, and the fold
+D181 ruled reached it only now
+
+`check_status_citations.mjs` answered "is this directory part of the repository?" with a private nine-name list
+plus a rule that drops any dot-prefixed name, while `source_index.mjs` had held the shared answer since D85 and the
+union since D197. The list is imported now and the dot rule is kept, because it is this reader's own predicate in
+the same sense as its extension list — removing it would widen the plane it walks, and `.mvn` is covered by both
+answers, so the fold drops files and adds none.
+
+The radius was measured by a mirror walk that first had to reproduce the shipped reader's own printed count:
+its private rule indexes 587 files, the shared set indexes 565, the difference is 22 files that only the private
+rule read (all of them generated `.sql` under the gitignored `data/seed/out_smoke/`) and 0 that only the shared
+set reads — so the fold is narrowing and equal on everything else. None of those 22 carries a `STATUS §` token, so
+the verdict for this tree is the same PASS at both settings and only the count it prints moved: 565 of 565
+candidates, 23 citations · 23 resolve, 35 mentions · 18 would resolve, exit 0. That was read off the bytes before
+this section existed, and the census counts its own counter: this text cites the 203-section twice, so re-read
+on the plane that includes it the same command prints 25 citations · 25 resolve and 36 mentions · 18 would
+resolve, still exit 0. Both pairs are kept because each names the plane it was measured on.
+
+Armed both ways in `falsify_status_citations.mjs` (6 arms → 8, 8 held, exit 0): the shipped reader's arm plants a
+bad `STATUS §99999` under `data/seed/out_smoke/` with a good control beside it and requires the plant to go unread
+(`files scanned 1`, and `99999` absent from the report); the second arm runs the same fixture through a copy of the
+reader given back its private list, through the harness's existing `--reader` seam, and requires exit 1 charging
+the plant at `files scanned 2`. The exclusion is therefore a witness, not a comment.
+
+One arm failed before it held, and the failure is the residue. The mutant copy rewrote its own
+`from './cli_args.mjs'` into a bare Windows absolute path, the ESM loader threw
+`ERR_UNSUPPORTED_ESM_URL_SCHEME`, and node's crash exit code was 1 — the code the arm predicted — so the arm saw
+a matching number where no `RESULT:` line had been printed. Fixed by `pathToFileURL(...).href`, not by relaxing
+the prediction, and the runner now enforces each arm's `absent:` patterns (a declared absence that nothing checks
+is decoration, and this is D194's "a death called a verdict" arriving through an exit code that happens to agree).
+
+Residue, stated because the arms do not close it. The correction paragraph above names a class no reader here
+judges: a line-number citation into a file the ledgers describe stays green when that file grows, because both of
+its failure conditions are about the line not being there rather than about it being the wrong line. What would
+close it is a shift report over the files a commit touches, which is the same missing reader as task #126 — a
+claim about the tree that nothing reconciles to the tree.
 

@@ -11255,3 +11255,75 @@ written here by hand printed 4 against the shipped scanner's 10.
 *written* rather than when it is read. The index holds 27 such names, most of them structurally legitimate, so
 the population needs a predicate before it can have a gate. Recorded as the next unit.
 
+## D199 — one question, four private answers: the fold D181 ruled reaches the last reader that kept its own
+directory list, and an exclusion is only a rule when an arm runs the tree through both answers
+
+**Decided:** `check_status_citations.mjs` imports `VENDOR_DIRS` instead of keeping a nine-name list, keeps its
+dot-prefix clause as its own predicate, and gains two harness arms — one that requires the shipped reader not to
+read a planted file under an excluded directory, one that requires a reader with the private list put back to read
+it and redden.
+
+**Why:** D85 made one list out of two and D181 ruled that the fold is a union; D197 shipped that union and added
+`.scratch`. Step 12 had still not been asked, so the same directory answered "walked" to three readers and
+"skipped" to a fourth. The cost is asymmetric in a way only an arm can show: a reader with a narrower exclusion
+certifies citations into generated files, and a reader with a wider one drops citations the repository actually
+owns. Measured on this tree the fold narrows by 22 files and widens by 0.
+
+**Rule this establishes:** when a shared predicate replaces a private one, the change must come with (a) a mirror
+walk that reproduces the shipped reader's printed count before its difference is quoted, so the measurement is
+known to be the reader's and not an imitation of it; (b) a statement of which direction the plane moved, with the
+population named; (c) an arm that puts the private answer back and requires the reader to behave differently.
+A fold asserted from a comment is a preference. And: an `absent:` pattern in an arm table must be enforced by the
+runner, because a mutant that dies before printing anything can still hand back the predicted exit code.
+
+**Not decided here:** whether a line-number citation into a shipped file should be re-checked whenever that file
+changes. 0418b22 moved `source_index.mjs` by ' + SHIFT + ' lines and silently invalidated STATUS §203's cite to its
+`VENDOR_DIRS` declaration — in bounds, non-blank, exempt from the strict census because the citing section is
+committed. Recorded as the pairing of task #126: a ledger claim about the code that nothing reconciles.
+
+## D198 — a reader that could not be read is not a verdict about the ledgers, and an arm whose evidence cannot hold what it predicts is a caption
+
+**Decided:** every arm that makes a statement about a reader's output runs through `runWith`, which makes three
+attempts, refuses to believe an exit code whose stdout is empty, and marks the result as a reading; the reporting
+loop refuses the whole run with exit 2 (`unread N of M arms`) when any reading never spoke, instead of scoring it.
+The `reading` tag scopes that refusal, so the three stub arms that aim deliberately at silent children are not
+charged by it. The structural claim the guard rests on is armed against the reader's own bytes: every
+`process.exit(` in `scripts/check_ledger_citations.mjs` has a `console.log(` before it, and a copy of the reader
+with an exit hoisted above the first print reddens that predicate.
+
+**Why:** the alternative was measured, and it is the failure this lane exists to keep out of the ledgers. A harness
+that prints `MISSED exit 2 expected, 134 printed` has taken an abort and turned it into a finding about a census
+that never ran, and everything around the number lends it the shape of evidence — the reader's name, the arm's
+name, the tally, the exit code it declined to doubt. D194 established the rule one level down, in a reader that
+could print a reason and exit 0 over it; this is that rule at the harness, where a child that never spoke is not a
+reader that found nothing. The refusal costs the one thing a green tally is for, a number to quote, and buys the
+claim that every line of that tally was read.
+
+**Rule this establishes:** a subprocess result is a reading only if the channel that carries verdicts carried
+something, and the harness must be able to say which channel that is and show the reader using it — which is why
+the structural arm is asked of the reader's bytes rather than asserted in a comment. The corollary comes from this
+unit's own half-written guard, which was measured before it was believed: an arm's evidence string must be able to
+hold the text its prediction demands, its mutation witness must be able to redden on the mutation it plants, and a
+predicate comparing two numbers must compare the two the sentence is about. Five defects of exactly those kinds
+sat in the first version of this guard, and three of them were arms that could never have fired — the class D192,
+D193 and D197 each found one of, arriving in the unit written to catch it.
+
+**Not decided here:** whether a silent child and a `bash` that cannot execute deserve the same verdict or
+different ones. Today only the first refuses; the second still reports three arms as MISSED, an absent instrument
+wearing the shape of a wrong subject. The refusal that would fix it needs a witness in both directions, and this
+host — where `bash` is the WSL stub while Git's bash sits one directory off `PATH` — is the only place one has
+been seen so far. Recorded as the next unit, together with the same `run`-reads-only-the-exit-code pattern, still
+unguarded, in `scripts/falsify_comment_plane.mjs`.
+Plane for these bytes, working copy: the same runs that wrote the numbers in this unit's STATUS section — step 8
+0 strict offender(s) over 382 section(s), step 9 0 offenders over 88 comment-plane citation(s), step 10 HEAD 171
+STATUS sections and 184 decisions all present on disk with no number claimed twice, step 12 22 of 22 spelled
+section citations resolving, and 56 of 56 harness arms held. That section carries the full plane; this entry is
+the ruling and does not restate a count it did not measure.
+
+The section this entry pairs with is deliberately not spelled by number anywhere above, and the reason is a
+measured constraint rather than a style. The checker that reads these cites requires a spelled ledger citation to
+resolve to a heading at HEAD, and that section is written by this same commit, so naming it in that form reddens
+the working-copy plane until the commit lands. Read rather than reasoned: the first version of the paragraph above
+spelled it, and step 12 exited 1 over the one citation with 23 citations and 22 resolving — the paragraph had moved
+the population it was describing, which is this lane's recurring defect, and it is why the numbers above were
+re-taken after the sentence changed.
