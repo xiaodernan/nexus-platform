@@ -5237,10 +5237,10 @@ because the domain has one value" — does not contain the wall clock anywhere i
 measuring something the sentence never promised. On a machine where the load spends twenty minutes after
 stamping `facts` and the gate then reads this file, `now()` is a fact about the machine.
 
-What the row asks now is the question the sentence means. `data/seed/load.sh:121` records the window the load
+What the row asks now is the question the sentence means. `data/seed/load.sh:155` records the window the load
 itself runs inside — `nexus.seed_started` and `nexus.seed_finished`, epoch seconds read from the server's
-clock by a statement at `data/seed/load.sh:130`, so a host/container clock disagreement cannot widen or narrow
-the window — and `data/seed/quality.sql:2345` keeps a degenerate timestamp column when its value falls between
+clock by a statement at `data/seed/load.sh:164`, so a host/container clock disagreement cannot widen or narrow
+the window — and `data/seed/quality.sql:2390` keeps a degenerate timestamp column when its value falls between
 the two bounds widened by 600 seconds at each end. Nothing in the row is measured against `now()` any more, and
 the width of the load stops mattering: the value is inside the window whether the load takes two minutes or two
 hours. That last clause was an argument when this unit first wrote it and is now a measurement — the third
@@ -5248,7 +5248,7 @@ certification run's load took 807 seconds against the second run's 190, on ident
 in both, where the replaced predicate was red in the slower one by at least 142 seconds of pure machine.
 Recording is opt-in (`SEED_ANCHOR=1`) for a reason that is not backwards-compatibility: writing
 a database-level setting is a write to the *database entry*, not to a table, so the throwaway gate database
-gets stamped by `scripts/db_gate_fresh.sh:140` and a shared one does not get stamped unless whoever owns it
+gets stamped by `scripts/db_gate_fresh.sh:173` and a shared one does not get stamped unless whoever owns it
 asks. The loader says so out loud when it did not stamp, because an unrecorded database used to be able to
 pass this row by accident of timing and now cannot pass it at all.
 
@@ -5320,8 +5320,8 @@ rc=0 without the flag and rc=3 with it — and with the flag rc=3 reports only t
 which on the demo database the coverage row names eleven of, four of them in `agent_runs`; it does not report
 this row's verdict. So the only reading that
 separates the four arms is the printed row, and a verdict carried by an exit code has to carry the invocation
-beside it; `data/seed/load.sh:168` already tells the operator which invocation that is, and
-`scripts/db_gate_fresh.sh:153` is the gate using it.
+beside it; `data/seed/load.sh:214` already tells the operator which invocation that is, and
+`scripts/db_gate_fresh.sh:186` is the gate using it.
 
 **Gates.** Three official 8-step runs of `scripts/db_gate_fresh.sh --keep`, all ending `RESULT: PASS — 216 quality
 checks on a from-scratch schema (tables=58, migrations=7)`. The first is the run this unit set out to make; the
@@ -5402,7 +5402,7 @@ preflight — before the container check, before the connection, before the load
 be published is refused in the second it is noticed rather than after ten minutes of loading it.
 `data/seed/load.sh:90` gates that read on the same `SEED_ANCHOR=1` that D89 introduced, and
 `data/seed/load.sh:171` records it as `ALTER DATABASE … SET nexus.seed_base`, called beside the window bounds
-at `data/seed/load.sh:190`. `scripts/db_gate_fresh.sh:144` turns all three on for the database it owns. One
+at `data/seed/load.sh:190`. `scripts/db_gate_fresh.sh:173` turns all three on for the database it owns. One
 flag, one carrier, one stamp, no new table: `tables=58` is unchanged.
 
 **The gate reads it and refuses to guess.** `data/seed/quality.sql:72` defines `seed_now` — `known`, `ts`, and
@@ -7093,7 +7093,7 @@ lesson was that an equal total is not the same set; this is the same lesson on a
 moves with the data, so a coverage denominator is a reading of the plane as much as of the file.
 
 **Found (b): the harness polices redness, not existence, so (a) passed it by.** Reading the shipped arithmetic
-(data/seed/falsifier_plants.py:287-299): collateral is `reds not in base_reds`, and `base_reds` is the set of
+(data/seed/falsifier_plants.py:1280-1292): collateral is `reds not in base_reds`, and `base_reds` is the set of
 *red* rows on unmutated data. A name that stops being filed is therefore invisible to every test the drive
 makes — the 213 was printed in the `rows` column and caught by a person reading it, not by the verdict. A drive
 whose arm deletes the table a sweep groups over can report PASS while three assertions leave the plane, and
@@ -7215,7 +7215,7 @@ the three deceptions is one UPDATE. They are the first arms in this lane whose f
 rather than a value, a count or a stamp: the `subject_type` string keeps its meaning and the `subject_id` names
 a row that really exists, in another table's role.
 
-**Decision (a): the two favourite arms lie by label.** `data/seed/falsifier_plants.py:230-235` points the one
+**Decision (a): the two favourite arms lie by label.** `data/seed/falsifier_plants.py:238-243` points the one
 `collection` favourite at the `kind='guide'` row and the one `guide` favourite at a `kind='collection'` row.
 `collections` is 4 rows — guide 1, collection 2, itinerary 1 — all four `visibility='public'` with
 `published_at` set and an `author_id`; `favorites` is 18 rows (merchant 12, offering 4, collection 1, guide 1).
@@ -8421,7 +8421,7 @@ inherited from D107/D108 rather than re-read. D138 had to refuse a claim for the
 fixes the reporting and then uses it.
 
 **Decision (a): a failing gate reports the same census a passing one does.** The else-branch at
-scripts/db_gate_fresh.sh:166-177 now counts `^  PASS` and `^  FAIL` lines from the same temp file it was
+scripts/db_gate_fresh.sh:191-202 now counts `^  PASS` and `^  FAIL` lines from the same temp file it was
 about to tail, and prints them with the two planes the schema was built on, before the last 25 lines --
 so the reason a run stopped is legible without a second run to ask "how many were there?"
 
@@ -9741,7 +9741,7 @@ claim. They are not one cause but three:
 * `docs/DATABASE.md:88` from two rows (`docs/DECISIONS.md:5160` and `docs/DECISIONS.md:5220`) — that file is
   dirty in this working copy with another lane's uncommitted 10-line append, which moved the line under the
   citation. Reported, not edited: the row is mine to note and the file is not mine to touch.
-* `scripts/db_gate_fresh.sh:144` from two rows (`docs/DECISIONS.md:5405` and `docs/STATUS.md:4634`) — D159's
+* the cite of `scripts/db_gate_fresh.sh` at line 144, from two rows (`docs/DECISIONS.md:5405` and `docs/STATUS.md:4634`) — D159's
   step 9 wiring added 8 lines above that number, so this lane's own change is what blanked it.
 * `scripts/check_ledger_sections.mjs:34` from two rows (`docs/DECISIONS.md:9342` and the D159 row that
   corrects it, `docs/DECISIONS.md:9688`) — the parse migration deleted a line there, and the correcting
@@ -10627,7 +10627,7 @@ WHY IT WAS BELIEVED. D176 wired step 13 with the plane knobs — `--dir`/`--head
 `--quality` for step 7 — and recorded what they printed: "step 8 PASS with 0 offenders" on the committed plane,
 against the forty-one D174 had measured by hand in a clean checkout. Both numbers were correct and they were not
 the same question. A plane knob relocates the TEXT a reader censuses; every reader here builds its SOURCE INDEX
-from the directory it was started in — `scripts/check_ledger_citations.mjs:58` is `const ROOT = process.cwd();`,
+from the directory it was started in — `scripts/check_ledger_citations.mjs:64` is `const ROOT = process.cwd();`,
 and `scripts/check_comment_citations.mjs:52` takes its ROOT from the script's own location but hands that cwd to
 the child it scores the comment plane with. So the knob leg was asking "do this clean checkout's sentences name
 files that exist HERE", and HERE is the shared working copy, where the other lanes' untracked `com.nexus.admin`,

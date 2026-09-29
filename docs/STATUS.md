@@ -4395,8 +4395,8 @@ plants            The harness slices the region out of the shipped file at run t
                     verdicts, and the exit code is a separate measurement: psql returns 0 from this file
                     whether the clock row is green or red unless it is invoked with `-v ON_ERROR_STOP=1`, the
                     flag that turns the verdict block's RAISE into rc=3 — which is how the gate itself calls
-                    it (`scripts/db_gate_fresh.sh:153`) and how load.sh tells the operator to call it
-                    (`data/seed/load.sh:168`). Measured on the shipped text at 08:00 with the artifact kept:
+                    it (`scripts/db_gate_fresh.sh:186`) and how load.sh tells the operator to call it
+                    (`data/seed/load.sh:214`). Measured on the shipped text at 08:00 with the artifact kept:
                     P4 gives rc=0 unflagged and rc=3 flagged, and P1 gives that same pair. So with the flag the
                     exit code reports "this database has an offender", not "my row failed" — the offender on
                     the demo database is one the coverage row names, `agent_runs.completion_tokens`, a runtime
@@ -4405,11 +4405,11 @@ plants            The harness slices the region out of the shipped file at run t
                     green, and it was.
                   P5 propagation, because P1..P4 set the GUCs in their own session and therefore prove
                     nothing about the mechanism between the two scripts: a throwaway database in the test
-                    container, the DO block at `data/seed/load.sh:127-133` extracted verbatim and writing both
+                    container, the DO block at `data/seed/load.sh:161-167` extracted verbatim and writing both
                     bounds, then a SECOND session reading `1790379918 / 1790379926 / recorded=true` across the
                     two writes, eight seconds apart — the gate's own pair is 190 apart — then the database
                     dropped, and the whole exchange kept in a file rather than only on a terminal.
-                    `scripts/db_gate_fresh.sh:140` turns the recording
+                    `scripts/db_gate_fresh.sh:173` turns the recording
                     on for the gate's own database and only there.
 mistakes          (a) The first propagation probe reported the shipped SQL as a syntax error and the error was
                     the probe's: it rebuilt the statement from a regex match and rstripped the semicolon
@@ -4631,7 +4631,7 @@ plane             `data/seed/quality.sql`'s fact-TTL row (:830) and slot-horizon
                     verdicts in the file that asked their questions of the reading clock. Both now read
                     `seed_now` (:72), a temp view over `nexus.seed_base`, which `generate.py` publishes
                     (:1654), `load.sh` validates in preflight (:65) and stamps (:171), and
-                    `scripts/db_gate_fresh.sh:144` turns on. No table added: the gate still lands on
+                    `scripts/db_gate_fresh.sh:173` turns on. No table added: the gate still lands on
                     tables=58, migrations=7, 216 checks.
 
 measured          On D89's kept gate database, before any predicate in this unit was written:
@@ -6656,13 +6656,13 @@ found             (a) The assertion plane is data-dependent, which is a second a
                     moved, by three, on an arm nobody had to think about. A coverage denominator quoted
                     without its plane is a reading of the data as much as of the file.
                   (b) The plants harness polices redness, not existence, so (a) passed it by. Collateral is
-                    computed as `reds not in base_reds` (data/seed/falsifier_plants.py:288) and base_reds is
+                    computed as `reds not in base_reds` (data/seed/falsifier_plants.py:1281) and base_reds is
                     the set of RED rows on unmutated data, so a name that stops being filed matches nothing
                     the drive tests: the 213 sat in the printed `rows` column and only a person reading the
                     table caught it. A drive can report PASS while three assertions leave the plane under it.
                   (c) 22 distinct names went red as collateral in this run. 11 already carried a witness; the
                     other 11 are recorded nowhere, because --emit-rows files only the matched target
-                    (data/seed/falsifier_plants.py:293). Among the eleven is `orphan: favorites.offering`,
+                    (data/seed/falsifier_plants.py:1292). Among the eleven is `orphan: favorites.offering`,
                     which reddened because the merchants delete cascade-killed the offering its unenforced
                     reference pointed at — the exact deception that row exists to watch, shown able to fail by
                     an arm aimed elsewhere and dropped by the tool that writes the record.
@@ -7983,8 +7983,8 @@ plane             `scripts/check_status_citations.mjs` (the spelled `STATUS §NN
                     written to; no other lane'"'"'s file was staged.
 
 changed           Two comments, same sentence, same reason:
-                    `services/platform/src/main/java/com/nexus/catalog/CollectionsController.java:186`
-                    and `services/platform/src/test/java/com/nexus/catalog/CollectionsReadTest.java:188`
+                    `services/platform/src/main/java/com/nexus/catalog/CollectionsController.java:192`
+                    and `services/platform/src/test/java/com/nexus/catalog/CollectionsReadTest.java:203`
                     said `STATUS §106` and now say `STATUS §121`. Nothing else in the tree changed.
 
 found             (a) THE DANGLING PAIR. D115 recovered the working copy'"'"'s stranded sections and
@@ -8998,7 +8998,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     The narrow predicate is clean: 6 of 149 citations land on a blank line, and a blank line
                     cannot hold the claim its sentence makes. Three causes, all named in D160 — two rows into
                     `docs/DATABASE.md:88` blanked by another lane's uncommitted append in this working copy,
-                    two into `scripts/db_gate_fresh.sh:144` blanked by D159's own step 9 wiring, and two into
+                    two into `scripts/db_gate_fresh.sh` at line 144, blanked by D159's own step 9 wiring, and two into
                     `scripts/check_ledger_sections.mjs:34` blanked by D159's parse migration, one of which is
                     the row that was written to correct the other. That last pair is the third instance this
                     arc has caught of a record drifting while describing a drift.
@@ -10118,7 +10118,7 @@ sites), one line of an admin console test (twelve, one per STATUS section in the
 repository, the order service, the AI runs module and the growth view (three each), six more for the remainder.
 Step 7 moves the same way (11 false sites against 8) and step 9 with it (FAIL on 75 citations across 20 files
 against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:379` is the fixed leg: `cd "$WT"` and no
-knob, so the reader's `process.cwd()`-derived index — `scripts/check_ledger_citations.mjs:58` — lands in the
+knob, so the reader's `process.cwd()`-derived index — `scripts/check_ledger_citations.mjs:64` — lands in the
 committed tree with its ledgers. 13b prints `plane reconciliation knob leg 77 / 0 — in-worktree leg 65 / 41`
 because a step whose whole point is the difference should not ask the reader to trust a comment about it. The
 harness legs stay in the main tree on purpose: D163's fixtures cite real repository files, and an index that
