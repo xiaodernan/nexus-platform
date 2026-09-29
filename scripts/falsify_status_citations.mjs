@@ -11,10 +11,10 @@
  * Exit: 0 every arm held · 1 at least one did not.
  */
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
@@ -35,6 +35,37 @@ const tree = (name, files) => {
 };
 
 const CTRL = 'package com.nexus.catalog;\n// see STATUS §%s for the report\npublic class Ctrl {}\n';
+
+// D199: the exclusion this reader shares with steps 7, 8 and 9 is the only thing that keeps a citation in
+// generated build output out of its plane, so the arm needs both halves — the shipped reader declining to read
+// it, and a reader that answers the directory question for itself charging it. The mutant is the shipped bytes
+// with ONE substitution: the shared import becomes the private nine-name list this file carried until D199. It
+// is written under `.scratch/`, which no census walks (D197) and which holds no tracked file, because the reader
+// resolves its own repository from the script's location and `git show HEAD:docs/STATUS.md` has to keep working.
+const MUTANT_DIR = join(ROOT, '.scratch');
+const MUTANT = join(MUTANT_DIR, 'd199_private_list_reader.mjs');
+const privateListReader = () => {
+  const src = readFileSync(CHECKER, 'utf8');
+  const swaps = [
+    ["import { VENDOR_DIRS } from './source_index.mjs';",
+      "const VENDOR_DIRS = new Set(['node_modules', 'target', '.next', 'dist', 'out', 'build', '.venv', '__pycache__', '.mvn']);"],
+    ["from './cli_args.mjs'", `from '${pathToFileURL(join(HERE, 'cli_args.mjs')).href}'`],
+  ];
+  let out = src;
+  for (const [from, to] of swaps) {
+    const hits = out.split(from).length - 1;
+    if (hits !== 1) throw new Error(`mutant swap expected exactly 1 site, got ${hits}: ${from}`);
+    out = out.replace(from, to);
+  }
+  mkdirSync(MUTANT_DIR, { recursive: true });
+  writeFileSync(MUTANT, out, 'utf8');
+  return MUTANT;
+};
+privateListReader();
+const EXC_PLANT = tree('excluded', {
+  'data/seed/out_smoke/Plant.java': CTRL.replace('%s', '99999'),
+  'services/catalog/Ctrl.java': CTRL.replace('%s', '121'),
+});
 const ARMS = [
   // The control arm deliberately does not pin this tree's token counts. The census includes the harness
   // that runs it — writing a line that mentions `STATUS §NN` in a script adds a mention to the very
@@ -63,11 +94,16 @@ const ARMS = [
     must: [/NOT CHECKED/, /saw no `STATUS §NN` token/] },
   { name: 'a HEAD revision that does not resolve', headRev: 'no-such-rev-4f2a', dir: ROOT, expect: 2,
     must: [/NOT CHECKED/] },
+  { name: 'the shared exclusion is this reader\'s directory answer: a plant under data/seed/out_smoke is not read, its control is',
+    fix: EXC_PLANT, expect: 0, must: [/RESULT: PASS/, /files scanned\s+1\b/, /citations\s+1\b/, /ok .*Ctrl\.java:2: STATUS §121/],
+    absent: [/99999/] },
+  { name: 'the same fixture through a copy of this reader given back its private list: the plant is charged (D199 witnesses itself)',
+    fix: EXC_PLANT, reader: MUTANT, expect: 1, must: [/RESULT: FAIL/, /## 99999\. /, /files scanned\s+2\b/] },
 ];
 
 let fails = 0;
 for (const arm of ARMS) {
-  const args = [CHECKER, '--head-rev', arm.headRev || 'HEAD'];
+  const args = [arm.reader || CHECKER, '--head-rev', arm.headRev || 'HEAD'];
   if (arm.fix) args.push('--dir', arm.fix);
   let out, code;
   try {
@@ -78,12 +114,17 @@ for (const arm of ARMS) {
     code = e.status === undefined ? -1 : e.status;
   }
   const missed = arm.must.filter((re) => !re.test(out));
-  const ok = code === arm.expect && missed.length === 0;
+  // `absent` is a claim too: an arm that says a string must not appear has to be the one that looks for it,
+  // otherwise the field is decoration and the arm green regardless (D196's vocabulary list, arriving here).
+  const found = (arm.absent || []).filter((re) => re.test(out));
+  const ok = code === arm.expect && missed.length === 0 && found.length === 0;
   if (!ok) fails += 1;
   console.log(`${ok ? 'held  ' : 'MISSED'}  exit ${arm.expect} expected, ${code} printed   ${arm.name}`);
   if (code !== arm.expect) console.log(`        verdict differs — printed: ${(out.match(/RESULT.*/) || ['<no RESULT line>']).join(' | ')}`);
   for (const m of missed) console.log(`        expected text missing: ${m}\n${out.split('\n').slice(0, 8).map((l) => '        | ' + l).join('\n')}`);
+  for (const m of found) console.log(`        text that must not appear was found: ${m}`);
 }
+rmSync(MUTANT, { force: true });
 console.log(`\n  ${ARMS.length} arms · ${ARMS.length - fails} held · ${fails} missed`);
 console.log('  grammar: a citation is `STATUS §NN` outside a code span and must resolve to a `## N. ` heading at');
 console.log('           HEAD; the same string inside backticks is a mention of it, counted and printed, not');

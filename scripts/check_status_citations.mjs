@@ -38,6 +38,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFlags } from './cli_args.mjs';
+import { VENDOR_DIRS } from './source_index.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const notCheckable = (m) => { console.log(`RESULT: NOT CHECKED — ${m}`); process.exit(2); };
@@ -64,8 +65,17 @@ if (!parsed.ok) notCheckable(parsed.reason);
 
 const ROOT = resolve(parsed.value['--dir'] ?? join(HERE, '..'));
 const REV = parsed.value['--head-rev'] ?? 'HEAD';
-const SKIP = new Set(['node_modules', 'target', '.next', 'dist', 'out', 'build', '.venv', '__pycache__', '.mvn']);
-const isSkipped = (name) => SKIP.has(name) || name.startsWith('.');
+// D199: this reader was the fourth one still deciding the directory question for itself. D181 ruled the
+// exclusion one list and D197 made the shipped set the union, but this file kept a private nine-name `SKIP`, so
+// gate step 12 indexed the generated seed output under the gitignored `data/seed/out_smoke/` that steps 7, 8 and
+// 9 refuse: a `STATUS` citation planted in build output would be charged here and be invisible to the other
+// readers, which is §84 residue (e) arriving at a fourth place. The private list named `.mvn`, which the shared
+// set does not, and the dot rule below already covered it — so this fold drops files from the plane and adds
+// none. The dot rule stays deliberately: it is this reader's own predicate, the same kind of choice as its
+// extension list, and removing it would widen the plane rather than align it (the shared set names neither
+// `.mvn` nor `.github`). `scripts/falsify_status_citations.mjs` arms both halves: the exclusion is live here, and
+// a copy of this reader given back a private list reddens on the very fixture the shipped one declines to read.
+const isSkipped = (name) => VENDOR_DIRS.has(name) || name.startsWith('.');
 const EXT = /\.(java|kt|ts|tsx|js|mjs|cjs|py|sql|sh|md|mustache)$/;
 const TOKEN = /STATUS §(\d+)/g;
 
