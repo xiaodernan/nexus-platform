@@ -21,6 +21,9 @@
  *                    committed backlog, because a committed row can only be corrected by appending (D161)
  *   BACKWARDS        a `78-84` range written `84-78`
  *   ZERO             line 0, which no editor can show
+ *   UNTRACKED TARGET the resolved file is on this disk and in no commit, so a clean checkout of the ref this
+ *                    run certifies cannot open it (D203) — counted on the committed plane, judged in a section
+ *                    this run is writing, and counted on a plane handed over with `--untracked-backlog`
  *
  * WHAT IS NOT A CITATION, stated because a checker that judged every `word:number` would be red on prose:
  * `127.0.0.1:5433` and `redis:6379` (host and port), `NEXUS_RL_AUTH:10` (an environment variable and its
@@ -58,6 +61,8 @@
  *   node scripts/check_ledger_citations.mjs --verbose      # list every citation and where it resolved
  *   node scripts/check_ledger_citations.mjs --text=<file>  # census one file instead of both ledgers (plants)
  *   node scripts/check_ledger_citations.mjs --text <file>  # the same request; both spellings are parsed
+ *   node scripts/check_ledger_citations.mjs --untracked-backlog # with --text: the plane is all backlog, so
+ *                                                          # an untracked target counts but does not offend
  *
  * A flag this reader does not know is refused with `RESULT: NOT CHECKED` and exit 2, never ignored. D157
  * measured why that matters: the old parser read only `--text=`, so `--text <plant>` was not an error, it was
@@ -113,6 +118,9 @@ const FLAGS = {
   '--report': { kind: 'switch' },
   '--worktree': { kind: 'switch' },
   '--verbose': { kind: 'switch' },
+  // D203 — see the BLANK_JUDGED note below for why a whole-plane census needs this, and the LIMITS block for
+  // what it does NOT turn off.
+  '--untracked-backlog': { kind: 'switch' },
 };
 
 const parsed = parseFlags(process.argv.slice(2), FLAGS);
@@ -124,6 +132,7 @@ const ARGS = {
   report: Boolean(parsed.flag['--report']),
   worktree: Boolean(parsed.flag['--worktree']),
   verbose: Boolean(parsed.flag['--verbose']),
+  untrackedBacklog: Boolean(parsed.flag['--untracked-backlog']),
 };
 /**
  * `--text` replaces the ledger list with one file, read as written. It exists for the same reason
@@ -146,6 +155,23 @@ const VERBOSE = ARGS.verbose;
  * comment-plane census through, so every row scored there is new by construction.
  */
 const BLANK_JUDGED = ARGS.text !== null;
+/**
+ * D203 — a caller's declaration that the plane it is handing over is entirely a pre-existing backlog, for the
+ * UNTRACKED TARGET class alone. The need came from a measurement, not a preference: gate step 9 feeds its
+ * generated comment-plane census through `--text`, and the first run of the new class over that plane printed
+ * `untracked targets 12 of 59` with 12 offenders and exit 1 — every one of them a cite inside shipped text
+ * (`data/seed/quality.sql` pointing into `SeoRepository.java` and `AdminListRepository.java`, among others)
+ * whose target is on this disk and in no commit. Those rows are exactly the debt the class was written to name,
+ * and they are not this run's to fix: the correction is `git add` of another lane's files, which this gate has
+ * no authority over, so arming the class on that plane would red the gate on a backlog and say nothing new.
+ * `--worktree` mode does not need the switch, because newness is decidable there from the two planes it reads.
+ *
+ * What this does NOT do: it turns off one class on one plane. FILE NOT FOUND, AMBIGUOUS, PAST EOF, BACKWARDS,
+ * ZERO and BLANK LINE keep judging the same text — the class's own witness arms that sentence by planting a
+ * plane carrying both an untracked target and a blank cite, which is what makes the switch a statement about
+ * the plane rather than a mute button.
+ */
+const UNTRACKED_BACKLOG = ARGS.untrackedBacklog;
 /** Where a plane's ledger files live. An absolute path is taken as given; a relative one is the repository's. */
 const plane = (p) => (p === null ? null : (isAbsolute(p) ? p : join(ROOT, p)));
 const DIR = plane(ARGS.dir);
@@ -164,6 +190,17 @@ if ((DIR === null) !== (HEAD_DIR === null)) {
     ? `--head-dir was given without --dir — the two planes are addressed as a pair, and this run would compare ${HEAD_DIR} against the ledgers of this tree`
     : `--dir was given without --head-dir — the two planes are addressed as a pair, and this run would compare this tree's HEAD against ${DIR}`);
 }
+/**
+ * D203 — the backlog declaration is only accepted for a plane that cannot decide newness for itself. On the two
+ * real ledgers, or any pair of planes, `isNewSection` answers "is this row being written right now", so the
+ * class has a judged subset and a switch that declares the WHOLE plane a backlog would silence it exactly where
+ * it has a verdict — including for gate step 8, the one caller that must not be able to. Refused rather than
+ * ignored, in the same shape as the half-pair refusal above: an exemption that quietly narrows a class is the
+ * D157 disease with a flag on it.
+ */
+if (UNTRACKED_BACKLOG && ARGS.text === null) {
+  notCheckable('--untracked-backlog was given without --text — the plane this run reads can decide which sections are new, so the class has a judged subset there and declaring the whole plane a backlog would silence it on the one plane where it carries a verdict');
+}
 
 /* ------------------------------------------------------------------ the source index */
 
@@ -178,6 +215,50 @@ if ((DIR === null) !== (HEAD_DIR === null)) {
 // second reader of the same claim carrying its own copy — which is how one sentence came to be quoted with
 // three different counts.
 const FILES = walkFiles(ROOT, (name) => LEDGER_EXT.test(name) || name.startsWith('.'));
+
+/**
+ * D203 — HEAD's tree, as the authoritative answer to "will this cite resolve anywhere else?".
+ *
+ * `FILES` is a filesystem walk, so it certifies a path this machine happens to hold. Measured at landing on
+ * `026a04d`, this working copy: 513 citation-shaped tokens, 0 offenders, exit 0 — and 46 of those cites point
+ * at a file no commit holds. The same ref frozen with `git worktree add --detach … HEAD`, read by the reader
+ * as it shipped before this class existed, files 47 offenders: 46 FILE NOT FOUND and 1 PAST EOF. The 46 name
+ * 18 distinct paths (`MerchantContentController`, `AdminListRepository.java`, `AdminConsoleApiTest` and their
+ * neighbours in the untracked commerce/admin test packages), while `git ls-files --others --exclude-standard`
+ * counts 377 untracked paths on this tree — a wider predicate than "a ledger names it", which is why the two
+ * numbers are different and both are written down.
+ *
+ * So a clean checkout of the ref the gate just certified is a plane where 46 ledger citations point at a file
+ * that does not exist, and nothing the disk plane printed said so. The single PAST EOF row is the same
+ * conflation one line deeper: it is the cite of `scripts/falsify_ledger_text.mjs` at line 858, where HEAD's
+ * blob has 736 lines and this disk has 887, so the cite is inside bounds on the disk plane and past the end on
+ * the committed one. (Written without a colon so this comment does not add a citation of its own to the drift
+ * backlog while that file is being edited by another lane.)
+ *
+ * That is the mirror of D197's exclusion lesson, read the other way: a directory absent from `VENDOR_DIRS` is
+ * a directory whose files the readers certify as cite targets, and a file absent from git's tree is a file only
+ * this machine can offer.
+ *
+ * The list comes from `git ls-tree -r --name-only HEAD` rather than `git ls-files`, because the claim being
+ * checked is about the commit a clean checkout reproduces, not about this machine's index: a staged-but-not-
+ * committed file is exactly as unreachable from that checkout as an untracked one, and asking the index would
+ * let a half-landing look shipped.
+ *
+ * A run that cannot ask git gets `TRACKED === null`, and the class prints UNCHECKED instead of a number — it
+ * never silently becomes "0 offenders". Measured on the harness's own fixture roots (`--dir` planes under the
+ * OS temp directory, which are not repositories): 3 arms there expect exit 0 with a green verdict, so a
+ * refusal would turn a plane with no git into a red gate. Disabling one class and saying so is what a plane
+ * without history looks like; inventing its green is what D157 was written against.
+ */
+let TRACKED = null;
+let TRACKED_REASON = null;
+try {
+  TRACKED = new Set(execFileSync('git', ['ls-tree', '-r', '--name-only', 'HEAD'],
+    { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 }).split(/\r?\n/).filter(Boolean));
+} catch (error) {
+  TRACKED = null;
+  TRACKED_REASON = `git ls-tree HEAD failed — ${error.code ?? error.message}`;
+}
 
 const BY_BASENAME = new Map();
 const BY_STEM = new Map();
@@ -320,9 +401,14 @@ function ledgerText(ledger, committed) {
  * One pass over one ledger. `committed` selects HEAD text vs the working copy; the section a token sits in is
  * carried so an offender can be attributed to the entry that made it, and the section count doubles as the
  * non-vacuity floor: a scan that reaches zero sections has not read the file it claims to have read.
+ *
+ * D203 renames the second argument from `blankOffends`: it is the newness predicate, and it now decides which
+ * sections are judged for two classes, not one. Keeping the old name would have made the second call site read
+ * like a blank-line rule that also charges an untracked target. The third argument exists because those two
+ * classes turned out to need different exemptions on one plane — see `UNTRACKED_BACKLOG`.
  */
-function census(committed, blankOffends) {
-  const stats = { tokens: 0, citations: 0, continuations: 0, sections: 0, blanks: 0, judged: 0, titles: new Set(), files: new Set(), offenders: [], unread: [] };
+function census(committed, judgedHere, untrackedHere = judgedHere) {
+  const stats = { tokens: 0, citations: 0, continuations: 0, sections: 0, blanks: 0, judged: 0, untracked: 0, untrackedJudged: 0, titles: new Set(), files: new Set(), offenders: [], unread: [] };
   for (const ledger of LEDGERS) {
     const { text, reason } = ledgerText(ledger, committed);
     if (text === null) {
@@ -354,6 +440,18 @@ function census(committed, blankOffends) {
         }
         const rel = cands[0];
         stats.files.add(rel);
+        // D203 — the target resolves on THIS disk and in no commit. Counted on the committed plane, judged
+        // only in a section this run is writing, which is D161's bargain for a class whose whole backlog is
+        // other people's already-committed prose. The correction is `git add`, not a re-aim: the line number
+        // is fine and the file simply is not in the tree a checkout reproduces.
+        if (TRACKED !== null && !TRACKED.has(rel)) {
+          stats.untracked += 1;
+          if (untrackedHere(section)) {
+            stats.untrackedJudged += 1;
+            stats.offenders.push({ kind: 'UNTRACKED TARGET', where, cite,
+              detail: `${rel} is on this disk but not in HEAD's tree — a clean checkout cannot open the file this cite points at` });
+          }
+        }
         const n = fileLines(rel);
         if (cite.backwards) {
           stats.offenders.push({ kind: 'BACKWARDS', where, cite, detail: `${cite.name}:${cite.backwards} in ${rel}, which has ${n} lines` });
@@ -374,7 +472,7 @@ function census(committed, blankOffends) {
           // committed rows whose correction channel is an append that leaves the old number standing.
           if (!fileText(rel)[a - 1].trim()) {
             stats.blanks += 1;
-            if (blankOffends(section)) {
+            if (judgedHere(section)) {
               stats.judged += 1;
               stats.offenders.push({ kind: 'BLANK LINE', where, cite,
                 detail: `${rel}:${a} is empty — a blank line cannot hold the claim this cite makes` });
@@ -411,7 +509,9 @@ const isNewSection = (section) => committed !== null && !committed.titles.has(se
 // counted sits inside a committed section), it cannot be an allow list because it is derived from the two
 // planes the census already reads, and it is the same bargain step 12 spells out for its own disk plane — a
 // row that only this run has written is this run to answer for, including when the writer is another lane.
-const work = census(false, (section) => BLANK_JUDGED || isNewSection(section));
+const writesSection = (section) => BLANK_JUDGED || isNewSection(section);
+// D203 — the untracked-target class takes the same bargain, minus what `--untracked-backlog` declares away.
+const work = census(false, writesSection, (section) => !UNTRACKED_BACKLOG && writesSection(section));
 /** The plane a verdict is written on: the working copy when this run is strict there, HEAD otherwise. */
 const strict = WORKTREE ? work : committed;
 
@@ -450,6 +550,12 @@ if (strict.files.size === 0) notCheckable(`${strict.citations} citation(s) found
 if (committed !== null && committed.sections === 0) {
   notCheckable(`the committed plane holds ${committed.sections} "## " section(s) over ${committed.tokens} name:number token(s), so no section on disk could be called old — a blank in the backlog would be judged as if it were being written`);
 }
+// D203 — the same shape as the guard above, aimed at the new denominator: HEAD's tree read as empty would make
+// every resolved cite an UNTRACKED TARGET, turning a broken `ls-tree` into the largest finding the gate has ever
+// printed. A size-0 set is not "the repo has no files"; it is this run having asked git the wrong question.
+if (TRACKED !== null && TRACKED.size === 0) {
+  notCheckable(`git ls-tree HEAD returned 0 paths, so every citation this run resolves would be charged as pointing outside the tree — the census cannot ask git what the repository holds`);
+}
 
 console.log('NEXUS — every file:line citation in docs/DECISIONS.md and docs/STATUS.md, read back out of the source');
 console.log(`  text censised            ${WORKTREE
@@ -458,6 +564,15 @@ console.log(`  text censised            ${WORKTREE
 console.log(`  blank-line cites         ${BLANK_JUDGED
   ? `${work.blanks} span start(s) on an empty line — every one is an offender on this plane`
   : `${committed.blanks} at HEAD (counted, not judged — D161's backlog) · ${work.judged} blank(s) among ${newSections(work, committed)} new section(s), and a blank there offends`}`);
+// D203 — printed in every mode, including the ones where the class is disabled: a count that vanishes when the
+// question cannot be asked is indistinguishable from a count of zero, which is the D192 disease in a new line.
+console.log(`  untracked targets        ${TRACKED === null
+  ? `UNCHECKED — ${TRACKED_REASON}; nothing is claimed about whether HEAD's tree holds the files these cites resolve to`
+  : BLANK_JUDGED && UNTRACKED_BACKLOG
+    ? `${work.untracked} of ${work.citations} citation(s) point at a file no commit holds — counted, not judged: --untracked-backlog declares this whole plane a backlog, and the fix belongs to the lane that wrote those files`
+    : BLANK_JUDGED
+    ? `${work.untracked} of ${work.citations} citation(s) point at a file no commit holds — every one is an offender on this plane`
+    : `${committed.untracked} at HEAD (counted, not judged — the fix is \`git add\`, and it belongs to the lane that wrote the file) · ${work.untrackedJudged} among ${newSections(work, committed)} new section(s), and one there offends`}`);
 console.log(`  headings seen            ${strict.sections} section(s)${WORKTREE && committed !== null ? `, ${committed.sections} at HEAD` : ''} — an offender is attributed to the section that wrote it`);
 console.log(`  name:number tokens       ${strict.tokens}`);
 console.log(`  citation-shaped          ${strict.citations} (the rest are host:port, ENV:value, §NN or prose)`);
@@ -515,7 +630,20 @@ if (!WORKTREE && work.judged > 0) {
   console.log('');
 }
 
-if (!WORKTREE && work.offenders.some((o) => o.kind !== 'BLANK LINE')) {
+// D203 — the same bargain, its own header: a target that exists only on this disk, cited by a section this run
+// is writing. It prints separately from the blank class because the two corrections are different actions —
+// one re-aims a number, the other commits a file — and a reader that merged them would report one reason for
+// two fixes. An existing section citing an untracked file is counted in the line above and left standing: the
+// file is another lane's, and `git add` over their boundary is not this gate's call.
+if (!WORKTREE && work.untrackedJudged > 0) {
+  console.log(`FALSE LEDGER CITATIONS — UNTRACKED TARGET IN A NEW SECTION (${work.untrackedJudged}):`);
+  for (const o of work.offenders.filter((x) => x.kind === 'UNTRACKED TARGET')) {
+    console.log(`    - ${o.where}  ${o.cite.name}:${o.cite.spans.map((s) => s.join('-')).join(',')} — ${o.detail}`);
+  }
+  console.log('');
+}
+
+if (!WORKTREE && work.offenders.some((o) => o.kind !== 'BLANK LINE' && o.kind !== 'UNTRACKED TARGET')) {
   console.log('The other working-copy offenders are not strict, so what prints above is what the NEXT commit');
   console.log('will inherit — they are another lane\'s unwritten paragraph or this lane\'s own draft, and a gate');
   console.log('that reddened on the first would be a gate two lanes could not run at the same time.');
@@ -529,9 +657,17 @@ console.log('blind to a misspelled extension (`Foo.jva:12` is not file-shaped) a
 console.log('capitalisation or extension, and a file deleted later still resolves if its line number survives.');
 console.log(`The directory exclusion is ${VENDOR_DIRS.size} names, shared with D87 through source_index.mjs —`);
 console.log('one hand list rather than two, but still a hand list, which is what §84 residue (e) owns.');
+console.log('The untracked-target class asks only whether HEAD holds the resolved path: it does not decide that a');
+console.log('file SHOULD be committed, and it never reaches a cite into a skipped directory, because the index');
+console.log('does not hold that path and FILE NOT FOUND speaks first. It cannot fire where git cannot be asked.');
+console.log('`--untracked-backlog` exempts that one class on the plane it is given, and no other class: a caller');
+console.log('that censuses a whole pre-existing plane cannot attribute a row to a writer, which is the sentence');
+console.log('the counted-not-judged report line above carries.');
+console.log('Separately, and as it has always been: the line a cite points at is read from the working copy on');
+console.log('BOTH planes, so a HEAD-plane line number is this disk\'s, not the commit\'s.');
 if (WORKTREE) {
   console.log('This run is strict on the WORKING COPY, so a citation in another lane\'s uncommitted paragraph');
   console.log('can redden it; the message names that file, section and line, and the claim goes to its owner.');
 }
 
-process.exit((strict.offenders.length > 0 || work.judged > 0) && !REPORT_ONLY ? 1 : 0);
+process.exit((strict.offenders.length > 0 || work.judged > 0 || work.untrackedJudged > 0) && !REPORT_ONLY ? 1 : 0);

@@ -157,11 +157,15 @@ writeFileSync(file, [
 const files = new Set(rows.map((r) => r.rel)).size;
 console.log(`  plane censised   ${PLANE}`);
 console.log(`  tokens found     ${rows.length} in ${files} file(s) of the comment plane`);
-console.log(`  scored by        scripts/check_ledger_citations.mjs --text=${file}`);
+console.log('  untracked reads  the census is a backlog: every bullet here is prose somebody already wrote, so');
+console.log('                   the reader is asked to count a cite whose target no commit holds, not to offend');
+console.log('                   on it (D203). The fix for those rows is `git add` in the lane that wrote the');
+console.log('                   file, which this gate has no authority to do. Every other class still judges.');
+console.log(`  scored by        scripts/check_ledger_citations.mjs --text=${file} --untracked-backlog`);
 
 let code = 0, out = '';
 try {
-  out = execFileSync(process.execPath, [CHECKER, `--text=${file}`], { encoding: 'utf8' });
+  out = execFileSync(process.execPath, [CHECKER, `--text=${file}`, '--untracked-backlog'], { encoding: 'utf8' });
 } catch (err) {
   code = err.status ?? 1;
   out = `${err.stdout ?? ''}${err.stderr ?? ''}`;
@@ -170,7 +174,7 @@ try {
 // plant whose every citation pointed outside the index, step 9 reported `NOT RUN (exit 2)` — correctly — and
 // printed nothing explaining it, because the only line the child had written was filtered out here. A guard that
 // says "the reader failed" while hiding the reader's sentence about why leaves the operator to re-derive it.
-console.log(out.split('\n').filter((l) => /citations|offender|headings|tokens|files cited|NOT FOUND|AMBIGUOUS|PAST|BACKWARDS|ZERO|is empty|Error|Cannot find|NOT CHECKED|RESULT:/.test(l)).join('\n'));
+console.log(out.split('\n').filter((l) => /citations|offender|headings|tokens|files cited|NOT FOUND|AMBIGUOUS|PAST|BACKWARDS|ZERO|is empty|untracked targets|Error|Cannot find|NOT CHECKED|RESULT:/.test(l)).join('\n'));
 if (VERBOSE) console.log(out);
 // A child that never produced a report has not refuted anything: it failed to run. Collapsing that into the
 // offender branch — as the first version did, reporting `RESULT: FAIL … at least one does not` for a step 8
