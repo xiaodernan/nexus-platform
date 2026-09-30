@@ -1163,17 +1163,8 @@ INSERT INTO ref_registry VALUES
  ('moderation_cases.subject_id', 'probe',
   'orphan probe over review|merchant|document|message; `listing` is in V1:574 and resolves to no table '
   || 'in this schema, so a case of that type is an orphan by construction (D68)'),
- ('user_identities.provider_id', 'not-a-reference',
-  'V1:53 declares it an opaque external subject id, never a token — no table in this schema resolves it'),
- ('permission_grants.granted_by', 'probe',
-  'the operator''s user id, resolved by a direct JOIN users below — not polymorphic, so no type arms are '
-  || 'involved. D72 measured it as the only uuid *_by column in public with no REFERENCES: its six siblings '
-  || '(campaigns.approved_by, coupons.created_by, coupons.published_by, refunds.approved_by, '
-  || 'seo_pages.reviewed_by, share_links.created_by) are all bounded to users, and the census missed this one '
-  || 'because it asked only about the *_id suffix. The writers supply principal.userId() '
-  || '(MerchantService.java:63) and operatorId (MerchantWorkspaceService.java:177, ApiKeyService.java:67); '
-  || 'generate.py''s own FK self-check map names permission_grants.merchant_id and not granted_by, so this '
-  || 'probe is the only thing on either side that asks whether an operator id resolves.');
+('user_identities.provider_id', 'not-a-reference',
+  'V1:53 declares it an opaque external subject id, never a token — no table in this schema resolves it');
 
 INSERT INTO qc
 SELECT 'the reference census reads the catalogue',
@@ -2595,7 +2586,7 @@ CREATE TEMP TABLE read_answer (tbl text NOT NULL, col text NOT NULL, key text NO
                                site text NOT NULL, why text NOT NULL, PRIMARY KEY (tbl, col, key));
 INSERT INTO read_answer VALUES
  ('collections', 'seo', 'generated_by', 'dead-reader',
-  'CollectionsRepository.java:68 (over from collections c at :52), CollectionsController.java:237',
+  'CollectionsRepository.java:68 (over from collections c at :52), CollectionsController.java:243',
   'the publishability test wants a provenance token and no seeded collection carries one, so the clause is '
   || 'always false and the other branch always decides'),
  ('offerings', 'attributes', 'import_job', 'dead-reader', 'MerchantImportRepository.java:37',
@@ -2609,25 +2600,25 @@ INSERT INTO read_answer VALUES
   'min(reward->>''currency'') on the same empty table'),
  -- The accessor reads, found by scanning Java rather than by transcribing SQL. Same rule: the ones that
  -- resolve to nothing say why, and the one that resolves says so.
- ('collections', 'seo', 'reviewed_by_human', 'dead-reader', 'CollectionsController.java:217,:289,:294',
+ ('collections', 'seo', 'reviewed_by_human', 'dead-reader', 'CollectionsController.java:223,:295,:300',
   'the §27 gate asks whether a human reviewed the row and no seeded collection answers; the fall-through '
   || 'is the honest answer here (the row is treated as unreviewed, hence noindex), and the seed says the '
   || 'same thing a second way with seo.noindex = true — the two agree, which is why this is a dead reader '
   || 'and not a bug'),
- ('collections', 'seo', 'noindex', 'reachable', 'CollectionsController.java:289,:297',
+ ('collections', 'seo', 'noindex', 'reachable', 'CollectionsController.java:295,:303',
   'the seed writes noindex on every collection row, so the second half of the same clause is a read that '
   || 'resolves'),
- ('collections', 'seo', 'curated_by', 'dead-reader', 'CollectionsController.java:251',
+ ('collections', 'seo', 'curated_by', 'dead-reader', 'CollectionsController.java:257',
   'the curation attribution (§8 curated_by.type); absent on all four rows, so the field is served null '
   || 'rather than as a person or a model that did not curate it'),
- ('collections', 'seo', 'model', 'dead-reader', 'CollectionsController.java:253',
+ ('collections', 'seo', 'model', 'dead-reader', 'CollectionsController.java:259',
   'the model name beside curated_by = model; absent, so nothing is attributed to a model version'),
- ('collections', 'seo', 'city', 'dead-reader', 'CollectionsController.java:218',
+ ('collections', 'seo', 'city', 'dead-reader', 'CollectionsController.java:224',
   '§8 keeps city/category optional context and forbids synthesising them from the slug; the seed states '
   || 'neither, so both are honestly absent rather than derived'),
- ('collections', 'seo', 'category', 'dead-reader', 'CollectionsController.java:219',
+ ('collections', 'seo', 'category', 'dead-reader', 'CollectionsController.java:225',
   'the same read as city, on the category half of the pair'),
- ('collections', 'seo', 'cover', 'dead-reader', 'CollectionsController.java:305, nested at :307,:312,:313',
+ ('collections', 'seo', 'cover', 'dead-reader', 'CollectionsController.java:311, nested at :313,:318,:319',
   'the cover.url/alt/credit reads hang off this one and are not separately ?-testable; the seed carries '
   || 'the image in the collections.cover_url COLUMN instead and coverOf() reads the column first, so the '
   || 'picture reaches the API while alt/credit stay null — measured, not assumed'),

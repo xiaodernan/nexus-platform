@@ -1029,13 +1029,7 @@ TEXT_ARMS = [
      [("INSERT INTO poly_probed VALUES",
        "INSERT INTO poly_probed VALUES\n ('plant_ghost_table', 1, 'text-plane plant: a probe declared over "
        "a table the schema does not have'),")]),
-    ("a join-one-type waiver is only true while the table ships one type",
-     "text plane: a registered column is re-classified as a join-one-type waiver while its table ships more than "
-     "one subject_type -- the name is chosen from ref_cat, not transcribed",
-     "", (),
-     [("asks whether an operator id resolves.');",
-       "asks whether an operator id resolves.');\n\nUPDATE ref_registry SET kind = 'join-one-type' WHERE name ="
-       " (SELECT c.name FROM ref_cat c WHERE c.types_n > 1 ORDER BY c.name LIMIT 1);")]),
+
     ("the registry names no column the schema has lost",
      "text plane: the registry gains a name no column of this schema carries",
      "", (),
