@@ -24,6 +24,9 @@
  *   UNTRACKED TARGET the resolved file is on this disk and in no commit, so a clean checkout of the ref this
  *                    run certifies cannot open it (D203) — counted on the committed plane, judged in a section
  *                    this run is writing, and counted on a plane handed over with `--untracked-backlog`
+ *   UNCOMMITTED TARGET the file IS in HEAD's tree but not with the bytes this disk holds, so a line claim that
+ *                    resolves here can be past HEAD's end (D204) — counted on the committed plane only when the
+ *                    same cite is clean against this disk, which means a clean checkout can never claim it
  *
  * WHAT IS NOT A CITATION, stated because a checker that judged every `word:number` would be red on prose:
  * `127.0.0.1:5433` and `redis:6379` (host and port), `NEXUS_RL_AUTH:10` (an environment variable and its
@@ -276,13 +279,86 @@ for (const rel of FILES) {
 }
 
 const TEXT = new Map();
-/** The cited file's lines, read once per file: a census asks for the same file dozens of times. */
-function fileText(rel) {
-  if (!TEXT.has(rel)) TEXT.set(rel, readFileSync(join(ROOT, rel), 'utf8').split(/\r?\n/));
-  return TEXT.get(rel);
+/**
+ * D204 — the cited file's lines, read from the plane the census is judging.
+ *
+ * Until this function took a plane, `census(true, …)` asked HEAD's ledgers whether their line numbers exist
+ * and then answered from this disk: measured at landing on `8fd6c7e`, 10 of the 31 path-exact files the two
+ * ledgers cite differ between HEAD's bytes and this working copy's, and the two verdicts the conflation
+ * produced were both wrong — one cite past HEAD's end was reported clean (0 strict offenders printed where a
+ * frozen HEAD said 1), and two blank cites were counted as HEAD's committed backlog when HEAD holds no blank
+ * line at them at all (21 printed, 19 true). Same disease as D203, one level deeper: D203 asked whether HEAD
+ * holds the *path*, and this asks whether HEAD holds the *bytes*.
+ *
+ * `null` means the plane holds no readable copy of the path, which is a different thing from "no lines": the
+ * caller must not judge a line claim out of nothing. When HEAD's own tree lists the path but `git show` cannot
+ * print it, that is a plane this run cannot read, so it is recorded in `HEAD_FAILS` and refused below rather
+ * than quietly answered from the disk.
+ */
+const HEAD_FAILS = [];
+function fileText(rel, committed) {
+  const key = `${committed ? 'head' : 'disk'}:${rel}`;
+  if (TEXT.has(key)) return TEXT.get(key);
+  let lines = null;
+  if (!committed) {
+    lines = readFileSync(join(ROOT, rel), 'utf8').split(/\r?\n/);
+  } else if (HEAD_DIR !== null) {
+    try {
+      lines = readFileSync(join(HEAD_DIR, rel), 'utf8').split(/\r?\n/);
+    } catch {
+      lines = null;                     // the supplied committed plane simply does not hold this file
+    }
+  } else {
+    try {
+      lines = execFileSync('git', ['show', `HEAD:${rel}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 })
+        .split(/\r?\n/);
+    } catch (error) {
+      lines = null;
+      if (TRACKED === null || TRACKED.has(rel)) {
+        HEAD_FAILS.push({ rel, reason: error.code ?? error.message });
+      }
+    }
+  }
+  TEXT.set(key, lines);
+  return lines;
 }
-function fileLines(rel) {
-  return fileText(rel).length;
+
+/**
+ * Every line-level claim one cite makes against one copy of one file: which of them offend, and how many span
+ * starts land on an empty line. Factored out of `census` because D204 puts the identical question to two
+ * copies of the same file — HEAD's and this disk's — and a second inline copy of these four rules is how one
+ * sentence about a blank line came to carry three different counts (D166).
+ */
+function citeLines(cite, rel, lines, section, where, judgedHere) {
+  const found = [];
+  let blanks = 0;
+  const n = lines.length;
+  if (cite.backwards) {
+    found.push({ kind: 'BACKWARDS', where, cite, detail: `${cite.name}:${cite.backwards} in ${rel}, which has ${n} lines` });
+  }
+  for (const span of cite.spans) {
+    const [a, b = a] = span;
+    if (a === 0 || b === 0) {
+      found.push({ kind: 'ZERO', where, cite, detail: `${rel} has no line 0` });
+      continue;
+    }
+    if (b > n) {
+      found.push({ kind: 'PAST EOF', where, cite, detail: `${cite.name}:${span.join('-')} — ${rel} has ${n} lines` });
+      break;
+    }
+    // D161 — counted on both planes, offended on one. A span that starts on a line holding nothing
+    // cannot be the line its sentence describes, whichever plane the sentence sits in; the reading
+    // plane just cannot afford the verdict yet, because four of the twelve blank cites there are in
+    // committed rows whose correction channel is an append that leaves the old number standing.
+    if (!lines[a - 1].trim()) {
+      blanks += 1;
+      if (judgedHere(section)) {
+        found.push({ kind: 'BLANK LINE', where, cite,
+          detail: `${rel}:${a} is empty — a blank line cannot hold the claim this cite makes` });
+      }
+    }
+  }
+  return { found, blanks };
 }
 
 /**
@@ -408,7 +484,7 @@ function ledgerText(ledger, committed) {
  * classes turned out to need different exemptions on one plane — see `UNTRACKED_BACKLOG`.
  */
 function census(committed, judgedHere, untrackedHere = judgedHere) {
-  const stats = { tokens: 0, citations: 0, continuations: 0, sections: 0, blanks: 0, judged: 0, untracked: 0, untrackedJudged: 0, titles: new Set(), files: new Set(), offenders: [], unread: [] };
+  const stats = { tokens: 0, citations: 0, continuations: 0, sections: 0, blanks: 0, judged: 0, untracked: 0, untrackedJudged: 0, uncommitted: 0, uncommittedRows: [], titles: new Set(), files: new Set(), offenders: [], unread: [] };
   for (const ledger of LEDGERS) {
     const { text, reason } = ledgerText(ledger, committed);
     if (text === null) {
@@ -452,32 +528,32 @@ function census(committed, judgedHere, untrackedHere = judgedHere) {
               detail: `${rel} is on this disk but not in HEAD's tree — a clean checkout cannot open the file this cite points at` });
           }
         }
-        const n = fileLines(rel);
-        if (cite.backwards) {
-          stats.offenders.push({ kind: 'BACKWARDS', where, cite, detail: `${cite.name}:${cite.backwards} in ${rel}, which has ${n} lines` });
+        const lines = fileText(rel, committed);
+        // The plane holds no copy of the file to read a line number out of. On the committed plane that is the
+        // UNTRACKED TARGET row above having just spoken, so nothing is added here — and nothing may be judged
+        // here against this disk while pretending to speak about HEAD.
+        if (lines === null) continue;
+        const here = citeLines(cite, rel, lines, section, where, judgedHere);
+        stats.blanks += here.blanks;
+        // D204 — the cite offends against HEAD's copy of the file and is clean against this disk's copy of the
+        // same path. That is a claim about a rewrite nobody has committed yet, and the gate has no authority
+        // over it: the fix is that lane committing the file it holds dirty, not a re-aim that would break the
+        // moment the rewrite lands. The exemption is self-limiting rather than a switch — if the two copies had
+        // the same bytes, an offender here would be an offender there, so the pair below could not fire — and
+        // on a clean checkout, including CI's, the two copies ARE the same file and the class is unreachable.
+        let found = here.found;
+        if (committed && found.length > 0) {
+          const disk = fileText(rel, false);
+          if (disk !== null && citeLines(cite, rel, disk, section, where, judgedHere).found.length === 0) {
+            stats.uncommitted += 1;
+            stats.uncommittedRows.push({ where, cite, rel, kinds: found.map((f) => f.kind),
+              head: lines.length, disk: disk.length });
+            found = [];
+          }
         }
-        for (const span of cite.spans) {
-          const [a, b = a] = span;
-          if (a === 0 || b === 0) {
-            stats.offenders.push({ kind: 'ZERO', where, cite, detail: `${rel} has no line 0` });
-            continue;
-          }
-          if (b > n) {
-            stats.offenders.push({ kind: 'PAST EOF', where, cite, detail: `${cite.name}:${span.join('-')} — ${rel} has ${n} lines` });
-            break;
-          }
-          // D161 — counted on both planes, offended on one. A span that starts on a line holding nothing
-          // cannot be the line its sentence describes, whichever plane the sentence sits in; the reading
-          // plane just cannot afford the verdict yet, because four of the twelve blank cites there are in
-          // committed rows whose correction channel is an append that leaves the old number standing.
-          if (!fileText(rel)[a - 1].trim()) {
-            stats.blanks += 1;
-            if (judgedHere(section)) {
-              stats.judged += 1;
-              stats.offenders.push({ kind: 'BLANK LINE', where, cite,
-                detail: `${rel}:${a} is empty — a blank line cannot hold the claim this cite makes` });
-            }
-          }
+        for (const f of found) {
+          if (f.kind === 'BLANK LINE') stats.judged += 1;
+          stats.offenders.push(f);
         }
       }
     });
@@ -534,6 +610,18 @@ if (unread.length > 0) {
   process.exit(2);
 }
 
+// D204 — the same shape as the guard above, aimed at the target reads: HEAD's tree says it holds the file,
+// `git show` cannot print it, and a census that judged every line claim against nothing would report the
+// cleanest verdict the gate has ever printed. `TRACKED === null` (git unusable) is in here too, because then
+// nothing can certify which paths HEAD holds at all.
+if (HEAD_FAILS.length > 0) {
+  console.log('NEXUS — ledger citation census');
+  console.log(`  RESULT: UNCHECKED — ${HEAD_FAILS.length} cited file(s) are named by HEAD's tree and could not be read from it`);
+  for (const f of HEAD_FAILS) console.log(`    ${f.rel}: git show HEAD:${f.rel} failed — ${f.reason}`);
+  console.log('  Nothing is claimed about the line numbers in those files. Re-run where `git show` can spawn.');
+  process.exit(2);
+}
+
 // Non-vacuity, in the same spirit as D87's row-count guard: a scan that resolves nothing is not a green scan.
 // These refuse (exit 2) rather than throw, and the difference is the whole point of D157's second half: a
 // `throw` printed a stack trace and exit 1, which is the code this reader uses for "the ledgers name a file
@@ -573,6 +661,12 @@ console.log(`  untracked targets        ${TRACKED === null
     : BLANK_JUDGED
     ? `${work.untracked} of ${work.citations} citation(s) point at a file no commit holds — every one is an offender on this plane`
     : `${committed.untracked} at HEAD (counted, not judged — the fix is \`git add\`, and it belongs to the lane that wrote the file) · ${work.untrackedJudged} among ${newSections(work, committed)} new section(s), and one there offends`}`);
+// D204 — printed in every mode, for the reason D192 established for the line above: a count that disappears on
+// the planes where the question cannot be asked is indistinguishable from a count of zero. `--text` has no
+// committed plane, so the honest number there is 0 with its cause attached, not a silent omission.
+console.log(`  uncommitted targets      ${committed === null
+  ? '0 — this run reads a plant, and a plant has no second copy of a target to disagree with'
+  : `${committed.uncommitted} of ${committed.citations} citation(s) point at a line this disk's copy of the file has and HEAD's copy does not — counted, not judged: the rewrite is the lane holding the file dirty, and where the two copies agree the class cannot fire`}`);
 console.log(`  headings seen            ${strict.sections} section(s)${WORKTREE && committed !== null ? `, ${committed.sections} at HEAD` : ''} — an offender is attributed to the section that wrote it`);
 console.log(`  name:number tokens       ${strict.tokens}`);
 console.log(`  citation-shaped          ${strict.citations} (the rest are host:port, ENV:value, §NN or prose)`);
@@ -601,6 +695,18 @@ if (VERBOSE) {
           + (c.length === 1 ? c[0] : c.length === 0 ? 'NOT FOUND' : `${c.length} candidates`));
       }
     }
+  }
+  console.log('');
+}
+
+// D204 — the backlog rows are printed by name and by both line counts, because "counted, not judged" is only
+// honest if the operator can see which file is mid-rewrite and how far apart the two copies are. A list that
+// prints a total and no rows is how D157's exemption read.
+if (committed !== null && committed.uncommitted > 0) {
+  console.log(`UNCOMMITTED TARGETS — cites whose line exists only in this disk's rewrite (${committed.uncommitted}):`);
+  for (const r of committed.uncommittedRows) {
+    console.log(`  - ${r.where}  ${r.cite.name}:${r.cite.spans.map((s) => s.join('-')).join(',')} — ${r.kinds.join('/')} would fire here; `
+      + `HEAD's copy of ${r.rel} has ${r.head} line(s) and this disk's has ${r.disk}, so the line is in an uncommitted edit`);
   }
   console.log('');
 }
@@ -663,8 +769,15 @@ console.log('does not hold that path and FILE NOT FOUND speaks first. It cannot 
 console.log('`--untracked-backlog` exempts that one class on the plane it is given, and no other class: a caller');
 console.log('that censuses a whole pre-existing plane cannot attribute a row to a writer, which is the sentence');
 console.log('the counted-not-judged report line above carries.');
-console.log('Separately, and as it has always been: the line a cite points at is read from the working copy on');
-console.log('BOTH planes, so a HEAD-plane line number is this disk\'s, not the commit\'s.');
+console.log('The line a cite points at is read from the plane being judged (D204): HEAD\'s own copy on the');
+console.log('committed plane, this disk\'s on a worktree or a plant, so a HEAD-plane line number is the');
+console.log('commit\'s rather than this machine\'s. Where the two copies disagree and the cite is clean only on');
+console.log('the disk, the row is counted as an UNCOMMITTED TARGET instead of judged — it is a claim about a');
+console.log('file somebody is still editing, and a gate that reddened on it would stay red until that lane');
+console.log('committed, which is not this run\'s action to take. The class cannot fire on a plane with no');
+console.log('second copy (a plant), nor on a clean checkout, where the two copies are the same bytes; a cite');
+console.log('that offends on BOTH copies stays a strict offender here, which is what keeps it a backlog and');
+console.log('not a mute.');
 if (WORKTREE) {
   console.log('This run is strict on the WORKING COPY, so a citation in another lane\'s uncommitted paragraph');
   console.log('can redden it; the message names that file, section and line, and the claim goes to its owner.');

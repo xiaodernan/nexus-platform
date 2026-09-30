@@ -174,7 +174,7 @@ try {
 // plant whose every citation pointed outside the index, step 9 reported `NOT RUN (exit 2)` — correctly — and
 // printed nothing explaining it, because the only line the child had written was filtered out here. A guard that
 // says "the reader failed" while hiding the reader's sentence about why leaves the operator to re-derive it.
-console.log(out.split('\n').filter((l) => /citations|offender|headings|tokens|files cited|NOT FOUND|AMBIGUOUS|PAST|BACKWARDS|ZERO|is empty|untracked targets|Error|Cannot find|NOT CHECKED|RESULT:/.test(l)).join('\n'));
+console.log(out.split('\n').filter((l) => /citations|offender|headings|tokens|files cited|NOT FOUND|AMBIGUOUS|PAST|BACKWARDS|ZERO|is empty|untracked targets|uncommitted targets|Error|Cannot find|NOT CHECKED|RESULT:/.test(l)).join('\n'));
 if (VERBOSE) console.log(out);
 // A child that never produced a report has not refuted anything: it failed to run. Collapsing that into the
 // offender branch — as the first version did, reporting `RESULT: FAIL … at least one does not` for a step 8
