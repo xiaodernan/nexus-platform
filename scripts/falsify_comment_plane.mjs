@@ -162,6 +162,24 @@ writeFileSync(join(STRAY_DIR, 'probe.d207unknown'),
   ['# scratch fixture — not shipped.', `# see ${MISSING}:3`, ''].join('\n'), 'utf8');
 const STRAY = STRAY_DIR;
 
+// D208 — two planes whose only difference is a filename. `notes.txt` is prose `LEDGER_EXT` accepts as a cite
+// TARGET but this census has no row for, so its citation must be counted as unjudged; the same bytes in
+// `notes.sql` are inside the vocabulary and must be scored. The pair is the control that shows the split keys on
+// the table, not on what the file says.
+function prosePlane(name, fileName) {
+  const dir = join(ROOT_FIX, name);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'probe.sql'), [
+    '-- scratch fixture for scripts/falsify_comment_plane.mjs — not shipped, not scored by any gate.',
+    `--   ${BASENAME}:12`, 'SELECT 1;', '',
+  ].join('\n'), 'utf8');
+  writeFileSync(join(dir, fileName),
+    [`-- a citation in prose: ${BASENAME}:12`, ''].join('\n'), 'utf8');
+  return dir;
+}
+const PROSE_TXT = prosePlane('prose-txt', 'notes.txt');
+const PROSE_SQL = prosePlane('prose-sql', 'notes.sql');
+
 // --------------------------------------------------------------------------- the arms
 const results = [];
 /** The verdict is stated before the shipped reader runs, so an arm cannot be written from what it printed. */
@@ -200,6 +218,27 @@ await arm('D207/T1 — a `.toml` comment is in the census now: its resolvable ci
   CRASH, ['--plane', TOML]);
 await arm('D207/C1 — an extension the vocabulary does not hold is named in the coverage row, not silently skipped',
   0, [/RESULT: PASS/, /\.d207unknown\(1\)/], CRASH, ['--plane', STRAY]);
+// D208 — predicted before either plane ran: PROSE_TXT judges one token (probe.sql) and puts the other in the new
+// row, because `.txt` is inside step 8's cite-target predicate and outside this census's table; PROSE_SQL judges
+// both and prints the row as an empty set. The bytes are identical in the two planes, so the only difference the
+// arm can be responding to is the filename. The forbidden texts are the offender ROW shape and the offender COUNT,
+// not the words: step 8's explanatory paragraph contains the phrase "FILE NOT FOUND" on a plane with no offenders
+// and this reader relays that line, so a witness aimed at the word would be a permanent red (measured first run).
+await arm('D208/P1 — a `.txt` cite is counted as prose no reader opens, and is not scored as a census bullet', 0,
+  [/RESULT: PASS/, /tokens found\s+1 in 1 file\(s\)/,
+    /prose, no reader\s+1 ext\(s\), 1 file\(s\), 1 token\(s\): \.txt\(1 file\(s\), 1 token\(s\)\)/,
+    /it opens 0 here/],
+  [...CRASH, /- notes\.txt/, /strict offenders\s+[1-9]/], ['--plane', PROSE_TXT]);
+await arm('D208/P2 — the same bytes named `.sql` are scored, so the row keys on the vocabulary table, not the content',
+  0, [/RESULT: PASS/, /tokens found\s+2 in 2 file\(s\)/,
+    /prose, no reader\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/],
+  CRASH, ['--plane', PROSE_SQL]);
+// D208/P7 — the walk's own failure mode, measured while writing the two arms above: an unreadable `--plane` threw
+// ENOENT at exit 1. Predicted after the guard: exit 2, the refusal names the path, and no stack line survives.
+await arm('D208/P7 — `--plane` at a directory that is not there refuses, it does not crash at the FAIL code', 2,
+  [/cannot open .*no-such-plane-dir/],
+  [/RESULT: PASS/, /RESULT: FAIL/, /ENOENT: no such file or directory, scandir/, /at .*check_comment_citations\.mjs:\d+/],
+  ['--plane', join(ROOT_FIX, 'no-such-plane-dir')]);
 await arm('a plane of comments that cites nothing is a refusal, not a green (D79)', 2,
   [/0 tokens found in the comment plane/], CRASH, ['--plane', SILENT]);
 await arm('`--plane --verbose` refuses: the request whose swallowed value used to throw ENOENT at exit 1', 2,
@@ -345,6 +384,67 @@ if (PLANTED === null) {
 } else {
   console.log('  (skipped) D206\'s mutant-reader arms: this run is already aimed at a planted checker ('
     + `${PLANTED}), and mutating the reader is what it does`);
+}
+
+// --------------------------------------------------------------------------- D208: the ledger-declaration slice's floor
+// The new row is a claim about a file this script does not read, so it is armed from the other side: copy step 8,
+// mutate the one line the row slices from, and aim the SHIPPED step 9 at the copy. Predicted before any mutant was
+// written: all three mutations refuse with exit 2 and print the number of declaration lines they matched, and none
+// of them reaches the point where step 9 would spawn the copy — a renamed or duplicated `const LEDGERS` makes the
+// copy a ReferenceError or a SyntaxError, so an arm that printed a child's crash would be D159 arriving again, this
+// time in the disclosure. The verbatim copy is the control: relocation alone must not refuse.
+if (PLANTED === null) {
+  const DECL = "const LEDGERS = ARGS.text === null ? ['docs/DECISIONS.md', 'docs/STATUS.md'] : [ARGS.text];";
+  const push = (name, expect, must, absent, r) => results.push({ name, expect, code: r.code,
+    missed: must.filter((re) => !re.test(r.out)), unwanted: absent.filter((re) => re.test(r.out)), out: r.out });
+  const driveStep8 = (tag, replacement) => {
+    const dir = join(tmpdir(), `nexus-d208-${tag}-${process.pid}`);
+    const src = readFileSync(CHECKER, 'utf8').replace(/\r\n/g, '\n');
+    const hits = src.split(DECL).length - 1;
+    let code = -1;
+    let out = '';
+    if (hits !== 1) {
+      out = `step 8's ledger declaration appears ${hits} times — no mutant was written`;
+    } else {
+      try {
+        mkdirSync(join(dir, 'scripts'), { recursive: true });
+        // The copy is spawned as a reader, so it needs the two modules it imports beside it — the same lesson the
+        // D206 driver learned: a copied script that dies on its own import prints 0 of everything and proves 0.
+        for (const sib of ['cli_args.mjs', 'source_index.mjs']) {
+          writeFileSync(join(dir, 'scripts', sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
+        }
+        const path = join(dir, 'scripts', 'check_ledger_citations.mjs');
+        writeFileSync(path, src.replace(DECL, replacement), 'utf8');
+        const r = spawnSync(process.execPath, [READER, `--checker=${path}`, '--plane', CONTROL],
+          { cwd: ROOT, encoding: 'utf8', timeout: 300000 });
+        code = r.status ?? -1;
+        out = `${r.stdout ?? ''}${r.stderr ?? ''}`;
+      } catch (e) {
+        out = `the mutant could not be run: ${e.message}`;
+      }
+    }
+    rmSync(dir, { recursive: true, force: true });
+    return { code, out };
+  };
+  const NO_REFUSE = [/cannot say which prose step 8 reads/, /sliced to 0 file\(s\)/];
+  push('D208/P3 — a verbatim copy of step 8 elsewhere still answers the row from the same declaration',
+    0, [/RESULT: PASS/, /prose, no reader\s+0 ext\(s\)/, /not one of the 2 file\(s\) step 8 names as prose/],
+    NO_REFUSE, driveStep8('copy', DECL));
+  push('D208/P4 — rename step 8\'s ledger declaration and the row refuses instead of reporting a gap it cannot name',
+    2, [/its ledger declaration matched 0 line\(s\)/],
+    [/sliced to 0 file\(s\)/, /matched 2 line\(s\)/, /RESULT: PASS/, /RESULT: FAIL/, /ReferenceError/,
+      /prose, no reader/], driveStep8('renamed', DECL.replace('const LEDGERS =', 'const LEDGERS_D208_RENAMED =')));
+  push('D208/P5 — duplicate it and the refusal counts the two lines, and never spawns a copy that cannot parse',
+    2, [/its ledger declaration matched 2 line\(s\)/],
+    [/SyntaxError/, /RESULT: PASS/, /RESULT: FAIL/, /prose, no reader/],
+    driveStep8('dup', `${DECL}\n${DECL}`));
+  push('D208/P6 — an empty default array refuses: a gap measured against no prose is not a measurement',
+    2, [/ledger list sliced to 0 file\(s\)/],
+    [/RESULT: PASS/, /RESULT: FAIL/, /prose, no reader/, /TypeError/],
+    driveStep8('empty', "const LEDGERS = ARGS.text === null ? [] : [ARGS.text];"));
+} else {
+  console.log('  (skipped) D208\'s mutant-checker arms: this run is already aimed at a planted checker ('
+    + `${PLANTED}), and the arms below plant one of their own`);
 }
 
 // --------------------------------------------------------------------------- the seam, inside the runner

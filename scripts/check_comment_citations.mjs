@@ -26,7 +26,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFlags } from './cli_args.mjs';
-import { VENDOR_DIRS } from './source_index.mjs';
+import { VENDOR_DIRS, LEDGER_EXT } from './source_index.mjs';
 
 // Flags are read here rather than assumed, and an unrecognised one stops the run: a scan that quietly ignored
 // `--plane=/some/dir` reported the repository as clean twice in a row while the operator believed it was
@@ -65,6 +65,13 @@ const CHECKER = parsed.value['--checker'] ? resolve(parsed.value['--checker'])
 // shipped bytes. `--plane` is also the shape D96 named as the acceptable seam: an interface someone would use
 // for a reason, which happens to be testable.
 const PLANE = planeArg ? resolve(planeArg) : ROOT;
+// D208 — measured while arming the rows below: `--plane` at a directory that is not there threw out of the walk
+// with an uncaught ENOENT at exit 1, which is this file's code for "a citation is wrong" and prints a stack
+// instead of a verdict. D159 ruled on that exact shape for a mistyped value; a mistyped *path* is the same
+// request wearing the same wrong code.
+try { readdirSync(PLANE); } catch (e) {
+  fail(`--plane names a directory this run cannot open (${e.code ?? e.message}): ${PLANE}`);
+}
 
 // Comment marker(s) per extension, tested anywhere on the line so a trailing `# see x.py:NN` counts. The cost
 // is that a string containing `--` or `//` can read as a comment: this over-reports rather than hides.
@@ -115,37 +122,117 @@ function grammar() {
 /** Extensions the plane holds that COMMENT has no row for, and how many files of each: collected by the same walk
  *  that produces the census, so the count below cannot describe a narrower scan than the one that ran. */
 const unmapped = new Map();
-let mappedFiles = 0;
+const mappedFiles = { count: 0 };
 
-function* walk(dir) {
+/** D208 — which files step 8 opens as *citing* prose, sliced out of step 8's own bytes.
+ *
+ *  The row D207 added reported only this table's own gaps, so it conflated two different fates: an extension with
+ *  no row here is not necessarily prose nobody reads, because step 8 reads the files it names itself. Measured on
+ *  this working copy: 30 `.md`, 9 `.txt` and 31 `.json` files sit outside `COMMENT` while `LEDGER_EXT` accepts them
+ *  as cite targets, and between them they hold 99 citation-shaped tokens no reader ever scores — against 96 tokens
+ *  this whole census does score. `docs/PLAN.md` alone accounts for 48 of them. The number that claim needs is the
+ *  list step 8 reads, and that list is one line in step 8's file, so it is read from there rather than copied here
+ *  (the same objection D85 raised against a second hand list, and the reason the grammar above is sliced too).
+ *
+ *  A slice that cannot find its declaration refuses the run: reporting a gap "measured against the ledgers" while
+ *  having read no ledger list would print a number that may describe any population at all, which is the D157
+ *  failure mode — a check that fails to fail. */
+function ledgerFiles() {
+  let text;
+  try { text = readFileSync(CHECKER, 'utf8'); } catch (e) {
+    fail(`the step-8 reader named by --checker could not be opened (${e.code ?? e.message}): ${CHECKER}`);
+  }
+  const lines = text.split(/\r?\n/).filter((l) => l.includes('const LEDGERS ='));
+  if (lines.length !== 1) {
+    fail(`cannot say which prose step 8 reads — its ledger declaration matched ${lines.length} line(s) in ${CHECKER},`
+      + ' and the "no reader opens these" row below is only true against the list that reader actually walks');
+  }
+  const lit = lines[0].match(/=== null \? \[([^\]]*)\]/);
+  if (!lit) fail(`cannot read the default ledger array out of: ${lines[0].trim()}`);
+  const names = [...lit[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  if (names.length === 0) {
+    fail(`step 8's ledger list sliced to 0 file(s) from ${CHECKER} — refusing to report a gap measured against no prose`);
+  }
+  return new Set(names);
+}
+const LEDGER_FILES = ledgerFiles();
+
+/** Citation-shaped tokens in a file, counted the way the census counts them: per line, same grammar, same name
+ *  filter. The grammar anchors on `^`, so matching the whole text at once is a different scan. */
+function citeCount(abs, rx) {
+  let lines;
+  try { lines = readFileSync(abs, 'utf8').replace(/\r\n/g, '\n').split('\n'); } catch { return null; }
+  let n = 0;
+  for (const line of lines) {
+    for (const m of line.matchAll(rx)) {
+      const name = m[1];
+      if (!(/\.[A-Za-z0-9]{1,6}$/.test(name) || name.startsWith('.'))) continue;
+      n += 1;
+    }
+  }
+  return n;
+}
+
+/** The two fates an extension with no `COMMENT` row can have, split by the other reader's own predicate. */
+const ledges = { into: new Map(), outside: new Map(), openedByStep8: 0 };
+function tally(group, ext, tokens) {
+  const cur = group.get(ext) ?? { files: 0, tokens: 0 };
+  cur.files += 1;
+  cur.tokens += tokens ?? 0;
+  group.set(ext, cur);
+}
+
+function* walk(dir, rx) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
-    if (e.isDirectory()) { if (!VENDOR_DIRS.has(e.name)) yield* walk(join(dir, e.name)); continue; }
+    if (e.isDirectory()) { if (!VENDOR_DIRS.has(e.name)) yield* walk(join(dir, e.name), rx); continue; }
     if (!e.isFile()) continue;
+    const abs = join(dir, e.name);
     const dot = e.name.lastIndexOf('.');
     const ext = dot < 0 ? '(no extension)' : e.name.slice(dot);
     if (!COMMENT[ext]) {
       unmapped.set(ext, (unmapped.get(ext) ?? 0) + 1);
+      const rel = relative(PLANE, abs).replace(/\\/g, '/');
+      if (LEDGER_FILES.has(rel)) ledges.openedByStep8 += 1;
+      else tally(LEDGER_EXT.test(e.name) ? ledges.into : ledges.outside, ext, citeCount(abs, rx));
       continue;
     }
-    mappedFiles += 1;
-    yield [join(dir, e.name), ext];
+    mappedFiles.count += 1;
+    yield [abs, ext];
   }
 }
 
-/** The disclosure row's own text: the unwalked names by file count, most first, capped so a build-output plane
- *  cannot print four hundred columns at the operator. The cap is counted, never silently dropped. */
+/** One `<ext>(N)` name list per group, capped so a build-output plane cannot print four hundred columns at the
+ *  operator. The cap is counted, never silently dropped. */
+function nameList(map, cap) {
+  const names = [...map.entries()].sort((a, b) => b[1].files - a[1].files || a[0].localeCompare(b[0]));
+  const shown = names.slice(0, cap).map(([e, c]) => `${e}(${c.files} file(s), ${c.tokens} token(s))`).join(' ');
+  const rest = names.length - Math.min(names.length, cap);
+  const total = names.reduce((s, [, c]) => s + c.tokens, 0);
+  const files = names.reduce((s, [, c]) => s + c.files, 0);
+  return { text: `${names.length} ext(s), ${files} file(s), ${total} token(s): ${shown || '(none)'}`
+    + `${rest > 0 ? `, +${rest} more name(s) not shown` : ''}`, names: names.length, files, total };
+}
+
+/** The disclosure rows' own text. */
 function coverageRow() {
-  const names = [...unmapped.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  const shown = names.slice(0, 12).map(([e, n]) => `${e}(${n})`).join(' ');
-  const rest = names.length - Math.min(names.length, 12);
-  return `  ext coverage       ${mappedFiles} file(s) read across ${Object.keys(COMMENT).length} mapped ext(s); `
-    + `${names.length} unwalked ext(s): ${shown || '(none)'}`
-    + `${rest > 0 ? `, +${rest} more name(s) not shown` : ''} — reported, not judged`;
+  const flat = [...unmapped.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([e, n]) => `${e}(${n})`);
+  const into = nameList(ledges.into, 6);
+  const outside = nameList(ledges.outside, 4);
+  return [
+    `  ext coverage       ${mappedFiles.count} file(s) read across ${Object.keys(COMMENT).length} mapped ext(s); `
+      + `${unmapped.size} unwalked ext(s): ${flat.slice(0, 12).join(' ') || '(none)'}`
+      + `${unmapped.size > 12 ? `, +${unmapped.size - 12} more name(s) not shown` : ''} — reported, not judged`,
+    `  prose, no reader   ${into.text} — inside step 8's own cite-target predicate, outside this census's table,`
+      + ` and not one of the ${LEDGER_FILES.size} file(s) step 8 names as prose (it opens ${ledges.openedByStep8} here)`,
+    `  outside both       ${outside.text} — neither reader's predicate accepts these; their bytes are scanned as`
+      + ' text, so a binary file can be listed and contribute nothing',
+  ].join('\n');
 }
 
 function collect(rx) {
   const rows = [];
-  for (const [abs, ext] of walk(PLANE)) {
+  for (const [abs, ext] of walk(PLANE, rx)) {
     const rel = relative(PLANE, abs).replace(/\\/g, '/');
     if (EXCLUDE_PREFIX.some((p) => rel.startsWith(p))) continue;
     let lines;
@@ -162,7 +249,8 @@ function collect(rx) {
   return rows;
 }
 
-const rows = collect(grammar());
+const rx = grammar();
+const rows = collect(rx);
 // Printed before the empty-census refusal, because a census that read nothing is exactly when the operator
 // needs to know which extensions were never opened.
 console.log(coverageRow());
