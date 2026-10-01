@@ -233,7 +233,27 @@ await arm('D208/P2 — the same bytes named `.sql` are scored, so the row keys o
   0, [/RESULT: PASS/, /tokens found\s+2 in 2 file\(s\)/,
     /prose, no reader\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/],
   CRASH, ['--plane', PROSE_SQL]);
+// D209 — the relay's filter. Step 8 prints its LIMITS paragraph as column-0 prose, and the old keyword filter
+// pulled single sentences out of it, so a clean plane's report carried the line "does not hold that path and FILE
+// NOT FOUND speaks first." — an offender class name in a run that filed no offenders. That fragment is where this
+// unit came from: D208/P1 predicted a red from it and got one that meant nothing. Predicted before running: on
+// CONTROL nothing indented and no verdict word survives (so no class name at all); on MIXED the class header and
+// its bullet survive while the paragraph does not; on NO_FILE the child refused (exit 2), and a refusal relays
+// whole — the child's own title line, column 0 and keyword-free, is the witness that the refusal branch is
+// load-bearing rather than the filter being a filter.
+await arm('D209/Q1 — a clean plane reports no offender class name, not even inside the child\'s prose', 0,
+  [/RESULT: PASS/, /strict offenders\s+0/],
+  [...CRASH, /FILE NOT FOUND/, /AMBIGUOUS/, /PAST EOF/, /does not hold that path/, /LIMITS, stated rather than implied/],
+  ['--plane', CONTROL]);
+await arm('D209/Q2 — the offender class header and its bullet are relayed; the child\'s explanatory paragraph is not',
+  1, [/RESULT: FAIL/, /FILE NOT FOUND \(1\)/, /headings seen/, /- src\/probe\.sql:3  wrote the cite/],
+  [...CRASH, /LIMITS, stated rather than implied/, /which is what keeps it a backlog/,
+    /NEXUS — ledger citation census/], ['--plane', MIXED]);
+await arm('D209/Q3 — when the child refuses, its whole report comes through, title line included', 2,
+  [/RESULT: NOT RUN/, /NOT CHECKED — 1 citation\(s\) found and 0 file\(s\) resolved/, /NEXUS — ledger citation census/],
+  CRASH, ['--plane', NO_FILE]);
 // D208/P7 — the walk's own failure mode, measured while writing the two arms above: an unreadable `--plane` threw
+
 // ENOENT at exit 1. Predicted after the guard: exit 2, the refusal names the path, and no stack line survives.
 await arm('D208/P7 — `--plane` at a directory that is not there refuses, it does not crash at the FAIL code', 2,
   [/cannot open .*no-such-plane-dir/],
@@ -320,6 +340,8 @@ if (PLANTED === null) {
   // `String.raw`, because the row's own text contains `\s`: a string literal that lost the backslash would match
   // zero bytes and the arm would report "the anchor appears 0 times" — a red that is about my escaping, not the code.
   const TOML_ROW = String.raw`  '.toml': [/(^|\s)#/],`;
+  // D209 — the relay clause, one line, three terms. `String.raw` for the same reason as TOML_ROW: it carries `\s`.
+  const RELAY_ROW = String.raw`  .filter((l) => code === 2 || /^\s/.test(l) || VERDICT_LINE.test(l))`;
   const check = (name, expect, must, absent, r) => results.push({
     name, expect, code: r.code,
     missed: must.filter((re) => !re.test(r.out)),
@@ -381,6 +403,34 @@ if (PLANTED === null) {
   check('D207/T2 — delete the .toml vocabulary row and the same TOML plane reads nothing at all',
     2, [/0 tokens found in the comment plane/, /\.toml\(1\)/], [/RESULT: PASS/, /RESULT: FAIL/],
     drive('toml-off', TOML_ROW, '', TOML));
+  // D209 — the relay clause has three terms and each one has to answer for a line on its own. Predictions written
+  // before any mutant ran, and R0 is the control that makes the other two mean something: a verbatim copy of the
+  // reader placed in a temp `scripts/` printed the same refusal whole (HELD), so a line that vanishes below is
+  // gone because of the mutation, not because the reader moved.
+  // R0 — verbatim copy on NO_FILE: exit 2, the child's title line, its refusal, step 9's own NOT RUN. Green.
+  check('D209/R0 — a verbatim copy of the relay reader still relays the refusal whole', 2,
+    [/RESULT: NOT RUN/, /NOT CHECKED — 1 citation\(s\) found and 0 file\(s\) resolved/, /NEXUS — ledger citation census/],
+    [/RESULT: PASS/, /RESULT: FAIL/],
+    drive('r0', RELAY_ROW, RELAY_ROW, NO_FILE));
+  // R1 — drop `code === 2` and the refusal branch stops existing. Measured on the first run, exactly as predicted in
+  // substance and mis-filed in shape: the ONLY line that disappears is the child's column-0, keyword-free title,
+  // because the two indented rows survive on their own terms. An absence witness goes in `absent`, not `must` — a
+  // `must` on a line the mutant was written to delete is an arm that can only report its own bookkeeping.
+  check('D209/R1 — the refusal term is the only thing that carries the child\'s column-0 title', 2,
+    [/RESULT: NOT RUN/, /NOT CHECKED — 1 citation\(s\) found and 0 file\(s\) resolved/],
+    [/NEXUS — ledger citation census/, /RESULT: PASS/, /RESULT: FAIL/],
+    drive('r1', RELAY_ROW, '  .filter((l) => false || /^\\s/.test(l) || VERDICT_LINE.test(l))', NO_FILE));
+  // R2 — drop the indented term on MIXED, the plane that ships exit 1. Three relayed rows went: the class header
+  // `FILE NOT FOUND (1)`, the `headings seen` row and the `strict offenders 1 offender(s)` count row — while the
+  // verdict line stayed, because step 9 composes its verdict from the child's WHOLE output, not from the relay. That
+  // is the failure mode D209 closes, and the arm states it as a contradiction the reader must not be able to print.
+  // One row stayed that the first prediction said would go: the offender AUTHOR bullet. It is not relayed — step 9
+  // builds the OFFENDER AUTHORS block from the rows it parsed itself, so attribution does not depend on the relay.
+  // Asserted as a MUST, which makes this arm two-sided: the same mutation must delete three lines and keep one.
+  check('D209/R2 — without the indented term the verdict and the author block stand on a gutted report', 1,
+    [/RESULT: FAIL/, /- src\/probe\.sql:3  wrote the cite/],
+    [/FILE NOT FOUND \(1\)/, /headings seen/, /strict offenders\s+1 offender\(s\)/, /RESULT: PASS/],
+    drive('r2', RELAY_ROW, '  .filter((l) => code === 2 || false || VERDICT_LINE.test(l))', MIXED));
 } else {
   console.log('  (skipped) D206\'s mutant-reader arms: this run is already aimed at a planted checker ('
     + `${PLANTED}), and mutating the reader is what it does`);

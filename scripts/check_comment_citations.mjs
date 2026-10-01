@@ -299,11 +299,18 @@ try {
   code = err.status ?? 1;
   out = `${err.stdout ?? ''}${err.stderr ?? ''}`;
 }
-// `NOT CHECKED` joins the pattern list because D159's own harness tripped over its absence: step 8 refused a
-// plant whose every citation pointed outside the index, step 9 reported `NOT RUN (exit 2)` — correctly — and
-// printed nothing explaining it, because the only line the child had written was filtered out here. A guard that
-// says "the reader failed" while hiding the reader's sentence about why leaves the operator to re-derive it.
-console.log(out.split('\n').filter((l) => /citations|offender|headings|tokens|files cited|NOT FOUND|AMBIGUOUS|PAST|BACKWARDS|ZERO|is empty|untracked targets|uncommitted targets|Error|Cannot find|NOT CHECKED|RESULT:/.test(l)).join('\n'));
+// D209 — what gets relayed from the child's report. The first version filtered on a keyword list, and step 8 prints
+// its LIMITS paragraph as plain column-0 prose: a keyword match pulled the *middle* of a sentence out and dropped
+// its beginning, so a clean plane's report contained the line "does not hold that path and FILE NOT FOUND speaks
+// first." — an offender class name in a run that filed no offenders. Measured, not imagined: this harness's own
+// D208/P1 arm was written against that fragment and predicted a red that does not exist, which is how the defect
+// was found. Now the relay keeps the report's own rows (indented label lines and the `- ` bullets under them) and
+// any line that carries a verdict, and when the child refused (exit 2) it relays everything — D159's ruling was
+// that a refusal must pass its reason through, and on a refusal the prose IS the reason.
+const VERDICT_LINE = /RESULT:|NOT CHECKED|NOT RUN|Error|Cannot find/;
+console.log(out.split('\n')
+  .filter((l) => code === 2 || /^\s/.test(l) || VERDICT_LINE.test(l))
+  .join('\n'));
 if (VERBOSE) console.log(out);
 // A child that never produced a report has not refuted anything: it failed to run. Collapsing that into the
 // offender branch — as the first version did, reporting `RESULT: FAIL … at least one does not` for a step 8
