@@ -180,6 +180,29 @@ function prosePlane(name, fileName) {
 const PROSE_TXT = prosePlane('prose-txt', 'notes.txt');
 const PROSE_SQL = prosePlane('prose-sql', 'notes.sql');
 
+// D210 — the path exclusion measured as a plane. Two files with identical bytes, one under `docs/` (the prefix this
+// census skips) and one under `doks/` (a directory nobody's rule covers), plus a scored file in `src/` so neither
+// plane can reach the read-nothing refusal. The `docs` half must PASS with the phantom named in the new row; the
+// `doks` half must FAIL on the same phantom. That pair is the only witness that the row keys on the path and not
+// on the prose: the two files differ in nothing but the directory they sit in.
+function prefixPlane(name, dirName) {
+  const dir = join(ROOT_FIX, name);
+  mkdirSync(join(dir, dirName), { recursive: true });
+  mkdirSync(join(dir, 'src'), { recursive: true });
+  const body = [
+    '-- NEXUS fixture for scripts/falsify_comment_plane.mjs — not shipped, not scored by any gate.',
+    `--   ${MISSING}:3`,
+    'SELECT 1;',
+    '',
+  ].join('\n');
+  writeFileSync(join(dir, dirName, 'probe.sql'), body, 'utf8');
+  writeFileSync(join(dir, 'src', 'probe.sql'),
+    [`--   ${BASENAME}:12`, 'SELECT 1;', ''].join('\n'), 'utf8');
+  return dir;
+}
+const PREFIX = prefixPlane('prefix-docs', 'docs');
+const PREFIX_OTHER = prefixPlane('prefix-doks', 'doks');
+
 // --------------------------------------------------------------------------- the arms
 const results = [];
 /** The verdict is stated before the shipped reader runs, so an arm cannot be written from what it printed. */
@@ -233,6 +256,20 @@ await arm('D208/P2 — the same bytes named `.sql` are scored, so the row keys o
   0, [/RESULT: PASS/, /tokens found\s+2 in 2 file\(s\)/,
     /prose, no reader\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/],
   CRASH, ['--plane', PROSE_SQL]);
+// D210 — the path skip gets its own row, and the row has to answer for a file. Predicted before running: PREFIX
+// reads 1 mapped file (src), skips 1 (docs/probe.sql), so `ext coverage` says 1 read and the new row names
+// `.sql(1 file(s), 1 token(s))` and the phantom is nowhere in the offender list — the plane PASSes with a citation
+// it never scored, which is exactly what the row is for. PREFIX_OTHER is the same bytes in `doks/`: 2 read, 2
+// tokens, the phantom an offender, exit 1. If those two arms ever print the same thing, the rule has stopped
+// keying on the path.
+await arm('D210/S1 — a mapped file under the excluded prefix is named by the new row and not counted as read', 0,
+  [/RESULT: PASS/, /tokens found\s+1 in 1 file\(s\)/, /ext coverage\s+1 file\(s\) read/,
+    /table, prefix-skip\s+1 ext\(s\), 1 file\(s\), 1 token\(s\): \.sql\(1 file\(s\), 1 token\(s\)\)/],
+  [...CRASH, /FILE NOT FOUND/, /strict offenders\s+[1-9]/], ['--plane', PREFIX]);
+await arm('D210/S2 — the identical bytes in a directory no rule covers are read, and the phantom offends', 1,
+  [/RESULT: FAIL/, /tokens found\s+2 in 2 file\(s\)/, /ext coverage\s+2 file\(s\) read/,
+    /table, prefix-skip\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/, /FILE NOT FOUND/],
+  [...CRASH, /RESULT: PASS/], ['--plane', PREFIX_OTHER]);
 // D209 — the relay's filter. Step 8 prints its LIMITS paragraph as column-0 prose, and the old keyword filter
 // pulled single sentences out of it, so a clean plane's report carried the line "does not hold that path and FILE
 // NOT FOUND speaks first." — an offender class name in a run that filed no offenders. That fragment is where this
@@ -431,6 +468,25 @@ if (PLANTED === null) {
     [/RESULT: FAIL/, /- src\/probe\.sql:3  wrote the cite/],
     [/FILE NOT FOUND \(1\)/, /headings seen/, /strict offenders\s+1 offender\(s\)/, /RESULT: PASS/],
     drive('r2', RELAY_ROW, '  .filter((l) => code === 2 || false || VERDICT_LINE.test(l))', MIXED));
+  // D210 — the walk-time skip, armed the same two ways: destroy the rule and the plane reddens, destroy only the
+  // counting and the plane stays green while the file it skipped is named nowhere. The second is the defect this
+  // unit closes, and it is only visible as an absence, so its witness is the row the mutant can no longer print.
+  const SKIP_BLOCK = '    if (EXCLUDE_PREFIX.some((p) => rel.startsWith(p))) {\n'
+    + '      tally(ledges.skipped, ext, citeCount(abs, rx));\n      continue;\n    }\n';
+  const SKIP_TALLY = '      tally(ledges.skipped, ext, citeCount(abs, rx));\n';
+  check('D210/S3 — delete the prefix rule and the docs phantom is scored: the skip is what hides it', 1,
+    [/RESULT: FAIL/, /FILE NOT FOUND/, /tokens found\s+2 in 2 file\(s\)/,
+      /table, prefix-skip\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/],
+    [/RESULT: PASS/, /ext coverage\s+1 file\(s\) read/],
+    drive('s3', SKIP_BLOCK, '', PREFIX));
+  // S4 is the disappearance witness, filed the way D209/R1 had to be filed after its own red: the mutant's own
+  // sentence is what the arm asserts. It claims one mapped file was read and zero were skipped, on a plane that
+  // holds two — which is precisely the state this repository was in before this unit, and the reason the row exists.
+  check('D210/S4 — keep the skip, drop its count, and the reader says one file read, none skipped, two walked', 0,
+    [/RESULT: PASS/, /ext coverage\s+1 file\(s\) read/,
+      /table, prefix-skip\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/],
+    [/table, prefix-skip\s+1 ext\(s\)/, /FILE NOT FOUND/, /ext coverage\s+2 file\(s\) read/],
+    drive('s4', SKIP_TALLY, '', PREFIX));
 } else {
   console.log('  (skipped) D206\'s mutant-reader arms: this run is already aimed at a planted checker ('
     + `${PLANTED}), and mutating the reader is what it does`);

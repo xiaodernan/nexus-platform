@@ -123,6 +123,14 @@ function grammar() {
  *  that produces the census, so the count below cannot describe a narrower scan than the one that ran. */
 const unmapped = new Map();
 const mappedFiles = { count: 0 };
+// D210 — mapped files this census skips by PATH. `EXCLUDE_PREFIX` was applied at read time (in `collect`), while
+// `mappedFiles.count` was incremented at walk time for every file whose extension the table holds, so the coverage
+// row said "N file(s) read" for files it then never opened. Measured today: 0 of the 12 mapped extensions has a
+// file under `docs/`, so the count happened to be true — and a `.md` vocabulary row, which is the obvious next
+// addition to this table, would silently turn 512 ledger citations into "read" numbers with none of the prose
+// scored. Now the skip is decided where the file is seen, the skipped half is named, and the number can only
+// describe files the census actually read.
+const ledges = { into: new Map(), outside: new Map(), skipped: new Map(), openedByStep8: 0 };
 
 /** D208 — which files step 8 opens as *citing* prose, sliced out of step 8's own bytes.
  *
@@ -174,7 +182,6 @@ function citeCount(abs, rx) {
 }
 
 /** The two fates an extension with no `COMMENT` row can have, split by the other reader's own predicate. */
-const ledges = { into: new Map(), outside: new Map(), openedByStep8: 0 };
 function tally(group, ext, tokens) {
   const cur = group.get(ext) ?? { files: 0, tokens: 0 };
   cur.files += 1;
@@ -187,13 +194,20 @@ function* walk(dir, rx) {
     if (e.isDirectory()) { if (!VENDOR_DIRS.has(e.name)) yield* walk(join(dir, e.name), rx); continue; }
     if (!e.isFile()) continue;
     const abs = join(dir, e.name);
+    const rel = relative(PLANE, abs).replace(/\\/g, '/');
     const dot = e.name.lastIndexOf('.');
     const ext = dot < 0 ? '(no extension)' : e.name.slice(dot);
     if (!COMMENT[ext]) {
       unmapped.set(ext, (unmapped.get(ext) ?? 0) + 1);
-      const rel = relative(PLANE, abs).replace(/\\/g, '/');
       if (LEDGER_FILES.has(rel)) ledges.openedByStep8 += 1;
       else tally(LEDGER_EXT.test(e.name) ? ledges.into : ledges.outside, ext, citeCount(abs, rx));
+      continue;
+    }
+    // D210 — the path exclusion decides here, where the file is first seen, and the file it skips is named rather
+    // than counted as read. `citeCount` is the same scan the unmapped rows use, so a skipped file's citations are
+    // counted by the reader's grammar and not by a second guess at it.
+    if (EXCLUDE_PREFIX.some((p) => rel.startsWith(p))) {
+      tally(ledges.skipped, ext, citeCount(abs, rx));
       continue;
     }
     mappedFiles.count += 1;
@@ -219,10 +233,19 @@ function coverageRow() {
     .map(([e, n]) => `${e}(${n})`);
   const into = nameList(ledges.into, 6);
   const outside = nameList(ledges.outside, 4);
+  const skipped = nameList(ledges.skipped, 4);
   return [
     `  ext coverage       ${mappedFiles.count} file(s) read across ${Object.keys(COMMENT).length} mapped ext(s); `
       + `${unmapped.size} unwalked ext(s): ${flat.slice(0, 12).join(' ') || '(none)'}`
       + `${unmapped.size > 12 ? `, +${unmapped.size - 12} more name(s) not shown` : ''} — reported, not judged`,
+    // D210 — the mapped half the path rule skips. The number is the row's own claim to keep: before this unit the
+    // line above counted these files as read and this row did not exist, so the only way to see the skip was to
+    // notice that a file named nowhere had no bullets. `0 file(s)` is the honest current state of this repository
+    // and `(none)` is what a future run must print too, until a vocabulary row lands whose files live under
+    // `${EXCLUDE_PREFIX}` — at which point this row carries the number and the coverage row stays right.
+    `  table, prefix-skip ${skipped.text} — inside this census's vocabulary but under its own path rule`
+      + ` (${[...EXCLUDE_PREFIX].join(', ')}), and not one of the ${LEDGER_FILES.size} file(s) step 8 names as`
+      + ' prose: a citation here is read by neither reader',
     `  prose, no reader   ${into.text} — inside step 8's own cite-target predicate, outside this census's table,`
       + ` and not one of the ${LEDGER_FILES.size} file(s) step 8 names as prose (it opens ${ledges.openedByStep8} here)`,
     `  outside both       ${outside.text} — neither reader's predicate accepts these; their bytes are scanned as`
@@ -234,7 +257,8 @@ function collect(rx) {
   const rows = [];
   for (const [abs, ext] of walk(PLANE, rx)) {
     const rel = relative(PLANE, abs).replace(/\\/g, '/');
-    if (EXCLUDE_PREFIX.some((p) => rel.startsWith(p))) continue;
+    // D210 — no path filter here: `walk` is where a file is admitted or skipped, and it reports the skips. A second
+    // copy of the rule at read time is how the coverage row came to count files this census never opened.
     let lines;
     try { lines = readFileSync(abs, 'utf8').replace(/\r\n/g, '\n').split('\n'); } catch { continue; }
     lines.forEach((line, i) => {
