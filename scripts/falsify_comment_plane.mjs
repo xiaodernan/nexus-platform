@@ -138,6 +138,30 @@ function twoBadPlane(name, goodLine, badA, badB) {
 }
 const TWO_BAD = twoBadPlane('two-bad', 12, 'd206_no_such_file_a.sql', 'd206_no_such_file_b.sql');
 
+// D207 — the vocabulary's own plane. `probe.toml` carries one cite the index resolves and one it does not, because
+// a phantom-only census trips step 8's `0 file(s) resolved` refusal before any offender exists (D206/M3 learned
+// that the hard way). `probe.d207unknown` holds a citation-shaped comment in an extension no vocabulary lists.
+function tomlPlane(name, goodLine, badCite) {
+  const dir = join(ROOT_FIX, name);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'probe.toml'), [
+    '# scratch fixture for scripts/falsify_comment_plane.mjs — not shipped, not scored by any gate.',
+    `# a cite the index resolves: ${BASENAME}:${goodLine}`,
+    `# a cite it does not: ${badCite}:3`,
+    'x = 1',
+    '',
+  ].join('\n'), 'utf8');
+  return join(ROOT_FIX, name);
+}
+const TOML = tomlPlane('toml', 12, MISSING);
+const STRAY_DIR = join(ROOT_FIX, 'stray');
+mkdirSync(STRAY_DIR, { recursive: true });
+writeFileSync(join(STRAY_DIR, 'probe.sql'),
+  ['-- scratch fixture — not shipped.', `--   ${BASENAME}:12`, 'SELECT 1;', ''].join('\n'), 'utf8');
+writeFileSync(join(STRAY_DIR, 'probe.d207unknown'),
+  ['# scratch fixture — not shipped.', `# see ${MISSING}:3`, ''].join('\n'), 'utf8');
+const STRAY = STRAY_DIR;
+
 // --------------------------------------------------------------------------- the arms
 const results = [];
 /** The verdict is stated before the shipped reader runs, so an arm cannot be written from what it printed. */
@@ -167,6 +191,15 @@ await arm('the offender names the comment that wrote it, not the census line tha
   [/OFFENDER AUTHORS — the comment behind each offending row above \(1 of 1 offender\(s\), 0 row\(s\) the plant does not account for\)/,
     /- src\/probe\.sql:3  wrote the cite/, /FILE NOT FOUND/],
   [...CRASH, /RESULT: PASS/], ['--plane', MIXED]);
+// D207 — the shipped reader over the two new planes. Predicted before running: TOML reddens with exactly one
+// offender (the phantom, on the third line of a file step 9 never opened before this unit) and its author line
+// names probe.toml at that line; STRAY passes, because the file it cannot read is reported by name in the coverage
+// row rather than scored — disclosure, not judgement.
+await arm('D207/T1 — a `.toml` comment is in the census now: its resolvable cite clears and its phantom offends',
+  1, [/RESULT: FAIL/, /tokens found\s+2 in 1 file\(s\)/, /FILE NOT FOUND/, /- probe\.toml:3  wrote the cite/],
+  CRASH, ['--plane', TOML]);
+await arm('D207/C1 — an extension the vocabulary does not hold is named in the coverage row, not silently skipped',
+  0, [/RESULT: PASS/, /\.d207unknown\(1\)/], CRASH, ['--plane', STRAY]);
 await arm('a plane of comments that cites nothing is a refusal, not a green (D79)', 2,
   [/0 tokens found in the comment plane/], CRASH, ['--plane', SILENT]);
 await arm('`--plane --verbose` refuses: the request whose swallowed value used to throw ENOENT at exit 1', 2,
@@ -245,21 +278,26 @@ if (PLANTED === null) {
 // verbatim copy is one of them, because without it a red could belong to the relocation rather than the mutation.
 if (PLANTED === null) {
   const ANCHOR = 'const bulletAt = new Map(rows.map((r, i) => [PLANT_HEAD.length + i + 1, r]));';
+  // `String.raw`, because the row's own text contains `\s`: a string literal that lost the backslash would match
+  // zero bytes and the arm would report "the anchor appears 0 times" — a red that is about my escaping, not the code.
+  const TOML_ROW = String.raw`  '.toml': [/(^|\s)#/],`;
   const check = (name, expect, must, absent, r) => results.push({
     name, expect, code: r.code,
     missed: must.filter((re) => !re.test(r.out)),
     unwanted: absent.filter((re) => re.test(r.out)),
     out: r.out,
   });
-  /** `hits !== 1` is reported as the arm's own red — a mutant that lost its anchor tests nothing at all. */
-  const drive = (tag, replacement, planeDir) => {
+  /** `hits !== 1` is reported as the arm's own red — a mutant that lost its anchor tests nothing at all.
+   *  D207 widened it from "the map anchor" to "any single anchor in step 9's bytes", because the vocabulary row
+   *  needs arming the same way and the mechanism is identical: copy the reader, replace one string, run it. */
+  const drive = (tag, anchor, replacement, planeDir) => {
     const dir = join(tmpdir(), `nexus-d206-${tag}-${process.pid}`);
     const src = readFileSync(READER, 'utf8').replace(/\r\n/g, '\n');
-    const hits = src.split(ANCHOR).length - 1;
+    const hits = src.split(anchor).length - 1;
     let code = -1;
     let out = '';
     if (hits !== 1) {
-      out = `the map anchor appears ${hits} times in step 9 — no mutant was written`;
+      out = `the mutant anchor appears ${hits} times in step 9 — no mutant was written`;
     } else {
       try {
         mkdirSync(join(dir, 'scripts'), { recursive: true });
@@ -267,7 +305,7 @@ if (PLANTED === null) {
           writeFileSync(join(dir, 'scripts', sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
         }
         const path = join(dir, 'scripts', 'check_comment_citations.mjs');
-        writeFileSync(path, src.replace(ANCHOR, replacement), 'utf8');
+        writeFileSync(path, src.replace(anchor, replacement), 'utf8');
         const r = spawnSync(process.execPath, [path, `--checker=${CHECKER}`, '--plane', planeDir],
           { cwd: ROOT, encoding: 'utf8', timeout: 300000 });
         code = r.status ?? -1;
@@ -282,14 +320,14 @@ if (PLANTED === null) {
   const NOT_RUN = [/RESULT: NOT RUN/];
   check('D206/C0 — a verbatim copy of step 9 in another directory reads the plane the shipped reader reads',
     1, [/RESULT: FAIL/, /tokens found\s+2 in 1 file\(s\)/, /- src\/probe\.sql:3  wrote the cite/], NOT_RUN,
-    drive('copy', ANCHOR, MIXED));
+    drive('copy', ANCHOR, ANCHOR, MIXED));
   check('D206/M1 — a map that places nothing reddens the run as a refusal that counts the bullets it had',
     2, [/RESULT: NOT RUN — step 8 filed 1 offender row\(s\) naming this reader's own plant and none of them matched a bullet this census wrote \(2 bullet\(s\)\)/], [/RESULT: PASS/, /RESULT: FAIL/],
-    drive('m1', 'const bulletAt = new Map();', MIXED));
+    drive('m1', ANCHOR, 'const bulletAt = new Map();', MIXED));
   check('D206/M2 — the map\'s line arithmetic is load-bearing: off by one and the reader names the wrong comment',
     1, [/RESULT: FAIL/, /OFFENDER AUTHORS/, /- src\/probe\.sql:2  wrote the cite/],
     [/RESULT: NOT RUN/, /- src\/probe\.sql:3  wrote the cite/],
-    drive('m2', 'const bulletAt = new Map(rows.map((r, i) => [PLANT_HEAD.length + i + 2, r]));', MIXED));
+    drive('m2', ANCHOR, 'const bulletAt = new Map(rows.map((r, i) => [PLANT_HEAD.length + i + 2, r]));', MIXED));
   // Predicted before the run: the spacing mutation keys row 0 at plant line 9 and row 2 at 11, so of the two
   // offender bullets (10 and 11) exactly one is placed. authors.size is 1, which keeps the FIRST guard silent, and
   // unplaced is 1 — the case only a two-offender plane can reach, because the shipped text says "outside the N
@@ -297,7 +335,13 @@ if (PLANTED === null) {
   check('D206/M3 — a plant line the census cannot account for is a disagreement, not a partial answer',
     2, [/RESULT: NOT RUN — 1 offender row\(s\) cited a plant line outside the 3 bullet\(s\) this census wrote/],
     [/RESULT: PASS/, /RESULT: FAIL/, /none of them matched a bullet this census wrote/],
-    drive('m3', 'const bulletAt = new Map(rows.map((r, i) => [PLANT_HEAD.length + i * 2 + 1, r]));', TWO_BAD));
+    drive('m3', ANCHOR, 'const bulletAt = new Map(rows.map((r, i) => [PLANT_HEAD.length + i * 2 + 1, r]));', TWO_BAD));
+  // D207/T2 — the vocabulary row is armed the same way the map is: delete it from a copy and the plane that just
+  // passed must turn into the refusal, which is the only proof that the row does the reading. Predicted: exit 2,
+  // `0 tokens found in the comment plane`, and the coverage row naming `.toml(1)` as the extension it skipped.
+  check('D207/T2 — delete the .toml vocabulary row and the same TOML plane reads nothing at all',
+    2, [/0 tokens found in the comment plane/, /\.toml\(1\)/], [/RESULT: PASS/, /RESULT: FAIL/],
+    drive('toml-off', TOML_ROW, '', TOML));
 } else {
   console.log('  (skipped) D206\'s mutant-reader arms: this run is already aimed at a planted checker ('
     + `${PLANTED}), and mutating the reader is what it does`);

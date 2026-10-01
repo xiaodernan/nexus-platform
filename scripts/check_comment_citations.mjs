@@ -73,6 +73,14 @@ const COMMENT = {
   '.sh': [/(^|\s)#/, /\/\//], '.py': [/(^|\s)#/], '.yml': [/(^|\s)#/], '.yaml': [/(^|\s)#/],
   '.java': [/\/\//, /^\s*\*/, /\/\*/], '.mjs': [/\/\//, /^\s*\*/, /\/\*/], '.cjs': [/\/\//, /^\s*\*/, /\/\*/],
   '.js': [/\/\//, /^\s*\*/, /\/\*/], '.ts': [/\/\//, /^\s*\*/, /\/\*/], '.tsx': [/\/\//, /^\s*\*/, /\/\*/],
+  // D207 — measured on this repository: at line 36 of `apps/ai/pyproject.toml` a `#` comment cites the CI workflow
+  // by file and line, and this table had no `.toml` row, so the census never opened the file. TOML's comment
+  // syntax is `#` to end of line, the same shape `.py` and `.yml` already declare. No other name is added on the
+  // strength of this unit: the extensions the plane holds but this table does not are printed below as a
+  // disclosure, so the next one that ships is seen rather than inferred. (The two files are named without their
+  // line numbers on purpose — writing a file-and-line pair in a comment here would add a citation site to the very
+  // census whose coverage this row reports, and the claim would then be about my own prose.)
+  '.toml': [/(^|\s)#/],
 };
 // The directory exclusion is `source_index.mjs`'s one list, imported rather than copied. This file kept a
 // private 15-name SKIP until the fold ruled at D181 and landed in 656ab7e: the two lists shared 10 names and
@@ -104,13 +112,35 @@ function grammar() {
   return new RegExp(body, 'g');
 }
 
+/** Extensions the plane holds that COMMENT has no row for, and how many files of each: collected by the same walk
+ *  that produces the census, so the count below cannot describe a narrower scan than the one that ran. */
+const unmapped = new Map();
+let mappedFiles = 0;
+
 function* walk(dir) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     if (e.isDirectory()) { if (!VENDOR_DIRS.has(e.name)) yield* walk(join(dir, e.name)); continue; }
     if (!e.isFile()) continue;
-    const ext = e.name.slice(e.name.lastIndexOf('.'));
-    if (COMMENT[ext]) yield [join(dir, e.name), ext];
+    const dot = e.name.lastIndexOf('.');
+    const ext = dot < 0 ? '(no extension)' : e.name.slice(dot);
+    if (!COMMENT[ext]) {
+      unmapped.set(ext, (unmapped.get(ext) ?? 0) + 1);
+      continue;
+    }
+    mappedFiles += 1;
+    yield [join(dir, e.name), ext];
   }
+}
+
+/** The disclosure row's own text: the unwalked names by file count, most first, capped so a build-output plane
+ *  cannot print four hundred columns at the operator. The cap is counted, never silently dropped. */
+function coverageRow() {
+  const names = [...unmapped.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const shown = names.slice(0, 12).map(([e, n]) => `${e}(${n})`).join(' ');
+  const rest = names.length - Math.min(names.length, 12);
+  return `  ext coverage       ${mappedFiles} file(s) read across ${Object.keys(COMMENT).length} mapped ext(s); `
+    + `${names.length} unwalked ext(s): ${shown || '(none)'}`
+    + `${rest > 0 ? `, +${rest} more name(s) not shown` : ''} — reported, not judged`;
 }
 
 function collect(rx) {
@@ -133,6 +163,9 @@ function collect(rx) {
 }
 
 const rows = collect(grammar());
+// Printed before the empty-census refusal, because a census that read nothing is exactly when the operator
+// needs to know which extensions were never opened.
+console.log(coverageRow());
 if (rows.length === 0) {
   console.error(`COMMENT CITATIONS: 0 tokens found in the comment plane of ${PLANE}. A scan that reads`
     + ' nothing is not a green scan — check the extension and skip lists, or the --plane argument, before'
