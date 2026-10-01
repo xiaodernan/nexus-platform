@@ -181,12 +181,24 @@ for v in MIN_MERCHANTS MIN_OFFERINGS MIN_REVIEWS MIN_NEAR_SHA_TIN; do
 done
 # shellcheck disable=SC2086  # intentional word splitting of the -v pairs
 GATE_OUT="$(mktemp "${TMPDIR:-/tmp}/nexus-gate-fresh.XXXXXX")"
-trap 'rm -f "$GATE_OUT"; cleanup' EXIT
+trap 'rm -f "$GATE_OUT" "$GATE_OUT.ledger"; cleanup' EXIT
 if printf '%s\n' "$(sed 's/\r$//' "$ROOT/data/seed/quality.sql")" \
    | docker exec -i "$CONTAINER" psql -v ON_ERROR_STOP=1 -qtA $VARS -U "$PGUSER" -d "$GATE_DB" > "$GATE_OUT" 2>&1; then
   CHECKS="$(grep -ac '^  PASS' "$GATE_OUT" || true)"
   printf '    -> %s quality checks passed against a from-scratch schema (tables=%s, migrations=%s)\n' \
     "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"
+  # The count this run just measured, judged against the ledger's own newest claim about it (task #126).
+  # The ledger wrote "216 assertions" 120 times and linked it to nothing, so a check added here left 120
+  # sentences stale with nothing reddening; this is the thing that reddens. It reads the number from THIS
+  # run rather than from a flag an operator carries across by hand, which is how 216 came to be written
+  # 120 times in the first place. A MISMATCH is a FAIL, deliberately: a step that cannot fail is the thing
+  # D195 called out, and a ledger that disagrees with the gate is a real defect in the ledger.
+  if ! node "$ROOT/scripts/check_ledger_numbers.mjs" --expect "assertions=$CHECKS" > "$GATE_OUT.ledger" 2>&1; then
+    printf '\n' >&2
+    tail -6 "$GATE_OUT.ledger" | sed -e 's/^/    /' >&2
+    die "step 5 filed $CHECKS assertion(s) and the ledger's newest claim disagrees — see the judgement above"
+  fi
+  tail -3 "$GATE_OUT.ledger" | sed -e 's/^/    /'
 else
   # D139: a gate that dies at step 5 used to report no numbers at all, which is how "214 assertions at
   # HEAD" became a figure quoted from a ledger entry instead of one read from a run. The success path
@@ -475,6 +487,28 @@ step "14/14  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_rea
 ( cd "$ROOT" && node scripts/falsify_console_a11y.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/falsify_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/check_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
+
+# --------------------------------------------------------------------------- 15. the ledger's line-number drift
+step "15/15  scripts/check_line_cite_drift.mjs — the ledger's line-number citations asked whether the line they name still holds the text it was chosen for"
+# check_ledger_citations.mjs (D88) asks four questions of a File.ext:NNN cite and none of them is about whether
+# the cited line still holds the text it was chosen for. STATUS §203 named a line that was wrong twice over —
+# two lines at the commit that wrote it, nineteen after a later one — and passed every reader on both planes,
+# because the strict census exempts a committed section and a stale number is neither past EOF nor blank.
+# This reader walks every File.ext:NNN citation in the ledgers, blames the citing line to the commit that
+# wrote it, reads the cited file at THAT commit and at HEAD, and compares the text of line NN. It reports
+# EXACT (the text is identical), MOVED (the text survives at one new line), NOT-UNIQUE (blank when written or
+# multiple occurrences at HEAD), GONE (text nowhere at HEAD), NO-BASE (line didn't exist at the commit),
+# UNPATHED (basename-only cite), NOT-AT-HEAD (rooted path absent at HEAD). The `--reaim` mode prints a
+# derived re-aim list so a lane can clear MOVED citations by applying the reader's own rows.
+# This step runs the reader in report mode (exit 0, prints all classes) and its harness to prove the reader
+# can be stopped. It does NOT use --strict MOVED,NOT-UNIQUE by default — the gate reports the census and the
+# operator decides whether to re-aim or escalate; the strict mode is an operator decision, not an automatic
+# gate failure. The falsify harness proves every class can be reddened and the reader refuses a shallow
+# clone (which would otherwise print a confident verdict about nothing).
+command -v git >/dev/null 2>&1 || die "step 15 needs git on PATH"
+( cd "$ROOT" && node scripts/falsify_line_cite_drift.mjs ) 2>&1 | sed -e 's/^/    /'
+( cd "$ROOT" && node scripts/check_line_cite_drift.mjs ) 2>&1 | sed -e 's/^/    /'
+
 printf '\nRESULT: PASS — %s quality checks on a from-scratch schema (tables=%s, migrations=%s), plus the\n' \
   "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"
 printf '        seed truncate shown clearing an empty stranger and refusing one that holds rows, the\n'
