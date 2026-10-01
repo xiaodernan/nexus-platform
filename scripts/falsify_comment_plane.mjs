@@ -117,6 +117,27 @@ const SILENT = emptyPlane('silent');
 const run = (...args) => spawnSync(process.execPath,
   [READER, ...(PLANTED ? [`--checker=${PLANTED}`] : []), ...args], { cwd: ROOT, encoding: 'utf8' });
 
+// D206 — a plane carrying TWO offenders, which is the smallest census that can show one offender row the map
+// places and one it cannot. Both offending names are held by nothing, so both are `FILE NOT FOUND`. The third
+// citation is one the index DOES resolve, and it is not decoration: measured on the first run of this arm, a
+// plane of nothing but phantoms never reaches an offender verdict at all — step 8 refuses with `NOT CHECKED — 2
+// citation(s) found and 0 file(s) resolved`, its own non-vacuity guard, and step 9 answers `step 8 produced no
+// report`. That is the D159 lesson repeated one layer down: an arm must be built on a plane that can offend.
+function twoBadPlane(name, goodLine, badA, badB) {
+  const dir = join(ROOT_FIX, name, 'src');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'probe.sql'), [
+    '-- scratch fixture for scripts/falsify_comment_plane.mjs — not shipped, not scored by any gate.',
+    `--   ${BASENAME}:${goodLine}`,
+    `--   ${badA}:3`,
+    `--   ${badB}:4`,
+    'SELECT 1;',
+    '',
+  ].join('\n'), 'utf8');
+  return join(ROOT_FIX, name);
+}
+const TWO_BAD = twoBadPlane('two-bad', 12, 'd206_no_such_file_a.sql', 'd206_no_such_file_b.sql');
+
 // --------------------------------------------------------------------------- the arms
 const results = [];
 /** The verdict is stated before the shipped reader runs, so an arm cannot be written from what it printed. */
@@ -213,6 +234,73 @@ if (PLANTED === null) {
   });
 } else {
   console.log(`  (skipped) the floor's own witness: this run is already aimed at a planted checker (${PLANTED})`);
+}
+
+// --------------------------------------------------------------------------- D206: the attribution map's own floor
+// D205 added two `RESULT: NOT RUN` guards between the offender report and a verdict, and recorded in its own commit
+// message that neither had ever fired. A guard nobody has seen red is a sentence about a floor, not a floor. Step 9
+// imports only its flag parser and its walker from the directory next to itself, and takes the resolver as a flag,
+// so a copy of it in a temp `scripts/` is a complete reader: aim it at the SHIPPED step 8 and a fixture plane and
+// nothing outside the mutant has to be touched. The four predictions below were written before any mutant ran; the
+// verbatim copy is one of them, because without it a red could belong to the relocation rather than the mutation.
+if (PLANTED === null) {
+  const ANCHOR = 'const bulletAt = new Map(rows.map((r, i) => [PLANT_HEAD.length + i + 1, r]));';
+  const check = (name, expect, must, absent, r) => results.push({
+    name, expect, code: r.code,
+    missed: must.filter((re) => !re.test(r.out)),
+    unwanted: absent.filter((re) => re.test(r.out)),
+    out: r.out,
+  });
+  /** `hits !== 1` is reported as the arm's own red — a mutant that lost its anchor tests nothing at all. */
+  const drive = (tag, replacement, planeDir) => {
+    const dir = join(tmpdir(), `nexus-d206-${tag}-${process.pid}`);
+    const src = readFileSync(READER, 'utf8').replace(/\r\n/g, '\n');
+    const hits = src.split(ANCHOR).length - 1;
+    let code = -1;
+    let out = '';
+    if (hits !== 1) {
+      out = `the map anchor appears ${hits} times in step 9 — no mutant was written`;
+    } else {
+      try {
+        mkdirSync(join(dir, 'scripts'), { recursive: true });
+        for (const sib of ['cli_args.mjs', 'source_index.mjs']) {
+          writeFileSync(join(dir, 'scripts', sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
+        }
+        const path = join(dir, 'scripts', 'check_comment_citations.mjs');
+        writeFileSync(path, src.replace(ANCHOR, replacement), 'utf8');
+        const r = spawnSync(process.execPath, [path, `--checker=${CHECKER}`, '--plane', planeDir],
+          { cwd: ROOT, encoding: 'utf8', timeout: 300000 });
+        code = r.status ?? -1;
+        out = `${r.stdout ?? ''}${r.stderr ?? ''}`;
+      } catch (e) {
+        out = `the mutant could not be run: ${e.message}`;
+      }
+    }
+    rmSync(dir, { recursive: true, force: true });
+    return { code, out };
+  };
+  const NOT_RUN = [/RESULT: NOT RUN/];
+  check('D206/C0 — a verbatim copy of step 9 in another directory reads the plane the shipped reader reads',
+    1, [/RESULT: FAIL/, /tokens found\s+2 in 1 file\(s\)/, /- src\/probe\.sql:3  wrote the cite/], NOT_RUN,
+    drive('copy', ANCHOR, MIXED));
+  check('D206/M1 — a map that places nothing reddens the run as a refusal that counts the bullets it had',
+    2, [/RESULT: NOT RUN — step 8 filed 1 offender row\(s\) naming this reader's own plant and none of them matched a bullet this census wrote \(2 bullet\(s\)\)/], [/RESULT: PASS/, /RESULT: FAIL/],
+    drive('m1', 'const bulletAt = new Map();', MIXED));
+  check('D206/M2 — the map\'s line arithmetic is load-bearing: off by one and the reader names the wrong comment',
+    1, [/RESULT: FAIL/, /OFFENDER AUTHORS/, /- src\/probe\.sql:2  wrote the cite/],
+    [/RESULT: NOT RUN/, /- src\/probe\.sql:3  wrote the cite/],
+    drive('m2', 'const bulletAt = new Map(rows.map((r, i) => [PLANT_HEAD.length + i + 2, r]));', MIXED));
+  // Predicted before the run: the spacing mutation keys row 0 at plant line 9 and row 2 at 11, so of the two
+  // offender bullets (10 and 11) exactly one is placed. authors.size is 1, which keeps the FIRST guard silent, and
+  // unplaced is 1 — the case only a two-offender plane can reach, because the shipped text says "outside the N
+  // bullet(s) this census wrote" and a lone offender that misses is the other guard's red.
+  check('D206/M3 — a plant line the census cannot account for is a disagreement, not a partial answer',
+    2, [/RESULT: NOT RUN — 1 offender row\(s\) cited a plant line outside the 3 bullet\(s\) this census wrote/],
+    [/RESULT: PASS/, /RESULT: FAIL/, /none of them matched a bullet this census wrote/],
+    drive('m3', 'const bulletAt = new Map(rows.map((r, i) => [PLANT_HEAD.length + i * 2 + 1, r]));', TWO_BAD));
+} else {
+  console.log('  (skipped) D206\'s mutant-reader arms: this run is already aimed at a planted checker ('
+    + `${PLANTED}), and mutating the reader is what it does`);
 }
 
 // --------------------------------------------------------------------------- the seam, inside the runner
