@@ -139,6 +139,13 @@ await arm('a plane whose only citation points outside the index: step 8 refuses 
   [/RESULT: NOT RUN/, /0 file\(s\) resolved/], CRASH, ['--plane', NO_FILE]);
 await arm('one resolvable cite plus one phantom — the phantom is an offender, and the run reddens', 1,
   [/RESULT: FAIL/, /FILE NOT FOUND/, /tokens found\s+2 in 1 file\(s\)/], CRASH, ['--plane', MIXED]);
+// D205 — the same plane, asked the next question: does the red say who wrote it? Before the author map, the only
+// place an offender appeared named the generated census and its one shared heading, so the row pointed at a line
+// of a file nobody edits. The fixture's phantom is on line 3 of `src/probe.sql`, and that is what must be printed.
+await arm('the offender names the comment that wrote it, not the census line that carries it', 1,
+  [/OFFENDER AUTHORS — the comment behind each offending row above \(1 of 1 offender\(s\), 0 row\(s\) the plant does not account for\)/,
+    /- src\/probe\.sql:3  wrote the cite/, /FILE NOT FOUND/],
+  [...CRASH, /RESULT: PASS/], ['--plane', MIXED]);
 await arm('a plane of comments that cites nothing is a refusal, not a green (D79)', 2,
   [/0 tokens found in the comment plane/], CRASH, ['--plane', SILENT]);
 await arm('`--plane --verbose` refuses: the request whose swallowed value used to throw ENOENT at exit 1', 2,
