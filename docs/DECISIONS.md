@@ -8431,7 +8431,7 @@ inherited from D107/D108 rather than re-read. D138 had to refuse a claim for the
 fixes the reporting and then uses it.
 
 **Decision (a): a failing gate reports the same census a passing one does.** The else-branch at
-scripts/db_gate_fresh.sh:203-202 now counts `^  PASS` and `^  FAIL` lines from the same temp file it was
+scripts/db_gate_fresh.sh:203-214 now counts `^  PASS` and `^  FAIL` lines from the same temp file it was
 about to tail, and prints them with the two planes the schema was built on, before the last 25 lines --
 so the reason a run stopped is legible without a second run to ask "how many were there?"
 

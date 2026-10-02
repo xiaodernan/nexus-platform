@@ -10478,7 +10478,7 @@ job-level note stays a note about the job rather than about the next step.
 (`GATE_QUALITY_SQL="$WT/data/seed/quality.sql"`, `GATE_COMMENT_PLANE="$WT"`) in front of harnesses that read no
 environment variable at all — verified by grepping all seven `scripts/falsify_*.mjs` for `process.env`: none of
 them reads any. The prefixes were labels, not planes, and no arm could see them because no arm reads a harness
-invocation line. Both are removed (scripts/db_gate_fresh.sh:425-419,:433-435) and `falsify_quality_seam.mjs`
+invocation line. Both are removed (scripts/db_gate_fresh.sh:425-431,:445-447) and `falsify_quality_seam.mjs`
 carries the arm that keeps them gone. This row was owed because two runs of this thread were appending to these two
 files concurrently; it had no earlier entry.
 (E) THE NEW READER’S OWN ARGUMENTS. `scripts/check_reader_reachability.mjs` parses its flags with
@@ -11420,3 +11420,42 @@ first.
                     carry the total its own labels claim, derived from the file rather than typed into
                     it, and a step whose header says a different total than the script files should be
                     the arm that proves it. Appends pure addition, zero lone LF. Nothing pushed.
+
+## 220. D218: a NOT-UNIQUE row is not always a stale number — one of ours names text the file legitimately holds twice
+
+                    Step 16 has two remaining rows and the batch that cleared the ten MOVED cites left
+                    these on purpose. Reading both sentences and the file they point into shows they are
+                    not the same case, and that the remedy the step promises — re-aim by reading the
+                    sentence — cannot work for one of them.
+
+                    The cited expression in the STATUS row is the collateral computation. In the shipped
+                    harness that line exists twice, at two different places that both need it: the per-arm
+                    loop and the control-leg block. Neither is a copy-paste mistake and neither is stale,
+                    so whichever number the ledger writes, the reader finds the same text on two lines and
+                    calls it NOT-UNIQUE. The DECISIONS row is a range whose start line lands in the same
+                    pair. That is why these two survived the re-aim batch rather than being part of it:
+                    the drift reader derives a new number for a MOVED cite, and there is no number here
+                    that would satisfy it.
+
+                    So the class has a second, unrecorded member: a citation whose target text is
+                    legitimately duplicated in the file. Three fates are possible and this unit declines
+                    to choose one in prose — widen the citation to a span no other site shares, which the
+                    reader would have to learn to compare as a span; make the ledger quote a fragment
+                    unique to the intended occurrence, which loses the expression the sentence was about;
+                    or have the reader accept a duplicated target when the sentence itself names which
+                    block it means, which needs a spelling for block identity that no reader has yet.
+                    Each of those is a change to a checker, and the checkers in this area are another
+                    lane s live drafts, so the question is filed rather than implemented.
+
+                    Measured on this plane after the re-aim batch and before this append: step 15 EXACT
+                    127 with MOVED 0, step 16 RESULT FAIL on 2 NOT-UNIQUE of 147 judged, step 8 censises
+                    HEAD strictly and counts the working copy, over 525 citations; step 10 PASS, step 12
+                    PASS. Two of the ten re-aimed rows turned out to be ranges, and moving only the first
+                    endpoint left a backwards span the working copy reports as its own two offenders —
+                    corrected in this batch by moving both endpoints by the same delta the reader derived.
+                    Until that correction is committed, step 8 exits 1 on purpose: the two broken spans are
+                    in HEAD, and a cite that offends on the committed plane is charged there. Re-aiming a
+                    range is a two-endpoint operation, and the reader that derives the number names only
+                    the start, which is the hole the next unit in this lane should close. Appends pure
+                    addition for this section, zero lone LF, no new citation-shaped token beyond the
+                    re-aims. Nothing pushed.
