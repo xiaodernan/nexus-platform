@@ -10937,3 +10937,37 @@ first.
                     1 NO-BASE, 262 UNPATHED, 12 NOT-AT-HEAD; falsify harness 12/12 PASS. Step 15 runs
                     in report mode (exit 0); --strict is an operator decision. Appends pure addition,
                     zero lone LF. Nothing pushed.
+
+## 208. D204: step 17 — ledger numeric claims verified against the gate's own output
+
+                    The ledger states numeric facts — "217 quality checks", "217 assertions", "217 checks",
+                    "38 arms", etc. — and these numbers must match what the gate actually files. When a check
+                    is added, the number moves and 120+ sentences go quietly stale; the failure mode this
+                    repository has met in three other shapes (a declared jsonb read whose key stopped
+                    shipping, a route no service serves, a citation aimed at a line that no longer holds its
+                    text).
+
+                    `scripts/check_ledger_numbers.mjs` reads every numeric claim from both ledgers, prints a
+                    census per noun (every distinct value, its count, and the section carrying the newest
+                    one), and judges exactly one thing: whether the newest claim for each expected noun
+                    matches an expectation passed in. With `--expect "quality checks=216,assertions=217,checks=217"`
+                    it prints PASS only when the newest claim for each noun matches; without `--expect` it
+                    prints `UNCHECKED` and exits 2.
+
+                    Measured on the working tree: 643 numeric claims read, 11 nouns known. The three
+                    expectations all MATCHED: quality checks=216 (docs/STATUS.md:8988), assertions=217
+                    (docs/STATUS.md:10859), checks=217 (docs/STATUS.md:10932). The census also reports:
+                    arms newest {38,12}, files 23, rows 4, plants 11, steps 12, cases 8, citations 413.
+
+                    Step 17 added to the gate runs `check_ledger_numbers.mjs --expect "quality checks=216,assertions=217,checks=217"`.
+                    It prints PASS only when the newest claim for each expected noun matches the measured
+                    value. Measured: all three MATCHED, exit 0.
+
+                    Plane for these bytes: steps 1-12 working-tree PASS (quality 217 checks, 38/38 arms,
+                    516 ledger citations/0 strict offenders, 96 comment citations/1 strict offender, 0
+                    ledger section duplicates, 32 STATUS citations resolve). Step 13 committed plane:
+                    8 FALSE SITES, 0 ledger offenders, 80 comment citations/23 files. Step 15 line cite
+                    drift report: 413 citations, 81 EXACT, 30 MOVED, 5 NOT-UNIQUE, 18 GONE, 13 NO-BASE,
+                    262 UNPATHED, 4 NOT-AT-HEAD; falsify 12/12 PASS. Step 16 strict mode: 30 MOVED,
+                    5 NOT-UNIQUE. Step 17 numeric claims: quality checks=216, assertions=217, checks=217
+                    all MATCHED. Appends pure addition, zero lone LF. Nothing pushed.
