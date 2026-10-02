@@ -11641,3 +11641,53 @@ Ledger readers re-run after the STATUS half of this batch: step 10 PASS with 219
 allowed, step 12 PASS, step 8 exit 0, step 17 quality checks, assertions and checks all MATCHED. The STATUS
 append is 36 added lines with zero deletions, its prior bytes a prefix of the result, CRLF preserved. This
 DECISIONS append is the same discipline. Nothing pushed.
+
+## D218 — a NOT-UNIQUE row is not a stale number, and --reaim carries only the start of a range
+
+Two findings share this row because the second was found while checking the first.
+
+The first: step 16 still reports two NOT-UNIQUE citations, and reading the file they point into shows the
+class has a member its own prose does not describe. The cited collateral computation exists twice at HEAD —
+once in the per-arm loop, once in the control-leg block — and neither copy is a mistake or a leftover. So
+whichever number the ledger writes, the reader finds the same text on two lines and cannot resolve it, which
+means the remedy the step promises (re-aim by reading the sentence) has no fix for this member. Three
+resolutions are possible — judge the citation as a span, quote a fragment unique to the intended
+occurrence, or let the sentence name which block it means and give the reader a spelling for block identity —
+and each is a change to a checker another lane is drafting as we speak, so the question is filed here rather
+than implemented in a commit message.
+
+The second, and the one that was a defect I shipped: the drift reader derives a new number for a MOVED
+citation and prints only that one number. Two of the ten rows applied last batch were ranges, so replacing
+the start left the ends where they were and produced spans that finish before they begin. The working-copy
+census named them, and the committed plane charged them strict, which is what step 8 exiting 1 was about.
+Both endpoints now move by the same delta the reader derived. Re-aiming a range is a two-endpoint operation,
+and a tool that hands out one endpoint invites exactly this regression from whoever trusts it next.
+
+Measured on the plane after this batch: step 8 exit 0 with 0 strict and 0 working-copy offenders over 525
+citations in 413 sections; step 15 EXACT 127, MOVED 0, NOT-UNIQUE 2, GONE 17; step 16 RESULT FAIL on those
+two; step 10 and step 12 PASS. Corrections to the landed record: the D218 commit message quotes step 15
+EXACT 125, read before that commit joined HEAD, while the post-commit reading is 127, and STATUS §220
+carries the correct figure. This append and the §220 one are pure additions with no new citation-shaped
+token, CRLF preserved, zero lone LF. Nothing pushed.
+
+## D219 — the gate derives its own step total, and the new check reddened its author before it was green
+
+§219 measured that a step header announces a total nobody reads and that the number goes stale every time a
+step is added. This unit closes it: the fresh-database gate now has a step whose only job is to read its own
+file, take the highest step number present, and stop the run if any header claims a different total. Twenty-
+one headers were brought to the derived value and the shell parser accepts the result.
+
+The order of the evidence is the point. The rewrite was keyed on a label starting at column zero, so the two
+indented seed-generation branch legs kept their stale denominator, and the guard fired on the file that was
+meant to be clean: derived total 18, drift list 12. It reddened an incomplete rewrite by its own author
+instead of passing it, which is the behaviour a check like this has to have before its later green means
+anything. The green was then paired with a red on a copy out of band — revert one header, get drift 12 and a
+refusal — so the passing reading is not an empty scan.
+
+What stays open: the noun still has two spellings, 21 invocations against 18 numbered steps, because a
+branch files two labels and three sub-labels share one number; only the header claim is now enforced, and
+the numbers census aims at no expectation for steps at all. Corrections to the landed record: the D219
+commit message describes the STATUS append as 31 added lines, while the staged numstat for that file is 27
+added and 0 deleted, and the gate file it reports as 555 to 571 lines did measure that way. Readers after
+the changed bytes: step 8 exit 0, step 9 PASS over 91 comment citations in 30 files, step 15 EXACT 127
+MOVED 0 NOT-UNIQUE 2 GONE 17, step 10 PASS with §221 allowed as disk-only, step 12 PASS. Nothing pushed.
