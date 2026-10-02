@@ -10950,12 +10950,12 @@ first.
                     `scripts/check_ledger_numbers.mjs` reads every numeric claim from both ledgers, prints a
                     census per noun (every distinct value, its count, and the section carrying the newest
                     one), and judges exactly one thing: whether the newest claim for each expected noun
-                    matches an expectation passed in. With `--expect "quality checks=216,assertions=217,checks=217"`
+                    matches an expectation passed in. With `--expect "quality checks=217,assertions=217,checks=217"`
                     it prints PASS only when the newest claim for each noun matches; without `--expect` it
                     prints `UNCHECKED` and exits 2.
 
                     Measured on the working tree: 643 numeric claims read, 11 nouns known. The three
-                    expectations all MATCHED: quality checks=216 (docs/STATUS.md:8988), assertions=217
+                    expectations all MATCHED: quality checks=217 (docs/STATUS.md:8988), assertions=217
                     (docs/STATUS.md:10859), checks=217 (docs/STATUS.md:10932). The census also reports:
                     arms newest {38,12}, files 23, rows 4, plants 11, steps 12, cases 8, citations 413.
 
@@ -10969,5 +10969,5 @@ first.
                     8 FALSE SITES, 0 ledger offenders, 80 comment citations/23 files. Step 15 line cite
                     drift report: 413 citations, 81 EXACT, 30 MOVED, 5 NOT-UNIQUE, 18 GONE, 13 NO-BASE,
                     262 UNPATHED, 4 NOT-AT-HEAD; falsify 12/12 PASS. Step 16 strict mode: 30 MOVED,
-                    5 NOT-UNIQUE. Step 17 numeric claims: quality checks=216, assertions=217, checks=217
+                    5 NOT-UNIQUE. Step 17 numeric claims: quality checks=217, assertions=217, checks=217
                     all MATCHED. Appends pure addition, zero lone LF. Nothing pushed.

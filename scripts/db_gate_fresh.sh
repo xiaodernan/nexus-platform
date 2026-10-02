@@ -530,7 +530,7 @@ step "17/17  scripts/check_ledger_numbers.mjs — the ledger's numeric claims ve
 command -v node >/dev/null 2>&1 || die "step 17 needs node on PATH"
 # The expectations come from the gate's own output captured in step 5 and step 11.
 # For now, hardcoded to the measured values; a future unit may wire the gate's own output directly.
-EXPECT="quality checks=216,assertions=217,checks=217"
+EXPECT="quality checks=217,assertions=217,checks=217"
 ( cd "$ROOT" && node scripts/check_ledger_numbers.mjs --expect "${EXPECT}" ) 2>&1 | sed -e 's/^/    /'
 
 printf '\nRESULT: PASS — %s quality checks on a from-scratch schema (tables=%s, migrations=%s), plus the\n' \
