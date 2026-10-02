@@ -11459,3 +11459,30 @@ first.
                     the start, which is the hole the next unit in this lane should close. Appends pure
                     addition for this section, zero lone LF, no new citation-shaped token beyond the
                     re-aims. Nothing pushed.
+
+## 221. D219: the gate derives its own step total, and the first run of the new check reddened its author
+
+                    §219 measured the number and §220 left it owed. This unit pays it: the fresh-database
+                    gate has a step 18 whose only job is to read its own file, take the highest step number
+                    present, and stop the run if any header announces a different total. Nothing is typed
+                    into a header any more, and every header in the script now says 18 — 21 of them,
+                    including the three sub-labels of the committed-plane step and the two branch legs of
+                    the seed-generation step, which are the ones the first pass missed.
+
+                    That miss is the interesting half of the record. The rewrite was keyed on a label
+                    starting at column zero, so the two indented generation legs kept their stale
+                    denominator, and the guard fired on the plane that was supposed to be clean: derived
+                    total 18, drift list 12. That is the correct behaviour of a check that does not know
+                    whose edit it is judging, and it caught an incomplete rewrite rather than passing it.
+                    Both legs were then re-aimed by the same two-width substitution, and the file reads
+                    derived total 18 with an empty drift list. The arm was run out of band, on a copy,
+                    reverting one header to the old denominator yields drift 12 and a refusal, which is
+                    what makes the green reading mean something rather than being an empty scan.
+
+                    The noun still has two spellings, and this unit enforces only one of them: 21 step
+                    invocations against 18 numbered steps, because a branch files two labels and three
+                    sub-labels share a number. The header claim is the one a reader can now check. The
+                    numbers census is still aimed at three nouns and none of them is steps, so §219 s
+                    measurement stands as the reading of that plane and this section is the reading of
+                    this one. Syntax checked with the shell parser, comment and ledger readers re-run on
+                    the changed bytes. Nothing pushed.

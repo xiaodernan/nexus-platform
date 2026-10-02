@@ -131,13 +131,13 @@ cleanup() {
 trap cleanup EXIT
 
 # --------------------------------------------------------------------------- 1. empty database
-step "1/12  create $GATE_DB from template0 (empty, no inherited objects)"
+step "1/18  create $GATE_DB from template0 (empty, no inherited objects)"
 psql_maint "CREATE DATABASE \"$GATE_DB\" TEMPLATE template0 ENCODING 'UTF8'" >/dev/null
 [ "$(psql_gate "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name NOT LIKE 'pg_%'")" = "0" ] \
   || die "the fresh database is not empty — template1 pollution would make this gate meaningless"
 
 # --------------------------------------------------------------------------- 2. migrations + roles
-step "2/12  apply infra/db/migrations/V*.sql + 00_roles.sql"
+step "2/18  apply infra/db/migrations/V*.sql + 00_roles.sql"
 NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_NAME="$GATE_DB" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/db_apply_migrations.sh" | sed -e 's/^/    /'
 TABLES="$(psql_gate "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")" \
@@ -147,15 +147,15 @@ echo "    -> gate database now has tables=$TABLES migrations=$SCHEMA_VERSION"
 
 # --------------------------------------------------------------------------- 3. generate the dataset
 if [ "$SKIP_GENERATE" = "1" ]; then
-  step "3/12  seed generation skipped (--skip-generate): loading data/seed/out/ as found"
+  step "3/18  seed generation skipped (--skip-generate): loading data/seed/out/ as found"
 else
-  step "3/12  generate the synthetic dataset from the CSVs (generate.py self-checks FK integrity)"
+  step "3/18  generate the synthetic dataset from the CSVs (generate.py self-checks FK integrity)"
   PYTHON="${PYTHON:-python}"
   ( cd "$ROOT" && "$PYTHON" data/seed/generate.py ) 2>&1 | tail -4 | sed -e 's/^/    /'
 fi
 
 # --------------------------------------------------------------------------- 4. load
-step "4/12  load the seed into the fresh database"
+step "4/18  load the seed into the fresh database"
 # RESEED_DEPENDENTS=1 states the blast radius rather than discovering it. The truncate script now
 # closes itself over the live foreign keys (D63), so it would clear these 27 tables on a fresh
 # database anyway — they are empty there. The gate names them because a from-scratch proof should not
@@ -174,7 +174,7 @@ CONTAINER="$CONTAINER" DB="$GATE_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 SEED_ANC
   "$ROOT/data/seed/load.sh" | tail -12 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 5. gate
-step "5/12  data/seed/quality.sql (the hard gate)"
+step "5/18  data/seed/quality.sql (the hard gate)"
 VARS=""
 for v in MIN_MERCHANTS MIN_OFFERINGS MIN_REVIEWS MIN_NEAR_SHA_TIN; do
   if [ -n "${!v:-}" ]; then VARS="$VARS -v $v=${!v}"; fi
@@ -214,7 +214,7 @@ else
 fi
 
 # --------------------------------------------------------------------------- 6. the truncate's two branches
-step "6/12  scripts/seed_truncate_probe.sh — an empty stranger is cleared, one holding rows refuses"
+step "6/18  scripts/seed_truncate_probe.sh — an empty stranger is cleared, one holding rows refuses"
 # The probe builds its own throwaway database, so the gate's loaded dataset stays the way step 4 left
 # it. Running it here is the point: a truncate that only ever succeeds proves nothing, and the branch
 # that protects somebody else's rows is the branch nobody waits to see.
@@ -222,7 +222,7 @@ NEXUS_PG_CONTAINER="$CONTAINER" NEXUS_DB_SUPERUSER="$PGUSER" \
   "$SCRIPT_DIR/seed_truncate_probe.sh" 2>&1 | tail -8 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 7. the read census and the source
-step "7/12  scripts/check_jsonb_reads.mjs — the build's jsonb reads and both answers' site citations"
+step "7/18  scripts/check_jsonb_reads.mjs — the build's jsonb reads and both answers' site citations"
 # Step 5's read list is a transcription of source text, and a transcription drifts silently: the D84 list named
 # reads the build does not make and missed the ones made through a Java map accessor, which D85's scanner then
 # counted. So the scanner runs as a reader rather than as a note, and since D87 it reads the `site` column of
@@ -241,7 +241,7 @@ command -v node >/dev/null 2>&1 || die "steps 7-12 need node on PATH; a skipped 
 ( cd "$ROOT" && node scripts/check_jsonb_reads.mjs ${GATE_QUALITY_SQL:+--quality="$GATE_QUALITY_SQL"} ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 8. the ledger's own citations
-step "8/12  scripts/check_ledger_citations.mjs — every File.java:NNN the ledgers claim, opened and read back"
+step "8/18  scripts/check_ledger_citations.mjs — every File.java:NNN the ledgers claim, opened and read back"
 # D87's site census stopped at the seed directory: it checked what the answer tables assert and left the prose
 # above them unverified, while §84 had already shipped a hand count of "71 prose citations, all resolved" that
 # nobody had ever measured. This step reads docs/DECISIONS.md and docs/STATUS.md and resolves every citation
@@ -281,7 +281,7 @@ fi
 
 
 # --------------------------------------------------------------------------- 9. the comment plane
-step "9/12  scripts/check_comment_citations.mjs — the citations that live inside source comments"
+step "9/18  scripts/check_comment_citations.mjs — the citations that live inside source comments"
 # Step 8 reads docs/. Source comments make the same kind of claim — quality.sql's notes cite lines of
 # load.sh, the two scanners cite Java sites — and nothing read that plane until D93 measured it: 68
 # citation-shaped tokens, 5 offenders, every offender an example of the grammar written inside the sentence
@@ -302,7 +302,7 @@ step "9/12  scripts/check_comment_citations.mjs — the citations that live insi
 ( cd "$ROOT" && node scripts/check_comment_citations.mjs ${GATE_COMMENT_PLANE:+--plane="$GATE_COMMENT_PLANE"} ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 10. the two planes of one ledger
-step "10/12 scripts/check_ledger_sections.mjs — every numbered section at HEAD is still in the file on disk"
+step "10/18 scripts/check_ledger_sections.mjs — every numbered section at HEAD is still in the file on disk"
 # Steps 1-9 all read one plane: step 8 reads the working tree on purpose. This step's subject IS the relation
 # between the two planes, so pinning it to either would make it vacuous — it compares `git show HEAD:docs/...`
 # with the file as it stands. It exists because D114 found nine sections of this ledger that no commit had
@@ -315,7 +315,7 @@ step "10/12 scripts/check_ledger_sections.mjs — every numbered section at HEAD
 ( cd "$ROOT" && node scripts/check_ledger_sections.mjs ${LEDGER_SECTIONS_DIR:+--dir "$LEDGER_SECTIONS_DIR"} ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 11. the record of shown redness
-step "11/12 scripts/check_falsifier_registry.mjs — every falsifier row names a live assertion and an openable witness"
+step "11/18 scripts/check_falsifier_registry.mjs — every falsifier row names a live assertion and an openable witness"
 # D103 wrote this file as the record of which assertions have been SHOWN able to fail, and D113 tightened what
 # a witness may be — but nothing executed the checker. A record validated only when someone remembers to pass
 # --db is a claim with a script next to it, so the validation goes where the precondition already exists:
@@ -331,7 +331,7 @@ step "11/12 scripts/check_falsifier_registry.mjs — every falsifier row names a
 ( cd "$ROOT" && node scripts/check_falsifier_registry.mjs --db "$GATE_DB" --container "$CONTAINER" \
   ${NEXUS_FALSIFIERS:+--registry "$NEXUS_FALSIFIERS"} ) 2>&1 | sed -e 's/^/    /'
 # ------------------------------------------------------------------------ 12. the spelled §-citations
-step "12/12 scripts/check_status_citations.mjs — every STATUS §NN written outside a code span names a heading"
+step "12/18 scripts/check_status_citations.mjs — every STATUS §NN written outside a code span names a heading"
 # §126 shipped this checker unwired and said why: its first run on the real tree was red with two offenders in
 # another lane's committed files, and "a step nobody can make green teaches running the gate with the step
 # skipped". The condition was the two offenders, not the wiring; §149 repointed them to §121 and the checker has
@@ -351,7 +351,7 @@ step "12/12 scripts/check_status_citations.mjs — every STATUS §NN written out
 ( cd "$ROOT" && node scripts/check_status_citations.mjs ${GATE_STATUS_DIR:+--dir="$GATE_STATUS_DIR"} ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 13. the committed plane (clean checkout)
-step "13/13  scripts/check_jsonb_reads.mjs + check_ledger_citations.mjs + check_comment_citations.mjs on a detached worktree of HEAD — the committed plane that the gate's reading steps certify"
+step "13/18  scripts/check_jsonb_reads.mjs + check_ledger_citations.mjs + check_comment_citations.mjs on a detached worktree of HEAD — the committed plane that the gate's reading steps certify"
 # Steps 7, 8 and 9 read the working tree by default. D173 and D174 showed that on a clean checkout of HEAD
 # step 7 exits 1 with eleven false sites, step 8 exits 1 with forty-one unresolved citations, and step 9
 # fails as its consequence. The gate's headline green is a property of the directory, not the commit, because
@@ -421,7 +421,7 @@ reconcile() {
     "$1" "$(num "$2" "$3")" "$(off "$3")" "$(num "$2" "$4")" "$(off "$4")" \
     "$(gap "$(off "$3")" "$(off "$4")")"
 }
-step "13a/13  quality reads on the committed plane (cwd inside the worktree; the knob leg printed for contrast)"
+step "13a/18  quality reads on the committed plane (cwd inside the worktree; the knob leg printed for contrast)"
 # D193: this leg used to carry `GATE_QUALITY_SQL="$WT/data/seed/quality.sql"` in front of the harness — the same
 # inert prefix 13b's paragraph above records removing, still standing two legs further along. Every
 # `scripts/falsify_*.mjs` was grepped for `process.env`: none of them reads any variable, and this harness builds
@@ -435,13 +435,13 @@ Q7_KNOB="$( cd "$ROOT" && node scripts/check_jsonb_reads.mjs --quality="$WT/data
 Q7_WT="$( cd "$WT" && node scripts/check_jsonb_reads.mjs --report 2>&1 || true )"
 printf '%s\n' "$Q7_WT" | sed -e 's/^/    /'
 reconcile 13a "$FILES_READS" "$Q7_KNOB" "$Q7_WT"
-step "13b/13  ledger citations on the committed plane (cwd inside the worktree; the knob leg printed for contrast)"
+step "13b/18  ledger citations on the committed plane (cwd inside the worktree; the knob leg printed for contrast)"
 ( cd "$ROOT" && node scripts/falsify_ledger_text.mjs ) 2>&1 | sed -e 's/^/    /' || true
 KNOB_LINE="$( cd "$ROOT" && node scripts/check_ledger_citations.mjs --dir="$WT" --head-dir="$WT" --report 2>&1 || true )"
 WT_LINE="$( cd "$WT" && node scripts/check_ledger_citations.mjs --report 2>&1 || true )"
 printf '%s\n' "$WT_LINE" | sed -e 's/^/    /'
 reconcile 13b "$FILES_LEDGER" "$KNOB_LINE" "$WT_LINE"
-step "13c/13  comment citations on the committed plane (cwd inside the worktree; the knob leg printed for contrast)"
+step "13c/18  comment citations on the committed plane (cwd inside the worktree; the knob leg printed for contrast)"
 # D193: the same inert prefix as 13a's note — `falsify_comment_plane.mjs` reads no environment variable either
 # (its seam is the `--checker=<path>` flag). The arm above covers every falsifier invocation in this file.
 ( cd "$ROOT" && node scripts/falsify_comment_plane.mjs ) 2>&1 | sed -e 's/^/    /' || true
@@ -455,7 +455,7 @@ trap - EXIT
 trap cleanup EXIT
 
 # --------------------------------------------------------------------------- 14. the console, and the readers nobody ran
-step "14/14  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_reader_reachability.mjs — the console's two promises, and whether every reader in scripts/ is reachable from a gate that can fail"
+step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_reader_reachability.mjs — the console's two promises, and whether every reader in scripts/ is reachable from a gate that can fail"
 # D195. Three things were true at once on the shipped bytes, and each one is the same shape this lane has now
 # closed four times (D98, D150-D152, D191, D192) — a rule that cannot fire on the plane the gate reads is not a
 # rule the gate has, and a reader nothing runs is not a gate either.
@@ -489,7 +489,7 @@ step "14/14  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_rea
 ( cd "$ROOT" && node scripts/check_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 15. the ledger's line-number drift
-step "15/15  scripts/check_line_cite_drift.mjs — the ledger's line-number citations asked whether the line they name still holds the text it was chosen for"
+step "15/18  scripts/check_line_cite_drift.mjs — the ledger's line-number citations asked whether the line they name still holds the text it was chosen for"
 # check_ledger_citations.mjs (D88) asks four questions of a File.ext:NNN cite and none of them is about whether
 # the cited line still holds the text it was chosen for. STATUS §203 named a line that was wrong twice over —
 # two lines at the commit that wrote it, nineteen after a later one — and passed every reader on both planes,
@@ -510,7 +510,7 @@ command -v git >/dev/null 2>&1 || die "step 15 needs git on PATH"
 ( cd "$ROOT" && node scripts/check_line_cite_drift.mjs ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 16. the ledger's line-number drift (strict mode)
-step "16/16  scripts/check_line_cite_drift.mjs --strict MOVED,NOT-UNIQUE — the ledger's stale numbers that are re-aimable"
+step "16/18  scripts/check_line_cite_drift.mjs --strict MOVED,NOT-UNIQUE — the ledger's stale numbers that are re-aimable"
 # Step 15 reports the drift census; step 16 enforces it. A citation whose target line has MOVED (text survives at one
 # new line) or is NOT-UNIQUE (blank when written or multiple occurrences at HEAD) is a stale number that can be
 # re-aimed. The `--reaim` mode prints the derived new numbers so a lane can clear MOVED citations by applying the
@@ -522,7 +522,7 @@ command -v git >/dev/null 2>&1 || die "step 16 needs git on PATH"
 ( cd "$ROOT" && node scripts/check_line_cite_drift.mjs --strict MOVED,NOT-UNIQUE ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 17. the ledger's numeric claims
-step "17/17  scripts/check_ledger_numbers.mjs — the ledger's numeric claims verified against the gate's own printout"
+step "17/18  scripts/check_ledger_numbers.mjs — the ledger's numeric claims verified against the gate's own printout"
 # The ledger states numeric facts — "217 quality checks", "217 assertions", "217 checks", "38 arms", etc.
 # These numbers must match what the gate actually files, otherwise a stale sentence goes uncorrected.
 # This step runs the numbers census with expectations derived from the gate's own output.
@@ -532,6 +532,22 @@ command -v node >/dev/null 2>&1 || die "step 17 needs node on PATH"
 # For now, hardcoded to the measured values; a future unit may wire the gate's own output directly.
 EXPECT="quality checks=217,assertions=217,checks=217"
 ( cd "$ROOT" && node scripts/check_ledger_numbers.mjs --expect "${EXPECT}" ) 2>&1 | sed -e 's/^/    /'
+
+# --------------------------------------------------------------------------- 18. the script counts its own steps
+step "18/18  self-consistency — every step header's claimed total equals the total this script files"
+# Each header announces N/D, and D was typed once, when its own step was the newest thing in the file, so every
+# step added afterwards left that sentence stale and nothing read it — the same class step 17 was filed for, aimed
+# at the gate's own printout. The total is therefore derived from this file rather than typed into it: the highest
+# step number present is the total, and any header whose denominator is not that number stops the run.
+command -v grep >/dev/null 2>&1 || die "step 18 needs grep on PATH"
+SELF="${BASH_SOURCE[0]}"
+STEP_TOTAL=$(grep -o 'step "[0-9][0-9]*' "$SELF" | sed 's/.*step "//' | sort -n | tail -1)
+DRIFT=$(grep -o 'step "[0-9][0-9]*[a-z]*/[0-9][0-9]*' "$SELF" | sed 's|.*/||' | sort -n -u | grep -v "^${STEP_TOTAL}$" || true)
+if [ -n "$DRIFT" ]; then
+  printf '    step headers claiming a total other than %s: %s\n' "${STEP_TOTAL}" "$(printf '%s ' ${DRIFT})"
+  die "step 18 — a step header announces a total the script does not file"
+fi
+printf '    self-total %s, every header denominator agrees\n' "${STEP_TOTAL}"
 
 printf '\nRESULT: PASS — %s quality checks on a from-scratch schema (tables=%s, migrations=%s), plus the\n' \
   "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"
