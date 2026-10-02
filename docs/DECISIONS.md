@@ -11613,3 +11613,31 @@ the named one, so the two fates stay computed rather than described. Collateral:
 print from 353 to 364, and the only site citing it — step 8 own comment — was re-aimed in the same commit after
 one repository-wide search for citations in that line range. Harness 54 to 57 arms, 57 held; step 8 and step 9
 both exit 0 on the repository plane. Nothing pushed.
+
+## D217 — the gate files a step total and no reader judges it, so this unit measured it instead of restating it
+
+Step 17 exists because the ledger states numbers the artefacts stopped stating, and it judges three nouns.
+One noun it knows but never aims at is steps, whose carrier the census itself names: the steps of the
+fresh-database gate. Measured on the working copy that carrier answers three different questions at once.
+Twenty-one invocations of the step function, seventeen distinct step numbers, and six denominators inside the
+labels: 12, 13, 14, 15, 16, 17. All three are true of the same file. The invocation total is larger because a
+branch files both of its legs under one number and because three sub-labels share one; the denominators
+disagree because a header is written once, when its own step is the newest thing in the script, and nobody
+revisits it — so the first twelve still announce themselves as one of twelve. The oldest numeric claim in the
+gate is therefore a claim no reader reads, which is the same shape as the drift this lane has met in a
+citation, a route and a jsonb key.
+
+Deliberately not done: no fourth expectation. The numbers checker is a file no commit holds on this plane —
+another lane is writing it live — so an expectation derived here and aimed there is only reproducible against
+an uncommitted draft, and a gate red nobody else can stand up is a rumour. The spelling choice (numbered
+step, invocation, or label denominator) is a convention, and a convention invented inside a commit message
+has no reader to enforce it; it is owed to the lane that owns that checker, recorded rather than guessed.
+
+What is owed next, in order: the gate derives its own total from the file rather than typing it into each
+header; a step whose header disagrees with the script is the arm that proves the derivation is load-bearing;
+and only then the expectation, with the noun spelled the way the derivation spells it.
+
+Ledger readers re-run after the STATUS half of this batch: step 10 PASS with 219 printed as disk-only and
+allowed, step 12 PASS, step 8 exit 0, step 17 quality checks, assertions and checks all MATCHED. The STATUS
+append is 36 added lines with zero deletions, its prior bytes a prefix of the result, CRLF preserved. This
+DECISIONS append is the same discipline. Nothing pushed.
