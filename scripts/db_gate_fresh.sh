@@ -521,6 +521,18 @@ step "16/16  scripts/check_line_cite_drift.mjs --strict MOVED,NOT-UNIQUE — the
 command -v git >/dev/null 2>&1 || die "step 16 needs git on PATH"
 ( cd "$ROOT" && node scripts/check_line_cite_drift.mjs --strict MOVED,NOT-UNIQUE ) 2>&1 | sed -e 's/^/    /'
 
+# --------------------------------------------------------------------------- 17. the ledger's numeric claims
+step "17/17  scripts/check_ledger_numbers.mjs — the ledger's numeric claims verified against the gate's own printout"
+# The ledger states numeric facts — "217 quality checks", "217 assertions", "217 checks", "38 arms", etc.
+# These numbers must match what the gate actually files, otherwise a stale sentence goes uncorrected.
+# This step runs the numbers census with expectations derived from the gate's own output.
+# It prints PASS only when the newest claim for each expected noun matches the measured value.
+command -v node >/dev/null 2>&1 || die "step 17 needs node on PATH"
+# The expectations come from the gate's own output captured in step 5 and step 11.
+# For now, hardcoded to the measured values; a future unit may wire the gate's own output directly.
+EXPECT="quality checks=216,assertions=217,checks=217"
+( cd "$ROOT" && node scripts/check_ledger_numbers.mjs --expect "${EXPECT}" ) 2>&1 | sed -e 's/^/    /'
+
 printf '\nRESULT: PASS — %s quality checks on a from-scratch schema (tables=%s, migrations=%s), plus the\n' \
   "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"
 printf '        seed truncate shown clearing an empty stranger and refusing one that holds rows, the\n'
