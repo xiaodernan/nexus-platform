@@ -639,6 +639,61 @@ if (PLANTED === null) {
     drive('w3', OPENED_ADD, '      if (LEDGER_FILES.has(rel)) { /* read by step 8, named by neither clause */ }',
       LEDGER_MD, CHK_MD));
 
+  // ------------------------------------------------------------------- D214: the fate of the tokens this row COUNTS
+  // The tail D213 armed promised that "a citation in either group is scored by step 8 alone". The two groups that
+  // sentence named are the files step 8 DECLARES, and the number printed at the head of the row is a third group:
+  // files whose extension has no `COMMENT` row AND whose path step 8 never reads. Measured on the plane built below
+  // (one past-end citation in `notes/probe.json`, a resolving one in `src/probe.sql`, `cli_args.mjs` copied into the
+  // plane so both names resolve here): step 9 counted the file — `.json(1 file(s), 1 token(s))` — and printed
+  // `RESULT: PASS` with `strict offenders 0`; the same bytes handed to step 8 through its own declaration knob
+  // (`--text notes/probe.json --dir <plane> --head-dir <plane>`) printed `strict offenders 1` under a `PAST EOF (1)`
+  // class and exited 1. So the tokens this row counts have no reader at all: its title said "no reader" and its
+  // sentence promised one, which is the same defect class as D211's prefix-skip row and D212's ledger clause, this
+  // time in the group the row itself numbers. Predicted before running: Y1 — step 9 on the plane PASSes, counts the
+  // file, and carries the new neither-reader clause; Y2 — step 8 charges those exact bytes once its declaration
+  // names them, which is what turns Y1's PASS from a resolution fact into a coverage fact; Y3 — step 9 against a
+  // step-8 copy that adds the `.json` file to its list moves the same file out of the counted group and into the
+  // named one, so the two fates stay computed from the declaration rather than from prose.
+  const JSON_PLANE = join(ROOT_FIX, 'd214-json');
+  mkdirSync(join(JSON_PLANE, 'notes'), { recursive: true });
+  mkdirSync(join(JSON_PLANE, 'src'), { recursive: true });
+  mkdirSync(join(JSON_PLANE, 'scripts'), { recursive: true });
+  writeFileSync(join(JSON_PLANE, 'scripts', BASENAME), readFileSync(join(ROOT, 'scripts', BASENAME), 'utf8'), 'utf8');
+  writeFileSync(join(JSON_PLANE, 'notes', 'probe.json'), [
+    '# NEXUS scratch fixture for scripts/falsify_comment_plane.mjs — not shipped, not scored by any gate.',
+    '## D214 probe section',
+    `#   ${BASENAME}:${PAST_END}`,
+    '{ "x": 1 }',
+    '',
+  ].join('\n'), 'utf8');
+  writeFileSync(join(JSON_PLANE, 'src', 'probe.sql'), [`--   ${BASENAME}:3`, 'SELECT 1;', ''].join('\n'), 'utf8');
+  /** step 8 in its own default invocation, aimed at one file by the knob that IS its ledger declaration. */
+  const step8Declares = (rel) => {
+    try {
+      return { code: 0, out: execFileSync(process.execPath,
+        [CHECKER, '--text', rel, '--dir', JSON_PLANE, '--head-dir', JSON_PLANE], { cwd: ROOT, encoding: 'utf8' }) };
+    } catch (err) {
+      return { code: err.status ?? 'null', out: `${err.stdout ?? ''}${err.stderr ?? ''}` };
+    }
+  };
+  check('D214/Y1 — a citation in the group this row numbers is passed by step 9 and named as opened by neither reader', 0,
+    [/RESULT: PASS/, /tokens found\s+1 in 1 file\(s\)/, /strict offenders\s+0/,
+      /prose, no reader\s+1 ext\(s\), 1 file\(s\), 1 token\(s\): \.json\(1 file\(s\), 1 token\(s\)\)/,
+      /the 1 file\(s\) and 1 token\(s\) this row counts is opened by neither reader/,
+      /counted here and judged nowhere/],
+    [...NO_OFFENDER, /PAST EOF/],
+    direct(CHECKER, JSON_PLANE));
+  const CHK_JSON = plant8('json', 'notes/probe.json');
+  check('D214/Y2 — step 8 charges those same bytes the moment its declaration names them, so Y1\'s PASS is coverage', 1,
+    [/strict offenders\s+1/, /PAST EOF/, /notes\/probe\.json/],
+    CRASH, step8Declares('notes/probe.json'));
+  check('D214/Y3 — declaring the file moves it from the counted group to the named one: the two fates are computed', 0,
+    [/RESULT: PASS/, /prose, no reader\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/,
+      /while 1 file\(s\) \(notes\/probe\.json\) have no `COMMENT` row/,
+      /a citation in one of the 1 file\(s\) those two clauses name is scored by step 8 alone/],
+    [...NO_OFFENDER, /\.json\(1 file\(s\), 1 token\(s\)\)/],
+    direct(CHK_JSON, JSON_PLANE));
+
   // --------------------------------------------------------------------------- D213: the clause that names the OTHER reader
   // Step 9's row ends "a citation in either group is scored by step 8 alone". That is a claim about step 8's
   // DEFAULT mode, and until this arm no witness in this file had ever run that mode: every arm reaches step 8 as

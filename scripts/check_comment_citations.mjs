@@ -279,11 +279,22 @@ function coverageRow() {
     // group holds "not one of the 2 file(s) step 8 names as prose". A bare number could not say which of those two
     // fates it described, so the split is printed as two clauses and the files are named: whichever way the
     // extension table moves, the reader sees which of step 8's ledgers this census pulled out of its own count.
+    // D214 — that sentence then said "a citation in either group is scored by step 8 alone", and the group THIS row
+    // counts is not one of the two it had just named. Measured on a plane written for the purpose (`notes/probe.json`
+    // carrying one past-end citation, beside `src/probe.sql`): step 9 printed `.json(1 file(s), 1 token(s))` here and
+    // `RESULT: PASS` with `strict offenders 0`, while handing the same bytes to step 8 through its own declaration
+    // (`--text notes/probe.json`) printed `strict offenders 1` and the `PAST EOF` class. So a non-declared file in
+    // this group is opened by neither reader, and only the files step 8's declaration names have a reader at all. The
+    // two fates are now counted separately, because the row's title said "no reader" while its sentence promised one.
     `  prose, no reader   ${into.text} — inside step 8's own cite-target predicate, outside this census's table,`
       + ` and not one of the ${LEDGER_FILES.size} file(s) step 8 names as prose: ${prose.files} of those hold a`
       + ` mapped extension and are named by the \`table, prose-skip\` row above, while ${openedText} have no`
-      + ' `COMMENT` row here and are pulled out of the count above — a citation in either group is scored by'
-      + ' step 8 alone',
+      + ' `COMMENT` row here and are pulled out of the count above. Two fates, counted apart: a citation in one of'
+      + ` the ${openedList.length + prose.files} file(s) those two clauses name is scored by step 8 alone, because`
+      + ` step 8 declares it, while a citation in the ${into.files} file(s) and ${into.total} token(s) this row`
+      + ` counts is opened by neither reader — step 8 opens only the ${LEDGER_FILES.size} file(s) its declaration`
+      + ' names, and this census has no `COMMENT` row for these extensions — so those tokens are counted here and'
+      + ' judged nowhere',
     `  outside both       ${outside.text} — neither reader's predicate accepts these; their bytes are scanned as`
       + ' text, so a binary file can be listed and contribute nothing',
   ].join('\n');

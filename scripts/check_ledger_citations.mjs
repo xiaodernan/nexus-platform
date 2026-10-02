@@ -94,7 +94,7 @@ const notCheckable = (m) => {
 
 /**
  * D157 — the argument grammar, in one place. Two spellings have ever been pointed at this reader:
- * `--text=<path>` (gate step 8, and `check_comment_citations.mjs:353`) and `--text <path>` (what a person types
+ * `--text=<path>` (gate step 8, and `check_comment_citations.mjs:364`) and `--text <path>` (what a person types
  * from the USAGE line). Only the first was parsed, so the second did not fail — it silently censused the wrong
  * plane and printed a truthful-looking green about it. Both are parsed now, and a request that cannot be aimed
  * is refused rather than dropped: unknown flag, missing value, empty value, a value that reads as another flag,
