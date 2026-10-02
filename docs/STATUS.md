@@ -6675,7 +6675,7 @@ found             (a) The assertion plane is data-dependent, which is a second a
                     table caught it. A drive can report PASS while three assertions leave the plane under it.
                   (c) 22 distinct names went red as collateral in this run. 11 already carried a witness; the
                     other 11 are recorded nowhere, because --emit-rows files only the matched target
-                    (data/seed/falsifier_plants.py:1292). Among the eleven is `orphan: favorites.offering`,
+                    (data/seed/falsifier_plants.py:1286). Among the eleven is `orphan: favorites.offering`,
                     which reddened because the merchants delete cascade-killed the offering its unenforced
                     reference pointed at — the exact deception that row exists to watch, shown able to fail by
                     an arm aimed elsewhere and dropped by the tool that writes the record.
@@ -10130,8 +10130,8 @@ print 41 `FILE NOT FOUND`. Thirteen untracked names carry the difference — the
 sites), one line of an admin console test (twelve, one per STATUS section in the forties and fifties), the seo
 repository, the order service, the AI runs module and the growth view (three each), six more for the remainder.
 Step 7 moves the same way (11 false sites against 8) and step 9 with it (FAIL on 75 citations across 20 files
-against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:379` is the fixed leg: `cd "$WT"` and no
-knob, so the reader's `process.cwd()`-derived index — `scripts/check_ledger_citations.mjs:64` — lands in the
+against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:391` is the fixed leg: `cd "$WT"` and no
+knob, so the reader's `process.cwd()`-derived index — `scripts/check_ledger_citations.mjs:72` — lands in the
 committed tree with its ledgers. 13b prints `plane reconciliation knob leg 77 / 0 — in-worktree leg 65 / 41`
 because a step whose whole point is the difference should not ask the reader to trust a comment about it. The
 harness legs stay in the main tree on purpose: D163's fixtures cite real repository files, and an index that
@@ -10160,7 +10160,7 @@ found in the arm's own label; the other runs the identical predicate over a copy
 another lane cites a line of the seo controller that holds nothing, judged by the default-plane control arm because
 D162's rule fires on the section a tree is writing. Held: `check_jsonb_reads.mjs, check_ledger_citations.mjs,
 check_comment_citations.mjs` three of three, and the mutant copy red as predicted. Plane unchanged from D188's
-measurement — `scripts/db_gate_fresh.sh:379` is the leg, and the reconciliation line still prints knob leg 77 / 0
+measurement — `scripts/db_gate_fresh.sh:391` is the leg, and the reconciliation line still prints knob leg 77 / 0
 against in-worktree 65 / 41. Rows stay uncommitted with D188's for the same reason: the disk holds nine DECISIONS
 and eleven STATUS sections from lanes whose sources are untracked, and committing the shared ledgers now would
 move those forty-one false cites onto the committed plane. Appends pure addition, zero lone LF. Nothing pushed.
@@ -10478,7 +10478,7 @@ job-level note stays a note about the job rather than about the next step.
 (`GATE_QUALITY_SQL="$WT/data/seed/quality.sql"`, `GATE_COMMENT_PLANE="$WT"`) in front of harnesses that read no
 environment variable at all — verified by grepping all seven `scripts/falsify_*.mjs` for `process.env`: none of
 them reads any. The prefixes were labels, not planes, and no arm could see them because no arm reads a harness
-invocation line. Both are removed (scripts/db_gate_fresh.sh:413-419,:433-435) and `falsify_quality_seam.mjs`
+invocation line. Both are removed (scripts/db_gate_fresh.sh:425-419,:433-435) and `falsify_quality_seam.mjs`
 carries the arm that keeps them gone. This row was owed because two runs of this thread were appending to these two
 files concurrently; it had no earlier entry.
 (E) THE NEW READER’S OWN ARGUMENTS. `scripts/check_reader_reachability.mjs` parses its flags with
@@ -10614,14 +10614,14 @@ them. D196's residue — "nothing charges the write" — is answered by `scripts
 which keeps out of the exclusion any file that turns out to be tracked, so the name cannot become a hiding
 place for a first-party claim.
 
-The bigger one was found by arming the smaller. `isCitation` (`scripts/check_ledger_citations.mjs:247`) asked
+The bigger one was found by arming the smaller. `isCitation` (`scripts/check_ledger_citations.mjs:404`) asked
 its bare-dotfile rule about names that also carry a slash, and that rule consults `BY_BASENAME`, which is
 keyed on basenames and never on paths. It cannot hold one, so every citation whose path begins with a dot
 directory was dropped before reaching `resolve()` — not judged, not reported, invisible in the counts because
 a dropped token is still a token. Ten such tokens sit in the two ledgers at this commit: four to
 `.github/workflows/ci.yml` and six to `./.gitignore`, the root-relative form the resolver has a branch for and
 the CI form the arms cite. None had been judged by any run since D88 wrote the classifier. The path clause is
-now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:252`), so `./.gitignore:21`
+now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:409`), so `./.gitignore:21`
 is a citation and `some/dir/notes` stays prose.
 
 Both halves were measured rather than argued. The ten-token count came out of this file's own tokenizer and

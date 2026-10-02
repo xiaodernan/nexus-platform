@@ -8431,7 +8431,7 @@ inherited from D107/D108 rather than re-read. D138 had to refuse a claim for the
 fixes the reporting and then uses it.
 
 **Decision (a): a failing gate reports the same census a passing one does.** The else-branch at
-scripts/db_gate_fresh.sh:191-202 now counts `^  PASS` and `^  FAIL` lines from the same temp file it was
+scripts/db_gate_fresh.sh:203-202 now counts `^  PASS` and `^  FAIL` lines from the same temp file it was
 about to tail, and prints them with the two planes the schema was built on, before the last 25 lines --
 so the reason a run stopped is legible without a second run to ask "how many were there?"
 
@@ -10637,7 +10637,7 @@ WHY IT WAS BELIEVED. D176 wired step 13 with the plane knobs — `--dir`/`--head
 `--quality` for step 7 — and recorded what they printed: "step 8 PASS with 0 offenders" on the committed plane,
 against the forty-one D174 had measured by hand in a clean checkout. Both numbers were correct and they were not
 the same question. A plane knob relocates the TEXT a reader censuses; every reader here builds its SOURCE INDEX
-from the directory it was started in — `scripts/check_ledger_citations.mjs:64` is `const ROOT = process.cwd();`,
+from the directory it was started in — `scripts/check_ledger_citations.mjs:72` is `const ROOT = process.cwd();`,
 and `scripts/check_comment_citations.mjs:52` takes its ROOT from the script's own location but hands that cwd to
 the child it scores the comment plane with. So the knob leg was asking "do this clean checkout's sentences name
 files that exist HERE", and HERE is the shared working copy, where the other lanes' untracked `com.nexus.admin`,
@@ -10676,7 +10676,7 @@ planes are now two measurements.
 ## D189 — the honesty D188 bought is one `cd` deep, so the harness that owns step 8's seam pins it and watches itself fail
 
 WHY A FIX THAT PRINTS A NUMBER STILL NEEDS AN ARM. D188 changed step 13 from `cd "$ROOT"` plus two plane knobs to
-`cd "$WT"` and no knob (`scripts/db_gate_fresh.sh:379` is the first of the three legs). Nothing in the gate holds
+`cd "$WT"` and no knob (`scripts/db_gate_fresh.sh:391` is the first of the three legs). Nothing in the gate holds
 that word in place: a later edit that "tidies" the legs back onto the repository's own path would still print a
 section header claiming the committed plane, and the only thing distinguishing the two runs is a number in a
 reporting step that cannot fail the gate. That is the same shape as every other seam this lane has had to arm —
