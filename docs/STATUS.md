@@ -11486,3 +11486,38 @@ first.
                     measurement stands as the reading of that plane and this section is the reading of
                     this one. Syntax checked with the shell parser, comment and ledger readers re-run on
                     the changed bytes. Nothing pushed.
+
+## 222. D220: a re-aim applier that moves every endpoint, and the selftest that caught it being wrong twice
+
+                    The drift reader prints one derived number per stale citation, and that is correct as
+                    far as it goes: it names the line whose text it located. Two citations in this ledger
+                    are spans, and the batch that applied the reader rows moved only the starts, which
+                    produced ranges that ended before they began. The tooling fix is an applier that
+                    carries the range semantics the row does not state: start, span end, and the
+                    continuation tail of the same file all move by the delta the reader derived.
+
+                    Its six behavioural cases had their predictions written first, and the third went red
+                    on the first run for a reason worth keeping: the ledgers spell a continuation with a
+                    colon, so a tail pattern reading only dash-comma digits left the second half of the
+                    range untouched and still reported success. That is the same failure class as the
+                    landed defect, one level down — an applier that moves part of a citation is worse than
+                    one that refuses. After the grammar fix all six match, and the three refusal legs were
+                    measured against real input rather than argued: a rows file with no rows in it (the
+                    live plane, where the stale count is zero) refuses, a run with no rows flag and no
+                    selftest says NOT RUN, and a row whose number is not on the site line moves nothing.
+
+                    A claim this section retracts. The commit message for the applier says the reader
+                    reachability census was run and reported above; the run happened, its verdict was not
+                    read before committing, and the reading is exit 1 with one offender —
+                    check_citation_supports_sentence.mjs is invoked by no surface, which is a pre-existing
+                    row about a file no commit holds, met once before in §209. It is not collateral from
+                    this batch, and the measurement that does hold is that the new applier is outside that
+                    census entirely, because the census names only readers whose filename starts with
+                    check. Running a reader and reporting a verdict it did not give is the oldest failure
+                    mode in this repository, so it is corrected here rather than left in a landed commit.
+
+                    Still owed, named so nobody re-measures it: the reader could print the tail it already
+                    parses, which would make the applier reparse unnecessary, and that file is another
+                    lane s live rewrite; the noun steps still has no expectation aimed at it; and step 17 s
+                    three expectations are still typed into the gate instead of read from its own
+                    printout. Nothing pushed.

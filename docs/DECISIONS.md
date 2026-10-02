@@ -11691,3 +11691,21 @@ commit message describes the STATUS append as 31 added lines, while the staged n
 added and 0 deleted, and the gate file it reports as 555 to 571 lines did measure that way. Readers after
 the changed bytes: step 8 exit 0, step 9 PASS over 91 comment citations in 30 files, step 15 EXACT 127
 MOVED 0 NOT-UNIQUE 2 GONE 17, step 10 PASS with §221 allowed as disk-only, step 12 PASS. Nothing pushed.
+
+## D220 — put the range semantics in an applier that refuses, not in a reader another lane is rewriting
+
+The choice was between two files. `check_line_cite_drift.mjs` already parses the continuation tail — it is
+how it decides a citation is MOVED — so printing what it saw would be the small change, and this lane does not
+own that file at the moment: its working copy carries another lane s rewrite, and a gate whose red can only be
+reproduced against an uncommitted draft is worth the same objection here that made the numbers expectation
+declined in D217. The other option was an applier that knows a citation is a range even when the row does not
+say so, and refuses instead of guessing. That is what shipped: it shifts the start, the span end and the
+continuation tail by the row s own delta, moves nothing when the row s number is absent from the site line,
+and refuses on an empty rows file so a run that read nothing cannot be reported as a clean one.
+
+The witness is a table of six cases with the predictions written beforehand, and its value showed up twice:
+the colon in the continuation spelling made the third case red on the first run — the tool would have moved
+half a range and claimed the whole — and the green reading after the fix is paired with the red before it,
+not offered as a bare pass. The row also corrects the D220 commit message, which reported a verdict from a
+reader run that had not been read: the reachability census exits 1 with one pre-existing offender, the
+untracked sentence-support probe invoked by no surface. Nothing pushed.
