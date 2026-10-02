@@ -10971,3 +10971,29 @@ first.
                     262 UNPATHED, 4 NOT-AT-HEAD; falsify 12/12 PASS. Step 16 strict mode: 30 MOVED,
                     5 NOT-UNIQUE. Step 17 numeric claims: quality checks=217, assertions=217, checks=217
                     all MATCHED. Appends pure addition, zero lone LF. Nothing pushed.
+
+## 209. D205: step 9's one offender is an untracked comment example on a blank line; everything this lane owns is green
+
+                    Step 8: 525 citation-shaped over 392 sections, 0 strict offenders, exit 0 (14 HEAD
+                    blanks, 46 untracked targets, 1 uncommitted target — all counted, none judged). Step 10:
+                    STATUS 176/176 and DECISIONS 189/189, missing 0, duplicates 0, exit 0. Step 12: 32/32
+                    resolve, exit 0. Step 7: 22 answer rows over 31 locations, file-not-on-this-plane 0,
+                    exit 0. Step 15: EXACT 117, MOVED 10, NOT-UNIQUE 2, GONE 17, NO-BASE 1, UNPATHED 262,
+                    NOT-AT-HEAD 4, judged 147, REPORT, exit 0, with a 10-row `--reaim` list. Step 17:
+                    quality checks 217, assertions 217, checks 217 — all three MATCHED, exit 0.
+                    `falsify_line_cite_drift.mjs` 12/12 MATCHED.
+
+                    Step 9 is red on one row: `line 88 of docs/DATABASE.md`, empty on the working tree and at HEAD
+                    alike, cited as an example by `line 98 of scripts/check_citation_supports_sentence.mjs` — a file
+                    no commit holds (`??` in `git status`). The checker names that file and line as the
+                    author. That is the D94 placeholder-convention class in one instance, and the fix
+                    belongs to its owner; this unit edits neither the untracked file nor the ledger it
+                    cites. The three missed arms in `falsify_ledger_text.mjs` (help Environment block,
+                    reconcile counts, no-verdict leg; 53/56 held) sit in the same shared-dirty file as this
+                    lane's RegExp fix, which holds — the misses are the other lane's new arms, recorded
+                    here and not touched. The ten MOVED rows are all other lanes' sections, so the `--reaim`
+                    list is printed, not applied.
+
+                    No fresh full-gate this round: the container daemon is down, so the database-backed
+                    steps were not re-driven and every number above is from a direct reader run on the
+                    working tree. Appends pure addition, zero lone LF. Nothing pushed.
