@@ -139,7 +139,7 @@ const mappedFiles = { count: 0 };
 // extensions has a file under `docs/`, and both ledgers are `.md`, which the table lacks — and the same accident
 // holds for the mirror case: a mapped-extension ledger OUTSIDE `docs/` would be read by both readers and its
 // citations scored twice. So the identity is asked before the path, and the answer is its own group.
-const ledges = { into: new Map(), outside: new Map(), skipped: new Map(), proseSkip: new Map(), openedByStep8: 0 };
+const ledges = { into: new Map(), outside: new Map(), skipped: new Map(), proseSkip: new Map(), opened: new Set() };
 
 /** D208 — which files step 8 opens as *citing* prose, sliced out of step 8's own bytes.
  *
@@ -208,7 +208,7 @@ function* walk(dir, rx) {
     const ext = dot < 0 ? '(no extension)' : e.name.slice(dot);
     if (!COMMENT[ext]) {
       unmapped.set(ext, (unmapped.get(ext) ?? 0) + 1);
-      if (LEDGER_FILES.has(rel)) ledges.openedByStep8 += 1;
+      if (LEDGER_FILES.has(rel)) ledges.opened.add(rel);
       else tally(LEDGER_EXT.test(e.name) ? ledges.into : ledges.outside, ext, citeCount(abs, rx));
       continue;
     }
@@ -249,6 +249,11 @@ function coverageRow() {
   const outside = nameList(ledges.outside, 4);
   const skipped = nameList(ledges.skipped, 4);
   const prose = nameList(ledges.proseSkip, 4);
+  const openedList = [...ledges.opened].sort();
+  const openedText = `${openedList.length} file(s)`
+    + (openedList.length === 0 ? ''
+      : ` (${openedList.slice(0, 4).join(', ')}`
+        + `${openedList.length > 4 ? `, +${openedList.length - 4} more name(s) not shown` : ''})`);
   return [
     `  ext coverage       ${mappedFiles.count} file(s) read across ${Object.keys(COMMENT).length} mapped ext(s); `
       + `${unmapped.size} unwalked ext(s): ${flat.slice(0, 12).join(' ') || '(none)'}`
@@ -269,8 +274,16 @@ function coverageRow() {
       + ` (${[...EXCLUDE_PREFIX].join(', ')}), and not one of the ${LEDGER_FILES.size} file(s) step 8 names as`
       + ' prose — those are counted by the `table, prose-skip` row, never here: a citation in this group is read'
       + ' by neither reader',
+    // D212 — measured on this repository, not assumed: both ledgers are `.md`, which `COMMENT` has no row for, so
+    // the count this row used to print was 2 while the row above's was 0 — and the sentence next to it claimed the
+    // group holds "not one of the 2 file(s) step 8 names as prose". A bare number could not say which of those two
+    // fates it described, so the split is printed as two clauses and the files are named: whichever way the
+    // extension table moves, the reader sees which of step 8's ledgers this census pulled out of its own count.
     `  prose, no reader   ${into.text} — inside step 8's own cite-target predicate, outside this census's table,`
-      + ` and not one of the ${LEDGER_FILES.size} file(s) step 8 names as prose (it opens ${ledges.openedByStep8} here)`,
+      + ` and not one of the ${LEDGER_FILES.size} file(s) step 8 names as prose: ${prose.files} of those hold a`
+      + ` mapped extension and are named by the \`table, prose-skip\` row above, while ${openedText} have no`
+      + ' `COMMENT` row here and are pulled out of the count above — a citation in either group is scored by'
+      + ' step 8 alone',
     `  outside both       ${outside.text} — neither reader's predicate accepts these; their bytes are scanned as`
       + ' text, so a binary file can be listed and contribute nothing',
   ].join('\n');

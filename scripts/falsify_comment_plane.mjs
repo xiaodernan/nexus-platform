@@ -250,7 +250,8 @@ await arm('D207/C1 — an extension the vocabulary does not hold is named in the
 await arm('D208/P1 — a `.txt` cite is counted as prose no reader opens, and is not scored as a census bullet', 0,
   [/RESULT: PASS/, /tokens found\s+1 in 1 file\(s\)/,
     /prose, no reader\s+1 ext\(s\), 1 file\(s\), 1 token\(s\): \.txt\(1 file\(s\), 1 token\(s\)\)/,
-    /it opens 0 here/],
+    /as prose: 0 of those hold a mapped extension/,
+    /while 0 file\(s\) have no `COMMENT` row here and are pulled out of the count above/],
   [...CRASH, /- notes\.txt/, /strict offenders\s+[1-9]/], ['--plane', PROSE_TXT]);
 await arm('D208/P2 — the same bytes named `.sql` are scored, so the row keys on the vocabulary table, not the content',
   0, [/RESULT: PASS/, /tokens found\s+2 in 2 file\(s\)/,
@@ -599,6 +600,44 @@ if (PLANTED === null) {
       /table, prefix-skip\s+1 ext\(s\)/, /RESULT: FAIL/],
     drive('q7', '  const prose = nameList(ledges.proseSkip, 4);',
       "    const prose = { text: '(none)' };", LEDGER_DOCS, CHK_DOCS));
+
+  // ----------------------------------------------------------------------------- D212: which clause a ledger belongs to
+  // The row Q1–Q7 armed prints its ledger disclosure as TWO computed clauses now, because the single count it used
+  // to print could not say whether it described the group above its own number: measured on this repository, both
+  // ledgers are `.md`, `COMMENT` has no row for them, so `walk` pulled them out of the census's own group AND the
+  // sentence beside it claimed that group holds none of step 8's prose — `2 file(s)` and `not one of the 2` on one
+  // line. A first draft of this unit asserted the repo number was 0; running the reader printed 2, which is why the
+  // wording, not a number, is what got changed. Three things are load-bearing and each takes its own arm: the NAME
+  // (a ledger pulled out of the count must be visible somewhere), the CLAUSE it lands in (decided by the extension
+  // table, not by prose), and the COUNT's survival when only the counting is destroyed.
+  // Predicted before any of these ran, on one fixture plane and one planted checker (step 8's declaration adds
+  // `docs/LEDGER.md`, so its list is 3 files): W1 names the file in the "no `COMMENT` row" clause and leaves the
+  // prose-skip row empty; W2 adds a `.md` row to this census's own table and the SAME file moves to the other
+  // clause, which is the pair that proves the split is read from the table; W3 keeps the file out of the census
+  // group while deleting its disclosure, and the arm asserts the reader's own false sentence — a disappearance
+  // witness filed the way D210/S4 had to be, since a `must` on the vanished name could only report bookkeeping.
+  const LEDGER_MD = ledgerPlane('d212-md', 'docs/LEDGER.md');
+  const CHK_MD = plant8('md', 'docs/LEDGER.md');
+  const OPENED_ADD = '      if (LEDGER_FILES.has(rel)) ledges.opened.add(rel);';
+  const MD_ROW = String.raw`  '.md': [/(^|\s)#/],`;
+  check('D212/W1 — a `.md` ledger step 8 declares is named by the clause that says the table lacks its extension', 0,
+    [/RESULT: PASS/, /tokens found\s+1 in 1 file\(s\)/,
+      /as prose: 0 of those hold a mapped extension/,
+      /while 1 file\(s\) \(docs\/LEDGER\.md\) have no `COMMENT` row here and are pulled out of the count above/],
+    NO_OFFENDER, direct(CHK_MD, LEDGER_MD));
+  check('D212/W2 — one `COMMENT` row for `.md` moves the same file to the other clause: the split is computed', 0,
+    [/RESULT: PASS/,
+      /table, prose-skip\s+1 ext\(s\), 1 file\(s\), 1 token\(s\): \.md\(1 file\(s\), 1 token\(s\)\)/,
+      /as prose: 1 of those hold a mapped extension and are named by the `table, prose-skip` row above/,
+      /while 0 file\(s\) have no `COMMENT` row here/],
+    [...NO_OFFENDER, /\(docs\/LEDGER\.md\) have no/],
+    drive('w2', TOML_ROW, `${TOML_ROW}\n${MD_ROW}`, LEDGER_MD, CHK_MD));
+  check('D212/W3 — keep the file out of the census, drop its disclosure, and the row says none were pulled out', 0,
+    [/RESULT: PASS/, /prose, no reader\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/,
+      /while 0 file\(s\) have no `COMMENT` row here and are pulled out of the count above/],
+    [...NO_OFFENDER, /docs\/LEDGER\.md/, /table, prose-skip\s+1 ext\(s\)/],
+    drive('w3', OPENED_ADD, '      if (LEDGER_FILES.has(rel)) { /* read by step 8, named by neither clause */ }',
+      LEDGER_MD, CHK_MD));
 } else {
   console.log('  (skipped) D206\'s mutant-reader arms: this run is already aimed at a planted checker ('
     + `${PLANTED}), and mutating the reader is what it does`);
