@@ -10997,3 +10997,390 @@ first.
                     No fresh full-gate this round: the container daemon is down, so the database-backed
                     steps were not re-driven and every number above is from a direct reader run on the
                     working tree. Appends pure addition, zero lone LF. Nothing pushed.
+
+## 210. D206: step 9's two exit-2 guards got arms by copying the reader into a temp scripts/ instead of mutating a shipped byte
+
+                    D205 shipped two `RESULT: NOT RUN` guards and recorded in its own message that
+                    neither had ever fired, because the harness could mutate step 8 but not step 9.
+                    A guard nobody has seen red is a sentence about a floor. Step 9 turns out to be
+                    mutatable without touching a shipped byte: it imports only two files from the
+                    directory beside itself and takes its resolver as a flag, so a copy written into
+                    a temp `scripts/`, aimed at the SHIPPED step 8 with `--checker` and at a fixture
+                    plane with `--plane`, is a complete reader.
+
+                    Four arms, predictions written before any mutant ran. C0 is the verbatim control
+                    — the copy reads the plane the shipped reader reads, same exit, same named
+                    offender — because without it an M-arm's red could belong to the relocation
+                    rather than to the mutation. M1 deletes the bullet map so nothing places, which
+                    makes the refusal the FIRST one, and the refusal has to count the bullets it
+                    had. M2 keys the same map one line off: exit 1 and an author block naming the
+                    good cite's line while the required line is absent. The line arithmetic is
+                    load-bearing: a map off by one does not go quiet, it names the wrong comment
+                    with full confidence, and that is the failure mode this unit exists to be able
+                    to see. M3 needs a two-offender plane — one bullet placed, one outside — because
+                    a lone offender that misses is the first guard's red, which is why the second
+                    guard needed a plane the previous batch did not have.
+
+                    M3 missed on its first run, and the miss was in the fixture rather than in the
+                    guard: a plane whose every citation is a phantom never reaches an offender
+                    verdict at all. Step 8 refuses with its own non-vacuity guard ("citation(s)
+                    found and 0 file(s) resolved"), step 9 reports that the child produced no
+                    report, and the run exits 2 — for the reason of the OTHER guard. An arm scored
+                    on its exit code alone would have called that a hold. The fixture now carries
+                    one resolvable citation beside the two phantoms, and the arm requires guard 2's
+                    exact sentence.
+
+                    Measured: 22 arms · 22 held · 0 missed, exit 0, harness +88/-0 over 268 -> 356
+                    lines. The repository's comment plane is unchanged by the addition — 95
+                    citations across 31 files, strict offenders 1, the same foreign blank-line cite
+                    belonging to another lane's untracked reader. Step 8's own controls were re-run
+                    on this same reader for D205 and no step-8 byte is in this commit.
+
+## 211. D207: the comment census walks .toml, and prints the extensions it still does not walk
+
+                    Measured before writing anything: the repository holds 30 extensions and step
+                    9's comment table named 11 of them. One of the missing names is a file this
+                    repository ships and runs — `apps/ai/pyproject.toml` has a comment carrying a
+                    citation-shaped token, and the census never opened the file. That is the whole
+                    defect: a hand-written vocabulary with nothing reporting the day the plane grows
+                    a type it does not know.
+
+                    Two changes, one population. `.toml` joins the table with TOML's own comment
+                    shape (`#` to end of line, the pattern `.py` and `.yml` already declare). No
+                    other name is added on this unit's evidence: the extensions holding a live
+                    citation today are `.md` and `.log`, and neither is a comment plane — `.md` is
+                    step 8's ledger population, where counting it twice would blame the wrong
+                    section, and `.log` is generated output. The new `ext coverage` row prints from
+                    the SAME walk that produces the census, so it cannot describe a narrower scan
+                    than the one that ran: files read, mapped extensions held, and every unwalked
+                    extension named with its file count, capped and counted when the list is long.
+                    It says "reported, not judged" because it is disclosure — the gate does not
+                    decide what a `.go` file's comments should contain.
+
+                    Witness: 22 -> 25 arms, predictions written before the mutants ran. T1 runs the
+                    shipped reader over a `.toml` plane: 2 tokens, the resolvable citation clears,
+                    the phantom offends, and the author block names the plant at the line that wrote
+                    it. T2 deletes the `.toml` row from a copy of step 9 and the same plane becomes
+                    "0 tokens found in the comment plane" at exit 2, with `.toml` in the coverage
+                    row — the arm that proves the row does the reading. C1 uses a plane holding a
+                    name nobody has heard of: PASS, and the coverage row names it, so "unwalked:
+                    (none)" can never again mean "read nothing". 25 · 25 · 0.
+
+                    Two findings from the run itself, both mine. First, the exit-code-only scoring
+                    that M3 exposed is a general hazard: a refusal can wear the same exit code as
+                    the guard being witnessed. Second, widening `drive()` to take any anchor left
+                    one line pointing at the old constant, so T2 was deleting the bullet map instead
+                    of the vocabulary row and reporting exit 1. The mutation is applied at exactly
+                    one statement, and generalising a helper means re-pointing the statement that
+                    APPLIES it, not just the signature.
+
+                    On the repository plane after the change: step 9 exit 1 with 96 comment-plane
+                    citations across 32 files (was 95 across 31 — the new token and the new file are
+                    the `.toml` citation, which resolves), strict offenders 1, the same foreign cite
+                    now named by its author. Collateral paid in the same commit: the inserted lines
+                    moved the `scored by --text=` print from 172 to 205, so step 8's comment cite of
+                    that line was re-aimed and verified by reading the line — the drift reader's
+                    population is the ledgers, so it prints no row for a cite inside a script.
+
+## 212. D208: step 9's coverage row says which reader opens each extension's prose, and refuses when it cannot say
+
+                    The row D207 added described only its own comment table, so it conflated two
+                    fates: an extension with no row there is not necessarily prose nobody reads,
+                    because step 8 reads the files it names itself. Measured on this working copy
+                    before writing any code: 30 `.md`, 9 `.txt` and 31 `.json` files sit outside the
+                    comment vocabulary while step 8's own target predicate accepts them as cite
+                    targets, and between them they hold 99 citation-shaped tokens no reader ever
+                    scores — against the 96 this whole census does score. `docs/PLAN.md` alone
+                    accounts for 48 of them. A second group sits outside both predicates: 16
+                    extensions, 121 files, 573 tokens, of which `.log` is 11 files and 547 tokens.
+
+                    Two rows print those groups, and both counts come from the same walk that
+                    produces the census, read with the grammar sliced out of step 8's own bytes — a
+                    disclosure that needed its own tokenizer would be a second definition of a
+                    citation. Step 8's declaring population is sliced too, from its one `const
+                    LEDGERS =` line: if that declaration moves, multiplies, or slices to no file,
+                    the run refuses at exit 2 rather than printing a gap measured against prose it
+                    did not read. Nothing here judges the new prose; the rows are disclosure, and P1
+                    pins that by requiring the token count while the `.txt` token is only counted,
+                    never scored.
+
+                    Harness 25 -> 32 arms, 32 held, 0 missed. The first run was 4 MISSED and all
+                    four were mine, not the code's. P1 forbade a phrase that step 8's explanatory
+                    paragraph contains on a CLEAN plane and this reader relays, so the witness now
+                    aims at the offender ROW and the offender COUNT rather than at the word. P2's
+                    `.sql` control printed a token count my other plane did not, because my fixture
+                    line had no comment marker — the two planes differed by content as well as by
+                    name, which is exactly the claim the arm exists to keep out. P3's copied step 8
+                    died on its own imports because I wrote no sibling modules beside it (0 of
+                    everything, proving 0). P4 forbade the refusal it also predicted. Armed on the
+                    way, from the same measurement: `--plane` at a directory that is not there threw
+                    an uncaught ENOENT at exit 1 — this file's code for "a citation is wrong" — and
+                    now refuses at 2, which is D159's ruling arriving at the path argument.
+
+                    Falsified hypothesis, recorded so nobody re-fixes it: I predicted the
+                    mapped-file tally over-counted files under `docs/` that the read loop then
+                    skips. Measured 0 of 546 — the walk's extension table and its prefix filter do
+                    not overlap on this tree, and no change was written for it.
+
+                    Measured after landing: step 9 exit 1 with 96 citations across 32 files (both
+                    unchanged) and the 1 strict offender that is another lane's untracked reader
+                    citing a blank line of `docs/DATABASE.md`; step 8 exit 0, 516 citations in 389
+                    sections, 0 offenders. Step 9 takes 0.79s on this tree, including the extra 191
+                    files the disclosure reads. Collateral: step 8's comment cite moved with the
+                    inserted lines and was re-aimed 205 -> 293; the drift reader cannot verify that
+                    one either.
+
+## 213. D209: step 9 relays a report by its shape, not by keywords — and the keyword relay was printing class names on planes that filed no offenders
+
+                    The relay filtered the child's stdout on a keyword list. Step 8 prints its
+                    LIMITS paragraph as column-0 prose, so a keyword match pulled the middle of a
+                    sentence out and dropped its beginning: on the repository plane, whose single
+                    offender is a BLANK LINE, the relayed report contained a sentence-half naming
+                    two OTHER offender classes — a class name in a run that filed none of them.
+                    Found by my own harness arm (D208/P1) predicting a red that did not exist.
+
+                    Now the relay keeps the report's own rows — indented label lines and the bullets
+                    under them — plus any line carrying a verdict, and when the child refused (exit
+                    2) it relays the child whole. That is D159's ruling that a refusal must pass its
+                    reason through, and on a refusal the prose IS the reason.
+
+                    Measured on the repository plane, committed step 9 versus this one, same
+                    worktree seconds apart, 62 added lines total: 4 rows recovered (`text censised`,
+                    `citation-shaped`, `bare :NN continuations`, and the offender class header — the
+                    row that names the class the run actually filed had been dropped by the filter
+                    that named other classes); 2 fragment lines removed; verdict, token count and
+                    offender count unchanged at 96 tokens in 32 files with 1 offender belonging to
+                    another lane. Step 8 on the ledgers: exit 0, 516 citations in 389 sections, 0
+                    offenders.
+
+                    Arms 32 -> 38, all held, exit 0. Shipped-code side: Q1 a clean plane prints no
+                    offender class name (the defect, now refused); Q2 the class header, its bullet
+                    and `headings seen` are relayed while the LIMITS paragraph and the child's
+                    column-0 title are not; Q3 on a refusal the whole report comes through, title
+                    included. Mutation side, one term each: R0 a verbatim copy of the reader in a
+                    temp `scripts/` still relays the refusal whole — the control that makes R1's
+                    absence mean the mutation and not the relocation; R1 drop the exit-2 term and
+                    exactly the child's keyword-free title disappears, nothing else; R2 drop the
+                    indented term and the class header, the count row and the heading census
+                    disappear while `RESULT: FAIL` stays. R2 is the contradiction this unit closes,
+                    seen from the other side: a verdict can be printed over an invisible report,
+                    because step 9 parses the child's WHOLE output, not the relay.
+
+                    One prediction was wrong: R2 was written expecting the offender AUTHOR bullet to
+                    go with the rows. It stayed — step 9 composes attribution from the rows it
+                    parsed itself, so attribution does not ride on the relay. The arm now asserts
+                    the survivor as a MUST, which makes it two-sided: the same mutation must delete
+                    three lines and keep one. Collateral: none needed — `scored by` is still line
+                    293, so the cite re-aimed in D208 still names its line. The harness's new
+                    regexes repeat a plant file name five times; the census reads only text after a
+                    comment marker, and one run proves it — 96 tokens, 1 offender, no FILE NOT FOUND
+                    row for a file called `.sql`.
+
+## 214. D210: step 9's "N file(s) read" counted files it had already decided not to read
+
+                    The coverage row printed a counter that mapped extensions admit a file, and then
+                    a second filter at read time dropped the ones under the path rule. So the row
+                    described an admissions table while the walk read a narrower set. Measured
+                    today: 0 of the 12 mapped extensions has a file under `docs/`, so the count
+                    happened to be true — and a claim that is true by accident still cannot be
+                    stopped. A `.md` vocabulary row would have turned 512 ledger citations into
+                    "read" numbers with no reader behind them.
+
+                    The decision now happens in `walk`, the one place a file is admitted or skipped,
+                    and the skips report themselves in a new row: `table, prefix-skip`. Three
+                    populations are named instead of two — unmapped extensions, mapped-and-read,
+                    mapped-but-path-skipped — and the fourth (step 8's own prose) stays separate.
+
+                    Arms, four, all on planes this harness writes: S1 the `docs/` phantom is
+                    disclosed and not scored; S2 the same bytes named under a different prefix are
+                    scored and go red, so the row keys on the path rule rather than on the content;
+                    S3 delete the prefix rule and the phantom IS scored — the skip is what hides it;
+                    S4 keep the skip and delete its tally, and the reader says one file read, none
+                    skipped, two walked. Harness 42 · 42 · 0. S4 is the second time this session I
+                    filed a disappearance witness in the MUST list; it is re-filed as the mutant's
+                    own contradictory sentence, the way D209/R1 had to be after its red.
+
+                    Collateral re-aim: the edit moved the `scored by` print from 293 to 317, so step
+                    8's cite of that line was re-aimed and a direct grep prints 317, EXACT. Repo
+                    plane after the change: 546 files read, `table, prefix-skip` printing none, 96
+                    tokens in 32 files, strict offenders 1 (another lane's uncommitted reader citing
+                    a blank line of `docs/DATABASE.md`), step 9 exit 1; step 8 on the ledger plane
+                    exit 0 with 0 offenders.
+
+## 215. D211: step 9 says which skipped files are step 8's prose, and asks before it says it
+
+                    The `table, prefix-skip` row printed "and not one of the N file(s) step 8 names
+                    as prose … a citation here is read by neither reader" for the files its own path
+                    rule skipped. Nothing computed that: `walk` consulted the ledger set only for
+                    extensions the comment table LACKS, so the sentence was composed, not checked.
+                    Measured on a plane written for the purpose — a `.py` file under the skipped
+                    prefix plus a `.sql` file elsewhere, and a copy of step 8 whose declaration adds
+                    the `.py` file — the reader printed the `.py` file inside that group AND the
+                    claim that none of its 3 prose files is there. Same PASS, same token count, no
+                    signal. Today the claim is true by accident: 0 of the 12 mapped extensions has a
+                    file under `docs/`, and both ledgers are `.md`, which the table has no row for.
+
+                    The same accident was the mirror case: a mapped-extension ledger OUTSIDE `docs/`
+                    was read by BOTH readers, so its citations were scored twice — which is exactly
+                    what excluding `docs/` was written to prevent. So identity is asked before path,
+                    and the answer gets its own group and its own row: `table, prose-skip`, printed
+                    always.
+
+                    Arms, seven, all on planes this harness writes. Q1/Q2 are the pair — identical
+                    bytes, identical path, one reader differing only by a NAME in its own
+                    declaration list — so the group keys on step 8's list, not on the filename or
+                    the directory. Q3 reaches the mirror case (step 8's prose living outside the
+                    skipped prefix) and shows 1 file read, not 2. Q4 deletes the identity test and
+                    the census opens step 8's prose (2 files, 2 tokens) while the verdict stays
+                    green — which is why the witness is the coverage row and not the exit code. Q5
+                    deletes the same term under the skipped prefix, where the path rule still hides
+                    the file, and asserts the mutant's own false sentence. Q6 keeps the skip and
+                    misroutes its count, separating "the test matters" from "the count matters" by
+                    the token total. Q7 stubs the row and pins that it prints a constant. `drive()`
+                    gained an optional checker argument for the plants.
+
+                    Two misses, both mine, both prediction, neither a code defect, both recorded in
+                    the arm text: Q7's first anchor had 4 spaces where step 9 uses 2, and the
+                    harness reported "no mutant was written" instead of faking a red; and I asserted
+                    the group's empty SHAPE while the stub prints a bare "(none)" — a row's label is
+                    column-padded, so the pin must allow the padding. Harness 49 · 49 · 0. Repo
+                    plane unchanged where it should be: 546 files read, both skip rows printing
+                    none, 96 tokens in 32 files, strict offenders 1 (another lane's), exit 1; step 8
+                    exit 0.
+
+                    Collateral: this edit moved the `scored by` print 317 -> 340 and step 8's cite
+                    was re-aimed to 340 (grep prints 340, EXACT). Report, not fixed: the ledgers'
+                    prose cites step 9 at line 142 for the site that passes `--text=` to step 8; at
+                    HEAD that statement was already 179 lines off (the site was 321) and this unit
+                    moved it to 344. The rows sit in files another lane is writing, so they are
+                    named here rather than edited.
+
+## 216. D212: step 9 says WHICH clause holds step 8's ledgers, and names them
+
+                    The "prose, no reader" row printed a bare count next to a sentence that denied
+                    it. On this repository both ledgers are `.md`, which the comment table has no
+                    row for, so the walk pulled them out of the census's own group while the same
+                    line claimed the group holds "not one of the 2 file(s) step 8 names as prose" —
+                    2 and not-one-of-2 on one row. A first draft of this unit asserted the
+                    repository number was 0; running the reader printed 2, so the fix is the
+                    wording, not a number: the split becomes two computed clauses (the count for
+                    files holding a mapped extension, versus the named files that have no comment
+                    row here) and the ledgers are printed by path.
+
+                    Harness 52 arms, 52 held, exit 0. W1 names a planted ledger in the
+                    no-comment-row clause on a plane whose step 8 copy declares it. W2 adds one
+                    `.md` row to this census's own table and the SAME file moves to the other clause
+                    — the pair that shows the split is read from the table, not composed around it.
+                    W3 keeps the file out of the census while deleting its disclosure, and asserts
+                    the reader's own false sentence: a disappearance witness filed the way D210/S4
+                    had to be, since a must-pattern on the vanished name could only report
+                    bookkeeping. D208/P1's assertion about what the reader opens was re-aimed at the
+                    two new clauses.
+
+                    Repo plane unchanged in substance: step 9 exits 1 with the one other lane's
+                    offender (a blank-line cite in its untracked reader), step 8 exits 0.
+                    Collateral: step 8's own cite of the `--text=` pass site moved 340 -> 353,
+                    measured on the committed blob and identical on the working copy. The ledgers'
+                    stale cites of step 9 remain another lane's rows — report, not edit.
+
+                    Not committed with this unit: a foreign uncommitted hunk in the same file (step
+                    9's spawnFailure/EBUSY distinction, which has no arm in the harness yet) was
+                    left in the working copy and excluded from the index, so D212's blob is HEAD
+                    plus these hunks only.
+
+## 217. D213: step 8's default mode is the reader behind step 9's "scored by step 8 alone" clause, and an unopenable declared ledger stops its census
+
+                    Step 9's prose row ends by saying that a citation in either disclosed group "is
+                    scored by step 8 alone". That is a claim about step 8's DEFAULT mode — no text
+                    knob, no plane knob — and until this batch no witness had ever run it: every
+                    existing arm reaches step 8 as step 9's child through the one-file knob, which
+                    reads a single file and never the declared ledger list. The clause could have
+                    named a reader that never reads them.
+
+                    X1 runs the control against a step 8 copy whose ledger declaration names one
+                    more file. Measured on the repository plane: sections 392 -> 396, tokens 768 ->
+                    775, exit 0 -> 1. The three new offender rows are all attributed to a dated
+                    run-log section of `docs/PLAN.md` — one citation at line 632 and two at lines
+                    696 and 883 that both point at a blank line of `docs/DATABASE.md`. Three
+                    citations to blank lines that today no declared ledger reads, because PLAN.md is
+                    neither in step 8's ledger list nor inside step 9's comment vocabulary — it
+                    lives under that reader's own path rule. So the default census really does walk
+                    every declared ledger, which is what step 9's clause rests on, and naming a
+                    fourth file a ledger would CHARGE its citations rather than free them.
+
+                    X2 falsifies that growth from the other side, and the miss is the finding. I
+                    predicted "a declared ledger no reader can open adds NO section and NO token",
+                    meaning a smaller census that still prints. Wrong: the mutant printed no census
+                    rows at all (sections and tokens both NaN) because step 8 refuses before the
+                    report, with a verdict that names the file it could not open. The real property
+                    is stronger than the one I drafted — an unopenable declared ledger STOPS the
+                    census instead of being silently skipped by it, so "0 offenders" can never be
+                    produced by a run that read nothing. The arm now pins all four halves separately
+                    (control prints finite rows, mutant prints none, and the mutant output carries
+                    both the refusal verdict and the ledger's own name) so a future red says which
+                    half broke.
+
+                    Repository plane re-measured rather than quoted: step 8 exit 0 with 392 sections
+                    and 768 name:number tokens; step 9 exit 0 with 91 comment-plane citations across
+                    30 files, its prose row printing 3 extensions, 70 files and 104 tokens. Note
+                    that step 9 is GREEN here: the blank-line offender this lane reported for
+                    several batches is gone from the working copy, and that file is another lane's —
+                    reported, not touched. Harness 54 · 54 · 0, diff pure addition (70/-0, one file,
+                    no production change). This commit deliberately did not stage step 9: its
+                    working copy still carries another lane's uncommitted spawnFailure/EBUSY hunk
+                    (13/1), which has no arm and is not this lane's to land.
+
+## 218. D214: step 9's prose row now counts two fates apart — the tokens it numbers are opened by neither reader
+
+                    The sentence quoted above names TWO groups: the files step 8 DECLARES. The
+                    number printed at the head of the row is a THIRD group — files whose extension
+                    has no comment row here and whose path step 8 never reads — and its fate was
+                    never stated. The title said "no reader"; the sentence promised one.
+
+                    Measured on a plane written for the purpose before anything was changed: a
+                    `.json` note carrying one past-end citation, a resolving citation beside it in a
+                    `.sql` file, and the two sibling modules copied into the plane so both names
+                    resolve there. Step 9 counted the file — `.json(1 file(s), 1 token(s))` — and
+                    printed PASS with strict offenders 0. The same bytes handed to step 8 through
+                    the knob that IS its ledger declaration printed strict offenders 1 under a PAST
+                    EOF class and exited 1. So a non-declared file's citations are opened by nobody,
+                    and step 9's PASS is a coverage fact rather than a resolution fact. On the
+                    repository plane the group the row numbers is 3 extensions, 70 files and 104
+                    tokens, while the files step 8 actually opens are the 2 it declares. The row now
+                    prints both fates with their own counts, computed from the same declaration the
+                    walk uses, and says plainly that the counted tokens are "counted here and judged
+                    nowhere".
+
+                    Three arms, all held on their first run, with the predictions written in the
+                    file's comment before the mutants: Y1 step 9 on the fixture plane — PASS, the
+                    file counted, the new neither-reader clause present, and the charged class
+                    spelling ABSENT (absent because that spelling is exactly what would mean a
+                    reader opened it); Y2 step 8 on those same bytes — exit 1, strict offenders 1,
+                    the file named, which is the arm that makes Y1 mean something, because without
+                    it a PASS could also be read as "the citation resolves"; Y3 step 9 against a
+                    step 8 copy that adds the fixture file to its own list — the same file leaves
+                    the counted group, which then prints 0 extensions, 0 files, 0 tokens and (none),
+                    and reappears in the named clause, so the split is computed from the declaration
+                    and not from prose about it.
+
+                    Collateral: the row's expansion pushed the `scored by` print step 8 names from
+                    353 to 364, and that one line cite was re-aimed — a repository-wide grep shows
+                    it is the only site citing step 9's line numbers in that range. Repo plane after
+                    the change, re-measured: step 8 exit 0, step 9 exit 0 with 91 comment-plane
+                    citations across 30 files; harness 57 arms · 57 held · 0 missed, exit 0.
+
+                    Landing note: this commit's step-9 blob carries only this unit's 13/2. The
+                    working copy still holds another lane's uncommitted spawnFailure/EBUSY hunk (0
+                    occurrences of it in what was staged), that hunk has no arm, and it is not this
+                    lane's to land.
+
+                    Record paid, and one correction. D215 wrote the nine DECISIONS rows for
+                    D206-D214 as a single pure append — 197 added lines, 0 new citation-shaped
+                    tokens, composed from each unit's own commit message. Its commit message says
+                    "198 lines": that was the append script's own report being off by one, and git
+                    and the file's counts agree on 197 (11418 -> 11615). The claim is corrected here
+                    rather than amended in the landed commit, because amending a published-history
+                    commit is not this lane's practice. This STATUS append is the other half of that
+                    record: nine sections for the same nine units, again with no new citation-shaped
+                    lines, verified by the three ledger readers in the same batch.
+
