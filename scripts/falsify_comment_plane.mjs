@@ -638,6 +638,76 @@ if (PLANTED === null) {
     [...NO_OFFENDER, /docs\/LEDGER\.md/, /table, prose-skip\s+1 ext\(s\)/],
     drive('w3', OPENED_ADD, '      if (LEDGER_FILES.has(rel)) { /* read by step 8, named by neither clause */ }',
       LEDGER_MD, CHK_MD));
+
+  // --------------------------------------------------------------------------- D213: the clause that names the OTHER reader
+  // Step 9's row ends "a citation in either group is scored by step 8 alone". That is a claim about step 8's
+  // DEFAULT mode, and until this arm no witness in this file had ever run that mode: every arm reaches step 8 as
+  // step 9's child through `--text=<plant>`, which reads one file and never the declared ledger list. Measured
+  // before the arm was written (a Temp probe, nothing shipped): declaring one more tracked file as prose moves
+  // `headings seen` and `name:number tokens` and puts that file's own citations under judgement — control exit 0
+  // with 768 tokens, mutant exit 1 with 775 and offenders attributed to the newly declared file.
+  // The pin is that MOVEMENT, on purpose. An arm asserting "the declared file has at least one offender" would
+  // ride on another lane's content: the day someone fixes the blank line it cites, the arm reddens while the
+  // mechanism is untouched. Reading-more is the mechanism, and it is monotone in the file it adds.
+  const defaultMode = (checker) => {
+    try {
+      return { code: 0, out: execFileSync(process.execPath, [checker], { cwd: ROOT, encoding: 'utf8' }) };
+    } catch (err) {
+      return { code: err.status ?? 'null', out: `${err.stdout ?? ''}${err.stderr ?? ''}` };
+    }
+  };
+  {
+    const rowNum = (out, label) => {
+      const hit = out.match(new RegExp(`^ +${label.source} +(\\d+)`, 'm'));
+      return hit ? Number(hit[1]) : NaN;
+    };
+    const ctl = defaultMode(CHECKER);
+    const mut = defaultMode(plant8('d213', 'docs/PLAN.md'));
+    const before = { sections: rowNum(ctl.out, /headings seen/), tokens: rowNum(ctl.out, /name:number tokens/) };
+    const after = { sections: rowNum(mut.out, /headings seen/), tokens: rowNum(mut.out, /name:number tokens/) };
+    const read = [before.sections, before.tokens, after.sections, after.tokens].every(Number.isFinite);
+    const grew = read && after.sections > before.sections && after.tokens > before.tokens;
+    const reason = grew ? [] : [/declaring one more ledger made step 8 read MORE of the repository/];
+    results.push({
+      name: `D213/X1 — step 8's default mode censises every file it declares, so step 9's "scored by step 8 alone"`
+        + ` clause has a reader behind it (sections ${before.sections}->${after.sections},`
+        + ` tokens ${before.tokens}->${after.tokens}; exits ${ctl.code}/${mut.code})`,
+      expect: 0, code: grew ? 0 : 1, missed: reason, unwanted: [],
+      out: grew ? '' : `control exit ${ctl.code}, mutant exit ${mut.code}: the census did not grow on both rows,`
+        + ` so the run read nothing new and the clause is unscored prose`,
+    });
+  }
+  // X2 is the same arithmetic aimed the other way, because a passing growth arm on its own proves only that two
+  // runs printed numbers. My prediction was "the declared-but-unopenable ledger adds no section and no token";
+  // the FIRST run of this arm falsified it and the miss is the finding — the mutant printed no `headings seen`
+  // row and no `name:number tokens` row at all, because step 8's unread-ledger check refuses the run (exit code
+  // of its own, verdict `RESULT: UNCHECKED`) before any census is reported. That is the stronger property, and it
+  // is what the arm pins now: an unreadable ledger stops the census rather than being silently left out of it.
+  // Both halves are separate missed-patterns, so a future red says which one went: the announcement or the
+  // emptiness of the census (D186's lesson — a case's name only tells you half of what it asserts).
+  {
+    const ctl = defaultMode(CHECKER);
+    const mut = defaultMode(plant8('d213-absent', 'docs/d213_no_such_ledger_held_by_no_commit.md'));
+    const rowNum = (out, label) => {
+      const hit = out.match(new RegExp(`^ +${label.source} +(\\d+)`, 'm'));
+      return hit ? Number(hit[1]) : NaN;
+    };
+    const censusPrinted = (out) => Number.isFinite(rowNum(out, /headings seen/))
+      && Number.isFinite(rowNum(out, /name:number tokens/));
+    const must = [/RESULT: UNCHECKED/, /docs\/d213_no_such_ledger_held_by_no_commit\.md/];
+    const announced = must.filter((re) => !re.test(mut.out));
+    const held = censusPrinted(ctl.out) && !censusPrinted(mut.out) && announced.length === 0;
+    results.push({
+      name: 'D213/X2 — a ledger that cannot be opened stops the census instead of being skipped by it'
+        + ` (control rows: sections ${rowNum(ctl.out, /headings seen/)}/tokens ${rowNum(ctl.out, /name:number tokens/)}`
+        + `, mutant rows: sections ${rowNum(mut.out, /headings seen/)}/tokens ${rowNum(mut.out, /name:number tokens/)})`,
+      expect: 0, code: held ? 0 : 1,
+      missed: held ? [] : [...(censusPrinted(ctl.out) ? [] : [/the CONTROL run must print a census to compare against/]),
+        ...(censusPrinted(mut.out) ? [] : [/the mutant must print NO census row/]), ...announced],
+      unwanted: [],
+      out: `mutant exit ${mut.code}`,
+    });
+  }
 } else {
   console.log('  (skipped) D206\'s mutant-reader arms: this run is already aimed at a planted checker ('
     + `${PLANTED}), and mutating the reader is what it does`);
