@@ -11384,3 +11384,39 @@ first.
                     record: nine sections for the same nine units, again with no new citation-shaped
                     lines, verified by the three ledger readers in the same batch.
 
+
+## 219. D217: the gate prints its own step total, and nothing judges it — measured three ways, three answers
+
+                    Step 17 was filed to catch exactly one class: a number the ledger states that the
+                    artefact it describes no longer states. It judges three nouns, and the nouns it does
+                    not judge keep drifting in the open. One of them is the gate total, and this batch
+                    measured it before asking anyone to agree.
+
+                    What the working copy files: 21 step invocations, 17 distinct step numbers, and six
+                    denominators in the labels themselves (12, 13, 14, 15, 16, 17). The three are all
+                    true of the same file, and none of them is what a reader would call its step count.
+                    The invocation total is larger than the number total because a branch files both of
+                    its legs as the same step number, and because three sub-labels share one number. The
+                    denominators disagree with each other because a label is written once, when its own
+                    step is the newest thing in the script, and is never revisited: the first twelve
+                    still say they are one of twelve, while the last one says it is one of seventeen. So
+                    the sentence in the header of a step is a numeric claim with no reader behind it, and
+                    it has quietly gone stale five times in this file.
+
+                    The ledger half of the same finding: the numbers census knows the noun steps, names
+                    its carrier as the steps of the fresh-database gate, and has no expectation aimed at
+                    it, so the newest claim it holds matches none of the three measured spellings.
+
+                    What this batch deliberately does not do: it does not add a fourth expectation to
+                    step 17. The numbers checker is a file no commit holds on this plane — another lane
+                    is writing it live — so a derived value aimed at it would be a gate whose red can
+                    only be reproduced against a draft no commit holds. The spelling decision
+                    also has to be made by somebody: a numbered step, an invocation, or a label
+                    denominator is three different nouns, and picking one in a commit message is how a
+                    convention gets invented without a reader to enforce it. Both are owed work, and the
+                    residue is recorded rather than guessed at here.
+
+                    Recorded as the standing question for the next unit in this lane: the gate should
+                    carry the total its own labels claim, derived from the file rather than typed into
+                    it, and a step whose header says a different total than the script files should be
+                    the arm that proves it. Appends pure addition, zero lone LF. Nothing pushed.
