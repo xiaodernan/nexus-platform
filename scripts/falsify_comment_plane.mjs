@@ -388,7 +388,9 @@ if (PLANTED === null) {
   /** `hits !== 1` is reported as the arm's own red — a mutant that lost its anchor tests nothing at all.
    *  D207 widened it from "the map anchor" to "any single anchor in step 9's bytes", because the vocabulary row
    *  needs arming the same way and the mechanism is identical: copy the reader, replace one string, run it. */
-  const drive = (tag, anchor, replacement, planeDir) => {
+  /** D211 widens it with a checker of its own: an arm that needs step 8 to name one of the plane's files as its
+   *  prose cannot be shown against a verbatim step 8 — the identity test is the thing under test. */
+  const drive = (tag, anchor, replacement, planeDir, checker = CHECKER) => {
     const dir = join(tmpdir(), `nexus-d206-${tag}-${process.pid}`);
     const src = readFileSync(READER, 'utf8').replace(/\r\n/g, '\n');
     const hits = src.split(anchor).length - 1;
@@ -404,7 +406,7 @@ if (PLANTED === null) {
         }
         const path = join(dir, 'scripts', 'check_comment_citations.mjs');
         writeFileSync(path, src.replace(anchor, replacement), 'utf8');
-        const r = spawnSync(process.execPath, [path, `--checker=${CHECKER}`, '--plane', planeDir],
+        const r = spawnSync(process.execPath, [path, `--checker=${checker}`, '--plane', planeDir],
           { cwd: ROOT, encoding: 'utf8', timeout: 300000 });
         code = r.status ?? -1;
         out = `${r.stdout ?? ''}${r.stderr ?? ''}`;
@@ -471,14 +473,16 @@ if (PLANTED === null) {
   // D210 — the walk-time skip, armed the same two ways: destroy the rule and the plane reddens, destroy only the
   // counting and the plane stays green while the file it skipped is named nowhere. The second is the defect this
   // unit closes, and it is only visible as an absence, so its witness is the row the mutant can no longer print.
-  const SKIP_BLOCK = '    if (EXCLUDE_PREFIX.some((p) => rel.startsWith(p))) {\n'
-    + '      tally(ledges.skipped, ext, citeCount(abs, rx));\n      continue;\n    }\n';
-  const SKIP_TALLY = '      tally(ledges.skipped, ext, citeCount(abs, rx));\n';
+  // D211 re-aimed these two anchors rather than loosening them: `walk` now holds one branch that asks identity
+  // first (`LEDGER_FILES`) and path second, so S3 deletes the path TERM of the merged condition and S4 keeps the
+  // skip while routing only the path half out of the count. Both keep the predictions they shipped with.
+  const PROSE_OR_PATH = '    if (isProse || EXCLUDE_PREFIX.some((p) => rel.startsWith(p))) {\n';
+  const MERGED_TALLY = '      tally(isProse ? ledges.proseSkip : ledges.skipped, ext, citeCount(abs, rx));\n';
   check('D210/S3 — delete the prefix rule and the docs phantom is scored: the skip is what hides it', 1,
     [/RESULT: FAIL/, /FILE NOT FOUND/, /tokens found\s+2 in 2 file\(s\)/,
       /table, prefix-skip\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/],
     [/RESULT: PASS/, /ext coverage\s+1 file\(s\) read/],
-    drive('s3', SKIP_BLOCK, '', PREFIX));
+    drive('s3', PROSE_OR_PATH, '    if (isProse) {\n', PREFIX));
   // S4 is the disappearance witness, filed the way D209/R1 had to be filed after its own red: the mutant's own
   // sentence is what the arm asserts. It claims one mapped file was read and zero were skipped, on a plane that
   // holds two — which is precisely the state this repository was in before this unit, and the reason the row exists.
@@ -486,7 +490,115 @@ if (PLANTED === null) {
     [/RESULT: PASS/, /ext coverage\s+1 file\(s\) read/,
       /table, prefix-skip\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/],
     [/table, prefix-skip\s+1 ext\(s\)/, /FILE NOT FOUND/, /ext coverage\s+2 file\(s\) read/],
-    drive('s4', SKIP_TALLY, '', PREFIX));
+    drive('s4', MERGED_TALLY, '      if (isProse) tally(ledges.proseSkip, ext, citeCount(abs, rx));\n', PREFIX));
+
+  // ----------------------------------------------------------------------- D211: the skip that asks WHO owns the file
+  // The row `table, prefix-skip` claims its group holds no file step 8 reads as prose, and until this unit nothing
+  // tested that: `walk` consulted `LEDGER_FILES` only for extensions the COMMENT table LACKS. Measured on a plane
+  // written for the purpose (docs/probe.py plus src/probe.sql, a copy of step 8 whose declaration adds
+  // docs/probe.py): the reader printed `.py(1 file(s), 1 token(s))` in that group AND "and not one of the 3 file(s)
+  // step 8 names as prose ... a citation here is read by neither reader", with the same PASS, the same token count
+  // and no signal of any kind. So the predictions below were written against that measurement, not against hope.
+  // Three separate things are load-bearing and each gets its own arm: the IDENTITY test (without it step 9 opens
+  // step 8's prose and reads the same citation twice), the GROUP the skip is counted into (without the distinction
+  // the file is disclosed as path-skipped, which is the false sentence again), and the ROW that prints the group
+  // (without it the count is computed and seen by nobody).
+  const DECL8 = "const LEDGERS = ARGS.text === null ? ['docs/DECISIONS.md', 'docs/STATUS.md'] : [ARGS.text];";
+  /** A copy of step 8 that names one more file as its own prose. Planted under ROOT_FIX, so the harness's own
+   *  cleanup removes it; the two modules step 8 imports go beside it because it is spawned as a reader — a copy
+   *  that dies on its own import prints 0 of everything and proves 0 (D206's lesson, repeated here). */
+  const plant8 = (tag, extraLedger) => {
+    const dir = join(ROOT_FIX, `d211-chk-${tag}`, 'scripts');
+    mkdirSync(dir, { recursive: true });
+    for (const sib of ['cli_args.mjs', 'source_index.mjs']) {
+      writeFileSync(join(dir, sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
+    }
+    const src8 = readFileSync(CHECKER, 'utf8').replace(/\r\n/g, '\n');
+    const hits = src8.split(DECL8).length - 1;
+    if (hits !== 1) refuse(`step 8's ledger declaration appears ${hits} times in ${CHECKER} — the D211 plant has no anchor`);
+    const path = join(dir, 'check_ledger_citations.mjs');
+    writeFileSync(path, src8.replace(DECL8,
+      DECL8.replace("'docs/STATUS.md']", `'docs/STATUS.md', '${extraLedger}']`)), 'utf8');
+    return path;
+  };
+  function ledgerPlane(name, relPath) {
+    const dir = join(ROOT_FIX, name);
+    const parts = relPath.split('/');
+    mkdirSync(join(dir, ...parts.slice(0, -1)), { recursive: true });
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(join(dir, ...parts), [
+      '# scratch fixture for scripts/falsify_comment_plane.mjs — not shipped, not scored by any gate.',
+      `#   ${BASENAME}:12`, 'x = 1', '',
+    ].join('\n'), 'utf8');
+    writeFileSync(join(dir, 'src', 'probe.sql'), [`--   ${BASENAME}:12`, 'SELECT 1;', ''].join('\n'), 'utf8');
+    return dir;
+  }
+  const LEDGER_DOCS = ledgerPlane('d211-docs', 'docs/probe.py');
+  const LEDGER_OUTSIDE = ledgerPlane('d211-outside', 'notes/ledger.py');
+  const CHK_DOCS = plant8('docs', 'docs/probe.py');
+  const CHK_OUT = plant8('notes', 'notes/ledger.py');
+  const direct = (checker, planeDir) => {
+    const r = run('--checker', checker, '--plane', planeDir);
+    return { code: r.status ?? -1, out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
+  };
+  const NO_OFFENDER = [...CRASH, /FILE NOT FOUND/, /strict offenders\s+[1-9]/];
+  // Q1 and Q2 are the pair: identical bytes, identical paths, one reader unchanged except for a NAME in its own
+  // declaration list. Predicted: Q1 puts .py in prefix-skip and (none) in prose-skip, Q2 the exact reverse.
+  check('D211/Q1 — a mapped file under docs/ that step 8 does not name is path-skipped, and prose-skip says none', 0,
+    [/RESULT: PASS/, /tokens found\s+1 in 1 file\(s\)/,
+      /table, prefix-skip\s+1 ext\(s\), 1 file\(s\), 1 token\(s\): \.py\(1 file\(s\), 1 token\(s\)\)/,
+      /table, prose-skip\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/],
+    NO_OFFENDER, direct(CHECKER, LEDGER_DOCS));
+  check('D211/Q2 — the same bytes with the same path, named by step 8, move to the prose group: the row keys on the list', 0,
+    [/RESULT: PASS/, /tokens found\s+1 in 1 file\(s\)/,
+      /table, prose-skip\s+1 ext\(s\), 1 file\(s\), 1 token\(s\): \.py\(1 file\(s\), 1 token\(s\)\)/,
+      /the 3 file\(s\) it reads as its own prose/,
+      /table, prefix-skip\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/],
+    [...NO_OFFENDER, /\.py\(1 file\(s\), 1 token\(s\)\) — inside this census's vocabulary but under its own path rule/],
+    direct(CHK_DOCS, LEDGER_DOCS));
+  // Q3 is the mirror case the directory rule never covered: step 8's prose OUTSIDE `docs/`, in a mapped extension.
+  // Predicted: prose-skip carries it, prefix-skip stays empty, and the census still reads exactly one file — the
+  // citation is scored once, which is what D207's exclusion of `docs/` was written to buy.
+  check('D211/Q3 — step 8 prose that lives outside the prefix is skipped by identity, not by the directory rule', 0,
+    [/RESULT: PASS/, /tokens found\s+1 in 1 file\(s\)/, /ext coverage\s+1 file\(s\) read/,
+      /table, prose-skip\s+1 ext\(s\), 1 file\(s\), 1 token\(s\): \.py\(1 file\(s\), 1 token\(s\)\)/],
+    [...NO_OFFENDER, /ext coverage\s+2 file\(s\) read/], direct(CHK_OUT, LEDGER_OUTSIDE));
+  const IDENTITY = '    const isProse = LEDGER_FILES.has(rel);';
+  // Q4 destroys the identity test. Predicted on the outside plane: the file is now READING material for this
+  // census (2 files, 2 tokens), still green on the verdict — the double read is invisible to the offender count
+  // and visible only in the coverage row. Q5 destroys the same term on the docs plane, where the path rule still
+  // hides the file, and the arm must catch the reader printing its own false sentence: prefix-skip naming .py
+  // while claiming none of the 3 files step 8 names as prose is there.
+  check('D211/Q4 — delete the identity test and step 9 opens step 8\'s prose: the same citation read twice', 0,
+    [/RESULT: PASS/, /ext coverage\s+2 file\(s\) read/, /tokens found\s+2 in 2 file\(s\)/,
+      /table, prose-skip\s+0 ext\(s\), 0 file\(s\), 0 token\(s\): \(none\)/],
+    NO_OFFENDER, drive('q4', IDENTITY, '    const isProse = false;', LEDGER_OUTSIDE, CHK_OUT));
+  check('D211/Q5 — the same mutation under docs/, where the mutant prints the false sentence this unit closes', 0,
+    [/RESULT: PASS/,
+      /table, prefix-skip\s+1 ext\(s\), 1 file\(s\), 1 token\(s\): \.py\(1 file\(s\), 1 token\(s\)\)/,
+      /and not one of the 3 file\(s\) step 8 names as prose/],
+    [/table, prose-skip\s+1 ext\(s\)/, /RESULT: FAIL/],
+    drive('q5', IDENTITY, '    const isProse = false;', LEDGER_DOCS, CHK_DOCS));
+  // Q6 keeps the skip and loses only the attribution: the file is still never opened (so 1 file read, 1 token —
+  // the state Q4 shows is the real damage), but it is disclosed as path-skipped, which is the claim this unit is
+  // about. The pair Q4/Q6 is what separates "the test is load-bearing" from "the count is load-bearing".
+  check('D211/Q6 — keep the skip, route it to the wrong group, and the reader calls step 8\'s prose a path rule', 0,
+    [/RESULT: PASS/, /ext coverage\s+1 file\(s\) read/, /tokens found\s+1 in 1 file\(s\)/,
+      /table, prefix-skip\s+1 ext\(s\), 1 file\(s\), 1 token\(s\): \.py\(1 file\(s\), 1 token\(s\)\)/],
+    [/table, prose-skip\s+1 ext\(s\)/, /ext coverage\s+2 file\(s\) read/],
+    drive('q6', MERGED_TALLY, '      tally(ledges.skipped, ext, citeCount(abs, rx));\n', LEDGER_OUTSIDE, CHK_OUT));
+  // Q7 arms the disclosure itself: the group is filled correctly, but the row prints a constant empty shape. The
+  // tail of the sentence stays printed, which is the witness that the row ran and lied rather than vanished.
+  // Predicted wrong on the first run and corrected here, not relaxed: I asserted the group's own empty text
+  // (`0 ext(s), 0 file(s), 0 token(s): (none)`) while the stub replaces that whole shape with a bare `(none)` —
+  // the informative half of the arm is that the row prints a CONSTANT, so that is what it pins.
+  check('D211/Q7 — a prose-skip row that reads a stub prints a constant "(none)" while the file it describes was skipped', 0,
+    [/RESULT: PASS/,
+      /table, prose-skip\s+\(none\) — inside this census's vocabulary and named by step 8/],
+    [/\.py\(1 file\(s\), 1 token\(s\)\) — inside this census's vocabulary and named by step 8/,
+      /table, prefix-skip\s+1 ext\(s\)/, /RESULT: FAIL/],
+    drive('q7', '  const prose = nameList(ledges.proseSkip, 4);',
+      "    const prose = { text: '(none)' };", LEDGER_DOCS, CHK_DOCS));
 } else {
   console.log('  (skipped) D206\'s mutant-reader arms: this run is already aimed at a planted checker ('
     + `${PLANTED}), and mutating the reader is what it does`);

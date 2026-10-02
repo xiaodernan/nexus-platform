@@ -130,7 +130,16 @@ const mappedFiles = { count: 0 };
 // addition to this table, would silently turn 512 ledger citations into "read" numbers with none of the prose
 // scored. Now the skip is decided where the file is seen, the skipped half is named, and the number can only
 // describe files the census actually read.
-const ledges = { into: new Map(), outside: new Map(), skipped: new Map(), openedByStep8: 0 };
+// D211 — and a third: a file this census's table DOES hold, which step 8 nevertheless names as its own prose.
+// `walk` consulted `LEDGER_FILES` only in the branch for extensions the table lacks, while the row below printed
+// "and not one of the N file(s) step 8 names as prose ... a citation here is read by neither reader" for the
+// path-skipped group without ever asking. Measured before this row existed: a step 8 whose declaration adds the
+// plane's `docs/probe.py` prints `.py(1 file(s), 1 token(s))` in that group and still claims none of them is its
+// prose, because the sentence was composed, not computed. Today it is true by accident — 0 of the 12 mapped
+// extensions has a file under `docs/`, and both ledgers are `.md`, which the table lacks — and the same accident
+// holds for the mirror case: a mapped-extension ledger OUTSIDE `docs/` would be read by both readers and its
+// citations scored twice. So the identity is asked before the path, and the answer is its own group.
+const ledges = { into: new Map(), outside: new Map(), skipped: new Map(), proseSkip: new Map(), openedByStep8: 0 };
 
 /** D208 — which files step 8 opens as *citing* prose, sliced out of step 8's own bytes.
  *
@@ -206,8 +215,13 @@ function* walk(dir, rx) {
     // D210 — the path exclusion decides here, where the file is first seen, and the file it skips is named rather
     // than counted as read. `citeCount` is the same scan the unmapped rows use, so a skipped file's citations are
     // counted by the reader's grammar and not by a second guess at it.
-    if (EXCLUDE_PREFIX.some((p) => rel.startsWith(p))) {
-      tally(ledges.skipped, ext, citeCount(abs, rx));
+    // D211 — identity before path: a file step 8 reads as its own prose is not this census's comment plane, and
+    // that is true wherever it lives, not only under the prefix. The path rule was protecting the two ledgers by
+    // accident (`docs/` holds no mapped-extension file); asking the declaration is what keeps the row below true
+    // when a vocabulary row lands whose names step 8 also reads.
+    const isProse = LEDGER_FILES.has(rel);
+    if (isProse || EXCLUDE_PREFIX.some((p) => rel.startsWith(p))) {
+      tally(isProse ? ledges.proseSkip : ledges.skipped, ext, citeCount(abs, rx));
       continue;
     }
     mappedFiles.count += 1;
@@ -234,10 +248,18 @@ function coverageRow() {
   const into = nameList(ledges.into, 6);
   const outside = nameList(ledges.outside, 4);
   const skipped = nameList(ledges.skipped, 4);
+  const prose = nameList(ledges.proseSkip, 4);
   return [
     `  ext coverage       ${mappedFiles.count} file(s) read across ${Object.keys(COMMENT).length} mapped ext(s); `
       + `${unmapped.size} unwalked ext(s): ${flat.slice(0, 12).join(' ') || '(none)'}`
       + `${unmapped.size > 12 ? `, +${unmapped.size - 12} more name(s) not shown` : ''} — reported, not judged`,
+    // D211 — the group whose existence the row below could only assert. `0 file(s)` is this repository's current
+    // state for the same reason the prefix-skip count was 0: the two files step 8 reads are `.md`, and the table
+    // has no `.md` row. The difference is that nothing here depends on that staying true — the counter is filled
+    // by the test that skips the file, so a vocabulary row naming one of step 8's ledgers moves this number.
+    `  table, prose-skip  ${prose.text} — inside this census's vocabulary and named by step 8 as one of the`
+      + ` ${LEDGER_FILES.size} file(s) it reads as its own prose: step 8 scores those citations and this census`
+      + ' never opens the file, so a citation there is scored once rather than twice',
     // D210 — the mapped half the path rule skips. The number is the row's own claim to keep: before this unit the
     // line above counted these files as read and this row did not exist, so the only way to see the skip was to
     // notice that a file named nowhere had no bullets. `0 file(s)` is the honest current state of this repository
@@ -245,7 +267,8 @@ function coverageRow() {
     // `${EXCLUDE_PREFIX}` — at which point this row carries the number and the coverage row stays right.
     `  table, prefix-skip ${skipped.text} — inside this census's vocabulary but under its own path rule`
       + ` (${[...EXCLUDE_PREFIX].join(', ')}), and not one of the ${LEDGER_FILES.size} file(s) step 8 names as`
-      + ' prose: a citation here is read by neither reader',
+      + ' prose — those are counted by the `table, prose-skip` row, never here: a citation in this group is read'
+      + ' by neither reader',
     `  prose, no reader   ${into.text} — inside step 8's own cite-target predicate, outside this census's table,`
       + ` and not one of the ${LEDGER_FILES.size} file(s) step 8 names as prose (it opens ${ledges.openedByStep8} here)`,
     `  outside both       ${outside.text} — neither reader's predicate accepts these; their bytes are scanned as`
