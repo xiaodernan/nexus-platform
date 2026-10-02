@@ -509,6 +509,18 @@ command -v git >/dev/null 2>&1 || die "step 15 needs git on PATH"
 ( cd "$ROOT" && node scripts/falsify_line_cite_drift.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/check_line_cite_drift.mjs ) 2>&1 | sed -e 's/^/    /'
 
+# --------------------------------------------------------------------------- 16. the ledger's line-number drift (strict mode)
+step "16/16  scripts/check_line_cite_drift.mjs --strict MOVED,NOT-UNIQUE — the ledger's stale numbers that are re-aimable"
+# Step 15 reports the drift census; step 16 enforces it. A citation whose target line has MOVED (text survives at one
+# new line) or is NOT-UNIQUE (blank when written or multiple occurrences at HEAD) is a stale number that can be
+# re-aimed. The `--reaim` mode prints the derived new numbers so a lane can clear MOVED citations by applying the
+# reader's own rows. NOT-UNIQUE citations are either blank when written (never pointed at text) or duplicate at
+# HEAD (the reader cannot guess which occurrence was meant); both are fixable only by reading the sentence, so
+# they are reported rather than auto-re-aimed. This step runs with --strict MOVED,NOT-UNIQUE and exits 1 if any
+# such citations exist, so the gate fails until the lane re-aims or documents them.
+command -v git >/dev/null 2>&1 || die "step 16 needs git on PATH"
+( cd "$ROOT" && node scripts/check_line_cite_drift.mjs --strict MOVED,NOT-UNIQUE ) 2>&1 | sed -e 's/^/    /'
+
 printf '\nRESULT: PASS — %s quality checks on a from-scratch schema (tables=%s, migrations=%s), plus the\n' \
   "${CHECKS:-?}" "$TABLES" "$SCHEMA_VERSION"
 printf '        seed truncate shown clearing an empty stranger and refusing one that holds rows, the\n'

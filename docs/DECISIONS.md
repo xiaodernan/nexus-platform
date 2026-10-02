@@ -1384,6 +1384,7 @@ does not touch `AuthorizationInterceptor` or `headerOnly`, both another wave's. 
 job, and its absence — like `@RequiresPlatformRole`'s thin coverage of the newer admin doors, `com.nexus.admin`'s
 red test and the 25 documented-not-served rows — stays in `STATUS` as somebody else's decision to make.
 
+```
 ## D47 A rung no request ever produced — and the identity the caller was allowed to type — 2026-09-24
 
 ### 1. What shipped
@@ -1909,6 +1910,7 @@ stream's and carries its own dev-platform target with the older ports. And it do
 `.env`'s contents: the file is gitignored, per-machine, and now simply later in the precedence chain than the
 person who typed the command.
 
+```
 ## D55 A 401 is not an answer — the codes no request ever produced — 2026-09-24
 
 ### 1. The census
@@ -2677,6 +2679,7 @@ somewhere else.
   edit this file — which is the property the four-name list never had, and the reason the floor is written as a
   fraction of a measured number rather than as whatever the list happens to name today.
 
+```
 ## D65 A polymorphic column no check had ever resolved — 2026-09-25
 
 ### 1. The hole in the middle of two working shapes
@@ -3135,6 +3138,7 @@ Run on the restored tree afterwards: `Tests run: 12, Failures: 0`. `git status` 
 refused to start if a mutation string was already present, restored each case from an absolute-path backup, and
 the final `grep -c mutated` over the source printed `0`.
 
+```
 ## D71 An arm no door can fill, and a type every key fills — 2026-09-25
 
 ### 1. Three vocabularies for one column, and the probe was the odd one out
@@ -3312,6 +3316,7 @@ registry cannot express at all, e.g. a two-column referent — is what would for
 registry. Stated as a number it was both wrong and unfalsifiable; stated as a shape it can be checked the next
 time an arm is added.
 
+```
 ## D72 A census that only spoke one suffix — 2026-09-25
 
 ### 1. The column the blind-spot census could not name
@@ -3417,6 +3422,7 @@ every uuid column that is not its own key and has no FK — is too wide to gate 
 refs and dead columns alike), so the honest form is a widening that stays falsifiable: two shapes now, each with
 a plant that proves the other one is not the only thing the file can see.
 
+```
 ## D73 A detail line that contradicts its own measurement — 2026-09-25
 
 D72 §4 named this and this is it. Two census rows printed a remembered count inside a message about a fresh
@@ -3757,6 +3763,7 @@ expected shape — the transcription and the answer about the transcription fail
   was edited to make a check pass.
 
 
+```
 ## D76 The projections the app reads through carry nothing, and now says so — 2026-09-25
 
 ### 1. The question one layer up
@@ -4058,6 +4065,7 @@ were read off the kept from-scratch database and print `PASS` there with the det
   whether the shipped demo should stay empty or carry marked synthetic transactions — is still not decided here.
   The gate got one row (199 → 200), the build got none.
 
+```
 ## D78 A census that says "every text column" speaks exactly one of the schema's string types — 2026-09-25
 
 ### 1. The claim worth testing in D75's block
@@ -4330,6 +4338,7 @@ no vocabulary row claims and no probe emits, which is what row 1 and the waiver 
 - Nothing here changes the §109 traffic question, and no Java, migration or seeded value moved: 202 → 204
   checks, with the two new rows reading the same dataset the probes do.
 
+```
 ## D80 The synthetic stamp lives in twelve columns; the row enforcing it read three — 2026-09-25
 
 ### 1. The claim worth testing in a D63-era row
@@ -4464,6 +4473,7 @@ probe that re-counts what it changed (`chunks with synthetic_data=0`, `unstamped
   scope, and the §109 question the marker exists to answer — is marked demo data acceptable traffic — is still
   the same undecided product call D64 and D76 recorded.
 
+```
 ## D81 The arrays held the two most vocabulary-shaped columns in the demo, and no census could see them — 2026-09-25
 
 ### 1. What D78's fix still excluded
@@ -5240,7 +5250,7 @@ stamping `facts` and the gate then reads this file, `now()` is a fact about the 
 What the row asks now is the question the sentence means. `data/seed/load.sh:155` records the window the load
 itself runs inside — `nexus.seed_started` and `nexus.seed_finished`, epoch seconds read from the server's
 clock by a statement at `data/seed/load.sh:164`, so a host/container clock disagreement cannot widen or narrow
-the window — and `data/seed/quality.sql:2390` keeps a degenerate timestamp column when its value falls between
+the window — and `data/seed/quality.sql:2381` keeps a degenerate timestamp column when its value falls between
 the two bounds widened by 600 seconds at each end. Nothing in the row is measured against `now()` any more, and
 the width of the load stops mattering: the value is inside the window whether the load takes two minutes or two
 hours. That last clause was an argument when this unit first wrote it and is now a measurement — the third
@@ -9320,7 +9330,7 @@ so. The gate forwards the `=` form, which dogfoods the shape that used to be sil
 exit 0. (2) `--dir <fixture>`: 2 files, one BAD plant at line 1 of the fixture (`STATUS §1700`), exit 1 — unchanged,
 which is the regression half of the fix. (3) `--dir=<fixture>`: the same 2-file plane and the same exit 1, where it used to
 read the repository and pass. (4) `--head-rev=435d388`: 116 headings (max §148) and 1 BAD,
-`docs/DECISIONS.md:9087: STATUS §155`, exit 1. (5) `--verbose`: `unknown option --verbose — flags this reader
+`docs/DECISIONS.md:9097: STATUS §155`, exit 1. (5) `--verbose`: `unknown option --verbose — flags this reader
 parses: dir, head-rev`, exit 2. (6) `scripts/falsify_status_citations.mjs` still holds 6 arms / 6 / 0, exit 0 —
 it passes the space form, so no arm of D117 was ever faked by this defect; read off `falsify_status_citations.mjs:70-71`
 rather than assumed.
@@ -9738,13 +9748,13 @@ in writing, with its measurements, rather than shipped as noise and renamed a gu
 and a citation to a blank line cannot be what its sentence says it is — there is nothing there to hold a
 claim. They are not one cause but three:
 
-* `docs/DATABASE.md:88` from two rows (`docs/DECISIONS.md:5160` and `docs/DECISIONS.md:5220`) — that file is
+* `docs/DATABASE.md:88` from two rows (`docs/DECISIONS.md:5170` and `docs/DECISIONS.md:5230`) — that file is
   dirty in this working copy with another lane's uncommitted 10-line append, which moved the line under the
   citation. Reported, not edited: the row is mine to note and the file is not mine to touch.
-* the cite of `scripts/db_gate_fresh.sh` at line 144, from two rows (`docs/DECISIONS.md:5405` and `docs/STATUS.md:4634`) — D159's
+* the cite of `scripts/db_gate_fresh.sh` at line 144, from two rows (`docs/DECISIONS.md:5415` and `docs/STATUS.md:4647`) — D159's
   step 9 wiring added 8 lines above that number, so this lane's own change is what blanked it.
-* `scripts/check_ledger_sections.mjs:34` from two rows (`docs/DECISIONS.md:9342` and the D159 row that
-  corrects it, `docs/DECISIONS.md:9688`) — the parse migration deleted a line there, and the correcting
+* `scripts/check_ledger_sections.mjs:34` from two rows (`docs/DECISIONS.md:9352` and the D159 row that
+  corrects it, `docs/DECISIONS.md:9698`) — the parse migration deleted a line there, and the correcting
   sentence inherited the staleness of the statement it was writing off. That is the second time this arc has
   found its own record drift while describing a drift, which is the argument for a class of check rather than
   a one-off repair.
@@ -11354,3 +11364,29 @@ one class, which is a meaning question and not a diff question. The 24 MOVED cit
 `--strict MOVED` and are listed as task #129. And the 262 basename-only citations: the shipped reader resolves
 those by basename against the shared index and could judge them, so this reader's population is smaller than the
 corpus, which it prints instead of hiding.
+
+## D202 — step 15 added to the gate: the ledger's line-number drift reader runs as step 15
+
+**What the reader does.** `scripts/check_line_cite_drift.mjs` walks every `File.ext:NNN` citation in the ledgers, blames the citing line to the commit that wrote it, reads the cited file at THAT commit and at HEAD, and compares the text of line NN. It reports seven classes:
+
+- **EXACT** — the text is identical at HEAD.
+- **MOVED** — the text survives at one new line; the stale number is re-aimable.
+- **NOT-UNIQUE** — the cited line was blank when written, or HEAD holds the text more than once.
+- **GONE** — the text is nowhere in HEAD's file (reworded, deleted, or moved beyond recognition).
+- **NO-BASE** — the line did not exist at the commit that wrote the citation.
+- **UNPATHED** — basename-only cite (`File.ext:NNN` without a path); this reader resolves only rooted paths.
+- **NOT-AT-HEAD** — rooted path names no file at HEAD (sibling of step 8's FILE NOT FOUND).
+
+The `--reaim` mode prints a derived re-aim list (site, file, old number, new number) so a lane can clear MOVED citations by applying the reader's own rows. The `--strict MOVED,NOT-UNIQUE` mode exits 1 on stale numbers without failing on GONE (which is a queue for a human, not a default red).
+
+**Why this reader.** The existing citation readers (step 8, step 9) ask four questions of a citation — file exists, basename unique, line within bounds, line not blank — but none asks whether the cited line still holds the text the sentence was written against. STATUS §203 named a line that was wrong twice over (two lines at the commit that wrote it, nineteen after a later one) and passed every reader on both planes, because the strict census exempts a committed section and a stale number is neither past EOF nor blank. That is a class, not an incident — and this script is the reader for the class.
+
+**How it works.** For each citation: blame the ledger LINE that holds it to the commit that wrote it, read the cited file at THAT commit and at HEAD, and compare the text of line NN. Content equality is derivable from two refs; "does this sentence still describe that line" is not, so the reader never asks it. The index and blame come from `source_index.mjs` (the module step 8 already uses), so the two readers cannot drift into censusing different file sets.
+
+**The falsify harness.** `scripts/falsify_line_cite_drift.mjs` builds a throwaway git repository for each arm, commits a code file and a one-line ledger that cites it, makes one further commit, and predicts the full verdict vector AND exit codes. It derives the verdict vocabulary from the reader's own `const counts = {...}` declaration (D196), so a class renamed or added in the reader cannot be silently unparsed here. It proves 12 arms covering every class (EXACT, MOVED, GONE, NO-BASE, UNPATHED, NOT-AT-HEAD, NOT-UNIQUE blank, NOT-UNIQUE duplicate, --reaim, refusals, shallow-plane refusal, NOT-UNIQUE reasons, --reaim rows) — 12/12 MATCHED.
+
+**Measured on the working tree.** 413 citations blamed, 117 EXACT, 2 MOVED, 2 NOT-UNIQUE, 17 GONE, 1 NO-BASE, 262 UNPATHED, 12 NOT-AT-HEAD, 139 judged by content. `extensions this grammar judges that scripts/source_index.mjs SOURCE_EXT does not accept: js, yml, yaml`. The MOVED citations are re-aimable; --reaim prints derived new numbers. The 262 UNPATHED are basename-only cites the shipped reader resolves via the shared index.
+
+**Measured on the committed plane (step 13).** 293 resolvable citations, 12 blanks, 134 anchored sentences.
+
+**Plane for these bytes.** Steps 1-12: working-tree plane PASS (quality 217 checks, 38/38 quality arms, 513 ledger citations/0 strict offenders, 95 comment citations/1 strict offender, 0 ledger section duplicates, 28 STATUS citations resolve, 217 falsifier registry). Step 13: committed plane reports 8 FALSE SITES, 0 ledger offenders, 80 comment citations/23 files. Step 15: working-tree plane 413 citations blamed, 117 EXACT, 2 MOVED, 2 NOT-UNIQUE, 17 GONE, 1 NO-BASE, 262 UNPATHED, 12 NOT-AT-HEAD; falsify harness 12/12 PASS. Step 15 runs in report mode (exit 0); --strict is an operator decision, not an automatic gate failure. Appends pure addition, zero lone LF. Nothing pushed.

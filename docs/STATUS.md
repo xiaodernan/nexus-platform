@@ -2746,6 +2746,7 @@ next              task #41 (D66): make the file name its own blind spots. The 25
                     other four would be invisible exactly the way `location` was.
 
 
+```
 ## 62. The file that counted its own blind spots (2026-09-25)
 
 D65 measured its remainder with a throwaway script in a temp directory, which makes the measurement a fact about
@@ -2786,6 +2787,7 @@ next              task #42 (D67): settle the two vocabularies for `favorites`, t
                     when that lands.
 
 
+```
 ## 63. A seeded row the write path refuses to re-create (2026-09-25)
 
 D66 registered the favourites probe as `probe` while its own `why` text admitted the probe's type set was not the
@@ -2827,6 +2829,7 @@ next              task #42's second half (D68): `moderation_cases` still carries
                     waiver. Give it a real (type,key) probe over V1:574's five declared types so D66's
                     waiver-scope row becomes a probe row — the registry line should print `probe 4` and no
                     `join-one-type` when that lands.
+```
 ## 64. The waiver that was only a thermometer (2026-09-25)
 
 D66 registered `moderation_cases.subject_id` as a `join-one-type` waiver and added a row that re-reads the
@@ -2870,6 +2873,7 @@ next              the registry has no `join-one-type` entry left, so D66's waive
                     is currently stale — what is missing is a witness for the day someone adds a second writer
                     and forgets the literal. That witness cannot live in quality.sql, which reads the seed and
                     never sees an application UPDATE, so this stays a report rather than becoming a gate here.
+```
 ## 65. Twelve pairs, four probes, one CHECK (2026-09-25)
 
 The schema holds 12 `(type, key)` polymorphic pairs; `quality.sql` resolved 4 of them and had never asked how
@@ -2914,6 +2918,7 @@ next              two ways to close the 11-unbounded finding and neither is mine
                     `audit_logs` rows, so the honest home for that is the Java suite (a test that writes an
                     event and asserts its subject_type resolves), not this file. Recorded as a report; also
                     still open: `saved_searches.notify` read by nothing.
+```
 ## 66. A telemetry door's second half, witnessed (2026-09-25)
 
 `EventsIngestTest` had three tests proving `actor_type` is a server fact and **none** touching the other half of
@@ -2964,6 +2969,7 @@ next              the decision, which is not mine to make silently: resolve the 
                     nothing; the drifted shared `nexus` demo database (11 quality.sql checks red there for drift
                     reasons, including D69's new pair row naming the 5 application-written pairs).
 
+```
 ## 67. An arm no door can fill, and a type every key fills (2026-09-25)
 
 `permission_grants.subject_type` has three vocabulary lists and no two agreed. `V1__init.sql:130` names
@@ -3028,6 +3034,7 @@ next              poly_arms is a hand copy of the four UNIONs, so the equality r
                     another stream; the drifted shared `nexus` demo database (15 merchant_user grants, 0 api_keys,
                     3,961 facts against the gate's 5,688) is diagnostic only and was not reseeded.
 
+```
 ## 68. A census that only spoke one suffix (2026-09-25)
 
 D66's reference census exists so that a column nobody thought to check cannot stay unmentioned — and it asked
@@ -3085,6 +3092,7 @@ next              the new row's detail carries a hand literal — "(26 on this s
                     CommerceApiTest belongs to another stream; the drifted shared `nexus` demo database stays
                     diagnostic and unreseeded.
 
+```
 ## 69. A detail line that contradicts its own measurement (2026-09-25)
 
 D72's own plant output caught it. Reverting the census broadening printed
@@ -3125,6 +3133,7 @@ next              the reason worth carrying forward: a green row whose detail re
                     remains diagnostic-only and unreseeded; the events subject seam (D70) still waits on a
                     contract decision rather than a check.
 
+```
 ## 70. The vocabulary the database defends has no data behind it (2026-09-25)
 
 D69 read the schema from the pair side and found one CHECK in twelve. D74 read it from the constraint side:
@@ -3178,6 +3187,7 @@ next              the residue worth carrying: (a) there is no census of text col
                     database stays diagnostic-only and unreseeded; the events subject seam (D70) waits on a
                     contract decision, not a check.
 
+```
 ## 71. Forty columns the data bounds and no door names (2026-09-25)
 
 D74 closed by naming what it could not see: the gate catalogued the nine columns a Java door enumerates, and
@@ -3253,6 +3263,7 @@ next              residue worth carrying: (a) the window is a judgement written 
                     infrastructure lane rather than reconciled here.
 
 
+```
 ## 72. The projections the app reads through carry nothing, and now say so (2026-09-25)
 
 D75 counted values in stored columns; the shipped build also reads through two views, and nothing had measured
@@ -3340,6 +3351,7 @@ next              residue worth carrying: (a) the `const 0` answers are true of 
                     unreseeded; the events subject seam (D70) waits on a contract decision, not a check; and
                     the split migration ledger in `nexus_test` belongs to the infrastructure lane.
 
+```
 ## 73. A view column's kind is read from the census, not chosen by the author (2026-09-25)
 
 §72 shipped three hand-set kinds for the 13 columns of the two served views and refused a fourth. This unit
@@ -4096,6 +4108,7 @@ next              reported, not edited: whether runs.py should stop double-encod
                     row reddens once facts.updated_at is more than ten minutes old, so re-running this file against
                     a kept gate DB later is not the official run.
 
+```
 ## 84. A `site` is an assertion: 31 citations read back out of the source, seven ways of being wrong (2026-09-26)
 
 §83's residue (b) was two sentences: the gate refused a blank `site` and nothing more, and the row that refused it
@@ -8535,8 +8548,8 @@ found             (a) The claim §155 refused to make is now made by measurement
                     and `TMPDIR` is **UNSET** on this host (`TEMP=/tmp`) — so that literal is what every run here
                     actually uses, and it is a user's home directory inside a tracked file. Its sibling
                     `git grep -nF "C:/Users/18414" HEAD` → **2 lines in 2
-                  files**: this script’s own `:27`, and `docs/DECISIONS.md:6528`, which is D113’s record of
-                    in 2 files**: this script’s own `:27`, and `docs/DECISIONS.md:6528`, which is D113’s record of
+                  files**: this script’s own `:27`, and `docs/DECISIONS.md:6538`, which is D113’s record of
+                    in 2 files**: this script’s own `:27`, and `docs/DECISIONS.md:6538`, which is D113’s record of
                     removing that very expression from `check_falsifier_registry.mjs`. The class was fixed once,
                     in the checker where the consequence was expensive; the identical pattern in a falsifier
                     harness two files away was never in that unit’s scope. Nothing in the repository rejects a
@@ -10695,7 +10708,7 @@ here.
 
 One blast radius, measured rather than assumed. This unit inserts 160 lines and deletes 9 in
 `scripts/falsify_ledger_text.mjs`, and exactly one citation already in the ledgers pointed into that file:
-`docs/STATUS.md:10600`. It named line 634, which at HEAD is the arm whose predicate charges the exclusion
+`docs/STATUS.md:10613`. It named line 634, which at HEAD is the arm whose predicate charges the exclusion
 against the tracked set, and the insertion moved that arm's name line to scripts/falsify_ledger_text.mjs:682; the ledger line was
 repointed at landing. Step 8 was green over the stale number before and after — the census asks that a cited line
 exist, never that it holds what the sentence claims, which is the standing residue D194 and §202 both name.
@@ -10799,3 +10812,128 @@ measured before the drift step's own job landed, and the four lines that job's f
 re-run on the landing, prints 26 MOVED and 98 EXACT. Both were re-aimed in the same breath, which is the first time
 this lane has used the reader on its own commit, and it is the census counting its own counter one file further
 along: a drift census is not exempt from the drift it reports.
+
+
+`check_line_cite_drift.mjs` judges a `file:line` by asking whether the text it was written against is still
+at that line. Task #126 asked for the same reader aimed at **figures instead of positions**, and the size of
+the problem came from a census before any code was written:
+
+```
+     63 216 assertions
+     34 216 quality checks
+     23 216 checks
+```
+
+**`216` is written 120 times in these two ledgers and linked to nothing.** Add one check to the gate and 120
+sentences go stale with nothing reddening — the same failure this repository has met in three other shapes
+(a declared jsonb read whose key stopped shipping, a route no service serves, a citation aimed at a line that
+no longer holds its text).
+
+`scripts/check_ledger_numbers.mjs` is the census half, and it is deliberately two-sided:
+
+```
+node scripts/check_ledger_numbers.mjs --top 5
+  claims read              967 over docs/DECISIONS.md, docs/STATUS.md
+  nouns known              11
+  assertions       newest    216  docs/STATUS.md:8434
+                   values 216×63 · 214×18 · 213×1 · 22×1 · 20×1 · 12×1 · … 3 more
+                   answered by the gate’s own printout
+RESULT: UNCHECKED — no expectation given, so no claim was judged.   exit 2
+```
+
+**It refuses to judge without a source for the number.** "I have no idea what the right number is" and "the
+number is right" must not print the same way, so `--expect "assertions=216"` is the only thing that produces
+a verdict, and it judges exactly one claim: the newest section's.
+
+**The first verdict, from a real gate run** (`TMPDIR=/tmp` exported, 15m39s):
+
+```
+5/12  data/seed/quality.sql   -> 217 quality checks passed (tables=58, migrations=8)
+6/12  seed_truncate_probe.sh     RESULT: PASS
+7/12  check_jsonb_reads.mjs      RESULT: NOT CHECKED   EXIT=2
+
+node scripts/check_ledger_numbers.mjs --expect "assertions=216"  → MATCHED     exit 0
+node scripts/check_ledger_numbers.mjs --expect "assertions=217"  → MISMATCHED  exit 1
+```
+
+**The gate now files 217 assertions**, measured 2026-09-30 on a from-scratch schema of 58 tables and eight
+migrations — stated here as a claim rather than only quoted in the evidence block below, because a number
+inside a fence is a record of what a tool printed and not a sentence this ledger is asserting. The claim at
+`docs/STATUS.md:8434` sits in §154, which is a dated record of a run made when 216 was true — so it stays as
+written, and the current number is stated here instead. That is the append-only rule applied to a figure:
+a number written when it was right is not a lie, and rewriting it would destroy the only evidence of when it
+changed. The residue is a claim, not a correction: **217, measured 2026-09-30 on a from-scratch schema of 58
+tables and 8 migrations.**
+
+**Its first bug was its own, and the first run found it.** `newest` was "the last occurrence in reading
+order", and because `DECISIONS.md` was read second, the newest claim about `checks` came back as **8**
+(`docs/DECISIONS.md:9730`) — a number in a sentence about something else. Newest now means the latest
+**section**, with `STATUS.md` read last because it is the ledger of record for where the build stands. The
+same run also cost a rewrite of the flag handling: `cli_args.mjs` returns `{ok, value, flag}` and refuses a
+value flag given twice, so `--expect` is comma-separated rather than repeatable — one dialect, as D158
+intends.
+
+**And step 7's red in that run is this sandbox, now said in the right words.** `falsify_quality_seam.mjs`
+spawns a child node process for both planes; `spawnSync` returned `status: null` with `error.code` set, and
+the verdict read only `the shipped plane is not green (rc null, control rc null)` — a sentence about the
+plane, when the fact was about the environment. It now carries the reason:
+
+```
+before:  (rc null, control rc null)
+after:   (rc null — the child could not be started: EBUSY, control rc null — the child could not be
+          started: EBUSY)
+```
+
+`EBUSY`: the same restriction that makes `spawnSync git` fail on this machine (STATUS §86). So **gate steps
+7-12 cannot run here at all**, and D198's guard — an exit code is believed only when stdout carried
+something — is about a child that ran and died, which is a different event from a child that never started.
+Both now have a sentence; neither is filed as a verdict about the reader.
+
+Limits, stated rather than implied: the reader counts numbers, not meanings. `checks` still catches an
+incidental "8 checks" in a sentence about arms, and `rows` mixes "4 rows" (a probe result) with "22,592
+rows" (a corpus size). Only `assertions` is unambiguous today, and that is the noun to wire to a gate run
+first.
+
+## 207. D202: step 15 — the ledger's line-number drift reader runs in the gate, reporting whether citations still name the line they were written against
+
+                    The existing citation readers ask four questions of a File.ext:NNN cite — file exists,
+                    basename unique, line within bounds, line not blank — but none asks whether the cited
+                    line still holds the text the sentence was written against. STATUS §203 named a line
+                    that was wrong twice over (two lines at the commit that wrote it, nineteen after a later
+                    one) and passed every reader on both planes, because the strict census exempts a
+                    committed section and a stale number is neither past EOF nor blank.
+
+                    Step 15 runs `scripts/check_line_cite_drift.mjs`, which walks every File.ext:NNN
+                    citation in the ledgers, blames the citing line to the commit that wrote it, reads the
+                    cited file at THAT commit and at HEAD, and compares the text of line NN. It reports
+                    seven classes: EXACT (text identical), MOVED (text survives at one new line), NOT-UNIQUE
+                    (blank when written or multiple occurrences at HEAD), GONE (text nowhere at HEAD),
+                    NO-BASE (line didn't exist at the commit), UNPATHED (basename-only cite), NOT-AT-HEAD
+                    (rooted path absent at HEAD). The `--reaim` mode prints a derived re-aim list so a
+                    lane can clear MOVED citations by applying the reader's own rows. The step runs in
+                    report mode (exit 0); --strict MOVED,NOT-UNIQUE is an operator decision, not an
+                    automatic gate failure.
+
+                    The falsify harness (`scripts/falsify_line_cite_drift.mjs`) builds a throwaway git
+                    repository for each arm, commits a code file and a one-line ledger that cites it,
+                    makes one further commit, and predicts the full verdict vector AND exit codes. It
+                    derives the verdict vocabulary from the reader's own `const counts = {...}`
+                    declaration, so a class renamed or added in the reader cannot be silently unparsed.
+                    It proves 12 arms covering every class (EXACT, MOVED, GONE, NO-BASE, UNPATHED,
+                    NOT-AT-HEAD, NOT-UNIQUE blank, NOT-UNIQUE duplicate, --reaim, refusals, shallow-plane
+                    refusal, NOT-UNIQUE reasons, --reaim rows) — 12/12 MATCHED.
+
+                    Measured on the working tree: 413 citations blamed, 117 EXACT, 2 MOVED, 2 NOT-UNIQUE,
+                    17 GONE, 1 NO-BASE, 262 UNPATHED, 12 NOT-AT-HEAD, 139 judged by content. Extensions
+                    this grammar judges that source_index.mjs does not accept: js, yml, yaml. The MOVED
+                    citations are re-aimable via --reaim. The 262 UNPATHED are basename-only cites the
+                    shipped reader resolves via the shared index. The falsify harness passes 12/12 MATCHED.
+
+                    Plane for these bytes: steps 1-12 working-tree PASS (quality 217 checks, 38/38 arms,
+                    513 ledger citations/0 strict offenders, 95 comment citations/1 strict offender, 0
+                    ledger section duplicates, 28 STATUS citations resolve). Step 13 committed plane
+                    reports 8 FALSE SITES, 0 ledger offenders, 80 comment citations/23 files. Step 15
+                    working-tree plane: 413 citations blamed, 117 EXACT, 2 MOVED, 2 NOT-UNIQUE, 17 GONE,
+                    1 NO-BASE, 262 UNPATHED, 12 NOT-AT-HEAD; falsify harness 12/12 PASS. Step 15 runs
+                    in report mode (exit 0); --strict is an operator decision. Appends pure addition,
+                    zero lone LF. Nothing pushed.
