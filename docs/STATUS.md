@@ -10407,7 +10407,7 @@ was a finished run. The guard now reads a terminal sentinel that also declares t
 (`scripts/falsify_quality_seam.mjs:261`, reader `scripts/check_jsonb_reads.mjs:902`), and a run whose declared
 code the process does not take is a crash, not a verdict. The `expectCrash` flag is policed both ways: an arm that
 declares a death over a run that finished reddens through the same predicate the loop uses
-(`scripts/falsify_quality_seam.mjs:456-458`).
+(`scripts/falsify_quality_seam.mjs:581-583`).
 
 **(c) The `--quality` seam refuses instead of dying.** After D159 made a mistyped flag value a legal request, a
 path with no file behind it and a path that is a directory both reached `readFileSync` and ended in `node:fs`
@@ -10459,10 +10459,10 @@ reports its LAST command unless the shell holds it. `scripts/db_gate_fresh.sh:51
 own pipes together, and D150/D151’s proof that step 11 can stop the run is a proof about that one line; GitHub
 Actions does not hold them, and its documented default for a `run:` step on Linux is `bash -e {0}`
 (workflow-syntax reference, the shell table: unspecified -> `bash -e {0}`; `shell: bash` -> `bash --noprofile
---norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:215-257)
+--norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:224-254)
 so that the report is an artifact, and none of them declared a shell, so none of them could fail. Measured in a
 shell rather than argued: `false | tee /dev/null` exits 0 under `bash -e` and 1 under `bash -eo pipefail`. All three
-declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:200-205), and the census prints
+declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:200), and the census prints
 `7 step(s) pipe a checker into tee` with 0 UNPROTECTED.
 (C) TWO COUNTS IN THIS UNIT’S OWN PROSE WERE WRONG, AND RUNNING A FILE CORRECTED BOTH. The note written above the
 piped steps said three steps "carried Hard-fail in their own comments". One of the three does; one of the other two
@@ -11793,3 +11793,42 @@ Readings on this plane, before the landing: the census prints EXACT 129 of 147 w
 exits 0 with 0 strict offenders; the section reader reports both ledgers at equal HEAD and disk counts with
 missing 0 and duplicate numbers 0; the section-citation reader exits 0 PASS. STATUS stays CRLF throughout, four
 in-place edits and one append, zero lone LF.
+
+## 230. Three of the four range citations were stale, the fourth was not, and the difference is readable only from the files (D227)
+
+The previous section left four range citations named as still pointing at lines that do not hold what their
+sentences describe, unverifiable by the drift reader because it prints one number per row while a range site has
+two endpoints. Reading each site's own sentence next to the target file at HEAD turns three of them into repairs
+and the fourth into an exoneration, which is the part worth recording: the row that said the fourth was drifting
+was the neighbour-blame artifact, not a finding.
+
+The fourth site cites the gate file's two spans for a sentence about removals. Its first span begins on the
+comment that says the leg used to carry the environment prefix in front of the harness, and its second ends on
+the invocation line the same sentence names. Both endpoints occur once. The sentence and the file agree, so the
+citation was correct as written and the reader's derived number for it came from a different sentence's writer.
+
+The first site cites the quality-seam harness's flag-parser refusal case as a three-line block. At HEAD that case
+begins ten lines further down than the ledger says, and the block that matches the sentence is the name, the
+arguments, and the evidence triple — so the pointer now starts on the case's own name line and runs the three
+lines the sentence describes. The harness is another lane's dirty working copy, and the numbers above are HEAD
+coordinates by policy: the drift reader, the ledger-citation reader's strict mode, and the CI step that runs both
+judge committed bytes, so a working-copy number would be right on this machine and wrong on a clean checkout.
+
+The second site cites the workflow's three tee-piping checker steps as a span that began at a step which is not
+one of the three and ended on a comment. The three are identifiable in the file by the note they carry on their
+shell declaration, so the span now runs from the first of them to the last tee line among them, which is the block
+the sentence counts. The third site cites the note itself as a span; a tail the reader cannot check is a claim it
+cannot protect, so that pointer is now a single line at the note.
+
+Every edit passed a check that the old text occurs exactly once on its own line, and one of them refused on a
+first attempt because the ledger spells its pointer inside a code span and the omitted backticks matched nothing.
+A refusal that writes nothing is the behaviour the repair needed: a partly-applied range edit is how the previous
+lane shipped two backwards spans.
+
+Readings after the three edits and before the landing: the ledger-citation reader exits 0 with 0 strict offenders
+in both modes; the section reader and the section-citation reader both PASS; the drift census prints EXACT 126 of
+147 with MOVED 0, NOT-UNIQUE 0 and NO-BASE 4 — three of those four are the sites edited this unit, NO-BASE for
+exactly the reason the previous section filed: an uncommitted line has no blame author, so it is reached rather
+than judged. The census re-read after the landing is this lane's first act in the next unit, and the tails of
+ranges remain machine-unchecked until either the reader names both endpoints or the sentence-level auditor of the
+open item lands.

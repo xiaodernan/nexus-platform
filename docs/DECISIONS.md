@@ -11814,3 +11814,20 @@ correct.
 Filed as a working rule: read the drift reader only on a plane whose ledger is committed, and audit a re-aim
 against the sentence that carries it. A green step 16 is evidence that no cited line moved since its (possibly
 neighbouring) writer; it is not evidence that the ledger points where it means to.
+
+## D227 — a range citation audited by content: three repairs, one exoneration, and the plane the numbers are stated on
+
+The four range citations the previous unit left open were read from the files rather than from the reader. One was
+never stale: its two spans sit on the comment that records a removal and on the invocation line its sentence
+names, each occurring once, so the drift row that implied otherwise was the neighbour-blame artifact.
+
+Three were repaired. A harness case block now starts on the case's own name line and runs the three lines the
+sentence describes; a workflow span that began on an unrelated step and ended on a comment now runs between the
+first and last of the three steps identified by the note they carry; and a pointer to a note lost its tail, because
+an endpoint no reader can verify is a claim no reader can protect. Numbers are stated on the HEAD plane by policy,
+which is what the strict readers and CI judge — the target file is another lane's dirty working copy, and a
+working-copy number would be right here and wrong on a clean checkout.
+
+Each edit was gated on the old text occurring exactly once on its own line; the first attempt refused because the
+ledger spells that pointer inside a code span, and a refusal that writes nothing is what keeps a range repair from
+half-applying.
