@@ -11786,3 +11786,31 @@ naming a cite-free line refuses.
 Four single citations re-aimed to reader-derived numbers I verified against the target files. The four
 ranges are left: the reader prints only a range's start, and assuming the tail moves by the same delta is
 what produced the backwards spans D220 recorded, so an unverified tail is worse than an open row.
+## D226 — the drift reader credits the re-aims it lands, so a green strict pass proves a number moved, not that it is right
+
+Step 16 now exits 0 — MOVED 0 and NOT-UNIQUE 0 across 147 judged citations — which finally lets a live gate drive
+reach the step that derives its expectations from its own measurement and the step that counts its own steps. The
+green needed a second reading, because it did not come from the repairs this lane filed.
+
+Two properties, both measured on a scratch plane outside the repository with predictions written first, four arms
+to four matches. First, the reader takes ledger text from HEAD and ledger blame from the working file: on a dirty
+ledger the writer looked up for a citation is the writer of whichever sentence sits at that number on disk, so an
+uncommitted line anywhere above shifts every verdict below it. A stale citation became NO-BASE — attributed to the
+all-zero commit — when a line was inserted above it without being committed, and became MOVED again when that
+insertion was committed, with the target file never touched in either arm.
+
+Second, and this is what made four wrong citations look certified: committing a citing line makes that commit its
+blame author, and the reader then compares the cited line at the author commit with the cited line at the same
+number at HEAD. Those are the same bytes. A re-aim is therefore credited as EXACT by the commit that lands it,
+whatever number it carries, and the reader cannot see its own wrong repair.
+
+The consequence was found by auditing this lane's own landed sites rather than the ledger's general population:
+two of the four single citations moved last unit landed on comment prose instead of the `isCitation` declaration
+and the last-segment split their sentences name, and two more name the gate's census assignment while their
+sentences describe the gate's in-worktree reader leg. Four repairs, each gated on the old text occurring exactly
+once on its own line, with the new numbers read off the target files first. The plants-block citations were
+correct.
+
+Filed as a working rule: read the drift reader only on a plane whose ledger is committed, and audit a re-aim
+against the sentence that carries it. A green step 16 is evidence that no cited line moved since its (possibly
+neighbouring) writer; it is not evidence that the ledger points where it means to.

@@ -10131,7 +10131,7 @@ print 41 `FILE NOT FOUND`. Thirteen untracked names carry the difference — the
 sites), one line of an admin console test (twelve, one per STATUS section in the forties and fifties), the seo
 repository, the order service, the AI runs module and the growth view (three each), six more for the remainder.
 Step 7 moves the same way (11 false sites against 8) and step 9 with it (FAIL on 75 citations across 20 files
-against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:403` is the fixed leg: `cd "$WT"` and no
+against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:441` is the fixed leg: `cd "$WT"` and no
 knob, so the reader's `process.cwd()`-derived index — `scripts/check_ledger_citations.mjs:72` — lands in the
 committed tree with its ledgers. 13b prints `plane reconciliation knob leg 77 / 0 — in-worktree leg 65 / 41`
 because a step whose whole point is the difference should not ask the reader to trust a comment about it. The
@@ -10161,7 +10161,7 @@ found in the arm's own label; the other runs the identical predicate over a copy
 another lane cites a line of the seo controller that holds nothing, judged by the default-plane control arm because
 D162's rule fires on the section a tree is writing. Held: `check_jsonb_reads.mjs, check_ledger_citations.mjs,
 check_comment_citations.mjs` three of three, and the mutant copy red as predicted. Plane unchanged from D188's
-measurement — `scripts/db_gate_fresh.sh:403` is the leg, and the reconciliation line still prints knob leg 77 / 0
+measurement — `scripts/db_gate_fresh.sh:441` is the leg, and the reconciliation line still prints knob leg 77 / 0
 against in-worktree 65 / 41. Rows stay uncommitted with D188's for the same reason: the disk holds nine DECISIONS
 and eleven STATUS sections from lanes whose sources are untracked, and committing the shared ledgers now would
 move those forty-one false cites onto the committed plane. Appends pure addition, zero lone LF. Nothing pushed.
@@ -10615,14 +10615,14 @@ them. D196's residue — "nothing charges the write" — is answered by `scripts
 which keeps out of the exclusion any file that turns out to be tracked, so the name cannot become a hiding
 place for a first-party claim.
 
-The bigger one was found by arming the smaller. `isCitation` (`scripts/check_ledger_citations.mjs:578`) asked
+The bigger one was found by arming the smaller. `isCitation` (`scripts/check_ledger_citations.mjs:404`) asked
 its bare-dotfile rule about names that also carry a slash, and that rule consults `BY_BASENAME`, which is
 keyed on basenames and never on paths. It cannot hold one, so every citation whose path begins with a dot
 directory was dropped before reaching `resolve()` — not judged, not reported, invisible in the counts because
 a dropped token is still a token. Ten such tokens sit in the two ledgers at this commit: four to
 `.github/workflows/ci.yml` and six to `./.gitignore`, the root-relative form the resolver has a branch for and
 the CI form the arms cite. None had been judged by any run since D88 wrote the classifier. The path clause is
-now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:583`), so `./.gitignore:21`
+now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:409`), so `./.gitignore:21`
 is a citation and `some/dir/notes` stays prose.
 
 Both halves were measured rather than argued. The ten-token count came out of this file's own tokenizer and
@@ -11738,3 +11738,58 @@ for.
 Readings: STATUS 11691 lines, every one CRLF-terminated after six in-place edits, zero lone LF; the census
 prints EXACT 113 of 147 on this plane with MOVED 8, NOT-UNIQUE 2, NO-BASE 7, GONE 17, UNPATHED 262,
 NOT-AT-HEAD 4, AMBIGUOUS 0.
+## 229. The drift reader credits its own re-aims, so a green step 16 was not the clearing it looked like (D226)
+
+Step 16 exits 0 on this plane: RESULT: PASS on 147 judged citations, MOVED 0, NOT-UNIQUE 0, EXACT 129. That
+reaches gate steps 17 and 18 in a live drive for the first time, since the strict failure stopped the run there
+under pipefail. The green is not, however, the clearing the previous section predicted, and the reason is a
+property of the reader rather than of the ledger.
+
+The puzzle was this lane's own: eight MOVED rows were filed, four single citations were repaired, four range
+citations were deliberately left alone, and then MOVED printed zero anyway. Nothing repaired the ranges, and the
+rows did not clear — they stopped being judged as what they were. One of the four still cites a range beginning
+at line 456 of the quality-seam harness, which today holds an expectCrash guard, while the sentence around it
+names the flag-parser refusal case — a line nowhere near 456 on either plane (581 at HEAD, 591 in the working
+copy, the harness being dirty); the reader cannot see this because its derived number came from a neighbouring
+sentence's writer, and its EXACT test only asks whether the line at that number changed between that writer
+and HEAD.
+
+A four-arm probe on a scratch plane outside the repository, with the predictions written first, gives the
+mechanism, and all four arms match. With the ledger clean, a citation whose numbered line has not moved reads
+EXACT. With the target file gaining a committed line above the cited text, the same citation reads MOVED one.
+Then one line is inserted into the ledger above the citing line and NOT committed, leaving the target untouched:
+the verdict becomes NO-BASE, and the row says the writer is the all-zero commit. The citation is still stale and
+still unmoved, but its verdict was decided by a neighbouring sentence's blame. Commit exactly that insertion and
+MOVED one returns.
+
+The reader takes the ledger's *text* from HEAD and its *writer map* from blame on the working file. Those are two
+coordinate systems, and any uncommitted line above a citation shifts one of them by that many lines, so the row's
+"written text" belongs to whatever sentence happens to sit at that number on disk. The previous section's third
+finding — site numbers disagreeing with the disk by one line — was the symptom of this, observed but not
+explained.
+
+The second half is the one that costs this lane work. Editing a citing line makes the new commit that line's
+blame author, and the reader then compares the cited line at that commit with the cited line at the same number
+at HEAD — the same revision, seen twice. Any number, right or wrong, is equal to itself, so a re-aim is credited
+as EXACT by the very commit that lands it, and a wrong re-aim is certified by the check that was supposed to
+catch it. That is why MOVED printed zero here while four citations stayed wrong, and it is why the eight rows read
+on a dirty plane were never trustworthy about which sentence they belonged to.
+
+An audit of the six sites this lane landed — four single citations and two plants-block citations — printed the
+site's own sentence next to the line each citation now names. Two were wrong: the citations that were moved off
+the ledger-citation checker's `isCitation` declaration and its last-segment split now name two lines of comment
+prose inside the paragraph above them, because the reader's derived numbers were computed from the neighbour's
+blame. Two more named the gate's step-7 census assignment while the sentences around them describe the gate's
+in-worktree leg of the ledger-citation reader. All four are repaired in this landing, each through a check that
+the old text occurs exactly once on its own line, and the new numbers were read off the target files before
+writing: the declaration, the segment split, and the leg line. The two plants citations were correct as landed.
+
+The rule this unit files for itself: the drift reader is only read on a plane whose ledger is committed, and a
+re-aim is audited against the sentence that carries it, never against the reader that proposed it. The reader
+cannot falsify its own credit.
+
+Readings on this plane, before the landing: the census prints EXACT 129 of 147 with MOVED 0, NOT-UNIQUE 0, GONE
+17, NO-BASE 1, UNPATHED 262, NOT-AT-HEAD 4, AMBIGUOUS 0, and its strict pass exits 0; the ledger-citation reader
+exits 0 with 0 strict offenders; the section reader reports both ledgers at equal HEAD and disk counts with
+missing 0 and duplicate numbers 0; the section-citation reader exits 0 PASS. STATUS stays CRLF throughout, four
+in-place edits and one append, zero lone LF.
