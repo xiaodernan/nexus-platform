@@ -11567,3 +11567,75 @@ Two consequences recorded here because the gate said them, not because I inferre
    claim being made, rather than the duplicated arithmetic the sentence paraphrases. That is a sentence
    rewrite in this lane, not a reader change, and it is the next unit.
 
+## 224. the spawn-failure class, censused: six tools die without a verdict, and the pattern is one try/catch
+
+`execFileSync` and `spawnSync` kept producing the same failure in three different costumes, and each costume
+was diagnosed separately: `rc null` for both planes of `scripts/falsify_quality_seam.mjs`, a misleading
+`exit 1` from `scripts/check_comment_citations.mjs` (because `err.status ?? 1` turns a `null` into a
+plausible number), and an uncaught `spawnSync git EBUSY` that stopped `scripts/falsify_line_cite_drift.mjs`
+with no RESULT line at all. So the class was censused rather than met a fourth time.
+
+Every tool in `scripts/` that spawns a child, run on this machine and classified by whether it printed a
+`RESULT:` line:
+
+```
+rc 0, verdict printed   check_citation_supports_sentence (CENSUS) · falsify_flag_dialect (PASS)
+                        check_line_cite_drift (REPORT 127/147)
+rc 2, refusal stated    check_ledger_sections · check_status_citations · falsify_reader_reachability
+                        check_falsifier_registry (no --db) · falsify_quality_seam (EBUSY)
+                        check_comment_citations (EBUSY) · check_ledger_citations
+rc 1, FAIL stated       falsify_comment_plane (57 arms, 0 held) · falsify_untracked_cites
+                        falsify_status_citations
+rc 1, NO verdict line   citation_blank_census · citation_blank_sites · falsify_ledger_sections
+                        falsify_ledger_text · falsify_line_cite_drift · falsify_plane_reads
+rc 127, no verdict      falsify_console_a11y
+```
+
+**Six tools die without saying anything**, and every one does it the same way: a bare
+`execFileSync('git'|'node'|'bash', ...)` with no guard at the call site. They are named rather than fixed
+here, because each belongs to a lane still writing it, and a census that lists them is the queue.
+
+**One is fixed, as the shape to copy.** `falsify_line_cite_drift.mjs` builds a real throwaway repository per
+arm, so a machine that cannot start git cannot run any of them; its `g()` now catches the spawn and says so
+instead of throwing past a top-level block that cannot catch it:
+
+```
+before:  an uncaught `spawnSync git EBUSY`, exit 1, no RESULT line
+after:   RESULT: NOT CHECKED — this harness drives real throwaway repositories, and git could not be
+         started: EBUSY.
+           No arm below was run. A refusal is not a failure, and the two must not share a verdict line.
+         exit 2
+```
+
+The reason is read from `err.code` **only when `err.status == null`** — a spawn failure sets `status` to
+`null`, not `undefined`, so a guard written `=== undefined` does not fire, and `?? 1` then turns that `null`
+into a 1 that reads like a reader which ran and found something. That is the third distinct JavaScript
+subtlety behind one class, and the class is one sentence:
+
+> **A process that never started and a process that ran and found nothing must not print the same line.**
+
+Not decided here: the three tools that *do* state a FAIL at `rc 1` are not obviously the same event.
+`falsify_comment_plane` reports 57 arms with 0 held, and whether every one of those is this environment or
+some of them are real is a question this census asks and does not answer.
+
+## 225. D222: full gate re-driven on Docker recovery — steps 1 through 8 green, step 9 red on the same single row
+
+                    The daemon is back, so the full gate ran on eaeb774: steps 1 through 5 file 217 checks
+                    with 0 red on 58 tables and 8 migrations; step 6 PASS; step 7 holds 38 of 38 arms with no
+                    false sites; step 8 harness and reader both PASS in-gate. Step 9 holds 17 of 17 harness
+                    arms, then the reader FAILS on 96 citations across 32 files with the same single
+                    blank-line offender D205 recorded — line 88 of the DATABASE doc, empty on both planes,
+                    cited as an example by line 98 of the untracked sentence-support probe. The gate exits 1
+                    there, so steps 10 through 17 are not reached in-gate on this run.
+
+                    Re-verified standalone: step 10 PASS with 176 against 176 and 189 against 189, missing 0,
+                    duplicates 0; step 12’s only BADs are the same other-lane `STATUS §224`; step 15 reports EXACT 117 with MOVED 10 and a
+                    10-row reaim list; step 17 matches all three newest claims; the line-drift falsifier
+                    holds 12 of 12. The ledger-text falsifier run directly holds 53 of 56 with the same 3
+                    missed, and the attempts-3 arm carrying this lane's fix is among the held — the misses
+                    stay the shared-dirty rewrite's new arms, recorded here and not touched.
+
+                    The D205 finding reproduces on a fresh database: the step 9 red is stable across runs
+                    and is the only thing between this tree and a green gate. The fix belongs to the
+                    untracked file's owner; nothing here edits it. Appends pure addition, zero lone LF.
+                    Nothing pushed.
