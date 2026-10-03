@@ -11639,3 +11639,24 @@ some of them are real is a question this census asks and does not answer.
                     and is the only thing between this tree and a green gate. The fix belongs to the
                     untracked file's owner; nothing here edits it. Appends pure addition, zero lone LF.
                     Nothing pushed.
+
+## 226. D223: step 9 green by its owner's placeholder fix; the gate stops at step 8's harness on two gate-text pins
+
+                    Step 9 reports 92 citations across 31 files with 0 strict offenders, exit 0. The probe
+                    file is still untracked and the cited line is still empty — the example now cites the
+                    placeholder number instead of the concrete one, exactly the fix D205 said belonged to
+                    its owner. Nothing here touched either file.
+
+                    The full gate was re-driven: steps 1 through 5 file 217 checks with 0 red, step 6 PASS,
+                    step 7 holds 38 of 38, the step 8 reader PASSes but its harness FAILs 2 arms, so the run
+                    exits 1 at step 8. Both arms pin gate-script headers by their old totals and both lookups
+                    now return empty, because the gate numbers its steps out of 18 after another lane's
+                    self-consistency step landed. Recorded here, not touched — the harness file is
+                    shared-dirty in this tree.
+
+                    Since D222: the gate is 18 steps and this lane's three headers already read out of 18;
+                    step 12 is green again at 39 of 39; step 15 reports EXACT 127 with MOVED down to 0;
+                    step 10 lists only the two new sections as uncommitted, missing 0, duplicates 0; step 17 matches all three newest claims; the
+                    line-drift falsifier holds 12 of 12. New open item, named not diagnosed: the blank-line
+                    census walks 16 cites where step 8 prints 14, exit 1 — filed as the next unit's starting
+                    point, with no verdict attached. Appends pure addition, zero lone LF. Nothing pushed.
