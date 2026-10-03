@@ -11831,3 +11831,25 @@ working-copy number would be right here and wrong on a clean checkout.
 Each edit was gated on the old text occurring exactly once on its own line; the first attempt refused because the
 ledger spells that pointer inside a code span, and a refusal that writes nothing is what keeps a range repair from
 half-applying.
+## D228 — a blame-free citation reader: one demonstrated sensitivity, two demonstrated blind spots, and a count left open
+
+The drift reader's two properties (worktree-keyed blame against HEAD-keyed text; the landing commit being its own
+baseline) cannot be fixed in place because both come from blame being the notion of "written against". So the fix
+is a different question, not a patched question: does the line a citation names hold a token the sentence around
+it put in backticks. That test is plane-relative and blameless, so a wrong re-aim is judged exactly as harshly on
+the commit that lands it as on any other, and it can be run on any ref — which is what let this unit compare the
+pre-repair and post-repair planes for the same site and watch the verdict move with the number.
+
+Numbers over the two ledgers at one ref: 545 endpoints, 370 unresolvable paths, 98 without a referent token, 1
+past EOF, 76 judged into 16 online / 11 near / 49 far / 0 absent. The 49 are mostly the reader's own grammar
+accepting prose words as tokens and a block-naming citation reading as a miss, so this stays a scratch instrument
+rather than a gate step, and it is honest about the cost: strict tokens shrink the judged population.
+
+Two limits stated instead of tuned away. A line whose only content is the path gives the reader nothing to test,
+so a stale and a repaired citation both pass there. And the range endpoint the reader flagged was found by hand
+to be a real tee line, so that row is a false positive of the token rule, not of the number.
+
+The finding left open on purpose: a ledger sentence cites a workflow range and claims three tee-piped steps, while
+the committed workflow holds ten tee commands, nine of them inside the region that comment introduces. The next
+unit decides which half is stale
+by reading the original finding; a number is not edited to make a reader quiet.

@@ -11832,3 +11832,44 @@ exactly the reason the previous section filed: an uncommitted line has no blame 
 than judged. The census re-read after the landing is this lane's first act in the next unit, and the tails of
 ranges remain machine-unchecked until either the reader names both endpoints or the sentence-level auditor of the
 open item lands.
+## 231. A second citation reader that never uses blame, and what its first measurement said (D228)
+
+The forward correction owed by the previous unit, filed here rather than amended: that unit's closing sentence
+described the pre-landing census (four cites unjudged because their writer was the all-zero sha) while the
+reading taken after its own commit was one unjudged and one hundred twenty-nine exact. Both numbers were true,
+of different planes, and the sentence named neither. It is corrected by stating the plane every time from now on.
+
+Then the durable thing this unit built: a reader that asks a different question of the same citations, because
+the question the drift reader asks cannot be asked of a re-aim. It takes the tokens a ledger sentence puts in
+backticks next to a citation, calls them the referent, and asks whether the cited line holds one of them. No
+blame, no writer commit, no self-credit: the commit that lands a wrong re-aim is judged on the same terms as a
+year-old one. It also reads both ends of a range and every continuation, which is the endpoint the other reader
+never prints.
+
+Measured on the committed plane, over the two ledgers: five hundred forty-five citation endpoints, of which three
+hundred seventy name a file through a path this reader will not resolve — a bare basename, or a package path the
+repository spells elsewhere — the same class the shipped reader declines, ninety-eight sit in lines whose
+neighbours carry no code token, one is past EOF, and
+seventy-six are judged. Of those: sixteen land on the referent's line, eleven within three lines, forty-nine do
+not, zero are absent from the file entirely.
+
+The forty-nine are not forty-nine findings, and the run says why: the token grammar accepts words that are not
+code — the last step of the range check turned on the token 'this' — and a citation that names a block rather
+than a line reads as a miss by construction. So this reader is a scratch instrument and not a gate step, and the
+judged population is far below the drift reader's because being strict about tokens costs population.
+
+Where it did earn its keep is the pair of known answers. The range repaired by the last unit reads stale at the
+old plane on BOTH endpoints and matched at the new plane on the start; that is a citation reader whose verdict
+moves with the number instead of with the commit. The other repaired pair reads matched at both planes, which is
+a blind spot: those lines hold nothing but the path, so the reader has no referent to test and passes either
+way. It is recorded as a limit, not fixed by loosening the token rule.
+
+One new finding, named and deliberately not repaired. The sentence that cites the workflow range claims three
+steps pipe a checker into tee. At the committed plane the file holds ten tee commands — thirteen lines mention
+the word, three of them the comment that introduced the region — and nine of the commands sit inside that region.
+So either the count in the sentence is stale or the range does not cover the
+steps the sentence means; deciding which needs the original finding re-read, and rewriting a number without
+reading it is the mistake this lane has now paid for twice. Open on purpose.
+
+Readings on this plane: the drift census unchanged at one hundred twenty-nine exact of one hundred forty-seven
+judged, zero moved, zero non-unique; nothing in the ledgers edited in place; the gate untouched; nothing pushed.
