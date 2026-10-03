@@ -497,7 +497,7 @@ Three changes, each covering a distinct way to be wrong:
    base paths accepted as strict prefixes and *extensions* (`/x/{id}/reindex`) still reported.
 
 Current ledger: **101 routes parsed · 64 served · 29 client-only · 0 missing · 0 undocumented**, over a 270-file
-corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:202` runs it with `--report`, so
+corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:218` runs it with `--report`, so
 CI stays advisory while the 29 rows are worked off; the split is by owner, not by excuse.
 
 Two of those 30 were true gaps that the old matcher hid, and both became visible rather than passed (that count is
@@ -10459,7 +10459,7 @@ reports its LAST command unless the shell holds it. `scripts/db_gate_fresh.sh:51
 own pipes together, and D150/D151’s proof that step 11 can stop the run is a proof about that one line; GitHub
 Actions does not hold them, and its documented default for a `run:` step on Linux is `bash -e {0}`
 (workflow-syntax reference, the shell table: unspecified -> `bash -e {0}`; `shell: bash` -> `bash --noprofile
---norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:224-254)
+--norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:215-236)
 so that the report is an artifact, and none of them declared a shell, so none of them could fail. Measured in a
 shell rather than argued: `false | tee /dev/null` exits 0 under `bash -e` and 1 under `bash -eo pipefail`. All three
 declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:200), and the census prints
@@ -11873,3 +11873,38 @@ reading it is the mistake this lane has now paid for twice. Open on purpose.
 
 Readings on this plane: the drift census unchanged at one hundred twenty-nine exact of one hundred forty-seven
 judged, zero moved, zero non-unique; nothing in the ledgers edited in place; the gate untouched; nothing pushed.
+## 232. The finding the last unit left open was mine, and reading the defining commit falsified it (D229)
+
+The open item was stated as a count conflict: a ledger sentence cites a workflow range and claims three piped
+steps, while the committed workflow supposedly holds ten of them. It was written down without reading the sentence
+twice, and reading it kills the finding. The three is a claim about the moment of the original defect; the same
+paragraph quotes the current census as its own derived number, seven, so the file already distinguishes the two
+tenses. My ten came from counting every line that mentions the word, three of which are the comment that introduces
+the region, and from treating a checker-piping step and a step writing to the job output as one population.
+Retracted, and the retraction is the point: a number I typed from a grep is a claim about my grep.
+
+What reading the commit that made the claim did find is worse than a stale count, and it is mine. The commit that
+introduced the shell note piped exactly three pre-existing checkers into the artifact writer, and at the committed
+plane those three steps run from line two hundred fifteen to line two hundred thirty-six. The ledger's range said
+two twenty-four to two fifty-four — four piped steps, the last two of which belong to readers written long after
+that finding. And the two twenty-four start was not inherited drift: it is where THIS lane's previous unit moved
+the number, replacing a two fifteen that was right. The referent auditor reported that repair as matched on its
+start, which is the self-credit property arriving by a new route — a re-aim can be certified by a reader that only
+asks whether the new line holds a token, because matching the wrong line is a true statement about the wrong thing.
+
+A second site fell to the same method. An early section cites the workflow's contract-drift step at line two hundred
+two; that line is inside the comment block, and the step that runs the checker in report mode is two eighteen. The
+drift reader has never objected, because a citation into comment prose moves with the file it names, which is exactly
+the exemption its own header warns a gate cannot carry.
+
+Both repairs went through an applier that reads the committed text, requires the pattern to occur once, requires it
+to occur on the predicted line, and writes nothing if any row refuses; two rows, two single matches, two lines
+rewritten, no other byte touched.
+
+Readings on this plane, after the edits: the drift census still judges one hundred forty-seven citations, but the two
+touched sites are now reached rather than judged — while the edit is uncommitted their writer is the all-zero sha — so
+exact one hundred twenty-eight, gone one hundred sixteen, no-base three, and one of those three is the re-aim that took
+a gone row out of the queue. On the landing commit both sites read judged by construction, the self-credit property
+again, which is why the clearing is claimed from the target file and not from the census. The strict pass exits 0; the
+comment-plane reader reports zero strict offenders; the section reader and the section-citation reader both pass; the
+referent auditor keeps publishing its own false-positive count as the reason it is still a scratch instrument.

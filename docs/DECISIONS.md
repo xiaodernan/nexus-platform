@@ -11853,3 +11853,23 @@ The finding left open on purpose: a ledger sentence cites a workflow range and c
 the committed workflow holds ten tee commands, nine of them inside the region that comment introduces. The next
 unit decides which half is stale
 by reading the original finding; a number is not edited to make a reader quiet.
+## D229 — a range is decided by the commit that made the claim, not by the file the claim points at
+
+D228 left a count conflict open and this unit falsified it: the sentence's three is about the moment of the defect
+while the same paragraph quotes the current derived census of seven, so the tension was an artifact of my own grep
+population (every line mentioning the word, including the comment that introduces the region) read without its
+tense. The claim is withdrawn.
+
+Reading the defining commit anyway produced two real defects, both citations this lane had written or blessed. The
+three steps the original finding armed span, at the committed plane, two hundred fifteen to two hundred thirty-six;
+the ledger named two twenty-four to two fifty-four, a span covering four piped steps whose last two belong to
+readers written later — and the start is where the previous unit moved it, overwriting a correct number. A referent
+check certified that move because it only asks whether the new line holds a token, so a wrong re-aim can be
+validated by a reader that matches the wrong line. The general rule: content checks are necessary and not
+sufficient for a citation whose sentence names a set fixed by a past change; the range must be re-derived from the
+commit that made the claim, and the auditor should say which of the two it consulted.
+
+The second site is the comment-prose class again: an early section cites the workflow's report-mode step at a line
+inside the explanatory comment instead of the step itself, a citation no drift reader can object to because the
+comment and the step move together. Both repairs are single-match-gated in-place edits; no other lane's text is
+touched; nothing pushed.
