@@ -11521,3 +11521,49 @@ first.
                     lane s live rewrite; the noun steps still has no expectation aimed at it; and step 17 s
                     three expectations are still typed into the gate instead of read from its own
                     printout. Nothing pushed.
+## 223. The gate stopped typing its own number (D221)
+
+Gate step 17 read a hand-typed expectation: the three nouns were pinned to one literal figure, with a
+comment in the shipped file admitting the wiring was unfinished and naming it "hardcoded to the measured
+values; a future unit may wire the gate's own output directly". Step 5, by contrast, already passed the
+count it had just measured. So the same quantity entered the gate twice — once derived, once typed — and
+only the derived half could notice a change.
+
+Now all three read the count step 5 filed, and the step refuses before judging when that count is not a
+positive integer. The refusal matters: the error path prints the count as a question mark, and a
+derivation reading a question mark would have produced an expectations string that quietly disagreed with
+every ledger sentence while still being called a measurement.
+
+Five arms, predictions written first, all matched:
+
+- count 217 -> exit 0, RESULT: MATCHED, expectations line printed as the three derived nouns;
+- count 216 -> exit 1, RESULT: MISMATCH on all three nouns. This is the arm that proves the derivation
+  governs: the verdict moved because the measurement moved, not because an operator retyped a figure;
+- count empty, count 0, count "?" -> exit 2 each, naming step 17 in the refusal.
+
+One prediction was wrong and the error was mine, not the gate's: the first green arm returned exit 1 with
+RESULT: MATCHED already printed. The slice I sourced into the harness ran past step 17 into step 18 and the
+final summary, where an unbound variable stopped my scratch harness. Tightening the slice to end at the
+reader invocation gave the predicted exit 0. The shipped file was never involved in that red.
+
+Readings after this edit, all on the working copy: step 8 exit 0 (strict offenders 0; 525 citation-shaped
+tokens in 418 sections, 0 offenders; 1 uncommitted target counted not judged); step 9 RESULT: PASS, 92
+comment-plane citations across 31 files; step 10 PASS; step 12 PASS; step 15 RESULT: REPORT, 127 of 147
+citations still naming the line they were written against, strict=none; step 16 RESULT: FAIL, NOT-UNIQUE 2
+of 147; step 17 via the arms above MATCHED, 3 of 3 newest claims.
+
+Two consequences recorded here because the gate said them, not because I inferred them:
+
+1. Step 16 fails, and `set -euo pipefail` at the top of the script means a piped step's verdict does stop
+   the run. So today a real drive dies at step 16 and never reaches step 17 or step 18. The number I just
+   wired is correct but currently unreachable in a live gate, and the two NOT-UNIQUE rows are the gate's
+   hard blocker, not a backlog note.
+2. That sharpens the earlier claim in section 220, which said the class admits no re-aim fix. Counting
+   occurrences in the plants harness: the collateral assignment and the hit-comprehension above it each
+   occur twice in the file (the control block repeats them), which is why a citation written against that
+   text cannot be made unique by pointing at a different copy. But the print row that reports collateral
+   and the missing-loop line beneath it each occur once, and the undeclared guard above them occurs once.
+   So a faithful re-aim exists for at least one of the two rows: name the unique line that carries the
+   claim being made, rather than the duplicated arithmetic the sentence paraphrases. That is a sentence
+   rewrite in this lane, not a reader change, and it is the next unit.
+

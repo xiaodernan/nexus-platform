@@ -528,9 +528,17 @@ step "17/18  scripts/check_ledger_numbers.mjs — the ledger's numeric claims ve
 # This step runs the numbers census with expectations derived from the gate's own output.
 # It prints PASS only when the newest claim for each expected noun matches the measured value.
 command -v node >/dev/null 2>&1 || die "step 17 needs node on PATH"
-# The expectations come from the gate's own output captured in step 5 and step 11.
-# For now, hardcoded to the measured values; a future unit may wire the gate's own output directly.
-EXPECT="quality checks=217,assertions=217,checks=217"
+# The expectations are the count step 5 just filed, not a figure an operator carries across by hand. The
+# ledger's three nouns name one measured quantity — "217 quality checks", "217 assertions", "217 checks" are
+# three spellings of the PASS lines this run counted — so all three read $CHECKS. A literal here would agree
+# with the ledger even when the run disagreed, which is the failure step 5 describes above: "216 assertions"
+# was written 120 times and linked to nothing.
+case "${CHECKS:-}" in
+  ''|*[!0-9]*) die "step 17 refuses: measured check count is not a positive integer ('${CHECKS:-}')" ;;
+esac
+[ "${CHECKS}" -gt 0 ] || die "step 17 refuses: step 5 filed 0 checks, so the derivation would judge an empty measurement"
+EXPECT="quality checks=${CHECKS},assertions=${CHECKS},checks=${CHECKS}"
+printf '    expectations derived from this run: %s\n' "${EXPECT}"
 ( cd "$ROOT" && node scripts/check_ledger_numbers.mjs --expect "${EXPECT}" ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 18. the script counts its own steps

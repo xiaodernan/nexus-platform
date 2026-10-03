@@ -11709,3 +11709,23 @@ half a range and claimed the whole — and the green reading after the fix is pa
 not offered as a bare pass. The row also corrects the D220 commit message, which reported a verdict from a
 reader run that had not been read: the reachability census exits 1 with one pre-existing offender, the
 untracked sentence-support probe invoked by no surface. Nothing pushed.
+
+## D221 — the gate's numeric expectations must come from the run that files them
+
+Step 17 typed its expectations while step 5 derived the same figure from its own count. The typed half
+would keep agreeing with the ledger after the run changed, which is the exact failure mode step 5's
+comment describes (a stale figure written many times and linked to nothing). All three nouns now read the
+count step 5 filed, and a non-integer or zero count refuses instead of judging.
+
+Witnessed by five arms with predictions written first: 217 green MATCHED, 216 red MISMATCH on all three
+nouns (the derivation governs, since only the measurement differed), and empty/0/question-mark each
+refused with exit 2 naming the step. The first green arm's exit 1 was traced to my harness slicing past
+step 17 into step 18 where a variable is unbound; the shipped file was not implicated.
+
+Decision recorded because it changes what is urgent: step 16 fails on two NOT-UNIQUE rows and the script
+runs under pipefail, so a live gate stops there and never reaches steps 17-18. Clearing those two rows is
+therefore the gate's blocker. Section 220's "no re-aim fix exists" claim is corrected by counting
+occurrences: the duplicated arithmetic lines occur twice, but the collateral print row, the missing-loop
+line, and the undeclared guard each occur once — so the honest re-aim is to cite the unique line that
+carries the claim, a sentence rewrite in this lane rather than a reader change.
+
