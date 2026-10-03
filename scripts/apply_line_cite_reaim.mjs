@@ -86,11 +86,17 @@ function main() {
   }
   let refused = 0, applied = 0;
   for (const [site, list] of bySite) {
-    const text = readFileSync(site, 'utf8');
+    // A site is `ledger:line`; only the part before the LAST colon is a path. Reading the whole token as a
+    // path is what crashed the first real run: the selftest calls shiftCitation directly, so this seam was
+    // never reached while the plane held 0 MOVED rows.
+    const sep = site.lastIndexOf(':');
+    const siteFile = site.slice(0, sep);
+    const lnRaw = Number(site.slice(sep + 1));
+    if (!Number.isInteger(lnRaw) || lnRaw < 1) { console.log(`REFUSE ${site} — site has no positive line number`); refused++; continue; }
+    const text = readFileSync(siteFile, 'utf8');
     const eol = text.includes('\r\n') ? '\r\n' : '\n';
     const lines = text.split(eol);
     for (const r of list) {
-      const lnRaw = Number(site.slice(site.lastIndexOf(':') + 1));
       const idx = lnRaw - 1;
       const got = shiftCitation(lines[idx] ?? '', r.file, r.from, r.to);
       if (got.moved === 0) { console.log(`REFUSE ${site} — no citation to ${r.file}:${r.from} on that line, so the row is stale or the line moved`); refused++; continue; }
@@ -98,7 +104,7 @@ function main() {
       applied++;
       console.log(`  ${got.moved === 1 ? 'one' : `${got.moved} endpoints`} moved  ${site}  ${r.file}:${r.from} -> :${r.to}`);
     }
-    if (apply) writeFileSync(site, lines.join(eol), 'utf8');
+    if (apply) writeFileSync(siteFile, lines.join(eol), 'utf8');
   }
   if (refused) { console.log(`RESULT: REFUSED — ${refused} row(s) unmatched, ${applied} applied${apply ? '' : ' (dry run)'}`); return 1; }
   console.log(`RESULT: ${apply ? 'APPLIED' : 'DRY RUN'} — ${applied} site line(s) rewritten, endpoints shifted by each row's own delta`);

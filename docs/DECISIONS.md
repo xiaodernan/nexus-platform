@@ -7103,7 +7103,7 @@ lesson was that an equal total is not the same set; this is the same lesson on a
 moves with the data, so a coverage denominator is a reading of the plane as much as of the file.
 
 **Found (b): the harness polices redness, not existence, so (a) passed it by.** Reading the shipped arithmetic
-(data/seed/falsifier_plants.py:1280-1292): collateral is `reds not in base_reds`, and `base_reds` is the set of
+in the per-arm block (data/seed/falsifier_plants.py:1270-1292): collateral is `reds not in base_reds`, and `base_reds` is the set of
 *red* rows on unmutated data. A name that stops being filed is therefore invisible to every test the drive
 makes — the 213 was printed in the `rows` column and caught by a person reading it, not by the verdict. A drive
 whose arm deletes the table a sweep groups over can report PASS while three assertions leave the plane, and
@@ -11747,3 +11747,42 @@ carries the claim, a sentence rewrite in this lane rather than a reader change.
 **Collateral movement since D222, all measured.** The gate is 18 steps now, and the three headers this lane added already read out of 18 in the committed bytes — the same renumbering work carried them, so there is nothing stale to repair there. Step 12 is green again (39 of 39; the uncommitted section its BADs named has since been committed). Step 15 reports EXACT 127 with MOVED down to 0 from 10; the ten reaim rows D222 printed have no remaining target on this tree — whether they were applied or the tree shifted under them is not established here, only the count. Step 10 lists only the two new sections as uncommitted work, missing 0, duplicates 0. Step 17 matches all three newest claims. The line-drift falsifier holds 12 of 12.
 
 **One new open item, named not diagnosed.** The blank-line census now disagrees with step 8: it walks 16 blank-line cites where step 8 prints 14, exit 1. At D177 the two readers agreed 12 of 12; something committed since added two cites the walk sees and the census does not count, or the reverse. Which reader is right is a counting-rule question for the lane that owns the pair — it is filed here as the next unit's starting point, with the two numbers and the exit code, and no verdict attached. Appends pure addition, zero lone LF. Nothing pushed.
+
+## D224 — A second reader that reconciles with the first must read the target from the same plane the first reads
+
+The blank-line census exists to say "and I agree with step 8", and when it stopped agreeing — 16 vs 14 — the
+disagreement was the census's own predicate, not the text. It read the ledgers from HEAD and the cited files
+from the working copy, so a dirty tree added two blanks the committed plane does not have: the cited line of
+`falsify_ledger_sections.mjs` holds `const ROOT` at HEAD and is empty on this disk, and the CI workflow's
+cited line holds a bash comment at HEAD and is empty on this disk. Each is another lane's uncommitted
+rewrite; neither is a blank on the plane step 8 judges. The rule this unit records: **the pair reads the
+same plane** — ledger and target both from HEAD under the default run, both from the disk under `--worktree`
+— and a target the judged plane does not hold belongs to the reader's UNTRACKED class, where it is counted
+on its own line and never as a blank. That is what removed the two false blanks: an untracked target no
+longer reaches a line read.
+
+Witnessed by the run that was failing: before, the census printed 16 blank-line cites against step 8's 14
+and exited 1; after, it prints 14 against 14 and exits 0, with the untracked class listed once from a
+`git ls-tree` set rather than a failed `git show` per cite (46 of them in the ledgers). The 14 that remain
+are genuinely empty on both planes and stay counted, not judged, per D161's backlog ruling — the gate will
+not redden on them until a section this run is writing cites one. Appends pure addition, zero lone LF.
+Nothing pushed.
+## D225 — re-aims are credited on the committed plane, and an applier's unexercised seam is the one that breaks
+
+Four facts from clearing step 16, the step that currently stops a live drive (MOVED 8 + NOT-UNIQUE 2 under
+pipefail). (1) Section 223's claim that the two NOT-UNIQUE rows are the plants citations is retracted: the
+rows name a controller line that was blank when written and a harness line whose written text was a bare
+closing brace held by thirteen lines; the plants citations are NO-BASE because the lines I edited have no
+blame author yet. The error came from quoting a count I had seen and a site list I remembered. (2) The
+reader judges the ledger's committed bytes: after four re-aims the census printed the same eight rows, so
+the loop is edit, commit, re-measure. (3) The rows' site numbers are HEAD coordinates while the disk has
+shifted, and the applier's per-row guard refused every unmatched row with exit 1 instead of rewriting a
+line it could not identify -- the behaviour D220 was built to have. (4) That applier's row-reading seam
+crashed immediately, because its six-case selftest calls the shift function directly and the plane held
+zero MOVED rows when it landed: main() handed the whole ledger-and-line token to the file reader. Fixed,
+selftest still 6/6, and two probe arms now go through main(): a range row moves its two endpoints, a row
+naming a cite-free line refuses.
+
+Four single citations re-aimed to reader-derived numbers I verified against the target files. The four
+ranges are left: the reader prints only a range's start, and assuming the tail moves by the same delta is
+what produced the backwards spans D220 recorded, so an unverified tail is worse than an open row.

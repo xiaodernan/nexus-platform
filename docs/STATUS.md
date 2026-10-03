@@ -6669,7 +6669,8 @@ found             (a) The assertion plane is data-dependent, which is a second a
                     moved, by three, on an arm nobody had to think about. A coverage denominator quoted
                     without its plane is a reading of the data as much as of the file.
                   (b) The plants harness polices redness, not existence, so (a) passed it by. Collateral is
-                    computed as `reds not in base_reds` (data/seed/falsifier_plants.py:1281) and base_reds is
+                    computed as `reds not in base_reds` inside the per-arm block
+                    (data/seed/falsifier_plants.py:1270-1292) and base_reds is
                     the set of RED rows on unmutated data, so a name that stops being filed matches nothing
                     the drive tests: the 213 sat in the printed `rows` column and only a person reading the
                     table caught it. A drive can report PASS while three assertions leave the plane under it.
@@ -10130,7 +10131,7 @@ print 41 `FILE NOT FOUND`. Thirteen untracked names carry the difference — the
 sites), one line of an admin console test (twelve, one per STATUS section in the forties and fifties), the seo
 repository, the order service, the AI runs module and the growth view (three each), six more for the remainder.
 Step 7 moves the same way (11 false sites against 8) and step 9 with it (FAIL on 75 citations across 20 files
-against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:391` is the fixed leg: `cd "$WT"` and no
+against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:403` is the fixed leg: `cd "$WT"` and no
 knob, so the reader's `process.cwd()`-derived index — `scripts/check_ledger_citations.mjs:72` — lands in the
 committed tree with its ledgers. 13b prints `plane reconciliation knob leg 77 / 0 — in-worktree leg 65 / 41`
 because a step whose whole point is the difference should not ask the reader to trust a comment about it. The
@@ -10160,7 +10161,7 @@ found in the arm's own label; the other runs the identical predicate over a copy
 another lane cites a line of the seo controller that holds nothing, judged by the default-plane control arm because
 D162's rule fires on the section a tree is writing. Held: `check_jsonb_reads.mjs, check_ledger_citations.mjs,
 check_comment_citations.mjs` three of three, and the mutant copy red as predicted. Plane unchanged from D188's
-measurement — `scripts/db_gate_fresh.sh:391` is the leg, and the reconciliation line still prints knob leg 77 / 0
+measurement — `scripts/db_gate_fresh.sh:403` is the leg, and the reconciliation line still prints knob leg 77 / 0
 against in-worktree 65 / 41. Rows stay uncommitted with D188's for the same reason: the disk holds nine DECISIONS
 and eleven STATUS sections from lanes whose sources are untracked, and committing the shared ledgers now would
 move those forty-one false cites onto the committed plane. Appends pure addition, zero lone LF. Nothing pushed.
@@ -10614,14 +10615,14 @@ them. D196's residue — "nothing charges the write" — is answered by `scripts
 which keeps out of the exclusion any file that turns out to be tracked, so the name cannot become a hiding
 place for a first-party claim.
 
-The bigger one was found by arming the smaller. `isCitation` (`scripts/check_ledger_citations.mjs:404`) asked
+The bigger one was found by arming the smaller. `isCitation` (`scripts/check_ledger_citations.mjs:578`) asked
 its bare-dotfile rule about names that also carry a slash, and that rule consults `BY_BASENAME`, which is
 keyed on basenames and never on paths. It cannot hold one, so every citation whose path begins with a dot
 directory was dropped before reaching `resolve()` — not judged, not reported, invisible in the counts because
 a dropped token is still a token. Ten such tokens sit in the two ledgers at this commit: four to
 `.github/workflows/ci.yml` and six to `./.gitignore`, the root-relative form the resolver has a branch for and
 the CI form the arms cite. None had been judged by any run since D88 wrote the classifier. The path clause is
-now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:409`), so `./.gitignore:21`
+now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:583`), so `./.gitignore:21`
 is a citation and `some/dir/notes` stays prose.
 
 Both halves were measured rather than argued. The ten-token count came out of this file's own tokenizer and
@@ -11660,3 +11661,80 @@ some of them are real is a question this census asks and does not answer.
                     line-drift falsifier holds 12 of 12. New open item, named not diagnosed: the blank-line
                     census walks 16 cites where step 8 prints 14, exit 1 — filed as the next unit's starting
                     point, with no verdict attached. Appends pure addition, zero lone LF. Nothing pushed.
+
+## 227. D224: the blank-line census read the wrong plane — the two-cite drift was the census, not step 8
+
+                    The disagreement D223 filed was real and the error was the census's own. Step 8 reads the
+                    cited target from the plane it judges (HEAD in its default mode); the census read the
+                    ledger from HEAD but every cited file from the working copy. A dirty tree therefore
+                    printed blanks the committed text does not have. Measured on one tree and one HEAD: the
+                    walk found 16 blank-line cites, step 8 printed 14, exit 1. All sixteen sites except two
+                    are empty on both planes. The two exceptions name it exactly — the cited line of
+                    `falsify_ledger_sections.mjs` is `const ROOT` at HEAD and empty on this disk (one extra
+                    import line shifted the body down), and the cited line of the CI workflow holds a bash
+                    comment at HEAD and is empty on this disk. Both are other lanes' uncommitted rewrites;
+                    neither is a blank on the plane step 8 judges, so step 8's 14 was right and the census's
+                    16 was a plane leak.
+
+                    The fix reads the target from the same plane the ledger is read from: `git show` under
+                    the default run, the disk under `--worktree`. A target the judged plane does not hold is
+                    skipped as the reader's UNTRACKED class rather than read from the disk, which is what had
+                    made 46 such cites look resolvable. HEAD's tree is listed once (`git ls-tree -r
+                    --name-only HEAD`), so an untracked name is a set lookup instead of a failed `git show`
+                    that prints a fatal to stderr for each of them.
+
+                    Re-verified on the same tree: `node scripts/citation_blank_census.mjs` now reads 357
+                    resolvable cites (the 46 undecidable-untracked targets no longer counted), prints 14
+                    blank-line cites, and PASSes the reconciliation against step 8's 14, exit 0 — the same
+                    14/14 agreement D190 measured before the tree went dirty. The `--worktree` mode is
+                    unchanged and still counts the working copy's lines, by design. Appends pure addition,
+                    zero lone LF. Nothing pushed.
+## 228. The reader judges the committed plane, so a re-aim is only credited after it lands (D225)
+
+Step 16 today fails on MOVED 8 + NOT-UNIQUE 2 of 147 judged citations, and the script runs with pipefail,
+so that is where a live drive stops. Working to clear it produced four measured findings, one of which
+corrects section 223 in this same lane.
+
+First: the two NOT-UNIQUE rows are not the plants citations. Reading the rows rather than the count gives
+one row naming a Java controller line that was blank when the citing sentence was written, and one naming a
+harness line whose written text was a lone closing brace, which thirteen lines hold at HEAD. The three
+plants citations are NO-BASE, because NO-BASE means the citing line has no blame author on this plane, and
+a line I have just edited is exactly that. Section 223 repeated section 220's attribution of these two
+rows to the plants harness; that attribution came from a remembered reading, and the run I quoted printed
+only the counts. The claim is retracted and the rows above are what the reader actually files.
+
+Second: re-aiming does not move a verdict until it is committed. After editing four citing lines the census
+still printed the identical eight MOVED rows with the identical old numbers. The reader takes the ledger's
+committed bytes as its input, so a citation repair shows up in the next commit, not the working copy. This
+is the same property gate step 8 was built around, and it means the honest loop for this class is edit,
+commit, re-measure -- a working-copy reading that still says MOVED does not mean the edit failed.
+
+Third: the rows' site coordinates and the file on disk disagree by one line in that region, because another
+lane's insertions moved the ledger while the reader reports HEAD coordinates. My applier noticed this on its
+own: given the reader's rows it opened each site, looked for the citation the row names, and when the line
+did not hold it printed REFUSE and exited 1 rather than rewriting a line it could not identify. That refusal
+is the behaviour D220 was written to have.
+
+Fourth: the applier had a crash in front of that guard, in the part its selftest never reached. The site
+token is a ledger path plus a line number, and main() passed the whole token to readFileSync, so the first
+real rows died on an ENOENT naming a path with a colon in it. Fixed by splitting at the last colon, refusing
+a site with no positive line number, and writing back to the path rather than the token. The six-case
+selftest still reports 6/6 MATCHED, which is the point to record honestly: those cases call the shift
+function directly, so they never exercised the row-reading seam, and the seam stayed broken until a plane
+with eight MOVED rows arrived. Two probe arms through main() on a scratch site file: a row naming a range
+reports 2 endpoints moved, a row naming a cite-free line refuses with exit 1. The exit code is read from the
+node process directly after noticing that piping the output through a converter made my own rc line report
+the converter's status.
+
+Landed in this unit: four single citations re-aimed to numbers the reader itself derived and I checked
+against the file -- two occurrences of the gate's census-variable line, and the two comment-citation
+readers' lines in the ledger-citation checker. The remaining four MOVED rows are ranges, and the reader
+prints one number per row: only the start. A range's tail needs its own verification, so those rows are
+left rather than shifted by an assumed uniform delta -- the second span of one of them demonstrably does
+not move with the first. The plants citations in both ledgers now name the per-arm block whose endpoints
+each occur once in the file, instead of line numbers that no longer resolve to the text they were chosen
+for.
+
+Readings: STATUS 11691 lines, every one CRLF-terminated after six in-place edits, zero lone LF; the census
+prints EXACT 113 of 147 on this plane with MOVED 8, NOT-UNIQUE 2, NO-BASE 7, GONE 17, UNPATHED 262,
+NOT-AT-HEAD 4, AMBIGUOUS 0.
