@@ -11908,3 +11908,49 @@ a gone row out of the queue. On the landing commit both sites read judged by con
 again, which is why the clearing is claimed from the target file and not from the census. The strict pass exits 0; the
 comment-plane reader reports zero strict offenders; the section reader and the section-citation reader both pass; the
 referent auditor keeps publishing its own false-positive count as the reason it is still a scratch instrument.
+## 233. A reader that decides a citation by the SURFACE of the line it names, and the three bugs that hid before it judged anything (D230)
+
+The rule is mechanical on both sides. The cited line gets a surface class in the target file at the ref being
+judged: nothing there is blank, a line whose first non-space token is that language's comment marker is a comment,
+a line that declares something nameable is a declaration, anything else is code. The citing text gets a claim verb
+from a closed list, taken from the CITATION'S OWN CLAUSE — the span around it between the nearest boundary
+characters that lie outside code spans and outside any citation. A sentence that says a line runs a checker while
+pointing at a comment is then a contradiction nobody has to interpret. Paragraph joining is part of the rule
+rather than a nicety: the ledger wraps near one hundred twenty columns, so a line is a fragment of a sentence, and
+the first version of this reader paired verbs with citations per line.
+
+That first version reddened two sentences that are correct, which is how the wrapping bug showed up. One cites the
+workflow's explanatory note: the sentence reads that all three steps declare a shell now, under a note that says
+why, and the citation names the note. The verb belongs to the steps; the citation's own clause already declares its
+surface to be a note, and the line it points at is that note. The other matched the word run out of the phrase
+"comment run" — a noun, two clauses further along, in a sentence that claims nothing about the cited block. Both
+rows were refusals of text that agrees with the files.
+
+Clause scoping then needed two masking fixes of its own, each of which was a false red before it was fixed.
+Code spans cannot be paired across the joined paragraph: one line with an unclosed backtick makes a paragraph-wide
+toggle mask every boundary character to the end, and the clause then re-absorbs the very cross-clause verbs the
+scoping exists to exclude — that artifact alone produced a third refusal on a correct row. And the walk leftward
+from a citation must start at the path, not at the character the citation regex consumed before it, because that
+character is frequently the opening parenthesis that bounds a parenthesised reference.
+
+Sensitivity was checked against the site this class came from, and it survives. The early section that says the
+workflow's report-mode step runs a checker, pointing inside the explanatory comment, is refused at the plane before
+the repair and reads matched at the repaired plane; the same workflow file is byte-identical across those two
+refs, so the only variable is the ledger's own text. The refusal set on that older plane went from three rows to
+one, and the one left is the real defect.
+
+What stops this becoming a gate step is a number the reader prints about itself. With clause scoping, six citation
+sites carry a claim verb inside their own clause while one hundred twenty-one have a verb somewhere in the
+paragraph and none in the clause. The gap is not the scoping: it is the closed verb list, which misses the verbs
+this ledger actually uses to make a claim about a line — gates, records, marks, tells, keeps, stamps, says, cites.
+A reader that judges six sites out of a hundred twenty-seven is a demonstration of a principle, not coverage, so
+it lives in the scratch directory, it prints its own narrowing when asked, and it refuses a run whose judged count
+is zero.
+
+The self-test is ten in-process cases whose verdicts were written before the code that decides them, including a
+differential case for the runaway mask and one that names a deliberate blind spot: a parenthesised reference with
+its verb after the closing parenthesis is not judged, because a reference in parentheses is not the subject of its
+own clause. The first self-test run scored three of eight, and the failure was the harness, not the rule: the
+fixture cited a file extension outside the reader's own vocabulary, so no citation matched at all and every case
+answered as unjudged. Now a case whose citation is not reached is reported as a mismatch instead of a verdict,
+which is the same trap this lane has been called out for elsewhere — an empty reading that looks like a clean one.

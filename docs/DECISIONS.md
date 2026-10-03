@@ -11873,3 +11873,28 @@ The second site is the comment-prose class again: an early section cites the wor
 inside the explanatory comment instead of the step itself, a citation no drift reader can object to because the
 comment and the step move together. Both repairs are single-match-gated in-place edits; no other lane's text is
 touched; nothing pushed.
+## D230 — a ledger line is a fragment of a sentence, so a claim must be paired with a citation at clause scope
+
+The surface reader pairs a citation with a claim verb, and the pairing scope turned out to carry the reader's whole
+error rate. Pairing per LINE reddened two correct sentences, because the ledgers wrap near one hundred twenty
+columns: the verb that mattered sat in an earlier clause of the same sentence ("all three declare a shell now,
+under a note that says why", where the citation names the note and the note is exactly what the line holds), or in
+a later clause of a later sentence, matched out of the noun "comment run". Pairing at clause scope inside a joined
+paragraph releases both, and keeps the refusal this class exists for: a citation into a workflow's explanatory
+comment, claimed by a verb in its own clause, is refused on the plane before the repair and matched after it, on a
+workflow file that is byte-identical across the two refs.
+
+Two masking rules are part of the scoping and not details. Inline code spans must be masked per line before
+joining, because a paragraph-wide backtick toggle turns one unclosed backtick into a mask over every remaining
+boundary character, and the clause then silently widens back to the paragraph — the failure is a red on a correct
+row, and it is invisible in the counts. And the citation regex consumes one character before the path; using that
+character as the left end of the clause walks straight past the opening parenthesis that bounds a parenthesised
+reference, which is the shape most of this ledger's citations take.
+
+The decision about the reader's status: it stays a scratch instrument. Clause scoping left six cited sites carrying
+a claim verb in their own clause against one hundred twenty-one carrying none, and the cause is the closed verb
+list, not the scoping — the ledgers claim about lines with verbs the list never names. Promotion to a gate step is
+deferred until the list is derived from the reader's own narrowing rows rather than typed, the judged count is
+reported together with the released count from the same scan, and the known-answer refusal is reproducible as a
+fixture. Nothing was appended to a tracked script and nothing was pushed; the two ledger files gain this section
+and nothing else.
