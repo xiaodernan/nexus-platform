@@ -10132,7 +10132,7 @@ sites), one line of an admin console test (twelve, one per STATUS section in the
 repository, the order service, the AI runs module and the growth view (three each), six more for the remainder.
 Step 7 moves the same way (11 false sites against 8) and step 9 with it (FAIL on 75 citations across 20 files
 against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:441` is the fixed leg: `cd "$WT"` and no
-knob, so the reader's `process.cwd()`-derived index — `scripts/check_ledger_citations.mjs:72` — lands in the
+knob, so the reader's `process.cwd()`-derived index — `scripts/check_ledger_citations.mjs:82` — lands in the
 committed tree with its ledgers. 13b prints `plane reconciliation knob leg 77 / 0 — in-worktree leg 65 / 41`
 because a step whose whole point is the difference should not ask the reader to trust a comment about it. The
 harness legs stay in the main tree on purpose: D163's fixtures cite real repository files, and an index that
@@ -11954,3 +11954,84 @@ own clause. The first self-test run scored three of eight, and the failure was t
 fixture cited a file extension outside the reader's own vocabulary, so no citation matched at all and every case
 answered as unjudged. Now a case whose citation is not reached is reported as a mismatch instead of a verdict,
 which is the same trap this lane has been called out for elsewhere — an empty reading that looks like a clean one.
+## 234. The claim-verb list is derived by running each verb alone, and the harvest is three sentences that were wrong when written (D231)
+
+The surface reader left a closed verb list of twelve stems typed by hand, which judged six sites of one hundred
+twenty-seven. Pairing moved from clause membership to ADJACENCY — a citation is claimed by the word touching it —
+chosen because the three known false positives all touch punctuation or a connective while the known-answer refusal
+touches the word "runs". Judged sites went from six to thirty-two on this plane, against one hundred forty-one
+released. The self-test's tenth case flipped from released to matched and that flip was written down before the run:
+a reference in parentheses followed by its verb is a claim about the line, and a clause rule throws it away because
+the closing parenthesis bounds the clause. Two further cases pin the new behaviour, so the flip is a recorded rule
+change and not output fitting. The list itself went from twelve hand-typed stems to forty-nine in two lists, and the
+citations whose adjacency carries a claim verb went from seventeen of four hundred fourteen to seventy-nine of the
+same four hundred fourteen — that denominator is this reader's own token grammar, one token wider than the drift
+census's four hundred thirteen.
+
+Widening the list ran each candidate stem alone and read its yield and its precision. Three findings, in the order
+that mattered.
+
+The first table said a stem judged nothing while the adjacency census showed its word after five citations. The verb
+was not absent; its cites point at files the reader cannot open. A stem's zero was a resolution failure wearing a
+vocabulary's clothes, so the table now prints dropped counts beside judged ones.
+
+The second is the number that governs the instrument: of five hundred thirteen cite-targets in the two ledgers, three
+hundred thirty-nine do not resolve at all, because a ledger names a file by basename — the ApiKeyService line
+sixty-seven form — and a reader that opens only the path it is handed reaches one hundred seventy-three. The verb
+list was never the binding constraint. The reader stays a scratch instrument, and now it says which constraint binds
+it.
+
+The third is a refusal that was a lie. A sentence reading that a run script's line twenty CITES a gitignore line was
+contradicted because line twenty is a comment — and that comment is the thing doing the citing. So the list splits by
+what the verb NEEDS: a speech verb promises only that the named line holds the words, so a comment satisfies it and a
+blank line still contradicts; a structural verb promises the line runs or declares, and a comment contradicts it. That
+split is now a rule with two cases of its own, and it is the reason the list is two lists.
+
+The harvest is in the ledger's own past. Two decision rows state that one checker's line fifty-two takes its ROOT and
+that another's line seventy-two is the ROOT assignment; a third row, in STATUS, attributes that same reader's
+"process-cwd-derived index" to the same line seventy-two. Line fifty-two is empty, line seventy-two is a comment
+about a flag parser, and the assignment is at eighty-two. Blame puts all three rows in one commit and that commit
+already held the truth at both numbers, so every one of the three was wrong the moment it was written — off by one
+and by ten. The drift census on a clean tree gives all three the word EXACT, and it is right to: its comparison is
+line-to-line between two refs, never line-to-sentence, so a citation that was born wrong can never move and is
+certified forever by a movement reader. Two of the three are also members of the twenty blank-line cites the
+citation gate counts without judging, which is why no gate reddened for them. All three are repaired by the gated
+applier, now row-idempotent: a row is legal only as UNAPPLIED — old cite once in its file and once on the predicted
+line — or as ALREADY APPLIED — old cite gone, new cite once on that line; anything else aborts the whole run. The
+first application wrote three lines and changed nothing else; the second printed ALREADY APPLIED three times and
+exited zero as a measured no-op, which is a better property than the refusal it replaced.
+
+Then the census contradicted a claim this unit was about to file, which is the reason it is filed differently. The
+same sentence family cites a checker's line sixty-six as the home of a package-dot-json example, in three rows. Read
+whole, the census already names those rows GONE: line sixty-six held an example that has since been rewritten into a
+flag spelling and the package example moved to line two hundred thirteen with its own number generalised to a
+placeholder. A first reading of the census's detail said "held and holds look identical", and that reading was wrong
+at the fifty-second character — the difference is past the truncation, exactly the failure my own note about truncated
+labels warns against. So the invisible class is narrower and sharper than "stale cites": it is the cite whose line was
+never the one the sentence means. Movement the census sees; mis-aim at birth it cannot.
+
+One more thing about the census, measured by this repair rather than remembered: those three sites now report NO-BASE
+with the detail "absent at zero-hash, the commit that wrote the citing line", because the reader blames the WORKING
+COPY and my edit made the lines uncommitted. An in-flight repair deletes itself from the population it is supposed to
+clear, and after the commit the same three sites will read EXACT again — the identical word they read while broken.
+Two of my instruments and one of my own hands, recorded because they were measured and not noticed. The append proof
+rebuilt HEAD's ledger text by applying the repairs to both ledgers and its prefix check failed on STATUS — which is
+how the third site was found: a purity test that names a line the repair also names is an accidental census, and the
+census is now written on purpose. The same proof exists because this unit's appender ran twice before anyone read the
+line counts, landing a second copy numbered as the next section, and the duplicate was cut by a heading-anchored
+truncate; the proof now refuses a tail holding a heading count other than one, so an accidental double append cannot
+land again. The applier also printed ten thousand two lone feeds on a file holding none: its check asked whether the
+character AFTER a line feed was a carriage return, which flags every ordinary pair, and a lone feed is one with no
+return BEFORE it — the landed append proof of the previous unit used the byte form, so its recorded claim stands and
+the wrong line was scratch-only. And the census's nonsense BEFORE tokens — a controller's name, a test class's name —
+turned out to be slash-list citations: twelve cite tokens in eight ledger lines spell several numbers after one
+colon-separated head, and every reader this lane owns reads the head and hands the tail to the adjacency extractor.
+
+Readings on this plane, after the repair and before the append: the surface reader judges thirty-two sites and
+contradicts none; the citation gate, the comment-plane reader, the section reader, the section-citation reader and the
+drift census all exit zero, the census judging one hundred forty-seven citations with one hundred twenty-seven EXACT,
+zero MOVED and sixteen GONE — the three repaired sites sitting in NO-BASE until the commit makes them blameable. The
+number reader exits two in its default mode with no expectation supplied, which is its documented not-run. STATUS and
+DECISIONS grow by pure appends with the committed blob, plus the three repaired lines, a byte prefix of the new text.
+Nothing pushed; the other lane's dirty files, including its live number reader and its dirty drift reader, are
+untouched.

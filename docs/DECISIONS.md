@@ -10637,8 +10637,8 @@ WHY IT WAS BELIEVED. D176 wired step 13 with the plane knobs — `--dir`/`--head
 `--quality` for step 7 — and recorded what they printed: "step 8 PASS with 0 offenders" on the committed plane,
 against the forty-one D174 had measured by hand in a clean checkout. Both numbers were correct and they were not
 the same question. A plane knob relocates the TEXT a reader censuses; every reader here builds its SOURCE INDEX
-from the directory it was started in — `scripts/check_ledger_citations.mjs:72` is `const ROOT = process.cwd();`,
-and `scripts/check_comment_citations.mjs:52` takes its ROOT from the script's own location but hands that cwd to
+from the directory it was started in — `scripts/check_ledger_citations.mjs:82` is `const ROOT = process.cwd();`,
+and `scripts/check_comment_citations.mjs:53` takes its ROOT from the script's own location but hands that cwd to
 the child it scores the comment plane with. So the knob leg was asking "do this clean checkout's sentences name
 files that exist HERE", and HERE is the shared working copy, where the other lanes' untracked `com.nexus.admin`,
 `com.nexus.seo`, `com.nexus.commerce` and `com.nexus.merchant` sources, the AI lane's untracked runs module and
@@ -11898,3 +11898,35 @@ deferred until the list is derived from the reader's own narrowing rows rather t
 reported together with the released count from the same scan, and the known-answer refusal is reproducible as a
 fixture. Nothing was appended to a tracked script and nothing was pushed; the two ledger files gain this section
 and nothing else.
+## D231 — a citation needs a surface and a verb class, and a movement reader's EXACT is a statement about two refs
+
+Three rules came out of deriving the surface reader's verb list instead of typing it, and out of repairing the three
+citations that derivation led to.
+
+First, a claim verb and a cited line must declare which SURFACE the pair needs. The measured driver was a refusal this
+lane wrote and then contradicted by accident: a run script's comment line CITES another file's line number, and the
+comment is exactly where the citing lives. Speech verbs (says, cites, names, notes, points) are satisfied by a comment
+and refused only by a blank line; structural verbs (runs, declares, calls, writes, reads, sets) are refused by a
+comment as well. A single verb list silently mixes the two and manufactures false positives out of correct prose, so
+the list is two lists, each with its own admissible surfaces, and both are pinned by named cases.
+
+Second, and this is the reason the surface reader exists at all: a reader that decides a citation by whether the named
+line still holds what it held moves no verdict for a citation that never held it. The two ROOT rows and their STATUS
+twin were wrong at the commit that wrote them, and the drift census gives all three EXACT, because its comparison is
+line-to-line across refs while the claim is line-to-sentence. The same census already sees every cite whose target
+TEXT moved — it reports the package-example rows as GONE — so the class it cannot see is mis-aim at birth, not
+staleness. Content-vs-claim checks therefore have to be made against the plane the sentence names, and a gate that
+only watches for movement should say in its own header what its EXACT word does not corroborate. One of the three was
+additionally invisible to the citation gate for an independent reason: it points at a blank line, and blank cites on
+the pre-existing plane are counted, not judged.
+
+Third, a movement reader's judged population is a property of the working copy. Blaming the file on disk means an
+uncommitted repair turns its own sites into NO-BASE rows — the census prints "absent at zero-hash" for lines it would
+certify a minute later — so a repair measured only while dirty appears to change nothing, and the same three lines
+carry the word EXACT both while broken and after being fixed. Verdict words are only evidence when the reader's
+question is the one being asked.
+
+The repairs are single-occurrence-gated in-place edits with the new target line read back from the target file before
+writing, and the applier is row-idempotent: each row must be exactly UNAPPLIED or exactly ALREADY APPLIED, anything
+else aborts, and a re-run of an applied set writes nothing and exits zero. No other lane's text is touched; nothing
+pushed.
