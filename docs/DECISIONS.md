@@ -1251,7 +1251,7 @@ D44's rule was *ask the resolver rather than copy its vocabulary*, and here ther
 handler wraps its body in `run` is a fact about a method body, invisible to reflection, and the two halves of
 the promise sit centimetres apart in one file. So `IdempotencyPairingTest` walks `src/main/java` and asks the
 mechanical question — every `.run("<scope>", …)` has an `@Idempotent(scope = "<same>")` above it in the same
-file — and names what it finds: `ModerationController.java:143 runs scope 'moderation_resolve' with no
+file — and names what it finds: `ModerationController.java:144 runs scope 'moderation_resolve' with no
 @Idempotent`. The walk opens with an assertion that the source directory exists, because a scan whose root had
 moved would pass by finding nothing (D44's non-zero guard again).
 
@@ -9130,10 +9130,10 @@ the run's own database name normalised, gives **0 differing lines**. So the deat
 breaking, not another lane's tree moving, and not the shim leaking into `generate.py`.
 
 **What this does not buy.** It witnesses one step's entry point. The same question for steps 8 and 9 is still
-open and has a measured shape: `check_ledger_citations.mjs:50` accepts `--text=<path>` and its own comment says
+open and has a measured shape: `check_ledger_citations.mjs:110` accepts `--text=<path>` and its own comment says
 that flag exists so "a witness must be able to show an arm failing without writing a tracked file that two other
-lanes are appending to", and `check_comment_citations.mjs:35` accepts `--plane <dir>` — yet the gate calls them
-with hardcoded arguments at `:208` and `:217`, so the capability is in the checker and unreachable from the gate.
+lanes are appending to", and `check_comment_citations.mjs:44` accepts `--plane <dir>` — yet the gate then called them
+with hardcoded arguments at `db_gate_fresh.sh:207` and `db_gate_fresh.sh:218` then, so the capability is in the checker and unreachable from the gate.
 Both arms were pre-flight-verified standalone in seconds before any long run was spent on them: a Temp ledger
 citing line 99999 of `CollectionsController.java` exits 1 and names the file's real 453 lines, and a Temp plane holding
 the same fake citation in a comment exits 1 likewise. Along the way the `--text` path refused two invalid
@@ -9169,7 +9169,7 @@ invocation nobody else makes: the thing that protects the tree is step 8 as the 
 call it from a shell.
 
 **What landed.** Two environment knobs in `scripts/db_gate_fresh.sh`, documented in its overrides block and used
-on the two invocation lines — `db_gate_fresh.sh:216` and `db_gate_fresh.sh:230`: `GATE_LEDGER_TEXT` becomes the
+on the two invocation lines — `db_gate_fresh.sh:279` and `db_gate_fresh.sh:302`: `GATE_LEDGER_TEXT` becomes the
 text-aiming flag and `GATE_COMMENT_PLANE` becomes the plane-aiming flag. Both use the same shell shape the two
 existing arms use rather than a bash array, because steps 10 and 11 already set that shape, and the shape was
 measured before it was written: with the variable unset the expansion adds zero argv elements even under the
@@ -9387,7 +9387,7 @@ was given no value` · exit 2. Its harness `scripts/falsify_ledger_sections.mjs`
 missed, exit 0, and it passes the space form, so — as with D117's arms — no existing arm was faked by this.
 
 **What is left of #102.** The dialect itself is still a convention, not a gate: nothing reddens a checker that
-accepts only one spelling, and `check_contract_drift.mjs:36` and the `verify_*.mjs` readers parse only the bare
+accepts only one spelling, and `check_contract_drift.mjs:29` and the `verify_*.mjs` readers parse only the bare
 form. The rule this lane now follows when writing a checker is in both files' usage blocks; promoting it to a
 gate needs a shared argument parser, which is a larger seam than a two-line fix and is not invented here.
 ## D156 — Step 7's `--quality` seam really does reach the site census, so the step got the arm steps 8-12 already had
@@ -9628,7 +9628,7 @@ WHAT IS LEFT, AND WHY IT IS NOT QUIETLY NARROWED. Seven readers still hand-write
 they are not one problem. Four accept both spellings from their own tables and are pinned by their own harnesses
 (`check_jsonb_reads.mjs`, `check_comment_citations.mjs`, `check_ledger_sections.mjs`, `check_status_citations.mjs`)
 — migrating them is a behaviour-preserving change each harness can prove, and it is the next unit, not this one.
-Two decide behaviour by presence alone (`check_contract_drift.mjs:36` reads `argv.includes('--report')`, and
+Two decide behaviour by presence alone (`check_contract_drift.mjs:29` reads `argv.includes('--report')`, and
 the untracked `verify_payload_conformance.mjs` in this working copy keeps a `Set` of `--report` and `--json`),
 so `--report=1` is not "report mode with a value" but a token nothing matches. In the drift checker that
 switch is the difference between a report and a failed build — its line 248 exits 1 only when `reportOnly` is
@@ -9694,8 +9694,8 @@ migration moved that statement to `check_comment_citations.mjs:142`. Step 8 kept
 because it checks that a named file has the cited line and not that the line says what the sentence claims
 — its own documented blind spot, demonstrated by its own author's edit. Repaired here. Three committed
 rows name lines this change moved, and they stay as history corrected by this paragraph rather than
-rewritten: `check_comment_citations.mjs:35` was the `--plane` accept site and is a comment now (the accept
-sits at `check_comment_citations.mjs:39` and `check_comment_citations.mjs:46`); `check_ledger_sections.mjs:34`
+rewritten: `check_comment_citations.mjs:35` was the `--plane` accept site and is a blank line at HEAD (the accept
+sits at `check_comment_citations.mjs:44` and `check_comment_citations.mjs:51`); `check_ledger_sections.mjs:34`
 named the line beside a bare-`indexOf` parse that no longer exists in that file; and the two
 `check_jsonb_reads.mjs:311` rows were already 32 lines off at HEAD, where the JSDoc grammar examples they
 refer to sit at `check_jsonb_reads.mjs:343` — `check_jsonb_reads.mjs:338` in the working copy.
@@ -11930,3 +11930,46 @@ The repairs are single-occurrence-gated in-place edits with the new target line 
 writing, and the applier is row-idempotent: each row must be exactly UNAPPLIED or exactly ALREADY APPLIED, anything
 else aborts, and a re-run of an applied set writes nothing and exits zero. No other lane's text is touched; nothing
 pushed.
+## D232 — a contradiction needs three planes to mean anything, and a token inside an identifier is not a verb
+
+A surface reader that reports "the cited line is blank" answers one question and dodges three. The same verdict word
+covers a citation that was wrong when it was written, a citation whose target moved afterwards, and a citation that
+is correct against a working copy nobody has committed. Only reading the same line at the writing commit, at HEAD,
+and on disk separates those, and they want different remedies: the first is repaired toward the current plane, the
+second is a movement the drift census should already see (it does not, because it compares line-to-line across refs
+and never to the sentence), and the third must NOT be re-aimed at all, because the number is a property of someone
+else's pending edit and the ledger should stay on the plane every reader can reach.
+
+Two rules this unit earns.
+
+First, adjacency must reject identifiers. A citation touching the head of a SCREAMING_SNAKE name is not touching a
+verb; pairing on that slice contradicts sentences that make no claim. The guard is "no letter, digit or underscore on
+the far side", pinned by a case whose verdict flips when the guard's after-side is deleted. Watch the uncomfortable
+measurement though: the row that motivated it had genuinely stale citations, so a false positive can sit on top of a
+real defect and removing one does not excuse ignoring the other.
+
+Second, a correction paragraph is a claim with a shelf life. D159's paragraph fixed three moved cites and described
+the new state with the word "now"; two days of edits made that description wrong, and nothing that reads the ledger
+could tell which moment "now" was written at. Prose that asserts a current state must name the plane — "at HEAD" —
+and the repair rows for this section do that rather than re-asserting a moment. A present-tense verb about a state
+another change later ended ("the gate calls them with fixed arguments") belongs to the same class and gets a tense
+change, not just a number.
+
+Also measured and recorded because it changes how the reader should be quoted: four ledger sentences had been
+agreeing with an uncommitted file for days, and the number that was true there was false at every committed plane
+including the one where the sentences were written. Presence of a cite in a strict drift census is not evidence that
+the cite is right; the census passed on those rows because the target file had not moved between its two refs.
+
+A third thing this unit paid for, and it is about how a landing is written up rather than about the ledger's old rows.
+The sensitivity figure drafted from an earlier reading — that the surface reader refuses with eight at 4951218 — did
+not reproduce once the ledgers had moved, and the numbers that do reproduce are the ones worth publishing: HEAD's own
+committed text refuses with 6, that plane's text with 8, and this disk's repaired text aimed at fccedf9 with 10. Each
+of the three varies exactly one side of the comparison, so they are three different questions, and a remembered
+verdict cannot tell them apart. Re-measure every differential at the plane the commit will be read at, in the same
+run that writes the sentence about it. The appended section reddened step 8 twice on the same habit: two citations
+landing on empty lines, which a section under writing may not do, so the claims about those lines moved into the
+house phrasing and the cited numbers that stayed are the ones naming text.
+
+14 rows, single-match-gated, targets read at HEAD by `git show`; the rows leave both ledgers' line counts as they
+found them and the appended sections are the only growth (12038 to 12116, 11933 to 11976); zero lone LF; no other
+lane's text touched; nothing pushed.

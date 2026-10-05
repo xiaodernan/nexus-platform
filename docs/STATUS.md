@@ -8529,10 +8529,10 @@ found             (a) The claim §155 refused to make is now made by measurement
                     `-euo pipefail` does hold the piped exit code, so a drifted anchor reddens the gate. What the
                     guard detects is a separate matter, already witnessed in D150's mutant (1/1, control green).
                   - (b) Steps 8 and 9 are not yet in that class, and the reason is plumbing rather than logic.
-                    `check_ledger_citations.mjs:50` takes `--text=<path>` — its comment says the flag exists so a
+                    `check_ledger_citations.mjs:110` takes `--text=<path>` — its comment says the flag exists so a
                     witness can fail an arm "without writing a tracked file that two other lanes are appending
-                    to" — and `check_comment_citations.mjs:35` takes `--plane <dir>`, while the gate calls them
-                    with fixed arguments at `db_gate_fresh.sh:208` and `:217`. Both arms were pre-flight-verified
+                    to" — and `check_comment_citations.mjs:44` takes `--plane <dir>`, while the gate then called them
+                    with fixed arguments at `db_gate_fresh.sh:207` and `db_gate_fresh.sh:218` then. Both arms were pre-flight-verified
                     standalone before any gate minute was spent: a Temp ledger that cites line 99999 of
                     `CollectionsController.java` exits 1 and names the file's real 453 lines; a Temp plane with the same
                     citation inside a comment prints
@@ -8738,7 +8738,7 @@ control         bare run on the repository: HEAD 127 · disk 127 · missing 0 ·
 harness         `scripts/falsify_ledger_sections.mjs`: 8 arms · 8 held · 0 missed · exit 0. It passes the space
                 form, so no D116 arm was resting on the defect.
 why             D154 fixed this shape in one of the two readers that had it; the census that found the second is
-                #102, and the remaining bare-form-only parsers are `check_contract_drift.mjs:36`,
+                #102, and the remaining bare-form-only parsers are `check_contract_drift.mjs:29`,
                 `verify_contract_runtime.mjs`, `verify_served_reads.mjs`. A shared argument parser is the real
                 fix and is not invented in a two-line commit.
 gates           steps 8/9/10/12 re-run on the bytes this section is written into: 377 citation-shaped tokens
@@ -8933,7 +8933,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     Left open and named, not narrowed. The seven hand-written readers are not one problem: four
                     accept both spellings from their own tables and are pinned by their own harnesses, and
                     migrating them is the next unit rather than this one; two decide behaviour by presence
-                    alone (`check_contract_drift.mjs:36`, and the untracked `verify_payload_conformance.mjs`
+                    alone (`check_contract_drift.mjs:29`, and the untracked `verify_payload_conformance.mjs`
                     in this working copy), so `--report=1` is a token nothing matches — and there that switch
                     is the difference between a report and a failed build (line 248 exits 1 only when
                     `reportOnly` is false), so a caller typing the glued form asked for tolerance and would
@@ -12035,3 +12035,81 @@ number reader exits two in its default mode with no expectation supplied, which 
 DECISIONS grow by pure appends with the committed blob, plus the three repaired lines, a byte prefix of the new text.
 Nothing pushed; the other lane's dirty files, including its live number reader and its dirty drift reader, are
 untouched.
+## 235. Seven contradictions are three diseases and one self-inflicted wound, and a "now" in a correction paragraph is a citation with an expiry date (D232)
+
+The widened surface reader reported seven claim-verb contradictions in HEAD's own ledger text (`--ref HEAD`, no
+ledger override: two in STATUS, five in DECISIONS). One
+plane cannot tell what kind of wrong a wrong is, so every row was read at three — the commit that wrote the
+sentence, HEAD, and the working copy (`.scratch/d235_adjudicate.mjs`). The word BLANK looks identical in all three
+stories and the remedy differs in each.
+
+Five of the seven were BORN RIGHT and MOVED, and they come in pairs: the `--text` flag site is cited by STATUS:8532
+and DECISIONS:9133, the `--plane` flag site by STATUS:8534 and DECISIONS:9135 — `check_ledger_citations.mjs:110` and
+`check_comment_citations.mjs:44` are where those flags are taken now — and DECISIONS:9172 names the gate's two
+invocation lines, which moved to `db_gate_fresh.sh:279` and `db_gate_fresh.sh:302`. One was BORN WRONG: DECISIONS:1254
+quotes the pairing test as printing line 143 of `ModerationController.java`,
+`runs scope 'moderation_resolve' with no @Idempotent`, and the test prints `i + 1` while that call has sat at
+`ModerationController.java:144` in every plane since the marker landed, and at 140 then 138 in the only two earlier
+planes this file has — 143 is in none of them, so it names nothing this repository ever committed. The number is a
+transcription error in a message I presented verbatim.
+
+One of the seven was my instrument's own. It paired the stem "gate" with `db_gate_fresh.sh:230` because the token
+touching that cite is the head of the identifier GATE_LEDGER_TEXT. An adjacency rule that accepts a slice of a name
+as a verb manufactures false positives out of shell prose, so a token with a letter, digit or underscore on its far
+side now carries no claim, and case S16 pins the differential: with the guard the site releases, with the guard's
+after-side removed the same fixture contradicts (SELFTEST 15 of 16). DECISIONS's judged count went 42 to 41, the
+released row is DECISIONS:9172, and the same command over the same committed text now refuses with six where it had
+refused with seven — while the two citations that row named were in fact stale, which is the uncomfortable part: the
+false positive was sitting on a real defect.
+
+Reading the charged sentences to work out what to repair turned up wrong cites the reader had not charged, and one row
+it had charged for a different reason than its neighbour: DECISIONS:9631.
+`db_gate_fresh.sh:208` and `:217`, in two sentences, never named the gate's step-8 and step-9 invocations: walking
+every commit touching that file, step 8 has been at 185, 191, 195, 197, 199, 207, 216, 218, 230, 248, 260, 266, 267
+and 279, and step 9 at 206, 208, 210, 218, 230, 232, 244, 262, 270, 283, 289, 290 and 302 — no plane holds 208 as
+step 8 and none holds 217 at all, though 208 was a real step-9 line at one early commit. At the writing plane the
+pair is 207 and 218. Those sentences also assert a PRESENT state — "the gate calls them with fixed arguments" — that
+D152 ended when it forwarded the two knobs, so the repair re-numbers and changes the tense, because a number alone
+would have made the sentence claim something false about today. Adjacency missed both cites because the verb sits
+three words back ("calls them with fixed arguments at `:208`"): that is the residue #137 counts, now with a
+measured specimen.
+
+`check_contract_drift.mjs:36` appears in four sentences (STATUS:8741, STATUS:8936, DECISIONS:9390 and DECISIONS:9631)
+and its file has exactly one commit; adjacency charged only the last, because the other three clauses carry no verb that
+pairs with it. At every committed plane the `--report` presence check is line 29 and line 36 is a comment about route
+spans; line 36 is true ONLY on the working copy, where another lane's uncommitted edit put seven lines above it. Four
+ledger sentences have been agreeing with a file nobody committed. They are re-aimed at 29 because the readers judge
+committed planes; when that edit lands, the drift census will report MOVED for all four and the right answer becomes
+36 again — that red is the signal working, not a regression. DECISIONS:9697 is the same disease inside a correction:
+it records that line 35 of `check_comment_citations.mjs` "is a comment now" and puts the two accepts at 39 and 46.
+Each of those three numbers was true of the plane it was written at — 39 opened the FLAGS block whose entry does the
+accepting and 46 read the value — while at HEAD 35 is an empty line, 39 is a comment, 46 is the verbose switch, and
+the accepts sit at `check_comment_citations.mjs:44` and `:51`. A "now" without a named plane is a claim that quietly
+expires, so the repair says "at HEAD" and re-aims the two accepts rather than re-asserting a moment.
+
+The repair is 14 rows in `.scratch`, applied through a row-idempotent gate that reads every MUST_HOLD target with
+`git show HEAD:<path>` rather than from disk — which matters here precisely because one target file is dirty. Both
+ledgers keep their line counts under those rows (12038 and 11933), zero lone LF, and a second application prints NO-OP
+with 14 rows ALREADY APPLIED. One more thing about my own readings, because it was a reading and not a tool: I mistook
+the sixth item of a renumbered `sed` range for line 35 and concluded HEAD's 35 held the fail helper, when it is blank;
+the reader's BLANK verdict was right and my arithmetic was the defect. Every line claim in this section comes from a
+number the file printed for itself.
+
+This section reddened step 8 twice on its own way in, and both reds were true. `check_ledger_citations.mjs` judges a
+blank-line citation only inside a section the run is writing, and my paragraph cited line 35 of
+`check_comment_citations.mjs` and line 143 of `ModerationController.java` — both empty at HEAD, one of them empty
+*because* that is the claim being made. A new section may not put a citation on an empty line, so the two claims are
+written in the house form for them ("line 35 of `check_comment_citations.mjs`") and the cited numbers that remain here
+all name lines carrying text. After that: 0 blank span starts among the 2 new sections and 0 strict offenders, exit 0
+in the default mode and under `--worktree`, with the backlog still 19 at HEAD.
+
+Readings after the repair, each command's own exit code captured rather than a pipeline's. The surface reader with the
+ledgers from disk and the cited files at HEAD: 36 claim sites in STATUS and 41 in DECISIONS judged, none contradicted.
+Its differential, where only one side of the comparison moves: the same command over HEAD's own committed ledger text
+refuses with 6 (the two STATUS rows, `ModerationController.java`'s line, the two DECISIONS flag pairs and the
+contract-drift row); at 4951218 that plane's text refuses with 8; and the repaired disk aimed at the older file plane
+fccedf9 refuses with 10, which is the same fact seen backwards — those numbers are true of HEAD and of nothing else.
+Step 8 exits 0 in both modes, the comment plane reads 92 citations across 31 files, the section reader and the
+section-citation reader exit 0, and the drift census judges 147 with 130 EXACT and `--strict MOVED,NOT-UNIQUE` clean;
+the census population did not move because this section is uncommitted, and its own cites will enter that count when
+it is. Nothing pushed; the other lane's dirty files, including that drift-cited file, are untouched.
