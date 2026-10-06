@@ -37,7 +37,13 @@
  *     first reproduce the shipped index file for file and then refuse if any file it kept out is tracked;
  *   · the shipped gate's `--help` has to name every knob its own Environment-overrides block documents, and
  *     step 8 has to both run this harness and pass the knob to the reader — a knob nobody can discover, or a
- *     harness nobody runs, is an arm that does not exist.
+ *     harness nobody runs, is an arm that does not exist;
+ *   · D198 — a child that writes nothing to stdout is not a reader that found nothing. It gets three attempts,
+ *     and if it stays silent the whole run refuses with exit 2 instead of scoring arms nobody observed, because
+ *     filing a death as a missed prediction is D194's class one level up: there, a reason that reached no exit
+ *     code; here, an arm result that reached no reading. The structural half of that claim — that the reader
+ *     prints before any of its exits, so silence is a death and not a verdict — is read out of the reader's own
+ *     bytes and armed against a copy with an exit hoisted above the first print.
  *
  * WHAT IT DOES NOT COVER, because a census that hides its blind spots is the thing this project keeps catching:
  * the plants live in the OS temp directory but the checker's *source index* is built from `process.cwd()`, so
@@ -48,14 +54,26 @@
  * that plane is `check_comment_citations.mjs`'s slice, and step 8's green arm here is the guard against the
  * grammar silently stopping matching anything.
  *
+ * Two limits, named rather than implied. (1) D198's guard reads stdout's *presence*, not its completeness: a
+ * reader killed after printing half its report is scored as read, and only its exit code then says it died —
+ * which is why the structural arm asks that every `process.exit(` have a `console.log(` before it, not that
+ * every exit path prints. (2) Three arms here run the gate's own shell helpers through `bash`, and on a host
+ * where `bash` is the WSL stub that cannot exec `/bin/bash` they report MISSED — an instrument that is absent
+ * wearing the shape of a subject that is wrong, which is the same confusion this unit's guard exists to stop at
+ * the reader. They hold with Git's bash first on `PATH` (measured, 5.2.37); the harness does not yet refuse
+ * when no working bash can be found, and that refusal is the next unit rather than a claim made here.
+ *
  * USAGE   node scripts/falsify_ledger_text.mjs                       (from the repo root)
  *         node scripts/falsify_ledger_text.mjs --reader=<planted reader>   (expect exit 1: the seam is live)
  *         node scripts/falsify_ledger_text.mjs --help
- * EXIT    0 every prediction held · 1 an arm missed · 2 the harness could not start, or was asked for a
- *         flag it does not parse — which is the case D163 caught this file in, printing a green tally about
- *         a mutant it had never opened because an unknown word used to be nothing at all
+ * EXIT    0 every prediction held · 1 an arm missed · 2 the harness could not start, was asked for a flag it
+ *         does not parse, or ran a reader that never spoke on stdout — the last two being the cases D163 and
+ *         D198 caught this file in: D163, printing a green tally about a mutant it had never opened because an
+ *         unknown word used to be nothing at all; D198, filing a dead child's exit code as a statement about
+ *         the reader it never reached
  */
 import { execFileSync, spawnSync } from 'node:child_process';
+import { isSpawnFailure } from './spawn_guard.mjs';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -100,7 +118,8 @@ const fixture = (name, lines) => {
 // for two reasons: the plant cannot drift back inside the file it cites, and D157's first version of this
 // comment carried a literal past-EOF example that gate step 9 — which scans source comments with step 8's own
 // grammar — correctly reddened for. A plant is allowed to hold a false citation; a comment about a plant is not.
-const PAST_END = readFileSync(CHECKER, 'utf8').split(/\r?\n/).length + 1;
+const READER_BYTES = readFileSync(CHECKER, 'utf8');
+const PAST_END = READER_BYTES.split(/\r?\n/).length + 1;
 const PLANT_EOF = fixture('plant_past_eof.md', [
   '# D157 plant',
   '',
@@ -186,10 +205,45 @@ writeFileSync(join(EMPTY_HEAD, 'docs', 'DECISIONS.md'), CRLF([
 ]), 'utf8');
 writeFileSync(join(EMPTY_HEAD, 'docs', 'STATUS.md'), CRLF(['# D191 status fixture', '']), 'utf8');
 
-const run = (args, cwd = ROOT) => {
-  const r = spawnSync(process.execPath, [CHECKER, ...args], { cwd, encoding: 'utf8', maxBuffer: 1 << 26 });
-  return { code: r.status, out: `${r.stdout || ''}${r.stderr || ''}` };
+// D198 — a child that writes nothing to stdout is not a reader that found nothing, and it must not be scored as
+// either. Six runs of this harness on a loaded host: four green, two red, and in both reds a different arm
+// reported a verdict the census never gave — one printed `MISSED exit 2 expected, 134 printed` with an empty
+// verdict line, the other `exit 0 expected, 0 printed` — while the identical invocation standalone returned the
+// expected exit code and its expected text. 134 is an abort, not a judgement. `runWith` reads stdout before it
+// reads the exit code, gives a silent child its retries, and the reporting loop refuses the whole run rather
+// than filing an observation nobody made against the reader's name. The channel is stdout alone: the reader
+// prints its report there on every path that reaches a decision, and the structural claim behind that is armed
+// below against the reader's own bytes.
+const READ_ATTEMPTS = 3;
+const runWith = (reader, args, cwd = ROOT) => {
+  let r = null;
+  let tries = 0;
+  // `tries` counts the attempts ACTUALLY made, so the number the arms print is the number the loop ran: an
+  // off-by-one here (counting the loop counter after the last increment) reported four attempts for three, and
+  // the arm that names `attempts 3` is what caught it — the counter is a measurement, not an index.
+  do {
+    tries += 1;
+    r = spawnSync(process.execPath, [reader, ...args], { cwd, encoding: 'utf8', maxBuffer: 1 << 26 });
+  } while (tries < READ_ATTEMPTS && (r.error || r.signal || (r.stdout ?? '').trim() === ''));
+  // The retry above treats `r.error` as a reason to try again, which is right for a reader that died and wrong
+  // for one that never started: after three attempts at a spawn this machine refuses, the loop fell through
+  // and every arm compared against a reader that was not there. Refused before the comparison, not after.
+  if (r.error) {
+    console.log(`RESULT: NOT CHECKED — the reader could not be started after ${tries} attempt(s): ${String(r.error.code || r.error.message)}.`);
+    console.log('  No arm below was run. A refusal is not a failure, and the two must not share a verdict line.');
+    process.exit(2);
+  }
+  const quiet = (r.stdout ?? '').trim() === '';
+  return {
+    code: r.status ?? -1,
+    out: `${r.stdout || ''}${r.stderr || ''}`,
+    tries,
+    unread: Boolean(r.error) || Boolean(r.signal) || quiet,
+    why: r.error ? `spawn failed: ${r.error.message}` : r.signal ? `killed by ${r.signal}`
+      : quiet ? 'no stdout at all' : '',
+  };
 };
+const run = (args, cwd = ROOT) => runWith(CHECKER, args, cwd);
 
 // D197 — the directory exclusion's teeth, on a supplied index root. `VENDOR_DIRS` now names `.scratch`, the
 // lane's own working directory, because a D196 landing showed a stale copy of `cli_args.mjs` sitting there and
@@ -413,14 +467,24 @@ function gateKnobs() {
 const results = [];
 for (const arm of ARMS) {
   const r = run(arm.args, arm.cwd);
-  results.push({ arm, ...r, printed: r.out });
+  // `reading` marks the arms that are statements about a reader's output. D198's refusal is scoped to them, so
+  // it cannot be tripped by the three stub arms below, which are deliberately aimed at silent children and are
+  // statements about the guard instead.
+  results.push({ arm, ...r, printed: r.out, reading: true });
 }
 
 {
   const knobs = gateKnobs();
   let out, code;
   try { out = execFileSync('bash', ['scripts/db_gate_fresh.sh', '--help'], { cwd: ROOT, encoding: 'utf8' }); code = 0; }
-  catch (e) { out = `${e.stdout || ''}${e.stderr || ''}`; code = e.status ?? -1; }
+  catch (e) {
+    if (isSpawnFailure(e)) {
+      console.log(`RESULT: NOT CHECKED — the gate script's --help could not be run: ${e.code}.`);
+      console.log('  A refusal is not a failure, and the two must not share a verdict line.');
+      process.exit(2);
+    }
+    out = `${e.stdout || ''}${e.stderr || ''}`; code = e.status ?? -1;
+  }
   const missing = knobs.filter((k) => !out.includes(k));
   results.push({
     arm: { name: `the shipped --help documents every knob in its own Environment block (${knobs.length} names)`,
@@ -429,7 +493,10 @@ for (const arm of ARMS) {
   });
 }
 {
-  const from = GATE.findIndex((l) => l.includes('step "8/12'));
+  // The anchor pins the step's number, not the era's step total: D219 renumbered every header from /12 to
+  // /18 and left these two arms grepping the old totals, so both went MISSED (region empty, every pattern
+  // unanswered) and gate step 8 could not pass at any plane. A total is a spelling; the number is the name.
+  const from = GATE.findIndex((l) => l.includes('step "8/'));
   const to = GATE.findIndex((l, i) => i > from && /^step /.test(l));
   const region = from < 0 ? '' : GATE.slice(from, to < 0 ? GATE.length : to).join('\n');
   const want = [/node scripts\/falsify_ledger_text\.mjs/, /GATE_LEDGER_TEXT:\+--text=/,
@@ -451,7 +518,7 @@ for (const arm of ARMS) {
 // never shrink the population it certifies. The pair arm runs that identical predicate over a copy where
 // `cd "$WT"` is put back to `cd "$ROOT"` and predicts the red, because an arm nobody has seen fail is a story.
 const step13 = (lines) => {
-  const from = lines.findIndex((l) => l.includes('step "13/13'));
+  const from = lines.findIndex((l) => l.includes('step "13/'));
   const region = from < 0 ? '' : lines.slice(from).join('\n');
   const readers = [...new Set([...region.matchAll(/cd "\$WT" && node scripts\/([\w.]+\.mjs)/g)].map((m) => m[1]))];
   // D190 — step 13 runs each of its three readers twice now: once from this directory with that step's own
@@ -706,6 +773,91 @@ if (MUTATES) {
 } else {
   console.log(`  (skipped) the mutant arm: this run is already aimed at a planted reader (${CHECKER})`);
 }
+// D198 — the silent child, its retries, and the channel it must speak on. The stubs live in their own directory,
+// not under FIX, because every harness run clears FIX at its start (D165's lesson), and the last arm below runs
+// THIS file as a child. Gated on MUTATES for the same reason the mutant arm is: a child aimed at a plant must not
+// aim a grandchild at a plant of its own.
+if (MUTATES) {
+  const STUBS = join(tmpdir(), 'nexus-d198-stubs');
+  rmSync(STUBS, { recursive: true, force: true });
+  mkdirSync(STUBS, { recursive: true });
+  const silent = join(STUBS, 'silent.mjs');
+  const rattling = join(STUBS, 'rattles_on_stderr.mjs');
+  const thirdTime = join(STUBS, 'speaks_third.mjs');
+  writeFileSync(silent, 'process.exit(1);\n', 'utf8');
+  writeFileSync(rattling, "process.stderr.write('a death rattle on stderr\\n'); process.exit(0);\n", 'utf8');
+  writeFileSync(thirdTime, [
+    "import { existsSync, readFileSync, writeFileSync } from 'node:fs';",
+    "const c = process.argv[1] + '.count';",
+    "const n = existsSync(c) ? Number(readFileSync(c, 'utf8')) : 0;",
+    "writeFileSync(c, String(n + 1));",
+    "if (n >= 2) console.log('NEXUS — the stub found its voice on the third attempt');",
+    "process.exit(1);",
+  ].join('\n'), 'utf8');
+  const s1 = runWith(silent, ['--worktree']);
+  results.push({
+    arm: { name: `a reader that writes nothing to stdout reads unread after ${READ_ATTEMPTS} attempts, whatever its exit code says`,
+      expect: 0, must: [/unread true/, /no stdout at all/, new RegExp(`attempts ${READ_ATTEMPTS}`)], absent: [] },
+    code: s1.unread && s1.tries === READ_ATTEMPTS && s1.code === 1 ? 0 : 1,
+    out: `unread ${s1.unread} · attempts ${s1.tries} · exit ${s1.code} · why: ${s1.why}`,
+  });
+  const s2 = runWith(rattling, ['--worktree']);
+  results.push({
+    arm: { name: 'stderr is not the verdict channel: a child that rattles there and exits 0 is still unread',
+      expect: 0, must: [/a death rattle on stderr/, /no stdout at all/, /exit 0/], absent: [] },
+    // The child's own text is carried into the arm's evidence: the first version of this arm demanded the rattle
+    // in `must` while printing a summary that could not contain it, so it reddened on its own wording rather
+    // than on the reader — an arm whose evidence string cannot hold what it predicts is a caption.
+    code: s2.unread && s2.code === 0 ? 0 : 1,
+    out: `${s2.why} · exit ${s2.code} · unread ${s2.unread} · the child wrote to stderr: ${s2.out.trim()}`,
+  });
+  rmSync(`${thirdTime}.count`, { force: true });
+  const s3 = runWith(thirdTime, ['--worktree']);
+  results.push({
+    arm: { name: 'the retry is real: a reader that speaks on its third attempt is read, not refused',
+      expect: 0, must: [/unread false · attempts 3 · exit 1/], absent: [/no stdout at all/] },
+    code: !s3.unread && s3.tries === 3 ? 0 : 1,
+    out: `unread ${s3.unread} · attempts ${s3.tries} · exit ${s3.code} · why: ${s3.why}`,
+  });
+  // The structural claim the guard leans on: an empty stdout is a death rather than a verdict because the reader
+  // prints before it can exit. Measured as byte order — every `process.exit(` in the reader has a `console.log(`
+  // before it — and armed by a copy that hoists an exit above the first print, because a guard nobody has seen
+  // fail is a story. What it cannot see is stated in the header, not implied here: this is order, not
+  // reachability, so an exit added below the first print that skips its own print still passes.
+  const lineOf = (b, i) => (i < 0 || i === undefined ? -1 : b.slice(0, i).split('\n').length);
+  const printIdx = [...READER_BYTES.matchAll(/console\.log\(/g)].map((m) => m.index);
+  const exitIdx = [...READER_BYTES.matchAll(/process\.exit\(/g)].map((m) => m.index);
+  const blindExits = (b) => {
+    const prints = [...b.matchAll(/console\.log\(/g)].map((m) => m.index);
+    return [...b.matchAll(/process\.exit\(/g)].map((m) => m.index).filter((e) => !prints.some((p) => p < e));
+  };
+  const shippedBlind = blindExits(READER_BYTES);
+  results.push({
+    arm: { name: 'the shipped reader prints to stdout before every one of its exits, so silence is a death',
+      expect: 0, must: [/\d+ console\.log · \d+ process\.exit · blind exit\(s\) 0/], absent: [] },
+    code: shippedBlind.length === 0 ? 0 : 1,
+    out: `${printIdx.length} console.log · ${exitIdx.length} process.exit · blind exit(s) ${shippedBlind.length}`
+      + ` · first print line ${lineOf(READER_BYTES, printIdx[0])}`,
+  });
+  const hoisted = READER_BYTES.replace('console.log(', 'process.exit(1); console.log(');
+  const hoistedBlind = blindExits(hoisted);
+  results.push({
+    arm: { name: 'that predicate reddens on a copy of the reader with an exit hoisted above its first print',
+      expect: 1, must: [/hoisted copy blind exit\(s\) 1/], absent: [] },
+    code: hoistedBlind.length === 1 ? 1 : 0, out: `hoisted copy blind exit(s) ${hoistedBlind.length}`,
+  });
+  const child = spawnSync(process.execPath, [HARNESS, `--reader=${silent}`],
+    { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26, timeout: 600000 });
+  results.push({
+    arm: { name: 'this harness aimed at a silent reader refuses the whole run instead of scoring arms it never observed',
+      expect: 2, must: [/RESULT: NOT CHECKED — the reader never spoke/, /unread \d+ of \d+ arms/],
+      absent: [/RESULT: PASS/, /RESULT: FAIL/] },
+    code: child.status ?? -1, out: `${child.stdout || ''}${child.stderr || ''}`,
+  });
+} else {
+  console.log(`  (skipped) the unread-child arms: this run is already aimed at a planted reader (${CHECKER})`);
+}
+
 // And the harness's own door, since D163 caught it standing open: a flag this file does not parse must refuse.
 {
   const child = spawnSync(process.execPath, [HARNESS, '--readers=x'], { cwd: ROOT, encoding: 'utf8', timeout: 60000 });
@@ -714,6 +866,24 @@ if (MUTATES) {
       must: [/RESULT: NOT CHECKED — unknown option --readers/, /flags this reader parses/] },
     code: child.status ?? -1, out: `${child.stdout || ''}${child.stderr || ''}`,
   });
+}
+
+// D198 — the refusal the arms above predict. A run in which the reader never spoke has no readings to score,
+// and scoring them anyway is what produced the two false reds that opened this unit: `exit 2 expected, 134
+// printed` with an empty verdict line, and `exit 0 expected, 0 printed`, both from a loaded host, while the
+// identical invocation standalone returned its expected verdict. An exit code with no stdout behind it is a
+// death, and a harness that files it as a missed prediction is making a claim about a reader it never reached.
+// Refusing costs the one thing a green tally is for; what it buys is that every arm printed below was read.
+const unreadArms = results.filter((r) => r.reading && r.unread);
+if (unreadArms.length > 0) {
+  console.log(`\n  unread ${unreadArms.length} of ${results.length} arms — the reader never spoke on stdout`);
+  for (const r of unreadArms) {
+    console.log(`         ${r.why} · exit ${r.code} · ${r.tries} attempt(s) · ${r.arm.name}`);
+  }
+  console.log('\nRESULT: NOT CHECKED — the reader never spoke on stdout for at least one arm, so no arm');
+  console.log('  above is a reading of it. This is not a finding about the ledgers, and it is not a pass:');
+  console.log('  re-run, and if a child stays silent, read the reader rather than this tally.');
+  process.exit(2);
 }
 
 for (const r of results) {

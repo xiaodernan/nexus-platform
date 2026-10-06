@@ -10611,7 +10611,7 @@ so the three readers walked a lane's working directory as part of the repository
 exactly one shipped file read AMBIGUOUS, gate step 9's falsifier refused with exit 2, and because
 `db_gate_fresh.sh` runs under `set -euo pipefail` that refusal stops whichever session runs the gate next.
 The list is now the union of the two drifted lists (22 names, `VENDOR_DIRS` in `scripts/source_index.mjs`), `.scratch` among
-them. D196's residue — "nothing charges the write" — is answered by `scripts/falsify_ledger_text.mjs:682`,
+them. D196's residue — "nothing charges the write" — is answered by `scripts/falsify_ledger_text.mjs:701`,
 which keeps out of the exclusion any file that turns out to be tracked, so the name cannot become a hiding
 place for a first-party claim.
 
@@ -10669,10 +10669,10 @@ those two fields, so a child that died before printing anything — exit 134 fro
 arrived as `MISSED exit 2 expected, 134 printed` with an empty verdict line, and again as `exit 0 expected, 0
 printed`: both of them findings about a reader no arm had reached. Six runs of the 50 arms on a loaded host had
 gone four green and two red, each red a different arm, while the same invocation standalone returned its expected
-verdict. Both halves of that sentence are armed now. A child gets three attempts (scripts/falsify_ledger_text.mjs:216), an exit code
+verdict. Both halves of that sentence are armed now. A child gets three attempts (scripts/falsify_ledger_text.mjs:217), an exit code
 is believed only when stdout carried something, and the reporting loop refuses the whole run with exit 2 and
-`unread N of M arms` (scripts/falsify_ledger_text.mjs:858) rather than scoring an observation nobody made. The refusal is scoped by a
-`reading` tag (scripts/falsify_ledger_text.mjs:464) so the three stub arms that are deliberately aimed at silent children cannot trip it.
+`unread N of M arms` (scripts/falsify_ledger_text.mjs:879) rather than scoring an observation nobody made. The refusal is scoped by a
+`reading` tag (scripts/falsify_ledger_text.mjs:473) so the three stub arms that are deliberately aimed at silent children cannot trip it.
 The contract in the header says all three exit-2 causes out loud, because a harness whose exit codes are not in
 its own documentation is one more thing to rediscover (scripts/falsify_ledger_text.mjs:69).
 
