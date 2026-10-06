@@ -39,7 +39,7 @@ const RAW = {
 };
 // D235 - this block used to refuse the run when any surface carried a CR byte, and the refusal was a
 // standing one: with core.autocrlf=true and no .gitattributes pin for the path, the working copy of an
-// unpinned surface is CRLF by construction (D234's "standing refusal wearing a temporary plane's
+// unpinned surface is CRLF by construction (D236's "standing refusal wearing a temporary plane's
 // clothes"). The arms' anchors are LF-spelled, so the harness now normalizes at load and prints which
 // surfaces it normalized - a stated fact about the plane, not a verdict about the bytes.
 const SHIPPED = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, v.replace(/\r\n/g, '\n')]));

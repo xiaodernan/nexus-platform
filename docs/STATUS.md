@@ -10488,7 +10488,7 @@ module exists to be the only copy of. Measured on that version: `--gate a --gate
 repeated `--report` was accepted twice, and every refusal carried this file’s own wording. The migration was
 witnessed rather than assumed, and one arm then found that its own witness had been leaning on the defect — the
 "a surface that cannot be opened" arm aimed the census at a missing file by APPENDING a second `--gate`, which only
-worked because the private loop resolved last-wins (scripts/falsify_reader_reachability.mjs:152-158).
+worked because the private loop resolved last-wins (scripts/falsify_reader_reachability.mjs:163-169).
 `scripts/falsify_flag_dialect.mjs` names this reader among the ones on the shared parser
 (scripts/falsify_flag_dialect.mjs:303), so a silent revert to a private loop is a red in that census.
 WITNESSES, all against the shipped bytes. `node scripts/check_reader_reachability.mjs` exits 0.
@@ -12194,7 +12194,7 @@ readers and the PLAN.md this unit reads, are untouched.
                     to 0, NOT-UNIQUE 2 to 0, EXACT 117 to 130). Nothing here re-aims or touches a
                     shared-dirty file. Appends pure addition, zero lone LF. Nothing pushed.
 
-## 237. the third citation reader gets the surface the reachability census demanded, and the falsifier that guards that census refuses on a plane fact nobody had re-run into (D234)
+## 238. the third citation reader gets the surface the reachability census demanded, and the falsifier that guards that census refuses on a plane fact nobody had re-run into (D234)
 
 `check_reader_reachability.mjs` went red on its own rule the first time it was re-run after D195's wiring
 moved: `invoked by 12 of 13 (unreached: 1)`, the unreached reader being `check_citation_supports_sentence.mjs`
@@ -12242,7 +12242,7 @@ the lane that owns PLAN.md's run log — this one.
 
 Appends pure addition, zero lone LF. Nothing pushed; the other lane's dirty files, the four citation readers
 among them, are untouched.
-## 238. D235 landed: the reachability falsifier normalizes at load and derives its population; the first complete fresh-gate run on this host runs steps 1-7 green and stops at step 8 on that falsifier's own stale anchors, measured and routed
+## 239. D235 landed: the reachability falsifier normalizes at load and derives its population; the first complete fresh-gate run on this host runs steps 1-7 green and stops at step 8 on that falsifier's own stale anchors, measured and routed
 
 THE D235 REMEDIATION, MEASURED FRESH. `falsify_reader_reachability.mjs` no longer refuses a surface for
 carrying a CR byte: the three surfaces are normalized CRLF->LF at load, and the run prints WHICH of them
@@ -12255,7 +12255,7 @@ one harness late). Run after the edit, unchanged since: 15 arms, 15 held, 0 miss
 
 STEP 14 RUNS END-TO-END HERE NOW. The gate's step-14 block — the same five piped invocations, same
 `set -euo pipefail` — re-run as a block: the i18n census, the a11y census, their two falsifiers and the
-reachability harness all print PASS, block exit 0. The step the D234 plane could not reach on this host
+reachability harness all print PASS, block exit 0. The step the D236 plane could not reach on this host
 is reachable and green.
 
 THE DB PLANE, SUPPLIED THE WAY THE FILE SAYS. Four residual `nexus_gate_*` databases from earlier aborted
@@ -12287,3 +12287,33 @@ invocation in the step and therefore did not run; the gate's exit is the falsifi
 
 Appends pure addition, zero lone LF. Nothing pushed; the other lane's dirty files, this falsifier among
 them, are untouched.
+## 240. The fork my own append built is resolved by renumbering the later duplicates, the citation my D235 edit moved is re-aimed, and the gate's remaining DB-free steps are measured standalone on this host
+
+THE FORK, AND WHOSE IT WAS. `e512c11` appended a §237 and a D234 without scanning the whole ledger for
+its number, and the other lane's same-numbered sections were already in — check_ledger_sections refused
+the run with "two sections answer one citation": STATUS 237×2 and DECISIONS D234×2, the same fork on both
+planes, so it was not drift but a double landing. The later duplicates are this lane's, so they move: the
+third-citation-reader section is now §238, the D235-landed section is now §239, and the standing-refusal
+ruling is now D236 — with every sentence that cited them by number moving too (one in STATUS, two in
+DECISIONS, one in the falsifier's own comment, six in PLAN's uncommitted log). The other lane's §237 and
+D234 keep their numbers, and every reference to them means them again. The rule the fork earns: an append
+that checks only the tail checks nothing — a section number is part of the content, and the reader
+refuses the fork, not the intent.
+
+THE RE-AIM. The D235 edit shifted the falsifier's last-wins comment block by eleven lines, and the drift
+census went from the §237-era reading to MOVED 1 of 147 judged. The citation now aims eleven lines lower,
+the target text was verified at the new range before the edit, and strict is clean on 147 judged after it.
+
+THE REMAINING STEPS, MEASURED STANDALONE while the gate proper still stops at step 8's stale anchors
+(that fix is routed in §239): the comment-citation reader PASSES on the working tree (92 citations across
+31 files); step 11 is DB-gated by design and refuses without a loaded seed; step 17's census is UNCHECKED
+by design without an expectation. Step 13's three committed-plane legs ran for the first time on this
+host, inside a detached worktree of HEAD, and every one reddened: 47 strict offenders in the ledger
+census, each a committed ledger sentence citing a file only the working tree holds — repositories,
+console tests and an AI runs module among them — which is the uncommitted-files lane's to land, not the
+ledgers' to re-aim; and one further offender is a committed falsifier comment citing the ledger-text
+falsifier's 858th line while HEAD's file has 737 — the owner lane's WIP extends the file its own comment
+cites. The committed ledgers point at work no committed tree contains; the planes are honest about it,
+and the red is a measurement of what has not landed.
+
+Appends pure addition, zero lone LF. Nothing pushed; the other lane's dirty files untouched.

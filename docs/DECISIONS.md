@@ -12015,7 +12015,7 @@ behind the name, 4 in a single sentence of which one is nine lines off.
 
 **Movement since D223, read off the counts.** EXACT 117 to 130, MOVED 10 to 0, NOT-UNIQUE 2 to 0, UNPATHED 262 to 274, citation-shaped 525 to 545, sections 423 to 447: the tree grew about twenty sections and the drift classes drained as other lanes re-aimed or rewrote. Nothing in this unit re-aims, rewords, or touches a shared-dirty file; the numbers are the work. Appends pure addition, zero lone LF. Nothing pushed.
 
-## D234 — a census earns its surface as a reporting invocation, and a precondition the machine's own checkout rules cannot satisfy is a standing refusal wearing a temporary plane's clothes
+## D236 — a census earns its surface as a reporting invocation, and a precondition the machine's own checkout rules cannot satisfy is a standing refusal wearing a temporary plane's clothes
 
 Two rulings, one from wiring and one from the refusal the wiring surfaced.
 
@@ -12041,9 +12041,9 @@ stops at step 14 on this plane for a reason no reader wrote.
 Two rulings, one applied to this lane's own harness and one witnessed against another falsifier in the
 same gate run.
 
-First, **D234's ruling applies on the harness side.** `falsify_reader_reachability.mjs` refused any surface
+First, **D236's ruling applies on the harness side.** `falsify_reader_reachability.mjs` refused any surface
 carrying a `\r` byte; with `core.autocrlf=true` and no `.gitattributes` pin for `.github/workflows/ci.yml`,
-that refusal fired on every normal checkout — the standing refusal D234 named. The arms' anchors are
+that refusal fired on every normal checkout — the standing refusal D236 named. The arms' anchors are
 LF-spelled text, so the harness now normalizes CRLF->LF at load and prints which surfaces it normalized:
 a stated fact about the plane, not a verdict about the bytes, and the shipped blobs stay untouched — the
 pin, or an EOL-agnostic precondition, remains the surface owner's remedy.
@@ -12058,4 +12058,4 @@ headers have read `/18` since D219 derived its total. Stale constants are D196's
 lives in a falsifier, and surfaced only once the DB plane let step 8 execute, makes the point sharper —
 the red is honest and it measures the falsifier, not the ledgers. The file carries its owner lane's active
 unit and is untouched; the derived-anchor shape (`step "8/`, `step "13/`, which cannot catch `13a/`) is
-recorded in §238 for whoever lands its next revision.
+recorded in §239 for whoever lands its next revision.
