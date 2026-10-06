@@ -12068,3 +12068,30 @@ never skipped — so an unbounded clause cannot bury the row after it. (2) The r
 is not a reading copy: `--limit`, a knob for the terse face, does not bind `--list`. The default face
 stays byte-stable because the gate invokes the reader with no flags, so output identity on the same
 ledgers is the proof, and §241 records the measurement.
+
+## D238 — the sharing-nothing census stays a census: the human read is the verdict, corrections append or route, and a repair that matches shape instead of sentence is exactly the defect the readers exist for
+
+The 44 rows the sharing-nothing census prints are judged by a human read, whole, in one unit (§242): 30 true
+subject, 4 self-naming, 3 photograph, 4 other-plane, 1 worn after an honest repair, 1 landed false by a repair,
+1 blank backlog. Three rulings follow.
+
+One. The census keeps exit 0 and keeps refusing to judge. Thirty of 44 rows prove that "shares no identifier" is
+the normal shape of a true citation written in prose — a sentence describes its subject in words precisely when
+the subject line does not re-spell the tokens — so arming the proxy would redden the gate on true rows. The one
+false row proves the other half: only a read can catch what identifiers cannot, which is why the deliverable is
+the --list copy and the judgment lands in the ledger, not in an exit code.
+
+Two. No row is edited by this unit. Corrections take two routed channels, both with byte evidence already
+recorded in §242. The predicate cite §200 lost to D227's pass goes back to 456-458 in a repair unit that runs
+only after the owner lane lands D198, gated on D217's single-occurrence assertion and on the target being
+HEAD-clean — the very discipline D217 stated and D227's pass did not satisfy. D189's first-leg cite belongs to
+the drift reader's step-16 class, whose MOVED bucket exists for exactly that wear.
+
+Three. D227's policy is reaffirmed and its failure named. Numbers on the HEAD plane is the rule; "repaired by
+content" must mean the sentence's own claim is matched, not a block of the right shape — a harness case block
+that starts on a name line is the shape of half the arms in that file, and the sentence here describes one arm
+in particular, the one that declares a death. The proof the failure is catchable by machinery already shipped:
+the same claim lived in two rows, D194's ruling (DECISIONS 11042) kept its true cite while D194's unit record
+(STATUS 10410) had its moved, so any repair pass that cross-checks sibling rows for the same claim before
+rewriting a number would have refused this edit. That cross-check is owed to the next repair unit as a step,
+not as advice.

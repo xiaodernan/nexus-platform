@@ -12344,3 +12344,58 @@ grammar: `--list=x` prints NOT CHECKED and exits 2, measured.
 
 Ruling: D237. Run log: PLAN.
 Appends pure addition, zero lone LF. Nothing pushed; the other lane's dirty files untouched.
+
+## 242. The 44 sharing-nothing rows are read whole: 30 cite their subject, 4 name themselves, 3 photograph dead runs, 4 live on the other plane, 1 wore out, and 1 repair landed false
+
+D237's --list printed every row the census cannot score — 44 of the 102 judged — with the clause each citation
+is responsible for, the single line it cites, and the section both sit in. This unit is the read that copy was
+built for. Each row was judged against the cited line's ±3 neighbourhood at HEAD, and where the two planes
+disagree, against the disk copy as well. No old text was edited and no row was re-aimed; every finding below is
+evidenced from committed bytes, and the rows are named by bare ledger line so this section adds no
+citation-shaped token.
+
+  true subject (30) — the cited line holds, verbatim, what its clause describes, in prose the identifier proxy
+    cannot see: STATUS 4412 4425 4767 4886 4888 6679 10135 10400 10407 10407 10491 12158 12237, DECISIONS 5414
+    5415 5451 7228 9333 10640 10641 10941 10976 10981 11042 11148 11154 11192 11195 11203 11416. Two shapes
+    dominate: the clause names its subject in words — the operator log, the reason count, the terminal sentinel,
+    the seed_base_record stamp, the capitals-run rule, the fixed leg — and the line says the thing; or the
+    clause names the counterpart of a contrast and the cited line is the other side (the resolve-based ROOT
+    beside the named process.cwd one, the notCheckable refusal helper beside the named throw).
+  self-naming (4) — the sentence quotes the citation token itself, so the target's content is irrelevant by
+    design: D88's "a ledger cites" pair (DECISIONS 5170, twice — line 88 of docs/DATABASE.md, which is blank,
+    and the CI workflow at 24), D88's header-example row (DECISIONS 5230 — the same blank 88, the very cite D94
+    later re-digitised to NN, closing that story from the other end), and D157's fixture cite (DECISIONS 9498 —
+    the index module's first line, named because the fixture's plant needed a target that always exists).
+  photograph (3) — a quoted run, not a live claim: §90's first-run table row (STATUS 4887 — the package.json
+    example has since left the header line it named), §120's crash stack (STATUS 5936 — ledgerText has since
+    moved), and §206's quoted tool output (STATUS 10839). Wear inside a photograph is recorded, not repaired.
+  other plane (4) — true on the plane the rows were written against, stale on the other: the required
+    body_blocks declaration (STATUS 5984 and DECISIONS 5095 — line 266 on the disk, pushed down at HEAD by the
+    union block the web lane landed above it), the three-attempts cite (STATUS 10672 — true against the D198
+    working copy of falsify_ledger_text.mjs, whose 904 disk lines hold the retries comment there; at HEAD that
+    line is fixture code and the same sentence's unread-refusal cite is past EOF), and D233's re-aim note (the
+    PLAN row of STATUS 12237 — the disk log holds the new number, the committed copy predates it). Owner lanes
+    land these; the gate's worktree plane already holds them true.
+  worn after an honest repair (1) — D189's first-leg cite (DECISIONS 10679) was re-aimed by D217's ten-row pass
+    and was true then; the gate has since grown from thirteen steps to eighteen and the first leg now sits at
+    424 where the cite says 391. That is the drift reader's step-16 class, routed, not this unit's repair.
+  landed false (1) — the finding of this unit. §200's range cite for the expectCrash both-ways predicate
+    (STATUS 10410) was true at its landing (3b4b422: the clause inside armReasons at 331-333) and true after
+    D196's renumber (af9bf2c: 456-458, the harness file byte-identical to HEAD's). D227's repaired-by-content
+    pass (2268dd7) moved it to 581-583 — a case block matched by shape, a name line plus two lines, rather than
+    by what the sentence describes; the block there is the --roots refusal arm, which declares no death. The
+    repaired number has never held on any plane: at HEAD the predicate's clause is at 456-458 — where D194's
+    own ruling still cites it (DECISIONS 11042, read true by this same unit) — at the current disk it sits at
+    466 of the 904-line D198 working copy, and 581-583 holds the --roots arm on every plane. D227's stated
+    policy, numbers on the HEAD plane, was right; its content match was not. The correction is routed, not
+    applied here: aim the row back at 456-458 in a repair unit that runs after the owner lane lands D198, gated
+    on D217's single-occurrence assertion, because the target file is HEAD-dirty today and D217's own
+    discipline forbids pinning a number to a moving plane.
+  blank backlog (1) — D160's own naming sentence (STATUS 9016), inside the 16 the blank census counts.
+
+The census's weakness held in both directions, as designed. Thirty of 44 rows prove the blind spot is the norm —
+a sentence describes its subject in prose exactly when the subject line does not re-spell the tokens — so arming
+the proxy would redden the gate on true rows; and the one false row was invisible to identifiers until a human
+read the clause against the line. The census stays exit 0 and stays a census (D238). This section adds no
+cite-shaped token, so the census is byte-stable across the append: 501 seen, 102 judged, 44 sharing nothing,
+before and after.
