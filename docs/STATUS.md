@@ -12534,3 +12534,27 @@ one unit per pair.
 The unit also caught its own preflight: the mapping census grepped `Mapping(` and reported one route where
 the file declares two — the bare `@PostMapping` has no parens to match. The door test's POST expectation is
 what surfaced it; D244 states the rule.
+## 249. The analytics window is adopted with the door test the pair never had (2db271c): 195/0/0 on a clean plane — and the committed drift reader's one-segment matcher turns the landing's +1 real served into a claimed +2, which is the reader's own known weakness measured live
+Two files adopted byte-for-byte: `MerchantAnalyticsController.java` (+194 — `GET /api/v1/merchant/analytics`:
+a window over events, reservations and orders whose honesty rules are part of the payload — a no-row window
+is a real zero calling itself `degraded:false`, an unknown metric is a 422, the window caps at 366 days) and
+`MerchantAnalyticsRepository.java` (+115). The pair has shipped with no test since Sep 24, so the unit
+authored the witness first rather than adopt an untested route: `MerchantAnalyticsDoorTest.java` (+171, this
+lane's work, not adoption). Working copy 2/0/0 in 13.94s: a past window answers zeros undegraded, the
+present window measures exactly what the test wrote (3 views, 2 clicks, 2 actions, one consumer-route booking
+whose `booked_value` is the slot's 180.00), bare dates are UTC day boundaries with `to` end-of-day, the
+metric is validated and echoed but narrows nothing in the payload (characterised, not endorsed), and the
+refusal table ends on the staffed caller's 200 with the single 403 audited. Acceptance on a detached
+worktree at 2db271c: **195 tests / 0 failures / 0 errors, BUILD SUCCESS**.
+The drift delta did not land cleanly and the discrepancy is the finding. The committed reader reports 89
+served / 21 CLIENT-ONLY at 2db271c (+2 / -2 from 5e0b178's 87 / 25), but only ONE of the two rows that left
+CLIENT-ONLY is this landing's: `/api/v1/merchant/analytics` is real; `/api/v1/admin/search/analytics` is a
+false pass — the committed reader matches a server route by its last ONE literal segment, so the first
+committed file carrying an `"/analytics"` literal (this controller) satisfies an admin route no committed
+code serves. The working copy's uncommitted fix to the reader already carries the two-literal-segment
+matcher and its own rationale (the §156 lesson it quotes); under it the delta is exactly +1. The committed
+plane readings across the arc therefore stand at 82 → 85 → 87 measured with a known one-segment false-pass
+that this landing newly triggered, and the reconciliation of that reader belongs to the lane whose fix is
+already drafted (its D, its landing).
+The campaign and knowledge pairs remain untracked with the same no-test shape; each gets an authored door
+test first, as this unit did.
