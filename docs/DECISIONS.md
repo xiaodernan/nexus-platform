@@ -12194,3 +12194,19 @@ invariant is about.
 Measured on the way past: the STATUS section this commit writes — three files +1196/-0, 192/0/0 at a283469,
 and the drift reader's three-plane table (82/85/106 served) that exposed the working-copy corpus for what it
 is.
+## D244 - a route census enumerates annotation spellings, bare and parameterized; and the test that drives a door is that census's checker
+Decided: any census of a controller's routes must enumerate every spelling that maps one — `@GetMapping`,
+`@PostMapping`, `@PatchMapping`, `@DeleteMapping`, `@PutMapping`, and `@RequestMapping` in both bare and
+parameterized forms — because a grep shaped like one spelling silently undercounts, and every downstream
+check built on the census (route-space unclaimed, contract coverage) inherits the undercount. And when a test
+drives a route the census did not report, the census is the defect, not the test.
+Why: the import-door adoption preflight grepped `Mapping(` and reported one route; the file declares two —
+the accept route is a bare `@PostMapping` with no parenthesis to match. Only the door test's own POST
+expectation, read before landing, exposed the gap. A census that misses the bare form would have landed a
+route whose contract-coverage claim was never checked, and the route-space-unclaimed guarantee would have
+rested on a count that was never whole.
+Rule: spell out the enumeration (or walk the annotations structurally) in every route census this ledger
+cites; when an adoption preflight's count disagrees with the door test's route count, stop and reconcile
+before staging, because the disagreement is itself the finding.
+Measured on the way past: the STATUS section this commit writes — one route reported, two declared, and the
+test that knew.

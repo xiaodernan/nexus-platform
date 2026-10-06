@@ -12512,3 +12512,25 @@ controller, and the admin/commerce/seo packages) — they stay CLIENT-ONLY on th
 own lanes land, which is now a measurable property instead of an invisible one.
 Remaining half of the queue's #17: reservation state transitions — D26 stands (no route moves a booking to
 confirmed) and building the acceptance route is a product decision that needs a contract row first.
+## 248. The import door follows the console under D243's protocol (5e0b178): controller and the witness that drives it, 193/0/0 on a clean plane, and the committed plane serves 87 — the door test caught the adoption preflight's own census missing a bare @PostMapping (D244)
+Two files adopted byte-for-byte: `MerchantImportController.java` (+157 — `POST /api/v1/merchant/imports`
+accepting a job with 202 queued, `GET /api/v1/merchant/imports/{job_id}` polling it to terminal status)
+and `MerchantImportDoorTest.java` (+131 — the coverage that keeps the adoption honest). Both routes are
+documented contract rows (:258 `write_products` accept, :259 `read_products` poll); the closure closes inside
+the tracked tree (ImportService, the MerchantImportRepository the previous landing brought, MerchantImportPort
+and its adapters). Working copy: the door test 1/0/0 in 12.46s — a real heuristic import end-to-end, a menu
+with both documented price shapes, three proposals, the import_job marker and imported price facts read back
+from the rows, the dashboard's pending_proposals selector seeing the import's three and not the hand-made
+draft beside it. Acceptance on a detached worktree at 5e0b178: **193 tests / 0 failures / 0 errors, BUILD
+SUCCESS** — 192 plus the door test.
+The drift reader on the committed plane: 113 parsed / **87 served** / 23 CLIENT-ONLY — exactly +2 served,
+-2 CLIENT-ONLY from the console landing's 85/25, the two import rows moving from documented-and-referenced
+to served. The committed-plane readings now stand at 82 → 85 → 87 across three adoptions; the working copy
+still reads 114 / 106 / 0 because its corpus counts the drafts that remain untracked: the analytics, campaign
+and knowledge controller/repository pairs. Those three pairs ship with no tests anywhere — unlike the console
+(whose test 599cfce committed) and the import door (whose test rode with the draft) — so adopting them as
+they stand would serve untested routes, the wave's sin reversed. Each pair gets an authored door test first,
+one unit per pair.
+The unit also caught its own preflight: the mapping census grepped `Mapping(` and reported one route where
+the file declares two — the bare `@PostMapping` has no parens to match. The door test's POST expectation is
+what surfaced it; D244 states the rule.
