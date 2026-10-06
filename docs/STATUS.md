@@ -12558,3 +12558,21 @@ that this landing newly triggered, and the reconciliation of that reader belongs
 already drafted (its D, its landing).
 The campaign and knowledge pairs remain untracked with the same no-test shape; each gets an authored door
 test first, as this unit did.
+## 250. The knowledge base is adopted with its authored door test (ab694d9): 197/0/0 on a clean plane, and the committed plane serves 91 — the two rows that left CLIENT-ONLY are both genuinely this landing's, and the remaining 19 are now a visible map of what still ships unserved
+Three files: `MerchantKnowledgeController.java` (+199 — `GET /api/v1/merchant/knowledge-base`: document rows
+with chunk counts and never chunk text; `POST /api/v1/merchant/knowledge-base/reindex`: a queue write that
+moves documents to pending and stops, reporting queued counts because claiming "reindexed" would claim work the
+route does not do), `MerchantKnowledgeRepository.java` (+113), and `MerchantKnowledgeDoorTest.java` (+174,
+authored by this lane first — the pair shipped no test). The door test pins the boundary the controller exists
+to hold: a token unique to the chunk text is not reachable from the read, the reindex reports the id it does
+not own under `unknown_document_ids` while queuing the two it does, `chunks.embedding` is exactly as empty
+after the write as before it, the second call is idempotent and audits again, and the refusal table ends on
+two audited 403s — `read_products` for the read, `configure_ai` for the write. Working copy 2/0/0 in 11.93s;
+acceptance on a detached worktree at ab694d9: **197 tests / 0 failures / 0 errors, BUILD SUCCESS**.
+The drift reader on the committed plane: 91 served / 19 CLIENT-ONLY, and unlike the analytics landing both
+rows that left CLIENT-ONLY are genuinely served by this landing — the knowledge-base read and the reindex
+write. The remaining 19 are the map of what still ships documented-and-referenced but unserved on the
+committed plane: five `/ai/v1` routes, four `/api/v1/admin` routes, the three campaign routes the last
+untracked merchant pair serves, and seven routes of the untracked commerce/seo packages (carts, order
+cancellation, payment confirmation, seo pages and routes) plus `/api/v1/users/{id}` and the payment webhook.
+The adoption arc has one merchant pair left; the packages beyond it are their own lanes' units (D243).
