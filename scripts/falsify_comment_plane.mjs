@@ -832,15 +832,18 @@ if (PLANTED === null) {
 // --------------------------------------------------------------------------- the seam, inside the runner
 {
   const gate = readFileSync(GATE, 'utf8').replace(/\r\n/g, '\n').split('\n');
-  const start = gate.findIndex((l) => /^step "9\/12/.test(l));
-  const end = gate.findIndex((l, i) => i > start && /^step "10\/12/.test(l));
+  // D242 — same class as the step-8/step-13 anchors: D219's renumber to /18 left these greps on the old total,
+  // the block came back empty (0 lines read, every pattern unanswered), and gate step 8 could not pass on any
+  // plane. An arm that pins a step's wiring pins the step's number, not the era's step total.
+  const start = gate.findIndex((l) => /^step "9\//.test(l));
+  const end = gate.findIndex((l, i) => i > start && /^step "10\//.test(l));
   const block = start < 0 ? [] : gate.slice(start, end < 0 ? gate.length : end);
   const wants = [/falsify_comment_plane\.mjs/, /GATE_COMMENT_PLANE:\+--plane=/];
   const missing = wants.filter((re) => !block.some((l) => re.test(l)));
   await arm(`step 9's block runs this harness AND forwards the knob to the reader (${block.length} lines read)`,
     missing.length === 0 ? 0 : 1, [], [], null);
   for (const m of missing) results.at(-1).missed.push(m);
-  if (start < 0) results.at(-1).missed.push(/^step "9\/12/);
+  if (start < 0) results.at(-1).missed.push(/^step "9\//);
   console.log(`  step 9 block: ${block.length} lines, ${missing.length} of ${wants.length} required forms missing`);
 }
 {
