@@ -12399,3 +12399,7 @@ the proxy would redden the gate on true rows; and the one false row was invisibl
 read the clause against the line. The census stays exit 0 and stays a census (D238). This section adds no
 cite-shaped token, so the census is byte-stable across the append: 501 seen, 102 judged, 44 sharing nothing,
 before and after.
+
+## 243. A line-count claim read by split-not-newline is off by one on every file that ends with a newline (D239)
+
+

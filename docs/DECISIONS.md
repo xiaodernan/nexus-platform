@@ -12095,3 +12095,20 @@ the same claim lived in two rows, D194's ruling (DECISIONS 11042) kept its true 
 (STATUS 10410) had its moved, so any repair pass that cross-checks sibling rows for the same claim before
 rewriting a number would have refused this edit. That cross-check is owed to the next repair unit as a step,
 not as advice.
+
+## D239 — a census row over the working copy is not a population, and a citation's shape decides whether a reader owes it an answer
+
+A line-count claim printed by a harness that calls `.split('\n').length` on a file ending with a newline is one
+higher than `wc -l`, because the split adds a phantom final element to the trailing empty segment. The proof script
+that landed D233 used that convention, so its message claimed "STATUS 12116 to 12174" while the actual blob has 12115
+terminators; fixing the harness to count newlines instead of segments produced the correct figures and tied them to
+the staged numstat by asserting HEAD lines + additions === disk lines.
+
+No reader judges these absolute line-count claims in committed ledger prose. The drift census (step 15) checks
+whether a cited line's text moved between refs, not whether the prose claiming "N lines" matches the blob. The number
+reader draft (another lane's live file) would be the natural place, but it is untracked and dirty. This unit measured
+the last 50 commits and found only one ledger-size claim ("STATUS 12115 to 12174") and it already uses the corrected
+convention; earlier units' messages carried the phantom figure but are beyond the scan window and not worth amending.
+The fix is in the harness, not in committed history, and the next time a unit prints absolute counts it will derive
+them from newlines.
+
