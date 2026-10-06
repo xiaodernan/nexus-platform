@@ -12487,3 +12487,28 @@ Measured after the fix: the harness over the shared working copy 57 arms / 56 he
 in a detached worktree at ace5813 RESULT: PASS — 57 arms / 57 held / 0 missed. Honest state: gate steps 9-18
 have still never run since D219's renumber — step 8 stops on THIS working copy until D217's landing reconciles
 Y1; on a clean plane it passes again.
+## 247. The committed red D241 recorded is paid: the console the wave tested for is adopted byte-for-byte from its untracked draft (a283469), 192/0/0 on a clean plane, MerchantConsoleTest 10/10 where 599cfce left 9 red — and the drift invariant's working-copy corpus turns out to have been counting untracked files all along (D243)
+The landing is three untracked files adopted with zero edits: `MerchantContentController.java` (+1017: the
+§23 reservationInbox, the §107 export, offering writes/archive, businesses onboarding, the dashboard),
+`MerchantContentRepository.java` (+126), and `MerchantImportRepository.java` (+53, which the controller's
+constructor injects). Staged by name, +1196/-0. The closure census covered imports AND same-package
+references — imports alone miss the same package — and every reference resolves tracked, including
+`MerchantImportPort` and its two adapters (a mid-census read of my own file listing had mislabelled the port
+untracked; `git ls-files` before staging settled it). The remaining untracked drafts — analytics, campaign,
+knowledge, the import controller — are nobody's debt to sweep in by adjacency and stay as they were.
+The contract needed no edit: every route the controller serves is already documented (API_CONTRACT.md
+:252-:274, including the combined `POST/PATCH/DELETE /offerings[/{id}]` row at :256), and :264's claim
+"Served by `MerchantContentController#reservationInbox`" — true only in working copies since Sep 23 — is
+true at HEAD for the first time.
+Acceptance on a detached worktree at a283469, which holds only committed bytes: `mvn -o test` gives
+**192 tests / 0 failures / 0 errors, BUILD SUCCESS** — the same 192-test denominator as the §245 baseline
+with its 8 failures + 1 error gone, and MerchantConsoleTest 10/10. The drift reader measured on three
+planes: parent 916df88 gives 113 parsed / 82 served / 28 CLIENT-ONLY; the landing gives 113 / 85 / 25
+(+3 served, -3 CLIENT-ONLY); the working copy gives 114 / 106 / 0. The standing "114 / 106 / 0" invariant
+is a working-copy reading: its source corpus counts untracked files (its +1 parsed row is the dirty
+API_CONTRACT.md's share-lane edit), so what HEAD serves was 82 until today and is 85 now. The 25 remaining
+CLIENT-ONLY routes belong to the still-untracked drafts (analytics, campaign, knowledge, the import
+controller, and the admin/commerce/seo packages) — they stay CLIENT-ONLY on the committed plane until their
+own lanes land, which is now a measurable property instead of an invisible one.
+Remaining half of the queue's #17: reservation state transitions — D26 stands (no route moves a booking to
+confirmed) and building the acceptance route is a product decision that needs a contract row first.

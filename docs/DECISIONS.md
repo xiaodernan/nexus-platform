@@ -12171,3 +12171,26 @@ and a landing that changes what a reader prints owns the reconciliation of every
 output touches — including arms in other lanes' harnesses.
 Measured on the way past: the STATUS section written by this same commit records the engine-restart kill, the
 two-plane attribution, and 57/57 at ace5813.
+## D243 - adopting an orphaned draft is a landing, not an edit: byte-for-byte, closure-censused, accepted on a plane of committed bytes only
+Decided: when a committed red depends on code that exists only as an untracked draft, and the lane that
+drafted it is absent (stale across many units, no claiming task in the queue, nothing in the working copy
+moving), this lane may adopt the draft — under four conditions. One: the draft's route or behaviour space is
+claimed by no other lane, checked against the tracked tree and the other drafts' mappings, so the adoption
+cannot collide on landing. Two: byte-for-byte — the adoption commits the drafted bytes with zero edits, or it
+is not an adoption and does not claim the name. Three: the compile closure is censused by imports AND
+same-package references (imports alone miss the package), and closes inside the tracked tree. Four: the
+acceptance runs on a plane holding only committed bytes, never on the working copy whose green the red has
+been outliving. And one refusal: the rest of the draft tree is not swept in by adjacency — files the unit
+does not need stay untracked, owned by nobody, visible to everybody.
+Why: D241 recorded that 599cfce committed MerchantConsoleTest without the code it exercises and left the fix
+"to the lanes that own them". Fourteen days of silence later the debt had not aged out — it had hardened:
+the contract's own row described a served state no commit could produce (D181's class of claim), the mvn
+plane could never be green at HEAD, and every session paid a re-diagnosis tax. A landing the absent lane can
+revert costs less than the standing red.
+Rule: adoption is recorded as adoption in the commit message and the ledger, with the closure census and the
+route-space check named; and any standing invariant measured on the working copy is recorded beside its
+committed-plane reading, because the working copy's corpus silently includes exactly the untracked files the
+invariant is about.
+Measured on the way past: the STATUS section this commit writes — three files +1196/-0, 192/0/0 at a283469,
+and the drift reader's three-plane table (82/85/106 served) that exposed the working-copy corpus for what it
+is.
