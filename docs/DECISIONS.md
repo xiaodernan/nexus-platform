@@ -12124,3 +12124,32 @@ them never happens - that is what makes a swept landing recoverable by prose alo
 opened this: two commits that exit 1 with no output while another lane commits concurrently are not read as a hook
 verdict. The hook is run standalone first (it passed), the index is re-checked, the commit is retried, and silence
 in a shared window is read as contention until proven otherwise.
+## D241 - an arm that pins a step's wiring pins the step's number, not the era's total; a test committed without the code it exercises is a committed red, whatever working copy was green the day it landed
+
+**Decided:** the two wiring arms in `scripts/falsify_ledger_text.mjs` anchor `step "8/` and `step "13/` - the
+step's number, which is its name - and never the total the current numbering era prints after the slash. D219
+renumbered every gate header from /12 to /18 and left the arms grepping the old totals: both findIndex calls
+returned -1, both regions emptied, and the fresh gate's step 8 - the first full run since D235 - stopped on
+two MISSED arms that measured the gate's own wiring against a spelling that no longer exists. The fix is a
+two-line re-aim, landed with the owed D198 landing in 767afe1 and measured 56 arms - 56 held - 0 missed on
+the landed bytes.
+
+**Why:** it is D219's own defect run in reverse. Step 18 exists so a header can no longer announce a total
+the script does not file; the arms were announcing a total the file no longer prints. Totals change by design
+- the gate grew from 12 to 18 steps as reading steps were added - while a step's number and the reader it
+runs do not. Anchoring the number costs nothing and survives the next renumber; anchoring the era buys a
+second red of the same class the next time a step is added.
+
+**Rule this establishes:** when an arm's anchor names a position inside a numbered family, the anchor is the
+family member's identity - its number, its declared name - never the family's current size.
+
+**Measured on the way past (report-only; the platform lane's):** the attributable mvn baseline on a detached
+worktree of f213481 reads Tests run 192, Failures 8, Errors 1 - all nine MerchantConsoleTest, one cause: no
+committed controller serves /api/v1/merchant/reservations, /api/v1/merchant/offerings, or
+/api/v1/merchant/export. The test landed in 599cfce with the booking-slice wave; the controller its green
+depended on never did. HEAD is the plane that names the red; the working copy that was green is not a plane
+anyone can re-run.
+
+The section this entry pairs with is deliberately not spelled by number here, for the same measured
+constraint D198's row records: the checker requires a spelled section cite to resolve at HEAD, and the
+section is written by this same commit.

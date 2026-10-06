@@ -12421,3 +12421,45 @@ graded them is recorded in the run log (PLAN.md, appended by this lane and never
 commit message drafted for the commit that never happened is superseded by this section. The sweep added no
 citation-shaped token of its own, so the census face re-printed over the swept tree carries the headline this unit
 graded by - 501 seen, 102 judged, 44 sharing nothing - byte for byte, the same face over the swept tree.
+## 245. The fresh gate ran end-to-end for the first time since D235: steps 1-7 green, step 8's stop is the wiring arms' stale era-total, the owed D198 landing rode the fix (D241), and the attributable mvn baseline names a wave commit that tests without serving
+
+scripts/db_gate_fresh.sh ran the whole gate off the working plane for the first time since D235, on a throwaway
+database from template0 that is gone again (nexus-postgres holds no `nexus_gate_%`). Steps 1-7 green:
+migrations=8, tables=58; the synthetic generator PASS (FK integrity, bounds, naming, density, language mix);
+217 quality checks passed against the from-scratch schema; the truncate probe cleared the empty stranger and
+refused the one holding rows; step 7's jsonb falsifier held 38 of 38 arms. Step 8 stopped the gate:
+56 arms - 54 held - 2 MISSED, and the gate fail-fasted there, so no reading step ran.
+
+Both misses were the wiring arms - "gate step 8 runs this harness AND passes the knob to the reader" and
+"gate step 13 runs its three reader legs INSIDE the worktree" - each printing `exit 0 expected, 1 printed`.
+The cause is neither the gate nor the reader: the arms anchored the era's step totals (`step "8/12`,
+`step "13/13`) and D219's renumber moved every header to /18 (scripts/db_gate_fresh.sh:244 is step 8's header
+today), so both findIndex calls returned -1, both regions came back empty, and every pattern the arms demand
+went unanswered. The anchors now pin the step's number (`step "8/` at scripts/falsify_ledger_text.mjs:499,
+`step "13/` at scripts/falsify_ledger_text.mjs:521) - unique first matches in the committed gate, blind to
+the next renumber.
+
+The fix landed with the owed D198 landing (767afe1): the silent-child guard the committed D198 row described
+- runWith's three attempts, the unread refusal at exit 2, the print-before-exit structural arm - together
+with its untracked dependency scripts/spawn_guard.mjs, whose :20 is the sentence the whole vocabulary hangs
+on. Measured on the landed bytes: 56 arms - 56 held - 0 missed, exit 0, with Git's bash first on PATH (the
+plane 204 names for the three bash-helper arms). The four live line-citations into the harness moved with
+the bytes - 203's :682 to :701, 204's :216 to :217, :858 to :879, :464 to :473 - :69 was verified still
+exact, and 204's historical :682 sentence about its own landing stays history. STATUS.md changed 4 lines for
+4 lines, CRLF preserved, and the step-8 reader re-run standalone over the repointed bytes exits 0.
+
+The attributable mvn baseline ran on a detached worktree of f213481: Tests run 192, Failures 8, Errors 1,
+Skipped 0 - all nine in MerchantConsoleTest, every failure one of two shapes (`offerings said: not_found`,
+or an inbox assertion parsing the same not_found envelope). The cause is committed and simple: no controller
+at HEAD serves /api/v1/merchant/reservations, /api/v1/merchant/offerings, or /api/v1/merchant/export - the
+only reservations controller serves /api/v1/reservations, the workspace controller serves members, api-keys
+and ai-agent config, and the inbox controller serves /api/v1/merchant/conversations. The test arrived in
+599cfce with the booking-slice wave, V3 and MerchantService and OfferingRepository; the controller its green
+depended on never landed. Report-only for the platform lane: HEAD's plane reads 183 green, 9 red, one cause,
+and the green number the wave's author saw belonged to a working copy nobody can re-run.
+
+Two loose ends closed on the way: nexus_test is converged with the migration set (schema_migrations records
+V1-V8, every marker present, the spurious index gone), so the rebuild the old task asked for is unnecessary
+and the baseline above is its replacement reading; and the full gate was NOT re-run end-to-end for this unit
+- step 8's own reader and the harness were both re-run standalone over the landed bytes, which is what this
+section measures.
