@@ -12576,3 +12576,29 @@ committed plane: five `/ai/v1` routes, four `/api/v1/admin` routes, the three ca
 untracked merchant pair serves, and seven routes of the untracked commerce/seo packages (carts, order
 cancellation, payment confirmation, seo pages and routes) plus `/api/v1/users/{id}` and the payment webhook.
 The adoption arc has one merchant pair left; the packages beyond it are their own lanes' units (D243).
+## 251. The campaign surface closes the adoption arc (17688e2): 199/0/0 on a clean plane, the committed plane serves 94 - up from 82 the morning the arc started - and the door test caught the draft's own comment promising a 422 its repository deliberately does not send
+Three files: `MerchantCampaignController.java` (+482 — `POST /campaigns` writing the draft literal and
+refusing a request that carries its own `status`, `POST /campaigns/{id}/approve-publish` as the only route
+out of draft — stamped once, idempotent on a second call, `scheduled` rather than `live` when the start is
+ahead, in one transaction with the coupons it advertises — and `POST /coupons` with tenant-unique codes
+translated to 409), `MerchantCampaignRepository.java` (+176), and `MerchantCampaignDoorTest.java` (+192,
+authored first — the pair shipped no test). Working copy 2/0/0 in 11.54s; acceptance on a detached
+worktree at 17688e2: **199 tests / 0 failures / 0 errors, BUILD SUCCESS**.
+The authored witness earned its keep twice. It pinned the boundary the route exists to hold — only
+approve-publish says live, the human is named on the row, the second click changes nothing, and the
+coupon a live campaign advertises left draft in the same transaction, so a live campaign never advertises
+a draft offer. And it caught the draft disagreeing with itself: the controller's comment promises a 422
+"naming the field" for a coupon the merchant does not own, while the repository deliberately answers the
+workspace's 404 `coupon_not_found` (its own comment cites D5). The test pins the code, because the code is
+what answers; the adoption is byte-for-byte, so the stale comment ships with the record of its mismatch.
+Two authoring lessons the run itself taught, for the next lane that writes one of these: the refusal order
+is resolver-then-grant — a body the permission resolver cannot read is a 422 before anyone's grants are
+considered, so a 403 test must carry a body that resolves; and the refusal table is as much of the door as
+the happy path — three audited 403s (create on both doors, publish without the grant) sit beside the 409,
+the 404, the 401 and the window/percent 422s.
+The arc, all under D243 with authored or adopted witnesses: console 82 → 85, import door → 87, analytics
+→ 89 (one real, one reader false-pass named in its section), knowledge → 91, campaigns → **94 served, 16
+CLIENT-ONLY**. Twelve documented routes stopped being calls nobody answers. The remaining 16 belong to
+lanes beyond the merchant tree: five `/ai/v1`, four `/api/v1/admin`, seven across the untracked
+commerce/seo packages, `/api/v1/users/{id}` and the payment webhook — each is now a named, measurable gap
+instead of an invisible one, and the merchant tree itself ships with no untracked file left in it.
