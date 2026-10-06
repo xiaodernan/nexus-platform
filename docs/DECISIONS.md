@@ -12112,3 +12112,15 @@ convention; earlier units' messages carried the phantom figure but are beyond th
 The fix is in the harness, not in committed history, and the next time a unit prints absolute counts it will derive
 them from newlines.
 
+## D240 — a swept landing is restored by a note, never by history rewrite; a silent commit failure in a concurrent window is contention until the hook and the index say otherwise
+
+36adb08 took this lane's staged ledgers under a message titled for its own D233 ruling, and the diff it carries is
+this lane's section 242 and this lane's D238 and nothing else - a commit whose message describes no byte of its own
+diff. The remedy is documentary, and it is the D236 lesson pointed the other way: numbering is part of content, and
+so is authorship. The next unit appends a landing note naming the sweeping commit and the hunks that identify the
+swept bytes; the verdict lines keep their numbers and their text; and no rebase, amend or reset ever touches a
+landed commit to repair attribution. A unit's measurements live in the run log even when the commit meant to carry
+them never happens - that is what makes a swept landing recoverable by prose alone. And the failure class that
+opened this: two commits that exit 1 with no output while another lane commits concurrently are not read as a hook
+verdict. The hook is run standalone first (it passed), the index is re-checked, the commit is retried, and silence
+in a shared window is read as contention until proven otherwise.

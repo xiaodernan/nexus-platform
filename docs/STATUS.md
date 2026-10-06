@@ -12403,3 +12403,21 @@ before and after.
 ## 243. A line-count claim read by split-not-newline is off by one on every file that ends with a newline (D239)
 
 
+## 244. The D238 landing was swept: both ledgers rode the other lane's 36adb08, and this note restores the attribution
+
+At the close of the D238 unit this lane staged both ledgers for its own commit and attempted it twice; both attempts
+exited 1 with no output, in the same window in which the other lane was committing, while this lane's hook run
+standalone passed (Git bash: RC 0). The next commit to land was the other lane's 36adb08, titled for its D233 census
+ruling, and it took the staged ledgers whole: the hunks are this unit's bytes and nothing else - one STATUS hunk at
+12343 adds the 55 lines of the section above, one DECISIONS hunk at 12067 adds the 27 lines of D238, and no D233
+byte of its own rides the diff, whose only two files are the two ledgers. The following commit, f213481, appends the
+other lane's D239 beside them (DECISIONS at 12099) and a STATUS heading at 12403. Nothing was lost and no number
+moved: the section sits at 12348 and D238 at 12072, exactly as written at staging time, and the D239 unit's own
+message records re-running step 8, step 9 and the drift census over the swept bytes - all clean.
+
+What the sweep cost is attribution, not bytes, and attribution is restored by a note, never by rewriting history
+(D240): the section above and its ruling were written and graded against the ed1da22 working copy, the battery that
+graded them is recorded in the run log (PLAN.md, appended by this lane and never committed by design), and the
+commit message drafted for the commit that never happened is superseded by this section. The sweep added no
+citation-shaped token of its own, so the census face re-printed over the swept tree carries the headline this unit
+graded by - 501 seen, 102 judged, 44 sharing nothing - byte for byte, the same face over the swept tree.
