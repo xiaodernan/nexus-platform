@@ -12172,3 +12172,73 @@ committed text, and the same 36 and 41 against this section's text, because none
 sections add sits in a clause carrying a verb from its closed list. A count that does not move when the prose moves
 is a coverage caveat, not a clean bill. Nothing pushed; the other lane's dirty files, including the four citation
 readers and the PLAN.md this unit reads, are untouched.
+
+## 237. D234: D223's open item closed itself — blank census agrees 16 of 16, full reader battery green
+
+                    HEAD carries six more decisions since the last unit, and the container daemon is down
+                    again, so every number here is from a direct reader run. D223's open item — the blank
+                    census walking 16 cites where step 8 printed 14 — re-driven on this HEAD reads 16 and
+                    16: AGREE, exit 0. The committed backlog itself moved 14 to 16, so no counting-rule
+                    dispute remains; closed here explicitly so it does not dangle.
+
+                    Step 7: 22 rows over 31 locations with nothing off-plane, exit 0. Step 8: 545 shaped
+                    over 447 sections seen, 0 strict offenders, exit 0 (16 HEAD blanks, 46 untracked targets, 1
+                    uncommitted target — all counted, none judged). Step 9: 92 across 31 with 0 offenders,
+                    exit 0. Step 10: STATUS 203 against 204 and DECISIONS 215 against 216, with uncommitted 236 and D233 from another lane plus 237 and D234 from this unit, missing 0, duplicates 0. Step 12: 39 of
+                    39, exit 0. Step 15: EXACT 130 with MOVED 0 and NOT-UNIQUE 0, GONE 16, NO-BASE 1,
+                    UNPATHED 274, NOT-AT-HEAD 4, judged 147. Step 17: all three newest claims MATCHED.
+                    Line-drift falsifier 12 of 12. Ledger-text falsifier not re-driven this round (over
+                    budget; last 56 with 51 held, quoted as last).
+
+                    Since D223 the tree grew about twenty sections and the drift classes drained (MOVED 10
+                    to 0, NOT-UNIQUE 2 to 0, EXACT 117 to 130). Nothing here re-aims or touches a
+                    shared-dirty file. Appends pure addition, zero lone LF. Nothing pushed.
+
+## 237. the third citation reader gets the surface the reachability census demanded, and the falsifier that guards that census refuses on a plane fact nobody had re-run into (D234)
+
+`check_reader_reachability.mjs` went red on its own rule the first time it was re-run after D195's wiring
+moved: `invoked by 12 of 13 (unreached: 1)`, the unreached reader being `check_citation_supports_sentence.mjs`
+— the sentence-support census this lane built on 2026-10-01, verified and re-verified, and never named by any
+surface. A reader nothing runs is a measurement, not a gate; the census's own words, reddening at its author.
+
+WHAT WENT IN. The reader was filed first (`e756d52`, 202 lines, no imports beyond node builtins), then invoked
+from gate step 14 — the step D195 built for exactly this class — as a REPORTING invocation with the design
+limit spelled in the gate's own comment: the census exits 0 whatever it finds, because "the neighbourhood
+shares no identifier" is a question, not a defect; what keeps it in the gate is the reachability census above
+it, and what it delivers is the population. Step 14's header names it. The step-total derivation (D219) is
+untouched: no new step label, so the denominator stays 18 and the drift list stays empty. The five inserted
+lines sit below every line the ledgers cite (highest cited line 441, insertion at 489+), and the two readers
+that read this file's shape were re-run to prove it: step 8 `--worktree` exits 0, the drift census files
+EXACT 130, MOVED 0, judged 147 — byte-identical to the readings D233 quoted before the edit. `bash -n` clean
+via Git's bash (PATH's bash is the WSL launcher, the fourth appearance of that class).
+
+MEASURED ON THE NEW SURFACE. The census on the working-copy ledgers: 499 citations seen, 499 by direct scan
+of the same pattern, 100 judged, 324 skipped as not-at-HEAD, 42 sharing nothing — the same numbers as this
+lane's last measurement before any of today's edits, 49 seconds, exit 0.
+
+THE NEW REFUSAL, WHICH IS NOT THIS UNIT'S RED. `falsify_reader_reachability.mjs` refuses at exit 2 with
+"the shipped ci is not LF here" — its precondition reads the three surfaces and refuses any byte of `\r`.
+`git ls-files --eol` says `i/lf w/crlf` for `.github/workflows/ci.yml`: the blob is LF, the working copy is
+CRLF, and with `core.autocrlf=true` and no `.gitattributes` pin for the path, CRLF on disk is what a normal
+checkout PRODUCES. The precondition held at D195 only because that lane hand-wrote the file LF and checked
+the bytes; any later smudge ends it. The refusal is honest — it says NOT CHECKED, not PASS — and the other
+lane's dirty ci.yml is why it fires today; a clean clone would refuse too, which makes the precondition a
+standing refusal wearing a temporary plane's clothes. Filed to the surface's owner: pin the path
+(`text eol=lf`, the same treatment `*.sh` already has) or make the precondition EOL-agnostic. This gate's
+step 14 runs that falsifier under `set -euo pipefail`, so on this plane the fresh-gate run now stops at step
+14 for a reason no reader wrote.
+
+ALSO CLOSED: the 127. PLAN's run log recorded `falsify_console_a11y.mjs` exiting 127 with zero bytes of
+output and no `process.exit(127)` anywhere in the file, and deliberately stopped at the fact. Re-measured
+today before this unit: 13 arms, 13 held, exit 0, its fixture root in the OS temp dir — the 127 did not
+reproduce, so it is not a property of the shipped bytes; it is recorded as an environment transient that
+reproducible runs replace, not as a defect found or fixed.
+
+AND THE RE-AIM D233 FILED. `docs/PLAN.md:87` now names `docs/DATABASE.md:162` — verified at HEAD, where
+line 162 is the §30 `data` uniqueness guard sentence and line 171 is agent_runs' fallback list, exactly as
+the ruling says; the dirty disk copy of DATABASE.md holds the same sentence at :172, so the number is a
+HEAD-plane claim and says so. The ruling's "whoever lands that file's next revision owns it" is satisfied by
+the lane that owns PLAN.md's run log — this one.
+
+Appends pure addition, zero lone LF. Nothing pushed; the other lane's dirty files, the four citation readers
+among them, are untouched.

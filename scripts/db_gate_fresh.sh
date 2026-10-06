@@ -455,7 +455,7 @@ trap - EXIT
 trap cleanup EXIT
 
 # --------------------------------------------------------------------------- 14. the console, and the readers nobody ran
-step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_reader_reachability.mjs — the console's two promises, and whether every reader in scripts/ is reachable from a gate that can fail"
+step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_reader_reachability.mjs + check_citation_supports_sentence.mjs — the console's two promises, and whether every reader in scripts/ is reachable from a gate that can fail"
 # D195. Three things were true at once on the shipped bytes, and each one is the same shape this lane has now
 # closed four times (D98, D150-D152, D191, D192) — a rule that cannot fire on the plane the gate reads is not a
 # rule the gate has, and a reader nothing runs is not a gate either.
@@ -487,6 +487,11 @@ step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_rea
 ( cd "$ROOT" && node scripts/falsify_console_a11y.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/falsify_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/check_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
+# The sentence-support census is a reporting invocation BY DESIGN: it exits 0 whatever it finds, because
+# "the neighbourhood shares no identifier" is a question, not a defect (its header says so in full). It
+# runs here for the rule that moved the two console readers in D195 — a reader nothing runs is a
+# measurement, not a gate — and the reachability census above is the check that keeps it here.
+( cd "$ROOT" && node scripts/check_citation_supports_sentence.mjs ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 15. the ledger's line-number drift
 step "15/18  scripts/check_line_cite_drift.mjs — the ledger's line-number citations asked whether the line they name still holds the text it was chosen for"

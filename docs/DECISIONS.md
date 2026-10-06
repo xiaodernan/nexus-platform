@@ -12004,3 +12004,35 @@ and prints what happens — three refusals for shape and one file judged with no
 duplicate a measurement that exists, and the rule that needs changing (the admission predicate) belongs to a file
 another lane is rewriting. Recorded instead: the group's committed size is 32 tokens, 28 of them with no file
 behind the name, 4 in a single sentence of which one is nine lines off.
+
+## D234 — D223's open item closed itself: the blank census agrees 16 of 16 on the new HEAD, and the full reader battery is green
+
+**State of the tree.** HEAD is d3e35df with six more decisions landed by other lanes since fecf437, and the container daemon is down again, so there is no fresh full gate this round — every number below comes from a reader run directly against the working tree. The next numbers were verified free at write time.
+
+**The open item is closed, by movement rather than diagnosis.** D223 filed the blank-line census disagreeing with step 8 (16 walked against 14 printed) as the next unit's starting point. Re-driven on this HEAD, the census walks 16 and step 8 prints 16: AGREE, exit 0. The committed backlog itself moved from 14 to 16 underneath the question, so there is no counting-rule dispute left to settle — the item is closed here explicitly so it does not dangle as an open finding, with the two runs and their planes named instead of a verdict about which reader was right.
+
+**The battery, all measured.** Step 7: 22 answer rows over 31 locations in 12 files with 38 distinct lines, nothing off-plane, exit 0. Step 8: 545 citation-shaped over 447 sections seen (443 at HEAD), 16 HEAD blanks and 46 untracked targets counted not judged, 1 uncommitted target counted not judged, 0 strict offenders, exit 0. Step 9: 92 citations across 31 files, 0 strict offenders, exit 0 — the placeholder fix holds. Step 10: STATUS 203 against 205 (uncommitted 236 from another lane, 237 this unit), DECISIONS 215 against 217 (uncommitted D233 from another lane, D234 this unit), missing 0, duplicates 0, exit 0' in-flight work. Step 12: 39 spelled with 39 resolving, exit 0. Step 15: EXACT 130 with MOVED down to 0 and NOT-UNIQUE down to 0, GONE 16, NO-BASE 1, UNPATHED 274, NOT-AT-HEAD 4, judged 147, REPORT, exit 0. Step 17: the three newest claims all MATCHED, exit 0. The line-drift falsifier holds 12 of 12. The ledger-text falsifier was not re-driven — it exceeded its time budget on this machine, and its last reading (56 arms with 51 held) is quoted as last, not current.
+
+**Movement since D223, read off the counts.** EXACT 117 to 130, MOVED 10 to 0, NOT-UNIQUE 2 to 0, UNPATHED 262 to 274, citation-shaped 525 to 545, sections 423 to 447: the tree grew about twenty sections and the drift classes drained as other lanes re-aimed or rewrote. Nothing in this unit re-aims, rewords, or touches a shared-dirty file; the numbers are the work. Appends pure addition, zero lone LF. Nothing pushed.
+
+## D234 — a census earns its surface as a reporting invocation, and a precondition the machine's own checkout rules cannot satisfy is a standing refusal wearing a temporary plane's clothes
+
+Two rulings, one from wiring and one from the refusal the wiring surfaced.
+
+First, **the reachability rule applies to the reader that asks it of others.** `check_reader_reachability.mjs`
+reddened its own author: `invoked by 12 of 13`, the unreached reader being the sentence-support census. The
+census cannot be made into a gate that fails — its header states the design: it exits 0 whatever it finds,
+because "shares no identifier" is a question, not a defect. So the surface it gets is a reporting invocation
+in gate step 14, with the limit spelled in the gate's comment and the deliverable named: the population, not
+a verdict. A step that cannot fail is tolerated in a gate only when its refusal would be a lie; what keeps
+the census honest is the census beside it, which fails when any first-party reader loses its surface.
+
+Second, **an LF precondition on an unpinned path is a refusal that survives its own justification.**
+`falsify_reader_reachability.mjs` refuses the run when any of the three surfaces carries a `\r` byte. The
+blob of `.github/workflows/ci.yml` is LF (`i/lf`), the working copy is CRLF (`w/crlf`), and with
+`core.autocrlf=true` and no `.gitattributes` pin for the path, CRLF on disk is what a normal checkout
+PRODUCES — so the precondition holds only in the window between a hand-written LF file and the next smudge,
+which is exactly how D195's green run and today's refusal are both true of the same committed bytes. The
+refusal is correct behaviour and its cause is environmental; the remedy belongs to the surface's owner:
+pin the path like `*.sh` already is, or make the precondition EOL-agnostic. Until then the fresh-gate run
+stops at step 14 on this plane for a reason no reader wrote.
