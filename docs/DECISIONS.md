@@ -11973,3 +11973,34 @@ house phrasing and the cited numbers that stayed are the ones naming text.
 14 rows, single-match-gated, targets read at HEAD by `git show`; the rows leave both ledgers' line counts as they
 found them and the appended sections are the only growth (12038 to 12116, 11933 to 11976); zero lone LF; no other
 lane's text touched; nothing pushed.
+## D233 — a census row over the working copy is not a population, and a citation's shape decides whether a reader owes it an answer
+
+Three rules and one refusal, from deciding what #137's 104 tokens actually are.
+
+First, **re-run the reader at a committed plane before quoting its number.** A disk-walking census reports the
+tree, and this tree is dirty by construction; the same shipped reader, aimed at a sibling `git archive HEAD`
+directory through the seam it already declares, printed 32 where the working copy printed 104. That is the same
+disease D232 caught in four ledger sentences agreeing with an uncommitted file, only now it is in a census headline
+that a whole task was filed against. A number that no commit reproduces is a measurement of somebody's pending
+edit. The corollary this lane paid for once already: planes are sibling directories, never a directory under the
+repo root, because a frozen copy under the root is counted by the walkers as part of the population.
+
+Second, **classify the shape of an admitted token before asking who should judge it.** 57 of the 104 are IP
+literals with a port tail or WCAG contrast ratios; the census admits them because its name rule accepts any name
+ending in a dot and up to six characters, and `.1` and `.80` satisfy it. So "counted here and judged nowhere" is
+a fact about the admission predicate, not a coverage hole. Pointing a citation reader at those files would
+manufacture targets out of color-contrast tables. Note the arithmetic the shape test needs: the grammar splits at
+the last colon, so a ratio of 4.80 to 1 arrives as the name `4.80` with line `1` — classifying the name alone calls a ratio a
+version number and mis-files it as a citation candidate.
+
+Third, **"the cited line holds text" is existence, not support.** The specimen is `docs/PLAN.md:87` naming
+`docs/DATABASE.md:171` for a guard the same file documents at line 162: the line is neither blank nor past EOF, so
+every line-shape reader passes it, and the sentence is wrong anyway. Claim-to-line agreement is the surface
+reader's question, and it reads the two ledgers, not the plan. A census that reports 0 offenders should be quoted
+as "0 offenders of the class I detect", never as "clean".
+
+Refused: a new reader for this group. Step 9's own `prose, stake` row already drives the named files through step 8
+and prints what happens — three refusals for shape and one file judged with no offender — so a second reader would
+duplicate a measurement that exists, and the rule that needs changing (the admission predicate) belongs to a file
+another lane is rewriting. Recorded instead: the group's committed size is 32 tokens, 28 of them with no file
+behind the name, 4 in a single sentence of which one is nine lines off.

@@ -12113,3 +12113,62 @@ Step 8 exits 0 in both modes, the comment plane reads 92 citations across 31 fil
 section-citation reader exit 0, and the drift census judges 147 with 130 EXACT and `--strict MOVED,NOT-UNIQUE` clean;
 the census population did not move because this section is uncommitted, and its own cites will enter that count when
 it is. Nothing pushed; the other lane's dirty files, including that drift-cited file, are untouched.
+## 236. The group of one hundred four tokens nobody judges is thirty-two at the plane a reader can reach, and "the line holds text" is not verification (D233)
+
+#137 recorded a debt in one number: step 9's `prose, no reader` row counted 104 citation-shaped tokens over 70
+files that no reader opens. Deciding that debt meant reading each token, so the population came from the census's
+own rows rather than a private walk, and the walk's first attempt was refused by its own guard: my name predicate
+found 81 tokens in `docs/PLAN.md` where step 9 numbers 53, because I had written my own rule instead of mirroring
+the census's (`/\.[A-Za-z0-9]{1,6}$/` on the name, or a leading dot). The mirror is in `.scratch/d238_unjudged.mjs`
+and refuses per file unless its count equals the row's: 53 + 22 + 11 + 11 + 4 + 3 = 104.
+
+The tokens then split three ways, and only one way is a citation surface. 47 name something that could be a file
+path, and every one of them sits in `docs/PLAN.md`. 32 are an IPv4 literal with a port tail. 25 are WCAG contrast
+ratios — and that class needed the name *and* the number together, because step 8's grammar splits at the last
+colon, so a ratio arrives as name `4.80` and line `1`: the name alone reads as a version and a reader aimed at it
+would open a file nobody named.
+
+Inside PLAN.md the 47 split again by what line they stand on: 30 sit within triple-backtick fences quoting gate
+output — the class D232 called a not-a-reference, a coordinate in printed text rather than a claim — and 17 are
+prose. Of those 17, exactly three do not land on text at HEAD, and reading the sentences says all three are about
+the defect rather than blind to it: two cite line 88 of `docs/DATABASE.md` while saying that line is empty, and one
+cites line 19 of a Java file the other lane has not committed yet.
+
+Then the plane. Step 9's default plane is the repository directory it is installed in, which is the working copy
+(`check_comment_citations.mjs:67`), and this tree is 132 paths dirty. Re-aiming the same shipped reader at a
+sibling `git archive HEAD` extraction prints **3 ext(s), 60 file(s), 32 token(s)** where the working copy prints
+104, and the named files move from six to four. My independent mirror, reading each named file at HEAD, counts the
+same 32: 7 in `docs/PLAN.md`, 11 + 11 + 3 in the three files that stayed tracked, and zero file-named tokens in the
+last two because they are untracked on disk. Two walks of different construction agreeing on 32 is the only reason
+I will print that number; 104 was never a population, it was this afternoon's working copy. Of the 72 tokens that
+did not survive to a commit, 26 belong to files no commit holds and 46 to PLAN.md's rewrite — that file is 130 lines
+at HEAD and 979 on this disk, which is the whole difference in one measurement.
+
+What the group is worth is already measured by the census itself, which is why this unit writes no reader: step 9's
+`prose, stake` row drives the named files through step 8 as if step 8 declared them, and at HEAD three of the four
+are refused "step 8 reads its tokens as host:port, ENV:value or prose" while PLAN.md is judged and files 0
+offenders. So the residue is a correction to a headline, not a missing gate. The admission rule that lets an IP
+address into a citation count lives in that census's own name filter and is one of the dirty files; it is reported,
+not edited.
+
+One real defect did come out of reading the 7 committed citations, and no line-shape reader can see it.
+`docs/PLAN.md:87` says the §30 `data` uniqueness guard "is named by four documents (docs/GROWTH.md:33,
+docs/DATABASE.md:171, docs/MERCHANT.md:56, and line 19 of a Java file that is not tracked at HEAD)". Three of those
+lines do carry the claim; line 171 of `docs/DATABASE.md` is `agent_runs`'s fallback column list, and the guard is
+documented nine lines above it, at `docs/DATABASE.md:162`. Every reader I own calls that citation clean, because the
+most a plane can say about a line is whether it holds text. PLAN.md is dirty in the other lane, so the re-aim is
+filed here rather than applied: whoever lands that file's next revision owns it.
+
+Readings after the append, each exit code taken from the reader that printed it, ledgers from disk and cited files at
+HEAD: step 8 exits 0 in both modes and files 0 blank span starts and 0 untracked targets among the 2 sections this
+unit wrote (16 blanks and 46 untracked names stay D161's backlog at HEAD, counted and not judged, and 1 of its 537
+citations names a line only this disk holds). The comment plane exits 0 with 92 tokens in 31 files and still prints
+3 ext(s), 70 file(s), 104 token(s) for the group this unit decided. The section reader counts STATUS at 203 sections
+at HEAD and 204 on disk with 0 duplicate numbers; the status-citation reader resolves 39 of 39; the sentence-support
+census sees 499 and judges 100; the blank census counts 16; the drift census judges 147 with EXACT 130, MOVED 0 and
+NOT-UNIQUE 0 under its strict pass. The surface reader's self-test stays at 16 of 16 and contradicts nothing on
+either ledger plane — and here is what that is worth: it judged 36 sites in STATUS and 41 in DECISIONS against the
+committed text, and the same 36 and 41 against this section's text, because none of the eight citations these two
+sections add sits in a clause carrying a verb from its closed list. A count that does not move when the prose moves
+is a coverage caveat, not a clean bill. Nothing pushed; the other lane's dirty files, including the four citation
+readers and the PLAN.md this unit reads, are untouched.
