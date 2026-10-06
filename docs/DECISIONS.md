@@ -12059,3 +12059,12 @@ lives in a falsifier, and surfaced only once the DB plane let step 8 execute, ma
 the red is honest and it measures the falsifier, not the ledgers. The file carries its owner lane's active
 unit and is untouched; the derived-anchor shape (`step "8/`, `step "13/`, which cannot catch `13a/`) is
 recorded in §239 for whoever lands its next revision.
+
+## D237 — a census that asks for a human's minute owes the human both texts
+
+**The ruling, two parts.** (1) A list whose rows invite judgment must carry the evidence the judgment
+needs: the clause the citation is responsible for and the line cited, printed side by side, clipped —
+never skipped — so an unbounded clause cannot bury the row after it. (2) The reading copy is whole or it
+is not a reading copy: `--limit`, a knob for the terse face, does not bind `--list`. The default face
+stays byte-stable because the gate invokes the reader with no flags, so output identity on the same
+ledgers is the proof, and §241 records the measurement.

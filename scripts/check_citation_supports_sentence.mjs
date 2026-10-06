@@ -31,8 +31,14 @@
  * So the output is a list of citations worth a human's minute, sorted by how little the neighbourhood shares.
  * A reader that cannot decide must not print a verdict, and this one cannot decide.
  *
+ * `--list` is the reading copy of that list. The default output names each citation and the identifiers its
+ * sentence wanted, but judging "does this line support this sentence" means reading two texts the default
+ * never prints: the clause the citation is responsible for, and the line it cites. `--list` prints both, with
+ * the ledger section each row sits in, for every sharing-nothing row — `--limit` does not truncate the list,
+ * because the point of the mode is to be read whole.
+ *
  * USAGE
- *   node scripts/check_citation_supports_sentence.mjs [--window N] [--ledger path] [--limit N]
+ *   node scripts/check_citation_supports_sentence.mjs [--window N] [--ledger path] [--limit N] [--list]
  */
 
 import { execFileSync } from 'node:child_process';
@@ -46,6 +52,7 @@ const parsed = parseFlags(process.argv.slice(2), {
   '--window': { kind: 'value', unit: 'N lines around the cited line' },
   '--ledger': { kind: 'value', unit: 'path (default: both ledgers)' },
   '--limit': { kind: 'value', unit: 'N rows of the census to print' },
+  '--list': { kind: 'switch' },
   '--verbose': { kind: 'switch' },
 });
 if (!parsed.ok) {
@@ -63,6 +70,10 @@ const git = (...a) => execFileSync('git', a, { cwd: ROOT, encoding: 'utf8', maxB
 // 263 of them "not at HEAD" because the paths it had matched were fragments. A global regex is state, and
 // state shared between two readers of the same text is a bug that only shows up as a wrong number.
 const citePattern = () => /([A-Za-z0-9_./-]+\.(?:java|py|ts|tsx|mjs|js|sql|sh|yml|yaml|json|md|txt)):(\d+)/g;
+
+// The list mode prints prose; an unbounded clause would bury the row after it. Clipped, not skipped — a row
+// that arrives already truncated still tells the reader where to open the ledger.
+const clip = (s, n) => (s.length > n ? `${s.slice(0, n)}…` : s);
 
 /**
  * Identifiers a span is about: the ones a code neighbourhood could plausibly spell.
@@ -141,7 +152,10 @@ for (const ledger of LEDGERS) {
   }
   const lines = text.replace(/\r\n/g, '\n').split('\n');
   for (const line of lines) direct += [...line.matchAll(citePattern())].length;
+  // The `## ` heading each citation sits under — the section a human reading `--list` output opens.
+  let heading = '';
   lines.forEach((line, i) => {
+    if (/^## /.test(line)) heading = line.replace(/^##\s+/, '').trim();
     for (const m of line.matchAll(citePattern())) {
       const [, path, numStr] = m;
       citations += 1;
@@ -161,11 +175,13 @@ for (const ledger of LEDGERS) {
       }
       const targetLines = target.replace(/\r\n/g, '\n').split('\n');
       const around = targetLines.slice(Math.max(0, num - 1 - WINDOW), num + WINDOW).join('\n');
-      const wanted = identifiers(clauseFor(lines, i));
+      const clause = clauseFor(lines, i);
+      const wanted = identifiers(clause);
       if (wanted.length === 0) continue; // a sentence with nothing mechanical in it cannot be judged here
       const shared = wanted.filter((w) => around.includes(w));
       rows.push({
-        ledger: `${ledger}:${i + 1}`, cite: `${path}:${num}`, wanted: wanted.length,
+        ledger: `${ledger}:${i + 1}`, cite: `${path}:${num}`, heading, clause,
+        cited: (targetLines[num - 1] ?? '').trim(), wanted: wanted.length,
         shared: shared.length, missing: wanted.filter((w) => !shared.includes(w)).slice(0, 4),
       });
     }
@@ -192,6 +208,17 @@ for (const r of worst.slice(0, LIMIT)) {
   console.log(`      sentence names ${r.wanted} identifier(s); the neighbourhood has none of: ${r.missing.join(', ')}`);
 }
 if (worst.length > LIMIT) console.log(`    … ${worst.length - LIMIT} more (raise --limit)`);
+
+if (parsed.flag['--list']) {
+  console.log('');
+  console.log(`  the sharing-nothing list, for a human   ${worst.length} row(s), read whole (--list ignores --limit)`);
+  worst.forEach((r, k) => {
+    console.log(`    [${k + 1}/${worst.length}] ${r.ledger}${r.heading ? ` in "${clip(r.heading, 72)}"` : ''} -> ${r.cite}`);
+    console.log(`      clause : ${clip(r.clause.trim(), 200)}`);
+    console.log(`      cited  : ${clip(r.cited, 160)}`);
+    console.log(`      names none of: ${r.missing.join(', ')}`);
+  });
+}
 
 console.log('');
 console.log('RESULT: CENSUS — nothing was judged, deliberately.');

@@ -12317,3 +12317,30 @@ cites. The committed ledgers point at work no committed tree contains; the plane
 and the red is a measurement of what has not landed.
 
 Appends pure addition, zero lone LF. Nothing pushed; the other lane's dirty files untouched.
+
+## 241. D237: the sharing-nothing census gets a reading copy, and its first reading is recorded
+
+The third citation reader (§238) printed identifiers only, so judging one of its rows meant opening two
+files. The reader now takes `--list`: every sharing-nothing row prints the clause the citation is
+responsible for, the exact line cited, and the ledger section each sits in — the two texts a judgment
+needs, clipped so no row buries the next, and the whole list because a knob built to cap the terse face
+must not shorten the reading copy. The switch refuses a value and unknown flags refuse per the D159
+grammar: `--list=x` prints NOT CHECKED and exits 2, measured.
+
+- The default face did not move, and that is load-bearing: the gate invokes this reader with no flags.
+  The pre-edit run and the post-edit default run are byte-identical over both ledgers (Compare-Object:
+  0 differing lines), which is how the numbers below are HEAD-plane numbers — the committed script and
+  the edited script agree on the same ledgers; the D233 story told by output identity instead of a
+  sibling directory.
+- Today's census: 501 citations seen, 102 judged, 324 skipped as not-at-HEAD, 44 sharing nothing. The
+  run log carries this unit's queue reading as 42 of 100; the population moved with the ledgers, which
+  is exactly D196's case for derived counts over remembered ones.
+- The first reading of the 44, every count pattern-derived from the list output, none hand-tallied:
+  3 rows cite a line that is empty at HEAD — the D160 predicate's territory, visible here without
+  opening anything; 8 rows target ledger-and-docs prose, where sharing nothing usually means the
+  sentence names a claim the prose supports without spelling its tokens; 27 target this directory's
+  scripts, mostly citations made for a line's role (the arm that plants a case) rather than its
+  vocabulary. The target-extension histogram reads mjs 23, md 8, sh 6, py 4, ts 2, yml 1.
+
+Ruling: D237. Run log: PLAN.
+Appends pure addition, zero lone LF. Nothing pushed; the other lane's dirty files untouched.
