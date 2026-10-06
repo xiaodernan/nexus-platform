@@ -12242,7 +12242,7 @@ the lane that owns PLAN.md's run log — this one.
 
 Appends pure addition, zero lone LF. Nothing pushed; the other lane's dirty files, the four citation readers
 among them, are untouched.
-## §238 — D235 landed: the reachability falsifier normalizes at load and derives its population; the first complete fresh-gate run on this host runs steps 1-7 green and stops at step 8 on that falsifier's own stale anchors, measured and routed
+## 238. D235 landed: the reachability falsifier normalizes at load and derives its population; the first complete fresh-gate run on this host runs steps 1-7 green and stops at step 8 on that falsifier's own stale anchors, measured and routed
 
 THE D235 REMEDIATION, MEASURED FRESH. `falsify_reader_reachability.mjs` no longer refuses a surface for
 carrying a CR byte: the three surfaces are normalized CRLF->LF at load, and the run prints WHICH of them
