@@ -12463,3 +12463,27 @@ V1-V8, every marker present, the spurious index gone), so the rebuild the old ta
 and the baseline above is its replacement reading; and the full gate was NOT re-run end-to-end for this unit
 - step 8's own reader and the harness were both re-run standalone over the landed bytes, which is what this
 section measures.
+## 246. The gate re-ran twice: an engine restart killed the first at step 4, the second stopped at step 8 on two misses that split three ways on two planes — a third era-total anchor in the sibling harness (fixed, ace5813), D214/Y1 owned by the uncommitted D217 checker bytes, and the archive plane's own X1/X2 NaN, which is D101's off-repo limitation and not a red
+The first re-run died at step 4 with GATE_EXIT=127 and no stderr in the log: Docker Engine restarted mid-run
+(all 17 containers "Up 21 seconds" at inspection), the seed load's docker exec died inside it, and the cleanup
+DROP failed with the same outage — `nexus_gate_29560_1791312341` leaked past the trap that promises not to leak
+it. Dropped by hand, with two older throwaways found beside it (`nexus_gate_1421_1791296627`,
+`nexus_probe_1984_1791296765`, zero connections each); the live databases (nexus, nexus_test, nexus_lead_check)
+were never touched. The second re-run captured stderr and went green through steps 1-7 (tables=58, migrations=8,
+217 quality checks, 38/38 jsonb arms) and stopped at step 8: 57 arms, 55 held, 2 missed.
+The two misses were attributed on a `git archive HEAD` plane built from the landed commit, which holds none of
+the shared working copy's dirty bytes: the step-9 wiring seam arm MISSED there too — committed state — because
+falsify_comment_plane.mjs greps `/^step "9\/12/` and `/^step "10\/12/`, the third and fourth members of
+D241's era-total class, in the sibling harness the step-8/step-13 sweep (767afe1) did not cover. Re-aimed to
+`step "9/` and `step "10/` (anchors verified unique first matches: db_gate_fresh.sh:284 and :305); landed as
+ace5813. The other miss, D214/Y1, HELD on that plane — so its working-copy miss is caused by the uncommitted
+D217 change to check_comment_citations.mjs (dirty since 2026-10-03, +78/-2): the new stake rows drive step 8
+over files the prose, no reader row counts and print the verdict spellings it files, PAST EOF among them,
+which Y1's absent list forbids. That reconciliation belongs to D217's landing, not to this lane (D242).
+X1/X2 also missed on the archive plane (sections NaN, tokens NaN) — that plane has no .git and step 8's default
+mode runs `git ls-tree`/`git show` (check_ledger_citations.mjs:259/:313/:462); D101 named exactly this
+limitation, both arms hold wherever git exists, and the archive-plane miss is the plane's artifact, not a red.
+Measured after the fix: the harness over the shared working copy 57 arms / 56 held / 1 missed (Y1 only), and
+in a detached worktree at ace5813 RESULT: PASS — 57 arms / 57 held / 0 missed. Honest state: gate steps 9-18
+have still never run since D219's renumber — step 8 stops on THIS working copy until D217's landing reconciles
+Y1; on a clean plane it passes again.

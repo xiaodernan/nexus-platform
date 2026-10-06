@@ -12153,3 +12153,21 @@ anyone can re-run.
 The section this entry pairs with is deliberately not spelled by number here, for the same measured
 constraint D198's row records: the checker requires a spelled section cite to resolve at HEAD, and the
 section is written by this same commit.
+## D242 - a class fix enumerates the class, not the instances it already knows; and a miss on the shared working copy is attributed on a plane built without the foreign bytes
+Decided: when a repair is stated as a class ("arms must pin the step number, not the era total", D241), the
+landing that claims it must sweep every harness for the class's spelling before it commits — grep the whole
+scripts tree, not the two files already named. And when a gate arm misses on the shared working copy, the first
+question is not "what broke" but "whose bytes am I running": re-run the same harness on a `git archive HEAD`
+plane, which holds none of the other lanes' uncommitted work. A miss that survives the plane is committed red;
+a miss that vanishes belongs to whichever dirty file the plane excludes; and a miss that APPEARS only on the
+plane is the plane's own artifact — name what the plane cannot do (D101 named the git-less one) and move on.
+Why: D241's landing re-aimed the step-8 and step-13 anchors it knew about; the next gate run stopped on a
+third member of the same class in falsify_comment_plane.mjs, and beside it on D214/Y1 — which held on every
+plane without the uncommitted D217 checker bytes and missed on every plane with them, because the new stake
+rows print verdict spellings Y1's absent list forbids (and judge files the row being armed describes as
+"judged nowhere"). Two different owners, two different fates, one aggregate "2 missed" that could not say so.
+Rule: class repairs carry a class sweep in the same commit; attribution runs claim the plane in their output;
+and a landing that changes what a reader prints owns the reconciliation of every arm whose predicate its new
+output touches — including arms in other lanes' harnesses.
+Measured on the way past: the STATUS section written by this same commit records the engine-restart kill, the
+two-plane attribution, and 57/57 at ace5813.
