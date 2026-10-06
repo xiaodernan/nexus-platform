@@ -12242,3 +12242,48 @@ the lane that owns PLAN.md's run log — this one.
 
 Appends pure addition, zero lone LF. Nothing pushed; the other lane's dirty files, the four citation readers
 among them, are untouched.
+## §238 — D235 landed: the reachability falsifier normalizes at load and derives its population; the first complete fresh-gate run on this host runs steps 1-7 green and stops at step 8 on that falsifier's own stale anchors, measured and routed
+
+THE D235 REMEDIATION, MEASURED FRESH. `falsify_reader_reachability.mjs` no longer refuses a surface for
+carrying a CR byte: the three surfaces are normalized CRLF->LF at load, and the run prints WHICH of them
+needed it — this run printed `CRLF normalized to LF in ci - the checkout plane's fact, not the harness's
+verdict` — a statement about the plane, not a verdict about the bytes, and the shipped blobs are untouched.
+The arms' counts are no longer typed: `SHIPPED_READERS` is `readdirSync(scripts/)` filtered to
+`check_*.mjs` — 13 today, the D195-era constant was 10 — and both the control arm's expectation and the
+one-gone arms are built from it, so a fourteenth reader moves the expectations by itself (the D196 rule,
+one harness late). Run after the edit, unchanged since: 15 arms, 15 held, 0 missed, exit 0.
+
+STEP 14 RUNS END-TO-END HERE NOW. The gate's step-14 block — the same five piped invocations, same
+`set -euo pipefail` — re-run as a block: the i18n census, the a11y census, their two falsifiers and the
+reachability harness all print PASS, block exit 0. The step the D234 plane could not reach on this host
+is reachable and green.
+
+THE DB PLANE, SUPPLIED THE WAY THE FILE SAYS. Four residual `nexus_gate_*` databases from earlier aborted
+runs were dropped first (`nexus_lead_check` left alone — its ownership is unproven). Then the plane was
+brought up exactly as `infra/docker-compose.yml` documents it: compose project `nexus-platform`,
+`nexus-platform-postgres` on 127.0.0.1:5433 and `nexus-platform-redis` on 6380, both reporting healthy.
+
+THE FIRST COMPLETE FRESH-GATE RUN ON THIS HOST. `db_gate_fresh.sh` ran from step 1 and stopped at step 8,
+and every step before the stop was green — the first time any of steps 1-6 has executed here, the DB plane
+having been absent until today: 58 tables and 8 migrations built from template0; the generator's FK
+self-check PASS; the seed loaded; `quality.sql`'s 217 checks PASS with the newest-claim MATCHED; the
+truncate probe's both halves PASS; `check_jsonb_reads.mjs`'s falsifier held 38 of 38 arms and the control
+census printed the tracked plane's own numbers. Then step 8 ran `falsify_ledger_text.mjs` and the gate
+took its first honest red: 56 arms, 54 held, 2 missed, RESULT: FAIL, gate exit 1. The two missed arms are
+the falsifier's own gate-wiring arms, and their anchors are hand-typed step labels — the harness looks for
+`step "8/12` and `step "13/13`, while the gate's headers have read `/18` since D219 derived its total from
+the file. Verified on the committed plane at HEAD: the anchors sit in the HEAD blob of that falsifier at
+its lines 432 and 454, and the HEAD blob of the gate carries exactly one `step "8/18` and one
+`step "13/18`. The defect never surfaced on this host before because steps 1-6 never ran here — step 8 was
+never reached. It is D196's class wearing a falsifier: a hand-typed population constant, stale, inside the
+instrument that polices hand-typed constants.
+
+ROUTING, AND WHAT DID NOT RUN. `scripts/falsify_ledger_text.mjs` is dirty with its owner lane's active D198
+unit — whose silent-child guard measured green in this same run — so the file is untouched, per lane
+discipline; the fix, when that file's next revision lands, is to derive the anchors the way this unit
+derived the reader count: `step "8/` and `step "13/` match the labels whatever the total, and `step "13/`
+cannot catch `13a/`, whose label spells the letter. Step 8's own citation census sits below the falsifier
+invocation in the step and therefore did not run; the gate's exit is the falsifier's, not the census's.
+
+Appends pure addition, zero lone LF. Nothing pushed; the other lane's dirty files, this falsifier among
+them, are untouched.

@@ -12036,3 +12036,26 @@ which is exactly how D195's green run and today's refusal are both true of the s
 refusal is correct behaviour and its cause is environmental; the remedy belongs to the surface's owner:
 pin the path like `*.sh` already is, or make the precondition EOL-agnostic. Until then the fresh-gate run
 stops at step 14 on this plane for a reason no reader wrote.
+## D235 — a precondition the checkout plane cannot satisfy is normalized at load and printed as a plane fact, and a falsifier that hand-types a population constant is its own offender
+
+Two rulings, one applied to this lane's own harness and one witnessed against another falsifier in the
+same gate run.
+
+First, **D234's ruling applies on the harness side.** `falsify_reader_reachability.mjs` refused any surface
+carrying a `\r` byte; with `core.autocrlf=true` and no `.gitattributes` pin for `.github/workflows/ci.yml`,
+that refusal fired on every normal checkout — the standing refusal D234 named. The arms' anchors are
+LF-spelled text, so the harness now normalizes CRLF->LF at load and prints which surfaces it normalized:
+a stated fact about the plane, not a verdict about the bytes, and the shipped blobs stay untouched — the
+pin, or an EOL-agnostic precondition, remains the surface owner's remedy.
+
+Second, **a falsifier's population is a measurement, so typing it is the defect the instrument exists to
+catch.** The control arm expected `invoked by 10 of 10` — typed when the census knew ten readers; scripts/
+holds thirteen today. The counts now derive from `readdirSync` at run time, and a fourteenth reader moves
+the expectations by itself. The same gate run then witnessed the class one file over: the first complete
+fresh-gate run on this host stopped at step 8 with `falsify_ledger_text.mjs`'s two gate-wiring arms missed,
+because their anchors hand-type the step labels `step "8/12` and `step "13/13` against a gate whose
+headers have read `/18` since D219 derived its total. Stale constants are D196's subject; that this pair
+lives in a falsifier, and surfaced only once the DB plane let step 8 execute, makes the point sharper —
+the red is honest and it measures the falsifier, not the ledgers. The file carries its owner lane's active
+unit and is untouched; the derived-anchor shape (`step "8/`, `step "13/`, which cannot catch `13a/`) is
+recorded in §238 for whoever lands its next revision.

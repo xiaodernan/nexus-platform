@@ -14,6 +14,10 @@
  * always passed explicitly, even when the surface is unmutated, so an arm cannot pass by silently falling back
  * to the shipped file -- the D154 defect, which is also one of the arms below.
  *
+ * D235 -- the shipped surfaces are normalized CRLF->LF at load, and the arm counts are derived from
+ * scripts/ at run time (the D196 rule, one harness late): a fourth check_*.mjs moves the control arm's
+ * expected number by itself instead of waiting for a hand-typed "10" to go stale.
+ *
  * Usage: node scripts/falsify_reader_reachability.mjs
  * Exit:  0 every arm held · 1 an arm missed · 2 a plant could not be built (an anchor that no longer matches
  *        proves nothing, so it is a refusal and not a red).
@@ -28,15 +32,20 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
 const CHECKER = join(HERE, 'check_reader_reachability.mjs');
 const FIX = join(tmpdir(), 'nexus-d195-falsify');
-const SHIPPED = {
+const RAW = {
   gate: readFileSync(join(ROOT, 'scripts', 'db_gate_fresh.sh'), 'utf8'),
   ci: readFileSync(join(ROOT, '.github', 'workflows', 'ci.yml'), 'utf8'),
   make: readFileSync(join(ROOT, 'Makefile'), 'utf8'),
 };
-for (const [k, v] of Object.entries(SHIPPED)) {
-  if (v.includes('\r')) { console.log(`RESULT: NOT CHECKED -- the shipped ${k} is not LF here`); process.exit(2); }
-}
+// D235 - this block used to refuse the run when any surface carried a CR byte, and the refusal was a
+// standing one: with core.autocrlf=true and no .gitattributes pin for the path, the working copy of an
+// unpinned surface is CRLF by construction (D234's "standing refusal wearing a temporary plane's
+// clothes"). The arms' anchors are LF-spelled, so the harness now normalizes at load and prints which
+// surfaces it normalized - a stated fact about the plane, not a verdict about the bytes.
+const SHIPPED = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, v.replace(/\r\n/g, '\n')]));
+const NORMALIZED = Object.entries(RAW).filter(([, v]) => v.includes('\r')).map(([k]) => k);
 rmSync(FIX, { recursive: true, force: true });
+if (NORMALIZED.length) console.log(`  load: CRLF normalized to LF in ${NORMALIZED.join(', ')} - the checkout plane's fact, not the harness's verdict`);
 mkdirSync(FIX, { recursive: true });
 
 function die(m) { console.log(`RESULT: NOT CHECKED — ${m}`); process.exit(2); }
@@ -105,24 +114,26 @@ const ciNoClaim = plant('ci-no-claim.yml', 'ci',
 
 /* ------------------------------------------------------------------ arms */
 const SHIPPED_READERS = readdirSync(join(ROOT, 'scripts')).filter((f) => /^check_.*\.mjs$/.test(f)).length;
+const allOf = new RegExp(`invoked by\\s+${SHIPPED_READERS} of ${SHIPPED_READERS}`);
+const oneGone = new RegExp(`invoked by\\s+${SHIPPED_READERS - 1} of ${SHIPPED_READERS}`); // D235: derived, not typed - the D196 rule, one harness late
 
 const ARMS = [
   {
     name: 'control — the three shipped surfaces, read through the checker\'s own seams',
     args: surfaceArgs(), expect: 0,
-    must: [/invoked by\s+10 of 10/, /gate pipefail\s+present/, /hard-fail claims\s+1 of \d+ piped step\(s\)/,
+    must: [allOf, /gate pipefail\s+present/, /hard-fail claims\s+1 of \d+ piped step\(s\)/,
       /0 UNPROTECTED|: check_contract_drift\.mjs, check_jsonb_reads\.mjs/],
     absent: [/OFFENDERS/],
   },
   {
     name: 'a reader invoked by no surface is an offender, and the count of readers falls by exactly one',
     args: surfaceArgs({ gate: a11yGone, ci: ciA11yGone }), expect: 1,
-    must: [/check_console_a11y\.mjs is invoked by no surface/, /invoked by\s+9 of 10/],
+    must: [/check_console_a11y\.mjs is invoked by no surface/, oneGone],
   },
   {
     name: 'a commented-out invocation is not a call site — the mention is still an offender',
     args: surfaceArgs({ gate: mentionedOnly, ci: ciA11yMentioned }), expect: 1,
-    must: [/check_console_a11y\.mjs is invoked by no surface/, /invoked by\s+9 of 10/],
+    must: [/check_console_a11y\.mjs is invoked by no surface/, oneGone],
   },
   {
     name: 'a commented-out `shell: bash` does not protect a piped step — comments are not code',
@@ -139,7 +150,7 @@ const ARMS = [
     name: 'the hard-fail claim count is read out of the comment above each step, not typed into the census',
     args: surfaceArgs({ ci: ciNoClaim }), expect: 0,
     must: [/hard-fail claims\s+0 of \d+ piped step\(s\) say "hard fail" in their own comment \(none\)/,
-      /invoked by\s+10 of 10/],
+      allOf],
     absent: [/OFFENDERS/],
   },
   {
@@ -186,12 +197,12 @@ const ARMS = [
   {
     name: '--gate <path> (spaced) reaches the planted surface — a dropped flag would read the gate and report 0 offenders',
     args: ['--gate', a11yGone, '--ci', ciA11yGone, '--make', join(FIX, 'Makefile-control')], expect: 1,
-    must: [/invoked by\s+9 of 10/],
+    must: [oneGone],
   },
   {
     name: '--gate=<path> (glued) aims the same census at the same surface, so one dialect is not the only one read',
     args: [`--gate=${a11yGone}`, `--ci=${ciA11yGone}`, `--make=${join(FIX, 'Makefile-control')}`], expect: 1,
-    must: [/invoked by\s+9 of 10/],
+    must: [oneGone],
   },
 ];
 
