@@ -1,0 +1,36 @@
+-- V8 — the seventh uuid `*_by` column catches up with its six siblings.
+--
+-- V8 is evidence-driven. While auditing the programmatic-SEO quality gate, this lane ran D72's census
+-- predicate over the live schema and got one row it could not explain:
+--
+--   permission_grants.granted_by     0
+--   campaigns.approved_by            1
+--   coupons.created_by               1
+--   coupons.published_by             1
+--   refunds.approved_by              1
+--   seo_pages.reviewed_by            1
+--   share_links.created_by           1
+--
+-- Seven uuid `*_by` columns, six carry a foreign key to users(id), and the seventh carries nothing. D72
+-- (quality.sql:1109-1117) found exactly this column and closed it *at the seed layer*: a probe that joins
+-- every non-null granted_by to users and requires zero unresolvable rows (quality.sql:345-360). That probe
+-- is a check on the data the seed loads. It is not a constraint on the column, and it never runs on a
+-- production write — so today nothing in the schema stops an orphan, and nothing in the schema would notice
+-- one that arrived after the seed was loaded.
+--
+-- The six siblings are bounded by V1 inline (`REFERENCES users(id)`). This migration brings the seventh to
+-- the same bound. ON DELETE SET NULL because the column is attribution, not ownership: if the operator's
+-- account is removed, the grant it issued should survive and say so rather than be deleted with them.
+--
+-- The column is nullable by design (V1:134 `granted_by uuid,`), and the seed leaves some rows unset
+-- (quality.sql:357 reports how many carry none), so NULL stays legal — a nullable uuid may point at users,
+-- an absent one still means "no operator recorded".
+--
+-- Pre-condition this migration assumes, and refuses loudly if it is false: every non-null value already
+-- resolves. `ALTER TABLE ... ADD CONSTRAINT` validates existing rows, so on a database holding an orphan
+-- this statement fails with 23503 and aborts. That is the intended behaviour — reported in the log rather
+-- than silently discarded — and it is why this is a migration and not a data repair: the repair, if ever
+-- needed, belongs in a unit that can name the offending rows.
+ALTER TABLE permission_grants DROP CONSTRAINT IF EXISTS permission_grants_granted_by_fkey;
+ALTER TABLE permission_grants ADD CONSTRAINT permission_grants_granted_by_fkey
+  FOREIGN KEY (granted_by) REFERENCES users(id) ON DELETE SET NULL;
