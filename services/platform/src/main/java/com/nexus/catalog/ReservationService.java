@@ -57,6 +57,11 @@ public class ReservationService {
         return reservations.slot(tenant, slotId);
     }
 
+    /** What the slot reads now — the seat count a page may print after something touched the pool. */
+    public Optional<Map<String, Object>> slotAfter(TenantContext tenant, UUID slotId) {
+        return reservations.slotAfter(tenant, slotId);
+    }
+
     public Optional<Map<String, Object>> find(TenantContext tenant, UUID reservationId) {
         return reservations.byId(tenant, reservationId);
     }
@@ -143,6 +148,40 @@ public class ReservationService {
         }
         return new Cancellation(find(tenant, reservationId).orElse(row),
                 slotId == null ? null : reservations.slotAfter(tenant, slotId).orElse(null), false);
+    }
+
+    /**
+     * A merchant's acceptance. {@code replay} is true when the row was already confirmed — the answer
+     * is the state as it reads now, not a second decision about it.
+     */
+    public record Acceptance(Map<String, Object> row, boolean replay) {
+    }
+
+    /**
+     * Accept a hold (§23, D26). Only {@code pending} confirms: a cancelled hold already released its
+     * seats, so confirming it would promise a table that went back to the pool, and a {@code completed}
+     * or {@code no_show} row is the record of an evening that happened (§109), not a hold. Accepting
+     * moves no seats — they left the pool when the holder booked and stay out until the holder
+     * releases — so the slot in the response reads exactly as the inbox left it.
+     */
+    @Transactional
+    public Acceptance accept(TenantContext tenant, Map<String, Object> row) {
+        UUID reservationId = Json.uuid(row, "id");
+        String status = Json.str(row, "status");
+        if ("confirmed".equals(status)) {
+            return new Acceptance(row, true);
+        }
+        if (!"pending".equals(status)) {
+            throw ApiException.conflict("reservation_not_confirmable",
+                    "A booking that is " + status + " is not a live hold, so there is nothing to accept",
+                    Json.map("reservation_id", reservationId.toString(), "status", status));
+        }
+        if (reservations.accept(tenant, reservationId) == 0) {
+            // The row moved under the read — re-read it so the answer is the state, not the intent.
+            return new Acceptance(find(tenant, reservationId)
+                    .orElseThrow(() -> ApiException.notFound("reservation_not_found", "No such booking")), true);
+        }
+        return new Acceptance(find(tenant, reservationId).orElse(row), false);
     }
 
     private static String newCode() {

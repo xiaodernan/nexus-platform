@@ -5,7 +5,9 @@ import java.util.List;
 /**
  * The workspace permission vocabulary from API_CONTRACT §5, plus the default grant sets written into
  * {@code permission_grants}. AI-facing roles deliberately never receive {@code publish_campaign} or
- * {@code refund_payment} (AGENT_CONTRACT §8).
+ * {@code refund_payment} (AGENT_CONTRACT §8), and never {@code manage_reservations} either: taking a
+ * hold out of pending is the merchant's own judgement about a real evening (D26), so no agent preset
+ * carries it and it is not an API-key scope — only a human member holds it.
  */
 public final class MerchantPermissions {
 
@@ -21,12 +23,13 @@ public final class MerchantPermissions {
     public static final String PUBLISH_CAMPAIGN = "publish_campaign";
     public static final String ADMIN_MEMBERS = "admin_members";
     public static final String CREATE_RESERVATION = "create_reservation";
+    public static final String MANAGE_RESERVATIONS = "manage_reservations";
 
     /** Everything a human owner needs; written as explicit grant rows, not inferred from the role. */
     public static final List<String> OWNER = List.of(
             WRITE_PROFILE, PUBLISH_LISTING, READ_PRODUCTS, WRITE_PRODUCTS, READ_ORDERS, READ_ANALYTICS,
             CONFIGURE_AI, SEND_MESSAGE, CREATE_DRAFT_CAMPAIGN, PUBLISH_CAMPAIGN, ADMIN_MEMBERS,
-            CREATE_RESERVATION);
+            CREATE_RESERVATION, MANAGE_RESERVATIONS);
 
     /** Staff: can serve customers and read the catalogue, cannot manage members or publish. */
     public static final List<String> STAFF = List.of(
@@ -35,7 +38,7 @@ public final class MerchantPermissions {
     /** Manager: staff plus profile editing and analytics, but no member admin and no campaign publish. */
     public static final List<String> MANAGER = List.of(
             WRITE_PROFILE, READ_PRODUCTS, WRITE_PRODUCTS, READ_ORDERS, READ_ANALYTICS, SEND_MESSAGE,
-            CREATE_RESERVATION, CREATE_DRAFT_CAMPAIGN);
+            CREATE_RESERVATION, CREATE_DRAFT_CAMPAIGN, MANAGE_RESERVATIONS);
 
     /** Read-only analyst. */
     public static final List<String> ANALYST = List.of(READ_PRODUCTS, READ_ANALYTICS, READ_ORDERS);

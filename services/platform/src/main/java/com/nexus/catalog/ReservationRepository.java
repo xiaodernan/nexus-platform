@@ -128,6 +128,23 @@ public class ReservationRepository {
     }
 
     /**
+     * The merchant's yes: a hold leaves {@code pending} exactly once, because the guard is in the
+     * statement — a double-tapped accept answers zero rows and the service reads that as "already
+     * accepted" instead of rewriting a row that moved. Only {@code pending} confirms: a cancelled hold
+     * has already released its seats back to the pool, and a {@code completed} or {@code no_show} row
+     * is the record of an evening that happened (§109), not a hold to advance.
+     */
+    public int accept(TenantContext tenant, UUID reservationId) {
+        return jdbc.updateForTenant(tenant, """
+                update reservations r
+                   set status = 'confirmed', updated_at = now()
+                  from merchants m
+                 where r.id = :reservation_id and m.id = r.merchant_id and m.tenant_id = :tenant_id
+                   and r.status = 'pending'
+                """, Json.map("reservation_id", reservationId));
+    }
+
+    /**
      * The merchant's booking inbox (§23): holds on this merchant's tables, soonest first. The predicate
      * is written once ({@link #inboxScope}) and reused by {@link #inboxCount} — a count that drifts from
      * the list would make {@code total_estimate} a different question than the page answers.

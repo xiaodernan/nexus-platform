@@ -35,9 +35,10 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>Authenticated as a user, always: a reservation is a claim about a named person's evening, so the
  * subject comes from the token and never from the body (§52). The response carries the human-readable
  * code and nothing else is promised about the merchant having seen it — {@code status} stays
- * {@code pending} until a human or the merchant's agent accepts, and no route here can advance it (§109).
- * The holder can only release a hold, which is the one transition that does not require trusting a
- * permission the §5 workspace vocabulary does not yet define (D26).
+ * {@code pending} until the merchant accepts, and no route here can advance it (§109). The holder can
+ * only release a hold; advancing it is the merchant's own act, served by the workspace's accept route
+ * behind the {@code manage_reservations} grant the §5 vocabulary defines (D26) — a promise about a
+ * real evening is theirs to make, never the holder's.
  */
 @RestController
 @RequestMapping("/api/v1/reservations")

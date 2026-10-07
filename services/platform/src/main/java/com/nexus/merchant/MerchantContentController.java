@@ -504,11 +504,51 @@ public class MerchantContentController {
                 "to", windowTo == null ? null : windowTo.toString()));
         page.put("sort", "starts_at asc");
         page.put("definitions", Json.map("pending", "held, not yet accepted by the merchant",
-                "confirmed", "accepted — this route never moves a booking into it (D26)",
+                "confirmed", "accepted — POST /reservations/{id}/accept is the route that moves a "
+                        + "booking here, on manage_reservations (D26)",
                 "total_estimate", "rows matching the same filter as this page, across pages"));
         page.put("notice", "An empty inbox is the real state: no reservations are seeded (§109), so rows "
                 + "appear only from bookings made against this deployment.");
         return page;
+    }
+
+    /**
+     * {@code POST /api/v1/merchant/reservations/{id}/accept} — the merchant's yes, the one transition
+     * D26 held open until the vocabulary named who may make it. Behind {@code manage_reservations}
+     * (owners and managers; deliberately not staff, API keys or the agent): confirming a hold is a
+     * promise about a real evening, not an inbox tidy-up. The seats do not move — they left the pool
+     * when the guest booked — so the slot in the response is the same pool the inbox showed, read
+     * after the write.
+     */
+    @PostMapping("/reservations/{id}/accept")
+    @RequiresPermission(value = MerchantPermissions.MANAGE_RESERVATIONS, merchant = "reservation:id")
+    public Map<String, Object> acceptReservation(@PathVariable String id, HttpServletRequest request) {
+        TenantContext tenant = Req.tenant(request);
+        Map<String, Object> held = reservations.find(tenant, uuid(id, "id"))
+                .orElseThrow(() -> ApiException.notFound("reservation_not_found", "No such booking"));
+        ReservationService.Acceptance accepted = reservations.accept(tenant, held);
+        Map<String, Object> row = accepted.row();
+        audit.record(request, "reservation_accept", "reservation", Json.uuid(row, "id"),
+                Json.uuid(row, "merchant_id"),
+                accepted.replay() ? null : Json.map("status", "pending", "code", Json.str(row, "code")),
+                Json.map("status", Json.str(row, "status"), "code", Json.str(row, "code"),
+                        "replay", accepted.replay()),
+                null);
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("changed", !accepted.replay());
+        out.put("reservation", inboxItem(row));
+        UUID slotId = Json.uuidOrNull(Json.str(row, "slot_id"));
+        if (slotId != null) {
+            out.put("slot", reservations.slotAfter(tenant, slotId)
+                    .map(s -> Json.map("id", Json.str(s, "id"),
+                            "capacity_left", Json.integer(s, "capacity_left")))
+                    .orElse(null));
+        }
+        out.put("status_note", accepted.replay()
+                ? "This booking was already accepted; the seats stayed out of the pool and nothing was rewritten."
+                : "Accepted. The seats stay out of the pool — the guest keeps the table unless they release it.");
+        return out;
     }
 
     /** One inbox row: what was held, when, for how many, and how to reach the guest about it. */

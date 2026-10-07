@@ -61,7 +61,7 @@ DEMO_PASSWORD = "nexus-demo-2026"          # documented demo login; never stored
 OWNER_PERMISSIONS = [
     "write_profile", "publish_listing", "read_products", "write_products", "read_orders",
     "read_analytics", "configure_ai", "send_message", "create_draft_campaign", "publish_campaign",
-    "admin_members", "create_reservation",
+    "admin_members", "create_reservation", "manage_reservations",
 ]
 
 # TTLs per AGENT_CONTRACT.md §5
