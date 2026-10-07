@@ -71,6 +71,25 @@ class PermissionVocabularyTest extends NexusIntegrationTest {
     }
 
     @Test
+    @DisplayName("The machine subjects never hold the two human judgements — publishing a campaign and accepting a hold")
+    void machineSubjectsNeverHoldTheHumanJudgements() {
+        // MerchantPermissions' javadoc promises this; the promise is load-bearing (D26: a machine can
+        // never decide a real evening, and AGENT_CONTRACT §8 keeps publish out of every machine
+        // preset), so it is pinned against the constants the build actually grants from.
+        List<String> judgements = List.of(MerchantPermissions.PUBLISH_CAMPAIGN,
+                MerchantPermissions.MANAGE_RESERVATIONS);
+        for (String judgement : judgements) {
+            assertThat(MerchantPermissions.defaultsForRole("ai_agent"))
+                    .as("the ai_agent preset must not carry " + judgement).doesNotContain(judgement);
+            assertThat(MerchantPermissions.API_KEY_SCOPES)
+                    .as("api-key scopes must not carry " + judgement).doesNotContain(judgement);
+        }
+        assertThat(MerchantPermissions.defaultsForRole("staff"))
+                .as("staff may reserve on the guest's behalf but not accept a hold (D26)")
+                .doesNotContain(MerchantPermissions.MANAGE_RESERVATIONS);
+    }
+
+    @Test
     @DisplayName("Every merchant() spelling on a guarded route is one the resolver actually understands")
     void merchantScopesResolveOrFailAsAClientError() {
         TenantContext tenant = new TenantContext(UUID.randomUUID(), "hong-kong", "HKD", "Asia/Hong_Kong", "HK");

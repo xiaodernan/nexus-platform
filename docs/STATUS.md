@@ -12629,3 +12629,14 @@ Plane for these bytes: run 4 measured on 404e15b's worktree; steps 7b-18 by hand
 
 Plane for these bytes: door tests and both arms on the working copy against `nexus_test` (127.0.0.1:5433, V1-V8 schema - the new door needs no V9 because `staff()` writes the grant directly); figures read from the surefire summaries of four mvn runs (36/36 baseline, 2/2 arm 1, 1 red arm 2, 36/36 restored). Appends pure addition; nothing pushed.
 
+## 265. D26's last two states became reachable (D274): the outcome door serves completed/no_show on the same grant, and the record is written once
+
+- The route on `manage_reservations`: `{status:"completed"|"no_show"}`; a pending hold closes directly; replay answers `changed:false`; 409 `reservation_not_closable` for a cancelled hold or a different outcome; 422 for a window that has not begun (`requireBegun` reads the reservation's copied `starts_at`) and for a `status` outside the two; no slot block in the response.
+- Door test: book -> accept -> time-travel -> close completed -> 200 with the "on record as honoured" note, replay -> `already recorded`, no_show rewrite -> 409, holder sees `completed`; audit probed through the jsonb columns with `::text` casts (fresh `before.status=confirmed`, replay `before` NULL).
+- Refusal table: 401 unauthenticated; 403 for a `read_orders`-only member and a same-tenant non-member (2 `permission_denied` rows); 422 for a future evening and for the allowlist (the given value echoed); 409 for a cancelled hold with its released seats still back; pending closes into both outcomes (`no_show` and `completed`, witnessed from three different guests - one holder cannot book the same slot twice, the door answers 409 `reservation_exists`); 404 for a foreign hold and an unknown id; `reservation_close` audit count 2.
+- Arm: the service's non-pending/non-confirmed 409 removed -> 2/2 red at the predicted legs (rewrite = 200 `changed:false` quiet-wrong via the statement backstop; cancelled = 422 via `requireBegun`, which runs first once the guard is gone) -> restore byte-verified -> 7/7 green (close 2 + accept 2 + vocabulary 3).
+- Vocabulary pin: the `ai_agent` preset and `API_KEY_SCOPES` hold neither `publish_campaign` nor `manage_reservations`; the staff preset holds the latter not.
+- API_CONTRACT: the close row plus two re-aims (accept row, inbox row) staged via cacheinfo as HEAD+mine (+3/-2); the working copy keeps the other lane's section-8 hunk unstaged.
+
+Plane for these bytes: door tests and the arm on the working copy against `nexus_test` (127.0.0.1:5433); figures from the surefire summaries of four mvn runs - 39 run/1 failed on the first full pass (the fixture's own booking sequence hit `reservation_exists`: one holder cannot book one slot twice, so each hold got its own guest), 2/2 close class, 2/2 red arm, 7/7 restored. Appends pure addition; nothing pushed.
+

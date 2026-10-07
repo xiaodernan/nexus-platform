@@ -145,6 +145,23 @@ public class ReservationRepository {
     }
 
     /**
+     * The evening's outcome: a live hold leaves the pool of open bookings exactly once, into one of the
+     * two states that record what happened. The guard is in the statement — a double-tapped close
+     * answers zero rows and the service reads that as "already recorded" instead of rewriting a row
+     * that moved, and a {@code cancelled} or already-closed row never matches at all, because rewriting
+     * the record of an evening (§109) is the one crime this state machine exists to prevent.
+     */
+    public int close(TenantContext tenant, UUID reservationId, String target) {
+        return jdbc.updateForTenant(tenant, """
+                update reservations r
+                   set status = :target, updated_at = now()
+                  from merchants m
+                 where r.id = :reservation_id and m.id = r.merchant_id and m.tenant_id = :tenant_id
+                   and r.status in ('pending', 'confirmed')
+                """, Json.map("reservation_id", reservationId, "target", target));
+    }
+
+    /**
      * The merchant's booking inbox (§23): holds on this merchant's tables, soonest first. The predicate
      * is written once ({@link #inboxScope}) and reused by {@link #inboxCount} — a count that drifts from
      * the list would make {@code total_estimate} a different question than the page answers.

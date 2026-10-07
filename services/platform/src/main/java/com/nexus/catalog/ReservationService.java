@@ -184,6 +184,50 @@ public class ReservationService {
         return new Acceptance(find(tenant, reservationId).orElse(row), false);
     }
 
+    /**
+     * The evening's outcome (§6, §23). A live hold ({@code pending} or {@code confirmed}) whose window
+     * has begun can be closed exactly once, into {@code completed} or {@code no_show} — the two records
+     * an evening can end with. A cancelled hold refuses (its seats went back to the pool and its
+     * evening never happened under this booking), an already-closed row refuses a different outcome
+     * (the record is written once; rewriting it is the §109 crime), the same outcome replays, and a
+     * future evening refuses on time: an outcome is a record, not a prediction.
+     */
+    @Transactional
+    public Closing close(TenantContext tenant, Map<String, Object> row, String target) {
+        UUID reservationId = Json.uuid(row, "id");
+        String status = Json.str(row, "status");
+        if (target.equals(status)) {
+            return new Closing(row, true);
+        }
+        if (!"pending".equals(status) && !"confirmed".equals(status)) {
+            throw ApiException.conflict("reservation_not_closable",
+                    "A booking that is " + status + " is not a live hold, so there is no evening left to record",
+                    Json.map("reservation_id", reservationId.toString(), "status", status));
+        }
+        requireBegun(row);
+        if (reservations.close(tenant, reservationId, target) == 0) {
+            // The row moved under the read — re-read it so the answer is the state, not the intent.
+            return new Closing(find(tenant, reservationId)
+                    .orElseThrow(() -> ApiException.notFound("reservation_not_found", "No such booking")), true);
+        }
+        return new Closing(find(tenant, reservationId).orElse(row), false);
+    }
+
+    /** A closed evening. {@code replay} is true when the row already carried this outcome. */
+    public record Closing(Map<String, Object> row, boolean replay) {
+    }
+
+    /** An outcome needs a past: a booking whose window has not begun has no evening to record. */
+    public static void requireBegun(Map<String, Object> row) {
+        Object startsAt = row.get("starts_at");
+        Instant starts = startsAt instanceof java.sql.Timestamp t ? t.toInstant()
+                : startsAt instanceof java.time.OffsetDateTime o ? o.toInstant() : null;
+        if (starts != null && starts.isAfter(Instant.now())) {
+            throw ApiException.validation("The evening has not begun yet, so there is no outcome to record",
+                    Json.map("field", "starts_at", "starts_at", starts.toString()));
+        }
+    }
+
     private static String newCode() {
         StringBuilder suffix = new StringBuilder(6);
         for (int i = 0; i < 6; i++) {

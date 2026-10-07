@@ -506,6 +506,10 @@ public class MerchantContentController {
         page.put("definitions", Json.map("pending", "held, not yet accepted by the merchant",
                 "confirmed", "accepted — POST /reservations/{id}/accept is the route that moves a "
                         + "booking here, on manage_reservations (D26)",
+                "completed", "the evening was honoured — POST /reservations/{id}/close records it, on "
+                        + "the same grant (D274)",
+                "no_show", "the guest never came — POST /reservations/{id}/close records it, on the "
+                        + "same grant (D274)",
                 "total_estimate", "rows matching the same filter as this page, across pages"));
         page.put("notice", "An empty inbox is the real state: no reservations are seeded (§109), so rows "
                 + "appear only from bookings made against this deployment.");
@@ -513,8 +517,8 @@ public class MerchantContentController {
     }
 
     /**
-     * {@code POST /api/v1/merchant/reservations/{id}/accept} — the merchant's yes, the one transition
-     * D26 held open until the vocabulary named who may make it. Behind {@code manage_reservations}
+     * {@code POST /api/v1/merchant/reservations/{id}/accept} — the merchant's yes, the transition D26
+     * held open until the vocabulary named who may make it. Behind {@code manage_reservations}
      * (owners and managers; deliberately not staff, API keys or the agent): confirming a hold is a
      * promise about a real evening, not an inbox tidy-up. The seats do not move — they left the pool
      * when the guest booked — so the slot in the response is the same pool the inbox showed, read
@@ -548,6 +552,53 @@ public class MerchantContentController {
         out.put("status_note", accepted.replay()
                 ? "This booking was already accepted; the seats stayed out of the pool and nothing was rewritten."
                 : "Accepted. The seats stay out of the pool — the guest keeps the table unless they release it.");
+        return out;
+    }
+
+    /**
+     * {@code POST /api/v1/merchant/reservations/{id}/close} — the evening's outcome, one step after the
+     * yes. The same grant that confirms a hold records what the evening became: {@code completed} (the
+     * guest's table was honoured) or {@code no_show} (it was not). The same judgement that makes
+     * acceptance the merchant's act makes the outcome theirs too (D26/D274), so this door shares
+     * {@code manage_reservations} and is closed to staff, API keys and the agent.
+     *
+     * <p>The record is written once: a second call with the same outcome answers {@code changed=false}
+     * rather than rewriting, a different outcome answers 409, a cancelled hold answers 409 (its seats
+     * went back and its evening never happened under this booking), and a booking whose window has not
+     * begun answers 422 — an outcome is a record, not a prediction. Seats move nowhere: they left the
+     * pool when the guest booked, and a past slot's capacity is history, not inventory.
+     */
+    @PostMapping("/reservations/{id}/close")
+    @RequiresPermission(value = MerchantPermissions.MANAGE_RESERVATIONS, merchant = "reservation:id")
+    public Map<String, Object> closeReservation(@PathVariable String id,
+                                                @RequestBody(required = false) Map<String, Object> body,
+                                                HttpServletRequest request) {
+        TenantContext tenant = Req.tenant(request);
+        String target = body == null ? null : Json.str(body, "status");
+        if (!"completed".equals(target) && !"no_show".equals(target)) {
+            throw ApiException.validation("'status' must be 'completed' or 'no_show' — the two records an "
+                    + "evening can end with", Json.map("field", "status",
+                    "allowed", List.of("completed", "no_show"), "given", target));
+        }
+        Map<String, Object> held = reservations.find(tenant, uuid(id, "id"))
+                .orElseThrow(() -> ApiException.notFound("reservation_not_found", "No such booking"));
+        ReservationService.Closing closed = reservations.close(tenant, held, target);
+        Map<String, Object> row = closed.row();
+        audit.record(request, "reservation_close", "reservation", Json.uuid(row, "id"),
+                Json.uuid(row, "merchant_id"),
+                closed.replay() ? null : Json.map("status", Json.str(held, "status"), "code", Json.str(row, "code")),
+                Json.map("status", Json.str(row, "status"), "code", Json.str(row, "code"),
+                        "replay", closed.replay()),
+                null);
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("changed", !closed.replay());
+        out.put("reservation", inboxItem(row));
+        out.put("status_note", closed.replay()
+                ? "This outcome was already recorded; the booking's history was not rewritten."
+                : "completed".equals(target)
+                        ? "The booking is on record as honoured. This is its last state — it cannot be rewritten."
+                        : "The booking is on record as a no-show. This is its last state — it cannot be rewritten.");
         return out;
     }
 
