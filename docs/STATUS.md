@@ -12602,3 +12602,19 @@ CLIENT-ONLY**. Twelve documented routes stopped being calls nobody answers. The 
 lanes beyond the merchant tree: five `/ai/v1`, four `/api/v1/admin`, seven across the untracked
 commerce/seo packages, `/api/v1/users/{id}` and the payment webhook — each is now a named, measurable gap
 instead of an invisible one, and the merchant tree itself ships with no untracked file left in it.
+## 263. The committed plane's first full gate pass (D245, run 4 at 404e15b): the gate stops at step 7's own green control, and the hand-run of steps 7b-18 files one root cause for every red - committed text citing planes that were never committed
+
+The worktree at 404e15b (the EOL fix is committed, so step 7 reaches its own judgement for the first time on this plane), `--keep`, GATE_EXIT=2:
+
+- Steps 1-6 green: 217 quality checks on 58 tables / 8 migrations; step 5's ledger claim MATCHED; the truncate probe 4/4; `nexus_gate_68146_1791397844` kept behind.
+- Step 7 refuses: `RESULT: NOT CHECKED - the shipped plane is not green (rc 1, control rc 1)`. The census behind it: 2 FALSE SITES, both the committed answers citing the untracked commerce package.
+- Step 8: the reader files 36 FILE NOT FOUND (untracked files the committed ledgers cite); its harness FAILs by the same green control the step-7 harness grew - a harness whose control plane is red reports FAIL, not green.
+- Step 9: the harness 57/57 PASS; the reader files 7 FILE NOT FOUND in 85 comment citations.
+- Steps 10, 11, 12 PASS - step 11's registry check ran against the kept fresh database, 217 assertions.
+- Step 14: the two console census readers refuse with exit 2 (`nothing was censused, so nothing can be reported green`) because `apps/web/app` is untracked wholesale; `falsify_reader_reachability` PASS; the citation-supports-sentence census reports `nothing was judged, deliberately`; and `falsify_console_a11y` CRASHES on a raw ENOENT stack at HEAD - the lane that owns the file already has the fix on their bytes (§§261-262), so this row attributes rather than re-fixes.
+- Step 15: the falsifier 12/12 PASS; the drift reader REPORTs 100/142 citations still naming their line. Step 16 FAILs: MOVED 26 of 142 at HEAD - the committed ledger's pre-correction numbers, the class §§258-260 are re-aiming on the working copy.
+- Step 17 MATCHED with `quality checks=217,assertions=217,checks=217`, all three derived from this run's own step-5 printout. Step 13 is degenerate on the plane it certifies (worktree equals HEAD), which is why the gate runs it against the working copy instead.
+
+The one-line reading: the working copy's gate and the committed plane's gate disagree only about untracked code - every reader that refuses here names either the commerce package or `apps/web/app`, and the two honest refusals (`nothing was censused`) are the readers working as designed on a plane where their population is zero. Nothing on the committed plane reds because of a reader's logic.
+
+Plane for these bytes: run 4 measured on 404e15b's worktree; steps 7b-18 by hand from the same worktree and kept database; the EOL fix's own suite 38/38 on the main tree earlier the same day. Appends pure addition (DECISIONS gains its missing trailing newline, a -1/+1 on its last line); nothing pushed.
