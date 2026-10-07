@@ -55,9 +55,11 @@ rmSync(FIX, { recursive: true, force: true });
 mkdirSync(FIX, { recursive: true });
 
 // Read as text and write as text: this file's plants anchor on ordinary sentences, and a byte-level rewrite of
-// a UTF-8 source would re-encode every § it passed.
-const BASE = readFileSync(TRACKED, 'utf8');
-if (BASE.includes('\r\n')) die('the seed gate is LF here; this harness assumes one line ending for its row plant');
+// a UTF-8 source would re-encode every § it passed. A fresh checkout of this same LF blob is CRLF on
+// disk (core.autocrlf smudges every text file), so normalize once instead of refusing a plane whose
+// only difference is the smudge: the plants anchor within a line, and every fixture then carries the
+// LF spelling the anchors were written against.
+const BASE = readFileSync(TRACKED, 'utf8').replace(/\r\n/g, '\n');
 
 /** Write `from` → `to` into its own fixture copy. A plant must hit its anchor exactly once or it proves nothing. */
 function plant(name, from, to) {
@@ -239,7 +241,8 @@ const run = (...argv) => runReader(CHECKER, ...argv);
  * copy is written into the temp directory with those two specifiers re-pathed to the same shipped files — the
  * mutation is the one named below and nothing else about its runtime.
  */
-const READER_SRC = readFileSync(CHECKER, 'utf8');
+// Same smudge as above — this copy is read for its mutants, whose multi-line anchors assume one spelling.
+const READER_SRC = readFileSync(CHECKER, 'utf8').replace(/\r\n/g, '\n');
 
 // D196 — the terminal line's wording used to be retyped here as a regex. That is the same act as copying a
 // class list by hand: reword the checker's last line and the copy stops matching, so every run — healthy ones
