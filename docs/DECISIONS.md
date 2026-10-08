@@ -10963,7 +10963,7 @@ every plant this harness files, because the site census already reddens an absen
 name and a citation-free site on its own — the belt's firing side is unreachable while the rule it
 polices is intact. So its witness is a mutant reader: the absent-file rule silenced in a copy of the
 checker, run through the `--reader` seam against the same planted row
-(scripts/falsify_quality_seam.mjs:291), which is the only arm that can make the belt speak. The
+(scripts/falsify_quality_seam.mjs:294), which is the only arm that can make the belt speak. The
 shipped-reader arms assert the opposite too — the belt's sentence must NOT print there — so a belt
 that fires on a healthy plane cannot pass either. It is policed in both directions and reachable in
 one, and the record says which.
@@ -10978,7 +10978,7 @@ parse, and each has its own plant: the read_cat loop header, its column alias, t
 INSERT, the shape_answer INSERT (only the row parser reads that one, so it is the sole route to the
 missing-marker refusal), and a last row that stops closing before the semicolon. The refusal arms
 also require the run to be total — no header, no ANSWER SITES, no FALSE SITES, no CENSUS COVERAGE
-alongside the refusal (scripts/falsify_quality_seam.mjs:401,:444) — because exit 2 alone would also pass a
+alongside the refusal (scripts/falsify_quality_seam.mjs:404,:447) — because exit 2 alone would also pass a
 run that refused and then answered anyway.
 
 One plant was wrong before it was right, and its own red is the reason the arms name their phrase.
@@ -11025,7 +11025,7 @@ takes for a healthy plane has not decided anything; the branch that classifies n
 record saying so in prose is not a gate. `branchlessKinds` now enters the exit term with the other reasons
 (scripts/check_jsonb_reads.mjs:899-902) and the block prints `ANSWER KINDS UNUSED (N)` with the kind named and the
 fix stated (scripts/check_jsonb_reads.mjs:819-827). The plant is one row whose kind word moves from `reachable`
-to `dead-reader` (scripts/falsify_quality_seam.mjs:127), which is the smallest change that empties a kind:
+to `dead-reader` (scripts/falsify_quality_seam.mjs:129), which is the smallest change that empties a kind:
 measured on it, the census's own numbers do not move (22 rows, 31 cited sites, 12 files, 38 line spans), all five
 miss classes stay at 0, and exactly one reason appears — so the reddening is this rule's and not collateral.
 The witness is M1 of `.scratch/d194_meta.mjs`: put `branchlessKinds.length` back out of the exit term and 34 of 35
@@ -11034,16 +11034,16 @@ arms hold, the one red being the arm aimed at this sentence.
 **(b) A crash guard keyed on the line a dying reader still prints.** The harness decides whether a run crashed.
 It was deciding from the census's header line, and the header is the first thing the reader prints — so a reader
 that announced itself and then died mid-report was scored as a finished run. The guard now keys on a terminal
-sentinel the reader prints as its last act (scripts/falsify_quality_seam.mjs:261), and that sentinel declares the
+sentinel the reader prints as its last act (scripts/falsify_quality_seam.mjs:264), and that sentinel declares the
 exit code the process intends (scripts/check_jsonb_reads.mjs:902), so a run whose last line says `this run exits 1`
 and whose process takes 0 is a crash too, not a verdict. Three witnesses, all on the shipped bytes: M3 puts the
 guard back on the header line and 33 of 35 hold, with exactly the two death arms red — the reader that dies after
 the header, and the reader whose declared exit code the process does not take; M4 removes the clause that refuses a
-finished run for an arm that declared a death (scripts/falsify_quality_seam.mjs:456-458) and 34 of 35 hold, red
+finished run for an arm that declared a death (scripts/falsify_quality_seam.mjs:459-461) and 34 of 35 hold, red
 only on the arm that polices it; M5 deletes the sentinel line from the reader and the whole census goes to 20 of
 35 — fifteen arms red, because a run that prints no terminal line cannot be certified as having finished. The
-`expectCrash` inversion is checked by calling the same predicate the loop calls (scripts/falsify_quality_seam.mjs:453,
-arm at :681-686) against the control's real result, so the flag cannot be proved by a plant that only ever dies.
+`expectCrash` inversion is checked by calling the same predicate the loop calls (scripts/falsify_quality_seam.mjs:456,
+arm at :684-689) against the control's real result, so the flag cannot be proved by a plant that only ever dies.
 
 **(c) The seam died where it should have refused.** D159 made a mistyped `--quality` value a legal request that
 refuses; nothing between that legality and the verdict ever said the file is simply not there. Pointed at a path
@@ -11051,7 +11051,7 @@ with no file behind it, or at a directory, the census reached `readFileSync` abo
 `node:fs` frames at exit 1 — this directory's code for "a read or a site is wrong" (measured before the guard:
 both paths exited 1 with a stack; only a file that exists and holds no answers refused at 2). Both are refusals
 now, naming what was handed to it (scripts/check_jsonb_reads.mjs:99-107), and the two arms assert the sentence,
-not just the code (scripts/falsify_quality_seam.mjs:622-633). Witness M2: neuter the two conditions and 33 of 35
+not just the code (scripts/falsify_quality_seam.mjs:625-636). Witness M2: neuter the two conditions and 33 of 35
 hold, red on exactly those two arms. M2's first version was a bad witness and is kept here as the lesson: it
 nulled the value the guards read instead of the conditions, which made the missing-file refusal fire for the
 *shipped* path too, so the copied harness died in its own pre-flight — "the shipped plane is not green (rc 2,
@@ -11151,10 +11151,10 @@ different files.
 
 No answer plant can reach it: a plant moves a row between classes, it cannot delete a sentence from the checker.
 So the witness is a mutant reader — one `MISS_WHY` key renamed, which is the smallest change that makes a class
-unnamed while leaving the row, its site and its file exactly as they were (scripts/falsify_quality_seam.mjs:310) —
+unnamed while leaving the row, its site and its file exactly as they were (scripts/falsify_quality_seam.mjs:313) —
 and the arm pair is one measurement run twice: the same fixture over the shipped reader exits 0 and must not print
-the block (scripts/falsify_quality_seam.mjs:731), the same fixture over the renamed reader exits 1 and must print
-it with the sentinel declaring exactly one reason (scripts/falsify_quality_seam.mjs:742). The arm that was already
+the block (scripts/falsify_quality_seam.mjs:734), the same fixture over the renamed reader exits 1 and must print
+it with the sentinel declaring exactly one reason (scripts/falsify_quality_seam.mjs:745). The arm that was already
 there for the hand-judged class gained the absence half, so the charge cannot leak onto a class that does have a
 sentence either; it is policed in both directions and reachable in one, which is the shape D193 said a belt has to
 have.
@@ -11170,8 +11170,8 @@ a regular expression retyped out of a sentence the checker assembles. Each has a
     cross-checked against the reasons that file's classifier pushes — the same two populations the checker
     compares at run time when it charges an unnamed class. They are two derivations by different means, so a
     disagreement is a fact about the reader rather than about my regex, and it refuses at import
-    (scripts/falsify_quality_seam.mjs:337,:343,:353-356). A third consequence: `onlyClass(name)` now refuses to
-    build an arm aimed at a class the reader never files (scripts/falsify_quality_seam.mjs:365), because an
+    (scripts/falsify_quality_seam.mjs:340,:346,:356-359). A third consequence: `onlyClass(name)` now refuses to
+    build an arm aimed at a class the reader never files (scripts/falsify_quality_seam.mjs:368), because an
     expectation no run can ever print is not falsifiable, it is a caption.
   - A hand-typed marks list goes blind in the other direction, and this one is a false green with teeth. The
     marks exist to check that a refusal is *total* — a census that cannot parse its input has no verdict to
@@ -11181,7 +11181,7 @@ a regular expression retyped out of a sentence the checker assembles. Each has a
     `ANSWERS THE READ CENSUS DID NOT FIND`. The heads are now read off the checker's own `console.log` literals,
     and the single print a refusal is allowed to make is excluded by a property of the source line rather than by
     a name typed here: the line whose own statement calls `process.exit(2)` is what the refusal *says*, so it
-    cannot also be what the refusal must not say (scripts/falsify_quality_seam.mjs:391-400).
+    cannot also be what the refusal must not say (scripts/falsify_quality_seam.mjs:394-403).
   - The derivation's own first measurement was wrong, and it is recorded here because the mistake is the same one
     in a different costume: a rule stated as a shape can admit members that are not of that kind. The literal
     prefixes read thirteen "heads" out of a checker that prints twelve verdicts and one disclaimer, the thirteenth
@@ -11189,22 +11189,22 @@ a regular expression retyped out of a sentence the checker assembles. Each has a
     mark that is prose is a false witness, not a harmless extra: any run that printed its own disclaimer would
     have read as a census that refused and answered at once. A head is now the capitals run, which ends at the
     first lower-case letter, and what survives must not end on sentence punctuation
-    (scripts/falsify_quality_seam.mjs:396-399). The footer that broke the first version is the arms' plant, found
+    (scripts/falsify_quality_seam.mjs:399-402). The footer that broke the first version is the arms' plant, found
     by a property of the print that *follows* it — a quoted `console.log` opening in a lower-case letter can only
     be the second half of a sentence, so the line it continues is prose too — which keeps the plant moving with
-    the reader's prose instead of becoming a fourth hand copy (scripts/falsify_quality_seam.mjs:412-429). Two
+    the reader's prose instead of becoming a fourth hand copy (scripts/falsify_quality_seam.mjs:415-432). Two
     arms score the pair: a refusal that answers through a head the six strings never carried must be seen, and a
-    refusal that prints only its disclaimer must not be (scripts/falsify_quality_seam.mjs:662,:671). The check
+    refusal that prints only its disclaimer must not be (scripts/falsify_quality_seam.mjs:665,:674). The check
     lives in an arm rather than in an import-time refusal deliberately: a `die` on the over-wide rule would
     preempt the arm that names the case, and an arm no run can redden is the caption D193 refuses.
   - A retyped terminal regex fails loudly, which is the least harmful of the three but not harmless: reword the
     checker's last line and the copy stops matching, `crashed` becomes true for every run including healthy ones,
     and the arms report deaths that never happened. The pattern is now the reader's last template line with each
-    interpolation turned into a capture group (scripts/falsify_quality_seam.mjs:250-262), floored at three groups —
+    interpolation turned into a capture group (scripts/falsify_quality_seam.mjs:253-265), floored at three groups —
     a reason count, the report mode, and the exit code — because a reader that stopped stating the code it takes
     has removed the very thing the predicate reads.
 
-The report prints the population it scored (`DERIVED VOCABULARY`, scripts/falsify_quality_seam.mjs:816) and lists
+The report prints the population it scored (`DERIVED VOCABULARY`, scripts/falsify_quality_seam.mjs:819) and lists
 each class and each verdict head, because a count over a set nobody can see is a number and not a measurement —
 the lesson D173 learned about remembered totals, applied to this harness's own lists. A harness copy pointed at a
 mutant reader prints a different vocabulary from the shipped one, which is the point: the arms score against the
@@ -11220,9 +11220,9 @@ at the code. The re-aiming is a derivation from the bytes: a single number must 
 the working copy and a range must match its whole block contiguously, so `scripts/check_jsonb_reads.mjs:887-890`,
 whose interior this unit edited, is placed by its two ends and re-spelled as the block's new extent (899-902). Four
 numbers could not be derived because their referent is gone — `VERDICT_MARKS` is now the derivation at
-(scripts/falsify_quality_seam.mjs:401) and the marks array's second line is now the totality predicate at
-(scripts/falsify_quality_seam.mjs:444), the hand-retyped `TERMINAL` is now built from the reader's last template
-line (scripts/falsify_quality_seam.mjs:261), and one cite D194 landed four lines above its own claim, on what was
+(scripts/falsify_quality_seam.mjs:404) and the marks array's second line is now the totality predicate at
+(scripts/falsify_quality_seam.mjs:447), the hand-retyped `TERMINAL` is now built from the reader's last template
+line (scripts/falsify_quality_seam.mjs:264), and one cite D194 landed four lines above its own claim, on what was
 HEAD's blank line 580 and is now the `found.size === 0` refusal (scripts/check_jsonb_reads.mjs:584). That last
 number is aimed by hand, and the aiming was tested: the first draft of this very sentence put the cite *on* the
 blank line, naming the reader file and that empty line number as the drift example, and step 8's new-section rule

@@ -10404,10 +10404,10 @@ counts are unchanged and exactly one reason appears.
 **(b) A crash guard keyed on the last line instead of the first.** `scripts/falsify_quality_seam.mjs` decided
 "the reader died" from the census's header — the first thing a reader prints — so a reader that died mid-report
 was a finished run. The guard now reads a terminal sentinel that also declares the code the process intends
-(`scripts/falsify_quality_seam.mjs:261`, reader `scripts/check_jsonb_reads.mjs:902`), and a run whose declared
+(`scripts/falsify_quality_seam.mjs:264`, reader `scripts/check_jsonb_reads.mjs:902`), and a run whose declared
 code the process does not take is a crash, not a verdict. The `expectCrash` flag is policed both ways: an arm that
 declares a death over a run that finished reddens through the same predicate the loop uses
-(`scripts/falsify_quality_seam.mjs:581-583`).
+(`scripts/falsify_quality_seam.mjs:584-586`).
 
 **(c) The `--quality` seam refuses instead of dying.** After D159 made a mistyped flag value a legal request, a
 path with no file behind it and a path that is a directory both reached `readFileSync` and ended in `node:fs`
@@ -10674,7 +10674,7 @@ is believed only when stdout carried something, and the reporting loop refuses t
 `unread N of M arms` (scripts/falsify_ledger_text.mjs:879) rather than scoring an observation nobody made. The refusal is scoped by a
 `reading` tag (scripts/falsify_ledger_text.mjs:473) so the three stub arms that are deliberately aimed at silent children cannot trip it.
 The contract in the header says all three exit-2 causes out loud, because a harness whose exit codes are not in
-its own documentation is one more thing to rediscover (scripts/falsify_ledger_text.mjs:69).
+its own documentation is one more thing to rediscover (scripts/falsify_ledger_text.mjs:87).
 
 The structural half is what keeps "stdout is empty" from being a guess. An empty stdout is a death rather than a
 verdict only if the reader prints before it can exit, so that is read out of the reader's own bytes — every
@@ -10710,13 +10710,13 @@ here.
 One blast radius, measured rather than assumed. This unit inserts 160 lines and deletes 9 in
 `scripts/falsify_ledger_text.mjs`, and exactly one citation already in the ledgers pointed into that file:
 `docs/STATUS.md:10613`. It named line 634, which at HEAD is the arm whose predicate charges the exclusion
-against the tracked set, and the insertion moved that arm's name line to scripts/falsify_ledger_text.mjs:682; the ledger line was
+against the tracked set, and the insertion moved that arm's name line to scripts/falsify_ledger_text.mjs:749; the ledger line was
 repointed at landing. Step 8 was green over the stale number before and after — the census asks that a cited line
 exist, never that it holds what the sentence claims, which is the standing residue D194 and §202 both name.
 
 The class is not unique to this harness. Two others spawn a reader and read its exit code the same way —
 `scripts/falsify_comment_plane.mjs:117` and
-`scripts/falsify_quality_seam.mjs:213` — and both are left alone here, because a fix belongs in
+`scripts/falsify_quality_seam.mjs:215` — and both are left alone here, because a fix belongs in
 a unit that can witness it in both directions. One of them is covered already by an earlier rule rather than by
 luck: `falsify_quality_seam`'s crash predicate reads the reader's terminal sentinel (D194), so a silent child
 there is refused as a crash and never scored as a reading. The other has no such guard, and its arm helper also
