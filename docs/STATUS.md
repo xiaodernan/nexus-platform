@@ -10956,8 +10956,8 @@ first.
                     prints `UNCHECKED` and exits 2.
 
                     Measured on the working tree: 643 numeric claims read, 11 nouns known. The three
-                    expectations all MATCHED: quality checks=217 (docs/STATUS.md:8988), assertions=217
-                    (docs/STATUS.md:10859), checks=217 (docs/STATUS.md:10932). The census also reports:
+                    expectations all MATCHED: quality checks=217 (docs/STATUS.md:8989), assertions=217
+                    (docs/STATUS.md:10860), checks=217 (docs/STATUS.md:10933). The census also reports:
                     arms newest {38,12}, files 23, rows 4, plants 11, steps 12, cases 8, citations 413.
 
                     Step 17 added to the gate runs `check_ledger_numbers.mjs --expect "quality checks=216,assertions=217,checks=217"`.

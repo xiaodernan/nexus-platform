@@ -5008,7 +5008,7 @@ count and compares it against the read list's: 17 and 17, or it says so.
 that had to be derived rather than guessed is the one about which *table* a file belongs to: `__init__.py` is the
 only basename this repo's 237 first-party `.java`/`.py` files hold twice, so an ambiguous-name rule is
 unreachable by the shipped text and had to be witnessed by a plant. And "the cited line must mention the row's
-column" would have reddened five shipped rows if it had been written as "must mention the key" — `CollectionsController.java:307`
+column" would have reddened five shipped rows if it had been written as "must mention the key" — `CollectionsController.java:313`
 is `url = blankToNull(cover.get("url"))`, which names `cover` (the row's key) and neither `seo` nor `url`'s parent,
 while `CollectionsRepository.java:52` is `from collections c`, which names only the table. The rule is
 therefore a disjunction over the row's three identifiers, and its weakness is stated in the same breath.
@@ -8395,7 +8395,7 @@ the session list shows exactly one open session in this repo, this one, and the 
 outside `com.nexus.platform.*` and `com.nexus.testsupport` -- 36 tracked files, 0 untracked -- while
 `admin`, `commerce` and `seo` (0/8, 0/10, 0/2 tracked) are imported by none of it. So it can land alone,
 and does, as `d7c2d57`: four files, 533 lines, no other stream's work swept in. The
-`POST /api/v1/share` row at `API_CONTRACT.md:411` is deliberately left out of the commit -- that file is
+`POST /api/v1/share` row at `API_CONTRACT.md:410` is deliberately left out of the commit -- that file is
 another lane's dirty working copy, and a contract promise is not this lane's to stage.
 
 The measurement that mattered came after. A detached worktree at the new HEAD running
@@ -11399,7 +11399,7 @@ The `--reaim` mode prints a derived re-aim list (site, file, old number, new num
 
 **What it does.** The reader reads all numeric claims from both ledgers, prints a census per noun (every distinct value, its count, and the section carrying the newest one), and judges exactly one thing: the newest claim for each expected noun against an expectation passed in. `--expect "quality checks=217,assertions=217,checks=217"` is the only mode that produces a verdict; without it the tool prints `UNCHECKED` and exits 2. The verdict vocabulary is one counts object printed one class per line and derived by the harness from the reader's own `const counts = {...}` declaration (D196).
 
-**Measured on the working tree.** 643 numeric claims read, 11 nouns known. With `--expect "quality checks=217,assertions=217,checks=217"`: all three newest claims MATCHED. The newest "quality checks" is 216 (docs/STATUS.md:8988), newest "assertions" is 217 (docs/STATUS.md:10859), newest "checks" is 217 (docs/STATUS.md:10932). The census also reports: arms newest {38,12}, files newest 23, rows newest 4, plants 11, steps 12, cases 8, citations 413.
+**Measured on the working tree.** 643 numeric claims read, 11 nouns known. With `--expect "quality checks=217,assertions=217,checks=217"`: all three newest claims MATCHED. The newest "quality checks" is 216 (docs/STATUS.md:8989), newest "assertions" is 217 (docs/STATUS.md:10860), newest "checks" is 217 (docs/STATUS.md:10933). The census also reports: arms newest {38,12}, files newest 23, rows newest 4, plants 11, steps 12, cases 8, citations 413.
 
 **Step 17 added to the gate.** `scripts/db_gate_fresh.sh` now runs `scripts/check_ledger_numbers.mjs --expect "quality checks=216,assertions=217,checks=217"` as step 17. It prints PASS only when the newest claim for each expected noun matches the measured value. Measured: all three MATCHED, exit 0.
 
