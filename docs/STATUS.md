@@ -13132,3 +13132,12 @@ nested run is finally allowed to complete.
 - Steps 15-18: harness 12/12; EXACT 102 / MOVED 26 / NOT-UNIQUE 0 of 144; strict FAIL on MOVED 26 (the 258-260 backlog); step 17 MATCHED 217 x 3; step 18 /18 everywhere.
 
 Plane: gate at D:/nexus-headplane-r5 (35ae8ce), hand legs at D:/nexus-headplane-r5b (c0fbdd0), logs D:/nexus-r5b-step*.log, kept database nexus_gate_7662_1791404038 (container nexus-platform-postgres). Nothing pushed.
+
+## 268. the 26 MOVED line citations re-aimed - 27 ledger lines, 38 spans, every span verified before any digit moved (D276)
+
+- The backlog: run 4's strict FAIL named 26 MOVED verdicts, all into scripts/falsify_quality_seam.mjs or scripts/falsify_ledger_text.mjs, whose target lines shifted as the harnesses grew.
+- The re-aim: 26 judged starts from the reader's own --reaim rows; 7 co-located range ends proven by whole-block writer-to-HEAD comparison; 1 comma-shorthand (444 to 447) verified through its judged sibling row; 4 searched tokens by unique-position search with backward extension capped at 5 lines; digits-only asserted per changed line; line counts unchanged (STATUS 13135, DECISIONS 12262), so no other citation moved.
+- Landed as 20dde06 via cacheinfo staging with a staged-set assertion; numstat exactly 27 lines each way.
+- Measured on plane D:/nexus-headplane-r7 at that commit: steps 15-16 EXACT 128 / MOVED 0 / NOT-UNIQUE 0 / GONE 16 of 144 judged; step 16 passes --strict MOVED,NOT-UNIQUE with rc=0.
+
+Plane: reader runs at D:/nexus-headplane-r7 (20dde06), logs D:/nexus-r7-step15.log and D:/nexus-r7-step16.log. Nothing pushed.
