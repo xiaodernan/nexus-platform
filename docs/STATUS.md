@@ -13119,3 +13119,16 @@ becomes `-1`, and the arm misses on a number that reads like a process that neve
 below the baseline it was measuring — except that here it is in the code, where it cannot be seen by running
 the thing it kills. The cost is stated rather than hidden: the harness now takes **15+ minutes**, because the
 nested run is finally allowed to complete.
+
+## 267. run 5 on the V9 set: the refusal inventory is stable across a mid-run commit, and both sides of the boundary are now measured (D275)
+
+- Run 5 at 35ae8ce (--keep): steps 1-6 green - 217 quality checks, 58 tables, 9 migrations (V9 in the set), truncate probe PASS; the gate stops at step 7's green control, GATE_EXIT=2.
+- Mid-run the concurrent c0fbdd0 landed (docs-only: 253-266 + D272); the diff on migrations/services/data is empty, so steps 1-6 carry over and the hand legs re-measured on a fresh detached plane at c0fbdd0.
+- Step 7: 2 FALSE SITES, both file-not-on-this-plane (OrderRepository.java x2) - "a plane fact, not a hand judgement", the reader's own words.
+- Step 8: 37 FILE NOT FOUND (404e15b re-measured for this comparison: 36 - the delta is one more citation in the concurrent commit's new text); harness 54/56, the two misses its real-ledger arms - held on the working copy, missed on the committed plane: the boundary is the story.
+- Step 9: harness 57/57 on committed bytes - D272's D214/Y1 open item does not reproduce (it was read through the working copy's dirty readers); reader 85 citations / 26 files / 7 offenders, run 4's number to the digit.
+- Steps 10/11/12 green (234/234 + 231/231; kept DB nexus_gate_7662_1791404038; every spelled section cite resolves); step 13 degenerate: 0+0 / 37 / 7 across three same-commit pairs.
+- Step 14: i18n + a11y refuse honestly (nothing under apps/web/app); falsify_console_a11y dies at the same ENOENT D245 recorded (attribution); reachability x2 and sentence-support green.
+- Steps 15-18: harness 12/12; EXACT 102 / MOVED 26 / NOT-UNIQUE 0 of 144; strict FAIL on MOVED 26 (the 258-260 backlog); step 17 MATCHED 217 x 3; step 18 /18 everywhere.
+
+Plane: gate at D:/nexus-headplane-r5 (35ae8ce), hand legs at D:/nexus-headplane-r5b (c0fbdd0), logs D:/nexus-r5b-step*.log, kept database nexus_gate_7662_1791404038 (container nexus-platform-postgres). Nothing pushed.
