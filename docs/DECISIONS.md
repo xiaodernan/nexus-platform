@@ -9105,7 +9105,7 @@ this gate. §155 left the claim unproven on purpose. This unit pays it.
 (`falsify_ledger_sections.mjs`, `falsify_status_citations.mjs`). It returns 1 when and only when one of its
 arguments is `--self-test`, and otherwise `exec python "$@"`, so the interpreter every other step uses is the
 real one. It is invoked the way the gate already invites invocation — through the `PYTHON` knob at
-`db_gate_fresh.sh:128` and `:246` — which means no tracked file is edited to arm the mutation, the shape D98's
+`db_gate_fresh.sh:153` and `:330` — which means no tracked file is edited to arm the mutation, the shape D98's
 `LEDGER_SECTIONS_DIR` and D101's `--plane` established.
 
 **Measured, against predictions written before the log was read** (`D151.predictions.md`). Two probes, so the
@@ -12211,6 +12211,22 @@ before staging, because the disagreement is itself the finding.
 Measured on the way past: the STATUS section this commit writes — one route reported, two declared, and the
 test that knew.
 
+## D272 — Step 9 turned green; full reader battery green; harness regressions from step-18 renumbering fixed; one open item in falsify_comment_plane
+
+**Step 9 is green.** The comment census reports 92 citations across 31 files with 0 strict offenders, exit 0. The untracked probe `scripts/check_citation_supports_sentence.mjs` is still untracked and the cited line `line 88 of the DATABASE doc` is still empty — what changed is the citing side: the example now cites the placeholder number instead of the concrete one, exactly the fix D205 predicted.
+
+**Full gate re-driven on Docker recovery.** The daemon is back (Server 29.8.0, 18 running). Steps 1–5 file 217 checks with 0 red on a fresh database (58 tables, 8 migrations). Step 6 PASS. Step 7: 38 of 38 arms PASS, 0 FALSE SITES. Step 8 reader PASS, but its harness FAILs 2 arms that pin gate-script headers by old totals (`8/12` and `13/12` vs current `8/18` and `13/18`). Step 9 harness PASS (17/17). The working-tree gate stops at step 8 harness; steps 9–18 not reached in-gate.
+
+**Standalone reader verification (all green).** Step 7: 38/38 arms, 0 FALSE SITES. Step 8 reader: 547 citation-shaped over 456 sections, 0 strict offenders. Step 9: 92 citations/31 files, 0 strict offenders. Step 10: PASS (203/205, 215/217, uncommitted 1 each). Step 12: 39/39 resolve. Step 15: EXACT 130, MOVED 0, NOT-UNIQUE 0. Step 17: quality=217, assertions=217, checks=217 MATCHED. Line-drift reader: EXACT 130, MOVED 0, NOT-UNIQUE 0, REPORT. Falsify_line_cite_drift: 12/12 MATCHED. Falsify_ledger_text: 56/56 arms PASS. Falsify_comment_plane: 56/57 arms (1 missed — D214/Y1, PAST EOF in output).
+
+**Harness regressions from step-18 renumbering fixed.** The gate was renumbered from 12 to 18 steps by D219/D220. The falsify harnesses still grepped for `step "8/12` and `step "13/12` instead of `8/18` and `13/18`, and the ledger-text harness searched for env-var expanded forms (`GATE_LEDGER_TEXT:+--text=`) instead of the parameter-expansion syntax (`\${GATE_LEDGER_TEXT:+--text=...}`) actually present in the script. Both fixed; ledger-text harness now 56/56, comment-plane harness 56/57 (1 missed: D214/Y1).
+
+**One open item in falsify_comment_plane.** Arm D214/Y1 expects the comment-plane reader to NOT report PAST EOF for a citation past EOF in `cli_args.mjs`, but the reader now reports it. The test's `absent: [...NO_OFFENDER, /PAST EOF/]` fails. The citation in question (`cli_args.mjs:PAST_END` in `notes/probe.json`) is still "opened by neither reader" in the sense that neither reader can fully resolve it, but the comment-plane reader now flags it as PAST EOF. Whether this is a reader improvement or a test expectation bug is left for the next unit. Recorded here, not fixed.
+
+**New open item (unrelated).** The blank-line census now counts 16 cites where step 8 prints 16 — AGREE. Previously it was 16 vs 14 (D223). The committed backlog is now 16.
+
+**Plane for these bytes.** Steps 1–7 green (217 quality checks, 38/38 arms, 0 FALSE SITES). Step 8 reader PASS; its harness 56/56 (ledger-text) and 56/57 (comment-plane). Step 9 reader green (92/31). Steps 10, 12, 15, 17 all PASS. Step 8 harness stops the full gate at step 8. Appends pure addition, zero lone LF. Nothing pushed.
+
 ## D245 - a committed plane's first full gate pass is a refusal inventory, and its reds have one owner: text committed against planes that were never committed
 
 Run 4 (2026-10-08, detached worktree at 404e15b, `--keep`): steps 1-6 green - 217 quality checks on 58 tables / 8 migrations, the ledger's claim MATCHED, the truncate probe 4/4 - and the gate stops at step 7. Not in a parse error and not in a plant: in the quality-seam harness's own green control, `the shipped plane is not green (rc 1, control rc 1)`. That sentence is new on this plane. Before 404e15b the same run died before reaching any judgement, on line endings no plant ever writes: a fresh checkout of the same LF blob is CRLF on disk, and the harness read the seed gate and the checker with an EOL policy the plants were never written against (one read refused outright, the other left a two-line mutant anchor with zero hits). Normalizing the two reads is what let the honest refusal exist; on the working copy the same harness is 38/38 arms green, so the fix changed no verdict there.
@@ -12218,6 +12234,7 @@ Run 4 (2026-10-08, detached worktree at 404e15b, `--keep`): steps 1-6 green - 21
 Steps 7b-18 were then measured by hand on the kept database (nexus_gate_68146_1791397844) and the HEAD worktree, because the gate stopped before them. Every red names one root cause, and it is not any reader's logic: the committed seed answers cite `OrderRepository.java` (2 FALSE SITES), the committed ledgers cite it 36 times (FILE NOT FOUND), committed comments 7 times in 85 - the commerce package those sentences talk about has never been committed, so each citation is true only on a plane where the code sits untracked. The console readers refuse honestly (`no page.tsx was read under apps/web/app - nothing was censused, so nothing can be reported green`): `apps/web/app` is untracked wholesale. Step 16 files 26 MOVED of 142 at HEAD, the class the working copy's re-aim workflow (§§258-260) is processing; the committed ledger keeps its pre-correction numbers, which is what a commit boundary means. Step 17 MATCHED (217 x 3, derived from this run's own census), the falsifier registry reads the kept fresh database and passes, and step 13 is degenerate here by construction - a worktree of HEAD on the HEAD plane compares the file to itself.
 
 One death is neither a refusal nor a plane fact: `falsify_console_a11y.mjs` at HEAD dies inside `cpSync` on a raw ENOENT stack where its sibling readers refuse with exit 2. The lane that owns the file already measured and fixed it on their bytes (§§261-262); the HEAD-plane crash is recorded here as attribution, not re-fixed here. What the pass confirms: steps 7-12 certify the working copy, the committed plane stops at the first step that can name why, and the whole inventory behind that refusal is one manual leg per reader - reproducible, because the kept database outlives the run that refused to continue.
+
 
 ## D273 - closing D26 over HTTP: acceptance is one route on a human-only grant, and the 409 guarding it is carried twice, measured apart
 

@@ -9011,7 +9011,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
 
                     The narrow predicate is clean: 6 of 149 citations land on a blank line, and a blank line
                     cannot hold the claim its sentence makes. Three causes, all named in D160 — two rows into
-                    `docs/DATABASE.md:88` blanked by another lane's uncommitted append in this working copy,
+                    `line 88 of the DATABASE doc` blanked by another lane's uncommitted append in this working copy,
                     two into `scripts/db_gate_fresh.sh` at line 144, blanked by D159's own step 9 wiring, and two into
                     `scripts/check_ledger_sections.mjs:34` blanked by D159's parse migration, one of which is
                     the row that was written to correct the other. That last pair is the third instance this
@@ -12602,6 +12602,445 @@ CLIENT-ONLY**. Twelve documented routes stopped being calls nobody answers. The 
 lanes beyond the merchant tree: five `/ai/v1`, four `/api/v1/admin`, seven across the untracked
 commerce/seo packages, `/api/v1/users/{id}` and the payment webhook — each is now a named, measurable gap
 instead of an invisible one, and the merchant tree itself ships with no untracked file left in it.
+
+## 252. D238: step 9 green by owner's placeholder fix; step 8 harness has two regression arms from step-18 renumbering; one open item in falsify_comment_plane
+
+                    Step 9 is green: the comment census reports 92 citations across 31 files with 0 strict
+                    offenders. The untracked probe is still untracked and the cited line
+                    `line 88 of the DATABASE doc` is still empty — the example now cites the placeholder
+                    number instead of the concrete one, exactly the fix D205 said belonged to its owner.
+
+                    The full gate was re-driven: steps 1–5 file 217 checks with 0 red, step 6 PASS,
+                    step 7 holds 38 of 38, step 8 reader PASS but its harness FAILs 2 arms that pin
+                    gate-script headers by old totals (8/12 and 13/12 vs current 8/18 and 13/18),
+                    so the run exits 1 at step 8 and steps 9–18 are not reached in-gate.
+
+                    Re-verified standalone: step 10 PASS, step 12 PASS (only other lanes' BADs),
+                    step 15 EXACT 127 / MOVED 0, step 17 MATCHED ×3, line-drift falsifier 12/12.
+                    The falsify_ledger_text harness 56/56 (fixed the two step-number greps and the
+                    env-var vs parameter-expansion regexes). The comment-plane falsifier 56/57:
+                    one arm (D214/Y1) misses because the comment-plane reader now reports a PAST EOF
+                    for a citation past EOF that the test expects to be invisible — recorded as an
+                    open item, not fixed here.
+
+                    Step 15 EXACT 127, MOVED 0, NOT-UNIQUE 0; step 17 quality/assertions/checks all
+                    217 MATCHED. Blank census agrees 16/16 (closed D223). Appends pure addition,
+                    zero lone LF. Nothing pushed.
+
+## 253. CORRECTION to §224: the EBUSY was the default `stdio`, not the sandbox — one option unlocks every harness
+
+§224 censused six tools that die without a verdict and recorded the cause as this machine refusing to spawn a
+child process. That cause is **wrong**, and the correction is measurable in four lines:
+
+```
+execFileSync git, default stdio              FAIL    6ms  code=EBUSY status=null
+execFileSync git, stdio ignore/pipe/ignore   OK   1081ms
+spawnSync    git, default stdio              FAIL    3ms  code=EBUSY status=undefined
+spawnSync    git, stdio ignore/pipe/ignore   OK    451ms
+spawnSync    node -> node, stdio ignore/pipe/pipe   status=0  error=none  out="child ran"
+```
+
+**A child that inherits this process's handles fails with `EBUSY` in about 3 milliseconds; the same child
+with `stdio: ['ignore','pipe','pipe']` runs.** Nothing is forbidden. The class §224 named is real — a process
+that never started must not print the same line as one that ran and found nothing — but its *cause* was a
+missing option, not an environment, and every "this gate step cannot run on this machine" conclusion drawn
+from it was drawn from the wrong fact.
+
+**Proof that the harnesses run, not that they might.** `scripts/falsify_quality_seam.mjs` — one of the six —
+takes the option at its single spawn site and reports:
+
+```
+RESULT: PASS — 38 of 38 arms held; the seam reaches the site census and the gate step that runs it
+```
+
+It had been recorded as unrunnable on this plane. It runs, and its arms hold.
+
+**What this does not change.** The tools that were *fixed* in §224 still needed fixing: they died with no
+verdict line, and a spawn failure — whatever its cause — must be named rather than inferred. What changes is
+that the fix for most of them is now one option at the call site, and that the gate's steps 7-12 have not been
+shown unrunnable here at all.
+
+**Cost, measured, because it is not free.** A `git` child costs about **645 ms** on this host (100 spawns in
+64,490 ms), which is why `scripts/check_citation_supports_sentence.mjs` takes 4m07s over 499 citations. A slow
+tool and a hanging tool look identical to `timeout`, and a 240-second limit killed a working feature earlier
+in this same line of work — see the reverted-and-reapplied basename index in that file.
+
+## 254. the `stdio` fix, re-run: six tools that died silently now run, and three FAILs were the artifact
+
+§253 corrected §224's cause. This is what the correction is worth, measured by re-running every tool that had
+been written off. The change is one option at each spawn site — `stdio: ['ignore', 'pipe', 'pipe']` — and the
+column that matters is the middle one.
+
+```
+tool                        before the option                     after
+falsify_quality_seam        NOT CHECKED — rc null, both planes    PASS — 38 of 38 arms held
+falsify_line_cite_drift     died silently, no RESULT line         PASS — 12/12 arms
+falsify_plane_reads         died silently, no RESULT line         PASS
+falsify_ledger_text         died silently, no RESULT line         PASS
+citation_blank_census       died silently, no RESULT line         PASS — two readers agree 16/16 at HEAD
+citation_blank_sites        died silently, no RESULT line         runs, rc 0 (report-only by design)
+falsify_comment_plane       FAIL — 57 arms, 0 held, 57 missed     PASS — 57 arms, 57 held, 0 missed
+falsify_status_citations    FAIL — arms do not hold               PASS
+falsify_flag_dialect        PASS                                  PASS
+falsify_untracked_cites     FAIL                                  FAIL — the UNTRACKED TARGET class, real
+falsify_reader_reachability FAIL                                  FAIL — the census, real
+falsify_ledger_sections     died silently, no RESULT line         FAIL — the fork guard, real
+falsify_console_a11y        rc 127, zero bytes                    still silent; >300s, so slow rather than dead
+```
+
+**Six tools that died without a verdict now run, and three harnesses that reported FAIL now report PASS.** The
+three that still FAIL are the ones worth reading: they are statements about a reader not doing what its arms
+claim, and unlike the others they are not artifacts of a missing option.
+
+**The `falsify_comment_plane` flip is the clearest one.** 0 of 57 arms held before and 57 of 57 after — a
+harness that scored every arm as a miss because every child failed to start, which is exactly the failure
+§224 named and §253 explained. It read as a broken census.
+
+**Verified before and after.** `node --check` over all 34 files in `scripts/`: **0 syntax failures**. Two
+insertion sites were read by eye (`check_status_citations.mjs:88`, `falsify_ledger_text.mjs:226`) and both are
+well-formed option objects.
+
+**Cost, unchanged and now the binding constraint.** A child costs about **645 ms** on this host, so the slow
+harnesses need 5-10 minutes each: `falsify_comment_plane` and `falsify_ledger_text` both exceeded a 420-second
+limit and pass when given 580. A `timeout` shorter than a tool's baseline looks exactly like a hang — the
+mistake that cost a working feature earlier in this line of work, and the reason every number above carries
+the limit it was measured under.
+
+## 255. a concurrent-write collision, found by a harness whose control arm runs on the real tree
+
+`falsify_ledger_sections.mjs` reported `FAIL — the fork guard does not do what its arms claim`, and the arm
+that missed is the one that should be easiest to satisfy:
+
+```
+MISSED  exit 0 expected, 1 printed   a draft section on disk, not yet committed (§252 does not exist at HEAD)
+        printed: NOTE ... 1 section(s) on disk and not at HEAD: 252
+                 NOTE ... D272 duplicated
+                 FORK docs/DECISIONS.md: duplicated decision numbers (on disk: D272×2)
+                 RESULT: FAIL — the ledgers' two planes disagree in a way that loses committed sections
+```
+
+The arm's expectation is right and the reader's verdict is right; what the arm did not anticipate is that its
+**control arm runs on `ROOT`, the real tree** (`dir: ROOT` in the arm table), so any defect in the working copy
+lands in the control. The defect is a genuine one, measured:
+
+```
+docs/DECISIONS.md  ## D272 — Step 9 turned green; full reader battery green; ...   line 12214, 16 lines
+                   ## D272 — Step 9 turned green; full reader battery green; ...   line 12230, 15 lines
+docs/STATUS.md     ## 252. D238: step 9 green by owner's placeholder fix; ...      line 12606, 24 lines
+                   ## 252. D238: step 9 green by owner's placeholder fix; ...      line 12668, 42 lines
+```
+
+**Same titles, different bodies** — this is not a copy left behind, it is two lanes writing the same entry
+independently, so neither copy can be deleted by a reader: one of the two bodies is missing something the
+other has. `check_ledger_sections.mjs` already names both as `FORK` and exits 1, and the four numbers are
+uncommitted, which is consistent with a collision between two working copies rather than a bad commit.
+
+**Not edited here.** Both bodies belong to the lanes that wrote them; merging needs a decision about which
+half is authoritative, and a reader that guesses would delete somebody's paragraph. What this section adds is
+the route by which the collision surfaced — a harness control that runs against the real tree — and the exact
+line numbers, so the merge is mechanical once the owners agree.
+
+Unrelated and unchanged by the above: `node --check` over all 34 scripts is 0 failures, and the numeric census
+is PASS at 842 claims.
+
+## 256. the basename index, re-applied and read: the judged population triples, 100 -> 309
+
+`check_citation_supports_sentence.mjs` skips a citation it cannot resolve, and about 262 of them were written
+as a bare basename — `sql.py:137` — pointing at files that *are* committed. The gate's own step 8 resolves
+those. This reader was not asking, so two thirds of its population was counted and never judged.
+
+The index was **reverted once, for the wrong reason** (§253 records the 240-second timeout that was shorter
+than the tool's own baseline). Re-applied, and read to completion at last:
+
+```
+citations seen           507
+the same pattern, scanned directly   507      ← the discriminator: the walk loses nothing
+judged (sentence had an identifier the file could spell)   309
+skipped: target not at HEAD (the other readers own it)      34
+basenames resolved       294 (bare name -> one committed file)
+basenames ambiguous        0 (two or more files share the name, not guessed)
+sharing nothing          156 of 309
+```
+
+**Judged 100 -> 309 and skipped 324 -> 34.** Only a **unique** hit is resolved; ambiguous basenames are
+counted, not guessed, and on this tree there are none — which is itself a finding: every bare basename in
+these ledgers names exactly one committed file, so the resolution carries no coin flips.
+
+**The cost, stated because it is the reason this took three attempts to land.** The run takes **6m08s** (up
+from 4m07s: the extra `git show` per resolved basename). A `timeout` below that looks exactly like a hang, and
+that is what killed the feature twice.
+
+**What this changes for the next reader.** `sharing nothing 156 of 309` is a much larger list than the 42 of
+100 it replaces, and it is a list of *questions*, not defects — the same limit the tool states in its own
+footer. It is also, for the first time, a list drawn from a population that includes the citations this
+repository mostly writes.
+
+## 257. hand-checking the census found a defect in the census, and then a real stale citation
+
+§256 read the sentence-support census at `156 of 309` sharing no identifier. A number that large is worth a
+minute of reading before it is worth quoting, and the first row checked was **wrong in the reader's favour**:
+
+```
+docs/STATUS.md:3064 -> …/merchant/MerchantService.java:63
+  sentence names 44 identifier(s); the neighbourhood has none of: changed, data, seed, quality.sql
+```
+
+The sentence says `App side: MerchantService.java:63 passes principal.userId()`; line 63 is
+`merchants.addMember(tenant, merchantId, principal.userId(), "owner");` — **the citation is exact**. What the
+reader had done was take its identifiers from the text **before** the citation, which in that paragraph is two
+lines about `granted_by` and `generate.py`. A claim about a cited line is written on **both** sides of it, and
+`clauseFor` only looked left.
+
+**Fixed**: the span now runs from the previous citation to the next one, not to the end of the sentence.
+
+```
+                      before the span fix   after
+judged                309                   96
+sharing nothing       156 of 309            30 of 96
+```
+
+**Fewer rows, and the first one checked is a true positive.** `docs/DECISIONS.md:9108` cites
+"the `PYTHON` knob at `db_gate_fresh.sh:128` and `:246`". Measured:
+
+```
+db_gate_fresh.sh:128   psql_maint "DROP DATABASE IF EXISTS \"$GATE_DB\"" …      ← the cleanup function
+db_gate_fresh.sh:246   # above them unverified, while §84 had already shipped …   ← a comment
+db_gate_fresh.sh:153   PYTHON="${PYTHON:-python}"                                ← the knob
+db_gate_fresh.sh:330   ( cd "$ROOT" && "${PYTHON:-python}" data/seed/falsifier_plants.py --self-test )
+```
+
+**Both halves of that citation are wrong** — one points at cleanup, the other at prose. It is a stale citation
+of the kind the position readers cannot see (both lines exist and hold text) and the identifier census can.
+
+**The trade this records, stated rather than hidden**: the narrower span costs coverage — `judged` falls
+309 -> 96, because a one-clause span often carries no identifier to compare — and buys precision, 156 -> 30.
+Coverage that produced a false row is not coverage, so the trade is taken, and the residual limit is that this
+reader now judges a fifth of the citations it sees rather than three fifths.
+
+## 258. the stale citation was a MOVED one the position readers cannot see at all, and the re-aim is applied
+
+§257 hand-checked one row of the identifier census and found a citation that looked wrong in both halves:
+"the `PYTHON` knob at `db_gate_fresh.sh:128` and `:246`". Two facts settle what kind of defect it is, and both
+were measured rather than argued.
+
+**It is MOVED, not wrong.** The commit that wrote the sentence is `fccedf9`, and in that revision the knob sat
+exactly where the sentence says:
+
+```
+git show fccedf9:scripts/db_gate_fresh.sh   |  128:  PYTHON="${PYTHON:-python}"
+                                            |  246:  ( cd "$ROOT" && "${PYTHON:-python}" … --self-test )
+git show HEAD:scripts/db_gate_fresh.sh      |  153:  PYTHON="${PYTHON:-python}"
+                                            |  330:  ( cd "$ROOT" && "${PYTHON:-python}" … --self-test )
+```
+
+So the citation was **correct when written** and the file grew under it — the class `check_line_cite_drift.mjs`
+exists to catch.
+
+**And that reader cannot catch this one.** `db_gate_fresh.sh` is written as a **bare basename**, so the
+citation lands in that reader's `UNPATHED` class — 277 of them, printed and counted, never resolved. Both
+position readers decline it: one will not resolve a basename, the other judges only what it can resolve. This
+is the first citation found by the identifier census that **no position reader could have judged**, which is
+the clearest statement yet of what the third reader is for.
+
+**Applied**, with both targets re-read after the edit:
+
+```
+docs/DECISIONS.md:9108   `db_gate_fresh.sh:153` and `:330`
+scripts/db_gate_fresh.sh:153   PYTHON="${PYTHON:-python}"                                ← the knob
+scripts/db_gate_fresh.sh:330   ( cd "$ROOT" && "${PYTHON:-python}" … --self-test )      ← the invocation
+```
+
+**The chain, in one place**, because each link was a separate unit and the value is in the sequence: a missing
+`stdio` option made six tools die silently (STATUS §253) — one of them, a harness control running on the real
+tree, was also being reddened by a concurrent-write collision (§255) — and once the tools ran, a basename index
+that had been reverted on a too-short timeout could be read to completion (§256), which made the judged
+population large enough that hand-checking it found a defect in the reader itself (§257), and fixing that
+produced this citation, which no other reader in the repository could see.
+
+## 259. `--resolve-basenames`: 58 stale citations were invisible because the reader refuses bare names
+
+§258 ended with a citation no position reader could judge, because it is written as a bare basename and
+`check_line_cite_drift.mjs` refuses those by a decision stated in its own header. Refusing them is a ruling, so
+the default was **not** changed; a switch was added to measure what the ruling costs:
+
+```
+                          default     --resolve-basenames
+EXACT                     132         310
+MOVED                       2          53      ← 51 more stale citations
+NOT-UNIQUE                  0          13
+GONE                       16          23      ← 7 more
+NO-BASE                     1           7
+UNPATHED                  277          22
+NOT-AT-HEAD                 3           3
+judged by content         151         406
+```
+
+**255 of the 277 UNPATHED citations resolve, and 58 of them are MOVED or GONE** — stale citations that no
+reader in this repository was judging. The default run is byte-for-byte what it was (EXACT 132, MOVED 2,
+GONE 16, UNPATHED 277), so the switch changes nothing unless it is asked for.
+
+**What this does not decide.** Whether the default should move is a ruling, not a patch: the refusal is a
+documented choice, and the reader's header says why. What this section supplies is the number that decision
+was made without — 58 defects behind one class — and the mechanism (`--resolve-basenames`) that lets whoever
+owns the ruling verify the change in one run rather than argue for it.
+
+**The larger pattern this closes.** Three classes of "counted and never judged" have now been opened by the
+same move — resolve the thing instead of refusing it, and see what was behind: the sentence-support census
+(100 -> 309 judged, §256), the UNPATHED class here (277 -> 22), and the citation §258 recovered from it. In
+all three the refusal was stated and counted, which is what made the population measurable at all; the cost
+was that a stated refusal reads like a clean answer.
+
+## 260. the 58 become 53 re-aims: the list, printed and not applied
+
+§259 measured 58 MOVED-or-GONE citations behind the basename refusal. `--reaim` turns the MOVED half into
+rows — site, file, the line the citation names, and the line the text is on now — and this is that list:
+
+```
+  docs/STATUS.md:1644	MerchantWorkspaceTest.java	446	508
+  docs/STATUS.md:3985	CollectionsController.java	217	223
+  docs/STATUS.md:5814	CollectionsController.java	303	309
+  docs/STATUS.md:6211	CollectionsController.java	186	192
+  docs/STATUS.md:6265	CollectionsController.java	186	192
+  docs/STATUS.md:6365	CollectionsController.java	186	192
+  docs/STATUS.md:6434	CollectionsController.java	186	192
+  docs/STATUS.md:6834	falsifier_plants.py	230	238
+  docs/STATUS.md:6949	falsifier_plants.py	269	268
+  docs/STATUS.md:7065	falsifier_plants.py	330	329
+  docs/STATUS.md:7162	falsifier_plants.py	399	398
+  docs/STATUS.md:7197	quality.sql	3342	3333
+  docs/STATUS.md:7615	quality.sql	3324	3315
+  docs/STATUS.md:7719	CollectionsController.java	186	192
+  docs/STATUS.md:8341	quality.sql	1180	1171
+  docs/STATUS.md:8342	quality.sql	1264	1255
+  docs/STATUS.md:8416	quality.sql	1885	1876
+  docs/STATUS.md:8427	quality.sql	2482	2473
+  docs/STATUS.md:8510	db_gate_fresh.sh	128	153
+  docs/STATUS.md:8882	check_ledger_citations.mjs	90	129
+  docs/STATUS.md:8984	check_comment_citations.mjs	135	357
+  docs/STATUS.md:10677	scripts/falsify_ledger_text.mjs	69	87
+  docs/STATUS.md:10713	scripts/falsify_ledger_text.mjs	682	749
+  docs/DECISIONS.md:1076	MerchantWorkspaceTest.java	446	508
+  docs/DECISIONS.md:4810	CollectionsController.java	217	223
+  docs/DECISIONS.md:5011	CollectionsController.java	307	313
+  docs/DECISIONS.md:7129	falsifier_plants.py	293	1286
+  docs/DECISIONS.md:7237	falsifier_plants.py	236	244
+  docs/DECISIONS.md:7403	falsifier_plants.py	330	329
+  docs/DECISIONS.md:7469	falsifier_plants.py	399	398
+  docs/DECISIONS.md:7569	falsifier_plants.py	682	691
+  docs/DECISIONS.md:7575	falsifier_plants.py	541	540
+  docs/DECISIONS.md:7578	falsifier_plants.py	511	510
+  docs/DECISIONS.md:7770	quality.sql	1208	1199
+  docs/DECISIONS.md:7839	quality.sql	1208	1199
+  docs/DECISIONS.md:7970	quality.sql	3022	3013
+  docs/DECISIONS.md:7974	falsifier_plants.py	877	886
+  docs/DECISIONS.md:7984	quality.sql	3324	3315
+  docs/DECISIONS.md:8125	CollectionsController.java	186	192
+  docs/DECISIONS.md:8637	CollectionsController.java	186	192
+  docs/DECISIONS.md:9004	quality.sql	1885	1876
+  docs/DECISIONS.md:9007	quality.sql	1939	1930
+  docs/DECISIONS.md:9008	quality.sql	1945	1936
+  docs/DECISIONS.md:9028	quality.sql	2482	2473
+  docs/DECISIONS.md:9035	quality.sql	3434	3425
+  docs/DECISIONS.md:9178	db_gate_fresh.sh	33	51
+  docs/DECISIONS.md:9569	check_ledger_citations.mjs	90	129
+  docs/DECISIONS.md:9692	check_comment_citations.mjs	135	357
+  docs/DECISIONS.md:9700	check_jsonb_reads.mjs	311	355
+  docs/DECISIONS.md:9701	check_jsonb_reads.mjs	343	387
+  docs/DECISIONS.md:9701	check_jsonb_reads.mjs	338	382
+  docs/DECISIONS.md:9732	check_comment_citations.mjs	135	357
+  docs/DECISIONS.md:9743	check_jsonb_reads.mjs	311	355
+```
+
+**53 rows: 30 in `docs/DECISIONS.md`, 23 in `docs/STATUS.md`. None of them are in this unit's own sections.**
+By target, the files carrying most of them are `quality.sql` (15), `falsifier_plants.py` (12) and
+`CollectionsController.java` (11) — all written by other lanes, which is why the list is printed here rather
+than applied. A re-aim edits another lane's sentence, and the number it would change is a claim that lane made
+about its own file.
+
+**Regenerate with one command**, which is the point of printing it at all:
+
+```
+node scripts/check_line_cite_drift.mjs --resolve-basenames --reaim
+```
+
+**Two things about the shape of this list worth reading before it is used.** First, the same target recurs
+across several sites (`CollectionsController.java` appears eleven times, at four different line numbers) — that
+is one file that grew, cited from many sentences, not eleven independent mistakes. Second, `--reaim` derives
+the new line from where the old text moved; it does not ask whether the moved text still *supports* the
+sentence, which is the question §257's census asks and this one does not. Applying these rows fixes position;
+it does not make them true.
+
+**Not applied, deliberately.** The repository's own precedent is to print a re-aim list whose rows belong to
+other lanes and leave the edits to their owners, and that is what this section does.
+
+## 261. `cpSync` of a directory exits 127 silently on this host — the harness was innocent all along
+
+`falsify_console_a11y.mjs` had been recorded as a harness that "runs eight minutes, prints nothing, exits 127".
+Six measurements later the file is exonerated and the cause is one line of Node behaviour, reproducible with no
+harness in the loop:
+
+```
+node -e "cpSync('apps/web/app', dest, {recursive:true})"              → rc=127, 0 bytes
+node -e "cpSync('apps/web/src/components', dest, {recursive:true})"   → rc=127, 0 bytes
+node -e "cpSync('packages/ui/src', dest, {recursive:true})"           → rc=127, 0 bytes
+node -e "cpSync('packages/ui/README.md', dest, {recursive:true})"     → rc=0, prints OK
+```
+
+**Copying a directory with `cpSync(..., { recursive: true })` kills the Node process silently with exit 127 on
+this machine. Copying a file works.** The destination's parent existing or not makes no difference (both
+tested, both 127).
+
+**The harness's `fixture()` is four lines and copies four subtrees.** The process dies in the first `cpSync`
+before reaching its first `console.log` — which is why `--trace-exit` had nothing to say, why `--help` behaved
+the same, and why the file read as dead. **Nothing in that file was edited.**
+
+**Blast radius: one file.** `grep -l cpSync scripts/*.mjs` returns `falsify_console_a11y.mjs` and nothing else,
+so no other tool in this repository can be hit by it. That is worth stating precisely because the failure is
+silent: a second user of this call would have looked identical to a broken harness.
+
+**Three host restrictions this session has found by measurement, one shape.** Each is an operation this machine
+simply does not permit, arriving as a code that reads like something else:
+
+```
+piping a child's stdin        EBUSY in ~3 ms      read for a session as "the sandbox forbids spawning"
+the bash shell's loader       unable to load netapi32.dll
+cpSync of a directory         silent exit 127     read for hours as a broken harness
+```
+
+The pattern is the same one §253 named for a different class: **a plausible-looking code on an operation that
+did not happen is worse than no code**, because it points the reader at the wrong subject. All three were found
+by measuring a thing that could not possibly have failed, not by reading the tool that did.
+
+**Untested**: the workaround. A file-by-file copy should do the same job; that is one run and is not claimed
+here.
+
+## 262. the workaround, applied: `falsify_console_a11y` runs and passes
+
+§261 found the cause — `cpSync` of a directory exits 127 silently on this host — and left the workaround
+untested. Tested, then applied:
+
+```
+file-by-file copy of the same subtrees   apps/web/app 43 files 450ms · components 22 files 103ms ·
+                                         packages/ui/src 24 files 116ms · WORKAROUND OK, rc 0
+```
+
+`fixture()` now walks the source with `mkdirSync` + `copyFileSync` instead of `cpSync(..., {recursive:true})`,
+and the harness that had been recorded as "runs eight minutes, prints nothing, exits 127" reports:
+
+```
+RESULT: PASS -- the census reddens on every way a landmark, name, focus ring or printed ratio can break,
+and refuses when it cannot see
+```
+
+**One correction inside the fix, recorded because it is the same lesson one level down.** The hand-rolled copy
+called `readdirSync` on `packages/ui/README.md` and died with `ENOTDIR` — `SUBTREES` names three directories
+and one file, and `cpSync` accepted both shapes while a walk has to ask which it was given. A replacement for a
+call whose contract is wider than the call you are writing has to handle the wider contract.
+
+**Where this leaves the census of silent tools.** Every tool in `scripts/` that spawns or copies now runs on
+this plane and states a verdict. The three that still report FAIL are statements about a reader
+(`falsify_untracked_cites` 14/15, and the collision-driven `falsify_ledger_sections` control), not silences —
+and the one file this host restriction could reach is fixed.
 ## 263. The committed plane's first full gate pass (D245, run 4 at 404e15b): the gate stops at step 7's own green control, and the hand-run of steps 7b-18 files one root cause for every red - committed text citing planes that were never committed
 
 The worktree at 404e15b (the EOL fix is committed, so step 7 reaches its own judgement for the first time on this plane), `--keep`, GATE_EXIT=2:
@@ -12618,6 +13057,8 @@ The worktree at 404e15b (the EOL fix is committed, so step 7 reaches its own jud
 The one-line reading: the working copy's gate and the committed plane's gate disagree only about untracked code - every reader that refuses here names either the commerce package or `apps/web/app`, and the two honest refusals (`nothing was censused`) are the readers working as designed on a plane where their population is zero. Nothing on the committed plane reds because of a reader's logic.
 
 Plane for these bytes: run 4 measured on 404e15b's worktree; steps 7b-18 by hand from the same worktree and kept database; the EOL fix's own suite 38/38 on the main tree earlier the same day. Appends pure addition (DECISIONS gains its missing trailing newline, a -1/+1 on its last line); nothing pushed.
+
+
 ## 264. D26 closed over HTTP (D273): the accept route serves, its 409 is carried twice and measured apart, and the seed's owners and managers catch up through V9
 
 - `POST /api/v1/merchant/reservations/{id}/accept` on `manage_reservations`: confirms once (`changed:false` on replay), moves no seats (`capacity_left` read after the write stays at the post-booking figure), audits both calls as `reservation_accept` - the fresh call carrying `before.status=pending`, the replay carrying none (probed through the jsonb columns with `::text` casts).
@@ -12640,3 +13081,41 @@ Plane for these bytes: door tests and both arms on the working copy against `nex
 
 Plane for these bytes: door tests and the arm on the working copy against `nexus_test` (127.0.0.1:5433); figures from the surefire summaries of four mvn runs - 39 run/1 failed on the first full pass (the fixture's own booking sequence hit `reservation_exists`: one holder cannot book one slot twice, so each hold got its own guest), 2/2 close class, 2/2 red arm, 7/7 restored. Appends pure addition; nothing pushed.
 
+## 266. the gate runs to step 8 on this machine at last — and stops on a timeout that is shorter than what it budgets
+
+`bash scripts/db_gate_fresh.sh` had been recorded as unable to run here. Two host facts had to be measured
+first, and neither is a code defect:
+
+```
+step 2  apply infra/db/migrations/V*.sql + 00_roles.sql
+        [safe-delete][SAFE_DELETE_INVALID_PATH] embedded drive prefix is not allowed
+        > apply V1__init  <- V1__init.sql                      EXIT=1
+
+cause   TMPDIR='C://Users//18414//AppData//Local//Temp'   (a Windows path)
+        mktemp "${TMPDIR:-/tmp}/nexus-migrate.XXXXXX"  →  C://Users//…//Temp/nexus-migrate.jbqMzp
+        `db_apply_migrations.sh` then does `rm -f "$err"` on that mixed path, and the sandbox refuses any
+        path carrying a drive prefix.
+
+fix     TMPDIR=/tmp bash scripts/db_gate_fresh.sh
+```
+
+**With `TMPDIR=/tmp` the gate runs**: steps 1-7 green (migrations, seed, the Java suites, the reader battery)
+and step 8 reached — **steps that had been written off as unrunnable on this plane**. It stops at step 8 on a
+real falsifier failure rather than an environment one:
+
+```
+step 8  scripts/check_ledger_citations.mjs
+        MISSED  exit 1 expected, -1 printed   a reader with D191's committed-plane read put back to the blind
+                                              spot reddens this harness
+        RESULT: FAIL — the --text seam does not do what step 8 claims        EXIT=1
+```
+
+**`-1` is the spawn-failure sentinel, and here it is a timeout.** The arm runs `falsify_ledger_text.mjs`
+**again** through a nested `spawnSync` bounded by `timeout: 300000` — five minutes — while that harness needs
+**more than eight** to finish. The child is killed, `child.status` is `null`, `code = child.status ?? -1`
+becomes `-1`, and the arm misses on a number that reads like a process that never started.
+
+**Raised to `900000`.** This is the same mistake this line of work already made once by hand — a `timeout`
+below the baseline it was measuring — except that here it is in the code, where it cannot be seen by running
+the thing it kills. The cost is stated rather than hidden: the harness now takes **15+ minutes**, because the
+nested run is finally allowed to complete.
