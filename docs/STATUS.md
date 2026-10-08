@@ -13160,3 +13160,15 @@ Plane: gate and hand legs at D:/nexus-headplane-r9 (7e2f846), logs D:/nexus-r9-g
 - Zero at HEAD is now a reader-side problem: arming the blank class needs D172's declaring-row-keyed exemption for cites whose sentence's claim is the citation itself - a checker change in another lane's dirty files, queued as D279's design candidate.
 
 Plane: re-aim verification at D:/nexus-headplane-r11 (5d717c3), logs D:/nexus-r11-steps-8-10-12-15.log, D:/nexus-r11-steps-16-8h-15h-17.log and D:/nexus-r11-blankprobe.log; nothing pushed; no database touched by this unit.
+
+## 271. run 7 walks the full 18-step inventory at 9cc7552 - step 16 strict green a second time inside a gate run, and step 8's blank-line backlog reads 8 (D279)
+
+- Gate legs: steps 1-6 green at 217 quality checks / 58 tables / 9 migrations with the truncate probe PASS, step 7 stopped at its own green control (rc 1, control rc 1, GATE_EXIT=2), and the kept database served step 11's two legs green: 393 registry rows and 216 of 217 assertions with a machine-checkable witness, the missing one named.
+
+- Step 16 --strict MOVED,NOT-UNIQUE exited 0 on 148 judged citations - run 6's 147 plus one - with EXACT 132, MOVED 0, NOT-UNIQUE 0, GONE 16, UNPATHED 290, NOT-AT-HEAD 13; the strict pass now holds across the three ledger commits that moved the backlog D276 replaced.
+
+- D278's halving reads on the gate plane: step 8 prints blank-line cites 8 at HEAD beside the same 37 FILE NOT FOUND of 636 citation-shaped tokens (from 626 pre-audit), and its harness holds 54 of 56 arms with the same two measured real-ledger misses.
+
+- Unchanged legs: step 9's 85 citations across 26 files with 7 of 7 attributed and a 57-arm harness fully held; step 10 green at STATUS 238 sections and DECISIONS 235 decisions; step 12 resolving 35 of 35 spelled citations; step 13's three pairs degenerate with every gap 0; step 14's two console refusals (rc 2) and the recorded ENOENT; step 17 MATCHED 217 on all three nouns; step 18 self-total 18.
+
+Plane: fresh detached worktree at 9cc7552, every hand leg with the plane as ROOT, step 13's block extracted from the shipped script with anchor checks; logs D:/nexus-r13-gate.log, D:/nexus-r13-leg-*.log, database kept as named in the gate log.
