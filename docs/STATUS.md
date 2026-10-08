@@ -13141,3 +13141,13 @@ Plane: gate at D:/nexus-headplane-r5 (35ae8ce), hand legs at D:/nexus-headplane-
 - Measured on plane D:/nexus-headplane-r7 at that commit: steps 15-16 EXACT 128 / MOVED 0 / NOT-UNIQUE 0 / GONE 16 of 144 judged; step 16 passes --strict MOVED,NOT-UNIQUE with rc=0.
 
 Plane: reader runs at D:/nexus-headplane-r7 (20dde06), logs D:/nexus-r7-step15.log and D:/nexus-r7-step16.log. Nothing pushed.
+
+## 269. run 6 walks the full 18-step inventory at 7e2f846 - step 16 strict green inside the gate's own listing, every red still names an untracked file, and D275's step 13 row is corrected from its log (D277)
+
+- Gate leg: steps 1-6 green (217 quality checks / 58 tables / 9 migrations / truncate PASS), step 7 NOT CHECKED at its own green control (rc 1, control rc 1), GATE_EXIT=2, kept database nexus_gate_35372_1791489132; every hand leg ran against the same single cut, no mid-run commit.
+- Headline: step 16 --strict MOVED,NOT-UNIQUE rc=0 in a complete inventory (runs 4/5 filed strict FAIL on MOVED 26); step 15 REPORT EXACT 131 / MOVED 0 / NOT-UNIQUE 0 / GONE 16 of 147 judged; harness 15 12/12.
+- Reds, one root cause unchanged: step 7 FALSE SITES (2) and step 8's reader 37 FILE NOT FOUND (run 5's count to the digit) both name files no commit holds; step 8's harness 54/56 with the same two real-ledger arms on the same boundary; step 9's reader 85/26 with 7 of 7 offender authors attributed, its harness 57/57; step 14's two honest rc=2 refusals plus falsify_console_a11y's recorded ENOENT.
+- Greens: step 10 236/236 sections and 233/233 decisions (run 5's 234/231 plus D276's pair exactly), step 11 both legs PASS on the kept database (393 registry rows, 216 of 217 witnessed, the one missing a witness named), step 12 35/35, step 17 MATCHED 217 x 3 derived from this run's own log, step 18 self-total 18.
+- Step 13 degenerate on one plane: pairs 11/2 vs 11/2, 83/37 vs 83/37, 26/7 vs 26/7, all three reconciliations gap 0 - the block ran verbatim from scripts/db_gate_fresh.sh:386-454, so the two legs truly read the same bytes. D275 filed 13a as 0+0; run 5's preserved q7 logs print FALSE SITES (2) in both legs, so the agreed figure was 2, not 0 - this entry corrects it from the logs themselves.
+
+Plane: gate and hand legs at D:/nexus-headplane-r9 (7e2f846), logs D:/nexus-r9-gate.log, D:/nexus-r9-step*.log and D:/nexus-r9-steps-11-13-17-18.log, kept database nexus_gate_35372_1791489132 (container nexus-platform-postgres). Nothing pushed.
