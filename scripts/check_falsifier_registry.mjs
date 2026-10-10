@@ -49,13 +49,22 @@ const slice = lines.slice(0, lines.indexOf(mark[0])).join('\n')
 let live;
 try {
   if (!DB) notChecked('no --db given; pass a loaded seed (scripts/db_gate_fresh.sh --keep)');
+  // The slice travels on this call's stdin, `input:` below, so the stdin slot must stay `pipe`: a slot of
+  // `ignore` never receives the bytes and the child answers as if nothing had been sent — an empty answer,
+  // not an error. This is the only child_process call in the repository that carries `input:`, which is
+  // why it does not take the ignore-stdin spelling STATUS §253 measures for every other spawn on this host.
   const out = execFileSync('docker', ['exec', '-i', CONTAINER, 'psql', '-U', 'postgres', '-d', DB,
-    '-v', 'ON_ERROR_STOP=0', '-tA', '-q'], { input: slice, encoding: 'utf8', maxBuffer: 1 << 26 });
-  const line = out.split('\n').filter((l) => l.includes('#') && l.length > 40).pop();
+    '-v', 'ON_ERROR_STOP=0', '-tA', '-q'], { stdio: ['pipe', 'pipe', 'pipe'], input: slice, encoding: 'utf8', maxBuffer: 1 << 26 });
+  const lines = out.split('\n').filter((l) => l.includes('#') && l.length > 40);
+  const line = lines.pop();
+  if (!line) {
+    notChecked(`no assertion line came back from the slice (${DB}) — psql answered ${out.length} byte(s), `
+      + 'none of them the qc aggregate, so the slice either never reached the server or ended before its last statement');
+  }
   const [count, joined] = line.split('#');
   live = new Set((joined || '').split('\t').map((s) => s.trim()).filter(Boolean));
   if (Number(count) !== live.size) notChecked(`qc declares ${count} rows, names came back as ${live.size} — lossy read`);
-} catch (e) { notChecked(`live assertion list unreadable: ${String(e.message).split('\n')[0]}`); }
+} catch (e) { notChecked(`live assertion list unreadable: ${String(e?.message ?? String(e)).split('\n')[0]}`); }
 
 if (!existsSync(REGISTRY)) notChecked(`registry file not found: ${REGISTRY}`);
 const rows = readFileSync(REGISTRY, 'utf8').split(/\r?\n/)
@@ -71,7 +80,7 @@ const fileState = (witness) => {
     return { ok: false, why: 'names a path outside the repository' };
   }
   let type = null;
-  try { type = execFileSync('git', ['cat-file', '-t', `HEAD:${witness}`], { cwd: ROOT, encoding: 'utf8' }).trim(); }
+  try { type = execFileSync('git', ['cat-file', '-t', `HEAD:${witness}`], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8' }).trim(); }
   catch { /* not tracked at HEAD */ }
   if (type === 'blob') return { ok: true, kind: 'file' };
   if (type) return { ok: false, why: `is tracked at HEAD as a ${type}, not a file` };
@@ -90,7 +99,7 @@ for (const r of rows) {
   if (keys.has(k)) bad.push(`duplicated (check, arm): ${k}`);
   keys.add(k);
   if (/^[0-9a-f]{7,40}$/.test(witness)) {
-    try { execFileSync('git', ['cat-file', '-e', `${witness}^{commit}`], { cwd: ROOT }); kinds.commit++; }
+    try { execFileSync('git', ['cat-file', '-e', `${witness}^{commit}`], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT }); kinds.commit++; }
     catch { bad.push(`witness is not a commit that exists (${witness}) for ${check}`); }
     continue;
   }
