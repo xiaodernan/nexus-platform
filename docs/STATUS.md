@@ -13407,3 +13407,20 @@ before: sixteen true rows prove an armed proxy would wrong true citations, and t
 rows prove only a human reading catches what the proxy cannot.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 290. the routed re-aim refused: the sentence it would have greened is false today (D297)
+
+The judgement unit's one routed row — the D91-era sentence naming the only place in the repository that
+puts a non-null deadline on a grant — reached its re-aim with the single-occurrence assertion made and the
+anti-laundering check run, and the check refused it. The sentence was true when its decision landed;
+three days later the seed lane's eleven legal-write arms arrived, one of which gives every human grant an
+expiry date — the exact category the claim's own enumeration covers, seed included — and neither that
+landing nor any reading since noticed the collision. Today two places write such a deadline: the test
+fixture (moved fifty-nine lines by the file's growth above it) and the plant arm; only the fixture asserts
+the predicate in both directions. Re-aiming the position would have left a green reader over a false
+sentence — the second time the verification has refused exactly that trade, after September's refused
+orphan marker. Both dated rows stand as written under the append-only doctrine; the correction is this
+section and its decision, and the reading list's one new row closes as a refusal with a reason instead of
+a re-aim.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

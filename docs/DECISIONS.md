@@ -12788,3 +12788,36 @@ identifiers is a question, the list is a reading list, the exit stays zero — h
 size, and the reading list is now current.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D297 - the routed re-aim is refused because the sentence it would have made green is false: a landing falsified a standing claim without either side noticing, and the anti-laundering check is what caught it
+
+The judgement unit routed one row to the drift discipline with a target and a rule: assert the old number
+occurs once, verify the sentence holds at the new line, and only then re-aim. Both halves ran. The old
+number occurs once in each ledger. The sentence does not hold — and the reason is not the position drift
+the re-aim was routed for, but a falsity the position readers cannot see and no reader has been asked to
+see: the claim that the test fixture is the only place in the repository — the decision's own enumeration
+reads seed, service, migration or test — that puts a non-null expiry on a grant row was true on the day
+it landed, and three days later the seed lane's legal-write arms arrived with one that gives every human
+grant an expiry date in a single update. The arm is one of the eleven the same ledger celebrated as the
+first witnesses that need no enforcement switch; the collision between the two entries went unseen by the
+landing that caused it, by every reader since, and by the judgement that routed the row — because the
+routed question was "does the line still hold the text", and the text moved the same way the file did.
+
+Re-aiming would have been correct arithmetic and a lie: the fixture's new line holds exactly the code the
+sentence describes, so the position readers would file the row exact from then on, and the sentence would
+stay false underneath a green verdict — the laundering shape this ledger named in September when it
+refused to re-aim a citation onto a marker-validation loop. That refusal was about a marker that never
+existed; this one is subtler, because the sentence was born true and was killed by a later landing that
+neither knew of the claim nor contradicted its spirit — the plant is a legal write demonstrated on purpose,
+and the fixture still does what the sentence values, asserting the predicate in both directions and
+refusing when the row it aims at is missing. What changed is the word only, and no re-aim repairs a word.
+
+So the correction takes the ledger's documented path: the two dated rows stand as written — a sentence
+true on its landing date is not wrong history — and this unit records the finding with its facts. The
+fixture now sits fifty-nine lines below the number both rows carry, and the plants file's grant-expiry arm
+makes the repository a two-writer place; the fixture remains the only writer that also asserts. The
+reading list's row closes as a refusal with a reason rather than a re-aim, which is the second time the
+pre-verification has refused a green that would have been a lie, and the lesson is the one the September
+entry wrote: a stale number is a question someone will ask again, an exact row is an answer nobody will.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
