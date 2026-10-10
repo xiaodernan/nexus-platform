@@ -122,7 +122,35 @@ public class MeController {
                         + "a deletion_request row was created for the retention job (§106).");
     }
 
-    /** §106 export: assembled JSON of everything the platform holds about this user. */
+    /**
+     * §106 export: one assembled JSON document of the rows this platform holds about this user.
+     *
+     * <p>The section list is derived from the schema's own links to {@code users}, and the door test
+     * re-derives it from {@code pg_constraint} plus the column-name census, so a migration that links a
+     * new table to a person reddens that test instead of quietly narrowing the export. Two column
+     * families are deliberately out: the accountability signature on someone <em>else's</em> record
+     * ({@code granted_by}, {@code approved_by}, {@code assigned_to}, {@code reviewed_by},
+     * {@code published_by}, {@code author_id}, {@code coupons.created_by}, {@code share_links.created_by}),
+     * because those rows are about the refund, the coupon, the moderation case or the published page and
+     * the person named in them is the platform's record of who was responsible. The erasure this route
+     * reaches through {@code eraseUser} is one {@code update users} over this row's own PII columns and
+     * nothing else, so another table's actor column survives an erasure by construction; exporting those
+     * signatures would hand another party's accountability record to this person.
+     *
+     * <p>Every list section states its own size in {@code section_sizes}, and the ones read through
+     * {@code exportRows} are read with a row cap that the file discloses rather than hides: {@code row_limit}
+     * says what was asked for and {@code possibly_truncated} names every section that returned a full cap.
+     * A person whose history exceeds the cap therefore gets a file that admits it is a prefix, not a file
+     * that claims to be all of them; the door test reads the payload's own array fields to check that no
+     * list section is left unsized. {@code exportRows} also converts the driver's own column types on the
+     * way out — a {@code jsonb} left raw is a wrapper object in the file, and an array column left raw fails
+     * the whole response — because a portable file is read as JSON by someone else's tool.
+     *
+     * <p>{@code audit_trail} carries the actor's own action, when and from where (ip, user agent) but not
+     * the {@code before}/{@code after} row images, which describe the record that was edited — often
+     * another person's. {@code external_principals} omits {@code key_hash}: a hash of a credential is
+     * still a credential-shaped secret.
+     */
     @GetMapping("/export")
     public Map<String, Object> export(HttpServletRequest request) {
         TenantContext tenant = Req.tenant(request);
@@ -130,35 +158,102 @@ public class MeController {
         Map<String, Object> profile = AuthService.userView(tenant, users.requireUser(tenant, userId));
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("exported_at", java.time.Instant.now().toString());
+        out.put("user_id", userId.toString());
         out.put("tenant", tenant.slug());
         out.put("profile", profile);
-        out.put("preferences", users.listPreferences(tenant, userId, null));
-        out.put("favorites", users.listFavorites(tenant, userId));
-        out.put("saved_searches", users.listSavedSearches(tenant, userId));
-        out.put("identities", users.identitiesOf(tenant, userId));
-        out.put("orders", exportRows(tenant, userId, "select o.id, o.code, o.status, o.total, o.currency, o.created_at,"
+        // The four small personal lists are read whole by the same methods the /me doors use; they get a
+        // stated size below all the same, so "this file sizes every list it holds" does not depend on
+        // which reader ran.
+        List<Map<String, Object>> preferences = users.listPreferences(tenant, userId, null);
+        List<Map<String, Object>> favorites = users.listFavorites(tenant, userId);
+        List<Map<String, Object>> savedSearches = users.listSavedSearches(tenant, userId);
+        List<Map<String, Object>> identities = users.identitiesOf(tenant, userId);
+        out.put("preferences", preferences);
+        out.put("favorites", favorites);
+        out.put("saved_searches", savedSearches);
+        out.put("identities", identities);
+        Map<String, String> capped = new LinkedHashMap<>();
+        capped.put("orders", "select o.id, o.code, o.status, o.total, o.currency, o.created_at,"
                 + " o.merchant_id, u.tenant_id from orders o join users u on u.id = o.user_id"
-                + " where o.user_id = :user_id and u.tenant_id = :tenant_id order by o.created_at desc limit :limit"));
-        out.put("reservations", exportRows(tenant, userId, "select r.id, r.code, r.status, r.starts_at, r.party_size,"
+                + " where o.user_id = :user_id and u.tenant_id = :tenant_id order by o.created_at desc limit :limit");
+        capped.put("reservations", "select r.id, r.code, r.status, r.starts_at, r.party_size,"
                 + " r.merchant_id, u.tenant_id from reservations r join users u on u.id = r.user_id"
-                + " where r.user_id = :user_id and u.tenant_id = :tenant_id order by r.created_at desc limit :limit"));
-        out.put("reviews", exportRows(tenant, userId, "select rv.id, rv.rating, rv.title, rv.body, rv.merchant_id,"
+                + " where r.user_id = :user_id and u.tenant_id = :tenant_id order by r.created_at desc limit :limit");
+        capped.put("reviews", "select rv.id, rv.rating, rv.title, rv.body, rv.merchant_id,"
                 + " u.tenant_id, rv.created_at from reviews rv join users u on u.id = rv.user_id"
-                + " where rv.user_id = :user_id and u.tenant_id = :tenant_id order by rv.created_at desc limit :limit"));
-        out.put("conversations", exportRows(tenant, userId, "select c.id, c.channel, c.mode, c.status, c.merchant_id,"
+                + " where rv.user_id = :user_id and u.tenant_id = :tenant_id order by rv.created_at desc limit :limit");
+        capped.put("conversations", "select c.id, c.channel, c.mode, c.status, c.merchant_id,"
                 + " u.tenant_id, c.created_at from conversations c join users u on u.id = c.user_id"
-                + " where c.user_id = :user_id and u.tenant_id = :tenant_id order by c.created_at desc limit :limit"));
-        out.put("messages", exportRows(tenant, userId, "select m.id, m.sender_type, m.role, m.content, m.created_at,"
+                + " where c.user_id = :user_id and u.tenant_id = :tenant_id order by c.created_at desc limit :limit");
+        capped.put("messages", "select m.id, m.sender_type, m.role, m.content, m.created_at,"
                 + " u.tenant_id from messages m join conversations c on c.id = m.conversation_id"
                 + " join users u on u.id = c.user_id where c.user_id = :user_id and u.tenant_id = :tenant_id"
-                + " order by m.created_at limit :limit"));
-        out.put("notifications", exportRows(tenant, userId, "select n.id, n.channel, n.template, n.payload, n.read_at,"
+                + " order by m.created_at limit :limit");
+        capped.put("notifications", "select n.id, n.channel, n.template, n.payload, n.read_at,"
                 + " n.created_at from notifications n where n.user_id = :user_id and n.tenant_id = :tenant_id"
-                + " order by n.created_at desc limit :limit"));
-        out.put("events", exportRows(tenant, userId, "select e.event_id, e.name, e.subject_type, e.subject_id,"
+                + " order by n.created_at desc limit :limit");
+        capped.put("events", "select e.event_id, e.name, e.subject_type, e.subject_id,"
                 + " e.occurred_at from events e where e.actor_type = 'user' and e.actor_id = :user_id"
-                + " and e.tenant_id = :tenant_id order by e.occurred_at desc limit :limit"));
-        out.put("deletion_requests", users.deletionRequests(tenant, userId));
+                + " and e.tenant_id = :tenant_id order by e.occurred_at desc limit :limit");
+        // The links §106 promised and this route did not serve until D282 enumerated them from the schema.
+        capped.put("memberships", "select mu.merchant_id, mu.role, mu.status, mu.created_at,"
+                + " m.tenant_id from merchant_users mu join merchants m on m.id = mu.merchant_id"
+                + " join users u on u.id = mu.user_id where mu.user_id = :user_id"
+                + " and m.tenant_id = :tenant_id order by mu.created_at limit :limit");
+        capped.put("external_principals", "select ep.id, ep.protocol, ep.client_id, ep.name, ep.merchant_id,"
+                + " ep.scopes, ep.status, ep.last_seen_at, ep.created_at from external_principals ep"
+                + " join users u on u.id = ep.linked_user_id where ep.linked_user_id = :user_id"
+                + " and u.tenant_id = :tenant_id order by ep.created_at limit :limit");
+        capped.put("carts", "select c.id, c.merchant_id, c.status, c.expires_at, c.created_at, c.updated_at"
+                + " from carts c join users u on u.id = c.user_id where c.user_id = :user_id"
+                + " and u.tenant_id = :tenant_id order by c.updated_at desc limit :limit");
+        capped.put("cart_items", "select ci.id, ci.cart_id, ci.kind, ci.offering_id, ci.reservation_id,"
+                + " ci.quantity, ci.unit_price, ci.currency, ci.options, ci.price_source, ci.created_at"
+                + " from cart_items ci join carts c on c.id = ci.cart_id join users u on u.id = c.user_id"
+                + " where c.user_id = :user_id and u.tenant_id = :tenant_id order by ci.created_at limit :limit");
+        capped.put("recommendation_sets", "select rs.id, rs.conversation_id, rs.query, rs.intent, rs.strategy,"
+                + " rs.items, rs.latency_ms, rs.created_at from recommendation_sets rs"
+                + " join users u on u.id = rs.user_id where rs.user_id = :user_id and u.tenant_id = :tenant_id"
+                + " order by rs.created_at desc limit :limit");
+        capped.put("feedback_events", "select fe.id, fe.subject_type, fe.subject_id, fe.signal, fe.value,"
+                + " fe.channel, fe.created_at from feedback_events fe join users u on u.id = fe.user_id"
+                + " where fe.user_id = :user_id and u.tenant_id = :tenant_id"
+                + " order by fe.created_at desc limit :limit");
+        capped.put("agent_runs", "select ar.id, ar.agent, ar.status, ar.input_summary, ar.output_summary,"
+                + " ar.plan, ar.tool_calls, ar.retrieval, ar.fact_ids, ar.started_at, ar.finished_at"
+                + " from agent_runs ar join users u on u.id = ar.user_id where ar.user_id = :user_id"
+                + " and u.tenant_id = :tenant_id order by ar.started_at desc limit :limit");
+        capped.put("referral_invites", "select rf.id, rf.kind, rf.code, rf.status, rf.invitee_email,"
+                + " rf.reward, rf.created_at, rf.converted_at from referrals rf"
+                + " join users u on u.id = rf.invitee_id where rf.invitee_id = :user_id"
+                + " and u.tenant_id = :tenant_id order by rf.created_at desc limit :limit");
+        capped.put("audit_trail", "select al.id, al.action, al.subject_type, al.subject_id, al.merchant_id,"
+                + " al.ip, al.user_agent, al.metadata, al.created_at from audit_logs al"
+                + " join users u on u.id = al.actor_id where al.actor_type = 'user' and al.actor_id = :user_id"
+                + " and u.tenant_id = :tenant_id order by al.created_at desc limit :limit");
+
+        capped.put("deletion_requests", "select d.id, d.kind, d.status, d.payload, d.created_at, d.completed_at,"
+                + " u.tenant_id from deletion_requests d join users u on u.id = d.user_id"
+                + " where d.user_id = :user_id and u.tenant_id = :tenant_id"
+                + " order by d.created_at desc limit :limit");
+
+        Map<String, Object> sectionSizes = new LinkedHashMap<>();
+        sectionSizes.put("preferences", preferences.size());
+        sectionSizes.put("favorites", favorites.size());
+        sectionSizes.put("saved_searches", savedSearches.size());
+        sectionSizes.put("identities", identities.size());
+        List<String> possiblyTruncated = new ArrayList<>();
+        for (Map.Entry<String, String> section : capped.entrySet()) {
+            List<Map<String, Object>> rows = exportRows(tenant, userId, section.getValue());
+            sectionSizes.put(section.getKey(), rows.size());
+            if (rows.size() == EXPORT_ROW_LIMIT) {
+                possiblyTruncated.add(section.getKey());
+            }
+            out.put(section.getKey(), rows);
+        }
+        out.put("row_limit", EXPORT_ROW_LIMIT);
+        out.put("section_sizes", sectionSizes);
+        out.put("possibly_truncated", possiblyTruncated);
         audit.record(request, "export_data", "user", userId, null, null, null, Json.map("format", "json"));
         return out;
     }
@@ -387,8 +482,10 @@ public class MeController {
                 "created_at", Json.ts(r, "created_at"));
     }
 
+    private static final int EXPORT_ROW_LIMIT = 500;
+
     private List<Map<String, Object>> exportRows(TenantContext tenant, UUID userId, String sql) {
-        return users.exportRows(tenant, userId, sql, 500);
+        return users.exportRows(tenant, userId, sql, EXPORT_ROW_LIMIT);
     }
 
     private void assertSubjectInTenant(TenantContext tenant, String subjectType, UUID subjectId) {

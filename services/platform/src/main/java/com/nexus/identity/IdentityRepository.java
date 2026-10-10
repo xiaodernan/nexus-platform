@@ -348,21 +348,45 @@ public class IdentityRepository {
         return userId;
     }
 
-    public List<Map<String, Object>> deletionRequests(TenantContext tenant, UUID userId) {
-        return jdbc.forTenant(tenant, """
-                select d.id, d.kind, d.status, d.payload, d.created_at, d.completed_at, u.tenant_id
-                from deletion_requests d join users u on u.id = d.user_id
-                where d.user_id = :user_id and u.tenant_id = :tenant_id
-                order by d.created_at desc
-                """, Json.map("user_id", userId));
-    }
-
     /** Rows of any tenant-owned table that reference this user — the export payload (§106). */
     public List<Map<String, Object>> exportRows(TenantContext tenant, UUID userId, String sql, int limit) {
         if (!sql.contains("tenant_id")) {
             throw new IllegalStateException("Export query lacks a tenant predicate");
         }
-        return jdbc.forTenant(tenant, sql, Json.map("user_id", userId, "limit", limit));
+        List<Map<String, Object>> rows = jdbc.forTenant(tenant, sql, Json.map("user_id", userId, "limit", limit));
+        rows.forEach(row -> row.replaceAll((column, value) -> portable(row, column)));
+        return rows;
+    }
+
+    /**
+     * A portable file is JSON, so the driver's own objects have to be asked for their values before they
+     * reach the response. Two shapes were measured on this route rather than imagined: {@code jsonb} arrives
+     * as a {@code PGobject}, which Jackson writes as its three getters — {@code {"type":"jsonb","value":…}}
+     * with the real document left as a string inside it — and {@code text[]} arrives as a {@code PgArray}
+     * that still holds its result set, whose getters reach {@code PgConnection}, and whose serialization
+     * fails the whole export with a 500. {@code Json.json} is the house conversion the rest of the build
+     * already uses; the array is unwrapped here because no column this export reads holds jsonb elements.
+     */
+    private static Object portable(Map<String, Object> row, String column) {
+        Object value = row.get(column);
+        if (value instanceof org.postgresql.util.PGobject) {
+            return Json.json(row, column);
+        }
+        if (value instanceof java.sql.Array array) {
+            try {
+                if (!(array.getArray() instanceof Object[] elements)) {
+                    return value;
+                }
+                List<Object> out = new java.util.ArrayList<>(elements.length);
+                for (Object element : elements) {
+                    out.add(element);
+                }
+                return out;
+            } catch (java.sql.SQLException e) {
+                throw ApiException.internal("Failed to read array column " + column, e);
+            }
+        }
+        return value;
     }
 
     public static int limitOrDefault(Paging paging, String raw) {
