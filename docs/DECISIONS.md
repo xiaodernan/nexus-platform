@@ -12358,7 +12358,7 @@ The green legs close the inventory: step 10 PASS (STATUS 236 sections, DECISIONS
 
 **Post-append readers.** step 8 PASS on the working copy — 0 strict offenders over 645 citation-shaped tokens (636 citations, 95 distinct files) out of 907 name:number tokens, with 0 blank(s) and 0 untracked cites among the 3 sections this disk holds that HEAD does not; step 9 PASS — 92 comment-plane citations across 31 files, all resolving; step 10 PASS — 240 DECISIONS and 244 STATUS sections on disk against 239 and 242 at HEAD, missing 0, duplicate numbers 0, disk-only {D283} and {273, 276}; step 12 PASS — 50 of 50 spelled §-citations resolve, unchanged by this append (the 36 counted on the clean worktree was that plane's total); step 15's harness 12/12 with the census at EXACT 140, MOVED 0, NOT-UNIQUE 0, GONE 16, NO-BASE 1, UNPATHED 290, NOT-AT-HEAD 4; step 16 PASS — strict clean over 157 content-judged citations; step 17 MATCHED on all three nouns at 217, over 892 numeric claims read, the newest claims being §276's own sentences.
 
-## D284. The two tools the ledgers cite are shipped
+## D284 - the two tools the ledgers cite are shipped
 
 The ledgers have documented two runnable procedures whose scripts no commit holds, and the gap sat
 unmeasured because every reader this project runs judges citation-shaped tokens — a path with a

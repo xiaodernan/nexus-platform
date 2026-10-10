@@ -13214,7 +13214,7 @@ plane             working copy at 401acab; step 11's control and both mutants on
 
 plane             working copy at 0a26868; the twenty leg logs and the gate log under D:/nexus-r18-*.log; leg 11b on nexus_slice_84695_1791614559. The shared STATUS working copy still carries the other lane's drafted §273, which remains theirs to land.
 
-## 277. The binding probe and the payload checker are committed (D284)
+## 277. the binding probe and the payload checker are committed (D284)
 
 Two procedures this section tree has cited as working tools are now held by a commit: the jsonb
 binding falsifier and the live-payload conformance checker. Both sat untracked for weeks while
