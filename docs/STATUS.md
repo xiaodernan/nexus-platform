@@ -13213,3 +13213,18 @@ plane             working copy at 401acab; step 11's control and both mutants on
 - readers        step 8 PASS — 0 strict offenders over 645 citation-shaped tokens (636 citations, 95 files), 0 blank(s) and 0 untracked cites among the 3 disk-only sections; step 9 PASS — 92 comment-plane citations across 31 files; step 10 PASS — STATUS 242 at HEAD / 244 on disk (disk-only 273, 276), DECISIONS 239 / 240 (disk-only D283), missing 0, duplicates 0; step 12 PASS — 50 of 50 spelled §-citations resolve, this append adding none; step 15 census EXACT 140 / MOVED 0 / NOT-UNIQUE 0 / GONE 16 / NO-BASE 1 / UNPATHED 290 / NOT-AT-HEAD 4 with the harness 12/12; step 16 PASS — strict clean over 157 judged; step 17 MATCHED 3 of 3 at 217 over 892 claims, the newest claims being this section's own.
 
 plane             working copy at 0a26868; the twenty leg logs and the gate log under D:/nexus-r18-*.log; leg 11b on nexus_slice_84695_1791614559. The shared STATUS working copy still carries the other lane's drafted §273, which remains theirs to land.
+
+## 277. The binding probe and the payload checker are committed (D284)
+
+Two procedures this section tree has cited as working tools are now held by a commit: the jsonb
+binding falsifier and the live-payload conformance checker. Both sat untracked for weeks while
+their verdicts were recorded here and in decisions — the prose references carried no line
+numbers, so the citation-shaped census never counted them, and a fresh clone could not re-run
+either. Measured on landing day: the probe prints CORRECT — one encoding on the default and the
+service plane, both refusing a dict binding, residue frozen at 2026-09-27 in five columns of four
+rows each; the payload checker with services down reports 5 probes NOT VERIFIED and exits 0 by
+design. list_routes.js stays untracked — the ledgers call it another stream's helper. Neither
+tool is scheduled; imports resolve against working-tree dependencies whose HEAD bytes a fresh
+clone would use.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

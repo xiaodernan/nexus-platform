@@ -12357,3 +12357,35 @@ The green legs close the inventory: step 10 PASS (STATUS 236 sections, DECISIONS
 **What this unit does not claim.** It changes no checker byte, re-aims no citation, and decides nothing about whether the 37 offenders or the console absences should be committed — that is their lanes' action, and the gate's next green boundary is still those files arriving. It does not re-run step 7's seam arms on the shared tree, where their green this session was a property of the directory rather than of the commit. Its plane: this append's readers on the shared working copy at 0a26868, the twenty leg logs and the gate log under `D:/nexus-r18-*.log`, and leg 11b on the witness database named above.
 
 **Post-append readers.** step 8 PASS on the working copy — 0 strict offenders over 645 citation-shaped tokens (636 citations, 95 distinct files) out of 907 name:number tokens, with 0 blank(s) and 0 untracked cites among the 3 sections this disk holds that HEAD does not; step 9 PASS — 92 comment-plane citations across 31 files, all resolving; step 10 PASS — 240 DECISIONS and 244 STATUS sections on disk against 239 and 242 at HEAD, missing 0, duplicate numbers 0, disk-only {D283} and {273, 276}; step 12 PASS — 50 of 50 spelled §-citations resolve, unchanged by this append (the 36 counted on the clean worktree was that plane's total); step 15's harness 12/12 with the census at EXACT 140, MOVED 0, NOT-UNIQUE 0, GONE 16, NO-BASE 1, UNPATHED 290, NOT-AT-HEAD 4; step 16 PASS — strict clean over 157 content-judged citations; step 17 MATCHED on all three nouns at 217, over 892 numeric claims read, the newest claims being §276's own sentences.
+
+## D284. The two tools the ledgers cite are shipped
+
+The ledgers have documented two runnable procedures whose scripts no commit holds, and the gap sat
+unmeasured because every reader this project runs judges citation-shaped tokens — a path with a
+line number — while these references are prose: the jsonb binding falsifier, whose invocation is
+printed verbatim in its own STATUS section and whose plane ruling a decision quotes, and the
+live-payload conformance checker, whose STATUS section records a first run that found a real
+platform 404 defect. A fresh clone cannot re-run either; the recorded verdicts name files that
+exist only in this working tree. Same class as the comment-plane offenders the gate keeps
+counting, one degree quieter: the shipped plane does not hold the file the text points at, and
+the census that would have counted it cannot see a reference without a line number.
+
+What landed, at their disk bytes, both never committed before (`git log --all` empty for the two
+paths): the binding probe answers CORRECT — one encoding — on both the default and the service
+plane today (a dict bound to the jsonb placeholder is rejected by asyncpg on both; the residue
+census finds four string-valued rows in each of five columns, newest 2026-09-27, i.e. frozen —
+the writer stopped emitting them — while the correctly-written rows are newer, 2026-09-28); the
+payload checker with both services down loads 7 schemas from the published dist and 21
+cross-object rules, reports 5 probes NOT VERIFIED with ECONNREFUSED, validates 0 payloads and
+exits 0 — the documented design that silence about an absent server is not laundered into a pass.
+
+Not landed: list_routes.js, which the ledgers themselves call another stream's helper. It stays
+untracked; this entry does not stage or delete it.
+
+Caveats recorded rather than fixed: both tools import their validators from packages/types and
+apps/ai, which are tracked but carry in-flight modifications in this working tree, so a fresh
+clone runs the HEAD bytes of those dependencies; and neither tool is wired into the gate or any
+schedule — the STATUS note that nothing runs the binding probe on a timer still holds after this
+commit.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
