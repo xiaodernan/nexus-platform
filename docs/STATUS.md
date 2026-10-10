@@ -13518,3 +13518,20 @@ now named on a second surface, with the same remedy (the owner's landing) and th
 a green working copy is worth.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 297. the e2e harness executes for the first time (D304)
+
+The M0 promise that waited the longest — the browser harness written and never executed — ran against a
+live stack built from this working tree: platform on 8090, AI on 8010 with the mock provider, web on 3002
+from a fresh build. Twenty tests passed, four skipped, zero failed, in one minute: the consumer journeys
+including the LLM-outage degradation and the five-minute MVP success test, the merchant journeys including
+publish, AI import and cross-merchant isolation, the HTTP contract probes, and the visual project across
+mobile, desktop and visual browser projects. Two harness fixes rode the run, both this lane's files: the
+contract spec's hardcoded web root became the config's own environment value, and its health probe moved
+to the route the contract actually documents. Three boot findings came with the first boot this service
+has ever had: the empty-password default fails closed by design, the demo database's flyway paper lag
+would push a booting platform to apply the unrecorded migrations as the unprivileged role and die on
+ownership — the operational face of the paper gap the validator proved — and the working boot disables
+flyway against an already-migrated database rather than mutating the demo plane.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

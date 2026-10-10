@@ -13018,3 +13018,39 @@ protecting that code in every clone — but the committed plane's test count for
 owner lands, and the ledger now names that on the second surface that shows it.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D304 - the browser harness runs for the first time in the repository's history: twenty green on a live stack, two harness drifts fixed, and three boot findings the service's first start produced
+
+The ledger's oldest unexecuted promise was the browser harness: written at M0, wired into CI's final job,
+and never run anywhere — not in CI (which has no remote) and not by hand. This unit built the stack it
+needs from the working tree and executed it. The platform started on its dev port against the seeded demo
+database, the AI service started with its mock provider on its dev port, the web application was built
+fresh and served on its own port, and the harness ran with its environment overrides: twenty tests passed,
+four skipped, zero failed, in a minute. The consumer journeys passed including the two the product's own
+promises hang on — the LLM-outage degradation that must degrade rather than break, and the five-minute
+MVP success test — as did the merchant journeys through publish, AI import with evidence, knowledge-base
+answers with handoff, the marketing agent's draft-not-publish wall, and cross-merchant isolation, the
+HTTP contract probes, and the visual project on three browser profiles.
+
+The first execution found its first drifts inside the harness itself, both fixed in this lane's own
+tracked files: the contract spec hardcoded a web root on a port this machine reserves for another project
+instead of using the environment value its own config exports, and its health probe demanded a route the
+API contract moved away from — the documented health path is the one the service actually serves. Both
+are the shape the harness exists to catch, met first by the harness.
+
+The service's first boot produced three findings the ledger had never been able to make. The datasource
+password defaults to empty and the boot fails closed naming the variable — D7's no-silent-fallbacks
+working as designed. The demo database's migration ledger lags its schema — the paper gap the migration
+validator proved on both live databases — and an unmodified boot discovers it the hard way: flyway sees
+the unrecorded migrations as pending, attempts them as the unprivileged runtime role, and dies on table
+ownership. The working boot disables flyway against the already-migrated database, which mutates nothing
+and leaves the ledger repair exactly where its ruling parked it. And the jwt secret refuses to guess
+outside the dev profile for the same D7 reason, so the run uses the dev profile's declared dev-only
+secret. The web application's home route answered a transient five hundred on its first hit after the
+platform came up and two hundred through the run — the other stream's surface, recorded not diagnosed.
+
+The journeys write through real doors — favourites, a reservation with its capacity consumed — against
+the demo plane, which is the plane's purpose and is reseedable by its own script; the write set is the
+run's, and it is named here.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

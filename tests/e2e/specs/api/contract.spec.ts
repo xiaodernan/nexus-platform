@@ -1,3 +1,4 @@
+import { WEB } from '../../playwright.config.js';
 import { test, expect, demoLogin, unauditedNumbers } from '../../lib/fixture.js';
 
 /**
@@ -114,8 +115,8 @@ test.describe('HTTP contract', () => {
 
   test('health + readiness for every service', async ({ platform, ai, request }) => {
     await expect(platform.get('/actuator/health').then((r) => r.status()).catch(() => 0)).resolves.toBeLessThan(500);
-    await expect(ai.get('/healthz').then((r) => r.status())).resolves.toBe(200);
-    const web = await request.get('http://127.0.0.1:3000/', { maxRedirects: 5 });
+    await expect(ai.get('/ai/v1/health').then((r) => r.status())).resolves.toBe(200);
+    const web = await request.get(WEB, { maxRedirects: 5 });
     expect(web.status()).toBe(200);
   });
 });
