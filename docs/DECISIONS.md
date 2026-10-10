@@ -12895,3 +12895,34 @@ led here is retired; the next reader of per-noun newest claims inherits a gramma
 its ledgers write in, and a refusal that names both values instead of an answer that names one.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D300 - the hundred-summation gap closes: seven compound claims that had been mis-valued in both directions now read their true figures, and the new code's own two bugs are caught by the same line-by-line discipline that justified the change
+
+The previous unit's widening left one gap named rather than smoothed: the word-number grammar knew
+"forty-four" but not "a hundred forty-four", so the hundred compounds in these ledgers were read at
+whichever fragment the grammar happened to reach. Counted before the grammar moved, the fragment problem
+was worse than a gap: seven hundred-compound claims sit in unfenced prose, and every one was mis-valued —
+"two hundred sixteen rows", which is this ledger's standing assertion count spelled the long way, was
+reading as sixteen; "one hundred forty-seven citations" as forty-seven; "four hundred forty-four
+citations" as forty-four; the bare "hundred forty-four" pair as a flat hundred. A reader whose purpose is
+judging figures was carrying seven wrong figures for the most quoted numbers in the repository.
+
+The fix is the measured shape and nothing more. The grammar gains a hundred-compound — a multiplier word,
+the word hundred, an optional remainder of one or two more words — with no "and", no thousands, no
+compositions outside the census; the value parser becomes a fold that multiplies at the hundred and adds
+the remainder, and refuses any word sequence it cannot compose rather than summing blind. The
+verification holds at three depths: twelve parser cases against known values including the refusals; the
+seven real claims read through the shipped grammar itself, each landing on its true figure; and the
+gate's three judged nouns unmoved at their lines, so step seventeen answers as it did.
+
+The unit's honest cost is two bugs in its own new code, both caught before landing by the same
+line-by-line population diff that justified the change. The first is an old friend in a new costume: an
+alternation whose leading whitespace bound to its first branch only, so the remainder group matched
+zero-width in front of the number it was meant to consume and the compound read as its tail — the same
+precedence family as the return-where-a-continue-was bug that once cost a citation census a third of its
+population. The second was quieter: a template escape that collapsed to the letter it prefixed, leaving a
+regex that compiled and parsed nothing. Both were visible only because the verification compared
+populations line by line instead of trusting a green run — and the final check reads the seven claims
+through the shipped file's own definitions, not through a copy of them.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

@@ -13456,3 +13456,19 @@ nouns stay MATCHED at their lines, the rows noun keeps its two-value refusal, an
 refuses with both of its section's values instead of answering with the one a heading happened to carry.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 293. the hundred-compound claims read their true values (D300)
+
+The word-summation gap the widened grammar named is closed with the same discipline that opened it: seven
+hundred-compound claims counted in unfenced prose — two hundred sixteen rows (the standing assertion count,
+long read as sixteen), one hundred forty-seven citations twice, four hundred forty-four, hundred
+forty-four twice — every one mis-valued before, every one at its true figure now. The grammar gains the
+measured shape and nothing else (a multiplier, an optional remainder, no and, no thousands), the value
+parser becomes a fold that refuses sequences it cannot compose, and the verification is three deep: twelve
+parser cases hold, the seven real claims read their true values through the shipped grammar itself, and the
+gate's three judged nouns stay MATCHED at their lines. Getting there caught two of this reader family's own
+bugs in the new code — an alternation whose leading whitespace bound to one branch only, and a template
+escape that silently collapsed — each found by a line-by-line population diff rather than by trust, each
+fixed before the landing.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

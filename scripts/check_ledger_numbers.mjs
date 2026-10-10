@@ -94,14 +94,51 @@ const WORDS = new Map();
 ONES.forEach((w, i) => WORDS.set(w, i + 1));
 TEENS.forEach((w, i) => WORDS.set(w, i + 10));
 TENS.forEach((w, i) => WORDS.set(w, (i + 2) * 10));
-const wordNumber = `(?:${[...TENS].join('|')})[-\\s](?:${ONES.join('|')})|(?:${[...TEENS, ...TENS, 'hundred'].join('|')})`;
+// The hundred-compound is measured, not speculative (2026-10-11): seven claims in unfenced prose —
+// `two hundred sixteen rows` (the standing assertion count, read as sixteen before this), `one hundred
+// forty-seven citations` (read as forty-seven), `four hundred forty-four citations` (read as forty-four)
+// — every one mis-valued by the bare-word form. The compound is a multiplier, an optional remainder and
+// nothing else: no `and`, no thousands, no `hundred hundred`. A form outside the map stays uncounted.
+// The optional remainder after a hundred: `two hundred sixteen`, `hundred forty-four`.
+const hundredRemainder =
+  `(?:\\s+(?:(?:${[...TENS].join('|')})[-\\s](?:${ONES.join('|')})|(?:${[...TEENS, ...TENS].join('|')})|(?:${ONES.join('|')})))?`;
+const wordNumber =
+  `(?:${[...ONES, ...TEENS, ...TENS].join('|')})\\s+hundred${hundredRemainder}` +
+  `|(?:${[...TENS].join('|')})[-\\s](?:${ONES.join('|')})` +
+  `|(?:${[...TEENS, ...TENS].join('|')})` +
+  `|hundred${hundredRemainder}`;
 
 function numberOf(raw) {
   const text = raw.trim().toLowerCase().replace(/\s+/g, ' ');
   if (/^\d/.test(text)) return Number(text.replace(/,/g, ''));
-  const [head, tail] = text.split(/[-\s]/);
-  if (tail === undefined) return WORDS.get(head) ?? (head === 'hundred' ? 100 : NaN);
-  return (WORDS.get(head) ?? NaN) + (WORDS.get(tail) ?? NaN);
+  const words = text.split(/[\s-]+/).filter(Boolean);
+  let total = 0;
+  let pending = 0;
+  let afterHundred = false;
+  for (const w of words) {
+    if (w === 'hundred') {
+      pending = (pending || 1) * 100;
+      afterHundred = true;
+      continue;
+    }
+    const v = WORDS.get(w);
+    if (v === undefined) return NaN;
+    if (afterHundred) {
+      pending += v; // `hundred forty-four` = 144, `hundred sixteen` = 116
+      afterHundred = false;
+      continue;
+    }
+    if (pending === 0) {
+      pending = v; // the first word: `forty-` of `forty-four`, `two` of `two hundred`
+      continue;
+    }
+    if (pending >= 20 && pending % 10 === 0 && v < 10) {
+      pending += v; // the `-four` of `forty-four`
+      continue;
+    }
+    return NaN; // a sequence the map does not compose is refused, not summed blind
+  }
+  return pending + total === 0 ? NaN : pending + total;
 }
 
 const nounPattern = Object.keys(NOUNS)
