@@ -12926,3 +12926,41 @@ populations line by line instead of trusting a green run — and the final check
 through the shipped file's own definitions, not through a copy of them.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D301 - the gate certifies its own readers' changes end to end: a second complete pass, now across the seven commits that touched the ledgers, the doors and the numbers grammar itself
+
+The first complete gate pass recorded the instrument green; this one answers the question a green
+instrument always owes next — does it stay green when the thing being measured and part of the measuring
+tool both move? Since the first pass, seven commits landed: five ledger waves, a seven-test door class,
+and two changes to the numbers reader's grammar that step seventeen runs inside the gate. The full fresh
+gate ran end to end on that plane: eighteen of eighteen steps, exit zero, the throwaway database dropped
+behind it and neither live database opened.
+
+The step that mattered most was the one whose tool had changed. Step seventeen judges the ledger's newest
+numeric claims against the gate's own printout, and its grammar gained the hyphenated modifier and the
+hundred compound in the last two units — changes verified beside the gate, in isolation, but never inside
+it. The run files all three newest claims MATCHED against the same 217 the hard gate prints, which is the
+widened grammar certifying itself in the position it occupies: the population it reads is now the
+nine-hundred-claim ledger, the newest claims sit where the reader says they sit, and the judgement the
+gate makes with them agrees with the artefact that produced the number. A reader change that only
+satisfied its own harness could not say that.
+
+The rest of the inventory held steady to the digit: 217 quality checks on 58 tables and 9 migrations with
+the newest-claim reader MATCHED, the truncate probe clearing and refusing, the jsonb seam at
+thirty-eight of thirty-eight, the ledger-citation falsifier at fifty-eight of fifty-eight, the comment
+plane at fifty-seven of fifty-seven with its census at 92 across 31 files, sections and registry and
+spelled citations green, the console's two promises and reachability green with their censuses held, the
+drift harness MATCHED with the strict re-aim clean on 157 judged, and the self-consistency step filing
+eighteen. The committed-plane legs printed their designed contrast as they did on the first pass — the
+knob leg's zero offenders against the in-worktree leg's settled thirty-seven.
+
+One measurement rode alongside rather than inside: the AI service's suite, re-run on today's plane. The
+eighty offline tests pass unchanged. The four live integration tests split two and two on the test
+database, and the two failures are the same two, by the same mechanisms, that the both-planes verdict
+recorded: the category filter's guard is defeated by fixture merchants' global count on a database weeks
+of platform tests have populated, and the audit-insert proof meets a tenants table whose thousands of
+rows are all fixture tenants — the demo tenant this build names is not among them. Nothing in the AI
+surface has drifted since its last measurement; what the suite splits on is the shape of the database it
+is pointed at, exactly as recorded.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

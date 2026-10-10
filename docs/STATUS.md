@@ -13472,3 +13472,19 @@ escape that silently collapsed — each found by a line-by-line population diff 
 fixed before the landing.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 294. the gate re-certifies the seven-commit plane (D301)
+
+The full fresh gate ran again — the first since the six-landings-after-D290 wave, and the first to
+certify the numbers reader's new grammar inside step 17 rather than beside it. Eighteen of eighteen,
+GATE_EXIT=0, the throwaway database dropped behind it: 217 quality checks on 58 tables and 9 migrations
+with the newest-claim MATCHED, the truncate probe, the jsonb seam 38/38, step 8's falsifier 58/58, the
+comment plane 57/57 and 92/31, sections, registry, spelled citations, console i18n and a11y, reachability
+15/15, the drift harness MATCHED with strict clean on 157, and step 17 MATCHED on all three newest claims
+through the widened grammar. Alongside it, the AI suite re-measured on today's plane: 80 offline tests
+pass unchanged, and the four live integration tests split two and two on the test database exactly as the
+both-planes verdict predicted — the category guard defeated by fixture merchants' global count and the
+insert meeting a tenants table whose thousands of rows are all fixture tenants, the demo tenant absent —
+the same two failures, the same mechanisms, no drift in the AI surface since its last measurement.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
