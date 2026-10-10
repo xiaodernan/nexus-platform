@@ -13242,3 +13242,16 @@ offerings slug, and no dictionary exists for the amenity booleans in offering at
 sort-filter mismatch and the open-now scope ruling stand as previously filed.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 279. the §23 route map (D286)
+
+The merchant write surface mapped against every platform test file: thirteen routes declared,
+seven called with spot-checked assertions — offerings create and delete, dashboard overview,
+export, the reservations list, accept and close — and six never named anywhere: the businesses
+quartet (create, update, verification, publish) and the offerings update and bulk pair. The
+only businesses-shaped strings in the tree are the analytics overview route, a different
+controller. The negative is the strong half: zero references cannot have been asserted even
+incidentally. Writing the six missing door tests waits on the platform build compiling, which
+is red at HEAD on the unfinished payment service.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

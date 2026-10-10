@@ -12427,3 +12427,37 @@ The sort-filter mismatch and the open-now scope mismatch are left as the earlier
 them — one is inside the uncommitted web surface, the other was a recorded ruling.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D286 - the §23 write surface mapped against the test tree: seven of thirteen routes called, six never named
+
+D285 withdrew the old claim that the merchant write surface has no integration test of any
+kind and left the route-by-route mapping as a further unit. This is that mapping. The
+controller declares thirteen routes under the merchant prefix; every Java test file in the
+platform was searched for each full path, and the seven hits were spot-read to check that the
+reference is assertion-bearing rather than setup traffic.
+
+Witnessed, with the assertion named: offerings create (a 422 whose body carries both the
+too-large code and the exact byte cap, the chunked-encoding pair, and the helper that asserts
+the returned offering envelope), offerings delete (200 with the before-image audit comment
+that says why the prior state is read at all), dashboard overview (200, then the pending-proposals counter read back to drive further
+assertions), export (the bundle's
+merchant id, owner role and offerings size each asserted), the reservations list (three test
+classes), the reservation accept door and the reservation close door (each its own door test
+class with the replay and state-machine arms this lane has already recorded).
+
+Never named, anywhere in the platform test tree: the entire businesses quartet — create,
+update, verification, publish — and the offerings pair that the console itself uses next to
+create, update and bulk. The only businesses-shaped strings in the whole tree belong to the
+analytics overview route, which is a different controller and a read, so it witnesses nothing
+here. So the surface the merchant console writes through has a real spine of tests around
+reservations, export, dashboard and offerings creation, and four cold corners: the business
+record itself is written and re-verified by no test this project ships.
+
+The map is a reference census with spot-checks, not a per-assertion audit; the negative is the
+strong half of it, because a route with zero references cannot have been asserted even
+incidentally. Writing the six missing door tests needs the platform build to compile, which is
+currently red at HEAD on another stream's unfinished payment service — the same recorded reason
+the reservation assertions have never run — so this map is the instrument for whichever lane's
+build goes green first, and this lane does not invent that service.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
