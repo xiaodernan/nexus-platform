@@ -13371,3 +13371,17 @@ green against it). The dev database's thinner ledger is a separate row with a di
 as the validator's first run filed it.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 288. the platform suite measured whole on the unblocked plane (D295)
+
+The full suite — every class under the platform's test tree, including the untracked packages the other
+stream has been building — ran end to end for the first time since the unfinished payment service reddened
+the build: 251 tests, 0 failures, 0 errors, 0 skipped, in 1:33. The count has moved from the 218 of the
+last recorded whole run through the reservation doors, the export door, the six content doors and the
+identity work, and every one of the claims that waited on a runnable build has now been spent by a run:
+the reservation assertions that the ledger twice recorded as never-executed have run twice today, and the
+six-door wait closed with the package run. What a green whole buys beyond the package runs: the classes
+outside the merchant tree — catalog, growth, identity, seo, ucp, the console and rate-limit suites — are
+measured on the same plane rather than assumed from their last individual runs.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

@@ -12718,3 +12718,31 @@ database's ledger has been recorded and not validated, and the one-off compariso
 rows was unrepeatable until the validator made it a command. The ledger is now both.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D295 - the platform suite runs whole and green for the first time since the payment service reddened the build: 251 of 251
+
+The ledger has carried a running excuse for months — the platform suite cannot run while the build is red
+— and the excuse did real work: it explained why reservation assertions were never executed, why the six
+unwitnessed doors stayed unwitnessed, why a migration-ledger repair waited. This session spent the
+precondition piecewise (the tree compiles, the merchant package runs 48 of 48, the test database's ledger
+repair lands), and this unit takes the whole measurement: every test class under the platform's test tree,
+run in one go against the test database, 251 tests, zero failures, zero errors, zero skipped.
+
+The count itself is a claim worth pinning because it has been quoted from memory: the last recorded whole
+run filed 218. The 33 since are named by the ledger's own recent units — the reservation close door, the
+export door this lane's neighbour walked, the six content doors' seven tests, and the identity work the
+other stream landed — and the whole run is what proves the sum actually runs together, on one database,
+in one context budget: parallel classes sharing the five-context cache the base class documents, no
+cross-class interference, no fixture collision. The run also reaches the classes no merchant-package run
+touches — catalog, conversation, growth, seo, ucp, the platform and rate-limit suites — which the readers
+have been quoting from their last individual green runs until now.
+
+Two honest limits, stated rather than smoothed. First, this is the working plane: the suite's tree
+includes untracked test classes that a clean checkout would not collect, so the committed plane's count is
+lower by exactly those files until their owner lands them — the same difference the committed-plane legs
+of the gate print. Second, a green whole is a point-in-time measurement of a moving plane; its value is
+that the next claim about "the suite" can be checked against a number that was actually taken, and the
+recorded excuses that the number retires are now retired by name: the reservation assertions ran twice
+today, and no wait in the ledger is any longer anchored to an unrunnable build.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
