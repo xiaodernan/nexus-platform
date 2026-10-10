@@ -12389,3 +12389,41 @@ schedule — the STATUS note that nothing runs the binding probe on a timer stil
 commit.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D285 - the early still-open list audited against today's plane: the rating item is closed by data the seeder already writes, the no-tests claim is dead, two items stand
+
+A section near the top of STATUS carries a "Still open on this page, in order of what they cost"
+list written during the merchant-page wave, and nothing ever revisited it. Stale open lists are
+how a project fools itself in both directions — work finished looks pending, and work pending
+looks owned — so this unit re-reads every item against the demo plane and today's code, closing
+what the evidence closes and leaving what it does not.
+
+The headline item is closed. "No rating fact row exists for any seeded merchant, so the rating
+stays unverified until that data decision is made" is false on every plane measured: the demo
+database holds one merchant-subject rating fact for each of its 520 merchants plus 1207
+offering-subject ones, all with source observed, behind 10456 published reviews; the seeder
+derives them from those reviews rather than typing numbers, and its own validator refuses a
+dataset whose rating fact disagrees with either the review aggregate or the merchants column
+that carries the same mean; and the platform serves the number — the merchant detail payload
+answers rating as value plus review count from merchants.rating_agg, and the catalog list sorts
+and filters on the same column. The data decision D25 deferred has been made and implemented;
+what cannot be judged from a clean file is whether the web page still paints an unverified badge
+over a number the API now sends, because the web app is another stream's uncommitted surface —
+that half is recorded, not closed.
+
+The second item is dead text. "The whole write surface still has no integration test of any
+kind" was true when written; com.nexus.merchant now holds eleven test classes — the reservation
+doors close and accept, imports, knowledge, campaigns, analytics, the console, the workspace,
+fact writes, import rungs, the permission vocabulary — so the blanket claim is withdrawn. A
+route-by-route mapping of which of the old surface's endpoints each class actually reaches is a
+further unit, not this one.
+
+Two items stand, unchanged and re-measured: no platform route serves an offerings slug (the
+main source tree matches nothing shaped like that handler, so the live-mode collection page's
+404 consequence stands), and the platform has no dictionary for the amenity booleans riding in
+offerings attributes (no opens_late or wheelchair_access appears anywhere in the shipped Java),
+so an unknown key would still render its own snake_case name wherever the render path lives.
+The sort-filter mismatch and the open-now scope mismatch are left as the earlier section filed
+them — one is inside the uncommitted web surface, the other was a recorded ruling.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

@@ -13228,3 +13228,17 @@ tool is scheduled; imports resolve against working-tree dependencies whose HEAD 
 clone would use.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 278. the early still-open list audited (D285)
+
+The merchant-page section's old "Still open" list was re-read against the demo plane and today's
+code. Closed with evidence: the rating item — 520 merchant rating facts for 520 merchants plus
+1207 offering ones behind 10456 published reviews, seeder-derived and self-validated against
+both the review aggregate and the merchants column, served by the detail payload as value plus
+count; the page-render half stays recorded-unverifiable because the web app is another stream's
+surface. Dead text: the claim that the write surface has no integration test of any kind —
+eleven merchant test classes exist now. Standing, re-measured: no platform route serves an
+offerings slug, and no dictionary exists for the amenity booleans in offering attributes. The
+sort-filter mismatch and the open-now scope ruling stand as previously filed.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
