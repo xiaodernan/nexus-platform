@@ -12964,3 +12964,33 @@ surface has drifted since its last measurement; what the suite splits on is the 
 is pointed at, exactly as recorded.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D302 - the standing items hold on the wave's plane, one strengthens: the amenity gap now has three planes named where its dictionary is missing, and the entrypoint map re-resolves unchanged
+
+An audit that closed items once owes the ledger the same service later: the working plane has grown the
+other stream's untracked modules since the standing list was last read, and a standing item is only worth
+its place if the new surface did not quietly answer it. All four items re-read against today's tree, every
+one read-only, none re-measured by trust.
+
+The offerings slug stands: the platform's route table still serves slug-shaped handlers for collections,
+guides and the UCP merchant manifest only, so the live-mode offering page's forty-four consequence is
+unchanged. The amenity gap is the unit's one strengthening, and it strengthens in an unusual direction —
+the seed generator demonstrably writes both booleans into offerings attributes, the web catalog's own test
+comment now states in print that its projection reads none of them, and the platform Java still carries no
+dictionary for either name. Three planes named where the earlier audit named two: the write plane, the
+render plane, and now the reading half of the web surface declaring its own innocence. When the dictionary
+is built, it has a named consumer waiting on each side.
+
+The sort-filter mismatch stands on both ends, measured rather than assumed: the search contract's strict
+filters model in the working copy carries no sort field — district, category, prices, freshness, ratings,
+tags, attributes, avoidance, kind, merchant, and no sort — while the four home rails still send one, so
+every rail's request is refused and falls back to empty exactly as the original filing described. The
+open-now scope mismatch stands by its recorded ruling: a merchant whose any-location openness outruns the
+printed primary-location week is a design question the ruling reserved, not a defect this plane produced.
+And the pipeline's four AI entrypoints re-resolve to the same map: the application module the boot step
+names exists on no plane, the dev shim exists only in the working copy and re-exports an untracked
+package, the tests directory is untracked in full, and the evaluation gate's module has never existed
+here — the other stream's wave landed identity and export work and nothing on the AI surface, so the
+clean-checkout failure order recorded in the map still holds.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

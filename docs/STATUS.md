@@ -13488,3 +13488,19 @@ insert meeting a tenants table whose thousands of rows are all fixture tenants, 
 the same two failures, the same mechanisms, no drift in the AI surface since its last measurement.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 295. the standing items re-measured on the wave's plane (D302)
+
+The four standing items the early audit left on the books re-read against today's working plane, which now
+carries the other stream's untracked admin, commerce and seo modules. All four stand. No platform route
+serves an offerings slug — the only slug-shaped handlers are collections, guides and the UCP merchant
+manifest. The amenity gap strengthened rather than narrowed: the seed generator writes both booleans, the
+web catalog's own test comment states its projection reads none of them, and the platform Java still has no
+dictionary — three planes named where one was. The sort-filter mismatch stands on both sides: the search
+contract's strict filters carry no sort field in the working copy, and the four home rails still send one,
+so the 422-and-empty fallback is unchanged. The open-now scope mismatch stands by its recorded ruling. And
+the pipeline's four AI entrypoints resolve exactly as mapped: the boot module absent on every plane, the
+dev shim untracked re-exporting an untracked package, the tests directory untracked in full, the evaluation
+module still existing nowhere — the other stream landed nothing on the AI surface in the wave.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
