@@ -13270,3 +13270,18 @@ database: control passes, a dropped column reddens naming column and foreign key
 ledger row reddens naming the file.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 281. the AI suite measured on both planes (D288)
+
+The committed pipeline's two AI steps name programs no commit holds: a clean checkout at this
+commit collects zero tests and exits with pytest's no-tests code, and the evaluation module the
+next step imports exists on no plane. The working-copy suite is healthy where it runs — four
+score tests without a database, four of four live integration tests against the seeded dev
+database under the restricted role (health, search, category filter reaching the database, and
+the audit-insert grant proof with its one row). On the pipeline's own empty-seeded shape the
+four split two and two: leftover fixture merchants defeat the category guard's global count,
+and the unguarded insert meets a tenants table without its row. The tenant-presence and
+demo-tenant-scoped guards are designed here, not applied — the test tree is another stream's
+untracked surface.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

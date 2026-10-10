@@ -12495,3 +12495,40 @@ target and destroys only its own reference database; both live databases were re
 throughout, and every scratch database was dropped on exit by trap.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D288 - the AI suite measured on both planes: the committed pipeline names two programs no commit holds, and the live-DB guards redden the empty-seeded plane they promised to skip
+
+Nothing in this unit edits the AI service — every file it touches is another stream's active
+surface — so the unit is measurement, and the measurements are sharp enough to route.
+
+The first finding is about the committed pipeline, not the tests. The workflow's test step runs
+pytest with the project's own configuration pointing at a tests directory, and a clean checkout
+at HEAD has no such directory: measured in a detached worktree at this commit, the command the
+pipeline runs collects zero tests and exits with pytest's no-tests code. The pipeline's next
+step names an evaluation module whose import fails the same way at HEAD and in this working
+tree alike — the module exists on no plane this machine can reach. So the two steps that the
+workflow's own comments describe as the reason the live database exists are, on the committed
+tree, programs no commit holds; the suite and the evaluator are working-copy surfaces, and the
+ledgers that quote suite verdicts quote a working copy.
+
+The suite itself, measured where it does run, is healthy and uneven. Without a database it
+passes four-score tests; with the restricted service role against the seeded dev database, all
+four live integration tests pass — the health probe sees the database, the search returns rows,
+the category filter provably reaches the database rather than string-matching, and the audit
+insert proves the grants allow exactly the write the service needs (and writes the one row that
+proof requires). On the pipeline's own shape — schema applied, role split applied, no demo seed
+— the same four tests split two and two: health and search pass, while the category guard counts
+published merchants anywhere in the database and three-thousand-odd leftover fixture merchants
+defeat that count, so the test demands demo-shaped matches from fixture data and reddens; and
+the audit-insert test has no guard at all, meeting a tenants table without its row and failing
+the insert the service then logs as a degraded path. The file's own promise — skip cleanly
+without infrastructure — holds for the no-URL case and breaks the moment infrastructure exists
+without the seed.
+
+The guard design is recorded here rather than applied: a tenant-row presence check before the
+insert assertion, and a merchant count scoped to the demo tenant instead of a global count,
+both in the shape the file's own earlier guard already uses. Applying them means editing
+another stream's untracked test tree, which this lane does not do; the measurements above are
+the instrument whoever owns that tree picks up.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
