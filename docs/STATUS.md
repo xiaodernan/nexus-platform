@@ -13285,3 +13285,18 @@ demo-tenant-scoped guards are designed here, not applied — the test tree is an
 untracked surface.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 282. the pipeline's four AI entrypoints mapped (D289)
+
+Every entrypoint the committed pipeline and the root Makefile name for the AI service was
+checked against this commit and then the working tree: the tests directory is a full untracked
+tree; the application module the pipeline boots has no file at this commit and none on disk;
+the Makefile's dev target names a shim that exists only in the working copy and re-exports the
+package the pipeline boots — the two committed files disagree with each other about where the
+service lives, and both are wrong on the committed plane; and the evaluation gate's module is
+absent at this commit and absent from the working tree, so the step its comment calls blocking
+names a program this machine has never held. The lint, type-check and every path-token script
+step resolve honestly; a clean checkout fails the AI steps in the order tests, evaluation,
+boot. Nothing staged — the api surface is another stream's active lane.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

@@ -12532,3 +12532,35 @@ another stream's untracked test tree, which this lane does not do; the measureme
 the instrument whoever owns that tree picks up.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D289 - the committed pipeline's four AI entrypoints resolve to nothing: three live only in the working copy and one exists on no plane at all
+
+D288 measured the test step; this unit completes the sweep over everything the committed
+workflow and the root Makefile name as an entrypoint into the AI service, and the pattern is
+now whole. Four invocations across the two committed files boot or verify the service: the
+pipeline's test step collects from a tests directory, its evaluation step imports a module,
+its boot step launches an application module, and the Makefile's dev target launches a
+different application module. Checked one by one against this commit and then against the
+working tree, the four resolve as follows.
+
+The tests directory is untracked in full — thirteen test files and their fixtures live in the
+working copy while the committed configuration points pytest at them, which is the exit the
+previous unit measured on a clean checkout. The application module the pipeline's boot step
+launches has no file at this commit and none on this machine's working tree either — the boot
+step cannot have run against the committed service, and no local shell reaches it. The
+Makefile's target names a different module, a thin shim that exists only in the working copy
+and whose own docstring admits it re-exports the real application from the package the pipeline
+boots — so the two committed files disagree with each other about where the service lives,
+and both are wrong on the committed plane. The evaluation module is the sharpest of the four:
+absent at this commit and absent from the working tree as well, so the gate step that its own
+comment describes as blocking merges names a program this machine has never held.
+
+None of this touches the service — the same ownership boundary as the previous unit applies,
+and the api package the tests and both shims import is another stream's active surface — so
+the unit records the map. What the map says for anyone reading the pipeline today: the lint
+and type-check steps resolve their tooling, every path-token step resolves its script, and
+the entire boot-verify-evaluate third of the workflow is declarations about programs that
+arrive with the working copy or have not arrived at all; a clean checkout runs the data-plane
+scripts honestly and then fails the AI steps in the order tests, evaluation, boot.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
