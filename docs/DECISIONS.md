@@ -12564,3 +12564,42 @@ arrive with the working copy or have not arrived at all; a clean checkout runs t
 scripts honestly and then fails the AI steps in the order tests, evaluation, boot.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D290 - the fresh gate files its first complete pass on this machine: eighteen of eighteen steps, and both things that stopped the previous run are gone
+
+The gate is the instrument every number in this ledger answers to, and the previous full run on this
+machine — recorded at the D235 landing — reached step 8 and stopped there: fifty-six arms, fifty-four
+held, two missed, on hand-written step anchors that had been written against a twelve-step gate and never
+derived when the gate grew to eighteen. This run is the first to file all eighteen steps with exit zero,
+and the two repairs that stood between that run and this one are visible in the numbers rather than
+asserted: the step-8 harness now holds fifty-eight of fifty-eight with every shipped anchor applying
+exactly once, and the child-spawn story that once made this machine refuse its own harnesses (a child
+inheriting handles fails in milliseconds; the same child with an explicit stdio runs) has been landed
+since, so steps the journal once recorded as environment-blocked were measured here rather than skipped.
+
+The numbers the pass files, in order: 217 quality checks against a from-scratch schema of 58 tables and
+9 migrations, with the ledger's newest claim MATCHED against the gate's own printout; the truncate probe
+clearing an empty stranger and refusing one that holds rows; the jsonb site census with its seam at
+thirty-eight of thirty-eight; the ledger citation reader on the working copy with zero strict offenders
+over 645 citation-shaped tokens; the comment plane's harness at fifty-seven of fifty-seven and its census
+at 92 citations across 31 files; the sections reader green with the one disk-only draft printed rather
+than counted; the falsifier registry green; the spelled section citations green; the console's copy and
+accessibility promises green with their censuses at fifteen of fifteen, reachability at fifteen of
+fifteen, and the third citation reader's census printed (599 seen, 102 judged, 33 sharing nothing); the
+drift harness with every arm MATCHED and the strict re-aim clean on 157 judged with EXACT 140; the
+ledger-numbers reader MATCHED on all three newest claims; and the self-consistency step filing eighteen.
+
+The committed-plane legs printed the contrast they exist to print rather than a surprise: driven from the
+main tree with the knob, the ledger reader cites 95 files and finds zero offenders; the same reader in
+the worktree of HEAD cites 83 and finds 37 — the settled class of committed sentences citing files that
+arrive with the working copy — and the committed comment leg fails on its own plane for the same reason
+while every harness arm around it holds. The gate exits zero by design on that contrast, and the design
+is what this run confirms.
+
+Housekeeping measured with the run rather than around it: six nexus_gate_* databases left by killed gate
+runs were dropped before it (the hazard the plan documents, cleaned this time at the same sitting), the
+gate's own throwaway database was dropped by its completion, and neither live database was opened. What
+the pass changes for the queue: the gate is now a re-runnable whole on this machine, so the next plane
+question is a run, not an archaeology project.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

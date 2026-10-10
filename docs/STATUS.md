@@ -13300,3 +13300,19 @@ step resolve honestly; a clean checkout fails the AI steps in the order tests, e
 boot. Nothing staged — the api surface is another stream's active lane.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 283. the fresh gate's first complete pass (D290)
+
+The full fresh gate ran end to end on this machine for the first time: eighteen of eighteen steps,
+GATE_EXIT=0, the gate's throwaway database dropped behind it and no live database opened. The hard gate
+held — 217 quality checks on a from-scratch schema (tables=58, migrations=9) with the newest-claim reader
+MATCHED — and the truncate probe cleared an empty stranger and refused one holding rows. The two deltas
+from the previous full run, which stopped at step 8 with two of its 56 arms missed: that step's successor
+now holds 58 of 58, the hand-written step anchors that reddened it being derived from the gate's own body
+since, and the machine's child-spawn story (explicit stdio, D237-era) means steps the journal once
+recorded as unrunnable here were measured rather than skipped. Six nexus_gate_* databases left behind by
+killed runs were dropped before the run. The committed-plane legs printed their designed contrast — the
+knob leg 95 files cited / 0 offenders against the in-worktree leg's 37, the committed comment plane
+failing on its own plane — the known class of citations into files only the working copy holds.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
