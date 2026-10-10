@@ -12635,3 +12635,50 @@ question is a run, not an archaeology project.
 
 **The rule this unit writes for its own technique, in the order it must run.** A ledger append is four checks, and three of them are byte comparisons: the base bytes come from `git show <head-rev>:<path>` and not from the working copy; the staged bytes have that base as a prefix; the staged bytes contain no CR anywhere; and after the commit the working copy is mirrored by an append whose new bytes have the old bytes as a prefix. The one that was missing at D291 was the CR check, and its absence is what made a 20-line append land as a 25,955-line commit.
 
+## D293 - the six write doors the route map found unwitnessed are witnessed, one defect is filed rather than fixed, and one stale assertion is re-aimed to the promise it keeps
+
+The route-by-route map left six of the merchant content controller's thirteen routes with zero references
+anywhere in the test tree, and recorded that writing their door tests waited on a platform build that was
+red on another stream's unfinished payment service. The payment service has since arrived in the working
+copy, the tree compiles, and the wait is over on this plane: a new door class drives all six through a
+real HTTP stack against the test database and asserts the payloads' promises rather than their statuses.
+Creating a business is checked against the rows it exists to write — the owner membership, the full owner
+grant set counted against the permission list in code, the location and hours children, the audit row —
+and against the failure it must not be able to produce, a malformed hours row refused while the merchant
+it would have created provably never lands. The profile door refuses the AI switch with the permission
+that owns it and a published listing's slug; verification is self-attested and says so, with the
+documents-only body taking its registration reference from the first document the caller supplied; the
+publish door is walked along the hint its own 409 prints, every one of the six guards named, then cleared
+through the doors that own them, published, and republished to the same state; a suspended listing is
+refused by the service's own 403. The offerings doors assert the slug refusal, the single live price fact
+restated in place by an edit and expired rather than deleted by a clear, and bulk's per-item honesty: one
+created row, two rejections naming their codes, a same-slug pair never writing the second, and a
+one-past-the-cap batch refused with both numbers while writing nothing.
+
+The run produced one defect this lane files rather than fixes: the offerings update route validates a
+carried name and then drops it, answering 200 with the row unchanged. The route's javadoc names the slug
+as the immutable field and the update statement carries everything else the partial-edit helper builds;
+the name is required-and-validated at the door and written nowhere, so both readings of the intent —
+immutable like the slug, or editable like the description — make today's behaviour wrong. The fix is one
+line in the field map the update carries, but the controller is the shared write surface the console
+stream builds against, the one-owner rule says a doubtful file is reported rather than edited, and the
+test asserts the honest present (the field is deliberately absent from its edit body) instead of
+immortalising either reading. Filed with the evidence: the 200, the unchanged row, and the validate-then-
+drop path.
+
+One stale assertion came red out of the same run and was re-aimed in the same unit, because its owner is
+this tree's own earlier landing: the console inbox test expected the payload's confirmed definition to
+carry a "never" that the accept route's commit had rewritten out of the sentence — the old text was the
+honesty of the era before the route existed ("this route never moves a booking into it"), the rewrite was
+mandatory the day the route shipped, and the assertion kept its real promise by re-aiming to the clause
+that still defines the state ("moves a booking here"). The red had been invisible since that landing only
+because the suite could not run while the build was broken; the package now runs 48 of 48.
+
+Landing note, recorded under D240's recovery doctrine rather than tidied: the previous unit's ledger
+append was staged and committed but never appended to the working copy, and the sections reader reddened
+on the gap within the minute — a committed heading the file on disk did not hold. The append was
+completed afterwards against the draft the file carries, byte-identical to the committed section, the
+other lane's bytes untouched, and the reader green again. The protocol's disk half is now part of this
+unit's own landing, done before the commit rather than after its first reader run. The same window held a concurrent landing that took the D291 and D292 numbers and healed its own disk half in its second commit; the duplicate-number fork this ledger has met before is avoided by the rule it produced - a unit claims a number only against the HEAD it asserts at commit time, and yields one a concurrent commit took first. This unit lands as D293 against the commit that holds D292.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

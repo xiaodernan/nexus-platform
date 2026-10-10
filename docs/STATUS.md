@@ -13338,3 +13338,21 @@ plane             Measured in D:/nexus-headplane-r19 (a sibling of the repo root
 
 plane        Repaired in the repository itself - no measurement plane was needed, every number here comes off `git show` bytes and the two working copies, and the readers run from the working tree with their own knobs. Standing rule recorded for the next ledger append, in the order it must run: base bytes from `git show <head-rev>:<path>`, staged bytes have that base as a prefix, staged bytes contain no CR, and after the commit the working copy is mirrored by an append whose new bytes have the old bytes as a prefix. Nothing staged but the two ledgers; the three identity files are in b2a2888; nothing pushed.
 
+## 286. the six unwitnessed doors get their tests (D293)
+
+The route map's six never-named write doors now have a class: seven green tests against the businesses
+quartet (create writing the owner membership plus the full owner grant set, update refusing the field
+another permission owns and the slug of a published listing, verification self-attested with the
+documents-only reference, publish refusing an incomplete listing while naming all six guards and then
+clearing them door by door before an idempotent republish, and the suspended refusal), plus the offerings
+pair (slug immutable, a price edit restating its single live fact in place, clearing expiring it, and
+bulk reporting created and rejected per item with a refused batch writing none of its rows). The merchant
+package re-ran 48 of 48 with the new class in it. Two findings rode the run: the offerings PATCH validates
+a carried name and then drops it — a 200 with an unchanged row, filed for the surface's owner with the
+one-line fix named — and a stale assertion in the console inbox test, red since the accept route's own
+landing rewrote the payload sentence it quoted, invisible until the build compiled again; re-aimed to the
+sentence's defining clause. Landing note for the previous unit: the ledger append reached the commit but
+missed the disk copy, the sections reader reddened on it within the minute, and the append was completed
+after without touching the draft bytes the file carries. The window also held a concurrent landing - D291 and its own D292 repair - which took the next numbers and healed its own disk half; this unit yields the numbers it can no longer claim and lands here as D293.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

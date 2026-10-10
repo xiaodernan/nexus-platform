@@ -114,7 +114,10 @@ class MerchantConsoleTest extends NexusIntegrationTest {
         assertThat(page.path("next_cursor").isNull()).isTrue();
         assertThat(page.path("sort").asText()).isEqualTo("starts_at asc");
         assertThat(page.path("filters").path("status").isNull()).isTrue();
-        assertThat(page.path("definitions").path("confirmed").asText()).contains("never");
+        // D26 built the accept route and rewrote this sentence with it — the old text ("this route never
+        // moves a booking into it") was the honesty of the era before the route existed. The assertion
+        // keeps its point: the payload defines the state by naming what moves a booking into it.
+        assertThat(page.path("definitions").path("confirmed").asText()).contains("moves a booking here");
     }
 
     @Test
