@@ -12821,3 +12821,40 @@ pre-verification has refused a green that would have been a lie, and the lesson 
 entry wrote: a stale number is a question someone will ask again, an exact row is an answer nobody will.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D298 - the sibling-claim sweep: of eleven legal-write arms, exactly one ever collided with a standing claim, and the sweep that proves it is the method the next landing should run first
+
+The refused re-aim produced a class claim — a landing can falsify a standing ledger sentence that neither
+the landing nor any reader ever compares against — and a class claim earns its keep by being measured
+across its whole population. The population here is the eleven legal-write arms the seed lane landed as
+the first witnesses that need no enforcement switch: single statements the schema accepts, each aimed at
+an assertion that exists to be reddened by exactly that write. The sweep asks of every arm the one
+question the D297 collision makes sharp: does any standing ledger sentence assert a writer, where this arm
+is a new writer?
+
+The question needs a taxonomy before it can be asked, because most of what the arms touch cannot collide
+with anything. The arms run at drive time on a throwaway database that the gate drops behind itself, so
+every standing-data claim — the seeded corpus carries only demo-sourced availability, no case points at a
+published review, the queue holds open work — is unreachable by construction: a drive can never change
+what the standing corpus is. And most of the arms target assertions built to meet them, the armed rows
+whose whole design is to lose to a specific legal write. What remains is the writer-claim shape: a
+sentence that says, of a column or a code path, that this build contains exactly one thing that writes it.
+
+The census over both ledgers found three candidates beyond the grant-expiry row the previous unit already
+corrected, and all three stand. The moderation vocabulary whose only writer emits one value: the batch's
+moderation arm moves a case's status and never touches that column, so the writer census is undisturbed.
+The refusal code called the only producer of its kind on a merchant row: arms write rows, and no arm
+produces a refusal code. The jsonb key reported as read by a predicate and written by nothing: the key
+lives in a column none of the ten tables the arms write is, so the nothing still writes it. A
+shape-variant sweep of the ten table names against the writer-claim grammar added two rows — one about a
+missing trigger, one about code that had to change — and neither is a writer claim either.
+
+So the class has exactly one instance, the one corrected, and the negative is now measured rather than
+implied. The durable output is the method: when a landing adds writers, the sentence to check before it
+lands is not whether the code compiles or the tests pass but whether any standing sentence claims a
+writer it just became; that check is one grep against the census this unit ran, and it belongs in the
+landing habit of the seed lane the same way the single-occurrence assertion belongs to a re-aim. The
+eleven arms keep their verdicts, the one collision keeps its correction, and the ledger now carries the
+sweep that would catch the next one before a reader has to.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

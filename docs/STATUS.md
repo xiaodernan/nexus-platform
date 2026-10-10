@@ -13424,3 +13424,21 @@ section and its decision, and the reading list's one new row closes as a refusal
 a re-aim.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 291. the sibling-claim sweep: D126's other ten arms collide with nothing (D298)
+
+The collision the refused re-aim caught — a legal-write arm falsifying a standing only-writer claim that
+its own landing never read — is a class claim, and a class claim is measured, not assumed. The sweep asked
+the eleven legal-write arms the one question that can reach a ledger sentence: does any standing claim
+assert a writer, where these arms are new writers? The distinction does the work: the arms are drive-time
+writes on a throwaway database, so standing-data claims ("the seeded corpus carries only demo availability")
+are unreachable by construction, and armed assertions exist to be reddened by exactly these writes. What
+can collide is the writer-claim shape, and the census found three candidates beyond the settled grant row:
+the auto_action vocabulary's only writer (no arm touches that column — the batch's moderation write moves
+status only), the error-code producer called the only one of its kind (arms produce rows, not refusal
+codes), and the jsonb key reported as read by a predicate and written by nothing (none of the ten tables
+the arms touch is that column). Each read in context stands. A shape-variant sweep over the ten tables'
+names against the writer-claim grammar added two rows, neither a writer claim. The class closes with one
+instance — the one already corrected — and the method that would catch the next one is the sweep itself.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
