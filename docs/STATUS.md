@@ -13504,3 +13504,17 @@ dev shim untracked re-exporting an untracked package, the tests directory untrac
 module still existing nowhere — the other stream landed nothing on the AI surface in the wave.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 296. the web and packages plane re-measured whole (D303)
+
+The four gates nothing had re-run in twelve days, on a working plane whose web surface the other stream
+has been growing all week. All green: the types package's full chain (build, schema generation with no
+regeneration drift, conformance at 432 checks, unit suite), the SDK's forty-three, the UI kit's typecheck,
+and the web app's three gates — typecheck clean, eslint clean, and vitest at one hundred thirty-six tests
+across eleven files. The count carries the unit's finding: every one of those eleven files is the other
+stream's untracked work, so the web application's entire test suite lives in the working copy and a clean
+checkout collects zero web tests — the same committed-plane shape the AI suite's measurement recorded,
+now named on a second surface, with the same remedy (the owner's landing) and the same honesty about what
+a green working copy is worth.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

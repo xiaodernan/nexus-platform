@@ -12994,3 +12994,27 @@ here — the other stream's wave landed identity and export work and nothing on 
 clean-checkout failure order recorded in the map still holds.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D303 - the web and the three packages re-measured whole: four gates green on the working plane, and the web's entire test suite turns out to live on the uncommitted side of it
+
+The platform suite got its whole-plane measurement when the build unblocked; the web application and the
+three workspace packages had not been measured together in twelve days, and the web surface in particular
+has been the other stream's main growing edge all week. All four gates ran, all green. The types package's
+chain is the strongest single gate in the repository by check count and it holds end to end: the build,
+schema generation that regenerates byte-identical output (the modified files in the working tree are the
+other stream's edits, not the generator's drift), the conformance run at four hundred thirty-two checks
+with its twenty-one custom rules and thirty negative fixtures, and the unit suite. The SDK's forty-three
+pass. The UI kit's typecheck is clean. The web app's three gates are clean together — typecheck, eslint at
+zero warnings, and vitest at one hundred thirty-six tests in two and a half seconds.
+
+The number that teaches is the file count, not the test count: eleven files, and every one of them —
+the catalog projection, the console libraries, the directory, the seo module, the search relevance
+fixture, the api base — is a file the other stream has not committed. The web application's entire test
+suite lives on the uncommitted side of its own tree. A clean checkout of this repository collects zero web
+tests, exactly as it collects zero AI tests, and for the same reason: the surfaces are being built in the
+working copy and their witnesses are riding along with them. The green working-copy run is worth what it
+always is — the tests exist, they pass against the code they test, and they are one commit away from
+protecting that code in every clone — but the committed plane's test count for the web is zero until the
+owner lands, and the ledger now names that on the second surface that shows it.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
