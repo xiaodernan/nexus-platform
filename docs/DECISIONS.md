@@ -12858,3 +12858,40 @@ eleven arms keep their verdicts, the one collision keeps its correction, and the
 sweep that would catch the next one before a reader has to.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D299 - the numbers reader's grammar gains the hyphenated modifier its ledgers already write in: 148 claims the census had never seen, five rows re-parented, one false parse corrected, and the MISMATCH that led here becomes the AMBIGUOUS it should have been
+
+The unit began as a false alarm. The sibling-claim sweep's own section heading says "ten arms collide with
+nothing", its body says "the eleven legal-write arms", and the numbers reader — asked for the newest claim
+about arms — answered ten and called a check against fifty-eight a MISMATCH. Both sentences are true; the
+reader saw one of them. The cause is not the heading (this ledger's headings have always carried real
+figures, and excluding them would drop a population, not clean one) but the grammar: a claim is a number
+adjacent to its noun, and "legal-write" sits between. The shape is not rare. Counted before the grammar
+moved, as this house requires: a hundred and forty-eight matches across roughly fifty modifiers, from the
+comment-plane citations to the zero-value arms — a standing population every per-noun judgement had been
+blind to.
+
+The widening is exactly the measured shape and nothing looser: one hyphenated token may sit between the
+number and the noun, because that is the population the census found. The verification runs on three
+planes. The population: the tool reads nine hundred fourteen claims before and nine hundred eighty-nine
+after — eighty gained, five re-parented — and the gain reconciles to the digit against an independent
+replication of the grammar, line for line, on both ledgers. The gate: its three judged nouns hold their
+values and their lines, so step seventeen is untouched. The verdict: the arms noun now refuses with both
+of its section's values — the same honest AMBIGUOUS the rows noun has been printing — instead of answering
+with whichever single value the grammar happened to reach.
+
+The five re-parented rows are each read, because a number nobody can explain is worse than no number. Four
+are the hundred-compound spellings ("a hundred forty-four citations"), which the old grammar captured at
+the second token and the new one captures at the first — a wrong value replaced by a different wrong value,
+both short of the true hundred and forty-four, which is the word-summation gap the reader has always
+carried and still carries, named here rather than smoothed. The fifth is a correction the widening paid
+for by itself: "forty checks-off arms" had been filing as a claim of forty checks — the reader's own
+documentation names that incidental-noun class — and now files as forty arms, which is the sentence it
+sits in.
+
+What the unit leaves named rather than fixed: the hundred-summation gap, and the fact that a heading's
+figures are claims in this ledger's house style and stay in the population on purpose. The MISMATCH that
+led here is retired; the next reader of per-noun newest claims inherits a grammar that sees the modifiers
+its ledgers write in, and a refusal that names both values instead of an answer that names one.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

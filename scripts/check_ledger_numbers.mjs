@@ -108,7 +108,17 @@ const nounPattern = Object.keys(NOUNS)
   .sort((a, b) => b.length - a.length) // longest first: `quality checks` must win over `checks`
   .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
   .join('|');
-const CLAIM = new RegExp(`(?<![\\w.])(\\d[\\d,]*|${wordNumber})\\s+(${nounPattern})\\b`, 'gi');
+// One hyphenated modifier may sit between the number and the noun — `eleven legal-write arms`,
+// `65 comment-plane citations`. Census before the grammar moved (2026-10-11): 148 such claims across
+// roughly fifty shapes in the two ledgers, every one invisible to the plain-adjacency form, so a
+// section could hold two values for one noun and the reader would judge the one it happened to see
+// (`ten arms` in a heading beat `eleven legal-write arms` in the body, and the verdict read MISMATCH
+// where the honest answer was AMBIGUOUS). Exactly the measured shape is added — one hyphenated token —
+// and nothing looser: a plain adjective is a different population nobody has counted.
+const CLAIM = new RegExp(
+  `(?<![\\w.])(\\d[\\d,]*|${wordNumber})(?:\\s+[A-Za-z][\\w-]*-[\\w-]+)?\\s+(${nounPattern})\\b`,
+  'gi',
+);
 
 /** Sections whose fence count is odd, so nothing in them was parsed. Reported, never silently dropped. */
 const fenceUnbalancedSections = new Set();

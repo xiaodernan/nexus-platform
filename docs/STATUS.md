@@ -13442,3 +13442,17 @@ names against the writer-claim grammar added two rows, neither a writer claim. T
 instance — the one already corrected — and the method that would catch the next one is the sweep itself.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 292. the numbers reader learns the hyphenated claim (D299)
+
+The grammar that missed "eleven legal-write arms" while catching the heading's "ten arms" — and so judged
+a MISMATCH where the honest verdict was AMBIGUOUS — is widened by exactly one measured shape: a single
+hyphenated modifier between the number and the noun. The census before the grammar moved found 148 raw
+matches across roughly fifty shapes; the reader's own exclusions (fenced evidence) and one re-parenting
+bring the tool's population from 914 to 989 — eighty claims gained, five re-parented, every digit
+accounted for. One of the five is a correction: "40 checks-off arms" had been filing as a claim of forty
+checks, the exact incidental-noun class the reader's own documentation names. The gate's three judged
+nouns stay MATCHED at their lines, the rows noun keeps its two-value refusal, and the arms noun now
+refuses with both of its section's values instead of answering with the one a heading happened to carry.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
