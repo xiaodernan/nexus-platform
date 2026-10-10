@@ -13356,3 +13356,18 @@ missed the disk copy, the sections reader reddened on it within the minute, and 
 after without touching the draft bytes the file carries. The window also held a concurrent landing - D291 and its own D292 repair - which took the next numbers and healed its own disk half; this unit yields the numbers it can no longer claim and lands here as D293.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 287. the migration ledger's paper gap closes (D294)
+
+The one-line repair the migration validator's first run named — recording the data-backfill migration
+whose row the test database's ledger never carried — waited on a green build, and the wait is over: the
+tree compiles and the merchant package ran 48 of 48 this session, so the unit spent the precondition.
+The validator's before verdict reproduced its first findings exactly: the ledger half red naming
+V9__manage_reservations_backfill, the schema half identical to a from-scratch reference across 1097
+catalog objects — the paper is what lags. The repair is the apply script's own documented path for a
+database whose content predates its ledger: record the version, run nothing. After: both halves green at
+the same 1097 objects, and the suite still answers on the repaired database (a workspace test re-run
+green against it). The dev database's thinner ledger is a separate row with a different owner and stays
+as the validator's first run filed it.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

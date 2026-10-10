@@ -12682,3 +12682,39 @@ other lane's bytes untouched, and the reader green again. The protocol's disk ha
 unit's own landing, done before the commit rather than after its first reader run. The same window held a concurrent landing that took the D291 and D292 numbers and healed its own disk half in its second commit; the duplicate-number fork this ledger has met before is avoided by the rule it produced - a unit claims a number only against the HEAD it asserts at commit time, and yields one a concurrent commit took first. This unit lands as D293 against the commit that holds D292.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D294 - the migration ledger's named repair is spent: the test database's paper catches up to a catalog that never moved
+
+The validator's first run closed with a repair it deliberately did not make: the test database's ledger
+was missing the data-backfill migration's row, the catalog was identical to a fresh build anyway, and
+recording the row was deferred — not because the record was unsafe, but because recording it changes what
+the next plain apply does to the database the integration suite consumes, and that suite could not run
+while the platform build was red on another stream's unfinished payment service. The repair was named for
+whoever's build went green first. This session measured the build compiling and the merchant package at
+48 of 48, which spends the precondition, so the unit applies the named line and closes the item.
+
+The discipline is the validator running on both sides of it. Before: the ledger half refuses — nine
+migration files, eight rows, the data-backfill version named — while the schema half diffed the live
+catalog against a throwaway reference built from template0 through the same apply script the fresh gate
+uses and found the two identical across 1097 catalog objects, the proof that the missing row is paper and
+not schema. The repair is the apply script's own documented path for a database whose content predates
+its ledger: declare one migration applied, running nothing — the same path that reconciled this database
+once before, when the privilege wave left it holding rows from migrations the ledger had not met. The
+record run skips every version already applied, refreshes the role grants it re-applies idempotently, and
+writes one row. After: the validator's verdict is green in both halves at the same 1097 objects, and the
+database still serves the suite — a workspace test re-run green against the repaired ledger.
+
+Two measurements recorded so the run cannot be misread later. The apply script's summary prints a tenant
+line, and the test database's tenants table holds thousands of rows: that is fixture accumulation from
+weeks of suite runs against a shared database — the same leftover-merchant residue the AI lane's
+integration measurements met — and nothing the record path wrote, which the identical-catalog verdict
+already proves. And the dev database's ledger, which holds fewer rows than the test database's because
+its middle migrations arrived through the platform's Flyway history, is left exactly as the validator's
+first run filed it: recording rows there is a decision about a database another project's history owns,
+not a paper catch-up, and this unit does not reach across it.
+
+The residue this closes is the oldest standing item on the open list: since the privilege wave, the test
+database's ledger has been recorded and not validated, and the one-off comparison that once justified the
+rows was unrepeatable until the validator made it a command. The ledger is now both.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
