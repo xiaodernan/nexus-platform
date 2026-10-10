@@ -13385,3 +13385,25 @@ outside the merchant tree — catalog, growth, identity, seo, ucp, the console a
 measured on the same plane rather than assumed from their last individual runs.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 289. the sharing-nothing thirty-three judged (D296)
+
+The third citation reader's current list — 33 of its 102 judged rows whose sentence shares no identifier
+with the cited neighbourhood — read row by row under the seven classes the previous judgment established.
+Sixteen are true subjects: the line says in prose, or verbatim, or as the first line of a cited range,
+exactly what the sentence describes, and the identifier proxy cannot see prose subjects, two-letter tokens
+or content past the window of a sixty-line range. Nine are the ledger citing its own machinery —
+adjudication sections quoting the defective rows they judge, and repair records quoting the rows they
+correct. Two are photographs (a reader run's BAD row and a verbatim table copied from the traceability
+document). Three are worn: the PYTHON-knob row the later section already adjudicated moved with the
+corrected numbers written beside it, the pair the D160 correction documented as thirty-two lines off, and
+one new stale position this unit found — a D91-era sentence naming the only deadline-writing fixture,
+whose line today holds an unrelated AI-switch assertion while the fixture itself sits fifty-nine lines
+lower; routed to the drift discipline, not re-aimed inside a judging unit. One row is two-plane true (a
+draft section's citation past the committed file's end, real only on the working copy), one landed-false
+(the refused re-aim of the September entry, re-verified absent on every plane today), and one the blank
+line its own sentence describes. The census's exit-zero-by-design ruling stands on the same evidence as
+before: sixteen true rows prove an armed proxy would wrong true citations, and the two adjudication-shaped
+rows prove only a human reading catches what the proxy cannot.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

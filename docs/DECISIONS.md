@@ -12746,3 +12746,45 @@ recorded excuses that the number retires are now retired by name: the reservatio
 today, and no wait in the ledger is any longer anchored to an unrunnable build.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D296 - the sharing-nothing list is a reading list again: thirty-three rows, seven classes, one new stale position, and the census's design confirmed a second time
+
+The third citation reader exists to produce a list a human can read, and the previous judgment of the
+forty-four-row era established the classes and the ruling — exit zero whatever it finds, because a
+zero-shared-identifier row is a question and not a defect. The list has since narrowed to thirty-three,
+and this unit reads every row under the same classes, with each verdict resting on the sentence and the
+cited neighbourhood rather than on the proxy's opinion.
+
+Sixteen of the thirty-three are true subjects, and the reasons the proxy misses them are the lesson: a
+sentence may describe its line in prose the identifier grammar cannot tokenise ("tells a caller about a
+retention job", where the line says exactly that); a sentence may quote its line verbatim inside backticks
+(the repository constant that is literally the text "from collections c"); a sentence may cite the first
+line of a sixty-line range whose subject identifiers live forty lines past the window; or the sentence's
+load-bearing tokens may be two letters the extractor does not class as identifiers. Nine are the ledger
+reading itself: adjudication sections quoting the defective citations they judge, correction paragraphs
+quoting the rows they correct, and the machinery's own example rows — all true by construction and all
+invisible to any identifier comparison. Two are photographs: a reader run's printed BAD row and a
+traceability table copied verbatim into a decision, citations that reproduce quoted text rather than claim
+support. One is blank on every plane and says so in its own sentence.
+
+Three rows are worn — true when written, moved since — and each is routed rather than repaired, because a
+judging unit does not re-aim: the PYTHON-knob citation the later section already adjudicated as moved, with
+the corrected numbers written into the adjudicating section and the original kept as history; the pair the
+earlier correction documented as thirty-two lines off with the true position named beside it; and one row
+this unit found fresh — a D91-era sentence claiming its line is the only place in the repository that puts
+a non-null deadline on a grant, where the named line today holds an AI-switch assertion and the deadline
+fixture sits fifty-nine lines lower, a position the position-readers never charged. The re-aim belongs to
+the drift discipline, with the old row's single-occurrence assertion to make first. One row is true only on
+another plane: a draft section's citation lands past the committed file's last line and inside the working
+copy's longer one, the two-plane shape the earlier judgment named. One is landed-false and stays so: the
+sentence names a plant marker that the file does not carry on any plane — re-verified today, zero
+occurrences, the two sibling markers named instead — which is the very row whose laundering re-aim was
+refused in September, and the refusal is what keeps it honestly red instead of invisibly green.
+
+What the second full reading adds to the first: the class distribution moved (sixteen true subjects of
+thirty-three, against thirty of forty-four), the one fresh defect is a stale position rather than a wrong
+sentence, and the landed-false row has not grown a sibling. The census's design ruling — zero shared
+identifiers is a question, the list is a reading list, the exit stays zero — holds on evidence twice the
+size, and the reading list is now current.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
