@@ -13255,3 +13255,18 @@ incidentally. Writing the six missing door tests waits on the platform build com
 is red at HEAD on the unfinished payment service.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 280. the migration validator's first verdicts (D287)
+
+The recorded-not-validated gap now has a command: the validator builds a reference database
+from template0 through the gate's own apply script and diffs ledger and catalog against any
+target. First verdicts: both live databases' schemas are identical to a fresh build across 1097
+catalog objects — the paper is what lags. The test database is missing one backfill migration's
+ledger row (data-only, so the catalog proves nothing moved); the dev database's ledger holds two
+rows because the middle migrations came through the platform's Flyway history and the last two
+were recorded by neither. Neither database was written — the one-line repair for the missing
+row is named for when the integration suite can run again. Three falsifier arms on a scratch
+database: control passes, a dropped column reddens naming column and foreign key, a deleted
+ledger row reddens naming the file.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

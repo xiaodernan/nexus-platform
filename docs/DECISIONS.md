@@ -12461,3 +12461,37 @@ the reservation assertions have never run — so this map is the instrument for 
 build goes green first, and this lane does not invent that service.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D287 - the migration ledger gets a validator: both live databases match a fresh build's schema, both ledgers are behind the paper
+
+The open list has carried "nexus_test's ledger is now recorded, not validated — nothing runs the
+migration files through it" since the privilege wave, and the 334-row comparison that once
+justified those ledger rows was a one-off transcript nobody can re-run. This unit makes the
+comparison a command. The validator reads the target database, builds a throwaway reference from
+template0 through the same apply script the fresh gate uses, and judges two halves: every
+migration file has a schema_migrations row and every row names an existing file, and the
+public-schema catalog — tables, views, columns, indexes, constraints, with the two bookkeeping
+tables excluded because the ledger half owns them — is diffed object by object.
+
+First verdicts, measured today. The test database's catalog is identical to a fresh through-all-
+migrations build across 1097 objects: the hand-built schema has no drift at all, and its single
+discrepancy is paper — one migration file's row is missing, which is exactly the shape the
+record-it-don't-run-it ruling was written for, since that migration is a data backfill whose
+absence cannot move a catalog, as the identical diff proves. The dev database's catalog is
+likewise identical, and its paper is further behind: its own ledger table holds only the first
+two migrations because the middle ones arrived through the platform service's Flyway history
+(printed as context by the validator), while the last two reached it recorded by neither ledger.
+Neither database was written here: recording the missing row into the test database changes what
+the next plain apply does to the database the integration suite consumes, and that suite cannot
+ be run while the platform build is red on another stream's unfinished payment service — an
+unmeasurable side effect is not taken, and the one-line repair is named for whoever's build goes
+green first.
+
+Witnesses, three arms on a scratch database built and dropped inside the run: the control, fully
+migrated, passes both halves at the same object count; a schema mutant that drops the column the
+last schema migration added reddens naming both the column and its foreign key; a ledger mutant
+that deletes one row reddens naming the file under the ledger-only mode. The validator reads its
+target and destroys only its own reference database; both live databases were read-only
+throughout, and every scratch database was dropped on exit by trap.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
