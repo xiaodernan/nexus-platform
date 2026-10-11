@@ -13054,3 +13054,41 @@ the demo plane, which is the plane's purpose and is reseedable by its own script
 run's, and it is named here.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D305 - the four not-at-head citations attributed: one exhibit must keep its bad spelling, two name another stream's untracked api by design, one names the in-flight payment service on purpose
+
+The line-cite census has carried a small standing numerator beside its larger queues — four
+citation sites whose targets cannot resolve at this commit — and this unit opens each site and
+says which stream owns it, because an attributed count is closed and an unexplained one is a
+backlog. The census around them is the cleanest it has ever been — every judged citation names
+the line it was written against, the GONE queue that stood at sixteen is empty, and the only
+non-judging classes left are the bare-name sites the grammar deliberately does not path and
+these four — so the numerator is the last unexplained number on that plane. None of the four is
+repairable by this lane, and the reasons are now measured one by one rather than assumed.
+
+The first site is the one that must not be repaired. Inside a section whose entire subject is a
+reader defect — the span that used to take its identifiers from the text before a citation and
+missed the claim written on both sides — the old offending token is quoted as the exhibit: a
+leading-slash spelling that names no file from the repository root. The reader still classifies
+it, correctly, as unresolvable at this commit, and the classification is the historical record
+working as intended; repointing the token at the tracked file would falsify the very defect the
+section exists to document. The tracked file the token badly names is of course present at this
+commit under its full path, and its line still carries the call the section says it carries.
+
+The second and third sites name the same defect from two ledgers — the jsonb double-encoding
+that binds text into a typed parameter over a pool that encodes it again — and both cite into
+the service's api package, which is a working-copy surface at this commit: one cite by full
+path, one by bare relative name. Read against the working copy the cites are exact — the
+parameter list the full-path site names is the one on disk — so both sites resolve the day that
+stream lands its package, and neither can resolve earlier. This is the same ownership boundary
+the earlier units drew around the tests, the shims and the evaluator; the api package is the
+fourth face of that same surface.
+
+The fourth site cites the commerce stream's cart service at the line that references the payment
+service the platform does not yet compile, and the citing sentence says so in its own words —
+the forward cite is deliberate, its target is that stream's untracked work in progress, and it
+resolves when that stream lands. Nothing here is orphaned: every unresolvable site is a named
+stream's named surface, one is a permanent exhibit by design, and the census's numerator is now
+a fully attributed four rather than a mystery four.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

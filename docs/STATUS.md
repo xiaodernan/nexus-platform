@@ -13535,3 +13535,18 @@ ownership — the operational face of the paper gap the validator proved — and
 flyway against an already-migrated database rather than mutating the demo plane.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 298. the four not-at-head citations attributed (D305)
+
+The line-cite census's standing not-at-head numerator is opened site by site, on a census whose
+judged side is fully exact for the first time — the sixteen-deep GONE queue is empty — leaving
+this numerator as the plane's last unexplained number: the leading-slash token inside the
+reader-defect section is the exhibit itself and must keep its unresolvable spelling; the jsonb
+double-encoding's two cites — full path and bare relative — both name the AI stream's untracked
+api package and are exact against its working copy, so they resolve when that stream lands it;
+the cart-service cite names the commerce stream's in-flight payment work on purpose, as its
+sentence already says. The tracked file the exhibit badly names exists at this commit and its
+line still carries the call. Nothing staged — every unresolvable site is another stream's named
+surface, and one is a permanent exhibit.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
