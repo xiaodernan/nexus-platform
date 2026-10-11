@@ -13583,3 +13583,19 @@ is recorded here with its counts and the one-line fix left to that stream's owne
 database dropped inside the run; nothing else written.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217/432
+
+## 301. the e2e seed path measured whole (D308)
+
+The continuous integration workflow invokes the seed generator with a count expression the
+committed generator rejects outright — its scale argument is a choice between three presets and
+the expression is not one of them — so the committed seed step fails before generating a row;
+the repair is one word in the workflow's file, which carries another stream's uncommitted
+work, so it is recorded rather than applied. The path that works was walked whole on a
+throwaway database: the smallest valid preset's self-check passes on foreign keys, bounds,
+naming, density and language mix, and the loader applies it in one transaction — one tenant,
+one hundred and twenty merchants with one hundred and twelve published, nine hundred and six
+offerings, one thousand five hundred reviews — while naming its own side effect, the three
+anchor-reading rows that would refuse this database until the loader reruns with its anchor
+flag. The complete fixture path is now measured on a plane nobody shares.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217/432

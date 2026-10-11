@@ -13159,3 +13159,36 @@ stream's owner: either the text drops the fixtures' claim, or the target grows a
 pair that actually produces them.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217/432
+
+## D308 - the pipeline's e2e seed step measured whole: the committed invocation form is rejected by the committed generator, and the path that does work is the one the Makefile's target never calls
+
+The previous unit measured the root Makefile's seed target and found it applies the tenant and
+nothing else, leaving the fixtures to a path it never calls. This unit walks that path
+end-to-end on a throwaway database and finds the same story from the other end — with one
+sharp addition inside the path itself.
+
+The addition is that the path's committed invocation cannot run. The continuous integration
+workflow's e2e job invokes the seed generator with a count expression of the form
+`merchants=80,offerings=600,reviews=1200`, and the generator at this commit rejects that form
+outright: its scale argument is a choice between three presets, and the expression is not one
+of them, so argparse exits on an invalid choice before a single row is generated. The generator
+is clean at this commit and its own header documents the preset names, so the break is in the
+workflow's command, not in the tool — the repair is one word (or three) in a file that carries
+another stream's uncommitted work, and it is recorded here rather than applied. For a pipeline
+that already cannot collect tests, import its evaluator, boot its service, or census an empty
+console, the seed step is one more step whose committed form fails for a reason the committed
+tree can answer by itself.
+
+The path that does work was then walked whole. The smallest valid preset produces a fully
+consistent dataset — its own self-check passes on foreign keys, bounds, naming, density and
+language mix — and the loader applies it into the throwaway database in one transaction: one
+tenant, one hundred and twenty merchants of which one hundred and twelve are published, nine
+hundred and six offerings and one thousand five hundred reviews. The loader is honest about
+its one side effect: the gate's generation-clock, fact-TTL and slot-horizon rows read anchor
+stamps this run did not set, so those three rows would refuse this database until the loader is
+rerun with its anchor flag or through the fresh gate, a named acceptance and not a failure.
+The schema below the load is the same complete catalog the validator already measured, so the
+whole fixture path — migrations, grants, generator, loader — is now measured on a plane nobody
+shares, and the only failures on it are the ones the committed commands carry.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217/432
