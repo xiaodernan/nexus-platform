@@ -13550,3 +13550,21 @@ line still carries the call. Nothing staged — every unresolvable site is anoth
 surface, and one is a permanent exhibit.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 299. the pipeline's verification third on the committed plane (D306)
+
+Every script step the committed workflow invokes was executed on a clean checkout of this
+commit: the two console censuses refuse honestly on the absent page tree — the committed web
+surface carries configuration, sources and the test harness while the application router
+directory lives entirely in the working copy — and their falsifier crashes instead, copying
+the fixture before checking it exists, so its arms never run and the fix belongs to that
+harness's owner, shaped like the refusal two files beside it already make; the jsonb census
+reddens on one answer row naming a commerce repository file this commit does not carry; the
+ledger citation reader reproduces the standing clean-checkout count, every bare name owned by
+another stream's working copy; the contract drift report is green-by-mode while listing the
+unimplemented documented routes and one contract-undefined path that turns out to be a test
+probing an absent route with a not-found assertion — a checker false positive whose remedy is
+a corpus boundary or an exemption, not a route; the citation-plane reader and both its
+falsifiers pass whole, and reader-reachability passes. Nothing staged.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217/432

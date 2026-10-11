@@ -13092,3 +13092,41 @@ stream's named surface, one is a permanent exhibit by design, and the census's n
 a fully attributed four rather than a mystery four.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D306 - the pipeline's verification third executed on the committed plane: two honest refusals, one honest report, three reproduced known reds, and one harness that crashes where its sibling checkers refuse
+
+The previous map said which committed entrypoints resolve; this unit runs the rest — every
+script step the committed workflow invokes after the boot step — on a clean checkout of this
+commit, and records the exit each one takes. The table is the finding, and one row of it is a
+defect in a committed tool rather than an absence in a working copy.
+
+The two console censuses behave exactly as their design says: with no page tree at this commit
+— the committed web surface carries its configuration, its source directory and its test
+harness, while the application router directory lives entirely in the working copy — both
+checkers refuse to judge, saying nothing was censused so nothing can be reported green, and
+exit on their refusal code. Their falsifier does not behave that way: given the same absent
+directory it copies the fixture tree before it checks whether the tree exists, the filesystem
+call throws, and the step dies with a stack trace — an uncaught crash on a plane its sibling
+tools handle with a named refusal. The step's arms never run, so the committed pipeline cannot
+even reach the arms' verdict on a clean checkout; the fix belongs to whoever owns that
+harness, and the shape to copy is the refusal two files beside it already make.
+
+The remaining reds are the known classes, reproduced at today's commit and attributed the same
+way the ledgers already attribute them. The jsonb census, run in the mode the workflow runs it,
+reddens on one answer row whose site names a repository file this commit does not carry — the
+commerce stream's working copy holds it, and the row resolves the day that stream lands the
+file. The ledger citation reader in its committed invocation reddens on the standing
+clean-checkout count, every one of them a bare name whose file lives in another stream's
+working copy, none new. The contract drift report, invoked as the workflow invokes it, reports
+green-by-mode while listing sixteen routes the committed services do not serve — the same
+working-copy surfaces again — and one path the contract never defines, which on inspection is
+a test asserting that an undocumented route answers not-found: the checker's corpus includes
+test sources, so a deliberate probe of a missing route reads as a reference to it, a false
+positive whose remedy is either a corpus boundary or a recorded exemption, not a route.
+
+The line-cite reader and both falsifier harnesses for the citation plane pass whole on the
+committed checkout, and the reader-reachability check passes; the map is now complete end to
+end, from entrypoints through verification, with every red either the crash above or a named
+stream's named working-copy surface.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217/432
