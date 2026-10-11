@@ -13130,3 +13130,32 @@ end, from entrypoints through verification, with every red either the crash abov
 stream's named working-copy surface.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217/432
+
+## D307 - the seed target's promise measured: a fresh database through the committed apply script ends with the tenant and nothing else, and the demo plane arrives through a different path the target does not run
+
+The root Makefile describes its seed target as applying the tenant and the demo fixtures, and
+the committed apply script that target invokes is honest in its own header about what it
+applies: the seed directory beside the migrations directory, nothing more. This unit measures
+the promise against a database rather than against the prose, and the measurement is the
+smallest kind of useful: a scratch database created inside the running container, carried
+through the exact committed command the target runs — migrations, role grants, seed step — and
+then counted before it is dropped.
+
+The counts are the finding. A fresh database through that command ends with every schema
+object and every ledger row the validator already knows about, and exactly one tenant; the
+merchant, offering, review and run tables stand empty. The demo plane every other measurement
+this session has read — the five-hundred-odd published merchants, the offerings, the reviews —
+arrives through the generator and loader pair, which the continuous integration's own e2e job
+invokes after the migrations and which the seed target never calls. So the target's help text
+promises fixtures the target does not apply; a developer running it on a fresh machine gets a
+correctly migrated, correctly granted, correctly tenanted database with nothing in it, and
+the prose above the target is the only place the fixtures were ever claimed.
+
+The script itself needs no repair — its header says exactly what it does, the seed directory
+holds exactly one file, and that file creates exactly the tenant it names. The repair belongs
+to the Makefile's help line, whose file carries another stream's uncommitted work, so this
+unit records the mismatch with its measured counts and leaves the one-line fix to that
+stream's owner: either the text drops the fixtures' claim, or the target grows a call to the
+pair that actually produces them.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217/432

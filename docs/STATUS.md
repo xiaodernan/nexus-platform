@@ -13568,3 +13568,18 @@ a corpus boundary or an exemption, not a route; the citation-plane reader and bo
 falsifiers pass whole, and reader-reachability passes. Nothing staged.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217/432
+
+## 300. the seed target's promise measured (D307)
+
+A scratch database inside the running container was carried through the committed apply
+script's seed path — migrations, grants, seed directory — and counted before being dropped: a
+complete schema, a complete migration ledger, exactly one tenant, and empty merchant, offering,
+review and run tables. The demo fixtures the root Makefile's help text promises the seed target
+applies arrive instead through the generator-and-loader pair the continuous integration's e2e
+job invokes after the migrations — a path the target never calls. The apply script's own header
+is honest about what it applies and its seed directory holds exactly one file; the repair is
+the Makefile's help line, whose file carries another stream's uncommitted work, so the mismatch
+is recorded here with its counts and the one-line fix left to that stream's owner. Scratch
+database dropped inside the run; nothing else written.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217/432
