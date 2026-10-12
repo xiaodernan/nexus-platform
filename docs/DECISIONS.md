@@ -13419,3 +13419,121 @@ The last several units fixed the gate's noun collision (D311/D312) and completed
 All six items are owned by other lanes' uncommitted surfaces or are standing backlogs. This snapshot records their status so the next measurement starts from ground truth.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## D314 - the census a re-aim is taken from has four readings of one committed ledger and the plane decides which is printed: one digit lands, the second row a dirty tree derives is the reader grading a different line's writer, and the shipped applier writes before it refuses
+
+**Why this unit exists.** A re-aim is a number lifted out of a census, so the census has to name its own plane before
+the number is spent. `docs/STATUS.md:2871` cites `IdentityRepository.java:252`; the line it names now holds a
+different statement, and the fix is one digit. Two planes print that citation as a row to move and one prints it as
+clean, and the same tool with the same bytes in front of it derives either one row or two. This unit lands the row
+a clean checkout derives, and writes down - with its failing pair of readings - the row a dirty checkout derives
+and no content test can license.
+
+**Four readings, decided by two axes.** The two ledger files at 0a8b201 are 27,100 lines split-with-trailing-empty
+(13,678 + 13,422; 13,677 + 13,421 content lines) and hold 462 citation-shaped tokens into code. First axis: which
+copy of `scripts/check_line_cite_drift.mjs` runs. HEAD's committed reader (20,010 bytes) answers
+`--resolve-basenames` with `RESULT: NOT CHECKED — unknown option`, exit 2; the working copy's reader (25,532 bytes,
+`+88 / -7` against that blob, report-only, uncommitted) judges the basename tails too. Second axis: which plane it
+runs on. Committed reader on a clean clone: 148 judged, EXACT 148, 13 NOT-AT-HEAD, 301 UNPATHED. Working-copy
+reader, same clean clone, default mode: 157 judged, EXACT 157, 4 NOT-AT-HEAD - nine tail-path citations promoted
+into the population by the uncommitted suffix index, no verdict changed. Working-copy reader, clean clone, widened:
+judged 436 of 462, EXACT 428, MOVED 1, NOT-UNIQUE 2, GONE 5, UNPATHED 22, NOT-AT-HEAD 4, AMBIGUOUS 0. Same command
+on the dirty tree: EXACT 425, MOVED 2, NOT-UNIQUE 2, GONE 7, same judged 436, same 462 tokens, same 27,100 ledger
+lines. Two files that differ by nothing at all in code, and by 74 uncommitted lines in one working copy, cannot
+have three citations change class - so the difference is the plane.
+
+**The three class changes are one ledger line, and the line is named.** `docs/STATUS.md:13626` is `- collateral`
+of `## 305`, and it cites three things: `IdentityRepository.java:106`, `IdentityRepository.java:252` and
+`MeController.java:122`. On a clean plane all three are EXACT; on this machine's working copy they come back
+MOVED, GONE, GONE - which is exactly `428 - 425 = 3`, `MOVED + 1`, `GONE + 2`. The cause is in the reader's own
+two calls: the loop iterates `HEAD:docs/STATUS.md` lines, while `blameByLine` runs `git blame --line-porcelain` on
+the *worktree*, and the printed site is the loop's index. The working copy carries two uncommitted hunks
+(`@@ -13184,0 +13185,33 @@` and `@@ -13677,0 +13711,41 @@`), so HEAD line 13626 actually sits at disk line 13659,
+and blame answers index 13626 with the writer of a line 33 rows above it: `ca91a66` (D308, a CI-lane commit) instead
+of `d9aed53` (DD310, the commit that wrote the cite). At `ca91a66`, `IdentityRepository.java:252` still held
+`update user_preferences p...`, which is what D309 moved to line 319 - so the reader reports a real MOVED pair for a
+citation that was already clean, and two real GONE pairs for the same reason. Nothing about the ledger text decided
+any of it: the same bytes judged on a plane whose worktree equals HEAD give the other three verdicts.
+
+**One of the two EXACTs is the entry grading its own bytes, and the other is not.** Site 13626 is EXACT on a clean
+plane only because `d9aed53` both moved that Java line and wrote the citation, so `written` and `target` are read
+from the same revision - a verdict that cannot be wrong is not a measurement. Site 2871's citing line was written by
+`53caf96` (D292), which moved no Java at all; the text line 252 held at `53caf96` is at HEAD line 319 and at no other
+line, so that pair is MOVED on every plane, and it is the only row the clean census hands to the applier. Once
+commit A lands, that site reads EXACT for the reason this paragraph distrusts: blame answers line 2871 with commit
+A itself, and commit A is the revision that holds the text, so `written` and `target` are the same line of the same
+blob. The 429 the census prints after the landing is therefore right by construction and unwitnessable by the tool
+that prints it - which is why the pair was derived from `53caf96` before the write and the post-landing reading is
+asserted only as a count.
+
+**The blame read is config-dependent, measured on one clean plane.** On the clone, `docs/STATUS.md`'s worktree
+equals its blob (LF, 0 CR, 13,677 lone-LF newlines) while `docs/DECISIONS.md`'s worktree is CRLF-smudged (13,421
+CRLF) against an LF blob - the same repository, two files, two line endings, because the second was checked out
+under `core.autocrlf=true` and the first was restored with it off. Run the identical reader on the identical plane
+with `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.autocrlf GIT_CONFIG_VALUE_0=false` and blame now attributes every
+DECISIONS line to the all-zero not-committed-yet pseudo-commit: `git show <40 zeros>:file` fails, and 230 citations
+- all of them in `docs/DECISIONS.md`, counted from the reader's own rows - move to NO-BASE. EXACT 428 becomes 203,
+NOT-UNIQUE 2 becomes 0, GONE 5 becomes 2, MOVED 1 stays 1, judged stays 436, and the exit code stays 0 in report
+mode. A census whose headline count survives while 230 of its 436 verdicts are decided by a config the reader never
+sets is not a reading of the ledger; it is a reading of the checkout. The file is on this lane's report-only list,
+so this is recorded with its numbers rather than patched. The same config decides what a *diff* of these ledgers
+says, and this landing paid for finding out: on this machine both ledgers are CRLF-smudged against LF blobs
+(`docs/STATUS.md` holds 13,751 CR and 0 lone LF), so `git diff --numstat` reads `74 0` under the repository's own
+`core.autocrlf=true` and `13751 13677` - every line added, every line removed - when the helper forces the flag
+off, which is how the first run of the landing script refused its own correct preflight by reporting a 13,677-line
+deletion. The fix is in the script, not the claim: a working-copy count is read under the checkout's own config,
+and a later `-c` wins on git's command line, which makes that deterministic rather than inherited.
+
+**The row that lands was asked of the tool the repository ships, in its own dry run.**
+`scripts/apply_line_cite_reaim.mjs --selftest` answers 6 of 6 MATCHED including its three range cases; its dry run
+over the one derived row prints `one moved  docs/STATUS.md:2871  IdentityRepository.java:252 -> :319` and
+`1 site line(s) rewritten` and writes nothing (proved by re-reading the file). Commit A then does exactly
+that one line, on HEAD's bytes: digits only (line-with-digits-stripped is byte-identical), character count unmoved,
+line count unmoved at 13,677, no CR, and the whole token appears twice in the ledger so the replacement is
+line-scoped and never global. The `--apply` leg was deliberately not run against this repository: the applier
+`open`s the disk ledger at the site coordinate the reader printed from HEAD, and this disk file is not HEAD's file -
+not in bytes, because the checkout is CRLF-smudged against an LF blob, which is why the splice is asserted
+line-for-line after the endings are normalised rather than as equal bytes.
+
+**The applier writes before it refuses - measured on a throwaway plane, in Temp, never under the repo root.** Feed
+it the two rows the dirty census derives and it refuses the second in both modes:
+`REFUSE docs/STATUS.md:13626 — no citation to IdentityRepository.java:252 on that line, so the row is stale or the
+line moved`, exit 1. In dry-run mode nothing is written. With `--apply`, exit 1 arrives *after* disk line 2871 has
+already been rewritten to `:319` - the `if (apply) writeFileSync` sits inside the per-site loop while the
+`if (refused) return 1` sits after it - so the plane is left half-repaired by a run whose exit code says it refused,
+and a caller that re-runs to "clean up" gets a second refusal with the first repair already in it, which reads like
+a stable failure. This lane owns that file, so the next unit is named rather than described: validate every row
+against its site line before opening any file for write, with one arm proving a refused run writes nothing and one
+proving a clean run writes every row.
+
+**Seven rows are kept, each falsified by moving it, and one attribution in my own unlanded draft is corrected.**
+Four GONE citations name `IdentityRepository.java:106` from inside the 100-versus-106 ambiguity note
+(`docs/STATUS.md:6369`, `:6460`, `docs/DECISIONS.md:6936`, `:8103`); each is the first number of a shorthand
+enumeration written `:106/339/360`, which the grammar judges as one number of a three-number list whose sentence is
+about a count - re-aiming the visible digit would half-repair the list and assert a number the tree contradicts.
+One GONE citation names `MeController.java:122` (`docs/DECISIONS.md:6943`) for a code comment that has been
+rewritten twice since, in a sentence whose subject is the `:106` pointer. Two NOT-UNIQUE rows
+(`docs/DECISIONS.md:13259`, `:13260`) quote coordinates as labels of citation sites: line 106's text there is `/**`,
+matched by six lines (52, 78, 95, 122, 161, 428), and the preference select is matched by two (268, 286), so the
+reader has no number to give and the applier has no row to take. The draft this unit replaces attributed those two
+rows to the collateral paragraph of the previous unit; walking the DECISIONS headings at 0a8b201 puts both lines
+under `## D309`, while the STATUS collateral line they were confused with - `docs/STATUS.md:13626` - does belong to
+`## 305`. D280's rule held for all seven: each is a true record of the run that measured it.
+
+**Readers on the bytes this entry commits, not on the bytes before it.** The landing script puts both appended
+entries on the working copy with their readings slot held open by a token, runs the four ledger-facing gate steps
+against those bytes, and only then fills the slot, so the string below is the reading taken on the final bytes:
+step 16 RESULT: REPORT — 157/157 citations still name the line they were written against (strict=none); step 9 RESULT: PASS — 91 comment-plane citation(s) across 30 file(s), all resolving (step 8 exit 0); step 10 RESULT: PASS — every committed heading is present on disk and no number is claimed twice  (grammar: a heading is `## N. ` in STATUS, `## D N ` in DECISIONS; missing-from-disk or duplicated is the failure; disk-only is printed and allowed, because writing an entry starts there); step 12 wildcard shorthand, not treated as endpoints: /ai/v1/**, /api/v1/**, /api/v1/ai/**, /api/v1/auth/**, /api/v1/me/* / source corpus: 367 files (platform:181, ai:60, web:42, web-lib:58, sdk:26)
+The fill is checked by re-running the two steps that score the ledgers themselves, so the slot could not have moved
+a line count or a citation; the previous lane's template measured these readings before the entry existed and still
+called them final.
+
+**What this does not close.** The widened reader is uncommitted and CI passes no flag, so 301 basename citations
+stay unjudged on every clean-checkout run and the standing `157/157` the gate prints is a number the gate's reader
+arrives at by refusing most of the population. The four NOT-AT-HEAD sites on a clean plane belong to streams whose
+files are not at this ref. The applier and the reader disagree about which plane a site coordinate lives on - this
+landing was safe because line 2871 was asserted byte-identical on disk and at HEAD before either tool ran, not
+because the two agree by design. The EOL/config dependence is a property of any plane with a mixed worktree,
+including this machine's, and it is not fixed by anything in this unit. And the three digits D311 through D313 were
+taken by the gate lane between the measurement above and this landing, so the unit that re-aims the row is numbered
+314, not the number its draft carried.
