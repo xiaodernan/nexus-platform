@@ -103,14 +103,65 @@ public class IdentityRepository {
                 Json.map("id", userId));
     }
 
-    /** §106 erasure: PII columns are nulled/deleted, accounting rows (orders, reservations) are kept. */
-    public void eraseUser(TenantContext tenant, UUID userId) {
-        jdbc.updateForTenant(tenant, """
-                update users
-                set email = null, phone = null, password_hash = null, display_name = 'Deleted user',
-                    avatar_url = null, status = 'deleted', deleted_at = now(), marketing_opt_in = false
-                where id = :id and tenant_id = :tenant_id
-                """, Json.map("id", userId));
+    /**
+     * One entry per column §106 erasure rewrites, in statement order. {@code personal} separates the columns
+     * that carry who the person is from the lifecycle columns the same statement moves.
+     *
+     * <p>Both lists the door publishes ({@link #erasedColumns()}, {@link #piiColumns()}) are read out of this
+     * declaration, and the SQL's {@code set} clause is built from it, so the statement, the audit detail and
+     * the response cannot disagree. They did at HEAD: the audit named four of the eight columns a hand-typed
+     * list next to a hand-typed statement happened to overlap with, and {@code avatar_url} was rewritten
+     * without ever being disclosed (D309).
+     */
+    public record ErasureColumn(String column, String expression, boolean personal) {
+    }
+
+    private static final List<ErasureColumn> ERASURE = List.of(
+            new ErasureColumn("email", "null", true),
+            new ErasureColumn("phone", "null", true),
+            new ErasureColumn("password_hash", "null", true),
+            new ErasureColumn("display_name", "'Deleted user'", true),
+            new ErasureColumn("avatar_url", "null", true),
+            new ErasureColumn("status", "'deleted'", false),
+            new ErasureColumn("deleted_at", "now()", false),
+            new ErasureColumn("marketing_opt_in", "false", false));
+
+    private static final String ERASURE_SET = ERASURE.stream()
+            .map(c -> c.column() + " = " + c.expression())
+            .collect(java.util.stream.Collectors.joining(", "));
+
+    public List<String> erasedColumns() {
+        return ERASURE.stream().map(ErasureColumn::column).toList();
+    }
+
+    public List<String> piiColumns() {
+        return ERASURE.stream().filter(ErasureColumn::personal).map(ErasureColumn::column).toList();
+    }
+
+    /** How many rows each of the two erasure statements wrote. */
+    public record ErasureResult(int userRows, int identityLinksRemoved) {
+    }
+
+    /**
+     * §106 erasure: this person's own identifier columns go, the accounting rows (orders, reservations) stay.
+     *
+     * <p>The identity links are deleted rather than kept: {@code user_identities.user_id} is declared
+     * {@code ON DELETE CASCADE} — the schema already says these rows are the user's — and the soft erase above
+     * means that cascade never fires, so at HEAD the person's email survived the erasure in
+     * {@code provider_id}, which {@code AuthService.register} writes for every password account. Keeping the
+     * row also poisoned the sign-in path: {@code oauth()} resolves a returning subject through that link and
+     * only provisions a new account when no link exists, so an erased person signing in again with a provider
+     * hit the deleted row and got {@code user_not_found} forever, while a re-registration of the same email
+     * had its {@code linkIdentity} swallowed by the {@code on conflict ... do nothing}.
+     */
+    public ErasureResult eraseUser(TenantContext tenant, UUID userId) {
+        int userRows = jdbc.updateForTenant(tenant,
+                "update users set " + ERASURE_SET + " where id = :id and tenant_id = :tenant_id",
+                Json.map("id", userId));
+        int links = jdbc.updateForTenant(tenant,
+                "delete from user_identities where user_id = :id and tenant_id = :tenant_id",
+                Json.map("id", userId));
+        return new ErasureResult(userRows, links);
     }
 
     public List<Map<String, Object>> listUsers(TenantContext tenant, int limit, int offset, String role,

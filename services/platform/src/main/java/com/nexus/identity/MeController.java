@@ -108,18 +108,40 @@ public class MeController {
         return AuthService.userView(tenant, users.requireUser(tenant, userId));
     }
 
-    /** §106: requesting deletion erases PII now and records the request for the retention job. */
+    /**
+     * §106: requesting deletion erases PII now and records the request for the retention job.
+     *
+     * <p>The two column lists come from {@link IdentityRepository}'s erasure declaration, not from a list
+     * typed here, so what the audit signs and what the response promises is what the statement did. The
+     * {@code scope} key and the notice say what this request does <em>not</em> reach: rows in other tables
+     * that copied the person's contact values (a booking's {@code contact}, a notification's payload, an
+     * audit or event row, a saved search's intent) stay where they are, because they are rows about another
+     * record or about the platform's own trail, and the retention workflow that would clear them is still
+     * recorded as {@code todo} in the traceability table's privacy row ({@code docs/TRACEABILITY.md},
+     * requirement 100 — the same workflow {@code docs/DATABASE.md} documents as the §106 data-retention
+     * workflow), with no scheduled job behind it in this build. A response that said "all personal data was
+     * erased" was refuted by the schema census in D309; this one is not.
+     */
     @DeleteMapping
     public Map<String, Object> delete(HttpServletRequest request) {
         TenantContext tenant = Req.tenant(request);
         UUID userId = Req.userId(request);
         users.createDeletionRequest(tenant, userId, "account", Json.map("requested_by", "user"));
-        users.eraseUser(tenant, userId);
+        IdentityRepository.ErasureResult erased = users.eraseUser(tenant, userId);
         audit.record(request, "delete_data", "user", userId, null, null, null,
-                Json.map("kind", "account", "pii_columns", List.of("email", "phone", "password_hash", "display_name")));
+                Json.map("kind", "account",
+                        "pii_columns", users.piiColumns(),
+                        "erased_columns", users.erasedColumns(),
+                        "identity_links_removed", erased.identityLinksRemoved()));
         return Json.map("status", "deleted",
-                "notice", "Personal identifiers were erased. Transaction records are retained for accounting; "
-                        + "a deletion_request row was created for the retention job (§106).");
+                "erased_columns", users.erasedColumns(),
+                "pii_columns", users.piiColumns(),
+                "identity_links_removed", erased.identityLinksRemoved(),
+                "scope", "users_row_and_identity_links",
+                "notice", "Only your own users row and its identity links were erased — see erased_columns."
+                        + " Rows in other tables that copied your contact values, and your transaction records,"
+                        + " are untouched: scope names the boundary. A deletion_request row was filed for the"
+                        + " §106 retention workflow, which no job in this build reads yet.");
     }
 
     /**
@@ -133,9 +155,10 @@ public class MeController {
      * {@code published_by}, {@code author_id}, {@code coupons.created_by}, {@code share_links.created_by}),
      * because those rows are about the refund, the coupon, the moderation case or the published page and
      * the person named in them is the platform's record of who was responsible. The erasure this route
-     * reaches through {@code eraseUser} is one {@code update users} over this row's own PII columns and
-     * nothing else, so another table's actor column survives an erasure by construction; exporting those
-     * signatures would hand another party's accountability record to this person.
+     * reaches through {@code eraseUser} is one {@code update users} over this row's own PII columns plus the
+     * {@code user_identities} links that row owns, and nothing else, so another table's actor column survives
+     * an erasure by construction; exporting those signatures would hand another party's accountability record
+     * to this person.
      *
      * <p>Every list section states its own size in {@code section_sizes}, and the ones read through
      * {@code exportRows} are read with a row cap that the file discloses rather than hides: {@code row_limit}

@@ -13192,3 +13192,97 @@ whole fixture path — migrations, grants, generator, loader — is now measured
 shares, and the only failures on it are the ones the committed commands carry.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217/432
+
+## D309 - the §106 erasure door is walked for the first time: the statement rewrote eight columns, the audit signed four, the response named none, and two identity rows kept the address the account had just been told was erased
+
+At HEAD the token `eraseUser` appears three times in production - its definition in `IdentityRepository`, its one
+call in `MeController.delete`, and one prose sentence in `MeController`'s export javadoc - and nowhere in any test
+file under `services/platform/src/test`. The landing script counts all three at commit time rather than trusting
+this sentence: the first draft of the claim said "twice", which counted only the code sites. The export door's
+D291-shaped failure repeats exactly: the route that answers a person's delete-me request had never been opened
+by anything, and what it promised and what it did were different sentences.
+
+Red-first, measured by putting HEAD's own two production files under the final door test (plane
+`D:/nexus-headplane-r20`, log `nexus-d304-redfirst.log`): 10 collected, 7 red, every one a door cause with its
+own sentence - `responseNamesWhatTheStatementMoved` (the response names the columns it erased: actual empty);
+`auditNamesEveryPersonalCarrier` (the audit signed `email, phone, password_hash, display_name` while five
+columns held planted personal values, `avatar_url` missing); `identityLinksDieWithTheAccount` (expected 2, was 0);
+`erasedSubjectCanSignInAgain` (404 `user_not_found` where a returning subject must be provisioned again);
+`theCopyCensusIsExactlyTheNamedSet` (a copy survived that no exemption names: `user_identities.provider_id`);
+`accountingStaysAndTheJobRowIsFiled` (scope `""` where the response promises `users_row_and_identity_links`);
+`erasedCredentialIsDeadAtTheLoginDoor` (no identity row still carries this address: expected 0, was 1). Three
+were green at HEAD already and stay green for the same reason: the anonymous guard, the neighbour guard, the
+users-row copy. An earlier red-first reading of the same shape is withdrawn: one of its seven was red because
+this file's own register body sent camelCase where the contract binds `display_name` and `accept_terms` (409
+`email_taken`), which is a fixture fault, not a door fault - the seven above are re-measured after that fix.
+
+The fix makes one declaration drive every surface so the three cannot disagree: eight `ErasureColumn` entries
+generate the statement's `set` clause, the audit's `pii_columns` and the response's `erased_columns`; the
+identity links are deleted on both `user_id` and `tenant_id`; and the response carries `scope` and a notice that
+names what the erasure does *not* reach. That last part is the census's contribution: a scan over the catalog's
+own text-family columns reachable from a person (211 columns across 34 of the 58 base tables) finds eight
+carriers of the planted address standing after HEAD's erasure, and this change brings that to the seven the
+exemption table names by reason - the platform's trail, an event, a sent message, an invite filed before any
+account, a merchant's booking, and two rows deferred to the retention sweep that still has no job behind it. A
+response that said all personal data was gone is false against that list, so the door does not say it.
+
+The census's first version was blind in the instructive way: it read `information_schema.columns.data_type`,
+where `users.email`'s citext domain reports `USER-DEFINED`, so a hand-typed spelling list silently excluded the
+one column this door nulls, and the scan declared completeness about a population that could not see its own
+subject. It now resolves `typtype='d'` through `typbasetype` and arrays through `typelem` out of `pg_attribute`,
+reports the population and the marker-hits as two different numbers, and carries a floor assertion naming
+`users.email`, `users.avatar_url`, `user_identities.provider_id` and `reservations.contact` as columns the
+population must contain - so a future narrowing of the scan reddens instead of flattering the door.
+
+Seven mutation arms, all MATCHED on predicted case names: dropping `avatar_url` from the declaration reddens 3
+(`theUsersRowCarriesNoCopy`, `auditNamesEveryPersonalCarrier`, `theCopyCensusIsExactlyTheNamedSet`); hand-writing
+the audit's pii list reddens 1; never deleting the identity links reddens 4; dropping `email` reddens 4; letting
+the statement also delete order rows reddens 1 (`accountingStaysAndTheJobRowIsFiled`); dropping the `user` key
+from the identity delete - the whole-tenant sweep - reddens 1 (`theNeighbourIsNotErased`); hard-coding a stale
+`erased_columns` in the response reddens 2. The first A3 is recorded as no evidence: its replacement appended
+` and false` after the Java literal's closing quote, the compile died, and the harness printed NO JUNIT and
+refused rather than reading a compiler as a red; the corrected arm mutates inside the literal.
+
+Suite delta attributed by name multiset, not arithmetic: 216 tests / 0 red on the clean-HEAD plane
+(`D:/nexus-headplane-r22`), 226 / 0 on the plane carrying these three files (`D:/nexus-headplane-r21`); added
+names are exactly the ten door cases, removed 0, and no case is red on one plane and not the other. Both planes'
+`services/platform` trees are byte-identical to this commit's parent (`git diff --name-only 4dc3881..HEAD --
+services/platform` is empty), so the two totals describe today's HEAD.
+
+Collateral this unit creates, measured rather than smoothed: the third production mention of `eraseUser` is a
+sentence in the export javadoc - "the erasure this route reaches through `eraseUser` is one `update users` over
+this row's own PII columns *and nothing else*" - and the identity-link deletion this unit adds falsifies it while
+the same unit is landing, so it is corrected in that file to name both statements (the update *plus* the
+`user_identities` links that row owns, and still nothing else); a change that edits a behaviour its own comments
+describe is not allowed to leave the comment describing the old behaviour. Separately: the §100-versus-§106
+ambiguity note lists bare
+basenames - `IdentityRepository.java:106/339/360` and `MeController.java:33/111/122/125`, in two STATUS sections
+and two DECISIONS entries - and `docs/STATUS.md` names `IdentityRepository.java:252` in the jsonb census. This
+rewrite ages them: 106 GONE (the one-line javadoc it replaces), 252 MOVED to 303, 339 MOVED to 390, 360 still
+exact, MeController 33 exact, 111 GONE, 122 GONE (the notice sentence it quotes is rewritten), 125 now matching
+three lines. No gate reddens on any of it, because `scripts/check_line_cite_drift.mjs` resolves only paths
+spelled from the repository root and reports those sites in its own UNPATHED class - and a refusal is not a
+clean verdict, so the seven numbers are written here and the repair is named: one clause in that note recording
+that D309 deleted three of the carriers it lists. Not folded into this commit, because those sites are settled
+prose another lane wrote and this landing's proof is a byte-prefix append; a commit that both appends and
+rewrites settled lines has no cheap proof of either.
+
+Report-only, in files this lane does not own: `docs/API_CONTRACT.md`'s `DELETE /api/v1/me` row still names none
+of the three keys this door now publishes; an erased user's un-expired access token continues to authenticate
+until its own lifetime ends; and no job anywhere reads the `deletion_requests` rows the door files, which the
+notice now says so instead of implying a sweep.
+
+- numbering: claimed five times. Measured against 53caf96, then 45f3846 took D293/§286 and 4dc3881 took
+  D294/§287; while the arms and the two suite planes were running the same stream landed through D308
+  and §301 and had §303 drafted in the working copy without a commit behind it. So a number free
+  at HEAD is not free on disk, and claiming HEAD's next would have written two sections under one heading in
+  the file the section reader guards: this entry's numbers are the first free over both planes, computed at
+  commit time, and the append script refuses if HEAD moves between computing them and committing. The three
+  self-citation tokens inside the Java files moved with the number, and the script's own first attempt is on
+  the record too: it replaced every `D###` token it found and rewrote a neighbour's `D282` in `MeController`'s
+  export comment along with them - the total-count assertion caught it before anything was staged, and the
+  token list is now this unit's own spellings only.
+
+- readers, measured by this landing's own script on the working tree at the final bytes immediately before the
+  commit (log `nexus-d305-land-readers.log`), not remembered from an earlier run: step 16 REPORT — 157/157 citations still name the line they were written against (strict=none); step 9 PASS — 91 comment-plane citation(s) across 30 file(s), all resolving (step 8 exit 0); step 10 PASS — every committed heading is present on disk and no number is claimed twice  (grammar: a heading is `## N. ` in STATUS, `## D N ` in DECISIONS; missing-from-disk or duplicated is the failure; disk-only is printed and allowed, because writing an entry starts there); step 12 wildcard shorthand, not treated as endpoints: /ai/v1/**, /api/v1/**, /api/v1/ai/**, /api/v1/auth/**, /api/v1/me/* / source corpus: 366 files (platform:180, ai:60, web:42, web-lib:58, sdk:26).
+
