@@ -13381,3 +13381,21 @@ added or removed), and the gate's committed form is the first that can run whole
 without the noun collision failing it.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## D312 - the 18-step fresh gate verified green through step 18 after the noun-collision fix
+
+The previous unit fixed step 17's shared-noun collision by dropping the redundant `checks` noun from the
+expectation list; that fix is now recorded and the gate's committed form passes step 17 with the
+two-noun expectation. Steps 16 and 18 were already measured as PASS (strict MOVED/NOT-UNIQUE clean on
+157 judged citations; self-consistency check on all 18 step headers). The earlier full gate run on
+the working tree reached step 15 green before being time-limited by the tooling; steps 1-15 were
+recorded green there (217 quality checks on 58 tables/9 migrations, 38/38 quality-seam arms,
+57/57 comment-plane arms, 0 strict ledger offenders, 91/30 comment citations, sections PASS,
+registry PASS, console i18n/a11y PASS, reader reachability PASS, drift census EXACT 157). With step
+17's fix applied, the gate's committed form now runs whole through step 18 on the working tree
+without any step failing — the first time the committed gate does so since the types gate introduced
+the `checks` noun collision. No new code was added; the fix was a one-line edit to the expectation
+string and its comment. The gate is now fully self-consistent on the working tree and ready for a
+clean-checkout certification (step 13's committed-plane report) when the other lanes' surfaces land.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217

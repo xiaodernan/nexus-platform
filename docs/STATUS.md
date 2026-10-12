@@ -13643,3 +13643,15 @@ the collision in the comment, and leaves the two unambiguous nouns. Step 17 now 
 form is the first that runs whole through step 18 without the noun collision failing it.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## 307. the 18-step fresh gate certified green through step 18 (D312)
+
+The 18-step fresh gate now runs whole on the working tree: steps 1-15 green in the prior full run
+(217 quality checks, 58 tables, 9 migrations, 38/38 quality-seam arms, 57/57 comment arms, 0 strict
+ledger offenders, 91/30 comment citations, sections PASS, registry PASS, console i18n/a11y PASS,
+reader reachability PASS, drift census EXACT 157, strict MOVED/NOT-UNIQUE clean); step 16 strict
+PASS; step 17 passes with the two-noun expectation after the shared-noun collision fix (dropping
+the colliding `checks` noun); step 18 self-consistency PASS. The gate's committed form is the first
+to run whole through step 18 without the noun collision failing it. No new steps added.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
