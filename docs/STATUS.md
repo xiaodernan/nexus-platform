@@ -13655,3 +13655,23 @@ the colliding `checks` noun); step 18 self-consistency PASS. The gate's committe
 to run whole through step 18 without the noun collision failing it. No new steps added.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## 308. cross-lane open items snapshot (D313)
+
+Six cross-lane open items catalogued as a standing snapshot:
+
+1. CI e2e seed step form rejected: the committed workflow invokes `python data/seed/generate.py --counts merchants=80,offerings=600,reviews=1200` but the generator at this commit only accepts `full`, `ci`, `smoke` as presets (argparse rejects the expression). Fix belongs to `.github/workflows/ci.yml` (other lane's dirty file). Closest valid form `--counts ci` measured and produces consistent 120-merchant dataset.
+
+2. Console falsifier crashes instead of refusing: `falsify_console_a11y.mjs` crashes with ENOENT on absent `apps/web/app` on clean checkout; sibling checkers honestly refuse. File is dirty (other lane's WIP).
+
+3. Contract-drift false positive: `check_contract_drift.mjs` flags `/api/v1/share/ZZZZZZZZZZ` as UNDOCUMENTED; source is a test (`a test file in the commerce stream-88`) asserting 404 for a random slug. Checker's corpus includes tests; file dirty; remedy is corpus boundary or exemption.
+
+4. JSONB false site on OrderRepository: quality.sql answer for `orders.metadata.session_id` cites `OrderRepository.java` absent at HEAD (commerce stream's WIP). False-site class reproduced on clean checkout; resolves when that stream lands.
+
+5. Console i18n/a11y readers not in CI: `check_console_i18n.mjs` and `check_console_a11y.mjs` pass on working tree but have no CI step. CI comment promises "Hard-fail: 7 arms" for absent steps.
+
+5. Blank-line cites backlog: 8 at HEAD (D161 backlog), counted not judged on real ledgers.
+
+All items owned by other lanes' uncommitted surfaces or standing backlogs. Snapshot recorded for next session.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217

@@ -13399,3 +13399,23 @@ string and its comment. The gate is now fully self-consistent on the working tre
 clean-checkout certification (step 13's committed-plane report) when the other lanes' surfaces land.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## D313 - cross-lane open items snapshot: the seed-form defect, the console falsifier crash, the contract-drift false positive, and the jsonb false site remain owned by other lanes' dirty surfaces
+
+The last several units fixed the gate's noun collision (D311/D312) and completed the seed path measurement (D307/D308). The cross-lane open items are now catalogued here so the next session inherits a measured snapshot.
+
+1. CI e2e seed step form rejected: the committed workflow invokes `python data/seed/generate.py --counts merchants=80,offerings=600,reviews=1200` but the generator at this commit only accepts `full`, `ci`, `smoke` as presets. The step fails at argparse (exit 2). The fix is in the workflow file (`.github/workflows/ci.yml`), which carries another stream's uncommitted work. Recorded in D308; the closest valid form (`--counts ci`) was measured and produces a consistent 120-merchant dataset.
+
+2. Console falsifier crashes instead of refusing: `falsify_console_a11y.mjs` crashes with ENOENT on the absent `apps/web/app` directory on a clean checkout, while its sibling checkers (`check_console_i18n.mjs`, `check_console_a11y.mjs`) honestly refuse. The falsifier is dirty (other lane's uncommitted work); the fix belongs to that lane.
+
+3. Contract-drift false positive on share probe: `check_contract_drift.mjs` reports `/api/v1/share/ZZZZZZZZZZ` as UNDOCUMENTED, but the source is a test (`a test file in the commerce stream`) asserting a 404 for a random slug. The checker's corpus includes test sources. The file is dirty; the remedy is a corpus boundary or exemption in that lane.
+
+4. JSONB census false site on OrderRepository: the quality.sql answer for `orders.metadata.session_id` cites `OrderRepository.java` which is absent at HEAD (commerce stream's in-flight work). The false-site class is reproduced on every clean checkout. Resolves when that stream lands its repository.
+
+5. Console i18n/a11y readers not in CI: the committed workflow has no step for `check_console_i18n.mjs` or `check_console_a11y.mjs`, though both pass on the working tree (31 pages, 13/13 accessibility arms). The CI comment mentions "Hard-fail: 7 arms" but those steps are absent. Recorded in D306 step 14.
+
+6. Blank-line cites backlog: 8 blank-line citations at HEAD (D161's backlog), counted but not judged on real ledgers per D161/D162. Not actionable until a section containing one is written.
+
+All six items are owned by other lanes' uncommitted surfaces or are standing backlogs. This snapshot records their status so the next measurement starts from ground truth.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
