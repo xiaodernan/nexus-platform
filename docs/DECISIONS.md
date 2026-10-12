@@ -13537,3 +13537,130 @@ because the two agree by design. The EOL/config dependence is a property of any 
 including this machine's, and it is not fixed by anything in this unit. And the three digits D311 through D313 were
 taken by the gate lane between the measurement above and this landing, so the unit that re-aims the row is numbered
 314, not the number its draft carried.
+
+## D315 - the applier that half-repaired a ledger and called it a refusal now reads every site before it opens one for write; seven arms hold the new shape, one of them reddened a case my prediction had left out, and the control that appeared to agree had crashed on its own import
+
+**Why this unit exists.** D314 measured a defect in `scripts/apply_line_cite_reaim.mjs` and named this unit with its
+two arms rather than describing it: `if (apply) writeFileSync` sat inside the per-site loop while
+`if (refused) return 1` sat after it, so a run fed one good row and one stale row repaired the good site on disk and
+still exited 1. A caller that re-ran to clean up got a second refusal with the first repair already in it, which reads
+like a stable failure. This lane owns that file, so the fix, the arms, and the landing are all here.
+
+**What the file does now.** `planJobs` (`scripts/apply_line_cite_reaim.mjs:53`, the line reads
+`export function planJobs(rows) {`) reads every site file and validates every row, and writes nothing: it splits each
+site token at the LAST colon, because a site is `ledger:line` and reading the whole token as a path is what crashed
+the first real run; it refuses a non-positive line number, a site file it cannot read (with `err.code`, so ENOENT is
+named rather than thrown), a line past the file's own end, and a row whose `from` number is not on the line it names.
+`reaim` (`:106`, `export function reaim(rows, apply) {`) is the only path that reaches `writeFileSync` (`:114`) and it
+reaches it only after the refusals list is known empty (`:109`). The RESULT line for a refusal now carries both
+halves of the truth - `1 row(s) unmatched, 1 validated row(s) planned and 0 written` - because a refusal that reports
+zero work done while silently holding one validated row is the lie this unit exists to stop. HEAD's 7,244 bytes became
+15,939 at 271 newline-terminated lines (`wc -l`; a `split('\n')` count says 272 because its last field is empty), LF,
+no CR; the three flags `--rows`, `--apply`, `--selftest` and the shared `parseFlags` import
+are unchanged, so the flag dialect gate has nothing new to charge.
+
+**The old selftest could not see the seam, so the new cases drive the real entry point.** Six cases became 13, measured
+`RESULT: PASS — 13 selftest case(s), 0 mismatch(es)` on the file as it commits: the five `shiftCitation` cases and the
+one refuse case stay, and seven new cases call `reaim` through files on a throwaway plane under the system temp dir.
+That difference is the unit: the shipped defect lived in the ordering of a loop that no old case ever entered, because
+each old case handed `shiftCitation` a line it had already built in memory. A case that skips a seam cannot redd an a
+change at that seam, which is why the plane cases assert exit code, exact bytes, and now a third thing.
+
+**A refusal has to name its reason, because exit 1 and unchanged bytes describe every refusal alike.** The arm that
+taught me this is A4: delete the past-EOF guard (`:84`, `if (lnRaw > lines.length) {`) and leave the `?? ''` fallback on
+the shift call. The run still exits 1, still writes nothing, and the case that claims to test that guard still reads
+green - because the missing line became an empty string, the citation was not found on it, and the *stale-row* message
+answered instead of the past-EOF one. So each refusing case now carries a `wantRefusal` sentence it demands from the
+captured output (`:244`, `const reasonOk = ...`), and the case for a line past the end insists on
+`the file holds 2 line(s), so there is no line 9`. Without that pin, A4 was an invisible mutation; with it, A4 reddens
+two cases and A4b - guard and fallback both gone - reddens the same two through `exit threw` rather than a wrong
+reason. Two arms, one case pair, two different mechanisms: that is what shows the belt is there and is not one clause's
+copy of another.
+
+**Line endings have two preserving mechanisms and only one of them is falsifiable, measured by forcing each.**
+`split` and `join` with the same separator are an exact inverse, so for a uniform file the read-side detection at
+`:82` (`const eol = text.includes('\r\n') ? '\r\n' : '\n';`) has no observable effect at all: arm A6, which pins it to
+`'\n'`, leaves every uniform case green, the CRLF case included, because the pieces keep their own carriage returns and
+the join puts them back exactly. What detection does decide is the line COUNT of a file carrying both spellings, so a
+case for that was added (`:215`) and A6 reddens precisely and only it. The write side is independently load-bearing:
+arm A3 replaces `j.lines.join(j.eol)` with a literal LF and reddens `a CRLF ledger comes back CRLF` and nothing else.
+Arm A5 pins detection to CRLF and reddens three, because every LF ledger collapses to one line and its rows become
+past-EOF refusals with different sentences. I am recording that one branch of a two-branch expression cannot be
+falsified through the uniform fixtures, rather than leaving the reader to assume both branches carry weight.
+
+**Seven arms, one control, all on throwaway planes.** The control is the unmutated copy in the same harness, and it
+must read 13 cases / 0 mismatch before any arm's red means anything. Each arm below is a splice into a copy under
+Temp, prefighted at exactly one needle hit, `node --check`ed, then its selftest is run; the prediction is the exact
+set of case names that must read MISMATCH, plus the shape of the red - an arm that reddens the right case through a
+different mechanism is not measuring this arm. Measured: A1 (write moved back above the refusal check) 1 case, the
+refused-run case, through `1 file(s) differ`; A2 (write loop no-oped) 2 cases, both promising written bytes; A3 1
+case, the CRLF one; A4 2 cases by reason; A4b the same 2 by `exit threw`; A5 3 cases; A6 1 case, the mixed one.
+**My prediction missed one name and it is recorded, not widened:** I wrote A4 and A4b down as reddening only the
+past-EOF case, having derived the arm against that fixture alone. The mixed-ending case reddened too, because its
+refusal is the same sentence from the same clause - one guard, two charges. Two more construction faults were found
+and fixed in the harness rather than in the code: the battery's first run compared the wrong capture group (the case
+count for the mismatch count), so it printed a disagreement for every arm whose reddened names it had just listed as
+identical; and the arms must not be run concurrently, because each spins its own temp plane and shares nothing.
+
+**The applier still does its job, on real ledger bytes, at the last ref that needed it done.** `0a8b201` is commit A's
+parent and the newest ref whose `docs/STATUS.md` still carries the stale digit. A clone there, supplied with the
+working copy's widened reader (25,532 bytes) and the new applier, reads its own census: EXACT 428, MOVED 1, one derived
+row `docs/STATUS.md:2871 IdentityRepository.java 252 -> 319`. Dry run exits 0 with the ledger hash unchanged and prints
+`RESULT: DRY RUN — 1 site line(s) rewritten`; `--apply` exits 0, numstat `1 1 docs/STATUS.md`, and the diff is the one
+digit inside a three-line-each hunk at 2868. The re-census on that plane reads MOVED 0, NO-BASE 1, EXACT 428 - unchanged
+- which is D314's plane property re-measured at a second ref, so it is a property of the reader and not an accident of
+one run: blame resolves the repaired line to the not-yet-committed pseudo-commit, so no reader can credit a fix it has
+not committed, and a repair moves out of MOVED into NO-BASE while no count rises.
+
+**The refactor changes the failure path and nothing else, shown by identical bytes.** Plane E is a second clone of the
+same ref, fed the same row list, running HEAD's committed 7,244-byte applier. Both runs exit 0, both print
+`APPLIED — 1 site line(s)`, and the two `docs/STATUS.md` files are byte-identical afterwards (`sha256/16`
+`2e405eeaf7d7aee6` on both). Validation moved earlier in the run; what a clean run writes did not move.
+
+**The half-repair, reproduced as a control against the fix, on identical fixture bytes.** One 3-line ledger, two rows:
+the first valid against its site line, the second naming a number that is not there. HEAD's committed bytes: exit 1,
+`RESULT: REFUSED — 1 row(s) unmatched, 1 applied`, and the ledger left holding `x.py:200` where it was found holding
+`x.py:100` - repaired and refused in the same run. The new bytes: the same exit 1,
+`RESULT: REFUSED — 1 row(s) unmatched, 1 validated row(s) planned and 0 written`, and the ledger byte-identical to the
+fixture. Same verdict, same exit code, opposite disk. That pair, not prose, is the claim.
+
+**The control that appeared to agree had crashed for a reason that had nothing to do with the applier.** The first
+version of this leg ran HEAD's committed applier from a copy sitting alone in Temp, and it died with
+`ERR_MODULE_NOT_FOUND` on its own `./cli_args.mjs` import. Exit 1, nothing written - observable-identical to a clean
+refusal, and one reading away from the sentence "the old and new shapes agree on a single invalid row", which would
+have been a fact about an import path. The control was rebuilt to give the committed bytes a real `scripts/` directory
+with its two imports beside it; it then refused for the stated reason
+(`REFUSE …:13626 — no citation to IdentityRepository.java:252 on that line`) and left the copy untouched, and the
+agreement is now worth what it claims: a single invalid row plans no write in either shape, which is exactly why the
+distinguishing input is a valid row and an invalid row in one run.
+
+**Two readings of one row, and the difference is the plane, not the ledger.** At 0f485f5cf22dd981abcf408c1fb1a1f632c6ca9a on a clean clone the
+widened census reads EXACT 445, MOVED 0, and derives zero rows; on this machine's dirty tree it reads EXACT 442,
+MOVED 1, GONE 7, and derives one row - `docs/STATUS.md:13626 IdentityRepository.java 252 -> 319` - with
+`445 - 3 = 442` closing on the single line D314 named. Measured further, and this is the part worth the sentence: that
+row's site line *does* hold the citation it names in `0a8b201`'s clean bytes. So the identical row is an honest repair
+on one plane and a stale-coordinate refusal on another, and the applier cannot tell which from the row alone - it is
+task #138's coordinate mix, seen from the writer's end. This unit does not touch the reader; it is report-only in this
+lane, and the refusal behaviour above is what keeps the mix from writing a wrong digit.
+
+**Two ledger sentences this unit ages, and neither is re-aimed.** `docs/DECISIONS.md:13488` and the `## 310`
+re-aim bullet in `docs/STATUS.md` both report `--selftest` answering 6 of 6 MATCHED. That was the file's own count at
+the time and it is a true record of the run that printed it, which is D280's rule; the command now answers 13 of 13 on
+the same file path. No digit in either sentence is a line citation into code, so nothing moves and no row is derived -
+the drift census at 0f485f5cf22dd981abcf408c1fb1a1f632c6ca9a confirms it by printing zero.
+
+**What this does not close.** No CI job and no gate step invokes this applier or its selftest: searching the filename
+across `.github/workflows/ci.yml`, `Makefile` and `scripts/*.sh` finds nothing but the two ledger sentences above,
+while the same gate does run one reader's self-test today (step 11, `data/seed/falsifier_plants.py --self-test`, the
+seam D151 proved can stop the gate). So this fix is guarded by the arms in this entry and by nothing upstream of it,
+and the next unit is named rather than described: forward `node scripts/apply_line_cite_reaim.mjs --selftest` as a
+gate step, with one arm proving a gate dies when the selftest rc is nonzero. That edit belongs to `scripts/db_gate_fresh.sh`,
+which the gate lane has been holding (D311 through D313), so it is handed here and not taken. Also still open: the
+reader's coordinate mix (#138), the 22 UNPATHED sites and the 301 basename citations no committed reader judges, the
+two NOT-UNIQUE and five GONE rows D314 ruled to keep, and the fact that `planJobs` reads whole site files into memory
+per site token, which is fine at 13,677 lines and would not be at a ledger two orders larger.
+
+**The number was claimed for this unit by the slots in these two entries.** At the asserted parent the ledgers reached
+D314 and STATUS 310 while the working copies already carried other streams' drafts, so the claim is free
+over both planes and is 315. step 16 RESULT: REPORT — 157/157 citations still name the line they were written against (strict=none); step 9 RESULT: PASS — 91 comment-plane citation(s) across 30 file(s), all resolving (step 8 exit 0); step 10 RESULT: PASS — every committed heading is present on disk and no number is claimed twice  (grammar: a heading is `## N. ` in STATUS, `## D N ` in DECISIONS; missing-from-disk or duplicated is the failure; disk-only is printed and allowed, because writing an entry starts there); step 12 wildcard shorthand, not treated as endpoints: /ai/v1/**, /api/v1/**, /api/v1/ai/**, /api/v1/auth/**, /api/v1/me/* / source corpus: 367 files (platform:181, ai:60, web:42, web-lib:58, sdk:26); applier --selftest RESULT: PASS — 13 selftest case(s), 0 mismatch(es) - measured by the landing script on the working tree at the final bytes,
+immediately before the commit, not remembered from an earlier run; STATUS 311 not 310; nothing pushed.
