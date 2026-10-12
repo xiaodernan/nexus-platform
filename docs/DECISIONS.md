@@ -13286,3 +13286,80 @@ notice now says so instead of implying a sweep.
 - readers, measured by this landing's own script on the working tree at the final bytes immediately before the
   commit (log `nexus-d305-land-readers.log`), not remembered from an earlier run: step 16 REPORT — 157/157 citations still name the line they were written against (strict=none); step 9 PASS — 91 comment-plane citation(s) across 30 file(s), all resolving (step 8 exit 0); step 10 PASS — every committed heading is present on disk and no number is claimed twice  (grammar: a heading is `## N. ` in STATUS, `## D N ` in DECISIONS; missing-from-disk or duplicated is the failure; disk-only is printed and allowed, because writing an entry starts there); step 12 wildcard shorthand, not treated as endpoints: /ai/v1/**, /api/v1/**, /api/v1/ai/**, /api/v1/auth/**, /api/v1/me/* / source corpus: 366 files (platform:180, ai:60, web:42, web-lib:58, sdk:26).
 
+
+## D310 - the erased account whose token still answers: the lifecycle guard selected the row and threw the answer away, and `PATCH /api/v1/me` decided the subject's fate before establishing that the subject existed
+
+`IdentityRepository.requireUserInTenant` is the lifecycle guard for every child table that hangs off a person
+rather than carrying a `tenant_id` of its own — `user_preferences`, `favorites`, `saved_searches`,
+`deletion_requests`. At HEAD its body was one statement: `jdbc.crossTenant("select 1 as ok from users u where
+u.id = :id and u.tenant_id = :tenant_id and u.status = 'active'", ...)`. `TenantJdbc.crossTenant` returns the
+rows; the method returned `void` and kept nothing, so the `status = 'active'` predicate — the whole reason the
+method exists — decided nothing. Seven call sites depended on it, two of them (`upsertPreference`,
+`createDeletionRequest`) commented in the present tense that the anchor had been verified. The landing script
+re-reads HEAD's bytes for all four claims at commit time rather than trusting this paragraph.
+
+Measured, not argued: a throwaway probe (`ErasedTokenProbeTest`, plane-only, never committed) planted a full-PII
+consumer with a workspace membership and grants, erased the account over HTTP, and kept using the access token,
+which the contract's §3 `logout` row says stays valid until its own `exp` because no request path consults
+revocation state. Sixteen legs, logged at `nexus-d310-probe.log`. `PATCH /api/v1/me` answered `404
+user_not_found` **and wrote anyway**: the row came back carrying a display name, a phone number and an avatar
+URL, three of the eight columns the erasure had just cleared. The replayed `DELETE /api/v1/me` answered the full
+`200` delete payload, which that controller files only after its `deletion_requests` insert and its
+`delete_data` audit row. `POST /api/v1/me/favorites` answered `200 saved`. A preference-write leg answered
+`422 validation_error` and was **withdrawn** from the count: its `kind` was `probe`, which the published
+validation pattern refuses, so it proved nothing about the lifecycle door — the door test plants `kind='food'`
+and carries that claim instead.
+
+`GET /api/v1/me` and `GET /api/v1/me/export` answered `404` because they read the `users` row. The child reads
+did not: `GET /api/v1/me/preferences` answered `200` and served the erased address itself out of a preference
+payload, and `/me/orders` and `/me/favorites` answered `200`. The merchant seam kept writing too — an erased
+staff member filed an offering (`201`, taking that merchant's offerings from 1 to 2) and pulled a full merchant
+export — because `merchant_users` and its `permission_grants` rows survive the erasure by construction, which is
+a §106 boundary question, not a guard bug. The refresh exchange refused with `404 user_not_found` while
+`TokenRegistry.familyKnown(sid)` stayed true: the erasure files no session revocation at all, and the family is
+inert only because the account read behind the exchange is gone.
+
+Red-first, HEAD's own two production files under the final door test (plane `D:/nexus-headplane-r23`, log
+`nexus-d310-redfirst.log`): 9 collected, 7 red, 2 green, every red naming its door cause —
+`theGuardActuallyLooks` (nothing thrown for an erased anchor), `preferenceWriteIsRefusedAndFilesNothing` (the
+response was the filed row), `favoriteWriteIsRefusedAndFilesNothing` (`200 saved`, a row appeared),
+`savedSearchIsRefusedAndFilesNothing` (a row appeared), `resetPersonalizationIsRefusedAndTakesNothing`
+(`removed_inferred_preferences: 1` — a refused request that was not inert), `theSecondEraseDoesNothing` (the
+full delete payload again), `profileWriteCannotResurrectAnErasedRow` (a 404 that put a name back). The two green
+at HEAD are the control case and the session-family case, whose behaviour this unit deliberately documents
+rather than changes.
+
+Three edits close the write path and leave the token window exactly as the contract rules it: the guard reads
+its own result through `crossTenantFirst` and refuses with `user_not_found`, the same code the row read uses;
+`updateProfile`'s `WHERE` gains `and u.deleted_at is null`, the statement's own lifecycle predicate rather than
+a copy of the door's read; `MeController.patch` establishes its subject before it writes, so the answer and the
+effect agree and the `update_profile` audit row is filed only for a write that was attempted in order. The
+window's reads, the surviving memberships and the absent session revocation are recorded above as measured
+residue, not silently widened: severing a workspace membership on erasure is a contract decision about which
+rows a person's delete-me request reaches, and the files that would carry it are not this lane's to edit.
+
+Three arms, three MATCHED on case names (plane `D:/nexus-headplane-r25`, log `nexus-d310-arms.log`), each
+predicted before it ran. Arm A puts HEAD's inert guard back: 6 red — the five write doors plus
+`theSecondEraseDoesNothing` — and notably **not** `profileWriteCannotResurrectAnErasedRow`, whose refusal comes
+from the controller's read, not from this guard. Arm B deletes the SQL lifecycle term: 1 red,
+`profileWriteCannotResurrectAnErasedRow`, caught at the repository seam where the test calls
+`updateProfile` directly and requires 0 rows. Arm C puts HEAD's read-after-write order back while leaving
+Arm B's term in place: 1 red, the same case name but the audit-row clause — the write lands nothing and the
+`update_profile` row is filed anyway. B and C striking one case at two different assertions is what shows the
+two layers are not each other's copy; a belt that no arm can miss is a belt that is not there.
+
+Suite attributed by case-name multiset across two fresh archives of `db09e8d` (planes `r24` and `r25`, logs
+`nexus-d310-baseline.log` and `nexus-d310-fixed.log`, multisets in `nexus-d310-suite-multiset.json`): baseline
+226 collected, 0 red, 46 report files; fixed 235 collected, 0 red, 47; added names exactly the nine door cases,
+removed 0, no case red on one plane only. The first run of this driver was discarded for a construction fault,
+not a code red: the planes were extracted into `services/platform` instead of the plane root, so the fixed
+plane's `mvn` never found a pom and the copy step died naming a path that did not exist.
+
+Collateral, measured the same way D309 measured its own: 13 live basename citations in the two ledgers name a
+line in the files this unit edited. Six change state — the five sites citing `IdentityRepository.java:106` go
+from 6 to 7 identical matches, and the one site citing `MeController.java:122` moves to 127 — and
+seven are unchanged (`MeController.java:33` exact on both planes at five sites, `IdentityRepository.java:252`
+already 2-of-2 on both). `check_line_cite_drift.mjs` still cannot see any of them, because it resolves only
+repo-root paths: it reproduces its standing 157/157 with the four NOT-AT-HEAD sites belonging to other streams,
+so the aged sites are recorded here and repaired in the next unit, which must re-enumerate them before
+re-aiming because these two files just moved again.

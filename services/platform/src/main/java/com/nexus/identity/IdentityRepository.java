@@ -77,13 +77,29 @@ public class IdentityRepository {
 
     /**
      * Defense in depth for tables keyed only by {@code user_id} (preferences, favorites, saved
-     * searches): the caller's tenant is verified before any cross-tenant-shaped insert runs.
+     * searches, deletion requests): the caller's account is verified live before any cross-tenant-shaped
+     * statement runs.
+     *
+     * <p>Until D310 the verification was inert. This method called {@link TenantJdbc#crossTenant}, which
+     * returns the rows, and threw the {@code List} away — so the {@code status = 'active'} predicate decided
+     * nothing, and an erased subject whose access token had not yet expired passed the guard it existed to
+     * refuse and filed rows on the account the platform had just erased. Reading the result is the whole fix.
      */
     public void requireUserInTenant(TenantContext tenant, UUID userId) {
-        jdbc.crossTenant("select 1 as ok from users u where u.id = :id and u.tenant_id = :tenant_id and u.status = 'active'",
-                Json.map("id", userId, "tenant_id", tenant.tenantId()));
+        jdbc.crossTenantFirst("select 1 as ok from users u where u.id = :id and u.tenant_id = :tenant_id"
+                        + " and u.status = 'active'",
+                Json.map("id", userId, "tenant_id", tenant.tenantId()))
+                .orElseThrow(() -> ApiException.notFound("user_not_found", "No such user"));
     }
 
+    /**
+     * The row's own PII columns, for a live subject. {@code deleted_at is null} is the statement's own
+     * lifecycle predicate, not a copy of the door's read: {@code PATCH /api/v1/me} used to update the row,
+     * file its audit row and only then read the user back — which answered {@code 404 user_not_found} for a
+     * write that had landed, putting a display name, a phone and an avatar URL back onto a row the person had
+     * just erased (D310). The controller reads its subject first so the answer matches the effect; this
+     * predicate keeps a future caller that forgets that read from resurrecting an erased row at all.
+     */
     public int updateProfile(TenantContext tenant, UUID userId, String displayName, String locale, String avatarUrl,
                             Boolean marketingOptIn, String phone) {
         return jdbc.updateForTenant(tenant, """
@@ -93,7 +109,7 @@ public class IdentityRepository {
                     avatar_url     = coalesce(cast(:avatar_url as text), avatar_url),
                     phone          = coalesce(cast(:phone as text), phone),
                     marketing_opt_in = coalesce(cast(:marketing_opt_in as boolean), marketing_opt_in)
-                where u.id = :id and u.tenant_id = :tenant_id
+                where u.id = :id and u.tenant_id = :tenant_id and u.deleted_at is null
                 """, Json.map("id", userId, "display_name", displayName, "locale", locale, "avatar_url", avatarUrl,
                 "phone", phone, "marketing_opt_in", marketingOptIn));
     }

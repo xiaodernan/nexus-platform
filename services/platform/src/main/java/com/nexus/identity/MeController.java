@@ -101,6 +101,11 @@ public class MeController {
     public Map<String, Object> patch(@Valid @RequestBody ProfilePatch body, HttpServletRequest request) {
         TenantContext tenant = Req.tenant(request);
         UUID userId = Req.userId(request);
+        // The subject is established before the door decides its fate (D310). HEAD wrote the row, filed its
+        // audit row, and only then read the user back to build the response — so an erased account whose
+        // access token had not expired received {@code 404 user_not_found} for a request that had already put
+        // a display name, a phone number and an avatar URL back onto the row the person had just erased.
+        users.requireUser(tenant, userId);
         users.updateProfile(tenant, userId, body.displayName(), body.locale(), body.avatarUrl(),
                 body.marketingOptIn(), body.phone());
         audit.record(request, "update_profile", "user", userId, null, null, null, Json.map("fields",
