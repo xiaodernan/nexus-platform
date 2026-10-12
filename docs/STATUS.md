@@ -13627,3 +13627,19 @@ plane             Measured in `D:/nexus-headplane-r20` (HEAD's two identity file
 - readers         step 16 REPORT — 157/157 citations still name the line they were written against (strict=none); step 9 PASS — 91 comment-plane citation(s) across 30 file(s), all resolving (step 8 exit 0); step 10 PASS — every committed heading is present on disk and no number is claimed twice  (grammar: a heading is `## N. ` in STATUS, `## D N ` in DECISIONS; missing-from-disk or duplicated is the failure; disk-only is printed and allowed, because writing an entry starts there); step 12 wildcard shorthand, not treated as endpoints: /ai/v1/**, /api/v1/**, /api/v1/ai/**, /api/v1/auth/**, /api/v1/me/* / source corpus: 367 files (platform:181, ai:60, web:42, web-lib:58, sdk:26) - measured by the landing script on the working tree at the final bytes, immediately before the commit, not remembered from an earlier run
 
 plane             Measured in `D:/nexus-headplane-r23` (the parent's two production files planted for red-first), attributed across `D:/nexus-headplane-r24` (baseline archive) and `D:/nexus-headplane-r25` (this unit's three files, the control gate and all three arms), siblings of the repo root and never under it; logs at `C:/Users/18414/AppData/Local/Temp/nexus-{d310-probe,d310-redfirst,d310-green,d310-control,d310-baseline,d310-fixed,d310-arms,d310-arm-A-inert-guard,d310-arm-B-no-lifecycle-term,d310-arm-C-read-after-write}.log`, multiset at `nexus-d310-suite-multiset.json`, readers run from the working tree; the test database `nexus_test` was read and written only through the harness's own tenant-scoped fixtures and the throwaway probe's own planted account, and neither live demo database was opened
+
+## 306. the 18-step fresh gate's step 17 fixed the shared-noun collision (D311)
+
+The 18-step fresh gate ran green through step 16 on the working tree: 217 quality checks on a
+from-scratch schema, 58 tables, 9 migrations, 38/38 quality-seam arms, 57/57 comment arms,
+0 strict ledger offenders, 91/30 comment citations, sections PASS, registry PASS, 157 exact
+line-cite drifts, strict MOVED/NOT-UNIQUE clean. At step 17 the gate failed: its expectation
+listed three nouns (quality checks, assertions, checks), but the shared noun `checks` now
+carries a second gate's count (432 from the types package), so the newest claim disagreed
+with the gate's measured 217. The fix drops the redundant `checks` noun from the expectation
+(listed in the script as `EXPECT="quality checks=${CHECKS},assertions=${CHECKS}"`), records
+the collision in the comment, and leaves the two unambiguous nouns. Step 17 now passes, step
+18's self-consistency check still passes (no steps added or removed). The gate's committed
+form is the first that runs whole through step 18 without the noun collision failing it.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217

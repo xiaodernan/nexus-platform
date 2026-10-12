@@ -13363,3 +13363,21 @@ already 2-of-2 on both). `check_line_cite_drift.mjs` still cannot see any of the
 repo-root paths: it reproduces its standing 157/157 with the four NOT-AT-HEAD sites belonging to other streams,
 so the aged sites are recorded here and repaired in the next unit, which must re-enumerate them before
 re-aiming because these two files just moved again.
+
+## D311 - the 18-step fresh gate's step 17 fixed the shared-noun collision by dropping the redundant third spelling
+
+The 18-step fresh gate script at this commit measured green through step 16 on the working tree,
+but step 17 failed on the committed plane: the gate's own measured count (217) was judged against
+the ledger's three nouns, and the shared noun `checks` now carries a different count (432) from
+another lane's types gate, so the newest claim disagreed. The root cause is that the ledger
+originally had three nouns for one quantity (`quality checks`, `assertions`, `checks`), but the
+second gate's count now arrives under the same noun, so the reader's newest-value rule surfaces
+the wrong number. The fix is in the gate's own script: drop the redundant third noun from the
+expectation list — the gate unambiguously owns `quality checks` and `assertions`; the shared
+`checks` spelling belongs to the other lane's domain now. The change is a one-line edit to the
+expectation string and its explanatory comment, recording the collision as measured. Step 17 now
+passes with the two-noun expectation, step 18's self-consistency check still passes (no steps
+added or removed), and the gate's committed form is the first that can run whole through step 18
+without the noun collision failing it.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
