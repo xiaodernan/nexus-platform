@@ -2868,7 +2868,7 @@ next              the registry has no `join-one-type` entry left, so D66's waive
                     other six, three are written by exactly one hand-written statement each that does set
                     `updated_at = now()` (`reviews` at ModerationRepository.java:91, `availability_slots` at
                     ReservationRepository.java:48 and :196, `user_preferences` at
-                    IdentityRepository.java:252), and three (`business_hours`, `collections`,
+                    IdentityRepository.java:319), and three (`business_hours`, `collections`,
                     `review_summaries`) have no UPDATE anywhere under `services/platform/src/main`. So nothing
                     is currently stale — what is missing is a witness for the day someone adds a second writer
                     and forgets the literal. That witness cannot live in quality.sql, which reads the seed and
