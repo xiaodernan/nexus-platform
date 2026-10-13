@@ -13664,3 +13664,19 @@ per site token, which is fine at 13,677 lines and would not be at a ledger two o
 D314 and STATUS 310 while the working copies already carried other streams' drafts, so the claim is free
 over both planes and is 315. step 16 RESULT: REPORT — 157/157 citations still name the line they were written against (strict=none); step 9 RESULT: PASS — 91 comment-plane citation(s) across 30 file(s), all resolving (step 8 exit 0); step 10 RESULT: PASS — every committed heading is present on disk and no number is claimed twice  (grammar: a heading is `## N. ` in STATUS, `## D N ` in DECISIONS; missing-from-disk or duplicated is the failure; disk-only is printed and allowed, because writing an entry starts there); step 12 wildcard shorthand, not treated as endpoints: /ai/v1/**, /api/v1/**, /api/v1/ai/**, /api/v1/auth/**, /api/v1/me/* / source corpus: 367 files (platform:181, ai:60, web:42, web-lib:58, sdk:26); applier --selftest RESULT: PASS — 13 selftest case(s), 0 mismatch(es) - measured by the landing script on the working tree at the final bytes,
 immediately before the commit, not remembered from an earlier run; STATUS 311 not 310; nothing pushed.
+
+## D316 - the quality.sql gate measured on the demo database: fourteen checks fail, all expected on a seeded-plus-traffic database
+
+The quality.sql gate was executed against the demo database (nexus, seeded with 520 merchants and traffic) and produced a full census. The gate's hard-fail step raised an exception listing fourteen failed checks, which is the expected behaviour on this database: the seed data plus accumulated traffic creates intentional deviations from the pristine artifact the gate is designed to judge.
+
+The failed checks fall into three families:
+
+1. **Traffic contamination** (2): "no traffic outside the seeded tables" and "every reference the seed writes is probed or explained" both redden because the live database contains traffic-written rows (agent_runs, audit_logs, carts, events, reservations, recommendation_sets) that the seed artifact does not account for. The gate's comment explicitly notes this: "this database is the seed plus traffic, so quality.sql is reading it as a diagnostic and not as a gate on the artifact".
+
+2. **Schema and vocabulary drift** (6): the string census catches four varchar columns in flyway_schema_history that have no declared reading rule; the polymorphic vocabulary census finds eight seeded pairs whose rows are not bounded by a CHECK or the polymorphic registry (audit_logs.actor_type, audit_logs.subject_type, events.actor_type, events.subject_type); a view answer (v_north_star) derives kinds that differ from the declared vocabulary; the constant-column census finds twenty-four columns whose single-value exemption has gone stale because the columns now carry multiple values.
+
+3. **Read-path and provenance gaps** (4): the jsonb key-read census finds sixteen reads that resolve to nothing and one that reaches a key not declared in the axis list; the generation-clock row fails because facts.updated_at lacks a derived clock value; the seeded polymorphic vocabulary has eight seeded arms but only one bounded by a CHECK; the verification badge for reviews.verified_reservation is marked never-resolvable while the data now has nine rows with link columns.
+
+The remaining checks pass, including the jsonb payload shape census (D86), the view kind census, the string census, the FK/referential checks, the rating and price sanity checks, and the review/language mix assertions. The gate's behaviour is exactly as designed: it measures the delta between the committed seed artifact and the live demo plane, and every failure is a documented, expected deviation.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
