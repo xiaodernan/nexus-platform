@@ -13737,3 +13737,16 @@ current contract, and one latency probe flipped between the two runs on the aged
 sensitivity, not a product verdict.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 315. the placeholder-citation class fires at a committed section (D319)
+
+The working-copy citation reader went red for the first time since the session began: four strict
+offenders, all FILE NOT FOUND, all in the applier unit's committed sections, all the same shape — example
+citations spelled with real-looking line numbers (x-dot-py colon two-hundred and colon one-hundred) where
+the house rule for showing the grammar is digits as NN, so the citation-shaped census counts them and step
+eight resolves them against an index that holds no such file. The class is the one D94 ruled on for
+comments, firing for the first time at committed ledger prose; the owning unit's lane gets the claim, the
+remedy is the two-character re-spell, and this unit lands only the routing. The landing's own section
+carries zero offenders, and the reader's other numbers are unchanged.
+
+- readers: step 8 4 offenders (routed to the applier unit's lane) · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

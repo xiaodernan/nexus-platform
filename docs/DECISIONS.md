@@ -13723,3 +13723,26 @@ takes), and the WebKit download (this machine's network). The suite now has a wh
 its name instead of a first-run fragment, and the number decomposes into families a reader can act on.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D319 - the placeholder-citation class fires at committed ledger prose: four example citations spelled with real line numbers resolve as claims, and the remedy is the owning lane's two-character re-spell
+
+The citation reader's strict verdict has been zero offenders for as long as this session has run, and the
+first red is a class the ledger has already ruled on meeting a surface it had not yet reached. The
+applier unit's committed sections illustrate their grammar with citations spelled as a real file would be
+spelled — an example name carrying real-looking line numbers — and the citation-shaped census cannot know
+an example from a claim: the token is citation-shaped, so it is counted, and the resolver opens the index
+and finds no such file, so the section reddens. The house rule for exactly this case is old and specific:
+prose that shows the citation grammar writes its digits as NN, precisely so a displayed shape can never
+be mistaken for a pointer. The comments plane has held that line since D94; the ledger prose is where the
+class arrived late.
+
+Nothing in this unit edits the offending sections. They are another lane's committed bytes, the
+one-owner rule holds in both directions, and the remedy is mechanical: re-spell the two numbers as NN and
+the four offenders vanish, because the census counts only digit-shaped line numbers. What this unit owes
+is the routing and the confirmation that the red is bounded — the offenders sit in one earlier section
+pair, the sections written since carry none, and every other reader number is unchanged. The strict
+verdict line in this section's own readers row states the four honestly rather than quoting a stale
+zero, because a green line copied forward past its own expiry is exactly the failure the reader exists
+to catch.
+
+- readers: step 8 4 offenders (routed to the applier unit's lane) · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
