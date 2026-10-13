@@ -405,13 +405,48 @@ public class IdentityRepository {
 
     // ---- deletion + export bookkeeping (§106) --------------------------
 
-    public UUID createDeletionRequest(TenantContext tenant, UUID userId, String kind, Map<String, Object> payload) {
+    /**
+     * The states §106's request ledger can hold, each declaring both halves of its own record.
+     *
+     * <p>Before this declaration the status was a literal inside the insert's own {@code VALUES} list and
+     * {@code completed_at} appeared in no statement at all, so every request the platform filed read
+     * {@code 'pending'} with no completion moment — including the ones it had finished inside the same request —
+     * and no caller could file anything else. A member here names its status text and whether that text claims a
+     * moment; the insert binds both columns from this one declaration, so a row cannot carry a status whose
+     * completion column says otherwise.
+     */
+    public enum DeletionState {
+        PENDING("pending", false),
+        COMPLETED("completed", true);
+
+        private final String status;
+        private final boolean completion;
+
+        DeletionState(String status, boolean completion) {
+            this.status = status;
+            this.completion = completion;
+        }
+
+        public String status() {
+            return status;
+        }
+
+        /** Whether a row in this state must hold a {@code completed_at}, and the only place that decides it. */
+        public boolean carriesCompletion() {
+            return completion;
+        }
+    }
+
+    public UUID createDeletionRequest(TenantContext tenant, UUID userId, String kind, DeletionState state,
+                                      Map<String, Object> payload) {
         // deletion_requests has no tenant column; the users anchor is verified first.
         requireUserInTenant(tenant, userId);
         jdbc.crossTenantUpdate("""
-                insert into deletion_requests (user_id, kind, status, payload)
-                values (:user_id, :kind, 'pending', cast(:payload as jsonb))
-                """, Json.map("user_id", userId, "kind", kind, "payload", Json.write(payload)));
+                insert into deletion_requests (user_id, kind, status, payload, completed_at)
+                values (:user_id, :kind, :status, cast(:payload as jsonb),
+                        case when cast(:completed as boolean) then now() end)
+                """, Json.map("user_id", userId, "kind", kind, "status", state.status(),
+                "completed", state.carriesCompletion(), "payload", Json.write(payload)));
         return userId;
     }
 

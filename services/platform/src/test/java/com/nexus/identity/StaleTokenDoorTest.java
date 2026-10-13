@@ -115,8 +115,14 @@ class StaleTokenDoorTest extends NexusIntegrationTest {
         return count("select count(*) from saved_searches where user_id = :u", Map.of("u", person.id()));
     }
 
-    private long deletionRows(Person person) {
-        return count("select count(*) from deletion_requests where user_id = :u", Map.of("u", person.id()));
+    /**
+     * The ledger rows of one kind for this person. Kind-scoped rather than whole-table because D320 gave the
+     * reset door a request row of its own ({@code personalization}): a count over every kind would move when an
+     * unrelated door filed, and the claim below is about the erase's row.
+     */
+    private long deletionRows(Person person, String kind) {
+        return count("select count(*) from deletion_requests where user_id = :u and kind = :k",
+                Map.of("u", person.id(), "k", kind));
     }
 
     private long auditRows(Person person, String action) {
@@ -214,6 +220,10 @@ class StaleTokenDoorTest extends NexusIntegrationTest {
                 + " the door said: %s", answer.getBody()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(prefs(person)).as("the inferred row planted before the erasure stays: a refused request"
                 + " must be inert, not half-applied").isEqualTo(before);
+        assertThat(deletionRows(person, "personalization"))
+                .as("and the refusal files no ledger row: D320 gave this door a request of its own, filed only"
+                        + " after the wipe succeeds, so a 404 that still recorded a completed deletion would be"
+                        + " a second write the erasure forbade").isZero();
     }
 
     @Test
@@ -255,7 +265,7 @@ class StaleTokenDoorTest extends NexusIntegrationTest {
     void theSecondEraseDoesNothing() {
         Person person = activePerson();
         erase(person);
-        long jobs = deletionRows(person);
+        long jobs = deletionRows(person, "account");
         long audits = auditRows(person, "delete_data");
 
         ResponseEntity<String> answer = exchange(HttpMethod.DELETE, person.tenant(), person.token(),
@@ -263,7 +273,7 @@ class StaleTokenDoorTest extends NexusIntegrationTest {
 
         assertThat(answer.getStatusCode()).as("the account is already gone, and D5 says an unreadable thing"
                 + " reads absent; the second erase said: %s", answer.getBody()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(deletionRows(person)).as("one erasure files exactly one deletion_request row; a replay"
+        assertThat(deletionRows(person, "account")).as("one erasure files exactly one deletion_request row; a replay"
                 + " that files a second hands the §106 retention job a duplicate").isEqualTo(jobs);
         assertThat(auditRows(person, "delete_data")).as("and no second delete_data audit row either")
                 .isEqualTo(audits);
@@ -327,8 +337,11 @@ class StaleTokenDoorTest extends NexusIntegrationTest {
                 .getStatusCode()).as("a live reset").isEqualTo(HttpStatus.OK);
         assertThat(prefs(person)).as("the reset wipes inferred memory and keeps the declared row (§33)")
                 .isEqualTo(1L);
+        assertThat(deletionRows(person, "personalization"))
+                .as("and the live reset's own ledger row is filed: the erased subject's zero above is a refusal,"
+                        + " not a door that never writes").isEqualTo(1L);
 
         erase(person);
-        assertThat(deletionRows(person)).as("the live account's own erase filed its job row").isEqualTo(1L);
+        assertThat(deletionRows(person, "account")).as("the live account's own erase filed its job row").isEqualTo(1L);
     }
 }

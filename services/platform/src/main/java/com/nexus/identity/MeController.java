@@ -126,12 +126,19 @@ public class MeController {
      * requirement 100 — the same workflow {@code docs/DATABASE.md} documents as the §106 data-retention
      * workflow), with no scheduled job behind it in this build. A response that said "all personal data was
      * erased" was refuted by the schema census in D309; this one is not.
+     *
+     * <p>The request this door files is filed {@link IdentityRepository.DeletionState#PENDING}: what happened at
+     * the moment of the request is the users row and its identity links, and the workflow that would clear the
+     * copies still outstanding — and move the row to {@code completed} with its {@code completed_at} — is the one
+     * the paragraph above says does not exist. Both columns come from that one declaration, in the repository's
+     * insert, so this sentence and the row the ledger holds cannot be filed apart from each other.
      */
     @DeleteMapping
     public Map<String, Object> delete(HttpServletRequest request) {
         TenantContext tenant = Req.tenant(request);
         UUID userId = Req.userId(request);
-        users.createDeletionRequest(tenant, userId, "account", Json.map("requested_by", "user"));
+        users.createDeletionRequest(tenant, userId, "account", IdentityRepository.DeletionState.PENDING,
+                Json.map("requested_by", "user"));
         IdentityRepository.ErasureResult erased = users.eraseUser(tenant, userId);
         audit.record(request, "delete_data", "user", userId, null, null, null,
                 Json.map("kind", "account",
@@ -327,15 +334,29 @@ public class MeController {
         return Json.map("status", "deleted", "id", id.toString());
     }
 
+    /**
+     * §33: wipe the inferred memory, keep what the person typed. §106: this is a personal data deletion the
+     * platform performs here and now, so it files its own request row as completed, carrying the count it
+     * actually removed.
+     *
+     * <p>Before that row existed, {@code personalization} was a member of the ledger's declared kind vocabulary
+     * with no door behind it, while this door deleted the rows of exactly that name and left no trace of having
+     * done it: the person's own export could not show a personalization deletion, and the erase's audit trail was
+     * the only place the act appeared. The count is read from the same value the response answers with, so the
+     * row and the reply cannot disagree about how many rows were taken.
+     */
     @PostMapping("/personalization/reset")
     public Map<String, Object> resetPersonalization(HttpServletRequest request) {
         TenantContext tenant = Req.tenant(request);
         UUID userId = Req.userId(request);
         int removed = users.deleteInferredPreferences(tenant, userId);
+        users.createDeletionRequest(tenant, userId, "personalization",
+                IdentityRepository.DeletionState.COMPLETED, Json.map("removed_inferred", removed));
         audit.record(request, "reset_personalization", "user", userId, null, null, null,
                 Json.map("removed_inferred", removed));
         return Json.map("removed_inferred_preferences", removed,
-                "notice", "Declared preferences you typed yourself are kept; only inferred memory was wiped (§33).");
+                "notice", "Declared preferences you typed yourself are kept; only inferred memory was wiped (§33)."
+                        + " A completed deletion_request row was filed for this wipe (§106).");
     }
 
     // ---- favorites ------------------------------------------------------
