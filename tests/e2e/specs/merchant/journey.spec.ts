@@ -103,12 +103,17 @@ test.describe('merchant journey', () => {
 
   test('one merchant can never read another merchant’s rows (§55)', async ({ platform }) => {
     const a = await demoLogin(platform, 'merchant');
+    // The demo payload's user carries no merchant_id — the caller's own workspace is read from /me's
+    // memberships, which is the same reader the console uses (the first draft of this test compared
+    // against a field that does not exist and read its own workspace as a cross-tenant 200).
+    const me = await platform.get('/api/v1/me', { headers: { Authorization: `Bearer ${a.access_token}`, 'X-Tenant': 'hong-kong' } });
+    const own = ((await me.json()).memberships?.[0]?.merchant?.id ?? '') as string;
     const merchants = await platform.get('/api/v1/merchants?limit=20', {
       headers: { 'X-Tenant': 'hong-kong' },
     });
     const rows = ((await merchants.json()).items ?? []) as Array<{ id: string }>;
-    test.skip(rows.length < 2, 'needs two seeded merchants');
-    const foreign = rows.find((r) => r.id !== (a.user as unknown as { merchant_id?: string }).merchant_id);
+    test.skip(rows.length < 2 || !own, 'needs two seeded merchants and a workspace for the demo merchant');
+    const foreign = rows.find((r) => r.id !== own);
     if (!foreign) return;
     const probe = await platform.get(`/api/v1/merchant/businesses/${foreign.id}/overview`, {
       headers: { Authorization: `Bearer ${a.access_token}`, 'X-Tenant': 'hong-kong' },

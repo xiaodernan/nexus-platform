@@ -13715,3 +13715,25 @@ plane            Measured on planes none of which is under the repository root: 
 The quality.sql gate ran to completion on the demo database (520 merchants, accumulated traffic) and produced fourteen failed checks, all of which are expected deviations of a seeded-plus-traffic database from the pristine seed artifact. The failures fall into three families: traffic contamination (two checks), schema and vocabulary drift (six checks), and read-path/provenance gaps (four checks). Every failure is a documented, expected deviation; the gate's comment explicitly states that this database is "the seed plus traffic, so quality.sql is reading it as a diagnostic and not as a gate on the artifact". The remaining checks pass, including the jsonb payload shape, view kinds, string census, FK integrity, rating/price sanity, and review assertions. The gate's committed form runs to completion and its failures are measured, attributed, and expected.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## 314. the e2e suite's first full census (D318)
+
+The first pass's twenty-green was real but partial — twenty-four of the suite's seventy placements, the
+composition gap the follow-up settled — and this unit takes the whole measurement on a stack that proved
+able to outlive its own session: the harness detached from its shell on day one and answered health
+probes two days later. Of the seventy placements, the forty-two this machine can reach ran twice,
+seventeen and then eighteen failing in stable families, every family named. The suite's own isolation
+test was one of the failures and the fix is the unit's: it derived the caller's merchant from a field the
+demo payload does not carry, so it read its own workspace as a cross-tenant two hundred — the server's
+isolation is real, proven by hand (a genuinely foreign overview answers 403, the caller's own 200), and
+the test now derives ownership the way the console does and passes. The largest family is the home
+page's five hundred, diagnosed to the line: four search rails rejected by the standing sort-filter
+mismatch plus a favourites rail refused unauthenticated, and all-fail is the one case the data layer
+throws on despite owning a degraded path built for exactly partial failure — routed to the surface's
+owner with the one-line shape named. The webkit project cannot download here (both CDN hosts time out;
+an environment gap), the visual readability test measures live text at 4.477 against an AA floor it
+asserts, three families of validation refusals are the September-era request bodies disagreeing with the
+current contract, and one latency probe flipped between the two runs on the aged stack — a timing
+sensitivity, not a product verdict.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

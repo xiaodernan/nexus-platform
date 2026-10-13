@@ -13680,3 +13680,46 @@ The failed checks fall into three families:
 The remaining checks pass, including the jsonb payload shape census (D86), the view kind census, the string census, the FK/referential checks, the rating and price sanity checks, and the review/language mix assertions. The gate's behaviour is exactly as designed: it measures the delta between the committed seed artifact and the live demo plane, and every failure is a documented, expected deviation.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## D318 - the e2e suite measured whole on a stack that outlived its shell: the isolation test's own bug found and fixed, the home page's five hundred diagnosed to the line, and every failure family named
+
+The harness's first execution answered a question and left three open: what the suite holds, why its
+first run counted twenty-four placements when its config files seventy, and whether the cross-tenant
+refusal its isolation test reported was the product's failure. The follow-up answers all three, on a
+stack detached from its launching shell that was still answering health probes two days later — the
+longest-lived thing this repository has booted.
+
+The count first. Seventy placements across four files and three browser projects; the mobile project's
+WebKit cannot be downloaded on this machine (both distribution hosts time out, the environment gap the
+ledger records), leaving forty-two reachable, run twice with a day between. Seventeen and then eighteen
+failed, and the families are the finding: the composition is stable, the names are specific, and no
+family is a fresh product defect except by inheritance from filings this ledger already carries. One
+latency probe flipped between the runs on the aged stack — a warm-search bound of two seconds meeting a
+two-day-old service, a timing sensitivity recorded as such.
+
+The isolation test was the unit's own to fix, and the fix matters beyond the test: it derived the
+caller's merchant from `user.merchant_id`, a field the demo login payload does not carry, so the
+comparison against every seeded row was against undefined and the first row — quite possibly the
+caller's own — was selected as foreign, and the workspace's own 200 read as a cross-tenant leak. The
+server's isolation was proven by hand before the test was touched: a genuinely foreign business overview
+answers 403, the caller's own answers 200. The test now reads ownership from the same memberships
+endpoint the console uses, asserts the two seeded rows it needs, and passes — the second harness defect
+the first executions caught in their own glass, after the hardcoded port and the moved health route.
+
+The home page's five hundred is diagnosed to the line and routed, not fixed — the surface is the other
+stream's. Four rails request a sort the search contract's strict filters refuse; the fifth reads the
+viewer's favourites without credentials and is refused; the data layer collects the five rejections
+through a settled-all, and its design answers partial failure with empty rails and a degraded flag — the
+page's own comment promises rails that cannot be fetched are simply absent. But every rail failing is
+the one case it throws, so the page renders its error boundary instead of a degraded home. The one-line
+shape (throw on all-fail versus degrade, as it degrades on some-fail) is named for the owner, and it
+explains why the first run's landing test passed on a transiently-healthy upstream and fails once the
+rails' refusals are stable.
+
+What remains is filed with owners: the home throw and the sort mismatch it rides (the web surface), the
+September request bodies behind three validation-refusal families (the harness's own era, a follow-up
+unit), the readability floor at 4.477 against an asserted AA (a live measurement the visual project
+takes), and the WebKit download (this machine's network). The suite now has a whole number attached to
+its name instead of a first-run fragment, and the number decomposes into families a reader can act on.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
