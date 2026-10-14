@@ -13931,3 +13931,33 @@ inventory either decision starts from, and the observation that the suite's whol
 this family until one of them does.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D329 - the route-contract remedy taken inside the harness's own files: twenty locators rewritten to hooks the surface really prints, two journeys green, and the last red family lands where the product's own honesty put it
+
+D328 routed two remedies and named their owners; this unit takes the one that belongs to its own lane.
+Every data-testid wait is rewritten to a hook the rebuilt surface demonstrably prints, each verified
+against the running plane before the edit: the cards carry `data-card-type` on their root article, the
+merchant page hands the harness six `aria-labelledby` sections and a single heading, the compare control
+is an `aria-pressed` button, the compare table is a table, and the §105 degraded notice is a warning row
+inside the stage list carrying the dictionary's own sentence. The rewrite is compatible with the other
+remedy — if the surface's owner re-adds markers, nothing here breaks — and the reservation journey keeps
+its skip while pointing at the surface's own comment recording that no Reserve button exists yet.
+
+Two journeys turned green on the rewrite alone: the trust-check journey that drives the API and asserts
+facts behind every rendered number, and the §105 outage journey whose degraded badge now waits on the
+sentence the surface really prints — the product's promise that an LLM outage degrades the answer rather
+than the site, witnessed in the browser. The merchant page's reviews section is reached through its
+landmark and its evidence through the list inside it.
+
+The remaining reds decomposed to their floors, and neither floor is a locator problem. Three tests enter
+through the home page and inherit the all-rails throw already filed to the web surface's owner — their
+search boxes are unreachable while the home page renders its error boundary. Two encode the §141 promise
+that natural-language phrasing returns results, and the plane answers them with the honest empty state:
+the probe the unit ran shows eight cards for a keyword and zero for the sentence, the mock intent
+extraction mapping the natural phrasing to no category, the deterministic fallback matching nothing, and
+the page keeping its no-padding promise with relaxation advice instead of irrelevant results. That is a
+quality finding about the AI lane's extraction and fallback, witnessed at the browser level and routed
+there; a harness that forced keyword queries into those tests would be testing less while looking green,
+which is exactly the trade this ledger exists to refuse.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

@@ -13848,3 +13848,21 @@ route contract's own URL shapes — the choice is above this unit, and the censu
 starts from.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 325. the harness moves to the surface's own hooks (D329)
+
+All twenty test-marker waits are rewritten to locators the rebuilt surface actually prints — cards by
+their `data-card-type` attribute, the merchant page by its `aria-labelledby` sections and heading, the
+compare control by its `aria-pressed` button, the degraded notice by the warning row the stage list
+renders with the dict's own label — the route-contract remedy D328 named, taken within this lane's own
+files and compatible with marker re-adding if the owner chooses it later. Two journeys turned green on
+the rewrite (the trust-check journey and the §105 LLM-outage degradation, whose badge now waits on the
+text the surface really prints). The remaining reds decompose further and every part is named: three
+tests enter through the home page and inherit its all-rails throw (the filed web finding), and two
+encode the §141 promise that natural-language phrasing returns results — which the plane now answers
+honestly with its empty state, because the mock intent extraction maps the Chinese phrasing to no
+category and the deterministic fallback matches nothing: eight cards for a keyword, zero for the
+sentence, the no-padding promise kept exactly as written. That is an AI-lane quality finding, not a
+harness defect, and the tests red on it are red for the product's own reason.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
