@@ -13770,3 +13770,15 @@ The insert named four columns of a table that declares six. `IdentityRepository.
 **What remains, unchanged by this unit.** No scheduled job reads `deletion_requests` in this build, so the erase's `pending` row is an honest record of an unfinished workflow rather than a bug to close here; the copies in the other tables stay where they are, and `docs/TRACEABILITY.md` requirement 100 stays `todo`. What changed is that the ledger can now say which kind was deleted and whether the platform finished.
 
 - readers: step 8 strict offenders         0 offender(s) on the plane this run judges / step 9 RESULT: PASS — 91 comment-plane citation(s) across 30 file(s), all resolving (step 8 exit 0) / step 10 RESULT: PASS — every committed heading is present on disk and no number is claimed twice  (grammar: a heading is `## N. ` in STATUS, `## D N ` in DECISIONS; missing-from-disk or duplicated is the failure; disk-only is printed and allowed, because writing an entry starts there) / step 12 RESULT: PASS — every spelled `STATUS §NN` citation resolves to a heading at HEAD / step 15 RESULT: REPORT — 158/158 citations still name the line they were written against (strict=none) / step 16 RESULT: PASS — --strict MOVED,NOT-UNIQUE clean on 158 judged citation(s); 158 still name the line they were written against
+
+## D317 - the 18-step fresh gate's falsify harness exposes a seam defect in the ledger text reader
+
+The previous unit fixed the gate's noun collision (D311/D312) and certified steps 1-18 green on the working tree. This unit runs the gate whole again and finds that the falsify harness for the ledger text reader (step 8's --text seam) fails its own arms: two of fifty-eight arms miss their expected exit code, and the seam "does not do what step 8 claims".
+
+The failure is specific: the harness aims a plant at the --text seam (feeding it a ledger file that exists only in the worktree) and expects the reader to redden the plant's citation. Instead the reader either accepts the plant or refuses for the wrong reason, and the harness arm that expects exit 1 gets exit 0 (or vice versa). The message "the --text seam does not do what step 8 claims" is the harness's own verdict: the reader's --text flag does not produce the rejection behaviour that step 8's comment claims.
+
+This is a defect in the ledger text reader's --text seam, not in the gate's logic. The reader's --text flag was added in D163/D164 to make the --text seam reachable from the gate without editing the shipped file mid-run. The harness (falsify_ledger_text.mjs) was added in D191/D192 to prove the seam is reachable. Two of its arms now miss, meaning the seam has drifted from its specification.
+
+The other fifty-six arms hold, including the console accessibility and i18n censuses (13/13 and 31/31 arms), the reader reachability census, and the citation-supports-sentence reporter. The gate's core steps (1-17) all pass on the working tree. The defect is isolated to the --text seam's contract.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
