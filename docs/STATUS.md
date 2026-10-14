@@ -13912,3 +13912,31 @@ the accessibility harness's crash on the unimported removal call in the other la
 the run mid-step. The correction is append-only; the routing of the crash stands unchanged.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 329. the memory wipe CONSUMER promised and the contract forbade is now a counted, filed, exportable door, and the kind vocabulary's doorless residue is one member the census names by word (D333)
+
+`docs/CONSUMER.md` §8 listed *Delete memory* beside *Reset personalization* with no route behind it, while
+`docs/API_CONTRACT.md` §3 explained the absence by saying a bulk wipe "would be indistinguishable, to the
+person who just lost their quiet-venue memory, from a bug". `POST /api/v1/me/memory/reset` answers that
+reason instead of deleting it: the statement ends `returning p.source as source`, so the reply carries the
+count it took split across all three labels the column can hold, the same numbers go into a completed
+`deletion_requests` row of kind `memory`, and the person's own export publishes that row with its
+`completed_at`. The boundary is printed by the door — `scope` answers `user_preferences_rows` — because
+favourites, saved searches and conversations are rows of other tables and their account-level deletion is
+`DELETE /api/v1/me`, which D309 showed is an update that leaves every preference row behind.
+
+Nine cases, six drives, and one harness bug the control caught before any arm did: the vocabulary census
+compared source member names against row texts spelling by spelling, so the reading now translates each
+member through the declaration, which is the only thing that can tie the two and the reason a member with no
+door behind it still reddens the claim. the battery's own line is `BATTERY: 6 drives, misfits: none`: control green, then A 8 red, B 4, C 5, D 2 and E 1, each of them exactly the case-name set the harness wrote for it before the run, and all twenty restore lines byte-identical The control ran 40 cases run and 0 red on the five identity door classes re-driven at this landing parent (MemoryDeletionDoorTest 9, DeletionRequestLedgerDoorTest 7, StaleTokenDoorTest 9, PersonalEraseDoorTest 10, PersonalExportDoorTest 5); the per-class counts are read back from each class's surefire report and sum to the total the drive printed. D320's sentence "one of those
+four had no door behind it" counted routes, not rows; on the row measure the residue was three at its
+parent, two at its landing, and it is one now — `export`, named by the census rather than by prose. The
+drift checker that is supposed to notice a documented route with no implementation was measured on four
+planes of the same code and credited the route to a test literal alone, then excused its absence on a
+one-word client match; both are defects in another lane's file, recorded and filed rather than edited here.
+
+- remains     no client call site — the SDK and web still do not offer the control, and the drift checker's
+  CLIENT-ONLY bucket is where that will show when someone wires it; `export` files nothing; the wipe is
+  synchronous, so `completed` is honest for this door and for no door that queues; the fresh-schema hard
+  gate was not run by this unit and its number is not quoted here
+- readers     step 8's own row on the bytes this commit stages reads `strict offenders 0 offender(s) on the plane this run judges`, and this unit re-spells nothing because the placeholder-span population the last unit cleared is 0 on both planes · step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 54/54 · step 15 158/158 · step 16 strict clean on 158

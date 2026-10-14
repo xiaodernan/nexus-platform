@@ -137,8 +137,8 @@ public class MeController {
     public Map<String, Object> delete(HttpServletRequest request) {
         TenantContext tenant = Req.tenant(request);
         UUID userId = Req.userId(request);
-        users.createDeletionRequest(tenant, userId, "account", IdentityRepository.DeletionState.PENDING,
-                Json.map("requested_by", "user"));
+        users.createDeletionRequest(tenant, userId, IdentityRepository.DeletionKind.ACCOUNT,
+                IdentityRepository.DeletionState.PENDING, Json.map("requested_by", "user"));
         IdentityRepository.ErasureResult erased = users.eraseUser(tenant, userId);
         audit.record(request, "delete_data", "user", userId, null, null, null,
                 Json.map("kind", "account",
@@ -350,13 +350,52 @@ public class MeController {
         TenantContext tenant = Req.tenant(request);
         UUID userId = Req.userId(request);
         int removed = users.deleteInferredPreferences(tenant, userId);
-        users.createDeletionRequest(tenant, userId, "personalization",
+        users.createDeletionRequest(tenant, userId, IdentityRepository.DeletionKind.PERSONALIZATION,
                 IdentityRepository.DeletionState.COMPLETED, Json.map("removed_inferred", removed));
         audit.record(request, "reset_personalization", "user", userId, null, null, null,
                 Json.map("removed_inferred", removed));
         return Json.map("removed_inferred_preferences", removed,
                 "notice", "Declared preferences you typed yourself are kept; only inferred memory was wiped (§33)."
                         + " A completed deletion_request row was filed for this wipe (§106).");
+    }
+
+    /**
+     * §106's "delete memory": every preference row the caller owns, whichever of the {@code source} column's three
+     * labels wrote it, and the completed request row that says the platform did it.
+     *
+     * <p>{@link #resetPersonalization} is the narrower act and stays the narrower act: it keeps what the person
+     * typed. This door is the one {@code docs/CONSUMER.md} §8 has always listed beside it under the name
+     * <em>Delete memory</em>, and which {@code docs/API_CONTRACT.md} §3 answered by forbidding a bulk wipe — "a bulk
+     * wipe would be indistinguishable, to the person who just lost their quiet-venue memory, from a bug". That
+     * reason is what this unit removes rather than overrides: the wipe answers with the count it took split by
+     * {@code source}, and files a completed {@code deletion_requests} row carrying the same numbers, so the person
+     * who asks afterwards gets, in their own export, both the fact that the wipe happened and exactly which rows it
+     * took. An anonymous {@code deleted everything} is the bug; a counted, filed, exportable one is the control.
+     *
+     * <p>The scope is the preference table and nothing else: rows in {@code favorites}, {@code saved_searches},
+     * {@code conversations} and {@code notifications} are records of the person's interactions, not the memory the
+     * recommendation path reads, and the account-level deletion of those is {@code DELETE /api/v1/me}. The response
+     * prints that boundary in {@code scope} because the word "memory" in a privacy control invites the reading that
+     * everything personal is gone.
+     */
+    @PostMapping("/memory/reset")
+    public Map<String, Object> resetMemory(HttpServletRequest request) {
+        TenantContext tenant = Req.tenant(request);
+        UUID userId = Req.userId(request);
+        IdentityRepository.PreferenceMemory taken = users.deletePreferenceMemory(tenant, userId);
+        users.createDeletionRequest(tenant, userId, IdentityRepository.DeletionKind.MEMORY,
+                IdentityRepository.DeletionState.COMPLETED,
+                Json.map("removed_preferences", taken.total(), "by_source", taken.bySource()));
+        audit.record(request, "reset_memory", "user", userId, null, null, null,
+                Json.map("removed_preferences", taken.total(), "by_source", taken.bySource()));
+        return Json.map("removed_preferences", taken.total(),
+                "removed_by_source", taken.bySource(),
+                "scope", "user_preferences_rows",
+                "notice", "Every stored preference was wiped — declared, inferred and transaction-sourced alike,"
+                        + " which is what distinguishes this from /me/personalization/reset (§106). Favourites,"
+                        + " saved searches, conversations and orders are rows of other tables and are untouched;"
+                        + " scope names that boundary, and DELETE /api/v1/me is the account deletion. A completed"
+                        + " deletion_request row of kind memory was filed for this wipe.");
     }
 
     // ---- favorites ------------------------------------------------------

@@ -260,8 +260,8 @@ class DeletionRequestLedgerDoorTest extends NexusIntegrationTest {
 
         for (IdentityRepository.DeletionState state : states) {
             Person person = consumer();
-            users.createDeletionRequest(context(person.tenant()), person.id(), "memory", state,
-                    Json.map("filed_by", "the state census"));
+            users.createDeletionRequest(context(person.tenant()), person.id(),
+                    IdentityRepository.DeletionKind.MEMORY, state, Json.map("filed_by", "the state census"));
 
             Filed filed = request(person, "memory");
             assertThat(filed.status()).as("%s must file the status text it declares", state)

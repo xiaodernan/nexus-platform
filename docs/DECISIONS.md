@@ -14038,3 +14038,125 @@ already explained is not a new red, and reading the failure without reading the 
 contrast into a phantom work item.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D333 - CONSUMER §8's "Delete memory" promised a route the build never had while API_CONTRACT §3 forbade the very shape of it: the door now answers the reason rather than overruling it, the kind vocabulary's doorless residue is measured down to one named member, and the contract drift checker is caught crediting a route to a test string
+
+**1. Two documents disagreed and the build sided with neither.** `docs/CONSUMER.md` §8 has listed
+*Delete memory* beside *Reset personalization* for as long as the consumer doc has existed, and the
+ledger's own `kind` column comment names `memory` as one of the four acts it can record. What the build
+had was the narrower door — `POST /api/v1/me/personalization/reset`, which keeps what the person typed —
+and `DELETE /api/v1/me`, and D309 measured what the erase actually is: an `update users set …` plus the
+identity links, so a person who deleted their account kept every `user_preferences` row they had ever
+made. "Delete memory" was therefore a control with no route, and the declared member `memory` a kind no
+door could file. `docs/API_CONTRACT.md` §3 explains why nothing was built, and the sentence is worth
+quoting because this unit has to answer it rather than delete it: a bulk wipe "would be indistinguishable,
+to the person who just lost their quiet-venue memory, from a bug".
+
+**2. The reason is answered, not overruled, and the thing that answers it is a count.** The wipe now
+deletes with `returning p.source as source` and merges those rows into a per-label tally, so the answer
+carries `removed_preferences` and `removed_by_source` — `declared`, `inferred` and `transaction` counted
+separately, read off the statement that took them rather than estimated beside it. The same numbers go
+into a completed `deletion_requests` row of kind `memory`, the same numbers go into the audit record, and
+the person's own `GET /api/v1/me/export` publishes the row with its `completed_at`. So the failure mode
+the contract named — a person losing memory and being unable to tell a control from a defect — is exactly
+the thing that is now impossible: the wipe is visible as an act the person made, with its own counts, in
+the file that is theirs. An anonymous `deleted everything` is the bug the sentence was protecting; a
+counted, filed, exportable one is the control §8 promised, and the contract row now quotes the
+prohibition as retired history instead of living law.
+
+**3. The boundary is printed by the door, because the word invites the wrong reach.** `scope` answers
+`user_preferences_rows`. Favourites, saved searches, conversations and notifications are rows of other
+tables — records of interactions rather than the memory the recommendation path reads — and their
+account-level deletion is `DELETE /api/v1/me`. One case plants a favourite and a saved search beside two
+preference rows and requires that the wipe takes two and leaves two; another requires that a second person
+in the caller's own tenant keeps their row, which is why the statement joins `users` for the tenant
+predicate rather than trusting the id. The two doors stay two doors: the narrow one keeps what survives it,
+the wide one takes the three that survive the narrow one, and the ledger holds one row per act under its
+own member of the vocabulary, never one act filing under the other's kind.
+
+**4. A harness bug the control caught before any arm did.** The vocabulary case reads the tree twice: once
+through live doors, asking the table which kinds exist afterwards, and once through the production sources,
+asking which `DeletionKind` constants appear in a `createDeletionRequest` call. Its first run was red, and
+the red was mine — the source reader collected member names (`MEMORY`) while the doors returned row texts
+(`memory`), and the case compared them spelling by spelling. The fix strengthens the claim instead of
+loosening it: the source reading now translates each member through the declaration
+(`DeletionKind.valueOf(member).kind()`), so the enum is the only thing that can tie a source name to a row
+text, and a member whose declared text no door can file reddens the census rather than surviving it as a
+case-sensitivity accident. An `EXPORT` member added to a call site without a door behind it is caught by the
+arm, and arm E is exactly that plant: a fifth vocabulary member with no route, and the census is the only
+case red.
+
+**5. The battery ran six drives and every red was predicted by case name.** the battery's own line is `BATTERY: 6 drives, misfits: none`: control green, then A 8 red, B 4, C 5, D 2 and E 1, each of them exactly the case-name set the harness wrote for it before the run, and all twenty restore lines byte-identical The control is
+40 cases run and 0 red on the five identity door classes re-driven at this landing parent (MemoryDeletionDoorTest 9, DeletionRequestLedgerDoorTest 7, StaleTokenDoorTest 9, PersonalEraseDoorTest 10, PersonalExportDoorTest 5); the per-class counts are read back from each class's surefire report and sum to the total the drive printed. A is the door moved off its path — eight red, every case that calls it; B is the wide statement
+narrowed back to `inferred` — four red, the four that measure reach, and the two that only read the ledger
+staying green, which is the point of splitting them; C deletes the filing statement — five red on the ledger
+side; D files the completed act as pending — two red, the state claim and the export; E as above.
+Restores were byte-identical after all five, asserted against the pristine copies rather than trusted.
+
+**6. One number in the ledger needed correcting, and it was the previous unit's.** D320 wrote of the four
+declared kinds that "one of those four had no door behind it". On the measure the ledger itself uses — a
+kind that a request row can carry — the count at D320's parent was three: `memory` had no route at all,
+`personalization` had a route that filed nothing until D320 gave it the row, and `export` is a read that
+files nothing. D320 moved the number to two; this unit moves it to one, and the residue is named by the
+census rather than by prose: the case asserts that the members with no door are exactly `export`, and the
+DisplayName says so too. The correction is worth recording because "one of those four" is a count of
+*routes the vocabulary names*, and the sentence sat beside a paragraph about *rows the ledger records* —
+two measures, one number, and only the second is the one §106's export can show.
+
+**7. The contract drift checker was found crediting a route twice over, once to a test and once to a word.**
+The drift delta this unit owes is small and clean: on a plane of the parent's own bytes the reader parses
+115 routes and finds 96 served across a 221-file corpus; with this unit's five files overlaid it parses 116
+and finds 97, with the CLIENT-ONLY bucket unchanged at 16 and UNDOCUMENTED unchanged at 1 — one documented
+route, one serving implementation, nothing else moved. What is not clean is how it got there, measured on
+four planes of the same code with one string re-pathed at a time:
+
+```
+plane 0  as written (the handler serves it, a test calls it)    exit 0   served 116/108 on the worktree
+plane 1  handler re-pathed, the test string left alone          exit 0   the route is still "served"
+plane 2  test string re-pathed, the handler left alone          exit 0   the route is still "served"
+plane 3  both carriers re-pathed, nothing names the path        exit 1   CLIENT-ONLY names [web, web-lib, sdk]
+```
+
+Plane 1 is the defect: the reader's platform corpus is `services/platform/src`, which is `src` and not
+`src/main`, so a literal inside a test file satisfies "some service implements this route". Plane 2 is the
+same coin's other face — the handler alone answers for it — and plane 3 names the second defect: with
+nothing in the services left, the route is charged to three client carriers, while `grep` finds no
+`memory/reset` call in `apps/web`, `apps/web/src` or `packages/sdk` at all, because the client-side match is
+`text.includes(signature)` over the single trailing word of the route, `reset`, which every web tree says
+somewhere. A route can therefore be credited to a test that only names it, and a missing implementation can
+be excused by a word. Both are gate findings in a file this lane does not own; they are recorded here and
+filed, not edited — the private directory list parked under #127 lives in the same checker.
+
+- What this does not claim, in its own words: no client call site was added — the SDK and the web still do
+  not offer the control, and step 7's CLIENT-ONLY bucket is the place that fact will show up when someone
+  wires it; no migration changed, the `kind` comment already declared all four members; the wipe is
+  synchronous inside the request, so `completed` is honest for this door and for no door that queues; the
+  `export` kind still files nothing, and the case that names it will go red the moment somebody makes it
+  file, which is the intended direction of travel; and the fresh-schema hard gate was not run by this unit,
+  so its number is not quoted here.
+
+```
+changed             services/platform/src/main/java/com/nexus/identity/MeController.java
+                    · @PostMapping("/memory/reset") + a three-paragraph javadoc adjudicating the contract's
+                      reason; the erase call site now files DeletionKind.ACCOUNT / PENDING and the
+                      personalization call site PERSONALIZATION / COMPLETED
+changed             services/platform/src/main/java/com/nexus/identity/IdentityRepository.java
+                    · PreferenceMemory(total, bySource) + deletePreferenceMemory whose statement ends
+                      `returning p.source as source`, merged through a TreeMap for a stable split
+changed             docs/API_CONTRACT.md · §3's erase-all row keeps the prohibition as a quote and names the
+                      door; the personalization row now documents two wipes, one row each, told apart by what
+                      they take, with the payload shape and the scope boundary
+changed             docs/CONSUMER.md · §8 lists Delete memory as its own route instead of a promise, §9
+                      names both doors and the kind each files
+changed             services/platform/src/test/java/com/nexus/identity/DeletionRequestLedgerDoorTest.java
+                    · the declared-state census files through the kind declaration rather than a bare text
+new                 services/platform/src/test/java/com/nexus/identity/MemoryDeletionDoorTest.java
+                    · nine cases: the whole source vocabulary, the two doors told apart, the filed row equal
+                      to the reply, the no-op that still files, the caller's rows and nobody else's, the
+                      tables the wipe does not reach, the person's own export, the vocabulary walked by two
+                      readers, and the source reader proven on planted calls before it judges the tree
+```
+
+step 8's own row on the bytes this commit stages reads `strict offenders 0 offender(s) on the plane this run judges`, and this unit re-spells nothing because the placeholder-span population the last unit cleared is 0 on both planes
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 54/54 · step 15 158/158 · step 16 strict clean on 158

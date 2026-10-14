@@ -52,13 +52,13 @@ fabricate a slot (§155).
 ## 8. Preference memory & personalization controls (§32, §33, §118)
 `user_preferences` gives "the more you use it, the better it knows you", but the consumer **owns** it:
 - **View** every stored preference; **edit**; **delete** one (`DELETE /me/preferences/{id}`);
-- `Forget this preference`, `Delete memory`, **`Reset personalization`** (`POST /me/personalization/reset`) — clears
-  `source='inferred'` memory (§33, §118).
+- `Forget this preference`, **`Delete memory`** (`POST /me/memory/reset`: every stored preference, whichever `source`
+  wrote it), **`Reset personalization`** (`POST /me/personalization/reset`: `source='inferred'` only, §33, §118).
 Personalization feeds ranking via `w_personalization` but updates slowly (EMA, min 3 signals, [RECOMMENDATION.md](RECOMMENDATION.md) §6).
 
 ## 9. Privacy & data rights (§106)
-Consumers can `GET /api/v1/me/export` (streaming JSON of all personal data), `DELETE /api/v1/me` (creates a
-`deletion_requests` row), delete memory, reset personalization. Data is access-controlled, auditable, encrypted where
+Consumers can `GET /api/v1/me/export` (streaming JSON of all personal data), `DELETE /api/v1/me` (files a
+`deletion_requests` row: kind `account`, status `pending`), `POST /api/v1/me/memory/reset` and `POST /api/v1/me/personalization/reset` (each files its own kind as `completed`, with the counts it removed). Data is access-controlled, auditable, encrypted where
 appropriate ([SECURITY.md](SECURITY.md)). Precise geo used only with consent; default coarse/district
 ([`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §1).
 

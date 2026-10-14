@@ -344,6 +344,38 @@ public class IdentityRepository {
                 """, Json.map("user_id", userId));
     }
 
+    /**
+     * What one wipe of the caller's whole preference memory took, split by the source column's own labels.
+     *
+     * @param total     the rows this statement deleted, which is the number the door answers with and files
+     * @param bySource  the same rows counted per {@code source}, from the rows the statement returned
+     */
+    public record PreferenceMemory(int total, Map<String, Integer> bySource) {
+    }
+
+    /**
+     * §106's "delete memory", the whole of it: every preference row the caller owns, whichever source wrote it.
+     *
+     * <p>{@link #deleteInferredPreferences} is the narrower act — it keeps what the person typed — so a wipe that
+     * claimed to take the memory but left two of the source column's three labels in place would be the same door
+     * answering a different question. The split is read out of {@code returning p.source} rather than counted in a
+     * second statement first: the numbers then describe the rows this statement actually took, and cannot disagree
+     * with the total the ledger row and the response carry.
+     */
+    public PreferenceMemory deletePreferenceMemory(TenantContext tenant, UUID userId) {
+        requireUserInTenant(tenant, userId);
+        List<Map<String, Object>> taken = jdbc.forTenant(tenant, """
+                delete from user_preferences p using users u
+                where p.user_id = :user_id and u.id = p.user_id and u.tenant_id = :tenant_id
+                returning p.source as source
+                """, Json.map("user_id", userId));
+        Map<String, Integer> bySource = new java.util.TreeMap<>();
+        for (Map<String, Object> row : taken) {
+            bySource.merge(String.valueOf(row.get("source")), 1, Integer::sum);
+        }
+        return new PreferenceMemory(taken.size(), Map.copyOf(bySource));
+    }
+
     // ---- favorites ------------------------------------------------------
 
     public List<Map<String, Object>> listFavorites(TenantContext tenant, UUID userId) {
@@ -406,6 +438,34 @@ public class IdentityRepository {
     // ---- deletion + export bookkeeping (§106) --------------------------
 
     /**
+     * The four acts §106's request ledger declares it can record.
+     *
+     * <p>The column's own declaration is a comment in the migration — {@code kind text NOT NULL} with the four
+     * spellings after a double dash — so the schema refuses no fifth spelling and nothing in the build ever
+     * checked that the four it names are reachable. Declaring them here gives the insert one place to bind from and gives the door census a
+     * declaration to walk: a member the vocabulary names that no door files reddens that census instead of living
+     * as a sentence in a migration. The text each member carries is the text the DDL comment spells, so the ledger's
+     * rows read the same either way.
+     */
+    public enum DeletionKind {
+        ACCOUNT("account"),
+        MEMORY("memory"),
+        PERSONALIZATION("personalization"),
+        EXPORT("export");
+
+        private final String kind;
+
+        DeletionKind(String kind) {
+            this.kind = kind;
+        }
+
+        /** The text the column holds, and the only text this build files. */
+        public String kind() {
+            return kind;
+        }
+    }
+
+    /**
      * The states §106's request ledger can hold, each declaring both halves of its own record.
      *
      * <p>Before this declaration the status was a literal inside the insert's own {@code VALUES} list and
@@ -437,7 +497,7 @@ public class IdentityRepository {
         }
     }
 
-    public UUID createDeletionRequest(TenantContext tenant, UUID userId, String kind, DeletionState state,
+    public UUID createDeletionRequest(TenantContext tenant, UUID userId, DeletionKind kind, DeletionState state,
                                       Map<String, Object> payload) {
         // deletion_requests has no tenant column; the users anchor is verified first.
         requireUserInTenant(tenant, userId);
@@ -445,7 +505,7 @@ public class IdentityRepository {
                 insert into deletion_requests (user_id, kind, status, payload, completed_at)
                 values (:user_id, :kind, :status, cast(:payload as jsonb),
                         case when cast(:completed as boolean) then now() end)
-                """, Json.map("user_id", userId, "kind", kind, "status", state.status(),
+                """, Json.map("user_id", userId, "kind", kind.kind(), "status", state.status(),
                 "completed", state.carriesCompletion(), "payload", Json.write(payload)));
         return userId;
     }
