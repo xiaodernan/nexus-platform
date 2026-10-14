@@ -13839,3 +13839,15 @@ The counts align with the full seed (520 merchants, ~5,700 offerings, ~11,000 re
 The quality.sql gate's hard-fail step ran against this database and recorded 14 failures (documented in D322), all attributable to traffic contamination, schema drift, or read-path gaps — not to seed data deficiencies. The seed data itself is healthy and matches the generator's declared output.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## D325 - the committed contract drift measured on a clean checkout: one undocumented test probe and sixteen client-only routes
+
+The contract drift checker was executed on a clean checkout of the current commit (HEAD) to measure the committed plane's contract surface. The checker parses 115 routes from the contract specification and finds 96 served by the platform or AI service. The remaining routes split into two classes:
+
+1. **CLIENT-ONLY (16)**: Routes documented in the contract and referenced by the SDK or web-lib, but no service implements them at this commit. These are the AI admin routes (/ai/v1/feedback, /ai/v1/query/understand, /ai/v1/rag/retrieve, /ai/v1/search/stream, /ai/v1/tools, /api/v1/admin/ai/ask, /api/v1/admin/ai/costs, /api/v1/admin/ai/runs, /api/v1/admin/merchants/{id}/suspend), the cart/current, orders/cancel, payments/confirm, seo/page, seo/routes, users/{id}, and webhooks/payments routes. The implementations live in the untracked admin, seo, and commerce modules (other lane's working copy).
+
+2. **UNDOCUMENTED (1)**: The route `/api/v1/share/ZZZZZZZZZZ` is referenced in platform code but the contract never defines it. The source is a test (`a test file in the platform stream-88`) that probes a random slug to assert a 404 response. The checker's corpus includes test sources, so the probe reads as an undocumented reference. This is a checker false positive — the remedy is either a corpus boundary excluding test files or an explicit exemption for known test probes.
+
+The committed plane has no MISSING routes (routes in the contract that no code references). The sixteen CLIENT-ONLY routes resolve when the other lane's admin/seo/commerce modules land. The one UNDOCUMENTED route is a test probe; the fix belongs to the checker's corpus boundary, not the contract.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217

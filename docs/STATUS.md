@@ -13790,3 +13790,9 @@ The ledger citation reader reports ten blank-line citations at HEAD, up from eig
 The demo database (nexus) was counted directly: 521 merchants (470 published), 5,538 offerings, 11,000 reviews (all with aspects), 2,118 chunks (all pending embedding), 32,492 availability slots across 21 days, 5,692 facts (all with expires_at). The counts align with the full seed specification (520 merchants, ~5,700 offerings, ~11,000 reviews). The quality.sql gate's 14 failures on this database are all attributable to traffic contamination, schema drift, or read-path gaps — not to seed data deficiencies (D322). The seed data itself is healthy.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## 321. the committed contract drift measured on a clean checkout (D325)
+
+The contract drift checker ran on a clean checkout of this commit and reported: 115 routes parsed, 96 served by platform/ai; 16 CLIENT-ONLY (documented in contract, referenced by sdk/web, but no service implements — the AI admin routes, cart/current, orders/cancel, payments/confirm, seo/page, seo/routes, users/{id}, webhooks/payments); 1 UNDOCUMENTED (the share route probe `/api/v1/share/ZZZZZZZZZZ` from `a test file in the platform stream-88`, a test asserting 404 on a random slug — a checker false positive whose remedy is a corpus boundary or exemption). The sixteen CLIENT-ONLY routes resolve when the other lane's admin/seo/commerce modules land; the UNDOCUMENTED item is a test probe false positive. Nothing staged.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
