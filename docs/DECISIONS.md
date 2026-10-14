@@ -13909,3 +13909,25 @@ remaining red families in the census belong to surfaces this lane does not own �
 all-rails throw, the readability floor, the webkit download — each routed with its owner named.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D328 - the harness's twenty test-marker waits meet a surface that prints none: the second half of the e2e red census belongs to a dropped testing contract, and both remedies belong to the surface's owner
+
+The merchant-page journey's thirty-second click timeout looked like one broken navigation; the census
+shows it is one instance of a contract that stopped existing. The harness waits on nine distinct
+data-testid markers across twenty occurrences — every card, badge, header, summary, table, slot and
+reason the journeys assert against — and the rebuilt web surface prints none of them: not one
+data-testid attribute exists anywhere in its source. The timeouts that survived the September-body fixes
+decompose exactly along this line, and the two families left that are not this census (the home page's
+all-rails throw and the readability floor) already have owners.
+
+The markers are a contract in both directions, which is why this unit routes rather than rewrites. The
+harness's locators were written against a surface that promised these hooks when the vertical slice was
+first walked; the surface was since rebuilt by its own stream, byte-for-byte adoption bringing new
+components that never carried them. Rewriting twenty locators to markup-shaped selectors would couple the
+harness to details the surface stream can change in any commit; re-adding the markers is one attribute
+per component and restores a contract both sides already know. Which of the two happens is the surface
+owner's decision to make with the harness lane's consent — what this ledger supplies is the complete
+inventory either decision starts from, and the observation that the suite's whole number cannot move past
+this family until one of them does.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

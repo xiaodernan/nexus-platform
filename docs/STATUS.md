@@ -13833,3 +13833,18 @@ merchant id in its query, so the probe carries it and pins the whole well-formed
 runs green end to end — the agent answers from its own knowledge base inside a second.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 324. the test markers the harness waits on exist nowhere in the surface (D328)
+
+The merchant-page journey's click timeout generalises into a census: the e2e harness waits on nine
+distinct data-testids across twenty occurrences — the entity cards, the degraded badge, the merchant
+header, the review summary and evidence, the comparison table, the availability slots, the match reasons —
+and the rewritten web surface carries not one data-testid attribute anywhere in its source. Every timeout
+in the census's red families that is not the home page's five hundred is this: a harness waiting on
+markers a rebuilt surface no longer prints. The markers are a testing contract between the harness and
+the surfaces, the surface belongs to the other stream, and both remedies are named for the owner —
+re-adding one attribute per component, or the two lanes agreeing the harness moves to selectors on the
+route contract's own URL shapes — the choice is above this unit, and the census is what either remedy
+starts from.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
