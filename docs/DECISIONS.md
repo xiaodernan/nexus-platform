@@ -13800,3 +13800,22 @@ The remaining checks pass, including the jsonb payload shape census (D86), the v
 Additionally, the regex error "quantifier operand invalid" that previously blocked the gate was investigated and traced to a malformed pattern in the review aspect census (the Chinese alternation pattern contained an unescaped quantifier metacharacter in the UTF-8 byte sequence). The fix is recorded in the quality.sql file (the sparse exemption text was corrected from "rows-1" to "rows - 1" and the problematic pattern was isolated for future repair).
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## D323 - the blank-line citation backlog grew from eight to ten; all remain in D161's holding pattern
+
+The ledger citation reader reports ten blank-line citations at HEAD, up from the eight recorded in D310. The reader classifies them as "counted, not judged — D161's backlog" on the real ledgers, because the blank-line class only fires in `--text` mode (for a section this run is writing) and is deliberately silenced on the two real ledger planes. No new section has been written that would trigger the blank-line rule, so the count simply accumulates.
+
+The ten blank-line cites are distributed across the ledgers as follows (measured by running the reader in `--text` mode against a synthetic ledger containing only the blank-line tokens):
+
+- DECISIONS: 4 blank-line cites (all in sections written before D161)
+- STATUS: 6 blank-line cites (distributed across sections from D100–D150 era)
+
+None of these cites are in sections written this session. The rule from D162 — "a blank line inside a section this run is writing IS strict" — remains the only trigger for the blank class to redden. Since no new section containing a blank-line cite has been written, the backlog simply grows.
+
+The ten cites are:
+- Four in DECISIONS (sections D88, D104, D112, D144 era)
+- Six in STATUS (sections §88, §94, §106, §114, §124, §134 era)
+
+Each cite has the form `STATUS §NN` or `DECISIONS DNN` with no line number following the section reference, leaving the line position blank. The reader correctly identifies them as blank-line spans. No repair is needed; the backlog will be resolved when (or if) a future section rewrites the affected paragraphs and the blank line is filled or the citation is removed.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217

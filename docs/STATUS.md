@@ -13778,3 +13778,9 @@ The 18-step fresh gate ran whole on the working tree with the noun-collision fix
 The quality.sql gate ran to completion on the demo database (520 merchants, accumulated traffic) and produced fourteen failed checks, all of which are expected deviations of a seeded-plus-traffic database from the pristine seed artifact. The failures fall into three families: traffic contamination (two checks), schema and vocabulary drift (six checks), and read-path/provenance gaps (four checks). Every failure is a documented, expected deviation; the gate's comment explicitly states that this database is "the seed plus traffic, so quality.sql is reading it as a diagnostic and not as a gate on the artifact". The remaining checks pass, including the jsonb payload shape, view kinds, string census, FK integrity, rating/price sanity, and review assertions. The regex error "quantifier operand invalid" was traced to the review aspect census pattern and isolated for repair.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## 319. the blank-line citation backlog grew to ten (D323)
+
+The ledger citation reader reports ten blank-line citations at HEAD, up from eight recorded in D310. All remain in D161's backlog — counted, not judged, because the blank-line class only fires in `--text` mode on a section this run is writing. Four cites live in DECISIONS (D88, D104, D112, D144 era), six in STATUS (§88, §94, §106, §114, §124, §134 era). Each cite has the form `STATUS §NN` or `DECISIONS DNN` with no line number, leaving the line position blank. The backlog will resolve when a future section rewrites the affected paragraphs. No action needed this session.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
