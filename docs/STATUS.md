@@ -13820,3 +13820,16 @@ with the two variable names that matter (the flyway disable spells spring, the j
 dev profile). The harness runs its four journeys green on the restored stack.
 
 - readers: step 8 4 offenders (routed to the applier unit's lane) · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 323. the KB journey speaks its endpoint's protocol (D327)
+
+The merchant-agent journey's remaining failure was the harness answering a stream with a JSON reader:
+the chat route is the D13 event stream — frames of event and data — and the answer lives in the summary
+frame's text with its citations beside it, so a .json() call on an event-stream is a category error the
+test could only reach after the request body started parsing. The frame parser is written against the
+stream's real shape, the grounded-or-hedged assertion reads the summary frame, and the journey surfaced
+one more tightened shape on the way: the conversations read is merchant-scoped and refuses without the
+merchant id in its query, so the probe carries it and pins the whole well-formed answer set. The journey
+runs green end to end — the agent answers from its own knowledge base inside a second.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

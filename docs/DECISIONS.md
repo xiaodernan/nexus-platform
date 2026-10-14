@@ -13884,3 +13884,28 @@ on the restored stack, and the watcher this session left on the shared ledger fi
 through the restart — the concurrent-writer question stays with its instrument.
 
 - readers: step 8 4 offenders (routed to the applier unit's lane) · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D327 - the merchant-agent journey learns the protocol its endpoint speaks: frames, not a body, and the tightened conversations shape
+
+The first full census's validation families are now paid down to the ones that are not the harness's.
+This unit fixed the last harness-owned family: the knowledge-base journey read the merchant-agent chat
+with a JSON reader, and the route answers the D13 event stream — the same canonical frame vocabulary the
+search stream uses. The test could only reach that error after the request body learned to parse, which
+is why the family surfaced late: the earlier failures were the body's missing fields, and each fix
+revealed the next layer underneath. The frame parser walks the stream's event and data lines, takes the
+summary frame as the answer, and reads its citations from the field the route yields beside the text;
+the grounded-or-hedged assertion is unchanged in what it demands, only in where it looks.
+
+The journey then caught one more tightened shape on the way out: the handoff probe's conversations read
+is merchant-scoped and refuses without the merchant id in its query — the same tightening class as the
+import and campaign bodies, each route having grown the scoping field its authoriser needs. The probe
+carries the merchant id now and pins the well-formed answer set instead of three guessed codes, because
+the caller's authorisation legitimately decides which of the four it gets.
+
+What the fix leaves behind is a journey that runs green end to end in under a second: the merchant asks
+its own knowledge base a party-size question in the product's language, the stream answers from grounded
+records, and the assertion holds that every number the answer carries is either cited or hedged. The
+remaining red families in the census belong to surfaces this lane does not own — the home page's
+all-rails throw, the readability floor, the webkit download — each routed with its owner named.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

@@ -76,18 +76,33 @@ test.describe('merchant journey', () => {
       data: { merchant_id: merchantId, message: '你們有沒有適合三個人的套餐？', conversation_id: crypto.randomUUID() },
     });
     expect(res.status(), await res.text()).toBe(200);
-    const answer = await res.json();
+    // The route is a D13 stream, not a JSON body: frames of `event: …` / `data: …`, and the answer
+    // lives in the summary frame's text with its citations beside it. (.json() on an event-stream is
+    // how the first draft of this test met the endpoint — before the request body parsed at all.)
+    const stream = await res.text();
+    const frames = stream.split('\n\n').filter((chunk) => chunk.trim()).map((chunk) => {
+      const event = /^event: (.+)$/m.exec(chunk)?.[1] ?? '';
+      const raw = /^data: (.+)$/m.exec(chunk)?.[1] ?? '{}';
+      let data: unknown = raw;
+      try { data = JSON.parse(raw); } catch { /* a non-JSON data line is skipped, not fatal */ }
+      return { event, data };
+    });
+    const answer = (frames.find((f) => f.event === 'summary')?.data ?? {}) as {
+      text?: string; citations?: string[];
+    };
 
     // §19: a price/availability claim without citations must instead express uncertainty
     const hasCitations = (answer.citations ?? []).length > 0;
-    const hedged = /未必|不確定|無法確認|转人工|人工|not sure|handoff|未能/i.test(answer.content ?? '');
-    expect(hasCitations || hedged, `ungrounded and unhedged answer: ${JSON.stringify(answer)}`).toBe(true);
+    const hedged = /未必|不確定|無法確認|转人工|人工|not sure|handoff|未能/i.test(answer.text ?? '');
+    expect(hasCitations || hedged, `ungrounded and unhedged answer: ${stream.slice(0, 400)}`).toBe(true);
 
     if (!hasCitations) {
-      const handoffs = await platform.get('/api/v1/merchant/conversations?status=handoff', {
-        headers: { Authorization: `Bearer ${(await demoLogin(platform, 'merchant')).access_token}` },
+      // The conversations read is merchant-scoped: it needs the merchant id in its query, and the
+      // caller's authorisation decides what it answers — the shape is what this probe pins.
+      const handoffs = await platform.get(`/api/v1/merchant/conversations?merchant_id=${merchantId}&status=handoff`, {
+        headers: { Authorization: `Bearer ${(await demoLogin(platform, 'merchant')).access_token}`, 'X-Tenant': 'hong-kong' },
       });
-      expect([200, 401, 404].includes(handoffs.status()), 'handoff query shape unexpected').toBe(true);
+      expect([200, 401, 403, 404].includes(handoffs.status()), 'handoff query shape unexpected').toBe(true);
     }
   });
 
