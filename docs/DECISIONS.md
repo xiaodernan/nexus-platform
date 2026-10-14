@@ -14014,3 +14014,27 @@ certification with named blockers is not a green run, and the ledger does not wr
 measurement of exactly how far the instrument goes before it stops, and why.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D332 - the misdiagnosis withdrawn: the seven rows are the designed contrast the series already recorded, and the halt's cause count drops from two to one
+
+The correction rule this ledger applies to others applies here first: before diagnosing a red, read the
+entries that measured it before. The re-certification's committed comment leg answered with seven
+offenders on the worktree drive and zero on the knob drive, and the previous unit read that difference as
+a source-index asymmetry — a defect in this lane's harness. The series' own earlier entries contradict
+the reading: the committed comment leg has failed on its own plane at every certification in the series,
+for the documented reason that the committed ledgers carry comment citations into files only the working
+copy holds — the runs module, the repositories the untracked streams carry — and the knob drive resolves
+them over the main tree while the worktree drive resolves over a clean checkout where the files are
+absent by construction. Zero-versus-seven is the contrast printing itself, the same contrast every
+certification since the committed-plane legs landed has recorded, and the gate's own exit logic
+tolerates it exactly because it is designed.
+
+What actually halted the run is one thing: the accessibility harness's crash on the unimported removal
+call inside the other lane's working-copy edit, which aborted the gate mid-step and took steps fifteen
+through eighteen with it. The correction shrinks the halt's cause count from two to one, withdraws the
+leg-asymmetry work item before anyone spends a unit on it, and leaves the crash routing exactly as it
+stood. The lesson is the one the series keeps teaching in its own voice: a red that the ledger has
+already explained is not a new red, and reading the failure without reading the ledger turns designed
+contrast into a phantom work item.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

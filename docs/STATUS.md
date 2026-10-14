@@ -13899,3 +13899,16 @@ Around the halt, the battery held: contract drift clean at 116 parsed and 108 se
 the console copy and accessibility readers green, and the AI live suite steady at its recorded two-and-two.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 328. the halt re-read: one blocker, not two — the seven rows are the designed contrast (D332)
+
+The re-certification's routing is corrected by this unit's own reading of the series it belongs to: the
+committed comment leg's seven-offender failure is the contrast that leg exists to print, recorded as
+designed behaviour in the series' own earlier entries — the knob leg resolves cites over the main tree
+where the untracked files live, the in-worktree leg resolves over a clean checkout where they do not —
+and the previous unit's leg-asymmetry diagnosis misread designed behaviour as a defect because it read
+the failure without reading the entries that came before it. The gate's exit-one has exactly one cause:
+the accessibility harness's crash on the unimported removal call in the other lane's edit, which aborted
+the run mid-step. The correction is append-only; the routing of the crash stands unchanged.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
