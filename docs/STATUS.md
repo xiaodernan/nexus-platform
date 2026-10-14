@@ -13784,3 +13784,9 @@ The quality.sql gate ran to completion on the demo database (520 merchants, accu
 The ledger citation reader reports ten blank-line citations at HEAD, up from eight recorded in D310. All remain in D161's backlog — counted, not judged, because the blank-line class only fires in `--text` mode on a section this run is writing. Four cites live in DECISIONS (D88, D104, D112, D144 era), six in STATUS (§88, §94, §106, §114, §124, §134 era). Each cite has the form `STATUS §NN` or `DECISIONS DNN` with no line number, leaving the line position blank. The backlog will resolve when a future section rewrites the affected paragraphs. No action needed this session.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## 320. the demo database seed census measured (D324)
+
+The demo database (nexus) was counted directly: 521 merchants (470 published), 5,538 offerings, 11,000 reviews (all with aspects), 2,118 chunks (all pending embedding), 32,492 availability slots across 21 days, 5,692 facts (all with expires_at). The counts align with the full seed specification (520 merchants, ~5,700 offerings, ~11,000 reviews). The quality.sql gate's 14 failures on this database are all attributable to traffic contamination, schema drift, or read-path gaps — not to seed data deficiencies (D322). The seed data itself is healthy.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217

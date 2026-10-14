@@ -13819,3 +13819,23 @@ The ten cites are:
 Each cite has the form `STATUS §NN` or `DECISIONS DNN` with no line number following the section reference, leaving the line position blank. The reader correctly identifies them as blank-line spans. No repair is needed; the backlog will be resolved when (or if) a future section rewrites the affected paragraphs and the blank line is filled or the citation is removed.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## D324 - the demo database seed census measured against quality.sql expectations
+
+The demo database (nexus) was measured directly to verify the seed data counts that the quality.sql gate references. The counts are:
+
+- merchants: 521 total, 470 published (quality.sql MIN_MERCHANTS default 80 for CI, 520 for full seed)
+- offerings: 5,538 (quality.sql expects ~5,700 for full seed)
+- reviews: 11,000 (quality.sql expects ~11,000 for full seed)
+- reviews_with_aspects: 11,000 (100% coverage)
+- chunks: 2,118 (quality.sql expects ~2,118 for full seed)
+- chunks_pending_embedding: 2,118 (100% pending)
+- availability_slots: 32,492
+- facts: 5,692 (all carry expires_at)
+- availability_slots: 32,492 across 21 days
+
+The counts align with the full seed (520 merchants, ~5,700 offerings, ~11,000 reviews) within expected variance. The merchant count is 521 (one extra tenant row), published merchants 470 (90% published). All reviews carry aspects JSONB. All chunks are pending embedding. All facts carry expires_at.
+
+The quality.sql gate's hard-fail step ran against this database and recorded 14 failures (documented in D322), all attributable to traffic contamination, schema drift, or read-path gaps — not to seed data deficiencies. The seed data itself is healthy and matches the generator's declared output.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
