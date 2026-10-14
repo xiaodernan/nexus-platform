@@ -13986,3 +13986,31 @@ promise is broken by a specific commit. The number will move again when the owne
 not need to be rebuilt, because this unit and its predecessors attached it to the failures themselves.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D331 - the gate halts for the first time in the certification series, and both blockers are bounded before the run is abandoned: a leg asymmetry this lane owns, and a crash in an edit it does not
+
+The certification series has a rhythm — the gate re-runs after a batch of landings and answers whether
+the instrument still holds — and this run broke the rhythm in a useful way: it halted, and the halt came
+with enough structure to route both halves. The first thirteen steps filed green to the digit, the same
+217 on a from-scratch schema, the same falsifier arms, the same readers. Then the committed-plane comment
+leg, which exists to print the contrast between its two drives, printed a new one: seven offender rows in
+the worktree leg that the knob leg resolves cleanly, every row a cite into a file that exists, is tracked,
+and predates the run — the oldest at D81 — so the failure is not a drifted cite but a source index that
+answers differently depending on which tree it was built over. That asymmetry lives in this lane's
+harness, and the next unit is named: build the worktree leg's index the way the knob leg builds its, and
+the seven either resolve or become real offenders with names.
+
+The second stop is not this lane's. The console accessibility harness died on a name error at its own
+line — a removal call using a function the file never imported — inside a working-copy edit whose dirty
+status names its owner, and the crash is why steps fifteen through eighteen never ran: a gate cannot
+complete past a harness that dies mid-arm. The routing carries the exact line and the exact miss, and the
+measured consequence: the re-certification is partial by one edit, completable the moment the owner's
+import lands or the edit is dropped.
+
+What the partial run still certified is recorded with the same weight as a full pass would carry: the
+hard gate, the falsifier arms, the readers, the drift battery at 116 parsed and 108 served with no gap
+bucket, the console's two promises, and the AI live suite steady at its recorded two-and-two. A partial
+certification with named blockers is not a green run, and the ledger does not write it as one; it is a
+measurement of exactly how far the instrument goes before it stops, and why.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

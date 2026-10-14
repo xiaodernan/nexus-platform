@@ -13881,3 +13881,21 @@ rewrites — each verified against the live stack before landing — moved the n
 number, left every remaining red owned by a named surface with the evidence attached.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 327. the gate's re-certification measured to its crash, with both blockers bounded and routed (D331)
+
+Eighteen commits after the last full green, the fresh gate re-ran and measured to a halt it had not met
+before: thirteen steps green — the hard gate's 217 on a from-scratch schema with the newest-claim MATCHED,
+the truncate probe, the jsonb seam, the citation and comment falsifiers at 58/58 and 57/57, sections,
+registry, spelled citations, the console readers — then two stops, each bounded and routed. The
+committed-plane comment leg reddened on seven rows whose resolution differs between its own two legs:
+the knob leg resolves every cite with zero offenders while the in-worktree leg's index misses the same
+seven, the oldest written at D81 into a file that is tracked and long enough — a leg asymmetry in the
+source index, this lane's harness, and the next unit's named work. The run then died inside the console
+accessibility harness on a name error — rmSync called without its import at the file's line 171 — in a
+working-copy edit this lane does not own; the crash is what stopped steps fifteen through eighteen, the
+file's dirty state names its owner, and the gate cannot complete past the crash while the edit stands.
+Around the halt, the battery held: contract drift clean at 116 parsed and 108 served with no gap bucket,
+the console copy and accessibility readers green, and the AI live suite steady at its recorded two-and-two.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
