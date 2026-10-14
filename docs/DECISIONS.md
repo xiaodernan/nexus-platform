@@ -13851,3 +13851,36 @@ The contract drift checker was executed on a clean checkout of the current commi
 The committed plane has no MISSING routes (routes in the contract that no code references). The sixteen CLIENT-ONLY routes resolve when the other lane's admin/seo/commerce modules land. The one UNDOCUMENTED route is a test probe; the fix belongs to the checker's corpus boundary, not the contract.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## D326 - four September request bodies brought to the current contract, the import wait taught the payload's own vocabulary, and the silent service deaths traced to the engine under them
+
+The first full e2e census routed four failure families to "the September-era request bodies disagreeing
+with the current contract", and this unit pays that routing. Each fix was verified against the live stack
+before the edit and re-run after, and each is a harness file this lane owns. The import journey's body
+now carries the merchant id the contract's own example has printed since §5.1 was written; the
+knowledge-base chat carries the conversation id the strict request model requires — a field without
+default, so its absence parses as a body error rather than a validation detail; the campaign draft
+carries the same merchant id. The fourth was not a missing field but an inverted premise: the §52 probe
+expected a consumer's business creation to be refused, when the create route is the one write designed
+to run without an existing subject — the product's self-serve onboarding, the very journey another test
+walks to a published listing. The probe now pins what the build actually promises (the self-serve create
+lands as a draft) and aims its refusal expectation at a write that genuinely requires grants: an
+offering posted into another merchant's workspace, answered 403.
+
+The import journey then taught the harness one more thing the first census could not have seen: the
+poll timed out on a job that had already reached its terminal state, because the harness waited for
+completed-failed-indexed and the API answers succeeded — the payload carries its own vocabulary field
+and its own terminal predicate, and the wait now uses the words the payload publishes. The import runs
+green end to end: accepted, proposal drafts produced with confidence numbers, nothing published silently.
+
+The silent service deaths that had corrupted the first census's tail and tangled two ledger episodes are
+traced to their cause at last: the platform's log caught the exact second — the redis connection reset
+and the database pool failed together, the reconnect watchdog refused — and the cause was the docker
+engine going down under every service at once, not any application defect. The engine restarts from this
+session, the containers return healthy on their own restart policy, and the working boot recipe is now
+written down with the names that failed before: the flyway disable must spell spring, the jwt secret
+lives in the dev profile, the database password names itself when missing. The four journeys run green
+on the restored stack, and the watcher this session left on the shared ledger file keeps collecting
+through the restart — the concurrent-writer question stays with its instrument.
+
+- readers: step 8 4 offenders (routed to the applier unit's lane) · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

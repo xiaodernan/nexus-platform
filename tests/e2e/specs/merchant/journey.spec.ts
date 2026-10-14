@@ -21,6 +21,11 @@ test.describe('merchant journey', () => {
   test('AI import produces drafts with evidence, never silent publishes (§31, §32, §27)', async ({ platform }) => {
     const { access_token } = await demoLogin(platform, 'merchant');
     const auth = { Authorization: `Bearer ${access_token}`, 'X-Tenant': 'hong-kong' };
+    // §5.1 requires merchant_id in the import body — the caller's own workspace, read the way the
+    // console reads it (the first draft of these journeys predated the field).
+    const me = await platform.get('/api/v1/me', { headers: auth });
+    const merchantId = ((await me.json()).memberships?.[0]?.merchant?.id ?? '') as string;
+    test.skip(!merchantId, 'the demo merchant has no workspace in this database');
 
     const menu = [
       'DEMO MENU — 沙田龍苑茶餐廳（合成數據）',
@@ -31,7 +36,7 @@ test.describe('merchant journey', () => {
 
     const created = await platform.post('/api/v1/merchant/imports', {
       headers: auth,
-      data: { source: { type: 'text', value: menu }, files: [] },
+      data: { merchant_id: merchantId, source: { type: 'text', value: menu }, files: [] },
     });
     expect(created.status(), await created.text()).toBe(202);
     const { job_id } = await created.json();
@@ -44,7 +49,7 @@ test.describe('merchant journey', () => {
         },
         { timeout: 60000, message: 'import job never reached a terminal state' },
       )
-      .toMatch(/completed|failed|indexed/);
+      .toMatch(/succeeded|failed/);
 
     const job = await platform.get(`/api/v1/merchant/imports/${job_id}`, { headers: auth });
     const body = await job.json();
@@ -68,7 +73,7 @@ test.describe('merchant journey', () => {
     const merchantId = items[0].id;
 
     const res = await ai.post('/ai/v1/merchant-agent/chat', {
-      data: { merchant_id: merchantId, message: '你們有沒有適合三個人的套餐？' },
+      data: { merchant_id: merchantId, message: '你們有沒有適合三個人的套餐？', conversation_id: crypto.randomUUID() },
     });
     expect(res.status(), await res.text()).toBe(200);
     const answer = await res.json();
@@ -89,9 +94,11 @@ test.describe('merchant journey', () => {
   test('marketing agent can draft but cannot publish without a human (§27, §49)', async ({ platform }) => {
     const { access_token } = await demoLogin(platform, 'merchant');
     const auth = { Authorization: `Bearer ${access_token}`, 'X-Tenant': 'hong-kong' };
+    const me = await platform.get('/api/v1/me', { headers: auth });
+    const merchantId = ((await me.json()).memberships?.[0]?.merchant?.id ?? '') as string;
     const draft = await platform.post('/api/v1/merchant/campaigns', {
       headers: auth,
-      data: { title: '週一至週三下午客流提振（AI 草稿）', goal: 'increase weekday afternoon traffic' },
+      data: { merchant_id: merchantId, title: '週一至週三下午客流提振（AI 草稿）', goal: 'increase weekday afternoon traffic' },
     });
     expect([200, 201, 403].includes(draft.status()), await draft.text()).toBe(true);
     if (draft.ok()) {

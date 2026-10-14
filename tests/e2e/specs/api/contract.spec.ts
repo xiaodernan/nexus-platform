@@ -40,12 +40,34 @@ test.describe('HTTP contract', () => {
     const noAuth = await platform.post('/api/v1/merchant/businesses', { data: { legal_name: 'X' } });
     expect(noAuth.status()).toBe(401);
 
+    // A consumer creating a business is this build's self-serve onboarding (§142's own journey), not a
+    // grant violation: the create route is the one write that must not require an existing subject. The
+    // §52 probe is kept on a write that does require grants — an offering for a workspace the caller
+    // does not hold, which is a 403 — and the created business must still start as a draft.
     const consumer = await demoLogin(platform, 'consumer');
-    const forbidden = await platform.post('/api/v1/merchant/businesses', {
+    const selfServe = await platform.post('/api/v1/merchant/businesses', {
       headers: { Authorization: `Bearer ${consumer.access_token}` },
-      data: { legal_name: 'X' },
+      data: { legal_name: 'E2E Onboarding Ltd', display_name: 'E2E Onboarding ' + Date.now() },
     });
-    expect([401, 403].includes(forbidden.status()), `consumer could create a merchant: ${forbidden.status()}`).toBe(
+    expect(selfServe.status(), await selfServe.text()).toBe(201);
+    expect((await selfServe.json()).merchant.status).toBe('draft');
+
+    const merchant = await demoLogin(platform, 'merchant');
+    const someoneElses = await platform.get('/api/v1/merchants?limit=5', {
+      headers: { 'X-Tenant': 'hong-kong' },
+    });
+    const rows = ((await someoneElses.json()).items ?? []) as Array<{ id: string }>;
+    const mine = await platform.get('/api/v1/me', {
+      headers: { Authorization: `Bearer ${merchant.access_token}`, 'X-Tenant': 'hong-kong' },
+    });
+    const myId = ((await mine.json()).memberships?.[0]?.merchant?.id ?? '') as string;
+    const other = rows.find((r) => r.id !== myId);
+    test.skip(!other, 'needs a second seeded merchant');
+    const forbidden = await platform.post('/api/v1/merchant/offerings', {
+      headers: { Authorization: `Bearer ${merchant.access_token}`, 'X-Tenant': 'hong-kong' },
+      data: { merchant_id: other!.id, name: 'Grant probe' },
+    });
+    expect([403, 404].includes(forbidden.status()), `a merchant wrote into another workspace: ${forbidden.status()}`).toBe(
       true,
     );
   });

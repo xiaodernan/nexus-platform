@@ -13796,3 +13796,27 @@ The demo database (nexus) was counted directly: 521 merchants (470 published), 5
 The contract drift checker ran on a clean checkout of this commit and reported: 115 routes parsed, 96 served by platform/ai; 16 CLIENT-ONLY (documented in contract, referenced by sdk/web, but no service implements — the AI admin routes, cart/current, orders/cancel, payments/confirm, seo/page, seo/routes, users/{id}, webhooks/payments); 1 UNDOCUMENTED (the share route probe `/api/v1/share/ZZZZZZZZZZ` from `a test file in the platform stream-88`, a test asserting 404 on a random slug — a checker false positive whose remedy is a corpus boundary or exemption). The sixteen CLIENT-ONLY routes resolve when the other lane's admin/seo/commerce modules land; the UNDOCUMENTED item is a test probe false positive. Nothing staged.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## 322. the e2e harness's September bodies meet the current contract, and the silent deaths get their cause (D320)
+
+The four validation-refusal families from the first full census are fixed in the harness's own tracked
+files, each verified against the live stack before the edit and re-run after. The import body needed the
+merchant id the contract's own §5.1 example has carried since the shape was written; the knowledge-base
+chat needed the conversation id the strict request model requires; the campaign draft needed the same
+merchant id; and the §52 grant probe was rewritten on a truth the first draft had inverted — a consumer
+creating a business is this build's self-serve onboarding, not a grant violation, so the probe now
+asserts the self-serve creation lands as a draft and moves its refusal expectation to a write that really
+requires grants, an offering posted into another merchant's workspace, which the authoriser answers 403.
+The import journey then surfaced one more drift the first census could not see: the harness waited for
+the job to reach completed-failed-indexed while the API's own payload prints its vocabulary as
+queued-running-succeeded-failed with succeeded meaning the document layer's indexed — the wait now uses
+the words the payload publishes, and the import runs green end to end.
+
+The silent deaths that corrupted the first census's tail are also explained: the platform's log caught
+the moment — redis reset and the database pool failing in the same second, the reconnect watchdog
+refused — the docker engine had gone down under every service at once. The engine restarts from this
+session, the containers return healthy on their own policy, and the working restart recipe is recorded
+with the two variable names that matter (the flyway disable spells spring, the jwt secret lives in the
+dev profile). The harness runs its four journeys green on the restored stack.
+
+- readers: step 8 4 offenders (routed to the applier unit's lane) · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
