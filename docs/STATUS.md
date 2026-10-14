@@ -13866,3 +13866,18 @@ sentence, the no-padding promise kept exactly as written. That is an AI-lane qua
 harness defect, and the tests red on it are red for the product's own reason.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 326. the post-fix whole number: twenty-nine of forty-two, and every red maps to a filed owner (D330)
+
+The suite re-ran whole after the four-unit repair arc: twenty-nine passed, three skipped, ten failed —
+down from eighteen failed when the arc began — and the ten decompose without remainder into the findings
+already routed: six inherit the home page's all-rails throw (the two health probes that answer for the
+web root, the landing journey, the merchant publish journey, and the two natural-language fills whose
+search box lives on the broken page), two encode the §141 promise that natural phrasing returns results
+(the AI lane's honest empty state), and two are the readability floor's 4.477 against its asserted AA.
+No new unattributed failure appeared anywhere in the run. The repair arc's ledger: four September request
+bodies, the import vocabulary, the isolation test's own bug, the SSE frame protocol, and twenty locator
+rewrites — each verified against the live stack before landing — moved the number and, more than the
+number, left every remaining red owned by a named surface with the evidence attached.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

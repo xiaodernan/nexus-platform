@@ -13961,3 +13961,28 @@ there; a harness that forced keyword queries into those tests would be testing l
 which is exactly the trade this ledger exists to refuse.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D330 - the repair arc's whole number: from eighteen reds to ten, with the ten mapped one-to-one onto findings that already carry owners
+
+The four-unit arc that began with the September request bodies ends in a whole measurement: the suite's
+forty-two reachable placements ran after the last locator landed, and the count is twenty-nine passed,
+three skipped, ten failed. The movement is the arc's ledger made visible — eighteen reds at the first
+full census, ten now — and the decomposition is the part that matters more than the count: every one of
+the ten maps onto a finding this ledger already carries with an owner attached, and the run produced no
+new unattributed failure anywhere.
+
+Six of the ten are the home page's all-rails throw wearing different doors: the health probe answers for
+the web root twice across projects, the landing journey and the merchant publish journey begin there, and
+the two natural-language fill timeouts are the search box being unreachable inside the error boundary.
+The fix is named to the line in the filed finding — the data layer degrades on partial failure and
+throws on all-fail — and it is the web surface's one-line shape. Two are the §141 promise meeting the
+AI lane's honest empty state, the natural-language phrasing that returns zero where a keyword returns
+eight, kept by the no-padding rule and owned by the extraction and fallback quality. Two are the visual
+readability floor measuring live text below the AA bound it asserts.
+
+What the arc leaves behind is a suite whose every red has a named surface, a diagnosed mechanism, and an
+owner — the state a harness exists to reach, where green means the promises hold and red means a specific
+promise is broken by a specific commit. The number will move again when the owners land; the mapping will
+not need to be rebuilt, because this unit and its predecessors attached it to the failures themselves.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
