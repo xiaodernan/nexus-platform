@@ -14279,3 +14279,9 @@ The quality.sql gate was executed again on the demo database to verify the D326 
 The gate's behavior remains exactly as designed: it measures the delta between the committed seed artifact and the live demo plane, and every failure is a documented, expected deviation (traffic contamination, schema drift, provenance gaps). The regex fix is stable and the gate runs cleanly on repeated executions.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## D336 - the blank-line cite in V8 migration fixed by re-spelling the quality.sql range
+
+The comment-plane citation reader reported one strict offender: a citation in `the migration file in the platform stream` that read `the quality gate file at the blank line-1117`. Line 1109 in quality.sql is a blank line, so the ledger citations reader classified this as a "blank line cite" and reddened it. The fix re-spells the citation to `the quality gate file at the D66 section-1117`, excluding the blank line at 1109 and pointing to the actual content (the D66 section header and the following census). The ledger citations reader no longer classifies it as a blank-line cite, and the comment-plane reader now reports 0 strict offenders and 0 blank-line cites. All six readers pass.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217

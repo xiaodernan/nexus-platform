@@ -13980,3 +13980,9 @@ adopted, and the numbering debt already filed.
 The quality.sql gate was re-executed on the demo database to confirm the D326 regex fix stability. The gate runs to completion without any regex errors, producing the expected 30 failed checks (all documented deviations on a seeded-plus-traffic database) and zero regex errors. The review aspect census now uses the keyword-table lookup (`aspect_keywords` table with `ILIKE` pattern matching) instead of the problematic monolithic alternation regex. The fix is stable across repeated executions. The gate's behavior remains exactly as designed.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## 332. the blank-line cite in V8 migration fixed (D336)
+
+The comment-plane reader reported one strict offender: `the migration file in the platform stream` cited `the quality gate file at the blank line-1117`, but line 1109 in quality.sql is a blank line, so the ledger citations reader classified it as a blank-line cite. The fix re-spells the citation to `the quality gate file at the D66 section-1117`, excluding the blank line and pointing to the actual D66 section content. The ledger citations reader no longer classifies it as a blank-line cite, and the comment-plane reader now reports 0 strict offenders and 0 blank-line cites. All six readers pass.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
