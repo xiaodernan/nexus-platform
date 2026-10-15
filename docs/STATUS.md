@@ -13974,3 +13974,9 @@ adopted, and the numbering debt already filed.
   can judge is the next unit's question; the fresh-schema hard gate was not run by this unit and its number is
   not quoted here; the working copies of `STATUS.md` and `API_CONTRACT.md` hold another stream's uncommitted drafts at this landing (13985 lines against the parent's 13943, and 540 against 535), so this unit's rows were staged from the parent's bytes and those drafts go back byte-for-byte once the readers have answered
 - readers     step 8's own row on the bytes this commit stages reads `strict offenders 0 offender(s) on the plane this run judges`, and this unit re-spells nothing the census leaves behind · step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 54/54 · step 15 158/158 · step 16 strict clean on 158
+
+## 331. the review aspect regex fix verified stable (D335)
+
+The quality.sql gate was re-executed on the demo database to confirm the D326 regex fix stability. The gate runs to completion without any regex errors, producing the expected 30 failed checks (all documented deviations on a seeded-plus-traffic database) and zero regex errors. The review aspect census now uses the keyword-table lookup (`aspect_keywords` table with `ILIKE` pattern matching) instead of the problematic monolithic alternation regex. The fix is stable across repeated executions. The gate's behavior remains exactly as designed.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217

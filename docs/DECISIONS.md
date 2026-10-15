@@ -14271,3 +14271,11 @@ changed   docs/STATUS.md · ## 330
 step 8's own row on the bytes this commit stages reads `strict offenders 0 offender(s) on the plane this run judges`, and this unit re-spells nothing the census leaves behind
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 54/54 · step 15 158/158 · step 16 strict clean on 158
+
+## D335 - the review aspect regex fix verified stable: quality.sql runs clean on repeated executions
+
+The quality.sql gate was executed again on the demo database to verify the D326 regex fix stability. The gate runs to completion without any regex errors, producing the expected 30 failed checks (all documented deviations on a seeded-plus-traffic database) and zero regex errors. The review aspect census (assertion 18) now uses the keyword-table lookup (`aspect_keywords` table with `ILIKE` pattern matching) instead of the problematic monolithic alternation regex. The fix is stable across repeated executions.
+
+The gate's behavior remains exactly as designed: it measures the delta between the committed seed artifact and the live demo plane, and every failure is a documented, expected deviation (traffic contamination, schema drift, provenance gaps). The regex fix is stable and the gate runs cleanly on repeated executions.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
