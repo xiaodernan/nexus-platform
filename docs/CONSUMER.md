@@ -58,7 +58,7 @@ Personalization feeds ranking via `w_personalization` but updates slowly (EMA, m
 
 ## 9. Privacy & data rights (§106)
 Consumers can `GET /api/v1/me/export` (streaming JSON of all personal data), `DELETE /api/v1/me` (files a
-`deletion_requests` row: kind `account`, status `pending`), `POST /api/v1/me/memory/reset` and `POST /api/v1/me/personalization/reset` (each files its own kind as `completed`, with the counts it removed). Data is access-controlled, auditable, encrypted where
+`deletion_requests` row: kind `account`, status `pending`), `POST /api/v1/me/memory/reset` and `POST /api/v1/me/personalization/reset` (each files its own kind as `completed`, with the counts it removed), and the export records its own taking too: `GET /api/v1/me/export` files kind `export` as `completed` with the disclosure block of the very file it hands back, *after* the sections are read, so a person's file lists every earlier read and never the one that produced it (D334). Data is access-controlled, auditable, encrypted where
 appropriate ([SECURITY.md](SECURITY.md)). Precise geo used only with consent; default coarse/district
 ([`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §1).
 

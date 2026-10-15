@@ -128,6 +128,13 @@ class MemoryDeletionDoorTest extends NexusIntegrationTest {
                 .isEqualTo(HttpStatus.OK);
     }
 
+    /** §106's portability act: taking the file. It files a ledger row of its own, which the census below reads. */
+    private void takeFile(Person person) {
+        ResponseEntity<String> answer = get(person.tenant(), person.token(), "/api/v1/me/export");
+        assertThat(answer.getStatusCode()).as("the export door must stay green; it said: %s", answer.getBody())
+                .isEqualTo(HttpStatus.OK);
+    }
+
     /** declared twice, inferred once, transaction once — one row for each label the column documents. */
     private void plantOneOfEachSource(Person person) {
         plant(person, "declared-a", "declared");
@@ -306,11 +313,12 @@ class MemoryDeletionDoorTest extends NexusIntegrationTest {
      * and asks the table which kinds exist afterwards; the other opens the production sources and asks which
      * {@code DeletionKind} constants appear in a {@code createDeletionRequest} call. The two must agree — a kind
      * filed by a repository seam nobody can reach over HTTP, or a door whose row the source census missed,
-     * reddens one reader and not the other. The residue is printed rather than hidden: the migration names four
-     * kinds and three have doors.
+     * reddens one reader and not the other. D333 left one member of the four with no door at all and printed it
+     * by name; this build files it, so the residue the case demands is now empty and a member added to the
+     * column comment without a route reddens the census again rather than surviving as prose.
      */
     @Test
-    @DisplayName("The kind vocabulary is the migration's own list; three members have a door, export has none")
+    @DisplayName("The kind vocabulary is the migration's own list and every member has a door behind it")
     void theDeclaredVocabularyIsWalkedDoorByDoor() throws Exception {
         Set<String> declared = Arrays.stream(IdentityRepository.DeletionKind.values())
                 .map(IdentityRepository.DeletionKind::kind).collect(java.util.stream.Collectors.toCollection(TreeSet::new));
@@ -324,19 +332,21 @@ class MemoryDeletionDoorTest extends NexusIntegrationTest {
         Person account = consumer("memkindacct");
         Person memory = consumer("memkindmem");
         Person personalization = consumer("memkindpers");
+        Person exporter = consumer("memkindexport");
         erase(account);
         wipe(memory);
         plant(personalization, "p-inferred", "inferred");
         resetPersonalization(personalization);
+        takeFile(exporter);
         Set<String> byDoors = new TreeSet<>();
-        for (Person person : List.of(account, memory, personalization)) {
+        for (Person person : List.of(account, memory, personalization, exporter)) {
             Set<String> kinds = kindsFiled(person);
             assertThat(kinds).as("each door files exactly one kind, its own — a door that wrote two rows would"
                     + " make the ledger say more than the act did").hasSize(1);
             byDoors.addAll(kinds);
         }
-        assertThat(byDoors).as("the three live doors, read off the table").containsExactlyInAnyOrder(
-                "account", "memory", "personalization");
+        assertThat(byDoors).as("the four live doors, read off the table").containsExactlyInAnyOrder(
+                "account", "export", "memory", "personalization");
 
         // Reader two, through the production source.
         List<String> arguments = filingArguments();
@@ -358,9 +368,11 @@ class MemoryDeletionDoorTest extends NexusIntegrationTest {
 
         Set<String> withoutDoors = new TreeSet<>(declared);
         withoutDoors.removeAll(byDoors);
-        assertThat(withoutDoors).as("the member the vocabulary names and no door files is printed here by name,"
-                        + " not left out of the census; it is the export request §106 describes and the export"
-                        + " door is a read that files nothing").containsExactly("export");
+        assertThat(withoutDoors)
+                .as("every member the column comment declares is filed by a door this build runs, so the residue"
+                        + " is empty: a member that appears here names a route nobody built, which is exactly what"
+                        + " D333 left behind for the export request and this unit closed")
+                .isEmpty();
     }
 
     @Test

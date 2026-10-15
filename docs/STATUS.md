@@ -13940,3 +13940,37 @@ one-word client match; both are defects in another lane's file, recorded and fil
   synchronous, so `completed` is honest for this door and for no door that queues; the fresh-schema hard
   gate was not run by this unit and its number is not quoted here
 - readers     step 8's own row on the bytes this commit stages reads `strict offenders 0 offender(s) on the plane this run judges`, and this unit re-spells nothing because the placeholder-span population the last unit cleared is 0 on both planes · step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 54/54 · step 15 158/158 · step 16 strict clean on 158
+
+## 330. the export door files its own taking after the file is assembled, which closes the kind vocabulary's last doorless member, and the bare-cite species that shipped two dangling numbers through a green certification is measured rather than merely cleared (D334)
+
+`GET /api/v1/me/export` now writes one completed `deletion_requests` row of kind `export`, and it writes it
+*after* the sections are read: the payload is the disclosure block the returned file itself carries —
+`exported_at`, `format`, `row_limit`, `section_sizes`, `possibly_truncated` — so the ledger row names the file
+it describes instead of describing an intention. The ordering is the claim. File the row first and the
+person's own file contains the read that produced it, that section's stated size depends on the request that
+asks for it, and a person with 499 earlier files is told by the 500th that `deletion_requests` filled the cap —
+a truncation admitted by a file that truncated nothing. `completed` is honest here because the assembly is
+synchronous, and the javadoc says what the row cannot witness: a transport that dies after the return
+statement. Two cases hold the new line: 501 earlier files planted for one person make the table hold 502 while
+the file reports 500, and the row this read files carries the same admission in its own payload; a refused
+read answers zero rows at both of its rungs, so the ledger records reads that produced a file, not attempts.
+That closes the residue the previous unit's census named by word: the four declared members of
+`IdentityRepository.DeletionKind` each have a route now, the case's demanded residue is empty in this commit,
+and a fifth spelling added to the column comment without a door reddens the census instead of living in a
+migration.
+
+the battery's own line is `BATTERY: PASS`: control green, then A 6 red, B 3, C 7, D 3 and E 4, each of them exactly the case-name set the harness wrote for it before the run, with every drive over all 47 cases and the file restored hash-identically after each 47 cases run and 0 red across the five identity door classes re-driven at this landing parent (PersonalExportDoorTest 12, MemoryDeletionDoorTest 9, DeletionRequestLedgerDoorTest 7, StaleTokenDoorTest 9, PersonalEraseDoorTest 10); the per-class counts come back from each class's surefire report and sum to the total the drive printed the run corrected its own author twice and both corrections are in the record: the first drive's artifact beside this one shows arm D CRASHED because the splice was one parenthesis short - a syntax red is zero evidence, so a compile probe now arms every mutant before test minutes are spent - and arm E DISAGREED with a fourth red its written prediction had not named, whose cause is that two of the door's row selectors find a row by the moment its payload declares, so a wrongly stamped row is unreachable rather than merely wrong; the prediction was corrected to four cases and the battery re-driven to the PASS above The export door went from five cases to twelve and the five identity door
+classes from 40 to 47. Then the finding this unit did not set out to make: two rows of
+`docs/API_CONTRACT.md` still pointed at the number the memory door was measured under before the renumber,
+and no reader could have noticed, because step 8 judges tokens shaped like a name followed by a colon and a
+digits-only cite has no colon. measured over the 27 documents other than the ledger, the parent plane carries 1315 bare decision-number cites and 41 of them name a number no heading holds; the bytes this commit stages remove exactly this unit's two and add none, which the landing asserts rather than hopes measured through the reader's own `--text` seam: a plane holding one colon-form cite whose target exists prints 1 name:number token, 1 citation-shaped, 0 offenders and exits 0, while the same plane with the target moved prints `1 found and 0 resolved` and exits 2 - the reader is sharp and simply never sees this species. This commit's own contract file, run through the same seam, is refused outright: `no citation-shaped token in 6 name:number tokens`, exit 2, which is why two red-looking cites shipped inside a green certification This unit re-aims its own two, to the doors that landed them, and leaves
+the rest named by family in the ledger rather than touched here: the early table vocabulary the ledger never
+adopted, and the numbering debt already filed.
+
+- remains     no route is added or removed — 87 route rows in the parent's file are 87 in the staged file, the same methods and paths in the same order, with only prose cells rewritten — so the contract drift reader's denominators are not
+  this unit's to quote; no client call site, and neither the SDK nor the web surfaces the export ledger; the
+  erased account still cannot read the file that would show its own exports, the boundary from D310 this unit
+  inherits rather than moves; the bare-cite species is measured, not closed, and giving step 8 a spelling it
+  can judge is the next unit's question; the fresh-schema hard gate was not run by this unit and its number is
+  not quoted here; the working copies of `STATUS.md` and `API_CONTRACT.md` hold another stream's uncommitted drafts at this landing (13985 lines against the parent's 13943, and 540 against 535), so this unit's rows were staged from the parent's bytes and those drafts go back byte-for-byte once the readers have answered
+- readers     step 8's own row on the bytes this commit stages reads `strict offenders 0 offender(s) on the plane this run judges`, and this unit re-spells nothing the census leaves behind · step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 54/54 · step 15 158/158 · step 16 strict clean on 158

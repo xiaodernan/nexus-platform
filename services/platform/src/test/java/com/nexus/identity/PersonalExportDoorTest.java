@@ -16,6 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
@@ -43,6 +44,18 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
  * exclusions a portable file has to make deliberately — the credential hash on an external principal, and
  * the {@code before}/{@code after} images on an audit row, which describe the record that was edited rather
  * than the person who edited it.
+ *
+ * <p>The last seven cases are the act of reading itself. D333 measured the ledger's declared kind vocabulary
+ * against the doors and found one member, {@code export}, that no door could file: §106 lists taking your data
+ * out beside deleting it, and the request ledger declares both, while this route read the ledger and never
+ * wrote it. It writes it now, as one completed row carrying the file's own disclosure block, and the ordering is
+ * the finding: the row is filed {@code after} the sections are read, so the file a person holds never contains
+ * the read that produced it, and the counts the row carries are measurements of a finished assembly rather than
+ * a plan of one. Filed before the read, the row would sit inside its own {@code deletion_requests} section, that
+ * section's stated size would depend on the request that asks for it, and a person with 499 earlier reads would
+ * be told their history was truncated by a file that truncated nothing. Two cases pin that rule from both
+ * sides, one of them by making two consecutive reads and requiring the second file to carry the first read's
+ * row with the first read's numbers in it.
  */
 class PersonalExportDoorTest extends NexusIntegrationTest {
 
@@ -102,6 +115,37 @@ class PersonalExportDoorTest extends NexusIntegrationTest {
         var answer = get(tenant, token(tenant, person, "consumer"), "/api/v1/me/export");
         assertThat(answer.getStatusCode()).as("export said: %s", answer.getBody()).isEqualTo(HttpStatus.OK);
         return Json.tree(answer.getBody());
+    }
+
+    private long filed(Tenant tenant, UUID person, String kind) {
+        return count("select count(*) from deletion_requests where user_id = :u and kind = :k",
+                Map.of("u", person, "k", kind));
+    }
+
+    /** The ledger's whole record of this person: one {@code kind=status} string per row the doors filed. */
+    private List<String> ledgerOf(Tenant tenant, UUID person) {
+        return jdbc.queryForList("select kind || '=' || status from deletion_requests where user_id = :u"
+                        + " order by kind", new MapSqlParameterSource("u", person), String.class);
+    }
+
+    /**
+     * One row of the ledger, found by the moment the read itself carries rather than by its position: two reads
+     * of one person are two rows, and each file says which act it records. Every caller asserts the stamp is the
+     * one this door answered with, so an absent row reports itself here instead of throwing on an empty result.
+     */
+    private JsonNode exportRecord(Tenant tenant, UUID person, String exportedAt) {
+        List<String> payloads = jdbc.queryForList("select payload::text from deletion_requests where user_id = :u"
+                        + " and kind = 'export' and payload->>'exported_at' = :at",
+                new MapSqlParameterSource("u", person).addValue("at", exportedAt), String.class);
+        assertThat(payloads).as("the read stamped %s filed exactly one export row", exportedAt).hasSize(1);
+        return Json.tree(payloads.get(0));
+    }
+
+    /** The same row's state claims: {@link #exportRecord} reads what it says, this reads when it says it ended. */
+    private boolean exportRowCompleted(Tenant tenant, UUID person, String exportedAt) {
+        return jdbc.queryForObject("select completed_at is not null from deletion_requests where user_id = :u"
+                        + " and kind = 'export' and payload->>'exported_at' = :at",
+                new MapSqlParameterSource("u", person).addValue("at", exportedAt), Boolean.class);
     }
 
     /** A cart line has to point at something, and the schema makes that an offering or a reservation. */
@@ -374,5 +418,214 @@ class PersonalExportDoorTest extends NexusIntegrationTest {
                         payload.path("deletion_requests"))
                 .isTrue();
         assertThat(payload.path("exported_at").asText()).isNotBlank();
+    }
+
+    @Test
+    @DisplayName("Taking the file is an act the ledger declares, and the read now files it as completed")
+    void theReadFilesItsOwnCompletedRowForThePersonWhoTookIt() {
+        Tenant tenant = newTenant("export-filed");
+        UUID person = newUser(tenant, "taker@export.test", "consumer");
+        UUID neighbour = newUser(tenant, "bystander@export.test", "consumer");
+
+        assertThat(filed(tenant, person, "export")).as("nothing has been read yet").isZero();
+
+        String stamp = export(tenant, person).path("exported_at").asText();
+
+        assertThat(filed(tenant, person, "export")).as("one read, one row").isEqualTo(1);
+        assertThat(ledgerOf(tenant, person))
+                .as("the assembly is synchronous, so the read is finished rather than requested, and a completed"
+                        + " row that carried no moment would be the same lie §106's ledger was built to avoid")
+                .containsExactly("export=completed");
+        assertThat(exportRowCompleted(tenant, person, stamp))
+                .as("a completed row has to hold the completion column its own status claims").isTrue();
+
+        // The row belongs to the caller: a second person's read files in that person's own ledger.
+        export(tenant, neighbour);
+        assertThat(filed(tenant, person, "export")).as("the neighbour's read filed nothing into this ledger")
+                .isEqualTo(1);
+        assertThat(ledgerOf(tenant, neighbour))
+                .as("one tenant, two people, and each one's export lands under their own id — the row the"
+                        + " neighbour took is not a row this person's file would show").containsExactly(
+                        "export=completed");
+    }
+
+    @Test
+    @DisplayName("The filed row is the file's own disclosure block, not a description written beside it")
+    void theFiledRowCarriesTheDisclosureBlockOfTheFileItProduced() {
+        Tenant tenant = newTenant("export-record");
+        UUID person = newUser(tenant, "mirror@export.test", "consumer");
+        // Populate a few sections: two maps read as equal is no witness if both are empty.
+        jdbc.update("insert into notifications (tenant_id, audience, user_id, channel, template, payload)"
+                        + " values (:t, 'consumer', :u, 'in_app', 'reservation_confirmed', cast(:p as jsonb))",
+                new MapSqlParameterSource("t", tenant.id()).addValue("u", person)
+                        .addValue("p", Json.write(Json.map("greeting", "您的餐桌已确认"))));
+        jdbc.update("insert into user_preferences (user_id, kind, key, value, source) values (:u, 'food', :key,"
+                        + " cast(:v as jsonb), 'declared')",
+                new MapSqlParameterSource("u", person).addValue("key", "mirror-quiet")
+                        .addValue("v", Json.write(Json.map("note", "quiet venue"))));
+
+        JsonNode payload = export(tenant, person);
+        JsonNode record = exportRecord(tenant, person, payload.path("exported_at").asText());
+
+        assertThat(record.path("exported_at").asText()).as("the row names the file it describes, by that file's"
+                + " own moment").isEqualTo(payload.path("exported_at").asText());
+        assertThat(record.path("format").asText()).isEqualTo("json");
+        assertThat(record.path("row_limit").asInt())
+                .as("the cap the row says was used is the cap the file says was used")
+                .isEqualTo(payload.path("row_limit").asInt());
+        assertThat(record.path("section_sizes"))
+                .as("every size in the row is the size the person was handed, key for key: row %s against file %s",
+                        record.path("section_sizes"), payload.path("section_sizes"))
+                .isEqualTo(payload.path("section_sizes"));
+        assertThat(record.path("possibly_truncated"))
+                .as("and the truncation the row reports is the truncation the file reports: %s",
+                        record.path("possibly_truncated"))
+                .isEqualTo(payload.path("possibly_truncated"));
+        assertThat(record.path("section_sizes").path("notifications").asInt()).as("the maps agree on a file that"
+                + " holds rows, not on two empties").isEqualTo(1);
+        assertThat(record.path("section_sizes").path("preferences").asInt()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A file is a snapshot: the read that produced it is not inside it, it is on the ledger")
+    void theFileDoesNotHoldTheRowOfTheReadThatProducedIt() {
+        Tenant tenant = newTenant("export-snapshot");
+        UUID person = newUser(tenant, "plain@export.test", "consumer");
+
+        JsonNode payload = export(tenant, person);
+
+        assertThat(payload.path("deletion_requests"))
+                .as("the file holds no row of the read that made it: %s", payload.path("deletion_requests"))
+                .isEmpty();
+        assertThat(payload.path("section_sizes").path("deletion_requests").asInt())
+                .as("and it states that size as zero, which is what the read found when it began").isZero();
+        assertThat(filed(tenant, person, "export"))
+                .as("while the act is filed, one row, from the same call").isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The next file shows the export that produced the last one, and the two counts differ by that row")
+    void theNextFileShowsTheExportThatProducedTheLastOne() {
+        Tenant tenant = newTenant("export-succession");
+        UUID person = newUser(tenant, "twice@export.test", "consumer");
+
+        JsonNode first = export(tenant, person);
+        JsonNode second = export(tenant, person);
+        String firstStamp = first.path("exported_at").asText();
+        assertThat(second.path("exported_at").asText())
+                .as("two reads need two stamps, or the selector that finds the earlier row is blind").isNotEqualTo(
+                        firstStamp);
+
+        JsonNode rows = second.path("deletion_requests");
+        assertThat(rows).as("the earlier read is the row this file holds").hasSize(1);
+        assertThat(rows.get(0).path("kind").asText()).isEqualTo("export");
+        assertThat(rows.get(0).path("status").asText()).isEqualTo("completed");
+        assertThat(rows.get(0).path("payload").path("exported_at").asText())
+                .as("and it is the file made at the moment it names: %s", rows.get(0)).isEqualTo(firstStamp);
+
+        // The pair of numbers is the snapshot rule stated twice, and the difference is exactly one read. The
+        // key's presence is claimed before its value is read: a payload that left `section_sizes` out would
+        // answer a missing node's zero for the number below, which is the same vacuity in a new place.
+        assertThat(rows.get(0).path("payload").path("section_sizes").has("deletion_requests"))
+                .as("the row this file holds has to say what its own moment counted, not merely not contradict"
+                        + " it: %s", rows.get(0).path("payload")).isTrue();
+        assertThat(rows.get(0).path("payload").path("section_sizes").path("deletion_requests").asInt())
+                .as("the row inside this file counted no export rows, because at its own moment there were none")
+                .isZero();
+        assertThat(first.path("section_sizes").path("deletion_requests").asInt()).isZero();
+        assertThat(second.path("section_sizes").path("deletion_requests").asInt())
+                .as("this file counts one, because the read that produced it is the difference — and it never"
+                        + " counts itself").isEqualTo(1);
+        assertThat(filed(tenant, person, "export")).as("two reads, two rows on the ledger").isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Reads accumulate, and the cap discloses the flood instead of hiding it from the ledger too")
+    void accumulatedReadsFillTheCapAndTheLedgerRowSaysSo() {
+        Tenant tenant = newTenant("export-flood");
+        UUID person = newUser(tenant, "archive@export.test", "consumer");
+        // 501 earlier reads, each stamped before this one so none of them can be confused with the act
+        // this case is about.
+        jdbc.update("insert into deletion_requests (user_id, kind, status, payload, completed_at, created_at)"
+                        + " select :u, 'export', 'completed', cast(:p as jsonb), now(),"
+                        + " now() - interval '1 hour' from generate_series(1, 501)",
+                new MapSqlParameterSource("u", person).addValue("p", "{\"exported_at\":\"earlier-read\"}"));
+
+        JsonNode payload = export(tenant, person);
+        int limit = payload.path("row_limit").asInt();
+
+        assertThat(limit).as("the plant has to exceed the cap or this case measures nothing").isLessThan(501);
+        assertThat(payload.path("section_sizes").path("deletion_requests").asInt()).isEqualTo(limit);
+        assertThat(payload.path("possibly_truncated")).as("the section that filled the cap is named by the file")
+                .extracting(node -> node.asText()).contains("deletion_requests");
+        assertThat(count("select count(*) from deletion_requests where user_id = :u", Map.of("u", person)))
+                .as("501 earlier reads plus this one, and the file showed %s of them",
+                        payload.path("section_sizes").path("deletion_requests").asInt())
+                .isEqualTo(502);
+        assertThat(exportRecord(tenant, person, payload.path("exported_at").asText()).path("possibly_truncated"))
+                .as("the ledger's row for this read carries the same admission: the file it describes was a prefix")
+                .extracting(node -> node.asText()).contains("deletion_requests");
+    }
+
+    @Test
+    @DisplayName("A read that never happened files nothing: no credential, and no account left to read")
+    void aRefusedReadFilesNothing() {
+        Tenant tenant = newTenant("export-refused");
+        UUID person = newUser(tenant, "ghost@export.test", "consumer");
+        String token = token(tenant, person, "consumer");
+
+        var anonymous = exchange(HttpMethod.GET, tenant, null, "/api/v1/me/export", null);
+        assertThat(anonymous.getStatusCode()).as("body: %s", anonymous.getBody()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(filed(tenant, person, "export")).as("a read that was refused is not an act the person made")
+                .isZero();
+
+        var erased = exchange(HttpMethod.DELETE, tenant, token, "/api/v1/me", null);
+        assertThat(erased.getStatusCode()).as("the erase door has to work for this rung to be reachable; it said:"
+                + " %s", erased.getBody()).isEqualTo(HttpStatus.OK);
+        assertThat(filed(tenant, person, "export")).as("the erase filed its own kind and no export row")
+                .isZero();
+
+        var after = get(tenant, token, "/api/v1/me/export");
+        assertThat(after.getStatusCode()).as("the erased account is refused the file, which is the boundary D310"
+                + " pinned; it said: %s", after.getBody()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(filed(tenant, person, "export")).as("and the refused read after the erasure files nothing"
+                + " either").isZero();
+    }
+
+    @Test
+    @DisplayName("Four acts file four rows, each under its own member of the vocabulary and its own state")
+    void fourActsFileFourRowsAndEachUnderItsOwnMember() {
+        Tenant tenant = newTenant("export-vocabulary");
+        UUID person = newUser(tenant, "every@export.test", "consumer");
+        String token = token(tenant, person, "consumer");
+        jdbc.update("insert into user_preferences (user_id, kind, key, value, source) values (:u, 'food', :key,"
+                        + " cast(:v as jsonb), :source)",
+                new MapSqlParameterSource("u", person).addValue("key", "vocab-declared")
+                        .addValue("v", Json.write(Json.map("note", "no shellfish"))).addValue("source", "declared"));
+        jdbc.update("insert into user_preferences (user_id, kind, key, value, source) values (:u, 'food', :key,"
+                        + " cast(:v as jsonb), :source)",
+                new MapSqlParameterSource("u", person).addValue("key", "vocab-inferred")
+                        .addValue("v", Json.write(Json.map("note", "quiet venues"))).addValue("source", "inferred"));
+
+        var read = get(tenant, token, "/api/v1/me/export");
+        assertThat(read.getStatusCode()).as("the read; it said: %s", read.getBody()).isEqualTo(HttpStatus.OK);
+        var wide = post(tenant, token, "/api/v1/me/memory/reset", Json.map());
+        assertThat(wide.getStatusCode()).as("the wide wipe; it said: %s", wide.getBody()).isEqualTo(HttpStatus.OK);
+        var narrow = post(tenant, token, "/api/v1/me/personalization/reset", Json.map());
+        assertThat(narrow.getStatusCode()).as("the narrow wipe; it said: %s", narrow.getBody())
+                .isEqualTo(HttpStatus.OK);
+        var erasure = exchange(HttpMethod.DELETE, tenant, token, "/api/v1/me", null);
+        assertThat(erasure.getStatusCode()).as("the erasure; it said: %s", erasure.getBody())
+                .isEqualTo(HttpStatus.OK);
+
+        assertThat(ledgerOf(tenant, person))
+                .as("every member of §106's declared vocabulary is now filed by the door that performs it, and"
+                        + " no door files under another's name")
+                .containsExactlyInAnyOrder("export=completed", "memory=completed", "personalization=completed",
+                        "account=pending");
+        assertThat(count("select count(*) from deletion_requests where user_id = :u", Map.of("u", person)))
+                .as("four acts, four rows — a door that filed twice would make the ledger say more than"
+                        + " the person did")
+                .isEqualTo(4);
     }
 }

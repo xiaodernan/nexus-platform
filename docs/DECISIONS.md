@@ -14160,3 +14160,114 @@ new                 services/platform/src/test/java/com/nexus/identity/MemoryDel
 step 8's own row on the bytes this commit stages reads `strict offenders 0 offender(s) on the plane this run judges`, and this unit re-spells nothing because the placeholder-span population the last unit cleared is 0 on both planes
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 54/54 · step 15 158/158 · step 16 strict clean on 158
+
+## D334 - the export door files its own taking: the vocabulary's last member gets a route, the row is written after the file is assembled so no file ever contains the read that produced it, and the two contract cites this series moved are re-aimed where no reader can see them
+
+**1. The residue the last unit named by word is now an act with a route.** D333 declared four kinds in
+`IdentityRepository.DeletionKind` and wrote a census case whose assertion was that the members with no door
+behind them are exactly one, named `export` — a case built to go red the moment somebody made that member
+file. This unit makes it file. `GET /api/v1/me/export` now writes one `deletion_requests` row of kind
+`export`, status `completed`, whose payload is the disclosure block the returned file itself carries. The
+census's demanded residue is flipped in this same commit to nothing: the four declared members each have a
+route, and a fifth spelling added to the column's comment without a door reddens that census rather than
+surviving as prose in a migration.
+
+**2. The row is filed after the sections are read, and the ordering is the claim, not a detail.** A
+person's file is a snapshot taken when the read began, and the act of taking it is a fact that begins when
+the snapshot ends. File it first and three things happen at once: the row lands inside its own section, so
+the file the person is handed contains the record of the reading they are being handed; that section's
+stated size depends on the request that asks for it, which is the one question the disclosure block exists
+to answer without asking; and a person who has taken 499 earlier files is told by the 500th that
+`deletion_requests` filled the row cap — a truncation admitted by a file that truncated nothing, because the
+row it counts is its own. Arm A is exactly that reorder, hoisting the filing above every section read, and
+brings down six cases - four named in the export door's own class, 1 in the personalization ledger case and 1 in the memory census. Two of those are cases in files this unit does not touch — the personalization ledger case and
+the memory case, each of which asserts that one act is one row in the person's own file — which is the
+evidence that the ordering is not this door's private habit but a property the other doors already depend on.
+
+**3. The payload is a measurement of the finished assembly, not a plan of one.** The row carries
+`exported_at` read off the answer that is about to be returned, beside the `format`, `row_limit`,
+`section_sizes` and `possibly_truncated` the file publishes — the disclosure block passed into the insert by
+reference rather than re-typed next to it. Two arms test that this is a record and not a formality. Arm D
+leaves out the two numbers that depend on the read, keeping the constant; arm E stamps the row with a
+freshly taken instant instead of the file's moment. both come back with exactly the case-name sets written before the run - D's 3 and E's 4, and the shape worth naming is E's: the row
+selectors in the test file find a row by the moment its own payload declares, so a row that names the wrong
+time is not merely wrong, it is unreachable — which is the D332 lesson kept in code rather than in a comment.
+
+**4. `completed` is honest for this door, and the sentence stops there.** The assembly is synchronous:
+every section is read, capped and copied into the payload before the insert runs, so at the moment the row is
+filed the file exists in the handler's own memory and the claim "this read produced this file" is about work
+already done. The limit is named in the same javadoc paragraph: a transport that dies after the return
+statement is a fact this row cannot witness, and the row does not claim to. Two cases hold the line. The
+accumulation case plants 501 earlier files for the same person, each stamped before the read it is not, so
+the flood is not this read's doing: the table then holds 502 rows, the file reports the 500 it read, and the
+row this read files names `deletion_requests` in its own `possibly_truncated` — the ledger admits what the
+file admits instead of quietly holding a prefix, and the admission is read back out of the row rather than
+assumed from the response. The refusal case walks two rungs of a read that never happened — no credential,
+then an account already erased — and requires zero rows at each, so the ledger records the reads that
+produced a file and not the attempts to take one.
+
+**5. The battery drove six times and every red was predicted by case name.** the battery's own line is `BATTERY: PASS`: control green, then A 6 red, B 3, C 7, D 3 and E 4, each of them exactly the case-name set the harness wrote for it before the run, with every drive over all 47 cases and the file restored hash-identically after each 47 cases run and 0 red across the five identity door classes re-driven at this landing parent (PersonalExportDoorTest 12, MemoryDeletionDoorTest 9, DeletionRequestLedgerDoorTest 7, StaleTokenDoorTest 9, PersonalEraseDoorTest 10); the per-class counts come back from each class's surefire report and sum to the total the drive printed The run
+also corrected its own author twice, and both corrections are in the record rather than smoothed over.
+the run corrected its own author twice and both corrections are in the record: the first drive's artifact beside this one shows arm D CRASHED because the splice was one parenthesis short - a syntax red is zero evidence, so a compile probe now arms every mutant before test minutes are spent - and arm E DISAGREED with a fourth red its written prediction had not named, whose cause is that two of the door's row selectors find a row by the moment its payload declares, so a wrongly stamped row is unreachable rather than merely wrong; the prediction was corrected to four cases and the battery re-driven to the PASS above
+
+**6. Two rows in the contract cited a number this series moved, and the reason they survived is a property of
+the reader, not an accident of attention.** The memory door was measured under a number the fourteens took
+before it landed, so the two `docs/API_CONTRACT.md` rows written before the renumber still pointed at the old
+one at this parent. This unit re-aims them — the erase-all row now names D333, the two-wipes row names D320
+and D333 — and measures the class instead of fixing only its own two instances: measured over the 27 documents other than the ledger, the parent plane carries 1315 bare decision-number cites and 41 of them name a number no heading holds; the bytes this commit stages remove exactly this unit's two and add none, which the landing asserts rather than hopes The families are
+named rather than touched. Of the thirty-nine that remain, thirty-five are the early table vocabulary, the
+numbers between D10 and D21, spread over four documents — 28 sites in the status ledger, 9 in this contract, 2 in `API.md` and 2 in `README.md` — rows in a table whose numbering the
+ledger never adopted, and re-aiming those means deciding what the table should say, which is a different
+unit's question with a different owner. Four are the D186 and D215 numbering debt already filed.
+
+**7. Why no gate saw a dangling cite, measured on both sides.** Step 8 judges a token shaped
+`name:number`; a bare cite to a decision number has no colon, so it is not even a citation-shaped token.
+measured through the reader's own `--text` seam: a plane holding one colon-form cite whose target exists prints 1 name:number token, 1 citation-shaped, 0 offenders and exits 0, while the same plane with the target moved prints `1 found and 0 resolved` and exits 2 - the reader is sharp and simply never sees this species. This commit's own contract file, run through the same seam, is refused outright: `no citation-shaped token in 6 name:number tokens`, exit 2, which is why two red-looking cites shipped inside a green certification The class is therefore not
+a backlog to clear by hand but a reader that does not cover a spelling; that is filed as the next unit's
+question, and this entry removes its own two instances and prints the count.
+
+**8. The population a unit number is claimed from has three spellings.** The ledger holds 289 `## D` headings at the parent and 290 in this commit, of which only 65 and 66 carry the ` - ` separator a scan keyed on that form counts. The
+scan this landing
+uses was widened to any `## D` line for that reason: the two maxima agree today because the newest entry
+happens to carry the hyphen, and they would silently disagree the day an entry lands with a bare title, which
+is a shape the ledger already contains. One consequence is worth naming: the census of paragraph 6 excludes
+the ledger itself, because that is where the numbering lives, so a dangling number can be *discussed* here
+without being *added* — which is why this entry can name the family it leaves behind while the status row
+that summarises it is worded to spell no number the ledger does not hold.
+
+- What this does not claim, in its own words: no route is added or removed — 87 route rows in the parent's file are 87 in the staged file, the same methods and paths in the same order, with only prose cells rewritten — so the contract
+  drift reader's denominators are not this unit's to quote; no migration changed, `export` was already a
+  declared member of the vocabulary; the row is not a privacy notice and redacts nothing the file itself does
+  not; the erased-account boundary inherited from D310 is untouched — a person who erases still cannot read
+  the file that would show their exports, and the case that pins it calls that a boundary this unit inherits
+  rather than moves; no client call site is added, and neither the SDK nor the web surfaces the export ledger;
+  the bare-cite species is measured, not closed, and the thirty-nine that remain are named by family rather
+  than re-aimed; the fresh-schema hard gate was not run by this unit, so its number is not quoted here; and
+  the working copies of `STATUS.md` and `API_CONTRACT.md` hold another stream's uncommitted drafts at this landing (13985 lines against the parent's 13943, and 540 against 535), so this unit's rows were staged from the parent's bytes and those drafts go back byte-for-byte once the readers have answered, which is a fact about this landing rather than a claim about the work — the committed rows are
+  what the certification judged, and they were judged over exactly those bytes.
+
+```
+changed   services/platform/src/main/java/com/nexus/identity/MeController.java
+          · 25 lines added and 0 removed in the handler: `export(...)` files one completed row of kind `export` after the sections are
+            assembled, its payload the disclosure block the returned file carries, plus a javadoc paragraph
+            adjudicating the ordering, the synchronous honesty of `completed` and the transport it cannot see
+changed   services/platform/src/test/java/com/nexus/identity/PersonalExportDoorTest.java
+          · 253 lines added and 0 removed, five cases to twelve: the row a read files for the person who took it, the payload
+            equal to the file's own block, the file that does not contain its own read, two files in
+            succession differing by exactly one row, an accumulated cap the ledger admits, a refused read that
+            files nothing at either rung, and four acts under four members with their own states
+changed   services/platform/src/test/java/com/nexus/identity/MemoryDeletionDoorTest.java
+          · 21 lines added and 9 rewritten: the vocabulary census gains an exporter and its demanded residue flips from one
+            named member to empty, so the doorless claim is closed by measurement rather than by prose
+changed   docs/API_CONTRACT.md · the export row documents the filing and the ordering in place of one line
+            about streaming JSON; the two rows that pointed at the moved number are re-aimed, three rows
+            rewritten in place with the line count unmoved
+changed   docs/CONSUMER.md · §9 says the export records its own taking, after the sections are read, so a
+            person's file lists every earlier read and never the one that produced it
+changed   docs/DECISIONS.md · ## D334
+changed   docs/STATUS.md · ## 330
+```
+
+step 8's own row on the bytes this commit stages reads `strict offenders 0 offender(s) on the plane this run judges`, and this unit re-spells nothing the census leaves behind
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 54/54 · step 15 158/158 · step 16 strict clean on 158

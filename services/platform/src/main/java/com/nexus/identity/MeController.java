@@ -185,6 +185,20 @@ public class MeController {
      * the {@code before}/{@code after} row images, which describe the record that was edited — often
      * another person's. {@code external_principals} omits {@code key_hash}: a hash of a credential is
      * still a credential-shaped secret.
+     *
+     * <p>Taking the file is an act, and §106's request ledger declares it as the kind {@code export}, so the
+     * read files one completed row carrying its own disclosure block — the {@code exported_at} the person was
+     * handed, {@code format}, {@code row_limit}, {@code section_sizes} and {@code possibly_truncated}. The row
+     * is written after the sections are read, which is the only ordering that keeps both claims true at once:
+     * the file a
+     * person holds does not contain the row of the read that produced it — it contains every earlier read —
+     * and the ledger's row is a measurement of the file rather than a description of the intent to make one.
+     * Filed before the read, the row would sit inside its own {@code deletion_requests} section, the section's
+     * stated size would depend on the request that asks for it, and the counts the row carries could not exist
+     * yet, so the row would have to be written from the plan instead of from the result. {@code completed} is
+     * honest here because the assembly is synchronous: the row is filed from the values that were returned.
+     * What it cannot witness is a transport that dies after the return statement, and no case in this build
+     * can reach that moment.
      */
     @GetMapping("/export")
     public Map<String, Object> export(HttpServletRequest request) {
@@ -289,6 +303,17 @@ public class MeController {
         out.put("row_limit", EXPORT_ROW_LIMIT);
         out.put("section_sizes", sectionSizes);
         out.put("possibly_truncated", possiblyTruncated);
+        // The fourth member of the ledger's kind vocabulary, filed last because it is a record of this read:
+        // the payload is the file's own disclosure block, so the row says what the person was handed. It is
+        // written after the sections are assembled for the same reason the audit row below is — the file is a
+        // snapshot taken when the read began, and the act of taking it is a fact that begins at the moment the
+        // snapshot ends. Filing it before the read would put the row inside its own file and make the
+        // section's stated size depend on the request that asks.
+        users.createDeletionRequest(tenant, userId, IdentityRepository.DeletionKind.EXPORT,
+                IdentityRepository.DeletionState.COMPLETED,
+                Json.map("exported_at", out.get("exported_at"), "format", "json",
+                        "row_limit", EXPORT_ROW_LIMIT,
+                        "section_sizes", sectionSizes, "possibly_truncated", possiblyTruncated));
         audit.record(request, "export_data", "user", userId, null, null, null, Json.map("format", "json"));
         return out;
     }
