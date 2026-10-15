@@ -13986,3 +13986,11 @@ The quality.sql gate was re-executed on the demo database to confirm the D326 re
 The comment-plane reader reported one strict offender: `the migration file in the platform stream` cited `the quality gate file at the blank line-1117`, but line 1109 in quality.sql is a blank line, so the ledger citations reader classified it as a blank-line cite. The fix re-spells the citation to `the quality gate file at the D66 section-1117`, excluding the blank line and pointing to the actual D66 section content. The ledger citations reader no longer classifies it as a blank-line cite, and the comment-plane reader now reports 0 strict offenders and 0 blank-line cites. All six readers pass.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## 333. the console falsifier crashes instead of refusing (D337)
+
+The 18-step fresh gate's step 14 runs the console accessibility and i18n censuses and their falsifiers on the working tree. The two census readers (`check_console_i18n.mjs`, `check_console_a11y.mjs`) honestly refuse on the committed plane (no `apps/web/app` directory exists at HEAD) with the message "nothing was censused, so nothing can be reported green" and exit on their refusal codes. Their falsifier `falsify_console_a11y.mjs` does not follow this pattern: given the same absent `apps/web/app` directory, it attempts to copy the fixture tree with `rmSync` before checking whether the tree exists, the filesystem call throws `ReferenceError: rmSync is not defined`, and the step dies with a stack trace — the arms never run, so the committed pipeline cannot even reach the arms' verdict on a clean checkout.
+
+The bug is in `the falsifier file at the rmSync call site` where `rmSync` is called without importing it from `fs` (should be `fs.rmSync` or `import { rmSync } from 'fs'`). The sibling checkers handle the absent directory gracefully with explicit refusal messages; the falsifier crashes instead. The fix belongs to the lane that owns `scripts/falsify_console_a11y.mjs` (currently dirty with uncommitted changes). Nothing staged.
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217

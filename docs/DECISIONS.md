@@ -14285,3 +14285,11 @@ The gate's behavior remains exactly as designed: it measures the delta between t
 The comment-plane citation reader reported one strict offender: a citation in `the migration file in the platform stream` that read `the quality gate file at the blank line-1117`. Line 1109 in quality.sql is a blank line, so the ledger citations reader classified this as a "blank line cite" and reddened it. The fix re-spells the citation to `the quality gate file at the D66 section-1117`, excluding the blank line at 1109 and pointing to the actual content (the D66 section header and the following census). The ledger citations reader no longer classifies it as a blank-line cite, and the comment-plane reader now reports 0 strict offenders and 0 blank-line cites. All six readers pass.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## D337 - the console falsifier crashes instead of refusing: falsify_console_a11y.mjs has a ReferenceError
+
+The 18-step fresh gate's step 14 runs three console-related readers and their falsifiers. The two census readers (`check_console_i18n.mjs` and `check_console_a11y.mjs`) behave as designed: on the committed plane where `apps/web/app` does not exist, both honestly refuse with "nothing was censused, so nothing can be reported green" and exit on their refusal codes. Their falsifier, `falsify_console_a11y.mjs`, does not follow this pattern: given the same absent `apps/web/app` directory, it attempts to copy the fixture tree with `rmSync` before checking whether the tree exists, the filesystem call throws `ReferenceError: rmSync is not defined`, and the step dies with a stack trace. The step's arms never run, so the committed pipeline cannot even reach the arms' verdict on a clean checkout.
+
+The bug is in `the falsifier file at the rmSync call site` where `rmSync` is called without importing it from `fs` (should be `fs.rmSync` or `import { rmSync } from 'fs'`). The sibling checkers handle the absent directory gracefully with explicit refusal messages; the falsifier crashes instead. The fix belongs to the lane that owns `scripts/falsify_console_a11y.mjs` (currently dirty with uncommitted changes).
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
