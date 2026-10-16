@@ -14404,4 +14404,36 @@ misconfigured live provider must never stop the product, so the pool always ends
 tests/test_provider_factory.py · 9 passed
 full apps/ai suite           · 217 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 348. the follow-up / conversation-state merge is pinned by tests (D352)
+
+`nlu/state_merger.py::merge_turn` implements the §7.1 / §34 follow-up merge contract — the
+documented semantics of a short follow-up turn applied onto carried Conversation state. It
+is pure and ordered (so it unit-tests without a model) and every change is recorded for the
+`agent_run` to explain — but it had **no tests**. This pins the contract.
+
+`tests/test_state_merger.py` (20 cases):
+- **price (§7.1)**: "太贵了" scales `budget.max` ×0.7 (1000→700), "高档" scales ×1.4; with no
+  stated budget the turn records `op: budget_relative, applied: false` and invents **nothing**
+  (§8 — never fabricate a budget);
+- **distance (§7.1)**: "近啲" halves the radius and sets `sort_preference=distance`; with no
+  geo anchor it sets the sort but never invents a radius; "擴大範圍" doubles it;
+- **party size**: "4个人" → 4; "50人" (out of the 1–40 range) is ignored;
+- **dietary / ambience**: "不吃辣" → `cuisine_avoid=spicy`, "不吃牛" → `diet_avoid=牛`,
+  "安靜" → preference `ambience=quiet`;
+- **urgency**: "而家" → `urgency=now`;
+- **compare (§34)**: "比较" + `top_subjects` flips intent to `compare` and keeps the top 3;
+- **"show me others"**: "其他" + `shown_ids` writes `filters.exclude`;
+- **reset**: "重新" clears carried state and marks the turn `followup_only`;
+- **shape**: an empty turn is a no-op (no changes); a pure follow-up is flagged
+  `is_followup_only=True`; a whole re-merge is deterministic;
+- **§8 single follow-up question** (`_question_for`): exactly one missing thing, locale-aware
+  (zh-HK / en), and `None` when nothing is missing;
+- the `merge_followup` alias is literally `merge_turn`.
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_state_merger.py · 20 passed
+full apps/ai suite         · 237 passed, 4 skipped (live-DB tests need Docker, down)
+```
 ```
