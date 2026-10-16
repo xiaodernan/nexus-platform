@@ -14549,4 +14549,31 @@ discipline: observe, document, don't mutate on a guess.)
 tests/test_lexicon.py      · 47 passed
 full apps/ai suite         · 312 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 352. the embedding adapter contract is pinned by tests (D356)
+
+`models/embeddings.py` is the dev/test embedding layer: `HashingEmbedding` (deterministic,
+content-cached, L2-normalized, explicitly **non-semantic** lexical hashing — the offline
+default) and `HttpEmbedding` (OpenAI-compatible `/embeddings`, network path `pragma: no
+cover`). Dim is fixed at 1024 everywhere (DECISIONS D3). It had **no direct tests** for the
+hashing contract or the construction guards. Fully offline — the HTTP network path is never
+exercised, only its guards.
+
+`tests/test_embeddings.py` (16 cases):
+- **dim**: `HashingEmbedding()` is `name="hashing"`, `dim=1024`; `dim=512` ⇒ `ValueError`;
+- **`embed_one`** (sync): length 1024, L2 norm ≈ 1.0, deterministic, cache returns a *copy*
+  (mutating the result can't poison the cache), identical text ⇒ cosine 1.0, shared tokens
+  (`ramen hong kong` vs `ramen tokyo` ⇒ 0.41) ≫ disjoint (⇒ 0.0), empty string ⇒ zero vector;
+- **async `health`**: `provider="hashing"`, `ok=True`, `dim=1024`, `semantic=False`, note
+  present; **async `embed`**: batch of N ⇒ N unit vectors of length 1024;
+- **`HttpEmbedding` guards**: missing `base_url`/`api_key` ⇒ `RuntimeError` (building it
+  silently would be a quality lie), `dim=256` ⇒ `ValueError`, built-with-creds is `http`/1024;
+- **factory** (`get_embedding_adapter`, §105 discipline): `http` provider with missing creds
+  **degrades to `HashingEmbedding`** rather than raising; `hashing` provider returns hashing.
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_embeddings.py    · 16 passed
+full apps/ai suite          · 328 passed, 4 skipped (live-DB tests need Docker, down)
+```
 ```
