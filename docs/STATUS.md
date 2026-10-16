@@ -4819,7 +4819,7 @@ next              (a) The sweep question is a decision, not an edit: run `markEx
 ## 89. Two arms of the TTL row had never been broken; breaking them found `facts` carrying no CHECK, and a witness that had started reading itself (2026-09-26)
 
 ```
-plane             `data/seed/quality.sql:830`'s first two arms — the confidence range and the forward-running
+plane             `data/seed/quality.sql:838`'s first two arms — the confidence range and the forward-running
                     TTL. Both shipped in D90 with the row they share, and neither had a plant. No shipped byte
                     changed in this unit: the witnesses, and the finding.
 
@@ -5367,7 +5367,7 @@ covers          DECISIONS D107 (c1e0878) and D108 (harness 111d5de, ledger + reg
                 D99–D106 still have no section here — their reasoning is in commit messages
                 476324d, 9ba17f4, 0d802be, 9591d54 and in DECISIONS; the debt is task #76.
 
-what landed     data/seed/quality.sql:955 renamed. The row was called
+what landed     data/seed/quality.sql:963 renamed. The row was called
                 `documents: content_hash matches the raw_text it carries` and read only raw_text; the check it
                 named is not addable either — 0 of 1,040 stored hashes equal sha256(raw_text). It is now
                 `documents: raw_text is substantial enough to feed RAG`.
@@ -10131,7 +10131,7 @@ print 41 `FILE NOT FOUND`. Thirteen untracked names carry the difference — the
 sites), one line of an admin console test (twelve, one per STATUS section in the forties and fifties), the seo
 repository, the order service, the AI runs module and the growth view (three each), six more for the remainder.
 Step 7 moves the same way (11 false sites against 8) and step 9 with it (FAIL on 75 citations across 20 files
-against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:441` is the fixed leg: `cd "$WT"` and no
+against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:446` is the fixed leg: `cd "$WT"` and no
 knob, so the reader's `process.cwd()`-derived index — `scripts/check_ledger_citations.mjs:82` — lands in the
 committed tree with its ledgers. 13b prints `plane reconciliation knob leg 77 / 0 — in-worktree leg 65 / 41`
 because a step whose whole point is the difference should not ask the reader to trust a comment about it. The
@@ -10161,7 +10161,7 @@ found in the arm's own label; the other runs the identical predicate over a copy
 another lane cites a line of the seo controller that holds nothing, judged by the default-plane control arm because
 D162's rule fires on the section a tree is writing. Held: `check_jsonb_reads.mjs, check_ledger_citations.mjs,
 check_comment_citations.mjs` three of three, and the mutant copy red as predicted. Plane unchanged from D188's
-measurement — `scripts/db_gate_fresh.sh:441` is the leg, and the reconciliation line still prints knob leg 77 / 0
+measurement — `scripts/db_gate_fresh.sh:446` is the leg, and the reconciliation line still prints knob leg 77 / 0
 against in-worktree 65 / 41. Rows stay uncommitted with D188's for the same reason: the disk holds nine DECISIONS
 and eleven STATUS sections from lanes whose sources are untracked, and committing the shared ledgers now would
 move those forty-one false cites onto the committed plane. Appends pure addition, zero lone LF. Nothing pushed.
@@ -10479,7 +10479,7 @@ job-level note stays a note about the job rather than about the next step.
 (`GATE_QUALITY_SQL="$WT/data/seed/quality.sql"`, `GATE_COMMENT_PLANE="$WT"`) in front of harnesses that read no
 environment variable at all — verified by grepping all seven `scripts/falsify_*.mjs` for `process.env`: none of
 them reads any. The prefixes were labels, not planes, and no arm could see them because no arm reads a harness
-invocation line. Both are removed (scripts/db_gate_fresh.sh:425-431,:445-447) and `falsify_quality_seam.mjs`
+invocation line. Both are removed (scripts/db_gate_fresh.sh:430-431,:445-447) and `falsify_quality_seam.mjs`
 carries the arm that keeps them gone. This row was owed because two runs of this thread were appending to these two
 files concurrently; it had no earlier entry.
 (E) THE NEW READER’S OWN ARGUMENTS. `scripts/check_reader_reachability.mjs` parses its flags with
@@ -12847,7 +12847,7 @@ the clearest statement yet of what the third reader is for.
 ```
 docs/DECISIONS.md:9108   `db_gate_fresh.sh:153` and `:330`
 scripts/db_gate_fresh.sh:153   PYTHON="${PYTHON:-python}"                                ← the knob
-scripts/db_gate_fresh.sh:330   ( cd "$ROOT" && "${PYTHON:-python}" … --self-test )      ← the invocation
+scripts/db_gate_fresh.sh:335   ( cd "$ROOT" && "${PYTHON:-python}" … --self-test )      ← the invocation
 ```
 
 **The chain, in one place**, because each link was a separate unit and the value is in the sequence: a missing

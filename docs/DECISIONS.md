@@ -5250,7 +5250,7 @@ stamping `facts` and the gate then reads this file, `now()` is a fact about the 
 What the row asks now is the question the sentence means. `data/seed/load.sh:155` records the window the load
 itself runs inside — `nexus.seed_started` and `nexus.seed_finished`, epoch seconds read from the server's
 clock by a statement at `data/seed/load.sh:164`, so a host/container clock disagreement cannot widen or narrow
-the window — and `data/seed/quality.sql:2381` keeps a degenerate timestamp column when its value falls between
+the window — and `data/seed/quality.sql:2389` keeps a degenerate timestamp column when its value falls between
 the two bounds widened by 600 seconds at each end. Nothing in the row is measured against `now()` any more, and
 the width of the load stops mattering: the value is inside the window whether the load takes two minutes or two
 hours. That last clause was an argument when this unit first wrote it and is now a measurement — the third
@@ -5418,8 +5418,8 @@ flag, one carrier, one stamp, no new table: `tables=58` is unchanged.
 **The gate reads it and refuses to guess.** `data/seed/quality.sql:72` defines `seed_now` — `known`, `ts`, and
 a `shown` string that says `NO BASE STAMPED — re-run data/seed/load.sh with SEED_ANCHOR=1` — through the same
 `nullif(current_setting(...), '')` form D89 used, with no fallback to `now()`. The TTL arm is now
-`stale AND expires_at > (SELECT ts FROM seed_now)` (`data/seed/quality.sql:836`), and the horizon arm is a
-window around the same instant (`data/seed/quality.sql:892`): the first slot may be no earlier than a day
+`stale AND expires_at > (SELECT ts FROM seed_now)` (`data/seed/quality.sql:844`), and the horizon arm is a
+window around the same instant (`data/seed/quality.sql:900`): the first slot may be no earlier than a day
 before the dataset's own now and no later than 8 days after it. Both rows lead with `known`, which keeps `ok`
 a boolean instead of a NULL the verdict's `WHERE NOT ok` would walk past, and the two-sided horizon bound is
 what replaces the single `>=`: an arm that can be broken from either end is an arm that is watching.
@@ -5586,7 +5586,7 @@ D90 re-anchored a row and gave one of its three arms a working plant. The other 
 statement with no witness that they can fail, which is the same hole D83's task line had been describing since
 it was written: §88's next (c) carried them, attributing them to task #57 — imprecise, since #57 closed with
 witnesses for its own census arms long before this row existed. They are named here as what they are: two arms
-of `confidence within 0..1 and a TTL that runs forward` (`data/seed/quality.sql:830`) that nobody had broken.
+of `confidence within 0..1 and a TTL that runs forward` (`data/seed/quality.sql:838`) that nobody had broken.
 
 **The plants.** Both go through the shipped text — the harness slices the row out of the working copy at run
 time — inside a transaction that is rolled back, and both pick their victim with a subquery that can only
@@ -5861,7 +5861,7 @@ see §93 for the nine-step result and its `GATE_RC`, read from the log after the
 ## D97 162 of the gate's 216 assertions are never named in this lane's ledgers — and the carry-on that said otherwise was three sections stale
 
 Three consecutive STATUS sections — §89's next (b), §92's, §93's — told the next unit that two arms of
-`data/seed/quality.sql:830` still needed a working falsifier. D92 supplied both, plus the pair-on-one-row arm
+`data/seed/quality.sql:838` still needed a working falsifier. D92 supplied both, plus the pair-on-one-row arm
 that proves the counts are independent. Nobody re-read the carry before writing it again, so the plan grew
 work that was done and the ledger quoted a number nobody had looked at. That is the reason to measure coverage
 rather than remember it.
@@ -6231,7 +6231,7 @@ contemporaneously, and #76 is closed by this insert plus the D111 note at the en
 
 `documents: content_hash matches the raw_text it carries` read only `raw_text`: its predicate is
 `NOT EXISTS (SELECT 1 FROM documents WHERE raw_text = '' OR length(raw_text) < 200)`, at
-`data/seed/quality.sql:955` before and after the rename. Nothing in the row touched `content_hash`,
+`data/seed/quality.sql:963` before and after the rename. Nothing in the row touched `content_hash`,
 and adding the named check was ruled out by measurement rather than by argument: on a loaded gate
 database, 0 of 1,040 stored hashes equal `encode(digest(raw_text,'sha256'),'hex')` with pgcrypto
 working (`digest` returned the expected value for a known string). The generator hashes a joined
@@ -10676,7 +10676,7 @@ planes are now two measurements.
 ## D189 — the honesty D188 bought is one `cd` deep, so the harness that owns step 8's seam pins it and watches itself fail
 
 WHY A FIX THAT PRINTS A NUMBER STILL NEEDS AN ARM. D188 changed step 13 from `cd "$ROOT"` plus two plane knobs to
-`cd "$WT"` and no knob (`scripts/db_gate_fresh.sh:391` is the first of the three legs). Nothing in the gate holds
+`cd "$WT"` and no knob (`scripts/db_gate_fresh.sh:396` is the first of the three legs). Nothing in the gate holds
 that word in place: a later edit that "tidies" the legs back onto the repository's own path would still print a
 section header claiming the committed plane, and the only thing distinguishing the two runs is a number in a
 reporting step that cannot fail the gate. That is the same shape as every other seam this lane has had to arm —
