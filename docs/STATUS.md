@@ -14795,3 +14795,20 @@ Chinese-aware text configuration, trigram-only matching for CJK queries, or a bi
 decision with real trade-offs, made with this diagnosis as its evidence.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+
+## 364. the Chinese-search remedies assessed for feasibility on the container they must run in (D366)
+
+The diagnosis's three remedy shapes are now decision-ready, probed read-only against the container that
+would host them. The Chinese-aware configuration is not available: neither zhparser nor pg_bigm exists
+in the image, so that remedy is an extension install — a container rebuild, the heaviest as framed. The
+trigram remedy is viable today: pg_trgm is installed, its operators discriminate Chinese correctly —
+the exact name similarity reads one point zero, a different merchant sharing one character reads zero
+point two, and the percent operator finds the merchant by its exact Chinese name. The category path was
+never the broken half: the taxonomy join matches two hundred two restaurants, and the stream's empty
+page is the text match coming up empty and the category filter conjunction killing the rest — which is
+why the trigram remedy, pointed at the text matching for CJK queries, is the shape that fits the
+diagnosis without touching the taxonomy. The decision is the AI and database lanes'; the probes it
+rests on are recorded here.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
