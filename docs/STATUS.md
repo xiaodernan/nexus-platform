@@ -14379,4 +14379,29 @@ case uses `observed` (4) vs `third_party` to guarantee a non-merchant winner.
 tests/test_facts.py · 16 passed
 full apps/ai suite   · 208 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 347. the provider factory degrade ladder is pinned by tests (D351)
+
+`models/factory.py` is the §105 safety floor: it builds the LLM provider pool and a
+misconfigured live provider must never stop the product, so the pool always ends with
+`mock` last and any `LLMError` during live-adapter construction degrades the pool to
+`{"mock": MockAdapter()}` (DECISIONS D4). It had **no tests**. This pins it.
+
+`tests/test_provider_factory.py` (9 cases):
+- `build_adapters` for `provider="mock"` returns only `{"mock": MockAdapter()}`;
+- the `mock` floor is always present for every provider (`mock` / `anthropic` / `openai`);
+- with dummy base_url + api_key the live `anthropic`/`openai` adapter is added *and* `mock`
+  stays in the pool;
+- a live adapter with no creds raises `LLMError` — the exact signal the ladder relies on;
+- **§105 degrade**: `get_pool` with a credential-less `anthropic` provider catches that
+  error and returns a `mock`-only pool;
+- `get_pool` is cached and deterministic (`is` identity) and always carries `mock`;
+- `get_adapter` returns the first pool entry (live when present, else `mock`);
+- `reset_provider_cache` actually clears the cache.
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_provider_factory.py · 9 passed
+full apps/ai suite           · 217 passed, 4 skipped (live-DB tests need Docker, down)
+```
 ```
