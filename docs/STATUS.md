@@ -14144,3 +14144,30 @@ cannot ship silently.
 tests/test_freshness.py · 15 passed
 full apps/ai suite      · 125 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 340. the hallucination gate is pinned by tests (D344)
+
+`trust/verification.py` is AGENT_CONTRACT §4 / spec §72 — the post-hoc claim checker
+that matches every numeric/entity claim in generated copy back to retrieved facts and
+strips the unmatched ones, counting them in `hallucination_rate`. The docstring calls it
+"the single most important quality gate in the product". It had **no tests**; this unit
+pins it.
+
+`tests/test_verification.py` locks seven behaviours:
+- `extract_claims` reads the right kind + value for money / rating / distance / percent /
+  count / clock-time, and returns `[]` on empty text;
+- grounded copy ("HK$320 評分 4.7" against price 320, rating 4.65) passes with
+  `hallucination_count=0`, `rate=0.0`;
+- the docstring's canonical fabrication — HK$500 against a grounded 320 — is caught
+  (`ok=False`), stripped (`stripped` holds it) and never reaches a screen (`text=""`);
+- the distance tolerance accepts 700m against a computed 683m but rejects 700m against
+  100m (the `0.06 / 60.0` window is tight on purpose);
+- `verify_bullets` honours §4: a bullet with a `fact_id` is kept, a bullet without one is
+  kept only if every claim inside it grounds, and an ungrounded claim in an unprovenanced
+  bullet is dropped.
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_verification.py · 7 passed
+full apps/ai suite        · 132 passed, 4 skipped (live-DB tests need Docker, down)
+```
