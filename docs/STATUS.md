@@ -14602,7 +14602,6 @@ locks them so a regression in the shared trust logic is caught without a running
 tests/test_pipeline.py      · 13 passed
 full apps/ai suite          · 341 passed, 4 skipped (live-DB tests need Docker, down)
 ```
-```
 
 ## 354. the wave verified independently on a stack its wave could not reach (D358)
 
@@ -14620,5 +14619,17 @@ the wave's own census had filed: the review-aspect census red at its threshold, 
 two hundred seventeen, on the from-scratch schema — the wave's finding confirmed by a second
 measurement on a second day. Four instruments, one session, every number the wave claimed re-derived
 and none contradicted.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 355. the doubled fence in the request-pipeline section repaired (D359)
+
+The request-pipeline section's verification block closed its code fence twice, and the second closer
+opened a block nothing ever closed — the P1 defect returning in landed bytes, one section's tail
+swallowed and the numbers census refusing the whole file for it. The repair is the removal of one
+redundant fence line, byte-targeted against the CRLF spelling the section actually uses; the census
+reads 1094 claims with every fence balanced and the sections reader passes. The mixed line endings the
+repair worked across (the block closes CRLF, the following heading arrived LF) are the same mixed-spelling
+surface the applier unit recorded, now measured in one more place.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
