@@ -14057,3 +14057,31 @@ The first cut of the EMA-direction case failed because both candidate EMAs clamp
 `1.0` — the function was right, the test's values were wrong. Fixed by keeping the
 inputs inside `[0, 1]`. A test that fails for the wrong reason is worse than no test;
 the corrected case now proves the direction without hiding behind the clamp.
+
+## 337. the §8 "never guess" contract is pinned by tests (D341)
+
+§8 / AGENT_CONTRACT §1: query understanding must not invent a field it cannot
+resolve — an unresolved field stays `null` and lands in `unknowns`. `extract_intent`
+in `nlu/understand.py` already implements this via `_compute_unknowns`; this unit
+pins it so a later tweak cannot quietly start fabricating intent/category/location/
+party_size to look more confident.
+
+`tests/test_understand_unknowns.py` locks five behaviours:
+- an empty query yields `intent="unknown"`, `unknowns=["intent"]`, and fabricates nothing;
+- "情侣约会" does **not** become `party_size=2` — the explicit §8 anti-guess rule at
+  `understand.py:332`;
+- a discovery verb with no named category/location ("有什么好推荐") stays
+  `discover_merchant` with `category=None`, empty `location`, `budget=None`, and both
+  `category` and `location` surfaced in `unknowns`;
+- a `reserve` with a district but no party/time lists both `party_size` and `time`;
+- noise input ("🔥🤷‍♂️ ㊙️") does not raise and stays honest (`intent="unknown"`, `unknowns` non-empty).
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_understand_unknowns.py · 5 passed
+full apps/ai suite               · 95 passed, 4 skipped (live-DB tests need Docker, down)
+```
+The first cut asserted `category is None` on "推荐一家店" — wrong: "店" resolves to the
+`retail` category, so that query is *not* vague. Switched to "有什么好推荐", which
+carries a discovery verb with no category noun. The test failed for the right reason
+(the premise was false), which is exactly what a contract test should catch.
