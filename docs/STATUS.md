@@ -14498,4 +14498,55 @@ model layer; `CostMeter` accumulates the telemetry that becomes an `llm_calls` r
 tests/test_model_router.py · 11 passed
 full apps/ai suite         · 265 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 351. the query-understanding lexicon is pinned by tests (D355)
+
+`nlu/lexicon.py` is the deterministic, data-driven lexicon the NLU extractors build on
+(spec §7, AGENT_CONTRACT §12, §111-112): locale detection, district/category/cuisine
+matching, query normalization, constraint canonicalization, and entity hints. It is pure
+data + pure functions — no network, no DB — so this unit is fully offline. It had **zero
+tests** for its own rules (only covered transitively).
+
+`tests/test_lexicon.py` (47 cases):
+
+- **§12 locale** (`detect_language`): empty ⇒ `zh-HK` (market default); pure ASCII ⇒ `en`;
+  trad marker `餐廳` ⇒ `zh-HK`, simp marker `餐厅`/`电脑` ⇒ `zh-CN`; a *shared* character
+  (`餐`) votes for neither, so the market default wins — the marker-pair design prevents a
+  common char from mis-detecting the locale;
+- **districts** (`match_district`): zh alias (`尖沙咀`), en name (`central`), **longest alias
+  wins** (`causeway bay cwb` ⇒ Causeway Bay), non-HK text ⇒ `None`, returned spec carries
+  `aliases/lat/lng/area`;
+- **categories** (`match_category`): generic buckets (`restaurant`/`retail`) get conf `0.7`,
+  specific (`cafe`) get `0.95`; rightmost *specific* wins (`電影院同咖啡店` ⇒ `cafe`, reversed
+  ⇒ `cinema`); no signal ⇒ `None`;
+- **cuisines** (`match_cuisines`): `壽司`⇒japanese, `泰國菜`⇒thai, `素食`⇒vegetarian, none⇒`[]`;
+- **normalization** (`normalize_query`): strips CJK/ASCII punctuation, collapses whitespace,
+  **keeps a digit-adjacent colon** (`7:30pm`) but drops a non-digit colon (`價錢：餐廳`⇒
+  `價錢 餐廳`); does **not** lowercase (matching functions lower internally);
+- **constraints** (`canon_constraint`): `辣`/`spicy`⇒`spicy`, `咖哩`/`咖喱`⇒`curry`, `牛`⇒
+  `beef`, `排隊`⇒`queue`, unknown⇒lowercased, `None`⇒`""`;
+- **entity hints**: `quoted_entities` (`「海底撈」`, `"Ocean Park"`), `proper_nouns` (captures
+  `Book`/`Starbucks`, excludes stopwords `Compare`/`and` and `hk`, none for lowercase);
+- **data integrity**: `SIMPLIFIED_MARKERS`/`TRADITIONAL_MARKERS` are disjoint; every district
+  has non-empty aliases + float lat/lng + area; `PREFERENCE_RULE_VALUES` and `NEGATION_CUES`
+  match their source derivations; every `PREFERENCE_RULES` row is a 4-tuple with polarity ∈
+  {1,-1}.
+
+**Premise corrected, not the code** (two test premises were wrong, the module is right):
+`電腦` is the *traditional* form (電/腦 are both trad markers) ⇒ `zh-HK`; the simplified form
+is `电脑`. And `normalize_query` deliberately leaves `ABC` upper-case.
+
+**Discrepancy flagged (no code change made on a guess)**: `match_category` prefers a
+*specific* category over a *generic* one even when the generic is rightmost, so
+`可帶寵物的餐廳` returns `pet`, **not** `restaurant`. This contradicts the module docstring's
+"rightmost wins" claim, which uses exactly that example to argue a pet token must *not*
+hijack a restaurant query. The actual behaviour is pinned as-is; the author should confirm
+intent — a pet-shop lexicon token may be over-powering restaurant queries. (§19/§105
+discipline: observe, document, don't mutate on a guess.)
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_lexicon.py      · 47 passed
+full apps/ai suite         · 312 passed, 4 skipped (live-DB tests need Docker, down)
+```
 ```
