@@ -14733,7 +14733,7 @@ The sections reader and the spelled-citation reader both pass on the restructure
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
 
-## 360. the AI wave's live verification completes on the demo plane: four for four where the fixtures were the only thing missing (D362)
+## 360. the AI wave's live verification completes on the demo plane: four for four where the fixtures were the only thing missing (D363)
 
 The test database's two-and-two was the wave's recorded shape, and the demo plane completes the picture:
 the same four integration tests run against the seeded database answer four for four — the category guard
