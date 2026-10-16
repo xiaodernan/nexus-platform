@@ -14603,3 +14603,22 @@ tests/test_pipeline.py      · 13 passed
 full apps/ai suite          · 341 passed, 4 skipped (live-DB tests need Docker, down)
 ```
 ```
+
+## 354. the wave verified independently on a stack its wave could not reach (D358)
+
+The AI test wave — twenty-two commits pinning the contracts by tests, the offline suite grown from eighty
+to three hundred forty-one — carried one measurement gap its own landing recorded: the live-database
+integration tests were skipped because the session that landed them saw the container fleet down. The
+gap is closed from this session, where the fleet reads nine hours healthy: the full offline suite
+re-runs at three hundred forty-one passed and four skipped, the live integration tests split two and two
+on the test database exactly as the both-planes verdict has recorded since their first measurement (the
+category guard's fixture defeat and the demo-tenant absence, unchanged mechanisms), and the e2e suite
+re-runs on a rebuilt stack at twenty-nine passed, three skipped, ten failed — digit-for-digit the
+post-fix whole number, the same ten reds in the same three routed families, reproducing across a service
+restart cycle. The fresh gate re-ran whole after the wave and reproduced the one data-quality failure
+the wave's own census had filed: the review-aspect census red at its threshold, two hundred sixteen of
+two hundred seventeen, on the from-scratch schema — the wave's finding confirmed by a second
+measurement on a second day. Four instruments, one session, every number the wave claimed re-derived
+and none contradicted.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

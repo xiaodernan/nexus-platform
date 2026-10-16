@@ -14305,3 +14305,31 @@ Steps 1-17 pass: 216 quality checks passed on the from-scratch schema (58 tables
 The single failure is a data quality issue: only 1834 of 11000 reviews (16.7%) cite a concrete aspect, below the 60% threshold in assertion 18. This is a seed data issue, not a code bug. The quality.sql gate is working as designed.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## D358 - the wave's numbers re-derived on a session its landings thought impossible: the fleet healthy, the live tests taken, the e2e whole number reproduced across a restart cycle, and the data-quality failure confirmed by a second gate
+
+A landing that records "the live-database tests need Docker, down" leaves exactly one question a reader
+can ask — do the numbers hold when the thing that was down comes back? — and this unit answers it for
+the twenty-two-commit wave that pinned the AI contracts by tests. The answer is four instruments run
+independently against the wave's claims, and no contradiction anywhere.
+
+The offline suite re-runs at three hundred forty-one passed and four skipped, matching the wave's own
+printout. The live integration tests, skipped when the wave landed, run now that the container fleet
+reads healthy: two pass, two fail, and the failures are the same two mechanisms the both-planes verdict
+has recorded since the first measurement — the category guard defeated by fixture merchants' count and
+the insert meeting a tenants table whose rows are all fixtures — unchanged by two hundred sixty new
+tests, because those tests pin the contracts offline and the wire against the database is a different
+plane. The e2e suite re-runs on a stack rebuilt after its services died with the same engine event:
+twenty-nine passed, three skipped, ten failed, the same ten, the same three families — the post-fix
+whole number reproducing digit-for-digit across a restart cycle, which is what makes it a measurement
+rather than an incident. The fresh gate re-runs whole after the wave and fails on exactly the
+data-quality check the wave's own census filed — the review-aspect census red at its threshold, two
+hundred sixteen of two hundred seventeen on the from-scratch schema — the wave's finding confirmed by a
+second gate on a second day, which is the difference between a filed failure and a reproduced one.
+
+The wave's work stands verified from outside its own session, by instruments it did not run, on
+infrastructure it believed absent. The one finding it filed is no longer single-sourced. Nothing in this
+unit edits the wave's tests, the seed, or the surfaces; the value is the re-derivation, and the gap it
+closes is the one every landing that records a skipped measurement leaves open.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
