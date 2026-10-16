@@ -14030,3 +14030,30 @@ Five cases cover the four outcomes: an ungrounded non-sponsored reason is droppe
 card with no `ai_match` is a no-op; and the live `/ai/v1/recommend` response carries
 no ungrounded non-sponsored reason. `dropped == 0` is the steady state for the rules
 path — the guard exists for the producer that does not yet exist.
+
+## 336. the personalization signal's contract is pinned by tests (D340)
+
+§99/§100: personalization is an EMA over feedback, never ground truth alone, and
+it stays neutral until enough signals accumulate (`PersonalizationConfig.min_signals`,
+default 3). `personalization_signal` in `search/ranking.py` is pure logic (no DB), so
+it is the kind of contract worth pinning directly rather than inferring from a ranker
+integration test that needs Docker.
+
+`tests/test_personalization_signal.py` locks five behaviours:
+- below `min_signals` it returns `None` (the ranker falls back to `neutral`);
+- at `min_signals` it returns a value in `[0, 1]`;
+- out-of-range inputs are clamped to `[0, 1]` (`_norm01`);
+- a strong *opening* rating outweighs a strong *closing* one (the `ema_alpha=0.1`
+  direction), documented with values that stay inside `[0, 1]` so clamping cannot
+  mask it;
+- a custom `min_signals` is respected (1 sample is enough at `min_signals=1`; 4 is
+  still short of 5).
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_personalization_signal.py · 5 passed
+```
+The first cut of the EMA-direction case failed because both candidate EMAs clamped to
+`1.0` — the function was right, the test's values were wrong. Fixed by keeping the
+inputs inside `[0, 1]`. A test that fails for the wrong reason is worse than no test;
+the corrected case now proves the direction without hiding behind the clamp.
