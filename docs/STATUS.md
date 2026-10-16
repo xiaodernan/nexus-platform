@@ -14665,3 +14665,70 @@ stands: reachability fourteen of fourteen. The falsifier family holds — a plan
 and fails, a uniform file passes.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 359. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D362)
+
+D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
+and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
+refuse if they differ. It refused — `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha
+edee2758d9b7, saved sha 3d4c58a95ede) - another stream wrote into it during this landing` — and the accusation
+was aimed at the wrong stream: 60,335 is exactly the blob that run had staged, so the disk held this landing's
+bytes because this landing wrote them and never wrote anything afterwards. No leg performed the restore.
+3 documents' uncommitted drafts went under it: `docs/API_CONTRACT.md` at 61541 bytes (sha 3d4c58a95ede) against the 60335 the run left in place, `docs/DECISIONS.md` at 1309273 bytes (sha 4190ca9a9133) against the 1307733 the run left in place, `docs/STATUS.md` at 1288052 bytes (sha 962dc71d9df6) against the 1277791 the run left in place; the fourth document it mirrored, `docs/CONSUMER.md`, held the same 6981 bytes as the blob and lost nothing, which is why the count is read from the byte comparison the dry log makes possible and not from the number of files the run touched. The rehearsal had already proved the leg and that is the trap in it: the same harness's dry-run path
+calls `rollback()`, the function that writes the saved bytes back, and printed four `rolled back … to its
+pre-mirror bytes` lines, while the real path never called it. A control that cannot tell the two paths apart is
+not a control, and the green rehearsal line was evidence about the dry branch only.
+
+The fix is a module rather than a louder warning at the call site: `Temp/nexus-d341-restore.py`, whose sequence
+has no optional legs. `save_premirror` reads the plane and writes each document into a scratch directory,
+fsynced and re-read and hash-compared before anything is mirrored — the refusal is `refusing to mirror bytes
+this run cannot put back`. `mirror` records what it wrote. `restore` performs the write and then proves it from
+a fresh read, and refuses first when the disk holds bytes that are neither its own mirror nor the saved file,
+which is the clause that names a real concurrent writer instead of blaming one. `verify_premirror` re-proves the
+recovery source immediately before staging, and `recover` restores from the copies alone when the process that
+mirrored is gone. The copies are named by the repo-relative path with its separators spelled out
+(`docs__STATUS.md`), because a basename is not an identity — two runs sharing one scratch directory would
+otherwise restore the wrong file under a true-looking log line, which is D197's duplicate-basename finding
+arriving from the other end.
+
+Six arms, each driving the shipped module and a mutant of it over the same scratch plane. the battery's own line is `BATTERY: PASS (6 arms and a control, plane at rest)`: 13 drives over the same plane, the shipped legs making 15 observations and the mutants 7, arm by arm shipped/mutant A 1/2, B 2/1, C 1/1, D 1/1, E 2/1, F 2/1, each count written before the run and none of them re-read from the log afterwards. The plane
+holds the two EOL spellings this repository trades in — every HEAD blob is LF while the working copy smudges
+`docs/DECISIONS.md` to 0 CR bytes and `docs/STATUS.md` to 0 — plus one uncommitted foreign line above
+the status ledger's next heading, so the drafts a landing covers are the kind this repository actually has. A is
+the loss itself: the perform-and-prove tail replaced by the check-only body, and the drive records both the
+refusal and that the foreign line is still off the disk after it — `e17fb7777bf6` still on the disk against the `fbad28eee95d` the run had saved as the pre-mirror bytes. B is a write that does not
+stick, and its first form was wrong in a way worth keeping: truncating every write the module performs also
+truncates the mirror that sets the scenario up, so the ownership guard fired before the re-read clause under
+test and the arm would have certified that clause with a refusal that came from a different one. The half write
+now applies only to the restore leg, and the mutant's success line prints over a plane holding 667,076 of 1,334,152 bytes. C is a
+missing copy, D a copy whose bytes are not the file it stands for, E another stream writing in after the mirror,
+F a restore that re-encodes line endings.
+
+130 cite lines name 36 decision numbers that no heading holds, and they fall into 2 shapes the cited line itself tells apart: 12 of them are rows of a table whose first cell is the number — `| D10 |` and its neighbours, a ruling that exists as a row and was never promoted to an entry — and the remaining 24 sit in 6 contiguous block(s), the largest D339 through D357, above which the ledger's own head at D360 now stands with 3 heading(s) in between (D358, D359, D360); step 12 calls every one of those cites dangling and no other reader calls them anything at all. A bare cite with no heading behind it is not only a broken pointer, it is a reservation on the
+number — and a reservation the ledger can walk straight over. measured twice, because the plane moved while this unit's draft was being written: at 764360a the ledger stopped at D338 and the walk up from that heading refused 19 numbers - D339 through D357 - handing the next unit D358 and ## 354; since then 3 heading(s) (D358, D359, D360) have landed over the top of that block, the parent's census reads 36 headingless numbers against 34 there: every one of the 19 blocked numbers is still cited with no heading, 0 number(s) left the set, and 2 arrived (D200, D361), the new ones filed by the very entries that landed over the block, not one cite of the block resolved, so the walk refuses none of them here and this unit takes D362 and ## 359 - which is what the rule reaches and what it does not: it binds a lane only while a reservation sits directly above the head, and once the head is past a block the arithmetic never returns to those numbers, so every cite in it stays dangling for good unless someone writes the entries the cites ask for. Writing this entry one number higher
+resolves nothing inside that block, because the cites ask for the entries they name and a harness lesson is not
+what a wire-boundary decision owes. over the 27 documents other than the ledger the parent plane carries 1,358 bare decision-number cites with 60 of them naming a number no heading holds, and the bytes this commit stages read 1,378 cites with 67 hanging - the 7 this unit's own sentences add, because naming a reserved number in prose is indistinguishable from pointing at it, and a census of cites cannot tell a pointer from a mention of one. The reserved numbers stay owed to the lanes that cite them, and this entry pays none of that debt on their behalf.
+
+- remains     the lost drafts are not recovered — `git fsck --dangling` lists 14 dangling blobs at this landing, sized 17341, 27234, 48964, 75545, 176853, 234590, 340550, 545126, 941053, 950614, 961166, 961570, 1040422, 1156017, and none carries one of the lost byte counts (1309273, 1288052, 61541); the same documents on the working copy today read docs/DECISIONS.md at 1,331,203, docs/STATUS.md at 1,332,165, so what went under that run's success line is gone from both the object store and the plane, and the ledgers that stand here were written again by their own authors rather than handed back; this landing's own mirror leg covered these two
+  documents and its restore leg put them back, and the plane this landing found held another stream's uncommitted bytes in `docs/DECISIONS.md` (1331203 bytes against the parent blob's 1319766, sha ebfb3c339c66), `docs/STATUS.md` (1332165 bytes against the parent blob's 1323069, sha a60896eff0d0), and those are the bytes its restore leg put back after the commit - the same leg the entry describes doing no such thing; no reader in this repository charges a landing
+  harness for calling these legs in this order, the module lives beside the harness rather than in `scripts/`,
+  and this landing's own log is a witness of one run rather than a gate; six arms are the six shapes this
+  harness has been shown to need (check-without-performing, a write that does not stick, missing copies, a
+  corrupt copy, a newer foreign draft, a re-encoded file) and a seventh failure mode would need a seventh arm,
+  which is this entry's blind spot and not the plane's; the block stays dangling because it is that
+  work's own debt, and the shape is named here rather than re-aimed by a unit that was about something else; no
+  code changes, no route is added or removed, and no test is touched — this unit is two documents, both ledgers
+- readers     {{READERS}}
+
+
+## 358. the queue file restructured and the plan's stale queue replaced by the re-derived one (D361)
+
+The plan file a fresh session reads first had decayed: its forward queue was the September-era P1-P4
+block, and the run log's latest entry had grown into a single eight-thousand-character line that both
+lanes had appended to without wrapping. The restructure reflows that line at sentence boundaries (content
+unchanged, the §-citations all resolving), replaces the stale queue with the re-derived one — the six
+owner-waiting items with their findings named, the standing invariants re-run this session with today's
+numbers, and the two blocked-on-the-other-stream entries — and leaves the dated run log intact below.
+The sections reader and the spelled-citation reader both pass on the restructured file.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
