@@ -14307,4 +14307,37 @@ is closed rather than inventing a non-existent double-charge guard.
 tests/test_stub_platform.py · 16 passed
 full apps/ai suite          · 177 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 345. the deterministic mock provider is pinned by tests (D349)
+
+`models/mock.py::MockAdapter` is the heuristic backbone of offline / dev / CI (DECISIONS
+D4, AGENT_CONTRACT §9): every §9 task has a real, deterministic implementation, and copy
+is composed only from records handed in, so it cannot invent a fact (§19). It was
+**untested**, so the offline provider — which stands in for every live model in CI — could
+drift unnoticed. This pins it.
+
+`tests/test_mock_adapter.py` (15 async cases):
+- **clear labelling (§105/§19)**: every response is `provider="mock"`, `model="mock-heuristic-1"`,
+  `degraded=True`, `cost_usd=0.0`; `health()` reports `provider=mock / ok=True / offline=True`;
+- **determinism**: identical requests yield byte-identical `text` + `data` (CI reproducibility);
+- **task routing / errors**: an unknown `task_class` and `embed` (served by `EmbeddingAdapter`)
+  both raise `LLMError`;
+- **summary composes, never invents (§19)**: the zh-HK / en summaries pull `title`, top reason,
+  min-price, min-distance and max-rating straight from the records; an empty result set yields
+  the honest "暫時找不到…" template, not a fabricated pick;
+- **`norm_locale`** (en / zh-CN / zh-Hans / zh-HK / default fallback) — the locale contract the
+  copy path depends on;
+- **`generate_ui_copy` is templates-only**: a known key + vars expands exactly; an unknown key
+  or a missing template var degrades to `none_grounded` ("I could not verify that…") — never
+  free generation;
+- **`rerank`** orders by lexical token hits then a rating bonus, deterministically, and is
+  stable across runs;
+- **`intent_extract`** returns a structured dict whose wire `text` round-trips to `data`;
+- **latency** is always a non-negative int (honours the injected `latency_ms`).
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_mock_adapter.py · 15 passed
+full apps/ai suite         · 192 passed, 4 skipped (live-DB tests need Docker, down)
+```
 ```
