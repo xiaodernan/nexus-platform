@@ -13182,6 +13182,7 @@ Plane: fresh detached worktree at 9cc7552, every hand leg with the plane as ROOT
 
 plane             D280 measured on a detached worktree of fc8a5de (r15) with the committed reader; re-verification of the unchanged census follows on a fresh plane at the landing commit.
 
+## 273. the nested timeout raised: \alsify_ledger_text\ passes, and the gate's step-8 blocker is cleared
 ## 274. run 8 walks the full 18-step inventory at e2eaf26 - step 16 strict green a third time inside a gate run, and the census stands at exactly the digits D280 predicted (D281)
 
 - drive             detached worktree at e2eaf26, gate logs outside the plane; steps 1-6 green (217 quality checks / 58 tables / 9 migrations, step 5's own numeric claim MATCHED, truncate PASS), step 7 stopped at its green control (rc 1, control rc 1) keeping database nexus_gate_52865_1791509761; legs 8-18 ran on that one commit with the plane as ROOT.
@@ -14000,3 +14001,32 @@ The bug is in `the falsifier file at the rmSync call site` where `rmSync` is cal
 The 18-step fresh gate was re-executed on the working tree to verify the D326 regex fix stability. The gate runs all 18 steps and fails on exactly one check: "reviews cite concrete aspects (§55 inputs)" with 1,834 of 11,000 reviews (16.7%) naming an aspect, below the 60% threshold. The D326 regex fix is stable: the review aspect census now uses the keyword-table lookup (`aspect_keywords` table with `ILIKE` pattern matching) instead of the problematic monolithic alternation regex. The "quantifier operand invalid" error is gone. The gate runs through all 18 steps and fails only on the review aspect census due to a data quality issue (16.7% vs 60% threshold), not a regex error. Steps 1-17 pass: 216 quality checks, 58 tables, 9 migrations, 38/38 quality-seam arms, 57/57 comment-plane arms, 0 strict ledger offenders, 91/30 comment citations, sections PASS, registry PASS, console i18n/a11y PASS, reader reachability PASS, drift census EXACT 157, strict MOVED/NOT-UNIQUE clean. Step 17 passes with two-noun expectation after the D321 noun-collision fix. Step 18 self-consistency PASS. The single failure is a data quality issue (16.7% vs 60% threshold), not a code bug. Nothing staged.
 
 - readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217/217
+
+## 335. the recommendation grounding boundary is now enforced at the wire (D339)
+
+§18/§19 say every recommendation bullet a user sees must trace to a `fact_id` (a
+verifiable fact), and §1846 forbids deceiving users for payment — a paid placement
+is *labelled* `sponsored`, never faked into a trust reason. `build_reasons` already
+honoured this internally (it skips any feature it cannot ground; `sponsored` is the
+one deliberate `fact_id=None`), but the **contract boundary did not enforce it**:
+`MatchExplanation.fact_id` is `Optional`, and `models/base.py` passes an upstream
+`reasons` list through unvalidated. A future LLM/upstream mapper that narrated a
+reason without a fact could have shipped an unverifiable claim straight to the user.
+
+**The fix is the last line before a card ships, not a crash.** `drop_ungrounded_reasons`
+in `search/cards.py` removes any `MatchExplanation` whose `fact_id is None` and whose
+`label` is not in the one allowed exception set (`{sponsored}`), and returns how many
+it dropped. The `recommend` endpoint runs it over `pack.cards` and logs a warning if
+anything was dropped — so a misbehaving producer is *counted*, never silent, and the
+response never 500s on upstream garbage (the project's degrade-don't-crash discipline).
+
+**Verified, not claimed** (DB-free, mock provider):
+```
+tests/test_recommend_reasons_grounded.py  · 5 passed
+full apps/ai suite                      · 85 passed, 4 skipped (live-DB tests need Docker, down)
+```
+Five cases cover the four outcomes: an ungrounded non-sponsored reason is dropped; a
+`sponsored` reason with no `fact_id` is kept; a fully-grounded card is untouched; a
+card with no `ai_match` is a no-op; and the live `/ai/v1/recommend` response carries
+no ungrounded non-sponsored reason. `dropped == 0` is the steady state for the rules
+path — the guard exists for the producer that does not yet exist.

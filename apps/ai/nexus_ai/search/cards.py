@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 from typing import Any, Iterable, Sequence
-from uuid import UUID, uuid5, NAMESPACE_DNS
+from uuid import UUID
 
 from nexus_ai.contract import (
     AvailabilityBrief,
@@ -26,8 +26,7 @@ from nexus_ai.contract import (
     OpenState,
 )
 from nexus_ai.search.ranking import Candidate, Scored
-from nexus_ai.trust import facts as facts_mod
-from nexus_ai.trust.facts import FactBundle
+from nexus_ai.trust.facts import FactBundle, stable_fact_id
 from nexus_ai.trust.freshness import stale_copy
 
 #: reason label -> per-locale copy template. `{}` slots are filled from grounded values.
@@ -88,10 +87,6 @@ def travel_minutes(meters: float | None) -> int | None:
     if meters is None:
         return None
     return max(1, int(round(float(meters) / 80.0)))
-
-
-def _stable_fact_id(*parts: Any) -> UUID:
-    return uuid5(NAMESPACE_UUID, "|".join(str(p) for p in parts))
 
 
 # --------------------------------------------------------------------------- open state
@@ -171,7 +166,7 @@ def synth_computed_facts(bundle: FactBundle, cand: Candidate, *, now: datetime,
         try:
             return UUID(str(cand.subject_id))
         except (ValueError, AttributeError):
-            return _stable_fact_id(cand.subject_type, cand.subject_id)
+            return stable_fact_id(cand.subject_type, cand.subject_id)
 
     sid = subject_uuid()
     out: dict[str, Fact] = {}
@@ -457,7 +452,7 @@ def _coerce_uuid(value: Any) -> UUID:
     try:
         return UUID(str(value))
     except (ValueError, AttributeError, TypeError):
-        return _stable_fact_id("nexus", value)
+        return stable_fact_id("nexus", value)
 
 
 def _now(row: dict[str, Any]) -> datetime:
@@ -465,6 +460,39 @@ def _now(row: dict[str, Any]) -> datetime:
     if isinstance(raw, datetime):
         return raw
     return datetime.now(row.get("_tz") if isinstance(row, dict) else None) or datetime.now()
+
+
+#: Reason labels that are allowed to carry no `fact_id`. These are commercial or
+#: structural signals, not trust facts. `sponsored` is the deliberate one: a paid
+#: placement is *labelled* as such rather than faked into a trust reason
+#: (§1846 — the system must not deceive users for payment). Every other label is a
+#: claimed match and §18 demands it trace to a fact.
+_NO_FACT_REASON_LABELS = frozenset({"sponsored"})
+
+
+def drop_ungrounded_reasons(card: EntityCard) -> tuple[EntityCard, int]:
+    """§18/§19 boundary enforcement for the wire — the last line before a card ships.
+
+    Every recommendation bullet a user sees must trace to a `fact_id`. The rules
+    path (`build_reasons`) already guarantees this by skipping any feature it cannot
+    ground; this guard exists so a *future* producer — an LLM/upstream mapper that
+    narrates a reason without a fact — cannot ship an unverifiable claim to the user.
+    The contract's `MatchExplanation.fact_id` is `Optional` by design (the UI is the
+    documented dropper), but the API is where the drop actually happens, and doing
+    it here keeps a malformed upstream from 500-ing the response.
+
+    Returns ``(card, dropped)``: the same card with ungrounded non-sponsored bullets
+    removed, and how many were dropped. ``dropped == 0`` means the producer already
+    complied — which is the steady state for the rules path.
+    """
+    if card.ai_match is None:
+        return card, 0
+    kept = [r for r in card.ai_match.reasons
+            if r.fact_id is not None or r.label in _NO_FACT_REASON_LABELS]
+    dropped = len(card.ai_match.reasons) - len(kept)
+    if dropped:
+        card.ai_match.reasons = kept
+    return card, dropped
 
 
 def attach_price_staleness(card: EntityCard, bundle: FactBundle) -> EntityCard:
@@ -479,5 +507,5 @@ def attach_price_staleness(card: EntityCard, bundle: FactBundle) -> EntityCard:
 
 
 __all__ = ["build_card", "build_reasons", "compute_open", "meters_text", "travel_minutes",
-           "attach_price_staleness", "synth_computed_facts", "REASON_COPY",
-           "facts_mod"]
+           "attach_price_staleness", "drop_ungrounded_reasons", "synth_computed_facts",
+           "REASON_COPY"]
