@@ -14085,3 +14085,33 @@ The first cut asserted `category is None` on "推荐一家店" — wrong: "店" 
 `retail` category, so that query is *not* vague. Switched to "有什么好推荐", which
 carries a discovery verb with no category noun. The test failed for the right reason
 (the premise was false), which is exactly what a contract test should catch.
+
+## 338. the prompt-injection trust module is pinned by tests (D342)
+
+`trust/injection.py` is the §19 / AGENT_CONTRACT §8 guard: reviews, merchant text, OCR,
+imported docs and external payloads are *data, never instructions*. It scans for
+instruction-shaped language (EN + ZH), command-injection tokens, payment-fraud and
+unauthorised-reservation phrases, URL exfil cues, and — crucially — registry tool names
+appearing inside content (a tool is only ever dispatched from the registry, never parsed
+out of data). It had **zero tests**; this unit pins it.
+
+`tests/test_injection.py` locks fifteen behaviours across the public surface:
+- EN/ZH "ignore previous instructions", role-hijack (EN/ZH), `command_injection`
+  (`rm -rf`), `payment_fraud` ("free of charge"), `reserve_without_user`
+  ("booking the table is confirmed"), `url_exfil` ("send it to https://…"), and a
+  registry tool name in content (`create_reservation` surfaces as `tool_name_in_content`
+  carrying the exact name + length);
+- benign and empty text are not flagged (empty counts 0 chars scanned);
+- `sanitize_untrusted` strips the envelope delimiter so content cannot close its own
+  envelope (forgery-prevention);
+- `wrap_untrusted` encloses content between the fixed delimiters, appends a hit count
+  when flagged, and with `scan=False` still wraps but reports clean;
+- `merge_reports` sums hits + scanned chars;
+- a flagged report degrades (`status="open"`, `severity="warn"`, score `0.25*hits`
+  capped at 1) while a clean one is `informational` / `info`.
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_injection.py · 15 passed
+full apps/ai suite       · 110 passed, 4 skipped (live-DB tests need Docker, down)
+```
