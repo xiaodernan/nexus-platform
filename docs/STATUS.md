@@ -14576,4 +14576,30 @@ exercised, only its guards.
 tests/test_embeddings.py    · 16 passed
 full apps/ai suite          · 328 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 353. the request-pipeline pure helpers are pinned by tests (D357)
+
+`api/pipeline.py` holds the shared rules both the JSON and stream search endpoints run
+(§105: the stream's fallback target must be the *same* search minus the model layer). The
+async paths (`understand`/`run_search`/`compose_summary`) need `Deps` and are covered by
+the endpoint/integration suites; the **pure, DB-free** helpers were unpinned. This unit
+locks them so a regression in the shared trust logic is caught without a running Postgres.
+
+`tests/test_pipeline.py` (13 cases):
+- **`MAX_QUERY_LENGTH == 200`** — the same BFF cap enforced before a model call is paid for;
+- **`validate_intent` (§7.1)**: a valid dict ⇒ `Intent` (and round-trips `raw_query`);
+  non-dict ⇒ `None`; a dict missing required fields ⇒ `None`;
+- **alias recovery (§105)**: a foreign `near_me` location shape is rejected by raw
+  `Intent.model_validate` but recovered by `validate_intent` via `_alias_intent_shape`
+  (`near_me`→`nearby`) — never answer with a half-trusted intent object;
+- **`_alias_intent_shape`**: maps `near_me`→`nearby` and `none`→`unspecified`, returns an
+  equal top-level-distinct dict, and **does not mutate** the caller's input;
+- **`card_citations` (§4 grounding)**: walks cards, collects `fact_id`s, de-duplicates in
+  encounter order, caps at `per_card` per card, and is safe on missing/`None` `facts`.
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_pipeline.py      · 13 passed
+full apps/ai suite          · 341 passed, 4 skipped (live-DB tests need Docker, down)
+```
 ```
