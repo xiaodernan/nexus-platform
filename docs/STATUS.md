@@ -14436,4 +14436,38 @@ is pure and ordered (so it unit-tests without a model) and every change is recor
 tests/test_state_merger.py · 20 passed
 full apps/ai suite         · 237 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 349. the EntityCard assembly layer is pinned by tests (D353)
+
+`search/cards.py` builds the single render contract for web/MCP/UCP; `drop_ungrounded_reasons`
+was pinned in D339. This unit covers the rest of the pure, DB-free card layer, focused on the
+two trust properties that must not drift: open-state is computed, never guessed (§2), and
+every rendered number/bullet traces to a `fact_id` (§18/§4).
+
+`tests/test_cards.py` (17 cases):
+- **`compute_open` never guesses (§2)**: no hours ⇒ `is_open=None` with no text; within-hours
+  ⇒ open with a `closes_hhmm`; before-open ⇒ closed with a `"Opens …"` next time; cross-midnight
+  open-late ⇒ still open; **yesterday's cross-midnight carry-over** (a Mon 01:00 query reads
+  Sunday's 02:00 close) ⇒ open;
+- **formatting**: `meters_text` (nearest-10m, km ≥1000, empty on `None`), `travel_minutes`
+  (80 m/min, floored at 1);
+- **`build_actions`**: merchant ⇒ view+compare (+ask when `ai_agent_enabled`); bookable
+  offering ⇒ reserve; non-bookable ⇒ cart_add — endpoints, payloads and EN/ZH labels correct;
+- **§18 `build_reasons` grounding**: a groundable feature (distance, rating) ships a bullet
+  with a `fact_id`, while an *ungroundable* one (popularity→`trending`) and a `district_match`
+  with no address fact ship **no bullet**; locale copy is correct (EN `near_you` → "300m away");
+- **`build_card` end-to-end**: rendered `rating`/`distance` carry a `fact_id`, every
+  `ai_match.reasons` bullet is grounded, the merchant CTA set is `[view, compare]`, and the
+  title orders the zh/en name per locale;
+- **§5 `attach_price_staleness`**: a stale price appends a `price_stale` bullet that stays
+  grounded to the price fact's id.
+
+One premise corrected, not the code: `meters_text(45)` is `40m` because Python's `round` uses
+banker's-rounding (`round(4.5)→4`); the test now pins unambiguous values (46→50m, 44→40m).
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_cards.py · 17 passed
+full apps/ai suite   · 254 passed, 4 skipped (live-DB tests need Docker, down)
+```
 ```
