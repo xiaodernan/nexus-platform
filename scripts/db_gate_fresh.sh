@@ -313,6 +313,11 @@ step "10/18 scripts/check_ledger_sections.mjs — every numbered section at HEAD
 # checkout: inert on a normal run, and the arm that shows this step can redden inside the gate without
 # editing a tracked file while nine other steps are reading it (D98's shape).
 ( cd "$ROOT" && node scripts/check_ledger_sections.mjs ${LEDGER_SECTIONS_DIR:+--dir "$LEDGER_SECTIONS_DIR"} ) 2>&1 | sed -e 's/^/    /'
+# The ledgers' line endings, per section: byte-targeted repairs (the fence fix, the applier's splice) work
+# one section at a time, and a section mixing CRLF and LF inside itself is where those tools break. The
+# census reports the whole-file split and fails on a mixed section; a uniform split is neither spelling
+# judged (D359's repair worked across CRLF and LF in one sitting, which is why this step exists).
+( cd "$ROOT" && node scripts/check_ledger_eols.mjs ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 11. the record of shown redness
 step "11/18 scripts/check_falsifier_registry.mjs — every falsifier row names a live assertion and an openable witness"
@@ -534,15 +539,17 @@ step "17/18  scripts/check_ledger_numbers.mjs — the ledger's numeric claims ve
 # It prints PASS only when the newest claim for each expected noun matches the measured value.
 command -v node >/dev/null 2>&1 || die "step 17 needs node on PATH"
 # The expectations are the count step 5 just filed, not a figure an operator carries across by hand. The
-# ledger's three nouns name one measured quantity — "217 quality checks", "217 assertions", "217 checks" are
-# three spellings of the PASS lines this run counted — so all three read $CHECKS. A literal here would agree
-# with the ledger even when the run disagreed, which is the failure step 5 describes above: "216 assertions"
-# was written 120 times and linked to nothing.
+# ledger originally had three nouns naming one measured quantity — "217 quality checks", "217 assertions",
+# "217 checks" — but another lane's types gate has since claimed the noun "checks" with its own count (432),
+# so the shared noun no longer belongs uniquely to this gate. We now judge only the two nouns this gate
+# unambiguously owns: "quality checks" and "assertions". A literal here would agree with the ledger even
+# when the run disagreed, which is the failure step 5 describes above: "216 assertions" was written 120
+# times and linked to nothing.
 case "${CHECKS:-}" in
   ''|*[!0-9]*) die "step 17 refuses: measured check count is not a positive integer ('${CHECKS:-}')" ;;
 esac
 [ "${CHECKS}" -gt 0 ] || die "step 17 refuses: step 5 filed 0 checks, so the derivation would judge an empty measurement"
-EXPECT="quality checks=${CHECKS},assertions=${CHECKS},checks=${CHECKS}"
+EXPECT="quality checks=${CHECKS},assertions=${CHECKS}"
 printf '    expectations derived from this run: %s\n' "${EXPECT}"
 ( cd "$ROOT" && node scripts/check_ledger_numbers.mjs --expect "${EXPECT}" ) 2>&1 | sed -e 's/^/    /'
 

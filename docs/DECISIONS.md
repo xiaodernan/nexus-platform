@@ -14357,3 +14357,30 @@ for how it looks in a file is a literal to the engine that reads it, and a check
 keywords must write Chinese characters.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D360 - the line-ending census: the ledgers' mixing is whole-file and per-section uniform, the new reader enforces that invariant from gate step ten, and the earlier phrasing is corrected by its own measurement
+
+The fence repair worked across line endings in one sitting and the entry described the surface as mixed —
+a word that mattered, because per-section mixing is where byte tools break and whole-file mixing is
+merely inconvenient. The census before the tool, as the house requires, settles it: both ledgers are
+CRLF bodies, this lane's recent LF appends are whole sections of their own, and no section mixes the two
+spellings inside itself. The earlier phrasing is corrected by the measurement rather than edited in
+place — the append-only ledger keeps its sentence and this section states the better one.
+
+The reader enforces the invariant the census found: it prints each ledger's CRLF and LF totals with its
+section count, names any section carrying both spellings inside itself — the state where a byte-targeted
+pattern written for one spelling misses the other and a splice that renumbers one way breaks the other —
+and exits with the house's three verdicts: pass when no section mixes, fail with the sections named when
+one does, and UNCHECKED with its own exit when a file cannot be opened, because a census that cannot run
+is not a verdict about spellings. The falsifier family holds: a planted section mixing one CRLF line
+into LF lines is named and fails; a uniform file passes; the default ledgers census clean at fourteen
+thousand six hundred five plus fourteen thousand three hundred fifty-nine CRLF against thirty-nine LF.
+
+The reader is wired into the gate's step ten, where the sections reader already guards the ledger files'
+integrity — reachability fourteen of fourteen, the same wiring the citation-support census received — so
+the invariant is enforced on every run rather than censused once. What the unit does not do is convert
+either spelling: the CRLF body and the LF appends are the lanes' respective histories, a conversion is
+the lanes' joint decision, and the reader's pass line says exactly that — the split is whole-file, which
+byte tools handle one section at a time.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

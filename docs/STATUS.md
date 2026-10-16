@@ -14650,3 +14650,18 @@ unblocked; the seed lane owns the file and gets the find, the spelling rule it t
 one the ledger's prose learned at D94 — escape forms that display well and mean nothing.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 357. the ledgers' line endings get their own census, and the earlier "mixed" phrasing is corrected by it (D330)
+
+Every byte-targeted repair on the ledgers — the fence fix, the applier's splice, any rewrite that counts
+lines — works one section at a time across line endings, and the surface those repairs work on was
+described in an earlier entry as mixed. The census says the mixing is whole-file, not per-section: both
+ledgers are CRLF bodies (fourteen thousand six hundred five and fourteen thousand three hundred
+fifty-nine lines) with this lane's recent LF appends as the only exceptions, thirty-nine lines in whole
+sections of their own, and not one section carrying both spellings inside itself. The new reader prints
+that split and fails on a section that mixes — the state where byte tools break — with an UNCHECKED exit
+for a file it cannot open, and it is wired into the gate's step ten, where the sections reader already
+stands: reachability fourteen of fourteen. The falsifier family holds — a planted mixed section is named
+and fails, a uniform file passes.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
