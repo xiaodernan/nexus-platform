@@ -14746,3 +14746,19 @@ table, which is the plane's purpose and the same write the first live measuremen
 Attribution, restored under the D240 doctrine: the previous commit (D361's restructure) swept this section's first draft into its tree - the landing staged the disk STATUS and the disk carried this unit's section, which the other stream had appended while drafting its own D362 - and the commit message described only the restructure. The bytes were always the other stream's; this note is the attribution the sweep cost, and the section now lands under its own unit's number.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 361. the Makefile's dev targets now boot what D304 measured (D364)
+
+The three dev targets predated the demo plane and the port pins: dev-platform ran bare maven with no
+password (the SCRAM refusal the boot fails closed on), flyway enabled against the lagging demo ledger,
+and no profile for the jwt secret; dev-ai answered without a database url, which is the degraded mode
+the contract forbids pretending is healthy; dev-web served on a port this machine reserves for another
+project. All three now carry the recipe D304 measured — the ports D9 pinned, the datasource password,
+the flyway disable against the already-migrated demo database, the dev profile's declared secret, the
+database url the AI needs to answer un-degraded — and each target was verified by actually booting
+through it and reading the health endpoints. The platform recipe also drops the quiet flag the first
+boot hid its own failure behind. The Makefile's own header says its recipes are copy-paste equivalent,
+so the fix is documentation becoming true rather than a convenience: every future session runs the
+measured recipe by running the target.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

@@ -15,12 +15,19 @@ SHELL := /usr/bin/env bash
 MAKEFLAGS += --no-print-directory
 
 COMPOSE        := docker compose -f infra/docker-compose.yml --env-file .env
-PG_CONTAINER   ?= nexus-postgres
+PG_CONTAINER   ?= nexus-platform-postgres
 DB_NAME        ?= nexus
-WEB_PORT       ?= 3000
-AI_PORT        ?= 8000
+WEB_PORT       ?= 3002
+AI_PORT        ?= 8010
+PLATFORM_PORT  ?= 8090
 AI_APP         ?= app.main:app
 AI_HOST        ?= 127.0.0.1
+# D9 pins these away from 5432/6379/3000/8000/8080 because unrelated stacks own them on this machine.
+# The demo-plane credentials and the flyway disable are the boot recipe D304 measured: the datasource
+# password fails closed when absent (D7), the demo ledger lags its schema so a booting flyway would try
+# to apply unrecorded migrations as the unprivileged role (D331), and the jwt secret refuses to guess
+# outside the dev profile - which is why the disable, not the profile's own flyway credentials, is what
+# makes the boot work against the demo database (the profile's flyway user needs the root password).
 
 .PHONY: help infra-up infra-down infra-logs db-reset db-migrate seed dev-web dev-ai dev-platform \
         test unit e2e up down logs status ps lint clean
@@ -65,15 +72,17 @@ db-verify: ## Table count, tenant row, HNSW index presence (no heredoc: works wi
 	docker exec $(PG_CONTAINER) psql -v ON_ERROR_STOP=1 -U postgres -d $(DB_NAME) -tA 	  -c "SELECT 'base_tables='||count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'" 	  -c "SELECT 'tenants='||count(*) FROM tenants" 	  -c "SELECT 'hnsw='||count(*) FROM pg_indexes WHERE tablename='chunks' AND indexdef ILIKE '%hnsw%'" 	  -c "SELECT 'ai_reachable_tables='||count(DISTINCT table_name) FROM information_schema.role_table_grants WHERE grantee='nexus_ai'"
 
 # ------------------------------------------------------------------ host-run dev services (Phase 1)
-dev-web: ## Next.js dev server on :3000 (apps/web)
+dev-web: ## Next.js dev server on :3002 (apps/web)
 	cd apps/web && npm run dev -- --port $(WEB_PORT)
 
-dev-ai: ## FastAPI dev server on :8000 (apps/ai, uv-managed venv)
-	cd apps/ai && (command -v uv >/dev/null 2>&1 && uv run uvicorn $(AI_APP) --reload --host $(AI_HOST) --port $(AI_PORT)) \
-	  || python -m uvicorn $(AI_APP) --reload --host $(AI_HOST) --port $(AI_PORT)
+dev-ai: ## FastAPI dev server on :8010 (apps/ai, uv-managed venv, demo database)
+	cd apps/ai && NEXUS_DATABASE_URL='postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/$(DB_NAME)' \
+	  bash -c 'command -v uv >/dev/null 2>&1 && uv run uvicorn $(AI_APP) --reload --host $(AI_HOST) --port $(AI_PORT) \
+	  || python -m uvicorn $(AI_APP) --reload --host $(AI_HOST) --port $(AI_PORT)'
 
-dev-platform: ## Spring Boot dev server on :8080 (services/platform, Maven)
-	cd services/platform && mvn -q -DskipTests spring-boot:run
+dev-platform: ## Spring Boot dev server on :8090 (services/platform, Maven; the boot recipe D304 measured)
+	cd services/platform && NEXUS_PORT=$(PLATFORM_PORT) NEXUS_DB_PASSWORD=nexus_dev_app_only \
+	  SPRING_FLYWAY_ENABLED=false SPRING_PROFILES_ACTIVE=dev mvn -o -DskipTests spring-boot:run
 
 # ------------------------------------------------------------------ tests
 test: ## Unit + integration tests for every stack present in the tree
