@@ -14762,3 +14762,18 @@ so the fix is documentation becoming true rather than a convenience: every futur
 measured recipe by running the target.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+
+## 362. the committed plane's own re-aim, derived where the arithmetic is clean (D366)
+
+The strict census on this machine's working copy is clean, but the working-copy drift reader could not
+derive three of the re-aim rows it owed — its blame walk fails on the ledgers' mixed-spelling bytes, the
+same surface the line-ending census measured — and the rows sat undelivered. The clean checkout of HEAD
+derives them cleanly: a worktree at the re-aim commit, the drift reader run there, three rows out — the
+gate step-10 wiring had shifted three db_gate_fresh cites by five lines — each applied to the ledgers
+with single-occurrence assertions on both planes. The strict census re-runs clean on the working copy
+with EXACT 158 of 158 judged, and the reader that cannot see its own arithmetic on the mixed bytes is
+the residue this census leaves named: a mixed-spelling file defeats the blame walk, and the clean
+checkout is where its arithmetic goes to work.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
