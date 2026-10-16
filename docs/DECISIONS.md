@@ -14384,3 +14384,36 @@ the lanes' joint decision, and the reader's pass line says exactly that — the 
 byte tools handle one section at a time.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D365 - the search cannot match the product's primary language: an evidence ladder from the e2e empty states to the text-matching configuration, and the remedy shapes with their trade-offs
+
+The e2e suite's two natural-language failures were routed to the AI lane as a quality finding — the
+honest empty state answering a Chinese sentence with zero while a keyword answers eight — and this unit
+is the diagnosis that finding deserved, run entirely against the live demo plane with the one variable
+isolated at each rung. The intent layer is clean: the stream's intent frame carries the right category
+and a resolved location for the harness's sentence, so the extraction maps the phrasing correctly. The
+failure is the search's text matching: the configuration allowlist knows simple and english, and neither
+can match Chinese — simple tokenizes on whitespace, which Chinese does not contain, and the english
+configuration has no stem for it. The evidence ladder isolates the script as the only variable: the same
+endpoint, the same geo, the same limit — an ASCII keyword answers five items, the exact Chinese merchant
+names copied from the results of that very query answer zero, the Chinese category words answer zero,
+and the empty query answers zero even with no filter, because an empty text match matches nothing by
+construction.
+
+The stakes are the product's own contract: §111 makes Traditional Chinese the primary copy language,
+the demo corpus it must serve is predominantly Chinese — the merchant names, the review bodies, the
+sixty percent language mix the seed's own census measures — and the search cannot find a merchant by its
+exact Chinese name. The browse path for the primary language does not exist on this plane.
+
+The remedy shapes are the AI and database lanes' to choose, each with real trade-offs the diagnosis
+frames: a Chinese-aware text search configuration (an extension with segmentation, the heaviest but the
+honest match for the language), trigram-only matching for CJK queries (no new extension — pg_trgm's
+trigrams work on any characters — but a different relevance shape than the english path), or a bigram
+index maintained alongside the existing columns. What the unit adds to that decision is the evidence:
+the exact query ladder, the empty-state behaviour that kept the page honest while the search underneath
+matched nothing, and the observation that the deterministic fallback the degradation path promises is
+itself subject to the same gap. The intent extraction that the first hypothesis suspected is exonerated
+by the same evidence — the stream carries the right category, and the search underneath it is where the
+language stops being searchable.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

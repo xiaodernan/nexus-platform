@@ -14777,3 +14777,21 @@ the residue this census leaves named: a mixed-spelling file defeats the blame wa
 checkout is where its arithmetic goes to work.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 363. the search cannot match Chinese: the diagnosis the e2e empty states were pointing at (D365)
+
+The natural-language empty states decompose to a finding deeper than the intent layer: the AI search
+cannot match Chinese text at all. The evidence ladder, each rung against the live demo plane: the
+September-era keyword query answers five items; the exact Chinese merchant names from the same result
+frames answer zero; the category words answer zero; and the empty query with no filter answers zero —
+the only variable that flips the count is the query's script. The intent extraction is not the failure —
+the stream's intent frame carries category restaurant and a resolved nearby location for the sentence
+the harness asks, and the pipeline's search step then matches nothing, because the text matching's
+configuration allowlist knows simple and english and the content it must match is predominantly Chinese:
+the merchant names, the §111 primary copy language, the sixty percent of reviews in zh-HK. The no-padding
+promise kept the page honest — an empty state with relaxation advice instead of irrelevant results — and
+the empty state was the symptom that led here. The remedy shapes belong to the AI and database lanes: a
+Chinese-aware text configuration, trigram-only matching for CJK queries, or a bigram index — a design
+decision with real trade-offs, made with this diagnosis as its evidence.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
