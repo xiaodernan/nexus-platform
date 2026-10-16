@@ -14229,4 +14229,43 @@ NOW = datetime(2024, 1, 1, 10, 0, tzinfo=HK_TZ)   # Monday
 tests/test_timeparse.py · 11 passed
 full apps/ai suite      · 149 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 343. the sponsored-placement contract is pinned by tests (D347)
+
+§67 / §66 / §1846: paid placement is a *capped post-hoc insertion*, never a scoring input.
+`search/ranking.py` is pure Python over the `Candidate` feature vector, so the invariants
+are unit-testable without a database — but neither `score_candidate` nor `apply_sponsored`
+had any tests. This unit pins both.
+
+`tests/test_sponsored_ranking.py` (12 cases):
+- **organic score is sponsored-blind** (§67): two candidates with byte-identical features,
+  differing only in the `sponsored` flag, produce *exactly* the same `score_candidate`
+  output — a paid placement can never earn a higher organic score than an equal organic one;
+- **organic best never displaced**: even a promoted card with a *higher* organic score sits
+  behind the organic best at rank 0;
+- **no promoted card at rank 0** (across a 6-organic + 2-promoted mix);
+- **capped within the top window**: with the default `cap_in_top=5 / max_in_top=1`, at most
+  one promoted card appears in the first 5 slots; the surplus (2 of 3) is pushed to the
+  tail, and *no* promoted card is ever dropped;
+- **custom cap enforced**: `SponsoredConfig(cap_in_top=5, max_in_top=2)` puts exactly 2
+  promoted within the top 5 and pushes the other 2 to the tail;
+- **no boost**: `apply_sponsored` only reorders — every result keeps `score == organic_score`;
+- **organic positions preserved on the cards**: organic cards carry their 1-based
+  `organic_rank`; a promoted card (never in the organic list) carries `organic_rank = None`,
+  proving it did not displace an organic result's slot (§67);
+- **promotion by id set** (not just the flag) works and still keeps the organic best first;
+- **no-promo / no-organic edge cases** return the input order unchanged;
+- **`sponsor_label`** lookup + fallback: `zh-HK` default, unknown locale falls back to
+  `zh-HK`, and the literal `"Sponsored"` only when `zh-HK` itself is absent.
+
+One test premise was corrected, not the code: with `cap_in_top=3` the strict
+`len(result) < cap_in_top` interleaving fits only 1 promoted slot, so the custom-cap case
+uses `cap_in_top=5` to actually exercise `max_in_top=2`. The function is correct; the test
+was asserting an impossible interleave.
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_sponsored_ranking.py · 12 passed
+full apps/ai suite             · 161 passed, 4 skipped (live-DB tests need Docker, down)
+```
 ```
