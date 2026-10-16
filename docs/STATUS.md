@@ -14268,4 +14268,43 @@ was asserting an impossible interleave.
 tests/test_sponsored_ranking.py · 12 passed
 full apps/ai suite             · 161 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 344. the offline platform stub is pinned by tests (D348)
+
+`adapters/platform.py::StubPlatformClient` is the deterministic stand-in for the Spring
+service on :8080 — the default so tests and the demo never need the live commerce core
+(API_CONTRACT §0/§4/§6). It is a *real* implementation (validates idempotency §1, rejects
+unpublished merchants §6, prices only from a supplied catalogue, enforces the §20 stale
+gate, and stamps every payload `"stub": True`) — but had **zero tests**, so the offline
+path could silently drift from the live one. This pins it.
+
+`tests/test_stub_platform.py` (16 async cases):
+- **`stub: True` on every payload** — merchant, cart, cart-item, price-check, order,
+  reservation, order-status all carry the marker, so nothing offline reads as live;
+- **merchant validation (§6)**: unknown merchant → 404, known → stub payload;
+- **offering/price (§6/§20)**: unknown offering → 422 ("never invents a price"); inactive
+  offering → 409; active → item with correct unit_price/quantity/total; a `price_stale`
+  offering yields `stale: True` + the `價格可能已更新` localisation, `price_check` reports
+  `stale_count`, and checkout refuses with 409 "stale price in cart — re-confirm";
+- **idempotency (§1)**: checkout/reservation reject an empty / <8-char / illegal-char key
+  with 422, and a *replayed* key returns the identical order/reservation (replay-safe);
+- **checkout success flow**: open cart → priced total → `pending_payment` order with a
+  `stub` payment intent, and the cart is closed (`checked_out`) afterwards;
+- **order status**: unknown → 404, known → same id;
+- **reservations (§6)**: every required field (`merchant_id`/`slot_id`/`party_size`/
+  `contact`) missing → 422; full payload → `status: "pending"` (a *hold*, never
+  "confirmed" — the exact claim `trust/injection.py` filters), replay-safe;
+- **`IDEMPOTENCY_RE` bounds** (8..128 chars, legal charset only);
+- **observability** (`calls` recorded) and **default client is `stub`**.
+
+Two test premises were corrected, not the code: `"tooshort"` is exactly 8 chars (valid), and
+the stub enforces replay-safety on the *same* key only — a *different* key creates a second
+order, which is the documented simplification; the success-flow test now asserts the cart
+is closed rather than inventing a non-existent double-charge guard.
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_stub_platform.py · 16 passed
+full apps/ai suite          · 177 passed, 4 skipped (live-DB tests need Docker, down)
+```
 ```
