@@ -14171,3 +14171,25 @@ pins it.
 tests/test_verification.py · 7 passed
 full apps/ai suite        · 132 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 341. the organic ranking-weight contract is pinned by tests (D345)
+
+§67 / AGENT_CONTRACT §6: the search service's scoring mix is load-time guarded, and the
+guards are correctness/security properties, not cosmetic ones — paid rank must never leak
+into the organic weights, every one of the 8 weight keys must be present, and the weights
+must sum to exactly 1.0. `load_ranking_weights` enforces all three but had **no tests**;
+this unit pins them.
+
+`tests/test_ranking_weights.py` (6 cases, each writes a temp YAML):
+- a valid 8-key config summing to 1.0 loads, with `version` set and every key present;
+- a `paid_rank` key is rejected (§67 — paid rank may not influence organic score);
+- every forbidden organic key (`bid`, `spend`, `plan`, `mrr`, `arr`, `ads`) is rejected;
+- a missing weight key is rejected with "missing";
+- weights summing to 0.99 are rejected with "sum to 1.0";
+- a missing file is rejected with "not found".
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_ranking_weights.py · 6 passed
+full apps/ai suite          · 138 passed, 4 skipped (live-DB tests need Docker, down)
+```
