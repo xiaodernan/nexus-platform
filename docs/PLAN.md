@@ -1268,3 +1268,6 @@ parse corrected as a bonus). The sibling-claim sweep is DONE (D298, a5232d4): of
 legal-write arms, exactly one ever collided with a standing writer-claim - the corrected grant-expiry one;
 the other three census candidates stand in context, and the method (writer-claim census before a landing
 that adds writers) is now recorded for the seed lane.
+
+
+The wave's live verification completed on the demo plane too (D363, three-plane whole: 341 offline / 2-and-2 fixture / 4-for-4 demo), with a D240 attribution note for the S359 sweep my D361 restructure staged - their own S359 independently walked the same reservation-block arithmetic, the two lanes converging on the same open questions from different sides. And the ledgers' line endings got their own census and reader (D360, 7dd07d5): both ledgers are CRLF bodies with this lane's LF appends as whole uniform sections, ZERO sections mix spellings, the reader enforces no-mixing from gate step 10 (reachability 14/14), and it self-falsifies on a planted mixed section.
