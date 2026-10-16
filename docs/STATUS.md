@@ -14340,4 +14340,43 @@ drift unnoticed. This pins it.
 tests/test_mock_adapter.py · 15 passed
 full apps/ai suite         · 192 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 346. the trust `facts` anchor is pinned by tests (D350)
+
+`trust/facts.py` is the §4 grounding anchor (AGENT_CONTRACT §4, spec §19/§53): every
+AI-stated fact must resolve to one of these, and the §4 source hierarchy
+(`merchant > observed > imported > third_party > inferred > demo`), the per-source
+confidence ceiling, and the "conflicts are surfaced, never hidden" rule all live here. The
+module is pure except for the `facts_from_rows` DB-row bridge — but it had **no tests**.
+This pins it.
+
+`tests/test_facts.py` (16 cases):
+- **§4 source hierarchy**: `SOURCE_RANK` order and `better_source`; the per-source
+  `SOURCE_CONFIDENCE_CAP` clamps a `third_party` claim of 0.99 down to 0.70 while a
+  `merchant` keeps 0.99 (third-party may never out-rank merchant — §3);
+- **`stable_fact_id`** is content-derived and deterministic (replay ⇒ same id, different
+  value ⇒ different id) — what makes the SSE frame reproducible;
+- **ordering**: `pick_all` ranks by source hierarchy, ties broken by confidence;
+  `pick_authoritative` returns the best or `None`;
+- **grounding at the fact level (§18/§19)**: `explanations` links each bullet to the
+  *authoritative* fact's `fact_id`; empty attribute ⇒ no explanation;
+- **conflicts surfaced, not hidden (§4)**: a `merchant` price vs `third_party` price yields
+  a `price_anomaly` at `warn` severity; identical values ⇒ no conflict; a non-merchant
+  winner (e.g. `observed` over `third_party`) ⇒ `high` severity;
+- **§4 confidence phrasing** (`copy_confidence_hint`) never upgrades: <0.4 → handoff,
+  <0.6 → uncertain, else `None`;
+- **`select_display_facts`** respects requested order and skips missing attributes;
+- **`synth`** is idempotent (same content + observed_at ⇒ same id) and marks `observed`;
+- **`facts_from_rows`** (DB bridge) clamps confidence, parses JSON values, honours
+  `forced_stale`, and drops rows with a non-UUID id.
+
+One test premise was corrected, not the code: between two non-merchant sources the §4 order
+ranks by `SOURCE_RANK`, so `third_party` (2) outranks `inferred` (1) — the high-severity
+case uses `observed` (4) vs `third_party` to guarantee a non-merchant winner.
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_facts.py · 16 passed
+full apps/ai suite   · 208 passed, 4 skipped (live-DB tests need Docker, down)
+```
 ```
