@@ -14115,3 +14115,32 @@ out of data). It had **zero tests**; this unit pins it.
 tests/test_injection.py · 15 passed
 full apps/ai suite       · 110 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 339. the freshness TTL policy is pinned by tests (D343)
+
+§20 / AGENT_CONTRACT §5: freshness is policy, not comments — `ttl_for_attribute` is what
+the search service and `/carts/price-check` consult, and a stale price must surface as
+"價格可能已更新". `trust/freshness.py` already implements the table and the evaluation,
+but it had **no tests**; this unit pins it so a TTL change or a wrong stale computation
+cannot ship silently.
+
+`tests/test_freshness.py` locks fifteen behaviours:
+- `ttl_for_attribute` resolves canonical attributes, column aliases
+  (`avg_price_hkd`→`price`, `hours`→`opening_hours`), unknown→24h default, and
+  `availability`→0 (real-time, never cached);
+- `evaluate` distinguishes fresh (`stale=False`, remaining `5/6` for a price seen 1h ago),
+  stale (past ttl → `stale=True`, remaining `0.0`), unknown observation (`stale=True`),
+  `forced_stale` override, and an explicit `expires_at`; availability reads as `real_time`
+  with `expires_at=None`;
+- `is_stale` / `remaining_fraction` conveniences; explicit `expires_at` is honoured;
+- `stale_copy` localises zh-HK/zh-CN/en and falls back to zh-HK for an unknown locale;
+- `mean_remaining_fraction` returns `None` for empty and the exact mean (`5/6`) for a
+  uniform fresh set;
+- `needs_reindex` triggers on `<24h & <5 new` = no, `>=5 new` = yes, `>24h` = yes, and
+  never-generated = yes.
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_freshness.py · 15 passed
+full apps/ai suite      · 125 passed, 4 skipped (live-DB tests need Docker, down)
+```
