@@ -14333,3 +14333,27 @@ unit edits the wave's tests, the seed, or the surfaces; the value is the re-deri
 closes is the one every landing that records a skipped measurement leaves open.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D359 - the gate's blocking check was dead on arrival: unicode escapes in standard strings decode to nothing, the seed's real coverage clears the threshold, and the fixed file runs 217-for-217
+
+The certification series' first data-quality failure — the review-aspect census red at sixteen-point-
+seven percent against a sixty percent threshold — decomposed, on the same database the gate had failed
+on, into a defect in the check's own spelling. The keyword table the check matches against was written
+with unicode escape sequences inside ordinary single-quoted strings, and postgres does not decode
+escapes there: every Chinese keyword landed as a literal backslash-u sequence matching no review body,
+leaving the census to see only its seven ASCII words. The proof ran both spellings against the same
+eleven thousand reviews on the same kept gate database: the escaped forms match nothing, the real
+characters match seven thousand five hundred nine distinct reviews — sixty-eight point three percent,
+above the threshold — and the gap between the gate's sixteen-point-seven and the true sixty-eight is
+exactly the Chinese half of the vocabulary dying in translation.
+
+The repair re-spells the fifteen keywords as the characters they mean, and the verification is
+end-to-end rather than per-keyword: the fixed quality.sql runs whole against the loaded gate database —
+two hundred seventeen checks, zero failed, exit zero, with the review-aspect row printing the number the
+decomposition promised. The gate's step five is green again, the instrument is unblocked for the next
+re-certification, and the seed lane receives the find together with the rule it teaches: the same rule
+the ledger's prose learned when its displayed citation shapes had to become NN — an escape form chosen
+for how it looks in a file is a literal to the engine that reads it, and a check that counts Chinese
+keywords must write Chinese characters.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

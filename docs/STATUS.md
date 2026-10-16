@@ -14633,3 +14633,20 @@ repair worked across (the block closes CRLF, the following heading arrived LF) a
 surface the applier unit recorded, now measured in one more place.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 356. the review-aspect check was dead on arrival from its own spelling (D360)
+
+The gate's step-5 failure that stopped the last certification decomposed to a defect in the check
+itself, found by decomposing the same database the gate had failed on: the aspect keyword table was
+written with unicode escape spellings, and standard postgres strings do not decode escapes — every
+Chinese keyword was a dead literal matching nothing, so the census saw only its ASCII half and measured
+sixteen-point-seven percent where the seed's real coverage is sixty-eight. The proof ran both spellings
+against the same eleven thousand reviews: the escaped spellings match nothing, the real characters match
+seven thousand five hundred nine — above the sixty percent threshold the check asserts. The repair is
+the fifteen keywords re-spelled as real UTF-8, and the fixed quality.sql re-runs against the loaded
+gate database end to end: two hundred seventeen checks, zero failed, the review-aspect row printing the
+seven-five-oh-nine the census promised. The gate's step five is green again and the instrument is
+unblocked; the seed lane owns the file and gets the find, the spelling rule it teaches being the same
+one the ledger's prose learned at D94 — escape forms that display well and mean nothing.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

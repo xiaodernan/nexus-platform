@@ -497,14 +497,22 @@ SELECT 'review bodies are not lorem/placeholder',
        (SELECT count(*) FROM reviews WHERE body ~* 'lorem|ipsum|placeholder|todo|test body')
        || ' placeholder body(ies)';
 
+-- Aspect keyword table to avoid regex quantifier issues with Chinese characters
+CREATE TEMP TABLE aspect_keywords (keyword text PRIMARY KEY);
+INSERT INTO aspect_keywords (keyword) VALUES
+ ('候位'), ('等咖'), ('排隊'), ('quiet'), ('嚴音'), ('嘈'),
+ ('份量'), ('分量大'), ('平價'), ('性價比'), ('抵'),
+ ('MTR'), ('港鐵'), ('步行'), ('分鐘'),
+ ('service'), ('staff'), ('slow'), ('fast'), ('clean'), ('乾淨');
+
 INSERT INTO qc
 SELECT 'reviews cite concrete aspects (§55 inputs)',
-       (SELECT count(*) FROM reviews WHERE body ~*
-         '候位|等咗|排隊|quiet|噪音|嘈|份量|分量大|平貴|性價比|抵|MTR|港鐵|步行|分钟|分鐘|service|staff|slow|fast|clean|乾淨') * 1.0
-         / nullif((SELECT count(*) FROM reviews),0) > 0.6,
-       (SELECT count(*) FROM reviews WHERE body ~*
-         '候位|等咗|排隊|quiet|噪音|嘈|份量|平貴|性價比|抵|MTR|港鐵|步行|service|staff|slow|fast|clean|乾淨')
-       || ' of ' || (SELECT count(*) FROM reviews) || ' reviews name an aspect';
+       (SELECT count(*) FROM reviews WHERE EXISTS (
+          SELECT 1 FROM aspect_keywords k WHERE reviews.body ILIKE '%' || k.keyword || '%'
+       )) * 1.0 / nullif((SELECT count(*) FROM reviews),0) > 0.6,
+       (SELECT count(*) FROM reviews WHERE EXISTS (
+          SELECT 1 FROM aspect_keywords k WHERE reviews.body ILIKE '%' || k.keyword || '%'
+       )) || ' of ' || (SELECT count(*) FROM reviews) || ' reviews name an aspect';
 
 INSERT INTO qc
 SELECT 'reviews carry aspect scores for weak-aspect demos',
@@ -3304,7 +3312,7 @@ INSERT INTO view_vocab VALUES
              || 'counters but coalesces each to 0, and v_north_star produces no rows at all. The exemption is '
              || 'worthless the moment a view column starts carrying only NULLs — that answer must then be '
              || 'written and this reason withdrawn in the same commit.'),
- ('sparse',  'no view column in the shipped demo has between 2 and rows-1 distinct values: seven funnel '
+ ('sparse',  'no view column in the shipped demo has between 2 and rows - 1 distinct values: seven funnel '
              || 'columns are single-valued, merchant_id is the grain, and the five north-star columns have no '
              || 'rows — all because D64''s fabrication guard keeps events/orders/reservations/carts/payments '
              || 'empty, which pins six funnel counters at one value (0). Seed any traffic and this cell goes '
