@@ -14732,3 +14732,17 @@ numbers, and the two blocked-on-the-other-stream entries — and leaves the date
 The sections reader and the spelled-citation reader both pass on the restructured file.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 360. the AI wave's live verification completes on the demo plane: four for four where the fixtures were the only thing missing (D362)
+
+The test database's two-and-two was the wave's recorded shape, and the demo plane completes the picture:
+the same four integration tests run against the seeded database answer four for four — the category guard
+finds the categories the demo seed carries, the insert meets the demo tenant the fixture plane lacks,
+and health and search answer as they do everywhere. The three-plane measurement is now whole: three
+hundred forty-one offline, two-and-two on the fixture database by its own known mechanisms, four-for-four
+on the demo database. The insert writes the one audit row the proof requires into the demo plane's own
+table, which is the plane's purpose and the same write the first live measurement made.
+
+Attribution, restored under the D240 doctrine: the previous commit (D361's restructure) swept this section's first draft into its tree - the landing staged the disk STATUS and the disk carried this unit's section, which the other stream had appended while drafting its own D362 - and the commit message described only the restructure. The bytes were always the other stream's; this note is the attribution the sweep cost, and the section now lands under its own unit's number.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
