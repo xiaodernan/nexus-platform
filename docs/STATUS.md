@@ -14193,3 +14193,40 @@ this unit pins them.
 tests/test_ranking_weights.py · 6 passed
 full apps/ai suite          · 138 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 342. the time-resolution contract is pinned by tests (D346)
+
+§8 / §7.1: `nlu/timeparse.py::parse_time` resolves a user's free-text temporal mention to a
+`TimeIntent` (or `None` when there is no time signal). It is the front line of §8's
+never-guess discipline *for time* — a query like "推荐一家好吃的" carries no time signal and
+must resolve to `None`, never an invented default. `parse_time` implemented this but had
+**no tests**; this unit pins the contract with a fixed reference clock so the assertions are
+deterministic.
+
+Reference clock (fixed, not `now`):
+```
+NOW = datetime(2024, 1, 1, 10, 0, tzinfo=HK_TZ)   # Monday
+```
+
+`tests/test_timeparse.py` (11 cases) locks:
+- **no time signal ⇒ None** (§8 honesty — "有什么好推荐" / "推荐一家店" resolve to `None`, not a
+  default hour); the same `None` path is exercised through the public `understand` surface;
+- **passed-hour rollover**: "7點" at 10:00 ⇒ tomorrow 07:00 (a clock time already behind
+  today's reads as the next occurrence, never "yesterday");
+- **literal clocks**: "晚上8點" ⇒ 20:00, "22:30" ⇒ 22:30, "10pm" ⇒ 22:00 — meridian words and
+  24h/12h/pm forms all normalise to HK-local wall time;
+- **relative-weekday**: "周六晚上" ⇒ next Saturday 2024-01-06 (the first Sat ≥ tomorrow),
+  "週末" ⇒ a Saturday-anchored span;
+- **day words**: "今晚" ⇒ today 18:00, "明日" ⇒ 2024-01-02 all-day;
+- **open-late relative**: "營業到10點後" ⇒ a relative `open_late_after: 1000` marker rather than
+  an absolute instant (the merchant's own close time is not known at parse time — §8 would
+  forbid guessing it, so the parser emits a relative cue the ranker can act on);
+- **serialisation**: `to_intent_dict` emits Zulu (`+00:00`-normalised) timestamps and leaves
+  genuinely-absent fields as `null` — no fabricated defaults leak into the wire JSON.
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_timeparse.py · 11 passed
+full apps/ai suite      · 149 passed, 4 skipped (live-DB tests need Docker, down)
+```
+```
