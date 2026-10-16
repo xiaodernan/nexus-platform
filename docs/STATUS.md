@@ -14470,4 +14470,32 @@ banker's-rounding (`round(4.5)→4`); the test now pins unambiguous values (46�
 tests/test_cards.py · 17 passed
 full apps/ai suite   · 254 passed, 4 skipped (live-DB tests need Docker, down)
 ```
+
+## 350. the model router / cost meter is pinned by tests (D354)
+
+`models/router.py::ModelRouter` maps task class → cheapest tier, enforces the LLM budget
+(≤3 calls, ≤1 `reason`, AGENT_CONTRACT §2/§9), and runs the §105 fallback ladder *inside* the
+model layer; `CostMeter` accumulates the telemetry that becomes an `llm_calls` row. It had
+**no tests**. Fake adapters stand in for real providers, so this is fully offline.
+
+`tests/test_model_router.py` (11 cases):
+- **`CostMeter`**: accumulates calls/tokens/cost/latency, counts `reason` calls, ORs the
+  `degraded` flag across responses, records the provider chain, and computes `total_tokens`;
+- **`pick`**: cheapest tier per task (`intent_extract`→cheap, `summary`→mid), `tier_override`
+  wins, unknown task → `KeyError`;
+- **§2 budget**: a 4th call raises `BudgetExceeded(kind="llm", limit=3)`, and a 2nd `reason`
+  call in one request raises `BudgetExceeded(kind="reason", limit=1)`;
+- **§105 ladder**: primary success ⇒ `fallback_from=None`; a provider `LLMError` or even an
+  adapter *crash* (a non-`LLMError` bug) falls through to the next adapter with
+  `fallback_from` set to the failed primary; when every adapter fails the last error surfaces;
+- **`as_llm_call_row`**: the exact `llm_calls` row shape (provider/model/purpose/tokens/cost/
+  latency/`status="ok"`/`cache_hit`);
+- **wiring**: an empty adapter list raises `ValueError`; `primary`/`provider_name` reflect the
+  primary adapter.
+
+**Verified, not claimed** (DB-free):
+```
+tests/test_model_router.py · 11 passed
+full apps/ai suite         · 265 passed, 4 skipped (live-DB tests need Docker, down)
+```
 ```
