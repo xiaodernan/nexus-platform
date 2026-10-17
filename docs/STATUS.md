@@ -14812,3 +14812,37 @@ diagnosis without touching the taxonomy. The decision is the AI and database lan
 rests on are recorded here.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+---
+
+## 365 · D367 — pin the intent-bucket → taxonomy bridge (`search/categories.resolve`)
+
+**Module / contract.** `nexus_ai.search.categories` is the pure, DB-free bridge between the
+intent layer's coarse category *bucket* (`restaurant`, `escape_room`, `retail` …) and the seeded
+`categories` taxonomy (10 roots + 67 leaves, hyphenated slugs). `search/sql.py` calls `resolve`
+to turn a bucket into the slug set a `slug IN (…)` SQL predicate should match.
+
+**Why it matters (regression guard).** Comparing the raw bucket to the taxonomy slug with `=`
+matched *nothing* on the live DB — every categorised query returned an empty page — so the bucket
+is expanded here into `[bucket, slug(bucket), *ALIASES[bucket]]`. Pinning the expansion is what
+stops that regression from silently returning an empty category page again.
+
+**Pinned behavior (22 cases, all confirmed empirically against the module):**
+- Empty contract: `None`, `""`, and whitespace-only all return `[]` (no category asked).
+- Normalization: case-insensitive (`RESTAURANT` → `['restaurant']`); surrounding whitespace trimmed.
+- Slug formation: every bucket carries its own name first, then the hyphenated taxonomy slug
+  (`escape_room` → `['escape_room', 'escape-room']`); an unrecognised bucket still yields its
+  hyphenated slug so a stray taxonomy row stays reachable.
+- Alias expansion: each `ALIASES` entry is emitted in order — `afternoon_tea` →
+  `['afternoon_tea', 'afternoon-tea', 'tea-house', 'cha-chan-teng']`; `retail` → `['retail', 'shopping']`;
+  `pet` → `['pet', 'pet-grooming']`; `attraction` → `['attraction', 'experience', 'activity']`, etc.
+- Dedup + order-stability: no duplicate slugs; output identical across repeated calls.
+- **Bridge regression**: an aliased bucket MUST still surface its taxonomy slugs
+  (`set(resolve('afternoon_tea')) >= {'tea-house', 'cha-chan-teng'}`), and the hyphenated slug is
+  always present so `sql.py`'s `slug IN (resolve(b))` finds rows instead of an empty page.
+
+**Discipline note.** No test-premise corrections were needed this unit — the module's behavior
+matched the docstring's stated contract exactly. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_categories.py` → **22 passed**; full `apps/ai`
+suite → **363 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
