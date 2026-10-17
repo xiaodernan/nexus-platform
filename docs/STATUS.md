@@ -14883,3 +14883,40 @@ on a present key. Code unchanged.
 
 **Verified, not claimed.** `pytest tests/test_understand_resolution.py` → **25 passed**; full
 `apps/ai` suite → **388 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+---
+
+## 367 · D369 — pin the parameterized SQL builders' pure surface (`search/sql`, §0/§6/§9/D3)
+
+**Module / contract.** `nexus_ai.search.sql` turns an intent/filter set into **parameterized**
+Postgres SQL (`$n` placeholders + a bound-param list). It builds strings only — no connection is
+opened — so every builder is exercisable offline. DECISIONS D3 (Postgres-only: tsvector ∪ pg_trgm
+∪ pgvector ∪ geo) and the project's injection rule ("values are never concatenated into SQL") are
+pinned here. The sibling `test_search_sql.py` already pins the category-taxonomy bridge; this unit
+pins the rest of the pure surface.
+
+**Pinned behavior (25 cases, all confirmed empirically):**
+- `Params` no-inlining: `add`/`extend` return ordered `$n` placeholders; a `build_merchant_query`
+  with a distinctive tenant + text emits **neither** string into the SQL — both are bound params.
+- `_tsconfig` allow-list (injection / typo guard): `simple`/`english` pass through; anything else
+  (incl. empty) falls back to `simple`, and the emitted SQL shows `to_tsquery('simple'`.
+- Merchant-query structural rules: base shape (`FROM merchants m` + `ORDER BY`); empty text → no
+  `@@` predicate and `true AS text_matched`; geo lane emits the spherical `acos(...)` distance
+  expression + `BETWEEN` bbox prefilter + `loc.meters <=`; `avoid` filter adds `AND NOT (`;
+  `max_price` filter present and bound.
+- Geo math: `haversine_m` is ~0 for identical points, symmetric, ~111 km per degree of latitude;
+  `bbox` is centered on the anchor and widens with radius.
+- `vector_literal`: 6-decimal pgvector text form; `[]` for empty.
+- Side-query empty guards: `facts_for`/`hours_for`/`reviews_for`/`entities_for`/`slots_for` return
+  `("", [])` for empty ids (prevents a `= ANY(ARRAY[])` SQL error); non-empty builds a bound query.
+- Chunk query: `top_k` clamped to 40 (§9 rerank budget) regardless of request; vector `<=>` op
+  present only when an embedding is supplied.
+- Open-now / time: `open_now_predicate_expr` returns `(weekday, 'HH:MM:SS')` in HK tz; `time_today`
+  returns a `time`.
+
+**Discipline note.** Three premise corrections, all call-signature / generated-text, not code:
+builders require `embedding` (and `build_chunk_query` also `merchant_id`); the geo lane emits
+`acos(...)`, not the literal word "haversine". Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_sql_builders.py` → **25 passed**; full `apps/ai`
+suite → **413 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
