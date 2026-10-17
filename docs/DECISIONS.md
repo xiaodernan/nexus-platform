@@ -14417,3 +14417,171 @@ by the same evidence — the stream carries the right category, and the search u
 language stops being searchable.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## D371 - the restore leg that only checked whether the bytes came back: what was lost, the discipline that now ships as a module with seven arms, and a reservation census whose largest block sits below the head the claim arithmetic walks up from
+
+**1. The loss, measured at the moment it happened and re-measured here.** D334 mirrored four documents onto
+the working copy, ran the six readers over those bytes, staged them, committed, and then ran a leg whose whole
+body was: read the disk, compare it with the bytes saved before the mirror, refuse if they differ. It refused,
+with a sentence blaming another stream — `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335
+bytes sha edee2758d9b7, saved sha 3d4c58a95ede) - another stream wrote into it during this landing`. The
+diagnosis was wrong and the run's own numbers say so: 60,335 bytes is precisely the blob this run had staged,
+so the disk held this landing's bytes because this landing had written them and never written anything after.
+No leg performed the restore. 3 documents' uncommitted drafts went under it: `docs/API_CONTRACT.md` at 61541 bytes (sha 3d4c58a95ede) against the 60335 the run left in place, `docs/DECISIONS.md` at 1309273 bytes (sha 4190ca9a9133) against the 1307733 the run left in place, `docs/STATUS.md` at 1288052 bytes (sha 962dc71d9df6) against the 1277791 the run left in place; the fourth document it mirrored, `docs/CONSUMER.md`, held the same 6981 bytes as the blob and lost nothing, which is why the count is read from the byte comparison the dry log makes possible and not from the number of files the run touched. A landing that verifies a restore instead of executing one does not lose
+the drafts slowly; it loses them at the moment its own log line claims they were put back.
+
+**2. The rehearsal had already proved the leg, which is the part worth keeping.** The same harness holds a
+dry-run path, and that path calls `rollback()` — the function that writes the saved bytes back. The dry run
+printed four of them (`rolled back docs/API_CONTRACT.md to its pre-mirror bytes (61541, sha 3d4c58a95ede)` and
+three more) and then said `dry run complete: readers measured, mirrors taken back, index untouched`. The real
+path never called it. So the rehearsal measured a shape the landing does not have, and the green rehearsal
+line was evidence about the dry branch only: a control that cannot distinguish the two paths is not a control.
+The fix is therefore not a louder warning at the call site but a module — `nexus-d341-restore.py` — whose
+sequence has no optional legs: `save_premirror` writes the plane's bytes out and fsyncs and hash-proves each
+copy before any document is touched, `mirror` records what it wrote, `restore` performs the write and then
+proves it from a fresh read, `verify_premirror` re-proves the recovery source immediately before staging, and
+`recover` restores from the copies alone when the process that mirrored is gone.
+
+**3. Why the recovery source is on disk and not in the run's memory.** The first landing kept the saved bytes
+in a dict. A dict is the right size for the loss it caused: the process that owned it died after the commit,
+and the bytes died with it. Copies go to a scratch directory, are fsynced, and are read back and hashed
+before the first mirror is allowed — the refusal is `refusing to mirror bytes this run cannot put back`. Their
+names are the repo-relative path with its separators spelled out (`docs__STATUS.md`), not the basename,
+because a basename is not an identity: two runs sharing one scratch directory, or one repository holding the
+same file name in two directories, would otherwise restore the wrong file under a true-looking log line —
+which is D197's duplicate-basename finding arriving from the other end.
+
+**4. Seven arms, each driving the shipped module and a mutant of it over the same plane.** The battery's own line is `BATTERY: PASS (7 arms and a control, plane at rest)`: 15 drives over the same plane, the shipped legs making 18 observations and the mutants 8, arm by arm shipped/mutant A 1/2, B 2/1, C 1/1, D 1/1, E 2/1, F 2/1, G 3/1, each count written before the run and none of them re-read from the log afterwards. the fixture the arms were driven over is named by the drive's own plane line: `DECISIONS 14419 lines as CRLF, STATUS as LF` - so the battery holds a CRLF decision document and an LF status document, the two spellings this repository trades in, on one plane
+That fixture is not the plane this landing found. The working copy reads 14419 CR bytes in the decision ledger
+and 14957 in the status ledger while both parent blobs are pure LF, and it is that mixture - not the battery's
+deliberate shapes - that a restore leg has to survive without handing one document back in a spelling no checkout
+of this repository produces. The status half of the fixture carries one uncommitted foreign line above its next
+heading, so the drafts a landing covers are the kind this repository has. A is the loss itself: the perform-and-prove
+tail replaced by the check-only body, and the drive records both that the leg refuses and that the foreign line is
+still off the disk after its own refusal — `e7f733702127` still on the disk against the `cfa7be4f933a` the run had saved as the pre-mirror bytes. B is a write that does not stick. C is the recovery source
+missing. D is a copy whose bytes are not the file it stands for. E is another stream writing into the document after
+the mirror, where the shipped guard stops and the newer bytes survive while a leg without the guard overwrites them.
+F is a restore that re-encodes line endings, refused on the CRLF document by name while the LF document passes. G is
+the failure the mixture above actually produces: the keep target taken from the blob instead of from the plane, so a
+landing that *succeeds* leaves the machine holding an LF copy of a document it checks out as CRLF. The same plane would be handed 0 CR byte(s) where it was found holding 14419 - the LF blob's bytes on a document the machine spells CRLF
+
+**5. The run corrected one of its own arms before it believed the result.** Arm B's first form truncated every
+write the module performed — including the mirror that sets the scenario up — so the disk never held the
+bytes the run claimed to have mirrored, and the ownership guard fired *before* the re-read clause under test.
+Read plainly, that arm would have certified the re-read with a refusal that came from a different clause
+entirely. The half write is now applied only to the restore leg, which is the leg whose claim is "the bytes
+I wrote are the bytes on the disk"; the same drive then shows both the shipped refusal and the mutant's
+`restored byte-for-byte` line printed over a plane holding 668,511 of 1,337,023 bytes.
+
+**6. The reservation census, and how far the rule that reads it can reach.**
+`docs/DECISIONS.md` holds 298 `## D` headings and stops at D365, so the arithmetic every previous
+landing used — highest heading plus one — hands this unit D366, and the walk that steps over any number a
+document cites with no heading behind it refuses none of them at this parent. 179 cite lines name 44 decision numbers that no heading holds, and they fall into 2 shapes the cited line itself tells apart: 12 of them are rows of a table whose first cell is the number — `| D10 |` and its neighbours, a ruling that exists as a row and was never promoted to an entry — and the remaining 32 sit in 7 contiguous block(s), the largest D339 through D357, above which the ledger's own head at D365 now stands with 4 heading(s) in between (D358, D359, D360, D365); step 12 calls every one of those cites dangling and no other reader calls them anything at all. Measured twice, because the plane moved while this unit's draft was being written: at 764360a the ledger stopped at D338 and the walk up from that heading refused 19 numbers - D339 through D357 - handing the next unit D358 and ## 354; since then 4 heading(s) (D358, D359, D360, D365) have landed over the top of that block, the parent's census reads 44 headingless numbers against 34 there: every one of the 19 blocked numbers is still cited with no heading, 0 number(s) left the set, and 10 arrived (D200, D361, D362, D363, D364, D366, D367, D368, D369, D370), the new ones filed by the very entries that landed over the block, not one cite of the block resolved, so the walk refuses 5 of them here too and this unit takes D371 and ## 365. Writing
+this entry wherever the arithmetic lands resolves nothing inside that block: the cites ask for the entries they
+name, and a unit about a harness cannot pay a debt owed by a wire-boundary decision. So this entry re-aims none of
+the cites, names the shape instead, and takes the pair the arithmetic reaches.
+
+**7. The strict drift leg was red while this unit was writing its excuse for it, another stream re-aimed it clean
+before the landing, and the control run meant to measure the unit's share of the red refused on a plane that moved
+under it.**
+The strict drift leg answers clean on the parent's bytes and stays clean under this unit's: the control prints `step 16 strict clean on 158` and the mirrored plane answers identically in all 12 counts it prints - citation-shaped tokens, blamed, quoted frames, judged citations and every verdict class - and the same 16 printed MOVED site(s) appear both times, in `docs/DECISIONS.md`, `docs/STATUS.md`, every one of them above this entry's first line; blaming the way the reader blames, the append leaves 262 line(s) in the 'Not Committed Yet' set, exactly the 262 this unit writes and all of them past the parent's last line, with 0 inside the committed range, while `ledger lines read` holds at 29378 on both planes although the staged blobs run to 29640 lines over the committed ones' 29378 - the reader takes its ledger text from `git show HEAD:<ledger>`, so the 262 lines this unit appends never entered the census it passed. The clean row is the plane's answer, not this unit's acquittal: the census cannot see an append, and what it does see is a verdict whose text half came from HEAD and whose author half came from the working copy. What this files beside the acquittal is the blind spot: this unit's own sentences put 0 citation-shaped token(s) into code, counted by the reader's grammar transcribed from its bytes and validated against its totals on the very corpus it read (482 against 482, 1 frame(s) both), and no instrument on this plane can judge them until they are committed, so their verdict is the next landing's measurement and this entry names the leg's own blind spot instead of calling the plane clean by inspection. A leg that inherits its verdict from the code plane is still a leg a landing must account for, and the
+honest row is the one the instrument prints, red or clean, beside the others rather than a run stopped at the first
+number another stream moved. The first version of this paragraph filed the difference between the two control
+readings as a defect in the census, and the measurement says otherwise: the census's per-line authors come from
+`git blame` on the working copy, its text from `git show HEAD:<ledger>`, and while the run was reading, another lane
+landed a thirteen-line re-aim of these very ledgers, so the bytes staged off the old parent were no longer an append
+of the new HEAD and blame correctly called thirteen committed lines uncommitted. A pure append cannot do that, which
+is now measured rather than asserted: at the parent's own bytes the all-zero author set holds nothing, and with this
+unit's lines appended it holds exactly those lines, none inside the committed range. What survives the misattribution
+is a smaller, real filing: the two halves of a verdict come from two planes and the reader prints no rev for the
+author half, so when HEAD and the working copy disagree mid-file its output is a mixture that reads like the ledger's
+own defect - the rows that looked like a broken instrument were `absent at 0000000` - and beside it two parsing facts
+this unit read but did not fix, that the blame map is keyed on the porcelain's original rather than final line
+number, and that the no-author branch keeps a row without incrementing the class count it prints, and a third that
+the same blame answers differently when `core.autocrlf=false` is forced on it because then the CRLF working copy
+disagrees with the LF blob on every line. All four belong to the reader, so they are filed as the next unit; what
+this landing changes is the harness, which now stops at the first HEAD move as interference instead of grading a
+schedule as a verdict, and runs both of its new guards in each direction before it trusts either.
+
+**8. Five defects this unit's own instrument made while the unit was being written.** Four are the entry's own bug
+arriving in a different leg - a check standing in for an action - and the fifth is a green run nobody read. They are
+recorded here because the entry is about that class, and a landing that documents a verify-instead-of-perform defect
+while its own harness commits four of them would be filing a lesson it has not learned. (i) The fill was a replace
+over the whole document, and the ledgers in
+HEAD already carry brace-wrapped text of their own: docs/DECISIONS.md line 93 holds a brace pair around `json .Config.Labels`, docs/STATUS.md line 14721 holds a brace pair around `READERS` - of these, `READERS` at docs/STATUS.md line 14721 carries the spelling of a slot this landing fills, which is what makes a whole-document replace a rewrite of the parent rather than an append: the first run of this harness changed parent bytes through that token and its own prefix clause stopped it. The fill now cuts the document at the parent's
+length, writes each slot into the tail only, and refuses unless the tail holds exactly one of each - a leg that exists
+because the filled bytes were no longer the parent's bytes with something after them. (ii) The delta leg that
+decides whether the plane was covered or edited compared bytes, so a CRLF checkout of a clean blob read as a rewrite;
+that would have made a successful landing hand back its own entry as a foreign draft. The leg now judges content with
+line endings set aside, and self-tests in both directions before it is trusted: a CRLF rendering of the parent reads
+zero added and zero removed, and one heading appended to that same rendering still reads one added and none removed.
+(iii) The refusal path lost the drafts again, in D334's exact shape: the harness raised out of a clause after the
+mirror, the process ended, and the putback died with it because it lived in a run's memory. The emergency leg is now
+registered to run when the process ends by any route, is armed before the first write, and reports which of the two
+cases it found - nothing to put back, or the plane already holding the found bytes. It performed and proved on a
+plane this run aborted, which is the leg the original harness never had. (iv) The delta leg's normalisation was
+itself nearly a lie: a one-heading append to a fourteen-thousand-line document read as two lines added and one
+removed, not because the text moved but because the line matcher marks lines occurring in more than one percent of a
+long sequence as ignorable, and a ledger full of blank lines trips that threshold into an arbitrary tail alignment.
+Turned off, the same append reads one and none; the real appends this unit carries read identically either way, which
+is the measurement that says the cure was needed and the claim was not. (v) The fifth produced no refusal at all: two
+dry runs came back green over bytes that opened sentences in lowercase, because the fill dropped each measurement in
+wherever the draft happened to put its slot and every derived sentence is written once for both positions. Nothing in
+this harness reads prose - the readers judge citations, counts and coordinates - so the only leg that could have
+caught it was the one that dumps the appended region for the eye, which this run writes and never grades. The fill now
+decides the position from the bytes around each slot: a value that lands after a full stop, or opens a line that
+carries prose after it, starts a sentence and capitalises; one that sits after a colon or on a labelled line is a
+continuation and is left lowercase; one that already opens uppercase is not re-written; and one that owns its line
+entirely is the ledger's verdict row, whose spelling is not this run's to choose - the landed decision ledger carries 2 line(s) opening `step 8's own row on the bytes this commit stages` in lowercase and 0 in uppercase, and this entry's row matches the 2 - so the fill leaves
+that row as it was landed. That rule is driven seven ways before it fills anything, including on the plane's own CRLF
+bytes where a byte-wise line test would call a line start a continuation, and the house `- readers:` line is the
+second case the rule must not convert. The run prints how many values it
+moved and where, and reports that reading in its commit message rather than here, because the count is only complete
+after the last slot - the one the readers answer - has been filled.
+
+- What this does not claim, in its own words:
+  - It does not recover what was lost. `git fsck --dangling` lists 28 dangling blobs at this landing, sized 17341, 27234, 48964, 75545, 176853, 234590, 340550, 545126, 941053, 950614, 961166, 961570, 1040422, 1156017, 1332927, 1344089, 1344107, 1345469, 1345481, 1345500, 1345539, 1345852, 1364261, 1364279, 1364990, 1365009, 1365029, 1365338, and none carries one of the lost byte counts (1309273, 1288052, 61541); the same documents on the working copy today read docs/DECISIONS.md at 1,337,023, docs/STATUS.md at 1,364,565, so what went under that run's success line is gone from both the object store and the plane, and the ledgers that stand here were written again by their own authors rather than handed back.
+  - It does not make the next landing call these legs in this order. No reader in this repository charges a
+    landing harness, and the module lives beside the harness rather than in `scripts/`; what binds the
+    sequence is this landing's own log, which is a witness of one run, not a gate.
+  - It does not claim the battery covers every way a restore can lie. Seven arms are the seven shapes this
+    harness has actually been shown to need: check-without-performing, write-that-does-not-stick, missing
+    copies, a corrupt copy, a newer foreign draft, a re-encoded file, and a keep target taken from the blob
+    rather than the plane. A restore leg with an eighth failure mode would need an eighth arm, and the absence
+    of that arm is this entry's blind spot, not the plane's.
+  - It does not renumber anyone else's work: over the 27 documents other than the ledger the parent plane carries 1,519 bare decision-number cites with 88 of them naming a number no heading holds, and the bytes this commit stages read 1,550 cites with 103 hanging - the 15 this unit's own sentences add, because naming a reserved number in prose is indistinguishable from pointing at it, and a census of cites cannot tell a pointer from a mention of one. The reserved numbers stay owed to the lanes that cite them, and this entry pays none of that debt on their behalf.
+  - It does not clear the drift debt the census prints, and it does not claim this unit's own cites are clean. The
+    sites it cannot aim name code coordinates some other stream moved and files some other stream never tracked,
+    and a documents-only unit cannot re-aim somebody else's cite without reading what they meant by it; the deeper
+    limit is that the census which prints them grades the committed ledgers, so the citations this entry appends
+    are invisible to it until a later commit carries them, and whatever verdict they earn will be that later
+    landing's measurement rather than this one's claim. The harness's appended-region count is the only reading of
+    those tokens this run can offer, and it is a count of shape, not a verdict.
+  - It does not hand back the plane's found bytes in every case. The restore leg's target is chosen from the
+    shape of the delta it found, and the choice is printed with the byte counts: another stream's bytes go back,
+    a draft of this entry that has just landed stays at the committed bytes.
+  - It claims no code change: two documents, both ledgers, nothing else.
+
+```
+changed   docs/DECISIONS.md · ## D371, this entry
+changed   docs/STATUS.md · ## 365, the same claim in the status ledger's voice; the plane this landing found holds the parent's text in both documents - 2 of them differ(s) from the blob only in line endings, 14419 CR byte(s) in the decision ledger and 14957 in the status ledger where both blobs are pure LF - so this run's restore leg is proved by the re-read that names the byte count and sha it found already in place, which is the case a verify-only leg cannot tell apart from a perform-and-prove one
+evidence  Temp/nexus-d341-restore.py · save_premirror, verify_premirror, mirror, restore, recover and
+          keep_spelling - the last the seventh arm exists to drive - plus the refusal class every arm reads
+          as data and the header that now names the loss by the number of documents the run's own logs show it
+evidence  Temp/nexus-d341-restore-falsifier.py + nexus-d341-arms.json · the artifact holds 8 verdict rows - 7 arms and the control - each with its shipped and mutant observation counts, the number of planes it built and the observations themselves, so every number this entry quotes about the battery is read out of the JSON the drive wrote
+evidence  Temp/nexus-d341-land.py · the emergency putback registered to run when the process ends by any
+          route, the content delta judged with line endings set aside and self-tested in both directions, the
+          slot fill scoped to the bytes past the parent, and the keep target read off the plane's own spelling
+evidence  Temp/nexus-d341-land.log · the landing's own restore lines, the drift control's verdict vector and
+          baseline blame set read with these two documents off the plane, the line count and the split of
+          uncommitted lines that show which half of each verdict came from which plane, the appended-region
+          token count re-taken over the bytes this commit carries, the two-directional self-test of the
+          currency guard and the blame spellings, and the delta shape each document was found holding
+evidence  Temp/nexus-d341-dry7.log + nexus-d341-dry8.log · the refusals paragraph 8 recounts, each one printed
+          by the leg that later shipped its cure, and the emergency putback's own performed-and-proved lines
+          over a plane the run aborted
+```
+
+step 8's own row on the bytes this commit stages reads `strict offenders 0 offender(s) on the plane this run judges`, and at the reader's own seam the two ledgers hold 447 and 554 name:number token(s) before this unit and the same 447 and 554 after it, so the plane this entry moves is the ledgers' heading census and not the citation plane
+
+- readers: step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 158/158 · step 16 strict clean on 158
