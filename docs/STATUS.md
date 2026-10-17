@@ -14920,3 +14920,38 @@ builders require `embedding` (and `build_chunk_query` also `merchant_id`); the g
 
 **Verified, not claimed.** `pytest tests/test_sql_builders.py` → **25 passed**; full `apps/ai`
 suite → **413 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+---
+
+## 368 · D370 — pin the provider-abstraction pure core (`models/base`, §9/§2/§105/D4)
+
+**Module / contract.** `nexus_ai.models.base` is the wire-agnostic provider core (AGENT_CONTRACT
+§9, DECISIONS D4): request/response data, dev-only pricing, token estimation, locale
+normalization, JSON coercion, record-extractors, and the `HttpLLMAdapter` credentials guard
+(§105 degrade). All pure / DB-free — pinnable offline.
+
+**Pinned behavior (28 cases, all confirmed empirically):**
+- `estimate_tokens`: empty→0; CJK ~1 token/char (`你好`→2); latin ~4 chars/token (`hello`→1,
+  `a`→1, `abcdefgh`→2); mixed counts CJK + quarter-latin.
+- `cost_usd`: `cheap` 1000/1000→0.0015; `reason` 1000/1000→0.09; unknown tier falls back to
+  `mid` (0.003) — the dev-only estimate, never a claim of invoice truth (§9).
+- `norm_locale`: `en`/`en-US`→`en`; `zh-CN`/`zh-Hans`→`zh-CN`; `zh-HK`→`zh-HK`; unknown / empty
+  / `None` all default to `zh-HK` (HK-first product).
+- `maybe_json`: parses objects/arrays (leading whitespace stripped); non-JSON and malformed both
+  return `None` (safe coercion, never raises).
+- Record-extractors (`record_title/price/meters/rating/top_reason`): title falls through
+  title→name→display_name→`?`; price/meters/rating handle both scalar and nested `{amount|meters|
+  value}` dicts and degrade to `None` on missing / un-coercible input (no raising); `top_reason`
+  returns the first reason text or `""`.
+- `budget_for`: known task class returns its `{tier, purpose}`; unknown raises `KeyError`.
+- `LLMResponse.total_tokens`: sums prompt + completion tokens.
+- `LLMError`: carries `provider` / `retryable` / `status`.
+- `HttpLLMAdapter` guard (DECISIONS D4 / §131): missing base_url or api_key raises `LLMError`
+  (keeps the factory on `mock`) rather than booting a mis-configured live client; with credentials
+  it constructs and `health()` (async) reports `ok=True`.
+
+**Discipline note.** Two premise corrections, not code: `LLMResponse` requires `text` as the first
+positional arg; `HttpLLMAdapter.health` is `async` and must be awaited. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_models_base.py` → **28 passed**; full `apps/ai`
+suite → **441 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
