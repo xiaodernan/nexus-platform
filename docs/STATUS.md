@@ -14846,3 +14846,40 @@ matched the docstring's stated contract exactly. Code unchanged.
 
 **Verified, not claimed.** `pytest tests/test_categories.py` → **22 passed**; full `apps/ai`
 suite → **363 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+---
+
+## 366 · D368 — pin `extract_intent_dict` structured resolution (§7.1, §111, §8)
+
+**Module / contract.** `nexus_ai.nlu.understand.extract_intent_dict` is the pure, DB-free front
+door of NLU. D341 (§337) already pinned its **§8 never-guess / unknowns** honesty. This unit pins
+the *structured extraction* slice D341 did not cover: district resolution, category-bucket
+extraction, numeric party size, and the `cuisine_avoid` / `diet_avoid` constraint shaping. The
+rule engine runs offline, so this is fully DB-free.
+
+**Pinned behavior (25 cases, all confirmed empirically):**
+- Top-level shape: required keys present; `intent` is a non-empty string; `confidence` is a **dict**
+  (`{intent, category, location}`, each a unit float in [0,1]); `unknowns` is a list.
+- District resolution: Chinese + English districts map to `{type:'district', value:<English
+  canonical>, resolved:{lat,lng}, radius_m:None}` — 尖沙咀→Tsim Sha Tsui, 銅鑼灣→Causeway Bay,
+  旺角→Mong Kok, central→Central, causeway bay→Causeway Bay. Absent district → `{}` (not `None`).
+- Category bucket: 餐廳→restaurant, 咖啡店→cafe, 電影院→cinema, 健身房→gym, 瑜伽→yoga, 寵物→pet,
+  書店→retail, 按摩→beauty. Bucket is a non-empty string, directly consumable by
+  `categories.resolve` (D367) — pinned end-to-end for all eight.
+- Party size: `2人`→2, `4个人`→4, `我们6个`→6; `一个人`→`None` (a single diner is **not** treated
+  as a party — the honest, non-guessing outcome, pinned as observed rather than forced to `1`).
+- Constraints: `不吃辣`→`{cuisine_avoid:spicy}`, `唔食牛`→`{diet_avoid:beef}`; positive food intent
+  (`食壽司`) and `素食` produce **no** avoid constraint.
+- Language: `餐廳`/`我想食飯`→`zh-HK`, `restaurant`→`en`.
+- Time shape: absent → `{}`; `今晚` → `{type:'range', starts_at, ends_at, quality}` with
+  `ends_at > starts_at` and a non-empty `quality` (clock-independent assertions only).
+- **Boundary documented**: `budget` and `cuisine` are deliberately **not** extracted here —
+  they are owned downstream by `nlu/state_merger` (D352). Asserted as `None` / absent so a future
+  change that quietly drops the boundary is caught.
+
+**Discipline note.** One premise correction: `cuisine` is not even emitted as a key (`.get`
+returns `None` for a missing field), so the boundary test asserts absence rather than `is None`
+on a present key. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_understand_resolution.py` → **25 passed**; full
+`apps/ai` suite → **388 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
