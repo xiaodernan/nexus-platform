@@ -15217,6 +15217,41 @@ nexus-platform-postgres nexus-platform-testpg` -- and stays the next unit's work
 
 ---
 
+## 377 · D380 · pin the shared HTTP shapes (`contract`, API_CONTRACT §2 / §7.1)
+
+**Module / contract.** `nexus_ai.contract` is imported by the routes and mirrored by the generated
+frontend types, so its behavior is interface behavior. The models split deliberately: `_Strict`
+(`extra="forbid"`) where the contract fixes a shape, `extra="ignore"` on the render surface so a newer
+server's extra field cannot break an older client.
+
+**Pinned behavior (29 cases, all confirmed empirically):**
+- Strictness: `GeoPoint`/`Money`/`SearchRequest`/`SearchRequestFilters` reject an unlisted field, and a
+  typo nested two levels down (`distirct`) is a `ValidationError`, not a silently dropped filter;
+  `EntityCard`/`SearchResponse` ignore a field only a newer server would send.
+- `Money.of`: `None` -> `None`; quantized to two places (`Decimal("12.346")` -> `"12.35"`); the amount is
+  always a **string** on the wire; `7` -> `"7.00"`; currency defaults to HKD; `model` round-trips.
+- `Fact.effective_stale`: the explicit flag wins; an expiry in the past **or exactly now** is stale; a
+  future expiry or no expiry is not; `source` is the closed six-value set; `value` accepts any JSON shape.
+- `Intent`: defaults say "unknown" (`intent="unknown"`, null category/budget/party, empty lists), lists are
+  per-instance (not a shared default), and the three literals (`IntentKind`, `SortPreference`, `urgency`)
+  reject words the contract does not name; a partial `IntentLocation` is valid, a wrong `type` is not.
+- `SearchRequest`: `limit=20`, `locale="zh-HK"`, `include_sponsored=True`, `filters` is always an instance
+  (never `None`), `kind` is the four-value set, `user_id` must be a UUID, and a full `Intent` nests.
+- `EntityCard`: `card_type="merchant"`, non-sponsored/non-demo flags, empty actions/facts, `organic_rank`
+  defaults to `None`, `id` is a real `UUID` (a string id is refused), and the card type is closed.
+- `SearchResponse`: not degraded, `provider="mock"`, `total_estimate=0`, `relevance_floor_applied=True`,
+  empty facets, no cursor. `UnderstandRequest/Response` and `CompareRow` defaults are pinned too.
+- Wire names are snake_case (`include_sponsored`, not `includeSponsored`) and a dump round-trips through
+  the constructor unchanged.
+
+**Discipline note.** No test-premise corrections; every case matched the probe on the first run. Code
+unchanged.
+
+**Verified, not claimed.** `pytest tests/test_contract.py` -> **29 passed**; full `apps/ai` suite ->
+**637 passed, 4 skipped** (`pytest -q`; the four live-DB tests skip because the Docker engine is down again).
+
+---
+
 ## 365. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D371)
 
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
