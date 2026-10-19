@@ -14989,6 +14989,41 @@ No network, no DB. (D371 was taken by the sibling landing-harness lane; this uni
 **Verified, not claimed.** `pytest tests/test_live_adapters.py` → **18 passed**; full `apps/ai`
 suite → **459 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
 
+---
+
+## 370 · D373 — pin the search request-shaping + row layer (`search/service` pure, §9/§4/§6)
+
+**Module / contract.** The async `search` orchestrator needs a backend (DB or static fixtures), but
+the layer around it is pure and DB-free: `plan_from_intent` (§9 — turn a validated `contract.Intent`
+into a `SearchPlan`), `_static_tokens` / `_filter_static` (offline catalogue filtering), and the
+row helpers (`_row_price`, `_row_sponsored`, `_relevance`, `_iso`, `_num`, `_slot_window`).
+
+**Pinned behavior (31 cases, all confirmed empirically):**
+- `_static_tokens`: whitespace tokens **plus CJK bigrams** (Chinese has no spaces — `沙田餐廳` →
+  `['沙田','沙田餐廳','田餐','餐廳']`), sorted + deduped; a lone CJK char yields no bigram.
+- `_row_price` priority `price_amount` > `avg_price_hkd` > `price_min`; `None` when absent.
+- `_row_sponsored`: reads `sponsored`/`promoted` from a dict **or** a JSON string; invalid JSON
+  degrades to not-sponsored (never raises).
+- `_relevance`: `max(kw,vec) + 0.35*min(kw,vec)`, clamped [0,1], 4dp; `vec` ignored outside the
+  vector lane (0.8+0.4 → 0.94 only when `vector_lane`).
+- `_iso` datetime→`…Z` (non-datetime→None); `_num` safe float coercion.
+- `_slot_window`: None without `at`/`open_now`; `(now, now+3h)` for open-now; `(at-30m, at+2h)`.
+- `_filter_static`: text match (token hits + name-hit bonus → `kw_score`), category / district
+  (case-insensitive) / max_price filters; mutates each kept row with `kw_score`/`vec_score`/
+  `text_matched`/`subject_type` (e.g. a name+tag hit → 0.65).
+- `plan_from_intent`: category + district into filters; resolved location seeds `geo`; `purchase`
+  intent → `offering` subject; budget → `budget_max`/`budget_per`; `urgency=="now"` → `open_now`;
+  `cuisine_avoid` constraint → `avoid`; a supplied geo without radius defaults to 5000 m; the
+  empty-value drop-filter runs **only in the intent path** (with `intent=None` filters pass through
+  verbatim); `open_now:False` survives the drop-filter (only None/""/[]/{} are dropped).
+
+**Discipline note.** Two premise corrections, not code: `extract_intent` returns an
+`IntentExtraction` whose `location` is a dict, so `plan_from_intent` must be driven with a
+`contract.Intent`; and the drop-filter is intent-path-only. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_search_plan.py` → **31 passed**; full `apps/ai`
+suite → **490 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
 ## 365. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D371)
 
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
