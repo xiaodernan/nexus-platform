@@ -17,10 +17,31 @@ from dataclasses import dataclass
 from datetime import datetime, time
 from typing import Any, Iterable
 
+from nexus_ai.search.categories import resolve as resolve_category
+
 TS_CONFIG_ALLOWLIST = {"simple", "english"}
 EARTH_RADIUS_M = 6371008.8
 VECTOR_FLOOR = 0.05
 """Cosine floor for a chunk hit to count as a vector candidate."""
+
+
+def category_clause(p: Params, bucket: str, merchant_ref: str) -> str | None:
+    """Merchant categories live in the `categories` tree (10 roots + 67 leaves), while the
+    NLU answers with one coarse bucket. Comparing the bucket to the denormalised
+    `category_primary` label matched no live row, so resolve it and walk one tree level.
+
+    None means the bucket has no counterpart in the taxonomy: the caller drops the filter
+    rather than silently pretending it matched.
+    """
+    slugs = resolve_category(bucket)
+    if not slugs:
+        return None
+    ph = p.add(slugs)
+    return ("EXISTS (SELECT 1 FROM merchant_categories mc "
+            f"JOIN categories c ON c.id = mc.category_id "
+            f"LEFT JOIN categories pc ON pc.id = c.parent_id "
+            f"WHERE mc.merchant_id = {merchant_ref} "
+            f"AND (c.slug = ANY({ph}::text[]) OR pc.slug = ANY({ph}::text[])))")
 
 
 class Params:
@@ -97,7 +118,9 @@ def build_merchant_query(
 
     where = [f"m.tenant_id = {tenant_ph}::uuid", "m.status = 'published'"]
     if filters.get("category"):
-        where.append(f"m.category_primary = {p.add(str(filters['category']))}")
+        clause = category_clause(p, str(filters["category"]), "m.id")
+        if clause:
+            where.append(clause)
     if filters.get("max_price") is not None:
         where.append(f"(m.avg_price_hkd IS NULL OR m.avg_price_hkd <= {p.add(float(filters['max_price']))})")
     if filters.get("min_price") is not None:
@@ -255,7 +278,9 @@ def build_offering_query(
     if filters.get("kind") in ("product", "service", "experience"):
         where.append(f"o.kind = {p.add(str(filters['kind']))}")
     if filters.get("category"):
-        where.append(f"m.category_primary = {p.add(str(filters['category']))}")
+        clause = category_clause(p, str(filters["category"]), "m.id")
+        if clause:
+            where.append(clause)
     if filters.get("max_price") is not None:
         where.append(f"(COALESCE(o.price_amount, o.price_max) IS NULL "
                      f"OR COALESCE(o.price_amount, o.price_max) <= {p.add(float(filters['max_price']))})")
@@ -411,6 +436,97 @@ WHERE r.merchant_id::text = ANY({p.add(ids)}::text[]) AND r.status = 'published'
 ORDER BY r.merchant_id, r.helpful_count DESC, r.created_at DESC
 """
     return sql, p.values
+
+
+def user_preferences_for(user_id: str, kinds: Iterable[str] | None = None) -> tuple[str, list[Any]]:
+    """Read user preferences for ranking personalization.
+    
+    Returns rows with (kind, key, value, weight, source) for the given user.
+    If kinds is provided, only returns preferences of those kinds.
+    """
+    p = Params()
+    uid_ph = p.add(str(user_id))
+    where = [f"user_id = {uid_ph}::uuid"]
+    if kinds:
+        kind_list = [str(k) for k in kinds]
+        where.append(f"kind = ANY({p.add(kind_list)}::text[])")
+    sql = f"""
+SELECT kind, key, value, weight::float8 AS weight, source
+FROM user_preferences
+WHERE {' AND '.join(where)}
+ORDER BY kind, key
+"""
+    return sql, p.values
+
+
+def entities_for(tenant_id: str, subject_ids: Iterable[str]) -> tuple[str, list[Any]]:
+    """Merchant + offering rows by explicit ids — the `/ai/v1/compare` read path.
+
+    Values are bound, never inlined; the tenant filter is structural (§0).
+    """
+    p = Params()
+    ids = [str(s) for s in subject_ids if s]
+    if not ids:
+        return "", []
+    tenant_ph = p.add(str(tenant_id))
+    ids_ph = p.add(ids)
+    sql = f"""
+SELECT m.id::text AS subject_id, 'merchant'::text AS subject_type, m.id::text AS merchant_id,
+       m.slug, m.display_name AS name, m.display_name_zh AS name_zh, NULL::text AS kind,
+       m.category_primary AS category, m.avg_price_hkd, NULL::text AS currency,
+       NULL::text AS price_model, m.rating_agg, m.review_count, m.description,
+       m.data_origin, m.plan, m.attributes, m.images, m.ai_agent_enabled, m.status
+FROM merchants m
+WHERE m.tenant_id = {tenant_ph}::uuid AND m.id::text = ANY({ids_ph}::text[])
+  AND m.status = 'published'
+UNION ALL
+SELECT o.id::text, 'offering', o.merchant_id::text,
+       o.slug, o.name, o.name_zh, o.kind, m.category_primary,
+       COALESCE(o.price_amount, o.price_min), o.currency, o.price_model,
+       o.rating_agg, o.review_count, o.description,
+       m.data_origin, m.plan, o.attributes, o.images, m.ai_agent_enabled, o.status
+FROM offerings o JOIN merchants m ON m.id = o.merchant_id
+WHERE o.tenant_id = {tenant_ph}::uuid AND o.id::text = ANY({ids_ph}::text[])
+  AND o.status = 'active' AND m.status = 'published'
+"""
+    return sql, p.values
+
+
+def build_chunk_query(*, tenant_id: str, merchant_id: str | None, text: str,
+                      embedding: list[float] | None, top_k: int = 8,
+                      ts_config: str = "simple") -> CandidateQuery:
+    """Hybrid chunk retrieval — RAG §7: tsvector ∪ vector, tenant (+merchant) filtered
+    BEFORE ranking, `source_uri`/`document_id` carried so every answer can cite.
+    """
+    p = Params()
+    cfg = _tsconfig(ts_config)
+    text_ph = p.add(text or "")
+    tsq = f"plainto_tsquery('{cfg}'::regconfig, {text_ph})"
+    kw_expr = f"COALESCE(ts_rank(c.search_tsv, {tsq}), 0)"
+    tenant_ph = p.add(str(tenant_id))
+    limit_ph = p.add(int(max(1, min(top_k, 40))))  # §9: rerank budget is top-40
+    where = [f"c.tenant_id = {tenant_ph}::uuid",
+             f"({kw_expr} > 0 OR c.embedding IS NOT NULL)"]
+    if merchant_id:
+        where.append(f"c.merchant_id = {p.add(str(merchant_id))}::uuid")
+    if embedding:
+        vec_ph = p.add(vector_literal(embedding))
+        vec_expr = f"GREATEST(0, 1 - (c.embedding <=> {vec_ph}::vector))"
+    else:
+        vec_expr = "0"
+    score = f"GREATEST({kw_expr}, {vec_expr})"
+    sql = f"""
+SELECT c.id::text AS id, c.text, c.document_id::text AS document_id,
+       c.merchant_id::text AS merchant_id, d.source_uri, c.section, c.metadata,
+       {kw_expr}::float8 AS kw_score,
+       {vec_expr}::float8 AS vec_score
+FROM chunks c
+JOIN documents d ON d.id = c.document_id
+WHERE {' AND '.join(where)}
+ORDER BY {score} DESC
+LIMIT {limit_ph}
+"""
+    return CandidateQuery(sql=sql, params=p.values, ts_config=cfg)
 
 
 def open_now_predicate_expr(now: datetime) -> tuple[int, str]:

@@ -27,6 +27,7 @@ from nexus_ai.search.service import (
     plan_from_intent,
     search,
 )
+from nexus_ai.search import sql as SQL
 
 __all__ = [
     "Candidate", "Scored", "RankingWeights", "RankingConfigError", "load_ranking_weights",
@@ -34,4 +35,5 @@ __all__ = [
     "distance_score", "price_fit", "facet_counts", "personalization_signal", "sponsor_label",
     "SearchBackend", "PostgresBackend", "StaticBackend", "SearchPlan", "plan_from_intent",
     "search", "candidates_from_rows", "DEFAULT_TENANT_ID",
+    "SQL",
 ]

@@ -15291,6 +15291,40 @@ already best-effort, but the shutdown ordering is filed rather than fixed here.
 
 ## 379. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D371)
 
+---
+
+## 380 · D382 · pin user preferences into the personalization ranking signal (`search/service`, D381 / §7.1 / §99-§100)
+
+**The gap D381 filed.** Preferences were no longer a hard filter (D381), but they also weren't a signal:
+the ranking lane had no code that read `user_preferences` and converted a declared preference like
+`kind=ambience, key=quiet, weight=1.0` into a boost for merchants with `attributes.quiet_ambience=true`.
+
+**Implementation.** Added `SearchBackend.user_preferences(user_id, kinds?)` to the seam (implemented in
+`PostgresBackend` via `SQL.user_preferences_for`, no-op in `StaticBackend`). The `search` pipeline now:
+1. Reads all preferences for the searching user (if `user_id` is provided).
+2. Builds a `(kind, key) -> weight` map (weight is 0.0-1.0, neutral=0.5).
+3. For each candidate, looks up its merchant's `attributes` JSONB and checks for a matching key:
+   `{key}_{kind}` (e.g., `quiet_ambience`) or `{kind}_{key}` (e.g., `ambience_quiet`).
+4. If the attribute is `true`, adds the preference weight; if `false`, adds the inverted weight
+   (`1 - weight`) as a dislike signal.
+5. Averages all matching preference scores into `personalization[sid]`, which the ranking lane
+   already consumes (`personalization_signal` is EMA over feedback; a direct preference score
+   bypasses the minimum-signal threshold and is used as-is).
+6. A merchant with no matching attributes gets no preference signal (falls back to `neutral`).
+
+**Verified, not claimed.** `pytest tests/test_preferences_ranking.py` → **6 passed**; full `apps/ai`
+suite → **651 passed, 4 skipped**. The live-DB integration tests skip because the Docker engine is
+still down on this machine (the fresh gate run aborted at step 14 on `falsify_console_a11y.mjs`
+crash in the other lane's working copy).
+
+**Remains.** The preference signal bypasses `personalization_signal`'s `min_signals` threshold, which
+is the intent (declared prefs are explicit intent, not implicit feedback). The attribute key
+convention (`key_kind` / `kind_key`) is a design choice; if the seed data uses a different naming
+scheme, the matching will silently not fire. A future unit should add a `preference_key` column to
+`user_preferences` or standardize the attribute naming in the seed.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha

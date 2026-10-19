@@ -408,6 +408,7 @@ apply to both objects:
 `GET /api/v1/collections` · `POST /api/v1/collections` · `GET /api/v1/collections/{slug}` ·
 `GET /api/v1/guides/{slug}` (SSR + JSON-LD) ·
 `POST /api/v1/share {subject_type,subject_id}` → short link + OG payload.
+`GET /api/v1/share/{code}` → resolves a share code to its target (public, no session).
 
 The four §8 reads above are served by `CollectionsController` (`com.nexus.catalog`): public, no session,
 `Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=86400`, `Vary: X-Tenant`, and every one

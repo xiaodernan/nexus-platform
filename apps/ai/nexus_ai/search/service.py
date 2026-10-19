@@ -73,6 +73,9 @@ class SearchBackend(Protocol):
 
     async def feedback(self, user_id: str, subject_ids: Sequence[str]) -> list[dict[str, Any]]: ...
 
+    async def user_preferences(self, user_id: str, kinds: Sequence[str] | None = None
+                               ) -> list[dict[str, Any]]: ...
+
 
 class PostgresBackend:
     """All SQL here is the parameterized builders in `nexus_ai.search.sql`."""
@@ -127,6 +130,19 @@ class PostgresBackend:
             log.info("feedback read failed", exc_info=True)
             return []
 
+    async def user_preferences(self, user_id: str, kinds: Sequence[str] | None = None
+                               ) -> list[dict[str, Any]]:
+        if not user_id:
+            return []
+        sql_text, params = S.user_preferences_for(user_id, kinds)
+        if not sql_text:
+            return []
+        try:
+            return await self.db.readonly(sql_text, *params, schema=self.search_path)
+        except Exception:  # pragma: no cover - telemetry must never break a search
+            log.info("user_preferences read failed", exc_info=True)
+            return []
+
 
 class StaticBackend:
     """Fixture-driven backend: keeps ranking/card/eval logic testable without a database."""
@@ -179,6 +195,10 @@ class StaticBackend:
     async def feedback(self, user_id: str, subject_ids: Sequence[str]) -> list[dict[str, Any]]:
         return []
 
+    async def user_preferences(self, user_id: str, kinds: Sequence[str] | None = None
+                               ) -> list[dict[str, Any]]:
+        return []
+
 
 def _filter_static(rows: list[dict[str, Any]], text: str,
                    filters: dict[str, Any]) -> list[dict[str, Any]]:
@@ -191,7 +211,7 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         hay += " " + " ".join(str(t) for t in (r.get("tags") or []))
         score = 0.0
         if low:
-            tokens = [t for t in low.split() if t]
+            tokens = _static_tokens(low)
             hits = sum(1 for t in tokens if t in hay)
             name_hit = any(t in str(r.get("display_name") or "").lower()
                            or t in str(r.get("name") or "").lower() for t in tokens)
@@ -214,6 +234,19 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
     return out
 
 
+def _static_tokens(low: str) -> list[str]:
+    """Whitespace tokens plus CJK bigrams — Chinese queries carry no spaces, so a
+    naive `split()` would filter every demo row out of a 沙田餐廳 query."""
+    toks = [t for t in low.split() if t]
+    out: list[str] = []
+    for t in toks:
+        out.append(t)
+        cjk = "".join(ch for ch in t if "一" <= ch <= "鿿")
+        if len(cjk) >= 2:
+            out.extend(cjk[i:i + 2] for i in range(len(cjk) - 1))
+    return sorted(set(out))
+
+
 # --------------------------------------------------------------------------- request shaping
 @dataclass
 class SearchPlan:
@@ -233,6 +266,8 @@ class SearchPlan:
     open_late_after: int | None = None
     sort_preference: str = "relevance"
     avoid: list[str] = field(default_factory=list)
+    # Soft preference signals for the ranking lane. Never a hard filter: only explicit
+    # `filters.attributes` from the caller reaches the SQL containment clause (D381).
     attributes: dict[str, Any] = field(default_factory=dict)
     limit: int = 20
 
@@ -283,9 +318,13 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     for c in intent.constraints:
         if c.key in ("cuisine_avoid", "avoid", "exclude"):
             plan.avoid.append(c.value)
-    for p in intent.preferences:
-        if p.polarity > 0:
-            plan.attributes.setdefault(p.key, True)
+    # `preferences` are SOFT (§7.1: "ambience: quiet" is a preference, not a constraint) and
+    # must not become WHERE clauses. The old mapping wrote `{"occasion": true}` into the JSONB
+    # attribute filter, which no seeded merchant carries, so a Chinese sentence whose only
+    # signal was a preference returned zero rows before ranking ever ran (D381). The value was
+    # also lost in the collapse to `True`, so even a matching key could not match its value.
+    # They stay on the Intent for the ranking lane; only the caller's explicit
+    # `filters.attributes` is a hard containment filter.
     out["avoid"] = plan.avoid
     out["attributes"] = {**out.get("attributes", {}), **plan.attributes}
     out["open_now"] = plan.open_now
@@ -495,6 +534,65 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
             sig = personalization_signal(values, w.personalization)
             if sig is not None:
                 personalization[sid] = sig
+
+        # User-declared preferences (D381): read prefs and match against merchant attributes
+        pref_rows = await backend.user_preferences(str(user_id))
+        if pref_rows:
+            # Build a map of preference (kind, key) -> weight
+            # weight is 0.5 (neutral) to 1.0 (strong like) or 0.0 (strong dislike)
+            pref_by_kind_key: dict[tuple[str, str], float] = {}
+            for p in pref_rows:
+                kind = p.get("kind")
+                key = p.get("key")
+                weight = p.get("weight")
+                if kind and key and weight is not None:
+                    pref_by_kind_key[(str(kind), str(key))] = float(weight)
+            
+            # For each candidate, check if its attributes match any user preference
+            # The candidate's subject_id is available in deduped rows
+            # We need merchant attributes for merchant candidates
+            merchant_attrs: dict[str, dict] = {}
+            for r in deduped:
+                mid = str(r.get("merchant_id") or r.get("id"))
+                attrs = r.get("attributes")
+                if attrs and mid not in merchant_attrs:
+                    if isinstance(attrs, str):
+                        import json
+                        try:
+                            attrs = json.loads(attrs)
+                        except Exception:
+                            attrs = {}
+                    merchant_attrs[mid] = attrs
+            
+            # Compute preference signal per subject
+            # A preference like (kind="ambience", key="quiet", weight=1.0) matches
+            # merchant with attributes.quiet_ambience == true
+            for sid, values in grouped.items():
+                # Find the merchant_id for this subject
+                mid = None
+                for r in deduped:
+                    if str(r.get("subject_id") or r.get("id")) == sid:
+                        mid = str(r.get("merchant_id") or r.get("id"))
+                        break
+                if not mid or mid not in merchant_attrs:
+                    continue
+                attrs = merchant_attrs[mid]
+                # Check each preference against attributes
+                pref_scores: list[float] = []
+                for (kind, key), weight in pref_by_kind_key.items():
+                    # The attribute key convention: {key}_{kind} (e.g., quiet_ambience)
+                    # or {kind}_{key} (e.g., ambience_quiet)
+                    attr_key1 = f"{key}_{kind}"
+                    attr_key2 = f"{kind}_{key}"
+                    if attrs.get(attr_key1) is True or attrs.get(attr_key2) is True:
+                        pref_scores.append(weight)
+                    elif attrs.get(attr_key1) is False or attrs.get(attr_key2) is False:
+                        # Opposite of what user wants - invert the weight around neutral (0.5)
+                        pref_scores.append(1.0 - weight)
+                if pref_scores:
+                    # Average the preference scores for this subject
+                    avg_score = sum(pref_scores) / len(pref_scores)
+                    personalization[sid] = avg_score
 
     candidates = candidates_from_rows(deduped, plan, bundle=bundle,
                                       facts_by_subject=facts_by_subject,

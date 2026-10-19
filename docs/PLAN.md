@@ -57,15 +57,16 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 ### Standing invariants (re-run this session, on this plane)
 
 ```
-node scripts/check_contract_drift.mjs            # 116 parsed / 108 served / no gap bucket
+node scripts/check_contract_drift.mjs            # 117 parsed / 109 served / no gap bucket
 node scripts/check_ledger_citations.mjs --worktree   # 0 offenders
 node scripts/check_ledger_sections.mjs               # PASS (disk-only draft printed and allowed)
 node scripts/check_ledger_numbers.mjs --census       # PASS, fences balanced
 node scripts/check_ledger_eols.mjs                   # PASS — no section mixes line endings (D360)
 node scripts/check_console_i18n.mjs && node scripts/check_console_a11y.mjs   # PASS
 node scripts/check_reader_reachability.mjs           # 14 of 14 readers invoked
+node scripts/check_status_citations.mjs              # PASS
 cd apps/web && npx tsc --noEmit && npx vitest run    # clean / 136
-cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 341 passed, 4 skipped
+cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 651 passed, 4 skipped
 cd services/platform && mvn -o test                  # 251 passed (D295's whole measurement)
 ```
 
@@ -1222,7 +1223,7 @@ along this line, and both remedies existed; the route-contract one is TAKEN (D32
 aria-pressed compare, dict-text degraded row), two journeys green (§105 outage badge witnessed),
 and the last reds decomposed to their floors: 3 home-entry tests (the all-rails throw, web owner)
 and 2 NL-quality tests - the honest empty state answers natural phrasing with 0 while keywords
-return 8, a §12-kept/§141-unmet finding routed to the AI lane.
+return 8, a §12-kept/§141-unmet finding routed to the AI lane - and the diagnosis landed (D361, the search cannot match Chinese AT ALL: exact merchant names, category words, any CJK query returns zero - the config allowlist knows simple/english with no Chinese tokenization - while §111 makes Chinese the primary language; remedy shapes with trade-offs filed for the AI/DB lanes.
 The post-fix whole number is in (D330, cf76eb6): 29 passed / 3 skipped / 10 failed, down from 18, and all ten map one-to-one onto filed findings with owners - 6 home-throw, 2 NL-quality, 2 AA - no new unattributed failure.
 The gate re-certification after the next 18 commits HALTED with both blockers bounded (D331,
 dac927a): 13 steps green, then 13c's worktree leg reddening on 7 cites the knob leg resolves (a
@@ -1254,7 +1255,7 @@ to end on the kept gate database - step 5 green again, the instrument unblocked 
 endings got their own census and reader (D360, 7dd07d5): both ledgers are CRLF bodies with this
 lane's LF appends as whole uniform sections, ZERO sections mix spellings (the earlier mixed
 phrasing corrected by its own measurement), the reader enforces no-mixing from gate step 10
-(reachability 14/14), and it self-falsifies on a planted mixed section Open next: the AI test
+(reachability 14/14), and it self-falsifies on a planted mixed section The mixed bytes also defeat the drift reader's blame walk - three re-aim rows it could not derive on the working copy derived cleanly on a clean checkout of HEAD and applied (D366, the strict census clean with EXACT 158 of 158) The Makefile's three dev targets were rewritten to the measured boot recipe (D364, dc7544d): ports D9-pinned (3002/8010/8090), the datasource password, the flyway disable, the dev profile, the AI's database url, and the quiet flag dropped - each target verified by killing the services and booting through it, health-checked Open next: the AI test
 tree's designed guards (other stream's surface), the name-drop fix (filed, owner's), and the
 hundred-summation gap - DONE as D300 (ae54282): seven hundred-compound claims were mis-valued in
 both
@@ -1269,5 +1270,15 @@ legal-write arms, exactly one ever collided with a standing writer-claim - the c
 the other three census candidates stand in context, and the method (writer-claim census before a landing
 that adds writers) is now recorded for the seed lane.
 
+
+The wave's live verification completed on the demo plane too (D363, three-plane whole: 341 offline / 2-and-2 fixture / 4-for-4 demo DB); the Chinese-search diagnosis was that the intent layer is clean but the SQL text filter excluded every row (D365); the remedies were assessed (D366) and the root cause was found: a soft preference (`occasion=date`) was being rendered as a hard JSONB attribute filter, deleting every row before ranking ran (D381). Fixed in `plan_from_intent` — preferences no longer reach the WHERE clause; the sentence "帮我找一个适合情侣约会的地方" now answers 5 items instead of 0 on the live nexus DB (470 published merchants).
+
+**Full AI suite: 651 passed, 4 skipped (offline).** Contract drift: 117 parsed / 109 served / no gap. Ledger checks: sections PASS, citations 0 offenders (worktree), STATUS citations PASS, EOLs PASS. The 18-step fresh gate re-run initiated (Docker engine re-started); steps 1-3 green (create gate DB, apply 9 migrations, generate synthetic data with FK integrity); running step 4 (seed load) now.
+
+User preferences are now read into the personalization ranking signal (D382): added `SearchBackend.user_preferences` seam, implemented in `PostgresBackend` via `SQL.user_preferences_for`; the search pipeline reads declared prefs for the user, matches against merchant `attributes` JSONB using `{key}_{kind}` / `{kind}_{key}` convention, and writes the averaged weight into `personalization[sid]` which the ranking lane consumes directly (bypassing `min_signals` for explicit intent). Pinned by `tests/test_preferences_ranking.py` (6 passed).
+
+Next: complete the fresh gate re-certification (steps 4-18); the web stream's home-page all-fail throw (D318), e2e test markers (D328), review-aspect threshold calibration (D359), name-drop fix (D329), readability floor (D328); standardize preference attribute naming in seed data (currently `key_kind` convention may not match seeded attributes).
+
+---
 
 The wave's live verification completed on the demo plane too (D363, three-plane whole: 341 offline / 2-and-2 fixture / 4-for-4 demo), with a D240 attribution note for the S359 sweep my D361 restructure staged - their own S359 independently walked the same reservation-block arithmetic, the two lanes converging on the same open questions from different sides. And the ledgers' line endings got their own census and reader (D360, 7dd07d5): both ledgers are CRLF bodies with this lane's LF appends as whole uniform sections, ZERO sections mix spellings, the reader enforces no-mixing from gate step 10 (reachability 14/14), and it self-falsifies on a planted mixed section.
