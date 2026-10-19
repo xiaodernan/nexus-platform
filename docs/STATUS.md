@@ -15088,6 +15088,26 @@ is the top-N, not the full ranked list. Code unchanged.
 **Verified, not claimed.** `pytest tests/test_search_pipeline.py` → **10 passed**; full `apps/ai`
 suite → **520 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
 
+---
+
+## 373 · D376 — pin stream-route pure helpers (`_wrap_for_summary`, `_ms_since`, §19)
+
+**Module / contract.** `nexus_ai.api.routes_stream` has two pure, DB-free helpers:
+`_wrap_for_summary` turns retrieved chunks into summary inputs and runs the §19 injection scan;
+`_ms_since` converts an ISO timestamp into elapsed milliseconds.
+
+**Pinned behavior (9 cases, all confirmed empirically):**
+- `_wrap_for_summary([])` → `([], None)`.
+- Each chunk is wrapped as `{"title": "KB", "text": <text or "">}` (missing text → `""`).
+- The returned `InjectionReport` labels the source `untrusted` (retrieved content is never
+  trusted, §19) and carries a `hits` list and an int `scanned_chars`.
+- `_ms_since`: a timestamp ~2 s ago reads ~2000 ms; garbage / empty / future all clamp to `0`.
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_stream_helpers.py` → **9 passed**; full `apps/ai`
+suite → **529 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
 ## 365. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D371)
 
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
