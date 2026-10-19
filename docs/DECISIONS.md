@@ -14418,6 +14418,49 @@ language stops being searchable.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
 
+## D381 - preferences are soft: a §7.1 `preference` must never become a SQL filter, and the Chinese sentence that returned an empty page was a preference wearing a constraint's clothes
+
+`Intent` separates `preferences` (soft: `{"key":"ambience","value":"quiet","polarity":1}`) from
+`constraints` (hard). `plan_from_intent` collapsed every positive preference into
+`plan.attributes[p.key] = True` and merged it into `filters["attributes"]`, which
+`build_merchant_query` renders as `m.attributes @> '{"<key>": true}'::jsonb`. Two defects in one
+line: a soft signal became a hard exclusion, and the value was lost in the collapse, so even a
+merchant carrying the key could not match its value.
+
+The measurement (live, seeded `nexus` database, 470 published merchants):
+
+```
+extract_intent_dict("帮我找一个适合情侣约会的地方") -> preferences [{key: occasion, value: date, polarity: 1}],
+                                                       category: None, location: {}
+plan.filters                                        -> {"attributes": {"occasion": True}, ...}
+build_merchant_query(...) executed against the DB  -> 0 rows
+SELECT count(*) ... WHERE attributes @> '{"occasion": true}'::jsonb -> 0
+```
+
+So the sentence's empty page that D365 attributed to Chinese text matching was in fact the
+attribute filter deleting every row before ranking ran; the text lane was never reached. After
+the change the same `/ai/v1/search` call answers **5 items** and the query carries no attribute
+clause.
+
+**Ruling.** `preferences` are ranking-lane input, never WHERE clauses. Only the caller's explicit
+`filters.attributes` (a request-level hard constraint) reaches the JSONB containment clause, and
+`avoid` keeps coming from `constraints`. A negative preference (`polarity < 0`) means "less like
+this", not "remove it", and must not become an exclusion either.
+
+**Where it lives.** `apps/ai/nexus_ai/search/service.py:plan_from_intent` no longer writes
+preferences into `plan.attributes`/`filters`; `SearchPlan.attributes` carries the comment that it
+is soft input. Pinned by `apps/ai/tests/test_preferences_are_soft.py` (8 cases, offline), which
+also asserts the extracted preference, the absent SQL clause, the surviving explicit attribute
+filter and the surviving hard `avoid`.
+
+**Not claimed.** Preferences are still not honored: the ranking lane has no preference feature, so
+"quiet" neither filters nor boosts today. The Intent keeps the preference and this ruling only
+stops it from lying about the page. Reading preferences into a ranking signal is the next unit's
+work, and until it lands the honest report is "the page is relevant by category, the preference is
+not yet applied".
+
+- readers: step 8 0 offenders · step 10 missing 0 · STATUS §378
+
 ## D371 - the restore leg that only checked whether the bytes came back: what was lost, the discipline that now ships as a module with seven arms, and a reservation census whose largest block sits below the head the claim arithmetic walks up from
 
 **1. The loss, measured at the moment it happened and re-measured here.** D334 mirrored four documents onto
