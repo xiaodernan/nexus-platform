@@ -13182,7 +13182,8 @@ Plane: fresh detached worktree at 9cc7552, every hand leg with the plane as ROOT
 
 plane             D280 measured on a detached worktree of fc8a5de (r15) with the committed reader; re-verification of the unchanged census follows on a fresh plane at the landing commit.
 
-## 273. the nested timeout raised: \alsify_ledger_text\ passes, and the gate's step-8 blocker is cleared
+## 273. the nested timeout raised: \
+alsify_ledger_text\ passes, and the gate's step-8 blocker is cleared
 ## 274. run 8 walks the full 18-step inventory at e2eaf26 - step 16 strict green a third time inside a gate run, and the census stands at exactly the digits D280 predicted (D281)
 
 - drive             detached worktree at e2eaf26, gate logs outside the plane; steps 1-6 green (217 quality checks / 58 tables / 9 migrations, step 5's own numeric claim MATCHED, truncate PASS), step 7 stopped at its green control (rc 1, control rc 1) keeping database nexus_gate_52865_1791509761; legs 8-18 ran on that one commit with the plane as ROOT.
@@ -15288,7 +15289,7 @@ already best-effort, but the shutdown ordering is filed rather than fixed here.
 
 ---
 
-## 365. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D371)
+## 379. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D371)
 
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
