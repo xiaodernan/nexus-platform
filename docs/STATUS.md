@@ -15108,6 +15108,36 @@ suite → **520 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Doc
 **Verified, not claimed.** `pytest tests/test_stream_helpers.py` → **9 passed**; full `apps/ai`
 suite → **529 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
 
+---
+
+## 374 · D377 — pin environment-backed settings (`config.py`, D4/D5)
+
+**Module / contract.** `nexus_ai.config` resolves every process knob from the environment with a
+safe offline default (DECISIONS D4/D5: no secrets in code; the suite runs with no env and no
+network). `load_settings()` reads env directly; `get_settings()` memoises; `reset_settings_cache()`
+clears it. Pure and DB-free.
+
+**Pinned behavior (24 cases, all confirmed empirically):**
+- Defaults: provider `mock`, `offline=True`, `uses_mock_llm=True`, embedding `hashing`, host
+  `127.0.0.1:8000`, `database_url=""`, platform `http://127.0.0.1:8080`, `demo_data=True`,
+  `allow_platform_stub=True`, tenant `hong-kong`, locale `zh-HK`, empty CORS tuple; the ranking
+  weights path resolves to `infra/config/ranking_weights.yaml`.
+- Provider validation: an unknown provider falls back to `mock`; `anthropic`/`openai` are live,
+  `uses_mock_llm=False` and `offline=False`.
+- DB-URL priority: `NEXUS_DATABASE_URL` > `DATABASE_URL` > `NEXUS_AI_DB_URL`.
+- Boolean parsing: `1/true/TRUE/yes/on` truthy; `0/false/no` falsey; empty → the declared default.
+- CORS: comma list trimmed, empty entries dropped; empty string → `()`.
+- Numeric env (`NEXUS_AI_PORT`, `NEXUS_MAX_LLM_CALLS`) parsed to ints.
+- Cache: `get_settings()` returns the same object until `reset_settings_cache()` is called, after
+  which an env change is picked up.
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. An autouse fixture
+clears `NEXUS_*`/`DATABASE_URL` per test so results are independent of the ambient shell. Code
+unchanged.
+
+**Verified, not claimed.** `pytest tests/test_config.py` → **24 passed**; full `apps/ai` suite →
+**553 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
 ## 365. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D371)
 
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
