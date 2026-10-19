@@ -15164,6 +15164,59 @@ functions are exercised with a **fake async database** (no real DB).
 **Verified, not claimed.** `pytest tests/test_runs.py` → **22 passed**; full `apps/ai` suite →
 **575 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
 
+## 376 · D379 · pin the DB seam's pure guards (`db/pool`, §0 / D3 / §105)
+
+**Module / contract.** `nexus_ai.db.pool` is where the §0 role split stops being documentation: reads run
+inside a `SET TRANSACTION READ ONLY` block, only `write()` opens a write path, the `search_path` is quoted
+rather than interpolated, and a missing DSN degrades to `None` instead of crashing at import. The live path
+is covered by `tests/test_integration.py`; this unit pins the seam itself with a fake pool and connection, so
+the guards are verified with no database reachable.
+
+**Pinned behavior (33 cases, all confirmed empirically):**
+- `QueryResult`: `len`, `first` (empty -> `None`), `scalars`; a column the query never selected raises
+  `KeyError` rather than returning a hole.
+- `_to_float`: `None`/`""` -> `None`, numeric text and ints -> float, junk -> `None`.
+- `_safe_path`: every kept element is quoted (`"public", "nexus_test"`); non-identifier elements are dropped
+  (`"a-b, c"` -> `"c"`); the empty setting is spelled `public` *before* the split, so `""` and `None` yield
+  `"public"` while a whitespace-only or all-dropped value yields the bare fallback `public`; digits and
+  underscores survive.
+- `_returns_rows`: true only for a leading SELECT/WITH/UPDATE/DELETE/INSERT **and** a `RETURNING`; a plain
+  SELECT, a plain DELETE and an empty string are false.
+- `_is_read_only_violation` / `_is_privilege_error`: recognised by the driver's exception class name or by
+  the message text; an unrelated error is neither.
+- `Database` defaults: `statement_timeout_ms = 3000`, empty `search_path` -> `public`, `read_only_violations`
+  starts at 0.
+- `readonly(...)`: the statement order is `BEGIN`, `SET TRANSACTION READ ONLY`, `SET LOCAL search_path TO
+  "<schema>"`, `SET LOCAL statement_timeout = <ms>`, fetch, commit; a per-call `schema` overrides the pool's.
+  A blocked write increments `read_only_violations` and re-raises; a privilege error becomes
+  `InsufficientPrivilege`; any other error is re-raised uncounted.
+- `write(...)`: fetches only when the statement returns rows (`RETURNING`), otherwise executes and returns
+  `[]`; the statement timeout is set inside the transaction. `insert_returning` maps a row or `None`;
+  `executemany` with no rows never acquires a connection and otherwise passes tuples in column order;
+  `close()` swallows an already-broken pool.
+- `_init_connection`: registers `jsonb` with an **identity encoder** (the fix for the double-encoded payload
+  bug) and `json.loads` decoder, and `numeric` with a `str` encoder / float decoder.
+- `connect`: no `database_url` -> `None` with no pool; the same Settings object builds one pool and reuses it;
+  `force_new` closes the old one and rebuilds with `min_size`/`max_size`, `application_name=nexus_ai` and the
+  statement timeout; `require_db` raises `DatabaseUnavailable` naming `NEXUS_DATABASE_URL`; `dispose` closes
+  and clears; `ping` is true when a connection answers and false when it does not; `__all__` is exactly the
+  nine-name surface.
+
+**Discipline note.** Seven failures in the first run were all test premises, never code: the fake's failure
+switch was matched against the SQL text instead of raised unconditionally, the `write()` log index counted
+`BEGIN` as a statement, and the `_safe_path` fallback is bare `public` only when every element is dropped.
+Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_db_pool.py` -> **33 passed**; full `apps/ai` suite ->
+**608 passed, 4 skipped** (`pytest -q`). The Docker window this session opened and closed: with
+`nexus-platform-postgres` answering, `NEXUS_TEST_DATABASE_URL=postgresql://nexus_ai:...@127.0.0.1:5433/nexus
+pytest tests/test_integration.py` -> **4 passed**; the engine then went away again (`docker ps` -> `failed to
+connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine ... cannot find the file specified`),
+so the 18-step gate refused at container resolution -- `ERROR: no running Postgres container among:
+nexus-platform-postgres nexus-platform-testpg` -- and stays the next unit's work.
+
+---
+
 ## 365. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D371)
 
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
