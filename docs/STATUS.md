@@ -15057,6 +15057,37 @@ unchanged.
 **Verified, not claimed.** `pytest tests/test_candidates_from_rows.py` → **20 passed**; full
 `apps/ai` suite → **510 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
 
+---
+
+## 372 · D375 — pin the end-to-end offline search pipeline (`search()` over `StaticBackend`, §6/§9/§67)
+
+**Module / contract.** `search()` is the deterministic pipeline: candidate fetch → dedupe → facts →
+candidates → organic rank → sponsored placement → facets → cards → `SearchResponse`.
+`StaticBackend` is fixture-driven, so the whole path runs **offline** (no DB, no network) with the
+real ranking weights loaded from `infra/config/ranking_weights.yaml` (version `hybrid_v1`).
+
+**Pinned behavior (10 cases, all confirmed empirically):**
+- Text filter: `query_text="ramen"` returns only the matching merchant; no text returns all
+  organic rows.
+- Response shape: `strategy` ends `+static` (and `+static+vector` in the vector lane);
+  `degraded=False`, `provider="none"`, `total_estimate == len(ranked)`.
+- Facets: `category`, `district`, `price_band` present.
+- Empty backend → no cards, `total_estimate=0`.
+- **Limit semantics**: `scored` and `cards` are the **top-N** (capped by `plan.limit`); the full
+  ranked count is carried in `total_estimate`. With `limit=1` over 2 matches: 1 scored, 1 card,
+  `total_estimate=2`.
+- Dedupe: the same `subject_type:subject_id` collapses to one candidate even if the backend returns
+  it twice.
+- Subject types: `("offering",)` drives the offering lane and returns the offering card.
+- `include_sponsored=False` leaves the organic set unchanged when there are no sponsored rows.
+
+**Discipline note.** Two premise corrections, not code: `RankingWeights()` has empty weights
+(KeyError), so the pipeline must be driven with `weights=None` to load the real config; and `scored`
+is the top-N, not the full ranked list. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_search_pipeline.py` → **10 passed**; full `apps/ai`
+suite → **520 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
 ## 365. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D371)
 
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
