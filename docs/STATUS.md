@@ -15024,6 +15024,39 @@ row helpers (`_row_price`, `_row_sponsored`, `_relevance`, `_iso`, `_num`, `_slo
 **Verified, not claimed.** `pytest tests/test_search_plan.py` → **31 passed**; full `apps/ai`
 suite → **490 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
 
+---
+
+## 371 · D374 — pin the row→Candidate map (`candidates_from_rows`, §4/§6/§99)
+
+**Module / contract.** `nexus_ai.search.service.candidates_from_rows` turns backend rows
+(merchant/offering dicts) into `Candidate` objects with relevance, price, distance, availability,
+sponsorship, personalization and freshness attached. DB-free: empty fact/hour/slot maps and a
+dummy `FactBundle` (the parameter is accepted but not read in the body) make it fully exercisable
+offline.
+
+**Pinned behavior (20 cases, all confirmed empirically):**
+- Identity: `subject_type`/`subject_id`/`merchant_id` mapping, with `merchant_id` falling back to
+  `merchant_id_key` then `subject_id`.
+- Relevance: `_relevance` fusion — 0.94 in the vector lane (max 0.8 + 0.35·min 0.4), 0.8 when the
+  vector lane is off.
+- Rating / `rating_count` / `tenant_mean_rating`; `distance_m` from `meters`; `price` via
+  `_row_price` (priority `price_amount` > `avg_price_hkd` > `price_min`).
+- Availability from the slot map: `available` (capacity ≥ party), `limited` (0 < capacity < party),
+  `full` (0), `None` (no slot).
+- Sponsorship from row attributes; personalization looked up by `subject_id` (absent → None).
+- Fallbacks: `district` ← `area`; `category` ← `category_primary` ← `kind`.
+- Defaults on a minimal row: `tenant_mean_rating` 3.5, `popularity` 0.0, `relevance` 0.0,
+  `rating_count` 0, `price`/`rating` None.
+- `open_now`/`freshness` are None when there are no hours/facts (never fabricated).
+- `raw` carries provenance: `{row, text_matched, as_of, organic_rank(None), availability,
+  open_state, slot}`; empty rows → `[]`.
+
+**Discipline note.** No test-premise corrections; the mapping matched the probe exactly. Code
+unchanged.
+
+**Verified, not claimed.** `pytest tests/test_candidates_from_rows.py` → **20 passed**; full
+`apps/ai` suite → **510 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
 ## 365. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D371)
 
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
