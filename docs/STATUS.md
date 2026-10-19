@@ -15138,6 +15138,32 @@ unchanged.
 **Verified, not claimed.** `pytest tests/test_config.py` → **24 passed**; full `apps/ai` suite →
 **553 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
 
+---
+
+## 375 · D378 — pin the run ledger + AI-write guard (`api/runs`, §8 / §0 / D19/D20)
+
+**Module / contract.** `nexus_ai.api.runs` owns two DB-free concerns: the in-memory `RunLedger`
+ring that answers the conversation timeline offline, and the `_check_table` guard that refuses to
+write any table outside the AI-owned grant set (API_CONTRACT §0, D19/D20). The `persist_*`
+functions are exercised with a **fake async database** (no real DB).
+
+**Pinned behavior (22 cases, all confirmed empirically):**
+- `RunLedger`: bounded ring evicts the oldest at capacity; `by_conversation` filters and returns
+  **copies** (mutating the result does not touch the ledger); `get` by id; `clear`.
+- `AI_WRITE_ALLOWED_TABLES` is exactly `{agent_runs, llm_calls, events, feedback_events,
+  recommendation_sets}`; `_check_table` allows those and raises `RuntimeError` for commerce/dialogue
+  tables (`orders`, `conversations`, `messages`, `carts`) — the D20 boundary.
+- Request context: `current_request_id` defaults to `""`; `set_request_id` is readable back.
+- `now_iso` ends with `Z`; `timeline_row` marks `persisted=True` **without mutating** the source row.
+- `persist_run`/`persist_event`/`persist_feedback`/`persist_recommendation_set` return True and emit
+  the expected `INSERT INTO <table>`; a DB failure is swallowed and returns False (observability
+  must never break a response); a `search_event` adds a second `events` insert.
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_runs.py` → **22 passed**; full `apps/ai` suite →
+**575 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
 ## 365. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D371)
 
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
