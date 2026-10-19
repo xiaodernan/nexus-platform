@@ -14956,6 +14956,39 @@ positional arg; `HttpLLMAdapter.health` is `async` and must be awaited. Code unc
 **Verified, not claimed.** `pytest tests/test_models_base.py` → **28 passed**; full `apps/ai`
 suite → **441 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
 
+---
+
+## 369 · D372 — pin the live-provider wire contract (`models/anthropic`, `models/openai`, §9/D4/§105)
+
+**Module / contract.** The live adapters (`AnthropicAdapter`, `OpenAIAdapter`) call real HTTP in
+production, but `HttpLLMAdapter` accepts an injected `client`, so the *wire contract* — request
+URL/body/headers and response parsing — is fully exercisable **offline** with a fake async client.
+No network, no DB. (D371 was taken by the sibling landing-harness lane; this unit is D372.)
+
+**Pinned behavior (18 cases, all confirmed empirically with a fake client):**
+- **Anthropic Messages**: POSTs `{base}/v1/messages`; headers `x-api-key`, `anthropic-version:
+  2023-06-01`, `content-type`; body carries `system` as a top-level field and
+  `messages:[{role:user, content}]`; `model` resolves from the task tier (`summary`→mid→
+  `claude-sonnet-latest`). Response: text = join of `text` blocks (non-text blocks ignored),
+  `prompt_tokens=input_tokens`, `completion_tokens=output_tokens`, `degraded=False`,
+  `finish_reason=stop_reason`; `json_hint` is deliberately **not** turned into `response_format`
+  (OpenAI-only field); structured text is parsed into `data` via `maybe_json`.
+- **OpenAI Chat Completions**: POSTs `{base}/chat/completions`; `authorization: Bearer <key>`;
+  injects a default NEXUS system message when none is supplied, else uses the custom one; body
+  `model` from the tier (`summary`→mid→`gpt-4o`). Response: text = `choices[0].message.content`,
+  `prompt_tokens`/`completion_tokens`, `finish_reason`; `json_hint` sets
+  `response_format:{type:json_object}`, absent otherwise.
+- **Cost plumbing**: both adapters compute `cost_usd` through the shared `base.cost_usd(tier, pt,
+  ct)` (pinned to the same function, not a hardcoded number).
+- **Error mapping (what the §105 ladder keys off)**: 429/5xx → `LLMError(retryable=True,
+  status=code)`; 4xx → `retryable=False`; transport exception → `retryable=True`.
+
+**Discipline note.** No code changed; the fake client is injected through the adapter's own
+`client=` seam, so nothing about the production network path is altered or exercised.
+
+**Verified, not claimed.** `pytest tests/test_live_adapters.py` → **18 passed**; full `apps/ai`
+suite → **459 passed, 4 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
 ## 365. a landing harness's restore leg checked whether the bytes came back instead of putting them back: the loss is named by that run's own numbers, the discipline ships as a module whose legs each have an arm, and the ledger's largest reservation block now sits below the head the arithmetic walks up from (D371)
 
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
