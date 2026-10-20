@@ -15568,6 +15568,65 @@ the next entry.
 
 ---
 
+## 389. D397 · the better evidence wins: a declared preference is not diluted by a weak history (`search/service`, §6 / §32-33 / §99)
+
+**The gap D382-D396 left.** The preference signal and the feedback signal answer the SAME
+question ("does this fit this user") from two different kinds of evidence: one is what the user
+SAID, the other is what they DID. The pipeline averaged them, and the average let a weak click
+history pull a preference the user DECLARED at 0.95 down to 0.675. That is the platform saying
+"you told us you want quiet, but we think you do not" — a claim it has no standing to make, and
+one the `source` column exists to prevent: `declared` is the user telling us, `inferred` is the
+platform's reading of their behaviour, `transaction` is something they did.
+
+**Measured, before the change.** preference alone (0.95) -> 0.95; preference + 3 weak clicks
+(0.4) -> **0.675**; preference + 3 strong clicks (0.9) -> 0.925; 3 weak clicks alone -> 0.4;
+nothing -> none.
+
+**The fix.** The two signals combine by MAXIMUM, not by average. Both are on the same 0..1
+scale ("how well this fits this user"), and the best evidence about a question is the strongest
+answer to it: a declared 0.95 beats a 0.4 history, and a 0.9 history still beats a preference the
+user holds at 0.5. A history below `min_signals` is not evidence at all and stays absent.
+
+**Verified, not claimed.** `pytest tests/test_preference_evidence.py` -> **6 passed**; full
+`apps/ai` suite -> **742 passed, 4 skipped**.
+
+---
+
+## 390. D396 · the fresh gate re-certified through step 6 on the live plane (`scripts/db_gate_fresh.sh`, 18 steps)
+
+**What the gate said.** With the Docker engine back up, the 18-step fresh gate ran against a
+from-scratch database (`nexus_gate_3054_1792508936`, built from template0, 58 tables, 9
+migrations):
+
+```
+=== 1/18  create the gate database from template0 (empty, no inherited objects)
+=== 2/18  apply infra/db/migrations/V*.sql + 00_roles.sql
+=== 3/18  generate the synthetic dataset (generate.py self-checks FK integrity)
+=== 4/18  load the seed into the fresh database
+=== 5/18  data/seed/quality.sql (the hard gate)
+    -> 217 quality checks passed against a from-scratch schema (tables=58, migrations=9)
+    RESULT: MATCHED — all 1 newest claim(s) agree with the value passed in
+=== 6/18  scripts/seed_truncate_probe.sh — an empty stranger is cleared, one holding rows refuses
+    RESULT: PASS — the empty child is cleared, the child with rows refuses by name,
+             and the refusal costs nothing
+=== 7/18  scripts/check_jsonb_reads.mjs — NOT CHECKED (rc 1, control rc 1)
+```
+
+**The step-5 red is the one D396 fixed.** The previous run died at step 5 with 216 assertions and
+1 red ("favourites point at a renderable row"); this run files **217 assertions with none red**,
+and the gate reached step 6 and then step 7, one step further than before.
+
+**The step-7 wall is the environment, not the tree.** `check_jsonb_reads.mjs` needs to spawn a
+child process, and this sandbox refuses node-spawning-node (the `EBUSY` class D200 documented,
+and the tool's own verdict now says so: "the shipped plane is not green (rc 1, control rc 1)" — both the
+shipped plane AND the control fail, which is the signature of a refused spawn rather than a red
+check). Steps 7-18 cannot run here; they are the steps CI is for.
+
+**Verified, not claimed.** The gate's own log is the evidence: `.tmp-p4/gate-fresh4.log`; the run
+exited 2 at step 7 for the reason above, with steps 1-6 green including the hard gate.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha

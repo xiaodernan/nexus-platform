@@ -907,7 +907,15 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     if pref_scores:
                         avg_score = sum(pref_scores) / len(pref_scores)
                         existing = personalization.get(sid)
-                        personalization[sid] = avg_score if existing is None else (existing + avg_score) / 2
+                        # D397: the preference and the feedback answer the SAME question
+                        # ("does this fit this user") from two different kinds of
+                        # evidence, so the better evidence wins rather than the average
+                        # of the two. Averaging let a weak click history dilute a
+                        # preference the user DECLARED at 0.95 down to 0.675, which is
+                        # the platform saying "you said you want quiet, but we think
+                        # you do not" - a claim it cannot make.
+                        personalization[sid] = (avg_score if existing is None
+                                                else max(existing, avg_score))
                     if matched_labels:
                         preference_labels.setdefault(sid, []).extend(matched_labels)
 
@@ -975,7 +983,9 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
             if pref_scores:
                 avg_score = sum(pref_scores) / len(pref_scores)
                 existing = personalization.get(sid)
-                personalization[sid] = avg_score if existing is None else (existing + avg_score) / 2
+                # D397: the better evidence wins; see the stored path above.
+                personalization[sid] = (avg_score if existing is None
+                                        else max(existing, avg_score))
             if matched_labels:
                 preference_labels.setdefault(sid, []).extend(matched_labels)
 
