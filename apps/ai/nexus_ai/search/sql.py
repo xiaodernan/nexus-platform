@@ -18,6 +18,7 @@ from datetime import datetime, time
 from typing import Any, Iterable
 
 from nexus_ai.search.categories import resolve as resolve_category
+from nexus_ai.search.tokens import cjk_keywords
 
 TS_CONFIG_ALLOWLIST = {"simple", "english"}
 EARTH_RADIUS_M = 6371008.8
@@ -183,6 +184,32 @@ def build_merchant_query(
         if radius_m:
             where.append(f"loc.meters <= {p.add(float(radius_m))}")
 
+    # D407: the CONTAINMENT lane for Chinese. `to_tsvector('simple', ...)` cannot SEGMENT
+    # Chinese (a CJK run with no spaces becomes ONE token, so 咖啡 never equals one) and
+    # the `%` OPERATOR cannot match it either (it needs three-character trigrams, and a
+    # two-character Chinese word has none). Measured on the seeded corpus: 咖啡 is in 8
+    # merchants' Chinese names and 30 of their descriptions, 拉麵 in 8 descriptions - and
+    # the tsvector lane matched NONE of them, so a Chinese query ranked the pool by rating
+    # and answered with whatever came first.
+    #
+    # The lane is CONTAINMENT, not similarity, for the reason D405 measured on the chunk
+    # lane: a trigram similarity of a long text against a short query does not separate a
+    # real match from noise. A merchant either mentions the word or it does not. The
+    # count is a FRACTION of the query's Chinese words, so a keyword query (one word) is
+    # a full-strength match and a long utterance is a weak one.
+    cjk = cjk_keywords(text)
+    if cjk:
+        tokens_ph = p.add(cjk)
+        count_ph = p.add(len(cjk))
+        contains_count = (
+            "(SELECT count(*)::float8 FROM unnest(" + tokens_ph + "::text[]) AS t"
+            " WHERE strpos(lower(coalesce(m.display_name_zh,'') || ' ' ||"
+            " coalesce(m.description,'') || ' ' || coalesce(m.tags::text,'')),"
+            " lower(t)) > 0)")
+        contains_frac = "(" + contains_count + " / " + count_ph + "::float8)"
+    else:
+        contains_count = "0::float8"
+        contains_frac = "0::float8"
     kw_score = (
         f"GREATEST(COALESCE(ts_rank(m.search_tsv, {tsq}), 0),"
         f" COALESCE(ts_rank(m.search_tsv, {wsq}), 0),"
@@ -190,9 +217,10 @@ def build_merchant_query(
         f" COALESCE(similarity(coalesce(m.display_name_zh,''), {text_ph}), 0),"
         f" COALESCE(word_similarity({text_ph}, coalesce(m.display_name,'') || ' ' ||"
         f" coalesce(m.display_name_zh,'') || ' ' || coalesce(m.description,'') || ' ' ||"
-        f" array_to_string(m.tags,' ')), 0))")
+        f" array_to_string(m.tags,' ')), 0)) + " + contains_frac)
     text_matched = (f"(m.search_tsv @@ {tsq} OR m.search_tsv @@ {wsq}"
-                    f" OR m.display_name % {text_ph} OR coalesce(m.display_name_zh,'') % {text_ph})")
+                    f" OR m.display_name % {text_ph} OR coalesce(m.display_name_zh,'') % {text_ph}"
+                    f" OR " + contains_count + " > 0)")
     # A browse request (no query text) must return every row the filters allow, but it
     # must not *claim* a text match: the ranking floor reads `text_matched` to decide
     # whether a query exists at all, and an empty query's relevance is always 0.

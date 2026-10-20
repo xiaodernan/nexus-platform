@@ -74,4 +74,33 @@ def mentions(text: str, query: str) -> bool:
     return False
 
 
-__all__ = ["cjk_bigrams", "mentions", "query_tokens"]
+#: A Chinese word is short. Four characters is the house's line between a keyword
+#: (咖啡, 燒鵝飯) and a phrase (幫我找沙田的餐廳), and the line matters because a long
+#: run contributes only its BIGRAMS to a keyword list: a phrase is not a thing a
+#: merchant's text can contain.
+KEYWORD_MAX_LEN = 4
+
+
+def cjk_keywords(text: str, limit: int = 16) -> list[str]:
+    """The Chinese words a query names — short runs whole, long runs as their bigrams.
+
+    The merchant lane's containment needs a WORD list, not the raw query: a merchant's
+    text can contain 咖啡 but never the whole sentence the user typed. The order is the
+    query's own order and the list is capped, so a long utterance cannot turn the
+    candidate query into a hundred `strpos` calls per row.
+    """
+    out: list[str] = []
+    seen: set[str] = set()
+    for token in query_tokens(text):
+        if not any(_CJK_LO <= ch <= _CJK_HI for ch in token):
+            continue  # a latin word: the tsvector lane already reads it
+        pieces = ([token] if len(token) <= KEYWORD_MAX_LEN
+                  else [token[i:i + 2] for i in range(len(token) - 1)])
+        for piece in pieces:
+            if piece and piece not in seen:
+                seen.add(piece)
+                out.append(piece)
+    return out[:limit]
+
+
+__all__ = ["cjk_bigrams", "cjk_keywords", "mentions", "query_tokens"]

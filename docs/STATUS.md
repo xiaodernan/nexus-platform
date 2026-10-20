@@ -16244,3 +16244,60 @@ define there, and the AI app cannot be imported. This commit restores it. The hi
 alone deliberately: rewriting a pushed commit needs a force-push, and the sibling lane shares this
 worktree with uncommitted work of its own — a broken intermediate commit that the next commit
 repairs is the cheaper risk than a force-push that could orphan someone's commit.
+
+## 401. D407 · a Chinese query could not reach the merchants it names (`search/sql` + `search/tokens`, §6 / §18 / §8)
+
+**What the corpus holds and what the answer was.** The seeded corpus has **8 merchants whose
+Chinese name contains 咖啡 and 30 whose description does**, and **8 whose description contains
+拉麵**. The merchant lane matched **none** of them:
+
+```
+select count(*) from merchants where display_name_zh ilike '%咖啡%'  -> 8
+select count(*) from merchants where description ilike '%咖啡%'      -> 30
+select count(*) from merchants where description ilike '%拉麵%'      -> 8
+select count(*) from merchants where search_tsv @@ plainto_tsquery('simple','咖啡') -> 0
+select count(*) from merchants where display_name_zh % '咖啡'        -> 0
+```
+
+**Why.** `to_tsvector('simple', ...)` cannot SEGMENT Chinese: a CJK run with no spaces becomes
+ONE token, so 咖啡 never equals one. The `%` OPERATOR cannot match it either — it needs
+three-character trigrams, and a two-character Chinese word has none. So `text_matched` was
+false for every merchant, the keyword score was 0 for every merchant, and the pool came back
+ordered by rating: the query 拉麵 answered with eight western grills, euros and italics, and
+**not one** ramen house.
+
+**The fix: CONTAINMENT, the same evidence D405 used on the chunk lane.** A trigram similarity
+of a long text against a short query does not separate a real match from noise (measured: a
+real Chinese match 0.0063, a nonsense query 0.0093), so the lane counts the words the
+merchant's own text MENTIONS. `search/tokens.py` grew `cjk_keywords()` (a short Chinese run
+whole, a long one as its bigrams, bounded at 16) and `search/sql.py`'s merchant query grew a
+`strpos` containment subquery over the merchant's Chinese name, description and tags. The count
+is a FRACTION of the query's Chinese words, so a keyword query is a full-strength match and a
+long utterance is a weak one; the words are BOUND as a parameter, so a quote in a query cannot
+become SQL. The lane is off entirely when the query has no Chinese words, which is why the
+English path's SQL does not change at all.
+
+**Measured, on the live plane, before and after.**
+
+| query | before | after |
+|---|---|---|
+| 拉麵 | 8 cards: western-grill, euro, italian, singmal… — **no ramen house** | 8 cards, **all "Ramen & Noodles"** |
+| 咖啡 | 8 cards of the highest-rated restaurants, whatever they were | 8 cards, **all coffee houses, tea houses and bakeries** |
+| coffee (English) | the coffee houses | unchanged — the lane is off without Chinese words |
+
+**The product's own sentence did not break.** "帮我找沙田适合情侣约会的餐厅，预算500港币，安静一点，周六晚上"
+still answers **8 cards with `unknowns: []`** and the same intent (category cafe, the quiet and
+the date preference, the Sha Tin district); the lane replaced two bakery cards with three more
+cafes in the same district.
+
+**Verified, not claimed.** `pytest tests/test_live_cjk_merchant_match.py` -> **9 passed** (5
+offline + 4 live); the full `apps/ai` suite -> **815 passed** with the database, **789 passed /
+26 skipped** without it.
+
+**Discipline note.** The assertion is about the ANSWER — every card the service serves for a
+Chinese query has to be a merchant whose own text mentions the word — and not about the SQL. A
+test that asserted "the query contains strpos" would have passed while the answer stayed wrong.
+Two things this unit does NOT claim: 點心 is answered by the CATEGORY inference, not by this
+lane (the corpus spells no 點心 in any text), and the corpus's TAGS are English, so 拉麵
+matches zero `ramen` tags — the lane finds the merchants that spell the word in Chinese, and a
+translation layer for the tags is still open.
