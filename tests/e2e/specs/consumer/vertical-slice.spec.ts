@@ -132,11 +132,18 @@ test.describe('consumer core journey', () => {
 
   test('merchant page: facts, hours, menu, reviews with evidence, action (§4, §54)', async ({ page }) => {
     await page.goto('/search?q=' + encodeURIComponent('餐厅'));
-    await cards(page).first().getByRole('link').click();
+    const link = cards(page).first().getByRole('link');
+    const href = await link.getAttribute('href');
+    expect(href, 'the first result should link to a merchant profile').toMatch(/^\/m\/[^/]+$/);
+    await link.click();
+    // A client-side navigation keeps the previous page on screen until the profile's data
+    // arrives, so every assertion below would otherwise read the search page (its own h1 and
+    // status text satisfy them) and the reviews panel would time out as "missing".
+    await expect(page).toHaveURL((url) => url.pathname === href, { timeout: 20000 });
+    const reviews = page.locator('section[aria-labelledby="reviews-title"]');
+    await expect(reviews).toBeVisible({ timeout: 20000 });
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.getByText(/Open|营业|開館|營業/i).first()).toBeVisible();
-    const reviews = page.locator('section[aria-labelledby="reviews-title"]');
-    await expect(reviews).toBeVisible();
     // §55: summary claims must trace back to review rows
     await expect(reviews.locator('li').first()).toBeVisible();
   });

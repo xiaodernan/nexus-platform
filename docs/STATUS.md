@@ -16586,3 +16586,37 @@ chip by a control that names that card. That control used to share the clear-all
 distance (`413 m` -> `410m`, the same value in both lanes), so the grid's three distance cells are
 equal. That is the seed's data, not this table's math; the UI invents nothing and each cell keeps
 its own fact id. The two reds above remain open units.
+
+## 407. D413 · the merchant test read the search page and called the profile's reviews "missing" (`tests/e2e/specs/consumer/vertical-slice.spec.ts`, §4 / §54 / §55)
+
+**What failed.** In a full-spec run the merchant case went red: the reviews panel
+(`section[aria-labelledby="reviews-title"]`) was not found — although the panel is unconditional
+in `MerchantView`.
+The failure snapshot is the SEARCH page. Its h1 ("“餐厅”的结果") and its status text satisfied the
+two assertions before the reviews one, and the five-second wait expired while the client-side
+navigation was still loading the profile.
+
+**Why the same build passed and failed.** A Next.js client-side navigation keeps the previous page
+on screen until the destination's data resolves. The case clicked the card's link and immediately
+asserted `h1` and `/Open|营业|開館|營業/` — both true on the search page — then gave the reviews
+panel 5s. Under load the profile read outlived that window, so the test reported a missing section
+that the destination has; run alone, it passed (2.7s). The test was reading whatever was on screen,
+not the page it had asked for.
+
+**The fix.** The case now reads the card's href, requires it to be a merchant profile
+(`/m/<slug>`), clicks it, waits for `page.url().pathname` to equal that href (20s), and only then
+waits for the reviews panel (20s). The href assertion also pins the test's subject: an offering
+card (`/o/…`) can no longer slip in and make the merchant-page claims vacuous.
+
+**Witness (injected latency, both sides).** A 6s `page.route('**/m/**')` delay was spliced into the
+case, with a byte backup and SHA1 check; the committed file contains no `page.route`.
+
+| body | result |
+|---|---|
+| pre-fix + 6s delay | **red** at `expect(reviews).toBeVisible()` (5s), 9.4s wall |
+| fixed + same 6s delay | **1 passed**, 25.0s wall (the delay applied to more than one request) |
+| committed body, no delay | **1 passed (3.5s)** |
+
+**Not claimed.** The product's slow-load behaviour is unchanged: `/m/[slug]` has no `loading.tsx`,
+so a user on a slow read also sees the old page until the profile arrives. That is a separate UI
+unit, filed rather than folded into a test fix.
