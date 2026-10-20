@@ -16876,3 +16876,50 @@ quietly. The measurement said the corpus holds **no** character the table change
 is monotone — it adds 52 reachable rows for 餐厅 and 32 for 食饭 and takes none away. Without
 that measurement the change would have been a guess, and a guess in the search lane is a guess
 about what the user sees.
+
+## 413. D419 · the demo plane's corpus is older than the seed generator, so the preferences the product understands do nothing there (`apps/ai/tests/test_live_personalization_signal.py`, §99-100)
+
+**What the personalization signal measures.** It is the ranking's answer to "does this fit
+this user" (§99-100). On the live demo plane it measured **0.5 on every card** — the matcher's
+*neutral* value — for a sentence that names an occasion:
+
+```
+想找一個適合情侶約會的餐廳
+   the live demo plane      -> personalization = 0.5 on all 6 cards   (the neutral value)
+   a plane seeded from the CURRENT generator -> personalization = 1.0 on all 6 cards
+```
+
+**The reason is not the code.** The plane's corpus was seeded before the seed generator
+learned to write the occasion attributes (D383), so **0 of its 500 published rows carry
+`date_occasion`** — and a preference whose attribute no row carries cannot move anything.
+The current generator's corpus carries every key the matchers read (`accessible_access` 61,
+`date_occasion` 11, `family_occasion` 3, `quiet_ambience` 53, `wheelchair_access` 63,
+`pet_friendly_access` 30, `parking_access` 26, `scenic_view` 0 in the small CI counts,
+`outdoor_seating` 30, `opens_late` 68, `mtr_within_5min` 27, `lively_ambience` 1,
+`indoor_style` 120, `outdoor_style` 14, `spicy_cuisine` 10, `rainy_day_weather` 120).
+
+**The change.** A live test that measures the signal, and — when the plane's corpus is too
+old to carry the attribute — **skips with the reason that says so**: the skip names the
+attribute, the row count, and the re-seed. A skip without its reason is a number, and a
+number here would hide a plane that cannot show the behaviour. The NLU half is measured
+separately and runs on any corpus: the intent names the occasion ✓.
+
+**Verified, not claimed.** `pytest tests/test_live_personalization_signal.py` -> **1 passed, 1
+skipped** on the live plane (the skip reason names the stale corpus) and **2 passed** on a
+plane seeded from the current generator — so the gate is a gate, and it is the CORPUS that
+was missing.
+
+**What this unit does NOT do, and why.** The live plane was **not** re-seeded. The seed's own
+header calls the load "Destructive either way", and on this shared plane it would truncate
+the AI lane's own run ledger (968 `agent_runs` rows) and the platform's demo rows
+(`orders`, `carts`, `favorites` — the `nexus_ai` role cannot even read them, so whether they
+hold anything is not knowable from this lane). The measurement was therefore taken on a
+**throwaway** database seeded from the current generator, with the local role passwords so
+the cluster-wide `ALTER ROLE` stayed a no-op. The re-seed of the shared plane is the seed
+lane's call, and it is filed in `docs/PLAN.md` with the recipe.
+
+**Discipline note.** This unit is what the lane's earlier live measurements were missing. The
+intent-level tests passed on the stale plane ✓ and the ranking-level behaviour was never
+measured on it ✗ — so the chain was "understood, then invisible". A measurement that reads
+the corpus's vocabulary before it measures the behaviour is the difference between a test that
+passes and a test that can fail.
