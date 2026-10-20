@@ -100,7 +100,9 @@ def compute_open(hours: Sequence[dict[str, Any]], *, now: datetime,
     """Opening state computed from `business_hours`, never guessed (§2).
 
     `hours` rows are `{weekday, opens_at, closes_at, crosses_midnight}` with weekday
-    0=Mon..6=Sun (V1__init.sql). Returns `is_open=None` when the merchant has no hours.
+    0=Mon..6=Sun (V1__init.sql). Returns `is_open=None` when the merchant has NO hours at
+    all; a merchant whose hours do not cover the queried weekday is CLOSED that day, and
+    says so (D422).
     """
     moment = at or now
     from nexus_ai.nlu.timeparse import HK_TZ
@@ -118,7 +120,15 @@ def compute_open(hours: Sequence[dict[str, Any]], *, now: datetime,
                     "text": f"Open until {_hhmm(closes)}", "as_of": local.isoformat(),
                     "closes_hhmm": _hhmm(closes)}
     if not today:
-        return {"is_open": None, "text": None, "as_of": local.isoformat()}
+        # D422: the merchant's own hours are the CLAIM. A venue that lists Mon-Sat is
+        # saying it is closed on Sundays, and "closed" is the answer - not "unknown".
+        # The unknown case is the one BELOW (no hours at all), and it stays unknown:
+        # they are different claims, and the grid's open_state row had an EMPTY CELL
+        # for ~5% of the merchants because they were treated as the second one.
+        if not hours:
+            return {"is_open": None, "text": None, "as_of": local.isoformat()}
+        return {"is_open": False, "opens_at": None, "closes_at": None, "text": "Closed",
+                "as_of": local.isoformat(), "closes_hhmm": None}
     for h in today:
         opens, closes = _as_time(h.get("opens_at")), _as_time(h.get("closes_at"))
         if not opens or not closes:

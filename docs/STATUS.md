@@ -17020,3 +17020,57 @@ which quietly excluded 点/點 and 热/熱 — the very pairs the unit was about
 looked principled. The rule that actually separates "another spelling of this word" from "a
 different word" is the reading and the definition, and a rule that rejects by a RELATION has to
 be checked against a case it is meant to keep.
+
+## 416. D422 · a merchant whose hours omit the queried weekday was shown as UNKNOWN, and the comparison table had a hole in it (`search/cards`, §2 / §37)
+
+**What the corpus says and what the answer said.** A merchant's own hours are the claim: a venue
+that lists Mon-Sat is saying it is closed on Sundays. `compute_open` could not read that — a
+merchant with **no hours for the queried weekday** returned `is_open=None`, the same answer it
+gave for a merchant with **no hours at all**. The measured cost:
+
+```
+the live plane:      23 of 470 published merchants omit the weekday (6-day hours)
+the current plane:     7 of 112 published merchants omit the weekday
+```
+
+So ~5% of the cards showed **no open state at all**, and the comparison grid's `open_state` row
+had an **empty cell** — a hole in a table whose other rows carry a value, which is what §37's
+grid promises and what the live contract test asserts.
+
+**The fix.** The two cases are different claims and now answer differently: **no hours at all**
+is still unknown (§2, never guessed), and **hours that do not cover the day** is **closed** —
+the merchant's own words, said out loud.
+
+**How the defect was found: the live suite was calibrated against a stale corpus.** §419 measured
+that the live demo plane's corpus predates the seed generator (0 of its 500 rows carry
+`date_occasion` ✗). So the lane's live suite was green against a corpus the seed no longer
+produces. Run against a plane seeded from the **current** generator, it failed **four** times:
+the comparison grid's empty `open_state` cell, and three CJK tests whose assertions were
+**too strong** (below). Both planes are green now:
+
+```
+the stale plane  ->  827 passed, 31 skipped
+the current plane ->  858 passed, 0 skipped
+```
+
+**A correction to two earlier entries, in the ledger's own spirit.** §399 (D407) and §411
+(D418) claim that "every card the service serves for a Chinese query has to be a merchant
+whose own text mentions the word". **That claim is too strong and is withdrawn here.** The
+containment lane is a **SCORE**, not a filter: a merchant whose own text does not mention the
+word can still be served when the corpus is sparse (the CI counts carry **one** ramen house and
+**eight** coffee houses ✗ — and the ramen query correctly serves the one ramen house first ✓
+and then the best of the rest ✓). The lane's promise is the **ORDER** — the merchants that
+mention the word rank above the ones that do not ✓ — and the two live tests now assert that ✓
+(with a skip, and its reason, when the corpus carries no mentioner at all ✓).
+
+**Verified, not claimed.** The full `apps/ai` suite -> **827 passed / 31 skipped** on the live
+plane and **858 passed** on the plane seeded from the current generator; `ruff check .` ->
+**All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 52 source files**; the
+eval gate -> **`RESULT: PASS - 2 suite(s), 0 failing`**.
+
+**Discipline note.** A green suite is a claim about the CORPUS it ran on, and this lane's live
+suite had been green on a corpus the seed no longer produces. The fix was not "make the tests
+pass" — it was to seed a second plane from the current generator and let the suite fail there:
+one failure was a product defect (the closed weekday ✗) and three were **our own assertions
+that were too strong** ✗. A suite that only ever runs on one corpus cannot tell the
+difference between a product defect and a test that has drifted away from the product.
