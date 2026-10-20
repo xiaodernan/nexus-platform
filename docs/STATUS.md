@@ -15663,6 +15663,36 @@ staging table before the INSERT that reads it. `data/seed/load.sh` has always pa
 
 ---
 
+## 392. D398 · a verification script that changed the shared database's roles, and what it cost (`verify_ci_seed_step.sh`)
+
+**What happened.** The D398 verification script applied `infra/postgres/init/00_roles.sql` to a
+throwaway database to prove the CI seed step. The ROLES are cluster-wide, not per-database, so that
+file's `ALTER ROLE nexus_ai WITH LOGIN PASSWORD %L` reset the password the LOCAL `nexus` database's
+AI role was using. The next live run failed with
+`password authentication failed for user "nexus_ai"` on every test that touched the database — nine
+of them — while the offline suite stayed green, which is the honest shape of the failure: the local
+plane's database access was broken, and only the live tests said so.
+
+**The repair.** The role passwords were restored from `.env`
+(`nexus_ai` -> `nexus_dev_ai_only`, `nexus_app` -> `nexus_dev_app_only`) and the live suite went
+back to **752 passed**. The script now passes the LOCAL passwords, which makes the cluster-wide
+`ALTER ROLE` a no-op, and says why in its header: in CI the cluster is disposable, so the step is
+safe there; on a shared machine it is not.
+
+**The lesson, stated so it is usable.** A verification script that touches a shared server is a
+change to that server. `00_roles.sql` is safe in CI because CI's Postgres is disposable and it is
+NOT safe on a machine that holds a database other people use — and the file does not say so, because
+from where it was written every cluster was disposable. The script now states the hazard rather
+than rediscovering it, and the CI step it mirrors is unchanged (CI's cluster IS disposable, and the
+step's own `ci_nexus_ai` password is the point of it).
+
+**Verified, not claimed.** The repaired script was re-run end to end against a throwaway database:
+schema -> `generate.py --counts ci` PASS -> 23 seed files applied -> **112 published merchants** ->
+the guard PASS -> `tests/test_live_preferences.py` -> **6 passed**; and the seeded `nexus` database
+was re-checked afterwards with the live suite -> **752 passed**.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha
