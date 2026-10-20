@@ -61,6 +61,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The seeded merchants carry no `vegetarian` attribute** — `vegetarian` is a lexicon cuisine and a seeded taxonomy leaf, so a typed "食素" resolves the category but the preference signal has no attribute to fire on (it is a cuisine, matched by leaf, so this is already covered by D394's `CUISINE_LEAVES`).
 - **The `personalization` weight is one number for two different things** — after D397 the preference and the feedback signals combine by maximum, so the number no longer says WHICH evidence produced it. A separate `preference` weight would need a `ranking_weights.yaml` change (the weights must sum to 1.0) and a strategy version bump; the current shape is defensible and the change is a product decision, not a bug fix.
 - **The `weak_aspects` attribute is a LIST, not a boolean** — the matcher reads booleans, so a merchant that is weak at something cannot be demoted by a preference naming that weakness. The vocabulary has no "prefer a merchant who is strong at X" rule, so the gap is a missing RULE rather than a broken matcher.
+- **A Chinese query's candidate pool is not subject-bounded** — the merchant lane's text match is blind to CJK (`tsvector` cannot segment it and the `%` operator needs three-character trigrams), and the corpus's tags are English, so 拉麵 matches **zero** `ramen` tags and the answer is a relevance order over every restaurant. Measured on the live plane while landing D406; the merchant lane's trigram work (D366) does not reach the candidate FILTER, only the score.
+- **The compare grid's row LABELS are raw attribute keys** — the rows are fact-backed (`price`, `rating`, `category`, `district`, `open_state`, `distance`) but the labels are the keys themselves; the surface that prints them is the web lane's (`packages/ui/src/trust/CompareTable.tsx`), reported and not edited here.
 
 ### Completed this session (AI lane)
 
@@ -84,6 +86,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D400/D401** The product's own non-negotiable rules, checked on the live plane; the comparison grid had no distance row and no district row (`apps/ai/tests/test_live_ai_contract.py`, `api/routes_discover`)
 - **D403** The RAG retrieval could not find a Chinese chunk, and the corpus plainly has one (`search/sql` + `api/routes_rag`) — the trigram lane
 - **D405** The merchant agent handed off every question, and its grounded branch had never run (`search/tokens` + `api/routes_rag` + `api/routes_stream`) — the containment is the evidence, not the score
+- **D406** The order the user's own words named was written down and never read (`search/ranking` + `search/service`) — the reader, with the sponsored slot still placed after it
 - **Fresh gate** re-certified through step 6 on the live plane: 217 quality checks, none red; step 7 is the sandbox's node-spawn refusal
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
@@ -100,7 +103,7 @@ node scripts/check_console_i18n.mjs && node scripts/check_console_a11y.mjs   # P
 node scripts/check_reader_reachability.mjs           # 14 of 14 readers invoked
 node scripts/check_status_citations.mjs              # PASS
 cd apps/web && npx tsc --noEmit && npx vitest run    # clean / 136
-cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 804 passed with the live DB / 783 passed, 21 skipped without it
+cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 806 passed with the live DB / 783 passed, 23 skipped without it
 cd services/platform && mvn -o test                  # 251 passed (D295's whole measurement)
 ```
 

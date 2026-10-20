@@ -16180,3 +16180,67 @@ the easy fix and the wrong one: at a floor of 0.006 the agent would have answere
 out of trigram noise, with citations attached — a worse failure than the handoff it had. The
 evidence had to be the text, and the branch that the wall had been hiding had to be run before the
 unit could claim the wall was the only thing wrong.
+
+## 400. D406 · the order the user's own words named was written down and never read (`search/ranking` + `search/service`, §34 / §67 / §8)
+
+**What the contract promised and what the answer did.** §34 names two follow-ups a user can type
+on a second turn — "太贵了" and "近一点" — and says what they mean: a budget cut, and
+`sort_preference=distance`. `plan_from_intent()` has written `plan.sort_preference` since the
+intent layer existed, and `nlu/state_merger.py` fills it from those very words. The ranking
+pipeline never read it: `organic_rank()` sorted by the organic score and stopped there, so every
+follow-up that named an order came back with **the same cards in the same order**. The sibling
+lane measured it on the live plane and filed the reader: "the 8 cards and their first four slugs
+are identical across turns".
+
+**The fix.** `search/ranking.py` grows `SORT_PREFERENCE_FIELDS` — the orderings the contract's
+closed `SortPreference` Literal can name, and the `Candidate` field each one reads — and
+`apply_sort_preference()`, which re-orders the organic list. `search/service.py` calls it between
+`organic_rank()` and `apply_sponsored()`, so the user's order lands BEFORE the promoted slots are
+placed (§67: a preference never buys or sells a rank).
+
+**Three properties, each with its own arm.**
+
+- **The vocabulary is closed, and the table is checked against it.** `SortPreference` is a
+  Literal of five names and the table has exactly those five; the test walks
+  `get_args(SortPreference)` against the table's keys. A name added to one list without the
+  other is a bug in whichever list was edited last, so the reader raises rather than falling back
+  to a default.
+- **It re-orders; it never re-scores and never filters.** The organic score is untouched and no
+  card is dropped: §34 changes the order of the answer, not the answer's membership.
+- **A card with no value for the field goes LAST, not first.** §8 forbids reading an unknown
+  price as 0 (that would make the most expensive restaurant in the corpus the cheapest one), an
+  unknown rating as 0, or an unknown distance as 0.
+
+**Measured, on the live plane, through the SSE stream the product's own surface uses.**
+
+- turn 1 "拉麵" -> `sort_preference: relevance`, 8 cards, prices 354.55 / 187.11 / 280.36 /
+  343.14 / 285.20 / 60.31 / 240.89 / 60.00 — the relevance order.
+- turn 2 "太贵了" -> `sort_preference: price_low`, 8 cards, prices 27.33 / 35.27 / 36.27 /
+  36.46 / 38.43 / 41.50 / 42.63 / 43.14 — ascending, and a different set, because the limit is
+  taken after the sort and a cheaper merchant can now enter the answer.
+- The English cue ("too expensive") names the same order.
+
+**Verified, not claimed.** `pytest tests/test_sort_preference_reader.py` -> **13 passed** (the
+vocabulary census, each ordering, the unknown-value rule, the sponsored interaction, the served
+pipeline, and the utterance -> merge -> plan -> served-cards chain, offline);
+`pytest tests/test_live_sort_preference.py` -> **2 passed** (both live); the full `apps/ai`
+suite -> **806 passed** with the database, **783 passed / 23 skipped** without it.
+
+**Discipline note.** The reader was written by the lane that could measure it, but it was the
+SIBLING lane's measurement that said what was broken ("identical across turns"), and the fix
+belongs to the plane that owns the ranking. Two things are deliberately NOT claimed here: the
+sort re-orders the POOL, so a price preference can change WHICH merchants are in the answer (the
+contract's own "太贵了" is a budget cut — with no budget stated there is nothing to cut, so the
+order carries the refinement); and a Chinese query's pool is not subject-bounded, because the
+merchant lane's text match is blind to CJK (the corpus's tags are English: 拉麵 matches zero
+`ramen` tags), which is a separate defect, filed and not fixed here.
+
+**A mistake this unit is filing rather than hiding.** D405's commit staged ONE LINE of this
+unit's wiring by accident — `search/service.py`'s `apply_sort_preference` call went into the
+index while the reader it calls did not (the reader is this unit's `search/ranking.py`, and the
+staging ran `git add` on the file after the working copy had been restored). So `## 399`'s commit
+on `master` is RED ON ITS OWN: `search/service.py` imports a name `search/ranking.py` does not
+define there, and the AI app cannot be imported. This commit restores it. The history is left
+alone deliberately: rewriting a pushed commit needs a force-push, and the sibling lane shares this
+worktree with uncommitted work of its own — a broken intermediate commit that the next commit
+repairs is the cheaper risk than a force-push that could orphan someone's commit.

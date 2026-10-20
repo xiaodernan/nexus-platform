@@ -5,6 +5,8 @@ invariants are unit-testable without a database:
   * weights are data, loaded from `infra/config/ranking_weights.yaml`
   * quality is Bayesian-smoothed, so 5.0/2 reviews loses to 4.6/200
   * a relevance floor drops junk *before* scoring
+  * the order the user's own words named (§34) re-orders the organic list, and never
+    re-scores it
   * sponsored slots are inserted *after* organic scoring, capped 1-in-top-5, and can
     never displace the organic best match (§67)
 """
@@ -258,6 +260,56 @@ def organic_rank(candidates: Iterable[Candidate], w: RankingWeights,
 
 def _has_query_signal(c: Candidate) -> bool:
     return c.relevance > 0.0 or bool(c.raw.get("text_matched"))
+
+
+#: §34 — the orderings `Intent.sort_preference` can name, and the `Candidate` field each one
+#: reads (`relevance` reads the score `organic_rank()` just produced). The contract's
+#: `SortPreference` is a closed Literal, so a name missing from this table is a bug in whichever
+#: list was edited last, not a case to fall back on — hence the KeyError rather than a default.
+#: `tests/test_sort_preference_reader.py` walks `get_args(SortPreference)` against these keys.
+SORT_PREFERENCE_FIELDS: dict[str, tuple[str, bool]] = {
+    "relevance": ("organic_score", True),
+    "distance": ("distance_m", False),
+    "price_low": ("price", False),
+    "rating": ("rating", True),
+    "trending": ("popularity", True),
+}
+
+
+def _sort_value(s: Scored, field: str) -> float | None:
+    return s.organic_score if field == "organic_score" else getattr(s.candidate, field)
+
+
+def apply_sort_preference(ranked: list[Scored], preference: str) -> list[Scored]:
+    """Re-order the organic list by the preference the user's words named (§34).
+
+    Runs after `organic_rank()` and before `apply_sponsored()`, so a preference never moves a
+    promoted slot (§67) and never re-reads the weights. A card that has no value for the field
+    goes last rather than being treated as zero — distance, price and rating are all numbers the
+    card would otherwise have to be able to show, and an absent one is not a cheap/free/close
+    winner (§8). Ties fall back to the organic order, then to the candidate key, so the result
+    is deterministic and never reorders two cards that the preference cannot tell apart.
+
+    It re-orders the POOL, not only the cards that would have been shown: the limit is taken
+    after this, so "too expensive" can bring a cheaper merchant INTO the answer instead of
+    re-ordering eight expensive ones. That is the point of the refinement — the contract's own
+    way of saying "太贵了" is a budget cut (§34), and when the user stated no budget there is
+    nothing to cut, so the order is what carries the refinement. The pool is still the one the
+    hard filters chose: the sort never widens the answer to a merchant the filters excluded,
+    and it never re-scores anything (the organic score is untouched).
+    """
+    field, descending = SORT_PREFERENCE_FIELDS[preference]
+    if preference == "relevance":
+        return ranked  # `organic_rank()` already sorted by exactly this
+    sign = -1.0 if descending else 1.0
+
+    def key(s: Scored) -> tuple[int, float, float, str]:
+        v = _sort_value(s, field)
+        missing = 1 if v is None else 0
+        return (missing, sign * (float(v) if v is not None else 0.0),
+                -s.organic_score, s.candidate.key())
+
+    return sorted(ranked, key=key)
 
 
 def apply_sponsored(ranked: list[Scored], w: RankingWeights,
