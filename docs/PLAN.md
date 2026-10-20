@@ -56,10 +56,11 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 
 ### Open, waiting on the AI lane (next)
 
-- **Standardize preference attribute naming in seed** — the NLU can now read every preference key, but the seeded merchants do not carry the matching attribute for all of them: `vegetarian` is a lexicon cuisine with no seeded boolean, and the `spicy` boolean is emitted under a cuisine-derived leaf rather than as a named attribute. The seed lane owns the attribute vocabulary; the AI lane's matcher is keyed to `{value}_{kind}`.
-- **Preference explanations for a stored vs a typed preference** — D392 names the preference that fired, but the card does not yet say whether it came from the user's stored memory or from this query's words. The `source` column (`declared`/`inferred`/`transaction`) carries the answer and is not on the card.
-- **The ranking lane has no preference feature of its own** — the preference signal rides in the `personalization` weight, which is an EMA over feedback by design. A declared preference is not feedback, so the two are averaged into one number and a strong preference can be diluted by a weak feedback history. A separate weight would need a `ranking_weights.yaml` change and a version bump.
-- **The `food/cuisine_like` structured preference is read by the matcher but not produced by the NLU** — the seed stores `{"values": ["cantonese","sushi"]}` under `food/cuisine_like`, and the category inference reads it, but a typed "我想食粵菜" still produces a `cuisine` preference rather than a `cuisine_like` one, so the two shapes do not meet.
+- **The `food/cuisine_like` structured preference is read by the matcher but not produced by the NLU** — the seed stores `{"values": ["cantonese","sushi"]}` under `food/cuisine_like`, and the category inference reads it, but a typed "我想食粵菜" produces a `cuisine` preference (a string value) rather than a `cuisine_like` one (an object with `values`). The two shapes now MEET at the matcher (D394 routes both through `cuisine_matches`), but they do not meet at the WRITER: a typed cuisine is not stored anywhere, so the user's own words about a cuisine are not recorded as a preference.
+- **The `ambience` preference's two spellings** — the seed stores `style/ambience` with `{"value": "quiet"}` while the lexicon's preference key is `ambience` with value `quiet`. The matcher reads the stored shape, so it fires; but a typed "安靜" produces `ambience=quiet` (a string), and the two shapes are read by different code paths. Worth one vocabulary decision rather than two readers.
+- **The seeded merchants carry no `vegetarian` attribute** — `vegetarian` is a lexicon cuisine and a seeded taxonomy leaf, so a typed "食素" resolves the category but the preference signal has no attribute to fire on (it is a cuisine, matched by leaf, so this is already covered by D394's `CUISINE_LEAVES`).
+- **The `personalization` weight is one number for two different things** — after D397 the preference and the feedback signals combine by maximum, so the number no longer says WHICH evidence produced it. A separate `preference` weight would need a `ranking_weights.yaml` change (the weights must sum to 1.0) and a strategy version bump; the current shape is defensible and the change is a product decision, not a bug fix.
+- **The `weak_aspects` attribute is a LIST, not a boolean** — the matcher reads booleans, so a merchant that is weak at something cannot be demoted by a preference naming that weakness. The vocabulary has no "prefer a merchant who is strong at X" rule, so the gap is a missing RULE rather than a broken matcher.
 
 ### Completed this session (AI lane)
 
@@ -74,6 +75,11 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D391** Category inference from the resolved signals (`nlu/understand`) — 18 tests added, 686 passed
 - **D392** The card names the preference that matched (`search/cards`) — 7 tests added, 693 passed
 - **D393** A negated preference is a dislike, not a like (`nlu/polarity`) — 16 tests added, 709 passed
+- **D394** The cuisine the user names and the cuisine the seed writes are two vocabularies (`nlu/lexicon`) — 5 tests added, 714 passed
+- **D395** The "X-style" form is how a HK user asks for a cuisine (`nlu/lexicon`) — 14 tests added, 728 passed
+- **D396** Typed vs declared preferences on the card, and a favourite pointing at an unopenable offering (`search/cards`, `data/seed/generate.py`) — 8 tests added, 736 passed
+- **D397** The better evidence wins: a declared preference is not diluted by a weak history (`search/service`) — 6 tests added, 742 passed
+- **Fresh gate** re-certified through step 6 on the live plane: 217 quality checks, none red; step 7 is the sandbox's node-spawn refusal
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
@@ -89,7 +95,7 @@ node scripts/check_console_i18n.mjs && node scripts/check_console_a11y.mjs   # P
 node scripts/check_reader_reachability.mjs           # 14 of 14 readers invoked
 node scripts/check_status_citations.mjs              # PASS
 cd apps/web && npx tsc --noEmit && npx vitest run    # clean / 136
-cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 709 passed, 4 skipped
+cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 742 passed, 4 skipped
 cd services/platform && mvn -o test                  # 251 passed (D295's whole measurement)
 ```
 
