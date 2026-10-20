@@ -174,12 +174,28 @@ def _fill_intent_kind(ex: IntentExtraction, text: str) -> IntentExtraction:
         ex.intent, ex.confidence["intent"] = "plan_experience", 0.8
     elif has(DISCOVER_CUES) or _looks_like_discovery(text):
         ex.intent, ex.confidence["intent"] = "discover_merchant", 0.75
-    elif match_category(text) or match_cuisines(text) or has(NEARBY_TERMS)             or has(PREFERENCE_RULE_VALUES) or _has_budget_word(text):
+    elif match_category(text) or match_cuisines(text) or has(NEARBY_TERMS)             or has(PREFERENCE_RULE_VALUES) or _has_budget_word(text) or _has_constraint(text):
         # "预算 300 港币，想吃日料" names *what* they want without a discovery verb.
         ex.intent, ex.confidence["intent"] = "discover_merchant", 0.6
     else:
         ex.intent, ex.confidence["intent"] = "unknown", 0.2
     return ex
+
+
+def _has_constraint(text: str) -> bool:
+    """Whether the text names a NEGATION and its value ("唔食辣", "no peanuts").
+
+    A user who says what they do not want is still asking for places, so the intent
+    has to be a discovery - otherwise the constraint is read and the answer is "I do
+    not know what you are looking for", which is not what was said.
+    """
+    for _key, negs, values in CONSTRAINT_RULES:
+        for neg in negs:
+            for m in re.finditer(re.escape(neg.strip()), text):
+                window = text[m.end(): m.end() + 8]
+                if any(v.strip() in window for v in values):
+                    return True
+    return False
 
 
 def _looks_like_discovery(text: str) -> bool:
@@ -526,19 +542,24 @@ def _extract_entities(text: str) -> list[str]:
         return quoted[:3]
     low = (text or "").lower()
     cue_at = -1
+    cue_len = 0
     for cue in _COMPARE_CUES_LOW:
         pos = low.find(cue.lower())
-        if pos >= 0:
-            cue_at = pos if cue_at < 0 else min(cue_at, pos)
+        if pos >= 0 and (cue_at < 0 or pos < cue_at):
+            cue_at, cue_len = pos, len(cue)
     if cue_at < 0:
         for token in ("compare", "contrast"):
             pos = low.find(token)
-            if pos >= 0:
-                cue_at = pos if cue_at < 0 else min(cue_at, pos)
+            if pos >= 0 and (cue_at < 0 or pos < cue_at):
+                cue_at, cue_len = pos, len(token)
     if cue_at < 0:
         return quoted[:3]
-    tail = (text[cue_at:][len(text[cue_at:].split()[0]):] if text[cue_at:].split() else "")
-    tail = tail.strip()
+    # The tail is what FOLLOWS the cue. The old code took the first WHITESPACE token of
+    # the text from the cue onwards, which is the cue itself for a latin cue ("compare
+    # A and B") but the WHOLE string for a Chinese one - so a Chinese compare
+    # ("compare Central and Mong Kok") had no tail at all, no entities, and no compare
+    # intent. The cue's own LENGTH is what the tail starts after.
+    tail = text[cue_at + cue_len:].strip()
     first = tail.split(" ", 1)
     if first and first[0].lower() in _COMPARE_TAILS:
         tail = first[1] if len(first) > 1 else ""

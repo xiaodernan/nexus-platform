@@ -16460,3 +16460,75 @@ sentence was still satisfied by the pre-fix product: it waited on selectors that
 click. A test that names an order is only a witness when it reads the thing the turn changes, and
 the red arm has to be the product mutant — an edited expectation would only prove that the
 expectation can fail.
+
+## 405. D411 · the merge gate that could not start, and the five gaps it found the moment it did (`nexus_ai/eval` + `nlu/lexicon` + `nlu/understand`, §7.1 / §18 / AGENT_CONTRACT §5)
+
+**What the CI's merge gate was.** The AI job's step "Eval gate (blocks merge: hallucination < 2%,
+injection containment 100%)" runs `python -m nexus_ai.eval.cli --suite intent_v1 --fail-on-gate`.
+**There was no `nexus_ai/eval` package in this repository** — the step failed with
+`ModuleNotFoundError` whatever the code under test said. A gate that cannot start is not a
+gate, and a step that is red for a reason nobody reads is a step nobody trusts.
+
+**What it is now.** A package with two suites, their case files as DATA beside the code, and a
+CLI that reports cases, metrics and gates and exits 1 when `--fail-on-gate` sees a failure.
+
+- `intent_v1` — 30 cases. **accuracy** (the fields the query carried came out right) and the
+  **hallucination rate** (a field the query did NOT carry was asserted) — the two the CI names.
+  The `must_not` half of a case is the §8 promise: an empty budget, an empty party size, an
+  empty district.
+- `safety_injection_v1` — 18 attacks, 3 forged envelopes, 6 ordinary texts. **containment** (every
+  attack detected AND named), **envelope containment** (a payload that forges the delimiter has
+  it redacted), and the **false-positive rate** on ordinary merchant text, because a scanner
+  that flags everything contains nothing.
+
+**Measured, on this plane, before and after.**
+
+| | before | after |
+|---|---|---|
+| `python -m nexus_ai.eval.cli ...` | `ModuleNotFoundError` | `RESULT: PASS - 2 suite(s), 0 failing` |
+| `intent_v1` | (the suite did not exist) | **30/30 cases**, accuracy **1.0000**, hallucination_rate **0.0000** |
+| `safety_injection_v1` | (the suite did not exist) | **27/27 cases**, containment **1.0000**, envelope **1.0000**, false positives **0.0000** |
+
+**The five gaps the gate found on its first run** — this is the part that matters, because a
+gate that only re-asserts the code cannot find anything:
+
+1. **麵包 (bakery) matched nothing.** The lexicon held **麺包 (U+9EB5)** — the Japanese form of
+   麵 — so the commonest word for bread was a synonym for nothing. (The same class as D409's
+   餐庁.)
+2. **食飯 did not mean "restaurant".** The restaurant list held three entries that no user
+   types (食食 / 攤食 / 餐補) and not 食飯, so "4人食飯" answered `intent: unknown`.
+3. **最高分 did not mean "the best rated".** The rating row had 最佳 and 最高受歡迎 and not
+   最高分, so the user had no way to ask for the top-rated places.
+4. **A Chinese compare had no entities.** The compare tail was taken as the first WHITESPACE
+   token after the cue — which is the cue itself for "compare A and B" but the WHOLE string for
+   "比較中環同旺角", so the tail was empty, the entities were none, and the intent stayed
+   `unknown`.
+5. **A constraint was not a request.** "唔食辣" produced the constraint `cuisine_avoid=spicy`
+   and the intent `unknown` — the service read what the user did not want and then said it did
+   not know what the user wanted.
+
+All five are fixed: the vocabulary (1, 2, 3), the compare tail (4) and the intent kind (5, a
+constraint is a discovery request). The suite is green because the gaps are closed, and the
+cases stay in the file so the gaps cannot reopen.
+
+**Verified, not claimed.** `pytest tests/test_eval_cli.py` -> **12 passed** (including the
+mutation arm: a deliberately unreadable case makes the suite fail and the CLI exit 1 — a gate
+that cannot fail is a rubber stamp); the full `apps/ai` suite -> **830 passed** with the
+database, **804 passed / 26 skipped** without it; `ruff check .` -> **All checks passed!**;
+`mypy nexus_ai` -> **Success: no issues found in 51 source files**; the CI step now runs
+`--suite intent_v1,safety_injection_v1`, which is what its own name claims.
+
+**Discipline note — the writer's own typo, twice.** The defect class D409 found has a source:
+a writer that emits the wrong code point once (庁 for 廳, 麺 for 麵) and then writes every test
+with the same wrong character, so the suite agrees with itself and with nothing else. While
+writing the case files **this unit reproduced it** — the first `intent_v1.jsonl` held 餐庁
+again, and one case held U+8FA6 (a rare character) where 辣 (U+8FA3) belonged, and the case
+failed for a reason that had nothing to do with the product. The case files are therefore
+written with explicit `\uXXXX` escapes, and the suite's own failures are what told me the
+character was wrong. The lesson is in the data, not in a comment: a case file written by hand
+in a Chinese keyboard layout is a case file that asserts the keyboard.
+
+**What this unit does NOT claim.** The suite measures the RULE floor and the scanner, not a
+model: with `NEXUS_LLM_PROVIDER=mock` the intent path is the deterministic one, which is the
+path CI runs. The corpus-level grounding (a claim that no fact backs) is still measured
+elsewhere, by the live-DB contract suite, and is not folded in here.

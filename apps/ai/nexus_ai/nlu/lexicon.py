@@ -41,11 +41,11 @@ NEARBY_TERMS = ["附近", "對開", "对开", "周边", "鄰近", "邻近", "nea
 
 # ------------------------------------------------------------------ categories
 CATEGORY_SYNONYMS: dict[str, list[str]] = {
-    "restaurant": ["餐延", "餐厅", "饭店", "飯店", "食飯", "吃饭", "搵食", "美食", "restaurant",
+    "restaurant": ["餐延", "餐厅", "饭店", "飯店", "食飤", "食饭", "吃饭", "小食", "美食", "食堂", "restaurant",
                    "dining", "eats", "food", "餐补"],
     "cafe": ["咖啡", "咖啡店", "cafe", "coffee", "茶記", "冰室", "茶餐延", "茶餐室", "brunch",
              "早午餐"],
-    "bakery": ["餅店", "饼店", "麵包", "面包", "bakery", "cake", "蛋糕", "甜品", "dessert"],
+    "bakery": ["餅店", "饼店", "餅包", "面包", "bakery", "cake", "蛋糕", "甜品", "dessert"],
     "bar": ["酒吧", "bar", "pub", "酒廊", "lounge", "啤酒", "cocktail", "調酒"],
     "hotpot": ["火鍋", "火锅", "hotpot", "hot pot", "打邊炉", "盆菜"],
     "gym": ["健身房", "健身中心", "健身", "gym", "fitness", "weight training", "舉重",
@@ -243,7 +243,7 @@ URGENCY_FLEXIBLE = ["得閒", "得闲", "有空", "隨時", "随时", "anytime",
 SORT_RULES: list[tuple[str, list[str]]] = [
     ("distance", ["近", "closest", "nearest", "距離", "距离", "nearby", "少行", "行幾耐"]),
     ("price_low", ["平", "cheap", "最平", "便宜", "low price", "under", "以下", "以內", "以内"]),
-    ("rating", ["好評", "好评", "最佳", "rating", "頂尖", "顶尖", "最受歡迎", "评分", "評分"]),
+    ("rating", ["好評", "好评", "最佳", "rating", "頂尖", "顶尖", "最受歡迎", "评分", "評分", "最高分"]),
     ("trending", ["熱門", "热门", "trending", "人气", "人氣", "最受歡迎", "最受欢迎的"]),
 ]
 

@@ -167,7 +167,7 @@ jobs:
           NEXUS_DB_URL: postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test
           NEXUS_TEST_DATABASE_URL: postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test
           NEXUS_LLM_PROVIDER: mock
-        run: uv run python -m nexus_ai.eval.cli --suite intent_v1 --fail-on-gate
+        run: uv run python -m nexus_ai.eval.cli --suite intent_v1,safety_injection_v1 --fail-on-gate
         working-directory: apps/ai
       # The falsifier for "does asyncpg's jsonb binding double-encode?". STATUS §186 recorded that nothing
       # ran this script ("it is not in data/seed/falsifiers.tsv"), which is why it could sit here claiming

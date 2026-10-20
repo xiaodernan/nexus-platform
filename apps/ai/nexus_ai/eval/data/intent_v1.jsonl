@@ -1,0 +1,30 @@
+{"expect": {"category": "restaurant", "intent": "discover_merchant", "preferences": [{"key": "cuisine", "polarity": 1, "value": "japanese"}]}, "id": "cat-ramen", "must_not": ["budget", "party_size", "location", "time"], "query": "拉麵"}
+{"expect": {"category": "cafe", "intent": "discover_merchant"}, "id": "cat-coffee", "must_not": ["budget", "party_size", "location", "time"], "query": "咖啡"}
+{"expect": {"category": "cafe", "intent": "discover_merchant"}, "id": "cat-cha-chaan-teng", "must_not": ["budget", "party_size", "location"], "query": "茶餐延"}
+{"expect": {"category": "restaurant", "intent": "discover_merchant"}, "id": "cat-restaurant-trad", "must_not": ["budget", "party_size", "location"], "query": "餐延"}
+{"expect": {"category": "restaurant", "intent": "discover_merchant"}, "id": "cat-restaurant-simp", "must_not": ["budget", "party_size", "location"], "query": "餐厅"}
+{"expect": {"category": "hotel", "intent": "discover_merchant"}, "id": "cat-hotel", "must_not": ["budget", "party_size", "location"], "query": "酒店"}
+{"expect": {"category": "bakery", "intent": "discover_merchant"}, "id": "cat-bakery", "must_not": ["budget", "party_size", "location"], "query": "餅包"}
+{"expect": {"category": "bar", "intent": "discover_merchant"}, "id": "cat-bar", "must_not": ["budget", "party_size", "location"], "query": "酒吧"}
+{"expect": {"category": "gym", "intent": "discover_merchant"}, "id": "cat-gym", "must_not": ["budget", "party_size", "location"], "query": "健身"}
+{"expect": {"category": "restaurant", "intent": "discover_merchant", "location": {"type": "district", "value": "Sha Tin"}}, "id": "loc-sha-tin", "must_not": ["budget", "party_size", "time"], "query": "沙田的餐延"}
+{"expect": {"category": "restaurant", "intent": "discover_merchant", "location": {"type": "nearby"}}, "id": "loc-near-me-en", "must_not": ["budget", "party_size"], "query": "restaurant near me"}
+{"expect": {"budget": {"currency": "HKD", "max": 500.0}, "category": "restaurant", "intent": "discover_merchant"}, "id": "budget-500", "must_not": ["party_size", "location"], "query": "預算500港幣的拉麵"}
+{"expect": {"budget": {"max": 100.0}, "category": "cafe", "intent": "discover_merchant"}, "id": "budget-en", "must_not": ["party_size", "location"], "query": "coffee under 100 dollars"}
+{"expect": {"intent": "discover_merchant", "party_size": 4}, "id": "party-4", "must_not": ["budget", "location", "time"], "query": "4人食饭"}
+{"expect": {"party_size": 3}, "id": "party-3-en", "must_not": ["budget", "location", "time"], "query": "party of 3 people"}
+{"expect": {"category": "restaurant", "intent": "discover_merchant", "preferences": [{"key": "ambience", "polarity": 1, "value": "quiet"}]}, "id": "pref-quiet", "must_not": ["budget", "party_size", "location"], "query": "安靜的餐延"}
+{"expect": {"intent": "discover_merchant", "preferences": [{"key": "occasion", "polarity": 1, "value": "date"}]}, "id": "pref-date", "must_not": ["budget", "party_size", "location"], "query": "約會的餐延"}
+{"expect": {"category": "cafe", "intent": "discover_merchant", "preferences": [{"key": "price_sense", "polarity": 1, "value": "cheap"}], "sort_preference": "price_low"}, "id": "pref-cheap-en", "must_not": ["budget", "party_size", "location"], "query": "cheap coffee"}
+{"expect": {"category": "restaurant", "intent": "discover_merchant", "sort_preference": "price_low"}, "id": "sort-price-low-zh", "must_not": ["budget", "party_size", "location"], "query": "有什麼平單嘅餐延"}
+{"expect": {"category": "restaurant", "intent": "discover_merchant", "sort_preference": "rating"}, "id": "sort-rating-zh", "must_not": ["budget", "party_size", "location"], "query": "最高分嘅餐延"}
+{"expect": {"constraints": [{"key": "cuisine_avoid", "value": "spicy"}]}, "id": "avoid-spicy", "must_not": ["budget", "party_size", "location"], "query": "唔食辣"}
+{"expect": {"intent": "compare"}, "id": "intent-compare", "must_not": ["budget", "party_size"], "query": "比較中環同旺角"}
+{"expect": {"intent": "reserve"}, "id": "intent-reserve", "must_not": ["budget", "party_size"], "query": "訂桌"}
+{"expect": {"intent": "purchase"}, "id": "intent-purchase", "must_not": ["budget", "party_size"], "query": "買"}
+{"expect": {"intent": "discover_merchant", "location": {"type": "district", "value": "Sha Tin"}, "preferences": [{"key": "ambience", "polarity": 1, "value": "quiet"}, {"key": "occasion", "polarity": 1, "value": "date"}], "unknowns": []}, "id": "product-e2e-sentence", "must_not": ["party_size"], "query": "帮我找沙田適合情侣約會的餐延，預算500港幣，安靜一點，周六晚上"}
+{"expect": {"intent": "discover_merchant"}, "id": "never-invent-a-party-size", "must_not": ["party_size", "budget", "location", "time"], "query": "情侣約會嘅餐延"}
+{"expect": {"intent": "discover_merchant"}, "id": "never-invent-a-budget", "must_not": ["budget", "party_size", "location", "time"], "query": "好食嘅餐延"}
+{"expect": {"intent": "discover_merchant"}, "id": "never-invent-a-district", "must_not": ["location", "budget", "party_size"], "query": "拉麵"}
+{"expect": {"category": "restaurant", "intent": "discover_merchant"}, "id": "never-invent-a-time", "must_not": ["time", "budget", "party_size"], "query": "餐延"}
+{"expect": {"intent": "unknown"}, "id": "an-empty-query-knows-nothing", "must_not": ["category", "budget", "party_size", "location", "time"], "query": ""}

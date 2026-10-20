@@ -63,7 +63,6 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The `weak_aspects` attribute is a LIST, not a boolean** — the matcher reads booleans, so a merchant that is weak at something cannot be demoted by a preference naming that weakness. The vocabulary has no "prefer a merchant who is strong at X" rule, so the gap is a missing RULE rather than a broken matcher.
 - **A Chinese query's candidate pool is not subject-bounded** — the merchant lane's text match is blind to CJK (`tsvector` cannot segment it and the `%` operator needs three-character trigrams), and the corpus's tags are English, so 拉麵 matches **zero** `ramen` tags and the answer is a relevance order over every restaurant. Measured on the live plane while landing D406; the merchant lane's trigram work (D366) does not reach the candidate FILTER, only the score.
 - **The compare grid's row LABELS are raw attribute keys** — the rows are fact-backed (`price`, `rating`, `category`, `district`, `open_state`, `distance`) but the labels are the keys themselves; the surface that prints them is the web lane's (`packages/ui/src/trust/CompareTable.tsx`), reported and not edited here.
-- **The CI's eval gate names a package that does not exist** — `python -m nexus_ai.eval.cli --suite intent_v1 --fail-on-gate` is the AI job's merge-blocking step ("hallucination < 2%, injection containment 100%"), and there is no `nexus_ai/eval` in this repository, so the step fails with `ModuleNotFoundError` whatever the code says. The lint and type gates beside it are green since D408; this one needs either the suite built or the step written to report what it can actually measure.
 - **The corpus's tags are English** — 拉麵 matches zero `ramen` tags, so a Chinese query reaches only the merchants that spell the word in Chinese (D407's lane). A translation layer for the tags is the open half of that unit.
 - **The web lane's own files carry the 庁 character** — D409 fixed 餐廳 in the AI lane and the seed; `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/mock/index.ts` and three web test files still write 餐庁 (U+5EF3), which is not a word a user types. Reported, not edited: that tree is the web lane's.
 - **The live demo corpus still holds the old names** — 54 merchants' descriptions carry 餐庁 because the database was seeded before D409. The generator is fixed; re-seeding a shared plane is a destructive operation and is the seed lane's call.
@@ -94,6 +93,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D407** A Chinese query could not reach the merchants it names (`search/sql` + `search/tokens`) — the containment lane, on the merchant pool
 - **D408** The CI's lint step named two tools the project did not have, and the type gate had never run (`apps/ai/pyproject.toml` + the findings) — the rule set is now stated in the repo and both gates are green
 - **D409** The platform's Chinese word for "restaurant" was the Japanese variant, so 餐廳 matched nothing (`nlu/lexicon` + the seed + the tests) — one character, 45 lines, and the answer stops being a nail salon
+- **D411** The merge gate that could not start, and the five gaps it found the moment it did (`nexus_ai/eval` + `nlu/lexicon` + `nlu/understand`) — the eval package exists, both suites hold, and the case files are written with explicit code points
 - **Fresh gate** re-certified through step 6 on the live plane: 217 quality checks, none red; step 7 is the sandbox's node-spawn refusal
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
@@ -110,9 +110,10 @@ node scripts/check_console_i18n.mjs && node scripts/check_console_a11y.mjs   # P
 node scripts/check_reader_reachability.mjs           # 14 of 14 readers invoked
 node scripts/check_status_citations.mjs              # PASS
 cd apps/web && npx tsc --noEmit && npx vitest run    # clean / 136
-cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 815 passed with the live DB / 789 passed, 26 skipped without it
+cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 830 passed with the live DB / 804 passed, 26 skipped without it
 cd apps/ai && ./.venv/Scripts/python.exe -m ruff check .   # All checks passed! (D408's rule set, stated in pyproject.toml)
-cd apps/ai && ./.venv/Scripts/python.exe -m mypy nexus_ai  # Success: no issues found in 46 source files
+cd apps/ai && ./.venv/Scripts/python.exe -m mypy nexus_ai  # Success: no issues found in 51 source files
+cd apps/ai && ./.venv/Scripts/python.exe -m nexus_ai.eval.cli --suite intent_v1,safety_injection_v1 --fail-on-gate   # RESULT: PASS - 2 suite(s), 0 failing (D410)
 cd services/platform && mvn -o test                  # 251 passed (D295's whole measurement)
 ```
 
