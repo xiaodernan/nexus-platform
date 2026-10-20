@@ -388,7 +388,8 @@ def candidates_from_rows(rows: Sequence[dict[str, Any]], plan: SearchPlan, *,
                          slots_by_merchant: dict[str, list[dict[str, Any]]],
                          personalization: dict[str, float],
                          weights: RankingWeights,
-                         vector_lane: bool) -> list[Candidate]:
+                         vector_lane: bool,
+                         preference_labels: dict[str, list[str]] | None = None) -> list[Candidate]:
     out: list[Candidate] = []
     for row in rows:
         subject_type = str(row.get("subject_type") or "merchant")
@@ -423,6 +424,7 @@ def candidates_from_rows(rows: Sequence[dict[str, Any]], plan: SearchPlan, *,
             category=row.get("category") or row.get("category_primary") or row.get("kind"),
             raw={"row": row, "text_matched": bool(row.get("text_matched")),
                  "as_of": plan.now, "organic_rank": None,
+                 "preference_labels": list((preference_labels or {}).get(subject_id, [])),
                  "availability": ({"status": availability,
                                    "next_slot": _iso(av_row.get("starts_at"))}
                                   if av_row else None),
@@ -557,6 +559,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
 
     # 2. Persistent user_preferences from database (D382, requires user_id)
     # Applies to ALL candidates, not just those with feedback
+    # D392: which preference fired for which subject, so the card can name it.
+    preference_labels: dict[str, list[str]] = {}
     if user_id:
         pref_rows = await backend.user_preferences(str(user_id))
         if pref_rows:
@@ -862,6 +866,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     pref_rules.append({
                         "kind": kind,
                         "key": key,
+                        "label": _preference_label(kind, key, value),
                         "weight": float(weight),
                         "match_fn": match_fn
                     })
@@ -880,14 +885,21 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         if r.get(field) is not None:
                             enriched_attrs[field] = r.get(field)
                     pref_scores: list[float] = []
+                    matched_labels: list[str] = []
                     for rule in pref_rules:
                         score = rule["match_fn"](enriched_attrs)
                         if score is not None:
                             pref_scores.append(score)
+                            # D392: name the preference that actually fired, so the card can
+                            # say WHICH preference matched instead of "matches your preferences".
+                            if score >= 0.5:
+                                matched_labels.append(rule["label"])
                     if pref_scores:
                         avg_score = sum(pref_scores) / len(pref_scores)
                         existing = personalization.get(sid)
                         personalization[sid] = avg_score if existing is None else (existing + avg_score) / 2
+                    if matched_labels:
+                        preference_labels.setdefault(sid, []).extend(matched_labels)
 
     # 3. Transient NLU intent_preferences from current query (D382 follow-up)
     # Works without user_id - applies to all candidates
@@ -927,7 +939,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                       hours_by_merchant=hours_by_merchant,
                                       slots_by_merchant=slots_by_merchant,
                                       personalization=personalization, weights=w,
-                                      vector_lane=vector_lane)
+                                      vector_lane=vector_lane,
+                                      preference_labels=preference_labels)
     ranked = organic_rank(candidates, w)
     ranked = apply_sponsored(ranked, w) if include_sponsored else ranked
 
@@ -956,6 +969,81 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
         degraded=False, provider="none", total_estimate=len(ranked),
         agent_run_id=None, relevance_floor_applied=True)
     return cards, response, bundle, top
+
+
+#: How a preference is named on a card, in the user's words. The key is the
+#: preference's (kind, key) pair; the entry is what the card prints.
+_PREFERENCE_LABEL_COPY: dict[tuple[str, str], dict[str, str]] = {
+    ("style", "ambience"): {"zh-HK": "氣氛偏好", "zh-CN": "氛围偏好", "en": "your ambience"},
+    ("ambience", "quiet"): {"zh-HK": "安靜", "zh-CN": "安静", "en": "quiet"},
+    ("ambience", "lively"): {"zh-HK": "熱鬧", "zh-CN": "热闹", "en": "lively"},
+    ("occasion", "date"): {"zh-HK": "約會場合", "zh-CN": "约会场合", "en": "a date"},
+    ("occasion", "group"): {"zh-HK": "聚會場合", "zh-CN": "聚会场合", "en": "a group outing"},
+    ("occasion", "family"): {"zh-HK": "家庭聚餐", "zh-CN": "家庭聚餐", "en": "a family meal"},
+    ("occasion", "business"): {"zh-HK": "商務宴請", "zh-CN": "商务宴请", "en": "a business meal"},
+    ("occasion", "solo"): {"zh-HK": "一個人用餐", "zh-CN": "一个人用餐", "en": "dining alone"},
+    ("access", "mtr_near"): {"zh-HK": "近地鐵", "zh-CN": "近地铁", "en": "near the MTR"},
+    ("access", "accessible"): {"zh-HK": "無障礙", "zh-CN": "无障碍", "en": "step-free access"},
+    ("access", "parking"): {"zh-HK": "有停車位", "zh-CN": "有停车位", "en": "parking"},
+    ("access", "pet_friendly"): {"zh-HK": "可帶寵物", "zh-CN": "可带宠物", "en": "pet-friendly"},
+    ("view", "scenic"): {"zh-HK": "好景觀", "zh-CN": "好景观", "en": "a good view"},
+    ("price_sense", "cheap"): {"zh-HK": "價錢相宜", "zh-CN": "价钱相宜", "en": "good value"},
+    ("price_sense", "premium"): {"zh-HK": "高檔次", "zh-CN": "高档次", "en": "premium"},
+    ("weather", "rainy_day"): {"zh-HK": "下雨天都合適", "zh-CN": "下雨天都合适", "en": "good on a rainy day"},
+    ("time_pref", "open_late"): {"zh-HK": "營業至夜深", "zh-CN": "营业至夜深", "en": "open late"},
+    ("cuisine", "spicy"): {"zh-HK": "辣味", "zh-CN": "辣味", "en": "spicy"},
+    ("style", "outdoor"): {"zh-HK": "戶外", "zh-CN": "户外", "en": "outdoor"},
+    ("style", "indoor"): {"zh-HK": "室內", "zh-CN": "室内", "en": "indoor"},
+}
+
+#: A preference whose VALUE is itself the thing the user asked for (an enum, not a
+#: boolean) is named by that value: "quiet" says more than "ambience" does.
+_PREFERENCE_VALUE_LABEL_COPY: dict[str, dict[str, str]] = {
+    "quiet": {"zh-HK": "安靜", "zh-CN": "安静", "en": "quiet"},
+    "lively": {"zh-HK": "熱鬧", "zh-CN": "热闹", "en": "lively"},
+    "ambience": {"zh-HK": "氣氛", "zh-CN": "氛围", "en": "ambience"},
+    "date": {"zh-HK": "約會", "zh-CN": "约会", "en": "a date"},
+    "group": {"zh-HK": "聚會", "zh-CN": "聚会", "en": "a group"},
+    "family": {"zh-HK": "家庭聚餐", "zh-CN": "家庭聚餐", "en": "a family meal"},
+    "business": {"zh-HK": "商務宴請", "zh-CN": "商务宴请", "en": "a business meal"},
+    "solo": {"zh-HK": "一個人用餐", "zh-CN": "一个人用餐", "en": "dining alone"},
+    "scenic": {"zh-HK": "好景觀", "zh-CN": "好景观", "en": "a good view"},
+    "cheap": {"zh-HK": "價錢相宜", "zh-CN": "价钱相宜", "en": "good value"},
+    "premium": {"zh-HK": "高檔次", "zh-CN": "高档次", "en": "premium"},
+    "spicy": {"zh-HK": "辣味", "zh-CN": "辣味", "en": "spicy"},
+    "outdoor": {"zh-HK": "戶外", "zh-CN": "户外", "en": "outdoor"},
+    "indoor": {"zh-HK": "室內", "zh-CN": "室内", "en": "indoor"},
+    "mtr_near": {"zh-HK": "近地鐵", "zh-CN": "近地铁", "en": "near the MTR"},
+    "accessible": {"zh-HK": "無障礙", "zh-CN": "无障碍", "en": "step-free access"},
+    "parking": {"zh-HK": "有停車位", "zh-CN": "有停车位", "en": "parking"},
+    "pet_friendly": {"zh-HK": "可帶寵物", "zh-CN": "可带宠物", "en": "pet-friendly"},
+    "rainy_day": {"zh-HK": "下雨天都合適", "zh-CN": "下雨天都合适", "en": "good on a rainy day"},
+    "open_late": {"zh-HK": "營業至夜深", "zh-CN": "营业至夜深", "en": "open late"},
+}
+
+
+def _preference_label(kind: str, key: str, value: Any) -> str:
+    """A short, human name for the preference that fired (D392).
+
+    The card says WHICH preference matched, not merely that one did. An enum-valued
+    preference is named by its value ("安靜"), because the value is what the user
+    asked for; a boolean one is named by its key ("近地鐵"). The copy is per locale,
+    and a pair the copy does not know falls back to the raw value, which is still
+    better than a bullet that names nothing.
+    """
+    # The stored value is the preference's JSONB; the thing the user asked for is
+    # usually the inner "value" ("quiet"), so that is what the card names.
+    inner = value.get("value") if isinstance(value, dict) else value
+    if isinstance(inner, str) and inner:
+        by_value = _PREFERENCE_VALUE_LABEL_COPY.get(inner.lower())
+        if by_value:
+            return by_value.get("zh-HK", inner)
+    copy = _PREFERENCE_LABEL_COPY.get((str(kind), str(key)))
+    if copy:
+        return copy.get("zh-HK", str(key))
+    if isinstance(inner, str) and inner:
+        return inner
+    return str(key)
 
 
 def _feedback_value(row: dict[str, Any]) -> float | None:

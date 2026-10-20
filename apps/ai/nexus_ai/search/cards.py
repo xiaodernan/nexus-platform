@@ -45,6 +45,8 @@ REASON_COPY: dict[str, dict[str, str]] = {
     "trending": {"zh-HK": "近期熱門", "zh-CN": "近期热门", "en": "trending"},
     "preference_match": {"zh-HK": "配合你的偏好", "zh-CN": "符合你的偏好",
                          "en": "matches your preferences"},
+    "preference_named": {"zh-HK": "配合你的偏好：{p}", "zh-CN": "符合你的偏好：{p}",
+                          "en": "matches your preference: {p}"},
     "fresh_data": {"zh-HK": "資料已核實", "zh-CN": "资料已核实", "en": "data verified"},
     "district_match": {"zh-HK": "位於 {district}", "zh-CN": "位于 {district}",
                        "en": "in {district}"},
@@ -321,6 +323,14 @@ def _reason_text(label: str, cand: Candidate, *, locale: str,
         return template.format(q=q[:24]) if q else ""
     if label == "near_you":
         return template.format(d=meters_text(cand.distance_m)) if cand.distance_m else ""
+    if label == "preference_match":
+        # D392: name the preference that fired, so the bullet is not a bare claim.
+        names = [str(n) for n in (cand.raw or {}).get("preference_labels") or [] if n]
+        if not names:
+            return template
+        named = REASON_COPY["preference_named"][locale]
+        uniq = list(dict.fromkeys(names))
+        return named.format(p="、".join(uniq) if locale != "en" else ", ".join(uniq))
     if label == "within_budget":
         if cand.budget_max is None or cand.price is None:
             return ""

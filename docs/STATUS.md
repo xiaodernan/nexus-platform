@@ -15376,6 +15376,36 @@ pair the lexicon emits and the lookup is one dict access. One test premise was a
 corrected rather than the code: "嗯" is not a discovery turn, so its `unknowns` list names the intent
 alone and not a category.
 
+
+---
+
+## 383. D392 · the card names the preference that matched, not merely that one did (`search/cards`, §18 / §99)
+
+**The gap D381-D383 left.** The pipeline could rank a merchant higher because of a preference
+(occasion=date, ambience=quiet, near the MTR), and the card's reason bullet said only
+"配合你的偏好" / "matches your preferences". A bullet that says something happened without saying what is
+not checkable against the user's own stated preference, which is the whole point of §18: every
+bullet carries a fact id, and this one carried a fact id for a claim nobody could verify.
+
+**The fix.** The search pipeline now records WHICH preference fired for which subject
+(`preference_labels` on the candidate's raw), the label is a per-locale name in the user's own words
+(`_PREFERENCE_LABEL_COPY` for a boolean preference, `_PREFERENCE_VALUE_LABEL_COPY` for an enum-valued
+one, where the value is what the user asked for: "安静" not "气氛"), and the bullet reads
+"配合你的偏好：安静" / "matches your preference: quiet".
+
+**The honesty rule.** A preference that scored BELOW neutral (a penalty) names nothing: the card must
+not claim a preference match for a merchant the user does not want. A preference the pipeline could not
+name falls back to the generic claim rather than inventing a name. Duplicate names are collapsed.
+
+**Verified, not claimed.** `pytest tests/test_preference_reason.py` -> **7 passed**; full `apps/ai`
+suite -> **693 passed, 4 skipped** (live-DB tests skip; the Docker engine is down on this machine).
+
+**Discipline note.** The first implementation passed the whole JSONB preference value to the label
+helper, so an enum-valued preference was named by its container rather than by its content ("气氛" where
+"安静" was what the user asked for); the helper now reads the inner value. A second slip was a variable
+name: the reason builder's locale parameter is `locale`, not `lang`, and the copy table is indexed by
+`locale` — the first draft used the other spelling and raised `NameError` on every card.
+
 ---
 
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
