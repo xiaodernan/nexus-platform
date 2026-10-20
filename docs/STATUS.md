@@ -16778,3 +16778,61 @@ word that looks right to a reader and matches nothing, which is exactly the trap
 correction was about. Every pair in this unit was checked against the character before it was
 written down, and the test asserts the MATCHER's answer rather than the table's contents, so a
 term that is in the table but does not match cannot pass.
+
+## 411. D417 · the vocabulary and the user wrote the same word in two spellings, and a string comparison is by code point (`nlu/canonical` + `nlu/lexicon`, §7.1 / §111)
+
+**What §410 left open.** §410 closed the 19 terms whose table held **no** traditional spelling at
+all. The rest of the vocabulary still answered to ONE spelling: the Unihan database's
+`kTraditionalVariant` data names **95 characters** in the vocabulary that have another spelling,
+and every term written in the other one found nothing.
+
+**The table, and the rule that makes it usable.** `nlu/canonical.py` holds the 95 pairs — the
+characters written as `\uXXXX` escapes, because §403's lesson was that a writer's memory of a
+CJK code point is not a reference. The Unihan data names the relations but not the standard
+form, so a character has another spelling when the data's `kTraditionalVariant` names a
+candidate that
+
+- has the **same Cantonese reading**, and
+- has an **overlapping `kDefinition`** (a different DEFINITION is a different word), and
+- is **not a glyph variant** of it (a `kSemanticVariant`/`kZVariant` pair is the same character
+  in another shape, not another spelling).
+
+That rule rejects the traps the raw data contains, and each rejection is a word that would
+have broken:
+
+| the data names | what it is | what the rule does |
+|---|---|---|
+| 别 -> 彆 | 彆 is "awkward" — a different word | rejected (the definitions differ) |
+| 台 -> 颱 | 颱 is "typhoon" — the typhoon's own form | rejected (the definitions differ) |
+| 板 -> 闆 | a glyph variant of 板 | rejected (a variant, not a spelling) |
+| 家 -> 傢 | a glyph variant of 家 | rejected (a variant, not a spelling) |
+
+The first mechanical pass had no such rule and produced **座位 -> 庢位**: a word that looks
+right to a reader and matches nothing, which is the same trap §408's correction was about.
+
+**The fix, on BOTH sides of every comparison.** `canonical()` is applied to the **query**
+(`normalize_query`, and the three matchers, so a matcher called directly is symmetric too) and
+to the **vocabulary tables** (at import). The vocabulary now holds ONE spelling per term — the
+standard one — and a user who types either spelling gets the same answer.
+
+**One thing this unit deliberately does NOT do.** The query text that goes to **SQL** is not
+canonicalised: the corpus is indexed as it is, and rewriting the text that is matched against
+that index would change **which rows match** — a different measurement, filed in
+`docs/PLAN.md` rather than assumed here. The plan's `query_text` stays the raw query, and
+`tests/test_canonical_forms.py` says so.
+
+**Verified, not claimed.** `pytest tests/test_canonical_forms.py` -> **6 passed** (the
+canonicalisation is idempotent and an equivalence, the table moves CHARACTERS only, the
+vocabulary holds the canonical form of every character it uses, both spellings reach the
+matcher, and the SQL's text is untouched); the full `apps/ai` suite -> **845 passed** with the
+database, **819 passed / 26 skipped** without it; `ruff check .` -> **All checks passed!**;
+`mypy nexus_ai` -> **Success: no issues found in 52 source files**; the eval gate ->
+**`RESULT: PASS - 2 suite(s), 0 failing`** (31/31 intent cases, 27/27 safety cases).
+
+**Discipline note.** The reference data needed a RULE before it could be used, and the rule is
+the interesting part: a candidate is another spelling of a character only when it means the
+same thing. A table built from the data's links alone would have rewritten 座位, 家 and 台风
+into words that no user types — and, like §403's, it would have looked correct in a diff. The
+difference between "the data links these two characters" and "these two characters are the
+same word" is the reading and the definition, and a gate that cannot tell them apart is a gate
+that will confidently break words.

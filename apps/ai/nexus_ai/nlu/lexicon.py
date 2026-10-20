@@ -7,6 +7,8 @@ language), zh-CN (simplified) and en, per AGENT_CONTRACT §12.
 
 from __future__ import annotations
 
+from nexus_ai.nlu.canonical import canonical
+
 import re
 from typing import Any
 
@@ -141,7 +143,7 @@ PREFERENCE_RULES: list[tuple[str, str, list[str], int]] = [
 ]
 
 #: every preference value the lexicon can emit (intent fallback uses this)
-PREFERENCE_RULE_VALUES = [v for _k, v, _t, _p in PREFERENCE_RULES]
+PREFERENCE_RULE_VALUES = [canonical(v) for _k, v, _t, _p in PREFERENCE_RULES]
 
 # The style forms join their rows, so a row read anywhere carries the whole vocabulary.
 for _cuisine, _forms in _CUISINE_STYLE_FORMS.items():
@@ -232,7 +234,9 @@ CONSTRAINT_RULES: list[tuple[str, list[str], list[str]]] = [
      ["排隊", "排队", "queue", "長龍", "长龙"]),
 ]
 
-NEGATION_CUES = [c for row in CONSTRAINT_RULES for c in row[1]]
+# D417: the derived lists are derived in the CANONICAL spelling, so they agree with
+# the tables they are derived from (which are canonicalised at import, below).
+NEGATION_CUES = [canonical(c) for row in CONSTRAINT_RULES for c in row[1]]
 
 # ------------------------------------------------------------------ urgency
 URGENCY_NOW = ["而家", "现在", "現正", "立刻", "马上", "馬上", "now", "asap", "急", "今晚", "今日"]
@@ -438,7 +442,9 @@ TRADITIONAL_MARKERS = frozenset(t for t, _s in _TRAD_SIMP_PAIRS)
 
 
 def match_district(text: str) -> tuple[str, dict[str, Any]] | None:
-    low = text.lower()
+    from nexus_ai.nlu.canonical import canonical
+
+    low = canonical(text).lower()
     best: tuple[int, str, dict[str, Any]] | None = None
     for name, spec in DISTRICTS.items():
         for alias in [name, *spec["aliases"]]:
@@ -457,7 +463,9 @@ def match_category(text: str) -> tuple[str, float] | None:
     **rightmost** one wins; ties break on term length (more specific) and then alphabetically
     for determinism. Without this, a preference token such as 宠物 would hijack the category.
     """
-    low = text.lower()
+    from nexus_ai.nlu.canonical import canonical
+
+    low = canonical(text).lower()
     hits: list[tuple[int, int, str]] = []
     for cat, terms in CATEGORY_SYNONYMS.items():
         longest = 0
@@ -481,7 +489,9 @@ def match_category(text: str) -> tuple[str, float] | None:
 
 
 def match_cuisines(text: str) -> list[str]:
-    low = text.lower()
+    from nexus_ai.nlu.canonical import canonical
+
+    low = canonical(text).lower()
     return [c for c, terms in CUISINE_TERMS.items() if any(t.lower() in low for t in terms)]
 
 
@@ -489,11 +499,19 @@ def normalize_query(text: str) -> str:
     """Lowercase ASCII, collapse whitespace, strip light punctuation but keep CJK + digits.
 
     A colon between digits is kept: "7:30pm" is a clock time, not punctuation.
+
+    D417: the text is also put in the CANONICAL spelling (`nlu/canonical.py`), so a user
+    who types 餐廳 and a vocabulary written 餐厅 meet in the middle. The canonicalisation
+    is one table of code points, checked against the Unihan database - and it is applied
+    HERE, in the NLU, not to the text that goes to SQL: the corpus is indexed as it is,
+    and rewriting the text matched against that index would change which rows match.
     """
+    from nexus_ai.nlu.canonical import canonical
+
     cleaned = re.sub(r"(?<!\d)[:：](?!\d)", " ", text or "")
     cleaned = re.sub(r"[，。！？；、,.!?;~（）()\[\]{}<>《》]+", " ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned)
-    return cleaned.strip()
+    return canonical(cleaned.strip())
 
 
 MONEY_RE = re.compile(
@@ -538,3 +556,53 @@ def proper_nouns(text: str) -> list[str]:
             continue
         out.append(cand)
     return out
+
+
+# --------------------------------------------------------------------------- D417
+#: The vocabulary's tables, canonicalised at import. A term written in either spelling is
+#: the same term, so the matchers answer to both. The tables are REBOUND (not edited in
+#: place) so that the canonicalisation is visible in one place and the tables above stay
+#: readable.
+_CANONICALISED_TABLES = (
+    "CATEGORY_SYNONYMS", "CUISINE_TERMS", "SORT_RULES", "CONSTRAINT_RULES", "DISTRICTS",
+    "PREFERENCE_RULES", "PREFERENCE_CUES", "PREFERENCE_RULE_VALUES", "COMPARE_CUES",
+    "DISCOVER_CUES", "RESERVE_CUES", "PURCHASE_CUES", "ASK_MERCHANT_CUES", "PLAN_CUES",
+    "NEARBY_TERMS", "OPEN_PRICE_WORDS", "CONSTRAINT_CANON",
+)
+
+
+def _canonical_node(node):
+    """Canonicalise every string in a table, and drop the duplicates it creates."""
+    from nexus_ai.nlu.canonical import canonical
+
+    if isinstance(node, str):
+        return canonical(node)
+    if isinstance(node, list):
+        # The canonicalisation changes the SPELLING, not the structure: a list that held
+        # the same cue twice still holds it twice, so every derived list and every test
+        # that compares them still compares the same shape.
+        return [_canonical_node(item) for item in node]
+    if isinstance(node, tuple):
+        return tuple(_canonical_node(item) for item in node)
+    if isinstance(node, dict):
+        return {_canonical_node(k): _canonical_node(v) for k, v in node.items()}
+    return node
+
+
+def _canonicalise_vocabulary() -> None:
+    """Put every vocabulary term in the canonical spelling (D417)."""
+    import sys
+
+    module = sys.modules[__name__]
+    for name in _CANONICALISED_TABLES:
+        table = getattr(module, name, None)
+        if table is None:
+            continue
+        setattr(module, name, _canonical_node(table))
+    # The DERIVED lists (NEGATION_CUES, PREFERENCE_RULE_VALUES) are built in the
+    # canonical spelling where they are defined, so they agree with the tables they come
+    # from - a list built from the pre-canonicalisation rows would keep the old
+    # spelling, and a test that compares the two would be comparing two vocabularies.
+
+
+_canonicalise_vocabulary()

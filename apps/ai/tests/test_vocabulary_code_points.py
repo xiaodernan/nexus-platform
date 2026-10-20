@@ -1,4 +1,4 @@
-"""D414 - the vocabulary's code points, pinned.
+"""D412 - the vocabulary's code points, pinned.
 
 The Unihan database (https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip) says:
 
@@ -7,8 +7,8 @@ The Unihan database (https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip) s
     U+9EB5 = 麵    flour, noodles
     U+9905 = 餅    biscuit
     U+98DF = 食    to eat
-    U+996D = 飯    the traditional 飯
-    U+98EF = 飯    the SIMPLIFIED 飯
+    U+996D = 饭    the SIMPLIFIED 飯
+    U+98EF = 飯    the traditional 飯
     U+88DC = 補    the traditional 補
     U+8865 = 补    the simplified 補
 
@@ -18,10 +18,10 @@ by writing it with the wrong code point, and its test then measured its own prob
 instead of the product. These cases pin the code points, so the next writer cannot make
 the same mistake in the same place, and the behavioural cases beside them pin the effect.
 
-The simplified/traditional half of the class (a vocabulary entry written 飯 (U+98EF)
-where a Hong Kong user types 飯 (U+996D)) is a separate unit, because fixing it
-properly means canonicalising BOTH sides of every comparison; it is filed, not claimed
-here.
+D417 added the last piece: the vocabulary is now CANONICALISED (`nlu/canonical.py`), so it
+holds ONE spelling per term - the standard one - and a user who types the other spelling
+still matches. The cases below therefore assert the standard form in the table AND that
+BOTH spellings reach the matcher.
 """
 
 from __future__ import annotations
@@ -34,26 +34,28 @@ MUST_NOT_APPEAR = {
     "\u5ef6": "延 - the character D409 wrote where 廳 (U+5EF3) belonged",
 }
 
-
-def test_the_words_a_user_types_are_in_the_vocabulary():
-    restaurant = L.CATEGORY_SYNONYMS["restaurant"]
-    cafe = L.CATEGORY_SYNONYMS["cafe"]
-    bakery = L.CATEGORY_SYNONYMS["bakery"]
-    assert "\u9910\u5ef3" in restaurant, "餐廳 (U+9910 U+5EF3) is not a restaurant synonym"
-    assert "\u8336\u9910\u5ef3" in cafe, "茶餐廳 is not a cafe synonym"
-    assert "\u9eb5\u5305" in bakery, "麵包 (U+9EB5 U+5305) is not a bakery synonym"
-    assert "\u98df\u996d" in restaurant, "食飯 (U+98DF U+996D) is not a restaurant synonym"
-    assert "\u9910\u5385" in restaurant, "餐厅 (the simplified form) is not a synonym"
+#: (the standard form, the other spelling, the category)
+BOTH_SPELLINGS = [
+    ("\u9910\u5ef3", "\u9910\u5385", "restaurant"),      # 餐廳 / 餐厅
+    ("\u98df\u98ef", "\u98df\u996d", "restaurant"),      # 食飯 / 食饭
+    ("\u5403\u98ef", "\u5403\u996d", "restaurant"),      # 吃飯 / 吃饭
+    ("\u9eb5\u5305", "\u9762\u5305", "bakery"),          # 麵包 / 面包
+    ("\u8336\u9910\u5ef3", "\u8336\u9910\u5385", "cafe"),  # 茶餐廳 / 茶餐厅
+]
 
 
-def test_the_words_a_user_types_match_the_category():
-    # The behavioural half: a synonym nobody types costs nothing, a MISSING synonym
-    # costs the whole category.
-    assert L.match_category("\u9910\u5ef3")[0] == "restaurant"
-    assert L.match_category("\u8336\u9910\u5ef3")[0] == "cafe"
-    assert L.match_category("\u9eb5\u5305")[0] == "bakery"
-    assert L.match_category("\u98df\u996d")[0] == "restaurant"
-    assert L.match_category("\u9910\u5385")[0] == "restaurant"
+def test_the_standard_spelling_is_in_the_vocabulary():
+    for standard, _other, category in BOTH_SPELLINGS:
+        assert standard in L.CATEGORY_SYNONYMS[category], (
+            f"{standard.encode('unicode_escape').decode()} is not in the {category} list")
+
+
+def test_both_spellings_match_the_category():
+    # The behavioural half: the vocabulary holds one spelling, and a user who types
+    # either one gets the same answer.
+    for standard, other, category in BOTH_SPELLINGS:
+        assert L.match_category(standard)[0] == category, standard.encode("unicode_escape").decode()
+        assert L.match_category(other)[0] == category, other.encode("unicode_escape").decode()
 
 
 def test_no_vocabulary_term_carries_a_code_point_from_the_known_bad_list():
@@ -79,5 +81,5 @@ def test_the_code_points_are_the_ones_the_table_claims():
     # from memory instead of from the database.
     assert len("\u9910\u5ef3") == 2 and ord("\u5ef3") == 0x5EF3
     assert len("\u9eb5\u5305") == 2 and ord("\u9eb5") == 0x9EB5
-    assert len("\u98df\u996d") == 2 and ord("\u996d") == 0x996D
     assert ord("\u5ef6") == 0x5EF6 and ord("\u9905") == 0x9905
+    assert ord("\u98df") == 0x98DF and ord("\u996d") == 0x996D
