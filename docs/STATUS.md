@@ -15480,6 +15480,40 @@ now uses the weight, and the test pins the number rather than a threshold.
 
 ---
 
+## 386. D395 · the "X-style" form is how a HK user asks for a cuisine (`nlu/lexicon`, §7.1 / §111)
+
+**The gap the live plane found.** With the Docker engine back up, the end-to-end probe against the
+seeded `nexus` database (470 published merchants, 202 under `restaurant`) showed the Chinese
+sentence answering with **5 items** where D381 left it at **0** â the fix holds on the live plane. The same
+probe then found a second hole: "æ³é£æ¥åðfè" ("I want Japanese-style food") resolved to
+`category=None` with **no preferences at all**, so the page answered with the search's first five
+merchants rather than the Japanese ones the user asked for.
+
+**Why.** Only two of the eleven `CUISINE_TERMS` rows carried the "X-style" form (日式, 泰式, 韓式)
+â the rows had 日料, 日本菜, 豝菜 but not 日式, and "日式菜" is how a Hong Kong user actually asks
+for Japanese food. A vocabulary row is a promise about what the users will type, and this one had
+promised less than it delivered.
+
+**The fix.** `_CUISINE_STYLE_FORMS` names the style form for each cuisine, and the forms are
+APPENDED to the rows themselves, so the rows stay the single source of truth: a form that is not
+IN the row is a form the matcher cannot see, and the test pins that.
+
+**Measured.** 日式 / 日式菜 -> japanese; 泰式 / 泰式菜 -> thai; 中式 -> cantonese; 西式 ->
+western; 意式 -> italian; 馬来西菜 -> malaysian; 素菜 -> vegetarian. On the live database
+"我想食日式菜" now extracts `category=restaurant` (0.92) with `cuisine=japanese`.
+
+**Verified, not claimed.** `pytest tests/test_cuisine_style_forms.py` -> **14 passed**; full `apps/ai`
+suite -> **728 passed, 4 skipped**; the live-DB integration tests -> **4 passed** with
+`NEXUS_TEST_DATABASE_URL` pointed at the seeded `nexus` database.
+
+**Discipline note.** The first probe of this unit was read off the console, and the console's
+GBK encoding made every Chinese term unreadable â one probe used the wrong codepoint for 泰 and
+appeared to show that the Thai row was missing its own style form. The probe was rewritten to
+print codepoints, which showed the row was fine and the probe was wrong. A measurement read
+through a lossy display is not a measurement.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha

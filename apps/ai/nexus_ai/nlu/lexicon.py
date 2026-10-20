@@ -73,6 +73,21 @@ CATEGORY_SYNONYMS: dict[str, list[str]] = {
 }
 
 #: food sub-cuisines; surfaced as `preferences`/`constraints` keys plus category=restaurant
+#: The "X-style" form (\u65e5\u5f0f, \u6cf0\u5f0f, ...) is how a HK user actually asks for a
+#: cuisine, and only two of the rows below carried it. These are the forms added, so the
+#: rows themselves stay the single source of truth.
+_CUISINE_STYLE_FORMS: dict[str, tuple[str, ...]] = {
+    "japanese": ("日式", "日式菜"),
+    "cantonese": ("中式", "中式菜"),
+    "western": ("西式", "西式菜"),
+    "italian": ("意式", "意式菜"),
+    "indian": ("印度菜",),
+    "malaysian": ("馬来西菜",),
+    "dim_sum": ("體烏菜",),
+    "seafood": ("海魚菜",),
+    "vegetarian": ("素菜",),
+}
+
 CUISINE_TERMS: dict[str, list[str]] = {
     "japanese": ["日料", "日本菜", "日本料理", "壽司", "寿司", "sushi", "ramen", "拉麵", "拉面",
                  "居酒屋", "izakaya", "鐵板燒", "日籍"],
@@ -127,6 +142,16 @@ PREFERENCE_RULES: list[tuple[str, str, list[str], int]] = [
 
 #: every preference value the lexicon can emit (intent fallback uses this)
 PREFERENCE_RULE_VALUES = [v for _k, v, _t, _p in PREFERENCE_RULES]
+
+# The style forms join their rows, so a row read anywhere carries the whole vocabulary.
+for _cuisine, _forms in _CUISINE_STYLE_FORMS.items():
+    _row = CUISINE_TERMS.get(_cuisine)
+    if _row is None:
+        continue
+    for _form in _forms:
+        if _form not in _row:
+            _row.append(_form)
+
 
 #: The cuisine the user names -> the seeded taxonomy leaves that satisfy it.
 #:
