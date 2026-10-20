@@ -79,6 +79,11 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D395** The "X-style" form is how a HK user asks for a cuisine (`nlu/lexicon`) — 14 tests added, 728 passed
 - **D396** Typed vs declared preferences on the card, and a favourite pointing at an unopenable offering (`search/cards`, `data/seed/generate.py`) — 8 tests added, 736 passed
 - **D397** The better evidence wins: a declared preference is not diluted by a weak history (`search/service`) — 6 tests added, 742 passed
+- **D398** The live-DB proof of the Chinese-sentence chain became a gate, and the CI job that runs it (`apps/ai/tests/test_live_preferences.py` + `.github/workflows/ci.yml`)
+- **D399** The product's own e2e sentence crashed the search with a 500 (`search/service` + `search/sql`) — the open-at-time filter bound a string to a `time` column
+- **D400/D401** The product's own non-negotiable rules, checked on the live plane; the comparison grid had no distance row and no district row (`apps/ai/tests/test_live_ai_contract.py`, `api/routes_discover`)
+- **D403** The RAG retrieval could not find a Chinese chunk, and the corpus plainly has one (`search/sql` + `api/routes_rag`) — the trigram lane
+- **D405** The merchant agent handed off every question, and its grounded branch had never run (`search/tokens` + `api/routes_rag` + `api/routes_stream`) — the containment is the evidence, not the score
 - **Fresh gate** re-certified through step 6 on the live plane: 217 quality checks, none red; step 7 is the sandbox's node-spawn refusal
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
@@ -95,7 +100,7 @@ node scripts/check_console_i18n.mjs && node scripts/check_console_a11y.mjs   # P
 node scripts/check_reader_reachability.mjs           # 14 of 14 readers invoked
 node scripts/check_status_citations.mjs              # PASS
 cd apps/web && npx tsc --noEmit && npx vitest run    # clean / 136
-cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 742 passed, 4 skipped
+cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 804 passed with the live DB / 783 passed, 21 skipped without it
 cd services/platform && mvn -o test                  # 251 passed (D295's whole measurement)
 ```
 

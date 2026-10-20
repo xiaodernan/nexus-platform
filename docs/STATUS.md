@@ -16118,3 +16118,65 @@ bytes that are not yet settled, and the EOL census would then be reading a mix t
   numbers `## 396` and `## 395` carry, and it is quoted here as inherited, not as this unit's evidence.
   A documents census run during this landing would have graded the mixed-EOL working copy described
   above rather than this commit's staged blob, which is why no step number is claimed as measured here.
+
+## 399. D405 · the merchant agent handed off every question, and its grounded branch had never run (`search/tokens` + `api/routes_rag` + `api/routes_stream`, §7 / §24-26 / §8)
+
+**What the merchant agent did, for every question.** `POST /ai/v1/merchant-agent/chat` answered
+"有咩飲品？", "what drinks do you have?", "menu", "coffee", "全日菜單" and "你哋有咩招牌菜？" with
+the same three frames — `status`, `summary` (the "I could not find that, here is a human to ask"
+copy), `done` — and `"citations":[]`. Two merchants × six questions = **twelve conversations,
+twelve handoffs, zero grounded answers**, for merchants whose knowledge base plainly holds the
+answer: one of their chunks is the full-menu heading itself.
+
+**Why — two defects, and the first was hiding the second.**
+
+1. **The grounding floor was a number no corpus could reach.** The route tested
+   `grounded = bool(chunks) and score >= 0.35`, where `score` is the best chunk's
+   `kw_score + vec_score`. `ts_rank` over a long chunk is small: the best score measured on the
+   seeded plane is **0.0865** for a good English match ("coffee") and **0.0000** for a Chinese one
+   (the tsvector cannot segment CJK — D403). 0.35 was not a floor, it was a wall.
+2. **The score cannot be the evidence even where it is reachable.** The trigram lane D403 added
+   produces a *similarity*, and a similarity does not separate a match from noise: measured on the
+   seeded corpus, 咖啡 (a real match — 79 chunks contain it) scores **0.0063** and a nonsense query
+   ("zzqxwv") scores **0.0093**. The noise is HIGHER. A similarity can widen a candidate set; it
+   cannot decide whether a chunk answers the question.
+
+**The fix: the text answers the question the score could not.** `search/tokens.py` grows the
+house's tokenizer into a shared one — `query_tokens` (latin words whole; a CJK run broken into
+bigrams, because Chinese carries no spaces and the bigram is the unit a chunk can hold) and
+`mentions` (does this text have the words?). `api/routes_rag.py` marks every retrieved chunk
+`hit = mentions(chunk.text, query)` and drops the rows without one; `api/routes_stream.py` grounds
+the merchant agent on `any(chunk.hit)` and no longer reads the score.
+
+**One rule for the CJK bigram.** `search/tokens.py` owns the bigram rule now, and the offline
+catalogue matcher (`search/service.py::_static_tokens`) delegates to it instead of carrying its own
+copy of the CJK range. Its OUTPUT is unchanged — the tokens, their order and their set are the
+same — which is why the offline search's own tests did not move. Two copies of a range are how two
+lanes start disagreeing about what a Chinese word is.
+
+**The second defect, which the first was hiding.** With the floor reachable for the first time, the
+grounded branch RAN — and it crashed: `"citations": [c["id"] for c in wrapped]` reads an `id` out of
+`_wrap_for_summary`'s payload, which holds only `title` and `text`, so the stream answered with a
+`KeyError: 'id'` and an `error` frame instead of an answer. The branch had never executed in
+production: every question took the handoff path, so the crash stayed hidden behind the defect
+that was hiding it. The citations now come from the chunks themselves.
+
+**Measured, on the live plane, after the fix.**
+
+- `POST /ai/v1/rag/retrieve`: 咖啡 -> 3 chunks, 全日菜單 -> 3, menu -> 3; `zzqxwv` -> **0** (it
+  answered with 6 arbitrary chunks before), `qqzzxxw` -> 0.
+- `POST /ai/v1/merchant-agent/chat`: a question the merchant's KB holds is answered, with
+  citations and `degraded: false`; a question it does not hold gets the handoff, with
+  `"citations":[]` and `degraded: true`. The probe that found the defect ran twelve questions
+  across two merchants; the test that pins it runs both arms on the live plane.
+
+**Verified, not claimed.** `pytest tests/test_rag_containment.py` -> **10 passed** (8 offline + 2
+live); `pytest tests/test_merchant_agent_grounding.py` -> **2 passed** (both live); the full
+`apps/ai` suite -> **804 passed** with the database, **783 passed / 21 skipped** without it.
+
+**Discipline note.** A retrieval score is a RANKING, not a confidence, and a threshold written
+against one is a wall the corpus cannot cross. Lowering 0.35 to a reachable value would have been
+the easy fix and the wrong one: at a floor of 0.006 the agent would have answered nonsense queries
+out of trigram noise, with citations attached — a worse failure than the handoff it had. The
+evidence had to be the text, and the branch that the wall had been hiding had to be run before the
+unit could claim the wall was the only thing wrong.

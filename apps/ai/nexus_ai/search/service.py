@@ -5,8 +5,9 @@ Hard properties of this module:
 * **zero LLM calls.** `search()` runs SQL → features → weights → cards and never touches a
   model router, so it is the endpoint the SSE stream can fall back to when the LLM is down
   (§105). `provider` is reported as `"none"` to make that visible in the response.
-* **organic first, sponsored second.** `organic_rank()` then `apply_sponsored()`, capped at
-  1-in-top-5, organic best match never displaced, label attached (§66-67).
+* **organic first, sponsored second.** `organic_rank()`, then the order the user's own words
+  named (§34: `apply_sort_preference()`), then `apply_sponsored()` — sponsored is still placed
+  last, capped at 1-in-top-5, organic best match never displaced, label attached (§66-67).
 * **tenant scoping is structural** — every candidate query carries `tenant_id` as a bound
   parameter, and the merchant agent path additionally binds `merchant_id`.
 * nothing is invented: availability only ever comes from `availability_slots` rows, opening
@@ -34,6 +35,7 @@ from nexus_ai.search.ranking import (
     RankingWeights,
     Scored,
     apply_sponsored,
+    apply_sort_preference,
     facet_counts,
     load_ranking_weights,
     organic_rank,
@@ -238,14 +240,20 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
 
 def _static_tokens(low: str) -> list[str]:
     """Whitespace tokens plus CJK bigrams — Chinese queries carry no spaces, so a
-    naive `split()` would filter every demo row out of a 沙田餐廳 query."""
+    naive `split()` would filter every demo row out of a Chinese query.
+
+    D405: the CJK bigram rule is `search/tokens.py`'s (`cjk_bigrams`), the one the live
+    retrieval lane reads. This function used to carry its own copy of the CJK range,
+    and two copies of a range are how two lanes start disagreeing about what a Chinese
+    word is. Its OUTPUT is unchanged — the tokens, their order and their set are the
+    same as before, which is why the offline search's own tests did not move."""
+    from nexus_ai.search.tokens import cjk_bigrams
+
     toks = [t for t in low.split() if t]
     out: list[str] = []
     for t in toks:
         out.append(t)
-        cjk = "".join(ch for ch in t if "一" <= ch <= "鿿")
-        if len(cjk) >= 2:
-            out.extend(cjk[i:i + 2] for i in range(len(cjk) - 1))
+        out.extend(cjk_bigrams(t))
     return sorted(set(out))
 
 
@@ -1002,6 +1010,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                       vector_lane=vector_lane,
                                       preference_labels=preference_labels)
     ranked = organic_rank(candidates, w)
+    ranked = apply_sort_preference(ranked, plan.sort_preference)
     ranked = apply_sponsored(ranked, w) if include_sponsored else ranked
 
     facets_raw = facet_counts([s.candidate for s in ranked], w.facets)

@@ -94,10 +94,21 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
         db = deps.database()
         if db is not None:
             from nexus_ai.api.routes_rag import retrieve_chunks
-            chunks, score = await retrieve_chunks(
+            # The retrieval's own score is not the grounding signal (D405), so it is not
+            # read here; the containment is.
+            chunks, _score = await retrieve_chunks(
                 db, deps, query=body.message, merchant_id=str(body.merchant_id),
                 tenant_id=deps.tenant_id(), top_k=6)
-        grounded = bool(chunks) and score >= 0.35
+        # D405: the grounding test is the CONTAINMENT, not an absolute score floor.
+        # The floor was 0.35 and the corpus could not reach it: the best retrieval score
+        # measured on the seeded plane is 0.09 for a good English match and 0.00 for a
+        # Chinese one, so the merchant agent answered EVERY question with "I cannot find
+        # that" and a handoff -- for a merchant whose KB plainly contains the answer.
+        # The retrieval already returns only chunks that matched (its WHERE clause is the
+        # filter), and a chunk that matched because it MENTIONS what was asked is the
+        # evidence. A chunk that matched only by trigram noise is not, and the
+        # containment test is what tells them apart.
+        grounded = any(bool(c.get("hit")) for c in chunks)
         provider = "mock"
         if grounded:
             yield ("status", {"stage": "summarizing", "text": copy["answering"]})
@@ -110,8 +121,15 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
                 task_class="summary",
                 payload={"records": wrapped, "locale": locale}), meter=meter)
             provider = call.response.provider
+            # D405: the citations are the CHUNKS' ids. `_wrap_for_summary` returns the
+            # model payload (title + scanned text) and holds no id, so the grounded branch
+            # used to raise `KeyError: 'id'` and the stream answered with an error frame
+            # instead of an answer. The branch had never run: the old floor (0.35) was
+            # unreachable, so every question took the handoff path and the crash stayed
+            # hidden behind a defect that was hiding it.
             yield ("summary", {"text": call.response.text,
-                               "citations": [c["id"] for c in wrapped][:8]})
+                               "citations": [str(c.get("id")) for c in chunks
+                                             if c.get("id")][:8]})
         else:
             yield ("summary", {"text": t["none_grounded"] + " " + t["handoff"],
                                "citations": []})

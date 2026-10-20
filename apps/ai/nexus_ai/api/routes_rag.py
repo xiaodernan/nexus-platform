@@ -50,8 +50,19 @@ async def retrieve_chunks(database: Any, deps: Deps, *, query: str,
     q = S.build_chunk_query(tenant_id=tenant_id, merchant_id=merchant_id, text=query,
                             embedding=embedding, top_k=top_k)
     rows = await database.readonly(q.sql, *q.params, schema=deps.settings.db_search_path)
-    best = max((float(r.get("kw_score") or 0) + float(r.get("vec_score") or 0)
-                for r in rows), default=0.0)
+    # D405: the trigram lane counts, and the CONTAINMENT is the evidence. The trigram
+    # similarity of a long chunk against a short query does not separate a real match
+    # from noise (measured on the seeded corpus: a real Chinese match scores 0.0063 and a
+    # nonsense query scores 0.0093), so it can widen the candidate set but it cannot
+    # decide whether a chunk really answers the question. Containment can.
+    from nexus_ai.search.tokens import mentions
+
+    for r in rows:
+        r["hit"] = mentions(str(r.get("text") or ""), query)
+    best = max(
+        (float(r.get("kw_score") or 0) + float(r.get("trigram_score") or 0)
+         + float(r.get("vec_score") or 0) for r in rows),
+        default=0.0)
     return rows, best
 
 
@@ -79,16 +90,16 @@ async def rag_retrieve(request: Request, body: RagRetrieveRequest):
                 status_code=503)
     chunks = []
     for r in rows:
-        # D402: the trigram lane counts as retrieval evidence. A Chinese chunk cannot
-        # match the tsvector (one token per CJK run) and the seeded corpus carries no
-        # embedding, so a Chinese query scored 0 on both lanes and every chunk it DID
-        # match was dropped by the threshold below - the retrieval answered "nothing
-        # found" for a query the corpus plainly contains.
+        # D405: a chunk answers the question when it MENTIONS what was asked. The
+        # trigram lane widens the candidate set (a Chinese chunk cannot match the
+        # tsvector, and the seeded corpus carries no embedding), and the containment
+        # decides. The score alone cannot: the trigram similarity of a long chunk
+        # against a short query does not separate a real match from noise, and the
+        # absolute floor it was measured against is out of the corpus's scale.
         score = max(float(r.get("kw_score") or 0.0), float(r.get("trigram_score") or 0.0),
                     float(r.get("vec_score") or 0.0))
-        if score < VECTOR_FLOOR and not float(r.get("kw_score") or 0.0) \
-                and not float(r.get("trigram_score") or 0.0):
-            continue  # §7: no answer without retrieval — drop sub-threshold noise
+        if not r.get("hit"):
+            continue  # §7: no answer without retrieval — drop what was not asked for
         text = str(r.get("text") or "")
         scan = scan_untrusted(text)
         chunks.append(RagChunk(
