@@ -128,6 +128,32 @@ jobs:
           NEXUS_DB_APP_PASSWORD=ci_nexus_app NEXUS_DB_AI_PASSWORD=ci_nexus_ai \
             psql -h 127.0.0.1 -p 5433 -U postgres -d nexus_test -v ON_ERROR_STOP=1 -q \
             -f infra/postgres/init/00_roles.sql
+      # D398: the schema alone is not enough for the live suite. The Chinese-sentence
+      # regressions (D381's soft preference as a hard filter, D391's category read from
+      # the resolved signals, D395's X-style cuisine) can only be seen against ROWS: with
+      # an empty database every one of them passes by returning nothing, which is the
+      # defect. So the demo seed is loaded into the test database before the suite runs.
+      # `generate.py` writes the .sql files; they are applied in FK order exactly as
+      # `data/seed/load.sh` applies them.
+      - name: Generate + load the demo seed into the test database
+        env:
+          NEXUS_SEED_COUNTS: ci
+        run: |
+          python data/seed/generate.py --counts "$NEXUS_SEED_COUNTS"
+          export PGPASSWORD=ci_secret
+          # --single-transaction is REQUIRED, not stylistic: each seed file stages its rows
+          # in a TEMP table declared ON COMMIT DROP, so a psql that autocommits between
+          # statements drops the staging table before the INSERT that reads it. This is
+          # what data/seed/load.sh does, and the difference is a hard error
+          # ("relation _seed_tenants does not exist"), not a subtle one.
+          for f in $(ls data/seed/out/*.sql | sort -V); do
+            psql -h 127.0.0.1 -p 5433 -U postgres -d nexus_test \
+              -v ON_ERROR_STOP=1 --single-transaction -q -f "$f"
+          done
+          psql -h 127.0.0.1 -p 5433 -U postgres -d nexus_test -tAc \
+            "select count(*) from merchants where status = 'published'" \
+            | grep -qE '^[1-9][0-9]*$' || {
+              echo "the seed published no merchant - the live suite would skip its own regressions"; exit 1; }
       - name: Tests + evaluation gate
         env:
           NEXUS_DB_URL: postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test

@@ -15627,6 +15627,42 @@ exited 2 at step 7 for the reason above, with steps 1-6 green including the hard
 
 ---
 
+## 391. D398 · the live-DB proof of the Chinese-sentence chain became a gate, and the CI job that runs it (`apps/ai/tests/test_live_preferences.py` + `.github/workflows/ci.yml`)
+
+**The gap D381-D397 left.** Every defect in that chain was verified offline and by probe, and a
+probe is a file nobody runs. D381's fix — a soft preference rendered as a hard filter — was the
+kind of defect that passes on an empty database: with no rows, the query returns nothing, which is
+what the defect does too. The live suite skipped every seed-dependent case.
+
+**What the tests now prove, on the live plane (6 cases, all passing against the seeded `nexus`):**
+
+- the Chinese date sentence answers with **cards** (it answered with 0 before D381);
+- it resolves a **category** (`restaurant`, inferred at 0.5, below the 0.95 a named category gets);
+- it **keeps the preference soft** (the preference survives, and the attribute filter does not);
+- the "X-style" cuisine sentence resolves a cuisine (`japanese`) and a category;
+- the quiet sentence resolves the cafe category;
+- the category the NLU infers is the category the **taxonomy holds** (202 merchants under
+  `restaurant`, 84 under `cafe`, 45 under `bar` on the seeded plane).
+
+**The CI job had to grow a step.** The AI job provisioned the SCHEMA and the role split but never
+seeded, so every seed-dependent case skipped — the tests were green precisely where they could
+not fail. The job now generates and loads the demo seed before the suite, and **asserts** that the
+seed published at least one merchant: a seed that loaded nothing would leave the live suite
+skipping its own regressions while the job stayed green.
+
+**Verified, not claimed.** The step was run exactly as CI runs it, against a throwaway database
+(`nexus_ci_seed_check`): schema applied from `infra/db/migrations/*.sql`, `generate.py --counts ci`
+-> PASS, the 23 seed files applied in FK order -> **112 published merchants**, the guard -> PASS, and
+`tests/test_live_preferences.py` against that database -> **6 passed**. The log is the evidence.
+
+**Discipline note.** The first run of the step failed with `relation "_seed_tenants" does not
+exist`, and the cause was not the CI step but the SEED's staging tables: each seed file stages its
+rows in a `TEMP TABLE ... ON COMMIT DROP`, so a psql that autocommits between statements drops the
+staging table before the INSERT that reads it. `data/seed/load.sh` has always passed
+`--single-transaction` for exactly this reason; the CI step now does too, and says why in a comment.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha
