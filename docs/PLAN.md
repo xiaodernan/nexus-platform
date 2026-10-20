@@ -101,6 +101,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D417** The vocabulary and the user wrote the same word in two spellings, and a string comparison is by code point (`nlu/canonical` + `nlu/lexicon`) — 95 characters canonicalised on BOTH sides, with a rule that rejects the glyph variants the Unihan links contain
 - **D418** The query that is matched against the corpus is now the canonical form, and it can only add matches (`search/service` + `api/routes_rag`) — the measured half of D417: 470 corpus rows, 0 of them hold a changeable character
 - **D419** The demo plane's corpus is older than the seed generator, so the preferences the product understands do nothing there (`apps/ai/tests/test_live_personalization_signal.py`) — the signal measures 0.5 (neutral) on the live plane and 1.0 on a plane seeded from the current generator
+- **D420** The canonicalisation swallowed the locale detection: a Simplified Chinese user was answered in the Traditional locale (`nlu/lexicon` + `nlu/understand`) — the normalisation keeps the user's own spelling again, and the canonical form is used only where the vocabulary is compared
 - **Fresh gate** re-certified through step 6 on the live plane: 217 quality checks, none red; step 7 is the sandbox's node-spawn refusal
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.

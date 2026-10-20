@@ -132,7 +132,14 @@ def extract_intent(query: str, context: dict[str, Any] | None = None) -> IntentE
         ex.unknowns = ["intent"]
         return ex
 
+    # D420: the language is read from the text as the user wrote it, and only the
+    # VOCABULARY comparison sees the canonical spelling. Canonicalising first would take
+    # the simplified markers with it, and a Simplified Chinese user would be answered
+    # in the Traditional locale.
     ex.language = str(context.get("locale") or detect_language(text))
+    from nexus_ai.nlu.canonical import canonical
+
+    text = canonical(text)
     ex = _fill_intent_kind(ex, text)
     ex = _fill_category(ex, text)
     ex = _fill_location(ex, text, context)

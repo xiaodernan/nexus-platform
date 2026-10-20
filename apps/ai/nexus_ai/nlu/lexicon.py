@@ -500,18 +500,18 @@ def normalize_query(text: str) -> str:
 
     A colon between digits is kept: "7:30pm" is a clock time, not punctuation.
 
-    D417: the text is also put in the CANONICAL spelling (`nlu/canonical.py`), so a user
-    who types 餐廳 and a vocabulary written 餐厅 meet in the middle. The canonicalisation
-    is one table of code points, checked against the Unihan database - and it is applied
-    HERE, in the NLU, not to the text that goes to SQL: the corpus is indexed as it is,
-    and rewriting the text matched against that index would change which rows match.
+    D420: this does NOT canonicalise the spelling, and that is the point. The locale
+    detection works by looking for the simplified and the traditional MARKERS, so a
+    canonicalised text would arrive at the detector without them: a user who writes
+    Simplified Chinese would be answered in the Traditional locale (measured: 预算三百元
+    detected zh-CN on the raw text and zh-HK on the canonical one). The canonicalisation
+    is applied where the VOCABULARY is compared - the matchers and the cue matching - and
+    the text that goes to SQL keeps the user's own spelling.
     """
-    from nexus_ai.nlu.canonical import canonical
-
     cleaned = re.sub(r"(?<!\d)[:：](?!\d)", " ", text or "")
     cleaned = re.sub(r"[，。！？；、,.!?;~（）()\[\]{}<>《》]+", " ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned)
-    return canonical(cleaned.strip())
+    return cleaned.strip()
 
 
 MONEY_RE = re.compile(

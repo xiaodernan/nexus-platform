@@ -16923,3 +16923,45 @@ intent-level tests passed on the stale plane ✓ and the ranking-level behaviour
 measured on it ✗ — so the chain was "understood, then invisible". A measurement that reads
 the corpus's vocabulary before it measures the behaviour is the difference between a test that
 passes and a test that can fail.
+
+## 414. D420 · the canonicalisation swallowed the locale detection: a Simplified Chinese user was answered in the Traditional locale (`nlu/lexicon` + `nlu/understand`, §12 / AGENT_CONTRACT §12)
+
+**What §411 broke, and how it was found.** §411 put the canonicalisation inside
+`normalize_query`, so the text that reaches the **locale detection** arrives in the
+Traditional spelling — and the detector works by looking for the simplified and the
+traditional **markers**. The measured damage:
+
+```
+这家餐厅不错   detect(raw) = zh-CN    detect(canonicalised) = zh-HK
+预算三百元     detect(raw) = zh-CN    detect(canonicalised) = zh-HK
+```
+
+So a user who writes Simplified Chinese was answered as if they had written Traditional
+Chinese: the intent's `language` was `zh-HK`, and the answer's copy follows the locale.
+
+**The fix: the canonicalisation belongs where the VOCABULARY is compared, not where the
+language is read.** `normalize_query` is back to the punctuation and whitespace
+normalisation it was always doing, the language is read from the text **as the user wrote
+it**, and the canonical spelling is used for the cue matching (the vocabulary's side). The
+three matchers still canonicalise their own input, so a caller that hands them a raw
+simplified string is compared symmetrically ✓.
+
+**Verified, not claimed.** `pytest tests/test_canonical_forms.py` -> **7 passed** (the
+canonicalisation is idempotent and an equivalence, the table moves CHARACTERS only, the
+vocabulary holds the canonical form of every character it uses, both spellings reach the
+matcher, the SQL's text is untouched, the normalisation keeps the user's own spelling, and
+**the locale detection survives the canonicalisation** — 预算三百元 is `zh-CN` and 預算三百元
+is `zh-HK`); the full `apps/ai` suite -> **850 passed** with the database (the stale plane
+skips the signal test with its reason), **820 passed / 31 skipped** without it; `ruff check .`
+-> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 52 source
+files**; the eval gate -> **`RESULT: PASS - 2 suite(s), 0 failing`** (31/31 intent cases,
+27/27 safety cases).
+
+**Discipline note.** A normalisation is a lossy operation, and this one lost something the
+code needed: the distinction between two writing systems. The suite did not catch it because
+the intent suite asserts the CATEGORY and the PREFERENCES, and both of those are the same in
+either spelling — the locale is the only field the canonicalisation touches, and nothing
+asserted it. The fix came from asking what else the normalised text is used for, and the
+answer ("the language, and the locale decides the answer's copy") was one line away from the
+change. **A normalisation that runs before a detector changes what the detector can see** —
+and the detector's input is part of its contract.

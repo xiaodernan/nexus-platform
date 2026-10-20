@@ -73,5 +73,22 @@ def test_the_query_text_that_goes_to_sql_is_not_canonicalised():
     assert canonical(plan.query_text) != plan.query_text  # the canonical form is different
 
 
-def test_the_normalised_query_is_canonical():
-    assert L.normalize_query("\u9910\u5385") == "\u9910\u5ef3"
+def test_the_normalised_query_keeps_the_users_own_spelling():
+    # D420: the normalisation does NOT canonicalise. The locale detection works by looking
+    # for the simplified and the traditional markers, so a canonicalised text would reach
+    # the detector without them - and a Simplified Chinese user would be answered in the
+    # Traditional locale. The canonicalisation is applied where the VOCABULARY is
+    # compared, not where the language is read.
+    assert L.normalize_query("\u9910\u5385") == "\u9910\u5385"
+    assert canonical(L.normalize_query("\u9910\u5385")) == "\u9910\u5ef3"
+
+
+def test_the_locale_detection_survives_the_canonicalisation():
+    # The measured damage this unit fixes: a Simplified sentence detected zh-CN on the
+    # raw text and zh-HK on the canonical one.
+    from nexus_ai.nlu.understand import extract_intent_dict
+
+    simplified = "\u9884\u7b97\u4e09\u767e\u5143"      # 预算三百元
+    traditional = "\u9810\u7b97\u4e09\u767e\u5143"      # 預算三百元
+    assert extract_intent_dict(simplified)["language"] == "zh-CN"
+    assert extract_intent_dict(traditional)["language"] == "zh-HK"
