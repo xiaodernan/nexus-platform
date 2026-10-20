@@ -56,7 +56,6 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 
 ### Open, waiting on the AI lane (next)
 
-- **Structured preference values not yet matched** — seed `user_preferences` carries structured JSON values (e.g., `cuisine_like: {values: ["cantonese","sushi"]}`, `budget: {value: 300, currency: "HKD"}`) but `search()` only matches boolean attributes. Need to extend matching logic in `search/service.py` for array/object values.
 - **Category inference from occasion/preference** — NLU extracts `occasion=date` but `category=null`. Should infer likely categories (restaurant/cafe/bar) from occasion/preference to improve recall.
 - **Preference explanations in ranking output** — when preferences boost a result, the EntityCard lacks a MatchExplanation with fact_id for the preference match. Add to `contributions()` and `AiMatch.reasons`.
 - **NLU preference polarity handling** — negative preferences (polarity=-1) should produce dislike signals (weight 0.0), currently only boolean True/False handled.
@@ -69,6 +68,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D381** Fix Chinese sentence empty page (soft preference → hard filter) — 8 tests added, 645 passed
 - **D382** Pin user preferences into personalization ranking — 6 tests added, 651 passed
 - **D383** NLU intent preferences feed personalization ranking — seed data aligned, 651 passed
+- **D384** Structured preference value matching for arrays/objects (budget, location, style, accessibility, cuisine) — 5 tests added, 657 passed
+- **D385** Fix empty query `text_matched` flag and update home rails sort preference — 1 test fix
+- **D386-D390** Complete preference matchers for all NLU keys (occasion, view, access, price_sense, weather, time_pref, cuisine, style) — 14 tests added, 668 passed
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
