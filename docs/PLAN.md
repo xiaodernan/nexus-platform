@@ -56,10 +56,10 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 
 ### Open, waiting on the AI lane (next)
 
-- **Category inference from occasion/preference** — NLU extracts `occasion=date` but `category=null`. Should infer likely categories (restaurant/cafe/bar) from occasion/preference to improve recall.
-- **Preference explanations in ranking output** — when preferences boost a result, the EntityCard lacks a MatchExplanation with fact_id for the preference match. Add to `contributions()` and `AiMatch.reasons`.
-- **NLU preference polarity handling** — negative preferences (polarity=-1) should produce dislike signals (weight 0.0), currently only boolean True/False handled.
-- **Standardize preference attribute naming in seed** — ensure all NLU preference keys have corresponding merchant attributes (currently missing: `cuisine_spicy`, `cuisine_vegetarian`, `price_sense_cheap`/`premium` as numeric ranges, `weather_rainy_day` as indoor flag).
+- **Standardize preference attribute naming in seed** — the NLU can now read every preference key, but the seeded merchants do not carry the matching attribute for all of them: `vegetarian` is a lexicon cuisine with no seeded boolean, and the `spicy` boolean is emitted under a cuisine-derived leaf rather than as a named attribute. The seed lane owns the attribute vocabulary; the AI lane's matcher is keyed to `{value}_{kind}`.
+- **Preference explanations for a stored vs a typed preference** — D392 names the preference that fired, but the card does not yet say whether it came from the user's stored memory or from this query's words. The `source` column (`declared`/`inferred`/`transaction`) carries the answer and is not on the card.
+- **The ranking lane has no preference feature of its own** — the preference signal rides in the `personalization` weight, which is an EMA over feedback by design. A declared preference is not feedback, so the two are averaged into one number and a strong preference can be diluted by a weak feedback history. A separate weight would need a `ranking_weights.yaml` change and a version bump.
+- **The `food/cuisine_like` structured preference is read by the matcher but not produced by the NLU** — the seed stores `{"values": ["cantonese","sushi"]}` under `food/cuisine_like`, and the category inference reads it, but a typed "我想食粵菜" still produces a `cuisine` preference rather than a `cuisine_like` one, so the two shapes do not meet.
 
 ### Completed this session (AI lane)
 
@@ -71,6 +71,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D384** Structured preference value matching for arrays/objects (budget, location, style, accessibility, cuisine) — 5 tests added, 657 passed
 - **D385** Fix empty query `text_matched` flag and update home rails sort preference — 1 test fix
 - **D386-D390** Complete preference matchers for all NLU keys (occasion, view, access, price_sense, weather, time_pref, cuisine, style) — 14 tests added, 668 passed
+- **D391** Category inference from the resolved signals (`nlu/understand`) — 18 tests added, 686 passed
+- **D392** The card names the preference that matched (`search/cards`) — 7 tests added, 693 passed
+- **D393** A negated preference is a dislike, not a like (`nlu/polarity`) — 16 tests added, 709 passed
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
@@ -86,7 +89,7 @@ node scripts/check_console_i18n.mjs && node scripts/check_console_a11y.mjs   # P
 node scripts/check_reader_reachability.mjs           # 14 of 14 readers invoked
 node scripts/check_status_citations.mjs              # PASS
 cd apps/web && npx tsc --noEmit && npx vitest run    # clean / 136
-cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 651 passed, 4 skipped
+cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 709 passed, 4 skipped
 cd services/platform && mvn -o test                  # 251 passed (D295's whole measurement)
 ```
 
