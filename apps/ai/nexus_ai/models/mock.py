@@ -121,15 +121,23 @@ class MockAdapter:
         return extract_intent_dict(query, context)
 
     def _plan(self, req: LLMRequest) -> dict[str, Any]:
-        from nexus_ai.orchestrator.planner import plan_from_intent_dict
-
         intent = req.payload.get("intent")
         if not intent:
             intent = self._intent(LLMRequest(task_class="intent_extract", payload={
                 "query": req.payload.get("query", ""),
                 "context": req.payload.get("context", {}),
             }))
-        return plan_from_intent_dict(intent)
+        # D408: this used to import `nexus_ai.orchestrator.planner`, a module this
+        # repository does not have, so the mock's "reason" task raised ImportError
+        # the first time anything asked for a plan. The plan the router needs is
+        # small - the intent, the steps it may run, and the budget (AGENT_CONTRACT
+        # §2: <=6 tool calls, <=3 LLM calls).
+        intent_kind = str((intent or {}).get("intent") or "discover_merchant")
+        steps = ["intent_extract", "search_merchants"]
+        if intent_kind == "compare":
+            steps.append("compare_entities")
+        return {"agent": "planner", "intent": intent_kind, "steps": steps,
+                "budget": {"max_steps": 6, "max_llm_calls": 3}}
 
     def _records(self, req: LLMRequest) -> list[dict[str, Any]]:
         recs = req.payload.get("records") or req.payload.get("items") or []
@@ -149,13 +157,16 @@ class MockAdapter:
         if len(recs) > 1:
             priced = [r for r in recs if record_price(r) is not None]
             if priced:
-                lines.append(t["value"].format(title=record_title(min(priced, key=record_price))))
+                lines.append(t["value"].format(
+                    title=record_title(min(priced, key=lambda r: float(record_price(r) or 0.0)))))
             near = [r for r in recs if record_meters(r) is not None]
             if near:
-                lines.append(t["closest"].format(title=record_title(min(near, key=record_meters))))
+                lines.append(t["closest"].format(
+                    title=record_title(min(near, key=lambda r: float(record_meters(r) or 0.0)))))
             rated = [r for r in recs if record_rating(r) is not None]
             if rated:
-                lines.append(t["popular"].format(title=record_title(max(rated, key=record_rating))))
+                lines.append(t["popular"].format(
+                    title=record_title(max(rated, key=lambda r: float(record_rating(r) or 0.0)))))
         return "\n".join(lines)
 
     def _copy(self, req: LLMRequest) -> str:

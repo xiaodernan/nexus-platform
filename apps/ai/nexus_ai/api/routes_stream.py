@@ -14,7 +14,7 @@ from pydantic import Field, field_validator
 from nexus_ai.api import runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import MAX_QUERY_LENGTH
-from nexus_ai.api.sse import CANONICAL_STREAM_EVENTS, sse_bytes, sse_frame
+from nexus_ai.api.sse import sse_bytes
 from nexus_ai.api.stream import search_stream_events
 from nexus_ai.contract import MerchantAgentRequest, _Strict
 from nexus_ai.models.mock import SUMMARY_TEMPLATES
@@ -90,7 +90,6 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
     try:
         yield ("status", {"stage": "understanding", "text": copy["reading"]})
         chunks: list[dict[str, Any]] = []
-        score = 0.0
         db = deps.database()
         if db is not None:
             from nexus_ai.api.routes_rag import retrieve_chunks

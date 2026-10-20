@@ -19,7 +19,7 @@ import logging
 from collections import deque
 from datetime import datetime, timezone
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 log = logging.getLogger("nexus_ai.api.runs")
 

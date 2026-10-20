@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-import json
 from typing import Any, Iterable, Sequence
 from uuid import UUID, uuid5, NAMESPACE_DNS
 
-from nexus_ai.contract import Fact, MatchExplanation
+from typing import cast
+
+from nexus_ai.contract import Fact, FactSource, MatchExplanation
 from nexus_ai.trust import freshness
 
 
@@ -76,7 +77,7 @@ def facts_from_rows(rows: Iterable[dict[str, Any]], *, now: datetime | None = No
         out.append(Fact(
             fact_id=fid, subject_type=str(r.get("subject_type") or "merchant"),
             subject_id=sid, attribute=str(r.get("attribute") or "unknown"), value=value,
-            source=source if source in SOURCE_RANK else "inferred",
+            source=cast(FactSource, source if source in SOURCE_RANK else "inferred"),
             confidence=round(conf, 3), observed_at=observed,
             expires_at=state.expires_at, stale=state.stale,
         ))
@@ -141,7 +142,7 @@ class FactBundle:
         return self.add(Fact(
             fact_id=stable_fact_id(subject_type, subject_id, attribute, value, now),
             subject_type=subject_type, subject_id=UUID(str(subject_id)),
-            attribute=attribute, value=value, source=source,
+            attribute=attribute, value=value, source=cast(FactSource, source),
             confidence=round(min(confidence, cap), 3), observed_at=now,
             expires_at=expires_at,
             stale=ttl <= 0 and False,

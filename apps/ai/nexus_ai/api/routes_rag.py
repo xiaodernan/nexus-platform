@@ -13,7 +13,6 @@ regex + lexicon, so it runs offline and labels itself degraded.
 
 from __future__ import annotations
 
-import hashlib
 import hmac
 import logging
 import re

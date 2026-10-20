@@ -6,7 +6,6 @@ the LOUD place, and the pipeline must demote the quiet one rather than boost it.
 
 from __future__ import annotations
 
-import json
 
 import nexus_ai.search.service as S
 from nexus_ai.nlu.understand import extract_intent

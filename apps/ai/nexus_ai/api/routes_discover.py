@@ -20,9 +20,9 @@ from pydantic import Field
 from nexus_ai.api import runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import (
-    MAX_QUERY_LENGTH, SearchPack, compose_summary, run_search, understand, validate_intent)
+    MAX_QUERY_LENGTH, compose_summary, run_search, understand)
 from nexus_ai.contract import (
-    CompareRow, GeoPoint, Intent, RecommendRequest, RecommendResponse, UnderstandRequest,
+    CompareRow, GeoPoint, RecommendRequest, RecommendResponse, UnderstandRequest,
     UnderstandResponse, _Strict)
 from nexus_ai.search.cards import (compute_open, drop_ungrounded_reasons, meters_text,
                                    travel_minutes)
@@ -142,6 +142,7 @@ async def _compare_rows(deps: Deps, subject_ids: list[str], tenant: str,
     far a merchant is.
     """
     meta: dict[str, Any] = {"source": "static", "degraded": deps.backend_degraded()}
+    hours_map: dict[str, list[Any]]
     db = deps.database()
     if db is not None:
         meta["source"] = "postgres"
@@ -164,7 +165,7 @@ async def _compare_rows(deps: Deps, subject_ids: list[str], tenant: str,
         entity_rows = [r for r in all_rows
                        if str(r.get("subject_id")) in want]
         fact_rows = await backend.facts(subject_ids)
-        hours_map = {str(h["merchant_id"]): [] for h in []}
+        hours_map = {}
         hours_rows = await backend.hours(list({str(r.get("merchant_id"))
                                                for r in entity_rows}))
         for h in hours_rows:
@@ -312,9 +313,9 @@ def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
                              ("category", cat_cells), ("district", district_cells),
                              ("open_state", open_cells),
                              ("distance", distance_cells)):
-        row = CompareRow(attribute=attribute, cards=cells)
-        if any(c["value"] is not None for c in row.cards):
-            rows.append(row.model_dump(mode="json"))
+        compare_row = CompareRow(attribute=attribute, cards=cells)
+        if any(c["value"] is not None for c in compare_row.cards):
+            rows.append(compare_row.model_dump(mode="json"))
     return rows
 
 

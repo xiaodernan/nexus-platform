@@ -8,14 +8,15 @@ without an id, because §4 says the UI must not render it anyway.
 
 from __future__ import annotations
 
-from datetime import datetime, time, timedelta
+from datetime import datetime, time
 from decimal import Decimal
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Sequence, cast
 from uuid import UUID
 
 from nexus_ai.contract import (
     AvailabilityBrief,
     CardAction,
+    CardType,
     EntityCard,
     EntityFlags,
     EntityImage,
@@ -130,8 +131,8 @@ def compute_open(hours: Sequence[dict[str, Any]], *, now: datetime,
             return {"is_open": True, "opens_at": _iso(opens), "closes_at": _iso(closes),
                     "text": f"Open until {_hhmm(closes)}", "as_of": local.isoformat(),
                     "closes_hhmm": _hhmm(closes)}
-    nxt = min((_as_time(h.get("opens_at")) for h in today if _as_time(h.get("opens_at"))),
-              default=None)
+    opens_today = [t for t in (_as_time(h.get("opens_at")) for h in today) if t is not None]
+    nxt = min(opens_today, default=None)
     return {"is_open": False, "opens_at": _iso(nxt) if nxt else None, "closes_at": None,
             "text": f"Opens {_hhmm(nxt)}" if nxt else "Closed",
             "as_of": local.isoformat(), "closes_hhmm": None}
@@ -232,10 +233,11 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
     reasons = build_reasons(cand, scored, bundle, locale=locale, computed=computed,
                             open_state=open_state, reasons_from=reasons_from, query=query)
 
-    card_type = "merchant"
+    card_type: CardType = "merchant"
     if cand.subject_type == "offering":
-        card_type = {"product": "product", "service": "service",
-                     "experience": "experience"}.get(str(rec.get("kind")), "product")
+        card_type = cast(CardType, {"product": "product", "service": "service",
+                                   "experience": "experience"}.get(
+                                       str(rec.get("kind")), "product"))
 
     title = _title(rec, card_type, locale)
     price = _price_of(cand, rec, card_type)

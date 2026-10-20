@@ -114,7 +114,8 @@ def test_resolve_conflicts_surfaces_price_anomaly_warn_when_merchant_wins():
     b = FactBundle()
     m = make_fact(source="merchant", attribute="price", value=100)
     t = make_fact(source="third_party", attribute="price", value=90)
-    b.add(m); b.add(t)
+    b.add(m)
+    b.add(t)
     chosen, disag = resolve_conflicts(b, "price", SUBJECT)
     assert chosen.fact_id == m.fact_id
     assert len(disag) == 1
@@ -136,7 +137,8 @@ def test_resolve_conflicts_high_severity_when_not_merchant():
     b = FactBundle()
     obs = make_fact(source="observed", attribute="price", value=100)
     tp = make_fact(source="third_party", attribute="price", value=90)
-    b.add(obs); b.add(tp)
+    b.add(obs)
+    b.add(tp)
     chosen, disag = resolve_conflicts(b, "price", SUBJECT)
     assert chosen.source == "observed"      # observed(4) outranks third_party(2)
     assert disag[0]["severity"] == "high"   # no merchant anchor => escalate

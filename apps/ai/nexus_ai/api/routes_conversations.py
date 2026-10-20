@@ -54,7 +54,7 @@ async def conversation_timeline(request: Request, conversation_id: str):
     timeline: list[dict[str, Any]] = []
     db = deps.database()
     degraded = True
-    reason = "no database connection — serving the in-process run ledger only"
+    reason: str | None = "no database connection — serving the in-process run ledger only"
 
     if db is not None:
         try:

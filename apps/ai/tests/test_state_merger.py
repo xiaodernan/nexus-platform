@@ -9,7 +9,6 @@ unit-tests without a model. It had **no tests**. This pins it. DB-free.
 
 from __future__ import annotations
 
-import pytest
 
 from nexus_ai.nlu.state_merger import (
     _question_for,

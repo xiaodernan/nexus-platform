@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, Sequence
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -113,7 +113,7 @@ def create_app(settings: Any | None = None) -> FastAPI:
     return app
 
 
-def _jsonable_errors(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _jsonable_errors(errors: Sequence[Any]) -> list[dict[str, Any]]:
     out = []
     for e in errors:
         out.append({

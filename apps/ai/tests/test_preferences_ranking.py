@@ -8,9 +8,7 @@ merchants with `quiet_ambience=true` in their attributes).
 
 from __future__ import annotations
 
-import json
 
-import pytest
 
 import nexus_ai.search.service as S
 from nexus_ai.search import sql as SQL

@@ -399,11 +399,12 @@ def _relevance(row: dict[str, Any], *, vector_lane: bool) -> float:
 def candidates_from_rows(rows: Sequence[dict[str, Any]], plan: SearchPlan, *,
                          bundle: FactBundle, facts_by_subject: dict[str, list[Any]],
                          hours_by_merchant: dict[str, list[Any]],
-                         slots_by_merchant: dict[str, list[dict[str, Any]]],
+                         slots_by_merchant: dict[str, dict[str, Any]],
                          personalization: dict[str, float],
                          weights: RankingWeights,
                          vector_lane: bool,
-                         preference_labels: dict[str, list[str]] | None = None) -> list[Candidate]:
+                         preference_labels: dict[str, list[dict[str, str]]] | None = None,
+                         ) -> list[Candidate]:
     out: list[Candidate] = []
     for row in rows:
         subject_type = str(row.get("subject_type") or "merchant")
@@ -510,10 +511,10 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     seen: set[str] = set()
     deduped: list[dict[str, Any]] = []
     for r in rows:
-        key = f"{r.get('subject_type')}:{r.get('subject_id') or r.get('id')}"
-        if key in seen:
+        subject_key = f"{r.get('subject_type')}:{r.get('subject_id') or r.get('id')}"
+        if subject_key in seen:
             continue
-        seen.add(key)
+        seen.add(subject_key)
         deduped.append(r)
         subject_ids.append(str(r.get("subject_id") or r.get("id")))
         merchant_ids.append(str(r.get("merchant_id") or r.get("merchant_id_key")
@@ -531,7 +532,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     for raw in hours_rows:
         hours_by_merchant.setdefault(str(raw.get("merchant_id")), []).append(raw)
 
-    slots_by_merchant: dict[str, list[dict[str, Any]]] = {}
+    slots_by_merchant: dict[str, dict[str, Any]] = {}
     window = _slot_window(plan)
     if window and merchant_ids:
         slot_rows = await backend.slots(list(dict.fromkeys(merchant_ids)), window[0],
@@ -545,7 +546,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
 
     personalization: dict[str, float] = {}
     # D392: which preference fired for which subject, so the card can name it.
-    preference_labels: dict[str, list[str]] = {}
+    preference_labels: dict[str, list[dict[str, str]]] = {}
 
     # Build merchant_attrs map once for all preference types
     merchant_attrs: dict[str, dict] = {}
@@ -590,7 +591,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 
                 try:
                     value = json.loads(raw_value) if isinstance(raw_value, str) else raw_value
-                except Exception as e:
+                except Exception:
                     value = {}
                 
                 match_fn = None
@@ -943,8 +944,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
             if mid not in merchant_attrs:
                 continue
             attrs = merchant_attrs[mid]
-            pref_scores: list[float] = []
-            matched_labels: list[dict[str, str]] = []
+            intent_pref_scores: list[float] = []
+            intent_matched_labels: list[dict[str, str]] = []
             for pref in intent_preferences:
                 pref_kind = pref.get("key")
                 pref_value = pref.get("value")
@@ -959,14 +960,14 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     tags = [str(t) for t in (attrs.get("tags") or [])]
                     if cuisine_matches(str(pref_value), cat, tags):
                         weight = 1.0 if polarity > 0 else 0.0
-                        pref_scores.append(weight)
+                        intent_pref_scores.append(weight)
                         if weight >= 0.5:
-                            matched_labels.append(
+                            intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                            pref_value),
                                  "source": "typed"})
                     else:
-                        pref_scores.append(0.5 if polarity > 0 else 1.0)
+                        intent_pref_scores.append(0.5 if polarity > 0 else 1.0)
                     continue
 
                 attr_key1 = f"{pref_value}_{pref_kind}"  # date_occasion
@@ -975,32 +976,32 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 for attr_key in (attr_key1, attr_key2):
                     if attrs.get(attr_key) is True:
                         weight = 1.0 if polarity > 0 else 0.0
-                        pref_scores.append(weight)
+                        intent_pref_scores.append(weight)
                         # D392: name the preference that fired, so the card can say WHICH.
                         # D396: a preference typed in THIS query is "typed", not "declared".
                         if weight >= 0.5:
-                            matched_labels.append(
+                            intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                            pref_value),
                                  "source": "typed"})
                         break
                     elif attrs.get(attr_key) is False:
                         weight = 0.0 if polarity > 0 else 1.0
-                        pref_scores.append(weight)
+                        intent_pref_scores.append(weight)
                         if weight >= 0.5:
-                            matched_labels.append(
+                            intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                            pref_value),
                                  "source": "typed"})
                         break
-            if pref_scores:
-                avg_score = sum(pref_scores) / len(pref_scores)
+            if intent_pref_scores:
+                avg_score = sum(intent_pref_scores) / len(intent_pref_scores)
                 existing = personalization.get(sid)
                 # D397: the better evidence wins; see the stored path above.
                 personalization[sid] = (avg_score if existing is None
                                         else max(existing, avg_score))
-            if matched_labels:
-                preference_labels.setdefault(sid, []).extend(matched_labels)
+            if intent_matched_labels:
+                preference_labels.setdefault(sid, []).extend(intent_matched_labels)
 
     candidates = candidates_from_rows(deduped, plan, bundle=bundle,
                                       facts_by_subject=facts_by_subject,

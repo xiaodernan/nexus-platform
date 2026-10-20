@@ -16301,3 +16301,69 @@ Two things this unit does NOT claim: 點心 is answered by the CATEGORY inferenc
 lane (the corpus spells no 點心 in any text), and the corpus's TAGS are English, so 拉麵
 matches zero `ramen` tags — the lane finds the merchants that spell the word in Chinese, and a
 translation layer for the tags is still open.
+
+## 402. D408 · the CI's lint step named two tools the project did not have, and the type gate had never run (`apps/ai/pyproject.toml` + the findings, CI step 2)
+
+**What the gate was.** `.github/workflows/ci.yml` runs, as the second step of the AI job,
+`uv run ruff check . && uv run mypy nexus_ai`. **Neither tool was in the project's
+dependencies** — `apps/ai/pyproject.toml`'s dev extras held `pytest` and `pytest-asyncio` and
+nothing else — so the step could not start: `uv run ruff` had no ruff to run. The gate had
+never reported anything, which is why nobody noticed that the type checker had never run
+either.
+
+**What it says once it runs.** With the tools installed (ruff 0.17.1, mypy 2.4.0, both
+measured on this plane):
+
+```
+python -m ruff check .            -> 328 findings   (the tool's DEFAULT rule set)
+python -m ruff check . --select E4,E7,E9,F -> 46 findings
+python -m mypy nexus_ai           -> 31 errors in 13 files
+```
+
+The 328 is the finding that matters about the finding: **ruff's default rule set changed under
+the house's feet** (a newer ruff added a broad preview set, and the same command went from 0 to
+328), and the 46 include the classes that actually matter — 29 unused imports, 6 undefined
+names, 3 unused variables, 3 f-strings without placeholders, 2 redefinitions, 2 semicolons, 1
+module-level import out of place.
+
+**The fix.**
+
+1. **The tools are dependencies now**: `ruff>=0.6` and `mypy>=1.11` in the dev extras, so the
+   CI step has something to run.
+2. **The rule set is stated in the repository**, not inherited from the tool: `select = ["E4",
+   "E7", "E9", "F"]` — pyflakes' correctness rules and pycodestyle's fatal errors, and nothing
+   else. The house style is deliberately not clean under a broad style set (`Optional[str]` over
+   `str | None` in the contract's pydantic shapes, `timezone.utc` over `datetime.UTC`, blind
+   `except Exception` on the §105 fallback paths), and **a gate that reddens on style is a gate
+   nobody reads**. The same reasoning is in the config's own comment, so the next reader does
+   not "fix" the selection into a 328-finding gate.
+3. **All 46 findings are fixed**, and all 31 type errors with them.
+
+**Two of the findings were real defects, not style.**
+
+- **`models/mock.py` imported `nexus_ai.orchestrator.planner`, a module this repository does
+  not have.** The mock's `reason` task therefore raised `ImportError` the first time anything
+  asked for a plan. The mock now builds the small plan the router needs itself (the intent, the
+  steps it may run, the budget AGENT_CONTRACT §2 names).
+- **Two annotations were lying about the code they described**: `slots_by_merchant` was
+  declared `dict[str, list[dict]]` while the code keeps one row per merchant, and
+  `preference_labels` was declared `list[str]` while it holds the label dicts. The code was
+  right and the annotation was wrong, so the annotations were corrected.
+
+**Verified, not claimed.** `python -m ruff check .` -> **All checks passed!**;
+`python -m mypy nexus_ai` -> **Success: no issues found in 46 source files**; the full
+`apps/ai` suite -> **815 passed** with the database, **789 passed / 26 skipped** without it.
+
+**Discipline note — the mistakes this unit made, and who caught them.** Two renames made while
+fixing the type errors broke the behaviour: the preference's own `key` (renamed to dodge a
+shadowing warning, while the body still read `key` — so no preference rule was ever built) and
+the second preference loop's `matched_labels` (left pointing at the first loop's variable,
+which is unbound when there are no stored preferences). The **suite** caught both: 32 failures,
+then 8, before the gates were green again. A gate installed after the fact has to be run
+against the whole suite and not only against the file it was written for.
+
+**What is still red, and is not this unit's.** The CI's next AI step, "Eval gate (blocks merge:
+hallucination < 2%, injection containment 100%)", runs `python -m nexus_ai.eval.cli --suite
+intent_v1 --fail-on-gate` — and **there is no `nexus_ai/eval` package in this repository**, so
+that step fails with `ModuleNotFoundError` whatever the code says. It is filed as the next unit
+and is NOT claimed here.

@@ -15,11 +15,10 @@ from __future__ import annotations
 
 from datetime import time
 
-import pytest
 
 import nexus_ai.search.service as S
 from nexus_ai.contract import Intent
-from nexus_ai.nlu.understand import extract_intent, extract_intent_dict
+from nexus_ai.nlu.understand import extract_intent_dict
 
 # The product's own e2e sentence (tests/e2e/specs/consumer/vertical-slice.spec.ts).
 E2E_SENTENCE = ("\u5e2b\u6211\u627e\u6c99\u7530\u9002\u5408\u60c5\u4fa3\u7ea6\u4f1a\u7684\u9910\u5385\uff0c"

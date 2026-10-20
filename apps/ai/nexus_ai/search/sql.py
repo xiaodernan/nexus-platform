@@ -168,9 +168,9 @@ def build_merchant_query(
         lat_ph, lng_ph = p.add(lat), p.add(lng)
         lat_min, lat_max, lng_min, lng_max = bbox(lat, lng, int(radius_m or 5000))
         b1, b2, b3, b4 = p.add(lat_min), p.add(lat_max), p.add(lng_min), p.add(lng_max)
-        geo_select = (f"loc.meters AS meters, loc.district AS district, "
-                      f"loc.address_line1 AS address_line1, loc.mtr_station AS mtr_station, "
-                      f"loc.mtr_walk_min AS mtr_walk_min")
+        geo_select = ("loc.meters AS meters, loc.district AS district, "
+                      "loc.address_line1 AS address_line1, loc.mtr_station AS mtr_station, "
+                      "loc.mtr_walk_min AS mtr_walk_min")
         geo_join = f"""LEFT JOIN LATERAL (
           SELECT l.id, l.district, l.address_line1, l.mtr_station, l.mtr_walk_min,
                  {haversine_expr(lat_ph, lng_ph, 'l.lat', 'l.lng')} AS meters
@@ -225,7 +225,6 @@ def build_merchant_query(
     # must not *claim* a text match: the ranking floor reads `text_matched` to decide
     # whether a query exists at all, and an empty query's relevance is always 0.
     has_text = bool((text or "").strip())
-    match = text_matched if has_text else "true"
     matched_flag = text_matched if has_text else "false"
 
     # ---- vector lane: pgvector cosine, max-pooled from the merchant's chunks

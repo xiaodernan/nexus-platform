@@ -8,7 +8,6 @@ thing" and "the page says the opposite of what the user asked".
 
 from __future__ import annotations
 
-import pytest
 
 from nexus_ai.nlu.polarity import apply_polarity, polarity_for
 from nexus_ai.nlu.understand import extract_intent

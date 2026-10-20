@@ -9,7 +9,6 @@ the query actually named.
 
 from __future__ import annotations
 
-import pytest
 
 from nexus_ai.nlu.understand import extract_intent, extract_intent_dict
 

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
 
 import nexus_ai.search.service as S
 from nexus_ai.search.cards import REASON_COPY, _reason_text

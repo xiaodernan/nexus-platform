@@ -22,11 +22,11 @@ whole byte stream reproducible and prove mock/live framing parity.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, AsyncIterator
 
 from nexus_ai.api import runs
-from nexus_ai.api.pipeline import SearchPack, card_citations, compose_summary, run_search, \
+from nexus_ai.api.pipeline import SearchPack, compose_summary, run_search, \
     understand
 from nexus_ai.api.deps import Deps
 from nexus_ai.api.sse import STREAM_STAGE_ORDER

@@ -215,7 +215,8 @@ class StubPlatformClient:
                           tenant: str | None = None) -> dict[str, Any]:
         self._record("create_cart", merchant_id=merchant_id, has_token=bool(token))
         cart_id = f"stub-cart-{len(self._carts) + 1}"
-        cart = {"id": cart_id, "merchant_id": merchant_id, "session_id": session_id,
+        cart: dict[str, Any] = {"id": cart_id, "merchant_id": merchant_id,
+                               "session_id": session_id,
                 "status": "open", "items": [], "currency": "HKD", "stub": True}
         self._carts[cart_id] = cart
         return dict(cart)

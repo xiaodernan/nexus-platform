@@ -17,7 +17,6 @@ Two things were missing and both are fixed here:
 
 from __future__ import annotations
 
-import json
 import os
 
 import pytest

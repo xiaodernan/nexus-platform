@@ -15,8 +15,7 @@ from uuid import UUID
 import pytest
 
 from nexus_ai.api.sse import (
-    CANONICAL_STREAM_EVENTS, NonCanonicalEvent, assert_canonical_stream, json_compact,
-    parse_frames, plain, sse_frame)
+    CANONICAL_STREAM_EVENTS, NonCanonicalEvent, assert_canonical_stream, parse_frames, plain, sse_frame)
 
 
 def test_canonical_set_is_exactly_d13():

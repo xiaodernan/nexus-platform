@@ -18,7 +18,51 @@ dependencies = [
 dev = [
     "pytest>=8.2",
     "pytest-asyncio>=0.23",
+    # D408: the CI's `uv run ruff check . && uv run mypy nexus_ai` step named two tools
+    # that were NOT in this list, so the step could not run at all - it failed with
+    # "executable file not found" before it could read a single line of the code. A gate
+    # that cannot start is not a gate.
+    "ruff>=0.6",
+    "mypy>=1.11",
 ]
+
+[tool.ruff]
+# D408: the rule set is stated HERE, not inherited from the tool's default. Ruff's
+# defaults changed under the house's feet before (a newer ruff added a broad preview
+# set and the same command went from 0 findings to 328), and a gate whose severity
+# depends on the version that happens to be installed is not a gate anybody can read.
+#
+# What is selected is the CORRECTNESS set: pyflakes' F rules (undefined names, unused
+# imports and variables, redefinitions, f-strings without placeholders) plus
+# pycodestyle's fatal errors. The house style is deliberately not pyflakes-clean under a
+# broad style set - `Optional[str]` over `str | None` (the contract's pydantic shapes),
+# `timezone.utc` over `datetime.UTC`, and blind `except Exception` on the §105
+# fallback paths - and a gate that reddens on style is a gate nobody reads.
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+# `start_ai.py` is a launcher: it reads the environment before it imports the app, so
+# its imports cannot all be at the top of the file.
+"start_ai.py" = ["E402"]
+
+[tool.mypy]
+# D408: the CI's `uv run mypy nexus_ai` step named a tool that was not in the dev
+# extras, and once it could run it reported 31 errors in 13 files - so it had never
+# been run at all. The configuration is HERE rather than in a CI flag, so the gate is
+# the same command on every machine.
+python_version = "3.11"
+files = ["nexus_ai"]
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+# Two of the service's dependencies ship no type information. A missing stub is not a
+# type error in the code under the gate; an untyped import is not a defect.
+module = ["yaml", "asyncpg"]
+ignore_missing_imports = true
 
 [build-system]
 requires = ["hatchling"]

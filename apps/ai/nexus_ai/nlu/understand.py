@@ -16,9 +16,6 @@ from typing import Any
 from nexus_ai.nlu.lexicon import (
     canon_constraint,
     COMPARE_CUES,
-    NEARBY_TERMS,
-    PREFERENCE_RULE_VALUES,
-    proper_nouns,
     quoted_entities,
     CONSTRAINT_RULES,
     DISCOVER_CUES,
@@ -439,11 +436,12 @@ def _fill_party(ex: IntentExtraction, text: str, context: dict[str, Any]) -> Int
             pass
     m = PARTY_RE.search(text)
     if m:
-        raw = next((g for g in m.groups() if g), None)
-        n = int(raw)
-        if 1 <= n <= 40:
-            ex.party_size = n
-            ex.confidence["party_size"] = 0.9
+        raw = next((g for g in m.groups() if g), "")
+        if raw:
+            n = int(raw)
+            if 1 <= n <= 40:
+                ex.party_size = n
+                ex.confidence["party_size"] = 0.9
     # NOTE: "情侣"/"date" is deliberately NOT turned into party_size=2. §8 forbids
     # guessing it and AGENT_CONTRACT §1 lists inventing party_size as a must-not.
     return ex
@@ -578,4 +576,10 @@ def _compute_unknowns(ex: IntentExtraction) -> list[str]:
         unknowns.append("compare_targets")
     # stable order, deduped
     seen: set[str] = set()
-    return [u for u in unknowns if not (u in seen or seen.add(u))]
+    out: list[str] = []
+    for u in unknowns:
+        if u in seen:
+            continue
+        seen.add(u)
+        out.append(u)
+    return out

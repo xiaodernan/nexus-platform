@@ -42,7 +42,7 @@ def cjk_bigrams(text: str) -> list[str]:
     return [cjk[i:i + 2] for i in range(len(cjk) - 1)]
 
 
-def query_tokens(text: str) -> list[str]:
+def query_tokens(text: str | None) -> list[str]:
     """The words and CJK bigrams a query asks about.
 
     Latin words are kept whole (a whole word is what a text contains); a CJK run is
@@ -59,7 +59,7 @@ def query_tokens(text: str) -> list[str]:
     return list(dict.fromkeys(out))
 
 
-def mentions(text: str, query: str) -> bool:
+def mentions(text: str, query: str | None) -> bool:
     """Whether a text mentions what the query asks about.
 
     A query token of two characters or more has to appear in the text. A query with
@@ -81,7 +81,7 @@ def mentions(text: str, query: str) -> bool:
 KEYWORD_MAX_LEN = 4
 
 
-def cjk_keywords(text: str, limit: int = 16) -> list[str]:
+def cjk_keywords(text: str | None, limit: int = 16) -> list[str]:
     """The Chinese words a query names — short runs whole, long runs as their bigrams.
 
     The merchant lane's containment needs a WORD list, not the raw query: a merchant's

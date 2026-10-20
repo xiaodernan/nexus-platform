@@ -75,8 +75,9 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
                                                       or base.get("language")}).to_dict()
         fresh["raw_query"] = turn
         merged = _overlay(fresh, base, turn)
-        changes = [{"op": "re_extract", "field": "intent", "value": merged.get("intent")}]
-        return MergeResult(intent=merged, changes=changes,
+        reset_changes = [{"op": "re_extract", "field": "intent",
+                         "value": merged.get("intent")}]
+        return MergeResult(intent=merged, changes=reset_changes,
                            follow_up_question=_question_for(merged))
 
     changes: list[dict[str, Any]] = []

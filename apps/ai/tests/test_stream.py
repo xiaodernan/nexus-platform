@@ -7,11 +7,9 @@ HTTP 5xx once started), and the §1 validation envelope before the stream begins
 
 from __future__ import annotations
 
-import json
 import re
 from uuid import UUID
 
-import pytest
 
 from nexus_ai.api.sse import CANONICAL_STREAM_EVENTS, parse_frames
 from nexus_ai.contract import EntityCard, Intent

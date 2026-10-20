@@ -27,6 +27,10 @@ IntentKind = Literal[
 SortPreference = Literal["relevance", "distance", "price_low", "rating", "trending"]
 FactSource = Literal["merchant", "imported", "observed", "third_party", "inferred", "demo"]
 ActorType = Literal["user", "merchant_user", "agent", "system", "anonymous"]
+#: D408: the card kinds, named once. The `EntityCard.card_type` field carried the
+#: Literal inline, so the card builder could only spell it as a plain `str` and the
+#: checker could not see the vocabulary it was filling.
+CardType = Literal["merchant", "product", "service", "experience", "collection"]
 
 
 class _Strict(BaseModel):
@@ -130,7 +134,7 @@ class EntityCard(BaseModel):
     """§2 the single render contract for consumer + AI + MCP surfaces."""
 
     model_config = ConfigDict(extra="ignore")
-    card_type: Literal["merchant", "product", "service", "experience", "collection"] = "merchant"
+    card_type: CardType = "merchant"
     id: UUID
     slug: str
     title: str
