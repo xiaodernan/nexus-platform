@@ -71,7 +71,8 @@ class TestMerchantQueryStructuralRules:
         q = S.build_merchant_query(tenant_id=TENANT, text="", embedding=None)
         # no @@ text-match predicate when there is nothing to match against
         assert "@@" not in q.sql
-        assert "true AS text_matched" in q.sql
+        # Empty query must not claim a text match; ranking floor reads text_matched
+        assert "false AS text_matched" in q.sql
 
     def test_geo_lane_adds_haversine_and_bbox(self):
         q = S.build_merchant_query(

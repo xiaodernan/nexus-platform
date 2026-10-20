@@ -190,7 +190,12 @@ def build_merchant_query(
         f" array_to_string(m.tags,' ')), 0))")
     text_matched = (f"(m.search_tsv @@ {tsq} OR m.search_tsv @@ {wsq}"
                     f" OR m.display_name % {text_ph} OR coalesce(m.display_name_zh,'') % {text_ph})")
-    match = text_matched if (text or "").strip() else "true"
+    # A browse request (no query text) must return every row the filters allow, but it
+    # must not *claim* a text match: the ranking floor reads `text_matched` to decide
+    # whether a query exists at all, and an empty query's relevance is always 0.
+    has_text = bool((text or "").strip())
+    match = text_matched if has_text else "true"
+    matched_flag = text_matched if has_text else "false"
 
     # ---- vector lane: pgvector cosine, max-pooled from the merchant's chunks
     vec_join = ""
@@ -228,7 +233,7 @@ SELECT m.id, m.slug, m.display_name, m.display_name_zh, m.description, m.categor
        'merchant'::text AS subject_type, m.id::text AS subject_id, m.id::text AS merchant_id,
        {geo_select},
        {kw_score} AS kw_score,
-       {match} AS text_matched,
+       {matched_flag} AS text_matched,
        {vec_select},
        COALESCE(tm.mean_rating, 3.5)::float8 AS tenant_mean_rating
 FROM merchants m
@@ -325,8 +330,10 @@ def build_offering_query(
         f" COALESCE(word_similarity({text_ph}, coalesce(o.name,'') || ' ' ||"
         f" coalesce(o.name_zh,'') || ' ' || coalesce(o.description,'') || ' ' ||"
         f" coalesce(o.description_zh,'')), 0))")
+    has_text = bool((text or "").strip())
     match = (f"(o.search_tsv @@ {tsq} OR o.search_tsv @@ {wsq} OR o.name % {text_ph}"
-             f" OR coalesce(o.name_zh,'') % {text_ph})") if (text or "").strip() else "true"
+             f" OR coalesce(o.name_zh,'') % {text_ph})") if has_text else "true"
+    matched_flag = match if has_text else "false"
 
     avoid = [str(a) for a in (filters.get("avoid") or [])]
     avoid_clause = ""
@@ -348,7 +355,7 @@ SELECT o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.description, o.descript
        'offering'::text AS subject_type, o.id::text AS subject_id, o.merchant_id::text AS merchant_id_key,
        {geo_select},
        {kw_score} AS kw_score,
-       {match} AS text_matched,
+       {matched_flag} AS text_matched,
        0::float8 AS vec_score,
        COALESCE((SELECT avg(r2.rating_agg)::float8 FROM merchants r2
                  WHERE r2.tenant_id = {tenant_ph}::uuid AND r2.status='published'
