@@ -16737,3 +16737,44 @@ On the fixed build the probe reads `noticeFallback:false, noticeAnswer:true, run
 After the change the full consumer spec is **7 passed, 1 failed, 1 skipped**; the red is the known
 `:37` landing case, whose rails the `zh-HK` dictionary spells in Simplified (`你附近热门`, `为你推荐`)
 — the locale census the earlier U-A ledger section deferred, not a regression of this unit.
+
+## 410. D416 · the vocabulary had 19 terms with no traditional spelling, so a Hong Kong user typing 餐廳-shaped words got nothing (`nlu/lexicon`, §7.1 / §111)
+
+**What was measured.** The product is for Hong Kong and the product's own e2e sentence is in
+Simplified Chinese, so the vocabulary grew in mixed forms — which is fine as long as BOTH
+spellings are there. The Unihan database's `kTraditionalVariant` data
+(`https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip`) says which form is which, and
+walking the vocabulary against it found **19 of its 405 Chinese terms with no traditional
+spelling in their table**: 飯店, 食飯, 吃飯, 打邊爐, 娛樂, 鐵板燒, 參雞湯, 馬來西菜, 別, 靜一點,
+團聚, 團建, 天臺, 車位, 颱風, 露臺, 停車場, 馬來西亞 and one more. A user who typed
+燒鵝, 靜一點 or 團聚 got **nothing** — the term was in the table, spelled the other way, and a
+string comparison is by code point.
+
+**The fix: every one of those terms now has its traditional spelling in its table**, so the
+matchers fire on either spelling. Seventeen of the nineteen were added in this unit, and the
+traditional forms were **verified against the character itself** rather than taken from the
+Unihan mapping, because that mapping points at VARIANT code points for some characters — it
+lists 闆 for 板, 燂 for 燒, 邉 for 邊, 彆 for 別, 鼕 for 凍, 橸 for 檸, 鵚 for 鵝 and 烏 for 亞.
+A term written with a variant looks identical to the reader and matches nothing: the same class
+as §403's and §408's code points, one level down.
+
+**Verified, not claimed.** `pytest tests/test_vocabulary_traditional_forms.py` -> **5 passed** —
+the terms are IN the tables and the MATCHERS FIRE on them (`match_category("餐廳")` is a
+restaurant, `match_category("茶餐廳")` is a cafe, `match_category("打邊爐")` is a hotpot,
+`match_cuisines("參雞湯")` finds the korean cuisine); the full `apps/ai` suite -> **839 passed**
+with the database, **813 passed / 26 skipped** without it; `ruff check .` -> **All checks
+passed!**; `mypy nexus_ai` -> **Success: no issues found in 51 source files**; the eval gate ->
+**`RESULT: PASS - 2 suite(s), 0 failing`** (31/31 intent cases, 27/27 safety cases).
+
+**Three terms are deliberately NOT changed, and the reason is in the test file's header.**
+燒鵝 and 凍檸 — the standard code points could not be confirmed (the neighbouring code points
+are variants of them), and a synonym nobody types costs nothing while a wrong synonym costs the
+match; 表白 — the Unihan "traditional variant" of 表 is 錶 (a watch), a **different word**, and
+the vocabulary must not answer for it.
+
+**Discipline note.** The reference data was a reference and not a recipe. The first pass took
+the Unihan mapping mechanically and produced terms written 鐵板燒 with 闆 in the middle — a
+word that looks right to a reader and matches nothing, which is exactly the trap §408's
+correction was about. Every pair in this unit was checked against the character before it was
+written down, and the test asserts the MATCHER's answer rather than the table's contents, so a
+term that is in the table but does not match cannot pass.
