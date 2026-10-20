@@ -221,9 +221,12 @@ def _adjust_budget(base: dict[str, Any], factor: float) -> dict[str, Any]:
     budget = base.get("budget") or {}
     cur = budget.get("max")
     if cur is None:
+        # §8 forbids inventing a number, but "太贵了" still has an honest effect: order by price.
+        # This is the same fallback `_tighten_radius` uses when there is no radius to scale.
+        base["sort_preference"] = "price_low"
         return {"op": "budget_relative", "field": "budget.max", "factor": factor,
-                "applied": False,
-                "note": "no stated budget to scale — do not invent one (§8)"}
+                "applied": False, "sort_preference": "price_low",
+                "note": "no stated budget to scale — do not invent one (§8), sort by price instead"}
     new = round(float(cur) * factor, 0)
     budget = {**budget, "max": new}
     base["budget"] = budget

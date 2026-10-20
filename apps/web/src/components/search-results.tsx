@@ -407,6 +407,16 @@ export function SearchResults({
       {state.cards.length ? (
         <div className="rounded-lg border border-line bg-surface p-4 shadow-xs">
           <p className="mb-2 text-sm font-medium text-ink-strong">{dict.search.followUpLabel}</p>
+          {/* §34: the two refinements the conversation contract names, one tap instead of a sentence.
+              Each label doubles as the utterance, so the chip says exactly what it submits. */}
+          <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label={dict.search.followUpLabel}>
+            <Button size="sm" variant="outline" onClick={() => setQuery(dict.search.refineCheaper)}>
+              {dict.search.refineCheaper}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setQuery(dict.search.refineCloser)}>
+              {dict.search.refineCloser}
+            </Button>
+          </div>
           <SearchBox
             locale={locale}
             size="md"

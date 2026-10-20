@@ -16013,3 +16013,108 @@ reds, each named by its own reading rather than by inference:
   18 steps; the last recorded reading on this plane is `## 395`'s (`step 8 0 offenders · step 9 91/30
   · step 10 missing 0 · step 12 50/50 · step 15 158/158 · step 16 strict clean on 158`), and it is
   quoted here as inherited, not as this unit's evidence.
+
+## 398. D404 · the conversation's two refinements had no surface, and the refusal to invent a budget threw away the whole refinement (`search/nlu/state_merger` + `components/search-results` + `lib/i18n/dict` + `lib/mock`, §34 / §8)
+
+**What §34 promised the consumer could say.** Two of the refinements the conversation contract names
+are ordinary Chinese phrases a user types on a second turn: 太贵了 ("too expensive") and 近一点 ("a bit
+closer"). The server already understood both — `nexus_ai/nlu/state_merger.py` matches them in
+`CHEAP_CUES`/`NEARER_CUES` and rewrites the merged intent — and `tests/e2e/specs/consumer/vertical-slice.spec.ts`
+is written as if the surface offered them as one-tap actions: `getByRole('button', {name:/太贵了| cheaper/i})`,
+then `getByRole('button', {name:/近一点|closer/i})`. On the live plane no such control existed anywhere, so
+the case spent its whole 30 s action timeout waiting and failed with `element(s) not found`. A contract
+sentence the product cannot offer a button for is not a UX preference; it is the acceptance test's own
+locator, in the file the repo calls "the definition of MVP complete".
+
+**The §8 trap inside the honest refusal.** Adding the button made a second defect visible, and this is
+the part a `applied: false` note hides. `太贵了` scales the stated budget by `CHEAP_FACTOR = 0.7`. When the
+first turn never named a budget — which is exactly the sentence the e2e test uses, `帮我找附近适合朋友聚会的餐厅` —
+`_adjust_budget` returned `applied: false` with the note `no stated budget to scale — do not invent one
+(§8)` and did **nothing else**. The refusal is right (§8: a rendered number needs a source), but the user
+asked for cheaper and got a page that could not possibly look cheaper, because the refinement's only
+effect was the number it would not fabricate. `_tighten_radius` already had the shape of the answer: with
+no radius to scale it sets `sort_preference = "distance"` and reports `radius_applied: False`. Saying "too
+expensive" without a number to cut has the same honest effect — put the cheap ones first.
+
+**The remedy, in the order it fell out.**
+1. `state_merger._adjust_budget`, no-budget branch: set `base["sort_preference"] = "price_low"`, keep
+   `op: "budget_relative"` and `applied: False` so the pre-existing witness at
+   `tests/test_state_merger.py:43` (`…_is_not_invented`) still holds, and add `sort_preference` to the
+   change record so the merge is auditable from `changes` alone.
+2. `dict.search` gains `refineCheaper`/`refineCloser`, declared in the interface so a locale that skips
+   them fails to compile. The strings ARE the utterances — `太贵了`/`近一点` in `zh-HK`, `Cheaper`/`Closer` in
+   `en` — so a chip prints exactly what it submits, and the cue matcher on the server reads the same text
+   it always read. No new cue vocabulary was introduced by this unit.
+3. `search-results.tsx` renders the two as a labelled `role="group"` in the follow-up region, wired to
+   the existing `setQuery`, which is the path that already carries `previous_intent` (§34's client half).
+   Nothing new submits a search; the chips only fill the box the user would have typed in.
+4. `lib/mock/index.ts` had the cheaper arm as `next.budget?.max ?? 400` — the offline plane inventing a
+   number the live plane's own comment refuses to invent. It now branches the way the service does:
+   scale when there is a stated budget, sort by price when there is not.
+
+**The witness.** `apps/ai`: `pytest tests/test_state_merger.py -q` → **21 passed**, with the new case
+`test_cheaper_with_no_budget_still_orders_by_price`. The case is behavioral, not textual: reverting the
+branch to the no-effect return makes it **1 failed / 20 passed**, and restoring makes it 21 again.
+`apps/web`: `npm run build` → `✓ Compiled successfully in 73s`, 0 error lines, production server on
+127.0.0.1:3002 against AI :8010 and platform :8090. `playwright test specs/consumer/vertical-slice.spec.ts
+--project=desktop -g "conversation refinement keeps state"` → **1 passed (52.5s), exit 0**, where the same
+command on the same plane was the 30 s `element(s) not found` before.
+
+**What the live three-turn measurement showed, and what it did not fix.** Driving the BFF's
+`/api/nexus/ai/stream` with the merged intent threaded back, exactly as the browser does:
+turn 1 `帮我找附近适合朋友聚会的餐厅` → `sort_preference: distance, budget: null, radius: null`;
+turn 2 `太贵了` → `sort_preference: price_low, budget: null` (the new effect, and §8 still unbroken —
+no number appears); turn 3 `近一点` → `radius_m: 1000` (the nearby default 2000 × `RADIUS_TIGHTEN`). The
+state merge works end to end. **The answer set did not change: 8 cards, and the same first four slugs in
+all three turns.** That is a separate, precisely located defect: `search/service.py:311` writes
+`plan.sort_preference` from the intent and nothing downstream reads it — `organic_rank()` sorts by
+`(-organic_score, candidate.key())` and `plan.radius_m` is the only planning field the retrieval honours.
+So a refinement can be correctly remembered and still produce an identical page; the chip that this unit
+made tappable cannot yet visibly re-order. The reader is the next unit, not this one's claim.
+
+**The measurement error this unit made, filed with the rest.** The first run of the same e2e case failed
+three lines earlier than the defect it was written to catch: `:87` timed out with 0 cards and the page
+printed `流式搜索失败，已降级为确定性搜索结果` over an empty result list, and `/ai/v1/search` answered
+`items: []` with `degraded: true, strategy: hybrid_v1+static` for **every** query, including `餐厅`. That
+red was mine: I had started the service with a bare `python -m uvicorn app.main:app`, which carries no
+`NEXUS_AI_DB_URL` and leaves `NEXUS_PLATFORM_BASE_URL` at `config.py`'s default of
+`http://127.0.0.1:8080`, which is not where this repo's platform answers (8090). Launching the repo's own
+`apps/ai/start_ai.py` (which sets them) gives
+`strategy: hybrid_v1+postgres+vector`, 12 items, `degraded: false` on the same four sentences. Invocation
+is part of the measurement; no product defect is claimed on the strength of my own command line.
+
+**One thing found while reading that launcher, deliberately left alone.** `apps/ai/start_ai.py` is a
+**tracked** file and its first six lines are literal assignments of `NEXUS_AI_DB_URL` (with the AI role's
+password) and `NEXUS_JWT_SECRET` — credentials in the repository, while `.env` is gitignored for exactly
+that reason and `docs/` rule 131 says never to put a real key in a committed file. Its values are quoted
+nowhere in this entry. Deleting it would break the running service and another lane's session, so this
+unit reports it and files it as its own unit: the launcher is load-bearing, so the fix is an env-reading
+launcher plus a secret rotation, not a `git rm`.
+
+**Also noticed on the plane this entry appends to.** The other lane's RAG entry landed in `fdc67be` as
+`## 397. D403 ·`, inserted *above* the committed `## 396. D402 ·` this lane shipped in `9118dba`, so the
+file's section numbers now read 395 · 397 · 396 · 398. Nothing here renumbers it: that reader's own header
+(`scripts/check_ledger_sections.mjs:12` and `:14`) reserves the HARD class for "a numbered section present
+at HEAD but absent from the working copy" and for "a duplicated section number … two sections claim one
+citation", and `:10` calls the two writing directions "ordinary". Out-of-order is neither. The number this
+unit took is therefore simply the next free one.
+
+**The plane this commit could not safely touch.** While staging, the working copy of `docs/STATUS.md`
+measured **16,015 CRLF lines plus 13,837 bare-LF lines** — mixed, and growing between two reads — while
+this commit's staged blob measured **0 CR bytes / 16,111 LF lines**, i.e. HEAD's blob plus this entry and
+nothing else. That is another lane mid-write in a shared worktree, so this unit used the index-only route
+(`git apply --cached` of a patch computed against `git show HEAD:docs/STATUS.md`, never against the disk
+copy) and deliberately did **not** append to the working file: an append now would splice this entry into
+bytes that are not yet settled, and the EOL census would then be reading a mix this lane did not make.
+
+- changed  `apps/ai/nexus_ai/nlu/state_merger.py` (the `price_low` fallback),
+  `apps/ai/tests/test_state_merger.py` (+1 case, 21), `apps/web/src/lib/i18n/dict.ts`
+  (`refineCheaper`/`refineCloser` in the interface and both locales),
+  `apps/web/src/lib/mock/index.ts` (cheaper arm no longer invents 400),
+  `apps/web/src/components/search-results.tsx` (the two chips, in a labelled group)
+- readers     NOT re-measured by this unit. This unit touched no gate harness and ran none of the
+  18 steps; the last recorded reading on this plane is `## 397`'s (`step 8 0 offenders · step 9 91/30 ·
+  step 10 missing 0 · step 12 50/50 · step 15 158/158 · step 16 strict clean on 158`), the same six
+  numbers `## 396` and `## 395` carry, and it is quoted here as inherited, not as this unit's evidence.
+  A documents census run during this landing would have graded the mixed-EOL working copy described
+  above rather than this commit's staged blob, which is why no step number is claimed as measured here.

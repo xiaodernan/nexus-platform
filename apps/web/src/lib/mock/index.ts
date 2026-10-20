@@ -261,10 +261,15 @@ export function mergeIntent(previous: Intent | null, followUp: string): Intent {
   const next: Intent = structuredClone(base);
   next.raw_query = followUp;
 
-  if (/太贵|贵了|太貴|expensive|too much/i.test(followUp)) {
-    const currentMax = next.budget?.max ?? 400;
-    next.budget = { min: null, max: Math.round(currentMax * 0.7), currency: next.budget?.currency ?? 'HKD', per: next.budget?.per ?? 'party' };
-    next.sort_preference = next.sort_preference === 'relevance' ? 'price_low' : next.sort_preference;
+  if (/太贵|贵了|太貴|expensive|too much|cheap/i.test(followUp)) {
+    if (next.budget && next.budget.max != null) {
+      next.budget = { ...next.budget, max: Math.round(next.budget.max * 0.7) };
+      next.sort_preference = next.sort_preference === 'relevance' ? 'price_low' : next.sort_preference;
+    } else {
+      // §8: with no stated budget there is nothing to scale, so neither plane invents one — the
+      // honest effect of "太贵了" is to order by price. Mirrors `state_merger._adjust_budget`.
+      next.sort_preference = 'price_low';
+    }
   }
   if (/近一点|近一些|太遠|太远|closer|nearer|近啲/i.test(followUp)) {
     next.sort_preference = 'distance';

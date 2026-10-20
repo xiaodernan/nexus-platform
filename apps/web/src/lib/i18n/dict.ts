@@ -73,6 +73,9 @@ export interface Dict {
     groups: Record<'best_match' | 'best_value' | 'closest' | 'most_popular', RailsCopy>;
     followUpLabel: string;
     followUpPlaceholder: string;
+    /** One-tap §34 refinements. Each string is also the utterance the cue matcher reads. */
+    refineCheaper: string;
+    refineCloser: string;
     newSearch: string;
     clearQuery: string;
     compareLabel: string;
@@ -714,6 +717,8 @@ const zhHK: Dict = {
     },
     followUpLabel: '继续追问',
     followUpPlaceholder: '例如：只看周六晚上 7 点后的',
+    refineCheaper: '太贵了',
+    refineCloser: '近一点',
     newSearch: '新搜索',
     clearQuery: '清除输入',
     compareLabel: '加入对比',
@@ -1403,6 +1408,8 @@ const en: Dict = {
     },
     followUpLabel: 'Keep refining',
     followUpPlaceholder: 'e.g. only Saturday after 7pm',
+    refineCheaper: 'Cheaper',
+    refineCloser: 'Closer',
     newSearch: 'New search',
     clearQuery: 'Clear',
     compareLabel: 'Compare',

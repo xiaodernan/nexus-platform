@@ -43,6 +43,16 @@ def test_cheaper_with_no_budget_is_not_invented():
     assert any(c["op"] == "budget_relative" and c["applied"] is False for c in res.changes)
 
 
+def test_cheaper_with_no_budget_still_orders_by_price():
+    # The refusal to invent a number must not cost the user the whole refinement: "太贵了" with no
+    # stated budget still moves the sort, exactly the way "近一点" does with no radius to scale.
+    res = merge_turn(_base(), "太贵了")
+    assert res.intent.get("sort_preference") == "price_low"
+    assert res.intent.get("budget") in (None, {})
+    assert any(c["op"] == "budget_relative" and c.get("sort_preference") == "price_low"
+               and c["applied"] is False for c in res.changes)
+
+
 # ------------------------------------------------------------- distance (§7.1)
 def test_nearer_cue_tightens_radius_and_sorts_distance():
     res = merge_turn(_base(location={"radius_m": 2000, "type": "nearby"}), "近啲")
