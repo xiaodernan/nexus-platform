@@ -117,7 +117,7 @@ export function CompareTray({
                 type="button"
                 onClick={() => onRemove(card)}
                 className="rounded-full p-0.5 hover:bg-surface hover:text-ink-strong"
-                aria-label={dict.search.compareClear}
+                aria-label={dict.search.compareRemoveItem(card.title)}
               >
                 <Icon name="close" size={12} />
               </button>

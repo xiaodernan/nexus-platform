@@ -114,11 +114,20 @@ test.describe('consumer core journey', () => {
     await page.goto('/search?q=' + encodeURIComponent('适合约会 餐厅'));
     await expect(cards(page).first()).toBeVisible({ timeout: 20000 });
     for (let i = 0; i < 3; i++) await cards(page).nth(i).locator('button[aria-pressed]').click();
-    await page.getByRole('button', { name: /对比|Compare/i }).click();
+    // Selecting the third card opens the tray; the comparison table is the cost surface (§37).
     await expect(page.locator('table')).toBeVisible();
     for (const row of [/Price|价格|人均/, /Rating|评分/, /Distance|距离/]) {
       await expect(page.locator('table').getByText(row).first()).toBeVisible();
     }
+    // Each chip's remove control names its own card, so it can be addressed and it drops
+    // exactly that card rather than whichever chip happens to be first.
+    const tray = page.getByRole('region', { name: /对比|Compare/ });
+    const chips = tray.locator('ul > li');
+    await expect(chips).toHaveCount(3);
+    const title = (await chips.first().locator('a').innerText()).trim();
+    await chips.first().getByRole('button', { name: `从对比中移除 ${title}` }).click();
+    await expect(chips).toHaveCount(2);
+    await expect(chips.getByRole('link', { name: title })).toHaveCount(0);
   });
 
   test('merchant page: facts, hours, menu, reviews with evidence, action (§4, §54)', async ({ page }) => {

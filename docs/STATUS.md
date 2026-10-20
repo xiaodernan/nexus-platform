@@ -16532,3 +16532,57 @@ in a Chinese keyboard layout is a case file that asserts the keyboard.
 model: with `NEXUS_LLM_PROVIDER=mock` the intent path is the deterministic one, which is the
 path CI runs. The corpus-level grounding (a claim that no fact backs) is still measured
 elsewhere, by the live-DB contract suite, and is not folded in here.
+
+## 406. D412 · the comparison table never received the point it measures distance from (`apps/web` compare BFF + results client + `CompareTable`, §37 / §19 / §8)
+
+**What the user saw.** Selecting three results opened the comparison tray with price, rating,
+category and open state — but no distance. §37's comparison is price / rating / distance, and the
+AI grid had grown a `distance` row in D401. The row was not hidden by CSS; it was absent from the
+response.
+
+**Why it was absent.** The reference point was dropped at both hops. The client posted
+`{subject_ids}` only; the BFF forwarded `{subject_ids}` only; `CompareRequest.geo` stayed `None`;
+and `_compare_rows` only emits `distance` (and fills `district`) when it receives a point. D401 had
+added the producer and the contract, but no caller passed the field — the D406 class one hop out:
+written down and never read.
+
+**Measured at the shipping seam.** The same three subject ids the search returned, POSTed through
+`:3002/api/nexus/ai/compare`:
+
+| body | `rows[].attribute` |
+|---|---|
+| `{"subject_ids":[…]}` | price, rating, category, open_state |
+| `{"subject_ids":[…],"geo":{"lat":22.3809,"lng":114.1861}}` | price, rating, category, district, open_state, distance |
+
+The distance cells are fact-backed (a `fact_id` per card) and render `410m`; the search lane reports
+`410m` for those same three cards.
+
+**The fix.** `SearchResults` now sends `geo` with the compare POST (and the effect depends on it);
+the BFF validates the point (finite `lat`/`lng`) and forwards it, or omits the field when the caller
+has none — the AI keeps the "no point, no row" rule. `CompareTable` renders the contract's attribute
+keys through `TrustLabels.rowLabels` (zh-HK and en, raw key as fallback), because `open_state` and
+`distance` are machine names, not copy.
+
+**The test could not say any of this.** The §37 case clicked `getByRole('button',
+{name:/对比|Compare/i})` — 12 elements matched (selected and unselected toggles, the clear-all and
+three chip removes), a strict-mode error — and asserted only that a `<table>` existed. It now relies
+on the tray opening at the third selection, asserts the three named contract rows, then removes a
+chip by a control that names that card. That control used to share the clear-all's label, so
+"remove this one" was unaddressable; it now takes `compareRemoveItem(title)`.
+
+**Witness.**
+- With the pre-fix client/BFF (row labels and chip controls already in place), §37 went red at the
+  distance clause: `locator('table').getByText(/Distance|距离/)` — element(s) not found.
+- With the fix, `npx playwright test specs/consumer/vertical-slice.spec.ts -g "compare three
+  merchants" --project=desktop --workers=1` -> **1 passed (12.9s)**; its run inside the full spec ->
+  **passed (5.2s)**.
+- Full spec on the same build -> **6 passed, 2 failed, 1 skipped** (2.1m). Both reds pre-date this
+  unit and are filed, not fixed here: the `zh-HK` landing rail is spelled with Simplified
+  characters, and the merchant detail page has no `section[aria-labelledby="reviews-title"]`. The
+  other six cases, including §34's ordering assertion, pass.
+- `npm run typecheck` clean; `npm run build` compiled successfully (7/7 pages).
+
+**What this unit does NOT claim.** The three seeded merchants this query returns share one stored
+distance (`413 m` -> `410m`, the same value in both lanes), so the grid's three distance cells are
+equal. That is the seed's data, not this table's math; the UI invents nothing and each cell keeps
+its own fact id. The two reds above remain open units.

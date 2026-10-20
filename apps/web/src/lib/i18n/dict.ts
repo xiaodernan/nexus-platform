@@ -80,6 +80,8 @@ export interface Dict {
     clearQuery: string;
     compareLabel: string;
     compareClear: string;
+    /** Names the card a chip's remove control drops, so the control is addressable per card. */
+    compareRemoveItem: (title: string) => string;
     compareTitle: (count: number) => string;
     emptyTitle: string;
     emptyText: string;
@@ -723,6 +725,7 @@ const zhHK: Dict = {
     clearQuery: '清除输入',
     compareLabel: '加入对比',
     compareClear: '清除对比',
+    compareRemoveItem: (title) => `从对比中移除 ${title}`,
     compareTitle: (count) => `对比 ${count} 个结果`,
     emptyTitle: '没有符合条件的结果',
     emptyText: '放宽一个条件（预算、距离或时间）通常就会有结果。',
@@ -1414,6 +1417,7 @@ const en: Dict = {
     clearQuery: 'Clear',
     compareLabel: 'Compare',
     compareClear: 'Clear comparison',
+    compareRemoveItem: (title) => `Remove ${title} from comparison`,
     compareTitle: (count) => `Compare ${count} results`,
     emptyTitle: 'No results match',
     emptyText: 'Relaxing one constraint (budget, distance or time) usually helps.',

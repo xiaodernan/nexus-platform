@@ -270,13 +270,13 @@ export function SearchResults({
       return;
     }
     const controller = new AbortController();
-    void postJson('/api/nexus/ai/compare', { subject_ids: compareIds })
+    void postJson('/api/nexus/ai/compare', { subject_ids: compareIds, geo })
       .then((result) => {
         if (!controller.signal.aborted && result.ok) setComparison(result.json as CompareResult);
       })
       .catch(() => undefined);
     return () => controller.abort();
-  }, [compareIds]);
+  }, [compareIds, geo]);
 
   const toggleCompare = useCallback((card: EntityCardModel) => {
     setCompareIds((previous) =>

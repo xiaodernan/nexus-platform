@@ -11,8 +11,16 @@ import type { TrustLabels } from '@nexus/ui';
 import { formatDistance, formatRelativeDay, formatTravelMinutes } from '../format';
 import { normalizeLocale, type Locale } from './dict';
 
-/** `CompareTable` needs three more strings than a card does; the union keeps both call sites honest. */
-export type UiLabels = TrustLabels & { compareTitle: string; best: string; viewMerchant: string };
+/**
+ * `CompareTable` needs three more strings than a card does, plus the row names the compare
+ * contract emits as raw attribute keys; the union keeps both call sites honest.
+ */
+export type UiLabels = TrustLabels & {
+  compareTitle: string;
+  best: string;
+  viewMerchant: string;
+  rowLabels: Record<string, string>;
+};
 
 export function trustLabels(locale: string | null | undefined): UiLabels {
   const lang = normalizeLocale(locale);
@@ -23,6 +31,14 @@ const zhLabels: UiLabels = {
   compareTitle: '逐项对比',
   best: '本行最优',
   viewMerchant: '查看主页',
+  rowLabels: {
+    price: '价格',
+    rating: '评分',
+    category: '类别',
+    district: '地区',
+    open_state: '营业状态',
+    distance: '距离',
+  },
   unverified: '未验证',
   staleValue: '可能已过期',
   uncertain: '置信度低',
@@ -65,6 +81,14 @@ const enLabels: UiLabels = {
   compareTitle: 'Attribute by attribute',
   best: 'Best in row',
   viewMerchant: 'View profile',
+  rowLabels: {
+    price: 'Price',
+    rating: 'Rating',
+    category: 'Category',
+    district: 'District',
+    open_state: 'Opening state',
+    distance: 'Distance',
+  },
   unverified: 'Unverified',
   staleValue: 'Possibly outdated',
   uncertain: 'Low confidence',

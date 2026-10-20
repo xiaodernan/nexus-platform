@@ -28,6 +28,8 @@ export function CompareTable({
     compareTitle: string;
     best: string;
     viewMerchant: string;
+    /** Localised names for the contract's row attributes; unknown keys fall back to the key. */
+    rowLabels?: Record<string, string>;
   };
   bestLabel?: (row: CompareRow, index: number) => number | null;
   className?: string;
@@ -75,7 +77,7 @@ export function CompareTable({
             return (
               <tr key={row.attribute} className="border-t border-line odd:bg-surface even:bg-surface-muted/45">
                 <th scope="row" className="sticky left-0 z-10 bg-surface p-3 text-left align-top text-xs font-medium text-ink-muted">
-                  {row.attribute}
+                  {labels.rowLabels?.[row.attribute] ?? row.attribute}
                 </th>
                 {row.cards.map((cell, cellIndex) => {
                   const factBacked = Boolean(cell.fact_id);
