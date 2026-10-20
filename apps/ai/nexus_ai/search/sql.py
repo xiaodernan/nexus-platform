@@ -141,7 +141,10 @@ def build_merchant_query(
             f"AND lower(coalesce(ld.district,'')) = lower({p.add(str(filters['district']))}))")
     if filters.get("open_weekday") is not None and filters.get("open_time") is not None:
         wd = p.add(int(filters["open_weekday"]))
-        tm = p.add(str(filters["open_time"]))
+        # D399: bind a `datetime.time`, not a string. The column is `time`, and a string
+        # bound to it makes asyncpg raise on the encode
+        # ("'str' object has no attribute 'hour'") before the query ever runs.
+        tm = p.add(filters["open_time"])
         where.append(
             f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
             f"AND bh.weekday = {wd}::smallint AND ("

@@ -15693,6 +15693,48 @@ was re-checked afterwards with the live suite -> **752 passed**.
 
 ---
 
+## 393. D399 · the product's own e2e sentence crashed the search with a 500 (`search/service` + `search/sql`, §7.1 / §8)
+
+**What the product's own acceptance test says.** The vertical slice's headline test asks
+"帮我找沙田适合情侣约会的餐厅，预算500港币，安静一点，周六晚上" and expects ranked cards with
+verifiable explanations, results actually near Sha Tin, and every slot the sentence filled
+resolved. Run against the live plane, that sentence returned:
+
+```
+asyncpg.exceptions.DataError: invalid input for query argument $7: '18:00:00'
+  ('str' object has no attribute 'hour')
+```
+
+**The cause.** The sentence's clock time ("周六晚上") produced an open-at-time filter, and the
+value was carried as the STRING "18:00:00" and bound to a `time` COLUMN. asyncpg encodes a
+`time` parameter from a `datetime.time`, so the bind raised before the query ever ran — a 500 on
+the product's headline sentence, and one no offline test could see, because the offline path
+never reaches a driver. The filter was correct; the VALUE'S TYPE was not.
+
+**The fix.** The plan carries a `datetime.time` (`plan.at.astimezone(HK_TZ).time()`) and the query
+binds it as one. The filter's SQL is unchanged.
+
+**Measured, on the live plane, after the fix.** The same sentence now answers with **8 cards**,
+every one carrying a distance (410m from Sha Tin) and the reasons `near_you`, `top_rated`,
+`within_budget`, `preference_match`; the intent resolves `category=restaurant` (0.7),
+`location=Sha Tin` (resolved, 22.3809/114.1861), `budget.max=500 HKD`,
+`time=range` (Sat 2026-10-24, 18:00–15:00, quality `night`), the preferences `ambience=quiet` and
+`occasion=date`, and `unknowns: []` — every slot the sentence filled, resolved.
+
+**Verified, not claimed.** `pytest tests/test_open_time_binding.py` -> **5 passed** (the plan
+carries a `time`, the query binds a `time`, and the open-at-time clause is still there);
+`pytest tests/test_live_preferences.py` against the seeded `nexus` -> **8 passed**, including the
+product's own sentence; full `apps/ai` suite -> **759 passed** with the database and **747
+passed / 12 skipped** without it.
+
+**Discipline note.** The offline test that pins the plan carries a `time`, and the live test pins
+the sentence's five slots and its eight answers. The first draft of the offline test read
+`extract_intent(...)` and handed the rule engine's own shape to `plan_from_intent`, which reads
+the contract shape — the premise was wrong, not the code, and the test was corrected to go through
+`validate_intent(extract_intent_dict(...))` the way the pipeline does.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha

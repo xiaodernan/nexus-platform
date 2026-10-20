@@ -135,6 +135,49 @@ def test_the_quiet_sentence_resolves_the_cafe_category(live_settings):
     assert data["intent"]["category"] == "cafe"
 
 
+# --------------------------------------------------------------------------- the product's own sentence
+E2E_SENTENCE = ("\u5e2b\u6211\u627e\u6c99\u7530\u9002\u5408\u60c5\u4fa3\u7ea6\u4f1a\u7684\u9910\u5385\uff0c"
+                "\u9884\u7b97500\u6e2f\u5e63\uff0c\u5b89\u9759\u4e00\u70b9\uff0c\u5468\u516d\u665a\u4e0a")  # 沙田/情侣约会/500港币/安静/周六晚上
+SHA_TIN = {"lat": 22.3809, "lng": 114.1861}
+
+
+def test_the_products_own_e2e_sentence_answers(live_settings):
+    """The sentence `tests/e2e/specs/consumer/vertical-slice.spec.ts` uses, end to end.
+
+    D399: this sentence CRASHED the search. Its clock time ("周六晚上") produced an
+    open-at-time filter whose value was bound to a `time` COLUMN as the string
+    "18:00:00", and asyncpg raises on that encode before the query runs - a 500 on the
+    product's headline sentence, invisible to every offline test because the offline path
+    never reaches a driver.
+    """
+    if _published_merchants(live_settings) == 0:
+        pytest.skip("no published merchants in this database - needs the demo seed")
+
+    body = _search(live_settings, E2E_SENTENCE, limit=8)
+    assert body["items"], body
+    for item in body["items"]:
+        # §94: the results must actually be near Sha Tin.
+        assert item.get("distance"), item
+
+
+def test_the_products_own_e2e_sentence_resolves_every_slot(live_settings):
+    """The sentence names a district, an occasion, a budget, an ambience and a time. A slot
+    the sentence filled must not be reported as missing."""
+    if _published_merchants(live_settings) == 0:
+        pytest.skip("no published merchants in this database - needs the demo seed")
+
+    data = _intent(live_settings, E2E_SENTENCE)
+    intent = data["intent"]
+    assert intent["category"] == "restaurant"
+    assert intent["location"]["value"] == "Sha Tin"
+    assert intent["budget"]["max"] == 500
+    assert intent["time"]["type"] == "range"
+    prefs = {(p["key"], p["value"]) for p in (intent.get("preferences") or [])}
+    assert ("ambience", "quiet") in prefs
+    assert ("occasion", "date") in prefs
+    assert intent.get("unknowns") == [], intent.get("unknowns")
+
+
 # --------------------------------------------------------------------------- the taxonomy
 def test_the_category_filter_reaches_the_database(live_settings):
     """The category the NLU infers must be the category the taxonomy holds, or the

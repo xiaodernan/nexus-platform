@@ -333,7 +333,12 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     if plan.open_late_after is not None:
         out["min_closing_hour"] = plan.open_late_after
     out["open_weekday"] = plan.at.astimezone(HK_TZ).weekday() if plan.at else None
-    out["open_time"] = plan.at.astimezone(HK_TZ).strftime("%H:%M:%S") if plan.at else None
+    # D399: the open-at-time filter binds a `time` COLUMN, and a `time` column needs a
+    # `datetime.time` - a string made asyncpg raise
+    # `invalid input for query argument $7: '18:00:00' ('str' object has no attribute 'hour')`
+    # on every query carrying a clock time, which is the product's own e2e sentence
+    # ("...周六晚上"). The value is a time, not a string that happens to look like one.
+    out["open_time"] = plan.at.astimezone(HK_TZ).time() if plan.at else None
     plan.filters = {k: v for k, v in out.items() if v not in (None, "", [], {})}
     return plan
 
