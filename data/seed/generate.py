@@ -1302,7 +1302,13 @@ class Gen:
                 uid("favorite", f"consumer:{m['id']}"), U_CONSUMER, "merchant", m["id"],
                 self.pick([None, "上次話想再嚟", "date night candidate", "約人呢度"]),
                 self.now - timedelta(days=self.rng.randint(1, 90))]))
-        for o in self.rng.sample(self.offerings, k=4):
+        # D396: a favourite is a link the consumer screen renders, and only an ACTIVE
+        # offering is renderable. The sample used to draw from every offering, so a draft or
+        # out_of_stock row could be bookmarked and the seed would fail quality.sql's
+        # "favourites point at a renderable row" check. The rule is the same one the
+        # merchant branch above already follows.
+        active_offerings = [o for o in self.offerings if o["status"] == "active"]
+        for o in self.rng.sample(active_offerings, k=4):
             self.rows["favorites"].append(row([
                 uid("favorite", f"consumer:{o['id']}"), U_CONSUMER, "offering", o["id"],
                 "想試", self.now - timedelta(days=self.rng.randint(1, 40))]))

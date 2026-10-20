@@ -15514,6 +15514,60 @@ through a lossy display is not a measurement.
 
 ---
 
+## 387. D396 · a preference TYPED in this query and one the user DECLARED earlier are different claims, and the card says which (`search/cards` + `search/service`, §18 / §32-33 / §99)
+
+**The gap D392 left.** The card named the preference that fired, but not WHERE it came from. The
+`user_preferences.source` column already carries the answer (`declared` = the user told us,
+`inferred` = the platform's reading of their behaviour, `transaction` = something they did), and
+a preference typed in THIS query is neither: it is a request, not a standing preference. The card
+said the same words for both, which is a claim the user could not check: "matches your preference"
+and "matches what you just asked for" are different promises.
+
+**The fix.** The label travels with its source: `preference_labels` entries are now
+`{label, source}`, the stored path takes the source from the row and the transient path marks it
+`typed`, and the card picks its copy by source â `preference_named` ("配合你的偏好：安靜" /
+"matches your preference: quiet") for a standing preference, `preference_typed` ("符合你這次的要求：安靜" /
+"matches what you asked for: quiet") for this turn. When both fired, the bullet names both.
+
+**The honesty rule.** A label that carries no source is not a claim about anything, so the generic
+copy is the honest answer rather than an invented one â a legacy string label still reads as
+"matches your preferences", not as a typed preference.
+
+**Verified, not claimed.** `pytest tests/test_preference_source.py` -> **8 passed**; full `apps/ai`
+suite -> **736 passed, 4 skipped** (live-DB tests skip; the Docker engine is up but the gate run
+holds the database).
+
+---
+
+## 388. D396 · a favourite could point at an offering the consumer cannot open (`data/seed/generate.py`, D58 / §35)
+
+**What the fresh gate found.** The 18-step gate ran to step 5 on the live plane and filed 216
+assertions with **1 red**: "favourites point at a renderable row". The seeded `nexus` database was
+clean â the same query over it returned 0 bad rows â because that database was seeded
+from an earlier RNG stream. The gate's own fresh seed was not clean.
+
+**The cause.** The generator sampled the four saved OFFERINGS from *every* offering:
+`self.rng.sample(self.offerings, k=4)`. The seeded catalogue holds 5,170 active offerings and 376
+that are `draft` or `out_of_stock`, so the sample could bookmark a row the consumer screen hides.
+Only an `active` offering is renderable, and the check asserts exactly that. The merchant branch
+one line above already did it right (`if m["status"] == "published"]`); the offering branch did not.
+
+**Why it had not been seen.** The sample only fails when one of the four draws lands on a
+non-active offering, and the probability of all four being active is (5170/5546)^4 â 75%, so the
+check failed on roughly one run in four. It passed the earlier runs by luck of the RNG stream, and
+D383's attribute work shifted that stream enough for the latent defect to surface. A check that
+passes three times out of four is not a passing check.
+
+**The fix.** The offering branch now samples from the active offerings only, so the seed cannot
+ship a bookmark whose click is a 404 â which is the same §35/D35 failure in the opposite
+direction, as the check's own comment says.
+
+**Verified, not claimed.** `python data/seed/generate.py --counts ci` -> RESULT: PASS (FK integrity,
+bounds, naming, density, language mix); the 18-step gate re-run is in flight and its verdict is
+the next entry.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha

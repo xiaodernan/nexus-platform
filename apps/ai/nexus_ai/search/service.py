@@ -869,6 +869,10 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         "kind": kind,
                         "key": key,
                         "label": _preference_label(kind, key, value),
+                        # D396: where the preference came from. "declared" is the user
+                        # telling us, "inferred" is the platform's reading of their
+                        # behaviour, "transaction" is something they did.
+                        "source": str(p.get("source") or "declared"),
                         "weight": float(weight),
                         "match_fn": match_fn
                     })
@@ -887,15 +891,19 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         if r.get(field) is not None:
                             enriched_attrs[field] = r.get(field)
                     pref_scores: list[float] = []
-                    matched_labels: list[str] = []
+                    matched_labels: list[dict[str, str]] = []
                     for rule in pref_rules:
                         score = rule["match_fn"](enriched_attrs)
                         if score is not None:
                             pref_scores.append(score)
                             # D392: name the preference that actually fired, so the card can
                             # say WHICH preference matched instead of "matches your preferences".
+                            # D396: the source travels with the name, so a preference the
+                            # user declared and one they typed in this query are
+                            # distinguishable on the card.
                             if score >= 0.5:
-                                matched_labels.append(rule["label"])
+                                matched_labels.append(
+                                    {"label": rule["label"], "source": rule["source"]})
                     if pref_scores:
                         avg_score = sum(pref_scores) / len(pref_scores)
                         existing = personalization.get(sid)
@@ -915,7 +923,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 continue
             attrs = merchant_attrs[mid]
             pref_scores: list[float] = []
-            matched_labels: list[str] = []
+            matched_labels: list[dict[str, str]] = []
             for pref in intent_preferences:
                 pref_kind = pref.get("key")
                 pref_value = pref.get("value")
@@ -933,7 +941,9 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         pref_scores.append(weight)
                         if weight >= 0.5:
                             matched_labels.append(
-                                _preference_label(str(pref_kind), str(pref_value), pref_value))
+                                {"label": _preference_label(str(pref_kind), str(pref_value),
+                                                           pref_value),
+                                 "source": "typed"})
                     else:
                         pref_scores.append(0.5 if polarity > 0 else 1.0)
                     continue
@@ -946,16 +956,21 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         weight = 1.0 if polarity > 0 else 0.0
                         pref_scores.append(weight)
                         # D392: name the preference that fired, so the card can say WHICH.
+                        # D396: a preference typed in THIS query is "typed", not "declared".
                         if weight >= 0.5:
                             matched_labels.append(
-                                _preference_label(str(pref_kind), str(pref_value), pref_value))
+                                {"label": _preference_label(str(pref_kind), str(pref_value),
+                                                           pref_value),
+                                 "source": "typed"})
                         break
                     elif attrs.get(attr_key) is False:
                         weight = 0.0 if polarity > 0 else 1.0
                         pref_scores.append(weight)
                         if weight >= 0.5:
                             matched_labels.append(
-                                _preference_label(str(pref_kind), str(pref_value), pref_value))
+                                {"label": _preference_label(str(pref_kind), str(pref_value),
+                                                           pref_value),
+                                 "source": "typed"})
                         break
             if pref_scores:
                 avg_score = sum(pref_scores) / len(pref_scores)

@@ -43,7 +43,8 @@ async def test_the_transient_preference_names_itself_on_the_card():
     assert len(cards) == 1
     labels = scored[0].candidate.raw.get("preference_labels") or []
     assert labels, "the transient preference produced no label"
-    assert "安靜" in "、".join(labels)
+    # The labels are dicts carrying the name and its source (D396).
+    assert "安靜" in "、".join(str(entry["label"]) for entry in labels)
 
 
 async def test_a_transient_preference_that_did_not_match_names_nothing():

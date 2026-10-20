@@ -40,7 +40,7 @@ def test_the_named_preference_copy_exists_for_every_locale():
 # --------------------------------------------------------------------------- the reason text
 def test_a_named_preference_is_named_in_the_reason():
     cand = Candidate(subject_type="merchant", subject_id="m1", merchant_id="m1",
-                     raw={"preference_labels": ["安靜"]})
+                     raw={"preference_labels": [{"label": "安靜", "source": "declared"}]})
     text = _reason_text("preference_match", cand, locale="zh-HK", open_state=None, query=None)
     assert "安靜" in text
     assert "偏好" in text
@@ -48,7 +48,7 @@ def test_a_named_preference_is_named_in_the_reason():
 
 def test_english_names_the_preference_too():
     cand = Candidate(subject_type="merchant", subject_id="m1", merchant_id="m1",
-                     raw={"preference_labels": ["quiet"]})
+                     raw={"preference_labels": [{"label": "quiet", "source": "declared"}]})
     text = _reason_text("preference_match", cand, locale="en", open_state=None, query=None)
     assert "quiet" in text
 
@@ -62,7 +62,9 @@ def test_without_a_name_the_bullet_stays_the_generic_claim():
 
 def test_duplicate_names_are_collapsed():
     cand = Candidate(subject_type="merchant", subject_id="m1", merchant_id="m1",
-                     raw={"preference_labels": ["quiet", "quiet", "near the MTR"]})
+                     raw={"preference_labels": [{"label": "quiet", "source": "declared"},
+                                               {"label": "quiet", "source": "declared"},
+                                               {"label": "near the MTR", "source": "declared"}]})
     text = _reason_text("preference_match", cand, locale="en", open_state=None, query=None)
     assert text.count("quiet") == 1
     assert "near the MTR" in text

@@ -47,6 +47,8 @@ REASON_COPY: dict[str, dict[str, str]] = {
                          "en": "matches your preferences"},
     "preference_named": {"zh-HK": "配合你的偏好：{p}", "zh-CN": "符合你的偏好：{p}",
                           "en": "matches your preference: {p}"},
+    "preference_typed": {"zh-HK": "符合你這次的要求：{p}", "zh-CN": "符合你这次的要求：{p}",
+                         "en": "matches what you asked for: {p}"},
     "fresh_data": {"zh-HK": "資料已核實", "zh-CN": "资料已核实", "en": "data verified"},
     "district_match": {"zh-HK": "位於 {district}", "zh-CN": "位于 {district}",
                        "en": "in {district}"},
@@ -325,12 +327,24 @@ def _reason_text(label: str, cand: Candidate, *, locale: str,
         return template.format(d=meters_text(cand.distance_m)) if cand.distance_m else ""
     if label == "preference_match":
         # D392: name the preference that fired, so the bullet is not a bare claim.
-        names = [str(n) for n in (cand.raw or {}).get("preference_labels") or [] if n]
-        if not names:
+        # D396: a preference TYPED in this query and one the user DECLARED earlier are
+        # different claims, and the card says which.
+        entries = [e for e in (cand.raw or {}).get("preference_labels") or []
+                   if isinstance(e, dict) and e.get("label")]
+        if not entries:
             return template
-        named = REASON_COPY["preference_named"][locale]
-        uniq = list(dict.fromkeys(names))
-        return named.format(p="、".join(uniq) if locale != "en" else ", ".join(uniq))
+        typed = [str(e["label"]) for e in entries if e.get("source") == "typed"]
+        stored = [str(e["label"]) for e in entries if e.get("source") != "typed"]
+        parts: list[str] = []
+        if stored:
+            uniq = list(dict.fromkeys(stored))
+            parts.append(REASON_COPY["preference_named"][locale].format(
+                p="、".join(uniq) if locale != "en" else ", ".join(uniq)))
+        if typed:
+            uniq = list(dict.fromkeys(typed))
+            parts.append(REASON_COPY["preference_typed"][locale].format(
+                p="、".join(uniq) if locale != "en" else ", ".join(uniq)))
+        return "；".join(parts) if locale != "en" else "; ".join(parts)
     if label == "within_budget":
         if cand.budget_max is None or cand.price is None:
             return ""
