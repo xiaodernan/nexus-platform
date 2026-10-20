@@ -33,7 +33,11 @@ def test_the_sentence_extracts_an_occasion_preference():
     data = extract_intent_dict(SENTENCE, {"locale": "zh-HK"})
     prefs = data.get("preferences") or []
     assert {"key": "occasion", "value": "date", "polarity": 1} in prefs
-    assert data.get("category") is None
+    # D381: the preference is SOFT, so it is not turned into a hard attribute filter.
+    # D391: the category is now READ from the resolved signal (occasion=date -> restaurant)
+    # rather than left null, which is what §141 asked for.
+    assert data.get("category") == "restaurant"
+    assert data["confidence"]["category"] < 0.95  # inferred, not named
 
 
 # --------------------------------------------------------------------------- the mapping

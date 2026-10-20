@@ -15337,6 +15337,45 @@ scheme, the matching will silently not fire. A future unit should add a `prefere
 
 **Remains.** Structured preference values (e.g., `cuisine_like: {values: [...]}`) not yet handled; currently only boolean attributes are matched. The `{value}_{kind}` convention works for the seeded boolean attributes but may need `preference_key` column for complex values.
 
+
+---
+
+## 382. D391 · the Chinese sentence's category is now READ from the signals the extractor resolved (`nlu/understand`, §7.1 / §8 / §141)
+
+**The gap D381 left.** D381 fixed the hard-filter defect: `occasion=date` no longer became a JSONB
+containment clause that deleted every row. But the sentence still extracted `category=null`, and a
+sentence with no category is a sentence the search cannot answer: §141 wanted the Chinese phrasing to
+return cards, and a null category is why it could not.
+
+**The fix.** `_infer_category_from_signals` reads the category from the signals the extractor DID
+resolve, and it runs twice: once in `_fill_category` (for the signals the category pass itself
+produces) and once after `_fill_preferences` (for the preference signals). The maps are data, not
+logic: `_OCCASION_CATEGORY_MAP` (date/group/family/business/solo), `_PREFERENCE_CATEGORY_MAP` keyed by
+the `(key, value)` pairs `PREFERENCE_RULES` actually emits, and `_CUISINE_CATEGORY_MAP` for a named
+cuisine.
+
+**The confidence discipline (§8).** An inferred category is never as certain as a named one: the
+direct hit is 0.95, the inference is capped at 0.75, and the inference only fires when the score
+reaches 0.5. A negative preference (`polarity=-1`) contributes -0.5, so a dislike can never name a
+place the user did not ask for. A category the query actually names is never overridden.
+
+**Measured, on the sentence that started this (18 cases in `tests/test_category_inference.py`):**
+`帮我找一个适合情侣约会的地方` -> `restaurant` (0.5) instead of null;
+`想找个适合独自用餐的咖啡厅` ->
+`cafe`; `想找个通定营业的地方` -> `bar`; `想找个热震的地方` -> `bar`;
+`想找个户外的地方` -> `attraction`; `想找个有停车位的地方` ->
+`mall`/`restaurant`; `下雨天想找个室内的地方` -> `restaurant`/`cafe`/`mall`.
+
+**Verified, not claimed.** `pytest tests/test_category_inference.py` -> **18 passed**; full `apps/ai`
+suite -> **686 passed, 4 skipped** (live-DB tests skip; the Docker engine is down on this machine).
+
+**Discipline note.** The first implementation of this unit put the preference-key lookup in a long
+`elif` chain that tested `key == "mtr_near"` where the extractor emits `key == "access",
+value == "mtr_near"`, so four of the access preferences never matched; the map is now keyed by the
+pair the lexicon emits and the lookup is one dict access. One test premise was also wrong and was
+corrected rather than the code: "嗯" is not a discovery turn, so its `unknowns` list names the intent
+alone and not a category.
+
 ---
 
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,

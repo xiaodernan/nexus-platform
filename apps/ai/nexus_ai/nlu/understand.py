@@ -142,6 +142,12 @@ def extract_intent(query: str, context: dict[str, Any] | None = None) -> IntentE
     ex = _fill_budget(ex, text)
     ex = _fill_party(ex, text, context)
     ex = _fill_preferences(ex, text)
+    # Second pass: infer category from preferences now that they are filled
+    if not ex.category:
+        inferred = _infer_category_from_signals(ex)
+        if inferred:
+            ex.category = inferred[0]
+            ex.confidence["category"] = inferred[1]
     ex = _fill_constraints(ex, text)
     ex = _fill_sort(ex, text)
     ex = _fill_urgency(ex, text)
@@ -211,7 +217,115 @@ def _fill_category(ex: IntentExtraction, text: str) -> IntentExtraction:
         ex.intent = "discover_offering"
     if ex.intent == "purchase" and ex.category:
         ex.unknowns = []  # recomputed later
+    # If still no category, try to infer from signals (occasion, preferences, etc.)
+    if not ex.category:
+        inferred = _infer_category_from_signals(ex)
+        if inferred:
+            ex.category = inferred[0]
+            ex.confidence["category"] = inferred[1]
     return ex
+
+
+# --------------------------------------------------------------------------- category inference from signals
+#: An occasion names a situation, not a place, so it only narrows the category.
+_OCCASION_CATEGORY_MAP: dict[str, list[tuple[str, float]]] = {
+    "date": [("restaurant", 0.7), ("cafe", 0.6), ("bar", 0.5)],
+    "group": [("restaurant", 0.7), ("bar", 0.6), ("karaoke", 0.5)],
+    "family": [("restaurant", 0.8), ("cafe", 0.5), ("hotpot", 0.5)],
+    "business": [("restaurant", 0.8), ("cafe", 0.5), ("hotel", 0.5)],
+    "solo": [("cafe", 0.7), ("restaurant", 0.6), ("bakery", 0.4)],
+}
+
+#: (preference key, preference value) -> the categories that fit it. The pairs are the
+#: ones `PREFERENCE_RULES` can emit, so a resolved preference is a category hint.
+_PREFERENCE_CATEGORY_MAP: dict[tuple[str, str], list[tuple[str, float]]] = {
+    ("ambience", "quiet"): [("cafe", 0.7), ("restaurant", 0.5)],
+    ("ambience", "lively"): [("bar", 0.7), ("karaoke", 0.5)],
+    ("style", "ambience"): [("restaurant", 0.6), ("cafe", 0.5), ("bar", 0.4)],
+    ("style", "outdoor"): [("attraction", 0.7), ("park", 0.5)],
+    ("style", "indoor"): [("restaurant", 0.6), ("cafe", 0.5), ("mall", 0.4)],
+    ("view", "scenic"): [("restaurant", 0.6), ("hotel", 0.5), ("attraction", 0.5)],
+    ("access", "mtr_near"): [("restaurant", 0.5), ("mall", 0.5)],
+    ("access", "accessible"): [("restaurant", 0.5), ("mall", 0.5)],
+    ("access", "parking"): [("mall", 0.6), ("restaurant", 0.4)],
+    ("access", "pet_friendly"): [("restaurant", 0.5), ("cafe", 0.4), ("park", 0.4)],
+    ("price_sense", "cheap"): [("restaurant", 0.6), ("cafe", 0.5)],
+    ("price_sense", "premium"): [("restaurant", 0.7), ("hotel", 0.5)],
+    ("weather", "rainy_day"): [("restaurant", 0.6), ("cafe", 0.5), ("mall", 0.5)],
+    ("time_pref", "open_late"): [("bar", 0.8), ("restaurant", 0.5)],
+    ("cuisine", "spicy"): [("restaurant", 0.8), ("hotpot", 0.6)],
+}
+
+#: A named cuisine lives in a category, and `specialty-coffee` is the one that is not a
+#: restaurant: the seeded taxonomy has a `cafe` category for it.
+_CUISINE_CATEGORY_MAP: dict[str, tuple[str, float]] = {
+    "specialty-coffee": ("cafe", 0.95),
+    "sushi": ("restaurant", 0.95),
+    "dim_sum": ("restaurant", 0.95),
+    "cantonese": ("restaurant", 0.9),
+    "japanese": ("restaurant", 0.9),
+    "korean": ("restaurant", 0.9),
+    "thai": ("restaurant", 0.9),
+    "italian": ("restaurant", 0.9),
+    "indian": ("restaurant", 0.9),
+    "western": ("restaurant", 0.9),
+    "vegetarian": ("restaurant", 0.8),
+    "seafood": ("restaurant", 0.9),
+    "malaysian": ("restaurant", 0.9),
+    "hotpot": ("restaurant", 0.9),
+    "sichuan": ("restaurant", 0.9),
+    "hunan": ("restaurant", 0.9),
+    "mexican": ("restaurant", 0.9),
+}
+
+
+def _infer_category_from_signals(ex: IntentExtraction) -> tuple[str, float] | None:
+    """Infer a category from occasion, preferences, and cuisine_like signals.
+
+    A Chinese sentence rarely names a category outright ("\u5e2b\u6211\u627e\u4e00\u4e2a\u9002\u5408\u60c5\u4fa3\u7ea6\u4f1a\u7684\u5730\u65b9" says `occasion=date` and nothing
+    else), so the category is inferred from the signals the extractor DID resolve. The
+    confidence is deliberately lower than a direct category hit (0.95): an inferred
+    category is a reading of the query, not a word the user wrote, and §8 says never
+    fill a field in as if it were certain.
+    """
+    scores: dict[str, float] = {}
+
+    for pref in ex.preferences:
+        key = str(pref.get("key") or "")
+        value = pref.get("value")
+        polarity = int(pref.get("polarity", 1) or 1)
+        sign = 1.0 if polarity > 0 else -0.5
+
+        # occasion: date/group/family/business/solo
+        if key == "occasion" and isinstance(value, str) and value in _OCCASION_CATEGORY_MAP:
+            for cat, conf in _OCCASION_CATEGORY_MAP[value]:
+                scores[cat] = scores.get(cat, 0.0) + conf * sign
+            continue
+
+        # (kind, value) pairs the NLU can emit
+        pair = (key, value) if isinstance(value, str) else None
+        if pair and pair in _PREFERENCE_CATEGORY_MAP:
+            for cat, conf in _PREFERENCE_CATEGORY_MAP[pair]:
+                scores[cat] = scores.get(cat, 0.0) + conf * sign
+            continue
+
+        # cuisine_like: {values: [...]} -> the category that cuisine lives in
+        if key == "cuisine_like" and isinstance(value, dict):
+            for cuisine in value.get("values") or []:
+                hit = _CUISINE_CATEGORY_MAP.get(str(cuisine).lower())
+                if hit:
+                    cat, conf = hit
+                    scores[cat] = scores.get(cat, 0.0) + conf * sign
+
+    if not scores:
+        return None
+
+    best_cat = max(scores, key=lambda c: (scores[c], c))
+    best_score = scores[best_cat]
+    if best_score < 0.5:
+        return None
+    # 0.5 -> 0.45, 0.95 -> 0.60: always below a direct hit, never above it.
+    return best_cat, round(min(0.75, 0.15 + best_score * 0.5), 4)
 
 
 def _fill_location(ex: IntentExtraction, text: str, context: dict[str, Any]) -> IntentExtraction:
