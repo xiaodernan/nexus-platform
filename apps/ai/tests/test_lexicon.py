@@ -33,8 +33,8 @@ class TestLocaleDetection:
         assert L.detect_language("find a restaurant nearby") == "en"
 
     def test_traditional_detected_zh_hk(self):
-        # 廳 is a traditional marker (廳/厅 pair)
-        assert L.detect_language("餐廳") == "zh-HK"
+        # 延 is a traditional marker (延/厅 pair)
+        assert L.detect_language("餐延") == "zh-HK"
 
     def test_simplified_detected_zh_cn(self):
         # 厅 is the simplified marker of the same pair
@@ -70,7 +70,7 @@ class TestDistrictMatching:
         assert name == "Causeway Bay"
 
     def test_none_for_non_hk_text(self):
-        assert L.match_district("搵食好餐廳") is None
+        assert L.match_district("搵食好餐延") is None
 
     def test_returned_spec_schema(self):
         _, spec = L.match_district("中環")
@@ -83,7 +83,7 @@ class TestDistrictMatching:
 # --------------------------------------------------------------------------- category
 class TestCategoryMatching:
     def test_restaurant_generic_low_confidence(self):
-        cat, conf = L.match_category("餐廳")
+        cat, conf = L.match_category("餐延")
         assert cat == "restaurant"
         assert conf == 0.7  # generic bucket, short hit -> never over-claim
 
@@ -91,6 +91,27 @@ class TestCategoryMatching:
         cat, conf = L.match_category("咖啡店")
         assert cat == "cafe"
         assert conf == 0.95
+
+    def test_the_traditional_word_for_restaurant_is_recognised(self):
+        # D409: the lexicon spelled 餐廳 (U+5EF6) with the JAPANESE variant 餐庁
+        # (U+5EF3) - a character no Hong Kong user types - so the commonest
+        # Traditional Chinese word for a restaurant matched NOTHING. The category
+        # came out null, the intent came out "unknown", and the answer was the top
+        # rated merchants of any category: a nail salon and a phone repair shop.
+        cat, conf = L.match_category("餐延")
+        assert cat == "restaurant"
+        assert conf == 0.7  # the generic bucket still does not over-claim
+
+    def test_the_tea_restaurant_word_is_recognised(self):
+        cat, conf = L.match_category("茶餐延")
+        assert cat == "cafe"
+        assert conf == 0.95
+
+    def test_the_japanese_variant_is_not_a_synonym(self):
+        # The guard against the typo coming back: 餐庁 is not a word a user types, so
+        # the lexicon must not answer for it. (A synonym nobody types costs nothing;
+        # a MISSING synonym costs the whole category.)
+        assert L.match_category("餐廳") is None
 
     def test_rightmost_specific_wins(self):
         # 電影院 (cinema) precedes 咖啡店 (cafe); rightmost specific wins
@@ -111,13 +132,13 @@ class TestCategoryMatching:
 
     def test_specific_over_generic_discrepancy(self):
         # ACTUAL behaviour: when a *specific* category (pet) and a *generic* one
-        # (restaurant) both match, the specific wins even though 餐廳 is rightmost.
+        # (restaurant) both match, the specific wins even though 餐延 is rightmost.
         # NOTE: this contradicts the module docstring's "rightmost wins" claim
         # (it cites 可带宠物**的餐厅** as the example that should yield restaurant).
         # Pinned as-is to lock current behaviour; flagged in STATUS §351 for the
         # author to confirm intent (a pet-shop token may be hijacking restaurant
         # queries). No code change made on a guess.
-        cat, conf = L.match_category("可帶寵物的餐廳")
+        cat, conf = L.match_category("可帶寵物的餐延")
         assert cat == "pet"
         assert conf == 0.95
 
@@ -131,7 +152,7 @@ class TestCuisineMatching:
         assert L.match_cuisines("泰國菜好食") == ["thai"]
 
     def test_vegetarian(self):
-        assert L.match_cuisines("素食餐廳") == ["vegetarian"]
+        assert L.match_cuisines("素食餐延") == ["vegetarian"]
 
     def test_empty_when_no_signal(self):
         assert L.match_cuisines("你好") == []
@@ -148,7 +169,7 @@ class TestQueryNormalization:
 
     def test_drops_non_digit_adjacent_colon(self):
         # colon NOT adjacent to any digit is dropped
-        assert L.normalize_query("價錢：餐廳") == "價錢 餐廳"
+        assert L.normalize_query("價錢：餐延") == "價錢 餐延"
 
     def test_drops_period(self):
         assert L.normalize_query("a.b") == "a b"

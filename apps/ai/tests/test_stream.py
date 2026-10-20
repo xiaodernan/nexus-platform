@@ -54,7 +54,7 @@ def test_status_events_have_only_stage_and_text(client):
 
 
 def test_intent_payload_validates_against_strict_schema(client):
-    _, frames = _stream(client, "開到半夜 銅鑼灣 餐廳")
+    _, frames = _stream(client, "開到半夜 銅鑼灣 餐延")
     data = next(d for n, d in frames if n == "intent")
     intent = Intent.model_validate(data)  # extra="forbid" -> drift fails loudly
     assert intent.raw_query

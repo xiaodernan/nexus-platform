@@ -18,7 +18,7 @@ NOW = datetime(2024, 1, 1, 10, 0, tzinfo=HK_TZ)
 
 
 def test_no_time_signal_returns_none():
-    assert parse_time("推薦一家餐廳", now=NOW) is None  # §8: never invent a time
+    assert parse_time("推薦一家餐延", now=NOW) is None  # §8: never invent a time
 
 
 def test_explicit_clock_with_passed_hour_rolls_to_tomorrow():

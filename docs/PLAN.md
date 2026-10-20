@@ -65,6 +65,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The compare grid's row LABELS are raw attribute keys** — the rows are fact-backed (`price`, `rating`, `category`, `district`, `open_state`, `distance`) but the labels are the keys themselves; the surface that prints them is the web lane's (`packages/ui/src/trust/CompareTable.tsx`), reported and not edited here.
 - **The CI's eval gate names a package that does not exist** — `python -m nexus_ai.eval.cli --suite intent_v1 --fail-on-gate` is the AI job's merge-blocking step ("hallucination < 2%, injection containment 100%"), and there is no `nexus_ai/eval` in this repository, so the step fails with `ModuleNotFoundError` whatever the code says. The lint and type gates beside it are green since D408; this one needs either the suite built or the step written to report what it can actually measure.
 - **The corpus's tags are English** — 拉麵 matches zero `ramen` tags, so a Chinese query reaches only the merchants that spell the word in Chinese (D407's lane). A translation layer for the tags is the open half of that unit.
+- **The web lane's own files carry the 庁 character** — D409 fixed 餐廳 in the AI lane and the seed; `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/mock/index.ts` and three web test files still write 餐庁 (U+5EF3), which is not a word a user types. Reported, not edited: that tree is the web lane's.
+- **The live demo corpus still holds the old names** — 54 merchants' descriptions carry 餐庁 because the database was seeded before D409. The generator is fixed; re-seeding a shared plane is a destructive operation and is the seed lane's call.
 
 ### Completed this session (AI lane)
 
@@ -91,6 +93,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D406** The order the user's own words named was written down and never read (`search/ranking` + `search/service`) — the reader, with the sponsored slot still placed after it
 - **D407** A Chinese query could not reach the merchants it names (`search/sql` + `search/tokens`) — the containment lane, on the merchant pool
 - **D408** The CI's lint step named two tools the project did not have, and the type gate had never run (`apps/ai/pyproject.toml` + the findings) — the rule set is now stated in the repo and both gates are green
+- **D409** The platform's Chinese word for "restaurant" was the Japanese variant, so 餐廳 matched nothing (`nlu/lexicon` + the seed + the tests) — one character, 45 lines, and the answer stops being a nail salon
 - **Fresh gate** re-certified through step 6 on the live plane: 217 quality checks, none red; step 7 is the sandbox's node-spawn refusal
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.

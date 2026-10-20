@@ -33,7 +33,7 @@ from nexus_ai.nlu.understand import extract_intent_dict
 
 def _valid_intent() -> dict:
     # the rule engine emits a §7.1-conformant dict — use it as the known-valid fixture
-    d = extract_intent_dict("搵尖沙咀餐廳", {})
+    d = extract_intent_dict("搵尖沙咀餐延", {})
     assert P.validate_intent(d) is not None
     return d
 
@@ -47,7 +47,7 @@ class TestValidateIntent:
     def test_valid_dict_returns_intent(self):
         result = P.validate_intent(_valid_intent())
         assert isinstance(result, Intent)
-        assert result.raw_query == "搵尖沙咀餐廳"
+        assert result.raw_query == "搵尖沙咀餐延"
 
     def test_none_returns_none(self):
         assert P.validate_intent(None) is None

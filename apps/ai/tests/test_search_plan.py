@@ -28,8 +28,8 @@ def _intent(query: str, **overrides) -> Intent:
 
 class TestStaticTokens:
     def test_cjk_bigrams_plus_full_token(self):
-        # Chinese has no spaces; a naive split would miss "沙田餐廳"
-        assert S._static_tokens("沙田餐廳") == ["沙田", "沙田餐廳", "田餐", "餐廳"]
+        # Chinese has no spaces; a naive split would miss "沙田餐延"
+        assert S._static_tokens("沙田餐延") == ["沙田", "沙田餐延", "田餐", "餐延"]
 
     def test_latin_whitespace_tokens(self):
         assert S._static_tokens("hello world") == ["hello", "world"]
@@ -138,7 +138,7 @@ class TestFilterStatic:
 
 class TestPlanFromIntent:
     def test_category_district_and_geo_from_resolved(self):
-        plan = S.plan_from_intent(_intent("搵尖沙咀餐廳"))
+        plan = S.plan_from_intent(_intent("搵尖沙咀餐延"))
         assert plan.filters["category"] == "restaurant"
         assert plan.filters["district"] == "Tsim Sha Tsui"
         # resolved location seeds geo
@@ -147,7 +147,7 @@ class TestPlanFromIntent:
 
     def test_open_now_false_survives_the_drop_filter(self):
         # only None/""/[]/{} are dropped; False is kept as an explicit signal
-        plan = S.plan_from_intent(_intent("搵尖沙咀餐廳"))
+        plan = S.plan_from_intent(_intent("搵尖沙咀餐延"))
         assert plan.filters["open_now"] is False
 
     def test_purchase_intent_maps_to_offering_subject(self):
@@ -156,19 +156,19 @@ class TestPlanFromIntent:
 
     def test_budget_maps_to_plan_fields(self):
         plan = S.plan_from_intent(
-            _intent("搵餐廳", budget={"max": 300, "per": "party"})
+            _intent("搵餐延", budget={"max": 300, "per": "party"})
         )
         assert plan.budget_max == 300.0
         assert plan.budget_per == "party"
 
     def test_urgency_now_sets_open_now(self):
-        plan = S.plan_from_intent(_intent("搵餐廳", urgency="now"))
+        plan = S.plan_from_intent(_intent("搵餐延", urgency="now"))
         assert plan.open_now is True
         assert plan.filters["open_now"] is True
 
     def test_cuisine_avoid_becomes_avoid_list(self):
         plan = S.plan_from_intent(
-            _intent("搵餐廳", constraints=[{"key": "cuisine_avoid", "value": "spicy"}])
+            _intent("搵餐延", constraints=[{"key": "cuisine_avoid", "value": "spicy"}])
         )
         assert plan.avoid == ["spicy"]
         assert plan.filters["avoid"] == ["spicy"]
@@ -195,5 +195,5 @@ class TestPlanFromIntent:
 
     def test_intent_path_drops_empty_filters(self):
         # the intent path drops None/""/[]/{} values from the final filter set
-        plan = S.plan_from_intent(_intent("搵餐廳"), filters={"tags": []})
+        plan = S.plan_from_intent(_intent("搵餐延"), filters={"tags": []})
         assert "tags" not in plan.filters

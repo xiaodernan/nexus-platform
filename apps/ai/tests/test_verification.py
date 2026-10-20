@@ -28,7 +28,7 @@ def _fact(*, attribute: str, value, fact_id=None, source: str = "merchant") -> F
 
 
 def test_extract_claims_reads_kinds_and_values():
-    text = "HK$320 評分 4.7 700m 20% 5 間餐廳 18:30"
+    text = "HK$320 評分 4.7 700m 20% 5 間餐延 18:30"
     claims = extract_claims(text)
     by_kind = {c.kind: c for c in claims}
     assert by_kind[MONEY_KIND].value == 320.0

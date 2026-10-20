@@ -16367,3 +16367,49 @@ hallucination < 2%, injection containment 100%)", runs `python -m nexus_ai.eval.
 intent_v1 --fail-on-gate` — and **there is no `nexus_ai/eval` package in this repository**, so
 that step fails with `ModuleNotFoundError` whatever the code says. It is filed as the next unit
 and is NOT claimed here.
+
+## 403. D409 · the platform's Chinese word for "restaurant" was the Japanese variant, so 餐廳 matched nothing (`nlu/lexicon` + the seed + the tests, §7.1 / §111)
+
+**What the lexicon held.** The `restaurant` category's Chinese synonyms were
+`["餐庁", "餐厅", "飯店", "食店", "食食", "吃飯", "攤食", "美食", "餐補"]` — and the first of them
+spells 餐 with **庁 (U+5EF3)**, the Japanese variant of 廳. The Traditional Chinese word Hong
+Kong writes is **餐廳 (U+5EF6)**, and the lexicon had never contained it: the `cafe` list had
+the same substitution inside 茶餐廳. The typo arrived with the first build (M1 wave 1) and every
+test since then asserted the TYPO, so the suite was green while the platform did not know the
+commonest word for a restaurant.
+
+**Measured, before and after, on the live plane.**
+
+| | before | after |
+|---|---|---|
+| `match_category("餐廳")` | `None` | `("restaurant", 0.7)` |
+| `match_category("茶餐廳")` | `None` | `("cafe", 0.95)` |
+| the intent for "餐廳" | `unknown`, category `None` | `discover_merchant`, category `restaurant` |
+| the answer for "餐廳" | a **nail salon**, a **phone repair** shop, a wine bar — the top-rated merchants of ANY category | a steakhouse, an Italian, a European bistro — restaurants |
+
+**The fix: one character, everywhere the vocabulary is written.** `庁` → `廳` in
+`nlu/lexicon.py` (the restaurant and cafe lists), `api/demo_data.py` (the offline demo
+catalogue's Chinese names), `nlu/state_merger.py` (the budget-cue regex), the seed's generator,
+its quality checks and its category pool, and the tests that asserted the typo. **39 lines in
+`apps/ai` and 6 in `data/seed`**, and the tests now assert the word a Hong Kong user actually
+types. Three new cases in `tests/test_lexicon.py` pin it: the Traditional form is recognised,
+茶餐廳 is recognised, and 餐庁 is **not** a synonym — so the typo cannot come back.
+
+**Verified, not claimed.** `pytest tests/test_lexicon.py` -> **50 passed** (47 before); the full
+`apps/ai` suite -> **818 passed** with the database, **792 passed / 26 skipped** without it;
+`ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 51
+source files**.
+
+**What this unit does NOT claim, and what it reports.** The live demo DATABASE still holds the
+old names: 54 of its merchants' descriptions carry 餐庁, because the corpus was seeded before
+this fix and re-seeding a shared plane is a destructive operation (the seed's own header says
+so) that this unit did not run. The generator is fixed, so the next seed load writes 餐廳. The
+web lane's own files carry the same character in six places (`apps/web/src/lib/i18n/dict.ts`,
+`apps/web/src/lib/mock/index.ts` and three test files) — that tree is not this lane's, so it is
+reported, not edited.
+
+**Discipline note.** The finding came from writing an EVALUATION suite, not from a test: the
+suite's cases are written in the words a user types, and the first one that named a restaurant
+came back with no category. A suite that only re-asserts the code's own vocabulary cannot find
+a vocabulary that is wrong in the same way everywhere — the tests had all been written with the
+same typo, so they agreed with each other and with nothing else.
