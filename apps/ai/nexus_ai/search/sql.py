@@ -469,6 +469,49 @@ ORDER BY kind, key
     return sql, p.values
 
 
+def compare_geo(tenant_id: str, merchant_ids: Iterable[str], lat: float, lng: float
+                ) -> tuple[str, list[Any]]:
+    """Each merchant's distance from a point and its district, from its PRIMARY location (D401).
+
+    The comparison grid needs a distance row (\u00a737: "three merchants from real rows only", and the
+    e2e spec asserts the compare table shows Price, Rating and Distance). A distance
+    needs a reference point, so this reads the same primary location the search's geo
+    lane reads \u2014 the nearest one to the point when a merchant has several, so the two lanes
+    cannot disagree about how far a merchant is.
+
+    The DISTRICT comes from the same row: the grid already built a `district` row and
+    dropped it every time, because `entities_for` selects no district column, so the
+    cells were always empty. Reading the district beside the distance is what makes the
+    row real.
+    """
+    p = Params()
+    ids = [str(m) for m in merchant_ids if m]
+    if not ids:
+        return "", []
+    tenant_ph = p.add(str(tenant_id))
+    ids_ph = p.add(ids)
+    lat_ph, lng_ph = p.add(float(lat)), p.add(float(lng))
+    expr = haversine_expr(lat_ph, lng_ph, "l.lat", "l.lng")
+    sql = f"""
+SELECT m.id::text AS merchant_id,
+       (SELECT {expr}
+          FROM locations l
+         WHERE l.merchant_id = m.id
+         ORDER BY l.is_primary DESC, {expr} ASC NULLS LAST
+         LIMIT 1) AS meters,
+       (SELECT l.district
+          FROM locations l
+         WHERE l.merchant_id = m.id
+         ORDER BY l.is_primary DESC, {expr} ASC NULLS LAST
+         LIMIT 1) AS district
+  FROM merchants m
+ WHERE m.tenant_id = {tenant_ph}::uuid
+   AND m.id::text = ANY({ids_ph}::text[])
+   AND m.status = 'published'
+"""
+    return sql, p.values
+
+
 def entities_for(tenant_id: str, subject_ids: Iterable[str]) -> tuple[str, list[Any]]:
     """Merchant + offering rows by explicit ids — the `/ai/v1/compare` read path.
 

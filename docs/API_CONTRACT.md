@@ -328,7 +328,7 @@ judgement about that text and not a permanent silence.
 | POST | `/ai/v1/search` | deterministic (non-streaming) hybrid search, and the §105 degradation target: `{intent\|query, geo?, filters?, limit}` → `{items:EntityCard[], facets, took_ms, strategy, degraded:false}` |
 | POST | `/ai/v1/query/understand` | `{query, context}` → `Intent` (below) |
 | POST | `/ai/v1/recommend` | `{intent|conversation_id, limit}` → `{set_id, items:EntityCard[]}` with explanations + fact ids |
-| POST | `/ai/v1/compare` | `{subject_ids:[...] }` → `{rows:[{attribute, cards:[{value,fact_id}]}]}` (§37) |
+| POST | `/ai/v1/compare` | `{subject_ids:[...], geo?:{lat,lng}}` → `{rows:[{attribute, cards:[{value,fact_id}]}]}` (§37). `geo` is the point the comparison is measured from; with it the grid carries a `distance` row (and the `district` of each merchant's primary location), without it there is no distance row — the grid never invents one. |
 | POST | `/ai/v1/rag/retrieve` | `{query, merchant_id?, filters, top_k}` → `{chunks:[{id,text,score,document_id,source_uri,fact_ids}]}` |
 | POST | `/ai/v1/merchant-agent/chat` | `{merchant_id, message, conversation_id}` → SSE; grounded only in merchant KB, low confidence → handoff (§24-26) |
 | POST | `/ai/v1/feedback` | `{subject_type,subject_id,signal,value,session_id}` (§99) |

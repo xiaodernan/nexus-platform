@@ -15764,6 +15764,52 @@ rule that is checked rarely.
 
 ---
 
+## 395. D401 · the comparison grid had no distance row, no district row, and two rows of "unverified" (`api/routes_discover` + `search/sql`, §37 / §18)
+
+**What the product says the comparison is.** §37: three merchants from real rows only, and the
+e2e spec asserts the compare table shows **Price, Rating and Distance**. The live grid, measured
+against the seeded plane, produced five rows — `price`, `rating`, `category`, `district`,
+`open_state` — and NO distance row at all.
+
+**The three defects, and what each was:**
+
+1. **No distance row.** A distance needs a reference point, and `CompareRequest` had none, so the
+   grid could not compute one. The request now accepts an optional `geo` (the point the
+   comparison is measured from) and the grid grows a `distance` row when it is given. The
+   distances come from the same PRIMARY location the search's geo lane reads, so the two lanes
+   cannot disagree about how far a merchant is. Without a `geo` there is no distance row — the
+   grid never invents one.
+2. **No district row.** The grid built a `district` row and dropped it EVERY time, because
+   `entities_for` selects no district column, so the cells were always empty and the row was
+   filtered out. The district now comes from the same primary-location read.
+3. **Two rows of "unverified".** A compare cell with no `fact_id` renders as the unverified
+   marker (`CompareTable`: `factBacked ? ... : labels.unverified`), so the `category` and
+   `district` rows rendered as "unverified" in the product's comparison table. Both are the
+   MERCHANT'S OWN CLAIM (its own `category_primary` column, its own location row), so both now
+   get a fact with the source and the timestamp — exactly the way the `open_state` row already
+   did.
+
+**Measured, on the live plane, after the fix.** The compare of three merchants now answers with six
+rows — `price`, `rating`, `category`, `district`, `open_state`, `distance` — and EVERY cell carries a
+fact id: price 354.55 / 187.11 / 280.36, rating 4.57 / 4.59 / 4.30, category Steakhouse /
+Italian / European Bistro, district Sha Tin / Sha Tin / Tai Wai, open_state Opens 12:00 x3, and
+distance 410m / 410m / 1.4km.
+
+**Verified, not claimed.** `pytest tests/test_compare_grid.py` -> **9 passed** (the request takes a
+point, the query reads the distance and the district, the grid keeps both rows, and the cells are
+fact-backed); `pytest tests/test_live_ai_contract.py` against the seeded `nexus` -> **4 passed**,
+including the grid carrying price, rating and distance with no empty cell; full `apps/ai` suite ->
+**772 passed** with the database, **756 passed / 16 skipped** without it. `docs/API_CONTRACT.md` §7
+now documents the optional `geo`.
+
+**The other half, and whose it is.** The grid's row headers are the RAW attribute keys
+(`price`, `rating`, ...), and the e2e spec looks for `/Price|价格|人均/` — so the table's row LABELS
+have to be localized by whoever renders them (`packages/ui/src/trust/CompareTable.tsx` renders
+`row.attribute` raw). That is the web lane's file, so it is reported, not edited. The AI lane's half
+is the rows and their facts, and that is what landed here.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha

@@ -22,9 +22,10 @@ from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import (
     MAX_QUERY_LENGTH, SearchPack, compose_summary, run_search, understand, validate_intent)
 from nexus_ai.contract import (
-    CompareRow, Intent, RecommendRequest, RecommendResponse, UnderstandRequest,
+    CompareRow, GeoPoint, Intent, RecommendRequest, RecommendResponse, UnderstandRequest,
     UnderstandResponse, _Strict)
-from nexus_ai.search.cards import compute_open, drop_ungrounded_reasons
+from nexus_ai.search.cards import (compute_open, drop_ungrounded_reasons, meters_text,
+                                   travel_minutes)
 from nexus_ai.trust.facts import FactBundle, facts_from_rows
 
 log = logging.getLogger("nexus_ai.api.routes_discover")
@@ -121,6 +122,11 @@ class CompareRequest(_Strict):
     subject_ids: list[UUID] = Field(min_length=2, max_length=5)
     tenant_id: Optional[UUID] = None
     locale: str = "zh-HK"
+    # D401: a distance needs a reference point. The grid grew a `distance` row
+    # (S37's comparison is price / rating / distance, and the e2e spec asserts the
+    # table shows all three), so the caller passes the point it is comparing FROM.
+    # Without it the row is simply absent - the grid never invents a distance.
+    geo: Optional[GeoPoint] = None
 
 
 _COMPARE_ATTRIBUTES = ("price", "rating", "category", "district", "open_hours",
@@ -128,8 +134,13 @@ _COMPARE_ATTRIBUTES = ("price", "rating", "category", "district", "open_hours",
 
 
 async def _compare_rows(deps: Deps, subject_ids: list[str], tenant: str,
-                        locale: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Collect (rows, meta) for the comparison grid from facts + published rows only."""
+                        locale: str, geo: Any = None) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Collect (rows, meta) for the comparison grid from facts + published rows only.
+
+    D401: a `geo` adds the `distance` row. The distances come from the same primary
+    location the search's geo lane reads, so the two lanes cannot disagree about how
+    far a merchant is.
+    """
     meta: dict[str, Any] = {"source": "static", "degraded": deps.backend_degraded()}
     db = deps.database()
     if db is not None:
@@ -163,7 +174,22 @@ async def _compare_rows(deps: Deps, subject_ids: list[str], tenant: str,
 
     now = datetime.now(timezone.utc)
     facts = FactBundle(facts_from_rows(fact_rows, now=now))
-    return _grid(entity_rows, facts, hours_map, now=now, locale=locale), meta
+    distances: dict[str, float] = {}
+    districts: dict[str, str] = {}
+    if geo is not None and db is not None:
+        from nexus_ai.search.sql import compare_geo
+
+        d_sql, d_params = compare_geo(tenant, [str(r["merchant_id"]) for r in entity_rows],
+                                       float(geo.lat), float(geo.lng))
+        if d_sql:
+            for d in await db.readonly(d_sql, *d_params, schema=deps.settings.db_search_path):
+                mid = str(d["merchant_id"])
+                if d.get("meters") is not None:
+                    distances[mid] = float(d["meters"])
+                if d.get("district") is not None:
+                    districts[mid] = str(d["district"])
+    return _grid(entity_rows, facts, hours_map, now=now, locale=locale,
+                 distances=distances, districts=districts), meta
 
 
 def S_entities(tenant: str, ids: list[str]):
@@ -201,7 +227,9 @@ def _cell(value: Any, fact: Any) -> dict[str, Any]:
 
 
 def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
-          hours_map: dict[str, list[Any]], *, now: Any, locale: str
+          hours_map: dict[str, list[Any]], *, now: Any, locale: str,
+          distances: dict[str, float] | None = None,
+          districts: dict[str, str] | None = None
           ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     order = [str(r.get("subject_id")) for r in entity_rows]
@@ -226,10 +254,31 @@ def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
         rating_cells.append(_cell(rating_val, rating_fact))
         cat = row.get("category") or row.get("category_primary")
         cat_fact = bundle.get("category", sid)
+        if cat_fact is None and cat is not None:
+            # D401: a cell with no fact id renders as the unverified marker, so a
+            # category nobody could check was a row of "unverified" in the table. The
+            # category is the merchant's OWN claim (its own column), so it gets a
+            # fact with the source and the timestamp, exactly like the open_state
+            # row above.
+            cat_fact = bundle.synth(
+                subject_type="merchant", subject_id=sid, attribute="category",
+                value={"value": cat}, source="merchant", confidence=0.9, observed_at=now)
         cat_cells.append(_cell(cat, cat_fact))
         addr_fact = bundle.get("address", sid)
         district = addr_fact.value.get("district") if addr_fact and isinstance(
             addr_fact.value, dict) else row.get("district")
+        if district is None and districts:
+            # D401: the entity rows carry no district column, so the grid's district row
+            # was empty and dropped every time. The primary location's district is the
+            # same fact the address fact would carry.
+            district = districts.get(str(row.get("merchant_id") or sid))
+        if addr_fact is None and district is not None:
+            # The district is the merchant's own claim about where it is, so it gets a
+            # fact with the source and the timestamp, the way the open_state row does.
+            addr_fact = bundle.synth(
+                subject_type="merchant", subject_id=sid, attribute="address",
+                value={"district": district}, source="merchant", confidence=0.9,
+                observed_at=now)
         district_cells.append(_cell(district, addr_fact))
         hours = hours_map.get(str(row.get("merchant_id") or sid), [])
         state = compute_open(hours, now=now) if hours else {"is_open": None}
@@ -243,9 +292,26 @@ def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
         else:
             open_cells.append(_cell(None, None))
 
+    # D401: the distance row, when the caller gave a point to measure from.
+    distance_cells: list[dict[str, Any]] = []
+    if distances:
+        for sid in order:
+            row = column_for(sid)
+            meters = distances.get(str(row.get("merchant_id") or sid))
+            if meters is None:
+                distance_cells.append(_cell(None, None))
+                continue
+            d_fact = bundle.synth(
+                subject_type="merchant", subject_id=sid, attribute="distance_m",
+                value={"meters": int(round(meters)), "text": meters_text(meters),
+                       "travel_minutes": travel_minutes(meters)},
+                source="inferred", confidence=0.95, observed_at=now)
+            distance_cells.append(_cell(meters_text(meters), d_fact))
+
     for attribute, cells in (("price", price_cells), ("rating", rating_cells),
                              ("category", cat_cells), ("district", district_cells),
-                             ("open_state", open_cells)):
+                             ("open_state", open_cells),
+                             ("distance", distance_cells)):
         row = CompareRow(attribute=attribute, cards=cells)
         if any(c["value"] is not None for c in row.cards):
             rows.append(row.model_dump(mode="json"))
@@ -258,7 +324,7 @@ async def compare(request: Request, body: CompareRequest):
     ids = [str(i) for i in body.subject_ids]
     try:
         rows, meta = await _compare_rows(deps, ids, str(body.tenant_id or deps.tenant_id()),
-                                         body.locale)
+                                         body.locale, body.geo)
     except Exception as exc:
         log.exception("compare read failed")
         return JSONResponse(

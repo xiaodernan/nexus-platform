@@ -105,6 +105,40 @@ def test_every_reason_carries_a_fact_id(live_settings):
         assert seen, "no reason rendered at all - the card cannot explain itself"
 
 
+def test_the_comparison_grid_carries_price_rating_and_distance(live_settings):
+    """§37: the comparison is three real merchants, and the e2e spec asserts the table
+    shows Price, Rating and Distance. D401: the live grid had no distance row at all and
+    no district row (the district cells were always empty), so the table could not show
+    what the product says it shows."""
+    if _published_merchants(live_settings) == 0:
+        pytest.skip("no published merchants in this database - needs the demo seed")
+
+    from fastapi.testclient import TestClient
+
+    from nexus_ai.api.app import create_app
+
+    with TestClient(create_app(live_settings)) as c:
+        r = c.post("/ai/v1/search", json={"intent": JAPANESE_INTENT, "geo": SHA_TIN,
+                                           "limit": 5})
+        assert r.status_code == 200, r.text
+        items = r.json()["items"]
+        assert len(items) >= 3
+
+        ids = [i["id"] for i in items[:3]]
+        cr = c.post("/ai/v1/compare", json={"subject_ids": ids, "geo": SHA_TIN})
+        assert cr.status_code == 200, cr.text
+        body = cr.json()
+        attributes = [row["attribute"] for row in body["rows"]]
+        assert "price" in attributes
+        assert "rating" in attributes
+        assert "distance" in attributes, attributes
+
+        for row in body["rows"]:
+            for cell in row["cards"]:
+                assert cell.get("value") is not None, \
+                    f"the {row['attribute']} row has an empty cell"
+
+
 def test_a_sponsored_card_is_labelled(live_settings):
     """§66-67: a promoted card must say so."""
     if _published_merchants(live_settings) == 0:
