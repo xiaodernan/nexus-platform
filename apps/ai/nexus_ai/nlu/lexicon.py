@@ -128,6 +128,71 @@ PREFERENCE_RULES: list[tuple[str, str, list[str], int]] = [
 #: every preference value the lexicon can emit (intent fallback uses this)
 PREFERENCE_RULE_VALUES = [v for _k, v, _t, _p in PREFERENCE_RULES]
 
+#: The cuisine the user names -> the seeded taxonomy leaves that satisfy it.
+#:
+#: The lexicon speaks the user's word ("japanese") while the seed stores the venue's
+#: leaf ("sushi", "ramen", "izakaya"). Without this map a cuisine preference that IS
+#: satisfied by the merchant never fires, and a satisfied preference is then the same
+#: as an unsatisfied one (D394). The leaves are the ones `data/seed/seed_pools.py`'s
+#: `CAT_TREE` writes; a leaf not listed here is matched by its own name.
+CUISINE_LEAVES: dict[str, tuple[str, ...]] = {
+    "cantonese": ("cantonese",),
+    "dim_sum": ("dimsum",),
+    "seafood": ("seafood-grill",),
+    "japanese": ("sushi", "ramen", "izakaya"),
+    "korean": ("korean",),
+    "thai": ("thai",),
+    "indian": ("indian",),
+    "italian": ("italian",),
+    "western": ("western-grill",),
+    "malaysian": ("singmal",),
+    "vegetarian": ("vegetarian",),
+    "specialty-coffee": ("specialty-coffee",),
+}
+
+
+def cuisine_leaves(cuisine: str) -> tuple[str, ...]:
+    """The seeded leaves that satisfy a named cuisine (D394).
+
+    An unknown cuisine is matched by its own name, which is the right default: a cuisine the
+    taxonomy does not know is still a word a merchant may carry in its tags.
+    """
+    key = (cuisine or "").strip().lower()
+    return CUISINE_LEAVES.get(key, (key,) if key else ())
+
+
+def cuisine_matches(cuisine: str, category: str, tags: list[str]) -> bool:
+    """Whether a merchant's taxonomy carries a named cuisine (D394).
+
+    Both sides are normalized (case, and the separators `_`/`-`/space) so "dim_sum" and
+    "dimsum" are the same word, and the comparison is by leaf rather than by substring:
+    a cuisine name must not match a merchant whose tag merely contains the letters.
+    """
+    leaves = cuisine_leaves(cuisine)
+    if not leaves:
+        return False
+    norm_cat = _normalize_token(category)
+    norm_tags = {_normalize_token(str(t)) for t in tags}
+    for leaf in leaves:
+        norm_leaf = _normalize_token(leaf)
+        if not norm_leaf:
+            continue
+        if norm_leaf in norm_tags:
+            return True
+        if norm_leaf in norm_cat:
+            return True
+    return False
+
+
+def _normalize_token(value: str) -> str:
+    """Case-fold a taxonomy token and drop the separators, so "dim_sum", "dim-sum" and
+    "dimsum" are one word (D394)."""
+    out = []
+    for ch in (value or "").lower():
+        if ch.isalnum():
+            out.append(ch)
+    return "".join(out)
+
 # ------------------------------------------------------------------ constraints (negated)
 CONSTRAINT_RULES: list[tuple[str, list[str], list[str]]] = [
     # (key, negation cues, value patterns)

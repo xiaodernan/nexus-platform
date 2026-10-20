@@ -15444,6 +15444,42 @@ the spice. The rule now distinguishes the two clauses, and the test that pins th
 
 ---
 
+## 385. D394 · the cuisine the user names and the cuisine the seed writes are two vocabularies (`nlu/lexicon`, §7.1 / §99)
+
+**The gap D384 left.** The NLU says "japanese"; the seeded taxonomy writes the leaves
+"sushi", "ramen" and "izakaya". The matcher compared the two by SUBSTRING, so a cuisine preference
+that WAS satisfied by the merchant never fired â "japanese" is not a substring of "sushi" â and
+"dim_sum" (the NLU's spelling) is not a substring of "dimsum" (the seed's). A satisfied preference
+and an unsatisfied one produced the same score, which is the same failure D381 found in a
+different shape: a signal that cannot fire is not a signal.
+
+**The fix.** `nexus_ai/nlu/lexicon.py` owns the vocabulary now: `CUISINE_LEAVES` maps a named cuisine to
+the leaves that satisfy it, `cuisine_leaves` resolves a name (an unknown cuisine falls back to
+matching by its own name, which is right â a cuisine the taxonomy does not know is still a word a
+merchant may carry), and `cuisine_matches` compares the two sides by LEAF, normalized for case and
+for the `_`/`-`/space separators, rather than by substring. Both the stored preference and the typed
+one go through it.
+
+**A weight inconsistency, fixed on the way.** The stored-cuisine matcher was returning a hard 1.0
+for a match while every other matcher returns the preference's own weight, so a preference the user
+holds at 0.9 was scoring as a certainty. The cuisine matcher now uses the weight like the rest
+("w" on a match, "1 - w" on a disliked cuisine, "0.5" for a cuisine that is simply absent).
+
+**Measured.** "japanese" now matches the sushi, ramen and izakaya leaves; "dim_sum" matches
+"dimsum"; "seafood" matches the "seafood-grill" leaf and the "Seafood & BBQ" category; "thai"
+matches neither a sushi nor a ramen merchant, and a merchant with no such cuisine scores the neutral
+0.5 rather than a match.
+
+**Verified, not claimed.** `pytest tests/test_cuisine_vocabulary.py` -> **5 passed**; full `apps/ai`
+suite -> **714 passed, 4 skipped** (live-DB tests skip; the Docker engine is down on this machine).
+
+**Discipline note.** The first version of the vocabulary test asserted the exact score (0.9) for a
+match, and the matcher returned 1.0 â because it ignored the weight. The test premise was right and
+the code was wrong: a preference the user holds at 0.9 must not score as a certainty. The matcher
+now uses the weight, and the test pins the number rather than a threshold.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha

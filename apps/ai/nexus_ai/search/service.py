@@ -25,6 +25,7 @@ from typing import Any, Protocol, Sequence
 from uuid import UUID
 
 from nexus_ai.contract import EntityCard, FacetValue, Intent, SearchResponse
+from nexus_ai.nlu.lexicon import cuisine_matches
 from nexus_ai.nlu.timeparse import HK_TZ
 from nexus_ai.search import sql as S
 from nexus_ai.search.cards import build_card, compute_open, attach_price_staleness
@@ -586,23 +587,24 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     cuisines = value.get("values") if isinstance(value, dict) else []
                     if cuisines:
                         is_like = key == "cuisine_like"
-                        def make_cuisine_match(cats, is_like_pref):
+                        def make_cuisine_match(cats, is_like_pref, w):
                             def _match(attrs):
-                                cat = str(attrs.get("category_primary") or "").lower()
-                                tags = [str(t).lower() for t in (attrs.get("tags") or [])]
-                                has_match = False
-                                for c in cats:
-                                    if c.lower() in cat or c.lower() in tags:
-                                        has_match = True
-                                        break
+                                # D394: the named cuisine and the merchant's taxonomy are
+                                # different vocabularies ("japanese" vs "sushi"), so the
+                                # match goes through the lexicon's leaf map.
+                                cat = str(attrs.get("category_primary") or "")
+                                tags = [str(t) for t in (attrs.get("tags") or [])]
+                                has_match = any(cuisine_matches(c, cat, tags) for c in cats)
                                 if has_match:
-                                    # Match found: like -> 1.0, dislike -> 0.0
-                                    return 1.0 if is_like_pref else 0.0
+                                    # Match found: like -> the preference's weight,
+                                    # dislike -> its inverse (a dislike is a negative signal).
+                                    return w if is_like_pref else 1.0 - w
                                 else:
-                                    # No match: like -> neutral (0.5), dislike -> positive (1.0, since not having disliked cuisine is good)
-                                    return 0.5 if is_like_pref else 1.0
+                                    # No match: like -> neutral (0.5), dislike -> the
+                                    # weight (not having a disliked cuisine is a mild positive).
+                                    return 0.5 if is_like_pref else w
                             return _match
-                        match_fn = make_cuisine_match(cuisines, is_like)
+                        match_fn = make_cuisine_match(cuisines, is_like, float(weight))
                 
                 # BUDGET: per_person_max_hkd -> numeric budget
                 elif kind == "budget" and key == "per_person_max_hkd":
@@ -920,6 +922,22 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 polarity = pref.get("polarity", 1)
                 if not pref_kind or not pref_value:
                     continue
+
+                # D394: a typed cuisine ("japanese") meets the taxonomy ("sushi") through
+                # the lexicon's leaf map, not through an attribute name.
+                if str(pref_kind) == "cuisine":
+                    cat = str(attrs.get("category_primary") or "")
+                    tags = [str(t) for t in (attrs.get("tags") or [])]
+                    if cuisine_matches(str(pref_value), cat, tags):
+                        weight = 1.0 if polarity > 0 else 0.0
+                        pref_scores.append(weight)
+                        if weight >= 0.5:
+                            matched_labels.append(
+                                _preference_label(str(pref_kind), str(pref_value), pref_value))
+                    else:
+                        pref_scores.append(0.5 if polarity > 0 else 1.0)
+                    continue
+
                 attr_key1 = f"{pref_value}_{pref_kind}"  # date_occasion
                 attr_key2 = f"{pref_kind}_{pref_value}"  # occasion_date
                 
