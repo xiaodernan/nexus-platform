@@ -18,6 +18,16 @@ function cards(page: Page) {
   return page.locator('article[data-card-type]');
 }
 
+/** The price each card shows, in the order the consumer sees it. Cards with no price are
+ *  skipped rather than guessed at, so a reader that wants an ordering must find priced cards. */
+async function cardPrices(page: Page): Promise<number[]> {
+  const text = await cards(page).allInnerTexts();
+  return text
+    .map((t) => /HK\$(\d+)/.exec(t)?.[1])
+    .filter((v): v is string => v !== undefined)
+    .map(Number);
+}
+
 /** The §105 degraded notice: the stage list's warning row, with the label the dict prints. */
 function degradedNotice(page: Page) {
   return page.locator('ol li').filter({ hasText: /流式搜索失败|降级|degraded/i }).first();
@@ -85,16 +95,19 @@ test.describe('consumer core journey', () => {
   test('conversation refinement keeps state (§34)', async ({ page }) => {
     await page.goto('/search?q=' + encodeURIComponent('帮我找附近适合朋友聚会的餐厅'));
     await expect(cards(page).first()).toBeVisible({ timeout: 20000 });
-    const firstCount = await cards(page).count();
 
     await page.getByRole('button', { name: /太贵了| cheaper/i }).first().click();
     await expect(cards(page).first()).toBeVisible();
+    // §34 through to §67: the refinement is not a re-render of the same answer, it is a
+    // different order. The sort the user asked for has to be readable in the card list.
+    const prices = await cardPrices(page);
+    expect(prices.length, 'the cheaper turn answered with fewer than two priced cards').toBeGreaterThan(1);
+    expect(prices, `太贵了 did not order the answer by price: ${prices.join(', ')}`).toEqual(
+      [...prices].sort((a, b) => a - b),
+    );
     await page.getByRole('button', { name: /近一点|closer/i }).first().click();
+    // §8: a preference re-orders the answer; it must never empty it.
     await expect(cards(page).first()).toBeVisible();
-
-    // budget tightening must actually change the result set, not just re-render it
-    expect(await cards(page).count()).toBeGreaterThan(0);
-    expect(firstCount).toBeGreaterThan(0);
   });
 
   test('compare three merchants from real rows only (§37)', async ({ page }) => {

@@ -16413,3 +16413,50 @@ suite's cases are written in the words a user types, and the first one that name
 came back with no category. A suite that only re-asserts the code's own vocabulary cannot find
 a vocabulary that is wrong in the same way everywhere — the tests had all been written with the
 same typo, so they agreed with each other and with nothing else.
+
+## 404. D410 · the refinement test clicked twice and asserted nothing about the order (`tests/e2e/specs/consumer/vertical-slice.spec.ts`, §34 / §67 / §8)
+
+**What the case asserted.** The consumer vertical slice's §34 case navigated to
+`/search?q=帮我找附近适合朋友聚会的餐厅`, clicked 太贵了, waited for a card, clicked 近一点, waited
+again, and asserted card counts were positive. Its own comment said budget tightening "must
+actually change the result set, not just re-render it", but no assertion read the set or its
+order: the buttons survive both turns, so a product that ignored the refinement entirely still
+satisfied every wait. ## 400 wired the sort reader, but the acceptance sentence still could not
+tell the two products apart.
+
+**The change.** `cardPrices()` reads each card's own text in DOM order
+(`article[data-card-type]`), takes the printed `HK$` figure, and **skips cards that print none**
+rather than guessing at them. After 太贵了 the case now requires at least two priced cards and a
+non-decreasing price sequence, and the assertion message carries the numbers it saw. The
+inherited `firstCount` and the trailing `count() > 0` were removed: the second refinement's
+contract is §8's — a preference re-orders the answer, it never empties it — so the case asserts
+a card remains instead of checking a count against itself. The comment that claimed a result-set
+change was replaced by the claim the assertions read.
+
+**Measured on the live plane (web :3002 through the product's BFF, AI :8010).**
+
+| turn | printed prices, in card order | ascending |
+|---|---|---|
+| 帮我找附近适合朋友聚会的餐厅 | 355, 187, 241, 210, 197, 88, 209, 118 | no |
+| the same sentence · 太贵了, wiring present | 35, 36, 36, 38, 42, 47, 47, 49 | **yes** |
+| the same sentence · 太贵了, wiring removed | 355, 187, 241, 210, 197, 88, 209, 118 | no |
+
+The mutant was the §34 wiring line removed from `search/service.py` by a byte-asserted splice
+(`f146e4dd15` -> `1d99861837`; the file still compiles), the AI restarted, and the same eight
+cards came back in the first turn's order. The old assertions were satisfied by that answer; the
+new ones are not.
+
+**Red/green, on the acceptance seat itself.** Against the mutant the single case failed at the
+price-order assertion (`1 failed`; it was `vertical-slice.spec.ts:106` then and is `:105` now,
+after the inherited tail was removed). The file was restored byte-for-byte (`f146e4dd15`), the AI
+restarted (PID 37012), and the same case passed twice: **1 passed (5.5s)** before the tail
+cleanup and **1 passed (14.2s)** after it. Command:
+`NEXUS_WEB_URL=http://127.0.0.1:3002 NEXUS_AI_URL=http://127.0.0.1:8010 npx playwright test
+specs/consumer/vertical-slice.spec.ts -g "conversation refinement keeps state" --project=desktop
+--workers=1`.
+
+**Discipline note.** ## 400 gave the reader thirteen unit cases and five arms, but the acceptance
+sentence was still satisfied by the pre-fix product: it waited on selectors that survive the
+click. A test that names an order is only a witness when it reads the thing the turn changes, and
+the red arm has to be the product mutant — an edited expectation would only prove that the
+expectation can fail.
