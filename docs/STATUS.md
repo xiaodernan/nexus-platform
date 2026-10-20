@@ -16965,3 +16965,58 @@ asserted it. The fix came from asking what else the normalised text is used for,
 answer ("the language, and the locale decides the answer's copy") was one line away from the
 change. **A normalisation that runs before a detector changes what the detector can see** —
 and the detector's input is part of its contract.
+
+## 415. D421 · the second turn's cues answer to one spelling only: 近一點 matched nothing while 近一点 did (`nlu/state_merger` + `nlu/canonical`, §34)
+
+**What the contract's follow-ups are.** §34 names the words a user types on a second turn —
+"太贵了", "近一点" — and the merge rules that answer them. The merge reads those words from
+the user's text, and the measured gaps were:
+
+```
+太贵了 / 太貴了   -> price_low both ways                     OK
+近一点           -> distance
+近一點           -> NOTHING (and 點 was even read as a TIME cue)
+遠一點           -> nothing
+熱鬧一點         -> nothing
+安靜一點         -> the quiet preference                     OK
+```
+
+**Two causes, and both had to be fixed.**
+
+1. **The cue lists are written in mixed forms** — 近一点 but not 近一點, 熱鬧 and 热闹 but the
+   traditional of 换一间 only sometimes — and the turn was compared with them **as the user
+   wrote it**.
+2. **The canonical table did not cover them.** §411's table was built from the **lexicon's**
+   vocabulary, and the state merger's cue lists are a **second vocabulary** ✗: the characters
+   only they use (点, 熱, 换, 闹) were not in the table ✗, so the canonicalisation did nothing
+   for them. A vocabulary that is canonicalised against one table and not another is a
+   vocabulary that is half canonicalised.
+
+**The fix.** The table is now built over **every Chinese character in the product's own
+sources** — the lexicon, the state merger's cue lists and the matchers' inline regexes (832
+characters, 229 with another spelling) — and the rule was corrected while it was being
+rebuilt: the `kSemanticVariant` relation is **not** a disqualifier, because Unihan lists the
+simplified and the traditional forms of the same word as semantic variants (点/點, 热/熱). The
+rule that survives is the **reading and the definition**: a candidate with a different reading
+or a different meaning is a different word, and rewriting a word with it would break the word
+(别/彆 "awkward", 台/颱 "typhoon", 板/闆 "door panel", 家/傢 "household servant").
+
+The merge now canonicalises the turn **for the matching** and keeps the user's own words for
+the `raw_query` ✓, and the cue lists are put in the canonical spelling at import ✓.
+
+**Verified, not claimed.** `pytest tests/test_merge_cue_spellings.py` -> **7 passed** (the
+price, distance, ambience, urgency, spicy and "show me others" cues each answer to BOTH
+spellings, and the merge still quotes the words the user wrote); the full `apps/ai` suite ->
+**857 passed** with the database (the stale plane skips the signal test with its reason),
+**827 passed / 31 skipped** without it; `ruff check .` -> **All checks passed!**; `mypy nexus_ai`
+-> **Success: no issues found in 52 source files**; the eval gate -> **`RESULT: PASS - 2
+suite(s), 0 failing`**.
+
+**Discipline note.** Two lessons in one unit, and the second is the one that will bite again.
+First: a table built from ONE vocabulary is a table that covers the other vocabulary by luck
+— the merge cues were a second vocabulary, and they were missed. Second: **the detector was
+also wrong**. The table's rule excluded the `kSemanticVariant` pairs as "glyph variants",
+which quietly excluded 点/點 and 热/熱 — the very pairs the unit was about — and the exclusion
+looked principled. The rule that actually separates "another spelling of this word" from "a
+different word" is the reading and the definition, and a rule that rejects by a RELATION has to
+be checked against a case it is meant to keep.

@@ -48,6 +48,23 @@ ANYTIME_CUES = ("得閒", "得闲", "anytime", "隨時", "随时", "无所谓", 
 SPICY = "spicy"
 
 
+def _canonicalise_cues() -> None:
+    """Put the cue lists in the canonical spelling (D421).
+
+    They are written in mixed forms - 近一点 but not 近一點, 熱鬧 and 热闹 but not the
+    Traditional 換一間 - and the turn is compared with them in the canonical form, so a
+    cue that is only written in the other spelling would never match.
+    """
+    from nexus_ai.nlu.canonical import canonical
+
+    for name, cues in list(globals().items()):
+        if name.endswith("_CUES") and isinstance(cues, tuple):
+            globals()[name] = tuple(canonical(cue) for cue in cues)
+
+
+_canonicalise_cues()
+
+
 @dataclass
 class MergeResult:
     intent: dict[str, Any]
@@ -68,12 +85,20 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
     if not turn:
         return MergeResult(intent=base, changes=[], is_followup_only=True)
 
+    # D421: the user's words are kept (the raw_query shows what they wrote), and the
+    # MATCHING sees the canonical spelling - the same one the cue lists are written in.
+    # Without this, a Traditional "近一點" matched no cue at all while the Simplified
+    # "近一点" did, and 點 was even read as a time cue.
+    from nexus_ai.nlu.canonical import canonical
+
+    match_text = canonical(turn)
+
     # A turn that carries brand-new structured content wins; the merge rules below are
     # for short anaphoric follow-ups only.
-    if _is_cold_start(base) or len(turn) > 24 and _carries_new_filters(turn):
-        fresh = extract_intent(turn, {**context, "locale": context.get("locale")
+    if _is_cold_start(base) or len(match_text) > 24 and _carries_new_filters(match_text):
+        fresh = extract_intent(match_text, {**context, "locale": context.get("locale")
                                                       or base.get("language")}).to_dict()
-        fresh["raw_query"] = turn
+        fresh["raw_query"] = turn  # the user's own words
         merged = _overlay(fresh, base, turn)
         reset_changes = [{"op": "re_extract", "field": "intent",
                          "value": merged.get("intent")}]
@@ -81,23 +106,23 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
                            follow_up_question=_question_for(merged))
 
     changes: list[dict[str, Any]] = []
-    low = turn.lower()
+    low = match_text.lower()
     locale = norm_locale(str(context.get("locale") or base.get("language") or "zh-HK"))
 
     # ---- price ----------------------------------------------------------
-    if _any(low, turn, CHEAPER_CUES):
+    if _any(low, match_text, CHEAPER_CUES):
         changes.append(_adjust_budget(base, CHEAP_FACTOR))
-    elif _any(low, turn, PRICIER_CUES):
+    elif _any(low, match_text, PRICIER_CUES):
         changes.append(_adjust_budget(base, PRICE_UP_FACTOR))
 
     # ---- distance -------------------------------------------------------
-    if _any(low, turn, NEARER_CUES):
+    if _any(low, match_text, NEARER_CUES):
         changes.append(_tighten_radius(base, RADIUS_TIGHTEN))
-    elif _any(low, turn, FARTHER_CUES):
+    elif _any(low, match_text, FARTHER_CUES):
         changes.append(_tighten_radius(base, RADIUS_LOOSEN))
 
     # ---- party size -----------------------------------------------------
-    m = re.search(r"(\d{1,2})\s*(?:個|个|位|人|pax|people|persons?)", turn)
+    m = re.search(r"(\d{1,2})\s*(?:個|个|位|人|pax|people|persons?)", match_text)
     m = m or re.search(r"(?:party(?:\s*of)?|for)\s*(\d{1,2})\b", low)
     if m:
         n = int(m.group(1))
@@ -108,7 +133,7 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
             _drop_unknown(base, "party_size")
 
     # ---- spicy / dietary -----------------------------------------------
-    if re.search(r"(唔食|不吃|不要|別|别|避免|no|without|avoid|少)\s*(?:食|吃|嘅)?\s*辣", turn) \
+    if re.search(r"(唔食|不吃|不要|別|别|避免|no|without|avoid|少)\s*(?:食|吃|嘅)?\s*辣", match_text) \
             or re.search(r"no\s+spicy|not\s+spicy", low):
         changes.append(_add_constraint(base, "cuisine_avoid", SPICY))
     elif re.search(r"(唔食|不吃|不要|避免|no|without)\s*(?:食|吃)?\s*(豬|猪|pork|牛|beef|海鮮|海鲜|香菜|花生|奶|dairy|gluten)",
@@ -116,32 +141,32 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
         v = re.search(r"(豬|猪|pork|牛|beef|海鮮|海鲜|香菜|花生|奶|dairy|gluten)", turn)
         if v:
             changes.append(_add_constraint(base, "diet_avoid", v.group(1)))
-    elif re.search(r"(辣都可以|辣都ok|spicy ok|无所谓|無所謂|incoming)", turn):
+    elif re.search(r"(辣都可以|辣都ok|spicy ok|无所谓|無所謂|incoming)", match_text):
         changes.append(_drop_constraint(base, SPICY))
 
     # ---- ambience -------------------------------------------------------
-    if _any(low, turn, QUIET_CUES):
+    if _any(low, match_text, QUIET_CUES):
         changes.append(_set_preference(base, "ambience", "quiet", 1))
-    elif _any(low, turn, LOUDP_CUES):
+    elif _any(low, match_text, LOUDP_CUES):
         changes.append(_set_preference(base, "ambience", "lively", 1))
 
     # ---- urgency / open now --------------------------------------------
-    if _any(low, turn, OPEN_NOW_CUES):
+    if _any(low, match_text, OPEN_NOW_CUES):
         base["urgency"] = "now"
         changes.append({"op": "set", "field": "urgency", "from": None, "to": "now"})
-    elif _any(low, turn, ANYTIME_CUES):
+    elif _any(low, match_text, ANYTIME_CUES):
         base["urgency"] = "flexible"
         changes.append({"op": "set", "field": "urgency", "from": None, "to": "flexible"})
 
     # ---- compare the top N ---------------------------------------------
-    if _any(low, turn, COMPARE_TOP_CUES):
+    if _any(low, match_text, COMPARE_TOP_CUES):
         targets = [t for t in (context.get("top_subjects") or []) if t][:3]
         base["intent"] = "compare"
         base["mentioned_entities"] = [str(t) for t in targets]
         changes.append({"op": "set", "field": "intent", "from": None, "to": "compare"})
 
     # ---- "show me others" ----------------------------------------------
-    if _any(low, turn, ALT_CUES):
+    if _any(low, match_text, ALT_CUES):
         seen = [str(s) for s in (context.get("shown_ids") or []) if str(s)]
         filters = base.setdefault("filters", {})
         if isinstance(filters, dict) and seen:
@@ -149,11 +174,11 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
             changes.append({"op": "exclude", "field": "filters.exclude", "to": len(seen)})
 
     # ---- any remaining explicit content in the follow-up ---------------
-    residual = extract_intent(turn, {**context, "locale": locale})
+    residual = extract_intent(match_text, {**context, "locale": locale})
     changes.extend(_absorb(base, residual, turn))
 
-    if _any(low, turn, RESET_CUES):
-        cleared = extract_intent(turn, context).to_dict()
+    if _any(low, match_text, RESET_CUES):
+        cleared = extract_intent(match_text, context).to_dict()
         return MergeResult(intent=cleared,
                            changes=[{"op": "reset", "field": "state", "to": "cleared"}],
                            follow_up_question=_question_for(cleared), is_followup_only=True)

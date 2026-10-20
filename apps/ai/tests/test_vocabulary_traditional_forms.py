@@ -29,7 +29,7 @@ MUST_HOLD = [
     ("\u98df\u5e97", "restaurant"),          # 食店
     ("\u5c0f\u98df", "restaurant"),          # 小食
     ("\u6253\u908a\u7210", "hotpot"),        # 打邊爐
-    ("\u5a31\u6a02", "attraction"),          # 娛樂
+    ("\u5a1b\u6a02", "attraction"),          # 娛樂
     ("\u8336\u9910\u5ef3", "cafe"),          # 茶餐廳
 ]
 
