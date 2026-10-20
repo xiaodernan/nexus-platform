@@ -983,8 +983,8 @@ SELECT 'merchants map to >=1 leaf category',
 -- §109: invented names only. Small blocklist of real HK chains; a collision means the generator
 -- picked a real brand and the demo would masquerade as a genuine business listing.
 WITH block(name) AS (VALUES
-  ('翠華餐延'),('翠華'),('美心'),('大快活'),('聖安娜'),('蓮香樓'),('蓮香'),('太興'),('元氣壽司'),
-  ('譚仔雲南米線'),('譚仔三哥'),('利苑酒家'),('利苑'),('金鳳茶餐延'),('添好運'),('Tim Ho Wan'),
+  ('翠華餐廳'),('翠華'),('美心'),('大快活'),('聖安娜'),('蓮香樓'),('蓮香'),('太興'),('元氣壽司'),
+  ('譚仔雲南米線'),('譚仔三哥'),('利苑酒家'),('利苑'),('金鳳茶餐廳'),('添好運'),('Tim Ho Wan'),
   ('星巴克'),('Starbucks'),('麥當勞'),('麦当劳'),('McDonald''s'),('肯德基'),('KFC'),('太平洋咖啡'),
   ('Caffè Pacific Coffee'),('Cafe de Coral'),('Café de Coral'),('許留山'),('元祖'),('7-Eleven'),
   ('惠康'),('Wellcome'),('百佳'),('ParknShop'),('莎莎'),('SASA'),('卓悅'),('one2free'),('CSL'),

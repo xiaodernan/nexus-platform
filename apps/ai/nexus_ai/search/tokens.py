@@ -75,7 +75,7 @@ def mentions(text: str, query: str | None) -> bool:
 
 
 #: A Chinese word is short. Four characters is the house's line between a keyword
-#: (咖啡, 燒鵝飯) and a phrase (幫我找沙田的餐延), and the line matters because a long
+#: (咖啡, 燒鵝飯) and a phrase (幫我找沙田的餐廳), and the line matters because a long
 #: run contributes only its BIGRAMS to a keyword list: a phrase is not a thing a
 #: merchant's text can contain.
 KEYWORD_MAX_LEN = 4

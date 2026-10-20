@@ -140,7 +140,7 @@ async def test_rerank_is_deterministic():
 # ------------------------------------------------------------- intent route returns a dict
 async def test_intent_extract_returns_structured_dict():
     resp = await MockAdapter().complete(_req("intent_extract",
-        {"query": "推薦一間餐延", "context": {}}))
+        {"query": "推薦一間餐廳", "context": {}}))
     assert isinstance(resp.data, dict)
     assert json.loads(resp.text) == resp.data   # wire text round-trips to the data dict
 

@@ -36,7 +36,7 @@ def _id(kind: str, name: str) -> str:
 _MERCHANTS: list[dict[str, Any]] = [
     {
         "slug": "demo-silver-mine-restaurant", "display_name": "Silver Mine Restaurant",
-        "display_name_zh": "銀礦餐延", "category_primary": "restaurant",
+        "display_name_zh": "銀礦餐廳", "category_primary": "restaurant",
         "description": "Demo cha chaan teng in Sha Tin — baked rice and milk tea (synthetic).",
         "tags": ["demo", "cha-chaan-teng", "family"], "district": "Sha Tin",
         "avg_price_hkd": 90.0, "rating_agg": 4.4, "review_count": 182, "popularity": 0.62,
@@ -57,7 +57,7 @@ _MERCHANTS: list[dict[str, Any]] = [
     },
     {
         "slug": "demo-harbour-view-dining", "display_name": "Harbour View Dining",
-        "display_name_zh": "維港灣景餐延", "category_primary": "restaurant",
+        "display_name_zh": "維港灣景餐廳", "category_primary": "restaurant",
         "description": "Demo waterfront dinner spot in Wan Chai (synthetic).",
         "tags": ["demo", "date", "view"], "district": "Wan Chai",
         "avg_price_hkd": 480.0, "rating_agg": 4.7, "review_count": 310, "popularity": 0.9,

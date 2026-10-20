@@ -41,11 +41,11 @@ NEARBY_TERMS = ["附近", "對開", "对开", "周边", "鄰近", "邻近", "nea
 
 # ------------------------------------------------------------------ categories
 CATEGORY_SYNONYMS: dict[str, list[str]] = {
-    "restaurant": ["餐延", "餐厅", "饭店", "飯店", "食飤", "食饭", "吃饭", "小食", "美食", "食堂", "restaurant",
-                   "dining", "eats", "food", "餐补"],
-    "cafe": ["咖啡", "咖啡店", "cafe", "coffee", "茶記", "冰室", "茶餐延", "茶餐室", "brunch",
+    "restaurant": ["餐廳", "餐厅", "饭店", "食店", "食飤", "食饭", "吃饭", "小食", "美食", "食堂", "restaurant",
+                   "dining", "eats", "food", "粉麵"],
+    "cafe": ["咖啡", "咖啡店", "cafe", "coffee", "茶記", "冰室", "茶餐廳", "茶餐室", "brunch",
              "早午餐"],
-    "bakery": ["餅店", "饼店", "餅包", "面包", "bakery", "cake", "蛋糕", "甜品", "dessert"],
+    "bakery": ["餅店", "饼店", "麵包", "面包", "bakery", "cake", "蛋糕", "甜品", "dessert"],
     "bar": ["酒吧", "bar", "pub", "酒廊", "lounge", "啤酒", "cocktail", "調酒"],
     "hotpot": ["火鍋", "火锅", "hotpot", "hot pot", "打邊炉", "盆菜"],
     "gym": ["健身房", "健身中心", "健身", "gym", "fitness", "weight training", "舉重",
@@ -340,7 +340,7 @@ _TRAD_SIMP_PAIRS: tuple[tuple[str, str], ...] = (
     ("於", "于"),
     ("來", "来"),
     ("對", "对"),
-    ("延", "厅"),
+    ("廳", "厅"),
     ("飲", "饮"),
     ("飯", "饭"),
     ("湯", "汤"),

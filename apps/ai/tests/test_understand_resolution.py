@@ -30,7 +30,7 @@ def _intent(query: str) -> dict:
 
 class TestTopLevelShape:
     def test_required_keys_present(self):
-        d = _intent("尖沙咀餐延")
+        d = _intent("尖沙咀餐廳")
         for k in (
             "intent",
             "language",
@@ -50,14 +50,14 @@ class TestTopLevelShape:
         assert _intent("書店")["intent"]
 
     def test_confidence_is_dict_of_unit_floats(self):
-        conf = _intent("尖沙咀餐延")["confidence"]
+        conf = _intent("尖沙咀餐廳")["confidence"]
         assert isinstance(conf, dict)
         for v in conf.values():
             assert isinstance(v, float)
             assert 0.0 <= v <= 1.0
 
     def test_unknowns_is_a_list(self):
-        assert isinstance(_intent("餐延")["unknowns"], list)
+        assert isinstance(_intent("餐廳")["unknowns"], list)
 
 
 class TestDistrictResolution:
@@ -91,14 +91,14 @@ class TestDistrictResolution:
         assert _intent("尖沙咀食飯")["location"]["radius_m"] is None
 
     def test_district_boosts_location_confidence(self):
-        conf = _intent("尖沙咀餐延")["confidence"]
+        conf = _intent("尖沙咀餐廳")["confidence"]
         assert "location" in conf and conf["location"] > 0.0
 
 
 class TestCategoryBucket:
     def test_known_buckets_extracted(self):
         cases = {
-            "餐延": "restaurant",
+            "餐廳": "restaurant",
             "咖啡店": "cafe",
             "電影院": "cinema",
             "健身房": "gym",
@@ -111,7 +111,7 @@ class TestCategoryBucket:
             assert _intent(q)["category"] == bucket
 
     def test_category_is_a_string_bucket(self):
-        cat = _intent("餐延")["category"]
+        cat = _intent("餐廳")["category"]
         assert isinstance(cat, str) and cat
 
 
@@ -126,7 +126,7 @@ class TestPartySize:
         assert _intent("一个人")["party_size"] is None
 
     def test_no_party_signal_is_none(self):
-        assert _intent("尖沙咀餐延")["party_size"] is None
+        assert _intent("尖沙咀餐廳")["party_size"] is None
 
 
 class TestConstraints:
@@ -147,7 +147,7 @@ class TestConstraints:
 
 class TestLanguageDetection:
     def test_chinese_markers(self):
-        assert _intent("餐延")["language"] == "zh-HK"
+        assert _intent("餐廳")["language"] == "zh-HK"
         assert _intent("我想食飯")["language"] == "zh-HK"
 
     def test_english_marker(self):
@@ -156,7 +156,7 @@ class TestLanguageDetection:
 
 class TestTimeShape:
     def test_no_time_returns_empty_dict(self):
-        assert _intent("餐延")["time"] == {}
+        assert _intent("餐廳")["time"] == {}
 
     def test_tonight_is_a_range_with_quality(self):
         t = _intent("今晚")["time"]
@@ -171,7 +171,7 @@ class TestCategoryTaxonomyBridge:
     """The bucket this function emits must be consumable by ``categories.resolve`` (D367)."""
 
     def test_every_detected_bucket_resolves_to_slugs(self):
-        for q in ["餐延", "咖啡店", "電影院", "健身房", "瑜伽", "寵物", "書店", "按摩"]:
+        for q in ["餐廳", "咖啡店", "電影院", "健身房", "瑜伽", "寵物", "書店", "按摩"]:
             bucket = _intent(q)["category"]
             assert isinstance(bucket, str)
             assert C.resolve(bucket), f"bucket {bucket!r} resolves to no taxonomy slugs"

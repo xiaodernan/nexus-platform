@@ -16621,6 +16621,87 @@ case, with a byte backup and SHA1 check; the committed file contains no `page.ro
 so a user on a slow read also sees the old page until the profile arrives. That is a separate UI
 unit, filed rather than folded into a test fix.
 
+## 408. D414 · the code points were the defect, not the words: §403's finding is withdrawn and its change is reverted (`nlu/lexicon` + the seed + the tests + the eval cases, §7.1 / §111)
+
+**What is being corrected.** §403 (D409) claimed that the platform's Chinese word for
+"restaurant" was wrong and fixed it; §404 (D411) found a second one and fixed it too. **Both
+findings were artefacts of the writer's own code point, and both fixes are reverted by this
+unit.** The Unihan database (`https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip`) is the
+oracle, and it says:
+
+```
+U+5EF3 = 廳   the hall, as in 餐廳     <- what the lexicon ALWAYS had
+U+5EF6 = 延   to delay                 <- what D409 put in its place
+U+9EB5 = 麵   flour, noodles           <- what the lexicon ALWAYS had
+U+9905 = 餅   biscuit                  <- what D410 put in its place
+U+98DF = 食   to eat
+U+996D = 飯   the traditional 飯
+U+98EF = 飯   the SIMPLIFIED 飯
+```
+
+**What happened, exactly.** The lexicon's restaurant list has always held 餐廳 (U+9910 U+5EF3) —
+the right word, the right code point. D409's probe asked for 餐廳 written with **U+5EF6** (延,
+"to delay"), matched nothing, and concluded the vocabulary was broken. The "fix" then replaced
+U+5EF3 with U+5EF6 **in the lexicon, the seed, the demo catalogue and the tests** — so the probe
+and the code started to agree with each other and with nothing a user types. D410's "麵包
+matched nothing" was the same artefact in the other direction (the probe wrote 餅包, U+9905, and
+the "fix" made the vocabulary match the probe's typo).
+
+**The measurement that gives the claim away.** With the corrections in place, and the Unihan
+database as the reference:
+
+| | the lexicon holds | the user types | matched? |
+|---|---|---|---|
+| 餐廳 (restaurant) | U+9910 U+5EF3 ✓ | U+9910 U+5EF3 | yes |
+| 餐廳 (the D409 probe) | — | U+9910 U+5EF6 (延) | no, and it never could |
+| 麵包 (bread) | U+9EB5 U+5305 ✓ | U+9EB5 U+5305 | yes |
+| 麵包 (the D410 case) | — | U+9905 U+5305 (餅) | no, and it never could |
+
+**What this unit changes.**
+
+1. **The two corruptions are reverted** — U+5EF6 → U+5EF3 in `nlu/lexicon.py`,
+   `api/demo_data.py`, `nlu/state_merger.py`, `search/tokens.py`, the seed's generator, its
+   quality checks, its category pool and the ten test files that asserted the typo: **the
+   vocabulary is back to the characters a Hong Kong user types**, and the seed's Chinese text
+   is back to 餐廳.
+2. **The vocabulary's remaining oddities are fixed**: 食店 was written with the **variant** 飯
+   (U+98EF) and is now 食店 with the standard 食 (U+98DF) — 飯店 is in the list already, so
+   nothing is lost; the list's last entry was 餐补 (the restaurant word plus the *simplified*
+   補) — a word nobody types — and is gone.
+3. **The eval case files are rebuilt with verified code points** (31 cases; the product's own
+   e2e sentence is in the Simplified Chinese the consumer slice writes, and the other cases are
+   in the Traditional Chinese a Hong Kong user types — the vocabulary has to answer to both).
+4. **The code points are pinned** by `tests/test_vocabulary_code_points.py`: the four key words
+   are asserted to be in the vocabulary AND to match, and the known-bad code points are
+   asserted to be absent from every vocabulary table. The D409 test cases are corrected in the
+   same direction: 餐廳 (U+5EF3) IS a restaurant, and 餐延 (U+5EF6) is NOT.
+
+**Verified, not claimed.** `pytest tests/test_vocabulary_code_points.py` -> **4 passed**;
+`pytest tests/test_lexicon.py` -> **50 passed**; the full `apps/ai` suite -> **834 passed** with
+the database, **808 passed / 26 skipped** without it; `ruff check .` -> **All checks passed!**;
+`mypy nexus_ai` -> **Success: no issues found in 51 source files**; the eval gate ->
+**`RESULT: PASS - 2 suite(s), 0 failing`** (31/31 intent cases, 27/27 safety cases).
+
+**The lesson, recorded because it is the one that matters.** A writer that emits the wrong code
+point once produces a defect that LOOKS like a product defect: the probe misses, the fix
+"works", the test goes green, and the ledger reports a finding. The green test was measuring
+the probe. The only oracle that caught it was **a reference outside the writer's head** — the
+Unihan database, which says what a code point IS. A vocabulary's correctness is a claim about
+characters, and a claim about characters has to be checked against a table of characters
+rather than against the writer's memory of them. §403 and §404's findings are withdrawn here;
+what survives from them is the harness (§404's eval package, its suites, its cases) and the
+four real vocabulary gaps it found (the bakery word, 食飯, 最高分, the Chinese compare tail,
+and a constraint being a request) — those were fixed for the right reasons and stay.
+
+**What is still open, filed and not claimed.** The vocabulary writes **140 characters in their
+simplified form** where a Hong Kong user writes the traditional one (the Unihan data's
+`kTraditionalVariant` says which is which: 飯 (U+98EF) for 飯 (U+996D), 补 (U+8865) for 補
+(U+88DC), 厅 (U+5385) for 廳 (U+5EF3) and so on). A user who types the traditional spelling of
+such a word gets nothing back, and the fix is not a rewrite of the tables but a **canonicalisation
+of BOTH sides** of every comparison — the query and the vocabulary term. That is the next unit,
+with the measurement (140 characters) and the recipe (the Unihan `kTraditionalVariant` data) in
+`docs/PLAN.md`.
+
 ## 409. D415 · the degraded notice named the wrong failure, and the §105 test watched a URL the browser never calls (`apps/web` stream client + zh-HK dict + `tests/e2e` §105, §7 / §105 / §155)
 
 The live plane told a false story on every search. `/search?q=适合约会 餐厅` finished a healthy stream

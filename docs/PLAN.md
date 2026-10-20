@@ -65,7 +65,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The compare grid's row LABELS are raw attribute keys** — the rows are fact-backed (`price`, `rating`, `category`, `district`, `open_state`, `distance`) but the labels are the keys themselves; the surface that prints them is the web lane's (`packages/ui/src/trust/CompareTable.tsx`), reported and not edited here.
 - **The corpus's tags are English** — 拉麵 matches zero `ramen` tags, so a Chinese query reaches only the merchants that spell the word in Chinese (D407's lane). A translation layer for the tags is the open half of that unit.
 - **The web lane's own files carry the 庁 character** — D409 fixed 餐廳 in the AI lane and the seed; `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/mock/index.ts` and three web test files still write 餐庁 (U+5EF3), which is not a word a user types. Reported, not edited: that tree is the web lane's.
-- **The live demo corpus still holds the old names** — 54 merchants' descriptions carry 餐庁 because the database was seeded before D409. The generator is fixed; re-seeding a shared plane is a destructive operation and is the seed lane's call.
+- **The live demo corpus was never wrong** — D403's claim that "54 merchants' descriptions carry 餐庁" was itself a code-point mistake: the corpus has always carried 餐廳 (U+9910 U+5EF3), and the 54 are the CORRECT word. D414 withdrew the claim with the measurement (the corpus has 54 of U+9910 U+5EF3 and 0 of U+9910 U+5EF6). No re-seed is needed; the item is closed.
+- **The vocabulary writes 140 characters in their SIMPLIFIED form** — a user who types the traditional spelling of such a word gets nothing back (D414 measured this with the Unihan database's `kTraditionalVariant` data: 飯 (U+98EF) for 飯 (U+996D), 补 (U+8865) for 補 (U+88DC), 厅 (U+5385) for 廳 (U+5EF3) and so on). The fix is not a rewrite of the tables but a **canonicalisation of BOTH sides** of every comparison — the query and the vocabulary term — and the recipe is the Unihan data itself. The next unit.
 
 ### Completed this session (AI lane)
 
@@ -94,6 +95,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D408** The CI's lint step named two tools the project did not have, and the type gate had never run (`apps/ai/pyproject.toml` + the findings) — the rule set is now stated in the repo and both gates are green
 - **D409** The platform's Chinese word for "restaurant" was the Japanese variant, so 餐廳 matched nothing (`nlu/lexicon` + the seed + the tests) — one character, 45 lines, and the answer stops being a nail salon
 - **D411** The merge gate that could not start, and the five gaps it found the moment it did (`nexus_ai/eval` + `nlu/lexicon` + `nlu/understand`) — the eval package exists, both suites hold, and the case files are written with explicit code points
+- **D414** The code points were the defect, not the words: §403's finding is withdrawn and its change is reverted — the Unihan database is the oracle, and the vocabulary's characters are pinned
 - **Fresh gate** re-certified through step 6 on the live plane: 217 quality checks, none red; step 7 is the sandbox's node-spawn refusal
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.

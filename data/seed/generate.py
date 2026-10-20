@@ -1358,7 +1358,7 @@ class Gen:
         datey = [m for m in quiet if m["top"] in ("restaurant", "bar", "cafe")]
         defs = [
             ("sha-tin-date-night", "guide", "沙田情侶約會路線", "A Sha Tin Date Night",
-             "由{d2}分鐘步程內嘅安靜餐延、甜品同酒吧組合而成的示範路線。全部商戶均為虛構。",
+             "由{d2}分鐘步程內嘅安靜餐廳、甜品同酒吧組合而成的示範路線。全部商戶均為虛構。",
              st[:8] + quiet[:2]),
             ("quiet-meals-near-me", "collection", "安靜嘅用餐位", "Quiet Tables Near Me",
              "低噪音評分優先嘅示範清單，適合要傾嘢嘅場合；數據為合成資料。",

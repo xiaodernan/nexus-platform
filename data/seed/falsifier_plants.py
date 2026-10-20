@@ -176,7 +176,7 @@ ARMS = [
      "UPDATE permission_grants SET granted_by = '00000000-0000-4000-8000-0000000000d1' "
      "WHERE id = (SELECT id FROM permission_grants WHERE granted_by IS NOT NULL ORDER BY id LIMIT 1);"),
     ("no merchant name collides", "a merchant renamed to a real HK chain on the §109 blocklist",
-     "UPDATE merchants SET display_name_zh = '翠華餐延' "
+     "UPDATE merchants SET display_name_zh = '翠華餐廳' "
      "WHERE id = (SELECT id FROM merchants ORDER BY id LIMIT 1);"),
     # Batch D119: the VOLUME family. Six of these names could not be reached by any fabricated value,
     # because every one of them reads `counts` -- a snapshot of `count(*)` taken at the top of the gate --

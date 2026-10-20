@@ -191,7 +191,7 @@ def _is_cold_start(base: dict[str, Any]) -> bool:
 
 
 def _carries_new_filters(turn: str) -> bool:
-    return bool(re.search(r"(預算|预算|budget|HK\$|hk\$|附近|餐厅|餐延|酒店|健身房|區|区|喺|在)", turn))
+    return bool(re.search(r"(預算|预算|budget|HK\$|hk\$|附近|餐厅|餐廳|酒店|健身房|區|区|喺|在)", turn))
 
 
 def _overlay(fresh: dict[str, Any], base: dict[str, Any], turn: str) -> dict[str, Any]:

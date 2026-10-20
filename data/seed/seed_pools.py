@@ -20,7 +20,7 @@ REAL_HK_BLOCKLIST = [
     "美心", "翠華", "翠华", "大快活", "大家樂", "大家乐", "太興", "太兴", "聖安娜", "奇趣坊",
     "許留山", "许留山", "滿記", "满记", "元谷", "大元茶餐厅", "八珍", "蓮香", "莲香", "陸羽",
     "蘭芳園", "兰芳园", "澳洲牛奶公司", "鎅記", "潘祥記", "奇華", "大班麵包", "半島酒店",
-    "利苑", "金鳳茶餐延", "維多利亞", "太平館", "城門河", "荷里活廣場", "又一城", "新城市廣場",
+    "利苑", "金鳳茶餐廳", "維多利亞", "太平館", "城門河", "荷里活廣場", "又一城", "新城市廣場",
     "海底撈", "海底捞", "Starbucks", "McDonald", "KFC", "Pizza Hut", "PizzaExpress", "成本屋",
     "藏壽司", "Sushi Rakuzo", "8度海逸", "帝京", "半島", "群記", "佔記", "安格斯", "王仔西餅",
     "蓮香樓", "天花酒", "富臨", "百國", "稻香", "東江", "泰昌", "鉅記", "咀香", "沙嗲",
@@ -117,9 +117,9 @@ NAME_SUFFIX_ZH = {
 # --------------------------------------------------------------------------- category tree
 # (top slug, en, zh, [(leaf slug, en, zh)])
 CAT_TREE = [
-    ("restaurant", "Restaurants", "餐延", [
+    ("restaurant", "Restaurants", "餐廳", [
         ("cantonese", "Cantonese", "粵菜"), ("dimsum", "Dim Sum", "點心"),
-        ("cha-chan-teng", "Cha Chaan Teng", "茶餐延"), ("siu-mei", "Roast Meats", "燒味"),
+        ("cha-chan-teng", "Cha Chaan Teng", "茶餐廳"), ("siu-mei", "Roast Meats", "燒味"),
         ("hotpot", "Hot Pot", "火鍋"), ("seafood-grill", "Seafood & BBQ", "海鮮燒烤"),
         ("sushi", "Sushi & Sashimi", "壽司刺身"), ("ramen", "Ramen & Noodles", "拉麵粉麵"),
         ("izakaya", "Izakaya", "居酒屋"), ("korean", "Korean", "韓國菜"),
@@ -713,7 +713,7 @@ DISH_POOL: dict[str, list[tuple]] = {
         ("高級城景房", "Deluxe City View", 1280, "-", "signature"),
         ("家庭連通房", "Family Interconnecting", 1680, "-", "premium"),
         ("行政套房", "Executive Suite", 2380, "-", "premium"),
-        ("延遲退房", "Late Check-out", 280, "-", "addon"),
+        ("廳遲退房", "Late Check-out", 280, "-", "addon"),
         ("機場接駁", "Airport Transfer", 480, "-", "classic"),
     ],
     "serviced-apartment": [
