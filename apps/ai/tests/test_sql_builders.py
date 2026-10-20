@@ -96,6 +96,18 @@ class TestMerchantQueryStructuralRules:
         assert 200.0 in q.params
 
 
+class TestOfferingQueryStructuralRules:
+    def test_empty_text_does_not_claim_a_match(self):
+        q = S.build_offering_query(tenant_id=TENANT, text="")
+        assert "@@" not in q.sql
+        assert "false AS text_matched" in q.sql
+
+    def test_text_query_keeps_the_match_predicate(self):
+        q = S.build_offering_query(tenant_id=TENANT, text="coffee")
+        assert "AS text_matched" in q.sql
+        assert "@@" in q.sql
+
+
 class TestGeoHelpers:
     def test_haversine_identical_points_is_zero(self):
         assert S.haversine_m(22.3, 114.17, 22.3, 114.17) < 1e-6
