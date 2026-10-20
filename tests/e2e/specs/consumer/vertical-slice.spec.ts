@@ -160,11 +160,20 @@ test.describe('consumer core journey', () => {
   });
 
   test('LLM outage degrades instead of breaking the site (§105)', async ({ page }) => {
-    await page.route('**/ai/v1/search/stream', (r) => r.abort('failed'));
+    // A healthy stream: `done` is the only event that prints the run id, so waiting for it proves
+    // the stream finished — and then the page must not claim it fell back to deterministic search.
+    // The browser calls the BFF, never the AI service directly.
     await page.goto('/search?q=' + encodeURIComponent('附近咖啡馆'));
-    // deterministic search must still return cards, plus a visible degraded marker
+    await expect(cards(page).first()).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/运行编号|run [0-9a-f]{8}-/i).first()).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/流式搜索失败|Streaming failed/i)).toHaveCount(0);
+
+    await page.route('**/api/nexus/ai/stream', (r) => r.abort('failed'));
+    await page.goto('/search?q=' + encodeURIComponent('附近咖啡馆'));
+    // deterministic search must still return cards, plus a visible fallback marker
     await expect(cards(page).first()).toBeVisible({ timeout: 15000 });
     await expect(degradedNotice(page)).toBeVisible();
+    await expect(page.getByText(/运行编号|run [0-9a-f]{8}-/i)).toHaveCount(0);
   });
 
   test('MVP success test: first meaningful action inside 5 minutes (§141)', async ({ page }) => {

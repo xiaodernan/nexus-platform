@@ -16620,3 +16620,39 @@ case, with a byte backup and SHA1 check; the committed file contains no `page.ro
 **Not claimed.** The product's slow-load behaviour is unchanged: `/m/[slug]` has no `loading.tsx`,
 so a user on a slow read also sees the old page until the profile arrives. That is a separate UI
 unit, filed rather than folded into a test fix.
+
+## 409. D415 · the degraded notice named the wrong failure, and the §105 test watched a URL the browser never calls (`apps/web` stream client + zh-HK dict + `tests/e2e` §105, §7 / §105 / §155)
+
+The live plane told a false story on every search. `/search?q=适合约会 餐厅` finished a healthy stream
+— 8 cards, a summary, a run id, `provider: mock` — and printed **「流式搜索失败，已降级为确定性搜索结果。」**
+The stream had not failed: the AI service's demo provider answered with `done.degraded: true`, and the
+client stored that provenance bit in the same `degraded` field it uses for transport fallback.
+
+**Measured, not inferred.** A Playwright probe on the pre-fix build distinguished the two paths by what
+only a successful stream can print (the run id):
+
+| case | cards | fallback notice | run id | stream request |
+|---|---|---|---|---|
+| healthy | 8 | present | present | `POST /api/nexus/ai/stream` |
+| route abort on `**/ai/v1/search/stream` | 8 | present | present | same — **the route never matched** |
+| route abort on `**/api/nexus/ai/stream` | 12 | present | absent | same |
+
+The middle row is the §105 e2e as it stood: it aborted a URL the browser never requests, so its
+`degradedNotice` assertion was satisfied by the healthy stream's false notice. The third row is what a
+real outage looks like — deterministic cards (12, not the AI demo's 8), no run id, the fallback notice.
+
+**The remedy.** `done.degraded` now travels inside `state.done` and means only "the answer came from
+rules, not a model"; `state.degraded` remains the transport-fallback flag set by
+`deterministicFallback`. A successful-but-model-free answer prints its own sentence (`answerDegraded`:
+「模型暂不可用：这段说明由规则生成，搜索结果本身仍来自实时检索。」) instead of claiming a fallback.
+The stage list now unmounts when the stream finishes, because it no longer stays "degraded" forever.
+
+**The test.** §105 now (a) waits for the healthy stream's run id and asserts the fallback sentence is
+absent, then (b) aborts `**/api/nexus/ai/stream` and asserts cards + the fallback notice + no run id.
+On the fixed build the probe reads `noticeFallback:false, noticeAnswer:true, runId:true` for healthy and
+`noticeFallback:true, noticeAnswer:false, runId:false` for the abort; the case is green in 1.9 s, and
+`tsc --noEmit` plus the web unit suite (136 tests) are clean.
+
+After the change the full consumer spec is **7 passed, 1 failed, 1 skipped**; the red is the known
+`:37` landing case, whose rails the `zh-HK` dictionary spells in Simplified (`你附近热门`, `为你推荐`)
+— the locale census the earlier U-A ledger section deferred, not a regression of this unit.

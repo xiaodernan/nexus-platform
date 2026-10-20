@@ -36,7 +36,9 @@ interface StreamState {
   cards: EntityCardModel[];
   intent: Intent | null;
   summary: { text: string; citations: string[] } | null;
-  done: { latency_ms: number; provider: string; runId: string } | null;
+  /** `degraded` says the AI answered without a model; it does not say the stream failed. */
+  done: { latency_ms: number; provider: string; runId: string; degraded: boolean } | null;
+  /** Transport fallback only: the stream failed and these cards came from `/ai/v1/search`. */
   degraded: boolean;
   failure: { code: string; message: string; requestId: string | null } | null;
   pending: boolean;
@@ -226,8 +228,8 @@ export function SearchResults({
                 latency_ms: data.latency_ms ?? 0,
                 provider: data.provider ?? 'unknown',
                 runId: data.agent_run_id ?? '',
+                degraded: data.degraded === true,
               },
-              degraded: data.degraded === true,
               pending: false,
               stages: finish(previous.stages, streamFailed),
             }));
@@ -330,6 +332,15 @@ export function SearchResults({
           degradedLabel={dict.search.degraded}
           liveLabel={dict.search.stages.understanding}
         />
+      ) : null}
+
+      {/* The stream can succeed while the answer itself is model-free (`done.degraded`). That is a
+          provenance fact, not a transport failure: say what is true instead of claiming a fallback. */}
+      {state.done?.degraded && !state.degraded ? (
+        <p className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning-soft px-3 py-2 text-xs text-warning">
+          <Icon name="warning" size={14} className="mt-0.5 shrink-0" />
+          <span>{dict.search.answerDegraded}</span>
+        </p>
       ) : null}
 
       {state.summary ? (
