@@ -530,6 +530,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 slots_by_merchant[mid] = raw
 
     personalization: dict[str, float] = {}
+    # D392: which preference fired for which subject, so the card can name it.
+    preference_labels: dict[str, list[str]] = {}
 
     # Build merchant_attrs map once for all preference types
     merchant_attrs: dict[str, dict] = {}
@@ -559,8 +561,6 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
 
     # 2. Persistent user_preferences from database (D382, requires user_id)
     # Applies to ALL candidates, not just those with feedback
-    # D392: which preference fired for which subject, so the card can name it.
-    preference_labels: dict[str, list[str]] = {}
     if user_id:
         pref_rows = await backend.user_preferences(str(user_id))
         if pref_rows:
@@ -904,6 +904,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     # 3. Transient NLU intent_preferences from current query (D382 follow-up)
     # Works without user_id - applies to all candidates
     if intent_preferences and merchant_attrs:
+        # D392: the labels dict is declared above, so a query with no stored preferences
+        # still records which one fired.
         for r in deduped:
             sid = str(r.get("subject_id") or r.get("id"))
             mid = str(r.get("merchant_id") or r.get("id"))
@@ -911,6 +913,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 continue
             attrs = merchant_attrs[mid]
             pref_scores: list[float] = []
+            matched_labels: list[str] = []
             for pref in intent_preferences:
                 pref_kind = pref.get("key")
                 pref_value = pref.get("value")
@@ -924,15 +927,24 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     if attrs.get(attr_key) is True:
                         weight = 1.0 if polarity > 0 else 0.0
                         pref_scores.append(weight)
+                        # D392: name the preference that fired, so the card can say WHICH.
+                        if weight >= 0.5:
+                            matched_labels.append(
+                                _preference_label(str(pref_kind), str(pref_value), pref_value))
                         break
                     elif attrs.get(attr_key) is False:
                         weight = 0.0 if polarity > 0 else 1.0
                         pref_scores.append(weight)
+                        if weight >= 0.5:
+                            matched_labels.append(
+                                _preference_label(str(pref_kind), str(pref_value), pref_value))
                         break
             if pref_scores:
                 avg_score = sum(pref_scores) / len(pref_scores)
                 existing = personalization.get(sid)
                 personalization[sid] = avg_score if existing is None else (existing + avg_score) / 2
+            if matched_labels:
+                preference_labels.setdefault(sid, []).extend(matched_labels)
 
     candidates = candidates_from_rows(deduped, plan, bundle=bundle,
                                       facts_by_subject=facts_by_subject,

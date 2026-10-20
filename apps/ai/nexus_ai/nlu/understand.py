@@ -38,6 +38,7 @@ from nexus_ai.nlu.lexicon import (
     match_district,
     normalize_query,
 )
+from nexus_ai.nlu.polarity import apply_polarity
 from nexus_ai.nlu.timeparse import HK_TZ, parse_time
 
 # --------------------------------------------------------------------------- patterns
@@ -449,15 +450,25 @@ def _fill_party(ex: IntentExtraction, text: str, context: dict[str, Any]) -> Int
 
 
 def _fill_preferences(ex: IntentExtraction, text: str) -> IntentExtraction:
+    """Resolve the preferences, then let the SENTENCE say which way each one points.
+
+    D393: the lexicon gives every rule a fixed polarity (+1), but a user who says
+    "\u55b8\u597d\u5b89\u975c" (not quiet) is expressing a dislike. The surface token that
+    matched is remembered, because the canonical value ("quiet") is not in a Chinese
+    sentence while the token that matched it ("\u5b89\u975c") is.
+    """
     low = text.lower()
     seen: set[tuple[str, str]] = set()
+    matched_tokens: dict[tuple[str, str], str] = {}
     for key, value, tokens, polarity in PREFERENCE_RULES:
         for tok in tokens:
             t = tok.lower()
             if t and t in low and (key, value) not in seen:
                 seen.add((key, value))
                 ex.preferences.append({"key": key, "value": value, "polarity": polarity})
+                matched_tokens[(key, value)] = tok
                 break
+    ex.preferences = apply_polarity(ex.preferences, text, matched_tokens)
     return ex
 
 

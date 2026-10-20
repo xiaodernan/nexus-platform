@@ -15408,6 +15408,42 @@ name: the reason builder's locale parameter is `locale`, not `lang`, and the cop
 
 ---
 
+## 384. D393 Â· a negated preference is a DISLIKE, not a like (`nlu/polarity`, Â§7.1 / Â§8)
+
+**The gap D381-D392 left.** The lexicon's `PREFERENCE_RULES` carry a fixed polarity of +1 for every
+rule, so "å´å¥½å®é" (not quiet) and "å®é" (quiet) extracted the SAME
+preference with the SAME sign. The ranking lane could then boost exactly the merchant the user had
+asked it to demote, which is the difference between "the page says the wrong thing" and "the page
+says the opposite of what the user asked".
+
+**The fix.** A new module `nexus_ai/nlu/polarity.py` decides the sign from the SENTENCE, and
+`_fill_preferences` calls it after the lexicon pass. The rule is deliberately narrow: a negation cue
+must GOVERN the token. A cue immediately before the token (modulo short filler: "å´å¥½çå®é") governs that token
+alone; a cue elsewhere in the sentence governs the turn, EXCEPT when other words separate it from
+the token by more than a filler, in which case the two belong to different clauses and the token
+keeps its positive polarity. A sentence carrying two preferences and one negation is therefore not
+silently turned into a dislike of both.
+
+**The token, not the canonical value.** The lexicon's canonical value ("quiet") is not in a Chinese
+sentence; the surface token that matched it ("å®é") is. So the extractor remembers which token
+matched each rule and the polarity is decided against THAT token.
+
+**The effect, measured end to end.** "å´å¥½å®éçåº" now extracts `ambience=quiet` with
+`polarity=-1`; the category inference reads the sign and contributes -0.5, so no category is
+inferred from a dislike; and the pipeline ranks the LOUD merchant above the quiet one (the two
+merchants' scores separate where they were tied before).
+
+**Verified, not claimed.** `pytest tests/test_preference_polarity.py` -> **12 passed**;
+`pytest tests/test_polarity_effect.py` -> **2 passed**; full `apps/ai` suite -> **709 passed, 4
+skipped** (live-DB tests skip; the Docker engine is down on this machine).
+
+**Discipline note.** The first version of the polarity rule negated a preference whenever a cue
+appeared ANYWHERE in the sentence, which made "å´å¥½è¾£ æ³æ¾åå®éçåå¡ååº" dislike the ambience as well as
+the spice. The rule now distinguishes the two clauses, and the test that pins that distinction is
+`test_a_cue_far_from_the_token_does_not_negate_it`.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha
