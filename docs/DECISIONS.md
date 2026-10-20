@@ -5101,7 +5101,9 @@ satisfy the type the reader assumes. Both are cited here and left for their owne
 §84's residue list named this unit in one sentence and, in the sentence after it, published a count of the same
 plane that had never been taken. `data/seed/quality.sql` answers had got a site reader in D87 — resolve the name,
 open the file, look at the line — and the prose that describes those answers, holding an order of magnitude more
-citations than the answer table does, had none. So `scripts/check_ledger_citations.mjs` is now gate step 8, the
+citations than the answer table does, had none. So `scripts/check_ledger_citations.mjs` is now gate ## D383 - NLU intent preferences feed the personalization ranking signal: `search()` accepts transient `Intent.preferences` (e.g., occasion=date from "十找一个适合情侵约会的地方"), matches against merchant `attributes` JSONB using `{value}_{kind}` convention (date_occasion), merges with persistent `user_preferences` and feedback signals. Seed data updated (`data/seed/generate.py`) to emit all NLU preference keys: date_occasion, group_occasion, ambience_style, mtr_near_access, accessible_access, parking_access, pet_friendly_access, scenic_view, spicy_cuisine, cheap_price_sense, premium_price_sense, rainy_day_weather. Pinned by `tests/test_preferences_ranking.py` (6 cases) and `test_preferences_are_soft.py` (8 cases). Full apps/ai: 651 passed, 4 skipped. Remains: structured values (cuisine_like arrays) not yet matched.
+
+step 8, the
 same operation pointed at `docs/DECISIONS.md` and `docs/STATUS.md`, and the first run contradicted the number
 above it.
 
