@@ -13,8 +13,9 @@
  * WHAT IT DOES NOW. One index, one predicate, one plane. `LEDGER_EXT` and the file walk come from
  * `source_index.mjs`, the module gate step 8 already indexes through, so the two readers cannot drift into
  * censusing different file sets — the failure this file had, which is how one sentence came to be quoted as
- * 6, 10, 14 and 12. The plane is HEAD unless `--worktree` says otherwise, a range contributes its START, and
- * an AMBIGUOUS name is skipped before any line is read. Then the two counts are COMPARED rather than assumed
+ * 6, 10, 14 and 12. The plane is HEAD unless `--worktree` says otherwise; the cited target is read from the
+ * SAME plane as the ledger (D224), a range contributes its START, and an AMBIGUOUS name is skipped before any
+ * line is read. Then the two counts are COMPARED rather than assumed
  * equal: the closing lines run the shipped reader, parse the number it prints, and exit 1 on disagreement. A
  * second reader that cannot say "and I agree with the first" only looks independent.
  *
@@ -27,6 +28,7 @@
  * EXIT    0 the two readers agree · 1 they disagree · 2 the census could not run
  */
 import { execFileSync } from 'node:child_process';
+import { guard } from './spawn_guard.mjs';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,9 +42,55 @@ if (EXTRA.length) {
   process.exit(2);
 }
 
-const doc = (name, committed) => (committed
-  ? execFileSync('git', ['show', `HEAD:${name}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 })
-  : readFileSync(join(ROOT, name), 'utf8')).replace(/\r\n/g, '\n');
+const doc = (name, committed) => (committed ? gitShow(name) : readFileSync(join(ROOT, name), 'utf8')).replace(/\r\n/g, '\n');
+
+// D224: the cited target is read from the plane this census names, not always from the disk. A ledger that is
+// judged on HEAD must read HEAD's copy of the file it cites, or a dirty working copy makes a cite that points
+// at text (HEAD) read as blank (disk) — exactly the two-cite drift D223 filed. A target the plane does not hold
+// is the reader's UNTRACKED class (counted on its own line, never as a blank), so it is skipped here rather
+// than read from the disk. HEAD's tree is listed once, so an untracked name is a set lookup and not a failed
+// `git show` that prints a fatal to stderr for every one of the 46 such cites the ledgers hold.
+let HEAD_TREE = null;
+const tracked = (name) => {
+  if (HEAD_TREE === null) {
+    const g = guard(() => execFileSync('git', ['ls-tree', '-r', '--name-only', 'HEAD'], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 24 }), 'git ls-tree HEAD');
+    if (!g.ok) {
+      if (!g.spawn) throw new Error(`${g.what} failed: ${g.reason}`);
+      console.log('RESULT: NOT CHECKED — this machine cannot spawn git, so the committed plane is unreadable here.');
+      console.log('  A refusal is not a finding, and the two must not share a verdict line.');
+      process.exit(2);
+    }
+    HEAD_TREE = new Set((g.value || '').split('\n').filter(Boolean));
+  }
+  return HEAD_TREE.has(name);
+};
+const readPlane = (name) => {
+  if (!WORKTREE && !tracked(name)) return null;
+  try {
+    return doc(name, !WORKTREE).split('\n');
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * `git show` for the committed plane. A **spawn** failure is refused with the reason: this machine cannot
+ * start git, so nothing on the committed plane can be read and the census has no population. A git that ran
+ * and failed is left to the caller — `HEAD:name` missing is a fact about the repository, not about the host.
+ * STATUS §224 censused six tools that died on exactly this without saying anything.
+ */
+function gitShow(name) {
+  const g = guard(() => execFileSync('git', ['show', `HEAD:${name}`], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 }),
+    `git show HEAD:${name}`);
+  if (!g.ok) {
+    if (!g.spawn) throw new Error(`${g.what} failed: ${g.reason}`);
+    console.log(`RESULT: NOT CHECKED — this machine cannot spawn git (${g.reason}), so the committed plane`
+      + ' is unreadable here.');
+    console.log('  A refusal is not a finding, and the two must not share a verdict line.');
+    process.exit(2);
+  }
+  return g.value;
+}
 
 // The same index the reader builds, from the same module, so the file set cannot drift from it.
 const FILES = walkFiles(ROOT, (name) => LEDGER_EXT.test(name) || name.startsWith('.'));
@@ -80,7 +128,8 @@ for (const ledger of ['docs/DECISIONS.md', 'docs/STATUS.md']) {
       const cands = resolveCite(name);
       if (cands.length !== 1) { if (cands.length > 1) ambiguous += 1; continue; }
       const rel = cands[0];
-      const target = readFileSync(join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n').split('\n');
+      const target = readPlane(rel);
+      if (target === null) continue;
       // A range contributes its START, which is the line the sentence stands on.
       const start = Number(cite[3] ?? cite[2]);
       const held = target[start - 1];
@@ -106,14 +155,16 @@ console.log(`  blank line cites   ${blanks}`);
 for (const s of sites) console.log(s);
 console.log(`  anchored sentences ${anchored} · anchor on the cited line ${exact} · within +-3 ${win3} · anywhere in the file ${winFile}`);
 
-// The reconciliation. Step 8 prints its committed-plane count; this walk got there by a different route (its
-// own resolution pass over the same index), so agreement is a finding and not a tautology.
+// The reconciliation. The reader must answer on the SAME plane this census named, not its own default:
+// `--worktree` compares the two working-copy walks, while the bare run compares the two HEAD walks. This
+// walk gets there by a different route (its own resolution pass over the same index), so agreement is a
+// finding and not a tautology.
 // D174: on the committed plane step 8 exits 1 with 41 offenders (FILE NOT FOUND for other lanes' uncommitted
 // work). execFileSync throws on non-zero; catch and extract stdout so the census can still read the count.
 let readerOut = '';
 try {
-  readerOut = execFileSync(process.execPath, ['scripts/check_ledger_citations.mjs'],
-    { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 20 });
+  readerOut = execFileSync(process.execPath, ['scripts/check_ledger_citations.mjs', ...(WORKTREE ? ['--worktree'] : [])],
+    { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 20 });
 } catch (e) {
   readerOut = e.stdout || e.output?.[1] || '';
 }

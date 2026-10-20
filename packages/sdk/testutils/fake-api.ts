@@ -163,11 +163,39 @@ export async function startFakeApi(): Promise<FakeApi> {
       return json(res, 201, result, { "x-request-id": rid });
     }
 
-    // --- reservation create ---
+    // --- reservation create / read / release ---
     if (req.method === "POST" && path === "/api/v1/reservations") {
       state.reserveRequests++;
       if (!idem) return errorEnvelope(res, 400, "validation_error", "Idempotency-Key required", rid);
-      return json(res, 201, { reservation_id: "res_1", status: "confirmed", code: "RK7Q2" }, { "x-request-id": rid });
+      // `pending`, because no route can advance a hold (D26) — a fixture that answered `confirmed`
+      // would teach the client to expect a state the platform never returns.
+      return json(res, 201, {
+        reservation_id: "res_1",
+        status: "pending",
+        code: "RK7Q2",
+        status_note: "Held as pending. The merchant has not confirmed it yet.",
+      }, { "x-request-id": rid });
+    }
+    if (path.startsWith("/api/v1/reservations/") && req.method === "GET") {
+      return json(res, 200, {
+        reservation_id: decodeURIComponent(path.slice("/api/v1/reservations/".length)),
+        status: "pending",
+        code: "RK7Q2",
+      }, { "x-request-id": rid });
+    }
+    if (path.startsWith("/api/v1/reservations/") && req.method === "PATCH") {
+      const status = (body as { status?: string })?.status;
+      if (status !== "cancelled") {
+        // The server guards the transition; the fake must guard it too, or the client's typo passes here
+        // and fails against the real platform.
+        return errorEnvelope(res, 422, "validation_error", `unsupported status ${String(status)}`, rid);
+      }
+      return json(res, 200, {
+        reservation_id: decodeURIComponent(path.slice("/api/v1/reservations/".length)),
+        status: "cancelled",
+        code: "RK7Q2",
+        status_note: "Cancelled. The merchant is not notified by this route.",
+      }, { "x-request-id": rid });
     }
 
     // --- event ingest with server dedup ---

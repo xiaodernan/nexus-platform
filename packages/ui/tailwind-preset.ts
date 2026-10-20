@@ -16,27 +16,33 @@ export const nexusPreset = {
   theme: {
     extend: {
       colors: {
+        /* Tokens carrying an `-rgb` sibling are exposed through rgb(<triplet> / <alpha-value>) so
+           `/NN` modifiers compile; see tokens.css for why a bare hex var cannot. The sibling must
+           match the hex — apps/web/src/lib/tokens.test.ts asserts it in CI. */
         accent: {
-          DEFAULT: 'var(--nexus-accent)',
+          DEFAULT: 'rgb(var(--nexus-accent-rgb) / <alpha-value>)',
           hover: 'var(--nexus-accent-hover)',
           active: 'var(--nexus-accent-active)',
           ink: 'var(--nexus-accent-ink)',
-          soft: 'var(--nexus-accent-soft)',
+          soft: 'rgb(var(--nexus-accent-soft-rgb) / <alpha-value>)',
           'soft-ink': 'var(--nexus-accent-soft-ink)',
-          line: 'var(--nexus-accent-line)',
+          line: 'rgb(var(--nexus-accent-line-rgb) / <alpha-value>)',
         },
         ai: 'var(--nexus-ai-ink)',
         canvas: 'var(--nexus-canvas)',
         surface: {
-          DEFAULT: 'var(--nexus-surface)',
+          DEFAULT: 'rgb(var(--nexus-surface-rgb) / <alpha-value>)',
           raised: 'var(--nexus-surface-raised)',
           sunken: 'var(--nexus-surface-sunken)',
-          muted: 'var(--nexus-surface-muted)',
+          muted: 'rgb(var(--nexus-surface-muted-rgb) / <alpha-value>)',
           overlay: 'var(--nexus-surface-overlay)',
           inverse: 'var(--nexus-surface-inverse)',
         },
         ink: {
-          strongest: 'var(--nexus-ink-strong)',
+          /* `text-ink-strong` is the name every component uses; the CSS variable is
+             --nexus-ink-strong. An earlier `strongest` key matched neither, so 28 call
+             sites compiled to no utility at all. */
+          strong: 'rgb(var(--nexus-ink-strong-rgb) / <alpha-value>)',
           DEFAULT: 'var(--nexus-ink)',
           muted: 'var(--nexus-ink-muted)',
           faint: 'var(--nexus-ink-faint)',
@@ -48,9 +54,9 @@ export const nexusPreset = {
           strong: 'var(--nexus-border-strong)',
           inverse: 'var(--nexus-border-inverse)',
         },
-        positive: { DEFAULT: 'var(--nexus-positive)', soft: 'var(--nexus-positive-soft)' },
-        warning: { DEFAULT: 'var(--nexus-warning)', soft: 'var(--nexus-warning-soft)' },
-        danger: { DEFAULT: 'var(--nexus-danger)', soft: 'var(--nexus-danger-soft)' },
+        positive: { DEFAULT: 'rgb(var(--nexus-positive-rgb) / <alpha-value>)', soft: 'rgb(var(--nexus-positive-soft-rgb) / <alpha-value>)' },
+        warning: { DEFAULT: 'rgb(var(--nexus-warning-rgb) / <alpha-value>)', soft: 'rgb(var(--nexus-warning-soft-rgb) / <alpha-value>)' },
+        danger: { DEFAULT: 'rgb(var(--nexus-danger-rgb) / <alpha-value>)', soft: 'rgb(var(--nexus-danger-soft-rgb) / <alpha-value>)' },
         chip: { DEFAULT: 'var(--nexus-neutral-chip)', ink: 'var(--nexus-neutral-chip-ink)' },
       },
       fontFamily: {

@@ -11,6 +11,7 @@ import type {
   Order,
   Reservation,
   Review,
+  ReviewSummary,
   SavedSearch,
   UserPreference,
 } from '../types';
@@ -342,7 +343,7 @@ export function factUuid(seed: string): string {
   let h2 = h1 ^ 0x5bf03635;
   const hex = (n: number, len = 8) => {
     let out = '';
-    let x = n >>> 0;
+    const x = n >>> 0;
     for (let i = 0; i < len; i += 1) {
       out += '0123456789abcdef'[(x >>> (i * 4)) & 15];
     }
@@ -567,7 +568,7 @@ export function buildReviews(seed: SeedMerchant, now: Date): Review[] {
   }));
 }
 
-export function buildReviewSummary(seed: SeedMerchant, now: Date) {
+export function buildReviewSummary(seed: SeedMerchant, now: Date): ReviewSummary | null {
   const reviews = buildReviews(seed, now);
   if (reviews.length === 0) return null;
   return {
@@ -632,8 +633,10 @@ export function buildAvailability(seed: SeedMerchant, now: Date): AvailabilitySl
 /* ------------------------------------------------------------ account fixtures */
 
 export function buildMe(now: Date): MeProfile {
+  // SEED_MERCHANTS is a static non-empty literal; the index access needs no runtime guard.
+  const anySeed = SEED_MERCHANTS[0] as SeedMerchant;
   const favorites: Favorite[] = ['m-lung-yuen', 'm-bauhinia-cafe', 'm-granite-gym'].map((id, index) => {
-    const seed = SEED_MERCHANTS.find((merchant) => merchant.id === id) ?? SEED_MERCHANTS[0];
+    const seed = SEED_MERCHANTS.find((merchant) => merchant.id === id) ?? anySeed;
     return {
       id: `fav-${index}`,
       subject_type: 'merchant',

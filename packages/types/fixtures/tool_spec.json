@@ -1,0 +1,266 @@
+{
+  "$comment": "Fixture set for src/schemas/tool_spec.json — AGENT_CONTRACT §3's canonical registry entries. The custom rules encode §2's budgets, §3's `additionalProperties=false` and §5's freshness table.",
+  "schema": "tool_spec",
+  "cases": [
+    {
+      "name": "01_valid_get_availability",
+      "description": "AGENT_CONTRACT §3's own example tool: live availability, `cache_ttl_s=0  # availability: never cached`, deterministic-search fallback, closed input schema.",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "name": "get_availability",
+        "version": "1",
+        "description": "Return the next reservable slots for a merchant from the live availability pool; never cached.",
+        "input_schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["merchant_id", "party_size"],
+          "properties": {
+            "merchant_id": { "type": "string", "format": "uuid" },
+            "party_size": { "type": "integer", "minimum": 1, "maximum": 99 },
+            "from": { "type": "string", "format": "date-time" },
+            "to": { "type": ["string", "null"], "format": "date-time" }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "slots"],
+          "properties": {
+            "status": { "type": "string", "enum": ["available", "limited", "unavailable", "unknown"] },
+            "slots": {
+              "type": "array",
+              "maxItems": 20,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["slot_id", "starts_at", "capacity_left"],
+                "properties": {
+                  "slot_id": { "type": "string", "format": "uuid" },
+                  "starts_at": { "type": "string", "format": "date-time" },
+                  "capacity_left": { "type": ["integer", "null"], "minimum": 0 }
+                }
+              }
+            }
+          }
+        },
+        "permission": "read_availability",
+        "scopes": ["tenant", "merchant"],
+        "timeout_ms": 4000,
+        "retries": 1,
+        "cache_ttl_s": 0,
+        "side_effect": false,
+        "cost_class": "db",
+        "fallback": "deterministic_search",
+        "agents": ["availability", "user_intent", "reservation"]
+      }
+    },
+    {
+      "name": "02_valid_create_reservation_mutation",
+      "description": "A side-effecting tool: AGENT §3/§8 plus API §1 require an explicit user action and an `Idempotency-Key`, and the human rung is the fallback for a failed booking.",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "name": "create_reservation",
+        "version": "1",
+        "description": "Create a reservation for a confirmed slot on behalf of an authenticated consumer.",
+        "input_schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["merchant_id", "slot_id", "party_size", "contact"],
+          "properties": {
+            "merchant_id": { "type": "string", "format": "uuid" },
+            "slot_id": { "type": "string", "format": "uuid" },
+            "party_size": { "type": "integer", "minimum": 1, "maximum": 99 },
+            "contact": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["phone"],
+              "properties": { "phone": { "type": "string" }, "email": { "type": ["string", "null"], "format": "email" } }
+            },
+            "notes": { "type": ["string", "null"], "maxLength": 500 }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reservation_id", "status"],
+          "properties": {
+            "reservation_id": { "type": "string", "format": "uuid" },
+            "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled", "completed", "no_show"] }
+          }
+        },
+        "permission": "create_reservation",
+        "scopes": ["merchant", "user"],
+        "timeout_ms": 4000,
+        "retries": 0,
+        "cache_ttl_s": 0,
+        "side_effect": true,
+        "cost_class": "db",
+        "fallback": "human",
+        "requires_idempotency_key": true,
+        "agents": ["checkout", "reservation"]
+      }
+    },
+    {
+      "name": "03_valid_search_web_egress",
+      "description": "The only tool with network egress (AGENT §3): 10s ceiling instead of 4s, no retries inside the 12s request budget, and its output is untrusted content that must be data-enveloped (§7).",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "name": "search_web",
+        "version": "1",
+        "description": "Query the allow-listed web search provider for merchant facts not present in the tenant database.",
+        "input_schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["query"],
+          "properties": {
+            "query": { "type": "string", "minLength": 2, "maxLength": 400 },
+            "locale": { "type": "string", "enum": ["en", "zh-HK", "zh-CN"] },
+            "max_results": { "type": "integer", "minimum": 1, "maximum": 10 }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["results"],
+          "properties": {
+            "results": {
+              "type": "array",
+              "maxItems": 10,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["url", "title", "snippet"],
+                "properties": {
+                  "url": { "type": "string", "format": "uri" },
+                  "title": { "type": "string" },
+                  "snippet": { "type": "string" },
+                  "retrieved_at": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        },
+        "permission": "read_web",
+        "scopes": ["tenant", "external_agent"],
+        "timeout_ms": 10000,
+        "retries": 0,
+        "cache_ttl_s": 900,
+        "side_effect": false,
+        "cost_class": "external",
+        "fallback": "deterministic_search",
+        "network_egress": true,
+        "untrusted_output": true,
+        "task_class": "classify_route",
+        "agents": ["retrieval", "fact_verification"]
+      }
+    },
+    {
+      "name": "04_invalid_open_input_schema",
+      "description": "AGENT §3 declares every tool input with `additionalProperties=false`; an open schema lets a prompt invent an argument (`{\"raw_sql\": …}`) and the dispatcher would forward it (spec §52).",
+      "expect": "invalid",
+      "expect_rule_ids": ["tool_spec_closed_input"],
+      "instance": {
+        "name": "get_price",
+        "version": "1",
+        "description": "Read the current published price of an offering from the fact store.",
+        "input_schema": { "type": "object", "properties": { "offering_id": { "type": "string" } } },
+        "output_schema": { "type": "object", "additionalProperties": false, "required": ["amount", "currency"], "properties": { "amount": { "type": "string" }, "currency": { "type": "string" } } },
+        "permission": "read_products",
+        "scopes": ["tenant", "merchant"],
+        "timeout_ms": 4000,
+        "retries": 1,
+        "cache_ttl_s": 0,
+        "side_effect": false,
+        "cost_class": "db",
+        "fallback": "deterministic_search"
+      }
+    },
+    {
+      "name": "05_invalid_availability_cached",
+      "description": "Caching live availability for five minutes is how a platform books a table that no longer exists (AGENT §3/§5, spec §20).",
+      "expect": "invalid",
+      "expect_rule_ids": ["tool_spec_availability_uncached"],
+      "instance": {
+        "name": "get_availability",
+        "version": "1",
+        "description": "Return the next reservable slots for a merchant from the live availability pool.",
+        "input_schema": { "type": "object", "additionalProperties": false, "required": ["merchant_id"], "properties": { "merchant_id": { "type": "string", "format": "uuid" } } },
+        "output_schema": { "type": "object", "additionalProperties": false, "required": ["status"], "properties": { "status": { "type": "string" } } },
+        "permission": "read_availability",
+        "scopes": ["tenant", "merchant"],
+        "timeout_ms": 4000,
+        "retries": 1,
+        "cache_ttl_s": 300,
+        "side_effect": false,
+        "cost_class": "db",
+        "fallback": "deterministic_search"
+      }
+    },
+    {
+      "name": "06_invalid_mutation_without_idempotency",
+      "description": "A retry of a side-effecting checkout without an idempotency key double-charges the customer (API §1, AGENT §3/§8).",
+      "expect": "invalid",
+      "expect_rule_ids": ["tool_spec_mutation_idempotent"],
+      "instance": {
+        "name": "checkout",
+        "version": "1",
+        "description": "Create an order and start payment for the caller's cart.",
+        "input_schema": { "type": "object", "additionalProperties": false, "required": ["cart_id"], "properties": { "cart_id": { "type": "string", "format": "uuid" } } },
+        "output_schema": { "type": "object", "additionalProperties": false, "required": ["order_id"], "properties": { "order_id": { "type": "string", "format": "uuid" } } },
+        "permission": "checkout",
+        "scopes": ["user", "merchant"],
+        "timeout_ms": 4000,
+        "retries": 1,
+        "cache_ttl_s": 0,
+        "side_effect": true,
+        "cost_class": "db",
+        "fallback": "human"
+      }
+    },
+    {
+      "name": "07_invalid_timeout_overrides_budget",
+      "description": "A 9s local tool with one retry needs 18s, which blows AGENT §2's 12s request budget — the orchestrator must degrade, not hang (spec §104).",
+      "expect": "invalid",
+      "expect_rule_ids": ["tool_spec_within_budget"],
+      "instance": {
+        "name": "retrieve_merchant_documents",
+        "version": "1",
+        "description": "Vector+keyword retrieval over the merchant's own knowledge-base documents.",
+        "input_schema": { "type": "object", "additionalProperties": false, "required": ["merchant_id", "query"], "properties": { "merchant_id": { "type": "string", "format": "uuid" }, "query": { "type": "string" } } },
+        "output_schema": { "type": "object", "additionalProperties": false, "required": ["chunks"], "properties": { "chunks": { "type": "array", "items": { "type": "object" } } } },
+        "permission": "read_merchant_documents",
+        "scopes": ["tenant", "merchant"],
+        "timeout_ms": 9000,
+        "retries": 1,
+        "cache_ttl_s": 0,
+        "side_effect": false,
+        "cost_class": "vector",
+        "fallback": "deterministic_search"
+      }
+    },
+    {
+      "name": "08_invalid_tenant_permission_without_tenant_scope",
+      "description": "AGENT §8 grants a tool call by matching `permission` against the subject's grants for the declared `scopes`. `export_data` is a tenant-level grant, so a tool that asks for it from the merchant scope can never be authorised — the dispatcher either kills the call or has to widen the check past §8.",
+      "expect": "invalid",
+      "expect_rule_ids": ["tool_spec_permission_matches_scope"],
+      "instance": {
+        "name": "retrieve_merchant_documents",
+        "version": "1",
+        "description": "Vector+keyword retrieval over the merchant's own knowledge-base documents.",
+        "input_schema": { "type": "object", "additionalProperties": false, "required": ["merchant_id", "query"], "properties": { "merchant_id": { "type": "string", "format": "uuid" }, "query": { "type": "string" } } },
+        "output_schema": { "type": "object", "additionalProperties": false, "required": ["chunks"], "properties": { "chunks": { "type": "array", "items": { "type": "object" } } } },
+        "permission": "export_data",
+        "scopes": ["merchant"],
+        "timeout_ms": 4000,
+        "retries": 1,
+        "cache_ttl_s": 0,
+        "side_effect": false,
+        "cost_class": "vector",
+        "fallback": "deterministic_search"
+      }
+    }
+  ]
+}

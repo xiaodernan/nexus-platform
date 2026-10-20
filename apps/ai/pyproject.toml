@@ -31,6 +31,12 @@ packages = ["nexus_ai"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 filterwarnings = ["ignore::DeprecationWarning"]
+# `-rs` by default: a skip without its reason is a number, and "4 skipped" reads as "four tests that were
+# not worth running" rather than "four tests this machine could not run". The integration tests below skip
+# whenever NEXUS_TEST_DATABASE_URL is unset — which is every local run and no CI run (ci.yml:134) — and the
+# reason has to be visible in the default output, not only under `-rs`. Same rule as the checkers in
+# scripts/: a reader that cannot run says so, in its own words, without being asked.
+addopts = "-rs"
 markers = [
     "integration: needs the live Postgres container (skips cleanly when unavailable)",
 ]

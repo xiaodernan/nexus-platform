@@ -238,9 +238,41 @@ function isoAtMinutes(weekday: number, minutes: number, instant: Date, dayOffset
 
 /** Hours text for the week ("12:00–22:00" / "全日休息"), used by the merchant availability strip. */
 export function hoursText(day: BusinessHoursDay | undefined, locale = 'zh-HK'): string {
-  if (!day) return locale.startsWith('zh') ? '未驗證' : 'unverified';
-  if (day.closed || !day.ranges?.length) return locale.startsWith('zh') ? '休息' : 'closed';
+  const closedText = locale.startsWith('zh') ? '休息' : 'closed';
+  const unverifiedText = locale.startsWith('zh') ? '未驗證' : 'unverified';
+  if (!day) return unverifiedText;
+  // A day with no ranges is only 休息 when the data says it is closed; silence about a weekday is not
+  // a closure claim (§19), and the live projection emits rows only for the days the service describes.
+  if (day.closed === true) return closedText;
+  if (!day.ranges?.length) return unverifiedText;
   return day.ranges.map((range) => `${range.open}–${range.close}`).join(', ');
+}
+
+/**
+ * `opening_hours` fact values are `{ zones: [{ weekday, opens, closes }] }` (docs/DATABASE.md), where
+ * `weekday` is the column's own 0=Mon…6=Sun numbering. Decoding it here keeps the provenance panel
+ * readable without restating the claim: the text is only ever the ranges the fact already carries.
+ */
+export function hoursFactText(value: unknown, locale = 'zh-HK'): string | null {
+  const zones = (value as { zones?: unknown } | null)?.zones;
+  if (!Array.isArray(zones)) return null;
+  const seen = new Set<string>();
+  const lines: Array<{ weekday: number; range: string }> = [];
+  for (const zone of zones) {
+    const entry = zone as { weekday?: unknown; opens?: unknown; closes?: unknown };
+    if (typeof entry?.weekday !== 'number' || typeof entry.opens !== 'string' || typeof entry.closes !== 'string') {
+      continue;
+    }
+    const key = `${entry.weekday}:${entry.opens}-${entry.closes}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    lines.push({ weekday: entry.weekday, range: `${entry.opens}–${entry.closes}` });
+  }
+  if (!lines.length) return null;
+  return lines
+    .sort((a, b) => a.weekday - b.weekday || a.range.localeCompare(b.range))
+    .map((line) => `${weekdayLabel((line.weekday + 1) % 7, locale)} ${line.range}`)
+    .join(locale.startsWith('zh') ? '、' : ', ');
 }
 
 /* ------------------------------------------------------------------ distance/maps */

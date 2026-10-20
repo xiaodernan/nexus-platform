@@ -55,11 +55,9 @@ rmSync(FIX, { recursive: true, force: true });
 mkdirSync(FIX, { recursive: true });
 
 // Read as text and write as text: this file's plants anchor on ordinary sentences, and a byte-level rewrite of
-// a UTF-8 source would re-encode every § it passed. A fresh checkout of this same LF blob is CRLF on
-// disk (core.autocrlf smudges every text file), so normalize once instead of refusing a plane whose
-// only difference is the smudge: the plants anchor within a line, and every fixture then carries the
-// LF spelling the anchors were written against.
-const BASE = readFileSync(TRACKED, 'utf8').replace(/\r\n/g, '\n');
+// a UTF-8 source would re-encode every § it passed.
+const BASE = readFileSync(TRACKED, 'utf8');
+if (BASE.includes('\r\n')) die('the seed gate is LF here; this harness assumes one line ending for its row plant');
 
 /** Write `from` → `to` into its own fixture copy. A plant must hit its anchor exactly once or it proves nothing. */
 function plant(name, from, to) {
@@ -212,7 +210,10 @@ function reason(out, name) {
  * three plane-fact classes each already have a site-census offender, so the belt has no reachable member there.
  */
 function runReader(reader, ...argv) {
-  const r = spawnSync(process.execPath, [reader, ...argv], { cwd: ROOT, encoding: 'utf8' });
+  // `stdio` is not decoration. Without it the child inherits this process's handles, and on this host that
+  // fails with EBUSY in ~3ms — which read as "the sandbox forbids spawning git/node" for a whole session.
+  // Measured A/B, 2026-10-07: default stdio EBUSY, `['ignore','pipe','pipe']` runs the same child in 451ms.
+  const r = spawnSync(process.execPath, [reader, ...argv], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   const out = `${r.stdout ?? ''}${r.stderr ?? ''}`;
   const c = CENSUS.exec(out);
   const s = SPANS.exec(out);
@@ -226,7 +227,14 @@ function runReader(reader, ...argv) {
   // was read as a finished run by the old predicate (measured: rc 1, header present, no census line, and
   // `crashed` false), and a terminal line whose declared code the process did not take is a run that cannot say
   // what it decided either.
-  const base = { rc: r.status, scanned: scanned ? +scanned[1] : null,
+  // A `null` status has two causes that must not print the same way: a child that ran and reported nothing,
+  // and a child this machine never managed to start. `spawnSync` leaves `status: null` for both and puts the
+  // reason in `error` — measured here on 2026-09-30, where both planes came back `rc null` and the verdict
+  // said only "the shipped plane is not green", which reads as a reader that failed rather than a process
+  // that was never spawned. This sandbox refuses some child processes outright (the same restriction that
+  // makes `spawnSync git` return EBUSY), so the reason is the difference between a red and an environment.
+  const spawnFailure = r.status === null && r.error ? String(r.error.code ?? r.error.message) : null;
+  const base = { rc: r.status, spawnFailure, scanned: scanned ? +scanned[1] : null,
     coverage: coverage ? +coverage[1] : null, out,
     reasons: terminal ? +terminal[1] : null,
     crashed: terminal ? (terminal[3] !== `${r.status}` || refused) : !refused };
@@ -241,8 +249,7 @@ const run = (...argv) => runReader(CHECKER, ...argv);
  * copy is written into the temp directory with those two specifiers re-pathed to the same shipped files — the
  * mutation is the one named below and nothing else about its runtime.
  */
-// Same smudge as above — this copy is read for its mutants, whose multi-line anchors assume one spelling.
-const READER_SRC = readFileSync(CHECKER, 'utf8').replace(/\r\n/g, '\n');
+const READER_SRC = readFileSync(CHECKER, 'utf8');
 
 // D196 — the terminal line's wording used to be retyped here as a regex. That is the same act as copying a
 // class list by hand: reword the checker's last line and the copy stops matching, so every run — healthy ones
@@ -322,7 +329,10 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 // transcription of a run someone remembered.
 const SHIPPED = run();
 const CTRL = run(`--quality=${CONTROL}`);
-if (SHIPPED.rc !== 0 || CTRL.rc !== 0) die(`the shipped plane is not green (rc ${SHIPPED.rc}, control rc ${CTRL.rc})`);
+const planeNote = (p) => (p.spawnFailure ? ` — the child could not be started: ${p.spawnFailure}` : '');
+if (SHIPPED.rc !== 0 || CTRL.rc !== 0) {
+  die(`the shipped plane is not green (rc ${SHIPPED.rc}${planeNote(SHIPPED)}, control rc ${CTRL.rc}${planeNote(CTRL)})`);
+}
 if (!same(SHIPPED.census, CTRL.census) || !same(SHIPPED.spans, CTRL.spans)) {
   die(`an unmutated copy through the seam moved the census: ${JSON.stringify(SHIPPED.census)} vs ${JSON.stringify(CTRL.census)}`);
 }

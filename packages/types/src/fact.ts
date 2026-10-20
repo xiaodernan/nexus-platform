@@ -179,6 +179,10 @@ export interface EntityFlags {
   stale?: boolean;
   /** Text came from an untrusted source and was sanitised (AGENT_CONTRACT §7/§8). */
   untrusted_content?: boolean;
+  /** Offering cards: `offerings.price_source = 'estimated'` (V1 line 227). */
+  estimated_price?: boolean;
+  /** Review cards: the reviewer has a purchase/reservation trace at this merchant (§55). */
+  verified_visit?: boolean;
   /** Extra flags, snake_case (API_CONTRACT §1). */
   [flag: string]: boolean | undefined;
 }

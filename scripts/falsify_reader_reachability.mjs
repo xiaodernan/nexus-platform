@@ -82,7 +82,7 @@ writeFileSync(join(FIX, 'ci-control.yml'), SHIPPED.ci, 'utf8');
 writeFileSync(join(FIX, 'Makefile-control'), SHIPPED.make, 'utf8');
 
 function run(...argv) {
-  const r = execFileSync('node', [CHECKER, ...argv], { encoding: 'utf8', cwd: ROOT, stdio: 'pipe' });
+  const r = execFileSync('node', [CHECKER, ...argv], { encoding: 'utf8', cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
   return { code: 0, out: r };
 }
 

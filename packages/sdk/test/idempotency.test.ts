@@ -62,7 +62,9 @@ test("reservation create requires and sends an Idempotency-Key, returning 201 co
   await withApi(async ({ api, make }) => {
     const client = make({ token: "t" });
     const res = await client.reservations.create({ merchant_id: "m1", slot_id: "s1", party_size: 2, contact: { phone: "+852 1234" } });
-    assert.equal(res.status, "confirmed");
+    // `pending`, never `confirmed`: this client's fixture used to answer a state no platform route can
+    // produce (§6, D26), which trained callers to expect a merchant decision that has not happened.
+    assert.equal(res.status, "pending");
     assert.equal(res.code, "RK7Q2");
     assert.equal(api.state.reserveRequests, 1);
   });

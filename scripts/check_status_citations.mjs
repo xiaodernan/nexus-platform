@@ -85,7 +85,7 @@ const fail = notCheckable;
 // tree of files under review, not a checkout with a HEAD.
 const REPO = join(HERE, '..');
 let headStatus;
-try { headStatus = execFileSync('git', ['show', `${REV}:docs/STATUS.md`], { encoding: 'utf8', cwd: REPO, maxBuffer: 1 << 26 }); }
+try { headStatus = execFileSync('git', ['show', `${REV}:docs/STATUS.md`], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', cwd: REPO, maxBuffer: 1 << 26 }); }
 catch (e) { fail(`cannot read \`git show ${REV}:docs/STATUS.md\` — ${e.message.split('\n')[0]}`); }
 const headings = new Set([...headStatus.replace(/\r\n/g, '\n').matchAll(/^## (\d+)\. /gm)].map((m) => m[1]));
 if (headings.size === 0) fail(`\`${REV}:docs/STATUS.md\` has no \`## N. \` headings — the heading pattern matched nothing`);

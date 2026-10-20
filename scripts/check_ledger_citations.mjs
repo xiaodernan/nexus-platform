@@ -257,7 +257,7 @@ let TRACKED = null;
 let TRACKED_REASON = null;
 try {
   TRACKED = new Set(execFileSync('git', ['ls-tree', '-r', '--name-only', 'HEAD'],
-    { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 }).split(/\r?\n/).filter(Boolean));
+    { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 }).split(/\r?\n/).filter(Boolean));
 } catch (error) {
   TRACKED = null;
   TRACKED_REASON = `git ls-tree HEAD failed — ${error.code ?? error.message}`;
@@ -310,7 +310,7 @@ function fileText(rel, committed) {
     }
   } else {
     try {
-      lines = execFileSync('git', ['show', `HEAD:${rel}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 })
+      lines = execFileSync('git', ['show', `HEAD:${rel}`], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 })
         .split(/\r?\n/);
     } catch (error) {
       lines = null;
@@ -363,13 +363,32 @@ function citeLines(cite, rel, lines, section, where, judgedHere) {
 
 /**
  * Resolve a cited name the way D87's site checker does — a path is matched by suffix, a bare name by
- * basename — plus two shapes the ledgers use and `quality.sql` does not: an extensionless Java class stem
- * (`EventsController`), and an outer-class/nested-record pair (`MeController.FavoriteBody`).
+ * basename — plus three shapes the ledgers use and `quality.sql` does not: an extensionless Java class stem
+ * (`EventsController`), an outer-class/nested-record pair (`MeController.FavoriteBody`), and an elided
+ * path. The header has claimed since D86 that "an elided path ... is a citation to a file" while no branch
+ * implemented it: an elided-prefix token tokenizes to a leading-slash path (the elision mark is a non-word
+ * character, so the tokenizer eats it and keeps the slash), and the suffix branch below then asked for
+ * `rel.endsWith('//merchant/...')`, which nothing holds — so the §257 census row quoting that form was
+ * filed FILE NOT FOUND by the gap between the header's promise and the code. An elision is now judged on
+ * the segments it left, which is the one reading a width-saving abbreviation can be given; a tail more
+ * than one file holds is AMBIGUOUS, because the elision is exactly what would have separated them.
  */
 function resolve(name) {
   // `./.gitignore` is the root-relative form the ledgers need for a file the repo root owns twice over:
   // bare `.gitignore` is held by the root AND by packages/sdk, so a root cite has to say it is at the root.
   if (name.startsWith('./')) return FILES.filter((rel) => rel === name.slice(2));
+  // An elided prefix arrives in two spellings: `…/a/b.java`, whose `…` the tokenizer strips and leaves a
+  // leading slash; and `x/.../a/b.java`, whose dots survive inside the token. Both are resolved by suffix
+  // on the tail after the elision.
+  if (name.startsWith('/')) {
+    const tail = name.slice(1);
+    return FILES.filter((rel) => rel === tail || rel.endsWith(`/${tail}`));
+  }
+  if (name.split('/').includes('...')) {
+    const segs = name.split('/');
+    const tail = segs.slice(segs.lastIndexOf('...') + 1).join('/');
+    return FILES.filter((rel) => rel === tail || rel.endsWith(`/${tail}`));
+  }
   if (name.includes('/')) return FILES.filter((rel) => rel === name || rel.endsWith(`/${name}`));
   if (MIGRATIONS.has(name)) return MIGRATIONS.get(name);
   if (LEDGER_EXT.test(name)) return BY_BASENAME.get(name) ?? [];
@@ -459,7 +478,7 @@ function ledgerText(ledger, committed) {
   if (committed) {
     try {
       return {
-        text: execFileSync('git', ['show', `HEAD:${ledger}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 }),
+        text: execFileSync('git', ['show', `HEAD:${ledger}`], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 }),
         reason: null,
       };
     } catch (error) {

@@ -1,0 +1,335 @@
+{
+  "$comment": "Fixture set for src/schemas/entity_card.json — the single render contract (API_CONTRACT §2). The rules in scripts/rules.mjs are the point of this file set: every number a card renders must be backed by one of its own facts (AGENT_CONTRACT §4), and every explanation bullet must cite one.",
+  "schema": "entity_card",
+  "cases": [
+    {
+      "name": "01_valid_merchant_card_full",
+      "description": "The §2 example carried to completion: price, rating, distance, open verdict and live availability each backed by a fact, one traceable explanation bullet, demo badge set (DECISIONS D6).",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "card_type": "merchant",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "slug": "lung-yuen-kitchen",
+        "title": "龍苑 Kitchen",
+        "subtitle": "Cantonese · Sha Tin",
+        "image": { "url": "https://cdn.example.com/lung-yuen.jpg", "alt": "demo image", "credit": "synthetic" },
+        "price": { "amount": "128.00", "currency": "HKD", "model": "per_person", "source": "merchant", "priced_at": "2026-09-22T02:00:00Z", "stale": false },
+        "rating": { "value": 4.6, "count": 213, "smoothed": true },
+        "distance": { "meters": 700, "text": "700m", "travel_minutes": 9 },
+        "open": {
+          "is_open": true,
+          "opens_at": null,
+          "closes_at": "2026-09-22T22:00:00Z",
+          "as_of": "2026-09-22T02:00:00Z",
+          "source_fact_id": "55555555-5555-4555-8555-555555555555",
+          "text": "Open until 22:00"
+        },
+        "availability": {
+          "status": "available",
+          "next_slot": "2026-09-26T19:00:00Z",
+          "capacity_left": 4,
+          "slot_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          "fact_id": "66666666-6666-4666-8666-666666666666",
+          "as_of": "2026-09-22T02:00:00Z"
+        },
+        "ai_match": {
+          "score": 0.91,
+          "reasons": [
+            { "label": "within_budget", "text": "符合你的预算 HK$500", "value": "128.00", "weight": 0.31, "fact_id": "33333333-3333-4333-8333-333333333333" },
+            { "label": "open_now", "text": "现在营业至 22:00", "fact_id": "55555555-5555-4555-8555-555555555555" }
+          ],
+          "strategy": "hybrid_v1",
+          "rank": 1
+        },
+        "actions": [
+          { "type": "reserve", "label": "预订", "endpoint": "/api/v1/reservations", "method": "POST", "requires_auth": true },
+          { "type": "compare", "label": "比较", "endpoint": null, "secondary": true }
+        ],
+        "facts": [
+          {
+            "fact_id": "33333333-3333-4333-8333-333333333333",
+            "subject_type": "merchant",
+            "subject_id": "11111111-1111-4111-8111-111111111111",
+            "attribute": "price",
+            "value": { "amount": "128.00", "currency": "HKD" },
+            "source": "merchant",
+            "confidence": 0.98,
+            "observed_at": "2026-09-22T02:00:00Z",
+            "expires_at": "2026-09-22T08:00:00Z",
+            "stale": false
+          },
+          {
+            "fact_id": "44444444-4444-4444-8444-444444444444",
+            "subject_type": "merchant",
+            "subject_id": "11111111-1111-4111-8111-111111111111",
+            "attribute": "rating",
+            "value": 4.6,
+            "unit": "score",
+            "source": "observed",
+            "confidence": 0.9,
+            "observed_at": "2026-09-22T02:00:00Z",
+            "expires_at": null,
+            "stale": false
+          },
+          {
+            "fact_id": "55555555-5555-4555-8555-555555555555",
+            "subject_type": "merchant",
+            "subject_id": "11111111-1111-4111-8111-111111111111",
+            "attribute": "opening_hours",
+            "value": { "sat": { "opens_at": "12:00", "closes_at": "22:00", "crosses_midnight": false } },
+            "source": "imported",
+            "confidence": 0.9,
+            "observed_at": "2026-09-21T02:00:00Z",
+            "expires_at": "2026-09-22T02:00:00Z",
+            "stale": false
+          },
+          {
+            "fact_id": "66666666-6666-4666-8666-666666666666",
+            "subject_type": "merchant",
+            "subject_id": "11111111-1111-4111-8111-111111111111",
+            "attribute": "availability",
+            "value": { "next_slot": "2026-09-26T19:00:00Z", "capacity_left": 4 },
+            "source": "observed",
+            "confidence": 0.99,
+            "observed_at": "2026-09-22T02:00:00Z",
+            "expires_at": "2026-09-22T02:00:00Z",
+            "stale": false
+          }
+        ],
+        "flags": { "sponsored": false, "demo": true, "unverified": false },
+        "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "category": "restaurant",
+        "tags": ["cantonese", "date_night", "quiet_ambience"],
+        "attributes": { "mtr_within_5min": true, "kid_friendly": false },
+        "location": { "lat": 22.3809, "lng": 114.1861 },
+        "district": "Sha Tin",
+        "transit": { "station": "Tai Wai", "walk_minutes": 4 },
+        "as_of": "2026-09-22T02:00:00Z",
+        "location_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        "ownership_verified": true,
+        "ai_agent_enabled": true
+      }
+    },
+    {
+      "name": "02_valid_product_card",
+      "description": "A product card (`product` variant) with a price fact about the offering; no open/availability block, so nothing else needs a citation.",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "card_type": "product",
+        "id": "22222222-2222-4222-8222-222222222222",
+        "slug": "yuen-nung-tea-set",
+        "title": "Organic Yuen Tung Tea Set",
+        "merchant_id": "11111111-1111-4111-8111-111111111111",
+        "merchant_name": "龍苑 Kitchen",
+        "price": { "amount": "88.00", "currency": "HKD", "model": "fixed", "source": "merchant" },
+        "stock_quantity": 12,
+        "purchasable": true,
+        "distance": { "meters": 1200, "text": "1.2km" },
+        "actions": [{ "type": "add_to_cart", "label": "加入购物车", "endpoint": "/api/v1/carts/items", "method": "POST", "requires_auth": true }],
+        "facts": [
+          {
+            "fact_id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+            "subject_type": "offering",
+            "subject_id": "22222222-2222-4222-8222-222222222222",
+            "merchant_id": "11111111-1111-4111-8111-111111111111",
+            "attribute": "price",
+            "value": { "amount": "88.00", "currency": "HKD" },
+            "source": "merchant",
+            "confidence": 0.99,
+            "observed_at": "2026-09-22T02:00:00Z",
+            "expires_at": "2026-09-22T08:00:00Z",
+            "stale": false
+          },
+          {
+            "fact_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+            "subject_type": "offering",
+            "subject_id": "22222222-2222-4222-8222-222222222222",
+            "merchant_id": "11111111-1111-4111-8111-111111111111",
+            "attribute": "inventory",
+            "value": 12,
+            "unit": "units",
+            "source": "imported",
+            "confidence": 0.95,
+            "observed_at": "2026-09-22T02:00:00Z",
+            "expires_at": "2026-09-22T02:15:00Z",
+            "stale": false
+          }
+        ],
+        "flags": { "sponsored": false, "demo": true, "unverified": false },
+        "category": "tea",
+        "as_of": "2026-09-22T02:00:00Z"
+      }
+    },
+    {
+      "name": "03_valid_collection_card",
+      "description": "A curated collection (`collection` variant). It renders no numbers of its own, so `facts` is legally empty — CONTRACT NOTES 10 records that `facts.subject_type` has no value for a collection row, so a guide cannot yet cite itself. The member card is fully fact-backed and validated recursively through `items`.",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "card_type": "collection",
+        "id": "abababab-abab-4bab-8bab-babababababb",
+        "title": "Quiet date-night spots in the New Territories",
+        "kind": "guide",
+        "author": "NEXUS editorial",
+        "item_count": 1,
+        "items": [
+          {
+            "card_type": "merchant",
+            "id": "11111111-1111-4111-8111-111111111111",
+            "title": "龍苑 Kitchen",
+            "price": { "amount": "128.00", "currency": "HKD", "model": "per_person" },
+            "facts": [
+              {
+                "fact_id": "33333333-3333-4333-8333-333333333333",
+                "subject_type": "merchant",
+                "subject_id": "11111111-1111-4111-8111-111111111111",
+                "attribute": "price",
+                "value": { "amount": "128.00", "currency": "HKD" },
+                "source": "merchant",
+                "confidence": 0.98,
+                "observed_at": "2026-09-22T02:00:00Z",
+                "expires_at": "2026-09-22T08:00:00Z",
+                "stale": false
+              }
+            ],
+            "flags": { "sponsored": false, "demo": true, "unverified": false }
+          }
+        ],
+        "facts": [],
+        "flags": { "sponsored": false, "demo": true, "unverified": false },
+        "published_at": "2026-09-22T02:00:00Z"
+      }
+    },
+    {
+      "name": "04_invalid_price_without_backing_fact",
+      "description": "The mandated failure case: the card renders HK$128.00 but ships no price fact. AGENT_CONTRACT §4 makes that an unclaimable number, so the renderer must drop the price rather than show it.",
+      "expect": "invalid",
+      "expect_rule_ids": ["entity_card_rendered_value_backed"],
+      "instance": {
+        "card_type": "merchant",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "title": "Unverified Noodle House",
+        "price": { "amount": "128.00", "currency": "HKD", "model": "per_person" },
+        "rating": { "value": 4.9, "count": 340 },
+        "facts": [],
+        "flags": { "sponsored": false, "demo": true, "unverified": true }
+      }
+    },
+    {
+      "name": "05_invalid_explanation_cites_missing_fact",
+      "description": "A 「符合预算」 bullet whose fact_id is not on the card — a citation the client cannot resolve is indistinguishable from a fabricated one (AGENT §1 `recommendation`, §4).",
+      "expect": "invalid",
+      "expect_rule_ids": ["entity_card_explanation_traceable"],
+      "instance": {
+        "card_type": "merchant",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "title": "龍苑 Kitchen",
+        "price": { "amount": "128.00", "currency": "HKD", "model": "per_person" },
+        "ai_match": {
+          "score": 0.88,
+          "reasons": [{ "label": "within_budget", "text": "符合你的预算 HK$500", "value": "128.00", "fact_id": "00000000-0000-4000-8000-000000000000" }]
+        },
+        "facts": [
+          {
+            "fact_id": "33333333-3333-4333-8333-333333333333",
+            "subject_type": "merchant",
+            "subject_id": "11111111-1111-4111-8111-111111111111",
+            "attribute": "price",
+            "value": { "amount": "128.00", "currency": "HKD" },
+            "source": "merchant",
+            "confidence": 0.98,
+            "observed_at": "2026-09-22T02:00:00Z",
+            "expires_at": "2026-09-22T08:00:00Z",
+            "stale": false
+          }
+        ],
+        "flags": { "sponsored": false, "demo": true, "unverified": false }
+      }
+    },
+    {
+      "name": "06_invalid_open_verdict_without_as_of",
+      "description": "「Open until 22:00」 with no `as_of` and no `source_fact_id`: a cached verdict presented as live is exactly what AGENT §5 forbids.",
+      "expect": "invalid",
+      "expect_rule_ids": ["entity_card_rendered_value_backed"],
+      "instance": {
+        "card_type": "merchant",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "title": "龍苑 Kitchen",
+        "open": { "is_open": true, "text": "Open until 22:00" },
+        "facts": [
+          {
+            "fact_id": "55555555-5555-4555-8555-555555555555",
+            "subject_type": "merchant",
+            "subject_id": "11111111-1111-4111-8111-111111111111",
+            "attribute": "opening_hours",
+            "value": { "mon": { "opens_at": "12:00", "closes_at": "22:00" } },
+            "source": "imported",
+            "confidence": 0.9,
+            "observed_at": "2026-09-21T02:00:00Z",
+            "expires_at": "2026-09-22T02:00:00Z",
+            "stale": false
+          }
+        ],
+        "flags": { "sponsored": false, "demo": true, "unverified": false }
+      }
+    },
+    {
+      "name": "07_invalid_sponsored_with_organic_rank",
+      "description": "AGENT §6 inserts paid placement after organic scoring; advertising rank 1 next to a sponsored badge would sell a relevance claim that was never earned.",
+      "expect": "invalid",
+      "expect_rule_ids": ["entity_card_sponsored_has_no_organic_rank"],
+      "instance": {
+        "card_type": "merchant",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "title": "龍苑 Kitchen",
+        "ai_match": { "score": 0.42, "rank": 1, "reasons": [] },
+        "facts": [],
+        "flags": { "sponsored": true, "demo": true, "unverified": false }
+      }
+    },
+    {
+      "name": "08_invalid_camel_case_and_bad_variant",
+      "description": "Two contract breaks at once: a camelCase key (`isSponsored`, API_CONTRACT §1) and a product-only field on a merchant card (`stock_quantity`), which the discriminated-union guards in entity_card.json reject with the boolean schema `false`.",
+      "expect": "invalid",
+      "expect_rule_ids": ["snake_case_keys", "additionalProperties", "false"],
+      "instance": {
+        "card_type": "merchant",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "title": "龍苑 Kitchen",
+        "stock_quantity": 3,
+        "isSponsored": true,
+        "facts": [],
+        "flags": { "sponsored": false, "demo": true, "unverified": false }
+      }
+    },
+    {
+      "name": "09_invalid_fact_about_an_unrelated_merchant",
+      "description": "API_CONTRACT §2 attaches `facts` to the entity being rendered, and AGENT §4 makes each citation an audit trail. This card's only fact is about a different merchant, so nothing on the card is actually evidence-backed — the schema accepts the shape (it is a well-formed Fact), which is why the scope check has to be a rule.",
+      "expect": "invalid",
+      "expect_rule_ids": ["entity_card_facts_scoped"],
+      "instance": {
+        "card_type": "merchant",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "title": "龍苑 Kitchen",
+        "facts": [
+          {
+            "fact_id": "99999999-9999-4999-8999-999999999999",
+            "subject_type": "merchant",
+            "subject_id": "88888888-8888-4888-8888-888888888888",
+            "merchant_id": "88888888-8888-4888-8888-888888888888",
+            "attribute": "price",
+            "value": { "amount": "128.00", "currency": "HKD" },
+            "source": "merchant",
+            "confidence": 0.98,
+            "observed_at": "2026-09-22T02:00:00Z",
+            "expires_at": "2026-09-22T08:00:00Z",
+            "stale": false
+          }
+        ],
+        "flags": { "sponsored": false, "demo": true, "unverified": false }
+      }
+    }
+  ]
+}

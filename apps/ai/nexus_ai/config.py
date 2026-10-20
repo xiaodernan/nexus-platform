@@ -50,6 +50,12 @@ class Settings:
     db_pool_max: int = 8
     db_search_path: str = "public"
 
+    http_host: str = "127.0.0.1"
+    http_port: int = 8000
+    internal_token: str = ""
+    cors_origins: tuple[str, ...] = ()
+    demo_data: bool = True
+
     platform_base_url: str = ""
     platform_timeout_s: float = 5.0
 
@@ -80,7 +86,7 @@ def load_settings() -> Settings:
     if provider not in VALID_PROVIDERS:
         provider = "mock"
 
-    db_url = _env("NEXUS_DATABASE_URL") or _env("DATABASE_URL")
+    db_url = _env("NEXUS_DATABASE_URL") or _env("DATABASE_URL") or _env("NEXUS_AI_DB_URL")
     platform = _env("NEXUS_PLATFORM_BASE_URL") or "http://127.0.0.1:8080"
     emb_provider = (_env("NEXUS_EMBEDDING_PROVIDER") or "hashing").lower()
 
@@ -99,6 +105,12 @@ def load_settings() -> Settings:
         database_url=db_url,
         db_statement_timeout_ms=int(_env("NEXUS_DB_STATEMENT_TIMEOUT_MS") or 3000),
         db_search_path=_env("NEXUS_DB_SEARCH_PATH") or "public",
+        http_host=_env("NEXUS_AI_HOST") or "127.0.0.1",
+        http_port=int(_env("NEXUS_AI_PORT") or 8000),
+        internal_token=_env("NEXUS_AI_INTERNAL_TOKEN"),
+        cors_origins=tuple(o.strip() for o in _env("NEXUS_AI_CORS_ORIGINS").split(",")
+                          if o.strip()),
+        demo_data=_env_bool("NEXUS_AI_DEMO_DATA", True),
         platform_base_url=platform,
         embedding_provider=emb_provider,
         embedding_base_url=_env("NEXUS_EMBEDDING_BASE_URL"),
@@ -118,5 +130,7 @@ def get_settings() -> Settings:
 
 def reset_settings_cache() -> None:
     """Tests mutate os.environ then call this."""
-    load_settings.cache_clear()
+    clear = getattr(load_settings, "cache_clear", None)
+    if clear is not None:  # load_settings is plain; only get_settings is memoised
+        clear()
     get_settings.cache_clear()

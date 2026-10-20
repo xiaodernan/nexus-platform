@@ -34,7 +34,7 @@
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "gen:schemas": "node scripts/gen_schemas.mjs",
     "conformance": "node scripts/validate_conformance.mjs",
-    "test:unit": "node --import tsx --test src/tests/enums.test.ts src/tests/schemas.test.ts src/tests/types.test.ts",
+    "test:unit": "tsc -p tsconfig.test.json && node --import tsx --test src/tests/enums.test.ts src/tests/schemas.test.ts src/tests/types.test.ts",
     "test": "npm run build && npm run gen:schemas && npm run conformance && npm run test:unit"
   },
   "devDependencies": {

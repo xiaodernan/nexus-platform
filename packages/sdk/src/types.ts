@@ -68,8 +68,11 @@ export interface Money {
   currency: string;
 }
 
-/** Source hierarchy for trust resolution (AGENT_CONTRACT §4). */
-export type FactSource = "merchant" | "imported" | "observed" | "third_party" | "inferred";
+/**
+ * Source hierarchy for trust resolution (AGENT_CONTRACT §4). `demo` is the seeded/synthetic
+ * provenance (DECISIONS D25) and resolves last, below `inferred`.
+ */
+export type FactSource = "merchant" | "imported" | "observed" | "third_party" | "inferred" | "demo";
 
 export interface Fact {
   fact_id: string;

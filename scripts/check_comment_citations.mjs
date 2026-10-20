@@ -140,6 +140,10 @@ const mappedFiles = { count: 0 };
 // holds for the mirror case: a mapped-extension ledger OUTSIDE `docs/` would be read by both readers and its
 // citations scored twice. So the identity is asked before the path, and the answer is its own group.
 const ledges = { into: new Map(), outside: new Map(), skipped: new Map(), proseSkip: new Map(), opened: new Set() };
+// D217 — `tally` aggregates by extension, which is what the row needed for its census, and threw the file identity
+// away. The stake row below asks a per-file question ("would a reader judge THIS file?"), so the files holding at
+// least one token are kept beside the aggregate. Nothing about the aggregate changes.
+const intoFiles = [];
 
 /** D208 — which files step 8 opens as *citing* prose, sliced out of step 8's own bytes.
  *
@@ -208,8 +212,15 @@ function* walk(dir, rx) {
     const ext = dot < 0 ? '(no extension)' : e.name.slice(dot);
     if (!COMMENT[ext]) {
       unmapped.set(ext, (unmapped.get(ext) ?? 0) + 1);
+      const tokens = citeCount(abs, rx);
       if (LEDGER_FILES.has(rel)) ledges.opened.add(rel);
-      else tally(LEDGER_EXT.test(e.name) ? ledges.into : ledges.outside, ext, citeCount(abs, rx));
+      else if (LEDGER_EXT.test(e.name)) {
+        tally(ledges.into, ext, tokens);
+        // D217 — the file is named only when it holds a token, so the stake row drives readers over prose that has a
+        // claim in it rather than over every file with an unfamiliar extension. `tokens` is null when the file could
+        // not be read, which is not a file with zero claims either, so the comparison is `> 0` on a real number.
+        if (tokens > 0) intoFiles.push({ rel, ext, tokens });
+      } else tally(ledges.outside, ext, tokens);
       continue;
     }
     // D210 — the path exclusion decides here, where the file is first seen, and the file it skips is named rather
@@ -239,6 +250,58 @@ function nameList(map, cap) {
   const files = names.reduce((s, [, c]) => s + c.files, 0);
   return { text: `${names.length} ext(s), ${files} file(s), ${total} token(s): ${shown || '(none)'}`
     + `${rest > 0 ? `, +${rest} more name(s) not shown` : ''}`, names: names.length, files, total };
+}
+
+// D217 — the stake behind the sentence "counted here and judged nowhere". Measured on this repository before the
+// row below was written, with the invocation step 9's own child already uses plus the plane knobs aimed at the plane
+// this census is reading: the group's 104 token(s) live in 6 of its 70 file(s), and driving step 8 over those six
+// returns ONE file a reader can judge (`docs/PLAN.md`, which would file 7 offenders across PAST EOF, BLANK LINE and
+// FILE NOT FOUND) and FIVE refusals — four because step 8's own classifier reads those name:number shapes as
+// host:port, ENV:value or prose, one because the file has no `## ` heading so step 8 refuses to call heading-less
+// text a ledger. Six drives cost 2.4s on this tree. The row used to end at "judged nowhere", which is true and costs
+// nothing to say; these two rows say what it is worth.
+const STAKE_CAP = 6;
+
+function stakeRows() {
+  const sorted = [...intoFiles].sort((a, b) => b.tokens - a.tokens || a.rel.localeCompare(b.rel));
+  const driven = sorted.slice(0, STAKE_CAP);
+  const rest = sorted.length - driven.length;
+  const shown = sorted.slice(0, STAKE_CAP).map((f) => `${f.rel}(${f.tokens} token(s))`).join(' ');
+  let offenderTotal = 0, judged = 0, noHeading = 0, notCitation = 0, unnamed = 0;
+  const detail = [];
+  for (const f of driven) {
+    let code = 0, out = '';
+    try {
+      out = execFileSync(process.execPath,
+        [CHECKER, `--text=${f.rel}`, `--dir=${PLANE}`, `--head-dir=${PLANE}`, '--untracked-backlog'],
+        { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', maxBuffer: 1 << 26 });
+    } catch (err) { code = err.status ?? 1; out = `${err.stdout ?? ''}${err.stderr ?? ''}`; }
+    // D209's rule applies to a refusal read as well as a report relayed: the verdict word alone is not a reason, and
+    // "0 offenders" must never be printable for a run that judged nothing. So the three fates are told apart by what
+    // the child actually printed, and a fourth bucket says so when none of the known reasons matches.
+    if (/headings seen/.test(out)) {
+      const m = /strict offenders\s+(\d+)/.exec(out);
+      if (!m) { unnamed++; detail.push(`${f.rel}: exit ${code} and no offender row — this row cannot say what it filed`); continue; }
+      judged++;
+      offenderTotal += Number(m[1]);
+      const cls = [...out.matchAll(/^ {2}([A-Z][A-Z ]{3,}?) \((\d+)\):$/gm)].map((c) => `${c[1]} ${c[2]}`);
+      detail.push(`${f.rel}: ${m[1]} offender(s)${cls.length ? ` (${cls.join(', ')})` : ''}`);
+    } else if (/no "## " heading/.test(out)) { noHeading++; detail.push(`${f.rel}: refused, the file has no heading`); }
+    else if (/no citation-shaped token/.test(out)) { notCitation++; detail.push(`${f.rel}: refused, step 8 reads its tokens as host:port, ENV:value or prose`); }
+    else { unnamed++; detail.push(`${f.rel}: refused at exit ${code} for a reason this row cannot name`); }
+  }
+  return [
+    `  prose, where       ${sorted.length} of the file(s) the row above numbers hold a token: ${shown || '(none)'}`
+      + `${rest > 0 ? `, +${rest} more file(s) not shown and not driven` : ''} — the group's tokens are not spread`
+      + ' evenly over its files, so this names the few files a reader would have to be asked about',
+    `  prose, stake       ${driven.length} file(s) driven through step 8 as if it declared them (cap ${STAKE_CAP}):`
+      + ` ${detail.join('; ') || '(nothing to drive)'} — ${judged} file(s) a reader judged and it would have filed`
+      + ` ${offenderTotal} offender(s) there, ${noHeading} refused for want of a heading, ${notCitation} refused`
+      + ' because the citing reader does not read those shapes as citations'
+      + `${unnamed ? `, ${unnamed} refused for a reason this row cannot name` : ''}`
+      + `${rest > 0 ? `, ${rest} file(s) not driven` : ''}. The row above says these tokens are judged nowhere; this`
+      + ' says what that is worth, and a refusal is printed as a refusal rather than as a clean bill',
+  ];
 }
 
 /** The disclosure rows' own text. */
@@ -295,6 +358,7 @@ function coverageRow() {
       + ` counts is opened by neither reader — step 8 opens only the ${LEDGER_FILES.size} file(s) its declaration`
       + ' names, and this census has no `COMMENT` row for these extensions — so those tokens are counted here and'
       + ' judged nowhere',
+    ...stakeRows(),
     `  outside both       ${outside.text} — neither reader's predicate accepts these; their bytes are scanned as`
       + ' text, so a binary file can be listed and contribute nothing',
   ].join('\n');
@@ -364,11 +428,22 @@ console.log('                   file, which this gate has no authority to do. Ev
 console.log(`  scored by        scripts/check_ledger_citations.mjs --text=${file} --untracked-backlog`);
 
 let code = 0, out = '';
+let spawnFailure = null;
 try {
-  out = execFileSync(process.execPath, [CHECKER, `--text=${file}`, '--untracked-backlog'], { encoding: 'utf8' });
+  out = execFileSync(process.execPath, [CHECKER, `--text=${file}`, '--untracked-backlog'], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
 } catch (err) {
   code = err.status ?? 1;
   out = `${err.stdout ?? ''}${err.stderr ?? ''}`;
+  // A child this machine never managed to start is not a reader that returned nothing, and the two were
+  // printing the same line. `execFileSync` leaves `status` undefined and puts the reason in `err.code`, which
+  // was dropped, so a sandbox restriction arrived as "step 8 produced no report" — a sentence about a reader.
+  // Measured 2026-10-02: this sandbox refuses node-spawning-node with EBUSY, the same restriction that makes
+  // `spawnSync git` fail, and the reason is the difference between a defect and an environment.
+  // `err.status` is **null** on a spawn failure, not `undefined` — which is why the first version of this
+  // guard did not fire, and why the verdict said "exit 1": `code = err.status ?? 1` turns that null into a
+  // 1 that reads like a reader which ran and found something. A null status and a 1 status must not be the
+  // same sentence, so the test is `== null` and the reason is carried out to the verdict line.
+  if (err.status == null && err.code) spawnFailure = String(err.code);
 }
 // D209 — what gets relayed from the child's report. The first version filtered on a keyword list, and step 8 prints
 // its LIMITS paragraph as plain column-0 prose: a keyword match pulled the *middle* of a sentence out and dropped
@@ -388,7 +463,8 @@ if (VERBOSE) console.log(out);
 // that could not even load its own import — states a claim about a citation that was never examined.
 const reported = /headings seen/.test(out);
 if (!reported) {
-  console.error(`\nRESULT: NOT RUN — step 8 produced no report (exit ${code}). A reader that crashed is not a`
+  console.error(`\nRESULT: NOT RUN — step 8 produced no report (exit ${code})`
+    + `${spawnFailure ? `, and it was never started: ${spawnFailure}` : ''}. A reader that crashed is not a`
     + ' citation that failed, and the two must not share a verdict line.');
   process.exit(2);
 }

@@ -80,7 +80,9 @@ untrusted (§51), and results recorded with `source=third_party` + lower confide
   visibly marked as an estimate.
 - Renderer contract: `EntityCard.facts[]` + `ai_match.reasons[].fact_id`. If `fact_id` is missing, the UI must not
   render that bullet.
-- `source` hierarchy for conflict resolution: `merchant` (fresh) > `observed` > `imported` > `third_party` > `inferred`.
+- `source` hierarchy for conflict resolution: `merchant` (fresh) > `observed` > `imported` > `third_party` > `inferred`
+  > `demo`. `demo` (DECISIONS D25) is the seeded/synthetic provenance stored on the row itself; resolving an unknown
+  source to a known one is forbidden, because that launders where the number came from.
   Conflicts create a `trust_signals` row rather than silently picking.
 - `confidence < 0.6` ⇒ phrase as uncertain in copy; `< 0.4` ⇒ omit and offer handoff. Never upgrade confidence for
   presentation.

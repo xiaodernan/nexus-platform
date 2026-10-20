@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createClient } from "../src/index.js";
+import { createClient, isNexusApiError } from "../src/index.js";
 import { withApi } from "../testutils/harness.js";
 
 test("createClient exposes every documented namespace", () => {
@@ -55,5 +55,38 @@ test("merchant analytics + ai deterministic search return structured results", a
     assert.equal(search.degraded, false);
     assert.equal(search.strategy, "hybrid_v1");
     assert.ok(search.items.length >= 1);
+  });
+});
+
+test("a reservation is held, read back and released — and a client cannot ask to confirm it (D26)", async () => {
+  await withApi(async ({ api, make }) => {
+    const client = make({ token: "t" });
+    const held = await client.reservations.create({
+      merchant_id: "m1", slot_id: "s1", party_size: 2, contact: { phone: "+852 1234" },
+    });
+    assert.equal(held.status, "pending", "the platform holds a table, it does not confirm one");
+
+    const read = await client.reservations.get("res_1");
+    assert.equal(read.reservation_id, "res_1");
+
+    const released = await client.reservations.cancel("res_1", "Flights changed");
+    assert.equal(released.status, "cancelled");
+    const patch = api.state.requests
+      .filter((r) => r.method === "PATCH" && r.path === "/api/v1/reservations/res_1")
+      .pop();
+    assert.deepEqual(patch?.body, { status: "cancelled", reason: "Flights changed" });
+
+    // The typed method refuses any other target state at compile time (`status` narrows to
+    // "cancelled"), so this goes through the raw transport to reach the guard on the wire — the server
+    // refuses it too, which is the half that matters for a client that ignores its types.
+    await assert.rejects(
+      () => client.http.request({
+        method: "PATCH", path: "/api/v1/reservations/res_1", body: { status: "confirmed" },
+      }),
+      (err: unknown) => {
+        assert.ok(isNexusApiError(err));
+        return err.status === 422;
+      },
+    );
   });
 });

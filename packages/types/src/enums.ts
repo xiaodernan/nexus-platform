@@ -258,10 +258,13 @@ export type ResourcePoolKind = (typeof RESOURCE_POOL_KIND)[number];
 
 /**
  * Fact provenance, ordered by conflict-resolution priority
- * (`merchant` fresh > `observed` > `imported` > `third_party` > `inferred`).
+ * (`merchant` fresh > `observed` > `imported` > `third_party` > `inferred` > `demo`).
  * Source: API_CONTRACT §2 `Fact.source` = V1__init.sql `facts.source` (line 546).
+ * `demo` is the seeded/synthetic origin (spec §109, §155): it states where the claim came from
+ * instead of clamping it to a real-world source, and it ranks last so it can never out-claim
+ * merchant- or observation-backed data in a conflict.
  */
-export const FACT_SOURCE = ["merchant", "imported", "observed", "third_party", "inferred"] as const;
+export const FACT_SOURCE = ["merchant", "imported", "observed", "third_party", "inferred", "demo"] as const;
 /** Fact provenance — API_CONTRACT §2, V1 `facts.source`; AGENT_CONTRACT §4, spec §19. */
 export type FactSource = (typeof FACT_SOURCE)[number];
 
@@ -272,6 +275,7 @@ export const FACT_SOURCE_PRIORITY: readonly FactSource[] = [
   "imported",
   "third_party",
   "inferred",
+  "demo",
 ];
 
 /**
@@ -294,6 +298,8 @@ export const FACT_ATTRIBUTE = [
   "distance",
   "description",
   "inventory",
+  "review_summary",
+  "popularity",
 ] as const;
 /** Fact attribute — V1 `facts.attribute`; AGENT_CONTRACT §4/§5. (`rating`/`distance`/`description`/`inventory` are required by the §2 card contract, which renders them as facts.) */
 export type FactAttribute = (typeof FACT_ATTRIBUTE)[number];
@@ -452,7 +458,7 @@ export const MESSAGE_ROLE = ["user", "assistant", "tool", "system"] as const;
 /** Model role — V1 `messages.role`. */
 export type MessageRole = (typeof MESSAGE_ROLE)[number];
 
-/** Structured payload renderer. Source: V1__init.sql `messages.content_type` (line 471). */
+/** Structured payload renderer. Source: V1__init.sql `messages.content_type` (line 472). */
 export const MESSAGE_CONTENT_TYPE = ["text", "cards", "comparison", "form"] as const;
 /** Message renderer — V1 `messages.content_type`; spec §35/§36/§37. */
 export type MessageContentType = (typeof MESSAGE_CONTENT_TYPE)[number];
@@ -890,7 +896,7 @@ export const NOTIFICATION_AUDIENCE = ["consumer", "merchant", "platform"] as con
 /** Notification audience — V1 `notifications.audience`; spec §123-125. */
 export type NotificationAudience = (typeof NOTIFICATION_AUDIENCE)[number];
 
-/** Delivery channels. Source: V1__init.sql `notifications.channel` (line 790); spec §123 ("WhatsApp where legally/technically available"). */
+/** Delivery channels. Source: V1__init.sql `notifications.channel` (line 789); spec §123 ("WhatsApp where legally/technically available"). */
 export const NOTIFICATION_CHANNEL = ["in_app", "email", "push", "whatsapp"] as const;
 /** Notification channel — V1 `notifications.channel`; spec §123. */
 export type NotificationChannel = (typeof NOTIFICATION_CHANNEL)[number];
@@ -1065,6 +1071,19 @@ export type ErrorCode = keyof typeof ERROR_CODE_STATUS;
 /** Ordered list of {@link ErrorCode}. */
 export const ERROR_CODE = Object.keys(ERROR_CODE_STATUS) as [ErrorCode, ...ErrorCode[]];
 
+/**
+ * Ladder codes a caller may specialise by naming the resource that failed — DECISIONS D27.
+ *
+ * §1's table is the *status ladder*, not a closed vocabulary: `merchant_not_found` is a `not_found`, and a
+ * client that has never heard of `slot_not_found` still lands on the same rung. Only these three qualify
+ * because only they change what the user is offered next; `validation_error`, `rate_limited` and
+ * `ai_unavailable` carry their whole meaning in `details`, so prefixing them would hide which `if/then`
+ * branch of `error_envelope.json` applies.
+ */
+export const RESOURCE_ERROR_SUFFIX = ["not_found", "conflict", "forbidden"] as const;
+/** Suffix a resource-qualified `error.code` must end with — DECISIONS D27. */
+export type ResourceErrorSuffix = (typeof RESOURCE_ERROR_SUFFIX)[number];
+
 /** SSE stream event names for `POST /ai/v1/chat` / `/api/v1/ai/search`. Source: API_CONTRACT §7 event list (verbatim) + spec §116. */
 export const AI_STREAM_EVENT = ["status", "intent", "results", "summary", "done", "error"] as const;
 /** SSE `event:` name — API_CONTRACT §7; spec §116. */
@@ -1196,6 +1215,7 @@ export const NEXUS_ENUMS = {
   UcpCapability: UCP_CAPABILITY,
   AuditAction: AUDIT_ACTION,
   ErrorCode: ERROR_CODE,
+  ResourceErrorSuffix: RESOURCE_ERROR_SUFFIX,
   AiStreamEvent: AI_STREAM_EVENT,
   AiStage: AI_STAGE,
 } as const satisfies Record<string, readonly string[]>;
@@ -1223,7 +1243,7 @@ export const SCHEMA_ENUM_BINDINGS = {
     "location.type": "LocationRefType",
     "time.type": "TimeRefType",
     language: "SupportedLocale",
-    unknowns[]: "IntentUnknownField",
+    "unknowns[]": "IntentUnknownField",
   },
   entity_card: {
     card_type: "CardType",
@@ -1288,6 +1308,14 @@ export const SCHEMA_ENUM_BINDINGS = {
  *    `entity_card_rendered_value_backed` still refuses to render a verdict without `as_of` and a
  *    cited `source_fact_id` (AGENT_CONTRACT §4/§5).
  * 9. API_CONTRACT §1's error example uses `"code": "merchant_not_found"`, which is not one of the
- *    eight codes §1 enumerates. → the enumeration is the closed domain (`ERROR_CODE`); the example
- *    value is carried as `details.resource` + `details.reason`.
+ *    eight codes §1 enumerates. → **resolved by DECISIONS D27**: the eight are the status ladder, and a
+ *    code may specialise `not_found|conflict|forbidden` by prefixing the resource (`RESOURCE_ERROR_SUFFIX`
+ *    above, `ladderErrorCode` in `src/errors.ts`). The live 404 the first conformance run captured is the
+ *    evidence — 22 such codes ship in the platform and `apps/web` branches on the family.
+ * 10. AGENT_CONTRACT §5 gives a TTL for `review_summary` and `popularity`, but V1 line 542's
+ *    `facts.attribute` comment lists neither — so the two most-cache-sensitive claims on a card
+ *    (「4.6 分，128 条评价」and「本周热门」) had no attribute to be stored under, and `apps/web`
+ *    already seeds a `review_summary` fact. → {@link FACT_ATTRIBUTE} is the superset; `src/tests/
+ *    enums.test.ts` asserts every `FRESHNESS_TTL_SECONDS` key is in it, which is the invariant that
+ *    makes §20's table expressible. The column is free text, so no migration is needed.
  */

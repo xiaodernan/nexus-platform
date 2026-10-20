@@ -16,6 +16,7 @@ Hard properties of this module:
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 from dataclasses import dataclass, field
@@ -367,8 +368,6 @@ def _row_price(row: dict[str, Any]) -> float | None:
 def _row_sponsored(row: dict[str, Any]) -> bool:
     attrs = row.get("attributes") or {}
     if isinstance(attrs, str):
-        import json
-
         try:
             attrs = json.loads(attrs)
         except Exception:
@@ -537,14 +536,13 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
         attrs = r.get("attributes")
         if attrs and mid not in merchant_attrs:
             if isinstance(attrs, str):
-                import json
                 try:
                     attrs = json.loads(attrs)
                 except Exception:
                     attrs = {}
             merchant_attrs[mid] = attrs
 
-    # 1. Feedback-based personalization (requires user_id and subject_ids)
+    #     # 1. Feedback-based personalization (requires user_id and subject_ids)
     grouped: dict[str, list[float]] = {}
     if user_id and subject_ids:
         fb_rows = await backend.feedback(str(user_id), subject_ids)
@@ -558,41 +556,163 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 personalization[sid] = sig
 
     # 2. Persistent user_preferences from database (D382, requires user_id)
+    # Applies to ALL candidates, not just those with feedback
     if user_id:
         pref_rows = await backend.user_preferences(str(user_id))
         if pref_rows:
-            pref_by_kind_key: dict[tuple[str, str], float] = {}
+            # Parse structured preference values and build matching rules
+            pref_rules: list[dict[str, Any]] = []
             for p in pref_rows:
                 kind = p.get("kind")
                 key = p.get("key")
                 weight = p.get("weight")
-                if kind and key and weight is not None:
-                    pref_by_kind_key[(str(kind), str(key))] = float(weight)
-            
-            # Compute preference signal per subject (only for those with feedback)
-            for sid, values in grouped.items():
-                mid = None
-                for r in deduped:
-                    if str(r.get("subject_id") or r.get("id")) == sid:
-                        mid = str(r.get("merchant_id") or r.get("id"))
-                        break
-                if not mid or mid not in merchant_attrs:
+                raw_value = p.get("value")
+                print(f'DEBUG: Processing pref kind={kind}, key={key}, weight={weight}')
+                if not (kind and key and weight is not None):
+                    print('DEBUG: Skipped - missing kind/key/weight')
                     continue
-                attrs = merchant_attrs[mid]
-                pref_scores: list[float] = []
-                for (kind, key), weight in pref_by_kind_key.items():
-                    attr_key1 = f"{key}_{kind}"
-                    attr_key2 = f"{kind}_{key}"
-                    if attrs.get(attr_key1) is True or attrs.get(attr_key2) is True:
-                        pref_scores.append(weight)
-                    elif attrs.get(attr_key1) is False or attrs.get(attr_key2) is False:
-                        pref_scores.append(1.0 - weight)
-                if pref_scores:
-                    avg_score = sum(pref_scores) / len(pref_scores)
-                    existing = personalization.get(sid)
-                    personalization[sid] = avg_score if existing is None else (existing + avg_score) / 2
+                
+                try:
+                    value = json.loads(raw_value) if isinstance(raw_value, str) else raw_value
+                    print(f'DEBUG: Parsed value = {value}')
+                except Exception as e:
+                    print(f'DEBUG: JSON parse error: {e}')
+                    value = {}
+                
+                match_fn = None
+                
+                # FOOD: cuisine_like / cuisine_dislike -> array of cuisines
+                if kind == "food" and key in ("cuisine_like", "cuisine_dislike"):
+                    cuisines = value.get("values") if isinstance(value, dict) else []
+                    if cuisines:
+                        polarity = 1 if key == "cuisine_like" else -1
+                        def make_cuisine_match(cats, pol):
+                            def _match(attrs):
+                                cat = str(attrs.get("category_primary") or "").lower()
+                                tags = [str(t).lower() for t in (attrs.get("tags") or [])]
+                                for c in cats:
+                                    if c.lower() in cat or c.lower() in tags:
+                                        return 1.0 if pol > 0 else 0.0
+                                return None
+                            return _match
+                        match_fn = make_cuisine_match(cuisines, polarity)
+                
+                # BUDGET: per_person_max_hkd -> numeric budget
+                elif kind == "budget" and key == "per_person_max_hkd":
+                    budget_val = value.get("value") if isinstance(value, dict) else None
+                    if budget_val is not None:
+                        def make_budget_match(budget, w):
+                            def _match(attrs):
+                                price = attrs.get("avg_price_hkd")
+                                if price is None:
+                                    return None
+                                try:
+                                    price = float(price)
+                                except Exception:
+                                    return None
+                                if price <= budget:
+                                    return w
+                                return max(0.0, 1.0 - w)
+                            return _match
+                        match_fn = make_budget_match(float(budget_val), float(weight))
+                
+                # LOCATION: home_district -> district match
+                elif kind == "location" and key == "home_district":
+                    district = value.get("value") if isinstance(value, dict) else None
+                    if district:
+                        def make_district_match(dist, w):
+                            def _match(attrs):
+                                mer_dist = str(attrs.get("district") or "").lower()
+                                if mer_dist == dist.lower():
+                                    return w
+                                return None
+                            return _match
+                        match_fn = make_district_match(str(district), float(weight))
+                
+                # STYLE: ambience -> string enum (quiet, lively, etc.)
+                elif kind == "style" and key == "ambience":
+                    ambience = value.get("value") if isinstance(value, dict) else None
+                    if ambience:
+                        def make_ambience_match(amb, w):
+                            def _match(attrs):
+                                if amb == "quiet":
+                                    if attrs.get("quiet_ambience") is True:
+                                        return w
+                                    if attrs.get("lively_ambience") is True:
+                                        return 1.0 - w
+                                elif amb == "lively":
+                                    if attrs.get("lively_ambience") is True:
+                                        return w
+                                    if attrs.get("quiet_ambience") is True:
+                                        return 1.0 - w
+                                return None
+                            return _match
+                        match_fn = make_ambience_match(str(ambience), float(weight))
+                
+                # ACCESSIBILITY: step_free -> boolean
+                elif kind == "accessibility" and key == "step_free":
+                    print(f'DEBUG: Matched accessibility/step_free, value={value}')
+                    val = value.get("value") if isinstance(value, dict) else None
+                    print(f'DEBUG: val = {val}')
+                    if isinstance(val, bool):
+                        print(f'DEBUG: val is bool = {val}')
+                        def make_access_match(v, w):
+                            def _match(attrs):
+                                if attrs.get("accessible_access") is True:
+                                    return w if v else (1.0 - w)
+                                if attrs.get("wheelchair_access") is True:
+                                    return w * 0.8 if v else (1.0 - w * 0.8)
+                                if attrs.get("accessible_access") is False and attrs.get("wheelchair_access") is False:
+                                    return 1.0 - w if v else w
+                                return None
+                            return _match
+                        match_fn = make_access_match(val, float(weight))
+                        print(f'DEBUG: match_fn created = {match_fn}')
+                
+                if match_fn:
+                    pref_rules.append({
+                        "kind": kind,
+                        "key": key,
+                        "weight": float(weight),
+                        "match_fn": match_fn
+                    })
+                    print(f'DEBUG: Added rule {kind}/{key}')
+            
+            # Apply user_preferences to ALL candidates (not just those with feedback)
+            print(f'DEBUG: pref_rules count = {len(pref_rules)}')
+            if pref_rules:
+                for r in deduped:
+                    sid = str(r.get("subject_id") or r.get("id"))
+                    mid = str(r.get("merchant_id") or r.get("id"))
+                    if mid not in merchant_attrs:
+                        continue
+                    attrs = merchant_attrs[mid]
+                    pref_scores: list[float] = []
+                    for rule in pref_rules:
+                        score = rule["match_fn"](attrs)
+                        if score is not None:
+                            pref_scores.append(score)
+                    if pref_scores:
+                        avg_score = sum(pref_scores) / len(pref_scores)
+                        existing = personalization.get(sid)
+                        personalization[sid] = avg_score if existing is None else (existing + avg_score) / 2
 
-    # 3. Transient NLU intent_preferences from current query (D382 follow-up)
+    # 3. Feedback-based personalization (requires user_id and subject_ids)
+    # Only applies to subjects that have feedback
+    if user_id and subject_ids:
+        fb_rows = await backend.feedback(str(user_id), subject_ids)
+        grouped: dict[str, list[float]] = {}
+        for raw in fb_rows:
+            val = _feedback_value(raw)
+            if val is not None:
+                grouped.setdefault(str(raw.get("subject_id")), []).append(val)
+        for sid, values in grouped.items():
+            sig = personalization_signal(values, w.personalization)
+            if sig is not None:
+                existing = personalization.get(sid)
+                personalization[sid] = sig if existing is None else (existing + sig) / 2
+
+    # 4. Transient NLU intent_preferences from current query (D382 follow-up)
     # Works without user_id - applies to all candidates
     if intent_preferences and merchant_attrs:
         for r in deduped:

@@ -1,0 +1,197 @@
+"""`POST /ai/v1/rag/retrieve` (§7) and `POST /ai/v1/imports/extract` (§7.0, D20).
+
+RAG retrieval is DB-only: without a pool it honestly returns zero chunks rather than
+inventing text. Retrieved chunk text is untrusted content (§51): it is scanned for
+instruction-shaped language and the count ships with each chunk as
+`injection_signals` — the scan never executes anything it finds (AGENT_CONTRACT §8).
+
+`/imports/extract` is service-to-service: gated by `X-Internal-Token` (constant-time
+compare), and **501 when the token is unconfigured — never an open door** (D7, the same
+rule the platform applies to its agent-message door). The extractor is deterministic
+regex + lexicon, so it runs offline and labels itself degraded.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import hmac
+import logging
+import re
+import time
+from typing import Any
+
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
+
+from nexus_ai.api import runs
+from nexus_ai.api.deps import Deps
+from nexus_ai.contract import (
+    RagChunk, RagRetrieveRequest, RagRetrieveResponse, _Strict)
+from nexus_ai.search import sql as S
+from nexus_ai.trust.injection import scan_untrusted
+
+log = logging.getLogger("nexus_ai.api.routes_rag")
+
+router = APIRouter()
+
+VECTOR_FLOOR = S.VECTOR_FLOOR
+
+
+# --------------------------------------------------------------------------- retrieve
+async def retrieve_chunks(database: Any, deps: Deps, *, query: str,
+                          merchant_id: str | None, tenant_id: str,
+                          top_k: int = 8) -> tuple[list[dict[str, Any]], float]:
+    """Hybrid chunk read; returns (rows, best_score). Parameterised SQL only (§52)."""
+    embedding: list[float] | None = None
+    try:
+        embedding = (await deps.embeddings().embed([query]))[0]
+    except Exception:  # keyword lane survives alone
+        log.info("embedding unavailable, keyword-only retrieval")
+    q = S.build_chunk_query(tenant_id=tenant_id, merchant_id=merchant_id, text=query,
+                            embedding=embedding, top_k=top_k)
+    rows = await database.readonly(q.sql, *q.params, schema=deps.settings.db_search_path)
+    best = max((float(r.get("kw_score") or 0) + float(r.get("vec_score") or 0)
+                for r in rows), default=0.0)
+    return rows, best
+
+
+@router.post("/ai/v1/rag/retrieve")
+async def rag_retrieve(request: Request, body: RagRetrieveRequest):
+    deps: Deps = request.app.state.deps
+    started = time.perf_counter()
+    tenant = str(body.tenant_id or deps.tenant_id())
+    rows: list[dict[str, Any]] = []
+    db = deps.database()
+    note = None
+    if db is None:
+        note = "no database connection — RAG retrieval has no offline corpus to search"
+    else:
+        try:
+            rows, _best = await retrieve_chunks(
+                db, deps, query=body.query,
+                merchant_id=str(body.merchant_id) if body.merchant_id else None,
+                tenant_id=tenant, top_k=body.top_k)
+        except Exception as exc:
+            log.exception("chunk retrieval failed")
+            return JSONResponse(
+                {"error": {"code": "ai_unavailable", "message": str(exc),
+                           "details": {}, "request_id": runs.current_request_id() or None}},
+                status_code=503)
+    chunks = []
+    for r in rows:
+        score = max(float(r.get("kw_score") or 0.0), float(r.get("vec_score") or 0.0))
+        if score < VECTOR_FLOOR and not float(r.get("kw_score") or 0.0):
+            continue  # §7: no answer without retrieval — drop sub-threshold noise
+        text = str(r.get("text") or "")
+        scan = scan_untrusted(text)
+        chunks.append(RagChunk(
+            id=_uuid_from(str(r["id"])), text=text, score=round(score, 4),
+            document_id=_uuid_from(str(r["document_id"])),
+            source_uri=r.get("source_uri"), fact_ids=[],
+            section=r.get("section"), injection_signals=len(scan.hits)))
+    took_ms = int((time.perf_counter() - started) * 1000)
+    payload = RagRetrieveResponse(chunks=chunks, took_ms=took_ms,
+                                  provider=deps.settings.embedding_provider,
+                                  threshold_applied=True).model_dump(mode="json")
+    if note:
+        payload["note"] = note
+    return JSONResponse(payload)
+
+
+def _uuid_from(value: str):
+    from uuid import UUID
+
+    try:
+        return UUID(value)
+    except (ValueError, TypeError):
+        import uuid
+
+        return uuid.uuid5(uuid.NAMESPACE_DNS, str(value))
+
+
+# --------------------------------------------------------------------------- imports
+class ImportExtractRequest(_Strict):
+    source_type: str
+    source_ref: str | None = None
+    raw_text: str
+
+
+_PRICE_RE = re.compile(
+    r"(?:HK\$|HKD|港幣|港币|\$)\s*(\d{1,5}(?:,\d{3})*(?:\.\d{1,2})?)|(\d{1,5}(?:\.\d{1,2})?)\s*(?:蚊|元|hkd)",
+    re.IGNORECASE)
+
+
+def _extract_proposals(raw_text: str) -> list[dict[str, Any]]:
+    """Deterministic line-based proposal extraction. Names/prices come ONLY from spans
+    of the input (§22: a human reviews every proposal before publish)."""
+    from nexus_ai.nlu.lexicon import match_category
+
+    proposals: list[dict[str, Any]] = []
+    offset = 0
+    for line in (raw_text or "").splitlines():
+        start = offset
+        offset += len(line) + 1
+        stripped = line.strip()
+        if not stripped or len(stripped) < 2:
+            continue
+        price: float | None = None
+        m = _PRICE_RE.search(stripped)
+        if m:
+            raw = (m.group(1) or m.group(2) or "").replace(",", "")
+            try:
+                price = float(raw)
+            except ValueError:
+                price = None
+        name_part = stripped.split("（")[0].split("(")[0]
+        name = re.sub(_PRICE_RE, "", name_part).strip(" -–—:：,，、/|｜")
+        if not name:
+            continue
+        hit = match_category(stripped)
+        category = hit[0] if hit else None
+        confidence = 0.4
+        if len(name) >= 2:
+            confidence += 0.2
+        if price is not None:
+            confidence += 0.2
+        if category:
+            confidence += 0.15
+        item: dict[str, Any] = {
+            "kind": "product",
+            "name": name[:120],
+            "price": (f"{price:.2f}" if price is not None else None),
+            "currency": "HKD" if price is not None else None,
+            "category": category,
+            "confidence": round(min(confidence, 0.95), 2),
+            "source_span": [start, start + len(line)],
+        }
+        proposals.append(item)
+    return proposals[:100]
+
+
+@router.post("/ai/v1/imports/extract")
+async def imports_extract(request: Request, body: ImportExtractRequest):
+    deps: Deps = request.app.state.deps
+    token = deps.settings.internal_token
+    if not token:
+        # D7: unconfigured secret is a closed door, not an open one.
+        return JSONResponse(
+            {"error": {"code": "ai_unavailable",
+                       "message": "NEXUS_AI_INTERNAL_TOKEN is not configured — "
+                                  "the service-to-service surface stays closed (D7)",
+                       "details": {}, "request_id": runs.current_request_id() or None}},
+            status_code=501)
+    given = request.headers.get("x-internal-token", "")
+    if not hmac.compare_digest(given, token):
+        return JSONResponse(
+            {"error": {"code": "unauthorized", "message": "invalid internal token",
+                       "details": {}, "request_id": runs.current_request_id() or None}},
+            status_code=401)
+    # raw_text is untrusted (§51): scanned, counted, never executed — it only becomes data
+    scan = scan_untrusted(body.raw_text)
+    proposals = _extract_proposals(body.raw_text)
+    return JSONResponse({
+        "proposals": proposals,
+        "extractor": "heuristic-v1",
+        "degraded": True,  # rule-based extraction; a human reviews every proposal (§22)
+        "injection_signals": len(scan.hits),
+    })

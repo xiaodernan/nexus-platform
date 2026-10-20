@@ -102,8 +102,8 @@ async function normaliseError(response: Response): Promise<NexusApiError> {
 }
 
 /**
- * Core request. `target` chooses platform (:8080) or AI (:8000) — documented env vars, and the
- * only two origins this app can reach.
+ * Core request. `target` chooses platform (:8090) or AI (:8010) — D9's canonical local ports behind
+ * documented env vars, and the only two origins this app can reach.
  */
 export async function nexusFetch<T>(
   target: 'platform' | 'ai',
@@ -173,8 +173,14 @@ export async function nexusFetch<T>(
   }
 }
 
-/** Convenience for the many GET reads that only need the body. */
+/**
+ * Convenience GET read for the many GETs that only need the body. It never *forces* GET: when a
+ * caller passes a `method` (POST/PATCH/DELETE) and a `body` — which `lib/data`'s live reads do for
+ * the AI search/compare endpoints — that verb is honoured. Defaulting to GET is only for bare GET
+ * callers; pinning `method:'GET'` while a body is present would make undici reject the request
+ * ("Request with GET/HEAD method cannot have body") and surface a real read as `upstream_unreachable`.
+ */
 export async function nexusGet<T>(target: 'platform' | 'ai', path: string, options?: RequestOptions): Promise<T> {
-  const { data } = await nexusFetch<T>(target, path, { ...options, method: 'GET' });
+  const { data } = await nexusFetch<T>(target, path, { method: 'GET', ...options });
   return data;
 }

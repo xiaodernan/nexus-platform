@@ -100,7 +100,11 @@ export function FactSourceChip({
     );
   }
   const tone =
-    fact.source === 'merchant' ? 'positive' : fact.source === 'inferred' || fact.source === 'third_party' ? 'warning' : 'neutral';
+    fact.source === 'merchant'
+      ? 'positive'
+      : fact.source === 'inferred' || fact.source === 'third_party' || fact.source === 'demo'
+        ? 'warning'
+        : 'neutral';
   const detail = `${labels.sourceLabel[fact.source]} · ${labels.confidenceLabel(fact.confidence)} · ${labels.observedLabel(
     fact.observed_at,
   )}`;
@@ -175,7 +179,7 @@ export function PriceTag({
       ) : uncertain ? (
         <span className="text-2xs text-warning">{labels.uncertain}</span>
       ) : (
-        <FactSource fact={fact} labels={labels} compact className="text-2xs" />
+        <FactSourceChip fact={fact} labels={labels} compact className="text-2xs" />
       )}
     </span>
   );
@@ -412,5 +416,3 @@ export function CardMedia({
     </div>
   );
 }
-
-export { findFact };

@@ -22,5 +22,7 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts"],
+  "// exclude": "src/tests imports the .mjs scripts, which have no declaration files; tsx runs them and `npm run build` must not emit them",
+  "exclude": ["src/tests"]
 }

@@ -69,8 +69,8 @@
     "FactSource": {
       "type": "string",
       "title": "FactSource",
-      "description": "API_CONTRACT §2 comment (`merchant|imported|observed|third_party|inferred`) = V1 `facts.source` priority order, AGENT_CONTRACT §4 (merchant > imported > observed > third-party > inferred).",
-      "enum": ["merchant", "imported", "observed", "third_party", "inferred"]
+      "description": "API_CONTRACT §2 comment (`merchant|imported|observed|third_party|inferred|demo`) = V1 `facts.source` priority order, AGENT_CONTRACT §4 (merchant > observed > imported > third_party > inferred > demo). `demo` is the seeded/synthetic provenance (DECISIONS D25) and can never outrank an observation.",
+      "enum": ["merchant", "imported", "observed", "third_party", "inferred", "demo"]
     },
     "FactSubjectType": {
       "type": "string",

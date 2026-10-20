@@ -87,6 +87,10 @@ nexus:
   demo:
     # Demo login (§87) and demo payment provider. Always clearly labelled; never pretends to be real.
     login-enabled: ${NEXUS_DEMO_LOGIN:true}
+  # The address a share link is built on (§8). Must be a URL a *stranger* can open, so it is the deployed
+  # web origin — the platform does not serve /s/{code} itself. Default matches the web app's own default
+  # (apps/web/src/lib/env.ts: NEXT_PUBLIC_SITE_URL).
+  public-site-url: ${NEXUS_PUBLIC_SITE_URL:http://localhost:3000}
   imports:
     # heuristic | http  (MerchantImportPort implementation, see README)
     mode: ${NEXUS_IMPORT_MODE:heuristic}

@@ -206,8 +206,11 @@ function liveTargets() {
 }
 
 const run = (args, cwd) => {
-  const r = spawnSync(process.execPath, [READER, ...args], { cwd, encoding: 'utf8', maxBuffer: 1 << 26 });
-  return { code: r.status ?? -1, out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
+  const r = spawnSync(process.execPath, [READER, ...args], { stdio: ['ignore', 'pipe', 'pipe'], cwd, encoding: 'utf8', maxBuffer: 1 << 26 });
+  // Both streams are kept apart as well as joined. The arm that reads a line out of this output could not
+  // tell whether the line was missing or merely reordered by the concatenation, so the answer is carried
+  // rather than reconstructed.
+  return { code: r.status ?? -1, out: `${r.stdout ?? ''}${r.stderr ?? ''}`, stdout: r.stdout ?? '', stderr: r.stderr ?? '' };
 };
 
 const live = liveTargets();
@@ -308,8 +311,11 @@ arm({ name: 'S5 — the switch refuses to silence a plane that can decide newnes
 // calls green is scored again without the switch, so S6's green cannot come from a plane that cited nothing.
 const STEP9 = join(ROOT, 'scripts', 'check_comment_citations.mjs');
 const runStep9 = (args, cwd) => {
-  const r = spawnSync(process.execPath, [STEP9, ...args], { cwd, encoding: 'utf8', maxBuffer: 1 << 26 });
-  return { code: r.status ?? -1, out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
+  const r = spawnSync(process.execPath, [STEP9, ...args], { stdio: ['ignore', 'pipe', 'pipe'], cwd, encoding: 'utf8', maxBuffer: 1 << 26 });
+  // The streams are kept apart as well as joined. S7 reads a line out of this output and could not tell
+  // whether the line was missing or merely reordered by the concatenation — so the answer is carried rather
+  // than reconstructed, which is the difference between a measurement and a second guess.
+  return { code: r.status ?? -1, out: `${r.stdout ?? ''}${r.stderr ?? ''}`, stdout: r.stdout ?? '', stderr: r.stderr ?? '' };
 };
 const STEP9_PLANE = join(FIX, 'step9-plane');
 mkdirSync(STEP9_PLANE, { recursive: true });
@@ -338,7 +344,14 @@ if (live.pickUntracked === null) {
     expect: 1, run: () => {
       const { out } = runStep9([`--plane=${STEP9_PLANE}`, `--checker=${READER}`], ROOT);
       const census = scoredBy(out);
-      if (census === null) return { code: -1, out: 'NOT RUN — step 9 printed no "scored by --text=" line to take the census path from' };
+      // The raw output is carried into the arm's verdict on purpose: the first version said only that the line
+      // was missing, and a hand-run of the same command DID print it, so the discrepancy could not be read off
+      // the harness. Printing what step 9 actually said costs a line and settles what a second guess cannot.
+      if (census === null) {
+        const r = runStep9([`--plane=${STEP9_PLANE}`, `--checker=${READER}`], ROOT);
+        return { code: -1, out: `NOT RUN — step 9 printed no "scored by --text=" line to take the census path from\n`
+          + `--- stdout (${r.stdout.length} chars) ---\n${r.stdout}\n--- stderr (${r.stderr.length} chars) ---\n${r.stderr}` };
+      }
       if (!existsSync(census)) return { code: -1, out: `NOT RUN — the census path step 9 printed does not exist on disk: ${census}` };
       return run(['--text', census], ROOT);
     },

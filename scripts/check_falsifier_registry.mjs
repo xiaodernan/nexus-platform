@@ -30,8 +30,9 @@
  * `--registry` exists so those refusals can be planted in a scratch copy instead of by editing the shipped file.
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -49,12 +50,20 @@ const slice = lines.slice(0, lines.indexOf(mark[0])).join('\n')
 let live;
 try {
   if (!DB) notChecked('no --db given; pass a loaded seed (scripts/db_gate_fresh.sh --keep)');
-  // The slice travels on this call's stdin, `input:` below, so the stdin slot must stay `pipe`: a slot of
-  // `ignore` never receives the bytes and the child answers as if nothing had been sent — an empty answer,
-  // not an error. This is the only child_process call in the repository that carries `input:`, which is
-  // why it does not take the ignore-stdin spelling STATUS §253 measures for every other spawn on this host.
-  const out = execFileSync('docker', ['exec', '-i', CONTAINER, 'psql', '-U', 'postgres', '-d', DB,
-    '-v', 'ON_ERROR_STOP=0', '-tA', '-q'], { stdio: ['pipe', 'pipe', 'pipe'], input: slice, encoding: 'utf8', maxBuffer: 1 << 26 });
+  // The slice used to travel on this call's stdin (`input:`), and the note that used to stand here was right
+  // about the mechanism and wrong about the conclusion: `input:` does need the stdin slot to be `pipe`, and a
+  // stdin pipe is the one thing this host refuses to give a child — `EBUSY` in about 3 ms, measured for every
+  // other spawn in this repository (STATUS §253). So this call is not the exception to that spelling; it is
+  // the call the spelling cannot serve. The slice is written to a file and copied in instead, and every spawn
+  // here now takes the ignore-stdin form the rest of the tree uses.
+  const sliceFile = join(tmpdir(), `nexus-qc-${process.pid}.sql`);
+  const inContainer = `/tmp/nexus-qc-${process.pid}.sql`;
+  writeFileSync(sliceFile, slice, 'utf8');
+  execFileSync('docker', ['cp', sliceFile, `${CONTAINER}:${inContainer}`],
+    { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
+  const out = execFileSync('docker', ['exec', CONTAINER, 'psql', '-U', 'postgres', '-d', DB,
+    '-v', 'ON_ERROR_STOP=0', '-tA', '-q', '-f', inContainer],
+    { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', maxBuffer: 1 << 26 });
   const lines = out.split('\n').filter((l) => l.includes('#') && l.length > 40);
   const line = lines.pop();
   if (!line) {

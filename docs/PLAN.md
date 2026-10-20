@@ -54,6 +54,24 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The readability floor** — live text measures 4.477:1 against the 4.5 AA bound the visual test
   asserts. Owner: the web stream.
 
+### Open, waiting on the AI lane (next)
+
+- **Structured preference values not yet matched** — seed `user_preferences` carries structured JSON values (e.g., `cuisine_like: {values: ["cantonese","sushi"]}`, `budget: {value: 300, currency: "HKD"}`) but `search()` only matches boolean attributes. Need to extend matching logic in `search/service.py` for array/object values.
+- **Category inference from occasion/preference** — NLU extracts `occasion=date` but `category=null`. Should infer likely categories (restaurant/cafe/bar) from occasion/preference to improve recall.
+- **Preference explanations in ranking output** — when preferences boost a result, the EntityCard lacks a MatchExplanation with fact_id for the preference match. Add to `contributions()` and `AiMatch.reasons`.
+- **NLU preference polarity handling** — negative preferences (polarity=-1) should produce dislike signals (weight 0.0), currently only boolean True/False handled.
+- **Standardize preference attribute naming in seed** — ensure all NLU preference keys have corresponding merchant attributes (currently missing: `cuisine_spicy`, `cuisine_vegetarian`, `price_sense_cheap`/`premium` as numeric ranges, `weather_rainy_day` as indoor flag).
+
+### Completed this session (AI lane)
+
+- **D379** Pin DB seam pure guards (`db/pool`, §0/D3/§105) — 33 tests added, 608 passed
+- **D380** Pin shared HTTP shapes (`contract`, API_CONTRACT §2/§7.1) — 29 tests added, 637 passed
+- **D381** Fix Chinese sentence empty page (soft preference → hard filter) — 8 tests added, 645 passed
+- **D382** Pin user preferences into personalization ranking — 6 tests added, 651 passed
+- **D383** NLU intent preferences feed personalization ranking — seed data aligned, 651 passed
+
+All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
+
 ### Standing invariants (re-run this session, on this plane)
 
 ```

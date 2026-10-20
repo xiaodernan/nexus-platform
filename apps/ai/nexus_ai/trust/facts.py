@@ -4,32 +4,45 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+import json
 from typing import Any, Iterable, Sequence
-from uuid import UUID, uuid4
+from uuid import UUID, uuid5, NAMESPACE_DNS
 
 from nexus_ai.contract import Fact, MatchExplanation
 from nexus_ai.trust import freshness
 
 
 #: §4 conflict resolution order — merchant (fresh) > observed > imported > third_party
-#: > inferred. A tie is broken by `confidence`, then recency.
+#: > inferred > demo. A tie is broken by `confidence`, then recency.
 SOURCE_RANK: dict[str, int] = {
     "merchant": 5,
     "observed": 4,
     "imported": 3,
     "third_party": 2,
     "inferred": 1,
+    # synthetic seed data keeps its own provenance instead of being clamped to a real-world one
+    "demo": 0,
 }
 
 #: confidence ceiling by source: third-party data may never out-rank merchant data (§3)
 SOURCE_CONFIDENCE_CAP: dict[str, float] = {
     "merchant": 1.0, "observed": 0.95, "imported": 0.9, "third_party": 0.7, "inferred": 0.5,
+    "demo": 0.5,
 }
 
 
 def better_source(a: str, b: str) -> int:
     """>0 if `a` outranks `b`."""
     return SOURCE_RANK.get(a, 0) - SOURCE_RANK.get(b, 0)
+
+
+def stable_fact_id(*parts: Any) -> UUID:
+    """Content-derived id for facts we compute at request time.
+
+    Not the seed generator's namespace, so a synthesised id can never collide with a
+    stored `facts` row; not random, so replaying a request reproduces the same ids.
+    """
+    return uuid5(NAMESPACE_DNS, "|".join(str(p) for p in parts))
 
 
 def facts_from_rows(rows: Iterable[dict[str, Any]], *, now: datetime | None = None) -> list[Fact]:
@@ -73,7 +86,6 @@ def facts_from_rows(rows: Iterable[dict[str, Any]], *, now: datetime | None = No
 @dataclass
 class FactBundle:
     """Facts for one request: the grounding set the verifier and renderer share."""
-
     facts: list[Fact] = field(default_factory=list)
 
     def by_subject(self, subject_id: Any) -> list[Fact]:
@@ -123,8 +135,12 @@ class FactBundle:
         if expires_at is None and ttl > 0:
             expires_at = now + __import__("datetime").timedelta(seconds=ttl)
         cap = SOURCE_CONFIDENCE_CAP.get(source, 0.5)
+        # A computed fact's id is a pure function of its content + observed_at (uuid5, not
+        # uuid4): a replayed request yields byte-identical frames and re-synthesising the
+        # same value is idempotent, which is what lets the SSE stream be reproducible.
         return self.add(Fact(
-            fact_id=uuid4(), subject_type=subject_type, subject_id=UUID(str(subject_id)),
+            fact_id=stable_fact_id(subject_type, subject_id, attribute, value, now),
+            subject_type=subject_type, subject_id=UUID(str(subject_id)),
             attribute=attribute, value=value, source=source,
             confidence=round(min(confidence, cap), 3), observed_at=now,
             expires_at=expires_at,

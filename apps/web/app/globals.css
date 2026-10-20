@@ -1,0 +1,22 @@
+/*
+ * apps/web entry stylesheet. The design tokens and the base element rules live in
+ * `@nexus/ui/styles.css` (imported by app/layout.tsx) so no app can fork the system; this file
+ * only turns on Tailwind and declares the one font face the token stack expects.
+ *
+ * The font file is served from /public rather than next/font: `--nexus-font-sans` asks for the
+ * family name "InterVariable", and next/font/local renames families at build time, which would
+ * silently drop the stack back to the system UI font. The file covers Latin only — CJK falls
+ * through to the platform faces listed in the token, which is the honest result for a Latin subset.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'InterVariable';
+  src: url('/fonts/inter-latin-wght-normal.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}

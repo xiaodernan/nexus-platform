@@ -1,0 +1,151 @@
+{
+  "$comment": "Fixture set for src/schemas/event.json — the single event shape of AGENT_CONTRACT §10, written to V1 `events` and read back by the north-star view `v_north_star`.",
+  "schema": "event",
+  "cases": [
+    {
+      "name": "01_valid_search_event",
+      "description": "A `search` event: spec §58 requires the query text and the result count, and the north-star derivation needs `degraded` plus the coarse-geo envelope from AGENT §10's `context`.",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "event_id": "11111111-1111-4111-8111-111111111111",
+        "name": "search",
+        "occurred_at": "2026-09-22T02:00:00Z",
+        "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "actor_type": "user",
+        "actor_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "subject_type": null,
+        "subject_id": null,
+        "session_id": "sess_9f2c1b9d4e",
+        "conversation_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "properties": { "query": "沙田 安静 约会 餐厅", "result_count": 12, "strategy": "hybrid_v1", "took_ms": 180, "degraded": false },
+        "context": { "locale": "zh-HK", "device": "mobile", "geo_precision": "district", "district": "Sha Tin", "app_version": "web-2026.09" },
+        "request_id": "req_2b1f3c",
+        "degraded": false
+      }
+    },
+    {
+      "name": "02_valid_anonymous_view_event",
+      "description": "Anonymous traffic: `actor_id` null with a `session_id` (AGENT §10 types actor_id as uuid|null), a merchant subject, and geo withheld entirely.",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "event_id": "22222222-2222-4222-8222-222222222222",
+        "name": "view",
+        "occurred_at": "2026-09-22T02:05:00Z",
+        "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "actor_type": "anonymous",
+        "actor_id": null,
+        "subject_type": "merchant",
+        "subject_id": "11111111-1111-4111-8111-111111111111",
+        "session_id": "sess_9f2c1b9d4e",
+        "conversation_id": null,
+        "properties": { "position": 3, "card_type": "merchant", "dwell_ms": 4200 },
+        "context": { "locale": "en", "device": "desktop", "geo_precision": "none", "utm": { "source": "google", "medium": "organic", "campaign": null } }
+      }
+    },
+    {
+      "name": "03_valid_agent_booking_conversion",
+      "description": "A `reserve` conversion executed by the checkout agent on the user's behalf — an agent must still carry its own actor id, and a conversion must state `degraded` so `v_north_star` can count it (AGENT §10, spec §162).",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "event_id": "33333333-3333-4333-8333-333333333333",
+        "name": "reserve",
+        "occurred_at": "2026-09-22T02:12:00Z",
+        "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "actor_type": "agent",
+        "actor_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        "subject_type": "reservation",
+        "subject_id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        "session_id": "sess_9f2c1b9d4e",
+        "conversation_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "properties": { "party_size": 2, "slot_start": "2026-09-26T19:00:00Z", "source_set_id": "ffffffff-ffff-4fff-8fff-ffffffffffff" },
+        "context": { "locale": "zh-HK", "device": "mobile", "geo_precision": "district" },
+        "degraded": false
+      }
+    },
+    {
+      "name": "04_invalid_user_event_without_actor_id",
+      "description": "`actor_type: user` with a null actor id cannot be attributed, deduped or fed back into personalisation (AGENT §10, §6).",
+      "expect": "invalid",
+      "expect_rule_ids": ["event_actor_identity"],
+      "instance": {
+        "event_id": "44444444-4444-4444-8444-444444444444",
+        "name": "favorite",
+        "occurred_at": "2026-09-22T02:20:00Z",
+        "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "actor_type": "user",
+        "actor_id": null,
+        "subject_type": "merchant",
+        "subject_id": "11111111-1111-4111-8111-111111111111",
+        "session_id": "sess_9f2c1b9d4e",
+        "conversation_id": null,
+        "properties": {},
+        "context": { "locale": "en", "device": "mobile", "geo_precision": "district" },
+        "degraded": false
+      }
+    },
+    {
+      "name": "05_invalid_search_missing_result_count",
+      "description": "A search event that records the query but not the result count: the search→conversion funnel cannot be built from it (spec §58).",
+      "expect": "invalid",
+      "expect_rule_ids": ["event_search_properties"],
+      "instance": {
+        "event_id": "55555555-5555-4555-8555-555555555555",
+        "name": "search",
+        "occurred_at": "2026-09-22T02:00:00Z",
+        "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "actor_type": "user",
+        "actor_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "subject_type": null,
+        "subject_id": null,
+        "session_id": "sess_9f2c1b9d4e",
+        "conversation_id": null,
+        "properties": { "query": "open now" },
+        "context": { "locale": "en", "device": "mobile", "geo_precision": "precise" },
+        "degraded": false
+      }
+    },
+    {
+      "name": "06_invalid_unlisted_event_name",
+      "description": "`impression` is not among AGENT §10's seventeen names; a new name is a contract change, because every consumer switches on this field.",
+      "expect": "invalid",
+      "expect_rule_ids": ["enum"],
+      "instance": {
+        "event_id": "66666666-6666-4666-8666-666666666666",
+        "name": "impression",
+        "occurred_at": "2026-09-22T02:00:00Z",
+        "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "actor_type": "system",
+        "actor_id": null,
+        "subject_type": "merchant",
+        "subject_id": "11111111-1111-4111-8111-111111111111",
+        "session_id": null,
+        "conversation_id": null,
+        "properties": {},
+        "context": { "locale": "en", "device": "unknown", "geo_precision": "none" }
+      }
+    },
+    {
+      "name": "07_invalid_half_subject_and_conversion_flag",
+      "description": "`subject_type` without `subject_id` (V1 `events.subject_id` would be NULL for a row-typed event) plus a conversion that omits `degraded`, which `v_north_star` filters on.",
+      "expect": "invalid",
+      "expect_rule_ids": ["event_subject_pairing", "event_conversion_carries_degraded"],
+      "instance": {
+        "event_id": "77777777-7777-4777-8777-777777777777",
+        "name": "purchase",
+        "occurred_at": "2026-09-22T02:30:00Z",
+        "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "actor_type": "user",
+        "actor_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "subject_type": "order",
+        "subject_id": null,
+        "session_id": "sess_9f2c1b9d4e",
+        "conversation_id": null,
+        "properties": { "total": "256.00", "currency": "HKD" },
+        "context": { "locale": "zh-HK", "device": "mobile", "geo_precision": "district" }
+      }
+    }
+  ]
+}

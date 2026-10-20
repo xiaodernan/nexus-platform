@@ -14,7 +14,7 @@
     "ErrorCode": {
       "type": "string",
       "title": "ErrorCode",
-      "description": "API_CONTRACT §1's enumerated codes, each with a fixed HTTP status (`ERROR_CODE_STATUS` in `src/enums.ts`). NOTE: §1's *example* uses `merchant_not_found`, which is not one of the eight; the enumeration is treated as the closed domain and the resource is carried in `details` (CONTRACT NOTES 9 in `src/enums.ts`).",
+      "description": "API_CONTRACT §1's eight ladder codes, each with a fixed HTTP status (`ERROR_CODE_STATUS` in `src/enums.ts`). §1's example `merchant_not_found` is a *specialisation* of one of these, not a ninth code — see `ResourceErrorCode` and DECISIONS D27.",
       "enum": [
         "validation_error",
         "unauthorized",
@@ -26,13 +26,23 @@
         "internal"
       ]
     },
+    "ResourceErrorCode": {
+      "type": "string",
+      "title": "ResourceErrorCode",
+      "pattern": "^[a-z][a-z0-9_]*_(not_found|conflict|forbidden)$",
+      "maxLength": 128,
+      "description": "A ladder code with the failed resource prefixed (DECISIONS D27) — `merchant_not_found` is a `not_found`, so the suffix alone fixes the HTTP status and a client that has never heard of the resource still lands on the right rung of §105's ladder. Only `not_found|conflict|forbidden` may be specialised: `validation_error`/`rate_limited`/`ai_unavailable` carry their whole meaning in `details`, and a prefix there would hide which `allOf` branch applies. Vocabulary in `src/enums.ts` (`RESOURCE_ERROR_SUFFIX`, `ladderErrorCode`)."
+    },
     "ApiError": {
       "type": "object",
       "additionalProperties": false,
       "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
       "required": ["code", "message", "details", "request_id"],
       "properties": {
-        "code": { "$ref": "#/$defs/ErrorCode" },
+        "code": {
+          "description": "Either a §1 ladder code or a resource-qualified specialisation of one (DECISIONS D27). `details.resource` is required only for a bare `not_found`, which names no subject.",
+          "anyOf": [{ "$ref": "#/$defs/ErrorCode" }, { "$ref": "#/$defs/ResourceErrorCode" }]
+        },
         "message": {
           "type": "string",
           "minLength": 1,

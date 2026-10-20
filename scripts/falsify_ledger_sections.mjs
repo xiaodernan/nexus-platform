@@ -19,6 +19,7 @@
  * Exit: 0 every prediction held · 1 an arm missed (the checker cannot do what the ledger says it does)
  */
 import { execFileSync } from 'node:child_process';
+import { guard, isSpawnFailure } from './spawn_guard.mjs';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -32,7 +33,19 @@ const FIX = join(tmpdir(), 'nexus-d116-falsify');
 const CHECKER = join(ROOT, 'scripts', 'check_ledger_sections.mjs');
 const RECOVERY = '99e5b0c';
 
-const show = (rev, p) => execFileSync('git', ['show', `${rev}:${p}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26 }).replace(/\r\n/g, '\n');
+// Guarded at the spawn, not at the exit code: a `git` that this machine could not start is not a revision
+// that does not hold the path. STATUS §224 censused six tools that died on exactly this with no verdict line.
+const show = (rev, p) => {
+  const g = guard(() => execFileSync('git', ['show', `${rev}:${p}`], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26 }),
+    `git show ${rev}:${p}`);
+  if (!g.ok) {
+    if (!g.spawn) throw new Error(`${g.what} failed: ${g.reason}`);
+    console.log(`RESULT: NOT CHECKED — this harness reads committed ledgers, and ${g.what} could not be started: ${g.reason}.`);
+    console.log('  No arm below was run. A refusal is not a failure, and the two must not share a verdict line.');
+    process.exit(2);
+  }
+  return g.value.replace(/\r\n/g, '\n');
+};
 const writeLedgers = (dir, status, decisions) => {
   mkdirSync(join(dir, 'docs'), { recursive: true });
   writeFileSync(join(dir, 'docs', 'STATUS.md'), status, 'utf8');
@@ -86,9 +99,16 @@ for (const arm of ARMS) {
   }
   let out, code;
   try {
-    out = execFileSync('node', [CHECKER, ...args, '--dir', dir], { encoding: 'utf8', cwd: ROOT, maxBuffer: 1 << 26 });
+    out = execFileSync('node', [CHECKER, ...args, '--dir', dir], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', cwd: ROOT, maxBuffer: 1 << 26 });
     code = 0;
   } catch (e) {
+    // A reader that never started is not a reader that failed: the catch below would have filed it as an exit
+    // code and carried on, and every arm would compare against a reader that was not there.
+    if (isSpawnFailure(e)) {
+      console.log(`RESULT: NOT CHECKED — the reader could not be started: ${e.code}.`);
+      console.log('  No arm below was run. A refusal is not a failure, and the two must not share a verdict line.');
+      process.exit(2);
+    }
     out = `${e.stdout || ''}${e.stderr || ''}`;
     code = e.status === undefined ? -1 : e.status;
   }
@@ -105,7 +125,7 @@ for (const arm of ARMS) {
   if (tree.headings !== 9) throw new Error(`the fixture put back ${tree.headings} headings, not nine`);
   const dir = writeLedgers(join(FIX, 'prerecovery'), tree.text, diskDecisions);
   let out, code;
-  try { out = execFileSync('node', [CHECKER, '--head-rev', `${RECOVERY}^`, '--dir', dir], { encoding: 'utf8', cwd: ROOT }); code = 0; }
+  try { out = execFileSync('node', [CHECKER, '--head-rev', `${RECOVERY}^`, '--dir', dir], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', cwd: ROOT }); code = 0; }
   catch (e) { out = `${e.stdout || ''}${e.stderr || ''}`; code = e.status === undefined ? -1 : e.status; }
   // The DECISIONS NOTE count is deliberately not pinned: `99e5b0c^` predates every decision written since
   // the recovery, so the arm's own fixture grows by one disk-only decision each time this lane lands an

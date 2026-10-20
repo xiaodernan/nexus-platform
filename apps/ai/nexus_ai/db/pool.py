@@ -61,7 +61,12 @@ async def _init_connection(conn: Any) -> None:
         try:
             await conn.set_type_codec(
                 type_name, schema="pg_catalog",
-                encoder=json.dumps, decoder=json.loads,
+                # The encoder is the identity on purpose. asyncpg's jsonb parameter already takes
+                # JSON *text*, and every writer in this service passes `json.dumps(...)` text
+                # (`api/runs.py:118-121,158-159`, `search/sql.py:137,297`). Registering
+                # `json.dumps` here encoded that text a second time, so every payload landed as a
+                # jsonb *string* (`jsonb_typeof = 'string'`) where no key read can reach it.
+                encoder=lambda value: value, decoder=json.loads,
             )
         except Exception:  # pragma: no cover - codec already registered
             log.debug("could not register codec for %s", type_name, exc_info=True)
@@ -131,7 +136,9 @@ class Database:
         async with self.pool.acquire() as conn:
             try:
                 async with conn.transaction():
-                    await conn.execute("SET LOCAL READ ONLY")
+                    # `SET TRANSACTION` (not `SET LOCAL`) is the only form Postgres accepts for
+                    # the read-only flag, and it must be the first statement of the block.
+                    await conn.execute("SET TRANSACTION READ ONLY")
                     await conn.execute("SET LOCAL search_path TO " + _safe_path(path))
                     await conn.execute(
                         f"SET LOCAL statement_timeout = {int(self.statement_timeout_ms)}")

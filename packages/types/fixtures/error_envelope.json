@@ -1,0 +1,161 @@
+{
+  "$comment": "Fixture set for src/schemas/error_envelope.json — API_CONTRACT §1's always-on error body. The schema closes the eight codes and the per-code `details` requirements (if/then); the two custom rules check what a schema cannot: that the body's own `details.http_status` agrees with §1's code→status table, and that an `ai_unavailable` names a rung of the §105 failure ladder.",
+  "schema": "error_envelope",
+  "cases": [
+    {
+      "name": "01_valid_not_found_carries_resource_and_reason",
+      "description": "API §1's example body, modelled the way CONTRACT NOTES 9 in src/enums.ts says it must be: `merchant_not_found` is not one of the eight codes, so it rides in `details.resource` + `details.reason` and the code stays `not_found` (404, D5).",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "error": {
+          "code": "not_found",
+          "message": "找不到该商户，或它尚未发布。",
+          "details": { "resource": "merchant", "reason": "merchant_not_found", "http_status": 404, "id_or_slug": "lung-yuen-kitchen" },
+          "request_id": "req_7f3a9c21b0"
+        }
+      }
+    },
+    {
+      "name": "02_valid_validation_error_with_field_errors",
+      "description": "A 422 from either service (§1 `field_errors`): the keys are dotted instance paths, not wire fields, which is why the map is exempt from the snake_case rule and the paths still read as JSON-Pointer-ish locations.",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "error": {
+          "code": "validation_error",
+          "message": "Some fields need another look before we search.",
+          "details": { "http_status": 422, "location": "body" },
+          "request_id": "req_0d1c2b3a4e5f",
+          "field_errors": { "party_size": "must be between 1 and 99", "time.starts_at": "is in the past" }
+        }
+      }
+    },
+    {
+      "name": "03_valid_ai_unavailable_names_the_ladder_rung",
+      "description": "Spec §105 / AGENT §2 rule 4: when the AI path fails the caller must be told which rung to take next, so `details.fallback` is from FALLBACK_KIND and `retryable` says whether staying on the AI path is worth another attempt.",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "error": {
+          "code": "ai_unavailable",
+          "message": "AI 搜索暂时不可用，已切换到普通搜索。",
+          "details": { "stage": "ranking", "fallback": "deterministic_search", "retryable": true, "http_status": 503, "retry_after": 30 },
+          "request_id": "req_5e4d3c2b1a"
+        }
+      }
+    },
+    {
+      "name": "04_valid_rate_limited_with_retry_after",
+      "description": "API §1's rate limits: `details.retry_after` mirrors the `Retry-After` header and `remaining` is what the caller has left in the window, so the client's backoff is computed rather than guessed.",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "error": {
+          "code": "rate_limited",
+          "message": "Too many searches in the last minute — give it 12 seconds.",
+          "details": { "retry_after": 12, "remaining": 0, "limit": 30, "http_status": 429 },
+          "request_id": "req_9a8b7c6d5e"
+        }
+      }
+    },
+    {
+      "name": "05_invalid_http_status_disagrees_with_code",
+      "description": "§1 binds each code to exactly one status. A `not_found` body that claims 403 would send the SDK's failure ladder down the authorisation branch for a resource that simply is not there — and D5 says a foreign row answers 404, so the disagreement is how enumeration bugs hide.",
+      "expect": "invalid",
+      "expect_rule_ids": ["error_http_status_matches_code"],
+      "instance": {
+        "error": {
+          "code": "not_found",
+          "message": "No such booking",
+          "details": { "resource": "reservation", "reason": "not_mine", "http_status": 403 },
+          "request_id": "req_1a2b3c"
+        }
+      }
+    },
+    {
+      "name": "06_invalid_ai_unavailable_invents_a_fallback",
+      "description": "`fallback` is the rung the caller should take, and §105's ladder has three: model_fallback, deterministic_search, human. `llm_retry` is a fourth that no client implements, so the response would tell the caller to do something nobody can do.",
+      "expect": "invalid",
+      "expect_rule_ids": ["error_ai_unavailable_names_ladder"],
+      "instance": {
+        "error": {
+          "code": "ai_unavailable",
+          "message": "The model is busy; we stopped rather than guess.",
+          "details": { "stage": "synthesise", "fallback": "llm_retry", "retryable": false, "http_status": 503 },
+          "request_id": "req_4d5e6f"
+        }
+      }
+    },
+    {
+      "name": "07_invalid_ai_unavailable_without_ladder_details",
+      "description": "The same failure with `fallback`/`retryable` absent: the if/then in error_envelope.json demands the keys (code `required`) and the rule refuses an `ai_unavailable` that leaves the caller to guess which rung to climb (spec §105).",
+      "expect": "invalid",
+      "expect_rule_ids": ["error_ai_unavailable_names_ladder", "required"],
+      "instance": {
+        "error": {
+          "code": "ai_unavailable",
+          "message": "AI 服务暂不可用。",
+          "details": { "stage": "retrieval", "http_status": 503 },
+          "request_id": "req_7g8h9i"
+        }
+      }
+    },
+    {
+      "name": "08_valid_resource_code_specialises_the_ladder",
+      "description": "DECISIONS D27: §1's eight codes are the status ladder, and a code may prefix the resource that failed — this is exactly what the platform sends on a merchant 404, captured live by `scripts/verify_payload_conformance.mjs`. The status comes from the `_not_found` suffix, and `details.resource` is deliberately not required because the code already names the subject.",
+      "expect": "valid",
+      "instance": {
+        "error": {
+          "code": "merchant_not_found",
+          "message": "找不到该商户。",
+          "details": { "http_status": 404 },
+          "request_id": "req_0j1k2l"
+        }
+      }
+    },
+    {
+      "name": "09_invalid_resource_code_status_disagrees_with_suffix",
+      "description": "The derivation D27 adds is the check the closed enum could not express at all: a `slot_not_found` served with 403 reads as a missing row to any client that resolves status from the suffix, and D5 makes a foreign row answer 404 for precisely that reason. This case is what keeps `ladderErrorCode` load-bearing rather than decorative.",
+      "expect": "invalid",
+      "expect_rule_ids": ["error_http_status_matches_code"],
+      "instance": {
+        "error": {
+          "code": "slot_not_found",
+          "message": "该时段已不存在。",
+          "details": { "http_status": 403 },
+          "request_id": "req_9k0l1m"
+        }
+      }
+    },
+    {
+      "name": "10_invalid_code_is_neither_ladder_nor_suffix",
+      "description": "A snake_case string ending in no ladder suffix is not a code: `validation_failed` resembles `validation_error`, would be served 422 by luck, and matches neither branch of the anyOf. If any string passed, §1's table would stop being a contract and become documentation.",
+      "expect": "invalid",
+      "expect_rule_ids": ["anyOf"],
+      "instance": {
+        "error": {
+          "code": "validation_failed",
+          "message": "Invalid request",
+          "details": { "http_status": 422 },
+          "request_id": "req_2n3o4p"
+        }
+      }
+    },
+    {
+      "name": "11_invalid_extra_top_level_key",
+      "description": "§1 says the error body is always `{ error: { … } }` — `error` is the only top-level key. A sibling `request_id` (the right value, the wrong place) would be missed by every client that reads `body.error.request_id`, so the correlation id is lost at the log boundary.",
+      "expect": "invalid",
+      "expect_rule_ids": ["additionalProperties"],
+      "instance": {
+        "error": {
+          "code": "internal",
+          "message": "Something broke on our side. The request id above is what to quote.",
+          "details": { "http_status": 500 },
+          "request_id": "req_3m4n5o"
+        },
+        "request_id": "req_3m4n5o"
+      }
+    }
+  ]
+}

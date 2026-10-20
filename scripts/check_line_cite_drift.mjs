@@ -71,6 +71,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseFlags } from './cli_args.mjs';
@@ -94,6 +95,7 @@ export const FLAGS = {
   '--limit': { kind: 'value', unit: 'integer' },
   '--strict': { kind: 'value', unit: 'MOVED,NOT-UNIQUE,GONE' },
   '--reaim': { kind: 'switch' },
+  '--resolve-basenames': { kind: 'switch' },
 };
 
 /** Blame `path` and return Map<lineNumber, commitSha>. Porcelain headers carry the line number and each text
@@ -111,7 +113,7 @@ export function blameByLine(git, path) {
   return map;
 }
 
-export function census({ repo, ledgers, limit }) {
+export function census({ repo, ledgers, limit, resolveBasenames = false }) {
   // stderr is dropped on purpose: `git show` writes a `fatal: path ... does not exist` for every citation into a
   // file that is not at this ref, which this reader has already classified. Left attached it printed 63 fatal
   // lines over a run whose own report says the same thing in three rows.
@@ -127,8 +129,43 @@ export function census({ repo, ledgers, limit }) {
     return blobCache.get(k);
   };
 
+  /**
+   * Every path at HEAD, indexed by every suffix it has, so a citation written as a path *tail*
+   * (`search/sql.py:137`) can be resolved instead of refused.
+   *
+   * WHY THIS EXISTS. The reader classified those as NOT-AT-HEAD and left them out of the judged
+   * population, which is the honest thing to print but the wrong thing to conclude: measured on
+   * 2026-09-30, all twelve of the sites it refused name files that exist at HEAD with the cited line
+   * inside them (`apps/ai/nexus_ai/search/sql.py` is 520 lines and the citation asks for :137). The
+   * verdict said "names no file at HEAD", which was true of `HEAD:search/sql.py` and false of the
+   * citation. A reader that cannot judge a citation must say so — it did — but a reader that *can*
+   * judge it and does not is a blind spot with a label on it.
+   *
+   * A suffix matching two or more files is NOT guessed at: it is counted as AMBIGUOUS and printed, so
+   * the number of unjudged citations stays visible instead of being spent on a coin flip.
+   */
+  const suffixIndex = (() => {
+    const index = new Map();
+    let files = [];
+    try {
+      files = git('ls-tree', '-r', '--name-only', 'HEAD').split('\n').filter(Boolean);
+    } catch {
+      return index; // an unreadable tree leaves the index empty and every suffix refusal stands
+    }
+    for (const p of files) {
+      const parts = p.split('/');
+      for (let i = 0; i < parts.length; i += 1) {
+        const suffix = parts.slice(i).join('/');
+        const hits = index.get(suffix);
+        if (hits) hits.push(p);
+        else index.set(suffix, [p]);
+      }
+    }
+    return index;
+  })();
+
   const rows = [];
-  const counts = { EXACT: 0, MOVED: 0, 'NOT-UNIQUE': 0, GONE: 0, 'NO-BASE': 0, UNPATHED: 0, 'NOT-AT-HEAD': 0 };
+  const counts = { EXACT: 0, MOVED: 0, 'NOT-UNIQUE': 0, GONE: 0, 'NO-BASE': 0, UNPATHED: 0, 'NOT-AT-HEAD': 0, AMBIGUOUS: 0 };
   // Every MOVED citation, uncapped by `--limit`: this is the list `--reaim` prints and a capped list would let a
   // lane re-aim twelve citations and believe it had cleared twenty-four.
   const moves = [];
@@ -169,15 +206,48 @@ export function census({ repo, ledgers, limit }) {
         const writer = map.get(ln);
         if (!writer) { keep({ verdict: 'NO-BASE', site: `${ledger}:${ln}`, detail: `${file}:${num} has no blame author` }); continue; }
         blamed += 1;
-        const atHead = linesAt('HEAD', file);
+        let atHead = linesAt('HEAD', file);
+        let path = file;
+        // `--resolve-basenames` widens the same suffix lookup to bare names. It is a switch and not the
+        // default because refusing basenames is a decision this file states in its own header, and a reader
+        // that silently changed its own population would be doing what this repository spends its ledgers
+        // objecting to. What the switch buys is a measurement: how many of the UNPATHED citations would
+        // resolve, and how many of those are MOVED or GONE rather than clean.
+        if (atHead === null && (file.includes('/') || resolveBasenames)) {
+          // Not a repo-relative path — try it as a tail before refusing it. `file` is kept for the message
+          // because that is what the ledger wrote; `path` is what it resolves to.
+          const hits = suffixIndex.get(file) ?? [];
+          if (hits.length === 1) {
+            path = hits[0];
+            atHead = linesAt('HEAD', path);
+          } else if (hits.length > 1) {
+            counts.AMBIGUOUS += 1;
+            keep({ verdict: 'AMBIGUOUS', site: `${ledger}:${ln}`, detail: `${file}:${num} matches ${hits.length} files at HEAD (${hits.slice(0, 3).join(', ')}${hits.length > 3 ? ', …' : ''}) — not judged, and not guessed` });
+            continue;
+          }
+        }
         if (atHead === null) {
           const basenameOnly = !file.includes('/');
           const v = basenameOnly ? 'UNPATHED' : 'NOT-AT-HEAD';
           counts[v] += 1;
-          keep({ verdict: v, site: `${ledger}:${ln}`, detail: basenameOnly ? `${file}:${num} is a basename, which this reader will not resolve` : `${file}:${num} names no file at HEAD — step 8's FILE NOT FOUND, not judged twice` });
+          // Two different reasons wear the same verdict, and they call for different work. A path that is
+          // absent everywhere is a stale citation. A path that exists in the working copy but not at HEAD
+          // is a citation into **uncommitted code**: resolvable on this machine and unresolvable from a
+          // clean checkout, which is the same objection D113 made to a witness kept outside the repo. The
+          // reader can tell them apart — it just has to look at the working tree as well as at HEAD.
+          const inWorktreeOnly = !basenameOnly && existsSync(join(repo, file));
+          keep({
+            verdict: v,
+            site: `${ledger}:${ln}`,
+            detail: basenameOnly
+              ? `${file}:${num} is a basename, which this reader will not resolve`
+              : inWorktreeOnly
+                ? `${file}:${num} is not tracked at HEAD — the file exists in the working copy only, so a clean checkout cannot resolve this citation`
+                : `${file}:${num} names no file at HEAD — step 8's FILE NOT FOUND, not judged twice`,
+          });
           continue;
         }
-        const atWriter = linesAt(writer, file);
+        const atWriter = linesAt(writer, path);
         const target = atHead[num - 1];
         if (atWriter === null || atWriter[num - 1] === undefined) {
           counts['NO-BASE'] += 1;
@@ -222,7 +292,7 @@ export function census({ repo, ledgers, limit }) {
   if (ledgerLines === 0) floors.push('the census read no ledger lines');
   if (blamed === 0 && total > 0) floors.push('the census resolved no blame author for any citation — it read nothing');
   if (judged === 0) floors.push('no citation survived both reads, so the content test judged nothing');
-  return { counts, rows, moves, unaimable, total, frames, blamed, ledgerLines, judged, floors };
+  return { counts, rows, moves, unaimable, total, frames, blamed, ledgerLines, judged, judgedClasses: JUDGED, floors };
 }
 
 export function main(argv) {
@@ -242,7 +312,8 @@ export function main(argv) {
   if (unknown.length) { console.log(`RESULT: NOT CHECKED — --strict ${unknown.join(',')} names no class this reader can refuse on (${STRICT_CLASSES.join(', ')})`); return 2; }
   if (reaim && strict.length) { console.log('RESULT: NOT CHECKED — --reaim prints a derived list and passes no verdict, so it does not combine with --strict'); return 2; }
 
-  const r = census({ repo: parsed.value['--repo'] ?? REPO, ledgers, limit });
+  const r = census({ repo: parsed.value['--repo'] ?? REPO, ledgers, limit,
+    resolveBasenames: Boolean(parsed.flag['--resolve-basenames']) });
   // The refusal vocabulary is one list; the classes the census actually emits are another. If they ever stop
   // agreeing, the run stops — a `--strict` aimed at a class the reader no longer counts would else PASS forever.
   const unemitted = STRICT_CLASSES.filter((c) => !(c in r.counts));
@@ -254,6 +325,16 @@ export function main(argv) {
   // line has no such collision.
   for (const [k, v] of Object.entries(r.counts)) console.log(`verdict ${k}: ${v}`);
   console.log(`judged by content: ${r.judged}`);
+  // The line above is parsed by an arm harness on the exact regex `^judged by content: (\d+)$`, so it keeps
+  // its shape. What it does NOT say is which classes it counts, and one of them is not a content judgement at
+  // all: `JUDGED` is ['EXACT','MOVED','NOT-UNIQUE','GONE','NO-BASE'], and NO-BASE means the citation has no
+  // blame author — reached, not judged. Measured twice rather than reasoned: with NO-BASE at 13 the printed
+  // total exceeded the content classes by 13, and with it at 1 the excess is 1. Naming the members costs a
+  // line and stops the label from claiming something the arithmetic contradicts. It reads the list off the
+  // census's own return value rather than the module scope: `JUDGED` lives inside `census()`, and the first
+  // version of this line named it from outside, which threw ReferenceError and took the reader down with no
+  // RESULT line at all. A reader that dies to add a clarifying sentence is worse than the unclear sentence.
+  console.log(`  judged classes: ${r.judgedClasses.join(' + ')} — NO-BASE has no blame author, so it is reached rather than judged`);
   const notInIndex = EXT_VOCAB.filter((e) => !SOURCE_EXT.test(`x.${e}`));
   console.log(`extensions this grammar judges that scripts/source_index.mjs SOURCE_EXT does not accept: ${notInIndex.join(', ') || '(none)'}`);
   // EXACT has no rows by definition, so the detail sections are every other class the census declared.

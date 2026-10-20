@@ -295,7 +295,10 @@ class StubPlatformClient:
         if idempotency_key in self._idem:
             return dict(self._idem[idempotency_key])
         res = {"id": f"stub-res-{len(self._reservations) + 1}",
-               "code": f"RZ{len(self._reservations) + 1:04d}", "status": "confirmed",
+               # `pending`, matching §6: a hold is not a confirmation, and `trust/injection.py` treats the
+               # claim "the table is confirmed" as something to filter out of untrusted text. A stub that
+               # emitted it would be the one thing the guard around it is written against.
+               "code": f"RZ{len(self._reservations) + 1:04d}", "status": "pending",
                "stub": True, **payload}
         self._reservations[res["id"]] = res
         self._idem[idempotency_key] = res

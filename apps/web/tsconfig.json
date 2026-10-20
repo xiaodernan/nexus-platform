@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["dom", "dom.iterable", "ES2022"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "ES2022"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "preserve",
@@ -18,13 +22,25 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "incremental": true,
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@nexus/ui": ["../../packages/ui/src/index.ts"],
-      "@nexus/ui/*": ["../../packages/ui/src/*", "../../packages/ui/*"]
-    }
+      "@/*": [
+        "./src/*"
+      ],
+      "@nexus/ui": [
+        "../../packages/ui/src/index.ts"
+      ],
+      "@nexus/ui/*": [
+        "../../packages/ui/src/*",
+        "../../packages/ui/*"
+      ]
+    },
+    "noEmit": true
   },
   "include": [
     "next-env.d.ts",
@@ -35,5 +51,8 @@
     "../../packages/ui/src/**/*.tsx",
     "../../packages/ui/tailwind-preset.ts"
   ],
-  "exclude": ["node_modules", ".next"]
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
 }

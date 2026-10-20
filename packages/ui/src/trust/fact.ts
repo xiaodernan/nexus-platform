@@ -10,8 +10,9 @@ import type { Fact, EntityCard, FactSource } from './types';
  *     `0.4 … 0.6` ⇒ renderable but must be phrased as uncertain (`isUncertain`).
  *  3. `expires_at` in the past or `stale === true` ⇒ the value is renderable but must carry the
  *     "may have changed" warning; never presented as a live price.
- *  4. When several facts share an attribute, `merchant > observed > imported > third_party > inferred`
- *     wins, then freshness (`observed_at`), then confidence. Ties never resolve to the higher number.
+ *  4. When several facts share an attribute, `merchant > observed > imported > third_party > inferred
+ *     > demo` wins, then freshness (`observed_at`), then confidence. Ties never resolve to the higher
+ *     number.
  */
 
 export const SOURCE_RANK: Record<FactSource, number> = {
@@ -20,6 +21,8 @@ export const SOURCE_RANK: Record<FactSource, number> = {
   imported: 3,
   third_party: 2,
   inferred: 1,
+  // Synthetic seed data: listed with its real origin, ranked last in any conflict.
+  demo: 0,
 };
 
 export const CONFIDENCE_OMIT_BELOW = 0.4;
@@ -35,6 +38,19 @@ export const TRUSTED_ATTRIBUTES = [
 ] as const;
 
 export type TrustedAttribute = (typeof TRUSTED_ATTRIBUTES)[number];
+
+/**
+ * Attributes that name the same claim on different surfaces. The canonical hours attribute is
+ * `opening_hours` — the stored column in `facts.attribute`, and the alias table in
+ * `apps/ai/nexus_ai/trust/freshness.py` resolves `business_hours` to it too — while the render
+ * contract above speaks `business_hours`. Resolving either name to either spelling keeps the two
+ * vocabularies from silently disagreeing about which claims are provenanced.
+ */
+const ATTRIBUTE_ALIASES: readonly (readonly string[])[] = [['business_hours', 'opening_hours', 'hours']];
+
+function attributeNames(attribute: string): readonly string[] {
+  return ATTRIBUTE_ALIASES.find((group) => group.includes(attribute)) ?? [attribute];
+}
 
 export function parseTime(value?: string | null): number | null {
   if (!value) return null;
@@ -66,7 +82,8 @@ export function isRenderable(fact?: Fact | null): boolean {
 /** Deterministic provenance ordering; returns the fact the UI is allowed to show. */
 export function pickFact(facts: Fact[] | null | undefined, attribute: string): Fact | null {
   if (!facts?.length) return null;
-  const candidates = facts.filter((fact) => fact.attribute === attribute);
+  const names = attributeNames(attribute);
+  const candidates = facts.filter((fact) => names.includes(fact.attribute));
   if (candidates.length === 0) return null;
   return candidates.reduce((best, candidate) => {
     const rank = SOURCE_RANK[candidate.source] ?? 0;

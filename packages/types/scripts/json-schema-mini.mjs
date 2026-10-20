@@ -25,6 +25,9 @@
  * rejects `null`), which is what makes `{"type":["string","null"],"pattern":…}` usable for the
  * nullable-but-shaped fields of spec §8.
  *
+ * On an `anyOf` failure the validator also re-emits the issues of the closest-matching branch, so a
+ * caller sees the specific keyword that gave up (`enum`, `format`, …) and not only the aggregate.
+ *
  * @module
  */
 
@@ -405,13 +408,13 @@ export function validate(schema, instance, options = {}) {
     if (Array.isArray(node.anyOf)) {
       const branches = node.anyOf.map((sub, index) => walk(sub, value, ip, `${sp}/anyOf/${index}`, entry, depth + 1));
       if (!branches.some((branch) => branch.length === 0)) {
-        const nested = branches.flat().slice(0, 6);
-        add(
-          "anyOf",
-          nested.length > 0
-            ? `no anyOf branch matched; closest: ${nested.map((e) => `${e.keyword} — ${e.message}`).join("; ")}`
-            : "no anyOf branch matched",
-        );
+        // Report the failing branch's own issues too, so a reader (and `expect_rule_ids` in the
+        // fixture gate) sees *which* constraint gave up — `enum`, `format`, … — rather than only
+        // the aggregate. A nullable wrapper (`anyOf: [<enum>, null]`) must still name its enum.
+        const closest = branches.reduce((best, branch, index) =>
+          branch.length < branches[best].length ? index : best, 0);
+        add("anyOf", `no anyOf branch matched; closest (branch ${closest}): ${branches[closest].map((e) => `${e.keyword} — ${e.message}`).join("; ") || "nothing"}`);
+        push(out, branches[closest], maxIssues);
       }
     }
     if (Array.isArray(node.oneOf)) {
@@ -463,7 +466,7 @@ function toRegExp(pattern) {
 const truncate = (text) => (text.length > 96 ? `${text.slice(0, 93)}...` : text);
 
 /**
- * Convenience: validate and throw on the first issue.
+ * Convenience: validate and throw an `AggregateError` carrying every issue.
  * @param {object|boolean} schema @param {unknown} instance @param {object} [options]
  */
 export function assertValid(schema, instance, options = {}) {

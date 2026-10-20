@@ -8,11 +8,44 @@
  * Spec: §104 Reliability, §105 AI Failure Handling.
  */
 
-import { ERROR_CODE_STATUS } from "./enums.js";
+import { ERROR_CODE_STATUS, RESOURCE_ERROR_SUFFIX } from "./enums.js";
+import type { ResourceErrorSuffix } from "./enums.js";
 import type { JsonObject } from "./common.js";
 
 /** Error code name — API_CONTRACT §1. */
 export type ApiErrorCode = keyof typeof ERROR_CODE_STATUS;
+
+/**
+ * A ladder code specialised by the resource that failed — `merchant_not_found`, `slot_not_found`,
+ * `idempotency_key_conflict` (DECISIONS D27). Structurally the same statement as the `ResourceErrorCode`
+ * branch of `src/schemas/error_envelope.json`.
+ */
+export type ResourceErrorCode = `${string}_${ResourceErrorSuffix}`;
+
+/** Anything a service may put in `error.code`. */
+export type WireErrorCode = ApiErrorCode | ResourceErrorCode;
+
+/**
+ * The §1 ladder code a wire code answers to, so a client can pick its rung without knowing the resource
+ * (D27). Null for a string that is neither — `validation_failed`, `Not_Found` and a bare `notfound` are
+ * all wire errors, and the caller must not guess a status for them.
+ */
+export function ladderErrorCode(code: string): ApiErrorCode | null {
+  if (Object.prototype.hasOwnProperty.call(ERROR_CODE_STATUS, code)) return code as ApiErrorCode;
+  for (const suffix of RESOURCE_ERROR_SUFFIX) {
+    if (code.length > suffix.length + 1 && code.endsWith(`_${suffix}`)) {
+      const resource = code.slice(0, code.length - suffix.length - 1);
+      if (/^[a-z][a-z0-9]*(_[a-z0-9]+)*$/.test(resource)) return suffix;
+    }
+  }
+  return null;
+}
+
+/** HTTP status a wire error code must be sent with; 500 when the code is not a contract code at all. */
+export function errorHttpStatus(code: string): number {
+  const ladder = ladderErrorCode(code);
+  return ladder === null ? 500 : ERROR_CODE_STATUS[ladder];
+}
 
 /** HTTP status each error code must be sent with. Source: API_CONTRACT §1 table. */
 export const ERROR_HTTP_STATUS = ERROR_CODE_STATUS;
@@ -25,13 +58,14 @@ export const ALL_ERROR_CODES = Object.keys(ERROR_CODE_STATUS) as ApiErrorCode[];
  * **Source: API_CONTRACT §1.**
  *
  * Note on the §1 example: `"code": "merchant_not_found"` is *not* one of the eight codes the same
- * section enumerates. The enumeration is treated as the closed `code` domain and the example value
- * is modelled as `details.resource` + `details.reason` (see CONTRACT NOTES in `enums.ts`); the
- * JSON Schema therefore constrains `code` to the eight documented values.
+ * section enumerates. DECISIONS D27 settled it — the eight are the **status ladder**, and a code may
+ * specialise `not_found|conflict|forbidden` by prefixing the resource name, so `code` accepts either
+ * shape and the HTTP status is read off the suffix (`ladderErrorCode`). `details.resource` stays required
+ * for a *bare* `not_found`, which names no subject. See CONTRACT NOTE 9 in `enums.ts`.
  */
 export interface ApiError {
-  /** Machine-readable code — API §1 (`validation_error|unauthorized|forbidden|not_found|conflict|rate_limited|ai_unavailable|internal`). */
-  code: ApiErrorCode;
+  /** Machine-readable code — API §1's ladder, optionally specialised by resource (DECISIONS D27). */
+  code: WireErrorCode;
   /** Human-readable, localised message (AGENT §12: echo the user's locale). Never a stack trace. */
   message: string;
   /** Structured context: field errors, resource/reason, retry hints. Keys snake_case. */

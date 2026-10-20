@@ -1,0 +1,200 @@
+{
+  "$comment": "Fixture set for src/schemas/intent.json. Each case is validated with the mini JSON Schema validator plus the cross-object rules in scripts/rules.mjs. `expect: invalid` cases must produce at least one failure whose code is listed in `expect_rule_ids` (a schema keyword such as `enum`, or a custom rule id).",
+  "schema": "intent",
+  "cases": [
+    {
+      "name": "01_valid_api_contract_example",
+      "description": "docs/API_CONTRACT.md §7.1 verbatim: category/location/time/budget extracted, party_size unknown and asked about once.",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "raw_query": "帮我找沙田适合情侣约会的餐厅，预算500，安静一点，周六晚上",
+        "intent": "discover_merchant",
+        "category": "restaurant",
+        "location": {
+          "type": "district",
+          "value": "Sha Tin",
+          "resolved": { "lat": 22.38, "lng": 114.19 },
+          "radius_m": null
+        },
+        "time": { "type": "explicit", "starts_at": "2026-09-26T19:00:00Z", "ends_at": null },
+        "budget": { "min": null, "max": 500, "currency": "HKD", "per": "party" },
+        "party_size": null,
+        "preferences": [{ "key": "ambience", "value": "quiet", "polarity": 1 }],
+        "constraints": [{ "key": "cuisine_avoid", "value": "spicy" }],
+        "sort_preference": "relevance",
+        "urgency": "normal",
+        "language": "zh-HK",
+        "confidence": { "category": 0.95, "budget": 0.9, "time": 0.8 },
+        "unknowns": ["party_size"]
+      }
+    },
+    {
+      "name": "02_valid_reserve_from_current_location",
+      "description": "Reservation ask with consented current-location context; nothing was said about time, so `time` is null and named in `unknowns` (spec §8 — ask, do not default).",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "raw_query": "now on a table for 2 near me",
+        "intent": "reserve",
+        "category": "restaurant",
+        "location": {
+          "type": "current_location",
+          "value": "near me",
+          "resolved": { "lat": 22.3193, "lng": 114.1694, "accuracy_m": 120 },
+          "radius_m": 1500,
+          "confidence": 0.93
+        },
+        "time": null,
+        "budget": null,
+        "party_size": 2,
+        "preferences": [],
+        "constraints": [],
+        "sort_preference": "distance",
+        "urgency": "high",
+        "language": "en",
+        "confidence": { "intent": 0.91, "location": 0.93, "party_size": 0.99 },
+        "unknowns": ["time"],
+        "clarification_asked": false,
+        "conversation_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "turn": 1,
+        "provider": "mock",
+        "model": "mock-intent-extractor"
+      }
+    },
+    {
+      "name": "03_valid_state_merged_too_expensive",
+      "description": "Second turn of 「太贵了」: API_CONTRACT §7.1 merge rule `budget.max *= 0.7` applied to 500 -> 350, sort switched to price_low, everything the user never said still null.",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "raw_query": "太贵了",
+        "intent": "discover_merchant",
+        "category": "restaurant",
+        "location": { "type": "district", "value": "Sha Tin", "resolved": null, "radius_m": null },
+        "time": null,
+        "budget": { "min": null, "max": 350, "currency": "HKD", "per": "party" },
+        "party_size": null,
+        "preferences": [{ "key": "ambience", "value": "quiet", "polarity": 1, "introduced_at_turn": 0 }],
+        "constraints": [],
+        "sort_preference": "price_low",
+        "urgency": null,
+        "language": "zh-HK",
+        "confidence": { "budget": 0.88, "sort_preference": 0.95 },
+        "unknowns": ["time", "party_size", "urgency"],
+        "clarification_asked": true,
+        "turn": 2
+      }
+    },
+    {
+      "name": "04_invalid_unknown_field_is_populated",
+      "description": "Declares `party_size` unknown while still carrying a value — the extractor guessed and then hedged, which spec §8 forbids.",
+      "expect": "invalid",
+      "expect_rule_ids": ["intent_unknowns_are_unsettled"],
+      "instance": {
+        "raw_query": "booking for tonight",
+        "intent": "reserve",
+        "category": null,
+        "location": null,
+        "time": { "type": "relative", "starts_at": "2026-09-22T19:00:00Z", "ends_at": null, "timezone": "Asia/Hong_Kong" },
+        "budget": null,
+        "party_size": 4,
+        "preferences": [],
+        "constraints": [],
+        "sort_preference": "relevance",
+        "urgency": null,
+        "language": "en",
+        "confidence": { "time": 0.8 },
+        "unknowns": ["party_size", "category"]
+      }
+    },
+    {
+      "name": "05_invalid_low_confidence_field_kept",
+      "description": "AGENT_CONTRACT §4: below 0.4 a field must be dropped (and offered as a question), not rendered with a shrug.",
+      "expect": "invalid",
+      "expect_rule_ids": ["intent_low_confidence_dropped"],
+      "instance": {
+        "raw_query": "somewhere nice-ish",
+        "intent": "discover_merchant",
+        "category": "hotel",
+        "location": null,
+        "time": null,
+        "budget": null,
+        "party_size": null,
+        "preferences": [],
+        "constraints": [],
+        "sort_preference": "relevance",
+        "urgency": null,
+        "language": "en",
+        "confidence": { "category": 0.22, "intent": 0.75 },
+        "unknowns": []
+      }
+    },
+    {
+      "name": "06_invalid_sort_preference_outside_registry",
+      "description": "`cheapest` is not one of the five documented sort preferences (API_CONTRACT §7.1) — a new sort mode is a contract change, not a string.",
+      "expect": "invalid",
+      "expect_rule_ids": ["enum"],
+      "instance": {
+        "raw_query": "cheapest place open now",
+        "intent": "discover_offering",
+        "category": null,
+        "location": null,
+        "time": { "type": "open_now", "starts_at": null, "ends_at": null },
+        "budget": null,
+        "party_size": null,
+        "preferences": [],
+        "constraints": [],
+        "sort_preference": "cheapest",
+        "urgency": "high",
+        "language": "en",
+        "confidence": { "sort_preference": 0.9 },
+        "unknowns": []
+      }
+    },
+    {
+      "name": "07_invalid_camel_case_keys",
+      "description": "API_CONTRACT §1 fixes snake_case on the wire; `partySize` / `rawQuery` would deserialize into nothing.",
+      "expect": "invalid",
+      "expect_rule_ids": ["snake_case_keys", "additionalProperties", "required"],
+      "instance": {
+        "rawQuery": "今晚两个人",
+        "intent": "reserve",
+        "category": null,
+        "location": null,
+        "time": null,
+        "budget": null,
+        "partySize": 2,
+        "preferences": [],
+        "constraints": [],
+        "sort_preference": "relevance",
+        "urgency": null,
+        "language": "zh-HK",
+        "confidence": {},
+        "unknowns": []
+      }
+    },
+    {
+      "name": "08_invalid_confidence_key_is_not_an_intent_field",
+      "description": "API_CONTRACT §7.1 types `confidence` as a per-field map, so a key must be an Intent field. `distance_m` is snake_case and a number, so the schema accepts it — but no extractor can be hedged or dropped by it, and §4's floor rule silently skips it. This is the shape a model invents when it scores an output that is not in the contract.",
+      "expect": "invalid",
+      "expect_rule_ids": ["intent_confidence_keys_are_fields"],
+      "instance": {
+        "raw_query": "帮我找沙田适合情侣约会的餐厅，预算500，安静一点，周六晚上",
+        "intent": "discover_merchant",
+        "category": "restaurant",
+        "location": { "type": "district", "value": "Sha Tin", "resolved": { "lat": 22.38, "lng": 114.19 }, "radius_m": null },
+        "time": { "type": "explicit", "starts_at": "2026-09-26T19:00:00Z", "ends_at": null },
+        "budget": { "min": null, "max": 500, "currency": "HKD", "per": "party" },
+        "party_size": null,
+        "preferences": [{ "key": "ambience", "value": "quiet", "polarity": 1 }],
+        "constraints": [{ "key": "cuisine_avoid", "value": "spicy" }],
+        "sort_preference": "relevance",
+        "urgency": "normal",
+        "language": "zh-HK",
+        "confidence": { "category": 0.95, "budget": 0.9, "time": 0.8, "distance_m": 0.99 },
+        "unknowns": ["party_size"]
+      }
+    }
+  ]
+}

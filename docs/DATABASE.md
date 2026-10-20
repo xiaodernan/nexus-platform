@@ -155,6 +155,16 @@ Grouped by domain; the ER overview in §10 shows relationships. "Owner role" = w
 - **`referrals`** — consumer|merchant|creator loops (§61, §62); `status` (`invited|signed_up|first_value|rewarded`) so
   rewards fire only on genuine conversion (§110 no fake growth).
 - **`subscriptions`** — merchant plan + credits (§65).
+- **`share_links`** (V7) — the short link `POST /api/v1/share` promised in §8. `code` is globally UNIQUE
+  (a stranger holding the link knows nothing about tenants, so the code has to resolve on its own); a
+  **partial** unique index on `(tenant_id, subject_type, subject_id) WHERE revoked_at IS NULL` makes
+  "one live link per subject" a constraint rather than a lookup, so re-sharing returns the same code and
+  a revoked link steps aside instead of blocking a replacement. `subject_type ∈
+  merchant|offering|collection|guide`; `hits` is written by the edge, **never** by the resolver route
+  (a GET that writes cannot be cached). No `updated_at` and therefore no trigger: V1 installs
+  `set_updated_at()` only on the tables it lists, and a column a trigger expects but the table lacks is
+  the exact shape of the `facts` incident V6 fixed. Rows are minted only for subjects that are already
+  public in that tenant, so the table cannot hold an address to a page that never existed.
 
 ### 3.11 Content / SEO (§28–§30, §64)
 - **`seo_pages`** — path/kind (`city|category|category_district|theme|merchant|offering|guide`), i18n `title/title_zh`,

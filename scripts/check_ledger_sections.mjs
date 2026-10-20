@@ -69,7 +69,7 @@ const notes = [];
 for (const led of LEDGERS) {
   let headText;
   try {
-    headText = execFileSync('git', ['show', `${REV}:${led.path}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26 });
+    headText = execFileSync('git', ['show', `${REV}:${led.path}`], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26 });
   } catch (e) {
     notChecked(`cannot read \`git show ${REV}:${led.path}\` — ${String(e.message).split('\n')[0]}`);
   }

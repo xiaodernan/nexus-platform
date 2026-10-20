@@ -61,6 +61,8 @@ import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
+import { guard, spawnResult } from './spawn_guard.mjs';
+
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PLANT_ARG = process.argv.find((a) => a.startsWith('--reader='));
 if (process.argv.includes('--help')) {
@@ -79,9 +81,28 @@ const die = (m) => { console.error(`RIG REFUSED — ${m}`); process.exit(2); };
 // mis-attribution this repository's own gate exists to refuse (the first run of this file died on that
 // downstream guard while the real cause was `Author identity unknown` in the commit it had swallowed).
 const git = (dir, ...args) => {
-  const r = spawnSync('git', ['-c', 'user.name=NEXUS Witness', '-c', 'user.email=witness@nexus.local',
-    '-C', dir, ...args], { encoding: 'utf8' });
-  if (r.status !== 0) die(`git ${args.join(' ')} in ${dir} failed — ${r.stderr.trim() || r.status}`);
+  // Guarded at the spawn, not at the exit code. A spawn failure leaves `status: null`, so the old test
+  // `r.status !== 0` was true for a git that never ran and reported it as `failed — null` — a sentence
+  // about git, when the fact was about the machine. Censused in STATUS §224 with five other tools.
+  const g = guard(() => spawnSync('git', ['-c', 'user.name=NEXUS Witness', '-c', 'user.email=witness@nexus.local',
+    '-C', dir, ...args], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' }), `git ${args.join(' ')}`);
+  if (!g.ok) {
+    console.log(`RESULT: NOT CHECKED — this harness commits to real throwaway repositories, and ${g.what}`
+      + ` could not be started: ${g.reason}.`);
+    console.log('  No arm below was run. A refusal is not a failure, and the two must not share a verdict line.');
+    process.exit(2);
+  }
+  // `spawnSync` does not throw — it reports the failure in the returned object — so the spawn is asked
+  // twice: once for a throw, once for a returned `error`. Both are the same event.
+  const s = spawnResult(g.value, `git ${args.join(' ')}`);
+  if (!s.ok) {
+    console.log(`RESULT: NOT CHECKED — this harness commits to real throwaway repositories, and ${s.what}`
+      + ` could not be started: ${s.reason}.`);
+    console.log('  No arm below was run. A refusal is not a failure, and the two must not share a verdict line.');
+    process.exit(2);
+  }
+  const r = s.value;
+  if (r.status !== 0) die(`git ${args.join(' ')} in ${dir} failed — ${(r.stderr ?? '').trim() || r.status}`);
   return r;
 };
 /** Lines the way the reader counts them: `split(/\r?\n/)`, so a body ending in a newline has one more. */
@@ -90,7 +111,7 @@ function fileBody(n, tag, blankAt = null) {
   return Array.from({ length: n }, (_, i) => (blankAt === i + 1 ? '' : `${tag} line ${i + 1}`)).join('\n') + '\n';
 }
 function run(args, cwd) {
-  const r = spawnSync(process.execPath, [READER, ...args], { cwd, encoding: 'utf8', maxBuffer: 64 << 20 });
+  const r = spawnSync(process.execPath, [READER, ...args], { stdio: ['ignore', 'pipe', 'pipe'], cwd, encoding: 'utf8', maxBuffer: 64 << 20 });
   return { code: r.status, out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 }
 

@@ -1,0 +1,21 @@
+uid=1_1 RootWebArea "NEXUS — 用一句话，找到今天想去的地方" focusable url="http://127.0.0.1:3001/"
+  uid=1_2 link "跳到主要内容" focusable url="http://127.0.0.1:3001/#nexus-main"
+    uid=1_3 StaticText "跳到主要内容"
+  uid=1_4 banner
+    uid=1_5 link "NEXUS" focusable url="http://127.0.0.1:3001/"
+      uid=1_6 StaticText "NEXUS"
+    uid=1_7 link "智能搜索" focusable url="http://127.0.0.1:3001/search"
+      uid=1_8 StaticText "智能搜索"
+  uid=1_9 StaticText "当前是示例数据"
+  uid=1_10 StaticText "站内商户、商品与评价均为合成数据，用于演示产品流程；不代表任何真实商户或营业状况。"
+  uid=1_11 main
+  uid=1_12 contentinfo
+    uid=1_13 StaticText "示例数据声明"
+    uid=1_14 StaticText "Phase 1 使用合成数据集演示流程；所有示例内容均标注“示例数据”，不会以真实商户或真实客流呈现。"
+    uid=1_15 StaticText "排序方法"
+    uid=1_16 StaticText "自然结果由相关度、质量、距离与价格匹配决定；付费展示位与自然排序分离，并始终标注“广告”。"
+    uid=1_17 StaticText "信任与安全"
+    uid=1_18 StaticText "任何结论都可追溯到来源事实；模型不会直接写入数据库，商户资料修改由商户决定。"
+    uid=1_19 StaticText "© 2026 NEXUS"
+    uid=1_20 StaticText "用一句话，找到今天想去的地方"
+  uid=1_21 button "Open Next.js Dev Tools" expandable focusable hasPopup="menu" invalid="false"

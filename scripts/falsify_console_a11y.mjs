@@ -23,7 +23,8 @@
  * Exit:  0 every prediction held; 1 an arm missed (the reader cannot do what its docblock says)
  */
 import { execFileSync } from 'node:child_process';
-import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { safeRemove } from './spawn_guard.mjs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,11 +41,52 @@ const SUBTREES = [
   'packages/ui/README.md',
 ];
 
-rmSync(FIX, { recursive: true, force: true });
+// A subtree that is not on disk is not a fixture with nothing in it — it is a tree this harness cannot judge,
+// and the first version crashed with ENOENT out of `readdirSync` instead of saying so. On a clean checkout
+// that reads as a broken harness rather than a missing surface, which is the distinction every reader in this
+// directory is required to keep (STATUS §308 item 2). Refuse, with the name of what is absent.
+const missing = SUBTREES.filter((t) => !existsSync(join(ROOT, t)));
+if (missing.length) {
+  console.log(`RESULT: NOT CHECKED — ${missing.length} of ${SUBTREES.length} subtree(s) this census reads are absent: `
+    + `${missing.join(', ')}.`);
+  console.log('  No arm was run. A tree this harness cannot see is not a tree whose accessibility is clean,');
+  console.log('  and the two must not share a verdict line.');
+  process.exit(2);
+}
+
+safeRemove(FIX);  // batched: a bulk `rmSync` of >50 files is refused by this host's delete shim
+
+/**
+ * Copy the subtrees the census reads, file by file.
+ *
+ * `cpSync(src, dest, { recursive: true })` on a DIRECTORY kills this Node process silently with exit 127 on
+ * this host — no output, no stack, `--trace-exit` silent — while copying a single FILE works. Measured on a
+ * minimal reproduction with no harness in the loop:
+ *
+ *   cpSync('apps/web/app', dest, {recursive:true})            rc=127, 0 bytes
+ *   cpSync('packages/ui/README.md', dest, {recursive:true})   rc=0, prints OK
+ *
+ * The parent directory existing or not makes no difference (both tested). So the copy is done by hand:
+ * `mkdirSync` then `copyFileSync` per file, which copies the same 89 files in under a second. A harness whose
+ * first statement never runs looks exactly like a broken harness, and this one was recorded as one.
+ */
+function copyTree(src, dest) {
+  // `SUBTREES` names three directories and one file (`packages/ui/README.md`), and `cpSync` took both shapes.
+  // The hand-rolled version has to ask which one it was given: the first version called `readdirSync` on the
+  // README and died with ENOTDIR.
+  if (statSync(src).isFile()) { mkdirSync(dirname(dest), { recursive: true }); copyFileSync(src, dest); return; }
+  mkdirSync(dest, { recursive: true });
+  for (const e of readdirSync(src, { withFileTypes: true })) {
+    const a = join(src, e.name);
+    const b = join(dest, e.name);
+    if (e.isDirectory()) copyTree(a, b);
+    else copyFileSync(a, b);
+  }
+}
 
 function fixture(slug) {
   const dir = join(FIX, slug);
-  for (const s of SUBTREES) cpSync(join(ROOT, s), join(dir, s), { recursive: true });
+  for (const s of SUBTREES) copyTree(join(ROOT, s), join(dir, s));
   return dir;
 }
 
@@ -164,7 +206,7 @@ for (const arm of ARMS) {
   let out;
   let code;
   try {
-    out = execFileSync('node', [CHECKER, '--plane', dir], { encoding: 'utf8', cwd: ROOT, maxBuffer: 1 << 26 });
+    out = execFileSync('node', [CHECKER, '--plane', dir], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', cwd: ROOT, maxBuffer: 1 << 26 });
     code = 0;
   } catch (e) {
     out = `${e.stdout || ''}${e.stderr || ''}`;

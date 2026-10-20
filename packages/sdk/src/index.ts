@@ -48,7 +48,7 @@ export { CartsResource } from "./resources/carts.js";
 export type { CartItemInput, CheckoutResult, PriceCheckResult } from "./resources/carts.js";
 export { OrdersResource } from "./resources/orders.js";
 export { ReservationsResource } from "./resources/reservations.js";
-export type { CreateReservationInput, Reservation } from "./resources/reservations.js";
+export type { CreateReservationInput, Reservation, ReservationPatch } from "./resources/reservations.js";
 export { PaymentsResource } from "./resources/payments.js";
 export { ReviewsResource } from "./resources/reviews.js";
 export { ConversationsResource } from "./resources/conversations.js";

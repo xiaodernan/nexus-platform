@@ -29,6 +29,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { guard } from './spawn_guard.mjs';
 import { LEDGER_EXT, walkFiles } from './source_index.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -46,11 +47,32 @@ const GRAMMAR = new RegExp(grammarLine[0].match(/matchAll\((\/.*\/g)\)/)[1].slic
 
 const FILES = walkFiles(ROOT, (name) => LEDGER_EXT.test(name) || name.startsWith('.'));
 const CACHE = new Map();
+/**
+ * `git show` for the committed plane, refusing by name when the machine cannot spawn git at all.
+ *
+ * Only a **spawn failure** is refused here. `git show` also throws when the path simply is not at HEAD, and
+ * that is a different event with a different meaning — a ledger citing a file no commit holds is a finding
+ * for this census, not an environment note. Censused in STATUS §224.
+ */
+function gitShow(rel) {
+  let thrown = null;
+  const g = guard(() => execFileSync('git', ['show', `HEAD:${rel}`], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 }),
+    `git show HEAD:${rel}`);
+  if (!g.ok) {
+    if (!g.spawn) throw thrown ?? new Error(`${g.what} failed: ${g.reason}`);
+    console.log(`RESULT: NOT CHECKED — this machine cannot spawn git (${g.reason}), so the committed plane`
+      + ' is unreadable here.');
+    console.log('  A refusal is not a finding, and the two must not share a verdict line.');
+    process.exit(2);
+  }
+  return g.value;
+}
+
 const lines = (rel) => {
   if (!CACHE.has(rel)) {
     const raw = WORKTREE || !rel.startsWith('docs/')
       ? readFileSync(join(ROOT, rel), 'utf8')
-      : execFileSync('git', ['show', `HEAD:${rel}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 });
+      : gitShow(rel);
     CACHE.set(rel, raw.replace(/\r\n/g, '\n').split('\n'));
   }
   return CACHE.get(rel);

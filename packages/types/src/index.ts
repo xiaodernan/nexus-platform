@@ -4,8 +4,10 @@
  * Sources of truth, in the order the contracts themselves declare:
  *  - `docs/API_CONTRACT.md`   — HTTP shapes (§0-§11). §2 core shared objects, §7.1 Intent, §10 external surfaces.
  *  - `docs/AGENT_CONTRACT.md` — agent/tool/trust invariants. §3 tool registry, §10 event schema.
- *  - `infra/db/V1__init.sql`  — persisted column names/types (note: `docs/DECISIONS.md` line 4 calls
- *    this `infra/db/migrations/V1__init.sql`; the file on disk has no `migrations/` segment).
+ *  - `infra/db/migrations/V1__init.sql` — persisted column names/types. Every `V1 line NNNN`
+ *    comment in this package points at that file; `src/tests/types.test.ts` reads the citations
+ *    back off disk and checks them, because a comment that points at the wrong line reads like
+ *    evidence and is not.
  *  - `docs/DECISIONS.md`      — binding stack/layout decisions (D1-D8).
  *  - The product spec (repo root `新建 文本文档.txt`) supplies the `§N` numbers quoted throughout.
  *

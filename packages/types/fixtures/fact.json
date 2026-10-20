@@ -1,0 +1,138 @@
+{
+  "$comment": "Fixture set for src/schemas/fact.json — the trust-layer primitive (API_CONTRACT §2, AGENT_CONTRACT §4/§5).",
+  "schema": "fact",
+  "cases": [
+    {
+      "name": "01_valid_api_contract_example",
+      "description": "docs/API_CONTRACT.md §2's Fact example: a merchant-confirmed HK$128.00 price observed 02:00Z with the 6h price TTL of AGENT §5.",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "fact_id": "33333333-3333-4333-8333-333333333333",
+        "subject_type": "offering",
+        "subject_id": "22222222-2222-4222-8222-222222222222",
+        "merchant_id": "11111111-1111-4111-8111-111111111111",
+        "attribute": "price",
+        "value": { "amount": "128.00", "currency": "HKD" },
+        "source": "merchant",
+        "confidence": 0.98,
+        "observed_at": "2026-09-22T02:00:00Z",
+        "expires_at": "2026-09-22T08:00:00Z",
+        "stale": false
+      }
+    },
+    {
+      "name": "02_valid_business_hours_object",
+      "description": "V1 `facts.value jsonb` also carries structured values; `opening_hours` may cache for 24h (AGENT §5).",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "fact_id": "55555555-5555-4555-8555-555555555555",
+        "subject_type": "merchant",
+        "subject_id": "11111111-1111-4111-8111-111111111111",
+        "attribute": "opening_hours",
+        "value": {
+          "sat": { "opens_at": "12:00", "closes_at": "22:00", "crosses_midnight": false },
+          "sun": { "opens_at": "12:00", "closes_at": "21:00", "crosses_midnight": false }
+        },
+        "source": "imported",
+        "source_uri": "https://example.com/lung-yuen/hours",
+        "confidence": 0.9,
+        "observed_at": "2026-09-21T02:00:00Z",
+        "expires_at": "2026-09-22T02:00:00Z",
+        "stale": false
+      }
+    },
+    {
+      "name": "03_valid_inferred_popularity_below_hedge_floor",
+      "description": "An `inferred` fact sits at the bottom of AGENT §4's source priority, so it stays below the 0.6 hedge floor; popularity caches for at most 1h (§5).",
+      "expect": "valid",
+      "expect_rule_ids": [],
+      "instance": {
+        "fact_id": "66666666-6666-4666-8666-666666666666",
+        "subject_type": "merchant",
+        "subject_id": "11111111-1111-4111-8111-111111111111",
+        "attribute": "popularity",
+        "value": 0.72,
+        "unit": "score",
+        "source": "inferred",
+        "confidence": 0.45,
+        "observed_at": "2026-09-22T02:00:00Z",
+        "expires_at": "2026-09-22T03:00:00Z",
+        "stale": false
+      }
+    },
+    {
+      "name": "04_invalid_amount_is_a_float",
+      "description": "API_CONTRACT §1: money is a string decimal. A JS float reaches the client as `128` and silently loses the cents, so it is caught by the money-shape rule even though a generic object would satisfy the schema.",
+      "expect": "invalid",
+      "expect_rule_ids": ["fact_money_has_currency"],
+      "instance": {
+        "fact_id": "77777777-7777-4777-8777-777777777777",
+        "subject_type": "offering",
+        "subject_id": "22222222-2222-4222-8222-222222222222",
+        "attribute": "price",
+        "value": { "amount": 128.0, "currency": "HKD" },
+        "source": "imported",
+        "confidence": 0.8,
+        "observed_at": "2026-09-22T02:00:00Z",
+        "expires_at": "2026-09-22T08:00:00Z",
+        "stale": false
+      }
+    },
+    {
+      "name": "05_invalid_price_cached_beyond_ttl",
+      "description": "AGENT_CONTRACT §5 allows a price to be reused for 6 hours; 48 hours would render 「HK$128」 long after the merchant changed the menu (spec §20).",
+      "expect": "invalid",
+      "expect_rule_ids": ["fact_within_ttl"],
+      "instance": {
+        "fact_id": "88888888-8888-4888-8888-888888888888",
+        "subject_type": "offering",
+        "subject_id": "22222222-2222-4222-8222-222222222222",
+        "attribute": "price",
+        "value": { "amount": "128.00", "currency": "HKD" },
+        "source": "merchant",
+        "confidence": 0.95,
+        "observed_at": "2026-09-20T02:00:00Z",
+        "expires_at": "2026-09-22T02:00:00Z",
+        "stale": false
+      }
+    },
+    {
+      "name": "06_invalid_source_outside_vocabulary",
+      "description": "`facts.source` is a closed five-value priority list (API §2 / V1 line 545). A sixth provenance would silently outrank merchant data in conflict resolution.",
+      "expect": "invalid",
+      "expect_rule_ids": ["enum"],
+      "instance": {
+        "fact_id": "99999999-9999-4999-8999-999999999999",
+        "subject_type": "merchant",
+        "subject_id": "11111111-1111-4111-8111-111111111111",
+        "attribute": "description",
+        "value": "Cozy Cantonese spot in Sha Tin.",
+        "source": "chatbot",
+        "confidence": 0.7,
+        "observed_at": "2026-09-22T02:00:00Z",
+        "expires_at": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "07_invalid_inferred_but_confident",
+      "description": "A model-derived value claiming 0.95 inverts AGENT §4's precedence: only the merchant may assert that strongly.",
+      "expect": "invalid",
+      "expect_rule_ids": ["fact_inferred_capped_confidence"],
+      "instance": {
+        "fact_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+        "subject_type": "offering",
+        "subject_id": "22222222-2222-4222-8222-222222222222",
+        "attribute": "price",
+        "value": { "amount": "98.00", "currency": "HKD" },
+        "source": "inferred",
+        "confidence": 0.95,
+        "observed_at": "2026-09-22T02:00:00Z",
+        "expires_at": "2026-09-22T08:00:00Z",
+        "stale": false
+      }
+    }
+  ]
+}

@@ -16,6 +16,7 @@ export * from './utils';
 export * from './icons/Icon';
 
 export * from './primitives/Button';
+export * from './primitives/button-classes';
 export * from './primitives/Input';
 export * from './primitives/field-classes';
 export * from './primitives/Card';
@@ -33,7 +34,10 @@ export * from './motion/Motion';
 export * from './trust/types';
 export * from './trust/fact';
 export * from './trust/Renderers';
-export * from './trust/EntityCard';
+// The model (`EntityCard`, from ./trust/types) and the component share a name in the contract docs.
+// The barrel exports the component as `EntityCardView` so `EntityCard` always means the wire type.
+export { EntityCard as EntityCardView, EntityRail } from './trust/EntityCard';
+export type { EntityCardProps } from './trust/EntityCard';
 export * from './trust/CompareTable';
 
 export * from './feedback/States';

@@ -13,7 +13,12 @@
 
 export type CardType = 'merchant' | 'product' | 'service' | 'experience' | 'collection';
 export type FactSubjectType = 'merchant' | 'offering' | 'location' | 'review' | 'user' | 'collection';
-export type FactSource = 'merchant' | 'imported' | 'observed' | 'third_party' | 'inferred';
+/**
+ * `demo` is a source, not a flag: synthetic seed data must arrive with its provenance stated
+ * rather than being clamped to a real-world one (spec §109, §155). It ranks below `inferred`, so
+ * it can never out-claim merchant- or observation-backed data in a conflict.
+ */
+export type FactSource = 'merchant' | 'imported' | 'observed' | 'third_party' | 'inferred' | 'demo';
 
 export interface GeoPoint {
   lat: number;
@@ -102,6 +107,10 @@ export interface EntityFlags {
   sponsored?: boolean | null;
   demo?: boolean | null;
   unverified?: boolean | null;
+  /** Offering cards only: `price_source = 'estimated'`, so the number is a guess, not a claim. */
+  estimated_price?: boolean | null;
+  /** Review cards only: the reviewer transacted with this merchant (§55 evidence). */
+  verified_visit?: boolean | null;
 }
 
 export interface EntityCard {

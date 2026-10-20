@@ -73,7 +73,7 @@
  *         the reader it never reached
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { isSpawnFailure } from './spawn_guard.mjs';
+import { isSpawnFailure, interpreterDeath } from './spawn_guard.mjs';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -157,6 +157,26 @@ const PLANT_AMBIG = fixture('plant_ambiguous.md', [
   'The real one is at scripts/source_index.mjs:1 and the vague one is at package.json:1.',
 ]);
 // Not a ledger: no `## ` heading anywhere, which the census reads as "I did not read what I claim to have".
+// D275 — the elided path. The reader's header has claimed since D86 that "an elided path ... is a citation to
+// a file", and until this unit no branch of resolve() implemented it: the elision mark is not a word
+// character, so the tokenizer eats it and keeps the slash, and the suffix branch then asked for a double
+// slash no tree holds. The §257 census row quoting that form was filed FILE NOT FOUND by exactly that gap.
+// First plant: a tail exactly one file holds, judged on its line like any other citation. Second: a tail
+// several files hold, which is AMBIGUOUS — an elision is not an exemption from naming one file.
+const PLANT_ELIDED = fixture('plant_elided_path.md', [
+  '# D275 plant',
+  '',
+  '## D994 An elided prefix that one file answers',
+  '',
+  'The real one is at scripts/source_index.mjs:1 and the elided one is at \u2026/scripts/source_index.mjs:1.',
+]);
+const PLANT_ELIDED_AMBIG = fixture('plant_elided_ambiguous.md', [
+  '# D275 plant',
+  '',
+  '## D993 An elided prefix six files answer',
+  '',
+  'The real one is at scripts/source_index.mjs:1 and the elided one is at \u2026/package.json:1.',
+]);
 const HEADLESS = fixture('plant_headless.md', ['# D157 plant', '', 'a citation-shaped token: package.json:1']);
 
 // D161 — the blank-line class, aimed at the plane that judges it. Both numbers are derived from the cited file
@@ -223,7 +243,7 @@ const runWith = (reader, args, cwd = ROOT) => {
   // the arm that names `attempts 3` is what caught it — the counter is a measurement, not an index.
   do {
     tries += 1;
-    r = spawnSync(process.execPath, [reader, ...args], { cwd, encoding: 'utf8', maxBuffer: 1 << 26 });
+    r = spawnSync(process.execPath, [reader, ...args], { stdio: ['ignore', 'pipe', 'pipe'], cwd, encoding: 'utf8', maxBuffer: 1 << 26 });
   } while (tries < READ_ATTEMPTS && (r.error || r.signal || (r.stdout ?? '').trim() === ''));
   // The retry above treats `r.error` as a reason to try again, which is right for a reader that died and wrong
   // for one that never started: after three attempts at a spawn this machine refuses, the loop fell through
@@ -333,6 +353,20 @@ const ARMS = [
   { name: '--text=<plant> reaches the ambiguous arm', args: [`--text=${PLANT_AMBIG}`], expect: 1,
     // The count and the candidate list are not pinned: which three of the six `package.json` files the walk
     // reports first is the index's business, and a floor of "some number, and the word hold it" is the claim.
+    must: [/FALSE LEDGER CITATIONS \(1\)/, /AMBIGUOUS/, /[1-9]\d* files hold it: /] },
+  // D275 — the elided-path branch, aimed at the reader rather than at a sentence about it. The first arm is
+  // the green leg the §257 offender could not have: one file answers the elided tail, so the citation
+  // resolves and is judged on its line. The second is the refusal an elision does not buy: six files hold
+  // `package.json`, so the elided cite is AMBIGUOUS and the row is an offender like any other.
+  { name: 'an elided prefix resolves to the one file its tail names, and is judged on its line',
+    args: [`--text=${PLANT_ELIDED}`], expect: 0,
+    // The absent list is the offender header alone: the reader's own LIMITS footer spells the class names
+    // ("FILE NOT FOUND speaks first"), so a broader absence pattern reddens on prose the reader always
+    // prints. A held green arm here is the sentence above plus zero offenders, nothing weaker.
+    must: [/every citation-shaped token resolves/, /strict offenders\s+0/],
+    absent: [/FALSE LEDGER CITATIONS/] },
+  { name: 'an elided prefix more than one file holds is AMBIGUOUS — an elision is not an exemption',
+    args: [`--text=${PLANT_ELIDED_AMBIG}`], expect: 1,
     must: [/FALSE LEDGER CITATIONS \(1\)/, /AMBIGUOUS/, /[1-9]\d* files hold it: /] },
   { name: 'a citation onto an empty line offends on the --text plane, and it is the only offender there',
     args: [`--text=${PLANT_BLANK}`], expect: 1,
@@ -464,6 +498,22 @@ function gateKnobs() {
   return names;
 }
 
+/**
+ * Can this host start a bash shell at all? The probe is the smallest thing that answers it, and the reason
+ * is carried rather than swallowed, because the two deaths are different refusals: `bash` missing from PATH
+ * (ENOENT, `isSpawnFailure`) and bash present but its interpreter unable to load (`interpreterDeath`). On a
+ * healthy plane this returns null and the bash arms below run as written. D275 measured both on this host:
+ * the WSL relay exits 1 with a CreateProcessCommon error, which is neither ENOENT nor a bash verdict.
+ */
+function bashDeath() {
+  try {
+    execFileSync('bash', ['-c', 'exit 0'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    return null;
+  } catch (e) {
+    return interpreterDeath(e) ?? (isSpawnFailure(e) ? String(e.code) : null);
+  }
+}
+
 const results = [];
 for (const arm of ARMS) {
   const r = run(arm.args, arm.cwd);
@@ -475,22 +525,38 @@ for (const arm of ARMS) {
 
 {
   const knobs = gateKnobs();
-  let out, code;
-  try { out = execFileSync('bash', ['scripts/db_gate_fresh.sh', '--help'], { cwd: ROOT, encoding: 'utf8' }); code = 0; }
-  catch (e) {
-    if (isSpawnFailure(e)) {
-      console.log(`RESULT: NOT CHECKED — the gate script's --help could not be run: ${e.code}.`);
-      console.log('  A refusal is not a failure, and the two must not share a verdict line.');
-      process.exit(2);
+  // D275 — a bash that cannot start a shell is a refusal, not a verdict. Measured here before the fix: the
+  // relay's own error line became this arm's whole output, so it scored "exit 0 expected, 1 printed" and
+  // named three knobs as missing text — a failed prediction about a script it never reached, filed the same
+  // way as a real defect would have been. The refusal says which interpreter died and why.
+  const death = bashDeath();
+  if (death) {
+    const why = `bash could not start a shell on this host (${death}), so the gate script's --help could not be read`;
+    console.log(`RESULT: NOT CHECKED — ${why}.`);
+    console.log('  A refusal is not a failure, and the two must not share a verdict line.');
+    results.push({
+      arm: { name: `the shipped --help documents every knob in its own Environment block (${knobs.length} names) — refused: ${death}`,
+        expect: 2, must: [/RESULT: NOT CHECKED — bash could not start a shell/], absent: [] },
+      code: 2, out: `RESULT: NOT CHECKED — ${why}.\n`,
+    });
+  } else {
+    let out, code;
+    try { out = execFileSync('bash', ['scripts/db_gate_fresh.sh', '--help'], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8' }); code = 0; }
+    catch (e) {
+      if (isSpawnFailure(e)) {
+        console.log(`RESULT: NOT CHECKED — the gate script's --help could not be run: ${e.code}.`);
+        console.log('  A refusal is not a failure, and the two must not share a verdict line.');
+        process.exit(2);
+      }
+      out = `${e.stdout || ''}${e.stderr || ''}`; code = e.status ?? -1;
     }
-    out = `${e.stdout || ''}${e.stderr || ''}`; code = e.status ?? -1;
+    const missing = knobs.filter((k) => !out.includes(k));
+    results.push({
+      arm: { name: `the shipped --help documents every knob in its own Environment block (${knobs.length} names)`,
+        expect: 0, must: knobs.map((k) => new RegExp(k)), absent: [] },
+      code, out, missing,
+    });
   }
-  const missing = knobs.filter((k) => !out.includes(k));
-  results.push({
-    arm: { name: `the shipped --help documents every knob in its own Environment block (${knobs.length} names)`,
-      expect: 0, must: knobs.map((k) => new RegExp(k)), absent: [] },
-    code, out, missing,
-  });
 }
 {
   // The anchor pins the step's number, not the era's step total: D219 renumbered every header from /12 to
@@ -499,11 +565,7 @@ for (const arm of ARMS) {
   const from = GATE.findIndex((l) => l.includes('step "8/'));
   const to = GATE.findIndex((l, i) => i > from && /^step /.test(l));
   const region = from < 0 ? '' : GATE.slice(from, to < 0 ? GATE.length : to).join('\n');
-  const want = [/node scripts\/falsify_ledger_text\.mjs/, /GATE_LEDGER_TEXT:\+--text=/,
-    /GATE_LEDGER_DIR:\+--dir=/, /GATE_LEDGER_HEAD_DIR:\+--head-dir=/,
-    // The two modes are mutually exclusive BY TEXT: `--worktree` alongside a supplied plane would compare
-    // nothing and still print a verdict, so the branch itself is what is pinned here, not just the flags.
-    /if \[ -n "\$\{GATE_LEDGER_DIR:-\}" \]/, /node scripts\/check_ledger_citations\.mjs --worktree/];
+  const want = [/node scripts\/falsify_ledger_text\.mjs/, /\$\{GATE_LEDGER_TEXT:\+--text=/, /\$\{GATE_LEDGER_DIR:\+--dir=/, /\$\{GATE_LEDGER_HEAD_DIR:\+--head-dir=/, /if \[ -n "\$\{GATE_LEDGER_DIR:-\}" \]/, /node scripts\/check_ledger_citations\.mjs --worktree/];
   results.push({
     arm: { name: 'gate step 8 runs this harness AND passes the knob to the reader', expect: 0, must: want, absent: [] },
     code: want.every((re) => re.test(region)) ? 0 : 1, out: region,
@@ -602,28 +664,54 @@ const runHelpers = (knobText, wtText) => {
   writeFileSync(pb, wtText, 'utf8');
   const dir = FIX.replace(/\\/g, '/');
   writeFileSync(ps, `set -euo pipefail\n${src}\nreconcile 13t "$FILES_READS" "$(cat '${dir}/d190-knob.txt')" "$(cat '${dir}/d190-wt.txt')"\n`, 'utf8');
-  try { return { code: 0, out: execFileSync('bash', [ps], { encoding: 'utf8' }) }; }
-  catch (e) { return { code: e.status ?? -1, out: `${e.stdout || ''}${e.stderr || ''}` }; }
+  try { return { code: 0, out: execFileSync('bash', [ps], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' }) }; }
+  catch (e) {
+    const death = interpreterDeath(e);
+    if (death) return { code: 2, out: `RESULT: NOT CHECKED — bash could not start a shell on this host (${death}).\n` };
+    return { code: e.status ?? -1, out: `${e.stdout || ''}${e.stderr || ''}` };
+  }
 };
+// D275 — both helper arms are refused, not missed, when bash cannot start a shell: the arithmetic they
+// pin lives in the gate's own `reconcile` function, so a dead interpreter takes the prediction with it.
 {
-  const { code, out } = runHelpers(
-    '  citations resolved   12 file(s) under a 21-dir vendor exclusion\nFALSE SITES (8):\n',
-    '  citations resolved   10 file(s) under a 14-dir vendor exclusion\nFALSE SITES (11):\n');
-  results.push({
-    arm: { name: 'reconcile prints both runs\' counts and their difference, computed by the gate\'s own helpers',
-      expect: 0, must: [/knob leg 12 file\(s\) cited \/ 8 offender\(s\), in-worktree leg 10 \/ 11/,
-        /moves the offender count by 3/], absent: [/no-verdict/, /not comparable/] },
-    code, out,
-  });
+  const death = bashDeath();
+  if (death) {
+    const why = `bash could not start a shell on this host (${death}), so the gate's reconcile helper could not be run`;
+    results.push({
+      arm: { name: 'reconcile prints both runs\' counts and their difference, computed by the gate\'s own helpers — refused',
+        expect: 2, must: [/RESULT: NOT CHECKED — bash could not start a shell/], absent: [] },
+      code: 2, out: `RESULT: NOT CHECKED — ${why}.\n`,
+    });
+  } else {
+    const { code, out } = runHelpers(
+      '  citations resolved   12 file(s) under a 21-dir vendor exclusion\nFALSE SITES (8):\n',
+      '  citations resolved   10 file(s) under a 14-dir vendor exclusion\nFALSE SITES (11):\n');
+    results.push({
+      arm: { name: 'reconcile prints both runs\' counts and their difference, computed by the gate\'s own helpers',
+        expect: 0, must: [/knob leg 12 file\(s\) cited \/ 8 offender\(s\), in-worktree leg 10 \/ 11/,
+          /moves the offender count by 3/], absent: [/no-verdict/, /not comparable/] },
+      code, out,
+    });
+  }
 }
 {
-  const { code, out } = runHelpers('node:internal/errors:900\n  throw err;\n',
-    '  citations resolved   10 file(s) under a 14-dir vendor exclusion\nFALSE SITES (11):\n');
-  results.push({
-    arm: { name: 'a leg that printed neither an offender header nor its clean sentence reads no-verdict and stops the subtraction',
-      expect: 0, must: [/no-verdict/, /not comparable/], absent: [/moves the offender count by/] },
-    code, out,
-  });
+  const death = bashDeath();
+  if (death) {
+    const why = `bash could not start a shell on this host (${death}), so the gate's reconcile helper could not be run`;
+    results.push({
+      arm: { name: 'a leg that printed neither an offender header nor its clean sentence reads no-verdict and stops the subtraction — refused',
+        expect: 2, must: [/RESULT: NOT CHECKED — bash could not start a shell/], absent: [] },
+      code: 2, out: `RESULT: NOT CHECKED — ${why}.\n`,
+    });
+  } else {
+    const { code, out } = runHelpers('node:internal/errors:900\n  throw err;\n',
+      '  citations resolved   10 file(s) under a 14-dir vendor exclusion\nFALSE SITES (11):\n');
+    results.push({
+      arm: { name: 'a leg that printed neither an offender header nor its clean sentence reads no-verdict and stops the subtraction',
+        expect: 0, must: [/no-verdict/, /not comparable/], absent: [/moves the offender count by/] },
+      code, out,
+    });
+  }
 }
 
 // The equivalence claim, checked as text rather than as two independent predictions: the two spellings of the
@@ -694,7 +782,7 @@ const runHelpers = (knobText, wtText) => {
       expect: 0, must: [], absent: [] },
     code: reproduces ? 0 : 1, out: `shipped ${shipped.length} · mirror ${mirror.length}`,
   });
-  const tracked = new Set(execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' })
+  const tracked = new Set(execFileSync('git', ['ls-files'], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8' })
     .split(/\r?\n/).filter((l) => l !== ''));
   const extras = walkKeeping('.scratch').filter((p) => !shippedSet.has(p));
   results.push({
@@ -746,8 +834,13 @@ if (MUTATES) {
       for (const sib of ['cli_args.mjs', 'source_index.mjs']) {
         writeFileSync(join(MDIR, sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
       }
+      // The timeout has to exceed this harness's own runtime, because the arm runs THIS FILE again. At
+      // 300000 ms the nested run was killed at five minutes while the harness needs eight, so `child.status`
+      // was `null`, `code` became `-1`, and the arm missed on a `-1` that read like a spawn failure. Measured
+      // in a full gate run: step 8 stopped on `MISSED exit 1 expected, -1 printed`. A budget below the thing
+      // it budgets for is not a budget.
       const child = spawnSync(process.execPath, [HARNESS, `--reader=${join(MDIR, 'check_ledger_citations.mjs')}`],
-        { cwd: ROOT, encoding: 'utf8', timeout: 300000, maxBuffer: 1 << 26 });
+        { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', timeout: 900000, maxBuffer: 1 << 26 });
       code = child.status ?? -1;
       out = `${child.stdout || ''}${child.stderr || ''}`;
     } catch (e) {
@@ -847,7 +940,7 @@ if (MUTATES) {
     code: hoistedBlind.length === 1 ? 1 : 0, out: `hoisted copy blind exit(s) ${hoistedBlind.length}`,
   });
   const child = spawnSync(process.execPath, [HARNESS, `--reader=${silent}`],
-    { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26, timeout: 600000 });
+    { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26, timeout: 600000 });
   results.push({
     arm: { name: 'this harness aimed at a silent reader refuses the whole run instead of scoring arms it never observed',
       expect: 2, must: [/RESULT: NOT CHECKED — the reader never spoke/, /unread \d+ of \d+ arms/],
@@ -860,7 +953,7 @@ if (MUTATES) {
 
 // And the harness's own door, since D163 caught it standing open: a flag this file does not parse must refuse.
 {
-  const child = spawnSync(process.execPath, [HARNESS, '--readers=x'], { cwd: ROOT, encoding: 'utf8', timeout: 60000 });
+  const child = spawnSync(process.execPath, [HARNESS, '--readers=x'], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', timeout: 60000 });
   results.push({
     arm: { name: 'a flag this harness does not parse is refused rather than ignored', expect: 2,
       must: [/RESULT: NOT CHECKED — unknown option --readers/, /flags this reader parses/] },

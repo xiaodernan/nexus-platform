@@ -143,6 +143,20 @@ jobs:
           NEXUS_LLM_PROVIDER: mock
         run: uv run python -m nexus_ai.eval.cli --suite intent_v1 --fail-on-gate
         working-directory: apps/ai
+      # The falsifier for "does asyncpg's jsonb binding double-encode?". STATUS §186 recorded that nothing
+      # ran this script ("it is not in data/seed/falsifiers.tsv"), which is why it could sit here claiming
+      # CORRECT while the *service* plane — the one with `_init_connection` registered — disagreed. It now
+      # reads NEXUS_TEST_DATABASE_URL, so this step is the schedule it was missing. The demo-database half
+      # of its output is reported as unavailable rather than as zero rows: CI does not seed `nexus`, and
+      # "no string-valued rows" and "I could not look" must not print the same way.
+      - name: jsonb binding falsifier (both planes, against the provisioned test DB)
+        env:
+          NEXUS_TEST_DATABASE_URL: postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test
+        # From apps/ai through uv, not from the root with a bare `python`: the script imports
+        # `nexus_ai.db.pool` for the service plane, and that import is the whole point — a root-level run
+        # would measure only the bare driver, which is the mistake the script was written to stop making.
+        run: uv run python ../../scripts/verify_jsonb_binding.py
+        working-directory: apps/ai
 
 # ------------------------------------------------------------------ end to end
   e2e:
@@ -235,6 +249,20 @@ jobs:
         run: |
           node scripts/check_ledger_citations.mjs | tee ledger-citations.txt
           { echo "## Ledger citations"; echo '```'; cat ledger-citations.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      # The ledger's numeric claims (task #126). This runs the CENSUS half, not the judged half: judging a
+      # number needs the count a gate run produces, and that path lives in step 5 of db_gate_fresh.sh. What a
+      # census knows on its own is still worth failing on — that the reader can read the ledgers at all, and
+      # that no section has slipped back into an odd number of code fences. That second one is not
+      # hypothetical: it is how the ten unbalanced sections of DECISIONS.md were found, after the thirteen in
+      # STATUS.md had been fixed by a whole-file parity check that could not see them, because DECISIONS.md is
+      # balanced in total and unbalanced in ten places. `exit 1` means the P1 defect is back; `exit 2` means
+      # the census itself could not run, which is not the same thing as a clean ledger.
+      - name: Ledger numbers are a census that can run, and the prose is still parseable
+        shell: bash
+        run: |
+          node scripts/check_ledger_numbers.mjs --census | tee ledger-numbers.txt
+          { echo "## Ledger numeric claims"; echo '```'; cat ledger-numbers.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       # The class above cannot see (D201): a cited line that IS there but is not the line the sentence was
       # written against. STATUS §203 named line 62 of `scripts/source_index.mjs` for a declaration standing at
       # line 60 in the commit that wrote it, and a later commit added 19 lines above it — the number was wrong on

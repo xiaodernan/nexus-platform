@@ -12,7 +12,7 @@
 --   share_links.created_by           1
 --
 -- Seven uuid `*_by` columns, six carry a foreign key to users(id), and the seventh carries nothing. D72
--- (quality.sql:1109-1117) found exactly this column and closed it *at the seed layer*: a probe that joins
+-- (quality.sql:1110-1117) found exactly this column and closed it *at the seed layer*: a probe that joins
 -- every non-null granted_by to users and requires zero unresolvable rows (quality.sql:345-360). That probe
 -- is a check on the data the seed loads. It is not a constraint on the column, and it never runs on a
 -- production write — so today nothing in the schema stops an orphan, and nothing in the schema would notice

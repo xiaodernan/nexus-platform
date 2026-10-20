@@ -57,7 +57,5 @@ const nextConfig = {
   },
 };
 
-void isProd;
-
 export default nextConfig;
 

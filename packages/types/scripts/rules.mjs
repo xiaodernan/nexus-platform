@@ -63,8 +63,8 @@ export const CARD_FACT_ATTRIBUTES = {
 };
 
 /**
- * @param {{NEXUS_ENUMS: Record<string, readonly string[]>, FRESHNESS_TTL_SECONDS: Record<string, number>, ERROR_HTTP_STATUS: Record<string, number>}} ts
- *   runtime registries loaded from `dist/enums.js` / `dist/fact.js` / `dist/errors.js`
+ * @param {{NEXUS_ENUMS: Record<string, readonly string[]>, FRESHNESS_TTL_SECONDS: Record<string, number>, ERROR_HTTP_STATUS: Record<string, number>, ladderErrorCode: (code: string) => string|null}} ts
+ *   runtime registries loaded from `dist/enums.js` / `dist/fact.js` / `dist/errors.js` / `dist/tools.js`
  * @returns {Array<{id: string, schemas: string[], rationale: string, check: (instance: any, ctx: any) => string[]}>}
  */
 export function buildRules(ts) {
@@ -185,7 +185,8 @@ export function buildRules(ts) {
     id: "fact_inferred_capped_confidence",
     schemas: ["fact", "entity_card"],
     rationale:
-      "@derived AGENT_CONTRACT §4 orders sources `merchant > imported > observed > third-party > inferred`; the "
+      "@derived AGENT_CONTRACT §4 orders sources for conflict resolution as `merchant (fresh) > observed > "
+      + "imported > third_party > inferred` (`FACT_SOURCE_PRIORITY`); the "
       + "only ordering that survives the numeric `confidence` field is that an inferred value may never claim "
       + "high confidence (>= 0.6 is the hedge floor, so inferred facts sit below it).",
     check(instance, ctx) {
@@ -285,6 +286,13 @@ export function buildRules(ts) {
       const scope = new Set(
         [instance.id, instance.merchant_id, instance.location_id].filter((value) => typeof value === "string"),
       );
+      // A collection/guide card cites facts about its members, so member ids are in scope too.
+      for (const key of ["items", "legs"]) {
+        for (const child of Array.isArray(instance[key]) ? instance[key] : []) {
+          if (!isObj(child)) continue;
+          for (const value of [child.id, child.merchant_id]) if (typeof value === "string") scope.add(value);
+        }
+      }
       const facts = Array.isArray(instance.facts) ? instance.facts : [];
       facts.forEach((fact, index) => {
         if (!isObj(fact)) return;
@@ -469,8 +477,8 @@ export function buildRules(ts) {
     schemas: ["tool_spec"],
     rationale:
       "@derived AGENT §8 checks `permission` against the subject's grants for the declared `scopes`; a tool that "
-      + "declares the `merchant` scope but asks for a platform-admin permission (or vice versa) would either fail at "
-      + "runtime or over-grant. The table below is the minimal coupling the contracts imply.",
+      + "asks for a tenant-level permission without declaring the `tenant` scope could never be granted, so the call "
+      + "either dies at the dispatcher or pushes the grant check wider than §8 allows.",
     check(instance) {
       const failures = [];
       const adminPermissions = new Set(ts.NEXUS_ENUMS.PermissionName.filter((p) => p.startsWith("admin_") || p === "moderate_content" || p === "export_data"));
@@ -478,9 +486,10 @@ export function buildRules(ts) {
       if (adminPermissions.has(instance.permission) && !scopes.includes("tenant")) {
         failures.push(`permission "${instance.permission}" needs the "tenant" scope (AGENT §8)`);
       }
-      if (scopes.includes("merchant") && !String(instance.permission).includes("read") && !String(instance.permission).includes("write") && !["create_cart", "create_reservation", "checkout", "publish_listing"].includes(instance.permission)) {
-        failures.push(`merchant-scoped tool "${instance.name}" carries the unrecognised permission "${instance.permission}"`);
-      }
+      // Deliberately *not* checked: "a merchant-scoped tool may only ask for read_*/write_*/the mutation
+      // allowlist". `create_draft_campaign`, `refund_payment` and `configure_ai` are all legitimate merchant
+      // grants in §8/§27, so that vocabulary would reject real specs; the closed `permission` enum in
+      // `src/schemas/tool_spec.json` already refuses names outside `PERMISSION_NAME`.
       return failures;
     },
   };
@@ -495,9 +504,17 @@ export function buildRules(ts) {
     check(instance) {
       const details = isObj(instance.error) && isObj(instance.error.details) ? instance.error.details : null;
       if (!details || details.http_status === undefined) return [];
-      const expected = ERROR_HTTP_STATUS[instance.error.code];
+      const code = isObj(instance.error) ? instance.error.code : undefined;
+      if (typeof code !== "string") return [];
+      // D27: a resource-qualified code answers to its suffix, so `merchant_not_found` is checked against
+      // the `not_found` row instead of being skipped as a name the table has never heard of.
+      const ladder = ts.ladderErrorCode(code);
+      // An out-of-contract `code` has no row in the table to disagree with; `error_envelope.json`'s
+      // anyOf rejects it, and reporting a status mismatch here would hide which half is wrong.
+      if (ladder === null) return [];
+      const expected = ERROR_HTTP_STATUS[ladder];
       if (expected !== details.http_status) {
-        return [`details.http_status ${details.http_status} does not match code "${instance.error.code}" -> HTTP ${expected}`];
+        return [`details.http_status ${details.http_status} does not match code "${code}" -> ${ladder} -> HTTP ${expected}`];
       }
       return [];
     },

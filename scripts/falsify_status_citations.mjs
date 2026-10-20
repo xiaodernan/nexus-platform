@@ -107,7 +107,7 @@ for (const arm of ARMS) {
   if (arm.fix) args.push('--dir', arm.fix);
   let out, code;
   try {
-    out = execFileSync('node', args, { encoding: 'utf8', cwd: ROOT, maxBuffer: 1 << 26 });
+    out = execFileSync('node', args, { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', cwd: ROOT, maxBuffer: 1 << 26 });
     code = 0;
   } catch (e) {
     out = `${e.stdout || ''}${e.stderr || ''}`;

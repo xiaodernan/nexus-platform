@@ -120,7 +120,17 @@ function clauseFor(lines, index) {
   const at = sentence.indexOf(here.trim().slice(0, 40));
   const before = at > 0 ? sentence.slice(0, at) : sentence;
   const lastCite = [...before.matchAll(citePattern())].pop();
-  return lastCite ? before.slice(lastCite.index + lastCite[0].length) : before;
+  const start = lastCite ? lastCite.index + lastCite[0].length : 0;
+  // The span runs from the previous citation to the NEXT one, not to the end of the sentence. A claim about a
+  // cited line is written on both sides of it — `MerchantService.java:NN passes principal.userId()` puts the
+  // verb and the identifier AFTER the citation — and the first version took only what preceded it. Hand-checked
+  // against a row this reader had flagged: the citation was exact, and the identifiers that "shared nothing"
+  // came from the two lines of unrelated prose before it. Fixing the span is what stops the reader charging a
+  // sentence with the previous sentence's subject.
+  const after = sentence.slice(at > 0 ? at + here.trim().slice(0, 40).length : 0);
+  const nextCite = after.match(citePattern());
+  const end = nextCite ? sentence.length - after.length + nextCite.index : sentence.length;
+  return sentence.slice(start, end);
 }
 
 /** The sentence a citation sits in: the run of non-empty lines around it, joined. */
@@ -133,6 +143,43 @@ function sentenceAt(lines, index) {
   return lines.slice(start, end + 1).join(' ');
 }
 
+/**
+ * A basename -> path table, built from `git ls-files` and only when a citation needs it.
+ *
+ * About 262 of this reader's citations are written as a bare basename and were being skipped as "not at
+ * HEAD" when the file is committed and perfectly readable. The gate's own step 8 resolves those, and names
+ * AMBIGUOUS when two files share a name; this reader was not asking.
+ *
+ * `git ls-files` rather than a directory walk: what has to be resolved is whatever `git show HEAD:` can
+ * serve, which is exactly the tracked set.
+ *
+ * **This feature was abandoned once, for the wrong reason.** Its first run was killed by a 240-second
+ * timeout and the tool was reverted as "it hangs". Measured afterwards: the unmodified reader takes 4m07s,
+ * so the timeout was simply shorter than the baseline. A tool that is slow and a tool that hangs look
+ * identical to `timeout`, and only a stopwatch tells them apart.
+ *
+ * Only a **unique** hit is resolved: two files called `sql.py` is a citation to neither, and guessing would
+ * charge a sentence with a neighbourhood it never named.
+ */
+let BY_BASENAME = null;
+function basenameIndex() {
+  if (BY_BASENAME) return BY_BASENAME;
+  const map = new Map();
+  try {
+    for (const rel of git('ls-files').split('\n')) {
+      if (!rel) continue;
+      const base = rel.split('/').pop();
+      const hits = map.get(base);
+      if (hits) hits.push(rel);
+      else map.set(base, [rel]);
+    }
+  } catch {
+    // an unreadable tree leaves the index empty, and every basename stays unresolved rather than guessed
+  }
+  BY_BASENAME = map;
+  return map;
+}
+
 const rows = [];
 let citations = 0;
 // The discriminator that settles a counting gap: the same pattern, scanned directly, with no walk in
@@ -140,6 +187,8 @@ let citations = 0;
 // not, the pattern the walk uses is not the pattern this file believes it uses. Printed, not reasoned about
 // — two theories about this gap were already written into the log as wrong.
 let direct = 0;
+let basenameResolved = 0;
+let ambiguousBasename = 0;
 let unreadable = 0;
 let unresolved = 0;
 for (const ledger of LEDGERS) {
@@ -160,10 +209,24 @@ for (const ledger of LEDGERS) {
       const [, path, numStr] = m;
       citations += 1;
       const num = Number(numStr);
-      let target;
+      let target = null;
+      let resolved = path;
       try {
         target = git('show', `HEAD:${path}`);
       } catch {
+        target = null;
+      }
+      if (target === null && !path.includes('/')) {
+        const hits = basenameIndex().get(path) ?? [];
+        if (hits.length === 1) {
+          resolved = hits[0];
+          try { target = git('show', `HEAD:${resolved}`); } catch { target = null; }
+          if (target !== null) basenameResolved += 1;
+        } else if (hits.length > 1) {
+          ambiguousBasename += 1;
+        }
+      }
+      if (target === null) {
         unresolved += 1;
         continue; // not this reader's question: the other two already refuse it by name
         // `continue`, not `return`: the callback runs per LINE and the loop runs per MATCH, so `return`
@@ -180,7 +243,7 @@ for (const ledger of LEDGERS) {
       if (wanted.length === 0) continue; // a sentence with nothing mechanical in it cannot be judged here
       const shared = wanted.filter((w) => around.includes(w));
       rows.push({
-        ledger: `${ledger}:${i + 1}`, cite: `${path}:${num}`, heading, clause,
+        ledger: `${ledger}:${i + 1}`, cite: `${resolved}:${num}`, heading, clause,
         cited: (targetLines[num - 1] ?? '').trim(), wanted: wanted.length,
         shared: shared.length, missing: wanted.filter((w) => !shared.includes(w)).slice(0, 4),
       });
@@ -200,6 +263,8 @@ console.log(`  the same pattern, scanned directly   ${direct}${direct === citati
 console.log(`  judged (sentence had an identifier the file could spell)   ${rows.length}`);
 console.log(`  skipped: target not at HEAD (the other readers own it)     ${unresolved}`);
 if (unreadable > 0) console.log(`  ledgers unreadable       ${unreadable}`);
+console.log(`  basenames resolved       ${basenameResolved} (bare name -> one committed file)`);
+console.log(`  basenames ambiguous      ${ambiguousBasename} (two or more files share the name, not guessed)`);
 console.log(`  window                   ±${WINDOW} line(s) around the cited line`);
 console.log('');
 console.log(`  sharing nothing          ${worst.length} of ${rows.length}`);

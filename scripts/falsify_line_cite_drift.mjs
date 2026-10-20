@@ -19,7 +19,7 @@
  */
 
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -34,11 +34,36 @@ if (!decl) throw new Error('the reader has no `const counts = {...}` declaration
 const CLASSES = decl[1].split(',').map((s) => s.trim()).filter(Boolean).map((s) => s.split(':')[0].replace(/['"]/g, '').trim());
 if (!CLASSES.includes('EXACT') || CLASSES.length < 4) throw new Error(`derived verdict classes look wrong: ${CLASSES.join(', ')}`);
 
-const g = (dir, ...a) => execFileSync('git', ['-c', 'user.name=D201 Arm', '-c', 'user.email=arm@nexus.local', ...a], { cwd: dir, encoding: 'utf8' });
+// Every arm below is a real throwaway repository, so a machine that cannot start git is not a machine this
+// harness can run on at all — and it used to say that by dying: an uncaught `spawnSync git EBUSY` with no
+// RESULT line, which reads like a harness that failed rather than an environment that cannot host it.
+// Measured 2026-10-03: exit 1, no RESULT line, and five more tools in scripts/ with the same shape.
+const g = (dir, ...a) => {
+  try {
+    return execFileSync('git', ['-c', 'user.name=D201 Arm', '-c', 'user.email=arm@nexus.local', ...a], { stdio: ['ignore', 'pipe', 'pipe'], cwd: dir, encoding: 'utf8' });
+  } catch (err) {
+    const reason = err.status == null && err.code ? String(err.code)
+      : `git exited ${err.status} on [git ${a.join(' ')}] in ${dir}: ${String(err.stderr || '').trim().slice(0, 200)}`;
+    console.log(`RESULT: NOT CHECKED — this harness drives real throwaway repositories, and git could not be started: ${reason}.`);
+    console.log('  No arm below was run. A refusal is not a failure, and the two must not share a verdict line.');
+    process.exit(2);
+  }
+};
 
 function makeRepo(name, first, later) {
-  const dir = join(SCRATCH, name);
-  rmSync(dir, { recursive: true, force: true });
+  // A fixture that already exists is not a fixture this harness may reuse. `git init` on the leftover
+  // repository leaves its commits in place, `git add -A` finds nothing new, and `git commit` answers 1 with
+  // *nothing to commit* — which the guard below then reports as "git could not be started", pointing at git
+  // rather than at a fixture that survived an interrupted run. Measured after a killed run left `.git` behind.
+  //
+  // So an occupied name takes a suffix instead of being cleared. The first version cleared it first and then
+  // took the suffix, which was pure cost: clearing a stale fixture costs about 0.4 s per file through this
+  // host's delete shim, and the answer was already decided by whether the path existed. That version ran
+  // fifteen minutes without printing a line and was killed by a timeout. A fresh path needs no clearing —
+  // which is what `existsSync` is here to establish, not to warn about.
+  const dir = existsSync(join(SCRATCH, name))
+    ? join(SCRATCH, `${name}-${process.pid}`)
+    : join(SCRATCH, name);
   mkdirSync(join(dir, 'src'), { recursive: true });
   g(dir, 'init', '-q');
   for (const [p, text] of Object.entries(first)) writeFileSync(join(dir, p), text.join('\n') + '\n');
@@ -53,7 +78,7 @@ function makeRepo(name, first, later) {
 }
 
 function run(dir, extra) {
-  const r = spawnSync(process.execPath, [READER, '--repo', dir, '--ledgers', 'L.md', ...extra], { encoding: 'utf8' });
+  const r = spawnSync(process.execPath, [READER, '--repo', dir, '--ledgers', 'L.md', ...extra], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
   const out = r.stdout ?? '';
   const counts = {};
   if (!/^verdict /m.test(out)) {
@@ -161,14 +186,16 @@ const has = (a, s) => (a.out.includes(s) ? 'has' : 'MISSING');
 // plane. `--no-local` forces the upload-pack path, where depth is honored and `.git/shallow` is written.
 {
   const src = makeRepo('deep', { 'src/a.mjs': A_LINES, 'L.md': ['the target is src/a.mjs:3'] });
-  const dst = join(SCRATCH, 'shallow');
-  rmSync(dst, { recursive: true, force: true });
-  execFileSync('git', ['clone', '-q', '--no-local', '--depth', '1', src, dst], { encoding: 'utf8' });
-  const shallowFlag = execFileSync('git', ['rev-parse', '--is-shallow-repository'], { cwd: dst, encoding: 'utf8' }).trim();
+  // Clone targets get unique names for the same reason `makeRepo` does: clearing a stale tree costs about
+  // 0.4 s per file here, and `git clone` refuses a destination that exists at all — measured as
+  // `fatal: destination path '…\full' already exists and is not an empty directory`. A name nobody has
+  // used needs no clearing and cannot collide.
+  const dst = join(SCRATCH, `shallow-${process.pid}`);
+  execFileSync('git', ['clone', '-q', '--no-local', '--depth', '1', src, dst], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
+  const shallowFlag = execFileSync('git', ['rev-parse', '--is-shallow-repository'], { stdio: ['ignore', 'pipe', 'pipe'], cwd: dst, encoding: 'utf8' }).trim();
   if (shallowFlag !== 'true') throw new Error(`the arm's own plane is not shallow (${shallowFlag}), so this arm would test nothing`);
-  const full = join(SCRATCH, 'full');
-  rmSync(full, { recursive: true, force: true });
-  execFileSync('git', ['clone', '-q', src, full], { encoding: 'utf8' });
+  const full = join(SCRATCH, `full-${process.pid}`);
+  execFileSync('git', ['clone', '-q', src, full], { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
   const a = run(dst, []);
   const b = run(full, []);
   arm('shallow plane refuses, full plane answers', 'shallow rc 2 · full rc 0', `shallow rc ${a.rc} · full rc ${b.rc}`,

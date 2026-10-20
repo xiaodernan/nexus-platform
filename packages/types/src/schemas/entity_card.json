@@ -52,8 +52,8 @@
     },
     "flags": { "$ref": "#/$defs/EntityFlags" },
     "tenant_id": {
-      "description": "API_CONTRACT §1 `X-Tenant`; the TS mirror accepts a tenant uuid or slug (DECISIONS D5).",
-      "oneOf": [
+      "description": "API_CONTRACT §1 `X-Tenant`; the TS mirror accepts a tenant uuid or slug (DECISIONS D5). `anyOf`, not `oneOf`: a lowercase uuid matches the slug pattern too, so an exclusive union would reject exactly the ids the field exists to carry.",
+      "anyOf": [
         { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid" },
         { "$ref": "https://nexus.dev/schemas/common.json#/$defs/slug" },
         { "type": "null" }

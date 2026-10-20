@@ -11,7 +11,7 @@ const compat = new FlatCompat({ baseDirectory: dirname(fileURLToPath(import.meta
  *    review rule, enforced by the trust-renderer prop types rather than the linter).
  */
 export default [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  ...compat.extends('next/core-web-vitals', 'next/typescript', 'plugin:jsx-a11y/recommended'),
   {
     ignores: ['.next/**', 'node_modules/**', 'next-env.d.ts', 'public/**', 'src/lib/mock/fixtures/**'],
   },

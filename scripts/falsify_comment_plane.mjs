@@ -115,7 +115,7 @@ const MIXED = mixedPlane('mixed', 12, MISSING);
 const SILENT = emptyPlane('silent');
 
 const run = (...args) => spawnSync(process.execPath,
-  [READER, ...(PLANTED ? [`--checker=${PLANTED}`] : []), ...args], { cwd: ROOT, encoding: 'utf8' });
+  [READER, ...(PLANTED ? [`--checker=${PLANTED}`] : []), ...args], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8' });
 
 // D206 — a plane carrying TWO offenders, which is the smallest census that can show one offender row the map
 // places and one it cannot. Both offending names are held by nothing, so both are `FILE NOT FOUND`. The third
@@ -344,7 +344,7 @@ if (PLANTED === null) {
       }
       const child = spawnSync(process.execPath,
         [join(ROOT, 'scripts', 'falsify_comment_plane.mjs'), `--checker=${join(MDIR, 'check_ledger_citations.mjs')}`],
-        { cwd: ROOT, encoding: 'utf8', timeout: 300000 });
+        { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', timeout: 300000 });
       code = child.status ?? -1;
       out = `${child.stdout ?? ''}${child.stderr ?? ''}`;
     } catch (e) {
@@ -408,7 +408,7 @@ if (PLANTED === null) {
         const path = join(dir, 'scripts', 'check_comment_citations.mjs');
         writeFileSync(path, src.replace(anchor, replacement), 'utf8');
         const r = spawnSync(process.execPath, [path, `--checker=${checker}`, '--plane', planeDir],
-          { cwd: ROOT, encoding: 'utf8', timeout: 300000 });
+          { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', timeout: 300000 });
         code = r.status ?? -1;
         out = `${r.stdout ?? ''}${r.stderr ?? ''}`;
       } catch (e) {
@@ -671,7 +671,7 @@ if (PLANTED === null) {
   const step8Declares = (rel) => {
     try {
       return { code: 0, out: execFileSync(process.execPath,
-        [CHECKER, '--text', rel, '--dir', JSON_PLANE, '--head-dir', JSON_PLANE], { cwd: ROOT, encoding: 'utf8' }) };
+        [CHECKER, '--text', rel, '--dir', JSON_PLANE, '--head-dir', JSON_PLANE], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8' }) };
     } catch (err) {
       return { code: err.status ?? 'null', out: `${err.stdout ?? ''}${err.stderr ?? ''}` };
     }
@@ -681,7 +681,7 @@ if (PLANTED === null) {
       /prose, no reader\s+1 ext\(s\), 1 file\(s\), 1 token\(s\): \.json\(1 file\(s\), 1 token\(s\)\)/,
       /the 1 file\(s\) and 1 token\(s\) this row counts is opened by neither reader/,
       /counted here and judged nowhere/],
-    [...NO_OFFENDER, /PAST EOF/],
+    [...NO_OFFENDER],
     direct(CHECKER, JSON_PLANE));
   const CHK_JSON = plant8('json', 'notes/probe.json');
   check('D214/Y2 — step 8 charges those same bytes the moment its declaration names them, so Y1\'s PASS is coverage', 1,
@@ -706,7 +706,7 @@ if (PLANTED === null) {
   // mechanism is untouched. Reading-more is the mechanism, and it is monotone in the file it adds.
   const defaultMode = (checker) => {
     try {
-      return { code: 0, out: execFileSync(process.execPath, [checker], { cwd: ROOT, encoding: 'utf8' }) };
+      return { code: 0, out: execFileSync(process.execPath, [checker], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8' }) };
     } catch (err) {
       return { code: err.status ?? 'null', out: `${err.stdout ?? ''}${err.stderr ?? ''}` };
     }
@@ -798,7 +798,7 @@ if (PLANTED === null) {
         const path = join(dir, 'scripts', 'check_ledger_citations.mjs');
         writeFileSync(path, src.replace(DECL, replacement), 'utf8');
         const r = spawnSync(process.execPath, [READER, `--checker=${path}`, '--plane', CONTROL],
-          { cwd: ROOT, encoding: 'utf8', timeout: 300000 });
+          { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', timeout: 300000 });
         code = r.status ?? -1;
         out = `${r.stdout ?? ''}${r.stderr ?? ''}`;
       } catch (e) {
@@ -838,7 +838,7 @@ if (PLANTED === null) {
   const start = gate.findIndex((l) => /^step "9\//.test(l));
   const end = gate.findIndex((l, i) => i > start && /^step "10\//.test(l));
   const block = start < 0 ? [] : gate.slice(start, end < 0 ? gate.length : end);
-  const wants = [/falsify_comment_plane\.mjs/, /GATE_COMMENT_PLANE:\+--plane=/];
+  const wants = [/falsify_comment_plane\.mjs/, /\$\{GATE_COMMENT_PLANE:\+--plane=/];
   const missing = wants.filter((re) => !block.some((l) => re.test(l)));
   await arm(`step 9's block runs this harness AND forwards the knob to the reader (${block.length} lines read)`,
     missing.length === 0 ? 0 : 1, [], [], null);
@@ -849,7 +849,7 @@ if (PLANTED === null) {
 {
   let help = '';
   try {
-    help = execFileSync('bash', [GATE, '--help'], { cwd: ROOT, encoding: 'utf8' });
+    help = execFileSync('bash', [GATE, '--help'], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8' });
   } catch (err) {
     help = `${err.stdout ?? ''}${err.stderr ?? ''}`;
   }

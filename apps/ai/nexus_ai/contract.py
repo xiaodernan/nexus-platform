@@ -25,7 +25,7 @@ IntentKind = Literal[
     "unknown",
 ]
 SortPreference = Literal["relevance", "distance", "price_low", "rating", "trending"]
-FactSource = Literal["merchant", "imported", "observed", "third_party", "inferred"]
+FactSource = Literal["merchant", "imported", "observed", "third_party", "inferred", "demo"]
 ActorType = Literal["user", "merchant_user", "agent", "system", "anonymous"]
 
 

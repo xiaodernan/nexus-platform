@@ -7,7 +7,7 @@ import type {
 } from '@nexus/ui/trust/types';
 import { findFact, isStale, pickFact } from '../facts';
 import { computeOpening, formatDistance, haversineMeters } from '../format';
-import { DISTRICTS, SEED_MERCHANTS, buildAvailability, buildMerchantDetail, buildMe, buildReviewSummary, buildReviews, demoUuid, distanceMeters, factUuid, merchantLocation, travelMinutes, DEMO_COLLECTIONS, DEMO_GUIDES, type SeedMerchant } from './seed';
+import { DISTRICTS, SEED_MERCHANTS, buildAvailability, buildMerchantDetail, buildMe, buildReviewSummary, buildReviews, demoUuid, distanceMeters, factUuid, merchantLocation, travelMinutes, DEMO_COLLECTIONS, DEMO_GUIDES, type DistrictKey, type SeedMerchant } from './seed';
 import type {
   Collection,
   CompareResult,
@@ -175,7 +175,7 @@ export function allCards(options: CardBuildOptions = {}): EntityCard[] {
 /* ------------------------------------------------------------------ query NLU */
 
 const BUDGET_PATTERNS: Array<RegExp> = [/预算\s*(\d+)/, /budget\s*(\d+)/i, /港币?\s*(\d+)\s*(?:以内|以下)/, /(\d+)\s*(?:港币|hkdb?|hkd)/i];
-const DISTRICT_WORDS: Array<[RegExp, string]> = [
+const DISTRICT_WORDS: Array<[RegExp, DistrictKey]> = [
   [/沙田|sha tin/i, 'sha_tin'], [/中環|中环|central/i, 'central'], [/旺角|mong kok/i, 'mong_kok'],
   [/銅鑼灣|铜锣湾|causeway/i, 'causeway_bay'], [/灣仔|湾仔|wan chai/i, 'wan_chai'], [/尖沙咀|tsim sha/i, 'tsim_sha_tsui'],
   [/九龍灣|九龙湾|kowloon bay/i, 'kowloon_bay'], [/鴨脷洲|鸭脷洲|ap lei/i, 'ap_lei_chau'], [/荃灣|荃湾|tsuen wan/i, 'tsuen_wan'],
@@ -224,9 +224,14 @@ export function understandQuery(query: string, context: { locale?: string; geo?:
     category: categoryEntry ? categoryEntry[1] : null,
     location: district
       ? { type: 'district', value: district.name, resolved: district.geo, radius_m: null }
-      : nearMe || context.geo
+      : nearMe
         ? { type: 'near_me', value: null, resolved: context.geo ?? null, radius_m: 3000 }
-        : null,
+        : /* A coarse centre is for *ranking* by distance, not for filtering: imposing a radius the
+             visitor never asked for turns the default location into a hard 3 km wall, which made
+             three of the five §6 starter prompts come back empty. */
+          context.geo
+          ? { type: 'near_me', value: null, resolved: context.geo, radius_m: null }
+          : null,
     time: weekend || evening ? { type: 'explicit', starts_at: startsAt.toISOString() } : { type: 'none' },
     budget: budgetMax !== null ? { min: null, max: budgetMax, currency: 'HKD', per: 'party' } : null,
     party_size: null,
@@ -283,16 +288,80 @@ export function mergeIntent(previous: Intent | null, followUp: string): Intent {
 
 /* -------------------------------------------------------------------- search */
 
+/**
+ * Query → match tokens. CJK is not space-separated, so a whole sentence arrives as one token and
+ * `haystack.includes("帮我找附近适合朋友聚会的餐厅")` is always false: an unsegmented matcher threw
+ * away *every* Chinese query with the §6 relevance floor, i.e. the default demo returned an empty
+ * page for its own example prompts. Two-character windows are the smallest meaningful unit here.
+ */
+function queryTokens(query: string): string[] {
+  const parts = query
+    .toLowerCase()
+    .split(/[\s,，、。;；!?！？：:()（）]+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length >= 2);
+  const tokens: string[] = [];
+  for (const part of parts) {
+    if (/[\u4e00-\u9fff]/.test(part)) {
+      const characters = [...part];
+      if (characters.length === 2) tokens.push(part);
+      for (let index = 0; index + 1 < characters.length; index += 1) {
+        tokens.push((characters[index] ?? '') + (characters[index + 1] ?? ''));
+      }
+    } else {
+      tokens.push(part);
+    }
+  }
+  return tokens;
+}
+
+/**
+ * The seed catalogue stores its structure in English slugs (`subcategories: ['japanese','ramen']`,
+ * `tags: ['friends']`), but a shopper types 日料. A surface-text matcher therefore never reaches
+ * the topical fields for Chinese at all: three of the five §6 starter prompts (朋友聚会 / 情侣约会 /
+ * 下雨天的鞋 / 预算日料) scored 0 on every merchant and the relevance floor returned an empty page
+ * for the demo's own examples. This maps the wording people actually type onto the vocabulary the
+ * records are written in; scene words come from `TAG_HINTS` so the two lists cannot drift apart.
+ */
+const CUISINE_VOCABULARY: Array<[RegExp, string[]]> = [
+  [/日料|日本料理|日式|和食|寿司|刺身|拉麵|拉面|居酒屋/, ['japanese', 'ramen']],
+  [/火鍋|火锅|打边炉|麻辣/, ['hotpot', 'sichuan']],
+  [/點心|点心|饮茶|飲茶|早茶|粤菜|粵菜/, ['dimsum', 'cantonese']],
+  [/韓式|韩式|泡菜|烧肉|烤肉|bbq/i, ['korean', 'bbq']],
+  [/素食|斋菜|素菜|vegetarian|veg/i, ['vegetarian']],
+  [/咖啡|手冲|手沖|cafe|coffee|早午餐|brunch/i, ['coffee', 'brunch']],
+  [/面包|麵包|烘焙|可颂|可頌|bakery/i, ['bakery']],
+  [/健身|举铁|舉鐵|力量|gym|fitness/i, ['gym', 'strength']],
+  [/按摩|理疗|理療|舒压|舒壓|恢复|恢復|recovery/, ['massage', 'recovery']],
+  [/酒吧|鸡尾酒|雞尾酒|喝一杯|cocktail/i, ['bar', 'cocktails']],
+  [/酒店|住宿|过夜|過夜|民宿|hotel|inn/i, ['boutique-hotel']],
+  [/鞋|雨天|下雨|雨伞|雨傘|rainy/i, ['footwear', 'rainy-day']],
+  [/跑步|行山|远足|遠足|跑团|running|hiking/i, ['running', 'outdoor']],
+];
+
+/** Query → slug-vocabulary tokens the records are indexed under (scenes + cuisines). */
+function vocabularyTokens(query: string): string[] {
+  const scenes = TAG_HINTS.filter(([pattern]) => pattern.test(query)).map(([, tag]) => tag);
+  const cuisines: string[] = [];
+  for (const [pattern, slugs] of CUISINE_VOCABULARY) {
+    if (pattern.test(query)) cuisines.push(...slugs);
+  }
+  return Array.from(new Set([...scenes, ...cuisines]));
+}
+
 function matchesQuery(seed: SeedMerchant, query: string): number {
   const haystack = `${seed.name} ${seed.tagline} ${seed.description} ${seed.category} ${seed.subcategories.join(' ')} ${seed.tags.join(' ')} ${DISTRICTS[seed.district]?.name ?? ''} ${DISTRICTS[seed.district]?.zh ?? ''}`.toLowerCase();
-  const tokens = query
-    .toLowerCase()
-    .split(/[\s,，、。;；!?！？]+/)
-    .map((token) => token.trim())
-    .filter((token) => token.length >= 2);
-  if (tokens.length === 0) return 0.4;
-  const hits = tokens.filter((token) => haystack.includes(token) || (token.length >= 3 && haystack.includes(token.slice(0, 3)))).length;
-  return hits / tokens.length;
+  const tokens = queryTokens(query);
+  const vocabulary = vocabularyTokens(query);
+  if (tokens.length === 0 && vocabulary.length === 0) return 0.4;
+  const hits = tokens.filter(
+    (token) => haystack.includes(token) || (token.length >= 3 && !/[\u4e00-\u9fff]/.test(token) && haystack.includes(token.slice(0, 3))),
+  ).length;
+  const topicHits = vocabulary.filter((token) => haystack.includes(token)).length;
+  /* A sentence carries function-word windows (帮我 / 适合 / 一个) that no record will ever contain,
+     so dividing hits by the raw window count understates a genuine topical hit. Take the stronger
+     of the two signals: prose overlap, or coverage of the vocabulary the record is filed under. */
+  return Math.max(tokens.length ? hits / tokens.length : 0, vocabulary.length ? topicHits / vocabulary.length : 0);
 }
 
 export interface MockSearchOptions {
@@ -469,7 +538,7 @@ export interface StreamInput {
  */
 export async function* mockSearchStream(
   input: StreamInput,
-  stageTexts: Record<StreamStage, string>,
+  stageTexts: Record<StreamStage, string> & { found: (count: number) => string },
 ): AsyncGenerator<MockStreamEvent> {
   const intent = input.previousIntent ? mergeIntent(input.previousIntent, input.query) : understandQuery(input.query, { geo: input.geo ?? null, locale: input.locale });
   yield { event: 'status', data: { stage: 'understanding', text: stageTexts.understanding } };
@@ -728,7 +797,7 @@ export const SEO_CATEGORIES: Array<{ slug: string; name: string; zh: string; see
   },
 ];
 
-function seedToSeoListing(seed: SeedMerchant, geo: GeoPoint | null): SeoListing {
+function seedToSeoListing(seed: SeedMerchant): SeoListing {
   const now = mockNow();
   const detail = buildMerchantDetail(seed, now);
   const priceFact = pickFact(detail.facts, 'price');
@@ -742,6 +811,9 @@ function seedToSeoListing(seed: SeedMerchant, geo: GeoPoint | null): SeoListing 
     facts: detail.facts, demo: true,
   };
 }
+
+/** The HKD ceiling `under_budget_count` is counted against; a fixture, but a stated one (§19). */
+const UNDER_BUDGET_HKD = 200;
 
 /**
  * Programmatic page data (§29/§30). `indexable` is false below the quality bar so the page
@@ -761,7 +833,7 @@ export function mockProgrammaticPage(city: string, categorySlug: string, subcate
   });
 
   const cards = matched.map((seed) => buildCard(seed, { geo: null, group: null }));
-  const listings = matched.map((seed) => seedToSeoListing(seed, null));
+  const listings = matched.map((seed) => seedToSeoListing(seed));
   const prices = cards.map((card) => Number(card.price?.amount ?? NaN)).filter((value) => Number.isFinite(value));
   const now = mockNow();
 
@@ -775,7 +847,9 @@ export function mockProgrammaticPage(city: string, categorySlug: string, subcate
     cards,
     facets: {
       open_now_count: cards.filter((card) => card.open?.is_open).length,
-      under_budget_count: cards.filter((card) => card.price && Number(card.price.amount) <= 200).length,
+      under_budget_count: cards.filter((card) => card.price && Number(card.price.amount) <= UNDER_BUDGET_HKD).length,
+      // The caption states the ceiling the count used, so the page cannot drift from its own number.
+      under_budget_hkd: UNDER_BUDGET_HKD,
       districts: Array.from(new Set(matched.map((seed) => DISTRICTS[seed.district]?.name ?? ''))),
       price_range: prices.length ? { min: Math.min(...prices), max: Math.max(...prices) } : null,
     },
@@ -799,13 +873,5 @@ export function mockProgrammaticRoutes(): Array<{ city: string; category: string
   return routes;
 }
 
-export const EXAMPLE_PROMPTS: Array<{ key: string; query: string }> = [
-  { key: 'friends_dinner', query: '帮我找附近适合朋友聚会的餐厅' },
-  { key: 'japanese_budget', query: '预算 300 港币，想吃日料' },
-  { key: 'date_weekend', query: '周末找一个适合情侣约会的地方' },
-  { key: 'rainy_shoes', query: '我想买一双适合香港下雨天穿的鞋' },
-  { key: 'late_gym', query: '帮我找一个晚上 10 点后还营业的健身房' },
-];
-
 export { SEED_MERCHANTS, DISTRICTS, demoUuid, factUuid };
-export type { GeoPoint };
+export type { DistrictKey, GeoPoint };

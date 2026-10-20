@@ -8,7 +8,8 @@
  *
  * Contrast: every text/background pair below is checked to WCAG 2.1 AA
  * (>= 4.5:1 body text, >= 3:1 large text and non-text/UI boundaries).
- * See packages/ui/README.md for the measured ratios.
+ * See packages/ui/README.md for the measured ratios, and `node scripts/check_console_a11y.mjs` for the
+ * reader that recomputes every printed ratio from the hex beside it and fails when the two disagree.
  *
  * Type scale is modular (~1.2, "perfect fourth") tuned for CJK readability:
  * generous line-height, slightly larger base size than typical Latin-first systems.
@@ -27,6 +28,9 @@
     --nexus-accent-soft-ink: #1c39d6;
     --nexus-accent-line: #c3ccfb;
     --nexus-accent-ring: rgba(37, 71, 244, 0.35);
+    --nexus-accent-rgb: 37 71 244;
+    --nexus-accent-soft-rgb: 238 241 254;
+    --nexus-accent-line-rgb: 195 204 251;
 
     /* AI-attribution gradient: reserved for "this came from the model" moments
        (summary panel, stage indicator). Never used on organic/sponsored chrome. */
@@ -41,11 +45,17 @@
     --nexus-surface-muted: #f2f4f8;
     --nexus-surface-overlay: rgba(17, 20, 30, 0.44);
     --nexus-surface-inverse: #0c0f18;
+    --nexus-surface-rgb: 255 255 255;
+    --nexus-surface-muted-rgb: 242 244 248;
 
     /* ---------------------------------------------------------------- ink */
-    --nexus-ink-strong: #0b0d14; /* 19.1:1 on surface */
-    --nexus-ink: #1b2030; /* 14.4:1 */
-    --nexus-ink-muted: #525a70; /* 7.2:1 */
+    --nexus-ink-strong: #0b0d14; /* 19.4:1 on surface */
+    /* Channel triplets back every token that a component applies an `/NN` alpha modifier to:
+       Tailwind composes `rgb(var(--x) / <alpha-value>)` only from space-separated channels, and
+       with a hex variable it drops the entire utility — silently, at build time. */
+    --nexus-ink-strong-rgb: 11 13 20;
+    --nexus-ink: #1b2030; /* 16.2:1 */
+    --nexus-ink-muted: #525a70; /* 6.9:1 */
     --nexus-ink-faint: #6a7288; /* 4.8:1 */
     --nexus-ink-disabled: #9aa2b4; /* large text / icons only */
     --nexus-ink-inverse: #f5f7fc;
@@ -62,6 +72,12 @@
     --nexus-warning-soft: #fdf3e2;
     --nexus-danger: #a51f2e;
     --nexus-danger-soft: #fdedee;
+    --nexus-positive-rgb: 15 122 83;
+    --nexus-positive-soft-rgb: 230 245 238;
+    --nexus-warning-rgb: 138 90 0;
+    --nexus-warning-soft-rgb: 253 243 226;
+    --nexus-danger-rgb: 165 31 46;
+    --nexus-danger-soft-rgb: 253 237 238;
     /* Sponsored / demo chrome must be legible but never compete with accent. */
     --nexus-neutral-chip: #eceff5;
     --nexus-neutral-chip-ink: #3c4356;
@@ -113,11 +129,14 @@
     --nexus-accent: #7b8cff;
     --nexus-accent-hover: #93a1ff;
     --nexus-accent-active: #a7b3ff;
-    --nexus-accent-ink: #080b14; /* text on accent — 6.5:1 */
+    --nexus-accent-ink: #080b14; /* text on accent — 6.6:1 */
     --nexus-accent-soft: #1b2050;
     --nexus-accent-soft-ink: #c3cbff;
     --nexus-accent-line: #2f3878;
     --nexus-accent-ring: rgba(123, 140, 255, 0.4);
+    --nexus-accent-rgb: 123 140 255;
+    --nexus-accent-soft-rgb: 27 32 80;
+    --nexus-accent-line-rgb: 47 56 120;
 
     --nexus-ai-gradient: linear-gradient(135deg, #7b8cff 0%, #a78bfa 55%, #d8a3f5 100%);
     --nexus-ai-ink: #b6a6ff;
@@ -129,11 +148,14 @@
     --nexus-surface-muted: #171b2a;
     --nexus-surface-overlay: rgba(3, 4, 10, 0.66);
     --nexus-surface-inverse: #f5f7fc;
+    --nexus-surface-rgb: 16 19 32;
+    --nexus-surface-muted-rgb: 23 27 42;
 
-    --nexus-ink-strong: #f6f8fd; /* 18.9:1 on surface */
-    --nexus-ink: #e6eaf4; /* 14.2:1 */
-    --nexus-ink-muted: #a7afc3; /* 7.9:1 */
-    --nexus-ink-faint: #8b93a8; /* 5.2:1 */
+    --nexus-ink-strong: #f6f8fd; /* 17.4:1 on surface */
+    --nexus-ink-strong-rgb: 246 248 253;
+    --nexus-ink: #e6eaf4; /* 15.4:1 */
+    --nexus-ink-muted: #a7afc3; /* 8.4:1 */
+    --nexus-ink-faint: #8b93a8; /* 6.0:1 */
     --nexus-ink-disabled: #5f687e;
     --nexus-ink-inverse: #0c0f18;
 
@@ -147,6 +169,12 @@
     --nexus-warning-soft: #2a2113;
     --nexus-danger: #ff8b96;
     --nexus-danger-soft: #2b1417;
+    --nexus-positive-rgb: 75 214 160;
+    --nexus-positive-soft-rgb: 16 40 31;
+    --nexus-warning-rgb: 240 185 90;
+    --nexus-warning-soft-rgb: 42 33 19;
+    --nexus-danger-rgb: 255 139 150;
+    --nexus-danger-soft-rgb: 43 20 23;
     --nexus-neutral-chip: #1b2032;
     --nexus-neutral-chip-ink: #c3cadb;
 

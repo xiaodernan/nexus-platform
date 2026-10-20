@@ -34,7 +34,7 @@ export type {
   SearchResponse,
 } from '@nexus/ui/trust/types';
 
-import type { EntityCard, Fact, GeoPoint, PriceModel } from '@nexus/ui/trust/types';
+import type { CardImage, CardPrice, EntityCard, EntityFlags, Fact, GeoPoint, PriceModel } from '@nexus/ui/trust/types';
 
 /* ------------------------------------------------------------------ Intent (§7.1) */
 
@@ -170,18 +170,19 @@ export interface MerchantDetail {
   name: string;
   tagline?: string | null;
   description?: string | null;
+  /** `''` when the service sent no category at all: the view must test it, not assume a badge. */
   category: string;
   cuisine?: string[] | null;
   price_band?: PriceModel | null;
   avg_price: { amount: string; currency: string } | null;
   rating: { value: number; count: number } | null;
-  images: Array<{ url: string; alt: string; credit: string }>;
+  images: CardImage[];
   locations: MerchantLocation[];
   business_hours: BusinessHoursDay[];
   top_offerings: OfferingSummary[];
   review_summary: ReviewSummary | null;
   facts: Fact[];
-  flags: { sponsored?: boolean | null; demo?: boolean; unverified?: boolean | null };
+  flags: EntityFlags;
   links?: Array<{ type: string; url: string; label: string }> | null;
   attributes?: Record<string, string[]> | null;
 }
@@ -192,11 +193,12 @@ export interface OfferingSummary {
   title: string;
   kind: 'product' | 'service' | 'experience';
   description?: string | null;
-  price: { amount: string; currency: string; model: PriceModel } | null;
-  image?: { url: string; alt: string; credit: string } | null;
+  /** The card's own price shape: `model` is absent whenever the service did not state one. */
+  price: CardPrice | null;
+  image?: CardImage | null;
   merchant?: { id: string; slug: string; name: string } | null;
   facts: Fact[];
-  flags: { demo?: boolean; unverified?: boolean | null };
+  flags: EntityFlags;
 }
 
 export type OfferingDetail = OfferingSummary & {
@@ -215,18 +217,19 @@ export interface Review {
   helpful_count: number;
   verified_reservation?: boolean | null;
   verified_purchase?: boolean | null;
-  flags: { demo?: boolean };
+  flags: EntityFlags;
 }
 
 /** §55 — every sentence in the AI summary points at review ids as evidence. */
 export interface ReviewSummary {
-  summary: string;
+  /** The narrative line; `null` when the service sent only bullets, and the panel renders the bullets. */
+  summary: string | null;
   themes: Array<{ label: string; sentiment: 'positive' | 'negative' | 'neutral'; mentions: number; review_ids: string[] }>;
   evidence_review_ids: string[];
   generated_at: string;
   model?: 'mock' | 'anthropic' | 'openai' | string | null;
   facts?: Fact[] | null;
-  flags: { demo?: boolean };
+  flags: EntityFlags;
 }
 
 export interface AvailabilitySlot {
@@ -245,8 +248,10 @@ export interface Collection {
   description: string;
   city: string;
   category?: string | null;
-  cover_image: { url: string; alt: string; credit: string };
-  curated_by: { type: 'editorial' | 'creator' | 'ai'; name: string };
+  /** Nullable because `collections.cover_url` is nullable: an uncredited photo must not gain a photographer. */
+  cover_image: { url: string; alt: string; credit: string | null } | null;
+  /** `model` = a named model version; `ai` = the platform's own AI curator, and both stay disclosed (§30). */
+  curated_by: { type: 'editorial' | 'creator' | 'model' | 'ai'; name: string };
   items: EntityCard[];
   updated_at: string;
   flags: { demo?: boolean };
@@ -390,10 +395,26 @@ export interface ProgrammaticPage {
   intro: string;
   listings: SeoListing[];
   cards: EntityCard[];
-  facets: { open_now_count: number; under_budget_count: number; districts: string[]; price_range: { min: number; max: number } | null };
+  /**
+   * `under_budget_hkd` is the ceiling `under_budget_count` was counted against. It travels with the
+   * count so the page can state it — a caption of "affordable" invented in the view would be a claim
+   * the data never made (§19).
+   */
+  facets: {
+    open_now_count: number;
+    under_budget_count: number;
+    under_budget_hkd: number;
+    districts: string[];
+    price_range: { min: number; max: number } | null;
+  };
   updated_at: string;
   indexable: boolean;
-  reason: 'enough_listings' | 'too_few_listings';
+  /**
+   * The §30 verdict's machine-readable cause, enumerated in API_CONTRACT §8. The consumer view does not
+   * narrate it (a shopper does not need "below_quality_bar"), but the type carries the whole set so a live
+   * payload never fails to decode, and `reason` is what an operator column will bind to later.
+   */
+  reason: 'enough_listings' | 'too_few_listings' | 'below_quality_bar' | 'not_published' | 'unreviewed_ai';
 }
 
 /* ------------------------------------------------------------------ BFF result */
