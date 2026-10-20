@@ -407,7 +407,13 @@ export function SearchResults({
       {state.cards.length ? (
         <div className="rounded-lg border border-line bg-surface p-4 shadow-xs">
           <p className="mb-2 text-sm font-medium text-ink-strong">{dict.search.followUpLabel}</p>
-          <SearchBox locale={locale} size="md" placeholder={dict.search.followUpPlaceholder} onSubmitQuery={setQuery} />
+          <SearchBox
+            locale={locale}
+            size="md"
+            label={dict.search.followUpLabel}
+            placeholder={dict.search.followUpPlaceholder}
+            onSubmitQuery={setQuery}
+          />
         </div>
       ) : null}
     </div>

@@ -15,12 +15,15 @@ export function SearchBox({
   locale,
   initialQuery = '',
   size = 'lg',
+  label,
   placeholder,
   onSubmitQuery,
 }: {
   locale: string;
   initialQuery?: string;
   size?: 'lg' | 'md';
+  /** The field's accessible name. A placeholder disappears when the user types; the name must not. */
+  label?: string;
   /** The follow-up box asks a different question from the first one, so its hint differs. */
   placeholder?: string;
   /** When set, the query is handed to the parent (the streaming panel) instead of navigating. */
@@ -34,6 +37,7 @@ export function SearchBox({
   const inputRef = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState(initialQuery);
   const composing = useRef(false);
+  const name = label ?? dict.home.searchLabel;
   const hint = placeholder ?? dict.home.searchPlaceholder;
 
   function submit(event: React.FormEvent) {
@@ -55,7 +59,7 @@ export function SearchBox({
       className={cx('flex w-full items-center gap-2', size === 'lg' ? 'sm:gap-3' : '')}
     >
       <label className="nexus-sr-only" htmlFor={inputId}>
-        {hint}
+        {name}
       </label>
       <div
         className={cx(

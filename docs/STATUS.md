@@ -15901,3 +15901,73 @@ back whole and this unit's own earlier draft is not returned as a phantom edit o
   line; no code changes, no route is added or removed, and no test is touched · this unit is two documents, both
   ledgers
 - readers     step 8 0 offenders · step 9 91/30 · step 10 missing 0 · step 12 50/50 · step 15 158/158 · step 16 strict clean on 158
+## 396. D402 · the search field's accessible name was an example sentence, and the product's own MVP test could not find the front door (`components/search-box` + `lib/i18n/dict`, §141 / §34)
+
+**What the surface promised and what it rendered.** The consumer front door is one input: the
+product's whole pitch is "say what you want in a sentence". `SearchBox` had ONE string for two jobs.
+`dict.home.searchPlaceholder` — `例如：帮我找沙田适合约会的餐厅，预算 500，安静一点`, an EXAMPLE —
+was passed both to the input's `placeholder` attribute and rendered inside the `<label>` element,
+so the field's accessible name was an example sentence. Two things follow from that, and only one
+of them is an accessibility complaint: a screen reader announces "for example: help me find a
+restaurant in Sha Tin" where it should announce what the field wants, and the accessible name
+changes whenever marketing rewrites the example. The example is the volatile string; the name is
+the contract.
+
+**The contract that was already written down.** `tests/e2e/specs/consumer/vertical-slice.spec.ts` is
+the file the repo calls "the definition of MVP complete", and it locates the field by its NAME:
+`getByLabel(/想要|需要|Tell me|What are you looking for/i)` — a question, in both locales. On the live
+plane that locator resolved to ZERO elements in six of the suite's nine cases, and the failure text
+said only `waiting for getByLabel(...)`. A consumer journey that cannot type its first sentence is
+not a partial pass; the whole front door was unaddressable by the product's own acceptance test.
+
+**The remedy, in the order it fell out.**
+1. `dict.ts` gains `home.searchLabel` beside `searchPlaceholder`, declared in the `Dict` interface so
+   a locale that skips it fails to compile: `你想要什么？` for `zh-HK`, `What are you looking for?` for
+   `en`. The interface carries the distinction as a comment — the name is a question, not an example.
+2. `SearchBox` gains an optional `label` prop and computes `const name = label ?? dict.home.searchLabel`
+   beside the existing `hint`; the sr-only `<label>` renders `{name}` and `placeholder` keeps `{hint}`.
+   The two strings are now separately overridable, which is what the results page needed anyway.
+3. The follow-up box on the results page is a different question from the first one, so it passes
+   `label={dict.search.followUpLabel}` and keeps its own placeholder. No new key: `followUpLabel`
+   already existed (`继续追问` / `Keep refining`) and was only ever rendered as visible prose above the
+   box, never as the field's name.
+
+**The witness.** The same command on the same live plane (`apps/web` production build served on
+127.0.0.1:3002, AI on :8010, platform on :8090, `playwright test specs/consumer --project=desktop
+--workers=2`), before and after: **6 failed / 2 passed** → **5 failed / 3 passed**, exit 1 both ways,
+and the case that turned green is `:141 MVP success test: first meaningful action inside 5 minutes
+(§141)`. `:40` also moved — it used to die at the `fill()`, and now dies three assertions later, so
+the fix unblocked it rather than healing it. The DOM evidence is Playwright's own aria snapshot
+(`error-context.md`), which reads `textbox "你想要什么？"` with the example on its own line beneath it
+as `/placeholder: 例如：…` — the name and the hint are two strings in the served markup, which is
+exactly the split this unit was about.
+
+**What this unit measured and deliberately did NOT fix.** Four separate defects remain in the five
+reds, each named by its own reading rather than by inference:
+- `:27` — the home rails. `page.getByText(/附近熱門/)` finds nothing because the `zh-HK` dictionary
+  spells them in Simplified (`为你推荐`, `附近热门`). Whether `zh-HK` should be Traditional is a locale
+  decision with a population behind it, not a locator bug, and it needs its own census.
+- `:40` — a race the card hook makes invisible. `cards()` is `article[data-card-type]`, and the home
+  page's rail cards carry the same attribute. Measured in the browser: the moment Enter is pressed the
+  home page shows 28 articles, then the route lands on `/search` with 0, then 8 arrive ~2.5s later.
+  The assertion `found.first()` toBeVisible passed on the HOME page's rails and `found.count()` ran on
+  the results page — the test is not page-scoped, and the product's stages were never frozen.
+- `:85` — the §34 refinement has no surface. `getByRole('button', {name:/太贵了| cheaper/i})` waits out
+  the whole 30s. The server half works (measured earlier: budget 500 → 350, and only 3 of 8 slugs
+  survive the turn), so this is a missing affordance, with a catch the next unit has to be honest
+  about: `state_merger._adjust_budget` returns `op: budget_relative, applied: false, note: "no stated
+  budget to scale — do not invent one (§8)"` when the first turn never named a budget, and the e2e's
+  own sentence (`帮我找附近适合朋友聚会的餐厅`) is exactly that case.
+- `:100` — `getByRole('button', {name:/对比|Compare/i})` resolves to 12 elements. The compare tray
+  gives every selected chip's remove button the SAME label as the clear-all button
+  (`cards.tsx` `CompareTray`: `aria-label={dict.search.compareClear}`), so four of those twelve say
+  "清除对比" and none of them says which merchant it removes.
+- `:111` — `section[aria-labelledby="reviews-title"]` is absent on the merchant page; separate unit.
+
+- changed  `apps/web/src/lib/i18n/dict.ts` (the `Dict` interface + both locales),
+  `apps/web/src/components/search-box.tsx` (the `label` prop and the name/hint split),
+  `apps/web/src/components/search-results.tsx` (the follow-up box's label)
+- readers     NOT re-measured by this unit. This unit touched no gate harness and ran none of the
+  18 steps; the last recorded reading on this plane is `## 395`'s (`step 8 0 offenders · step 9 91/30
+  · step 10 missing 0 · step 12 50/50 · step 15 158/158 · step 16 strict clean on 158`), and it is
+  quoted here as inherited, not as this unit's evidence.

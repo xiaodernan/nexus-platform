@@ -49,6 +49,8 @@ export interface Dict {
     eyebrow: string;
     title: string;
     subtitle: string;
+    /** The search field's accessible name — a question, not an example. */
+    searchLabel: string;
     searchPlaceholder: string;
     submit: string;
     examplesLabel: string;
@@ -671,6 +673,7 @@ const zhHK: Dict = {
     eyebrow: '对话式本地发现',
     title: '想说就去。',
     subtitle: '讲出你的条件——地区、预算、时间、口味——NEXUS 会理解需求、搜索真实商户并解释每个推荐。',
+    searchLabel: '你想要什么？',
     searchPlaceholder: '例如：帮我找沙田适合约会的餐厅，预算 500，安静一点',
     submit: '开始搜索',
     examplesLabel: '试试这些',
@@ -1359,6 +1362,7 @@ const en: Dict = {
     title: 'Just say it.',
     subtitle:
       'Describe the plan — area, budget, time, taste — and NEXUS understands, searches real listings and explains every result.',
+    searchLabel: 'What are you looking for?',
     searchPlaceholder: 'e.g. date-friendly restaurants in Sha Tin, budget 500, quiet',
     submit: 'Search',
     examplesLabel: 'Try one of these',
