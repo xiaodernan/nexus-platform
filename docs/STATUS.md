@@ -16836,3 +16836,43 @@ into words that no user types — and, like §403's, it would have looked correc
 difference between "the data links these two characters" and "these two characters are the
 same word" is the reading and the definition, and a gate that cannot tell them apart is a gate
 that will confidently break words.
+
+## 412. D418 · the query that is matched against the corpus is now the canonical form, and it can only add matches (`search/service` + `api/routes_rag`, §6 / §7.1)
+
+**The open half of §411.** D417 canonicalised the NLU's vocabulary and the NLU's query, but the
+text that goes to **SQL** was still the raw query — so a user who typed 餐厅 did not reach a
+corpus row whose Chinese text is 餐廳. §411 filed that as a separate measurement rather than
+assuming it, and the measurement decided it:
+
+```
+470 published merchants, and 0 of them hold a character the canonical table changes.
+
+query 餐厅 (U+9910 U+5385):  raw reaches  0 rows,  canonical reaches 52
+query 食饭 (U+98DF U+996D):  raw reaches  0 rows,  canonical reaches 32
+query 餐廳 (U+9910 U+5EF3):  raw reaches 52 rows,  canonical reaches 52  (unchanged)
+```
+
+The corpus is entirely in the standard forms, so canonicalising the text that is matched
+against the index **can only add matches** — it cannot lose one, and there is no row whose
+match the change breaks.
+
+**The fix.** The merchant and offering queries (`search/service.py`) and the chunk retrieval
+(`api/routes_rag.py`) now take the **canonical** form of the query. The plan's `query_text` is
+untouched, so **the card still quotes the user's own words**: the query the user typed is not
+the query the card explains, and a card that answered "matches 餐廳" to a user who typed 餐厅
+would be showing the user a word they did not write.
+
+**Verified, not claimed.** `pytest tests/test_live_canonical_query.py` -> **3 passed** (both
+spellings reach the SAME merchants on the live plane, and the card still quotes the typed
+words — the test asserts the canonical form is NOT in the card); the full `apps/ai` suite ->
+**848 passed** with the database, **819 passed / 29 skipped** without it; `ruff check .` ->
+**All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 52 source files**; the
+eval gate -> **`RESULT: PASS - 2 suite(s), 0 failing`**.
+
+**Discipline note.** This unit is the one that shows what a filed measurement is for. The
+canonicalisation of the SQL text was NOT obviously right: the corpus is indexed as it is, and
+rewriting the text matched against an index is exactly the kind of change that breaks a search
+quietly. The measurement said the corpus holds **no** character the table changes, so the change
+is monotone — it adds 52 reachable rows for 餐厅 and 32 for 食饭 and takes none away. Without
+that measurement the change would have been a guess, and a guess in the search lane is a guess
+about what the user sees.

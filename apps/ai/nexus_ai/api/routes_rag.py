@@ -46,7 +46,12 @@ async def retrieve_chunks(database: Any, deps: Deps, *, query: str,
         embedding = (await deps.embeddings().embed([query]))[0]
     except Exception:  # keyword lane survives alone
         log.info("embedding unavailable, keyword-only retrieval")
-    q = S.build_chunk_query(tenant_id=tenant_id, merchant_id=merchant_id, text=query,
+    # D418: the same canonical form for the chunk lane - the corpus's chunks are indexed
+    # as they are, and the canonical form is the one they are written in.
+    from nexus_ai.nlu.canonical import canonical
+
+    q = S.build_chunk_query(tenant_id=tenant_id, merchant_id=merchant_id,
+                            text=canonical(query),
                             embedding=embedding, top_k=top_k)
     rows = await database.readonly(q.sql, *q.params, schema=deps.settings.db_search_path)
     # D405: the trigram lane counts, and the CONTAINMENT is the evidence. The trigram

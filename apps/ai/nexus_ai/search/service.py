@@ -499,7 +499,14 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     merchant_ids: list[str] = []
     rows: list[dict[str, Any]] = []
 
-    common = dict(tenant_id=str(tenant_id), text=plan.query_text or None,
+    # D418: the text that is MATCHED against the corpus's index is the canonical form of
+    # the query. The corpus is indexed as it is, and 0 of its 470 published rows hold a
+    # character the canonical table changes - so this can only add matches: the query
+    # 餐厅 (simplified) reaches 0 rows raw and 52 canonicalised. The card still shows
+    # the user's own words (plan.query_text is untouched).
+    from nexus_ai.nlu.canonical import canonical
+
+    common = dict(tenant_id=str(tenant_id), text=canonical(plan.query_text) or None,
                   filters=plan.filters, geo=plan.geo, radius_m=plan.radius_m,
                   limit=max(60, plan.limit * 3))
     if "merchant" in plan.subject_types:
