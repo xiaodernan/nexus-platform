@@ -652,21 +652,211 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             return _match
                         match_fn = make_ambience_match(str(ambience), float(weight))
                 
-                # ACCESSIBILITY: step_free -> boolean
-                elif kind == "accessibility" and key == "step_free":
+                # ACCESS: pet_friendly -> boolean
+                elif kind == "access" and key == "pet_friendly":
                     val = value.get("value") if isinstance(value, dict) else None
                     if isinstance(val, bool):
-                        def make_access_match(v, w):
+                        def make_pet_match(v, w):
                             def _match(attrs):
-                                if attrs.get("accessible_access") is True:
+                                if attrs.get("pet_friendly_access") is True:
                                     return w if v else (1.0 - w)
-                                if attrs.get("wheelchair_access") is True:
-                                    return w * 0.8 if v else (1.0 - w * 0.8)
+                                if attrs.get("pet_friendly_access") is False:
+                                    return 1.0 - w if v else w
+                                return None
+                            return _match
+                        match_fn = make_pet_match(val, float(weight))
+
+                # OCCASION: date, group, family, business, solo -> boolean
+                elif kind == "occasion" and key in ("date", "group", "family", "business", "solo"):
+                    val = value.get("value") if isinstance(value, dict) else None
+                    # For occasion, the value is the occasion type (e.g., "date", "group")
+                    # We check if the merchant has the corresponding occasion attribute
+                    occasion_key = f"{key}_occasion"
+                    if key == "solo":
+                        occasion_key = "solo_occasion"
+                    elif key == "group":
+                        occasion_key = "group_occasion"
+                    elif key == "family":
+                        occasion_key = "family_occasion"
+                    elif key == "business":
+                        occasion_key = "business_occasion"
+                    elif key == "date":
+                        occasion_key = "date_occasion"
+
+                    def make_occasion_match(occ_key, w):
+                        def _match(attrs):
+                            if attrs.get(occ_key) is True:
+                                return 1.0
+                            if attrs.get(occ_key) is False:
+                                return 0.0
+                            return 0.5  # neutral if not specified
+                        return _match
+                    match_fn = make_occasion_match(occasion_key, float(weight))
+
+                # VIEW: scenic -> boolean
+                elif kind == "view" and key == "scenic":
+                    val = value.get("value") if isinstance(value, dict) else None
+                    if isinstance(val, bool):
+                        def make_scenic_match(v, w):
+                            def _match(attrs):
+                                if attrs.get("scenic_view") is True:
+                                    return w if v else (1.0 - w)
+                                if attrs.get("scenic_view") is False:
+                                    return 1.0 - w if v else w
+                                return None
+                            return _match
+                        match_fn = make_scenic_match(val, float(weight))
+
+                # PRICE SENSE: cheap, premium
+                elif kind == "price_sense" and key in ("cheap", "premium"):
+                    is_cheap = key == "cheap"
+                    def make_price_sense_match(is_cheap_pref, w):
+                        def _match(attrs):
+                            price = attrs.get("avg_price_hkd")
+                            if price is None:
+                                return None
+                            try:
+                                price = float(price)
+                            except Exception:
+                                return None
+                            if is_cheap_pref:
+                                # cheap: prefer lower prices
+                                if price <= 100:
+                                    return w
+                                elif price <= 200:
+                                    return w * 0.5
+                                return 0.0
+                            else:
+                                # premium: prefer higher prices
+                                if price >= 400:
+                                    return w
+                                elif price >= 200:
+                                    return w * 0.5
+                                return 0.0
+                        return _match
+                    match_fn = make_price_sense_match(is_cheap, float(weight))
+
+                # WEATHER: rainy_day -> boolean
+                elif kind == "weather" and key == "rainy_day":
+                    val = value.get("value") if isinstance(value, dict) else None
+                    if isinstance(val, bool):
+                        def make_rainy_match(v, w):
+                            def _match(attrs):
+                                # rainy_day preference: prefer indoor venues
+                                if attrs.get("indoor_style") is True:
+                                    return w if v else (1.0 - w)
+                                if attrs.get("outdoor_style") is True:
+                                    return 1.0 - w if v else w
+                                return None
+                            return _match
+                        match_fn = make_rainy_match(val, float(weight))
+
+                # TIME PREF: open_late -> boolean
+                elif kind == "time_pref" and key == "open_late":
+                    val = value.get("value") if isinstance(value, dict) else None
+                    if isinstance(val, bool):
+                        def make_late_match(v, w):
+                            def _match(attrs):
+                                if attrs.get("opens_late") is True:
+                                    return w if v else (1.0 - w)
+                                if attrs.get("opens_late") is False:
+                                    return 1.0 - w if v else w
+                                return None
+                            return _match
+                        match_fn = make_late_match(val, float(weight))
+
+                # CUISINE: spicy
+                elif kind == "cuisine" and key == "spicy":
+                    val = value.get("value") if isinstance(value, dict) else None
+                    if isinstance(val, bool):
+                        def make_spicy_match(v, w):
+                            def _match(attrs):
+                                if attrs.get("spicy_cuisine") is True:
+                                    return w if v else (1.0 - w)
+                                if attrs.get("spicy_cuisine") is False:
+                                    return 1.0 - w if v else w
+                                return None
+                            return _match
+                        match_fn = make_spicy_match(val, float(weight))
+
+                # STYLE: outdoor, indoor
+                elif kind == "style" and key in ("outdoor", "indoor"):
+                    is_outdoor = key == "outdoor"
+                    def make_outdoor_match(is_outdoor_pref, w):
+                        def _match(attrs):
+                            if is_outdoor_pref:
+                                if attrs.get("outdoor_style") is True:
+                                    return w
+                                if attrs.get("indoor_style") is True:
+                                    return 1.0 - w
+                                if attrs.get("outdoor_seating") is True:
+                                    return w * 0.8
+                            else:
+                                if attrs.get("indoor_style") is True:
+                                    return w
+                                if attrs.get("outdoor_style") is True:
+                                    return 1.0 - w
+                                if attrs.get("outdoor_seating") is True:
+                                    return 1.0 - w * 0.8
+                            return None
+                        return _match
+                    match_fn = make_outdoor_match(is_outdoor, float(weight))
+
+                # ACCESS: mtr_near -> boolean
+                elif kind == "access" and key == "mtr_near":
+                    val = value.get("value") if isinstance(value, dict) else None
+                    if isinstance(val, bool):
+                        def make_mtr_match(v, w):
+                            def _match(attrs):
+                                if attrs.get("mtr_near_access") is True or attrs.get("mtr_within_5min") is True:
+                                    return w if v else (1.0 - w)
+                                if attrs.get("mtr_near_access") is False and attrs.get("mtr_within_5min") is False:
+                                    return 1.0 - w if v else w
+                                return None
+                            return _match
+                        match_fn = make_mtr_match(val, float(weight))
+
+                # ACCESS: accessible -> boolean
+                elif kind == "access" and key == "accessible":
+                    val = value.get("value") if isinstance(value, dict) else None
+                    if isinstance(val, bool):
+                        def make_accessible_match(v, w):
+                            def _match(attrs):
+                                if attrs.get("accessible_access") is True or attrs.get("wheelchair_access") is True:
+                                    return w if v else (1.0 - w)
                                 if attrs.get("accessible_access") is False and attrs.get("wheelchair_access") is False:
                                     return 1.0 - w if v else w
                                 return None
                             return _match
-                        match_fn = make_access_match(val, float(weight))
+                        match_fn = make_accessible_match(val, float(weight))
+
+                # ACCESS: parking -> boolean
+                elif kind == "access" and key == "parking":
+                    val = value.get("value") if isinstance(value, dict) else None
+                    if isinstance(val, bool):
+                        def make_parking_match(v, w):
+                            def _match(attrs):
+                                if attrs.get("parking_access") is True:
+                                    return w if v else (1.0 - w)
+                                if attrs.get("parking_access") is False:
+                                    return 1.0 - w if v else w
+                                return None
+                            return _match
+                        match_fn = make_parking_match(val, float(weight))
+
+                # ACCESS: pet_friendly -> boolean
+                elif kind == "access" and key == "pet_friendly":
+                    val = value.get("value") if isinstance(value, dict) else None
+                    if isinstance(val, bool):
+                        def make_pet_match(v, w):
+                            def _match(attrs):
+                                if attrs.get("pet_friendly_access") is True:
+                                    return w if v else (1.0 - w)
+                                if attrs.get("pet_friendly_access") is False:
+                                    return 1.0 - w if v else w
+                                return None
+                            return _match
+                        match_fn = make_pet_match(val, float(weight))
                 
                 if match_fn:
                     pref_rules.append({
