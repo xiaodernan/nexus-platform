@@ -160,7 +160,9 @@ async def run_search(deps: Deps, intent: Intent | None, *, query: str = "",
         except Exception:  # pragma: no cover - the keyword lane is the floor
             embedding = None
     vector_lane = bool(embedding) and backend.name == "postgres"
-    intent_prefs = intent.preferences if intent else None
+    # `search()` matches preferences by key, so it takes them as plain dicts; the contract hands
+    # out PreferenceItem models, and calling `.get` on one crashed every query that had a preference.
+    intent_prefs = [p.model_dump() for p in intent.preferences] if intent else None
     cards, response, bundle, scored = await deterministic_search(
         backend=backend, plan=plan, tenant_id=deps.tenant_id(),
         embedding=embedding if vector_lane else None, vector_lane=vector_lane,

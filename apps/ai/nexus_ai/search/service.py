@@ -542,7 +542,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     attrs = {}
             merchant_attrs[mid] = attrs
 
-    #     # 1. Feedback-based personalization (requires user_id and subject_ids)
+    # 1. Feedback-based personalization (requires user_id and subject_ids)
     grouped: dict[str, list[float]] = {}
     if user_id and subject_ids:
         fb_rows = await backend.feedback(str(user_id), subject_ids)
@@ -567,16 +567,12 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 key = p.get("key")
                 weight = p.get("weight")
                 raw_value = p.get("value")
-                print(f'DEBUG: Processing pref kind={kind}, key={key}, weight={weight}')
                 if not (kind and key and weight is not None):
-                    print('DEBUG: Skipped - missing kind/key/weight')
                     continue
                 
                 try:
                     value = json.loads(raw_value) if isinstance(raw_value, str) else raw_value
-                    print(f'DEBUG: Parsed value = {value}')
                 except Exception as e:
-                    print(f'DEBUG: JSON parse error: {e}')
                     value = {}
                 
                 match_fn = None
@@ -585,17 +581,24 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 if kind == "food" and key in ("cuisine_like", "cuisine_dislike"):
                     cuisines = value.get("values") if isinstance(value, dict) else []
                     if cuisines:
-                        polarity = 1 if key == "cuisine_like" else -1
-                        def make_cuisine_match(cats, pol):
+                        is_like = key == "cuisine_like"
+                        def make_cuisine_match(cats, is_like_pref):
                             def _match(attrs):
                                 cat = str(attrs.get("category_primary") or "").lower()
                                 tags = [str(t).lower() for t in (attrs.get("tags") or [])]
+                                has_match = False
                                 for c in cats:
                                     if c.lower() in cat or c.lower() in tags:
-                                        return 1.0 if pol > 0 else 0.0
-                                return None
+                                        has_match = True
+                                        break
+                                if has_match:
+                                    # Match found: like -> 1.0, dislike -> 0.0
+                                    return 1.0 if is_like_pref else 0.0
+                                else:
+                                    # No match: like -> neutral (0.5), dislike -> positive (1.0, since not having disliked cuisine is good)
+                                    return 0.5 if is_like_pref else 1.0
                             return _match
-                        match_fn = make_cuisine_match(cuisines, polarity)
+                        match_fn = make_cuisine_match(cuisines, is_like)
                 
                 # BUDGET: per_person_max_hkd -> numeric budget
                 elif kind == "budget" and key == "per_person_max_hkd":
@@ -651,11 +654,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 
                 # ACCESSIBILITY: step_free -> boolean
                 elif kind == "accessibility" and key == "step_free":
-                    print(f'DEBUG: Matched accessibility/step_free, value={value}')
                     val = value.get("value") if isinstance(value, dict) else None
-                    print(f'DEBUG: val = {val}')
                     if isinstance(val, bool):
-                        print(f'DEBUG: val is bool = {val}')
                         def make_access_match(v, w):
                             def _match(attrs):
                                 if attrs.get("accessible_access") is True:
@@ -667,7 +667,6 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 return None
                             return _match
                         match_fn = make_access_match(val, float(weight))
-                        print(f'DEBUG: match_fn created = {match_fn}')
                 
                 if match_fn:
                     pref_rules.append({
@@ -676,10 +675,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         "weight": float(weight),
                         "match_fn": match_fn
                     })
-                    print(f'DEBUG: Added rule {kind}/{key}')
             
             # Apply user_preferences to ALL candidates (not just those with feedback)
-            print(f'DEBUG: pref_rules count = {len(pref_rules)}')
             if pref_rules:
                 for r in deduped:
                     sid = str(r.get("subject_id") or r.get("id"))
@@ -687,9 +684,14 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     if mid not in merchant_attrs:
                         continue
                     attrs = merchant_attrs[mid]
+                    # Also include relevant top-level fields for budget/district matching
+                    enriched_attrs = dict(attrs)
+                    for field in ("avg_price_hkd", "district", "category_primary", "tags"):
+                        if r.get(field) is not None:
+                            enriched_attrs[field] = r.get(field)
                     pref_scores: list[float] = []
                     for rule in pref_rules:
-                        score = rule["match_fn"](attrs)
+                        score = rule["match_fn"](enriched_attrs)
                         if score is not None:
                             pref_scores.append(score)
                     if pref_scores:
@@ -697,22 +699,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         existing = personalization.get(sid)
                         personalization[sid] = avg_score if existing is None else (existing + avg_score) / 2
 
-    # 3. Feedback-based personalization (requires user_id and subject_ids)
-    # Only applies to subjects that have feedback
-    if user_id and subject_ids:
-        fb_rows = await backend.feedback(str(user_id), subject_ids)
-        grouped: dict[str, list[float]] = {}
-        for raw in fb_rows:
-            val = _feedback_value(raw)
-            if val is not None:
-                grouped.setdefault(str(raw.get("subject_id")), []).append(val)
-        for sid, values in grouped.items():
-            sig = personalization_signal(values, w.personalization)
-            if sig is not None:
-                existing = personalization.get(sid)
-                personalization[sid] = sig if existing is None else (existing + sig) / 2
-
-    # 4. Transient NLU intent_preferences from current query (D382 follow-up)
+    # 3. Transient NLU intent_preferences from current query (D382 follow-up)
     # Works without user_id - applies to all candidates
     if intent_preferences and merchant_attrs:
         for r in deduped:

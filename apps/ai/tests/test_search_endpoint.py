@@ -54,6 +54,16 @@ def test_query_and_intent_paths(client):
     assert by_intent["intent"]["location"]["value"] == "sha tin"
 
 
+def test_extracted_preferences_reach_the_ranking_lane(client):
+    """A query that extracts a preference must answer, not 503: the ranking lane reads
+    preferences by key, and the contract hands it PreferenceItem models."""
+    r = _search(client, query="安静的咖啡店，适合工作，有插座", locale="zh-HK", limit=5)
+    assert r.status_code == 200, r.text
+    prefs = r.json()["intent"]["preferences"]
+    assert prefs, "the query must extract at least one preference, or this test proves nothing"
+    assert set(prefs[0]) == {"key", "value", "polarity"}
+
+
 def test_unknown_top_level_field_rejected(client):
     r = _search(client, query="sha tin", not_a_field=True)
     assert r.status_code == 422

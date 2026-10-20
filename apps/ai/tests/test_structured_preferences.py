@@ -79,12 +79,14 @@ async def test_cuisine_dislike_preference_penalizes_matching_merchant():
              "display_name": "Spicy Hotpot", "display_name_zh": "麻辣火锅",
              "category_primary": "restaurant", "rating_agg": 4.5, "review_count": 10,
              "tags": ["hotpot", "spicy", "sichuan"],
-             "attributes": {"data_origin": "demo", "spicy_cuisine": True}},
+             "attributes": {"data_origin": "demo", "spicy_cuisine": True},
+             "kw_score": 0.5, "text_matched": True},
             {"subject_id": "m2", "merchant_id": "m2", "subject_type": "merchant",
              "display_name": "Mild Cafe", "display_name_zh": "清淡咖啡",
              "category_primary": "cafe", "rating_agg": 4.0, "review_count": 20,
              "tags": ["coffee", "light-meal"],
-             "attributes": {"data_origin": "demo", "spicy_cuisine": False}},
+             "attributes": {"data_origin": "demo", "spicy_cuisine": False},
+             "kw_score": 0.5, "text_matched": True},
         ],
         user_prefs=[
             {"user_id": "u1", "kind": "food", "key": "cuisine_dislike",
@@ -99,7 +101,8 @@ async def test_cuisine_dislike_preference_penalizes_matching_merchant():
     assert len(scored) == 2
     # Find the spicy one - should have low personalization (penalty)
     for s in scored:
-        if s.candidate.raw.get("display_name_zh") == "麻辣火锅":
+        row = s.candidate.raw.get("row", {})
+        if row.get("display_name_zh") == "麻辣火锅":
             assert s.candidate.personalization is not None
             assert s.candidate.personalization < 0.5  # penalty
         else:
@@ -115,12 +118,14 @@ async def test_budget_preference_within_budget_boosts():
              "display_name": "Cheap Eats", "display_name_zh": "平价小吃",
              "category_primary": "restaurant", "rating_agg": 4.0, "review_count": 10,
              "avg_price_hkd": 50,
-             "attributes": {"data_origin": "demo"}},
+             "attributes": {"data_origin": "demo"},
+             "kw_score": 0.5, "text_matched": True},
             {"subject_id": "m2", "merchant_id": "m2", "subject_type": "merchant",
              "display_name": "Fine Dining", "display_name_zh": "高级餐厅",
              "category_primary": "restaurant", "rating_agg": 4.5, "review_count": 20,
              "avg_price_hkd": 500,
-             "attributes": {"data_origin": "demo"}},
+             "attributes": {"data_origin": "demo"},
+             "kw_score": 0.5, "text_matched": True},
         ],
         user_prefs=[
             {"user_id": "u1", "kind": "budget", "key": "per_person_max_hkd",
@@ -129,12 +134,13 @@ async def test_budget_preference_within_budget_boosts():
         ]
     )
     
-    plan = S.SearchPlan(query_text="restaurant", limit=10)
+    plan = S.SearchPlan(query_text="eats", limit=10)
     cards, resp, _, scored = await S.search(backend=backend, plan=plan, user_id="u1")
     
     assert len(scored) == 2
     for s in scored:
-        if s.candidate.raw.get("avg_price_hkd") == 50:
+        row = s.candidate.raw.get("row", {})
+        if row.get("avg_price_hkd") == 50:
             assert s.candidate.personalization is not None
             assert s.candidate.personalization > 0.5  # within budget -> boost
         else:
@@ -170,7 +176,8 @@ async def test_home_district_preference_boosts():
     
     assert len(scored) == 2
     for s in scored:
-        if s.candidate.raw.get("district") == "Sha Tin":
+        row = s.candidate.raw.get("row", {})
+        if row.get("district") == "Sha Tin":
             assert s.candidate.personalization is not None
             assert s.candidate.personalization > 0.5  # district match -> boost
         else:
@@ -182,8 +189,15 @@ async def test_ambience_preference_matches_boolean_attributes():
     # Use a SqlLikeBackend that does not filter on text (like the real SQL backend)
     # Use a SqlLikeBackend that does not filter on text (like the real SQL backend)
     class SqlLikeBackend(S.StaticBackend):
+        def __init__(self, *args, user_prefs=None, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._user_prefs = user_prefs or []
+
         async def merchant_candidates(self, *, text=None, filters=None, **_kw):
             return [dict(r) for r in self.merchants]
+
+        async def user_preferences(self, user_id: str, kinds=None):
+            return [dict(p) for p in self._user_prefs if str(p.get('user_id')) == user_id]
 
     backend = SqlLikeBackend(
         merchants=[
