@@ -15325,6 +15325,20 @@ scheme, the matching will silently not fire. A future unit should add a `prefere
 
 ---
 
+## 381 · D383 · NLU intent preferences now feed the personalization ranking signal (`search/service`, D382 follow-up / §7.1 / §99-100)
+
+**The gap D382 filed.** D382 added persistent `user_preferences` (from the database) to the personalization signal, but the transient NLU-extracted `Intent.preferences` from the current query were not used. A Chinese sentence like "帮我找一个适合情侣约会的地方" extracts `occasion=date` but this signal was lost before ranking.
+
+**Implementation.** The `search()` pipeline now accepts an optional `intent_preferences` parameter (passed from `run_search` via the `Intent` object). For each candidate, the pipeline matches the NLU preference `(key=occasion, value=date, polarity=1)` against merchant `attributes` JSONB using the `{value}_{kind}` convention (e.g., `date_occasion`). A match adds weight 1.0 (polarity > 0) or 0.0 (polarity < 0); a mismatch inverts. The averaged score merges with any existing personalization (feedback, persistent prefs).
+
+**Seed data alignment.** Updated `data/seed/generate.py` to emit merchant attributes matching all NLU preference keys: `date_occasion`, `group_occasion`, `family_occasion`, `business_occasion`, `solo_occasion`, `ambience_style`, `outdoor_style`, `indoor_style`, `mtr_near_access`, `accessible_access`, `parking_access`, `pet_friendly_access`, `scenic_view`, `spicy_cuisine`, `cheap_price_sense`, `premium_price_sense`, `rainy_day_weather` — alongside existing `quiet_ambience`, `lively_ambience`, `kid_friendly`, `mtr_within_5min`, `outdoor_seating`, `has_private_room`, `wheelchair_access`, `opens_late`.
+
+**Verified, not claimed.** Offline test `test_pref_match.py`: a query with `intent_preferences=[{key:occasion, value:date, polarity:1}]` boosts merchants with `date_occasion=true` (personalization=1.0) and penalizes `date_occasion=false` (personalization=0.0). Full `apps/ai` suite: **651 passed, 4 skipped**. All ledger checks PASS.
+
+**Remains.** Structured preference values (e.g., `cuisine_like: {values: [...]}`) not yet handled; currently only boolean attributes are matched. The `{value}_{kind}` convention works for the seeded boolean attributes but may need `preference_key` column for complex values.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha

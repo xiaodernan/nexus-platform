@@ -465,11 +465,17 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                  embedding: Sequence[float] | None = None,
                  vector_lane: bool = False,
                  user_id: str | None = None,
+                 intent_preferences: Sequence[dict[str, Any]] | None = None,
                  locale: str = "zh-HK",
                  include_sponsored: bool = True) -> tuple[list[EntityCard], SearchResponse,
                                                           FactBundle, list[Scored]]:
     """Deterministic search end-to-end. Returns cards, the response, the grounding bundle and
-    the scored list (the latter two feed `/ai/v1/recommend`, compare and the eval harness)."""
+    the scored list (the latter two feed `/ai/v1/recommend`, compare and the eval harness).
+
+    `intent_preferences`: optional NLU-extracted preferences from the current query's Intent.
+    These are transient per-query signals (e.g., occasion=date from "帮我找一个适合情侣约会的地方"),
+    distinct from persistent `user_preferences` stored in the database.
+    """
     started = time.perf_counter()
     w = weights or load_ranking_weights(_default_weights_path())
     bundle = FactBundle()
@@ -523,9 +529,25 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 slots_by_merchant[mid] = raw
 
     personalization: dict[str, float] = {}
+
+    # Build merchant_attrs map once for all preference types
+    merchant_attrs: dict[str, dict] = {}
+    for r in deduped:
+        mid = str(r.get("merchant_id") or r.get("id"))
+        attrs = r.get("attributes")
+        if attrs and mid not in merchant_attrs:
+            if isinstance(attrs, str):
+                import json
+                try:
+                    attrs = json.loads(attrs)
+                except Exception:
+                    attrs = {}
+            merchant_attrs[mid] = attrs
+
+    # 1. Feedback-based personalization (requires user_id and subject_ids)
+    grouped: dict[str, list[float]] = {}
     if user_id and subject_ids:
         fb_rows = await backend.feedback(str(user_id), subject_ids)
-        grouped: dict[str, list[float]] = {}
         for raw in fb_rows:
             val = _feedback_value(raw)
             if val is not None:
@@ -535,11 +557,10 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
             if sig is not None:
                 personalization[sid] = sig
 
-        # User-declared preferences (D381): read prefs and match against merchant attributes
+    # 2. Persistent user_preferences from database (D382, requires user_id)
+    if user_id:
         pref_rows = await backend.user_preferences(str(user_id))
         if pref_rows:
-            # Build a map of preference (kind, key) -> weight
-            # weight is 0.5 (neutral) to 1.0 (strong like) or 0.0 (strong dislike)
             pref_by_kind_key: dict[tuple[str, str], float] = {}
             for p in pref_rows:
                 kind = p.get("kind")
@@ -548,27 +569,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 if kind and key and weight is not None:
                     pref_by_kind_key[(str(kind), str(key))] = float(weight)
             
-            # For each candidate, check if its attributes match any user preference
-            # The candidate's subject_id is available in deduped rows
-            # We need merchant attributes for merchant candidates
-            merchant_attrs: dict[str, dict] = {}
-            for r in deduped:
-                mid = str(r.get("merchant_id") or r.get("id"))
-                attrs = r.get("attributes")
-                if attrs and mid not in merchant_attrs:
-                    if isinstance(attrs, str):
-                        import json
-                        try:
-                            attrs = json.loads(attrs)
-                        except Exception:
-                            attrs = {}
-                    merchant_attrs[mid] = attrs
-            
-            # Compute preference signal per subject
-            # A preference like (kind="ambience", key="quiet", weight=1.0) matches
-            # merchant with attributes.quiet_ambience == true
+            # Compute preference signal per subject (only for those with feedback)
             for sid, values in grouped.items():
-                # Find the merchant_id for this subject
                 mid = None
                 for r in deduped:
                     if str(r.get("subject_id") or r.get("id")) == sid:
@@ -577,22 +579,51 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 if not mid or mid not in merchant_attrs:
                     continue
                 attrs = merchant_attrs[mid]
-                # Check each preference against attributes
                 pref_scores: list[float] = []
                 for (kind, key), weight in pref_by_kind_key.items():
-                    # The attribute key convention: {key}_{kind} (e.g., quiet_ambience)
-                    # or {kind}_{key} (e.g., ambience_quiet)
                     attr_key1 = f"{key}_{kind}"
                     attr_key2 = f"{kind}_{key}"
                     if attrs.get(attr_key1) is True or attrs.get(attr_key2) is True:
                         pref_scores.append(weight)
                     elif attrs.get(attr_key1) is False or attrs.get(attr_key2) is False:
-                        # Opposite of what user wants - invert the weight around neutral (0.5)
                         pref_scores.append(1.0 - weight)
                 if pref_scores:
-                    # Average the preference scores for this subject
                     avg_score = sum(pref_scores) / len(pref_scores)
-                    personalization[sid] = avg_score
+                    existing = personalization.get(sid)
+                    personalization[sid] = avg_score if existing is None else (existing + avg_score) / 2
+
+    # 3. Transient NLU intent_preferences from current query (D382 follow-up)
+    # Works without user_id - applies to all candidates
+    if intent_preferences and merchant_attrs:
+        for r in deduped:
+            sid = str(r.get("subject_id") or r.get("id"))
+            mid = str(r.get("merchant_id") or r.get("id"))
+            if mid not in merchant_attrs:
+                continue
+            attrs = merchant_attrs[mid]
+            pref_scores: list[float] = []
+            for pref in intent_preferences:
+                pref_kind = pref.get("key")
+                pref_value = pref.get("value")
+                polarity = pref.get("polarity", 1)
+                if not pref_kind or not pref_value:
+                    continue
+                attr_key1 = f"{pref_value}_{pref_kind}"  # date_occasion
+                attr_key2 = f"{pref_kind}_{pref_value}"  # occasion_date
+                
+                for attr_key in (attr_key1, attr_key2):
+                    if attrs.get(attr_key) is True:
+                        weight = 1.0 if polarity > 0 else 0.0
+                        pref_scores.append(weight)
+                        break
+                    elif attrs.get(attr_key) is False:
+                        weight = 0.0 if polarity > 0 else 1.0
+                        pref_scores.append(weight)
+                        break
+            if pref_scores:
+                avg_score = sum(pref_scores) / len(pref_scores)
+                existing = personalization.get(sid)
+                personalization[sid] = avg_score if existing is None else (existing + avg_score) / 2
 
     candidates = candidates_from_rows(deduped, plan, bundle=bundle,
                                       facts_by_subject=facts_by_subject,

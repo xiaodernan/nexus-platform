@@ -1049,7 +1049,34 @@ class Gen:
                                        "set-lunch", "e-wallet", "card-no"]))
             attrs = {
                 "data_origin": "demo",
+                # Ambience preferences (NLU: ambience/quiet, ambience/lively)
                 "quiet_ambience": m["aspect_mean"]["noise"] >= 4.2,
+                "lively_ambience": m["aspect_mean"]["noise"] < 3.0,
+                # Occasion preferences (NLU: occasion/date, occasion/group, occasion/family, occasion/business, occasion/solo)
+                "date_occasion": m["leaf"] in ("restaurant", "cafe", "bar", "hotpot", "western", "italian", "japanese", "korean", "thai", "indian", "seafood", "dim_sum", "malaysian"),
+                "group_occasion": m["leaf"] in ("hotpot", "karaoke", "escape_room", "bar", "restaurant", "bbq"),
+                "family_occasion": m["leaf"] in ("restaurant", "cafe", "dim_sum", "hotpot", "bakery", "cooking_class"),
+                "business_occasion": m["leaf"] in ("restaurant", "hotel", "cafe", "western", "japanese", "italian"),
+                "solo_occasion": m["leaf"] in ("cafe", "bakery", "restaurant", "fast_food"),
+                # Style preferences (NLU: style/ambience, style/outdoor, style/indoor)
+                "ambience_style": m["aspect_mean"]["value"] >= 4.0,  # value as proxy for overall quality/ambience
+                "outdoor_style": m["leaf"] in ("attraction", "park", "outdoor_seating") or self.rng.random() < 0.15,
+                "indoor_style": True,  # most HK venues are indoor
+                # Access preferences (NLU: access/mtr_near, access/accessible, access/parking, access/pet_friendly)
+                "mtr_near_access": m["mtr_min"] <= 5,
+                "accessible_access": self.rng.random() < 0.55,
+                "parking_access": self.rng.random() < 0.3,
+                "pet_friendly_access": self.rng.random() < 0.2,
+                # View preferences (NLU: view/scenic)
+                "scenic_view": m["leaf"] in ("attraction", "hotel", "rooftop", "seafood") and self.rng.random() < 0.3,
+                # Cuisine preferences (NLU: cuisine/spicy)
+                "spicy_cuisine": m["leaf"] in ("hotpot", "korean", "thai", "indian", "malaysian", "sichuan", "hunan", "mexican"),
+                # Price sense preferences (NLU: price_sense/cheap, price_sense/premium)
+                "cheap_price_sense": m["avg_price"] < 100,
+                "premium_price_sense": m["avg_price"] > 400,
+                # Weather preference (NLU: weather/rainy_day)
+                "rainy_day_weather": True,  # all venues usable on rainy days
+                # Existing attributes
                 "kid_friendly": self.rng.random() < 0.45,
                 "mtr_within_5min": m["mtr_min"] <= 5,
                 "outdoor_seating": self.rng.random() < 0.2,
