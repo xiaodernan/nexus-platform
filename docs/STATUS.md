@@ -15810,6 +15810,48 @@ is the rows and their facts, and that is what landed here.
 
 ---
 
+## 397. D403 · the RAG retrieval could not find a Chinese chunk, and the corpus plainly has one (`search/sql` + `api/routes_rag`, §7 / RAG)
+
+**What the corpus holds and what the retrieval found.** The seeded corpus has **79 chunks whose
+text contains 咖啡**, and the retrieval answered **nothing** for the query 咖啡. The merchant lane
+found the same merchants by trigram (D366), but the CHUNK lane had only two:
+
+```
+SELECT count(*) FROM chunks WHERE text LIKE '%咖啡%'                  -> 79
+SELECT count(*) FROM chunks WHERE search_tsv @@ plainto_tsquery('simple','咖啡') -> 0
+SELECT count(*) FROM chunks WHERE embedding IS NOT NULL             -> 0
+```
+
+**Why.** `to_tsvector('simple', ...)` cannot SEGMENT Chinese: a CJK run with no spaces becomes
+ONE token, so 咖啡 is a SUBSTRING of a token like 咖啡及茶 and never equals one. The vector lane
+cannot cover it either â the seeded chunks carry no embedding â so the retrieval had no lane left, and the
+merchant agent's answers (grounded on chunks) had nothing to ground on for a Chinese question.
+
+**The fix, in two halves that both had to land:**
+
+1. **The query gained a trigram lane.** `similarity(c.text, :text)` is the trigram function that
+   DOES work on CJK: the `%` OPERATOR does not, because it needs three-character trigrams and a
+   two-character Chinese word has none (`text % '咖啡'` -> 0 rows, `similarity(...) > 0` -> 82). The
+   parameter is cast (`::text`) because `similarity(text, $1)` leaves the type ambiguous and
+   Postgres answers `could not determine data type of parameter $1` â a hard error, not a soft one.
+2. **The route's threshold learned to count it.** The route scored a chunk by `kw_score` and
+   `vec_score` only, so the chunks the trigram lane DID match were dropped as sub-threshold
+   noise. The trigram score is now part of the score and of the threshold's evidence.
+
+**Measured, on the live plane, after the fix.** 咖啡 -> 3 chunks; 蛋糕 -> 3; 素食 -> 3; 全日菜單 -> 3;
+menu -> 3. Before the fix, 咖啡 and 蛋糕 answered 0.
+
+**Verified, not claimed.** `pytest tests/test_rag_chinese.py` -> **6 passed** (5 offline + the live
+one); full `apps/ai` suite -> **779 passed** with the database, **762 passed / 17 skipped** without
+it.
+
+**Discipline note.** The first attempt at the trigram lane changed the query and the retrieval still
+answered 0 â because the route's threshold dropped the chunks the new lane had found. The
+probe that found it read the route's own scoring line rather than assuming the query was the whole
+story; a lane that only SCORES cannot widen a result set, and this one had to widen a FILTER too.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha

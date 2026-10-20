@@ -556,10 +556,19 @@ def build_chunk_query(*, tenant_id: str, merchant_id: str | None, text: str,
     text_ph = p.add(text or "")
     tsq = f"plainto_tsquery('{cfg}'::regconfig, {text_ph})"
     kw_expr = f"COALESCE(ts_rank(c.search_tsv, {tsq}), 0)"
+    # D402: the trigram lane. `to_tsvector('simple', ...)` cannot SEGMENT Chinese: a
+    # CJK run with no spaces becomes ONE token, so a Chinese word never matches one
+    # (79 seeded chunks contain 咖啡 and 0 of them match
+    # `search_tsv @@ plainto_tsquery('simple','咖啡')`). The vector lane cannot cover
+    # it either: the seeded chunks carry no embedding, so the retrieval returned
+    # NOTHING for a Chinese query. `similarity()` is the trigram function that does
+    # work on CJK (the `%` OPERATOR does not: it needs three-character trigrams, and
+    # a two-character Chinese word has none).
+    trigram_expr = f"COALESCE(similarity(c.text, {text_ph}::text), 0)"
     tenant_ph = p.add(str(tenant_id))
     limit_ph = p.add(int(max(1, min(top_k, 40))))  # §9: rerank budget is top-40
     where = [f"c.tenant_id = {tenant_ph}::uuid",
-             f"({kw_expr} > 0 OR c.embedding IS NOT NULL)"]
+             f"({kw_expr} > 0 OR {trigram_expr} > 0 OR c.embedding IS NOT NULL)"]
     if merchant_id:
         where.append(f"c.merchant_id = {p.add(str(merchant_id))}::uuid")
     if embedding:
@@ -567,11 +576,12 @@ def build_chunk_query(*, tenant_id: str, merchant_id: str | None, text: str,
         vec_expr = f"GREATEST(0, 1 - (c.embedding <=> {vec_ph}::vector))"
     else:
         vec_expr = "0"
-    score = f"GREATEST({kw_expr}, {vec_expr})"
+    score = f"GREATEST({kw_expr}, {trigram_expr}, {vec_expr})"
     sql = f"""
 SELECT c.id::text AS id, c.text, c.document_id::text AS document_id,
        c.merchant_id::text AS merchant_id, d.source_uri, c.section, c.metadata,
        {kw_expr}::float8 AS kw_score,
+       {trigram_expr}::float8 AS trigram_score,
        {vec_expr}::float8 AS vec_score
 FROM chunks c
 JOIN documents d ON d.id = c.document_id

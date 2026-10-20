@@ -79,8 +79,15 @@ async def rag_retrieve(request: Request, body: RagRetrieveRequest):
                 status_code=503)
     chunks = []
     for r in rows:
-        score = max(float(r.get("kw_score") or 0.0), float(r.get("vec_score") or 0.0))
-        if score < VECTOR_FLOOR and not float(r.get("kw_score") or 0.0):
+        # D402: the trigram lane counts as retrieval evidence. A Chinese chunk cannot
+        # match the tsvector (one token per CJK run) and the seeded corpus carries no
+        # embedding, so a Chinese query scored 0 on both lanes and every chunk it DID
+        # match was dropped by the threshold below - the retrieval answered "nothing
+        # found" for a query the corpus plainly contains.
+        score = max(float(r.get("kw_score") or 0.0), float(r.get("trigram_score") or 0.0),
+                    float(r.get("vec_score") or 0.0))
+        if score < VECTOR_FLOOR and not float(r.get("kw_score") or 0.0) \
+                and not float(r.get("trigram_score") or 0.0):
             continue  # §7: no answer without retrieval — drop sub-threshold noise
         text = str(r.get("text") or "")
         scan = scan_untrusted(text)
