@@ -15735,6 +15735,35 @@ the contract shape — the premise was wrong, not the code, and the test was cor
 
 ---
 
+## 394. D400 · the product's own non-negotiable rules, checked on the live plane (`apps/ai/tests/test_live_ai_contract.py`, README rule 1 / §18 / §109)
+
+**What was checked and where.** The README's FIRST rule is "Real data or nothing: every price,
+rating, hour and distance shown to a user traces to a `facts` row ... Unverifiable = rendered as
+unverified", and the e2e suite asserts it ("cards never render an ungrounded number"). But the
+e2e assertion lives in the BROWSER run, which needs the whole stack, so the rule was only ever
+checked when the stack was up — which is most of the time, not.
+
+**The three cases, now on the AI service's own suite:**
+
+1. **No card renders an ungrounded number** — for every card the live search returns: a price
+   needs a `price` fact, a rating needs a `rating` fact, an open state needs an `opening_hours`
+   fact, and the synthetic inventory must carry `flags.demo` (the e2e spec's own assertions,
+   run against the database).
+2. **Every reason carries a fact id** — §18: a bullet without a fact id is a claim nobody can
+   check, and the card rendered 1 reason per card on the live plane (all with fact ids).
+3. **A sponsored card is labelled** — §66-67: a promoted card must say so.
+
+**Verified, not claimed.** `pytest tests/test_live_ai_contract.py` against the seeded `nexus` ->
+**3 passed**; full `apps/ai` suite -> **762 passed** with the database, **747 passed / 15
+skipped** without it.
+
+**Why this unit exists.** D399 found a 500 on the product's headline sentence with a probe and
+a live test. The rules above had the same exposure and no gate at all: they were asserted only
+in a run that needs three services. A rule that is only checked when the whole stack is up is a
+rule that is checked rarely.
+
+---
+
 D334 mirrored four documents over the working copy, ran the six readers on those bytes, staged them, committed,
 and then executed a leg whose whole body was: read the disk, compare it with the bytes saved before the mirror,
 refuse if they differ. It refused · `docs/API_CONTRACT.md was not put back byte-for-byte (disk 60335 bytes sha
