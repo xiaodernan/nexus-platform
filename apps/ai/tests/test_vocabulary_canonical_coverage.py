@@ -28,6 +28,7 @@ So this file is the census that makes both facts ONE fact:
 from __future__ import annotations
 
 from nexus_ai.nlu import lexicon as L
+from nexus_ai.nlu import numerals as N
 from nexus_ai.nlu.canonical import CANONICAL_FORMS, canonical
 
 #: The tables that hold the Simplified/Traditional fact ON PURPOSE: the marker sets and
@@ -68,7 +69,17 @@ def _vocabulary_tables() -> dict[str, object]:
 def test_every_vocabulary_table_is_canonicalised_or_already_canonical():
     listed = set(L._CANONICALISED_TABLES)
     offenders: dict[str, list[str]] = {}
-    for name, value in _vocabulary_tables().items():
+    # D445: the numeral table is a vocabulary table too - the numbers a user writes are
+    # characters the product matches against, and the Simplified 两 never reaches a matcher
+    # (the text is canonicalised first), so the table holds the Traditional 兩.
+    tables = dict(_vocabulary_tables())
+    for name in dir(N):
+        if name.startswith("__"):
+            continue
+        value = getattr(N, name)
+        if isinstance(value, (str, list, tuple, dict, set, frozenset)) and _chinese(value):
+            tables[f"numerals.{name}"] = value
+    for name, value in tables.items():
         if name in BY_DESIGN or name in THE_MAP:
             continue
         if name in listed:

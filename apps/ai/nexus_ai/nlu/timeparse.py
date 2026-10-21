@@ -65,6 +65,23 @@ CLOCK_RE = re.compile(
     re.VERBOSE,
 )
 
+#: The characters a Chinese numeral may precede when it is an HOUR (D445: 九點 is 9 o'clock
+#: - the product read the weekday numerals and not the hour ones, so a user who wrote a
+#: number the way they speak got nothing).
+_HOUR_MARKERS = "點点時时"
+
+
+def clock_match(text: str) -> re.Match[str] | None:
+    """The clock in a text, with the Chinese numerals read as digits.
+
+    One place, so the hour is read the same way wherever it is looked for: 九點 and 9點
+    are the same hour, and 星期三 stays a weekday (the numeral is only rewritten when it
+    is followed by an hour marker).
+    """
+    from nexus_ai.nlu.numerals import normalise_numerals
+
+    return CLOCK_RE.search(normalise_numerals(text or "", only_before=_HOUR_MARKERS))
+
 
 @dataclass
 class ParsedTime:
@@ -158,7 +175,7 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
     wd = _find_weekday(text)
     if wd:
         weekday, next_week = wd
-    clock = CLOCK_RE.search(text)
+    clock = clock_match(text)
     has_weekend = any(tok.lower() in low for tok in WEEKEND_TOKENS)
     is_tonight = any(tok in text for tok in TONIGHT_TOKENS) or ("tonight" in low)
     is_tomorrow = any(tok in text for tok in TOMORROW_TOKENS) or ("tomorrow" in low)
@@ -296,7 +313,7 @@ def _late_suffix(text: str, clock: re.Match) -> bool:
 
 def _bare_hour(text: str) -> tuple[int, int] | None:
     """`10pm`, `10點`, `22:00` anywhere, for the open-late reading."""
-    m = CLOCK_RE.search(text)
+    m = clock_match(text)
     if not m:
         return None
     hh, mm, _ = _clock_to_hm(m, _find_part(text))

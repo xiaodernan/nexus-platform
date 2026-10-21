@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Any
 
 from nexus_ai.contract import Intent
-from nexus_ai.nlu.understand import IntentExtraction, extract_intent
+from nexus_ai.nlu.understand import IntentExtraction, extract_intent, party_text
 from nexus_ai.models.base import norm_locale
 
 #: §7.1 — "太贵了" ⇒ budget.max *= 0.7
@@ -122,7 +122,9 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
         changes.append(_tighten_radius(base, RADIUS_LOOSEN))
 
     # ---- party size -----------------------------------------------------
-    m = re.search(r"(\d{1,2})\s*(?:個|个|位|人|pax|people|persons?)", match_text)
+    # D445: the numerals are read here too - 三位 is three seats, and the merge's own
+    # rule has to agree with the first turn's (the shared reader is in `nlu/understand`).
+    m = re.search(r"(\d{1,2})\s*(?:個|个|位|人|pax|people|persons?)", party_text(match_text))
     m = m or re.search(r"(?:party(?:\s*of)?|for)\s*(\d{1,2})\b", low)
     if m:
         n = int(m.group(1))

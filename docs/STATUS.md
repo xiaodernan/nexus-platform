@@ -18121,3 +18121,62 @@ database being unavailable**, so there is no `agent_runs` table to write to, and
 ledger holds the row only for a run with a conversation - a search has none. The chat's failure
 is different: the retrieval raised while the database was UP, so its run has somewhere to go,
 and now it goes there.
+
+## 439. D445 · the product read the Chinese numerals in ONE place - the weekdays - and not in the two a user writes most: the hour and the party size (`apps/ai/nexus_ai/nlu/numerals.py`, `apps/ai/tests/test_chinese_numerals.py`)
+
+**What the product does, and what was measured.** The time parser reads the weekday numerals
+(星期三 ✓). It did not read the hour (九點 ✗) and the party-size matcher did not read them
+either (三個人 ✗), so a Hong Kong user who wrote a number the way they spoke was understood in
+the weekdays and nowhere else. Measured on the NLU - the first turn, where the answer is served:
+
+```
+'3個人食飯'   -> party_size=3      time=None
+'三個人食飯'   -> party_size=None   time=None        <- the Chinese numeral
+'3个人吃饭'   -> party_size=3      time=None
+'三个人吃饭'   -> party_size=None   time=None        <- the Chinese numeral
+'2位'         -> party_size=2      time=None
+'兩位'         -> party_size=None   time=None        <- the Chinese numeral
+'9點食飯'     -> party_size=None   time='explicit'
+'九點食飯'     -> party_size=None   time=None        <- the Chinese numeral
+'星期三食飯'   -> party_size=None   time='range'     <- the weekday, read all along
+```
+
+**The fix - one rule, in one place.** `nlu/numerals.py` holds the digits and the compound
+forms a user writes (十 ✓, 十一 ✓, 二十 ✓, 二十三 ✓); the code points were checked against the
+Unicode character database, because a writer's memory of a CJK code point is not a reference
+(D409). The time parser reads the hour through it, the NLU reads the party size through it, and
+the state merger's **second** turn reads it too - the same way the first turn does, which is the
+point: the two turns are the same rule.
+
+**The discipline the fix had to respect.** The first attempt read the Chinese ONE as a number,
+and the product's OWN tests caught it - two decisions the house has already made and tested:
+
+* "一個人" is the SOLO cue and does not become a party size (an honest reading, not a guess);
+* "安靜一點" is a DEGREE, not one o'clock - the product's own end-to-end sentence says "安靜一點"
+  and "周六晚上", and its time is Saturday evening.
+
+So the numeral ONE is not read as a number in these two places, while the compound forms are
+unaffected (十一個人 is eleven people ✓). The two spellings of a word must meet (§429, D435) -
+and the two spellings of a NUMBER now meet too: 三個人 and 3個人 are the same party ✓.
+
+**The gate.** `apps/ai/tests/test_chinese_numerals.py` reads the digits, the compounds, the
+hour in both spellings, the party size in both spellings (first turn AND second turn), the
+weekday still reading, and the two decisions above still holding. §429's census was extended to
+the new table: it holds the canonical spelling only, like every other vocabulary table.
+
+**Verified, not claimed.**
+
+- the gate -> **8 passed**; the census -> **5 passed** (the numeral table included)
+- the full `apps/ai` suite -> **1011 passed** with the database, **961 passed / 50 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 54
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** This defect was invisible because the product was RIGHT in the one place
+the numerals appear in its own data - the weekday - and the tests all wrote Arabic digits. A
+gate written in the product's own spelling would have caught it: the D409 lesson (a writer's
+memory of a code point is not a reference) has a second half - **a writer's habit is not a
+reference either**, and the habits of the people who write the tests are the digits.

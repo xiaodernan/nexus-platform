@@ -67,6 +67,23 @@ PARTY_RE = re.compile(
     r"|(\d{1,2})\s*(?:people|pax|persons?|guests|diners)\b",
     re.IGNORECASE,
 )
+
+#: The characters a Chinese numeral may precede when it is a PARTY SIZE (D445: 三個人 is
+#: three people - the product read the digits and not the numerals, so a user who wrote a
+#: number the way they speak got no party size at all).
+_PARTY_MARKERS = "個个位人"
+
+
+def party_text(text: str) -> str:
+    """The text with its Chinese party-size numerals read as digits.
+
+    One place, so the party size is read the same way in the first turn and in the
+    second: 三個人 and 3個人 are the same party, and 星期三 stays a weekday (the numeral
+    is only rewritten when a party counter follows it).
+    """
+    from nexus_ai.nlu.numerals import normalise_numerals
+
+    return normalise_numerals(text or "", only_before=_PARTY_MARKERS)
 RADIUS_RE = re.compile(
     r"(\d{1,3})\s*(?:公里|公里|km|千米)", re.IGNORECASE
 )
@@ -457,7 +474,7 @@ def _fill_party(ex: IntentExtraction, text: str, context: dict[str, Any]) -> Int
             return ex
         except (TypeError, ValueError):
             pass
-    m = PARTY_RE.search(text)
+    m = PARTY_RE.search(party_text(text))
     if m:
         raw = next((g for g in m.groups() if g), "")
         if raw:
