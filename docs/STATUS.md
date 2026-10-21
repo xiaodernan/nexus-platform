@@ -19622,3 +19622,60 @@ contract's row is asking about the request ✓ and a reader of the route is aski
 answer ✓ ✓. The general form ✓: when a rule covers "the shape" ✓, the first question is
 *"whose shape?"* ✓ - and the honest answer is "the shape a client sends" ✓ *and* "the shape
 a client receives" ✓ ✓.
+
+## 465. D471 · the cross-lane card type promises TEN fields the contract's §2 never names - and three of its own comments cite §2 for them (`apps/ai/tests/test_cards_carry_the_contract_fields.py`)
+
+**What the product does, and what was measured.** API_CONTRACT §2 is *"the single render
+contract for consumer + AI + MCP surfaces"* ✓ and it spells the card out field by field ✓ -
+**fifteen** ✓: `card_type` ✓, `id` ✓, `slug` ✓, `title` ✓, `subtitle` ✓, `image` ✓, `price` ✓,
+`rating` ✓, `distance` ✓, `open` ✓, `availability` ✓, `ai_match` ✓, `actions` ✓, `facts` ✓,
+`flags` ✓ ✓.
+
+The service's card carries all fifteen ✓ plus two **ranking internals** ✓ (`organic_rank` ✓,
+`score_breakdown` ✓ - the model says they are never rendered by the UI but are needed by
+/compare and the eval ✓) ✓ - measured on the offline plane ✓:
+
+```
+a card's keys: actions ai_match availability card_type distance facts flags id image
+                open organic_rank price rating score_breakdown slug subtitle title
+```
+
+And the cross-lane `EntityCardBase` is **richer than the contract** ✓: it promises **ten**
+fields §2 does not name ✓ - `description` ✓, `tenant_id` ✓, `merchant_id` ✓, `category` ✓,
+`tags` ✓, `attributes` ✓, `location` ✓, `district` ✓, `transit` ✓, `as_of` ✓ ✓ - and three of
+its **own comments** cite *"API_CONTRACT §2"* for fields §2 does not contain ✓ ✗ (the
+`district` ✓, the `location` ✓ and the `transit` ✓ comments ✓) ✓. The web's UI reads **none**
+of the ten ✓ ✓ - so the promise has no reader on the page that renders the card ✓ ✓ ✓.
+
+**The fix.** The service's side is already compliant ✓ ✓, so what the AI lane owes is the
+**check** ✓: `apps/ai/tests/test_cards_carry_the_contract_fields.py` **reads the contract's
+own §2 block** ✓ (not a list of names ✓) ✓ and requires every card the service returns - the
+search's ✓ and the recommend's ✓ - to carry its fields ✓ ✓, with the two extras **declared**
+✓ ✓ ✓. It was **proved to fail** ✓: dropping `subtitle` from the card model made it fail with
+*"a card does not carry the contract's §2 fields ['subtitle']"* ✓ - the probe was put back ✓ ✓.
+
+**Filed.** The cross-lane `EntityCardBase` ✓ and the three false §2 citations ✓ belong to the
+types lane ✓ ✓, so they are **reported, not edited** ✓ ✓; and the contract's §2 does not name
+the two ranking internals ✓ ✓ that the service sends ✓ (the model says why ✓) ✓ - which is a
+question for the contract's owner ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **2 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1065 passed** with the database, **1011 passed / 54 skipped**
+  without it (the sibling lane's two untracked test files excluded - `test_app_surface.py` ✓
+  and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ - see §436);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** The contract's §2 and the cross-lane type are **two copies of the card's
+shape** ✓ ✓ - and the copy that grew is the **type** ✓ ✗, which is the direction that
+matters ✓: a field added to a type is a **promise the service must keep** ✓ ✗, and a promise
+with no reader ✓ (the web reads none of the ten ✓ ✓) is a promise the **writer** forgot ✓ ✓ ✓.
+The D438 lesson ✓ ("a shape that is written once and copied is a shape that drifts" ✓) says
+the fix is not to patch the copy ✓ - it is to say which copy is the **authority** ✓ ✓ and to
+check the other against it ✓ ✓, which is what this gate does ✓ ✓ (it reads the contract ✓,
+not the type ✓) ✓.
