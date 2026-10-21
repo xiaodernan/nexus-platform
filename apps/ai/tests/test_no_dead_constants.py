@@ -34,6 +34,14 @@ TESTS = PACKAGE.parent / "tests"
 #: a pydantic model is used by the framework, and a table's name is often its own use.
 ALLOWED = frozenset({"__all__", "MODEL_CONFIG", "model_config"})
 
+#: The PUBLIC exports of a package that nothing in this repository calls. A public export is
+#: a promise - the platform lane may call it - so it is declared rather than deleted (D464).
+DECLARED_EXPORTS = frozenset({
+    "hours_ttl",          # trust/freshness.py - a TTL helper the platform may ask for
+    "now_ms",             # models/base.py - a clock helper the platform may ask for
+    "set_platform_client",  # adapters/platform.py - the platform door's setter
+})
+
 
 def _module_constants() -> dict[str, list[str]]:
     """Every module-level constant in the package, and where it is defined."""
@@ -124,25 +132,22 @@ def test_every_module_level_constant_is_read_by_the_package():
 
 def test_every_module_level_function_is_called_somewhere():
     # D450: the same rule for the functions. A function the framework calls (a route
-    # handler) is decorated, and is exempt; a function nothing calls is dead - unless a
-    # test calls it, which is a use.
+    # handler) is decorated, and is exempt; a function nothing calls is dead.
     #
-    # D463 left this rule counting MENTIONS, and that is a known gap: the AST count finds
-    # seven more functions that nothing calls (the five private ones and two public exports
-    # nobody uses). It is filed rather than fixed here, because two of them are part of a
-    # package's public API and that is a decision, not a cleanup.
-    tests = PACKAGE.parent / "tests"
-    test_text = "\n".join(
-        path.read_text(encoding="utf-8-sig") for path in sorted(tests.glob("*.py")))
+    # D464: this rule counts READS now, like the constants' rule. Counting mentions had
+    # hidden seven functions behind a mention - a comment, a docstring, the package's own
+    # `__all__`. Five were private helpers and are gone; the three left are PUBLIC exports
+    # of a package, and a public export nobody calls is a promise (the platform lane may
+    # call it), so they are declared rather than deleted.
+    read = _reads()
     dead = []
     for name, where in sorted(_module_functions().items()):
         if name.startswith("__"):
             continue
-        if _mentions(name) > len(where):
+        if name in DECLARED_EXPORTS:
             continue
-        if test_text.count(name) > 0:
-            continue
-        dead.append(f"{name} ({', '.join(where)})")
+        if name not in read:
+            dead.append(f"{name} ({', '.join(where)})")
     assert not dead, (
         "these functions are defined and called by nothing: "
         + "; ".join(dead))

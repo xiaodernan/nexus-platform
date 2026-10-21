@@ -9,7 +9,6 @@ without an id, because §4 says the UI must not render it anyway.
 from __future__ import annotations
 
 from datetime import datetime, time
-from decimal import Decimal
 from typing import Any, Iterable, Sequence, cast
 from uuid import UUID
 
@@ -68,15 +67,6 @@ FEATURE_TO_LABEL = {
 }
 
 DEMO_ORIGINS = {"demo", "synthetic", "seed", "fixture"}
-
-
-def _dec(value: Any) -> Decimal | None:
-    if value is None:
-        return None
-    try:
-        return Decimal(str(value))
-    except Exception:
-        return None
 
 
 def meters_text(meters: float | None) -> str:

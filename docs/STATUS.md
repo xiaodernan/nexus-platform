@@ -19200,3 +19200,51 @@ table it touches ✓. The general rule: **a census that counts mentions will fin
 and the thing it was sent to find is a use** ✓. So the count has to be of the thing itself ✓ -
 an AST read ✓ - and a table that is only canonicalised is dead ✓, which is a different fact
 from the one the census was asking ✗.
+
+## 458. D464 · the function census counted mentions, so seven functions nothing calls were hiding behind one (`apps/ai/nexus_ai/search/cards.py`, `apps/ai/nexus_ai/models/anthropic.py`, `apps/ai/nexus_ai/api/stream.py`, `apps/ai/tests/test_no_dead_constants.py`)
+
+**What the product does, and what was measured.** §444 (D450) made the census say that every
+module-level function in the package is called somewhere ✓ - and it counted the **text mentions**
+of a name ✓. §457 (D463) changed the **constants**' rule to count **reads** ✓ (an AST name in
+Load context ✓, or an attribute that is read ✓) ✓, and left the functions' rule counting
+mentions ✓ - so the same hole was still open on the other side ✓.
+
+Asking the AST finds **seven** functions that nothing calls ✓:
+
+```
+search/cards.py       _dec                 a decimal helper
+models/anthropic.py   _dump                a debug helper
+api/stream.py         _norm_locale         a locale helper
+api/stream.py         _party_size          a party-size reader
+trust/freshness.py    hours_ttl            a TTL helper   (a PUBLIC export)
+models/base.py        now_ms               a clock helper (a PUBLIC export)
+adapters/platform.py  set_platform_client  the door's setter (a PUBLIC export)
+```
+
+Each was alive in the census because something **mentions** it ✓ - a comment ✓, a docstring ✓, or
+the package's own `__all__` ✓. A mention is the cheapest thing in a repository to produce ✓,
+and counting them as uses is how a function nothing calls stays alive ✓.
+
+**The fix.** The four **private** helpers are gone ✓ (`ruff` took the imports they left behind ✓).
+The three **public exports** are **declared** in the gate with their reason ✓ - a public export of
+a package is a promise ✓ (the platform lane may call it ✓), and deleting a promise is a decision
+✓, not a cleanup ✓. The functions' rule now counts reads ✓, like the constants' rule ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **2 passed** ✓, and it was **proved to fail** by D463's count ✓ (the same census
+  that now passes found all seven ✓);
+- the full `apps/ai` suite -> **1044 passed** with the database, **992 passed / 52 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436);
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 55
+  source files**;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** Two rules in one census, counting two different things ✓, is one rule and a
+half ✗ - and the half that counted mentions was the one nobody questioned ✓ because it had been
+there since §444 ✓ and it had found five dead functions ✓ (a rule that finds things gets credit
+for finding things ✓, and the credit hides the shape of the rule ✓). So the shape has to be
+**the same as the thing** ✓ everywhere in the census ✓: a use is a read ✓, and a definition is
+alive when it is read ✓ - whether it is a table ✓, a function ✓ or a constant ✓.

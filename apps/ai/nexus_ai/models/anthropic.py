@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import time
 from typing import Any
 
@@ -72,5 +71,3 @@ class AnthropicAdapter(HttpLLMAdapter):
         )
 
 
-def _dump(req: LLMRequest) -> str:  # pragma: no cover - debug helper
-    return json.dumps(req.payload, ensure_ascii=False)

@@ -59,12 +59,6 @@ def stage_text(locale: str, stage: str) -> str:
     return STAGE_TEXT.get(norm_locale(locale), STAGE_TEXT["zh-HK"])[stage]
 
 
-def _norm_locale(locale: str) -> str:
-    from nexus_ai.models.base import norm_locale
-
-    return norm_locale(locale)
-
-
 def _context_geo(context: dict[str, Any]) -> Any:
     geo = context.get("geo")
     return geo if isinstance(geo, dict) else None
@@ -80,14 +74,6 @@ def _context_now(context: dict[str, Any]) -> datetime | None:
         except ValueError:
             return None
     return None
-
-
-def _party_size(context: dict[str, Any]) -> int | None:
-    try:
-        n = context.get("party_size")
-        return int(n) if n is not None else None
-    except (TypeError, ValueError):
-        return None
 
 
 async def search_stream_events(*, query: str, deps: Deps,
