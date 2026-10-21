@@ -17,7 +17,9 @@ def test_understand_returns_strict_intent(client):
     assert r.status_code == 200
     body = r.json()
     UnderstandResponse.model_validate(body)
-    Intent.model_validate(body["intent"])
+    # D466: the answer IS the intent (the contract's §7 row), so the intent's own fields
+    # validate against §7.1's model - and the three service extras ride at the root.
+    Intent.model_validate({k: v for k, v in body.items() if k in Intent.model_fields})
     assert body["provider"] in ("mock", "rules")
     assert isinstance(body["degraded"], bool)
 

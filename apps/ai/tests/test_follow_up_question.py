@@ -39,7 +39,7 @@ def test_the_endpoint_asks_the_one_question_the_intent_leaves_open():
 
     with TestClient(create_app(_client())) as c:
         body = _understand(c, "餐廳")
-        intent = body.get("intent") or {}
+        intent = body  # D466: the answer IS the intent (the contract's §7 row)
         assert intent.get("unknowns"), "the intent guessed everything - nothing to ask"
         assert body.get("follow_up_question"), (
             "the intent leaves something unknown and the endpoint asks nothing: "
@@ -59,7 +59,7 @@ def test_the_question_is_in_the_users_language():
         assert english["follow_up_question"].isascii(), (
             "the English user was asked in Chinese")
         # the Simplified spelling is the one D435 made the locale detection know
-        assert simplified["intent"]["language"] == "zh-CN", (
+        assert simplified["language"] == "zh-CN", (
             "the Simplified query was not read as Simplified")
         assert simplified["follow_up_question"], "no question for the simplified query"
 
@@ -69,7 +69,7 @@ def test_nothing_to_ask_means_no_question():
 
     with TestClient(create_app(_client())) as c:
         body = _understand(c, "拉麵", context={"locale": "zh-HK"})
-        intent = body.get("intent") or {}
+        intent = body  # D466: the answer IS the intent (the contract's §7 row)
         if not intent.get("unknowns"):
             assert body.get("follow_up_question") is None, (
                 "the endpoint asked a question it had no unknown to ask about")
@@ -83,4 +83,4 @@ def test_the_live_plane_asks_it_too():
         body = _understand(c, "餐廳")
         assert body.get("follow_up_question"), (
             "the live plane delivered no follow-up question")
-        assert (body.get("intent") or {}).get("unknowns")
+        assert body.get("unknowns")  # D466: the answer IS the intent

@@ -53,8 +53,13 @@ async def query_understand(request: Request, body: UnderstandRequest):
     # name the run it belongs to.
     run_id = runs.new_id()
     res = await understand(query, deps=deps, context=body.context, agent_run_id=run_id)
+    # D466: the answer IS the intent (the contract's §7 row, the §7.1 shape, the cross-lane
+    # `Intent` type, the SDK's `Promise<Intent>` and the web's own mock all say so). The
+    # service's three extras - the provider, the §105 degraded flag and §8's one follow-up
+    # question - ride at the root, where the cross-lane type already puts `provider`.
     payload = UnderstandResponse(
-        intent=res.intent, provider=res.provider, degraded=res.degraded,
+        **res.intent.model_dump(),
+        provider=res.provider, degraded=res.degraded,
         follow_up_question=res.follow_up_question)
     # D432: the intent extraction is a task (AGENT_CONTRACT §8), so it writes a run.
     # D461: the run's `agent` names a ROSTER agent (§1 - the authoritative list). The

@@ -263,9 +263,23 @@ class UnderstandRequest(_Strict):
     context: dict[str, Any] = Field(default_factory=dict)
 
 
-class UnderstandResponse(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    intent: Intent
+class UnderstandResponse(Intent):
+    """D466: the answer IS the intent (API_CONTRACT §7's row: `{query, context}` -> `Intent`).
+
+    The answer used to be a WRAPPER - `{intent: {...}, provider, degraded, follow_up_question}` -
+    while five witnesses say the answer is the intent itself: the contract's row ("-> `Intent`
+    (below)"), the contract's §7.1 shape, the cross-lane `Intent` interface
+    (`packages/types/src/intent.ts`), the SDK's `queryUnderstand(): Promise<Intent>`, and the
+    web lane's own mock of this endpoint. A client that followed the contract read
+    `raw_query` and got `undefined`; one that read `intent` got an object where the contract
+    says a kind.
+
+    The service's three extras stay at the root: `provider` is already an optional field of
+    the cross-lane `Intent` (and DECISIONS D4 requires the provider to be shown), `degraded`
+    is the §105 degradation signal, and `follow_up_question` is §8's one follow-up question
+    (D439). `degraded` and `follow_up_question` are not in the cross-lane type yet - filed.
+    """
+
     provider: str = "mock"
     degraded: bool = False
     follow_up_question: Optional[str] = None

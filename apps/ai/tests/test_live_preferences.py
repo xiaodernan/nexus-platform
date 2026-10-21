@@ -91,9 +91,9 @@ def test_the_chinese_date_sentence_resolves_a_category(live_settings):
         pytest.skip("no published merchants in this database - needs the demo seed")
 
     data = _intent(live_settings, DATE_SENTENCE)
-    assert data["intent"]["category"] == "restaurant"
+    assert data["category"] == "restaurant"
     # An INFERRED category is never as certain as a named one.
-    assert data["intent"].get("confidence", {}).get("category", 0) < 0.95
+    assert data.get("confidence", {}).get("category", 0) < 0.95
 
 def test_the_chinese_date_sentence_keeps_its_preference_soft(live_settings):
     """D381: the preference must not become an attribute filter, or the search returns
@@ -102,7 +102,7 @@ def test_the_chinese_date_sentence_keeps_its_preference_soft(live_settings):
         pytest.skip("no published merchants in this database - needs the demo seed")
 
     data = _intent(live_settings, DATE_SENTENCE)
-    prefs = data["intent"].get("preferences") or []
+    prefs = data.get("preferences") or []
     assert {"key": "occasion", "value": "date", "polarity": 1} in prefs
 
 # --------------------------------------------------------------------------- the vocabulary
@@ -113,8 +113,8 @@ def test_the_style_form_cuisine_resolves_on_the_live_plane(live_settings):
         pytest.skip("no published merchants in this database - needs the demo seed")
 
     data = _intent(live_settings, JAPANESE_SENTENCE)
-    assert data["intent"]["category"] == "restaurant"
-    cuisines = [p for p in (data["intent"].get("preferences") or [])
+    assert data["category"] == "restaurant"
+    cuisines = [p for p in (data.get("preferences") or [])
                 if p.get("key") == "cuisine"]
     assert cuisines and cuisines[0]["value"] == "japanese"
 
@@ -123,7 +123,7 @@ def test_the_quiet_sentence_resolves_the_cafe_category(live_settings):
         pytest.skip("no published merchants in this database - needs the demo seed")
 
     data = _intent(live_settings, QUIET_SENTENCE)
-    assert data["intent"]["category"] == "cafe"
+    assert data["category"] == "cafe"
 
 # --------------------------------------------------------------------------- the product's own sentence
 E2E_SENTENCE = ("\u5e2b\u6211\u627e\u6c99\u7530\u9002\u5408\u60c5\u4fa3\u7ea6\u4f1a\u7684\u9910\u5385\uff0c"
@@ -154,7 +154,7 @@ def test_the_products_own_e2e_sentence_resolves_every_slot(live_settings):
         pytest.skip("no published merchants in this database - needs the demo seed")
 
     data = _intent(live_settings, E2E_SENTENCE)
-    intent = data["intent"]
+    intent = data
     assert intent["category"] == "restaurant"
     assert intent["location"]["value"] == "Sha Tin"
     assert intent["budget"]["max"] == 500

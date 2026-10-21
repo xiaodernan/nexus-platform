@@ -104,5 +104,5 @@ def test_the_preference_is_understood_whatever_the_corpus_carries(live_settings=
         r = c.post("/ai/v1/query/understand",
                    json={"query": DATE_SENTENCE, "context": {"locale": "zh-HK"}})
         assert r.status_code == 200, r.text
-        prefs = r.json()["intent"].get("preferences") or []
+        prefs = r.json().get("preferences") or []
     assert {"key": "occasion", "value": "date", "polarity": 1} in prefs

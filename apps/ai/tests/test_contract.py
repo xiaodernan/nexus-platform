@@ -228,7 +228,9 @@ def test_wire_names_are_snake_case_and_round_trip():
 def test_understand_and_compare_shapes():
     u = C.UnderstandRequest(query="x")
     assert u.context == {}
-    r = C.UnderstandResponse(intent=C.Intent(raw_query="x"))
+    # D466: the answer IS the intent (the contract's §7 row), so the response model takes
+    # the intent's fields at the root.
+    r = C.UnderstandResponse(raw_query="x")
     assert r.follow_up_question is None and r.degraded is False
     row = C.CompareRow(attribute="price")
     assert row.cards == []

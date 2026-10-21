@@ -19309,3 +19309,66 @@ reads it ✓ and a field that is empty because nothing can fill it ✓ look **id
 outside ✓, and only the corpus says which one it is ✓. So the useful gate is not "the field
 must not be empty" ✓ - it is "**the field is empty, or everything in it resolves**" ✓ - which
 is the shape that survives the corpus growing ✓.
+
+## 460. D466 · the answer to `query/understand` was a WRAPPER - the contract, the cross-lane type, the SDK and the web's own mock all say the answer IS the intent (`apps/ai/nexus_ai/contract.py`, `apps/ai/nexus_ai/api/routes_discover.py`, `apps/ai/tests/test_understand_answer_is_the_intent.py`)
+
+**What the product does, and what was measured.** The endpoint answered with
+
+```
+{"intent": {raw_query, intent, category, location, time, budget, ...}, "provider": "mock",
+ "degraded": false, "follow_up_question": "..."}
+```
+
+while **five** witnesses say the answer is the intent itself:
+
+```
+API_CONTRACT §7's row        {query, context} -> `Intent` (below)
+API_CONTRACT §7.1            the intent's own shape, at the root
+packages/types/src/intent.ts the cross-lane `Intent` interface
+packages/sdk .../ai.ts       queryUnderstand(): Promise<Intent>
+apps/web/src/lib/mock/index.ts  the web lane's OWN mock of this endpoint -> a bare Intent
+```
+
+The service alone disagreed - and a client that followed the contract or the SDK read
+`raw_query` and got `undefined`, and read `intent` (the **kind**) and got an **object**. The
+SDK's typed method was a promise about the answer's shape, and nothing compared it with the
+answer.
+
+**The fix.** The answer is the intent now ✓: the response model extends the intent (so §7.1's
+shape is the root), and the service's three extras ride beside it - `provider` (already an
+optional field of the cross-lane `Intent`, and DECISIONS D4 requires the provider to be
+shown), `degraded` (§105) and `follow_up_question` (§8's one follow-up question, D439).
+
+**The gate.** `apps/ai/tests/test_understand_answer_is_the_intent.py` **reads the cross-lane
+interface** and requires the answer to carry every field that interface declares as
+**required** ✓, that `intent` is the kind and not an object ✓, that the three extras are at
+the root ✓, and that the intent's fields still validate against §7.1's model ✓. It was
+**proved to fail** ✓: putting the wrapper back made four of its checks fail - the missing
+fields, the nested `intent`, the lost `provider` ✓ - and the probe was put back ✓.
+
+**Filed.** The cross-lane `Intent` interface does not declare `degraded` or
+`follow_up_question` ✓, so a TypeScript client cannot read them typed ✓ - the answer carries
+them, the type does not know them ✓. And the interface's `clarification_asked` (the flag for
+"a follow-up was already asked") is never set ✓ - what it should mean on a stateless endpoint
+is a question for the contract's owner ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **5 passed** ✓, and it was **proved to fail** ✓ (four checks, as above) ✓;
+- the full `apps/ai` suite -> **1051 passed** with the database, **997 passed / 54 skipped**
+  without it (the sibling lane's two untracked test files excluded - `test_app_surface.py` ✓
+  and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ - see §436);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** A contract that lives in two languages needs a gate that reads one of
+them and checks the other ✓ - and the AI lane had gates for every shape EXCEPT this one ✓.
+What made the drift possible was not the wrapper but the **direction** of the copies ✓: the
+cross-lane type, the SDK and the web's mock all agreed with each other ✓, so every human
+(and every test) that looked at any of them saw a consistent story ✓, while the one copy
+nobody compared - the answer ✓ - said something else ✓. The fix is the comparison itself ✓:
+the gate reads `packages/types/src/intent.ts` ✓ and asks the service ✓, so the two copies
+cannot drift apart again without a test failing ✓.
