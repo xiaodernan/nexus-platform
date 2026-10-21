@@ -17074,3 +17074,31 @@ pass" — it was to seed a second plane from the current generator and let the s
 one failure was a product defect (the closed weekday ✗) and three were **our own assertions
 that were too strong** ✗. A suite that only ever runs on one corpus cannot tell the
 difference between a product defect and a test that has drifted away from the product.
+
+---
+
+## 417 · D423 — pin query vocabulary + containment (`search/tokens`, §7 / RAG)
+
+**Module / contract.** `nexus_ai.search.tokens` answers two questions: what a query asks about
+(`query_tokens` — words + CJK bigrams), and whether a text mentions it (`mentions` — containment).
+The docstring records why containment, not trigram similarity, is the confidence signal: on the
+seeded corpus a real 咖啡 match measured **0.0063** while nonsense measured **0.0093** (noise
+higher), so similarity may widen a candidate set but can never be a confidence signal. Pure,
+DB-free.
+
+**Pinned behavior (21 cases, all confirmed empirically):**
+- `cjk_bigrams`: every CJK bigram in order (`沙田餐廳` → `['沙田','田餐','餐廳']`); two chars → one
+  bigram; a single char / empty → `[]`; latin is ignored while CJK is still extracted (`a沙田b`).
+- `query_tokens`: latin words kept whole and lowercased with punctuation stripped
+  (`Hello, World!` → `['hello','world']`); CJK runs also contribute their bigrams; a single-char
+  latin token is dropped (`a 沙田` → `['沙田']`); empty/None → `[]`; duplicates removed in order.
+- `mentions`: CJK containment true; latin containment true; cross-language false; a one-character
+  query matches nothing (honest — it cannot be told apart from any other); empty query false.
+- `cjk_keywords`: short CJK words kept whole (`咖啡`), latin excluded, a long run (> `KEYWORD_MAX_LEN`
+  = 4) contributes its bigrams (`幫我找沙田的餐廳` → the 7 bigrams), and `limit` caps the list
+  (`limit=0` → `[]`, `limit=1` → `['咖啡']`).
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_search_tokens.py` → **21 passed**; full `apps/ai`
+suite → **848 passed, 31 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
