@@ -19795,3 +19795,56 @@ description of it ✓ ✗ ✗. So the rule that closes the list is the one that 
 honest ✓: **the list must be empty, and adding to it must be a decision** ✓ ✓ - and the
 general form ✓: a declaration in a gate is a promise that someone will close it ✓ ✓, so a
 declaration without a name and a date is a promise nobody made ✓ ✓ ✗.
+
+## 468. D474 · the card's NESTED objects were never checked - the root's fields were, and ten objects inside the card were not (`apps/ai/tests/test_card_nested_shapes.py`)
+
+**What the product does, and what was measured.** §465 (D471) checked the card's **root**
+fields against API_CONTRACT §2 ✓ - and the ten objects **inside** the card were untouched ✓:
+the price ✓, the rating ✓, the distance ✓, the open state ✓, the availability ✓, the AI
+match ✓, the actions ✓, the facts ✓, the image ✓ and the flags ✓ ✓.
+
+§2 spells every one of them out ✓ - the price inline ✓ (`{"amount": ..., "currency": ...,
+"model": ...}` ✓), the actions as an array of objects ✓, the open state in the shared
+`// Opening state` block ✓, the facts in the shared `// Fact` block ✓ - so each of them has
+a shape the service can be checked against ✓, and each was a **second copy** of the
+contract's shape that nothing compared ✓ ✓.
+
+**What the check found.** The service's nested objects are, in fact, compliant ✓ - with
+**four exceptions** the gate has to name ✓, because the contract's block does not spell them
+out ✓:
+
+```
+rating.fact_id             the trust primitive (§4/§19: any AI-stated fact cites one)
+distance.fact_id           the same
+availability.source_fact_id  the same
+flags.estimated_price      the flag §2 names in prose (D472 added it)
+actions.payload            the action's own body
+```
+
+**The gate.** `apps/ai/tests/test_card_nested_shapes.py` reads the contract's own blocks ✓ -
+the card's inline blocks ✓ (parsed out of the JSONC ✓, the comments stripped ✓) and the
+shared objects' blocks ✓ - and requires every nested object on a card to carry exactly
+those fields ✓, plus the declared ones ✓. It was **proved to fail** ✓: giving the
+availability block a field §2 does not name made it fail with *"the card's 'availability'
+carries ['surprise'] that the contract's block does not name and the gate does not
+declare"* ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **3 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1072 passed** with the database, **1018 passed / 54 skipped**
+  without it (the sibling lane's two untracked test files excluded - `test_app_surface.py` ✓
+  and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ - see §436);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** D471 checked the card's root and stopped there ✓ - and the shape of a
+check decides how deep it goes ✓: **a rule that says "the card's fields" is about the card's
+*own* fields** ✓, and a card is a card **of objects** ✓. The general form ✓: when a rule
+covers a thing that is **made of** other things ✓, the rule has to say how deep it reaches ✓ -
+and the honest answer is *"every object in it"*, not *"the object"* ✓ ✓. This is the D462
+lesson one level in ✓: a census is only as wide as the shape it recognises ✓, and the card's
+shape has **ten shapes inside it** ✓ ✓.
