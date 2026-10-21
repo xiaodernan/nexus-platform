@@ -47,10 +47,25 @@ async def query_understand(request: Request, body: UnderstandRequest):
     query = (body.query or "").strip()
     if not query or len(query) > MAX_QUERY_LENGTH:
         return _bad_request(f"query is required and must be <= {MAX_QUERY_LENGTH} chars")
+    started = time.perf_counter()
     res = await understand(query, deps=deps, context=body.context)
     payload = UnderstandResponse(
         intent=res.intent, provider=res.provider, degraded=res.degraded,
         follow_up_question=res.follow_up_question)
+    # D432: the intent extraction is a task (AGENT_CONTRACT §8), so it writes a run.
+    await runs.record_run(deps, {
+        "agent_run_id": runs.new_id(), "agent": "intent_extract",
+        "status": "succeeded", "provider": res.provider, "model": None,
+        "conversation_id": None, "user_id": None, "tenant_id": deps.tenant_id(),
+        "input_summary": query[:500] or None,
+        "output_summary": str(getattr(res.intent, "intent", "") or ""),
+        "plan": {"steps": ["intent_rules"]}, "tool_calls": [],
+        "retrieval": [], "fact_ids": [],
+        "latency_ms": int((time.perf_counter() - started) * 1000), "cost_usd": 0.0,
+        "fallback_used": "state_merge" if res.provider == "rules" else None,
+        "error": None, "started_at": None, "finished_at": None,
+        "degraded": bool(res.degraded),
+    })
     return JSONResponse(payload.model_dump(mode="json"))
 
 
@@ -95,6 +110,25 @@ async def recommend(request: Request, body: RecommendRequest):
         degraded=bool(pack.degraded or summary.degraded),
         agent_run_id=UUID(runs.new_id()), latency_ms=latency_ms, cost_usd=0.0)
     data = payload.model_dump(mode="json")
+
+    # D432: the response hands the caller an `agent_run_id`, so a run row has to carry
+    # it - otherwise the id points at nothing.
+    await runs.record_run(deps, {
+        "agent_run_id": str(data["agent_run_id"]), "agent": "recommendation",
+        "status": "succeeded", "provider": pack.response.provider, "model": None,
+        "conversation_id": str(body.conversation_id) if body.conversation_id else None,
+        "user_id": str(body.user_id) if body.user_id else None,
+        "tenant_id": deps.tenant_id(),
+        "input_summary": (query or intent.raw_query)[:500] or None,
+        "output_summary": f"{len(pack.cards)} cards",
+        "plan": {"steps": ["intent_rules", "search_merchants"]},
+        "tool_calls": [{"tool": "search_merchants", "ok": True,
+                        "ms": int(pack.response.took_ms)}],
+        "retrieval": [],
+        "fact_ids": [str(f.fact_id) for c in pack.cards for f in (c.facts or [])],
+        "latency_ms": latency_ms, "cost_usd": 0.0, "fallback_used": None, "error": None,
+        "started_at": None, "finished_at": None, "degraded": bool(pack.degraded),
+    })
 
     db = deps.database()
     if db is not None:  # AI-owned table; best-effort like every other write here

@@ -17372,3 +17372,49 @@ still answered perfectly ✓. A response that works and a record of the response
 different promises ✓, and only the first one was being kept ✓. The contract asks for the second
 one in the first line of §8 ✓, and it is the line that is easiest to skip ✓ because nothing
 fails when it is ✓.
+
+## 426. D432 · three more surfaces wrote no run, and the recommendation handed out a run id that resolved to nothing (`api/runs` + the three routes, AGENT_CONTRACT §8)
+
+**The census.** §431 found that the merchant agent's chat wrote no `agent_runs` row ✗, and the
+same question — *which surfaces record the work they do?* — has an answer for every endpoint ✗.
+Walking the service's endpoints and counting what each leaves in the in-process ledger ✓:
+
+```
+/ai/v1/search               200  runs: 1
+/ai/v1/search/stream        200  runs: 1
+/ai/v1/merchant-agent/chat  200  runs: 1
+/ai/v1/rag/retrieve         200  runs: 0    <- this unit
+/ai/v1/query/understand     200  runs: 0    <- this unit
+/ai/v1/recommend            200  runs: 0    <- this unit
+/ai/v1/feedback             200  runs: 0    (correct: the feedback EVENT is its record)
+```
+
+And the recommendation was worse than "no run": its response carries an **`agent_run_id`** ✓ —
+the id of a run ✗ — and **no run row ever carried that id** ✓, so the caller was handed a
+pointer to a row that did not exist ✗.
+
+**The fix.** One shared recorder (`api/runs.py::record_run`) — the ledger first ✓ (so the
+timeline answers offline ✓) and the table best-effort ✓ (so a persistence failure never breaks
+a response ✓) — and three calls to it ✓: the **retrieval** ✓ (`retrieval` ✓ — the chunks it was
+grounded on ✓, which are not facts ✗ and do not go in `fact_ids` ✓), the **intent extraction**
+✓ (`intent_extract` ✓ — the contract's roster name ✓) and the **recommendation** ✓
+(`recommendation` ✓, carrying **the response's own `agent_run_id`** ✓, so the id resolves ✓).
+
+**The one that is right to write no run.** The **feedback** ✓: a signal is not a task ✗, and it
+records itself in `feedback_events` ✓ — a run there would be a second, redundant record of the
+same thing ✗. That case is pinned too ✓, because "every endpoint writes a run" would have been
+the wrong rule ✗.
+
+**Verified, not claimed.** `pytest tests/test_runs_census.py` -> **5 passed** (the search ✓, the
+intent extraction ✓, the retrieval ✓, the recommendation ✓ — including that **its response's
+`agent_run_id` resolves to a run** ✓ — and the feedback ✓, which writes its event and **no**
+run ✓); the full `apps/ai` suite -> **942 passed / 37 skipped**; `ruff check .` -> **All checks
+passed!**; `mypy nexus_ai` -> **Success: no issues found in 52 source files**; the eval gate ->
+**`RESULT: PASS - 2 suite(s), 0 failing`**.
+
+**Discipline note.** §8's first line is a promise that **nothing fails on** when it is broken ✗ —
+the responses were all 200 ✓, the answers were all right ✓, and the records were missing ✗. A
+contract clause that only a human reading the ledger would notice ✗ is a clause that gets
+noticed once and then never again ✗; a census that counts the records ✗ makes it a **number**
+✗, and a number can be a gate ✓. The census is now a test ✓ — five cases ✓, one per surface ✓,
+including the surface that is right to be absent ✓.

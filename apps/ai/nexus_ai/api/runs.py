@@ -53,6 +53,10 @@ class RunLedger:
     def add(self, run: dict[str, Any]) -> None:
         self._runs.append(run)
 
+    def get_all(self) -> list[dict[str, Any]]:
+        """Every run in the ring, oldest first (D432: the census reads this)."""
+        return [dict(r) for r in self._runs]
+
     def by_conversation(self, conversation_id: Any) -> list[dict[str, Any]]:
         cid = str(conversation_id)
         return [dict(r) for r in self._runs if str(r.get("conversation_id") or "") == cid]
@@ -82,6 +86,24 @@ def _check_table(table: str) -> None:
 def _uuid_array_sql(values: list[Any]) -> str:
     ids = [str(v) for v in values if v]
     return ",".join(f"{v}::uuid" for v in ids)
+
+
+async def record_run(deps: Any, run: dict[str, Any]) -> None:
+    """Write one `agent_runs` row: the in-process ledger first, the table best-effort.
+
+    D432: three surfaces wrote no run at all - the retrieval, the intent extraction and
+    the recommendation - and the recommendation's response handed the caller an
+    `agent_run_id` that resolved to nothing. One recorder, so the shape of a run is
+    written down ONCE (AGENT_CONTRACT §8: every task writes one).
+    """
+    deps.ledger.add({**run, "persisted": False})
+    db = deps.database()
+    if db is None:
+        return
+    try:
+        await persist_run(db, run)
+    except Exception:  # pragma: no cover - a persistence failure never breaks a response
+        log.warning("agent_runs insert failed (continuing degraded)", exc_info=True)
 
 
 async def persist_run(database: Any, run: dict[str, Any], *,

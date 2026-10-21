@@ -112,6 +112,22 @@ async def rag_retrieve(request: Request, body: RagRetrieveRequest):
             source_uri=r.get("source_uri"), fact_ids=[],
             section=r.get("section"), injection_signals=len(scan.hits)))
     took_ms = int((time.perf_counter() - started) * 1000)
+    # D432: the retrieval is a task (AGENT_CONTRACT §8), so it writes a run - and the
+    # chunks it was grounded on are its `retrieval`, not its facts (a chunk id is not a
+    # fact id).
+    await runs.record_run(deps, {
+        "agent_run_id": runs.new_id(), "agent": "retrieval", "status": "succeeded",
+        "provider": deps.settings.embedding_provider, "model": None,
+        "conversation_id": None, "user_id": None, "tenant_id": deps.tenant_id(),
+        "input_summary": (body.query or "")[:500] or None,
+        "output_summary": f"{len(chunks)} chunks",
+        "plan": {"steps": ["retrieve_merchant_documents"]},
+        "tool_calls": [{"tool": "retrieve_merchant_documents", "ok": bool(chunks),
+                        "ms": took_ms}],
+        "retrieval": [str(c.id) for c in chunks], "fact_ids": [],
+        "latency_ms": took_ms, "cost_usd": 0.0, "fallback_used": None, "error": None,
+        "started_at": None, "finished_at": None, "degraded": False,
+    })
     payload = RagRetrieveResponse(chunks=chunks, took_ms=took_ms,
                                   provider=deps.settings.embedding_provider,
                                   threshold_applied=True).model_dump(mode="json")
