@@ -1,4 +1,4 @@
-﻿"""搂0 / D3 / 搂105 鈥?the DB seam's pure guards, pinned without a database.
+"""搂0 / D3 / 搂105 鈥?the DB seam's pure guards, pinned without a database.
 
 `nexus_ai.db.pool` is where the role split stops being documentation: SELECTs run inside a
 READ ONLY transaction, only `write()` opens a write path, the search path is quoted rather

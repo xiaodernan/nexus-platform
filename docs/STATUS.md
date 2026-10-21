@@ -18535,3 +18535,66 @@ thing in the same wrong way. A fix that lands with a gate is only as wide as the
 scope, and a gate's scope is a decision somebody has to make every time - so the honest
 version of a gate is the one that **censors** the surface (every response that carries the
 field) rather than the one that lists the paths somebody remembered.
+
+## 447. D453 · the test files' Chinese was never checked: two wrong code points were living in them, one of them in a table nothing read (`apps/ai/tests/test_vocabulary_is_the_reference.py`, `apps/ai/tests/test_merge_cue_spellings.py`)
+
+**What the product does, and what was measured.** §422 (D434) made the vocabulary the reference
+for a CJK code point - but it walked **one** surface (the evaluation's intent cases) and it
+kept its reference as a **hand-written** list of twenty tables. Two things followed from that:
+
+* the surface: the test files - a hundred and two files of Chinese - were unchecked, and a
+  wrong code point is exactly what lives there;
+* the reference: a list somebody has to remember to update is a list that goes out of date,
+  which is the same defect §435 and §447 found in the census.
+
+**The fix - the reference is derived, and the scope is the whole surface.**
+
+* the reference is now every Chinese character the product's own package carries - its **data**,
+  not its prose - so a new vocabulary table, a new template or a new label is in the
+  reference the moment it exists. The evaluation package is excluded: the suite being judged
+  cannot define what the judge knows (that would be circular);
+* the scope is the **whole test directory**, not the paths somebody remembered (§446's lesson);
+* twenty-seven characters the product has no business knowing are **DECLARED** - a grammatical
+  word, a brand, an attack's payload, a demo merchant's name - each entry carrying the Unihan
+  database's own gloss of it and what the test that uses it is doing.
+
+**What the wider gate found.**
+
+* **U+95A9** ("Fujian province; a river; a tribe") written where **U+95F9** ("quarrel;
+  dispute hotly") belongs - in a table **nothing read**. The dead `PAIRS` table of
+  `tests/test_merge_cue_spellings.py` was the §443 class: a dead table is where the product's
+  description of itself rots, and it rots quietly. The table is gone; the pairs it listed are
+  asserted one by one below it, where each one says what it must do.
+* **U+5584** ("good, virtuous, charitable, kind") written where **U+5566** ("final particle of
+  assertion" - the Cantonese negation) belongs - in a test that **PASSED**, because the cue
+  that fired was the other word in the same phrase: the merge's own `OPEN_NOW_CUES` carries
+  the correct spelling, and the typo rode in on a different cue.
+* a UTF-8 byte order mark on `tests/test_db_pool.py` - invisible in the source, and it breaks
+  every reader that opens the file as plain UTF-8 (this gate included).
+
+Every code point here was confirmed against the Unihan database (`Unihan_Readings.txt`,
+`kDefinition`), never against a memory: the writer's memory of a CJK code point is not a
+reference (§409, §446). The oracle contradicted the writer's guess on several of them - which
+is the whole reason the reference is a database and not a head.
+
+**The gate.**
+`apps/ai/tests/test_vocabulary_is_the_reference.py` now walks the evaluation's intent cases
+**and** every test file, requires every Chinese character to be one the product carries or one
+that is DECLARED, and requires no test file to carry a byte order mark.
+
+**Verified, not claimed.**
+
+- the gate -> **3 passed**; the full `apps/ai` suite -> **1024 passed** with the database,
+  **973 passed / 51 skipped** without it (the sibling lane's untracked
+  `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 55
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** The two wrong code points sat in the same file, and one of them sat in a
+table that nothing read - so the file's own test was green while the file was wrong. A dead
+table does not merely rot: it **hides** the rot from the test that covers the file, and the
+only way to see it is to compare the code point against something that is not the writer's
+memory. That is what a reference is for.

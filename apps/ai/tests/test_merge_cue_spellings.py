@@ -23,21 +23,10 @@ from nexus_ai.nlu.state_merger import merge_turn
 
 STATE = {"intent": "discover_merchant", "language": "zh-HK", "raw_query": "\u62c9\u9eb5"}
 
-#: (the simplified turn, the traditional turn, what the merge must do)
-PAIRS = [
-    # 太贵了 / 太貴了 -> the budget tightens and the order becomes price_low
-    ("\u592a\u8d35\u4e86", "\u592a\u8cb4\u4e86", "price_low"),
-    # 近一点 / 近一點 -> the radius tightens and the order becomes distance
-    ("\u8fd1\u4e00\u70b9", "\u8fd1\u4e00\u9ede", "distance"),
-    # 遠一點 -> the radius loosens
-    ("\u9060\u4e00\u9ede", "\u9060\u4e00\u9ede", None),
-    # 安靜一點 -> the quiet preference
-    ("\u5b89\u975c\u4e00\u70b9", "\u5b89\u975c\u4e00\u9ede", "quiet"),
-    # 熱鬧一點 -> the lively preference
-    ("\u70ed\u95a9\u4e00\u70b9", "\u71b1\u9b27\u4e00\u9ede", "lively"),
-    # 而家開唔開 -> the urgency is now
-    ("\u800c\u5bb6\u958b\u5584\u958b", "\u800c\u5bb6\u958b\u5584\u958b", "now"),
-]
+# D453: the PAIRS table that stood here was read by nothing, and it carried a wrong
+# code point (U+95A9 - "Fujian province; a river; a tribe" - where U+95F9
+# belongs). The pairs are asserted one by one below, where each one says what it
+# must do; a dead table is where the product's description of itself rots.
 
 
 def _merge(turn: str, context: dict | None = None) -> dict:
@@ -68,7 +57,7 @@ def test_the_ambience_cues_answer_to_both_spellings():
 
 
 def test_the_urgency_cue_answers_to_both_spellings():
-    for turn in ("\u800c\u5bb6\u958b\u5584\u958b",):
+    for turn in ("\u800c\u5bb6\u958b\u5566\u958b",):
         assert _merge(turn).get("urgency") == "now"
 
 
