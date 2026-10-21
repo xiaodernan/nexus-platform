@@ -17776,3 +17776,57 @@ half that this unit found: **the model existed and nobody called it either** - a
 that happened instead was not a bug but a copy. Seven hand-built envelopes looked fine,
 passed every test, and meant that the contract's model described a shape the service did not
 produce. A model that is not used is not a contract: it is a comment with a type annotation.
+
+## 433. D439 · §8's follow-up question was computed in the user's language and delivered NOWHERE: the endpoint's `follow_up_question` was always null (`apps/ai/nexus_ai/api/pipeline.py`, `apps/ai/nexus_ai/nlu/state_merger.py`, `apps/ai/tests/test_follow_up_question.py`)
+
+**What the product does, and what was measured.** API_CONTRACT §7.1 carries the intent's
+`"unknowns": ["party_size"]  // §8 - never guess; ask in one follow-up only`. The question
+itself is written - `nlu/state_merger.py` holds it in the user's language, one question, never
+an interrogation - and it was delivered nowhere.
+
+Measured on the live plane, before this unit:
+
+```
+'拉麵'        -> follow_up_question=None   unknowns=['location']   language=zh-HK
+'餐廳'        -> follow_up_question=None   unknowns=['location']   language=zh-HK
+'coffee'      -> follow_up_question=None   unknowns=['location']   language=en
+'安靜的地方'  -> follow_up_question=None   unknowns=['location']   language=zh-HK
+```
+
+The intent always knew something was missing (`unknowns=['location']` ✓) and the question was
+always null ✗. The reason is a seam: **only the merge path ever asked for the question** - the
+second turn of a conversation - and the endpoint that carries the field
+(`/ai/v1/query/understand`) never merges, because the merge needs a `previous_intent` the
+endpoint does not accept. So the field existed, was documented in the response model, and was
+null in every response the service ever gave.
+
+**The fix.** The question is asked on EVERY turn now: the pipeline computes it on the model
+path and on the deterministic floor, in the user's language - which, since §429 (D435), is the
+language the user's own spelling asked for. The question function became public (`question_for`),
+because every turn needs it and not only the ones that follow another turn.
+
+**Verified, not claimed.**
+
+- the gate -> **4 passed** (3 offline + 1 on the live plane): the endpoint asks the one
+  question the intent leaves open, the question is in the user's language (the English query
+  gets an English question, the Traditional and the Simplified queries get their own), and an
+  intent with nothing unknown gets no question
+- the full `apps/ai` suite -> **1002 passed** with the database, **958 passed / 44 skipped**
+  without it
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 53
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note, and a filed residual.** The general shape is the D435 shape one layer up: a
+fact the product knows (what is missing) and a promise the product makes (ask about it, once)
+that were never JOINED - the question lived behind a seam only one caller went through. The
+field was not a bug in the field: it was a field whose value was decided by which code path
+happened to run.
+
+The residual is filed: **the stream does not carry the question either.** The merge path
+computes it (`IntentResult.follow_up_question` ✓) and the stream yields the intent, the
+results and the summary - the question is dropped ✗. Delivering it needs a frame the
+documented SSE list does not have (`API_CONTRACT` §7's six frames), so that is a contract
+decision, not a silent change.

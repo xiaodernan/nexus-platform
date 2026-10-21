@@ -28,7 +28,7 @@ from nexus_ai.api.deps import Deps
 from nexus_ai.contract import Intent
 from nexus_ai.models.base import LLMRequest
 from nexus_ai.models.router import BudgetExceeded, CostMeter
-from nexus_ai.nlu.state_merger import merge_turn
+from nexus_ai.nlu.state_merger import merge_turn, question_for
 from nexus_ai.nlu.understand import extract_intent_dict
 from nexus_ai.search.service import SearchPlan, plan_from_intent
 from nexus_ai.search.service import search as deterministic_search
@@ -97,10 +97,13 @@ async def understand(query: str, *, deps: Deps, context: dict[str, Any] | None =
     def floor(note: str) -> IntentResult:
         nonlocal deterministic
         if deterministic is None:
+            intent = validate_intent(extract_intent_dict(query, context)) \
+                or Intent(raw_query=query)
             deterministic = IntentResult(
-                intent=validate_intent(extract_intent_dict(query, context))
-                or Intent(raw_query=query),
-                provider="rules", degraded=True, note=note)
+                intent=intent,
+                provider="rules", degraded=True, note=note,
+                # D439: §8's one follow-up question, in the user's language.
+                follow_up_question=question_for(intent.model_dump()))
         return deterministic
 
     try:
@@ -135,7 +138,9 @@ async def understand(query: str, *, deps: Deps, context: dict[str, Any] | None =
         return IntentResult(intent=intent,
                             provider=call.response.provider or router.provider_name(),
                             degraded=bool(meter.degraded), usage=meter.usage(),
-                            llm_records=list(meter.records))
+                            llm_records=list(meter.records),
+                            # D439: §8's one follow-up question, in the user's language.
+                            follow_up_question=question_for(intent.model_dump()))
     except BudgetExceeded as exc:
         log.info("intent budget exceeded, deterministic floor: %s", exc)
         return floor("budget_exceeded")

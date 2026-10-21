@@ -11,7 +11,7 @@ from __future__ import annotations
 
 
 from nexus_ai.nlu.state_merger import (
-    _question_for,
+    question_for,
     merge_followup,
     merge_turn,
 )
@@ -146,9 +146,9 @@ def test_merge_is_deterministic():
 
 # ------------------------------------------------------------- §8 single follow-up question
 def test_question_for_asks_one_missing_thing_locale_aware():
-    assert _question_for({"unknowns": ["party_size", "time"], "language": "zh-HK"}) == "请问几位？"
-    assert _question_for({"unknowns": ["party_size"], "language": "en"}) == "How many people?"
-    assert _question_for({"unknowns": []}) is None
+    assert question_for({"unknowns": ["party_size", "time"], "language": "zh-HK"}) == "请问几位？"
+    assert question_for({"unknowns": ["party_size"], "language": "en"}) == "How many people?"
+    assert question_for({"unknowns": []}) is None
 
 
 # ------------------------------------------------------------- alias

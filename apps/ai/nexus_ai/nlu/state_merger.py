@@ -103,7 +103,7 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
         reset_changes = [{"op": "re_extract", "field": "intent",
                          "value": merged.get("intent")}]
         return MergeResult(intent=merged, changes=reset_changes,
-                           follow_up_question=_question_for(merged))
+                           follow_up_question=question_for(merged))
 
     changes: list[dict[str, Any]] = []
     low = match_text.lower()
@@ -181,12 +181,12 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
         cleared = extract_intent(match_text, context).to_dict()
         return MergeResult(intent=cleared,
                            changes=[{"op": "reset", "field": "state", "to": "cleared"}],
-                           follow_up_question=_question_for(cleared), is_followup_only=True)
+                           follow_up_question=question_for(cleared), is_followup_only=True)
 
     base["raw_query"] = f"{base.get('raw_query', '')} · {turn}".strip(" ·")
     _recalc_unknowns(base)
     return MergeResult(intent=base, changes=[c for c in changes if c],
-                       follow_up_question=_question_for(base), is_followup_only=True)
+                       follow_up_question=question_for(base), is_followup_only=True)
 
 
 #: convenience alias — the contract names the merge entry point both ways in docs
@@ -381,10 +381,15 @@ def _compute_unknowns_public(ex: IntentExtraction) -> list[str]:
 _ONE_FOLLOWUP_ORDER = ("party_size", "time", "location", "budget", "category")
 
 
-def _question_for(intent: dict[str, Any]) -> str | None:
+def question_for(intent: dict[str, Any]) -> str | None:
     """§8: ask about the single most important missing thing, in the user's language.
 
     Exactly one follow-up, never an interrogation.
+
+    D439: this is the question the AGENT CONTRACT asks for, and it was computed here and
+    delivered nowhere - the understand endpoint's `follow_up_question` was always null
+    because only the merge path ever asked for it. It is public now because every turn
+    needs it, not only the ones that follow another turn.
     """
     unknowns = [u for u in intent.get("unknowns") or [] if u in _ONE_FOLLOWUP_ORDER]
     if not unknowns:
