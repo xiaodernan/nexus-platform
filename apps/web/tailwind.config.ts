@@ -8,6 +8,7 @@ import preset from '@nexus/ui/tailwind-preset';
 export default {
   presets: [preset],
   content: [
+    './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
     '../../packages/ui/src/**/*.{ts,tsx}',
     '../../packages/ui/tailwind-preset.ts',

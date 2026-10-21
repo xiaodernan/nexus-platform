@@ -310,3 +310,15 @@ body {
   clip: auto;
   white-space: normal;
 }
+
+/*
+ * `Reveal` prints its start state (`opacity: 0`) on the server and clears it when the in-view
+ * animation runs. A reader who asks for reduced motion should never have to wait for that
+ * animation, or for JavaScript at all, to see the page — so the request itself shows the content.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

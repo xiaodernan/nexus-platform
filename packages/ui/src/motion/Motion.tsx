@@ -58,8 +58,14 @@ export const staggerItem: Variants = {
 };
 
 /**
- * Reveal — scroll-triggered entrance. Falls back to "always visible" when reduced
- * motion is requested (children render with no transform and no opacity change).
+ * Reveal — scroll-triggered entrance.
+ *
+ * The markup must not branch on `useReducedMotion()`: that hook reads the OS preference while
+ * rendering, so the server pass (always `false`) and a client first pass (`true` when the OS asks
+ * for reduction) would hydrate two different elements and leave the server's `opacity: 0` stranded
+ * in the DOM with nothing left to clear it. The preference is honoured in `transition` (no DOM
+ * effect) and by the `[data-reveal]` rule in tokens.css, which is what keeps the content visible
+ * before and without JS.
  */
 const MOTION_TAG = {
   div: motion.div,
@@ -83,17 +89,14 @@ export function Reveal({
 }) {
   const reduced = useReducedMotion();
   const Tag = MOTION_TAG[as];
-  if (reduced) {
-    const Plain = as;
-    return <Plain className={className}>{children}</Plain>;
-  }
   return (
     <Tag
       className={className}
+      data-reveal=""
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount }}
-      transition={{ duration: duration.slow, ease: EASE, delay }}
+      transition={{ duration: reduced ? 0 : duration.slow, ease: EASE, delay: reduced ? 0 : delay }}
     >
       {children}
     </Tag>

@@ -18649,3 +18649,113 @@ behind another file's table of the same name - and hiding, with it, a code point
 by three strokes. The general rule: **the scope of a count decides what it can see**, so a count
 whose scope is a guess should be trusted as a guess - and the cheapest way to make it a fact is
 to count where the thing lives.
+
+## 449. D455 · the §170 review pack could not be collected at all: the `evidence` script was declared, its file never existed, and the ledger said screenshots were impossible here (`apps/web/scripts/collect-evidence.mjs`, `apps/web/package.json`)
+
+**What the product promises.** The §170 "definition of done for the vertical slice" section names five
+screenshots in `tests/evidence/` - `/`, `/search`, `/m/[slug]`, `/merchant`, `/admin` - and
+`apps/web/package.json` advertises the command that is supposed to produce them:
+`"evidence": "node scripts/collect-evidence.mjs"`. The file was not there. `git show
+HEAD:apps/web/scripts/collect-evidence.mjs` answers `exists on disk, but not in HEAD` - so for the whole
+time the pack has been "the gate", running the gate has been impossible, and nobody noticed, because a
+missing script is the one kind of missing test that prints no red.
+
+**And the sentence that hid it.** The same §170 neighborhood asserted that this machine cannot take
+screenshots at all - "the in-app browser reports `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`, so no screenshot
+evidence can be produced by any agent here". That was a claim about one tool. It was read as a claim about
+the product, and it stood until this section, which falsifies it with the artifacts: a Playwright Chromium,
+driven headless, captured **5/5 surfaces** into `tests/evidence/` with a `manifest.json` that carries a
+SHA-256 per PNG. **The §170 screenshot half of the definition of done is now collectible, and the
+"impossible on this machine" sentence is obsolete as of this section** - superseded here rather than edited
+in place, so the line numbers every other reader cites keep pointing where they point.
+
+**What the collector is.** Five surfaces, each with the marker that proves *that* surface rendered - the
+landing heading and its labelled search input; a result card plus the stream's own run id, which is the
+only event that prints after `done`; the merchant page for **the slug the search itself linked to** (read
+out of the first `a[href^="/m/"]`, not a hand-picked slug, which is how a pack starts proving a page nobody
+navigates to); and the two consoles, which answer with their sign-in gates because there is no login page
+yet - the pack records the gate, and says so in `notes`. A missing marker fails the run and still leaves
+its screenshot and error in the manifest: the picture of a failure is evidence too. Screenshots and the
+manifest stay out of git (`tests/evidence/*`, with `.gitkeep` tracked) - §131.
+
+**Verified, not claimed.**
+
+- the run -> `5/5 surfaces captured`, `manifest.ok true`, all five HTTP 200
+- the markers -> home `heading 想说就去。`, `heading_font_px 68`, `search_input true`, `sections 9`;
+  search `cards 8`, `summary true`, `model_free_notice true`, `fallback_notice false`,
+  `first_merchant /m/banyan-ridge-0153`; merchant `星灶`, `reviews 10`, `opening_state true`;
+  both consoles `gate sign-in-required`
+- the bytes -> 296470 / 190111 / 345801 / 49871 / 41265, each with a `screenshot_sha256`
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** Two failure modes met here, and both are general. A `package.json` script whose target
+does not exist is a *silent* gate - it cannot be green, but it also cannot be red, so it removes the
+question rather than answering it (U-F files the door). And a ledger sentence that reports what a *tool*
+could not do must name the tool: "screenshots are impossible" outlived the browser view it was written
+about, and for weeks it excused a pack that was only ever missing one file.
+
+
+## 450. D456 · the landing page rendered two things it was not: Tailwind never scanned the route tree, and a reduced-motion reader was served an invisible hero (`apps/web/tailwind.config.ts`, `packages/ui/src/motion/Motion.tsx`, `packages/ui/src/styles/tokens.css`)
+
+**Found by the pack, not by looking.** The first collection produced a screenshot of a landing page with a
+blank top section and a heading the size of body text. Both were real defects on the live plane, and neither
+was visible to any check that existed.
+
+**One: the route tree was never a candidate for a single utility class.** `apps/web/tailwind.config.ts`
+scanned `./src/**`, `../../packages/ui/src/**` and the preset file - and never `./app/**`, which is where
+every page of this app lives. The hero heading styles itself `text-4xl sm:text-5xl lg:text-6xl`; none of
+those three classes was emitted, so the `<h1>` fell through to preflight's `font-size: inherit` and painted
+at **16px** on a page whose own markup asked for **68px** (`packages/ui/tailwind-preset.ts`'s `6xl` is
+`4.25rem`). Adding the glob is the whole fix.
+
+- the census -> **43** utility tokens are used only under `app/`; **0** of them are absent from the shipped
+  CSS now (the matcher accepts both `.sm\:x{` and `.hover\:x:hover{`, because a variant that only differs
+  by a pseudo-selector is not a missing class)
+- the live reading -> `h1` computed `font-size: 68px` in all three arms of the witness below
+
+**A measurement error worth the row.** The first probe asked `document.querySelector('section')` for its
+padding and concluded the hero had none. It does not: `py-14 sm:py-20` is on the `Container` *inside* the
+section. The corrected reading is 80px / 80px. A probe that reads the wrong node does not report a defect,
+it reports itself.
+
+**Two: `prefers-reduced-motion` got a page it could not see.** `Reveal` branched its own markup on
+`useReducedMotion()`. That hook reads a media query *while rendering*: on the server there is no query, so
+the answer is `false` and the server prints the `motion` element with its `initial` state inlined
+(`opacity:0`); a reader whose OS asks for reduction gets `true` on the client's first pass and renders a
+plain tag instead. The two trees disagree, the client's tree wins structurally, and the server's inline
+`opacity: 0` is left on an element nothing any longer animates. Measured on the live plane before the fix:
+under `reducedMotion: reduce` both hero wrappers stayed at `opacity: 0` - after scrolling them into view,
+after typing, indefinitely. Playwright's `visible` cannot see this, because visibility is a layout fact and
+opacity is a paint fact; which is also why the pack captured a blank hero rather than a broken one.
+
+**The fix, and the belt.** The markup no longer branches - the same element always renders, and the
+preference shortens the `transition` instead. `packages/ui/src/styles/tokens.css` adds, for
+`prefers-reduced-motion: reduce`, `[data-reveal] { opacity: 1 !important; transform: none !important }`, so
+a reader who never runs JavaScript still sees the content: the server's start state is a *starting* state,
+not a condition.
+
+**Verified, not claimed** - three arms against the running production build on :3002 (a scratch Playwright
+probe, deliberately not committed):
+
+| arm | `[data-reveal]` nodes | hidden | h1 | hydration errors |
+| --- | --- | --- | --- | --- |
+| no preference | 2 | 0 | 1.00 / 68px | 0 |
+| `reduce` | 2 | 0 | 1.00 / 68px | 0 |
+| `reduce` + JavaScript off | 2 | 0 | 1.00 / 68px | 0 |
+
+The third arm is the one that pays for the belt: its inline style is still `opacity:0;transform:
+translateY(16px)` and its computed opacity is `1`. The CSS is doing that work, not hydration. The second
+arm reaches `1` by a different route (inline `opacity: 1`), so the two mechanisms are separately witnessed
+rather than conflated. `npm run typecheck` is clean in `@nexus/ui` and `@nexus/web`, and `npm run build`
+exits 0.
+
+**Named, not fixed.** `StaggerGroup`, `StaggerItem` and `Animate` branch on `useReducedMotion()` the same
+way `Reveal` used to. A grep over `apps/` and `packages/` finds each of them only inside
+`packages/ui/src/motion/Motion.tsx` - three exports, no consumers - so the bug is latent, not live, and
+belonging to whoever gives them a first reader.
+
+**Discipline note.** "The element is in the DOM, it is `visible`, the text is right" is what every check
+here could say about a hero that painted nothing. The property that matters for a reader is the *computed*
+one, so the collector now records `heading_font_px` in the manifest and refuses to screenshot a page whose
+on-screen nodes have not reached full opacity. A marker that a broken page can also satisfy is not a marker.
