@@ -17165,3 +17165,25 @@ pins the actual behavior.
 
 **Verified, not claimed.** `pytest tests/test_safety_injection_suite.py` → **8 passed**; full
 `apps/ai` suite → **891 passed, 31 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+---
+
+## 420 · D426 — pin the HTTP layer's degrade wiring (`api/deps`, §105 / D4)
+
+**Module / contract.** `Deps` is the one seam that decides mode. With no DB pool it must answer
+from the clearly-labelled demo catalogue (`StaticBackend`), the router must degrade to `mock`, and
+embeddings must degrade to `hashing`. None of it touches a real database or network.
+
+**Pinned behavior (7 cases, all confirmed empirically):**
+- No pool → `database()` is None, `db_available()` False, `backend_degraded()` True.
+- `backend()` returns a `StaticBackend` with `name == "static"` (the demo catalogue).
+- `router()` returns a `ModelRouter` whose `adapters` include a `MockAdapter` (D4 degrade).
+- `embeddings()` returns a `HashingEmbedding` (`name == "hashing"`).
+- `tenant_id()` is `DEFAULT_TENANT_ID`; `build_deps(settings)` returns a `Deps` holding that exact
+  settings object.
+
+**Discipline note.** One premise correction, not code: `ModelRouter` exposes `adapters`, not
+`providers` (the probe's `getattr` fallback hid the difference). Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_deps.py` → **7 passed**; full `apps/ai` suite →
+**898 passed, 31 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
