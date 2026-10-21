@@ -17332,3 +17332,43 @@ written for a promise that does not ✗ — a red gate trains people to ignore g
 lane's readers are only worth their reading if they are mostly green ✓ and their reds are real ✓.
 This unit's reds are the ones that would matter ✗: a filter that stops filtering ✗, a card that
 stops saying whether it is open ✗, a number that loses its fact ✗.
+
+## 425. D431 · the merchant agent's chat wrote NO run, so its turns were invisible to the conversation timeline (`api/routes_stream`, AGENT_CONTRACT §8)
+
+**What the contract asks for and what the plane had.** AGENT_CONTRACT §8: every task writes an
+`agent_runs` row ✓, and the runs of one conversation link together ✓. The chat's request
+**requires** a `conversation_id` ✓ — the caller has already paid for the linkage ✓ — and the turn
+was invisible:
+
+```
+the chat: 200
+the runs recorded for the conversation: 0
+the five most recent runs on the plane: all "search"
+```
+
+So a conversation that contains a merchant chat shows nothing but the searches ✓, and
+`GET /ai/v1/conversations/{id}` — the surface that answers "what happened in this
+conversation" ✓ — could not show the agent's own turns ✓.
+
+**The fix.** The chat records its run the way the search records its own ✓: the in-process ledger
+first ✓ (so the timeline answers offline ✓) and the table best-effort ✓ (so a persistence
+failure never breaks a response ✓). The run carries the **conversation** ✓, the **merchant** ✓,
+the **message** ✓, the **answer** ✓, the grounded/degraded distinction ✓ (a handoff is a
+different outcome from an answer ✓, and the run says which one it was ✓) and the **chunks** the
+answer was grounded on ✓ — in the `retrieval` column ✓, not in `fact_ids` ✓, because a chunk id
+is not a fact id ✓.
+
+**Verified, not claimed.** `pytest tests/test_merchant_agent_run.py` -> **2 passed** (the chat
+writes a run for the conversation it was given ✓, carrying the conversation ✓, the merchant ✓,
+the question ✓ and the answer ✓; and a handoff is recorded as degraded ✓ with
+`fallback_used: no_grounded_chunks` ✓); the full `apps/ai` suite -> **937 passed / 37
+skipped**; `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues
+found in 52 source files**; the eval gate -> **`RESULT: PASS - 2 suite(s), 0 failing`**; and
+on the live plane the probe now reads **1** run for the conversation ✓ (it read 0 ✓).
+
+**Discipline note.** Two of the three surfaces that make a product operable — the timeline ✓ and
+the observability ledger ✓ — were blind to one of the product's own features ✓, and the feature
+still answered perfectly ✓. A response that works and a record of the response are two
+different promises ✓, and only the first one was being kept ✓. The contract asks for the second
+one in the first line of §8 ✓, and it is the line that is easiest to skip ✓ because nothing
+fails when it is ✓.

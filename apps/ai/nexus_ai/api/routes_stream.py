@@ -109,6 +109,7 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
         # containment test is what tells them apart.
         grounded = any(bool(c.get("hit")) for c in chunks)
         provider = "mock"
+        answer_text = ""
         if grounded:
             yield ("status", {"stage": "summarizing", "text": copy["answering"]})
             from nexus_ai.models.base import LLMRequest
@@ -126,19 +127,64 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
             # instead of an answer. The branch had never run: the old floor (0.35) was
             # unreachable, so every question took the handoff path and the crash stayed
             # hidden behind a defect that was hiding it.
-            yield ("summary", {"text": call.response.text,
+            answer_text = call.response.text
+            yield ("summary", {"text": answer_text,
                                "citations": [str(c.get("id")) for c in chunks
                                              if c.get("id")][:8]})
         else:
-            yield ("summary", {"text": t["none_grounded"] + " " + t["handoff"],
+            answer_text = t["none_grounded"] + " " + t["handoff"]
+            yield ("summary", {"text": answer_text,
                                "citations": []})
         yield ("done", {"agent_run_id": run_id, "latency_ms": _ms_since(started),
                         "cost_usd": 0.0, "degraded": not grounded,
                         "provider": provider})
+        await _record_chat(deps, run_id=run_id, body=body, grounded=grounded,
+                          answer=answer_text, citations=[str(c.get("id")) for c in chunks
+                                                       if c.get("id")],
+                          latency_ms=_ms_since(started), provider=provider)
     except Exception as exc:  # the same inside-stream error contract as search
         log.exception("merchant-agent stream failed")
         yield ("error", {"code": "internal", "message": str(exc),
                          "request_id": request_id})
+
+
+async def _record_chat(deps: Any, *, run_id: str, body: Any, grounded: bool, answer: str,
+                 citations: list[str], latency_ms: int, provider: str) -> None:
+    """Write the chat's `agent_runs` row (AGENT_CONTRACT §8: every task writes one).
+
+    D431: the chat wrote NONE, so its turns were invisible to the conversation timeline
+    and to the observability surface - and the request REQUIRES a conversation_id, so
+    the caller had already paid for the linkage. The run carries the conversation, the
+    merchant, the message, the answer and the chunks the answer was grounded on (the
+    `retrieval` column, not `fact_ids`: a chunk id is not a fact id).
+    """
+    from nexus_ai.api import runs
+
+    run = {
+        "agent_run_id": run_id, "agent": "merchant_agent",
+        "status": "succeeded" if grounded else "degraded",
+        "provider": provider, "model": None,
+        "conversation_id": str(body.conversation_id) if body.conversation_id else None,
+        "merchant_id": str(body.merchant_id) if body.merchant_id else None,
+        "user_id": None,
+        "tenant_id": deps.tenant_id(),
+        "input_summary": (body.message or "")[:500] or None,
+        "output_summary": (answer or "")[:500] or None,
+        "plan": {"steps": ["retrieve_merchant_documents", "summarize"]},
+        "tool_calls": [{"tool": "retrieve_merchant_documents", "ok": bool(citations),
+                        "ms": latency_ms}],
+        "retrieval": citations,
+        "fact_ids": [],
+        "latency_ms": latency_ms, "cost_usd": 0.0,
+        "fallback_used": None if grounded else "no_grounded_chunks",
+        "error": None, "started_at": None, "finished_at": None,
+        "degraded": not grounded,
+    }
+    deps.ledger.add({**run, "persisted": False})
+    db = deps.database()
+    if db is None:
+        return
+    await runs.persist_run(db, run)
 
 
 def _wrap_for_summary(chunks: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], Any]:

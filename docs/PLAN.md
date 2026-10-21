@@ -108,6 +108,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D428** The card's fact references: the contract's `source_fact_id` was always null (`search/cards`) — the open state and the availability brief now point at the facts the card already carries
 - **D429** The attributes the matchers read and the ones the seed writes were two hand-kept lists, and nothing checked they agreed (`apps/ai/tests/test_attribute_vocabulary.py`) — a source-level gate, because a live check would measure the corpus's category mix instead
 - **D430** The search's ANSWER had no gate: the explicit filters, the open state, the facts and the distance were only ever checked one at a time (`apps/ai/tests/test_live_search_contract.py`) — six consumer-style checks, measured on BOTH planes
+- **D431** The merchant agent's chat wrote NO run, so its turns were invisible to the conversation timeline (`api/routes_stream`) — AGENT_CONTRACT §8's first line, and the line that is easiest to skip because nothing fails when it is
+- **The numbering: the D-numbers 428-430 and the sections 422-425 are this lane's** — the sibling lane's counter (its last was D427 / §421) would land on D428 / §422, which this lane holds. If the next unit collides, renumber it (as D409 did, and D414 recorded) — the readers cannot see the sibling's three sections, so only the two lanes can keep the numbering straight.
 - **Fresh gate** re-certified through step 6 on the live plane: 217 quality checks, none red; step 7 is the sandbox's node-spawn refusal
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
