@@ -23,9 +23,10 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from nexus_ai.api import errors, runs
+from nexus_ai.contract import ImportExtractRequest
 from nexus_ai.api.deps import Deps
 from nexus_ai.contract import (
-    RagChunk, RagRetrieveRequest, RagRetrieveResponse, _Strict)
+    RagChunk, RagRetrieveRequest, RagRetrieveResponse)
 from nexus_ai.search import sql as S
 from nexus_ai.trust.injection import scan_untrusted
 
@@ -147,12 +148,6 @@ def _uuid_from(value: str):
 
 
 # --------------------------------------------------------------------------- imports
-class ImportExtractRequest(_Strict):
-    source_type: str
-    source_ref: str | None = None
-    raw_text: str
-
-
 _PRICE_RE = re.compile(
     r"(?:HK\$|HKD|港幣|港币|\$)\s*(\d{1,5}(?:,\d{3})*(?:\.\d{1,2})?)|(\d{1,5}(?:\.\d{1,2})?)\s*(?:蚊|元|hkd)",
     re.IGNORECASE)

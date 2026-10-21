@@ -4,21 +4,18 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, AsyncIterator, Optional
-from uuid import UUID
+from typing import Any, AsyncIterator
 
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
-from pydantic import Field, field_validator
 
 from nexus_ai.api import errors, runs
 from nexus_ai.api.deps import Deps
-from nexus_ai.api.pipeline import MAX_QUERY_LENGTH
+from nexus_ai.contract import StreamSearchRequest
 from nexus_ai.api.sse import sse_bytes
 from nexus_ai.api.stream import search_stream_events
 from nexus_ai.contract import (
-    MerchantAgentRequest, StreamDoneFrame, StreamStatusFrame, StreamSummaryFrame,
-    _Strict)
+    MerchantAgentRequest, StreamDoneFrame, StreamStatusFrame, StreamSummaryFrame)
 from nexus_ai.models.mock import SUMMARY_TEMPLATES
 
 log = logging.getLogger("nexus_ai.api.routes_stream")
@@ -31,27 +28,6 @@ STREAM_HEADERS = {
     "connection": "keep-alive",
     "x-accel-buffering": "no",
 }
-
-
-class StreamSearchRequest(_Strict):
-    """Body shape the web BFF forwards verbatim
-    (`apps/web/app/api/nexus/ai/stream/route.ts`)."""
-
-    query: str
-    conversation_id: Optional[UUID] = None
-    previous_intent: Optional[dict[str, Any]] = None
-    context: dict[str, Any] = Field(default_factory=dict)
-    limit: int = 8
-
-    @field_validator("query")
-    @classmethod
-    def _check_query(cls, v: str) -> str:
-        v = (v or "").strip()
-        if not v:
-            raise ValueError("query is required")
-        if len(v) > MAX_QUERY_LENGTH:
-            raise ValueError(f"query must be at most {MAX_QUERY_LENGTH} characters")
-        return v
 
 
 def _deps(request: Request) -> Deps:

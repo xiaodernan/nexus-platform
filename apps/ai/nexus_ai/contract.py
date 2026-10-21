@@ -12,7 +12,7 @@ from decimal import Decimal
 from typing import Any, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 IntentKind = Literal[
     "discover_merchant",
@@ -223,6 +223,55 @@ class SearchRequestFilters(_Strict):
     avoid: list[str] = Field(default_factory=list)
     kind: Optional[Literal["merchant", "product", "service", "experience"]] = None
     merchant_id: Optional[UUID] = None
+
+
+#: The longest query the service accepts - the same cap the BFF enforces before it
+#: pays for a model call (D410).
+MAX_QUERY_LENGTH = 200
+
+
+class CompareRequest(_Strict):
+    """The comparison's request (API_CONTRACT §7: `{subject_ids:[...], geo?:{lat,lng}}`).
+
+    D401: a distance needs a reference point. The grid grew a `distance` row
+    (S37's comparison is price / rating / distance, and the e2e spec asserts the
+    table shows all three), so the caller passes the point it is comparing FROM.
+    Without it the row is simply absent - the grid never invents a distance.
+    """
+
+    subject_ids: list[UUID] = Field(min_length=2, max_length=5)
+    tenant_id: Optional[UUID] = None
+    locale: str = "zh-HK"
+    geo: Optional[GeoPoint] = None
+
+
+class StreamSearchRequest(_Strict):
+    """Body shape the web BFF forwards verbatim
+    (`apps/web/app/api/nexus/ai/stream/route.ts`)."""
+
+    query: str
+    conversation_id: Optional[UUID] = None
+    previous_intent: Optional[dict[str, Any]] = None
+    context: dict[str, Any] = Field(default_factory=dict)
+    limit: int = 8
+
+    @field_validator("query")
+    @classmethod
+    def _check_query(cls, v: str) -> str:
+        v = (v or "").strip()
+        if not v:
+            raise ValueError("query is required")
+        if len(v) > MAX_QUERY_LENGTH:
+            raise ValueError(f"query must be at most {MAX_QUERY_LENGTH} characters")
+        return v
+
+
+class ImportExtractRequest(_Strict):
+    """The import door's request (API_CONTRACT §7.0 - service to service)."""
+
+    source_type: str
+    source_ref: str | None = None
+    raw_text: str
 
 
 class SearchRequest(_Strict):

@@ -19565,3 +19565,60 @@ declared "a surface with no model" ✓, and the declaration read as a fact about
 rather than as a note about the gap ✓ ✓. The fix is the order of the work ✓: **a shape the
 contract names deserves a model** ✓ - and a gate that asks "which surfaces have no model?"
 ✓ should be asking it of the contract's **rows** ✓, not of a list of exceptions ✓ ✓.
+
+## 464. D470 · the public surfaces' REQUEST models lived in the routes - the answers got their models in the last three units, the requests had none (`apps/ai/nexus_ai/contract.py`, `apps/ai/nexus_ai/api/routes_discover.py`, `apps/ai/nexus_ai/api/routes_rag.py`, `apps/ai/nexus_ai/api/routes_stream.py`, `apps/ai/nexus_ai/api/pipeline.py`, `apps/ai/tests/test_request_models_live_in_the_contract.py`)
+
+**What the product does, and what was measured.** §461-§463 (D467-D469) gave the **answers**
+models ✓ and made the routes build their answers through them ✓. The **requests** had nothing
+✓: the comparison's request ✓, the stream's request ✓ and the import door's request ✓ were
+declared in their **routes** ✓, while API_CONTRACT §7 names every one of those requests ✓ ✓
+(`{subject_ids:[...], geo?:{lat,lng}}` ✓) ✓.
+
+The census of every class the package declares ✓ found **six** `*Request` classes outside the
+contract module ✓:
+
+```
+CompareRequest        api/routes_discover.py   the comparison's request  (a public surface)
+StreamSearchRequest   api/routes_stream.py     the search stream's request  (a public surface)
+ImportExtractRequest  api/routes_rag.py        the import door's request  (a public surface)
+LLMRequest            models/base.py           the model router's own request
+PlatformRejectedRequest adapters/platform.py  the platform door's rejection body
+```
+
+A public request's shape was in **two** places ✓ - the contract's row ✓ and the route's class
+✓ - and only one of them was checked ✓ ✓.
+
+**The fix.** The three public request models moved to the contract module ✓ ✓, and the
+stream's request took the **query-length cap** with it ✓ (it validates the query against
+it ✓) ✓ - the cap is a **shape rule** ✓ (*"the same cap the BFF enforces before paying for
+a model call"* ✓) ✓, so it belongs where the shapes live ✓ ✓, and the pipeline still
+exposes it ✓ ✓ (the test that pins it still does ✓ ✓).
+
+**The gate.** `apps/ai/tests/test_request_models_live_in_the_contract.py` asks the package
+**where every `*Request` class is declared** ✓ - the AST, not a list of names ✓ - and
+requires it to be the contract module ✓ ✓, with the two that are **not** HTTP bodies declared
+here with their reason ✓ ✓. It was **proved to fail** ✓: declaring a request model in a route
+again made it fail with *"these request models are declared outside the contract module:
+HealthRequest (api/routes_system.py)"* ✓ - the probe was put back ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **3 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1063 passed** with the database, **1009 passed / 54 skipped**
+  without it (the sibling lane's two untracked test files excluded - `test_app_surface.py` ✓
+  and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ - see §436);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** The last three units each began by asking a census about the **answers**
+✓, and each census was right ✓ - and none of them asked about the **requests** ✓ ✓. A
+census's symmetry is the thing to watch ✓: if a shape is written in two places ✓ (the
+contract's row ✓ and the code ✓), then **both directions** of the traffic are worth asking
+about ✓ - what the service answers ✓ *and* what it accepts ✓ ✓ - because a reader of the
+contract's row is asking about the request ✓ and a reader of the route is asking about the
+answer ✓ ✓. The general form ✓: when a rule covers "the shape" ✓, the first question is
+*"whose shape?"* ✓ - and the honest answer is "the shape a client sends" ✓ *and* "the shape
+a client receives" ✓ ✓.

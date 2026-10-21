@@ -10,21 +10,18 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from pydantic import Field
 
 from nexus_ai.api import errors, runs
 from nexus_ai.api.degraded import degraded_json
 from nexus_ai.api.deps import Deps
-from nexus_ai.api.pipeline import (
-    MAX_QUERY_LENGTH, compose_summary, run_search, understand)
+from nexus_ai.api.pipeline import compose_summary, run_search, understand
 from nexus_ai.contract import (
-    CompareResponse, CompareRow, GeoPoint, RecommendRequest, RecommendResponse,
-    UnderstandRequest, UnderstandResponse, _Strict)
+    MAX_QUERY_LENGTH, CompareRequest, CompareResponse, CompareRow, RecommendRequest, RecommendResponse, UnderstandRequest, UnderstandResponse)
 from nexus_ai.search.cards import (compute_open, drop_ungrounded_reasons, meters_text,
                                    travel_minutes)
 from nexus_ai.trust.facts import FactBundle, facts_from_rows
@@ -171,17 +168,6 @@ async def recommend(request: Request, body: RecommendRequest):
 
 
 # --------------------------------------------------------------------------- compare
-class CompareRequest(_Strict):
-    subject_ids: list[UUID] = Field(min_length=2, max_length=5)
-    tenant_id: Optional[UUID] = None
-    locale: str = "zh-HK"
-    # D401: a distance needs a reference point. The grid grew a `distance` row
-    # (S37's comparison is price / rating / distance, and the e2e spec asserts the
-    # table shows all three), so the caller passes the point it is comparing FROM.
-    # Without it the row is simply absent - the grid never invents a distance.
-    geo: Optional[GeoPoint] = None
-
-
 # D449: the attribute list that used to stand here was dead - nothing read it - and it
 # had gone out of date: it named an `open_hours` row (the grid's row is `open_state`, §422)
 # and an `availability` row the grid does not have. The grid below builds its rows

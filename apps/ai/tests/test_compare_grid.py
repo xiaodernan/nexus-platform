@@ -16,7 +16,7 @@ import pytest
 from pydantic import ValidationError
 
 import nexus_ai.api.routes_discover as RD
-from nexus_ai.api.routes_discover import CompareRequest
+from nexus_ai.contract import CompareRequest
 from nexus_ai.search import sql as SQL
 from nexus_ai.trust.facts import FactBundle
 

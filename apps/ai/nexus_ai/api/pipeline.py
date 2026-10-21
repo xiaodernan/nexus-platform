@@ -41,7 +41,10 @@ log = logging.getLogger("nexus_ai.api.pipeline")
 _LOCATION_TYPE_ALIASES = {"near_me": "nearby", "neighbourhood": "nearby"}
 _TIME_TYPE_ALIASES = {"none": "unspecified", "relative_range": "range"}
 
-MAX_QUERY_LENGTH = 200  # same cap the BFF enforces before paying for a model call
+# D470: the cap moved to the contract module - it is a shape rule, and the
+# contract module is where the shapes live (the pipeline still exposes it,
+# and the tests pin it here).
+from nexus_ai.contract import MAX_QUERY_LENGTH  # noqa: E402,F401
 
 
 # --------------------------------------------------------------------------- intent
