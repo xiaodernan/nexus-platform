@@ -30,6 +30,28 @@ NEGATION_CUES: tuple[str, ...] = (
 _NEGATION_WINDOW_CJK = 6
 _NEGATION_WINDOW_LATIN = 16
 
+#: D447: the cue table is canonicalised at import, like the lexicon's (D435), the state
+#: merger's (D421) and the time parser's (D446). The text is canonicalised before it
+#: reaches the polarity, so a Simplified entry here could never match.
+_CANONICALISED_TABLES = ("NEGATION_CUES",)
+
+
+def _canonicalise_tables() -> None:
+    """Put every cue table in this module in the canonical spelling."""
+    import sys
+
+    from nexus_ai.nlu.canonical import canonical_node
+
+    module = sys.modules[__name__]
+    for name in _CANONICALISED_TABLES:
+        table = getattr(module, name, None)
+        if table is None:
+            continue
+        setattr(module, name, canonical_node(table))
+
+
+_canonicalise_tables()
+
 #: The cue must be the LAST thing before the token (modulo a short filler) for a
 #: token-local negation. Anything else is a sentence-level negation.
 _LOCAL_FILLER = re.compile(r"^[的地得咗喇啦呢個個,\s]*")

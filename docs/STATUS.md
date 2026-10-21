@@ -18244,3 +18244,51 @@ point failed twice - U+908A is 邊, not 週, and U+908A is not a character the v
 D409's lesson is not "write the escapes carefully"; it is **have a reference that says whether
 the character is the one you meant** - the Unicode character database, and now the product's own
 vocabulary for the words the product knows.
+
+## 441. D447 · the census was covering less than half the vocabulary: four more tables held dead Simplified entries (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/tests/test_vocabulary_canonical_coverage.py`)
+
+**What the product does, and what was measured.** §440 (D446) ended with its own lesson: *"a
+census is worth exactly as much as its scope"*. The census covered the lexicon, the state
+merger and the time parser. It did not cover `nlu/understand.py` or `nlu/polarity.py` - and
+those modules hold cue tables too. The wider census (every module-level table in the NLU
+package) found four more:
+
+```
+nlu/understand.py   OPEN_PRICE_WORDS     3 non-canonical characters
+nlu/understand.py   _BUDGET_WORDS        3 non-canonical characters
+nlu/understand.py   _COMPARE_CUES_LOW    4 non-canonical characters
+nlu/polarity.py     NEGATION_CUES        1 non-canonical character
+```
+
+**What it cost, honestly: nothing today, and that is the point.** The query is canonicalised
+before it is compared with a cue table, so a Simplified entry in a table that is not
+canonicalised can never match. These four tables hold BOTH spellings - the Traditional forms
+were added by §409 (D416) - so the Simplified entries were dead but redundant, and every cue
+still fired. Had one of these tables held only the Simplified spelling, its cue would have
+been dead exactly as the time parser's weekday was (§440) - and nothing would have said so.
+
+**The fix.** The four tables are canonicalised at import, like the lexicon's, the merger's and
+the time parser's - one mechanism, one place - so the vocabulary holds one spelling per word
+everywhere, and the census's rule has nothing left to find.
+
+**The gate.** §429's census now covers the WHOLE NLU package: the lexicon, the state merger,
+the time parser, the numeral table, the intent module and the polarity module - each with the
+list of the tables its own module canonicalises at import.
+
+**Verified, not claimed.**
+
+- the census -> **5 passed** (the whole NLU package)
+- the full `apps/ai` suite -> **1017 passed** with the database, **967 passed / 50 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 54
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** This unit's finding is a unit with no user-visible symptom, and it is
+still worth its entry - because the symptom it WOULD have had is the one §440 just fixed, in a
+different table, and the difference between the two was a census's scope. A defect that is
+invisible today is not a defect that cannot become visible: **the tables that hold a
+Simplified entry are the tables that will lose their Traditional one the day someone edits
+them.**

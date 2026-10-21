@@ -29,8 +29,10 @@ from __future__ import annotations
 
 from nexus_ai.nlu import lexicon as L
 from nexus_ai.nlu import numerals as N
+from nexus_ai.nlu import polarity as P
 from nexus_ai.nlu import state_merger as M
 from nexus_ai.nlu import timeparse as T
+from nexus_ai.nlu import understand as U
 from nexus_ai.nlu.canonical import CANONICAL_FORMS, canonical
 
 #: The tables that hold the Simplified/Traditional fact ON PURPOSE: the marker sets and
@@ -51,15 +53,19 @@ def _chinese(value: object) -> set[str]:
 
 
 def _vocabulary_tables() -> dict[str, object]:
-    """Every vocabulary table - the ones whose spelling decides what the product matches.
+    """Every vocabulary table in the NLU package - the ones whose spelling decides what
+    the product matches.
 
     D446: the TIME PARSER's tables were not in this census, and they are vocabulary too -
     the query is canonicalised before it reaches them, so a Simplified entry in a table
     that is not canonicalised can never match, and the Traditional spelling the table does
     not carry is not read at all (that is how the Cantonese 禮拜 was never understood).
+    D447: the census now covers the WHOLE package, because a census is worth exactly as
+    much as its scope.
     """
     tables: dict[str, object] = {}
-    for module, label in ((L, "lexicon"), (T, "timeparse"), (N, "numerals")):
+    for module in (L, M, T, N, U, P):
+        label = module.__name__.rsplit(".", 1)[-1]
         for name in dir(module):
             if name.startswith("__"):
                 continue
@@ -81,8 +87,10 @@ def _canonicalised_names() -> set[str]:
     """The tables that are canonicalised at import, by whichever module owns them."""
     names = {f"lexicon.{name}" for name in L._CANONICALISED_TABLES}
     names |= {f"timeparse.{name}" for name in T._CANONICALISED_TABLES}
+    names |= {f"understand.{name}" for name in U._CANONICALISED_TABLES}
+    names |= {f"polarity.{name}" for name in P._CANONICALISED_TABLES}
     # the state merger's cue lists are canonicalised by their `*_CUES` name
-    names |= {f"merger.{name}" for name in dir(M)
+    names |= {f"state_merger.{name}" for name in dir(M)
               if name.endswith("_CUES") and isinstance(getattr(M, name), tuple)}
     return names
 

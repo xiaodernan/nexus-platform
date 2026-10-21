@@ -76,6 +76,29 @@ PARTY_RE = re.compile(
 #: Simplified marker here could never match. (個 U+500B, 位 U+4F4D, 人 U+4EBA.)
 _PARTY_MARKERS = "個位人"
 
+#: D447: this module's own cue tables are canonicalised at import, like the lexicon's
+#: (D435) and the state merger's (D421). Their Simplified entries were dead - the query
+#: is canonicalised before it is compared with them - and they were harmless only because
+#: the tables happened to hold both spellings.
+_CANONICALISED_TABLES = ("OPEN_PRICE_WORDS", "_BUDGET_WORDS", "_COMPARE_CUES_LOW")
+
+
+def _canonicalise_tables() -> None:
+    """Put every cue table in this module in the canonical spelling."""
+    import sys
+
+    from nexus_ai.nlu.canonical import canonical_node
+
+    module = sys.modules[__name__]
+    for name in _CANONICALISED_TABLES:
+        table = getattr(module, name, None)
+        if table is None:
+            continue
+        setattr(module, name, canonical_node(table))
+
+
+_canonicalise_tables()
+
 
 def party_text(text: str) -> str:
     """The text with its Chinese party-size numerals read as digits.
