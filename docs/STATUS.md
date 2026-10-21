@@ -17456,3 +17456,63 @@ measured on a **model** of the product ✗ — and the difference between the mo
 showed up here in the form of a probe that could not spell 拉麵 ✗. The test that takes its words
 from the vocabulary ✓ cannot make that mistake ✓, which is a stronger property than a test that
 happens to spell them right ✓ today ✓.
+
+## 428. D434 · the evaluation's own price case was written with three wrong code points, and it still PASSED (`apps/ai/tests/test_vocabulary_is_the_reference.py`, `apps/ai/nexus_ai/eval/data/intent_v1.jsonl`)
+
+**What the product does, and what was measured.** §405 (D411) built the eval gate: a suite of
+intent cases and a suite of injection cases that run without a database and fail the build when
+a behaviour regresses. The cases are DATA, and DATA is written by hand. §403 (D409) and §408
+(D414) already paid for that lesson once - a hand-written CJK code point is not a reference, and
+the fix that time was to check the vocabulary against the Unihan database. But the CASES were
+never checked against anything. They were only ever checked against their own expectations.
+
+**The defect.** The intent case `sort-price-low-zh` asks for something cheaper in Cantonese and
+expects the price ordering. Its query was written with **three wrong code points**:
+
+```
+written    U+6709 U+4EC0 U+9EBC U+5E73 U+55AE U+5605 U+9910 U+5EF3
+           有    什    麼    平    (variant) 嘅    餐    廳
+right     U+6709 U+54A9 U+5E73 U+5572 U+5605 U+9910 U+5EF3
+           有    咩    平    啲    嘅    餐    廳
+```
+
+`什` is not `咩` (the Cantonese question particle, U+54A9 - "the bleating of sheep; (Cant.) an
+interrogative particle" in the Unihan readings), `麼` is not `啲` (U+5572), and U+55AE is a
+variant of `啲` rather than `啲` itself. Every one of the three was verified against the Unihan
+database and the compatibility pages before it was written down.
+
+**The part that matters.** The case **PASSED** - all along, and after the fix. It passed because
+the sort's cue list contains the single character `平` on its own, and the query's `平` matched it.
+So the case was not testing the phrase it claimed to test; it was testing a loose one-character
+cue, and the three wrong characters were decoration. A gate that asks only "does the case pass?"
+cannot see that. The gate was reporting coverage the suite did not have, and the coverage it
+reported was the coverage of the cheapest possible way to pass.
+
+**The fix, and the reference that makes it hold.** The case's query is now the real words. And
+the repo now carries a reference that does not need the Unihan data shipped with it: **the
+product's own vocabulary**. `apps/ai/tests/test_vocabulary_is_the_reference.py` requires every
+Chinese character in the intent cases to be one the lexicon, the canonical table or the merge's
+cues already carry - after the canonicalisation the product actually performs on the text
+(§411, D417). The injection suite is deliberately out of scope: an attack is SUPPOSED to use words
+the platform has never heard of. The handful of grammatical words the vocabulary does not carry
+are DECLARED in the test, each with its verified code point.
+
+**Verified, not claimed.**
+
+- `pytest tests/test_vocabulary_is_the_reference.py` -> **1 passed**
+- the full `apps/ai` suite -> **982 passed** with the database (the one before was 981)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 52
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** (`intent_v1` 31/31, `safety_injection_v1`
+  27/27) - with the case's query fixed, so the suite now asserts the phrase it names
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** §427 (D433) made a live test take its words FROM the vocabulary, so that a
+test cannot inherit a writer's misspelling. This unit applies the same rule to the DATA: a case
+file must take its characters from the vocabulary too. The general form of the lesson is worth
+stating, because it is easy to get backwards: **a test that passes for the wrong reason is worse
+than a test that fails**, because a failing test is a task and a passing test is a claim. The
+three wrong code points sat in the suite for the whole of §405's life, and every run of the gate
+reported the suite's coverage as complete. The gate was measuring the right thing; the QUESTION
+it asked was not the right one.

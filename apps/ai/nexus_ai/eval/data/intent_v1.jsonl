@@ -17,7 +17,7 @@
 {"expect": {"category": "restaurant", "intent": "discover_merchant", "preferences": [{"key": "ambience", "polarity": 1, "value": "quiet"}]}, "id": "pref-quiet", "must_not": ["budget", "party_size", "location"], "query": "安靜的餐廳"}
 {"expect": {"intent": "discover_merchant", "preferences": [{"key": "occasion", "polarity": 1, "value": "date"}]}, "id": "pref-date", "must_not": ["budget", "party_size", "location"], "query": "約會的餐廳"}
 {"expect": {"category": "cafe", "intent": "discover_merchant", "preferences": [{"key": "price_sense", "polarity": 1, "value": "cheap"}], "sort_preference": "price_low"}, "id": "pref-cheap-en", "must_not": ["budget", "party_size", "location"], "query": "cheap coffee"}
-{"expect": {"category": "restaurant", "intent": "discover_merchant", "sort_preference": "price_low"}, "id": "sort-price-low-zh", "must_not": ["budget", "party_size", "location"], "query": "有什麼平單嘅餐廳"}
+{"expect": {"category": "restaurant", "intent": "discover_merchant", "sort_preference": "price_low"}, "id": "sort-price-low-zh", "must_not": ["budget", "party_size", "location"], "query": "有咩平啲嘅餐廳"}
 {"expect": {"category": "restaurant", "intent": "discover_merchant", "sort_preference": "rating"}, "id": "sort-rating-zh", "must_not": ["budget", "party_size", "location"], "query": "最高分嘅餐廳"}
 {"expect": {"constraints": [{"key": "cuisine_avoid", "value": "spicy"}], "intent": "discover_merchant"}, "id": "avoid-spicy", "must_not": ["budget", "party_size", "location"], "query": "唔食辣"}
 {"expect": {"intent": "compare"}, "id": "intent-compare", "must_not": ["budget", "party_size"], "query": "比較中環同旺角"}
