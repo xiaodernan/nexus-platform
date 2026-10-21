@@ -18436,3 +18436,56 @@ assumption to hide. `session_state_from_context` was a whole second way for the 
 read a conversation's state, and the second way disagreed with the first (§34 and D20). The
 census does not only remove clutter: it removes the places where the product could quietly
 disagree with itself.
+
+## 445. D451 · a degraded answer came back with NO degraded header: the recommendation and the intent extraction said `degraded: true` and said nothing else (`apps/ai/nexus_ai/api/degraded.py`, `apps/ai/tests/test_degraded_header.py`)
+
+**What the product does, and what was measured.** OBSERVABILITY.md §2, on a degraded answer:
+
+> the response carried `X-Nexus-Degraded` plus the UI "降級模式" badge. **A degraded answer
+> that looks like a normal answer is an observability failure even when the request returned
+> 200.**
+
+Measured on the live plane, before this unit:
+
+```
+/ai/v1/search           -> 200  the header: 'false'  the body's degraded: False
+/ai/v1/recommend        -> 200  the header: None    the body's degraded: True   <- no header
+/ai/v1/query/understand -> 200  the header: None    the body's degraded: True   <- no header
+/ai/v1/rag/retrieve     -> 200  the header: None
+```
+
+The search set the header from its own response; the two endpoints that ALSO carry a
+`degraded` field set no header at all. The middleware set the header when the **backend** was
+degraded - a different signal: an answer can be degraded while the backend is perfectly fine
+(the model layer fell back to the rules), and then the answer said so in its body and nowhere
+else. The client that is supposed to show the "降級模式" badge reads the header.
+
+**The fix - one place, so the two cannot disagree.**
+
+* `api/degraded.py` builds a response that carries the flag in the body AND in the header;
+* the search, the recommendation and the intent extraction answer through it;
+* the middleware now OVERRIDES the header with "true" when the backend is degraded - the
+  backend being down degrades every answer, whatever the route said about its own.
+
+**The gate - the class.** `apps/ai/tests/test_degraded_header.py` walks every endpoint that
+answers with a `degraded` field, requires the header to be present, and requires it to AGREE
+with the body - and requires it to be present on a healthy answer too, so a client can tell
+"not degraded" from "not reported".
+
+**Verified, not claimed.**
+
+- the gate -> **2 passed**; the full `apps/ai` suite -> **1022 passed** with the database,
+  **971 passed / 51 skipped** without it (the sibling lane's untracked
+  `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 55
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** The product had TWO answers to "is this answer degraded?" - the body and
+the header - and they were read from two different places: the body by the route, the header
+by the middleware. §438 (D438) was the same shape in a different guise (seven hand-built error
+envelopes and one model that nothing used). The general rule keeps being the same one: **a
+fact the product states in two places must be stated from one place** - and when it is not, the
+two copies disagree, and the one a client reads is the one nobody checks.

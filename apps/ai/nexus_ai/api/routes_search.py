@@ -14,7 +14,7 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from nexus_ai.api import errors, runs
+from nexus_ai.api import degraded, errors, runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import run_search, validate_intent
 from nexus_ai.contract import SearchRequest
@@ -53,8 +53,9 @@ async def search_endpoint(request: Request, body: SearchRequest) -> JSONResponse
     data["intent"] = intent.model_dump(mode="json") if intent else None
 
     _record(deps, run_id=run_id, body=body, intent=intent, pack=pack)
-    headers = {"x-nexus-degraded": "true" if data["degraded"] else "false"}
-    return JSONResponse(data, headers=headers)
+    # D451: the degraded flag travels in the body AND the header - one place, so the two
+    # cannot disagree (OBSERVABILITY.md §2).
+    return degraded.degraded_json(data)
 
 
 def _record(deps: Deps, *, run_id: str, body: SearchRequest, intent: Any,

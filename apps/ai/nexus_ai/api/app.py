@@ -81,7 +81,9 @@ def create_app(settings: Any | None = None) -> FastAPI:
             pass
         response.headers["x-request-id"] = rid
         if deps.backend_degraded():
-            response.headers.setdefault("x-nexus-degraded", "true")
+            # D451: the backend being down degrades EVERY answer, whatever the route said
+            # about its own response.
+            response.headers["x-nexus-degraded"] = "true"
         return response
 
     @app.exception_handler(RequestValidationError)
