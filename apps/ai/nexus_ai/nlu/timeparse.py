@@ -61,9 +61,11 @@ EARLY_CUES = ("之前", "以前提前", "before", "up to", "以內", "以内", "
 OPEN_LATE_CUES = ("還营业", "還營業", "还营业", "仍開", "仍开", "開住", "开住", "營業中",
                   "still open", "open at", "open until", "营业到", "營業到", "夜晚都")
 
-#: How many characters around the clock a direction word may sit in. The longest cue
-#: is four characters wide, and the cue may sit on either side of the clock.
-_CUE_WINDOW = 6
+#: How many characters around the clock a direction word may sit in. The window is
+#: derived from the cue tables themselves - the longest cue, plus the space that
+#: separates it from the clock - so a longer cue cannot fall out of it again (D475:
+#: a hard-coded 6 was one short of `before`, and the English "before 7pm" was invisible).
+_CUE_WINDOW = max(len(cue) for cue in EARLY_CUES + LATE_CUES) + 1
 
 CLOCK_RE = re.compile(
     r"(?:(\d{1,2})\s*[:：]\s*(\d{2}))"                                  # 19:30
@@ -355,16 +357,33 @@ def _default_duration(part_label: str | None) -> int:
             "noon": 90, "morning": 120}.get(part_label or "", 120)
 
 
+def _cue_near(text: str, clock: re.Match, cues: tuple[str, ...]) -> bool:
+    """Whether a direction word sits next to the clock, on EITHER side.
+
+    D475: the two cues were read differently - the early one on both sides of the
+    clock, the late one only after it - and the English word order puts the cue
+    BEFORE the clock ("after 7pm"), so the late cue was invisible in English while it
+    worked in Chinese ("七點之後"). One rule for both now.
+
+    D463: the list used to be hard-coded in the late cue while the table beside it -
+    `LATE_CUES` - held the same idea and was read by nobody, and the two disagreed: the
+    table knows the Cantonese and the written forms, the literal knew six of them. One
+    list now, and the table is the one that is read.
+    """
+    tail = text[clock.end(): clock.end() + _CUE_WINDOW]
+    head = text[max(0, clock.start() - _CUE_WINDOW): clock.start()]
+    return any(tok in tail or tok in head for tok in cues)
+
+
 def _late_suffix(text: str, clock: re.Match) -> bool:
-    """The direction word right after the clock ("seven o'clock, after").
+    """The direction word next to the clock ("seven o'clock, after").
 
     D463: the list used to be hard-coded HERE while the table beside it - `LATE_CUES` -
     held the same idea and was read by nobody, and the two disagreed: the table knows the
     Cantonese and the written forms, the literal knew six of them. One list now, and the
     table is the one that is read.
     """
-    tail = text[clock.end(): clock.end() + _CUE_WINDOW]
-    return any(tok in tail for tok in LATE_CUES)
+    return _cue_near(text, clock, LATE_CUES)
 
 
 def _early_suffix(text: str, clock: re.Match) -> bool:
@@ -375,9 +394,7 @@ def _early_suffix(text: str, clock: re.Match) -> bool:
     the clock - "seven o'clock, before" and "before seven o'clock" are the same request -
     so both sides are read.
     """
-    tail = text[clock.end(): clock.end() + _CUE_WINDOW]
-    head = text[max(0, clock.start() - _CUE_WINDOW): clock.start()]
-    return any(tok in tail or tok in head for tok in EARLY_CUES)
+    return _cue_near(text, clock, EARLY_CUES)
 
 
 def _bare_hour(text: str) -> tuple[int, int] | None:

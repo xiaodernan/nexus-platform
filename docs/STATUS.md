@@ -19848,3 +19848,64 @@ covers a thing that is **made of** other things ✓, the rule has to say how dee
 and the honest answer is *"every object in it"*, not *"the object"* ✓ ✓. This is the D462
 lesson one level in ✓: a census is only as wide as the shape it recognises ✓, and the card's
 shape has **ten shapes inside it** ✓ ✓.
+
+## 469. D475 · the English "before 7pm" and "after 7pm" were dropped - the cue window was one character too short, and only the early cue was read on both sides of the clock (`apps/ai/nexus_ai/nlu/timeparse.py`, `apps/ai/tests/test_time_cue_positions.py`)
+
+**What the product does, and what was measured.** §457 (D463) made the "before" cue mean
+something ✓ - the parser reads the cue tables ✓, the plan carries the direction ✓, the
+service turns it into a filter ✓, the search filters the opening hour ✓ - and its gate
+checked each layer **with the Chinese order** ✓, the one the cue tables were written in ✓ ✓.
+
+The English and the Chinese say the same thing ✓ and got **different answers** ✓:
+
+```
+coffee in sha tin before 7pm   the quality 'night'             the items 6
+coffee in sha tin 七點之前      the quality 'before:0700'        the items 0
+coffee in sha tin after 7pm    the quality 'night'             the items 6
+coffee in sha tin 七點之後      the quality 'open_late_after:0700'  the items 9
+```
+
+**Two defects, and they hide in the language nobody tested.** ✓
+
+* **The window was one character too short.** ✓ The cue is read in the text around the
+  clock ✓, and the window was a hard-coded **6** ✓ - while the longest cue is `before` ✓
+  (six characters ✓) and the space that separates it from the clock is a seventh ✓. So
+  *"before 7pm"* ✓ and *"7pm before"* ✓ were both read as a plain clock time ✓ ✓, in
+  every language that spells the cue in Latin letters ✓ ✓.
+* **Only the early cue was read on both sides.** ✓ The early cue looked before **and**
+  after the clock ✓; the late cue looked only **after** it ✓. The Chinese order puts the
+  cue after the clock ✓ (`七點之後` ✓), and the English order puts it **before** ✓
+  (`after 7pm` ✓) ✓ - so the late cue worked in Chinese and was invisible in English ✓ ✓.
+
+**The fix.** The window is now **derived from the cue tables** ✓ -
+`max(len(cue) for cue in EARLY_CUES + LATE_CUES) + 1` ✓ - so a longer cue cannot fall out
+of it again ✓ ✓ - and both cues are read by **one** rule ✓ (`_cue_near` ✓), which reads both
+sides ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_time_cue_positions.py` reads the cue tables themselves ✓
+and requires **every cue, in every language it is written in**, to be read on **both**
+sides of the clock ✓ ✓ - twenty-four parameters ✓, composed from the tables ✓ (no CJK code
+point is typed by hand ✓ - D409, D446 ✓) ✓ - plus the window's own rule ✓ (*"a cue that
+does not fit in the window can never be read"*) ✓ ✓. It was **proved to fail** ✓: putting
+the hard-coded 6 back made three of its checks fail ✓ (*"'before' before the clock: the cue
+was not read - the quality is 'night'"*) ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **26 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1044 passed** offline ✓ (the D463 gate ✓ still holds ✓ - the
+  "before" still means what it meant ✓) ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** D463's gate read the cue tables ✓ and checked the **Chinese** order ✓
+✓ - so it was a good gate ✓ that happened to test one language ✓ ✓. The general form ✓: a
+table that holds **more than one language** ✓ is a table whose *readers* must be tested in
+**every** language it holds ✓ - and the cheapest way to say that is to make the test's
+parameters come from the table ✓, so the table grows and the test grows with it ✓ ✓. A
+hard-coded window is the same mistake one level down ✓: **a number that describes a table
+must come from the table** ✓ - otherwise it is a copy ✓, and the copy is the thing that
+drifts ✓ ✓ ✓.
