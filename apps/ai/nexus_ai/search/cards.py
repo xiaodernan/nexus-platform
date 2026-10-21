@@ -276,16 +276,32 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
                                           fact_id=(anchor.fact_id if anchor else None)))
 
     image = _image_of(rec)
+    # D423: the contract's OpenState and AvailabilityBrief both carry a `source_fact_id`
+    # - the trust primitive (§4/§19: any AI-stated fact cites one of these) - and the
+    # card's construction FILTERED the keys it passed, so the field was always null
+    # while the card carried the very fact it names in its own `facts` list. The same
+    # filter dropped `opens_at` and `closes_at`, so a card that said "Open until 18:00"
+    # never said when it closed. Both are filled from the facts the card already has.
+    # The `opens_at` / `closes_at` that compute_open produces are TIME strings ("18:00")
+    # while the contract declares them as datetimes - that disagreement is filed, and it
+    # is why only the fields the two shapes agree on are passed through.
+    open_fields: dict[str, Any] = {k: v for k, v in (open_state or {}).items()
+                                   if k in ("is_open", "text", "as_of")}
+    open_fact = computed.get("open_state")
+    if open_fact is not None:
+        open_fields["source_fact_id"] = open_fact.fact_id
+    availability_fields: dict[str, Any] = {k: (availability or {}).get(k)
+                                          for k in ("status", "next_slot")
+                                          if (availability or {}).get(k) is not None}
+    availability_fact = computed.get("availability")
+    if availability_fact is not None:
+        availability_fields["source_fact_id"] = availability_fact.fact_id
     return EntityCard(
         card_type=card_type, id=subject_uuid, slug=str(rec.get("slug") or sid),
         title=title, subtitle=_subtitle(rec, cand, card_type),
         image=image, price=price, rating=rating, distance=distance,
-        open=OpenState(**({k: v for k, v in open_state.items()
-                           if k in ("is_open", "text", "as_of")}
-                          if open_state else {"is_open": None})),
-        availability=AvailabilityBrief(**({k: availability.get(k) for k in
-                                           ("status", "next_slot", "source_fact_id")}
-                                          if availability else {})),
+        open=OpenState(**open_fields) if open_state else OpenState(is_open=None),
+        availability=AvailabilityBrief(**availability_fields),
         ai_match=AiMatch(score=round(float(scored.score if scored else 0.0), 4),
                          reasons=reasons),
         actions=build_actions(card_type, subject_uuid, rec, locale),

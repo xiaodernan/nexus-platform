@@ -17216,3 +17216,44 @@ request time.
 
 **Verified, not claimed.** `pytest tests/test_demo_data.py` → **21 passed**; full `apps/ai` suite →
 **919 passed, 31 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+## 422. D428 · the card's fact references: the contract's `source_fact_id` was always null (`search/cards`, §4 / §18 / §19)
+
+**What the card rendered and what it pointed at.** `OpenState` and `AvailabilityBrief` both
+declare a `source_fact_id` — the trust primitive (§4/§19: *any AI-stated fact cites one of
+these*) — and the card's construction **filtered the keys it passed**, so:
+
+- the open state's `source_fact_id` was **always null**, while the card carried the very fact it
+  names (the `open_state` fact, with its id) in its own `facts` list ✓;
+- the availability brief's `source_fact_id` came from a dict that does not carry one, so it was
+  null as well ✓.
+
+The card's price and rating carry their fact ids ✓ and the reasons all carry theirs ✓ — the
+open state and the availability were the two places where a rendered claim could not be
+traced back to its source ✗.
+
+**The fix.** Both fields are filled from the facts the card already has: the open state points
+at the `open_state` fact ✓ and the availability brief at the `availability` fact ✓. A reader
+can now trace every rendered number back to the fact it came from, which is what §18's
+"every bullet must trace to a fact id" is for ✓.
+
+**Verified, not claimed.** `pytest tests/test_card_fact_references.py` -> **3 passed** (the open
+state names the fact it came from, the availability brief names its own, and a card with no
+open state still builds ✓); the full `apps/ai` suite -> **919 passed / 31 skipped**;
+`ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 52
+source files**; the eval gate -> **`RESULT: PASS - 2 suite(s), 0 failing`**.
+
+**A shape disagreement this unit found and did NOT paper over.** `compute_open` produces
+`opens_at` and `closes_at` as **time strings** ("18:00") ✓, while the contract's `OpenState`
+declares them as **datetimes** ✓. Passing them through raises a validation error, so they
+stay filtered for now ✓ — the card still says "Open until 18:00" in the text ✓, and the
+`closes_hhmm` the computation produces is dropped by the contract's model ✗ (the model ignores
+extra keys ✓). Which of the two shapes is right is a contract question ✓ (the `as_of` field
+carries the instant ✓, and a "closes at 18:00" is a time of day ✓, not an instant ✓), so it is
+filed in `docs/PLAN.md` rather than decided here ✓.
+
+**Discipline note.** The filter that dropped the field was written to keep the card's shape
+tidy, and it did that so well that it also dropped the trust primitive ✓ — the one field whose
+whole job is to point at a fact ✓. A filter that selects keys by name should be read as a
+claim about which fields matter ✓, and the card's own `facts` list already said which ones
+did ✓.
