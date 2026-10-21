@@ -14,7 +14,9 @@ def test_health_ok_never_5xx(client):
     assert body["version"]
     assert body["provider"] == "mock"
     assert body["offline"] is True
-    assert body["database"] == {"configured": False, "available": False}
+    # D473: the health's blocks are contract models now, so they carry every field the
+    # model declares - the database block's `error` is null when there is none.
+    assert body["database"] == {"configured": False, "available": False, "error": None}
     assert body["embeddings"] == {"provider": "hashing", "dim": 1024}
     assert "mock" in body["adapters"]
     assert body["now"]

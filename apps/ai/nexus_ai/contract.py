@@ -330,6 +330,60 @@ class ConversationView(BaseModel):
     reason: Optional[str] = None
 
 
+class DatabaseHealth(BaseModel):
+    """D473: the health check's database block."""
+
+    model_config = ConfigDict(extra="ignore")
+    configured: bool = False
+    available: bool = False
+    error: Optional[str] = None
+
+
+class EmbeddingsHealth(BaseModel):
+    """D473: the health check's embeddings block."""
+
+    model_config = ConfigDict(extra="ignore")
+    provider: str = "hashing"
+    dim: int = 1024
+
+
+class HealthResponse(BaseModel):
+    """D473: the health check's answer - a shape, not a dict written in a route."""
+
+    model_config = ConfigDict(extra="ignore")
+    status: str = "ok"
+    service: str = "nexus-ai"
+    version: str = "0.0.0"
+    provider: str = "mock"
+    offline: bool = False
+    demo_data: bool = False
+    database: DatabaseHealth = Field(default_factory=DatabaseHealth)
+    embeddings: EmbeddingsHealth = Field(default_factory=EmbeddingsHealth)
+    adapters: list[str] = Field(default_factory=list)
+    now: str = ""
+
+
+class ToolManifestEntry(BaseModel):
+    """D473: one entry of the tool manifest - a name and what it may do."""
+
+    model_config = ConfigDict(extra="ignore")
+    name: str
+    implemented: bool = False
+    registry_status: str = "not_built"
+    data_path_via_http: bool = False
+
+
+class ToolsManifestResponse(BaseModel):
+    """D473: the tool manifest's answer."""
+
+    model_config = ConfigDict(extra="ignore")
+    tools: list[ToolManifestEntry] = Field(default_factory=list)
+    count: int = 0
+    registry_status: str = "not_built"
+    note: Optional[str] = None
+    degraded: bool = True
+
+
 class StreamStatusFrame(BaseModel):
     """D468: the SSE frames' payload shapes were hand-built dicts with no model."""
 

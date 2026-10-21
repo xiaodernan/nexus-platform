@@ -13,7 +13,6 @@ table and, offline, records nothing and says so.
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -21,7 +20,9 @@ from fastapi.responses import JSONResponse
 from nexus_ai.api import runs
 from nexus_ai.api.degraded import degraded_json
 from nexus_ai.api.deps import Deps
-from nexus_ai.contract import FeedbackRequest, FeedbackResponse
+from nexus_ai.contract import (
+    DatabaseHealth, EmbeddingsHealth, FeedbackRequest, FeedbackResponse,
+    HealthResponse, ToolManifestEntry, ToolsManifestResponse)
 
 log = logging.getLogger("nexus_ai.api.routes_system")
 
@@ -71,26 +72,28 @@ async def health(request: Request):
         db_error = db_error or f"router unavailable: {exc}"
 
     offline = settings.llm_provider == "mock" and settings.embedding_provider == "hashing"
-    payload: dict[str, Any] = {
-        "status": "ok",
-        "service": "nexus-ai",
-        "version": SERVICE_VERSION,
-        "provider": settings.llm_provider,
-        "offline": offline,
-        "demo_data": bool(settings.demo_data and db is None),
-        "database": {
-            "configured": bool(settings.database_url),
-            "available": db_available,
-            **({"error": db_error} if db_error else {}),
-        },
-        "embeddings": {
-            "provider": settings.embedding_provider,
-            "dim": settings.embedding_dim,
-        },
-        "adapters": adapters,
-        "now": runs.now_iso(),
-    }
-    return JSONResponse(payload)
+    # D473: the answer is built through the contract's model - the route used to write the
+    # ten fields out in a dict, so nothing described the health check's shape.
+    payload = HealthResponse(
+        status="ok",
+        service="nexus-ai",
+        version=SERVICE_VERSION,
+        provider=settings.llm_provider,
+        offline=offline,
+        demo_data=bool(settings.demo_data and db is None),
+        database=DatabaseHealth(
+            configured=bool(settings.database_url),
+            available=db_available,
+            error=db_error or None,
+        ),
+        embeddings=EmbeddingsHealth(
+            provider=settings.embedding_provider,
+            dim=settings.embedding_dim,
+        ),
+        adapters=adapters,
+        now=runs.now_iso(),
+    )
+    return JSONResponse(payload.model_dump(mode="json"))
 
 
 # --------------------------------------------------------------------------- tools
@@ -100,22 +103,23 @@ async def tools(request: Request):
     dispatch registry (AGENT_CONTRACT §3) ships. Never advertise a capability absent."""
     manifest = []
     for name in CANONICAL_TOOLS:
-        manifest.append({
-            "name": name,
-            "implemented": False,
-            "registry_status": "not_built",
-            "data_path_via_http": name in _DATA_PATH_TOOLS,
-        })
-    # D451: the degraded flag travels in the body AND the header (OBSERVABILITY.md §2).
-    return degraded_json({
-        "tools": manifest,
-        "count": len(manifest),
-        "registry_status": "not_built",
-        "note": ("the tool-dispatch registry (tools/registry.py) is not part of this HTTP "
-                 "layer; these are the canonical §3 names with the endpoints that already "
-                 "exercise the same read paths, not live dispatchable tools"),
-        "degraded": True,
-    })
+        manifest.append(ToolManifestEntry(
+            name=name,
+            implemented=False,
+            registry_status="not_built",
+            data_path_via_http=name in _DATA_PATH_TOOLS,
+        ))
+    # D473: the answer is built through the contract's model (D451: the degraded flag
+    # travels in the body AND the header - OBSERVABILITY.md §2).
+    return degraded_json(ToolsManifestResponse(
+        tools=manifest,
+        count=len(manifest),
+        registry_status="not_built",
+        note=("the tool-dispatch registry (tools/registry.py) is not part of this HTTP "
+              "layer; these are the canonical §3 names with the endpoints that already "
+              "exercise the same read paths, not live dispatchable tools"),
+        degraded=True,
+    ).model_dump(mode="json"))
 
 
 # --------------------------------------------------------------------------- feedback

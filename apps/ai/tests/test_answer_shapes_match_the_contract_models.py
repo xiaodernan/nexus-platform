@@ -37,14 +37,15 @@ PROBES: dict[str, tuple[str, dict[str, Any]]] = {
                                           str(uuid.UUID(int=8))]}),
     "/ai/v1/feedback": ("POST", {"subject_type": "merchant", "signal": "click"}),
     "/ai/v1/conversations/{conversation_id}": ("GET", {}),
+    # D473: the health check and the tool manifest used to be declared as surfaces with no
+    # model - they had one now, and the declaration is gone.
+    "/ai/v1/health": ("GET", {}),
+    "/ai/v1/tools": ("GET", {}),
 }
 
 #: The surfaces with NO model, and why. Each one is asked too - and the rule is that its
 #: answer must match no model at all, so a surface that grows a model must lose its entry.
-NO_MODEL_PROBES: dict[str, tuple[str, str]] = {
-    "/ai/v1/health": ("GET", "the diagnostic surface - its shape is the health checker's own"),
-    "/ai/v1/tools": ("GET", "the tool manifest - the shape is the registry's own"),
-}
+NO_MODEL_PROBES: dict[str, tuple[str, str]] = {}
 
 #: The surfaces the gate cannot ask: one answers with SSE, one is the service-to-service door.
 DECLARED_UNREACHABLE = {
@@ -104,7 +105,14 @@ def test_every_answer_is_exactly_one_contract_models_shape():
 
 
 def test_the_surfaces_with_no_model_match_no_model():
+    # D473: the list is EMPTY - every surface that answers with a JSON body has a model,
+    # and a surface that grows one must not be declared as an exception any more.
     models = _models()
+    assert not NO_MODEL_PROBES, (
+        "these surfaces are declared as having no model: "
+        + ", ".join(sorted(NO_MODEL_PROBES))
+        + " - D473 gave the health check and the tool manifest their models, so the "
+          "exception list should be empty")
     with _client() as c:
         for path, (method, reason) in NO_MODEL_PROBES.items():
             keys = set(_ask(c, path, method, {}))

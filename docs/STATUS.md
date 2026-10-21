@@ -19739,3 +19739,59 @@ promise in **both** directions ✓ ✓ - the contract's flag names are promises 
 renders the card ✓, and the service's model is the promise back ✓ - so the check has to run
 in both directions too ✓ ✓, and a flag that only one side can see is a flag one side has
 invented ✓ ✓ ✓.
+
+## 467. D473 · the health check and the tool manifest answered with hand-built dicts - the last two surfaces the shape gate had to DECLARE as model-less (`apps/ai/nexus_ai/contract.py`, `apps/ai/nexus_ai/api/routes_system.py`, `apps/ai/tests/test_answer_shapes_match_the_contract_models.py`, `apps/ai/tests/test_health_and_tools.py`)
+
+**What the product does, and what was measured.** §461 (D467) gave every answer a contract
+model ✓ and made the routes build their answers through it ✓ - and it had to **declare two
+surfaces as model-less** ✓, with a reason for each ✓:
+
+```
+/ai/v1/health   "the diagnostic surface - its shape is the health checker's own"
+/ai/v1/tools    "the tool manifest - the shape is the registry's own"
+```
+
+Both reasons described a fact about the **route** ✓, and both were true ✓ - the health's
+answer was ten fields written out in a dict ✓ (`status` ✓, `service` ✓, `version` ✓,
+`provider` ✓, `offline` ✓, `demo_data` ✓, `database` ✓, `embeddings` ✓, `adapters` ✓, `now` ✓)
+✓ and the manifest's was four ✓, with a five-field entry for each of the canonical tools ✓
+✓. So the two exceptions in the gate were the only place in the repository that said what
+those two answers look like ✓ - and a declaration is not a description ✓ ✗ ✗.
+
+**The fix.** The contract gained `HealthResponse` ✓, `DatabaseHealth` ✓,
+`EmbeddingsHealth` ✓, `ToolsManifestResponse` ✓ and `ToolManifestEntry` ✓, and the two routes
+build their answers through them ✓ ✓ - like every other answer in the service ✓ ✓ ✓.
+
+**The consequence, which is the point.** The shape gate's exception list is now **empty**
+✓ ✓: every surface that answers with a JSON body has a model ✓ ✓, and the gate now
+**asserts** that the list is empty ✓ ✓ - so a new exception has to be a deliberate act with a
+reason ✓, not something that accumulates ✓ ✓.
+
+The one visible change ✓: the health's `database` block now carries `"error": null` ✓ -
+the model declares the field ✓, so it is always there ✓ ✓ (the field used to be absent when
+there was no error ✓) ✓.
+
+**The gate.** The shape gate was **proved to fail** ✓ on this surface ✓: hand-patching one
+field onto the health check's answer made it fail with *"/ai/v1/health answers with the
+fields [...], which match 0 contract models"* ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **8 passed** (the shape gate ✓ + the health/tools tests ✓), and it was **proved
+  to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1069 passed** with the database, **1015 passed / 54 skipped**
+  without it (the sibling lane's two untracked test files excluded - `test_app_surface.py` ✓
+  and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ - see §436);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** An exception list inside a gate is a **TODO with a green tick** ✓ ✓: it
+makes a gap look handled ✓ ✓, because a reader sees the exception and reads "known" ✓ ✗. The
+exception is the one place that says the shape ✓, and a place that only says a shape is not a
+description of it ✓ ✗ ✗. So the rule that closes the list is the one that keeps the gate
+honest ✓: **the list must be empty, and adding to it must be a decision** ✓ ✓ - and the
+general form ✓: a declaration in a gate is a promise that someone will close it ✓ ✓, so a
+declaration without a name and a date is a promise nobody made ✓ ✓ ✗.
