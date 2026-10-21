@@ -18759,3 +18759,67 @@ belonging to whoever gives them a first reader.
 here could say about a hero that painted nothing. The property that matters for a reader is the *computed*
 one, so the collector now records `heading_font_px` in the manifest and refuses to screenshot a page whose
 on-screen nodes have not reached full opacity. A marker that a broken page can also satisfy is not a marker.
+## 451. D457 · every card image on the live plane was a 404: the seed writes its placeholder art into a directory nothing copies, and no reader joined the two vocabularies (`apps/web/public/demo/img/`, `apps/web/src/lib/seed-vocabulary.ts`, `apps/web/src/lib/demo-assets.test.ts`, `apps/web/scripts/collect-evidence.mjs`)
+
+**The defect the plane had.** `write_images()` in `data/seed/generate.py` renders the demo placeholders into
+`data/seed/out/images/` and writes a README whose only instruction is "Copy this directory into
+`apps/web/public/demo/img/`". The generated directory is gitignored output, and nobody ever performed the
+copy, so `apps/web/public/` had no `demo/` at all. Every seeded row that stores an image URL pointed at a file
+the server could not answer: the home rails, the search results and the merchant page rendered broken frames.
+The live plane now returns 200 for all 15 URLs the seed can name, and the review pack records zero broken
+images on all five surfaces.
+
+**What the served data actually names.** The image-bearing columns are `collections.cover_url`,
+`merchants.images`, `offerings.images`, `reviews.photos` and `users.avatar_url`. Read across the seeded
+database they yield exactly 15 distinct paths: ten category files (`restaurant`, `cafe`, `bar`, `fitness`,
+`beauty`, `activity`, `hotel`, `experience`, `shopping`, `service`) and five avatar files
+(`avatar-1`..`avatar-5`). `reviews.photos` contributes none — the seed leaves 11,000 review rows with empty
+photo arrays — so the served vocabulary is the palette plus the roles, not more and not less.
+
+**Why the copy step was not enough.** Restoring the files fixes today's plane and nothing else. The
+generator's palette, the taxonomy's top categories and the directory on disk are three vocabularies that must
+agree, and until now no reader compared any two of them: add a top category to `CAT_TREE` and the seed emits
+`/demo/img/<new-top>.svg` for every merchant filed under it with no art generated; drop a palette key and the
+same happens. So `seed-vocabulary.ts` reads all three out of the Python sources as text — the `palette` dict,
+the `enumerate([...])` role list, `CAT_TREE` and `DISCLAIMER` — with scanners that track nesting and honour
+string quotes, because a category label can contain a bracket and every leaf tuple nests inside its top's list.
+It never imports or shells out to the generator: a literal broken in the file under test must not be able to
+grade itself.
+
+**The gate's 15 cases.** Six read the shipped files: every name the generator writes is on disk; the directory
+holds no file the generator does not write; every `CAT_TREE` top has art; every category placeholder carries
+the disclosure string the seed stores in its `alt` attributes; every avatar carries its own `D<index>` label; no
+placeholder reaches an external host. One reads the generated SQL when this machine has run the seed (23 files
+here, skipped when `data/seed/out/` is absent — the shipped-files half is the always-on one). Eight read
+synthetic sources shaped like the generator but deliberately wrong, which is what makes the first arm
+falsifiable without editing a tracked Python file: a palette missing a category a taxonomy still has, a roles
+list of a different length, a `palette` entry with no colour, a missing `write_images()`, a bracket inside a
+quoted label.
+
+**Witness.** Five mutation arms, run against the served directory only, each expecting the exact set of red
+cases rather than a count: delete `restaurant.svg`, add a file the generator never writes, strip one
+placeholder's disclosure text, move one avatar's index label, point one placeholder at an external host. All
+five matched. The deleted-file arm reddens two cases and only those — its own, and the generated-SQL payload
+arm that also names `restaurant.svg` — which is why the disclosure and avatar arms read only files that exist:
+a deleted asset is one claim's business, and three crashing cases would hide which one. The harness refuses to
+grade a plane whose files differ from `data/seed/out/images/` before the first arm, and re-hashes against the
+generated art after every arm; one battery run was voided on exactly that precondition after a killed run left
+a mutated file behind and the self-consistency check alone graded it as the baseline.
+
+**The evidence pack got the reader it lacked.** `collect-evidence.mjs` now records `broken_images` (every
+`<img>` the browser finished loading at natural width 0) and `failed_requests` (every response over 400) per
+surface, and refuses to call a surface captured when an image rendered broken. A screenshot of a card grid with
+empty frames looks like a card grid; this is the only marker in the pack that can tell the two apart. Verified
+by taking the file away: with `restaurant.svg` moved aside the run exits 1 and names the URL 7 times on home, 8
+on search and 12 on the merchant page — the three surfaces that render seeded imagery. The two console surfaces
+report empty arrays because they draw no seeded imagery, and `failed_requests` is disclosed rather than
+asserted: an API probe can answer 4xx legitimately, a broken image never can. Green run: 5/5 surfaces, 0 broken
+images, 0 failed requests.
+
+**Filed, not fixed.** `data/seed/quality.sql` has a row whose sentence is "images are local placeholders, never
+hotlinks" and whose SQL joins only `merchants.images`. Four of the five carriers above are outside its reach, so
+an `https://` URL in an offering image, a collection cover or an avatar would pass the database quality gate
+today. Widening it is the next unit; the app-side gate above already reads every name the generated SQL emits.
+
+**Numbers.** `apps/web` suite 151 passed across 12 files (15 of them in the new gate), `tsc --noEmit` clean, 15
+placeholder files served, 5/5 arms matched, 5/5 surfaces captured.

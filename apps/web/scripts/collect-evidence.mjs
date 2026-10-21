@@ -68,6 +68,19 @@ function firstLine(error) {
   return String(error?.message ?? error).split('\n')[0];
 }
 
+/**
+ * `<img>` elements the browser could not decode or fetch. A seeded card whose `/demo/img/...`
+ * placeholder is missing renders as a broken frame and the screenshot still looks plausible, so the
+ * pack records the count and refuses to call such a surface captured.
+ */
+async function brokenImages(page) {
+  return page.evaluate(() =>
+    [...document.images]
+      .filter((img) => img.complete && img.naturalWidth === 0)
+      .map((img) => img.currentSrc || img.src),
+  );
+}
+
 async function main() {
   mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch({ headless: !headed });
@@ -75,9 +88,16 @@ async function main() {
   await context.addCookies([{ name: 'nexus_locale', value: LOCALE, url: base }]);
   const page = await context.newPage();
   const pages = [];
+  // Disclosed per surface rather than asserted on: an API probe can answer 4xx legitimately, while
+  // a broken `<img>` never can, so only the image count fails the run.
+  const failedRequests = [];
+  page.on('response', (response) => {
+    if (response.status() >= 400) failedRequests.push(`${response.status()} ${response.url()}`);
+  });
 
   async function snap({ name, url, check }) {
     const entry = { name, requested_url: url, captured_at: new Date().toISOString(), ok: true };
+    failedRequests.length = 0;
     try {
       const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
       entry.status = response ? response.status() : null;
@@ -86,10 +106,15 @@ async function main() {
       entry.markers = await check(page);
       await settled(page);
       entry.rendered_opaque = true;
+      entry.broken_images = await brokenImages(page);
+      if (entry.broken_images.length) {
+        throw new Error(`rendered broken: ${entry.broken_images.join(', ')}`);
+      }
     } catch (error) {
       entry.ok = false;
       entry.error = firstLine(error);
     }
+    entry.failed_requests = [...failedRequests];
 
     const file = path.join(outDir, `${String(pages.length + 1).padStart(2, '0')}-${name}.png`);
     try {
