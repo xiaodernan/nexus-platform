@@ -17,7 +17,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from pydantic import Field
 
-from nexus_ai.api import runs
+from nexus_ai.api import errors, runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import (
     MAX_QUERY_LENGTH, compose_summary, run_search, understand)
@@ -34,10 +34,10 @@ router = APIRouter()
 
 
 def _bad_request(message: str) -> JSONResponse:
-    return JSONResponse(
-        {"error": {"code": "validation_error", "message": message, "details": {},
-                   "request_id": runs.current_request_id() or None}},
-        status_code=422)
+    # D438: the envelope comes from the contract's own shape.
+    return errors.error_response("validation_error", message,
+                                  request_id=runs.current_request_id() or None,
+                                  status=422)
 
 
 # --------------------------------------------------------------------------- understand
@@ -98,9 +98,9 @@ async def recommend(request: Request, body: RecommendRequest):
                                 user_id=body.user_id)
     except Exception as exc:
         log.exception("recommend search failed")
-        return JSONResponse(
-            {"error": {"code": "ai_unavailable", "message": str(exc), "details": {},
-                       "request_id": runs.current_request_id() or None}}, status_code=503)
+        return errors.error_response("ai_unavailable", str(exc),
+                                      request_id=runs.current_request_id() or None,
+                                      status=503)
     # §18/§19: enforce the grounding boundary at the wire. The rules path never emits
     # an ungrounded non-sponsored reason, so `ungrounded` is 0 in steady state; if a
     # future producer does, the bullet is dropped and counted rather than shipped.
@@ -371,8 +371,8 @@ async def compare(request: Request, body: CompareRequest):
                                          body.locale, body.geo)
     except Exception as exc:
         log.exception("compare read failed")
-        return JSONResponse(
-            {"error": {"code": "ai_unavailable", "message": str(exc), "details": {},
-                       "request_id": runs.current_request_id() or None}}, status_code=503)
+        return errors.error_response("ai_unavailable", str(exc),
+                                      request_id=runs.current_request_id() or None,
+                                      status=503)
     return JSONResponse({"rows": rows, "subjects": ids, "degraded": bool(meta["degraded"]),
                          "source": meta["source"]})

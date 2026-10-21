@@ -17715,3 +17715,64 @@ The caveat is about the numbers themselves: the mock provider ESTIMATES its toke
 (`estimate_tokens`), so a row written by the mock carries an estimate, not a measurement. The
 row says which provider wrote it, so the reader can tell - but a ledger whose rows can be
 estimates has to say so on the row, and today it says so only by naming the provider.
+
+## 432. D438 · the contract module modelled the error body and seven places hand-built it instead; one request shape has been dead since the first commit (`apps/ai/nexus_ai/api/errors.py`, `apps/ai/nexus_ai/contract.py`, `apps/ai/tests/test_contract_shapes_are_used.py`)
+
+**What the product does, and what was measured.** `nexus_ai/contract.py` is the AI service's own
+shape vocabulary - the request bodies the routes parse, the response bodies they return, the
+error body they answer with. It declares **14 shapes**. The census of the package (every
+definition, and whether anything mentions it - the same sweep that found §431's unused row
+builder) says:
+
+```
+the contract module declares 14 shapes
+   AiSearchRequest    -> (nowhere)
+   ErrorEnvelope      -> (nowhere)
+   the other twelve   -> wired to a route
+```
+
+**The first defect: the error body was modelled and then copied.** `ErrorEnvelope` and
+`ErrorBody` describe the §1 error body, and **seven places across five route modules
+hand-built the same dict** instead: `api/app.py`, `api/routes_search.py`,
+`api/routes_conversations.py`, `api/routes_discover.py` (three of them), `api/routes_rag.py`
+(three of them). A shape written once and copied seven times is a shape that drifts - and a
+drift there is invisible, because the copy still *looks* like an envelope.
+
+**The second defect: a request shape nobody ever sent.** `AiSearchRequest`
+(`query`, `conversation_id`, `context`, `limit`) has been dead since the first commit
+(`e237f6d`, "M1 wave 1"): the search's own shape is `SearchRequest`, and the platform never
+sent this one - it only ever calls `/ai/v1/imports/extract` (service to service) and the
+browser uses the stream. Its `conversation_id` was the interesting part: the non-streaming
+search still cannot join a conversation, and its runs are still invisible to the
+conversation timeline.
+
+**The fix.**
+
+* `api/errors.py` builds the envelope from the contract's own model, and every route calls
+  it - one place, and the place the contract points at;
+* `AiSearchRequest` is removed: a shape no route accepts is a promise nobody keeps, and the
+  alternative - letting the non-streaming search carry a `conversation_id` - is a contract
+  decision (the documented request shape, the SDK's type, the platform's caller), not a
+  change to make silently in a unit about dead code. **Filed, not done.**
+
+**The gate - a census, so the next unused shape is caught.**
+`apps/ai/tests/test_contract_shapes_are_used.py` requires that every shape the contract
+module declares is used by the package (a shape mentioned only by its own definition is
+unused), and that every error the service answers with - four error paths, exercised - is
+accepted by the contract's own `ErrorEnvelope` model.
+
+**Verified, not claimed.**
+
+- the gate -> **3 passed**; the full `apps/ai` suite -> **998 passed** with the database,
+  **955 passed / 43 skipped** without it
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 53
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** §431's lesson ("the builder existed and the call did not") had a second
+half that this unit found: **the model existed and nobody called it either** - and the thing
+that happened instead was not a bug but a copy. Seven hand-built envelopes looked fine,
+passed every test, and meant that the contract's model described a shape the service did not
+produce. A model that is not used is not a contract: it is a comment with a type annotation.

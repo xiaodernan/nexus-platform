@@ -22,7 +22,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from nexus_ai.api import runs
+from nexus_ai.api import errors, runs
 from nexus_ai.api.deps import Deps, build_deps
 from nexus_ai.api.routes_conversations import router as conversations_router
 from nexus_ai.api.routes_discover import router as discover_router
@@ -37,11 +37,11 @@ log = logging.getLogger("nexus_ai.api.app")
 
 def _envelope(code: str, message: str, *, details: Any = None,
               request_id: str | None = None, status: int) -> JSONResponse:
-    return JSONResponse(
-        {"error": {"code": code, "message": message,
-                   "details": details or {},
-                   "request_id": request_id or (runs.current_request_id() or None)}},
-        status_code=status)
+    # D438: the envelope is the contract's own shape (nexus_ai/contract.py), built in one
+    # place - it used to be hand-built here and in six other places.
+    return errors.error_response(code, message, details=details,
+                                  request_id=request_id or (runs.current_request_id() or None),
+                                  status=status)
 
 
 def create_app(settings: Any | None = None) -> FastAPI:

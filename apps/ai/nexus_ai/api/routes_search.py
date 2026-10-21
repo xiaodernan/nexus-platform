@@ -14,7 +14,7 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from nexus_ai.api import runs
+from nexus_ai.api import errors, runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import run_search, validate_intent
 from nexus_ai.contract import SearchRequest
@@ -42,11 +42,9 @@ async def search_endpoint(request: Request, body: SearchRequest) -> JSONResponse
             locale=body.locale, user_id=body.user_id)
     except Exception as exc:
         log.exception("deterministic search failed")
-        return JSONResponse(
-            {"error": {"code": "ai_unavailable",
-                       "message": f"search backend unavailable: {exc}",
-                       "details": {}, "request_id": runs.current_request_id() or None}},
-            status_code=503)
+        return errors.error_response(
+            "ai_unavailable", f"search backend unavailable: {exc}",
+            request_id=runs.current_request_id() or None, status=503)
 
     response = pack.response
     data = response.model_dump(mode="json")

@@ -347,13 +347,6 @@ class FeedbackRequest(_Strict):
     channel: str = "web"
 
 
-class AiSearchRequest(_Strict):
-    query: str
-    conversation_id: Optional[UUID] = None
-    context: dict[str, Any] = Field(default_factory=dict)
-    limit: int = 8
-
-
 # AGENT_CONTRACT §10 — single event shape, one place.
 EVENT_NAMES = (
     "search", "view", "click", "favorite", "compare", "reserve", "cart_add", "checkout",

@@ -22,7 +22,7 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from nexus_ai.api import runs
+from nexus_ai.api import errors, runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.contract import (
     RagChunk, RagRetrieveRequest, RagRetrieveResponse, _Strict)
@@ -88,10 +88,9 @@ async def rag_retrieve(request: Request, body: RagRetrieveRequest):
                 tenant_id=tenant, top_k=body.top_k)
         except Exception as exc:
             log.exception("chunk retrieval failed")
-            return JSONResponse(
-                {"error": {"code": "ai_unavailable", "message": str(exc),
-                           "details": {}, "request_id": runs.current_request_id() or None}},
-                status_code=503)
+            return errors.error_response(
+                "ai_unavailable", str(exc),
+                request_id=runs.current_request_id() or None, status=503)
     chunks = []
     for r in rows:
         # D405: a chunk answers the question when it MENTIONS what was asked. The
@@ -212,18 +211,16 @@ async def imports_extract(request: Request, body: ImportExtractRequest):
     token = deps.settings.internal_token
     if not token:
         # D7: unconfigured secret is a closed door, not an open one.
-        return JSONResponse(
-            {"error": {"code": "ai_unavailable",
-                       "message": "NEXUS_AI_INTERNAL_TOKEN is not configured — "
-                                  "the service-to-service surface stays closed (D7)",
-                       "details": {}, "request_id": runs.current_request_id() or None}},
-            status_code=501)
+        return errors.error_response(
+            "ai_unavailable",
+            "NEXUS_AI_INTERNAL_TOKEN is not configured — "
+            "the service-to-service surface stays closed (D7)",
+            request_id=runs.current_request_id() or None, status=501)
     given = request.headers.get("x-internal-token", "")
     if not hmac.compare_digest(given, token):
-        return JSONResponse(
-            {"error": {"code": "unauthorized", "message": "invalid internal token",
-                       "details": {}, "request_id": runs.current_request_id() or None}},
-            status_code=401)
+        return errors.error_response(
+            "unauthorized", "invalid internal token",
+            request_id=runs.current_request_id() or None, status=401)
     # raw_text is untrusted (§51): scanned, counted, never executed — it only becomes data
     scan = scan_untrusted(body.raw_text)
     proposals = _extract_proposals(body.raw_text)

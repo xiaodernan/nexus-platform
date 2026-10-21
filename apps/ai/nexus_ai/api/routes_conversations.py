@@ -21,7 +21,7 @@ from uuid import UUID
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from nexus_ai.api import runs
+from nexus_ai.api import errors, runs
 from nexus_ai.api.deps import Deps
 
 log = logging.getLogger("nexus_ai.api.routes_conversations")
@@ -37,10 +37,10 @@ def _jsonable(v: Any) -> Any:
 
 
 def _bad_request(message: str) -> JSONResponse:
-    return JSONResponse(
-        {"error": {"code": "validation_error", "message": message, "details": {},
-                   "request_id": runs.current_request_id() or None}},
-        status_code=422)
+    # D438: the envelope comes from the contract's own shape.
+    return errors.error_response("validation_error", message,
+                                  request_id=runs.current_request_id() or None,
+                                  status=422)
 
 
 @router.get("/ai/v1/conversations/{conversation_id}")
