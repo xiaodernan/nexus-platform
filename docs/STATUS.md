@@ -17946,3 +17946,62 @@ touching it.
 break: nothing fails when a path rots, and the reader who follows it is usually an agent that
 has no way to tell "not built yet" from "moved". The three-way rule above is the general form
 worth keeping: **a missing path is only a defect when the thing it names is somewhere else.**
+
+## 436. D442 · the service-to-service door was IN the public OpenAPI document: §7.0 says it must not be (`apps/ai/nexus_ai/api/routes_rag.py`, `apps/ai/tests/test_service_to_service_is_hidden.py`)
+
+**What the product does, and what was measured.** API_CONTRACT §7.0 states three things about
+the paths that exist only between our own services:
+
+> These paths exist only between our own services. The BFF must not proxy them, **they are
+> absent from the public OpenAPI document**, and a request that arrives from an edge is
+> rejected for missing the shared secret.
+
+Two of the three held. The secret stands (D7: an unconfigured token is a closed door, and a
+wrong one is a 401 ✓). The third did not:
+
+```
+the OpenAPI document lists 13 paths:
+   get   /                                  post  /ai/v1/compare
+   get   /ai/v1/conversations/{id}          post  /ai/v1/feedback
+   get   /ai/v1/health                      post  /ai/v1/imports/extract     <- the door
+   post  /ai/v1/merchant-agent/chat         post  /ai/v1/query/understand
+   post  /ai/v1/rag/retrieve                post  /ai/v1/recommend
+   post  /ai/v1/search                      post  /ai/v1/search/stream
+   get   /ai/v1/tools
+```
+
+`/ai/v1/imports/extract` - the door the platform calls to hand raw text to the extractor -
+was in the document any client could read. The secret still guarded it, but the document was
+telling the world where the door is.
+
+**The fix.** `include_in_schema=False` on that one route: the door is still there, still
+guarded, and no longer advertised.
+
+**The gate - and it reads the paths from the contract, not from a list.**
+`apps/ai/tests/test_service_to_service_is_hidden.py` takes the service-to-service paths out
+of `API_CONTRACT.md`'s §7.0 section itself - a hand-kept list would be the same fact in two
+places, and the two would drift (§432, D438) - and then checks all three halves of the
+sentence: the paths are absent from the public document, the door is still closed without the
+secret (401/501), and the door still opens with it (200).
+
+**Verified, not claimed.**
+
+- the gate -> **3 passed**
+- the full `apps/ai` suite -> **998 passed** with the database, **951 passed / 47 skipped**
+  without it. **One note, and it is not mine:** the sibling lane's **untracked**
+  `apps/ai/tests/test_app_surface.py` asserts the app's OpenAPI path set against a constant
+  that still contains `/ai/v1/imports/extract`, so one of its eleven tests now fails. That
+  file is the sibling's (it is untracked and it is their work), and its expectation encodes
+  the behaviour §7.0 forbids - it needs the service-to-service path taken out of it. **Filed
+  for the sibling, not touched here.**
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 53
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** The sentence in §7.0 has three clauses and the product kept two of them.
+That is the shape of a defect nobody notices: the clauses are individually small ("absent from
+the OpenAPI document" is one flag), and a reader - human or agent - has no reason to check
+the third clause when the first two are visibly working. The gate now reads the clause out of
+the contract, so the contract and the service cannot drift apart on it.

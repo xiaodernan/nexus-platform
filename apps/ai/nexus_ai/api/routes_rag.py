@@ -205,8 +205,18 @@ def _extract_proposals(raw_text: str) -> list[dict[str, Any]]:
     return proposals[:100]
 
 
-@router.post("/ai/v1/imports/extract")
+@router.post("/ai/v1/imports/extract", include_in_schema=False)
 async def imports_extract(request: Request, body: ImportExtractRequest):
+    """D442: the service-to-service door is ABSENT from the public OpenAPI document.
+
+    API_CONTRACT §7.0: "These paths exist only between our own services. The BFF must not
+    proxy them, they are absent from the public OpenAPI document, and a request that
+    arrives from an edge is rejected for missing the shared secret."
+
+    The path was in the OpenAPI document - so a client that reads the document could
+    discover the door and call it. The secret still stands (D7: unconfigured is a closed
+    door), but the document was telling the world where the door is.
+    """
     deps: Deps = request.app.state.deps
     token = deps.settings.internal_token
     if not token:
