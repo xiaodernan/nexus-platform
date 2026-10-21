@@ -18598,3 +18598,54 @@ table that nothing read - so the file's own test was green while the file was wr
 table does not merely rot: it **hides** the rot from the test that covers the file, and the
 only way to see it is to compare the code point against something that is not the writer's
 memory. That is what a reference is for.
+
+## 448. D454 · three more tables the test files defined and read by nothing - and the counting that hid a fourth (`apps/ai/tests/test_no_dead_constants.py`, `apps/ai/tests/test_timeparse_spellings.py`)
+
+**What the product does, and what was measured.** §444 (D450) took the census to the package's
+**functions** and made the gate say that every module-level constant and every module-level
+function in the package is read by the package. The **test files** were never swept - and a
+test file is where a dead table hides best, because the file's own test is green while the file
+is wrong.
+
+The sweep found three:
+
+```
+tests/test_live_preferences.py   SHA_TIN   a geo coordinate for a district nothing asks for
+tests/test_runs_census.py         MERCHANT  a subject id no request names
+tests/test_timeparse_spellings.py EAT       the word for a restaurant, in a file about the clock
+```
+
+(and a fourth - the dead `PAIRS` table of `tests/test_merge_cue_spellings.py` - which §447 (D453)
+had already removed, and which was the table that carried a wrong code point ✓).
+
+**The counting, which is the part worth keeping.** The first sweep counted a name's mentions
+**across the whole test directory** - and found nothing, because another test file has a *live*
+`PAIRS` of its own: the dead table was hiding behind a live table of the same name. The rule
+that sees this is per file: **a constant is read by the file that defines it** - read by the AST
+(`Name` nodes in `Load` context ✓), not by counting substrings ✓, so a name that is part of a
+longer one cannot stand in for a use.
+
+**The gate.** `apps/ai/tests/test_no_dead_constants.py` now sweeps the test files as well, with
+that rule - the same class, one census, two surfaces.
+
+**The fix.** The three are gone (`import uuid` with them ✓ - it was theirs ✓).
+
+**Verified, not claimed.**
+
+- the gate -> **3 passed**; and it was **proved to fail**: a constant added on purpose to a
+  test file made it fail with `DEAD_PROBE (test_timeparse_spellings.py)` ✓, and the file was put
+  back ✓ - a gate that cannot fail is worth nothing
+- the full `apps/ai` suite -> **1025 passed** with the database, **974 passed / 51 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 55
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** A census that counts over the wrong scope reports a clean plane. The
+package-wide count said "no dead tables" while a dead table was sitting in a test file, hiding
+behind another file's table of the same name - and hiding, with it, a code point that was wrong
+by three strokes. The general rule: **the scope of a count decides what it can see**, so a count
+whose scope is a guess should be trusted as a guess - and the cheapest way to make it a fact is
+to count where the thing lives.

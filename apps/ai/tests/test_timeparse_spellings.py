@@ -22,7 +22,6 @@ WEEK_SIMPLIFIED = "\u793c\u62dc"
 WEEK_TRADITIONAL = "\u9031"
 WEEK_PLAIN = "\u5468"
 THREE = "\u4e09"
-EAT = "\u98df\u9910"
 #: 現在 现在 聽日 明日 週末 周末 下午
 NOW_TRADITIONAL = "\u73fe\u5728"
 NOW_SIMPLIFIED = "\u73b0\u5728"
@@ -31,7 +30,6 @@ TOMORROW_PLAIN = "\u660e\u65e5"
 WEEKEND_TRADITIONAL = "\u9031\u672b"
 WEEKEND_SIMPLIFIED = "\u5468\u672b"
 AFTERNOON = "\u4e0b\u5348"
-
 
 def test_every_weekday_token_in_the_table_reads():
     # the data-driven half: the table's own tokens must all be understood
@@ -45,7 +43,6 @@ def test_every_weekday_token_in_the_table_reads():
             f"the weekday token {token.encode('unicode_escape').decode()} did not read as a "
             f"weekday")
 
-
 def test_the_cantonese_weekday_reads():
     # D446: this one read as NOTHING before - the table held only the Simplified 礼拜, which
     # the canonicalisation had already rewritten away.
@@ -53,7 +50,6 @@ def test_the_cantonese_weekday_reads():
     assert parsed is not None and parsed.starts_at is not None, (
         "the Cantonese weekday did not read")
     assert parsed.type == "range"
-
 
 def test_every_spelling_of_the_weekday_reads_the_same_day():
     days = set()
@@ -63,7 +59,6 @@ def test_every_spelling_of_the_weekday_reads_the_same_day():
             f"the weekday {prefix.encode('unicode_escape').decode()} did not read")
         days.add(parsed.starts_at.date())
     assert len(days) == 1, f"the spellings of the weekday read as different days: {days}"
-
 
 def test_the_day_words_read_in_both_spellings():
     now = parse_time(NOW_TRADITIONAL)
@@ -78,14 +73,12 @@ def test_the_day_words_read_in_both_spellings():
     assert tomorrow.starts_at == tomorrow_plain.starts_at, (
         "聽日 and 明日 read as different days")
 
-
 def test_the_weekend_reads_in_both_spellings():
     traditional = parse_time(WEEKEND_TRADITIONAL)
     simplified = parse_time(WEEKEND_SIMPLIFIED)
     assert traditional is not None and simplified is not None
     assert traditional.starts_at == simplified.starts_at, (
         "週末 and 周末 read as different weekends")
-
 
 def test_the_part_of_day_reads():
     parsed = parse_time(AFTERNOON)

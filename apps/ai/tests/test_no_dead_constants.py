@@ -108,3 +108,40 @@ def test_every_module_level_function_is_called_somewhere():
     assert not dead, (
         "these functions are defined and called by nothing: "
         + "; ".join(dead))
+
+
+def _defined_and_loaded(tree: ast.AST) -> tuple[list[str], set[str]]:
+    """The module-level constants a file defines, and the names it reads."""
+    defined: list[str] = []
+    for node in getattr(tree, "body", []):
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Name) and target.id.isupper():
+                defined.append(target.id)
+    loaded = {node.id for node in ast.walk(tree)
+              if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)}
+    return defined, loaded
+
+
+def test_every_test_file_constant_is_read_by_its_own_file():
+    # D454: the census over the TEST files. The count is per file, because a count over
+    # the whole directory hides a dead table behind another file's table of the same name -
+    # which is exactly how the dead PAIRS table of test_merge_cue_spellings.py survived
+    # (another test file has a live PAIRS), and that dead table carried a wrong code point
+    # (D453). A dead table hides the rot from the test that covers the file.
+    tests = PACKAGE.parent / "tests"
+    dead = []
+    for path in sorted(tests.glob("*.py")):
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8-sig"))
+        except SyntaxError:  # pragma: no cover - a file that does not parse is not ours
+            continue
+        defined, loaded = _defined_and_loaded(tree)
+        for name in defined:
+            if name not in loaded:
+                dead.append(f"{name} ({path.name})")
+    assert not dead, (
+        "these constants are defined by a test file and read by nothing: a table nobody "
+        "reads is a promise nobody keeps, and a dead one hides the wrong code point from "
+        "the test that covers the file (D453) - " + "; ".join(dead))

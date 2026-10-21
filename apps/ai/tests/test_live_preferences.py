@@ -26,7 +26,6 @@ DATE_SENTENCE = "\u5e2b\u6211\u627e\u4e00\u500b\u9002\u5408\u60c5\u4fa3\u7ea6\u4
 QUIET_SENTENCE = "\u60f3\u627e\u4e2a\u5b89\u975c\u7684\u5496\u5561\u5e97"  # 安静的咖啡店
 JAPANESE_SENTENCE = "\u6211\u60f3\u98df\u65e5\u5f0f\u83dc"  # 我想食日式菜
 
-
 @pytest.fixture
 def live_settings():
     if not DB_URL:
@@ -35,7 +34,6 @@ def live_settings():
 
     return Settings(llm_provider="mock", embedding_provider="hashing",
                     database_url=DB_URL, internal_token="")
-
 
 def _published_merchants(live_settings) -> int:
     import asyncio
@@ -53,7 +51,6 @@ def _published_merchants(live_settings) -> int:
 
     return asyncio.run(_go())
 
-
 def _search(live_settings, query: str, limit: int = 5) -> dict:
     from fastapi.testclient import TestClient
 
@@ -63,7 +60,6 @@ def _search(live_settings, query: str, limit: int = 5) -> dict:
         r = c.post("/ai/v1/search", json={"query": query, "limit": limit})
         assert r.status_code == 200, r.text
         return r.json()
-
 
 def _intent(live_settings, query: str) -> dict:
     from fastapi.testclient import TestClient
@@ -78,7 +74,6 @@ def _intent(live_settings, query: str) -> dict:
         assert r.status_code == 200, r.text
         return r.json()
 
-
 # --------------------------------------------------------------------------- the sentence
 def test_the_chinese_date_sentence_answers_with_cards(live_settings):
     """D381: this sentence answered with ZERO cards because a soft preference became a
@@ -88,7 +83,6 @@ def test_the_chinese_date_sentence_answers_with_cards(live_settings):
 
     body = _search(live_settings, DATE_SENTENCE)
     assert body["items"], body
-
 
 def test_the_chinese_date_sentence_resolves_a_category(live_settings):
     """D391: the sentence named no category, and a sentence with no category is a sentence
@@ -101,7 +95,6 @@ def test_the_chinese_date_sentence_resolves_a_category(live_settings):
     # An INFERRED category is never as certain as a named one.
     assert data["intent"].get("confidence", {}).get("category", 0) < 0.95
 
-
 def test_the_chinese_date_sentence_keeps_its_preference_soft(live_settings):
     """D381: the preference must not become an attribute filter, or the search returns
     nothing at all."""
@@ -111,7 +104,6 @@ def test_the_chinese_date_sentence_keeps_its_preference_soft(live_settings):
     data = _intent(live_settings, DATE_SENTENCE)
     prefs = data["intent"].get("preferences") or []
     assert {"key": "occasion", "value": "date", "polarity": 1} in prefs
-
 
 # --------------------------------------------------------------------------- the vocabulary
 def test_the_style_form_cuisine_resolves_on_the_live_plane(live_settings):
@@ -126,7 +118,6 @@ def test_the_style_form_cuisine_resolves_on_the_live_plane(live_settings):
                 if p.get("key") == "cuisine"]
     assert cuisines and cuisines[0]["value"] == "japanese"
 
-
 def test_the_quiet_sentence_resolves_the_cafe_category(live_settings):
     if _published_merchants(live_settings) == 0:
         pytest.skip("no published merchants in this database - needs the demo seed")
@@ -134,12 +125,9 @@ def test_the_quiet_sentence_resolves_the_cafe_category(live_settings):
     data = _intent(live_settings, QUIET_SENTENCE)
     assert data["intent"]["category"] == "cafe"
 
-
 # --------------------------------------------------------------------------- the product's own sentence
 E2E_SENTENCE = ("\u5e2b\u6211\u627e\u6c99\u7530\u9002\u5408\u60c5\u4fa3\u7ea6\u4f1a\u7684\u9910\u5385\uff0c"
                 "\u9884\u7b97500\u6e2f\u5e63\uff0c\u5b89\u9759\u4e00\u70b9\uff0c\u5468\u516d\u665a\u4e0a")  # 沙田/情侣约会/500港币/安静/周六晚上
-SHA_TIN = {"lat": 22.3809, "lng": 114.1861}
-
 
 def test_the_products_own_e2e_sentence_answers(live_settings):
     """The sentence `tests/e2e/specs/consumer/vertical-slice.spec.ts` uses, end to end.
@@ -159,7 +147,6 @@ def test_the_products_own_e2e_sentence_answers(live_settings):
         # §94: the results must actually be near Sha Tin.
         assert item.get("distance"), item
 
-
 def test_the_products_own_e2e_sentence_resolves_every_slot(live_settings):
     """The sentence names a district, an occasion, a budget, an ambience and a time. A slot
     the sentence filled must not be reported as missing."""
@@ -176,7 +163,6 @@ def test_the_products_own_e2e_sentence_resolves_every_slot(live_settings):
     assert ("ambience", "quiet") in prefs
     assert ("occasion", "date") in prefs
     assert intent.get("unknowns") == [], intent.get("unknowns")
-
 
 # --------------------------------------------------------------------------- the taxonomy
 def test_the_category_filter_reaches_the_database(live_settings):
