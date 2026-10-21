@@ -112,7 +112,8 @@ async def search_stream_events(*, query: str, deps: Deps,
     try:
         # -- 2. intent ----------------------------------------------------------
         intent_res = await understand(query, deps=deps, context=context,
-                                      previous_intent=previous_intent)
+                                      previous_intent=previous_intent,
+                                      agent_run_id=run_id)
         yield ("intent", intent_res.intent.model_dump(mode="json"))
 
         # -- 3. searching / 4. comparing / 5. results --------------------------
@@ -125,7 +126,7 @@ async def search_stream_events(*, query: str, deps: Deps,
 
         # -- 6. summarizing / 7. summary ---------------------------------------
         yield await _status(next(stage_iter))
-        summary = await compose_summary(deps, pack, locale=locale)
+        summary = await compose_summary(deps, pack, locale=locale, agent_run_id=run_id)
         yield ("summary", {"text": summary.text, "citations": summary.citations})
 
         # -- 8. done ------------------------------------------------------------
@@ -155,7 +156,10 @@ async def search_stream_events(*, query: str, deps: Deps,
     _record(deps, run_id=run_id, status="succeeded", started=started,
             provider=summary.provider, degraded=degraded, conversation_id=conversation_id,
             query=query, intent=intent_res.intent, pack=pack, summary=summary,
-            user_id=user_id, fallback_used=intent_res.note)
+            user_id=user_id, fallback_used=intent_res.note,
+            usage_in=dict(intent_res.usage or {}),
+            llm_records=list(intent_res.llm_records or []) +
+            list(getattr(summary, "llm_records", None) or []))
 
 
 STAGE_ORDER = STREAM_STAGE_ORDER  # ("understanding", "searching", "comparing", "summarizing")
@@ -165,9 +169,19 @@ def _record(deps: Deps, *, run_id: str, status: str, started: int, provider: str
             degraded: bool, conversation_id: str | None, query: str,
             intent: Any, pack: SearchPack | None, summary: Any,
             user_id: str | None, error: str | None = None,
-            fallback_used: str | None = None) -> None:
+            fallback_used: str | None = None, usage_in: dict[str, Any] | None = None,
+            llm_records: list[Any] | None = None) -> None:
     """Ledger + best-effort persistence; an observability failure never breaks a stream."""
     fact_ids = summary.citations if summary else []
+    # D437: the tokens and the cost the model layer measured - the intent's and the
+    # summary's - rather than the zeros this row used to carry.
+    usage = {"llm_calls": 0, "prompt_tokens": 0, "completion_tokens": 0, "cost_usd": 0.0}
+    for part in (usage_in or {}, getattr(summary, "usage", None) or {}):
+        for key, value in part.items():
+            if key == "cost_usd":
+                usage["cost_usd"] = float(usage["cost_usd"]) + float(value or 0.0)
+            else:
+                usage[key] = int(usage.get(key, 0)) + int(value or 0)
     run = {
         "agent_run_id": run_id, "agent": "search", "status": status,
         "provider": provider, "model": "mock-heuristic-1" if provider == "mock" else
@@ -182,7 +196,10 @@ def _record(deps: Deps, *, run_id: str, status: str, started: int, provider: str
                         "ms": int(pack.response.took_ms) if pack else 0}]
         if pack else [],
         "fact_ids": fact_ids, "latency_ms": monotonic_ms() - started,
-        "cost_usd": 0.0, "fallback_used": fallback_used, "error": error,
+        "prompt_tokens": int(usage.get("prompt_tokens") or 0),
+        "completion_tokens": int(usage.get("completion_tokens") or 0),
+        "cost_usd": float(usage.get("cost_usd") or 0.0),
+        "fallback_used": fallback_used, "error": error,
         "started_at": None, "finished_at": None,
         "degraded": degraded,
     }
@@ -201,6 +218,8 @@ def _record(deps: Deps, *, run_id: str, status: str, started: int, provider: str
 
     async def _persist() -> None:
         await runs.persist_run(db, run, search_event=event)
+        # D437: the cost ledger's row refers to the run, so it is written after it.
+        await runs.record_llm_calls(deps, llm_records, run_id)
 
     try:
         import asyncio

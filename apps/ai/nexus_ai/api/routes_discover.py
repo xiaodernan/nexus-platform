@@ -48,24 +48,33 @@ async def query_understand(request: Request, body: UnderstandRequest):
     if not query or len(query) > MAX_QUERY_LENGTH:
         return _bad_request(f"query is required and must be <= {MAX_QUERY_LENGTH} chars")
     started = time.perf_counter()
-    res = await understand(query, deps=deps, context=body.context)
+    # D437: the run id is created BEFORE the model call, so the cost ledger's row can
+    # name the run it belongs to.
+    run_id = runs.new_id()
+    res = await understand(query, deps=deps, context=body.context, agent_run_id=run_id)
     payload = UnderstandResponse(
         intent=res.intent, provider=res.provider, degraded=res.degraded,
         follow_up_question=res.follow_up_question)
     # D432: the intent extraction is a task (AGENT_CONTRACT §8), so it writes a run.
     await runs.record_run(deps, {
-        "agent_run_id": runs.new_id(), "agent": "intent_extract",
+        "agent_run_id": run_id, "agent": "intent_extract",
         "status": "succeeded", "provider": res.provider, "model": None,
         "conversation_id": None, "user_id": None, "tenant_id": deps.tenant_id(),
         "input_summary": query[:500] or None,
         "output_summary": str(getattr(res.intent, "intent", "") or ""),
         "plan": {"steps": ["intent_rules"]}, "tool_calls": [],
         "retrieval": [], "fact_ids": [],
-        "latency_ms": int((time.perf_counter() - started) * 1000), "cost_usd": 0.0,
+        "latency_ms": int((time.perf_counter() - started) * 1000),
         "fallback_used": "state_merge" if res.provider == "rules" else None,
         "error": None, "started_at": None, "finished_at": None,
+        # D437: the tokens and the cost the model layer measured, not zeros.
+        "prompt_tokens": int(res.usage.get("prompt_tokens") or 0),
+        "completion_tokens": int(res.usage.get("completion_tokens") or 0),
+        "cost_usd": float(res.usage.get("cost_usd") or 0.0),
         "degraded": bool(res.degraded),
     })
+    # D437: the cost ledger's row refers to the run, so it is written after it.
+    await runs.record_llm_calls(deps, res.llm_records, run_id)
     return JSONResponse(payload.model_dump(mode="json"))
 
 

@@ -110,6 +110,8 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
         grounded = any(bool(c.get("hit")) for c in chunks)
         provider = "mock"
         answer_text = ""
+        usage: dict[str, Any] = {}
+        llm_records: list[Any] = []
         if grounded:
             yield ("status", {"stage": "summarizing", "text": copy["answering"]})
             from nexus_ai.models.base import LLMRequest
@@ -120,6 +122,10 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
             call = await deps.router().run(LLMRequest(
                 task_class="summary",
                 payload={"records": wrapped, "locale": locale}), meter=meter)
+            # D437: the chat's model call is a row in the cost ledger too - written after
+            # the run row, because the ledger row refers to it.
+            usage = meter.usage()
+            llm_records = list(meter.records)
             provider = call.response.provider
             # D405: the citations are the CHUNKS' ids. `_wrap_for_summary` returns the
             # model payload (title + scanned text) and holds no id, so the grounded branch
@@ -136,12 +142,14 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
             yield ("summary", {"text": answer_text,
                                "citations": []})
         yield ("done", {"agent_run_id": run_id, "latency_ms": _ms_since(started),
-                        "cost_usd": 0.0, "degraded": not grounded,
+                        "cost_usd": float((usage or {}).get("cost_usd") or 0.0),
+                        "degraded": not grounded,
                         "provider": provider})
         await _record_chat(deps, run_id=run_id, body=body, grounded=grounded,
                           answer=answer_text, citations=[str(c.get("id")) for c in chunks
                                                        if c.get("id")],
-                          latency_ms=_ms_since(started), provider=provider)
+                          latency_ms=_ms_since(started), provider=provider,
+                          usage=usage, llm_records=llm_records)
     except Exception as exc:  # the same inside-stream error contract as search
         log.exception("merchant-agent stream failed")
         yield ("error", {"code": "internal", "message": str(exc),
@@ -149,7 +157,9 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
 
 
 async def _record_chat(deps: Any, *, run_id: str, body: Any, grounded: bool, answer: str,
-                 citations: list[str], latency_ms: int, provider: str) -> None:
+                 citations: list[str], latency_ms: int, provider: str,
+                 usage: dict[str, Any] | None = None,
+                 llm_records: list[Any] | None = None) -> None:
     """Write the chat's `agent_runs` row (AGENT_CONTRACT §8: every task writes one).
 
     D431: the chat wrote NONE, so its turns were invisible to the conversation timeline
@@ -160,6 +170,7 @@ async def _record_chat(deps: Any, *, run_id: str, body: Any, grounded: bool, ans
     """
     from nexus_ai.api import runs
 
+    usage = usage or {}
     run = {
         "agent_run_id": run_id, "agent": "merchant_agent",
         "status": "succeeded" if grounded else "degraded",
@@ -175,7 +186,11 @@ async def _record_chat(deps: Any, *, run_id: str, body: Any, grounded: bool, ans
                         "ms": latency_ms}],
         "retrieval": citations,
         "fact_ids": [],
-        "latency_ms": latency_ms, "cost_usd": 0.0,
+        "latency_ms": latency_ms,
+        # D437: the tokens and the cost the model layer measured.
+        "prompt_tokens": int(usage.get("prompt_tokens") or 0),
+        "completion_tokens": int(usage.get("completion_tokens") or 0),
+        "cost_usd": float(usage.get("cost_usd") or 0.0),
         "fallback_used": None if grounded else "no_grounded_chunks",
         "error": None, "started_at": None, "finished_at": None,
         "degraded": not grounded,
@@ -185,6 +200,8 @@ async def _record_chat(deps: Any, *, run_id: str, body: Any, grounded: bool, ans
     if db is None:
         return
     await runs.persist_run(db, run)
+    # D437: the cost ledger's row refers to the run, so it is written after it.
+    await runs.record_llm_calls(deps, llm_records or [], run_id)
 
 
 def _wrap_for_summary(chunks: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], Any]:

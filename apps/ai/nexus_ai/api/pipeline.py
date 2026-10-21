@@ -53,6 +53,14 @@ class IntentResult:
     note: str | None = None
     changes: list[dict[str, Any]] = field(default_factory=list)
     follow_up_question: str | None = None
+    #: D437: what the model layer measured (tokens, cost). The `agent_runs` row carries
+    #: tokens and cost_usd (AGENT_CONTRACT §8), and they used to be zeros whatever the
+    #: model layer had measured.
+    usage: dict[str, Any] = field(default_factory=dict)
+    #: D437: the calls themselves, for the cost ledger. `llm_calls.agent_run_id` refers
+    #: to `agent_runs(id)`, so the ledger row can only be written AFTER the run row -
+    #: the recorder that owns the run writes both, in that order.
+    llm_records: list[Any] = field(default_factory=list)
 
 
 def _alias_intent_shape(data: dict[str, Any]) -> dict[str, Any]:
@@ -80,7 +88,8 @@ def validate_intent(data: Any) -> Intent | None:
 
 
 async def understand(query: str, *, deps: Deps, context: dict[str, Any] | None = None,
-                     previous_intent: dict[str, Any] | None = None) -> IntentResult:
+                     previous_intent: dict[str, Any] | None = None,
+                     agent_run_id: Any = None) -> IntentResult:
     """Intent for one turn: model layer first (§9 `intent_extract`), rule floor always."""
     context = dict(context or {})
     deterministic: IntentResult | None = None
@@ -109,6 +118,9 @@ async def understand(query: str, *, deps: Deps, context: dict[str, Any] | None =
         call = await router.run(LLMRequest(
             task_class="intent_extract",
             payload={"query": query, "context": context}), meter=meter)
+        # D437: the cost ledger is one row per model call (§160) - the row the router
+        # builds. The run row has to exist first (`llm_calls.agent_run_id` refers to it),
+        # so the recorder that owns the run writes both, in that order.
         data = call.response.data
         if isinstance(data, str):
             import json
@@ -122,7 +134,8 @@ async def understand(query: str, *, deps: Deps, context: dict[str, Any] | None =
             raise ValueError("model returned an Intent outside the §7.1 schema")
         return IntentResult(intent=intent,
                             provider=call.response.provider or router.provider_name(),
-                            degraded=bool(meter.degraded))
+                            degraded=bool(meter.degraded), usage=meter.usage(),
+                            llm_records=list(meter.records))
     except BudgetExceeded as exc:
         log.info("intent budget exceeded, deterministic floor: %s", exc)
         return floor("budget_exceeded")
@@ -183,6 +196,10 @@ class SummaryResult:
     provider: str
     degraded: bool
     verification: dict[str, Any] = field(default_factory=dict)
+    #: D437: what the summary's model call measured.
+    usage: dict[str, Any] = field(default_factory=dict)
+    #: D437: the call itself, for the cost ledger (written after the run row).
+    llm_records: list[Any] = field(default_factory=list)
 
 
 def card_citations(items: list[dict[str, Any]], per_card: int = 2) -> list[str]:
@@ -196,7 +213,7 @@ def card_citations(items: list[dict[str, Any]], per_card: int = 2) -> list[str]:
 
 
 async def compose_summary(deps: Deps, pack: SearchPack, *,
-                          locale: str) -> SummaryResult:
+                          locale: str, agent_run_id: Any = None) -> SummaryResult:
     """User-facing summary text, always post-verified against the grounding bundle (§4)."""
     citations = card_citations(pack.items)
     try:
@@ -205,12 +222,15 @@ async def compose_summary(deps: Deps, pack: SearchPack, *,
         call = await router.run(LLMRequest(
             task_class="summary",
             payload={"records": pack.items, "locale": locale}), meter=meter)
+        # D437: the summary's model call is a row in the cost ledger too - written after
+        # the run row, because the ledger row refers to it.
         raw = call.response.text or ""
         report = verify_generated_text(raw, pack.bundle, records=pack.items)
         return SummaryResult(
             text=report.text, citations=citations,
             provider=call.response.provider, degraded=bool(meter.degraded) or pack.degraded,
-            verification=report.as_dict())
+            verification=report.as_dict(), usage=meter.usage(),
+            llm_records=list(meter.records))
     except Exception as exc:
         log.info("summary model unavailable, template floor: %s", exc)
         from nexus_ai.models.mock import SUMMARY_TEMPLATES

@@ -156,6 +156,55 @@ VALUES (
     return True
 
 
+async def persist_llm_call(database: Any, row: dict[str, Any]) -> bool:
+    """`llm_calls` is the cost ledger (§160): one row per model call.
+
+    D437: the table was AI-owned and empty. The router built the exact row for it
+    (`RoutedCall.as_llm_call_row`) and nothing ever called it, so the product measured
+    every model call and then threw the measurement away.
+    """
+    _check_table("llm_calls")
+    sql = """
+    INSERT INTO llm_calls (agent_run_id, provider, model, purpose, prompt_tokens,
+                           completion_tokens, cost_usd, latency_ms, status, cache_hit)
+    VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    """
+    try:
+        await database.write(
+            sql,
+            str(row["agent_run_id"]) if row.get("agent_run_id") else None,
+            str(row.get("provider") or "none"),
+            str(row.get("model") or "unknown"),
+            str(row.get("purpose") or "generate"),
+            int(row.get("prompt_tokens") or 0),
+            int(row.get("completion_tokens") or 0),
+            float(row.get("cost_usd") or 0.0),
+            int(row.get("latency_ms") or 0),
+            str(row.get("status") or "ok"),
+            bool(row.get("cache_hit") or False),
+        )
+    except Exception:  # pragma: no cover - a ledger write never breaks a response
+        log.warning("llm_calls insert failed (continuing degraded)", exc_info=True)
+        return False
+    return True
+
+
+async def record_llm_calls(deps: Any, records: Any, agent_run_id: Any = None) -> None:
+    """Write one `llm_calls` row per model call the router made (D437).
+
+    Best-effort like every other write here: a ledger that cannot be written must never
+    break the answer the user is waiting for.
+    """
+    db = deps.database()
+    if db is None:
+        return
+    for record in list(records or []):
+        try:
+            await persist_llm_call(db, record.as_llm_call_row(agent_run_id))
+        except Exception:  # pragma: no cover - never fatal
+            log.warning("llm_calls insert failed (continuing degraded)", exc_info=True)
+
+
 async def persist_event(database: Any, event: dict[str, Any]) -> bool:
     """`events` is INSERT-only (D19): no RETURNING, no SELECT, never fatal."""
     _check_table("events")

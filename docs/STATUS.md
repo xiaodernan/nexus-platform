@@ -17655,3 +17655,63 @@ the same list for different purposes. The general form: **when a test names two 
 source it reads them from must hold two things.** Reading both spellings out of a list that
 holds one is the same mistake as reading a case file's expectation out of the case file - the
 assertion is about itself.
+
+## 431. D437 · the cost ledger was an EMPTY table: the router built the row for it and nobody ever called the builder (`apps/ai/nexus_ai/api/runs.py`, `apps/ai/nexus_ai/models/router.py`, `apps/ai/tests/test_live_cost_ledger.py`)
+
+**What the product does, and what was measured.** The AI service may write five tables; `llm_calls`
+is the cost ledger - OBSERVABILITY.md §3: *"llm_calls is the ledger: provider, model, purpose,
+tokens, cost_usd, latency, cache_hit"* - and §1 lists it as *"llm_calls per model call"*.
+
+Measured on the seeded live plane, before this unit:
+
+```
+the llm_calls rows: 0
+the agent_runs rows: 446   prompt_tokens 0 (446/446)   completion_tokens 0   cost_usd 0
+   of which 138 runs had used the mock provider
+```
+
+**The defect.** The router builds the exact row for that ledger - `RoutedCall.as_llm_call_row()`,
+whose own docstring says *"One routed LLM call, ready to be recorded into `llm_calls`"* - and
+**nothing ever called it**. The table was in the AI service's own write grant
+(`AI_WRITE_ALLOWED_TABLES`) and empty. So the model layer measured every call - the
+`CostMeter` counts the calls and sums the tokens, the cost and the latency - and the
+measurement was thrown away: the `agent_runs` row wrote `prompt_tokens=0`,
+`completion_tokens=0`, `cost_usd=0` whatever the model layer had measured. AGENT_CONTRACT §8
+says a run carries *"tokens, cost_usd"*.
+
+**The fix - the ledger and the run are written together, in that order.**
+
+* the `CostMeter` keeps the CALLS, not only their totals, so the recorder has the rows to
+  write;
+* the recorder that owns the run writes the run first and the ledger row second - because
+  `llm_calls.agent_run_id` refers to `agent_runs(id)`. The foreign key taught the order: the
+  first attempt wrote the ledger row first and every insert was rejected, which is why the
+  table could look "written but empty" for a while;
+* the run row now carries the tokens and the cost the model layer measured - the intent
+  extraction's, the summary's and the merchant agent's chat's.
+
+**Verified, not claimed.**
+
+- the live gate -> **3 passed**: a model call leaves a row in `llm_calls` (provider, model,
+  purpose, tokens, latency), the run that made it carries the tokens, and the ledger and the
+  run agree about them
+- the live plane, after the fix -> **`llm_calls` 3 rows** (it was 0) and **6 runs carrying
+  tokens** where the table had 446 runs carrying none. The 446 older rows keep their zeros:
+  the fix applies to the runs written after it
+- the full `apps/ai` suite -> **995 passed** with the database, **952 passed / 43 skipped** without it
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 52
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note, and one honest caveat.** The general shape of this defect is old and familiar:
+*the builder existed and the call did not*. `as_llm_call_row()` was written to the exact shape
+of the table, documented as "ready to be recorded", and never recorded - so the cost ledger was
+a schema and a docstring, and every cost dashboard built on it (§160) would have divided by a
+sum of nothing.
+
+The caveat is about the numbers themselves: the mock provider ESTIMATES its token counts
+(`estimate_tokens`), so a row written by the mock carries an estimate, not a measurement. The
+row says which provider wrote it, so the reader can tell - but a ledger whose rows can be
+estimates has to say so on the row, and today it says so only by naming the provider.

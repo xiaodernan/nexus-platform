@@ -57,6 +57,20 @@ class CostMeter:
     latency_ms: int = 0
     degraded: bool = False
     providers: list[str] = field(default_factory=list)
+    #: D437: the calls themselves, not just their totals. `llm_calls` is the cost ledger
+    #: (§160) - one row per model call - and the row is built by `RoutedCall`, so the
+    #: meter keeps the calls and the recorder writes them. Before this, the ledger table
+    #: was AI-owned and empty: the usage was measured here and then thrown away.
+    records: list[RoutedCall] = field(default_factory=list)
+
+    def usage(self) -> dict[str, Any]:
+        """What the model layer measured, in the shape `agent_runs` carries."""
+        return {
+            "llm_calls": self.llm_calls,
+            "prompt_tokens": self.prompt_tokens,
+            "completion_tokens": self.completion_tokens,
+            "cost_usd": self.cost_usd,
+        }
 
     def add(self, resp: LLMResponse) -> None:
         self.llm_calls += 1
@@ -124,7 +138,11 @@ class ModelRouter:
                 continue
             if meter is not None:
                 meter.add(resp)
-            return RoutedCall(response=resp, task_class=req.task_class,
-                              fallback_from=self.adapters[0].name if idx else None)
+            routed = RoutedCall(response=resp, task_class=req.task_class,
+                                fallback_from=self.adapters[0].name if idx else None)
+            # D437: the meter keeps the call itself, so the recorder can write the
+            # `llm_calls` row the cost ledger is made of.
+            meter.records.append(routed)
+            return routed
         # exhausted the chain: the caller's next rung is deterministic search (§105)
         raise last_err or LLMError("no adapter available", provider="none")
