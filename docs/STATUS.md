@@ -18066,3 +18066,58 @@ the run is written, the row is complete-looking, and the field that would have e
 failure is simply not there. The gate is the schema, not a list of fields, so the next column
 cannot be dropped either: **the writer and the schema are one document, and the gate reads
 the schema.**
+
+## 438. D444 · a FAILED merchant-agent chat wrote no run: the error frame was the only trace of a merchant turn that broke (`apps/ai/nexus_ai/api/routes_stream.py`, `apps/ai/tests/test_failed_chat_writes_a_run.py`)
+
+**What the product does, and what was measured.** AGENT_CONTRACT §8: *"Each task writes
+`agent_runs`"*. §431 (D431) gave the merchant agent's chat a run - on the success path. The
+**error path** was never given one:
+
+```python
+    except Exception as exc:  # the same inside-stream error contract as search
+        log.exception("merchant-agent stream failed")
+        yield ("error", {"code": "internal", "message": str(exc),
+                         "request_id": request_id})
+```
+
+The search stream's failure path has written its failed run for a long time
+(`api/stream.py`: `_record(..., status="failed", error=str(exc), fallback_used="stream_error")`).
+So the two surfaces answer the same question the same way, and one of them was silent: a
+merchant turn that broke left no row, no status and - before §437 (D443) - no way to say why
+it broke.
+
+**The fix.** The chat's failure path writes its run: status `failed`, the error message, and
+the same best-effort handling as every other write. The error frame still goes out FIRST -
+the user is not waiting on a ledger write - and the run is recorded after it, exactly as the
+search stream does.
+
+**The gate - and it makes the chat fail on purpose.**
+`apps/ai/tests/test_failed_chat_writes_a_run.py` breaks the chat's retrieval (the retrieval is
+the one thing that can fail under a live pool) and then checks that the failure left a run:
+`status='failed'`, an error message, and - on the live plane - the row in the table. The
+chat only retrieves when it has a pool, so this gate is a live-plane gate: the failure path
+does not exist offline, and §427's lesson is that a gate belongs on the plane where the
+answer is served.
+
+**Verified, not claimed.**
+
+- the gate -> **2 passed** on the live plane
+- the full `apps/ai` suite -> **1003 passed** with the database, **953 passed / 50 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 53
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note, and a residual that is filed rather than fixed.** The two units D443 and
+D444 are one lesson at two depths: a column that cannot be written (D443) and a turn that is
+not written (D444). Both are invisible, because the thing that fails is exactly the thing
+whose absence nobody notices - a ledger without the error, and a ledger without the failure.
+
+The residual: the JSON endpoints' 5xx paths (the search, the recommendation, the comparison,
+the retrieval) still write no run. The reason is not an excuse: **those failures are the
+database being unavailable**, so there is no `agent_runs` table to write to, and the in-process
+ledger holds the row only for a run with a conversation - a search has none. The chat's failure
+is different: the retrieval raised while the database was UP, so its run has somewhere to go,
+and now it goes there.

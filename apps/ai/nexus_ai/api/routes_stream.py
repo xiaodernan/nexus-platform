@@ -152,14 +152,23 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
                           usage=usage, llm_records=llm_records)
     except Exception as exc:  # the same inside-stream error contract as search
         log.exception("merchant-agent stream failed")
+        # D444: the failed turn is still a task, and §8 says every task writes a run - the
+        # search stream has written its failed run all along, and the chat's error frame
+        # was the only trace of a merchant turn that broke. The frame goes out FIRST (the
+        # user is not waiting on a ledger write) and the run is recorded after it, exactly
+        # as the search stream does.
         yield ("error", {"code": "internal", "message": str(exc),
                          "request_id": request_id})
+        await _record_chat(deps, run_id=run_id, body=body, grounded=False, answer="",
+                           citations=[], latency_ms=_ms_since(started), provider="none",
+                           status="failed", error=str(exc))
 
 
 async def _record_chat(deps: Any, *, run_id: str, body: Any, grounded: bool, answer: str,
                  citations: list[str], latency_ms: int, provider: str,
                  usage: dict[str, Any] | None = None,
-                 llm_records: list[Any] | None = None) -> None:
+                 llm_records: list[Any] | None = None,
+                 status: str | None = None, error: str | None = None) -> None:
     """Write the chat's `agent_runs` row (AGENT_CONTRACT §8: every task writes one).
 
     D431: the chat wrote NONE, so its turns were invisible to the conversation timeline
@@ -167,13 +176,17 @@ async def _record_chat(deps: Any, *, run_id: str, body: Any, grounded: bool, ans
     the caller had already paid for the linkage. The run carries the conversation, the
     merchant, the message, the answer and the chunks the answer was grounded on (the
     `retrieval` column, not `fact_ids`: a chunk id is not a fact id).
+
+    D444: a chat that FAILED wrote no run either - the search stream has written its
+    failed run since D434's era, and the chat's error frame was the only trace of a
+    merchant turn that broke. A failed task is still a task.
     """
     from nexus_ai.api import runs
 
     usage = usage or {}
     run = {
         "agent_run_id": run_id, "agent": "merchant_agent",
-        "status": "succeeded" if grounded else "degraded",
+        "status": status or ("succeeded" if grounded else "degraded"),
         "provider": provider, "model": None,
         "conversation_id": str(body.conversation_id) if body.conversation_id else None,
         "merchant_id": str(body.merchant_id) if body.merchant_id else None,
@@ -192,7 +205,8 @@ async def _record_chat(deps: Any, *, run_id: str, body: Any, grounded: bool, ans
         "completion_tokens": int(usage.get("completion_tokens") or 0),
         "cost_usd": float(usage.get("cost_usd") or 0.0),
         "fallback_used": None if grounded else "no_grounded_chunks",
-        "error": None, "started_at": None, "finished_at": None,
+        # D443: the writer now writes this column, so a failed run can say why.
+        "error": error, "started_at": None, "finished_at": None,
         "degraded": not grounded,
     }
     deps.ledger.add({**run, "persisted": False})
