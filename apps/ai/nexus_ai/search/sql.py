@@ -158,6 +158,14 @@ def build_merchant_query(
             f"EXISTS (SELECT 1 FROM business_hours bc WHERE bc.merchant_id = m.id AND ("
             f"bc.closes_at >= ({p.add(int(min_closing))}::int * interval '1 hour')::time "
             f"OR bc.crosses_midnight = true))")
+    # D463: the mirror of the filter above - the merchant has to OPEN at or before the
+    # hour the user named ("before seven", "up to seven").
+    max_opening = filters.get("max_opening_hour")
+    if max_opening is not None:
+        where.append(
+            f"EXISTS (SELECT 1 FROM business_hours bo WHERE bo.merchant_id = m.id AND ("
+            f"bo.opens_at <= ({p.add(int(max_opening))}::int * interval '1 hour')::time "
+            f"OR bo.crosses_midnight = true))")
 
     # ---- geo lane: bbox prefilter then haversine on the nearest primary location
     geo_join = ""
@@ -402,6 +410,13 @@ LIMIT {limit_ph}
 
 
 # --------------------------------------------------------------------- side queries
+# D453: every by-ids predicate below binds `uuid[]` against the column's own type.
+# `col::text = ANY($n::text[])` is type-legal and answers correctly, but it is
+# UNEINDEXABLE: EXPLAIN (ANALYZE, BUFFERS) on the seeded corpus showed
+# `Seq Scan on offerings ... Rows Removed by Filter: 5546` at 1001.9ms where
+# `o.id = ANY($n::uuid[])` gives `Bitmap Index Scan on offerings_pkey` at 0.07ms.
+# Cold, the sequential reads pushed `/ai/v1/compare` past this service's own
+# statement_timeout and it answered 503. The ids stay bound as strings.
 def facts_for(subject_ids: Iterable[str], attributes: Iterable[str] | None = None
               ) -> tuple[str, list[Any]]:
     p = Params()
@@ -413,7 +428,7 @@ SELECT id::text AS fact_id, subject_type, subject_id::text AS subject_id,
        merchant_id::text AS merchant_id, attribute, value, unit, currency, source,
        source_uri, confidence::float8 AS confidence, observed_at, expires_at, stale
 FROM facts
-WHERE subject_id::text = ANY({p.add(ids)}::text[])
+WHERE subject_id = ANY({p.add(ids)}::uuid[])
 """
     if attributes:
         sql += f" AND attribute = ANY({p.add(list(attributes))}::text[])"
@@ -428,7 +443,7 @@ def hours_for(merchant_ids: Iterable[str]) -> tuple[str, list[Any]]:
         return "", []
     sql = f"""
 SELECT merchant_id::text AS merchant_id, weekday, opens_at, closes_at, crosses_midnight, source
-FROM business_hours WHERE merchant_id::text = ANY({p.add(ids)}::text[])
+FROM business_hours WHERE merchant_id = ANY({p.add(ids)}::uuid[])
 ORDER BY merchant_id, weekday, opens_at
 """
     return sql, p.values
@@ -444,7 +459,7 @@ def slots_for(merchant_ids: Iterable[str], starts_at: datetime, ends_at: datetim
 SELECT merchant_id::text AS merchant_id, id::text AS slot_id, starts_at, ends_at,
        capacity_total, capacity_left, price_amount, currency, source
 FROM availability_slots
-WHERE merchant_id::text = ANY({p.add(ids)}::text[])
+WHERE merchant_id = ANY({p.add(ids)}::uuid[])
   AND starts_at >= {p.add(starts_at)} AND starts_at <= {p.add(ends_at)}
   AND capacity_left > 0
 """
@@ -465,9 +480,9 @@ SELECT r.id::text AS review_id, r.merchant_id::text AS merchant_id,
        r.language, r.created_at, r.verified_purchase, r.verified_reservation,
        r.data_origin, r.aspects, r.helpful_count
 FROM reviews r
-WHERE r.merchant_id::text = ANY({p.add(ids)}::text[]) AND r.status = 'published'
+WHERE r.merchant_id = ANY({p.add(ids)}::uuid[]) AND r.status = 'published'
   AND r.id IN (SELECT id FROM reviews r2
-               WHERE r2.merchant_id::text = ANY({p.add(ids)}::text[])
+               WHERE r2.merchant_id = ANY({p.add(ids)}::uuid[])
                  AND r2.status='published'
                ORDER BY r2.merchant_id, r2.helpful_count DESC, r2.created_at DESC)
 ORDER BY r.merchant_id, r.helpful_count DESC, r.created_at DESC
@@ -533,7 +548,7 @@ SELECT m.id::text AS merchant_id,
          LIMIT 1) AS district
   FROM merchants m
  WHERE m.tenant_id = {tenant_ph}::uuid
-   AND m.id::text = ANY({ids_ph}::text[])
+   AND m.id = ANY({ids_ph}::uuid[])
    AND m.status = 'published'
 """
     return sql, p.values
@@ -557,7 +572,7 @@ SELECT m.id::text AS subject_id, 'merchant'::text AS subject_type, m.id::text AS
        NULL::text AS price_model, m.rating_agg, m.review_count, m.description,
        m.data_origin, m.plan, m.attributes, m.images, m.ai_agent_enabled, m.status
 FROM merchants m
-WHERE m.tenant_id = {tenant_ph}::uuid AND m.id::text = ANY({ids_ph}::text[])
+WHERE m.tenant_id = {tenant_ph}::uuid AND m.id = ANY({ids_ph}::uuid[])
   AND m.status = 'published'
 UNION ALL
 SELECT o.id::text, 'offering', o.merchant_id::text,
@@ -566,7 +581,7 @@ SELECT o.id::text, 'offering', o.merchant_id::text,
        o.rating_agg, o.review_count, o.description,
        m.data_origin, m.plan, o.attributes, o.images, m.ai_agent_enabled, o.status
 FROM offerings o JOIN merchants m ON m.id = o.merchant_id
-WHERE o.tenant_id = {tenant_ph}::uuid AND o.id::text = ANY({ids_ph}::text[])
+WHERE o.tenant_id = {tenant_ph}::uuid AND o.id = ANY({ids_ph}::uuid[])
   AND o.status = 'active' AND m.status = 'published'
 """
     return sql, p.values

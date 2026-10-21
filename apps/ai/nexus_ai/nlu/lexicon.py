@@ -527,11 +527,6 @@ def normalize_query(text: str) -> str:
     return cleaned.strip()
 
 
-MONEY_RE = re.compile(
-    r"(?:HK\$|HKD|港币|港幣|\$|￥|人民币)?\s*(\d{2,5})(?:\.\d{1,2})?\s*"
-    r"(?:港?幣|币|dollar|dollars|HKD)?",
-    re.IGNORECASE,
-)
 
 
 # ------------------------------------------------------------------ entity hints

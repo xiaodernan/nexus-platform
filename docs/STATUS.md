@@ -19124,3 +19124,79 @@ the thing (a module a reader opens) went unchecked ✓. The general form ✓: **
 as wide as the shape it recognises ✓**, so the fix is not "add more paths" ✓ but "name the
 thing the reader follows" ✓ - here, a module name ✓ - and then let the rule be about that ✓.
 The same shape hid three renames ✓ and eight promises ✓ behind one green gate ✓.
+
+## 457. D463 · the user's "before" was dropped without a word - and the "after" filter was asking the database for the wrong hour (`apps/ai/nexus_ai/nlu/timeparse.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/sql.py`, `apps/ai/tests/test_time_before_cue.py`)
+
+**What the product does, and what was measured.** The time parser keeps three tables for the
+**direction** of a time: `LATE_CUES` (after), `OPEN_LATE_CUES` (open late) and `EARLY_CUES`
+(before / up to / within). Measured on the live plane:
+
+```
+seven o'clock            -> explicit, 07:00-09:00      the window
+seven o'clock, after     -> relative, no window        the "open late" filter
+seven o'clock, before    -> explicit, 07:00-09:00      <- THE CUE WAS DROPPED
+seven o'clock, up to     -> explicit, 07:00-09:00      <- dropped too
+```
+
+**Two defects, one root.** `EARLY_CUES` and `LATE_CUES` were **read by nobody**: the function
+that reads the direction had its **own hard-coded list** (`("後", "后", "以後", "之後", "起",
+"past")` ✓ - six ✓) while the table beside it held fifteen ✓, and the two **disagreed** ✓. So
+the "after" cue was read from a literal ✓ and the "before" cue ✓ - the table nobody read ✓ -
+was **silently dropped** ✓: the user said "before seven" ✓ and the product answered as if they
+had not said it ✓.
+
+And the census that should have found it could not: it counted the **TEXT mentions** of a
+name ✓, and the canonicalisation list mentions every table it touches ✓ - a mention that is
+not a use ✓ (it is a promise that the table *will* be read ✓). So `EARLY_CUES` looked alive ✓
+while nothing read it ✓.
+
+**And the "after" filter, once it was read, was wrong.** The quality carries `HHMM`
+(`open_late_after:1000` ✓) and the filter's SQL is `(X::int * interval '1 hour')::time` ✓ -
+so X has to be the **hour** ✓. The plan passed `int("1000")` ✓ = 1000 ✓, and 1000 hours is 41
+days ✓, whose time part is **four in the afternoon** ✓: the "open late after ten" filter was
+asking the database for a closing hour of **16:00** ✓, and every merchant that closes before
+tea time was quietly dropped ✓.
+
+**The fix.**
+
+* the parser reads the **table** ✓ (one list ✓ - the literal goes ✓), the window around the
+  clock widens to fit the longest cue ✓, and the "before" cue is read at all ✓ - on **either
+  side** of the clock ✓ ("seven o'clock, before" and "before seven o'clock" are the same
+  request ✓);
+* the "before" means what the "after" means ✓: the parser says `before:HHMM` ✓, the plan
+  carries it ✓, the service turns it into a filter ✓, and the search asks for the merchants
+  whose **opening** hour is at or before the hour named ✓ - the mirror of the filter that asks
+  for a **closing** hour at or after it ✓;
+* the HHMM is read as the **hour** ✓ on both sides ✓;
+* the census counts **reads** ✓ - a name in Load context ✓, or an attribute that is read ✓ -
+  so a mention in a comment ✓, in a docstring ✓ or in a list of table names ✓ is not a use ✓.
+  It found three dead tables ✓: `EARLY_CUES` ✓, `LATE_CUES` ✓ and `MONEY_RE` ✓ (a leftover ✓ -
+  the budget is parsed by the two regexes in `nlu/understand.py` ✓) ✓.
+
+**The reading is the product's, and it is filed.** The intent's time shape (§7.1) carries a
+**window** ✓, not a direction ✓, so "before" has no field of its own ✓; the alternative
+reading - "a table before seven" ✓, i.e. open **at** seven ✓ - would say exactly what
+"seven o'clock" already says ✓, so it adds nothing ✓. The mirror of the "open late" reading ✓
+is the one that adds something ✓, and that is the one implemented ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **8 passed** ✓ (`tests/test_time_before_cue.py` ✓ - the cue is read ✓, on either
+  side ✓, the "up to" family ✓, the "after" still means what it meant ✓, the plan carries it ✓,
+  the filter asks for the hour ✓, the SQL asks for the opening hour ✓);
+- the full `apps/ai` suite -> **1044 passed** with the database, **992 passed / 52 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436);
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 55
+  source files**;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** The census counted mentions ✓, and a mention is the cheapest thing in the
+repository to produce ✓ - a comment ✓, a docstring ✓, a list of names ✓. Counting them as
+*uses* is how a table that nobody reads stays alive ✓, and it stays alive for as long as the
+thing that mentions it ✓ - here, the canonicalisation ✓, whose whole job is to mention every
+table it touches ✓. The general rule: **a census that counts mentions will find mentions ✓,
+and the thing it was sent to find is a use** ✓. So the count has to be of the thing itself ✓ -
+an AST read ✓ - and a table that is only canonicalised is dead ✓, which is a different fact
+from the one the census was asking ✗.

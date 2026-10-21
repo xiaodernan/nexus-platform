@@ -123,7 +123,7 @@ class PostgresBackend:
         sql_text = """
             SELECT subject_id::text AS subject_id, signal, value
             FROM feedback_events
-            WHERE user_id::text = $1::uuid AND subject_id::text = ANY($2::text[])
+            WHERE user_id = $1::uuid AND subject_id = ANY($2::uuid[])
             ORDER BY created_at DESC LIMIT 200
         """
         try:
@@ -274,6 +274,9 @@ class SearchPlan:
     now: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     open_now: bool = False
     open_late_after: int | None = None
+    #: D463: the merchant's OPENING hour has to be at or before this - the mirror
+    #: of `open_late_after`, which asks for a CLOSING hour at or after it.
+    open_early_before: int | None = None
     sort_preference: str = "relevance"
     avoid: list[str] = field(default_factory=list)
     # Soft preference signals for the ranking lane. Never a hard filter: only explicit
@@ -320,7 +323,12 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     plan.at = intent.time.starts_at if intent.time else None
     if intent.time and intent.time.quality and intent.time.quality.startswith(
             "open_late_after:"):
-        plan.open_late_after = int(intent.time.quality.split(":", 1)[1])
+        # D463: the quality carries HHMM and the filter wants the HOUR -
+        # 1000 hours is 41 days, and its time part is four in the afternoon.
+        plan.open_late_after = int(intent.time.quality.split(":", 1)[1]) // 100
+    if intent.time and intent.time.quality and intent.time.quality.startswith("before:"):
+        # D463: the same HHMM -> HOUR, for the same reason.
+        plan.open_early_before = int(intent.time.quality.split(":", 1)[1]) // 100
     if intent.time and intent.time.type == "unspecified" and not plan.at:
         plan.at = None
     if intent.urgency == "now":
@@ -340,6 +348,8 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     out["open_now"] = plan.open_now
     if plan.open_late_after is not None:
         out["min_closing_hour"] = plan.open_late_after
+    if plan.open_early_before is not None:
+        out["max_opening_hour"] = plan.open_early_before
     out["open_weekday"] = plan.at.astimezone(HK_TZ).weekday() if plan.at else None
     # D399: the open-at-time filter binds a `time` COLUMN, and a `time` column needs a
     # `datetime.time` - a string made asyncpg raise

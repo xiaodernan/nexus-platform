@@ -61,6 +61,10 @@ EARLY_CUES = ("之前", "以前提前", "before", "up to", "以內", "以内", "
 OPEN_LATE_CUES = ("還营业", "還營業", "还营业", "仍開", "仍开", "開住", "开住", "營業中",
                   "still open", "open at", "open until", "营业到", "營業到", "夜晚都")
 
+#: How many characters around the clock a direction word may sit in. The longest cue
+#: is four characters wide, and the cue may sit on either side of the clock.
+_CUE_WINDOW = 6
+
 CLOCK_RE = re.compile(
     r"(?:(\d{1,2})\s*[:：]\s*(\d{2}))"                                  # 19:30
     r"|(?:(\d{1,2})\s*(?:點|点|時|时|o'?clock)(半|\d{1,2}(?:分|分鐘|分钟)?)?)"  # 7點 / 7點半 / 7時15分
@@ -254,6 +258,12 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
             else:
                 start = start + timedelta(days=1)
         window_end = start + timedelta(minutes=_default_duration(part_label))
+        if _early_suffix(text, clock):
+            # D463: "before seven" is a direction, not a window: the merchant's OPENING
+            # hour has to be at or before it - the mirror of the "open late after" filter
+            # below, which asks for a CLOSING hour at or after it.
+            return ParsedTime("relative", None, None, _raw(raw_text),
+                              quality=f"before:{hh:02d}{mm:02d}", confidence=0.8)
         if open_late or _late_suffix(text, clock):
             return ParsedTime("relative", None, None, _raw(raw_text),
                               quality=f"open_late_after:{hh:02d}{mm:02d}",
@@ -346,8 +356,28 @@ def _default_duration(part_label: str | None) -> int:
 
 
 def _late_suffix(text: str, clock: re.Match) -> bool:
-    tail = text[clock.end(): clock.end() + 4]
-    return any(tok in tail for tok in ("後", "后", "以後", "之後", "起", "past"))
+    """The direction word right after the clock ("seven o'clock, after").
+
+    D463: the list used to be hard-coded HERE while the table beside it - `LATE_CUES` -
+    held the same idea and was read by nobody, and the two disagreed: the table knows the
+    Cantonese and the written forms, the literal knew six of them. One list now, and the
+    table is the one that is read.
+    """
+    tail = text[clock.end(): clock.end() + _CUE_WINDOW]
+    return any(tok in tail for tok in LATE_CUES)
+
+
+def _early_suffix(text: str, clock: re.Match) -> bool:
+    """The direction word next to the clock ("seven o'clock, before").
+
+    D463: `EARLY_CUES` was a table nobody read, so the "before" was dropped and the
+    query answered as if the user had not said it. The cue may sit on either side of
+    the clock - "seven o'clock, before" and "before seven o'clock" are the same request -
+    so both sides are read.
+    """
+    tail = text[clock.end(): clock.end() + _CUE_WINDOW]
+    head = text[max(0, clock.start() - _CUE_WINDOW): clock.start()]
+    return any(tok in tail or tok in head for tok in EARLY_CUES)
 
 
 def _bare_hour(text: str) -> tuple[int, int] | None:
