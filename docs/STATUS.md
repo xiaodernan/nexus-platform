@@ -17102,3 +17102,36 @@ DB-free.
 
 **Verified, not claimed.** `pytest tests/test_search_tokens.py` → **21 passed**; full `apps/ai`
 suite → **848 passed, 31 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+---
+
+## 418 · D424 — pin the eval harness's pure logic (`eval/suites` + `eval/intent_v1`)
+
+**Module / contract.** A suite keeps three questions apart: did the case pass, what is the metric,
+and does the gate hold. `eval/suites` owns `Gate` (one metric against one bound), `SuiteResult`,
+`load_cases` and `rate`; `eval/intent_v1` owns the subset matcher and the accuracy/hallucination
+gates (§7.1/§8). Pure and DB-free — the only I/O is reading a JSONL case file (driven from a tmp
+dir here).
+
+**Pinned behavior (35 cases, all confirmed empirically):**
+- `Gate.passed`: `>=`/`<=` are inclusive with a 1e-9 epsilon (0.9/0.9 true, 0.89 false;
+  0.02/0.02 true, 0.03 false); `==` exact; an unknown comparator raises `ValueError`; `as_dict`
+  carries `passed`/`detail`.
+- `SuiteResult.ok`: clean → true; any failure → false; any failed gate → false; `as_dict` reports
+  `failed = cases - passed` and the failures list.
+- `rate`: empty denominator → **1.0** (nothing failed, the empty case is named not hidden); 1/2 →
+  0.5; 0/5 → 0.0.
+- `_empty`: `None/{}/[]/""/0` empty; `1`/`"x"` not.
+- `_matches`: dict **subset** (extra keys ok, missing key fails), list **containment**, scalar
+  equality, type mismatch fails, nested subset ok.
+- `load_cases`: missing file → `FileNotFoundError`; blank lines and `//` comments skipped; bad JSON
+  → `ValueError` (with line number); a case without `id` → `ValueError`; a file with no cases →
+  `ValueError` ("a suite that passes by having nothing to judge").
+- `intent_v1.run`: over 3 cases (one right, one wrong field, one invented field) → accuracy 2/3,
+  hallucination_rate 1/3, case_pass_rate 1/3, both gates fail, and the failures name the reason
+  (`expected …` / `invented …`); an all-passing case set meets the gates (`ok`).
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_eval_suites.py` → **35 passed**; full `apps/ai` suite
+→ **883 passed, 31 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
