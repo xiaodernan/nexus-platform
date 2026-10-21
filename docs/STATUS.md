@@ -17257,3 +17257,44 @@ tidy, and it did that so well that it also dropped the trust primitive ✓ — t
 whole job is to point at a fact ✓. A filter that selects keys by name should be read as a
 claim about which fields matter ✓, and the card's own `facts` list already said which ones
 did ✓.
+
+## 423. D429 · the attributes the matchers read and the ones the seed writes were two hand-kept lists, and nothing checked they agreed (`apps/ai/tests/test_attribute_vocabulary.py`, §7.1 / §18 / §99)
+
+**The class of defect this unit closes.** The preferences are matched against the merchants'
+`attributes` ✓, and the seed writes those attributes ✓ — so the two lists have to agree ✓, and
+nothing checked it ✓. The lane's live suite was green through a whole class of that ✗: when the
+demo plane's corpus was seeded before the generator learned to write the occasion attributes
+(§419), the date and family preferences were **understood and then did nothing** ✗, and no test
+failed ✗ because no test asserted the behaviour on a corpus that carried them ✗ (§422).
+
+**Why the check is between the two SOURCES and not on the corpus.** A live check cannot be the
+gate ✗: whether an attribute has a merchant at all is a property of the corpus's **category
+mix** ✗ — the CI's small counts carry no "rooftop" leaf ✗, so `scenic_view` has no merchant
+there ✗, and the same test would be green on the full corpus ✗ and red on the CI's ✗. A gate
+whose verdict depends on the corpus's mix is a gate that measures the mix ✗. So the check reads
+the two sources ✗: **every attribute the matchers read must be one the seed writes** ✓, and
+**every attribute the seed writes must be one a matcher reads** ✓ (the other direction ✗: an
+attribute nobody reads is data that looks load-bearing ✗ and is not ✗).
+
+The extraction is deliberately narrow ✓: the matchers' keys are the **boolean** attribute checks
+(`attrs.get("x") is True/False` ✓ — which is how a preference signal is read ✓) plus the
+literals the occasion matcher assigns to its variable key ✓, and the seed's keys are the ones in
+its `attrs = {...}` block ✓.
+
+**Verified, not claimed.** `pytest tests/test_attribute_vocabulary.py` -> **2 passed**; the full
+`apps/ai` suite -> **935 passed / 31 skipped**; `ruff check .` -> **All checks passed!**;
+`mypy nexus_ai` -> **Success: no issues found in 52 source files**; the eval gate ->
+**`RESULT: PASS - 2 suite(s), 0 failing`**.
+
+**What the check found when it was written.** The first direction passed on the spot ✓ — the two
+lists agree ✓ — and the second one found **five attributes the seed writes and no matcher
+reads** ✗ (`date_occasion`, `group_occasion`, `family_occasion`, `business_occasion`,
+`solo_occasion` ✗). They are read ✗ — through the occasion matcher's variable key ✗ — so the
+check learned to read the vocabulary the way the code does ✓ (the literals the matcher assigns
+✓) rather than the way a text search would ✗. **A check that finds a false positive in its
+first minute is a check that has to be taught the code's shape** ✓, and the shape it was taught
+is the shape the matcher actually reads ✓.
+
+**Discipline note.** The house's standing question — "is this number real?" — has a source-level
+form ✗: two hand-kept lists that must agree ✗ are a contract ✗, and a contract with no reader
+is a wish ✓. §419 and §422 are what it costs when the wish is the only thing that exists ✓.
