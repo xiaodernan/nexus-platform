@@ -18946,3 +18946,57 @@ second one is the more dangerous ✓, because a request that is rejected is not 
 that shows up anywhere ✓. So a census has to ask the surface **the way a client would** ✓
 (and the comparison needs two subjects ✓) and then it has to notice that a 422 is not an
 answer ✓.
+
+## 454. D460 · the COMPARISON was a task that wrote no run - and the census that was supposed to say so never asked it (`apps/ai/nexus_ai/api/routes_discover.py`, `apps/ai/tests/test_runs_census_walks_every_route.py`)
+
+**What the product does, and what was measured.** §426 (D432) gave three surfaces their
+`agent_runs` row ✓ and published a census that said it *"walked the service's endpoints and
+counted what each leaves in the in-process ledger"* ✓ - and the table it published has
+**seven** endpoints ✓. The committed test file asked **five** ✓.
+
+The endpoint it never asked is the **comparison** ✓ - and it is the one task surface that
+wrote no run at all ✓. A comparison is a task ✓: it reads merchants ✓, builds the grid ✓
+and grounds **every cell in a fact** ✓ (§37 ✓) - and none of that was recorded anywhere ✓, so
+*"why did the comparison put these two side by side"* had no answer ✓. The search writes a
+run for a plain read ✓; the retrieval writes one ✓; the comparison read nothing down ✓.
+
+**The fix.** The comparison writes a run ✓ - `compare_entities` ✓ (the §3 tool's name ✓), the
+subjects it compared as its `retrieval` ✓, and the grid's **fact ids** as its `fact_ids` ✓
+(the cells carry facts ✓ - unlike the retrieval's chunk ids ✓, which are not facts ✓).
+
+**The gate - a census that walks the surface, the way a client would.** The new census walks
+the application's **own OpenAPI document** ✓, asks **every** route with a request a client
+could send ✓, and requires a run for every task surface ✓. Two things it does that the old one
+did not:
+
+* it **counts the ledger's DELTA** per surface ✓ - the ledger carries every earlier
+  surface's run ✓, so "the ledger is not empty" would be true whatever the surface did ✓;
+* it **notices a 422** ✓ - the comparison needs **two** subjects ✓ (its request model's own
+  rule ✓), and a probe that sends one gets a 422 ✓, which looks like a surface that was
+  measured and was not ✓ (the same lesson as §453's degraded-header census ✓).
+
+The surfaces that are **not** tasks are declared with the reason ✓ - a signal is not a task ✓
+(the D432 ruling ✓), a manifest is not a task ✓, a health check is not a task ✓, and the
+timeline is a **read of the run ledger** ✓ (a run that reads runs ✓) ✓. A census with no
+declared exemptions cannot tell "this writes no run" from "nobody asked it" ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **2 passed** ✓, and it was **proved to fail** ✓: with the comparison's run
+  removed on purpose ✓, the census failed with *"POST /ai/v1/compare"* ✓ in the walk and with
+  *"the comparison wrote no run"* ✓ in the detail - the probe was put back ✓;
+- the full `apps/ai` suite -> **1034 passed** with the database, **982 passed / 52 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436);
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 55
+  source files**;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** The published table said seven ✓ and the test file said five ✓ - and
+both were true ✓, because the table was a **measurement** ✓ and the file was a **gate** ✓, and
+the gate is what has to keep up ✓. The gap between them was invisible from the outside ✓,
+because the gate was green ✓. That is the second time in two units that a census's own
+**published table** and its **committed gate** disagreed ✓ - so the rule for the next one is
+simple ✓: **the table a ledger entry publishes and the gate that ships are the same
+census** ✓, or the entry is quoting a measurement nobody re-runs ✓.

@@ -369,6 +369,7 @@ def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
 async def compare(request: Request, body: CompareRequest):
     deps: Deps = request.app.state.deps
     ids = [str(i) for i in body.subject_ids]
+    started = time.perf_counter()
     try:
         rows, meta = await _compare_rows(deps, ids, str(body.tenant_id or deps.tenant_id()),
                                          body.locale, body.geo)
@@ -377,9 +378,41 @@ async def compare(request: Request, body: CompareRequest):
         return errors.error_response("ai_unavailable", str(exc),
                                       request_id=runs.current_request_id() or None,
                                       status=503)
+    # D460: the comparison is a task (it reads merchants, builds a grid and grounds every
+    # cell in a fact), so it writes a run like every other task - the D432 census walked
+    # the service's endpoints and never asked this one, so the work it does was not
+    # recorded anywhere: "why did the comparison put these two side by side" had no
+    # answer. The grid's facts are its `fact_ids` (they are facts, unlike the retrieval's
+    # chunk ids) and the compared merchants are its `retrieval`.
+    latency_ms = int((time.perf_counter() - started) * 1000)
+    await runs.record_run(deps, {
+        "agent_run_id": runs.new_id(), "agent": "compare_entities",
+        "status": "succeeded", "provider": "none", "model": None,
+        "conversation_id": None,
+        "user_id": None,
+        "tenant_id": deps.tenant_id(),
+        "input_summary": f"compare {len(ids)} subjects",
+        "output_summary": f"{len(rows)} rows",
+        "plan": {"steps": ["compare_entities"]},
+        "tool_calls": [{"tool": "compare_entities", "ok": True, "ms": latency_ms}],
+        "retrieval": ids, "fact_ids": _compare_fact_ids(rows),
+        "latency_ms": latency_ms, "cost_usd": 0.0, "fallback_used": None, "error": None,
+        "started_at": None, "finished_at": None, "degraded": bool(meta["degraded"]),
+    })
     # D459: the degraded flag travels in the body AND the header (OBSERVABILITY.md §2).
     # The D452 census never reached this endpoint - the probe's request was invalid, so
     # it was never measured - and a degraded comparison looked like a normal one.
     return degraded_json({"rows": rows, "subjects": ids,
                           "degraded": bool(meta["degraded"]),
                           "source": meta["source"]})
+
+
+def _compare_fact_ids(rows: list[dict[str, Any]]) -> list[str]:
+    """The facts the comparison's grid was built from - the cells that carry one."""
+    out: list[str] = []
+    for row in rows:
+        for cell in row.get("cards") or []:
+            fact_id = cell.get("fact_id")
+            if fact_id:
+                out.append(str(fact_id))
+    return out
