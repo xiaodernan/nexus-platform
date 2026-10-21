@@ -43,7 +43,8 @@ def test_the_intent_extraction_writes_a_run():
         assert r.status_code == 200, r.text
         runs = _ledger(c).get_all()
         assert runs, "the intent extraction wrote no run"
-        assert runs[-1]["agent"] == "intent_extract"
+        assert runs[-1]["agent"] == "user_intent"  # D461: the roster's planner, not the
+        # router's task class - the roster is AGENT_CONTRACT §1's list
 
 def test_the_retrieval_writes_a_run():
     with _client() as c:

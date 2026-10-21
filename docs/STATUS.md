@@ -19000,3 +19000,71 @@ because the gate was green ✓. That is the second time in two units that a cens
 **published table** and its **committed gate** disagreed ✓ - so the rule for the next one is
 simple ✓: **the table a ledger entry publishes and the gate that ships are the same
 census** ✓, or the entry is quoting a measurement nobody re-runs ✓.
+
+## 455. D461 · three of the six names the service wrote into `agent_runs.agent` were not on the contract's roster - one of them was the ROUTER'S TASK CLASS (`apps/ai/nexus_ai/api/routes_discover.py`, `apps/ai/tests/test_run_agent_names_are_roster_agents.py`)
+
+**What the product does, and what was measured.** `agent_runs.agent` is the name of the agent
+that did the work ✓, and **AGENT_CONTRACT §1 holds the authoritative roster** ✓ ("Implement
+the roster exactly; do not add ad-hoc agents that bypass the registry" ✓ - AGENTS.md ✓). The
+service was writing six names ✓, and three of them are not on that roster ✓:
+
+```
+search            - the roster's executor                                  on the roster
+retrieval         - the roster's executor                                  on the roster
+recommendation    - the roster's synthesiser                               on the roster
+intent_extract    - the ROUTER'S TASK CLASS (§9), not an agent at all      not on it
+merchant_agent    - a name the roster does not define                      not on it
+compare_entities  - a §3 TOOL name; the roster has no tool agent          not on it
+```
+
+The middle one is the interesting one ✓: **`intent_extract` is the model router's task
+class** (§9's table ✓ - the same string the router's own table carries ✓), and it was written
+into the column that names an **agent** ✓. §426 (D432) called it *"the contract's roster
+name"* ✓ - it is not ✓, and the roster's planner is **`user_intent`** ✓. So the record was
+wrong twice over ✓: the name was a different concept ✓, and the entry that introduced it
+described it as something it was not ✓.
+
+**Why it matters.** The roster is what a reader opens to answer *"which agent did this?"* ✓,
+and the run ledger is what makes an answer replayable ✓ ("Agent 为什么做出这个结果 is
+answerable by replaying one `agent_run`" ✓ - OBSERVABILITY §70 ✓). A run that names
+`intent_extract` cannot be joined to the roster ✓, so the answer cannot be looked up ✓.
+
+**And the third copy.** The schema carries its **own** list of the column's values ✓ -
+`user_intent|search|retrieval|ranking|recommendation|reservation|cart|customer_service|
+marketing|analytics|seo|fraud|fact_verification` ✓ - and that list has drifted ✓ (it still
+says `fraud` ✓ where the roster says `fraud_trust` ✓, and it is missing `location` ✓,
+`availability` ✓, `review` ✓, `merchant_sales` ✓ and `admin_agent` ✓). A column's comment
+that enumerates its values is a second copy of a list ✓, and the second copy is the one that
+goes stale ✓. The migration is the platform lane's ✓ and is already applied ✓, so it is
+**reported here and not edited** ✓.
+
+**The fix.** The intent extraction's run now names **`user_intent`** ✓ - the roster's
+planner ✓, which is what the intent extraction *is* ✓.
+
+**The gate.** `apps/ai/tests/test_run_agent_names_are_roster_agents.py` **parses the roster
+out of the contract** ✓ (not a copy ✓ - the copy is the defect ✓) ✓, walks every task surface
+✓, and requires each run's `agent` to be a roster name ✓ - or one of the **two declared**
+off-roster surfaces ✓, with the reason ✓ and the filing ✓ (the merchant agent's chat ✓ and
+the comparison ✓ are surfaces the roster does not name ✓, and until the contract names them
+✓, the name is declared rather than invented quietly ✓).
+
+**Verified, not claimed.**
+
+- the gate -> **2 passed** ✓, and it was **proved to fail** ✓: putting the task class back
+  into the column made it fail with *"these runs name an agent the contract's roster does
+  not define: /ai/v1/query/understand -> 'intent_extract'"* ✓ - the probe was put back ✓;
+- the full `apps/ai` suite -> **1036 passed** with the database, **984 passed / 52 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436);
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 55
+  source files**;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** Three copies of "the agent names" existed ✓ - the roster ✓, the
+schema's comment ✓ and the code's strings ✓ - and the code's strings were the one nothing
+checked ✓. The D438 lesson ✓ ("a shape that is written once and copied is a shape that
+drifts" ✓) is the same lesson with a different word ✓: **the copy is the defect** ✓ - so the
+gate now READS the list ✓ and the two names that are genuinely off-roster are DECLARED with
+their reason ✓, instead of the roster quietly growing a twin ✓. And a correction belongs in
+the ledger ✓: §426's *"the contract's roster name"* was wrong ✓, and this entry says so ✓.

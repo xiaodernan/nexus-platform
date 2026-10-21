@@ -57,8 +57,12 @@ async def query_understand(request: Request, body: UnderstandRequest):
         intent=res.intent, provider=res.provider, degraded=res.degraded,
         follow_up_question=res.follow_up_question)
     # D432: the intent extraction is a task (AGENT_CONTRACT §8), so it writes a run.
+    # D461: the run's `agent` names a ROSTER agent (§1 - the authoritative list). The
+    # intent extraction is the planner's work, and the planner is `user_intent`; the name
+    # that stood here ("intent_extract") is the ROUTER's task class (§9), which is a
+    # different thing entirely, and D432's entry called it "the contract's roster name".
     await runs.record_run(deps, {
-        "agent_run_id": run_id, "agent": "intent_extract",
+        "agent_run_id": run_id, "agent": "user_intent",
         "status": "succeeded", "provider": res.provider, "model": None,
         "conversation_id": None, "user_id": None, "tenant_id": deps.tenant_id(),
         "input_summary": query[:500] or None,
