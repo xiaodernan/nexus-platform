@@ -11,7 +11,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from pydantic import Field, field_validator
 
-from nexus_ai.api import runs
+from nexus_ai.api import errors, runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import MAX_QUERY_LENGTH
 from nexus_ai.api.sse import sse_bytes
@@ -157,8 +157,11 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
         # was the only trace of a merchant turn that broke. The frame goes out FIRST (the
         # user is not waiting on a ledger write) and the run is recorded after it, exactly
         # as the search stream does.
-        yield ("error", {"code": "internal", "message": str(exc),
-                         "request_id": request_id})
+        # D455: the error frame is built by the one builder, from the contract's own error
+        # body, and the code follows the one rule - the search stream says "ai_unavailable"
+        # when the model layer or the database is unreachable, and this one said
+        # "internal" whatever broke, so the same failure got two codes.
+        yield ("error", errors.error_frame(exc, request_id=request_id))
         await _record_chat(deps, run_id=run_id, body=body, grounded=False, answer="",
                            citations=[], latency_ms=_ms_since(started), provider="none",
                            status="failed", error=str(exc))

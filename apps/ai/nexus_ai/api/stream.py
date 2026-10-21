@@ -25,7 +25,7 @@ import logging
 from datetime import datetime
 from typing import Any, AsyncIterator
 
-from nexus_ai.api import runs
+from nexus_ai.api import errors, runs
 from nexus_ai.api.pipeline import SearchPack, compose_summary, run_search, \
     understand
 from nexus_ai.api.deps import Deps
@@ -132,11 +132,10 @@ async def search_stream_events(*, query: str, deps: Deps,
         # -- 8. done ------------------------------------------------------------
     except Exception as exc:  # the §105 contract: failure travels INSIDE the stream
         log.exception("stream failed mid-request")
-        yield ("error", {
-            "code": "ai_unavailable" if isinstance(exc, (ConnectionError, TimeoutError))
-            else "internal",
-            "message": str(exc) or exc.__class__.__name__,
-            "request_id": request_id})
+        # D455: the error frame is built by the one builder, from the contract's own error
+        # body, and the code follows the one rule - so this stream and the merchant chat's
+        # answer the same failure the same way.
+        yield ("error", errors.error_frame(exc, request_id=request_id))
         _record(deps, run_id=run_id, status="failed", started=started,
                 provider="none", degraded=True, conversation_id=conversation_id,
                 query=query, intent=None, pack=None, summary=None, user_id=user_id,

@@ -18823,3 +18823,66 @@ today. Widening it is the next unit; the app-side gate above already reads every
 
 **Numbers.** `apps/web` suite 151 passed across 12 files (15 of them in the new gate), `tsc --noEmit` clean, 15
 placeholder files served, 5/5 arms matched, 5/5 surfaces captured.
+
+## 452. D458 · the two SSE error frames were hand-built, and they disagreed: the same failure got two codes (`apps/ai/nexus_ai/api/errors.py`, `apps/ai/tests/test_stream_error_frames.py`)
+
+**What the product does, and what was measured.** The search stream and the merchant-agent
+chat are two surfaces that answer the same question - *what broke?* - and they answered it
+differently:
+
+```
+the search stream   "ai_unavailable" when the model layer or the database was unreachable,
+                    "internal" for anything else
+the merchant chat   "internal", whatever broke
+```
+
+So the same kind of failure got **two different codes** depending on which stream the client
+was talking to - and "ai_unavailable" is the code the contract gives for *try again* ✓, so a
+client that retries on it would not retry the chat ✓. Both frames were also **written by
+hand**, which is §438's class: a shape written once and copied is a shape that drifts, and the
+copy still looks right.
+
+**The fix - one builder, one rule.**
+
+* `api/errors.py` builds the frame from the contract's **own error body** (`ErrorBody` ✓ -
+  the same model the HTTP envelope is built from ✓), so the frame and the envelope cannot
+  drift apart ✓;
+* `error_code_for` holds the **one rule** for what a failure is called ✓, and both streams ask
+  it ✓.
+
+**The gate.** `apps/ai/tests/test_stream_error_frames.py` walks **both** surfaces:
+
+* a census: no module outside `api/errors.py` hand-builds a frame (a dict with `code` and
+  `message` ✓) ✓;
+* the frame validates against the contract's `ErrorBody` ✓, and carries the request id ✓;
+* the **search stream** answers an unreachable dependency with `ai_unavailable` ✓;
+* the **merchant chat** answers the same failure with the same code ✓ (live plane ✓ - the
+  chat only retrieves when it has a pool ✓).
+
+And the gate was **proved to fail**: a frame hand-built on purpose made it fail twice over -
+the census caught the copy ✓, and the behavioural check caught the code ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **5 passed** with the database, **4 passed / 1 skipped** without it
+- the full `apps/ai` suite -> **1030 passed** with the database, **978 passed / 52 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 55
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**One honest note on the verification.** Two earlier runs of that same command failed **a single
+test whose name the run did not print** ✓. The live subset was then run four times ✓ (82 passed
+each ✓) and the whole suite three times ✓ (1030 passed each ✓) without a repeat ✓, so the
+failure could not be reproduced ✓ - it is written down here rather than left out ✓, because a
+verification that is only quoted when it is green is not a verification ✓. The next unit that
+touches the live plane should watch for it ✓.
+
+**Discipline note.** The two frames looked the same to a reader - three fields, a code, a
+message, a request id ✓ - so the disagreement hid in the *value* of one of them ✓. A shape
+that is written twice is a shape that drifts, and what it drifts in is whatever nobody
+compares: here, the code that tells a client whether trying again is worth it ✓. The fix is
+not "be careful" ✓ - it is one builder ✓, and a gate that walks both surfaces ✓ so that a
+second copy cannot appear without failing the build ✓.
