@@ -30,12 +30,20 @@ DB_URL = os.environ.get("NEXUS_TEST_DATABASE_URL", "").strip()
 #: the query comes from the product's own vocabulary - a hand-typed CJK code point is not a
 #: reference (D409, D446)
 RAMEN = L.CUISINE_TERMS["japanese"][5]
+CONVERSATION = "77777777-7777-7777-7777-777777777777"
 
 #: the endpoints that answer with a `degraded` field
 ENDPOINTS = [
     ("/ai/v1/search", {"query": RAMEN, "limit": 3}),
     ("/ai/v1/recommend", {"query": RAMEN, "limit": 3}),
     ("/ai/v1/query/understand", {"query": RAMEN, "context": {}}),
+    ("/ai/v1/feedback", {"subject_type": "merchant", "signal": "click"}),
+]
+
+#: the endpoints that answer with a `degraded` field and take no body
+GET_ENDPOINTS = [
+    "/ai/v1/tools",
+    f"/ai/v1/conversations/{CONVERSATION}",
 ]
 
 
@@ -59,6 +67,20 @@ def test_every_degraded_answer_says_so_in_the_header(client):
             f"{path} answered with degraded={payload['degraded']} and NO "
             f"X-Nexus-Degraded header - a degraded answer that looks like a normal "
             f"answer is an observability failure even when the request returned 200")
+        assert header == ("true" if payload["degraded"] else "false"), (
+            f"{path} says degraded={payload['degraded']} in the body and {header!r} in the "
+            f"header - the two must agree")
+
+    for path in GET_ENDPOINTS:
+        r = client.get(path)
+        assert r.status_code == 200, (path, r.status_code, r.text[:200])
+        payload = r.json()
+        if "degraded" not in payload:
+            continue
+        header = r.headers.get("x-nexus-degraded")
+        assert header is not None, (
+            f"{path} answered with degraded={payload['degraded']} and NO "
+            f"X-Nexus-Degraded header")
         assert header == ("true" if payload["degraded"] else "false"), (
             f"{path} says degraded={payload['degraded']} in the body and {header!r} in the "
             f"header - the two must agree")

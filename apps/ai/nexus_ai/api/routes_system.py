@@ -19,6 +19,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from nexus_ai.api import runs
+from nexus_ai.api.degraded import degraded_json
 from nexus_ai.api.deps import Deps
 from nexus_ai.contract import FeedbackRequest
 
@@ -105,7 +106,8 @@ async def tools(request: Request):
             "registry_status": "not_built",
             "data_path_via_http": name in _DATA_PATH_TOOLS,
         })
-    return JSONResponse({
+    # D451: the degraded flag travels in the body AND the header (OBSERVABILITY.md §2).
+    return degraded_json({
         "tools": manifest,
         "count": len(manifest),
         "registry_status": "not_built",
@@ -125,7 +127,8 @@ async def feedback(request: Request, body: FeedbackRequest):
     if db is None:
         payload["reason"] = ("no database connection — feedback is not persisted "
                              "offline; nothing was recorded")
-        return JSONResponse(payload)
+        # D451: the degraded flag travels in the body AND the header.
+        return degraded_json(payload)
     row = {
         "tenant_id": deps.tenant_id(),
         "user_id": str(body.user_id) if body.user_id else None,
@@ -140,4 +143,5 @@ async def feedback(request: Request, body: FeedbackRequest):
     payload["degraded"] = not ok
     if not ok:
         payload["reason"] = "feedback_events insert failed (see server log)"
-    return JSONResponse(payload)
+    # D451: the degraded flag travels in the body AND the header.
+    return degraded_json(payload)

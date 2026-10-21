@@ -22,6 +22,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from nexus_ai.api import errors, runs
+from nexus_ai.api.degraded import degraded_json
 from nexus_ai.api.deps import Deps
 
 log = logging.getLogger("nexus_ai.api.routes_conversations")
@@ -86,4 +87,5 @@ async def conversation_timeline(request: Request, conversation_id: str):
     }
     if reason:
         payload["reason"] = reason
-    return JSONResponse(payload)
+    # D451: the degraded flag travels in the body AND the header (OBSERVABILITY.md §2).
+    return degraded_json(payload)

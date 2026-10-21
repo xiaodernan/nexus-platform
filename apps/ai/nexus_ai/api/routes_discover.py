@@ -17,7 +17,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from pydantic import Field
 
-from nexus_ai.api import degraded, errors, runs
+from nexus_ai.api import errors, runs
+from nexus_ai.api.degraded import degraded_json
 from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import (
     MAX_QUERY_LENGTH, compose_summary, run_search, understand)
@@ -74,7 +75,7 @@ async def query_understand(request: Request, body: UnderstandRequest):
         "degraded": bool(res.degraded),
     }, llm_records=list(res.llm_records or []))
     # D451: the degraded flag travels in the body AND the header (OBSERVABILITY.md §2).
-    return degraded.degraded_json(payload.model_dump(mode="json"))
+    return degraded_json(payload.model_dump(mode="json"))
 
 
 # --------------------------------------------------------------------------- recommend
@@ -157,7 +158,7 @@ async def recommend(request: Request, body: RecommendRequest):
         except Exception:  # pragma: no cover
             log.warning("recommendation_sets insert failed", exc_info=True)
     # D451: the degraded flag travels in the body AND the header (OBSERVABILITY.md §2).
-    return degraded.degraded_json(data)
+    return degraded_json(data)
 
 
 # --------------------------------------------------------------------------- compare

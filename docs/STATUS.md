@@ -18489,3 +18489,49 @@ by the middleware. §438 (D438) was the same shape in a different guise (seven h
 envelopes and one model that nothing used). The general rule keeps being the same one: **a
 fact the product states in two places must be stated from one place** - and when it is not, the
 two copies disagree, and the one a client reads is the one nobody checks.
+
+## 446. D452 · the degraded-header fix covered three of SIX endpoints: the feedback, the conversation timeline and the tool manifest still said `degraded` and nothing else (`apps/ai/nexus_ai/api/routes_system.py`, `apps/ai/nexus_ai/api/routes_conversations.py`, `apps/ai/tests/test_degraded_header.py`)
+
+**What the product does, and what was measured.** §445 (D451) made the degraded flag travel in
+the body AND the header - and the gate it came with walked **three** endpoints. A census of
+every response that carries a `degraded` field says there are **six**:
+
+```
+/ai/v1/search            -> 200  the header: 'false'  the body's degraded: False
+/ai/v1/recommend         -> 200  the header: 'true'   the body's degraded: True
+/ai/v1/query/understand  -> 200  the header: 'true'   the body's degraded: True
+/ai/v1/feedback          -> 200  the header: None     the body's degraded: False   <- no header
+/ai/v1/conversations/{id}-> 200  the header: None     the body's degraded: False   <- no header
+/ai/v1/tools             -> 200  the header: None     the body's degraded: True    <- no header
+```
+
+The tool manifest is the one that matters most: it says `degraded: true` **permanently** - the
+dispatch registry is not built (§3, §11) - and a client reading the header saw nothing at all.
+The conversation timeline says `degraded` when its read fell back to the in-process ledger,
+and the feedback says it when the event could not be written.
+
+**The fix.** The same builder answers those three as well, so all six carry the flag in the
+body and the header, from one place.
+
+**The gate - and it now walks all six.**
+`apps/ai/tests/test_degraded_header.py` walks every endpoint that answers with a `degraded`
+field - the four that take a body and the two that do not - and requires the header to be
+present and to AGREE with the body.
+
+**Verified, not claimed.**
+
+- the gate -> **2 passed**; the full `apps/ai` suite -> **1022 passed** with the database,
+  **971 passed / 51 skipped** without it (the sibling lane's untracked
+  `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 55
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** This is §442 (D448)'s lesson, a day later and in a different room: the
+gate that found the defect walked three paths, and three more responses were saying the same
+thing in the same wrong way. A fix that lands with a gate is only as wide as the gate's
+scope, and a gate's scope is a decision somebody has to make every time - so the honest
+version of a gate is the one that **censors** the surface (every response that carries the
+field) rather than the one that lists the paths somebody remembered.
