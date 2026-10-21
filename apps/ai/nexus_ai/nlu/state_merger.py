@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any
 
 from nexus_ai.contract import Intent
@@ -413,15 +412,10 @@ def question_for(intent: dict[str, Any]) -> str | None:
     return bank[locale].get(key)
 
 
-def session_state_from_context(context: dict[str, Any]) -> dict[str, Any] | None:
-    """Read carried state out of `conversations.state` (§34) if the caller sent one."""
-    state = context.get("state") or context.get("intent_state")
-    if isinstance(state, dict) and state:
-        return _as_dict(state)
-    return None
+# D450: the carried-state reader that used to stand here is gone - the merge
+# takes the state the caller passes it, and this service never reads the
+# platform's conversations.state (D20).
 
 
-def now_in_hk() -> datetime:
-    from nexus_ai.nlu.timeparse import HK_TZ
-
-    return datetime.now(HK_TZ)
+# D450: the Hong Kong clock that used to stand here is gone - the time parser
+# owns HK_TZ and the merge measures its own latency.

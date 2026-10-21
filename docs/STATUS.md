@@ -18388,3 +18388,51 @@ list is a place where the product's description of itself rots, and it rots *qui
 nothing reads it and nothing fails. The list that says what the comparison grid carries is
 the list a reader would trust - so it had better be the code that builds the grid, and the
 gate that says the code builds it.
+
+## 444. D450 · five functions nothing called either - and one of them was reading state this service must never read (`apps/ai/nexus_ai/nlu/state_merger.py`, `apps/ai/tests/test_no_dead_constants.py`)
+
+**What the product does, and what was measured.** §443 (D449) took the census to the package's
+**constants**. The same sweep finds the **functions** - and five of them were called by nothing:
+
+```
+search/cards.py        _existing_fact_for          a one-line wrapper over bundle.get()
+nlu/polarity.py        _is_cjk                     a one-line CJK check
+api/runs.py            _uuid_array_sql             a uuid[] SQL builder
+nlu/state_merger.py    now_in_hk                   the Hong Kong clock
+nlu/state_merger.py    session_state_from_context  the carried-state reader
+```
+
+**And one of them was wrong in a way that matters.** `session_state_from_context` read the
+carried state out of `context["state"]` - the shape of `conversations.state` (§34). This
+service does not read the platform's conversations (§34, D20: the platform owns every
+conversation write), so the function could only ever have read a state the caller happened to
+paste in - and it read it in a way nothing else in the product does. A dead function that
+invents a second way in is worse than a dead function that does not.
+
+**The fix.** The five are gone, each with a note saying where the truth lives now (the callers
+read the bundle directly; the polarity module's own window check; the writer binds the fact
+ids and lets Postgres cast them; the time parser owns HK_TZ; the merge takes the state the
+caller passes it, and this service never reads the platform's conversations.state).
+
+**The gate - the class, extended.** `apps/ai/tests/test_no_dead_constants.py` now also requires
+that **every module-level function in the package is called somewhere**. A function the
+framework calls (a route handler) is decorated, and is exempt; a function nothing calls is
+dead unless a test calls it - which is a use.
+
+**Verified, not claimed.**
+
+- the gate -> **2 passed**; the full `apps/ai` suite -> **1020 passed** with the database,
+  **969 passed / 51 skipped** without it (the sibling lane's untracked
+  `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 54
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** A dead function is cheaper than a dead table - nobody writes a test
+against it, so it cannot fail - which is exactly why it is the better place for a wrong
+assumption to hide. `session_state_from_context` was a whole second way for the product to
+read a conversation's state, and the second way disagreed with the first (§34 and D20). The
+census does not only remove clutter: it removes the places where the product could quietly
+disagree with itself.

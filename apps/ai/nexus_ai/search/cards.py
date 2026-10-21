@@ -215,8 +215,8 @@ def synth_computed_facts(bundle: FactBundle, cand: Candidate, *, now: datetime,
     return out
 
 
-def _existing_fact_for(bundle: FactBundle, attribute: str, subject_id: Any) -> Fact | None:
-    return bundle.get(attribute, subject_id)
+# D450: the one-line fact lookup that used to stand here is gone - the callers
+# read the bundle directly.
 
 
 # ------------------------------------------------------------------------- the card

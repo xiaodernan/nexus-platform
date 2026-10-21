@@ -61,8 +61,6 @@ def _window_for(token: str) -> int:
     return _NEGATION_WINDOW_CJK if any("一" <= ch <= "鿿" for ch in token) else _NEGATION_WINDOW_LATIN
 
 
-def _is_cjk(text: str) -> bool:
-    return any("一" <= ch <= "鿿" for ch in text)
 
 
 def polarity_for(text: str, token: str) -> int:

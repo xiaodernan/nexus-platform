@@ -41,6 +41,28 @@ def _module_constants() -> dict[str, list[str]]:
     return found
 
 
+def _module_functions() -> dict[str, list[str]]:
+    """Every module-level function in the package that the framework does not call.
+
+    A decorated function is called by the framework (the router, the app factory), so it is
+    not dead by being unreferenced - D450.
+    """
+    found: dict[str, list[str]] = {}
+    for path in sorted(PACKAGE.rglob("*.py")):
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except SyntaxError:  # pragma: no cover
+            continue
+        for node in tree.body:
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            if node.decorator_list:
+                continue
+            found.setdefault(node.name, []).append(
+                path.relative_to(PACKAGE).as_posix())
+    return found
+
+
 def _mentions(name: str) -> int:
     """How many times the package mentions a name (its definition counts once)."""
     total = 0
@@ -65,3 +87,24 @@ def test_every_module_level_constant_is_read_somewhere_in_the_package():
         "these constants are defined and read by nothing: a table nobody reads is a "
         "promise nobody keeps, and a list that has gone out of date is the one nobody "
         "updates - " + "; ".join(dead))
+
+
+def test_every_module_level_function_is_called_somewhere():
+    # D450: the same rule for the functions. A function the framework calls (a route
+    # handler) is decorated, and is exempt; a function nothing calls is dead - unless a
+    # test calls it, which is a use.
+    tests = PACKAGE.parent / "tests"
+    test_text = "\n".join(
+        path.read_text(encoding="utf-8") for path in sorted(tests.glob("*.py")))
+    dead = []
+    for name, where in sorted(_module_functions().items()):
+        if name.startswith("__"):
+            continue
+        if _mentions(name) > len(where):
+            continue
+        if test_text.count(name) > 0:
+            continue
+        dead.append(f"{name} ({', '.join(where)})")
+    assert not dead, (
+        "these functions are defined and called by nothing: "
+        + "; ".join(dead))

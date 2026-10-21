@@ -103,9 +103,8 @@ def _check_table(table: str) -> None:
             "grant set (API_CONTRACT §0, D19/D20)")
 
 
-def _uuid_array_sql(values: list[Any]) -> str:
-    ids = [str(v) for v in values if v]
-    return ",".join(f"{v}::uuid" for v in ids)
+# D450: the uuid[] SQL builder that used to stand here is gone - the writer binds the
+# fact ids as one string and lets Postgres cast them.
 
 
 async def record_run(deps: Any, run: dict[str, Any],
