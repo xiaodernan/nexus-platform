@@ -17516,3 +17516,84 @@ than a test that fails**, because a failing test is a task and a passing test is
 three wrong code points sat in the suite for the whole of §405's life, and every run of the gate
 reported the suite's coverage as complete. The gate was measuring the right thing; the QUESTION
 it asked was not the right one.
+
+## 429. D435 · the word for "now" set NOTHING: two vocabulary tables were left out of the canonicalisation list, and the locale's markers did not know the canonical table's 96 Simplified forms (`apps/ai/nlu/lexicon.py`, `apps/ai/tests/test_vocabulary_canonical_coverage.py`, `apps/ai/tests/test_live_vocabulary_spelling.py`)
+
+**What the product does, and what was measured.** Two facts about a Chinese character are kept in
+this product, and they are the SAME fact:
+
+* its **canonical spelling** - the one the vocabulary is written in and the one every comparison
+  is made in, because the query is canonicalised before it is compared (§411, D417);
+* whether it is the **Simplified or the Traditional** one - which is what the locale detection
+  votes on, on the text as the user wrote it (§420, D420).
+
+They were kept twice, by hand, in two different modules, and nothing checked they agreed.
+
+**The first drift: two tables were left out of the canonicalisation list.** `nlu/lexicon.py`
+already holds the mechanism - `_CANONICALISED_TABLES`, a list of the tables that are rebound in
+the canonical spelling at import (§411, D417). The list is kept BY HAND, and the two urgency cue
+lists were not on it. So the cue for "now" was compared against a spelling it could never have:
+
+```
+现在  U+73B0 U+5728   ->  urgency='normal'    (the cue was compared in the wrong spelling)
+現在  U+73FE U+5728   ->  urgency='normal'    (the word is not in the list at all)
+得闲  U+5F97 U+95F2   ->  urgency='normal'
+得閒  U+5F97 U+9592   ->  urgency='flexible'  (the one spelling that worked)
+```
+
+**A user who typed 现在 was told nothing about urgency - in either spelling.** The word "now" was
+in the cue list in the Simplified spelling only; the Traditional spelling of the same word was
+never there, and the Simplified entry could not fire because the query's character is rewritten
+before the comparison.
+
+**The second drift: the locale's markers did not know the canonical table.** The detection votes
+on Simplified and Traditional characters, so it needs its own list of them - `_TRAD_SIMP_PAIRS`,
+144 pairs. The canonical table already knows 229 Simplified forms. The two lists overlapped on 133
+of them, so **96 Simplified forms the product already rewrites did not vote as Simplified**: a
+Simplified user whose query used one of them was read as a Hong Kong user and answered in the
+Traditional locale. The same query, 现在, came back `language='zh-HK'` - the user wrote
+Simplified and was addressed in Traditional.
+
+**The fix - one fact, one place.**
+
+* `URGENCY_NOW` and `URGENCY_FLEXIBLE` (and the cuisine style forms, which hold a mixed
+  spelling of their own) are now on `_CANONICALISED_TABLES`, so every cue is written in the one
+  spelling the comparison happens in;
+* the marker sets are now DERIVED from the canonical table - the detection's Simplified set is
+  the canonical table's keys and its Traditional set is the canonical table's values, unioned with
+  the pairs the canonical table does not carry (适/適, 麵/麺). The two tables can no longer
+  disagree, because one of them is now computed from the other.
+
+**The gate - a census, so the next table left out is caught.**
+`apps/ai/tests/test_vocabulary_canonical_coverage.py` requires that every vocabulary table
+holding Chinese is either canonicalised at import or already holds the canonical spelling (a
+table that holds a character the canonicalisation rewrites is a table whose cues can never match),
+that the canonicalised tables hold only canonical characters, that **every one of the 229
+canonical pairs votes for its own locale**, and that the product's own word for "now" is
+understood in both spellings. `apps/ai/tests/test_live_vocabulary_spelling.py` asks the live
+stream the same question - the fix was measured offline first, and an offline measurement is a
+MODEL of the product (§427, D433).
+
+**Verified, not claimed.**
+
+- the census -> **5 passed**; the live plane -> **1 passed** (the stream's intent frame reports
+  `urgency='now'` and `language='zh-CN'` for the Simplified spelling, `zh-HK` for the Traditional)
+- the full `apps/ai` suite -> **988 passed** with the database, **948 passed / 39 skipped** without it
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 52
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note, and a residual that is filed rather than fixed.** The general form of the
+lesson is not "be careful with the Chinese": it is that **a fact kept in two places is a fact
+that will drift**, and the fix is not vigilance but DERIVATION - one place computed from the
+other. Here the two facts drifted in opposite directions at once: the vocabulary forgot two
+tables and the markers forgot 96 characters, and both defects made the SAME user - someone
+typing Simplified - wrong in two different ways at the same time.
+
+The residual is measured and left alone on purpose: 37 of the canonical forms have a VARIANT the
+table does not join (Unihan's variant data names 閒 as both U+9591 and U+9592, and the table
+rewrites 闲 to only one of them). Joining variants is a word-level decision - §411's own lesson
+is that 座位 must not become 庢位 - so it is a decision to make with the ledger in front of it,
+not a change to make silently.

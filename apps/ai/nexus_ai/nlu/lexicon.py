@@ -7,7 +7,7 @@ language), zh-CN (simplified) and en, per AGENT_CONTRACT §12.
 
 from __future__ import annotations
 
-from nexus_ai.nlu.canonical import canonical
+from nexus_ai.nlu.canonical import CANONICAL_FORMS, canonical
 
 import re
 from typing import Any
@@ -437,8 +437,20 @@ _TRAD_SIMP_PAIRS: tuple[tuple[str, str], ...] = (
     ("並", "并"),
 )
 
-SIMPLIFIED_MARKERS = frozenset(s for _t, s in _TRAD_SIMP_PAIRS)
-TRADITIONAL_MARKERS = frozenset(t for t, _s in _TRAD_SIMP_PAIRS)
+#: Traditional vs simplified markers, built from explicit differing pairs so a
+#: shared character (餐/吃/情) can never vote for the wrong locale.
+#:
+#: D435: the markers are ALSO the canonical table's pairs, because "this character is
+#: the Simplified spelling" is ONE fact and the detection and the canonicalisation kept
+#: it twice, by hand, independently. They disagreed on 96 of the 229 Simplified forms the
+#: product already rewrites: those characters did not vote as Simplified, so a Simplified
+#: user whose query used one of them was read as a Hong Kong user and answered in the
+#: Traditional locale. One source of truth closes the gap for good - and the pairs the
+#: canonical table does NOT carry (适/適, 麵/麺) are still carried here.
+SIMPLIFIED_MARKERS = (frozenset(s for _t, s in _TRAD_SIMP_PAIRS)
+                      | frozenset(CANONICAL_FORMS))
+TRADITIONAL_MARKERS = (frozenset(t for t, _s in _TRAD_SIMP_PAIRS)
+                        | frozenset(CANONICAL_FORMS.values()))
 
 
 def match_district(text: str) -> tuple[str, dict[str, Any]] | None:
@@ -568,6 +580,15 @@ _CANONICALISED_TABLES = (
     "PREFERENCE_RULES", "PREFERENCE_CUES", "PREFERENCE_RULE_VALUES", "COMPARE_CUES",
     "DISCOVER_CUES", "RESERVE_CUES", "PURCHASE_CUES", "ASK_MERCHANT_CUES", "PLAN_CUES",
     "NEARBY_TERMS", "OPEN_PRICE_WORDS", "CONSTRAINT_CANON",
+    # D435: the urgency cues were LEFT OUT of this list, and the query is canonicalised
+    # before it is compared with them - so a cue written in the Simplified spelling was
+    # compared against a spelling it could never have. 现在 set nothing: neither the
+    # Simplified query nor the Traditional one was understood as "now".
+    "URGENCY_NOW", "URGENCY_FLEXIBLE",
+    # the cuisine style forms are appended to CUISINE_TERMS (which is canonicalised),
+    # but they hold a mixed spelling of their own - 馬来西菜 - and a table that holds a
+    # character the canonicalisation rewrites is a table whose cues can never match.
+    "_CUISINE_STYLE_FORMS",
 )
 
 
