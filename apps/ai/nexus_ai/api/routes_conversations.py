@@ -22,6 +22,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from nexus_ai.api import errors, runs
+from nexus_ai.contract import ConversationView
 from nexus_ai.api.degraded import degraded_json
 from nexus_ai.api.deps import Deps
 
@@ -79,13 +80,10 @@ async def conversation_timeline(request: Request, conversation_id: str):
 
     timeline.sort(key=lambda r: str(r.get("started_at") or ""))
 
-    payload: dict[str, Any] = {
-        "conversation_id": cid,
-        "agent_runs": timeline,
-        "count": len(timeline),
-        "degraded": degraded,
-    }
-    if reason:
-        payload["reason"] = reason
+    # D469: the view's shape comes from the contract's model - the route used to spell the
+    # fields out in a dict, and the shape was in no model at all.
+    payload = ConversationView(
+        conversation_id=cid, agent_runs=timeline, count=len(timeline),
+        degraded=degraded, reason=reason)
     # D451: the degraded flag travels in the body AND the header (OBSERVABILITY.md §2).
-    return degraded_json(payload)
+    return degraded_json(payload.model_dump(mode="json"))

@@ -261,6 +261,21 @@ class SearchResponse(BaseModel):
     intent: Optional[Intent] = None
 
 
+class ConversationView(BaseModel):
+    """D469: the §52 audit view of one conversation - the contract names this shape.
+
+    API_CONTRACT §7's row: "the §52 audit view of one conversation:
+    `{conversation_id, agent_runs:[...], count, degraded, reason?}`".
+    """
+
+    model_config = ConfigDict(extra="ignore")
+    conversation_id: str
+    agent_runs: list[dict[str, Any]] = Field(default_factory=list)
+    count: int = 0
+    degraded: bool = True
+    reason: Optional[str] = None
+
+
 class StreamStatusFrame(BaseModel):
     """D468: the SSE frames' payload shapes were hand-built dicts with no model."""
 

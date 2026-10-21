@@ -19503,3 +19503,65 @@ and here the shape asked was "a JSON body" ✓, which is a statement about the t
 about the answer ✓ ✓. The general form ✓: when a rule says *"every X"*, the first question is
 not *"is every X covered?"* ✓ but *"what is X?"* ✓ - and the honest answer is "an answer", ✓
 whatever it arrives in ✓ - a body ✓, a frame ✓, or a header ✓.
+
+## 463. D469 · the conversation audit view is contracted field by field (§52) and had NO model (`apps/ai/nexus_ai/contract.py`, `apps/ai/nexus_ai/api/routes_conversations.py`, `apps/ai/tests/test_answer_shapes_match_the_contract_models.py`)
+
+**What the product does, and what was measured.** API_CONTRACT §7's row names the audit view
+exactly:
+
+> `GET /ai/v1/conversations/{id}` - the §52 audit view of one conversation:
+> `{conversation_id, agent_runs:[...], count, degraded, reason?}`
+
+and the route spelled those fields out in a dict ✓ - so the shape was in **no model at all**
+✓ ✓, and §461 (D467) had to **declare** the surface as one with no model ✓ (a filing ✓) ✓ ✓.
+A contract that names a shape field by field and a route that writes it by hand are two
+copies of the same thing ✓, and the copy that is checked is the one the contract already
+answers ✓.
+
+**The fix.** The contract gained `ConversationView` ✓ - the §52 shape ✓ - and the route builds
+its answer **through** it ✓ ✓, like every other answer now ✓ (§461 ✓, §462 ✓) ✓.
+
+**The gate.** The D467 gate now asks the audit view too ✓ and requires its answer to be
+**exactly one model's fields** ✓ ✓, and the surface's declaration is gone ✓ ✓ - a surface
+that grows a model must lose its entry ✓, and this one did ✓ ✓. The gate was **proved to
+fail** ✓: hand-patching one field onto the view's answer made it fail with *"/ai/v1/
+conversations/{conversation_id} answers with the fields [...], which match 0 contract
+models"* ✓ - the probe was put back ✓.
+
+**And the gate's own selection rule was too narrow.** It picked the models whose **names** end
+in `Response` ✓ - a rule about a shape of a name ✓ ✓ - so `ConversationView` would have been
+**invisible** to it ✓ ✗ ✗. It now reads **every** model the contract module declares ✓ ✓ -
+the D462 lesson ✓ (a census is only as wide as the shape it recognises ✓) ✓ applied to the
+gate that was written to avoid exactly that ✓ ✓.
+
+**Filed.** Two contract questions the audit view raises ✓:
+
+* the §52 row names the run's fields as *"... `fact_ids`, `tokens`, `cost_usd` ..."* ✓, and the
+  answer carries `prompt_tokens` and `completion_tokens` ✓ - two fields where the contract
+  names one ✓ - and it carries four id columns the contract's list omits ✓ (`tenant_id` ✓,
+  `user_id` ✓, `merchant_id` ✓, `conversation_id` ✓) ✓, so the list reads as a sample rather
+  than a shape ✓ ✓;
+* the search ✓, the intent extraction ✓, the comparison ✓ and the RAG ✓ have **no**
+  conversation id in their requests ✓, so their runs can never appear in the audit view ✓ -
+  only the stream's ✓ and the chat's ✓ can ✓ ✓. Whether those four belong to a conversation
+  at all is a contract decision ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **4 passed** ✓ (the D467 gate ✓ - the D468 frame gate ✓ **9 passed** together
+  ✓), and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1060 passed** with the database, **1006 passed / 54 skipped**
+  without it (the sibling lane's two untracked test files excluded - `test_app_surface.py` ✓
+  and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ - see §436);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** A gate that names its exceptions is a gate that has already found the
+thing it is checking for ✓ - and here the exception was **the defect** ✓: the audit view was
+declared "a surface with no model" ✓, and the declaration read as a fact about the surface ✓
+rather than as a note about the gap ✓ ✓. The fix is the order of the work ✓: **a shape the
+contract names deserves a model** ✓ - and a gate that asks "which surfaces have no model?"
+✓ should be asking it of the contract's **rows** ✓, not of a list of exceptions ✓ ✓.
