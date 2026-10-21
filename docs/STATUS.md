@@ -17597,3 +17597,61 @@ table does not join (Unihan's variant data names 閒 as both U+9591 and U+9592, 
 rewrites 闲 to only one of them). Joining variants is a word-level decision - §411's own lesson
 is that 座位 must not become 庢位 - so it is a decision to make with the ledger in front of it,
 not a change to make silently.
+
+## 430. D436 · the Simplified spelling of the two-turn refinement was NEVER RUN: the test read "the two spellings" out of a list that holds one spelling (`apps/ai/tests/test_live_conversation_refinement.py`, `apps/ai/tests/test_refinement_spellings.py`)
+
+**What the product does, and what was measured.** §427 (D433) measured the product's own
+two-turn refinement on the live plane and reported a table with a row for each spelling:
+
+```
+turn 2  太貴了 (traditional)   sort='price_low'   8 cards, prices ASCENDING
+turn 2  太贵了 (simplified)    sort='price_low'   8 cards, prices ASCENDING
+```
+
+The second row was never run. The test took its two words from the merge's own cue list:
+
+```python
+CHEAPER_TRADITIONAL = M.CHEAPER_CUES[1]
+CHEAPER_SIMPLIFIED  = M.CHEAPER_CUES[0]
+```
+
+and **those two entries are the same string** - `U+592A U+8CB4` and `U+592A U+8CB4`. They are
+the same because §415 (D421) canonicalises every cue list at import (`_canonicalise_cues`), so
+the list holds ONE spelling per word - and the two entries are the two spellings of the source
+text, collapsed into one. The test looped over the same query twice, measured the Traditional
+spelling twice, and reported both spellings as covered.
+
+**The property itself is true; the evidence was hollow.** The merge does answer to either
+spelling - the turn is canonicalised too (§415, D421), so the user's Simplified word and the
+cue's Traditional one meet. That was never the question. The question was whether the product
+was MEASURED in both, and it was not.
+
+**The fix.** The two spellings now come from the place that holds two spellings - the canonical
+table, whose keys are the Simplified forms and whose values are the Traditional ones:
+
+* `apps/ai/tests/test_live_conversation_refinement.py` derives the other spelling from the
+  canonical table and **asserts that the two differ** - a guard, not a hope - and the closer
+  cue is measured in both spellings too (§427's table had only the Traditional one);
+* `apps/ai/tests/test_refinement_spellings.py` holds the property itself as a gate over EVERY
+  cue the merge compares against: the canonical spelling and the other spelling must produce
+  the SAME refinement, and the canonical table must hold both spellings of every pair.
+
+**Verified, not claimed.**
+
+- the gate -> **4 passed**; the live plane -> **2 passed** (the refinement now fires in the
+  Simplified spelling as well: `sort_preference='price_low'`, prices ASCENDING, and the closer
+  cue tightens the radius in both spellings)
+- the full `apps/ai` suite -> **992 passed** with the database, **952 passed / 40 skipped** without it
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 52
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** A green test can still measure nothing, when the thing it names was
+canonicalised under it. §415's fix was right - one spelling per word, the user's text rewritten
+to meet it - and it silently removed the evidence for §427's claim, because the two units read
+the same list for different purposes. The general form: **when a test names two things, the
+source it reads them from must hold two things.** Reading both spellings out of a list that
+holds one is the same mistake as reading a case file's expectation out of the case file - the
+assertion is about itself.
