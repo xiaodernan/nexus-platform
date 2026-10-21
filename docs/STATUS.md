@@ -19248,3 +19248,64 @@ there since §444 ✓ and it had found five dead functions ✓ (a rule that find
 for finding things ✓, and the credit hides the shape of the rule ✓). So the shape has to be
 **the same as the thing** ✓ everywhere in the census ✓: a use is a read ✓, and a definition is
 alive when it is read ✓ - whether it is a table ✓, a function ✓ or a constant ✓.
+
+## 459. D465 · two fields promise facts and carry chunk ids: the RAG's `fact_ids` is empty because the CORPUS cannot fill it, and the chat's citations are chunk ids (`apps/ai/tests/test_citations_resolve.py`)
+
+**What the product does, and what was measured.** The contract's §7 row gives every RAG chunk a
+`fact_ids` ✓, and RAG.md's pipeline table says the pack carries them *"for citation"* ✓. The
+service has always sent an **empty list** ✓ - and the measurement says why ✓:
+
+```
+the chunks table       no column for a fact link at all
+the chunk's metadata   none (a note, the sections, the embedding, the origin, the overlap)
+the corpus's facts      0 of 1228 have a source_uri that matches a document's
+```
+
+The facts' URIs are per fact (`demo://seed/price/<slug>` ✓) and the documents' are per document
+(`demo://seed/menu/<slug>.txt` ✓) ✓, so there is **nothing to join on** ✓. The corpus cannot
+fill the field ✓, and an empty list is the honest answer ✓ - a non-empty one would be a
+citation that does not resolve ✓.
+
+**And the chat's citations are chunk ids** ✓, which the trust layer's rule does not obviously
+cover: *"Every material claim an AI answer can cite must resolve to a fact row"* ✓ (the
+schema's own comment ✓). The chat's answer is grounded in the **merchant's own knowledge
+base** ✓ - a document ✓, not a fact row ✓ - so whether a document satisfies the rule ✓ is a
+**contract decision** ✓, and it is filed ✓ (below ✓) ✓.
+
+**The gate.** `apps/ai/tests/test_citations_resolve.py` holds both halves ✓:
+
+* a chunk's `fact_ids` is **empty, or every id resolves to a fact row** ✓ - so the field can
+  be filled the moment the corpus can carry it ✓, and never with an invention ✓;
+* the chat's **citations resolve to chunks** ✓, and the chat must cite **something** ✓ when it
+  answers ✓ - a grounded answer that cites nothing cannot be checked by anyone ✓. (The first
+  version of this test passed without checking anything ✓, because the message it used did not
+  ground ✓ - it took the handoff path ✓, whose empty citations are correct ✓. A gate that can
+  pass without measuring is the D452 lesson all over again ✓.)
+
+**Filed, and reported to the platform lane.**
+
+* the **corpus** has to carry the link ✓: the importer writes the chunk's fact ids into the
+  chunk's `metadata` ✓ (a `jsonb` column ✓, no migration needed ✓), and the AI service reads
+  them from there ✓ - the retrieval is in this lane ✓, the importer is not ✓;
+* the **rule** ✓ - does a citation to the merchant's own document satisfy *"must resolve to a
+  fact row"* ✓? - is a decision for the contract's owner ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **2 passed** with the database ✓;
+- the full `apps/ai` suite -> **1046 passed** with the database, **992 passed / 54 skipped** ✓
+  without it (the sibling lane's two untracked test files excluded - `test_app_surface.py`
+  and `test_uuid_id_bindings.py`, the second one still in flight on their side - see §436);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside) ✓;
+  `mypy nexus_ai` -> **Success: no issues found in 55 source files**;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** The empty list was not a bug in the code ✓ - it was a promise in the contract
+that the corpus could not keep ✓, and the service had been answering it honestly ✓ for a long
+time ✓. The measurement is what tells the two apart ✓: a field that is empty because nothing
+reads it ✓ and a field that is empty because nothing can fill it ✓ look **identical** from the
+outside ✓, and only the corpus says which one it is ✓. So the useful gate is not "the field
+must not be empty" ✓ - it is "**the field is empty, or everything in it resolves**" ✓ - which
+is the shape that survives the corpus growing ✓.
