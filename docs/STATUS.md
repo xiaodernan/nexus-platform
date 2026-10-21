@@ -19068,3 +19068,59 @@ drifts" ✓) is the same lesson with a different word ✓: **the copy is the def
 gate now READS the list ✓ and the two names that are genuinely off-roster are DECLARED with
 their reason ✓, instead of the roster quietly growing a twin ✓. And a correction belongs in
 the ledger ✓: §426's *"the contract's roster name"* was wrong ✓, and this entry says so ✓.
+
+## 456. D462 · the documents named ELEVEN modules that exist nowhere - and the gate that was supposed to catch it could not see a bare module name (`apps/ai/tests/test_doc_paths_are_real.py`, `docs/RAG.md`, `docs/TRACEABILITY.md`, `docs/AI.md`)
+
+**What the product does, and what was measured.** §435 (D441) made the documents' paths real ✓ -
+it rewrote fifteen living documents that pointed at `apps/ai/app/...` ✓ - and it left a gate ✓
+whose rule was *"every path that carries a directory"* ✓. So a **bare module name** - the kind
+that names a file next to the prose ✓ - was never checked at all ✓, and the census of every
+backticked module name in the living documents found **eleven that exist nowhere** ✓:
+
+```
+apps/ai/nexus_ai/eval/gates.py        AI.md            - the file is eval/cli.py
+apps/ai/nexus_ai/nlu/intent.py        TRACEABILITY.md  - the file is nlu/understand.py
+rag/envelope.py                       TRACEABILITY.md  - the file is api/errors.py
+chunk.py  embed.py  ingest.py         RAG.md           - the platform's importer
+pack.py  retrieve.py  rerank.py       RAG.md           - the RAG pipeline's table
+apps/ai/nexus_ai/orchestrator/planner.py        AGENTS.md, AGENT_CONTRACT.md - not built
+apps/ai/nexus_ai/tools/registry.py              AGENTS.md, AGENT_CONTRACT.md, TRACEABILITY.md
+```
+
+The first three are **renames** ✓ - the file moved and the name stayed behind ✓ (the gates
+moved into the CLI ✓, the intent engine is `nlu/understand.py` ✓, the error envelope is
+`api/errors.py` ✓ since §432 ✓) ✓ - and a reader who follows any of them finds nothing ✓.
+
+**The fix.** The six that name code in this repository now point at it ✓ (the RAG pipeline's
+**Retrieve** at `apps/ai/nexus_ai/search/sql.py` ✓, **Rerank** at the router's `rerank` task
+class ✓, **Pack** at `apps/ai/nexus_ai/api/routes_rag.py` ✓, and the injection scan's pointer ✓),
+and the three renames are corrected ✓. The five that are **promises** ✓ - the platform's
+importer ✓ and the orchestrator ✓ and the tool registry ✓ - are **declared** in the gate with
+what each one is ✓, because a promise that is not declared is a drift waiting to be
+discovered ✓.
+
+**The gate.** The D441 gate now also checks the **module names** ✓: a backticked `*.py` in a
+living document must exist in the repository ✓, or be declared ✓ with its reason ✓. And the
+repository's own noise is excluded ✓ (the virtualenv's `sql.py` ✓ and `node_modules` ✓ are not
+facts about this repository ✓ - the old scan would have found the virtualenv's copy and
+believed a stale path was fine ✓).
+
+**Verified, not claimed.**
+
+- the gate -> **2 passed** ✓, and it was **proved to fail** ✓: a module name that does not
+  exist, written into a document on purpose ✓, made it fail with *"these documents name a
+  module that exists nowhere in the repository"* ✓ - the probe was put back ✓;
+- the full `apps/ai` suite -> **1037 passed** with the database, **985 passed / 52 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436);
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 55
+  source files**;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** A rule that is written as *"every path that carries a directory"* is a
+rule about a **shape**, not about the thing ✓ - and the shape is what the gate checked ✓ while
+the thing (a module a reader opens) went unchecked ✓. The general form ✓: **a census is only
+as wide as the shape it recognises ✓**, so the fix is not "add more paths" ✓ but "name the
+thing the reader follows" ✓ - here, a module name ✓ - and then let the rule be about that ✓.
+The same shape hid three renames ✓ and eight promises ✓ behind one green gate ✓.

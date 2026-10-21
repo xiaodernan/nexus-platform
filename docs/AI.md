@@ -110,7 +110,7 @@ relevance nDCG, **hallucination rate**, p50/p95 latency, cost, human-interventio
 - p95 `/ai/v1/search` **< 250ms** warm (first stream event <1.2s, full answer <6s, [`API_CONTRACT.md`](API_CONTRACT.md) §11)
 - **no regression > 3pp** on task success
 
-`apps/ai/nexus_ai/eval/gates.py` is the CI enforcement point; wired by [TESTING.md](TESTING.md) and [ROADMAP.md](ROADMAP.md) M3+.
+`apps/ai/nexus_ai/eval/cli.py` is the CI enforcement point; wired by [TESTING.md](TESTING.md) and [ROADMAP.md](ROADMAP.md) M3+.
 
 ## Open questions / risks
 - **Merge-rule drift vs. mock provider:** deterministic merges are testable, but real-provider `太贵了 → budget*0.7` is a

@@ -22,9 +22,9 @@ Concrete parameters (implement exactly, they are the tuned defaults):
 | Chunk | `chunk.py` | **semantic, 240–400 tokens, 12% overlap, section-aware** (`section` column carries the heading) |
 | Embed | `embed.py` | embedding model, dim 1024, **batched**, cached by content hash; sets `embed_model`, `embedded_at` |
 | Store | `embed.py` | `chunks.embedding` (HNSW cosine) + `search_tsv` (trigger, [DATABASE.md](DATABASE.md) §8) + trgm |
-| Retrieve | `retrieve.py` | **tsvector ∪ pgvector cosine**, filtered by `tenant_id` (+`merchant_id` on merchant path) **before** ranking |
-| Rerank | `rerank.py` | cross-encoder or LLM listwise on **top-40 only** ([`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §9) |
-| Pack | `pack.py` | dedupe, build a context pack carrying `document_id, chunk_id, source_uri, fact_ids` for citation |
+| Retrieve | `apps/ai/nexus_ai/search/sql.py` | **tsvector ∪ pgvector cosine**, filtered by `tenant_id` (+`merchant_id` on merchant path) **before** ranking |
+| Rerank | `apps/ai/nexus_ai/models/router.py` | cross-encoder or LLM listwise on **top-40 only** ([`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §9) |
+| Pack | `apps/ai/nexus_ai/api/routes_rag.py` | dedupe, build a context pack carrying `document_id, chunk_id, source_uri, fact_ids` for citation |
 | Generate | (LLM via router) | answer must cite the pack; **no answer without retrieval** |
 
 Ownership of retrieval filter: the tenant filter runs *before* similarity scoring (chunks denormalise `merchant_id`/
@@ -52,7 +52,8 @@ base/reindex`. Ingest must be an **async worker**, never inline on a request pat
 ## 6. Prompt-injection envelope (§51, [`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §7/§8)
 Chunk text is **untrusted content**: it is wrapped in a fixed data-delimiter envelope before reaching the LLM;
 instruction-like text inside it is ignored and logged as a `prompt_injection` signal. Tool names may only come from the
-registry, never from retrieved text ([AGENTS.md](AGENTS.md) §5). This is enforced in `pack.py`/generation, and is a
+registry, never from retrieved text ([AGENTS.md](AGENTS.md) §5). This is enforced in `apps/ai/nexus_ai/api/routes_rag.py` (the scan) and in the
+generation step, and is a
 required test in `safety_injection_v1`.
 
 ## 7. Evaluation

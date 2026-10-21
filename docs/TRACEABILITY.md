@@ -21,7 +21,7 @@ Verification kinds: `unit` `integration` `api` `e2e` `visual` `eval` `manual-rev
 
 | § | Requirement | Owner artifact | Verify | Status |
 |---|---|---|---|---|
-| 10 | Query understanding → Intent (uncertain fields allowed) | `apps/ai/nexus_ai/nlu/intent.py`, `AGENT_CONTRACT` §7.1 | eval `intent_v1` | building |
+| 10 | Query understanding → Intent (uncertain fields allowed) | `apps/ai/nexus_ai/nlu/understand.py`, `AGENT_CONTRACT` §7.1 | eval `intent_v1` | building |
 | 11-14 | Multi-agent roster + orchestrator (dynamic plan, not blind tool calls) | `apps/ai/nexus_ai/orchestrator/{planner,executor}.py`, `agents/*` | unit + eval `tool_selection_v1` | building |
 | 15-17 | Tool registry: schema/validation/timeout/retry/logging/auth/errors | `apps/ai/nexus_ai/tools/registry.py` | unit + `GET /ai/v1/tools` | building |
 | 18-20 | RAG pipeline (parse→chunk→embed→hybrid→rerank→pack→LLM) | `apps/ai/nexus_ai/rag/*` | eval `rag_faithfulness_v1` | building |
@@ -64,7 +64,7 @@ Verification kinds: `unit` `integration` `api` `e2e` `visual` `eval` `manual-rev
 |---|---|---|---|---|
 | 55-57 | Multi-tenant + RBAC incl. AI-agent permissions | `tenants/merchant_users/permission_grants`, ArchUnit + interceptor | unit (tenant isolation) | building |
 | 58 | Security: auth, rate limit, validation, SQLi/XSS/CSRF/SSRF, secrets, audit | `platform/filters`, `audit_logs`, CSP headers | api + security tests | building |
-| 59-60 | Prompt-injection defense + tool-call authorization chain | `AGENT_CONTRACT` §8, `rag/envelope.py` | eval `safety_injection_v1` | building |
+| 59-60 | Prompt-injection defense + tool-call authorization chain | `AGENT_CONTRACT` §8, `apps/ai/nexus_ai/api/errors.py` | eval `safety_injection_v1` | building |
 | 61-63 | Trust & fraud, review system, review intelligence with evidence | `trust_signals`, `reviews`, `review_summaries` | unit + api | building |
 | 64-66 | Merchant analytics, AI analytics agent, event tracking schema | `v_merchant_funnel`, `agents/analytics`, `events` | integration | building |
 | 67-71 | Growth engine, viral loop, merchant/consumer referral, creators | `referrals`, `collections`, `growth` module | api + e2e | todo |
