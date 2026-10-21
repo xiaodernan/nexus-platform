@@ -267,7 +267,8 @@ PLAN_CUES = ["行程", "一日", "半日", "itinerary", "plan", "路線", "路�
 DISCOVER_CUES = ["搵", "找", "推荐", "推薦", "建議", "建议", "find", "recommend", "suggest",
                  "有冇", "有無", "where", "边度", "哪裡", "哪里", "any", "place", "地方", "去邊"]
 
-ASSUMED_TOKENS = {"the", "a", "an", "for", "to", "of", "in", "at", "i", "want", "me", "please"}
+# D449: the assumed-token set used to stand here, and nothing read it. The tokeniser
+# (nlu/tokens.py) is what strips the filler, and it carries its own list.
 
 
 def detect_language(text: str) -> str:

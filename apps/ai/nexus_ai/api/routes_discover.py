@@ -170,8 +170,10 @@ class CompareRequest(_Strict):
     geo: Optional[GeoPoint] = None
 
 
-_COMPARE_ATTRIBUTES = ("price", "rating", "category", "district", "open_hours",
-                       "availability")
+# D449: the attribute list that used to stand here was dead - nothing read it - and it
+# had gone out of date: it named an `open_hours` row (the grid's row is `open_state`, §422)
+# and an `availability` row the grid does not have. The grid below builds its rows
+# explicitly, and the ledger of what it builds is the test, not a list nobody reads.
 
 
 async def _compare_rows(deps: Deps, subject_ids: list[str], tenant: str,

@@ -35,7 +35,8 @@ NEARER_CUES = ("近啲", "近一点", "近一啲", "太遠", "太远", "far", "n
                "near by", "行少两步", "foot", "少啲路")
 FARTHER_CUES = ("遠啲", "远一点", "远啲", "扩大范围", "擴大範圍", "farther", "further",
                 "wider", "埋遠啲", "更大範圍")
-PARTY_CUES = ("我哋", "我们")
+# D449: the party cue list used to stand here, and nothing read it - the
+# merge reads the party size with a regex, like the first turn does (D445).
 QUIET_CUES = ("安靜", "安静", "静啲", "静一啲", "quiet", "唔想太嘈", "不想太吵")
 LOUDP_CUES = ("熱鬧", "热闹", "lively")
 RESET_CUES = ("重新", "清空", "reset", "start over", "唔係", "不是呢個", "不是这个")

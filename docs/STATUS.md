@@ -18340,3 +18340,51 @@ were broken, and they were broken in the way that fails quietly - a best-effort 
 reports nothing when the database says no. The gate now walks the stream as well, and the
 recorder no longer leaves the order to chance: the ledger's row and the run it names are one
 write, in one order, from one place.
+
+## 443. D449 · five tables the product carried and read by nothing - and one of them had gone out of date and was WRONG (`apps/ai/nexus_ai/api/routes_discover.py`, `apps/ai/nexus_ai/contract.py`, `apps/ai/tests/test_no_dead_constants.py`)
+
+**What the product does, and what was measured.** A census of the package's definitions - the
+same sweep that found §437's unused row builder - found five module-level constants that
+**nothing read**:
+
+```
+api/routes_discover.py   _COMPARE_ATTRIBUTES   the comparison grid's attribute list
+contract.py              EVENT_NAMES            the canonical event names (§10)
+nlu/lexicon.py           ASSUMED_TOKENS         the English filler words
+nlu/state_merger.py      PARTY_CUES             the "we" cues
+trust/verification.py    _KIND_ORDER            the verification's kind order
+```
+
+**And one of them was wrong.** `_COMPARE_ATTRIBUTES` named the rows the comparison grid
+carries - and it had gone out of date: it said `open_hours` (the grid's row is **`open_state`**,
+since §422) and `availability` (a row the grid does not have). The grid itself builds its
+rows explicitly, so the list was a comment with a name - and the comment was the one that
+nobody updated, exactly as one expects of a comment nobody reads.
+
+**The fix.** The five are gone, each with a note saying where the truth now lives (the grid
+builds its rows; AGENT_CONTRACT §10 is the one place the event names live; the tokeniser
+carries the filler list; the merge reads the party size with a regex, like the first turn
+does - §439; the verification walks its kinds in its own order).
+
+**The gate - the class, not the five.**
+`apps/ai/tests/test_no_dead_constants.py` requires that **every module-level constant in the
+package is read by the package**. A constant that is written and never read is either a
+promise to wire something up or a leftover, and both are the writer's business - not the next
+reader's.
+
+**Verified, not claimed.**
+
+- the gate -> **1 passed**; the full `apps/ai` suite -> **1019 passed** with the database,
+  **968 passed / 51 skipped** without it (the sibling lane's untracked
+  `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 54
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** The five were harmless and one was wrong, and that is the point: a dead
+list is a place where the product's description of itself rots, and it rots *quietly*, because
+nothing reads it and nothing fails. The list that says what the comparison grid carries is
+the list a reader would trust - so it had better be the code that builds the grid, and the
+gate that says the code builds it.

@@ -347,12 +347,9 @@ class FeedbackRequest(_Strict):
     channel: str = "web"
 
 
-# AGENT_CONTRACT §10 — single event shape, one place.
-EVENT_NAMES = (
-    "search", "view", "click", "favorite", "compare", "reserve", "cart_add", "checkout",
-    "purchase", "cancel", "review", "share", "feedback", "ai_answer", "handoff",
-    "campaign_publish", "agent_run",
-)
+# D449: the list of the canonical event names used to stand here, and nothing read it.
+# AGENT_CONTRACT §10 is the one place those names live - a second copy here was a
+# promise about a table this service writes one row of (`search`).
 
 
 class Event(_Strict):

@@ -60,8 +60,8 @@ QUOTED_ENTITY_RES: tuple[re.Pattern[str], ...] = (
     re.compile(r"《([^》\n]{2,60})》"),
 )
 
-_KIND_ORDER = (MONEY_KIND, TIME_KIND, DISTANCE_KIND, MINUTES_KIND, RATING_KIND,
-               PERCENT_KIND, COUNT_KIND)
+# D449: the kind order used to stand here, and nothing read it. The verification walks
+# the kinds it knows about in its own order.
 
 #: how far a copy value may sit from a grounded value and still be the same fact
 TOLERANCE: dict[str, tuple[float, float]] = {
