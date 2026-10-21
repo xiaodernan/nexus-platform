@@ -17830,3 +17830,60 @@ computes it (`IntentResult.follow_up_question` ✓) and the stream yields the in
 results and the summary - the question is dropped ✗. Delivering it needs a frame the
 documented SSE list does not have (`API_CONTRACT` §7's six frames), so that is a contract
 decision, not a silent change.
+
+## 434. D440 · a run said when it started and never when it finished: the timeline's documented shape promises `finished_at` (`apps/ai/nexus_ai/api/runs.py`, `apps/ai/tests/test_live_run_timestamps.py`)
+
+**What the product does, and what was measured.** API_CONTRACT §7's conversation-timeline row
+names the fields each run carries, and two of them are the ends of the run:
+
+> Each run is its `agent_runs` row (`agent_run_id, agent, model, provider, status, plan,
+> input_summary, output_summary, tool_calls, retrieval, fact_ids, tokens, cost_usd,
+> latency_ms, error, fallback_used, started_at, finished_at, parent_run_id`)
+
+Measured on the seeded live plane before this unit:
+
+```
+the agent_runs table: 25 columns, 446 rows
+   started_at    null in    0/446
+   finished_at   null in  446/446
+```
+
+**The defect.** `finished_at` has no default, and no caller ever passed one: the run's clock
+was a monotonic millisecond counter (`latency_ms` ✓) and the wall clock was never stamped, so
+every run on the plane - every search, every intent extraction, every chat turn - carried a
+NULL end. The `started_at` was there, but only because the recorder back-solves it from the
+measured latency (a caller passing NULL had overridden the column default and every insert
+had been rejected). So one end of every run was invented and the other was missing.
+
+**The fix - the write IS the finish.**
+
+* the recorder stamps `finished_at` when the caller has none, and back-solves `started_at`
+  from the measured latency, so the two ends of the in-process run agree with each other;
+* the SQL stamps `finished_at` itself (`COALESCE($22::timestamptz, now())`), which keeps the
+  durable row and its back-solved start exactly `latency_ms` apart - the same clock, not two.
+
+**Verified, not claimed.**
+
+- the live gate -> **3 passed**: a run carries both ends, the two ends agree with the latency
+  the run measured (within 50ms), and the in-process ledger carries the end too - the offline
+  timeline would otherwise show runs that never finished
+- the live plane, after the fix -> `finished_at` null in **624 of 686** rows: the 62 rows
+  written after the fix carry it, and the 624 older rows keep their NULL - the ledger's
+  history is not rewritten to look better than it was
+- the full `apps/ai` suite -> **1005 passed** with the database, **958 passed / 47 skipped**
+  without it
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 53
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** This is the same defect §431 (D437) found in the cost ledger, one column
+over: **a column the product's own documented shape promises, and nothing ever wrote.** The
+column was there, the schema was there, the timeline read it - and because a NULL end is a
+legal value, nothing failed and nothing looked wrong. The run looked complete in the
+observability surface: an agent, a status, a plan, a latency. It just never ended.
+
+The residual is filed: `parent_run_id` is NULL in every row too, and that one is honest - the
+product runs one task per turn and has no sub-agent runs to link - but the roster's
+parent/child tree (§8's "sub-agents link via parent_run_id") is not there yet.

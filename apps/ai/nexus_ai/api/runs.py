@@ -17,7 +17,7 @@ import contextvars
 import json
 import logging
 from collections import deque
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import uuid4
 
@@ -44,6 +44,26 @@ def now_iso() -> str:
 
 
 # --------------------------------------------------------------------------- ledger
+def stamp_run(run: dict[str, Any]) -> dict[str, Any]:
+    """D440: a run that says when it started and never when it finished is half a run.
+
+    The `agent_runs` row carries `started_at` and `finished_at`, and API_CONTRACT §7's
+    conversation-timeline row lists both - but every one of the 446 runs on the seeded
+    plane had `finished_at` NULL, because no caller ever passed one and the column has no
+    default. The write IS the finish, so the recorder stamps it, and it back-solves the
+    start from the measured latency so the pair is internally consistent.
+    """
+    stamped = dict(run)
+    if not stamped.get("finished_at"):
+        finished = datetime.now(timezone.utc)
+        stamped["finished_at"] = finished.isoformat().replace("+00:00", "Z")
+        if not stamped.get("started_at"):
+            latency = int(stamped.get("latency_ms") or 0)
+            started = finished - timedelta(milliseconds=latency)
+            stamped["started_at"] = started.isoformat().replace("+00:00", "Z")
+    return stamped
+
+
 class RunLedger:
     """Bounded in-process mirror of recent `agent_runs`, keyed by conversation."""
 
@@ -51,7 +71,7 @@ class RunLedger:
         self._runs: deque[dict[str, Any]] = deque(maxlen=capacity)
 
     def add(self, run: dict[str, Any]) -> None:
-        self._runs.append(run)
+        self._runs.append(stamp_run(run))
 
     def get_all(self) -> list[dict[str, Any]]:
         """Every run in the ring, oldest first (D432: the census reads this)."""
@@ -126,7 +146,11 @@ VALUES (
   -- NOT NULL, so an explicit NULL overrode the column default and every insert was rejected.
   -- Back-solving it from the measured latency keeps the ledger honest instead of lossy.
   COALESCE($21::timestamptz, now() - make_interval(secs => $19::int / 1000.0)),
-  $22::timestamptz)
+  -- D440: the write IS the finish. `finished_at` had no default and no caller ever passed
+  -- one, so every run on the plane carried a NULL end - and the documented timeline shape
+  -- lists it.
+  COALESCE($22::timestamptz, now())
+)
 """
 
     def _uuid_or_none(v: Any) -> str | None:
