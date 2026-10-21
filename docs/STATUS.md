@@ -18886,3 +18886,63 @@ that is written twice is a shape that drifts, and what it drifts in is whatever 
 compares: here, the code that tells a client whether trying again is worth it ✓. The fix is
 not "be careful" ✓ - it is one builder ✓, and a gate that walks both surfaces ✓ so that a
 second copy cannot appear without failing the build ✓.
+
+## 453. D459 · the COMPARISON was the seventh surface the degraded-header census never reached: its request was invalid, so it was never measured (`apps/ai/nexus_ai/api/routes_discover.py`, `apps/ai/tests/test_degraded_header.py`)
+
+**What the product does, and what was measured.** §445 (D451) made the degraded flag travel in
+the body AND the `X-Nexus-Degraded` header ✓; §446 (D452) widened the fix to the three
+endpoints the first census missed ✓. The census was a **hand-kept list of paths**, and the
+list was wrong in a way nobody could see - because the endpoint it missed was never even
+asked:
+
+```
+/ai/v1/compare -> 200  the header: None  the body's degraded: False   <- no header
+```
+
+The comparison needs **at least two subjects** (that is its request model's own rule ✓) and
+the census's probe sent **one** ✓ - so the request was rejected with a 422 ✓, the endpoint
+answered nothing, and the census counted a surface it had never reached ✓. A degraded
+comparison looked exactly like a normal one ✓.
+
+**The fix.** The comparison's answer goes through the one builder ✓, so the flag travels in
+the body and the header ✓ like every other surface ✓.
+
+**The gate - and it now CENSORS instead of listing.** `apps/ai/tests/test_degraded_header.py`
+walks the application's **own OpenAPI document** (the surface a client can see ✓), asks
+**every** route ✓, and requires every route that answers with a `degraded` field to be
+covered by the table and to carry the header ✓. A route that answers with the field and is
+not in the table fails the gate ✓ - which is exactly how the comparison is caught now ✓
+rather than by somebody remembering it next time ✓.
+
+**And the gate measures the ROUTE's header, not the middleware's.** The middleware writes the
+header too when the **backend** is degraded (the offline demo answers every question from
+the demo catalogue ✓), and that would **mask** a route that says nothing ✓ - so the gate
+switches the backend's signal off ✓ and measures what the route says ✓, and measures the
+backend's own promise on its own ✓ (the health endpoint never sets the header ✓, so it is
+the clean probe ✓). Without that split the gate would pass offline **whatever the route
+did** ✓ and fail only on the live plane ✓ - a gate that is green for the wrong reason ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **4 passed** with the database and **4 passed** without it ✓;
+- and it was **proved to fail twice over** ✓: a frame hand-built on purpose ✓ (the compare's
+  bare `JSONResponse` ✓) made it fail with *"answered with degraded=False and NO
+  X-Nexus-Degraded header"* ✓, and removing the comparison from the table made the census
+  fail with *"these routes answer with a `degraded` field and are not covered"* ✓ - both
+  probes were put back ✓;
+- the full `apps/ai` suite -> **1031 passed** with the database, **980 passed / 52 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436);
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 55
+  source files**;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** The gate that was supposed to cover this surface was not wrong - it was
+**narrow** ✓, and narrowness is invisible from the inside ✓: every path it listed was
+covered ✓, so it was green ✓. The two ways a census lies are both about what it does NOT
+ask ✓ - a path nobody remembered ✓ and a request that was answered with a 422 ✓ - and the
+second one is the more dangerous ✓, because a request that is rejected is not a failure
+that shows up anywhere ✓. So a census has to ask the surface **the way a client would** ✓
+(and the comparison needs two subjects ✓) and then it has to notice that a 422 is not an
+answer ✓.

@@ -377,5 +377,9 @@ async def compare(request: Request, body: CompareRequest):
         return errors.error_response("ai_unavailable", str(exc),
                                       request_id=runs.current_request_id() or None,
                                       status=503)
-    return JSONResponse({"rows": rows, "subjects": ids, "degraded": bool(meta["degraded"]),
-                         "source": meta["source"]})
+    # D459: the degraded flag travels in the body AND the header (OBSERVABILITY.md §2).
+    # The D452 census never reached this endpoint - the probe's request was invalid, so
+    # it was never measured - and a degraded comparison looked like a normal one.
+    return degraded_json({"rows": rows, "subjects": ids,
+                          "degraded": bool(meta["degraded"]),
+                          "source": meta["source"]})
