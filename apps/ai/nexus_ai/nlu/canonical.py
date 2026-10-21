@@ -39,6 +39,8 @@ this table changes, so that can only add matches).
 
 from __future__ import annotations
 
+from typing import Any
+
 #: simplified -> the standard spelling. The characters are written as escapes on purpose:
 #: D409's lesson was that a writer's memory of a CJK code point is not a reference.
 CANONICAL_FORMS: dict[str, str] = {
@@ -281,4 +283,23 @@ def canonical(text: str) -> str:
     return "".join(CANONICAL_FORMS.get(ch, ch) for ch in text)
 
 
-__all__ = ["CANONICAL_FORMS", "canonical"]
+def canonical_node(node: Any) -> Any:
+    """Canonicalise every string inside a table, keeping its structure.
+
+    The vocabulary's tables are held in the canonical spelling (D435), and the structure of
+    a table is not changed by the spelling of its contents: a list that held the same cue
+    twice still holds it twice, so every derived list and every test that compares them
+    still compares the same shape.
+    """
+    if isinstance(node, str):
+        return canonical(node)
+    if isinstance(node, list):
+        return [canonical_node(item) for item in node]
+    if isinstance(node, tuple):
+        return tuple(canonical_node(item) for item in node)
+    if isinstance(node, dict):
+        return {canonical_node(k): canonical_node(v) for k, v in node.items()}
+    return node
+
+
+__all__ = ["CANONICAL_FORMS", "canonical", "canonical_node"]

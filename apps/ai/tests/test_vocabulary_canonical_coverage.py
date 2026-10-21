@@ -29,17 +29,21 @@ from __future__ import annotations
 
 from nexus_ai.nlu import lexicon as L
 from nexus_ai.nlu import numerals as N
+from nexus_ai.nlu import state_merger as M
+from nexus_ai.nlu import timeparse as T
 from nexus_ai.nlu.canonical import CANONICAL_FORMS, canonical
 
 #: The tables that hold the Simplified/Traditional fact ON PURPOSE: the marker sets and
 #: the pairs they are built from. They are the detection's raw material - the detection
 #: reads the text as the user wrote it, so it needs the Simplified spelling itself.
+#:
+#: D446: the canonical table itself, imported into the lexicon's namespace: it IS the map.
 BY_DESIGN = frozenset({
-    "SIMPLIFIED_MARKERS", "TRADITIONAL_MARKERS", "_TRAD_SIMP_PAIRS",
+    "lexicon.SIMPLIFIED_MARKERS", "SIMPLIFIED_MARKERS",
+    "lexicon.TRADITIONAL_MARKERS", "TRADITIONAL_MARKERS",
+    "lexicon._TRAD_SIMP_PAIRS", "_TRAD_SIMP_PAIRS",
+    "lexicon.CANONICAL_FORMS", "CANONICAL_FORMS",
 })
-
-#: The canonical table itself, imported into the lexicon's namespace: it IS the map.
-THE_MAP = frozenset({"CANONICAL_FORMS"})
 
 
 def _chinese(value: object) -> set[str]:
@@ -47,40 +51,47 @@ def _chinese(value: object) -> set[str]:
 
 
 def _vocabulary_tables() -> dict[str, object]:
-    """The lexicon's tables - the ones whose spelling decides what the product matches."""
+    """Every vocabulary table - the ones whose spelling decides what the product matches.
+
+    D446: the TIME PARSER's tables were not in this census, and they are vocabulary too -
+    the query is canonicalised before it reaches them, so a Simplified entry in a table
+    that is not canonicalised can never match, and the Traditional spelling the table does
+    not carry is not read at all (that is how the Cantonese 禮拜 was never understood).
+    """
     tables: dict[str, object] = {}
-    for name in dir(L):
-        if name.startswith("__"):
-            continue
-        value = getattr(L, name)
-        if not isinstance(value, (str, list, tuple, dict, set, frozenset)):
-            continue
-        # a vocabulary table is NAMED in capitals; the module also leaks the loop
-        # variables of its own comprehensions (_row, _form, _forms), and those are not
-        # tables the product matches against.
-        if not name.lstrip("_").isupper():
-            continue
-        if not _chinese(value):
-            continue
-        tables[name] = value
+    for module, label in ((L, "lexicon"), (T, "timeparse"), (N, "numerals")):
+        for name in dir(module):
+            if name.startswith("__"):
+                continue
+            value = getattr(module, name)
+            if not isinstance(value, (str, list, tuple, dict, set, frozenset)):
+                continue
+            # a vocabulary table is NAMED in capitals; the module also leaks the loop
+            # variables of its own comprehensions (_row, _form, _forms), and those are not
+            # tables the product matches against.
+            if not name.lstrip("_").isupper():
+                continue
+            if not _chinese(value):
+                continue
+            tables[f"{label}.{name}"] = value
     return tables
 
 
+def _canonicalised_names() -> set[str]:
+    """The tables that are canonicalised at import, by whichever module owns them."""
+    names = {f"lexicon.{name}" for name in L._CANONICALISED_TABLES}
+    names |= {f"timeparse.{name}" for name in T._CANONICALISED_TABLES}
+    # the state merger's cue lists are canonicalised by their `*_CUES` name
+    names |= {f"merger.{name}" for name in dir(M)
+              if name.endswith("_CUES") and isinstance(getattr(M, name), tuple)}
+    return names
+
+
 def test_every_vocabulary_table_is_canonicalised_or_already_canonical():
-    listed = set(L._CANONICALISED_TABLES)
+    listed = _canonicalised_names()
     offenders: dict[str, list[str]] = {}
-    # D445: the numeral table is a vocabulary table too - the numbers a user writes are
-    # characters the product matches against, and the Simplified 两 never reaches a matcher
-    # (the text is canonicalised first), so the table holds the Traditional 兩.
-    tables = dict(_vocabulary_tables())
-    for name in dir(N):
-        if name.startswith("__"):
-            continue
-        value = getattr(N, name)
-        if isinstance(value, (str, list, tuple, dict, set, frozenset)) and _chinese(value):
-            tables[f"numerals.{name}"] = value
-    for name, value in tables.items():
-        if name in BY_DESIGN or name in THE_MAP:
+    for name, value in _vocabulary_tables().items():
+        if name in BY_DESIGN:
             continue
         if name in listed:
             continue

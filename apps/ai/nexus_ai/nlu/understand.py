@@ -71,7 +71,10 @@ PARTY_RE = re.compile(
 #: The characters a Chinese numeral may precede when it is a PARTY SIZE (D445: 三個人 is
 #: three people - the product read the digits and not the numerals, so a user who wrote a
 #: number the way they speak got no party size at all).
-_PARTY_MARKERS = "個个位人"
+#:
+#: D446: the CANONICAL spellings only - the text is canonicalised before it is read, so a
+#: Simplified marker here could never match. (個 U+500B, 位 U+4F4D, 人 U+4EBA.)
+_PARTY_MARKERS = "個位人"
 
 
 def party_text(text: str) -> str:

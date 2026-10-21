@@ -18180,3 +18180,67 @@ the numerals appear in its own data - the weekday - and the tests all wrote Arab
 gate written in the product's own spelling would have caught it: the D409 lesson (a writer's
 memory of a code point is not a reference) has a second half - **a writer's habit is not a
 reference either**, and the habits of the people who write the tests are the digits.
+
+## 440. D446 · the Cantonese 禮拜 was never read: the time parser's cue tables were not canonicalised, so their Simplified entries were dead and the Traditional spelling they did not carry was not read at all (`apps/ai/nexus_ai/nlu/timeparse.py`, `apps/ai/nexus_ai/nlu/canonical.py`, `apps/ai/tests/test_timeparse_spellings.py`)
+
+**What the product does, and what was measured.** §429 (D435) canonicalised the LEXICON's tables
+and found two of them left out; the state merger's cue lists had been canonicalised since
+§415 (D421). **The time parser's tables were in neither census** - and they are vocabulary
+too: the query is canonicalised before it reaches them, so a Simplified entry in a table that is
+not canonicalised can never match, and the Traditional spelling the table does not carry is not
+read at all.
+
+Measured on the parser, before this unit:
+
+```
+'星期三食飯'  -> range        (the plain weekday)
+'礼拜三食飯'  -> range        (the Simplified weekday - the table's entry, which the
+                              canonicalisation had already rewritten away: DEAD)
+'禮拜三食飯'  -> NOTHING      (the Cantonese weekday - the way a Hong Kong user writes
+                              "week" - and the table did not carry it)
+'週三食飯'    -> range
+'周三食飯'    -> range
+```
+
+And the tables behind it: `WEEKDAY_TOKENS` held only the Simplified 礼拜, `NEXT_WEEK_TOKENS`
+held the Simplified 來週, `OPEN_LATE_CUES` held the Simplified 還營業, `TODAY_TOKENS` the
+Simplified 现在, `PART_OF_DAY` the Simplified 間, `LATE_CUES` 過, `EARLY_CUES` 內 and
+`WEEKEND_TOKENS` 雙休 - **every one of them a dead entry**, and every one of them a spelling
+the product could not read.
+
+**The fix.**
+
+* the time parser's cue tables are canonicalised at import, like the lexicon's and the merger's -
+  one mechanism, one place (`nlu/canonical.py` grew the recursive `canonical_node` the lexicon
+  already had, so there is one implementation and not two);
+* the text is canonicalised before it is read, so the two spellings of a word meet whichever
+  way the user writes it;
+* the hour and party markers hold the canonical spellings only - a Simplified marker there
+  could never match.
+
+**The gate.** `apps/ai/tests/test_timeparse_spellings.py` reads the weekday in all five
+spellings and requires them to be the SAME day, reads 现在/现在, 聽日/明日 and 週末/周末 in both
+spellings, and checks that **every weekday token in the table** is understood. §429's census was
+extended to the time parser's tables, so the next table left out is caught.
+
+**Verified, not claimed.**
+
+- the gate -> **6 passed**; the census -> **5 passed** (the time parser's tables included)
+- the full `apps/ai` suite -> **1017 passed** with the database, **967 passed / 50 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 54
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note, and a lesson this unit paid for twice.** The lesson is the census's: **a
+check that covers some of the vocabulary is a promise about the rest of it** - §429's census
+covered the lexicon and the merger and said nothing about the time parser, and the time parser
+was wrong in the same way the lexicon had been. A census is worth exactly as much as its scope.
+
+The lesson this unit paid for twice: while writing the gate, the writer's memory of a CJK code
+point failed twice - U+908A is 邊, not 週, and U+908A is not a character the vocabulary carries.
+D409's lesson is not "write the escapes carefully"; it is **have a reference that says whether
+the character is the one you meant** - the Unicode character database, and now the product's own
+vocabulary for the words the product knows.

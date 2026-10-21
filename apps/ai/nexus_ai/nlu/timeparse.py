@@ -11,9 +11,12 @@ the tzdata package (Windows CI) and is documented in AGENT_CONTRACT §12.
 from __future__ import annotations
 
 import re
+import sys
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
+
+from nexus_ai.nlu.canonical import canonical
 
 HK_TZ = timezone(timedelta(hours=8), "Asia/Hong_Kong")
 
@@ -68,7 +71,37 @@ CLOCK_RE = re.compile(
 #: The characters a Chinese numeral may precede when it is an HOUR (D445: 九點 is 9 o'clock
 #: - the product read the weekday numerals and not the hour ones, so a user who wrote a
 #: number the way they speak got nothing).
-_HOUR_MARKERS = "點点時时"
+#:
+#: D446: the CANONICAL spellings only - the text is canonicalised before it is read, so a
+#: Simplified marker here could never match. (點 U+9EDE and 時 U+6642.)
+_HOUR_MARKERS = "點時"
+
+#: D446: the time parser's cue tables are canonicalised at import, like the lexicon's
+#: (D435) and the state merger's (D421). The query is canonicalised before it reaches a
+#: matcher, so a Simplified entry in a table that is NOT canonicalised can never match -
+#: and the Traditional spelling the table does not carry is not read at all. That is how
+#: the Cantonese 禮拜 (the Traditional spelling of 礼拜) was never understood: the table
+#: held only the Simplified 礼拜, which the canonicalisation had already rewritten away.
+_CANONICALISED_TABLES = (
+    "TODAY_TOKENS", "TONIGHT_TOKENS", "TOMORROW_TOKENS", "AFTER_TOMORROW_TOKENS",
+    "NEXT_WEEK_TOKENS", "WEEKEND_TOKENS", "WEEKDAY_TOKENS", "WEEKDAY_SUFFIX",
+    "PART_OF_DAY", "EARLY_CUES", "LATE_CUES", "OPEN_LATE_CUES",
+)
+
+
+def _canonicalise_tables() -> None:
+    """Put every cue table in the canonical spelling."""
+    from nexus_ai.nlu.canonical import canonical_node
+
+    module = sys.modules[__name__]
+    for name in _CANONICALISED_TABLES:
+        table = getattr(module, name, None)
+        if table is None:
+            continue
+        setattr(module, name, canonical_node(table))
+
+
+_canonicalise_tables()
 
 
 def clock_match(text: str) -> re.Match[str] | None:
@@ -163,9 +196,15 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
 
     Never guesses a date when none was implied: a pure "open late" cue comes back with
     `starts_at=None` and a machine-readable `quality` instead (§8 — no invented fields).
+
+    D446: the text is canonicalised before it is read, because the cue tables are (§411,
+    D435) - so the Cantonese 禮拜 and the Simplified 礼拜 are the same weekday, and the
+    Traditional spelling the table did not carry is read at last.
     """
     if not text:
         return None
+    raw_text = text
+    text = canonical(text)
     now = (now or datetime.now(HK_TZ)).astimezone(HK_TZ)
     today = now.date()
     low = text.lower()
@@ -216,17 +255,17 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
                 start = start + timedelta(days=1)
         window_end = start + timedelta(minutes=_default_duration(part_label))
         if open_late or _late_suffix(text, clock):
-            return ParsedTime("relative", None, None, _raw(text),
+            return ParsedTime("relative", None, None, _raw(raw_text),
                               quality=f"open_late_after:{hh:02d}{mm:02d}",
                               confidence=0.9)
-        return ParsedTime("explicit", start, window_end, _raw(text),
+        return ParsedTime("explicit", start, window_end, _raw(raw_text),
                           quality=part_label, confidence=0.95)
 
     # ---- 2. "open after 10" without a date: a recurring closing-time filter --
     late_hours = _bare_hour(text) if open_late else None
     if late_hours is not None:
         hh, mm = late_hours
-        return ParsedTime("relative", None, None, _raw(text),
+        return ParsedTime("relative", None, None, _raw(raw_text),
                           quality=f"open_late_after:{hh:02d}{mm:02d}", confidence=0.8)
 
     # ---- 3. day + part-of-day window --------------------------------------
@@ -240,14 +279,14 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
             if weekday is None and not (is_tomorrow or is_after_tomorrow or has_weekend):
                 start, end = rolled, end + timedelta(days=1)
         conf = 0.85 if weekday is not None else 0.7
-        return ParsedTime("range", start, end, _raw(text), quality=label, confidence=conf)
+        return ParsedTime("range", start, end, _raw(raw_text), quality=label, confidence=conf)
 
     # ---- 4. weekend span ---------------------------------------------------
     if has_weekend:
         sat = resolve_weekday(5, today)
         start = _combine(sat, 9, 0)
         end = _combine(sat + timedelta(days=2), 0, 0)
-        return ParsedTime("range", start, end, _raw(text), quality="weekend", confidence=0.75)
+        return ParsedTime("range", start, end, _raw(raw_text), quality="weekend", confidence=0.75)
 
     # ---- 5. part-of-day only ("晚上10點後" handled above; "夜晚" here) -------
     if part:
@@ -257,13 +296,13 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
         if end <= now:
             start += timedelta(days=1)
             end += timedelta(days=1)
-        return ParsedTime("range", start, end, _raw(text), quality=label, confidence=0.5)
+        return ParsedTime("range", start, end, _raw(raw_text), quality=label, confidence=0.5)
 
     # ---- 6. bare day -------------------------------------------------------
     if day is not None:
         start = _combine(day, 9, 0)
         end = _combine(day, 23, 0)
-        return ParsedTime("range", start, end, _raw(text), quality="all_day", confidence=0.6)
+        return ParsedTime("range", start, end, _raw(raw_text), quality="all_day", confidence=0.6)
 
     return None
 

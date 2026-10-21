@@ -593,21 +593,18 @@ _CANONICALISED_TABLES = (
 
 
 def _canonical_node(node):
-    """Canonicalise every string in a table, and drop the duplicates it creates."""
-    from nexus_ai.nlu.canonical import canonical
+    """Canonicalise every string in a table, and drop the duplicates it creates.
 
-    if isinstance(node, str):
-        return canonical(node)
-    if isinstance(node, list):
-        # The canonicalisation changes the SPELLING, not the structure: a list that held
-        # the same cue twice still holds it twice, so every derived list and every test
-        # that compares them still compares the same shape.
-        return [_canonical_node(item) for item in node]
-    if isinstance(node, tuple):
-        return tuple(_canonical_node(item) for item in node)
-    if isinstance(node, dict):
-        return {_canonical_node(k): _canonical_node(v) for k, v in node.items()}
-    return node
+    D446: the recursive canonicalisation lives in `nlu/canonical.py` now, because the time
+    parser needs it too (its cue tables were left out of the canonicalisation, and the
+    Cantonese 禮拜 was never read because of it).
+    """
+    from nexus_ai.nlu.canonical import canonical_node
+
+    # The canonicalisation changes the SPELLING, not the structure: a list that held the
+    # same cue twice still holds it twice, so every derived list and every test that
+    # compares them still compares the same shape.
+    return canonical_node(node)
 
 
 def _canonicalise_vocabulary() -> None:
