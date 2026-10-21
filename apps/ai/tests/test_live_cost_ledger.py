@@ -103,3 +103,31 @@ def test_the_ledger_and_the_run_agree_on_the_tokens(client):
     assert call and run, "the ledger or the run is missing"
     assert int(call[0]["prompt_tokens"]) == int(run[0]["prompt_tokens"]), (
         "the ledger and the run disagree about the tokens of the same call")
+
+
+def test_the_stream_path_leaves_its_ledger_rows_too(client):
+    # D448: the ledger row refers to the run, so the two are written in that order. The
+    # stream writes its run in the background, and the ledger row used to be written on
+    # its own schedule - so a ledger row could be written BEFORE the run it names, and
+    # the foreign key rejected it.
+    import time
+
+    with client.stream("POST", "/ai/v1/search/stream",
+                       json={"query": "拉麵", "limit": 3}) as resp:
+        assert resp.status_code == 200, resp.status_code
+        for _line in resp.iter_lines():
+            pass
+
+    rows = []
+    for _attempt in range(40):
+        rows = _fetch("SELECT agent_run_id::text, purpose FROM llm_calls "
+                      "WHERE agent_run_id IS NOT NULL")
+        if rows:
+            break
+        time.sleep(0.05)
+    assert rows, (
+        "the stream's model call left no row in the cost ledger - the ledger row and "
+        "the run it names have to be written in that order, and the stream writes its "
+        "run in the background")
+    assert all(row["agent_run_id"] for row in rows), (
+        "a ledger row names no run")

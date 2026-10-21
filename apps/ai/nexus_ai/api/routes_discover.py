@@ -72,9 +72,7 @@ async def query_understand(request: Request, body: UnderstandRequest):
         "completion_tokens": int(res.usage.get("completion_tokens") or 0),
         "cost_usd": float(res.usage.get("cost_usd") or 0.0),
         "degraded": bool(res.degraded),
-    })
-    # D437: the cost ledger's row refers to the run, so it is written after it.
-    await runs.record_llm_calls(deps, res.llm_records, run_id)
+    }, llm_records=list(res.llm_records or []))
     return JSONResponse(payload.model_dump(mode="json"))
 
 

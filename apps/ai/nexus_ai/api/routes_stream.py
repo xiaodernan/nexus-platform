@@ -213,9 +213,9 @@ async def _record_chat(deps: Any, *, run_id: str, body: Any, grounded: bool, ans
     db = deps.database()
     if db is None:
         return
-    await runs.persist_run(db, run)
-    # D437: the cost ledger's row refers to the run, so it is written after it.
-    await runs.record_llm_calls(deps, llm_records or [], run_id)
+    # D448: the cost ledger's rows travel separately, and go in with the run - the
+    # ledger row refers to it.
+    await runs.persist_run(db, run, llm_records=llm_records or [])
 
 
 def _wrap_for_summary(chunks: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], Any]:

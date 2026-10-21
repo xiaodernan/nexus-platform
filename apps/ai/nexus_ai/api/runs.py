@@ -108,26 +108,31 @@ def _uuid_array_sql(values: list[Any]) -> str:
     return ",".join(f"{v}::uuid" for v in ids)
 
 
-async def record_run(deps: Any, run: dict[str, Any]) -> None:
+async def record_run(deps: Any, run: dict[str, Any],
+                    llm_records: Any = None) -> None:
     """Write one `agent_runs` row: the in-process ledger first, the table best-effort.
 
     D432: three surfaces wrote no run at all - the retrieval, the intent extraction and
     the recommendation - and the recommendation's response handed the caller an
     `agent_run_id` that resolved to nothing. One recorder, so the shape of a run is
     written down ONCE (AGENT_CONTRACT §8: every task writes one).
+
+    D448: the cost ledger's rows travel SEPARATELY, not inside the run: the run row is
+    served to the browser (the timeline endpoint) and it has to stay serialisable.
     """
     deps.ledger.add({**run, "persisted": False})
     db = deps.database()
     if db is None:
         return
     try:
-        await persist_run(db, run)
+        await persist_run(db, run, llm_records=llm_records)
     except Exception:  # pragma: no cover - a persistence failure never breaks a response
         log.warning("agent_runs insert failed (continuing degraded)", exc_info=True)
 
 
 async def persist_run(database: Any, run: dict[str, Any], *,
-                      search_event: dict[str, Any] | None = None) -> bool:
+                      search_event: dict[str, Any] | None = None,
+                      llm_records: Any = None) -> bool:
     """Best-effort INSERT of one agent_run (+ optional `events` search row)."""
     _check_table("agent_runs")
     fact_ids = [str(f) for f in (run.get("fact_ids") or []) if f]
@@ -181,6 +186,10 @@ VALUES (
     except Exception:  # pragma: no cover - observability must never break a response
         log.warning("agent_runs insert failed (continuing degraded)", exc_info=True)
         return False
+    # D448: the cost ledger's rows go in with the run, and AFTER it - `llm_calls`
+    # refers to `agent_runs(id)`, so a ledger row written before the run is rejected by
+    # the foreign key. One recorder, one order.
+    await write_llm_calls(database, llm_records, run["agent_run_id"])
     if search_event is not None:
         await persist_event(database, search_event)
     return True
@@ -219,18 +228,16 @@ async def persist_llm_call(database: Any, row: dict[str, Any]) -> bool:
     return True
 
 
-async def record_llm_calls(deps: Any, records: Any, agent_run_id: Any = None) -> None:
+async def write_llm_calls(database: Any, records: Any, agent_run_id: Any = None) -> None:
     """Write one `llm_calls` row per model call the router made (D437).
 
-    Best-effort like every other write here: a ledger that cannot be written must never
-    break the answer the user is waiting for.
+    The rows are written AFTER the run they belong to: `llm_calls.agent_run_id` refers to
+    `agent_runs(id)`, so a ledger row written first is rejected by the foreign key. That is
+    why this is called from `persist_run` and not from the caller - one recorder, one order.
     """
-    db = deps.database()
-    if db is None:
-        return
     for record in list(records or []):
         try:
-            await persist_llm_call(db, record.as_llm_call_row(agent_run_id))
+            await persist_llm_call(database, record.as_llm_call_row(agent_run_id))
         except Exception:  # pragma: no cover - never fatal
             log.warning("llm_calls insert failed (continuing degraded)", exc_info=True)
 

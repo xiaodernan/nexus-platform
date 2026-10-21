@@ -217,9 +217,9 @@ def _record(deps: Deps, *, run_id: str, status: str, started: int, provider: str
     } if status == "succeeded" else None
 
     async def _persist() -> None:
-        await runs.persist_run(db, run, search_event=event)
-        # D437: the cost ledger's row refers to the run, so it is written after it.
-        await runs.record_llm_calls(deps, llm_records, run_id)
+        # D448: the run and the cost ledger go in together, the run first - the ledger
+        # row refers to it.
+        await runs.persist_run(db, run, search_event=event, llm_records=llm_records)
 
     try:
         import asyncio

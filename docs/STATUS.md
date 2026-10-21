@@ -18292,3 +18292,51 @@ different table, and the difference between the two was a census's scope. A defe
 invisible today is not a defect that cannot become visible: **the tables that hold a
 Simplified entry are the tables that will lose their Traditional one the day someone edits
 them.**
+
+## 442. D448 · the cost ledger's rows were written on their own schedule, and the foreign key rejected half of them (`apps/ai/nexus_ai/api/runs.py`, `apps/ai/tests/test_live_cost_ledger.py`)
+
+**What the product does, and what was measured.** §437 (D437) made the model layer's calls
+leave a row in the cost ledger - and the gate passed, because it measured ONE path. The other
+two paths were broken, and the breakage was quiet: `llm_calls.agent_run_id` refers to
+`agent_runs(id)`, so a ledger row written **before** the run it names is rejected by the foreign
+key, and the write is best-effort by design - so the row was dropped and the request answered
+as if nothing had happened.
+
+The stream wrote its run in a background task and its ledger row on the request's own
+schedule - a race the foreign key wins. The chat wrote the ledger row before the run. The
+intent extraction happened to be the one path that was in the right order, and the one path the
+gate measured.
+
+**The fix - one recorder, one order.**
+
+* the cost ledger's rows travel SEPARATELY from the run (the run row is served to the browser
+  by the timeline endpoint, so it has to stay serialisable - putting the calls in it broke the
+  endpoint with "Object of type RoutedCall is not JSON serializable");
+* the recorder that writes the run writes the ledger rows immediately after it, in the one
+  order the foreign key allows - so no path can get it wrong, and there is no schedule to race
+  against.
+
+**The gate - and it now covers the path that was broken.**
+`apps/ai/tests/test_live_cost_ledger.py` asks the live plane for the ledger row of an intent
+extraction (the row, the run it names, and the tokens they agree on) and **makes a stream
+request and waits for its ledger row** - the path that was silently broken.
+
+**Verified, not claimed.**
+
+- the gate -> **4 passed** (the row, the agreement, and the stream's row)
+- the live plane -> **`llm_calls` 428 rows** (it was 0 when §437 started) and **442 runs
+  carrying tokens** (they were 0)
+- the full `apps/ai` suite -> **1018 passed** with the database, **967 passed / 51 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 54
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** This is §440's lesson for the ledger: **a gate is worth exactly as much as
+the paths it walks.** §437's gate walked one path and found the ledger working; the other two
+were broken, and they were broken in the way that fails quietly - a best-effort write that
+reports nothing when the database says no. The gate now walks the stream as well, and the
+recorder no longer leaves the order to chance: the ledger's row and the run it names are one
+write, in one order, from one place.
