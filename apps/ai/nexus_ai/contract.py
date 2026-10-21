@@ -261,6 +261,35 @@ class SearchResponse(BaseModel):
     intent: Optional[Intent] = None
 
 
+class StreamStatusFrame(BaseModel):
+    """D468: the SSE frames' payload shapes were hand-built dicts with no model."""
+
+    model_config = ConfigDict(extra="ignore")
+    stage: str
+    text: str
+
+
+class StreamResultsFrame(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    set_id: str
+    items: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class StreamSummaryFrame(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    text: str
+    citations: list[str] = Field(default_factory=list)
+
+
+class StreamDoneFrame(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    agent_run_id: str
+    latency_ms: int
+    cost_usd: float = 0.0
+    degraded: bool = False
+    provider: Optional[str] = None
+
+
 class UnderstandRequest(_Strict):
     query: str
     context: dict[str, Any] = Field(default_factory=dict)

@@ -30,6 +30,8 @@ from nexus_ai.api.pipeline import SearchPack, compose_summary, run_search, \
     understand
 from nexus_ai.api.deps import Deps
 from nexus_ai.api.sse import STREAM_STAGE_ORDER
+from nexus_ai.contract import (StreamDoneFrame, StreamResultsFrame,
+                             StreamStatusFrame, StreamSummaryFrame)
 
 log = logging.getLogger("nexus_ai.api.stream")
 
@@ -91,7 +93,9 @@ async def search_stream_events(*, query: str, deps: Deps,
     stage_iter = iter(STAGE_ORDER)
 
     async def _status(stage: str) -> tuple[str, Any]:
-        return ("status", {"stage": stage, "text": stage_text(locale, stage)})
+        # D468: the frame's payload comes from the contract's model.
+        return ("status", StreamStatusFrame(
+            stage=stage, text=stage_text(locale, stage)).model_dump(mode="json"))
 
     # -- 1. understanding ------------------------------------------------------
     yield await _status(next(stage_iter))
@@ -108,12 +112,14 @@ async def search_stream_events(*, query: str, deps: Deps,
             deps, intent_res.intent, query=query, geo=_context_geo(context),
             now=_context_now(context), limit=limit, locale=locale, user_id=user_id)
         yield await _status(next(stage_iter))
-        yield ("results", {"set_id": pack.set_id, "items": pack.items})
+        yield ("results", StreamResultsFrame(
+            set_id=pack.set_id, items=pack.items).model_dump(mode="json"))
 
         # -- 6. summarizing / 7. summary ---------------------------------------
         yield await _status(next(stage_iter))
         summary = await compose_summary(deps, pack, locale=locale, agent_run_id=run_id)
-        yield ("summary", {"text": summary.text, "citations": summary.citations})
+        yield ("summary", StreamSummaryFrame(
+            text=summary.text, citations=summary.citations).model_dump(mode="json"))
 
         # -- 8. done ------------------------------------------------------------
     except Exception as exc:  # the §105 contract: failure travels INSIDE the stream
@@ -130,14 +136,14 @@ async def search_stream_events(*, query: str, deps: Deps,
 
     latency = monotonic_ms() - started
     degraded = bool(intent_res.degraded or pack.degraded or summary.degraded)
-    yield ("done", {
-        "agent_run_id": run_id,
-        "latency_ms": latency,
-        "cost_usd": 0.0,
-        "degraded": degraded,
-        "provider": summary.provider if summary.provider != "rules" else
+    yield ("done", StreamDoneFrame(
+        agent_run_id=run_id,
+        latency_ms=latency,
+        cost_usd=0.0,
+        degraded=degraded,
+        provider=summary.provider if summary.provider != "rules" else
         intent_res.provider if intent_res.provider != "rules" else "mock",
-    })
+    ).model_dump(mode="json"))
     _record(deps, run_id=run_id, status="succeeded", started=started,
             provider=summary.provider, degraded=degraded, conversation_id=conversation_id,
             query=query, intent=intent_res.intent, pack=pack, summary=summary,

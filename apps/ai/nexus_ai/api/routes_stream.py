@@ -16,7 +16,9 @@ from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import MAX_QUERY_LENGTH
 from nexus_ai.api.sse import sse_bytes
 from nexus_ai.api.stream import search_stream_events
-from nexus_ai.contract import MerchantAgentRequest, _Strict
+from nexus_ai.contract import (
+    MerchantAgentRequest, StreamDoneFrame, StreamStatusFrame, StreamSummaryFrame,
+    _Strict)
 from nexus_ai.models.mock import SUMMARY_TEMPLATES
 
 log = logging.getLogger("nexus_ai.api.routes_stream")
@@ -88,7 +90,8 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
     started = runs.now_iso()
     run_id = runs.new_id()
     try:
-        yield ("status", {"stage": "understanding", "text": copy["reading"]})
+        yield ("status", StreamStatusFrame(
+            stage="understanding", text=copy["reading"]).model_dump(mode="json"))
         chunks: list[dict[str, Any]] = []
         db = deps.database()
         if db is not None:
@@ -113,7 +116,8 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
         usage: dict[str, Any] = {}
         llm_records: list[Any] = []
         if grounded:
-            yield ("status", {"stage": "summarizing", "text": copy["answering"]})
+            yield ("status", StreamStatusFrame(
+                stage="summarizing", text=copy["answering"]).model_dump(mode="json"))
             from nexus_ai.models.base import LLMRequest
             from nexus_ai.models.router import CostMeter
 
@@ -134,17 +138,18 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
             # unreachable, so every question took the handoff path and the crash stayed
             # hidden behind a defect that was hiding it.
             answer_text = call.response.text
-            yield ("summary", {"text": answer_text,
-                               "citations": [str(c.get("id")) for c in chunks
-                                             if c.get("id")][:8]})
+            yield ("summary", StreamSummaryFrame(
+                text=answer_text,
+                citations=[str(c.get("id")) for c in chunks if c.get("id")][:8],
+            ).model_dump(mode="json"))
         else:
             answer_text = t["none_grounded"] + " " + t["handoff"]
-            yield ("summary", {"text": answer_text,
-                               "citations": []})
-        yield ("done", {"agent_run_id": run_id, "latency_ms": _ms_since(started),
-                        "cost_usd": float((usage or {}).get("cost_usd") or 0.0),
-                        "degraded": not grounded,
-                        "provider": provider})
+            yield ("summary", StreamSummaryFrame(
+                text=answer_text, citations=[]).model_dump(mode="json"))
+        yield ("done", StreamDoneFrame(
+            agent_run_id=run_id, latency_ms=_ms_since(started),
+            cost_usd=float((usage or {}).get("cost_usd") or 0.0),
+            degraded=not grounded, provider=provider).model_dump(mode="json"))
         await _record_chat(deps, run_id=run_id, body=body, grounded=grounded,
                           answer=answer_text, citations=[str(c.get("id")) for c in chunks
                                                        if c.get("id")],

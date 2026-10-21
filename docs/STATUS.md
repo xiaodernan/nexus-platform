@@ -19443,3 +19443,63 @@ answer but in no model is the fingerprint of a patch ✓ - which is why the gate
 *question* ("is this answer some model's shape exactly?") ✓ rather than checking a list of
 fields ✓: a list would have to be updated by hand ✓, and the hand-updated list is the defect
 all over again ✓.
+
+## 462. D468 · the SSE frames' payloads had NO models - the JSON answers got them in the last unit, the stream did not (`apps/ai/nexus_ai/contract.py`, `apps/ai/nexus_ai/api/stream.py`, `apps/ai/nexus_ai/api/routes_stream.py`, `apps/ai/tests/test_stream_frames_match_the_contract_models.py`)
+
+**What the product does, and what was measured.** §461 (D467) gave every **JSON answer** a
+contract model ✓ and made the routes build their answers through it ✓. The **SSE frames** ✓ -
+the AI service's main streaming surface ✓ - got nothing ✓: their payloads were hand-built
+dicts in the routes ✓, with no model ✓ and no gate ✓.
+
+```
+stream.py         ("status",  {"stage": stage, "text": ...})
+                  ("results", {"set_id": pack.set_id, "items": pack.items})
+                  ("summary", {"text": summary.text, "citations": summary.citations})
+                  ("done",    {"agent_run_id": ..., "latency_ms": ..., ...})
+routes_stream.py  ("status",  {"stage": "understanding", "text": ...})
+                  ("summary", {"text": answer_text, "citations": [...]})
+                  ("done",    {"agent_run_id": ..., "latency_ms": ..., ...})
+```
+
+**The fix.** The contract gained the four frame models ✓ (`StreamStatusFrame` ✓,
+`StreamResultsFrame` ✓, `StreamSummaryFrame` ✓, `StreamDoneFrame` ✓) ✓, and both streams
+build their frames **through** them ✓ - the same rule the JSON answers now follow ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_stream_frames_match_the_contract_models.py` reads **both**
+streams ✓ - the search stream ✓ and the merchant chat ✓ - and requires every frame's payload
+to be **exactly one contract model's fields** ✓, the models read out of the contract module ✓
+(not listed in the gate ✓) ✓. It also pins the fields **by name** ✓ - the `status` frame's
+`stage`/`text` ✓, the `results` frame's `set_id`/`items` ✓, the `summary` frame's
+`text`/`citations` ✓, the `done` frame's five ✓ - so a frame cannot quietly lose a field ✓.
+It was **proved to fail** ✓: hand-patching one field onto the `results` frame made two of its
+checks fail ✓ (*"the 'results' frame carries the fields [...], which match 0 contract
+models"*) ✓ - the probe was put back ✓.
+
+**Filed.** The cross-lane `AiIntentEvent` says the intent frame's payload is
+`{intent: Intent}` ✓ - a **wrapper** ✓ - while the service ✓ and the SDK's own mapper ✓
+(`frameToEvent`: `d as unknown as Intent` ✓) both say the frame's payload **is** the intent ✓.
+A client written against the cross-lane type reads `frame.intent` and gets the **kind** (a
+string ✓) where the type promises an object ✓. That file belongs to the types lane ✓, so it
+is **reported, not edited** ✓ - and the gate pins the service's side ✓ so the two cannot
+drift further ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **5 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1060 passed** with the database, **1006 passed / 54 skipped**
+  without it (the sibling lane's two untracked test files excluded - `test_app_surface.py` ✓
+  and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ - see §436);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** §461's rule was right ✓ and its **scope** was wrong ✓: *"every answer is
+one contract model's shape"* ✓ meant *"every JSON body"* ✓, and the stream's answers were not
+in the room ✓ - so the unit that fixed the answers left the frames exactly as they were ✓ ✓.
+That is the D462 lesson one layer up ✓: **a census is only as wide as the shape it asks** ✓ -
+and here the shape asked was "a JSON body" ✓, which is a statement about the transport ✓, not
+about the answer ✓ ✓. The general form ✓: when a rule says *"every X"*, the first question is
+not *"is every X covered?"* ✓ but *"what is X?"* ✓ - and the honest answer is "an answer", ✓
+whatever it arrives in ✓ - a body ✓, a frame ✓, or a header ✓.
