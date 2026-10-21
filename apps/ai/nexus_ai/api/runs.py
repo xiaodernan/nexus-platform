@@ -136,7 +136,7 @@ INSERT INTO agent_runs (
   id, tenant_id, user_id, merchant_id, conversation_id, agent, model, provider, status,
   plan, input_summary, output_summary, tool_calls, retrieval, fact_ids,
   prompt_tokens, completion_tokens, cost_usd, latency_ms, fallback_used,
-  started_at, finished_at)
+  started_at, finished_at, task_id, parent_run_id, error)
 VALUES (
   $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6, $7, $8, $9,
   $10::jsonb, $11, $12, $13::jsonb, $14::jsonb,
@@ -149,7 +149,12 @@ VALUES (
   -- D440: the write IS the finish. `finished_at` had no default and no caller ever passed
   -- one, so every run on the plane carried a NULL end - and the documented timeline shape
   -- lists it.
-  COALESCE($22::timestamptz, now())
+  COALESCE($22::timestamptz, now()),
+  -- D443: the three columns the INSERT used to DROP. `error` and `parent_run_id` are named
+  -- by the contract (API_CONTRACT §7's timeline row, DATABASE.md §3.12, AGENT_CONTRACT §8),
+  -- so a failed run could not say why it failed and a sub-agent run could not link to its
+  -- parent - the writer had no way to say either.
+  $23, $24::uuid, $25
 )
 """
 
@@ -169,6 +174,7 @@ VALUES (
         int(run.get("prompt_tokens") or 0), int(run.get("completion_tokens") or 0),
         float(run.get("cost_usd") or 0.0), int(run.get("latency_ms") or 0),
         run.get("fallback_used"), run.get("started_at"), run.get("finished_at"),
+        run.get("task_id"), _uuid_or_none(run.get("parent_run_id")), run.get("error"),
     )
     try:
         await database.write(sql, *args)

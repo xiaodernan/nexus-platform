@@ -18005,3 +18005,64 @@ That is the shape of a defect nobody notices: the clauses are individually small
 the OpenAPI document" is one flag), and a reader - human or agent - has no reason to check
 the third clause when the first two are visibly working. The gate now reads the clause out of
 the contract, so the contract and the service cannot drift apart on it.
+
+## 437. D443 · the writer DROPPED three of the schema's columns: every failed run on the plane said nothing about why it failed (`apps/ai/nexus_ai/api/runs.py`, `apps/ai/tests/test_run_columns_are_written.py`)
+
+**What the product does, and what was measured.** The `agent_runs` table has exactly one
+writer - the INSERT in `api/runs.py` - and it named **22 of the schema's 25 columns**. The
+three it dropped were `task_id`, `parent_run_id` and `error`, and two of those are named by the
+contract:
+
+* API_CONTRACT §7's conversation-timeline row: *"Each run is its `agent_runs` row
+  (`agent_run_id, agent, model, provider, status, plan, ..., input_summary, output_summary,
+  tool_calls, retrieval, fact_ids, tokens, cost_usd, latency_ms, **error**, fallback_used,
+  started_at, finished_at, **parent_run_id**)"*;
+* DATABASE.md §3.12: *"`parent_run_id` for nested agents"*;
+* AGENT_CONTRACT §8: *"sub-agents link via `parent_run_id`"*.
+
+Measured on the seeded live plane, before this unit:
+
+```
+the agent_runs table: 25 columns, 863 rows
+   error          non-null in   0/863 rows
+   parent_run_id  non-null in   0/863 rows
+   task_id        non-null in   0/863 rows
+   the failed runs: 13
+   a failed run's error message: <Record status='degraded' error=None>
+```
+
+**The defect.** The CALLERS fill `error` - the stream's `_record` and the chat's
+`_record_chat` both pass it - and the writer threw it away, because the column was not in the
+INSERT. So **every one of the 13 failed runs carried `error = NULL`**: the observability
+surface could say a run failed and could not say why. And `parent_run_id` could not be written
+at all, so the parent/child tree §8 promises is not a gap in the product's behaviour - it is
+a gap in the writer's SQL.
+
+**The fix.** The writer names every column the schema has, and binds one argument per column.
+
+**The gate - and it reads the SCHEMA, not a list.**
+`apps/ai/tests/test_run_columns_are_written.py` parses the migration's `CREATE TABLE
+agent_runs` and requires the writer's INSERT to name **every** column of it, requires the
+placeholders to be contiguous, and requires the argument tuple to bind exactly one argument
+per placeholder (counted by the parser, not by lines). The live half writes a failed run and
+reads its error back.
+
+**Verified, not claimed.**
+
+- the gate -> **3 passed** (the completeness check, the placeholder/argument check, and the
+  live round-trip of a failed run's error)
+- the full `apps/ai` suite -> **1001 passed** with the database, **953 passed / 48 skipped**
+  without it (the sibling lane's untracked `tests/test_app_surface.py` excluded - see §436)
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 53
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** This is §434 (D440) one column over, and the two units together are the
+shape of the whole observability ledger: a column that exists and cannot be written is a
+promise nobody keeps, and a promise that cannot be kept is invisible - the INSERT succeeds,
+the run is written, the row is complete-looking, and the field that would have explained the
+failure is simply not there. The gate is the schema, not a list of fields, so the next column
+cannot be dropped either: **the writer and the schema are one document, and the gate reads
+the schema.**
