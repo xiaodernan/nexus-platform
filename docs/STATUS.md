@@ -19372,3 +19372,74 @@ cross-lane type, the SDK and the web's mock all agreed with each other ✓, so e
 nobody compared - the answer ✓ - said something else ✓. The fix is the comparison itself ✓:
 the gate reads `packages/types/src/intent.ts` ✓ and asks the service ✓, so the two copies
 cannot drift apart again without a test failing ✓.
+
+## 461. D467 · every answer's shape was written TWICE - once in the contract model and once in the route's dict - and the two disagreed (`apps/ai/nexus_ai/contract.py`, `apps/ai/nexus_ai/api/routes_search.py`, `apps/ai/nexus_ai/api/routes_rag.py`, `apps/ai/nexus_ai/api/routes_discover.py`, `apps/ai/nexus_ai/api/routes_system.py`, `apps/ai/tests/test_answer_shapes_match_the_contract_models.py`)
+
+**What the product does, and what was measured.** Every answer the service returns has a
+contract model ✓ - `SearchResponse` ✓, `UnderstandResponse` ✓, `RecommendResponse` ✓,
+`RagRetrieveResponse` ✓. And the routes did not use them ✓: they **dumped the model and then
+patched the dict by hand** ✓.
+
+```
+routes_search.py   data = response.model_dump(mode="json")
+                    data["agent_run_id"] = run_id
+                    data["degraded"] = bool(pack.degraded)
+                    data["intent"] = intent.model_dump(mode="json") if intent else None
+routes_rag.py      payload = RagRetrieveResponse(...).model_dump(mode="json")
+                    if note:
+                        payload["note"] = note
+```
+
+Two of the patched fields were in **no model at all** ✓ - the search's `intent` ✓ and the
+RAG's `note` ✓ - so the models did not describe the answers they stood for ✓, and the
+census of the answers' keys against the models' fields found it ✓:
+
+```
+/ai/v1/search         the answer has `intent`   the model does not declare it
+/ai/v1/rag/retrieve   the answer has `note`     the model does not declare it
+/ai/v1/compare        the answer has a shape NO model declared
+/ai/v1/feedback       the answer has a shape NO model declared
+```
+
+**The fix.** The models declare what the answers carry ✓ (`SearchResponse.intent` ✓,
+`RagRetrieveResponse.note` ✓) ✓, the two surfaces with no model got one ✓
+(`CompareResponse` ✓, `FeedbackResponse` ✓) ✓, and the routes build their answers **through
+the models** ✓ - the D438 lesson ✓ ("the envelope comes from the contract's own shape" ✓),
+applied to every answer ✓ rather than to the error envelope alone ✓.
+
+**The gate.** `apps/ai/tests/test_answer_shapes_match_the_contract_models.py` asks every
+surface that has a model ✓ and requires the answer's keys to be **exactly one model's
+fields** ✓ - the models are read out of the contract module ✓, not listed in the gate ✓, so a
+model added later is covered without touching the test ✓. The surfaces with **no** model are
+declared with the reason ✓, and the rule for them is the other way round ✓: their answer
+must match **no** model ✓, so a surface that grows a model must lose its entry ✓. It was
+**proved to fail** ✓: hand-patching one field onto the search's answer again made it fail
+with *"answers with the fields [...], which match 0 contract models"* ✓ - the probe was put
+back ✓.
+
+**Filed.** The health check ✓, the tool manifest ✓, the conversation audit view ✓, the SSE
+chat ✓ and the service-to-service import door ✓ have no model ✓ - the audit view is
+**contracted** ✓ (§52 ✓) and still has no model ✓, which belongs with the contract's owner ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **4 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1055 passed** with the database, **1001 passed / 54 skipped**
+  without it (the sibling lane's two untracked test files excluded - `test_app_surface.py` ✓
+  and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ - see §436);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** A model that is dumped and then patched is a model that lies ✓ - and it
+lies in the direction that matters ✓: the patch is where the newest field goes ✓, so the
+model is always the OLDER copy ✓, and a reader of the model sees a shape that has been
+failing to describe the answer for as long as the patch has existed ✓. The D438 unit found
+this for the error envelope ✓ and fixed it there ✓; the general form was waiting ✓: **every
+answer should be built by the model that describes it** ✓, and a field that appears in an
+answer but in no model is the fingerprint of a patch ✓ - which is why the gate asks the
+*question* ("is this answer some model's shape exactly?") ✓ rather than checking a list of
+fields ✓: a list would have to be updated by hand ✓, and the hand-updated list is the defect
+all over again ✓.

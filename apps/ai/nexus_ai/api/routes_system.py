@@ -21,7 +21,7 @@ from fastapi.responses import JSONResponse
 from nexus_ai.api import runs
 from nexus_ai.api.degraded import degraded_json
 from nexus_ai.api.deps import Deps
-from nexus_ai.contract import FeedbackRequest
+from nexus_ai.contract import FeedbackRequest, FeedbackResponse
 
 log = logging.getLogger("nexus_ai.api.routes_system")
 
@@ -122,13 +122,15 @@ async def tools(request: Request):
 @router.post("/ai/v1/feedback")
 async def feedback(request: Request, body: FeedbackRequest):
     deps: Deps = request.app.state.deps
-    payload: dict[str, Any] = {"recorded": False, "degraded": True}
+    # D467: the feedback's answer is built through the contract's model - it had no
+    # model at all, so nothing described its shape.
     db = deps.database()
     if db is None:
-        payload["reason"] = ("no database connection — feedback is not persisted "
-                             "offline; nothing was recorded")
         # D451: the degraded flag travels in the body AND the header.
-        return degraded_json(payload)
+        return degraded_json(FeedbackResponse(
+            recorded=False, degraded=True,
+            reason=("no database connection — feedback is not persisted "
+                    "offline; nothing was recorded")).model_dump(mode="json"))
     row = {
         "tenant_id": deps.tenant_id(),
         "user_id": str(body.user_id) if body.user_id else None,
@@ -139,9 +141,8 @@ async def feedback(request: Request, body: FeedbackRequest):
         "channel": body.channel,
     }
     ok = await runs.persist_feedback(db, row)
-    payload["recorded"] = bool(ok)
-    payload["degraded"] = not ok
-    if not ok:
-        payload["reason"] = "feedback_events insert failed (see server log)"
     # D451: the degraded flag travels in the body AND the header.
-    return degraded_json(payload)
+    return degraded_json(FeedbackResponse(
+        recorded=bool(ok), degraded=not ok,
+        reason=None if ok else "feedback_events insert failed (see server log)"
+    ).model_dump(mode="json"))

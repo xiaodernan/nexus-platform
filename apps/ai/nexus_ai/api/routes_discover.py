@@ -23,8 +23,8 @@ from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import (
     MAX_QUERY_LENGTH, compose_summary, run_search, understand)
 from nexus_ai.contract import (
-    CompareRow, GeoPoint, RecommendRequest, RecommendResponse, UnderstandRequest,
-    UnderstandResponse, _Strict)
+    CompareResponse, CompareRow, GeoPoint, RecommendRequest, RecommendResponse,
+    UnderstandRequest, UnderstandResponse, _Strict)
 from nexus_ai.search.cards import (compute_open, drop_ungrounded_reasons, meters_text,
                                    travel_minutes)
 from nexus_ai.trust.facts import FactBundle, facts_from_rows
@@ -411,9 +411,11 @@ async def compare(request: Request, body: CompareRequest):
     # D459: the degraded flag travels in the body AND the header (OBSERVABILITY.md §2).
     # The D452 census never reached this endpoint - the probe's request was invalid, so
     # it was never measured - and a degraded comparison looked like a normal one.
-    return degraded_json({"rows": rows, "subjects": ids,
-                          "degraded": bool(meta["degraded"]),
-                          "source": meta["source"]})
+    # D467: the comparison's answer is built through the contract's model - it had no
+    # model at all, so nothing described its shape.
+    return degraded_json(CompareResponse(
+        rows=[CompareRow(**row) for row in rows], subjects=list(body.subject_ids),
+        degraded=bool(meta["degraded"]), source=meta["source"]).model_dump(mode="json"))
 
 
 def _compare_fact_ids(rows: list[dict[str, Any]]) -> list[str]:

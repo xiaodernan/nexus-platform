@@ -256,6 +256,9 @@ class SearchResponse(BaseModel):
     next_cursor: Optional[str] = None
     agent_run_id: Optional[UUID] = None
     relevance_floor_applied: bool = True
+    # D467: the answer carries the intent it understood - the route used to patch this
+    # field onto the dumped model, so the model did not describe the answer.
+    intent: Optional[Intent] = None
 
 
 class UnderstandRequest(_Strict):
@@ -342,6 +345,27 @@ class RagRetrieveResponse(BaseModel):
     took_ms: int
     provider: str = "hashing"
     threshold_applied: bool = True
+    # D467: the note the route used to patch onto the dumped model.
+    note: Optional[str] = None
+
+
+class CompareResponse(BaseModel):
+    """D467: the comparison's answer had a shape no model declared."""
+
+    model_config = ConfigDict(extra="ignore")
+    rows: list[CompareRow] = Field(default_factory=list)
+    subjects: list[UUID] = Field(default_factory=list)
+    source: str = "static"
+    degraded: bool = True
+
+
+class FeedbackResponse(BaseModel):
+    """D467: the feedback's answer had a shape no model declared."""
+
+    model_config = ConfigDict(extra="ignore")
+    recorded: bool = False
+    degraded: bool = True
+    reason: Optional[str] = None
 
 
 class MerchantAgentRequest(_Strict):

@@ -127,11 +127,11 @@ async def rag_retrieve(request: Request, body: RagRetrieveRequest):
         "latency_ms": took_ms, "cost_usd": 0.0, "fallback_used": None, "error": None,
         "started_at": None, "finished_at": None, "degraded": False,
     })
+    # D467: the note is the model's field - the route used to patch it onto the dumped
+    # model, so the model did not describe the answer.
     payload = RagRetrieveResponse(chunks=chunks, took_ms=took_ms,
                                   provider=deps.settings.embedding_provider,
-                                  threshold_applied=True).model_dump(mode="json")
-    if note:
-        payload["note"] = note
+                                  threshold_applied=True, note=note).model_dump(mode="json")
     return JSONResponse(payload)
 
 

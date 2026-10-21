@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -47,11 +48,14 @@ async def search_endpoint(request: Request, body: SearchRequest) -> JSONResponse
             "ai_unavailable", f"search backend unavailable: {exc}",
             request_id=runs.current_request_id() or None, status=503)
 
-    response = pack.response
-    data = response.model_dump(mode="json")
-    data["agent_run_id"] = run_id
-    data["degraded"] = bool(pack.degraded)
-    data["intent"] = intent.model_dump(mode="json") if intent else None
+    # D467: the answer is built THROUGH the model. The route used to dump the model and
+    # then patch three fields onto the dict - and one of them (`intent`) was in no model
+    # at all, so the model did not describe the answer it stood for.
+    data = pack.response.model_copy(update={
+        "agent_run_id": UUID(run_id),
+        "degraded": bool(pack.degraded),
+        "intent": intent,
+    }).model_dump(mode="json")
 
     _record(deps, run_id=run_id, body=body, intent=intent, pack=pack)
     # D451: the degraded flag travels in the body AND the header - one place, so the two
