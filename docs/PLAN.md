@@ -107,6 +107,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D422** A merchant whose hours omit the queried weekday was shown as UNKNOWN, and the comparison table had a hole in it (`search/cards`) — "no hours at all" and "not open today" are different claims, and the live suite was calibrated against a stale corpus
 - **D428** The card's fact references: the contract's `source_fact_id` was always null (`search/cards`) — the open state and the availability brief now point at the facts the card already carries
 - **D429** The attributes the matchers read and the ones the seed writes were two hand-kept lists, and nothing checked they agreed (`apps/ai/tests/test_attribute_vocabulary.py`) — a source-level gate, because a live check would measure the corpus's category mix instead
+- **D430** The search's ANSWER had no gate: the explicit filters, the open state, the facts and the distance were only ever checked one at a time (`apps/ai/tests/test_live_search_contract.py`) — six consumer-style checks, measured on BOTH planes
 - **Fresh gate** re-certified through step 6 on the live plane: 217 quality checks, none red; step 7 is the sandbox's node-spawn refusal
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.

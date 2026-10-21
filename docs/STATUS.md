@@ -17298,3 +17298,37 @@ is the shape the matcher actually reads ✓.
 **Discipline note.** The house's standing question — "is this number real?" — has a source-level
 form ✗: two hand-kept lists that must agree ✗ are a contract ✗, and a contract with no reader
 is a wish ✓. §419 and §422 are what it costs when the wish is the only thing that exists ✓.
+
+## 424. D430 · the search's ANSWER had no gate: the explicit filters, the open state, the facts and the distance were only ever checked one at a time (`apps/ai/tests/test_live_search_contract.py`, §2 / §7.1 / §18 / §37)
+
+**What this unit is.** The lane's gates were about the **intent** — what the service
+**understood** ✓. This one is about the **answer** — what it **served** ✗ — and it is written the
+way a consumer would write it ✓: send the request, look at the cards ✓. The four properties the
+contract asks of an answer, each of which had been checked somewhere but never together:
+
+- the caller's **explicit filters are hard** (§7.1: the intent's preferences are soft ✗ and the
+  request's filters are hard ✓). §381 fixed the case where a soft preference became a hard
+  filter ✗; nothing checked the other direction ✓ — that an explicit filter is honoured at all ✓.
+- **every card says whether it is open** (§2: never guessed ✗ — and §422 made "closed" say so ✓).
+- **every rendered number is backed by a fact** (§18/§19: the facts list backs every number ✓).
+- **a point to measure from gives a distance** (§37's grid ✗ — and §401 added the row ✓).
+
+**Measured before writing it, on the live plane.** The filters hold ✓ (`max_price: 60` -> the
+dearest card is 60.00 ✓, `min_rating: 4.5` -> the lowest rating served is 4.52 ✓, the district
+filter -> every subtitle carries "Sha Tin" ✓), and every card carries an open state ✓ — so this
+unit is a **gate for a promise that already holds** ✓, which is the cheapest kind of gate there
+is ✓: it turns six things that were true today into six things that cannot stop being true
+tomorrow ✓.
+
+**Verified, not claimed.** `pytest tests/test_live_search_contract.py` -> **6 passed** on the
+live plane **and 6 passed** on the plane seeded from the current generator ✓ (§422's second
+plane ✓ — the gate is measured on both ✓, so a corpus that cannot show a behaviour says so
+instead of passing quietly ✓); the full `apps/ai` suite -> **935 passed / 37 skipped**;
+`ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 52
+source files**; the eval gate -> **`RESULT: PASS - 2 suite(s), 0 failing`**.
+
+**Discipline note.** A gate written for a promise that already holds is worth more than one
+written for a promise that does not ✗ — a red gate trains people to ignore gates ✓, and the
+lane's readers are only worth their reading if they are mostly green ✓ and their reds are real ✓.
+This unit's reds are the ones that would matter ✗: a filter that stops filtering ✗, a card that
+stops saying whether it is open ✗, a number that loses its fact ✗.
