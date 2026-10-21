@@ -36,7 +36,7 @@ receive → classify intent → build plan (min necessary steps) → execute DAG
 ```
 Rules:
 1. **Dynamic planning.** A greeting or "what's open now" must not trigger retrieval+rerank+summary. The planner emits a
-   typed `Plan` (`apps/ai/app/orchestrator/planner.py`); each step names a tool from the registry.
+   typed `Plan` (`apps/ai/nexus_ai/orchestrator/planner.py`); each step names a tool from the registry.
 2. Budget: max 6 tool calls and 3 LLM calls per user-facing request; exceeding it must degrade to deterministic search,
    not hang.
 3. Parallelism: independent steps (availability + reviews + geo) run concurrently; dependent ones do not.
@@ -60,7 +60,7 @@ ToolSpec(
   fallback="deterministic_search", # what runs when this fails (§105)
 )
 ```
-Registry: `apps/ai/app/tools/registry.py`. Tools are the **only** way an agent reaches data — no direct SQL from agent code,
+Registry: `apps/ai/nexus_ai/tools/registry.py`. Tools are the **only** way an agent reaches data — no direct SQL from agent code,
 no raw prompt→DB path (§52). Calls flow `agent → registry.dispatch(subject, tool, args)` which performs, in order:
 permission check → argument validation → timeout/retry → execute → result validation → audit/log → return.
 Unknown tool names and unlisted arguments are hard errors.
@@ -150,7 +150,7 @@ parse → clean → semantic chunk (240-400 tokens, 12% overlap, section-aware) 
 
 ## 9. Model router & cost (§101-102, §160)
 
-`apps/ai/app/models/router.py` maps task class → model, cheapest that can do the job:
+`apps/ai/nexus_ai/models/router.py` maps task class → model, cheapest that can do the job:
 
 | task_class | default provider | notes |
 |---|---|---|

@@ -24,7 +24,7 @@ Foundation so all later streams run in parallel. Target: `docker compose up` boo
 2. **Flyway wiring to `infra/db/V1__init.sql`** (owner `services/platform` · depends 1 · done: migration applies clean on empty DB + `updated_at`/`tsv` triggers fire; P0). *Spec §84/§85 path mismatch: file is `infra/db/`, configure Flyway location accordingly ([DATABASE.md](DATABASE.md)).*
 3. **Provision DB roles + grants** — create `nexus_app` (RW commerce) and `nexus_ai` (SELECT + narrow RW) as `V2__roles_grants.sql` (owner `infra/db` · depends 2 · done: `nexus_ai` INSERT into `orders` is denied by the DB, not by convention; [DATABASE.md](DATABASE.md) §9 GAP closed; **P0** — the whole §52 "no LLM→DB" guarantee depends on it).
 4. **`packages/types` codegen from contracts** (owner `packages/types` · depends 2 · done: OpenAPI `/v3/api-docs` + `/ai/openapi.json` generate TS + JSON Schemas for `Intent`/`EntityCard`/`Fact`; contract test passes; [API.md](API.md); P0).
-5. **LLM provider adapters + `MockAdapter` default** (owner `apps/ai/app/models` · depends 1 · done: `NEXUS_LLM_PROVIDER=mock` returns deterministic labelled intent/summary/copy offline (D4); a task_class router stub exists; P0).
+5. **LLM provider adapters + `MockAdapter` default** (owner `apps/ai/nexus_ai/models` · depends 1 · done: `NEXUS_LLM_PROVIDER=mock` returns deterministic labelled intent/summary/copy offline (D4); a task_class router stub exists; P0).
 6. **Auth skeleton (JWT HS256 dev, cookie) + `TenantContext`** (owner `services/platform/.../auth` · depends 2,3 · done: register/login/refresh/me round-trip; every repo requires `TenantContext`; cross-tenant → 404; [SECURITY.md](SECURITY.md) §1; P0).
 7. **Docs set + AGENTS.md-of-repo conventions** (owner `docs/` · depends — · done: this 18-file set committed and internally consistent; P1).
 
@@ -42,21 +42,21 @@ Builds merchant supply so search has something to find. Depends-on M0.
 ## M2 — Consumer search (deterministic) (§13, §16, §113–§115)
 No LLM yet — proves the retrieval/rank/geo spine. Depends-on M1 (needs published merchants + seed).
 1. **Seed generator: 500 merchants / 5000 offerings / 10000 reviews, all demo-flagged** (data/seed · M0.2 · done: §86 counts, every row `data_origin='demo'`, synthetic-looking, `flags.demo`+`X-Demo-Data`; [TESTING.md](TESTING.md) §6; **P1** — the slice is untestable without it).
-2. **`SearchBackend` interface + Postgres impl** (apps/ai/app/search/sql.py · M2.1 · done: hybrid tsvector ∪ trgm ∪ vector ∪ geo ∪ metadata; tenant predicate + status filter enforced; [SEARCH.md](SEARCH.md); P1).
+2. **`SearchBackend` interface + Postgres impl** (apps/ai/nexus_ai/search/sql.py · M2.1 · done: hybrid tsvector ∪ trgm ∪ vector ∪ geo ∪ metadata; tenant predicate + status filter enforced; [SEARCH.md](SEARCH.md); P1).
 3. **bbox + haversine geo + clustering payload** (apps/ai + platform `locations/geo` · M2.2 · done: `GET /api/v1/locations/geo?bbox&zoom`; why-no-PostGIS noted [DATABASE.md](DATABASE.md) §5; P2).
 4. **`/ai/v1/search` deterministic endpoint** (apps/ai · M2.2 · done: returns `EntityCard[]` where every number has a `fact_id`; p95 <250ms warm; [API.md](API.md) contract test; P1).
-5. **Ranking v1 (`hybrid_v1`)** (apps/ai/app/recommend · M2.4 · done: weighted blend, Bayesian quality, relevance floor, sponsored separation off (organic only); [RECOMMENDATION.md](RECOMMENDATION.md); P1).
+5. **Ranking v1 (`hybrid_v1`)** (apps/ai/nexus_ai/recommend · M2.4 · done: weighted blend, Bayesian quality, relevance floor, sponsored separation off (organic only); [RECOMMENDATION.md](RECOMMENDATION.md); P1).
 6. **CJK text-search decision** (apps/ai/search · M2.2 · done: measure `tsvector('simple')` recall on zh-HK; if insufficient, enable engine `SearchBackend` or a CJK parser — resolves the [ARCHITECTURE.md](ARCHITECTURE.md) §9 risk; **P2** but blocking "real" search).
 
 ## M3 — AI search + RAG + query understanding (§7, §8, §12, §34, §116)
 The intelligence layer. Depends-on M2. **Milestone M0→M3 turns on `NEXUS_LLM_PROVIDER` decision — mock in CI, real in a labelled lane [D4](DECISIONS.md).**
-1. **Query understanding → `Intent`** (apps/ai/app/nlu · M2.4 · done: schema-constrained, unknowns never guessed, §8/§2 golden case passes; [AI.md](AI.md) §2; P1).
+1. **Query understanding → `Intent`** (apps/ai/nexus_ai/nlu · M2.4 · done: schema-constrained, unknowns never guessed, §8/§2 golden case passes; [AI.md](AI.md) §2; P1).
 2. **Conversation state + merge rules** (nlu/state_merger + conversations.state · M3.1 · done: §34 4-turn script narrows correctly, deterministic under mock; [AI.md](AI.md) §3; P1).
-3. **RAG pipeline** (apps/ai/app/rag · M1.6 · done: chunk 240–400/12% → embed(1024) → hybrid retrieve (tenant-before-similarity) → rerank top-40 → context pack w/ citations; no-answer-without-retrieval; [RAG.md](RAG.md); P1).
-4. **Orchestrator plan/execute/verify** (apps/ai/app/orchestrator + tools/registry · M3.1–3.3 · done: dynamic plan, ≤6 tool/≤3 LLM budget, 4s/12s timeouts, degrade-to-deterministic on breach; [AGENTS.md](AGENTS.md) §2–3; P1).
+3. **RAG pipeline** (apps/ai/nexus_ai/rag · M1.6 · done: chunk 240–400/12% → embed(1024) → hybrid retrieve (tenant-before-similarity) → rerank top-40 → context pack w/ citations; no-answer-without-retrieval; [RAG.md](RAG.md); P1).
+4. **Orchestrator plan/execute/verify** (apps/ai/nexus_ai/orchestrator + tools/registry · M3.1–3.3 · done: dynamic plan, ≤6 tool/≤3 LLM budget, 4s/12s timeouts, degrade-to-deterministic on breach; [AGENTS.md](AGENTS.md) §2–3; P1).
 5. **SSE streaming `/ai/v1/search/stream`** (apps/web + apps/ai · M3.4 · done: user-legible stages, no CoT, `event: error`→client deterministic fallback; first-event <1.2s; [AI.md](AI.md) §4; P1).
 6. **fact_verification + fraud_trust guards in the render path** (apps/ai · M3.4 · done: claim without `fact_id` stripped; post-validation counts hallucination; [`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §4; **P0-by-consequence** (§155); P1).
-7. **Eval harness + gate in CI** (apps/ai/app/eval · M3.1–3.6 · done: `intent_v1`/`rag_faithfulness_v1`/`safety_injection_v1` run; hallucination <2%, injection 100%, no >3pp regression blocks merge; [TESTING.md](TESTING.md) §5; P1).
+7. **Eval harness + gate in CI** (apps/ai/nexus_ai/eval · M3.1–3.6 · done: `intent_v1`/`rag_faithfulness_v1`/`safety_injection_v1` run; hallucination <2%, injection 100%, no >3pp regression blocks merge; [TESTING.md](TESTING.md) §5; P1).
 
 ## M4 — Recommendation + Merchant AI Agent (§17, §18, §24–§26, §55)
 Depends-on M3.

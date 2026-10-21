@@ -17887,3 +17887,62 @@ observability surface: an agent, a status, a plan, a latency. It just never ende
 The residual is filed: `parent_run_id` is NULL in every row too, and that one is honest - the
 product runs one task per turn and has no sub-agent runs to link - but the roster's
 parent/child tree (§8's "sub-agents link via parent_run_id") is not there yet.
+
+## 435. D441 · the documents pointed at a layout the repository never had: `apps/ai/app/...` instead of `apps/ai/nexus_ai/...` (`apps/ai/tests/test_doc_paths_are_real.py`, 15 documents)
+
+**What the product does, and what was measured.** The lane's documents name the files a
+reader is expected to open - the router, the state merger, the search SQL, the tool registry.
+Those names had drifted: the documents said `apps/ai/app/...` and the repository says
+`apps/ai/nexus_ai/...`. The census (every `apps/...` path the documents mention, and whether
+it is there) found **73 paths that do not exist**, of which **10 name a file that exists
+elsewhere** - the reader follows the path and finds nothing.
+
+```
+AGENT_CONTRACT.md: apps/ai/app/models/router.py      -> apps/ai/nexus_ai/models/router.py
+AI.md:             apps/ai/app/nlu/state_merger.py    -> apps/ai/nexus_ai/nlu/state_merger.py
+AI.md:             apps/ai/app/models/router.py        -> apps/ai/nexus_ai/models/router.py
+API_CONTRACT.md:   apps/ai/app/nlu/state_merger.py    -> apps/ai/nexus_ai/nlu/state_merger.py
+ARCHITECTURE.md:   apps/ai/app/search/sql.py          -> apps/ai/nexus_ai/search/sql.py
+DATABASE.md:       apps/ai/app/nlu/state_merger.py    -> apps/ai/nexus_ai/nlu/state_merger.py
+PLAN.md:           apps/ai/nlu/lexicon.py              -> apps/ai/nexus_ai/nlu/lexicon.py
+PRODUCT.md:        apps/ai/app/nlu/state_merger.py    -> apps/ai/nexus_ai/nlu/state_merger.py
+TRACEABILITY.md:   apps/ai/app/search/sql.py          -> apps/ai/nexus_ai/search/sql.py
+TRACEABILITY.md:   apps/ai/app/nlu/state_merger.py    -> apps/ai/nexus_ai/nlu/state_merger.py
+```
+
+The `apps/ai/app/` prefix is a layout that was never built - the package is `nexus_ai` - and
+the drift reached the documents an AGENT reads before it touches the code (`AGENTS.md` points
+at the registry and the planner; `AI.md` points at the router and the merger).
+
+**The fix.** The paths are rewritten in the fifteen living documents. The ledgers are NOT
+rewritten: `docs/STATUS.md` and `docs/DECISIONS.md` are history, and a record is not edited
+to look tidier than it was.
+
+**The gate - the rule, and the reason it is not "every path must exist".**
+`apps/ai/tests/test_doc_paths_are_real.py` distinguishes three cases:
+
+* a path that exists -> fine;
+* a path that does not exist **while the same file exists elsewhere** -> STALE, and that is
+  the defect;
+* a path that does not exist and has no counterpart -> **a promise about the future** (the
+  tool registry, the orchestrator, the eval gates) - a promise, not a drift.
+
+The gate reads the living documents only, and only the paths that name the AI lane's own
+files: another lane's path is that lane's to fix, and this lane reports it rather than
+touching it.
+
+**Verified, not claimed.**
+
+- the gate -> **1 passed** (it failed with all ten findings before the fix)
+- the full `apps/ai` suite -> **1006 passed** with the database, **959 passed / 47 skipped**
+  without it
+- `ruff check .` -> **All checks passed!**; `mypy nexus_ai` -> **Success: no issues found in 53
+  source files**
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing**
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS
+
+**Discipline note.** A path in a document is a promise too - a small one, and the cheapest to
+break: nothing fails when a path rots, and the reader who follows it is usually an agent that
+has no way to tell "not built yet" from "moved". The three-way rule above is the general form
+worth keeping: **a missing path is only a defect when the thing it names is somewhere else.**

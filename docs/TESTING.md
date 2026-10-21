@@ -1,7 +1,7 @@
 # NEXUS — Testing & Quality (§71–§76, §156, [`DECISIONS.md`](DECISIONS.md) D7, [`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §11)
 
 Status: **to be built.** Owner: unit/integration next to each module; browser suites in `tests/e2e` (Playwright) with
-screenshots in `tests/evidence/`; AI evals in `apps/ai/app/eval`. CI pipeline (§132): lint → type check → unit →
+screenshots in `tests/evidence/`; AI evals in `apps/ai/nexus_ai/eval`. CI pipeline (§132): lint → type check → unit →
 integration → build → E2E → security scan. Honesty is testable here, not just aspirational (§155, §156).
 
 ## 1. Test pyramid (§73)

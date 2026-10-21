@@ -10,8 +10,8 @@ Verification kinds: `unit` `integration` `api` `e2e` `visual` `eval` `manual-rev
 
 | § | Requirement | Owner artifact | Verify | Status |
 |---|---|---|---|---|
-| 1-2 | Consumer = natural-language decision layer, not search-list | `apps/ai/app/orchestrator`, `apps/web/(consumer)/search` | e2e vertical slice | building |
-| 3 | Merchant = AI business agent, not a webpage | `services/platform/merchant`, `apps/ai/app/agents/merchant_sales` | e2e merchant flow | todo |
+| 1-2 | Consumer = natural-language decision layer, not search-list | `apps/ai/nexus_ai/orchestrator`, `apps/web/(consumer)/search` | e2e vertical slice | building |
+| 3 | Merchant = AI business agent, not a webpage | `services/platform/merchant`, `apps/ai/nexus_ai/agents/merchant_sales` | e2e merchant flow | todo |
 | 4 | Not a Yelp/Amazon/Shopify/OpenTable clone; AI Decision Layer | `docs/VISION.md`, `docs/PRODUCT.md` | manual-review | building |
 | 5-7 | HK first, global-ready, dense-vertical cold start | `tenants` table, `infra/config/markets.yaml`, i18n routing | integration | building |
 | 8 | Homepage: premium (Apple+Perplexity), NL input, rails | `apps/web/app/(consumer)/page.tsx`, `packages/ui` | visual | building |
@@ -21,13 +21,13 @@ Verification kinds: `unit` `integration` `api` `e2e` `visual` `eval` `manual-rev
 
 | § | Requirement | Owner artifact | Verify | Status |
 |---|---|---|---|---|
-| 10 | Query understanding → Intent (uncertain fields allowed) | `apps/ai/app/nlu/intent.py`, `AGENT_CONTRACT` §7.1 | eval `intent_v1` | building |
-| 11-14 | Multi-agent roster + orchestrator (dynamic plan, not blind tool calls) | `apps/ai/app/orchestrator/{planner,executor}.py`, `agents/*` | unit + eval `tool_selection_v1` | building |
-| 15-17 | Tool registry: schema/validation/timeout/retry/logging/auth/errors | `apps/ai/app/tools/registry.py` | unit + `GET /ai/v1/tools` | building |
-| 18-20 | RAG pipeline (parse→chunk→embed→hybrid→rerank→pack→LLM) | `apps/ai/app/rag/*` | eval `rag_faithfulness_v1` | building |
-| 21 | Hybrid search = keyword + vector + metadata + geo + ranking | `apps/ai/app/search/sql.py` | integration + eval `search_relevance_v1` | building |
+| 10 | Query understanding → Intent (uncertain fields allowed) | `apps/ai/nexus_ai/nlu/intent.py`, `AGENT_CONTRACT` §7.1 | eval `intent_v1` | building |
+| 11-14 | Multi-agent roster + orchestrator (dynamic plan, not blind tool calls) | `apps/ai/nexus_ai/orchestrator/{planner,executor}.py`, `agents/*` | unit + eval `tool_selection_v1` | building |
+| 15-17 | Tool registry: schema/validation/timeout/retry/logging/auth/errors | `apps/ai/nexus_ai/tools/registry.py` | unit + `GET /ai/v1/tools` | building |
+| 18-20 | RAG pipeline (parse→chunk→embed→hybrid→rerank→pack→LLM) | `apps/ai/nexus_ai/rag/*` | eval `rag_faithfulness_v1` | building |
+| 21 | Hybrid search = keyword + vector + metadata + geo + ranking | `apps/ai/nexus_ai/search/sql.py` | integration + eval `search_relevance_v1` | building |
 | 22-23 | Postgres + pgvector as phase-1 stores (no premature infra) | `infra/db/migrations/V1__init.sql`, compose | integration | done (schema applied) |
-| 24 | Recommendation = candidate→filter→rank→LLM reasoning | `apps/ai/app/recommend/*` | eval | building |
+| 24 | Recommendation = candidate→filter→rank→LLM reasoning | `apps/ai/nexus_ai/recommend/*` | eval | building |
 | 25 | Every recommendation explainable, bullets trace to facts | `MatchExplanation.fact_id`, `packages/ui/MatchExplanations` | visual + unit | building |
 | 26-27 | Trust layer (source/timestamp/confidence) + freshness TTL | `facts` table, `AGENT_CONTRACT` §4-5 | unit + api | building |
 
@@ -36,9 +36,9 @@ Verification kinds: `unit` `integration` `api` `e2e` `visual` `eval` `manual-rev
 | § | Requirement | Owner artifact | Verify | Status |
 |---|---|---|---|---|
 | 28-30 | Onboarding funnel, verification, publish | `services/platform/merchant` (status machine) | api + e2e | building |
-| 31-32 | AI merchant import (URL/PDF/menu → offerings + KB) | `merchant/imports`, `MerchantImportPort`, `apps/ai/app/rag` | api (mock+real) | building |
+| 31-32 | AI merchant import (URL/PDF/menu → offerings + KB) | `merchant/imports`, `MerchantImportPort`, `apps/ai/nexus_ai/rag` | api (mock+real) | building |
 | 33 | Merchant dashboard (overview→billing) | `apps/web/app/(merchant)/*` | visual | todo |
-| 34 | Merchant AI sales agent grounded in own KB | `apps/ai/app/merchant_agent` | eval + api | building |
+| 34 | Merchant AI sales agent grounded in own KB | `apps/ai/nexus_ai/merchant_agent` | eval + api | building |
 | 35-36 | AI customer service + human handoff on low confidence | `handoffs` table, `merchant_agent/confidence` | e2e | building |
 | 37 | AI marketing agent: drafts only, publish needs explicit approval | `campaigns.status`, `approve-publish` endpoint | unit (RBAC) + api | building |
 | 38-39 | SEO agent + programmatic SEO with uniqueness/quality guard | `seo_pages.quality_score`, `agents/seo` | eval + manual-review | todo |
@@ -50,7 +50,7 @@ Verification kinds: `unit` `integration` `api` `e2e` `visual` `eval` `manual-rev
 | § | Requirement | Owner artifact | Verify | Status |
 |---|---|---|---|---|
 | 42-44 | Account, preference memory, personalization with view/edit/delete/reset | `user_preferences`, `/me/preferences`, `account` UI | api + e2e | building |
-| 45 | Multi-turn conversation state (太贵了/近一点/不吃辣) | `apps/ai/app/nlu/state_merger.py` | unit + e2e | building |
+| 45 | Multi-turn conversation state (太贵了/近一点/不吃辣) | `apps/ai/nexus_ai/nlu/state_merger.py` | unit + e2e | building |
 | 46-47 | Cards + AI result interface (summary+cards+compare+map+actions) | `EntityCard`, `packages/ui`, `/search` | visual | building |
 | 48 | Comparison table from real data only | `/ai/v1/compare`, `CompareTable` | api + visual | todo |
 | 49 | Map experience (markers, clustering, directions) | `/m/[slug]` map panel (SVG, no key faking) | visual | building |
@@ -72,7 +72,7 @@ Verification kinds: `unit` `integration` `api` `e2e` `visual` `eval` `manual-rev
 | 73-75 | Monetization tiers, marketplace revenue, ranking integrity | `subscriptions`, `coupons`, sponsored separation | unit (ranking) | building |
 | 76 | Admin console | `apps/web/app/(admin)`, `/api/v1/admin/**` | e2e | todo |
 | 77-78 | Observability incl. AI traces, tokens, cost | `agent_runs`, `llm_calls`, admin cost dashboard | api + visual | building |
-| 79-80 | Evaluation system + agent benchmark metrics | `eval_suites/eval_cases/eval_runs`, `apps/ai/app/eval` | eval gate | building |
+| 79-80 | Evaluation system + agent benchmark metrics | `eval_suites/eval_cases/eval_runs`, `apps/ai/nexus_ai/eval` | eval gate | building |
 | 81 | Testing pyramid (unit→perf) | `tests/`, module test suites | all | building |
 | 82-84 | Browser E2E (Playwright), visual regression, agent-driven browser checks | `tests/e2e` | e2e + visual | todo |
 | 85-87 | Responsive, design system, visual direction | `packages/ui`, mobile-first breakpoints | visual | building |

@@ -1,6 +1,6 @@
 # NEXUS — RAG System (§12)
 
-Status: **to be built.** Owner: `apps/ai/app/rag/**`, DB role `nexus_ai` (read-write on `documents, chunks, facts`).
+Status: **to be built.** Owner: `apps/ai/nexus_ai/rag/**`, DB role `nexus_ai` (read-write on `documents, chunks, facts`).
 Shapes/thresholds reference [`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §7 (pipeline) and §4 (trust). Query/agent wiring:
 [AI.md](AI.md), [AGENTS.md](AGENTS.md). Embedding dim is **fixed at 1024** (D3) — a model change is a migration, not config.
 

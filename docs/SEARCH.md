@@ -10,7 +10,7 @@ Service sits behind a `SearchBackend` interface so PostgreSQL (phase 1) and Open
 swappable without touching call sites (D3, [ARCHITECTURE.md](ARCHITECTURE.md) §7).
 
 ## 2. Ownership
-- Interface `SearchBackend` + Postgres impl: `apps/ai/app/search/{backend.py, sql.py}` (D3).
+- Interface `SearchBackend` + Postgres impl: `apps/ai/nexus_ai/search/{backend.py, sql.py}` (D3).
 - Platform-side search (public merchant listing, facets): `services/platform/.../search/`.
 - SQL text lives in those two places only — no scattered search queries.
 - Endpoint: `POST /ai/v1/search {intent, geo?, filters?, limit}` → `{items:EntityCard[], facets, took_ms, strategy,

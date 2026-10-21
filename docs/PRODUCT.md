@@ -10,7 +10,7 @@ this file must not fork them. Section numbers `§n` map to `新建 文本文档.
 |---|---|---|
 | Consumer + Merchant + Admin UI | `apps/web` route groups `(consumer)` `(merchant)` `(admin)`, Next.js App Router | Next 15 / 3000, SSR+SSG |
 | Commerce core (auth, merchants, offerings, carts, orders, reservations, payments, reviews, conversations, events, growth, admin) | `services/platform/.../<domain>/` Java packages in one Spring Boot monolith | Java / 8080 |
-| AI (query understanding, search, RAG, agents, recommendations, compare, eval, observability) | `apps/ai/app/<subsystem>/` | FastAPI / 8000 |
+| AI (query understanding, search, RAG, agents, recommendations, compare, eval, observability) | `apps/ai/nexus_ai/<subsystem>/` | FastAPI / 8000 |
 | Shared types + JSON Schemas (generated) | `packages/types` | build artifact |
 | Config (ranking weights, i18n) + compose + migrations | `infra/` | — |
 | Synthetic data generator + loader | `data/seed` | — |
@@ -35,7 +35,7 @@ answer < 6s (§11, [API.md](API.md)).
 ### 1.3 Conversation / multi-turn (§34)
 Follow-ups mutate state: `太贵了` → budget down; `近一点` → distance sort + tighter radius; `不吃辣` → append constraint.
 State (`conversation`, `intent`, `filters`, `preferences`) persists on `conversations.state`. Merge rules in
-`apps/ai/app/nlu/state_merger.py` ([AI.md](AI.md)). Acceptance: 4-turn script returns coherent narrowing (E2E, [TESTING.md](TESTING.md)).
+`apps/ai/nexus_ai/nlu/state_merger.py` ([AI.md](AI.md)). Acceptance: 4-turn script returns coherent narrowing (E2E, [TESTING.md](TESTING.md)).
 
 ### 1.4 Result interface + cards (§35, §36, §37)
 Result = AI summary + cards + comparison + map + actions (§36), grouped (Best match / Best value / Closest / Most

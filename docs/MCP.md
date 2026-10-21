@@ -1,6 +1,6 @@
 # NEXUS — MCP Server (§3, §44, §45, §96, §97)
 
-Status: **seams reserved in phase 1, server NOT built until Phase 4 (§146).** Owner: `apps/ai/app/mcp/`, path `/mcp`
+Status: **seams reserved in phase 1, server NOT built until Phase 4 (§146).** Owner: `apps/ai/nexus_ai/mcp/`, path `/mcp`
 (streamable HTTP + JSON-RPC). **Nothing is live today** — the tools are the *same* registry tools used internally
 ([AGENTS.md](AGENTS.md) §3), so the seam exists without extra logic.
 
@@ -54,4 +54,4 @@ state "reserved seam, to be built" ([D4/D7](DECISIONS.md)).
 - **Abuse & cost:** an external agent can hammer `search_nexus`; needs per-principal rate limits + cost accounting
   ([`API_CONTRACT.md`](API_CONTRACT.md) §9, [AI.md](AI.md) §5) before opening the surface.
 - **MCP spec churn:** transport ("streamable HTTP + JSON-RPC") and auth are evolving standards — isolate behind
-  `apps/ai/app/mcp/` so churn doesn't reach the core.
+  `apps/ai/nexus_ai/mcp/` so churn doesn't reach the core.

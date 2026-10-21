@@ -384,7 +384,7 @@ secret. This is D20: the platform owns every commerce and conversation write, so
 }
 ```
 Conversation state merges successive turns: "太贵了" → `budget.max *= 0.7`; "近一点" → `sort_preference=distance`,
-`location.radius_m` tightened; "不吃辣" → append constraint. Merge rules live in `apps/ai/app/nlu/state_merger.py`.
+`location.radius_m` tightened; "不吃辣" → append constraint. Merge rules live in `apps/ai/nexus_ai/nlu/state_merger.py`.
 
 ## 8. Growth & creator
 

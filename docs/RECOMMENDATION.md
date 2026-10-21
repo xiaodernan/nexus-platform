@@ -1,6 +1,6 @@
 # NEXUS — Recommendation & Ranking (§17, §18, §66–§67, §98–§100, §113)
 
-Status: **to be built.** Owner: `apps/ai/app/recommend/**` (agents `ranking`, `recommendation` write
+Status: **to be built.** Owner: `apps/ai/nexus_ai/recommend/**` (agents `ranking`, `recommendation` write
 `recommendation_sets`; role `nexus_ai`). Authoritative scoring/sponsored rules: [`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §6;
 trust/fact linkage: §4. Retrieval feeding candidates: [SEARCH.md](SEARCH.md); feedback→memory: [CONSUMER.md](CONSUMER.md),
 [GROWTH.md](GROWTH.md).

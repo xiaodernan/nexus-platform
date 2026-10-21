@@ -21,7 +21,7 @@ agents that bypass the registry.**
 
 ## 2. Orchestrator loop (§10) — see [AI.md](AI.md) §4
 `receive → classify → plan (min necessary steps) → execute DAG (parallel independents) → collect → verify → rank →
-compose EntityCards+citations → log agent_run → return`. Typed `Plan` from `apps/ai/app/orchestrator/planner.py`;
+compose EntityCards+citations → log agent_run → return`. Typed `Plan` from `apps/ai/nexus_ai/orchestrator/planner.py`;
 budget ≤6 tool / ≤3 LLM calls, 4s/tool, 12s/request; on breach degrade to deterministic search, never hang
 ([`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §2). Dynamic planning is required — a simple query must not fan out to every
 tool (§10: "Agent 不应该盲目调用所有工具").
@@ -29,7 +29,7 @@ tool (§10: "Agent 不应该盲目调用所有工具").
 ## 3. Tool registry contract (§11, [`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §3)
 Every tool declares a `ToolSpec`: `name, version, description, input_schema (additionalProperties=false),
 output_schema, permission, scopes, timeout_ms, retries, cache_ttl_s, side_effect, cost_class (db|vector|llm_cheap|
-llm_reason|external), fallback`. Registry = `apps/ai/app/tools/registry.py`; public manifest at
+llm_reason|external), fallback`. Registry = `apps/ai/nexus_ai/tools/registry.py`; public manifest at
 `GET /ai/v1/tools` ([`API_CONTRACT.md`](API_CONTRACT.md) §7).
 
 **Dispatch is the only data path** (§52): `agent → registry.dispatch(subject, tool, args)` runs, in order:

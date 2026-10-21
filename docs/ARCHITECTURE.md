@@ -144,7 +144,7 @@ Using an expired cache to deceive the user is prohibited (§103); `stale=true` r
 
 ## 7. Extension seams (keep UCP/MCP/model logic out of business code, §43)
 
-- **`SearchBackend`** interface (§16): phase-1 impl is Postgres-only SQL in `apps/ai/app/search/sql.py` +
+- **`SearchBackend`** interface (§16): phase-1 impl is Postgres-only SQL in `apps/ai/nexus_ai/search/sql.py` +
   `services/platform/.../search/` (D3). OpenSearch/Elasticsearch is a second impl; call sites never change. Image
   `elasticsearch:8.13.4` is pre-cached for when it is enabled.
 - **`PaymentProvider`** interface (§42): `demo` impl ships phase 1; real providers (Stripe/AlipayHK/PayMe/HSBC) are

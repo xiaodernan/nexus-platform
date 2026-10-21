@@ -1,6 +1,6 @@
 # NEXUS — AI Service (`apps/ai`)
 
-Status: **to be built.** Owner: FastAPI service, port 8000 (`apps/ai/app/**`), DB role `nexus_ai`
+Status: **to be built.** Owner: FastAPI service, port 8000 (`apps/ai/nexus_ai/**`), DB role `nexus_ai`
 ([`API_CONTRACT.md`](API_CONTRACT.md) §0). This doc covers query understanding, conversation-state merge, the
 orchestrator loop, the model router, cost accounting and the eval gate. Agent roster/tool registry live in
 [AGENTS.md](AGENTS.md); retrieval internals in [RAG.md](RAG.md); ranking math in [RECOMMENDATION.md](RECOMMENDATION.md).
@@ -8,7 +8,7 @@ Canonical shapes: [`API_CONTRACT.md`](API_CONTRACT.md) §7, [`AGENT_CONTRACT.md`
 
 ## 1. Directory / file ownership (target layout)
 ```
-apps/ai/app/
+apps/ai/nexus_ai/
   nlu/            understand.py (Intent), state_merger.py (multi-turn merge, §34)
   orchestrator/   planner.py (typed Plan), executor.py (DAG), verify.py
   search/         sql.py (hybrid SQL seam), backend.py (SearchBackend iface, §16)
@@ -39,7 +39,7 @@ The canonical object is [`API_CONTRACT.md`](API_CONTRACT.md) §7.1 — do not fo
 
 ## 3. Conversation state & merge rules (§34)
 
-State persists on `conversations.state` (jsonb) and is merged per turn by `apps/ai/app/nlu/state_merger.py`.
+State persists on `conversations.state` (jsonb) and is merged per turn by `apps/ai/nexus_ai/nlu/state_merger.py`.
 Deterministic merge rules (illustrative, from [`API_CONTRACT.md`](API_CONTRACT.md) §7.1) — merges edit the *previous*
 Intent, they do not re-derive from scratch:
 
@@ -81,7 +81,7 @@ receive → classify intent → build Plan (min necessary steps) → execute DAG
 
 ## 5. Model router & cost accounting (§101, §102, §160, [`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §9)
 
-`apps/ai/app/models/router.py` maps task_class → cheapest model that can do the job:
+`apps/ai/nexus_ai/models/router.py` maps task_class → cheapest model that can do the job:
 `intent_extract`/`classify` → cheap-fast (schema-constrained); `embed` → embedding model (batched, cached by content
 hash); `rerank` → cross-encoder (top-40 only); `summary` → mid; `reason/plan` → reasoning model (≤1/request);
 `generate_ui_copy` → mid. Adapters share one interface: `MockAdapter` (default, `NEXUS_LLM_PROVIDER=mock`, D4) /
@@ -110,7 +110,7 @@ relevance nDCG, **hallucination rate**, p50/p95 latency, cost, human-interventio
 - p95 `/ai/v1/search` **< 250ms** warm (first stream event <1.2s, full answer <6s, [`API_CONTRACT.md`](API_CONTRACT.md) §11)
 - **no regression > 3pp** on task success
 
-`apps/ai/app/eval/gates.py` is the CI enforcement point; wired by [TESTING.md](TESTING.md) and [ROADMAP.md](ROADMAP.md) M3+.
+`apps/ai/nexus_ai/eval/gates.py` is the CI enforcement point; wired by [TESTING.md](TESTING.md) and [ROADMAP.md](ROADMAP.md) M3+.
 
 ## Open questions / risks
 - **Merge-rule drift vs. mock provider:** deterministic merges are testable, but real-provider `太贵了 → budget*0.7` is a

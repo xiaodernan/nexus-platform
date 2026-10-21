@@ -120,7 +120,7 @@ Grouped by domain; the ER overview in §10 shows relationships. "Owner role" = w
 
 ### 3.6 Conversations (§25, §26, §34)
 - **`conversations`** — `channel` (`web|mcp|ucp|whatsapp|email`), `mode` (`ai|human|hybrid`), and `state jsonb` = the
-  persisted conversation/intent/filters/preferences (§34, merged by `apps/ai/app/nlu/state_merger.py`).
+  persisted conversation/intent/filters/preferences (§34, merged by `apps/ai/nexus_ai/nlu/state_merger.py`).
 - **`messages`** — `sender_type`, `role`, `content_type` (`text|cards|comparison|form`), `payload jsonb` (structured UI
   blocks + sources), `agent_run_id` link, `confidence`, `handoff` flag.
 - **`handoffs`** — §26 escalation: reason (`low_confidence|user_request|policy|refund`), status, `evidence`.
