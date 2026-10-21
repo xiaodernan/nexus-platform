@@ -17187,3 +17187,32 @@ embeddings must degrade to `hashing`. None of it touches a real database or netw
 
 **Verified, not claimed.** `pytest tests/test_deps.py` → **7 passed**; full `apps/ai` suite →
 **898 passed, 31 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+---
+
+## 421 · D427 — pin the offline demo catalogue's integrity (`api/demo_data`, §109/§155)
+
+**Module / contract.** `api/demo_data` is the clearly-labelled synthetic catalogue the DB-free HTTP
+layer serves. Its honesty rules are a contract: every row carries `data_origin="demo"`, ids are
+deterministic (uuid5), every offering references a real merchant and inherits its category/district,
+and every rendered number (price/rating) ships with a backing `facts` row — nothing is invented at
+request time.
+
+**Pinned behavior (21 cases, all confirmed empirically):**
+- `_id` is deterministic for the same `(kind, name)` and differs across kinds.
+- Merchants: 6 rows, all `data_origin="demo"`, `subject_id == merchant_id == id`, empty
+  `attributes`, unique slugs/ids, and `ai_agent_enabled` true only for `demo-lan-kwai-fong`.
+- Offerings: 2 rows, every `merchant_slug` exists, `merchant_id == _id("merchant", slug)`, and
+  `category`/`district` are inherited from the parent merchant.
+- Facts: 19 rows, all `stale=False`, `observed_at == now - 2h`, deterministic `fact_id`s; every
+  offering has a price fact (2); merchant price facts appear only for the 5 merchants that have a
+  price; every merchant has an address and a rating fact (6 each).
+- Hours: 35 rows (first 5 merchants × 7 weekdays), all weekdays 0–6, opens 11:30, restaurants close
+  23:00, the café closes 19:00.
+- `demo_backend(now=…)` assembles those counts; `demo_is_active` is true for it and false for an
+  arbitrary object.
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_demo_data.py` → **21 passed**; full `apps/ai` suite →
+**919 passed, 31 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
