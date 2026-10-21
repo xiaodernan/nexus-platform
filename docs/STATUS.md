@@ -17418,3 +17418,41 @@ contract clause that only a human reading the ledger would notice ✗ is a claus
 noticed once and then never again ✗; a census that counts the records ✗ makes it a **number**
 ✗, and a number can be a gate ✓. The census is now a test ✓ — five cases ✓, one per surface ✓,
 including the surface that is right to be absent ✓.
+
+## 427. D433 · the product's two-turn refinement had never been measured on the live plane, in either spelling (`apps/ai/tests/test_live_conversation_refinement.py`, §34)
+
+**What the product does, and what was measured.** A user says what they want, then says "太贵了"
+(too expensive) or "近一点" (a bit closer) on the second turn ✓, and §34 promises what the second
+turn does ✓. The two units that carry it were measured **offline** ✓: D406 wired the sort
+preference (`plan.sort_preference` was written and never read ✓) and D421 made the merge's cues
+answer to either spelling ✓ (the cues are a second vocabulary the canonical table did not cover ✓).
+Neither asked the live plane ✓.
+
+**What the live plane answers, measured now.**
+
+```
+turn 1  拉麵                      sort='relevance'   8 cards
+turn 2  太貴了 (traditional)        sort='price_low'   8 cards, prices ASCENDING
+turn 2  太贵了 (simplified)         sort='price_low'   8 cards, prices ASCENDING
+turn 2  近一點 (traditional)         sort='distance'   8 cards, the radius tightened to 1000
+```
+
+**The words in the test come FROM the vocabulary** ✓ — `L.CUISINE_TERMS["japanese"][5]` ✓ and
+`M.CHEAPER_CUES` / `M.NEARER_CUES` ✓ — because D421's lesson is that a writer's memory of a CJK
+code point is not a reference ✓, and a test that hard-codes one inherits the mistake ✓. (It is not
+hypothetical: while writing this unit the probe's own 拉麵 and 近一點 were **wrong code points** ✓
+and the probe reported a refinement that did not fire ✗ — the vocabulary was the only thing that
+had it right ✓.)
+
+**Verified, not claimed.** `pytest tests/test_live_conversation_refinement.py` -> **2 passed** on
+the plane seeded from the current generator ✓; the full `apps/ai` suite -> **981 passed** with the
+database, **942 passed / 39 skipped** without it ✓; `ruff check .` -> **All checks passed!**;
+`mypy nexus_ai` -> **Success: no issues found in 52 source files**; the eval gate ->
+**`RESULT: PASS - 2 suite(s), 0 failing`**.
+
+**Discipline note.** Two units, two fixes ✓, and the question that would have caught the next one
+was never asked ✗ on the plane where the answer is served ✗. A fix measured offline is a fix
+measured on a **model** of the product ✗ — and the difference between the model and the product
+showed up here in the form of a probe that could not spell 拉麵 ✗. The test that takes its words
+from the vocabulary ✓ cannot make that mistake ✓, which is a stronger property than a test that
+happens to spell them right ✓ today ✓.
