@@ -17135,3 +17135,33 @@ dir here).
 
 **Verified, not claimed.** `pytest tests/test_eval_suites.py` → **35 passed**; full `apps/ai` suite
 → **883 passed, 31 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+---
+
+## 419 · D425 — pin the injection-containment gate (`eval/safety_injection_v1`, §19)
+
+**Module / contract.** `eval/safety_injection_v1.run` is the release gate for §19: every attack
+payload must be **detected and named**, the envelope delimiter must be unforgeable, and ordinary
+merchant text must **not** be flagged (a scanner that flags everything contains nothing). It is
+pure and DB-free; the scanner itself is already pinned by `test_injection.py` (D342), so this file
+pins the suite harness.
+
+**Pinned behavior (8 cases, all confirmed empirically):**
+- All-contained set (1 attack + 1 benign + 1 forged-delimiter envelope): `containment=1.0`,
+  `envelope_containment=1.0`, `false_positive_rate=0.0`, all three gates pass, `ok=True`, no
+  failures; the `*_cases` metrics are floats.
+- Undetected attack (benign text declared `attack`) → `containment=0.0`, the containment gate
+  fails, failure reads `not detected (signals=[])`.
+- `expect_signal` mismatch → failure `detected, but the signal '…' was not among ['ignore_instructions']`.
+- False positive (injection text declared `benign`) → `false_positive_rate=1.0`, the `<=0.10` gate
+  fails, failure reads `ordinary text flagged as ['ignore_instructions']`.
+- Envelope forgery (`DELIMITER_END` in the text) is redacted → `envelope_containment=1.0`.
+- **Empty suite quirk**: `rate(0,0)=1.0` also applies to `false_positive_rate`, so `run([])` reports
+  a 100% false-positive rate and fails that gate (`ok=False`) — the empty case is named, not hidden.
+
+**Discipline note.** One premise correction, not code: I first assumed an empty suite would be `ok`;
+the probe showed `rate(0,0)=1.0` makes the false-positive rate 1.0 and fails the gate. The test now
+pins the actual behavior.
+
+**Verified, not claimed.** `pytest tests/test_safety_injection_suite.py` → **8 passed**; full
+`apps/ai` suite → **891 passed, 31 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
