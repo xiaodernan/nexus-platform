@@ -258,7 +258,10 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
     flags = EntityFlags(
         sponsored=bool(cand.sponsored),
         demo=str(rec.get("data_origin") or "").lower() in DEMO_ORIGINS,
-        unverified=not bool(rec.get("ownership_verified", True)))
+        unverified=not bool(rec.get("ownership_verified", True)),
+        # D472: the offering's price came from an estimate - the flag API_CONTRACT §2
+        # names for offering cards. The query already selects `price_source`.
+        estimated_price=(str(rec.get("price_source") or "").lower() == "estimated"))
     if cand.sponsored and sponsor_label:
         anchor = computed.get("relevance") or (facts[0] if facts else None)
         reasons.insert(0, MatchExplanation(label="sponsored", text=sponsor_label,

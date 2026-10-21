@@ -19679,3 +19679,63 @@ The D438 lesson ✓ ("a shape that is written once and copied is a shape that dr
 the fix is not to patch the copy ✓ - it is to say which copy is the **authority** ✓ ✓ and to
 check the other against it ✓ ✓, which is what this gate does ✓ ✓ (it reads the contract ✓,
 not the type ✓) ✓.
+
+## 466. D472 · the `estimated_price` flag: the CONTRACT names it, the query has the data, and the card could never send it (`apps/ai/nexus_ai/contract.py`, `apps/ai/nexus_ai/search/cards.py`, `apps/ai/tests/test_estimated_price_flag.py`)
+
+**What the product does, and what was measured.** API_CONTRACT §2 spells out the card's flags
+and then says:
+
+> The three above are the card-wide set; two projections add one flag of their own:
+> `estimated_price` on offering cards (`offerings.price_source = 'estimated'`) and
+> `verified_visit` on review cards
+
+and the service's card could carry **none** of them ✓ ✗ ✗. The measurement ✓:
+
+* the contract names the flag ✓ ✓;
+* the corpus has **105** offerings whose `price_source` is `estimated` ✓ (of 906 ✓) ✓ - the
+  flag describes a real and common case ✓ ✓;
+* the offering's query **already selects** `o.price_source` ✓ ✓ - the data was there ✓ ✓;
+* the card's `EntityFlags` had three fields ✓ - `sponsored` ✓, `demo` ✓, `unverified` ✓ - and
+  **no** `estimated_price` ✓ ✗ ✗, so the flag was never sent ✓ ✗ ✗ ✗.
+
+A renderer told to look for `estimated_price` was looking for a field that was never there ✓
+✗ ✗ - and the price it was rendering said nothing about where the number came from ✓ ✓.
+
+**The fix.** The `EntityFlags` model carries the flag ✓ ✓ and the card builder sets it from
+the row's `price_source` ✓ ✓ - the one column the query already had ✓ ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_estimated_price_flag.py` checks both halves ✓: the
+contract's §2 **names** the flag ✓ (read out of the contract ✓, not listed in the test ✓) ✓,
+and the builder maps it ✓ - an estimated price carries the flag ✓, a merchant's price does
+**not** ✓, and the flag is on every card ✓ ✓. It was **proved to fail** ✓: removing the
+mapping made it fail with *"the offering's price came from an estimate and the card does not
+say so"* ✓ - the probe was put back ✓ ✓.
+
+**Filed.** The contract's §2 also names `verified_visit` (on review cards ✓) ✓ - and the AI
+service builds **no** review cards ✓ (the card types are
+`merchant|product|service|experience|collection` ✓) ✓, so that flag belongs to a projection
+this service does not own ✓ ✓. And the cross-lane `EntityFlags` also declares `stale` ✓ and
+`untrusted_content` ✓, which the contract does not name ✓ ✗ (the same filing as §465's ten
+card fields ✓ ✓) ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **4 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1069 passed** with the database, **1015 passed / 54 skipped**
+  without it (the sibling lane's two untracked test files excluded - `test_app_surface.py` ✓
+  and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ - see §436);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** §465 (D471) found the cross-lane type promising **more** than the
+contract ✓, and this unit found the mirror ✓: the **contract** promising a field the service
+could not send ✓ ✗ ✗ ✗ - and the difference is who is hurt ✓: a type that promises too much
+is a promise the *service* must keep ✓, while a contract that promises a field the service
+cannot send is a promise the **renderer** cannot keep ✓ ✓ ✗. The general form ✓: a flag is a
+promise in **both** directions ✓ ✓ - the contract's flag names are promises to whoever
+renders the card ✓, and the service's model is the promise back ✓ - so the check has to run
+in both directions too ✓ ✓, and a flag that only one side can see is a flag one side has
+invented ✓ ✓ ✓.

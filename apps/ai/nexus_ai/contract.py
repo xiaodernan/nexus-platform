@@ -122,6 +122,11 @@ class EntityFlags(BaseModel):
     sponsored: bool = False
     demo: bool = False
     unverified: bool = False
+    # D472: API_CONTRACT §2 names this flag - "estimated_price on offering cards
+    # (offerings.price_source = 'estimated')" - and the offering's query already selects
+    # `price_source`, but the flag could never be sent, so a renderer told to look for it
+    # was looking for a field that was never there.
+    estimated_price: bool = False
 
 
 class AiMatch(BaseModel):
