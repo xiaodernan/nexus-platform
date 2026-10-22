@@ -21576,3 +21576,56 @@ the census gap that hid it ✓ ✓ is the D464 rule's own blind spot ✓ ✓ —
 ✓ — which counts a test's read ✓ ✓: so the general form's last clause ✓ ✓: **a census that
 counts the TESTS' reads cannot find what only the tests use ✓ ✓ - and the tests are the
 ones that keep a wrong copy alive ✓ ✓** ✓ ✓ ✓.
+
+## 497. D504 · the dead-constant census counted a TEST's read as a read - so a rule the contract FORBIDS survived on the strength of the test that asserted it (`apps/ai/tests/test_no_dead_constants.py`, `apps/ai/tests/test_the_trust_surface_is_used.py`)
+
+**What the product does, and what was measured.** D464's census asks *"is this name read?"*
+✓ ✓ — and it counts a read **in the package OR in the tests** ✓ ✓. So a name that only a
+**test** reads survives it ✓ ✓ ✓.
+
+**And D503 showed what that costs** ✓ ✓: the trust layer kept a second copy of the §4
+renderer rule ✓ ✓ — the copy the contract **forbids** ✓ ✓ (a bullet with no `fact_id`
+survived when its claims happened to ground ✓ ✓) ✓ — and **the test asserted it** ✓ ✓ ✗ ✗.
+So the census saw a use ✓ ✓ and the copy stayed ✓ ✓ ✗ ✗ ✓.
+
+**The census now asks TWO questions** ✓ ✓:
+* is the name read at all ✓ ✓ (the package **or** the tests ✓ ✓) ✓ — the old question ✓ ✓;
+* is the name read by the **product** ✓ ✓ — the new one ✓ ✓.
+
+**And every name the product does not read is now DECLARED, one by one, with the reason**
+✓ ✓ — fourteen of them ✓ ✓: the CI's frame check ✓, the task class's metadata ✓, the
+scanner's convenience predicates ✓, the demo-mode check ✓, the provider factory's
+accessors ✓, the platform door's client and resetters ✓, the SQL's helpers ✓, the naming
+convention ✓, the database requirement ✓, the freshness trigger ✓ ✓.
+
+**So the product's dead surface is a list, not a gap** ✓ ✓ — and the list says *why* each
+name is a promise ✓ ✓ rather than being an accident ✓ ✓.
+
+**The gate.** The D464 census gains the new question ✓ ✓, and the D503 gate's trust-layer
+check now reads **one** declared list ✓ ✓ (the D464's ✓ ✓) — not two ✓ ✓ ✓.
+
+It was **proved to fail** ✓: dropping one declaration made the census fail ✓ ✓ — the
+probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the census -> **3 passed** ✓ (with the D503 gate ✓: **11 passed** ✓), and it was **proved
+  to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **2378 passed** offline ✓, and **2432 passed** with the
+database ✓ ✓ (the sibling lane's two untracked test files excluded ✓ - `test_app_surface.py`
+✓ and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ ✓, see
+§436 ✓);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 58 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The twenty-seventh unit in a row ✓, and this one is the **same** lesson
+as D503 ✓ ✓, made **mechanical** ✓ ✓. D503 found the defect ✓ ✓ (a wrong copy kept alive
+by a test ✓ ✓) — and this unit fixes the **census that could not see it** ✓ ✓, so the next
+one is found by a gate instead of by a reader ✓ ✓ ✓. And the general form's last clause
+now has a home ✓ ✓: **A CENSUS THAT COUNTS THE TESTS' READS CANNOT FIND WHAT ONLY THE
+TESTS USE ✓ ✓ - and the tests are the ones that keep a wrong copy alive ✓ ✓** ✓ ✓. So the
+house's own method ✓ ✓ — *a census is worth exactly as much as its scope* ✓ ✓ (D446 ✓ ✓)
+— gets its own reading here ✓ ✓: **a census that counts the tests is a census of the
+tests ✓ ✓** ✓ ✓ ✓.

@@ -40,6 +40,28 @@ DECLARED_EXPORTS = frozenset({
     "hours_ttl",          # trust/freshness.py - a TTL helper the platform may ask for
     "now_ms",             # models/base.py - a clock helper the platform may ask for
     "set_platform_client",  # adapters/platform.py - the platform door's setter
+    # D504: the names the PRODUCT does not read, declared one by one. Each is a promise the
+    # platform lane (or a CI script) may ask for - a helper, a setter, a test-support
+    # entry point. A name that is NOT here and the product does not read is DEAD, and the
+    # census now says so.
+    "assert_canonical_stream",  # api/sse.py - the CI's check that a body is whole frames
+    "budget_for",          # models/base.py - a task class's model metadata
+    "contains_injection_signals",  # trust/injection.py - the scanner's convenience predicate
+    "demo_is_active",      # api/demo_data.py - is the offline demo corpus serving?
+    "get_adapter",         # models/factory.py - the configured provider's adapter
+    "get_platform_client",  # adapters/platform.py - the platform door's client
+    "haversine_m",         # search/sql.py - the great-circle helper the SQL mirrors
+    "injection_signals",   # trust/injection.py - the scanner's convenience signal list
+    "merge_reports",       # trust/injection.py - the report merger for a split scan
+    "needs_reindex",       # trust/freshness.py - the §5 recompute trigger
+    "open_now_predicate_expr",  # search/sql.py - the open-now SQL predicate
+    "proper_nouns",        # nlu/lexicon.py - the demo data's naming convention
+    "require_db",          # db/pool.py - the database requirement helper
+    "reset_platform_client",  # adapters/platform.py - the platform door's resetter
+    "reset_provider_cache",  # models/factory.py - the provider pool's resetter
+    "reset_settings_cache",  # config.py - the settings cache's resetter
+    "reviews_for",         # search/sql.py - the review rows for a set of merchants
+    "time_today",          # search/sql.py - the SQL's local-time helper
 })
 
 
@@ -83,25 +105,40 @@ def _module_functions() -> dict[str, list[str]]:
     return found
 
 
-def _reads() -> set[str]:
-    """The names that are READ - in the package and in the tests.
+def _reads_in(root: Path) -> set[str]:
+    """The names that are READ in one tree.
 
     D463: a use is a READ, not a mention. A name in Load context, or an attribute that is
     read, is a use; a string in a comment, in a docstring or in a list of table names is not.
     """
     out: set[str] = set()
-    for root in (PACKAGE, TESTS):
-        for path in sorted(root.rglob("*.py")):
-            try:
-                tree = ast.parse(path.read_text(encoding="utf-8-sig"))
-            except (SyntaxError, OSError):  # pragma: no cover
-                continue
-            for node in ast.walk(tree):
-                if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
-                    out.add(node.id)
-                elif isinstance(node, ast.Attribute):
-                    out.add(node.attr)
+    for path in sorted(root.rglob("*.py")):
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8-sig"))
+        except (SyntaxError, OSError):  # pragma: no cover
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+                out.add(node.id)
+            elif isinstance(node, ast.Attribute):
+                out.add(node.attr)
     return out
+
+
+def _reads() -> set[str]:
+    """The names that are READ - in the package and in the tests."""
+    return _reads_in(PACKAGE) | _reads_in(TESTS)
+
+
+def _product_reads() -> set[str]:
+    """The names the PRODUCT reads - the tests are not the product.
+
+    D504: a name only a TEST reads is the product's dead surface, and the census could not
+    see it: it counted the tests' reads as reads. D503 is what that cost - the trust layer
+    kept a second copy of the §4 renderer rule (the copy the contract FORBIDS) and the
+    test asserted it, so the census saw a use and the copy stayed.
+    """
+    return _reads_in(PACKAGE)
 
 
 def _mentions(name: str) -> int:
@@ -150,4 +187,35 @@ def test_every_module_level_function_is_called_somewhere():
             dead.append(f"{name} ({', '.join(where)})")
     assert not dead, (
         "these functions are defined and called by nothing: "
+        + "; ".join(dead))
+
+
+def test_every_module_level_name_is_read_by_the_product():
+    # D504: the census above counts a read in the TESTS as a read, so a name only a test
+    # calls survives it - and D503 is what that cost: the trust layer kept a second copy
+    # of the §4 renderer rule (the copy the contract FORBIDS) and the test asserted it, so
+    # the census saw a use and the copy stayed.
+    #
+    # The product's own dead surface is a different question, and this asks it. A name the
+    # product does not read is either wired up or DECLARED - and the declaration says why.
+    read = _product_reads()
+    dead = []
+    for name, where in sorted(_module_constants().items()):
+        if name in ALLOWED or name in DECLARED_EXPORTS:
+            continue
+        if name in read:
+            continue
+        dead.append(f"{name} ({', '.join(where)})")
+    for name, where in sorted(_module_functions().items()):
+        if name.startswith("__"):
+            continue
+        if name in DECLARED_EXPORTS:
+            continue
+        if name in read:
+            continue
+        dead.append(f"{name} ({', '.join(where)})")
+    assert not dead, (
+        "these names are read by the TESTS but by no product code - a public name nobody "
+        "calls is a promise nobody keeps, and a second copy of a rule is a second thing "
+        "that can drift (D503). Wire them up, or declare them with the reason: "
         + "; ".join(dead))

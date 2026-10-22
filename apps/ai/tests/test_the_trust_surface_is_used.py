@@ -42,21 +42,15 @@ TRUST = PACKAGE / "trust"
 #: rather than a dead name. (D503: the three that used to be here - `verify_bullets`,
 #: `pick_authoritative`, `select_display_facts` - were second copies of rules the product
 #: keeps elsewhere, and one of them was the copy the contract forbids.)
-#: The D464 census's own declared exports are reused - one list, not two ✓.
-DECLARED = {
-    "contains_injection_signals": "trust/injection.py - the scanner's convenience predicate",
-    "injection_signals": "trust/injection.py - the scanner's convenience signal list",
-    "merge_reports": "trust/injection.py - the report merger for a split scan",
-}
+#: The declared names live in ONE list - the D464 census's - and this gate reads it ✓.
+DECLARED: dict[str, str] = {}
 
 
 def _declared_everywhere() -> dict[str, str]:
-    """Every declared export - the D464 census's and this gate's."""
+    """Every declared export - the D464 census's one list ✓."""
     from test_no_dead_constants import DECLARED_EXPORTS
 
-    out = {name: "the D464 census's declared export" for name in DECLARED_EXPORTS}
-    out.update(DECLARED)
-    return out
+    return {name: "the D464 census's declared export" for name in DECLARED_EXPORTS}
 
 
 def _package_reads() -> set[str]:
