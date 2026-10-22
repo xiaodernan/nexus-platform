@@ -20,6 +20,8 @@ Containment can: the chunk's text either has the words or it does not.
 
 from __future__ import annotations
 
+from nexus_ai.nlu.matching import cue_in
+
 #: CJK ideographs, the range `normalize_query` and the lexicon both use.
 _CJK_LO, _CJK_HI = "一", "鿿"
 
@@ -69,7 +71,10 @@ def mentions(text: str, query: str | None) -> bool:
     """
     low = (text or "").lower()
     for token in query_tokens(query):
-        if token in low:
+        # D482: the ONE matcher - the query's token is a WORD in the text. "spa" inside
+        # "spaghetti" is not a spa, and "tea" inside "steakhouse" is not a tea. A
+        # plural still matches: "bar" in "bars" is a bar.
+        if cue_in(token, text or "", low):
             return True
     return False
 

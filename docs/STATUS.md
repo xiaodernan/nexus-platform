@@ -20343,3 +20343,81 @@ it** ✓ ✓ - six units ✓, six readers fixed ✓ ✓, and the census that fin
 census ✓ ✓. The D481 rule is the one to remember ✓: **a name is a word** ✓ ✓ - the same
 rule the D478 unit wrote for the time parser's markers ✓ ✓, now the rule of the whole
 package ✓ ✓.
+
+## 476. D482 · the trust layer typed a price as a plain NUMBER - the keyword's window was six characters, and the keyword list stood inside the reader (`apps/ai/nexus_ai/trust/verification.py`, `apps/ai/nexus_ai/search/tokens.py`, `apps/ai/tests/test_trust_claim_kinds.py`)
+
+**What the product does, and what was measured.** The trust layer types every numeric claim
+in the copy ✓ and matches it back to a fact ✓ (§4 ✓) - and the **kind** it gives the claim
+decides the **tolerance** the grounding uses ✓ ✓: a money claim typed as a plain number is
+grounded with the loose number tolerance ✓ ✓, so a price can be grounded by a rating fact
+✓ ✓.
+
+**And the window was six characters.** ✓ The reader looked six characters either side of
+the number ✓ ✓ - shorter than most English clauses ✓ ✓:
+
+```
+the price is 128      -> the claim kind NUMBER   (the window was "ce is 128")
+the budget is 500     -> the claim kind NUMBER   (the window was "et is 500")
+a 4.5 star rating     -> the claim kind NUMBER   (the English "star" was not in the
+                                                  keyword list at all)
+```
+
+**Three defects.** ✓
+
+* **The window did not reach the word that types the claim.** ✓ "the price is 128" put the
+  word "price" **outside** the window ✓ ✓ - so a price was typed as a plain number ✓ ✓.
+* **The English "star" was not in the rating list.** ✓ So "a 4.5 star rating" was a plain
+  number ✓ ✓.
+* **The keyword list stood inside the reader** ✓ - a second copy of the vocabulary ✓ ✓
+  (D438 ✓) - **and the keywords were read as bare substrings** ✓ ✓, so "priceless" typed a
+  number as money ✓ ✓.
+
+**And the same shape in the RAG.** ✓ The route's **containment** test ✓ - the evidence the
+route uses to decide whether a chunk answers the question ✓ (D405 ✓) - read the query's
+tokens as bare substrings ✓ ✓: **"spa" matched "spaghetti"** ✓ ✓ and **"tea" matched
+"steakhouse"** ✓ ✓, so a chunk that does not mention the query was kept ✓ ✓.
+
+**The fix.** The window now reaches the word that types the claim ✓ ✓ - **sixteen**
+characters for Latin ✓ and **six** for CJK ✓ ✓, the polarity reader's own reach ✓ ✓ (the
+house's precedent ✓ ✓) - and the keyword lists are **TABLES** ✓ ✓ (`RATING_KEYWORDS` ✓,
+`MONEY_KEYWORDS` ✓) with the English **"star"** among them ✓ ✓. The Latin keywords are read
+by the **ONE matcher** ✓ ✓, so "priceless" is not "price" ✓ ✓ - which is what keeps the
+wider window honest ✓ ✓: with a six-character window "a priceless 300" was a plain number
+✓ ✓, and with a sixteen-character window it would have been **money** ✓ ✓ without the
+matcher ✓ ✓. The RAG's containment test reads words too ✓ ✓ - and a **plural** still
+matches ✓ ✓ ("bar" in "bars" is a bar ✓ ✓).
+
+**The gate.** `apps/ai/tests/test_trust_claim_kinds.py` takes its **parameters from the
+tables** ✓ ✓ and requires that ✓:
+
+* a price is a **money** claim ✓ ✓, a budget is a money claim ✓ ✓, a star rating is a
+  **rating** claim ✓ ✓, and a number with no word typing it is a **plain number** ✓ ✓ (the
+  product must not invent a kind ✓ ✓);
+* a Latin keyword is not read out of the **middle** of a word ✓ ✓, and the CJK keywords
+  still read ✓ ✓;
+* and the containment test reads words ✓ ✓ - "spa" does not match "spaghetti" ✓ ✓, "bar"
+  still matches "bars" ✓ ✓.
+
+It was **proved to fail** ✓: putting the six-character window and the substring keywords
+back made **three** of its checks fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **20 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1876 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The seventh unit in a row ✓ found the same **shape** ✓, and this one
+shows the shape is not only in the NLU ✓ - it is in the **trust layer** ✓ and in the
+**search lane** ✓ ✓. So the general form widens once more ✓: **the rule is a rule of the
+package** ✓ ✓, and the way to hold it is not to remember every reader ✓ ✓ but to have
+**one matcher** ✓ ✓ that the readers can all call ✓ ✓. And the second half of this unit is
+the one worth keeping ✓: the fix here is **two changes that only work together** ✓ ✓ - a
+wider window ✓ and a word-boundary matcher ✓ ✓ - and either alone is wrong ✓ ✓ (a wider
+window alone turns "priceless" into a price ✓ ✓; the old narrow window alone never finds
+the word ✓ ✓). That is the D477 lesson in a new place ✓ ✓: **a fix that needs a partner is
+a fix whose partner must be in the same unit** ✓ ✓ - and the gate is what holds them
+together ✓ ✓.

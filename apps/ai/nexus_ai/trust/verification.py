@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Iterable, Sequence
 
+from nexus_ai.nlu.matching import cue_in
 from nexus_ai.trust.facts import FactBundle
 
 MONEY_KIND = "money"
@@ -309,12 +310,45 @@ def _count_claim(m: re.Match[str]) -> Claim | None:
     return Claim(COUNT_KIND, m.group(0), m.start(), m.end(), value=value, norm=str(value))
 
 
+#: The words that TYPE a bare number. D482: they stood inside the reader, so the list
+#: was a second copy of the vocabulary (D438) and the English "star" was missing from
+#: the rating list altogether - "a 4.5 star rating" was typed as a plain number.
+RATING_KEYWORDS: tuple[str, ...] = ("評", "评", "評分", "评分", "rating", "star", "星")
+MONEY_KEYWORDS: tuple[str, ...] = ("预算", "預算", "budget", "price", "價", "价")
+
+#: How far the keyword may reach to type a claim. D482: the window was SIX characters,
+#: which is shorter than most English clauses - "the price is 128" put the word "price"
+#: outside the window, so a price was typed as a plain number and then grounded with the
+#: loose number tolerance. The polarity reader's own reach is the house's precedent:
+#: sixteen characters for Latin, six for CJK (there are no spaces to bound a Chinese
+#: phrase).
+_KEYWORD_WINDOW_LATIN = 16
+_KEYWORD_WINDOW_CJK = 6
+
+
+def _keyword_window(text: str) -> int:
+    """How far a keyword may reach to type a claim.
+
+    The polarity reader's own reach is the house's precedent: sixteen characters for
+    Latin, six for CJK - a Chinese phrase is short, and there are no spaces to bound it.
+    """
+    if any("\u3400" <= ch <= "\u9fff" for ch in text):
+        return _KEYWORD_WINDOW_CJK
+    return _KEYWORD_WINDOW_LATIN
+
+
 def _bare_kind(text: str, start: int, end: int) -> str:
-    window = text[max(0, start - 6):min(len(text), end + 6)]
+    """The kind of a bare number - the word that types it decides.
+
+    D482: the window now reaches the word that types the claim, and the Latin keywords
+    are read by the ONE matcher - "priceless" is not "price".
+    """
+    reach = _keyword_window(text)
+    window = text[max(0, start - reach):min(len(text), end + reach)]
     low = window.lower()
-    if any(k in low for k in ("評", "评", "rating", "星")):
+    if any(cue_in(k, window, low) for k in RATING_KEYWORDS):
         return RATING_KIND
-    if any(k in low for k in ("预算", "預算", "budget", "price", "價", "价")):
+    if any(cue_in(k, window, low) for k in MONEY_KEYWORDS):
         return MONEY_KIND
     return NUMBER_KIND
 
