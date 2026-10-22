@@ -21437,3 +21437,64 @@ made is a promise that will be broken by the next reader who does not know the r
 ✓ ✓ ✓. And the D500 lesson found it ✓ ✓: the public-surface census (§493 ✓ ✓) walked the
 package's exports ✓ ✓ and found the trust layer's helpers ✓ ✓ - and reading what they
 **do** ✓ ✓ is what turned up the clamp ✓ ✓ ✓.
+
+## 495. D502 · the §18/§19 grounding boundary was enforced on ONE of the THREE card surfaces - the consumer's search route shipped cards without it (`apps/ai/nexus_ai/api/pipeline.py`, `apps/ai/nexus_ai/api/routes_discover.py`, `apps/ai/tests/test_every_card_surface_enforces_the_grounding.py`)
+
+**What the product does, and what was measured.** `AGENT_CONTRACT §4` (non-negotiable) says:
+*"Renderer contract: `EntityCard.facts[]` + `ai_match.reasons[].fact_id`. **If `fact_id` is
+missing, the UI must not render that bullet**"* ✓ ✓. The product has a guard for that —
+`drop_ungrounded_reasons` ✓ ✓ — and **the recommend route** called it on every card before
+it shipped ✓ ✓. **The search route did not** ✓ ✓ ✗. **The stream route did not** ✓ ✓ ✗.
+
+So the boundary the contract calls non-negotiable was enforced on the surface the
+**recommendation** product uses ✓ ✓ and **not** on the surface the **consumer** uses ✓ ✓ ✗ —
+and `/ai/v1/search` is both the main consumer surface ✓ ✓ **and** the §105 fallback target
+the stream degrades to ✓ ✓ ✓.
+
+**And the live corpus shows no difference** ✓ ✓ — the rules path never emits an ungrounded
+reason ✓ ✓, so every card the product ships today is clean ✓ ✓. **That is exactly why the
+guard belongs in the shared place** ✓ ✓: the guard is there for the producer that does not
+exist **yet** ✓ ✓ ✓.
+
+**The fix.** The guard moves **into `run_search`** ✓ ✓ — the one function all three surfaces
+call ✓ ✓ — so there is **one** place where a card is made shippable ✓ ✓ and a surface
+**cannot forget it** ✓ ✓. The recommend route's own copy goes ✓ ✓ (a route that remembered
+the rule on its own is a **second copy** of it ✓ ✓ — and the next surface would not have
+it ✓ ✓ ✓).
+
+**The gate.** `apps/ai/tests/test_every_card_surface_enforces_the_grounding.py` ✓ ✓ — and it
+**injects** the ungrounded reason ✓ ✓ (it makes the producer that would break the contract
+✓ ✓, and asks every surface what it does with the result ✓ ✓ ✓):
+* the injected reason is **gone** from the search route's cards ✓ ✓;
+* and from the recommend route's cards ✓ ✓;
+* and from the **stream's** frames ✓ ✓;
+* and the guard lives in the **one** function all three call ✓ ✓ — a route that keeps its own
+copy **fails** the gate ✓ ✓ ✓.
+
+It was **proved to fail** ✓: taking the guard out of the shared path made **three** of its
+checks fail ✓ ✓ — the stream shipped the ungrounded reason ✓ ✓ — the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **4 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **2369 passed** offline ✓, and **2423 passed** with the
+database ✓ ✓ (the sibling lane's two untracked test files excluded ✓ - `test_app_surface.py`
+✓ and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ ✓, see
+§436 ✓);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 58 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The twenty-fifth unit in a row ✓, and this one is the **fourth** reading
+of one form ✓ ✓: **a rule that only one surface keeps is a rule the other surfaces do not
+have** ✓ ✓. D487 found the two readers of the urgency ✓ ✓, D488 the two readers of the
+constraints ✓ ✓, D495 the two readers of the negations ✓ ✓, and this one the **two readers
+of the grounding boundary** ✓ ✓ — where the copy was not a second *implementation* ✓ ✓ but a
+second *call site* ✓ ✓ ✗ ✗. So the general form gains its last clause ✓ ✓: **a rule that
+guards a wire is enforced where the wire is made ✓ ✓, not by each surface that happens to
+use it** ✓ ✓ — because the surfaces are added over time ✓ ✓ and the ones that come later
+are the ones that forget ✓ ✓ ✓. And the gate's method is the D500 lesson turned mechanical
+✓ ✓: **the gate INJECTS the failure the guard exists for** ✓ ✓ — because a guard that is
+never exercised is a guard that is never tested ✓ ✓, and the live corpus cannot tell the
+two apart ✓ ✓ ✓.

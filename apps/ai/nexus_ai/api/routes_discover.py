@@ -22,7 +22,7 @@ from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import compose_summary, run_search, understand
 from nexus_ai.contract import (
     MAX_QUERY_LENGTH, CompareRequest, CompareResponse, CompareRow, RecommendRequest, RecommendResponse, UnderstandRequest, UnderstandResponse)
-from nexus_ai.search.cards import (compute_open, drop_ungrounded_reasons, meters_text,
+from nexus_ai.search.cards import (compute_open, meters_text,
                                    travel_minutes)
 from nexus_ai.trust.facts import FactBundle, facts_from_rows
 
@@ -107,15 +107,10 @@ async def recommend(request: Request, body: RecommendRequest):
         return errors.error_response("ai_unavailable", str(exc),
                                       request_id=runs.current_request_id() or None,
                                       status=503)
-    # §18/§19: enforce the grounding boundary at the wire. The rules path never emits
-    # an ungrounded non-sponsored reason, so `ungrounded` is 0 in steady state; if a
-    # future producer does, the bullet is dropped and counted rather than shipped.
-    ungrounded = 0
-    for c in pack.cards:
-        _, dropped = drop_ungrounded_reasons(c)
-        ungrounded += dropped
-    if ungrounded:  # pragma: no cover — never hit by the rules path; guard for future producers
-        log.warning("recommend dropped %d ungrounded non-sponsored reasons", ungrounded)
+    # D502: the §18/§19 grounding boundary is enforced in `run_search` - the one function
+    # every card surface calls - so this route does not have to remember it. It used to be
+    # enforced HERE and only here, so the search route and the stream route shipped cards
+    # without it.
     summary = await compose_summary(deps, pack, locale=body.locale)
     latency_ms = int((time.perf_counter() - started) * 1000)
     payload = RecommendResponse(

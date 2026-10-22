@@ -30,6 +30,7 @@ from nexus_ai.models.base import LLMRequest
 from nexus_ai.models.router import BudgetExceeded, CostMeter
 from nexus_ai.nlu.state_merger import merge_turn, question_for
 from nexus_ai.nlu.understand import extract_intent_dict
+from nexus_ai.search.cards import drop_ungrounded_reasons
 from nexus_ai.search.service import SearchPlan, plan_from_intent
 from nexus_ai.search.service import search as deterministic_search
 from nexus_ai.trust.facts import FactBundle
@@ -190,6 +191,16 @@ async def run_search(deps: Deps, intent: Intent | None, *, query: str = "",
         user_id=str(user_id) if user_id else None,
         intent_preferences=intent_prefs, locale=locale)
     degraded = deps.backend_degraded() or response.degraded
+    # D502: the §18/§19 grounding boundary - a bullet without a `fact_id` must not render
+    # (AGENT_CONTRACT §4) - is enforced HERE, in the one function every card surface
+    # calls. It used to be enforced only in the recommend route, so the search route (the
+    # main consumer surface, and the §105 fallback the stream degrades to) and the stream
+    # route shipped cards without it. A boundary that only one surface keeps is a boundary
+    # that the other surfaces do not have.
+    for card in cards:
+        _card, dropped = drop_ungrounded_reasons(card)
+        if dropped:  # pragma: no cover - the rules path never emits one
+            log.warning("dropped %d ungrounded non-sponsored reason(s)", dropped)
     return SearchPack(cards=cards,
                       items=[c.model_dump(mode="json") for c in cards],
                       response=response, bundle=bundle, scored=scored, plan=plan,
