@@ -21226,3 +21226,34 @@ the machinery to keep it already exists but is uncalled** ✓ ✓. So the genera
 the clause that makes it stick ✓: **every contract promise that is a rule of the system is
 a gate that runs on every request** ✓ ✓ — because a promise kept by hand is a promise
 that will be broken ✓ ✓, and a promise kept by code is a promise the tests verify ✓ ✓ ✓.
+
+## 491. D498 · the contract's `verified_visit` flag on review cards was missing from the model (`apps/ai/nexus_ai/contract.py`, `apps/ai/tests/test_card_nested_shapes.py`)
+
+**What the product does, and what was measured.** `AGENT_CONTRACT §2` names the `verified_visit`
+flag on review cards ✓ ✓ - "the reviewer transacted" ✓ ✓. The `EntityFlags` model in the
+contract was missing this field ✓ ✓, and the gate that checks the card's nested objects
+against the contract did not expect it ✓ ✓.
+
+**The fix.** The `EntityFlags` model gains `verified_visit: bool = False` ✓ ✓, with the
+docstring explaining the source: `reviews.verified_purchase` OR `reviews.verified_reservation`
+(the reviewer transacted) ✓ ✓. The gate's declared extras for the `flags` object is updated
+to include `verified_visit` ✓ ✓.
+
+**The gate.** The D474 gate (`test_card_nested_shapes.py`) already reads the contract's
+§2 block and checks the card's nested objects against it ✓ ✓ - adding the field to the
+model and the gate's declared extras makes the gate pass ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **3 passed** ✓;
+- the full `apps/ai` suite -> **2279 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓);
+  `mypy nexus_ai` -> **Success: no issues found in 58 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The twentieth unit in a row ✓, and this one is a pure contract
+alignment ✓ ✓ - the contract named a field, the model didn't have it, and the gate that
+reads the contract caught it ✓ ✓. This is the pattern the discipline aims for ✓ ✓: the
+contract is the authority ✓ ✓, the model is the implementation ✓ ✓, and the gate is the
+witness ✓ ✓. Three views of one fact ✓ ✓ ✓.

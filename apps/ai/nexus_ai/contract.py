@@ -127,6 +127,12 @@ class EntityFlags(BaseModel):
     # `price_source`, but the flag could never be sent, so a renderer told to look for it
     # was looking for a field that was never there.
     estimated_price: bool = False
+    # D498: API_CONTRACT §2 names this flag - "verified_visit on review cards (the
+    # reviewer transacted)". The review card is not yet implemented in the AI lane (the
+    # platform owns reviews), but the flag is part of the shared contract and must be
+    # present on the model. The value is derived from `reviews.verified_purchase` OR
+    # `reviews.verified_reservation` (the reviewer transacted).
+    verified_visit: bool = False
     # D497: AGENT_CONTRACT §4 says "Conflicts create a `trust_signals` row rather than
     # silently picking" - and the product picked silently: the card showed one value and
     # the other one vanished. The ROW is the platform's to write (the AI role has no grant

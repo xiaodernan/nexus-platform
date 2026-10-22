@@ -37,8 +37,10 @@ DECLARED_EXTRAS: dict[str, tuple[str, ...]] = {
     # flag that says a fact is DISPUTED (§4: a conflict creates a `trust_signals` row
     # rather than silently picking) - D497. §2 says a new flag name belongs in §2 -
     # filed, the contract is not this lane's to change - and the gate declares it until
-    # the contract names it.
-    "flags": ("estimated_price", "conflicting_fact"),
+    # the contract names it. "verified_visit" on review cards (the reviewer transacted) -
+    # D498: the contract names it but the review card is not yet implemented in the AI
+    # lane (the platform owns reviews).
+    "flags": ("estimated_price", "conflicting_fact", "verified_visit"),
     # the action's payload - the endpoint's own body
     "actions": ("payload",),
 }
