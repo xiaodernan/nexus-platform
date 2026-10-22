@@ -328,7 +328,7 @@ SELECT id::text AS agent_run_id, tenant_id::text, user_id::text, merchant_id::te
        prompt_tokens, completion_tokens, cost_usd::float8 AS cost_usd, latency_ms,
        error, fallback_used, started_at, finished_at, parent_run_id::text
 FROM agent_runs
-WHERE conversation_id::text = $1::text
+WHERE conversation_id = $1::uuid
 ORDER BY started_at ASC
 LIMIT 100
 """

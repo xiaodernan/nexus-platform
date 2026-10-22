@@ -410,7 +410,7 @@ LIMIT {limit_ph}
 
 
 # --------------------------------------------------------------------- side queries
-# D453: every by-ids predicate below binds `uuid[]` against the column's own type.
+# D466: every by-ids predicate below binds `uuid[]` against the column's own type.
 # `col::text = ANY($n::text[])` is type-legal and answers correctly, but it is
 # UNEINDEXABLE: EXPLAIN (ANALYZE, BUFFERS) on the seeded corpus showed
 # `Seq Scan on offerings ... Rows Removed by Filter: 5546` at 1001.9ms where

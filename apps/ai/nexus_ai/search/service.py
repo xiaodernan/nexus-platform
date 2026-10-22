@@ -285,6 +285,27 @@ class SearchPlan:
     limit: int = 20
 
 
+def _canonical_category(filters: dict[str, Any]) -> None:
+    """D505: the caller's `filters.category` is the same fact as the intent's category, and
+    it must be read by the SAME reader - the lexin's `match_category`.
+
+    It used to pass the raw string through, so "escape room" (the product's own
+    vocabulary) matched NOTHING while the same word in a QUERY found the bucket. The search
+    resolves the bucket into taxonomy slugs (`search/categories.py`), so the filter has to
+    speak the bucket.
+
+    A word the product does not know is left alone - the reader must not invent a category
+    the caller did not ask for.
+    """
+    if not filters.get("category"):
+        return
+    from nexus_ai.nlu.lexicon import match_category
+
+    matched = match_category(str(filters["category"]))
+    if matched is not None:
+        filters["category"] = matched[0]
+
+
 def plan_from_intent(intent: Intent | None, *, query: str | None = None,
                      geo: Any = None, filters: Any = None, now: datetime | None = None,
                      limit: int = 20, locale: str = "zh-HK") -> SearchPlan:
@@ -295,6 +316,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     plan.query_text = (query or (intent.raw_query if intent else "") or "").strip()
     if intent is None:
         plan.filters = _plain(filters)
+        _canonical_category(plan.filters)
         _apply_geo(plan, geo)
         return plan
 
@@ -303,6 +325,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
         plan.subject_types = ("offering",)
     out = plan.filters = _plain(filters)
     out.setdefault("category", intent.category)
+    _canonical_category(out)
     if intent.location and intent.location.value:
         out.setdefault("district", intent.location.value)
     if intent.location and intent.location.radius_m:

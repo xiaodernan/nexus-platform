@@ -1,0 +1,22 @@
+-- NEXUS V10 — a facts read by subject id needs an index that LEADS with subject_id
+-- (DECISIONS D466; docs/DATABASE.md §5).
+--
+-- `/ai/v1/compare` and `/ai/v1/search` fetch the grounding facts for a page of subjects with
+-- `WHERE subject_id = ANY($1::uuid[])` (nexus_ai/search/sql.py::facts_for). The only indexes on
+-- `facts` that name subject_id — facts_subject_idx and facts_one_row_per_claim_uidx — both lead
+-- with `subject_type`, which this read never constrains: a page mixes merchant cards and
+-- offering cards, so the type is exactly what the caller does not know. PostgreSQL can skip a
+-- leading column only under narrow conditions, and on the seeded corpus it did not: EXPLAIN
+-- (ANALYZE, BUFFERS) answered `Seq Scan on facts ... 258.415 ms`, reading all 297 of the
+-- table's heap blocks to return 14 rows.
+--
+-- That leg is what left the compare read over budget: the query itself is 5700 rows wide and the
+-- service caps a statement at 3000 ms (NEXUS_DB_STATEMENT_TIMEOUT_MS), so on a cold container
+-- this one sequential scan sat beside the two others that V10 does not touch and the request
+-- answered 503 "canceling statement due to statement timeout".
+--
+-- Additive only: no row is read or written differently, and the platform lane's
+-- `subject_type = :type and subject_id = :id` reads (FactRepository.java:72, :96) keep using
+-- facts_subject_idx exactly as before.
+
+CREATE INDEX IF NOT EXISTS facts_subject_id_idx ON facts (subject_id);
