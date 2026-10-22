@@ -20287,3 +20287,59 @@ defect behind ✓ (the budget words ✓, the negations ✓) is a unit that has n
 - the general form is **a census, then a rule, then a gate that takes its parameters from
 the tables** ✓ ✓, in that order ✓ ✓, and D475–D480 are the six units in a row that say it
 ✓ ✓.
+
+## 475. D481 · the lexin's OWN readers read their names as bare SUBSTRINGS - so "spaghetti" was a SPA, and the live search answered with BEAUTY SALONS (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_lexicon_readers_are_words.py`)
+
+**What the product does, and what was measured.** §474 (D480) gave the **first turn's**
+readers the ONE matcher ✓ ✓. The **lexin's own** readers - the **category** names ✓, the
+**district** names ✓ and the **cuisine** terms ✓ - still tested their tables with `in low`
+✓ ✓, so a word that **contained** a name read as the name ✓ ✓.
+
+**And this one is the worst of the series: a wrong VERTICAL.** ✓
+
+* **"spaghetti dinner in sha tin" was answered with beauty salons.** ✓ The category table
+  names `spa` ✓ ✓ and the reader tested `t in low` ✓ ✓ - so "spaghetti" was a **spa** ✓
+  ✓, the category was **beauty** ✓ ✓, and the **live search** answered with **two beauty
+  salons** ✓ ✓ - where the same query answered with **nine cafés** ✓ ✓.
+* **"barbecue in sha tin" was a bar.** ✓ The category table names `bar` ✓ ✓ - and
+  "barbecue" contains it ✓ ✓ - so the category was **bar** ✓ ✓.
+
+**The fix.** All three readers read through the **ONE matcher** ✓ ✓: the district names and
+their aliases ✓, the category names ✓ - and the **rightmost** match still decides ✓ ✓
+(CJK puts the head noun last ✓, so the rule is unchanged ✓) ✓ - and the cuisine terms ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_lexicon_readers_are_words.py` takes its **parameters from
+the tables** ✓ ✓ - every Latin name of the category table ✓, of the district table and its
+aliases ✓ and of the cuisine table ✓ ✓ - and requires that ✓:
+
+* no Latin name is read out of the **middle** of a word ✓ ✓;
+* the measured instances ✓ ✓ ("spaghetti" ✓, "barbecue" ✓) ✓;
+* and the readers still do their work ✓ ✓ - the spa ✓, the café ✓, the bar ✓, the Italian
+  ✓, the Japanese ✓, the district ✓ ✓.
+
+It was **proved to fail** ✓: putting the bare-substring match back made **a hundred and
+forty-two** of its checks fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **145 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1711 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the **live** answer ✓: "spaghetti dinner in sha tin" -> **two beauty salons** before ✓ ✓
+  and **three restaurants** after ✓ ✓, with no beauty category in the answer ✓ ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The sixth unit in a row ✓ (D475–D480 ✓) found the same **shape** ✓,
+and this one shows the **cost** of the shape at its highest ✓ ✓: a wrong intent is an
+annoyance ✓, a wrong **time window** is a wrong answer ✓, and a wrong **vertical** is a
+search that returns the wrong **kind of place** ✓ ✓ - the user asked for dinner and got a
+salon ✓ ✓. So the general form gains its scale ✓: **the looser the match, the bigger the
+answer it can hijack** ✓ ✓ - a cue that matches inside a word can hijack an *intent* ✓, a
+*time* ✓, a *sort* ✓, a *preference* ✓, and a whole **category** ✓ ✓. And the fix is the
+same one every time ✓ ✓, which is the point ✓ ✓: **one matcher, and every reader through
+it** ✓ ✓ - six units ✓, six readers fixed ✓ ✓, and the census that finds them is the same
+census ✓ ✓. The D481 rule is the one to remember ✓: **a name is a word** ✓ ✓ - the same
+rule the D478 unit wrote for the time parser's markers ✓ ✓, now the rule of the whole
+package ✓ ✓.

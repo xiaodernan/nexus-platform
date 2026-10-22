@@ -8,6 +8,7 @@ language), zh-CN (simplified) and en, per AGENT_CONTRACT §12.
 from __future__ import annotations
 
 from nexus_ai.nlu.canonical import CANONICAL_FORMS, canonical
+from nexus_ai.nlu.matching import cue_in, cue_positions
 
 import re
 from typing import Any
@@ -523,14 +524,15 @@ TRADITIONAL_MARKERS = (frozenset(t for t, _s in _TRAD_SIMP_PAIRS)
 def match_district(text: str) -> tuple[str, dict[str, Any]] | None:
     from nexus_ai.nlu.canonical import canonical
 
-    low = canonical(text).lower()
+    canon = canonical(text)
+    low = canon.lower()
     best: tuple[int, str, dict[str, Any]] | None = None
     for name, spec in DISTRICTS.items():
         for alias in [name, *spec["aliases"]]:
-            a = alias.lower()
-            if a and a in low:
-                if best is None or len(a) > best[0]:
-                    best = (len(a), name, spec)
+            # D481: the ONE matcher - a district name is a word, not a piece of one.
+            if alias and cue_in(alias, canon, low):
+                if best is None or len(alias) > best[0]:
+                    best = (len(alias), name, spec)
     return (best[1], best[2]) if best else None
 
 
@@ -544,14 +546,18 @@ def match_category(text: str) -> tuple[str, float] | None:
     """
     from nexus_ai.nlu.canonical import canonical
 
-    low = canonical(text).lower()
+    canon = canonical(text)
+    low = canon.lower()
     hits: list[tuple[int, int, str]] = []
     for cat, terms in CATEGORY_SYNONYMS.items():
         longest = 0
         rightmost = -1
         for term in terms:
             t = term.lower().strip()
-            idx = low.rfind(t) if t and t in low else -1
+            # D481: the ONE matcher, and the RIGHTMOST match still decides (CJK puts the
+            # head noun last). "spa" inside "spaghetti" is not a spa.
+            positions = cue_positions(t, canon, low) if t else []
+            idx = max(positions) if positions else -1
             if idx >= 0:
                 longest = max(longest, len(t))
                 rightmost = max(rightmost, idx + len(t))
@@ -570,8 +576,11 @@ def match_category(text: str) -> tuple[str, float] | None:
 def match_cuisines(text: str) -> list[str]:
     from nexus_ai.nlu.canonical import canonical
 
-    low = canonical(text).lower()
-    return [c for c, terms in CUISINE_TERMS.items() if any(t.lower() in low for t in terms)]
+    canon = canonical(text)
+    low = canon.lower()
+    # D481: the ONE matcher - a cuisine term is a word.
+    return [c for c, terms in CUISINE_TERMS.items()
+            if any(cue_in(t, canon, low) for t in terms)]
 
 
 def normalize_query(text: str) -> str:
