@@ -96,7 +96,7 @@ class HttpEmbedding:
         return {"provider": self.name, "ok": True, "dim": self.dim, "model": self.model,
                 "semantic": True}
 
-    async def embed(self, texts: Sequence[str]) -> list[list[float]]:  # pragma: no cover - network
+    async def embed(self, texts: Sequence[str]) -> list[list[float] | None]:  # pragma: no cover - network
         import httpx
 
         missing = [t for t in texts]
@@ -110,13 +110,18 @@ class HttpEmbedding:
             else:
                 todo.append((i, t or ""))
         if todo:
+            # Group by model to minimize API calls when multiple providers are configured
+            by_model: Dict[str, list[tuple[int, str]]] = {}
+            for i, t in todo:
+                key = self.model or "hashing"
+                by_model.setdefault(key, []).append((i, t))
             client = self._client or httpx.AsyncClient(timeout=self.timeout_s)
             try:
                 resp = await client.post(
                     f"{self.base_url}/embeddings",
                     headers={"authorization": f"Bearer {self.api_key}"},
-                    json={"model": self.model, "dimensions": self.dim,
-                          "input": [t for _, t in todo]},
+                    json={"model": model_key, "dimensions": self.dim,
+                          "input": [t for _, t in items]},
                 )
                 resp.raise_for_status()
                 data = sorted(resp.json()["data"], key=lambda d: d["index"])
