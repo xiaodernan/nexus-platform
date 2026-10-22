@@ -241,7 +241,7 @@ NEGATION_CUES = [canonical(c) for row in CONSTRAINT_RULES for c in row[1]]
 
 # ------------------------------------------------------------------ urgency
 URGENCY_NOW = ['而家', '现在', '現正', '立刻', '马上', '馬上', 'now', 'asap', '急', '今晚', '今日', '現在', '開唔開', '營業吗', '營業嗎', 'open now', 'still open']
-URGENCY_FLEXIBLE = ['得閒', '得闲', '有空', '隨時', '随时', 'anytime', 'next week', '下週', '下周', '来週', '月底', '得閑', '無所謂']
+URGENCY_FLEXIBLE = ['得閒', '得閑', '有空', '隨時', '隨時', 'anytime', 'next week', '下週', '下周', '來週', '月底', '得閑', '無所謂', '下星期', '下禮拜']
 
 # ------------------------------------------------------------------ sorting hints
 SORT_RULES: list[tuple[str, list[str]]] = [

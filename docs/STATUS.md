@@ -20984,7 +20984,10 @@ It was **proved to fail** ✓: taking one next-week word out of the urgency's ta
 **Verified, not claimed.**
 
 - the gate -> **9 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
-- the full `apps/ai` suite -> **2194 passed** offline ✓;
+- the full `apps/ai` suite -> **2221 passed** offline ✓, and **2290 passed**
+  with the database ✓ (the sibling lane's two untracked test files excluded ✓ -
+  `test_app_surface.py` and `test_uuid_id_bindings.py` ✓, the second one still in flight
+  on their side ✓, see §436);
 - `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
   nexus_ai` -> **Success: no issues found in 56 source files** ✓;
 - the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
