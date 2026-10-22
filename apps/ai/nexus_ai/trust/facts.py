@@ -230,15 +230,6 @@ def resolve_conflicts(bundle: FactBundle, attribute: str, subject_id: Any,
     return chosen, disagreements
 
 
-def copy_confidence_hint(confidence: float) -> str | None:
-    """§4: <0.6 phrase as uncertain, <0.4 omit and offer handoff. Never upgrade."""
-    if confidence < 0.4:
-        return "omit_and_offer_handoff"
-    if confidence < 0.6:
-        return "phrase_as_uncertain"
-    return None
-
-
 def select_display_facts(bundle: FactBundle, subject_id: Any,
                          attributes: Sequence[str]) -> list[Fact]:
     out: list[Fact] = []

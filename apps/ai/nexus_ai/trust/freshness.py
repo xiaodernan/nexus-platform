@@ -94,11 +94,6 @@ def evaluate(observed_at: datetime | None, attribute: str, *, now: datetime | No
     return Freshness(attribute, ttl, observed_at or now, exp, False, remain)
 
 
-def is_stale(observed_at: datetime | None, attribute: str, *, now: datetime | None = None,
-             expires_at: datetime | None = None) -> bool:
-    return evaluate(observed_at, attribute, now=now, expires_at=expires_at).stale
-
-
 def remaining_fraction(observed_at: datetime | None, attribute: str,
                        *, now: datetime | None = None,
                        expires_at: datetime | None = None) -> float:

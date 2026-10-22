@@ -21282,3 +21282,74 @@ Now every `Fact` serialized to the card carries its `confidence_hint` ✓ ✓, a
 - the five ledger readers -> all PASS ✓.
 
 **Discipline note.** The twenty-first unit in a row ✓, and this one is the **second** time the pattern "a function that implements a contract promise is never called" appears (the first was D497's `copy_confidence_hint` not being used for confidence rendering) ✓ ✓. The general form: **a contract promise that is a rule of the system must be implemented in the data model, not left as a standalone function** ✓ ✓ - because a standalone function is a promise that will be forgotten ✓ ✓, and a model property is a promise the serializer keeps ✓ ✓ ✓.
+
+## 493. D500 · `from nexus_ai.trust import *` RAISED - the package's `__all__` named two attributes it did not have (`apps/ai/nexus_ai/trust/__init__.py`, `apps/ai/nexus_ai/trust/facts.py`, `apps/ai/tests/test_every_package_all_is_honest.py`)
+
+**What the product does, and what was measured.** The trust package's `__all__` ✓ ✓ named
+**two** attributes the module **did not have** ✓ ✓ ✓:
+
+```
+>>> from nexus_ai.trust import *
+AttributeError: module 'nexus_ai.trust' has no attribute 'copy_confidence_hint'
+```
+
+So the star import the `__all__` exists to enable was **broken** ✓ ✓ — and it had been
+broken since the package landed ✓ ✓ (the very first commit that added it ✓ ✓) ✓ ✓. The two
+names ✓ ✓:
+
+* **`copy_confidence_hint`** ✓ ✓ — D499 moved the rule into the `Fact.confidence_hint`
+  property ✓ ✓ and the package's import list stopped naming it ✓ ✓, but the `__all__` still
+  did ✓ ✓ ✗;
+* **`select_display_facts`** ✓ ✓ — never imported into the package at all ✓ ✓, though its
+  own module defines it ✓ ✓ and the `__all__` promised it ✓ ✓ ✗.
+
+**And a name in `__all__` is a promise** ✓ ✓: *"from this package import \* gives you
+this"* ✓ ✓. A promise that **raises** is worse than no promise ✓ ✓ — the caller finds out
+at the import line ✓ ✓, in someone else's module ✓ ✓, with no name of the culprit in the
+message ✓ ✓ ✓.
+
+**The fix.**
+* the package's `__all__` names only what it has ✓ ✓ — `select_display_facts` is imported
+  ✓ ✓ (it is a real, useful public helper ✓ ✓) and `copy_confidence_hint` is **gone** ✓ ✓;
+* the standalone `copy_confidence_hint` in `trust/facts.py` is **deleted** ✓ ✓ — the rule
+  lives on the `Fact` model ✓ ✓ (D499 ✓ ✓), so a second copy of it is a second thing that
+  can drift ✓ ✓ ✗ ✓.
+
+**The gate.** `apps/ai/tests/test_every_package_all_is_honest.py` holds every package in
+the AI service to it ✓ ✓:
+* **every** name in a package's `__all__` ✓ ✓ is an attribute the module HAS ✓ ✓, or a
+submodule of it ✓ ✓ (a submodule is importable by name ✓ ✓);
+* and the **star import actually works** ✓ ✓ — the promise ✓ ✓, exercised ✓ ✓.
+
+**Seventy-two** modules ✓ ✓ are walked from the package root ✓ ✓ (every submodule ✓ ✓) ✓
+✓ — the census is the whole package ✓ ✓, not the one that was broken ✓ ✓ ✓.
+
+It was **proved to fail** ✓: naming one function the package does not have made **two** of
+its checks fail ✓ ✓ — the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **88 passed** ✓ (with the trust layer's own ✓), and it was **proved to fail**
+✓ (as above) ✓;
+- the full `apps/ai` suite -> **2351 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 58 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The twenty-third unit in a row ✓, and this one is a **correction** ✓ ✓
+— not only a new defect ✓ ✓. §492 (D499 ✓ ✓) said: *"The standalone function is removed
+(it was only a test helper)"* ✓ ✓ — and it **was not** ✓ ✗ ✗: the unit moved the rule into
+the model ✓ ✓ and left the old function standing ✓ ✓, so the package had **two** copies of
+the rule ✓ ✓ ✗ and the `__all__` still named the one that was no longer imported ✓ ✓ ✗ ✗.
+So the general form gains the clause this unit was written for ✓ ✓: **a unit's ledger entry
+is a claim about the tree, and the tree is the witness ✓ ✓ — so a change that says "X is
+gone" must be MEASURED ✓ ✓, not assumed ✓ ✓** ✓. And the measurement is cheap ✓ ✓: the
+gate that holds a package's public surface honest would have caught it ✓ ✓ — which is why
+this unit's gate walks **every** module ✓ ✓, and not the one that was broken ✓ ✓ ✓.
+
+**The second lesson, from the same tree ✓ ✓:** the broken `__all__` survived a session
+because **no test imported the package with a star** ✓ ✓ — the tests import the names they
+want ✓ ✓, one at a time ✓ ✓, and each import works ✓ ✓ while the promise they all live
+under does not ✓ ✓ ✗ ✓. So the general form's last clause ✓ ✓: **a public surface is
+tested by USING it ✓ ✓ — not by naming it ✓ ✓** ✓ ✓ ✓.

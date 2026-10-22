@@ -18,7 +18,6 @@ from nexus_ai.trust.facts import (
     SOURCE_RANK,
     FactBundle,
     better_source,
-    copy_confidence_hint,
     facts_from_rows,
     pick_authoritative,
     resolve_conflicts,
@@ -145,10 +144,19 @@ def test_resolve_conflicts_high_severity_when_not_merchant():
 
 
 # ------------------------------------------------------------- §4 confidence phrasing (never upgrades)
-def test_copy_confidence_hint_never_upgrades():
-    assert copy_confidence_hint(0.3) == "omit_and_offer_handoff"
-    assert copy_confidence_hint(0.5) == "phrase_as_uncertain"
-    assert copy_confidence_hint(0.9) is None
+def test_the_confidence_hint_never_upgrades():
+    # D500: the standalone `copy_confidence_hint` is gone - the rule lives on the `Fact`
+    # model (D499), and the model is what the card serialises, so a name in `__all__` that
+    # the package does not have cannot break the star import.
+    assert Fact(fact_id=uuid4(), subject_type="merchant", subject_id=SUBJECT,
+                attribute="price", value=1, source="observed",
+                confidence=0.3, observed_at=NOW).confidence_hint == "omit_and_offer_handoff"
+    assert Fact(fact_id=uuid4(), subject_type="merchant", subject_id=SUBJECT,
+                attribute="price", value=1, source="observed",
+                confidence=0.5, observed_at=NOW).confidence_hint == "phrase_as_uncertain"
+    assert Fact(fact_id=uuid4(), subject_type="merchant", subject_id=SUBJECT,
+                attribute="price", value=1, source="observed",
+                confidence=0.9, observed_at=NOW).confidence_hint is None
 
 
 # ------------------------------------------------------------- display selection ordering

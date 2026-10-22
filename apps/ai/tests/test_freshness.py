@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 from nexus_ai.trust.freshness import (
-    FRESHNESS_TTL, evaluate, is_stale, mean_remaining_fraction, needs_reindex,
+    FRESHNESS_TTL, evaluate, mean_remaining_fraction, needs_reindex,
     remaining_fraction, stale_copy, ttl_for_attribute)
 
 UTC = timezone.utc
@@ -68,9 +68,12 @@ def test_forced_stale_overrides_freshness():
     assert f.stale is True
 
 
-def test_is_stale_convenience():
-    assert is_stale(NOW - timedelta(hours=10), "price", now=NOW) is True
-    assert is_stale(NOW - timedelta(hours=1), "price", now=NOW) is False
+def test_the_stale_flag_is_the_evaluation_s():
+    # D500: `is_stale` was a public export that no production code called - the dead
+    # constant census counts a TEST's read as a read, so it survived. The evaluation
+    # already answers the question (`evaluate(...).stale`), so the wrapper is gone.
+    assert evaluate(NOW - timedelta(hours=10), "price", now=NOW).stale is True
+    assert evaluate(NOW - timedelta(hours=1), "price", now=NOW).stale is False
 
 
 def test_remaining_fraction_convenience():
