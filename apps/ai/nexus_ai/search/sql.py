@@ -410,13 +410,13 @@ LIMIT {limit_ph}
 
 
 # --------------------------------------------------------------------- side queries
-# D466: every by-ids predicate below binds `uuid[]` against the column's own type.
-# `col::text = ANY($n::text[])` is type-legal and answers correctly, but it is
-# UNEINDEXABLE: EXPLAIN (ANALYZE, BUFFERS) on the seeded corpus showed
-# `Seq Scan on offerings ... Rows Removed by Filter: 5546` at 1001.9ms where
-# `o.id = ANY($n::uuid[])` gives `Bitmap Index Scan on offerings_pkey` at 0.07ms.
-# Cold, the sequential reads pushed `/ai/v1/compare` past this service's own
-# statement_timeout and it answered 503. The ids stay bound as strings.
+# D506: every by-ids predicate below binds `uuid[]` against the column's own type.
+# `col::text = ANY($n::text[])` is type-legal and answers correctly, but casting the
+# column makes the predicate UNEINDEXABLE: the planner reads the whole table instead of
+# walking its index, and cold those reads pushed `/ai/v1/compare` past this service's own
+# statement_timeout so the request answered 503. The ids stay bound as strings - asyncpg
+# encodes a list of str for a `uuid[]`. The plan is measured, not remembered, by
+# apps/ai/tests/test_uuid_id_bindings.py.
 def facts_for(subject_ids: Iterable[str], attributes: Iterable[str] | None = None
               ) -> tuple[str, list[Any]]:
     p = Params()

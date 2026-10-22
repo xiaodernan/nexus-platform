@@ -21629,3 +21629,136 @@ TESTS USE ✓ ✓ - and the tests are the ones that keep a wrong copy alive ✓ 
 house's own method ✓ ✓ — *a census is worth exactly as much as its scope* ✓ ✓ (D446 ✓ ✓)
 — gets its own reading here ✓ ✓: **a census that counts the tests is a census of the
 tests ✓ ✓** ✓ ✓ ✓.
+
+## 498. D506 · a read by ids compared its uuid columns as TEXT, so nine indexed lookups became sequential scans and the cold compare request answered 503 (`apps/ai/tests/test_uuid_id_bindings.py`, `apps/ai/nexus_ai/search/sql.py`, `infra/db/migrations/V10__facts_subject_id_index.sql`, `docs/DATABASE.md`)
+
+**What the consumer saw.** `/ai/v1/compare` takes three subject ids and answers a grid of
+facts, hours and distances. On a cold container it answered **503** `canceling statement due
+to statement timeout` - the service cancelled itself, against the budget it sets for its own
+statements (`NEXUS_DB_STATEMENT_TIMEOUT_MS` = 3000 ms, apps/ai/nexus_ai/config.py) - and the
+home page reported "3 of 5 rails unavailable". The consumer-visible half is the compare tray:
+tests/e2e/specs/consumer/vertical-slice.spec.ts:113 selects three cards and waits for a
+`table` that never arrives.
+
+**The cause was in the SQL text, not in the data.** Nine by-ids predicates read
+`col::text = ANY($n::text[])` - eight in search/sql.py (`facts_for`, `hours_for`, `slots_for`,
+`reviews_for` twice, `compare_geo`, `entities_for` twice) and one in search/service.py (the
+personalisation read `feedback`) - and two single-value id reads compared as text
+(`user_id::text = $1::uuid` in that same read, `conversation_id::text = $1::text` in the run
+ledger). Every one of those columns is `uuid` and every one carries an index over it, so the
+cast changes nothing the caller can see and everything the planner can use: a predicate over a
+**cast** column is not servable by a btree over the **column**, so each read walks the table
+page by page.
+
+**The facts leg needed an index as well as a bind.** `facts` is read by `subject_id` alone,
+and both indexes that name `subject_id` - `facts_subject_idx`, `facts_one_row_per_claim_uidx`
+- LEAD with `subject_type`, which this read cannot name: one page mixes merchant cards and
+offering cards. Skipping a leading column is possible only under narrow conditions and the
+seeded corpus did not allow it, so V10 adds `facts_subject_id_idx ON facts (subject_id)`.
+Additive only: the platform lane's `subject_type = :type and subject_id = :id` reads keep using
+`facts_subject_idx` exactly as before.
+
+**The gate** (apps/ai/tests/test_uuid_id_bindings.py, **24 cases**) charges the class, not the
+one line that was fixed:
+
+- **the door**, offline, so CI sees it with no database: no id column anywhere in the AI
+  package is compared as text. Its exemptions are declared where they are read - `SELECT
+  id::text AS ...` is how rows leave the database, and `id::text <> ALL(...)` (the "show me
+  others" filter) is a negative list no btree serves at all, with values from a request field
+  this service does not validate as uuids. Six shapes of the old spelling are charged, six
+  other shapes are not.
+- **the bind shape**: all six by-ids builders are called and their SQL is read back - every id
+  predicate ends in `::uuid[]`, and the ids themselves stay bound as strings, because asyncpg
+  encodes a list of `str` for a `uuid[]` parameter.
+- **the two single-value reads** (`runs.py`'s conversation-id read, the compare read's
+  `user_id`), which are not arrays and so need their own clause.
+- **the live plans**, against the container this service is configured with: `EXPLAIN (ANALYZE,
+  BUFFERS)` is taken on the SQL the production builders return - never retyped here - and no
+  by-ids read may sequential-scan a table the corpus actually makes large. The row counts come
+  from the same connection, so a smaller corpus shrinks the population instead of hiding a
+  table, and the floor sits below the smallest large table and above the tables where a
+  sequential scan genuinely is the cheapest plan.
+- **the endpoint itself**: `/ai/v1/compare` answered 200 in under the service's own statement
+  budget, with `source = postgres`, `degraded = false` and at least two rows of grid.
+- **the arm, both ways**: the shipped bytes carry zero charged lines; a copy of `sql.py` with
+  the eight predicates put back to `::text = ANY(::text[])` reddens the door and names exactly
+  eight sites. The mutation is line-wise and skips comments, because the comment beside the
+  builders quotes the old spelling to explain the rule - and a door that charges its own
+  documentation cannot be read.
+
+**Verified, not claimed.**
+
+- the gate -> **24 passed** with `NEXUS_TEST_DATABASE_URL` set, **22 passed / 2 skipped**
+  offline (the two live legs say what they need and skip when it is absent);
+- the warm/warm EXPLAIN pair, both readings from the same connection and the same prepared
+  statement so only the bind differs: entities 6.336 -> 0.096 ms, facts 2.700 -> 0.126 ms,
+  business_hours 2.254 -> 0.145 ms, compare_geo 0.520 -> 0.168 ms; heap blocks read 1088 -> 15,
+  291 -> 11, 79 -> 9, 210 -> 27. The facts leg's new access path is `Bitmap Index Scan on
+  facts_subject_id_idx`;
+- the HTTP symptom: the recorded 503 body is kept in tmp/run/cmp.json, and the same request now
+  answers `http=200` in 0.230 s / 0.117 s / 0.124 s with 6 rows and `degraded=false`;
+- the consumer leg it unblocked: the serial consumer e2e run (tmp/run/consumer-e2e-r3.log) is
+  **7 passed / 1 skipped / 1 failed**, and the compare case at vertical-slice.spec.ts:113 is
+  one of the passed. The one red is the landing rails' title: the e2e expects 附近熱門 while the
+  zh-HK surface renders 附近热门 - a locale defect, filed as the next unit, not this one;
+- the full `apps/ai` suite -> **2661 passed, 43 skipped (0 red; an earlier concurrent run reported 4 reds which two later serial runs did not reproduce)** with the database set, run with `-p no:cacheprovider`
+  so no residue from an earlier draft was counted;
+- `ruff check .` -> **3 errors**, `mypy nexus_ai` -> **4 errors**, and all seven are in
+  apps/ai/nexus_ai/models/embeddings.py - a file this unit does not touch and no test calls
+  (see the next unit; the report is not laundered into a pass by excluding it).
+
+**Attribution, honestly.** This defect was fixed and landed *without a ledger entry*, which is
+why it is written now rather than as part of the unit that wrote the code: the nine predicates
+went to `uuid[]` inside `a0ba536` (the commit whose subject is D463/§457, a time-parsing unit),
+and the gate, V10 and the `docs/DATABASE.md` §5 row were swept into `fad4330` by the sibling's
+`git commit` of the shared tree. `git log --grep` for the timeout, for `facts_subject_id_idx`
+and for `V10` returned nothing before this section. So a unit's ledger row is a claim about the
+tree, and the tree is the witness (the D500 form) - and in a shared tree a landing can be true
+of the code and missing from the ledger at the same time. The numbering moved twice: this lane
+planned **D453**, taken by a sibling note, then **D466**, taken by §460, and PLAN §"the
+numbering" named the next pair as D505/§498 - but D505 is already a marker in
+nexus_ai/search/service.py and apps/ai/tests/test_the_filter_speaks_the_category_vocabulary.py
+(carried by `fad4330`, with no section of its own), so this unit is **D506 / §498** and the
+unsectioned D505 is left named here rather than renumbered out of existence. V10's header was
+edited after it landed - comment text only, the `CREATE INDEX` line is byte-identical - and the
+reason it is safe is measured: no plane records version 10 in `flyway_schema_history` (the dev
+`nexus` database stops at 9 and the index arrived through `db_apply_migrations.sh`, which keeps
+no ledger), so there is no stored checksum for the new bytes to disagree with. On the next
+platform boot Flyway applies V10 and records it.
+
+Two more things ride in this row's commit, and both are named rather than buried. First, the
+reader that scores citations written inside source comments
+(`scripts/check_comment_citations.mjs`, gate step 9) had one strict offender left in the tree,
+in a file this unit otherwise does not touch. The
+jsonb-codec comment in apps/ai/nexus_ai/db/pool.py:66 pointed at two spans of the run-ledger
+writer and two of the search builder - 118 to 121 and 158 to 159 there, 137 and 297 there - all
+written when those files were shorter, and its first target line is empty today, so the cite
+claimed a writer where no writer stands. It is re-aimed at the spans that do pass `json.dumps(...)`
+text: apps/ai/nexus_ai/api/runs.py:173, apps/ai/nexus_ai/api/runs.py:265 and
+apps/ai/nexus_ai/search/sql.py:138, each read back from the file after the edit. Measured: step 9
+went from `RESULT: FAIL` with `strict offenders 1` to `RESULT: PASS - 108 comment-plane
+citation(s) across 41 file(s), all resolving` with `strict offenders 0`. Second, the consumer e2e
+leg of this unit's verification wrote into the tracked `tests/e2e/report/` directory - 4 deletions,
+`index.html` modified, 4 new artifacts. Those are run outputs and not this unit's claims, so the
+new artifacts were moved to `tmp/run/e2e-report-r3/` and the tracked paths were restored with
+`git checkout -- tests/e2e/report`, scoped to that one directory, whose only pending change was
+mine; `git status --porcelain -- tests/e2e/report` is empty now and the commit carries no report
+churn.
+
+**Red that is in the room and is not mine.** `node scripts/check_ledger_numbers.mjs --census`
+fails on this tree: three sections of docs/STATUS.md - the ones headed 430. D436, 438. D444 and
+471. D477 - hold an odd number of code fences, so the numbers census never parses what is inside
+them. It reproduces on a plane built from HEAD's own bytes: `git show HEAD:docs/STATUS.md` and
+`git show HEAD:docs/DECISIONS.md` copied into a scratch directory with the reader run from that
+directory as its cwd, printing the same three sections. So it is not this row's append - the diff
+here is additive at the end of the file - and those three sections were not edited here. It is
+the P1 shape the reader itself names: an unclosed fence swallows the prose after it, and here it
+swallows three sections' numbers out of the census. Filed as its own unit; this row does not
+launder it into a pass.
+
+**Discipline note.** The general form: **a comparison that casts the COLUMN to reach the
+parameter's type is a silent index removal - the parameter is the thing that should follow the
+column.** Type-legal and correct is not the test; the test is whether the plan can still reach
+the rows. And the second form: a structural door must be paired with the measurement it stands
+in for - here the door is offline and cheap, and the EXPLAIN pair plus the endpoint run against
+the live container so the door cannot rot into a rule that matches a plan no longer taken.

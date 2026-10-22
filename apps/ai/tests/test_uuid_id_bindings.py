@@ -1,4 +1,4 @@
-"""D466 — a read by ids must reach its rows in the COLUMN'S OWN TYPE, not as text.
+"""D506 — a read by ids must reach its rows in the COLUMN'S OWN TYPE, not as text.
 
 `/ai/v1/compare` answered 503 `canceling statement due to statement timeout` on a cold
 container (measured: 4.56s direct, 502 through the web BFF; three repeats once warm came back
@@ -6,10 +6,13 @@ container (measured: 4.56s direct, 502 through the web BFF; three repeats once w
 tray that renders nothing on that answer is the consumer-visible half: the e2e selects three
 cards and waits for a `table` that never arrives.
 
-The cause was in the SQL text, not the data. Ten predicates read
-`col::text = ANY($n::text[])`. `col` is `uuid` in every one of them and every one of them is
-indexed on that column — so casting it makes the predicate uneindexable. EXPLAIN (ANALYZE,
-BUFFERS) on the seeded corpus, through this service's own builders:
+The cause was in the SQL text, not the data. Nine by-ids predicates read
+`col::text = ANY($n::text[])` (eight in `search/sql.py`, one in `search/service.py`) and two
+single-value id reads compared as text (`user_id::text = $1::uuid` in the compare read,
+`conversation_id::text = $1::text` in the run ledger). Every one of those columns is `uuid`
+and every one is indexed on that column — so casting it makes the predicate uneindexable.
+EXPLAIN (ANALYZE, BUFFERS) on the seeded corpus, through this service's own builders, at the
+reading taken when this unit landed:
 
     o.id::text = ANY($2::text[])   Seq Scan on offerings  Rows Removed by Filter: 5546  1001.9 ms
     o.id       = ANY($2::uuid[])   Bitmap Index Scan on offerings_pkey                     0.07 ms
@@ -23,7 +26,9 @@ own budget. The facts leg needed V10 as well as the bind: `facts_subject_idx` an
 because one page mixes merchant cards and offering cards.
 
 What is charged here: the spelling (offline, so CI sees it with no database), the shape of
-every builder's bind, and the plan plus the endpoint itself against the live container.
+every builder's bind, and the plan plus the endpoint itself against the live container. The
+last two legs are skipped when `NEXUS_TEST_DATABASE_URL` is unset, so CI never claims to have
+measured a plan it did not read.
 """
 
 from __future__ import annotations
@@ -161,7 +166,7 @@ def test_the_door_charges_every_shape_of_the_old_spelling(spelling):
     "WHERE m.id = $2::uuid",
     "WHERE merchant_id::text <> ALL($1::text[])",
     "array(select i::text from unnest(fact_ids) i) AS fact_ids",
-    "# `o.id::text = ANY($n::text[])` is the spelling that caused D466",
+    "# `o.id::text = ANY($n::text[])` is the spelling that caused D506",
 ])
 def test_the_door_does_not_charge_the_shapes_that_are_not_the_defect(spelling):
     # The other half of the control: exempt spellings stay exempt by rule, not by accident.

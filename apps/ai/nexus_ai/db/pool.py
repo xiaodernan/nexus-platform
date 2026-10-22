@@ -63,7 +63,7 @@ async def _init_connection(conn: Any) -> None:
                 type_name, schema="pg_catalog",
                 # The encoder is the identity on purpose. asyncpg's jsonb parameter already takes
                 # JSON *text*, and every writer in this service passes `json.dumps(...)` text
-                # (`api/runs.py:118-121,158-159`, `search/sql.py:137,297`). Registering
+                # (`api/runs.py:173,175-176,265-266`, `search/sql.py:138,340`). Registering
                 # `json.dumps` here encoded that text a second time, so every payload landed as a
                 # jsonb *string* (`jsonb_typeof = 'string'`) where no key read can reach it.
                 encoder=lambda value: value, decoder=json.loads,

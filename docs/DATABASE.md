@@ -220,7 +220,7 @@ Plus targeted: GIN on `tags[]`/`attributes`/jsonb for faceted filtering; `mercha
 `rating_agg DESC`, `price_amount` btree for sort/filter; events/audit time-series indexes; `facts(expires_at) WHERE
 stale IS FALSE` partial index so the TTL sweeper touches only live facts; `facts(subject_id)` (V10) for the AI's
 by-ids grounding read — `facts_for` filters `subject_id = ANY(uuid[])` and *cannot* name `subject_type`, because one
-page mixes merchant cards and offering cards, and both indexes that mention `subject_id` lead with it (D466).
+page mixes merchant cards and offering cards, and both indexes that mention `subject_id` lead with it (D506).
 
 ## 6. Freshness / TTL design (§20, [`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §5)
 
