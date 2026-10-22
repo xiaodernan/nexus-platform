@@ -42,6 +42,11 @@ from nexus_ai.nlu.canonical import CANONICAL_FORMS, canonical
 #: D446: the canonical table itself, imported into the lexicon's namespace: it IS the map.
 BY_DESIGN = frozenset({
     "lexicon.SIMPLIFIED_MARKERS", "SIMPLIFIED_MARKERS",
+    # D483: the question bank holds PER-LOCALE copy - the zh-CN section is
+    # Simplified on purpose (a Simplified user is answered in Simplified), and the
+    # copy is never COMPARED with a canonicalised query, so the rule that
+    # protects the cue tables does not apply to it.
+    "state_merger.FOLLOWUP_QUESTIONS", "FOLLOWUP_QUESTIONS",
     "lexicon.TRADITIONAL_MARKERS", "TRADITIONAL_MARKERS",
     "lexicon._TRAD_SIMP_PAIRS", "_TRAD_SIMP_PAIRS",
     "lexicon.CANONICAL_FORMS", "CANONICAL_FORMS",

@@ -20421,3 +20421,76 @@ window alone turns "priceless" into a price ✓ ✓; the old narrow window alone
 the word ✓ ✓). That is the D477 lesson in a new place ✓ ✓: **a fix that needs a partner is
 a fix whose partner must be in the same unit** ✓ ✓ - and the gate is what holds them
 together ✓ ✓.
+
+## 477. D483 · the one unknown the product asks NOTHING about: the INTENT (`apps/ai/nexus_ai/nlu/state_merger.py`, `apps/ai/tests/test_follow_up_question_covers_every_unknown.py`)
+
+**What the product does, and what was measured.** §8's promise ✓: *"ask about the single
+most important missing thing, in the user's language"* ✓ - and the intent's unknowns were
+read from a list of five ✓ that did not include **"intent"** ✓ ✓. So a query the product
+cannot classify carried `unknowns: ["intent"]` ✓ and **no question at all** ✓ ✓:
+
+```
+open now              -> the unknowns ['intent']   the follow_up_question None
+4 people dinner ...   -> the unknowns ['intent']   the follow_up_question None
+```
+
+The user was told the product does not know what it is looking for ✓ - and then it asked
+**nothing** ✓ ✓.
+
+**And the bank itself was two copies of one thing.** ✓ The list of the questions stood
+**inside** the reader ✓ ✓ (a second copy of the vocabulary ✓ - D438 ✓), and the **zh-HK**
+section was written in the **Simplified** script ✓ ✓ - a copy-paste of the zh-CN section ✓,
+with one Traditional exception ✓ ✓ - so a Hong Kong user was asked *请问几位？* ✓ ✓ while
+the budget question beside it was *預算大概幾多？* ✓ ✓.
+
+**The fix.** ✓
+
+* The **intent** joins the follow-up order ✓ ✓ - it is the most important thing missing ✓
+  (the product does not even know what the user wants ✓) ✓.
+* The bank is a **TABLE** ✓ ✓ (`FOLLOWUP_QUESTIONS` ✓) - one place ✓ ✓, and the gate can
+  read it ✓ ✓.
+* The **zh-HK** section is in the product's **canonical** spelling ✓ ✓ - the canonicaliser
+  is the authority ✓ (D417 ✓) - so the copy a Hong Kong user reads is the same Traditional
+  copy the rest of the product answers in ✓ ✓, while the **zh-CN** section keeps its
+  Simplified spelling ✓ ✓ (a Simplified user is answered in Simplified ✓ ✓). The table is
+  named in the vocabulary gate's **BY_DESIGN** list ✓ ✓ - it holds per-locale copy ✓, and
+  the copy is never **compared** with a canonicalised query ✓ ✓, so the rule that protects
+  the cue tables does not apply to it ✓ ✓.
+* The intent's question is the **product's own wording** ✓ ✓ - the platform's search label
+  ✓ ✓ - and the characters came from there ✓ ✓, not from the writer's memory ✓ ✓ (D409,
+  D446 ✓).
+
+**The gate.** `apps/ai/tests/test_follow_up_question_covers_every_unknown.py` takes its
+**parameters from the table** ✓ ✓ and requires that ✓:
+
+* every unknown the product can carry has a question in **every** locale ✓ ✓;
+* the intent is in the follow-up order ✓ ✓;
+* an unknown **carries** a question ✓ ✓ - the end-to-end proof ✓ ✓ ("open now" ✓, "coffee" ✓,
+  "book a table" ✓) ✓;
+* the question is asked in the **user's language** ✓ ✓;
+* and the reader and the table agree ✓ ✓.
+
+It was **proved to fail** ✓: taking the intent out of the order made **three** of its checks
+fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **9 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1885 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The eighth unit in a row ✓, and this one is a different shape ✓ - not a
+loose match ✓ but a **list that is missing an entry** ✓ ✓. The general form ✓: **a promise
+the product makes in one place and keeps in another is a promise nobody keeps** ✓ ✓ - the
+contract promises a follow-up question ✓ ✓, the reader kept five questions ✓ ✓, and the
+sixth - the one that matters most ✓ ✓ - was never written ✓ ✓. And the two copies ✓ ✓ (the
+list of the unknowns ✓ and the list of the questions ✓) are the same lesson the D438 unit
+named ✓ ✓: **the copy is the thing that drifts** ✓ ✓ - so the fix is **one table** ✓ ✓
+that the gate reads ✓ ✓, and the words in it come from the **product's own copy** ✓ ✓
+rather than from the writer's memory ✓ ✓. And the D439 unit's own test pinned the old
+Simplified string ✓ ✓ - so the fix moved the test to follow the table ✓ ✓ (and the test's
+purpose - the locale ✓ - is unchanged ✓ ✓): **a test that pins a copy must be able to
+follow the copy** ✓ ✓, or it is a second copy ✓ ✓.

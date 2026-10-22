@@ -394,7 +394,39 @@ def _compute_unknowns_public(ex: IntentExtraction) -> list[str]:
     return _compute_unknowns(ex)
 
 
-_ONE_FOLLOWUP_ORDER = ("party_size", "time", "location", "budget", "category")
+_ONE_FOLLOWUP_ORDER = ("intent", "party_size", "time", "location", "budget",
+                     "category")
+
+
+#: §8's ONE follow-up question, in the three locales. D483: the bank stood inside
+#: the reader, and the INTENT - the one thing the product knows least about - was
+#: not in it: a query the product cannot classify carried `unknowns: ["intent"]`
+#: and NO question at all. The wording is the product's own - the platform's
+#: search label (D409, D446: the writer's memory of a code point is not a
+#: reference).
+FOLLOWUP_QUESTIONS: dict[str, dict[str, str]] = {
+    "zh-HK": {
+        "intent": "你想要什么？",
+        "party_size": "請問几位？",
+        "time": "想約什么時候？",
+        "location": "想喺邊個區？",
+        "budget": "預算大概幾多？",
+        "category": "想食定想買？"},
+    "zh-CN": {
+        "intent": "你想要什么？",
+        "party_size": "请问几位？",
+        "time": "想约什么时候？",
+        "location": "想在哪个区？",
+        "budget": "预算大概多少？",
+        "category": "想找餐厅还是商品？"},
+    "en": {
+        "intent": "What are you looking for?",
+        "party_size": "How many people?",
+        "time": "When would you like to go?",
+        "location": "Which area?",
+        "budget": "What's your budget?",
+        "category": "Looking for a place or a product?"}
+}
 
 
 def question_for(intent: dict[str, Any]) -> str | None:
@@ -412,24 +444,4 @@ def question_for(intent: dict[str, Any]) -> str | None:
         return None
     key = unknowns[0]
     locale = norm_locale(str(intent.get("language") or "zh-HK"))
-    bank = {
-        "zh-HK": {"party_size": "请问几位？", "time": "想约什么时候？",
-                  "location": "想喺边个区？", "budget": "預算大概幾多？",
-                  "category": "想食定想買？"},
-        "zh-CN": {"party_size": "请问几位？", "time": "想约什么时候？",
-                  "location": "想在哪个区？", "budget": "预算大概多少？",
-                  "category": "想找餐厅还是商品？"},
-        "en": {"party_size": "How many people?", "time": "When would you like to go?",
-               "location": "Which area?", "budget": "What's your budget?",
-               "category": "Looking for a place or a product?"},
-    }
-    return bank[locale].get(key)
-
-
-# D450: the carried-state reader that used to stand here is gone - the merge
-# takes the state the caller passes it, and this service never reads the
-# platform's conversations.state (D20).
-
-
-# D450: the Hong Kong clock that used to stand here is gone - the time parser
-# owns HK_TZ and the merge measures its own latency.
+    return FOLLOWUP_QUESTIONS[locale].get(key)
