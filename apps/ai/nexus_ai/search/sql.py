@@ -587,14 +587,30 @@ WHERE o.tenant_id = {tenant_ph}::uuid AND o.id = ANY({ids_ph}::uuid[])
     return sql, p.values
 
 
+def _tsconfig_to_cfg(ts_config: str) -> str:
+    """Map user-friendly ts_config name to Postgres tsvector config name."""
+    mapping = {
+        "simple": "simple",
+        "cjk_zh": "jiebacfg",  # CJK Bigram configuration for Chinese
+        "english": "english",
+    }
+    return mapping.get(ts_config, "simple")
+
+
 def build_chunk_query(*, tenant_id: str, merchant_id: str | None, text: str,
                       embedding: list[float] | None, top_k: int = 8,
                       ts_config: str = "simple") -> CandidateQuery:
     """Hybrid chunk retrieval — RAG §7: tsvector ∪ vector, tenant (+merchant) filtered
+
     BEFORE ranking, `source_uri`/`document_id` carried so every answer can cite.
+
+    If `ts_config` is `"simple"`, uses Postgres `to_tsvector('simple')` which cannot
+    segment CJK ideographs — Chinese/Japanese/Korean words without spaces will not
+    match. Use `ts_config="cjk_zh"` for CJK-aware trigram matching, or `"english"`
+    for Western text.
     """
     p = Params()
-    cfg = _tsconfig(ts_config)
+    cfg = _tsconfig_to_cfg(ts_config)
     text_ph = p.add(text or "")
     tsq = f"plainto_tsquery('{cfg}'::regconfig, {text_ph})"
     kw_expr = f"COALESCE(ts_rank(c.search_tsv, {tsq}), 0)"
