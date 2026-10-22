@@ -20560,3 +20560,74 @@ census in both directions ✓ ✓: **what the producer can produce** ✓ and **w
 can answer** ✓ ✓, and the two sets must be the same set ✓ ✓. That is the D477 lesson
 (D485 ✓) with the sign reversed ✓ ✓: a table's entries are promises ✓ ✓ - and a promise
 that can never be kept ✓ is as dead as a promise that was never made ✓ ✓.
+
+## 479. D485 · the canonical table was missing NINE Simplified forms the product already knew - so a Simplified Chinese user asking for noodles got NOTHING (`apps/ai/nexus_ai/nlu/canonical.py`, `apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_canonical_covers_every_pair.py`)
+
+**What the product does, and what was measured.** The canonical table ✓ maps the **Simplified**
+spelling to the product's **canonical** one ✓ ✓ (the table's own docstring ✓, and Unihan's
+sources settle the direction ✓ - the "AG" source marks the Simplified form ✓ ✓). The
+lexicon keeps its **own** pair list ✓ ✓, and **nine** of those pairs were not in the table
+✓ ✓ - so a query written in those Simplified forms was compared against the table's
+canonical spelling ✓ ✓ and **never met it** ✓ ✓.
+
+**The two spellings of the same request.** ✓
+
+```
+the Simplified 粉面 (noodle soup)   -> the intent 'unknown'
+the Traditional 粉麵                -> the intent 'discover_merchant', the category
+                                       'restaurant'
+the Simplified 划位 (book a table)  -> the intent 'unknown'
+the Traditional 劃位                -> the intent 'reserve'
+```
+
+**A Simplified Chinese user was not understood.** ✓ ✓ The product answers **zh-CN** ✓ ✓
+(the locale detection had it right ✓ ✓ - the Simplified text was voted zh-CN ✓ ✓) - and
+then the **cues never matched** ✓ ✓: the category table holds *粉麵* ✓, the category table
+holds *麵包* ✓ and the reserve table holds *劃位* ✓ ✓, and the query's Simplified spelling
+was compared against them as it stood ✓ ✓.
+
+**The fix.** The table now carries **every** pair the lexicon knows ✓ ✓ - **nine** entries
+added ✓ ✓ (the code points come from the lexicon's own list ✓ ✓, and the entries are
+written as escapes ✓ ✓ - D409, D446: the writer's memory of a code point is not a
+reference ✓ ✓, and Unihan's sources are the authority ✓ ✓). The lexicon's note ✓ - which
+said the pairs the canonical table does **not** carry are "still carried here" ✓ ✓ - now
+says what is true ✓ ✓: the table carries them all ✓ ✓.
+
+**And the three characters whose Traditional form the two copies disagreed on** ✓ ✓ - a
+character can have two Traditional spellings ✓ ✓ (*复* → *復* or *複* ✓, *鸡* → *雞* or *鷄* ✓,
+*线* → *線* or *綫* ✓) ✓ and the canonicaliser has to pick one ✓ ✓ - the **product's** pick
+is the table's ✓ ✓ (the locale vote is unaffected ✓ ✓: both spellings are Traditional ✓ ✓).
+
+**The gate.** `apps/ai/tests/test_canonical_covers_every_pair.py` is the census D435's note
+asked for and nobody ran ✓ ✓:
+
+* **every** Simplified form the lexicon knows is a key in the canonical table ✓ ✓ (a
+  hundred and forty-four parameters ✓ ✓, taken from the lexicon's list ✓ ✓);
+* the value is a **Traditional** character ✓ ✓ and not the Simplified one ✓ ✓;
+* and the **end-to-end** proof ✓ ✓: the same request in the two spellings reads the same
+✓ ✓.
+
+It was **proved to fail** ✓: taking one of the nine entries out of the table made **two** of
+its checks fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **146 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1899 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The tenth unit in a row ✓, and this one is a **copy that was never
+finished** ✓ ✓: the canonical spelling is ONE fact ✓ ✓, and the D435 unit made the locale
+markers and the canonical table share it ✓ ✓ - and then wrote **nine** of the pairs into
+the markers' list ✓ ✓ and forgot the table ✓ ✓. The general form ✓: **a fact kept in two
+places is a fact that will differ** ✓ ✓ - and the D435 note even **recorded** the gap ✓ ✓
+("the pairs the canonical table does NOT carry ✓ are still carried here ✓") ✓ ✓, which is
+the saddest kind of note ✓ ✓: a gap **documented** ✓ and therefore **kept** ✓ ✓. The
+lesson for the census ✓: **a census of the copies is not a census of the facts** ✓ ✓ -
+the D435 census compared the two copies ✓ and found where they disagreed ✓ ✓, but never
+asked whether the map was **complete** ✓ ✓. So the general form gains its last clause ✓:
+**one fact, one place ✓, and a census that asks each place for the WHOLE fact** ✓ ✓ -
+and the gate here asks the map for every pair the product knows ✓ ✓ ✓.

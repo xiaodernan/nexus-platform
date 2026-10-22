@@ -513,8 +513,13 @@ _TRAD_SIMP_PAIRS: tuple[tuple[str, str], ...] = (
 #: it twice, by hand, independently. They disagreed on 96 of the 229 Simplified forms the
 #: product already rewrites: those characters did not vote as Simplified, so a Simplified
 #: user whose query used one of them was read as a Hong Kong user and answered in the
-#: Traditional locale. One source of truth closes the gap for good - and the pairs the
-#: canonical table does NOT carry (适/適, 麵/麺) are still carried here.
+#: Traditional locale. One source of truth closes the gap for good.
+#:
+#: D485: the canonical table now carries EVERY pair this list holds (it was missing nine),
+#: so a query written in the Simplified spelling is rewritten to the canonical one before
+#: it is compared - the table's key is the Simplified character, its value the canonical
+#: one. A Simplified user asking for noodles got nothing; the same request in the
+#: Traditional spelling worked.
 SIMPLIFIED_MARKERS = (frozenset(s for _t, s in _TRAD_SIMP_PAIRS)
                       | frozenset(CANONICAL_FORMS))
 TRADITIONAL_MARKERS = (frozenset(t for t, _s in _TRAD_SIMP_PAIRS)
