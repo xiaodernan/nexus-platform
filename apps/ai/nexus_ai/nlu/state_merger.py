@@ -8,6 +8,7 @@ sort to distance and tightens the radius, "不吃辣" appends a constraint. Merg
 
 from __future__ import annotations
 
+import copy
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -204,7 +205,11 @@ def _as_dict(state: dict[str, Any] | Intent | None) -> dict[str, Any]:
     if isinstance(state, Intent):
         return state.model_dump(mode="json")
     if isinstance(state, dict) and state:
-        data = dict(state)
+        # D489: a DEEP copy. The shallow one left the nested lists (the preferences, the
+        # constraints) the CALLER'S, and the merge appends to them - so the merge changed
+        # the state it was given, though the module promises it is PURE. A caller that
+        # keeps the state to merge the next turn found the turn's preferences in it.
+        data = copy.deepcopy(state)
         data.setdefault("raw_query", "")
         data.setdefault("intent", "unknown")
         data.setdefault("location", {})

@@ -20816,3 +20816,65 @@ the answers** ✓ ✓ ✓ - because the only way to see a second reader is to **
 the unit showed the gates are alive ✓ ✓: the vocabulary gate caught a character the fix
 carried away ✓ ✓, and the answer was not to put the character back ✓ ✓ but to say **what the
 product's vocabulary is** ✓ ✓ ✓.
+
+## 483. D489 · the merge CHANGED the state it was given - though the module promises it is PURE (`apps/ai/nexus_ai/nlu/state_merger.py`, `apps/ai/tests/test_the_merge_is_pure.py`)
+
+**What the product does, and what was measured.** The state merger's own docstring says it ✓
+✓: *"Merging is **pure and ordered** so it unit-tests without a model"* ✓ ✓. It was not pure
+✓ ✓. The state was copied with `dict(state)` ✓ - a **shallow** copy ✓ ✓ - so the nested
+lists ✓ (the preferences ✓, the constraints ✓) were the **caller's** ✓ ✓, and the residual
+absorb **appends** to them ✓ ✓:
+
+```
+the turn 'quiet cafe'        the caller's preferences [] -> []
+   the answer's preferences [('ambience', 'quiet')]
+the turn 'romantic dinner'   the caller's preferences [] -> [{'key': 'occasion', 'value': 'date', ...}]
+   the answer's preferences [('occasion', 'date')]
+the turn 'a view'            the caller's preferences [('occasion', 'date')] -> [('occasion', 'date'), ('view', 'scenic')])
+```
+
+**So a caller that keeps the state** ✓ - to merge the **next** turn into it ✓ ✓ - **found
+the turn's preferences already in it** ✓ ✓ ✓. And the second turn's answer then carried
+the first turn's preference ✓ ✓ ✓ - a conversation that drifted on its own ✓ ✓.
+
+**The fix.** The merge works on a **deep copy** ✓ ✓ of the state ✓ ✓ - so it writes into
+its own ✓ ✓ and the caller's is exactly as it found it ✓ ✓.
+
+**And this was found by the §482 (D488 ✓) census** ✓ ✓: the census asked the two readers
+the same question about every word of the tables they share ✓ ✓, and the answers came back
+**growing** ✓ ✓ - the merge's preferences accumulating from call to call ✓ ✓ - which is not
+a vocabulary defect at all ✓ ✓ but a **side effect** ✓ ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_the_merge_is_pure.py` holds the promise ✓ ✓:
+
+* the merge leaves the state it was given **untouched** ✓ ✓ (ten turns ✓ ✓, compared field
+  by field ✓ ✓);
+* the merge is **deterministic** ✓ ✓ - the same state and the same turn give the same
+  answer ✓ ✓, every time ✓ ✓;
+* the merge still **reads** the state ✓ ✓ - the carried preference is not lost ✓ ✓ (the fix
+  must not cost the product the state ✓ ✓);
+* and a caller can merge **twice** onto the same state ✓ ✓ without the second turn seeing
+  the first turn's preferences ✓ ✓.
+
+It was **proved to fail** ✓: putting the shallow copy back made **seven** of its checks
+fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **13 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **2179 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The fourteenth unit in a row ✓, and this one is the **fourth** reading
+of §481's lesson ✓ ✓ - and it is the one that closes the series ✓ ✓. D487 said the two
+readers must read one vocabulary ✓ ✓; D488 said a gate must **ask** them the same question
+✓ ✓; and this unit says the third thing ✓ ✓: **a reader that changes what it reads is not
+a reader** ✓ ✓ - it is a **side effect** ✓ ✓, and a side effect in a **pure** function ✓ ✓
+is a defect the vocabulary can never show ✓ ✓. So the general form's last clause ✓: **one
+fact, one place ✓, every reader through it ✓, a gate that asks two readers the same
+question ✓, and a reader that changes nothing** ✓ ✓ ✓. And the finding is a good one ✓:
+the census that D488 left in the code ✓✓ - a gate that asks the same question twice ✓✓ -
+is what found it ✓✓ (the answers grew ✓✓) ✓✓ ✓.
