@@ -20936,3 +20936,90 @@ through their weighted sum: `bayesian_quality`, `distance_score`, `price_fit`,
 
 **Verified, not claimed.** `pytest tests/test_ranking_components.py` → **27 passed**; full `apps/ai`
 suite → **2253 passed, 56 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+## 486. D492 · the urgency and the TIME PARSER disagreed about "next week" - a Cantonese user who said 下星期 got NO urgency (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_the_next_week_words_are_one_vocabulary.py`)
+
+**What the product does, and what was measured.** The **time parser** holds the next-week
+words ✓ ✓ and the **urgency** holds the "flexible" words ✓ ✓ - and they mean the **same
+thing** ✓ ✓ ("next week" ✓) and they live in **two modules** ✓ ✓:
+
+```
+the time parser's next-week words   下週, 下周, 來週, 來週, next week, 下星期, 下禮拜
+the urgency's flexible words        得閒, 得閑, 有空, 隨時, 隨時, anytime, next week,
+                                    下週, 下周, 來週, 月底, 得閑, 無所謂
+```
+
+**Two words were missing from the urgency's side** ✓ ✓ - **下星期** ✓ (U+4E0B U+661F U+671F ✓)
+✓ and **下禮拜** ✓ (U+4E0B U+79AE U+62DC ✓) ✓ - and the time parser knew both ✓ ✓ ✓. So a
+user who said **"next week"** in Cantonese ✓ ✓ was heard by the time parser ✓ ✓ and was
+**not** heard by the urgency ✓ ✓:
+
+```
+下星期  -> the urgency 'normal'   (the time parser's next-week flag: set)
+下禮拜  -> the urgency 'normal'   (the time parser's next-week flag: set)
+```
+
+**The fix.** The urgency's flexible table gains the words the time parser knows ✓ ✓ (D486's
+lesson ✓: the copy must be the **whole** fact ✓ ✓) ✓ - and the code points come from the
+**time parser's own table** ✓ ✓ (D409 ✓, D446 ✓: the writer's memory of a code point is
+not a reference ✓ ✓).
+
+**The comparison is made in the CANONICAL spelling** ✓ ✓ - both tables are canonicalised
+at import ✓ ✓, so a word written in either spelling is the same word ✓ ✓ (the Traditional
+來週 ✓ and the Simplified 来週 ✓ are one word ✓ ✓, and the gap was **two** words ✓ ✓ and
+not three ✓ ✓).
+
+**The gate.** `apps/ai/tests/test_the_next_week_words_are_one_vocabulary.py` holds the two
+tables to each other ✓ ✓:
+
+* **every** next-week word the time parser names ✓ ✓ is a flexible word the urgency names
+✓ ✓ (seven parameters ✓ ✓, taken from the table ✓ ✓);
+* the measured instances ✓ ✓ - **下星期** ✓ and **下禮拜** ✓ - are read as **flexible** ✓ ✓
+by the **first turn** ✓ ✓ **and** by the **merge** ✓ ✓ ✓;
+* and the two tables agree ✓ ✓ about every word ✓ ✓.
+
+It was **proved to fail** ✓: taking one next-week word out of the urgency's table made
+**three** of its checks fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **9 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **2194 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The fifteenth unit in a row ✓, and this one finds the **same** defect
+in a **third** shape ✓ ✓. D486 found a copy that was a **subset** ✓ ✓; D487 found two
+copies that differed in **both** directions ✓ ✓; D488 found a **second reader** ✓ ✓; and
+this one finds a copy in **another module** ✓ ✓ - the one place a "one fact, one place"
+census that walks a single module can never look ✓ ✓ ✓. So the general form gains the
+clause the census was missing ✓: **the vocabulary that means the same thing must be
+compared ACROSS the modules that hold it** ✓ ✓ - because a table's neighbours are not its
+readers ✓ ✓, and a vocabulary split across two files is **two vocabularies** ✓ ✓ however
+well the two files agree about the words they share ✓ ✓ ✓. And the fix is the same one
+✓ ✓ it has been since D485 ✓ ✓: **the union** ✓ ✓ - the copy takes the whole fact ✓ ✓,
+and the gate asks the two tables the same question ✓ ✓ ✓.
+
+## 487. D493 · the cuisine vocabulary bridge was only exercised through the search path - the leaf map and its by-leaf (not substring) comparison (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_cuisine_matching.py`)
+
+**Module / contract.** The lexicon speaks the user's word ("japanese") while the seed stores the
+venue's taxonomy leaf ("sushi", "ramen", "izakaya"). `cuisine_leaves` maps the former to the
+latter; `cuisine_matches` decides whether a merchant's category/tags carry the cuisine. Without the
+map a satisfied preference never fires, and a satisfied preference becomes indistinguishable from
+an unsatisfied one (D394). The comparison is by **leaf**, not by substring on a tag.
+
+**Pinned behavior (15 cases, all confirmed empirically):**
+- `cuisine_leaves`: `japanese` → `('sushi','ramen','izakaya')`; case/whitespace normalised
+  (`' Japanese '` is the same); `dim_sum` → `('dimsum',)`; an unknown cuisine is matched by its own
+  name; empty/`None` → `()`.
+- `cuisine_matches`: a tag exact-match fires (`sushi`); the category path is containment
+  (`restaurant/sushi`, `thai-food`); a tag that merely CONTAINS the leaf does **not** fire
+  (`sushibar`); `_`/`-`/space and case are one word (`dimsum`/`dim-sum`/`DIM SUM`); empty cuisine
+  or empty category+tags matches nothing; an unknown cuisine matches its own name.
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_cuisine_matching.py` → **15 passed**; full `apps/ai`
+suite → **2268 passed, 56 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
