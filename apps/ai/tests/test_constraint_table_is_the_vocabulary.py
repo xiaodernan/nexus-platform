@@ -99,4 +99,6 @@ def test_the_merge_reads_them_too():
         merged = {(c.get("key"), c.get("value"))
                   for c in merge_turn(dict(BASE), text).intent.get("constraints", [])}
         assert expected in first, f"the first turn read {first} for {text!r}"
-        assert expected in merged, f"the merge read {merged} for {text!r}"
+        assert merged == first, (
+            f"the merge read {merged} and the first turn {first} for {text!r} - the "
+            f"same constraint in two spellings is two answers")

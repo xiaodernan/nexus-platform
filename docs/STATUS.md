@@ -20754,3 +20754,65 @@ two different vocabularies ✓ ✓ is answering **two different questions** ✓ 
 general form's last clause ✓: **one fact, one place, and every reader of that fact through
 it** ✓ ✓ - and the gate here is that clause made mechanical ✓ ✓: it asks the two readers
 the same question and compares the answers ✓ ✓ ✓.
+
+## 482. D488 · the merge added the SAME constraint TWICE, in two spellings - a second reader of the vocabulary the first turn reads (`apps/ai/nexus_ai/nlu/state_merger.py`, `apps/ai/tests/test_the_two_readers_agree.py`)
+
+**What the product does, and what was measured.** §481 (D487 ✓) made the urgency **one**
+vocabulary ✓ ✓ - and the census that followed it asked the two readers the same question
+about every word of the tables they share ✓ ✓, field by field ✓ ✓. It found **twelve**
+divergences ✓ ✓, and every one of them was the same shape ✓ ✓:
+
+```
+"唔食豬" (I don't eat pork)
+   the first turn   [('diet_avoid', 'pork')]
+   the merge        [('diet_avoid', 'pork'), ('diet_avoid', '豬')]
+```
+
+**The same constraint, twice, in two spellings.** ✓ The merge read the constraints with its
+own **hand-written regexes** ✓ ✓ (a **second reader** of the vocabulary the first turn
+reads ✓ ✓ - and a **subset** of it ✓ ✓, D486's lesson ✓ ✓) **and** the residual absorb
+read the lexin's table ✓ ✓ - so the constraint was added **once by each** ✓ ✓, once in the
+raw spelling the regex found ✓ (U+8C6C ✓) ✓ and once in the canonical one ✓ ✓.
+
+**The fix.** The merge's own rules **go** ✓ ✓ - the one reader stays ✓ ✓, the residual
+absorb ✓ ✓, which reads the lexin's table ✓ ✓ and therefore reads the **whole** table ✓ ✓.
+The relaxation ✓ (the "spicy is fine" one ✓) **stays** ✓ ✓ - it is a different thing ✓ ✓
+(it **drops** a constraint ✓ ✓, and no table holds it ✓ ✓).
+
+**And the vocabulary gate caught the loss.** ✓ With the second reader gone ✓, the product's
+only copy of the Cantonese particle **U+5605** went with it ✓ ✓ (it stood in that regex ✓,
+between the negation and the value it qualified ✓) ✓ - and the vocabulary gate ✗ said so ✓ ✓:
+*the evaluation's Cantonese cases use a character the product's vocabulary does not carry* ✓
+✓. The product's tables hold the **words** ✓ ✓ and the particle is the **grammar** between
+them ✓ ✓ - so the particle joins the gate's **DECLARED** list ✓ ✓ (the characters the tests
+use that the product's vocabulary does not carry ✓ ✓), with Unihan's gloss ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_the_two_readers_agree.py` is the census made mechanical ✓ ✓:
+every word of the tables the two readers share ✓ ✓ (the urgency ✓, the constraints ✓, the
+categories ✓) ✓ is asked of both readers ✓ ✓ and the answers are compared **field by
+field** ✓ ✓ - the fields the merge **changed** ✓ ✓, because the merge keeps the carried
+state for the rest ✓ ✓. And the merge holds **no** constraint rule of its own ✓ ✓.
+
+It was **proved to fail** ✓: giving the merge a subset of its own again made **seventeen**
+of its checks fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **63 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **2166 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The thirteenth unit in a row ✓, and this one is the **third** reading of
+§481's lesson ✓ ✓ - and it shows the lesson's **last** clause ✓: **a gate must ask the
+readers the same question** ✓ ✓, because the two readers answering differently is a defect
+no shape check and no copy census can see ✓ ✓ - a copy census compares the **tables** ✓ ✓
+and both readers had the SAME table ✓ ✓ (the second reader was a **regex** ✓, not a table
+✓ ✗ ✓). So the general form gains its final clause ✓: **one fact, one place, every reader
+of that fact through it ✓, and a gate that asks two readers the same question and compares
+the answers** ✓ ✓ ✓ - because the only way to see a second reader is to **ask** ✓ ✓ ✓. And
+the unit showed the gates are alive ✓ ✓: the vocabulary gate caught a character the fix
+carried away ✓ ✓, and the answer was not to put the character back ✓ ✓ but to say **what the
+product's vocabulary is** ✓ ✓ ✓.

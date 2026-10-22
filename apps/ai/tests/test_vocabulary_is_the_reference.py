@@ -67,6 +67,8 @@ DECLARED = {
     "\u52a9",   # 助 - help, aid, assist - a sponsored label the test supplies
     "\u53c9",   # 叉 - crotch; fork, prong - a menu item in a demo row (char siu rice)
     "\u55ef",   # 嗯 - final particle - a turn that is not a request at all
+    "\u5605",   # 嘅 - sound of sighing; (Cant.) possessive - the Cantonese particle that joins the words in a query - the product's tables hold the words,
+                   # not the grammar
     "\u5622",   # 嘢 - (Cant.) thing - the Cantonese shopping cue (to buy things)
     "\u5904",   # 处 - place, locale; department - a demo merchant's name (the far cafe)
     "\u5ea7",   # 座 - seat; stand, base - the query that asks for a socket

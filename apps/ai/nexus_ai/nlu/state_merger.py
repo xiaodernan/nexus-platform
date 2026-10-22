@@ -139,15 +139,11 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
             _drop_unknown(base, "party_size")
 
     # ---- spicy / dietary -----------------------------------------------
-    if re.search(r"(唔食|不吃|不要|別|别|避免|no|without|avoid|少)\s*(?:食|吃|嘅)?\s*辣", match_text) \
-            or re.search(r"no\s+spicy|not\s+spicy", low):
-        changes.append(_add_constraint(base, "cuisine_avoid", SPICY))
-    elif re.search(r"(唔食|不吃|不要|避免|no|without)\s*(?:食|吃)?\s*(豬|猪|pork|牛|beef|海鮮|海鲜|香菜|花生|奶|dairy|gluten)",
-                   turn):
-        v = re.search(r"(豬|猪|pork|牛|beef|海鮮|海鲜|香菜|花生|奶|dairy|gluten)", turn)
-        if v:
-            changes.append(_add_constraint(base, "diet_avoid", v.group(1)))
-    elif re.search(r"(辣都可以|辣都ok|spicy ok|无所谓|無所謂|incoming)", match_text):
+    # D488: the constraints are read by the ONE reader - the residual absorb below, which
+    # reads the lexin's table. The rules that stood here were a second reader of the same
+    # vocabulary (and a SUBSET of it), so the merge added the SAME constraint twice, in two
+    # spellings: "I don't eat pork" gave the first turn one constraint and the merge two.
+    if re.search(r"(辣都可以|辣都ok|spicy ok|无所谓|無所謂|incoming)", match_text):
         changes.append(_drop_constraint(base, SPICY))
 
     # ---- ambience -------------------------------------------------------
