@@ -19966,3 +19966,70 @@ match on a **shape** ✓, and shapes nest ✓ - "far" is a shape inside "farther
 substring match cannot tell a word from a part of a word ✓ ✓. The general form ✓: **when the
 thing you are looking for can contain the thing you are looking for** ✓, the match has to
 say which one it means ✓ - the longest one ✓, on a word boundary ✓ ✓.
+
+## 471. D477 · every ENGLISH weekday was unreadable - the word boundary was a LITERAL BACKSPACE byte - and the day after tomorrow was tomorrow (`apps/ai/nexus_ai/nlu/timeparse.py`, `apps/ai/tests/test_weekday_tokens_are_readable.py`)
+
+**What the product does, and what was measured.** The time parser's tables name the days ✓ -
+`WEEKDAY_TOKENS` carries `星期一` ✓, `週一` ✓, `周一` ✓ **and** `monday` ✓, `tuesday` ✓,
+`mon` ✓, `tue` ✓ ✓ - fourteen English names ✓. The census of the table against the reader
+found that **not one of them could be read** ✓:
+
+```
+monday     -> None        星期一     -> (0, False)
+friday     -> None        星期五     -> (4, False)
+next friday-> None        下星期五   -> (0, True)
+```
+
+**The cause was a byte.** The reader's ASCII branch looked like this ✓:
+
+```python
+if not re.search(rf"^<BACKSPACE>{re.escape(tok)}<BACKSPACE>$", low):
+```
+
+- the two `\b` word boundaries were written as **literal backspace bytes** (0x08) ✓ ✓, so
+the regex searched for a backspace around the weekday name and **never matched** ✓ ✓. The
+comment directly above the line says what it was meant to be ✓ - *"3-letter abbreviations
+must be whole words: 'sunset' is not Sunday"* ✓ ✓ - and the code said the opposite ✓: not
+only did it not enforce the boundary ✓, it made the **whole table** unreachable ✓ ✓.
+
+**And the day after tomorrow was tomorrow.** ✓ The branch that picks the day read
+`elif is_tomorrow or is_after_tomorrow:` ✓ and added **one** day ✓ ✓ - so *"the day after
+tomorrow"* ✓ and the Chinese landed on **tomorrow** ✓ ✓ (and the English phrase also matched
+the "tomorrow" inside itself ✓, so it took the same branch ✓ ✓). The day after tomorrow is
+**two** days out ✓ ✓.
+
+**The fix.** The word boundary is `\b` ✓ ✓, and the after-tomorrow case is checked **first**
+✓ and adds two days ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_weekday_tokens_are_readable.py` reads the tables
+themselves ✓ and requires **every** entry to be readable ✓ ✓ (fourteen parameters ✓, taken
+from the table ✓ ✓) ✓, that the abbreviations are whole words ✓ (*"sunset" is not Sunday* ✓)
+✓, that the day after tomorrow is two days out ✓ and tomorrow is one ✓ ✓, and that the
+English and the Chinese Monday land on the **same day** ✓ ✓.
+
+It also checks the **class** of the defect ✓: no source file may carry a control character
+that is not a tab ✓, a newline ✓ or a carriage return ✓ ✓ - because *a byte where an escape
+belongs is invisible in a diff and fatal in a matcher* ✓ ✓. It was **proved to fail** ✓:
+putting the backspace byte back made **eighteen** of its checks fail ✓ ✓ - the probe was put
+back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **20 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1074 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** The three units in a row ✓ (D475 ✓, D476 ✓, this one ✓) found the same
+**shape** ✓: a table that holds more than one language ✓, and the half nobody tested ✓
+✓ - and in every case the Chinese worked ✓ and the English did something **else** ✓ ✓. The
+general form ✓: **a table's entries are promises, and a promise nobody exercises is a
+promise nobody keeps** ✓ ✓ - so the gate's parameters must come from the table ✓ ✓, so the
+table grows and the test grows with it ✓ ✓. And the deeper lesson ✓: the D464 census
+counted **AST reads** ✓ and found this table *read* ✓ - the name appears in the source ✓, the
+function is called ✓, and the matcher still never matched ✓ ✓. **A read is not a match** ✓ ✓ -
+and a byte that changed what the pattern says is invisible to every census that counts
+names ✓ ✓.

@@ -189,7 +189,7 @@ def _find_weekday(text: str) -> tuple[int, bool] | None:
     for tok in sorted(WEEKDAY_TOKENS, key=len, reverse=True):
         if tok.isascii():
             # 3-letter abbreviations must be whole words: "sunset" is not Sunday
-            if not re.search(rf"{re.escape(tok)}", low):
+            if not re.search(rf"\b{re.escape(tok)}\b", low):
                 continue
         elif tok not in text:
             continue
@@ -234,7 +234,14 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
         day = resolve_weekday(weekday, today, next_week=next_week)
     elif is_tonight:
         day = today
-    elif is_tomorrow or is_after_tomorrow:
+    elif is_after_tomorrow:
+        # D477: the day after tomorrow is TWO days out. The branch added one day for
+        # `is_tomorrow or is_after_tomorrow`, so "the day after tomorrow" and the Chinese
+        # landed on tomorrow - and the English phrase also matched the "tomorrow" inside
+        # itself, so it took the same branch. The after-tomorrow case is checked FIRST,
+        # so the phrase that contains "tomorrow" is not read as tomorrow.
+        day = today + timedelta(days=2)
+    elif is_tomorrow:
         day = today + timedelta(days=1)
     elif is_today:
         day = today
