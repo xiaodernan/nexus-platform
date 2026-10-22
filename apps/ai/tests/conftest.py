@@ -27,14 +27,16 @@ def offline_env(monkeypatch):
     monkeypatch.delenv("NEXUS_AI_CORS_ORIGINS", raising=False)
 
     from nexus_ai.config import reset_settings_cache
-    from nexus_ai.models import factory
+    from nexus_ai.models import embeddings, factory
     from nexus_ai.db import pool as db_pool
 
     reset_settings_cache()
     factory.reset_provider_cache()
+    embeddings._CACHE.clear()
     db_pool._instance = None
     yield
     db_pool._instance = None
+    embeddings._CACHE.clear()
     factory.reset_provider_cache()
     reset_settings_cache()
 

@@ -176,10 +176,14 @@ async def run_search(deps: Deps, intent: Intent | None, *, query: str = "",
     backend = deps.backend()
     vector_lane = False
     embedding: list[float] | None = None
-    if plan.query_text and deps.settings.embedding_provider == "hashing":
-        try:  # hashing embeddings are offline; they only feed the pgvector lane in live DB
+    if plan.query_text:
+        # D507: every provider feeds the pgvector lane. The guard used to read
+        # `embedding_provider == "hashing"`, which asked the offline adapter for a vector and
+        # refused the semantic one - so the provider the docs name for paraphrase recall
+        # (AGENT_CONTRACT §6) never reached the lane it exists to serve.
+        try:
             embedding = (await deps.embeddings().embed([plan.query_text]))[0]
-        except Exception:  # pragma: no cover - the keyword lane is the floor
+        except Exception:  # the keyword lane is the floor
             embedding = None
     vector_lane = bool(embedding) and backend.name == "postgres"
     # `search()` matches preferences by key, so it takes them as plain dicts; the contract hands

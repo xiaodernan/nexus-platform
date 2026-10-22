@@ -96,47 +96,62 @@ class HttpEmbedding:
         return {"provider": self.name, "ok": True, "dim": self.dim, "model": self.model,
                 "semantic": True}
 
-    async def embed(self, texts: Sequence[str]) -> list[list[float] | None]:  # pragma: no cover - network
+    async def embed(self, texts: Sequence[str]) -> list[list[float]]:
+        """One `/embeddings` request per call, rows placed by the endpoint's own `index`.
+
+        D507: the response's `data` array is not promised in request order, and a row that
+        never arrived is a provider failure, not a zero to store - `chunks.embedding` is read
+        by cosine, so a zero vector makes that row permanently unretrievable.
+        """
         import httpx
 
-        missing = [t for t in texts]
-        out: list[list[float] | None] = [None] * len(missing)
-        # batched, and cached by content hash (§9)
+        out: list[list[float] | None] = [None] * len(texts)
+        # cached by content hash (AGENT_CONTRACT §9): a re-embedded chunk costs no call
         todo: list[tuple[int, str]] = []
-        for i, t in enumerate(missing):
+        for i, t in enumerate(texts):
             hit = _CACHE.get((self.model, t or ""))
             if hit is not None:
                 out[i] = list(hit)
             else:
                 todo.append((i, t or ""))
         if todo:
-            # Group by model to minimize API calls when multiple providers are configured
-            by_model: Dict[str, list[tuple[int, str]]] = {}
-            for i, t in todo:
-                key = self.model or "hashing"
-                by_model.setdefault(key, []).append((i, t))
             client = self._client or httpx.AsyncClient(timeout=self.timeout_s)
             try:
                 resp = await client.post(
                     f"{self.base_url}/embeddings",
                     headers={"authorization": f"Bearer {self.api_key}"},
-                    json={"model": model_key, "dimensions": self.dim,
-                          "input": [t for _, t in items]},
+                    json={"model": self.model, "dimensions": self.dim,
+                          "input": [t for _, t in todo]},
                 )
                 resp.raise_for_status()
-                data = sorted(resp.json()["data"], key=lambda d: d["index"])
-                for (i, t), item in zip(todo, data):
+                data = resp.json()["data"]
+                if len(data) != len(todo):
+                    raise RuntimeError(
+                        f"embedding endpoint answered {len(data)} row(s) for "
+                        f"{len(todo)} input(s) - a short answer would leave rows unset")
+                for item in data:
+                    index = item["index"]
+                    if not isinstance(index, int) or not 0 <= index < len(todo):
+                        raise RuntimeError(
+                            f"embedding endpoint returned index {index!r}, outside the "
+                            f"{len(todo)} input(s) it was sent")
+                    i, text = todo[index]
                     vec = [float(v) for v in item["embedding"]]
                     if len(vec) != self.dim:
                         raise RuntimeError(
                             f"embedding endpoint returned dim {len(vec)}, contract requires "
                             f"{self.dim} (DECISIONS D3) — refusing to store a mismatched vector")
                     out[i] = vec
-                    _CACHE[(self.model, t)] = tuple(vec)
+                    _CACHE[(self.model, text)] = tuple(vec)
             finally:
                 if self._client is None:
                     await client.aclose()
-        return [v if v is not None else [0.0] * self.dim for v in out]
+        unfilled = [i for i, v in enumerate(out) if v is None]
+        if unfilled:
+            raise RuntimeError(
+                f"embedding endpoint left {len(unfilled)} of {len(out)} row(s) unset "
+                f"(positions {unfilled[:5]}) - refusing to store a zero vector")
+        return [v for v in out if v is not None]
 
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+|[㐀-鿿]")
