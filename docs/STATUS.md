@@ -20033,3 +20033,97 @@ counted **AST reads** ✓ and found this table *read* ✓ - the name appears in 
 function is called ✓, and the matcher still never matched ✓ ✓. **A read is not a match** ✓ ✓ -
 and a byte that changed what the pattern says is invisible to every census that counts
 names ✓ ✓.
+
+## 472. D478 · every Latin marker was matched as a bare SUBSTRING - so "ramen" (which contains "am") was answered with the MORNING window, and "know" (which contains "now") with TODAY (`apps/ai/nexus_ai/nlu/timeparse.py`, `apps/ai/tests/test_time_markers_are_words.py`)
+
+**What the product does, and what was measured.** The time parser's tables name the parts of
+the day ✓, the days ✓, the open-late cues ✓ and the directions ✓ - and **every one of them
+was matched as a bare substring** ✓ ✓, so a word that **contained** a marker read as the
+marker ✓ ✓.
+
+The live answer showed it ✓ - the same corpus, the same minute, **the user's own word** ✓:
+
+```
+ramen in sha tin          the time 'morning' (07:00-11:30)   the items  3
+coffee in sha tin         the time none                       the items  9
+lamb chops in sha tin     the time 'morning' (07:00-11:30)   the items  3
+know a good ramen place   the time 'morning' + TODAY          the items  1
+```
+
+**Three defects, all of them a word read out of a word.** ✓
+
+* **"am" inside "ramen"** ✓ - the part-of-day table's morning row names `am` ✓, and the
+  reader tested `t in low` ✓ ✓ - so a user who wrote **ramen** got the **07:00-11:30
+  morning window** ✓ ✓, and the search answered with the merchants open in the morning ✓
+  (three of them ✓) instead of the nine the same query returned without the "r" ✓ ✓. The
+  same held for `lamb` ✓, `shampoo` ✓, `camping` ✓ and `programmer` ✓ ✓.
+* **"now" inside "know"** ✓ - the today table names `now` ✓, so *know* ✓, *nowhere* ✓ and
+  *snow* ✓ were all read as **today** ✓ ✓.
+* **"past" inside "pastry"** ✓ - the late-cue table names `past` ✓, so a query about
+  **pastry** was read as *"open late after"* ✓ ✓.
+
+**And the Chinese half was never affected** ✓ - Chinese has no word inside a word ✓, so
+the same request in the two languages got two different answers ✓ ✓. The morning row's
+own Chinese marker ✓ (`朝早` ✓ - U+671D U+65E9 ✓) was read ✓ ✓, and its Latin half was
+not ✓ ✓.
+
+**The fix.** **One** matcher ✓ (`_marker_positions` ✓ / `_marker_in` ✓), used by **every**
+read of a marker ✓ ✓: the part-of-day table ✓, the day tables ✓, the weekend and
+next-week tables ✓, the open-late cues ✓ and the direction cues ✓ ✓. A **Latin marker is
+a word** ✓ - nothing may touch its left ✓ (*"7am" is a marker ✓, "ramen" is not* ✓) and
+only a plural may follow it ✓ (*"weekends" is "weekend"* ✓) ✓ - while a **CJK marker**
+matches on its own spelling ✓ ✓.
+
+The literals that used to sit **beside** the tables ✓ (`"today"` ✓, `"now"` ✓,
+`"tomorrow"` ✓, `"tonight"` ✓) are gone ✓ ✓ - they were the tables' own entries ✓, and a
+second copy is a copy that drifts ✓ ✓ (D438, D463 ✓). The tables name the words the
+looser match used to find ✓ (`midnight` ✓, `overnight` ✓, `luncheon` ✓) ✓, and the
+**duplicated** `evening` left the night row ✓ ✓ - a promise made twice ✓, and the reader
+takes the first ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_time_markers_are_words.py` takes its **parameters from
+the tables** ✓ ✓ - every marker of every table ✓, so the tables grow and the gate grows
+with them ✓ ✓ - and requires that ✓:
+
+* every **Latin** marker reads as a word ✓ ✓ (thirty-four parameters ✓);
+* no Latin marker reads out of the **middle** of a word ✓ ✓ (a letter glued to the
+  marker's left must take it out of the text ✓);
+* every **CJK** marker still reads ✓ ✓ - the fix must not cost the Chinese anything ✓ ✓;
+* the measured instances ✓ ✓ ("ramen" ✓, "lamb" ✓, "know" ✓, "nowhere" ✓, "snow" ✓,
+  "pastry" ✓) ✓, and the words the tables name ✓ ✓ (*midnight* ✓, *overnight* ✓,
+  *luncheon* ✓, *next weekend* ✓, *weekends* ✓, *7am* ✓, *7pm* ✓, *mornings* ✓,
+  *today's* ✓) ✓ ✓;
+* and the **end-to-end** proof ✓: *ramen in sha tin* carries **no** time filter ✓ ✓ and
+  *ramen in sha tin morning* still carries the morning ✓ ✓.
+
+It was **proved to fail** ✓: putting the bare-substring match back made **thirty-seven**
+of its checks fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **159 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1233 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the **live** answer ✓: *ramen in sha tin* **3 -> 12** items ✓ ✓, *lamb chops in sha tin*
+  **3 -> 20** ✓ ✓, *know a good ramen place* **1 -> 20** ✓ ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** The three units in a row ✓ (D475 ✓, D476 ✓, D477 ✓) found the same
+**shape** ✓: a table that holds more than one language ✓, and the half nobody tested ✓ ✓.
+This one is that shape with the **sign flipped** ✓ - here the **Chinese** half was right
+✓ and the **Latin** half was wrong ✓ ✓, and wrong in the loudest way there is ✓: a
+**filter the user never asked for** ✓ ✓, an answer nine merchants wide instead of three ✓
+✓. The general form ✓: **a marker is a word, not a piece of a word** ✓ - and D476's
+lesson and this one are the **same hazard seen from two sides** ✓ ✓: *the thing you are
+looking for can contain the thing you are looking for* ✓ (D476 ✓: "far" inside
+"farther" ✓) and *the thing you are looking for can sit inside another word* ✓ (here:
+"am" inside "ramen" ✓) ✓ ✓. So the honest form is one sentence about the **matcher** ✓:
+**every read of a marker goes through one matcher** ✓ ✓ - the tables are the vocabulary ✓,
+the matcher is the grammar ✓, and the gate takes its parameters from the tables ✓ so that
+the vocabulary and the grammar cannot drift apart ✓ ✓. And the third time over ✓: the
+D464 census counted **AST reads** ✓ and found these markers *read* ✓ - the name is in the
+source ✓, the function is called ✓, and the match was the **wrong thing** ✓ ✓.
+**A read is not a match** ✓ ✓.
