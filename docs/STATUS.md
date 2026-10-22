@@ -20908,3 +20908,31 @@ sessions, so the unit took the next free pair **D490 / §484**. Code unchanged.
 
 **Verified, not claimed.** `pytest tests/test_app_surface.py` → **10 passed**; full `apps/ai` suite
 → **2211 passed, 56 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+## 485. D491 · the ranking COMPONENTS were only pinned through their sum - the Bayesian smoothing, the distance/price/availability curves, the price bands and the facet counts (`apps/ai/nexus_ai/search/ranking.py`, `apps/ai/tests/test_ranking_components.py`)
+
+**Module / contract.** `ranking.py` is deliberately pure Python over a `Candidate` feature vector,
+so its invariants are unit-testable without a database. `score_candidate`/`apply_sponsored` were
+pinned by D345/D347; this unit pins the **individual components** whose shapes those tests only saw
+through their weighted sum: `bayesian_quality`, `distance_score`, `price_fit`,
+`availability_score`, `quality_component`, `price_band`, `facet_counts`.
+
+**Pinned behavior (27 cases, all confirmed empirically):**
+- `bayesian_quality`: 0 reviews / `rating=None` fall back to the tenant mean; 5.0/2 reviews →
+  3.676471; 4.6/200 → 4.523256; and the docstring's claim holds — 5.0/2 loses to 4.6/200.
+- `distance_score`: `None` → neutral 0.5; 0 m → 1.0; the decay constant (2500 m) → `e^-1`; beyond
+  `max_radius_m` → 0.02; a negative distance clamps to 0 → 1.0.
+- `price_fit`: `None` → 0.5; inside budget → 1.0; at 2× the budget → 0.214311; over the hard cap
+  (2×) → 0.0; no budget → the neutral band (100 HKD → 0.57735).
+- `availability_score`: `None`/`"unknown"`/unrecognised → the unknown weight (0.35); `available`
+  → 1.0; `limited` → 0.6; `full` → 0.05.
+- `quality_component`: the Bayesian rating rescaled `(q-1)/4` (3.5 → 0.625).
+- `price_band`: `None`→unknown; 99→`$`; 100/299→`$$`; 300/799→`$$$`; 800→`$$$$` (the boundaries are
+  the contract).
+- `facet_counts`: counts district/category/price_band/open_now over the **result set**, skips
+  `None` values, and returns only the requested facets.
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_ranking_components.py` → **27 passed**; full `apps/ai`
+suite → **2253 passed, 56 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
