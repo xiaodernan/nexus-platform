@@ -20213,3 +20213,77 @@ probe written from memory typed the **wrong** character for the Traditional "buy
 would have "proved" a canonicaliser bug that does not exist ✓ ✓; Unihan is the authority ✓,
 and the canonicaliser is right ✓ ✓ - which is exactly why the unit's fix went into the
 **table** ✓ (where the spelling is the product's) ✓ and not into the canonicaliser ✓ ✓.
+
+## 474. D480 · the first turn's REMAINING readers still matched their tables as bare SUBSTRINGS - so "know" made the query URGENT and "underground" made it a PRICE search (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_first_turn_readers_are_words.py`)
+
+**What the product does, and what was measured.** §473 (D479) gave the **intent** tables the
+ONE matcher ✓ ✓. The readers of the **other** tables - the urgency ✓, the budget words ✓,
+the sort rules ✓, the preferences ✓, the price words ✓, the nearby terms ✓ and the
+constraint negations ✓ - still tested their tables with `in low` ✓ ✓, so a word that
+**contained** a token read as the token ✓ ✓.
+
+**Four visible defects, all measured.** ✓
+
+* **"know" made the query urgent.** ✓ The urgency table names `now` ✓ ✓, and the reader
+  tested `t.lower() in low` ✓ ✓ - so **"know a good cafe in sha tin"** was answered with the
+  urgency **now** ✓ ✓, and "knowledge of good coffee" ✓ and "nowhere near a cafe" ✓ the
+  same ✓ ✓. The user said nothing about urgency ✓ ✓.
+* **"underground" made it a price search.** ✓ The sort rules name `under` ✓ (the price
+  row ✓) ✓ - and the reader took it ✓ ✓, so **"underground coffee"** was answered with the
+  sort **price_low** ✓ ✓: the search ordered the answers by a price the user never said
+  ✓ ✓.
+* **"review" was a scenic view.** ✓ The preference rules name `view` ✓ ✓ and read it out
+  of "review" ✓ ✓ - so "review a cafe" carried the preference **view=scenic** ✓ ✓.
+* **A word in two sort rows.** ✓ The word **U+6700 U+53D7 U+6B61 U+8FCE** stood in the
+  **rating** row **and** in the **trending** row ✓ ✓ - and the sort reader takes the first
+  row that matches ✓ ✓ - so the rating row's copy always won ✓ ✓ and the trending row's
+  copy was a promise nobody kept ✓ ✓ (D477 ✓).
+
+**And the same defect, latent, in three more readers.** ✓ The budget words ✓ (so
+"underground" also counted as a stated budget ✓), the constraint negations ✓ (so "no" inside
+"notebook" was a negation ✓) and the price words ✓ ✓ - none of which has a visible effect
+today ✓ ✓, and all of them the same defect ✓ ✓.
+
+**The fix.** Every one of those readers reads through the **ONE matcher** ✓ ✓ - the budget
+words ✓, the nearby terms ✓, the price words ✓, the preference tokens ✓, the constraint
+negations **and their values** ✓ ✓, the compare cues and the sort tokens ✓ ✓, and the
+urgency ✓ ✓. And the word that stood in two sort rows has **one** home ✓ ✓ - the popular
+list ✓ ✓ - and the rating row keeps its own words ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_first_turn_readers_are_words.py` takes its **parameters
+from the tables** ✓ ✓ - every token of every table the first turn reads ✓ ✓ - and requires
+that ✓:
+
+* no **Latin** token is read out of the **middle** of a word ✓ ✓ (the CJK ones have no
+  word inside a word ✓, so the rule is the Latin one ✓ ✓);
+* every token still reaches **its own** effect ✓ ✓ - the urgency ✓, the sort ✓, the
+  preference ✓, the nearby place ✓ ✓;
+* no token sits in **two rows of one reader** ✓ ✓ (the sort rules ✓ and the urgency tables
+✓ ✓);
+* and the measured instances ✓ ✓ - "know" ✓, "knowledge" ✓, "nowhere" ✓, "underground" ✓,
+  "review" ✓ ✓.
+
+It was **proved to fail** ✓: putting the bare-substring match back made **sixty-three** of
+its checks fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **310 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1711 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The fifth unit in a row ✓ found the same **shape** ✓ - a table of
+words ✓, and a reader that read them **its own way** ✓ ✓ - and this one is the **proof
+that the shape is a system** ✓ ✓: D479 fixed the **intent** tables ✓ and the very next
+census found **seven more readers** ✓ ✓ with the same loose match ✓ ✓. So the general form
+is not "fix the tables" ✓ ✓ - it is **find every reader** ✓ ✓: a rule that says *how a
+word is found* ✓ has to hold for **every** reader ✓ ✓, and the honest way to hold it is to
+**have one matcher and route every reader through it** ✓ ✓ - which is what the ONE matcher
+is ✓ ✓. And the ledger is where the second half shows ✓: a unit that leaves a **latent**
+defect behind ✓ (the budget words ✓, the negations ✓) is a unit that has not finished ✓ ✓
+- the general form is **a census, then a rule, then a gate that takes its parameters from
+the tables** ✓ ✓, in that order ✓ ✓, and D475–D480 are the six units in a row that say it
+✓ ✓.

@@ -258,7 +258,9 @@ _BUDGET_WORDS = ("預算", "预算", "budget", "hk$", "hkd", "港幣", "港币",
 
 def _has_budget_word(text: str) -> bool:
     low = (text or "").lower()
-    return any(w in low for w in _BUDGET_WORDS)
+    # D480: the budget words are read by the ONE matcher - "under" inside "underground"
+    # is not a budget the user stated.
+    return any(cue_in(w, text, low) for w in _BUDGET_WORDS)
 
 
 def _fill_category(ex: IntentExtraction, text: str) -> IntentExtraction:
@@ -393,7 +395,8 @@ def _infer_category_from_signals(ex: IntentExtraction) -> tuple[str, float] | No
 def _fill_location(ex: IntentExtraction, text: str, context: dict[str, Any]) -> IntentExtraction:
     district = match_district(text)
     low = text.lower()
-    nearby = any(t.lower() in low for t in NEARBY_TERMS)
+    # D480: the ONE matcher - a Latin term is a word.
+    nearby = any(cue_in(t, text, low) for t in NEARBY_TERMS)
     geo = context.get("geo") or {}
     loc: dict[str, Any] = {}
     if district:
@@ -468,7 +471,7 @@ def _fill_budget(ex: IntentExtraction, text: str) -> IntentExtraction:
             break
     if not found:
         m = CURRENCY_AMOUNT_RE.search(text)
-        if m and any(w in text.lower() for w in OPEN_PRICE_WORDS):
+        if m and any(cue_in(w, text, text.lower()) for w in OPEN_PRICE_WORDS):
             budget["max"] = float(m.group(1))
             ex.confidence["budget"] = 0.8
             found = True
@@ -525,7 +528,9 @@ def _fill_preferences(ex: IntentExtraction, text: str) -> IntentExtraction:
     for key, value, tokens, polarity in PREFERENCE_RULES:
         for tok in tokens:
             t = tok.lower()
-            if t and t in low and (key, value) not in seen:
+            # D480: the ONE matcher - "view" inside "review" is not a view the user
+            # asked for, and "solo" inside "console" is not a solo dinner.
+            if t and cue_in(tok, text, low) and (key, value) not in seen:
                 seen.add((key, value))
                 ex.preferences.append({"key": key, "value": value, "polarity": polarity})
                 matched_tokens[(key, value)] = tok
@@ -537,12 +542,15 @@ def _fill_preferences(ex: IntentExtraction, text: str) -> IntentExtraction:
 def _fill_constraints(ex: IntentExtraction, text: str) -> IntentExtraction:
     """Negation window only: "唔食辣" ⇒ constraint, "食辣" ⇒ preference (§8)."""
     seen: set[tuple[str, str]] = set()
+    low = (text or "").lower()
     for key, negs, values in CONSTRAINT_RULES:
         for neg in negs:
-            for m in re.finditer(re.escape(neg.strip()), text):
-                window = text[m.end(): m.end() + 8]
+            # D480: the ONE matcher, for the negation and for the value - "no" inside
+            # "notebook" is not a negation.
+            for start in cue_positions(neg.strip(), text, low):
+                window = text[start + len(neg.strip()): start + len(neg.strip()) + 8]
                 for v in values:
-                    if v.strip() in window:
+                    if cue_in(v.strip(), window, window.lower()):
                         canon = canon_constraint(v)
                         if (key, canon) in seen:
                             continue
@@ -553,11 +561,14 @@ def _fill_constraints(ex: IntentExtraction, text: str) -> IntentExtraction:
 
 def _fill_sort(ex: IntentExtraction, text: str) -> IntentExtraction:
     low = text.lower()
-    if any(c.lower() in low for c in COMPARE_CUES) and len(_extract_entities(text)) >= 2:
+    # D480: the ONE matcher - "under" inside "underground" is not a price hint, and a
+    # compare cue read out of a word is not a compare turn.
+    if any(cue_in(c, text, low) for c in COMPARE_CUES) \
+            and len(_extract_entities(text)) >= 2:
         ex.sort_preference = "relevance"
         return ex
     for pref, tokens in SORT_RULES:
-        if any(t.lower() in low for t in tokens):
+        if any(cue_in(t, text, low) for t in tokens):
             ex.sort_preference = pref
             ex.confidence["sort_preference"] = 0.8
             break
@@ -566,9 +577,10 @@ def _fill_sort(ex: IntentExtraction, text: str) -> IntentExtraction:
 
 def _fill_urgency(ex: IntentExtraction, text: str) -> IntentExtraction:
     low = text.lower()
-    if any(t.lower() in low for t in URGENCY_NOW):
+    # D480: the ONE matcher - "now" inside "know" is not an urgent query.
+    if any(cue_in(t, text, low) for t in URGENCY_NOW):
         ex.urgency = "now"
-    elif any(t.lower() in low for t in URGENCY_FLEXIBLE):
+    elif any(cue_in(t, text, low) for t in URGENCY_FLEXIBLE):
         ex.urgency = "flexible"
     return ex
 
