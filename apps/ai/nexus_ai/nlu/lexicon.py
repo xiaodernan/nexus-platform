@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from nexus_ai.nlu.canonical import CANONICAL_FORMS, canonical
 from nexus_ai.nlu.matching import cue_in, cue_positions
+from nexus_ai.nlu.polarity import NEGATION_CUES
 
 import re
 from typing import Any
@@ -222,22 +223,23 @@ def _normalize_token(value: str) -> str:
     return "".join(out)
 
 # ------------------------------------------------------------------ constraints (negated)
+#: D493: the negations the product understands are ONE list. The constraint table's
+#: own list was a SUBSET of the polarity module's vocabulary (D486's lesson: a copy
+#: that is a subset answers less), so a word the product reads as a negation - "I
+#: don't want", "I hate", "no" - was not a negation here, and "I don't want
+#: spicy" gave NO constraint at all. The four words the table alone used are kept.
+_CONSTRAINT_NEGATIONS = list(dict.fromkeys([*NEGATION_CUES,
+                                   "\u4e0d\u5403", "\u5225",
+                                   "\u907f\u514d", "\u5c11"]))
+
 CONSTRAINT_RULES: list[tuple[str, list[str], list[str]]] = [
-    ("cuisine_avoid", ['唔食', '不吃', '不吃', '唔想', '不想', '不要', '唔要', '別', '别', '避免', 'no ', 'not ', 'without', 'avoid', '少', '唔鍾意', '唔鍾', '不喜歡'],
-     ['辣', 'spicy', 'curry']),
-    ("diet_avoid", ['唔食', '不吃', '不要', '唔想', '不想', '避免', 'no ', 'without', 'avoid', '唔鍾意', '唔鍾', '不喜歡'],
-     ['豬', '猪', 'pork', '牛', 'beef', '海鮮', '海鲜', 'seafood', '香菜', 'cilantro', '花生', 'peanut', '蔥', '葱', 'onion', '蒜', 'garlic', '奶', 'dairy', 'gluten', '薑', 'ginger']),
-    ("smoking_avoid", ['唔想', '不想', '不要', 'no ', 'avoid', '唔鍾意', '唔鍾', '不喜歡'],
-     ['煙', '烟', 'smoking', '二手煙']),
-    ("noise_avoid", ['唔想', '不想', '不要', '避免', 'no ', 'avoid', '唔鍾意', '唔鍾', '不喜歡'],
-     ['嘈', '吵', 'noise', '吵鬧']),
-    ("feature_avoid", ['唔想', '不想', '不要', '避免', 'no ', 'avoid', '唔鍾意', '唔鍾', '不喜歡'],
-     ['排隊', '排队', 'queue', '長龍', '长龙']),
+    ('cuisine_avoid', _CONSTRAINT_NEGATIONS, ['辣', 'spicy', 'curry']),
+    ('diet_avoid', _CONSTRAINT_NEGATIONS, ['豬', '猪', 'pork', '牛', 'beef', '海鮮', '海鲜', 'seafood', '香菜', 'cilantro', '花生', 'peanut', '蔥', '葱', 'onion', '蒜', 'garlic', '奶', 'dairy', 'gluten', '薑', 'ginger']),
+    ('smoking_avoid', _CONSTRAINT_NEGATIONS, ['煙', '烟', 'smoking', '二手煙']),
+    ('noise_avoid', _CONSTRAINT_NEGATIONS, ['嘈', '吵', 'noise', '吵鬧']),
+    ('feature_avoid', _CONSTRAINT_NEGATIONS, ['排隊', '排队', 'queue', '長龍', '长龙']),
 ]
 
-# D417: the derived lists are derived in the CANONICAL spelling, so they agree with
-# the tables they are derived from (which are canonicalised at import, below).
-NEGATION_CUES = [canonical(c) for row in CONSTRAINT_RULES for c in row[1]]
 
 # ------------------------------------------------------------------ urgency
 URGENCY_NOW = ['而家', '现在', '現正', '立刻', '马上', '馬上', 'now', 'asap', '急', '今晚', '今日', '現在', '開唔開', '營業吗', '營業嗎', 'open now', 'still open']

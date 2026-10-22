@@ -254,9 +254,11 @@ class TestLexiconDataIntegrity:
             assert isinstance(patterns, list) and patterns
             assert polarity in (1, -1)
 
-    def test_negation_cues_derived(self):
-        expected = [c for _k, cues, _v in L.CONSTRAINT_RULES for c in cues]
-        assert L.NEGATION_CUES == expected
+    # D493: the lexicon's derived NEGATION_CUES is gone. It was derived from the
+    # constraint rules and read by no production code - only by this test, which
+    # re-derived it and so proved nothing - and the constraint rules now take the ONE
+    # negations list (the polarity module's vocabulary), so the derived list would have
+    # been the same list five times over. The polarity module holds the vocabulary.
 
 
 if __name__ == "__main__":

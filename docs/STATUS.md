@@ -21026,3 +21026,80 @@ an unsatisfied one (D394). The comparison is by **leaf**, not by substring on a 
 
 **Verified, not claimed.** `pytest tests/test_cuisine_matching.py` → **15 passed**; full `apps/ai`
 suite → **2268 passed, 56 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+## 490. D495 · the constraint table's negations were a SUBSET of the product's own vocabulary - "I don't want spicy" and "I hate spicy" gave NO constraint (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_the_negations_are_the_products_own.py`)
+
+**What the product does, and what was measured.** The **polarity** module ✓ (the one that
+flips a preference's sign ✓) holds the product's vocabulary of **"the negations it
+understands"** ✓ ✓ - twenty-eight words ✓ ✓. The **constraint** table ✓ (the one that
+says "avoid this" ✓) held its **own** list ✓ ✓ - seventeen words ✓ ✓ - and **fifteen of
+the product's were missing from it** ✓ ✓:
+
+```
+the product KNOWS the negation          the constraint table reads it
+唔好 (I don't want)                     no
+唔想要 / 不想要 (I don't want to)        no
+討厭 / 讨厌 (I hate)                    no
+冇 (no / without)                      no
+唔係 / 不是 (is not)                   no
+不好 (not good)                        no
+don't / dont / do not                  no
+hate / dislike                         no
+```
+
+**So a user who said "I don't want spicy"** ✓ ✓ (or "I hate spicy" ✓, or "no spicy" ✓ in
+Cantonese ✓) **got NO constraint at all** ✓ ✓ - the product read the word ✓ ✓ (the
+polarity module knows it ✓ ✓) and then did nothing with it ✓ ✓. And the same word with a
+different value ✓ ✓ behaved the same way ✓ ✓ - the gap was in the **negation** ✓ ✓, not
+in the values ✓ ✓.
+
+**The fix.** The negations the product understands are **ONE list** ✓ ✓: the constraint
+table's negations are the **polarity module's vocabulary** ✓ ✓ (the derivation ✓ - one
+fact ✓, one place ✓ ✓), plus the **four** words the constraint table alone used ✓ ✓
+(不吃 ✓, 別 ✓, 避免 ✓, 少 ✓ - U+4E0D U+5403 ✓, U+5225 ✓, U+907F U+514D ✓, U+5C11 ✓ ✓) ✓.
+And the lexicon's own **derived** `NEGATION_CUES` **goes** ✓ ✓ - it was derived from the
+constraint rules ✓ ✓ and read by **no production code** ✓ ✓ (only by a test that
+**re-derived** it ✓ ✓, which proves nothing ✓ ✓) ✓, and with one shared list it would
+have been the same list five times over ✓ ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_the_negations_are_the_products_own.py` holds the two
+lists to each other ✓ ✓:
+
+* **every** negation the product knows ✓ ✓ is a negation of **every** constraint rule ✓ ✓
+(the forms are generic ✓ - "I don't like it" applies to the cuisine ✓, the diet ✓, the
+noise ✓ ✓);
+* **every** one of them ✓ ✓, with a rule's value ✓ ✓, produces that rule's constraint ✓ ✓ -
+in the **first turn** ✓ ✓ **and** in the **merge** ✓ ✓ (the same turn ✓, read two ways ✓
+✓);
+* and the measured instances ✓ ✓ - **唔好** ✓, **討厭** ✓, **冇** ✓, **唔係** ✓, **不要** ✓
+✓ - are read ✓ ✓.
+
+It was **proved to fail** ✓: dropping one negation from the shared list made **eleven** of
+its checks fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **78 passed** ✓ (with the §480 (D486 ✓) gate ✓ and the lexicon's own ✓), and
+  it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **2247 passed** offline ✓, and **2301 passed** with the
+  database ✓ ✓ (the sibling lane's two untracked test files excluded ✓ - `test_app_surface.py`
+  ✓ and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ ✓, see
+  §436 ✓);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The sixteenth unit in a row ✓, and this one is §480's (D486 ✓) lesson
+found in the **last** place it could be found ✓ ✓. D486 found the constraint table to be a
+subset of the **polarity** table ✓ ✓ - and it fixed **four** words ✓ ✓ (the "don't like"
+family ✓ ✓), and the ledger said so ✓ ✓ honestly ✓ ✓. But the general form it drew was
+"the copy must be the **whole** fact" ✓ ✓ - and the fix had taken **four** words out of
+**twenty-eight** ✓ ✗ ✗. So the lesson was stated and not carried out ✗ ✗ ✓: a fix that
+takes a **subset** of the missing words ✓ ✗ is the same defect it was fixing ✓ ✗ ✓. The
+general form's sharpest form ✓: **when a table is a subset of another, the fix is the
+UNION ✓ ✓ - not a selection ✓ ✓** ✓, because a selection is a judgement about which words
+matter ✓ ✗, and the product's own table is the judgement ✓ ✓ ✓. So the general form gains
+its last clause ✓: **one fact ✓, one place ✓, every reader through it ✓, a gate that asks
+the readers the same question ✓, and when the copies differ ✓ - the union ✓, and the gate
+that says so ✓** ✓ ✓.
