@@ -223,16 +223,16 @@ def _normalize_token(value: str) -> str:
 
 # ------------------------------------------------------------------ constraints (negated)
 CONSTRAINT_RULES: list[tuple[str, list[str], list[str]]] = [
-    # (key, negation cues, value patterns)
-    ("cuisine_avoid", ["唔食", "不吃", "不吃", "唔想", "不想", "不要", "唔要", "別", "别", "避免",
-                       "no ", "not ", "without", "avoid", "少"], ["辣", "spicy", "curry"]),
-    ("diet_avoid", ["唔食", "不吃", "不要", "唔想", "不想", "避免", "no ", "without", "avoid"],
-     ["豬", "猪", "pork", "牛", "beef", "海鮮", "海鲜", "seafood", "香菜", "cilantro",
-      "花生", "peanut", "蔥", "葱", "onion", "蒜", "garlic", "奶", "dairy", "gluten", "麩"]),
-    ("smoking_avoid", ["唔想", "不想", "不要", "no ", "avoid"], ["煙", "烟", "smoking", "二手煙"]),
-    ("noise_avoid", ["唔想", "不想", "不要", "避免", "no ", "avoid"], ["嘈", "吵", "noise", "吵鬧"]),
-    ("feature_avoid", ["唔想", "不想", "不要", "避免", "no ", "avoid"],
-     ["排隊", "排队", "queue", "長龍", "长龙"]),
+    ("cuisine_avoid", ['唔食', '不吃', '不吃', '唔想', '不想', '不要', '唔要', '別', '别', '避免', 'no ', 'not ', 'without', 'avoid', '少', '唔鍾意', '唔鍾', '不喜歡'],
+     ['辣', 'spicy', 'curry']),
+    ("diet_avoid", ['唔食', '不吃', '不要', '唔想', '不想', '避免', 'no ', 'without', 'avoid', '唔鍾意', '唔鍾', '不喜歡'],
+     ['豬', '猪', 'pork', '牛', 'beef', '海鮮', '海鲜', 'seafood', '香菜', 'cilantro', '花生', 'peanut', '蔥', '葱', 'onion', '蒜', 'garlic', '奶', 'dairy', 'gluten', '薑', 'ginger']),
+    ("smoking_avoid", ['唔想', '不想', '不要', 'no ', 'avoid', '唔鍾意', '唔鍾', '不喜歡'],
+     ['煙', '烟', 'smoking', '二手煙']),
+    ("noise_avoid", ['唔想', '不想', '不要', '避免', 'no ', 'avoid', '唔鍾意', '唔鍾', '不喜歡'],
+     ['嘈', '吵', 'noise', '吵鬧']),
+    ("feature_avoid", ['唔想', '不想', '不要', '避免', 'no ', 'avoid', '唔鍾意', '唔鍾', '不喜歡'],
+     ['排隊', '排队', 'queue', '長龍', '长龙']),
 ]
 
 # D417: the derived lists are derived in the CANONICAL spelling, so they agree with

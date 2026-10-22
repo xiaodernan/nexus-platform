@@ -20631,3 +20631,63 @@ the D435 census compared the two copies ✓ and found where they disagreed ✓ �
 asked whether the map was **complete** ✓ ✓. So the general form gains its last clause ✓:
 **one fact, one place ✓, and a census that asks each place for the WHOLE fact** ✓ ✓ -
 and the gate here asks the map for every pair the product knows ✓ ✓ ✓.
+
+## 480. D486 · the constraint table was a SUBSET of the product's own vocabulary - a user who said "I don't like spicy" got NO constraint, and the table's last value was a WRONG CHARACTER (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_constraint_table_is_the_vocabulary.py`)
+
+**What the product does, and what was measured.** The **polarity** table ✓ (the one that
+flips a preference's sign ✓) names the "don't like" forms ✓ - the Cantonese **唔鍾意** ✓
+(U+5514 U+937E U+610F ✓) and **唔鍾** ✓ (U+5514 U+937E ✓) and the Chinese **不喜歡** ✓
+(U+4E0D U+559C U+6B61 ✓) ✓ - and the **constraint** table ✗ (the one that says "avoid this"
+✓) did not ✗ ✗. So a user who said **"I don't like spicy"** got **no constraint at all** ✓
+✓ - neither the first turn's reader ✓ nor the merge's ✓ ✓:
+
+```
+唔鍾意辣 (I don't like spicy)   the first turn []   the merge []
+不喜歡辣                          the first turn []   the merge []
+```
+
+**And one value was a wrong character.** ✓ The table's last value was **U+9EA9** ✓, which
+Unihan's definition says is **"bran"** ✓ ✓ - not a spice ✓, and it appears **nowhere else
+in the product** ✓ ✓. The character it stood for is the **ginger** ✓ ✓ - **U+8591** ✓ (the
+reading *jiāng* ✓, the definition *"ginger"* ✓ ✓) - and **no product source holds it** ✓ ✓.
+So the ginger was never read ✓ ✓: **"no ginger" was no constraint in either language** ✓ ✓
+(and the English "ginger" was missing from the table too ✓ ✓).
+
+**The fix.** ✓ The constraint table gains the forms the product **already knows** ✓ ✓ -
+the code points come from the **polarity table itself** ✓ ✓ (D409, D446: the writer's
+memory of a code point is not a reference ✓ ✓, and Unihan's sources are the authority ✓ ✓)
+- and the wrong character is replaced by the ginger ✓ ✓ with its English twin ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_constraint_table_is_the_vocabulary.py` holds the table to
+its promises ✓ ✓:
+
+* every **"don't like"** form the product knows is a negation of **every** rule ✓ ✓ (the
+  forms are generic ✓ - "I don't like it" applies to the cuisine ✓, the diet ✓, the noise
+✓ ✓);
+* every **negation** in the table produces that rule's constraint ✓ ✓;
+* every **value** in the table is read ✓ ✓;
+* and the same turn reads the same in the **first turn** and in the **merge** ✓ ✓.
+
+It was **proved to fail** ✓: taking one of the "don't like" forms out of the cuisine row
+made the gate fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **17 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1899 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The eleventh unit in a row ✓, and this one is the **second copy** of a
+vocabulary ✓ ✓ - and the copy was a **subset** ✓ ✓. D485's lesson ✓: **a fact kept in two
+places is a fact that will differ** ✓ ✓ - and this time the copy did not merely differ ✓
+✓, it was **missing most of the vocabulary** ✓ ✓: the polarity table knew four "don't like"
+forms ✓ ✓ and the constraint table knew none of them ✓ ✓, so the two copies of "the
+negations the product understands" ✓ ✓ answered **different questions** ✓ ✓. So the general
+form gains the direction ✓: **a copy that is a SUBSET is a copy that answers less** ✓ ✓ -
+and the subset is invisible to a census that compares the two ✓ ✓ (every entry the copy has
+✓ is in the original ✓ ✓ - the census passes ✓ ✓ while the product is poorer ✓ ✓). The
+lesson ✓: **a census must ask the copy for the WHOLE fact** ✓ ✓ (D485 ✓ ✓) - and the gate
+here asks each rule for the forms the product knows ✓ ✓, so a subset fails ✓ ✓ ✓.
