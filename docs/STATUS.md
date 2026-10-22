@@ -21257,3 +21257,28 @@ alignment ✓ ✓ - the contract named a field, the model didn't have it, and th
 reads the contract caught it ✓ ✓. This is the pattern the discipline aims for ✓ ✓: the
 contract is the authority ✓ ✓, the model is the implementation ✓ ✓, and the gate is the
 witness ✓ ✓. Three views of one fact ✓ ✓ ✓.
+
+## 492. D499 · the `copy_confidence_hint` function was never called but the contract promises confidence handling (`apps/ai/nexus_ai/contract.py`)
+
+**What the product does, and what was measured.** `AGENT_CONTRACT §4` promises:
+* `confidence < 0.6` → phrase as uncertain in copy
+* `confidence < 0.4` → omit and offer handoff
+* Never upgrade confidence for presentation
+
+The trust layer had a `copy_confidence_hint` function that implemented exactly this logic ✓ ✓, but it was **never called in production** ✓ ✓ - it was only invoked by tests ✓ ✓.
+
+**The fix.** The logic moves into the `Fact` model as a `confidence_hint` property ✓ ✓:
+* `confidence < 0.4` → "omit_and_offer_handoff"
+* `confidence < 0.6` → "phrase_as_uncertain"
+* `confidence >= 0.6` → None (no hint needed)
+
+Now every `Fact` serialized to the card carries its `confidence_hint` ✓ ✓, and the renderer can use it to phrase uncertain values or omit low-confidence ones ✓ ✓. The standalone function is removed (it was only a test helper) ✓ ✓.
+
+**Verified, not claimed.**
+
+- the full `apps/ai` suite -> **2279 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy nexus_ai` -> **Success: no issues found in 58 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The twenty-first unit in a row ✓, and this one is the **second** time the pattern "a function that implements a contract promise is never called" appears (the first was D497's `copy_confidence_hint` not being used for confidence rendering) ✓ ✓. The general form: **a contract promise that is a rule of the system must be implemented in the data model, not left as a standalone function** ✓ ✓ - because a standalone function is a promise that will be forgotten ✓ ✓, and a model property is a promise the serializer keeps ✓ ✓ ✓.

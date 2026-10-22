@@ -71,6 +71,15 @@ class Fact(_Strict):
     stale: bool = False
 
     @property
+    def confidence_hint(self) -> str | None:
+        """§4: <0.6 phrase as uncertain, <0.4 omit and offer handoff. Never upgrade."""
+        if self.confidence < 0.4:
+            return "omit_and_offer_handoff"
+        if self.confidence < 0.6:
+            return "phrase_as_uncertain"
+        return None
+
+    @property
     def effective_stale(self) -> bool:
         if self.stale:
             return True
