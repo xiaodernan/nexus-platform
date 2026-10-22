@@ -72,12 +72,28 @@ def facts_from_rows(rows: Iterable[dict[str, Any]], *, now: datetime | None = No
         state = freshness.evaluate(observed, str(r.get("attribute") or "description"),
                                    now=now, expires_at=expires,
                                    forced_stale=bool(r.get("stale")))
-        source = str(r.get("source") or "inferred")
+        # D501: a MISSING or UNKNOWN source resolves to `demo` - the bottom of the
+        # hierarchy, the bucket for provenance that is not vouchable - and NEVER to a
+        # source the row did not claim. AGENT_CONTRACT 4: "resolving an unknown source to
+        # a known one is forbidden, because that launders where the number came from" -
+        # and DECISIONS D25 ruling 3 named this clamping "provenance laundering, the
+        # opposite of 109". `demo` is a first-class source ranked BELOW `inferred` on
+        # purpose, so synthetic data states where it came from and never outranks a real
+        # observation.
+        source = str(r.get("source") or "").strip()
+        if source not in SOURCE_RANK:
+            source = "demo"
         conf = min(float(r.get("confidence") or 0.5), SOURCE_CONFIDENCE_CAP.get(source, 0.5))
         out.append(Fact(
             fact_id=fid, subject_type=str(r.get("subject_type") or "merchant"),
             subject_id=sid, attribute=str(r.get("attribute") or "unknown"), value=value,
-            source=cast(FactSource, source if source in SOURCE_RANK else "inferred"),
+            # D501: an UNKNOWN source resolves to `demo` - the bottom of the hierarchy,
+            # the bucket for provenance that is not vouchable - and NEVER to a
+            # source the row did not claim. AGENT_CONTRACT 4: "resolving an unknown
+            # source to a known one is forbidden, because that launders where the
+            # number came from" - and DECISIONS D25 ruling 3 named this clamping
+            # "provenance laundering, the opposite of 109".
+            source=cast(FactSource, source),
             confidence=round(conf, 3), observed_at=observed,
             expires_at=state.expires_at, stale=state.stale,
         ))

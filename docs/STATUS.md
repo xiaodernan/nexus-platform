@@ -21353,3 +21353,87 @@ because **no test imported the package with a star** ✓ ✓ — the tests impor
 want ✓ ✓, one at a time ✓ ✓, and each import works ✓ ✓ while the promise they all live
 under does not ✓ ✓ ✗ ✓. So the general form's last clause ✓ ✓: **a public surface is
 tested by USING it ✓ ✓ — not by naming it ✓ ✓** ✓ ✓ ✓.
+
+## 494. D501 · an UNKNOWN fact source was LAUNDERED into a real one - the product invented the provenance of a number it did not vouch for (`apps/ai/nexus_ai/trust/facts.py`, `apps/ai/tests/test_an_unknown_source_is_never_laundered.py`)
+
+**What the product does, and what was measured.** `AGENT_CONTRACT §4` says it plainly ✓ ✓:
+
+> *resolving an unknown source to a known one is **forbidden**, because that launders where
+> the number came from* ✓ ✓
+
+and **DECISIONS D25, ruling 3** ✓ ✓, named this exact behaviour and called it **provenance
+laundering** ✓ ✓:
+
+> *`apps/ai` resolved that by clamping unknown sources to `inferred` — **provenance
+> laundering, the opposite of §109*** ✓ ✓
+
+**And the clamping was still there** ✓ ✓ — **two** paths ✓ ✓, and neither was a
+deliberate choice ✓ ✓ ✓:
+
+```
+source = str(r.get("source") or "inferred")                                  <- a MISSING one
+source=cast(FactSource, source if source in SOURCE_RANK else "inferred")     <- an UNKNOWN one
+```
+
+**So a row whose source the product does not know** ✓ ✓ — a partner feed ✓, a scrape ✓, a
+typo ✓, a casing slip ✓ — **was relabelled `inferred`** ✓ ✓: a **real** provenance ✓ ✓
+(rank 1 ✓, above `demo`'s 0 ✓) ✓ ✓ with `inferred`'s confidence cap ✓ ✓. The row never
+claimed that provenance ✓ ✓ — the product **invented** it ✓ ✓, and the invented one is
+**better-provenanced** than the synthetic bucket the contract reserves for data whose
+origin is **not vouchable** ✓ ✓ ✓.
+
+Measured ✓ ✓:
+
+```
+the row that said 'partner_feed' became:
+   the source 'inferred' - a source the row never claimed
+   and it is ranked 1 against merchant's 5
+```
+
+**D25's ruling 3 gave the answer, and the product did not take it** ✓ ✓. `demo` is a
+first-class `FactSource` ✓ ✓, ranked **below** `inferred` **on purpose** ✓ ✓ — *"so
+synthetic data states where it came from and never outranks a real observation"* ✓ ✓. An
+unknown source belongs **there** ✓ ✓, not above it ✓ ✓ ✓.
+
+**The fix.** A **missing** or **unknown** source resolves to `demo` ✓ ✓ — the bottom of the
+hierarchy ✓ ✓, the bucket for provenance that is not vouchable ✓ ✓ — and **never** to a
+source the row did not claim ✓ ✓. And the confidence is capped from the **resolved** source
+✓ ✓, so an unknown source cannot buy confidence it did not earn ✓ ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_an_unknown_source_is_never_laundered.py` holds the reader
+to the contract ✓ ✓:
+* a source the product **knows** ✓ ✓ is carried through **exactly** ✓ ✓ (six parameters
+✓ ✓, one per named source ✓ ✓);
+* a source it does **not** know ✓ ✓ — `partner_feed` ✓, `scraped` ✓, `MERCHANT` ✓ (the
+casing ✓), an empty string ✓, `user` ✓ — never becomes a **real** provenance ✓ ✓ and
+resolves to `demo` ✓ ✓ (five parameters ✓ ✓);
+* an unknown source never outranks a real observation ✓ ✓ (the hierarchy holds ✓ ✓);
+* and an unknown source is capped like `demo`'s ✓ ✓ — a row that claims 0.99 confidence
+does not get 0.99 out of an unknown source ✓ ✓ ✓.
+
+It was **proved to fail** ✓: putting the laundering back made **five** of its checks fail
+✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **14 passed** ✓ (with the trust layer's own ✓), and it was **proved to fail**
+✓ (as above) ✓;
+- the full `apps/ai` suite -> **2365 passed** offline ✓, and **2419 passed** with the
+database ✓ ✓ (the sibling lane's two untracked test files excluded ✓ - `test_app_surface.py`
+✓ and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ ✓, see
+§436 ✓);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 58 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The twenty-fourth unit in a row ✓, and this one is the **third**
+reading of one form ✓ ✓: **a decision that was ruled on and not implemented is a decision
+that was not made** ✓ ✓. D25 ruled that `demo` is a source ✓ ✓ and that the clamping was
+laundering ✓ ✓ - and **both** halves were left in the code ✓ ✓ ✗ ✗: the clamp to
+`inferred` ✓ ✗ and the ruling's own answer ✓ ✗ ✓. So the general form gains the clause this
+unit was written for ✓ ✓: **a RULING IS A CHANGE, and a change that is filed without being
+made is a promise that will be broken by the next reader who does not know the ruling**
+✓ ✓ ✓. And the D500 lesson found it ✓ ✓: the public-surface census (§493 ✓ ✓) walked the
+package's exports ✓ ✓ and found the trust layer's helpers ✓ ✓ - and reading what they
+**do** ✓ ✓ is what turned up the clamp ✓ ✓ ✓.
