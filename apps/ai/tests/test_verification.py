@@ -17,7 +17,7 @@ from nexus_ai.contract import Fact
 from nexus_ai.trust.facts import FactBundle
 from nexus_ai.trust.verification import (
     COUNT_KIND, DISTANCE_KIND, MONEY_KIND, RATING_KIND, TIME_KIND, extract_claims,
-    verify_bullets, verify_generated_text)
+    verify_generated_text)
 
 
 def _fact(*, attribute: str, value, fact_id=None, source: str = "merchant") -> Fact:
@@ -69,20 +69,45 @@ def test_distance_tolerance_accepts_near_value_and_rejects_far():
     assert verify_generated_text("700m", bundle=far).ok is False
 
 
-def test_verify_bullets_renderer_contract():
-    # §4: a bullet without a fact_id must not render unless every claim inside it grounds.
-    bullets = [
-        {"text": "HK$320", "fact_id": str(uuid4())},   # has provenance -> kept
-        {"text": "HK$500", "fact_id": None},            # no provenance, ungrounded -> dropped
-        {"text": "HK$320", "fact_id": None},            # no provenance, but grounds -> kept
-    ]
-    kept, report = verify_bullets(bullets, bundle=None, extra_numbers=[320])
-    assert len(kept) == 2
-    assert report.hallucination_count == 1
+def test_the_renderer_contract_drops_a_bullet_without_provenance():
+    # D503: the trust layer held a SECOND copy of the §4 renderer rule, and it was the
+    # copy the contract FORBIDS: it kept a bullet with no `fact_id` when the bullet's
+    # claims happened to ground. The product's guard - `drop_ungrounded_reasons` - drops it
+    # (the `sponsored` label excepted: a paid placement is LABELLED as such rather than
+    # faked into a trust reason, §1846). This test now asserts the PRODUCT's rule.
+    from nexus_ai.contract import AiMatch, EntityCard, MatchExplanation
+    from nexus_ai.search.cards import drop_ungrounded_reasons
+
+    def _card(reason: MatchExplanation) -> EntityCard:
+        return EntityCard(
+            card_type="merchant", id=uuid4(), slug="x", title="x",
+            ai_match=AiMatch(score=1.0, reasons=[reason]))
+
+    grounded = _card(MatchExplanation(label="matches_query", text="HK$320", value="320",
+                                      fact_id=None))
+    kept, dropped = drop_ungrounded_reasons(grounded)
+    assert dropped == 1, (
+        "a bullet with no fact_id was kept - §4: if `fact_id` is missing, the UI must not "
+        "render that bullet")
+    assert kept.ai_match.reasons == []
+
+    sponsored = _card(MatchExplanation(label="sponsored", text="sponsored", value=None,
+                                       fact_id=None))
+    kept, dropped = drop_ungrounded_reasons(sponsored)
+    assert dropped == 0, "the sponsored label is the one exception - a paid placement is "\
+                         "LABELLED, not hidden"
+    assert len(kept.ai_match.reasons) == 1
 
 
-def test_fabricated_claim_in_unprovenanced_bullet_is_dropped():
-    bullets = [{"text": "HK$999", "fact_id": None}]
-    kept, report = verify_bullets(bullets, bundle=None, extra_numbers=[320])
-    assert kept == []
-    assert report.hallucination_count == 1
+def test_a_fabricated_claim_in_an_unprovenanced_bullet_is_dropped():
+    from nexus_ai.contract import AiMatch, EntityCard, MatchExplanation
+    from nexus_ai.search.cards import drop_ungrounded_reasons
+
+    card = EntityCard(
+        card_type="merchant", id=uuid4(), slug="x", title="x",
+        ai_match=AiMatch(score=1.0, reasons=[
+            MatchExplanation(label="matches_query", text="HK$999", value="999",
+                             fact_id=None)]))
+    kept, dropped = drop_ungrounded_reasons(card)
+    assert dropped == 1
+    assert kept.ai_match.reasons == []

@@ -21498,3 +21498,81 @@ are the ones that forget ✓ ✓ ✓. And the gate's method is the D500 lesson t
 ✓ ✓: **the gate INJECTS the failure the guard exists for** ✓ ✓ — because a guard that is
 never exercised is a guard that is never tested ✓ ✓, and the live corpus cannot tell the
 two apart ✓ ✓ ✓.
+
+## 496. D503 · the trust layer held a SECOND copy of the §4 renderer rule - and it was the copy the contract FORBIDS (`apps/ai/nexus_ai/trust/verification.py`, `apps/ai/nexus_ai/trust/facts.py`, `apps/ai/nexus_ai/trust/__init__.py`, `apps/ai/tests/test_the_trust_surface_is_used.py`)
+
+**What the product does, and what was measured.** `AGENT_CONTRACT §4` (non-negotiable) says:
+*"Renderer contract: `EntityCard.facts[]` + `ai_match.reasons[].fact_id`. **If `fact_id` is
+missing, the UI must not render that bullet**"* ✓ ✓. The product's guard ✓ (`drop_ungrounded_reasons`
+✓, in `search/cards.py` ✓) keeps that rule ✓ ✓ — a reason with no `fact_id` is dropped ✓
+✓ (the `sponsored` label excepted ✓ ✓ — a paid placement is **labelled** as such rather
+than faked into a trust reason ✓ ✓, §1846 ✓).
+
+**And the trust layer held a second implementation** ✓ ✓ — `verify_bullets` ✓ ✓ (in
+`trust/verification.py` ✓ ✓) ✓ — **and it implemented the rule the other way** ✓ ✓: a
+bullet with no `fact_id` **survived** if its claims happened to ground ✓ ✓ ✓. Measured ✓ ✓:
+
+```
+the trust layer's `verify_bullets` (the product never calls it):
+   kept 0 of 3   the dropped ['HK$999', 'HK$128', 'HK$999']
+the product's wire guard `drop_ungrounded_reasons`:
+   kept 1 of 3   the dropped 2
+```
+
+**And the TEST asserted the wrong copy** ✓ ✓ ✗ ✗ — the test kept a no-provenance bullet
+that the product drops ✓ ✓. So the test was **green** ✓ ✓ while the product kept a
+**different** rule ✓ ✓ ✗ ✗ — the D488 lesson exactly ✓ ✓: *a test that asserts a SECOND
+reader's answer proves nothing about the product's* ✓ ✓ ✓.
+
+**Two more copies went with it** ✓ ✓ — both read by the tests and by **no** production code
+✓ ✓:
+* `pick_authoritative` ✓ ✓ — a second copy of the §4 source hierarchy ✓ ✓ (the product's
+`FactBundle.pick_all` ✓ is the picker ✓ ✓ — the two agreed on **108** measured cases ✓ ✓,
+so nothing was lost ✓ ✓, but a second copy is a second thing that can drift ✓ ✓ ✓);
+* `select_display_facts` ✓ ✓ — a second copy of the display selection ✓ ✓ (the card builder
+picks its own facts ✓ ✓, computed first ✓ ✓).
+
+**And the D464 census could not see any of them** ✓ ✓ ✗ ✗ — it counts a read **in the
+tests** as a read ✓ ✓, so a function only a test calls survives it ✓ ✓ ✓.
+
+**The fix.** All three go ✓ ✓ — the product's guard is the rule ✓ ✓ — and the trust
+package's exports name only what the package has ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_the_trust_surface_is_used.py` holds the trust layer's
+public surface to the product ✓ ✓:
+* every name the trust package exports is either **called by the product** ✓ ✓ or
+**declared** ✓ ✓ as a promise the platform lane may ask for ✓ ✓ (the D464 census's own
+declared list is **reused** ✓ ✓ — one list ✓, not two ✓ ✓);
+* the §4 renderer rule has **one** implementation ✓ ✓ — the product's ✓ ✓ — and the trust
+layer does not keep a second copy ✓ ✓;
+* the product's guard drops a bullet with no provenance ✓ ✓ and keeps the `sponsored`
+one ✓ ✓;
+* and the three second copies are **gone** ✓ ✓ — from the package **and** from the modules
+✓ ✓ ✓.
+
+It was **proved to fail** ✓: bringing the wrong copy back made **two** of its checks fail
+✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **8 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **2377 passed** offline ✓, and **2431 passed** with the
+database ✓ ✓ (the sibling lane's two untracked test files excluded ✓ - `test_app_surface.py`
+✓ and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ ✓, see
+§436 ✓);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 58 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The twenty-sixth unit in a row ✓, and this one is the **fifth** reading
+of the same form ✓ ✓, and the **sharpest** one yet ✓ ✓. D488 said *a test that asserts a
+second reader's answer proves nothing about the product's* ✓ ✓ — and here the second reader
+was **a rule the contract forbids** ✓ ✓ ✗ ✗, so the test was not merely uninformative ✓ ✓
+but **wrong** ✓ ✓ ✗ ✗. So the general form gains its last clause ✓ ✓: **a test that pins a
+rule must pin the rule the PRODUCT keeps ✓ ✓ — and when two copies disagree ✓ ✓, the copy
+the product does not call is the copy that goes ✓ ✓, whatever the test says** ✓ ✓ ✓. And
+the census gap that hid it ✓ ✓ is the D464 rule's own blind spot ✓ ✓ — *a use is a READ* ✓
+✓ — which counts a test's read ✓ ✓: so the general form's last clause ✓ ✓: **a census that
+counts the TESTS' reads cannot find what only the tests use ✓ ✓ - and the tests are the
+ones that keep a wrong copy alive ✓ ✓** ✓ ✓ ✓.

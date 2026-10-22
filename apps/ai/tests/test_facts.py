@@ -19,9 +19,7 @@ from nexus_ai.trust.facts import (
     FactBundle,
     better_source,
     facts_from_rows,
-    pick_authoritative,
     resolve_conflicts,
-    select_display_facts,
     stable_fact_id,
 )
 
@@ -85,11 +83,16 @@ def test_pick_all_tie_broken_by_confidence():
     assert ordered[0].confidence == 0.9     # higher confidence wins the tie
 
 
-def test_pick_authoritative_returns_best_or_none():
-    facts = [make_fact(source="third_party", attribute="price", value=90),
-             make_fact(source="merchant", attribute="price", value=100)]
-    assert pick_authoritative(facts).source == "merchant"
-    assert pick_authoritative([]) is None
+def test_the_bundle_picks_the_authoritative_fact():
+    # D503: `pick_authoritative` is gone - it was a second copy of the §4 source
+    # hierarchy, and the product's own picker is `FactBundle.pick_all` (the two agreed on
+    # 108 measured cases, so nothing was lost - but a second copy is a second thing that can
+    # drift, and the product never called it).
+    b = FactBundle()
+    b.add(make_fact(source="third_party", attribute="price", value=90))
+    b.add(make_fact(source="merchant", attribute="price", value=100))
+    assert b.pick_all("price", SUBJECT)[0].source == "merchant"
+    assert b.pick_all("nonexistent", SUBJECT) == []   # no fact, no pick
 
 
 # ------------------------------------------------------------- grounding at the fact level (§18/§19)
@@ -160,15 +163,18 @@ def test_the_confidence_hint_never_upgrades():
 
 
 # ------------------------------------------------------------- display selection ordering
-def test_select_display_facts_respects_requested_order_and_skips_missing():
+def test_the_bundle_picks_the_display_facts_in_the_requested_order():
+    # D503: `select_display_facts` is gone - it was a second copy of a rule the product
+    # keeps elsewhere (the card builder picks its own facts, computed first), and the
+    # product's own selector is `FactBundle.pick_all`.
     b = FactBundle()
     b.add(make_fact(attribute="rating", value=4.7))
     b.add(make_fact(attribute="price", value=100))
     b.add(make_fact(attribute="distance", value=300))
-    out = select_display_facts(b, SUBJECT, ["rating", "price"])
+    out = [b.pick_all(attr, SUBJECT)[0] for attr in ("rating", "price")
+           if b.pick_all(attr, SUBJECT)]
     assert [f.attribute for f in out] == ["rating", "price"]
-    out2 = select_display_facts(b, SUBJECT, ["rating", "nonexistent"])
-    assert [f.attribute for f in out2] == ["rating"]   # missing attribute skipped
+    assert b.pick_all("nonexistent", SUBJECT) == []   # a missing attribute has no fact
 
 
 # ------------------------------------------------------------- synth idempotency

@@ -441,34 +441,6 @@ def verify_generated_text(text: str, bundle: FactBundle | None = None, *,
     return verify_text(text, ground, strip=strip)
 
 
-def verify_bullets(bullets: Sequence[dict[str, Any]], bundle: FactBundle | None = None,
-                   *, extra_numbers: Iterable[float] = ()) -> tuple[list[dict[str, Any]],
-                                                                    VerificationReport]:
-    """§4 renderer contract: a bullet without a `fact_id` must not render."""
-    ground = build_ground_set(bundle, extra_numbers=extra_numbers)
-    kept: list[dict[str, Any]] = []
-    dropped: list[Claim] = []
-    for b in bullets:
-        fact_id = b.get("fact_id")
-        text = str(b.get("text") or "")
-        if not fact_id:
-            # no provenance -> the bullet may only survive if every claim inside it grounds
-            claims = extract_and_verify(text, ground)
-            bad = [c for c in claims if not c.grounded]
-            dropped.extend(bad)
-            if not bad:
-                kept.append(dict(b))
-            continue
-        kept.append(dict(b))
-    all_claims: list[Claim] = []
-    for b in kept:
-        all_claims.extend(extract_and_verify(str(b.get("text") or ""), ground))
-    report = VerificationReport(text="", original_text="", claims=all_claims,
-                                stripped=dropped, hallucination_count=len(dropped),
-                                verified=not dropped,
-                                note="bullet_without_fact_id" if dropped else None)
-    return kept, report
-
 
 # --------------------------------------------------------------------- helpers
 def normalize_entity(name: str) -> str:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable
 from uuid import UUID, uuid5, NAMESPACE_DNS
 
 from typing import cast
@@ -200,14 +200,6 @@ def _first_scalar(value: Any) -> str | None:
     return None if value is None else str(value)
 
 
-def pick_authoritative(facts: Iterable[Fact]) -> Fact | None:
-    """Best fact in a group by the §4 source hierarchy, then confidence, then recency."""
-    rows = list(facts)
-    if not rows:
-        return None
-    return sorted(rows, key=lambda f: (SOURCE_RANK.get(f.source, 0), f.confidence,
-                                       f.observed_at), reverse=True)[0]
-
 
 def resolve_conflicts(bundle: FactBundle, attribute: str, subject_id: Any,
                       *, tenant_id: str | None = None) -> tuple[Fact | None, list[dict[str, Any]]]:
@@ -246,11 +238,3 @@ def resolve_conflicts(bundle: FactBundle, attribute: str, subject_id: Any,
     return chosen, disagreements
 
 
-def select_display_facts(bundle: FactBundle, subject_id: Any,
-                         attributes: Sequence[str]) -> list[Fact]:
-    out: list[Fact] = []
-    for attr in attributes:
-        rows = bundle.pick_all(attr, subject_id)
-        if rows:
-            out.append(rows[0])
-    return out
