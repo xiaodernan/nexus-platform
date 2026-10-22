@@ -19909,3 +19909,60 @@ parameters come from the table ✓, so the table grows and the test grows with i
 hard-coded window is the same mistake one level down ✓: **a number that describes a table
 must come from the table** ✓ - otherwise it is a copy ✓, and the copy is the thing that
 drifts ✓ ✓ ✓.
+
+## 470. D476 · the English "farther" TIGHTENED the search radius - and a Chinese word meant the opposite of what it said (`apps/ai/nexus_ai/nlu/state_merger.py`, `apps/ai/tests/test_state_merger_cue_shadowing.py`)
+
+**What the product does, and what was measured.** A second turn merges onto the intent the
+first turn built ✓ - "too expensive" ✓, "farther" ✓, "quieter" ✓, "open now" ✓. The merge
+holds **eleven cue tables** ✓, each with a Latin half and a CJK half ✓, and it checks its
+pairs in order ✓ (`if NEARER_CUES ... elif FARTHER_CUES` ✓).
+
+The census of the tables against the merge found **three** defects ✓, and every one of them
+made a user get **the opposite** of what they asked ✓:
+
+* **The English "farther" narrowed the search.** ✓ The match was a plain substring test ✓,
+  and `NEARER_CUES`'s **"far"** sat inside `FARTHER_CUES`'s **"farther"** ✓ - and the nearer
+  table is checked first ✓, so the English "farther" took the **nearer** branch ✓: the radius
+  was **halved** where the user asked to **double** it ✓ ✓. The CJK half of the same table
+  was never affected ✓ - no CJK cue is a substring of another CJK cue ✓ ✓ - which is exactly
+  why the drift hid ✓: **the Chinese said "widen" and the English said "narrow"** ✓ ✓.
+* **`貴啲` ("a bit pricier") sat in BOTH tables.** ✓ `CHEAPER_CUES` **and** `PRICIER_CUES`
+  ✓ - two tables that mean **opposite** things ✓ - and the cheaper one is checked first ✓,
+  so the word always **tightened** the budget ✓: the user asked for a pricier search and
+  got a cheaper one ✓ ✓.
+* **A shorter cue could shadow a longer one anywhere.** ✓ `PRICIER_CUES`'s "expensive" sits
+  inside `CHEAPER_CUES`'s "too expensive" ✓, and `OPEN_NOW_CUES`'s "now" sits inside its own
+  "open now" ✓ ✓.
+
+**The fix.** The cue that matches is the **longest** one ✓ (not the first one that happens
+to be contained in the text ✓) ✓, and a **Latin** cue matches on a **word boundary** ✓ -
+"far" is not the word "far" in "farther" ✓ ✓ - while a CJK cue matches on its own spelling
+✓ ✓. The contradictory cue left the cheaper table ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_state_merger_cue_shadowing.py` asks the **merge** ✓ - so
+it tests the behaviour and not the matcher ✓: every cue of a table must produce **that
+table's** effect ✓ (the budget down ✓, the radius up ✓, the ambience lively ✓, the urgency
+flexible ✓) ✓, in **every language the table is written in** ✓ ✓, and no cue may sit in two
+tables that mean opposite things ✓ ✓. It was **proved to fail** ✓: putting `貴啲` back into
+the cheaper table made two of its checks fail ✓ (*"PRICIER_CUES's cue '貴啲' produced
+'cheaper' instead of 'pricier'"*) ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **10 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1054 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 55 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- `node scripts/check_ledger_sections.mjs` / `check_ledger_eols.mjs` / `check_ledger_citations.mjs
+  --worktree` / `check_status_citations.mjs` / `check_contract_drift.mjs` -> all PASS ✓.
+
+**Discipline note.** §469 (D475) found that a cue table's **Latin** entries were the ones
+that broke ✓, and said the general form ✓: *a table that holds more than one language is a
+table whose readers must be tested in every language it holds* ✓ ✓. This unit is that form
+applied to the tables D475 did not reach ✓ - and the census that found the defects ✓ was
+the same census the gate now runs ✓ ✓. The further lesson ✓: a **substring** match is a
+match on a **shape** ✓, and shapes nest ✓ - "far" is a shape inside "farther" ✓ - so a
+substring match cannot tell a word from a part of a word ✓ ✓. The general form ✓: **when the
+thing you are looking for can contain the thing you are looking for** ✓, the match has to
+say which one it means ✓ - the longest one ✓, on a word boundary ✓ ✓.

@@ -25,7 +25,10 @@ DEFAULT_NEARBY_RADIUS_M = 2000
 MIN_RADIUS_M = 300
 MAX_RADIUS_M = 15000
 
-CHEAPER_CUES = ("太贵", "太貴", "貴啲", "平啲", "平D", "平些", "平一啲", "cheap", "cheaper",
+# D476: the cue "貴啲" ("a bit pricier") stood in this table AND in PRICIER_CUES -
+# and the two tables mean opposite things, so the one checked first always won: asking
+# for a pricier search TIGHTENED the budget. The word belongs to PRICIER_CUES alone.
+CHEAPER_CUES = ("太贵", "太貴", "平啲", "平D", "平些", "平一啲", "cheap", "cheaper",
                 "too expensive", "too pricey", "太 expensive", "贵了", "貴了", "抵啲", "划算",
                 "划算", "price down", "预算少啲", "預算少啲")
 PRICIER_CUES = ("貴一啲", "贵一点", "贵啲", "高档", "高級", "高级", "premium", "luxury",
@@ -242,7 +245,37 @@ def _overlay(fresh: dict[str, Any], base: dict[str, Any], turn: str) -> dict[str
 
 
 def _any(low: str, text: str, cues: tuple[str, ...]) -> bool:
-    return any(c in text or c.lower() in low for c in cues)
+    """Whether any of the cues is in the text.
+
+    D476: the longest matching cue wins, and a Latin cue only matches on a word boundary.
+    The match used to be a plain substring test, so the shorter "far" in `NEARER_CUES` sat
+    inside the longer "farther" in `FARTHER_CUES` and the English "farther" took the NEAR
+    branch - the radius was TIGHTENED where the user asked to widen it. The CJK half of
+    the same table was never affected, because no CJK cue is a substring of another one -
+    which is exactly why the drift hid: the Chinese said "widen" and the English said
+    "narrow".
+    """
+    return _longest_cue(text, low, cues) is not None
+
+
+def _longest_cue(text: str, low: str, cues: tuple[str, ...]) -> str | None:
+    """The longest cue in the text, or None. The longest wins, so a cue that contains
+    another one cannot be shadowed by it."""
+    best: str | None = None
+    for cue in cues:
+        if not _cue_in(cue, text, low):
+            continue
+        if best is None or len(cue) > len(best):
+            best = cue
+    return best
+
+
+def _cue_in(cue: str, text: str, low: str) -> bool:
+    """Whether one cue is in the text. A Latin cue matches on a word boundary - "far" is
+    not the word "far" in "farther" - and a CJK cue matches on its own spelling."""
+    if cue.isascii():
+        return bool(re.search(rf"(?<![a-z0-9]){re.escape(cue.lower())}(?![a-z0-9])", low))
+    return cue in text
 
 
 def _adjust_budget(base: dict[str, Any], factor: float) -> dict[str, Any]:
