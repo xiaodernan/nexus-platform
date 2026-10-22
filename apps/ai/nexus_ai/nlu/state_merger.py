@@ -9,12 +9,14 @@ sort to distance and tightens the radius, "不吃辣" appends a constraint. Merg
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
 from nexus_ai.contract import Intent
 from nexus_ai.nlu.understand import IntentExtraction, extract_intent, party_text
 from nexus_ai.models.base import norm_locale
+from nexus_ai.nlu.lexicon import URGENCY_FLEXIBLE, URGENCY_NOW
 from nexus_ai.nlu.matching import longest_cue
 
 #: §7.1 — "太贵了" ⇒ budget.max *= 0.7
@@ -46,8 +48,6 @@ RESET_CUES = ("重新", "清空", "reset", "start over", "唔係", "不是呢個
 ALT_CUES = ("換一間", "换一间", "其他", "再搵", "再找", "其他选择", "next", "another",
             "more options", "仲有", "还有")
 COMPARE_TOP_CUES = ("前三", "頭三位", "头三位", "top 3", "top three", "compare", "比較", "比较")
-OPEN_NOW_CUES = ("而家", "现在", "開唔開", "营业吗", "營業嗎", "open now", "still open", "now")
-ANYTIME_CUES = ("得閒", "得闲", "anytime", "隨時", "随时", "无所谓", "無所謂")
 
 SPICY = "spicy"
 
@@ -157,10 +157,14 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
         changes.append(_set_preference(base, "ambience", "lively", 1))
 
     # ---- urgency / open now --------------------------------------------
-    if _any(low, match_text, OPEN_NOW_CUES):
+    # D487: the urgency is ONE vocabulary - the lexin's tables (D435: the tables are
+    # REBOUND, not edited in place, so the merge and the first turn read the same
+    # words). The merge's own copies were a subset: "next week", "asap", "I am free"
+    # and "at the end of the month" were read by the first turn and not by the merge.
+    if _any(low, match_text, URGENCY_NOW):
         base["urgency"] = "now"
         changes.append({"op": "set", "field": "urgency", "from": None, "to": "now"})
-    elif _any(low, match_text, ANYTIME_CUES):
+    elif _any(low, match_text, URGENCY_FLEXIBLE):
         base["urgency"] = "flexible"
         changes.append({"op": "set", "field": "urgency", "from": None, "to": "flexible"})
 
@@ -245,7 +249,7 @@ def _overlay(fresh: dict[str, Any], base: dict[str, Any], turn: str) -> dict[str
     return out
 
 
-def _any(low: str, text: str, cues: tuple[str, ...]) -> bool:
+def _any(low: str, text: str, cues: Sequence[str]) -> bool:
     """Whether any of the cues is in the text.
 
     D476: the longest matching cue wins, and a Latin cue only matches on a word boundary.

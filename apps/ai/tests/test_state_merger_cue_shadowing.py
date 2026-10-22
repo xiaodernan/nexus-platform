@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import pytest
 
+from nexus_ai.nlu import lexicon as L
 from nexus_ai.nlu import state_merger as M
 
 #: the cue tables the merge checks, and the order it checks them in
@@ -27,7 +28,13 @@ PAIRS = [
     ("CHEAPER_CUES", "PRICIER_CUES"),
     ("NEARER_CUES", "FARTHER_CUES"),
     ("QUIET_CUES", "LOUDP_CUES"),
-    ("OPEN_NOW_CUES", "ANYTIME_CUES"),
+]
+
+#: D487: the urgency's vocabulary moved to the lexicon - the merge and the first turn read
+#: the same tables now (they had copies, and the copies were subsets), so the shadowing
+#: census covers the tables where they live
+URGENCY_PAIRS = [
+    ("URGENCY_NOW", "URGENCY_FLEXIBLE"),
 ]
 
 
@@ -51,10 +58,16 @@ def test_the_cue_tables_are_readable():
     tables = _tables()
     for expected in ("CHEAPER_CUES", "PRICIER_CUES", "NEARER_CUES", "FARTHER_CUES",
                      "QUIET_CUES", "LOUDP_CUES", "RESET_CUES", "ALT_CUES",
-                     "COMPARE_TOP_CUES", "OPEN_NOW_CUES", "ANYTIME_CUES"):
+                     "COMPARE_TOP_CUES"):
         assert expected in tables, (
             f"the state merger has no {expected} - the gate reads the tables out of the "
             f"module, so a renamed table changes what the gate can see: {sorted(tables)}")
+    # D487: the urgency's vocabulary moved to the lexicon - the merge and the first turn
+    # read the same tables now, so the merge has no copy of its own
+    for gone in ("OPEN_NOW_CUES", "ANYTIME_CUES"):
+        assert gone not in vars(M), (
+            f"the state merger holds {gone} again - the urgency's vocabulary is ONE thing "
+            f"(the lexin's tables) and a second copy is a copy that answers less")
 
 
 def _effect(result: M.MergeResult) -> str:
@@ -85,7 +98,6 @@ def test_a_cue_reaches_its_own_tables_branch(first: str, second: str):
         "CHEAPER_CUES": "cheaper", "PRICIER_CUES": "pricier",
         "NEARER_CUES": "nearer", "FARTHER_CUES": "farther",
         "QUIET_CUES": "quiet", "LOUDP_CUES": "lively",
-        "OPEN_NOW_CUES": "now", "ANYTIME_CUES": "flexible",
     }[second]
     for cue in getattr(M, second):
         result = M.merge_turn(_state(), cue)
@@ -139,7 +151,8 @@ def test_the_longest_cue_wins():
     assert longest_cue("farther", "farther", M.FARTHER_CUES) == "farther", (
         "the longest matching cue must win - otherwise 'farther' is read as 'far'")
     assert longest_cue("too expensive", "too expensive", M.CHEAPER_CUES) == "too expensive"
-    assert longest_cue("open now", "open now", M.OPEN_NOW_CUES) == "open now"
+    # D487: the urgency's words live in the lexin's tables now
+    assert longest_cue("open now", "open now", L.URGENCY_NOW) == "open now"
 
 
 def test_a_latin_cue_matches_on_a_word_boundary():

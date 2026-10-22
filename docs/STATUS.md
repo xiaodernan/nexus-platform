@@ -20691,3 +20691,66 @@ and the subset is invisible to a census that compares the two ✓ ✓ (every ent
 ✓ is in the original ✓ ✓ - the census passes ✓ ✓ while the product is poorer ✓ ✓). The
 lesson ✓: **a census must ask the copy for the WHOLE fact** ✓ ✓ (D485 ✓ ✓) - and the gate
 here asks each rule for the forms the product knows ✓ ✓, so a subset fails ✓ ✓ ✓.
+
+## 481. D487 · the urgency was TWO vocabularies - a follow-up that said "next week" was URGENT on the first turn and had NO urgency in the merge (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/state_merger.py`, `apps/ai/tests/test_urgency_is_one_vocabulary.py`)
+
+**What the product does, and what was measured.** The first turn reads the urgency from the
+lexin's `URGENCY_NOW` and `URGENCY_FLEXIBLE` ✓ ✓; the **merge** read it from **two tables
+of its own** ✓ ✓ - and the copies were **subsets** ✓ ✓ that differed in **both**
+directions ✓ ✓:
+
+```
+                          the first turn      the merge
+asap                     now                 None
+next week                flexible            None
+the end of the month     flexible            None
+free time                flexible            None
+still open               normal              now
+```
+
+**So a follow-up that said "next week"** ✓ ✓ (or "asap" ✓, or "I am free" ✓, or "at the end
+of the month" ✓) **was answered with NO urgency in the merge** ✓ ✓ - while the **first** turn
+read the very same words ✓ ✓. And the merge's own word ✓ (the "whatever" one ✓) the first
+turn did not know ✓ ✓.
+
+**The fix.** The urgency is **ONE vocabulary** ✓ ✓: the merge reads the lexin's tables ✓ ✓
+(D435 ✓: the tables are **rebound**, not edited in place ✓, so both readers see the same
+words ✓ ✓), the lexin's tables gain the words the merge knew ✓ ✓, and the merge's two
+copies **go** ✓ ✓ (a table nobody reads is a promise nobody keeps ✓ ✓).
+
+**And the first turn reads one more thing than it did** ✓ ✓: the "still open" family ✓ ✓
+now sets the urgency ✓ ✓ - the merge has always read it that way ✓ ✓, and the two readers
+were always supposed to agree ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_urgency_is_one_vocabulary.py` holds the two readers to the
+same vocabulary ✓ ✓:
+
+* the merge holds **no** urgency copy of its own ✓ ✓;
+* **every** word the urgency tables name ✓ ✓ (thirty parameters ✓ ✓, taken from the tables
+✓ ✓) is read the **same way** by the first turn and by the merge ✓ ✓;
+* and the measured instances ✓ ✓ ("asap" ✓, "next week" ✓, "anytime" ✓, "still open" ✓) ✓.
+
+It was **proved to fail** ✓: giving the merge a subset of its own again made **seventeen** of
+its checks fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **32 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **2068 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The twelfth unit in a row ✓, and this one is §480's (D486 ✓) lesson
+found in a **third** place ✓ ✓ - the copies of the product's vocabulary ✓ ✓. D486's lesson ✓
+was that a copy which is a **subset** answers less ✓ ✓; D485's was that a fact kept in two
+places **will differ** ✓ ✓; and here the two copies differed in **both** directions ✓ ✓ -
+so each reader knew something the other did not ✓ ✓, and **the same sentence** meant two
+different things depending on which reader answered it ✓ ✓. The general form ✓: **the
+copies of a vocabulary are not one vocabulary** ✓ ✓ - they are N vocabularies ✓ ✓ that
+happen to share a name ✓ ✓ - and a product that answers a first turn and a follow-up with
+two different vocabularies ✓ ✓ is answering **two different questions** ✓ ✓. So the
+general form's last clause ✓: **one fact, one place, and every reader of that fact through
+it** ✓ ✓ - and the gate here is that clause made mechanical ✓ ✓: it asks the two readers
+the same question and compares the answers ✓ ✓ ✓.
