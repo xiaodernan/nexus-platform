@@ -20127,3 +20127,89 @@ the vocabulary and the grammar cannot drift apart ✓ ✓. And the third time ov
 D464 census counted **AST reads** ✓ and found these markers *read* ✓ - the name is in the
 source ✓, the function is called ✓, and the match was the **wrong thing** ✓ ✓.
 **A read is not a match** ✓ ✓.
+
+## 473. D479 · the first turn had its own copy of the matching rule — so a BOOKSHOP was a RESERVATION, an ORDER was a BOOKING, and nine of the fifteen compare cues could never compare (`apps/ai/nexus_ai/nlu/matching.py`, `apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_first_turn_cues_are_words.py`)
+
+**What the product does, and what was measured.** Three readers read cues out of a text ✓ -
+the time parser ✓ (D478 ✓), the state merger ✓ (D476 ✓) and the **first turn** ✓ - and each
+had **its own copy** of the rule ✓ ✓. The first turn's copy was the loosest ✓: any
+substring will do ✓ ✓.
+
+**Four defects, all of them measured.** ✓
+
+* **A bookshop was a reservation.** ✓ The reserve table names `book` ✓ and the reader
+  tested `c.lower() in low` ✓ ✓ - so **"bookshop in sha tin"** was answered with the
+  intent **reserve** (0.9) ✓ ✓. And **"planets cafe"** with **plan_experience** (0.8) ✓ ✓
+  (the cue `plan` inside "planets") ✓, "notebook cafe" with reserve ✓ ✓ and "airplane
+  restaurant" with plan_experience ✓ ✓.
+* **An order was a booking.** ✓ The Chinese half had the **mirror** defect ✓: the
+  one-character cue **U+8A02** ("book") sits inside the purchase cue **U+8A02 U+8CFC**
+  (the Traditional "buy") ✓ - and the reserve table is checked first ✓ - so an order was
+  answered with the intent **reserve** (0.9) ✓ ✓, and the Simplified **U+8BA2 U+8D2D** the
+  same ✓ ✓.
+* **The table's "book a table" cue was spelled with a character the product never
+  writes.** ✓ The table held **U+8A02 U+67B1** ✓; the **contract's** own eval case writes
+  **U+8A02 U+684C** ✓ - and it passed only because the bare **U+8A02** matched ✓ ✓. So the
+  table's specific entry was a promise nobody kept ✓ ✓ (D477 ✓).
+* **Nine of the fifteen compare cues could never compare.** ✓ The compare cue's
+  **position** was found from a list that held six of the table's fifteen cues ✓ (a second
+  copy of the vocabulary ✓ - D438 ✓) - so "which" ✓, "vs" ✓, "versus" ✓ and four Chinese
+  cues could never be found ✓ ✓, and a compare turn that named two things with one of them
+  got **no compare intent** ✓ ✓:
+
+  ```
+  which ramen and sushi   -> discover_merchant
+  vs ramen and sushi      -> discover_merchant
+  versus ramen and sushi  -> discover_merchant
+  compare ramen and sushi -> compare
+  ```
+
+**The fix.** **One matcher** ✓ (`nlu/matching.py` ✓ - the rule D478 wrote ✓), and the three
+readers read through it ✓ ✓: the time parser ✓, the state merger ✓ and the first turn ✓ ✓.
+The first turn's **fourth copy** of the vocabulary ✓ (the hard-coded list inside
+`_looks_like_discovery` ✓) goes ✓ ✓ - it was a subset of the discovery table ✓ (plus one
+word the table had lost ✓, which the table now holds ✓) ✓ ✓. The cue tables no longer
+shadow each other ✓ ✓, and they name the **forms** the word rule would otherwise lose ✓ ✓
+(the cue and its inflections are one word ✓).
+
+**The gate.** `apps/ai/tests/test_first_turn_cues_are_words.py` takes its **parameters from
+the tables** ✓ ✓ - every cue of every table ✓ (a hundred and fifteen ✓) ✓ - and requires
+that ✓:
+
+* every cue reaches **its own** intent ✓ ✓ (the compare cue with two things to compare ✓)
+✓;
+* no Latin cue is read out of the **middle** of a word ✓ ✓;
+* no cue sits in **two** tables ✓ ✓, and no cue of an earlier table sits **inside** a later
+  table's cue ✓ ✓ (the shadowing rule ✓) ✓;
+* and the measured instances ✓ ✓ - "bookshop" ✓, "notebook" ✓, "planets" ✓, "airplane" ✓,
+  the order ✓, the contract's spelling ✓ ✓.
+
+It was **proved to fail** ✓: putting the bare-substring match back made **forty-seven** of
+its checks fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **168 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1401 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓ - and it **caught** this unit's
+  own first fix ✓ ✓: the shadowing cue was removed before the table named the contract's
+  spelling ✓, and the contract's reserve case went dark ✓ ✓ - the fix was wrong until the
+  table named it ✓ ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The fourth unit in a row ✓ (D475 ✓, D476 ✓, D477 ✓, D478 ✓) found the
+same **shape** ✓: a table of words ✓, and a reader that read them **its own way** ✓ ✓. The
+general form ✓: **the vocabulary and the grammar live in different places** ✓ - the tables
+say WHAT the product understands ✓ and the matcher says HOW a word is found ✓ ✓ - and when
+the grammar is written twice ✓, the two copies drift ✓ ✓ and the drift shows up as the
+wrong intent ✓ ✓. So the honest form is one sentence about the **package** ✓: **every read
+of a cue goes through one matcher ✓, and every cue comes from a table** ✓ ✓. And the eval
+gate earned its place twice over ✓: it caught the contract's own spelling going missing ✓
+✓, and it holds the intent behaviour the tables' order encodes ✓ ✓. And the house rule
+held ✓: **the writer's memory of a code point is not a reference** ✓ (D409, D446 ✓) - a
+probe written from memory typed the **wrong** character for the Traditional "buy" ✓ and
+would have "proved" a canonicaliser bug that does not exist ✓ ✓; Unihan is the authority ✓,
+and the canonicaliser is right ✓ ✓ - which is exactly why the unit's fix went into the
+**table** ✓ (where the spelling is the product's) ✓ and not into the canonicaliser ✓ ✓.

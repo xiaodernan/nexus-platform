@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from nexus_ai.nlu.matching import cue_in, cue_positions
 from nexus_ai.nlu.lexicon import (
     canon_constraint,
     COMPARE_CUES,
@@ -80,7 +81,7 @@ _PARTY_MARKERS = "個位人"
 #: (D435) and the state merger's (D421). Their Simplified entries were dead - the query
 #: is canonicalised before it is compared with them - and they were harmless only because
 #: the tables happened to hold both spellings.
-_CANONICALISED_TABLES = ("OPEN_PRICE_WORDS", "_BUDGET_WORDS", "_COMPARE_CUES_LOW")
+_CANONICALISED_TABLES = ("OPEN_PRICE_WORDS", "_BUDGET_WORDS")
 
 
 def _canonicalise_tables() -> None:
@@ -209,7 +210,9 @@ def extract_intent(query: str, context: dict[str, Any] | None = None) -> IntentE
 # --------------------------------------------------------------------------- field rules
 def _fill_intent_kind(ex: IntentExtraction, text: str) -> IntentExtraction:
     low = text.lower()
-    has = lambda cues: any(c.lower() in low for c in cues)  # noqa: E731
+    # D479: the first turn had its own copy of the matching rule - the loosest one,
+    # any substring will do - so a bookshop was a reservation. One rule now.
+    has = lambda cues: any(cue_in(c, text, low) for c in cues)  # noqa: E731
 
     compare_hits = len(_extract_entities(text)) >= 2
     if has(COMPARE_CUES) and compare_hits:
@@ -222,7 +225,7 @@ def _fill_intent_kind(ex: IntentExtraction, text: str) -> IntentExtraction:
         ex.intent, ex.confidence["intent"] = "ask_merchant", 0.8
     elif has(PLAN_CUES):
         ex.intent, ex.confidence["intent"] = "plan_experience", 0.8
-    elif has(DISCOVER_CUES) or _looks_like_discovery(text):
+    elif has(DISCOVER_CUES):
         ex.intent, ex.confidence["intent"] = "discover_merchant", 0.75
     elif match_category(text) or match_cuisines(text) or has(NEARBY_TERMS)             or has(PREFERENCE_RULE_VALUES) or _has_budget_word(text) or _has_constraint(text):
         # "预算 300 港币，想吃日料" names *what* they want without a discovery verb.
@@ -246,11 +249,6 @@ def _has_constraint(text: str) -> bool:
                 if any(v.strip() in window for v in values):
                     return True
     return False
-
-
-def _looks_like_discovery(text: str) -> bool:
-    return bool(re.search(r"(搵|找|推薦|推荐|邊間|邊度|哪间|哪裡|哪里|find|recommend|where|any)",
-                          text, re.IGNORECASE))
 
 
 #: A stated price/quantity limit with no discovery verb is still a discovery request.
@@ -575,7 +573,6 @@ def _fill_urgency(ex: IntentExtraction, text: str) -> IntentExtraction:
     return ex
 
 
-_COMPARE_CUES_LOW = ("比較", "比较", "対比", "对比", "邊間好", "边间好")
 _COMPARE_TAILS = ("these", "the", "them")
 _ENTITY_SEPARATORS = ("同埋", "vs.", "vs", "versus", " and ", "，", ",")
 
@@ -591,17 +588,16 @@ def _extract_entities(text: str) -> list[str]:
     if len(quoted) >= 2:
         return quoted[:3]
     low = (text or "").lower()
+    # D479: the cue's position is found with the ONE matcher, over the whole compare
+    # table. The list that stood here held six of the table's cues, so the other nine
+    # ("which", "vs", "versus", and four Chinese ones) could never find their position -
+    # and a compare turn naming two things with one of them got no compare intent.
     cue_at = -1
     cue_len = 0
-    for cue in _COMPARE_CUES_LOW:
-        pos = low.find(cue.lower())
-        if pos >= 0 and (cue_at < 0 or pos < cue_at):
-            cue_at, cue_len = pos, len(cue)
-    if cue_at < 0:
-        for token in ("compare", "contrast"):
-            pos = low.find(token)
-            if pos >= 0 and (cue_at < 0 or pos < cue_at):
-                cue_at, cue_len = pos, len(token)
+    for cue in COMPARE_CUES:
+        for pos in cue_positions(cue, text, low):
+            if cue_at < 0 or pos < cue_at:
+                cue_at, cue_len = pos, len(cue)
     if cue_at < 0:
         return quoted[:3]
     # The tail is what FOLLOWS the cue. The old code took the first WHITESPACE token of

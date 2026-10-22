@@ -15,6 +15,7 @@ from typing import Any
 from nexus_ai.contract import Intent
 from nexus_ai.nlu.understand import IntentExtraction, extract_intent, party_text
 from nexus_ai.models.base import norm_locale
+from nexus_ai.nlu.matching import longest_cue
 
 #: §7.1 — "太贵了" ⇒ budget.max *= 0.7
 CHEAP_FACTOR = 0.7
@@ -255,27 +256,7 @@ def _any(low: str, text: str, cues: tuple[str, ...]) -> bool:
     which is exactly why the drift hid: the Chinese said "widen" and the English said
     "narrow".
     """
-    return _longest_cue(text, low, cues) is not None
-
-
-def _longest_cue(text: str, low: str, cues: tuple[str, ...]) -> str | None:
-    """The longest cue in the text, or None. The longest wins, so a cue that contains
-    another one cannot be shadowed by it."""
-    best: str | None = None
-    for cue in cues:
-        if not _cue_in(cue, text, low):
-            continue
-        if best is None or len(cue) > len(best):
-            best = cue
-    return best
-
-
-def _cue_in(cue: str, text: str, low: str) -> bool:
-    """Whether one cue is in the text. A Latin cue matches on a word boundary - "far" is
-    not the word "far" in "farther" - and a CJK cue matches on its own spelling."""
-    if cue.isascii():
-        return bool(re.search(rf"(?<![a-z0-9]){re.escape(cue.lower())}(?![a-z0-9])", low))
-    return cue in text
+    return longest_cue(text, low, cues) is not None
 
 
 def _adjust_budget(base: dict[str, Any], factor: float) -> dict[str, Any]:

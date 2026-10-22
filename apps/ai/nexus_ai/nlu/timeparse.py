@@ -17,6 +17,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
 
 from nexus_ai.nlu.canonical import canonical
+from nexus_ai.nlu.matching import cue_in, cue_positions
 
 HK_TZ = timezone(timedelta(hours=8), "Asia/Hong_Kong")
 
@@ -167,32 +168,11 @@ def _guess_meridiem(hour: int, meridiem: str | None, part: str | None) -> int:
     return hour
 
 
-def _marker_positions(marker: str, text: str, low: str) -> list[int]:
-    """Where a marker reads in the text - every place it is found.
-
-    D478: the markers were matched as bare substrings, so a word that CONTAINED a marker
-    read as the marker: "am" inside "ramen" gave the query the MORNING window, "now"
-    inside "know" gave it TODAY, and "past" inside "pastry" gave it "open late after".
-    A Latin marker is a WORD - nothing may touch its left ("7am" is a marker, "ramen" is
-    not) and only a plural may follow it ("weekends" is "weekend") - while a CJK marker
-    has no word boundaries and matches on its own spelling.
-    """
-    if marker.isascii():
-        pattern = rf"(?<![a-z]){re.escape(marker.lower())}(?:es|s)?(?![a-z])"
-        return [m.start() for m in re.finditer(pattern, low)]
-    return [m.start() for m in re.finditer(re.escape(marker), text)]
-
-
-def _marker_in(marker: str, text: str, low: str) -> bool:
-    """Whether a marker is in the text. One rule, for every marker read."""
-    return bool(_marker_positions(marker, text, low))
-
-
 def _find_part(text: str, low: str) -> tuple[str, time, time] | None:
     best: tuple[int, tuple[str, time, time]] | None = None
     for label, tokens, start, end in PART_OF_DAY:
         for tok in tokens:
-            if not _marker_in(tok, text, low):
+            if not cue_in(tok, text, low):
                 continue
             if best is None or len(tok) > best[0]:
                 best = (len(tok), (label, start, end))
@@ -201,7 +181,7 @@ def _find_part(text: str, low: str) -> tuple[str, time, time] | None:
 
 def _find_weekday(text: str) -> tuple[int, bool] | None:
     low = text.lower()
-    next_week = any(_marker_in(tok, text, low) for tok in NEXT_WEEK_TOKENS)
+    next_week = any(cue_in(tok, text, low) for tok in NEXT_WEEK_TOKENS)
     # 星期X / 週X / 周X first (longest wins), then bare english names
     m = re.search(r"(?:星期|礼拜|週|周)([一二三四五六日天])", text)
     if m:
@@ -244,12 +224,12 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
     # D478: every marker is read by the one rule, and the tables are the only source -
     # the literals that used to sit beside them ("today", "now", "tomorrow", "tonight")
     # are the tables' own entries, and a second copy is a copy that drifts (D438).
-    has_weekend = any(_marker_in(tok, text, low) for tok in WEEKEND_TOKENS)
-    is_tonight = any(_marker_in(tok, text, low) for tok in TONIGHT_TOKENS)
-    is_tomorrow = any(_marker_in(tok, text, low) for tok in TOMORROW_TOKENS)
-    is_today = any(_marker_in(tok, text, low) for tok in TODAY_TOKENS)
-    is_after_tomorrow = any(_marker_in(tok, text, low) for tok in AFTER_TOMORROW_TOKENS)
-    open_late = any(_marker_in(tok, text, low) for tok in OPEN_LATE_CUES) or bool(
+    has_weekend = any(cue_in(tok, text, low) for tok in WEEKEND_TOKENS)
+    is_tonight = any(cue_in(tok, text, low) for tok in TONIGHT_TOKENS)
+    is_tomorrow = any(cue_in(tok, text, low) for tok in TOMORROW_TOKENS)
+    is_today = any(cue_in(tok, text, low) for tok in TODAY_TOKENS)
+    is_after_tomorrow = any(cue_in(tok, text, low) for tok in AFTER_TOMORROW_TOKENS)
+    open_late = any(cue_in(tok, text, low) for tok in OPEN_LATE_CUES) or bool(
         clock and _late_suffix(text, clock))
 
     day: date | None = None
@@ -404,7 +384,7 @@ def _cue_near(text: str, clock: re.Match, cues: tuple[str, ...]) -> bool:
     start = max(0, clock.start() - _CUE_WINDOW)
     end = min(len(text), clock.end() + _CUE_WINDOW)
     for cue in cues:
-        for position in _marker_positions(cue, text, low):
+        for position in cue_positions(cue, text, low):
             if start <= position <= end:
                 return True
     return False

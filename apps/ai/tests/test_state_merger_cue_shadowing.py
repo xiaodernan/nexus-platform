@@ -134,19 +134,19 @@ def test_no_cue_sits_in_two_tables_that_mean_opposite_things():
 
 def test_the_longest_cue_wins():
     """A cue that contains another cue must reach the longer one's branch."""
-    from nexus_ai.nlu.state_merger import _longest_cue
+    from nexus_ai.nlu.matching import longest_cue
 
-    assert _longest_cue("farther", "farther", M.FARTHER_CUES) == "farther", (
+    assert longest_cue("farther", "farther", M.FARTHER_CUES) == "farther", (
         "the longest matching cue must win - otherwise 'farther' is read as 'far'")
-    assert _longest_cue("too expensive", "too expensive", M.CHEAPER_CUES) == "too expensive"
-    assert _longest_cue("open now", "open now", M.OPEN_NOW_CUES) == "open now"
+    assert longest_cue("too expensive", "too expensive", M.CHEAPER_CUES) == "too expensive"
+    assert longest_cue("open now", "open now", M.OPEN_NOW_CUES) == "open now"
 
 
 def test_a_latin_cue_matches_on_a_word_boundary():
     """'far' is not the word 'far' in 'farther'."""
-    from nexus_ai.nlu.state_merger import _cue_in
+    from nexus_ai.nlu.matching import cue_in
 
-    assert not _cue_in("far", "farther", "farther"), (
+    assert not cue_in("far", "farther", "farther"), (
         "'far' matched inside 'farther' - a Latin cue must match on a word boundary")
-    assert _cue_in("far", "far away", "far away")
-    assert _cue_in("far", "far, please", "far, please")
+    assert cue_in("far", "far away", "far away")
+    assert cue_in("far", "far, please", "far, please")
