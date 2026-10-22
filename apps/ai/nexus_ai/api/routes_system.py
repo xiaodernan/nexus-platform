@@ -23,6 +23,7 @@ from nexus_ai.api.deps import Deps
 from nexus_ai.contract import (
     DatabaseHealth, EmbeddingsHealth, FeedbackRequest, FeedbackResponse,
     HealthResponse, ToolManifestEntry, ToolsManifestResponse)
+from nexus_ai.tools.names import CANONICAL_TOOL_NAMES
 
 log = logging.getLogger("nexus_ai.api.routes_system")
 
@@ -31,15 +32,9 @@ router = APIRouter()
 SERVICE_VERSION = "0.1.0"
 
 #: AGENT_CONTRACT §3 canonical tool names — implement exactly these, never bypass.
-CANONICAL_TOOLS: tuple[str, ...] = (
-    "search_merchants", "search_products", "search_services", "search_reviews",
-    "search_location", "get_business_hours", "get_price", "get_inventory",
-    "get_availability", "create_reservation", "create_cart", "update_cart",
-    "checkout", "get_order_status", "search_web", "retrieve_merchant_documents",
-    "analyze_reviews", "get_user_preferences", "set_user_preference",
-    "summarize_reviews", "compare_entities", "draft_campaign", "draft_seo_page",
-    "record_event",
-)
+#: D496: the list was written out here a second time, and the trust layer's copy of it
+#: was missing eight of the names. The names are ONE list now — nexus_ai/tools/names.py.
+CANONICAL_TOOLS: tuple[str, ...] = CANONICAL_TOOL_NAMES
 
 #: read-only tools this HTTP layer already answers *through its endpoints*
 #: (still `implemented: false` for dispatch purposes — there is no registry yet).

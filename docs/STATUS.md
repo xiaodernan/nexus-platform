@@ -21103,3 +21103,67 @@ matter ✓ ✗, and the product's own table is the judgement ✓ ✓ ✓. So the
 its last clause ✓: **one fact ✓, one place ✓, every reader through it ✓, a gate that asks
 the readers the same question ✓, and when the copies differ ✓ - the union ✓, and the gate
 that says so ✓** ✓ ✓.
+
+## 488. D496 · the trust layer's TOOL-NAME list was a SUBSET of the canonical set - a merchant document naming `summarize_reviews` was NOT flagged (`apps/ai/nexus_ai/tools/names.py`, `apps/ai/nexus_ai/trust/injection.py`, `apps/ai/nexus_ai/api/routes_system.py`, `apps/ai/tests/test_the_tool_names_are_one_list.py`)
+
+**What the product does, and what was measured.** `AGENT_CONTRACT §3` names the canonical
+tool set ✓ ✓ - twenty-four names ✓ ✓ - and two readers need that list ✓ ✓: the **manifest**
+at `GET /ai/v1/tools` ✓ ✓ (what the platform reads to know what the registry holds ✓ ✓) and
+the **trust layer's scanner** ✓ ✓ (the guard behind "tool names come only from the
+registry, never from content" ✓ ✓). Both held a **hand-written copy** ✓ ✓ - and the
+scanner's copy was a **subset** ✓ ✓: **eight** of the twenty-four names were **missing**
+from it ✓ ✓:
+
+```
+search_services        search_reviews         search_location
+get_business_hours     analyze_reviews        get_user_preferences
+summarize_reviews      compare_entities
+```
+
+**So a merchant's document that named one of them was not flagged at all** ✓ ✓ - the
+scanner looked for the other sixteen ✓ ✓, found nothing ✓ ✓, and the content went into the
+answer as clean ✓ ✓ - and the promise the scanner exists to keep ✓ ✓ ("content cannot name
+a tool" ✓ ✓) was **not** kept for eight of the twenty-four tools ✓ ✓ ✓.
+
+**The fix.** The names are **ONE list** ✓ ✓, in one place ✓ ✓ -
+`apps/ai/nexus_ai/tools/names.py` ✓ ✓ - and both readers take it from there ✓ ✓: the
+manifest's list **is** the canonical list ✓ ✓, and the scanner's tokens are the canonical
+set **plus** the two tools §4 names as never in a default grant ✓ ✓ (a **superset** ✓ ✓ is
+fine ✓ ✓ - a **subset** ✓ ✗ is a hole in the guard ✓ ✓) ✓ ✓.
+
+**And the gate reads the contract** ✓ ✓ (the house's pattern ✓ - the roster gate does the
+same ✓ ✓): `apps/ai/tests/test_the_tool_names_are_one_list.py` ✓ ✓:
+
+* the canonical list **is** the contract's list ✓ ✓ - read out of `AGENT_CONTRACT §3` ✓ ✓,
+  not copied ✓ ✓;
+* the manifest advertises **exactly** that list ✓ ✓;
+* the scanner knows **every** name in it ✓ ✓;
+* and **every** name is actually **flagged** when it appears in content ✓ ✓ - twenty-four
+  parameters ✓ ✓, read out of the list ✓ ✓, and the end-to-end proof ✓ ✓ ✓.
+
+It was **proved to fail** ✓: giving the scanner a subset again made **twenty-five** of its
+checks fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **28 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **2275 passed** offline ✓, and **2329 passed** with the
+  database ✓ ✓ (the sibling lane's two untracked test files excluded ✓ - `test_app_surface.py`
+  ✓ and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ ✓, see
+  §436 ✓);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 58 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The seventeenth unit in a row ✓, and this one is the §490 (D495 ✓)
+lesson in a **new** place ✓ ✓ - and the new place is a **guard** ✓ ✓, not a vocabulary ✓ ✓.
+D495 said: when a table is a subset of another ✓ ✓, the fix is the **union** ✓ ✓, and a
+subset copy is a hole ✓ ✓. Here the subset copy was the **scanner** ✓ ✓ - so the hole was
+in the **security** ✓ ✓, and the union was the difference between "content cannot name a
+tool" ✓ ✓ and "content can name eight of the twenty-four tools" ✓ ✓ ✓. So the general form
+gains the clause that makes it a **security** rule and not a tidiness rule ✓: **a copy that
+is a SUBSET is a hole in whatever the copy guards ✓ ✓ - and a guard's subset is a
+vulnerability ✓ ✓** ✓ ✓. And the gate that says so ✓ ✓ is the one that reads the
+**contract** ✓ ✓ - because the contract is the authority ✓ ✓, and a list of names that
+lives only in the code is a list that drifts ✓ ✓ ✓.

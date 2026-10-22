@@ -20,6 +20,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
+from nexus_ai.tools.names import CANONICAL_TOOL_NAMES, NEVER_IN_DEFAULT_GRANT
+
 INSTRUCTION_DELIMITER = "<<<UNTRUSTED_DATA>>>"
 DELIMITER_START = INSTRUCTION_DELIMITER + "START"
 DELIMITER_END = INSTRUCTION_DELIMITER + "END"
@@ -79,12 +81,13 @@ INJECTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 )
 
 #: Registry tool names must never originate from content (§8 last bullet).
-TOOL_NAME_TOKENS: frozenset[str] = frozenset({
-    "create_reservation", "create_cart", "update_cart", "checkout", "refund_payment",
-    "publish_campaign", "set_user_preference", "get_order_status", "search_web",
-    "get_inventory", "get_price", "get_availability", "draft_campaign", "draft_seo_page",
-    "retrieve_merchant_documents", "record_event", "search_merchants", "search_products",
-})
+#: D496: this was a hand-written SUBSET of the canonical set - eight of the twenty-four
+#: tools were not looked for, so a document naming "summarize_reviews" (or
+#: "analyze_reviews", "compare_entities", "get_business_hours", "search_location",
+#: "search_reviews", "search_services", "get_user_preferences") was not flagged at all.
+#: The names are ONE list now, in nexus_ai/tools/names.py.
+TOOL_NAME_TOKENS: frozenset[str] = (frozenset(CANONICAL_TOOL_NAMES)
+                                     | frozenset(NEVER_IN_DEFAULT_GRANT))
 
 #: Delimiters are stripped from untrusted text: they must never be forgeable by content.
 _UNTRUSTED_DELIMITER_RE = re.compile(re.escape(INSTRUCTION_DELIMITER) + r"(?:START|END)?")
