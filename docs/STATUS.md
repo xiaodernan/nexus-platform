@@ -20878,3 +20878,33 @@ fact, one place ✓, every reader through it ✓, a gate that asks two readers t
 question ✓, and a reader that changes nothing** ✓ ✓ ✓. And the finding is a good one ✓:
 the census that D488 left in the code ✓✓ - a gate that asks the same question twice ✓✓ -
 is what found it ✓✓ (the answers grew ✓✓) ✓✓ ✓.
+
+## 484. D490 · the app factory's SURFACE was unpinned - the route set, the error envelope and the offline-degrade header (`apps/ai/nexus_ai/api/app.py`, `apps/ai/tests/test_app_surface.py`)
+
+**Module / contract.** `create_app()` is the one seam that wires every §7 route, the request-id
+middleware and the error-envelope handlers. The app builds with no env and no network (the DB pool
+opens best-effort and stays None offline), so its surface is pinnable DB-free.
+
+**Pinned behavior (10 cases, all confirmed empirically):**
+- `_envelope`: the only failure shape is `{error:{code,message,details,request_id}}` at the given
+  status; `details` defaults to `{}`; an explicit `request_id` wins, else the contextvar is used,
+  else `null`.
+- `_jsonable_errors`: `loc` is stringified to a list, `msg` to a string, `type` carried; a malformed
+  error dict degrades to `{loc:[], msg:"", type:None}` instead of raising.
+- `create_app()` returns a `FastAPI` titled `NEXUS AI service` / `0.1.0` with a `Deps` on
+  `app.state`; the OpenAPI path set is a **superset** of the required §7 surface (`/`,
+  `/ai/v1/search`, `/ai/v1/search/stream`, `/ai/v1/query/understand`, `/ai/v1/recommend`,
+  `/ai/v1/compare`, `/ai/v1/rag/retrieve`, `/ai/v1/feedback`, `/ai/v1/conversations/{id}`,
+  `/ai/v1/merchant-agent/chat`, `/ai/v1/health`, `/ai/v1/tools`) — a dropped route is a
+  regression, an added route is a feature.
+- Root `/` answers `{"service":"nexus-ai","docs":"/docs","health":"/ai/v1/health"}`; the
+  middleware stamps `x-request-id` and, offline, `x-nexus-degraded: true`; a schema-invalid body
+  gets the 422 envelope with `code=="validation_error"`.
+
+**Discipline note.** Two premise corrections, not code: the route set is now a **subset** check
+(the parallel lane removed `/ai/v1/imports/extract`, and an exact-equality assertion made an
+intentional removal look like a regression); the repo had also advanced from D427 to D489 between
+sessions, so the unit took the next free pair **D490 / §484**. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_app_surface.py` → **10 passed**; full `apps/ai` suite
+→ **2211 passed, 56 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
