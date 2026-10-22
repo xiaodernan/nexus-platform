@@ -33,8 +33,12 @@ DECLARED_EXTRAS: dict[str, tuple[str, ...]] = {
     "rating": ("fact_id",),
     "distance": ("fact_id",),
     "availability": ("source_fact_id",),
-    # the flag §2 names in prose ("estimated_price on offering cards") - D472
-    "flags": ("estimated_price",),
+    # the flag §2 names in prose ("estimated_price on offering cards") - D472, and the
+    # flag that says a fact is DISPUTED (§4: a conflict creates a `trust_signals` row
+    # rather than silently picking) - D497. §2 says a new flag name belongs in §2 -
+    # filed, the contract is not this lane's to change - and the gate declares it until
+    # the contract names it.
+    "flags": ("estimated_price", "conflicting_fact"),
     # the action's payload - the endpoint's own body
     "actions": ("payload",),
 }

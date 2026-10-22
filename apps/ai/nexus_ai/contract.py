@@ -127,6 +127,12 @@ class EntityFlags(BaseModel):
     # `price_source`, but the flag could never be sent, so a renderer told to look for it
     # was looking for a field that was never there.
     estimated_price: bool = False
+    # D497: AGENT_CONTRACT §4 says "Conflicts create a `trust_signals` row rather than
+    # silently picking" - and the product picked silently: the card showed one value and
+    # the other one vanished. The ROW is the platform's to write (the AI role has no grant
+    # on `trust_signals` - filed), so the card says the value is disputed instead. The
+    # contract's §2 should name this flag (filed: a new flag name belongs in §2).
+    conflicting_fact: bool = False
 
 
 class AiMatch(BaseModel):

@@ -26,7 +26,7 @@ from nexus_ai.contract import (
     OpenState,
 )
 from nexus_ai.search.ranking import Candidate, Scored
-from nexus_ai.trust.facts import FactBundle, stable_fact_id
+from nexus_ai.trust.facts import FactBundle, resolve_conflicts, stable_fact_id
 from nexus_ai.trust.freshness import stale_copy
 
 #: reason label -> per-locale copy template. `{}` slots are filled from grounded values.
@@ -261,7 +261,12 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
         unverified=not bool(rec.get("ownership_verified", True)),
         # D472: the offering's price came from an estimate - the flag API_CONTRACT §2
         # names for offering cards. The query already selects `price_source`.
-        estimated_price=(str(rec.get("price_source") or "").lower() == "estimated"))
+        estimated_price=(str(rec.get("price_source") or "").lower() == "estimated"),
+        # D497: AGENT_CONTRACT §4 - a conflict creates a `trust_signals` row rather than
+        # silently picking. The row is the platform's to write (the AI role has no grant on
+        # `trust_signals` - filed), so the card says the value is DISPUTED instead of
+        # hiding the other value. The trust layer's own resolver says which value won.
+        conflicting_fact=bool(_disputed_attributes(bundle, subject_uuid)))
     if cand.sponsored and sponsor_label:
         anchor = computed.get("relevance") or (facts[0] if facts else None)
         reasons.insert(0, MatchExplanation(label="sponsored", text=sponsor_label,
@@ -406,6 +411,26 @@ def _fact_for(label: str, computed: dict[str, Fact], bundle: FactBundle,
     if label in ("trending", "preference_match", "fresh_data"):
         return None
     return None
+
+
+#: The attributes a card shows a fact for - the ones a conflict can be about.
+DISPUTED_ATTRIBUTES: tuple[str, ...] = ("price", "avg_price_hkd", "rating",
+                                        "opening_hours", "address")
+
+
+def _disputed_attributes(bundle: FactBundle, subject_uuid: Any) -> list[str]:
+    """The attributes whose facts DISAGREE - §4's conflicts, not a silent pick.
+
+    The trust layer's own resolver decides which value wins (the source hierarchy, then
+    the confidence, then the recency) and reports the disagreement; this asks it, so the
+    rule lives in one place.
+    """
+    out: list[str] = []
+    for attribute in DISPUTED_ATTRIBUTES:
+        _chosen, disagreements = resolve_conflicts(bundle, attribute, subject_uuid)
+        if disagreements:
+            out.append(attribute)
+    return out
 
 
 def _fact_value(fact: Fact) -> str | None:

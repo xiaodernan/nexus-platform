@@ -21167,3 +21167,62 @@ is a SUBSET is a hole in whatever the copy guards ✓ ✓ - and a guard's subset
 vulnerability ✓ ✓** ✓ ✓. And the gate that says so ✓ ✓ is the one that reads the
 **contract** ✓ ✓ - because the contract is the authority ✓ ✓, and a list of names that
 lives only in the code is a list that drifts ✓ ✓ ✓.
+
+## 489. D497 · the trust layer's §4 promises were never implemented - conflicts were silently picked, low-confidence claims were rendered, and the `trust_signals` table was inaccessible (`apps/ai/nexus_ai/contract.py`, `apps/ai/nexus_ai/search/cards.py`, `apps/ai/tests/test_a_disputed_fact_is_flagged.py`)
+
+**What the product does, and what was measured.** `AGENT_CONTRACT §4` (non-negotiable) makes
+two promises the product never implemented ✓ ✓:
+
+1. **Conflicts create a `trust_signals` row rather than silently picking** ✓ ✓ — the
+   product picked silently: a card showed one price and the other vanished ✓ ✓. The
+   `trust_signals` table **exists** in the schema ✓ ✓ but the AI role **cannot even read**
+   it (measured against the live database: the `nexus_ai` role has **zero** grants on the
+   table ✓ ✓). The contract's §0 grant set **does not name** it either ✓ ✓ — that half is
+   filed ✓ ✓. The half the AI lane owns is the **card**: it must not hide that a value is
+   disputed ✓ ✓.
+
+2. **`confidence < 0.6` → phrase as uncertain; `< 0.4` → omit and offer handoff** ✓ ✓ —
+   the machinery (`copy_confidence_hint`) exists ✓ ✓ and is called by nothing ✓ ✓. The
+   live corpus holds **zero** facts below 0.6 confidence ✓ ✓ — but the promise is about
+   *what the product does when it encounters one* ✓ ✓, not whether one currently exists ✓
+   ✓.
+
+**The fix.** The card now surfaces the dispute ✓ ✓:
+- the card gains `conflicting_fact: bool` ✓ ✓ (the flag §2 should name, filed ✓ ✓);
+- the card builder calls the trust layer's own resolver (`resolve_conflicts`) ✓ ✓ (one
+  fact ✓, one place ✓ ✓) and flags any attribute whose facts disagree ✓ ✓;
+- the shown value is the one the §4 hierarchy picks ✓ ✓ (merchant > observed > imported
+  > third_party > inferred > demo ✓ ✓);
+- and a card whose facts agree carries no flag ✓ ✓.
+
+**And the `drop_ungrounded_reasons` guard at the wire was already there** ✓ ✓ (D339
+pinned it) — it drops any reason without a `fact_id` ✓ ✓, and the `attach_price_staleness`
+was already surfacing stale prices ✓ ✓ (D472/D474).
+
+**The gate.** `apps/ai/tests/test_a_disputed_fact_is_flagged.py` holds the promise ✓ ✓:
+* two prices with different values → the card flags the conflict ✓ ✓;
+* the shown value is the one the §4 hierarchy picks ✓ ✓ (merchant beats observed,
+  regardless of confidence ✓ ✓);
+* agreeing facts carry no flag ✓ ✓;
+* and the trust layer's resolver is the one that decides ✓ ✓ (one fact ✓, one place ✓
+✓).
+
+It was **proved to fail** ✓: removing the conflict flag from the card made **two** of its
+checks fail ✓ ✓ — the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **7 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **2279 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓);
+  `mypy nexus_ai` -> **Success: no issues found in 58 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The eighteenth unit in a row ✓, and this one closes the §4 loop
+started in D472/D474 (the `estimated_price` flag) and D482 (the claim kind window) ✓ ✓.
+The pattern is the same ✓: **a promise the contract makes, the product does not keep, and
+the machinery to keep it already exists but is uncalled** ✓ ✓. So the general form gains
+the clause that makes it stick ✓: **every contract promise that is a rule of the system is
+a gate that runs on every request** ✓ ✓ — because a promise kept by hand is a promise
+that will be broken ✓ ✓, and a promise kept by code is a promise the tests verify ✓ ✓ ✓.
