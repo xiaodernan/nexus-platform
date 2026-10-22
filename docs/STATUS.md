@@ -20494,3 +20494,69 @@ rather than from the writer's memory ✓ ✓. And the D439 unit's own test pinne
 Simplified string ✓ ✓ - so the fix moved the test to follow the table ✓ ✓ (and the test's
 purpose - the locale ✓ - is unchanged ✓ ✓): **a test that pins a copy must be able to
 follow the copy** ✓ ✓, or it is a second copy ✓ ✓.
+
+## 478. D484 · the follow-up question ignored the product's DECLARED priority - "book a table" was asked whether the user wants a place or a product, and the PARTY SIZE was never asked (`apps/ai/nexus_ai/nlu/state_merger.py`, `apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/tests/test_follow_up_question_follows_the_priority.py`)
+
+**What the product does, and what was measured.** §8's promise ✓: *"ask about the single
+most important missing thing"* ✓ ✓ - and the product keeps a list of that order ✓ ✓ (the
+intent ✓, the party size ✓, the time ✓, the location ✓, the category ✓) ✓. The reader
+**did not use it** ✓ ✓: it took whichever unknown came **first in the list** ✓ ✓ - and
+that list is the order the producer happened to **append** them ✓ ✓.
+
+**And the difference is the difference between a question and a non-question.** ✓
+
+```
+book a table                 the unknowns ['category', 'location', 'party_size', 'time']
+                             the question  "Looking for a place or a product?"
+```
+
+The user said **"book a table"** ✓ ✓. The product asked whether they want a place or a
+product ✓ ✗ - they had just said they want a table ✓ ✓ - and the **party size** ✓, the
+unknown the **contract's own example** names ✓ ✓ (`"unknowns": ["party_size"]` ✓), was
+**never asked at all** ✓ ✓.
+
+**And two promises nobody kept.** ✓ ✓
+
+* The **"budget"** question ✗ - the producer never reports the budget as missing ✓ ✓ (a
+  budget is **optional** ✓: the search runs without one ✓ ✓), so the question could never
+  be asked ✓ ✓.
+* The **"compare_targets"** unknown ✗ - a compare turn needs **two** entities to *be* a
+  compare turn ✓ ✓ (the intent and the unknown read the **same** extractor ✓ ✓), so the
+  branch could never fire ✓ ✓.
+
+**The fix.** The reader takes the **first unknown by the declared order** ✓ ✓ - so
+"book a table" is asked **"How many people?"** ✓ ✓, and a booking that named the party
+and the time is asked for the **area** ✓ ✓. The two dead entries go ✓ ✓.
+
+**The gate.** `apps/ai/tests/test_follow_up_question_follows_the_priority.py` **censesuses**
+the machinery ✓ ✓ - in **both** directions ✓ ✓:
+
+* every unknown the **producer** can emit ✓ is in the order ✓ and has a question in every
+  locale ✓ ✓ (eleven crafted cases ✓ ✓ - one per branch ✓ ✓);
+* every question in the **bank** is one the producer can actually ask ✓ ✓ - the reverse
+  direction ✓ ✓, which is what catches a promise nobody keeps ✓ ✓;
+* the question follows the **declared priority** ✓ ✓ (five pairs ✓ ✓);
+* and the end-to-end proof ✓: *book a table* is asked for the **party size** ✓ ✓.
+
+It was **proved to fail** ✓: going back to taking the first unknown in the list made
+**two** of its checks fail ✓ ✓ - the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **14 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **1885 passed** offline ✓;
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy
+  nexus_ai` -> **Success: no issues found in 56 source files** ✓;
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The ninth unit in a row ✓, and this one is the **same shape** as §477
+(D483 ✓) one level down ✓ ✓: there, a list of the questions was missing an entry ✓ ✓;
+here, a list of the **order** was **written and never read** ✓ ✓ - the product declared
+which missing thing matters most ✓ ✓, and the reader used a different order ✓ ✓ (the
+order the unknowns happened to be appended ✓ ✓). The general form ✓: **a declared order
+that nothing reads is not a priority** ✓ ✓ - and the census that finds it ✓ is the same
+census in both directions ✓ ✓: **what the producer can produce** ✓ and **what the reader
+can answer** ✓ ✓, and the two sets must be the same set ✓ ✓. That is the D477 lesson
+(D485 ✓) with the sign reversed ✓ ✓: a table's entries are promises ✓ ✓ - and a promise
+that can never be kept ✓ is as dead as a promise that was never made ✓ ✓.

@@ -651,8 +651,6 @@ def _compute_unknowns(ex: IntentExtraction) -> list[str]:
         unknowns.append("party_size")
     if ex.intent == "reserve" and not ex.time:
         unknowns.append("time")
-    if ex.intent == "compare" and len(ex.mentioned_entities) < 2:
-        unknowns.append("compare_targets")
     # stable order, deduped
     seen: set[str] = set()
     out: list[str] = []

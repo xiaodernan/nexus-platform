@@ -394,8 +394,7 @@ def _compute_unknowns_public(ex: IntentExtraction) -> list[str]:
     return _compute_unknowns(ex)
 
 
-_ONE_FOLLOWUP_ORDER = ("intent", "party_size", "time", "location", "budget",
-                     "category")
+_ONE_FOLLOWUP_ORDER = ("intent", "party_size", "time", "location", "category")
 
 
 #: §8's ONE follow-up question, in the three locales. D483: the bank stood inside
@@ -410,21 +409,18 @@ FOLLOWUP_QUESTIONS: dict[str, dict[str, str]] = {
         "party_size": "請問几位？",
         "time": "想約什么時候？",
         "location": "想喺邊個區？",
-        "budget": "預算大概幾多？",
         "category": "想食定想買？"},
     "zh-CN": {
         "intent": "你想要什么？",
         "party_size": "请问几位？",
         "time": "想约什么时候？",
         "location": "想在哪个区？",
-        "budget": "预算大概多少？",
         "category": "想找餐厅还是商品？"},
     "en": {
         "intent": "What are you looking for?",
         "party_size": "How many people?",
         "time": "When would you like to go?",
         "location": "Which area?",
-        "budget": "What's your budget?",
         "category": "Looking for a place or a product?"}
 }
 
@@ -442,6 +438,11 @@ def question_for(intent: dict[str, Any]) -> str | None:
     unknowns = [u for u in intent.get("unknowns") or [] if u in _ONE_FOLLOWUP_ORDER]
     if not unknowns:
         return None
-    key = unknowns[0]
+    # D484: the ORDER is the product's declared priority - "ask about the single most
+    # important missing thing" - and the reader used to take whichever unknown came
+    # first in the list, which is the order the producer appended them. "book a table"
+    # was asked whether the user wants a place or a product, and the party size - the
+    # unknown the contract's own example names - was never asked at all.
+    key = min(unknowns, key=_ONE_FOLLOWUP_ORDER.index)
     locale = norm_locale(str(intent.get("language") or "zh-HK"))
     return FOLLOWUP_QUESTIONS[locale].get(key)
