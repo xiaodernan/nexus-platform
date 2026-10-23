@@ -23027,3 +23027,75 @@ still writes no `cuisine_avoid` - the preference lane now reads the refusal, the
 lane does not. Widening the window to sixteen was measured too: it then reads "no rush,
 want spicy" as a refusal of spicy. That lane's grammar is the next unit's, not this
 one's.
+
+## 530. D536 · the constraint lane reads the clause, not eight characters (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/tests/test_the_constraint_lane_reads_the_clause.py`)
+
+**What was measured.** The lane that writes the §7.1 constraints had its own idea of how
+far a refusal reaches: eight characters past the negation, measured from the end of the
+cue AFTER its trailing space was stripped - so a value had seven characters of room, and
+the lane could not read the product's own vocabulary:
+
+    no cilantro    ->  []        the value is eight characters
+    no coriander   ->  []        nine, and in CONSTRAINT_CANON and in no rule
+    唔要咖喱        ->  []        咖喱 / 咖哩 are in the canon and in no rule
+    don't want spicy          ->  []    the value sits ten past the cue
+    I do not want spicy food  ->  []
+
+The preference lane read every one of these refusals; the constraint lane - the one the
+§7.1 schema and the state merger carry - wrote nothing, so the refusal reached the
+ranking lane and never reached the filter. Widening the window to sixteen was measured
+and rejected: it then reads "no rush want spicy" as a refusal of the spicy, because
+both clauses' words sit inside it. A window is not a grammar.
+
+**The fix.** The clause is the unit of governance (D535), so the value is now read the
+way the polarity lane reads a token: the cue governs a value in its own clause, and one
+verb may bridge the two. `polarity._attached` is promoted to `clause_attached` and both
+lanes read governance through it - ONE reader, so the two lanes cannot disagree about
+what a refusal governs. Every gap the clause rule accepts fits inside the old window, so
+nothing the old rule read is lost. The three surface forms the canon names and no rule
+carried - 咖喱, 咖哩 (the Cantonese spellings of curry) and the English coriander - join
+the values; `cilantro` was already there and is read now that the window stops
+truncating it.
+
+**Verified, not claimed.**
+`test_the_constraint_lane_reads_the_clause.py`: **65 passed** - a census over the
+product's own `CONSTRAINT_CANON`: all 27 surface forms must sit in some rule's values,
+and each must be read, under the Cantonese cue and the English one, as the canon value
+the test's own key map says it is (a new canon entry that declares no key reddens the
+gate, so the semantic decision is made rather than inferred); the eight measured holes
+are pinned to their exact constraint sets; and the two sentences the widened window
+would have broken are held empty. Proved to fail: the eight-character window back
+reddens **8**, the three surface forms out of the rules again reddens **10** (each probe
+put back and byte-compared). Live (`test_live_the_refusal_does_not_flatten_the_lane.py`):
+**4 passed**. The nine refusal/polarity/constraint gates -> **150 passed**; merger,
+search-plan, lexicon and understand -> **235 passed**; the vocabulary gates -> **57
+passed**; filtered regression (`-k "preference or structured or occasion or personaliz
+or merge or refinement or state or polarity or cuisine or transient or ranking or
+attribute or vocabulary or ambience or refusal or negation or clause"`) -> **1471
+passed, 35 skipped**; (`-k "search or rank or card or score or facet or filter or avoid
+or understand or intent or nlu"`) -> **1061 passed, 38 skipped**; `mypy nexus_ai` ->
+**Success: no issues found in 60 source files**; `ruff check nexus_ai tests` -> **All
+checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**. The whole `tests/` tree
+was run once as well: **3656 passed, 43 skipped, 3 failed**, and all three failures
+reproduce on the tree WITHOUT this unit's changes (`test_doc_paths_are_real.py`'s
+`site.py`, `test_live_search_contract.py`'s refused-cuisine ranking, and a
+seed-state-dependent `test_citations_resolve.py` case that passes in isolation).
+
+**Residue measured and filed, not fixed.**
+- The polarity lane's AFTER-case reads a cue that touches the token before it as
+  governing that token, even when the cue has its own object after it: measured, "I want
+  spicy no cilantro" answers spicy **-1** - a dislike of the very thing asked for, which
+  the ranking lane then demotes. The rule to write is that a cue governs a preceding
+  token only when it governs nothing after it; the constraint lane reads forward only,
+  so the mirror case "咖喱唔要" writes no constraint at all.
+- The clause gap admits a short filler and ONE verb, but not an adverb: "not very spicy"
+  (the gap "very", four characters) reads +1 and writes no constraint, and "not really
+  like spicy" reads the same. 咁 is in the particle vocabulary (D535); the English degree
+  words are the missing half of it.
+- `plan_from_intent` maps `cuisine_avoid` into `plan.avoid` and drops every other
+  constraint key: `diet_avoid`, `smoking_avoid`, `noise_avoid` and `feature_avoid` never
+  reach the search plan, while the corpus carries the facts they name (239 offerings
+  carry a gluten tag, 15 a peanut one). "no gluten" is now read and then dropped between
+  the Intent and the plan - the D517 shape, one lane over.
+- `meat` is in no table at all: "no meat" writes no constraint and no preference, though
+  the corpus carries the vegetarian merchants the refusal points at.

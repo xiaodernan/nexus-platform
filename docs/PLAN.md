@@ -61,16 +61,27 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   reader can see (a sentinel, or punctuation kept for the readers that need it), without breaking
   the Latin cue spellings that rely on punctuation-becomes-space ("no, spicy" must still read).
   Owner: the AI lane.
-- **The constraint lane's value list is ASCII-only where the preference lane is not** -
-  D535 measured that "唔要咖喱" writes NO `cuisine_avoid` at all: the rule's values are
-  `['辣', 'spicy', 'curry']`, and 咖喱 / 咖哩 - the words a Cantonese user types - are in
-  `CONSTRAINT_CANON` (which maps them to `curry`) but not in the rule's own values, so
-  nothing matches. The preference lane reads the refusal; the filter lane does not.
+- **A refusal that touches the token BEFORE it governs that token, even when it has an object of its own** - measured in the polarity lane's after-case while landing D536: "I want spicy no
+  cilantro" answers spicy **-1**, a dislike of the very thing the user asked for, because the
+  "no" sits directly after the token and nothing sits between them. The rule to write is that a
+  cue governs a preceding token only when it governs nothing after it. The constraint lane
+  reads forward only (deliberately, after D536), so the mirror case "咖喱唔要" writes no
+  constraint at all - it comes with the same rule, not before it.
   Owner: the AI lane.
-- **The constraint lane's negation window is eight characters** - "don't want spicy" (the
-  value sits ten past the cue) writes no `cuisine_avoid`, while "no rush, want spicy" is
-  what a sixteen-character window would then misread as a refusal of spicy. D535 measured
-  both directions; the grammar of that window is its own unit.
+- **The clause gap admits one verb but not an adverb** - "not very spicy" (the gap "very",
+  four characters) reads +1 and writes no constraint, and "not really like spicy" reads the
+  same. 咁 is in the particle vocabulary (D535); the English degree words are the missing half
+  of it.
+  Owner: the AI lane.
+- **The search plan drops every constraint key but `cuisine_avoid`** - `plan_from_intent` maps
+  `cuisine_avoid` into `plan.avoid` and nothing else, so `diet_avoid`, `smoking_avoid`,
+  `noise_avoid` and `feature_avoid` never reach the SQL - while the corpus carries the facts
+  they name (239 offerings carry a gluten tag, 15 a peanut one). "no gluten" is now read
+  (D536) and then dropped between the Intent and the plan: the D517 shape, one lane over.
+  Owner: the AI lane.
+- **`meat` is in no table at all** - "no meat" writes no constraint and no preference, though
+  the corpus carries the vegetarian merchants the refusal points at. The cuisine bridge maps a
+  word to the taxonomy's leaves (D394); "meat" has no entry to map.
   Owner: the AI lane.
 ### Open, waiting on the AI lane (next)
 
@@ -1509,3 +1520,23 @@ this unit measured and could not fix without touching the normalizer's contract.
 
 **Queue spent:** nothing queued; the two residues above (the constraint lane's ASCII-only
 value list and its eight-character window) are measured and filed.
+
+### 2026-10-24 (later still, the third) — D536: the constraint lane reads the clause, not eight characters
+
+1. D536 (86b6929) - the lane that writes the §7.1 constraints read an eight-character window
+   past the negation, measured from the end of the cue AFTER its trailing space was stripped -
+   so a value had seven characters of room and the lane could not read the product's own
+   vocabulary. Measured: "no cilantro" (the value is eight characters), "no coriander" (nine,
+   and in `CONSTRAINT_CANON` and in no rule), "唔要咖喱" / "唔要咖哩" (in the canon and in no
+   rule) and "don't want spicy" (the value sits ten past the cue) all wrote NOTHING, while the
+   preference lane read every one of those refusals. A sixteen-character window was measured
+   and rejected: it reads "no rush want spicy" as a refusal of the spicy, because both clauses'
+   words sit inside it. The clause is the unit of governance (D535), so the value is now read
+   the way the polarity lane reads a token - `polarity._attached` is promoted to
+   `clause_attached` and both lanes read governance through the one reader. Every gap the
+   clause rule accepts fits inside the old window, so nothing the old rule read is lost; what
+   it gains is every surface form the canon names.
+
+**Queue spent:** the two items above - the constraint lane's ASCII-only value list (咖喱 /
+咖哩 / coriander are in the rules now) and its eight-character window (the clause rule
+replaces it). The four residues above are what this unit measured and could not fix.
