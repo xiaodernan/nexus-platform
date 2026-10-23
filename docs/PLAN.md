@@ -54,13 +54,11 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The readability floor** — live text measures 4.477:1 against the 4.5 AA bound the visual test
   asserts. Owner: the web stream.
 
-- **The pause rule reads across a want verb** - D538 reads the separator directly under a cue as
-  the cue's own punctuation ("唔好，辣" refuses the 辣), and it reads it that way even when a verb
-  follows it: measured, "唔好，要辣" answers 辣 **-1** and writes `cuisine_avoid:spicy`,
-  "辣嘅唔好，要咖喱" answers the 咖喱 -1 and writes `cuisine_avoid:curry`, and "咖喱唔好，想食辣"
-  writes `cuisine_avoid:spicy` on top of the curry - the thing the next clause asks for, refused,
-  in both lanes (the D522 shape). The comma before 要 / want really did end a clause; the one
-  before a bare noun is a pause. The two shapes need telling apart.
+- **A surface inside another surface reads past the clause's reach** - "煙" inside "二手煙"
+  sits two characters further from the cue, and the reach is the clause (D535), so "no want 二手煙"
+  reads the 二手煙 -1 and the 煙 +1. The two lanes agree (no constraint is written for the 煙
+  either), so it is the reader's reach rather than a contradiction - but a preference keyed on the
+  shorter surface would be boosted by a sentence that refuses the longer one.
   Owner: the AI lane.
 - **`_has_constraint` still carries D536's eight-character window** - the constraint lane reads the
   clause (D536), but the intent kind's own test for "is there a refusal here" still counts
@@ -1614,4 +1612,24 @@ the clause boundary surviving normalisation.
    `cuisine_avoid:spicy` on top of the curry) and `_has_constraint`'s window (the backward shapes
    with no category of their own inherit it - "peanut hate" writes the constraint and answers
    `unknown`).
+
+
+### 2026-10-24 (later still, the seventh) — D540: a verb after the comma opens the next clause
+
+1. D540 (61de385) - D538 read the separator directly under a cue as the cue's own punctuation, so
+   "唔好，辣" refuses the 辣 - right when the cue's OBJECT follows the comma, wrong when a VERB
+   does: measured at HEAD, "唔好，要辣" answered 辣 -1 and wrote `cuisine_avoid:spicy`,
+   "辣嘅唔好，要咖喱" answered the 咖喱 -1 and wrote `cuisine_avoid:curry`, and "咖喱唔好，想食辣"
+   wrote `cuisine_avoid:spicy` on top of the curry - the thing the next clause asks for, refused,
+   in both lanes (the D522 shape, from one character of punctuation). A bare noun after the comma
+   is the pause; a verb opens the next clause's request. `forward_gap` keeps the separator in the
+   gap when one was stripped and what follows opens with a verb, so `clause_attached` reads the
+   boundary it has spelled since D535. The control is the other half: with no comma there is no
+   separator to read and the verb is the clause's own bridge, so "唔好食辣" and "don't want spicy"
+   refuse exactly as before.
+
+**Queue spent:** the pause-rule item (the comma before a verb now ends the cue's clause; the one
+   before a bare noun is still a pause). One residue filed: a surface inside another surface
+   ("煙" inside "二手煙") can sit past the clause's reach and read +1 while the longer form is
+   refused - the two lanes agree about it, so it is the reach, not a contradiction.
 

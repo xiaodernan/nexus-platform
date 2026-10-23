@@ -23267,3 +23267,49 @@ is read as the cue's own punctuation even when a verb follows it, and there the 
 really did end a clause. `_has_constraint` still carries D536's eight-character window,
 so "no cilantro" writes `diet_avoid:coriander` and answers the intent `unknown`, and the
 backward shapes with no category of their own ("peanut hate") inherit that hole.
+
+## 534. D540 - a verb after the comma opens the next clause (`apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/tests/test_a_verb_after_the_comma_opens_the_next_clause.py`)
+
+**What was measured.** D538 read the separator directly under a cue as the cue's own
+punctuation, so a comma could never come between a refusal and its object - "唔好，辣"
+refuses the 辣. That is right when the cue's OBJECT follows the comma and wrong when a
+VERB does. Measured at HEAD, three sentences the product answers with read the refusal
+onto the thing the next clause asks for:
+
+    唔好，要辣        ->  辣 -1, cuisine_avoid:spicy    (the user asked for the 辣)
+    辣嘅唔好，要咖喱   ->  咖喱 -1, cuisine_avoid:curry   (ditto)
+    咖喱唔好，想食辣   ->  cuisine_avoid:spicy, on top of the curry
+
+The search filtered for the very thing the user asked for and the ranking demoted it -
+the D522 shape, from one character of punctuation.
+
+**The fix.** A bare noun after the comma is the refusal's own object (the pause); a verb
+opens a new clause's request. `forward_gap` now keeps the separator in the gap when one
+was stripped and what follows opens with a verb, and `clause_attached` reads the boundary
+it has spelled since D535. The control is the other half of the rule and the reason this
+is not "a comma always ends the clause": with NO comma there is no separator to read,
+and the verb is the clause's own bridge (D535) - "唔好食辣" and "don't want spicy" refuse
+exactly as they did before. Only a STRIPPED separator arms the new reading, and only
+against a verb.
+
+**Verified, not claimed.**
+`test_a_verb_after_the_comma_opens_the_next_clause.py`: **772 passed** - a census over
+every verb the bridge table names x every surface the rules name, in BOTH shapes (the
+separator'd one asks for the value and writes nothing; the comma-less one refuses it and
+writes the constraint), plus a pause census over every surface, a punctuation census over
+`CLAUSE_PUNCTUATION`, the line break, the three measured defects and the minimal pairs.
+Proved to fail: `forward_gap` reverted to the unconditional strip reddens **382**, the
+file restored and byte-compared. The fourteen refusal/polarity/constraint gates, the two
+new doors and the two vocabulary gates -> **2731 passed**; merger, search-plan and lexicon
+-> **285 passed**; filtered regression (`-k "preference or structured or occasion or
+personaliz or merge or refinement or state or polarity or cuisine or transient or
+ranking or attribute or vocabulary or ambience or refusal or negation or clause"`) ->
+**2874 passed, 35 skipped**; (`-k "search or rank or card or score or facet or filter or
+avoid or understand or intent or nlu"`) -> **1113 passed, 38 skipped**; `mypy nexus_ai`
+-> **Success: no issues found in 59 source files**; `ruff check nexus_ai tests` ->
+**All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
+
+**Residue measured and filed, not fixed.** A surface that sits inside another one ("煙"
+inside "二手煙") can be further from the cue than the clause's reach, so it reads +1 while
+the longer form is refused - the two lanes agree about it (no constraint is written for
+it either), so it is the reader's reach, not a contradiction.
