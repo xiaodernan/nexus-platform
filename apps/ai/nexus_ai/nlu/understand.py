@@ -111,6 +111,25 @@ def party_text(text: str) -> str:
     from nexus_ai.nlu.numerals import normalise_numerals
 
     return normalise_numerals(text or "", only_before=_PARTY_MARKERS)
+
+
+def party_size_of(text: str) -> int | None:
+    """The party size a turn names, or None when it names none. The ONE reader.
+
+    `PARTY_RE` guards its CJK alternative with `(?:\D|^)`, so a digit run that is part of a
+    LONGER number is not read as a party size. D518: the state merger kept a private copy of
+    the pattern without that guard, so "113個人" was thirteen seats on the second turn
+    and no party size at all on the first - the same fact read two ways, and the merge's copy
+    was the one that invented a number. Both turns read it here now.
+    """
+    m = PARTY_RE.search(party_text(text))
+    if not m:
+        return None
+    raw = next((g for g in m.groups() if g), "")
+    if not raw:
+        return None
+    n = int(raw)
+    return n if 1 <= n <= 40 else None
 RADIUS_RE = re.compile(
     r"(\d{1,3})\s*(?:公里|公里|km|千米)", re.IGNORECASE
 )
@@ -501,14 +520,10 @@ def _fill_party(ex: IntentExtraction, text: str, context: dict[str, Any]) -> Int
             return ex
         except (TypeError, ValueError):
             pass
-    m = PARTY_RE.search(party_text(text))
-    if m:
-        raw = next((g for g in m.groups() if g), "")
-        if raw:
-            n = int(raw)
-            if 1 <= n <= 40:
-                ex.party_size = n
-                ex.confidence["party_size"] = 0.9
+    n = party_size_of(text)
+    if n is not None:
+        ex.party_size = n
+        ex.confidence["party_size"] = 0.9
     # NOTE: "情侣"/"date" is deliberately NOT turned into party_size=2. §8 forbids
     # guessing it and AGENT_CONTRACT §1 lists inventing party_size as a must-not.
     return ex

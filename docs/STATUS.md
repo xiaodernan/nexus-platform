@@ -22177,3 +22177,45 @@ gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers -> green, and line
 re-measured at **117/177** citations still naming the line they were written against
 (strict=none). §510's `search/sql.py:131` citation was re-aimed to `:146`, because this unit's
 own insertion moved it.
+## 512. D518 · the party size had two readers, and the merge's copy invented a number the first turn refused to (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/nlu/state_merger.py`, `apps/ai/tests/test_the_party_size_has_one_reader.py`)
+
+**What was measured.** `state_merger.py` carried a comment that said the merge reads the party
+size with "the shared reader ... in `nlu/understand`". It did not. It kept a private copy of
+the pattern, and the copy had lost the leading-digit guard `PARTY_RE` puts on its CJK
+alternative (`(?:\D|^)`), so a digit run that is part of a LONGER number was read as a party
+size. Measured at HEAD, with a non-cold-start base so the follow-up branch runs:
+
+    "113個人"   -> the first turn reads NO party size (§8: do not invent a number)
+                -> the merge read THIRTEEN SEATS
+    "113位"     -> None  /  13
+    "HK$113位人" -> None  /  13
+    "這角落有213人" -> None  /  13
+
+One fact, two readers, and the merge's copy was the one that invented a number. Every form the
+product's own tables name agreed - the spelled-out Chinese numerals (三個人, 十一個人, 兩個人),
+the latin units (guests, diners, persons, pax, "party of 4", "for 6 people") - so the drift
+was confined to the long digit runs, which is exactly the kind of gap a private copy hides.
+
+**The fix.** `understand.party_size_of` is now the ONE reader: it runs `PARTY_RE` over
+`party_text(text)` and applies the 1..40 range, which is what `_fill_party` was already doing
+inline. `_fill_party` calls it, and `merge_turn` calls it too, so the merge's private regex is
+gone. The reader is exported rather than private because the whole point is that the second
+turn imports the first turn's rule instead of restating it.
+
+**Discipline note.** This is the D476/D487 shape arriving a third time: a comment asserted a
+shared reader, the code kept a copy, and the copy drifted in the one direction that matters -
+it read MORE than the guarded original. A comment is not a coupling; the import is. The gate
+therefore asserts the coupling structurally (the merge's source must name the shared reader)
+as well as behaviourally, because a behavioural gate alone passes the moment someone re-copies
+the pattern with the cases they remember.
+
+**Verified, not claimed.** The gate: **67 passed** - 12 forms the product's tables name read
+identically by both turns, 10 turns that must not be read at all read by neither, the
+structural coupling check, and the guard pinned on its own. Proved to fail: putting the
+private copy back reddens **5** of them (the four long-digit-run refusals and the structural
+check) - the probe was put back and the suite returned to green. Targeted regression (party
+gate, state merger, search plan, understand resolution, sql builders, categories, the two
+vocabulary gates, the two-readers-agree gate, merge cue spellings, negations, cuisine
+vocabulary) -> **367 passed**; `mypy nexus_ai` -> **Success: no issues found in 59 source
+files**; `ruff check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0
+failing**; the ten CI checkers -> green.

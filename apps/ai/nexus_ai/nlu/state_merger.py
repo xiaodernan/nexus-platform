@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from nexus_ai.contract import Intent
-from nexus_ai.nlu.understand import IntentExtraction, extract_intent, party_text
+from nexus_ai.nlu.understand import IntentExtraction, extract_intent, party_size_of
 from nexus_ai.models.base import norm_locale
 from nexus_ai.nlu.lexicon import URGENCY_FLEXIBLE, URGENCY_NOW
 from nexus_ai.nlu.matching import longest_cue
@@ -127,17 +127,16 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
         changes.append(_tighten_radius(base, RADIUS_LOOSEN))
 
     # ---- party size -----------------------------------------------------
-    # D445: the numerals are read here too - 三位 is three seats, and the merge's own
-    # rule has to agree with the first turn's (the shared reader is in `nlu/understand`).
-    m = re.search(r"(\d{1,2})\s*(?:個|个|位|人|pax|people|persons?)", party_text(match_text))
-    m = m or re.search(r"(?:party(?:\s*of)?|for)\s*(\d{1,2})\b", low)
-    if m:
-        n = int(m.group(1))
-        if 1 <= n <= 40:
-            changes.append({"op": "set", "field": "party_size", "from": base.get("party_size"),
-                            "to": n})
-            base["party_size"] = n
-            _drop_unknown(base, "party_size")
+    # D445: the numerals are read here too - 三位 is three seats, and the merge reads them
+    # with the SAME reader the first turn uses (`understand.party_size_of`). It used to keep a
+    # private copy of the pattern, and the copy had lost the leading-digit guard, so
+    # "113個人" was thirteen seats here and no party size at all on the first turn (D518).
+    n = party_size_of(match_text)
+    if n is not None:
+        changes.append({"op": "set", "field": "party_size", "from": base.get("party_size"),
+                        "to": n})
+        base["party_size"] = n
+        _drop_unknown(base, "party_size")
 
     # ---- spicy / dietary -----------------------------------------------
     # D488: the constraints are read by the ONE reader - the residual absorb below, which
