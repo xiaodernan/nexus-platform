@@ -61,6 +61,17 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   reader can see (a sentinel, or punctuation kept for the readers that need it), without breaking
   the Latin cue spellings that rely on punctuation-becomes-space ("no, spicy" must still read).
   Owner: the AI lane.
+- **The constraint lane's value list is ASCII-only where the preference lane is not** -
+  D535 measured that "唔要咖喱" writes NO `cuisine_avoid` at all: the rule's values are
+  `['辣', 'spicy', 'curry']`, and 咖喱 / 咖哩 - the words a Cantonese user types - are in
+  `CONSTRAINT_CANON` (which maps them to `curry`) but not in the rule's own values, so
+  nothing matches. The preference lane reads the refusal; the filter lane does not.
+  Owner: the AI lane.
+- **The constraint lane's negation window is eight characters** - "don't want spicy" (the
+  value sits ten past the cue) writes no `cuisine_avoid`, while "no rush, want spicy" is
+  what a sixteen-character window would then misread as a refusal of spicy. D535 measured
+  both directions; the grammar of that window is its own unit.
+  Owner: the AI lane.
 ### Open, waiting on the AI lane (next)
 
 - **The `food/cuisine_like` structured preference is read by the matcher but not produced by the NLU** — the seed stores `{"values": ["cantonese","sushi"]}` under `food/cuisine_like`, and the category inference reads it, but a typed "我想食粵菜" produces a `cuisine` preference (a string value) rather than a `cuisine_like` one (an object with `values`). The two shapes now MEET at the matcher (D394 routes both through `cuisine_matches`), but they do not meet at the WRITER: a typed cuisine is not stored anywhere, so the user's own words about a cuisine are not recorded as a preference.
@@ -1480,3 +1491,21 @@ un-covered pure functions the AST scan named (`nlu/understand.py::_fill_*`,
 
 **Queue spent:** nothing was queued; the normalizer's comma erasure is filed above as the residue
 this unit measured and could not fix without touching the normalizer's contract.
+
+### 2026-10-24 (later still) — D534 and D535: the refusals the product could not read, and the clause they live in
+
+1. D534 (032aa0c) - 無 / 沒有 / 没有 were not in the refusal table, so "無素食" read as a
+   LIKE of vegetarian and the ranking lane boosted it (the D522 shape again). Adding them
+   was only safe after D533: 無 sits inside 無障礙 and 貴都無所謂, and 有無 / 有没有 is the
+   product's own question form, so a naive entry would refuse the wheelchair users, the
+   premium diner who says price is no object, and every "is there any X?" question. 没有
+   is spelled out beside 沒有 because the canonical table has no 没 -> 沒 entry.
+2. D535 (a3ba887) - D533 enforced the boundary the punctuation marks; the conjunction and
+   the verb survived it. "cheap and no curry" read the cheap as refused (the refusal is
+   the curry's), and "I do not want spicy food" read as a LIKE of the very thing refused
+   (the verb "want" between cue and value broke the attachment). A conjunction now ends a
+   clause; one verb may bridge a refusal to its object. The degree adverb 咁 joins the
+   particle vocabulary, which the vocabulary gate holds the package to.
+
+**Queue spent:** nothing queued; the two residues above (the constraint lane's ASCII-only
+value list and its eight-character window) are measured and filed.
