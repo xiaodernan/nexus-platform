@@ -37,7 +37,11 @@ from nexus_ai.nlu.lexicon import (
     match_district,
     normalize_query,
 )
-from nexus_ai.nlu.polarity import apply_polarity, is_existential_question
+from nexus_ai.nlu.polarity import (
+    apply_polarity,
+    clause_attached,
+    is_existential_question,
+)
 from nexus_ai.nlu.timeparse import HK_TZ, parse_time
 
 # --------------------------------------------------------------------------- patterns
@@ -565,26 +569,48 @@ def _fill_preferences(ex: IntentExtraction, text: str) -> IntentExtraction:
 
 
 def _fill_constraints(ex: IntentExtraction, text: str) -> IntentExtraction:
-    """Negation window only: "唔食辣" ⇒ constraint, "食辣" ⇒ preference (§8)."""
+    """A refusal inside a clause writes that clause's constraint: "唔食辣" ⇒ constraint, "食辣" ⇒ preference (§8).
+
+    D536: the lane read an eight-character window past the cue, and the cue's own
+    trailing space was stripped before the offset was measured - so the value had
+    seven characters of room. A character count is not a clause: "no cilantro" and
+    "no coriander" wrote no constraint at all, and neither did "don't want spicy".
+    Widening the window was measured and rejected - at sixteen it reads "no rush want
+    spicy" as a refusal of the spicy, because both clauses' words sit inside it. So
+    the window is a guess at a grammar, and the lane now reads a refusal the way the
+    polarity lane reads one (D535): the cue governs a value in its own clause, and one
+    verb may bridge the two. The two arms were then run against each other over the
+    sentences the product's own refusal tests speak - the clause rule wrote every
+    constraint the window wrote, and lost none; what it gains is the reach a clause
+    gives that eight characters never did, and every surface form the product's own
+    CONSTRAINT_CANON names, which the census in this unit's test file now holds open.
+    """
     seen: set[tuple[str, str]] = set()
     low = (text or "").lower()
     for key, negs, values in CONSTRAINT_RULES:
         for neg in negs:
             # D480: the ONE matcher, for the negation and for the value - "no" inside
             # "notebook" is not a negation.
-            for start in cue_positions(neg.strip(), text, low):
+            cue = neg.strip()
+            for start in cue_positions(cue, text, low):
                 # D533: 有冇 X asks whether X exists; the cue under the 有 is the
                 # question's verb, not a refusal of the thing asked about.
                 if is_existential_question(low, start):
                     continue
-                window = text[start + len(neg.strip()): start + len(neg.strip()) + 8]
+                after = start + len(cue)
                 for v in values:
-                    if cue_in(v.strip(), window, window.lower()):
-                        canon = canon_constraint(v)
-                        if (key, canon) in seen:
+                    value = v.strip()
+                    # D536: the clause, not a window. The value must sit in the cue's
+                    # own clause, and one verb may bridge the two - "don't WANT spicy"
+                    # refuses the spicy, while "no rush want spicy" refuses nothing.
+                    for at in cue_positions(value, text, low):
+                        if at < after or not clause_attached(low[after:at]):
                             continue
-                        seen.add((key, canon))
-                        ex.constraints.append({"key": key, "value": canon})
+                        canon = canon_constraint(v)
+                        if (key, canon) not in seen:
+                            seen.add((key, canon))
+                            ex.constraints.append({"key": key, "value": canon})
+                        break
     return ex
 
 

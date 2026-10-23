@@ -254,9 +254,14 @@ _CONSTRAINT_NEGATIONS = list(dict.fromkeys([*NEGATION_CUES,
                                    "\u4e0d\u5403", "\u5225",
                                    "\u907f\u514d", "\u5c11"]))
 
+# D536: the values are the SURFACE FORMS a user types, matched against the canonicalised
+#: query - so a form the product's own CONSTRAINT_CANON names must be in the list or the
+#: rule cannot see it. 咖喱 / 咖哩 (the Cantonese spellings of curry) and the English
+#: coriander were in the canon and in no rule: "唔要咖喱" and "no coriander" wrote no
+#: constraint at all, while the preference lane read the same refusal.
 CONSTRAINT_RULES: list[tuple[str, list[str], list[str]]] = [
-    ('cuisine_avoid', _CONSTRAINT_NEGATIONS, ['辣', 'spicy', 'curry']),
-    ('diet_avoid', _CONSTRAINT_NEGATIONS, ['豬', '猪', 'pork', '牛', 'beef', '海鮮', '海鲜', 'seafood', '香菜', 'cilantro', '花生', 'peanut', '蔥', '葱', 'onion', '蒜', 'garlic', '奶', 'dairy', 'gluten', '薑', 'ginger']),
+    ('cuisine_avoid', _CONSTRAINT_NEGATIONS, ['辣', 'spicy', 'curry', '咖喱', '咖哩']),
+    ('diet_avoid', _CONSTRAINT_NEGATIONS, ['豬', '猪', 'pork', '牛', 'beef', '海鮮', '海鲜', 'seafood', '香菜', 'cilantro', 'coriander', '花生', 'peanut', '蔥', '葱', 'onion', '蒜', 'garlic', '奶', 'dairy', 'gluten', '薑', 'ginger']),
     ('smoking_avoid', _CONSTRAINT_NEGATIONS, ['煙', '烟', 'smoking', '二手煙']),
     ('noise_avoid', _CONSTRAINT_NEGATIONS, ['嘈', '吵', 'noise', '吵鬧']),
     ('feature_avoid', _CONSTRAINT_NEGATIONS, ['排隊', '排队', 'queue', '長龍', '长龙']),

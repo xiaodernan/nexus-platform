@@ -92,8 +92,16 @@ _CLAUSE_CONJUNCTIONS = ("and", "or", "but", "同埋", "同", "和", "跟",
 _VERB_BRIDGE = ("want", "like", "eat", "have", "要", "想", "食", "吃", "鍾意", "喜歡")
 
 
-def _attached(between: str) -> bool:
-    """Whether a cue and a token separated by `between` are in the same clause."""
+def clause_attached(between: str) -> bool:
+    """Whether a cue and a token separated by `between` are in the same clause.
+
+    D536: the CONSTRAINT lane reads governance through this function too. It had its
+    own eight-character window, which is not a clause: measured, it could not reach
+    "no coriander" (the value is nine characters) nor "don't want spicy" (one verb
+    and two spaces sat in the way), and widening it read "no rush want spicy" as a
+    refusal of the spicy. One reader for both lanes, so the two cannot disagree about
+    what a refusal governs.
+    """
     gap = between.strip()
     if not gap:
         return True
@@ -161,7 +169,7 @@ def polarity_for(text: str, token: str) -> int:
                 if cue_at < idx - window:
                     cue_at = low.find(cue, cue_at + 1)
                     continue  # too far back to reach this token
-                if _attached(low[cue_at + len(cue):idx]):
+                if clause_attached(low[cue_at + len(cue):idx]):
                     return -1
                 # Other words or a clause boundary separate them: a different clause,
                 # so the token keeps its polarity.
@@ -172,7 +180,7 @@ def polarity_for(text: str, token: str) -> int:
             # about spicy and refuses noisy - two clauses, and the refusal belongs to
             # the second one. A cue that merely sits somewhere later in the turn
             # governs nothing (D533).
-            if _attached(low[idx + len(tok):cue_at]):
+            if clause_attached(low[idx + len(tok):cue_at]):
                 return -1
             cue_at = low.find(cue, cue_at + 1)
             continue
