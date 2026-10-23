@@ -22982,3 +22982,48 @@ check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**
 Kong user, the D420 shape. Filling the map entry obliges 没 to vote Simplified on its own
 (the D435 gate's locale invariant), which moves locale detection for every sentence
 carrying it; that is the next unit's measurement, not this one's.
+
+## 529. D535 · the clause is the unit of governance: a conjunction ends it, one verb bridge keeps it (`apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/tests/test_the_clause_is_the_unit_of_refusal.py`)
+
+**What was measured.** D533 enforced the boundary the punctuation marks. Two cases
+survived it, because the normalizer turns a clause comma into a space while the OTHER
+clause markers survive as words:
+
+    cheap and no curry        ->  cheap -1     (the refusal is the curry's, not the cheap's)
+    I do not want spicy food  ->  spicy +1     (a LIKE of the very thing refused)
+
+The first is a conjunction: "X and no Y" coordinates two clauses and the refusal belongs
+to the second. The second is a verb: "do not WANT spicy" keeps the refusal inside its own
+clause across one verb, and without the bridge the most natural English refusal read as a
+LIKE, which the ranking lane then boosted - the D522 shape, in English.
+
+**The fix.** A conjunction ends a clause: a cue on the far side of one governs nothing
+there. One verb may sit between a refusal and the thing refused. Both halves are the same
+principle D533 stated - a refusal governs the clause it sits in - applied to the two
+clause markers the punctuation rule could not see. The degree adverb 咁 joins the
+particle vocabulary (`唔好咁嘈` - don't be SO noisy - refuses the 嘈 with the adverb in
+between), which the vocabulary gate holds the package to.
+
+**Verified, not claimed.**
+`test_the_clause_is_the_unit_of_refusal.py`: **30 passed** - every conjunction the table
+names ends the clause in both directions (the wanted half stays wanted, the refused half
+stays refused, and the constraint still writes); every bridged refusal reads -1; and the
+eight cases D533 fixed are held green so the two units cannot drift apart. Proved to
+fail: removing the conjunction boundary reddens **17**, removing the verb bridge
+**3** (each probe put back and byte-compared). Live (`test_live_preferences.py`,
+`test_live_conversation_refinement.py`, `test_live_personalization_signal.py`,
+`test_live_the_refusal_does_not_flatten_the_lane.py`): **17 passed, 1 skipped** (the
+test's own note about the pre-seed corpus). Targeted regression (`-k "preference or
+structured or occasion or personaliz or merge or refinement or state or polarity or
+cuisine or transient or ranking or attribute or vocabulary or ambience or refusal or
+negation or clause"`) -> **1387 passed, 35 skipped**; (`-k "search or rank or card or
+score or facet or filter or avoid or understand or intent or nlu"`) -> **1058 passed, 38
+skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff
+check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
+
+**Residue measured and filed, not fixed.** The CONSTRAINT lane's window is eight
+characters past the negation, so "don't want spicy" (the value sits ten past the cue)
+still writes no `cuisine_avoid` - the preference lane now reads the refusal, the filter
+lane does not. Widening the window to sixteen was measured too: it then reads "no rush,
+want spicy" as a refusal of spicy. That lane's grammar is the next unit's, not this
+one's.

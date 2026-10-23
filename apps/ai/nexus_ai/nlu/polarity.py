@@ -69,12 +69,27 @@ _canonicalise_tables()
 #: clause, so a cue on the far side of a comma belongs to another clause and governs
 #: nothing there. Inside a clause, the Cantonese sentence particles do not separate
 #: anything, and a short word gap is still the same clause - "唔好食辣" (don't EAT
-#: spicy) refuses the spicy. The rule this replaces was `_LOCAL_FILLER.match(between)`,
+#: spicy) refuses the spicy, and "唔好咁嘈" (don't be SO noisy) refuses the 嘈 with the
+#: degree adverb 咁 still in between. The rule this replaces was `_LOCAL_FILLER.match(between)`,
 #: a pattern whose `*` quantifier matched the empty string, so ANY gap of three
 #: characters or fewer read as filler and the boundary was never enforced at all.
 _CLAUSE_BOUNDARY = re.compile(r"[,，。;；!?！？\n]")
-_LOCAL_FILLER = re.compile(r"[的地得咗喇啦呢個個\s]*")
+_LOCAL_FILLER = re.compile(r"[的地得咁咗喇啦呢個個\s]*")
 _ATTACHED_GAP = 3
+
+#: D535: the words that COORDINATE two clauses. The normalizer turns a clause comma
+#: into a space, but the conjunction survives it - so "cheap and no curry" still says
+#: which clause the refusal belongs to, and the reader must read it: the refusal is the
+#: curry's, not the cheap's. Written in the canonical spelling, like every cue table
+#: here (the text is canonicalised before it reaches this module, D447).
+_CLAUSE_CONJUNCTIONS = ("and", "or", "but", "同埋", "同", "和", "跟",
+                        "但是", "不過")
+
+#: D535: ONE verb may sit between a refusal and the thing refused without ending the
+#: clause - "I do not WANT spicy", "唔好食辣". Without it, the natural English refusal
+#: read as a LIKE: measured, "I do not want spicy food" answered +1 and the ranking
+#: lane boosted the very thing refused (the D522 shape, in English).
+_VERB_BRIDGE = ("want", "like", "eat", "have", "要", "想", "食", "吃", "鍾意", "喜歡")
 
 
 def _attached(between: str) -> bool:
@@ -84,9 +99,13 @@ def _attached(between: str) -> bool:
         return True
     if _CLAUSE_BOUNDARY.search(gap):
         return False
+    if any(conj in gap for conj in _CLAUSE_CONJUNCTIONS):
+        return False
     if _LOCAL_FILLER.fullmatch(gap):
         return True
-    return len(gap) <= _ATTACHED_GAP
+    if len(gap) <= _ATTACHED_GAP:
+        return True
+    return gap in _VERB_BRIDGE
 
 
 def _window_for(token: str) -> int:
