@@ -23356,3 +23356,39 @@ shared negation answers both consistently ("海鲜 avoid" -> the constraint and 
 other two shapes read nothing at all: a cue with a verb of its own after it is not
 clause-final, so "花生 少吃" and "peanut 別吃" write no constraint and no preference -
 the eat-less spelling is a hole in the clause rule, filed, not in the vocabulary.
+## 536. D542 - the doc gate's exemptions were claims nobody checked, and one of them was already false (`apps/ai/tests/test_doc_paths_are_real.py`)
+
+**What was measured.** D462's gate consults its exemption table BEFORE it looks for the
+name, so a declared name that becomes real stays invisible to the rule written to catch
+it: `embed.py` sat in `DECLARED_PROMISES` as "the platform's importer embeds them (not in
+this repo)" while `apps/ai/nexus_ai/rag/embed.py` had been in the repository since
+D510/D515 and `docs/RAG.md` names it as the lane's own Embed and Store stage - the
+exemption had outlived its fact and nothing could see it. The table also had no way to
+say the other thing a document does with a name: `docs/ENVIRONMENT_REPORT.md` names
+CPython's `site.py` to explain the locale hazard that kills every interpreter launch
+under a path the GBK codepage cannot decode - a fact about the machine, not a promise
+about this repository, and a flat "not here" row cannot say which of the two it is.
+
+**The fix.** The declarations are claims now, and each is held to what it claims: a
+declared name may not be a file the repository has (the dead `embed.py` row is deleted -
+the file is real); a declaration no judged document cites is a hiding place, not an
+exemption; and a borrowed name must resolve, here and now, to a file the interpreter
+produces OUTSIDE the repository root - `site.py` moves to its own `DECLARED_EXTERNAL`
+table carrying the import name the sentence means.
+
+**Verified, not claimed.**
+`test_doc_paths_are_real.py`: **5 passed**. Proved to fail, four mutations, each restored
+and byte-compared: re-adding the `embed.py` row reddens the first new gate (**1 failed,**
+**4 deselected**); a name no document cites reddens the second; a borrowed name that
+resolves inside the repository and one the interpreter cannot produce at all each redden
+the third. The vocabulary reference, the dead-constant census and the constraint table's
+vocabulary gate beside it -> **28 passed**; `ruff check` -> **All checks passed**; `mypy`
+-> **Success: no issues found in 1 source file**.
+
+**Residue measured and filed, not fixed.** The new gates read NAMES, not sentences: a
+declaration is green as long as some judged document still puts the name in backticks,
+whatever the sentence now says about it. Measured: `docs/AI.md` describes the planner
+(`orchestrator/planner.py`) in the present tense - "emits a typed `Plan`" - for a module
+that does not exist, under a declaration that says it is not built yet. The row stays
+green because the name is still cited; only a reader of the sentence could see the claim
+flip.

@@ -65,6 +65,12 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   preference: the user refuses and the product hears nothing. The clause rule would have to let
   the cue govern the verb's own object.
   Owner: the AI lane.
+- **The declarations are checked by name, not by sentence** - the doc gate's exemption
+  tables are green as long as a judged document still puts the name in backticks, whatever
+  the sentence now says about it: measured, `docs/AI.md` describes the planner
+  (`orchestrator/planner.py`) in the present tense under a declaration that says it is not
+  built yet (D542). Only a reader of the sentence could see the claim flip.
+  Owner: the AI lane.
 - **The four negations only the constraint table carries split the two lanes** - 不吃 / 別 /
   避免 / 少 are absent from the polarity table (D493's debt), so "海鲜 避免" writes
   `diet_avoid:seafood` and the preference `cuisine seafood +1` in one sentence, where the
@@ -1658,3 +1664,20 @@ the clause boundary surviving normalisation.
    ("海鲜 避免" writes the constraint and the +1 preference, "海鲜 avoid" writes the constraint
    and -1); and a cue with a verb of its own after it ("花生 少吃", "peanut 別吃") is not
    clause-final, so the eat-less spelling reads nothing at all.
+### 2026-10-24 (later still, the ninth) — D542: the doc gate's exemptions were claims nobody checked
+
+1. D542 (d6c7654) - the unit was found written in the working tree when this session opened,
+   uncommitted, and it was finished and verified here. D462's gate consults its exemption
+   table before it looks for the name, so a declared name that becomes real stays invisible
+   to the rule written to catch it: `embed.py` sat in `DECLARED_PROMISES` as the platform's
+   importer while `apps/ai/nexus_ai/rag/embed.py` had been in the repository since D510/D515
+   and `docs/RAG.md` names it as the lane's own Embed and Store stage. Three clauses now
+   hold each declaration to what it claims: a declared name may not be a file the
+   repository has, a declaration no judged document cites is deleted, and a borrowed name
+   must resolve to a file the interpreter produces outside the repository root. `site.py`,
+   which `docs/ENVIRONMENT_REPORT.md` names to explain the locale hazard, moves to a
+   `DECLARED_EXTERNAL` table carrying the import name the sentence means.
+
+**Queue spent:** nothing queued. One residue filed: the gates read names, not sentences -
+   `docs/AI.md` describes the planner in the present tense under a declaration that says it
+   is not built yet, and the row stays green because the name is still cited.
