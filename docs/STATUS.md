@@ -22518,3 +22518,52 @@ root -> **3 failed**. Targeted regression (cuisine, lexicon, vocabulary, canonic
 **1043 passed, 8 skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source
 files**; `ruff check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0
 failing**; the ten CI checkers -> green.
+## 520. D526 · a stored dislike that boosted the very thing it refused - "spicy" was a leaf nobody writes (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_the_spicy_word_speaks_the_seeds_own_leaves.py`, `apps/ai/tests/test_live_the_declared_dislike_demotes.py`)
+
+**What was measured.** The seed writes the demo consumer's dislike as
+`food/cuisine_dislike = {"values": ["spicy"]}`, and it writes each merchant's
+`spicy_cuisine` attribute as `m["leaf"] in ("hotpot", "korean", "thai", "indian",
+"malaysian", "sichuan", "hunan", "mexican")`. Two statements about one fact, and nothing
+held them to each other. The preference reader resolved "spicy" through the cuisine bridge,
+found no leaf of that name, and fell back to the identity - a leaf no merchant carries. The
+dislike therefore answered the same number for every merchant. Measured on the live corpus,
+over all 470 published merchants read as the demo user:
+
+    the 54 merchants the corpus itself calls spicy -> mean 0.7403
+    the other 416                                 -> mean 0.6591
+
+A declared dislike that leaves the refused merchants **0.0812 above** the rest is the D522
+inversion one plane over: the stored path instead of the transient one.
+
+**The fix.** One bridge entry. `CUISINE_LEAVES["spicy"]` now carries the seed's own
+derivation, respelled into the taxonomy that replaced it: `malaysian` is the seed's word
+for the leaf the taxonomy now writes as `singmal`, and `sichuan`/`hunan`/`mexican` name
+leaves the taxonomy does not write at all, so there is nothing to map them onto and they
+drop out. Measured after: the 54 spicy merchants read **0.5532** against **0.6591** for
+the rest - the dislike demotes. The same entry reaches the two other readers of the word
+for free, because they already go through the bridge: a typed "辣"/"spicy" preference, and
+the `avoid=["spicy"]` hard filter, both of which previously matched nothing.
+
+**Discipline note.** The seed's derivation is the authority for what the word means, and
+the taxonomy is the authority for how the leaves are spelled - so the gate reads the
+derivation out of `data/seed/generate.py` with `ast` (not by importing a CLI with a
+`main()`) and holds the bridge to it. The seed's own vocabulary is itself stale in the
+same way - see the seed-lane item filed below - but "spicy" is the one case where the
+derivation's intent is unambiguous and the respelling is mechanical, so it is fixed here
+rather than reported.
+
+**Verified, not claimed.** The gate: **9 passed** - the seed really declares the dislike,
+the bridge carries the seed's own derivation respelled into the taxonomy, all 5 bridged
+leaves match the word, a sibling leaf of the same root does not, and the stored dislike
+separates the two merchants. Proved to fail four ways (each probe put back, file
+byte-compared afterwards): the entry removed -> **8 failed**; narrowed to one leaf ->
+**5 failed**; widened past the seed's derivation -> **1 failed**; left at the old dead
+spelling `malaysian` -> **8 failed**. Live contract re-measured on this database
+(**3 passed** in that file): the demo user's dislike row is on the plane, the corpus
+carries the leaves, and the stored dislike scores the refused merchants below the rest.
+Targeted regression (cuisine, lexicon, vocabulary, canonical, preference, spicy, avoid,
+filter) -> **1418 passed, 24 skipped**; live (preferences, search contract, vocabulary
+spelling, sort preference, canonical query, the new dislike gate) -> **30 passed**; `mypy
+nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check .` -> **All
+checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers ->
+green.

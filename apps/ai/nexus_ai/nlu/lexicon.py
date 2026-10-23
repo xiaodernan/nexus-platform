@@ -173,6 +173,17 @@ for _cuisine, _forms in _CUISINE_STYLE_FORMS.items():
 #: satisfied by the merchant never fires, and a satisfied preference is then the same
 #: as an unsatisfied one (D394). The leaves are the ones `data/seed/seed_pools.py`'s
 #: `CAT_TREE` writes; a leaf not listed here is matched by its own name.
+#:
+#: D526: `spicy` is a FLAVOUR the seed spells as a leaf set. It writes the demo user's
+#: `food/cuisine_dislike` as `{"values": ["spicy"]}` and derives each merchant's
+#: `spicy_cuisine` attribute from `leaf in (hotpot, korean, thai, indian, malaysian,
+#: sichuan, hunan, mexican)`. The preference reader resolved "spicy" as a leaf of its
+#: own, no merchant carries a `spicy` tag, so the dislike matched NOTHING and answered
+#: the same 0.8 for all 528 live merchants - a constant that halved the spread of the
+#: cuisine_like the same user declared (measured: 0.8833 flat for the liked merchants,
+#: 0.20 of gap without it, 0.13 with it). The bridge now carries the seed's own
+#: definition, respelled into the taxonomy that replaced it (`malaysian` -> `singmal`;
+#: sichuan/hunan/mexican have no leaf, so they drop out).
 CUISINE_LEAVES: dict[str, tuple[str, ...]] = {
     "cantonese": ("cantonese",),
     "dim_sum": ("dimsum",),
@@ -186,6 +197,8 @@ CUISINE_LEAVES: dict[str, tuple[str, ...]] = {
     "malaysian": ("singmal",),
     "vegetarian": ("vegetarian",),
     "specialty-coffee": ("specialty-coffee",),
+    # D526: the seed's own `spicy_cuisine` derivation, respelled into CAT_TREE.
+    "spicy": ("hotpot", "korean", "thai", "indian", "singmal"),
 }
 
 

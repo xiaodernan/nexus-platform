@@ -54,6 +54,25 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The readability floor** — live text measures 4.477:1 against the 4.5 AA bound the visual test
   asserts. Owner: the web stream.
 
+- **The seed's occasion/style/view derivations speak a leaf vocabulary the taxonomy no longer
+  writes** — D526 measured it on a fresh 300-merchant seed. `data/seed/generate.py` derives
+  `solo_occasion`, `scenic_view` and `outdoor_style`'s leaf leg from tuples in which **0 of
+  the terms is a leaf `CAT_TREE` writes**, so those attributes are `False` for every merchant
+  forever: `solo_occasion` = `("cafe", "bakery", "restaurant", "fast_food")`, `scenic_view` =
+  `("attraction", "hotel", "rooftop", "seafood")`, `outdoor_style` = `("attraction", "park",
+  "outdoor_seating")`. The NLU understands `occasion=solo` and `view=scenic`, the matcher
+  reads `solo_occasion`/`scenic_view`, and the corpus never writes them True — so both
+  preferences read 0.5 (neutral) on every merchant. The other derivations are partly dead
+  for the same reason: `date_occasion` 5 of 13 terms live (11.3% of merchants),
+  `group_occasion` 2 of 6 (4.0%), `family_occasion` 1 of 6 (3.7%), `business_occasion` 1 of 6
+  (1.7%). The dead terms are three vocabularies mixed in one tuple — root names (`cafe`,
+  `bar`, `hotel`), the NLU's cuisine keys (`dim_sum`, `japanese`, `seafood`, `western`,
+  `malaysian`), and words no plane has ever written (`bbq`, `bakery`, `fast_food`,
+  `attraction`, `park`, `rooftop`, `cooking_class`, `sichuan`, `hunan`, `mexican`).
+  `escape_room` is the taxonomy's `escape-room` with the separator the NLU uses, so it is a
+  spelling, not a rename. Owner: the seed lane — the AI lane fixed only `spicy` (D526),
+  where the respelling was mechanical; what `solo` and `scenic` MEAN is the seed lane's call.
+
 ### Open, waiting on the AI lane (next)
 
 - **The `food/cuisine_like` structured preference is read by the matcher but not produced by the NLU** — the seed stores `{"values": ["cantonese","sushi"]}` under `food/cuisine_like`, and the category inference reads it, but a typed "我想食粵菜" produces a `cuisine` preference (a string value) rather than a `cuisine_like` one (an object with `values`). The two shapes now MEET at the matcher (D394 routes both through `cuisine_matches`), but they do not meet at the WRITER: a typed cuisine is not stored anywhere, so the user's own words about a cuisine are not recorded as a preference.
