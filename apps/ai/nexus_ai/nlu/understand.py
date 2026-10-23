@@ -40,6 +40,7 @@ from nexus_ai.nlu.lexicon import (
 from nexus_ai.nlu.polarity import (
     apply_polarity,
     clause_attached,
+    clause_final,
     forward_gap,
     is_existential_question,
 )
@@ -593,6 +594,16 @@ def _fill_constraints(ex: IntentExtraction, text: str) -> IntentExtraction:
     value on the far side of it is not refused ("唔好辣，想找個安靜的咖啡店" refuses the
     spicy and nothing else). Before the separator existed both sentences arrived as one
     string and the lane could not tell them apart either.
+
+    D539: the lane reads BACKWARD too. A refusal written the Cantonese way puts the
+    value first - "咖喱唔要" refuses the curry - and the forward-only lane answered
+    nothing for every one of those sentences while the preference lane read the same
+    refusal. Three conditions, each the mirror of a rule the polarity lane already
+    reads: the gap between the value and the cue keeps EVERY separator in it (there
+    the comma really did end the value's clause - "辣，唔好" leaves the 辣 alone,
+    which is why this is not `forward_gap`), the cue must be final in its own clause
+    (a cue with an object after it keeps that object, D537), and the existential
+    question is exempt (D533).
     """
     seen: set[tuple[str, str]] = set()
     low = (text or "").lower()
@@ -613,9 +624,20 @@ def _fill_constraints(ex: IntentExtraction, text: str) -> IntentExtraction:
                     # own clause, and one verb may bridge the two - "don't WANT spicy"
                     # refuses the spicy, while "no rush want spicy" refuses nothing.
                     for at in cue_positions(value, text, low):
+                        if at < after:
+                            # D539: the value sits BEFORE the cue - "咖喱唔要" refuses
+                            # the curry. The gap keeps every separator in it, because
+                            # there the comma really did end the value's clause
+                            # ("辣，唔好" leaves the 辣 alone), and the cue must govern
+                            # nothing after it in its own clause - a cue with an object
+                            # of its own keeps that object (D537).
+                            if not (at + len(value) <= start
+                                    and clause_attached(low[at + len(value):start])
+                                    and clause_final(low, start, cue)):
+                                continue
                         # D538: the separator directly under the cue is the cue's own
                         # punctuation; one anywhere else in the gap is a clause boundary.
-                        if at < after or not clause_attached(forward_gap(low, after, at)):
+                        elif not clause_attached(forward_gap(low, after, at)):
                             continue
                         canon = canon_constraint(v)
                         if (key, canon) not in seen:

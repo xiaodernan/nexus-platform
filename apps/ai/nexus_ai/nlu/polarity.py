@@ -180,7 +180,7 @@ def forward_gap(low: str, cue_end: int, token_at: int) -> str:
     return low[cue_end:token_at].lstrip(" \t" + CLAUSE_SEPARATOR)
 
 
-def _clause_final(low: str, cue_at: int, cue: str) -> bool:
+def clause_final(low: str, cue_at: int, cue: str) -> bool:
     """Whether nothing but the clause's own particles follows the cue.
 
     D537: a cue that still has words after it is speaking about THOSE words. Measured,
@@ -271,7 +271,7 @@ def polarity_for(text: str, token: str) -> int:
             # governs nothing (D533), and a cue with an object after it governs THAT
             # object, not the token before it (D537).
             if (clause_attached(low[idx + len(tok):cue_at])
-                    and _clause_final(low, cue_at, c)):
+                    and clause_final(low, cue_at, c)):
                 return -1
 
     return 1

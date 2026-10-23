@@ -206,8 +206,15 @@ def test_the_constraint_lane_reads_the_same_clauses(text, want):
 
 
 def test_a_refusal_in_the_next_clause_writes_no_constraint():
-    """The behavioural half of the smear: the search plan does not filter for it either."""
-    assert constraints("想食辣，咖喱唔好") == set()
+    """The behavioural half of the smear: the search plan filters for the refused thing only.
+
+    D539: the lane read forward only when this pin was written, so the sentence wrote
+    nothing at all - which held the 辣 out of the filter by refusing the curry nowhere.
+    The backward arm reads the Cantonese order now, so the sentence writes exactly the
+    curry's constraint: the 辣 stays out of the filter AND the 咖喱 is filtered for,
+    which is the pair of readings the two lanes owe each other.
+    """
+    assert constraints("想食辣，咖喱唔好") == {("cuisine_avoid", "curry")}
 
 
 # ------------------------------------------------------------------ the field rules
