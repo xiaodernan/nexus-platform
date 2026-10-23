@@ -22836,3 +22836,49 @@ passed, 31 skipped**; (`-k "search or rank or card or score or facet or filter o
 or understand or intent or nlu"`) -> **1058 passed, 38 skipped**; `mypy nexus_ai` ->
 **Success: no issues found in 59 source files**; `ruff check .` -> **All checks
 passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
+
+## 526. D532 · the seed derived the preference attributes from names the taxonomy does not carry (`data/seed/seed_pools.py`, `data/seed/generate.py`, `apps/ai/tests/test_the_seed_derives_preferences_from_leaves_the_taxonomy_writes.py`, `apps/ai/tests/test_the_spicy_word_speaks_the_seeds_own_leaves.py`)
+
+**What was measured.** The seed derives seven merchant `attributes` from the merchant's
+category, and every name it compared against was a name the taxonomy does not carry.
+`restaurant`, `cafe`, `bar` and `hotel` are TOPS in `CAT_TREE`, not leaves - a merchant's
+`leaf` is `sushi` or `ramen`, never `restaurant` - while `western`, `seafood`, `dim_sum`,
+`malaysian`, `bakery`, `bbq`, `cooking_class`, `japanese` and `escape_room` are
+respellings of leaves, and `attraction`, `park`, `rooftop`, `fast_food`, `sichuan`,
+`hunan` and `mexican` name no leaf at all. Measured on the seed's own output (60
+merchants): `solo_occasion` was True for **0 of 60** merchants and `scenic_view` for
+**0** - the preferences the NLU emits (`occasion/solo`, `scene/scenic`) were inert on
+every row - while `date_occasion` (4), `group_occasion` (1), `family_occasion` (1) and
+`business_occasion` (1) sat barely above the 15% coin-flip the generator sprinkles for
+variety. D528 had just wired the occasion matcher to its weight (D522's lesson), so the
+matcher was weighting a flag that was always False: the user is told they have a
+preference for somewhere quiet to eat alone, the corpus says nothing, and the ranking
+lane answers from a constant. This is the D518 shape a fifth time - one fact, two
+planes - with the writer and the reader on opposite sides of the seed.
+
+**The fix.** The leaf sets moved into `seed_pools.py` beside the tree they name
+(`DATE_LEAVES`, `GROUP_LEAVES`, `FAMILY_LEAVES`, `BUSINESS_LEAVES`, `SOLO_LEAVES`,
+`SCENIC_LEAVES`, `SPICY_LEAVES`), the tops are read off the tree with `_leaves_under()`
+instead of retyped, and the names that resolve to nothing were dropped. Measured on the
+same 60 merchants after: `solo_occasion` **27 of 60**, `scenic_view` 2,
+`date_occasion` 34, `group_occasion` 25, `family_occasion` 28, `business_occasion` 30.
+`outdoor_style` stays at the generator's own fallback because the taxonomy carries no
+outdoor leaf; that is now recorded in the set itself (`OUTDOOR_LEAVES = ()`) instead of
+being left to look like a fact about the data.
+
+**Verified, not claimed.**
+`test_the_seed_derives_preferences_from_leaves_the_taxonomy_writes.py`: **21 passed** -
+every member of every set is a leaf the tree writes, no set names a top, the generator's
+derivation reads the set it was measured against, the sets are not vacuously small,
+`OUTDOOR_LEAVES` is empty for the stated reason, and the generated corpus really does
+carry each preference on both sides (the attribute is True for at least one merchant,
+so the preference the NLU emits is not inert). The D526 spicy gate was re-read against
+the named set and still holds: **9 passed**. Proved to fail: putting `restaurant` - a
+TOP - back into `SPICY_LEAVES` reddens **2** checks (the probe was put back and the file
+byte-compared afterwards); the same holds for a derivation naming a set `seed_pools`
+does not write. Targeted regression (`-k "preference or structured or occasion or
+personaliz or merge or refinement or state or polarity or cuisine or transient or
+ranking or attribute or vocabulary or ambience"`) -> **1304 passed, 31 skipped**;
+(`-k "seed or taxonomy or category or leaf or falsifier"`) -> **469 passed, 5 skipped**;
+`mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check .` ->
+**All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.

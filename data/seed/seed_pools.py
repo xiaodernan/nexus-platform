@@ -179,6 +179,62 @@ TOP_NAMES = {t[0]: (t[1], t[2]) for t in CAT_TREE}
 LEAF_CUISINE_EN = {leaf[0]: leaf[1] for top in CAT_TREE for leaf in top[3]}
 LEAF_CUISINE_ZH = {leaf[0]: leaf[2] for top in CAT_TREE for leaf in top[3]}
 
+# ------------------------------------------------------------------ preference leaf sets (D532)
+# The merchant `attributes` the seed derives from a category were written against names the
+# taxonomy does not carry: `restaurant`, `cafe`, `bar` and `hotel` are TOPS, `western`,
+# `seafood`, `dim_sum`, `malaysian`, `bakery`, `bbq`, `cooking_class`, `japanese` and
+# `escape_room` are respellings of leaves, and `attraction`, `park`, `rooftop`, `fast_food`,
+# `sichuan`, `hunan` and `mexican` name no leaf at all. Measured on the seed's own output,
+# `solo_occasion` was True for 0 of 60 merchants and `scenic_view` for 0 - the preference the
+# NLU emits was inert on every row, and nothing said so. Every name below is a leaf the
+# tree carries, and the tops are read off the tree rather than retyped, so a rename cannot
+# silently kill them again.
+
+
+def _leaves_under(*tops: str) -> tuple[str, ...]:
+    """Every leaf under the named tops, in tree order, without repeats."""
+    return tuple(dict.fromkeys(
+        leaf[0] for top in CAT_TREE if top[0] in tops for leaf in top[3]))
+
+
+def _leaves(*names: str) -> tuple[str, ...]:
+    """The named leaves, in the order given, without repeats."""
+    return tuple(dict.fromkeys(names))
+
+
+_JAPANESE_LEAVES = ("sushi", "ramen", "izakaya")
+_CLASS_LEAVES = ("craft-workshop", "paint-sip")
+
+DATE_LEAVES = _leaves(*_leaves_under("restaurant", "cafe", "bar"), "hotpot",
+                      "western-grill", "italian", *_JAPANESE_LEAVES, "korean", "thai",
+                      "indian", "seafood-grill", "dimsum", "singmal")
+GROUP_LEAVES = _leaves(*_leaves_under("bar", "restaurant"), "hotpot", "karaoke",
+                       "escape-room", "seafood-grill")
+FAMILY_LEAVES = _leaves(*_leaves_under("restaurant", "cafe"), "hotpot", "dimsum",
+                        "bakery-dessert", *_CLASS_LEAVES)
+BUSINESS_LEAVES = _leaves(*_leaves_under("restaurant", "hotel", "cafe"),
+                          "western-grill", "italian", *_JAPANESE_LEAVES)
+SOLO_LEAVES = _leaves_under("cafe", "restaurant")
+SCENIC_LEAVES = _leaves(*_leaves_under("hotel"), "seafood-grill")
+#: the taxonomy carries no outdoor leaf, so the leaf half of `outdoor_style` is empty by
+#: construction and the flag is the generator's own fallback alone. Recorded here rather
+#: than left to look like a fact about the data.
+OUTDOOR_LEAVES: tuple[str, ...] = ()
+SPICY_LEAVES = _leaves("hotpot", "korean", "thai", "indian", "singmal")
+
+#: every name the preference derivations are allowed to use, for the gate that holds them
+#: to the tree (D532).
+PREFERENCE_LEAF_SETS = {
+    "DATE_LEAVES": DATE_LEAVES,
+    "GROUP_LEAVES": GROUP_LEAVES,
+    "FAMILY_LEAVES": FAMILY_LEAVES,
+    "BUSINESS_LEAVES": BUSINESS_LEAVES,
+    "SOLO_LEAVES": SOLO_LEAVES,
+    "SCENIC_LEAVES": SCENIC_LEAVES,
+    "OUTDOOR_LEAVES": OUTDOOR_LEAVES,
+    "SPICY_LEAVES": SPICY_LEAVES,
+}
+
 # --------------------------------------------------------------------------- opening hours profiles
 # blocks of (open_h, open_m, close_h, close_m); close >= 24 means it crosses midnight.
 HOURS_PROFILES = {

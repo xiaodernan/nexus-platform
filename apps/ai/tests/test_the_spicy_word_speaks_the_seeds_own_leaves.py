@@ -3,7 +3,7 @@
 The seed writes the demo user's dislike as `food/cuisine_dislike = {"values": ["spicy"]}`,
 and it writes each merchant's `spicy_cuisine` attribute as
 
-    m["leaf"] in ("hotpot", "korean", "thai", "indian", "malaysian", "sichuan", "hunan", "mexican")
+    m["leaf"] in SPICY_LEAVES
 
 Those are two statements about ONE fact, and until now nothing held them to each other. The
 preference reader resolved "spicy" through the cuisine bridge, found no leaf of that name,
@@ -25,8 +25,12 @@ This gate reads the seed's own derivation and holds the bridge to it:
   * and the dislike SEPARATES: a spicy merchant is scored below a merchant that is not,
     which is the entire point of storing a dislike.
 
+D532 moved the tuple into `seed_pools.py` beside the tree it names, so the seed now derives
+`spicy_cuisine` from `SPICY_LEAVES`; this gate reads the set the name resolves to, and a
+name that resolves to no set reddens the check below.
+
 It was **proved to fail**: dropping "spicy" from the bridge reddens every check here (the
-probe was put back).
+probe was put back), and so does naming a set `seed_pools` does not write.
 """
 
 from __future__ import annotations
@@ -45,7 +49,7 @@ _GENERATOR = _SEED_DIR / "generate.py"
 
 sys.path.insert(0, str(_SEED_DIR))
 
-from seed_pools import CAT_TREE  # noqa: E402  (the writer of the taxonomy the seed derives from)
+from seed_pools import CAT_TREE, PREFERENCE_LEAF_SETS  # noqa: E402  (the writer of the taxonomy the seed derives from)
 
 #: leaf slug -> the root it hangs from - the taxonomy the seed's derivations name.
 SEED_LEAVES = {leaf[0]: top[0] for top in CAT_TREE for leaf in top[3]}
@@ -67,10 +71,21 @@ def _seed_facts() -> tuple[tuple[str, ...], list[str]]:
                 if isinstance(key, ast.Constant) and key.value == "spicy_cuisine":
                     assert isinstance(value, ast.Compare) and len(value.comparators) == 1
                     operand = value.comparators[0]
-                    assert isinstance(operand, ast.Tuple), (
-                        "the seed's spicy_cuisine derivation is no longer a membership test "
-                        "against a tuple of leaves - this gate must be re-read against it")
-                    terms = tuple(ast.literal_eval(operand))
+                    if isinstance(operand, ast.Name):
+                        # D532: the tuple moved into seed_pools beside the tree it names,
+                        # so the derivation now reads a set by name. Hold the name to the
+                        # registry, so a name that resolves to nothing reddens here.
+                        assert operand.id in PREFERENCE_LEAF_SETS, (
+                            f"the seed derives spicy_cuisine from {operand.id!r}, and "
+                            f"seed_pools writes no set of that name - the derivation reads "
+                            f"a set that does not exist")
+                        terms = tuple(PREFERENCE_LEAF_SETS[operand.id])
+                    else:
+                        assert isinstance(operand, ast.Tuple), (
+                            "the seed's spicy_cuisine derivation is no longer a membership "
+                            "test against a tuple of leaves or a named leaf set - this "
+                            "gate must be re-read against it")
+                        terms = tuple(ast.literal_eval(operand))
         if isinstance(node, ast.Tuple) and len(node.elts) >= 3:
             first, second = node.elts[0], node.elts[1]
             if (isinstance(first, ast.Constant) and first.value == "food"

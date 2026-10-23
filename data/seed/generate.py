@@ -37,7 +37,9 @@ from seed_pools import (  # noqa: E402
     DISH_POOL, DEMO_URI, DISCLAIMER, DISCLAIMER_UNI, DISTRICTS, DIST_BY_SLUG, DOW_EN,
     DOW_ZH, HOURS_PROFILES, LEAF_CUISINE_EN, LEAF_CUISINE_ZH, LEAF_SPEC, MIX_CONNECTORS,
     NAME_EN_1, NAME_EN_2, NAME_SUFFIX_ZH, NAME_ZH_1, NAME_ZH_2, OCCASION, PASSWORD_HASH_PLACEHOLDER,
-    PARTY, POLICY_LINES, REAL_HK_BLOCKLIST, REVIEW_CLOSER, REVIEW_OPENER, REVIEW_TEXT,
+    PARTY, POLICY_LINES, BUSINESS_LEAVES, DATE_LEAVES, FAMILY_LEAVES, GROUP_LEAVES,
+    OUTDOOR_LEAVES, REAL_HK_BLOCKLIST, REVIEW_CLOSER, REVIEW_OPENER, REVIEW_TEXT,
+    SCENIC_LEAVES, SOLO_LEAVES, SPICY_LEAVES,
     SHA_TIN_CENTROID, STREET_EN_HEAD, STREET_EN_SUF, STREET_ZH_HEAD, STREET_ZH_SUF,
     TOP_NAMES, VERDICT, WHO,
 )
@@ -1053,14 +1055,30 @@ class Gen:
                 "quiet_ambience": m["aspect_mean"]["noise"] >= 4.2,
                 "lively_ambience": m["aspect_mean"]["noise"] < 3.0,
                 # Occasion preferences (NLU: occasion/date, occasion/group, occasion/family, occasion/business, occasion/solo)
-                "date_occasion": m["leaf"] in ("restaurant", "cafe", "bar", "hotpot", "western", "italian", "japanese", "korean", "thai", "indian", "seafood", "dim_sum", "malaysian"),
-                "group_occasion": m["leaf"] in ("hotpot", "karaoke", "escape_room", "bar", "restaurant", "bbq"),
-                "family_occasion": m["leaf"] in ("restaurant", "cafe", "dim_sum", "hotpot", "bakery", "cooking_class"),
-                "business_occasion": m["leaf"] in ("restaurant", "hotel", "cafe", "western", "japanese", "italian"),
-                "solo_occasion": m["leaf"] in ("cafe", "bakery", "restaurant", "fast_food"),
+                # D532: these were written against names the taxonomy does not carry.
+                # `restaurant`, `cafe`, `bar` and `hotel` are TOPS, not leaves, so a
+                # merchant whose leaf is `sushi` matched none of them; `western`,
+                # `seafood`, `dim_sum`, `malaysian`, `bakery`, `bbq`, `cooking_class`,
+                # `japanese` and `escape_room` are respellings of leaves; and
+                # `fast_food` names no leaf at all. Measured on the seed's own
+                # output, `solo_occasion` was True for 0 of 60 merchants and
+                # `business_occasion` for 1 - the preference the NLU emits was inert
+                # on every row, and nothing said so. Every name below is now a leaf
+                # the taxonomy carries, and the tops are read off the tree rather
+                # than retyped, so a rename cannot silently kill them again.
+                "date_occasion": m["leaf"] in DATE_LEAVES,
+                "group_occasion": m["leaf"] in GROUP_LEAVES,
+                "family_occasion": m["leaf"] in FAMILY_LEAVES,
+                "business_occasion": m["leaf"] in BUSINESS_LEAVES,
+                "solo_occasion": m["leaf"] in SOLO_LEAVES,
                 # Style preferences (NLU: style/ambience, style/outdoor, style/indoor)
                 "ambience_style": m["aspect_mean"]["value"] >= 4.0,  # value as proxy for overall quality/ambience
-                "outdoor_style": m["leaf"] in ("attraction", "park", "outdoor_seating") or self.rng.random() < 0.15,
+                # D532: `attraction`, `park` and `outdoor_seating` name no leaf, so the
+                # leaf half of this never fired and the flag was the 15% fallback
+                # alone. The taxonomy carries no outdoor leaf at all, so the set stays
+                # empty and that is recorded here rather than left to look like a
+                # fact about the data.
+                "outdoor_style": m["leaf"] in OUTDOOR_LEAVES or self.rng.random() < 0.15,
                 "indoor_style": True,  # most HK venues are indoor
                 # Access preferences (NLU: access/mtr_near, access/accessible, access/parking, access/pet_friendly)
                 "mtr_near_access": m["mtr_min"] <= 5,
@@ -1068,9 +1086,18 @@ class Gen:
                 "parking_access": self.rng.random() < 0.3,
                 "pet_friendly_access": self.rng.random() < 0.2,
                 # View preferences (NLU: view/scenic)
-                "scenic_view": m["leaf"] in ("attraction", "hotel", "rooftop", "seafood") and self.rng.random() < 0.3,
+                # D532: `attraction`, `rooftop` and `seafood` name no leaf, and
+                # `hotel` is a top - so this was False for every merchant on the
+                # corpus and the view preference was inert. `scenic_view` was True
+                # for 0 of 60 merchants before, and for the hotels and the seafood
+                # houses the flag was written for after.
+                "scenic_view": m["leaf"] in SCENIC_LEAVES and self.rng.random() < 0.3,
                 # Cuisine preferences (NLU: cuisine/spicy)
-                "spicy_cuisine": m["leaf"] in ("hotpot", "korean", "thai", "indian", "malaysian", "sichuan", "hunan", "mexican"),
+                # D532: `malaysian` is the taxonomy's `singmal`, and `sichuan`,
+                # `hunan` and `mexican` name no leaf at all - the seed asserted a
+                # spicy cuisine the corpus does not carry (D526's shape, three
+                # more times).
+                "spicy_cuisine": m["leaf"] in SPICY_LEAVES,
                 # Price sense preferences (NLU: price_sense/cheap, price_sense/premium)
                 "cheap_price_sense": m["avg_price"] < 100,
                 "premium_price_sense": m["avg_price"] > 400,
