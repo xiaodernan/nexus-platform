@@ -22343,3 +22343,49 @@ tags `sushi` / `ramen` / `izakaya` surface (**11 passed** in that file). Targete
 (search contract, preferences, vocabulary spelling, conversation refinement) -> **22 passed**;
 `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check .` -> **All
 checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers -> green.
+
+## 516. D522 · the query's own cuisine preference was read out of a JSONB key the seed never writes - and a DISLIKE scored the maximum (`apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_the_intent_cuisine_reads_the_rows_columns.py`, `apps/ai/tests/test_live_search_contract.py`)
+
+**What was measured.** A merchant's `category_primary` and `tags` are COLUMNS on its row.
+The `attributes` JSONB carries the booleans - `quiet_ambience`, `wheelchair_access`,
+`opens_late` - and never the category, never the tags (measured on this corpus). The
+stored-preference path knew that and folded the row's columns in before matching; the
+transient path - the one that serves the preferences the user typed in THIS query - read
+`attrs.get("category_primary")` and `attrs.get("tags")` straight out of the JSONB, so both
+were empty for every merchant in the corpus. An empty category and an empty tag list never
+match a cuisine, so every cuisine preference fell to the non-matching branch:
+
+    a cuisine the user LIKED    -> 0.5
+    a cuisine the user DISLIKED -> 1.0   (the maximum)
+
+Measured through the API on the live corpus, `query="素食唔好"` (not vegetarian) gave
+every Vegetarian merchant `personalization = 1.0` and they ranked **1, 2, 3, 4**, while
+`query="想食素食"` (I want vegetarian) gave them `0.5`. The platform scored the thing
+the user refused above the thing they asked for - and the card named no preference at all,
+because a match that never fires records no label.
+
+**The fix.** One reader of one fact: `_enriched_attrs(row, attrs)` folds the row's own
+columns (`avg_price_hkd`, `district`, `category_primary`, `tags`) into the JSONB, and BOTH
+preference paths now call it - the stored path's inline copy is gone. Measured after:
+`想食素食` -> the Vegetarian merchants rank 1, 2, 3, 4;
+`素食唔好` -> they fall to 21, 35, 43; `想食日料` -> Ramen & Noodles at 1, 2;
+`唔好日料` -> no Japanese leaf in the top 50 at all.
+
+**Discipline note.** The stored path had the enrichment inline and the transient path did
+not, and the copy that drifted is the one that serves the live query - the D518 shape again,
+one fact with two readers. D394's gate covered the stored path (`user_preferences`,
+`cuisine_like`) and passed the whole time, because a gate written against one reader says
+nothing about its twin. Folding the row's columns is now the ONE reader both paths call, so
+the next preference kind cannot be added to one lane and forgotten in the other.
+
+**Verified, not claimed.** The gate: **12 passed** - the query's cuisine fires on the
+merchant the corpus tags (five spellings across five cuisines), the polarity points the
+right way in both directions, the card names the preference as `typed`, and the intent block
+is pinned to the shared reader. Proved to fail: reading `merchant_attrs[mid]` instead of
+`_enriched_attrs(r, ...)` reddens **9** of the 12, and the live check with it. Live contract
+re-measured on this database (**12 passed** in that file). Targeted regression (cuisine,
+preference, personalization, ranking, search, intent, card) -> **806 passed**; live (search
+contract, preferences, sort preference, vocabulary spelling, conversation refinement) ->
+**25 passed**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff
+check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI
+checkers -> green.

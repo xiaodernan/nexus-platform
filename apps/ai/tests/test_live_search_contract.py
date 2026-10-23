@@ -263,3 +263,43 @@ def test_a_query_naming_the_cuisine_in_its_own_name_finds_it(live_settings):
     assert japanese & kept, (
         "the unfiltered search surfaces none of the merchants the corpus tags with the "
         "cuisine's leaves - this database cannot measure the cuisine preference")
+
+
+def test_a_refused_cuisine_is_not_served_at_the_top(live_settings):
+    """D522: the query's own cuisine preference must read the row's columns.
+
+    Measured on this database before the fix: `query="\u7d20\u98df\u5514\u597d"` (not vegetarian) gave
+    every Vegetarian merchant personalization 1.0 - the maximum - and they ranked 1, 2, 3, 4,
+    while `query="\u60f3\u98df\u7d20\u98df"` (I want vegetarian) gave them 0.5. The reader was looking
+    for `category_primary` and `tags` inside the `attributes` JSONB, where the seed never
+    writes them, so no cuisine ever matched and the non-matching branch scored a DISLIKE
+    above a LIKE.
+    """
+    if _published(live_settings) == 0:
+        pytest.skip("no published merchants in this database - needs the demo seed")
+    import asyncio
+
+    from nexus_ai.db import pool as db_pool
+
+    async def _tagged(tag):
+        db = await db_pool.connect(live_settings, force_new=True)
+        try:
+            rows = await db.readonly(
+                "select slug from merchants where status = 'published' and tags @> $1::text[]",
+                [tag])
+            return {r["slug"] for r in rows}
+        finally:
+            await db_pool.dispose()
+
+    vegetarian = asyncio.run(_tagged("vegetarian"))
+    assert vegetarian, "the corpus carries the tag and the query found none of it"
+
+    wanted = _search(live_settings, query="\u60f3\u98df\u7d20\u98df", limit=50)
+    refused = _search(live_settings, query="\u7d20\u98df\u5514\u597d", limit=50)
+    wanted_top = {i["slug"] for i in (wanted.get("items") or [])[:4]}
+    refused_top = {i["slug"] for i in (refused.get("items") or [])[:4]}
+    assert wanted_top & vegetarian, (
+        "a cuisine the user asked for does not lead the answer - the preference never fired")
+    assert not (wanted_top & refused_top), (
+        f"the merchants a cuisine the user asked for leads with are still at the top when "
+        f"the user refuses that cuisine: {sorted(wanted_top & refused_top)}")

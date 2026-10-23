@@ -547,6 +547,30 @@ def candidates_from_rows(rows: Sequence[dict[str, Any]], plan: SearchPlan, *,
     return out
 
 
+#: the merchant row's own columns that the `attributes` JSONB does NOT carry. A preference
+#: reader handed only the JSONB reads an empty category and no tags at all - and a cuisine
+#: matcher that cannot see either one never fires (D522).
+_ROW_FIELDS = ("avg_price_hkd", "district", "category_primary", "tags")
+
+
+def _enriched_attrs(row: dict[str, Any], attrs: dict[str, Any]) -> dict[str, Any]:
+    """The merchant's attributes with the ROW's own columns folded in.
+
+    `category_primary` and `tags` are columns on the merchant row, not keys of the
+    `attributes` JSONB (measured on this corpus: the JSONB carries the booleans -
+    `quiet_ambience`, `wheelchair_access`, `opens_late` - and never the category or the
+    tags). The stored-preference path folds them in; until D522 the transient intent path
+    did not, so a cuisine preference taken from the query the user just typed was read
+    against an empty category and an empty tag list - which never matches, and whose
+    non-matching branch scores a DISLIKED cuisine 1.0 and a LIKED one 0.5.
+    """
+    out = dict(attrs)
+    for column in _ROW_FIELDS:
+        if row.get(column) is not None:
+            out[column] = row.get(column)
+    return out
+
+
 def _iso(value: Any) -> str | None:
     if isinstance(value, datetime):
         return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -1004,10 +1028,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         continue
                     attrs = merchant_attrs[mid]
                     # Also include relevant top-level fields for budget/district matching
-                    enriched_attrs = dict(attrs)
-                    for field in ("avg_price_hkd", "district", "category_primary", "tags"):
-                        if r.get(field) is not None:
-                            enriched_attrs[field] = r.get(field)
+                    enriched_attrs = _enriched_attrs(r, attrs)
                     pref_scores: list[float] = []
                     matched_labels: list[dict[str, str]] = []
                     for rule in pref_rules:
@@ -1047,7 +1068,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
             mid = str(r.get("merchant_id") or r.get("id"))
             if mid not in merchant_attrs:
                 continue
-            attrs = merchant_attrs[mid]
+            attrs = _enriched_attrs(r, merchant_attrs[mid])
             intent_pref_scores: list[float] = []
             intent_matched_labels: list[dict[str, str]] = []
             for pref in intent_preferences:
