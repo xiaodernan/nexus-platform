@@ -22882,3 +22882,56 @@ ranking or attribute or vocabulary or ambience"`) -> **1304 passed, 31 skipped**
 (`-k "seed or taxonomy or category or leaf or falsifier"`) -> **469 passed, 5 skipped**;
 `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check .` ->
 **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
+
+## 527. D533 · a question was read as a refusal, and a refusal governed clauses it never sat in (`apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/tests/test_a_question_is_not_a_refusal.py`)
+
+**What was measured.** The product names its question vocabulary in `ASK_MERCHANT_CUES` -
+有無, 有无, 有冇 - and its refusal vocabulary in `NEGATION_CUES` - 冇 among them. Two
+tables, one pair of characters, opposite meanings, and the reader that runs on the
+sentence had to pick one. It picked the refusal. Measured on the live rule path:
+
+    有冇辣            ->  spicy   -1,  cuisine_avoid=spicy    (the user ASKED about spicy)
+    有冇海鮮          ->  seafood -1,  diet_avoid=seafood
+    想問有冇嘈        ->  quiet   -1,  noise_avoid=嘈
+    有冇安靜啲嘅餐廳  ->  quiet   -1
+
+A question demoted the very merchants it asked about, in the preference lane and the
+constraint lane alike - the D529 shape with the sign the other way round. The same unit
+closes the other half of the rule the module's own docstring already claims (a cue must
+GOVERN the token): a cue that merely sat somewhere later in the turn governed it, so
+"想找個安靜的咖啡店，唔好辣" read quiet as -1 - a refusal of the quiet belonging to the
+辣 clause.
+
+**The fix.** A cue under the lead of the existential question governs nothing: the 有 of
+有冇 / 有無 / 有没有 is the question's own verb. A cue governs a token it is attached to -
+adjacent, modulo a short in-clause gap, with the Cantonese particles still reading as
+same-clause - and a clause boundary (a comma, either spelling) ends the clause it sits
+in. Both readers now walk every occurrence of a cue rather than the first, so a turn that
+opens with a question and refuses later ("有冇辣，冇海鮮") still refuses the seafood. The
+old attachment test was `_LOCAL_FILLER.match(between)` - a pattern whose `*` quantifier
+matched the empty string, so ANY gap of three characters or fewer read as filler and the
+boundary was never enforced at all.
+
+**Verified, not claimed.**
+`test_a_question_is_not_a_refusal.py`: **22 passed** - every 有-led question form the
+product's own `ASK_MERCHANT_CUES` names leaves the preference it asks about positive and
+writes no constraint; the same word without the 有 still refuses; a refusal later in a
+turn that opens with a question still refuses, in both lanes; a cue that merely sits
+later in the turn governs nothing; a cue attached after the token still negates it. The
+contested-characters check fails the gate if the two tables stop disagreeing, so the gate
+cannot go vacuous. Proved to fail: removing the question exemption reddens **5**, the
+unconditional after-case **1**, the first-occurrence-only scan **6** (each probe put back
+and byte-compared). Live (`test_live_preferences.py`,
+`test_live_conversation_refinement.py`, `test_live_personalization_signal.py`): **13
+passed, 1 skipped** (the skip is the test's own note: the live corpus predates the seed
+generator that writes `date_occasion`). Targeted regression (`-k "preference or
+structured or occasion or personaliz or merge or refinement or state or polarity or
+cuisine or transient or ranking or attribute or vocabulary or ambience"`) -> **1304
+passed, 31 skipped**; (`-k "search or rank or card or score or facet or filter or avoid or
+understand or intent or nlu"`) -> **1058 passed, 38 skipped**; `mypy nexus_ai` ->
+**Success: no issues found in 59 source files**; `ruff check .` -> **All checks passed**;
+eval gate -> **PASS - 2 suite(s), 0 failing**.
+
+**Residue measured and filed, not fixed.** `normalize_query` turns every clause comma
+into a space, so by the time this reader runs "平, 唔要咖喱" and "平 唔要咖喱" are the same
+string and no reader can tell the clauses apart. The normalizer owns that one.

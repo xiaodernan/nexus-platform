@@ -10,6 +10,12 @@ the whole turn, EXCEPT when other words separate it from the token by more than 
 which case the two belong to different clauses and the token keeps its positive polarity. A
 sentence carrying two preferences and one negation is therefore not silently turned into a
 dislike of both.
+
+D533 adds the one exemption that rule was missing: the existential question. "有冇辣?" asks
+whether spicy exists - it does not refuse it. The cue under a leading 有 is the question's own
+verb, and the product's ASK_MERCHANT_CUES already spells 有無 / 有无 / 有冇 as questions. Two
+tables named the same characters with opposite meanings and this reader had to pick one; it
+picked the refusal, so a question came back as a dislike of the very thing asked about.
 """
 
 from __future__ import annotations
@@ -52,23 +58,55 @@ def _canonicalise_tables() -> None:
 
 _canonicalise_tables()
 
-#: The cue must be the LAST thing before the token (modulo a short filler) for a
-#: token-local negation. Anything else is a sentence-level negation.
-_LOCAL_FILLER = re.compile(r"^[的地得咗喇啦呢個個,\s]*")
+#: What may sit between a cue and the token it governs. A clause boundary ends the
+#: clause, so a cue on the far side of a comma belongs to another clause and governs
+#: nothing there. Inside a clause, the Cantonese sentence particles do not separate
+#: anything, and a short word gap is still the same clause - "唔好食辣" (don't EAT
+#: spicy) refuses the spicy. The rule this replaces was `_LOCAL_FILLER.match(between)`,
+#: a pattern whose `*` quantifier matched the empty string, so ANY gap of three
+#: characters or fewer read as filler and the boundary was never enforced at all.
+_CLAUSE_BOUNDARY = re.compile(r"[,，。;；!?！？\n]")
+_LOCAL_FILLER = re.compile(r"[的地得咗喇啦呢個個\s]*")
+_ATTACHED_GAP = 3
+
+
+def _attached(between: str) -> bool:
+    """Whether a cue and a token separated by `between` are in the same clause."""
+    gap = between.strip()
+    if not gap:
+        return True
+    if _CLAUSE_BOUNDARY.search(gap):
+        return False
+    if _LOCAL_FILLER.fullmatch(gap):
+        return True
+    return len(gap) <= _ATTACHED_GAP
 
 
 def _window_for(token: str) -> int:
     return _NEGATION_WINDOW_CJK if any("一" <= ch <= "鿿" for ch in token) else _NEGATION_WINDOW_LATIN
 
 
+#: D533: the lead of the existential question. 有冇 / 有無 / 有没有 all ask "is there
+#: any", and the cue that follows the 有 is the question's verb, not a refusal - so a
+#: cue sitting directly under a 有 governs nothing.
+_EXISTENTIAL_LEAD = "有"
+
+
+def is_existential_question(low: str, cue_at: int) -> bool:
+    """Whether the cue at `cue_at` is the tail of 有冇 / 有無 / 有没有 - a question, not a refusal."""
+    lead = cue_at - len(_EXISTENTIAL_LEAD)
+    return lead >= 0 and low[lead:cue_at] == _EXISTENTIAL_LEAD
 
 
 def polarity_for(text: str, token: str) -> int:
     """+1 when the preference is wanted, -1 when it is negated, 0 when it is ungoverned.
 
-    The token's own position decides: a cue before the token, close enough and with nothing
-    but filler between them, governs the token; a cue elsewhere in the sentence governs the
-    whole turn unless other words separate it from the token.
+    The token's own position decides. A cue ATTACHED to the token - immediately before
+    or after it, modulo a short in-clause gap - governs that token and nothing else. A
+    cue elsewhere in the sentence governs the turn only when no clause boundary and no
+    more than a short gap separates it from the token; otherwise the two belong to
+    different clauses and the token keeps its positive polarity. A cue under the lead of
+    the existential question (有冇 X) governs nothing at all (D533).
     """
     low = text.lower()
     tok = token.lower()
@@ -81,24 +119,37 @@ def polarity_for(text: str, token: str) -> int:
 
     window = _window_for(token)
     for cue in NEGATION_CUES:
+        # Every occurrence, not just the first: "有冇辣，冇海鮮" asks about spicy and
+        # refuses seafood, and a reader that stops at the first 冇 answers neither.
         cue_at = low.find(cue)
-        if cue_at < 0:
+        while cue_at >= 0:
+            # The cue must not sit inside the preference token itself.
+            if cue_at >= idx and cue_at < idx + len(tok):
+                cue_at = low.find(cue, cue_at + 1)
+                continue
+            # D533: a cue under a leading 有 is the existential question's verb.
+            if is_existential_question(low, cue_at):
+                cue_at = low.find(cue, cue_at + 1)
+                continue
+            if cue_at < idx:
+                if cue_at < idx - window:
+                    cue_at = low.find(cue, cue_at + 1)
+                    continue  # too far back to reach this token
+                if _attached(low[cue_at + len(cue):idx]):
+                    return -1
+                # Other words or a clause boundary separate them: a different clause,
+                # so the token keeps its polarity.
+                cue_at = low.find(cue, cue_at + 1)
+                continue
+            # The cue sits AFTER the token. It governs the token only when it is
+            # attached to it: "安靜的不好" negates 安靜, while "有無辣，唔好嘈" asks
+            # about spicy and refuses noisy - two clauses, and the refusal belongs to
+            # the second one. A cue that merely sits somewhere later in the turn
+            # governs nothing (D533).
+            if _attached(low[idx + len(tok):cue_at]):
+                return -1
+            cue_at = low.find(cue, cue_at + 1)
             continue
-        # The cue must not sit inside the preference token itself.
-        if cue_at >= idx and cue_at < idx + len(tok):
-            continue
-        if cue_at < idx:
-            if cue_at < idx - window:
-                continue  # too far back to reach this token
-            between = low[cue_at + len(cue):idx]
-            if not between.strip():
-                return -1  # adjacent
-            if len(between) <= 3 and _LOCAL_FILLER.match(between):
-                return -1  # only filler between them
-            # Other words separate them: a different clause, so the token keeps its polarity.
-            continue
-        # The cue sits AFTER the token: it governs the turn.
-        return -1
 
     return 1
 

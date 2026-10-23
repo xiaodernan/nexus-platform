@@ -37,7 +37,7 @@ from nexus_ai.nlu.lexicon import (
     match_district,
     normalize_query,
 )
-from nexus_ai.nlu.polarity import apply_polarity
+from nexus_ai.nlu.polarity import apply_polarity, is_existential_question
 from nexus_ai.nlu.timeparse import HK_TZ, parse_time
 
 # --------------------------------------------------------------------------- patterns
@@ -573,6 +573,10 @@ def _fill_constraints(ex: IntentExtraction, text: str) -> IntentExtraction:
             # D480: the ONE matcher, for the negation and for the value - "no" inside
             # "notebook" is not a negation.
             for start in cue_positions(neg.strip(), text, low):
+                # D533: 有冇 X asks whether X exists; the cue under the 有 is the
+                # question's verb, not a refusal of the thing asked about.
+                if is_existential_question(low, start):
+                    continue
                 window = text[start + len(neg.strip()): start + len(neg.strip()) + 8]
                 for v in values:
                     if cue_in(v.strip(), window, window.lower()):
