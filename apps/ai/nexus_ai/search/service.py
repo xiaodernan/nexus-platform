@@ -851,6 +851,42 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             return _match
                         match_fn = make_ambience_match(str(ambience), float(weight))
                 
+                # AMBIENCE: quiet / lively -> boolean
+                elif kind == "ambience" and key in ("quiet", "lively"):
+                    # D531: the NLU's own PREFERENCE_RULES emits `ambience/quiet` and
+                    # `ambience/lively` - the words a user actually types - and the
+                    # seed's own comment names them ("Ambience preferences (NLU:
+                    # ambience/quiet, ambience/lively)"), but this chain had a branch
+                    # only for `style/ambience`, whose value is the STRING "quiet". A
+                    # preference stored in the spelling the product itself emits
+                    # answered `personalization = None` for every merchant on the
+                    # corpus, while the very same fact typed into the query box was
+                    # read correctly (the intent path derives `quiet_ambience`). One
+                    # fact, two readers, and the persistent one was the broken one -
+                    # the D518 shape again. §33: the user can inspect and delete their
+                    # preferences, and a preference whose effect they cannot see is
+                    # one they cannot inspect.
+                    val = value.get("value") if isinstance(value, dict) else None
+                    if isinstance(val, bool):
+                        want = "quiet_ambience" if key == "quiet" else "lively_ambience"
+                        other = "lively_ambience" if key == "quiet" else "quiet_ambience"
+
+                        def make_ambience_flag_match(want_key, other_key, v, w):
+                            def _match(attrs):
+                                # D527's lesson, applied again: accept either witness.
+                                # A matcher that demands its own attribute answers None
+                                # for every merchant the corpus leaves it out of.
+                                if attrs.get(want_key) is True:
+                                    return _sided(w, liked=v)
+                                if attrs.get(other_key) is True:
+                                    return _sided(w, liked=not v)
+                                if attrs.get(want_key) is False:
+                                    return _sided(w, liked=not v)
+                                return None
+                            return _match
+                        match_fn = make_ambience_flag_match(want, other, val,
+                                                             float(weight))
+
                 # ACCESS: pet_friendly -> boolean
                 elif kind == "access" and key == "pet_friendly":
                     val = value.get("value") if isinstance(value, dict) else None

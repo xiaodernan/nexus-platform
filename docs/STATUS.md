@@ -22781,3 +22781,58 @@ skipped**; (`-k "search or rank or card or score or facet or filter or avoid or
 understand or intent or nlu"`) -> **1052 passed, 35 skipped**; `mypy nexus_ai` ->
 **Success: no issues found in 59 source files**; `ruff check .` -> **All checks
 passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
+
+## 525. D531 · a preference the user DECLARES in the NLU's own spelling was unreadable (`apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_a_declared_preference_speaks_the_spelling_the_nlu_emits.py`, `apps/ai/tests/test_live_the_declared_preference_speaks_the_nlu_spelling.py`)
+
+**What was measured.** The lexicon's `PREFERENCE_RULES` carries two spellings of the same
+fact, and both are the product's own:
+
+    ("ambience", "quiet",  ["安靜", "静一啲", "quiet", ...], 1)
+    ("ambience", "lively", ["熱鬧", "lively", ...], 1)
+    ("style",   "ambience", ["有情調", "vibe", ...], 1)
+
+The seed's own comment names the first two - "Ambience preferences (NLU: ambience/quiet,
+ambience/lively)" - and the seed declares its demo user's ambience row as
+`("style", "ambience", {"value": "quiet"}, 0.6, "inferred")`, whose value is the STRING
+"quiet". So the stored-preference chain grew a branch for `style/ambience` reading a
+string, and never one for `ambience/quiet` or `ambience/lively`, which carry a BOOLEAN.
+Measured on this database, a preference stored the way the product itself spells it:
+
+    kind=ambience, key=quiet, value={"value": true}  ->  personalization = None
+                                                         for all 470 merchants
+
+The same fact typed into the query box was read correctly, because the intent path
+derives `quiet_ambience` and the seed writes it. So the TRANSIENT signal worked and the
+PERSISTENT one did not: the preference the user saved was the one that did nothing, and
+nothing on any surface said so. §33 says the user can inspect and delete their
+preferences; a preference whose effect they cannot see is one they cannot inspect.
+
+This is the D518 shape a fourth time - one fact, two readers, and here the copy serving
+the live query was the working one while the stored copy was the broken one - and the
+mirror image of D530, where it was the other way round. It also shows the limit of
+D527's gate: that gate reads the SEED's declared rows against the ranker's branches, and
+the seed spells its ambience row `style/ambience`, so the gate was green while the
+spelling the NLU emits was unreadable.
+
+**The fix.** A branch for `ambience/quiet` and `ambience/lively` reading the boolean the
+NLU emits, with the two attributes as either witness (D527's lesson: a matcher that
+demands its own attribute answers None for every merchant the corpus leaves it out of).
+Measured on this database after: a declared `ambience/quiet` at 0.9 scores the 188 quiet
+merchants **0.9000** and the 282 loud ones **0.1000**.
+
+**Verified, not claimed.**
+`test_a_declared_preference_speaks_the_spelling_the_nlu_emits.py`: **6 passed** - the
+declared preference reaches the quiet merchants, the lively one reaches the lively
+merchants, a `value: false` refusal reads the other way round, the two spellings of one
+fact answer alike, a merchant the corpus says nothing about stays unscored, and the
+cross-plane gate: every (kind, key) the NLU emits has a stored branch. Live
+(`test_live_the_declared_preference_speaks_the_nlu_spelling.py`): **3 passed** - the
+corpus splits on both sides, the preference in the NLU's spelling is read, and the lane
+is not flat. Proved to fail: removing the branch reddens **6** of the 9 checks (the probe
+put back, the file byte-compared afterwards). Targeted regression (`-k "preference or
+structured or occasion or personaliz or merge or refinement or state or polarity or
+cuisine or transient or ranking or attribute or vocabulary or ambience"`) -> **1283
+passed, 31 skipped**; (`-k "search or rank or card or score or facet or filter or avoid
+or understand or intent or nlu"`) -> **1058 passed, 38 skipped**; `mypy nexus_ai` ->
+**Success: no issues found in 59 source files**; `ruff check .` -> **All checks
+passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
