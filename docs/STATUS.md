@@ -21894,3 +21894,24 @@ implementation detail that should not be locked in as a contract.
 
 **Verified, not claimed.** `pytest tests/test_verification_ground.py` → **16 passed**; full
 `apps/ai` suite → **2683 passed, 98 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+## 504. D512 · the stream's pure helpers were unpinned - the per-locale stage copy, the context parsers and the determinism seam (`apps/ai/nexus_ai/api/stream.py`, `apps/ai/tests/test_stream_pure.py`)
+
+**Module / contract.** `search_stream_events` orchestrates the canonical SSE stream; this unit pins
+the small pure pieces it stands on: `stage_text` (per-locale, user-legible stage copy — §7/§116
+forbids chain-of-thought), `_context_geo` / `_context_now` (context parsing) and `monotonic_ms`
+(the determinism seam). Pure and DB-free.
+
+**Pinned behavior (15 cases, all confirmed empirically):**
+- `stage_text`: zh-HK `理解需求…`, zh-CN `比较这些选择…`, en `Summarising…`; locale variants are
+  normalised (`en-US`→en, `zh-Hans`→zh-CN); an unknown locale falls back to zh-HK; all four stages
+  exist for each of the three locales; an unknown stage raises `KeyError` (never silently blank).
+- `_context_geo`: a dict is returned; a non-dict/absent is `None`.
+- `_context_now`: a datetime passes through; an ISO `…Z` string is parsed to a tz-aware datetime;
+  garbage/absent is `None` (never a crash).
+- `monotonic_ms` returns a positive int.
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_stream_pure.py` → **15 passed**; full `apps/ai` suite
+→ **2698 passed, 98 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
