@@ -303,3 +303,50 @@ def test_a_refused_cuisine_is_not_served_at_the_top(live_settings):
     assert not (wanted_top & refused_top), (
         f"the merchants a cuisine the user asked for leads with are still at the top when "
         f"the user refuses that cuisine: {sorted(wanted_top & refused_top)}")
+
+
+def test_a_leaf_the_caller_names_is_not_broadened_to_its_root(live_settings):
+    """D524: `filters.category` is a HARD filter (§7.1), and a leaf the caller names must
+    not be silently widened to its whole root.
+
+    The reader answers with a coarse bucket, and for 21 of the taxonomy's 67 leaves the
+    bucket is coarser than what the caller wrote - "coffee" is a word inside
+    `specialty-coffee`, "salon" inside `hair-salon`, "bar" inside `cocktail-bar`. Measured
+    on this database before the fix: `specialty-coffee` answered 79 merchants (the cafe
+    root) where the corpus holds 33, `cocktail-bar` 39 where it holds 13, `hair-salon` 39
+    where it holds 11.
+    """
+    if _published(live_settings) == 0:
+        pytest.skip("no published merchants in this database - needs the demo seed")
+    import asyncio
+
+    from nexus_ai.db import pool as db_pool
+
+    async def _in_category(slug):
+        db = await db_pool.connect(live_settings, force_new=True)
+        try:
+            rows = await db.readonly(
+                "select count(*) as n from merchants m "
+                "join merchant_categories mc on mc.merchant_id = m.id "
+                "join categories c on c.id = mc.category_id "
+                "where m.status = 'published' and c.slug = $1", slug)
+            return int(rows[0]["n"])
+        finally:
+            await db_pool.dispose()
+
+    for leaf in ("specialty-coffee", "cocktail-bar", "hair-salon", "spa-massage",
+                 "boutique-hotel", "food-tour"):
+        want = asyncio.run(_in_category(leaf))
+        assert want, f"the corpus carries the leaf {leaf!r} and the query found none of it"
+        got = _search(live_settings, query="", filters={"category": leaf},
+                      limit=50).get("total_estimate")
+        assert got == want, (
+            f"the caller named the leaf {leaf!r} and was answered with {got} merchants "
+            f"where the taxonomy holds {want} - the filter was widened past what was asked")
+    # and the roots still answer with their whole subtree
+    for root in ("cafe", "bar", "beauty"):
+        want = asyncio.run(_in_category(root))
+        got = _search(live_settings, query="", filters={"category": root},
+                      limit=50).get("total_estimate")
+        assert got == want, (
+            f"the root {root!r} no longer answers with its whole subtree: {got} of {want}")

@@ -306,6 +306,27 @@ def _canonical_category(filters: dict[str, Any]) -> None:
         filters["category"] = matched[0]
 
 
+def _keep_category_spelling(filters: dict[str, Any], raw: Any) -> None:
+    """D524: the caller's OWN spelling of the category, kept beside the bucket.
+
+    `match_category` answers with a COARSER fact than a taxonomy leaf. The word "coffee" is
+    a word inside the slug `specialty-coffee` - hyphens are word boundaries - so the leaf
+    reads as the bucket `cafe`, and the bucket stands for every cafe in the taxonomy. A
+    caller who named ONE leaf then got its whole root: measured on the live corpus,
+    `filters={"category": "specialty-coffee"}` answered 79 merchants where the corpus holds
+    33, `cocktail-bar` answered 39 where it holds 13, `hair-salon` 39 where it holds 11.
+
+    The taxonomy is the only plane that knows which slugs are leaves, so the caller's
+    spelling travels to the SQL, which asks it: an exact leaf wins, and the bucket walk is
+    the fallback for a root or a word.
+    """
+    if raw is None or not str(raw).strip():
+        return
+    from nexus_ai.search.categories import canonical_tag
+
+    filters["category_spelling"] = canonical_tag(str(raw))
+
+
 def _canonical_district(filters: dict[str, Any]) -> None:
     """D508: the caller's `filters.district` is the same fact as the intent's district, and
     it must be read by the SAME reader - the lexin's `match_district`.
@@ -366,6 +387,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     plan.query_text = (query or (intent.raw_query if intent else "") or "").strip()
     if intent is None:
         plan.filters = _plain(filters)
+        _keep_category_spelling(plan.filters, (plan.filters or {}).get("category"))
         _canonical_category(plan.filters)
         _canonical_district(plan.filters)
         _canonical_tags(plan.filters)
@@ -376,6 +398,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     if filters and _plain(filters).get("kind") in ("product", "service", "experience"):
         plan.subject_types = ("offering",)
     out = plan.filters = _plain(filters)
+    _keep_category_spelling(out, out.get("category"))
     out.setdefault("category", intent.category)
     _canonical_category(out)
     _canonical_district(out)

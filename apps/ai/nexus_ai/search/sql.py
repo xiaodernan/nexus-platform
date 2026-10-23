@@ -41,23 +41,40 @@ def _avoid_terms(avoid: Iterable[Any]) -> list[str]:
     return terms
 
 
-def category_clause(p: Params, bucket: str, merchant_ref: str) -> str | None:
+def category_clause(p: Params, bucket: str, merchant_ref: str,
+                    spelling: str | None = None) -> str | None:
     """Merchant categories live in the `categories` tree (10 roots + 67 leaves), while the
     NLU answers with one coarse bucket. Comparing the bucket to the denormalised
     `category_primary` label matched no live row, so resolve it and walk one tree level.
 
     None means the bucket has no counterpart in the taxonomy: the caller drops the filter
     rather than silently pretending it matched.
+
+    D524: `spelling` is the caller's OWN value, and the taxonomy is asked whether it names a
+    LEAF. It does for 21 of the 67 leaves - `specialty-coffee`, `cocktail-bar`,
+    `hair-salon`, ... - whose names contain a word the bucket reader also knows, so the
+    bucket they were rewritten into stands for the whole root. An exact leaf therefore wins
+    and the bucket walk is the fallback, which is what a root ("cafe") and a plain word
+    ("coffee") need.
     """
     slugs = resolve_category(bucket)
     if not slugs:
         return None
     ph = p.add(slugs)
+    exact = p.add(resolve_category(spelling)) if spelling else None
+    leaf = (f"c.slug = ANY({exact}::text[])" if exact else None)
+    walked = f"(c.slug = ANY({ph}::text[]) OR pc.slug = ANY({ph}::text[]))"
+    if leaf is None:
+        legs = walked
+    else:
+        # the bucket walk only runs when the caller's spelling is not a leaf of its own
+        legs = (f"({leaf} OR (NOT EXISTS (SELECT 1 FROM categories "
+                f"WHERE slug = ANY({exact}::text[]) AND parent_id IS NOT NULL) "
+                f"AND {walked}))")
     return ("EXISTS (SELECT 1 FROM merchant_categories mc "
             f"JOIN categories c ON c.id = mc.category_id "
             f"LEFT JOIN categories pc ON pc.id = c.parent_id "
-            f"WHERE mc.merchant_id = {merchant_ref} "
-            f"AND (c.slug = ANY({ph}::text[]) OR pc.slug = ANY({ph}::text[])))")
+            f"WHERE mc.merchant_id = {merchant_ref} AND {legs})")
 
 
 class Params:
@@ -134,7 +151,8 @@ def build_merchant_query(
 
     where = [f"m.tenant_id = {tenant_ph}::uuid", "m.status = 'published'"]
     if filters.get("category"):
-        clause = category_clause(p, str(filters["category"]), "m.id")
+        clause = category_clause(p, str(filters["category"]), "m.id",
+                                 filters.get("category_spelling"))
         if clause:
             where.append(clause)
     if filters.get("max_price") is not None:
@@ -339,7 +357,8 @@ def build_offering_query(
     if filters.get("kind") in ("product", "service", "experience"):
         where.append(f"o.kind = {p.add(str(filters['kind']))}")
     if filters.get("category"):
-        clause = category_clause(p, str(filters["category"]), "m.id")
+        clause = category_clause(p, str(filters["category"]), "m.id",
+                                 filters.get("category_spelling"))
         if clause:
             where.append(clause)
     if filters.get("max_price") is not None:

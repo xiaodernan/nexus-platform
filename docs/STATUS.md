@@ -22434,3 +22434,47 @@ lexicon, polarity, intent, vocabulary, canonical forms, preference, merger, stat
 passed**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check .`
 -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers
 -> green.
+
+## 518. D524 · the category filter widened 21 of the taxonomy's 67 leaves into their whole root (`apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/sql.py`, `apps/ai/tests/test_the_category_filter_keeps_the_leaf_the_caller_named.py`, `apps/ai/tests/test_live_search_contract.py`)
+
+**What was measured.** `filters.category` is read by the SAME reader as the intent's category
+(D505), and that reader answers with a coarse BUCKET. For 21 of the taxonomy's 67 leaves the
+bucket is COARSER than what the caller wrote, because the leaf's own name contains a word
+the reader also knows - "coffee" is a word inside `specialty-coffee`, "salon" inside
+`hair-salon`, "bar" inside `cocktail-bar` (a hyphen is a word boundary, so the reader is
+right to see the word). The leaf was rewritten into its root and the caller's HARD filter
+(§7.1) silently became the whole root. Measured on the live corpus, `query=""` with
+
+    filters={"category": "specialty-coffee"}  -> 79 merchants  (the corpus holds 33)
+    filters={"category": "cocktail-bar"}      -> 39 merchants  (the corpus holds 13)
+    filters={"category": "hair-salon"}        -> 39 merchants  (the corpus holds 11)
+
+The other 46 leaves passed through untouched (`match_category` does not know their names),
+which is what made the defect invisible: one fact, one filter, and an answer that depended
+on whether the leaf's name happened to contain a category word.
+
+**The fix.** The taxonomy is the only plane that knows which slugs are leaves, so the
+caller's own spelling now travels beside the bucket (`category_spelling`, respelled by the
+product's ONE separator rule) and the SQL asks the taxonomy: `c.slug = ANY(spelling)` wins,
+and the one-level bucket walk runs only when the spelling is NOT a leaf of its own. A root
+(`cafe` -> 79) and a word (`coffee` -> the cafe bucket) take the walk exactly as before.
+Measured after: all 77 taxonomy slugs answer with exactly the count the corpus holds.
+
+**Discipline note.** D505 was right that the filter must speak the product's vocabulary and
+wrong about what that vocabulary IS: the reader it chose answers with the coarser fact, and
+a hard filter must never be coarsened. The fix does not add a second reader - it keeps the
+one reader and stops it from discarding what the caller wrote, then lets the plane that
+owns the taxonomy arbitrate.
+
+**Verified, not claimed.** The gate: **18 passed** - the planner keeps the caller's spelling
+beside the bucket for the 12 measured leaves, the spelling is respelled by the ONE separator
+rule, no spelling is invented when the caller named none, the SQL binds both slug sets, a
+root still walks one tree level, and an unknown word still falls back to the bucket.
+Proved to fail: dropping the spelling from the plan reddens **13** of the 18, and the live
+check with it. Live contract re-measured on this database (**13 passed** in that file): six
+leaves answer exactly their own count and three roots answer with their whole subtree.
+Targeted regression (category, filter, search, intent, sql) -> **914 passed**; live (search
+contract, preferences, sort preference, vocabulary spelling, conversation refinement) ->
+**26 passed**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff
+check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI
+checkers -> green.
