@@ -21864,3 +21864,33 @@ a fake async database/adapter (no real DB, no network).
 
 **Verified, not claimed.** `pytest tests/test_rag_embed.py` → **18 passed**; full `apps/ai` suite
 → **2667 passed, 98 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+## 503. D511 · the claim-verification GROUND SET was only exercised through the renderer gate - the entity normalisation, the per-kind tolerances and strip/no-strip (`apps/ai/nexus_ai/trust/verification.py`, `apps/ai/tests/test_verification_ground.py`)
+
+**Module / contract.** `extract_claims` and the renderer gate are pinned by `test_verification.py`;
+this unit pins the pieces they stand on: `normalize_entity`, `build_ground_set` (facts + request
+numbers + records), `GroundSet.find`'s per-kind tolerances, and `verify_text`'s strip/no-strip
+behaviour. This is the §4/§72 quality gate: every numeric/entity claim in generated copy must match
+a retrieved fact, or it is stripped and counted.
+
+**Pinned behavior (16 cases, all confirmed empirically):**
+- `normalize_entity`: quotes/brackets/parentheses become spaces, whitespace collapses, text is
+  lowercased (`「龍苑 Kitchen」` → `龍苑 kitchen`; `(X)` → `x`; empty → empty).
+- `build_ground_set`: `extra_numbers` become `("request")` numbers; `extra_strings` are stored and a
+  clock string also contributes its minute-of-day (`18:30` → 1110); `records` contribute their
+  numbers (keyed by attribute) and their display/name/slug as entities.
+- `GroundSet.find` tolerances: money 320 grounds / 500 does not; rating 4.65 grounds against 4.6
+  (0.06 tolerance) / 4.8 does not; count is **exact** (3 grounds, 4 does not); an entity matches by
+  normalised name; a time matches by its stored string.
+- `verify_text`: all-grounded text is returned unchanged (`verified=True`, note `None`); a
+  fabricated `HK$500` is **stripped** (`hallucination_count=1`, rate 1.0, note
+  `ungrounded_claims_stripped`); `strip=False` keeps the text but still reports the stripped claim;
+  no claims → rate 0.0 and `ok=True`.
+
+**Discipline note.** One premise correction, not code: `rating 4.6` only grounds when 4.6 is also
+in the ground set (my first "all grounded" case had only 320). Also asserted record numbers by
+**containment**, not exact count, because `_feed` adds a record's number twice — a harmless
+implementation detail that should not be locked in as a contract.
+
+**Verified, not claimed.** `pytest tests/test_verification_ground.py` → **16 passed**; full
+`apps/ai` suite → **2683 passed, 98 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
