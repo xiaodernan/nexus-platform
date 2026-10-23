@@ -212,6 +212,32 @@ def forward_gap(low: str, cue_end: int, token_at: int) -> str:
     return gap
 
 
+def _governed_by_verb(tail: str) -> bool:
+    """Whether the cue governs a verb - the topicalised refusal's other half.
+
+    D543: a refusal can put the value FIRST and the verb after the cue - "花生少吃"
+    (peanut, eat less), "gluten 避免吃" (avoid eating gluten), "牛肉唔好食" (beef, do
+    not eat). The cue governs the verb, and the verb's object is the token the
+    backward arm found before the cue. A NOUN after the cue is still the cue's own
+    object (D537: "no cilantro" keeps the cilantro), and a verb with words of its own
+    after it ("唔好食咖喱") is the forward refusal of those words instead - so the tail
+    is ONE bridge verb, with the clause's own particles allowed to hang off it.
+    """
+    for verb in _VERB_BRIDGE:
+        if verb.isascii():
+            m = re.match(re.escape(verb) + r"\b", tail)
+            if m is None:
+                continue
+            rest = tail[m.end():]
+        elif tail.startswith(verb):
+            rest = tail[len(verb):]
+        else:
+            continue
+        rest = rest.strip(" \t")
+        return not rest or _LOCAL_FILLER.fullmatch(rest) is not None
+    return False
+
+
 def clause_final(low: str, cue_at: int, cue: str) -> bool:
     """Whether nothing but the clause's own particles follows the cue.
 
@@ -229,12 +255,22 @@ def clause_final(low: str, cue_at: int, cue: str) -> bool:
     answered +1 for the 安靜 - the refusal's own clause ended at the comma and the words
     after it belong to the next one. The tail now ends at the clause boundary, which is
     where the cue's clause ends.
+
+    D543: ONE verb may follow the cue without being the cue's object, because the
+    refusal written the eat-less way puts the verb after it - "花生少吃", "peanut 別吃",
+    "gluten 避免吃". The verb's object is the token before the cue, which is exactly
+    what the backward arm is asking about, so the cue is final enough for it. A verb
+    with an object of its own after it is the forward refusal of that object, and the
+    tail check refuses it.
     """
     tail = low[cue_at + len(cue):]
     boundary = _CLAUSE_BOUNDARY.search(tail)
     if boundary is not None:
         tail = tail[:boundary.start()]
-    return _LOCAL_FILLER.fullmatch(tail.strip(" \t")) is not None
+    tail = tail.strip(" \t")
+    if _LOCAL_FILLER.fullmatch(tail) is not None:
+        return True
+    return _governed_by_verb(tail)
 
 
 #: D533: the lead of the existential question. 有冇 / 有無 / 有没有 all ask "is there
