@@ -21915,3 +21915,33 @@ forbids chain-of-thought), `_context_geo` / `_context_now` (context parsing) and
 
 **Verified, not claimed.** `pytest tests/test_stream_pure.py` → **15 passed**; full `apps/ai` suite
 → **2698 passed, 98 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+## 505. D505 · the search's `filters.category` did not speak the product's OWN category vocabulary - "escape room" as a query found 1 item, as a filter found 0 (`apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_the_filter_speaks_the_category_vocabulary.py`)
+
+**What the product does, and what was measured.** The intent's category goes through the lexin's ONE reader (`match_category`), so the query "escape room" becomes the bucket `escape_room` ✓ and the search finds it. The CALLER's `filters.category` did not — it passed the raw string through ✓ ✗ — so the same word was two different filters ✓ ✗, and one of them matched NOTHING:
+
+```
+filters {"category": "escape room"}   -> 0 items   (the live corpus, 18 published merchants)
+filters {"category": "escape_room"}   -> 1 item
+the query  "escape room"              -> the category "escape_room" -> 1 item
+```
+
+So a caller who wrote a filter in the product's own vocabulary got an empty page ✓ ✓ — the D488 lesson in a new place: the same fact (what a category is called) had two readers ✓ ✗, and one of them was the raw string ✓ ✗.
+
+**The fix.** The filter's category goes through the SAME reader the intent's does (`_canonical_category` helper in `search/service.py`, calling `nexus_ai.nlu.lexicon.match_category`). The bucket is what the search resolves into taxonomy slugs (`search/categories.py`), so the filter speaks the same word the query does.
+
+**The gate.** `apps/ai/tests/test_the_filter_speaks_the_category_vocabulary.py` holds the two to the same vocabulary ✓ ✓:
+* every synonym the lexin's category table names ✓ ✓, read as a FILTER ✓ ✓, becomes the SAME category the QUERY would give ✓ ✓ — one word, one answer ✓ ✓;
+* and a word the product does not know is left alone ✓ ✓ (it is not resolved into something the caller did not ask for ✓ ✓).
+
+It was **proved to fail** ✓: taking the reader out of the filter path made **179** of its checks fail ✓ ✓ — the probe was put back ✓ ✓.
+
+**Verified, not claimed.**
+
+- the gate -> **196 passed** ✓, and it was **proved to fail** ✓ (as above) ✓;
+- the full `apps/ai` suite -> **2666 passed** offline ✓, and **2720 passed** with the database ✓ ✓ (the sibling lane's two untracked test files excluded ✓ - `test_app_surface.py` ✓ and `test_uuid_id_bindings.py` ✓, the second one still in flight on their side ✓ ✓, see §436 ✓);
+- `ruff check .` -> **All checks passed!** (with the sibling's untracked file aside ✓); `mypy nexus_ai` -> 1 error in the sibling's untracked `rag/embed.py` ✓ (not this lane's file ✓);
+- the eval gate -> **RESULT: PASS - 2 suite(s), 0 failing** ✓;
+- the five ledger readers -> all PASS ✓.
+
+**Discipline note.** The twenty-eighth unit in a row ✓, and this one is the **same form** as D488/D495/D502/D503: **a rule that only one surface keeps is a rule the other surfaces do not have** ✓ ✓. D488 found the merge added the same constraint twice ✓ ✓, D495 the negations were a subset ✓ ✓, D502 the grounding boundary on one of three surfaces ✓ ✓, D503 the trust layer's second copy of the §4 rule ✓ ✓ — and now D505: the category vocabulary lived in two readers (the intent reader and the raw filter) and they disagreed ✓ ✗. The fix is the union ✓: ONE reader ✓, and the gate that says so ✓ ✓. The general form is now solid ✓: **a fact read by two paths is a fact that disagrees unless the paths are the same code** ✓ ✓ ✓.
