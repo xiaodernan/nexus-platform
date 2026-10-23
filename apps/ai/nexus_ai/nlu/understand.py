@@ -267,14 +267,16 @@ def _has_constraint(text: str) -> bool:
     A user who says what they do not want is still asking for places, so the intent
     has to be a discovery - otherwise the constraint is read and the answer is "I do
     not know what you are looking for", which is not what was said.
+
+    D541: the question is answered by the ONE reader. This copy kept D536's
+    eight-character window after the lane itself moved to the clause, so the two
+    answers about one sentence could disagree: measured, "no cilantro" and
+    "no coriander" wrote `diet_avoid:coriander` and came back with the intent
+    `unknown` - the constraint was read and the answer refused to answer. The window
+    was also a substring test, so a cue inside a word ("no" in "snow peanut") counted
+    as a refusal. One reader for both questions, the way D536 gave the two lanes one.
     """
-    for _key, negs, values in CONSTRAINT_RULES:
-        for neg in negs:
-            for m in re.finditer(re.escape(neg.strip()), text):
-                window = text[m.end(): m.end() + 8]
-                if any(v.strip() in window for v in values):
-                    return True
-    return False
+    return bool(constraint_hits(text))
 
 
 #: A stated price/quantity limit with no discovery verb is still a discovery request.
@@ -570,41 +572,16 @@ def _fill_preferences(ex: IntentExtraction, text: str) -> IntentExtraction:
     return ex
 
 
-def _fill_constraints(ex: IntentExtraction, text: str) -> IntentExtraction:
-    """A refusal inside a clause writes that clause's constraint: "唔食辣" ⇒ constraint, "食辣" ⇒ preference (§8).
+def constraint_hits(text: str) -> list[tuple[str, str]]:
+    """Every (key, canon value) refusal the clause rule reads out of the text.
 
-    D536: the lane read an eight-character window past the cue, and the cue's own
-    trailing space was stripped before the offset was measured - so the value had
-    seven characters of room. A character count is not a clause: "no cilantro" and
-    "no coriander" wrote no constraint at all, and neither did "don't want spicy".
-    Widening the window was measured and rejected - at sixteen it reads "no rush want
-    spicy" as a refusal of the spicy, because both clauses' words sit inside it. So
-    the window is a guess at a grammar, and the lane now reads a refusal the way the
-    polarity lane reads one (D535): the cue governs a value in its own clause, and one
-    verb may bridge the two. The two arms were then run against each other over the
-    sentences the product's own refusal tests speak - the clause rule wrote every
-    constraint the window wrote, and lost none; what it gains is the reach a clause
-    gives that eight characters never did, and every surface form the product's own
-    CONSTRAINT_CANON names, which the census in this unit's test file now holds open.
-
-    D538: the normalizer writes a clause separator where a comma was, and the lane reads
-    it the way the polarity lane does. The one that sits directly under the cue is the
-    cue's own punctuation - "唔好，辣" refuses the 辣 - and `forward_gap` takes it out of
-    the way; one anywhere else in the gap is the boundary between two clauses, and the
-    value on the far side of it is not refused ("唔好辣，想找個安靜的咖啡店" refuses the
-    spicy and nothing else). Before the separator existed both sentences arrived as one
-    string and the lane could not tell them apart either.
-
-    D539: the lane reads BACKWARD too. A refusal written the Cantonese way puts the
-    value first - "咖喱唔要" refuses the curry - and the forward-only lane answered
-    nothing for every one of those sentences while the preference lane read the same
-    refusal. Three conditions, each the mirror of a rule the polarity lane already
-    reads: the gap between the value and the cue keeps EVERY separator in it (there
-    the comma really did end the value's clause - "辣，唔好" leaves the 辣 alone,
-    which is why this is not `forward_gap`), the cue must be final in its own clause
-    (a cue with an object after it keeps that object, D537), and the existential
-    question is exempt (D533).
+    D536 replaced the lane's eight-character window with the clause rule; D539 gave it
+    the backward direction. D541 makes this the ONE reader both of the module's
+    questions about a refusal are answered by - what the search plan filters for, and
+    whether the turn is a discovery at all - so the two can no longer disagree about
+    one sentence.
     """
+    hits: list[tuple[str, str]] = []
     seen: set[tuple[str, str]] = set()
     low = (text or "").lower()
     for key, negs, values in CONSTRAINT_RULES:
@@ -642,8 +619,48 @@ def _fill_constraints(ex: IntentExtraction, text: str) -> IntentExtraction:
                         canon = canon_constraint(v)
                         if (key, canon) not in seen:
                             seen.add((key, canon))
-                            ex.constraints.append({"key": key, "value": canon})
+                            hits.append((key, canon))
                         break
+    return hits
+
+
+def _fill_constraints(ex: IntentExtraction, text: str) -> IntentExtraction:
+    """A refusal inside a clause writes that clause's constraint: "唔食辣" ⇒ constraint, "食辣" ⇒ preference (§8).
+
+    D536: the lane read an eight-character window past the cue, and the cue's own
+    trailing space was stripped before the offset was measured - so the value had
+    seven characters of room. A character count is not a clause: "no cilantro" and
+    "no coriander" wrote no constraint at all, and neither did "don't want spicy".
+    Widening the window was measured and rejected - at sixteen it reads "no rush want
+    spicy" as a refusal of the spicy, because both clauses' words sit inside it. So
+    the window is a guess at a grammar, and the lane now reads a refusal the way the
+    polarity lane reads one (D535): the cue governs a value in its own clause, and one
+    verb may bridge the two. The two arms were then run against each other over the
+    sentences the product's own refusal tests speak - the clause rule wrote every
+    constraint the window wrote, and lost none; what it gains is the reach a clause
+    gives that eight characters never did, and every surface form the product's own
+    CONSTRAINT_CANON names, which the census in this unit's test file now holds open.
+
+    D538: the normalizer writes a clause separator where a comma was, and the lane reads
+    it the way the polarity lane does. The one that sits directly under the cue is the
+    cue's own punctuation - "唔好，辣" refuses the 辣 - and `forward_gap` takes it out of
+    the way; one anywhere else in the gap is the boundary between two clauses, and the
+    value on the far side of it is not refused ("唔好辣，想找個安靜的咖啡店" refuses the
+    spicy and nothing else). Before the separator existed both sentences arrived as one
+    string and the lane could not tell them apart either.
+
+    D539: the lane reads BACKWARD too. A refusal written the Cantonese way puts the
+    value first - "咖喱唔要" refuses the curry - and the forward-only lane answered
+    nothing for every one of those sentences while the preference lane read the same
+    refusal. Three conditions, each the mirror of a rule the polarity lane already
+    reads: the gap between the value and the cue keeps EVERY separator in it (there
+    the comma really did end the value's clause - "辣，唔好" leaves the 辣 alone,
+    which is why this is not `forward_gap`), the cue must be final in its own clause
+    (a cue with an object after it keeps that object, D537), and the existential
+    question is exempt (D533).
+    """
+    for key, canon in constraint_hits(text):
+        ex.constraints.append({"key": key, "value": canon})
     return ex
 
 
