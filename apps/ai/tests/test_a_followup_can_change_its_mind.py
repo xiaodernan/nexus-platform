@@ -24,8 +24,15 @@ no-op. It was **proved to fail**: restoring the membership test reddens the chec
 
 from __future__ import annotations
 
+from nexus_ai.nlu import lexicon as L
 from nexus_ai.nlu.state_merger import merge_turn
 from nexus_ai.nlu.understand import extract_intent
+
+#: the lexicon's own word for `ambience/quiet`. A hand-written CJK code point is not a
+#: reference (D409) - this file shipped one the product's vocabulary does not carry and
+#: the vocabulary gate reddened for it (D520's defect, caught by the gate written for it).
+QUIETER = next(t for kind, key, terms, _pol in L.PREFERENCE_RULES
+                if (kind, key) == ("ambience", "quiet") for t in terms)
 
 JAPANESE = "我想食日本菜"      # 我想食日本菜
 THAI = "想食泰國菜"                # 想食泰國菜
@@ -88,7 +95,7 @@ def test_restating_the_same_preference_changes_nothing():
 
 
 def test_a_new_key_joins_without_disturbing_the_others():
-    after = merge_turn(_state(JAPANESE), "安靜啓斸")  # 安靜啲
+    after = merge_turn(_state(JAPANESE), QUIETER)
     prefs = _prefs(after)
     assert ("cuisine", "japanese") in prefs, (
         f"absorbing a new key dropped the one the state already carried: {prefs}")

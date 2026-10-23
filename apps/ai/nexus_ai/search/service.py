@@ -592,6 +592,18 @@ def _sided(w: float, *, liked: bool) -> float:
     return 0.5 + strength if liked else 0.5 - strength
 
 
+#: (kind, key) whose attribute is not spelled `{value}_{kind}` or `{kind}_{value}`.
+#: One fact, one reader, one spelling (D527): the name is the one the stored branch
+#: below reads, so a preference the user TYPES and the same preference they DECLARED
+#: are answered by the same fact in the corpus. A new row here must name an
+#: attribute the seed actually writes -
+#: `test_the_typed_preference_speaks_the_corpus_spelling.py` holds the two planes
+#: to each other.
+_INTENT_ATTR_ALIASES: dict[tuple[str, str], tuple[str, ...]] = {
+    ("time_pref", "open_late"): ("opens_late",),
+}
+
+
 def _enriched_attrs(row: dict[str, Any], attrs: dict[str, Any]) -> dict[str, Any]:
     """The merchant's attributes with the ROW's own columns folded in.
 
@@ -1147,10 +1159,21 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         intent_pref_scores.append(0.5)
                     continue
 
-                attr_key1 = f"{pref_value}_{pref_kind}"  # date_occasion
-                attr_key2 = f"{pref_kind}_{pref_value}"  # occasion_date
-                
-                for attr_key in (attr_key1, attr_key2):
+                # D530: `time_pref/open_late` is the one preference whose attribute is
+                # not spelled `{value}_{kind}` or `{kind}_{value}`. The stored branch
+                # below reads `opens_late`; the two derived names are
+                # `open_late_time_pref` and `time_pref_open_late`, and no corpus writes
+                # either. Measured on the live plane, a user typing a late-night
+                # request changed 0 of 470 merchants: the corpus splits 266 / 204 on
+                # `opens_late`, the stored path scores those halves 0.9 / 0.1, and the
+                # typed one scored nothing at all. One fact, two readers, and the one
+                # serving the live query was the broken one (D518/D522 again).
+                attr_keys = [f"{pref_value}_{pref_kind}",   # date_occasion
+                             f"{pref_kind}_{pref_value}"]   # occasion_date
+                attr_keys += [a for a in _INTENT_ATTR_ALIASES.get(
+                    (str(pref_kind), str(pref_value)), ()) if a not in attr_keys]
+
+                for attr_key in attr_keys:
                     if attrs.get(attr_key) is True:
                         weight = 1.0 if polarity > 0 else 0.0
                         intent_pref_scores.append(weight)

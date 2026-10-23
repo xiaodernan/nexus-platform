@@ -22730,3 +22730,54 @@ transient or ranking"`) -> **803 passed, 24 skipped**; (`-k "search or rank or c
 score or facet or filter or avoid"`) -> **818 passed, 26 skipped**; `mypy nexus_ai` ->
 **Success: no issues found in 59 source files**; `ruff check .` -> **All checks
 passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
+
+## 524. D530 · the preference the user TYPES read an attribute no corpus writes (`apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_a_followup_can_change_its_mind.py`, `apps/ai/tests/test_a_typed_preference_reaches_the_attribute_the_corpus_writes.py`, `apps/ai/tests/test_the_typed_preference_speaks_the_corpus_spelling.py`, `apps/ai/tests/test_live_the_typed_preference_moves_the_lane.py`)
+
+**What was measured.** The ranker answers the same question twice: once for a preference
+the user DECLARED, out of `user_preferences` - a long `if kind == ... and key == ...`
+chain that names each attribute explicitly - and once for a preference the user typed in
+THIS query, out of the Intent, which derives the attribute name from the (kind, key)
+pair (`date_occasion` from `occasion/date`). Nineteen of the twenty rows in the
+lexicon's `PREFERENCE_RULES` resolve through one of those two spellings to an attribute
+the seed writes. One does not. `time_pref/open_late` derives `open_late_time_pref` and
+`time_pref_open_late`; the seed, the stored branch and the corpus all spell it
+`opens_late`. Measured on this database:
+
+    the corpus splits 266 merchants that open late / 204 that do not
+    the stored path scores those halves          0.9 / 0.1
+    the typed path, before the fix, scored       0 of 470 merchants
+
+A user who typed a late-night request got a personalization lane that moved nothing at
+all, and nothing on any surface said so. This is the D518 shape (one fact, two readers,
+and the copy serving the live query is the broken one) reached a third time, and the
+D522 shape (a reader looking where the fact is not written) reached from the attribute
+side rather than the JSONB side.
+
+**The fix.** `_INTENT_ATTR_ALIASES` carries the one (kind, key) whose attribute is not
+spellable from the pair, naming the spelling the stored branch already reads - one fact,
+one reader, one spelling (D527). Measured live after: the 266 late merchants answer 1.0
+and the 204 that close early answer 0.0.
+
+**A defect the gate found in this lane's own work.** `test_vocabulary_is_the_reference`
+reddened on D528's fixture: it had typed a CJK code point (U+65B8) the product's
+vocabulary does not carry - D520's defect, in a file written two units later, caught by
+the gate that was written for it. The fixture now takes its word from the lexicon's own
+`ambience/quiet` row, as D409 requires.
+
+**Verified, not claimed.**
+`test_a_typed_preference_reaches_the_attribute_the_corpus_writes.py`: **4 passed** - the
+typed preference reaches the merchant that stays open, demotes the one that closes, the
+two halves are separated, and the declared and the typed preference read the same
+attribute. `test_the_typed_preference_speaks_the_corpus_spelling.py`: **20 passed** -
+every (kind, key) the NLU emits names an attribute the seed writes, every alias names
+one the seed writes, and every alias is a preference the NLU can emit. Live
+(`test_live_the_typed_preference_moves_the_lane.py`): **3 passed** - the corpus splits on
+both sides, the typed request moves the lane, and the lane is not flat. Proved to fail:
+dropping `opens_late` out of the alias table reddens **6** of the 27 checks (the probe
+put back, the file byte-compared afterwards). Targeted regression (`-k "preference or
+structured or occasion or personaliz or merge or refinement or state or polarity or
+cuisine or transient or ranking or attribute or vocabulary"`) -> **1275 passed, 28
+skipped**; (`-k "search or rank or card or score or facet or filter or avoid or
+understand or intent or nlu"`) -> **1052 passed, 35 skipped**; `mypy nexus_ai` ->
+**Success: no issues found in 59 source files**; `ruff check .` -> **All checks
+passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
