@@ -36,7 +36,11 @@ def cue_positions(cue: str, text: str, low: str) -> list[int]:
     out of `low` and a CJK cue out of `text`.
     """
     if cue.isascii():
-        pattern = rf"(?<![a-z]){re.escape(cue.lower())}(?:es|s)?(?![a-z])"
+        # D538: a space inside the cue reads as ANY whitespace, so a cue whose own words
+        # the user punctuated - "make a, table" - still reads across the clause separator
+        # the normalizer writes where the comma was.
+        words = r"\s".join(re.escape(w) for w in re.split(r"\s+", cue.lower()))
+        pattern = rf"(?<![a-z]){words}(?:es|s)?(?![a-z])"
         return [m.start() for m in re.finditer(pattern, low)]
     return [m.start() for m in re.finditer(re.escape(cue), text)]
 

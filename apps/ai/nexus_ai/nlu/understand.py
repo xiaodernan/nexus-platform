@@ -40,6 +40,7 @@ from nexus_ai.nlu.lexicon import (
 from nexus_ai.nlu.polarity import (
     apply_polarity,
     clause_attached,
+    forward_gap,
     is_existential_question,
 )
 from nexus_ai.nlu.timeparse import HK_TZ, parse_time
@@ -584,6 +585,14 @@ def _fill_constraints(ex: IntentExtraction, text: str) -> IntentExtraction:
     constraint the window wrote, and lost none; what it gains is the reach a clause
     gives that eight characters never did, and every surface form the product's own
     CONSTRAINT_CANON names, which the census in this unit's test file now holds open.
+
+    D538: the normalizer writes a clause separator where a comma was, and the lane reads
+    it the way the polarity lane does. The one that sits directly under the cue is the
+    cue's own punctuation - "唔好，辣" refuses the 辣 - and `forward_gap` takes it out of
+    the way; one anywhere else in the gap is the boundary between two clauses, and the
+    value on the far side of it is not refused ("唔好辣，想找個安靜的咖啡店" refuses the
+    spicy and nothing else). Before the separator existed both sentences arrived as one
+    string and the lane could not tell them apart either.
     """
     seen: set[tuple[str, str]] = set()
     low = (text or "").lower()
@@ -604,7 +613,9 @@ def _fill_constraints(ex: IntentExtraction, text: str) -> IntentExtraction:
                     # own clause, and one verb may bridge the two - "don't WANT spicy"
                     # refuses the spicy, while "no rush want spicy" refuses nothing.
                     for at in cue_positions(value, text, low):
-                        if at < after or not clause_attached(low[after:at]):
+                        # D538: the separator directly under the cue is the cue's own
+                        # punctuation; one anywhere else in the gap is a clause boundary.
+                        if at < after or not clause_attached(forward_gap(low, after, at)):
                             continue
                         canon = canon_constraint(v)
                         if (key, canon) not in seen:

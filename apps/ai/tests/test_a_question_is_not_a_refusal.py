@@ -25,10 +25,10 @@ governs the turn only from inside the turn's own clause. This gate holds both ha
 the product's own tables, so a question form added to ASK_MERCHANT_CUES is covered by
 construction rather than by memory.
 
-Residue measured and filed, not fixed: `normalize_query` turns every clause comma into a
-space, so by the time this reader runs "平, 唔要咖喱" and "平 唔要咖喱" are the same string
-and no reader can tell the clauses apart. The comma case still reads as one clause here;
-the normalizer owns that.
+D538 spent the residue this file used to file: `normalize_query` no longer turns the clause
+comma into a space. It writes the clause separator instead, so "平，唔要咖喱" and "平 唔要咖喱"
+are different strings by the time this reader runs, and the boundary between the two clauses
+is read here the way it is read everywhere else.
 """
 
 from __future__ import annotations

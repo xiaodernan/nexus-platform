@@ -20,10 +20,13 @@ clauses' words sit inside it. So the window is not a grammar, it is a guess at o
 and this unit replaces it with the rule the polarity lane already reads a refusal by
 (D535): the cue governs a value in its own clause, and one verb may bridge the two.
 
-Both directions were then measured against HEAD's own matcher, over the sentences the
-product's refusal tests speak: the window read 30 of them and the clause rule reads
-all 30 with the same verdict, while writing 20 more it never reached. `READ_AT_HEAD`
-below is that population, curated to span every rule key.
+Both directions were then measured against HEAD's own matcher over the sentences the
+product's refusal tests speak: every sentence the window wrote a constraint for the
+clause rule writes the same one, and no sentence loses a read - while a body of
+sentences the window never reached now reads. The count is not restated here because
+the corpus it is measured over is this package's own test files, so the figure moves
+when a refusal is added; `READ_AT_HEAD` below is that population, curated to span every
+rule key, and it is the durable witness.
 """
 
 from __future__ import annotations
@@ -139,7 +142,7 @@ def test_a_value_in_another_clause_is_not_refused(text):
         f"the clause AFTER the refusal's own, and a reach that long is not a clause")
 
 
-#: Every sentence the eight-character window DID read, out of the 626 the product's own
+#: Every sentence the eight-character window DID read, out of the ones the product's own
 #: refusal tests speak, curated to span all five rule keys and each gap shape the clause
 #: rule keeps: bare, filler (咁 / the), one verb (食 / want), a conjunction ending the
 #: first clause, and the question's 有 that governs nothing (D533). The rule change is

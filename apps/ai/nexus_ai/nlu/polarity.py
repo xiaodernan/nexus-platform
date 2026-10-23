@@ -16,12 +16,41 @@ whether spicy exists - it does not refuse it. The cue under a leading 有 is the
 verb, and the product's ASK_MERCHANT_CUES already spells 有無 / 有无 / 有冇 as questions. Two
 tables named the same characters with opposite meanings and this reader had to pick one; it
 picked the refusal, so a question came back as a dislike of the very thing asked about.
+
+D538 retires the reach that gave this rule a second, contradictory form. Governance is the
+clause (D535/D536), and a character count is not a clause: this lane capped a cue's reach at a
+fixed number of characters while the constraint lane read the whole clause through the very
+same `clause_attached`. The two lanes could therefore disagree about one sentence - "without
+海鮮" wrote a refusal of the seafood into the search plan and read it as a LIKE of the seafood
+in the ranking, so the product filtered for what it also boosted. The cap was applied to
+positions found with `str.find`, so a cue inside a word reached where the ONE matcher would not
+have located a cue at all. Both halves go together: one locator, one reach, both lanes. The
+agreement the two lanes owe each other is held open by a door in this package's own tests.
+
+The same unit gives the clause a shape the normalizer can no longer erase. A clause comma
+used to arrive here as a space, so the two clauses were one string and the boundary this
+module already spelled was a rule with nothing left to read: measured, "想食辣，咖喱唔好"
+answered -1 for the 咖喱 - a refusal of the very thing the clause before it asked for. The
+normalizer now writes CLAUSE_SEPARATOR where the comma was - whitespace, so every `\s*` in
+the field rules still reads across it, and not ASCII whitespace, so the fold cannot flatten
+it back into one - and the boundary, the filler and the clause-final tail all read it.
 """
 
 from __future__ import annotations
 
 import re
 from typing import Any
+
+from nexus_ai.nlu.matching import cue_positions
+
+#: D538: the character the normalizer writes where a clause comma was - the ideographic
+#: space. It is whitespace, so every `\s*` in the field rules still reads across it, and
+#: it is not ASCII whitespace, so the fold that collapses runs of spaces cannot flatten it
+#: back into one. Before it existed the comma became a space and the boundary was gone:
+#: "辣，唔好" and "辣 唔好" arrived at the readers as the same string, and nothing
+#: downstream could tell a refusal that governs the token before it from the two clauses
+#: the user actually wrote.
+CLAUSE_SEPARATOR = "\u3000"
 
 #: Negation cues that mean "not this". The Chinese ones are the ones users actually type;
 #: the English ones keep the English lexicon rows honest.
@@ -38,14 +67,13 @@ NEGATION_CUES: tuple[str, ...] = (
     "not ", "no ", "don't", "dont", "do not", "avoid", "without", "hate", "dislike",
 )
 
-#: How far back a cue may reach to govern a token. CJK needs a wider window than latin
-#: because there are no spaces to bound the phrase.
-_NEGATION_WINDOW_CJK = 6
-_NEGATION_WINDOW_LATIN = 16
-
 #: D447: the cue table is canonicalised at import, like the lexicon's (D435), the state
 #: merger's (D421) and the time parser's (D446). The text is canonicalised before it
 #: reaches the polarity, so a Simplified entry here could never match.
+#:
+#: The Latin entries carry a trailing space, which is how the constraint table spells them
+#: too; a reader that locates cues with the ONE matcher strips it first, because "no " is
+#: not a word (D538).
 _CANONICALISED_TABLES = ("NEGATION_CUES",)
 
 
@@ -73,14 +101,27 @@ _canonicalise_tables()
 #: degree adverb 咁 still in between. The rule this replaces was `_LOCAL_FILLER.match(between)`,
 #: a pattern whose `*` quantifier matched the empty string, so ANY gap of three
 #: characters or fewer read as filler and the boundary was never enforced at all.
-_CLAUSE_BOUNDARY = re.compile(r"[,，。;；!?！？\n]")
+#
+#: D538: the normalizer's clause separator joins them. It is the character the comma
+#: itself became, so the rule reads the same clause edges the user wrote.
+#:
+#: The characters are written straight into the class - none of them is a regex
+#: metacharacter inside brackets - and the newline as its two-character escape, so a
+#: reader that walks the class (the doors that derive their population from it) sees a
+#: newline where one is meant.
+_CLAUSE_BOUNDARY_CHARS = ",，。;；!?！？"
+_CLAUSE_BOUNDARY = re.compile(
+    "[" + _CLAUSE_BOUNDARY_CHARS + "\\n" + CLAUSE_SEPARATOR + "]")
 # D537: the Cantonese sentence-FINAL particles join the vocabulary. A refusal is often
 # written with one hanging off the end of it - "辣唔好呀" (spicy, no) - and the after-case
 # (a cue that governs the token BEFORE it) has to read the particle as part of the refusal
 # rather than as a word the cue is speaking about. Without them the rule below would read
 # "辣唔好呀" as a LIKE of the spicy. 咁 came in with D535; these are its neighbours,
 # measured against the same need.
-_LOCAL_FILLER = re.compile(r"[的地得咁咗喇啦呢個個呀㗎喎嘛囉嘞咩啩\s]*")
+#: D538: the whitespace is spelled out - the ASCII space and the tab - because the clause
+#: separator is a BOUNDARY, not filler: a gap that holds one is two clauses, and a `\s`
+#: here would have read it as the particles' own company.
+_LOCAL_FILLER = re.compile(r"[的地得咁咗喇啦呢個個呀㗎喎嘛囉嘞咩啩 \t]*")
 _ATTACHED_GAP = 3
 
 #: D535: the words that COORDINATE two clauses. The normalizer turns a clause comma
@@ -108,7 +149,9 @@ def clause_attached(between: str) -> bool:
     refusal of the spicy. One reader for both lanes, so the two cannot disagree about
     what a refusal governs.
     """
-    gap = between.strip()
+    # D538: the ASCII space and the tab go; the clause separator does not. A plain
+    # `.strip()` would have taken it for filler and the boundary would never be read.
+    gap = between.strip(" \t")
     if not gap:
         return True
     if _CLAUSE_BOUNDARY.search(gap):
@@ -122,6 +165,21 @@ def clause_attached(between: str) -> bool:
     return gap in _VERB_BRIDGE
 
 
+def forward_gap(low: str, cue_end: int, token_at: int) -> str:
+    """The gap between a cue and the token it governs, with the cue's own punctuation gone.
+
+    D538: the normalizer writes a clause separator where a comma was, and one that sits
+    directly under the cue is the cue's own punctuation - "唔好，辣" refuses the 辣, the
+    comma is a pause after the refusal, not a boundary between it and its object. A
+    separator anywhere else in the gap is the boundary between two clauses, and
+    `clause_attached` reads it as one. So the leading run goes and the rest is read as it
+    stands. This is the forward direction only: a cue that governs a token BEFORE it - the
+    after-case - keeps every separator in its gap, because there the comma really did end
+    the token's clause ("辣，唔好" leaves the 辣 alone).
+    """
+    return low[cue_end:token_at].lstrip(" \t" + CLAUSE_SEPARATOR)
+
+
 def _clause_final(low: str, cue_at: int, cue: str) -> bool:
     """Whether nothing but the clause's own particles follows the cue.
 
@@ -133,12 +191,18 @@ def _clause_final(low: str, cue_at: int, cue: str) -> bool:
     that follows it. A cue governs a preceding token only when it governs nothing after
     it: "素食唔好" refuses the 素食, "辣唔好呀" refuses the 辣, and the cue with an object
     of its own keeps its object.
+
+    D538: the tail is the cue's OWN CLAUSE, not the rest of the turn. "安靜的不好，要嘈"
+    refuses the 安靜 and asks for the 嘈, and a reader that ran to the end of the sentence
+    answered +1 for the 安靜 - the refusal's own clause ended at the comma and the words
+    after it belong to the next one. The tail now ends at the clause boundary, which is
+    where the cue's clause ends.
     """
-    return _LOCAL_FILLER.fullmatch(low[cue_at + len(cue):].strip()) is not None
-
-
-def _window_for(token: str) -> int:
-    return _NEGATION_WINDOW_CJK if any("一" <= ch <= "鿿" for ch in token) else _NEGATION_WINDOW_LATIN
+    tail = low[cue_at + len(cue):]
+    boundary = _CLAUSE_BOUNDARY.search(tail)
+    if boundary is not None:
+        tail = tail[:boundary.start()]
+    return _LOCAL_FILLER.fullmatch(tail.strip(" \t")) is not None
 
 
 #: D533: the lead of the existential question. 有冇 / 有無 / 有没有 all ask "is there
@@ -162,39 +226,43 @@ def polarity_for(text: str, token: str) -> int:
     more than a short gap separates it from the token; otherwise the two belong to
     different clauses and the token keeps its positive polarity. A cue under the lead of
     the existential question (有冇 X) governs nothing at all (D533).
+
+    D538: the positions come from the ONE matcher and the reach is the clause - the two
+    rules the constraint lane already reads. A cue inside a word is not a cue, and a cue
+    cannot reach further back than the clause it sits in, so the lanes cannot part company
+    over one sentence: a refusal the search filters for is never also a preference the
+    ranking boosts.
     """
     low = text.lower()
-    tok = token.lower()
+    tok = token.strip().lower()
     if not tok:
         return 0
 
-    idx = low.find(tok)
-    if idx < 0:
+    found = cue_positions(tok, text, low)
+    if not found:
         return 0
+    idx = found[0]
 
-    window = _window_for(token)
     for cue in NEGATION_CUES:
+        # The table's Latin entries carry their own trailing space; the matcher wants the
+        # word. The same reading of the same table the constraint lane makes (D536).
+        c = cue.strip()
+        if not c:
+            continue
         # Every occurrence, not just the first: "有冇辣，冇海鮮" asks about spicy and
         # refuses seafood, and a reader that stops at the first 冇 answers neither.
-        cue_at = low.find(cue)
-        while cue_at >= 0:
+        for cue_at in cue_positions(c, text, low):
             # The cue must not sit inside the preference token itself.
-            if cue_at >= idx and cue_at < idx + len(tok):
-                cue_at = low.find(cue, cue_at + 1)
+            if idx <= cue_at < idx + len(tok):
                 continue
             # D533: a cue under a leading 有 is the existential question's verb.
             if is_existential_question(low, cue_at):
-                cue_at = low.find(cue, cue_at + 1)
                 continue
             if cue_at < idx:
-                if cue_at < idx - window:
-                    cue_at = low.find(cue, cue_at + 1)
-                    continue  # too far back to reach this token
-                if clause_attached(low[cue_at + len(cue):idx]):
+                if clause_attached(forward_gap(low, cue_at + len(c), idx)):
                     return -1
                 # Other words or a clause boundary separate them: a different clause,
                 # so the token keeps its polarity.
-                cue_at = low.find(cue, cue_at + 1)
                 continue
             # The cue sits AFTER the token. It governs the token only when it is
             # attached to it: "安靜的不好" negates 安靜, while "有無辣，唔好嘈" asks
@@ -203,10 +271,8 @@ def polarity_for(text: str, token: str) -> int:
             # governs nothing (D533), and a cue with an object after it governs THAT
             # object, not the token before it (D537).
             if (clause_attached(low[idx + len(tok):cue_at])
-                    and _clause_final(low, cue_at, cue)):
+                    and _clause_final(low, cue_at, c)):
                 return -1
-            cue_at = low.find(cue, cue_at + 1)
-            continue
 
     return 1
 

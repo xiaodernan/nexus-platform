@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from nexus_ai.nlu.canonical import CANONICAL_FORMS, canonical
 from nexus_ai.nlu.matching import cue_in, cue_positions
-from nexus_ai.nlu.polarity import NEGATION_CUES
+from nexus_ai.nlu.polarity import CLAUSE_SEPARATOR, NEGATION_CUES
 
 import re
 from typing import Any
@@ -633,10 +633,23 @@ def match_cuisines(text: str) -> list[str]:
     return [c for c, _t in match_cuisine_terms(text)]
 
 
+#: D538: the punctuation that ends a clause. Each of these becomes the clause separator
+#: (CLAUSE_SEPARATOR) in the normalised query - the comma no reader could see, and its
+#: neighbours. The colon is not among them: a colon between digits is a clock time, and
+#: the one that is not becomes a plain space.
+CLAUSE_PUNCTUATION = "，。！？；、,.!?;~（）()[]{}<>《》"
+
+
 def normalize_query(text: str) -> str:
-    """Lowercase ASCII, collapse whitespace, strip light punctuation but keep CJK + digits.
+    """Lowercase ASCII, collapse whitespace, turn clause punctuation into the separator.
 
     A colon between digits is kept: "7:30pm" is a clock time, not punctuation.
+
+    D538: the light punctuation becomes CLAUSE_SEPARATOR rather than a space, so the
+    clause boundary survives the normalisation - "辣，唔好" and "辣 唔好" are no longer the
+    same string by the time the readers run. The separator is whitespace, so every `\s*`
+    in the field rules still reads across it, and it is not ASCII whitespace, so the fold
+    below cannot flatten it back into one.
 
     D420: this does NOT canonicalise the spelling, and that is the point. The locale
     detection works by looking for the simplified and the traditional MARKERS, so a
@@ -647,8 +660,16 @@ def normalize_query(text: str) -> str:
     the text that goes to SQL keeps the user's own spelling.
     """
     cleaned = re.sub(r"(?<!\d)[:：](?!\d)", " ", text or "")
-    cleaned = re.sub(r"[，。！？；、,.!?;~（）()\[\]{}<>《》]+", " ", cleaned)
-    cleaned = re.sub(r"\s+", " ", cleaned)
+    # D538: the clause punctuation becomes the separator, and the ASCII whitespace that
+    # sat around it goes with it - the separator stands alone between the two clauses,
+    # so a reader that looks for one finds exactly one.
+    cleaned = re.sub(r"[ \t\r\n]*[" + re.escape(CLAUSE_PUNCTUATION) + r"]+[ \t\r\n]*",
+                     CLAUSE_SEPARATOR, cleaned)
+    # D538: a line break is a clause edge too. The boundary table has always named it, and
+    # the fold below used to flatten it into a space - so a query typed over two lines read
+    # as one clause and a refusal on the second line governed the first line's token.
+    cleaned = re.sub(r"[ \t]*\r?\n[ \t\r\n]*", CLAUSE_SEPARATOR, cleaned)
+    cleaned = re.sub(r"[ \t\r\n]+", " ", cleaned)
     return cleaned.strip()
 
 

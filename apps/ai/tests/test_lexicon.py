@@ -162,7 +162,8 @@ class TestCuisineMatching:
 # --------------------------------------------------------------------------- normalization
 class TestQueryNormalization:
     def test_strips_punctuation_and_collapses_ws(self):
-        assert L.normalize_query("  你好，世界！  ") == "你好 世界"
+        # D538: the clause punctuation becomes the clause separator, not a space
+        assert L.normalize_query("  你好，世界！  ") == "你好\u3000世界"
 
     def test_keeps_clock_colon(self):
         # colon between digits is a clock time, not punctuation
@@ -173,7 +174,8 @@ class TestQueryNormalization:
         assert L.normalize_query("價錢：餐廳") == "價錢 餐廳"
 
     def test_drops_period(self):
-        assert L.normalize_query("a.b") == "a b"
+        # D538: same - the separator, not a space, so the clause edge survives
+        assert L.normalize_query("a.b") == "a\u3000b"
 
     def test_keeps_digits_and_cjk(self):
         # normalize_query does NOT lowercase — matching functions lower() internally
