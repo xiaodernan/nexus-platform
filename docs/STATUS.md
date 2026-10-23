@@ -22935,3 +22935,50 @@ eval gate -> **PASS - 2 suite(s), 0 failing**.
 **Residue measured and filed, not fixed.** `normalize_query` turns every clause comma
 into a space, so by the time this reader runs "平, 唔要咖喱" and "平 唔要咖喱" are the same
 string and no reader can tell the clauses apart. The normalizer owns that one.
+
+## 528. D534 · the refusals the product could not read - 無, 沒有, 没有 (`apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/tests/test_the_refusals_the_product_could_not_read.py`)
+
+**What was measured.** The refusal table carried 冇 - the Cantonese character - and the
+standard-written refusals were not in it:
+
+    無素食     ->  vegetarian +1     (a LIKE of the very thing refused)
+    沒有素食   ->  vegetarian +1
+    没有素食   ->  vegetarian +1
+    无素食     ->  vegetarian +1     (canonicalised to 無素食, same hole)
+
+So a user who refused in the standard written spelling was answered with the opposite of
+what they asked, and the ranking lane then boosted it - the D522 shape again, in the one
+vocabulary the product has not finished.
+
+**The fix.** 無 and 沒有 join the table. Adding them was NOT safe before D533, and the
+reason is the point: 無 sits inside 無障礙 (the accessible token) and inside 貴都無所謂
+(the premium pattern), and 有無 / 有没有 is the product's own question form - a naive
+table entry would refuse the wheelchair users, refuse the premium diner who says price is
+no object, and turn "is there any outdoor seating?" into a dislike of outdoor seating.
+D533's attachment rule and its existential-question exemption are what make the entry
+honest, and the gate pins the neighbours so they stay honest. 没有 is spelled out beside
+沒有 because the canonical table has no 没 -> 沒 entry: canonicalisation cannot unify the
+two scripts, and the Simplified user's refusal would otherwise go unread.
+
+**Verified, not claimed.**
+`test_the_refusals_the_product_could_not_read.py`: **15 passed** - each spelling is in the
+product's own table (so a removal reddens the gate), each reads -1 in the preference
+lane, each writes `cuisine_avoid=spicy` in the constraint lane, and the six measured
+neighbours keep their positive polarity with only the constraints the sentence itself
+legitimately writes. Proved to fail: removing 無 from the table reddens **3** (the probe
+was put back and byte-compared). Live (`test_live_preferences.py`,
+`test_live_conversation_refinement.py`, `test_live_personalization_signal.py`,
+`test_live_the_refusal_does_not_flatten_the_lane.py`): **17 passed, 1 skipped** (the
+test's own note about the pre-seed corpus). Targeted regression (`-k "preference or
+structured or occasion or personaliz or merge or refinement or state or polarity or
+cuisine or transient or ranking or attribute or vocabulary or ambience or refusal or
+negation"`) -> **1355 passed, 35 skipped**; (`-k "search or rank or card or score or
+facet or filter or avoid or understand or intent or nlu"`) -> **1058 passed, 38
+skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff
+check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
+
+**Residue measured and filed, not fixed.** `CANONICAL_FORMS` has no 没 -> 沒 entry, so
+`detect_language("没有素食")` answers **zh-HK** - a Simplified user is read as a Hong
+Kong user, the D420 shape. Filling the map entry obliges 没 to vote Simplified on its own
+(the D435 gate's locale invariant), which moves locale detection for every sentence
+carrying it; that is the next unit's measurement, not this one's.

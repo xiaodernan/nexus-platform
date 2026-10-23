@@ -25,9 +25,16 @@ from typing import Any
 
 #: Negation cues that mean "not this". The Chinese ones are the ones users actually type;
 #: the English ones keep the English lexicon rows honest.
+#:
+#: D534 added 無 and 沒有 - the standard-written refusals, next to the Cantonese 冇 the
+#: table already carried: measured, "無素食" read as a LIKE of vegetarian and the ranking
+#: lane then boosted it (the D522 shape). 没有 is spelled out beside 沒有 because the
+#: canonical table has no 没 -> 沒 entry, so canonicalisation cannot unify the two
+#: spellings and a Simplified user's refusal would go unread; the map's hole is filed in
+#: PLAN, and when it is filled this row canonicalises into 沒有 and costs nothing.
 NEGATION_CUES: tuple[str, ...] = (
     "唔好", "唔要", "唔想", "唔鍾意", "唔鍾", "唔食", "唔想要", "不要", "不想", "不喜歡", "不喜欢",
-    "不想要", "讨厌", "討厭", "没咩", "冇", "唔係", "不是", "不好",
+    "不想要", "讨厌", "討厭", "没咩", "冇", "無", "沒有", "没有", "唔係", "不是", "不好",
     "not ", "no ", "don't", "dont", "do not", "avoid", "without", "hate", "dislike",
 )
 
