@@ -21812,3 +21812,27 @@ its own **spelling** (no boundaries), and the **longest** matching cue wins.
 
 **Verified, not claimed.** `pytest tests/test_cue_matching.py` → **15 passed**; full `apps/ai` suite
 → **2636 passed, 98 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+## 501. D509 · the time parser's two helpers were only exercised through `parse_time` - the clock match's group contract and the weekday rollover (`apps/ai/nexus_ai/nlu/timeparse.py`, `apps/ai/tests/test_timeparse_helpers.py`)
+
+**Module / contract.** `parse_time` is pinned end-to-end by D346; this unit pins the two pure
+helpers it is built from: `clock_match` (the clock in a text, with Chinese numerals read as digits
+and the weekday left alone) and `resolve_weekday` (the next occurrence of a weekday, with an
+optional +7 days).
+
+**Pinned behavior (13 cases, all confirmed empirically):**
+- `clock_match("9點")` matches `9點` and exposes the hour at **group(3)**; the Chinese `九點` is
+  normalised to the same `9點` (one reading, wherever the hour is looked for).
+- Colon form `9:30` exposes hour/minute at **group(1)/(2)**; the meridiem form `10pm` exposes
+  hour/meridiem at **group(5)/(6)**; `7:30pm` stops at the minutes (`7:30`) — "pm" is the caller's
+  to read.
+- `星期三` is **not** a clock (the numeral rewrite is restricted to an hour marker); empty → `None`;
+  a clock inside a sentence (`今晚8點`) still yields the hour.
+- `resolve_weekday`: forward to the target (Mon→Wed = 2026-01-07); today counts as the next
+  occurrence (Mon→Mon = today); Sunday later the same week (2026-01-11); `next_week=True` adds 7
+  days (Mon→2026-01-12, Wed→2026-01-14).
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_timeparse_helpers.py` → **13 passed**; full `apps/ai`
+suite → **2649 passed, 98 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
