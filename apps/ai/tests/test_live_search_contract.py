@@ -221,3 +221,45 @@ def test_a_point_to_measure_from_gives_a_distance(live_settings):
         distance = it.get("distance") or {}
         assert distance.get("meters") is not None, f"{it.get('slug')} has no distance"
         assert distance.get("fact_id"), "the distance has no fact"
+
+
+def test_a_query_naming_the_cuisine_in_its_own_name_finds_it(live_settings):
+    """D520: a cuisine row speaks its own name, in English as in Chinese.
+
+    Measured on this database: `query="japanese"` used to be read as intent `unknown` with
+    no category and no preference, and the answer was a mixed bag - a nail salon, a phone
+    repair shop and a swimming centre among the cards served to a user who asked for
+    Japanese food. The corpus carries 27 published merchants under the three Japanese
+    leaves (sushi, ramen, izakaya).
+    """
+    if _published(live_settings) == 0:
+        pytest.skip("no published merchants in this database - needs the demo seed")
+    import asyncio
+
+    from nexus_ai.db import pool as db_pool
+
+    async def _tagged(tags):
+        db = await db_pool.connect(live_settings, force_new=True)
+        try:
+            rows = await db.readonly(
+                "select slug from merchants where status = 'published' and tags && $1::text[]",
+                list(tags))
+            return {r["slug"] for r in rows}
+        finally:
+            await db_pool.dispose()
+
+    japanese = asyncio.run(_tagged(["sushi", "ramen", "izakaya"]))
+    assert japanese, "the corpus carries the leaves and the query found none of them"
+    body = _search(live_settings, query="japanese", limit=50)
+    intent = body.get("intent") or {}
+    assert intent.get("intent") == "discover_merchant", (
+        f"a query naming a cuisine was read as {intent.get('intent')!r} - the user typed "
+        f"the product's own word for it")
+    assert intent.get("category") == "restaurant", (
+        f"a query naming a cuisine named no category: {intent.get('category')!r}")
+    assert [p for p in intent.get("preferences") or [] if p.get("key") == "cuisine"], (
+        "a query naming a cuisine produced no cuisine preference")
+    kept = {i["slug"] for i in body.get("items") or []}
+    assert japanese & kept, (
+        "the unfiltered search surfaces none of the merchants the corpus tags with the "
+        "cuisine's leaves - this database cannot measure the cuisine preference")

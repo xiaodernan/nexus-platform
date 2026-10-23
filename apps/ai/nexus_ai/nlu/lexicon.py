@@ -103,7 +103,7 @@ _CUISINE_STYLE_FORMS: dict[str, tuple[str, ...]] = {
 
 CUISINE_TERMS: dict[str, list[str]] = {
     "japanese": ["日料", "日本菜", "日本料理", "壽司", "寿司", "sushi", "ramen", "拉麵", "拉面",
-                 "居酒屋", "izakaya", "鐵板燒", "日籍"],
+                 "居酒屋", "izakaya", "鐵板燒", "日籍", "japanese"],
     "cantonese": ["廣東", "粤菜", "粵菜", "趙潤保", "cantonese", "茶記", "碟頭飯", "燒臘", "烧腊"],
     "korean": ["韓國", "韩国", "韓式", "韩式", "korean", "BBQ", "烤肉", "参鶏湯", "參雞湯"],
     "thai": ["泰國", "泰国", "泰式", "thai", "冬蔭", "冬阴功", "凍陳功", "som tam"],

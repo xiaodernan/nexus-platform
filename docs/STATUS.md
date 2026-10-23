@@ -22302,3 +22302,44 @@ contract, live preferences, live vocabulary spelling, live conversation refineme
 passed**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check .`
 -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers
 -> green.
+
+## 515. D521 · the cuisine row that could not read its own name (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_the_cuisine_row_speaks_its_own_name.py`, `apps/ai/tests/test_live_search_contract.py`)
+
+**What was measured.** The lexicon has eleven cuisine rows, and ten of them carry the cuisine's
+OWN name among their terms: a user who types "italian", "korean", "thai", "seafood" or "dim
+sum" gets the cuisine. The eleventh - `japanese` - does not. Its row is the Japanese words and
+the transliterations and never the word itself, so the one word the product uses for the
+cuisine in its own maps (`CUISINE_LEAVES`, `_CUISINE_CATEGORY_MAP`, the ranking labels) is the
+one word its reader cannot read. Measured through the extractor:
+
+    extract_intent("japanese")                     -> intent "unknown", category None, preferences []
+    extract_intent("i want japanese")              -> intent "unknown"
+    extract_intent("somewhere japanese in central") -> intent "unknown"
+
+and through the API on the live corpus, `query="japanese"` was read as `intent: unknown` with
+no category and no preference, and the 50 cards served to a user who asked for Japanese food
+were a mixed bag - a nail salon, a phone repair shop, a swimming centre, a gym, a bookshop -
+with exactly **1** of the corpus's 27 published Japanese-leaf merchants in them, at rank 9, by
+accident of ranking rather than by any signal.
+
+**The fix.** One term: `"japanese"` joins its own row. The same query now reads as
+`discover_merchant` / `restaurant` with a `cuisine=japanese` preference, and the answer
+carries **3** of the 27 (ranks 8, 32, 48).
+
+**Discipline note.** The row was authored Chinese-first, and the English name of the one
+cuisine whose English name is also the product's own word for it was the one left out. Ten
+rows happen to carry their own name and one does not, and nothing held the eleven to the
+rule - so the gate takes its parameter from the table (`sorted(CUISINE_TERMS)`) and folds the
+separators, because the row key is `dim_sum` and the user writes "dim sum". A twelfth row
+inherits the rule instead of relying on somebody remembering it.
+
+**Verified, not claimed.** The gate: **17 passed** - every row reads its own name in the
+spelling a user types it, and a query naming the cuisine is understood with a category and a
+cuisine preference. Proved to fail: deleting the term from the row reddens every check here
+(the probe was put back). Live contract re-measured on this database: `query="japanese"` ->
+`discover_merchant` / `restaurant` with a `cuisine` preference, and the merchants the corpus
+tags `sushi` / `ramen` / `izakaya` surface (**11 passed** in that file). Targeted regression
+(cuisine, lexicon, polarity, intent, vocabulary, canonical forms) -> **1142 passed**; live
+(search contract, preferences, vocabulary spelling, conversation refinement) -> **22 passed**;
+`mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check .` -> **All
+checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers -> green.
