@@ -22478,3 +22478,43 @@ contract, preferences, sort preference, vocabulary spelling, conversation refine
 **26 passed**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff
 check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI
 checkers -> green.
+## 519. D525 · the cuisine bridge named leaves no seed writes, and nothing read the seed to say so (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_the_cuisine_bridge_speaks_the_seeds_leaves.py`)
+
+**What was measured.** `CUISINE_LEAVES` is the bridge between the word a user types
+("japanese") and the leaf the taxonomy stores (`sushi`, `ramen`, `izakaya`), and its own
+docstring makes a claim about a file in another plane: *"the leaves are the ones
+`data/seed/seed_pools.py`'s `CAT_TREE` writes"*. Nothing read that file. A leaf the bridge
+names and the taxonomy does not write is a leaf no merchant can carry, so the preference
+fires on nothing - and a satisfied preference becomes the same as an unsatisfied one (D394),
+which is the exact failure D522 measured from the other side. The seed writes 10 roots and
+67 leaves; the bridge names 14 leaves across 12 cuisines. The counts happened to agree, but
+they agreed by luck: the two planes are edited by hand, in different files, by different
+units, and no gate held them to each other.
+
+**The fix.** No product change - the invariant already held. The gap was the missing
+reader. `apps/ai/tests/test_the_cuisine_bridge_speaks_the_seeds_leaves.py` imports the
+seed's own `CAT_TREE` (the writer of the taxonomy the bridge names) and holds the bridge to
+it in both directions: every leaf the bridge names is a leaf `CAT_TREE` writes, spelled the
+seed's way; every cuisine the vocabulary names resolves to at least one real leaf; and the
+bridge is not vacuously true - the taxonomy's own food leaves are still reachable through
+it, so the mapping has not quietly emptied itself. The behavioural half pins the distinction
+D394 depends on: a merchant carrying the leaf matches, and a merchant that merely sits in
+the same ROOT does not, and neither does a merchant carrying a different leaf of that root.
+
+**Discipline note.** This is the first gate in the project that reads the seed's taxonomy
+from the AI lane's tests, and it is deliberately written against the counts it measured
+(10 roots, 67 leaves) so that a re-seed which changes the taxonomy reddens the gate rather
+than silently re-baselining it. The seed's `out/` and `out_smoke/` directories are not
+tracked, so the gate reads `seed_pools.py` - the file that generates them - and not a
+generated artefact.
+
+**Verified, not claimed.** The gate: **37 passed** - 12 cuisines resolve to real leaves,
+14 bridged leaves are all seed leaves, every nameable cuisine resolves, the bridge is not
+vacuous, and 11 behavioural cases (leaf fires / root does not / sibling leaf does not).
+Proved to fail, each probe put back and the file byte-compared afterwards: renaming one
+bridged leaf to a slug the seed does not write -> **3 failed**; emptying one cuisine's
+leaf tuple so it resolves to nothing -> **3 failed**; widening one cuisine to its whole
+root -> **3 failed**. Targeted regression (cuisine, lexicon, vocabulary, canonical) ->
+**1043 passed, 8 skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source
+files**; `ruff check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0
+failing**; the ten CI checkers -> green.
