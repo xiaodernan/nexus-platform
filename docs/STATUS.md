@@ -21975,3 +21975,37 @@ It was **proved to fail** ✓: taking the reader out of the filter path made **6
 - the five ledger readers -> all PASS ✓.
 
 **Discipline note.** The twenty-ninth unit in a row ✓, and this one is the **sixth** reading of the same form ✓ ✓: **a rule that only one surface keeps is a rule the other surfaces do not have** ✓ ✓. D488 found the merge added the same constraint twice ✓ ✓, D495 the negations were a subset ✓ ✓, D502 the grounding boundary on one of three surfaces ✓ ✓, D503 the trust layer's second copy of the §4 rule ✓ ✓, D505 the category vocabulary on one of two paths ✓ ✓ — and now D508: the district vocabulary lived in two readers (the intent reader and the raw filter) and they disagreed ✓ ✗. The fix is the union ✓: ONE reader ✓, and the gate that says so ✓ ✓. The general form is now battle-tested ✓: **a fact read by two paths is a fact that disagrees unless the paths are the same code** ✓ ✓ ✓.
+## 507. D513 · the numbers reader's fence grammar could not see a language-tagged fence - three well-formed STATUS sections refused as unparseable, ten DECISIONS strays read as balanced (`scripts/check_ledger_numbers.mjs`, `docs/DECISIONS.md`)
+
+**What was measured.** The reader's `FENCE` was `/^\s*```\s*$/` - a bare fence only - while both
+ledgers open blocks with language tags. Measured on HEAD before the change, under the reader's own
+`^## ` sectioning: STATUS.md holds 510 fence lines across 495 sections - 507 bare and exactly THREE
+language-tagged, and those three are the whole failure: §430 (D436), §438 (D444) and §471 (D477)
+hold 4, 2 and 4 fences but 3, 1 and 3 BARE ones, so the reader refused them as unparseable and read
+no claim from them at all. DECISIONS.md holds 176 fences across 300 sections, every section even in
+bare fences - yet ten sections (D46, D54, D64, D70, D71, D72, D75, D77, D79, D80) each end in a
+stray fence with nothing after it: a dangling opener that swallows the next section's heading into a
+code block, invisible to a grammar that only counts bare fences.
+
+**The fix.** `FENCE` is now `/^\s*```[^`]*$/` - three backticks plus an optional info string and no
+backtick inside it, which is the markdown rule and the ledgers' actual spelling. Under the
+markdown-true grammar STATUS.md is 510 / 495 / 0 unbalanced - the reader was wrong and the three
+sections were well-formed. The ten DECISIONS strays were blanked IN PLACE: same line count, so no
+citation moves (no `DECISIONS.md:NNN` cite pointed at any of the ten lines - measured before the
+edit; the drift reader judges each cite against the commit that wrote it, so a shift would have
+reddened it).
+
+**Discipline note.** The bare-only grammar mis-counted in both directions at once - false refusals
+in STATUS and masked strays in DECISIONS - because a language-tagged opener read as prose
+desynchronises the toggle. A reader whose grammar is narrower than the document's markdown does not
+fail safe; it fails quietly in both directions.
+
+**Verified, not claimed.** `node scripts/check_ledger_numbers.mjs --census` -> **RESULT: PASS - 1179
+numeric claim(s) read, every section's fences balanced, 11 noun(s) seen** (before: FAIL - 3 sections
+odd). Ledger readers: sections PASS, citations PASS, eols PASS, status-citations PASS; line-cite-drift
+REPORT 115/175 EXACT with strict=none, unchanged by the in-place blanking. Full CI checker set also
+run: contract-drift PASS, console-i18n PASS, console-a11y PASS, reader-reachability PASS. Still red on
+this plane, pre-existing at HEAD and untouched by this unit: `check_jsonb_reads.mjs` fails on one
+stale answer site (`shape_answer collections.items` cites `generate.py:1342`, which is now the
+author-name picker; the guide item list moved to :1375) - re-aimed in §508.
+

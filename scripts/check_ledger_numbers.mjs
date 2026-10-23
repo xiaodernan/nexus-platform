@@ -171,12 +171,20 @@ function claims() {
       continue;
     }
     const raw = text.replace(/\r\n/g, '\n').split('\n');
-    const FENCE = /^\s*```\s*$/;
-    // Fences are paired **per section**, and a section whose fence count is odd is not parsed at all.
-    // Naive toggling across the whole file is off by one from the first unbalanced section onwards, and this
-    // ledger has thirteen of them (STATUS.md carries 265 fence lines, an odd number — measured 2026-09-30).
-    // A section that cannot be split into prose and evidence cannot be read for claims, and saying so is the
+    // D513: a fence is ``` plus an OPTIONAL info string and no backtick inside it - the markdown rule, and
+    // the spelling these ledgers actually write. Measured on HEAD before this change (2026-10-23, the
+    // reader's own `^## ` sectioning): STATUS.md 510 fence lines / 495 sections - 507 bare and only THREE
+    // language-tagged, which are exactly the three sections the bare-only grammar refused; DECISIONS.md 176
+    // fences / 300 sections - 154 bare, 12 tagged, and ten sections ending in a stray opener. The bare-only
+    // spelling read a ```python opener as prose, so it mis-counted in both directions at once: three
+    // well-formed STATUS sections (§430 D436, §438 D444, §471 D477) were refused as unparseable, and ten
+    // DECISIONS sections (D46, D54, D64, D70, D71, D72, D75, D77, D79, D80) whose stray trailing opener
+    // swallows the next heading read as balanced - their prose paired as evidence and their evidence as
+    // prose. Fences are paired **per section**, and a section whose fence count is odd is not parsed at
+    // all: naive toggling across the whole file is off by one from the first unbalanced section onwards. A
+    // section that cannot be split into prose and evidence cannot be read for claims, and saying so is the
     // only honest option: guessing which half a number belongs to is how a quoted census line became a claim.
+    const FENCE = /^\s*```[^`]*$/;
     const sectionOf = [];
     let sec = '(before the first heading)';
     let secIndex = 0;

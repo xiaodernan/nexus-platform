@@ -1384,7 +1384,7 @@ does not touch `AuthorizationInterceptor` or `headerOnly`, both another wave's. 
 job, and its absence — like `@RequiresPlatformRole`'s thin coverage of the newer admin doors, `com.nexus.admin`'s
 red test and the 25 documented-not-served rows — stays in `STATUS` as somebody else's decision to make.
 
-```
+
 ## D47 A rung no request ever produced — and the identity the caller was allowed to type — 2026-09-24
 
 ### 1. What shipped
@@ -1910,7 +1910,7 @@ stream's and carries its own dev-platform target with the older ports. And it do
 `.env`'s contents: the file is gitignored, per-machine, and now simply later in the precedence chain than the
 person who typed the command.
 
-```
+
 ## D55 A 401 is not an answer — the codes no request ever produced — 2026-09-24
 
 ### 1. The census
@@ -2679,7 +2679,7 @@ somewhere else.
   edit this file — which is the property the four-name list never had, and the reason the floor is written as a
   fraction of a measured number rather than as whatever the list happens to name today.
 
-```
+
 ## D65 A polymorphic column no check had ever resolved — 2026-09-25
 
 ### 1. The hole in the middle of two working shapes
@@ -3138,7 +3138,7 @@ Run on the restored tree afterwards: `Tests run: 12, Failures: 0`. `git status` 
 refused to start if a mutation string was already present, restored each case from an absolute-path backup, and
 the final `grep -c mutated` over the source printed `0`.
 
-```
+
 ## D71 An arm no door can fill, and a type every key fills — 2026-09-25
 
 ### 1. Three vocabularies for one column, and the probe was the odd one out
@@ -3316,7 +3316,7 @@ registry cannot express at all, e.g. a two-column referent — is what would for
 registry. Stated as a number it was both wrong and unfalsifiable; stated as a shape it can be checked the next
 time an arm is added.
 
-```
+
 ## D72 A census that only spoke one suffix — 2026-09-25
 
 ### 1. The column the blind-spot census could not name
@@ -3422,7 +3422,7 @@ every uuid column that is not its own key and has no FK — is too wide to gate 
 refs and dead columns alike), so the honest form is a widening that stays falsifiable: two shapes now, each with
 a plant that proves the other one is not the only thing the file can see.
 
-```
+
 ## D73 A detail line that contradicts its own measurement — 2026-09-25
 
 D72 §4 named this and this is it. Two census rows printed a remembered count inside a message about a fresh
@@ -3763,7 +3763,7 @@ expected shape — the transcription and the answer about the transcription fail
   was edited to make a check pass.
 
 
-```
+
 ## D76 The projections the app reads through carry nothing, and now says so — 2026-09-25
 
 ### 1. The question one layer up
@@ -4065,7 +4065,7 @@ were read off the kept from-scratch database and print `PASS` there with the det
   whether the shipped demo should stay empty or carry marked synthetic transactions — is still not decided here.
   The gate got one row (199 → 200), the build got none.
 
-```
+
 ## D78 A census that says "every text column" speaks exactly one of the schema's string types — 2026-09-25
 
 ### 1. The claim worth testing in D75's block
@@ -4338,7 +4338,7 @@ no vocabulary row claims and no probe emits, which is what row 1 and the waiver 
 - Nothing here changes the §109 traffic question, and no Java, migration or seeded value moved: 202 → 204
   checks, with the two new rows reading the same dataset the probes do.
 
-```
+
 ## D80 The synthetic stamp lives in twelve columns; the row enforcing it read three — 2026-09-25
 
 ### 1. The claim worth testing in a D63-era row
@@ -4473,7 +4473,7 @@ probe that re-counts what it changed (`chunks with synthetic_data=0`, `unstamped
   scope, and the §109 question the marker exists to answer — is marked demo data acceptable traffic — is still
   the same undecided product call D64 and D76 recorded.
 
-```
+
 ## D81 The arrays held the two most vocabulary-shaped columns in the demo, and no census could see them — 2026-09-25
 
 ### 1. What D78's fix still excluded
