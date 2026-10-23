@@ -23099,3 +23099,53 @@ seed-state-dependent `test_citations_resolve.py` case that passes in isolation).
   the Intent and the plan - the D517 shape, one lane over.
 - `meat` is in no table at all: "no meat" writes no constraint and no preference, though
   the corpus carries the vegetarian merchants the refusal points at.
+
+## 531. D537 · a cue with an object of its own does not reach back to the token before it (`apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/tests/test_a_cue_with_its_own_object_does_not_reach_back.py`)
+
+**What was measured.** D533 taught the polarity lane to read a cue that sits AFTER the
+token it governs ("素食唔好" refuses the 素食), and the rule was attachment alone - which
+is symmetric, and an empty gap is the most attached gap there is. So the lane read a cue
+backwards whenever it touched the token before it, and the most natural way to refuse one
+thing while asking for another came back inverted:
+
+    I want spicy no cilantro   ->  spicy -1     (a dislike of the thing asked for)
+    辣，唔要咖喱                ->  辣 -1        (the refusal is the curry's)
+    quiet, no noisy please     ->  quiet -1
+
+The "no" governs the object that follows it. Reading it backwards demoted the very thing
+the user asked for, and the ranking lane then ranked on the inverted signal - the D522
+shape, in the after-case.
+
+**The fix.** A cue governs a preceding token only when it governs NOTHING after it: a cue
+that still has words after it is speaking about those words. The Cantonese sentence-final
+particles - 辣唔好呀 (spicy, no) - are part of the refusal and not words of their own, so
+呀 㗎 喎 嘛 囉 嘞 咩 啩 join the filler vocabulary beside 咁 (D535); without them the new
+rule would read "辣唔好呀" as a LIKE of the spicy, trading one defect for another.
+
+**Verified, not claimed.**
+`test_a_cue_with_its_own_object_does_not_reach_back.py`: **34 passed** - the five measured
+inversions, the eight measured particles pinned in the table with the rest of the
+vocabulary derived from it (so a particle added later is covered and one removed reddens
+the pin), the four after-cases D533 fixed, and the five forward refusals. The gate's first
+draft fed the raw comma'd string straight to `polarity_for` and went GREEN under the
+probe; the lane is now fed the text it actually receives (normalised, then canonicalised),
+which is what makes the Cantonese case load-bearing. Proved to fail: the clause-final
+condition removed reddens **5**, the particles removed reddens **3** (each probe put back
+and byte-compared). The eleven refusal/polarity/constraint gates plus the merger,
+search-plan and live-refusal suites -> **433 passed**; `mypy nexus_ai` -> **Success: no
+issues found in 59 source files**; `ruff check nexus_ai tests` -> **All checks passed**;
+eval gate -> **PASS - 2 suite(s), 0 failing**; filtered regression (`-k "preference or
+structured or occasion or personaliz or merge or refinement or state or polarity or
+cuisine or transient or ranking or attribute or vocabulary or ambience or refusal or
+negation or clause"`) -> **1477 passed, 35 skipped**; (`-k "search or rank or card or score
+or facet or filter or avoid or understand or intent or nlu"`) -> **1061 passed, 38
+skipped**.
+
+**Residue measured and filed, not fixed.** The constraint lane still reads forward only,
+so "咖喱唔要" writes no `cuisine_avoid`. The backward direction is safe in principle now
+that a cue with an object of its own cannot reach back - but the normaliser erases the
+clause comma, and without a visible boundary "想食辣，咖喱唔要" would still smear the
+refusal onto the 辣 (the gap "咖喱" is three characters, which reads as attached). The
+same root cause costs the after-case its non-final clauses: "安靜的不好，要嘈" reads the 安靜
+as wanted, because everything after the cue looks like the cue's own object. Both come
+with the clause boundary that survives normalisation, not before it.

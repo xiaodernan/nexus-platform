@@ -61,12 +61,15 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   reader can see (a sentinel, or punctuation kept for the readers that need it), without breaking
   the Latin cue spellings that rely on punctuation-becomes-space ("no, spicy" must still read).
   Owner: the AI lane.
-- **A refusal that touches the token BEFORE it governs that token, even when it has an object of its own** - measured in the polarity lane's after-case while landing D536: "I want spicy no
-  cilantro" answers spicy **-1**, a dislike of the very thing the user asked for, because the
-  "no" sits directly after the token and nothing sits between them. The rule to write is that a
-  cue governs a preceding token only when it governs nothing after it. The constraint lane
-  reads forward only (deliberately, after D536), so the mirror case "咖喱唔要" writes no
-  constraint at all - it comes with the same rule, not before it.
+- **The constraint lane reads forward only, and the after-case cannot see a non-final clause** - D537 wrote the rule that fixes the polarity lane's after-case (a cue governs a
+  preceding token only when it governs nothing after it), but the constraint lane still has
+  no backward direction at all: "咖喱唔要" writes no `cuisine_avoid`. The backward direction
+  is safe in principle now - a cue with an object of its own cannot reach back - but the
+  normaliser erases the clause comma, so without a visible boundary "想食辣，咖喱唔好" would
+  smear the refusal onto the 辣 (the gap "咖喱" is three characters, which reads as
+  attached). The same missing boundary costs the after-case its non-final clauses:
+  "安靜的不好，要嘈" reads the 安靜 as wanted. Both come with the boundary that survives
+  normalisation, not before it.
   Owner: the AI lane.
 - **The clause gap admits one verb but not an adverb** - "not very spicy" (the gap "very",
   four characters) reads +1 and writes no constraint, and "not really like spicy" reads the
@@ -1540,3 +1543,17 @@ value list and its eight-character window) are measured and filed.
 **Queue spent:** the two items above - the constraint lane's ASCII-only value list (咖喱 /
 咖哩 / coriander are in the rules now) and its eight-character window (the clause rule
 replaces it). The four residues above are what this unit measured and could not fix.
+
+### 2026-10-24 (later still, the fourth) — D537: a cue with an object of its own does not reach back
+
+1. D537 (2a5d9e3) - D533's after-case read a cue backwards whenever it touched the token
+   before it, and an empty gap is the most attached gap there is: measured, "I want spicy
+   no cilantro" answered spicy **-1**, "辣，唔要咖喱" answered 辣 -1, "quiet, no noisy
+   please" answered quiet -1 - a dislike of the very thing asked for, which the ranking lane
+   then ranked on. A cue governs a preceding token only when it governs nothing after it;
+   the Cantonese sentence-final particles (辣唔好呀) join the filler vocabulary beside 咁 so
+   the rule does not read a refusal with a particle hanging off it as a LIKE.
+
+**Queue spent:** nothing queued; the after-case residue above is narrowed to the constraint
+lane's backward direction and the after-case's non-final clauses, both of which now wait on
+the clause boundary surviving normalisation.
