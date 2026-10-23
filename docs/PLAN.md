@@ -54,6 +54,13 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The readability floor** — live text measures 4.477:1 against the 4.5 AA bound the visual test
   asserts. Owner: the web stream.
 
+- **The normalizer erases the clause boundary the polarity reader needs** - D533 measured that
+  `normalize_query` turns every clause comma into a space, so by the time the polarity reader runs
+  "平, 唔要咖喱" and "平 唔要咖喱" are the same string and no reader can tell the clauses apart: the
+  refusal still smears onto the cheap. The boundary has to survive normalisation as something a
+  reader can see (a sentinel, or punctuation kept for the readers that need it), without breaking
+  the Latin cue spellings that rely on punctuation-becomes-space ("no, spicy" must still read).
+  Owner: the AI lane.
 ### Open, waiting on the AI lane (next)
 
 - **The `food/cuisine_like` structured preference is read by the matcher but not produced by the NLU** — the seed stores `{"values": ["cantonese","sushi"]}` under `food/cuisine_like`, and the category inference reads it, but a typed "我想食粵菜" produces a `cuisine` preference (a string value) rather than a `cuisine_like` one (an object with `values`). The two shapes now MEET at the matcher (D394 routes both through `cuisine_matches`), but they do not meet at the WRITER: a typed cuisine is not stored anywhere, so the user's own words about a cuisine are not recorded as a preference.
@@ -1456,3 +1463,20 @@ two planes to each other. The next lane's question is the same one asked of the 
 un-covered pure functions the AST scan named (`nlu/understand.py::_fill_*`,
 `api/routes_rag.py::_extract_proposals`, `api/routes_discover.py::_compare_fact_ids`,
 `api/sse.py::json_compact`).
+
+### 2026-10-24 (later) — D533: a question is not a refusal, and a refusal governs only its own clause
+
+1. D533 (6b2ecfa) - the product names 有無 / 有无 / 有冇 as QUESTIONS in `ASK_MERCHANT_CUES` and 冇 as
+   a REFUSAL in `NEGATION_CUES`; the reader that runs on the sentence had to pick one and picked the
+   refusal, so "有冇辣" demoted the spicy merchants the user asked about, in the preference lane and
+   the constraint lane alike. The same unit closes the other half of the rule the module's docstring
+   already claimed: a cue that merely sat later in the turn governed it ("想找個安靜的咖啡店，唔好辣"
+   read quiet as -1). A cue under the 有 governs nothing; a cue governs a token it is attached to,
+   with a clause boundary ending the clause. The old attachment test was
+   `_LOCAL_FILLER.match(between)` - a `*` quantifier matches the empty string, so any gap of three
+   characters or fewer read as filler and the boundary was never enforced at all. The particle
+   vocabulary stays in the product and stays load-bearing (the vocabulary gate derives its reference
+   from the package's own string constants, and dropping the particles reddened it).
+
+**Queue spent:** nothing was queued; the normalizer's comma erasure is filed above as the residue
+this unit measured and could not fix without touching the normalizer's contract.
