@@ -23392,3 +23392,42 @@ whatever the sentence now says about it. Measured: `docs/AI.md` describes the pl
 that does not exist, under a declaration that says it is not built yet. The row stays
 green because the name is still cited; only a reader of the sentence could see the claim
 flip.
+## 537. D543 - the eat-less refusal puts the verb AFTER the cue, and the clause rule reads it (`apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/tests/test_the_eat_less_refusal_puts_the_verb_after_the_cue.py`)
+
+**What was measured.** D537's rule - a cue reaches back to a preceding token only when it
+governs nothing after it - is right for a NOUN and wrong for a VERB, because the eat-less
+refusal is written the other way round: "花生少吃" (peanut, eat less), "peanut 別吃",
+"gluten 避免吃". The value sits BEFORE the cue and the verb after it, and the verb's
+object is the value. Measured at HEAD, every one of these wrote nothing and came back
+with the intent `unknown` - the user refused and the product heard nothing, in the
+language most of its users type.
+
+**The fix.** The tail after the cue may be ONE bridge verb, with the clause's own
+particles hanging off it. The cue governs the verb, and the verb's object is the token
+the backward arm already found, so the cue is final enough to reach back. A NOUN after
+the cue is still the cue's own object (D537's "no cilantro" keeps the cilantro), a verb
+with an object of its own after it is the forward refusal of that object ("辣唔好食咖喱"
+refuses the curry), and the boundary, the separator and the existential exemption all
+keep their teeth. Both lanes read the one rule, so "辣唔好食" now answers -1 and writes
+`cuisine_avoid:spicy` with one voice.
+
+**Verified, not claimed.**
+`test_the_eat_less_refusal_puts_the_verb_after_the_cue.py`: **1550 passed** - a census over
+every surface the rules name x every negation they read with one bridge verb in the tail,
+every negation x every bridge verb across the five rule keys, the mixed-script and
+particled shapes, the six rows the tail must not open, and the D493 debt measured at the
+new shape. Proved to fail: the verb branch removed from `clause_final` reddens **1541**,
+the tail made unconditionally final reddens the three noun-tail rows, the file restored
+and byte-compared. The fourteen refusal/polarity/constraint gates and the vocabulary
+gates -> **3872 passed**; filtered regression (`-k "preference or structured or occasion
+or personaliz or merge or refinement or state or polarity or cuisine or transient or
+ranking or attribute or vocabulary or ambience or refusal or negation or clause"`) ->
+**5521 passed, 35 skipped**; (`-k "search or rank or card or score or facet or filter or
+avoid or understand or intent or nlu"`) -> **2255 passed, 38 skipped**; `mypy nexus_ai` ->
+**Success: no issues found in 59 source files**; `ruff check nexus_ai tests` -> **All
+checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
+
+**Residue measured and filed, not fixed.** The debt gate's four words are readable at the
+new shape too: "海鲜 少吃" writes `diet_avoid:seafood` and the polarity lane still reads
+seafood +1, because 少 is not in `NEGATION_CUES` - the D493 debt, now measured on the
+eat-less shape as well (the new door's debt rows pin it there).

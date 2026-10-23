@@ -60,11 +60,6 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   either), so it is the reader's reach rather than a contradiction - but a preference keyed on the
   shorter surface would be boosted by a sentence that refuses the longer one.
   Owner: the AI lane.
-- **The eat-less spelling reads nothing at all** - a cue with a verb of its own after it is not
-  clause-final (D537's rule), so "花生 少吃" and "peanut 別吃" write no constraint and no
-  preference: the user refuses and the product hears nothing. The clause rule would have to let
-  the cue govern the verb's own object.
-  Owner: the AI lane.
 - **The declarations are checked by name, not by sentence** - the doc gate's exemption
   tables are green as long as a judged document still puts the name in backticks, whatever
   the sentence now says about it: measured, `docs/AI.md` describes the planner
@@ -75,7 +70,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   避免 / 少 are absent from the polarity table (D493's debt), so "海鲜 避免" writes
   `diet_avoid:seafood` and the preference `cuisine seafood +1` in one sentence, where the
   shared negation answers both consistently ("海鲜 avoid" -> the constraint and -1). The
-  reader is shared (D541); the two vocabularies are not yet one.
+  reader is shared (D541); the two vocabularies are not yet one. The eat-less shape reads the
+  same split now (D543): "海鲜 少吃" writes the constraint and boosts the seafood.
   Owner: the AI lane.
 - **The clause gap admits one verb but not an adverb** - "not very spicy" (the gap "very",
   four characters) reads +1 and writes no constraint, and "not really like spicy" reads the
@@ -1681,3 +1677,20 @@ the clause boundary surviving normalisation.
 **Queue spent:** nothing queued. One residue filed: the gates read names, not sentences -
    `docs/AI.md` describes the planner in the present tense under a declaration that says it
    is not built yet, and the row stays green because the name is still cited.
+### 2026-10-24 (later still, the tenth) — D543: the eat-less refusal puts the verb after the cue
+
+1. D543 (c5f9ba9) - D537's rule (a cue reaches back only when it governs nothing after it) is
+   right for a NOUN and wrong for a VERB: the eat-less refusal puts the value first and the
+   verb after the cue - "花生少吃", "peanut 別吃", "gluten 避免吃" - and the verb's object is
+   the value. Measured at HEAD, every one of these wrote nothing and answered `unknown`. The
+   tail after the cue may now be ONE bridge verb, with the clause's own particles hanging off
+   it: the cue governs the verb and the verb's object is the token the backward arm found. A
+   noun after the cue is still the cue's own object, a verb with an object of its own is the
+   forward refusal of that object, and the boundary, the separator and the existential
+   exemption keep their teeth. Both lanes read the one rule, so "辣唔好食" answers -1 and
+   writes `cuisine_avoid:spicy` with one voice.
+
+**Queue spent:** the eat-less item (filed by D541's residue). One residue re-measured, not
+   moved: the D493 debt is readable at the new shape too - "海鲜 少吃" writes
+   `diet_avoid:seafood` and the polarity lane still boosts the seafood, because 少 is not in
+   `NEGATION_CUES`; the new door pins the four words at this shape.
