@@ -306,6 +306,27 @@ def _canonical_category(filters: dict[str, Any]) -> None:
         filters["category"] = matched[0]
 
 
+def _canonical_district(filters: dict[str, Any]) -> None:
+    """D508: the caller's `filters.district` is the same fact as the intent's district, and
+    it must be read by the SAME reader - the lexin's `match_district`.
+
+    It used to pass the raw string through, so "中環" (the product's own vocabulary alias)
+    matched NOTHING while the same word in a QUERY found the district. The search resolves
+    the district into coordinates (`search/service.py`), so the filter has to speak the
+    canonical district name.
+
+    A word the product does not know is left alone - the reader must not invent a district
+    the caller did not ask for.
+    """
+    if not filters.get("district"):
+        return
+    from nexus_ai.nlu.lexicon import match_district
+
+    matched = match_district(str(filters["district"]))
+    if matched is not None:
+        filters["district"] = matched[0]
+
+
 def plan_from_intent(intent: Intent | None, *, query: str | None = None,
                      geo: Any = None, filters: Any = None, now: datetime | None = None,
                      limit: int = 20, locale: str = "zh-HK") -> SearchPlan:
@@ -317,6 +338,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     if intent is None:
         plan.filters = _plain(filters)
         _canonical_category(plan.filters)
+        _canonical_district(plan.filters)
         _apply_geo(plan, geo)
         return plan
 
@@ -326,6 +348,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     out = plan.filters = _plain(filters)
     out.setdefault("category", intent.category)
     _canonical_category(out)
+    _canonical_district(out)
     if intent.location and intent.location.value:
         out.setdefault("district", intent.location.value)
     if intent.location and intent.location.radius_m:
