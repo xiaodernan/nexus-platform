@@ -98,8 +98,16 @@ async def test_a_liked_cuisine_boosts_the_merchant_that_carries_it():
     assert await _score_for("vegetarian", ["vegetarian"], "Vegetarian", polarity=1) == 1.0
 
 
-async def test_a_disliked_cuisine_boosts_the_merchant_that_does_not_carry_it():
-    assert await _score_for("vegetarian", ["sushi"], "Sushi & Sashimi", polarity=-1) == 1.0
+async def test_a_disliked_cuisine_leaves_the_merchant_that_does_not_carry_it_neutral():
+    """D529 corrected this row. It used to assert 1.0 - "the merchant is not the refused
+    cuisine, therefore a perfect match" - and that answer is the maximum, so a refusal
+    became evidence FOR everything else at full strength. Because the aggregation across
+    preferences is a maximum (D397), one typed refusal erased every other preference the
+    user had: measured on the live corpus, a declared `quiet` at 0.9 plus a typed refusal
+    of Japanese left all 442 non-Japanese merchants at 1.0, quiet and loud alike. A LIKE
+    already answers neutral for a non-match; a DISLIKE now does too. The cuisine the user
+    refused is still demoted to 0.0 - see the row above."""
+    assert await _score_for("vegetarian", ["sushi"], "Sushi & Sashimi", polarity=-1) == 0.5
 
 
 async def test_the_card_names_the_preference_that_fired():

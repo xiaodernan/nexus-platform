@@ -1135,7 +1135,16 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                                            pref_value),
                                  "source": "typed"})
                     else:
-                        intent_pref_scores.append(0.5 if polarity > 0 else 1.0)
+                        # D529: the merchant is not the refused cuisine, and that is
+                        # NOT evidence that it fits. Answering the maximum here made
+                        # a refusal evidence FOR everything else at full strength,
+                        # and because the aggregation is a maximum (D397) it wiped
+                        # out every other preference the user had: measured on the
+                        # live corpus, a declared `quiet` at 0.9 plus a typed
+                        # refusal of Japanese left all 442 non-Japanese merchants at
+                        # 1.0, quiet and loud indistinguishable. A LIKE already
+                        # answers neutral for a non-match; a DISLIKE must too.
+                        intent_pref_scores.append(0.5)
                     continue
 
                 attr_key1 = f"{pref_value}_{pref_kind}"  # date_occasion

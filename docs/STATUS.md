@@ -22679,3 +22679,54 @@ understand or intent"`) -> **342 passed, 13 skipped**; (`-k "preference or struc
 or occasion or personaliz or merge or refinement or state"`) -> **533 passed, 18
 skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**;
 `ruff check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
+
+## 523. D529 · a refusal was evidence FOR everything else, at full strength (`apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_the_intent_cuisine_reads_the_rows_columns.py`, `apps/ai/tests/test_a_refusal_is_not_evidence_for_everything_else.py`, `apps/ai/tests/test_live_the_refusal_does_not_flatten_the_lane.py`)
+
+**What was measured.** The transient path - the one that serves the preferences the user
+typed in THIS query - answered a cuisine preference it could not match with the side of
+neutral the user was NOT on:
+
+    a cuisine the user LIKED    -> 0.5   (no evidence either way)
+    a cuisine the user DISLIKED -> 1.0   (the maximum)
+
+"The merchant is not the refused cuisine, therefore a perfect match." It is not a match.
+The merchant simply is not the thing the user turned down, and the user said nothing
+about how well it fits them. Answering the maximum there made a refusal evidence FOR
+everything else at full strength - and because the aggregation across preferences is a
+maximum (D397), one typed refusal erased every other preference the user had. Measured
+on this database (470 published merchants), a declared `quiet` at weight 0.9 plus a typed
+refusal of Japanese:
+
+    before:  the 188 quiet merchants  -> 0.9000
+             the 282 loud merchants   -> 1.0000
+    after:   the 188 quiet merchants  -> 0.9000
+             the 282 loud merchants   -> 0.5000
+
+Before the fix the personalization lane was FLAT: 470 merchants, one value, and the
+preference the user had declared had no effect on the order they were served in. This
+is the D527 shape once more - a signal answering a question it was not asked - reached
+from the transient path instead of the stored one, and it is the residue D522 left
+behind: the `1.0` was the symptom of a match that never fired, and when the match was
+repaired the answer was pinned as though it had been the design.
+
+**The fix.** The non-match answers neutral, in both directions, exactly as a LIKE
+already did. The refused cuisine is still demoted to 0.0 - refusing something still
+excludes it. What changed is that refusing something no longer promotes everything
+else. The row that pinned the old behaviour in the D522 gate was rewritten with the
+measurement that overturns it, so the two units do not disagree about the same line.
+
+**Verified, not claimed.** `test_a_refusal_is_not_evidence_for_everything_else.py`:
+**6 passed** - the refused cuisine still demotes to the floor, a liked cuisine still
+boosts, a refusal no longer promotes what it did not name, the lane can still tell the
+two halves apart, a declared preference survives a refusal typed in the same turn, and
+the lane is unchanged when nobody refuses anything. Live
+(`test_live_the_refusal_does_not_flatten_the_lane.py`): **4 passed** - the corpus splits
+on both sides, the refusal does not lift the half the user did not name above the half
+it did, the declared 0.9 survives, and the lane is not flat. Proved to fail: restoring
+`0.5 if polarity > 0 else 1.0` reddens **5** of the fourteen checks (the probe put back,
+the file byte-compared afterwards). Targeted regression (`-k "preference or structured
+or occasion or personaliz or merge or refinement or state or polarity or cuisine or
+transient or ranking"`) -> **803 passed, 24 skipped**; (`-k "search or rank or card or
+score or facet or filter or avoid"`) -> **818 passed, 26 skipped**; `mypy nexus_ai` ->
+**Success: no issues found in 59 source files**; `ruff check .` -> **All checks
+passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
