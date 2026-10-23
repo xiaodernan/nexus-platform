@@ -22219,3 +22219,53 @@ vocabulary gates, the two-readers-agree gate, merge cue spellings, negations, cu
 vocabulary) -> **367 passed**; `mypy nexus_ai` -> **Success: no issues found in 59 source
 files**; `ruff check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0
 failing**; the ten CI checkers -> green.
+## 513. D519 · the district reader could not read the spelling the corpus writes its districts in - and four of the corpus's fifteen districts were missing from it entirely (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_the_district_speaks_the_corpus_spelling.py`)
+
+**What was measured.** A district has three spellings in this product: the DISPLAY NAME
+("Sha Tin", which `locations.district` holds and the SQL compares), the SPACED form ("sha
+tin", which the lexin's alias table carries), and the SLUG (`sha-tin`, which the seed writes
+as a tag on every merchant in the district). `match_district` compares its aliases LITERALLY
+through `cue_in`, and the alias table only had the spaced form - so the corpus's own spelling
+resolved to nothing. Measured on the live corpus: of the 15 district tags the seed writes,
+**1** resolved (`central`, the only single-word one) and 14 did not. Through the API:
+
+    filters={"district": "sha-tin"}  -> 0 items
+    filters={"district": "Sha Tin"}  -> 50 items (the limit)
+
+The second defect sat behind the first: the lexin's `DISTRICTS` held 20 districts and the
+corpus writes 15 of them, but four were absent from the table altogether - Tai Wai (137
+published merchants, the second-largest district in the corpus), Ma On Shan (50), Kowloon Bay
+(14) and Stanley (6). A user who asked for any of them got no district and no geo anchor.
+
+**The fix.** Two halves, one theme. `_hyphenate_district_aliases` runs after the vocabulary
+canonicalisation and adds the folded form of every Latin district name and alias to that
+district's alias list - folded by the product's ONE separator rule
+(`categories.canonical_tag`, the same rule that folds a category bucket and a tag), not a
+second one. And the four missing districts are added from the seed's own DISTRICTS table,
+which is the writer of both `locations.district` and the district tags - so the coordinates
+are the seed's, not an estimate. The table now holds 24 districts and every one of the 15
+corpus district tags resolves: `sha-tin` -> Sha Tin, `tai-wai` -> Tai Wai,
+`ma-on-shan` -> Ma On Shan, `kowloon-bay` -> Kowloon Bay, `stanley` -> Stanley.
+
+**Discipline note.** The alias table was not wrong so much as incomplete in a direction
+nobody looked: every alias a human would type was there, and the one spelling the corpus
+itself writes was not. That is the D516 shape again - the writer and the reader of one fact
+disagreeing about a separator - and the fix is the same shape too: fold with the rule the
+product already has, and take the missing rows from the writer rather than inventing them.
+The gate pins the coupling (the folded spelling must be IN the table, so a district added
+later inherits the fold) as well as the behaviour, because a behavioural gate alone would
+pass the moment someone adds a district and forgets its hyphen.
+
+**Verified, not claimed.** The gate: **79 passed** - all 15 corpus district tags resolve to
+the district the corpus says they are and filter to it through `plan_from_intent`, every
+Latin spelling of every district in the table resolves, the folded spelling is in the table,
+and the display name and spaced form still resolve (the fold adds, never replaces). Proved to
+fail in both halves separately: removing the fold reddens **46** checks; removing the four
+districts reddens **8**. Live contract re-measured: `kowloon-bay` -> 14 items and `stanley`
+-> 6 items, exactly the published-merchant counts the corpus holds. Targeted regression
+(district spelling gate, district vocabulary gate, lexicon, canonical forms, lexicon readers,
+vocabulary code points, search plan, understand resolution, state merger, sql builders) ->
+**538 passed**, and (live contract, live sort preference, search pipeline, preferences are
+soft, the tags gate, the avoid gate, the party-size gate) -> **182 passed**; `mypy nexus_ai`
+-> **Success: no issues found in 59 source files**; `ruff check .` -> **All checks passed**;
+eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers -> green.

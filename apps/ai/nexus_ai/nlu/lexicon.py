@@ -37,6 +37,15 @@ DISTRICTS: dict[str, dict[str, Any]] = {
     "Cyberport":        {"aliases": ["數碼港", "数码港", "cyberport"], "lat": 22.2570, "lng": 114.1290, "area": "HKI"},
     "Lantau":           {"aliases": ["大嶼山", "大屿山", "tant", "disney", "迪士尼"], "lat": 22.2950, "lng": 113.9430, "area": "NT"},
     "Sheung Shui":      {"aliases": ["上水", "sheung shui"], "lat": 22.5010, "lng": 114.1280, "area": "NT"},
+    # D519: four districts the corpus writes and this table did not know. The seed's own
+    # DISTRICTS table (`data/seed/seed_pools.py`) is the writer of `locations.district` and
+    # of the district TAGS, so its rows are the source here - the coordinates are the seed's,
+    # not an estimate. Tai Wai alone carries 137 published merchants, the second-largest
+    # district in the corpus, and "大圍" resolved to no district at all.
+    "Tai Wai":          {"aliases": ["大圍", "tai wai"], "lat": 22.3696, "lng": 114.1784, "area": "NT"},
+    "Ma On Shan":       {"aliases": ["馬鞍山", "ma on shan"], "lat": 22.4085, "lng": 114.2264, "area": "NT"},
+    "Kowloon Bay":      {"aliases": ["九龍灣", "kowloon bay"], "lat": 22.3228, "lng": 114.2098, "area": "KLN"},
+    "Stanley":          {"aliases": ["赤柱", "stanley"], "lat": 22.2180, "lng": 114.1750, "area": "HKI"},
 }
 
 #: "附近/近一点/nearby" — no district, radius around the user's geo hint.
@@ -700,4 +709,39 @@ def _canonicalise_vocabulary() -> None:
     # spelling, and a test that compares the two would be comparing two vocabularies.
 
 
+def _hyphenate_district_aliases() -> None:
+    """Give every district the spelling the corpus writes its districts in (D519).
+
+    A Latin alias is written the way a person writes it - "sha tin" - while the corpus writes
+    the district as a hyphenated slug: every merchant in Sha Tin carries the tag `sha-tin`,
+    and `locations.district` holds the display name "Sha Tin". `cue_in` compares the alias
+    LITERALLY, so the corpus's own spelling matched nothing: measured on the live corpus,
+    14 of the 15 district tags the seed writes (`sha-tin`, `mong-kok`, `tsim-sha-tsui`,
+    `causeway-bay`, `kwun-tong`, ...) resolved to no district at all, and
+    `filters={"district": "sha-tin"}` returned 0 items where "Sha Tin" returned 50.
+
+    The fold is the product's ONE separator rule (`categories.canonical_tag`, the same one
+    that folds a category bucket and a tag), not a second one: one word, one set of spellings.
+    A CJK alias folds to itself, so this only ever adds Latin forms.
+    """
+    import sys
+
+    from nexus_ai.search.categories import canonical_tag
+
+    module = sys.modules[__name__]
+    table = getattr(module, "DISTRICTS", None)
+    if not isinstance(table, dict):
+        return
+    folded: dict[str, dict[str, Any]] = {}
+    for name, spec in table.items():
+        aliases = list(spec.get("aliases") or [])
+        for form in (name, *aliases):
+            slug = canonical_tag(form)
+            if slug and slug not in aliases:
+                aliases.append(slug)
+        folded[name] = {**spec, "aliases": aliases}
+    setattr(module, "DISTRICTS", folded)
+
+
 _canonicalise_vocabulary()
+_hyphenate_district_aliases()
