@@ -74,7 +74,13 @@ _canonicalise_tables()
 #: a pattern whose `*` quantifier matched the empty string, so ANY gap of three
 #: characters or fewer read as filler and the boundary was never enforced at all.
 _CLAUSE_BOUNDARY = re.compile(r"[,，。;；!?！？\n]")
-_LOCAL_FILLER = re.compile(r"[的地得咁咗喇啦呢個個\s]*")
+# D537: the Cantonese sentence-FINAL particles join the vocabulary. A refusal is often
+# written with one hanging off the end of it - "辣唔好呀" (spicy, no) - and the after-case
+# (a cue that governs the token BEFORE it) has to read the particle as part of the refusal
+# rather than as a word the cue is speaking about. Without them the rule below would read
+# "辣唔好呀" as a LIKE of the spicy. 咁 came in with D535; these are its neighbours,
+# measured against the same need.
+_LOCAL_FILLER = re.compile(r"[的地得咁咗喇啦呢個個呀㗎喎嘛囉嘞咩啩\s]*")
 _ATTACHED_GAP = 3
 
 #: D535: the words that COORDINATE two clauses. The normalizer turns a clause comma
@@ -114,6 +120,21 @@ def clause_attached(between: str) -> bool:
     if len(gap) <= _ATTACHED_GAP:
         return True
     return gap in _VERB_BRIDGE
+
+
+def _clause_final(low: str, cue_at: int, cue: str) -> bool:
+    """Whether nothing but the clause's own particles follows the cue.
+
+    D537: a cue that still has words after it is speaking about THOSE words. Measured,
+    "I want spicy no cilantro" answered spicy **-1** - a dislike of the very thing the
+    user asked for, which the ranking lane then demoted (the D522 shape, in the
+    after-case) - because the "no" sits directly after the token with nothing between
+    them, and the reader took an empty gap for governance. The "no" governs the cilantro
+    that follows it. A cue governs a preceding token only when it governs nothing after
+    it: "素食唔好" refuses the 素食, "辣唔好呀" refuses the 辣, and the cue with an object
+    of its own keeps its object.
+    """
+    return _LOCAL_FILLER.fullmatch(low[cue_at + len(cue):].strip()) is not None
 
 
 def _window_for(token: str) -> int:
@@ -179,8 +200,10 @@ def polarity_for(text: str, token: str) -> int:
             # attached to it: "安靜的不好" negates 安靜, while "有無辣，唔好嘈" asks
             # about spicy and refuses noisy - two clauses, and the refusal belongs to
             # the second one. A cue that merely sits somewhere later in the turn
-            # governs nothing (D533).
-            if clause_attached(low[idx + len(tok):cue_at]):
+            # governs nothing (D533), and a cue with an object after it governs THAT
+            # object, not the token before it (D537).
+            if (clause_attached(low[idx + len(tok):cue_at])
+                    and _clause_final(low, cue_at, cue)):
                 return -1
             cue_at = low.find(cue, cue_at + 1)
             continue
