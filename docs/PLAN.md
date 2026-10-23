@@ -54,25 +54,6 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The readability floor** — live text measures 4.477:1 against the 4.5 AA bound the visual test
   asserts. Owner: the web stream.
 
-- **The seed's occasion/style/view derivations speak a leaf vocabulary the taxonomy no longer
-  writes** — D526 measured it on a fresh 300-merchant seed. `data/seed/generate.py` derives
-  `solo_occasion`, `scenic_view` and `outdoor_style`'s leaf leg from tuples in which **0 of
-  the terms is a leaf `CAT_TREE` writes**, so those attributes are `False` for every merchant
-  forever: `solo_occasion` = `("cafe", "bakery", "restaurant", "fast_food")`, `scenic_view` =
-  `("attraction", "hotel", "rooftop", "seafood")`, `outdoor_style` = `("attraction", "park",
-  "outdoor_seating")`. The NLU understands `occasion=solo` and `view=scenic`, the matcher
-  reads `solo_occasion`/`scenic_view`, and the corpus never writes them True — so both
-  preferences read 0.5 (neutral) on every merchant. The other derivations are partly dead
-  for the same reason: `date_occasion` 5 of 13 terms live (11.3% of merchants),
-  `group_occasion` 2 of 6 (4.0%), `family_occasion` 1 of 6 (3.7%), `business_occasion` 1 of 6
-  (1.7%). The dead terms are three vocabularies mixed in one tuple — root names (`cafe`,
-  `bar`, `hotel`), the NLU's cuisine keys (`dim_sum`, `japanese`, `seafood`, `western`,
-  `malaysian`), and words no plane has ever written (`bbq`, `bakery`, `fast_food`,
-  `attraction`, `park`, `rooftop`, `cooking_class`, `sichuan`, `hunan`, `mexican`).
-  `escape_room` is the taxonomy's `escape-room` with the separator the NLU uses, so it is a
-  spelling, not a rename. Owner: the seed lane — the AI lane fixed only `spicy` (D526),
-  where the respelling was mechanical; what `solo` and `scenic` MEAN is the seed lane's call.
-
 ### Open, waiting on the AI lane (next)
 
 - **The `food/cuisine_like` structured preference is read by the matcher but not produced by the NLU** — the seed stores `{"values": ["cantonese","sushi"]}` under `food/cuisine_like`, and the category inference reads it, but a typed "我想食粵菜" produces a `cuisine` preference (a string value) rather than a `cuisine_like` one (an object with `values`). The two shapes now MEET at the matcher (D394 routes both through `cuisine_matches`), but they do not meet at the WRITER: a typed cuisine is not stored anywhere, so the user's own words about a cuisine are not recorded as a preference.
@@ -1440,3 +1421,38 @@ Next: complete the fresh gate re-certification (steps 4-18); the web stream's ho
 ---
 
 The wave's live verification completed on the demo plane too (D363, three-plane whole: 341 offline / 2-and-2 fixture / 4-for-4 demo), with a D240 attribution note for the S359 sweep my D361 restructure staged - their own S359 independently walked the same reservation-block arithmetic, the two lanes converging on the same open questions from different sides. And the ledgers' line endings got their own census and reader (D360, 7dd07d5): both ledgers are CRLF bodies with this lane's LF appends as whole uniform sections, ZERO sections mix spellings, the reader enforces no-mixing from gate step 10 (reachability 14/14), and it self-falsifies on a planted mixed section.
+### 2026-10-24 — D528-D532, one shape five times over: the corpus and the reader spelling one fact differently
+
+Baseline unchanged: the ten readers are where D520 left them. Five units this session, each one the
+same question asked of a different plane: *what does the corpus write, does the reader read it, and is
+the answer finer than the caller's own?*
+
+1. D528 (168c7f2) - `_absorb`'s preference merge silently dropped a later turn's answer whenever an
+   earlier turn had already touched the key, so "I wanted Japanese, actually no" kept the LIKE. The
+   turn's value now replaces the state's for that key outright, compared on (value, polarity).
+2. D529 (c9c326e) - the intent path's cuisine non-match answered 1.0 (the maximum) for a DISLIKE,
+   and the aggregator is a max: one typed refusal flattened all 442 non-Japanese merchants to 1.0.
+   Both directions now answer the neutral 0.5.
+3. D530 (402ac27) - the typed preference derived `open_late_time_pref`/`time_pref_open_late`, which
+   no corpus writes: 0 of 470 merchants answered. An alias table maps the (kind, key) to the
+   attribute the corpus actually writes (`opens_late`).
+4. D531 (95023f8) - a preference DECLARED in the NLU's own spelling (`ambience/quiet`, boolean)
+   had no stored branch at all: all 470 merchants read None, while the same fact typed into the
+   query box worked. Branches added, each attribute witnessing the other.
+5. D532 (5c51097) - the seed derived `solo_occasion`/`scenic_view` from tuples in which 0 of the
+   terms is a leaf `CAT_TREE` writes, so D528's occasion matcher weighted a flag that was always
+   False (0 of 60 merchants). The leaf sets moved into `seed_pools.py` beside the tree they name,
+   the tops read off the tree instead of retyped; after: solo 27/60, scenic 2, date 34, group 25,
+   family 28, business 30.
+
+**Queue spent:** the D526 item on the seed's dead occasion/style/view vocabulary - the AI lane's
+half (spicy) landed in D526; the seed lane's half (what solo and scenic MEAN) lands in D532, with
+`OUTDOOR_LEAVES = ()` recording that the taxonomy carries no outdoor leaf rather than leaving the
+fallback to look like a fact about the data.
+
+**The shape of the residue:** five units, five spellings of one fact that two planes could not
+agree on. The gates that caught them all read a writer against a reader with `ast` and hold the
+two planes to each other. The next lane's question is the same one asked of the remaining
+un-covered pure functions the AST scan named (`nlu/understand.py::_fill_*`,
+`api/routes_rag.py::_extract_proposals`, `api/routes_discover.py::_compare_fact_ids`,
+`api/sse.py::json_compact`).
