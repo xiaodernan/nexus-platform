@@ -327,6 +327,35 @@ def _canonical_district(filters: dict[str, Any]) -> None:
         filters["district"] = matched[0]
 
 
+def _canonical_tags(filters: dict[str, Any]) -> None:
+    """D516: the caller's `filters.tags` is the same fact as the merchant's `tags` column,
+    and it must be read by the SAME reader - `categories.canonical_tag`, the one that
+    already folds a category bucket into the taxonomy's spelling.
+
+    The seed writes every tag as a lowercase hyphen slug (all 100 distinct tags in the demo
+    corpus match `^[a-z0-9-]+$`) and `search/sql.py` compares with `&&` - an exact array
+    overlap. The filter used to pass the raw string straight through, so a caller who
+    spelled the tag the way the product spells it in prose matched NOTHING. Measured on the
+    live corpus: `Cantonese` -> 0 rows where `cantonese` -> 11, `escape_room` -> 0 where
+    `escape-room` -> 6, `"  cantonese  "` -> 0. One fact, two readers, and one of them was
+    the raw string.
+
+    The reader RESPELLS and never REWORDS: no alias table, no lexicon, so a tag the product
+    does not know keeps its word and still matches nothing rather than being resolved into
+    a different tag the caller never asked for.
+    """
+    raw = filters.get("tags")
+    if not raw:
+        return
+    from nexus_ai.search.categories import canonical_tag
+
+    # A lone string is one tag, not one tag per character: iterating "ramen" would hand the
+    # predicate five tags, none of which any merchant carries.
+    if isinstance(raw, str):
+        raw = [raw]
+    filters["tags"] = [canonical_tag(t) for t in raw]
+
+
 def plan_from_intent(intent: Intent | None, *, query: str | None = None,
                      geo: Any = None, filters: Any = None, now: datetime | None = None,
                      limit: int = 20, locale: str = "zh-HK") -> SearchPlan:
@@ -339,6 +368,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
         plan.filters = _plain(filters)
         _canonical_category(plan.filters)
         _canonical_district(plan.filters)
+        _canonical_tags(plan.filters)
         _apply_geo(plan, geo)
         return plan
 
@@ -349,6 +379,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     out.setdefault("category", intent.category)
     _canonical_category(out)
     _canonical_district(out)
+    _canonical_tags(out)
     if intent.location and intent.location.value:
         out.setdefault("district", intent.location.value)
     if intent.location and intent.location.radius_m:

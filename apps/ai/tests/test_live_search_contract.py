@@ -126,6 +126,38 @@ def test_every_rendered_number_is_backed_by_a_fact(live_settings):
         assert facts.get("open_state") is not None, "the open state has no fact"
 
 
+def test_the_explicit_tag_filter_speaks_the_stored_spelling(live_settings):
+    """D516: the same tag, spelled two ways, must reach the same rows.
+
+    The seed writes every tag as a lowercase hyphen slug and the SQL tag filter is an exact
+    array overlap, so the caller's spelling has to be folded before it reaches the
+    predicate. Measured on this database: `cantonese` -> 11 rows, `Cantonese` -> 0.
+    """
+    if _published(live_settings) == 0:
+        pytest.skip("no published merchants in this database - needs the demo seed")
+    stored = _search(live_settings, query="", filters={"tags": ["cantonese"]})
+    typed = _search(live_settings, query="", filters={"tags": ["Cantonese"]})
+    assert stored.get("items"), "the corpus carries the tag and the filter emptied the answer"
+    assert [i["slug"] for i in typed.get("items") or []] == [
+        i["slug"] for i in stored["items"]], (
+        "the tag spelled the way the product spells it in prose gave a different answer "
+        "than the stored spelling - one fact, two readers")
+
+
+def test_the_explicit_tag_filter_is_read_on_the_intent_path_too(live_settings):
+    """The same gate on the branch that DOES resolve an intent - the reader has to sit on
+    both paths, not only the one that had it first."""
+    if _published(live_settings) == 0:
+        pytest.skip("no published merchants in this database - needs the demo seed")
+    stored = _search(live_settings, filters={"tags": ["cantonese"]})
+    typed = _search(live_settings, filters={"tags": ["Cantonese"]})
+    assert stored.get("items"), "the corpus carries the tag and the filter emptied the answer"
+    assert [i["slug"] for i in typed.get("items") or []] == [
+        i["slug"] for i in stored["items"]], (
+        "the intent path read the tag differently from the intent-None path - one fact, "
+        "two readers")
+
+
 def test_a_point_to_measure_from_gives_a_distance(live_settings):
     if _published(live_settings) == 0:
         pytest.skip("no published merchants in this database - needs the demo seed")

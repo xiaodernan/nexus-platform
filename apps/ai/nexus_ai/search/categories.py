@@ -9,9 +9,20 @@ resolved here into the set of slugs that mean the same thing.
 The raw bucket stays in the returned set: `StaticBackend`'s fixture catalogue has no
 `categories` rows and stores the coarse bucket in `category` itself, and one code path serves
 both backends.
+
+The same rule reads the merchant `tags` column. The seed writes every tag as a lowercase
+hyphen slug (all 100 distinct tags in the demo corpus match `^[a-z0-9-]+$`) and the SQL tag
+filter compares with `&&` - an exact array overlap - so the caller's spelling has to be folded
+into that one spelling before it reaches the predicate.
 """
 
 from __future__ import annotations
+
+import re
+
+#: the one separator rule: the vocabulary separates words with `_` or a space, a slug
+#: hyphenates them.
+_SEPARATORS = re.compile(r"[\s_]+")
 
 #: buckets whose name is not a slug in the taxonomy, i.e. not fixed by `_slug()` alone.
 ALIASES: dict[str, tuple[str, ...]] = {
@@ -27,9 +38,21 @@ ALIASES: dict[str, tuple[str, ...]] = {
 
 
 def _slug(bucket: str) -> str:
-    """Taxonomy slugs hyphenate where the intent vocabulary underscores (`escape_room` ->
-    `escape-room`), which covers most buckets without an explicit alias."""
-    return bucket.replace("_", "-")
+    """The product's ONE separator rule: a slug hyphenates where the vocabulary separates
+    words (`escape_room` -> `escape-room`, `escape room` -> `escape-room`), which covers most
+    buckets and tags without an explicit alias."""
+    return _SEPARATORS.sub("-", bucket)
+
+
+def canonical_tag(tag: str | None) -> str:
+    """The stored spelling of a tag: case-folded, trimmed, separators hyphenated.
+
+    The seed is the writer and the SQL `&&` predicate is the reader; this is the one function
+    that speaks to both. It RESPELLS and never REWORDS - there is no alias table and no
+    lexicon here - so a tag the product does not know keeps its word and still matches
+    nothing, rather than being resolved into a different tag the caller never asked for.
+    """
+    return _slug((tag or "").strip().lower())
 
 
 def resolve(bucket: str | None) -> list[str]:
@@ -46,4 +69,4 @@ def resolve(bucket: str | None) -> list[str]:
     return out
 
 
-__all__ = ["ALIASES", "resolve"]
+__all__ = ["ALIASES", "canonical_tag", "resolve"]

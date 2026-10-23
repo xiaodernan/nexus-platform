@@ -22065,3 +22065,60 @@ source files**; `ruff check .` -> 1 error, and it is the sibling lane's untracke
 touched here); eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers -> green as
 re-measured after this landing (jsonb census re-walked with the new module present).
 
+## 510. D516 · the search's `filters.tags` did not speak the spelling the `tags` COLUMN is written in (`apps/ai/nexus_ai/search/categories.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_the_filter_speaks_the_tags_vocabulary.py`, `apps/ai/tests/test_live_search_contract.py`)
+
+**What was measured.** `search/sql.py:131` turns `filters.tags` into `m.tags && ARRAY[...]` - an
+exact array overlap against a column the seed writes. The seed writes every tag as a lowercase
+hyphen slug: measured against the live corpus, `select distinct unnest(tags) from merchants`
+returns 100 tags and every one matches `^[a-z0-9-]+$`. The filter, however, passed the caller's
+raw string straight through, so a caller who spelled a tag the way the product spells it in
+prose matched NOTHING:
+
+    filters {"tags": ["cantonese"]}      -> 11 rows
+    filters {"tags": ["Cantonese"]}      -> 0 rows
+    filters {"tags": ["escape_room"]}    -> 0 rows   ("escape-room" -> 6)
+    filters {"tags": ["  cantonese  "]}  -> 0 rows
+
+the D505/D508 lesson in a third place: the same fact (how a tag is spelled) had two readers,
+and one of them was the raw string. Two further defects rode along in the same lane. The
+`plan_from_intent` intent-None branch returned early before any normalisation, so the
+filter-only caller got nothing normalised at all - category and district were read there,
+tags were not. And `_canonical_tags` iterated `filters["tags"]` directly, so a caller passing
+one tag as a bare string (`{"tags": "ramen"}`) handed the predicate five tags, none of which
+any merchant carries.
+
+**The fix.** One reader, exported and shared: `categories.canonical_tag` case-folds, trims and
+hyphenates through the module's own `_slug`, the same separator rule that already folds a
+category bucket into the taxonomy's spelling (`escape_room` -> `escape-room`). `_slug` now
+covers whitespace as well as `_`, which is what makes `escape room` and `escape_room` one
+word. `_canonical_tags` routes every tag through it on BOTH branches of `plan_from_intent`,
+and wraps a lone string into a one-element list before iterating. The reader RESPELLS and
+never REWORDS - no alias table, no lexicon - so a tag the product does not know keeps its
+word and still matches nothing, rather than being resolved into a tag the caller never asked
+for. This also retires the sibling lane's D509 WIP, which was in the tree as a no-op: its
+if/else both appended the tag unchanged, it was called only on the intent branch, and its
+companion gate asserted the pass-through it was meant to replace (and was the one red
+`ruff check .` at HEAD). The gate is now a real one.
+
+**Discipline note.** Three readers of one fact in one lane - the seed's slug rule, the SQL
+`&&`, and the caller's raw string - is the D488 shape again, and the fix is the same shape
+too: not a second normaliser next to the first, but the first one, exported and called from
+the place that was guessing. The "respells, never rewords" invariant is what keeps the fix
+from becoming an alias table by accident; it is stated as an independent restatement of the
+lexicon's own word-identity rule rather than by calling the code under test.
+
+**Verified, not claimed.** The tags vocabulary gate: **50 passed** (31 fixed-point/idempotence
+checks over tags measured from the live corpus, 5 spelling families, 5 reword refusals, both
+branches of the plan reader, the lone-string case, the empty-list case). Proved to fail:
+disabling the reader reddens **12** of them (`test_every_spelling_of_a_stored_tag_reaches_the
+stored_tag` x5, `test_both_branches_of_the_plan_reader_read_the_tags` x5,
+`test_a_lone_string_is_one_tag_not_one_tag_per_character`, `test_an_unknown_tag_keeps_its_
+word`) - the probe was put back and the suite returned to green. Two live-contract tests
+added and proved the same way: `cantonese` and `Cantonese` now return the SAME cards on both
+the intent-None and the intent path, against the live database. Targeted regression
+(search plan, categories, search sql, search pipeline, both vocabulary gates, live contract,
+cuisine vocabulary, understand resolution) -> **246 passed**; `mypy nexus_ai` -> **Success:
+no issues found in 59 source files**; `ruff check .` -> **All checks passed** (it was red at
+HEAD on the sibling's in-flight file); eval gate -> **PASS - 2 suite(s), 0 failing**; the ten
+CI checkers -> green, and line-cite-drift re-measured at **116/176** citations still naming
+the line they were written against (strict=none).
