@@ -576,6 +576,22 @@ def candidates_from_rows(rows: Sequence[dict[str, Any]], plan: SearchPlan, *,
 _ROW_FIELDS = ("avg_price_hkd", "district", "category_primary", "tags")
 
 
+def _sided(w: float, *, liked: bool) -> float:
+    """The score a preference gives, on the side of neutral the USER is on.
+
+    D527: the boolean matchers read a weight as `w if liked else 1 - w`, which is only
+    correct while w > 0.5. Below it the two sides CROSS: a user who says "step-free
+    access matters a little" (weight 0.4) was served the merchants that have none at 0.6
+    and the merchants that have it at 0.4 - the platform ranking the thing the user asked
+    for BELOW the thing they did not, which is the D522 inversion one signal over. A weak
+    preference is weak evidence FOR, never evidence AGAINST. So the distance from neutral
+    carries the strength and the side of neutral carries the sign: reflecting at 0.5 keeps
+    every weight in [0, 1] on the user's own side, and leaves w > 0.5 exactly where it was.
+    """
+    strength = abs(float(w) - 0.5)
+    return 0.5 + strength if liked else 0.5 - strength
+
+
 def _enriched_attrs(row: dict[str, Any], attrs: dict[str, Any]) -> dict[str, Any]:
     """The merchant's attributes with the ROW's own columns folded in.
 
@@ -785,8 +801,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 except Exception:
                                     return None
                                 if price <= budget:
-                                    return w
-                                return max(0.0, 1.0 - w)
+                                    return _sided(w, liked=True)
+                                return _sided(w, liked=False)
                             return _match
                         match_fn = make_budget_match(float(budget_val), float(weight))
                 
@@ -811,14 +827,14 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             def _match(attrs):
                                 if amb == "quiet":
                                     if attrs.get("quiet_ambience") is True:
-                                        return w
+                                        return _sided(w, liked=True)
                                     if attrs.get("lively_ambience") is True:
-                                        return 1.0 - w
+                                        return _sided(w, liked=False)
                                 elif amb == "lively":
                                     if attrs.get("lively_ambience") is True:
-                                        return w
+                                        return _sided(w, liked=True)
                                     if attrs.get("quiet_ambience") is True:
-                                        return 1.0 - w
+                                        return _sided(w, liked=False)
                                 return None
                             return _match
                         match_fn = make_ambience_match(str(ambience), float(weight))
@@ -830,9 +846,9 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         def make_pet_match(v, w):
                             def _match(attrs):
                                 if attrs.get("pet_friendly_access") is True:
-                                    return w if v else (1.0 - w)
+                                    return _sided(w, liked=v)
                                 if attrs.get("pet_friendly_access") is False:
-                                    return 1.0 - w if v else w
+                                    return _sided(w, liked=not v)
                                 return None
                             return _match
                         match_fn = make_pet_match(val, float(weight))
@@ -871,9 +887,9 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         def make_scenic_match(v, w):
                             def _match(attrs):
                                 if attrs.get("scenic_view") is True:
-                                    return w if v else (1.0 - w)
+                                    return _sided(w, liked=v)
                                 if attrs.get("scenic_view") is False:
-                                    return 1.0 - w if v else w
+                                    return _sided(w, liked=not v)
                                 return None
                             return _match
                         match_fn = make_scenic_match(val, float(weight))
@@ -915,9 +931,9 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             def _match(attrs):
                                 # rainy_day preference: prefer indoor venues
                                 if attrs.get("indoor_style") is True:
-                                    return w if v else (1.0 - w)
+                                    return _sided(w, liked=v)
                                 if attrs.get("outdoor_style") is True:
-                                    return 1.0 - w if v else w
+                                    return _sided(w, liked=not v)
                                 return None
                             return _match
                         match_fn = make_rainy_match(val, float(weight))
@@ -929,9 +945,9 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         def make_late_match(v, w):
                             def _match(attrs):
                                 if attrs.get("opens_late") is True:
-                                    return w if v else (1.0 - w)
+                                    return _sided(w, liked=v)
                                 if attrs.get("opens_late") is False:
-                                    return 1.0 - w if v else w
+                                    return _sided(w, liked=not v)
                                 return None
                             return _match
                         match_fn = make_late_match(val, float(weight))
@@ -943,32 +959,38 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         def make_spicy_match(v, w):
                             def _match(attrs):
                                 if attrs.get("spicy_cuisine") is True:
-                                    return w if v else (1.0 - w)
+                                    return _sided(w, liked=v)
                                 if attrs.get("spicy_cuisine") is False:
-                                    return 1.0 - w if v else w
+                                    return _sided(w, liked=not v)
                                 return None
                             return _match
                         match_fn = make_spicy_match(val, float(weight))
 
                 # STYLE: outdoor, indoor
                 elif kind == "style" and key in ("outdoor", "indoor"):
-                    is_outdoor = key == "outdoor"
+                    # D527: the row's VALUE says which way it points. This branch used to
+                    # read only the key, so {"key": "outdoor", "value": false} - a refusal
+                    # of the outdoors - was served as a request for it.
+                    val = value.get("value") if isinstance(value, dict) else None
+                    if not isinstance(val, bool):
+                        val = True
+                    is_outdoor = (key == "outdoor") == bool(val)
                     def make_outdoor_match(is_outdoor_pref, w):
                         def _match(attrs):
                             if is_outdoor_pref:
                                 if attrs.get("outdoor_style") is True:
-                                    return w
+                                    return _sided(w, liked=True)
                                 if attrs.get("indoor_style") is True:
-                                    return 1.0 - w
+                                    return _sided(w, liked=False)
                                 if attrs.get("outdoor_seating") is True:
-                                    return w * 0.8
+                                    return _sided(w * 0.8, liked=True)
                             else:
                                 if attrs.get("indoor_style") is True:
-                                    return w
+                                    return _sided(w, liked=True)
                                 if attrs.get("outdoor_style") is True:
-                                    return 1.0 - w
+                                    return _sided(w, liked=False)
                                 if attrs.get("outdoor_seating") is True:
-                                    return 1.0 - w * 0.8
+                                    return _sided(w * 0.8, liked=False)
                             return None
                         return _match
                     match_fn = make_outdoor_match(is_outdoor, float(weight))
@@ -980,9 +1002,10 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         def make_mtr_match(v, w):
                             def _match(attrs):
                                 if attrs.get("mtr_near_access") is True or attrs.get("mtr_within_5min") is True:
-                                    return w if v else (1.0 - w)
-                                if attrs.get("mtr_near_access") is False and attrs.get("mtr_within_5min") is False:
-                                    return 1.0 - w if v else w
+                                    return _sided(w, liked=v)
+                                # D527: OR, not AND - see the accessible matcher above.
+                                if attrs.get("mtr_near_access") is False or attrs.get("mtr_within_5min") is False:
+                                    return _sided(w, liked=not v)
                                 return None
                             return _match
                         match_fn = make_mtr_match(val, float(weight))
@@ -994,9 +1017,15 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         def make_accessible_match(v, w):
                             def _match(attrs):
                                 if attrs.get("accessible_access") is True or attrs.get("wheelchair_access") is True:
-                                    return w if v else (1.0 - w)
-                                if attrs.get("accessible_access") is False and attrs.get("wheelchair_access") is False:
-                                    return 1.0 - w if v else w
+                                    return _sided(w, liked=v)
+                                # D527: OR, not AND. Demanding BOTH attributes say False
+                                # makes a merchant the corpus describes with only one of them
+                                # read as UNKNOWN, and the preference then demotes nobody.
+                                # Measured on the live corpus: 267 merchants answer True and
+                                # 0 answer False, because only `wheelchair_access` is written
+                                # there - the whole avoiding half of the preference was dead.
+                                if attrs.get("accessible_access") is False or attrs.get("wheelchair_access") is False:
+                                    return _sided(w, liked=not v)
                                 return None
                             return _match
                         match_fn = make_accessible_match(val, float(weight))
@@ -1008,27 +1037,12 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         def make_parking_match(v, w):
                             def _match(attrs):
                                 if attrs.get("parking_access") is True:
-                                    return w if v else (1.0 - w)
+                                    return _sided(w, liked=v)
                                 if attrs.get("parking_access") is False:
-                                    return 1.0 - w if v else w
+                                    return _sided(w, liked=not v)
                                 return None
                             return _match
                         match_fn = make_parking_match(val, float(weight))
-
-                # ACCESS: pet_friendly -> boolean
-                elif kind == "access" and key == "pet_friendly":
-                    val = value.get("value") if isinstance(value, dict) else None
-                    if isinstance(val, bool):
-                        def make_pet_match(v, w):
-                            def _match(attrs):
-                                if attrs.get("pet_friendly_access") is True:
-                                    return w if v else (1.0 - w)
-                                if attrs.get("pet_friendly_access") is False:
-                                    return 1.0 - w if v else w
-                                return None
-                            return _match
-                        match_fn = make_pet_match(val, float(weight))
-                
                 if match_fn:
                     pref_rules.append({
                         "kind": kind,

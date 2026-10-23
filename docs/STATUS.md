@@ -22567,3 +22567,61 @@ spelling, sort preference, canonical query, the new dislike gate) -> **30 passed
 nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check .` -> **All
 checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers ->
 green.
+## 521. D527 · a weak preference was evidence AGAINST the thing the user asked for (`apps/ai/nexus_ai/search/service.py`, `data/seed/generate.py`, `apps/ai/tests/test_a_weak_preference_is_not_evidence_against_it.py`, `apps/ai/tests/test_every_preference_the_seed_declares_is_read.py`, `apps/ai/tests/test_live_the_weak_preference_keeps_its_side.py`)
+
+**What was measured.** Every boolean matcher in the ranker read its weight the same way -
+`return w if v else (1.0 - w)` - which is only correct while `w > 0.5`. Below it the two
+sides cross and the outcome the user asked for is scored BELOW the outcome they did not.
+The seed declares `access/accessible` at **0.4**, the one row in the demo corpus under the
+midpoint, so this was live, not hypothetical. Measured on this database over all 470
+published merchants, with the seed's own row and the seed's own weight:
+
+    the 267 merchants the corpus calls accessible -> mean 0.4000
+    the 203 it calls inaccessible                 -> mean 0.6000
+
+A user who said step-free access matters a little was served the merchants that have none
+**0.2 above** the merchants that have it. The D522 inversion, one signal over, and invisible
+for the same reason: every other weight in the corpus sits above 0.5.
+
+Two more defects fell out of measuring it. The `style/outdoor` and `style/indoor` branch
+read only the KEY and never the row's value, so `{"key": "outdoor", "value": false}` - a
+refusal of the outdoors - was served as a request for it. And the `access/accessible` and
+`access/mtr_near` matchers required **both** of their two attributes to be `False` before
+they would call a merchant lacking the thing, while this corpus writes only one of the pair
+- so 267 merchants answered True, 0 answered False, and the demoting half of the preference
+was dead on arrival. The seed also declared its step-free row as `accessibility/step_free`,
+a (kind, key) the ranker has no branch for at all: the row was dropped on the floor and the
+user was told they had a preference that answered `None` for every merchant.
+
+**The fix.** One helper, `_sided(w, liked=...)`: the distance from neutral carries the
+strength and the side of neutral carries the sign, so a weight below 0.5 is weak evidence
+FOR rather than evidence AGAINST. Every weight above 0.5 answers exactly what it answered
+before (`w=0.9` still gives 0.9), so only the inverted half of the range moves. Measured
+after: **0.6000** for the accessible merchants against **0.4000** for the rest. The
+outdoor/indoor branch now reads the row's value; the two two-attribute matchers accept
+either witness; the seed's row is respelled into the spelling the NLU itself emits; and the
+`access/pet_friendly` branch, which was written twice in the same chain, is written once.
+
+**Discipline note.** The seed's row was misspelled in a vocabulary the product does not use
+anywhere else - the NLU's own `PREFERENCE_RULES` carries `("access", "accessible", ...)`,
+and that is the spelling the matcher already had a branch for. So the row was respelled
+rather than a second branch added for the same fact: one fact, one reader, one spelling.
+The gate that holds it reads both planes with `ast` - the seed's `prefs` list and the
+ranker's own `if kind == ... and key == ...` chain - so a new branch is picked up the moment
+it is written, and a new misspelled row reddens the gate instead of landing silently.
+
+**Verified, not claimed.** The ordering gate: **106 passed** - 12 boolean preferences x 7
+weights across the whole range, the satisfying merchant always ahead, plus the strong-weight
+regression guard (`w=0.9` still answers 0.9) and the refused direction (`value: false`). The
+readability gate: **7 passed**. Live contract re-measured on this database (**2 passed**):
+the corpus splits on the attribute on both sides, and the weak preference keeps the
+accessible merchants ahead. Proved to fail: restoring `w if v else (1.0 - w)` reddens **24**
+of the ordering checks; respelling the seed's row back to `accessibility/step_free`, or to
+any kind the ranker has never heard of, reddens the readability check (each probe put back,
+both files byte-compared afterwards). Targeted regression (preference, structured,
+personalization, spicy, accessible, ambience, pet, mtr, scenic, budget, ranking, score) ->
+**537 passed, 16 skipped**; live (preferences, search contract, dislike, weak preference,
+vocabulary spelling, sort preference, canonical query, personalization signal) -> **33
+passed, 1 skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**;
+`ruff check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the
+CI checkers -> green.

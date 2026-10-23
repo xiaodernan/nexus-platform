@@ -1013,7 +1013,7 @@ class Gen:
             ("location", "home_district", {"value": "Sha Tin", "lat": 22.3831, "lng": 114.1876}, 1.0, "declared"),
             ("style", "ambience", {"value": "quiet"}, 0.6, "inferred"),
             ("language", "response_locale", {"value": "zh-HK"}, 1.0, "declared"),
-            ("accessibility", "step_free", {"value": True}, 0.4, "declared"),
+            ("access", "accessible", {"value": True}, 0.4, "declared"),
         ]
         self.rows["user_preferences"] = [row([
             uid("pref", k), U_CONSUMER, kind, k, val, w, src, "long_term", None,
