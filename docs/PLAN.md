@@ -54,27 +54,21 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The readability floor** — live text measures 4.477:1 against the 4.5 AA bound the visual test
   asserts. Owner: the web stream.
 
-- **The constraint lane reads forward only** - "咖喱唔要" writes no `cuisine_avoid`: the lane that
-  writes the §7.1 constraints has no backward direction at all, while the polarity lane has read a
-  cue BEFORE its token since D533. D538 made the direction safe to write - the clause separator
-  survives normalisation, so the backward gap can keep every separator in it (there the comma
-  really did end the token's clause) - and the polarity lane's own non-final after-case came with
-  it ("想食辣，唔好嘈，要安靜" refuses the 嘈 and asks for the 安靜). What remains is the arm
-  itself: the value before the cue, the cue clause-final in its own clause, the existential
-  question exempt.
-  Owner: the AI lane.
 - **The pause rule reads across a want verb** - D538 reads the separator directly under a cue as
   the cue's own punctuation ("唔好，辣" refuses the 辣), and it reads it that way even when a verb
-  follows it: measured, "唔好，要辣" answers 辣 **-1** and writes `cuisine_avoid:spicy`, and
-  "辣嘅唔好，要咖喱" answers the 咖喱 -1 and writes `cuisine_avoid:curry` - the thing the next
-  clause asks for, refused, in both lanes (the D522 shape). The comma before 要 / want really did
-  end a clause; the one before a bare noun is a pause. The two shapes need telling apart.
+  follows it: measured, "唔好，要辣" answers 辣 **-1** and writes `cuisine_avoid:spicy`,
+  "辣嘅唔好，要咖喱" answers the 咖喱 -1 and writes `cuisine_avoid:curry`, and "咖喱唔好，想食辣"
+  writes `cuisine_avoid:spicy` on top of the curry - the thing the next clause asks for, refused,
+  in both lanes (the D522 shape). The comma before 要 / want really did end a clause; the one
+  before a bare noun is a pause. The two shapes need telling apart.
   Owner: the AI lane.
 - **`_has_constraint` still carries D536's eight-character window** - the constraint lane reads the
   clause (D536), but the intent kind's own test for "is there a refusal here" still counts
   characters: measured, "no cilantro" and "no coriander" write `diet_avoid:coriander` and come
   back with the intent `unknown` - the constraint is read and the answer is "I do not know what
-  you are looking for". One reader for both questions, the way D536 gave the two lanes one.
+  you are looking for". D539's backward arm inherits the hole for every refusal with no category
+  of its own ("peanut hate" writes `diet_avoid:peanut` and answers `unknown`). One reader for
+  both questions, the way D536 gave the two lanes one.
   Owner: the AI lane.
 - **The clause gap admits one verb but not an adverb** - "not very spicy" (the gap "very",
   four characters) reads +1 and writes no constraint, and "not really like spicy" reads the
@@ -1593,4 +1587,31 @@ the clause boundary surviving normalisation.
    itself, the pause rule reading across a want verb ("唔好，要辣" refuses the 辣 the next clause
    asks for, in both lanes), and `_has_constraint`'s eight-character window ("no cilantro"
    writes the constraint and answers the intent `unknown`).
+
+
+### 2026-10-24 (later still, the sixth) — D539: the constraint lane reads a refusal written the Cantonese way round
+
+1. D539 (832e7a0) - a Cantonese refusal puts the value first ("咖喱唔要" refuses the curry) and
+   the polarity lane has read a cue AFTER its token since D533, but the lane that writes the §7.1
+   constraints read forward only: measured at HEAD, 490 of 490 backward shapes over the rules'
+   own surfaces and seven negations wrote nothing while the preference lane read a dislike for
+   every one whose cue it carries - the search filtered nothing and the ranking demoted the
+   curry, a refusal the product half-read in the language most of its users type. The backward
+   arm is the mirror of three rules the polarity lane already reads, and it is NOT `forward_gap`
+   run backwards: the gap keeps EVERY separator in it (there the comma really did end the value's
+   clause - "辣，唔好" leaves the 辣 alone), the cue must be final in its own clause (a cue with
+   an object of its own keeps that object, D537), and the existential question is exempt from
+   both orders ("有冇咖喱" and the topic-fronted "咖喱有冇" - the 有 sits directly under the cue
+   either way). `_clause_final` is promoted to `clause_final`, the way D536 gave both lanes
+   `clause_attached`. 356 of the 490 read now; the 134 that do not are two correct silences (the
+   cue is not a word, or the cue still has a verb after it). One pin moves: D538's "想食辣，咖喱唔好"
+   wrote NOTHING, which held the 辣 out of the filter by refusing the curry nowhere; the sentence
+   now writes exactly the curry's constraint.
+
+**Queue spent:** the constraint lane's backward direction (the whole item - the arm, the cue
+   clause-final, the existential exemption from both orders). Two residues sharpened by this
+   unit's measurements: the pause rule reading across a want verb ("咖喱唔好，想食辣" now writes
+   `cuisine_avoid:spicy` on top of the curry) and `_has_constraint`'s window (the backward shapes
+   with no category of their own inherit it - "peanut hate" writes the constraint and answers
+   `unknown`).
 

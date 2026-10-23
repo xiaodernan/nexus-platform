@@ -23217,3 +23217,53 @@ kind never sees: the intent comes back `unknown`. And the pause rule reads acros
 verb: "唔好，要辣" refuses the 辣 the next clause asks for, in both lanes - the separator
 under the cue is read as the cue's own punctuation even when a verb follows it, which is
 where a comma really did end a clause.
+
+## 533. D539 - the constraint lane reads a refusal written the Cantonese way round (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/tests/test_a_value_before_the_cue_writes_its_constraint.py`, `apps/ai/tests/test_the_clause_boundary_survives_normalisation.py`)
+
+**What was measured.** A Cantonese refusal puts the value FIRST - "咖喱唔要" refuses the
+curry - and the polarity lane has read a cue that sits AFTER its token since D533. The
+lane that writes the §7.1 constraints read forward only: measured at HEAD, 490 of 490
+backward shapes over the rules' own surfaces and seven negations wrote nothing, while
+the preference lane read a dislike for every one whose cue the polarity table carries.
+The search filtered nothing and the ranking demoted the curry - a refusal the product
+half-read, in the language most of its users type. 356 of the 490 read now; the 134
+that still do not are two correct silences - the cue is not a word at all ("curryno"),
+or the cue still has a verb after it, which is D537's rule read from the other side.
+
+**The fix.** The backward arm is the mirror of three rules the polarity lane already
+reads, and it is NOT `forward_gap` run backwards: the gap between the value and the cue
+keeps EVERY separator in it (there the comma really did end the value's clause - "辣，唔好"
+leaves the 辣 alone), the cue must be final in its own clause (a cue with an object of
+its own keeps that object, D537), and the existential question is exempt from BOTH
+orders ("有冇咖喱" asks whether curry exists, and so does the topic-fronted "咖喱有冇" -
+the 有 sits directly under the cue either way, so D533's one exemption reads both).
+`_clause_final` is promoted to `clause_final`, the way D536 gave both lanes
+`clause_attached`: one reader for the clause-final tail. One pin moves with the unit -
+D538's `test_a_refusal_in_the_next_clause_writes_no_constraint` asserted that "想食辣，
+咖喱唔好" wrote NOTHING, which held the 辣 out of the filter by refusing the curry
+nowhere; the sentence now writes exactly the curry's constraint.
+
+**Verified, not claimed.**
+`test_a_value_before_the_cue_writes_its_constraint.py`: **1102 passed** - a census over
+every surface the rules name × every negation both tables carry, each row charging BOTH
+halves (the constraint is written AND the polarity lane reads the dislike), plus the
+spaced gap, the two mixed-script refusals, the eight sentences the arm must not read,
+and the six forward readings that must not move. Proved to fail: the backward arm's
+condition forced false reddens **1088**, the file restored and byte-compared. The
+twelve refusal/polarity/constraint gates plus the new door and the merger, search-plan
+and lexicon suites -> **2236 passed**; the two vocabulary gates -> **8 passed**;
+filtered regression (`-k "preference or structured or occasion or personaliz or merge
+or refinement or state or polarity or cuisine or transient or ranking or attribute or
+vocabulary or ambience or refusal or negation or clause"`) -> **2102 passed, 35
+skipped**; (`-k "search or rank or card or score or facet or filter or avoid or
+understand or intent or nlu"`) -> **1113 passed, 38 skipped**; `mypy nexus_ai` ->
+**Success: no issues found in 59 source files**; `ruff check nexus_ai tests` ->
+**All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
+
+**Residue measured and filed, not fixed.** The pause rule reads across a want verb:
+"唔好，要辣" refuses the 辣 the next clause asks for, in both lanes, and "咖喱唔好，
+想食辣" writes `cuisine_avoid:spicy` for the same reason - the separator under the cue
+is read as the cue's own punctuation even when a verb follows it, and there the comma
+really did end a clause. `_has_constraint` still carries D536's eight-character window,
+so "no cilantro" writes `diet_avoid:coriander` and answers the intent `unknown`, and the
+backward shapes with no category of their own ("peanut hate") inherit that hole.
