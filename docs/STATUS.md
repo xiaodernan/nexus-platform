@@ -21836,3 +21836,31 @@ optional +7 days).
 
 **Verified, not claimed.** `pytest tests/test_timeparse_helpers.py` → **13 passed**; full `apps/ai`
 suite → **2649 passed, 98 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
+
+## 502. D510 · the embed+store stage had NO tests at all - the refusal rules, the guarded UPDATE and the batching counts (`apps/ai/nexus_ai/rag/embed.py`, `apps/ai/tests/test_rag_embed.py`)
+
+**Module / contract.** `rag/embed.py` is the stage D507 added: it fills `chunks.embedding` for the
+rows that have none, and **refuses** what the provider cannot answer correctly rather than
+labelling an unretrievable row "embedded". It had no test file; this unit pins the pure layer with
+a fake async database/adapter (no real DB, no network).
+
+**Pinned behavior (18 cases, all confirmed empirically):**
+- `model_tag`: the adapter's `model` wins over `name`; neither → `""` (never a typed guess).
+- `_validate_vector`: a wrong dimension is refused; an **all-zero** vector is refused (cosine
+  cannot rank it, so storing it would label the row embedded while unretrievable); a valid vector
+  comes back as floats.
+- `_validate_answer`: a short answer is refused; a matching answer passes.
+- `build_store_query`: emits `UPDATE chunks` with the `embedding IS NULL` guard (never overwrite a
+  row another pass stamped) and `RETURNING c.id`; binds model/stamp/id/vector in order (the vector
+  as the pgvector literal); a short answer with `texts` is refused before any SQL is built.
+- `EmbedReport.refused_rows = scanned - stored`; `_describe` names stored/scanned/model/dim/
+  refused/pending.
+- `embed_pending` (fake DB emulating `id > cursor ORDER BY id LIMIT want`): one batch → scanned 2,
+  stored = the RETURNING row count, batches 1, one write; a poisoned batch (1 vector for 2 texts)
+  → one failure, stored 0, **no write**; `limit=1` scans 1; empty pending → all zeros;
+  `batch_size<1` → `ValueError`.
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_rag_embed.py` → **18 passed**; full `apps/ai` suite
+→ **2667 passed, 98 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
