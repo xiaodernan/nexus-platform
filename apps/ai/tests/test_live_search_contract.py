@@ -158,6 +158,61 @@ def test_the_explicit_tag_filter_is_read_on_the_intent_path_too(live_settings):
         "two readers")
 
 
+def test_the_avoid_filter_speaks_the_tags_the_corpus_writes(live_settings):
+    """D517: the corpus records a cuisine in `tags` under the taxonomy leaf, so an `avoid`
+    filter that never reads the column cannot exclude it.
+
+    Measured on this database: `avoid=["seafood"]` used to remove 16 of the 470 published
+    merchants and let all 14 published `seafood-grill` merchants through.
+    """
+    if _published(live_settings) == 0:
+        pytest.skip("no published merchants in this database - needs the demo seed")
+    import asyncio
+
+    from nexus_ai.db import pool as db_pool
+
+    async def _tagged(tag: str) -> set[str]:
+        db = await db_pool.connect(live_settings, force_new=True)
+        try:
+            rows = await db.readonly(
+                "select slug from merchants where status = 'published' and tags @> $1::text[]",
+                [tag])
+            return {r["slug"] for r in rows}
+        finally:
+            await db_pool.dispose()
+
+    seafood = asyncio.run(_tagged("seafood-grill"))
+    assert seafood, "the corpus carries the tag and the query found none of it"
+    # the query is the word itself, so the merchants it names rank at the top
+    kept = {i["slug"] for i in _search(
+        live_settings, query="seafood", limit=50).get("items") or []}
+    assert seafood & kept, (
+        "the unfiltered search surfaces none of the merchants the corpus tags as seafood - "
+        "this database cannot measure the avoid filter")
+    avoided = {i["slug"] for i in _search(
+        live_settings, query="seafood", limit=50,
+        filters={"avoid": ["seafood"]}).get("items") or []}
+    assert not (seafood & avoided), (
+        f"the caller asked to avoid seafood and these merchants were still served: "
+        f"{sorted(seafood & avoided)}")
+
+
+def test_the_callers_own_avoid_list_is_not_overwritten(live_settings):
+    """D517: §7.1 makes the request's filters hard. An intent must not replace the caller's
+    own `avoid` list with an empty one.
+
+    The query is the word itself so the merchants it names rank at the top; if the caller's
+    list never reaches the SQL the two answers are identical.
+    """
+    if _published(live_settings) == 0:
+        pytest.skip("no published merchants in this database - needs the demo seed")
+    kept = {i["slug"] for i in _search(live_settings, query="seafood", limit=50).get("items") or []}
+    avoided = {i["slug"] for i in _search(
+        live_settings, query="seafood", limit=50, filters={"avoid": ["seafood"]}).get("items") or []}
+    assert kept - avoided, (
+        "the caller's explicit avoid list changed nothing - it never reached the SQL")
+
+
 def test_a_point_to_measure_from_gives_a_distance(live_settings):
     if _published(live_settings) == 0:
         pytest.skip("no published merchants in this database - needs the demo seed")

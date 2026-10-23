@@ -17,13 +17,28 @@ from dataclasses import dataclass
 from datetime import datetime, time
 from typing import Any, Iterable
 
-from nexus_ai.search.categories import resolve as resolve_category
+from nexus_ai.search.categories import avoid_terms, resolve as resolve_category
 from nexus_ai.search.tokens import cjk_keywords
 
 TS_CONFIG_ALLOWLIST = {"simple", "english"}
 EARTH_RADIUS_M = 6371008.8
 VECTOR_FLOOR = 0.05
 """Cosine floor for a chunk hit to count as a vector candidate."""
+
+
+def _avoid_terms(avoid: Iterable[Any]) -> list[str]:
+    """Every spelling the avoided words stand for, deduped and order-stable (D517).
+
+    `plan.avoid` carries the lexin's canonical constraint value; the corpus records the fact
+    in the `tags` column under the taxonomy leaf. Reading only the raw token is what let
+    `avoid=["seafood"]` past all 15 merchants tagged `seafood-grill`.
+    """
+    terms: list[str] = []
+    for value in avoid:
+        for term in avoid_terms(str(value)):
+            if term not in terms:
+                terms.append(term)
+    return terms
 
 
 def category_clause(p: Params, bucket: str, merchant_ref: str) -> str | None:
@@ -252,10 +267,13 @@ def build_merchant_query(
     avoid = [str(a) for a in (filters.get("avoid") or [])]
     avoid_clause = ""
     if avoid:
-        # "唔食辣" must not silently pass a spicy-tagged merchant through (§8 filters)
-        av_ph = p.add(avoid)
+        # D517: the term set is the corpus's OWN vocabulary, not the caller's raw token.
+        # "唔食辣" must not silently pass a spicy-tagged merchant through (§8 filters), and
+        # the tag is where the corpus records that fact.
+        av_ph = p.add(_avoid_terms(avoid))
         avoid_clause = f"""AND NOT (
-            coalesce(m.category_primary,'') = ANY({av_ph}::text[])
+            m.tags && {av_ph}::text[]
+            OR coalesce(m.category_primary,'') = ANY({av_ph}::text[])
             OR EXISTS (SELECT 1 FROM offerings ao WHERE ao.merchant_id = m.id
                        AND (ao.name || ' ' || coalesce(ao.name_zh,'') || ' ' ||
                             coalesce(ao.description,'')) ILIKE ANY(
@@ -376,9 +394,13 @@ def build_offering_query(
     avoid = [str(a) for a in (filters.get("avoid") or [])]
     avoid_clause = ""
     if avoid:
-        av_ph = p.add(avoid)
-        avoid_clause = f"""AND NOT (coalesce(o.name,'') || ' ' || coalesce(o.name_zh,'')
-            || ' ' || coalesce(o.description,'') ILIKE ANY(
+        # D517: the same vocabulary expansion as the merchant lane, so the two lanes
+        # exclude the same merchants for the same word.
+        av_ph = p.add(_avoid_terms(avoid))
+        avoid_clause = f"""AND NOT (m.tags && {av_ph}::text[]
+            OR coalesce(m.category_primary,'') = ANY({av_ph}::text[])
+            OR (coalesce(o.name,'') || ' ' || coalesce(o.name_zh,'')
+                || ' ' || coalesce(o.description,'')) ILIKE ANY(
               SELECT '%'||x||'%' FROM unnest({av_ph}::text[]) x))"""
 
     sql = f"""

@@ -55,6 +55,50 @@ def canonical_tag(tag: str | None) -> str:
     return _slug((tag or "").strip().lower())
 
 
+def _spellings(value: str | None) -> list[str]:
+    """Every spelling of ONE word the product's readers use: as typed, hyphenated, underscored.
+
+    The lexin's cuisine bridge is keyed on the intent vocabulary's underscore form (`dim_sum`)
+    while the corpus writes the hyphenated slug (`dim-sum`), so a reader that offers it only
+    one of the two can miss the leaf. The space-separated prose form ("dim sum") folds to the
+    hyphenated one first, and that in turn yields the underscored one, so all three land on
+    the bridge.
+    """
+    raw = (value or "").strip().lower()
+    if not raw:
+        return []
+    out = [raw]
+    for form in (canonical_tag(raw), canonical_tag(raw).replace("-", "_")):
+        if form and form not in out:
+            out.append(form)
+    return out
+
+
+def avoid_terms(value: str | None) -> list[str]:
+    """The spellings an `avoid` value stands for, in the corpus's own vocabulary.
+
+    `plan.avoid` carries the lexin's canonical constraint value - the negation reader turns a
+    Cantonese "no seafood" into `seafood` - and the SQL avoid clause compares that token to
+    `m.category_primary` with `=` and to the offering names with ILIKE. The taxonomy's leaf for
+    the same word is `seafood-grill`, and the column stores the leaf's NAME ("Seafood & BBQ"),
+    so neither leg can fire: measured on the live corpus, all 14 published merchants tagged
+    `seafood-grill` survived `avoid=["seafood"]`.
+
+    The leaves come from the lexin's OWN cuisine bridge (`cuisine_leaves`) - the same reader
+    the preference lane reads a cuisine with (D394) - so one word has one set of spellings
+    again. A cuisine the taxonomy does not know still contributes its own spellings, because
+    that is a word a merchant may carry in its tags.
+    """
+    from nexus_ai.nlu.lexicon import cuisine_leaves
+
+    out: list[str] = []
+    for spelling in _spellings(value):
+        for term in (spelling, *cuisine_leaves(spelling)):
+            if term and term not in out:
+                out.append(term)
+    return out
+
+
 def resolve(bucket: str | None) -> list[str]:
     """Slugs standing for `bucket`, deduped, order-stable. Empty when nothing was asked."""
     if not bucket:
@@ -69,4 +113,4 @@ def resolve(bucket: str | None) -> list[str]:
     return out
 
 
-__all__ = ["ALIASES", "canonical_tag", "resolve"]
+__all__ = ["ALIASES", "avoid_terms", "canonical_tag", "resolve"]

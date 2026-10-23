@@ -22067,7 +22067,7 @@ re-measured after this landing (jsonb census re-walked with the new module prese
 
 ## 510. D516 · the search's `filters.tags` did not speak the spelling the `tags` COLUMN is written in (`apps/ai/nexus_ai/search/categories.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_the_filter_speaks_the_tags_vocabulary.py`, `apps/ai/tests/test_live_search_contract.py`)
 
-**What was measured.** `search/sql.py:131` turns `filters.tags` into `m.tags && ARRAY[...]` - an
+**What was measured.** `search/sql.py:146` turns `filters.tags` into `m.tags && ARRAY[...]` - an
 exact array overlap against a column the seed writes. The seed writes every tag as a lowercase
 hyphen slug: measured against the live corpus, `select distinct unnest(tags) from merchants`
 returns 100 tags and every one matches `^[a-z0-9-]+$`. The filter, however, passed the caller's
@@ -22122,3 +22122,58 @@ no issues found in 59 source files**; `ruff check .` -> **All checks passed** (i
 HEAD on the sibling's in-flight file); eval gate -> **PASS - 2 suite(s), 0 failing**; the ten
 CI checkers -> green, and line-cite-drift re-measured at **116/176** citations still naming
 the line they were written against (strict=none).
+## 511. D517 · the search's `avoid` filter spoke a vocabulary the corpus does not have, and the planner threw the caller's own list away (`apps/ai/nexus_ai/search/categories.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/sql.py`, `apps/ai/tests/test_the_filter_speaks_the_avoid_vocabulary.py`, `apps/ai/tests/test_live_search_contract.py`)
+
+**What was measured.** Two defects in one lane, both the D488 shape - the same fact read by two
+readers, one of them the raw string.
+
+The first is in the planner. `plan_from_intent` ended with `out["avoid"] = plan.avoid`, and
+`plan.avoid` holds only what the INTENT's constraints named. So a caller who sent
+`{"avoid": ["pork"]}` alongside an intent that named nothing had their hard filter overwritten
+by an empty list - and the empty-filter sweep on the next line then dropped the key
+altogether. Measured: `plan.filters` carried no `avoid` at all. §7.1 says the request's filters
+are HARD, so a caller who asked to avoid pork was not filtered.
+
+The second is in the SQL. The avoid clause compared the canonical constraint token to
+`m.category_primary` with `=` and to the offering names with ILIKE. The taxonomy's leaf for the
+same word is `seafood-grill`, and the column stores the leaf's NAME ("Seafood & BBQ"), so the
+`=` leg could never fire and the ILIKE leg saw only the prose. Measured on the live corpus:
+`avoid=["seafood"]` removed 16 of the 470 published merchants, and all 14 published merchants
+tagged `seafood-grill` survived it. The tags column - the one place the corpus records the
+fact - was never read.
+
+**The fix.** One reader, exported and shared: `categories.avoid_terms` folds the value through
+the lexin's OWN cuisine bridge (`cuisine_leaves`, D394) - the same reader the preference lane
+reads a cuisine with - and offers the bridge all three spellings of the word (`dim_sum`,
+`dim-sum`, `dim sum`), because the bridge is keyed on the intent vocabulary's underscore form
+while the corpus writes the hyphenated slug. `search/sql.py` binds that term set in both lanes
+and reads `m.tags &&` alongside the category and the offering names, so the two lanes exclude
+the same merchants for the same word. The planner now merges the caller's explicit list with
+the intent's constraints, deduped and order-stable, instead of overwriting one with the other.
+Measured after: `avoid=["seafood"]` removes 30 of the 470 published merchants and excludes
+every one of the 14 published `seafood-grill` merchants; through the API, a `seafood` query at
+limit 50 loses 19 merchants to the filter.
+
+**Discipline note.** The avoid filter and the preference lane were two readers of one fact, and
+the avoid one was reading a vocabulary no table in this corpus speaks - it compared a
+lowercase ascii token to a column of display names. That is why it was invisible: the clause
+was never empty, it just never matched anything it was written to match. Re-aiming it through
+the lexin's existing bridge rather than adding a second table is what keeps the two lanes from
+drifting apart again, and the gate asserts the equivalence directly (the term set the SQL binds
+must contain every leaf the bridge names) instead of trusting the reader.
+
+**Verified, not claimed.** The vocabulary gate: **35 passed** (every `CUISINE_LEAVES` key
+reaches its leaves through every spelling, the two SQL lanes bind the same term set, the
+caller's list survives the intent path, the merge is deduped and order-stable). Proved to fail
+in both halves separately: reverting the SQL expansion reddens the two lane checks; reverting
+the planner merge reddens the three planner checks; reverting both reddens the two new
+live-contract tests. Live contract: **10 passed** - `avoid=["seafood"]` now serves none of the
+14 published `seafood-grill` merchants, and the caller's own list measurably changes the answer
+(19 of 50 cards). Targeted regression (avoid gate, tags gate, live contract, sql builders,
+search plan, preferences-are-soft, categories, search pipeline, constraint vocabulary, state
+merger, understand resolution, cuisine vocabulary) -> **261 passed**; `mypy nexus_ai` ->
+**Success: no issues found in 59 source files**; `ruff check .` -> **All checks passed**; eval
+gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers -> green, and line-cite-drift
+re-measured at **117/177** citations still naming the line they were written against
+(strict=none). §510's `search/sql.py:131` citation was re-aimed to `:146`, because this unit's
+own insertion moved it.

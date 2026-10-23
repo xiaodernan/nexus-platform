@@ -420,7 +420,17 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     # also lost in the collapse to `True`, so even a matching key could not match its value.
     # They stay on the Intent for the ranking lane; only the caller's explicit
     # `filters.attributes` is a hard containment filter.
-    out["avoid"] = plan.avoid
+    # D517: the caller's explicit `filters.avoid` is a hard filter too (§7.1: the request's
+    # filters are hard). This line used to be a plain assignment, so `plan.avoid` - which
+    # holds only what the INTENT's constraints named - overwrote it: a caller who asked to
+    # avoid pork alongside an intent that named nothing got an empty avoid list, and the
+    # sweep below then dropped the key altogether. The caller's list is kept and the
+    # intent's constraints are merged into it, deduped and order-stable.
+    merged_avoid: list[str] = []
+    for a in [*(out.get("avoid") or []), *plan.avoid]:
+        if a and a not in merged_avoid:
+            merged_avoid.append(a)
+    out["avoid"] = merged_avoid
     out["attributes"] = {**out.get("attributes", {}), **plan.attributes}
     out["open_now"] = plan.open_now
     if plan.open_late_after is not None:
