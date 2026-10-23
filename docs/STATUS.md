@@ -23149,3 +23149,71 @@ refusal onto the 辣 (the gap "咖喱" is three characters, which reads as attac
 same root cause costs the after-case its non-final clauses: "安靜的不好，要嘈" reads the 安靜
 as wanted, because everything after the cue looks like the cue's own object. Both come
 with the clause boundary that survives normalisation, not before it.
+
+## 532. D538 - one locator, one reach, both lanes - and the clause boundary survives (`apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/matching.py`, `apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/tests/test_a_refusal_is_read_once_by_both_lanes.py`, `apps/ai/tests/test_the_clause_boundary_survives_normalisation.py`)
+
+**What was measured.** Since D536 the polarity lane and the constraint lane read the same
+refusal out of the same sentence and shared `clause_attached`, but the polarity lane kept
+two private rules of its own: a REACH (a cue could not govern a token further away than a
+fixed character count, fewer for a CJK token than for a Latin one, while the constraint
+lane read the whole clause) and a LOCATOR (positions found with `str.find`, so a cue
+inside a word was a cue here and not there). Measured at HEAD over sentences the product
+answers with, three bilingual refusals wrote the filter and read the opposite in the
+ranking:
+
+    without 海鮮   -> constraint diet_avoid:seafood      polarity +1
+    without any 奶 -> constraint diet_avoid:dairy        polarity +1
+    avoid 二手煙    -> constraint smoking_avoid:smoking   polarity +1
+
+The seafood was excluded from the results and boosted in their order, in one turn, from
+six words. The same unit measured what the normaliser's flattening cost: a clause comma
+arrived at both lanes as a space, so "想食辣，咖喱唔好" answered -1 for the 咖喱 - a refusal
+of the very thing the clause before it asked for.
+
+**The fix.** The positions now come from the ONE matcher (`cue_positions`) and the reach
+is the clause, so a refusal the search filters for is never also a preference the ranking
+boosts. `normalize_query` writes the ideographic space (`CLAUSE_SEPARATOR`) where the
+clause punctuation was, and a line break becomes one too, with the ASCII whitespace
+around it: it is whitespace, so every `\s*` in the field rules still reads across it, and
+it is not ASCII whitespace, so the fold cannot flatten it back into one. Three readers
+then read it - the clause boundary, the filler (a gap holding one is two clauses, not
+particles), and the clause-final tail (`_clause_final` now ends at the separator, so
+"安靜的不好，要嘈" refuses the 安靜 and "想食辣，唔好嘈，要安靜" refuses the 嘈 and asks for
+the 安靜). The one place the separator is not a boundary is directly under a cue:
+"唔好，辣" refuses the 辣, because there the comma is a pause after the refusal and not a
+boundary between it and its object. That is `forward_gap`, and it is the forward
+direction only - a cue that governs a token BEFORE it keeps every separator in its gap,
+because there the comma really did end the token's clause.
+
+**Verified, not claimed.**
+`test_a_refusal_is_read_once_by_both_lanes.py`: **615 passed** - an agreement census over
+the product's own negations, gap shapes and values, both directions charged;
+`test_the_clause_boundary_survives_normalisation.py`: **84 passed** - the separator's
+contract, a census of every punctuation the normalizer rewrites, the smears the comma
+used to cause, the clauses the tail now reads, and the readings that must not move.
+Proved to fail, each half put back and byte-compared: the separator demoted to a space
+reddens **54**, the tail run to the end of the turn reddens **2**, `clause_attached`
+stripping the separator again reddens **26**, `forward_gap` keeping the cue's own
+separator reddens **2**. The eleven refusal/polarity/constraint gates plus merger,
+search-plan and lexicon -> **1167 passed**; filtered regression (`-k "preference or
+structured or occasion or personaliz or merge or refinement or state or polarity or
+cuisine or transient or ranking or attribute or vocabulary or ambience or refusal or
+negation or clause"`) -> **2092 passed, 35 skipped**; (`-k "search or rank or card or
+score or facet or filter or avoid or understand or intent or nlu"`) -> **1077 passed, 38
+skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**;
+`ruff check nexus_ai tests` -> **All checks passed**; eval gate -> **PASS - 2 suite(s),
+0 failing**.
+
+**Contract change, stated.** `normalize_query` writes `CLAUSE_SEPARATOR` where it used to
+write a space, so "你好，世界" is now "你好<U+3000>世界" and "a.b" is "a<U+3000>b" (two
+pins in `tests/test_lexicon.py` updated). Everything downstream reads it as whitespace;
+the two lanes read it as a clause boundary.
+
+**Residue measured and filed, not fixed.** The constraint lane still reads forward only,
+so "咖喱唔要" writes no `cuisine_avoid` - the boundary is now visible, so the backward
+direction is safe to write and is the next unit. `_has_constraint` still carries D536's
+eight-character window, so "no cilantro" and "no coriander" write a constraint the intent
+kind never sees: the intent comes back `unknown`. And the pause rule reads across a want
+verb: "唔好，要辣" refuses the 辣 the next clause asks for, in both lanes - the separator
+under the cue is read as the cue's own punctuation even when a verb follows it, which is
+where a comma really did end a clause.

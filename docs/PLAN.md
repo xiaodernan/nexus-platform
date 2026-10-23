@@ -54,22 +54,27 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The readability floor** — live text measures 4.477:1 against the 4.5 AA bound the visual test
   asserts. Owner: the web stream.
 
-- **The normalizer erases the clause boundary the polarity reader needs** - D533 measured that
-  `normalize_query` turns every clause comma into a space, so by the time the polarity reader runs
-  "平, 唔要咖喱" and "平 唔要咖喱" are the same string and no reader can tell the clauses apart: the
-  refusal still smears onto the cheap. The boundary has to survive normalisation as something a
-  reader can see (a sentinel, or punctuation kept for the readers that need it), without breaking
-  the Latin cue spellings that rely on punctuation-becomes-space ("no, spicy" must still read).
+- **The constraint lane reads forward only** - "咖喱唔要" writes no `cuisine_avoid`: the lane that
+  writes the §7.1 constraints has no backward direction at all, while the polarity lane has read a
+  cue BEFORE its token since D533. D538 made the direction safe to write - the clause separator
+  survives normalisation, so the backward gap can keep every separator in it (there the comma
+  really did end the token's clause) - and the polarity lane's own non-final after-case came with
+  it ("想食辣，唔好嘈，要安靜" refuses the 嘈 and asks for the 安靜). What remains is the arm
+  itself: the value before the cue, the cue clause-final in its own clause, the existential
+  question exempt.
   Owner: the AI lane.
-- **The constraint lane reads forward only, and the after-case cannot see a non-final clause** - D537 wrote the rule that fixes the polarity lane's after-case (a cue governs a
-  preceding token only when it governs nothing after it), but the constraint lane still has
-  no backward direction at all: "咖喱唔要" writes no `cuisine_avoid`. The backward direction
-  is safe in principle now - a cue with an object of its own cannot reach back - but the
-  normaliser erases the clause comma, so without a visible boundary "想食辣，咖喱唔好" would
-  smear the refusal onto the 辣 (the gap "咖喱" is three characters, which reads as
-  attached). The same missing boundary costs the after-case its non-final clauses:
-  "安靜的不好，要嘈" reads the 安靜 as wanted. Both come with the boundary that survives
-  normalisation, not before it.
+- **The pause rule reads across a want verb** - D538 reads the separator directly under a cue as
+  the cue's own punctuation ("唔好，辣" refuses the 辣), and it reads it that way even when a verb
+  follows it: measured, "唔好，要辣" answers 辣 **-1** and writes `cuisine_avoid:spicy`, and
+  "辣嘅唔好，要咖喱" answers the 咖喱 -1 and writes `cuisine_avoid:curry` - the thing the next
+  clause asks for, refused, in both lanes (the D522 shape). The comma before 要 / want really did
+  end a clause; the one before a bare noun is a pause. The two shapes need telling apart.
+  Owner: the AI lane.
+- **`_has_constraint` still carries D536's eight-character window** - the constraint lane reads the
+  clause (D536), but the intent kind's own test for "is there a refusal here" still counts
+  characters: measured, "no cilantro" and "no coriander" write `diet_avoid:coriander` and come
+  back with the intent `unknown` - the constraint is read and the answer is "I do not know what
+  you are looking for". One reader for both questions, the way D536 gave the two lanes one.
   Owner: the AI lane.
 - **The clause gap admits one verb but not an adverb** - "not very spicy" (the gap "very",
   four characters) reads +1 and writes no constraint, and "not really like spicy" reads the
@@ -1557,3 +1562,35 @@ replaces it). The four residues above are what this unit measured and could not 
 **Queue spent:** nothing queued; the after-case residue above is narrowed to the constraint
 lane's backward direction and the after-case's non-final clauses, both of which now wait on
 the clause boundary surviving normalisation.
+
+### 2026-10-24 (later still, the fifth) — D538: one locator, one reach, both lanes - and the clause boundary survives
+
+1. D538 (6b83c73) - since D536 the two lanes shared `clause_attached` and still disagreed,
+   because the polarity lane kept two private rules: a REACH (a fixed character count, fewer for
+   a CJK token than a Latin one, while the constraint lane read the whole clause) and a LOCATOR
+   (`str.find`, so a cue inside a word was a cue here and not there). Measured at HEAD, three
+   bilingual refusals wrote the filter and read the opposite in the ranking - "without 海鮮"
+   wrote `diet_avoid:seafood` and answered 海鮮 +1, "without any 奶" wrote `diet_avoid:dairy`
+   and answered +1, "avoid 二手煙" wrote `smoking_avoid:smoking` and answered +1: the seafood was
+   excluded from the results and boosted in their order, in one turn, from six words. The
+   positions now come from the ONE matcher and the reach is the clause. The same unit gave the
+   clause a shape the normalizer can no longer erase: the comma used to arrive as a space, so
+   "想食辣，咖喱唔好" answered -1 for the 咖喱; `normalize_query` now writes the ideographic space
+   (CLAUSE_SEPARATOR) where the clause punctuation was, and a line break becomes one too. It is
+   whitespace, so every `\s*` in the field rules still reads across it, and it is not ASCII
+   whitespace, so the fold cannot flatten it back into one. Three readers read it: the clause
+   boundary, the filler (a gap holding one is two clauses, not particles), and the clause-final
+   tail - which is what lets "想食辣，唔好嘈，要安靜" refuse the 嘈 and ask for the 安靜. The one
+   place the separator is not a boundary is directly under a cue ("唔好，辣" refuses the 辣):
+   that is `forward_gap`, forward direction only. The ONE matcher learned the same lesson - a
+   space inside a cue reads as any whitespace, so "make a, table" is still a booking.
+
+**Queue spent:** the normalizer-erases-the-clause-boundary item (the separator is the boundary,
+   and the census of every punctuation the normalizer rewrites holds it open), and the
+   after-case's half of the constraint-lane item ("安靜的不好，要嘈" refuses the 安靜 now - the
+   clause-final tail is the cue's clause, not the turn). The constraint lane's backward direction
+   is what remains of that item. Three residues measured and filed: the backward direction
+   itself, the pause rule reading across a want verb ("唔好，要辣" refuses the 辣 the next clause
+   asks for, in both lanes), and `_has_constraint`'s eight-character window ("no cilantro"
+   writes the constraint and answers the intent `unknown`).
+
