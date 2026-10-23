@@ -22389,3 +22389,48 @@ contract, preferences, sort preference, vocabulary spelling, conversation refine
 **25 passed**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff
 check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI
 checkers -> green.
+
+## 517. D523 · a negated cuisine was a LIKE, in Chinese as in English - the polarity reader was handed the wrong word (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/tests/test_a_negated_cuisine_is_a_dislike.py`)
+
+**What was measured.** `apply_polarity` re-stamps the polarity of EVERY preference on the
+Intent, and its contract is explicit: `tokens` maps a preference's (key, value) to the
+SURFACE term that matched it, "because the canonical value is not in a Chinese sentence,
+but the token that matched is". The cuisine preferences are put on the Intent by
+`_fill_category`, which appended them with no token at all - so the reader fell back to the
+canonical value, and a Chinese sentence negating a cuisine carried none of it. Measured
+before the fix, every one of these came back polarity **+1**:
+
+    "素食唔好"             -> cuisine=vegetarian, polarity +1
+    "唔好素食"             -> cuisine=vegetarian, polarity +1
+    "不想吃海鲜"          -> cuisine=seafood,    polarity +1
+    "不要日料"             -> cuisine=japanese,   polarity +1
+    "食么都好 唔好日式" -> cuisine=japanese,   polarity +1
+
+The English rows worked, and only by luck of the same fallback: "no seafood" happens to
+carry the canonical value inside the sentence. Nothing was wrong with the polarity grammar -
+the reader was being handed the wrong word.
+
+**The fix.** `match_cuisine_terms` is the ONE cuisine matcher and returns
+`(cuisine, the surface term that matched it)`; `match_cuisines` is now its projection, so
+there is still one matcher and no second copy of the rule. `_fill_preferences` feeds those
+terms into the token map it already hands `apply_polarity`, and the reader sees the word the
+user actually typed. Measured after: every negation above reads -1, every affirmation reads
++1, and the ranking lane points the right way (a refusal now demotes the merchants that
+carry the cuisine - see §516 for the measured ranking effect).
+
+**Discipline note.** The bug was invisible in English and total in Chinese, which is the
+same asymmetry D420 found in the locale detection: a reader that falls back to a canonical
+value can only ever be right for the language the canonical value is written in. The gate
+therefore takes its parameter from the table - every cuisine row, its own Chinese term,
+negated before and after - rather than listing the sentences that happened to be measured.
+
+**Verified, not claimed.** The gate: **35 passed** - every cuisine row's own term negated
+reads -1 and affirmed reads +1, the English negations read -1, and the coupling is pinned
+(the token map is built from `match_cuisine_terms`, and it still reaches `apply_polarity`).
+Proved to fail: reverting `_fill_preferences` to build the token map from `PREFERENCE_RULES`
+alone reddens **14** of the 35 (the probe was put back). Targeted regression (cuisine,
+lexicon, polarity, intent, vocabulary, canonical forms, preference, merger, state) ->
+**1512 passed**; live (search contract, preferences, conversation refinement) -> **22
+passed**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check .`
+-> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers
+-> green.

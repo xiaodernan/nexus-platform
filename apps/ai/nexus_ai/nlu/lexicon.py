@@ -588,14 +588,31 @@ def match_category(text: str) -> tuple[str, float] | None:
     return best_cat, (0.7 if generic and best_len <= 2 else 0.95)
 
 
-def match_cuisines(text: str) -> list[str]:
+def match_cuisine_terms(text: str) -> list[tuple[str, str]]:
+    """(cuisine, the surface term that matched it) - the ONE cuisine matcher.
+
+    D522: the polarity reader needs the term the USER typed, not the cuisine's canonical
+    name. "唔好素食" negates a word that is in the sentence ("素食"); the
+    canonical value ("vegetarian") is not, and a reader handed the canonical value cannot see
+    the negation at all. `match_cuisines` is this function's projection, so there is still
+    one matcher.
+    """
     from nexus_ai.nlu.canonical import canonical
 
     canon = canonical(text)
     low = canon.lower()
     # D481: the ONE matcher - a cuisine term is a word.
-    return [c for c, terms in CUISINE_TERMS.items()
-            if any(cue_in(t, canon, low) for t in terms)]
+    out: list[tuple[str, str]] = []
+    for c, terms in CUISINE_TERMS.items():
+        for t in terms:
+            if cue_in(t, canon, low):
+                out.append((c, t))
+                break
+    return out
+
+
+def match_cuisines(text: str) -> list[str]:
+    return [c for c, _t in match_cuisine_terms(text)]
 
 
 def normalize_query(text: str) -> str:

@@ -32,6 +32,7 @@ from nexus_ai.nlu.lexicon import (
     URGENCY_NOW,
     detect_language,
     match_category,
+    match_cuisine_terms,
     match_cuisines,
     match_district,
     normalize_query,
@@ -550,6 +551,15 @@ def _fill_preferences(ex: IntentExtraction, text: str) -> IntentExtraction:
                 ex.preferences.append({"key": key, "value": value, "polarity": polarity})
                 matched_tokens[(key, value)] = tok
                 break
+    # D522: `apply_polarity` re-stamps EVERY preference on the Intent, and the cuisine ones
+    # were put there by `_fill_category` without the surface term that matched them - so the
+    # reader fell back to the canonical value, a word that is not in a Chinese sentence, and
+    # a negation the user typed was never seen. Measured: "素食唔好", "唔好素食",
+    # "不想吃海鲜", "不要日料" all came back polarity +1 - a LIKE of the
+    # very cuisine the user refused, which the ranking lane then boosts. The English rows
+    # worked only by luck of that fallback: "no seafood" carries the value in the sentence.
+    for cuisine, term in match_cuisine_terms(text):
+        matched_tokens.setdefault(("cuisine", cuisine), term)
     ex.preferences = apply_polarity(ex.preferences, text, matched_tokens)
     return ex
 
