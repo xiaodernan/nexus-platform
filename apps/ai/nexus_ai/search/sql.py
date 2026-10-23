@@ -289,7 +289,7 @@ LIMIT {limit_ph}
     return CandidateQuery(sql=sql, params=p.values, ts_config=cfg)
 
 
-def vector_literal(embedding: list[float]) -> str:
+def vector_literal(embedding: Iterable[float]) -> str:
     """pgvector text form. Bound as a parameter and cast with `::vector` in the SQL."""
     return "[" + ",".join(f"{float(v):.6f}" for v in embedding) + "]"
 

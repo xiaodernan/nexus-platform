@@ -22033,3 +22033,35 @@ to redden**, exit 0 (was exit 1, FALSE SITES (1)). Full CI checker set green: nu
 REPORT 115/175 EXACT with strict=none, contract-drift PASS, console-i18n PASS, console-a11y PASS,
 reader-reachability PASS.
 
+## 509. D515 · the embed+store stage's module was never in git - a fresh clone could not import what D510's 18 tests import (`apps/ai/nexus_ai/rag/embed.py`, `apps/ai/nexus_ai/search/sql.py`, `Makefile`, `docs/ENVIRONMENT_REPORT.md`)
+
+**What was measured.** `rag/embed.py` (written 2026-10-23 09:57, the stage `docs/RAG.md` §2 names) sat
+untracked in the working tree while `tests/test_rag_embed.py` (D510, committed) imported it: a fresh
+clone of HEAD fails at collection with `ModuleNotFoundError: nexus_ai.rag`. Both lanes had been
+working around it - the sibling's §506 counts the suite "with the sibling's untracked file aside".
+Landing it also closed the two gate reds it carried: `mypy nexus_ai` named
+`rag/embed.py:136 - Argument 1 to "vector_literal" has incompatible type "Sequence[float]"; expected
+"list[float]"` (the helper only iterates, so its annotation was narrower than its contract), and
+`ruff check .` was red at HEAD on an unused `extract_intent_dict` import in
+`test_the_filter_speaks_the_district_vocabulary.py`.
+
+**The fix.** Landed the module byte-for-byte (no logic change - its 18 tests already pin it), widened
+`vector_literal`'s parameter to `Iterable[float]`, dropped the unused import. The module's docstring
+promises `make ai-embed`; no such target existed, so the target now exists - written in the
+`uv run --no-sync` form, because a plain `uv run` installs the project editable on this host and the
+GBK locale cannot decode the `.pth` path (recorded in ENVIRONMENT_REPORT §8 with the recovery).
+Verified both legs of the recipe: `--dry-run` reports **2118 chunk(s) await embedding** against the
+demo database - the same count the module's docstring measured before it existed - exit 0, and no
+`.pth` is written.
+
+**Discipline note.** A module whose tests are committed and whose source is not is a clone that
+cannot run its own gate; the workaround had been papering over it for a day. The venv hazard behind
+the `--no-sync` choice is now written down so the next session does not rediscover it by crashing.
+
+**Verified, not claimed.** Targeted suite (rag_embed, search_sql, embeddings, both vocabulary gates,
+semantic-lane reachability) -> **340 passed**; `mypy nexus_ai` -> **Success: no issues found in 59
+source files**; `ruff check .` -> 1 error, and it is the sibling lane's untracked WIP
+(`test_the_filter_speaks_the_tags_vocabulary.py`, the same unused import - their in-flight file, not
+touched here); eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers -> green as
+re-measured after this landing (jsonb census re-walked with the new module present).
+

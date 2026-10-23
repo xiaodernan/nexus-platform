@@ -240,3 +240,15 @@ $ bash -c 'cd apps/web && (node -e "require(./package.json).scripts.dev" && echo
   → `bash scripts/db_apply_migrations.sh --seed` → `docker exec nexus-redis redis-cli ping`. Add
   `--force` to that script to re-apply migrations, or `docker volume rm nexus_pgdata` (after `docker rm -f
   nexus-postgres`) for a true reset — which is exactly what `make db-reset` does, step by step.
+* **apps/ai venv hazard on this host (measured 2026-10-23, D515): the project must never be installed
+  editable into the venv.** `site.py` reads `.pth` files with the LOCALE encoding (Python 3.11's
+  `addpackage`: `io.TextIOWrapper(io.open_code(fullname), encoding="locale")`), and this repository lives
+  at `D:\获客平台` - a path the GBK locale cannot decode - so the moment `uv run`/`uv sync` installs the
+  project (`_editable_impl_nexus_ai.pth`), every `.venv\Scripts\python.exe` dies at startup with
+  `UnicodeDecodeError: 'gbk' codec` before a single test runs. `PYTHONUTF8=1` does not help (the encoding
+  is explicit). Recovery: delete the `.pth`. Prevention: `uv run --no-sync ...`, or invoke
+  `.venv\Scripts\python.exe -m pytest` directly (`-m` puts the working tree on `sys.path`, so
+  `nexus_ai` is imported from the source, never from a stale copy). The Makefile's `ai-embed` target is
+  written in the `--no-sync` form for this reason; CI is unaffected (Linux paths are ASCII). Also note
+  the repo carries no committed `apps/ai/uv.lock`, so an un-`--frozen` sync re-resolves and can churn
+  the venv (that is how a stale `pydantic-core` half-install once wedged it).

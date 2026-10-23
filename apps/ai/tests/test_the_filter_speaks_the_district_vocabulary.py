@@ -25,7 +25,6 @@ from __future__ import annotations
 import pytest
 
 from nexus_ai.nlu.lexicon import DISTRICTS, match_district
-from nexus_ai.nlu.understand import extract_intent_dict
 from nexus_ai.search.service import plan_from_intent
 
 #: every alias the product's district table names (canonical + all aliases)

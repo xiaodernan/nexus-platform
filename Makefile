@@ -57,6 +57,11 @@ db-migrate: ## Apply infra/db/migrations/*.sql in order, then bind role grants (
 seed: ## Apply infra/db/seed/*.sql (tenant hong-kong + demo fixtures); idempotent
 	bash scripts/db_apply_migrations.sh --seed
 
+ai-embed: ## Fill chunks.embedding for the chunks that have none (RAG §2 worker; inspect with --dry-run, canary with --limit)
+	cd apps/ai && NEXUS_DATABASE_URL='postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/$(DB_NAME)' \
+	  bash -c 'command -v uv >/dev/null 2>&1 && uv run --no-sync python -m nexus_ai.rag.embed \
+	  || python -m nexus_ai.rag.embed'
+
 db-reset: ## DESTROY local data: drop nexus_pgdata, recreate, migrate, seed
 	@echo "!! recreating the nexus database from scratch (volume nexus_pgdata is deleted)"
 	docker rm -f $(PG_CONTAINER) >/dev/null 2>&1 || true
