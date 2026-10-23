@@ -62,6 +62,15 @@ BOOLEAN_PREFERENCES = [
      {"outdoor_style": True}, {"indoor_style": True}),
     ("style", "indoor", True,
      {"indoor_style": True}, {"outdoor_style": True}),
+    # D528: the occasion matcher used to answer a hardcoded 1.0 / 0.0 and never read the
+    # weight at all, so an occasion the user cares about a little swung the signal over
+    # its whole range and one they care about a great deal swung it no further.
+    ("occasion", "date", "date", {"date_occasion": True}, {"date_occasion": False}),
+    ("occasion", "group", "group", {"group_occasion": True}, {"group_occasion": False}),
+    ("occasion", "family", "family", {"family_occasion": True}, {"family_occasion": False}),
+    ("occasion", "business", "business",
+     {"business_occasion": True}, {"business_occasion": False}),
+    ("occasion", "solo", "solo", {"solo_occasion": True}, {"solo_occasion": False}),
 ]
 
 #: every weight the product's own data uses, plus the ones that used to invert

@@ -29,6 +29,7 @@ import pytest
 from nexus_ai.nlu import lexicon as L
 from nexus_ai.nlu import state_merger as M
 from nexus_ai.nlu.canonical import CANONICAL_FORMS
+from nexus_ai.nlu.polarity import NEGATION_CUES
 
 DB_URL = os.environ.get("NEXUS_TEST_DATABASE_URL", "").strip()
 
@@ -126,3 +127,63 @@ def test_the_second_turn_narrows_the_distance_in_both_spellings(client):
             f"{word.encode('unicode_escape').decode()} did not name the order")
         location = intent.get("location") or {}
         assert location.get("radius_m"), "the radius was not tightened"
+
+# ------------------------------------------------------------------ D528: changing your mind
+# The words come from the product's own tables, not from this file (D409/D421/D436): a
+# hand-typed CJK code point is a writer's memory, not a reference.
+JAPANESE_WORD = L.CUISINE_TERMS["japanese"][1]        # the lexicon's own word for it
+THAI_WORD = L.CUISINE_TERMS["thai"][0]
+SCENIC_WORD = next(t for kind, key, terms, _pol in L.PREFERENCE_RULES
+                   if (kind, key) == ("view", "scenic") for t in terms if len(t) == 2)
+WANT_JAPANESE = f"我想食{JAPANESE_WORD}"
+WANT_THAI = f"想食{THAI_WORD}"
+WANT_SCENIC = f"我想要{SCENIC_WORD}"
+REFUSE_SCENIC = f"{NEGATION_CUES[0]}{SCENIC_WORD}"
+
+
+def _preference_labels(items) -> set[str]:
+    """The `preference_match` reasons the cards actually carried."""
+    out: set[str] = set()
+    for item in items:
+        for reason in (item.get("ai_match") or {}).get("reasons") or []:
+            if reason.get("label") == "preference_match":
+                out.add(str(reason.get("text") or ""))
+    return out
+
+
+def test_the_second_turn_serves_the_cuisine_the_user_changed_to(client):
+    """D528: `_absorb` dropped a preference the state already carried, so a follow-up
+    naming a different cuisine left the FIRST one in place - and the cards went on
+    naming the cuisine the user had abandoned."""
+    first, items, _prices = _turn(client, WANT_JAPANESE)
+    assert items, "the first turn served no cards"
+
+    intent, items, _prices = _turn(client, WANT_THAI, dict(first))
+    assert items, "the follow-up emptied the answer"
+    held = [(p.get("key"), p.get("value")) for p in intent.get("preferences") or []]
+    assert ("cuisine", "thai") in held, (
+        f"the follow-up named a different cuisine and the state still carried {held}")
+    assert ("cuisine", "japanese") not in held, (
+        f"the state still carries the cuisine the user abandoned: {held}")
+    labels = _preference_labels(items)
+    assert any("thai" in label for label in labels), (
+        f"no card named the cuisine the user changed to: {sorted(labels)}")
+    assert not any("japanese" in label for label in labels), (
+        f"a card still names the cuisine the user abandoned: {sorted(labels)}")
+
+
+def test_a_refusal_typed_in_the_follow_up_reaches_the_intent(client):
+    """D528: the same drop threw away the POLARITY. "我想要海景" then "唔好海景" kept
+    view=scenic at +1, so the ranking lane boosted the very thing the user refused in
+    the follow-up - the D523 inversion reached from the merge lane."""
+    first, items, _prices = _turn(client, WANT_SCENIC)
+    assert items, "the first turn served no cards"
+
+    intent, items, _prices = _turn(client, REFUSE_SCENIC, dict(first))
+    assert items, "the follow-up emptied the answer"
+    held = {(str(p.get("key")), str(p.get("value"))): int(p.get("polarity", 1))
+            for p in intent.get("preferences") or []}
+    assert held.get(("view", "scenic")) == -1, (
+        f"the refusal typed in the follow-up left {held} - a dislike the user spoke out "
+        f"loud is still a LIKE to the ranking lane")
+

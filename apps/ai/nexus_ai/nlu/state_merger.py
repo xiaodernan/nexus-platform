@@ -352,10 +352,33 @@ def _absorb(base: dict[str, Any], turn: IntentExtraction, text: str) -> list[dic
             out.append({"op": "set", "field": "category", "from": base.get("category"),
                         "to": turn.category})
             base["category"] = turn.category
+    # D528: the turn's values for a key REPLACE the state's values for that key. The
+    # old test was `p["key"] not in {keys the state holds}`, so a follow-up that named a
+    # preference the state already carried was DROPPED - and dropping it is not neutral.
+    # Measured: "我想食日本菜" then "想食泰國菜" kept `cuisine=japanese`, and
+    # "我想要海景" then "唔好海景" kept `view=scenic` at polarity **+1**: a negation the
+    # user typed in the follow-up was discarded and the thing they refused stayed a LIKE,
+    # which is the D523 inversion reached from the other lane. Nothing was recorded
+    # either, so no `agent_run` could explain what the turn did (§34).
+    wanted_by_key: dict[str, list[dict[str, Any]]] = {}
     for p in turn.preferences:
-        if p["key"] not in {q.get("key") for q in base.get("preferences") or []}:
-            base.setdefault("preferences", []).append(p)
-            out.append({"op": "append", "field": "preferences", "to": f"{p['key']}={p['value']}"})
+        wanted_by_key.setdefault(str(p.get("key")), []).append(p)
+    for key, wanted in wanted_by_key.items():
+        held = [q for q in base.get("preferences") or [] if q.get("key") == key]
+        if not held:
+            base.setdefault("preferences", []).extend(wanted)
+            out.append({"op": "append", "field": "preferences",
+                        "to": f"{key}={wanted[0].get('value')}"})
+            continue
+        if (_shape(held) == _shape(wanted)):
+            continue  # the turn re-states what the state already carries
+        base["preferences"] = ([q for q in base.get("preferences") or []
+                                if q.get("key") != key] + wanted)
+        # the polarity travels with the value, so a flip from +1 to -1 is visible in the
+        # record and not just in the state
+        out.append({"op": "set", "field": f"preferences.{key}",
+                    "from": [list(s) for s in _shape(held)],
+                    "to": [list(s) for s in _shape(wanted)]})
     for c in turn.constraints:
         o = _add_constraint(base, c["key"], c["value"])
         if o.get("op") != "noop":
@@ -374,6 +397,11 @@ def _absorb(base: dict[str, Any], turn: IntentExtraction, text: str) -> list[dic
         base["sort_preference"] = turn.sort_preference
         out.append({"op": "set", "field": "sort_preference", "to": turn.sort_preference})
     return out
+
+
+def _shape(prefs: list[dict[str, Any]]) -> list[tuple[Any, Any]]:
+    """(value, polarity) for each row - what makes one preference different from another."""
+    return [(p.get("value"), p.get("polarity", 1)) for p in prefs]
 
 
 def _drop_unknown(base: dict[str, Any], field_name: str) -> None:

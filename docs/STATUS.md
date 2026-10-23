@@ -22625,3 +22625,57 @@ vocabulary spelling, sort preference, canonical query, personalization signal) -
 passed, 1 skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**;
 `ruff check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the
 CI checkers -> green.
+
+## 522. D528 · a follow-up that changed its mind was dropped on the floor (`apps/ai/nexus_ai/nlu/state_merger.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_a_followup_can_change_its_mind.py`, `apps/ai/tests/test_live_conversation_refinement.py`)
+
+**What was measured.** `_absorb` pulls whatever a follow-up resolved into the carried
+state, and its preference half tested `if p["key"] not in {the keys the state holds}`.
+A preference the state already carried was therefore DROPPED - and dropping it is not
+neutral:
+
+    我想要海景  then  唔好海景  ->  view=scenic, polarity **+1**
+
+The negation the user typed in the follow-up was discarded and the thing they refused
+stayed a LIKE, which the ranking lane then boosts: the D523 inversion, reached from the
+merge lane instead of the polarity lane. And the same test dropped a plain change of
+mind:
+
+    我想食日本菜  then  想食泰國菜  ->  cuisine=japanese, and `changes: []`
+
+The user was answered with the cuisine they had abandoned, and because nothing was
+recorded no `agent_run` could explain what the turn did (§34: every change is
+recorded). Measured on the live plane, through the stream the product answers on: the
+first turn's cards carried `符合你這次的要求：japanese` and the follow-up's carried the
+same string - the user's second sentence had moved nothing at all.
+
+**The fix.** The turn's values for a key REPLACE the state's values for that key, and
+the replacement is recorded with the polarity attached, so a flip from +1 to -1 is
+visible in the record and not only in the state. Re-stating what the state already
+carries is still a no-op, and a new key still merges without disturbing the others.
+Measured live after: the follow-up's cards carry `符合你這次的要求：thai`, the state
+carries `("cuisine", "thai")` and no longer `("cuisine", "japanese")`, and
+`唔好海景` leaves `view=scenic` at polarity **-1**.
+
+**A second reader of the same weight.** `make_occasion_match` was the one matcher of
+fifteen that never read its weight at all - it answered a hardcoded `1.0` / `0.0` - so
+an occasion the user cares about a little swung the personalization signal over its
+whole range and one they care about a great deal swung it no further. It now answers
+through `_sided(w, ...)` (D527) like every other boolean matcher, and an attribute the
+corpus does not declare is still neutral at 0.5.
+
+**Verified, not claimed.** The merge gate `test_a_followup_can_change_its_mind.py`:
+**7 passed** - a different cuisine lands, the replacement is recorded, a negation typed
+in the follow-up flips the polarity, the flip is visible in the record, a re-stated
+preference is a no-op, a new key does not disturb the others, and the merge stays pure.
+The ordering gate `test_a_weak_preference_is_not_evidence_against_it.py`, extended with
+the five occasion rows: **146 passed**. The live gate
+`test_live_conversation_refinement.py`: **4 passed** - the two-turn refinement in both
+spellings still works, and the two measurements above are taken off the live stream.
+Proved to fail: making the occasion matcher ignore its weight reddens **5** of the
+ordering checks; restoring the membership test reddens **4** of the merge checks and
+**2** of the live ones (each probe put back, the files byte-compared afterwards).
+Targeted regression (`-k "merge or refinement or state or conversation or nlu or
+understand or intent"`) -> **342 passed, 13 skipped**; (`-k "preference or structured
+or occasion or personaliz or merge or refinement or state"`) -> **533 passed, 18
+skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**;
+`ruff check .` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.

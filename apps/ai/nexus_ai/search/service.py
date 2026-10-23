@@ -872,10 +872,16 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
 
                     def make_occasion_match(occ_key, w):
                         def _match(attrs):
+                            # D528: the weight is the caller's and it is READ here. This
+                            # matcher used to answer the hardcoded 1.0 / 0.0 whatever the
+                            # weight said, so an occasion the user cares about a little
+                            # swung the personalization signal over its whole range and one
+                            # they care about a lot swung it no further. The weight is the
+                            # only thing that says how much.
                             if attrs.get(occ_key) is True:
-                                return 1.0
+                                return _sided(w, liked=True)
                             if attrs.get(occ_key) is False:
-                                return 0.0
+                                return _sided(w, liked=False)
                             return 0.5  # neutral if not specified
                         return _match
                     match_fn = make_occasion_match(occasion_key, float(weight))
