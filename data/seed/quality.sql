@@ -3507,7 +3507,7 @@ CREATE TEMP TABLE shape_answer (tbl text NOT NULL, col text NOT NULL, kind text 
                                 why text NOT NULL, PRIMARY KEY (tbl, col));
 INSERT INTO shape_answer VALUES
  ('collections', 'items', 'array-only',
-  'generate.py:292 lists the items column and :1342 builds the guide item list; CollectionsController.java:145 '
+  'generate.py:292 lists the items column and :1375 builds the guide item list; CollectionsController.java:145 '
   || 'reads it with Json.jsonArray(row, "items")',
   'a guide''s ordered items are a list, so the build consumes it as an array and resolves each element into an '
   || 'EntityCard on the same read; no clause asks collections.items for a key, and none could'),

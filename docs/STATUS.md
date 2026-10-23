@@ -22009,3 +22009,27 @@ this plane, pre-existing at HEAD and untouched by this unit: `check_jsonb_reads.
 stale answer site (`shape_answer collections.items` cites `generate.py:1342`, which is now the
 author-name picker; the guide item list moved to :1375) - re-aimed in §508.
 
+## 508. D514 · the jsonb census's answer site cited a line the seed had moved past - `collections.items` pointed at generate.py:1342, which is now the author-name picker (`data/seed/quality.sql`)
+
+**What was measured.** `check_jsonb_reads.mjs` reads the `shape_answer` rows out of
+`data/seed/quality.sql` and resolves each `site` citation back into the source it names. The
+`collections.items` row cited `generate.py:292` (the items column in the collections tuple - still
+exact) and `:1342` as the line that builds the guide item list. Line 1342 of the current generator
+is `return self.pick(["陳先生", ...])` - the review author-label picker; the guide item list is built
+at :1375 (`items = [{"subject_type": "merchant", ...} for m in members]` inside `build_collections`).
+The generator grew by 33 lines above that point and the citation never followed. The reader was red
+at HEAD: exit 1, FALSE SITES (1).
+
+**The fix.** Re-aimed the citation in place: `:1342` -> `:1375`. One number, one line. No other
+answer site moved - the reader resolved the other 30 source locations.
+
+**Discipline note.** This is the D88 class the drift reader owns, arriving on the answer-site plane:
+the line still exists and still holds text, so only a reader that resolves the citation can see it.
+The jsonb census is that reader, and a lane that re-aims a citation should run it.
+
+**Verified, not claimed.** `node scripts/check_jsonb_reads.mjs` -> **REPORT COMPLETE - 0 reason(s)
+to redden**, exit 0 (was exit 1, FALSE SITES (1)). Full CI checker set green: numbers census PASS
+(1179 claims), sections PASS, citations PASS, eols PASS, status-citations PASS, line-cite-drift
+REPORT 115/175 EXACT with strict=none, contract-drift PASS, console-i18n PASS, console-a11y PASS,
+reader-reachability PASS.
+
