@@ -21788,3 +21788,27 @@ Two defects in one seam, and each one hid the other.
 **Reported, not fixed here.** `/ai/v1/health` answers with `settings.embedding_provider` (apps/ai/nexus_ai/api/routes_system.py:85), not with the adapter the factory built. `embedding_provider=http` with no credentials builds `HashingEmbedding` (apps/ai/nexus_ai/models/embeddings.py:179,180) and health still reports `http`, with `dim` and `model` from the same config — so the surface that exists to say which provider is serving answers a different question than the one the factory decided. The degrade itself is pinned by a test; the disclosure changes a served contract shape and needs its own witness.
 
 **Discipline note.** The general form: **a test file's docstring that forbids a path from being exercised is a claim about the code, and the code has to be asked whether it can run at all** — a method that raises on its first line survives every suite-wide green count, and the pragma is what makes it look deliberate. And the second form: **"is the provider X" is not the question "is a vector available"**; gating a capability on a configuration label makes the lane depend on which adapter was named, when the two conditions that actually decide it (a vector exists, and a backend that can use one) were already combined on the line below the guard.
+
+## 500. D508 · the one cue-reading rule was only exercised through its callers - the Latin word boundary, the CJK spelling match and the longest-wins choice (`apps/ai/nexus_ai/nlu/matching.py`, `apps/ai/tests/test_cue_matching.py`)
+
+**Module / contract.** `nlu/matching.py` is the one rule for reading a cue out of a text, after
+three copies failed differently (D476/D478): the first turn read "book" inside "bookshop" (a shop
+became a reservation) and "past" inside "pastry" (a pastry became "open late after"). The rule:
+a Latin cue is a **word** (no letter may touch it; only a plural may follow), a CJK cue matches on
+its own **spelling** (no boundaries), and the **longest** matching cue wins.
+
+**Pinned behavior (15 cases, all confirmed empirically):**
+- Latin word boundary: `book` matches `book a table` at 0 and `books` (plural); it does **not**
+  match `bookshop`/`booking` (letter after) or `ramen` (letter before `am`); `past` does not match
+  `pastry`; a digit may touch (`7am` matches `am` at 1); every occurrence is reported.
+- CJK: a substring match (`好安靜` → position 1) and no boundaries (`不安靜` → position 1); an
+  absent cue → `[]`.
+- `cue_in` is the boolean wrapper (true for a word, false for a substring).
+- `longest_cue`: `["book","books"]` on `books` → `books`; `["am","7am"]` on `7am` → `7am` (a short
+  cue must not shadow a longer one); no match → `None`; a non-matching plural (`weekdays` vs
+  `weekend`) → `None`.
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_cue_matching.py` → **15 passed**; full `apps/ai` suite
+→ **2636 passed, 98 skipped** (`pytest -q`, live-DB tests skip because Docker is down).
