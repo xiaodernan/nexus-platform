@@ -23313,3 +23313,46 @@ avoid or understand or intent or nlu"`) -> **1113 passed, 38 skipped**; `mypy ne
 inside "二手煙") can be further from the cue than the clause's reach, so it reads +1 while
 the longer form is refused - the two lanes agree about it (no constraint is written for
 it either), so it is the reader's reach, not a contradiction.
+
+## 535. D541 - the intent kind answers its question with the ONE reader (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/tests/test_the_intent_kind_reads_the_refusal_the_lane_reads.py`)
+
+**What was measured.** The module asks two questions about a refusal - what the search
+plan filters for (`_fill_constraints`) and whether the turn is a discovery at all
+(`_has_constraint`). D536 moved the first to the clause rule and left the second on
+D536's eight-character window, so the two answers about one sentence could disagree:
+measured at HEAD, "no cilantro", "no coriander" and "peanut hate" wrote their constraint
+and came back with the intent `unknown` - the refusal was read and the answer was "I do
+not know what you are looking for". The window was also a substring test, so a cue
+inside a word counted as a refusal ("no" in "snow peanut"), the D480 shape.
+
+**The fix.** `constraint_hits` is now the one reader both questions are answered by:
+the lane appends what it returns, and the intent kind asks it whether anything came
+back. The reader is the clause rule of D536/D539 and the ONE matcher of D480, unchanged
+- what changes is that the second question stops carrying its own copy.
+
+**Verified, not claimed.**
+`test_the_intent_kind_reads_the_refusal_the_lane_reads.py`: **1097 passed** - a census
+over every surface the rules name × every negation both tables carry, forward and
+backward, each row charging the constraint AND the intent; the measured holes; the
+cue-inside-a-word rows; and a row that holds the two questions to one reader by
+construction. Proved to fail: `_has_constraint` put back on the eight-character window
+reddens **76**, the file restored and byte-compared. The fourteen
+refusal/polarity/constraint gates, the three doors and the merger, search-plan, lexicon
+and vocabulary suites -> **4113 passed**; filtered regression (`-k "preference or
+structured or occasion or personaliz or merge or refinement or state or polarity or
+cuisine or transient or ranking or attribute or vocabulary or ambience or refusal or
+negation or clause"`) -> **3971 passed, 35 skipped**; (`-k "search or rank or card or
+score or facet or filter or avoid or understand or intent or nlu"`) -> **2210 passed, 38
+skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**;
+`ruff check nexus_ai tests` -> **All checks passed**; eval gate -> **PASS - 2 suite(s),
+0 failing**.
+
+**Residue measured and filed, not fixed.** The reader is shared now, the two
+vocabularies are not: the four negations the constraint table alone carries - 不吃 /
+別 / 避免 / 少 - are absent from the polarity table (the D493 debt), and the shared
+reader makes the disagreement measurable inside one sentence: "海鲜 避免" writes the
+constraint `diet_avoid:seafood` and the preference `cuisine seafood +1`, where the
+shared negation answers both consistently ("海鲜 avoid" -> the constraint and -1). The
+other two shapes read nothing at all: a cue with a verb of its own after it is not
+clause-final, so "花生 少吃" and "peanut 別吃" write no constraint and no preference -
+the eat-less spelling is a hole in the clause rule, filed, not in the vocabulary.

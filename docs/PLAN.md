@@ -60,13 +60,16 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   either), so it is the reader's reach rather than a contradiction - but a preference keyed on the
   shorter surface would be boosted by a sentence that refuses the longer one.
   Owner: the AI lane.
-- **`_has_constraint` still carries D536's eight-character window** - the constraint lane reads the
-  clause (D536), but the intent kind's own test for "is there a refusal here" still counts
-  characters: measured, "no cilantro" and "no coriander" write `diet_avoid:coriander` and come
-  back with the intent `unknown` - the constraint is read and the answer is "I do not know what
-  you are looking for". D539's backward arm inherits the hole for every refusal with no category
-  of its own ("peanut hate" writes `diet_avoid:peanut` and answers `unknown`). One reader for
-  both questions, the way D536 gave the two lanes one.
+- **The eat-less spelling reads nothing at all** - a cue with a verb of its own after it is not
+  clause-final (D537's rule), so "花生 少吃" and "peanut 別吃" write no constraint and no
+  preference: the user refuses and the product hears nothing. The clause rule would have to let
+  the cue govern the verb's own object.
+  Owner: the AI lane.
+- **The four negations only the constraint table carries split the two lanes** - 不吃 / 別 /
+  避免 / 少 are absent from the polarity table (D493's debt), so "海鲜 避免" writes
+  `diet_avoid:seafood` and the preference `cuisine seafood +1` in one sentence, where the
+  shared negation answers both consistently ("海鲜 avoid" -> the constraint and -1). The
+  reader is shared (D541); the two vocabularies are not yet one.
   Owner: the AI lane.
 - **The clause gap admits one verb but not an adverb** - "not very spicy" (the gap "very",
   four characters) reads +1 and writes no constraint, and "not really like spicy" reads the
@@ -1633,3 +1636,25 @@ the clause boundary surviving normalisation.
    ("煙" inside "二手煙") can sit past the clause's reach and read +1 while the longer form is
    refused - the two lanes agree about it, so it is the reach, not a contradiction.
 
+### 2026-10-24 (later still, the eighth) — D541: the intent kind answers its question with the ONE reader
+
+1. D541 (f293d31) - the module asked two questions about a refusal - what the search plan
+   filters for (`_fill_constraints`) and whether the turn is a discovery at all
+   (`_has_constraint`) - and D536 moved the first to the clause rule while leaving the second on
+   D536's own eight-character window, so the two answers about one sentence could disagree:
+   measured at HEAD, "no cilantro", "no coriander" and "peanut hate" wrote their constraint
+   and came back with the intent `unknown` - the refusal was read and the answer was "I do not
+   know what you are looking for". The window was also a substring test, so a cue inside a word
+   counted ("no" in "snow peanut", the D480 shape). `constraint_hits` is now the ONE reader
+   both questions are answered by: the lane appends what it returns, and the intent kind asks it
+   whether anything came back. The reader itself - the clause rule of D536/D539 and the ONE
+   matcher of D480 - is unchanged; what changes is that the second question stops carrying its
+   own copy.
+
+**Queue spent:** the `_has_constraint` window item. Two residues filed, both measured through
+   the real path (the text is canonicalised before it is read, so a raw-text probe lies): the
+   four negations only the constraint table carries (不吃 / 別 / 避免 / 少) are absent from the
+   polarity table, and the shared reader now measures the disagreement inside one sentence
+   ("海鲜 避免" writes the constraint and the +1 preference, "海鲜 avoid" writes the constraint
+   and -1); and a cue with a verb of its own after it ("花生 少吃", "peanut 別吃") is not
+   clause-final, so the eat-less spelling reads nothing at all.
