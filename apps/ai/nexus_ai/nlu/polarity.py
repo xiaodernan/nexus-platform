@@ -165,6 +165,23 @@ def clause_attached(between: str) -> bool:
     return gap in _VERB_BRIDGE
 
 
+def _opens_with_verb(gap: str) -> bool:
+    """Whether the gap opens with one of the bridge verbs - the next clause's request.
+
+    D540: a verb directly under the separator is what tells a pause from a boundary.
+    "唔好，辣" refuses the 辣 (the comma is a pause inside the refusal) while "唔好，要辣"
+    asks for it (the comma ended the cue's clause and 要 opens the next one). A Latin verb
+    is a WORD - "wanted" does not open with "want" - and a Chinese one is the character.
+    """
+    for verb in _VERB_BRIDGE:
+        if verb.isascii():
+            if re.match(re.escape(verb) + r"\b", gap):
+                return True
+        elif gap.startswith(verb):
+            return True
+    return False
+
+
 def forward_gap(low: str, cue_end: int, token_at: int) -> str:
     """The gap between a cue and the token it governs, with the cue's own punctuation gone.
 
@@ -176,8 +193,23 @@ def forward_gap(low: str, cue_end: int, token_at: int) -> str:
     stands. This is the forward direction only: a cue that governs a token BEFORE it - the
     after-case - keeps every separator in its gap, because there the comma really did end
     the token's clause ("辣，唔好" leaves the 辣 alone).
+
+    D540: the separator is the cue's own punctuation only when the cue's OBJECT follows
+    it. A gap that opens with a verb after the separator is the next clause asking for
+    something - "唔好，要辣" asks for the 辣 and "咖喱唔好，想食辣" asks for the 辣 it also
+    refuses the curry in - so the separator stays in the gap and `clause_attached` reads
+    the boundary. Only a STRIPPED separator arms this, and only against a verb: the
+    bridge inside one clause ("唔好要辣", no comma) still refuses the 辣, because there was
+    no separator to read and the verb is the clause's own (D535).
     """
-    return low[cue_end:token_at].lstrip(" \t" + CLAUSE_SEPARATOR)
+    raw = low[cue_end:token_at]
+    gap = raw.lstrip(" \t" + CLAUSE_SEPARATOR)
+    if gap == raw:
+        return raw
+    prefix = raw[:len(raw) - len(gap)]
+    if CLAUSE_SEPARATOR in prefix and _opens_with_verb(gap):
+        return raw
+    return gap
 
 
 def clause_final(low: str, cue_at: int, cue: str) -> bool:
