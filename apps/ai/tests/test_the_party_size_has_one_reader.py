@@ -31,7 +31,7 @@ from nexus_ai.nlu.understand import PARTY_RE, extract_intent, party_size_of
 
 #: a state that is NOT a cold start, so `merge_turn` takes the follow-up branch (the one that
 #: used to keep the private regex) instead of re-extracting from scratch
-BASE = {"raw_query": "揄餐廳", "intent": "discover", "category": "restaurant",
+BASE = {"raw_query": "搵餐廳", "intent": "discover", "category": "restaurant",
         "language": "zh-HK", "location": {}, "time": {}, "preferences": [],
         "constraints": [], "unknowns": [], "confidence": {}}
 

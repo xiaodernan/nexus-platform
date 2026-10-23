@@ -40,7 +40,7 @@ TENANT = DEFAULT_TENANT_ID
 
 
 def _intent(**overrides) -> Intent:
-    d = extract_intent_dict("\u63c4\u9910\u5ef3")
+    d = extract_intent_dict("\u6435\u9910\u5ef3")
     d.update(overrides)
     return Intent.model_validate(d)
 

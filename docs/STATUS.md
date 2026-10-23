@@ -22269,3 +22269,36 @@ vocabulary code points, search plan, understand resolution, state merger, sql bu
 soft, the tags gate, the avoid gate, the party-size gate) -> **182 passed**; `mypy nexus_ai`
 -> **Success: no issues found in 59 source files**; `ruff check .` -> **All checks passed**;
 eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers -> green.
+
+## 514. D520 · two test fixtures wrote a code point the product's vocabulary does not carry - and one of them was the base of another lane's gate (`apps/ai/tests/test_the_party_size_has_one_reader.py`, `apps/ai/tests/test_the_filter_speaks_the_avoid_vocabulary.py`)
+
+**What was measured.** The D453 gate derives its reference from the product's own package -
+every Chinese character the package carries, its data and not its prose - and then reads every
+string constant in `tests/`. A character neither the product nor the `DECLARED` list knows is a
+word the platform has never heard of. Running the targeted regression for the next unit turned
+it RED on `U+63C4`, in two files: the D518 party-size gate's `BASE` state and the D517 avoid
+gate's `_intent()` base - both `"揄餐廳"`, where the Cantonese "find a restaurant"
+(`搵餐廳`, which `DISCOVER_CUES` carries) was meant. One of the two wrote the
+character literally and the other wrote it as a `\u63c4` escape, so a reader grepping for the
+glyph found only one of them.
+
+**The fix.** Both spellings of the same word, corrected to the character the vocabulary
+carries. In the avoid gate this is not only a cosmetic repair: `_intent()` builds its base with
+`extract_intent_dict`, and the unintelligible query made that base `intent="unknown"` with
+`category=None` - so D517's planner gate had been measuring the intent path with an intent
+that named nothing. With the word the product knows, the same assertions pass on a base that
+is a real `discover_merchant` / `restaurant`.
+
+**Discipline note.** D517 and D518 were committed with this red and nobody saw it, because
+each unit ran the tests it had written rather than the gate that reads the test FILES. The
+code-point gate is the one that reads what a test file SAYS rather than what it asserts, and
+it is the only thing that would have caught it. A red gate found while validating the next
+unit is a defect of this unit, not a note in the next one's entry.
+
+**Verified, not claimed.** The gate was red on exactly this character before the fix and green
+after (proved to fail by the measurement itself). Targeted regression (cuisine, lexicon,
+polarity, intent, vocabulary, canonical, party size, avoid) -> **1234 passed**; live (search
+contract, live preferences, live vocabulary spelling, live conversation refinement) -> **22
+passed**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check .`
+-> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers
+-> green.
