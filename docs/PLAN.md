@@ -75,6 +75,13 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   reader is shared (D541); the two vocabularies are not yet one. The eat-less shape reads the
   same split now (D543): "海鲜 少吃" writes the constraint and boosts the seafood.
   Owner: the AI lane.
+- **The polarity lane refuses the WORD where the user asked for its opposite** - the token
+  嗜 sits in the quiet preference rule's own token list, and the cue negates the token it
+  finds, so "唔好嗜" (do not be noisy) writes `noise_avoid:noise` AND reads the
+  preference `ambience/quiet` **-1** - the ranking lane demotes the quiet merchants for a
+  user who asked for a quiet one. Measured identical under every spelling of the negation
+  (唔好 / 兇 / 無 / 没 / 沒), so it is the reader's token choice rather than a
+  vocabulary hole. Owner: the AI lane.
 - **The offline lane never reads `avoid` at all** - `_filter_static`
   (`search/service.py:207`) filters on category, district and max_price and nothing else, so
   the fixture-backed backend answers a different question about the same hard filter than the
@@ -1764,3 +1771,23 @@ the clause boundary surviving normalisation.
    `noise` and `queue` name no tag the corpus writes, though the corpus DOES record a noise
    fact in `attributes.weak_aspects` and `quiet_ambience`; and `onion` / `ginger` /
    `coriander` are named by the diet rule and absent from the corpus's allergen vocabulary.
+### 2026-10-24 (later still, the fourteenth) — D547: the negation the product did not know, in either spelling
+
+1. D547 (ec3c69a) - 没 / 沒 was in no table at all. Measured at D546, "没食辣", "沒食辣",
+   "没吃辣", "沒吃辣", "我没吃辣" and "我沒吃辣" all wrote no constraint, read the cuisine +1 - a
+   LIKE of the very thing the user refused - and answered the intent `unknown`, while every
+   other spelling of the same refusal (唔食 / 不吃 / 不想吃 / 不要吃 / 讨厌 / 冇食 / 無食) wrote
+   it in both lanes. One canon entry (没 -> 沒) and one cue (the bare 没) reach three readers:
+   the canon unifies the two scripts for every table canonicalised at import, the cue is
+   derived into the constraint table's own negations so ONE entry serves both lanes, and the
+   locale markers gain the pair for free because they are derived from the canon - "没有素食"
+   was answered in zh-HK for a Simplified user before this. D534's gate is re-pointed at the
+   canonical form of its population: the hand-spelled 没有 row it carried was standing in for
+   the canon entry that now exists. Proved to fail twice (canon entry deleted -> 11 red, bare
+   cue deleted -> 21 red).
+
+**Queue spent:** the 没 -> 沒 canon item (filed by D545). Two residues filed: the polarity lane
+   reads a refusal of the WORD where the user asked for its opposite - "唔好嘈" / "没嘈" write
+   `noise_avoid:noise` and read `ambience/quiet` -1, so the ranking lane demotes the quiet
+   merchants for a user who asked for a quiet one, and the shape is the same in every spelling
+   of the negation; and 不吃 is the remaining word of the D493 family the polarity table lacks.

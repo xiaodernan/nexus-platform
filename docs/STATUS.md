@@ -23643,3 +23643,60 @@ so they exclude only what their spelling matches in an offering's name (6, 33 an
 merchants). And the offline lane never reads `avoid` at all: `_filter_static` filters on
 category, district and max_price and nothing else, so the fixture-backed backend answers a
 different question about the same filter than the live one - the D488 shape, one lane over.
+## 541. D547 - the negation the product did not know, in either spelling (`apps/ai/nexus_ai/nlu/canonical.py`, `apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/tests/test_the_negation_the_product_did_not_know_in_either_spelling.py`, `apps/ai/tests/test_the_refusals_the_product_could_not_read.py`)
+
+**What was measured.** Every other spelling of "did not" was a word the product understood -
+唔食辣, 不吃辣, 不想吃辣, 不要吃辣, 讨厌吃辣, 冇食辣 and 無食辣 all wrote the refusal
+and read it -1. 没 / 沒 was in NO table at all, and measured at D546 every sentence that
+used it came back the opposite of what was asked: "没食辣", "沒食辣", "没吃辣", "沒吃辣",
+"我没吃辣" and "我沒吃辣" all wrote no constraint, read the cuisine **+1** - a LIKE of the
+very thing the user refused - and answered the intent `unknown`; "没素食" read vegetarian +1;
+"没吃花生" wrote nothing at all. Not in `CANONICAL_FORMS`, so the two scripts could not meet.
+Not in `NEGATION_CUES`, so neither lane read it. And because the locale markers are DERIVED
+from the canon (`SIMPLIFIED_MARKERS = ... | frozenset(CANONICAL_FORMS)`), not in the detector
+either - measured, "没有素食" was answered in the **zh-HK** locale for a user who typed
+Simplified. D534 filed the canon hole in this exact sentence and predicted the row would
+canonicalise into 沒有 and cost nothing when it was filled.
+
+**The fix.** One canon entry (没 -> 沒) and one cue (the bare 没, which canonicalises into
+沒). The two together reach three readers: the canon makes the two spellings one word, so
+every table canonicalised at import (D447) holds one form of it; the cue joins
+`NEGATION_CUES`, from which the constraint table derives its own negations, so ONE entry is
+read by BOTH lanes rather than taught to each (D493's shape); and the locale markers gain the
+pair for free, because they are derived from the canon rather than kept beside it. Measured
+after: every one of the six sentences writes `cuisine_avoid:spicy` and reads the spicy -1, the
+bare cue writes all five rules' refusals in both spellings, "没有素食" is answered in zh-CN,
+and the refusal reaches `plan.avoid` - the whole chain the D541/D546/D547 units built.
+
+**Verified, not claimed.**
+`test_the_negation_the_product_did_not_know_in_either_spelling.py`: **28 passed** - the canon
+entry is an equivalence, each spelling votes for the locale it belongs to, the bare cue is in
+the product's own table in both spellings, the census walks every constraint rule's first
+value under both spellings, the eight measured sentences read the refusal and not a LIKE, the
+refusal reaches `plan.avoid`, and five neighbours (the cue inside 無所謂, the existential
+question's lead, the refusal in another clause) govern nothing. Proved to fail twice, each
+restored and byte-compared: the canon entry deleted reddens **11**, the bare cue deleted
+reddens **21**. `test_the_refusals_the_product_could_not_read.py` is re-pointed at the
+canonical form of its population - the hand-spelled 没有 row it carried was standing in for
+the canon entry that now exists, and the bare 没 joins it - **18 passed**. The vocabulary,
+canonical-coverage, canon, lexicon, negations, refusal-once, clause, seam, degree, question,
+eat-less, state-merger and understand gates beside them -> **6953 passed**; filtered
+regression (`-k "preference or structured or occasion or personaliz or merge or refinement or
+state or polarity or cuisine or transient or ranking or attribute or vocabulary or ambience or
+refusal or negation or clause"`) -> **7082 passed, 4 skipped**; (`-k "search or rank or card or
+score or facet or filter or avoid or understand or intent or nlu"`) -> **2415 passed, 11
+skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check
+nexus_ai tests` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**. One
+failure is PRE-EXISTING on this plane and unrelated, and it reddens identically at HEAD with
+the changes stashed: `test_a_refused_cuisine_is_not_served_at_the_top`, the same two slugs
+(`cove-house-0017`, `jade-stone-0321`) - this plane's corpus predates the seed generator that
+writes the occasion rows the test reads.
+
+**Residue measured and filed, not fixed.** The polarity lane reads a refusal of the WORD where
+the user asked for its opposite: measured, "唔好嘈", "冇嘈", "無嘈", "没嘈" and "沒嘈" all write
+`noise_avoid:noise` AND read the preference `ambience/quiet` **-1**, so the ranking lane demotes
+the quiet merchants for a user who asked for a quiet one. The token 嘈 sits in the quiet rule's
+own token list, and the cue negates the token it finds - the shape is the same whichever
+spelling of the negation is typed, which is why it is filed rather than charged here. 不吃 is
+the remaining word of the same family the polarity table lacks (D493's debt): measured,
+"不吃辣" writes `cuisine_avoid:spicy` and still reads the spicy +1.
