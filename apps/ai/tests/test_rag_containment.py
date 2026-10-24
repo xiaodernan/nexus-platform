@@ -27,6 +27,13 @@ def test_a_latin_query_is_one_token():
     assert query_tokens("coffee") == ["coffee"]
 
 
+def test_the_tokenizer_still_returns_the_function_words():
+    # D551: the refusal belongs to the GATE, not to the tokenizer. query_tokens feeds the
+    # merchant lane's keyword list too, and a word dropped there is a word no lane can
+    # ever use again — the corpus would silently lose the query's shape.
+    assert query_tokens("the and for") == ["the", "and", "for"]
+
+
 def test_a_chinese_query_becomes_bigrams():
     # Chinese carries no spaces, so the whole run is one token and the BIGRAMS are what a
     # chunk can hold.
@@ -60,6 +67,39 @@ def test_a_chinese_question_hits_a_chunk_that_mentions_the_word():
 
 def test_a_chinese_question_does_not_hit_an_unrelated_chunk():
     assert mentions("全日菜單 / Full menu", "有咩飲品？") is False
+
+
+# ------------------------------------------------------------------- the function-word refusal
+# D551. Containment is only evidence when the contained token is something the query
+# ASKED ABOUT. "the" sits in almost every chunk of the corpus — the data statement opens
+# every merchant document — so a query that shared nothing but "the" with a chunk used to
+# be answered with that chunk. The cases below are that shape, written as a unit: the
+# first asserts the refusal, the second that the refusal stops at the function words.
+def test_a_function_word_is_not_a_mention():
+    assert mentions("the kitchen rests with the pass on the day",
+                    "outside seating near the ferry") is False
+    assert mentions("a table for six, from tuesday",
+                    "quiet dim sum for two") is False
+
+
+def test_the_content_word_beside_the_function_words_is_still_the_evidence():
+    # the reverse control: the refusal must not reach past the function words. "two"
+    # is a party size and "ferry" is a place — both are things a chunk can answer.
+    assert mentions("a table for two by the ferry", "outside seating near the ferry") is True
+    assert mentions("a table for two by the ferry", "quiet dim sum for two") is True
+
+
+def test_a_query_made_only_of_function_words_mentions_nothing():
+    # The same refusal a one-character query gets, for the same reason: nothing was
+    # asked about, so nothing can be shown to answer it.
+    assert mentions("全日菜單 / Full menu (12 項)", "the and for") is False
+    assert mentions("what is it like", "what is it like") is False
+
+
+def test_a_cjk_bigram_is_not_a_function_word():
+    # the list is English; a Chinese query's bigrams are content by construction, and
+    # 餐廳 is exactly what a 茶餐廳 query asks about.
+    assert mentions("沙田的茶餐廳深夜有位", "唔好太嘈 茶餐廳") is True
 
 
 # --------------------------------------------------------------------------- the live plane

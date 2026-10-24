@@ -61,16 +61,55 @@ def query_tokens(text: str | None) -> list[str]:
     return list(dict.fromkeys(out))
 
 
+#: English words that ask for nothing. A query token has to be a word the text can
+#: *mention*; these are words almost every chunk of the corpus contains, so counting one
+#: as evidence makes the gate a formality — the cases in `test_rag_containment.py` are
+#: the shape, measured against the seeded corpus: a query whose only shared word is
+#: "the" was answered by data-statement chunks, and the data statement is the one block
+#: that opens every merchant document.
+#:
+#: Deliberately NOT `trust/verification.py`'s `ENTITY_STOPWORDS`: that list strips words
+#: out of a *merchant's name* before comparing names, so it drops "near" and "best" —
+#: words that carry a real request ("near me", "best for kids"). Two lists with different
+#: jobs; the divergence is the point, not an oversight.
+EN_FUNCTION_WORDS = frozenset({
+    # articles, conjunctions, prepositions
+    "an", "and", "as", "at", "but", "by", "for", "from", "in", "into", "nor", "of",
+    "on", "onto", "or", "over", "so", "than", "the", "their", "to", "under", "via",
+    "with", "within", "without",
+    # pronouns and demonstratives
+    "he", "him", "his", "her", "hers", "here", "it", "its", "me", "my", "ours",
+    "somebody", "someone", "she", "them", "there", "these", "they", "this",
+    "those", "us", "we", "you", "your", "yours",
+    # auxiliaries and the copula
+    "am", "are", "been", "being", "be", "did", "does", "do", "had", "has", "have",
+    "having", "is", "must", "was", "were", "will", "would", "shall", "should", "can",
+    "could", "may", "might",
+    # question words and negation
+    "any", "anyone", "how", "no", "none", "not", "nothing", "what", "when", "where",
+    "which", "who", "whom", "whose", "why",
+    # fillers that name no attribute
+    "all", "everything", "just", "like", "many", "more", "most", "much", "please",
+    "really", "some", "stuff", "thing", "things", "very",
+})
+
+
 def mentions(text: str, query: str | None) -> bool:
     """Whether a text mentions what the query asks about.
 
-    A query token of two characters or more has to appear in the text. A query with
+    A content token of two characters or more has to appear in the text. A query with
     nothing tokenizable (a single CJK character, a punctuation mark) matches nothing:
     "mentions" has to mean something, and a one-character query cannot be told apart
     from any other one.
+
+    D551: neither can a function word. A query made only of them asks about nothing, so
+    it mentions nothing — the same refusal the one-character query gets, for the same
+    reason.
     """
     low = (text or "").lower()
     for token in query_tokens(query):
+        if token in EN_FUNCTION_WORDS:
+            continue
         # D482: the ONE matcher - the query's token is a WORD in the text. "spa" inside
         # "spaghetti" is not a spa, and "tea" inside "steakhouse" is not a tea. A
         # plural still matches: "bar" in "bars" is a bar.
