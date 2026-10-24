@@ -1839,3 +1839,39 @@ the clause boundary surviving normalisation.
    bucket into slugs through `categories.resolve` and the fixture lane does not. The 57 fixture
    rows in the suite all write the coarse bucket themselves, so the lane is self-consistent on
    fixtures and wrong on live-shaped rows.
+
+### 2026-10-25 (the first) — D550: the gate stops forbidding the embedding pass, and a kind becomes a claim
+
+1. D550 (716e3df) - the chunks row asserted the seed's precondition on every plane it graded, so the
+   embedding pass D508 shipped was refused by the gate it was meant to satisfy: on a canary plane that
+   ran `python -m nexus_ai.rag.embed` over a fresh seed, 215 of 217 rows passed and the two reds read
+   "2118 chunk(s) already embedded or mislabelled" and "chunks.embedded_at is stamped from the clock
+   (2026-10-25 02:39:38+08) and no answer says so". The deeper half is the second red: the D83 block
+   answers "why can this column not vary?" with a kind, and the coverage row compared the kind to
+   nothing, so that same printout carried a PASS for the exemption row while its own answer list read
+   `chunks.embedded_at [never-written]` over 2118 rows stamped at one fresh instant. The chunks row is
+   now the invariant the worker guarantees - a vector, the model that produced it and the stamp are one
+   fact about one row, and any two of the three is a deception - and `spread_pos` beside `spread_claim`
+   compiles every kind into a predicate over the measured position: `never-written` holds only while the
+   column is NULL everywhere, `generation-clock` only inside the load's own bracket, and the new
+   `run-stamped`, which replaces the false `never-written` for `chunks.embedded_at`, only while the
+   column is still empty or its one instant sits at or after the bracket's end. The bracket is
+   `[seed_started, seed_finished + 1)` tested half-open, because the old widening by 600 s at each end
+   swallowed a run instant 24 s after a 17 s load, and a plane the loader never stamped prints NOT
+   RECORDED instead of a bracket built out of NULLs. Verified: 217 quality checks and 217 assertions at
+   red = 0 on both states the old row conflated - 2118 pending / 0 embedded on the seed-only plane and 0
+   pending / 2118 embedded with one model name and one stamp on the canary that read 215 of 217 before
+   this unit - and the live demo database files the same 29 red names under the parent body and the new
+   one. Seven new arms PASS with the closing baseline identical to the opening; the two that test the
+   bound rather than a value's colour each take the clock row as collateral, which is the right pair.
+   The reverse control says what the unit added: HEAD's own body is entirely green under four of the
+   eight plants. Registry 402 rows, checker PASS, 216 of 217 assertions with an openable witness.
+
+**Queue spent:** the item D508 left when it wrote the worker - the seed gate asserts the un-embedded
+   state as a precondition, so a corpus could be embedded or gated and never both. Three residues
+   filed: nothing automated runs `make ai-embed` (zero references in `.github/workflows/ci.yml` or
+   `scripts/`), so the demo database is still 0 of 2118 embedded and the vectors exist only on the
+   canary plane built by hand; the live demo database's stamped window is a 2024 placeholder
+   (1726972800 .. 1726972900, two years before its own seed base) that the loader should stamp or
+   refuse rather than carry; and `## 540. D546` appears in docs/STATUS.md twice at HEAD, the same 63
+   lines back to back, because no reader counts duplicate section numbers.

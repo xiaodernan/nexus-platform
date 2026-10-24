@@ -23805,3 +23805,82 @@ the fixture lane, which matches none of them. The 57 fixture rows in the suite a
 coarse bucket into `category_primary` themselves, so the lane is self-consistent on fixtures
 and wrong on live-shaped rows. Filed rather than charged here because it is a different leg
 with a different reader, and the D548 lesson is that one unit fixes one thing.
+
+
+## 544. D550 - the seed gate forbade the embedding pass it had been waiting for, and a kind was a label instead of a claim (`data/seed/quality.sql`, `data/seed/falsifier_plants.py`, `data/seed/falsifiers.tsv`, `apps/ai/nexus_ai/rag/embed.py`)
+
+**What was measured.** Two defects one row apart in the same file, and the second is why the
+first could not be fixed on its own. (a) The chunks row asserted the seed's PRECONDITION on every
+plane it graded - no vector, `embed_model = 'pending'`, on all 2118 rows - so when D508 shipped the
+pass that fills those columns, the gate refused its own product: measured on a canary plane built
+by loading the seed and running `python -m nexus_ai.rag.embed` over it, 215 of 217 rows passed and
+the two reds read "2118 chunk(s) already embedded or mislabelled" and "chunks.embedded_at is
+stamped from the clock (2026-10-25 02:39:38.165785+08) and no answer says so". The demo could be
+embedded or gated, never both. (b) That second red names the real hole. The D83 block answers "why
+can this column not vary?" with a kind, and the coverage row checked exactly two things - that
+every degenerate column HAS an answer, and that an answered column has not started VARYING. A kind
+is a claim about where a value sits, and nothing compared the claim to the measurement, so the one
+write that slips past it is a write that keeps the column degenerate. Measured, not reasoned: the
+same canary printout carries `PASS |every column that cannot vary is answered for why it` while its
+own answer list reads `chunks.embedded_at [never-written]` over 2118 rows stamped at one fresh
+instant. And the widening is why it was the clock row that moved: its bracket was the recorded
+window plus 600 s at each end, so a run instant 24 s after a 17 s load looked like the loader's own.
+
+**The fix.** The chunks row is now the invariant the worker guarantees instead of the state the
+seed happens to ship: a vector, the model that produced it and the pass's stamp are one fact about
+one row, and any two of the three is a deception - so the row reddens a half-written chunk and is
+green over a pending corpus and an embedded one alike. Then the part that makes a kind a claim.
+`spread_pos` lays every answered column's measured position beside its kind - the value as epoch
+seconds, whether it falls in the load's own bracket, the seed's base instant, and whether a bracket
+exists at all - and `spread_claim` compiles each kind into a predicate over that row:
+`never-written` and `all-open-queue` hold only while the column is NULL everywhere,
+`single-instant-pinned` only at or before the base instant and outside the bracket, `history-date`
+only strictly before the base, `generation-clock` only inside the bracket, and `run-stamped` - the
+new kind, which replaces the false `never-written` for `chunks.embedded_at` - holds while the
+column is still empty or while its one instant sits at or after the bracket's end. The coverage row
+refuses an answer that does not hold and prints the position it measured. Two window facts came
+with it: the bracket is `[seed_started, seed_finished + 1)` tested half-open, because a ten-minute
+widening swallows exactly the run instant this kind exists to name; and a plane the loader never
+stamped now prints NOT RECORDED instead of a bracket built out of NULLs - the position that kind
+claims cannot be checked there, and the text says so rather than claiming it.
+
+**Verified, not claimed.** The gate files **217 quality checks** and reports **217 assertions**
+with red = 0 on both of the states the old row conflated: the seed-only plane
+`nexus_gate_84632_1792868328`, where the chunks row prints `2118 pending chunk(s), 0 embedded, 0
+half-written`, and the embedded canary `nexus_embedcanary_81155`, where the same row prints `0
+pending chunk(s), 2118 embedded, 0 half-written; 1 model name(s) [hashing] and 1 distinct stamp(s)`
+- the plane that read 215 of 217 before this unit. On the live demo database the parent body and
+the new body file the SAME 29 red names over the same 217 assertions, so nothing here made an
+existing plane redder. Seven new arms - three against the chunks invariant, four against the
+coverage row - PASS with the closing baseline identical to the opening (217 assertions, red = 0),
+and the two that test the bound rather than a value's colour each take the clock row as collateral,
+which is the right pair: a stamp written inside the bracket is a lie about position, so it reddens
+the row that reads position and the row that derives the clock set from it. `--self-test` PASS,
+every text anchor applying exactly once. The reverse control is what says what this unit added:
+HEAD's own body, run against the same eight plants on the same plane, reports 217 assertions red = 0
+unmutated and is entirely green under four of them - the chunk stamped while its vector stays NULL,
+the open review case given a resolution instant, every merchant's `updated_at` moved to `now()`,
+every user soft-deleted at one instant - while the new body reddens each one; of the other four,
+the two half-writes that fill a vector redden only the old precondition row, and the bracket
+mutations redden 2 and 1 rows. Registry 402 rows, checker PASS, 216 of 217 assertions with an
+openable witness. `ruff` and `mypy` clean over 59 source files. The apps/ai suite reports 7 failed
+/ 10373 passed / 127 skipped and all seven names are in
+`test_the_filter_speaks_the_tags_vocabulary.py`, which is another lane's uncommitted revert of the
+tag canonicaliser in `apps/ai/nexus_ai/search/service.py` - none of the four files this unit
+touches is on that path.
+
+**Residue measured and filed, not fixed.**
+- The live demo database carries a stamped window of 1726972800 .. 1726972900 - a 2024 placeholder
+two years before its own seed base (2026-09-22), a 100-second bracket no loader measured. The clock
+row now prints it verbatim instead of widening over it, and the residue is the loader's: stamp the
+real instants or refuse to stamp.
+- The gate accepts an embedded corpus and the worker exists, but nothing automated runs it:
+`ai-embed` appears in `Makefile` and in zero lines of `.github/workflows/ci.yml` or `scripts/`, so
+the vectors still live only on the canary plane built by hand - the demo database is 0 of 2118
+embedded. Filed as the next unit's work, not this one's fix.
+- `## 540. D546` is in docs/STATUS.md twice at HEAD, the same 63 lines back to back - a
+swept-landing double-append that stays invisible because no reader counts duplicate section numbers.
+- Gate step 7 files 7 FALSE SITES against lines of `data/seed/generate.py` that have moved, and
+step 16's strict census still carries its MOVED backlog, so the 18-step drive aborts before step 17
+and this section's figures were judged by running the numbers checker directly rather than by
+trusting a drive that never reached it.
