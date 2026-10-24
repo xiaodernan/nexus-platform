@@ -138,6 +138,15 @@ _CLAUSE_CONJUNCTIONS = ("and", "or", "but", "同埋", "同", "和", "跟",
 #: lane boosted the very thing refused (the D522 shape, in English).
 _VERB_BRIDGE = ("want", "like", "eat", "have", "要", "想", "食", "吃", "鍾意", "喜歡")
 
+#: D544: the DEGREE adverbs a user puts between a refusal and the thing refused - "not
+#: very spicy", "not really like spicy", "唔好 very 辣". A degree word modifies the value;
+#: it does not open a clause of its own, so the gap it sits in is the refusal's own. The
+#: short ones ("so", "too") were already inside the three-character gap and the Cantonese
+#: ones (太, 咁) are the filler class and the short-gap rule's; these are the English words
+#: the length rule could not reach. They are read HERE, next to the bridge, because the
+#: seam door derives its gap population from the tables this module reads.
+_DEGREE_ADVERBS = ("very", "really", "quite", "so", "too")
+
 
 def clause_attached(between: str) -> bool:
     """Whether a cue and a token separated by `between` are in the same clause.
@@ -162,7 +171,16 @@ def clause_attached(between: str) -> bool:
         return True
     if len(gap) <= _ATTACHED_GAP:
         return True
-    return gap in _VERB_BRIDGE
+    if gap in _VERB_BRIDGE:
+        return True
+    # D544: a degree adverb may sit between the cue and the thing it governs - "not very
+    # spicy", "唔好 very 辣" - and one may sit between the cue and the bridge verb: "not
+    # really like spicy". A word that is neither a degree nor a verb still separates them,
+    # which is what keeps D536's "no rush want spicy" unread.
+    words = gap.split()
+    if words and words[0] in _DEGREE_ADVERBS:
+        return len(words) == 1 or (len(words) == 2 and words[1] in _VERB_BRIDGE)
+    return False
 
 
 def _opens_with_verb(gap: str) -> bool:

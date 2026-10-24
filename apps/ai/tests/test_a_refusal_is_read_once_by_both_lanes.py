@@ -104,9 +104,11 @@ SEPARATING = (tuple(f" {c} " for c in P._CLAUSE_CONJUNCTIONS)
               + (" want to eat ", " much of the ", " so very "))
 
 #: gaps inside it: nothing, a space, a word too short to be a clause of its own, one verb
-#: from the bridge, one sentence particle from the filler class.
+#: from the bridge, one sentence particle from the filler class, one degree adverb from
+#: the table D544 added (a degree word modifies the value; it opens no clause).
 ATTACHING = ("", " ", " the ") + tuple(
     f" {v} " for v in P._VERB_BRIDGE) + tuple(
+    f" {d} " for d in P._DEGREE_ADVERBS) + tuple(
     f" {ch} " for ch in _class_members(P._LOCAL_FILLER.pattern) if ch not in " \t")
 
 SHAPES = ATTACHING + SEPARATING
