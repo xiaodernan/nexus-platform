@@ -23700,3 +23700,53 @@ own token list, and the cue negates the token it finds - the shape is the same w
 spelling of the negation is typed, which is why it is filed rather than charged here. 不吃 is
 the remaining word of the same family the polarity table lacks (D493's debt): measured,
 "不吃辣" writes `cuisine_avoid:spicy` and still reads the spicy +1.
+
+## 542. D548 - the outdoor vocabulary names the word a user actually types (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_the_outdoor_vocabulary_names_the_word_a_user_types.py`)
+
+**What was measured.** The `style/outdoor` preference row answered 戶外, 户外,
+outdoor, 露輪, 露台, "al fresco", 焕烤 and 烤焕 - and read NOTHING for
+the word a Hong Kong user types for an open-air place. Measured at HEAD, 露天咖啡店,
+露天座位, 露天, 露天座, 露天餐廳,
+露天座位的餐廳 and 室外咖啡店 wrote no preference at
+all, while 戶外咖啡店 wrote `style/outdoor +1` and 室內咖啡店
+wrote `style/indoor +1`. The corpus carries the fact the row points at: measured on the live
+plane, **94 of the 470** published merchants write `outdoor_seating: true` - exactly the 0.2 the
+seed generator rolls - so a preference the row cannot read is a preference the ranking lane
+never asks about for a fifth of the corpus, and the user who asked for an open-air cafe was
+answered by relevance alone. The second hole is the same shape one row over: the INDOOR row
+names 室內 / 室内 and the outdoor row named neither 室外 nor 露天, so
+the table answered a user in one spelling of a pair only - D416's lesson in a table that was
+already half-fixed.
+
+**The fix.** Two tokens in the row the reader already walks: 露天 and 室外. No new
+rule and no new lane - the row IS the vocabulary the ranking lane asks with, so the two words
+reach it whole.
+
+**Verified, not claimed.**
+`test_the_outdoor_vocabulary_names_the_word_a_user_types.py`: **12 passed** - both words are in
+the row, all seven measured sentences read `style/outdoor +1`, the indoor neighbour keeps its
+own row and does not collapse into it, the live corpus carries the fact (94 of 470 measured
+above), and the preference the row names scores the merchants that carry it above the ones that
+do not. Proved to fail twice, each mutation restored and byte-compared (sha256
+`dd79eb8ef6b8cbfe`): 露天 deleted reddens **7**, 室外 deleted reddens **2**. The
+vocabulary, traditional-forms, canonical-coverage, canon, lexicon, negations, refusal-once,
+clause, seam, degree, question, eat-less, state-merger, understand, category, structured and
+refusal gates beside them -> **154 passed**; the filtered regression (`-k "preference or
+structured or occasion or personaliz or merge or refinement or state or polarity or cuisine or
+transient or ranking or attribute or vocabulary or ambience or refusal or negation or clause"`)
+-> **7096 passed, 4 skipped, 1 failed**; `mypy nexus_ai` -> **Success: no issues found in 59
+source files**; `ruff check nexus_ai tests` -> **All checks passed**; eval gate -> **PASS - 2
+suite(s), 0 failing**. The one failure is PRE-EXISTING on this plane and unrelated, and it
+reddens identically at HEAD with the changes stashed:
+`test_a_refused_cuisine_is_not_served_at_the_top`, the same two slugs (`cove-house-0017`,
+`jade-stone-0321`) - this plane's corpus predates the seed generator that writes the occasion
+rows the test reads.
+
+**Residue measured and filed, not fixed.** The ranking matcher for `style/outdoor` reads
+`outdoor_style` at full weight and `outdoor_seating` at 0.8 of it
+(`search/service.py:1064`, `:1068`), but measured on this plane `outdoor_style` is written on
+**0** merchants while `outdoor_seating` is written on 94 - the plane predates the generator
+that emits the style flag, so the half of the matcher that gives full weight is unmeasurable
+here and only the fixture tests exercise it. Re-seeding the plane (or the CI's fresh seed) is
+what makes that half live-measurable; the vocabulary row itself is now correct in either case.
+

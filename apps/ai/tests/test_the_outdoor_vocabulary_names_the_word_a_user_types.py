@@ -13,7 +13,7 @@ Hong Kong user types for an open-air place:
 A preference the vocabulary does not read is a preference the ranking lane never asks
 about, so a user who asked for an open-air cafe was answered by relevance alone. The corpus
 carries the fact the row points at: `outdoor_seating` is written on a fifth of the published
-merchants (measured below, on the live plane) and `outdoor_style` on a seventh by the current
+merchants (measured below, on the live plane) and `outdoor_style` at 0.15 by the current
 seed generator.
 
 The second hole is the same shape one row over: the INDOOR row carries 室內 / 室内, and the

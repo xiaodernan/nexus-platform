@@ -1791,3 +1791,26 @@ the clause boundary surviving normalisation.
    `noise_avoid:noise` and read `ambience/quiet` -1, so the ranking lane demotes the quiet
    merchants for a user who asked for a quiet one, and the shape is the same in every spelling
    of the negation; and 不吃 is the remaining word of the D493 family the polarity table lacks.
+
+### 2026-10-24 (later still, the fifteenth) — D548: the outdoor vocabulary names the word a user actually types
+
+1. D548 (82b9e16) - the `style/outdoor` row answered 戶外 / 户外 / outdoor /
+   露輪 / 露台 / "al fresco" / 焕烤 / 烤焕 and nothing else, so the
+   seven sentences a Hong Kong user actually types for an open-air place - 露天咖啡店,
+   露天座位, 露天, 露天座, 露天餐廳,
+   露天座位的餐廳, 室外咖啡店 - wrote no preference
+   at all while 戶外咖啡店 wrote `style/outdoor +1`. The corpus carries the
+   fact the row points at (94 of 470 published merchants write `outdoor_seating: true`), so the
+   hole cost a fifth of the corpus its ranking signal. The row also named neither half of the
+   standard-written pair the INDOOR row already carries (室內 / 室内): 室外 was
+   missing too. Two tokens in the row the reader already walks, 露天 and 室外; the
+   gate measures the words in the row, the seven sentences reading the preference, the indoor
+   neighbour keeping its own row, and - on the live plane - the preference scoring the
+   merchants that carry the fact above the ones that do not. Proved to fail twice
+   (露天 deleted -> 7 red, 室外 deleted -> 2 red).
+
+**Queue spent:** the 露天 / 室外 vocabulary item (filed by D416's half-fixed
+   pair, carried since). One residue filed: `outdoor_style` is written on 0 of this plane's
+   merchants while `outdoor_seating` is written on 94, so the full-weight half of the ranking
+   matcher is unmeasurable on this plane and lives only in the fixtures until the plane is
+   re-seeded.
