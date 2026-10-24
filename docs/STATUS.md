@@ -23750,3 +23750,58 @@ that emits the style flag, so the half of the matcher that gives full weight is 
 here and only the fixture tests exercise it. Re-seeding the plane (or the CI's fresh seed) is
 what makes that half live-measurable; the vocabulary row itself is now correct in either case.
 
+
+## 543. D549 - the fixture lane answers the same avoid question the live lane answers (`apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_the_fixture_lane_answers_the_same_avoid_question.py`)
+
+**What was measured.** `_filter_static` is the fixture backend's WHERE clause, and it read
+`category`, `district` and `max_price` - and never `avoid`. The live SQL lane has excluded on
+`avoid` since D517, so the two backends answered DIFFERENT QUESTIONS about the same hard
+filter: measured at HEAD on the live plane (470 published merchants), `avoid=["seafood"]`
+dropped **30** merchants in the live lane and **0** in the fixture lane; `avoid=["gluten"]`
+dropped 269 and 0; peanut 22 and 0; dairy 245 and 0; egg 193 and 0; shellfish 156 and 0; soy
+213 and 0; fish 106 and 0; spicy 66 and 0; meat 44 and 0; pork 120 and 0; beef 72 and 0; nuts
+97 and 0; sesame 57 and 0; garlic 51 and 0; onion 6 and 0; ginger 33 and 0; vegetarian 9 and 0.
+A test that asked the fixture backend whether a refusal filtered anything was answered "no"
+for every word the corpus carries - the D488 shape, one lane over.
+
+**The fix.** The live clause is four legs, and the lane only decides where the last two of them
+look: the merchant lane reads the merchant's OWN offerings (`EXISTS (SELECT 1 FROM offerings
+ao WHERE ao.merchant_id = m.id ...)`), the offering lane reads the offering's own name and
+allergens. `_filter_static` now mirrors all four - `m.tags && terms`,
+`m.category_primary = ANY(terms)`, and the row's own offerings or its own name and
+`attributes.allergens` - reading the terms through the live lane's OWN expansion
+(`sql._avoid_terms` -> `categories.avoid_terms`) rather than a second copy of it, so
+`avoid=["seafood"]` still reaches the merchants tagged `seafood-grill`. `merchant_candidates`
+hands the filter the backend's own offering list, because the EXISTS leg has nothing to read
+otherwise.
+
+**Verified, not claimed.**
+`test_the_fixture_lane_answers_the_same_avoid_question.py`: **10 passed** - one test per leg,
+the control that must survive every word, the word no row carries dropping nothing, an empty
+list changing nothing, and two live cross-checks that run the predicate against the live SQL
+over **20 words on both lanes** (470 merchants, 4707 active offerings, 5546 offerings of every
+status) with **zero disagreements**. Proved to fail six times, each restored and byte-compared
+(sha256 `e97a9d3b275b0524`): the avoid call dropped reddens **5**, the tag leg **3**, the
+category leg **1**, the allergen leg **3**, the merchant lane's offering loop **3**, the
+offering lane's own-words leg **2**. The search, sort, preference, structured, polarity,
+vocabulary, canonical-coverage, canon, weak-preference, refusal and fixture gates beside them
+-> **251 passed**; the filtered regression (`-k "preference or structured or occasion or
+personaliz or merge or refinement or state or polarity or cuisine or transient or ranking or
+attribute or vocabulary or ambience or refusal or negation or clause"`) -> **7096 passed, 4
+skipped, 1 failed**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**;
+`ruff check nexus_ai tests` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0
+failing**. The one failure is PRE-EXISTING on this plane and unrelated, and it reddens
+identically at HEAD with the changes stashed:
+`test_a_refused_cuisine_is_not_served_at_the_top`, the same two slugs (`cove-house-0017`,
+`jade-stone-0321`).
+
+**Residue measured and filed, not fixed.** The same function's `category` leg is the next
+instance of the same shape, and it is worse: measured on the live plane, `category_primary`
+holds the taxonomy's leaf NES ("Cantonese", "Cha Chaan Teng", "Board Game Cafe" - 66 distinct
+values, none of them a coarse bucket), while `_filter_static` compares the caller's bucket to
+that column with `=`. So `filters={"category": "restaurant"}` keeps **184** merchants in the
+live lane - which resolves the bucket into slugs through `categories.resolve` - and **0** in
+the fixture lane, which matches none of them. The 57 fixture rows in the suite all write the
+coarse bucket into `category_primary` themselves, so the lane is self-consistent on fixtures
+and wrong on live-shaped rows. Filed rather than charged here because it is a different leg
+with a different reader, and the D548 lesson is that one unit fixes one thing.

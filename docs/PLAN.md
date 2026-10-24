@@ -1814,3 +1814,28 @@ the clause boundary surviving normalisation.
    merchants while `outdoor_seating` is written on 94, so the full-weight half of the ranking
    matcher is unmeasurable on this plane and lives only in the fixtures until the plane is
    re-seeded.
+
+### 2026-10-24 (later still, the sixteenth) — D549: the fixture lane answers the same avoid question the live lane answers
+
+1. D549 (00fe33f) - `_filter_static` read `category`, `district` and `max_price` and never
+   `avoid`, so the fixture backend and the live backend answered different questions about the
+   same hard filter. Measured at HEAD on the live plane: `avoid=["seafood"]` dropped 30 of the
+   470 published merchants live and 0 in a fixture, gluten 269 and 0, peanut 22 and 0, dairy
+   245 and 0 - every word the corpus carries, answered "no" by the fixture lane. The live
+   clause is four legs and the lane decides only where the last two look: the merchant lane
+   reads the merchant's OWN offerings, the offering lane its own name and allergens. The
+   fixture lane now mirrors all four, expands the terms through the live lane's own reader
+   (`sql._avoid_terms` -> `categories.avoid_terms`), and `merchant_candidates` hands the
+   filter the backend's offerings so the EXISTS leg has something to read. The gate measures
+   the predicate against the live SQL over 20 words on both lanes - zero disagreements - and
+   proves to fail six times (the call dropped -> 5 red, tag leg -> 3, category leg -> 1,
+   allergen leg -> 3, merchant-lane offering loop -> 3, offering-lane own words -> 2).
+
+**Queue spent:** the `_filter_static` never reads `avoid` item (filed by D546). One residue
+   filed, in the same function and the same family: the `category` leg compares the caller's
+   bucket to `category_primary` with `=`, and the corpus writes taxonomy leaf NAMES there (66
+   distinct values, none a coarse bucket) - measured, `filters={"category": "restaurant"}`
+   keeps 184 merchants live and 0 in the fixture lane, because the live lane resolves the
+   bucket into slugs through `categories.resolve` and the fixture lane does not. The 57 fixture
+   rows in the suite all write the coarse bucket themselves, so the lane is self-consistent on
+   fixtures and wrong on live-shaped rows.
