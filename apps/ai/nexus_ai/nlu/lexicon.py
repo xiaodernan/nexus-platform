@@ -261,7 +261,7 @@ _CONSTRAINT_NEGATIONS = list(dict.fromkeys([*NEGATION_CUES,
 #: constraint at all, while the preference lane read the same refusal.
 CONSTRAINT_RULES: list[tuple[str, list[str], list[str]]] = [
     ('cuisine_avoid', _CONSTRAINT_NEGATIONS, ['辣', 'spicy', 'curry', '咖喱', '咖哩']),
-    ('diet_avoid', _CONSTRAINT_NEGATIONS, ['豬', '猪', 'pork', '牛', 'beef', '海鮮', '海鲜', 'seafood', '香菜', 'cilantro', 'coriander', '花生', 'peanut', '蔥', '葱', 'onion', '蒜', 'garlic', '奶', 'dairy', 'gluten', '薑', 'ginger']),
+    ('diet_avoid', _CONSTRAINT_NEGATIONS, ['豬', '猪', 'pork', '牛', 'beef', '海鮮', '海鲜', 'seafood', '香菜', 'cilantro', 'coriander', '花生', 'peanut', '蔥', '葱', 'onion', '蒜', 'garlic', '奶', 'dairy', 'gluten', '薑', '姜', 'ginger']),
     ('smoking_avoid', _CONSTRAINT_NEGATIONS, ['煙', '烟', 'smoking', '二手煙']),
     ('noise_avoid', _CONSTRAINT_NEGATIONS, ['嘈', '吵', 'noise', '吵鬧']),
     ('feature_avoid', _CONSTRAINT_NEGATIONS, ['排隊', '排队', 'queue', '長龍', '长龙']),
@@ -684,7 +684,10 @@ CONSTRAINT_CANON = {
     "cilantro": "coriander", "coriander": "coriander", "花生": "peanut", "peanut": "peanut",
     "蔥": "onion", "葱": "onion", "onion": "onion", "蒜": "garlic", "garlic": "garlic",
     "奶": "dairy", "dairy": "dairy", "gluten": "gluten", "煙": "smoking", "烟": "smoking",
-    "smoking": "smoking", "排隊": "queue", "排队": "queue", "queue": "queue",
+    "smoking": "smoking", "二手煙": "smoking", "排隊": "queue", "排队": "queue",
+    "queue": "queue", "長龍": "queue", "长龙": "queue",
+    "嘈": "noise", "吵": "noise", "吵鬧": "noise", "noise": "noise",
+    "薑": "ginger", "姜": "ginger", "ginger": "ginger",
 }
 
 

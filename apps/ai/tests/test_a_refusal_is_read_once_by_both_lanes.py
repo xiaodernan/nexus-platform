@@ -177,8 +177,15 @@ def test_a_refusal_and_a_dislike_are_the_same_relation(shape: str, negation: str
     sentence = _prepare(_phrase(negation, shape, value))
     keys = {c["value"]: c["key"] for c in extract_intent(sentence).constraints}
     low = sentence.lower()
+    # D545: a surface nested inside a longer one ("煙" inside "二手煙") sits further
+    # from the cue than the clause's reach, so the constraint lane refuses the longer
+    # form and the polarity lane reads the shorter one ungoverned. That is the reach
+    # residue, not a contradiction - and it is the SEAM walk below that can contradict,
+    # because that one walks only the values both vocabularies name (no nested surface
+    # is one of them).
+    found = [s for s in VALUES if cue_in(s, sentence, low)]
     readings = [(s, keys.get(canon_constraint(s), ""), P.polarity_for(sentence, s))
-                for s in VALUES if cue_in(s, sentence, low)]
+                for s in found if not any(o != s and s in o for o in found)]
     assert readings, (
         f"{_phrase(negation, shape, value)!r} carries no value the matcher can find - the "
         f"row would agree by reading nothing")

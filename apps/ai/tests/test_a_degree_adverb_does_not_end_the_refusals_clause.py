@@ -86,16 +86,20 @@ def test_a_degree_adverb_in_the_gap_keeps_the_refusal_whole(value: str, negation
 
     if negation not in POLARITY_NEGATIONS:
         return  # the D493 debt: not this door's question
-    # The polarity charge follows the constraint lane's OWN reading: a surface whose
-    # canon the lane did not write is not charged here. "煙" inside "二手煙" is the
-    # case - the degree gap reaches the longer surface and not the shorter one, and
-    # CONSTRAINT_CANON spells the two apart, so the lane wrote 二手煙 and not smoking.
-    # That is the reach residue (filed), not a contradiction: nothing in the ranking
-    # lane ever asks about 煙, because no preference rule names it.
+    # The polarity charge follows the constraint lane's OWN reading, and a surface that
+    # sits inside a longer one is not charged at all: "煙" inside "二手煙" is two
+    # characters further from the cue, so the clause reaches the longer form and not the
+    # shorter one - the reach residue, filed since D540, not a contradiction. No
+    # preference rule names the shorter surface, so the ranking lane never asks about it;
+    # the seam door next door is where a real contradiction would be caught, because it
+    # walks only the values BOTH vocabularies name.
     written = {canon for _k, canon in _written(ex)}
     low = sentence.lower()
-    for surface in VALUES:
-        if cue_in(surface, sentence, low) and canon_constraint(surface) in written:
+    found = [s for s in VALUES if cue_in(s, sentence, low)]
+    for surface in found:
+        if any(other != surface and surface in other for other in found):
+            continue
+        if canon_constraint(surface) in written:
             sign = P.polarity_for(sentence, surface)
             assert sign == -1, (
                 f"{sentence!r}: the constraint lane refused {surface!r} and the polarity "

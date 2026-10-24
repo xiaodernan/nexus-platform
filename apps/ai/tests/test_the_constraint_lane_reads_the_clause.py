@@ -76,6 +76,8 @@ KEY_OF = {
     "gluten": "diet_avoid",
     "smoking": "smoking_avoid",
     "queue": "feature_avoid",
+    "noise": "noise_avoid",
+    "ginger": "diet_avoid",
 }
 
 #: the two cues a refusal is read under - the Cantonese spelling and the English one.
@@ -151,7 +153,7 @@ READ_AT_HEAD = (
     ("唔好食辣", {("cuisine_avoid", "spicy")}),
     ("我唔食辣", {("cuisine_avoid", "spicy")}),
     ("唔好辣，想找個安靜的咖啡店", {("cuisine_avoid", "spicy")}),
-    ("唔好咁嘈", {("noise_avoid", "嘈")}),
+    ("唔好咁嘈", {("noise_avoid", "noise")}),  # D545: the canon spells the value now
     ("唔食香菜", {("diet_avoid", "coriander")}),
     ("不要蔥蒜", {("diet_avoid", "garlic"), ("diet_avoid", "onion")}),
     ("沒有海鮮", {("diet_avoid", "seafood")}),
