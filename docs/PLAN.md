@@ -73,11 +73,6 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   reader is shared (D541); the two vocabularies are not yet one. The eat-less shape reads the
   same split now (D543): "海鲜 少吃" writes the constraint and boosts the seafood.
   Owner: the AI lane.
-- **The clause gap admits one verb but not an adverb** - "not very spicy" (the gap "very",
-  four characters) reads +1 and writes no constraint, and "not really like spicy" reads the
-  same. 咁 is in the particle vocabulary (D535); the English degree words are the missing half
-  of it.
-  Owner: the AI lane.
 - **The search plan drops every constraint key but `cuisine_avoid`** - `plan_from_intent` maps
   `cuisine_avoid` into `plan.avoid` and nothing else, so `diet_avoid`, `smoking_avoid`,
   `noise_avoid` and `feature_avoid` never reach the SQL - while the corpus carries the facts
@@ -1694,3 +1689,21 @@ the clause boundary surviving normalisation.
    moved: the D493 debt is readable at the new shape too - "海鲜 少吃" writes
    `diet_avoid:seafood` and the polarity lane still boosts the seafood, because 少 is not in
    `NEGATION_CUES`; the new door pins the four words at this shape.
+### 2026-10-24 (later still, the eleventh) — D544: a degree adverb does not end the refusal's clause
+
+1. D544 (bc1d0a3) - the gap rule reads anything up to three characters as the refusal's own,
+   which is why "not so spicy" and "唔好咁辣" worked; the English degree words are longer
+   than that: measured at HEAD, "not very spicy" (the gap "very", four characters)
+   answered spicy +1 and wrote no constraint, and "not really like spicy" read the same -
+   the D522 shape from one adverb. A degree word modifies the value; it opens no clause of
+   its own. The gap between a cue and the thing it governs may now be a degree adverb, or a
+   degree adverb in front of the ONE bridge verb. A word that is neither still separates
+   them, so D536's "no rush want spicy" stays unread, and the seam door takes the new table
+   up by itself because it derives its gap population from the tables `clause_attached`
+   reads.
+
+**Queue spent:** the degree-adverb item. One residue re-measured at the new shape: the
+   reach ("煙" inside "二手煙" sits two characters further from the cue) now shows through
+   the degree gap as well - "唔好 very 二手煙" writes `smoking_avoid:二手煙` and the 煙
+   reads +1, with CONSTRAINT_CANON spelling the two apart, so the new door charges the
+   polarity lane only where the constraint lane's own reading wrote the canon.

@@ -23431,3 +23431,46 @@ checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**.
 new shape too: "海鲜 少吃" writes `diet_avoid:seafood` and the polarity lane still reads
 seafood +1, because 少 is not in `NEGATION_CUES` - the D493 debt, now measured on the
 eat-less shape as well (the new door's debt rows pin it there).
+## 538. D544 - a degree adverb between the cue and the value does not end the refusal's clause (`apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/tests/test_a_degree_adverb_does_not_end_the_refusals_clause.py`, `apps/ai/tests/test_a_refusal_is_read_once_by_both_lanes.py`)
+
+**What was measured.** The gap rule reads anything up to three characters as the
+refusal's own clause, which is why "not so spicy" and "唔好咁辣" already worked. The
+English degree words are longer than that: measured at HEAD, "not very spicy" (the gap
+"very", four characters) answered spicy +1 and wrote no constraint, and "not really
+like spicy" read the same - the ranking lane boosted the very thing the user refused,
+the D522 shape, from one adverb. A degree word modifies the value; it does not open a
+clause of its own.
+
+**The fix.** `_DEGREE_ADVERBS` joins the tables `clause_attached` reads: the gap between
+a cue and the thing it governs may be a degree adverb, or a degree adverb in front of
+the ONE bridge verb ("not really like spicy" - the cue governs the verb, the adverb
+modifies the value). A word that is neither still separates them, which is what keeps
+D536's "no rush want spicy" unread, and a boundary or a coordinator ends the clause
+wherever it sits. The seam door derives its gap population from these tables, so the
+new words join it by itself.
+
+**Verified, not claimed.**
+`test_a_degree_adverb_does_not_end_the_refusals_clause.py`: **1257 passed** - a census
+over every surface the rules name x every negation they read with the longest degree
+adverb in the gap, every degree adverb x every bridge verb as the gap (both axes walked
+whole, with a floor clause that holds the walk to its claim), the measured sentences in
+either script, and the five rows the gap must not open. Proved to fail: the degree
+branch removed from `clause_attached` reddens **1247**; the degree+verb half alone
+removed reddens the 50 two-word rows; the file restored and byte-compared. The seam
+door with the new gap shapes, the constraint/clause/backward/comma/intent-kind doors and
+the vocabulary gates -> **5200 passed**; filtered regression (`-k "preference or
+structured or occasion or personaliz or merge or refinement or state or polarity or
+cuisine or transient or ranking or attribute or vocabulary or ambience or refusal or
+negation or clause"`) -> **6793 passed, 35 skipped**; (`-k "search or rank or card or
+score or facet or filter or avoid or understand or intent or nlu"`) -> **2292 passed, 38
+skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**; `ruff
+check nexus_ai tests` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0
+failing**.
+
+**Residue measured and filed, not fixed.** The degree gap reaches the LONGER surface and
+not the shorter one inside it: "唔好 very 二手煙" writes `smoking_avoid:二手煙` while the
+煙 reads +1 in the polarity lane - and CONSTRAINT_CANON spells the two apart (煙 ->
+smoking, 二手煙 -> 二手煙), so the lane wrote one canon and not the other. Nothing in the
+ranking lane asks about 煙, so the two answers never meet in production; the new door
+charges the polarity lane only where the constraint lane's own reading wrote the canon,
+and the reach itself stays filed.
