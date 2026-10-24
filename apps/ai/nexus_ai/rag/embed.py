@@ -4,8 +4,11 @@ The schema has carried `chunks.embedding vector(1024)`, `embed_model` and `embed
 since V1, the seed has stamped every chunk it writes `embed_model = 'pending'`, and
 `nexus_ai/search/sql.py` has a vector branch in its hybrid read — but nothing between them
 ever ran. Measured on the live demo corpus before this module existed: 2118 chunks, 0 of
-them with a vector, so the vector lane scored nothing and the seed's own quality gate
-asserted that state as a precondition. This is the missing stage.
+them with a vector, so the vector lane scored nothing. The seed's quality gate asserted
+that empty state as a precondition on every plane it graded, which meant a corpus could
+be embedded or gated but never both — D550 replaced that row with the invariant this
+module keeps, so a pending corpus and an embedded one both pass. This is the missing
+stage.
 
 The rules, in the order they matter:
 

@@ -266,7 +266,6 @@ no case points at a review consumers can already read	D126	a legal write the sch
 human grants carry no deadline	D126	a legal write the schema accepts: every human grant given an expiry date	11642b7
 facts all carry expires_at (TTL per §5)	D126	a legal write the schema accepts: one fact made timeless	11642b7
 hours facts respect the 24h TTL	D126	a legal write the schema accepts: one opening-hours fact given a 25-hour TTL	11642b7
-chunks: embedding NULL and embed_model=pending	D126	a legal write the schema accepts: an unembedded chunk labelled as embedded	11642b7
 slots marked source=demo (never real availability)	D126	a legal write the schema accepts: one slot marked as real availability	11642b7
 a seeded polymorphic vocabulary is bounded or probed	D126	a legal write the schema accepts: a feedback event filed under a subject type nobody declared	11642b7
 every column that cannot vary is answered for why it cannot	D126	a merchant's published-review counter moved by one	11642b7
@@ -415,3 +414,13 @@ a door vocabulary names a column the schema has	D175	plant: a door list names a 
 the arm registry agrees with the probed-pair counts	D175	plant: the declared arm count disagrees with the registry it is checked against	data/seed/falsifier_witnesses/d175_plants.py
 traffic sweep reaches the whole closure, not a hand list	D175	plant: the anchor list grows until the sweep outside it falls under its own floor	data/seed/falsifier_witnesses/d175_plants.py
 a served view answers every column it exposes	D175	plant: a view column loses the answer that was written for it	data/seed/falsifier_witnesses/d175_plants.py
+chunks: a vector, its model and its stamp travel together	D550	a legal write the schema accepts: an unembedded chunk labelled as embedded	data/seed/falsifier_plants.py
+chunks: a vector, its model and its stamp travel together	D550	a legal write the schema accepts: a chunk stamped as embedded while its vector stays NULL	data/seed/falsifier_plants.py
+chunks: a vector, its model and its stamp travel together	D550	a legal write the schema accepts: a chunk given a 1024-dim vector whose model is still 'pending' and which carries no stamp	data/seed/falsifier_plants.py
+every column that cannot vary is answered for why it cannot	D550	a legal write the schema accepts: one open review case gains a resolution instant, so the answer that says the column holds no value at all is now false	data/seed/falsifier_plants.py
+every column that cannot vary is answered for why it cannot	D550	a legal write the schema accepts: every merchant's updated_at moved to now(), so the answer that pins the column to the seed base date names an instant the column no longer holds	data/seed/falsifier_plants.py
+every column that cannot vary is answered for why it cannot	D550	a legal write the schema accepts: every seeded user soft-deleted at one instant, so the answer that says nothing in the demo is deleted is false -- and the value is not the loader's either	data/seed/falsifier_plants.py
+every column that cannot vary is answered for why it cannot	D550	a legal write the schema accepts: one chunk embedded and stamped with the loader's own instant, so the answer that says a run wrote the stamp names a position the column does not hold	data/seed/falsifier_plants.py
+the columns stamped from the generation clock are exactly the ones answered so	D550	a legal write the schema accepts: one chunk embedded and stamped with the loader's own instant, so the answer that says a run wrote the stamp names a position the column does not hold	data/seed/falsifier_plants.py
+every column that cannot vary is answered for why it cannot	D550	a session that records no load window, on a plane whose clock column is real: the position the answers claim cannot be checked here, and the text must say the window is absent rather than quote a bracket	data/seed/falsifier_plants.py
+the columns stamped from the generation clock are exactly the ones answered so	D550	a session that records no load window, on a plane whose clock column is real: the position the answers claim cannot be checked here, and the text must say the window is absent rather than quote a bracket	data/seed/falsifier_plants.py

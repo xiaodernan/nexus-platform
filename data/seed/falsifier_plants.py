@@ -762,7 +762,7 @@ ARMS += [
     # schema, so no write -- legal or not -- can leave a priced offering without it, and
     # `session_replication_role = replica` does not silence NOT NULL either. The assertion is implied by
     # the column, which makes it the one kind of qc row no plant can falsify.
-    ("chunks: embedding NULL and embed_model=pending",
+    ("chunks: a vector, its model and its stamp travel together",
      "a legal write the schema accepts: an unembedded chunk labelled as embedded",
      "UPDATE chunks SET embed_model = 'text-embedding-3-small' WHERE id = "
      "(SELECT id FROM chunks ORDER BY id LIMIT 1);"),
@@ -990,6 +990,65 @@ ARMS += [
      "DO $d147$ DECLARE d text; BEGIN SELECT rtrim(pg_get_viewdef('public.v_merchant_funnel', true), ';' ||"
      " chr(10)) INTO d; EXECUTE 'CREATE OR REPLACE VIEW public.v_merchant_funnel AS SELECT s.*, 1::bigint"
      " AS plant_unanswered FROM (' || d || ') s'; END $d147$;"),
+]
+
+# Batch D550: the arms for what an embedding pass actually writes, and for the answers that only hold while
+# nothing writes them.
+#
+# WHY THESE EXIST. D508 shipped `nexus_ai/rag/embed.py` and the gate still refused its output: the chunks row
+# asserted the seed's precondition on every row, so a plane with 2118 vectors read "2118 chunk(s) already
+# embedded or mislabelled" and the demo could be embedded or gated, never both. D550 rewrote that row as the
+# invariant the worker guarantees -- a vector, the model that produced it and the pass's stamp are one fact
+# about one row, and any two of the three is a deception -- and the two arms below are the half-writes the
+# schema accepts and only that row can see. A whole-table re-stamp is the other half of the unit: the D83 block
+# answered "why can this column not vary?" with a kind, and compared the kind to nothing, so writing one fresh
+# instant into a column the answer says is empty left the answer standing and the sentence beside it false. The
+# first three `every column that cannot vary` arms are that sentence tested from three positions at once -- empty,
+# pinned to the base date, and open-queue -- and each of them reddens on the position, not on the colour: the
+# value written is `now()`, which is after the load's own bracket, so the clock row stays green and the
+# exemption row is the only one that moves.
+#
+# THE LAST TWO ARMS TEST THE BOUND AND ITS ABSENCE, not a value's colour. The bound: `run-stamped` says the
+# instant belongs to a run that started after the load, so a stamp written INSIDE the load's own bracket falsifies
+# the answer while leaving every column legally filled -- the vector, the model and the stamp all travel
+# together, and only the position is a lie. Removing it: a plane the loader never stamped cannot place a position
+# at all, and the row must say the window is absent rather than print `[1970-01-01 .. 1970-01-01]` from a NULL
+# bracket. `set_config(..., false)` inside the drive's transaction is the only way to stand on such a plane
+# without deleting a kept database: the transaction rolls back, so the GUC the loader stamped stays.
+ARMS += [
+    ("chunks: a vector, its model and its stamp travel together",
+     "a legal write the schema accepts: a chunk stamped as embedded while its vector stays NULL",
+     "UPDATE chunks SET embedded_at = now() WHERE id = (SELECT id FROM chunks ORDER BY id LIMIT 1);"),
+    ("chunks: a vector, its model and its stamp travel together",
+     "a legal write the schema accepts: a chunk given a 1024-dim vector whose model is still 'pending' and "
+     "which carries no stamp",
+     "UPDATE chunks SET embedding = ('[' || repeat('0.1,', 1023) || '0.1]')::vector WHERE id = "
+     "(SELECT id FROM chunks ORDER BY id LIMIT 1);"),
+    ("every column that cannot vary is answered for why it cannot",
+     "a legal write the schema accepts: one open review case gains a resolution instant, so the answer that "
+     "says the column holds no value at all is now false",
+     "UPDATE moderation_cases SET resolved_at = now() WHERE id = "
+     "(SELECT c.id FROM moderation_cases c WHERE c.subject_type = 'review' AND c.status = 'open' "
+     "ORDER BY c.id LIMIT 1);"),
+    ("every column that cannot vary is answered for why it cannot",
+     "a legal write the schema accepts: every merchant's updated_at moved to now(), so the answer that pins "
+     "the column to the seed base date names an instant the column no longer holds",
+     "UPDATE merchants SET updated_at = now();"),
+    ("every column that cannot vary is answered for why it cannot",
+     "a legal write the schema accepts: every seeded user soft-deleted at one instant, so the answer that "
+     "says nothing in the demo is deleted is false -- and the value is not the loader's either",
+     "UPDATE users SET deleted_at = now();"),
+    ("every column that cannot vary is answered for why it cannot",
+     "a legal write the schema accepts: one chunk embedded and stamped with the loader's own instant, so the "
+     "answer that says a run wrote the stamp names a position the column does not hold",
+     "UPDATE chunks SET embedding = ('[' || repeat('0.1,', 1023) || '0.1]')::vector, "
+     "embed_model = 'hashing', embedded_at = to_timestamp(current_setting('nexus.seed_started')::bigint) "
+     "WHERE id = (SELECT id FROM chunks ORDER BY id LIMIT 1);"),
+    ("every column that cannot vary is answered for why it cannot",
+     "a session that records no load window, on a plane whose clock column is real: the position the answers "
+     "claim cannot be checked here, and the text must say the window is absent rather than quote a bracket",
+     "SELECT set_config('nexus.seed_started', '', false); "
+     "SELECT set_config('nexus.seed_finished', '', false);"),
 ]
 
 # Batch D148: the fourth mutation plane. Six arms that rewrite the sliced gate body in memory, aimed at the rows

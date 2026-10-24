@@ -931,12 +931,55 @@ SELECT 'slots marked source=demo (never real availability)',
        NOT EXISTS (SELECT 1 FROM availability_slots WHERE source <> 'demo'),
        (SELECT count(*) FROM availability_slots WHERE source <> 'demo') || ' slot(s) not marked demo';
 
--- chunks / RAG pipeline preconditions (§7)
+-- chunks / RAG pipeline (§7).
+--
+-- D550 rewrote this row, because the row as written forbids the state the schema waits for. It asserted
+-- `embedding IS NULL AND embed_model = 'pending'` on every chunk — the condition the seed ships in, and the
+-- condition `nexus_ai/rag/embed.py` exists to leave behind. Measured on a from-scratch plane (`--keep`ed, then
+-- seeded and anchored the way `scripts/db_gate_fresh.sh` does): the shipped worker stored 2118 vectors over 67
+-- batches in one pass, and the row then read "2118 chunk(s) already embedded or mislabelled". So the demo
+-- corpus could be embedded or it could be gated, never both, and the one number the RAG lane needs — how many
+-- chunks carry a vector — was reported as an offence.
+--
+-- What the row means is narrower, and true of both states: the three columns that record an embedding are one
+-- fact about one row. A vector with no model named is unretrievable-by-reading (cosine ranks it, and nothing
+-- says which model's space it lives in); a model stamp with no vector is the deception D126 planted, because
+-- the column then claims work that never ran; a stamp with no vector is the same lie on the other column. The
+-- seed cannot fabricate vectors and this file does not have to assert that it cannot: `data/seed/out/19_chunks.sql`
+-- COPYs a column list that names `embed_model` and no `embedding` or `embedded_at`, so a seeded plane has every
+-- row on the pending side of this row without anyone promising it there.
 INSERT INTO qc
-SELECT 'chunks: embedding NULL and embed_model=pending',
-       NOT EXISTS (SELECT 1 FROM chunks WHERE embedding IS NOT NULL OR embed_model <> 'pending'),
-       (SELECT count(*) FROM chunks WHERE embedding IS NOT NULL OR embed_model <> 'pending')
-       || ' chunk(s) already embedded or mislabelled';
+WITH chunk_shape AS (
+  SELECT (embedding IS NULL) AS no_vector,
+         (embed_model IS NULL OR embed_model = 'pending') AS no_model,
+         (embedded_at IS NULL) AS no_stamp,
+         count(*) AS n
+    FROM chunks
+   GROUP BY 1, 2, 3)
+SELECT 'chunks: a vector, its model and its stamp travel together',
+       NOT EXISTS (SELECT 1 FROM chunk_shape WHERE NOT (no_vector AND no_model AND no_stamp)
+                                               AND NOT (NOT no_vector AND NOT no_model AND NOT no_stamp)),
+       (SELECT coalesce(sum(n), 0) FROM chunk_shape WHERE no_vector AND no_model AND no_stamp)
+       || ' pending chunk(s), '
+       || (SELECT coalesce(sum(n), 0) FROM chunk_shape WHERE NOT no_vector AND NOT no_model AND NOT no_stamp)
+       || ' embedded, '
+       || (SELECT coalesce(sum(n), 0) FROM chunk_shape WHERE NOT (no_vector AND no_model AND no_stamp)
+                                                      AND NOT (NOT no_vector AND NOT no_model AND NOT no_stamp))
+       || ' half-written; '
+       || (SELECT count(DISTINCT embed_model) FROM chunks WHERE embed_model IS DISTINCT FROM 'pending')
+       || ' model name(s) [' || coalesce((SELECT string_agg(embed_model, ' + ' ORDER BY embed_model)
+                                           FROM (SELECT DISTINCT embed_model FROM chunks
+                                                  WHERE embed_model IS DISTINCT FROM 'pending') named), 'none')
+       || '] and ' || (SELECT count(DISTINCT embedded_at) FROM chunks WHERE embedded_at IS NOT NULL)
+       || ' distinct stamp(s) — one pass stamps every row it fills with its own run instant'
+       || ' — offenders: ' || coalesce((SELECT string_agg(x, ' · ' ORDER BY x) FROM (
+              SELECT CASE WHEN no_vector THEN 'no vector' ELSE 'a vector' END || ' + '
+                     || CASE WHEN no_model THEN 'no model named' ELSE 'a model named' END || ' + '
+                     || CASE WHEN no_stamp THEN 'unstamped' ELSE 'stamped' END
+                     || ' on ' || n || ' row(s)' AS x
+                FROM chunk_shape
+               WHERE NOT (no_vector AND no_model AND no_stamp)
+                 AND NOT (NOT no_vector AND NOT no_model AND NOT no_stamp)) o), 'none');
 
 INSERT INTO qc
 WITH sized AS (
@@ -2258,12 +2301,21 @@ SELECT 'a verification badge stays unresolvable only while its evidence and its 
 -- one pinned while the answer still claims it moves.
 --
 -- WHAT THE ANSWERS ARE AND WHAT THE ROWS REFUSE. Every degenerate column gets a kind — all-open-queue,
--- never-written, generation-clock, uniform-by-design, single-instant-pinned, history-date — and a reason. The
--- coverage row refuses a new degenerate column joining the set unanswered, and refuses an answer whose column
--- has started varying (a stale exemption is the same failure §77 and §80 both had to guard). The clock row is
--- mechanical: the set of columns answered generation-clock must equal the set whose value falls inside the
--- recorded load window, and neither side may be empty — so writing a fresh timestamp into another column
--- reddens it, and so does pinning facts.updated_at and leaving the answer behind.
+-- never-written, generation-clock, run-stamped, uniform-by-design, single-instant-pinned, history-date — and a
+-- reason. The coverage row refuses a new degenerate column joining the set unanswered, and refuses an answer
+-- whose column has started varying (a stale exemption is the same failure §77 and §80 both had to guard). The
+-- clock row is mechanical: the set of columns answered generation-clock must equal the set whose value falls
+-- inside the recorded load window, and neither side may be empty — so writing a fresh timestamp into another
+-- column reddens it, and so does pinning facts.updated_at and leaving the answer behind.
+--
+-- D550 ADDED THE PART THIS BLOCK LACKED: a kind is a claim about WHERE the value sits, and until now nothing
+-- compared the claim to the measurement. The check refused an answer whose column had started VARYING, so the
+-- one mutation that slips past it is a write that puts a single fresh instant into a column the seed never
+-- touches — the column stays degenerate, the exemption stays "valid", and the sentence beside it ("the
+-- embeddings were never stamped") is now false. Measured, not inferred: `python -m nexus_ai.rag.embed` ran over
+-- this plane and stamped all 2118 chunks with its own run instant, and the coverage row stayed green over the
+-- answer that says `never-written`. Reading the kind is what makes the position part of the claim, and the
+-- position is also what tells a loader's instant from a later run's — see the window below.
 
 CREATE TEMP TABLE spread_cat (tbl text NOT NULL, col text NOT NULL, ty text NOT NULL, rows bigint NOT NULL,
                               nulls bigint NOT NULL, distincts int NOT NULL, val text, class text NOT NULL,
@@ -2304,9 +2356,10 @@ END $d83a$;
 CREATE TEMP TABLE spread_answer (tbl text NOT NULL, col text NOT NULL, kind text NOT NULL, why text NOT NULL,
                                  PRIMARY KEY (tbl, col));
 INSERT INTO spread_answer VALUES
- ('chunks', 'embedded_at', 'never-written', 'the chunk table is written with an embed_model and no embedding run '
-  || 'is recorded; §75 already found embed_model read by zero occurrences in services/platform, and this is the '
-  || 'same column family''s other half'),
+ ('chunks', 'embedded_at', 'run-stamped', 'nothing in the seed writes this column — `out/19_chunks.sql` COPYs an '
+  || 'embed_model and no embedding or stamp — so it is NULL on a loaded plane, and the instant that fills it is '
+  || 'the embedding pass''s own run stamp (`nexus_ai/rag/embed.py` binds one instant per pass and writes it into '
+  || 'every row that pass fills). Either way it is not the loader''s instant, which is what this kind claims'),
  ('moderation_cases', 'resolved_at', 'all-open-queue', 'all 544 shipped cases are open, so the resolve route has '
   || 'nothing to resolve in the seed — the queue row in §71 prints the same 544'),
  ('permission_grants', 'expires_at', 'never-written', '§43: the expiry witness found no grant in the demo ever '
@@ -2356,29 +2409,56 @@ INSERT INTO spread_answer VALUES
 -- "did this value come from the load", so the load now answers it: `SEED_ANCHOR=1` makes `data/seed/load.sh`
 -- stamp `nexus.seed_started` and `nexus.seed_finished` — epoch seconds read from the SERVER's clock, so host
 -- and container skew cannot enter — onto the database it loads, and the predicate below asks whether a value
--- falls inside that window widened by 600 s at each end. Nothing in this set is measured against now() any
--- more, and the width of the load no longer matters: the value is inside the window whether the load takes two
--- minutes or two hours, which is the difference between a gate and a stopwatch. Two other rows asked their
--- questions of the reading clock until D90 re-anchored them the same way — `seed_now` above is that anchor —
--- and part A's `past_expiry` column keeps now() on purpose, because that one reports the reading instant.
+-- falls inside that window. Nothing in this set is measured against now() any more, and the width of the load
+-- no longer matters: the value is inside the window whether the load takes two minutes or two hours, which is
+-- the difference between a gate and a stopwatch. Two other rows asked their questions of the reading clock
+-- until D90 re-anchored them the same way — `seed_now` above is that anchor — and part A's `past_expiry`
+-- column keeps now() on purpose, because that one reports the reading instant.
+--
+-- THE WINDOW IS THE BRACKET, PLUS ONE SECOND, AND NOT A MARGIN OF CONVENIENCE. This view shipped with 600 s
+-- added at each end, which was harmless while the only writer of a fresh timestamp was the load itself. D550
+-- measured what it costs once something else writes: the embedding pass stamped `chunks.embedded_at` 24 s after
+-- the load's own bracket closed — a run's instant, not the loader's — and the widened test swept it into the
+-- clock set, so the row reported that the seed had stamped the column and reddened on the answer that correctly
+-- says it never did. The bound is now what the mechanism actually guarantees. `started` is read before the load
+-- transaction opens and floored down, so no value the load writes can precede it; `finished` is read after the
+-- commit and floored down, so a load-stamped value can sit above it only by the sub-second remainder the floor
+-- hid — never by more than a second. `[s, f + 1)` is therefore the load's own bracket and nothing more, and a
+-- value stamped after it belongs to a run, which is the kind `run-stamped` claims.
 --
 -- MEASURED BEFORE WRITING THIS, on the live demo database (a seed loaded 2026-09-23 07:31), for every
 -- degenerate timestamp column: 22 hold one value, and the distances from that load instant are 0 min
 -- (facts.updated_at, the anchor itself), then 138 min (idempotency_keys.expires_at, a runtime write that a
 -- from-scratch database does not hold), then 1,231 min for every column pinned to the base date. A ±10-minute
 -- window around the load separates the clock-stamped column from the rest by a factor of 13.8 in the nearest
--- case — 138 min out against a 10-min margin — so the margin is not what makes this row pass.
+-- case — 138 min out against a 10-min margin — so the margin is not what makes this row pass on a loaded plane.
+-- It is what made the row lie on an embedded one: the factor only measures the columns the seed wrote, and a
+-- run that starts a minute after the load is inside a ten-minute margin and outside the bracket.
 --
 -- A database the loader never stamped is not evidence, and this row does not pretend otherwise: with no window
 -- the derived set is empty, the row is red, and its text names the missing window instead of blaming the seed.
 -- That is not a change of colour anywhere — under the old rule the live demo database was already red here,
 -- its facts.updated_at reading 4,273 minutes from now() when this was measured (2026-09-26 06:44), a gap that
 -- only grows, against a bound of ten.
+--
+-- The claim leg below takes the same rule in the other direction: on a plane with no window recorded, a position
+-- cannot be placed, so a kind that claims one is not answered false there — `single-instant-pinned` and
+-- `history-date` already waive against a missing base for the same reason, and `run-stamped` waives against a
+-- missing bracket. What the waiver does NOT do is go unstated: an offender on such a plane says the window is
+-- absent rather than quoting a bracket this database never held.
 CREATE TEMP VIEW spread_window AS
   SELECT g.s, g.f, (g.s IS NOT NULL AND g.f IS NOT NULL AND g.s <= g.f) AS recorded,
-         g.s - 600 AS lower, g.f + 600 AS upper
+         g.s AS lower, g.f + 1 AS upper
     FROM (SELECT nullif(current_setting('nexus.seed_started', true), '')::bigint AS s,
                  nullif(current_setting('nexus.seed_finished', true), '')::bigint AS f) g;
+
+-- The instant the DATA calls "now", recorded beside the window for the same reason: a column pinned to the
+-- base date and a column backdated to a chosen earlier day are different claims, and both are different from
+-- "the loader stamped it". `nexus.seed_base` comes from generate.py's own carrier line, so it is a property of
+-- the dataset rather than of the machine that loaded it.
+CREATE TEMP VIEW spread_base AS
+  SELECT b.txt, extract(epoch FROM (b.txt)::timestamptz) AS e
+    FROM (SELECT nullif(current_setting('nexus.seed_base', true), '')::text AS txt) b;
 
 CREATE TEMP VIEW spread_clock AS
   SELECT c.tbl, c.col, c.val,
@@ -2386,7 +2466,60 @@ CREATE TEMP VIEW spread_clock AS
     FROM spread_cat c CROSS JOIN spread_window w
    WHERE w.recorded
      AND c.class IN ('constant', 'sparse-constant') AND c.ty LIKE 'timestamp%'
-     AND extract(epoch FROM (c.val)::timestamptz) BETWEEN w.lower AND w.upper;
+     AND extract(epoch FROM (c.val)::timestamptz) >= w.lower AND extract(epoch FROM (c.val)::timestamptz) < w.upper;
+
+-- Every answer row, read against the measurement it claims. A kind is not a label: `never-written` says no row
+-- carries a value, `history-date` says the value is before the seed's own base instant, `generation-clock` says
+-- the load stamped it, `run-stamped` says something that ran after the load did. Each of those is a position a
+-- database either is or is not in, so each is compared here and the coverage row below refuses the answers that
+-- are not. A value's position is read only from a date or timestamp column — `val_e` is NULL for a number, and
+-- a kind that claims a position is then refused rather than crashing on a cast.
+CREATE TEMP VIEW spread_pos AS
+  SELECT a.tbl, a.col, a.kind, c.class, c.ty, c.rows, c.nulls, c.distincts, c.val,
+         CASE WHEN c.ty LIKE 'timestamp%' THEN extract(epoch FROM (c.val)::timestamptz)
+              WHEN c.ty = 'date' THEN extract(epoch FROM (c.val)::date::timestamptz)
+         END AS val_e,
+         (k.tbl IS NOT NULL) AS in_clock,
+         b.e AS base_e, w.upper AS upper_e, w.s AS win_s, w.f AS win_f, w.recorded AS win_recorded
+    FROM spread_answer a
+    JOIN spread_cat c ON c.tbl = a.tbl AND c.col = a.col
+    CROSS JOIN spread_window w
+    CROSS JOIN spread_base b
+    LEFT JOIN spread_clock k ON k.tbl = a.tbl AND k.col = a.col;
+
+CREATE TEMP VIEW spread_claim AS
+  SELECT p.*,
+         CASE p.kind
+           WHEN 'never-written' THEN p.class = 'all-null'
+           WHEN 'all-open-queue' THEN p.class = 'all-null'
+           WHEN 'uniform-by-design' THEN p.class IN ('constant', 'sparse-constant')
+           WHEN 'single-instant-pinned' THEN p.class IN ('constant', 'sparse-constant') AND NOT p.in_clock
+                 AND (p.base_e IS NULL OR p.val_e <= p.base_e)
+           WHEN 'history-date' THEN p.class IN ('constant', 'sparse-constant') AND NOT p.in_clock
+                 AND (p.base_e IS NULL OR p.val_e < p.base_e)
+           WHEN 'generation-clock' THEN p.in_clock
+           WHEN 'run-stamped' THEN p.class = 'all-null'
+                 OR (p.class IN ('constant', 'sparse-constant') AND p.ty LIKE 'timestamp%'
+                     AND (NOT p.win_recorded OR p.val_e >= p.upper_e))
+         END AS holds,
+         CASE WHEN p.class = 'all-null' THEN 'holds no value on any of its ' || p.rows || ' row(s)'
+              WHEN p.class = 'varying' THEN 'now holds ' || p.distincts || ' distinct values, so no exemption'
+                                          || ' belongs here at all'
+              WHEN p.in_clock THEN 'holds ' || p.val || ', inside the load''s own bracket ['
+                                  || to_timestamp(p.win_s)::text || ' .. ' || to_timestamp(p.win_f)::text || ']'
+              WHEN p.val_e IS NULL THEN 'holds ' || p.val || ', which is not an instant, so no kind that'
+                                        || ' claims a position in time can be true of it'
+              WHEN NOT p.win_recorded THEN 'holds ' || p.val || ', and this database records no load window,'
+                                        || ' so the position this kind claims cannot be checked here'
+              WHEN p.val_e >= p.upper_e THEN 'holds ' || p.val || ', '
+                                            || round(p.val_e - p.upper_e) || ' s after the load bracket closed'
+              WHEN p.base_e IS NULL OR p.val_e > p.base_e THEN 'holds ' || p.val || ', after the load bracket'
+              ELSE 'holds ' || p.val || ', ' || CASE WHEN p.val_e = p.base_e
+                                                     THEN 'which IS the seed base instant'
+                                                     ELSE round((p.base_e - p.val_e) / 86400)
+                                                          || ' day(s) before the seed base' END
+         END AS position
+    FROM spread_pos p;
 
 INSERT INTO qc
 SELECT 'every column that cannot vary is answered for why it cannot',
@@ -2397,9 +2530,11 @@ SELECT 'every column that cannot vary is answered for why it cannot',
        AND NOT EXISTS (SELECT 1 FROM spread_answer a
                         WHERE NOT EXISTS (SELECT 1 FROM spread_cat c WHERE c.tbl = a.tbl AND c.col = a.col
                                             AND c.class <> 'varying'))
+       AND NOT EXISTS (SELECT 1 FROM spread_claim cl WHERE cl.class <> 'varying' AND cl.holds IS NOT TRUE)
        AND NOT EXISTS (SELECT 1 FROM spread_answer a WHERE btrim(a.why) = ''
                         OR a.kind NOT IN ('never-written', 'all-open-queue', 'uniform-by-design',
-                                          'single-instant-pinned', 'history-date', 'generation-clock')),
+                                          'single-instant-pinned', 'history-date', 'generation-clock',
+                                          'run-stamped')),
        (SELECT count(*) FROM spread_cat) || ' numeric/date/timestamp column(s) counted: '
        || (SELECT count(*) FROM spread_cat WHERE class = 'varying') || ' varying, '
        || (SELECT count(*) FROM spread_cat WHERE class = 'constant') || ' constant, '
@@ -2421,10 +2556,15 @@ SELECT 'every column that cannot vary is answered for why it cannot',
                 FROM spread_answer a JOIN spread_cat c ON c.tbl = a.tbl AND c.col = a.col
                  WHERE c.class = 'varying'
               UNION ALL
+              SELECT 'the answer for ' || cl.tbl || '.' || cl.col || ' claims ' || cl.kind || ', but the column '
+                     || cl.position
+                FROM spread_claim cl WHERE cl.class <> 'varying' AND cl.holds IS NOT TRUE
+              UNION ALL
               SELECT 'the answer for ' || tbl || '.' || col || ' names kind ''' || kind
-                     || ''', not one of the six this block knows'
+                     || ''', not one of the seven this block knows'
                 FROM spread_answer WHERE kind NOT IN ('never-written', 'all-open-queue', 'uniform-by-design',
-                                                      'single-instant-pinned', 'history-date', 'generation-clock')
+                                                      'single-instant-pinned', 'history-date', 'generation-clock',
+                                                      'run-stamped')
               UNION ALL
               SELECT 'the answer for ' || tbl || '.' || col || ' gives no reason'
                 FROM spread_answer WHERE btrim(why) = '') o), 'none');
@@ -2440,7 +2580,7 @@ SELECT 'the columns stamped from the generation clock are exactly the ones answe
                         AND NOT EXISTS (SELECT 1 FROM spread_clock k
                                         WHERE k.tbl = a.tbl AND k.col = a.col)),
        (SELECT count(*) FROM spread_clock) || ' column(s) hold a single value inside the window the loader'
-       || ' recorded for itself (±10 min at each end), which is '
+       || ' recorded for itself (the bracket itself, plus the second its own floor can hide), which is '
        || CASE WHEN (SELECT recorded FROM spread_window)
                THEN '[' || to_timestamp((SELECT s FROM spread_window))::text || ' .. '
                     || to_timestamp((SELECT f FROM spread_window))::text || ']'
