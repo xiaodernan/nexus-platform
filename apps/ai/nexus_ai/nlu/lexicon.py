@@ -149,7 +149,14 @@ PREFERENCE_RULES: list[tuple[str, str, list[str], int]] = [
                                 "late night", "after hours", "24小時", "24小时",
                                 "夜唔閉", "瞓夜晚"], 1),
     ("cuisine", "spicy", ["辣", "香辣", "spicy", "麻辣", "咖哩", "咖喱"], 1),
-    ("style", "outdoor", ["戶外", "户外", "outdoor", "露臺", "露台", "al fresco", "燒烤", "烧烤"], 1),
+    # D548: 露天 is the word a Hong Kong user types for an open-air place ("露天咖啡店",
+    # "露天座位") and it was in NO row - measured, it read nothing at all while 戶外
+    # read `style/outdoor +1`, so the ranking lane never asked about the outdoors for the
+    # sentence. 室外 is its standard-written counterpart, the same word the INDOOR row already
+    # carries as 室內 / 室内: a row that names one half of the pair and not the other is a
+    # row that answers a user in one spelling only (D416).
+    ("style", "outdoor", ["戶外", "户外", "室外", "outdoor", "露臺", "露台",
+                          "露天", "al fresco", "燒烤", "烧烤"], 1),
     ("style", "indoor", ["室內", "室内", "indoor", "有蓋", "有盖", "雨淋唔到"], 1),
 ]
 
