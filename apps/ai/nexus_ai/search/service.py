@@ -179,7 +179,10 @@ class StaticBackend:
     async def merchant_candidates(self, *, text=None, filters=None, **_kw: Any
                                   ) -> list[dict[str, Any]]:
         rows = [dict(r) for r in self.merchants]
-        return _filter_static(rows, text or "", filters or {})
+        # D549: the merchant lane's avoid clause reads the merchant's OWN offerings too
+        # (`EXISTS (SELECT 1 FROM offerings ao WHERE ao.merchant_id = m.id ...)`), so the
+        # fixture lane is handed the same list the live lane would join against.
+        return _filter_static(rows, text or "", filters or {}, offerings=self.offerings)
 
     async def offering_candidates(self, *, text=None, filters=None, **_kw: Any
                                   ) -> list[dict[str, Any]]:
@@ -217,7 +220,8 @@ class StaticBackend:
 
 
 def _filter_static(rows: list[dict[str, Any]], text: str,
-                   filters: dict[str, Any]) -> list[dict[str, Any]]:
+                   filters: dict[str, Any],
+                   offerings: Sequence[dict[str, Any]] = ()) -> list[dict[str, Any]]:
     low = (text or "").lower()
     out: list[dict[str, Any]] = []
     for r in rows:
@@ -242,6 +246,12 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         if filters.get("max_price") is not None and r.get("avg_price_hkd") is not None \
                 and float(r["avg_price_hkd"]) > float(filters["max_price"]):
             continue
+        # D549: `avoid` is a HARD filter (7.1) and the live lane has always excluded on
+        # it. This lane read category, district and max_price and nothing else, so the
+        # fixture backend answered a different question about the same request than the
+        # live one - the D488 shape, one lane over.
+        if _static_avoids(r, filters.get("avoid"), offerings):
+            continue
         r["kw_score"] = max(float(r.get("kw_score") or 0.0), score)
         r.setdefault("vec_score", 0.0)
         r.setdefault("text_matched", bool(low))
@@ -249,6 +259,72 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         out.append(r)
     return out
 
+
+def _static_avoid_terms(avoid: Any) -> set[str]:
+    """The spellings an `avoid` value stands for, in the corpus's own vocabulary (D549).
+
+    This is the live lane's OWN expansion (`sql._avoid_terms`, which reads
+    `categories.avoid_terms`), not a second copy of it: one word has one set of spellings
+    again, so a fixture that asks to avoid seafood excludes the same rows the live clause
+    does. Written as a set because the predicate below is a membership test, not an order.
+    """
+    from nexus_ai.search.categories import avoid_terms
+
+    return {t.lower() for value in (avoid or []) for t in avoid_terms(str(value)) if t}
+
+
+def _static_row_avoids_text(row: dict[str, Any], terms: set[str]) -> bool:
+    """The ILIKE leg: does the row's own prose mention a term the user refused?
+
+    The live clause concatenates `name || name_zh || description` and matches
+    case-insensitively; the keys are the live SELECT's own aliases, so a fixture row and a
+    live row are read by the same names.
+    """
+    hay = " ".join(str(row.get(k) or "") for k in
+                   ("name", "name_zh", "description")).lower()
+    return any(t in hay for t in terms)
+
+
+def _static_row_avoids_allergen(row: dict[str, Any], terms: set[str]) -> bool:
+    """The allergens leg: `attributes->'allergens' ?| terms`, on the row's own attributes."""
+    allergens = (row.get("attributes") or {}).get("allergens") or []
+    return bool({str(a).strip().lower() for a in allergens} & terms)
+
+
+def _static_avoids(row: dict[str, Any], avoid: Any,
+                   offerings: Sequence[dict[str, Any]] = ()) -> bool:
+    """Whether the live avoid clause would drop this row (D549).
+
+    The live clause is the same legs in both lanes, and the lane only decides WHERE the last
+    two of them look:
+
+        AND NOT (m.tags && terms
+                 OR m.category_primary = ANY(terms)
+                 OR <the merchant's offerings match>      -- merchant lane
+                 OR <the offering's own name/allergens>)  -- offering lane
+
+    The row's own shape says which lane it is, the way `_filter_static` already decides
+    `subject_type` below: a merchant row carries `display_name`, an offering row does not.
+    """
+    terms = _static_avoid_terms(avoid)
+    if not terms:
+        return False
+    tags = {str(t).strip().lower() for t in (row.get("tags") or [])}
+    if tags & terms:
+        return True
+    category = str(row.get("category_primary") or row.get("category") or "").strip().lower()
+    if category in terms:
+        return True
+    if row.get("display_name"):
+        # the merchant lane: the EXISTS leg looks at the merchant's OWN offerings.
+        mine = str(row.get("id") or "")
+        for o in offerings:
+            if str(o.get("merchant_id") or "") != mine:
+                continue
+            if _static_row_avoids_text(o, terms) or _static_row_avoids_allergen(o, terms):
+                return True
+        return False
+    return _static_row_avoids_text(row, terms) or _static_row_avoids_allergen(row, terms)
 
 def _static_tokens(low: str) -> list[str]:
     """Whitespace tokens plus CJK bigrams — Chinese queries carry no spaces, so a
