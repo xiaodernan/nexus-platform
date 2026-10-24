@@ -26,7 +26,11 @@ from typing import Any, Protocol, Sequence
 from uuid import UUID
 
 from nexus_ai.contract import EntityCard, FacetValue, Intent, SearchResponse
-from nexus_ai.nlu.lexicon import cuisine_matches
+from nexus_ai.nlu.lexicon import (
+    CONSTRAINT_RULES,
+    canon_constraint,
+    cuisine_matches,
+)
 from nexus_ai.nlu.timeparse import HK_TZ
 from nexus_ai.search import sql as S
 from nexus_ai.search.cards import build_card, compute_open, attach_price_staleness
@@ -46,6 +50,14 @@ from nexus_ai.trust.facts import FactBundle, facts_from_rows
 from nexus_ai.trust.freshness import mean_remaining_fraction
 
 log = logging.getLogger("nexus_ai.search")
+
+#: D546: the constraint keys whose value names a thing the answer must NOT carry. The set is
+#: derived from the lexicon's own `CONSTRAINT_RULES` - not copied out of it - because the
+#: hand-written tuple it replaces named three of the five keys the refusal lane writes, and
+#: the two it missed were the ones whose values the corpus records most often.
+AVOID_CONSTRAINT_KEYS: frozenset[str] = frozenset(
+    {"avoid", "exclude", *(key for key, _negations, _values in CONSTRAINT_RULES)})
+
 
 KIND_TO_SUBJECT = {
     "discover_merchant": ("merchant",),
@@ -434,8 +446,25 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     if intent.urgency == "now":
         plan.open_now = True
     for c in intent.constraints:
-        if c.key in ("cuisine_avoid", "avoid", "exclude"):
-            plan.avoid.append(c.value)
+        # D546: EVERY refusal the lane reads reaches the avoid lane. This used to name three
+        # of the five keys the refusal lane writes - `cuisine_avoid`, plus the caller's own
+        # `avoid` / `exclude` - so a sentence the lane read arrived at the plan with its
+        # refusal already dropped: "唔食花生" wrote `diet_avoid:peanut` and the plan carried
+        # nothing, and so did "no gluten", "唔好嘈" and "唔想排隊". The key set is now DERIVED
+        # from the lexicon's own `CONSTRAINT_RULES` rather than copied out of it, so a rule
+        # added to the table reaches the filter by construction instead of by somebody
+        # remembering this line. The value goes through the ONE canon reader
+        # (`canon_constraint`), the same reader `_fill_constraints` uses, so a caller who
+        # hands the planner a surface form gets the term set the lane's own reading writes.
+        if c.key in AVOID_CONSTRAINT_KEYS:
+            value = canon_constraint(c.value)
+            # D546: deduped here too, the way the caller's list is merged below. Measured
+            # at HEAD, an Intent carrying the same refusal twice under two spellings
+            # ("花生" and "peanut") left `plan.avoid == ['peanut', 'peanut']`; the merge
+            # cleaned it up on its way into the filters, so nothing downstream ever saw
+            # the duplicate - which is exactly why it survived.
+            if value and value not in plan.avoid:
+                plan.avoid.append(value)
     # `preferences` are SOFT (§7.1: "ambience: quiet" is a preference, not a constraint) and
     # must not become WHERE clauses. The old mapping wrote `{"occasion": true}` into the JSONB
     # attribute filter, which no seeded merchant carries, so a Chinese sentence whose only

@@ -293,9 +293,11 @@ def build_merchant_query(
             m.tags && {av_ph}::text[]
             OR coalesce(m.category_primary,'') = ANY({av_ph}::text[])
             OR EXISTS (SELECT 1 FROM offerings ao WHERE ao.merchant_id = m.id
-                       AND (ao.name || ' ' || coalesce(ao.name_zh,'') || ' ' ||
-                            coalesce(ao.description,'')) ILIKE ANY(
-                             SELECT '%'||x||'%' FROM unnest({av_ph}::text[]) x)))"""
+                       AND ((ao.name || ' ' || coalesce(ao.name_zh,'') || ' ' ||
+                             coalesce(ao.description,'')) ILIKE ANY(
+                             SELECT '%'||x||'%' FROM unnest({av_ph}::text[]) x)
+                            OR coalesce(ao.attributes->'allergens','[]'::jsonb)
+                               ?| {av_ph}::text[])))"""
 
     order_expr = (f"(GREATEST({kw_score}, COALESCE(vv.vec_score, 0)))" if embedding
                   else kw_score)
@@ -420,7 +422,8 @@ def build_offering_query(
             OR coalesce(m.category_primary,'') = ANY({av_ph}::text[])
             OR (coalesce(o.name,'') || ' ' || coalesce(o.name_zh,'')
                 || ' ' || coalesce(o.description,'')) ILIKE ANY(
-              SELECT '%'||x||'%' FROM unnest({av_ph}::text[]) x))"""
+              SELECT '%'||x||'%' FROM unnest({av_ph}::text[]) x)
+            OR coalesce(o.attributes->'allergens','[]'::jsonb) ?| {av_ph}::text[])"""
 
     sql = f"""
 SELECT o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.description, o.description_zh,
