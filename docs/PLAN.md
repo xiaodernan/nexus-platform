@@ -75,12 +75,24 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   reader is shared (D541); the two vocabularies are not yet one. The eat-less shape reads the
   same split now (D543): "海鲜 少吃" writes the constraint and boosts the seafood.
   Owner: the AI lane.
-- **The search plan drops every constraint key but `cuisine_avoid`** - `plan_from_intent` maps
-  `cuisine_avoid` into `plan.avoid` and nothing else, so `diet_avoid`, `smoking_avoid`,
-  `noise_avoid` and `feature_avoid` never reach the SQL - while the corpus carries the facts
-  they name (239 offerings carry a gluten tag, 15 a peanut one). "no gluten" is now read
-  (D536) and then dropped between the Intent and the plan: the D517 shape, one lane over.
-  Owner: the AI lane.
+- **The offline lane never reads `avoid` at all** - `_filter_static`
+  (`search/service.py:207`) filters on category, district and max_price and nothing else, so
+  the fixture-backed backend answers a different question about the same hard filter than the
+  live one does: after D546 the live lanes exclude every row carrying an avoided allergen
+  tag and the offline lane excludes none of them. The D488 shape (two readers of one fact),
+  one lane over. Owner: the AI lane.
+- **`smoking`, `noise` and `queue` name no tag the corpus writes** - the constraint lane
+  reads and the canon spells them (D545), the planner now carries them (D546), and the avoid
+  clause excludes nothing: measured on the live corpus, `avoid=["smoking"]`,
+  `avoid=["noise"]` and `avoid=["queue"]` each removed 0 of 470 published merchants. The
+  corpus DOES record a noise fact - `attributes.weak_aspects` can name `noise` and
+  `quiet_ambience` is written from the same aspect - so the refusal has a row to point at;
+  nothing reads it yet. Owner: the AI lane.
+- **`onion`, `ginger` and `coriander` are named by the diet rule and absent from the corpus's
+  allergen vocabulary** - the corpus writes gluten, soy, dairy, egg, shellfish, fish, nuts,
+  chili, sulphite, mollusc, pork, garlic, sesame, coconut, peanut, herb and pepper, and none
+  of the three. They therefore exclude only what their spelling matches in an offering's
+  name: measured, 6, 33 and 0 of 470 published merchants. Owner: the AI lane.
 - **`meat` is in no table at all** - "no meat" writes no constraint and no preference, though
   the corpus carries the vegetarian merchants the refusal points at. The cuisine bridge maps a
   word to the taxonomy's leaves (D394); "meat" has no entry to map.
@@ -1727,3 +1739,28 @@ the clause boundary surviving normalisation.
    ("煙" inside "二手煙") is now reachable by the agreement rows through the shared canon, so
    the seam door's and the D544 door's rows skip a nested surface - the contradiction the seam
    door exists for cannot involve one, because no preference rule names 煙 or 吵.
+### 2026-10-24 (later still, the thirteenth) — D546: every refusal the lane reads reaches the filter
+
+1. D546 (0c0ed2a) - `plan_from_intent` mapped three keys into `plan.avoid` out of the five the
+   refusal lane writes, so a sentence the lane read arrived at the plan with its refusal
+   already dropped: "唔食花生" wrote `diet_avoid:peanut` and the plan carried `avoid == []`,
+   and so did "no gluten", "唔好嘈" and "唔想排隊". The key set is now derived from the
+   lexicon's own `CONSTRAINT_RULES` rather than hand-copied out of it, the value goes through
+   the one canon reader, and `plan.avoid` is deduped where it is assembled (measured: the same
+   refusal under two spellings left `['peanut', 'peanut']`, cleaned up downstream and so
+   invisible). The keys that did reach the filter were read by a clause that never looked at
+   the column the corpus writes the fact in: an ingredient is recorded per offering, in
+   `offerings.attributes->'allergens'`, and `avoid=["gluten"]` excluded 0 of 470 published
+   merchants and 0 of 4,707 active offerings while 269 merchants and 1,380 offerings carry the
+   tag. Both lanes now read that column beside the tags they already read, through the same
+   bound term set. The gate derives its population from the corpus and was proved to fail four
+   ways (the three-key tuple back -> 39 red, either allergen leg deleted -> 1 red, the canon
+   call dropped -> 29 red).
+
+**Queue spent:** the planner-drops-the-constraints item. Three residues filed: the offline
+   lane never reads `avoid` at all (`_filter_static` filters on category, district and
+   max_price and nothing else, so the fixture-backed backend answers a different question
+   about the same filter than the live one - the D488 shape one lane over); `smoking`,
+   `noise` and `queue` name no tag the corpus writes, though the corpus DOES record a noise
+   fact in `attributes.weak_aspects` and `quiet_ambience`; and `onion` / `ginger` /
+   `coriander` are named by the diet rule and absent from the corpus's allergen vocabulary.

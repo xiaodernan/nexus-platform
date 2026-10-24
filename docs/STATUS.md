@@ -23517,3 +23517,129 @@ production (no preference rule names 煙, so the ranking lane never asks about i
 seam door walks only the values both vocabularies name). The pinned row "唔好咁嘈 ->
 noise_avoid:嘈" in the clause gate is re-spelled `noise_avoid:noise`: the window's
 refusal is kept, under the canon's name.
+## 540. D546 - every refusal the lane reads reaches the filter, and the filter reads the allergen column (`apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/sql.py`, `apps/ai/tests/test_every_refusal_the_lane_reads_reaches_the_avoid_filter.py`)
+
+**What was measured.** `plan_from_intent` mapped THREE keys into `plan.avoid` -
+`cuisine_avoid`, plus the caller's own `avoid` / `exclude` - out of the FIVE the refusal lane
+writes. A sentence the lane read therefore arrived at the plan with its refusal already
+dropped: measured at HEAD, "唔食花生" wrote `diet_avoid:peanut` and the plan carried
+`avoid == []`, and so did "no gluten", "唔好嘈" and "唔想排隊". The corpus carries what
+those words name - 1,380 active offerings carry a `gluten` allergen tag and 57 a `peanut`
+one - so the product read the refusal and then threw it away between the Intent and the SQL.
+The keys that DID reach the filter were read by a clause that never looked at the column the
+corpus writes the fact in: `avoid_terms` expands a word into the taxonomy's leaves, which is
+right for a CUISINE, but an ingredient is recorded per OFFERING, in
+`offerings.attributes->'allergens'`. Measured on the live corpus, `avoid=["gluten"]`
+excluded **0 of 470** published merchants and **0 of 4,707** active offerings while 269
+merchants and 1,380 offerings carry the tag. The clause read the merchant's tags, the
+merchant's category and the offering's NAME - and an allergen is in none of them. Measured
+beside it, an Intent carrying the same refusal twice under two spellings left
+`plan.avoid == ['peanut', 'peanut']`; the merge below deduped it on the way into the filters,
+so nothing downstream ever saw the duplicate, which is why it survived.
+
+**The fix.** The planner DERIVES its key set from the lexicon's own `CONSTRAINT_RULES`
+instead of hand-copying three of the five keys out of it, so a rule added to the table
+reaches the filter by construction rather than because somebody remembered a tuple. The
+value goes through the ONE canon reader (`canon_constraint`), the same reader
+`_fill_constraints` uses, so a caller who hands the planner a surface form binds the term
+set the lane's own reading writes. `plan.avoid` is deduped where it is assembled. Both
+lanes' avoid clauses read `offerings.attributes->'allergens'` beside the tags they already
+read, through the same bound term set, so one word has one set of spellings in both lanes.
+
+**Verified, not claimed.** `test_every_refusal_the_lane_reads_reaches_the_avoid_filter.py`:
+**52 passed** - the census walks every (key, surface) pair the rules carry and lands the
+canon value in the plan, the key set is the table's own and nothing else, a surface form is
+canonicalised, one refusal is written once, the caller's list still merges, both lanes name
+the allergen column and bind the same terms, and the live measurement derives its population
+from the corpus (every allergen tag a live offering carries, both lanes, the leak counted
+rather than assumed). Proved to fail four ways, each restored and byte-compared: the
+three-key tuple restored reddens **39**, the merchant lane's allergen leg deleted reddens
+**1**, the offering lane's allergen leg deleted reddens **1**, the canon call dropped
+reddens **29**. Measured on the live corpus after the fix: `avoid=["gluten"]` excludes 269
+merchants / 1,271 offerings (was 0 / 0), `peanut` 22 / 44, `dairy` 245 / 1,022, `egg` 193 /
+545, `soy` 213 / 1,247, `shellfish` 156 / 389, `fish` 106 / 295, `nuts` 97 / 171, `sesame`
+57 / 82, `garlic` 51 / 118. The clause, vocabulary, canon, SQL-builder, plan and
+soft-preference gates beside it -> **292 passed**; filtered regression (`-k "preference or
+structured or occasion or personaliz or merge or refinement or state or polarity or cuisine
+or transient or ranking or attribute or vocabulary or ambience or refusal or negation or
+clause"`) -> **7051 passed, 4 skipped**; (`-k "search or rank or card or score or facet or
+filter or avoid or understand or intent or nlu"`) -> **2404 passed, 11 skipped**; `mypy
+nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check nexus_ai tests` ->
+**All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**. One failure is
+PRE-EXISTING on this plane and unrelated: `test_a_refused_cuisine_is_not_served_at_the_top`
+reddens at HEAD with the same two slugs (this plane's corpus predates the seed generator
+that writes the occasion rows it reads), and it was measured stashed as well as applied.
+
+**Residue measured and filed, not fixed.** Three canon values still name nothing the corpus
+writes, so the filter carries them and excludes nothing: `smoking`, `noise` and `queue` -
+there is no smoking tag, no noise tag and no queue tag on any merchant or offering, though
+the corpus DOES record a noise fact (`attributes.weak_aspects` can name `noise`, and
+`quiet_ambience` is written from the same aspect) and a waiting-time one. `onion`, `ginger`
+and `coriander` are named by the diet rule and absent from the corpus's allergen vocabulary,
+so they exclude only what their spelling matches in an offering's name (6, 33 and 0
+merchants). And the offline lane never reads `avoid` at all: `_filter_static` filters on
+category, district and max_price and nothing else, so the fixture-backed backend answers a
+different question about the same filter than the live one - the D488 shape, one lane over.
+## 540. D546 - every refusal the lane reads reaches the filter, and the filter reads the allergen column (`apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/sql.py`, `apps/ai/tests/test_every_refusal_the_lane_reads_reaches_the_avoid_filter.py`)
+
+**What was measured.** `plan_from_intent` mapped THREE keys into `plan.avoid` -
+`cuisine_avoid`, plus the caller's own `avoid` / `exclude` - out of the FIVE the refusal lane
+writes. A sentence the lane read therefore arrived at the plan with its refusal already
+dropped: measured at HEAD, "唔食花生" wrote `diet_avoid:peanut` and the plan carried
+`avoid == []`, and so did "no gluten", "唔好嘈" and "唔想排隊". The corpus carries what
+those words name - 1,380 active offerings carry a `gluten` allergen tag and 57 a `peanut`
+one - so the product read the refusal and then threw it away between the Intent and the SQL.
+The keys that DID reach the filter were read by a clause that never looked at the column the
+corpus writes the fact in: `avoid_terms` expands a word into the taxonomy's leaves, which is
+right for a CUISINE, but an ingredient is recorded per OFFERING, in
+`offerings.attributes->'allergens'`. Measured on the live corpus, `avoid=["gluten"]`
+excluded **0 of 470** published merchants and **0 of 4,707** active offerings while 269
+merchants and 1,380 offerings carry the tag. The clause read the merchant's tags, the
+merchant's category and the offering's NAME - and an allergen is in none of them. Measured
+beside it, an Intent carrying the same refusal twice under two spellings left
+`plan.avoid == ['peanut', 'peanut']`; the merge below deduped it on the way into the filters,
+so nothing downstream ever saw the duplicate, which is why it survived.
+
+**The fix.** The planner DERIVES its key set from the lexicon's own `CONSTRAINT_RULES`
+instead of hand-copying three of the five keys out of it, so a rule added to the table
+reaches the filter by construction rather than because somebody remembered a tuple. The
+value goes through the ONE canon reader (`canon_constraint`), the same reader
+`_fill_constraints` uses, so a caller who hands the planner a surface form binds the term
+set the lane's own reading writes. `plan.avoid` is deduped where it is assembled. Both
+lanes' avoid clauses read `offerings.attributes->'allergens'` beside the tags they already
+read, through the same bound term set, so one word has one set of spellings in both lanes.
+
+**Verified, not claimed.** `test_every_refusal_the_lane_reads_reaches_the_avoid_filter.py`:
+**52 passed** - the census walks every (key, surface) pair the rules carry and lands the
+canon value in the plan, the key set is the table's own and nothing else, a surface form is
+canonicalised, one refusal is written once, the caller's list still merges, both lanes name
+the allergen column and bind the same terms, and the live measurement derives its population
+from the corpus (every allergen tag a live offering carries, both lanes, the leak counted
+rather than assumed). Proved to fail four ways, each restored and byte-compared: the
+three-key tuple restored reddens **39**, the merchant lane's allergen leg deleted reddens
+**1**, the offering lane's allergen leg deleted reddens **1**, the canon call dropped
+reddens **29**. Measured on the live corpus after the fix: `avoid=["gluten"]` excludes 269
+merchants / 1,271 offerings (was 0 / 0), `peanut` 22 / 44, `dairy` 245 / 1,022, `egg` 193 /
+545, `soy` 213 / 1,247, `shellfish` 156 / 389, `fish` 106 / 295, `nuts` 97 / 171, `sesame`
+57 / 82, `garlic` 51 / 118. The clause, vocabulary, canon, SQL-builder, plan and
+soft-preference gates beside it -> **292 passed**; filtered regression (`-k "preference or
+structured or occasion or personaliz or merge or refinement or state or polarity or cuisine
+or transient or ranking or attribute or vocabulary or ambience or refusal or negation or
+clause"`) -> **7051 passed, 4 skipped**; (`-k "search or rank or card or score or facet or
+filter or avoid or understand or intent or nlu"`) -> **2404 passed, 11 skipped**; `mypy
+nexus_ai` -> **Success: no issues found in 59 source files**; `ruff check nexus_ai tests` ->
+**All checks passed**; eval gate -> **PASS - 2 suite(s), 0 failing**. One failure is
+PRE-EXISTING on this plane and unrelated: `test_a_refused_cuisine_is_not_served_at_the_top`
+reddens at HEAD with the same two slugs (this plane's corpus predates the seed generator
+that writes the occasion rows it reads), and it was measured stashed as well as applied.
+
+**Residue measured and filed, not fixed.** Three canon values still name nothing the corpus
+writes, so the filter carries them and excludes nothing: `smoking`, `noise` and `queue` -
+there is no smoking tag, no noise tag and no queue tag on any merchant or offering, though
+the corpus DOES record a noise fact (`attributes.weak_aspects` can name `noise`, and
+`quiet_ambience` is written from the same aspect) and a waiting-time one. `onion`, `ginger`
+and `coriander` are named by the diet rule and absent from the corpus's allergen vocabulary,
+so they exclude only what their spelling matches in an offering's name (6, 33 and 0
+merchants). And the offline lane never reads `avoid` at all: `_filter_static` filters on
+category, district and max_price and nothing else, so the fixture-backed backend answers a
+different question about the same filter than the live one - the D488 shape, one lane over.
