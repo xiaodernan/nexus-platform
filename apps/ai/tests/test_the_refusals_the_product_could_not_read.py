@@ -21,22 +21,31 @@ Adding the cues was not safe before D533, and the reason is the point of this ga
     outdoor seating. D533's attachment rule and its existential-question exemption are
     what make the entry honest, and the cases below are what keep it honest.
 
-没有 is spelled out beside 沒有 because the canonical table has no 没 -> 沒 entry, so
-canonicalisation cannot unify the two scripts; that hole is filed in PLAN, and when it is
-filled this row canonicalises into 沒有 and costs nothing.
+D547 fills the hole that sentence named: 没 -> 沒 is in the canonical table now, so the
+two scripts unify and the table below is checked in its CANONICAL form - the shape D447
+already puts every cue table in. The same unit adds the one-character cue the table was
+still missing: 没 / 沒, the bare "did not", beside the 冇 and 無 it already carried.
+Measured at D546, "没食辣", "沒食辣", "没吃辣", "沒吃辣", "我没吃辣" and "我沒吃辣" all
+wrote no constraint and read the cuisine +1 - a LIKE of the very thing the user refused -
+and answered the intent `unknown`, where every other spelling of the same refusal wrote it
+in both lanes. The neighbours below are what keep the bare cue honest, and they are the
+same neighbours 無 needed: a cue inside another word, or under the existential question's
+lead, governs nothing.
 """
 
 from __future__ import annotations
 
 import pytest
 
+from nexus_ai.nlu.canonical import canonical
 from nexus_ai.nlu.polarity import NEGATION_CUES
 from nexus_ai.nlu.understand import extract_intent
 
-#: the refusals the product could not read, in the spellings a user types them. The
-#: traditional pair is the cue table's own spelling; 没有 is the Simplified one the
-#: canonical table cannot yet unify.
-NEW_REFUSALS = ("無", "沒有", "没有")
+#: the refusals the product could not read, in the spellings a user types them - and the
+#: bare 没 D547 adds beside them. The table is read in its CANONICAL form (D447), so a
+#: Simplified spelling is checked through the canon rather than spelled out beside its
+#: traditional one: 没 and 没有 both land on 沒 / 沒有.
+NEW_REFUSALS = ("無", "沒有", "没", "没有")
 
 #: the measured neighbours - sentences where the new cue sits inside another word, or
 #: under the existential question's lead, or after the token it must not govern. Each
@@ -55,8 +64,15 @@ NOT_REFUSALS = (
 
 @pytest.mark.parametrize("cue", NEW_REFUSALS, ids=NEW_REFUSALS)
 def test_the_refusal_is_in_the_products_own_table(cue):
-    """A gate whose cases come from a table that dropped them would pass forever."""
-    assert cue in NEGATION_CUES, (
+    """A gate whose cases come from a table that dropped them would pass forever.
+
+    The table holds canonical forms (D447), so the spelling a user types is checked
+    through the canon: 没 -> 沒 and 没有 -> 沒有. Before D547 this assertion held the
+    Simplified spelling of 沒有 in the table BY HAND, because the canon had no entry to
+    fold it - and the row went red the moment the canon gained one, which is the
+    duplicate the hand-spelling was standing in for.
+    """
+    assert canonical(cue) in NEGATION_CUES, (
         f"{cue.encode('unicode_escape').decode()} is no longer a negation the product "
         f"knows - the refusal this unit measured is unread again")
 

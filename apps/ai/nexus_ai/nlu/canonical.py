@@ -151,6 +151,12 @@ CANONICAL_FORMS: dict[str, str] = {
     "\u6c49": "\u6f22",  # \u6c49 -> \u6f22
     "\u6c64": "\u6e6f",  # \u6c64 -> \u6e6f
     "\u6c9f": "\u6e9d",  # \u6c9f -> \u6e9d
+    # D547: the product's own negation word, in the spelling a Simplified user types.
+    # Unihan: same Cantonese reading (mut6), overlapping kDefinition ("not, have not,
+    # no"). It was in NO table - not the canon, not the negation cues, not the locale
+    # markers - so "没食辣" wrote no constraint and read the spicy +1, a LIKE of the
+    # very cuisine the user refused, while "沒有食辣" read the refusal in both lanes.
+    "\u6ca1": "\u6c92",  # \u6ca1 -> \u6c92
     "\u6d4b": "\u6e2c",  # \u6d4b -> \u6e2c
     "\u6d4e": "\u6fdf",  # \u6d4e -> \u6fdf
     "\u6d82": "\u5857",  # \u6d82 -> \u5857

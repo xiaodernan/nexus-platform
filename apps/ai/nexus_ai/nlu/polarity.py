@@ -61,9 +61,20 @@ CLAUSE_SEPARATOR = "\u3000"
 #: canonical table has no 没 -> 沒 entry, so canonicalisation cannot unify the two
 #: spellings and a Simplified user's refusal would go unread; the map's hole is filed in
 #: PLAN, and when it is filled this row canonicalises into 沒有 and costs nothing.
+#:
+#: D547 fills that hole: 没 -> 沒 is in the canonical table now, so the two-character rows
+#: above canonicalise into 沒有 and the bare 没 joins them as the one-character cue the
+#: table already carries 冇 and 無 as. It was the ONE spelling of "did not" the product
+#: did not know: measured, "没食辣", "沒食辣", "没吃辣", "沒吃辣", "我没吃辣" and "我沒吃辣"
+#: all wrote no constraint and read the cuisine +1 - a LIKE of the very thing the user
+#: refused - and answered the intent `unknown`, where 唔食辣 / 不吃辣 / 不想吃辣 / 不要吃辣 /
+#: 讨厌吃辣 / 冇食辣 / 無食辣 all write the refusal in both lanes. The bare cue is the same
+#: word 冇 and 無 are, in the spelling a Simplified user types; the constraint table reads
+#: it through `_CONSTRAINT_NEGATIONS`, which derives from this list, so one entry fixes
+#: both lanes (D493's shape).
 NEGATION_CUES: tuple[str, ...] = (
     "唔好", "唔要", "唔想", "唔鍾意", "唔鍾", "唔食", "唔想要", "不要", "不想", "不喜歡", "不喜欢",
-    "不想要", "讨厌", "討厭", "没咩", "冇", "無", "沒有", "没有", "唔係", "不是", "不好",
+    "不想要", "讨厌", "討厭", "没咩", "冇", "無", "沒有", "没有", "没", "唔係", "不是", "不好",
     "not ", "no ", "don't", "dont", "do not", "avoid", "without", "hate", "dislike",
 )
 
