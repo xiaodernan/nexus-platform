@@ -23474,3 +23474,46 @@ smoking, 二手煙 -> 二手煙), so the lane wrote one canon and not the other.
 ranking lane asks about 煙, so the two answers never meet in production; the new door
 charges the polarity lane only where the constraint lane's own reading wrote the canon,
 and the reach itself stays filed.
+## 539. D545 - the canon names every spelling the rules carry, and one refusal is one value (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_the_canon_covers_every_spelling_the_rules_name.py`, `apps/ai/tests/test_the_constraint_lane_reads_the_clause.py`, `apps/ai/tests/test_a_refusal_is_read_once_by_both_lanes.py`, `apps/ai/tests/test_a_degree_adverb_does_not_end_the_refusals_clause.py`)
+
+**What was measured.** A surface `CONSTRAINT_CANON` did not name fell back to itself, so
+one refusal read as two values depending on the language the user typed: "唔好嘈" wrote
+`noise_avoid:嘈` while "no noise" wrote `noise_avoid:noise`; "no 長龍" wrote
+`feature_avoid:長龍`; "不要薑" wrote `diet_avoid:薑`. And the dedup that should have
+collapsed the spellings compared two different strings - "no 二手煙" wrote BOTH
+`smoking_avoid:smoking` (from the 煙 inside the word) and `smoking_avoid:二手煙`, so the
+plan's avoid list carried the same refusal twice under two names. The Simplified spelling
+was worse than uncanonicalised: 姜 sat in no table at all, so "不要姜" wrote nothing -
+the one value the D416/D417 rule (every term answers to both spellings) never reached.
+
+**The fix.** The canon now names every surface the rules carry - 嘈 / 吵 / 吵鬧 / noise ->
+noise, 二手煙 -> smoking, 長龍 / 长龙 -> queue, 薑 / 姜 / ginger -> ginger - and 姜 joins
+the diet rule beside 薑. Every value the canon names is ASCII, because the corpus writes
+its tags in English (the leaf names `avoid_terms` expands): a value in another script is
+one the avoid clause can never match.
+
+**Verified, not claimed.**
+`test_the_canon_covers_every_spelling_the_rules_name.py`: **84 passed** - every surface the
+rules name is a canon key, every canon value is a word the corpus can carry, every nested
+spelling writes ONE refusal (the derived pairs 二手煙<煙 and 吵鬧<吵, under both cues), the
+eight measured holes read the shared value, and every surface refused under both cues
+writes its rule's canon and nothing else. Proved to fail: the 嘈 entry deleted reddens
+**3**, the 嘈 entry spelled as itself reddens **3**, 姜 removed from the diet rule reddens
+**1**; the file restored and byte-compared each time. The clause, seam, degree, question
+and constraint-vocabulary gates beside it -> **2062 passed**; filtered regression (`-k
+"preference or structured or occasion or personaliz or merge or refinement or state or
+polarity or cuisine or transient or ranking or attribute or vocabulary or ambience or
+refusal or negation or clause"`) -> **6969 passed, 35 skipped**; (`-k "search or rank or
+card or score or facet or filter or avoid or understand or intent or nlu"`) -> **2326
+passed, 38 skipped**; `mypy nexus_ai` -> **Success: no issues found in 59 source files**;
+`ruff check nexus_ai tests` -> **All checks passed**; eval gate -> **PASS - 2 suite(s), 0
+failing**.
+
+**Residue measured and filed, not fixed.** The two gates whose rows walk every surface now
+skip a surface nested inside a longer one, because the shared canon made the charge reach
+it: "唔好 very 二手煙" writes one `smoking_avoid:smoking` and the polarity lane still
+reads the 煙 +1 - the reach residue of D540, unchanged by this unit, and unrealizable in
+production (no preference rule names 煙, so the ranking lane never asks about it; the
+seam door walks only the values both vocabularies name). The pinned row "唔好咁嘈 ->
+noise_avoid:嘈" in the clause gate is re-spelled `noise_avoid:noise`: the window's
+refusal is kept, under the canon's name.

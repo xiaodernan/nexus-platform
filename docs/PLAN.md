@@ -56,9 +56,11 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 
 - **A surface inside another surface reads past the clause's reach** - "煙" inside "二手煙"
   sits two characters further from the cue, and the reach is the clause (D535), so "no want 二手煙"
-  reads the 二手煙 -1 and the 煙 +1. The two lanes agree (no constraint is written for the 煙
-  either), so it is the reader's reach rather than a contradiction - but a preference keyed on the
-  shorter surface would be boosted by a sentence that refuses the longer one.
+  reads the 二手煙 -1 and the 煙 +1. The two lanes agree about the CONSTRAINT now (D545's canon
+  gives the nested pair one value, so the refusal is written once), so it is the reader's reach
+  rather than a contradiction - but a preference keyed on the shorter surface would be boosted by
+  a sentence that refuses the longer one. No preference rule names 煙 or 吵 today, which is why
+  the residue is unreachable in production rather than merely unmeasured.
   Owner: the AI lane.
 - **The declarations are checked by name, not by sentence** - the doc gate's exemption
   tables are green as long as a judged document still puts the name in backticks, whatever
@@ -1707,3 +1709,21 @@ the clause boundary surviving normalisation.
    the degree gap as well - "唔好 very 二手煙" writes `smoking_avoid:二手煙` and the 煙
    reads +1, with CONSTRAINT_CANON spelling the two apart, so the new door charges the
    polarity lane only where the constraint lane's own reading wrote the canon.
+### 2026-10-24 (later still, the twelfth) — D545: the canon names every spelling the rules carry
+
+1. D545 (4029d5a) - a surface CONSTRAINT_CANON did not name fell back to itself, so one refusal
+   read as two values depending on the language the user typed: "唔好嘈" wrote noise_avoid:嘈
+   while "no noise" wrote noise_avoid:noise, and "no 二手煙" wrote BOTH
+   smoking_avoid:smoking (from the 煙 inside the word) and smoking_avoid:二手煙 - the dedup
+   compared two different strings. The Simplified spelling was worse than uncanonicalised: 姜
+   sat in no table at all, so "不要姜" wrote nothing. The canon now names every surface the
+   rules carry, 姜 joins the diet rule beside 薑, and every value it names is ASCII - the
+   corpus writes its tags in English, so a value in another script is one the avoid clause can
+   never match.
+
+**Queue spent:** the CONSTRAINT_CANON item (the noise / queue / ginger / 二手煙 spellings, filed
+   from the residues) and with it the 姜 half of the canonical-map hole - the SURFACE is in the
+   rule and the canon now; the 没 -> 沒 map entry stays filed. One residue re-measured: the reach
+   ("煙" inside "二手煙") is now reachable by the agreement rows through the shared canon, so
+   the seam door's and the D544 door's rows skip a nested surface - the contradiction the seam
+   door exists for cannot involve one, because no preference rule names 煙 or 吵.
