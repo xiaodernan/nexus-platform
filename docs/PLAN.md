@@ -1880,8 +1880,9 @@ the clause boundary surviving normalisation.
 
 1. D551 7e6e805 - `POST /ai/v1/rag/retrieve` kept a candidate row only when `mentions(text, query)`
    held, and `mentions()` accepted any query token of two characters or more - including `the`,
-   `for`, `what`. Measured on the live demo corpus, where `the` appears in 1167 of its 2118 chunks
-   while `ferry`, `seating` and `outside` appear in none: six ordinary queries got 25 served rows,
+   `for`, `what`. Measured on the live demo corpus with the reader the gate uses - a word, not
+   a substring - where `the` sits in 791 of its 2118 chunks and `for` in 889 while `ferry`,
+   `seating` and `outside` sit in none: six ordinary queries got 25 served rows,
    12 of them the data statement, and `outside seating near the ferry` got 8 rows that were all the
    data statement. The gate that D405 built as the one honest signal - containment, because the
    trigram similarity does not separate a real match from noise - was a formality for every English

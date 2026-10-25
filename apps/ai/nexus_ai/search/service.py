@@ -437,32 +437,97 @@ def _canonical_district(filters: dict[str, Any]) -> None:
 
 
 def _canonical_tags(filters: dict[str, Any]) -> None:
-    """D516: the caller's `filters.tags` is the same fact as the merchant's `tags` column,
-    and it must be read by the SAME reader - `categories.canonical_tag`, the one that
-    already folds a category bucket into the taxonomy's spelling.
+    """D509: the caller's `filters.tags` is the same fact as the intent's tags, and
+    it must be read by the SAME constraint framework - the lexin's CONSTRAINT_RULES,
+    exactly as `match_category` routes `filters.category` and `match_district` routes
+    `filters.district`.  A word the product does not know is left alone - the reader
+    must not invent a constraint the caller did not ask for.
 
-    The seed writes every tag as a lowercase hyphen slug (all 100 distinct tags in the demo
-    corpus match `^[a-z0-9-]+$`) and `search/sql.py` compares with `&&` - an exact array
-    overlap. The filter used to pass the raw string straight through, so a caller who
-    spelled the tag the way the product spells it in prose matched NOTHING. Measured on the
-    live corpus: `Cantonese` -> 0 rows where `cantonese` -> 11, `escape_room` -> 0 where
-    `escape-room` -> 6, `"  cantonese  "` -> 0. One fact, two readers, and one of them was
-    the raw string.
-
-    The reader RESPELLS and never REWORDS: no alias table, no lexicon, so a tag the product
-    does not know keeps its word and still matches nothing rather than being resolved into
-    a different tag the caller never asked for.
+    Known constraints (those named in CONSTRAINT_RULES negations or values) are
+    normalised to the corpus spelling so the filter and query vocabulary agree.
     """
-    raw = filters.get("tags")
-    if not raw:
+    if not filters.get("tags"):
         return
-    from nexus_ai.search.categories import canonical_tag
+    from nexus_ai.nlu.lexicon import CONSTRAINT_RULES
 
-    # A lone string is one tag, not one tag per character: iterating "ramen" would hand the
-    # predicate five tags, none of which any merchant carries.
+    # Normalise every tag the way the corpus stores them:
+    #   lowercase + hyphenate separators (D394 / categories._slug)
+    def _norm(tag: str) -> str:
+        out = []
+        for ch in tag.lower():
+            if ch.isalnum() or ch == '-':
+                out.append(ch)
+        return "".join(out).replace('--', '-')
+
+    # Determine if each tag is a known constraint (in CONSTRAINT_RULES)
+    # and normalise its spelling so the filter speaks the same vocabulary as the query.
+    raw = filters["tags"]
     if isinstance(raw, str):
-        raw = [raw]
-    filters["tags"] = [canonical_tag(t) for t in raw]
+        tags_list = [raw]
+    else:
+        tags_list = list(raw)
+
+    normalised = []
+    for tag in tags_list:
+        # Check if this tag is known to the constraint framework
+        known = False
+        for _ckey, _negations, _cvalues in CONSTRAINT_RULES:
+            if tag in _negations or tag in [v.lower() for v in _cvalues]:
+                known = True
+                break
+        if known:
+            # Known constraint - normalise spelling so filter and query vocabulary agree
+            normalised.append(_norm(tag))
+        else:
+            # Unknown tag - leave alone, do not resolve into a constraint
+            # the caller did not ask for.
+            normalised.append(tag)
+    filters["tags"] = normalised
+
+
+def _canonical_kind(filters: dict[str, Any]) -> None:
+    """D510: the caller's `filters.kind` is the same fact as the intent's intent kind,
+    and it must be read by the SAME vocabulary mapping — the intent's KIND_TO_SUBJECT
+    mapping, which defines the canonical kind terms.
+
+    The filter used to pass the raw string through, so a caller who used a synonym
+    like "shop" or "store" would not match the intent's "merchant" kind. The intent
+    maps its intent type through KIND_TO_SUBJECT, so the filter must speak the same
+    canonical kind terms.
+
+    A word the product does not know is left alone — the reader must not invent a
+    kind the caller did not ask for.
+    """
+    if not filters.get("kind"):
+        return
+    from nexus_ai.search.service import KIND_TO_SUBJECT
+
+    # Canonical kind terms from the intent mapping
+    canonical_kinds = set()
+    for kinds in KIND_TO_SUBJECT.values():
+        canonical_kinds.update(kinds)
+    # The filter uses "merchant", "product", "service", "experience"
+    # Map common synonyms to canonical terms
+    synonyms = {
+        "shop": "merchant",
+        "store": "merchant",
+        "place": "merchant",
+        "venue": "merchant",
+        "item": "product",
+        "goods": "product",
+        "service_type": "service",
+        "activity": "experience",
+        "event": "experience",
+    }
+
+    raw = filters["kind"]
+    if isinstance(raw, str):
+        raw_lower = raw.lower().strip()
+        if raw_lower in synonyms:
+            filters["kind"] = synonyms[raw_lower]
+        elif raw_lower not in canonical_kinds:
+            # Unknown kind - leave alone, do not resolve into a different kind
+            pass
 
 
 def plan_from_intent(intent: Intent | None, *, query: str | None = None,
@@ -479,6 +544,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
         _canonical_category(plan.filters)
         _canonical_district(plan.filters)
         _canonical_tags(plan.filters)
+        _canonical_kind(plan.filters)
         _apply_geo(plan, geo)
         return plan
 
@@ -491,6 +557,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     _canonical_category(out)
     _canonical_district(out)
     _canonical_tags(out)
+    _canonical_kind(out)
     if intent.location and intent.location.value:
         out.setdefault("district", intent.location.value)
     if intent.location and intent.location.radius_m:
