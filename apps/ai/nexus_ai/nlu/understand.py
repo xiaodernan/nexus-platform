@@ -303,6 +303,11 @@ def _fill_category(ex: IntentExtraction, text: str) -> IntentExtraction:
             ex.category, ex.confidence["category"] = "restaurant", 0.9
         for c in cuisines:
             ex.preferences.append({"key": "cuisine", "value": c, "polarity": 1})
+        # D511: also emit the structured cuisine_like that the seed writes and the matcher reads
+        # The seed stores {"values": [...]} under cuisine_like; the matcher (D394) reads both
+        # shapes through cuisine_matches. A typed cuisine should be stored as cuisine_like
+        # so the user's own words are recorded as a preference, not just used for category.
+        ex.preferences.append({"key": "cuisine_like", "value": {"values": cuisines}, "polarity": 1})
         ex.confidence["category"] = max(ex.confidence.get("category", 0.0), 0.92)
     if ex.intent == "discover_merchant" and ex.category in ("footwear", "electronics", "retail"):
         # a purchasable thing, not a place to go
