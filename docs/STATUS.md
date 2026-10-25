@@ -23953,3 +23953,30 @@ eight, and a second leg prints the content token carrying each remaining serve -
 token: 0`. Over HTTP the shipped route answers 200 with 2/0/2/8/1/1 chunks for those six
 queries. The four remaining data-statement serves are honest: each one is carried by a word
 the query asked about, and what they say about the corpus is task #199, not this gate.
+
+## 546. D553 · the clause-final negation rule was unpinned - the cue's own clause, its particles, and the one bridge verb (`apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/tests/test_clause_final.py`)
+
+**Module / contract.** `clause_final` decides whether a negation cue governs a PRECEDING token:
+a cue that still has words after it is speaking about THOSE words (D537), the tail is the cue's
+OWN CLAUSE so a comma ends the refusal's reach (D538), and ONE bridge verb may follow the cue
+because the topicalised refusal puts the verb after it (D543). `polarity_for` was pinned by
+D340/D347; this helper it now stands on was not.
+
+**Pinned behavior (12 cases, all confirmed empirically):**
+- Nothing (or only the clause's own particles) after the cue → final: `素食唔好`, `辣唔好呀`.
+- A comma ends the clause: `辣唔好，要嘈` is final for `唔好` (the `要嘈` belongs to the next clause).
+- One bridge verb may follow: `花生少吃`, `gluten 避免吃`, `peanut 別吃`, `唔好食`.
+- An OBJECT after the cue is not final: `I want spicy no cilantro` → the `no` governs the cilantro.
+- A verb with an object of its own is not final: `唔好食咖喱` → the forward refusal of the curry.
+- A bare cue (`no`) is final.
+- `_governed_by_verb`: one bridge verb → true; verb + object (`eat something`, `食咖喱`,
+  `want it`) → false; non-verbs and empty → false.
+- Constants: `_CLAUSE_BOUNDARY_CHARS == ",，。;；!?！？"`, and the ten-word `_VERB_BRIDGE`.
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. `polarity.py` was
+concurrently extended by another lane (+6 lines) while this unit ran; the pinned contract still
+holds on the resulting tree.
+
+**Verified, not claimed.** `pytest tests/test_clause_final.py` → **12 passed**. The full `apps/ai`
+suite at HEAD (`4877eb4`, before this unit) ran **220 failed / 10203 passed / 127 skipped** — those
+failures are pre-existing and under investigation; this unit neither causes nor cures them.
