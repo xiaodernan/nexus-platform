@@ -23884,3 +23884,72 @@ swept-landing double-append that stays invisible because no reader counts duplic
 step 16's strict census still carries its MOVED backlog, so the 18-step drive aborts before step 17
 and this section's figures were judged by running the numbers checker directly rather than by
 trusting a drive that never reached it.
+
+
+## 545. D551 - the retrieval answered a real question with the corpus's boilerplate, because its hit gate accepted "the" as evidence (`apps/ai/nexus_ai/search/tokens.py`, `apps/ai/tests/test_rag_containment.py`)
+
+**What was measured.** Four legs on the live demo corpus, and the last one is what turned
+into a fix. (a) The embedding pass D550 stopped forbidding is now run over the demo
+database: 2118 of 2118 chunks carry a vector, `hashing`, dim 1024, one stamp, and the seed
+gate files the same 29 red names over the same 217 assertions before and after it - the
+rewritten chunks row prints `0 pending chunk(s), 2118 embedded, 0 half-written` there.
+(b) The vector lane participates, and the controlled pair is what proves it rather than
+the score column: the identical query run against the embedded plane and the seed-only
+plane returns 48 rows with a non-zero `vec_score` and 0 rows, and per query the two
+served id sets are disjoint. (c) It costs nothing and buys nothing measurable at this
+corpus size: interleaved medians over three rounds put the lexical-only shape at 610.263 ms
+and the shipped hybrid at 532.78 ms, and no leg - not the shipped chunk builder, not the
+shipped merchant builder, not either of them with `enable_seqscan = off` - reaches
+`chunks_embedding_hnsw`; only a pure `ORDER BY embedding <=> $1 LIMIT k`, a shape no
+shipped code issues, does, at 1.118 ms against 16.987 ms for the same rows unindexed.
+(d) What the lane *serves*: the route keeps a candidate only when `mentions(text, query)`
+holds (`api/routes_rag.py`, `if not r.get("hit"): continue`), so the token that returns
+True is the entire evidence for the row - and the same flag is what
+`api/routes_stream.py` calls `grounded`, which decides whether the merchant chat answers
+from the knowledge base or hands off. Six ordinary queries over the shipped builder got 25
+served rows, 12 of them the data statement, with `outside seating near the ferry` served 8
+rows that were all data statement. Reading the gate's own tokens against 30 drawn
+data-statement chunks says why: the single token `the` passed it for 19 of the 30 and `for`
+for 17. The corpus is the other half of the answer - `the` appears in 1167 of its 2118
+chunks, while `ferry`, `seating` and `outside` appear in none. A query whose only shared
+word with a chunk is a function word was answered with that chunk, so for English queries
+the containment gate D405 built as the one honest signal was a formality - and it was a
+formality in the branch that decides whether to trust an answer.
+
+**The fix.** `EN_FUNCTION_WORDS` - articles, conjunctions, prepositions, pronouns,
+auxiliaries, question words and the fillers that name no attribute - and `mentions()`
+skips them: a token has to be something the query *asked about*. A query made only of
+them now mentions nothing, which is the same refusal the one-character query already got
+and for the same reason. The filter sits in the gate, not in `query_tokens`: that list
+also feeds the merchant lane's keyword extraction, and a word dropped there is a word no
+lane can use again, so a new case pins the tokenizer still returning `the and for` while
+the gate refuses them. The list is deliberately not `trust/verification.py`'s
+`ENTITY_STOPWORDS` - that one strips words out of a merchant *name* before comparing
+names, which is why it drops `near` and `best`, both of which carry a real request here.
+
+**Verified, not claimed.** Five new cases, and a four-arm battery over the three files that
+read this lane's containment. The unmutated baseline reddens nothing, so every red below is
+the arm and not the harness. Deleting the guard reddens exactly the two refusal cases;
+moving the filter into `query_tokens` reddens exactly the tokenizer case and *no* refusal
+case - that pairing is what shows the filter is in the gate rather than merely effective;
+putting `menu` in the list reddens `test_a_text_mentioning_the_query_is_a_hit`, which is the
+arm that charges the list for reaching past function words into content; taking `the` out
+reddens `test_a_function_word_is_not_a_mention`. The battery files 5 of 5 arms MATCHED, its
+unmutated baseline leg among them, and the mutated target came back byte-identical (6811) after
+the last one. Whole AI suite: 7 failed, 10378 passed, 127
+skipped against the parent commit's 7, 10373, 127 - five more passing, none newly failing.
+All seven reds are `apps/ai/tests/test_the_filter_speaks_the_tags_vocabulary.py`, the
+tag-normalisation group D550 filed as another lane's uncommitted revert of
+`search/service.py`; that file carries the same uncommitted edit through this run. ruff and
+mypy (59 source files) clean. One of my own cases went red first and stayed red until fixed:
+the vocabulary gate `test_every_test_file_uses_characters_the_product_knows` charged
+`test_rag_containment.py` for two code points (U+4F9B, U+61C9) the product's own package
+never carries, so the fixture text was rewritten from characters the reference does carry -
+the gate works on the file that quotes it. Then the measured legs re-ran against the live
+demo corpus: the same six queries now serve 14 rows and 4 of them are the data statement
+(where they served 25 and 12), `outside seating near the ferry` serves none where it served
+eight, and a second leg prints the content token carrying each remaining serve - `dim`/`sum`,
+`sushi`, `late`, `board`, `茶餐廳`, `適合` - and files `served rows carried by no content
+token: 0`. Over HTTP the shipped route answers 200 with 2/0/2/8/1/1 chunks for those six
+queries. The four remaining data-statement serves are honest: each one is carried by a word
+the query asked about, and what they say about the corpus is task #199, not this gate.

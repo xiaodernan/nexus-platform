@@ -105,18 +105,20 @@ apply_file() {
   fi
   echo "> apply $version  <- $(basename "$file")"
   # --single-transaction: a migration that fails half-way leaves NO partial schema behind.
+  # stderr is captured in a VARIABLE, not a temp file. On this host `mktemp` returns a `C:\…`
+  # path and the node runtime's safe-delete shim refuses to `rm` it — which aborted the script on
+  # the CLEANUP line of a migration that had succeeded, masking the real exit status. A variable
+  # has nothing to delete. (`2>&1 >/dev/null` sends stderr to the capture pipe, stdout to null.)
   local err rc=0
-  err="$(mktemp "${TMPDIR:-/tmp}/nexus-migrate.XXXXXX")"
-  sed 's/\r$//' "$file" | docker exec -i "$CONTAINER" \
-    psql -v ON_ERROR_STOP=1 --single-transaction -U "$PGUSER" -d "$DBNAME" -q -f - 2>"$err" || rc=$?
+  err="$(sed 's/\r$//' "$file" | docker exec -i "$CONTAINER" \
+    psql -v ON_ERROR_STOP=1 --single-transaction -U "$PGUSER" -d "$DBNAME" -q -f - 2>&1 >/dev/null)" || rc=$?
   if [ "$rc" -ne 0 ]; then
-    cat "$err" >&2
+    printf '%s\n' "$err" >&2
     # `already exists` is not a broken migration — it is a database whose content predates its ledger,
     # which happens whenever a schema was built by hand (or by Flyway, whose history this script does
     # not read when the service never booted against that database). Re-running would be a silent
     # double-apply, so stop and name the repair instead of letting the operator guess at the error.
-    if grep -qE 'already exists' "$err"; then
-      rm -f "$err"
+    if printf '%s\n' "$err" | grep -qE 'already exists'; then
       echo "!! $version was not executed: the objects it creates are already in '$DBNAME', but" \
            "$version is not in schema_migrations, so this script cannot tell applied-by-hand from a" \
            "half-built schema." >&2
@@ -127,10 +129,8 @@ apply_file() {
            "down in this run are skipped." >&2
       exit 1
     fi
-    rm -f "$err"
     return "$rc"
   fi
-  rm -f "$err"
   if [ -n "$version" ]; then
     psql_exec "INSERT INTO schema_migrations(version, applied_at) VALUES ('$version', now())
                ON CONFLICT (version) DO NOTHING" >/dev/null
@@ -184,17 +184,21 @@ if [ "${#RECORD[@]}" -gt 0 ]; then
   done
 fi
 
-# ------------------------------------------------------------------ migrations, in filename order
-# Flyway-style V<version>__<name>.sql, applied in lexicographic order (bash globs are sorted).
+# ------------------------------------------------------------------ migrations, in VERSION order
+# Flyway-style V<version>__<name>.sql. The order is the NUMERIC version, not lexicographic: a plain
+# glob sorts "V10__…" BEFORE "V1__…" ("0" < "_"), so a from-scratch database ran V10's
+# `CREATE INDEX … ON facts` before V1 had created `facts` and the gate died at step 2 — while the
+# dev database, whose tables predate V10, could never show it. `sort -V` is the version order
+# Flyway itself uses. `grep -v '^$'` keeps an empty glob (nullglob) from feeding one blank line.
 shopt -s nullglob
 count=0
-for f in "$MIG_DIR"/*.sql; do
+while IFS= read -r f; do
   case "$f" in *~*) continue ;; esac
   base="$(basename "$f")"
   version="${base%.sql}"
   apply_file "$f" "$version"
   count=$((count + 1))
-done
+done < <(printf '%s\n' "$MIG_DIR"/*.sql | grep -v '^$' | sort -V)
 shopt -u nullglob
 echo "OK: $count migration file(s) considered from infra/db/migrations"
 

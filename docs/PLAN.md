@@ -1875,3 +1875,35 @@ the clause boundary surviving normalisation.
    (1726972800 .. 1726972900, two years before its own seed base) that the loader should stamp or
    refuse rather than carry; and `## 540. D546` appears in docs/STATUS.md twice at HEAD, the same 63
    lines back to back, because no reader counts duplicate section numbers.
+
+### 2026-10-25 (the second) — D551: the retrieval's hit gate stops accepting a function word as evidence
+
+1. D551 7e6e805 - `POST /ai/v1/rag/retrieve` kept a candidate row only when `mentions(text, query)`
+   held, and `mentions()` accepted any query token of two characters or more - including `the`,
+   `for`, `what`. Measured on the live demo corpus, where `the` appears in 1167 of its 2118 chunks
+   while `ferry`, `seating` and `outside` appear in none: six ordinary queries got 25 served rows,
+   12 of them the data statement, and `outside seating near the ferry` got 8 rows that were all the
+   data statement. The gate that D405 built as the one honest signal - containment, because the
+   trigram similarity does not separate a real match from noise - was a formality for every English
+   query. `EN_FUNCTION_WORDS` is now skipped by `mentions()`, in the gate and not in `query_tokens`
+   (the tokenizer feeds the merchant lane's keyword list too, and a word dropped there is a word no
+   lane can use again), and a query made only of them mentions nothing, the same refusal the
+   one-character query already got. Verified on the same live corpus: served rows carried by no
+   content token 0, boilerplate among served 12 of 25 before and 4 of 14 after, and the route's own
+   payload for the ferry query 8 chunks before and 0 after - §7's "no answer without retrieval",
+   which is the honest answer when the corpus holds no ferry. The three residuals the same four legs
+   measured and this unit did not fix are filed: neither shipped builder reaches
+   `chunks_embedding_hnsw` even with `enable_seqscan = off` (only a pure `ORDER BY embedding <=> $1
+   LIMIT k` does - 1.118 ms against 16.987 ms for the same rows unindexed), the hybrid costs nothing
+   measurable at this corpus size (medians 610.263 ms lexical against 532.78 ms shipped), and 1040 of
+   2118 chunks - just under half the retrieval corpus - are the section that opens every merchant
+   document, which nothing in `data/seed/quality.sql` bounds.
+
+**Queue spent:** the item D550 left when it landed the gate that no longer forbade the pass - the
+   embedding pass has now run over the demo corpus (2118 of 2118 chunks carry a vector, `hashing`,
+   one stamp) and the vector lane was shown to participate rather than assumed: the same query
+   against the embedded plane and the seed-only plane returns 48 rows with a non-zero `vec_score` and
+   0, and the two served id sets are disjoint per query. One residue filed here too:
+   `docs/DEPLOYMENT.md` §6, the checklist written for the next agent, still sends it to
+   `nexus-platform-testpg`, which exited three weeks ago, and carries three numbers this machine no
+   longer agrees with.
