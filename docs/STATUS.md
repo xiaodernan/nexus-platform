@@ -24340,3 +24340,17 @@ else moves. The attribution: the duplicated section is the other stream's landin
 the mechanical renumber the discovering lane performs with the owner named here.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 554. the allergens read declared and answered, and the seven moved sites re-aimed (D368)
+
+The AI lane's new code reads `offerings.attributes ? 'allergens'` — the menu-source allergen array the
+seed has carried since the menu parse landed — and the jsonb census reddened the read twice over: no
+declared triple, and no answer row. Both landed here: the triple declared in the read_cat VALUES list
+(the declared list is the contract between the build's reads and the seed's answers), and the answer row
+kinding the read reachable with the site generate.py's allergens construction line — 3240 of 5534
+offerings carry a non-empty allergens array, measured. The census re-runs green: 18 triples declared,
+zero reasons to redden, exit zero. Seven answer sites that cited generate.py lines the same stream's
+edits had moved were re-aimed to their new homes in the same unit — the same digits-only discipline the
+line-cite re-aims use, verified against the file before each replace.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3

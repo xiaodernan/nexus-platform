@@ -2663,7 +2663,7 @@ SELECT 'the columns stamped from the generation clock are exactly the ones answe
 --     generated_by. The measurement that 0 of 520 merchant payloads carry the key stays true; what was false
 --     is calling it a read. It is dropped from this census and reported in §82 rather than kept as a row that
 --     answers a question nobody asks.
---   * `tenants.config ? currency_default` was answered `reachable` with the site "generate.py:979 writes it" —
+--   * `tenants.config ? currency_default` was answered `reachable` with the site "generate.py:981 writes it" —
 --     a write site in the read column. Nothing in services/platform or apps/ai reads that key (D46 said so
 --     first; D84 re-buried it by mis-kinding it). It stays here as the census's mirror kind, `never-read`.
 --
@@ -2707,6 +2707,8 @@ BEGIN
       ('collections', 'seo', 'city'), ('collections', 'seo', 'category'), ('collections', 'seo', 'cover'),
       ('documents', 'metadata', 'extractor'), ('documents', 'metadata', 'note'),
       ('documents', 'metadata', 'degraded'), ('documents', 'metadata', 'proposals'),
+      -- D360-era: the AI search reads the allergens array the menu source carries (offerings.attributes).
+      ('offerings', 'attributes', 'allergens'),
       -- Not a read at all: shipped in a payload, named by no source read anywhere. Kept because D84's own
       -- residue said the mirror defect deserves a row, and step 7 reddens if a read for it ever appears.
       ('tenants', 'config', 'currency_default')
@@ -2740,6 +2742,9 @@ INSERT INTO read_answer VALUES
  ('offerings', 'attributes', 'import_job', 'dead-reader', 'MerchantImportRepository.java:37',
   'the import selector wants draft rows carrying an import job and no seeded offering does, so the lane '
   || 'reports no imports'),
+ ('offerings', 'attributes', 'allergens', 'reachable', 'generate.py:1204 writes it; the AI lane reads it',
+  '3240 of 5534 offerings carry an allergens array (the menu-source allergen note, when the menu lists '
+  || 'one); the AI search reads it for the allergen question'),
  ('orders', 'metadata', 'session_id', 'empty-by-guard', 'OrderRepository.java:97',
   'guest-order lookup by session; orders is EMPTY by D64 because §109 forbids fabricated transactions'),
  ('referrals', 'reward', 'amount', 'empty-by-guard', 'ReferralRepository.java:89',
@@ -2783,7 +2788,7 @@ INSERT INTO read_answer VALUES
  -- The mirror of every row above: not a read that resolves to nothing, a payload key no read names. D46
  -- found this one and its answer was never wired into a census; D84 then mis-filed it as `reachable`
  -- because a write site was read as a read site. step 7 of the gate reddens if a read for it appears.
- ('tenants', 'config', 'currency_default', 'never-read', 'generate.py:979 writes it; no read site found',
+ ('tenants', 'config', 'currency_default', 'never-read', 'generate.py:981 writes it; no read site found',
   'the seed stamps a default currency on the tenant config and nothing in services/platform or apps/ai '
   || 'asks for it, so the key is served-invisible: it is not a broken read, it is an unread write, and '
   || 'making a door own that is the point of naming it here');
@@ -3647,25 +3652,25 @@ CREATE TEMP TABLE shape_answer (tbl text NOT NULL, col text NOT NULL, kind text 
                                 why text NOT NULL, PRIMARY KEY (tbl, col));
 INSERT INTO shape_answer VALUES
  ('collections', 'items', 'array-only',
-  'generate.py:292 lists the items column and :1375 builds the guide item list; CollectionsController.java:145 '
+  'generate.py:293 lists the items column and :1409 builds the guide item list; CollectionsController.java:145 '
   || 'reads it with Json.jsonArray(row, "items")',
   'a guide''s ordered items are a list, so the build consumes it as an array and resolves each element into an '
   || 'EntityCard on the same read; no clause asks collections.items for a key, and none could'),
  ('merchants', 'images', 'array-only',
-  'generate.py:251 lists the images column; merchant/MerchantRepository.java:306 (Json.jsonArray(row, "images")),'
+  'generate.py:253 lists the images column; merchant/MerchantRepository.java:306 (Json.jsonArray(row, "images")),'
   || ' selected whole at :22',
   'an ordered gallery, read whole and projected by position — the url/alt/credit content lives in the elements, '
   || 'which is D81''s census, not this one'),
- ('offerings', 'images', 'array-only', 'generate.py:266 lists the images column;'
+ ('offerings', 'images', 'array-only', 'generate.py:268 lists the images column;'
   || ' catalog/OfferingRepository.java:270, selected whole at :25',
   'the same gallery shape on the offering side'),
- ('offerings', 'options', 'array-only', 'generate.py:266 lists the options column;'
+ ('offerings', 'options', 'array-only', 'generate.py:268 lists the options column;'
   || ' catalog/OfferingRepository.java:273, selected whole at :25',
   'choice groups (name + values), so it is a list by design; 2,936 of 5,534 payloads are [] — an offering with no '
   || 'options, a real state and not an unreadable one. Named against the column, not the word: order_items.options '
   || 'is a different column, written by commerce/OrderRepository.java:78-84'),
  ('reviews', 'photos', 'array-only',
-  'generate.py:274 lists the photos column; CatalogController.java:388 (Json.jsonArray(row, "photos")),'
+  'generate.py:276 lists the photos column; CatalogController.java:388 (Json.jsonArray(row, "photos")),'
   || ' selected by ReviewRepository.java:48 and CatalogRepository.java:59',
   'every one of the 11,000 payloads is [] — the column exists to hold review photos and no seeded review has '
   || 'one, which D81 counted from the other side');
