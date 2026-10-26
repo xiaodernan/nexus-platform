@@ -24084,3 +24084,20 @@ claimed here: the 18-step fresh gate was not re-run; neither red above is fixed 
 `check_ledger_sections.mjs` still has #196's duplicated `## 540. D546` to report and this unit
 did not touch it; and the process answering :8010 serves a scratch plane outside the repo root,
 so it is a measurement plane and not the plane the demo runs from.
+
+
+**Stale inside its own landing.** The paragraph above filed
+`test_a_followup_can_name_a_different_cuisine` as a red that ships at HEAD, and what it
+measured was the plane `git archive` had cut from a63571a. While this section was being written
+the tree gained 3019bdb, whose own subject line calls it "the two remaining D511-caused reds",
+and its fix is in the test's expectation rather than the product: the assertion now demands
+`{("cuisine", "thai"): 1, ("cuisine_like", '{"values": ["thai"]}'): 1}`, so the abandoned
+japanese is still replaced and what the case charges for is the companion key D511 added
+alongside the string. Both files re-run against the working copy are green - all of them, not
+one of them - which is the only reason this sentence is short. What the sequence leaves as this
+section's real residue is the shape of the claim, not its verdict: "is red at HEAD" is a
+statement about a commit, and mine named no commit, so a reader arriving after 3019bdb cannot
+even ask whether it still holds. That is D551's carrier sentence again in a different tense -
+a claim whose basis is the thing a reader needs in order to re-run it - and the door that would
+catch the class (a ledger claim about a test's verdict with no ref in the same sentence) is
+filed as the next unit rather than written here.
