@@ -24354,3 +24354,83 @@ edits had moved were re-aimed to their new homes in the same unit — the same d
 line-cite re-aims use, verified against the file before each replace.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 555. D558 · the evidence pack certified a home page whose card artwork never appeared, because its opacity marker read inline styles and the hide was a class (`packages/ui/src/trust/Renderers.tsx`, `apps/web/scripts/collect-evidence.mjs`, `tests/e2e/specs/consumer/card-media.spec.ts`)
+
+**What was measured.** The pack answered `5/5 surfaces captured`, `rendered_opaque: true`,
+`broken_images: []` for every surface, and the screenshots it writes are what this lane reads to decide
+what a consumer sees. `01-home.png` showed the rails' names, prices and badges over a grey block where
+each card's artwork should be: 28 card images, 28 placeholders that never lifted. `CardMedia` paints its
+`<img>` at `opacity-0` and moves it to `opacity-100` from React's `onLoad`. On a server-rendered page the
+browser has usually fetched and decoded the tiny local SVG before hydration attaches the handler, and a
+load event that already fired never fires again — so `loaded` stays false for the life of the page. This
+is the stranded-opacity family STATUS §450 named for `Reveal` — same shape, the thing that lifts the opacity
+never runs; different cause, a load that predates its handler rather than a preference the markup
+ignored. The split by population, read off the live dev plane before anything changed: home 28/28 images
+`complete` with computed opacity 0, cold and warm, at 3 s and at 8 s; a merchant detail page 12/12 the
+same; the streamed search surface 8/8 opaque. Same component, two outcomes — the search results are
+client-rendered, so React creates those elements with the handler already attached. That difference is
+why the search case is the witness's control rather than a fourth thing to fix.
+
+**The fix.** A ref callback runs on every mount, so it reads the completion the event missed:
+`node.complete && node.naturalWidth > 0`. The second term keeps `onLoad`'s success-only contract — a
+failed image still keeps its skeleton, exactly as before — so the fix cannot turn a broken URL into a
+visible frame. Nothing else in the tree reads `onLoad`, and the three call sites that render artwork
+(`EntityCard`, `merchant-view`, `offering-view`) all reach it through this one component, so the repair
+is not per-surface.
+
+**The second finding: the pack could not see the class it was certifying.** `rendered_opaque` comes from
+`settled()`, which waits on `[style*="opacity"]` — elements carrying an **inline** opacity. `CardMedia`
+hides with a Tailwind **class**, so the marker's population never contained the artwork and its `true`
+was read as a verdict about the page. STATUS §450 had already written that sentence — "visibility is a layout
+fact and opacity is a paint fact; which is also why the pack captured a blank hero" — and left the pack
+unchanged. It is changed now: the manifest carries `artwork_invisible`, every decoded, on-screen `<img>`
+still under `0.99` opacity after a 15-second deadline, named by src, and a non-empty residue fails the
+surface the way `broken_images` already does. `settled()`'s comment now states its own population
+instead of letting the key's name over-claim; the key itself keeps its spelling because no reader in the
+tree opens the manifest — the collector writes it and nothing consumes it. The same file carried a
+dead binding that predates this unit — `const home = await snap({ … })`, whose value no later line reads
+(the summary works off `pages`) — and `npm run lint:web` answers it with one error and exit 1. It is removed here rather than left for the next author to meet as a pre-existing red: a
+collector that cannot be linted cleanly is a collector nobody re-runs.
+
+**Verified, not claimed.** Two arms, both against the running dev plane, both splicing the same three
+lines (the ref callback's body becomes `void node;`) and restoring from a byte capture rather than
+`git checkout`, because the fix is uncommitted work in a shared tree.
+`tmp/run/d558_arms.py` drives the witness: arm open → 2 failed / 1 passed, home charging `28/28 of home's
+card images are loaded and still invisible` and merchant charging 7/7, with the streamed search control
+green; arm shut → 3 passed; restored bytes equal capture. The merchant count is 7/7 there and 12/12 in
+the pack because the spec follows the home page's first merchant link rather than pinning a seeded slug,
+and the collector reaches the merchant the search returned — neither number is a fixture, so each carrier
+prints its own.
+`tmp/run/d558_evidence_arm.py` drives the pack: arm open → `FAIL home … artwork loaded but stayed
+invisible (28)` and `FAIL merchant … (12)`, while search and both consoles still capture; arm shut →
+5/5 captured with every residue empty. The pack then regenerated on the fixed bytes, and `01-home.png`
+now shows the artwork.
+
+**Two readings that were harness noise, not verdicts.** The first arm run reported FAIL for a reason of
+my own making: two `open()` calls, each with a 15-second settle, do not fit Playwright's 30-second
+default, and every failure text was `page.waitForTimeout: Target page, context or browser has been
+closed`. A timeout that arrives before the assertion is not evidence about the assertion, so the three
+tests now carry `test.slow()` and the red that arrives is the charge. The same file's `networkidle`
+waits never resolve against `next dev` — the HMR socket keeps the network busy — which is why `open()`
+waits on the surface's own card hook plus a deadline instead. Both traps are recorded in the spec's own
+comments, because the next author of a browser test here will reach for the same two idioms.
+
+**Left open.** With JavaScript disabled the artwork still never appears: the component's start state is
+invisible and only a script lifts it, which is the boundary STATUS §450 closed for `Reveal` in CSS and this
+unit does not close here — the demo's whole flow needs JS anyway, so it is disclosed rather than
+repaired. Task #211: the suite's `mobile` project is `devices['iPhone 13']`, which is WebKit, while
+`.github/workflows/ci.yml` installs `--with-deps chromium` and this machine's `webkit-2359` download
+times out twice — so all 12 mobile reds in `specs/consumer` read
+`browserType.launch: Executable doesn't exist`, in both environments, and the phone-size verdict had to
+come from a Chromium probe at 390×844 instead (home 28 images, 28 decoded, 0 invisible; search 8/8;
+`/m/silver-table-0147` 7/0). Task #212: that harness sets `locale: 'zh-HK'` while the page renders its
+rail labels in Simplified, which is why `vertical-slice` waits for `附近熱門` and finds nothing — that
+spec on desktop is 7 failed / 1 passed focused and 6 failed in the combined run, so its count moves and
+none of its reasons are about artwork. Task #210, from the same harness: `playwright.config.ts` and
+`lib/fixture.ts` resolve their URLs to `:3000`/`:8080`/`:8000` while the Makefile declares
+`3002`/`8090`/`8010` and `make e2e` exports none of them — CI boots its own stack on the defaults, so
+the defaults are a second copy of a coordinate the Makefile owns, and on this machine they point at
+another product's frontend. #207, #208, #203, #204, #205, #196 and #195 stand as filed.
+
+- readers: the witness green on the bytes this section describes (3 passed, desktop) and `npm run lint:web` at 0 errors · step 8 0 strict offenders on the working-copy plane · step 9 0 offenders, with no citation total quoted because that count moves with other lanes' uncommitted comments in the same tree · step 10 every committed heading still on disk, duplicate 0, uncommitted 1 (this section) · step 12 every spelled `STATUS §NN` in the tree resolves, this section's three among them · the line-ending census PASS with mixed 0, this section uniform LF like the section it follows · step 15 103 of 179 line citations still name the line they were written against, strict=none, and every MOVED and NOT-UNIQUE site lies outside this section · step 17 census-only, no `--expect`, because no fresh 18-step gate was filed in this unit: the database-backed steps were not re-run here, and the figures above come from the readers this change can actually reach

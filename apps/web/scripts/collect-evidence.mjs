@@ -45,6 +45,11 @@ const wait = (page, locator, what, timeout = 20000) =>
  * Playwright's `visible` is a layout fact, not a paint fact: a Reveal wrapper still sitting at
  * `opacity: 0` before hydration counts as visible, and a screenshot taken there shows a blank
  * section. Wait until every on-screen element that carries an inline opacity has reached 1.
+ *
+ * Its population is inline styles only, which is narrower than the key's name suggests — an artwork
+ * hidden by a Tailwind `opacity-0` *class* is not judged here. `artwork_invisible` below is the
+ * marker that reads that class, and it exists because this pack certified a whole home page of
+ * invisible card artwork as `rendered_opaque: true` (D558).
  */
 async function settled(page, timeout = 15000) {
   await page
@@ -81,6 +86,47 @@ async function brokenImages(page) {
   );
 }
 
+/**
+ * On-screen `<img>` elements that decoded but are still painted invisible.
+ *
+ * `brokenImages` catches artwork that never arrived; this catches artwork that arrived and is being
+ * hidden. The distinction matters because a reveal-on-load component can strand an image at
+ * `opacity: 0` for the life of the page: React's `onLoad` never fires for a load the browser finished
+ * before hydration attached the handler, so the element is `complete`, decoded, and invisible. Nothing
+ * else in this pack sees it — the screenshot looks plausible only because the skeleton is grey.
+ *
+ * Runs in the page, so it may reference nothing from this module.
+ */
+function invisibleArtwork() {
+  return [...document.images]
+    .filter((img) => {
+      const rect = img.getBoundingClientRect();
+      return (
+        img.complete &&
+        img.naturalWidth > 0 &&
+        rect.width > 0 &&
+        rect.height > 0 &&
+        !img.closest('[hidden],[aria-hidden="true"]') &&
+        Number.parseFloat(getComputedStyle(img).opacity) < 0.99
+      );
+    })
+    .map((img) => img.currentSrc || img.src);
+}
+
+/**
+ * A deadline, not a sleep: a fade that hydration has to start first can outlast any fixed settle, and
+ * the residue after the deadline is the finding. Polled from Node rather than `waitForFunction` so the
+ * same in-page reading decides both when to stop and what to report.
+ */
+async function stuckArtwork(page, deadlineMs = 15000) {
+  const until = Date.now() + deadlineMs;
+  for (;;) {
+    const stuck = await page.evaluate(invisibleArtwork);
+    if (stuck.length === 0 || Date.now() >= until) return stuck;
+    await page.waitForTimeout(250);
+  }
+}
+
 async function main() {
   mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch({ headless: !headed });
@@ -110,6 +156,13 @@ async function main() {
       if (entry.broken_images.length) {
         throw new Error(`rendered broken: ${entry.broken_images.join(', ')}`);
       }
+      entry.artwork_invisible = await stuckArtwork(page);
+      if (entry.artwork_invisible.length) {
+        throw new Error(
+          `artwork loaded but stayed invisible (${entry.artwork_invisible.length}): ` +
+            entry.artwork_invisible.slice(0, 3).join(', '),
+        );
+      }
     } catch (error) {
       entry.ok = false;
       entry.error = firstLine(error);
@@ -135,7 +188,7 @@ async function main() {
     return entry.markers ?? {};
   }
 
-  const home = await snap({
+  await snap({
     name: 'home',
     url: `${base}/`,
     check: async (surface) => {

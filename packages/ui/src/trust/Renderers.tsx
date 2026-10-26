@@ -390,6 +390,14 @@ export function CardMedia({
   className?: string;
 }) {
   const [loaded, setLoaded] = React.useState(false);
+  // `onLoad` only reaches a load that happens after hydration attached the handler. On a
+  // server-rendered surface the browser has usually finished the local artwork by then, and a load
+  // event that already fired never fires again — so the ref callback, which runs on every mount,
+  // reads the completion the event missed. Mirrors onLoad's success-only contract: a failed image
+  // keeps the skeleton, exactly as it did before.
+  const adopt = React.useCallback((node: HTMLImageElement | null) => {
+    if (node && node.complete && node.naturalWidth > 0) setLoaded(true);
+  }, []);
   return (
     <div
       className={cx('relative w-full overflow-hidden bg-surface-muted', className)}
@@ -399,6 +407,7 @@ export function CardMedia({
       {card.image?.url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          ref={adopt}
           src={card.image.url}
           alt={card.image.alt || card.title}
           loading="lazy"
