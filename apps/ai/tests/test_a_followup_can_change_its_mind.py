@@ -54,7 +54,10 @@ def test_a_followup_can_name_a_different_cuisine():
     before = _state(JAPANESE)
     assert ("cuisine", "japanese") in _prefs(_Merge(before)), "the fixture is not what it claims"
     after = merge_turn(before, THAI)
-    assert _prefs(after) == {("cuisine", "thai"): 1}, (
+    # D511 adds the structured `cuisine_like` companion alongside the `cuisine` string; both
+    # must carry THAI (the abandoned japanese is replaced), so the assertion names both.
+    assert _prefs(after) == {("cuisine", "thai"): 1,
+                             ("cuisine_like", '{"values": ["thai"]}'): 1}, (
         f"a follow-up naming a different cuisine left {_prefs(after)} - the user changed "
         f"their mind and was answered with what they abandoned")
 

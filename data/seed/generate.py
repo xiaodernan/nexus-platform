@@ -1052,6 +1052,10 @@ class Gen:
             attrs = {
                 "data_origin": "demo",
                 # Ambience preferences (NLU: ambience/quiet, ambience/lively)
+                # D554: the NLU emits (cuisine, vegetarian); the attribute-name gate reads
+                # `<key>_<kind>` / `<kind>_<key>`, and no such name existed - the preference
+                # was inert on the attribute path (the cuisine matcher still reads the leaf).
+                "cuisine_vegetarian": m["leaf"] == "vegetarian",
                 "quiet_ambience": m["aspect_mean"]["noise"] >= 4.2,
                 "lively_ambience": m["aspect_mean"]["noise"] < 3.0,
                 # Occasion preferences (NLU: occasion/date, occasion/group, occasion/family, occasion/business, occasion/solo)
