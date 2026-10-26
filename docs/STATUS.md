@@ -23910,11 +23910,19 @@ from the knowledge base or hands off. Six ordinary queries over the shipped buil
 served rows, 12 of them the data statement, with `outside seating near the ferry` served 8
 rows that were all data statement. Reading the gate's own tokens against 30 drawn
 data-statement chunks says why: the single token `the` passed it for 19 of the 30 and `for`
-for 17. The corpus is the other half of the answer - `the` appears in 1167 of its 2118
-chunks, while `ferry`, `seating` and `outside` appear in none. A query whose only shared
-word with a chunk is a function word was answered with that chunk, so for English queries
-the containment gate D405 built as the one honest signal was a formality - and it was a
-formality in the branch that decides whether to trust an answer.
+for 17. The corpus is the other half of the answer, and it is counted with the reader the
+gate itself uses - a WORD, not a substring: `the` sits in 791 of its 2118 chunks and `for` in
+889 (1167 for `the` read as a bare substring), while `ferry`, `seating` and `outside` sit in
+none, in either reading. A query whose only shared word with a chunk is a function word was
+answered with that chunk, so for English queries the containment gate D405 built as the one
+honest signal was a formality - and it was a
+formality in the branch that decides whether to trust an answer. Two shapes the same legs
+ruled out are recorded because each was a candidate for this unit instead: there is no
+duplicated text to dedup (2118 distinct `text` values over 2118 rows, so the boilerplate is
+the same *section* repeated per document, not the same bytes pasted twice), and a seed-side
+bound on that section could not have landed honestly - 1040 of the 2118 chunks already carry
+it, so a quality row capping one section's share would have filed the corpus as it exists
+today as a failure. That row is task #199, not this commit.
 
 **The fix.** `EN_FUNCTION_WORDS` - articles, conjunctions, prepositions, pronouns,
 auxiliaries, question words and the fillers that name no attribute - and `mentions()`
@@ -23940,7 +23948,9 @@ the last one. Whole AI suite: 7 failed, 10378 passed, 127
 skipped against the parent commit's 7, 10373, 127 - five more passing, none newly failing.
 All seven reds are `apps/ai/tests/test_the_filter_speaks_the_tags_vocabulary.py`, the
 tag-normalisation group D550 filed as another lane's uncommitted revert of
-`search/service.py`; that file carries the same uncommitted edit through this run. ruff and
+`search/service.py`; that revert is committed now (f02e223, 4877eb4), and the same file run
+with the three containment files and the two newest sibling lanes gives 120 passed, 2 skipped -
+the seven were that run's working copy, not the tree's present. ruff and
 mypy (59 source files) clean. One of my own cases went red first and stayed red until fixed:
 the vocabulary gate `test_every_test_file_uses_characters_the_product_knows` charged
 `test_rag_containment.py` for two code points (U+4F9B, U+61C9) the product's own package
