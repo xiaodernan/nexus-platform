@@ -23960,8 +23960,9 @@ demo corpus: the same six queries now serve 14 rows and 4 of them are the data s
 (where they served 25 and 12), `outside seating near the ferry` serves none where it served
 eight, and a second leg prints the content token carrying each remaining serve - `dim`/`sum`,
 `sushi`, `late`, `board`, `茶餐廳`, `適合` - and files `served rows carried by no content
-token: 0`. Over HTTP the shipped route answers 200 with 2/0/2/8/1/1 chunks for those six
-queries. The four remaining data-statement serves are honest: each one is carried by a word
+token: 0`. That reading is `fastapi`'s TestClient, which calls the ASGI app
+inside the test process - the same six counts came back over a real socket, on
+a plane holding only committed bytes, in the section that follows. The four remaining data-statement serves are honest: each one is carried by a word
 the query asked about, and what they say about the corpus is task #199, not this gate.
 
 ## 546. D553 · the clause-final negation rule was unpinned - the cue's own clause, its particles, and the one bridge verb (`apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/tests/test_clause_final.py`)
@@ -24017,3 +24018,69 @@ still holds `'{"values": ["japanese"]}'`; `json.loads` returns `{'values': ['jap
 personalization matcher's shape). `pytest tests/test_cuisine_like_is_written_by_nlu.py
 tests/test_a_refusal_is_read_once_by_both_lanes.py tests/test_clause_final.py` → **562 passed**.
 Full-suite result recorded in the run log.
+
+
+## 548. D555 - D551 said "over HTTP" for an in-process call, and the socket on a committed-only plane answers the same (`docs/STATUS.md`)
+
+**What was measured.** D551's last sentence filed `2/0/2/8/1/1` chunks for six queries under
+the words "Over HTTP", and what produced them was `fastapi`'s TestClient: the ASGI app called
+inside the test process, no socket, no shipped boot. The same six queries now go over the
+connection the product actually runs on - `uvicorn` started from the committed
+`apps/ai/start_ai.py`, listening on 127.0.0.1:8010, against the live demo database. The
+carrier had to be pinned before its numbers could mean anything, because the working copy
+holds three files another lane has not committed (`nexus_ai/nlu/lexicon.py`,
+`nexus_ai/nlu/polarity.py`, `nexus_ai/search/service.py`) - and `api/deps.py`, which every
+route of this endpoint takes its dependencies from, imports the third of them, even though the
+chunk query itself is built one module over in `search/sql.py`. So the server runs from a plane
+made by `git archive HEAD` outside the repo root. On Windows that archive converts the LF blobs
+to CRLF on the way out, so every "plane == HEAD" check here compares normalised bytes, and the
+unnormalised comparison is what first made the plane look different from the commit it was
+built from. The identity is printed by the boot itself instead of asserted by the note: it
+resolves `nexus_ai.search.tokens`, names the file it came from and prints the git blob hash of
+its normalised bytes -
+`.../head_ai_http/tree/apps/ai/nexus_ai/search/tokens.py`, blob
+`9275be686e4645f5e9d3366fa95fc60e9041984a`, which is exactly what
+`git rev-parse HEAD:apps/ai/nexus_ai/search/tokens.py` answers. Then: HTTP 200 with
+2/0/2/8/1/1 chunks, 14 served, 4 of them the data statement, `outside seating near the ferry`
+serving none, and no count moved against the in-process reading; the refusal shape survives the
+trip too, `the` alone answering 200 with 0 chunks. The server's log carries no error line for
+the whole leg.
+
+Two readings came out other than the note expected them, and both are filed rather than
+smoothed over. The first is a probe I wrote with its conclusion already in it: a `near the for`
+query was meant to show that `near` stays out of the filter - D551 kept it there on purpose,
+because it carries a request - and therefore is not the refusal shape. It served 0 chunks
+anyway. Asking the corpus with the gate's own reader, `mentions()` over the demo tenant's 2118
+chunks, says why: `near` appears in 0 of them, as do `ferry`, `seating` and `outside`, while
+after the filter `the` and `for` mention 0 (where D551 measured them passing for 791 and 889),
+`dim` reaches 8 and `sushi` 28. So that zero is a word the corpus never carries, not a filter
+refusing, and the sentence in the scratch log was an expectation until a count replaced it.
+
+The second is the suite. Whole AI suite off the working copy: 2 failed, 10421 passed, 127
+skipped, against the 7, 10378, 127 D551 recorded - the seven tag-normalisation reds went with
+the revert that is now committed. Run the two survivors against the committed plane and they
+split: `apps/ai/tests/test_a_followup_can_change_its_mind.py::test_a_followup_can_name_a_different_cuisine`
+is red at HEAD too, with its own sentence intact - "a follow-up naming a different cuisine left
+`{('cuisine', 'thai'): 1, ('cuisine_like', '{"values": ["thai"]}'): 1}` - the user changed
+their mind and was answered with what they abandoned" - while
+`test_the_typed_preference_speaks_the_corpus_spelling.py::test_every_preference_the_nlu_emits_names_an_attribute_the_seed_writes[cuisine-vegetarian]`
+is green there (28 passed). The second belongs to the lane's uncommitted bytes and is not mine
+to judge; the first ships red at HEAD, in the cuisine-preference lane D554 wrote two sections
+ago, and it is the next unit - a shipped test that fails is a claim the ledger publishes while
+the product contradicts it.
+
+**The correction.** D551's sentence now names the reading it ran and points at this one for
+the socket: no number in it changed, only the carrier's name. The mis-naming is the reason the
+leg was needed at all - "over HTTP" is the shape a reader cannot check, because two different
+transports answer to it and one of them never leaves the process.
+
+**Verified, not claimed.** The numbers reader ran on a docs-only plane outside the repo root,
+with its expectation re-derived by the gate's own counting command over the fresh-gate log
+(`grep -ac '^  PASS'`, which answers 217): the committed ledger passes, the ledger carrying
+this section passes, and the same plane asked for `assertions=218` reddens on a line inside
+D551's section - the leg that shows this section added no competing claim, since the newest one
+the reader can still find is that section's. `check_status_citations.mjs` passes. What is not
+claimed here: the 18-step fresh gate was not re-run; neither red above is fixed here;
+`check_ledger_sections.mjs` still has #196's duplicated `## 540. D546` to report and this unit
+did not touch it; and the process answering :8010 serves a scratch plane outside the repo root,
+so it is a measurement plane and not the plane the demo runs from.
