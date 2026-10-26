@@ -23580,7 +23580,7 @@ so they exclude only what their spelling matches in an offering's name (6, 33 an
 merchants). And the offline lane never reads `avoid` at all: `_filter_static` filters on
 category, district and max_price and nothing else, so the fixture-backed backend answers a
 different question about the same filter than the live one - the D488 shape, one lane over.
-## 540. D546 - every refusal the lane reads reaches the filter, and the filter reads the allergen column (`apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/sql.py`, `apps/ai/tests/test_every_refusal_the_lane_reads_reaches_the_avoid_filter.py`)
+## 552. D546 - every refusal the lane reads reaches the filter, and the filter reads the allergen column (`apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/sql.py`, `apps/ai/tests/test_every_refusal_the_lane_reads_reaches_the_avoid_filter.py`)
 
 **What was measured.** `plan_from_intent` mapped THREE keys into `plan.avoid` -
 `cuisine_avoid`, plus the caller's own `avoid` / `exclude` - out of the FIVE the refusal lane
@@ -24326,5 +24326,17 @@ that show their parallel iteration on the same quality.sql spelling — all drop
 scratch directory's cleanup took this run's detailed log, leaving the mid-run check's captured numbers
 as the record. The re-aims the run owed were applied and landed separately (D365's strict-clean state
 predates it and holds).
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+
+## 553. the duplicated S540 fork repaired by renumbering the later copy (D560)
+
+Two commits landed the request-pipeline refusal unit's section under the same number — the same
+double-landing shape this lane's own twin D366 commits printed one section earlier — and the sections
+reader stopped the gate on the duplicate. The repair renumbers the later copy to 552 and leaves the
+first as the section the number was filed under; no citations pointed at the later copy, so nothing
+else moves. The attribution: the duplicated section is the other stream's landing, and the repair is
+the mechanical renumber the discovering lane performs with the owner named here.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
