@@ -24101,3 +24101,128 @@ even ask whether it still holds. That is D551's carrier sentence again in a diff
 a claim whose basis is the thing a reader needs in order to re-run it - and the door that would
 catch the class (a ledger claim about a test's verdict with no ref in the same sentence) is
 filed as the next unit rather than written here.
+
+## 549. D556 · the runbook told the next agent to `docker exec` a container that had exited 29 days earlier, and its `wc -l` answered `0` like a measurement (`docs/DEPLOYMENT.md`)
+
+**What was measured.** `docs/DEPLOYMENT.md` section 6 is the checklist a new agent runs before believing anything
+else in the document. Its container names were the defect. It opened by naming `nexus-platform-testpg` as "the
+instance that holds `nexus`, `nexus_test` and `nexus_funnel_probe` and publishes the documented `127.0.0.1:5433`",
+and told the reader that `nexus-platform-postgres` — the name `infra/docker-compose.yml` actually declares — "is not
+running here", so "use the name in this checklist … not the compose name". On 2026-10-26 both halves are inverted:
+`nexus-platform-postgres` is running, healthy, labelled with the config file this repo ships, and is the container
+holding `127.0.0.1:5433 -> 5432`; `nexus-platform-testpg` is `Exited (137)` since `2026-09-27T14:54:08Z`, carries no
+compose label at all, and still has `127.0.0.1:5433` in its `HostConfig.PortBindings`, so `docker start` on it now
+collides with the live one. The command the section was built around is `psql -AtU postgres -d nexus -c "\dt" | wc -l`.
+Against an exited container `docker exec` writes its reason to stderr and puts nothing on stdout, `wc -l` counts that
+nothing, and the pipeline exits 0 — so the runbook's headline measurement printed a clean `0`. That is not a failed
+command a reader can dismiss; it is an answer that reads as "this schema has no tables", which is the shape of a real
+finding and is why the leg runs HEAD's own line rather than describing it: rc 0, stdout `'0'`, stderr `Error response
+from daemon: container 1300aea6a292… is not running`. The failure was real and printed — on the one channel a
+`| wc -l` recipe never reads.
+
+**Five more claims in the same section, each checked against the machine that day.** (i) The block's cache line was
+`docker exec nexus-redis redis-cli ping  # PONG`. `nexus-redis` belongs to another product: its compose label names
+`D:\内容创作平台\infra\docker-compose.yml`, its image is `redis:7-alpine`, and it publishes no host port at all — and
+it answers `PONG`, so that line passes forever without touching this project's cache, which is `nexus-platform-redis`
+on 6380. (ii) "this machine has five Postgres containers" — the census is 7 containers on a Postgres image, 5 names
+beginning `nexus`, 3 both, and the three numbers are now commands in the block rather than a sentence. (iii)
+"`nexus-postgres` publishes `:55433`" — it publishes `0.0.0.0:55100 -> 5432`, not loopback; it does still reject
+`-U postgres` (its superuser is `nexus`), and the cheap-looking substitute lies: `pg_isready -U postgres` against
+that container answers "accepting connections" although the role does not exist, so only `psql` proves auth. (iv)
+section 2 certified the in-compose DNS with "verified with a psql client on network `nexus_default`" — `nexus_default`
+is the other product's network and proves nothing about this stack; the claim is now re-verified from inside our own
+containers on `nexus-platform_default` (`psql -h postgres` answers `current_database() = nexus` over `172.24.0.3`,
+`redis-cli -h redis` answers `PONG`), dated. (v) the table tally "58 = 56 V*.sql tables + 2" — the live plane answers
+59 and `infra/db/migrations/V*.sql` declares 57; the same two extra ledgers (`schema_migrations`,
+`flyway_schema_history`) but both digits stale, so the block now derives the declared count from the migration files
+and the live count from the catalog and states the arithmetic `59 = 57 + 2` in the same fenced block, where the next
+agent matches machine against machine instead of memory against prose.
+
+**The grant list was a third number again, and the quoted gate line had never printed.** section 5 said of
+`nexus_ai`: "Measured: 6 read-only + 13 read-write = 19 reachable tables". `information_schema.table_privileges` on
+the live `nexus` answers 11 SELECT-only + 13 read-write + 1 append-only (`events`, INSERT with no SELECT) = 25
+reachable; `infra/postgres/init/00_roles.sql` applied to a from-scratch database answers 11 + 14 + 1 = 26. Neither
+plane says 19, and `docs/API_CONTRACT.md` section 0 — the list both of those are supposed to implement, and which
+says "verified against the live DB — 23 tables, nothing wider" — is a third answer. The one-table difference between
+the two planes is `coupons`, which the contract and the roles file's own read-write vocabulary both name and which
+carries no grant on the live database; section 5 now states both counts and says which plane each belongs to instead
+of publishing one of them as *the* measurement. Separately, section 5 quoted the fresh gate as
+`RESULT: PASS — 153 … passed against a from-scratch schema (tables=57, migrations=4)`. No run of
+`scripts/db_gate_fresh.sh` prints that sentence: step 5 prints `-> %s quality checks passed against a from-scratch
+schema (tables=%s, migrations=%s)` and only the eighteenth step's ending prints `RESULT: PASS — %s quality checks on
+a from-scratch schema (tables=%s, migrations=%s), plus the …` — the runbook had pasted the prefix of one line onto
+the wording of another, so a reader checking the doc against a log could not find the log line, whatever number the
+gate actually printed. The quote above is elided on purpose rather than written out with its stale count: this
+ledger's own newest numeric claim is read by `scripts/check_ledger_numbers.mjs`, which takes the newest SECTION
+mentioning a noun and refuses to judge it when that section names two values, so a section about a stale number that
+repeats it verbatim becomes the newest claim of that number — measured both ways in a plane outside the repository
+root: with the elision the reader answers `quality checks: newest 217 … vs expected 217 — MATCHED`, and with the
+verbatim quote restored it answers `newest section names 2 values {217, 153} — AMBIGUOUS, not judged` and exits 2.
+(The leg's first attempt reported the same rc for both variants and had done neither: it crashed on a missing
+sibling module, and a reader that dies also has an exit code — so it now prints CRASHED when no `RESULT:` line came
+back.) The section now quotes both
+printf shapes, names which step owns each, carries the reading measured on 2026-10-26 (217 quality checks, 58 tables,
+10 migrations), and says plainly that the 18-step run on this machine did not reach its own ending.
+One credential-shaped thing also left the page: section 6's block used to restate the AI role's DSN with its password
+inline, next to the comment "(must fail on carts/users writes)". The claim is still there and is now testable without
+a secret — `has_table_privilege('nexus_ai','carts','INSERT')` and the same for `users`, plus
+`has_schema_privilege(…,'public','CREATE')` and `has_database_privilege(…, 'CREATE')`, all four reading `f`.
+
+**The fix.** section 6 attributes every container by the label `com.docker.compose.project.config_files` read off
+`docker inspect`, one bullet per name, with the running one named once at the top; the block's commands all target
+the live names; the three census counts, the two table counts and the grant split are printed by commands inside the
+block, each annotated with its own number; and section 2's DNS claim names the network it was checked from. The leg
+that judges this (`tmp/run/d556_checklist_leg.py`) scrapes its expectations out of the comments it is testing, so it
+cannot pass by re-typing what I wrote. Its general rule is the part that outlives this section: **a command whose
+whole stdout is one integer must carry that integer in its own trailing comment** — an annotation whose number moved
+fails, and an annotation that says nothing fails, which is what turns a runbook line from a description into a
+measurement with a named carrier. The splitter that feeds bash is quote-aware and joins backslash continuations,
+because the block's SQL is written across several lines inside one quoted argument; it also discards `#`-to-end-of-line
+outside quotes, which is the fix for an apostrophe in prose ("this project's container") opening a phantom quote that
+swallowed three following commands.
+
+**Verified, not claimed.** `--text docs/DEPLOYMENT.md`: 11 commands, every one rc 0, and the numbers come back —
+7/5/3 containers, 59 tables today, 57 declared by `V*.sql`, `59 = 57 + 2`, `chunks_embedding_hnsw` from the index
+query, `11|13|1|25` from the catalog, PONG from the container our compose file created; a final clause refuses any
+`docker exec`/`docker inspect` whose target label does not name this repo's compose file. `--rev HEAD`: the shipped
+section's own `\dt | wc -l` line yields the clean `0` filed above. `tmp/run/d556_arms.py` mutates that rule three
+ways and every arm is MATCHED: `# 5 carry a nexus name` → `# 4` answers *"prints 5 but its comment says 4"*, deleting
+the number from the image census answers *"prints 7 and its comment states no number"*, and `# 59 tables today` → 60
+answers *"prints 59 but its comment says 60"* — so the rule is not a substring accident and is not vacuous.
+`tmp/run/d556_grants_leg.py` re-derives the grant story on a scratch database (`CREATE DATABASE … TEMPLATE
+template0` on the same container, shipped migrations and roles applied into it: `tables=58, migrations=10`) and
+asserts the prose's exact shape: live `11|13|1|25` with `coupons` SELECT `f`, scratch `11|14|1|26` with `coupons` `t`,
+the extra table landing in the read-write bucket, and `f|f|f|f` for all four promised denials on **both** planes, so
+repairing a runbook could not quietly soften a security claim; the scratch database is dropped in a `finally`. The
+fresh-database gate (`tmp/run/d556_fresh_gate2.txt`) ran steps 1–6 green on a from-scratch database and stopped at
+step 7 with rc 2, the first attempt (`d556_fresh_gate.txt`) having died inside step 6 with `ERROR: no
+/d/获客平台/data/seed/out/00_truncate.sql` — mtimes put that file's write at 22:28:30 against the step's 22:28:06
+failure, i.e. a concurrent `generate.py` emptied and refilled the one shared generated directory under a running
+gate; recorded as task #205, not repaired here.
+
+**One red in that run was mine, and it was 31 of the 35 reasons.** Step 7 refused to check the committed plane
+because its own run and its control both came back rc 1. The obvious reading — the three AI-lane files this worktree
+carries uncommitted — was wrong, and I nearly wrote it into section 5; asking the reader instead printed 35 reasons,
+of which 31 named `tmp/_head_check/…` (`node scripts/check_jsonb_reads.mjs 2>&1 | grep -c '_head_check'` → 31, the
+complement → 4): a 914-file `git archive` plane a previous window left inside the repository root, whose duplicate
+`CatalogController.java` / `ReviewRepository.java` / `CatalogRepository.java` made the reader's basename resolution
+ambiguous, exactly the trap task #124 filed. Moving the plane out to a sibling of the repo root left 8 reasons, saved
+as `tmp/run/d556_jsonb_after.txt`: 7 false sites, every one a `data/seed/generate.py:NNN` answer-site whose line has
+since moved (`tenants.config.currency_default:979` among them), plus one undeclared read — the AI lane reads
+`offerings.attributes` key `allergens` in `apps/ai/nexus_ai/search/service.py` and `sql.py` and `data/seed/quality.sql`
+declares no answer for it. The 4 that did not name the plane grew into 8 because a cite that resolves is a cite the
+reader can then judge line by line: the `site-file-ambiguous` class stopped at the ambiguity, and past it the same
+sites read as false. The lesson is the one D556
+keeps hitting from both directions: a scratch plane under the repo root is not invisible, it is a participant in every
+census that walks the tree, and it can redden a gate that is otherwise reporting the truth.
+
+**Left open.** Task #203: `coupons` is named by the contract and by `00_roles.sql`'s read-write vocabulary, is granted
+on a from-scratch plane and is not granted on the live one — and that same file's `(d)` "NOT granted, on purpose"
+comment still names `coupons`, `categories` and `availability_slots`, while the vocabularies above it grant
+`categories` and `availability_slots` SELECT and `coupons` read-write. Deciding that is a grant decision, not a doc
+edit, and this unit deliberately did not re-grant the shared `nexus`. Task #204: `docs/ENVIRONMENT_REPORT.md` cites a
+"`DEPLOYMENT.md` §6.2" that does not exist and repeats a grant list the schema outgrew. Task #205: `data/seed/out/` is
+one shared generated directory, so `seed_truncate_probe.sh` can read a `00_truncate.sql` that a concurrent generation
+pass has just removed. Task #195: step 7's 7 remaining false sites and the undeclared `allergens` read. And the
+runbook still cannot be walked to a green 18-step gate in this worktree — which section 5 now says out loud instead of
+quoting a sentence the script never prints.
