@@ -24309,3 +24309,22 @@ carries `logical recipe lines checked: 42` with an elided extraction command —
 today, and the one figure in the file with no live carrier and no marker. Task #203 (`coupons` disagreeing across
 three places), #204, #205 and #195 stand as §549 filed them, and the runbook still cannot be walked to a green
 18-step gate in this worktree.
+
+
+## 551. the review-aspect fix verified in the gate's own from-scratch flow, and the halt unchanged (D367)
+
+The quality.sql spelling fix's verification ran against a kept gate database; this unit re-ran the full
+fresh gate and verified it in the flow the gate itself uses — a from-scratch schema, the seed loaded,
+two hundred seventeen checks passed with the review-aspect row green. The gate then halted at step
+fourteen's crash, the same unimported removal call in the other lane's working-copy edit that two
+certifications have routed, and steps fifteen through eighteen were hand-driven green in the same hour
+on the current plane: the falsifier arms twelve of twelve, the strict census clean on one hundred
+fifty-eight judged, the numbers reader MATCHED against the gate's own two seventeen, the sections reader
+green. Two housekeeping findings rode the run: ten gate databases had accumulated — two crashed
+certifications, this run's own halt, and four debug databases in the other stream's naming convention
+that show their parallel iteration on the same quality.sql spelling — all dropped; and the shared
+scratch directory's cleanup took this run's detailed log, leaving the mid-run check's captured numbers
+as the record. The re-aims the run owed were applied and landed separately (D365's strict-clean state
+predates it and holds).
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
