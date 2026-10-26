@@ -24226,3 +24226,86 @@ one shared generated directory, so `seed_truncate_probe.sh` can read a `00_trunc
 pass has just removed. Task #195: step 7's 7 remaining false sites and the undeclared `allergens` read. And the
 runbook still cannot be walked to a green 18-step gate in this worktree — which section 5 now says out loud instead of
 quoting a sentence the script never prints.
+
+## 550. D557 · the repaired runbook went red on a number nobody in this repo owns, and the doc's own reset recipe was aiming `docker rm -f` at another product's container (`docs/DEPLOYMENT.md`, `docs/ENVIRONMENT_REPORT.md`, `Makefile`)
+
+**What was measured.** §549 shipped a rule — *a command whose whole stdout is one integer must carry that integer in
+its own trailing comment* — and the legs built to enforce it. Re-running leg 1 on the repaired
+`docs/DEPLOYMENT.md` section 6 that same evening went red on the line the rule was supposed to protect:
+`docker ps -a --format '{{.Image}}' | grep -ciE 'postgres|pgvector'` printed `6` against a comment saying `7`. The
+measurement is correct and the comment is correct, at different times of the same day: the census is this machine's
+container set, which other products change at will, and between the morning and the afternoon of 2026-10-26 one of
+their containers left, with nothing in this repo touched. Refreshing the comment to `6` would rot tomorrow, and
+refusing to annotate it would throw away §549's rule for every line in the block. So the rule needed a boundary, not
+a number: it binds integers the repo owns, and the exemption has to be *named* rather than assumed.
+The same pass found the second, worse thing. `docs/ENVIRONMENT_REPORT.md` section 8 carried a documented reset —
+`docker rm -f` + `docker volume rm` — against `nexus-postgres`, a name this repo released to `nexus-platform-postgres`
+in `599cfce` and that a foreign `docker run` took on 2026-10-16. A stale name in a runbook line mis-instructs a
+reader; a stale name in a documented destroy command deletes somebody else's data. The control leg reads that
+shipped text and never runs it, and both new legs are read-only by construction: they classify commands and refuse
+to execute the state-changing ones.
+
+**The rule, in the two halves §549 left missing.** (i) *Attribution is keyed on effect, not on the word `rm`.* A
+read may name any container — section 6's block now has seven of them, because the contrast between what our plane
+holds and what the container wearing our September name holds **is** the measurement — and its annotation must say
+whose it is. A command that changes state may name only a container `infra/docker-compose.yml` declares, identity
+read from `com.docker.compose.project.config_files` plus the five-table discriminator
+`('merchants','chunks','tenants','offerings','facts')`. (ii) *`live-world count` is the one admissible escape from
+the integer rule, and it is gated.* The marker is refused on any command that touches a repo-owned artifact (any of
+`infra/ data/ docs/ scripts/ apps/ Makefile` in its text, or a container whose compose label is ours), and it is
+refused unless the block itself carries a standalone comment line naming the class and the command shape it covers —
+otherwise a two-word comment becomes a way to stop checking. Section 6 now opens its block with that explanation and
+marks exactly the three `docker ps` censuses with it; every other integer in the block still carries its own value.
+
+**The executable surface under the same rule, and where the Makefile never had the defect.** `docs/ENVIRONMENT_REPORT.md`
+section 8's rot bullet now says why `make db-reset` survived the rename that poisoned the documented recipe: it is
+`docker rm -f $(PG_CONTAINER)` with `PG_CONTAINER ?= nexus-platform-postgres` declared at the top of the file, so
+`599cfce`'s rename reached one line and every recipe followed it. A literal name in prose and a variable in a recipe
+are not the same kind of statement — only one of them is a copy of something that already moved. Leg 2 reads the
+Makefile's own write surface the way it reads the runbook: it expands each recipe's variables from the file's bytes,
+classifies each line read-only or state-changing without running it, and requires every name a *write* resolves to
+carry this repo's compose label and every volume it destroys to appear as a `name:` in `infra/docker-compose.yml`.
+The shipped Makefile answers clean: three writes resolving to `nexus-platform-postgres`, one volume `nexus_pgdata`
+the compose file pins, one compose-scoped write carrying `-f infra/docker-compose.yml`. Section 3's make row got the
+same treatment as its prose cousins: `All 42 logical recipe lines … pass bash -n` was a figure with no carrier, so
+the row now prints both ends of the subtraction — `**47**` tab-led physical lines and `**9**` trailing-backslash
+continuations — and states `**38**` as what make's own rules derive, all 38 parsed. Extracting that clause needed
+make's `$$` → `$` translation first: two of the three health-check loops failed `bash -n` on `i=$$((i+1))`, which is
+charging the document with a syntax error make would never produce.
+
+**One more thing the live plane said while being re-measured.** Its `chunks` HNSW index and its `facts_subject_id_idx`
+are live, and `facts_subject_id_idx` is V10's — while `schema_migrations` holds `0` V10 rows and `flyway_schema_history`
+holds `0` V10 rows. The plane is one migration ahead of both of its own ledgers, which is disclosed in section 8
+rather than repaired: reconciling it means deciding which ledger is authoritative on a shared container other lanes
+are writing to.
+
+**Verified, not claimed.** `tmp/run/d557_checklist_leg.py --text docs/DEPLOYMENT.md`: 19 commands ran, and the owned
+integers answered their own comments — 59 tables, 57 declared by `V*.sql`, `48|5` for the foreign database's
+table-name overlap, `11|13|1|25` for the AI role's grants, `0/5/5` for the five names across the three databases,
+config `56379` against live `[]` for the shared cache's port, PONG from the container our compose file created;
+`0` state-changing commands in the block and 7 reads that name a foreign container and say whose.
+`tmp/run/d557_env_leg.py --text docs/ENVIRONMENT_REPORT.md`: `528/5546/11000/2118` seeded rows, the rename dated
+`599cfce` 2026-09-23 with the compose diff carrying it, both caches answering PONG, `nexus-postgres` still rejecting
+`-U postgres`, 25 distinct `nexus_ai`-reachable tables, `data/seed/out` → 23 and `infra/db/seed` → 1, 47 − 9 = 38
+derived and all 38 parsing, and the write surface clean. Reverse controls, run on the shipped bytes: leg 1 `--rev
+HEAD` PASSes by naming that a claimed table was measured where it is not, a configured port was called absent, and a
+subsection shape the document does not use was cited; leg 2 `--rev e893f48` PASSes by naming the documented
+`docker rm -f` aimed at another product's container, the ping answered for the wrong cache, the psql row on the same
+dead name, and the recipe-line figure carried in prose alone. `tmp/run/d557_arms.py` — 13 arms, 13 matched, both
+green controls included: a1 `# 59 tables today` → 60 answers *prints 59 but its comment says 60*; a2 deletes the
+digit and answers *states no number*; a3 puts `live-world count` on that owned command and is refused (*reads an
+artifact this repo declares*); a4 de-phrases the block's class explanation and the three marked censuses lose their
+license (*no standalone comment in the block names the class*); a5 plants a foreign-name `docker rm -f` and gets both
+the charge and `-- NOT EXECUTED (state-changing)`; a6 is the other side of the rule — the same verb against **our**
+container is refused from execution and **not** charged; b1 turns the last seeded-row digit and b2 the physical-line
+carrier both redden against their carriers; b4 plants the destroy into section 8's own fence and the leg files it
+without running it; b3 shows the `bash -n` clause can fire at all (clean `[]`, planted one `echo` line); c1 aims the
+write-surface clause at the Makefile in memory and gets `problems=[]` clean, the stale default `nexus-postgres`
+named, and `nexus-pgdata` (one hyphen from the pinned name) refused as a volume no `name:` declares.
+
+**Left open.** Task #207: the live plane runs V10 while neither ledger records it. Task #208: `data/seed/out`'s 23
+files and `infra/db/seed`'s 1 are read by leg 2, but `docs/ENVIRONMENT_REPORT.md` section 7's dated transcript still
+carries `logical recipe lines checked: 42` with an elided extraction command — correct for 2026-09-22, unverifiable
+today, and the one figure in the file with no live carrier and no marker. Task #203 (`coupons` disagreeing across
+three places), #204, #205 and #195 stand as §549 filed them, and the runbook still cannot be walked to a green
+18-step gate in this worktree.

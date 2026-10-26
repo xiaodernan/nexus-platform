@@ -58,9 +58,9 @@ gcloud: absent
 
 | Missing | Consequence / decision taken |
 |---|---|
-| **No `psql` client on the host** | All SQL runs **inside** the container: `docker exec -i nexus-postgres psql -v ON_ERROR_STOP=1 -U postgres -d nexus -f -`. `make db-migrate`/`db-reset`/`db-verify` and `scripts/db_apply_migrations.sh` are built around `docker exec`, and CRLF is stripped with `sed 's/\r$//'` before piping (Windows checkout safety). |
-| **No `redis-cli` on the host** | `docker exec nexus-redis redis-cli ping` for checks; host-side reachability was proven with a raw socket from Python instead (see §7). |
-| **No GNU `make` reliably on the PATH** (two mid-session invocations did reach a GNU-make-compatible binary and executed recipes; it is absent at end of session — do not assume it exists) | The `Makefile` is still the canonical, reviewable command surface (per the M0 deliverable) but cannot be executed on this box. Mitigations applied: `SHELL := /usr/bin/env bash`, `.ONESHELL:`, no bash-4-only syntax, every recipe is a single copy-pasteable bash command, so `make x` ≡ running `x`'s body in Git Bash. All 42 logical recipe lines were extracted with make's own tab/continuation rules and pass **`bash -n`** after variable expansion (`.ONESHELL` semantics), and the data-path bodies (`infra-up`, `db-migrate`, `seed`, `db-reset` steps, `status`, `ps`) were additionally executed verbatim (§7). To use the Makefile: `winget install GnuWin32.Make` or `scoop install make` (needs `grep`/`awk`/`sed`, all already in Git Bash). |
+| **No `psql` client on the host** | All SQL runs **inside** the container: `docker exec -i nexus-platform-postgres psql -v ON_ERROR_STOP=1 -U postgres -d nexus -f -`. That container name is a correction, not a preference: when this line was written the compose file declared `container_name: nexus-postgres` and the command was right; commit `599cfce` (2026-09-23) renamed the service to `nexus-platform-postgres`, and a foreign `docker run` took the freed name on 2026-10-16. Left untouched, the command above now opens **another product's** database with a superuser that does not exist in it — measured 2026-10-26 as `FATAL: role "postgres" does not exist`. It fails loudly, which is more than the same mis-naming did in `docs/DEPLOYMENT.md` §6, where a `| wc -l` swallowed the reason and printed a clean `0`. `make db-migrate`/`db-reset`/`db-verify` and `scripts/db_apply_migrations.sh` are built around `docker exec`, and CRLF is stripped with `sed 's/\r$//'` before piping (Windows checkout safety). |
+| **No `redis-cli` on the host** | `docker exec nexus-platform-redis redis-cli ping` for checks (the bare `nexus-redis` this row used to name is a *different product's* cache and answers `PONG` just the same — see `docs/DEPLOYMENT.md` §6 for how the two are told apart). Host-side reachability was proven with a raw socket from Python instead (see §7). |
+| **No GNU `make` reliably on the PATH** (two mid-session invocations did reach a GNU-make-compatible binary and executed recipes; it is absent at end of session — do not assume it exists) | The `Makefile` is still the canonical, reviewable command surface (per the M0 deliverable) but cannot be executed on this box. Mitigations applied: `SHELL := /usr/bin/env bash`, `.ONESHELL:`, no bash-4-only syntax, every recipe is a single copy-pasteable bash command, so `make x` ≡ running `x`'s body in Git Bash. Every recipe line is now counted on the machine instead of remembered in this row: `awk 'index($0,"\t")==1{c++} END{print c+0}' Makefile` prints **47** tab-led physical lines, `awk 'index($0,"\t")==1 && substr($0,length($0))=="\\"{c++} END{print c+0}' Makefile` prints **9** of them continuing onto the next, so the file is **38** logical recipe lines as measured 2026-10-26 — the **42** this row carried was the same count on 2026-09-22, and the two figures move apart because recipes have since been split across continuations, which raises the physical count while lowering the logical one. All 38 were extracted with make's own tab/continuation rules and pass **`bash -n`** after variable expansion (`.ONESHELL` semantics, re-run 2026-10-26), and the data-path bodies (`infra-up`, `db-migrate`, `seed`, `db-reset` steps, `status`, `ps`) were additionally executed verbatim (§7). To use the Makefile: `winget install GnuWin32.Make` or `scoop install make` (needs `grep`/`awk`/`sed`, all already in Git Bash). |
 | **No `pnpm`** (matches D1 §"npm workspaces") | `dev-web`/`test` use `npm run` / `npx`; no `packageManager: pnpm` pin may be introduced without breaking this machine. |
 | **No `gradle`** | Platform build is Maven (D1), verified `mvn 3.9.15` + Java 25. |
 | **No OpenSearch/Elasticsearch service for NEXUS, and no LLM/`docker-compose full` yet** | Phase 1 search is Postgres-only (tsvector + pg_trgm + pgvector + bbox) exactly as D3 states. A foreign project's Elasticsearch 8.16.4 (`specproof-elasticsearch`) owns host `9200` and answers `401 missing authentication credentials` — NEXUS must **not** assume it; if we ever enable a search engine, it needs a dedicated container on a free port (see §4). |
@@ -95,20 +95,36 @@ These were **found**, not assumed, and none was silently "fixed" by granting ext
    `V2__integrity.sql` (docs pass, additive constraints) also applies cleanly in order.
 2. `docs/DATABASE.md` §9 flags "GAP: V1 creates no roles and no GRANT/REVOKE — the split is only a convention" and
    allows either a `V2__roles_grants.sql` or an `infra/db` bootstrap. I implemented the bootstrap
-   (`infra/postgres/init/00_roles.sql`, re-applied after migrations). The gap is now closed — DATABASE.md should be
-   updated to point at it, and the lead should pick whether the schema owner stays `postgres` or becomes `nexus_app`
-   (both paths are documented in DEPLOYMENT.md §6.2; default privileges were made **fail-closed for `nexus_ai`**).
-3. **`nexus_ai` cannot serve three canonical tools as specified.** API_CONTRACT §0 grants no access to
-   `tenants`, `user_preferences` or `events`, so `get_user_preferences` / `set_user_preference` / `record_event` and any
-   tenant-slug resolution will hit `permission denied` under the AI role (verified: `nexus_ai` → `ERROR: permission
-   denied for table carts`, and it does hold `DELETE,INSERT,SELECT,UPDATE` on `chunks`). Two options: route those tools
-   through platform HTTP (my assumption), or amend §0 to add `SELECT ON tenants`, `SELECT/INSERT/UPDATE ON
-   user_preferences`, `INSERT ON events`. Needs a decision before M3.
+   (`infra/postgres/init/00_roles.sql`, re-applied after migrations). Both follow-ups this row asked for have since
+   happened, and re-checking them is cheap: `docs/DATABASE.md` §9 no longer carries the GAP flag and names
+   `infra/postgres/init/00_roles.sql` as the thing that closes it, and the schema owner has been picked —
+   `postgres` applies migrations and owns the schema, `nexus_app` holds `USAGE` with no `CREATE` and is never a
+   migration role (D30, D32), recorded in `docs/DEPLOYMENT.md` section 8 item 2, not in a "§6.2": this row cited
+   `DEPLOYMENT.md §6.2` since 2026-09-22, and DEPLOYMENT's §6 is a single checklist with no numbered subsections,
+   so the address resolved nowhere (D557 re-aims it; default privileges were made **fail-closed for `nexus_ai`**).
+3. **`nexus_ai` cannot serve three canonical tools as specified.** ~~API_CONTRACT §0 grants no access to
+   `tenants`, `user_preferences` or `events`~~ — **answered on the live plane 2026-10-26, and from the shipped file
+   rather than by drift**: `infra/postgres/init/00_roles.sql`'s read-only vocabulary contains `tenants` and
+   `user_preferences`, its append-only clause grants `INSERT ON TABLE events` plus `USAGE, SELECT` on
+   `events_id_seq`, and `information_schema.table_privileges` on the live `nexus` answers exactly that
+   (`tenants|SELECT`, `user_preferences|SELECT`, `events|INSERT`, and `external_principals|SELECT` besides). So the
+   permission half of this observation is closed and no decision is outstanding. Two things it got right are worth
+   keeping in view: `set_user_preference` stays platform-routed *by design* — D19 made `user_preferences`
+   read-only for the AI role so that one actor owns one table (`/api/v1/me/preferences`) — and `record_event`'s
+   `INSERT`-without-`SELECT` still rejects `INSERT … RETURNING`, which is why the event writer mints its own id.
+   The live reason none of the three can serve anything today is one layer up: `GET /ai/v1/tools` reports
+   `implemented=False` / `registry_status="not_built"` for all of them (`apps/ai/nexus_ai/api/routes_system.py`),
+   so there is no dispatch to grant past.
 4. `data/seed/generate.py` + `seed_pools.py` (data agent, in progress) emit `data/seed/seed.sql`, which `make seed`
    does **not** apply (it only walks `infra/db/seed/*.sql`, currently just the tenant). A loading hook that already
    works: `bash scripts/db_apply_migrations.sh --file data/seed/seed.sql` (verified with `--file
    infra/db/seed/00_tenant.sql`). Decide in M1 whether the dataset becomes `infra/db/seed/10_demo.sql` (then
-   `make seed` covers it) or gets its own `make seed-demo` target.
+   `make seed` covers it) or gets its own `make seed-demo` target. **How it resolved (re-checked 2026-10-26):**
+   neither option, and `data/seed/seed.sql` never existed — the generator writes a numbered directory
+   (`ls data/seed/out/*.sql | wc -l` → 23 today) and `data/seed/load.sh` applies it. `make seed` still walks only
+   `infra/db/seed/*.sql` (`ls infra/db/seed/*.sql | wc -l` → 1, the tenant), while that target's own help line
+   promised "tenant hong-kong + demo fixtures" — the same defect one size smaller, and D557 corrected the line to
+   name `data/seed/load.sh`.
 5. **A privilege-leak bug I introduced and then fixed (measured, not hypothetical).** The first version of
    `infra/postgres/init/00_roles.sql` contained `ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT
    SELECT ON TABLES TO nexus_ai`. Because initdb scripts run **before** `V1__init.sql` creates anything, that default
@@ -128,8 +144,12 @@ These were **found**, not assumed, and none was silently "fixed" by granting ext
 
 ## 6. Resulting architecture-of-record for Phase 1
 
-* **Containerized:** PostgreSQL 16.15 + pgvector (`nexus-postgres`), Redis 7.4 (`nexus-redis`) — named volumes
-  `nexus_pgdata` / `nexus_redisdata`, loopback ports, healthchecks, `restart: unless-stopped`.
+* **Containerized:** PostgreSQL 16.15 + pgvector (`nexus-platform-postgres`) and Redis 7.4
+  (`nexus-platform-redis`) on named volumes `nexus_pgdata` / `nexus_redisdata`, loopback ports, healthchecks,
+  `restart: unless-stopped`. This line read `nexus-postgres` / `nexus-redis` until `599cfce` renamed the services and
+  other products' containers took the freed names, so the two names above are the ones `infra/docker-compose.yml`
+  declares today, not the ones this file first wrote — §3 carries the rename, and `docs/DEPLOYMENT.md` §6 carries how
+  a container's name is attributed at all.
 * **Host processes:** Next.js (3000), FastAPI (8000), Spring Boot (8080) via `make dev-*` — their Dockerfiles do not
   exist yet, therefore the compose services are gated behind `profiles: ["full"]` so the default path is unaffected.
 * **SQL path:** `docker exec … psql` (no host client). Idempotent ledger table `schema_migrations`.
@@ -229,17 +249,52 @@ $ bash -c 'cd apps/web && (node -e "require(./package.json).scripts.dev" && echo
 
 ## 8. Leaving state + reproducibility
 
-* Left **running and healthy**: `nexus-postgres` (127.0.0.1:5433) and `nexus-redis` (127.0.0.1:6380) with
-  `migrations=2`, `tenant hong-kong=1`, all other tables empty, 19 reachable tables for `nexus_ai`. The temporary
-  verification container `nexus-infra-verify` was removed. No secret or credential was committed; `.env` is git-ignored
+* Left **running and healthy** on 2026-09-22: `nexus-postgres` (127.0.0.1:5433) and `nexus-redis` (127.0.0.1:6380)
+  with `migrations=2`, `tenant hong-kong=1`, all other tables empty, 19 reachable tables for `nexus_ai`. Those were
+  *our* container names then — `infra/docker-compose.yml` renamed them to `nexus-platform-*` one commit later
+  (`599cfce`, 2026-09-23), so this sentence is a dated record and not an instruction; reading it as one is what
+  made the third bullet below dangerous. The temporary verification container `nexus-infra-verify` was removed and
+  appears in no `docker ps -a` on 2026-10-26. No secret or credential was committed; `.env` is git-ignored
   (`git check-ignore .env` → hit) and carries a randomly generated 64-char dev `NEXUS_JWT_SECRET`.
+* **The same leaving-state sentence, re-measured 2026-10-26** — "leaving state" is the first thing a new agent
+  reads as "current state", so it is restated with the commands that print it:
+
+  ```bash
+  docker exec -i nexus-platform-postgres psql -AtU postgres -d nexus -c \
+    "select count(*) from pg_tables where schemaname='public'"                    # 59 tables in the live nexus
+  docker exec -i nexus-platform-postgres psql -AtU postgres -d nexus -c "select count(*) from schema_migrations"   # 2 rows: V1 + V2, the infra applier's ledger
+  docker exec -i nexus-platform-postgres psql -AtU postgres -d nexus -c "select count(*) from flyway_schema_history" # 8 rows: V2 through V9, the service boot's ledger
+  ls infra/db/migrations/V*.sql | wc -l                                            # 10 migration files on disk
+  docker exec -i nexus-platform-postgres psql -AtU postgres -d nexus -c \
+    "select count(*) from pg_indexes where indexname='facts_subject_id_idx'"      # 1: V10 is applied, and recorded in NEITHER ledger
+  docker exec -i nexus-platform-postgres psql -AtU postgres -d nexus -c \
+    "select (select count(*) from merchants)||'/'||(select count(*) from offerings)||'/'||(select count(*) from reviews)||'/'||(select count(*) from chunks where embedding is not null)"   # 528/5546/11000/2118 seeded rows, every chunk carrying an embedding
+  ```
+
+  The `migrations=2` half has aged worst: 2 + 8 rows cover V1-V9 while the file set is 10 deep and V10's index is
+  live, so the plane runs one migration *ahead of both of its own ledgers* — two appliers, two ledgers, neither
+  recording what the other did (filed, not repaired here). `nexus_ai` reaches 25 tables today; the split and the
+  catalog query that prints it are in `docs/DEPLOYMENT.md` §6, which is where those numbers have a reader.
 * Files owned by this work stream: `infra/docker-compose.yml`, `infra/postgres/init/{00_extensions,00_roles}.sql`,
   `infra/db/seed/00_tenant.sql`, `scripts/db_apply_migrations.sh`, `Makefile`, `.env.example`, `.gitignore`,
   `docs/DEPLOYMENT.md`, this file.
 * Reproduce from scratch in ~30 s: `docker compose -f infra/docker-compose.yml --env-file .env up -d postgres redis`
-  → `bash scripts/db_apply_migrations.sh --seed` → `docker exec nexus-redis redis-cli ping`. Add
+  → `bash scripts/db_apply_migrations.sh --seed` → `docker exec nexus-platform-redis redis-cli ping`. Add
   `--force` to that script to re-apply migrations, or `docker volume rm nexus_pgdata` (after `docker rm -f
-  nexus-postgres`) for a true reset — which is exactly what `make db-reset` does, step by step.
+  nexus-platform-postgres`) for a true reset — which is exactly what `make db-reset` does, step by step.
+  **Both container names in that recipe are the point of this bullet:** as shipped they read `nexus-redis` and
+  `nexus-postgres`, and on 2026-10-26 those names belonged to *other products'* containers — so the `ping` checked a
+  cache that is not ours, and `docker rm -f nexus-postgres` was a documented, copy-pasteable instruction to destroy
+  somebody else's database. A volume name does not rot the same way: `nexus_pgdata` is pinned by this repo's
+  compose file (`volumes:` → `name: nexus_pgdata`), which is the difference between a name a container happens to
+  wear and a name a tracked file declares. The Makefile never had this defect, and the reason is a spelling: its
+  reset is `docker rm -f $(PG_CONTAINER)`, with `PG_CONTAINER ?= nexus-platform-postgres` declared at the top of
+  the file, so `599cfce`'s rename reached one line and every recipe followed it. A literal name in prose and a
+  variable in a recipe are not the same kind of statement — only one of them is a copy of something that already
+  moved. The judging leg now reads the Makefile's own write surface the same way: it expands each recipe's
+  variables from the file's bytes, classifies each line read-only or state-changing without running it, and
+  requires every name a *write* resolves to be one this repo's compose file declares and every volume it
+  destroys to be one its `name:` pins.
 * **apps/ai venv hazard on this host (measured 2026-10-23, D515): the project must never be installed
   editable into the venv.** `site.py` reads `.pth` files with the LOCALE encoding (Python 3.11's
   `addpackage`: `io.TextIOWrapper(io.open_code(fullname), encoding="locale")`), and this repository lives

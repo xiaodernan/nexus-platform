@@ -137,8 +137,9 @@ make, run the commands shown in each recipe directly.
 
 Seven containers on this machine run a Postgres image, five carry a `nexus` name, and three are both — so neither the
 name nor the image tells you which one is ours. The block below counts all three numbers instead of asking the reader
-to trust this sentence; every line in it is attributed by the compose label
-`com.docker.compose.project.config_files`, read off `docker inspect`, and was measured on 2026-10-26:
+to trust this sentence. Every container in it is attributed — by the compose label
+`com.docker.compose.project.config_files` for the ones a compose file created, and by five table names for the one
+that has no labels at all — and every number it states was measured on 2026-10-26:
 
 * **`nexus-platform-postgres`** — project `nexus-platform`, config file `infra/docker-compose.yml` (the file this
   repo ships), image `pgvector/pgvector:pg16`, running and healthy, publishes `127.0.0.1:5433 -> 5432`, superuser
@@ -146,27 +147,63 @@ to trust this sentence; every line in it is attributed by the compose label
   this `container_name`, so the compose name *is* the live name.
 * **`nexus-platform-redis`** — same project and file, `redis:7.4-alpine`, `127.0.0.1:6380 -> 6379`. Our cache.
 * **`nexus-redis`** — a *different product's* container: project `nexus`, config file
-  `D:\内容创作平台\infra\docker-compose.yml`, image `redis:7-alpine`, and **no host port at all** (`6379/tcp`).
+  `D:\内容创作平台\infra\docker-compose.yml`, image `redis:7-alpine`, on the `nexus_default` network.
   `docker exec nexus-redis redis-cli ping` answers `PONG` — which is how a checklist naming it could keep passing
-  while testing the wrong stack. It sits on the `nexus_default` network, along with nothing of ours.
-* **`nexus-postgres`** — no compose labels (never started from this repo's file). Its superuser role is `nexus`, so
-  `psql -U postgres` gives `FATAL: role "postgres" does not exist`; it publishes `0.0.0.0:55100 -> 5432` — not
-  loopback, and not the `:55433` this section used to claim. Its `nexus` is a stale plane: 53 tables, **neither**
-  `schema_migrations` nor `flyway_schema_history`, and no HNSW index on `chunks`.
+  while testing the wrong stack. Its published port takes two sentences, because two fields of one `docker inspect`
+  disagree about it: `HostConfig.PortBindings` — what the container was *created* to publish — says
+  `0.0.0.0:56379 -> 6379`, while `NetworkSettings.Ports` — what the host is forwarding right now — says
+  `{"6379/tcp":[]}` and a host-side connect to `127.0.0.1:56379` answers `ConnectionRefusedError` (measured
+  2026-10-26, container `running` since 13:55Z the same day). An earlier draft of this bullet read only the second
+  field and printed "no host port at all", which is a statement about the running state wearing a configuration's
+  clothes; the block below prints both fields.
+* **`nexus-postgres`** — zero compose labels (`docker inspect -f '{{len .Config.Labels}}'` prints `0`, and the JSON
+  of the same field prints `{}`), so no compose file ever created it: this is a `docker run` container, `restart=no`,
+  on the plain `bridge` network — which is why nothing inside `nexus-platform_default` can resolve it, and why
+  "reachable as `postgres`" says nothing about this one. Its superuser role is `nexus`, so `psql -U postgres` gives
+  `FATAL: role "postgres" does not exist`; it publishes `0.0.0.0:55100 -> 5432` — world-addressable, not loopback,
+  and not the `:55433` this section used to claim. **Its name is ours from September and its contents are somebody
+  else's now:** `infra/docker-compose.yml` declared `container_name: nexus-postgres` until commit `599cfce`
+  (2026-09-23) renamed it to `nexus-platform-postgres`, and a foreign `docker run` took the freed name on
+  2026-10-16T07:31Z. Its `nexus` database is 53 tables of another product's schema — `agents`, `api_tokens`,
+  `design_nodes`, `marketplace_items`, `game_completions` — of which 48 appear in no `V*.sql` this repo ships and
+  only 5 share a name with ours (`conversations`, `messages`, `moderation_cases`, `notifications`, `users`, a
+  collision that says nothing about content). It holds **0** of the five table names a NEXUS schema must have, no
+  migration ledger, and no `chunks` table at all — which is why the "no HNSW index on `chunks`" this bullet
+  carried for one hour was vacuous: an index query over an absent table returns no rows whether or not the product
+  uses vectors. It is not an empty container either: its `nexus_dbagent_scratch` is an *older* application of our
+  own migrations — 57 tables, all five names present, `schema_migrations` with the three rows V1-V3, and a live
+  `chunks_embedding_hnsw` — where `nexus_ai` reaches 24 tables against the `nexus` database's 0. Nobody owns this
+  container according to any field `docker inspect` shows, so identify it by what its databases hold, not by its
+  name or its image.
+
 * **`nexus-platform-testpg`** — no compose labels, `Exited (137)` four weeks ago, `restart=unless-stopped`. Its
   config still maps `127.0.0.1:5433`, i.e. the live container's host port, so `docker start` on it now collides.
   Every `docker exec` against it fails with `Error response from daemon: container … is not running`; and because
   that goes to stderr, a pipeline like `psql -c "\dt" | wc -l` prints `0` — which reads as an empty schema, not as
   a dead container.
 
+Every line of the block below that only *reads* may name any container — several must name the foreign ones,
+because the contrast is the measurement. Nothing in the block changes state. State-changing recipes do have to name
+ours: `docs/ENVIRONMENT_REPORT.md` §8's reset ran `docker rm -f` + `docker volume rm` against a container name that
+is no longer ours, and §550 of the ledger is the unit that caught it.
+
 ```bash
 docker ps --format '{{.Names}}\t{{.Ports}}'           # running containers and their host ports
 docker inspect -f '{{.Name}} {{index .Config.Labels "com.docker.compose.project.config_files"}}' \
   $(docker ps --format '{{.Names}}')                   # ... and which project's file each came from
-docker ps -a --format '{{.Image}}' | grep -ciE 'postgres|pgvector'    # 7 containers here run a Postgres image
-docker ps -a --format '{{.Names}}' | grep -c '^nexus'                 # 5 carry a nexus name, 2 of them Redis
+# live-world count: the three `docker ps` censuses below read this machine's container set, which other
+# products change at will - one of them printed 7 in the morning and 6 in the afternoon of 2026-10-26,
+# with nothing in this repo touched. Their annotations therefore name what the number counts and say it
+# moves; they do not pin it. Every other integer in this block is this repo's own reading and does carry
+# its value, because a carrier that goes red when the migration set grows is the point of carrying it.
+docker ps -a --format '{{.Image}}' | grep -ciE 'postgres|pgvector'    # live-world count: how many
+    # containers here run a Postgres image - 6 on 2026-10-26, of which one is this repo's live plane, one
+    # a verification container this repo created, and four belong to other products
+docker ps -a --format '{{.Names}}' | grep -c '^nexus'                 # live-world count: how many names
+    # begin `nexus` - 5 on 2026-10-26, 2 of them Redis, and 3 of the 5 are not this repo's containers
 docker ps -a --format '{{.Names}}\t{{.Image}}' \
-  | awk '$1 ~ /^nexus/ && $2 ~ /pgvector|postgres/' | wc -l           # 3 are both: the two named above and testpg
+  | awk '$1 ~ /^nexus/ && $2 ~ /pgvector|postgres/' | wc -l            # live-world count: how many are
+    # both - 3 on 2026-10-26, i.e. this repo's two plus the foreign one wearing our September name
 docker exec nexus-platform-postgres pg_isready -U postgres -d nexus
 docker exec -i nexus-platform-postgres psql -AtU postgres -d nexus -c "\dt" | wc -l   # 59 tables today
 grep -hoiE '^create table( if not exists)? [a-zA-Z_]+' infra/db/migrations/*.sql \
@@ -190,6 +227,21 @@ docker exec -i nexus-platform-postgres psql -AtU postgres -d nexus -c \
     # it read-write; the same file applied to a from-scratch database gives 26, including `coupons`. The
     # live plane's grants predate that line, so `make db-migrate` (which re-applies `00_roles.sql`,
     # revoke-first and self-healing) repairs it.
+# attribution: which of these databases IS a NEXUS schema? five names every one must have.
+docker inspect -f '{{len .Config.Labels}}' nexus-postgres       # 0 compose labels => no compose file ever created it
+docker exec -i nexus-postgres psql -AtU nexus -d nexus -c \
+  "select count(*) from pg_tables where schemaname='public' and tablename in ('merchants','chunks','tenants','offerings','facts')"   # 0 of the five, on the container wearing our September name
+docker exec -i nexus-postgres psql -AtU nexus -d nexus_dbagent_scratch -c \
+  "select count(*) from pg_tables where schemaname='public' and tablename in ('merchants','chunks','tenants','offerings','facts')"   # 5 of the five, in that same container's older copy of our own migrations
+docker exec -i nexus-platform-postgres psql -AtU postgres -d nexus -c \
+  "select count(*) from pg_tables where schemaname='public' and tablename in ('merchants','chunks','tenants','offerings','facts')"   # 5 of the five, on the live plane
+docker exec -i nexus-postgres psql -AtU nexus -d nexus -c \
+  "select count(*) from pg_tables where schemaname='public' and tablename='chunks'"   # 0: no `chunks` table exists there, so an index query over it measures nothing about vectors
+awk 'NR==FNR{a[$0];next} {if($0 in a) s++; else f++} END{print f "|" s}' \
+  <(grep -hoiE '^create table( if not exists)? [a-zA-Z_.]+' infra/db/migrations/*.sql | awk '{print tolower($NF)}' | sed 's/.*\.//' | sort -u) \
+  <(docker exec -i nexus-postgres psql -AtU nexus -d nexus -c "select tablename from pg_tables where schemaname='public'")   # 48|5 — 48 names no V*.sql in this repo declares, 5 shared by coincidence
+docker exec -i nexus-postgres psql -AtU nexus -d nexus_dbagent_scratch -c "select count(*) from schema_migrations"   # 3 rows (V1-V3): an application of our migrations from before V4, not the live plane
+docker inspect -f '{{json .HostConfig.PortBindings}} {{json .NetworkSettings.Ports}}' nexus-redis   # 56379 in the config, [] in the live allocation — say which field you read
 # from the AI service host process: the `nexus_ai` DSN §2 names reaches 127.0.0.1:5433/nexus, and the commerce
 #   writes really are denied there — has_table_privilege('nexus_ai','carts','INSERT') and the same for `users` are
 #   both false, and the role holds no CREATE on schema public or on the database.
@@ -214,8 +266,14 @@ docker exec -i nexus-platform-postgres psql -AtU postgres -d nexus -c \
    and `ALTER DEFAULT PRIVILEGES` (already in `00_roles.sql`) has to be re-verified against whatever role the
    managed Postgres instance makes the table owner — on a hosted instance that is often not the connecting user,
    and a default-privilege line keyed to the wrong role grants nothing, silently. The mechanics are in §5 above
-   and in [ENVIRONMENT_REPORT.md](ENVIRONMENT_REPORT.md) §5.5.
-3. Fix the §0 gaps (ENVIRONMENT_REPORT §5.3) before M3 or accept that three canonical tools are platform-routed.
+   and in [ENVIRONMENT_REPORT.md](ENVIRONMENT_REPORT.md) §5 — its fifth numbered observation, the one about
+   initdb-time versus migration-time SQL. The address this page carried for those two clauses, `§5.5` and `§5.3`,
+   named headings that document does not have: its section 5 is a numbered list, not a list of subsections.
+3. ~~Fix the §0 gaps before M3 or accept that three canonical tools are platform-routed~~ — the permission half of
+   that closed while the sentence sat: measured on the live plane 2026-10-26, `nexus_ai` holds `SELECT` on
+   `tenants`, `SELECT` on `user_preferences` and `INSERT` on `events` (the same list [ENVIRONMENT_REPORT.md](ENVIRONMENT_REPORT.md)
+   §5 raised as its third observation). What is still true is the other half of that observation — no route
+   dispatches those tools today, so they are platform-routed by absence rather than by grant.
 4. TLS + Redis `requirepass`, a non-dev `NEXUS_JWT_SECRET` (RS256 in prod per D5), backups of the `nexus_pgdata`
    volume, and a `V*` migration for anything that changes the 1024-dim embedding contract (D3).
 5. Playwright browser install (`npx playwright install chromium`) before `make e2e` can produce

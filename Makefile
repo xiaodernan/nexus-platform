@@ -54,7 +54,7 @@ infra-logs: ## Tail logs of the data stores
 db-migrate: ## Apply infra/db/migrations/*.sql in order, then bind role grants (idempotent)
 	bash scripts/db_apply_migrations.sh
 
-seed: ## Apply infra/db/seed/*.sql (tenant hong-kong + demo fixtures); idempotent
+seed: ## Apply infra/db/seed/*.sql (tenant hong-kong only); the demo dataset is data/seed/load.sh
 	bash scripts/db_apply_migrations.sh --seed
 
 ai-embed: ## Fill chunks.embedding for the chunks that have none (RAG §2 worker; inspect with --dry-run, canary with --limit)
