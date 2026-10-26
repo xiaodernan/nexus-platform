@@ -8,6 +8,7 @@ confidence is what lets us honour §8 "不要强行猜测" — a field we cannot
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -146,6 +147,23 @@ WALK_MIN_RE = re.compile(r"(?:行|walk|步行|走)\s*(\d{1,2})\s*(?:分鐘|分�
 OPEN_PRICE_WORDS = ("預算", "预算", "budget", "price", "價錢", "价钱", "多少錢", "多少钱", "平", "貴", "贵")
 
 
+def _wire_value(row: dict[str, Any]) -> dict[str, Any]:
+    """A structured value crosses the §2 boundary as JSON TEXT.
+
+    The contract fixes `PreferenceItem.value: str` and `ConstraintItem.value: str`, while the
+    rule engine's own rows hold structured objects (D511's `cuisine_like`, the budget row).
+    Emitting the object into the dict made `Intent.model_validate` FAIL — a typed-cuisine
+    query could not build an intent at all, so `/ai/v1/query/understand` and the search
+    pipeline broke on it — and it made every consumer that hashes the value crash
+    (`TypeError: unhashable type: 'dict'`). Every reader downstream already parses the text
+    back (`search/service.py` `json.loads(raw_value)`), so JSON text is the shape they expect.
+    """
+    value = row.get("value")
+    if isinstance(value, (dict, list)):
+        return {**row, "value": json.dumps(value, ensure_ascii=False)}
+    return row
+
+
 @dataclass
 class IntentExtraction:
     """The rule engine's output before it is coerced into the contract's `Intent`."""
@@ -176,8 +194,8 @@ class IntentExtraction:
             "time": self.time or {},
             "budget": self.budget,
             "party_size": self.party_size,
-            "preferences": self.preferences,
-            "constraints": self.constraints,
+            "preferences": [_wire_value(p) for p in self.preferences],
+            "constraints": [_wire_value(c) for c in self.constraints],
             "sort_preference": self.sort_preference,
             "urgency": self.urgency,
             "language": self.language,
@@ -303,11 +321,18 @@ def _fill_category(ex: IntentExtraction, text: str) -> IntentExtraction:
             ex.category, ex.confidence["category"] = "restaurant", 0.9
         for c in cuisines:
             ex.preferences.append({"key": "cuisine", "value": c, "polarity": 1})
-        # D511: also emit the structured cuisine_like that the seed writes and the matcher reads
+        # D511: also emit the structured cuisine_like that the seed writes and the matcher reads.
         # The seed stores {"values": [...]} under cuisine_like; the matcher (D394) reads both
         # shapes through cuisine_matches. A typed cuisine should be stored as cuisine_like
         # so the user's own words are recorded as a preference, not just used for category.
-        ex.preferences.append({"key": "cuisine_like", "value": {"values": cuisines}, "polarity": 1})
+        #
+        # The value is JSON TEXT, not an object: the contract fixes `PreferenceItem.value: str`,
+        # and an object here made `Intent.model_validate` reject every typed-cuisine query and
+        # made every consumer that hashes the value crash (184 tests). Every reader parses the
+        # text back (`search/service.py` `json.loads(raw_value)`), so this is the one shape.
+        ex.preferences.append({"key": "cuisine_like",
+                               "value": json.dumps({"values": cuisines}, ensure_ascii=False),
+                               "polarity": 1})
         ex.confidence["category"] = max(ex.confidence.get("category", 0.0), 0.92)
     if ex.intent == "discover_merchant" and ex.category in ("footwear", "electronics", "retail"):
         # a purchasable thing, not a place to go
@@ -406,13 +431,21 @@ def _infer_category_from_signals(ex: IntentExtraction) -> tuple[str, float] | No
                 scores[cat] = scores.get(cat, 0.0) + conf * sign
             continue
 
-        # cuisine_like: {values: [...]} -> the category that cuisine lives in
-        if key == "cuisine_like" and isinstance(value, dict):
-            for cuisine in value.get("values") or []:
-                hit = _CUISINE_CATEGORY_MAP.get(str(cuisine).lower())
-                if hit:
-                    cat, conf = hit
-                    scores[cat] = scores.get(cat, 0.0) + conf * sign
+        # cuisine_like: {"values": [...]} -> the category that cuisine lives in. The value
+        # crosses the boundary as JSON TEXT (the contract fixes `value: str`), so parse it.
+        if key == "cuisine_like":
+            payload: Any = value
+            if isinstance(value, str):
+                try:
+                    payload = json.loads(value)
+                except ValueError:
+                    payload = None
+            if isinstance(payload, dict):
+                for cuisine in payload.get("values") or []:
+                    hit = _CUISINE_CATEGORY_MAP.get(str(cuisine).lower())
+                    if hit:
+                        cat, conf = hit
+                        scores[cat] = scores.get(cat, 0.0) + conf * sign
 
     if not scores:
         return None

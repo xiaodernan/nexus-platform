@@ -23,6 +23,8 @@ Verified, not claimed.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from nexus_ai.nlu.understand import extract_intent
@@ -41,7 +43,11 @@ def test_nlu_writes_cuisine_like_structured_preference():
     # Should ALSO have cuisine_like structured preference
     cuisine_like_prefs = [p for p in result.preferences if p["key"] == "cuisine_like"]
     assert len(cuisine_like_prefs) == 1, f"Expected 1 cuisine_like pref, got {len(cuisine_like_prefs)}"
-    assert cuisine_like_prefs[0]["value"] == {"values": ["cantonese"]}
+    # cuisine_like crosses the boundary as JSON TEXT: the contract fixes
+    # `PreferenceItem.value: str`, and every reader parses it back with json.loads.
+    raw = cuisine_like_prefs[0]["value"]
+    assert isinstance(raw, str), "the contract fixes value: str"
+    assert json.loads(raw) == {"values": ["cantonese"]}
     assert cuisine_like_prefs[0]["polarity"] == 1
 
 
@@ -52,7 +58,7 @@ def test_nlu_writes_cuisine_like_for_multiple_cuisines():
     cuisine_like_prefs = [p for p in result.preferences if p["key"] == "cuisine_like"]
     assert len(cuisine_like_prefs) == 1, f"Expected 1 cuisine_like pref, got {len(cuisine_like_prefs)}"
     
-    values = cuisine_like_prefs[0]["value"]["values"]
+    values = json.loads(cuisine_like_prefs[0]["value"])["values"]
     assert "cantonese" in values, f"Expected cantonese in {values}"
     assert "dim_sum" in values, f"Expected dim_sum in {values}"
 
@@ -71,7 +77,11 @@ def test_nlu_writes_both_cuisine_and_cuisine_like():
     assert cuisine_prefs[0]["value"] == "cantonese"
     
     # cuisine_like is an object with values list
-    assert cuisine_like_prefs[0]["value"] == {"values": ["cantonese"]}
+    # cuisine_like crosses the boundary as JSON TEXT: the contract fixes
+    # `PreferenceItem.value: str`, and every reader parses it back with json.loads.
+    raw = cuisine_like_prefs[0]["value"]
+    assert isinstance(raw, str), "the contract fixes value: str"
+    assert json.loads(raw) == {"values": ["cantonese"]}
 
 
 def test_cuisine_like_values_match_detected_cuisines():
@@ -81,7 +91,7 @@ def test_cuisine_like_values_match_detected_cuisines():
     cuisine_like_prefs = [p for p in result.preferences if p["key"] == "cuisine_like"]
     assert len(cuisine_like_prefs) == 1
     
-    values = cuisine_like_prefs[0]["value"]["values"]
+    values = json.loads(cuisine_like_prefs[0]["value"])["values"]
     # Should contain cantonese and dim_sum (the two detected)
     assert "cantonese" in values
     assert "dim_sum" in values

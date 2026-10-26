@@ -23980,3 +23980,30 @@ holds on the resulting tree.
 **Verified, not claimed.** `pytest tests/test_clause_final.py` → **12 passed**. The full `apps/ai`
 suite at HEAD (`4877eb4`, before this unit) ran **220 failed / 10203 passed / 127 skipped** — those
 failures are pre-existing and under investigation; this unit neither causes nor cures them.
+
+## 547. D554 · D511's structured `cuisine_like` broke the §2 contract - a typed-cuisine query could not build an Intent, and 184 tests crashed hashing the value (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/tests/test_cuisine_like_is_written_by_nlu.py`)
+
+**The defect.** D511 (`4877eb4`) appended `{"key": "cuisine_like", "value": {"values": [...]}}` to
+the extraction's preferences — an **object** where the contract fixes
+`PreferenceItem.value: str`. Measured, not assumed:
+
+- `Intent(**extract_intent_dict("我想食日本菜"))` raised `ValidationError: preferences.1.value /
+  Input should be a valid string [input_type=dict]` — every typed-cuisine query could not build
+  an intent at all, so `/ai/v1/query/understand` and the search pipeline broke on it;
+- every consumer that hashes the value crashed with `TypeError: unhashable type: 'dict'` —
+  **184** failures in `test_a_refusal_is_read_once_by_both_lanes.py` alone, **220** in the suite;
+- the failure reproduced on a **clean HEAD worktree** (`git worktree add … HEAD`), so it was not
+  the uncommitted work of another lane.
+
+**The fix (one shape).** The value is JSON **text** everywhere: `_fill_category` now emits
+`json.dumps({"values": cuisines}, ensure_ascii=False)`, and `_infer_category_from_signals` parses a
+string value back (it still infers `restaurant` for 日本菜). `_wire_value` stays at the
+`IntentExtraction.to_dict` boundary as a guard for any future structured row. The D511 test's four
+assertions were updated from "the value is an object" to "the value is a string that
+`json.loads` back to `{"values": [...]}`" — the object shape was the defect, not the contract.
+
+**Verified, not claimed.** `Intent(**extract_intent_dict("我想食日本菜"))` builds; the extraction
+still holds `'{"values": ["japanese"]}'`; `json.loads` returns `{'values': ['japanese']}` (the
+personalization matcher's shape). `pytest tests/test_cuisine_like_is_written_by_nlu.py
+tests/test_a_refusal_is_read_once_by_both_lanes.py tests/test_clause_final.py` → **562 passed**.
+Full-suite result recorded in the run log.
