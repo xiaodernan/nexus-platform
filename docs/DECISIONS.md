@@ -13548,7 +13548,7 @@ two arms rather than describing it: `if (apply) writeFileSync` sat inside the pe
 still exited 1. A caller that re-ran to clean up got a second refusal with the first repair already in it, which reads
 like a stable failure. This lane owns that file, so the fix, the arms, and the landing are all here.
 
-**What the file does now.** `planJobs` (`scripts/apply_line_cite_reaim.mjs:53`, the line reads
+**What the file does now.** `planJobs` (`scripts/apply_line_cite_reaim.mjs:56`, the line reads
 `export function planJobs(rows) {`) reads every site file and validates every row, and writes nothing: it splits each
 site token at the LAST colon, because a site is `ledger:line` and reading the whole token as a path is what crashed
 the first real run; it refuses a non-positive line number, a site file it cannot read (with `err.code`, so ENOENT is

@@ -4418,7 +4418,7 @@ plants            The harness slices the region out of the shipped file at run t
                     green, and it was.
                   P5 propagation, because P1..P4 set the GUCs in their own session and therefore prove
                     nothing about the mechanism between the two scripts: a throwaway database in the test
-                    container, the DO block at `data/seed/load.sh:161-167` extracted verbatim and writing both
+                    container, the DO block at `data/seed/load.sh:164-170` extracted verbatim and writing both
                     bounds, then a SECOND session reading `1790379918 / 1790379926 / recorded=true` across the
                     two writes, eight seconds apart · the gate's own pair is 190 apart · then the database
                     dropped, and the whole exchange kept in a file rather than only on a terminal.
@@ -22175,7 +22175,7 @@ merger, understand resolution, cuisine vocabulary) -> **261 passed**; `mypy nexu
 **Success: no issues found in 59 source files**; `ruff check .` -> **All checks passed**; eval
 gate -> **PASS - 2 suite(s), 0 failing**; the ten CI checkers -> green, and line-cite-drift
 re-measured at **117/177** citations still naming the line they were written against
-(strict=none). §510's `search/sql.py:131` citation was re-aimed to `:146`, because this unit's
+(strict=none). §510's citation of `search/sql.py` line 131 was re-aimed to `:146`, because this unit's
 own insertion moved it.
 ## 512. D518 · the party size had two readers, and the merge's copy invented a number the first turn refused to (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/nlu/state_merger.py`, `apps/ai/tests/test_the_party_size_has_one_reader.py`)
 
@@ -23744,7 +23744,7 @@ rows the test reads.
 
 **Residue measured and filed, not fixed.** The ranking matcher for `style/outdoor` reads
 `outdoor_style` at full weight and `outdoor_seating` at 0.8 of it
-(`search/service.py:1064`, `:1068`), but measured on this plane `outdoor_style` is written on
+(`search/service.py:1207`, `:1211`), but measured on this plane `outdoor_style` is written on
 **0** merchants while `outdoor_seating` is written on 94 - the plane predates the generator
 that emits the style flag, so the half of the matcher that gives full weight is unmeasurable
 here and only the fixture tests exercise it. Re-seeding the plane (or the CI's fresh seed) is
