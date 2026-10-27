@@ -40,7 +40,12 @@ jobs:
           p() { echo "$1=$(printf '%s\n' "$files" | grep -qE "$2" && echo true || echo false)"; }
           p web '^(apps/web|packages/ui|packages/types)/'
           p platform '^services/platform/'
-          p ai '^(apps/ai|infra/config)/'
+          # D576 — the seed is the `ai` job's INPUT, not only the ai app's: this job generates the demo
+          # seed and now holds every claim the seeded collections make against the rows that back them.
+          # So a change to the seed, to the claim vocabulary both sides read, or to the reader and its
+          # arms must run this job — otherwise the copy can go back to claiming what its members do not
+          # support, and nothing would notice.
+          p ai '^(apps/ai|infra/config|data/seed/|scripts/(check|falsify)_collection_claims\.mjs)'
           p docs '^(docs/|README\.md)' | tee -a "$GITHUB_OUTPUT"
 
   lint-type:
@@ -140,6 +145,8 @@ jobs:
         ports: ['6380:6379']
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --all-extras
         working-directory: apps/ai
@@ -171,6 +178,11 @@ jobs:
           NEXUS_SEED_COUNTS: ci
         run: |
           python data/seed/generate.py --counts "$NEXUS_SEED_COUNTS"
+          # D576 — the seed's collections make claims about their members, and the claims are copy:
+          # "every member is a quiet restaurant or cafe", "every member is in Tai Wai". The reader parses
+          # the SHIPPED copy back out of the shipped templates and holds every claim against the SHIPPED
+          # rows, so it runs here, on the rows this job is about to load, and before they are loaded.
+          node scripts/check_collection_claims.mjs
           export PGPASSWORD=ci_secret
           # --single-transaction is REQUIRED, not stylistic: each seed file stages its rows
           # in a TEMP table declared ON COMMIT DROP, so a psql that autocommits between
@@ -237,7 +249,17 @@ jobs:
         run: |
           docker compose -f infra/docker-compose.yml up -d postgres redis
           bash scripts/db_apply_migrations.sh
-          python data/seed/generate.py --counts merchants=80,offerings=600,reviews=1200
+          # D576 — the scale of the demo seed. `--counts` takes a PRESET NAME (full|ci|smoke), so
+          # `--counts merchants=80,offerings=600,reviews=1200` was an argparse error: this step was
+          # failing on its own command line and generating nothing, and the suite below it never ran
+          # against a seeded database. The three scale flags are separate options, and these are the
+          # numbers the broken line meant.
+          python data/seed/generate.py --merchants 80 --offerings 600 --reviews 1200
+          # The seed's four collections advertise what their members are -- a quiet list of tables, a
+          # Tai Wai list under HK$100 -- and the reader parses the SHIPPED copy back out of the shipped
+          # templates and holds every claim against the SHIPPED rows. It runs BEFORE the load so a seed
+          # whose advertising does not match its own members never reaches the database this job tests.
+          node scripts/check_collection_claims.mjs
           bash data/seed/load.sh
       - name: Boot services
         run: |

@@ -153,6 +153,26 @@ else
   PYTHON="${PYTHON:-python}"
   ( cd "$ROOT" && "$PYTHON" data/seed/generate.py ) 2>&1 | tail -4 | sed -e 's/^/    /'
 fi
+# D576. THE COPY IS A CLAIM, AND THE ROWS ARE ITS ONLY SUPPORT. The seed's four collections advertise
+# what their members are -- "every member is a quiet restaurant or cafe", "every member is in Tai Wai,
+# under HK$100" -- and until this unit that copy was written BY HAND beside the rows it described. STATUS
+# 571 measured what that cost: a quiet-meals list whose ten members include a Tailor and a Barber and
+# span seven districts, under a title that says 安靜嘅用餐位 ("quiet dining places"); and a Tai Wai list
+# where ONE of the nine stops is in Tai Wai -- five are in Sha Tin and the rest in Wan Chai, Tuen Mun and
+# Kwun Tong. The claim vocabulary (data/seed/claim_vocabulary.json) is now the single place that says
+# what each collection asserts, the generator renders its copy from that declaration, and this reader
+# parses the SHIPPED copy back out of the shipped templates and holds every claim against the SHIPPED
+# rows. So this step does not merely produce a dataset: it produces a dataset whose advertising copy is
+# checked against that dataset.
+#
+# The reader runs on whatever rows are about to be loaded -- generated just above, or found on disk under
+# --skip-generate -- because step 4 loads those rows either way, and a copy that lies is loaded just as
+# eagerly as a copy that tells the truth. A reader that refuses (exit 2) stops the gate too: "not checked"
+# is not "nothing found", and a gate that cannot tell those apart is the defect this lane keeps closing.
+( cd "$ROOT" && node scripts/check_collection_claims.mjs ) 2>&1 | sed -e 's/^/    /'
+# ...and the reader's own arms, for the reason every reader's arms are here: a census is only as good as
+# the arms that show it reddening. 17 arms, one generated plane, about half a minute.
+( cd "$ROOT" && node scripts/falsify_collection_claims.mjs ) 2>&1 | sed -e 's/^/    /'
 
 # --------------------------------------------------------------------------- 4. load
 step "4/18  load the seed into the fresh database"

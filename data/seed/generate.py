@@ -388,6 +388,135 @@ def emit_truncate(f, tables: "list[str]", header: "str", hint: "str") -> None:
     f.write("$$;\n")
 
 
+# --------------------------------------------------------------------------- claim vocabulary (D576)
+#
+# A seeded collection makes claims: a district, a price bound, a kind of shop, a number of stops.
+# Until D576 the copy was written first and the members picked afterwards, so three of the four
+# collections said things their own members did not support -- a "quiet tables" list holding a tailor
+# and a barber, a "Tai Wai under $100" list with one of nine stops in Tai Wai, a "Sha Tin family
+# weekend" whose four Tai Wai stops and its phone-repair stop were none of those things.
+#
+# The fix is ONE file, `claim_vocabulary.json`, that both sides read: the generator selects members by
+# the checks declared there and renders the copy from the templates declared there; the reader
+# (`scripts/check_collection_claims.mjs`) parses the SHIPPED copy back out of the same templates and
+# holds every claim against the rows the seed wrote. A claim that is not in the vocabulary cannot be
+# said, and a claim that is in it is checked against the data rather than against the generator's
+# memory of it.
+#
+# The vocabulary's district list is checked against `seed_pools.DISTRICTS` on every run: two lists of
+# the same names is one too many, and a reader that trusted a stale copy would name a district the
+# generator never writes.
+CLAIM_VOCAB_PATH = HERE / "claim_vocabulary.json"
+
+
+def load_claim_vocab(path: "Path | None" = None) -> dict:
+    with open(path or CLAIM_VOCAB_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def vocab_district(vocab: dict, slug: str) -> dict:
+    for d in vocab["vocabulary"]["districts"]:
+        if d["slug"] == slug:
+            return d
+    raise ValueError(f"the claim vocabulary has no district {slug!r}")
+
+
+def vocab_attribute(vocab: dict, key: str) -> dict:
+    for a in vocab["vocabulary"]["attributes"]:
+        if a["key"] == key:
+            return a
+    raise ValueError(f"the claim vocabulary has no attribute {key!r}")
+
+
+def vocab_kind_zh(vocab: dict, key: str) -> str:
+    for k in vocab["vocabulary"]["kinds"]:
+        if k["key"] == key:
+            return k["zh"]
+    raise ValueError(f"the claim vocabulary has no kind {key!r}")
+
+
+def join_zh(items: list) -> str:
+    """`A、B同C` -- the list spelling the copy uses, and the one the reader parses back."""
+    if not items:
+        return ""
+    if len(items) == 1:
+        return items[0]
+    return "、".join(items[:-1]) + "同" + items[-1]
+
+
+def merchant_satisfies(m: dict, claim: dict) -> bool:
+    """One membership claim, asked of one merchant.
+
+    The names here are the vocabulary's check names, and `scripts/check_collection_claims.mjs` asks the
+    SAME questions of the SHIPPED rows. A check only one side implements is a check one side can
+    answer wrongly, so the set is closed: the generator refuses a claim it does not know rather than
+    ignoring it and shipping a collection that does not mean what it says.
+    """
+    check = claim["check"]
+    value = claim.get("value")
+    if check == "district_all":
+        return m["district"][0] == value
+    if check == "attribute_all":
+        return bool(m["attrs"].get(value))
+    if check == "avg_price_lt":
+        return m["avg_price"] is not None and m["avg_price"] < value
+    if check == "kind_all":
+        return m["top"] in value
+    if check == "has_slots":
+        return bool(m["slots"])
+    if check == "open_on_sunday":
+        return any(s["starts"].weekday() == 6 for s in m["slots"])
+    if check == "weekend_slots":
+        days = {s["starts"].weekday() for s in m["slots"]}
+        return 5 in days and 6 in days
+    raise ValueError(f"the claim vocabulary declares a check this generator does not implement: {check}")
+
+
+def claim_is_member_scoped(check: str) -> bool:
+    """Whether a check is asked of ONE merchant or of the collection as a whole.
+
+    `home_district` is the only one that is not: it compares the consumer's declared home
+    district with the district the list is in, so asking it of a merchant would be asking a
+    merchant where its owner lives.
+    """
+    return check != "home_district"
+
+
+def render_slot(slot_name: str, spec: dict, ctx: dict, vocab: dict) -> str:
+    kind = spec["render"]
+    if kind == "number":
+        return str(ctx[slot_name])
+    if kind == "attribute_word":
+        return vocab_attribute(vocab, spec["value"])["zh"]
+    if kind == "district":
+        return vocab_district(vocab, ctx[slot_name])["zh"]
+    if kind == "kind_list":
+        keys = ctx[slot_name]
+        if not keys:
+            raise ValueError(f"the slot {slot_name!r} has nothing to render")
+        return join_zh([vocab_kind_zh(vocab, k) for k in keys])
+    if kind == "stage_list":
+        keys = ctx[slot_name]
+        if not keys:
+            raise ValueError(f"the slot {slot_name!r} has nothing to render")
+        labels = {s["key"]: s["zh"] for s in vocab["vocabulary"]["stages"]}
+        return join_zh([labels[k] for k in keys])
+    if kind == "fixed":
+        return spec["value"]
+    raise ValueError(f"the claim vocabulary declares a slot this generator cannot render: {slot_name}")
+
+
+def render_phrase(phrase: dict, ctx: dict, vocab: dict) -> str:
+    out = phrase["text"]
+    for name, spec in vocab["slots"].items():
+        token = "{" + name + "}"
+        if token in out:
+            out = out.replace(token, render_slot(name, spec, ctx, vocab))
+    if "{" in out:
+        raise ValueError(f"the phrase {phrase['id']!r} still holds a slot after rendering: {out}")
+    return out
+
+
 # --------------------------------------------------------------------------- generator
 class Gen:
     def __init__(self, args):
@@ -400,6 +529,26 @@ class Gen:
         self.facts: list[dict] = []
         self.slots: list[dict] = []
         self.rows: dict[str, list[list[str]]] = {}
+        self.vocab = load_claim_vocab()
+        # The vocabulary's district list and the taxonomy's are the same names written twice; a
+        # disagreement would let the reader check a district the generator never writes, so the run
+        # stops here rather than shipping a collection whose copy names a place with no members.
+        want = {d[0]: (d[1], d[2]) for d in DISTRICTS}
+        have = {d["slug"]: (d["en"], d["zh"]) for d in self.vocab["vocabulary"]["districts"]}
+        if want != have:
+            only_seed = sorted(set(want) - set(have))
+            only_vocab = sorted(set(have) - set(want))
+            renamed = sorted(k for k in set(want) & set(have) if want[k] != have[k])
+            raise SystemExit(
+                "generator: claim_vocabulary.json and seed_pools.py disagree about the districts "
+                f"(only in the taxonomy: {only_seed}; only in the vocabulary: {only_vocab}; "
+                f"renamed: {renamed}) — one list of names, not two")
+        # The copy ends with the dataset's own disclaimer. The reader looks for the vocabulary's
+        # spelling, so the two must be the same string rather than two that look alike.
+        if self.vocab.get("disclaimer") != DISCLAIMER:
+            raise SystemExit(
+                "generator: the claim vocabulary's disclaimer is "
+                f"{self.vocab.get('disclaimer')!r} but the seed writes {DISCLAIMER!r}")
 
     # ---- randomness helpers
     def pick(self, seq):
@@ -765,7 +914,7 @@ class Gen:
                               f" — demo pool"))
             m["pools"].append(pool)
         sessions = spec["slots"]
-        for day in range(self.a.days):
+        for day in range(self.a.horizon_days):
             dt = (self.now + timedelta(days=day)).date()
             wd = dt.weekday()
             if wd == m["closed_day"]:
@@ -773,6 +922,12 @@ class Gen:
             weekend = wd >= 4
             for label, times in sessions:
                 chosen = [t for t in times if self.rng.random() < (0.85 if weekend else 0.7)]
+                if weekend and not chosen and times:
+                    # A merchant that is open on a weekend day has at least one session on it. The
+                    # itinerary claims the weekend, and a claim the dice can erase is not a claim:
+                    # without this, a merchant whose every session time lost the roll would leave
+                    # the weekend half of the itinerary unbookable on the plane that says it.
+                    chosen = [times[0]]
                 chosen = chosen[: self.a.max_slots]
                 for t in chosen:
                     pool = self.pick(m["pools"])
@@ -1021,6 +1176,11 @@ class Gen:
             uid("pref", k), U_CONSUMER, kind, k, val, w, src, "long_term", None,
             self.now + timedelta(days=90), self.now - timedelta(days=20), self.now - timedelta(days=3)])
             for kind, k, val, w, src in prefs]
+        # The consumer's declared home district, read back off the row that is written rather than
+        # kept in a second place: a "near me" claim is a claim about this preference, and the reader
+        # asks the shipped row. `self.home_district` holds the EN spelling the preference carries.
+        self.home_district = next(val["value"] for kind, k, val, w, src in prefs
+                                  if k == "home_district")
 
         self.rows["categories"] = []
         self.category_ids: dict[str, str] = {}
@@ -1118,6 +1278,10 @@ class Gen:
                 "demo_login_role": ("merchant" if m["id"] in owner_ids else None),
                 "weak_aspects": m["weak"],
             }
+            # The collections' membership claims are asked of these attributes (D576), and the reader
+            # asks the same questions of the column written below. Keeping the very dict that is
+            # written means the filter and the shipped attribute can never disagree about a merchant.
+            m["attrs"] = attrs
             # category label only: `MerchantCards.subtitleOf` appends the district itself, and the
             # web console prints this column raw, so a "Ramen · Sha Tin" value rendered twice.
             primary = LEAF_CUISINE_EN[m["leaf"]]
@@ -1381,67 +1545,195 @@ class Gen:
         chosen = [pool[0], pool[min(7, len(pool) - 1)], pool[min(19, len(pool) - 1)]]
         return list(zip(U_OWNERS, chosen))
 
+    # ---- the collections' claims (D576) -------------------------------------
+    def consumer_home_district(self):
+        """The demo consumer's declared home district, as a vocabulary slug.
+
+        The preference carries the district's EN spelling; the vocabulary carries the slug, so the
+        two are joined here rather than a third list being written down.
+        """
+        for d in self.vocab["vocabulary"]["districts"]:
+            if d["en"] == self.home_district:
+                return d["slug"]
+        raise SystemExit(f"generator: the consumer's home_district {self.home_district!r} names no "
+                         f"district the claim vocabulary declares")
+
+    def collection_members(self, entry):
+        """The members of one collection, chosen by the claims the collection makes.
+
+        The membership is DERIVED from the claim rather than written first: a collection that says
+        "all members are in Sha Tin, quiet, and of these kinds" is a collection whose members are
+        exactly the published merchants that are in Sha Tin, quiet, and of these kinds. Before this,
+        three of the four collections carried copy their own members did not support -- a "quiet
+        tables" list holding a tailor and a barber, a "Tai Wai" list with one stop in Tai Wai, and
+        a family itinerary whose route carried a phone repair and a live music bar.
+        """
+        claims = entry["members"]["claims"]
+        pool = [m for m in self.merchants
+                if m["status"] == "published"
+                and all(merchant_satisfies(m, c) for c in claims)]
+        if not pool:
+            raise SystemExit(
+                f"generator: the collection {entry['slug']!r} has no published member that satisfies "
+                f"its own claims ({', '.join(c['check'] for c in claims)}) on this plane -- the copy "
+                f"would name something the list does not contain")
+        members = self.round_robin(pool, entry["members"]["limit"])
+        if entry["members"].get("repeat_first") and members:
+            # The first stop is cited twice on purpose: the platform keeps repeats
+            # (CollectionsController: "Item order, repeats included") and the duplicate-key reader
+            # needs a real repeat to witness. The claims are about the DISTINCT stops, so the copy's
+            # count is the number of distinct members and not the number of rows.
+            members = members + [members[0]]
+        return members
+
+    def round_robin(self, pool, limit):
+        """Take the members round-robin over the kinds they come in.
+
+        A collection that may hold three kinds should hold all three in its first stops rather than
+        nine of whichever kind the generator happened to plan first: a route whose copy names a
+        cafe and a bar but whose first nine stops are all restaurants is a route the copy does not
+        describe. The order inside a kind is the generator's own, so the selection is deterministic.
+        """
+        groups: dict[str, list] = {}
+        for m in pool:
+            groups.setdefault(m["top"], []).append(m)
+        order = [k["key"] for k in self.vocab["vocabulary"]["kinds"] if k["key"] in groups]
+        picked = []
+        depth = 0
+        while len(picked) < limit:
+            added = False
+            for key in order:
+                group = groups[key]
+                if depth < len(group):
+                    picked.append(group[depth])
+                    added = True
+                    if len(picked) >= limit:
+                        break
+            if not added:
+                break
+            depth += 1
+        return picked
+
+    def member_kinds(self, members):
+        order = [k["key"] for k in self.vocab["vocabulary"]["kinds"]]
+        have = {m["top"] for m in members}
+        return [k for k in order if k in have]
+
+    def stage_offered(self, stage, members):
+        """Whether one itinerary stage is offered by at least one member's own slots.
+
+        A band stage (lunch, dinner) is offered by a member of the right kind that has a session
+        starting inside the band; a kind stage (activity) is offered by a member of that kind that
+        has any session. The band alone would let a painting workshop's 13:00 class be counted as
+        a lunch, so the kind narrows it.
+        """
+        kinds = stage.get("kind_in")
+        window = None
+        if stage.get("band"):
+            for b in self.vocab["vocabulary"]["bands"]:
+                if b["key"] == stage["band"]:
+                    window = b
+            if window is None:
+                raise SystemExit(f"generator: the stage {stage['key']!r} names a band the claim "
+                                 f"vocabulary does not declare")
+        for m in members:
+            if kinds and m["top"] not in kinds:
+                continue
+            for s in m["slots"]:
+                if window is None:
+                    return True
+                if window["from"] <= s["starts"].strftime("%H:%M") <= window["to"]:
+                    return True
+        return False
+
+    def member_stages(self, members):
+        return [s["key"] for s in self.vocab["vocabulary"]["stages"]
+                if self.stage_offered(s, members)]
+
+    def claim_context(self, entry, members):
+        """The values the copy's slots are filled from, derived from the members themselves."""
+        distinct = {m["id"]: m for m in members}
+        ctx = dict(entry.get("values") or {})
+        ctx["count"] = len(distinct)
+        ctx["minutes"] = max(m["mtr_min"] for m in distinct.values())
+        ctx["kinds"] = self.member_kinds(distinct.values())
+        ctx["stages"] = self.member_stages(distinct.values())
+        return ctx
+
+    def title_claim_words(self, entry):
+        """The word in each title that carries a claim, and the claim it carries.
+
+        A title that says nothing checkable says nothing, so a title claim has to name the words it
+        is made of. The words of a district and of an attribute are the vocabulary's own, so the
+        generator refuses a vocabulary that spells one of them differently; the words of a price and
+        of a "near me" are the collection's own, but a price word has to carry the number it claims.
+        """
+        out = []
+        for claim in entry.get("title_claims", []):
+            zh, en = claim.get("zh"), claim.get("en")
+            check, value = claim["check"], claim.get("value")
+            if not zh or not en:
+                raise SystemExit(f"generator: the collection {entry['slug']!r} declares a title claim "
+                                 f"with no word in it -- a title nobody can check says nothing")
+            if check == "district_all":
+                d = vocab_district(self.vocab, value)
+                if (zh, en) != (d["zh"], d["en"]):
+                    raise SystemExit(f"generator: the collection {entry['slug']!r} spells the district "
+                                     f"{value!r} as {zh!r}/{en!r} in its title, but the vocabulary "
+                                     f"names it {d['zh']!r}/{d['en']!r}")
+            elif check == "attribute_all":
+                a = vocab_attribute(self.vocab, value)
+                if (zh, en) != (a["zh"], a["en"]):
+                    raise SystemExit(f"generator: the collection {entry['slug']!r} spells the attribute "
+                                     f"{value!r} as {zh!r}/{en!r} in its title, but the vocabulary "
+                                     f"names it {a['zh']!r}/{a['en']!r}")
+            elif check == "avg_price_lt":
+                if str(value) not in zh or str(value) not in en:
+                    raise SystemExit(f"generator: the collection {entry['slug']!r} claims a price below "
+                                     f"{value} but its title words {zh!r}/{en!r} do not carry the number")
+            if zh not in entry["title_zh"] or en not in entry["title"]:
+                raise SystemExit(f"generator: the collection {entry['slug']!r} claims {check}="
+                                 f"{value!r} in words {zh!r}/{en!r}, but its title "
+                                 f"{entry['title_zh']!r} / {entry['title']!r} does not carry them")
+            out.append((claim, zh, en))
+        return out
+
+    def title_claim_holds(self, claim, members):
+        """Whether the members (or the consumer) support what the title claims."""
+        check, value = claim["check"], claim.get("value")
+        if not claim_is_member_scoped(check):
+            return self.consumer_home_district() == value
+        return all(merchant_satisfies(m, claim) for m in members)
+
     def build_collections(self):
-        st = [m for m in self.merchants if m["status"] == "published" and m["district"][0] == "sha-tin"]
-        tw = [m for m in self.merchants if m["status"] == "published" and m["district"][0] == "tai-wai"]
-        quiet = [m for m in self.merchants if m["aspect_mean"]["noise"] >= 4.3 and m["status"] == "published"]
-        cheap = [m for m in self.merchants if 0 < m["avg_price"] < 70 and m["status"] == "published"]
-        # The date-night route is a CLAIMED route: its title says Sha Tin, its copy says quiet
-        # restaurants/dessert/bars within a stated number of walking minutes. So the membership is
-        # derived from the claim rather than the copy being written first -- every member is published,
-        # in Sha Tin, quiet by the seed's own noise threshold, and of a kind the route can name.
-        # `datey` was dead before this change: it was computed and never used, which is how the copy
-        # came to name 甜品/酒吧 while the members were heritage tours, tailors and photo studios.
-        datey = [m for m in st
-                 if m["aspect_mean"]["noise"] >= 4.3 and m["top"] in ("restaurant", "cafe", "bar")]
-        # Ten references over nine shops: the first member is cited twice on purpose, because the
-        # platform keeps repeats (CollectionsController: "Item order, repeats included") and the
-        # duplicate-key reader needs a real repeat to witness.
-        route = (datey[:9] + datey[:1]) if len(datey) >= 9 else datey
-        if route:
-            # `d2` is the largest walk-from-MTR among the members, so "within N minutes" is true of
-            # every stop and false of nothing. `mtr_min` is the seed's own walking-minutes field.
-            d2 = max(m["mtr_min"] for m in route)
-            kinds = []
-            if any(m["top"] == "restaurant" for m in route):
-                kinds.append("餐廳")
-            if any(m["top"] == "cafe" for m in route):
-                kinds.append("咖啡店")
-            if any(m["leaf"] == "bakery-dessert" for m in route):
-                kinds.append("甜品")
-            if any(m["top"] == "bar" for m in route):
-                kinds.append("酒吧")
-            kind_text = ("、".join(kinds[:-1]) + "同" + kinds[-1]) if len(kinds) > 1 else (
-                kinds[0] if kinds else "店舖")
-            date_desc = f"由{d2}分鐘步程內嘅安靜{kind_text}組合而成的示範路線。"
-        else:
-            # A small merchants plane can hold no member that satisfies the claim; the copy then says
-            # so instead of claiming a route that has no stops.
-            date_desc = "細商戶數目嘅示範資料未產生符合條件嘅商戶，呢條示範路線暫時冇站。"
-        defs = [
-            ("sha-tin-date-night", "guide", "沙田情侶約會路線", "A Sha Tin Date Night",
-             date_desc + "全部商戶均為虛構。",
-             route),
-            ("quiet-meals-near-me", "collection", "安靜嘅用餐位", "Quiet Tables Near Me",
-             "低噪音評分優先嘅示範清單，適合要傾嘢嘅場合；數據為合成資料。",
-             (quiet or st)[:10]),
-            ("tai-wai-under-100", "collection", "大圍百蚊以下", "Tai Wai Under HK$100",
-             "大圍區人均低價位示範之選（合成商戶，並非真實店舖）。", (cheap or tw)[:9]),
-            ("weekend-family-sha-tin", "itinerary", "沙田親子週末路線", "A Family Weekend in Sha Tin",
-             "早午餐—活動—下午茶—晚飯嘅示範一日行程，含供求時段示範。", (st[:5] + tw[:4])),
-        ]
         guides = []
         self.rows["collections"] = []
-        for slug, kind, title_zh, title, desc, members in defs:
-            cid = uid("collection", slug)
+        phrases = {p["id"]: p for p in self.vocab["phrases"]}
+        for entry in self.vocab["collections"]:
+            members = self.collection_members(entry)
+            for claim, _zh, _en in self.title_claim_words(entry):
+                if not self.title_claim_holds(claim, members):
+                    raise SystemExit(
+                        f"generator: the title of {entry['slug']!r} claims {claim['check']}="
+                        f"{claim.get('value')!r} and its own members do not support it")
+            ctx = self.claim_context(entry, members)
+            body = ""
+            for pid in entry["body"]:
+                phrase = phrases.get(pid)
+                if phrase is None:
+                    raise SystemExit(f"generator: the collection {entry['slug']!r} names a phrase "
+                                     f"{pid!r} the claim vocabulary does not declare")
+                body += render_phrase(phrase, ctx, self.vocab)
+            desc = body + " " + DISCLAIMER
+            cid = uid("collection", entry["slug"])
             items = [{"subject_type": "merchant", "subject_id": m["id"],
                       "note": f"{m['district'][1]} · {m['price_band']}"} for m in members]
-            guides.append(dict(id=cid, slug=slug, kind=kind))
+            guides.append(dict(id=cid, slug=entry["slug"], kind=entry["kind"]))
             self.rows["collections"].append(row([
-                cid, TENANT_ID, U_CONSUMER, kind, slug, title, title_zh,
-                desc + " " + DISCLAIMER, f"/demo/img/{('restaurant' if kind != 'itinerary' else 'experience')}.svg",
+                cid, TENANT_ID, U_CONSUMER, entry["kind"], entry["slug"], entry["title"],
+                entry["title_zh"], desc, f"/demo/img/{entry['cover']}.svg",
                 items, "public", "demo",
-                {"title": f"{title_zh} — NEXUS demo guide", "noindex": True, "data_origin": "demo"},
+                {"title": f"{entry['title_zh']} — NEXUS demo guide", "noindex": True, "data_origin": "demo"},
                 self.now - timedelta(days=self.rng.randint(3, 60)),
                 self.now - timedelta(days=30), self.now]))
         return guides
@@ -2090,6 +2382,16 @@ def parse_args(argv=None):
     else:
         now = datetime.fromisoformat(base)
     args.now_dt = now
+    # The availability horizon always reaches a Saturday AND a Sunday, whatever `--days` says.
+    # The family itinerary claims a weekend, and the claim is only true if the horizon contains one:
+    # a three-day horizon from the pinned Tuesday (2026-09-22) ended on a Thursday, so the
+    # itinerary said 週末 while no stop could be booked on a weekend day at all. The requested
+    # length is kept in `--days`; the horizon that is actually generated is `horizon_days`, and the
+    # run prints both so the two numbers are never confused.
+    sat_offset = (5 - now.weekday()) % 7   # days from now to the next Saturday
+    sun_offset = (6 - now.weekday()) % 7   # days from now to the next Sunday
+    weekend_days = sun_offset + 1 if sat_offset < sun_offset else sat_offset + 2
+    args.horizon_days = max(args.days, weekend_days)
     return ap, args
 
 
@@ -2105,7 +2407,8 @@ def main(argv=None) -> int:
     out_dir = Path(args.out).resolve()
     print(f"{DISCLAIMER}")
     print(f"seed={args.seed}  now={ts(args.now_dt)}  scale: merchants={args.merchants} "
-          f"offerings~{args.offerings} reviews={args.reviews} days={args.days}")
+          f"offerings~{args.offerings} reviews={args.reviews} days={args.days} "
+          f"(availability horizon {args.horizon_days} days — it always reaches a weekend)")
     gen = Gen(args)
     gen.run()
     written = write_outputs(gen, out_dir)
@@ -2116,7 +2419,7 @@ def main(argv=None) -> int:
           f"{getattr(gen, 'offering_factor', 1):.2f}×)")
     for prefix, table, n in written:
         print(f"  {prefix:<28} {n:>7,} rows")
-    print(f"  {'availability horizon':<28} {total_slots:>7,} rows / {args.days} days")
+    print(f"  {'availability horizon':<28} {total_slots:>7,} rows / {args.horizon_days} days")
     rc = 0
     if not args.skip_selfcheck:
         rc = self_check(gen, out_dir, args)

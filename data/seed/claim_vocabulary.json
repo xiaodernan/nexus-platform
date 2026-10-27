@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "purpose": "The claims a seeded collection makes, and the words it says them in. The generator renders each collection's copy from these templates and its membership from these checks; scripts/check_collection_claims.mjs reads the SAME file, parses the shipped copy back out of the templates, and holds every claim against the members the seed actually wrote. One file, two readers: a claim that is not written here cannot be said, and a claim that is written here is checked against the rows, not against the generator's memory.",
+  "disclaimer": "SYNTHETIC DEMO DATA - NOT REAL BUSINESSES",
+
+  "checks": {
+    "district_all": "every member's primary location sits in the named district",
+    "attribute_all": "every member carries the named merchant attribute",
+    "avg_price_lt": "every member's avg_price_hkd is below the stated bound",
+    "kind_all": "every member's category top is inside the named set",
+    "kinds_exact": "the copy names exactly the category tops its members have",
+    "count_is": "the copy's stop count is the number of distinct members",
+    "walk_minutes_exact": "every member is within the stated walking minutes, AND the stated bound is the members' own maximum",
+    "has_slots": "every member has at least one availability slot",
+    "open_on_sunday": "every member has at least one slot on a Sunday",
+    "stage_present": "each named itinerary stage is offered by at least one member slot",
+    "weekend_slots": "the members have slots on a Saturday and on a Sunday",
+    "home_district": "the named district is the demo consumer's declared home_district"
+  },
+
+  "vocabulary": {
+    "districts": [
+      {"slug": "sha-tin", "en": "Sha Tin", "zh": "沙田"},
+      {"slug": "tai-wai", "en": "Tai Wai", "zh": "大圍"},
+      {"slug": "ma-on-shan", "en": "Ma On Shan", "zh": "馬鞍山"},
+      {"slug": "tsuen-wan", "en": "Tsuen Wan", "zh": "荃灣"},
+      {"slug": "tai-po", "en": "Tai Po", "zh": "大埔"},
+      {"slug": "tuen-mun", "en": "Tuen Mun", "zh": "屯門"},
+      {"slug": "sheung-shui", "en": "Sheung Shui", "zh": "上水"},
+      {"slug": "kowloon-bay", "en": "Kowloon Bay", "zh": "九龍灣"},
+      {"slug": "kwun-tong", "en": "Kwun Tong", "zh": "觀塘"},
+      {"slug": "tsim-sha-tsui", "en": "Tsim Sha Tsui", "zh": "尖沙咀"},
+      {"slug": "mong-kok", "en": "Mong Kok", "zh": "旺角"},
+      {"slug": "central", "en": "Central", "zh": "中環"},
+      {"slug": "wan-chai", "en": "Wan Chai", "zh": "灣仔"},
+      {"slug": "causeway-bay", "en": "Causeway Bay", "zh": "銅鑼灣"},
+      {"slug": "stanley", "en": "Stanley", "zh": "赤柱"}
+    ],
+    "kinds": [
+      {"key": "restaurant", "zh": "餐廳"},
+      {"key": "cafe", "zh": "咖啡店"},
+      {"key": "bar", "zh": "酒吧"},
+      {"key": "fitness", "zh": "健身"},
+      {"key": "beauty", "zh": "美容"},
+      {"key": "activity", "zh": "活動"},
+      {"key": "hotel", "zh": "酒店"},
+      {"key": "experience", "zh": "體驗"},
+      {"key": "shopping", "zh": "購物"},
+      {"key": "service", "zh": "服務"}
+    ],
+    "attributes": [
+      {"key": "quiet_ambience", "zh": "安靜", "en": "Quiet"},
+      {"key": "date_occasion", "zh": "情侶", "en": "Date"},
+      {"key": "family_occasion", "zh": "親子", "en": "Family"}
+    ],
+    "bands": [
+      {"key": "lunch", "zh": "午餐", "from": "11:00", "to": "13:59"},
+      {"key": "dinner", "zh": "晚餐", "from": "18:00", "to": "21:59"}
+    ],
+    "stages": [
+      {"key": "lunch", "zh": "午餐", "band": "lunch", "kind_in": ["restaurant", "cafe"]},
+      {"key": "activity", "zh": "活動", "kind_in": ["activity", "experience"]},
+      {"key": "dinner", "zh": "晚餐", "band": "dinner", "kind_in": ["restaurant", "cafe"]}
+    ]
+  },
+
+  "slots": {
+    "minutes": {"render": "number", "derive": "max_walk_minutes", "check": "walk_minutes_exact"},
+    "count": {"render": "number", "derive": "member_count", "check": "count_is"},
+    "price": {"render": "number", "check": "avg_price_lt"},
+    "kinds": {"render": "kind_list", "derive": "member_kinds", "check": "kinds_exact"},
+    "district": {"render": "district", "check": "district_all"},
+    "stages": {"render": "stage_list", "derive": "member_stages", "check": "stage_present"},
+    "quiet": {"render": "attribute_word", "value": "quiet_ambience", "check": "attribute_all"},
+    "family": {"render": "attribute_word", "value": "family_occasion", "check": "attribute_all"},
+    "weekend": {"render": "fixed", "value": "週末", "check": "weekend_slots"}
+  },
+
+  "phrases": [
+    {"id": "route_walk_kinds", "text": "全線都係{minutes}分鐘步程內嘅{kinds}。"},
+    {"id": "route_quiet", "text": "全部成員都係{quiet}嘅商戶。"},
+    {"id": "route_count", "text": "全線共{count}個站。"},
+    {"id": "quiet_kinds", "text": "全部成員都係{quiet}嘅{kinds}。"},
+    {"id": "all_in_district", "text": "全部成員都喺{district}區。"},
+    {"id": "district_price", "text": "全部成員都喺{district}區，人均低於{price}蚊。"},
+    {"id": "list_count", "text": "清單共有{count}間。"},
+    {"id": "family_members", "text": "全部成員都係{family}嘅商戶。"},
+    {"id": "itinerary_stages", "text": "由{stages}組成嘅示範一日行程。"},
+    {"id": "itinerary_weekend", "text": "行程包含{weekend}供求時段。"},
+    {"id": "fictional", "text": "全部商戶均為虛構。"}
+  ],
+
+  "collections": [
+    {
+      "slug": "sha-tin-date-night",
+      "kind": "guide",
+      "title": "A Sha Tin Date Night",
+      "title_zh": "沙田情侶約會路線",
+      "cover": "restaurant",
+      "members": {
+        "limit": 9,
+        "repeat_first": true,
+        "claims": [
+          {"check": "district_all", "value": "sha-tin"},
+          {"check": "attribute_all", "value": "quiet_ambience"},
+          {"check": "kind_all", "value": ["restaurant", "cafe", "bar"]}
+        ]
+      },
+      "title_claims": [
+        {"check": "district_all", "value": "sha-tin", "zh": "沙田", "en": "Sha Tin"},
+        {"check": "attribute_all", "value": "date_occasion", "zh": "情侶", "en": "Date"}
+      ],
+      "values": {"district": "sha-tin"},
+      "body": ["route_walk_kinds", "route_quiet", "route_count", "fictional"]
+    },
+    {
+      "slug": "quiet-meals-near-me",
+      "kind": "collection",
+      "title": "Quiet Tables Near Me",
+      "title_zh": "我附近嘅安靜用餐位",
+      "cover": "restaurant",
+      "members": {
+        "limit": 10,
+        "claims": [
+          {"check": "district_all", "value": "sha-tin"},
+          {"check": "attribute_all", "value": "quiet_ambience"},
+          {"check": "kind_all", "value": ["restaurant", "cafe"]}
+        ]
+      },
+      "title_claims": [
+        {"check": "attribute_all", "value": "quiet_ambience", "zh": "安靜", "en": "Quiet"},
+        {"check": "home_district", "value": "sha-tin", "zh": "我附近", "en": "Near Me"}
+      ],
+      "values": {"district": "sha-tin"},
+      "body": ["quiet_kinds", "all_in_district", "list_count", "fictional"]
+    },
+    {
+      "slug": "tai-wai-under-100",
+      "kind": "collection",
+      "title": "Tai Wai Under HK$100",
+      "title_zh": "大圍人均低於100蚊",
+      "cover": "restaurant",
+      "members": {
+        "limit": 9,
+        "claims": [
+          {"check": "district_all", "value": "tai-wai"},
+          {"check": "avg_price_lt", "value": 100}
+        ]
+      },
+      "title_claims": [
+        {"check": "district_all", "value": "tai-wai", "zh": "大圍", "en": "Tai Wai"},
+        {"check": "avg_price_lt", "value": 100, "zh": "100蚊", "en": "HK$100"}
+      ],
+      "values": {"district": "tai-wai", "price": 100},
+      "body": ["district_price", "list_count", "fictional"]
+    },
+    {
+      "slug": "weekend-family-sha-tin",
+      "kind": "itinerary",
+      "title": "A Family Weekend in Sha Tin",
+      "title_zh": "沙田親子週末路線",
+      "cover": "experience",
+      "members": {
+        "limit": 9,
+        "claims": [
+          {"check": "district_all", "value": "sha-tin"},
+          {"check": "attribute_all", "value": "family_occasion"},
+          {"check": "kind_all", "value": ["restaurant", "cafe", "activity", "experience"]},
+          {"check": "has_slots"},
+          {"check": "open_on_sunday"}
+        ]
+      },
+      "title_claims": [
+        {"check": "district_all", "value": "sha-tin", "zh": "沙田", "en": "Sha Tin"},
+        {"check": "attribute_all", "value": "family_occasion", "zh": "親子", "en": "Family"},
+        {"check": "weekend_slots", "zh": "週末", "en": "Weekend"}
+      ],
+      "values": {"district": "sha-tin"},
+      "body": ["itinerary_stages", "family_members", "itinerary_weekend", "route_count", "fictional"]
+    }
+  ]
+}

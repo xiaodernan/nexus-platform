@@ -5387,7 +5387,7 @@ before anything in this unit was written.
 
 **The horizon row had an expiry date nobody wrote down.** Its second arm read
 `(SELECT min(starts_at)::date FROM availability_slots) >= current_date - 7`. The seeded horizon is pinned to
-`2026-09-22T11:00:00+08:00` (`data/seed/generate.py:2085`), so `min(starts_at)` is fixed at
+`2026-09-22T11:00:00+08:00` (`data/seed/generate.py:2377`), so `min(starts_at)` is fixed at
 2026-09-22 07:00+08 while `current_date - 7` walks forward one step a day. On 2026-09-26 the threshold read
 2026-09-19 and the arm had 3 days of slack; on 2026-09-30 it reddens with the source tree unchanged and every
 decision it encodes still true. A gate that fails on a Tuesday for no reason but Tuesday is not a gate; CI
@@ -5395,7 +5395,7 @@ running this file was scheduled to go red in its sleep.
 
 **The TTL arm could not fail.** Its third arm read `stale AND expires_at > now()`. The generator sets the flag
 only where the expiry already precedes its own instant — `stale = bool(exp and exp < self.now and ...)` at
-`data/seed/generate.py:968` — so every stale row in the dataset expires before the base instant, and the
+`data/seed/generate.py:1123` — so every stale row in the dataset expires before the base instant, and the
 newest of the 72 stale rows read 2026-09-22 09:30:00+08, which is 90 minutes *before* the 11:00 base. Any
 `now()` that has not been wound backwards reads later than that. The count it reports is 0 and, for a seed
 loaded after the base instant, has to be: at the 11:41 reading it had been unable to fail for 4 days and
@@ -5404,7 +5404,7 @@ loaded after the base instant, has to be: at the 11:41 reading it had been unabl
 Both rows ask the same question — *is this data self-consistent?* — so both now ask the data, and the answer
 travels with the dataset.
 
-**The anchor is published by the thing that knows it.** `data/seed/generate.py:1749` writes the resolved base
+**The anchor is published by the thing that knows it.** `data/seed/generate.py:2041` writes the resolved base
 into `out/00_truncate.sql` as one comment line, `-- seed-base: 2026-09-22 11:00:00+08`, in the same
 `write_outputs()` call that writes the CSVs beside it, in a file that call deletes before it starts. That
 placement is the whole design: the carrier cannot outlive the data it describes, because the only way to have
@@ -5450,7 +5450,7 @@ the upper one, and the newest stale expiry sits 90 min below the base. The bound
 rows pass, and the 20 h one is tight enough to be interesting.
 
 **What this does not buy.** The TTL arm still cannot be tripped by any dataset `generate.py` writes, for the
-same reason `now()` could not trip it: `data/seed/generate.py:968` forbids the combination at the source. What
+same reason `now()` could not trip it: `data/seed/generate.py:1123` forbids the combination at the source. What
 changed is *which* producer the arm watches. `MerchantContentRepository.expireFacts` and the row's own
 `stale` column are written by the platform at read time, and 4,484 of the seed's facts are past expiry while
 4,412 of those carry `stale=false` — so the guard is real for a served database and the plant above is its
@@ -5531,7 +5531,7 @@ promise about fact freshness.
 **Measured first.** On the database D90's passing gate run left behind, and again on the live demo database:
 every one of the 520 `opening_hours` facts is past expiry and none of them carries `stale=true` — 0 of 520.
 The price facts read 2,080 past expiry with 72 marked, the rating facts 1,727 with none. The reason is
-arithmetic, not sloppiness: `stale` is set at the instant the row is written, and `data/seed/generate.py:968`
+arithmetic, not sloppiness: `stale` is set at the instant the row is written, and `data/seed/generate.py:1123`
 marks a row only where its expiry already precedes that instant. A TTL of 24 hours is never already-expired
 when it is stamped, so no 24-hour fact can ever be marked at load; and 24 hours after the pinned base every
 one of them is expired to a client while the column still says "no". Nothing re-stamps them either:
