@@ -24601,3 +24601,33 @@ iteration time**).
 **Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
 
 **Verified, not claimed.** `pytest tests/test_sse_bytes.py` → **8 passed**.
+
+## 563. D567 · the jsonb-reads falsifier held 3 of 38 arms only because its FIXTURES were stale - the checker was right all along (`scripts/falsify_quality_seam.mjs`, gate step 7)
+
+**What the gate said.** With D552/D559 fixed, `db_gate_fresh.sh` ran through steps 1-6 (migrations
+V1→V10, generate PASS, seed loaded, **217 quality checks PASS** + ledger MATCHED, truncate probe
+PASS) and stopped at step 7: `RESULT: FAIL — 35 of 38 arms held`. The three misses were all arms of
+`falsify_quality_seam.mjs` over `check_jsonb_reads.mjs`.
+
+**The diagnosis: the plane outgrew the fixtures, not the checker.**
+- **Arm "a default root still reaches every declared read"** narrowed to ONE root
+  (`services/platform/src/main/java`) and required every declared read to stay reachable. The plane
+  now also carries a read in `apps/ai` (`offerings.attributes.allergens`), so narrowing to one root
+  **must** miss it — and that is the CORRECT behaviour, already tested by the `--roots=scripts` arm
+  (rc 1 with `outside-the-census-roots`). The arm pinned a premise the plane has outgrown, so it is
+  **retired** (38 → 37 arms). Historical "38 of 38" claims stand as written; this section supersedes
+  the count.
+- **Arm "a root that opens files and finds no read is refused"** pointed at `apps/ai/nexus_ai`, which
+  now holds **3** jsonb reads (it held none when the arm was written). Re-pointed at
+  `apps/ai/nexus_ai/api` — measured: **16 files opened, 0 jsonb reads** — which is exactly what the
+  arm needs.
+- **Arm "a kind no row carries reddens"** re-filed ONE `reachable` row; the plane now has **two**
+  (the platform row and the `apps/ai` read of `offerings.attributes.allergens`), so the branch was
+  not emptied. It now re-files **both** via `plantMany`.
+
+**The checker was correct throughout.** Manually re-filing both rows made it print
+`ANSWER KINDS UNUSED (1)`, `1 classify no row on this plane (reachable)` and
+`REPORT COMPLETE — 1 reason(s) to redden, this run exits 1` — the behaviour the arm expects.
+
+**Verified, not claimed.** `node scripts/falsify_quality_seam.mjs` → **RESULT: PASS — 37 of 37 arms
+held**. The control `node scripts/check_jsonb_reads.mjs` → `REPORT COMPLETE — 0 reason(s)`, exit 0.

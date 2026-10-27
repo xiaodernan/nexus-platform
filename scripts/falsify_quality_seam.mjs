@@ -119,13 +119,18 @@ function plantMany(name, pairs) {
 const UNKNOWN_KIND = plant('unknown_kind.sql',
   "'reachable', 'CollectionsController.java:295,:303',", "'maybe-read', 'CollectionsController.java:295,:303',");
 
-// D194 — the other direction of the same drift. This census expects four kinds; re-filing the plane's only
-// `reachable` row under `dead-reader` leaves a branch with no member. Both kinds expect a findable read, so the
-// read census' own numbers do not move and the single observable change is the unused branch. Measured on the
-// bytes before the rule existed: the run printed `1 classify no row on this plane (reachable)` and exited 0 — a
-// sentence with no consequence, which is what D193 stopped doing for `--roots`.
-const KIND_UNUSED = plant('kind_unused.sql', "('collections', 'seo', 'noindex', 'reachable'",
-  "('collections', 'seo', 'noindex', 'dead-reader'");
+// D194 — the other direction of the same drift. This census expects four kinds; re-filing EVERY row of
+// one kind under `dead-reader` leaves a branch with no member. (The plane now carries two `reachable`
+// rows - the platform one and the `apps/ai` read of `offerings.attributes.allergens` - so re-filing a
+// single anchor no longer empties the branch; both are re-filed here.) Both kinds expect a findable
+// read, so the read census' own numbers do not move and the single observable change is the unused
+// branch. Measured on the bytes before the rule existed: the run printed `1 classify no row on this
+// plane (reachable)` and exited 0 — a sentence with no consequence, which is what D193 stopped doing
+// for `--roots`.
+const KIND_UNUSED = plantMany('kind_unused.sql', [
+  ["('collections', 'seo', 'noindex', 'reachable'", "('collections', 'seo', 'noindex', 'dead-reader'"],
+  ["('offerings', 'attributes', 'allergens', 'reachable'", "('offerings', 'attributes', 'allergens', 'dead-reader'"],
+]);
 
 // D194 — the seam's input itself. Every plant above writes a real file, so nothing ever pointed `--quality` at a
 // path that is absent or is a directory, and such a request died inside `readFileSync` about forty lines later:
@@ -565,18 +570,11 @@ const ARMS = [
   // printed nothing, the `unseen` bucket excused every miss as "outside what a textual scan can see", and a
   // scan aimed at one subtree would have reported a green over zero files read. Every arm names the reason its
   // refusal prints, because a refusal for the wrong reason is the defect (D159) these floors must not re-invent.
-  {
-    name: 'a default root still reaches every declared read — the narrowed control the floors are read against',
-    args: ['--roots=services/platform/src/main/java'], expectRc: 0,
-    evidence: ['read scan walks     1 root(s): services/platform/src/main/java'],
-    // The number is derived from the control's own print, not transcribed: the population must really have
-    // narrowed, and the narrowing must not have manufactured a miss.
-    check: (r) => r.scanned === null || !(r.scanned < SCANNED_CTRL)
-      ? `population did not narrow (${r.scanned} files vs the control's ${SCANNED_CTRL})`
-      : (classCounts(r).some((c) => c !== 0)
-        ? `narrowing to one root invented misses: ${MISS_CLASSES.map((c, i) => `${c}=${classCounts(r)[i]}`).join(' ')}`
-        : null),
-  },
+  // RETIRED: this arm narrowed to ONE root and required every declared read to stay reachable. That
+  // held while all declared reads lived in the platform tree; the plane now also carries a read in
+  // `apps/ai` (`offerings.attributes.allergens`), so narrowing to one root MUST miss it - and that
+  // is the CORRECT behaviour, already tested by the `--roots=scripts` arm below (rc 1 with
+  // outside-the-census-roots). Keeping this arm would pin a premise the plane has outgrown.
   {
     name: 'a root that holds no source file at all is refused — a census that opened nothing has no sight',
     args: ['--roots=docs'], expectRc: 2,
@@ -584,8 +582,8 @@ const ARMS = [
   },
   {
     name: 'a root that opens files and finds no read is refused — a census with no second reader only agrees',
-    args: ['--roots=apps/ai/nexus_ai'], expectRc: 2,
-    evidence: ['RESULT: NOT CHECKED', 'found 0 jsonb read(s)', 'apps/ai/nexus_ai'],
+    args: ['--roots=apps/ai/nexus_ai/api'], expectRc: 2,
+    evidence: ['RESULT: NOT CHECKED', 'found 0 jsonb read(s)', 'apps/ai/nexus_ai/api'],
     // It must be the READS floor that fired, not the files floor one step earlier: the refusal's own number says.
     check: (r) => { const m = /opened (\d+) file\(s\)/.exec(r.out); return !m || +m[1] === 0
       ? `refused for opening nothing (${r.out.split('\n')[0].slice(0, 120)}) rather than for finding no read` : null; },
