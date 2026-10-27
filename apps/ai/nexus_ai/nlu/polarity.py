@@ -382,11 +382,19 @@ def apply_polarity(preferences: list[dict[str, Any]], text: str,
     actually negates the preference. `tokens` maps a preference's (key, value) to the
     surface token that matched it in the sentence — the canonical value ("quiet") is not
     in a Chinese sentence, but the token that matched ("安靜") is.
+
+    Also deduplicates preferences by (key, value) keeping the first occurrence.
     """
+    from nexus_ai.nlu.lexicon import ANTONYM_TERMS
+
     out: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
     for pref in preferences:
         key = str(pref.get("key") or "")
         value = str(pref.get("value") or "")
+        if (key, value) in seen:
+            continue
+        seen.add((key, value))
         token = ""
         if tokens is not None:
             token = tokens.get((key, value), "")
@@ -394,6 +402,12 @@ def apply_polarity(preferences: list[dict[str, Any]], text: str,
             token = value or key
         if token and token.lower() in text.lower():
             sign = polarity_for(text, token)
+            # D570: a refusal of the value's OPPOSITE is a request FOR the value ("唔好嘈" wants
+            # quiet), so the -1 is inverted. A question about it stays +1 (polarity_for already
+            # skips the existential cue), and polarity_for itself is unchanged - the pure reader
+            # still answers -1, which is what its own tests pin.
+            if sign == -1 and token.strip().lower() in ANTONYM_TERMS.get((key, value), frozenset()):
+                sign = 1
             if sign:
                 pref = {**pref, "polarity": sign}
         out.append(pref)

@@ -24683,3 +24683,33 @@ occurs on more than one line, so no tool can choose: `docs/STATUS.md:4421 -> dat
 (2 lines hold `"DO \$\$"`), `docs/STATUS.md:22178 -> search/sql.py:131` (2 lines hold
 `wsq = f"websearch_to_tsquery('`), `docs/STATUS.md:23747 -> search/service.py:1064` (3 lines hold
 `if attrs.get("outdoor_style")`). Each needs the citing sentence read against the candidates.
+
+## 566. D570 · "don't be noisy" was read as a DISLIKE of quiet - the antonym surface inverted the ranking for 40% of the plane (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/polarity.py`)
+
+**What was measured.** `extract_intent("唔好嘈")` (don't be noisy) produced
+`{"key": "ambience", "value": "quiet", "polarity": -1}` — the user asks for quiet and the ranking
+lane is told to demote it. On the live corpus `quiet_ambience` is true on **188 of 470** published
+merchants, so the inversion reached **40%** of the plane. The constraint lane was right all along
+(`noise_avoid: noise`); only the preference was reversed.
+
+**Why the obvious fix does not work.** Removing 嘈 (noisy) from the quiet rule fixes the refusal,
+but `有無嘈` (is it noisy?) must still read quiet **+1** — the existential question asks about the
+thing (D533) — and the tests pin that. The rule must keep the surface; what must change is what a
+**refusal** of it means.
+
+**The fix.** `lexicon.ANTONYM_TERMS` names the surfaces that are the OPPOSITE of a value
+(`("ambience","quiet") -> {"嘈"}`), and `apply_polarity` inverts a **-1** on such a surface to
+**+1**. `polarity_for` is untouched: it is a pure cue reader and still answers -1, which its own
+tests pin. The two layers now say different, correct things:
+
+| turn | quiet preference |
+|---|---|
+| `唔好嘈` (don't be noisy) | **+1** — wants quiet |
+| `唔好安靜` (don't be quiet) | **-1** — refuses quiet (the control) |
+| `有無嘈` (is it noisy?) | **+1** — the question (D533) |
+| `唔想太嘈` (don't want it too noisy) | **+1** — the phrase |
+
+**Verified, not claimed.** `pytest tests/test_an_antonym_refusal_means_the_value.py` → **8 passed**;
+the affected nine files (preference polarity, clause unit, canon spellings, constraint lane, clause
+boundary, question-not-refusal, avoid filter, the 184-arm two-lane file) → **930 passed, 1 skipped**;
+the vocabulary gate + the new file + three neighbours → **129 passed**.

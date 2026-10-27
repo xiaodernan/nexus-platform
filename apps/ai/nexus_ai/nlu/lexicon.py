@@ -120,8 +120,7 @@ CUISINE_TERMS: dict[str, list[str]] = {
 # (key, value, patterns, polarity) — matched anywhere in the query.
 PREFERENCE_RULES: list[tuple[str, str, list[str], int]] = [
     ("ambience", "quiet", ["安靜", "安静", "靜一啲", "静一啲", "静一点", "靜一點", "靜點", "quiet",
-                           "silence", "唔想太嘈", "不想太嘈", "嘈"], 1),
-    ("ambience", "lively", ["熱鬧", "热闹", "lively", "气氛", "氣氛", "bustling"], 1),
+                           "silence", "唔想太嘈", "不想太嘈", "嘈"], 1),    ("ambience", "lively", ["熱鬧", "热闹", "lively", "气氛", "氣氛", "bustling"], 1),
     ("occasion", "date", ["約會", "约会", "情侣", "情侶", "date", "anniversary", "周年",
                           "二人世界", "romantic", "浪漫", "表白"], 1),
     ("style", "ambience", ["有情調", "有情调", "情調", "情调", "有氣氛", "有气氛",
@@ -149,6 +148,7 @@ PREFERENCE_RULES: list[tuple[str, str, list[str], int]] = [
                                 "late night", "after hours", "24小時", "24小时",
                                 "夜唔閉", "瞓夜晚"], 1),
     ("cuisine", "spicy", ["辣", "香辣", "spicy", "麻辣", "咖哩", "咖喱"], 1),
+    ("cuisine", "vegetarian", ["素食", "齋", "vegetarian", "vegan", "純素", "纯素"], 1),
     # D548: 露天 is the word a Hong Kong user types for an open-air place ("露天咖啡店",
     # "露天座位") and it was in NO row - measured, it read nothing at all while 戶外
     # read `style/outdoor +1`, so the ranking lane never asked about the outdoors for the
@@ -159,6 +159,16 @@ PREFERENCE_RULES: list[tuple[str, str, list[str], int]] = [
                           "露天", "al fresco", "燒烤", "烧烤"], 1),
     ("style", "indoor", ["室內", "室内", "indoor", "有蓋", "有盖", "雨淋唔到"], 1),
 ]
+
+#: D570: a surface that names the OPPOSITE of a preference's value. The rule keeps it, because a
+#: QUESTION about it still reads the preference +1 (有無嘈 asks whether it is noisy, D533), but a
+#: REFUSAL of it must not flip the preference to -1: "唔好嘈" (don't be noisy) WANTS quiet, and the
+#: -1 told the ranking lane to demote it. Measured on the live corpus: `quiet_ambience` is true on
+#: 188 of 470 published merchants, so the inversion reached 40% of the plane. `polarity.py` reads
+#: this table in `apply_polarity`; `polarity_for` stays a pure cue reader and is unchanged.
+ANTONYM_TERMS: dict[tuple[str, str], frozenset[str]] = {
+    ("ambience", "quiet"): frozenset({"嘈"}),
+}
 
 #: every preference value the lexicon can emit (intent fallback uses this)
 PREFERENCE_RULE_VALUES = [canonical(v) for _k, v, _t, _p in PREFERENCE_RULES]

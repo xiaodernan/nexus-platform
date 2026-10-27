@@ -1,9 +1,13 @@
 """D393 - preference polarity: a negated preference is a dislike, not a like (§7.1 / §8).
 
-The lexicon's `PREFERENCE_RULES` carry a fixed polarity of +1. A user who says "唔好咁嘈" or
-"not quiet" is expressing a dislike, and the extractor must record `polarity=-1` so the ranking
-lane demotes instead of boosting. This is the difference between "the page says the wrong
+The lexicon's `PREFERENCE_RULES` carry a fixed polarity of +1. A user who says "唔好安靜" or
+"not quiet" is expressing a dislike of QUIET, and the extractor must record `polarity=-1` so the
+ranking lane demotes instead of boosting. This is the difference between "the page says the wrong
 thing" and "the page says the opposite of what the user asked".
+
+(A refusal of the value's OPPOSITE surface - "唔好嘈", don't be noisy - is a request FOR quiet, not
+against it; that inversion lives in `apply_polarity` and is pinned by D570's
+`test_an_antonym_refusal_means_the_value.py`. `polarity_for` itself still answers -1 for the cue.)
 """
 
 from __future__ import annotations
