@@ -20,7 +20,7 @@
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -49,6 +49,26 @@ const g = (dir, ...a) => {
     process.exit(2);
   }
 };
+
+// D577's other half: every arm below spawns the file as it sits on disk, while CI's step 15/16 runs the file as
+// it was committed. A worktree copy that differs from HEAD's blob means this harness grades a reader that is not
+// the one being installed, and its green must not be carried into a ledger row as shipped behavior. The check is
+// scoped to this one path (`git diff HEAD -- <reader>`), not to `git status`: in a shared worktree the status
+// line covers every lane's paths, and the only divergence that matters here is the reader's own bytes.
+const READER_REL = relative(REPO, READER).replace(/\\/g, '/');
+if (!g(REPO, 'ls-tree', 'HEAD', '--', READER_REL).trim()) {
+  console.log('RESULT: NOT CHECKED — the reader named above is not committed at HEAD, so there is no shipped reader for these arms to falsify.');
+  console.log('  Commit the reader first; an arm that grades only an uncommitted file proves nothing about the gate.');
+  process.exit(2);
+}
+const readerDiff = g(REPO, 'diff', '--no-ext-diff', '--no-textconv', 'HEAD', '--', READER_REL);
+if (readerDiff.trim() !== '') {
+  console.log('RESULT: NOT CHECKED — the reader on disk is not the reader at HEAD, so the arms below would grade bytes CI does not run.');
+  console.log(`  ${readerDiff.split('\n').find((l) => l.startsWith('diff ')) ?? READER_REL}`);
+  console.log(`  ${g(REPO, 'diff', '--stat', 'HEAD', '--', READER_REL).trim().split('\n').filter(Boolean).pop() ?? '(no stat line)'}`);
+  console.log('  Either commit the reader or re-run this harness from a plane where its worktree copy matches HEAD; a green here with a dirty reader is a green for the wrong file.');
+  process.exit(2);
+}
 
 function makeRepo(name, first, later) {
   // A fixture that already exists is not a fixture this harness may reuse. `git init` on the leftover
@@ -95,9 +115,13 @@ function run(dir, extra) {
   const judged = /^judged by content: (\d+)$/m.exec(out);
   const frames = /^quoted error frames skipped \(file:LINE:COL\): (\d+)$/m.exec(out);
   if (!frames) throw new Error('the reader prints no `quoted error frames skipped` line, so this harness cannot assert the skip count');
+  // D577: the reader grades HEAD's copy of the ledger, so the arm that dirties a citing line asserts the
+  // plane-level divergence it discloses. A reader that stopped printing it would silently re-open the mask.
+  const dirty = /^ledger lines differing between disk and HEAD: (\d+)/m.exec(out);
+  if (!dirty) throw new Error('the reader prints no `ledger lines differing between disk and HEAD: N` line, so the plane it graded is not disclosed');
   const result = /RESULT: (\w+)/.exec(out);
   if (!result) throw new Error(`the reader printed no RESULT line (rc ${r.status}):\n${out}${r.stderr}`);
-  return { counts, frames: Number(frames[1]), judged: judged ? Number(judged[1]) : -1, verdict: result[1], rc: r.status, out, rows: out.split('\n').filter((l) => l.startsWith('reaim\t')) };
+  return { counts, frames: Number(frames[1]), dirty: Number(dirty[1]), judged: judged ? Number(judged[1]) : -1, verdict: result[1], rc: r.status, out, rows: out.split('\n').filter((l) => l.startsWith('reaim\t')) };
 }
 
 const A_LINES = ['line one', 'line two', 'THE TARGET LINE', 'line four'];
@@ -256,6 +280,28 @@ const has = (a, s) => (a.out.includes(s) ? 'has' : 'MISSING');
     `frames-only ${want('EXACT', 0, 0, 2)} · frames 1 · sentence has || mixed ${want('MOVED', 1)} · frames 1`,
     `frames-only ${vec(a)} · frames ${a.frames} · sentence ${has(a, 'quoted error frame (file:LINE:COL)')} || mixed ${vec(b)} · frames ${b.frames}`,
     `the frames-only refusal reads: ${a.out.split('\n').find((l) => l.startsWith('RESULT')) ?? '(no RESULT line)'}`);
+}
+
+// 13 The basis — a stale number typed into the ledger on disk, then committed. The census reads HEAD's copy of
+// the ledger and blames HEAD's copy of it, so the three planes differ only in whether the citing line exists as a
+// commit. Arm 13 exists because the reader used to blame the working copy: the uncommitted line dated to no
+// commit at all, its cite lost the basis it was written against, and MOVED emptied — so typing a correction into
+// `docs/STATUS.md` turned step 16 green while HEAD still named a line that had moved.
+{
+  const later = { 'src/a.mjs': ['line one', 'line two', 'AN INSERTION', 'THE TARGET LINE', 'line four'] };
+  const clean = makeRepo('basis_clean', { 'src/a.mjs': A_LINES, 'L.md': ['the target is src/a.mjs:3'] }, later);
+  const dir2 = makeRepo('basis_dirty', { 'src/a.mjs': A_LINES, 'L.md': ['the target is src/a.mjs:3'] }, later);
+  const a = run(clean, []);
+  writeFileSync(join(dir2, 'L.md'), 'the target is src/a.mjs:4 (re-aimed on disk, not committed)\n');
+  const b = run(dir2, []);
+  const s = run(dir2, ['--strict', 'MOVED']);
+  g(dir2, 'add', 'L.md');
+  g(dir2, 'commit', '-q', '-m', 'the disk number is the one that is right');
+  const c = run(dir2, []);
+  arm('a stale number typed into the ledger cannot empty the strict classes',
+    `${want('MOVED', 1)} · diverges 0 || ${want('MOVED', 1)} · diverges 1 · strict-MOVED FAIL rc 1 || ${want('EXACT', 1)} · diverges 0`,
+    `${vec(a)} · diverges ${a.dirty} || ${vec(b)} · diverges ${b.dirty} · strict-MOVED ${s.verdict} rc ${s.rc} || ${vec(c)} · diverges ${c.dirty}`,
+    `divergence is disclosed, not assumed: the dirty plane reads \`${b.out.split('\n').find((l) => l.startsWith('ledger lines differing'))?.slice(0, 84) ?? '(none)'}\``);
 }
 
 let matched = 0;for (const c of cases) {
