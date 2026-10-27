@@ -24631,3 +24631,28 @@ PASS) and stopped at step 7: `RESULT: FAIL — 35 of 38 arms held`. The three mi
 
 **Verified, not claimed.** `node scripts/falsify_quality_seam.mjs` → **RESULT: PASS — 37 of 37 arms
 held**. The control `node scripts/check_jsonb_reads.mjs` → `REPORT COMPLETE — 0 reason(s)`, exit 0.
+
+## 564. D568 · the console-a11y falsifier called `rmSync` without importing it - gate step 14 died on a ReferenceError, not on a red arm (`scripts/falsify_console_a11y.mjs`)
+
+**What the gate said.** With step 7 fixed (D567), the full 18-step run passed steps 1-13 and reached
+step 14. `check_console_a11y.mjs` itself printed **PASS** (landmarks, names, focus rings, and every
+printed contrast ratio), and then the step died with:
+
+```
+ReferenceError: rmSync is not defined
+    at Object.apply (scripts/falsify_console_a11y.mjs:171:19)
+```
+
+**The defect.** The module imports `copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync,
+statSync, writeFileSync` from `node:fs` — and **not `rmSync`** — while three arms use it (the README
+removal at :171 and the two console-page trees at :185-186). A falsifier that throws is not a missed
+arm: the step cannot tell "the checker is right" from "the harness is broken", which is exactly the
+distinction these arms exist to make.
+
+**The fix.** All three calls use `safeRemove` (already imported from `spawn_guard.mjs`), which also
+handles this host's safe-delete shim: a bulk recursive `rmSync` is refused, so `safeRemove` unlinks
+in batches and then removes the empty directories. The arm's meaning is unchanged — it still removes
+the README / the console page trees and still requires the checker to redden for that reason.
+
+**Verified, not claimed.** `node scripts/falsify_console_a11y.mjs` → **RESULT: PASS — 13 arms · 13
+held · 0 missed** (fixture root `nexus-d186-falsify`).

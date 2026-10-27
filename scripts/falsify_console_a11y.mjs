@@ -168,7 +168,7 @@ const ARMS = [
   },
   {
     name: 'the README the palette cites, removed',
-    apply: (d) => rmSync(join(d, 'packages/ui/README.md'), { force: true }),
+    apply: (d) => safeRemove(join(d, 'packages/ui/README.md')),
     expect: 1,
     must: [/README\.md for its measured ratios, and that file does not exist/],
   },
@@ -182,8 +182,10 @@ const ARMS = [
   {
     name: 'REFUSAL: a plane with no console pages at all',
     apply: (d) => {
-      rmSync(join(d, 'apps/web/app/admin'), { recursive: true, force: true });
-      rmSync(join(d, 'apps/web/app/merchant'), { recursive: true, force: true });
+      // D568: `rmSync` was never imported here (a ReferenceError at this line, caught by gate step 14),
+      // and the host's safe-delete shim refuses a bulk recursive delete anyway - `safeRemove` batches it.
+      safeRemove(join(d, 'apps/web/app/admin'));
+      safeRemove(join(d, 'apps/web/app/merchant'));
     },
     expect: 2,
     must: [/no console page\.tsx was read/],
