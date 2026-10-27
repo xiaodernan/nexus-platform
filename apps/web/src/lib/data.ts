@@ -13,7 +13,7 @@
 
 import { IS_MOCK } from './env';
 import { nexusGet } from './api/base';
-import { toGuide, toGuidePage } from './platform-guides';
+import { toCollection, toCollectionPage, toGuide, toGuidePage } from './platform-guides';
 import {
   merchantDetailFrom,
   offeringFrom,
@@ -284,14 +284,14 @@ export async function offeringBySlug(slug: string): Promise<NexusResult<Offering
  * with its own sitemap entry is the kind of drift this split prevents.
  */
 
-export async function guideBySlug(slug: string): Promise<NexusResult<Guide | null>> {
+export async function guideBySlug(slug: string, locale: string): Promise<NexusResult<Guide | null>> {
   if (IS_MOCK) return { data: mockGuide(slug), mocked: true };
   try {
     // Projected, not cast: the platform serves `items` (stored blocks + a resolved `card` each) and the
     // view-model wants `body_blocks`, which it never served. A bare cast is what made this page throw
     // `undefined.map` in live mode — see `platform-guides.ts`.
     const payload = await nexusGet<Record<string, unknown>>('platform', `/api/v1/guides/${encodeURIComponent(slug)}`);
-    return { data: toGuide(payload), mocked: false };
+    return { data: toGuide(payload, locale), mocked: false };
   } catch (cause) {
     if (isNotFound(cause)) return { data: null, mocked: false };
     throw cause;
@@ -303,33 +303,34 @@ export async function guideBySlug(slug: string): Promise<NexusResult<Guide | nul
  * reachable from the navigation, and a catalogue the platform has not published yet should answer
  * with its own empty state plus the reason (§105) rather than an error page behind a nav link.
  */
-export async function guideList(): Promise<NexusResult<CursorPage<Guide>>> {
+export async function guideList(locale: string): Promise<NexusResult<CursorPage<Guide>>> {
   if (IS_MOCK) return { data: pageOf(mockGuides()), mocked: true };
   try {
     const page = await nexusGet<CursorPage<Record<string, unknown>>>('platform', '/api/v1/guides');
-    return { data: toGuidePage(page), mocked: false };
+    return { data: toGuidePage(page, locale), mocked: false };
   } catch (cause) {
     return degraded(pageOf<Guide>([]), false, reasonOf(cause));
   }
 }
 
-export async function collectionBySlug(slug: string): Promise<NexusResult<Collection | null>> {
+export async function collectionBySlug(slug: string, locale: string): Promise<NexusResult<Collection | null>> {
   if (IS_MOCK) return { data: mockCollection(slug), mocked: true };
   try {
-    return {
-      data: await nexusGet<Collection>('platform', `/api/v1/collections/${encodeURIComponent(slug)}`),
-      mocked: false,
-    };
+    // Projected for the same reason as the guide read: the platform serves a localized title pair and
+    // the resolved cards under `cards`, and the view-model wants a string and a list of `EntityCard`s.
+    const payload = await nexusGet<Record<string, unknown>>('platform', `/api/v1/collections/${encodeURIComponent(slug)}`);
+    return { data: toCollection(payload, locale), mocked: false };
   } catch (cause) {
     if (isNotFound(cause)) return { data: null, mocked: false };
     throw cause;
   }
 }
 
-export async function collectionList(): Promise<NexusResult<CursorPage<Collection>>> {
+export async function collectionList(locale: string): Promise<NexusResult<CursorPage<Collection>>> {
   if (IS_MOCK) return { data: pageOf(mockCollections()), mocked: true };
   try {
-    return { data: await nexusGet<CursorPage<Collection>>('platform', '/api/v1/collections'), mocked: false };
+    const page = await nexusGet<CursorPage<Record<string, unknown>>>('platform', '/api/v1/collections');
+    return { data: toCollectionPage(page, locale), mocked: false };
   } catch (cause) {
     return degraded(pageOf<Collection>([]), false, reasonOf(cause));
   }

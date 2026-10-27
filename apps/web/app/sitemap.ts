@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { collectionList, guideList, programmaticPage, programmaticRoutes } from '@/lib/data';
 import { IS_MOCK, SEO_DISCOVERY_ENABLED, SITE_URL, TENANT } from '@/lib/env';
+import { currentLocale } from '@/lib/i18n/server';
 import { SEED_MERCHANTS } from '@/lib/mock';
 import { sitemapEntries, type SitemapSource } from '@/lib/seo';
 
@@ -69,7 +70,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  const guides = (await guideList()).data?.items ?? [];
+  // The sitemap carries paths and timestamps, not titles, but the reads it makes project the
+  // payload's localized title pair — so it resolves the same locale the pages would.
+  const locale = await currentLocale();
+
+  const guides = (await guideList(locale)).data?.items ?? [];
   for (const guide of guides) {
     sources.push({
       path: `/guides/${guide.slug}`,
@@ -80,7 +85,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  const collections = (await collectionList()).data?.items ?? [];
+  const collections = (await collectionList(locale)).data?.items ?? [];
   for (const collection of collections) {
     sources.push({ path: `/collections/${collection.slug}`, lastModified: collection.updated_at ?? null });
   }

@@ -24905,3 +24905,101 @@ place until a clause proves otherwise, so that is the next unit's work and not t
   reader 15 of 15 first-party readers invoked, 0 unreached · no fresh 18-step gate was filed in this unit, so
   the database-backed steps were not re-run here; the figures above come from the readers this change can
   reach
+
+## 569. D573 · the four §8 growth routes answered HTTP 500 in live mode — the platform serves `title` as a localized pair and the web rendered it raw (`apps/web/src/lib/platform-guides.ts`, `apps/web/src/lib/data.ts`, `apps/web/app/guides/page.tsx`, `apps/web/app/collections/page.tsx`, `apps/web/app/guides/[slug]/page.tsx`, `apps/web/app/collections/[slug]/page.tsx`)
+
+**What was found, and how.** The D572 live leg widened from the home page to the navigation routes and found
+that four of them answered **HTTP 500**: `/guides`, `/collections`, `/guides/sha-tin-date-night` and
+`/collections/tai-wai-under-100`. The server said it in one line:
+
+```
+Objects are not valid as a React child (found: object with keys {en, zh}).
+```
+
+The page was not broken by its own markup and not by a missing fixture. It was broken by a field the
+platform serves and the web renders without projecting.
+
+**The cause, read from the producer rather than inferred.** `CollectionsController.summary()` is ONE
+projection shared by `/api/v1/collections`, `/api/v1/guides`, both detail routes and the draft-create
+answer, and it puts a **pair** in `title`
+(`services/platform/src/main/java/com/nexus/catalog/CollectionsController.java:217`):
+
+```java
+out.put("title", Json.map("en", Json.str(row, "title"), "zh", Json.str(row, "title_zh")));
+```
+
+Two columns, one field: `collections.title` and `collections.title_zh`. The contract documents it that
+way — "`collections.slug`, `title` (+ `title_zh` for the zh-HK locale)" (`docs/API_CONTRACT.md:397`), inside
+`API_CONTRACT §8`'s growth surface. The web's view-model declares `title: string`
+(`apps/web/src/lib/types.ts:247` for a collection, `apps/web/src/lib/types.ts:262` for a guide) and the
+read cast the payload raw, so the page handed React a map and React refused it. Every growth route in the
+navigation was unreachable in live mode, and the two index pages were the ones the nav links to.
+
+**Why the mock plane never showed it.** `DEMO_GUIDES` and `DEMO_COLLECTIONS` are written in the view-model
+shape, with plain-string titles. The two planes disagreed about the same field and only one of them was
+ever exercised — the same failure as the `body_blocks` defect this module already carries, one layer
+down. A green mock run was not evidence about a live run.
+
+**The fix.** The pair is resolved **by the page's locale**, in the one module that already owns the wire →
+view-model crossing for this surface (`apps/web/src/lib/platform-guides.ts`):
+
+- `toLocalizedTitle(value, locale)` (`apps/web/src/lib/platform-guides.ts:71`) reads the column the locale
+  asks for — `zh-HK` reads `zh`, `en` reads `en` — falls back to the other column when the locale's own is
+  absent, and passes a plain string through so the mock plane and any future wire that serves one keep
+  working. An absent title answers `''`, never a map.
+- `toGuide(payload, locale)` (`apps/web/src/lib/platform-guides.ts:174`) and `toCollection(payload, locale)`
+  (`apps/web/src/lib/platform-guides.ts:201`) apply it, and project the fields whose wire type differs from
+  the view-model's declared type: `description`, `cover_image` (the wire allows a null `alt`; the
+  view-model declares a string, and an empty alt is the honest spelling of "this image carries no alt
+  text"), `city` and `category`.
+- `toCollection` derives a collection's `items` from the wire's resolved `cards`, not from `items`. The
+  detail view serves both, and `items` holds the stored references the author wrote
+  (`{subject_type, subject_id, note, card}`) while `cards` holds the same walk with the merchant resolved.
+  Rendering the stored array would have produced a grid of references with no title and a `JsonLd` whose
+  `name` was undefined — a page that answers 200 and says nothing.
+- `toGuidePage` and `toCollectionPage` project a list page item by item, as `toGuidePage` already did.
+
+The locale reaches the read: `guideBySlug`, `guideList`, `collectionBySlug` and `collectionList` now take it
+(`apps/web/src/lib/data.ts:287`, `apps/web/src/lib/data.ts:306`, `apps/web/src/lib/data.ts:316`,
+`apps/web/src/lib/data.ts:329`) and the four pages pass the one they already resolve. `app/sitemap.ts`
+resolves it too — the sitemap carries paths and timestamps rather than titles, but its reads project the
+same field, so it must not be the one place that guesses.
+
+**What it does not do.** It does not change the platform: the pair is what `API_CONTRACT §8` documents and
+what `title_zh` exists for. It does not pick a language by guessing — the page's locale is the only input,
+and a locale with no column of its own falls back to the other rather than to nothing. It does not drop a
+card the platform could not resolve: `dropped_item_ids` still names them and the resolved array still omits
+them, which is the `API_CONTRACT §8` rule that an unresolvable id drops the item and never renders a
+placeholder card.
+
+**Evidence.** The unit cases in `apps/web/src/lib/platform-guides.test.ts` are written from the wire shape
+the platform actually serves — the pair, the null `alt`, the stored references beside the resolved cards —
+and not from the mock plane's plain strings: 17 cases, green, in a file that held 8 before this unit. The
+live leg re-visited the four routes on the running stack (`http://127.0.0.1:3002`, live mode against the
+platform on `:8090`): **all four answer HTTP 200**, against four HTTP 500s before this change, and the
+browser console is clean on three of them. The fourth — the guide detail route — logs one React error,
+"Encountered two children with the same key", which is the defect the next unit takes; it is named below
+rather than counted as clean. The rendered heading is the platform's `zh` column read by the page's own
+locale (沙田情侶約會路線), and the collection detail renders nine resolved merchant cards — names, ratings,
+prices — where the stored array would have rendered nine references with no title. `npx tsc --noEmit` over
+`apps/web` is clean, and the whole web suite is 160 cases in 12 files, green.
+
+**Left open, named here rather than left to be discovered again.** The guide detail route now answers 200
+and still logs one React error: "Encountered two children with the same key". The seeded Sha Tin guide
+cites ten merchants over nine shops — `bramble-spoon-0001` appears at position 1 and position 9 of the
+resolved cards, and the platform's own comment says the repeats are kept on purpose, because a `cards`
+array one shorter than the items it came from reads as a lost item. So the data is right and the web's
+`key={card.id}` is wrong; that is the next unit, not this one. Separately, the seeded guide's description
+carries a broken template placeholder — `"由{d2}分鐘步程內嘅安靜餐廳…"` — where a distance number belongs,
+and that string is what the page renders as its description.
+
+- readers: the four growth routes answer HTTP 200 live — `/guides`, `/collections`,
+  `/guides/sha-tin-date-night`, `/collections/tai-wai-under-100` — against four HTTP 500s before this
+  change · the browser console is clean on three of the four; the guide detail route logs one React
+  duplicate-key error, which the next unit takes and this section names rather than counting as clean ·
+  the rendered heading is the platform's `zh` column read by the page's own locale, and the collection
+  detail renders nine resolved merchant cards where the stored array would have rendered nine references
+  with no title · `apps/web/src/lib/platform-guides.test.ts` is 17 cases green in a file that held 8 ·
+  `npx tsc --noEmit` over `apps/web` is clean and the whole web suite is 160 cases in 12 files, green ·
+  gate step 10 reads this section as one more heading with missing 0 and duplicate 0, and step 8 reads
+  its eleven citations against the working tree with 0 strict offenders

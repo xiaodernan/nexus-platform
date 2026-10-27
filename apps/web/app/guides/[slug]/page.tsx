@@ -18,7 +18,8 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata(props: Props): Promise<Metadata | undefined> {
   const { slug } = await props.params;
-  const guide = (await guideBySlug(decodeURIComponent(slug))).data;
+  const locale = await currentLocale();
+  const guide = (await guideBySlug(decodeURIComponent(slug), locale)).data;
   if (!guide) return undefined;
   return {
     title: guide.title,
@@ -38,7 +39,7 @@ export default async function GuidePage(props: Props) {
   const locale = await currentLocale();
   const dict = getDict(locale);
   const { slug } = await props.params;
-  const guide = (await guideBySlug(decodeURIComponent(slug))).data;
+  const guide = (await guideBySlug(decodeURIComponent(slug), locale)).data;
   if (!guide) notFound();
 
   return (

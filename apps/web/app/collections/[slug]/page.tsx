@@ -14,7 +14,8 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata(props: Props): Promise<Metadata | undefined> {
   const { slug } = await props.params;
-  const collection = (await collectionBySlug(decodeURIComponent(slug))).data;
+  const locale = await currentLocale();
+  const collection = (await collectionBySlug(decodeURIComponent(slug), locale)).data;
   if (!collection) return undefined;
   const cover = collection.cover_image;
   return {
@@ -35,7 +36,7 @@ export default async function CollectionPage(props: Props) {
   const locale = await currentLocale();
   const dict = getDict(locale);
   const { slug } = await props.params;
-  const collection = (await collectionBySlug(decodeURIComponent(slug))).data;
+  const collection = (await collectionBySlug(decodeURIComponent(slug), locale)).data;
   if (!collection) notFound();
 
   return (

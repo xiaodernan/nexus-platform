@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function GuidesIndexPage() {
   const locale = await currentLocale();
   const dict = getDict(locale);
-  const result = await guideList();
+  const result = await guideList(locale);
   const guides = result.data.items;
 
   return (
