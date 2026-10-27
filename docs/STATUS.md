@@ -24434,3 +24434,37 @@ the defaults are a second copy of a coordinate the Makefile owns, and on this ma
 another product's frontend. #207, #208, #203, #204, #205, #196 and #195 stand as filed.
 
 - readers: the witness green on the bytes this section describes (3 passed, desktop) and `npm run lint:web` at 0 errors · step 8 0 strict offenders on the working-copy plane · step 9 0 offenders, with no citation total quoted because that count moves with other lanes' uncommitted comments in the same tree · step 10 every committed heading still on disk, duplicate 0, uncommitted 1 (this section) · step 12 every spelled `STATUS §NN` in the tree resolves, this section's three among them · the line-ending census PASS with mixed 0, this section uniform LF like the section it follows · step 15 103 of 179 line citations still name the line they were written against, strict=none, and every MOVED and NOT-UNIQUE site lies outside this section · step 17 census-only, no `--expect`, because no fresh 18-step gate was filed in this unit: the database-backed steps were not re-run here, and the figures above come from the readers this change can actually reach
+
+## 556. D559 · the from-scratch gate was aborted by its own CLEANUP - the host's safe-delete shim refused a `C:\…` temp path at three EXIT traps (`data/seed/load.sh`, `scripts/db_gate_fresh.sh`, `scripts/seed_truncate_probe.sh`)
+
+**The defect.** D552 fixed the gate's step 2 (migrations ran V10 before V1). With that fixed, the
+gate reached step 4 and stopped — not on a data check, but on a **cleanup**. `mktemp` on this host
+returns a `C:\…` path, and the node runtime's safe-delete shim refuses to `rm` it. Under `set -e`
+(and the gate's `pipefail`) a refused `rm` in an EXIT trap turns a **successful** step into a
+non-zero exit, so the run died with no failing assertion anywhere:
+
+- `data/seed/load.sh`: `cleanup() { rm -f "$stream"; }` on an EXIT trap — the seed load finished
+  (facts 5688, chunks 2118) and then exited non-zero, aborting the gate after step 4;
+- `scripts/db_gate_fresh.sh`: the step-5 `trap 'rm -f "$GATE_OUT" …'` could fail at exit and
+  corrupt the gate's own exit code;
+- `scripts/seed_truncate_probe.sh`: two traps (`REFUSE_OUT`, `CLEAR_OUT`) — step 6 passed its four
+  arms and then died on the cleanup line.
+
+**The fix.** Every one of those cleanups is now `rm -f … 2>/dev/null || true`. A cleanup is not a
+check: it must never be able to fail a step that succeeded, and it must never hide a real failure
+behind a shim's refusal.
+
+**Evidence (the run with the first two fixed).** step 2: V1→V10 in order, tables=58, migrations=10 ·
+step 3: generate PASS (FK integrity, bounds, naming, density, language mix) · step 4: seed loaded
+(facts 5688, chunks 2118, reviews 11000, availability_slots 32492) · step 5: **217 quality checks
+passed** and the ledger's newest claim MATCHED · step 6: truncate probe PASS (the empty stranger is
+cleared, the one holding rows refuses by name, and the refusal costs nothing). The run stopped at
+the probe's own cleanup `rm` — exactly the third fix above.
+
+**Full 18-step run pending.** Docker Desktop went down again before the third fix could be exercised
+end-to-end; the next unit with the daemon up runs `bash scripts/db_gate_fresh.sh` to completion.
+
+**Suite state.** The `apps/ai` suite ran to 100% with **0 FAILED** (`grep -c '^FAILED'` = 0) across
+10550 collected tests; pytest's non-zero exit came from its **tmp_path cleanup** being refused by
+the same shim (`SAFE_DELETE_BULK_CONFIRM_REQUIRED`), not from a test. Run it with
+`--basetemp` on a relative path to get a clean exit code.

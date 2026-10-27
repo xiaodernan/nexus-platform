@@ -99,7 +99,7 @@ if printf '%s\n' "$(sed 's/\r$//' "$TRUNCATE_SQL")" \
 else
   refused=1
 fi
-trap 'rm -f "$REFUSE_OUT"; cleanup' EXIT
+trap 'rm -f "$REFUSE_OUT" 2>/dev/null || true; cleanup' EXIT
 cat "$REFUSE_OUT" | sed -e 's/^/    /'
 [ "$refused" = "1" ] || die "the truncate SUCCEEDED with rows in probe_row_child — it cleared a table nobody listed"
 grep -q "probe_row_child (1 row(s) written elsewhere)" "$REFUSE_OUT" \
@@ -114,7 +114,7 @@ echo "    -> refused by name, and the database it refused is the database it fou
 step "4/4  with the planted rows gone, the same script must clear both strangers"
 psql_probe "DELETE FROM probe_row_child;" >/dev/null
 CLEAR_OUT="$(mktemp "${TMPDIR:-/tmp}/nexus-probe-clear.XXXXXX")"
-trap 'rm -f "$CLEAR_OUT"; cleanup' EXIT
+trap 'rm -f "$CLEAR_OUT" 2>/dev/null || true; cleanup' EXIT
 printf '%s\n' "$(sed 's/\r$//' "$TRUNCATE_SQL")" \
   | docker exec -i "$CONTAINER" psql -v ON_ERROR_STOP=1 --single-transaction -q -U "$PGUSER" \
     -d "$PROBE_DB" > "$CLEAR_OUT" 2>&1 || { cat "$CLEAR_OUT" | sed -e 's/^/    /'; die "the empty-stranger case did not clear"; }

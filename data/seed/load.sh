@@ -147,7 +147,10 @@ log "         SYNTHETIC DEMO DATA — the rows describe invented businesses, not
 # cat the ordered scripts into a single psql session on stdin: COPY ... FROM STDIN then
 # consumes the rows that follow it in the same stream.
 stream=$(mktemp "${TMPDIR:-/tmp}/nexus-seed.XXXXXX.sql")
-cleanup() { rm -f "$stream"; }
+# On this host `mktemp` returns a `C:\…` path and the node runtime's safe-delete shim refuses to
+# `rm` it. The cleanup runs from an EXIT trap under `set -e`, so a refused `rm` turned a SUCCESSFUL
+# load into a non-zero exit — and the gate's `pipefail` then aborted the whole run after step 4.
+cleanup() { rm -f "$stream" 2>/dev/null || true; }
 trap cleanup EXIT
 : > "$stream"
 for f in "${files[@]}"; do cat "$f" >> "$stream"; done

@@ -181,7 +181,7 @@ for v in MIN_MERCHANTS MIN_OFFERINGS MIN_REVIEWS MIN_NEAR_SHA_TIN; do
 done
 # shellcheck disable=SC2086  # intentional word splitting of the -v pairs
 GATE_OUT="$(mktemp "${TMPDIR:-/tmp}/nexus-gate-fresh.XXXXXX")"
-trap 'rm -f "$GATE_OUT" "$GATE_OUT.ledger"; cleanup' EXIT
+trap 'rm -f "$GATE_OUT" "$GATE_OUT.ledger" 2>/dev/null || true; cleanup' EXIT
 if printf '%s\n' "$(sed 's/\r$//' "$ROOT/data/seed/quality.sql")" \
    | docker exec -i "$CONTAINER" psql -v ON_ERROR_STOP=1 -qtA $VARS -U "$PGUSER" -d "$GATE_DB" > "$GATE_OUT" 2>&1; then
   CHECKS="$(grep -ac '^  PASS' "$GATE_OUT" || true)"
