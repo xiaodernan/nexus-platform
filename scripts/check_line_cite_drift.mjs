@@ -12,8 +12,10 @@
  * already committed (D162's newness predicate), so no reader on this plane could see it at all. That is a class,
  * not an incident — and this script is the reader for the class.
  *
- * THE TEST, AND WHY IT NEEDS NO GUESS ABOUT MEANING. For each citation: blame the ledger LINE that holds it to
- * the commit that wrote it, read the cited file at THAT commit and at HEAD, and compare the text of line NN.
+ * THE TEST, AND WHY IT NEEDS NO GUESS ABOUT MEANING. For each citation: blame the ledger LINE that holds it — at
+ * HEAD, the same plane its text is read from, because blaming the working copy dates an uncommitted line to no
+ * commit at all and every citation on an edited line then escapes judgement (D577, and the arm that keeps it so) —
+ * read the cited file at THAT commit and at HEAD, and compare the text of line NN.
  * Content equality is derivable from two refs; "does this sentence still describe that line" is not, so this
  * reader never asks it. It reports four states for the line the cite pointed at when it was written:
  *   EXACT       line NN at HEAD holds exactly the text line NN held when the citation was committed.
@@ -71,7 +73,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseFlags } from './cli_args.mjs';
@@ -98,14 +100,25 @@ export const FLAGS = {
   '--resolve-basenames': { kind: 'switch' },
 };
 
-/** Blame `path` and return Map<lineNumber, commitSha>. Porcelain headers carry the line number and each text
- *  line starts with a tab; reading the author off the wrong half of the record is how the preflight produced its
- *  fake zero, so this walker binds the number from the header and the commit from the same iteration. */
-export function blameByLine(git, path) {
+/** Blame `path` AT `rev` and return Map<lineNumber, commitSha>. Porcelain headers carry the line number and each
+ *  text line starts with a tab; reading the author off the wrong half of the record is how the preflight produced
+ *  its fake zero, so this walker binds the number from the header and the commit from the same iteration.
+ *
+ *  WHY THE REV IS ARGUED (D577). The census reads the ledger's text out of HEAD (`git show HEAD:<ledger>`), so the
+ *  line numbers it holds are HEAD's. Blaming the working copy asks a different plane: `git blame <path>` with no rev
+ *  dates an uncommitted line to the all-zero sha, and the all-zero sha resolves to no tree, so every citation
+ *  sitting on a line somebody is editing fell to NO-BASE — which is not a judgement, it is a skipped one. Measured
+ *  on a throwaway plane, and kept reproducible by the last arm of `scripts/falsify_line_cite_drift.mjs`: a
+ *  committed ledger whose citation is stale reports `MOVED 1` and `--strict MOVED` exits 1 while the worktree is
+ *  clean, and editing that same line ON DISK — no target moved, no commit made — reported `MOVED 0 · NO-BASE 1`
+ *  and the same strict run exited 0. A green the editor can reach by typing is not a gate. Blaming HEAD makes
+ *  basis and text one plane again; what the editor's own bytes represent is counted and printed instead of
+ *  silently grading a plane that does not exist yet. */
+export function blameByLine(git, path, rev = 'HEAD') {
   const map = new Map();
   let cur = null;
   let line = 0;
-  for (const l of git('blame', '--line-porcelain', path).split(/\r?\n/)) {
+  for (const l of git('blame', '--line-porcelain', rev, '--', path).split(/\r?\n/)) {
     const h = /^([0-9a-f]{40}) \d+ (\d+)/.exec(l);
     if (h) { line = Number(h[2]); cur = h[1]; continue; }
     if (/^\t/.test(l) && cur) map.set(line, cur);
@@ -185,13 +198,27 @@ export function census({ repo, ledgers, limit, resolveBasenames = false }) {
   let ledgerLines = 0;
   let blamed = 0;
   let noLedger = 0;
+  let dirtyLines = 0;
+  let absentLedgers = 0;
 
   for (const ledger of ledgers) {
     let headText;
     try { headText = git('show', `HEAD:${ledger}`); } catch { headText = null; }
     if (headText === null) { noLedger += 1; keep({ verdict: 'NO-BASE', site: ledger, detail: 'committed ledger unreadable on this plane' }); continue; }
-    const map = blameByLine(git, ledger);
+    const map = blameByLine(git, ledger, 'HEAD');
     const lines = headText.replace(/\r\n/g, '\n').split('\n');
+    // The editor's own bytes, counted rather than judged: they have no basis commit, so nothing here can say what
+    // they will mean once committed. Printed as one number per run so a PASS cannot be read as a verdict on the
+    // working copy — which is what this census's reader used to invite by blaming that copy and dating its lines
+    // to no commit at all.
+    let diskText = null;
+    try { diskText = readFileSync(join(repo, ledger), 'utf8'); } catch { diskText = null; }
+    if (diskText !== null) {
+      const disk = diskText.replace(/\r\n/g, '\n').split('\n');
+      for (let i = 0; i < Math.max(disk.length, lines.length); i += 1) if (disk[i] !== lines[i]) dirtyLines += 1;
+    } else {
+      absentLedgers += 1;
+    }
     lines.forEach((l, i) => {
       const ln = i + 1;
       ledgerLines += 1;
@@ -292,7 +319,8 @@ export function census({ repo, ledgers, limit, resolveBasenames = false }) {
   if (ledgerLines === 0) floors.push('the census read no ledger lines');
   if (blamed === 0 && total > 0) floors.push('the census resolved no blame author for any citation — it read nothing');
   if (judged === 0) floors.push('no citation survived both reads, so the content test judged nothing');
-  return { counts, rows, moves, unaimable, total, frames, blamed, ledgerLines, judged, judgedClasses: JUDGED, floors };
+  return { counts, rows, moves, unaimable, total, frames, blamed, ledgerLines, dirtyLines, absentLedgers,
+    judged, judgedClasses: JUDGED, floors };
 }
 
 export function main(argv) {
@@ -320,6 +348,12 @@ export function main(argv) {
   if (unemitted.length) { console.log(`RESULT: NOT CHECKED — STRICT_CLASSES names ${unemitted.join(', ')} which this census does not emit`); return 2; }
   console.log(`ledger lines read: ${r.ledgerLines} · citation-shaped tokens into code: ${r.total} · blamed: ${r.blamed}`);
   console.log(`quoted error frames skipped (file:LINE:COL): ${r.frames}`);
+  // The plane this census graded, stated. D577: before the basis was pinned to HEAD, an uncommitted edit to a
+  // citing line was dated to the all-zero sha and skipped as NO-BASE, so a lane re-aiming a stale number saw
+  // `MOVED 0` and a PASS on the very class it was supposed to clear. The count below is the disclosure half of
+  // that fix: it says how much of this machine's ledger is not in the reading above.
+  console.log(`ledger lines differing between disk and HEAD: ${r.dirtyLines} (the census grades HEAD's copy, so a number edited on disk is not judged until it is committed)`
+    + (r.absentLedgers ? ` — and ${r.absentLedgers} of the ${ledgers.length} ledger(s) named here have no disk copy on this plane, so their divergence is unknown rather than zero` : ''));
   // One line per class, walked off the census's own `counts` object: a prose sentence that carries a digit
   // (`step 8's class`) was read as that digit by the first version of the arm harness, and a machine-parseable
   // line has no such collision.
