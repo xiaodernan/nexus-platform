@@ -24538,3 +24538,24 @@ it just outside the domain and turn a whole page into an error), and the result 
 **Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
 
 **Verified, not claimed.** `pytest tests/test_haversine_expr.py` → **8 passed**.
+
+## 560. D564 · the two claim-verification wrappers were only exercised through `verify_text` - the list copy and the in-place marking (`apps/ai/nexus_ai/trust/verification.py`, `apps/ai/tests/test_verification_claims.py`)
+
+**Module / contract.** `verify_text` (pinned by D511) calls both wrappers; this unit pins what they
+themselves promise: `verify_claims` returns a **new list** holding the **same Claim objects**, which
+it marks **in place** (`grounded`, `fact_id`, `grounded_value`); `extract_and_verify` is extraction
+then verification, in document order.
+
+**Pinned behavior (7 cases, all confirmed empirically):**
+- `verify_claims` returns `is not claims` (a new list) but `out[i] is claims[i]` (the same objects);
+- a grounded claim gets `grounded=True` and its grounded value (320.0), a fabricated one stays
+  `False`/`None`; a request number (an `extra_numbers` entry) has `fact_id is None`; empty → `[]`;
+- `extract_and_verify("Price HK$320")` → one money claim, grounded, 320.0; `HK$500` stays
+  ungrounded; empty text → `[]`.
+
+**Also verified this turn (DB-free).** The web stack: `npm run test:web` → **151 passed** (12
+files), `npm run typecheck:web` clean, `npm run lint:web` → **0 errors** (6 pre-existing warnings).
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_verification_claims.py` → **7 passed**.
