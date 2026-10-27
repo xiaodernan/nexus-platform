@@ -497,7 +497,7 @@ Three changes, each covering a distinct way to be wrong:
    base paths accepted as strict prefixes and *extensions* (`/x/{id}/reindex`) still reported.
 
 Current ledger: **101 routes parsed · 64 served · 29 client-only · 0 missing · 0 undocumented**, over a 270-file
-corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:264` runs it with `--report`, so
+corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:280` runs it with `--report`, so
 CI stays advisory while the 29 rows are worked off; the split is by owner, not by excuse.
 
 Two of those 30 were true gaps that the old matcher hid, and both became visible rather than passed (that count is
@@ -10459,10 +10459,10 @@ reports its LAST command unless the shell holds it. `scripts/db_gate_fresh.sh:51
 own pipes together, and D150/D151’s proof that step 11 can stop the run is a proof about that one line; GitHub
 Actions does not hold them, and its documented default for a `run:` step on Linux is `bash -e {0}`
 (workflow-syntax reference, the shell table: unspecified -> `bash -e {0}`; `shell: bash` -> `bash --noprofile
---norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:261-282)
+--norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:277-298)
 so that the report is an artifact, and none of them declared a shell, so none of them could fail. Measured in a
 shell rather than argued: `false | tee /dev/null` exits 0 under `bash -e` and 1 under `bash -eo pipefail`. All three
-declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:246), and the census prints
+declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:262), and the census prints
 `7 step(s) pipe a checker into tee` with 0 UNPROTECTED.
 (C) TWO COUNTS IN THIS UNIT’S OWN PROSE WERE WRONG, AND RUNNING A FILE CORRECTED BOTH. The note written above the
 piped steps said three steps "carried Hard-fail in their own comments". One of the three does; one of the other two
@@ -10488,7 +10488,7 @@ module exists to be the only copy of. Measured on that version: `--gate a --gate
 repeated `--report` was accepted twice, and every refusal carried this file’s own wording. The migration was
 witnessed rather than assumed, and one arm then found that its own witness had been leaning on the defect · the
 "a surface that cannot be opened" arm aimed the census at a missing file by APPENDING a second `--gate`, which only
-worked because the private loop resolved last-wins (scripts/falsify_reader_reachability.mjs:163-169).
+worked because the private loop resolved last-wins (scripts/falsify_reader_reachability.mjs:169-175).
 `scripts/falsify_flag_dialect.mjs` names this reader among the ones on the shared parser
 (scripts/falsify_flag_dialect.mjs:303), so a silent revert to a private loop is a red in that census.
 WITNESSES, all against the shipped bytes. `node scripts/check_reader_reachability.mjs` exits 0.
@@ -24730,7 +24730,7 @@ all: it ran `cd tests/e2e && npx playwright test`. So the documented local entry
 plane while `make dev-*` had started a different stack — the run was real, it started, it reported a
 verdict, and the verdict was about services nobody in this repository had started. The CI job is not
 wrong to own those defaults: it boots Spring on 8080, uvicorn on 8000 and Next on 3000 and waits on
-all three (`.github/workflows/ci.yml:213-217`), and it exports no `NEXUS_*` either, so CI's fallbacks
+all three (`.github/workflows/ci.yml:229-233`), and it exports no `NEXUS_*` either, so CI's fallbacks
 are exactly its plane. The defect is that the defaults were the **only** copy the local path could
 read. On this machine the three fallback ports belong to a different product: `:3000` answers
 `<html lang="en">` with a hashed Next bundle, `:8000` answers `{"detail":"Not Found"}`, and `:8080`
@@ -24855,9 +24855,9 @@ counted one file short of the reader's — the root `Makefile` its extension tes
 
 **The second red was D571's own commit, and the ledger is where it is corrected.** D571 added six lines to
 `.github/workflows/ci.yml` above three committed citations, so its own commit moved the file under three rows
-written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:264` (the
-`--report` run), `.github/workflows/ci.yml:261-282` (the three steps that pipe a reader into `tee`),
-`.github/workflows/ci.yml:246` (the note that says why they declare `shell: bash`). Each was read at the commit
+written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:280` (the
+`--report` run), `.github/workflows/ci.yml:277-298` (the three steps that pipe a reader into `tee`),
+`.github/workflows/ci.yml:262` (the note that says why they declare `shell: bash`). Each was read at the commit
 that wrote the row (`3d4820e`: 240, 255, 258) and at HEAD (246, 261, 264) before the re-aim, the range's end
 included (276 at `3d4820e` is 282 at HEAD).
 
