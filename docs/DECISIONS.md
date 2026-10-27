@@ -5387,7 +5387,7 @@ before anything in this unit was written.
 
 **The horizon row had an expiry date nobody wrote down.** Its second arm read
 `(SELECT min(starts_at)::date FROM availability_slots) >= current_date - 7`. The seeded horizon is pinned to
-`2026-09-22T11:00:00+08:00` (`data/seed/generate.py:2054`), so `min(starts_at)` is fixed at
+`2026-09-22T11:00:00+08:00` (`data/seed/generate.py:2085`), so `min(starts_at)` is fixed at
 2026-09-22 07:00+08 while `current_date - 7` walks forward one step a day. On 2026-09-26 the threshold read
 2026-09-19 and the arm had 3 days of slack; on 2026-09-30 it reddens with the source tree unchanged and every
 decision it encodes still true. A gate that fails on a Tuesday for no reason but Tuesday is not a gate; CI
@@ -5404,7 +5404,7 @@ loaded after the base instant, has to be: at the 11:41 reading it had been unabl
 Both rows ask the same question — *is this data self-consistent?* — so both now ask the data, and the answer
 travels with the dataset.
 
-**The anchor is published by the thing that knows it.** `data/seed/generate.py:1718` writes the resolved base
+**The anchor is published by the thing that knows it.** `data/seed/generate.py:1749` writes the resolved base
 into `out/00_truncate.sql` as one comment line, `-- seed-base: 2026-09-22 11:00:00+08`, in the same
 `write_outputs()` call that writes the CSVs beside it, in a file that call deletes before it starts. That
 placement is the whole design: the carrier cannot outlive the data it describes, because the only way to have

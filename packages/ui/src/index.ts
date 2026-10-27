@@ -39,5 +39,6 @@ export * from './trust/Renderers';
 export { EntityCard as EntityCardView, EntityRail } from './trust/EntityCard';
 export type { EntityCardProps } from './trust/EntityCard';
 export * from './trust/CompareTable';
+export * from './trust/cardKeys';
 
 export * from './feedback/States';

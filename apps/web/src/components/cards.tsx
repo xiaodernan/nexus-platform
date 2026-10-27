@@ -9,7 +9,7 @@
  */
 
 import Link from 'next/link';
-import { Button, CompareTable, EntityCardView, EntityRail, Icon, cx } from '@nexus/ui';
+import { Button, CompareTable, EntityCardView, EntityRail, Icon, cardKeys, cx } from '@nexus/ui';
 import type { CompareResult, EntityCard as EntityCardModel } from '@nexus/ui/trust/types';
 import { getDict, trustLabels } from '@/lib/i18n';
 
@@ -34,10 +34,11 @@ export function CardGrid({
   const labels = trustLabels(locale);
   const dict = getDict(locale);
   if (cards.length === 0) return null;
+  const keys = cardKeys(cards);
   return (
     <ul className={cx('grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3', className)}>
       {cards.map((card, index) => (
-        <li key={card.id} className="flex">
+        <li key={keys[index]} className="flex">
           <EntityCardView
             card={card}
             labels={labels}
@@ -93,6 +94,7 @@ export function CompareTray({
   const labels = trustLabels(locale);
   const dict = getDict(locale);
   if (cards.length === 0) return null;
+  const keys = cardKeys(cards);
   return (
     <section aria-label={dict.search.compareTitle(cards.length)} className="mt-8 flex flex-col gap-3 rounded-lg border border-line bg-surface p-4 shadow-xs sm:p-5">
       <header className="flex flex-wrap items-center justify-between gap-2">
@@ -107,8 +109,8 @@ export function CompareTray({
         <p className="text-sm text-ink-muted">{dict.states.loading}</p>
       )}
       <ul className="flex flex-wrap gap-2">
-        {cards.map((card) => (
-          <li key={card.id}>
+        {cards.map((card, index) => (
+          <li key={keys[index]}>
             <span className="inline-flex items-center gap-1 rounded-full border border-line bg-surface-muted px-2.5 py-1 text-xs text-ink-muted">
               <Link href={card.card_type === 'merchant' ? `/m/${card.slug}` : `/o/${card.slug}`} className="hover:text-accent">
                 {card.title}

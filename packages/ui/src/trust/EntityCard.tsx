@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { cx } from '../utils';
 import { Icon } from '../icons/Icon';
 import { CardMedia, DemoBadge, DistanceBadge, MatchExplanations, OpenBadge, PriceTag, RatingStars, SponsoredBadge, AvailabilityBadge, type TrustLabels } from './Renderers';
+import { cardKeys } from './cardKeys';
 import type { CardAction, EntityCard as EntityCardModel } from './types';
 
 /**
@@ -198,6 +199,7 @@ export function EntityRail({
   hrefFor?: (card: EntityCardModel) => string;
 }) {
   if (cards.length === 0) return null;
+  const keys = cardKeys(cards);
   return (
     <section id={id} aria-labelledby={id ? `${id}-title` : undefined} className="py-7 sm:py-8">
       <header className="mb-4 flex flex-wrap items-end justify-between gap-2">
@@ -211,7 +213,7 @@ export function EntityRail({
       </header>
       <div className="rail-scroll -mx-4 flex gap-4 overflow-x-auto px-4 pb-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         {cards.map((card, index) => (
-          <React.Fragment key={card.id}>
+          <React.Fragment key={keys[index]}>
             {renderCard
               ? renderCard(card, index)
               : <EntityCard card={card} labels={labels} variant="rail" href={hrefOverride?.(card)} />}

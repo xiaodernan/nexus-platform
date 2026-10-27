@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { cx } from '../utils';
 import { Icon } from '../icons/Icon';
 import { DemoBadge } from './Renderers';
+import { cardKeys } from './cardKeys';
 import type { CompareResult, CompareRow, EntityCard } from './types';
 import type { TrustLabels } from './Renderers';
 
@@ -36,6 +37,7 @@ export function CompareTable({
 }) {
   const columns = cards ?? result.cards ?? [];
   const ordered = columns.filter((card): card is EntityCard => Boolean(card));
+  const keys = cardKeys(ordered);
 
   if (ordered.length === 0 || result.rows.length === 0) {
     return (
@@ -55,7 +57,7 @@ export function CompareTable({
               {labels.provenance}
             </th>
             {ordered.map((card, index) => (
-              <th key={card.id} scope="col" className="min-w-[10.5rem] border-l border-line p-3 align-bottom">
+              <th key={keys[index]} scope="col" className="min-w-[10.5rem] border-l border-line p-3 align-bottom">
                 <span className="flex flex-col gap-1.5">
                   {card.flags?.demo ? <DemoBadge labels={labels} /> : null}
                   <Link

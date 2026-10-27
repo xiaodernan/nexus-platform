@@ -71,6 +71,21 @@ jobs:
         shell: bash
         run: |
           node scripts/falsify_slot_keys.mjs | tee slot-keys-arms.txt
+      # D575 — the client plane's DUPLICATE keys. React's duplicate-key warning lives only in the client
+      # reconciler and is absent from every `react-dom-server*.development.js` build, so no server render can
+      # decide it: the reader runs the real component and walks the element tree it returns. A card's `id` is
+      # its identity, and an identity is not unique inside a list that holds that card twice — which the
+      # platform does deliberately (a guide may cite one shop twice). Same reason as the step above for living
+      # in this job rather than `contract-drift`: the reader needs the TypeScript compiler API.
+      - name: No card list can render two members with the same key
+        shell: bash
+        run: |
+          node scripts/check_duplicate_keys.mjs | tee duplicate-keys.txt
+          { echo "## Duplicate keys"; echo '```'; cat duplicate-keys.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: The duplicate-key census can still fail (its own arms)
+        shell: bash
+        run: |
+          node scripts/falsify_duplicate_keys.mjs | tee duplicate-keys-arms.txt
 
 # ------------------------------------------------------------------ services
   platform:

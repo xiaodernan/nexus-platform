@@ -1386,11 +1386,42 @@ class Gen:
         tw = [m for m in self.merchants if m["status"] == "published" and m["district"][0] == "tai-wai"]
         quiet = [m for m in self.merchants if m["aspect_mean"]["noise"] >= 4.3 and m["status"] == "published"]
         cheap = [m for m in self.merchants if 0 < m["avg_price"] < 70 and m["status"] == "published"]
-        datey = [m for m in quiet if m["top"] in ("restaurant", "bar", "cafe")]
+        # The date-night route is a CLAIMED route: its title says Sha Tin, its copy says quiet
+        # restaurants/dessert/bars within a stated number of walking minutes. So the membership is
+        # derived from the claim rather than the copy being written first -- every member is published,
+        # in Sha Tin, quiet by the seed's own noise threshold, and of a kind the route can name.
+        # `datey` was dead before this change: it was computed and never used, which is how the copy
+        # came to name 甜品/酒吧 while the members were heritage tours, tailors and photo studios.
+        datey = [m for m in st
+                 if m["aspect_mean"]["noise"] >= 4.3 and m["top"] in ("restaurant", "cafe", "bar")]
+        # Ten references over nine shops: the first member is cited twice on purpose, because the
+        # platform keeps repeats (CollectionsController: "Item order, repeats included") and the
+        # duplicate-key reader needs a real repeat to witness.
+        route = (datey[:9] + datey[:1]) if len(datey) >= 9 else datey
+        if route:
+            # `d2` is the largest walk-from-MTR among the members, so "within N minutes" is true of
+            # every stop and false of nothing. `mtr_min` is the seed's own walking-minutes field.
+            d2 = max(m["mtr_min"] for m in route)
+            kinds = []
+            if any(m["top"] == "restaurant" for m in route):
+                kinds.append("餐廳")
+            if any(m["top"] == "cafe" for m in route):
+                kinds.append("咖啡店")
+            if any(m["leaf"] == "bakery-dessert" for m in route):
+                kinds.append("甜品")
+            if any(m["top"] == "bar" for m in route):
+                kinds.append("酒吧")
+            kind_text = ("、".join(kinds[:-1]) + "同" + kinds[-1]) if len(kinds) > 1 else (
+                kinds[0] if kinds else "店舖")
+            date_desc = f"由{d2}分鐘步程內嘅安靜{kind_text}組合而成的示範路線。"
+        else:
+            # A small merchants plane can hold no member that satisfies the claim; the copy then says
+            # so instead of claiming a route that has no stops.
+            date_desc = "細商戶數目嘅示範資料未產生符合條件嘅商戶，呢條示範路線暫時冇站。"
         defs = [
             ("sha-tin-date-night", "guide", "沙田情侶約會路線", "A Sha Tin Date Night",
-             "由{d2}分鐘步程內嘅安靜餐廳、甜品同酒吧組合而成的示範路線。全部商戶均為虛構。",
-             st[:8] + quiet[:2]),
+             date_desc + "全部商戶均為虛構。",
+             route),
             ("quiet-meals-near-me", "collection", "安靜嘅用餐位", "Quiet Tables Near Me",
              "低噪音評分優先嘅示範清單，適合要傾嘢嘅場合；數據為合成資料。",
              (quiet or st)[:10]),

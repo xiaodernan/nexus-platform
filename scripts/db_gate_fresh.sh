@@ -460,7 +460,7 @@ trap - EXIT
 trap cleanup EXIT
 
 # --------------------------------------------------------------------------- 14. the console, and the readers nobody ran
-step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_slot_keys.mjs + check_reader_reachability.mjs + check_citation_supports_sentence.mjs — the console's two promises, the client plane's unkeyed list members, and whether every reader in scripts/ is reachable from a gate that can fail"
+step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_slot_keys.mjs + check_duplicate_keys.mjs + check_reader_reachability.mjs + check_citation_supports_sentence.mjs — the console's two promises, the client plane's list members, and whether every reader in scripts/ is reachable from a gate that can fail"
 # D195. Three things were true at once on the shipped bytes, and each one is the same shape this lane has now
 # closed four times (D98, D150-D152, D191, D192) — a rule that cannot fire on the plane the gate reads is not a
 # rule the gate has, and a reader nothing runs is not a gate either.
@@ -503,6 +503,20 @@ step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_slo
 ( cd "$ROOT" && node scripts/falsify_console_a11y.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/check_slot_keys.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/falsify_slot_keys.mjs ) 2>&1 | sed -e 's/^/    /'
+# D575. `scripts/check_duplicate_keys.mjs` asks the OTHER half of the same React question, and it cannot be
+# asked by a source scan: React's duplicate-key warning lives only in the client reconciler, is absent from
+# every `react-dom-server*.development.js` build, and `renderToStaticMarkup` emits nothing for a list whose
+# members share a key. So this reader RUNS the real component and walks the element tree it returns, and the
+# rule it applies -- the members of one children array must carry distinct keys -- is a property of that tree.
+# The defect it was written for: a card's `id` is its IDENTITY, and an identity is not unique inside a list
+# that holds that card twice. The platform keeps those repeats deliberately (`CollectionsController` resolves a
+# guide's items in the author's order and adds the card each item resolved), so the seeded Sha Tin guide
+# cites ten merchants over nine shops and the card list rendered the same key twice. The fix names the
+# OCCURRENCE rather than the identity (`packages/ui/src/trust/cardKeys.ts`), and this reader is what keeps a
+# future list from keying by identity again. Its 16 arms run here for the reason every reader's arms are: a
+# census is only as good as the arms that show it reddening.
+( cd "$ROOT" && node scripts/check_duplicate_keys.mjs ) 2>&1 | sed -e 's/^/    /'
+( cd "$ROOT" && node scripts/falsify_duplicate_keys.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/falsify_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/check_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
 # The sentence-support census is a reporting invocation BY DESIGN: it exits 0 whatever it finds, because

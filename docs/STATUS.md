@@ -25163,3 +25163,62 @@ the seeded guide's description still carries a broken template placeholder —
   spelled `STATUS §NN` · the line-ending census reads `docs/STATUS.md` with CRLF 0 and mixed 0 · no fresh
   18-step gate was filed in this unit, so the database-backed steps were not re-run here; the figures
   above come from the readers this change can reach
+## 571. D575 · the guide detail page rendered two cards with the same React key — the platform keeps repeats on purpose and the web keyed by identity (`scripts/check_duplicate_keys.mjs`, `scripts/falsify_duplicate_keys.mjs`, `packages/ui/src/trust/cardKeys.ts`, `packages/ui/src/trust/EntityCard.tsx`, `packages/ui/src/trust/CompareTable.tsx`, `apps/web/src/components/cards.tsx`, `data/seed/generate.py`)
+
+**What was found, and how.** The guide detail route on the running stack (`http://127.0.0.1:3002/guides/sha-tin-date-night`) carried exactly one React error in the browser console: "Encountered two children with the same key". The page itself looked right — the heading, the description, and ten merchant cards with names, ratings and prices. §569 named the defect and §570 left it open; what no reader could see was the RULE behind it, and the rule turned out to say that the DATA was right and the KEY was wrong.
+
+**Why a list may hold the same card twice.** The platform resolves a guide's items in the author's order and keeps every reference — it resolves each item and adds the card it resolved — so a guide that cites one shop in two places yields that shop's card twice. That is deliberate: `CollectionsController`'s own comment says "Item order, repeats included", the row's `item_count` says ten, and a `cards` array one shorter than the items it came from reads as a lost item. The web keyed the list members by `card.id` — the card's IDENTITY — and an identity is not unique inside a list that holds that card twice. React's reconciler keeps the keys it has already seen in the children array it is walking, and when a key comes round twice it logs the warning and the second member takes the first one's place on update: the list duplicates or drops a member.
+
+**Why no reader could have caught it.** The warning lives in the CLIENT reconciler alone: it is absent from every `react-dom-server` build, and `renderToStaticMarkup` emits nothing for a list whose members share a key. No server render can witness it, and D574's reader — which reads the render tree from the source — was the right instrument for the OTHER warning and the wrong one for this. So the reader here runs the real component and reads the tree it returns.
+
+**The fix — a key names the OCCURRENCE, not the identity.** `packages/ui/src/trust/cardKeys.ts:22` is the whole rule: the first appearance of an id keeps the bare id, and a repeat is suffixed with the number of EARLIER appearances of that same id (`dup`, then `dup#1`). The suffix counts appearances of the same id rather than positions in the list, so a list of distinct cards keys exactly as it did before the helper existed — no remount, no churn — and a card keeps its key when an unrelated card joins the list. Four sites now call it:
+
+- `apps/web/src/components/cards.tsx:41` — `CardGrid`'s `<li>`, keyed by `keys[index]`.
+- `apps/web/src/components/cards.tsx:113` — the compare tray's `<li>`, keyed by `keys[index]`.
+- `packages/ui/src/trust/EntityCard.tsx:216` — `EntityRail`'s keyed fragment, `keys[index]`.
+- `packages/ui/src/trust/CompareTable.tsx:60` — the compare table's `<th scope="col">`, keyed by `keys[index]`.
+
+**The reader.** `scripts/check_duplicate_keys.mjs` asks the question React asks, of the real component rather than of the source text:
+
+- the population is the components that take a LIST OF IDENTITY-BEARING OBJECTS — a prop whose declared type is an array of a type that declares `id: string` — and the identity-bearing types are resolved through the imports, so `EntityCardModel` in the web and `EntityCard` in the UI package are the same type and both are found;
+- the fixture is built by `identityList` (`scripts/check_duplicate_keys.mjs:424`): one list member per identity, and one identity twice, so a list keyed by identity gives `dup` twice and a list keyed by occurrence gives `dup` and `dup#1`. The other props are furnished from their DECLARED types — strings become `'en'`, functions become no-ops, the labels object becomes the real `trustLabels('en')`;
+- the client plane is the modules carrying the `'use client'` directive plus their transitive import closure; the same shape in a server module is not this defect, because the warning does not exist there;
+- a REQUIRED prop whose type the reader cannot furnish is a REFUSAL, not a verdict: the component was not run, and "did not run" is not "found nothing";
+- it refuses with exit 2 when one of the three `ROOTS` is absent (`scripts/check_duplicate_keys.mjs:93`) or when the population is empty: a tree this reader cannot see is not a tree whose lists are safe.
+
+**What it does not do, stated rather than implied.**
+
+- It does not decide whether a list really can hold the same card twice; it asks whether the shape CAN warn. A prop that only ever receives distinct cards is judged the same way. That direction over-reports, which is the direction this project accepts.
+- It does not check the MISSING-key warning — a list member with no key at all. That is D574's subject, `scripts/check_slot_keys.mjs`.
+- It does not run a browser. The live measurement that anchors it is the console A/B below.
+
+**The seed's half — the copy was claiming a route its members did not make.** The guide's description shipped the literal placeholder `由{d2}分鐘步程內嘅安靜餐廳…` — `{d2}` was a template slot that was never filled — and its members were eight Sha Tin shops plus two drawn from every merchant whose noise rating was high enough, so the route's copy named restaurants, dessert and bars while its members were heritage tours, tailors and photo studios. The old code computed that quiet list and never used it; that is how the copy and the membership came apart. Both are now derived from the CLAIM:
+
+- `data/seed/generate.py:1395` — the membership `datey` is the published Sha Tin merchants whose noise rating is at least 4.3 and whose kind is a restaurant, a cafe or a bar, so every member is a stop the route can name;
+- `data/seed/generate.py:1400` — the `route` is `datey[:9] + datey[:1]`: ten references over nine shops, with the first member cited twice on purpose, because the platform keeps repeats and a reader with no repeat to witness cannot see the defect;
+- `data/seed/generate.py:1404` — the distance in the copy is `d2 = max(m["mtr_min"])` over the members, the seed's own walking-minutes field, so "within N minutes" is true of every stop and false of nothing;
+- the kind nouns in the copy are the members' own kinds, and a small merchants plane that produces no qualifying member gets a copy that says the route has no stops rather than a copy that claims a distance.
+
+The regenerated dataset answers the guide over HTTP with 200 and no placeholder: `由14分鐘步程內嘅安靜餐廳、咖啡店同酒吧組合而成的示範路線。全部商戶均為虛構。`, ten items over nine distinct merchants, every one of them in Sha Tin.
+
+**The correction §569 and §570 owed.** Both rows name `bramble-spoon-0001` as the repeated shop, at positions 1 and 9. That was true of the seed this unit replaced and is false of the seed that ships now: the route's repeated member is `umber-ridge-0029`, at positions 1 and 10, and `bramble-spoon-0001` is no longer a member of the route at all. The shape of the finding is unchanged — ten references over nine shops, one identity twice — and the slug in those two rows is stale.
+
+**Evidence.** The reader on this tree: PASS, 126 JSX/TS files under the three roots, 57 client-plane modules of which 26 carry the directive, 69 files that render on the server and are out of scope, 5 card-list components run, 0 duplicate keys. `scripts/falsify_duplicate_keys.mjs` is 16 arms, 16 held, 0 missed: the census reddens on a list keyed by the card identity, and it reddens in the RAIL and in the COMPARE TABLE too; it keeps quiet on the SERVER plane, where the warning does not exist; it keeps quiet on a list member with NO key at all, which is D574's warning and not this one; and it refuses with exit 2 on a component whose required prop it cannot furnish, on a tree missing one of the three source roots, on an unknown flag and on `--plane` given twice. The last two arms aim it at a planted tree in both spellings — `--plane <dir>` and `--plane=<dir>` — and the `--report` arm prints the offender and still exits 0.
+
+The reachability census reads 17 of 17 first-party readers invoked by a surface, 0 unreached, and 14 CI steps that pipe a checker into `tee` all declare `shell: bash` — this reader and its own arms are two of those fourteen. Gate step 14 runs both (`scripts/db_gate_fresh.sh:518`, `scripts/db_gate_fresh.sh:519`).
+
+The live A/B is the console itself. With `key={card.id}` the guide route carries exactly one message, "Encountered two children with the same key"; with `key={keys[index]}` a cache-bypassing reload of the same route carries no console message at all. The probe was reverted from the saved bytes of the file rather than from git, and the reverted file's sha256 was read back to confirm it.
+
+`npm run typecheck --workspaces --if-present` exits 0 across all four workspaces, and the workspace suites are 234 tests green — the web's 160 in 12 files, the SDK's 43 and the types package's 31.
+
+**The ledger's own readers.** Two committed citations moved with the seed edit and were re-aimed in the same commit: the base-instant row now names `data/seed/generate.py:2085`, which holds `base = "2026-09-22T11:00:00+08:00"`, and the anchor-write row now names `data/seed/generate.py:1749`, which writes the `-- seed-base:` line. Each target was read by hand before it was accepted.
+
+**Left open, named here rather than left to be discovered again.** The other three seeded collections still claim things their members do not support, and they are the same defect one level up, in copy rather than in code:
+
+- `quiet-meals-near-me` — the title says 安靜嘅用餐位, and the ten members include a Tailor and a Barber, which are not tables; they also span seven districts from Sha Tin to Tsim Sha Tsui and Stanley, which is not "near me";
+- `tai-wai-under-100` — the copy says 大圍區, and ONE of the nine stops is in Tai Wai: five are in Sha Tin and the rest in Wan Chai, Tuen Mun and Kwun Tong. The price claim holds, the members running from 18.22 to 67.56;
+- `weekend-family-sha-tin` — the copy promises 早午餐—活動—下午茶—晚飯, and only 3 of the 9 members are food at all; the route also carries a Phone Repair and a Live Music Bar, and 4 of the 9 stops are in Tai Wai rather than Sha Tin.
+
+That is the next unit: derive each collection's membership from its claim the way this unit derived the route's, and let the copy say what the members are.
+
+- readers: the duplicate-key census is green on this tree — 126 files, 57 client modules, 5 components run, 0 duplicate keys — and the arm battery is 16 of 16 held, 0 missed · the reachability census 17 of 17 first-party readers invoked, 0 unreached, and 14 CI steps pipe a checker into `tee` under `shell: bash` · the guide answers HTTP 200 live with no `{d2}` placeholder, ten items over nine distinct merchants, every member in Sha Tin · the live browser console on the guide route carries no message at all after the occurrence key, against one React duplicate-key error before it · `npm run typecheck --workspaces --if-present` exits 0 across all four workspaces and the workspace suites are 234 tests green — web 160 in 12 files, sdk 43, types 31 · the two moved committed citations were re-aimed in this commit · the other three seeded collections' false claims are named above as the next unit, not fixed here
