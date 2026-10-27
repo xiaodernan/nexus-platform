@@ -4904,7 +4904,7 @@ of them: `agent_runs.plan->>'steps'` is NULL on 40 of 40 while re-parsing (`plan
 one-element arrays and 2 empty ones; `events.properties->>'query'` is NULL on 35 of 35 and reaches 34 by the same
 route. The two encodings have writers: `persist_event` is the only `INSERT INTO events` in the AI service and it
 binds `json.dumps(...)` **text** into `$10::jsonb` (`apps/ai/nexus_ai/api/runs.py:144,:158`) over an asyncpg pool
-(`db/pool.py:222`) that quotes a `str` parameter a second time — all 34 string-valued events rows are named
+(`db/pool.py:229`) that quotes a `str` parameter a second time — all 34 string-valued events rows are named
 `search`, that call's default — whereas the Java lane casts
 (`services/platform/src/main/java/com/nexus/growth/EventRepository.java:39`), which parses. One `events` column
 therefore carries both encodings today, 34 rows this way and 1 that way, and no
@@ -5092,7 +5092,7 @@ checker; what is being retracted is the claim of having counted it.
 placeholders in `apps/ai/nexus_ai/api/runs.py` (:118, :120, :121, :158, :159, :182, :207, :208) through asyncpg,
 whose codec quotes a `str` a second time — D86 measured the result at 188 string-valued jsonb rows on the live
 demo database, 34 of them `events.properties`. And the web lane's `Guide` type declares `body_blocks` required
-(`apps/web/src/lib/types.ts:266`), `growth-view.tsx:72` maps over it, `lib/mock/index.ts:740` synthesises it, and
+(`apps/web/src/lib/types.ts:271`), `growth-view.tsx:72` maps over it, `lib/mock/index.ts:814` synthesises it, and
 the string `body_blocks` does not occur anywhere in `services/platform/src/main/java` — so a live §8 guide cannot
 satisfy the type the reader assumes. Both are cited here and left for their owners.
 
@@ -5249,9 +5249,9 @@ because the domain has one value" — does not contain the wall clock anywhere i
 measuring something the sentence never promised. On a machine where the load spends twenty minutes after
 stamping `facts` and the gate then reads this file, `now()` is a fact about the machine.
 
-What the row asks now is the question the sentence means. `data/seed/load.sh:155` records the window the load
+What the row asks now is the question the sentence means. `data/seed/load.sh:158` records the window the load
 itself runs inside — `nexus.seed_started` and `nexus.seed_finished`, epoch seconds read from the server's
-clock by a statement at `data/seed/load.sh:164`, so a host/container clock disagreement cannot widen or narrow
+clock by a statement at `data/seed/load.sh:167`, so a host/container clock disagreement cannot widen or narrow
 the window — and `data/seed/quality.sql:2389` keeps a degenerate timestamp column when its value falls between
 the two bounds widened by 600 seconds at each end. Nothing in the row is measured against `now()` any more, and
 the width of the load stops mattering: the value is inside the window whether the load takes two minutes or two
@@ -5332,7 +5332,7 @@ rc=0 without the flag and rc=3 with it — and with the flag rc=3 reports only t
 which on the demo database the coverage row names eleven of, four of them in `agent_runs`; it does not report
 this row's verdict. So the only reading that
 separates the four arms is the printed row, and a verdict carried by an exit code has to carry the invocation
-beside it; `data/seed/load.sh:214` already tells the operator which invocation that is, and
+beside it; `data/seed/load.sh:217` already tells the operator which invocation that is, and
 `scripts/db_gate_fresh.sh:186` is the gate using it.
 
 **Gates.** Three official 8-step runs of `scripts/db_gate_fresh.sh --keep`, all ending `RESULT: PASS — 216 quality
@@ -5387,7 +5387,7 @@ before anything in this unit was written.
 
 **The horizon row had an expiry date nobody wrote down.** Its second arm read
 `(SELECT min(starts_at)::date FROM availability_slots) >= current_date - 7`. The seeded horizon is pinned to
-`2026-09-22T11:00:00+08:00` (`data/seed/generate.py:1990`), so `min(starts_at)` is fixed at
+`2026-09-22T11:00:00+08:00` (`data/seed/generate.py:2054`), so `min(starts_at)` is fixed at
 2026-09-22 07:00+08 while `current_date - 7` walks forward one step a day. On 2026-09-26 the threshold read
 2026-09-19 and the arm had 3 days of slack; on 2026-09-30 it reddens with the source tree unchanged and every
 decision it encodes still true. A gate that fails on a Tuesday for no reason but Tuesday is not a gate; CI
@@ -5395,7 +5395,7 @@ running this file was scheduled to go red in its sleep.
 
 **The TTL arm could not fail.** Its third arm read `stale AND expires_at > now()`. The generator sets the flag
 only where the expiry already precedes its own instant — `stale = bool(exp and exp < self.now and ...)` at
-`data/seed/generate.py:966` — so every stale row in the dataset expires before the base instant, and the
+`data/seed/generate.py:968` — so every stale row in the dataset expires before the base instant, and the
 newest of the 72 stale rows read 2026-09-22 09:30:00+08, which is 90 minutes *before* the 11:00 base. Any
 `now()` that has not been wound backwards reads later than that. The count it reports is 0 and, for a seed
 loaded after the base instant, has to be: at the 11:41 reading it had been unable to fail for 4 days and
@@ -5404,7 +5404,7 @@ loaded after the base instant, has to be: at the 11:41 reading it had been unabl
 Both rows ask the same question — *is this data self-consistent?* — so both now ask the data, and the answer
 travels with the dataset.
 
-**The anchor is published by the thing that knows it.** `data/seed/generate.py:1654` writes the resolved base
+**The anchor is published by the thing that knows it.** `data/seed/generate.py:1718` writes the resolved base
 into `out/00_truncate.sql` as one comment line, `-- seed-base: 2026-09-22 11:00:00+08`, in the same
 `write_outputs()` call that writes the CSVs beside it, in a file that call deletes before it starts. That
 placement is the whole design: the carrier cannot outlive the data it describes, because the only way to have
@@ -5413,8 +5413,8 @@ preflight — before the container check, before the connection, before the load
 `SEED_ANCHOR=1 needs a '-- seed-base: <instant>' line` if the shape is wrong, so a dataset whose base cannot
 be published is refused in the second it is noticed rather than after ten minutes of loading it.
 `data/seed/load.sh:90` gates that read on the same `SEED_ANCHOR=1` that D89 introduced, and
-`data/seed/load.sh:171` records it as `ALTER DATABASE … SET nexus.seed_base`, called beside the window bounds
-at `data/seed/load.sh:190`. `scripts/db_gate_fresh.sh:173` turns all three on for the database it owns. One
+`data/seed/load.sh:174` records it as `ALTER DATABASE … SET nexus.seed_base`, called beside the window bounds
+at `data/seed/load.sh:193`. `scripts/db_gate_fresh.sh:173` turns all three on for the database it owns. One
 flag, one carrier, one stamp, no new table: `tables=58` is unchanged.
 
 **The gate reads it and refuses to guess.** `data/seed/quality.sql:72` defines `seed_now` — `known`, `ts`, and
@@ -5450,7 +5450,7 @@ the upper one, and the newest stale expiry sits 90 min below the base. The bound
 rows pass, and the 20 h one is tight enough to be interesting.
 
 **What this does not buy.** The TTL arm still cannot be tripped by any dataset `generate.py` writes, for the
-same reason `now()` could not trip it: `data/seed/generate.py:966` forbids the combination at the source. What
+same reason `now()` could not trip it: `data/seed/generate.py:968` forbids the combination at the source. What
 changed is *which* producer the arm watches. `MerchantContentRepository.expireFacts` and the row's own
 `stale` column are written by the platform at read time, and 4,484 of the seed's facts are past expiry while
 4,412 of those carry `stale=false` — so the guard is real for a served database and the plant above is its
@@ -5531,7 +5531,7 @@ promise about fact freshness.
 **Measured first.** On the database D90's passing gate run left behind, and again on the live demo database:
 every one of the 520 `opening_hours` facts is past expiry and none of them carries `stale=true` — 0 of 520.
 The price facts read 2,080 past expiry with 72 marked, the rating facts 1,727 with none. The reason is
-arithmetic, not sloppiness: `stale` is set at the instant the row is written, and `data/seed/generate.py:966`
+arithmetic, not sloppiness: `stale` is set at the instant the row is written, and `data/seed/generate.py:968`
 marks a row only where its expiry already precedes that instant. A TTL of 24 hours is never already-expired
 when it is stamped, so no 24-hour fact can ever be marked at load; and 24 hours after the pinned base every
 one of them is expired to a client while the column still says "no". Nothing re-stamps them either:
@@ -5547,7 +5547,7 @@ one you got depended on which backend happened to be up. §87's next (a) recorde
 carry: 100 percent past, 0 percent marked.
 
 **The promise is real; the column is not the promise.** The consumer's "may have changed" comes from
-`packages/ui/src/trust/fact.ts:66` — `isStale()` is `fact.stale === true || isExpired(fact, now)` — so the
+`packages/ui/src/trust/fact.ts:82` — `isStale()` is `fact.stale === true || isExpired(fact, now)` — so the
 flag is one input and the client's own clock the other. That makes `expires_at` the only freshness signal a
 served fact actually owes, and it rewrites the check as two properties that can both fail:
 
@@ -6233,7 +6233,7 @@ contemporaneously, and #76 is closed by this insert plus the D111 note at the en
 
 `documents: content_hash matches the raw_text it carries` read only `raw_text`: its predicate is
 `NOT EXISTS (SELECT 1 FROM documents WHERE raw_text = '' OR length(raw_text) < 200)`, at
-`data/seed/quality.sql:963` before and after the rename. Nothing in the row touched `content_hash`,
+`data/seed/quality.sql:1006` before and after the rename. Nothing in the row touched `content_hash`,
 and adding the named check was ruled out by measurement rather than by argument: on a loaded gate
 database, 0 of 1,040 stored hashes equal `encode(digest(raw_text,'sha256'),'hex')` with pgcrypto
 working (`digest` returned the expected value for a known string). The generator hashes a joined
@@ -6619,7 +6619,7 @@ Report: pick one encoder. The committed codec is the one that also protects ever
 `json.dumps` call in the writer is the half to drop.
 
 **2. `Guide.body_blocks` (#64) — true at HEAD, already fixed in the working copy by its owner.** At HEAD the
-web type requires the field (`apps/web/src/lib/types.ts:261`, no `?`) and the platform's
+web type requires the field (`apps/web/src/lib/types.ts:266`, no `?`) and the platform's
 `services/platform/src/main/java/com/nexus/catalog/CollectionsController.java` contains **zero** occurrences of
 the string. On disk the same file emits it (`out.put("body_blocks", bodyBlocks(items))`, working-copy line 188)
 and `CollectionsReadTest` asserts it, so the drift is closed as uncommitted work. The live residue is
@@ -7105,7 +7105,7 @@ lesson was that an equal total is not the same set; this is the same lesson on a
 moves with the data, so a coverage denominator is a reading of the plane as much as of the file.
 
 **Found (b): the harness polices redness, not existence, so (a) passed it by.** Reading the shipped arithmetic
-in the per-arm block (data/seed/falsifier_plants.py:1270-1292): collateral is `reds not in base_reds`, and `base_reds` is the set of
+in the per-arm block (data/seed/falsifier_plants.py:1329-1351): collateral is `reds not in base_reds`, and `base_reds` is the set of
 *red* rows on unmutated data. A name that stops being filed is therefore invisible to every test the drive
 makes — the 213 was printed in the `rows` column and caught by a person reading it, not by the verdict. A drive
 whose arm deletes the table a sweep groups over can report PASS while three assertions leave the plane, and
@@ -10517,7 +10517,7 @@ This makes `nexus_test` a true replica of `nexus` at HEAD, and the test suite's 
 
 **Ruling.** A codec is part of the plane. A probe that emulates "the shape the code writes" must open the connection the way the service opens it; `scripts/verify_jsonb_binding.py` now writes on both planes and takes its verdict from the service one. A measurement that names a service's behaviour without naming the plane it ran on is not a falsifier, and this project has now retracted two verdicts that came from exactly that omission (§119 here, and D174/D176 for the gate's three directory-reading steps).
 
-**The visible cost**, measured rather than argued: `search/sql.py:137,297`'s `attributes @> {param}::jsonb` matched 5534 rows on the fixed plane and 0 on the pre-fix plane, and `POST /ai/v1/search` with an `attributes` filter answered `items=5` against `items=0` — a 200 with an empty list, which no reader can distinguish from "no matches".
+**The visible cost**, measured rather than argued: `search/sql.py:205,365`'s `attributes @> {param}::jsonb` matched 5534 rows on the fixed plane and 0 on the pre-fix plane, and `POST /ai/v1/search` with an `attributes` filter answered `items=5` against `items=0` — a 200 with an empty list, which no reader can distinguish from "no matches".
 
 **Not decided here:** the 12 string-valued rows on `nexus` stay. They are demo telemetry the seed never writes (D64), so a repair would be an invisible edit no gate could re-measure.
 
@@ -10965,7 +10965,7 @@ every plant this harness files, because the site census already reddens an absen
 name and a citation-free site on its own — the belt's firing side is unreachable while the rule it
 polices is intact. So its witness is a mutant reader: the absent-file rule silenced in a copy of the
 checker, run through the `--reader` seam against the same planted row
-(scripts/falsify_quality_seam.mjs:294), which is the only arm that can make the belt speak. The
+(scripts/falsify_quality_seam.mjs:306), which is the only arm that can make the belt speak. The
 shipped-reader arms assert the opposite too — the belt's sentence must NOT print there — so a belt
 that fires on a healthy plane cannot pass either. It is policed in both directions and reachable in
 one, and the record says which.
@@ -10980,7 +10980,7 @@ parse, and each has its own plant: the read_cat loop header, its column alias, t
 INSERT, the shape_answer INSERT (only the row parser reads that one, so it is the sole route to the
 missing-marker refusal), and a last row that stops closing before the semicolon. The refusal arms
 also require the run to be total — no header, no ANSWER SITES, no FALSE SITES, no CENSUS COVERAGE
-alongside the refusal (scripts/falsify_quality_seam.mjs:404,:447) — because exit 2 alone would also pass a
+alongside the refusal (scripts/falsify_quality_seam.mjs:419,:462) — because exit 2 alone would also pass a
 run that refused and then answered anyway.
 
 One plant was wrong before it was right, and its own red is the reason the arms name their phrase.
@@ -11036,15 +11036,15 @@ arms hold, the one red being the arm aimed at this sentence.
 **(b) A crash guard keyed on the line a dying reader still prints.** The harness decides whether a run crashed.
 It was deciding from the census's header line, and the header is the first thing the reader prints — so a reader
 that announced itself and then died mid-report was scored as a finished run. The guard now keys on a terminal
-sentinel the reader prints as its last act (scripts/falsify_quality_seam.mjs:264), and that sentinel declares the
+sentinel the reader prints as its last act (scripts/falsify_quality_seam.mjs:276), and that sentinel declares the
 exit code the process intends (scripts/check_jsonb_reads.mjs:902), so a run whose last line says `this run exits 1`
 and whose process takes 0 is a crash too, not a verdict. Three witnesses, all on the shipped bytes: M3 puts the
 guard back on the header line and 33 of 35 hold, with exactly the two death arms red — the reader that dies after
 the header, and the reader whose declared exit code the process does not take; M4 removes the clause that refuses a
-finished run for an arm that declared a death (scripts/falsify_quality_seam.mjs:459-461) and 34 of 35 hold, red
+finished run for an arm that declared a death (scripts/falsify_quality_seam.mjs:474-476) and 34 of 35 hold, red
 only on the arm that polices it; M5 deletes the sentinel line from the reader and the whole census goes to 20 of
 35 — fifteen arms red, because a run that prints no terminal line cannot be certified as having finished. The
-`expectCrash` inversion is checked by calling the same predicate the loop calls (scripts/falsify_quality_seam.mjs:456,
+`expectCrash` inversion is checked by calling the same predicate the loop calls (scripts/falsify_quality_seam.mjs:471,
 arm at :684-689) against the control's real result, so the flag cannot be proved by a plant that only ever dies.
 
 **(c) The seam died where it should have refused.** D159 made a mistyped `--quality` value a legal request that
@@ -11053,7 +11053,7 @@ with no file behind it, or at a directory, the census reached `readFileSync` abo
 `node:fs` frames at exit 1 — this directory's code for "a read or a site is wrong" (measured before the guard:
 both paths exited 1 with a stack; only a file that exists and holds no answers refused at 2). Both are refusals
 now, naming what was handed to it (scripts/check_jsonb_reads.mjs:99-107), and the two arms assert the sentence,
-not just the code (scripts/falsify_quality_seam.mjs:625-636). Witness M2: neuter the two conditions and 33 of 35
+not just the code (scripts/falsify_quality_seam.mjs:633-644). Witness M2: neuter the two conditions and 33 of 35
 hold, red on exactly those two arms. M2's first version was a bad witness and is kept here as the lesson: it
 nulled the value the guards read instead of the conditions, which made the missing-file refusal fire for the
 *shipped* path too, so the copied harness died in its own pre-flight — "the shipped plane is not green (rc 2,
@@ -11153,10 +11153,10 @@ different files.
 
 No answer plant can reach it: a plant moves a row between classes, it cannot delete a sentence from the checker.
 So the witness is a mutant reader — one `MISS_WHY` key renamed, which is the smallest change that makes a class
-unnamed while leaving the row, its site and its file exactly as they were (scripts/falsify_quality_seam.mjs:313) —
+unnamed while leaving the row, its site and its file exactly as they were (scripts/falsify_quality_seam.mjs:325) —
 and the arm pair is one measurement run twice: the same fixture over the shipped reader exits 0 and must not print
-the block (scripts/falsify_quality_seam.mjs:734), the same fixture over the renamed reader exits 1 and must print
-it with the sentinel declaring exactly one reason (scripts/falsify_quality_seam.mjs:745). The arm that was already
+the block (scripts/falsify_quality_seam.mjs:742), the same fixture over the renamed reader exits 1 and must print
+it with the sentinel declaring exactly one reason (scripts/falsify_quality_seam.mjs:753). The arm that was already
 there for the hand-judged class gained the absence half, so the charge cannot leak onto a class that does have a
 sentence either; it is policed in both directions and reachable in one, which is the shape D193 said a belt has to
 have.
@@ -11172,8 +11172,8 @@ a regular expression retyped out of a sentence the checker assembles. Each has a
     cross-checked against the reasons that file's classifier pushes — the same two populations the checker
     compares at run time when it charges an unnamed class. They are two derivations by different means, so a
     disagreement is a fact about the reader rather than about my regex, and it refuses at import
-    (scripts/falsify_quality_seam.mjs:340,:346,:356-359). A third consequence: `onlyClass(name)` now refuses to
-    build an arm aimed at a class the reader never files (scripts/falsify_quality_seam.mjs:368), because an
+    (scripts/falsify_quality_seam.mjs:355,:361,:371-374). A third consequence: `onlyClass(name)` now refuses to
+    build an arm aimed at a class the reader never files (scripts/falsify_quality_seam.mjs:383), because an
     expectation no run can ever print is not falsifiable, it is a caption.
   - A hand-typed marks list goes blind in the other direction, and this one is a false green with teeth. The
     marks exist to check that a refusal is *total* — a census that cannot parse its input has no verdict to
@@ -11183,7 +11183,7 @@ a regular expression retyped out of a sentence the checker assembles. Each has a
     `ANSWERS THE READ CENSUS DID NOT FIND`. The heads are now read off the checker's own `console.log` literals,
     and the single print a refusal is allowed to make is excluded by a property of the source line rather than by
     a name typed here: the line whose own statement calls `process.exit(2)` is what the refusal *says*, so it
-    cannot also be what the refusal must not say (scripts/falsify_quality_seam.mjs:394-403).
+    cannot also be what the refusal must not say (scripts/falsify_quality_seam.mjs:409-418).
   - The derivation's own first measurement was wrong, and it is recorded here because the mistake is the same one
     in a different costume: a rule stated as a shape can admit members that are not of that kind. The literal
     prefixes read thirteen "heads" out of a checker that prints twelve verdicts and one disclaimer, the thirteenth
@@ -11191,22 +11191,22 @@ a regular expression retyped out of a sentence the checker assembles. Each has a
     mark that is prose is a false witness, not a harmless extra: any run that printed its own disclaimer would
     have read as a census that refused and answered at once. A head is now the capitals run, which ends at the
     first lower-case letter, and what survives must not end on sentence punctuation
-    (scripts/falsify_quality_seam.mjs:399-402). The footer that broke the first version is the arms' plant, found
+    (scripts/falsify_quality_seam.mjs:414-417). The footer that broke the first version is the arms' plant, found
     by a property of the print that *follows* it — a quoted `console.log` opening in a lower-case letter can only
     be the second half of a sentence, so the line it continues is prose too — which keeps the plant moving with
-    the reader's prose instead of becoming a fourth hand copy (scripts/falsify_quality_seam.mjs:415-432). Two
+    the reader's prose instead of becoming a fourth hand copy (scripts/falsify_quality_seam.mjs:430-447). Two
     arms score the pair: a refusal that answers through a head the six strings never carried must be seen, and a
-    refusal that prints only its disclaimer must not be (scripts/falsify_quality_seam.mjs:665,:674). The check
+    refusal that prints only its disclaimer must not be (scripts/falsify_quality_seam.mjs:673,:682). The check
     lives in an arm rather than in an import-time refusal deliberately: a `die` on the over-wide rule would
     preempt the arm that names the case, and an arm no run can redden is the caption D193 refuses.
   - A retyped terminal regex fails loudly, which is the least harmful of the three but not harmless: reword the
     checker's last line and the copy stops matching, `crashed` becomes true for every run including healthy ones,
     and the arms report deaths that never happened. The pattern is now the reader's last template line with each
-    interpolation turned into a capture group (scripts/falsify_quality_seam.mjs:253-265), floored at three groups —
+    interpolation turned into a capture group (scripts/falsify_quality_seam.mjs:265-277), floored at three groups —
     a reason count, the report mode, and the exit code — because a reader that stopped stating the code it takes
     has removed the very thing the predicate reads.
 
-The report prints the population it scored (`DERIVED VOCABULARY`, scripts/falsify_quality_seam.mjs:819) and lists
+The report prints the population it scored (`DERIVED VOCABULARY`, scripts/falsify_quality_seam.mjs:827) and lists
 each class and each verdict head, because a count over a set nobody can see is a number and not a measurement —
 the lesson D173 learned about remembered totals, applied to this harness's own lists. A harness copy pointed at a
 mutant reader prints a different vocabulary from the shipped one, which is the point: the arms score against the
@@ -11222,9 +11222,9 @@ at the code. The re-aiming is a derivation from the bytes: a single number must 
 the working copy and a range must match its whole block contiguously, so `scripts/check_jsonb_reads.mjs:887-890`,
 whose interior this unit edited, is placed by its two ends and re-spelled as the block's new extent (899-902). Four
 numbers could not be derived because their referent is gone — `VERDICT_MARKS` is now the derivation at
-(scripts/falsify_quality_seam.mjs:404) and the marks array's second line is now the totality predicate at
-(scripts/falsify_quality_seam.mjs:447), the hand-retyped `TERMINAL` is now built from the reader's last template
-line (scripts/falsify_quality_seam.mjs:264), and one cite D194 landed four lines above its own claim, on what was
+(scripts/falsify_quality_seam.mjs:419) and the marks array's second line is now the totality predicate at
+(scripts/falsify_quality_seam.mjs:462), the hand-retyped `TERMINAL` is now built from the reader's last template
+line (scripts/falsify_quality_seam.mjs:276), and one cite D194 landed four lines above its own claim, on what was
 HEAD's blank line 580 and is now the `found.size === 0` refusal (scripts/check_jsonb_reads.mjs:584). That last
 number is aimed by hand, and the aiming was tested: the first draft of this very sentence put the cite *on* the
 blank line, naming the reader file and that empty line number as the drift example, and step 8's new-section rule
@@ -12264,7 +12264,7 @@ Steps 14-18 close the inventory. The two console readers refuse honestly ("no pa
 
 ## D276 - the 26 MOVED line citations are re-aimed from writer-time text, and the gate's strict step passes on a committed plane
 
-Run 4 measured the strict backlog and run 5 carried it unchanged: 26 MOVED verdicts, every one a line-number citation into scripts/falsify_quality_seam.mjs or scripts/falsify_ledger_text.mjs whose target line had shifted as those harnesses grew. This unit re-aims them - 27 ledger lines, 38 number spans - and verifies every span against writer-time text before any digit moves. The 26 judged starts are taken from the reader's own --reaim rows (the grammar those rows were judged under is the CITE regex at scripts/check_line_cite_drift.mjs:85). The 7 co-located range ends are proven by whole-block writer-to-HEAD comparison rather than the single-line match a start gets. One comma-shorthand re-aimed 444 to 447 on docs/DECISIONS.md:10981 is invisible to the reader and is verified through the judged sibling row that names the same target with a full path (docs/DECISIONS.md:11224). Four searched tokens (:343, :353-356, :671, and the wrapped :681-686) are verified by unique-position search with backward extension capped at 5 lines. Every replacement is digits-only, asserted per changed line; both files keep their line counts (STATUS 13135, DECISIONS 12262), so no other citation moved. Landed as 20dde06 via cacheinfo staging with a staged-set assertion and a numstat of exactly 27 lines each way, then measured on a fresh plane at that commit: EXACT 128 / MOVED 0 / NOT-UNIQUE 0 / GONE 16 of 144 judged, and step 16 (scripts/db_gate_fresh.sh:532) passes --strict MOVED,NOT-UNIQUE with rc=0; the plain reader of step 15 (scripts/db_gate_fresh.sh:520) reports 128/144 still naming their line.
+Run 4 measured the strict backlog and run 5 carried it unchanged: 26 MOVED verdicts, every one a line-number citation into scripts/falsify_quality_seam.mjs or scripts/falsify_ledger_text.mjs whose target line had shifted as those harnesses grew. This unit re-aims them - 27 ledger lines, 38 number spans - and verifies every span against writer-time text before any digit moves. The 26 judged starts are taken from the reader's own --reaim rows (the grammar those rows were judged under is the CITE regex at scripts/check_line_cite_drift.mjs:86). The 7 co-located range ends are proven by whole-block writer-to-HEAD comparison rather than the single-line match a start gets. One comma-shorthand re-aimed 444 to 447 on docs/DECISIONS.md:10981 is invisible to the reader and is verified through the judged sibling row that names the same target with a full path (docs/DECISIONS.md:11224). Four searched tokens (:343, :353-356, :671, and the wrapped :681-686) are verified by unique-position search with backward extension capped at 5 lines. Every replacement is digits-only, asserted per changed line; both files keep their line counts (STATUS 13135, DECISIONS 12262), so no other citation moved. Landed as 20dde06 via cacheinfo staging with a staged-set assertion and a numstat of exactly 27 lines each way, then measured on a fresh plane at that commit: EXACT 128 / MOVED 0 / NOT-UNIQUE 0 / GONE 16 of 144 judged, and step 16 (scripts/db_gate_fresh.sh:532) passes --strict MOVED,NOT-UNIQUE with rc=0; the plain reader of step 15 (scripts/db_gate_fresh.sh:520) reports 128/144 still naming their line.
 
 ## D277 - run 6 walks the full 18-step inventory at 7e2f846, step 16's strict pass is clean inside a run that ends there, and D275's step 13 row is corrected from its own preserved log
 

@@ -29,7 +29,10 @@ import { parseFlags } from './cli_args.mjs';
 
 // A citation into one file, as it appears on a ledger line: `path.ext:123`, optionally followed by more
 // endpoint numbers introduced by `-` (a span) or `,` (a continuation of the same file).
-const CITE = /([A-Za-z0-9_./-]+\.(?:mjs|py|sh|java|ts|tsx|json|sql)):(\d+)((?:(?:-|,):?\d+)*)/g;
+// D569: the extension list must be the one the DRIFT READER judges, or a row the reader produces for an
+// extension this regex does not know is refused forever ("no citation to … on that line"). The reader's own
+// census names `js`, `yml` and `yaml` as judged-but-outside SOURCE_EXT; they are here for the same reason.
+const CITE = /([A-Za-z0-9_./-]+\.(?:mjs|js|py|sh|java|ts|tsx|json|sql|yml|yaml)):(\d+)((?:(?:-|,):?\d+)*)/g;
 
 // Shift every endpoint that belongs to the citation whose START is `from`, by `delta`.
 // Returns { text, moved } where moved counts the endpoints rewritten.
@@ -57,7 +60,11 @@ export function planJobs(rows) {
     if (!bySite.has(site)) bySite.set(site, []);
     bySite.get(site).push({ file, from: Number(from), to: Number(to) });
   }
-  const jobs = [];
+  // D569: group by FILE, not by site. Grouping by site read the whole file once per site and wrote it once
+  // per site, so with several sites in one ledger every write after the first restored the file as it was
+  // read and only the LAST site's rewrite survived - measured: 72 rows planned, 2 lines changed. One read
+  // and one write per file is what the header's "changes nothing it was not told to" actually needs.
+  const byFile = new Map();
   const refusals = [];
   for (const [site, list] of bySite) {
     // A site is `ledger:line`; only the part before the LAST colon is a path. Reading the whole token as a path
@@ -70,34 +77,37 @@ export function planJobs(rows) {
       refusals.push(`REFUSE ${site} — site has no positive line number`);
       continue;
     }
-    let text;
-    try {
-      text = readFileSync(siteFile, 'utf8');
-    } catch (err) {
-      refusals.push(`REFUSE ${site} — the site file cannot be read (${err.code || err.message}), so its row cannot be validated`);
+    let job = byFile.get(siteFile);
+    if (!job) {
+      let text;
+      try {
+        text = readFileSync(siteFile, 'utf8');
+      } catch (err) {
+        refusals.push(`REFUSE ${site} — the site file cannot be read (${err.code || err.message}), so its row cannot be validated`);
+        continue;
+      }
+      // The file's own ending is part of the plan. A ledger checked out CRLF must come back CRLF, or a one-digit
+      // repair would silently re-encode every line this run did not touch.
+      const eol = text.includes('\r\n') ? '\r\n' : '\n';
+      job = { siteFile, eol, lines: text.split(eol), rowsApplied: 0 };
+      byFile.set(siteFile, job);
+    }
+    if (lnRaw > job.lines.length) {
+      refusals.push(`REFUSE ${site} — the file holds ${job.lines.length} line(s), so there is no line ${lnRaw} to rewrite`);
       continue;
     }
-    // The file's own ending is part of the plan. A ledger checked out CRLF must come back CRLF, or a one-digit
-    // repair would silently re-encode every line this run did not touch.
-    const eol = text.includes('\r\n') ? '\r\n' : '\n';
-    const lines = text.split(eol);
-    if (lnRaw > lines.length) {
-      refusals.push(`REFUSE ${site} — the file holds ${lines.length} line(s), so there is no line ${lnRaw} to rewrite`);
-      continue;
-    }
-    let rowsApplied = 0;
     for (const r of list) {
-      const got = shiftCitation(lines[lnRaw - 1] ?? '', r.file, r.from, r.to);
+      const got = shiftCitation(job.lines[lnRaw - 1] ?? '', r.file, r.from, r.to);
       if (got.moved === 0) {
         refusals.push(`REFUSE ${site} — no citation to ${r.file}:${r.from} on that line, so the row is stale or the line moved`);
         continue;
       }
-      lines[lnRaw - 1] = got.text;
-      rowsApplied += 1;
+      job.lines[lnRaw - 1] = got.text;
+      job.rowsApplied += 1;
       console.log(`  ${got.moved === 1 ? 'one' : `${got.moved} endpoints`} moved  ${site}  ${r.file}:${r.from} -> :${r.to}`);
     }
-    if (rowsApplied) jobs.push({ siteFile, eol, lines, rowsApplied });
   }
+  const jobs = [...byFile.values()].filter((j) => j.rowsApplied > 0);
   return { jobs, refusals };
 }
 

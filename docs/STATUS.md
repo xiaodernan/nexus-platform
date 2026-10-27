@@ -497,7 +497,7 @@ Three changes, each covering a distinct way to be wrong:
    base paths accepted as strict prefixes and *extensions* (`/x/{id}/reindex`) still reported.
 
 Current ledger: **101 routes parsed · 64 served · 29 client-only · 0 missing · 0 undocumented**, over a 270-file
-corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:218` runs it with `--report`, so
+corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:258` runs it with `--report`, so
 CI stays advisory while the 29 rows are worked off; the split is by owner, not by excuse.
 
 Two of those 30 were true gaps that the old matcher hid, and both became visible rather than passed (that count is
@@ -4190,8 +4190,8 @@ next              reported to their lanes, not edited: the AI service binds json
                     placeholders in apps/ai/nexus_ai/api/runs.py (:118, :120, :121, :158, :159, :182, :207, :208)
                     through asyncpg, which quotes a str again · 188 string-valued jsonb rows on the live demo
                     database, 34 of them events.properties (task #62); and the web lane declares Guide.body_blocks
-                    required (apps/web/src/lib/types.ts:266), maps over it at growth-view.tsx:72, synthesises it
-                    in lib/mock/index.ts:740, while the string body_blocks does not occur anywhere in
+                    required (apps/web/src/lib/types.ts:271), maps over it at growth-view.tsx:72, synthesises it
+                    in lib/mock/index.ts:814, while the string body_blocks does not occur anywhere in
                     services/platform/src/main/java · a live §8 guide cannot satisfy the type its reader assumes.
                     Residue this row owns: (a) "the cited line mentions the row's table, column or key" is a
                     disjunction over three identifiers, so a citation to the right line for the wrong reason
@@ -4409,7 +4409,7 @@ plants            The harness slices the region out of the shipped file at run t
                     whether the clock row is green or red unless it is invoked with `-v ON_ERROR_STOP=1`, the
                     flag that turns the verdict block's RAISE into rc=3 · which is how the gate itself calls
                     it (`scripts/db_gate_fresh.sh:186`) and how load.sh tells the operator to call it
-                    (`data/seed/load.sh:214`). Measured on the shipped text at 08:00 with the artifact kept:
+                    (`data/seed/load.sh:217`). Measured on the shipped text at 08:00 with the artifact kept:
                     P4 gives rc=0 unflagged and rc=3 flagged, and P1 gives that same pair. So with the flag the
                     exit code reports "this database has an offender", not "my row failed" · the offender on
                     the demo database is one the coverage row names, `agent_runs.completion_tokens`, a runtime
@@ -4654,7 +4654,7 @@ measured          On D89's kept gate database, before any predicate in this unit
                     date in it that nobody wrote down, and CI inherits expiry dates.
                   The TTL arm counted `stale AND expires_at > now()`. 72 stale rows, the newest expiring
                     2026-09-22 09:30+08 · 90 min before the 11:00 base · because
-                    `data/seed/generate.py:966` sets the flag only where the expiry already precedes its own
+                    `data/seed/generate.py:968` sets the flag only where the expiry already precedes its own
                     instant. At the 11:41 reading that arm had been unable to fail for 4 days and 35
                     minutes, and it had been unable to fail for every seed loaded after the base.
                   Margins of the new arms, on the same data: the first slot sits 20 h above the lower bound
@@ -4764,11 +4764,11 @@ plane             `scripts/verify_consumer_slice.py`'s fact-freshness leg · one
 measured          On the database D90's passing gate run left behind, and on the live demo database:
                     520 of 520 `opening_hours` facts are past expiry with none marked; price 2,080 past with
                     72 marked; rating 1,727 past with none. The cause is arithmetic ·
-                    `data/seed/generate.py:966` marks a row only where its expiry already precedes the
+                    `data/seed/generate.py:968` marks a row only where its expiry already precedes the
                     instant it is written, so a 24-hour TTL can never be marked at load and is expired for
                     every reader 24 hours later. `markExpiredStale` (`FactRepository.java:102`) has no
                     callers in the repository.
-                  The UI does not depend on that column alone: `packages/ui/src/trust/fact.ts:66` is
+                  The UI does not depend on that column alone: `packages/ui/src/trust/fact.ts:82` is
                     `fact.stale === true || isExpired(fact, now)`, which makes `expires_at` the owed field
                     and the flag one input. So the old arm was both unsatisfiable (live leg, since
                     2026-09-23 11:00+08) and vacuous (offline catalogue, where `expires_at` is built from the
@@ -5367,7 +5367,7 @@ covers          DECISIONS D107 (c1e0878) and D108 (harness 111d5de, ledger + reg
                 D99–D106 still have no section here · their reasoning is in commit messages
                 476324d, 9ba17f4, 0d802be, 9591d54 and in DECISIONS; the debt is task #76.
 
-what landed     data/seed/quality.sql:963 renamed. The row was called
+what landed     data/seed/quality.sql:1006 renamed. The row was called
                 `documents: content_hash matches the raw_text it carries` and read only raw_text; the check it
                 named is not addable either · 0 of 1,040 stored hashes equal sha256(raw_text). It is now
                 `documents: raw_text is substantial enough to feed RAG`.
@@ -5602,7 +5602,7 @@ Reports about somebody else's files decay fastest, because their plane moves und
   `git ls-files apps/ai/nexus_ai/api/` → 0 files, so the writer is untracked and a clean checkout sees neither
   half of the pair. Report: drop the `json.dumps` in the writer, keep the codec.
 - **`Guide.body_blocks` (#64) · real at HEAD, closed in the working copy by its owner.** At HEAD the consumer
-  requires the field (`apps/web/src/lib/types.ts:261`) and the producer never names it
+  requires the field (`apps/web/src/lib/types.ts:266`) and the producer never names it
   (`…/catalog/CollectionsController.java`, 0 occurrences at HEAD). On disk the same controller emits it at its
   line 188 and `CollectionsReadTest` asserts it. Residue worth reporting: `docs/API_CONTRACT.md` has 0 hits for
   the field on disk **and** 0 at HEAD, so a field both sides now honour is documented in no text this lane's
@@ -5981,7 +5981,7 @@ declared read whose key starts shipping, a migration whose table appears, a rout
 
 ## 121. [recovered by D115 from the working copy's §106] A required field no service serves, and the page that threw on it (2026-09-27)
 
-`apps/web/src/lib/types.ts:266` declares `Guide.body_blocks` **required**, and `growth-view.tsx:72` maps
+`apps/web/src/lib/types.ts:271` declares `Guide.body_blocks` **required**, and `growth-view.tsx:72` maps
 over it with no guard. The word does not occur in `services/platform/src/main/java` at all:
 
 ```
@@ -5997,7 +5997,7 @@ are not a rename apart: the wire's block is `{subject_type, subject_id, note, ca
 
 So live mode handed `undefined` to a required field and `/guides/[slug]` threw
 `Cannot read properties of undefined (reading 'map')`. **Mock mode could never show it**: `DEMO_GUIDES`
-(`lib/mock/seed.ts:739`) is written in the view-model shape, so the only plane that was ever exercised
+(`lib/mock/seed.ts:742`) is written in the view-model shape, so the only plane that was ever exercised
 agreed with the type, and the plane that ships did not. The bare `nexusGet<Guide>(…)` cast in
 `data.ts:guideBySlug` is what let the disagreement through the type system.
 
@@ -6670,13 +6670,13 @@ found             (a) The assertion plane is data-dependent, which is a second a
                     without its plane is a reading of the data as much as of the file.
                   (b) The plants harness polices redness, not existence, so (a) passed it by. Collateral is
                     computed as `reds not in base_reds` inside the per-arm block
-                    (data/seed/falsifier_plants.py:1270-1292) and base_reds is
+                    (data/seed/falsifier_plants.py:1329-1351) and base_reds is
                     the set of RED rows on unmutated data, so a name that stops being filed matches nothing
                     the drive tests: the 213 sat in the printed `rows` column and only a person reading the
                     table caught it. A drive can report PASS while three assertions leave the plane under it.
                   (c) 22 distinct names went red as collateral in this run. 11 already carried a witness; the
                     other 11 are recorded nowhere, because --emit-rows files only the matched target
-                    (data/seed/falsifier_plants.py:1286). Among the eleven is `orphan: favorites.offering`,
+                    (data/seed/falsifier_plants.py:1345). Among the eleven is `orphan: favorites.offering`,
                     which reddened because the merchants delete cascade-killed the offering its unenforced
                     reference pointed at · the exact deception that row exists to watch, shown able to fail by
                     an arm aimed elsewhere and dropped by the tool that writes the record.
@@ -9706,7 +9706,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     `asyncpg.connect`. The service's connections come from `db/pool.py::connect`, which
                     passes `init=_init_connection`, and `_init_connection` registered `encoder=json.dumps`
                     on `jsonb`. Every writer in the service already passes `json.dumps(...)` text
-                    (`api/runs.py:118-121,158-159`, `search/sql.py:137,297`), so that text was encoded a
+                    (`api/runs.py:118-121,158-159`, `search/sql.py:205,365`), so that text was encoded a
                     second time and stored as a jsonb *string*: `jsonb_typeof = 'string'`, every key read
                     NULL, only `#>> '{}'` reaching the payload · the shape D86's quality.sql header
                     describes from the data side.
@@ -9726,9 +9726,9 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     of the 62 jsonb columns censused · are stamped 2026-09-27T15:34:09Z, written the day
                     *after* that measurement. A row count cannot say when; a timestamp can.
 
-                    The consequence is not telemetry only. `search/sql.py:137,297` builds
+                    The consequence is not telemetry only. `search/sql.py:205,365` builds
                     `attributes @> {param}::jsonb` from a `json.dumps(...)` value, and `plan_from_intent`
-                    fills that filter from positive `intent.preferences` (`search/service.py:301-303`).
+                    fills that filter from positive `intent.preferences` (`search/service.py:647-649`).
                     Measured on `nexus`, one connection each: `attributes @> '{"data_origin":"demo"}'
                     matched 5534 rows on the fixed plane and 0 on the pre-fix plane. End to end,
                     `POST /ai/v1/search` with `filters={"attributes":{"data_origin":"demo"}}` answered 200
@@ -10404,10 +10404,10 @@ counts are unchanged and exactly one reason appears.
 **(b) A crash guard keyed on the last line instead of the first.** `scripts/falsify_quality_seam.mjs` decided
 "the reader died" from the census's header · the first thing a reader prints · so a reader that died mid-report
 was a finished run. The guard now reads a terminal sentinel that also declares the code the process intends
-(`scripts/falsify_quality_seam.mjs:264`, reader `scripts/check_jsonb_reads.mjs:902`), and a run whose declared
+(`scripts/falsify_quality_seam.mjs:276`, reader `scripts/check_jsonb_reads.mjs:902`), and a run whose declared
 code the process does not take is a crash, not a verdict. The `expectCrash` flag is policed both ways: an arm that
 declares a death over a run that finished reddens through the same predicate the loop uses
-(`scripts/falsify_quality_seam.mjs:584-586`).
+(`scripts/falsify_quality_seam.mjs:592-594`).
 
 **(c) The `--quality` seam refuses instead of dying.** After D159 made a mistyped flag value a legal request, a
 path with no file behind it and a path that is a directory both reached `readFileSync` and ended in `node:fs`
@@ -10459,10 +10459,10 @@ reports its LAST command unless the shell holds it. `scripts/db_gate_fresh.sh:51
 own pipes together, and D150/D151’s proof that step 11 can stop the run is a proof about that one line; GitHub
 Actions does not hold them, and its documented default for a `run:` step on Linux is `bash -e {0}`
 (workflow-syntax reference, the shell table: unspecified -> `bash -e {0}`; `shell: bash` -> `bash --noprofile
---norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:215-236)
+--norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:255-276)
 so that the report is an artifact, and none of them declared a shell, so none of them could fail. Measured in a
 shell rather than argued: `false | tee /dev/null` exits 0 under `bash -e` and 1 under `bash -eo pipefail`. All three
-declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:200), and the census prints
+declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:240), and the census prints
 `7 step(s) pipe a checker into tee` with 0 UNPROTECTED.
 (C) TWO COUNTS IN THIS UNIT’S OWN PROSE WERE WRONG, AND RUNNING A FILE CORRECTED BOTH. The note written above the
 piped steps said three steps "carried Hard-fail in their own comments". One of the three does; one of the other two
@@ -10611,18 +10611,18 @@ so the three readers walked a lane's working directory as part of the repository
 exactly one shipped file read AMBIGUOUS, gate step 9's falsifier refused with exit 2, and because
 `db_gate_fresh.sh` runs under `set -euo pipefail` that refusal stops whichever session runs the gate next.
 The list is now the union of the two drifted lists (22 names, `VENDOR_DIRS` in `scripts/source_index.mjs`), `.scratch` among
-them. D196's residue · "nothing charges the write" · is answered by `scripts/falsify_ledger_text.mjs:701`,
+them. D196's residue · "nothing charges the write" · is answered by `scripts/falsify_ledger_text.mjs:789`,
 which keeps out of the exclusion any file that turns out to be tracked, so the name cannot become a hiding
 place for a first-party claim.
 
-The bigger one was found by arming the smaller. `isCitation` (`scripts/check_ledger_citations.mjs:404`) asked
+The bigger one was found by arming the smaller. `isCitation` (`scripts/check_ledger_citations.mjs:423`) asked
 its bare-dotfile rule about names that also carry a slash, and that rule consults `BY_BASENAME`, which is
 keyed on basenames and never on paths. It cannot hold one, so every citation whose path begins with a dot
 directory was dropped before reaching `resolve()` · not judged, not reported, invisible in the counts because
 a dropped token is still a token. Ten such tokens sit in the two ledgers at this commit: four to
 `.github/workflows/ci.yml` and six to `./.gitignore`, the root-relative form the resolver has a branch for and
 the CI form the arms cite. None had been judged by any run since D88 wrote the classifier. The path clause is
-now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:409`), so `./.gitignore:21`
+now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:428`), so `./.gitignore:21`
 is a citation and `some/dir/notes` stays prose.
 
 Both halves were measured rather than argued. The ten-token count came out of this file's own tokenizer and
@@ -10669,10 +10669,10 @@ those two fields, so a child that died before printing anything · exit 134 from
 arrived as `MISSED exit 2 expected, 134 printed` with an empty verdict line, and again as `exit 0 expected, 0
 printed`: both of them findings about a reader no arm had reached. Six runs of the 50 arms on a loaded host had
 gone four green and two red, each red a different arm, while the same invocation standalone returned its expected
-verdict. Both halves of that sentence are armed now. A child gets three attempts (scripts/falsify_ledger_text.mjs:217), an exit code
+verdict. Both halves of that sentence are armed now. A child gets three attempts (scripts/falsify_ledger_text.mjs:237), an exit code
 is believed only when stdout carried something, and the reporting loop refuses the whole run with exit 2 and
-`unread N of M arms` (scripts/falsify_ledger_text.mjs:879) rather than scoring an observation nobody made. The refusal is scoped by a
-`reading` tag (scripts/falsify_ledger_text.mjs:473) so the three stub arms that are deliberately aimed at silent children cannot trip it.
+`unread N of M arms` (scripts/falsify_ledger_text.mjs:972) rather than scoring an observation nobody made. The refusal is scoped by a
+`reading` tag (scripts/falsify_ledger_text.mjs:523) so the three stub arms that are deliberately aimed at silent children cannot trip it.
 The contract in the header says all three exit-2 causes out loud, because a harness whose exit codes are not in
 its own documentation is one more thing to rediscover (scripts/falsify_ledger_text.mjs:87).
 
@@ -10710,7 +10710,7 @@ here.
 One blast radius, measured rather than assumed. This unit inserts 160 lines and deletes 9 in
 `scripts/falsify_ledger_text.mjs`, and exactly one citation already in the ledgers pointed into that file:
 `docs/STATUS.md:10613`. It named line 634, which at HEAD is the arm whose predicate charges the exclusion
-against the tracked set, and the insertion moved that arm's name line to scripts/falsify_ledger_text.mjs:749; the ledger line was
+against the tracked set, and the insertion moved that arm's name line to scripts/falsify_ledger_text.mjs:842; the ledger line was
 repointed at landing. Step 8 was green over the stale number before and after · the census asks that a cited line
 exist, never that it holds what the sentence claims, which is the standing residue D194 and §202 both name.
 
@@ -12435,8 +12435,8 @@ Both misses were the wiring arms - "gate step 8 runs this harness AND passes the
 The cause is neither the gate nor the reader: the arms anchored the era's step totals (`step "8/12`,
 `step "13/13`) and D219's renumber moved every header to /18 (scripts/db_gate_fresh.sh:244 is step 8's header
 today), so both findIndex calls returned -1, both regions came back empty, and every pattern the arms demand
-went unanswered. The anchors now pin the step's number (`step "8/` at scripts/falsify_ledger_text.mjs:499,
-`step "13/` at scripts/falsify_ledger_text.mjs:521) - unique first matches in the committed gate, blind to
+went unanswered. The anchors now pin the step's number (`step "8/` at scripts/falsify_ledger_text.mjs:565,
+`step "13/` at scripts/falsify_ledger_text.mjs:583) - unique first matches in the committed gate, blind to
 the next renumber.
 
 The fix landed with the owed D198 landing (767afe1): the silent-child guard the committed D198 row described
@@ -16066,7 +16066,7 @@ turn 1 `帮我找附近适合朋友聚会的餐厅` → `sort_preference: distan
 turn 2 `太贵了` → `sort_preference: price_low, budget: null` (the new effect, and §8 still unbroken —
 no number appears); turn 3 `近一点` → `radius_m: 1000` (the nearby default 2000 × `RADIUS_TIGHTEN`). The
 state merge works end to end. **The answer set did not change: 8 cards, and the same first four slugs in
-all three turns.** That is a separate, precisely located defect: `search/service.py:311` writes
+all three turns.** That is a separate, precisely located defect: `search/service.py:577` writes
 `plan.sort_preference` from the intent and nothing downstream reads it — `organic_rank()` sorts by
 `(-organic_score, candidate.key())` and `plan.radius_m` is the only planning field the retrieval honours.
 So a refinement can be correctly remembered and still produce an identical page; the chip that this unit
@@ -21735,7 +21735,7 @@ writer and two of the search builder - 118 to 121 and 158 to 159 there, 137 and 
 written when those files were shorter, and its first target line is empty today, so the cite
 claimed a writer where no writer stands. It is re-aimed at the spans that do pass `json.dumps(...)`
 text: apps/ai/nexus_ai/api/runs.py:173, apps/ai/nexus_ai/api/runs.py:265 and
-apps/ai/nexus_ai/search/sql.py:138, each read back from the file after the edit. Measured: step 9
+apps/ai/nexus_ai/search/sql.py:171, each read back from the file after the edit. Measured: step 9
 went from `RESULT: FAIL` with `strict offenders 1` to `RESULT: PASS - 108 comment-plane
 citation(s) across 41 file(s), all resolving` with `strict offenders 0`. Second, the consumer e2e
 leg of this unit's verification wrote into the tracked `tests/e2e/report/` directory - 4 deletions,
@@ -22040,7 +22040,7 @@ untracked in the working tree while `tests/test_rag_embed.py` (D510, committed) 
 clone of HEAD fails at collection with `ModuleNotFoundError: nexus_ai.rag`. Both lanes had been
 working around it - the sibling's §506 counts the suite "with the sibling's untracked file aside".
 Landing it also closed the two gate reds it carried: `mypy nexus_ai` named
-`rag/embed.py:136 - Argument 1 to "vector_literal" has incompatible type "Sequence[float]"; expected
+`rag/embed.py:139 - Argument 1 to "vector_literal" has incompatible type "Sequence[float]"; expected
 "list[float]"` (the helper only iterates, so its annotation was narrower than its contract), and
 `ruff check .` was red at HEAD on an unused `extract_intent_dict` import in
 `test_the_filter_speaks_the_district_vocabulary.py`.
@@ -22067,7 +22067,7 @@ re-measured after this landing (jsonb census re-walked with the new module prese
 
 ## 510. D516 · the search's `filters.tags` did not speak the spelling the `tags` COLUMN is written in (`apps/ai/nexus_ai/search/categories.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_the_filter_speaks_the_tags_vocabulary.py`, `apps/ai/tests/test_live_search_contract.py`)
 
-**What was measured.** `search/sql.py:146` turns `filters.tags` into `m.tags && ARRAY[...]` - an
+**What was measured.** `search/sql.py:164` turns `filters.tags` into `m.tags && ARRAY[...]` - an
 exact array overlap against a column the seed writes. The seed writes every tag as a lowercase
 hyphen slug: measured against the live corpus, `select distinct unnest(tags) from merchants`
 returns 100 tags and every one matches `^[a-z0-9-]+$`. The filter, however, passed the caller's
@@ -24656,3 +24656,30 @@ the README / the console page trees and still requires the checker to redden for
 
 **Verified, not claimed.** `node scripts/falsify_console_a11y.mjs` → **RESULT: PASS — 13 arms · 13
 held · 0 missed** (fixture root `nexus-d186-falsify`).
+
+## 565. D569 · the line-citation re-aimer had TWO defects of its own - it could not read a `yml` row, and it lost every rewrite but the last per file (`scripts/apply_line_cite_reaim.mjs`)
+
+**What the gate said.** With steps 1-15 passing, the 18-step run stopped at step 16:
+`RESULT: FAIL — --strict MOVED,NOT-UNIQUE on MOVED 72 + NOT-UNIQUE 3 of 179 judged citation(s)`.
+The project ships `scripts/apply_line_cite_reaim.mjs` for exactly this; it did not work.
+
+**Defect 1 - the applier's grammar was narrower than the reader's.** Its `CITE` regex accepted
+`mjs|py|sh|java|ts|tsx|json|sql` while the drift reader also judges `js`, `yml` and `yaml` (its own
+census prints that difference). The three `.github/workflows/ci.yml` rows were therefore refused
+forever: `no citation to … on that line`. Fixed by adding the three extensions.
+
+**Defect 2 - a lost update.** `planJobs` grouped rows by **site** (`ledger:line`), read the whole
+ledger once per site, and wrote it once per site. With 70 sites in two files, every write after the
+first restored the file as it was read, so only the **last** site's rewrite survived: measured,
+`RESULT: APPLIED — 72 site line(s) rewritten` while `git diff --stat` showed **2 lines changed**.
+Fixed by grouping by **file**: one read, all its rows applied, one write.
+
+**The result.** `node scripts/check_line_cite_drift.mjs --reaim` now produces 70 rows, all validated;
+after `--apply`, `git diff --stat` shows **71 insertions / 71 deletions** across the two ledgers and
+the strict reader reports **MOVED 0**. `--selftest` → **PASS — 13 case(s), 0 mismatch(es)**.
+
+**What is left, named.** Step 16 still reddens on **NOT-UNIQUE 3** - citations whose quoted text
+occurs on more than one line, so no tool can choose: `docs/STATUS.md:4421 -> data/seed/load.sh:161`
+(2 lines hold `"DO \$\$"`), `docs/STATUS.md:22178 -> search/sql.py:131` (2 lines hold
+`wsq = f"websearch_to_tsquery('`), `docs/STATUS.md:23747 -> search/service.py:1064` (3 lines hold
+`if attrs.get("outdoor_style")`). Each needs the citing sentence read against the candidates.
