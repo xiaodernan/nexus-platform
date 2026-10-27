@@ -24581,3 +24581,23 @@ constructed, never called.
 Corrected against the source before writing the assertion, not by weakening it.
 
 **Verified, not claimed.** `pytest tests/test_factory_pool.py` → **8 passed**.
+
+## 562. D566 · the SSE serializer's two bottom pieces were unpinned - compact JSON and the async byte encoder (`apps/ai/nexus_ai/api/sse.py`, `apps/ai/tests/test_sse_bytes.py`)
+
+**Module / contract.** `test_sse.py` pins `sse_frame` / `parse_frames` /
+`assert_canonical_stream` / `plain`; this unit pins the two underneath: `json_compact` (compact
+separators, no ASCII escaping, insertion order preserved — the browser forwards upstream bytes
+verbatim) and `sse_bytes` (one UTF-8 frame per event, in order; a non-canonical name raises **at
+iteration time**).
+
+**Pinned behavior (8 cases, all confirmed empirically):**
+- `json_compact` → `{"a":1,"b":2}` (no spaces); `{"a":"中"}` keeps the CJK unescaped; insertion
+  order survives (`{"b":1,"a":2}`); nested structures are compact too.
+- `sse_bytes` yields exactly `b'event: status\ndata: {"stage":"searching"}\n\n'` and
+  `b'event: done\ndata: {"agent_run_id":"r1"}\n\n'`, in order; a CJK payload is UTF-8 bytes, not
+  `\u` escapes; an empty iterator yields nothing; `("bogus", {})` raises `NonCanonicalEvent` when
+  the stream is consumed (not at construction).
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_sse_bytes.py` → **8 passed**.
