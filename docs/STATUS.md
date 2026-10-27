@@ -24486,7 +24486,7 @@ canonicalises before it matches** — and that guarantee had no end-to-end row.
 - A numeral before a counter becomes a digit (`三個人` → `3個人`, `二人` → `2人`, `十三個人` →
   `13個人`); an Arabic digit is left alone; the rest of the sentence is untouched
   (`三個人食飯` → `3個人食飯`).
-- A numeral with no counter after it is left alone: `星期三` stays a weekday, `兩隻` stays a pair.
+- A numeral with no counter after it is left alone: `星期三` stays a weekday, and a numeral before a non-counter (the hour marker) stays put.
   The rule is the **following** character, not the word before it (`星期三人` → `星期3人`).
 - Empty → empty; the marker set is exactly the three counters.
 - **Canonicalise-first, end to end:** `extract_intent("四个人").party_size == 4` and

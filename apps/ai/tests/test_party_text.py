@@ -3,7 +3,7 @@
 `party_size_of` is pinned by the party-size tests; this file pins the helper it stands on:
 `party_text` rewrites a Chinese numeral to a digit **only when a party counter follows it**
 (``_PARTY_MARKERS`` = 個/位/人), so 三個人 and 3個人 are the same party while 星期三 stays a
-weekday and 兩隻 stays a pair. It also pins the end-to-end guarantee that makes Simplified input
+weekday and a numeral before a non-counter stays put. It also pins the end-to-end guarantee that makes Simplified input
 work: the pipeline canonicalises BEFORE it matches, so 四个人 and 两位 are read even though the
 numeral table holds only the Traditional spellings.
 
@@ -30,7 +30,10 @@ class TestPartyText:
         assert U.party_text("星期三") == "星期三"
 
     def test_a_non_counter_suffix_is_left_alone(self):
-        assert U.party_text("兩隻") == "兩隻"
+        # 點 is the hour marker, not a party counter, so the numeral is not rewritten.
+        # (The first draft used a pair-counter word the vocabulary does not carry; the
+        # vocabulary gate caught it - D409/D446.)
+        assert U.party_text("兩點") == "兩點"
 
     def test_a_compound_numeral_is_read(self):
         assert U.party_text("十三個人") == "13個人"
