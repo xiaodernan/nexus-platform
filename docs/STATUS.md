@@ -497,7 +497,7 @@ Three changes, each covering a distinct way to be wrong:
    base paths accepted as strict prefixes and *extensions* (`/x/{id}/reindex`) still reported.
 
 Current ledger: **101 routes parsed · 64 served · 29 client-only · 0 missing · 0 undocumented**, over a 270-file
-corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:280` runs it with `--report`, so
+corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:295` runs it with `--report`, so
 CI stays advisory while the 29 rows are worked off; the split is by owner, not by excuse.
 
 Two of those 30 were true gaps that the old matcher hid, and both became visible rather than passed (that count is
@@ -10459,10 +10459,10 @@ reports its LAST command unless the shell holds it. `scripts/db_gate_fresh.sh:51
 own pipes together, and D150/D151’s proof that step 11 can stop the run is a proof about that one line; GitHub
 Actions does not hold them, and its documented default for a `run:` step on Linux is `bash -e {0}`
 (workflow-syntax reference, the shell table: unspecified -> `bash -e {0}`; `shell: bash` -> `bash --noprofile
---norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:277-298)
+--norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:292-313)
 so that the report is an artifact, and none of them declared a shell, so none of them could fail. Measured in a
 shell rather than argued: `false | tee /dev/null` exits 0 under `bash -e` and 1 under `bash -eo pipefail`. All three
-declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:262), and the census prints
+declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:277), and the census prints
 `7 step(s) pipe a checker into tee` with 0 UNPROTECTED.
 (C) TWO COUNTS IN THIS UNIT’S OWN PROSE WERE WRONG, AND RUNNING A FILE CORRECTED BOTH. The note written above the
 piped steps said three steps "carried Hard-fail in their own comments". One of the three does; one of the other two
@@ -24730,7 +24730,7 @@ all: it ran `cd tests/e2e && npx playwright test`. So the documented local entry
 plane while `make dev-*` had started a different stack — the run was real, it started, it reported a
 verdict, and the verdict was about services nobody in this repository had started. The CI job is not
 wrong to own those defaults: it boots Spring on 8080, uvicorn on 8000 and Next on 3000 and waits on
-all three (`.github/workflows/ci.yml:229-233`), and it exports no `NEXUS_*` either, so CI's fallbacks
+all three (`.github/workflows/ci.yml:244-248`), and it exports no `NEXUS_*` either, so CI's fallbacks
 are exactly its plane. The defect is that the defaults were the **only** copy the local path could
 read. On this machine the three fallback ports belong to a different product: `:3000` answers
 `<html lang="en">` with a hashed Next bundle, `:8000` answers `{"detail":"Not Found"}`, and `:8080`
@@ -24855,9 +24855,9 @@ counted one file short of the reader's — the root `Makefile` its extension tes
 
 **The second red was D571's own commit, and the ledger is where it is corrected.** D571 added six lines to
 `.github/workflows/ci.yml` above three committed citations, so its own commit moved the file under three rows
-written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:280` (the
-`--report` run), `.github/workflows/ci.yml:277-298` (the three steps that pipe a reader into `tee`),
-`.github/workflows/ci.yml:262` (the note that says why they declare `shell: bash`). Each was read at the commit
+written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:295` (the
+`--report` run), `.github/workflows/ci.yml:292-313` (the three steps that pipe a reader into `tee`),
+`.github/workflows/ci.yml:277` (the note that says why they declare `shell: bash`). Each was read at the commit
 that wrote the row (`3d4820e`: 240, 255, 258) and at HEAD (246, 261, 264) before the re-aim, the range's end
 included (276 at `3d4820e` is 282 at HEAD).
 
@@ -25046,7 +25046,7 @@ an array, so React asks for no key at all. The thirteen are:
 - `packages/ui/src/primitives/Select.tsx:132` — `Select`'s `label` in a two-child `<span>`.
 - `packages/ui/src/primitives/Tabs.tsx:140` — `Tab`'s `children` in a two-child `<button>`.
 - `packages/ui/src/feedback/States.tsx:78` — `ErrorState`'s `retryAction` in a two-child `<span>`.
-- `packages/ui/src/trust/EntityCard.tsx:210` — `EntityRail`'s `action` in a two-child `<header>`, the one
+- `packages/ui/src/trust/EntityCard.tsx:212` — `EntityRail`'s `action` in a two-child `<header>`, the one
   the console named.
 
 **The reader.** `scripts/check_slot_keys.mjs` reads the same render tree from the other end — the
@@ -25126,12 +25126,12 @@ reader filed all ten MOVED against the commit that carried them, which is the re
 a new one: a citation is EXACT while the line it names still holds the text it held when its row was
 written, so a commit that shifts a cited file invalidates the rows that cite it even when the ledger itself
 did not move. The ten are re-aimed from the same `--reaim` output, the three range ends moving with their
-starts, and every target was read by hand first: `.github/workflows/ci.yml:280` is the `--report` run,
-`.github/workflows/ci.yml:277-298` is the three steps that pipe a checker into `tee`,
-`.github/workflows/ci.yml:262` is the note that says why they declare `shell: bash`,
-`.github/workflows/ci.yml:229-233` is the block that boots Spring on 8080, uvicorn on 8000 and Next on
+starts, and every target was read by hand first: `.github/workflows/ci.yml:295` is the `--report` run,
+`.github/workflows/ci.yml:292-313` is the three steps that pipe a checker into `tee`,
+`.github/workflows/ci.yml:277` is the note that says why they declare `shell: bash`,
+`.github/workflows/ci.yml:244-248` is the block that boots Spring on 8080, uvicorn on 8000 and Next on
 3000 and waits on all three, `scripts/falsify_reader_reachability.mjs:169-175` is the arm that used to
-resolve last-wins, and `scripts/db_gate_fresh.sh:545` and `scripts/db_gate_fresh.sh:533` are step 16's
+resolve last-wins, and `scripts/db_gate_fresh.sh:559` and `scripts/db_gate_fresh.sh:547` are step 16's
 strict run and step 15's plain run. On the committed tree step 16 reads MOVED 0 and NOT-UNIQUE 0 over 232
 judged citations, of which 225 still name the line they were written against. Gate step 8's seven
 UNTRACKED TARGET rows — every one of them naming `scripts/check_slot_keys.mjs`, because a clean checkout of
