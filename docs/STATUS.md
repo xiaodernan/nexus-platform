@@ -24473,3 +24473,28 @@ the same shim (`SAFE_DELETE_BULK_CONFIRM_REQUIRED`), not from a test. Run it wit
 EXIT trap) and `scripts/check_launcher_log_mode.sh` (`mktemp -d` + `rm -f "$root/…"` in its
 cleanup) carried the identical defect. Neither is called by the 18-step gate, but both are CI
 scripts that would fail on this host for the same reason, so both cleanups are tolerant now.
+
+## 557. D561 · the party-size reader's normalisation step was unpinned - the counter-only rewrite, and the canonicalise-first guarantee that makes Simplified input work (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/tests/test_party_text.py`)
+
+**Module / contract.** `party_size_of` is pinned by the party-size tests; this unit pins the helper
+it stands on: `party_text` rewrites a Chinese numeral to a digit **only when a party counter
+follows it** (`_PARTY_MARKERS` = 個/位/人). The numeral table holds only the Traditional spellings
+(D435: one spelling per character), so Simplified input works **only because the pipeline
+canonicalises before it matches** — and that guarantee had no end-to-end row.
+
+**Pinned behavior (13 cases, all confirmed empirically):**
+- A numeral before a counter becomes a digit (`三個人` → `3個人`, `二人` → `2人`, `十三個人` →
+  `13個人`); an Arabic digit is left alone; the rest of the sentence is untouched
+  (`三個人食飯` → `3個人食飯`).
+- A numeral with no counter after it is left alone: `星期三` stays a weekday, `兩隻` stays a pair.
+  The rule is the **following** character, not the word before it (`星期三人` → `星期3人`).
+- Empty → empty; the marker set is exactly the three counters.
+- **Canonicalise-first, end to end:** `extract_intent("四个人").party_size == 4` and
+  `extract_intent("两位").party_size == 2` — Simplified input is read even though the table has no
+  `两`/`个` — while `四個人` → 4 and `2位` → 2 agree, and a turn naming no party → `None`.
+
+**Discipline note.** A direct `party_size_of("四个人")` returns `None`, which looked like a
+Simplified-input gap; the real pipeline canonicalises first and returns 4. The probe was wrong, not
+the product — and the test now pins the pipeline's guarantee so the distinction cannot be lost.
+
+**Verified, not claimed.** `pytest tests/test_party_text.py` → **13 passed**.
