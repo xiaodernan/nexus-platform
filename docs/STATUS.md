@@ -24559,3 +24559,25 @@ files), `npm run typecheck:web` clean, `npm run lint:web` → **0 errors** (6 pr
 **Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
 
 **Verified, not claimed.** `pytest tests/test_verification_claims.py` → **7 passed**.
+
+## 561. D565 · the provider pool factory was unpinned - the configured-first/mock-last order, the cache, and the degrade that keeps the product serving (`apps/ai/nexus_ai/models/factory.py`, `apps/ai/tests/test_factory_pool.py`)
+
+**Module / contract.** The factory decides which providers serve and in what order, caches the pool
+per `(llm_provider, llm_base_url)`, and **degrades a misconfigured live provider to mock** rather
+than stopping the product. `get_router` is the seam the request path calls. Pure — adapters are
+constructed, never called.
+
+**Pinned behavior (8 cases, all confirmed empirically):**
+- `mock` → `["mock"]`; a configured live provider comes **first** and `mock` **last**
+  (`["anthropic", "mock"]`, `["openai", "mock"]`).
+- The same settings return the **same pool object**; `reset_provider_cache()` clears it (a new
+  object); a different provider is a different object.
+- An anthropic pool with an **empty key** degrades to `["mock"]` — a misconfigured live provider
+  never stops the product.
+- `get_router` returns a `ModelRouter` carrying the pool's adapters and the settings'
+  `max_llm_calls` (7); `get_adapter` is the first of the pool.
+
+**Discipline note.** The probe first read `router.providers` (0); the attribute is `adapters`.
+Corrected against the source before writing the assertion, not by weakening it.
+
+**Verified, not claimed.** `pytest tests/test_factory_pool.py` → **8 passed**.
