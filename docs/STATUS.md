@@ -24498,3 +24498,22 @@ Simplified-input gap; the real pipeline canonicalises first and returns 4. The p
 the product — and the test now pins the pipeline's guarantee so the distinction cannot be lost.
 
 **Verified, not claimed.** `pytest tests/test_party_text.py` → **13 passed**.
+
+## 558. D562 · the two response helpers were only covered through TestClient - the degraded HEADER and the §1 error envelope (`apps/ai/nexus_ai/api/degraded.py`, `apps/ai/nexus_ai/api/errors.py`, `apps/ai/tests/test_response_helpers.py`)
+
+**Module / contract.** `degraded_json` says whether a response is degraded **in the body and in the
+header** — the header is what a client or proxy reads without parsing. `error_response` is the §1
+error envelope with the request id the service is carrying. Both are pure JSONResponse builders;
+their call sites are covered through TestClient, the helpers themselves were not.
+
+**Pinned behavior (7 cases, all confirmed empirically):**
+- `degraded_json({"degraded": True, "x": 1})` → status 200, header `x-nexus-degraded: true`, body
+  unchanged; `False` → `false`; an **absent** key means not degraded (`false`); `status=` is passed
+  through (503).
+- `error_response("not_found", "no such thing")` → 400 and
+  `{"error": {"code", "message", "details": {}, "request_id": None}}`; `details`, `request_id` and
+  `status=` are carried verbatim (422); the code and message are the caller's, never rewritten.
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_response_helpers.py` → **7 passed**.
