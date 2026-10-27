@@ -55,6 +55,22 @@ jobs:
       - run: npm run lint --workspaces --if-present
       - run: npm run typecheck --workspaces --if-present
       - run: npm run test --workspaces --if-present
+      # D574 — the client plane's multi-child slots. React's missing-key warning fires on the CLIENT plane
+      # only, and only for an element that crossed the RSC boundary: a plain element created in the same
+      # pass is marked validated before the reconciler walks the array, and the server plane never warns at
+      # all. So the reader derives the client plane from the source and reports the slots that could warn.
+      # It needs the TypeScript compiler API, which is why it lives in the job that installs the workspace
+      # rather than in `contract-drift` (that job installs nothing, and a reader that cannot import its own
+      # parser would die with MODULE_NOT_FOUND — a crash, not a verdict).
+      - name: The client plane's multi-child slots cannot render an unkeyed list member
+        shell: bash
+        run: |
+          node scripts/check_slot_keys.mjs | tee slot-keys.txt
+          { echo "## Slot keys"; echo '```'; cat slot-keys.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: The slot-key census can still fail (its own arms)
+        shell: bash
+        run: |
+          node scripts/falsify_slot_keys.mjs | tee slot-keys-arms.txt
 
 # ------------------------------------------------------------------ services
   platform:

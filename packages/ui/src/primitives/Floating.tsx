@@ -184,7 +184,7 @@ export function ToastProvider({
 
   return (
     <ToastContext.Provider value={{ toast, dismiss }}>
-      {children}
+      <React.Fragment key="toast-children">{children}</React.Fragment>
       <div
         aria-live="polite"
         aria-label={strings.notifications}

@@ -207,7 +207,7 @@ export function EntityRail({
           </h2>
           {description ? <p className="text-sm text-ink-muted">{description}</p> : null}
         </div>
-        {action}
+        <React.Fragment key="rail-action">{action}</React.Fragment>
       </header>
       <div className="rail-scroll -mx-4 flex gap-4 overflow-x-auto px-4 pb-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         {cards.map((card, index) => (

@@ -75,7 +75,7 @@ export function ErrorState({
       {description ? <p className="text-sm leading-relaxed text-ink">{description}</p> : null}
       {hint ? <p className="text-xs leading-relaxed text-ink-muted">{hint}</p> : null}
       <span className="flex flex-wrap items-center gap-3">
-        {retryAction}
+        <React.Fragment key="error-retry">{retryAction}</React.Fragment>
         {requestId ? (
           <span className="font-mono text-2xs text-ink-faint">request_id: {requestId}</span>
         ) : null}

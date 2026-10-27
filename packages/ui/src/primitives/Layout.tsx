@@ -124,7 +124,7 @@ export function Section({
           {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
         </header>
       ) : null}
-      {children}
+      <React.Fragment key="section-content">{children}</React.Fragment>
     </section>
   );
 }

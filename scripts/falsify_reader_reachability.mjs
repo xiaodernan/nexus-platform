@@ -121,8 +121,14 @@ const ARMS = [
   {
     name: 'control — the three shipped surfaces, read through the checker\'s own seams',
     args: surfaceArgs(), expect: 0,
+    // D574 — the last expectation used to be a hand-typed PAIR of checker names ("the first two entries of
+    // the piped list"). That is a pin on another lane's file: adding a CI step before those two moved the
+    // list and reddened this arm, which says nothing about the census. What the arm actually claims is that
+    // the piped list is printed and that none of its steps is unprotected — and the second half is already
+    // pinned by `absent: [/OFFENDERS/]`, because an unprotected pipe IS an offender in this census. So the
+    // name list is replaced by the derived shape of the line, and the reader count above stays derived.
     must: [allOf, /gate pipefail\s+present/, /hard-fail claims\s+1 of \d+ piped step\(s\)/,
-      /0 UNPROTECTED|: check_contract_drift\.mjs, check_jsonb_reads\.mjs/],
+      /CI piped steps\s+\d+ step\(s\) pipe a checker into tee/],
     absent: [/OFFENDERS/],
   },
   {

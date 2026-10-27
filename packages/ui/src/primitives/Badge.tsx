@@ -58,7 +58,7 @@ export function Badge({
       {...rest}
     >
       {icon ? <Icon name={icon} size={size === 'sm' ? 11 : 13} /> : null}
-      {children}
+      <React.Fragment key="badge-content">{children}</React.Fragment>
     </span>
   );
 }

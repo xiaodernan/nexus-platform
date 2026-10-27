@@ -137,7 +137,7 @@ export function Tab({
       )}
       {...rest}
     >
-      {children}
+      <React.Fragment key="tab-content">{children}</React.Fragment>
       {selected ? (
         <span
           aria-hidden

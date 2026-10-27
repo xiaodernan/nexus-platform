@@ -460,7 +460,7 @@ trap - EXIT
 trap cleanup EXIT
 
 # --------------------------------------------------------------------------- 14. the console, and the readers nobody ran
-step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_reader_reachability.mjs + check_citation_supports_sentence.mjs — the console's two promises, and whether every reader in scripts/ is reachable from a gate that can fail"
+step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_slot_keys.mjs + check_reader_reachability.mjs + check_citation_supports_sentence.mjs — the console's two promises, the client plane's unkeyed list members, and whether every reader in scripts/ is reachable from a gate that can fail"
 # D195. Three things were true at once on the shipped bytes, and each one is the same shape this lane has now
 # closed four times (D98, D150-D152, D191, D192) — a rule that cannot fire on the plane the gate reads is not a
 # rule the gate has, and a reader nothing runs is not a gate either.
@@ -487,9 +487,22 @@ step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_rea
 # repository — so they run after step 13 rather than beside it, and the same pipe discipline applies to them.
 # `scripts/falsify_console_a11y.mjs` is run here for the reason every reader's arms are: the census is only
 # as good as the arms that show it reddening, and 13 of 13 held before this step existed.
+#
+# D574. `scripts/check_slot_keys.mjs` reads the same render tree from the other end. React's missing-key
+# warning fires on the CLIENT plane only, and only for an element that crossed the RSC boundary: a plain
+# element created in the same pass is marked validated before the reconciler walks the array, and the server
+# plane never warns at all. The reader derives the client plane from the source — the modules carrying
+# 'use client' plus their transitive import closure, `export * from` re-exports included — and reports every
+# multi-child slot that renders a ReactNode-typed prop bare. Measured on the running dev server before the
+# reader existed: the home page's rail action, passed from a server component into the client `CardRail`,
+# drew exactly one such error, naming `EntityRail` and `HomePage`; with the value in a keyed fragment the
+# console carries none. Its 15 arms run here for the same reason as the console census's 13: a census is
+# only as good as the arms that show it reddening.
 ( cd "$ROOT" && node scripts/check_console_i18n.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/check_console_a11y.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/falsify_console_a11y.mjs ) 2>&1 | sed -e 's/^/    /'
+( cd "$ROOT" && node scripts/check_slot_keys.mjs ) 2>&1 | sed -e 's/^/    /'
+( cd "$ROOT" && node scripts/falsify_slot_keys.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/falsify_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/check_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
 # The sentence-support census is a reporting invocation BY DESIGN: it exits 0 whatever it finds, because

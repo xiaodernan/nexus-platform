@@ -37,7 +37,7 @@ function FieldShell({
     <div className={cx('flex flex-col gap-1.5', containerClassName)}>
       {label ? (
         <label htmlFor={id} className="text-xs font-medium tracking-wide text-ink-muted">
-          {label}
+          <React.Fragment key="field-label">{label}</React.Fragment>
           {required ? (
             <span className="ml-1 text-danger" aria-hidden>
               *
@@ -45,11 +45,11 @@ function FieldShell({
           ) : null}
         </label>
       ) : null}
-      {children}
+      <React.Fragment key="field-control">{children}</React.Fragment>
       {error ? (
         <p id={`${id}-error`} className="flex items-center gap-1.5 text-xs text-danger">
           <Icon name="warning" size={14} />
-          {error}
+          <React.Fragment key="field-error">{error}</React.Fragment>
         </p>
       ) : hint ? (
         <p id={`${id}-hint`} className="text-xs text-ink-faint">

@@ -129,7 +129,7 @@ export function Select({
     <div ref={rootRef} className={cx('relative flex flex-col gap-1.5', containerClassName)}>
       {label ? (
         <span id={`${id}-label`} className="text-xs font-medium tracking-wide text-ink-muted">
-          {label}
+          <React.Fragment key="select-label">{label}</React.Fragment>
           {required ? <span className="ml-1 text-danger">*</span> : null}
         </span>
       ) : null}

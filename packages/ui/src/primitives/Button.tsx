@@ -61,9 +61,9 @@ export function Button({
         <Icon name="spinner" spin size={size === 'lg' ? 18 : 16} className="absolute left-1/2 -translate-x-1/2 opacity-90" />
       ) : null}
       <span className={cx('inline-flex items-center gap-2', loading && 'opacity-0')}>
-        {leadingIcon}
-        {children}
-        {trailingIcon}
+        <React.Fragment key="button-leading">{leadingIcon}</React.Fragment>
+        <React.Fragment key="button-content">{children}</React.Fragment>
+        <React.Fragment key="button-trailing">{trailingIcon}</React.Fragment>
       </span>
     </button>
   );

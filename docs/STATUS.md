@@ -10611,18 +10611,18 @@ so the three readers walked a lane's working directory as part of the repository
 exactly one shipped file read AMBIGUOUS, gate step 9's falsifier refused with exit 2, and because
 `db_gate_fresh.sh` runs under `set -euo pipefail` that refusal stops whichever session runs the gate next.
 The list is now the union of the two drifted lists (22 names, `VENDOR_DIRS` in `scripts/source_index.mjs`), `.scratch` among
-them. D196's residue · "nothing charges the write" · is answered by `scripts/falsify_ledger_text.mjs:789`,
+them. D196's residue · "nothing charges the write" · is answered by `scripts/falsify_ledger_text.mjs:794`,
 which keeps out of the exclusion any file that turns out to be tracked, so the name cannot become a hiding
 place for a first-party claim.
 
-The bigger one was found by arming the smaller. `isCitation` (`scripts/check_ledger_citations.mjs:423`) asked
+The bigger one was found by arming the smaller. `isCitation` (`scripts/check_ledger_citations.mjs:425`) asked
 its bare-dotfile rule about names that also carry a slash, and that rule consults `BY_BASENAME`, which is
 keyed on basenames and never on paths. It cannot hold one, so every citation whose path begins with a dot
 directory was dropped before reaching `resolve()` · not judged, not reported, invisible in the counts because
 a dropped token is still a token. Ten such tokens sit in the two ledgers at this commit: four to
 `.github/workflows/ci.yml` and six to `./.gitignore`, the root-relative form the resolver has a branch for and
 the CI form the arms cite. None had been judged by any run since D88 wrote the classifier. The path clause is
-now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:428`), so `./.gitignore:21`
+now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:430`), so `./.gitignore:21`
 is a citation and `some/dir/notes` stays prose.
 
 Both halves were measured rather than argued. The ten-token count came out of this file's own tokenizer and
@@ -10671,7 +10671,7 @@ printed`: both of them findings about a reader no arm had reached. Six runs of t
 gone four green and two red, each red a different arm, while the same invocation standalone returned its expected
 verdict. Both halves of that sentence are armed now. A child gets three attempts (scripts/falsify_ledger_text.mjs:237), an exit code
 is believed only when stdout carried something, and the reporting loop refuses the whole run with exit 2 and
-`unread N of M arms` (scripts/falsify_ledger_text.mjs:972) rather than scoring an observation nobody made. The refusal is scoped by a
+`unread N of M arms` (scripts/falsify_ledger_text.mjs:977) rather than scoring an observation nobody made. The refusal is scoped by a
 `reading` tag (scripts/falsify_ledger_text.mjs:523) so the three stub arms that are deliberately aimed at silent children cannot trip it.
 The contract in the header says all three exit-2 causes out loud, because a harness whose exit codes are not in
 its own documentation is one more thing to rediscover (scripts/falsify_ledger_text.mjs:87).
@@ -10710,7 +10710,7 @@ here.
 One blast radius, measured rather than assumed. This unit inserts 160 lines and deletes 9 in
 `scripts/falsify_ledger_text.mjs`, and exactly one citation already in the ledgers pointed into that file:
 `docs/STATUS.md:10613`. It named line 634, which at HEAD is the arm whose predicate charges the exclusion
-against the tracked set, and the insertion moved that arm's name line to scripts/falsify_ledger_text.mjs:842; the ledger line was
+against the tracked set, and the insertion moved that arm's name line to scripts/falsify_ledger_text.mjs:847; the ledger line was
 repointed at landing. Step 8 was green over the stale number before and after · the census asks that a cited line
 exist, never that it holds what the sentence claims, which is the standing residue D194 and §202 both name.
 
@@ -25003,3 +25003,148 @@ and that string is what the page renders as its description.
   `npx tsc --noEmit` over `apps/web` is clean and the whole web suite is 160 cases in 12 files, green ·
   gate step 10 reads this section as one more heading with missing 0 and duplicate 0, and step 8 reads
   its eleven citations against the working tree with 0 strict offenders
+
+## 570. D574 · the client plane's multi-child slots could render an unkeyed list member — React's missing-key warning fired on the home page and no reader could see it (`scripts/check_slot_keys.mjs`, `scripts/falsify_slot_keys.mjs`, `packages/ui/src/primitives/Badge.tsx`, `packages/ui/src/primitives/Button.tsx`, `packages/ui/src/primitives/Input.tsx`, `packages/ui/src/primitives/Layout.tsx`, `packages/ui/src/primitives/Select.tsx`, `packages/ui/src/primitives/Tabs.tsx`, `packages/ui/src/primitives/Floating.tsx`, `packages/ui/src/feedback/States.tsx`, `packages/ui/src/trust/EntityCard.tsx`)
+
+**What was found, and how.** The live home page rendered and the browser console still carried a React
+error: `Each child in a list should have a unique "key" prop` — naming `EntityRail` as the slot's owner
+and `HomePage` as the component the child was passed from. The page itself looked right: hero, search,
+four rails, 24 cards, the footer. Nothing in this repository could see the defect. Every reader that
+reads the web tree reads TEXT — the accessibility reader reads the render tree, the i18n reader reads
+the copy — and none of them asks whether a slot React walks as a LIST carries the keys React asks for.
+The console warning is the only place the answer exists, and nothing was reading it.
+
+**The mechanism, read from the runtime rather than inferred.** React's `validateChildKeys` marks a
+PLAIN element `validated = 1` the moment the element enters a children array, so an element created in
+the same pass never draws the warning. An element that crosses the RSC boundary arrives as a
+`React.lazy`, and the runtime Next vendors has NO lazy branch in `validateChildKeys`: the lazy is
+never marked, and when the reconciler resolves it the element behind it is still unvalidated, so React
+asks the slot's owner for a key. The SERVER plane never warns, and that is not luck: there the element
+is a plain element created in the same pass, and the array-creation loop marks it validated before the
+server renderer walks the array. The defect therefore belongs to the client plane and to no other.
+
+**The rule, in the shape the compiler emits it.** SWC sets `isStaticChildren = true` exactly when a
+slot's children compile to an ARRAY, which is exactly when the slot has two or more real children: JSX
+text is trimmed the way the JSX transform trims it, so whitespace on its own line is not a child. Every
+member of such an array is a list member and React asks each one for a key. A slot with ONE child
+compiles to `false` and asks nothing.
+
+**The fix.** Thirteen sites in nine files: the bare node-typed prop is wrapped in a keyed fragment. A
+keyed fragment turns "element in an array" into "single child of a fragment", and a single child is not
+an array, so React asks for no key at all. The thirteen are:
+
+- `packages/ui/src/primitives/Badge.tsx:61` — `Badge`'s `children` in a two-child `<span>`.
+- `packages/ui/src/primitives/Button.tsx:64` — `Button`'s `leadingIcon` in a three-child `<span>`.
+- `packages/ui/src/primitives/Button.tsx:65` — `Button`'s `children`, the same span.
+- `packages/ui/src/primitives/Button.tsx:66` — `Button`'s `trailingIcon`, the same span.
+- `packages/ui/src/primitives/Floating.tsx:187` — `ToastProvider`'s `children` in a two-child
+  `<ToastContext.Provider>`.
+- `packages/ui/src/primitives/Input.tsx:40` — `FieldShell`'s `label` in a two-child `<label>`.
+- `packages/ui/src/primitives/Input.tsx:48` — `FieldShell`'s `children` in a three-child `<div>`.
+- `packages/ui/src/primitives/Input.tsx:52` — `FieldShell`'s `error` in a two-child `<p>`.
+- `packages/ui/src/primitives/Layout.tsx:127` — `Section`'s `children` in a two-child `<section>`.
+- `packages/ui/src/primitives/Select.tsx:132` — `Select`'s `label` in a two-child `<span>`.
+- `packages/ui/src/primitives/Tabs.tsx:140` — `Tab`'s `children` in a two-child `<button>`.
+- `packages/ui/src/feedback/States.tsx:78` — `ErrorState`'s `retryAction` in a two-child `<span>`.
+- `packages/ui/src/trust/EntityCard.tsx:210` — `EntityRail`'s `action` in a two-child `<header>`, the one
+  the console named.
+
+**The reader.** `scripts/check_slot_keys.mjs` reads the same render tree from the other end — the
+question React asks, asked of the source:
+
+- the population is three source roots (`scripts/check_slot_keys.mjs:79`), and it REFUSES with exit 2
+  when a root is absent or the population is empty: a tree this reader cannot see is not a tree whose
+  slots are safe.
+- the client plane is the modules whose FIRST statement is the `'use client'` directive
+  (`scripts/check_slot_keys.mjs:118`) plus their transitive import closure — and the closure follows
+  RE-EXPORTS as well as imports (`scripts/check_slot_keys.mjs:152`), because `packages/ui/src/index.ts:26`
+  is a barrel: `export * from './primitives/Layout'` pulls that module into the client bundle through the
+  re-export, not through an import statement. The reader's own header records the measurement that
+  forced the change — the first version of the closure put 53 modules in the plane and `Layout.tsx` was
+  not among them.
+- the slot is a JSX element or fragment whose REAL children number two or more.
+- the prop is read from the component's own declared props type: an inline type literal, a named
+  interface or type alias in the same file (following `extends`), or the type argument of `React.FC<…>`;
+  the node-typed test is `ReactNode`, `ReactElement` or `ReactChildren`
+  (`scripts/check_slot_keys.mjs:192`).
+- the `children` fallback: React's JSX contract makes every component's children a ReactNode, so a slot
+  that renders `children` bare is read as node-typed even when that member's type lives in the
+  platform's own `React.*Attributes` declarations, which this reader does not resolve
+  (`scripts/check_slot_keys.mjs:384`).
+- the verdict names every offender and exits 1 (`scripts/check_slot_keys.mjs:422`), or prints PASS and
+  exits 0 (`scripts/check_slot_keys.mjs:425`).
+
+**What it does not do, stated rather than implied.**
+
+- It does not decide whether a slot's prop is actually handed a server-created element. It asks the
+  question React asks — can this shape warn? A prop that only ever receives a client-local element is
+  reported anyway. That direction over-reports, which is the direction this project accepts.
+- It reads the BARE-IDENTIFIER form only. A conditional (`{action ? <X/> : null}`), a logical
+  (`{action && <X/>}`) or an array literal compiles to an element the SLOT creates itself, and the
+  reader says so rather than guessing.
+- It does not check the DUPLICATE-key warning. React raises that one on the client only and no source
+  scan can decide it — two cards may legitimately carry the same id. That is D575, named below and not
+  answered here.
+- It does not run a browser. It reads the source and reasons about the shape the compiler emits; the
+  live measurement that anchors it is the console A/B below.
+
+**Evidence.** The census on the HEAD bytes: 13 node-typed props in multi-child slots, 13 offenders, exit
+1, one line per site. On this working tree: 0, exit 0. The population is identical on both planes — 125
+JSX/TS files under the three roots, 56 client-plane modules of which 26 carry the directive, 69 files
+that render on the server, 242 multi-child slots — so the difference between the two readings is the
+thirteen wrappers and nothing else.
+
+`scripts/falsify_slot_keys.mjs` is 15 arms, 15 held, 0 missed. The census reddens on a bare node-typed
+prop; it keeps quiet when the same prop's declared type is changed to a non-node type; it keeps quiet
+on the SERVER plane; it keeps quiet on a conditional; it follows the barrel's `export * from` and goes
+quiet again when that re-export is deleted; it refuses with exit 2 on a missing source root, on an
+unknown flag and on `--plane` given twice; and the last three arms aim it at a planted tree in both
+spellings — `--plane <dir>` and `--plane=<dir>` — while the `--report` arm prints the offender and still
+exits 0.
+
+The reachability census reads 16 of 16 first-party readers invoked by a surface, 0 unreached, and all
+12 CI steps that pipe a checker into `tee` declare `shell: bash` — this reader and its own arms are two
+of those twelve. The CI wiring is in the `lint-type` job and not in `contract-drift`, because that job
+installs NOTHING: a reader that cannot import its own parser dies with MODULE_NOT_FOUND, which is a
+crash and not a verdict.
+
+`npm run typecheck --workspaces --if-present` exits 0 across all four workspaces, and the workspace
+suites are 234 tests green — the web's 160 in 12 files, the SDK's 43 and the types package's 31. The
+live A/B is the console itself: before the wrappers the browser console on `http://127.0.0.1:3002/` carried exactly one
+React missing-key error naming `EntityRail` and `HomePage`; after them a cache-bypassing reload of the
+same page carries no console message at all — no error, no warning — while the page renders in full:
+hero, search, four rails with 24 cards, the "一次搜索做了什么" section and the footer.
+
+**The ledger's own readers.** Gate step 16 was RED when this unit started: five MOVED citations, all of
+them rows D572's own commit had made stale by editing `scripts/check_ledger_citations.mjs` and
+`scripts/falsify_ledger_text.mjs` — two and five lines of drift. They are re-aimed here from the
+reader's own `--reaim` output, each target line read by hand before it was accepted, and step 16 now
+reads MOVED 0 and NOT-UNIQUE 0 on 204 judged citations, of which 192 still name the line they were
+written against. Gate step 8 is strict on the working copy, so before this unit's reader is in a commit
+it files seven UNTRACKED TARGET rows — every one of them naming `scripts/check_slot_keys.mjs`, because a
+clean checkout of HEAD cannot open a file HEAD does not hold; the commit that adds the file is what
+clears them. Step 10 reads the new section as one more heading with missing 0 and duplicate 0, step 12
+resolves every spelled `STATUS §NN`, and the line-ending census reads `docs/STATUS.md` with CRLF 0 and
+mixed 0.
+
+**Left open, named here rather than left to be discovered again.** D575: the guide detail route renders
+nine resolved merchant cards from a guide that cites ten merchants over nine shops —
+`bramble-spoon-0001` appears at position 1 and position 9 of the resolved array, and the web keys the
+cards by `card.id`. That is the DUPLICATE-key warning, a different warning from this one, raised on the
+client only, which no source scan can decide; §569 named it and this unit does not close it. Separately,
+the seeded guide's description still carries a broken template placeholder —
+`"由{d2}分鐘步程內嘅安靜餐廳…"` — where a distance number belongs.
+
+- readers: the census red on the HEAD bytes (13 offenders, exit 1) and green on this tree (0, exit 0),
+  with the same population on both planes · the arm battery 15 of 15 held, 0 missed · the reachability
+  census 16 of 16 first-party readers invoked, 0 unreached, and 12 CI steps pipe a checker into `tee`
+  under `shell: bash` · `npm run typecheck --workspaces --if-present` exits 0 across all four
+  workspaces and `npm run test --workspaces --if-present` is 234 tests green — web 160 in 12 files,
+  sdk 43, types 31 · the live browser console on the home page carries no message at all after a
+  cache-bypassing reload, against one React missing-key error before the wrappers · the ledger's own
+  readers, on this tree: gate step 16 PASS — MOVED 0, NOT-UNIQUE 0 over 204 judged citations, of which
+  192 still name the line they were written against, after this unit re-aimed the five rows D572's
+  commit had made stale · step 10 reads this section as one more heading with missing 0 and duplicate 0
+  · step 12 resolves every spelled `STATUS §NN` · the line-ending census reads `docs/STATUS.md` with
+  CRLF 0 and mixed 0 · no fresh 18-step gate was filed in this unit, so the database-backed steps were
+  not re-run here; the figures above come from the readers this change can reach
