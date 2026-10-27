@@ -25117,15 +25117,28 @@ hero, search, four rails with 24 cards, the "一次搜索做了什么" section a
 
 **The ledger's own readers.** Gate step 16 was RED when this unit started: five MOVED citations, all of
 them rows D572's own commit had made stale by editing `scripts/check_ledger_citations.mjs` and
-`scripts/falsify_ledger_text.mjs` — two and five lines of drift. They are re-aimed here from the
-reader's own `--reaim` output, each target line read by hand before it was accepted, and step 16 now
-reads MOVED 0 and NOT-UNIQUE 0 on 204 judged citations, of which 192 still name the line they were
-written against. Gate step 8 is strict on the working copy, so before this unit's reader is in a commit
-it files seven UNTRACKED TARGET rows — every one of them naming `scripts/check_slot_keys.mjs`, because a
-clean checkout of HEAD cannot open a file HEAD does not hold; the commit that adds the file is what
-clears them. Step 10 reads the new section as one more heading with missing 0 and duplicate 0, step 12
-resolves every spelled `STATUS §NN`, and the line-ending census reads `docs/STATUS.md` with CRLF 0 and
-mixed 0.
+`scripts/falsify_ledger_text.mjs` — two and five lines of drift. They were re-aimed from the reader's own
+`--reaim` output, each target line read by hand before it was accepted. Then this unit's own commit did the
+same thing one layer up: it added 16 lines to `.github/workflows/ci.yml`, 13 to `scripts/db_gate_fresh.sh`
+and 6 to `scripts/falsify_reader_reachability.mjs`, and those three files are cited by ten committed
+citations in nine rows — eight rows in this ledger and one row in `docs/DECISIONS.md` carrying two. The
+reader filed all ten MOVED against the commit that carried them, which is the reader's own rule rather than
+a new one: a citation is EXACT while the line it names still holds the text it held when its row was
+written, so a commit that shifts a cited file invalidates the rows that cite it even when the ledger itself
+did not move. The ten are re-aimed from the same `--reaim` output, the three range ends moving with their
+starts, and every target was read by hand first: `.github/workflows/ci.yml:280` is the `--report` run,
+`.github/workflows/ci.yml:277-298` is the three steps that pipe a checker into `tee`,
+`.github/workflows/ci.yml:262` is the note that says why they declare `shell: bash`,
+`.github/workflows/ci.yml:229-233` is the block that boots Spring on 8080, uvicorn on 8000 and Next on
+3000 and waits on all three, `scripts/falsify_reader_reachability.mjs:169-175` is the arm that used to
+resolve last-wins, and `scripts/db_gate_fresh.sh:545` and `scripts/db_gate_fresh.sh:533` are step 16's
+strict run and step 15's plain run. On the committed tree step 16 reads MOVED 0 and NOT-UNIQUE 0 over 225
+judged citations, of which 218 still name the line they were written against. Gate step 8's seven
+UNTRACKED TARGET rows — every one of them naming `scripts/check_slot_keys.mjs`, because a clean checkout of
+HEAD cannot open a file HEAD does not hold — cleared with the commit that adds the file, and the reader
+now files 0 strict offenders. Step 10 reads the new section as one more heading with missing 0 and
+duplicate 0, step 12 resolves every spelled `STATUS §NN`, and the line-ending census reads
+`docs/STATUS.md` with CRLF 0 and mixed 0.
 
 **Left open, named here rather than left to be discovered again.** D575: the guide detail route renders
 nine resolved merchant cards from a guide that cites ten merchants over nine shops —
@@ -25142,9 +25155,11 @@ the seeded guide's description still carries a broken template placeholder —
   workspaces and `npm run test --workspaces --if-present` is 234 tests green — web 160 in 12 files,
   sdk 43, types 31 · the live browser console on the home page carries no message at all after a
   cache-bypassing reload, against one React missing-key error before the wrappers · the ledger's own
-  readers, on this tree: gate step 16 PASS — MOVED 0, NOT-UNIQUE 0 over 204 judged citations, of which
-  192 still name the line they were written against, after this unit re-aimed the five rows D572's
-  commit had made stale · step 10 reads this section as one more heading with missing 0 and duplicate 0
-  · step 12 resolves every spelled `STATUS §NN` · the line-ending census reads `docs/STATUS.md` with
-  CRLF 0 and mixed 0 · no fresh 18-step gate was filed in this unit, so the database-backed steps were
-  not re-run here; the figures above come from the readers this change can reach
+  readers, on the committed tree: gate step 16 PASS — MOVED 0, NOT-UNIQUE 0 over 225 judged citations, of
+  which 218 still name the line they were written against, after this unit re-aimed the five rows D572's
+  commit had made stale and the ten its own commit made stale in turn · gate step 8 files 0 strict
+  offenders, the seven UNTRACKED TARGET rows having cleared with the commit that adds the reader ·
+  step 10 reads this section as one more heading with missing 0 and duplicate 0 · step 12 resolves every
+  spelled `STATUS §NN` · the line-ending census reads `docs/STATUS.md` with CRLF 0 and mixed 0 · no fresh
+  18-step gate was filed in this unit, so the database-backed steps were not re-run here; the figures
+  above come from the readers this change can reach
