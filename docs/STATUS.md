@@ -24517,3 +24517,24 @@ their call sites are covered through TestClient, the helpers themselves were not
 **Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
 
 **Verified, not claimed.** `pytest tests/test_response_helpers.py` → **7 passed**.
+
+## 559. D563 · the distance expression was unpinned - the float8 casts and the clamp that keeps `acos` in its domain (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/tests/test_haversine_expr.py`)
+
+**Module / contract.** `haversine_expr` returns a SQL string the query builder splices in, so its
+shape IS the contract: every parameter and column is cast to `float8` (asyncpg will not infer a
+numeric type for `radians`), the cosine is clamped to `[-1, 1]` **before** `acos` (rounding can push
+it just outside the domain and turn a whole page into an error), and the result is cast back to
+`float8`.
+
+**Pinned behavior (8 cases, all confirmed empirically):**
+- `EARTH_RADIUS_M == 6371008.8`.
+- Every placeholder/column is `::float8` (`radians($1::float8)`, `radians(m.lat::float8)`, …), and
+  other column names are threaded through (`o.lat`/`o.lng` replace `m.` entirely).
+- The clamp `greatest(-1.0, least(1.0, …))` is present; the expression starts
+  `(6371008.8 * acos(` and ends `::float8`.
+- Each placeholder appears the expected number of times (`$1` twice for cos/sin, `$2` once), and
+  both the cosine and sine terms are present.
+
+**Discipline note.** No test-premise corrections; behavior matched the probe. Code unchanged.
+
+**Verified, not claimed.** `pytest tests/test_haversine_expr.py` → **8 passed**.
