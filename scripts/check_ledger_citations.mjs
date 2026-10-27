@@ -76,7 +76,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join, isAbsolute } from 'node:path';
-import { LEDGER_EXT, VENDOR_DIRS, walkFiles } from './source_index.mjs';
+import { LEDGER_EXT, LEDGER_FILE, VENDOR_DIRS, walkFiles } from './source_index.mjs';
 import { parseFlags } from './cli_args.mjs';
 
 const ROOT = process.cwd();
@@ -216,8 +216,10 @@ if (UNTRACKED_BACKLOG && ARGS.text === null) {
  */
 // The predicate lives in `source_index.mjs` beside the exclusion list and `SOURCE_EXT`, because D166 found a
 // second reader of the same claim carrying its own copy — which is how one sentence came to be quoted with
-// three different counts.
-const FILES = walkFiles(ROOT, (name) => LEDGER_EXT.test(name) || name.startsWith('.'));
+// three different counts. D574 added the repository's extensionless root files to it: `Makefile` has no
+// extension for `LEDGER_EXT` to match, so a paragraph citing the build's own entry point was filed FILE NOT
+// FOUND against a file the repository really owns.
+const FILES = walkFiles(ROOT, LEDGER_FILE);
 
 /**
  * D203 — HEAD's tree, as the authoritative answer to "will this cite resolve anywhere else?".

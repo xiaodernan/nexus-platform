@@ -32,7 +32,7 @@ import { guard } from './spawn_guard.mjs';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { LEDGER_EXT, walkFiles } from './source_index.mjs';
+import { LEDGER_FILE, walkFiles } from './source_index.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WORKTREE = process.argv.slice(2).includes('--worktree');
@@ -93,7 +93,7 @@ function gitShow(name) {
 }
 
 // The same index the reader builds, from the same module, so the file set cannot drift from it.
-const FILES = walkFiles(ROOT, (name) => LEDGER_EXT.test(name) || name.startsWith('.'));
+const FILES = walkFiles(ROOT, LEDGER_FILE);
 const BY_NAME = new Map();
 for (const rel of FILES) BY_NAME.set(rel, BY_NAME.get(rel) ?? []);
 const resolveCite = (name) => (name.includes('/')

@@ -30,7 +30,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { guard } from './spawn_guard.mjs';
-import { LEDGER_EXT, walkFiles } from './source_index.mjs';
+import { LEDGER_FILE, walkFiles } from './source_index.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WORKTREE = process.argv.slice(2).includes('--worktree');
@@ -45,7 +45,7 @@ const grammarLine = checker.split('\n').filter((l) => l.includes('matchAll(') &&
 if (grammarLine.length !== 1) throw new Error(`step 8's grammar moved or multiplied: ${grammarLine.length} lines`);
 const GRAMMAR = new RegExp(grammarLine[0].match(/matchAll\((\/.*\/g)\)/)[1].slice(1, -2), 'g');
 
-const FILES = walkFiles(ROOT, (name) => LEDGER_EXT.test(name) || name.startsWith('.'));
+const FILES = walkFiles(ROOT, LEDGER_FILE);
 const CACHE = new Map();
 /**
  * `git show` for the committed plane, refusing by name when the machine cannot spawn git at all.

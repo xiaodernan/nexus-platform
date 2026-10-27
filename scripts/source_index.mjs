@@ -92,6 +92,37 @@ export const SOURCE_EXT = /\.(java|py|ts|tsx|mjs|cjs|sql|sh)$/;
 export const LEDGER_EXT = /\.(java|py|ts|tsx|mjs|cjs|sql|sh|md|ya?ml|json|toml|txt|properties|cfg|ini)$/;
 
 /**
+ * The repository's extensionless root files — the build's own entry points.
+ *
+ * `LEDGER_EXT` names a file by its extension, so it structurally cannot name a file that has none, and the
+ * repository has one that the ledgers point at: the root `Makefile`. D571 cited it — "the Makefile's own dev
+ * plane is `WEB_PORT ?= 3002`, `PLATFORM_PORT ?= 8090`, `AI_PORT ?= 8010` (`Makefile:20-22`)" — and gate
+ * step 8 filed that citation as **FILE NOT FOUND**: the file is real, tracked, and holds exactly those three
+ * knobs on exactly those lines, but no indexed file had that name or path.
+ *
+ * The class is the reader's own grammar, not the writer's: `isCitation()` admits any capitalised
+ * extensionless word as a class stem (`EventsController:63`), so `Makefile:20-22` was a citation the reader
+ * had promised to judge and then could not open. Two ways out existed. Spelling the cite `./Makefile:20-22`
+ * would have taken the path branch, whose last segment is not a held file, so the citation would have been
+ * silently dropped from the census — a green that says nothing (D193's chain). Teaching the index the file
+ * keeps it judged.
+ *
+ * A hand list, and it can go stale: a root file added later and cited by a paragraph would be filed FILE NOT
+ * FOUND again. That is the good direction — a stale entry is a red, not a silence, and the reader that raises
+ * it names the file it could not open. It is ONE list beside `LEDGER_EXT`, not a copy inside a reader (D166).
+ */
+export const EXTENSIONLESS = new Set(['Makefile']);
+
+/**
+ * The one predicate for "a file a ledger may cite": extensioned by `LEDGER_EXT`, one of the repository's
+ * extensionless root files, or a dot file the repository owns. Three readers walk the ledger population with
+ * it — `check_ledger_citations.mjs`, `citation_blank_census.mjs` and `citation_blank_sites.mjs` — and D166's
+ * lesson is that they must not keep private copies of it: two copies resolved two file sets and the project
+ * quoted three different blank-citation counts for one sentence.
+ */
+export const LEDGER_FILE = (name) => LEDGER_EXT.test(name) || EXTENSIONLESS.has(name) || name.startsWith('.');
+
+/**
  * Every file under `root` that `accept` names, as forward-slash paths relative to it, skipping VENDOR_DIRS.
  * A directory it cannot read is skipped rather than thrown on: the walk runs over a working tree another
  * lane may be mid-write in.

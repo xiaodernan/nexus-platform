@@ -79,7 +79,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFlags } from './cli_args.mjs';
-import { LEDGER_EXT, VENDOR_DIRS, walkFiles } from './source_index.mjs';
+import { LEDGER_FILE, VENDOR_DIRS, walkFiles } from './source_index.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const FIX = join(tmpdir(), 'nexus-d157-falsify');
@@ -758,7 +758,12 @@ const runHelpers = (knobText, wtText) => {
   });
 }
 {
-  const accept = (name) => LEDGER_EXT.test(name) || name.startsWith('.');
+  // The shared predicate, not a copy of it. This harness's claim is about "the shipped index" — the reader's
+  // own file set — and D166 found two readers of one claim resolving two file sets because one of them kept a
+  // private copy. D572 is the second time that copy would have mattered: the reader's index gained the
+  // repository's extensionless build entry point, and a private copy here would count one file short of the
+  // reader — a population this harness prints as if it were a measurement of the reader.
+  const accept = LEDGER_FILE;
   // A mirror of `walkFiles`, differing in exactly one decision: whether `keep` is skipped. Its own arm below
   // demands that the mirror reproduce the shipped walk when nothing is kept, so the radius printed after it is
   // a measurement of the shipped list rather than of a traversal this file invented.

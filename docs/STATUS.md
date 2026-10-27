@@ -497,7 +497,7 @@ Three changes, each covering a distinct way to be wrong:
    base paths accepted as strict prefixes and *extensions* (`/x/{id}/reindex`) still reported.
 
 Current ledger: **101 routes parsed · 64 served · 29 client-only · 0 missing · 0 undocumented**, over a 270-file
-corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:258` runs it with `--report`, so
+corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:264` runs it with `--report`, so
 CI stays advisory while the 29 rows are worked off; the split is by owner, not by excuse.
 
 Two of those 30 were true gaps that the old matcher hid, and both became visible rather than passed (that count is
@@ -10459,10 +10459,10 @@ reports its LAST command unless the shell holds it. `scripts/db_gate_fresh.sh:51
 own pipes together, and D150/D151’s proof that step 11 can stop the run is a proof about that one line; GitHub
 Actions does not hold them, and its documented default for a `run:` step on Linux is `bash -e {0}`
 (workflow-syntax reference, the shell table: unspecified -> `bash -e {0}`; `shell: bash` -> `bash --noprofile
---norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:255-276)
+--norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:261-282)
 so that the report is an artifact, and none of them declared a shell, so none of them could fail. Measured in a
 shell rather than argued: `false | tee /dev/null` exits 0 under `bash -e` and 1 under `bash -eo pipefail`. All three
-declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:240), and the census prints
+declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:246), and the census prints
 `7 step(s) pipe a checker into tee` with 0 UNPROTECTED.
 (C) TWO COUNTS IN THIS UNIT’S OWN PROSE WERE WRONG, AND RUNNING A FILE CORRECTED BOTH. The note written above the
 piped steps said three steps "carried Hard-fail in their own comments". One of the three does; one of the other two
@@ -24816,3 +24816,92 @@ clean on 181 judged citations of which 174 still name the line they were written
 line-ending census PASS with mixed 0, this section uniform LF like the section it follows · no fresh
 18-step gate was filed in this unit, so the database-backed steps were not re-run here; the figures
 above come from the readers this change can reach
+
+## 568. D572 · the citation reader could not hold the repository's own extensionless build entry point — D571's `Makefile:20-22` was filed FILE NOT FOUND by the index, not by the ledger (`scripts/source_index.mjs`, `scripts/check_ledger_citations.mjs`, `scripts/citation_blank_census.mjs`, `scripts/citation_blank_sites.mjs`, `scripts/falsify_ledger_text.mjs`)
+
+**What was found.** D571 (§567) landed a row that cites the build's own entry point — "the Makefile's own dev
+plane is `WEB_PORT ?= 3002`, `PLATFORM_PORT ?= 8090`, `AI_PORT ?= 8010` (`Makefile:20-22`)" — and the commit
+that carried it left two gates red on the tree it landed:
+
+- gate step 8 (`check_ledger_citations.mjs`) filed **FILE NOT FOUND** for `Makefile:20-22` — "no indexed file
+  has that name or path";
+- gate step 16 (`check_line_cite_drift.mjs --strict MOVED,NOT-UNIQUE`) filed **MOVED** for three
+  `.github/workflows/ci.yml` cites that D571's own commit had pushed down six lines.
+
+The two have different causes, and the first one is not the ledger's.
+
+**The first red was the reader's, read from the producer rather than inferred.** The file is real, tracked
+(`git ls-files Makefile` names it) and holds exactly those three knobs on exactly those lines: `Makefile:20-22`
+reads `WEB_PORT ?= 3002`, `AI_PORT ?= 8010`, `PLATFORM_PORT ?= 8090`. The reader's index could not name it.
+`LEDGER_EXT` names a file by its extension and `Makefile` has none — while the reader's own grammar admits the
+citation anyway, because `isCitation()` takes a capitalised extensionless word for a class stem (the same
+grammar that reads `EventsController:63`). So the citation was one the reader had promised to judge and then
+could not open. The class that fired was the honest one; the finding was about the index.
+
+**Two ways out, and why neither was taken.** Spelling the cite `./Makefile:20-22` takes the path branch, whose
+last segment is not a held file, so the citation would have been dropped from the census rather than judged —
+a green that says nothing, which is the D193 chain. Putting a second private copy of the walk predicate inside
+one reader repeats D166's failure: two readers of one claim resolving two file sets, which is how one sentence
+came to be quoted with three different counts.
+
+**The fix — one list, one predicate, four readers.** `scripts/source_index.mjs` now holds the repository's
+extensionless root files (`EXTENSIONLESS`, `scripts/source_index.mjs:114`) and the one predicate that says what
+a ledger may cite (`LEDGER_FILE`, `scripts/source_index.mjs:123`): extensioned by `LEDGER_EXT`, one of those
+extensionless names, or a dot file the repository owns. The three readers that walk the ledger population point
+at it (`scripts/check_ledger_citations.mjs:222`, `scripts/citation_blank_census.mjs:96`,
+`scripts/citation_blank_sites.mjs:48`), and so does the falsifier that witnesses the reader's own index
+(`scripts/falsify_ledger_text.mjs:766`), which had kept a private copy of the same predicate and would have
+counted one file short of the reader's — the root `Makefile` its extension test cannot name.
+
+**The second red was D571's own commit, and the ledger is where it is corrected.** D571 added six lines to
+`.github/workflows/ci.yml` above three committed citations, so its own commit moved the file under three rows
+written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:264` (the
+`--report` run), `.github/workflows/ci.yml:261-282` (the three steps that pipe a reader into `tee`),
+`.github/workflows/ci.yml:246` (the note that says why they declare `shell: bash`). Each was read at the commit
+that wrote the row (`3d4820e`: 240, 255, 258) and at HEAD (246, 261, 264) before the re-aim, the range's end
+included (276 at `3d4820e` is 282 at HEAD).
+
+**What it does not do.** It does not widen what a paragraph may say; it widens what the reader can open to
+check it. `EXTENSIONLESS` is a hand list of one name, and it can go stale — a root file added later and cited
+by a paragraph would be filed FILE NOT FOUND again, which is the good direction: a stale entry is a red, not a
+silence, and the reader that raises it names the file it could not open. It does not re-open the D571 row: that
+row's claim was true when it was written and is true now.
+
+**Evidence — two planes, four readings, and the direction of each difference named.**
+
+- **Control** — HEAD's reader on HEAD's bytes: **1 FILE NOT FOUND offender** (`Makefile:20-22` at
+  `docs/STATUS.md:24728`), exit 1. The plane is HEAD's tree (922 files) extracted with `git archive HEAD` to
+  `D:\获客平台-planes\d572_head` and graded through the reader's own `--dir`/`--head-dir` seam, so both planes
+  are HEAD's bytes and the reader reads them as plain files instead of through `git show`.
+- **Treatment** — this unit's reader on that same plane: **0 offenders**, exit 0, and the distinct files cited
+  go 108 → 109.
+- **Reverse control** — HEAD's reader on this tree: **1 offender**, exit 1, the same row. The ledger's bytes
+  are therefore not the variable; the reader was.
+- **This unit's reader on this tree**: **0 offenders**, exit 0. The index's population changes by exactly one
+  file — `Makefile` — measured on HEAD's tree, where the walk returns 810 → 811; on this working tree the same
+  walk returns 1155, because the tree also holds this project's untracked work, so the number on this tree is
+  not a figure about the repository.
+
+Step 8's own falsifier is green with the shared predicate — 58 arms, 58 held, 0 missed — and it now prints the
+reader's own index rather than a private copy's, which would have counted one file short.
+
+**Left open, named here rather than left to be discovered again.** `tmp/` is not in the exclusion list
+(`scripts/source_index.mjs:79`), so a scratch copy of a shipped script under the repository root enters the
+index: while measuring this unit, two copies of `check_ledger_citations.mjs` left under `tmp/run/` made the
+reader file **6 AMBIGUOUS** offenders on the rows that name that script, and the copies were moved out to a
+plane outside the repository to clear it. The walk returns 1155 files on this tree and 314 of them live under
+`tmp/` — the repository's own scratch directory, gitignored and untracked, and therefore a cite target that
+every ledger row naming a shipped script can collide with. A directory added to the exclusion list is a hiding
+place until a clause proves otherwise, so that is the next unit's work and not this one's.
+
+- readers: the reader green on this tree (0 strict offenders of 722 citation-shaped tokens, exit 0) and red on
+  the HEAD bytes it was measured against (1 FILE NOT FOUND, exit 1) · the treatment green on that same plane
+  (0 offenders, exit 0, distinct files cited 108 → 109) and the reverse control still red on this tree
+  (1 offender, exit 1) — the ledger's bytes are not the variable, the reader was · step 8's own falsifier
+  58 arms, 58 held, 0 missed, and the population it prints is now the reader's own · step 9, step 10, step 12,
+  step 15 and step 16 all exit 0, step 10 with missing 0, duplicate 0 and uncommitted 1 (this section), the
+  line-ending census with CRLF 0 and mixed 0 on `docs/STATUS.md` · step 16 with `--strict MOVED,NOT-UNIQUE`
+  clean on 184 judged citations of which 174 still name the line they were written against · the reachability
+  reader 15 of 15 first-party readers invoked, 0 unreached · no fresh 18-step gate was filed in this unit, so
+  the database-backed steps were not re-run here; the figures above come from the readers this change can
+  reach
