@@ -497,7 +497,7 @@ Three changes, each covering a distinct way to be wrong:
    base paths accepted as strict prefixes and *extensions* (`/x/{id}/reindex`) still reported.
 
 Current ledger: **101 routes parsed · 64 served · 29 client-only · 0 missing · 0 undocumented**, over a 270-file
-corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:295` runs it with `--report`, so
+corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:317` runs it with `--report`, so
 CI stays advisory while the 29 rows are worked off; the split is by owner, not by excuse.
 
 Two of those 30 were true gaps that the old matcher hid, and both became visible rather than passed (that count is
@@ -4408,7 +4408,7 @@ plants            The harness slices the region out of the shipped file at run t
                     verdicts, and the exit code is a separate measurement: psql returns 0 from this file
                     whether the clock row is green or red unless it is invoked with `-v ON_ERROR_STOP=1`, the
                     flag that turns the verdict block's RAISE into rc=3 · which is how the gate itself calls
-                    it (`scripts/db_gate_fresh.sh:186`) and how load.sh tells the operator to call it
+                    it (`scripts/db_gate_fresh.sh:206`) and how load.sh tells the operator to call it
                     (`data/seed/load.sh:217`). Measured on the shipped text at 08:00 with the artifact kept:
                     P4 gives rc=0 unflagged and rc=3 flagged, and P1 gives that same pair. So with the flag the
                     exit code reports "this database has an offender", not "my row failed" · the offender on
@@ -4422,7 +4422,7 @@ plants            The harness slices the region out of the shipped file at run t
                     bounds, then a SECOND session reading `1790379918 / 1790379926 / recorded=true` across the
                     two writes, eight seconds apart · the gate's own pair is 190 apart · then the database
                     dropped, and the whole exchange kept in a file rather than only on a terminal.
-                    `scripts/db_gate_fresh.sh:173` turns the recording
+                    `scripts/db_gate_fresh.sh:193` turns the recording
                     on for the gate's own database and only there.
 mistakes          (a) The first propagation probe reported the shipped SQL as a syntax error and the error was
                     the probe's: it rebuilt the statement from a regex match and rstripped the semicolon
@@ -4644,7 +4644,7 @@ plane             `data/seed/quality.sql`'s fact-TTL row (:830) and slot-horizon
                     verdicts in the file that asked their questions of the reading clock. Both now read
                     `seed_now` (:72), a temp view over `nexus.seed_base`, which `generate.py` publishes
                     (:1654), `load.sh` validates in preflight (:65) and stamps (:171), and
-                    `scripts/db_gate_fresh.sh:173` turns on. No table added: the gate still lands on
+                    `scripts/db_gate_fresh.sh:193` turns on. No table added: the gate still lands on
                     tables=58, migrations=7, 216 checks.
 
 measured          On D89's kept gate database, before any predicate in this unit was written:
@@ -10131,7 +10131,7 @@ print 41 `FILE NOT FOUND`. Thirteen untracked names carry the difference · the 
 sites), one line of an admin console test (twelve, one per STATUS section in the forties and fifties), the seo
 repository, the order service, the AI runs module and the growth view (three each), six more for the remainder.
 Step 7 moves the same way (11 false sites against 8) and step 9 with it (FAIL on 75 citations across 20 files
-against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:446` is the fixed leg: `cd "$WT"` and no
+against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:466` is the fixed leg: `cd "$WT"` and no
 knob, so the reader's `process.cwd()`-derived index · `scripts/check_ledger_citations.mjs:82` · lands in the
 committed tree with its ledgers. 13b prints `plane reconciliation knob leg 77 / 0 · in-worktree leg 65 / 41`
 because a step whose whole point is the difference should not ask the reader to trust a comment about it. The
@@ -10161,7 +10161,7 @@ found in the arm's own label; the other runs the identical predicate over a copy
 another lane cites a line of the seo controller that holds nothing, judged by the default-plane control arm because
 D162's rule fires on the section a tree is writing. Held: `check_jsonb_reads.mjs, check_ledger_citations.mjs,
 check_comment_citations.mjs` three of three, and the mutant copy red as predicted. Plane unchanged from D188's
-measurement · `scripts/db_gate_fresh.sh:446` is the leg, and the reconciliation line still prints knob leg 77 / 0
+measurement · `scripts/db_gate_fresh.sh:466` is the leg, and the reconciliation line still prints knob leg 77 / 0
 against in-worktree 65 / 41. Rows stay uncommitted with D188's for the same reason: the disk holds nine DECISIONS
 and eleven STATUS sections from lanes whose sources are untracked, and committing the shared ledgers now would
 move those forty-one false cites onto the committed plane. Appends pure addition, zero lone LF. Nothing pushed.
@@ -10459,10 +10459,10 @@ reports its LAST command unless the shell holds it. `scripts/db_gate_fresh.sh:51
 own pipes together, and D150/D151’s proof that step 11 can stop the run is a proof about that one line; GitHub
 Actions does not hold them, and its documented default for a `run:` step on Linux is `bash -e {0}`
 (workflow-syntax reference, the shell table: unspecified -> `bash -e {0}`; `shell: bash` -> `bash --noprofile
---norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:292-313)
+--norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:314-335)
 so that the report is an artifact, and none of them declared a shell, so none of them could fail. Measured in a
 shell rather than argued: `false | tee /dev/null` exits 0 under `bash -e` and 1 under `bash -eo pipefail`. All three
-declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:277), and the census prints
+declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:299), and the census prints
 `7 step(s) pipe a checker into tee` with 0 UNPROTECTED.
 (C) TWO COUNTS IN THIS UNIT’S OWN PROSE WERE WRONG, AND RUNNING A FILE CORRECTED BOTH. The note written above the
 piped steps said three steps "carried Hard-fail in their own comments". One of the three does; one of the other two
@@ -10479,7 +10479,7 @@ job-level note stays a note about the job rather than about the next step.
 (`GATE_QUALITY_SQL="$WT/data/seed/quality.sql"`, `GATE_COMMENT_PLANE="$WT"`) in front of harnesses that read no
 environment variable at all · verified by grepping all seven `scripts/falsify_*.mjs` for `process.env`: none of
 them reads any. The prefixes were labels, not planes, and no arm could see them because no arm reads a harness
-invocation line. Both are removed (scripts/db_gate_fresh.sh:430-431,:445-447) and `falsify_quality_seam.mjs`
+invocation line. Both are removed (scripts/db_gate_fresh.sh:450-451,:465-467) and `falsify_quality_seam.mjs`
 carries the arm that keeps them gone. This row was owed because two runs of this thread were appending to these two
 files concurrently; it had no earlier entry.
 (E) THE NEW READER’S OWN ARGUMENTS. `scripts/check_reader_reachability.mjs` parses its flags with
@@ -12046,7 +12046,7 @@ stories and the remedy differs in each.
 Five of the seven were BORN RIGHT and MOVED, and they come in pairs: the `--text` flag site is cited by STATUS:8532
 and DECISIONS:9133, the `--plane` flag site by STATUS:8534 and DECISIONS:9135 · `check_ledger_citations.mjs:110` and
 `check_comment_citations.mjs:44` are where those flags are taken now · and DECISIONS:9172 names the gate's two
-invocation lines, which moved to `db_gate_fresh.sh:279` and `db_gate_fresh.sh:302`. One was BORN WRONG: DECISIONS:1254
+invocation lines, which moved to `db_gate_fresh.sh:299` and `db_gate_fresh.sh:322`. One was BORN WRONG: DECISIONS:1254
 quotes the pairing test as printing line 143 of `ModerationController.java`,
 `runs scope 'moderation_resolve' with no @Idempotent`, and the test prints `i + 1` while that call has sat at
 `ModerationController.java:144` in every plane since the marker landed, and at 140 then 138 in the only two earlier
@@ -12433,7 +12433,7 @@ refused the one holding rows; step 7's jsonb falsifier held 38 of 38 arms. Step 
 Both misses were the wiring arms - "gate step 8 runs this harness AND passes the knob to the reader" and
 "gate step 13 runs its three reader legs INSIDE the worktree" - each printing `exit 0 expected, 1 printed`.
 The cause is neither the gate nor the reader: the arms anchored the era's step totals (`step "8/12`,
-`step "13/13`) and D219's renumber moved every header to /18 (scripts/db_gate_fresh.sh:244 is step 8's header
+`step "13/13`) and D219's renumber moved every header to /18 (scripts/db_gate_fresh.sh:264 is step 8's header
 today), so both findIndex calls returned -1, both regions came back empty, and every pattern the arms demand
 went unanswered. The anchors now pin the step's number (`step "8/` at scripts/falsify_ledger_text.mjs:565,
 `step "13/` at scripts/falsify_ledger_text.mjs:583) - unique first matches in the committed gate, blind to
@@ -12847,7 +12847,7 @@ the clearest statement yet of what the third reader is for.
 ```
 docs/DECISIONS.md:9108   `db_gate_fresh.sh:153` and `:330`
 scripts/db_gate_fresh.sh:153   PYTHON="${PYTHON:-python}"                                ← the knob
-scripts/db_gate_fresh.sh:335   ( cd "$ROOT" && "${PYTHON:-python}" … --self-test )      ← the invocation
+scripts/db_gate_fresh.sh:355   ( cd "$ROOT" && "${PYTHON:-python}" … --self-test )      ← the invocation
 ```
 
 **The chain, in one place**, because each link was a separate unit and the value is in the sequence: a missing
@@ -13148,7 +13148,7 @@ Plane: reader runs at D:/nexus-headplane-r7 (20dde06), logs D:/nexus-r7-step15.l
 - Headline: step 16 --strict MOVED,NOT-UNIQUE rc=0 in a complete inventory (runs 4/5 filed strict FAIL on MOVED 26); step 15 REPORT EXACT 131 / MOVED 0 / NOT-UNIQUE 0 / GONE 16 of 147 judged; harness 15 12/12.
 - Reds, one root cause unchanged: step 7 FALSE SITES (2) and step 8's reader 37 FILE NOT FOUND (run 5's count to the digit) both name files no commit holds; step 8's harness 54/56 with the same two real-ledger arms on the same boundary; step 9's reader 85/26 with 7 of 7 offender authors attributed, its harness 57/57; step 14's two honest rc=2 refusals plus falsify_console_a11y's recorded ENOENT.
 - Greens: step 10 236/236 sections and 233/233 decisions (run 5's 234/231 plus D276's pair exactly), step 11 both legs PASS on the kept database (393 registry rows, 216 of 217 witnessed, the one missing a witness named), step 12 35/35, step 17 MATCHED 217 x 3 derived from this run's own log, step 18 self-total 18.
-- Step 13 degenerate on one plane: pairs 11/2 vs 11/2, 83/37 vs 83/37, 26/7 vs 26/7, all three reconciliations gap 0 - the block ran verbatim from scripts/db_gate_fresh.sh:391-454, so the two legs truly read the same bytes. D275 filed 13a as 0+0; run 5's preserved q7 logs print FALSE SITES (2) in both legs, so the agreed figure was 2, not 0 - this entry corrects it from the logs themselves.
+- Step 13 degenerate on one plane: pairs 11/2 vs 11/2, 83/37 vs 83/37, 26/7 vs 26/7, all three reconciliations gap 0 - the block ran verbatim from scripts/db_gate_fresh.sh:411-474, so the two legs truly read the same bytes. D275 filed 13a as 0+0; run 5's preserved q7 logs print FALSE SITES (2) in both legs, so the agreed figure was 2, not 0 - this entry corrects it from the logs themselves.
 
 Plane: gate and hand legs at D:/nexus-headplane-r9 (7e2f846), logs D:/nexus-r9-gate.log, D:/nexus-r9-step*.log and D:/nexus-r9-steps-11-13-17-18.log, kept database nexus_gate_35372_1791489132 (container nexus-platform-postgres). Nothing pushed.
 
@@ -24730,7 +24730,7 @@ all: it ran `cd tests/e2e && npx playwright test`. So the documented local entry
 plane while `make dev-*` had started a different stack — the run was real, it started, it reported a
 verdict, and the verdict was about services nobody in this repository had started. The CI job is not
 wrong to own those defaults: it boots Spring on 8080, uvicorn on 8000 and Next on 3000 and waits on
-all three (`.github/workflows/ci.yml:244-248`), and it exports no `NEXUS_*` either, so CI's fallbacks
+all three (`.github/workflows/ci.yml:266-270`), and it exports no `NEXUS_*` either, so CI's fallbacks
 are exactly its plane. The defect is that the defaults were the **only** copy the local path could
 read. On this machine the three fallback ports belong to a different product: `:3000` answers
 `<html lang="en">` with a hashed Next bundle, `:8000` answers `{"detail":"Not Found"}`, and `:8080`
@@ -24855,9 +24855,9 @@ counted one file short of the reader's — the root `Makefile` its extension tes
 
 **The second red was D571's own commit, and the ledger is where it is corrected.** D571 added six lines to
 `.github/workflows/ci.yml` above three committed citations, so its own commit moved the file under three rows
-written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:295` (the
-`--report` run), `.github/workflows/ci.yml:292-313` (the three steps that pipe a reader into `tee`),
-`.github/workflows/ci.yml:277` (the note that says why they declare `shell: bash`). Each was read at the commit
+written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:317` (the
+`--report` run), `.github/workflows/ci.yml:314-335` (the three steps that pipe a reader into `tee`),
+`.github/workflows/ci.yml:299` (the note that says why they declare `shell: bash`). Each was read at the commit
 that wrote the row (`3d4820e`: 240, 255, 258) and at HEAD (246, 261, 264) before the re-aim, the range's end
 included (276 at `3d4820e` is 282 at HEAD).
 
@@ -25126,12 +25126,12 @@ reader filed all ten MOVED against the commit that carried them, which is the re
 a new one: a citation is EXACT while the line it names still holds the text it held when its row was
 written, so a commit that shifts a cited file invalidates the rows that cite it even when the ledger itself
 did not move. The ten are re-aimed from the same `--reaim` output, the three range ends moving with their
-starts, and every target was read by hand first: `.github/workflows/ci.yml:295` is the `--report` run,
-`.github/workflows/ci.yml:292-313` is the three steps that pipe a checker into `tee`,
-`.github/workflows/ci.yml:277` is the note that says why they declare `shell: bash`,
-`.github/workflows/ci.yml:244-248` is the block that boots Spring on 8080, uvicorn on 8000 and Next on
+starts, and every target was read by hand first: `.github/workflows/ci.yml:317` is the `--report` run,
+`.github/workflows/ci.yml:314-335` is the three steps that pipe a checker into `tee`,
+`.github/workflows/ci.yml:299` is the note that says why they declare `shell: bash`,
+`.github/workflows/ci.yml:266-270` is the block that boots Spring on 8080, uvicorn on 8000 and Next on
 3000 and waits on all three, `scripts/falsify_reader_reachability.mjs:169-175` is the arm that used to
-resolve last-wins, and `scripts/db_gate_fresh.sh:559` and `scripts/db_gate_fresh.sh:547` are step 16's
+resolve last-wins, and `scripts/db_gate_fresh.sh:579` and `scripts/db_gate_fresh.sh:567` are step 16's
 strict run and step 15's plain run. On the committed tree step 16 reads MOVED 0 and NOT-UNIQUE 0 over 232
 judged citations, of which 225 still name the line they were written against. Gate step 8's seven
 UNTRACKED TARGET rows — every one of them naming `scripts/check_slot_keys.mjs`, because a clean checkout of
@@ -25205,7 +25205,7 @@ The regenerated dataset answers the guide over HTTP with 200 and no placeholder:
 
 **Evidence.** The reader on this tree: PASS, 126 JSX/TS files under the three roots, 57 client-plane modules of which 26 carry the directive, 69 files that render on the server and are out of scope, 5 card-list components run, 0 duplicate keys. `scripts/falsify_duplicate_keys.mjs` is 16 arms, 16 held, 0 missed: the census reddens on a list keyed by the card identity, and it reddens in the RAIL and in the COMPARE TABLE too; it keeps quiet on the SERVER plane, where the warning does not exist; it keeps quiet on a list member with NO key at all, which is D574's warning and not this one; and it refuses with exit 2 on a component whose required prop it cannot furnish, on a tree missing one of the three source roots, on an unknown flag and on `--plane` given twice. The last two arms aim it at a planted tree in both spellings — `--plane <dir>` and `--plane=<dir>` — and the `--report` arm prints the offender and still exits 0.
 
-The reachability census reads 17 of 17 first-party readers invoked by a surface, 0 unreached, and 14 CI steps that pipe a checker into `tee` all declare `shell: bash` — this reader and its own arms are two of those fourteen. Gate step 14 runs both (`scripts/db_gate_fresh.sh:518`, `scripts/db_gate_fresh.sh:519`).
+The reachability census reads 17 of 17 first-party readers invoked by a surface, 0 unreached, and 14 CI steps that pipe a checker into `tee` all declare `shell: bash` — this reader and its own arms are two of those fourteen. Gate step 14 runs both (`scripts/db_gate_fresh.sh:538`, `scripts/db_gate_fresh.sh:539`).
 
 The live A/B is the console itself. With `key={card.id}` the guide route carries exactly one message, "Encountered two children with the same key"; with `key={keys[index]}` a cache-bypassing reload of the same route carries no console message at all. The probe was reverted from the saved bytes of the file rather than from git, and the reverted file's sha256 was read back to confirm it.
 
