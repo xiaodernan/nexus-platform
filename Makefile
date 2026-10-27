@@ -98,8 +98,14 @@ test: ## Unit + integration tests for every stack present in the tree
 unit: ## Fast unit tests only (no DB) — apps/ai suite
 	cd apps/ai && (uv run pytest -q -m "not integration" || python -m pytest -q -m "not integration")
 
+# The harness reads its three service URLs from the environment and falls back to the framework defaults,
+# which are NOT this Makefile's ports. Export them here, derived from the *_PORT knobs above, so `make e2e`
+# tests the stack `make dev-*` actually started. scripts/check_plane_coordinates.mjs is what keeps this
+# recipe and those fallbacks from drifting apart again.
 e2e: ## Playwright suites (needs infra-up + dev-web/dev-ai/dev-platform running)
-	cd tests/e2e && npx playwright test
+	cd tests/e2e && NEXUS_WEB_URL=http://127.0.0.1:$(WEB_PORT) \
+	  NEXUS_PLATFORM_URL=http://127.0.0.1:$(PLATFORM_PORT) \
+	  NEXUS_AI_URL=http://127.0.0.1:$(AI_PORT) npx playwright test
 
 lint: ## Lint/format checks where configured
 	@npm run lint --if-present

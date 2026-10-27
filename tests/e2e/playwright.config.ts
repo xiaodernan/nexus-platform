@@ -9,9 +9,10 @@ const EVIDENCE = path.resolve(here, '..', 'evidence');
 /**
  * NEXUS browser test suite.
  *
- * The stack (platform :8080, ai :8000, web :3000) is expected to be already running —
- * `make dev-stack`. webServer is opt-in via NEXUS_E2E_AUTOSTART=1 because the Next app is a
- * workspace package and CI starts it explicitly.
+ * The stack must already be running. `make e2e` exports the three URLs this harness and `lib/fixture.ts`
+ * read, pointing them at the ports `make dev-web`, `make dev-ai` and `make dev-platform` boot on; run the
+ * suite by hand against another plane and export them yourself. The fallbacks below are the framework
+ * defaults, which is the plane CI builds its own stack on. There is no autostart in this file.
  */
 export default defineConfig({
   testDir: './specs',

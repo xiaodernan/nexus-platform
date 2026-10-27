@@ -24713,3 +24713,106 @@ tests pin. The two layers now say different, correct things:
 the affected nine files (preference polarity, clause unit, canon spellings, constraint lane, clause
 boundary, question-not-refusal, avoid filter, the 184-arm two-lane file) → **930 passed, 1 skipped**;
 the vocabulary gate + the new file + three neighbours → **129 passed**.
+
+## 567. D571 · the browser harness resolved its three service URLs to the ports another product owns, and `make e2e` exported none of them (`Makefile`, `tests/e2e/playwright.config.ts`, `tests/e2e/lib/fixture.ts`, `tests/e2e/package.json`, `scripts/check_plane_coordinates.mjs`)
+
+**Why this is D571 and not D559.** A concurrent lane landed its own D559–D570 into this ledger while this
+unit was being measured, so the number this unit was carrying was taken. The id moved rather than the
+content: the measurements below are the same ones, re-read after the ledger moved, and the section
+number is derived from the file rather than asserted.
+
+**What was measured.** The harness reads each service coordinate from the environment and falls back to
+the framework default: `NEXUS_WEB_URL` → `http://127.0.0.1:3000` (`tests/e2e/playwright.config.ts:6`),
+`NEXUS_PLATFORM_URL` → `http://127.0.0.1:8080` and `NEXUS_AI_URL` → `http://127.0.0.1:8000`
+(`tests/e2e/lib/fixture.ts:4` and `:5`). The Makefile's own dev plane is `WEB_PORT ?= 3002`,
+`PLATFORM_PORT ?= 8090`, `AI_PORT ?= 8010` (`Makefile:20-22`), and the `e2e` recipe exported nothing at
+all: it ran `cd tests/e2e && npx playwright test`. So the documented local entry point read the fallback
+plane while `make dev-*` had started a different stack — the run was real, it started, it reported a
+verdict, and the verdict was about services nobody in this repository had started. The CI job is not
+wrong to own those defaults: it boots Spring on 8080, uvicorn on 8000 and Next on 3000 and waits on
+all three (`.github/workflows/ci.yml:213-217`), and it exports no `NEXUS_*` either, so CI's fallbacks
+are exactly its plane. The defect is that the defaults were the **only** copy the local path could
+read. On this machine the three fallback ports belong to a different product: `:3000` answers
+`<html lang="en">` with a hashed Next bundle, `:8000` answers `{"detail":"Not Found"}`, and `:8080`
+answers `{"success":false,...,"code":"UNAUTHORIZED"}` — none of them ours. Ours answer `lang="zh-HK"`
+on `:3002`, a `{"code":"not_found",...,"request_id":...}` on `:8090` and `{"service":"nexus-ai",...}`
+on `:8010`. The harness would have driven another product's frontend and reported it as NEXUS.
+
+**The second finding: a fourth copy of the web port, and a promise the file never kept.**
+`tests/e2e/package.json`'s `codegen` script hard-coded `playwright codegen http://localhost:3000` — a
+fourth copy of the web coordinate, in the one file of the harness with no env guard at all, so no plane
+could move it. And the config's docstring promised three things the file did not have: a `webServer`
+block ("webServer is opt-in via `NEXUS_E2E_AUTOSTART=1`") that exists in no line of the file, a knob
+`NEXUS_E2E_AUTOSTART` that no line of the harness reads, and `make dev-stack` — a target the Makefile
+has never declared (24 `^target:` lines read, none of them `dev-stack`). It also told the reader the
+stack lived on "platform :8080, ai :8000, web :3000", which is the CI plane, so the local reader was
+sent to the wrong plane by the file that explains the harness.
+
+**The fix.** The `e2e` recipe now exports the three URLs, derived from the knobs above rather than
+retyped: `NEXUS_WEB_URL=http://127.0.0.1:$(WEB_PORT)`, `NEXUS_PLATFORM_URL=…$(PLATFORM_PORT)`,
+`NEXUS_AI_URL=…$(AI_PORT)`. A change to `WEB_PORT` therefore moves the coordinate the harness reads
+and the coordinate the harness's own docstring names, together. The config's docstring was rewritten to
+say which plane each fallback is — the framework defaults, which is the plane CI builds its own stack
+on — and to state plainly that there is no autostart in the file. `package.json`'s `codegen` no longer
+names a port at all: `playwright codegen` reads the URL from the config, which reads it from the
+environment. `tests/e2e/README.md` now says that `make e2e` exports all three, derived from the
+Makefile's own `WEB_PORT` / `PLATFORM_PORT` / `AI_PORT`, so a run through make reads the stack make
+started.
+
+**The door.** `scripts/check_plane_coordinates.mjs` reads the Makefile, the CI workflow and the harness
+directory as text and holds five rules: **R1** every env-guarded fallback in the harness must be
+exported by the `e2e` recipe, and derived from a declared `*_PORT` — a retyped literal does not pass;
+**R2** where the CI e2e job exports no variable, the fallback ports and the job's port set must be the
+same set; **R3** a URL literal may not be naked, and a line that quotes a variable may not contradict
+the code's own default; **R4** a backticked or fenced `make <target>` in the harness must be a declared
+target; **R5** a `NEXUS_*` token the harness names must be read on a `process.env` line somewhere in the
+population. The door runs in CI before any service exists, because it reads text and starts nothing.
+
+**Verified, not claimed.** Nine arms in `tmp/run/d559_arms.mjs`, each splicing one needle into one
+shipped file and restoring from a byte capture rather than `git checkout`: the export removed (3
+offenders), the export retyped instead of derived (1), the export derived from an undeclared variable
+(1), CI's AI port moved off the harness's set (2), the fourth copy of the web port back in
+`package.json` (1), the phantom target back in the config comment (1), the phantom knob back in the
+config comment (1), the Makefile's own `WEB_PORT` moved from 3002 to 3012 (0 — a derived coordinate
+must stay silent), and the README's row drifting from the code it documents (1). All nine matched the
+predicted offender count, and the tree hash was unchanged at rest afterwards
+(`fb54c0d4d48e`).
+
+Two behavioural legs, run against the live stack and driven by the shipped recipe rather than a
+retyped copy of it (`tmp/run/d559_expand_recipe.mjs` expands the Makefile's own `e2e` body, because
+`make` is not installed on this machine). With the export in place: **3 passed** (28.2 s). The first
+attempt in that shape was 2 passed / 1 failed — the streamed search surface, whose AI service had
+booted seconds earlier — and the second attempt with the services warm was the 3 passed that is quoted
+here. With the export removed, so the harness fell back to the defaults: **3 failed**, each on
+`toBeVisible` for `article[data-card-type]` — the card the suite is about — and exit 1. That is the
+defect in one line: the documented local entry point was red against a stack that was not ours, every
+one of those failures read as a NEXUS card defect and none of them was, and the same suite is green
+against the stack `make dev-*` started.
+
+The reverse control is the HEAD bytes, extracted to a plane outside the repository
+(`D:\获客平台-planes\d559_head`, 42 files) and graded by the same door: **6 offenders, exit 1** — the
+three "make e2e exports no …" rows, one naked URL in `package.json`, the `make dev-stack` target and the
+`NEXUS_E2E_AUTOSTART` knob. The working copy grades 0 offenders, exit 0. The two planes differ only in
+the bytes of this unit, and the door reads both.
+
+**Left open.** The door compares port **sets**, not service↔port pairs, because the workflow text
+declares no role for `:3000`/`:8080`/`:8000` — it says so in its own output rather than implying more.
+`infra/docker-compose.yml`, `scripts/e2e_fresh.sh` and the `verify_*` scripts carry their own copies of
+these coordinates and are outside this population. R4 reads backticks and fenced blocks only, so an
+unbackticked `make target` in prose escapes it — a sentence about making sure is not a coordinate. Task
+#211: the `mobile` project is `devices['iPhone 13']`, which is WebKit, while CI installs
+`--with-deps chromium` alone, so the phone-size verdict still needs a browser the workflow does not
+install. Task #212: the harness asks for `locale: 'zh-HK'` while the page answers in Simplified, so
+`vertical-slice` waits for `附近熱門` and finds nothing — its reds move for that reason and not for
+this one. Task #210 is closed by this unit.
+
+- readers: the door green on the bytes this section describes (0 offenders, exit 0) and the reverse
+control red on the HEAD bytes (6 offenders, exit 1) · the arm battery 9 of 9 matched with the tree at
+rest `fb54c0d4d48e` · the behavioural legs 3 passed with the export and 3 failed without it · the
+reachability reader 15 of 15 first-party readers invoked, 0 unreached, and the new door is one of the
+15 · step 8, step 9, step 10, step 12, step 15 and step 16 all exit 0 on this tree, step 10 with
+missing 0, duplicate 0 and uncommitted 1 (this section), step 16 with `--strict MOVED,NOT-UNIQUE`
+clean on 181 judged citations of which 174 still name the line they were written against · the
+line-ending census PASS with mixed 0, this section uniform LF like the section it follows · no fresh
+18-step gate was filed in this unit, so the database-backed steps were not re-run here; the figures
+above come from the readers this change can reach

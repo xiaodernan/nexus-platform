@@ -18,6 +18,11 @@ make infra-up && make dev-platform && make dev-ai && make dev-web
 | `NEXUS_AI_URL` | `http://127.0.0.1:8000` | FastAPI |
 | `NEXUS_E2E_WRITE_PATHS` | unset | opt in to mutating tests (reservation, checkout) |
 
+`make e2e` exports all three, derived from the Makefile's own `WEB_PORT` / `PLATFORM_PORT` / `AI_PORT`, so a run
+through make reads the stack make started rather than whatever answers on the default port. The defaults above
+are what the harness uses when nothing is exported — the plane CI builds its own stack on — and
+`scripts/check_plane_coordinates.mjs` is the reader that keeps those copies from drifting apart again.
+
 ```bash
 npm install
 npx playwright install chromium

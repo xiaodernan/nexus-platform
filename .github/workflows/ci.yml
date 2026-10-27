@@ -196,6 +196,12 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '25', cache: maven }
       - uses: astral-sh/setup-uv@v5
+      - name: Census the harness coordinates
+        # The Playwright harness reads its three service URLs from the environment and falls back to the
+        # framework defaults, which is the plane this job boots. This step is what reddens a drift between
+        # those fallbacks, the Makefile's e2e recipe and the ports below — it reads text only, so it runs
+        # before any service exists.
+        run: node scripts/check_plane_coordinates.mjs
       - name: Start data stores + schema + demo data
         run: |
           docker compose -f infra/docker-compose.yml up -d postgres redis

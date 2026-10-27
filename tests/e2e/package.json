@@ -10,7 +10,7 @@
     "test:api": "playwright test specs/api",
     "test:visual": "playwright test specs/visual --update-snapshots=missing",
     "report": "playwright show-report report",
-    "codegen": "playwright codegen http://localhost:3000"
+    "codegen": "playwright codegen"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.1",
