@@ -24468,3 +24468,8 @@ end-to-end; the next unit with the daemon up runs `bash scripts/db_gate_fresh.sh
 10550 collected tests; pytest's non-zero exit came from its **tmp_path cleanup** being refused by
 the same shim (`SAFE_DELETE_BULK_CONFIRM_REQUIRED`), not from a test. Run it with
 `--basetemp` on a relative path to get a clean exit code.
+
+**The same pattern outside the gate.** `scripts/db_schema_drift.sh` (`mktemp -d` + `rm -rf` in its
+EXIT trap) and `scripts/check_launcher_log_mode.sh` (`mktemp -d` + `rm -f "$root/…"` in its
+cleanup) carried the identical defect. Neither is called by the 18-step gate, but both are CI
+scripts that would fail on this host for the same reason, so both cleanups are tolerant now.

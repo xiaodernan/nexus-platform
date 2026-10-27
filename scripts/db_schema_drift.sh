@@ -82,7 +82,10 @@ FAILURES=0
 step "1/2  ledger: infra/db/migrations/V*.sql vs $TARGET's schema_migrations"
 
 TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"; [ -n "${REF_DB:-}" ] && psql_m "DROP DATABASE IF EXISTS \"$REF_DB\"" >/dev/null 2>&1 || true' EXIT
+# D559: a cleanup must not fail the step. `mktemp -d` returns a `C:\…` path on this host and the
+# node runtime's safe-delete shim refuses to `rm -rf` it; under `set -e` that turned a clean run
+# into a non-zero exit on the cleanup line.
+trap 'rm -rf "$TMP" 2>/dev/null || true; [ -n "${REF_DB:-}" ] && psql_m "DROP DATABASE IF EXISTS \"$REF_DB\"" >/dev/null 2>&1 || true' EXIT
 
 ls "$MIG_DIR"/V*.sql >/dev/null 2>&1 || die "no V*.sql files in $MIG_DIR"
 for f in "$MIG_DIR"/V*.sql; do basename "$f" .sql; done | sort > "$TMP/files.txt"

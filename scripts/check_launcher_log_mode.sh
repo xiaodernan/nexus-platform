@@ -17,12 +17,14 @@ work="$(mktemp -d)"
 DEFAULTS=(".platform-dev.log" ".platform-dev.pid")
 
 cleanup() {
+  # D559: `mktemp -d` and `$root/…` are `C:\…` paths on this host, and the node runtime's
+  # safe-delete shim refuses to `rm` them; under `set -e` that failed a run on its cleanup line.
   for f in "${DEFAULTS[@]}"; do
-    if [ -f "$work/$f.was-absent" ]; then rm -f "$root/$f"
+    if [ -f "$work/$f.was-absent" ]; then rm -f "$root/$f" 2>/dev/null || true
     elif [ -f "$work/$f.copy" ]; then cp "$work/$f.copy" "$root/$f"
     fi
   done
-  rm -rf "$work"
+  rm -rf "$work" 2>/dev/null || true
 }
 trap cleanup EXIT
 
