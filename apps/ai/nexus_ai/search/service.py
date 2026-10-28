@@ -184,10 +184,11 @@ class StaticBackend:
         # fixture lane is handed the same list the live lane would join against.
         return _filter_static(rows, text or "", filters or {}, offerings=self.offerings)
 
-    async def offering_candidates(self, *, text=None, filters=None, **_kw: Any
+    async def offering_candidates(self, *, text=None, filters=None,
+                                  party_size: int | None = None, **_kw: Any
                                   ) -> list[dict[str, Any]]:
         rows = [dict(r) for r in self.offerings]
-        return _filter_static(rows, text or "", filters or {})
+        return _filter_static(rows, text or "", filters or {}, party_size=party_size)
 
     async def facts(self, subject_ids: Sequence[str]) -> list[dict[str, Any]]:
         ids = {str(s) for s in subject_ids}
@@ -221,7 +222,8 @@ class StaticBackend:
 
 def _filter_static(rows: list[dict[str, Any]], text: str,
                    filters: dict[str, Any],
-                   offerings: Sequence[dict[str, Any]] = ()) -> list[dict[str, Any]]:
+                   offerings: Sequence[dict[str, Any]] = (),
+                   party_size: int | None = None) -> list[dict[str, Any]]:
     low = (text or "").lower()
     out: list[dict[str, Any]] = []
     for r in rows:
@@ -267,6 +269,13 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         # live one - the D488 shape, one lane over.
         if _static_avoids(r, filters.get("avoid"), offerings):
             continue
+        if party_size:
+            # D607: the same hard bound the live clause applies, so the two lanes answer one
+            # request with one set (D449). A row that states no bound is not a small row.
+            lo, hi = r.get("min_party_size"), r.get("max_party_size")
+            if ((hi is not None and int(party_size) > int(hi))
+                    or (lo is not None and int(party_size) < int(lo))):
+                continue
         r["kw_score"] = max(float(r.get("kw_score") or 0.0), score)
         r.setdefault("vec_score", 0.0)
         r.setdefault("text_matched", bool(low))
@@ -955,8 +964,13 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
         rows += merchant_rows
         pool_total += _pool_total(merchant_rows)
     if "offering" in plan.subject_types:
+        # D607: the party a request names is a hard bound on which OFFERINGS can answer it, the
+        # same way it already bounds slot capacity. It goes to the offering lane only -
+        # `merchants` carries no party columns, and aggregating a merchant's offerings into a
+        # merchant-level rule is undocumented (filed in PLAN).
         offering_rows = await backend.offering_candidates(
-            **{k: v for k, v in common.items() if k != "embedding"})
+            **{k: v for k, v in common.items() if k != "embedding"},
+            party_size=plan.party_size)
         rows += offering_rows
         pool_total += _pool_total(offering_rows)
     seen: set[str] = set()

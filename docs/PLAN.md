@@ -2187,3 +2187,53 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   a sentence from it and let the client render the notice from `stale` - the item already carries the
   boolean, and §5's promise is about surfacing staleness, not about which module owns the wording.
   Owner: the AI lane with the platform adapter's owner.
+
+- **A party a merchant cannot seat is not answerable by any clause D607 wrote, because the merchant
+  lane has nothing to compare it against (D607's scope limit)** - `min/max_party_size` live on
+  `offerings`, so the repair bounds which OFFERINGS answer a party; `merchants` carries no party
+  columns (measured: `docs/DATABASE.md:72` puts the Booking columns on `offerings` only), and the
+  sentence "a restaurant whose every offering caps at 2 cannot host 8 people" is an aggregation rule
+  nobody has written down. It needs one first - `any` (one seatable offering is enough), `all` (the
+  merchant must seat the whole party in one booking), or a sum over concurrent offerings are three
+  different products, and the demo plane's 804 bounded offerings sit across enough merchants that
+  the three answers differ. D607's door pins the merchant lane NOT applying one
+  (`test_the_merchant_lane_is_not_asked_to_aggregate_the_bounds`), so whichever is chosen has to be
+  written before that row is changed. Owner: the AI lane with whoever owns the §117 memory-and-
+  intent vocabulary that would have to carry the rule.
+
+- **A page whose ordering key is tied is not a population, and a filter measured on it measures the
+  planner (D607's method, and a defect of its own)** - the offering lane's `ORDER BY` is
+  `kw_score DESC, o.rating_agg DESC` (`sql.py:576`) with no final tie-break. Measured on `下午茶`
+  at `LIMIT 200`: 200 rows over 27 distinct `(kw_score, rating_agg)` keys, and **148 of the 200
+  share one key** - `(1.75, 0.0)` - which is also the key of the page's last row, so the cut falls
+  inside that tie group and which rows win it is the planner's choice. Adding the party predicate
+  replaced 21 of the page's 200 rows, 9 of them rows that fit the party perfectly, while the same
+  query called twice with no change returned the identical 200 ids. Two consequences: the exactness
+  claim had to move to whole per-merchant populations (`POPULATION` in D607's door), and
+  `filters.exclude` - the already-seen list - plus every second page is unstable under a change to
+  an unrelated predicate. Either the ordering owes a deterministic tie-break (`o.id` is the obvious
+  one) or the paging contract has to say out loud that it does not exist. Owner: the AI lane.
+
+- **How long an offering takes is read by nobody who books one (D607's census)** -
+  `offerings.duration_minutes` is populated on 804 offerings, the same count as the rows stating a
+  party bound, so the corpus's bookable rows do carry a duration. Java names the column 13 times,
+  the web 0 times, and the AI lane's SQL never selects it (measured: 1 occurrence of the word in
+  `nexus_ai`, which is D607's own comment). `_slot_window` (`service.py:896`) and `slots_for`
+  (`sql.py:622`) bound a time window and a capacity, never an offering's length, so a
+  recommendation can propose a two-hour offering into a one-hour slot and nothing between the card
+  and the booking says so. The product question comes first: does the slot window come from the
+  offering's own duration, or from what the caller asked for? Owner: the AI lane with the
+  reservation owner.
+
+- **A fixture merchant that names its coarse bucket cannot answer a leaf the live lane answers, and
+  HEAD is red on it (found while proving D607's reds were not D607's)** -
+  `test_sort_preference_reader.py::test_the_followup_sentence_reaches_the_served_order` and
+  `::test_closer_orders_by_distance_only_when_distance_is_known` fail at `d0f3b91`, measured in a
+  detached worktree of that commit so none of D607's files existed. The utterance 拉麵 yields
+  `filters={'category': 'ramen'}`; the live lane answers **22** merchants (23 are tagged `ramen`,
+  which exists as a child category) and `_filter_static` answers **0** of the fixture's rows, each of
+  which carries `category_primary='restaurant'` and no `category_slugs`. D596's mirror compares the
+  resolved bucket against the row's own display name or its slugs, so a LEAF bucket breaks the case
+  its docstring promised to keep: "a fixture that stores the coarse bucket in `category_primary`
+  itself keeps the old comparison". Owner: the D596 lane - the clause and the fixture are both
+  theirs; this row records the measurement because D607 could otherwise be blamed for it.

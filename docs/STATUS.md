@@ -26705,3 +26705,134 @@ population is an edit to one file rather than a new reader.
   written into this census), the six-state literal scanner that separates copy from prose, the reference
   graph that decides whether a block is `UNREFERENCED`, and `scripts/falsify_ui_script.mjs`'s baseline run
   for the two population counts the arms assert.
+
+## 605. D607 · an offering's own party bounds were SELECTed into every row and applied by no reader (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_an_offering_that_cannot_seat_the_party_is_not_answered_for_it.py`)
+
+**What was measured.** The offering SELECT already carries `o.bookable, o.min_party_size,
+o.max_party_size` (`sql.py:555`) and the plan already knows the party (`service.py:442`, filled
+from the intent at `:660`, and already used hard against slot capacity at `sql.py:637` -
+`AND capacity_left >= :party_size`). Nothing compared the party to the offering. Read-only probe of
+the offering lane, top 12 per query (`tmp/d606_probe.py`):
+
+    query      party  rows carrying bounds  answers that cannot seat them
+    下午茶          4     3                      1  posture-assessment-afternoon (1-2)
+    下午茶          8     3                      2  + trial-class-afternoon (1-4)
+    下午茶         12     3                      3  + skin-analysis-consult-afternoon (1-8)
+    晚餐           4     2                      2  gel-nails (1-2), soak-off-reshape-weekend (1-2)
+    bookable      8     1                      1  lane-booking-per-hour-large (1-6)
+
+The bounds are not noise, and the shapes are exactly two: of 5,534 offerings, 804 state a bound -
+and all 804 state BOTH (`min` or `max` non-NULL = 804, `min` and `max` non-NULL = 804), all 804 are
+`bookable`, 4,730 state neither, `count(distinct max_party_size)` = 5 (2/4/6/8/10, largest cap 10),
+267 rows cap at 2, 538 cap below 8, and `count(*) filter (where min_party_size > 1)` is **0**. That
+last zero is why the minimum half of the column is carried here by the fixture lane: on this plane
+there is no live victim to point at, and a door that claimed one would be claiming a number it
+never read.
+
+**Two measurements decided HOW the removal could be asserted, and one of them is a defect of its
+own.** First, an offering's `slug` is not a row key: 5,534 offerings share 1,623 slugs, and the same
+slug carries different bounds across its rows (`executive-suite` appears 9 times with caps
+None/2/4/6). Every set comparison in the door is therefore keyed on `id`. Second, a 200-row page
+cannot answer "what did the clause remove": `下午茶` at `LIMIT 200` serves 200 rows over **27**
+distinct `(kw_score, rating_agg)` ordering keys, and **148 of the 200 share one key** - `(1.75,
+0.0)` - which is also the key of the page's LAST row, so the cut falls inside that tie group
+(`tmp/d606_churn.py`). The same query called twice unchanged returned the identical 200 ids; adding
+the party predicate replaced 21 of them, **9 of which fit the party perfectly**. Asking "exactly
+those that cannot fit" of a cut page would therefore have measured the planner, not the clause - and
+the first version of this door did exactly that, went red on a correct repair, and had to be
+re-measured before it was believed. The removal is now asserted on whole per-merchant populations:
+`POPULATION` asks the corpus for merchants holding both shapes in 8-60 offerings, and the door
+asserts `len(page) < limit` before comparing, so the claim cannot quietly become a page-cut claim
+again. The tie behaviour itself is filed in PLAN as its own question, because `filters.exclude` and
+every second page assume an order that the lane does not actually give them.
+
+**The repair is one clause per lane and one argument in between.** `build_offering_query` takes
+`party_size` and appends, only when the caller named a party, `(o.max_party_size IS NULL OR
+o.max_party_size >= $n)` and `(o.min_party_size IS NULL OR o.min_party_size <= $n)` (`sql.py:464`);
+the party is bound, never interpolated, which the door checks by reading the two comparison operands
+out of the built text. `_filter_static` mirrors the same predicate (`service.py:272`) so the fixture
+lane answers the request the live lane answers (D449), and the pipeline dispatches the plan's own
+value (`service.py:973`). NULL is kept meaningful on purpose: an offering that never stated a cap is
+not a small offering, and 4,730 of the 5,534 rows are that offering - a clause without the NULL arm
+deletes the majority of the catalogue, which is arm B's red. Absence is kept meaningful too:
+`party_size=None` means the caller asked no question about the party, and both lanes answer it with
+the whole catalogue (the no-party rows, live and fixture). The merchant lane is deliberately not
+touched: `merchants` has no party columns and "a merchant whose every offering caps at 2 cannot host
+8" is an aggregation rule nobody has written down, so the door pins the absence
+(`test_the_merchant_lane_is_not_asked_to_aggregate_the_bounds`) and PLAN carries the decision.
+
+**Two rows exist because an arm said the door was blind.** Every other row calls a lane directly, so
+a pipeline that dropped the party between the plan and the dispatch would have kept all of them
+green - arm D proved it, and `_Recorder` (a `StaticBackend` that records what the pipeline actually
+sends) is the row that catches it now, in both directions: the party that is named must arrive, and
+the party that is not must arrive as an absence.
+
+**Arms.** Six, each mutating one shipped clause, each restored before the next arm runs and
+byte-for-byte at the end (`restored sql.py: True`, `restored service.py: True`), control **12
+passed**:
+
+* A - the party clause never reaches the offering SQL (`if party_size and False`): **4 failed, 8
+  passed** - `test_the_offering_lane_answers_a_party_it_cannot_seat`,
+  `test_the_party_clause_removes_exactly_the_offerings_that_cannot_fit`,
+  `test_a_party_larger_than_every_stated_cap_leaves_only_unbounded_offerings` and the SQL-text row.
+  This arm is the pre-fix state: the door's red-then-green evidence is here rather than in a
+  remembered probe, because the mutation reproduces exactly what `tmp/d606_probe.py` measured.
+* B - the bound comparisons lose their NULL arms: **2 failed, 10 passed** - the exactness row (the
+  rows that fit vanish) and the SQL-text row (no `IS NULL` left in the WHERE). The under-filtering
+  rows stay green, which is the point: over-filtering and under-filtering are different failures and
+  only one of them is this unit's defect.
+* C - the fixture mirror loses its NULL arms: **3 failed, 9 passed** - both fixture parity rows plus
+  the pipeline row, which is the lane-parity claim (D449) being graded rather than asserted.
+* D - the pipeline stops forwarding the plan's party (`party_size=None`): **1 failed, 11 passed** -
+  only `test_the_pipeline_hands_the_plan_party_to_the_offering_lane`. Ten rows of a door that cannot
+  see the dispatch it sits behind is the reason this row exists.
+* E - the minimum half of the clause is lifted out: **1 failed, 11 passed** - the SQL-text row, and
+  nothing else. That is the honest shape of a 0-victim half: `min_party_size > 1` has no row on this
+  plane to remove, so only the claim that both arms exist can grade it. Recorded rather than
+  smoothed over.
+* F - the fixture mirror never runs at all: **3 failed, 9 passed** - the same three as C, which says
+  the mirror's NULL arms are its entire live contribution on this corpus and the shape differences
+  are carried by the cap half.
+
+The first arms run is also recorded, because the harness was wrong before it was right: it restored
+the mutated file only at the end, so arm B's mutation was still in `sql.py` while arms C and D ran,
+and two live reds were blamed on clauses that had not been touched. The six counts above are from the
+re-run with a restore after every arm, at the bytes this unit committed.
+
+**Verified after the edit.** The door **12 passed** - 5 rows read the live plane and 7 need no
+database, so the same file says "12 passed" with the DB and "7 passed, 5 skipped" without it. The
+blast radius of the two signature changes - the 13 test files
+that name `_filter_static`, `offering_candidates` or `build_offering_query` - **323 passed, 2
+failed**. Those 2 are not this unit's and were not accepted on reasoning: `d0f3b91` was checked out
+into a detached worktree where none of D607's files exist, and
+`test_sort_preference_reader.py::test_the_followup_sentence_reaches_the_served_order` and
+`::test_closer_orders_by_distance_only_when_distance_is_known` fail there too. Their cause is the
+category mirror, not the party clause: the utterance 拉麵 yields `filters={'category': 'ramen'}`,
+the live lane answers 22 merchants and `_filter_static` answers 0 of a fixture whose rows store
+`category_primary='restaurant'` with no `category_slugs` - a LEAF bucket breaks the case D596's
+docstring promised to keep. Filed in PLAN against the D596 lane, with the measurement, rather than
+repaired here in a file this unit has no claim on. `ruff check` is clean over `sql.py`,
+`service.py` and the door.
+
+One thing about this unit's place in the tree is stated rather than left to the reader. The unit
+id moved from D606 to D607 mid-flight: §604 - another lane's web-script census, then uncommitted -
+had already taken the number, and the ledger's numbering is content, so the rename happened in the
+code comments, the door and this section instead. This section was then written to land after the
+code, because the working copy of `docs/STATUS.md` carried that lane's
+136 uncommitted lines and staging this file would have swept them into D607's commit. That lane
+committed while this one was measuring, so the deferral dissolved rather than was carried: the diff
+over `docs/STATUS.md` at the commit byte is 131 insertions and 0 deletions, one hunk starting
+after §604's own `- readers:` footer, which is the whole of this section and nothing of that one -
+measured, not assumed from the commit's subject line. The ledger therefore travels WITH the code.
+The full-suite baseline launched at `ca66248`
+was still running through these edits, reached 40%, and was stopped; its stop left part of its
+process tree alive, so it is treated as no verdict at all - nothing in this section cites it, and
+every number above was produced by a run started after the final byte.
+
+- readers: `_fits` / `_stated_bound` (the row-level mirror of the shipped clause, keyed on `id`
+  because a slug is not a row), `POPULATION` (the corpus chooses which merchants' whole sets fit
+  inside one page, and the door asserts the page did not reach the limit before it compares them),
+  `VICTIMS` pages for the answers-a-user-got claims, `re.findall` over the built SQL's two bound
+  comparisons and their placeholders, `_Recorder.offering_candidates` (what the pipeline dispatches,
+  in both directions), and one census SELECT that re-measures the four populations every claim above
+  quotes.

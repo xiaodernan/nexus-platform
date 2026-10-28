@@ -415,6 +415,7 @@ def build_offering_query(
     filters: dict[str, Any] | None = None,
     geo: tuple[float, float] | None = None,
     radius_m: int | None = None,
+    party_size: int | None = None,
     limit: int = 60,
     with_total: bool = False,
 ) -> CandidateQuery:
@@ -453,6 +454,17 @@ def build_offering_query(
         where.append(f"o.rating_agg >= {p.add(float(filters['min_rating']))}")
     for key, value in (filters.get("attributes") or {}).items():
         where.append(f"o.attributes @> {p.add(json.dumps({str(key): value}, ensure_ascii=False))}::jsonb")
+    # D607: an offering states the party it physically fits (`docs/DATABASE.md:72` calls
+    # bookable/min/max_party_size/duration_minutes the Booking columns), and this lane already
+    # selects the two bounds into the row. It applied neither, while applying slot capacity
+    # (`slots_for`, `AND capacity_left >= :party_size`) - so a 12-person request was answered
+    # with a 1-2 offering. Hard filter, only when the caller named a party, and NULL means the
+    # offering never stated a bound: 4,730 of this plane's 5,534 rows are unbounded, and a
+    # clause without the NULL arm deletes them all.
+    if party_size:
+        need = p.add(int(party_size))
+        where.append(f"(o.max_party_size IS NULL OR o.max_party_size >= {need})")
+        where.append(f"(o.min_party_size IS NULL OR o.min_party_size <= {need})")
 
     geo_join = ""
     geo_select = "NULL::float8 AS meters, NULL::text AS district"
