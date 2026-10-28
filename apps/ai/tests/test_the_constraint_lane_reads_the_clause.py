@@ -65,6 +65,21 @@ NOT_REFUSALS = (
 KEY_OF = {
     "spicy": "cuisine_avoid",
     "curry": "cuisine_avoid",
+    # D584 gave every cuisine the ASK lane names a refusal surface, and the surfaces enter
+    # the canon - the 10 values below are what that wrote here. Declared by what the fact IS,
+    # not read off the rule table: a user who refuses 素食 refuses a cuisine the corpus tags,
+    # which is the lane that filters. 素食's own value was already declared by someone else's
+    # sentence, so it is not among these.
+    "cantonese": "cuisine_avoid",
+    "dim_sum": "cuisine_avoid",
+    "indian": "cuisine_avoid",
+    "italian": "cuisine_avoid",
+    "japanese": "cuisine_avoid",
+    "korean": "cuisine_avoid",
+    "malaysian": "cuisine_avoid",
+    "thai": "cuisine_avoid",
+    "vegetarian": "cuisine_avoid",
+    "western": "cuisine_avoid",
     "pork": "diet_avoid",
     "beef": "diet_avoid",
     "seafood": "diet_avoid",

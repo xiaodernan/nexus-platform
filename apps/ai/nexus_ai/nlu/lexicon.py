@@ -847,7 +847,7 @@ def _add_cuisine_refusal_surfaces() -> None:
     beside it (D493: one word, one set of spellings, both directions).
 
     So the surfaces come from `CUISINE_TERMS`, and the ninth cuisine cannot be added to the
-    ask side without the refuse side getting it too. Two guards keep the change from moving
+    ask side without the refuse side getting it too. Three guards keep the change from moving
     a sentence that already works:
 
     * a surface that already refuses something keeps that meaning. 咖哩 stays `curry` and
@@ -855,7 +855,12 @@ def _add_cuisine_refusal_surfaces() -> None:
       fill a gap - no (rule, value) pair a user's sentence produced before changes now;
     * a one-character CJK surface is not derived. 齋 and 蟹 complete longer words (長齋, 蟹黃)
       and D579's word-boundary rule is not in the matcher yet, so neither lane may trust a
-      single character - the same floor D582 left 吵 on.
+      single character - the same floor D582 left 吵 on;
+    * a surface whose value another row already refuses goes to THAT row. 生蠔 and 大排档 are
+      the ask lane's spellings of the seafood cuisine, and 海鮮 has refused `seafood` as a
+      diet fact from the beginning, so the cuisine row would have been a second lane for one
+      fact (D545) - the five surfaces 海魚菜, 生蚝, 生蠔, 大排檔, 大排档 refuse seafood in the
+      diet row, which filters the same rows the D584 measurement counted.
 
     Runs after the canonicalisation, because `_canonical_node` REBINDS the table it
     canonicalises: a row list built beside CONSTRAINT_RULES would freeze the pre-canonical
@@ -877,7 +882,18 @@ def _add_cuisine_refusal_surfaces() -> None:
         # surface, and deriving `western` for it would refuse a second thing than it does.
         return any(surface == e or (e and e in surface) for e in already)
 
-    derived: list[str] = []
+    # The lane each value is already refused in, read off the rows before anything is added.
+    # A cuisine word whose value another row already refuses belongs to THAT row: 生蠔 is the
+    # ask lane's spelling of the seafood cuisine, and 海鮮 has refused `seafood` as a diet
+    # fact from the start, so writing it under the cuisine row would have the same fact
+    # arrive under two keys. The plan merges every key into one `avoid` list (D546), so the
+    # filter does not change either way - which is why nothing downstream ever noticed.
+    owned: dict[str, str] = {}
+    for key, _negs, values in rules:
+        for surface in values:
+            owned.setdefault(canon_constraint(str(surface).strip()), key)
+
+    by_key: dict[str, list[str]] = {}
     for value, surfaces in terms.items():
         for surface in surfaces:
             word = str(surface).strip()
@@ -885,19 +901,20 @@ def _add_cuisine_refusal_surfaces() -> None:
                 continue
             if len(word) == 1 and not word.isascii():
                 continue
-            derived.append(word)
             canon.setdefault(word, value)
             canon.setdefault(word.lower(), value)
-    if derived:
-        # Folded into the row that already refuses cuisines rather than added as a twin:
+            # the value the lane will actually write, which is the canon's answer and not
+            # necessarily the ask vocabulary's key.
+            by_key.setdefault(owned.get(canon_constraint(word), "cuisine_avoid"), []).append(word)
+    if by_key:
+        # Folded into the rows that already refuse these kinds rather than added as twins:
         # the canon is taken per SURFACE, so 辣 keeps `spicy` and 咖哩 keeps `curry` beside
         # the 96 new words, and a reader of this table sees one cuisine row, not two that
         # differ only in when they were written down.
         for index, (key, negs, values) in enumerate(rules):
-            if key == "cuisine_avoid":
-                rules[index] = (key, negs, [*values, *derived])
-                return
-        rules.append(("cuisine_avoid", list(_CONSTRAINT_NEGATIONS), derived))
+            extra = by_key.get(key)
+            if extra:
+                rules[index] = (key, negs, [*values, *extra])
 
 
 _canonicalise_vocabulary()

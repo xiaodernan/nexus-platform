@@ -109,12 +109,15 @@ def test_a_degree_adverb_in_the_gap_keeps_the_refusal_whole(value: str, negation
 #: the gap vocabulary itself: every degree adverb x every bridge verb, the negation and the
 #: surface strided so the walk covers every one of each (the floor clause below proves it).
 DEGREE_VERB_GAPS = tuple(f" {d} {v} " for d in DEGREES for v in VERBS)
-#: Both axes walk with step one and the door holds more rows than either table has
-#: entries, so the negation axis and the surface axis are each covered whole - no
-#: stride arithmetic to get wrong, and the floor clause below proves it either way.
-GAP_ROWS = [(gap, SHARED_NEGATIONS[i % len(SHARED_NEGATIONS)],
+#: All three axes walk with step one and the walk runs as long as the LONGEST table, so each
+#: axis is covered whole - no stride arithmetic to get wrong, and the floor clause below
+#: proves it either way. D584 grew the surface table past the gap table (50 gaps, 117
+#: surfaces), and a walk the length of the gaps silently dropped 67 surfaces from the census;
+#: the stride is what moved here, not the coverage the clause claims.
+GAP_ROWS = [(DEGREE_VERB_GAPS[i % len(DEGREE_VERB_GAPS)],
+            SHARED_NEGATIONS[i % len(SHARED_NEGATIONS)],
             VALUES[i % len(VALUES)])
-            for i, gap in enumerate(DEGREE_VERB_GAPS)]
+            for i in range(max(len(DEGREE_VERB_GAPS), len(SHARED_NEGATIONS), len(VALUES)))]
 
 
 @pytest.mark.parametrize("gap,negation,value", GAP_ROWS,

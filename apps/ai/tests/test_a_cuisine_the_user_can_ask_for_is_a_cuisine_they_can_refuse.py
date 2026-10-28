@@ -66,6 +66,11 @@ WAS_REFUSED = {
     "煙": ("smoking_avoid", "smoking"),
 }
 
+#: The surfaces `CUISINE_TERMS['seafood']` names that no refusal row carried before the
+#: derivation - measured, not chosen. 海鮮 already refused the value, so these five arrived
+#: as the first NEW thing to refuse seafood and went into the cuisine row anyway.
+SEAFOOD_ONLY_SURFACES = ("生蠔", "生蚝", "海魚菜", "大排档", "大排檔")
+
 
 class TestTheCensusOfTheVocabulary:
     def test_every_cuisine_the_ask_lane_names_can_be_refused(self):
@@ -113,6 +118,29 @@ class TestTheCensusOfTheVocabulary:
         assert len(keys) == len(set(keys)), (
             f"CONSTRAINT_RULES carries the same kind twice: {keys} - a table whose rows are "
             f" distinguished only by when they were written is a table nobody can read")
+
+    def test_no_value_is_refused_under_two_lanes(self):
+        # D545's invariant, walked over the whole table: the row a value sits in is the lane
+        # the fact is declared in, and the plan merges EVERY key into one `avoid` list (D546),
+        # so a value carried by two rows filters exactly as well as one - which is precisely
+        # why nothing downstream ever noticed the drift.
+        lanes: dict[str, set[str]] = {}
+        for key, _negs, values in LX.CONSTRAINT_RULES:
+            for surface in values:
+                lanes.setdefault(LX.canon_constraint(str(surface).strip()), set()).add(key)
+        split = {value: sorted(keys) for value, keys in lanes.items() if len(keys) > 1}
+        assert not split, (
+            f"{split} is refused under two keys - one fact is one lane, and a vocabulary "
+            f"whose contract test reads the value to a key can only say WHICH if it is one")
+
+    @pytest.mark.parametrize("surface", SEAFOOD_ONLY_SURFACES, ids=list(SEAFOOD_ONLY_SURFACES))
+    def test_a_seafood_dish_refuses_it_in_the_row_that_already_refuses_seafood(
+            self, surface: str) -> None:
+        hits = _refuses(surface)
+        assert hits == [("diet_avoid", "seafood")], (
+            f"{CUE}{surface} wrote {hits} - the ask lane files this word under the seafood "
+            f"cuisine, but 海鮮 has refused that value as a diet fact since before this "
+            f"lane grew, and a surface may not move the value it refuses to a second lane")
 
 
 class TestTheRefusalReachesTheCorpusVocabulary:
