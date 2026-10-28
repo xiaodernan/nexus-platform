@@ -193,6 +193,7 @@ def build_merchant_query(
     geo: tuple[float, float] | None = None,
     radius_m: int | None = None,
     limit: int = 60,
+    with_total: bool = False,
 ) -> CandidateQuery:
     p = Params()
     cfg = _tsconfig(ts_config)
@@ -366,8 +367,16 @@ def build_merchant_query(
     order_expr = (f"(GREATEST({kw_score}, COALESCE(vv.vec_score, 0)))" if embedding
                   else kw_score)
 
+    # D599: `total_estimate` was `len(ranked)`, and the candidate fetch is capped at
+    # `max(60, limit * 3)`, so every answer above the cap claimed the cap as its total: the
+    # `restaurant` root holds 184 merchants and answered 150. This window counts the rows the
+    # WHERE matches BEFORE the ORDER BY / LIMIT, so one round trip answers both the page and
+    # the pool. Measured on the seeded plane (2026-10-29): the exact counts are cafe 79,
+    # restaurant 184, unfiltered 470, and the unfiltered query cost 22.4 ms with the column
+    # against 234.1 ms without it cold.
+    total_select = "count(*) OVER () AS pool_total,\n       " if with_total else ""
     sql = f"""
-SELECT m.id, m.slug, m.display_name, m.display_name_zh, m.description, m.category_primary,
+SELECT {total_select}m.id, m.slug, m.display_name, m.display_name_zh, m.description, m.category_primary,
        m.avg_price_hkd, m.rating_agg, m.review_count, m.popularity_score, m.tags,
        m.attributes, m.data_origin, m.plan, m.images, m.ai_agent_enabled,
        {category_slugs_select} AS category_slugs,
@@ -407,6 +416,7 @@ def build_offering_query(
     geo: tuple[float, float] | None = None,
     radius_m: int | None = None,
     limit: int = 60,
+    with_total: bool = False,
 ) -> CandidateQuery:
     """Offerings carry no chunks of their own, so this lane is keyword+metadata+geo
     only — honestly documented rather than faking a vector score (§13 lanes)."""
@@ -523,8 +533,11 @@ def build_offering_query(
               SELECT '%'||x||'%' FROM unnest({av_ph}::text[]) x)
             OR coalesce(o.attributes->'allergens','[]'::jsonb) ?| {av_ph}::text[])"""
 
+    # D599: the offering lane's own pool size, the same window as the merchant lane; the
+    # search service sums the lanes it asked for and reports that instead of the capped page.
+    total_select = "count(*) OVER () AS pool_total,\n       " if with_total else ""
     sql = f"""
-SELECT o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.description, o.description_zh,
+SELECT {total_select}o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.description, o.description_zh,
        o.kind, o.price_amount, o.price_min, o.price_max, o.currency, o.price_model,
        o.price_source, o.price_updated_at, o.stock_quantity, o.stock_updated_at,
        o.bookable, o.min_party_size, o.max_party_size, o.rating_agg, o.review_count,

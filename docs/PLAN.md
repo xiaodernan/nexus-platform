@@ -2062,3 +2062,13 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `ambience`, `mtr_distance`); whether any of them is a thing a guest would refuse is a product
   question, and inventing a mapping would be this lane writing its own evidence. Owner: the AI
   lane with the seed lane.
+
+- **`total_estimate` reported the candidate cap as the corpus's size - closed by D599** - the
+  search path fetched `max(60, limit * 3)` candidates and answered `len(ranked)`, so the
+  `restaurant` root (184 merchants) and the unfiltered catalogue (470) both answered 150. Each
+  candidate SELECT now carries an opt-in `count(*) OVER () AS pool_total` (a window taken before
+  its ORDER BY / LIMIT), the service sums the lanes it asked for, and the response reports
+  `max(len(ranked), pool_total)`. Residue: a text query's total is the size of the MATCHING pool,
+  not of the rows the relevance floor keeps, and the window costs a full evaluation of the WHERE
+  set on every search (22.4 ms against 234.1 ms cold on the unfiltered query here, i.e. inside
+  the noise at this corpus size but not free at production scale).

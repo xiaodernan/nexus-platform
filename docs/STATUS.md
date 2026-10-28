@@ -26047,3 +26047,36 @@ doors: All checks passed.
 human read off the generator are on them. `weak_aspects` carries more names than the lexin can
 refuse (`service`, `seating`, `taste`, `ambience`, `mtr_distance`), and whether any is a refusal
 is a product question - filed in PLAN rather than mapped by guess.
+
+## 595. D599 · `total_estimate` reported the candidate cap as the corpus's size (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_total_estimate_counts_the_pool_behind_the_cap.py`)
+
+**What was measured.** `search()` fetched candidates with `limit=max(60, plan.limit * 3)` and
+answered `total_estimate=len(ranked)`, so no answer could exceed that cap. Measured on the live
+plane (2026-10-29) with `limit=150`: the `restaurant` root holds **184** published merchants and
+the page stopped at **150**; the unfiltered catalogue holds **470** and the page stopped at
+**150**; only populations already under the cap (`cafe` 79, `bar` 39) answered their true size.
+`docs/API_CONTRACT.md` §2 names the field `total_estimate`, and the live category door already
+asserts equality with the taxonomy's own count - true only while the population fit the cap.
+
+**The fix is one round trip.** Both builders gain `with_total: bool = False`; when set, the
+SELECT opens with `count(*) OVER () AS pool_total`, a window taken over the rows the WHERE
+matches BEFORE the ORDER BY / LIMIT. Measured: cafe 79, restaurant 184, unfiltered 470 - exact,
+not extrapolated. The unfiltered merchant query cost **22.4 ms** with the column against
+**234.1 ms** without it on the first (cold) run, so the column is not a tax at this corpus size.
+The service asks for it with `with_total=True` on the lanes the plan actually queries, sums their
+`pool_total` (the two lanes cannot double-count: dedupe is keyed on `subject_type:subject_id`),
+and reports `max(len(ranked), pool_total)`, so a population that already fit never shrinks.
+
+**What this does not claim.** A text query's total is the size of the MATCHING pool, not of the
+rows the relevance floor keeps after ranking - the floor runs after the page is fetched and the
+window cannot see it. The card list stays ranked and floored; the number answers "how many
+results exist". Filed in PLAN with the cost note.
+
+**Verified after the edit.** The new door plus `test_search_pipeline.py` and
+`test_search_sql.py`: **23 passed**; `test_contract.py`, `test_preferences_are_soft.py` and
+`test_search_plan.py`: **68 passed**; the live door `test_live_search_contract.py` (which asserts
+`total_estimate` equals the taxonomy's count for six leaves and three roots): **13 passed** with
+`NEXUS_TEST_DATABASE_URL` set. `ruff check` over the two modules and the door: All checks passed.
+
+- readers: `with_total` in `build_merchant_query` / `build_offering_query`, `_pool_total()` and
+  the `total_estimate=` line in `search()`.

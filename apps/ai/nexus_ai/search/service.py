@@ -868,6 +868,19 @@ def _slot_window(plan: SearchPlan) -> tuple[datetime, datetime] | None:
     return at - timedelta(minutes=30), at + timedelta(hours=2)
 
 
+def _pool_total(rows: Sequence[dict[str, Any]]) -> int:
+    """The lane's own row count, read from the window column when the backend answers it.
+
+    `pool_total` is `count(*) OVER ()` in the candidate SELECT, i.e. the size of the WHOLE
+    filtered pool before its LIMIT (D599). A fixture backend has no LIMIT to hit and no window
+    column, so the rows it returned ARE its pool.
+    """
+    if not rows:
+        return 0
+    value = rows[0].get("pool_total")
+    return int(value) if value is not None else len(rows)
+
+
 async def search(*, backend: SearchBackend, plan: SearchPlan,
                  weights: RankingWeights | None = None,
                  tenant_id: UUID | str = DEFAULT_TENANT_ID,
@@ -899,15 +912,27 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     # the user's own words (plan.query_text is untouched).
     from nexus_ai.nlu.canonical import canonical
 
+    # D599: `total_estimate` answers how many subjects the query matched, not how many fit in
+    # the candidate page. The page is capped at `max(60, plan.limit * 3)`, so `len(ranked)`
+    # could never exceed that cap: a caller naming the `restaurant` root (184 merchants) was
+    # told 150. Each lane's SELECT carries `pool_total` (a window count taken before its
+    # ORDER BY / LIMIT) when asked, and the response reports that sum; a backend that does not
+    # answer the column keeps `len(ranked)`, and the larger of the two wins so a page that was
+    # not capped by the pool never shrinks its answer.
     common = dict(tenant_id=str(tenant_id), text=canonical(plan.query_text) or None,
                   filters=plan.filters, geo=plan.geo, radius_m=plan.radius_m,
-                  limit=max(60, plan.limit * 3))
+                  limit=max(60, plan.limit * 3), with_total=True)
+    pool_total = 0
     if "merchant" in plan.subject_types:
-        rows += await backend.merchant_candidates(embedding=list(embedding) if embedding
-                                                  else None, **common)
+        merchant_rows = await backend.merchant_candidates(
+            embedding=list(embedding) if embedding else None, **common)
+        rows += merchant_rows
+        pool_total += _pool_total(merchant_rows)
     if "offering" in plan.subject_types:
-        rows += await backend.offering_candidates(**{k: v for k, v in common.items()
-                                                     if k != "embedding"})
+        offering_rows = await backend.offering_candidates(
+            **{k: v for k, v in common.items() if k != "embedding"})
+        rows += offering_rows
+        pool_total += _pool_total(offering_rows)
     seen: set[str] = set()
     deduped: list[dict[str, Any]] = []
     for r in rows:
@@ -1549,7 +1574,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
         strategy += "+vector"
     response = SearchResponse(
         items=cards, facets=facets, took_ms=took_ms, strategy=strategy,
-        degraded=False, provider="none", total_estimate=len(ranked),
+        degraded=False, provider="none", total_estimate=max(len(ranked), pool_total),
         agent_run_id=None, relevance_floor_applied=True)
     return cards, response, bundle, top
 
