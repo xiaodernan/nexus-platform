@@ -152,7 +152,16 @@ def test_outdoor_is_empty_because_the_taxonomy_has_no_outdoor_leaf():
 # ------------------------------------------------------------------ the generated output
 def test_the_generated_corpus_carries_each_preference_on_both_sides():
     """A set that is right on paper and dead in the output proves nothing. This runs the
-    generator at its smallest scale and reads the attributes it actually wrote."""
+    generator and reads the attributes it actually wrote.
+
+    D586: it ran at `--merchants 60` until that census started failing on `scenic_view`, and
+    the failure was the GATE's, not the corpus's. Measured at the fixed default seed
+    (20260921), the attribute is written True for 0 of 60, 2 of 120, 6 of 240 and 11 of 520
+    merchants - about a 2% rate - so at 60 the check was a coin toss on a draw it could not
+    see, and a rare-but-live fact was being reported as dead. A census asserts something only
+    if the sample can carry it, so this now runs at the generator's own shipped scale, which
+    is the corpus the product is served (`--merchants` default 520, measured 20s).
+    """
     import csv
     import io
     import json
@@ -161,8 +170,7 @@ def test_the_generated_corpus_carries_each_preference_on_both_sides():
     out = tempfile.mkdtemp(prefix="nexus_seed_gate_")
     import generate as G  # noqa: E402  (the generator this gate is holding to the tree)
 
-    rc = G.main(["--merchants", "60", "--offerings", "120", "--reviews", "200",
-                 "--days", "2", "--out", out, "--skip-selfcheck"])
+    rc = G.main(["--reviews", "200", "--days", "2", "--out", out, "--skip-selfcheck"])
     assert rc == 0, "the generator refused to run"
     raw = (Path(out) / "06_merchants.sql").read_text(encoding="utf-8").split("\n")
     header = next(line for line in raw if line.startswith("COPY "))
@@ -172,6 +180,13 @@ def test_the_generated_corpus_carries_each_preference_on_both_sides():
                         if line and not line.startswith(("COPY", "--", "\\")))
             if len(p) == len(cols)]
     assert rows, "the generator wrote no merchant rows"
+    # D586: the census means nothing below the scale that can carry it. If someone puts a
+    # small `--merchants` back, this fails as "the sample is too small to census" instead of
+    # reporting the rarest attribute as dead.
+    assert len(rows) >= 500, (
+        f"the census ran on {len(rows)} merchants - at that scale a 2%-rate attribute like "
+        f"scenic_view is absent about half the time, so a zero here would say more about the "
+        f"sample than about the corpus")
     counts = {attr: 0 for attr in DERIVATIONS}
     for parts in rows:
         attrs = json.loads(parts[at])
@@ -182,6 +197,6 @@ def test_the_generated_corpus_carries_each_preference_on_both_sides():
         if set_name == "OUTDOOR_LEAVES":
             continue
         assert counts[attr] > 0, (
-            f"the generator wrote {attr!r} as True for 0 of {len(rows)} merchants - the "
-            f"attribute is dead in the corpus the product is served, so the preference "
-            f"the NLU emits is inert")
+            f"the generator wrote {attr!r} as True for 0 of {len(rows)} merchants (the other "
+            f"census counts are {counts}) - the attribute is dead in the corpus the product "
+            f"is served, so the preference the NLU emits is inert")
