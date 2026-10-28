@@ -131,17 +131,18 @@ class TestCategoryMatching:
         assert cat == "retail"
         assert conf == 0.7
 
-    def test_specific_over_generic_discrepancy(self):
-        # ACTUAL behaviour: when a *specific* category (pet) and a *generic* one
-        # (restaurant) both match, the specific wins even though 餐廳 is rightmost.
-        # NOTE: this contradicts the module docstring's "rightmost wins" claim
-        # (it cites 可带宠物**的餐厅** as the example that should yield restaurant).
-        # Pinned as-is to lock current behaviour; flagged in STATUS §351 for the
-        # author to confirm intent (a pet-shop token may be hijacking restaurant
-        # queries). No code change made on a guess.
-        cat, conf = L.match_category("可帶寵物的餐廳")
-        assert cat == "pet"
-        assert conf == 0.95
+    def test_the_possessive_marks_the_head(self):
+        # D603 answered the question §351 flagged. A specific word still beats a generic one
+        # in a compound (寵物美容 is a pet groomer), but 的/嘅 introduces the noun the sentence
+        # is ABOUT: 可帶寵物的餐廳 is a restaurant that allows pets. Measured before the fix,
+        # this sentence produced `category=pet` and the search answered with ten pet groomers.
+        cat, _conf = L.match_category("可帶寵物的餐廳")
+        assert cat == "restaurant"
+        # the rule is about the POSSESSIVE, not about demoting every specific word: in a
+        # compound the head is still the last word, so 寵物美容 is a beauty salon whose
+        # modifier is 寵物, and 寵物餐廳 keeps the specific word as the category (unchanged).
+        assert L.match_category("寵物美容")[0] == "beauty"
+        assert L.match_category("寵物餐廳")[0] == "pet"
 
 
 # --------------------------------------------------------------------------- cuisine

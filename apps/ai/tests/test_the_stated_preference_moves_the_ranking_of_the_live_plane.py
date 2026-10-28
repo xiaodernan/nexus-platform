@@ -11,7 +11,7 @@ Measured on the seeded plane 2026-10-29 (470 published merchants, no embeddings)
     query               attribute            population   base   top10   lift
     安靜的咖啡店        quiet_ambience       79 cafes     0.43   0.60    1.39
     適合情侶約會的地方  date_occasion        184 rest.    1.00   1.00    1.00
-    可以帶寵物的餐廳    pet_friendly_access  10 (!!)      0.30   0.30    1.00
+    可以帶寵物的餐廳    pet_friendly_access  184 rest.    0.22   0.50    2.24
     有戶外座位的餐廳    outdoor_seating      184 rest.    0.23   0.20    0.88
     有停車場的餐廳      parking_access       184 rest.    0.28   0.00    0.00
     近地鐵站的餐廳      mtr_near_access      184 rest.    0.30   0.20    0.67
@@ -28,10 +28,10 @@ Three findings, each named rather than smoothed over:
   true on 28% of restaurants and 0 of the top ten; outdoor and MTR sit at 0.88 and 0.67. The
   row below asserts the measured state so that a fix reddens it and forces this table to move.
 
-The pet case is worse than a ranking miss - the plan it produced was `category=pet`, i.e. pet
-GROOMERS, because the sentence named 寵物 and the rightmost-cue rule in `match_category` read it
-over the head noun 餐廳. That is filed in PLAN as its own defect; it is why that population is 10
-rows and not 184.
+The pet row was a MISREAD until D603, not a ranking miss: the plan was `category=pet`, i.e. ten
+pet GROOMERS, because the specific-word rule read 寵物 over the head noun 餐廳. D603 made 的/嘅
+mark the head (`帶寵物的餐廳` is a restaurant, `寵物美容` is still a pet groomer), and with the
+right population the preference lifts 0.22 -> 0.50 (lift 2.24). The table shows the after.
 """
 
 from __future__ import annotations
@@ -47,6 +47,7 @@ DB_URL = os.environ.get("NEXUS_TEST_DATABASE_URL", "").strip()
 
 CASES = [
     ("安靜的咖啡店", "quiet_ambience"),
+    ("可以帶寵物的餐廳", "pet_friendly_access"),
     ("適合情侶約會的地方", "date_occasion"),
     ("有戶外座位的餐廳", "outdoor_seating"),
     ("有停車場的餐廳", "parking_access"),
@@ -54,7 +55,7 @@ CASES = [
 ]
 
 #: the two the ranking is expected to answer; the access three are measured, not yet answered.
-WORKING = {"安靜的咖啡店": 1.2}
+WORKING = {"安靜的咖啡店": 1.2, "可以帶寵物的餐廳": 1.5}
 
 
 def _true(row, attr):

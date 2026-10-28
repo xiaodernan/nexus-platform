@@ -26270,3 +26270,34 @@ to move. A door that recorded a 0.00 lift as "expected" without that shape would
 `ruff check`: All checks passed. No product line moved in this unit.
 
 - readers: the case table, `WORKING`, and the three live rows.
+
+## 600. D603 · 帶寵物的餐廳 was answered with ten pet groomers, and §351's pinned row had said so (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_lexicon.py`, `apps/ai/tests/test_the_stated_preference_moves_the_ranking_of_the_live_plane.py`)
+
+**What was measured.** D602's ranking door found the pet case answering 10 rows, not 184:
+`可以帶寵物的餐廳` produced `category=pet`. `match_category` sorts its hits by rightmost cue, then
+lets a SPECIFIC category beat a GENERIC one (`retail`/`attraction`/`restaurant`) regardless of
+position - so 寵物 (specific, ending at 4) beat 餐廳 (generic, ending at 9). The search answered
+with pet groomers and the `pet_friendly` preference never had a restaurant to rank.
+
+**The rule.** The possessive marks the head: 的/嘅 before a generic cue makes that cue the noun the
+sentence is about. Measured after the edit - `可以帶寵物的餐廳` -> **restaurant** (0.70),
+`帶寵物的餐廳` -> restaurant, `帶寵物的咖啡店` -> cafe, while `寵物美容` -> **beauty** (the head is
+美容, 寵物 is its modifier) and `寵物餐廳` -> **pet** (unchanged: a compound keeps the specific
+word). The pet-friendly preference now has the right population and lifts it: base **0.22** ->
+top-10 **0.50**, lift **2.24** (D602's door, now a gated case at >= 1.5).
+
+**The row that had already named it.** `test_lexicon.py::TestCategoryMatching::
+test_specific_over_generic_discrepancy` pinned the old answer with a comment saying it contradicted
+the module docstring, that it was "flagged in STATUS §351 for the author to confirm intent", and
+"no code change made on a guess". This unit answers that question, so the row becomes
+`test_the_possessive_marks_the_head` and asserts both sides of the rule (possessive sentence vs
+compound).
+
+**Verified.** `test_lexicon.py`: **48 passed, 1 failed** - the failure is
+`test_unknown_lowercased`, red at HEAD before this change (filed under D584's follow-up).
+`intent_v1` + `safety_injection_v1` with `--fail-on-gate`: **PASS**. The ranking door, the
+retrieval door and `test_search_plan`: **38 passed** with `NEXUS_TEST_DATABASE_URL` set.
+`ruff check` over the module and the two doors: All checks passed.
+
+- readers: `_possessive_before`, the `generic_head` branch in `match_category`, and the updated
+  lexicon row.

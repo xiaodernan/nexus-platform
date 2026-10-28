@@ -620,6 +620,11 @@ LEAF_SYNONYMS: dict[str, tuple[str, ...]] = {
 }
 
 
+def _possessive_before(canon: str, start: int) -> bool:
+    """Whether the cue at `start` is introduced by 的/嘅, i.e. it is the noun being described."""
+    return start > 0 and canon[start - 1] in ("的", "嘅")
+
+
 def match_category(text: str) -> tuple[str, float] | None:
     """Return (category, confidence). Confidence 0.95 for a direct hit, lower for the
     generic `retail`/`attraction` fallbacks so the model never over-claims.
@@ -650,8 +655,15 @@ def match_category(text: str) -> tuple[str, float] | None:
     if not hits:
         return None
     hits.sort(key=lambda x: (-x[0], -x[1], x[2]))
-    specific = [h for h in hits if h[2] not in ("retail", "attraction", "restaurant")
-                and h[1] >= 2]
+    # D603: the possessive marks the HEAD. 宠物美容 is a pet groomer (specific word first), but
+    # 帶寵物的餐廳 is a RESTAURANT that allows pets - the 的 makes 餐廳 the noun the sentence is
+    # about, and reading 寵物 as the category answered a sentence about restaurants with ten pet
+    # groomers. Measured at HEAD: `match_category('可以帶寵物的餐廳')` answered `pet`.
+    generic_head = any(h[2] in ("retail", "attraction", "restaurant")
+                       and _possessive_before(canon, h[0] - h[1]) for h in hits)
+    specific = ([] if generic_head else
+                [h for h in hits if h[2] not in ("retail", "attraction", "restaurant")
+                 and h[1] >= 2])
     rightmost, best_len, best_cat = (specific or hits)[0]
     generic = best_cat in ("retail", "attraction", "restaurant")
     return best_cat, (0.7 if generic and best_len <= 2 else 0.95)

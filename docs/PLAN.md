@@ -2110,11 +2110,10 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   most 0.06 while quality and distance spread wider. The fix is a ranking decision (a query-stated
   preference is stronger evidence than a stored one; or the weight is data to revisit), and the
   door now asserts the defect so a fix reddens it. Owner: the AI lane with the ranking owner.
-- **`可以帶寵物的餐廳` is answered with pet groomers** - `match_category`'s rightmost-cue rule read
-  寵物 over the head noun 餐廳 and produced `category=pet`; the answer population is 10 pet
-  groomers, and the pet-friendly preference never gets a chance on it. The fix is a head-noun rule
-  for the bucket matcher (the leaf reader already has one), measured by D600's door once the plan
-  is right. Owner: the AI lane.
+- **`可以帶寵物的餐廳` answered pet groomers - closed by D603** - the possessive now marks the
+  head (`可帶寵物的餐廳` -> restaurant, `寵物美容` -> beauty, `寵物餐廳` -> pet unchanged), and with
+  the right population the pet-friendly preference lifts 0.22 -> 0.50 (2.24). The §351 pin in
+  `test_lexicon.py` was rewritten to assert both sides.
 - **`date_occasion` is true on every restaurant** - 184 of 184, so the occasion/date preference is
   inert on this corpus in the same way `indoor_style` is. Either the seed writes the fact where it
   discriminates or the preference is documented as a corpus constant and its door row keeps
