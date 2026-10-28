@@ -2241,23 +2241,33 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
 
 - **The district every card prints is a fact the card lane never fetches - the plane keys its
   address facts to the location row, and the card's fetch binds merchant ids (found measuring
-  D608's collateral)** - `facts` holds 684 `address` rows, all of them `subject_type='location'`
-  with `subject_id = locations.id` (measured: 684 of 684 hit `locations.id`, 0 hit `merchants.id`),
-  and every one of the 684 carries its own `merchant_id` column, so the join exists.
-  `facts_for` (`search/sql.py`) asks `subject_id = ANY(<the card's subject ids>::uuid[])` and the
-  card lane passes merchant/offering ids: over the plane's first 40 merchants that bind returns 160
-  facts - 40 each of `cuisine`, `opening_hours`, `price`, `rating` - and 0 address facts. A live geo
-  answer at Central (10 cards) therefore carries `price` 54, `opening_hours` 54, `cuisine` 54,
-  `rating` 64 plus the synthesised `distance_m`/`open_state`/`relevance`/`mtr_proximity` 10 each and
-  **no `address` fact at all**: 0 of 10 cards raise `district_match` - `_fact_for` maps that label
-  to `address`, so it can never resolve - while 10 of 10 print `· Central` in `subtitle`, ungrounded
-  (§18 asks every bullet to name a fact, and here the sentence that would name one is the one that
-  cannot). `address_line1` arrives in the same row and is read by nothing in the AI lane (census: 0;
-  web 4, Java 15 - both on the platform-catalog path, not the card). Two fix shapes, different
-  reach: project the location id the geo LATERAL already selects (`SELECT l.id`, unprojected today
-  on both lanes) and bind those ids in the fact fetch, or read address facts by their own
-  `merchant_id`. This is D589's class - a rendered value with no fact behind it - one column over.
-  Owner: the AI lane.
+  D608's collateral) - closed by D609**: `facts` holds 684 `address` rows, all of them
+  `subject_type='location'` with `subject_id = locations.id` (measured: 684 of 684 hit
+  `locations.id`, 0 hit `merchants.id`) - the one attribute this plane files under a third kind
+  of subject - and `facts_for` (`search/sql.py`) asks `subject_id = ANY(<the card's subject ids>
+  ::uuid[])`, which the card lane fills with merchant/offering ids; over the plane's first 40
+  merchants that bind returns 160 facts, 40 each of `cuisine`, `opening_hours`, `price`, `rating`,
+  and 0 address facts. The location's uuid was on no list the load could ask for: the geo LATERAL
+  selects `l.id` inside its subquery and projects five other columns, never the id, so the row was
+  never fetched rather than filtered out. A live geo answer at Central (10 cards) therefore carried
+  `price` 54, `opening_hours` 54, `cuisine` 54, `rating` 64 plus the synthesised
+  `distance_m`/`open_state`/`relevance`/`mtr_proximity` 10 each and **no `address` fact at all**:
+  0 of 10 cards raise `district_match` - `_fact_for` maps that label to `address`, so it can never
+  resolve - while 10 of 10 print `· Central` in `subtitle`, ungrounded (§18 asks every bullet to
+  name a fact, and here the sentence that would name one is the one that cannot). Of the two shapes
+  filed here the first shipped, because the second cites the wrong district: 133 of the plane's 145
+  published multi-location merchants keep their NEAREST location in a different district from their
+  PRIMARY one (松屋: Ma On Shan / Tai Wai), and 77 of 520 merchants have locations in more than one
+  district. `build_merchant_query` and `build_offering_query` both project `loc.id AS location_id`
+  (`NULL::uuid` when a page asks no geo), the page's single fact fetch asks for the deduplicated
+  union of candidate and location ids, and a row that names a location cites that location's fact
+  and no other. After, live on both lanes: **6 of 6 cards raise the bullet, 6 of 6 carry the
+  `address` fact on `cards[].facts`, the bundle holds 54 of them over 54 distinct locations, and
+  all 18 lane×locale pages report 0 ungrounded bullets and 0 citations disagreeing with the printed
+  word**; a page with no geo still asks for its own 60 ids and loads 0 address facts. This is
+  D589's class - a rendered value with no fact behind it - one column over. `address_line1` arrives
+  in the same row and is still read by nothing in the AI lane (census: 0; web 4, Java 15 - both on
+  the platform-catalog path, not the card), which stays open below. Owner: the AI lane.
 
 - **Two of the census's zero-reader tokens were the census being wrong, and the ones left are named
   here rather than "fixed" (D608's method, audited)** - `merchant_lively_ambience` is read: the
@@ -2283,3 +2293,70 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   and its numbers are the day's plane - they have to be re-measured, not remembered. Three units
   have now come out of the same question: D607 (`min/max_party_size`), D608
   (`mtr_station`/`mtr_walk_min`), and the `address` keying above.
+
+- **Reaching the district's fact widened what the verifier will accept as grounded (the cost D609
+  disclosed instead of absorbing)** - `build_ground_set` feeds every scalar of every bundle fact,
+  so a merchant geo page's set goes from **1,078 numbers / 323 strings to 1,186 / 600** and an
+  offering page's from 264 / 94 to 340 / 289 (`tmp/d609_final_live.py`). The 277 new strings are the
+  district and address words the cards now print, which is the point. The 108 new numbers are the
+  `lat`/`lng` pairs inside those same 684 `address` values, and `TOLERANCE[NUMBER_KIND]` is
+  `(0.01, 0.5)` (`trust/verification.py`): a number a model invents within half a degree of a real
+  latitude - about 55 km - now matches a fact and reads as grounded. That tolerance was written for
+  prices and distances, not for coordinates, and D609 made 54 of them reachable per page. Either the
+  table carries a per-kind tolerance with a km-scale bound for `lat`/`lng`, or the geo scalars stay
+  out of the ground set while the district half of the same value stays in. Owner: the trust lane
+  with the AI lane.
+
+- **A location's clock joins the bundle and no score, and nothing decides whether that is right** -
+  `facts_from_rows` groups into `facts_by_subject` under each fact's OWN `subject_id`, and
+  `Candidate.freshness` reads `facts_by_subject.get(subject_id)` for the candidate's own id
+  (`search/service.py:808`), so the 54 location facts D609 now loads cannot lift or sink the
+  merchant's freshness contribution. D609 pinned that with
+  `test_a_location_fact_moves_no_ranking_number` because a citation unit must not re-rank the plane
+  on the side; the open question is the product one - a merchant whose nearest location's address
+  fact is 36 days old but whose own four facts are fresh still scores as fresh today. Owner: the AI
+  lane with the ranking owner.
+
+- **§5's surfaced warning still exists only for price, and D609 put a stale word on more cards** -
+  all 684 `address` facts carry `observed_at = 2026-09-22 03:00 UTC` against
+  `FRESHNESS_TTL["address"] = 30 days`, so every one is past its TTL; 684 of 684 say `stale = false`
+  in the column, and `facts_from_rows` re-evaluates from the clock (D589's rule), so all 54 facts a
+  live geo page loads arrive `stale = True` - and the district bullet still rises, because
+  §18 asks a claim to trace to a fact id and this is the merchant's own statement of where it is
+  (`source = 'merchant'` on 684 of 684). §5 asks a stale value to be surfaced ("價格可能已更新"), and
+  the only lane that does that is the price one. Whether a district the user is about to walk to
+  earns the same banner, a weaker marker, or nothing, is a product decision about which stale
+  attributes are allowed to speak plainly; D609 names it rather than inventing a marker. Owner: the
+  AI lane with the product owner.
+
+- **The comparison grid files its own `address` fact under the merchant, and the card lane now
+  refuses that key** - `apps/ai/nexus_ai/api/routes_discover.py:325-330` (D401) synthesises a
+  merchant-keyed `address` fact when the grid finds none, from the merchant's primary location.
+  D609's rule is that a row which names a location cites that location's fact and nothing else,
+  because the nearest location and the primary one differ in district for 133 of the plane's 145
+  published multi-location merchants. So the same product shows the same merchant in two cells and
+  the two surfaces can vouch for different districts with different shapes of citation - one stored
+  under a key the plane's own `facts` table never uses, one stored and read under the location's id.
+  Reconciling them means either the grid reads the geo lane's location too, or the D401 synth stops
+  claiming a key the corpus does not file; either is a decision about who owns the grid's geo row.
+  Owner: the AI lane.
+
+- **The fact load's id list now grows with the places on a page, measured only at `limit` 6** - a
+  merchant geo page's candidate list is 54 rows naming 54 distinct locations, so its one `facts`
+  fetch binds 108 ids where it bound 54; an offering page is 60 rows over 38 distinct locations, so
+  60 to 98; a page with no geo still binds its own 60 (`tmp/d609_cost_probe.py`). The ids are
+  deduplicated, so the ceiling is the page's distinct locations rather than a multiple of its rows,
+  but the largest page actually shipped (`limit` 20 with `subject_types=('merchant',
+  'offering')`) has not been measured for either id count or the `facts` query's own time, and the
+  load has no cap. Owner: the AI lane.
+
+- **The offering page answered the same dish twice, and D609's live rows read it rather than
+  tripping on it** - `下午茶` near Central at `limit` 6 returns six cards of which two are
+  `雲吞蝦麵（下午茶版） Prawn Wantan Noodles` with the same merchant, district and price
+  (`tmp/d609_final_live.txt`), and 60 offering rows share their 38 locations unevenly for the same
+  reason. Both cards cite a real fact for the district they print, so nothing here is ungrounded.
+  The defect, if it is one, is that six slots hold two copies of one dish: nobody has measured
+  whether they are distinct `offerings.id` rows of one merchant, one row reached through two
+  locations, or the ranking's tie-break choosing the same product twice over. Filed because the
+  measurement was in front of this unit and its cause was not. Owner: the AI lane with the offering
+  ingest owner.

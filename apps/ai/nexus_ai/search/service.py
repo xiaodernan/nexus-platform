@@ -937,6 +937,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     w = weights or load_ranking_weights(_default_weights_path())
     bundle = FactBundle()
     subject_ids: list[str] = []
+    location_ids: list[str] = []
     merchant_ids: list[str] = []
     rows: list[dict[str, Any]] = []
 
@@ -984,8 +985,14 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
         subject_ids.append(str(r.get("subject_id") or r.get("id")))
         merchant_ids.append(str(r.get("merchant_id") or r.get("merchant_id_key")
                                 or r.get("id")))
+        # D609: a geo row names the location its district came from. This plane files every
+        # `address` fact under `locations.id` (measured 684 of 684, 0 under a merchant), so a
+        # load keyed only to the candidate subjects can never reach the district it prints.
+        if r.get("location_id"):
+            location_ids.append(str(r["location_id"]))
 
-    fact_rows = await backend.facts(subject_ids) if subject_ids else []
+    fact_subject_ids = list(dict.fromkeys(subject_ids + location_ids))
+    fact_rows = await backend.facts(fact_subject_ids) if fact_subject_ids else []
     for fact in facts_from_rows(fact_rows, now=plan.now):
         bundle.add(fact)
     facts_by_subject: dict[str, list[Any]] = {}

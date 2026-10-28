@@ -243,7 +243,7 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
     facts: list[Fact] = []
     for attribute in ("price", "avg_price_hkd", "rating", "opening_hours", "address",
                       "distance_m", "mtr_proximity", "open_state", "availability", "relevance"):
-        f = computed.get(attribute) or bundle.get(attribute, subject_uuid)
+        f = computed.get(attribute) or _fact_by_subject(bundle, attribute, cand)
         if f and f not in facts:
             facts.append(f)
 
@@ -431,6 +431,32 @@ def _reason_text(label: str, cand: Candidate, *, locale: str,
     return template
 
 
+#: The attributes this plane files under the LOCATION its geo row selects rather than under the
+#: card's own subject. Measured (`tmp/d609_district_cite_probe.py`, 2026-10-29): all 684
+#: `address` facts are keyed to `locations.id` and none to a merchant, while cuisine,
+#: opening_hours, price and rating are keyed to the merchant or the offering - `address` is the
+#: only attribute a card can print without being able to reach a fact for it.
+LOCATION_KEYED_ATTRIBUTES = frozenset({"address"})
+
+
+def _fact_by_subject(bundle: FactBundle, attribute: str, cand: Candidate) -> Fact | None:
+    """The fact for the subject the printed word actually came from.
+
+    A geo row names the location its district was read from (D609), so for an attribute filed
+    under locations the citation is THAT location's fact and no other: 77 of this plane's 520
+    merchants keep locations in more than one district and for 133 of the 145 published ones the
+    nearest location sits in a different district from the primary, so falling back to a
+    merchant-level address fact would vouch for a word the card is not printing. With no
+    location on the row, the card's own subject is the only rung there is - and it is the right
+    one, because that is where the in-memory demo lane files the same attribute
+    (`demo_data.py:151`).
+    """
+    rec = (cand.raw or {}).get("row") or (cand.raw or {})
+    if attribute in LOCATION_KEYED_ATTRIBUTES and rec.get("location_id"):
+        return bundle.get(attribute, _coerce_uuid(str(rec["location_id"])))
+    return bundle.get(attribute, _coerce_uuid(str(cand.subject_id)))
+
+
 def _fact_for(label: str, computed: dict[str, Fact], bundle: FactBundle,
               cand: Candidate) -> Fact | None:
     key = {"near_you": "distance_m", "slot_available": "availability",
@@ -440,15 +466,10 @@ def _fact_for(label: str, computed: dict[str, Fact], bundle: FactBundle,
            "district_match": "address", "within_budget": "price",
            "mtr_proximity": "mtr_proximity",
            "top_rated": "rating"}.get(label)
-    sid = _coerce_uuid(str(cand.subject_id))
     if key and key in computed:
         return computed[key]
     if key:
-        found = bundle.get(key, sid)
-        if found:
-            return found
-    if label in ("trending", "preference_match", "fresh_data"):
-        return None
+        return _fact_by_subject(bundle, key, cand)
     return None
 
 
@@ -516,9 +537,9 @@ def price_clock(rec: dict[str, Any]) -> datetime | None:
     """The row's own stamp for the price it publishes, or None when it has no such column.
 
     `V1__init.sql:228` annotates `offerings.price_updated_at` as "drives freshness TTL (§20)"
-    and `OfferingRepository` moves it on every price write; `sql.py:454` selects it into the
-    candidate row. `merchants` has no price clock, so a merchant row answers None - and the
-    reader then claims nothing rather than inventing a stamp.
+    and `OfferingRepository` moves it on every price write; `build_offering_query` selects it
+    into the candidate row. `merchants` has no price clock, so a merchant row answers None - and
+    the reader then claims nothing rather than inventing a stamp.
     """
     stamp = rec.get("price_updated_at")
     if isinstance(stamp, str):

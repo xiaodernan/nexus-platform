@@ -26848,7 +26848,7 @@ actually carry a value. The token this unit landed on is the transit pair. `docs
 names the consumer surface in Hong Kong terms ("district/area + MTR proximity"), and
 `docs/DATABASE.md:65` files that sentence as two columns of the location record (`mtr_station`,
 `mtr_walk_min`) - the platform's merchant surface ships them, and the AI lane's merchant SELECT
-projects them at `sql.py:269-270`. Measured: **0 readers** of either name anywhere in `nexus_ai`
+projects them at `sql.py:273-274`. Measured: **0 readers** of either name anywhere in `nexus_ai`
 outside the projection that puts them in the row. A real geo search (`咖啡店`, Central, r=3000) hands
 the station to **20 of 20** rows and the minutes to **20 of 20**; the same request through the
 shipped pipeline produced **0 of 6 cards** saying anything about a station
@@ -26970,4 +26970,136 @@ queue, not a verdict, and this unit re-checked each one before filing it.
   `card.facts`, so the fact had to join it), `build_offering_query`'s geo block (asserted as SQL
   text against the merchant lane's), the door's five live rows over the shipped pipeline (row
   columns, card bullets, the threshold's three spellings and the plane's own fact coverage), and
-  `tmp/d608_census.py` + `tmp/d608_final_live.py` as the re-runnable measurements. 
+  `tmp/d608_census.py` + `tmp/d608_final_live.py` as the re-runnable measurements.
+
+## 607. D609 · the district every geo card printed was filed under a subject the answer never loaded (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/cards.py`, `apps/ai/tests/test_the_district_a_card_prints_is_filed_under_a_subject_the_answer_never_loads.py`)
+
+**What was measured.** D608 filed this as the residue of its own evidence and re-measured it before
+building on it (`tmp/d609_district_cite_probe.py`, the plane as of 2026-10-29). Census of `facts` by
+attribute x `subject_type`:
+
+    address        location   n=684    keyed on a merchant: 0    keyed on a location: 684
+    cuisine        merchant   n=520    520                       0
+    opening_hours  merchant   n=520    520                       0
+    price          merchant   n=520    / offering n=1,564
+    rating         merchant   n=520    / offering n=1,207
+    capacity       offering   n=157
+
+`address` is the one attribute this plane files under a THIRD kind of subject, and the fact load had
+no way to reach it: `facts_for` binds `WHERE subject_id = ANY(<ids>::uuid[])` and `search()` fills
+`<ids>` from the candidate rows' own ids, while the geo LATERAL that produces the district selects
+`l.id` inside its subquery and projected five other columns from it - never the id. So the
+location's uuid was on no list anyone could ask for: not a filter that drops a row, a row that was
+never fetched. Through the shipped pipeline, `咖啡店` near Central r=3000 at `limit` 6: **0 of 6
+merchant cards and 0 of 6 offering cards raise the `district_match` bullet while 6 of 6 print
+`· Central` in `subtitle`, and the bundle holds 0 `address` facts** - 54 facts, every one of them
+cuisine, opening_hours, price, rating or a synthesised four. `REASON_COPY` has held a district
+sentence in all three locales since long before this unit and no card could ever raise it. The fact
+is there for the asking: for the 20 merchants a real geo search returns, the location their own
+LATERAL picks (bbox + haversine + `ORDER BY meters ASC NULLS LAST LIMIT 1`) carries an `address`
+fact **20 of 20** times, and the fact's district equals the column's **20 of 20**.
+
+**The key has to be the location's id, and the shape filed in PLAN as the cheaper alternative cites
+the wrong district.** The other option was to read address facts by their own `merchant_id` column,
+which exists on 684 of 684. Measured: 520 merchants keep 684 locations and **77** of them have
+locations in more than one district, and among the **145** published merchants with more than one
+location, **133** keep their nearest location in a different district from their primary one (松屋:
+Ma On Shan / Tai Wai; 喜薈: Central / Stanley). An additive ladder - the card's own subject first,
+the location second - is the same mistake one rung away from shipping. So the rule is strict: **a
+row that names a location cites that location's fact and nothing else**; a row that names none cites
+its own subject, which is where the in-memory demo lane files the same attribute
+(`apps/ai/nexus_ai/api/demo_data.py:151`). Arms E and F below are the two ways to break it.
+
+**Three layers, one per claim.** (1) Both geo blocks project `loc.id AS location_id` and state an
+absent location as `NULL::uuid AS location_id` rather than as a missing key, because
+`_coerce_uuid(None)` answers a derived uuid and an untyped NULL would have made "no location"
+citable. (2) `search()` collects the rows' location ids and makes its ONE fact fetch over
+`dict.fromkeys(subject_ids + location_ids)` - the deduplication is in the shipped line because 60
+offering rows name only 38 distinct locations. (3) `cards.py` gained `LOCATION_KEYED_ATTRIBUTES` and
+`_fact_by_subject`, which `build_card`'s facts tuple and `_fact_for` both go through, so the
+bullet's `fact_id` and the `address` entry in `cards[].facts` are the same object - the pair the web
+filters bullets by (`apps/web/src/lib/facts.ts:112`). The dead tail of `_fact_for` (three labels
+that map to no key and returned `None` twice over) went with it, and `_NO_FACT_REASON_LABELS` holds
+exactly one label, `sponsored`: the bullet is raised only when a fact backs it.
+
+**Live at the shipped bytes** (`tmp/d609_final_live.py`, both lanes x three locales at `limit` 6):
+every one of the 18 pages is **6 cards, 6 district bullets, 6 `address` facts on `cards[].facts`, 0
+bullets without a card fact at the §18 gate and 0 citations whose district differs from the word
+printed**. The sentences are 位於 Central / 位于 Central / in Central for one row and 位於 Tsim Sha
+Tsui for another; the offering lane cites its own merchant's nearest location, so
+`白酒蛤蜊意粉（下午茶版）` prints `位於 Wan Chai` under the Wan Chai record. Every cited fact is
+`source='merchant'` at the plane's own confidences (0.8 / 0.9 / 0.95 / 0.98 / 1.0). A page with no
+geo is unchanged: 6 cards, **60 ids asked, 0 `address` facts loaded, 0 district bullets** - the
+widening is paid for only where a district is printed.
+
+**The clock stays the authority, and what it says is kept even though it is uncomfortable.** All 684
+`address` facts carry `observed_at = 2026-09-22 03:00 UTC` against `FRESHNESS_TTL["address"] = 30
+days`, and 684 of 684 say `stale = false` in the column. `facts_from_rows` re-evaluates from the
+clock - D589's rule, "the DB flag never overrides the clock" - so all 54 facts a live geo page loads
+arrive `stale = True`, and the bullet still rises: §18 asks a claim to trace to a fact id, and this
+fact is the merchant's own statement of where it is. §5 asks a stale value to be surfaced, and only
+the price lane does; whether a district a user is about to walk to earns a marker is filed in PLAN
+with these counts instead of answered here by inventing one.
+
+**Nine arms, and the two one-row arms are the informative ones.** Each mutates one shipped clause
+and runs the door (`tmp/d609_arms.py`, `tmp/d609_arms.txt`; every arm restores and reports
+`restored=True`; control at the final bytes: **21 passed**).
+
+    A  merchant lane stops naming the location    3 failed, 18 passed
+    B  offering lane stops naming it again        2 failed, 19 passed
+    C  location projected, the load never asks   11 failed, 10 passed
+    D  card looks every fact up under its own    10 failed, 11 passed
+    E  card prefers a merchant-level fact         1 failed, 20 passed
+    F  card falls back when the location has 0     1 failed, 20 passed
+    G  a NULL location column still adds a read    1 failed, 20 passed
+    H  ids concatenated without deduplication      1 failed, 20 passed
+    I  the absent location typed as text           2 failed, 19 passed
+
+A/B and C/D are the repair's halves and move half the door each. E and F each move exactly one row,
+and that row is the one the design correction was made for: F is the ladder described above, and
+under it a card prints `位於 Central` while citing a merchant-level fact whose value says Stanley -
+a citation that looks grounded, which is worse than the missing citation A and B produce. G is
+pinned by `test_a_page_with_no_location_states_no_extra_subject` (`asked == [str(MERCHANT)]`) and H
+by `test_two_cards_on_one_location_ask_the_load_for_it_once`. No arm was blind, so no row had to be
+added between runs; the nine above are the run at the final bytes.
+
+**Red before green, and the sweep after.** The door read **12 failed, 7 passed** against the tree
+before any of the three layers existed - 19 rows then; the strict rule and the cost row added the
+two it does not have - and **21 passed** at the shipped bytes. Neighbour sweep at the final bytes:
+**217 passed, 0 failed** over the thirteen files that read this lane's row shape, fact load or card
+shape (`test_cards.py`, `test_search_sql.py`, `test_sql_builders.py`,
+`test_cards_carry_the_contract_fields.py`, `test_uuid_id_bindings.py`, `test_open_time_binding.py` =
+82; `test_compare_grid.py`, D589's, D605's, D607's and D608's doors, the retrieval door and this
+unit's = 135), with `ruff check` clean on the three source files and the door. The D608-era
+full-suite run was stopped mid-flight and is **no verdict**, like §605's stopped run - nothing above
+cites it. A fresh full suite started after the final byte read **11% with 0 failures** when this
+section was written; it outlives the commit and its verdict is reported when it lands.
+
+**Five findings disclosed rather than absorbed, all in PLAN with their counts.** (i)
+`build_ground_set` feeds every scalar of every bundle fact, so a merchant geo page's ground set goes
+from 1,078 numbers / 323 strings to **1,186 / 600** and an offering page's from 264 / 94 to
+340 / 289. The new numbers are the 54 `lat`/`lng` pairs inside those address values, and under
+`TOLERANCE[NUMBER_KIND] = (0.01, 0.5)` a number invented within half a degree of a real latitude -
+about 55 km - now reads as grounded. (ii) Location facts join the bundle and no score:
+`facts_by_subject` buckets under each fact's own `subject_id` and `Candidate.freshness` reads the
+merchant's own list (`search/service.py:808`), which
+`test_a_location_fact_moves_no_ranking_number` pins as a rule while the question stays open.
+(iii) `_disputed_attributes` still resolves over the card's own subject and cannot be wrong yet -
+exactly 1 `address` fact per location (684 facts over 684 distinct subjects, `locs_with_two = 0`).
+(iv) The comparison grid synthesises its own merchant-keyed `address` fact when it finds none
+(`apps/ai/nexus_ai/api/routes_discover.py:325-330`, D401) - now a different shape of the same fact,
+on a second surface, under a different key. (v) The fetch goes 54 → 108 ids on a merchant geo page
+and 60 → 98 on an offering page, measured only at `limit` 6, with no cap on the load. A sixth thing
+came out of the same live run: that offering page answers `雲吞蝦麵（下午茶版）` twice, identically -
+both cards cite a real fact, so nothing is ungrounded; nobody has yet measured why six slots hold
+two copies of one dish.
+
+- readers: `facts_for`'s `ANY(uuid[])` bind (unchanged, and the reason the widening had to happen on
+  the id list rather than the predicate), `search()`'s id collection and its single `backend.facts`
+  call, `build_merchant_query` and `build_offering_query`'s geo blocks (asserted as SQL text, both
+  lanes, geo and no-geo), `LOCATION_KEYED_ATTRIBUTES`, `_fact_by_subject` (the strict rung rule),
+  `_fact_for`'s district key, `build_card`'s facts tuple, `drop_ungrounded_reasons` (the §18 wire
+  gate, `dropped == 0`), `renderableReasons` in the web (which reads `card.facts`),
+  `facts_from_rows`' re-evaluation of the clock, and
+  `tmp/d609_district_cite_probe.py` + `tmp/d609_cost_probe.py` + `tmp/d609_final_live.py` as the
+  re-runnable measurements.
