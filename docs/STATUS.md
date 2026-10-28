@@ -25707,3 +25707,38 @@ in the payload.
 
 - readers: both files green in this session's sweep; 2 live rows of the price door skipped
   without `NEXUS_TEST_DATABASE_URL`.
+
+## 586. D593 · the strategy string named a vector lane that scored nothing, on a plane where no chunk carries an embedding (`apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_the_strategy_string_names_only_the_lane_that_scored.py`, `apps/ai/tests/test_search_pipeline.py`)
+
+**What was measured.** `api/pipeline.py` sets `vector_lane = bool(embedding) and
+backend.name == "postgres"`, and `search()` appended `+vector` on that flag alone. On the plane
+this service reads: `chunks` holds **2118** rows and `count(embedding)` is **0**, so every
+candidate's `vec_score` is 0.0 while the response answered
+`hybrid_v1+postgres+vector` - measured through the shipped `PostgresBackend` with a real
+hashing embedding, 10 cards, `max(vec_score) = 0.0`. The string is the only place a caller can
+read which lanes produced the ranking, so naming a lane by the request rather than by its work
+is the §5 shape (unverifiable rendered as verified) one field over from the cards.
+
+**The suffix is now earned, not claimed.** `vector_contributed` is true only when the lane was
+requested AND at least one RANKED row carried a non-zero `vec_score`. Four separations, because
+three of them are ways the old rule looked right: the plane's own case (every score 0.0) gets no
+suffix; one non-zero score gets it; a row that carries the column when the lane was not
+requested is not a lane; and a row the query filtered out of the ranking does not count even
+though it was fetched. After the change the same live probe answers `hybrid_v1+postgres`, which
+is what the plane can support.
+
+**Verified, and proved to fail.** The new door is 5 offline rows and 1 live row: **5 passed**
+offline, **6 passed** with `NEXUS_TEST_DATABASE_URL` set (the live row measures the plane's
+own `count(embedding)`, skips if a re-embedding makes it non-zero, and then asserts both the
+absent suffix and a zero `vec_score` on every ranked row). With the condition put back to
+`if vector_lane:` three rows fail. `test_search_pipeline.py`'s vector row now supplies the
+score its suffix claims (`vec_score=0.62` on one fixture row) instead of asserting the flag's
+own echo; that file and the new one are **15 passed, 1 skipped** together. `ruff check` over
+the three files: All checks passed.
+
+**Left open.** The response cannot distinguish "the lane was not requested" from "the lane was
+requested and the corpus holds no vector", because both now print the same string - the truth
+the old spelling claimed and this one omits. A `vector_hits` count beside `strategy` would say
+it, but that is a contract change and this unit did not make one. Running `make ai-embed` is
+still the product answer: it fills the 2118 chunks and the suffix returns by itself, which is
+the property that makes this rule safe rather than a permanent downgrade.

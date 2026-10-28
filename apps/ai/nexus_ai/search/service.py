@@ -1454,8 +1454,18 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
         cards.append(attach_price_staleness(card, bundle))
 
     took_ms = int((time.perf_counter() - started) * 1000)
+    # D593: the strategy string names the lanes that SCORED, not the lanes that were asked
+    # for. Measured on the plane this service reads: 0 of 2118 chunks carry an embedding, so
+    # every candidate's `vec_score` is 0.0 while the response still answered
+    # `hybrid_v1+postgres+vector` - a lane named by the request flag rather than by its work.
+    # The leg is named only when at least one ranked row carried a non-zero score; whether a
+    # chunk is embedded is the corpus's own fact, and this reader can see it in the rows it
+    # just ranked.
+    vector_contributed = bool(vector_lane) and any(
+        float((s.candidate.raw.get("row") or {}).get("vec_score") or 0.0) > 0.0
+        for s in ranked)
     strategy = f"{w.version}+{backend.name}"
-    if vector_lane:
+    if vector_contributed:
         strategy += "+vector"
     response = SearchResponse(
         items=cards, facets=facets, took_ms=took_ms, strategy=strategy,

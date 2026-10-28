@@ -93,7 +93,12 @@ class TestSubjectAndLanes:
         assert resp.total_estimate == 1
 
     async def test_vector_lane_suffix(self):
-        _, resp, _, _ = await _run(S.SearchPlan(limit=10), vector_lane=True)
+        # D593: the suffix is earned by a non-zero vec_score on a ranked row, not by the
+        # request flag - the plane this service reads has 0 of 2118 chunks embedded, and
+        # the fixture now says which lane actually scored.
+        rows = [dict(MERCHANTS[0], vec_score=0.62), dict(MERCHANTS[1])]
+        _, resp, _, _ = await _run(S.SearchPlan(limit=10),
+                                   backend=S.StaticBackend(merchants=rows), vector_lane=True)
         assert resp.strategy.endswith("+static+vector")
 
     async def test_include_sponsored_false_keeps_organic(self):

@@ -2013,10 +2013,13 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   price TTL is six hours (AGENT_CONTRACT §5), so D589's honest warning now fires on the whole
   golden path. Either the plane is re-seeded on the demo cadence or the TTL for demo rows is a
   contract question; nothing in the AI lane can decide it alone.
-- **The vector lane still retrieves nothing and the strategy string still names it** - 0 of 2118
-  chunks carry an embedding on the plane the service reads, while the response says
-  `hybrid_v1+postgres+vector`. Running `make ai-embed` is the product answer; making the string
-  report what ran is the honesty answer. Owner: the AI lane.
+- **The vector lane still retrieves nothing** - 0 of 2118 chunks carry an embedding on the plane
+  the service reads. **The honesty half is closed by D593**: the strategy string now names the
+  lane only when a ranked row carried a non-zero `vec_score`, so the same request answers
+  `hybrid_v1+postgres` and a re-embedding brings `+vector` back without a code change. The
+  product half remains: `make ai-embed` is what fills the 2118 chunks, and until it runs the
+  golden path is lexical-only on a vectorless corpus. Owner: the AI lane (the pass) with the
+  seed lane (whether a demo plane should be re-embedded after every reseed).
 - **Two live-set reds D583 measured and did not inherit** -
   `test_a_refused_cuisine_is_not_served_at_the_top` and
   `test_the_outdoor_preference_scores_the_merchants_that_carry_it` reproduce byte-identically
