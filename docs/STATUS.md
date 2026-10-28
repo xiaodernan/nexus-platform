@@ -26081,6 +26081,81 @@ results exist". Filed in PLAN with the cost note.
 - readers: `with_total` in `build_merchant_query` / `build_offering_query`, `_pool_total()` and
   the `total_estimate=` line in `search()`.
 
+## 596. D588 · the ranker read thirteen preference kinds and the shipped write API accepted eight (`services/platform/src/main/java/com/nexus/identity/MeController.java`, `packages/types/src/enums.ts`, `apps/ai/tests/test_a_preference_kind_the_ranker_reads_is_one_the_api_accepts.py`)
+
+**What was measured.** Three planes spell the preference vocabulary and only two of them are
+consulted when a user writes. The ranking branch table in `search/service.py` has a clause for
+13 kinds (`access`, `ambience`, `budget`, `cuisine`, `food`, `location`, `occasion`,
+`price_sense`, `style`, `time_pref`, `view`, `weakness`, `weather`); `PreferenceBody`'s
+`@Pattern` and `packages/types`' `PREFERENCE_KIND`, which agree with each other, admitted 8
+(`food`, `budget`, `location`, `brand`, `style`, `activity`, `language`, `accessibility`). The
+intersection is four. Nine kinds the product is built to honour could not be declared at all:
+the caller is refused before a row exists, so the memory the ranker reads is a memory the user
+cannot put there (§32/§33 make preferences visible and editable, which presumes they are
+writable).
+
+`access` is the sharpest of the nine because the platform already stores it.
+`data/seed/generate.py:1173` declares `("access", "accessible", {"value": True}, 0.4,
+"declared")`, and the live plane (re-measured for this section) holds 7 preference rows across
+`access`, `budget`, `food`, `language`, `location`, `style`. So the seed writes - and the plane
+stores - a kind the shipped validator refuses: the demo user has a preference their own owner
+cannot edit or re-create. D527 caught the same fault line from the other side (a declared row
+the ranker had no branch for) and fixed the SEED's spelling; nobody fixed the API's.
+
+**The fix is additive, and that is the whole design.** Nine words joined both write lists, which
+now answer 17 and 17, and the gate checks the two lists against each other as well as against
+the reader. Nothing that works today is refused: no word left either list. That is why
+`accessibility`, `activity` and `brand` stay accepted although no ranking clause reads them -
+retiring them would refuse callers that call today. `accessibility` is the trap in that residue:
+it is the contract's own word for a step-free preference while the ranker and the seed both
+spell it `access`, so a caller who obeys the published types stores a row nothing answers for.
+The honest repair is a reader-side alias or a migration, not a second spelling added to the
+branch table, which would put one value in two lanes (D545). Filed in PLAN, and the residue row
+names all three so the debt cannot become invisible.
+
+**Read off the source, not imported.** `_readable_kinds()` walks `service.py` with `ast` for
+`kind ==` comparisons (D527's technique), `_java_kinds()` reads the annotation VALUE after
+joining its string literals - a lane that wraps the pattern into `"a|b" + "|c|d"` is still one
+validator - and `_ts_kinds()` and `_seed_kinds()` read the array literal and the seed's `prefs`
+list. A branch written five minutes ago is therefore in the census, and a deleted one stops
+being promised. Each reader raises by name if its plane changes shape: while writing this unit
+the `@Pattern` reader first matched a LATER `@Pattern` in the same file and silently swallowed
+half the record, and it was the door's own assert that said so.
+
+**Arms.** Four, each mutating one shipped copy of the vocabulary (or this door's own reader) and
+restoring byte-for-byte (`restored=True` four times). Measured, names as printed:
+
+* B4, the state change - both write lists reverted to the eight words they carried before this
+  unit: **11 failed, 7 passed** - nine
+  `test_a_kind_the_ranker_reads_can_be_created_through_the_api[<kind>]` rows (`access`,
+  `ambience`, `cuisine`, `occasion`, `price_sense`, `time_pref`, `view`, `weakness`, `weather`),
+  `test_the_seed_declares_only_kinds_the_api_accepts` and the live
+  `test_the_plane_stores_only_kinds_the_api_accepts`. This is the red the unit was cut against;
+  the remembered count was 12 and the measured one is 11.
+* B1 - `weakness` dropped from the Java `@Pattern` alone: **2 failed**, that parametrised row and
+  `test_the_validator_and_the_contract_name_the_same_kinds`. A validator falling behind the
+  contract is caught twice: as an unfillable promise and as a split list.
+* B2 - `access` dropped from `PREFERENCE_KIND` alone: **1 failed**, the agreement row and nothing
+  else. The writable claim reads the server, not the types package, so a contract that
+  under-states the server moves exactly one row - which is why the two write planes are compared
+  to each other and not only to the reader.
+* B3 - this door's reader of the branch table blinded (`sub.left.id == "kind"` renamed): **2
+  failed, 3 passed, 1 skipped** - the census guard and the residue row. Blinding it does not
+  merely empty the census, it drops every kind out of the parametrised promise, so nine rows
+  would have gone quietly green with nothing behind them. The guard is what stops that reading
+  as a pass.
+
+**Verified after the edit.** The door: **18 passed** with `NEXUS_TEST_DATABASE_URL` set, 17
+passed + 1 skipped offline, `ruff check` clean. The Java side builds and its own identity doors
+still pass over the widened `PreferenceBody`: `mvn -o -q compile -DskipTests` exit 0, then
+`mvn -o -q test -Dtest=FavoriteDoorTest,MemoryDeletionDoorTest` exit 0 - surefire answers 6 and 9
+tests, 0 failures, 0 errors, 0 skipped. Neither door asserts that a kind is REFUSED, which is why
+an additive list moves nothing: the widest thing they test against the validator is `food`.
+
+- readers: `_readable_kinds` / `_java_kinds` / `_ts_kinds` / `_seed_kinds` and the four
+  module-level sets they fill; `PreferenceBody`'s kind `@Pattern`; `PREFERENCE_KIND`; the live
+  group-by in `test_the_plane_stores_only_kinds_the_api_accepts`.
+
 ## 597. D600 · the live plane had no retrieval-precision measurement at all (`apps/ai/tests/test_the_retrieval_precision_of_the_live_plane.py`)
 
 **Why a door and not a change.** Twelve live doors ask whether a filter was honoured, a fact was

@@ -973,8 +973,15 @@ export const SEO_PAGE_STATUS = ["draft", "published", "noindex", "retired"] as c
 /** SEO page state — V1 `seo_pages.status`; spec §28. */
 export type SeoPageStatus = (typeof SEO_PAGE_STATUS)[number];
 
-/** Preference memory kinds. Source: V1__init.sql `user_preferences.kind` (line 64); spec §32/§117-118. */
-export const PREFERENCE_KIND = ["food", "budget", "location", "brand", "style", "activity", "language", "accessibility"] as const;
+/** Preference memory kinds. Source: V1__init.sql `user_preferences.kind` (line 64) names the
+ * first eight; the rest are the kinds the ranking reader (`apps/ai/nexus_ai/search/service.py`)
+ * has a clause for, so a user can declare what the product is built to honour (D588);
+ * spec §32/§117-118. */
+export const PREFERENCE_KIND = [
+  "food", "budget", "location", "brand", "style", "activity", "language", "accessibility",
+  "access", "ambience", "cuisine", "occasion", "price_sense", "time_pref", "view", "weakness",
+  "weather",
+] as const;
 /** Preference memory kind — V1 `user_preferences.kind`; spec §32. */
 export type PreferenceKind = (typeof PREFERENCE_KIND)[number];
 

@@ -44,7 +44,9 @@ public class MeController {
                                Boolean marketingOptIn) {
     }
 
-    public record PreferenceBody(@NotBlank @Pattern(regexp = "^(food|budget|location|brand|style|activity|language|accessibility)$")
+    public record PreferenceBody(@NotBlank @Pattern(regexp =
+            "^(food|budget|location|brand|style|activity|language|accessibility"
+            + "|access|ambience|cuisine|occasion|price_sense|time_pref|view|weakness|weather)$")
                                  String kind,
                                  @NotBlank @Size(max = 64) String key,
                                  @NotNull Object value,
