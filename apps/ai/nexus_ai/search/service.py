@@ -273,6 +273,36 @@ def _static_avoid_terms(avoid: Any) -> set[str]:
     return {t.lower() for value in (avoid or []) for t in avoid_terms(str(value)) if t}
 
 
+def _static_avoid_aspects(avoid: Any) -> set[str]:
+    """The `weak_aspects` names the refused words stand for (D595).
+
+    The live clause's aspect leg reads the corpus's own aspect vocabulary through
+    `categories.aspect_terms`; this set is the same reader, so a fixture that asks to avoid
+    noise excludes the same merchants the live clause does.
+    """
+    from nexus_ai.search.categories import aspect_terms
+
+    return {t.lower() for value in (avoid or []) for t in aspect_terms(str(value)) if t}
+
+
+def _static_row_avoids_aspect(row: dict[str, Any], aspects: set[str]) -> bool:
+    """The aspect leg: `attributes->'weak_aspects' ?| aspects`, on the row's own attributes.
+
+    A merchant row carries its own `attributes`; an offering row carries the MERCHANT's list
+    under `merchant_weak_aspects`, because the live clause reads `m.attributes` on both lanes.
+    """
+    if not aspects:
+        return False
+    weak: Any = None
+    if row.get("display_name"):
+        # a merchant row (the same rule `_filter_static` uses for `subject_type`)
+        attrs = row.get("attributes") or {}
+        weak = attrs.get("weak_aspects") if isinstance(attrs, dict) else None
+    if not weak:
+        weak = row.get("merchant_weak_aspects") or []
+    return bool({str(x).strip().lower() for x in weak if x} & aspects)
+
+
 def _static_row_avoids_text(row: dict[str, Any], terms: set[str]) -> bool:
     """The ILIKE leg: does the row's own prose mention a term the user refused?
 
@@ -314,6 +344,10 @@ def _static_avoids(row: dict[str, Any], avoid: Any,
         return True
     category = str(row.get("category_primary") or row.get("category") or "").strip().lower()
     if category in terms:
+        return True
+    # D595: the refused aspect the corpus records as a merchant weakness. A merchant row reads
+    # its own list; an offering row reads the merchant's, carried beside it by the live SELECT.
+    if _static_row_avoids_aspect(row, _static_avoid_aspects(avoid)):
         return True
     if row.get("display_name"):
         # the merchant lane: the EXISTS leg looks at the merchant's OWN offerings.

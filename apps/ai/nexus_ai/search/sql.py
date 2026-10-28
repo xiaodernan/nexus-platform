@@ -17,7 +17,8 @@ from dataclasses import dataclass
 from datetime import datetime, time
 from typing import Any, Iterable
 
-from nexus_ai.search.categories import avoid_terms, resolve as resolve_category
+from nexus_ai.search.categories import (aspect_terms, avoid_terms,
+                                     resolve as resolve_category)
 from nexus_ai.search.tokens import cjk_keywords
 
 TS_CONFIG_ALLOWLIST = {"simple", "english"}
@@ -39,6 +40,23 @@ def _avoid_terms(avoid: Iterable[Any]) -> list[str]:
             if term not in terms:
                 terms.append(term)
     return terms
+
+def _avoid_aspects(avoid: Iterable[Any]) -> list[str]:
+    """The `weak_aspects` names the refused words stand for (D595).
+
+    `avoid` is the plan's canonical constraint values; the corpus records a merchant's
+    weaknesses as the LIST attribute `weak_aspects`, in its own aspect vocabulary. Measured
+    at HEAD, `avoid=["noise"]` and `["queue"]` each removed 0 of 470 published merchants while
+    the corpus names `noise` on 15 and `waiting_time` on 15 - the fact existed and no reader
+    joined it. Empty when no refused word has an aspect spelling, so a cuisine-only refusal
+    adds no leg.
+    """
+    out: list[str] = []
+    for value in avoid:
+        for term in aspect_terms(str(value)):
+            if term not in out:
+                out.append(term)
+    return out
 
 
 def category_clause(p: Params, bucket: str, merchant_ref: str,
@@ -289,9 +307,13 @@ def build_merchant_query(
         # "唔食辣" must not silently pass a spicy-tagged merchant through (§8 filters), and
         # the tag is where the corpus records that fact.
         av_ph = p.add(_avoid_terms(avoid))
+        aspects = _avoid_aspects(avoid)
+        aspect_leg = ("" if not aspects else
+                      f"\n            OR coalesce(m.attributes->'weak_aspects','[]'::jsonb)"
+                      f" ?| {p.add(aspects)}::text[]")
         avoid_clause = f"""AND NOT (
             m.tags && {av_ph}::text[]
-            OR coalesce(m.category_primary,'') = ANY({av_ph}::text[])
+            OR coalesce(m.category_primary,'') = ANY({av_ph}::text[]){aspect_leg}
             OR EXISTS (SELECT 1 FROM offerings ao WHERE ao.merchant_id = m.id
                        AND ((ao.name || ' ' || coalesce(ao.name_zh,'') || ' ' ||
                              coalesce(ao.description,'')) ILIKE ANY(
@@ -441,8 +463,12 @@ def build_offering_query(
         # D517: the same vocabulary expansion as the merchant lane, so the two lanes
         # exclude the same merchants for the same word.
         av_ph = p.add(_avoid_terms(avoid))
+        aspects = _avoid_aspects(avoid)
+        aspect_leg = ("" if not aspects else
+                      f"\n            OR coalesce(m.attributes->'weak_aspects','[]'::jsonb)"
+                      f" ?| {p.add(aspects)}::text[]")
         avoid_clause = f"""AND NOT (m.tags && {av_ph}::text[]
-            OR coalesce(m.category_primary,'') = ANY({av_ph}::text[])
+            OR coalesce(m.category_primary,'') = ANY({av_ph}::text[]){aspect_leg}
             OR (coalesce(o.name,'') || ' ' || coalesce(o.name_zh,'')
                 || ' ' || coalesce(o.description,'')) ILIKE ANY(
               SELECT '%'||x||'%' FROM unnest({av_ph}::text[]) x)
@@ -457,6 +483,7 @@ SELECT o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.description, o.descript
        m.slug AS merchant_slug, m.display_name AS merchant_name,
        m.display_name_zh AS merchant_name_zh, m.category_primary AS category,
        m.avg_price_hkd, m.data_origin, m.plan, m.tags,
+       coalesce(m.attributes->'weak_aspects','[]'::jsonb) AS merchant_weak_aspects,
        'offering'::text AS subject_type, o.id::text AS subject_id, o.merchant_id::text AS merchant_id_key,
        {geo_select},
        {kw_score} AS kw_score,

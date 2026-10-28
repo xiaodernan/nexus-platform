@@ -25844,3 +25844,49 @@ can support. **10 passed** offline, **14 passed** with `NEXUS_TEST_DATABASE_URL`
 hours) still renders whatever the row carries, so the module's promise is kept one cell at a
 time rather than by the table. And the merchant branch cannot ever carry a clock until
 `merchants` grows one - a schema question, not a reader's.
+
+## 590. D595 · a refusal of noise or queue removed nothing though the corpus records both facts - the constraint and the weakness list had no bridge (`apps/ai/nexus_ai/search/categories.py`, `apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_a_refusal_of_noise_reaches_the_corpus_weakness_list.py`)
+
+**What was measured.** PLAN's item said the three words by name. Measured on the live plane at
+this HEAD: `avoid=["noise"]`, `["queue"]` and `["smoking"]` each removed **0** of the 470
+published merchants, while the corpus records two of the three as the LIST attribute
+`weak_aspects` - `noise` on **15** merchants and `waiting_time` on **15**. D581 had just proved
+a PREFERENCE can read that list; the hard filter still could not, so "唔好嘈" wrote
+`noise_avoid:noise` and the answer did not move. The refusal surface existed and the fact
+existed; nothing joined them.
+
+**The bridge is one vocabulary.** `categories.aspect_terms` maps the lexin's constraint value to
+the corpus's aspect name - `noise` -> `noise`, `queue` -> `waiting_time` - and both lanes read
+it: the SQL avoid clause grows one leg on each lane
+(`coalesce(m.attributes->'weak_aspects','[]'::jsonb) ?| aspects`), the offering lane's SELECT
+carries the MERCHANT's list as `merchant_weak_aspects` because the live clause reads
+`m.attributes` on both, and `_filter_static` reads the same map through
+`_static_avoid_aspects`, so the fixture backend answers the same question (D549's rule).
+`smoking` maps to **nothing** on purpose: `generate.py` writes no smoking attribute or tag, and
+a leg there would exclude on a fact the corpus does not write.
+
+**Measured after the change, on the same plane.** noise 470 -> **455**, queue 470 -> **455**,
+smoking 470 -> **470**, and the offerings of the noise-weak merchants 4707 -> **4568** - each
+drop is exactly the carrier set, and the wage is that nothing else moved.
+
+**Verified, and proved to fail.** The new door is 4 offline rows and 5 live rows: the bridge's
+three answers (including the empty one for `smoking` and for a cuisine), the fixture lane
+excluding the weak merchant, membership rather than substring (a merchant weak at `service`
+survives a `queue` refusal), the offering row reading the merchant's list, and - live - the
+carrier census, `avoid=noise` and `avoid=queue` each keeping exactly the non-carriers,
+`avoid=smoking` keeping all 470 with the reason asserted, and the offering lane's kept set
+matching what the merchant list predicts. **9 passed** with `NEXUS_TEST_DATABASE_URL` set;
+D549's two-lane comparison over its twenty words (which includes `noise`) is **10 passed** in
+the same run, **19** together. With the map emptied the door reports **5 failed**. `ruff check`
+over the three modules: All checks passed.
+
+**Left open, named.**
+
+- `lively_ambience` is the second spelling of the same fact (12 merchants, and its union with
+  the weakness list is 16 - one merchant more), and this unit reads only the list. A reader that
+  excluded lively places on a "no noise" refusal would be excluding on a positive-sounding
+  attribute; whether the product wants it is a ranking decision, not a vocabulary one.
+- `smoking` still has no fact: the seed lane must write one before any reader can serve it.
+  The gate now says so explicitly, so the word cannot be recorded as "filtered" while it is not.
+- `ASPECT_AVOID` is a hand-list, like `ANTONYM_TERMS` before it: a fourth aspect word joins the
+  refusal vocabulary and gets no leg until someone writes its pair here.

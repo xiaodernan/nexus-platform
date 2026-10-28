@@ -99,6 +99,34 @@ def avoid_terms(value: str | None) -> list[str]:
     return out
 
 
+#: The aspect names a refusal stands for in the corpus's own attribute vocabulary.
+#: `weak_aspects` is the LIST of aspect names a merchant is weak at (the seed writes
+#: `noise`, `service`, `waiting_time`, ...). The lexin's constraint values and the corpus's
+#: aspect names are two vocabularies for the same fact, and `queue` is the one pair whose
+#: spelling differs. `smoking` has no entry because no reader may exclude on a fact the
+#: corpus does not write - the generator records no smoking attribute at all.
+ASPECT_AVOID: dict[str, tuple[str, ...]] = {
+    "noise": ("noise",),
+    "queue": ("waiting_time",),
+}
+
+
+def aspect_terms(value: str | None) -> list[str]:
+    """The `weak_aspects` names a refused constraint stands for, deduped and order-stable.
+
+    Measured on the live plane at HEAD (2026-10-28): `avoid=["noise"]`, `["queue"]` and
+    `["smoking"]` each removed **0** of 470 published merchants, while the corpus records the
+    fact for two of them - `weak_aspects` names `noise` on 15 merchants and `waiting_time` on
+    15. The refusal surface exists and the fact exists; nothing joined them.
+    """
+    out: list[str] = []
+    for spelling in _spellings(value):
+        for term in ASPECT_AVOID.get(spelling, ()):
+            if term not in out:
+                out.append(term)
+    return out
+
+
 def resolve(bucket: str | None) -> list[str]:
     """Slugs standing for `bucket`, deduped, order-stable. Empty when nothing was asked."""
     if not bucket:
@@ -113,4 +141,5 @@ def resolve(bucket: str | None) -> list[str]:
     return out
 
 
-__all__ = ["ALIASES", "avoid_terms", "canonical_tag", "resolve"]
+__all__ = ["ALIASES", "ASPECT_AVOID", "aspect_terms", "avoid_terms",
+           "canonical_tag", "resolve"]

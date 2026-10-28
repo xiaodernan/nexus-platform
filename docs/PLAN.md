@@ -1998,17 +1998,17 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
 
 **The queue this leaves, in the order the measurements justify.**
 
-- **The avoid constraint reads nothing the corpus writes for `noise` and `queue`** - measured on
-  the live plane at this HEAD: `avoid=["noise"]`, `["queue"]` and `["smoking"]` each remove 0 of
-  470 published merchants, while the corpus DOES carry the fact for two of the three
-  (`weak_aspects` names noise on 15 and waiting_time on 15; `lively_ambience` true on 12). D581
-  proved a preference can read the list; the hard filter still cannot, so "唔好嘈" writes
-  `noise_avoid:noise` and the answer is unchanged. The fix is one leg on both lanes (the SQL
-  clause and `_filter_static`, whose D549 gate compares them over 20 words) plus the aspect
-  vocabulary that maps `queue` to the corpus's `waiting_time`. Owner: the AI lane.
+- **The avoid constraint reads nothing the corpus writes for `noise` and `queue`** - **closed
+  by D595**: `categories.aspect_terms` bridges the constraint value to the corpus's aspect name
+  (`queue` -> `waiting_time`), the SQL clause and `_filter_static` both read it, and the live
+  plane moves 470 -> 455 for `noise` and for `queue`, with the offering lane 4707 -> 4568.
+  Residues filed: `lively_ambience` is a second spelling of the noise fact (12 merchants, union
+  16) that nothing reads, and the bridge is a hand-list that grows by hand.
 - **`smoking` has no fact in the corpus at all** - `generate.py` writes no smoking attribute or
   tag, so no reader can exclude on it and none should pretend to. The refusal surface exists
-  (`smoking_avoid`); the fact does not. Owner: the seed lane, before the AI lane can serve it.
+  (`smoking_avoid`); the fact does not. D595's gate now asserts that the refusal drops 0 and
+  says why, so the word cannot be recorded as filtered while it is not. Owner: the seed lane,
+  before the AI lane can serve it.
 - **Every demo price is stale by construction** - all 4,707 priced clocks are 36 days old and the
   price TTL is six hours (AGENT_CONTRACT §5), so D589's honest warning now fires on the whole
   golden path. Either the plane is re-seeded on the demo cadence or the TTL for demo rows is a
