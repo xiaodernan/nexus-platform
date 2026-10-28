@@ -2033,3 +2033,12 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   venues are indoor") is a real fact; whether the preference should read a constant as one is a
   product question, and the seed lane may prefer to write the fact only where it discriminates.
   Owner: the AI lane with the seed lane.
+
+- **The category filter's fixture lane cannot see the taxonomy's leaf rule** - D596 made the two
+  lanes agree on the bucket walk (`restaurant` 184/184, `cafe` 79/79, `bar` 39/39), but D524's
+  leaf-exact rule - a caller who names a leaf gets that leaf, not its root - is answered only by
+  the live lane, because the fixture lane has no taxonomy plane. Measured difference:
+  `filters={"category": "specialty-coffee"}` answers 33 live rows and the whole cafe root through
+  the predicate. A fixture-only taxonomy copy would be a second writer of the taxonomy; the
+  honest fix is to hand the fixture lane the plane's leaf set from the DB, and that is a
+  fixture-API decision. Owner: the AI lane.

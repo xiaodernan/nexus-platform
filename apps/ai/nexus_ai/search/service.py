@@ -238,8 +238,23 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
             if hits == 0 and not name_hit:
                 continue
             score = min(1.0, 0.25 * hits + (0.4 if name_hit else 0.0))
-        if filters.get("category") and r.get("category_primary") != filters["category"]:
-            continue
+        if filters.get("category"):
+            # D596: the live lane resolves the bucket into taxonomy slugs and walks one tree
+            # level; this lane compared the bucket to `category_primary`, which on a live row
+            # holds the leaf's DISPLAY NAME ("Tea House"). Measured at HEAD: `category=cafe`
+            # kept 79 merchants live and 0 here, restaurant 184 and 0. A row that carries the
+            # resolved slugs (`category_slugs`, both lanes' SELECT) is matched on them; a
+            # fixture that stores the coarse bucket itself keeps the old comparison.
+            from nexus_ai.search.categories import canonical_tag, resolve
+
+            bucket = str(filters["category"])
+            slugs = {canonical_tag(x) for x in resolve(bucket)}
+            row_slugs = {canonical_tag(str(x)) for x in (r.get("category_slugs") or [])}
+            if row_slugs:
+                if not (row_slugs & slugs):
+                    continue
+            elif r.get("category_primary") != bucket:
+                continue
         if filters.get("district") and str(r.get("district") or "").lower() != \
                 str(filters["district"]).lower():
             continue

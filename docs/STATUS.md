@@ -25890,3 +25890,38 @@ over the three modules: All checks passed.
   The gate now says so explicitly, so the word cannot be recorded as "filtered" while it is not.
 - `ASPECT_AVOID` is a hand-list, like `ANTONYM_TERMS` before it: a fourth aspect word joins the
   refusal vocabulary and gets no leg until someone writes its pair here.
+
+## 591. D596 · the category filter kept 0 on the fixture lane for every live-shaped row - the bucket was compared to a display name (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_the_category_filter_answers_the_same_question_on_both_lanes.py`)
+
+**What was measured.** Categories live in the `categories` tree, and `sql.category_clause`
+resolves the caller's bucket into taxonomy slugs and walks one level (a leaf or its parent).
+`_filter_static` compared that bucket to `category_primary`, which on a live row holds the
+leaf's DISPLAY NAME - 66 distinct values, "Tea House", "Hot Pot", "Craft Workshop", none of
+them a bucket. Measured at HEAD on the live plane: `filters={"category": "cafe"}` kept **79**
+merchants live and **0** through the fixture predicate; restaurant **184** and 0; bar **39**
+and 0. A fixture-backed test that asked whether a category filter filtered anything was
+answered "no" for every live-shaped row - the D549 shape, one leg over, and the residue D549
+itself filed.
+
+**The mirror is data, not taxonomy knowledge.** Both lanes' SELECT now carry
+`category_slugs`: the merchant's leaf slugs AND their parents', aggregated from
+`merchant_categories` - the same two levels `category_clause` walks. `_filter_static` matches
+the resolved bucket against that list when a row carries it, and keeps the old comparison when
+it does not, which is the shape all 57 of the suite's own fixture rows use (the coarse bucket
+stored in `category_primary` itself). Nothing that was right moved.
+
+**Measured after the change, on the same plane.** restaurant **184 / 184**, cafe **79 / 79**,
+bar **39 / 39**, dessert **0 / 0** - the four buckets the door walks, live set and fixture
+predicate set equal to the merchant. With the resolved-slug branch disabled (the legacy
+comparison alone) the door reports **5 failed**; with it, **12 passed** with
+`NEXUS_TEST_DATABASE_URL` set, and the three neighbouring category doors - `test_search_plan`,
+`test_the_filter_speaks_the_category_vocabulary`, `test_the_category_filter_keeps_the_leaf_the_caller_named` -
+are green in the same run (**255 passed** across the four files). `ruff check` over the two
+modules and the new door: All checks passed.
+
+**Left open, named.** D524's leaf-exact rule is not mirrored: the live clause asks the
+taxonomy whether the caller's spelling is a leaf and, if it is, skips the root walk; the
+fixture lane has no taxonomy plane, so it always answers the walk. The two agree on a bucket
+or a word (`cafe`, `restaurant`, `tea-house`) and can differ when a caller names a leaf whose
+root its bucket stands for (`specialty-coffee` -> cafe). Filed in PLAN rather than papered
+over with a fixture-only taxonomy copy.

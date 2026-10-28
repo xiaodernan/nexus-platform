@@ -328,6 +328,12 @@ def build_merchant_query(
 SELECT m.id, m.slug, m.display_name, m.display_name_zh, m.description, m.category_primary,
        m.avg_price_hkd, m.rating_agg, m.review_count, m.popularity_score, m.tags,
        m.attributes, m.data_origin, m.plan, m.images, m.ai_agent_enabled,
+       coalesce((SELECT array_agg(DISTINCT s.slug)
+                 FROM merchant_categories mc2
+                 JOIN categories c2 ON c2.id = mc2.category_id
+                 LEFT JOIN categories pc2 ON pc2.id = c2.parent_id
+                 CROSS JOIN LATERAL (VALUES (c2.slug), (pc2.slug)) AS s(slug)
+                 WHERE mc2.merchant_id = m.id AND s.slug IS NOT NULL), '{{}}'::text[]) AS category_slugs,
        'merchant'::text AS subject_type, m.id::text AS subject_id, m.id::text AS merchant_id,
        {geo_select},
        {kw_score} AS kw_score,
@@ -484,6 +490,12 @@ SELECT o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.description, o.descript
        m.display_name_zh AS merchant_name_zh, m.category_primary AS category,
        m.avg_price_hkd, m.data_origin, m.plan, m.tags,
        coalesce(m.attributes->'weak_aspects','[]'::jsonb) AS merchant_weak_aspects,
+       coalesce((SELECT array_agg(DISTINCT s.slug)
+                 FROM merchant_categories mc2
+                 JOIN categories c2 ON c2.id = mc2.category_id
+                 LEFT JOIN categories pc2 ON pc2.id = c2.parent_id
+                 CROSS JOIN LATERAL (VALUES (c2.slug), (pc2.slug)) AS s(slug)
+                 WHERE mc2.merchant_id = m.id AND s.slug IS NOT NULL), '{{}}'::text[]) AS category_slugs,
        'offering'::text AS subject_type, o.id::text AS subject_id, o.merchant_id::text AS merchant_id_key,
        {geo_select},
        {kw_score} AS kw_score,
