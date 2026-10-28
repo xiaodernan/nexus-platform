@@ -478,7 +478,7 @@ def _price_of(cand: Candidate, rec: dict[str, Any], card_type: str) -> Money | N
     return Money.of(amount, currency=currency, model=model)
 
 
-def _price_clock(rec: dict[str, Any]) -> datetime | None:
+def price_clock(rec: dict[str, Any]) -> datetime | None:
     """The row's own stamp for the price it publishes, or None when it has no such column.
 
     `V1__init.sql:228` annotates `offerings.price_updated_at` as "drives freshness TTL (§20)"
@@ -495,39 +495,59 @@ def _price_clock(rec: dict[str, Any]) -> datetime | None:
     return stamp if isinstance(stamp, datetime) else None
 
 
-def _ground_rendered_price(bundle: FactBundle, cand: Candidate, rec: dict[str, Any],
-                           price: Money | None, subject_id: UUID) -> Fact | None:
-    """§4: the number the card prints has to resolve to a fact.
+def price_fact_source(rec: dict[str, Any]) -> str:
+    """The §4 source a row's own price is vouched by, never more than the row says (D501).
 
-    The card renders the row's own price column (`_price_of`), while the trust answers for it
-    only if somebody wrote a `price` row for that subject - measured at HEAD, 3,373 of this
-    plane's 4,707 priced offerings have none, so those cards print a price with nothing to cite
-    and `attach_price_staleness` (§5) has nothing to read. The web's own reader names the
-    consequence: `resolvedPrice` returns null for a card with no price fact, and the page renders
-    the unverified marker over a merchant's own published number.
-
-    The fact is stamped with the row's price clock, NOT with the request time: stamping it `now`
-    would launder a 36-day-old number into a fresh one, which is what §5 forbids. Where the
-    facts table already vouches for a price (or for `avg_price_hkd`) nothing is written, so the
-    reader cannot manufacture a §4 conflict against its own row.
+    Measured on this plane, `price_source` holds `merchant` (4,710), `estimated` (559) and
+    `observed` (265) offerings. `estimated` is not in the hierarchy, and a source the
+    hierarchy does not know is not a merchant's claim.
     """
-    if price is None:
+    source = str(rec.get("price_source") or "").strip()
+    return source if source in SOURCE_RANK else "demo"
+
+
+def ground_row_price(bundle: FactBundle, *, subject_type: str, subject_id: Any,
+                     rec: dict[str, Any], amount: Any, currency: Any = None,
+                     model: Any = None) -> Fact | None:
+    """§4: a price a read renders out of its own column has to resolve to a fact.
+
+    Two readers needed it and got it the same way: the card (`_ground_rendered_price`, D589)
+    and the comparison grid's price cell (D590). Both print the row's column while the trust
+    layer answers only from the `facts` table, so a subject whose price lives in a column
+    renders a number with nothing to cite and no age to surface.
+
+    The fact is stamped with the row's price clock, NOT with the request time: stamping it
+    `now` would launder a 36-day-old number into a fresh one, which is what §5 forbids. Where
+    the facts table already vouches for a price (or for `avg_price_hkd`) nothing is written, so
+    a reader cannot manufacture a §4 conflict against its own row.
+    """
+    if amount is None:
         return None
-    stamp = _price_clock(rec)
+    stamp = price_clock(rec)
     if stamp is None:
         return None
     if bundle.get("price", subject_id) or bundle.get("avg_price_hkd", subject_id):
         return None
-    # D501's rule, applied to the column's own vocabulary: a source the hierarchy does not
-    # know (`estimated` among them) is not vouchable and never becomes a merchant claim.
-    source = str(rec.get("price_source") or "").strip()
-    if source not in SOURCE_RANK:
-        source = "demo"
-    return bundle.synth(subject_type=cand.subject_type, subject_id=subject_id,
-                        attribute="price",
-                        value={"amount": price.amount, "currency": price.currency,
-                               "model": price.model},
-                        source=source, confidence=0.9, observed_at=stamp)
+    return bundle.synth(subject_type=subject_type, subject_id=subject_id, attribute="price",
+                        value={"amount": amount, "currency": currency, "model": model},
+                        source=price_fact_source(rec), confidence=0.9, observed_at=stamp)
+
+
+def _ground_rendered_price(bundle: FactBundle, cand: Candidate, rec: dict[str, Any],
+                           price: Money | None, subject_id: UUID) -> Fact | None:
+    """§4: the number the card prints has to resolve to a fact - see `ground_row_price`.
+
+    Measured at HEAD, 3,373 of this plane's 4,707 priced offerings have no `price` row for
+    their own subject, so those cards print a price with nothing to cite and
+    `attach_price_staleness` (§5) has nothing to read. The web's own reader names the
+    consequence: `resolvedPrice` returns null for a card with no price fact, and the page
+    renders the unverified marker over a merchant's own published number.
+    """
+    if price is None:
+        return None
+    return ground_row_price(bundle, subject_type=cand.subject_type, subject_id=subject_id,
+                            rec=rec, amount=price.amount, currency=price.currency,
+                            model=price.model)
 
 
 def _image_of(rec: dict[str, Any]) -> EntityImage | None:
@@ -635,4 +655,5 @@ def attach_price_staleness(card: EntityCard, bundle: FactBundle) -> EntityCard:
 
 __all__ = ["build_card", "build_reasons", "compute_open", "meters_text", "travel_minutes",
            "attach_price_staleness", "drop_ungrounded_reasons", "synth_computed_facts",
+           "ground_row_price", "price_clock", "price_fact_source",
            "REASON_COPY"]

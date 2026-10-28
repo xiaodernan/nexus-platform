@@ -634,6 +634,12 @@ def entities_for(tenant_id: str, subject_ids: Iterable[str]) -> tuple[str, list[
     """Merchant + offering rows by explicit ids — the `/ai/v1/compare` read path.
 
     Values are bound, never inlined; the tenant filter is structural (§0).
+
+    The offering branch carries `price_updated_at` and `price_source` because the grid stamps
+    its price cell from the row's own clock (D590, the compare reader of D589). `merchants`
+    has no such column - V1 gives it `avg_price_hkd` and `price_band` and no price clock - so
+    the merchant branch selects NULLs for both and its cell keeps the unverified marker
+    instead of a stamp this table cannot support.
     """
     p = Params()
     ids = [str(s) for s in subject_ids if s]
@@ -645,7 +651,9 @@ def entities_for(tenant_id: str, subject_ids: Iterable[str]) -> tuple[str, list[
 SELECT m.id::text AS subject_id, 'merchant'::text AS subject_type, m.id::text AS merchant_id,
        m.slug, m.display_name AS name, m.display_name_zh AS name_zh, NULL::text AS kind,
        m.category_primary AS category, m.avg_price_hkd, NULL::text AS currency,
-       NULL::text AS price_model, m.rating_agg, m.review_count, m.description,
+       NULL::text AS price_model,
+       NULL::timestamptz AS price_updated_at, NULL::text AS price_source,
+       m.rating_agg, m.review_count, m.description,
        m.data_origin, m.plan, m.attributes, m.images, m.ai_agent_enabled, m.status
 FROM merchants m
 WHERE m.tenant_id = {tenant_ph}::uuid AND m.id = ANY({ids_ph}::uuid[])
@@ -654,6 +662,7 @@ UNION ALL
 SELECT o.id::text, 'offering', o.merchant_id::text,
        o.slug, o.name, o.name_zh, o.kind, m.category_primary,
        COALESCE(o.price_amount, o.price_min), o.currency, o.price_model,
+       o.price_updated_at, o.price_source,
        o.rating_agg, o.review_count, o.description,
        m.data_origin, m.plan, o.attributes, o.images, m.ai_agent_enabled, o.status
 FROM offerings o JOIN merchants m ON m.id = o.merchant_id

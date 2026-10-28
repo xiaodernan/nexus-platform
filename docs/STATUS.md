@@ -25811,3 +25811,36 @@ passed.
 everyone equally and its two negative legs are never reached. Filed in PLAN as a product
 question for the AI lane with the seed lane - the constant is a real fact, and whether a
 preference should read it as one is not this unit's to decide.
+
+## 589. D590 · the comparison grid printed the row's own price column and cited nothing - D589's hole, one reader over (`apps/ai/nexus_ai/search/cards.py`, `apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/api/routes_discover.py`, `apps/ai/tests/test_the_price_cell_of_the_comparison_grid_carries_its_rows_clock.py`)
+
+**What was measured.** D589 grounded the price a CARD prints, because 3,373 of this plane's
+4,707 priced offerings carry no `price` fact for their own subject. The comparison grid's price
+cell had the same shape: `_grid` fell back to `f"{row['avg_price_hkd']:.2f}"` when the bundle
+held no price fact, so the cell printed a number the citation list could not name, while the
+module's own docstring promises that a comparison renders only what resolves to a fact. The
+second half is the clock: the UI computes the cell's age from the fact, and a cell with no fact
+has no age to show.
+
+**The fix is one function, two readers.** D589's grounding logic is now `ground_row_price`
+(with `price_clock` and `price_fact_source` named beside it, all exported), and both the card
+path and the grid call it: a `price` fact stamped with the row's own `price_updated_at` - never
+the request time, because stamping `now` launders an old number into a fresh one - and skipped
+when the bundle already vouches for the subject. `entities_for` (the compare read) now selects
+`o.price_updated_at` and `o.price_source` on the offering branch and explicit NULLs on the
+merchant branch, because `merchants` has `avg_price_hkd` and no price clock: a merchant row's
+cell keeps the unverified marker rather than a stamp the table cannot support.
+
+**Verified, not claimed.** The door is 9 rows: the cell cites a fact stamped with the row's own
+clock; the staleness is the clock's answer (parametrised); a subject that already has a price
+fact is not given a second one; a merchant row with no clock claims nothing; the cell reports
+the source the row gives (parametrised - an unknown `price_source` becomes `demo`, not a
+merchant claim); the compare READ selects the clock; a grounded cell reaches the comparison's
+citation list; and on the live plane both branches of one real comparison cite what each row
+can support. **10 passed** offline, **14 passed** with `NEXUS_TEST_DATABASE_URL` set, and
+`ruff check` over the four files: All checks passed.
+
+**Left open.** The grid grounds only the price cell; every other cell in it (rating, distance,
+hours) still renders whatever the row carries, so the module's promise is kept one cell at a
+time rather than by the table. And the merchant branch cannot ever carry a clock until
+`merchants` grows one - a schema question, not a reader's.

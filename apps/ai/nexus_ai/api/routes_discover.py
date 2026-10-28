@@ -22,7 +22,7 @@ from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import compose_summary, run_search, understand
 from nexus_ai.contract import (
     MAX_QUERY_LENGTH, CompareRequest, CompareResponse, CompareRow, RecommendRequest, RecommendResponse, UnderstandRequest, UnderstandResponse)
-from nexus_ai.search.cards import (compute_open, meters_text,
+from nexus_ai.search.cards import (compute_open, ground_row_price, meters_text,
                                    travel_minutes)
 from nexus_ai.trust.facts import FactBundle, facts_from_rows
 
@@ -283,7 +283,20 @@ def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
         if price_fact and isinstance(price_fact.value, dict):
             price_val = price_fact.value.get("amount")
         elif row.get("avg_price_hkd") is not None:
-            price_val = f"{float(row['avg_price_hkd']):.2f}"
+            amount = float(row["avg_price_hkd"])
+            price_val = f"{amount:.2f}"
+            # D590: the cell printed the row's own column and cited nothing, which is the
+            # card's §4 hole (D589) in the comparison table - and this module's own docstring
+            # promises a comparison renders only what resolves to a fact. Grounded from the
+            # row's own price clock, so the age the UI computes for the cell is the age of
+            # the number, not of the request. A merchant row carries no price clock
+            # (`merchants` has avg_price_hkd and price_band and nothing else), so its cell
+            # keeps the unverified marker rather than a stamp this table cannot support.
+            price_fact = ground_row_price(bundle, subject_type=str(row.get("subject_type")
+                                                                  or "offering"),
+                                         subject_id=sid, rec=row, amount=amount,
+                                         currency=row.get("currency"),
+                                         model=row.get("price_model")) or price_fact
         price_cells.append(_cell(price_val, price_fact))
         rating_fact = bundle.get("rating", sid)
         rating_val = rating_fact.value.get("value") if rating_fact and isinstance(
