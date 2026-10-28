@@ -2124,7 +2124,10 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   the repo boundary by `test_a_preference_written_through_the_api_is_not_read_as_silence.py`) and
   left the inference lane at `NEUTRAL_PREFERENCE_WEIGHT`, because a guess the platform made without
   a stated confidence is not evidence the user offered. `PreferenceWeightDoorTest
-  ::inferenceStillAnswersNeutralAndThatIsFiled` pins that behaviour as the open question it is. Two
+  ::inferenceStillAnswersNeutralAndThatIsFiled` pins that behaviour as the open question it is. The
+  demo corpus is not the caller that trips it - its single `inferred` row carries an explicit 0.6
+  (census measured for this bullet: 7 rows across 1 owner, none at 0.500) - so the exposure is an API
+  caller or a behaviour pipeline that omits the number, not the seed. Two
   real repairs, and they are different products: the behaviour pipeline computes a confidence from
   how many observations agree and passes it in, or the write plane refuses an `inferred` row whose
   weight is absent (400 rather than a silent 0.5 - which is the shape §33's editability presumes).
@@ -2147,10 +2150,28 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
 - **`notification_channel` rows are written without a `weight` at all (found while asking who writes
   this column)** - `NotificationRepository.setPreference` names six columns in its INSERT and leaves
   `weight` to the DDL's `NOT NULL DEFAULT 0.500`, i.e. to the number D587 just proved the ranker
-  reads as no evidence. Measured inert: 0 occurrences of that kind in `search/service.py` and 0 in
-  `MeController`, so no ranking clause reads it today. The user-facing half is not inert -
-  `GET /api/v1/me/preferences` lists these rows with that weight, and `PreferenceBody`'s kind
-  pattern does not accept `notification_channel`, so §33's "editable" promise does not reach a row
-  the notification panel wrote. Either the notification lane states a weight it means (it reads only
+  reads as no evidence. Measured inert for ranking: 0 occurrences of that kind in `search/service.py`
+  and 0 in `MeController`. Measured on the live plane just now: 7 rows across 1 owner, none of them
+  `notification_channel` and none at 0.500 - so this write path has never been used here, and the
+  defect is a promise waiting for its first caller rather than a broken edit today. The user-facing
+  half is read off the source and NOT yet run against a row: `GET /api/v1/me/preferences` takes the
+  `kind` filter as optional and selects `p.weight`, so it lists these rows at the weight nobody
+  stated, while `PATCH /preferences/{id}` demands the same `PreferenceBody` whose kind `@Pattern`
+  does not admit `notification_channel` - §33's "editable" promise therefore does not reach a row the
+  notification panel wrote. Either the notification lane states a weight it means (it reads only
   `value.enabled`, so any number is a lie) or its rows are excluded from the preference list the
   user edits. Owner: the platform lane with the notification owner.
+
+- **The memory tier a caller chooses has to be decided, not silently absorbed (D604's gap)** -
+  `user_preferences.scope` (`session|long_term`, `V1__init.sql:69`) is validated by the shipped door
+  (`MeController.java:57`), stored by the shipped INSERT (`IdentityRepository.java:322`) and listed
+  back to the owner (`p.scope`, `:283`/`:301`), while `user_preferences_for` (`sql.py:651`) - the AI
+  lane's only read of the table - never names `scope` or `conversation_id`, so a preference scoped
+  to one conversation ranks every later answer forever. Census: 7 rows across 1 owner, all
+  `long_term`, `count(conversation_id)` = 0, so there is no live victim yet. The two repairs are
+  different products and one clause resolves both (D545): honour the tier in the ranking read, which
+  means the writer owes the conversation key and §6's split between `conversations.state` and
+  `user_preferences` has to be re-read, or refuse `scope="session"` at the door until there is
+  something to honour it against. `test_a_preference_scoped_to_one_conversation_is_read_back_by_every_search.py`
+  pins the gap in both directions and its shadow rows go red either way, so the decision cannot be
+  made by accident. Owner: the AI lane with the platform lane; the spec question is §117's.

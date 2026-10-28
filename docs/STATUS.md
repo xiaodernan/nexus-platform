@@ -26406,3 +26406,83 @@ a stored WEIGHT.
   `_Backend.user_preferences`, `_row` / `_score` and the `_LIVE_JSONB` fold, `PREFERENCES`;
   `IdentityRepository.DECLARED_PREFERENCE_WEIGHT` / `NEUTRAL_PREFERENCE_WEIGHT` and the
   `insertWeight` / `weight_given` bind pair inside `upsertPreference`.
+
+## 602. D604 · the memory tier a caller chooses is stored, shown to its owner, and read by nobody (`apps/ai/tests/test_a_preference_scoped_to_one_conversation_is_read_back_by_every_search.py`)
+
+**What was measured.** `user_preferences` carries two columns that say HOW LONG a preference
+lives: `scope text NOT NULL DEFAULT 'long_term' -- session|long_term`
+(`infra/db/migrations/V1__init.sql:69`) and `conversation_id uuid`, nullable
+(`V1__init.sql:70`). Both are reachable from a caller: the shipped write door validates the tier
+with `@Pattern(regexp = "^(session|long_term)$")` (`MeController.java:57`), and the contract shows
+it to clients as "Memory tier - V1 `scope` (`session|long_term`), spec §117"
+(`packages/types/src/auth.ts:206`). The read that feeds the ranking is
+`nexus_ai/search/sql.py::user_preferences_for` (line 651) - the AI lane's only read of this table -
+and it selects `kind, key, value, weight, source` under a WHERE of `user_id`, D585's deadline
+predicate and the optional `kind` list. Measured: the word `scope` occurs twice in `nexus_ai`
+and both occurrences are in a comment (`api/app.py:10`, `trust/injection.py:11`); `conversation_id`
+occurs in this lane's SQL nowhere. So the two tiers are one tier to the ranker - a preference a
+caller scoped to one conversation ranks every later answer forever - and the owner is told about
+the tier anyway, because both preference lists select `p.scope` straight into the §32 view
+(`IdentityRepository.java:283` and `:301`).
+
+The plane cannot show a victim, so the gate runs the SHIPPED SQL against a `values` list that
+shadows the table (D585's technique, nothing written anywhere). One durable row plus two session
+rows for one user - the second session row carrying a real conversation key, the third shaped
+exactly as the shipped API shapes it:
+
+    read returns                          keys
+    all three rows                        ambience, scenic, per_person_max_hkd
+    only the long_term row                ambience            (the tripwire that the shadow reaches the SQL)
+
+`data/seed/generate.py` writes `"long_term", None` for every row it makes, and measured on the
+live plane the census is 7 rows across 1 owner, all `long_term`, `count(conversation_id)` = 0 - so
+the first caller to send `scope="session"` through the shipped door is the first victim. The door
+says that out loud in its own row (`test_this_plane_has_no_session_row_yet`) so a future reader
+cannot mistake the shadow for a measurement of real traffic.
+
+**The write plane is not the half that ignores this, and that is what makes the repair a decision
+rather than a patch.** The INSERT stores the tier (`IdentityRepository.java:322`), so `scope` is
+faithfully kept; what it does not do is populate `conversation_id`, and `PreferenceBody` has no
+field for it - measured by reading the record's own parameter list, not the file. A reader that
+wanted to honour "this preference lives only in this conversation" would have nothing to honour it
+against. So one gap has two clauses, and per D545 they get decided together: either the ranking
+read honours the tier (which means the writer owes the key), or the door refuses `session` until
+there is a place to honour it against. `docs/AGENTS.md` §6 draws the line under both: four memory
+scopes with permission isolation, session memory being `conversations.state` and user-preference
+memory being `user_preferences` with "scope `session|long_term`, user view/edit/delete - §32/§33".
+Choosing is a product call - the two options ship different promises - so this unit pins the gap
+and files the decision in PLAN instead of picking silently and absorbing a spec question into a
+WHERE clause.
+
+**Arms.** Four. Three mutate the Java plane on disk and restore byte-for-byte
+(`restored=True`, three times); the reader arm is an in-process patch, and that is worth stating
+because the reason is a rule of this lane rather than a shortcut: the AI suite was running against
+these bytes, so `sql.py` was not editable while it ran.
+
+* A - `user_preferences_for` wrapped in the test process so its WHERE also says
+  `AND scope = 'long_term'` (the shape a repair takes): **2 failed, 5 passed** -
+  `test_the_ranking_read_names_neither_column_the_tier_lives_in` and
+  `test_a_preference_scoped_to_one_conversation_is_read_back_by_every_search`. The shadow tripwire
+  stayed green, which is the arm's other half: honouring the tier must still return the durable
+  row. The first version of this arm appended the predicate to the end of the built string, which
+  put it after `ORDER BY` and turned the two DB rows red on a syntax error; an arm that goes red
+  for the wrong reason measures nothing, so it now aims inside the WHERE and asserts its own needle
+  is present before replacing it.
+* B - the preference INSERT stops naming `scope`: **1 failed, 6 passed**,
+  `test_the_tier_the_caller_chose_is_the_tier_that_is_stored`. The claim stays pointed at the read
+  because the writer arm proves the write rows are live.
+* C1 - `record PreferenceBody(` renamed so both of this door's readers of it come up empty:
+  **2 failed, 5 passed** - the tier row and `test_the_shipped_writer_cannot_give_a_session_row_a_conversation`.
+  Both fail on their own asserts, not by falling through to a pass.
+* C2 - the owner's list stops selecting `p.scope`: **1 failed, 6 passed**,
+  `test_the_owner_is_shown_the_tier_the_ranker_ignores` - the §32 promise row.
+
+**Verified.** The door: **7 passed** with `NEXUS_TEST_DATABASE_URL` set, **4 passed, 3 skipped**
+without it (the three DB rows declare themselves with `live_only`), `ruff check` clean. No
+production file was changed by this unit; `git status` after the arms answers clean for
+`IdentityRepository.java` and `MeController.java`.
+
+- readers: `_preference_insert_columns` (the writer's own column list), `_preference_body_text` and
+  `_scope_tiers_the_api_admits` (scoped inside the record after D588's later-`@Pattern` trap),
+  `SQL.user_preferences_for` and the `_MEMORY` shadow `values` CTE, `p.scope` in the owner's list,
+  and the live census of `user_preferences` by `scope` with `count(conversation_id)`.
