@@ -399,6 +399,28 @@ def build_offering_query(
         if radius_m:
             where.append(f"loc.meters <= {p.add(float(radius_m))}")
 
+    # D583: the merchant lane's D407 containment leg, aimed at the offering's OWN text.
+    # The corpus was measured, not assumed: 咖啡 is in 80 published offerings, 拉麵 in 43 and
+    # 甜品 in 39, and the offering lane's tsvector cannot match any of them - a Chinese run
+    # becomes one token, and the two available text search configs both answer False for a
+    # offering text matched against its own word. So every row the lane returned carried the
+    # SAME kw_score (0.3333 for 咖啡, from word_similarity alone) and the page was ordered by
+    # rating: the 24 mentioning rows of the 60 it served stood at ranks 4 through 54. The
+    # merchant lane, with this leg, puts its 27 mentioning rows at 0 through 26. Two lanes of
+    # one product must not answer one Chinese word with two different orders (D449).
+    cjk = cjk_keywords(text)
+    if cjk:
+        tokens_ph = p.add(cjk)
+        count_ph = p.add(len(cjk))
+        contains_count = (
+            "(SELECT count(*)::float8 FROM unnest(" + tokens_ph + "::text[]) AS t"
+            " WHERE strpos(lower(coalesce(o.name,'') || ' ' || coalesce(o.name_zh,'') ||"
+            " ' ' || coalesce(o.description,'') || ' ' || coalesce(o.description_zh,'')),"
+            " lower(t)) > 0)")
+        contains_frac = "(" + contains_count + " / " + count_ph + "::float8)"
+    else:
+        contains_count = "0::float8"
+        contains_frac = "0::float8"
     kw_score = (
         f"GREATEST(COALESCE(ts_rank(o.search_tsv, {tsq}), 0),"
         f" COALESCE(ts_rank(o.search_tsv, {wsq}), 0),"
@@ -406,10 +428,11 @@ def build_offering_query(
         f" COALESCE(similarity(coalesce(o.name_zh,''), {text_ph}), 0),"
         f" COALESCE(word_similarity({text_ph}, coalesce(o.name,'') || ' ' ||"
         f" coalesce(o.name_zh,'') || ' ' || coalesce(o.description,'') || ' ' ||"
-        f" coalesce(o.description_zh,'')), 0))")
+        f" coalesce(o.description_zh,'')), 0)) + " + contains_frac)
     has_text = bool((text or "").strip())
     match = (f"(o.search_tsv @@ {tsq} OR o.search_tsv @@ {wsq} OR o.name % {text_ph}"
-             f" OR coalesce(o.name_zh,'') % {text_ph})") if has_text else "true"
+             f" OR coalesce(o.name_zh,'') % {text_ph}"
+             f" OR " + contains_count + " > 0)") if has_text else "true"
     matched_flag = match if has_text else "false"
 
     avoid = [str(a) for a in (filters.get("avoid") or [])]
