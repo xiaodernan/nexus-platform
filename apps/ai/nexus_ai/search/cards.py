@@ -52,6 +52,11 @@ REASON_COPY: dict[str, dict[str, str]] = {
     "fresh_data": {"zh-HK": "資料已核實", "zh-CN": "资料已核实", "en": "data verified"},
     "district_match": {"zh-HK": "位於 {district}", "zh-CN": "位于 {district}",
                        "en": "in {district}"},
+    # D608: the walk from the station, in the merchant's own recorded minutes - not the walk
+    # from the user, which `near_you` estimates from straight-line metres.
+    "mtr_proximity": {"zh-HK": "港鐵 {station} 站步行 {minutes} 分鐘",
+                      "zh-CN": "地铁 {station} 站步行 {minutes} 分钟",
+                      "en": "{minutes} min walk from MTR {station}"},
     "sponsored": {"zh-HK": "廣告", "zh-CN": "广告", "en": "Sponsored"},
 }
 
@@ -181,6 +186,18 @@ def synth_computed_facts(bundle: FactBundle, cand: Candidate, *, now: datetime,
             value={"meters": int(round(cand.distance_m)), "text": meters_text(cand.distance_m),
                    "travel_minutes": travel_minutes(cand.distance_m)},
             source="inferred", confidence=0.95, observed_at=now)
+    # D608: the recorded walk from the station, which is two columns of the location record the
+    # geo lane already fetches. The plane keeps no transit FACT to cite - its 684 `address` facts
+    # hold lat/lng/line1/line2/district and no station - so the citation is synthesised from the
+    # row, on the `distance_m` fact's own shape. `source` follows what this plane already says
+    # about that same location record: `merchant` on 684 of 684 address facts.
+    rec = (cand.raw or {}).get("row") or (cand.raw or {})
+    station, walk_min = rec.get("mtr_station"), rec.get("mtr_walk_min")
+    if station and walk_min is not None:
+        out["mtr_proximity"] = bundle.synth(
+            subject_type=cand.subject_type, subject_id=sid, attribute="mtr_proximity",
+            value={"station": str(station), "walk_min": int(walk_min)},
+            source="merchant", confidence=0.9, observed_at=now)
     if open_state and open_state.get("is_open") is not None:
         out["open_state"] = bundle.synth(
             subject_type="merchant", subject_id=sid, attribute="open_state",
@@ -225,7 +242,7 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
     subject_uuid = _coerce_uuid(sid)
     facts: list[Fact] = []
     for attribute in ("price", "avg_price_hkd", "rating", "opening_hours", "address",
-                      "distance_m", "open_state", "availability", "relevance"):
+                      "distance_m", "mtr_proximity", "open_state", "availability", "relevance"):
         f = computed.get(attribute) or bundle.get(attribute, subject_uuid)
         if f and f not in facts:
             facts.append(f)
@@ -345,6 +362,16 @@ def build_reasons(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
                 text=_reason_text("district_match", cand, locale=lang,
                                   open_state=open_state, query=query),
                 value=cand.district, fact_id=fact.fact_id))
+    # D608: appended the way the district bullet is, because it is not a ranking contribution - no
+    # feature score earns it a place - while still tracing to a fact (§18) or not being raised.
+    transit = _fact_for("mtr_proximity", computed, bundle, cand)
+    if transit is not None and "mtr_proximity" not in seen:
+        transit_text = _reason_text("mtr_proximity", cand, locale=lang,
+                                    open_state=open_state, query=query)
+        if transit_text:
+            out.append(MatchExplanation(label="mtr_proximity", text=transit_text,
+                                        value=str(transit.value["walk_min"]),
+                                        fact_id=transit.fact_id))
     return out[:5]
 
 
@@ -395,6 +422,12 @@ def _reason_text(label: str, cand: Candidate, *, locale: str,
         return template.format(when=nxt or "") if cand.availability == "available" else ""
     if label == "district_match":
         return template.format(district=cand.district) if cand.district else ""
+    if label == "mtr_proximity":
+        rec = (cand.raw or {}).get("row") or (cand.raw or {})
+        station, walk_min = rec.get("mtr_station"), rec.get("mtr_walk_min")
+        if not station or walk_min is None:
+            return ""  # half a transit fact is a guess about the other half (§2)
+        return template.format(station=str(station), minutes=int(walk_min))
     return template
 
 
@@ -405,6 +438,7 @@ def _fact_for(label: str, computed: dict[str, Fact], bundle: FactBundle,
            "matches_query": "relevance", "preference_match": "relevance",
            "fresh_data": "relevance", "trending": "popularity",
            "district_match": "address", "within_budget": "price",
+           "mtr_proximity": "mtr_proximity",
            "top_rated": "rating"}.get(label)
     sid = _coerce_uuid(str(cand.subject_id))
     if key and key in computed:

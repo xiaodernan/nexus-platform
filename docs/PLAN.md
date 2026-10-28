@@ -2237,3 +2237,49 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   its docstring promised to keep: "a fixture that stores the coarse bucket in `category_primary`
   itself keeps the old comparison". Owner: the D596 lane - the clause and the fixture are both
   theirs; this row records the measurement because D607 could otherwise be blamed for it.
+
+
+- **The district every card prints is a fact the card lane never fetches - the plane keys its
+  address facts to the location row, and the card's fetch binds merchant ids (found measuring
+  D608's collateral)** - `facts` holds 684 `address` rows, all of them `subject_type='location'`
+  with `subject_id = locations.id` (measured: 684 of 684 hit `locations.id`, 0 hit `merchants.id`),
+  and every one of the 684 carries its own `merchant_id` column, so the join exists.
+  `facts_for` (`search/sql.py`) asks `subject_id = ANY(<the card's subject ids>::uuid[])` and the
+  card lane passes merchant/offering ids: over the plane's first 40 merchants that bind returns 160
+  facts - 40 each of `cuisine`, `opening_hours`, `price`, `rating` - and 0 address facts. A live geo
+  answer at Central (10 cards) therefore carries `price` 54, `opening_hours` 54, `cuisine` 54,
+  `rating` 64 plus the synthesised `distance_m`/`open_state`/`relevance`/`mtr_proximity` 10 each and
+  **no `address` fact at all**: 0 of 10 cards raise `district_match` - `_fact_for` maps that label
+  to `address`, so it can never resolve - while 10 of 10 print `· Central` in `subtitle`, ungrounded
+  (§18 asks every bullet to name a fact, and here the sentence that would name one is the one that
+  cannot). `address_line1` arrives in the same row and is read by nothing in the AI lane (census: 0;
+  web 4, Java 15 - both on the platform-catalog path, not the card). Two fix shapes, different
+  reach: project the location id the geo LATERAL already selects (`SELECT l.id`, unprojected today
+  on both lanes) and bind those ids in the fact fetch, or read address facts by their own
+  `merchant_id`. This is D589's class - a rendered value with no fact behind it - one column over.
+  Owner: the AI lane.
+
+- **Two of the census's zero-reader tokens were the census being wrong, and the ones left are named
+  here rather than "fixed" (D608's method, audited)** - `merchant_lively_ambience` is read: the
+  static refusal's offering leg looks the row value up under a key it COMPOSES
+  (`row.get("merchant_" + name)`, `search/service.py:343`), which a name-match census cannot see.
+  `mean_rating` is read too - it is the inner aggregate alias re-exported one line up as
+  `tenant_mean_rating` (`search/sql.py:388`, `:393`) and consumed at `service.py:802`. So the
+  census's output is a queue, not a verdict, and every "0 readers" gets re-checked against
+  composition and aliasing before it is filed. What survives: `address_line1` (the bullet above),
+  and the whole `reviews_for` builder (`search/sql.py:649`) - no caller outside its own three tests,
+  and it sits on the dead-name exemption list at `tests/test_no_dead_constants.py:63` with a comment
+  describing it as "the review rows for a set of merchants" while the product already renders review
+  rows, with their ids, from the platform lane (`apps/web/src/components/merchant-view.tsx:209`).
+  Either the AI lane's review lane gets wired and its `review_id` becomes a citation the card can
+  carry, or the builder and its exemption both go; which of those is a product question about who
+  owns review evidence. Owner: the AI lane with the review-ingest owner.
+
+- **The census that found D607's column, D608's column and the address keying - so the next one is
+  looked for rather than tripped over** - `tmp/d608_census.py` reads every bare `m.`/`o.` column and
+  every `AS alias` out of `search/sql.py`'s SELECT lists (47 tokens on this tree), counts each
+  name's occurrences per AI-lane module, the web app and the Java platform, and then asks the plane
+  how many rows actually carry a value. It is cheap, it is re-runnable after any SELECT-list change,
+  and its numbers are the day's plane - they have to be re-measured, not remembered. Three units
+  have now come out of the same question: D607 (`min/max_party_size`), D608
+  (`mtr_station`/`mtr_walk_min`), and the `address` keying above.

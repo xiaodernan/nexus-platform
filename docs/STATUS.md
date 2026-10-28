@@ -26836,3 +26836,138 @@ every number above was produced by a run started after the final byte.
   comparisons and their placeholders, `_Recorder.offering_candidates` (what the pipeline dispatches,
   in both directions), and one census SELECT that re-measures the four populations every claim above
   quotes.
+
+## 606. D608 · the walk from the station every geo row carries was fetched by one lane, not fetched by the other, and spoken by no card (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/cards.py`, `apps/ai/tests/test_the_nearest_station_the_geo_lane_fetches_is_not_on_the_card.py`)
+
+**What was measured.** D607 found one column by accident of proximity - `min/max_party_size` was
+in the row and applied by nobody - and asked whether the same sentence is true of other columns.
+`tmp/d608_census.py` answers that for the whole row shape: every bare `m.`/`o.` column and every
+`AS alias` in `search/sql.py`'s SELECT lists (47 tokens on this tree), each one's occurrence count
+per AI-lane module, in the web app and in the Java platform, and how many rows of this plane
+actually carry a value. The token this unit landed on is the transit pair. `docs/VISION.md:45`
+names the consumer surface in Hong Kong terms ("district/area + MTR proximity"), and
+`docs/DATABASE.md:65` files that sentence as two columns of the location record (`mtr_station`,
+`mtr_walk_min`) - the platform's merchant surface ships them, and the AI lane's merchant SELECT
+projects them at `sql.py:269-270`. Measured: **0 readers** of either name anywhere in `nexus_ai`
+outside the projection that puts them in the row. A real geo search (`咖啡店`, Central, r=3000) hands
+the station to **20 of 20** rows and the minutes to **20 of 20**; the same request through the
+shipped pipeline produced **0 of 6 cards** saying anything about a station
+(`tmp/d608_mtr_probe.py`, `tmp/d608_pipeline_probe.py`).
+
+**What the card printed in its place is a different question, and both numbers are kept.** The
+only transit sentence a card had was `near_you`, whose `travel_minutes` is an estimate of the walk
+from THE USER at 4.8 km/h over straight-line metres (`travel_minutes` in `search/cards.py`,
+rendered by the web at `apps/web/src/lib/facts.ts:77`). The row's `mtr_walk_min` is the walk from
+THE STATION, which the merchant states. On the live page the two differ in both directions - 14
+recorded against 6 estimated for one card, 6 recorded against 21 estimated for another - so
+neither number is wrong and neither is a proxy for the other. What the plane keeps is the recorded
+one: **684 of 684** `locations` rows carry both halves, all **470** published merchants with a
+primary location have both, `mtr_walk_min` spans 2..25, and the three spellings of the same
+five-minute threshold agree exactly - 132 merchants by the column, by the
+`attributes->'mtr_within_5min'` trait the ranking lane already reads (`service.py:1390`) and by
+the `mtr-5min` tag, **0 disagreements**. Printing the number therefore contradicts nothing the
+answer already claims.
+
+**The second half was a lane asymmetry, the D449/D596 shape.** The offering lane's geo block
+projected `loc.meters, loc.district` where the merchant lane's projects five columns including
+both transit ones, so one product answered one geo request with two row shapes - and an offering
+card, which is the thing a bookable user actually walks to, could not have carried the fact even
+after the card learned to read it. Arm D below re-creates exactly that state and the door reads
+`the offering row has no ['mtr_station', 'mtr_walk_min'] key at all`.
+
+**Three layers, one per claim.** (1) `build_offering_query`'s geo block now mirrors the merchant
+lane's: the same five columns, the same LATERAL, the same `ORDER BY meters ASC NULLS LAST LIMIT
+1`. (2) `synth_computed_facts` raises a `mtr_proximity` fact from the pair when a row states both
+halves, keyed on the card's own subject and stamped with the request clock, with
+`source='merchant'` because that is what this plane already says about the same location record -
+all 684 of its `address` facts are `source='merchant'`. The plane keeps no transit fact to cite
+(measured: `facts` holds `address`, `capacity`, `cuisine`, `opening_hours`, `price` and `rating`
+and nothing else), so the citation is synthesised from the row on `distance_m`'s existing shape
+rather than invented as a stored row. (3) the copy lane got the label in all three locales,
+`_fact_for` got its key, `build_reasons` appends the bullet the way `district_match` is appended -
+because no feature score earns it a place, it is not a ranking contribution - and the fact joins
+`build_card`'s `facts` tuple. `_NO_FACT_REASON_LABELS` still holds exactly one label, `sponsored`,
+so the bullet is raised only when a fact backs it and the door checks it survives
+`drop_ungrounded_reasons` (`dropped == 0`) and appears in `card.facts`, which is the list the web
+filters bullets by (`facts.ts:112`).
+
+**Live at the shipped bytes** (`tmp/d608_final_live.py`, two queries x three locales x both lanes,
+6 cards each): every lane, locale and page carries **6 rows with the pair, 6 bullets, 6 facts in
+`cards[].facts`, 6 in the bundle**. The sentences are 港鐵 Central 站步行 14 分鐘 / 地铁 Central 站步行 14 分钟
+/ 14 min walk from MTR Central for the same row, and the offering lane answers with its own
+merchant's station (港鐵 Wan Chai 站步行 14 分鐘). The estimate stays where it was:
+`distance.travel_minutes` still reports the walk from the user beside it.
+
+Two things about the shape of the append are stated because a reader will otherwise assume them.
+The bullet enters `out` last and `build_reasons` caps the list at five, so where a card already
+carries five stronger reasons it is the transit sentence that gets dropped, not one of theirs -
+measured over 20 requests (two subject types x two geo states x five queries at `limit` 20,
+`tmp/d608_cap_probe.py`): **200 of 200** cards whose row states the pair carry the bullet and 0
+were dropped by the cap, so nothing on this plane loses a bullet to this addition. And the
+estimate is not replaced: a card may now read 6 minutes from you beside 14 from Central, which
+is the honest pair of two different questions rather than one laundered into the other.
+
+**Seven arms, and the third one is the interesting failure.** Each mutates one shipped clause and
+runs the door (`tmp/d608_arms.py`, `tmp/d608_arms.txt`, every arm restores and reports
+`restored=True`; control at the final bytes: **17 passed**).
+
+    A  no transit fact is ever synthesised            8 failed, 9 passed
+    B  the label has no fact key to look up          8 failed, 9 passed
+    C  a half transit fact is printed anyway         16 passed, 0 failed  <- the door was blind here
+    D  the offering lane projects two columns again  2 failed, 15 passed
+    E  the fact is not on the card                   1 failed, 16 passed
+    F  the reason block is never appended            8 failed, 9 passed
+    G  one locale key is misspelt                    5 failed, 7 passed, 5 errors
+
+C removed `_reason_text`'s guard - refuse to format a sentence when one half of the pair is
+missing - and the door did not move, because `build_card` only reaches that lane after
+`synth_computed_facts` has already refused to raise the fact. That is not a licence to delete the
+guard: `_fact_for` can hand the lane a fact the ROW did not provide (a stored `mtr_proximity`
+cited under a query with no geo - the same ladder `district_match` climbs to read a stored
+address), and without the guard that call formats `None` into a sentence about a walk nobody
+stated. The door was missing the contract, so the door gained a row
+(`test_half_a_transit_pair_writes_no_sentence_at_the_copy_lane_too`, which also asserts the
+complete pair still writes one), and C was re-run at those bytes: **1 failed, 16 passed**. Every
+number above is from the second run.
+
+**Neighbour sweep: 191 passed, 0 failed** across the twelve files that read this lane's row shape
+and card shape (`test_cards.py`, `test_search_sql.py`, `test_sql_builders.py`,
+`test_cards_carry_the_contract_fields.py`, `test_compare_grid.py`, `test_uuid_id_bindings.py`,
+`test_open_time_binding.py`, D589's, D607's and D605's doors,
+`test_the_party_size_has_one_reader.py` and the live-plane retrieval door) at the final bytes,
+with `ruff check` clean on all three files. The full-suite run that was in flight when this unit
+started (`ca66248`-era tree, before any D608 byte existed) reached 20% and its process was
+stopped; like §605's stopped run it is **no verdict** and nothing above cites it. A fresh suite
+started after the final byte read **5,104 passed, 1 failed at 15%** when this section was written,
+and it outlives this commit. The one failure so far sits in
+`test_a_chunk_is_cited_only_from_a_document_the_pipeline_called_ready.py`, a RAG-lane file this
+unit touches nothing of - and re-running that file alone at these bytes failed once
+(`test_an_indexed_document_is_cited_exactly_as_it_is_today`) and passed once, so it is flaky
+whatever this commit does. Named here, not resolved; its module `nexus_ai/rag/embed.py` is the
+concurrent lane's in-flight edit and is not in this commit.
+
+**Two findings were measured and deliberately not absorbed.** The first is bigger than this unit
+and is the queue's next candidate: the plane's 684 `address` facts are keyed
+`subject_type='location'` / `subject_id = locations.id` (684 of 684 hit `locations.id`, 0 hit
+`merchants.id`, and every one carries its own `merchant_id`), while `facts_for` binds the card's
+subject ids - so on a live geo answer the bundle holds price/opening_hours/cuisine/rating plus the
+synthesised facts and **no address fact at all**; 0 of 10 cards can raise the `district_match`
+bullet they already have copy for, while 10 of 10 print `· Central` in the subtitle ungrounded.
+The district reaches the user; the citation does not. That is D589's class one column over, and
+fixing it means widening the fact load to the location ids the LATERAL already selects (`SELECT
+l.id`, unprojected on both lanes today) or re-filing the facts by `merchant_id` - a keying
+decision with two shapes and different reach, which is why it is in PLAN with its counts rather
+than folded into a transit unit's evidence. The second: the census said `merchant_lively_ambience`
+and `mean_rating` had no readers and both were wrong - the first is read under a key the refusal
+lane COMPOSES (`row.get("merchant_" + name)`, `search/service.py:343`) and the second is an inner
+alias re-exported one line up as `tenant_mean_rating`. A "0 readers" line in that census is a
+queue, not a verdict, and this unit re-checked each one before filing it.
+
+- readers: `synth_computed_facts` (the pair → a `mtr_proximity` fact, only when both halves
+  exist), `_fact_for`'s key map, `_reason_text`'s locale-folded template, `build_reasons`'s append
+  beside the district block, `build_card`'s `facts` tuple, `drop_ungrounded_reasons` (the wire
+  gate the bullet has to pass, `dropped == 0`), `renderableReasons` in the web (which reads
+  `card.facts`, so the fact had to join it), `build_offering_query`'s geo block (asserted as SQL
+  text against the merchant lane's), the door's five live rows over the shipped pipeline (row
+  columns, card bullets, the threshold's three spellings and the plane's own fact coverage), and
+  `tmp/d608_census.py` + `tmp/d608_final_live.py` as the re-runnable measurements. 

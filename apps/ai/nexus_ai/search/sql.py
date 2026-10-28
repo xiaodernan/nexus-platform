@@ -467,15 +467,22 @@ def build_offering_query(
         where.append(f"(o.min_party_size IS NULL OR o.min_party_size <= {need})")
 
     geo_join = ""
-    geo_select = "NULL::float8 AS meters, NULL::text AS district"
+    geo_select = ("NULL::float8 AS meters, NULL::text AS district, "
+                  "NULL::text AS address_line1, NULL::text AS mtr_station, "
+                  "NULL::int AS mtr_walk_min")
     if geo:
         lat, lng = float(geo[0]), float(geo[1])
         lat_ph, lng_ph = p.add(lat), p.add(lng)
         lat_min, lat_max, lng_min, lng_max = bbox(lat, lng, int(radius_m or 5000))
         b1, b2, b3, b4 = p.add(lat_min), p.add(lat_max), p.add(lng_min), p.add(lng_max)
-        geo_select = "loc.meters AS meters, loc.district AS district"
+        # D608: this block projected two columns while the merchant lane's projected five
+        # (`sql.py:269-270`), so one product answered one geo request with two row shapes and an
+        # offering card could not be told the walk its own merchant states (D449).
+        geo_select = ("loc.meters AS meters, loc.district AS district, "
+                      "loc.address_line1 AS address_line1, loc.mtr_station AS mtr_station, "
+                      "loc.mtr_walk_min AS mtr_walk_min")
         geo_join = f"""JOIN LATERAL (
-          SELECT l.id, l.district,
+          SELECT l.id, l.district, l.address_line1, l.mtr_station, l.mtr_walk_min,
                  {haversine_expr(lat_ph, lng_ph, 'l.lat', 'l.lng')} AS meters
           FROM locations l
           WHERE l.merchant_id = m.id
