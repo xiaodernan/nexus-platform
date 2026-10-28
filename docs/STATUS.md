@@ -25742,3 +25742,39 @@ the old spelling claimed and this one omits. A `vector_hits` count beside `strat
 it, but that is a contract change and this unit did not make one. Running `make ai-embed` is
 still the product answer: it fills the 2118 chunks and the suffix returns by itself, which is
 the property that makes this rule safe rather than a permanent downgrade.
+
+## 587. D592 · the palette printed 4.8:1 against white while the page painted the text on a canvas that measured 4.477:1 (`packages/ui/src/tokens`, `scripts/check_console_a11y.mjs`, `scripts/falsify_console_a11y.mjs`)
+
+**What was measured.** The visual suite had been red on a readability floor of 4.477:1 against
+the 4.5 AA bound it asserts, filed in PLAN as the web surface's. This unit found which pair:
+`--nexus-ink-faint` #6a7288 clears AA on `--nexus-surface` (#ffffff, **4.80:1** - the ground its
+printed claim names) and fails on four of the six neutral grounds the palette offers: canvas
+**4.48:1**, surface-muted 4.36:1, surface-sunken 4.21:1, neutral-chip 4.17:1. The live reading
+of 4.477 is the canvas cell. The constraint lane was never involved; a token measured against
+one ground was printed on another.
+
+**The fix and the census that would have caught it.** The token is #62697d now: tightest cell
+**4.75:1** on neutral-chip, 5.11:1 on the canvas, 5.47:1 on surface, and the dark theme (already
+clean, worst cell 5.26:1) is untouched. `check_console_a11y.mjs` grows a second population,
+because the first cannot see this: a printed claim is one token against the ground its comment
+names, while a component composes its own pair from two tokens and a source reader cannot
+resolve a className. Every body-text token (ink-strong, ink, ink-muted, ink-faint,
+neutral-chip-ink) is recomputed against every neutral ground (surface, surface-raised, canvas,
+surface-muted, surface-sunken, neutral-chip) - **5 x 6 x 2 = 60 cells**, each of which must
+clear 4.5:1. The population is named in the file, ink-disabled and ink-inverse are excluded with
+their reasons, and a named token or ground the theme does not declare is a refusal (exit 2)
+rather than a silently narrower census.
+
+**Verified, not claimed.** On this session's run: `node scripts/check_console_a11y.mjs` ->
+PASS, 10 printed pairs, 60 ground cells, tightest light `--nexus-ink-faint` on
+`--nexus-neutral-chip` 4.75:1 and on #ffffff 5.47:1; `node scripts/falsify_console_a11y.mjs` ->
+PASS, the shipped checker reddens on every way a landmark, name, focus ring, printed ratio or
+neutral-ground pair can break, and refuses when it cannot see. The commit reports the arm that
+isolates this class (the printed claim stays TRUE - 4.8:1 really is what #6a7288 measures on
+white - and only the canvas cell moves), `npm run test:web` 160 passed and `tokens.test.ts`
+6 passed.
+
+**Left open.** The matrix is body text only; non-text contrast (icons, borders, focus rings at
+3:1) is a different bound and no reader in this repository measures it. And the density of the
+grounds is the palette's own: a seventh neutral ground added to the theme is caught by the
+refusal, but the person who adds it still has to decide which tokens may sit on it.
