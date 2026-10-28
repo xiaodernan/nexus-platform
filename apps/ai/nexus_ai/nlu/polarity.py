@@ -43,6 +43,19 @@ direction, measured on the live service: 避免 / 不吃 / 別 / 少 wrote the p
 a +1 preference for the value in the same sentence, so the product filtered for what it also
 boosted. The vocabulary is one list now, and the boundary rule is what makes the
 single-character rows of that list safe to read.
+
+The composition layer is `antonym_direction`. A row may carry its own OPPOSITE in its token
+list - the quiet rule carries 嘈 - and then the sign the sentence answers is a sign about the
+opposite, not about the value, so the answer owes the value one more reading. D570 wrote the
+refusal (唔好嘈 wants quiet). D582 writes the want, and it is not a sign flip: "嘈的餐廳" asks for
+the noisy restaurant, so the value points at -1, while "太嘈" and "好嘈" and "有冇嘈" name the
+same character without asking for it and keep the row's own +1. What separates them is a FRAME,
+not a word - a bridge verb in the surface's own clause before it, the attributive particle in
+its clause after it (`is_asked_for`) - because the complaint and the request are written with the
+same adjective, and a lane that picks one of them by guessing turns a user's own words into a
+dislike of what they asked for. Measured before the arm existed, the want wrote +1 and the
+ranking buried the loud half of the live plane (188 quiet merchants scored 1.0, 282 loud ones 0.0)
+for the query that asked for the loud half.
 """
 
 from __future__ import annotations
@@ -166,6 +179,13 @@ _CLAUSE_BOUNDARY = re.compile(
 #: here would have read it as the particles' own company.
 _LOCAL_FILLER = re.compile(r"[的地得咁咗喇啦呢個個呀㗎喎嘛囉嘞咩啩 \t]*")
 _ATTACHED_GAP = 3
+
+#: D582: the particle that turns a property word into the thing a query asks for - "嘈的餐廳",
+#: "嘈嘅地方". It is the attributive leg of `is_asked_for`, and 嘅 is the Cantonese spelling of
+#: the same function: the product's tables hold the words, and a Hong Kong query joins them with
+#: this one. A property word with no particle and no verb after it is a bare mention, and the
+#: lane leaves a bare mention alone (`is_asked_for` says what it would otherwise guess).
+_ATTRIBUTIVE_PARTICLES = ("的", "嘅")
 
 #: D535: the words that COORDINATE two clauses. The normalizer turns a clause comma
 #: into a space, but the conjunction survives it - so "cheap and no curry" still says
@@ -429,6 +449,114 @@ def polarity_for(text: str, token: str) -> int:
     return 1
 
 
+def _first_position(text: str, token: str) -> int:
+    """Where the reader reads the token from - its first position, or -1 for nowhere.
+
+    `polarity_for` reads the token at `cue_positions(...)[0]`; a second reader of the same
+    sentence has to mean the same occurrence, or the two answer two different words (D541).
+    """
+    low = text.lower()
+    tok = token.strip().lower()
+    if not tok:
+        return -1
+    found = cue_positions(tok, text, low)
+    return found[0] if found else -1
+
+
+def is_asked_about(text: str, token: str) -> bool:
+    """Whether the token is what 有冇 / 有無 / 有没有 asks about - a question, not a want.
+
+    D533 answered this SHAPE for the CUE: a 冇 sitting directly under a 有 is the question's
+    own verb, so it refuses nothing (`is_existential_question`). Read at the TOKEN instead,
+    the same shape is the question's object: "有冇嘈" asks whether a noisy place exists, and
+    neither a refusal nor a want is in it. The positions come from the ONE matcher and the
+    predicate is D533's own, so the two readers cannot name two different words for one 冇 -
+    and this is the complement of `negation_positions`, which is exactly where a refusal is
+    NOT, for the same reason.
+    """
+    tok_at = _first_position(text, token)
+    if tok_at <= 0:
+        return False
+    low = text.lower()
+    for cue in NEGATION_CUES:
+        c = cue.strip()
+        if not c:
+            continue
+        for cue_at in cue_positions(c, text, low):
+            if cue_at + len(c) == tok_at and is_existential_question(low, cue_at):
+                return True
+    return False
+
+
+def is_asked_for(text: str, token: str) -> bool:
+    """Whether the sentence asks FOR the token - the frame that turns a word into a want.
+
+    Two shapes carry it, and both are vocabulary this module already reads: a bridge verb
+    (`_VERB_BRIDGE` - 想 / 要 / 食 / want / like) in the token's OWN CLAUSE before it, and the
+    attributive particle (`_ATTRIBUTIVE_PARTICLES` - 的 / 嘅) in its own clause after it.
+    "我想嘈一點" and "嘈嘅餐廳" both ask for the noise; "太嘈" asks for nothing, and neither
+    shape is in it.
+
+    The frame is why the want of an antonym is decided by the SENTENCE and not by a marker
+    table. Measured, "好嘈", "咁嘈", "嘈死" and "嘈到爆" name the noise with no governance at
+    all, and they are complaints about a place as often as they are requests for one; so is
+    "我想搵好嘈嘅餐廳", which the same words make into a want. No word inside those sentences
+    says which, and a lane that guesses turns a request into a dislike of the thing asked
+    for - so a bare mention is left at the row's own polarity, which is what the product did
+    before this rule and what its tests pin.
+    """
+    tok_at = _first_position(text, token)
+    if tok_at < 0:
+        return False
+    low = text.lower()
+    tok_end = tok_at + len(token.strip().lower())
+
+    head = low[:tok_at]
+    cut = 0
+    for boundary in _CLAUSE_BOUNDARY.finditer(head):
+        cut = boundary.end()
+    for verb in _VERB_BRIDGE:
+        if verb.isascii():
+            if re.search(r"\b" + re.escape(verb), head[cut:]):
+                return True
+        elif verb in head[cut:]:
+            return True
+
+    tail_m = _CLAUSE_BOUNDARY.search(low, tok_end)
+    tail = low[tok_end:tail_m.start()] if tail_m else low[tok_end:]
+    return any(p in tail for p in _ATTRIBUTIVE_PARTICLES)
+
+
+def antonym_direction(sign: int, text: str, token: str) -> int:
+    """Which way a value's OPPOSITE surface points the VALUE.
+
+    `polarity_for` answers what the sentence does to the surface; this answers what the
+    surface does to the value, for the row that carries its own opposite in its token list
+    (`lexicon.ANTONYM_TERMS`: the quiet rule carries 嘈). Four readings, and the value is
+    pointed at by three of them:
+
+      * a REFUSAL of the opposite wants the value - "唔好嘈" wants quiet (D570);
+      * an EXISTENTIAL QUESTION about it says neither, so it stays where the row put it, +1
+        - 有冇嘈 asks, it does not want (D533, pinned by D570's own test);
+      * a sentence that ASKS FOR it is a dislike of the value - "嘈的餐廳" wants the noisy
+        restaurant, so quiet points at -1 and the ranking demotes the quiet ones. Measured
+        before this arm existed the query wrote +1, and on the live plane the ranker scored
+        the 188 merchants whose `quiet_ambience` is True at 1.0 and the 282 whose it is
+        False at 0.0: the loud half of the plane was buried for the user who asked for it;
+      * anything else is a bare mention, ungoverned and frameless, and the lane does not
+        guess its direction (`is_asked_for` says why).
+
+    `polarity_for` is unchanged: the pure cue reader still answers -1 for "唔好咁嘈", which
+    is what its own tests pin. This is the composition layer, where the (key, value) is
+    known.
+    """
+    if sign == -1:
+        return 1
+    if sign == 1 and not is_asked_about(text, token) and is_asked_for(text, token):
+        return -1
+    return sign
+
+
 def apply_polarity(preferences: list[dict[str, Any]], text: str,
                     tokens: dict[tuple[str, str], str] | None = None) -> list[dict[str, Any]]:
     """Re-stamp each preference's polarity from the sentence it came from.
@@ -437,6 +565,10 @@ def apply_polarity(preferences: list[dict[str, Any]], text: str,
     actually negates the preference. `tokens` maps a preference's (key, value) to the
     surface token that matched it in the sentence — the canonical value ("quiet") is not
     in a Chinese sentence, but the token that matched ("安靜") is.
+
+    A token that is the value's OWN OPPOSITE is read by `antonym_direction`, which is the
+    one place that knows both the (key, value) and the surface, so both directions of the
+    inversion live in one function instead of one in each reader (D570, D582).
 
     Also deduplicates preferences by (key, value) keeping the first occurrence.
     """
@@ -457,12 +589,8 @@ def apply_polarity(preferences: list[dict[str, Any]], text: str,
             token = value or key
         if token and token.lower() in text.lower():
             sign = polarity_for(text, token)
-            # D570: a refusal of the value's OPPOSITE is a request FOR the value ("唔好嘈" wants
-            # quiet), so the -1 is inverted. A question about it stays +1 (polarity_for already
-            # skips the existential cue), and polarity_for itself is unchanged - the pure reader
-            # still answers -1, which is what its own tests pin.
-            if sign == -1 and token.strip().lower() in ANTONYM_TERMS.get((key, value), frozenset()):
-                sign = 1
+            if token.strip().lower() in ANTONYM_TERMS.get((key, value), frozenset()):
+                sign = antonym_direction(sign, text, token)
             if sign:
                 pref = {**pref, "polarity": sign}
         out.append(pref)

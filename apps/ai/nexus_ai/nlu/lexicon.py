@@ -166,6 +166,14 @@ PREFERENCE_RULES: list[tuple[str, str, list[str], int]] = [
 #: -1 told the ranking lane to demote it. Measured on the live corpus: `quiet_ambience` is true on
 #: 188 of 470 published merchants, so the inversion reached 40% of the plane. `polarity.py` reads
 #: this table in `apply_polarity`; `polarity_for` stays a pure cue reader and is unchanged.
+#:
+#: D582 wrote the mirror of the same fact, from the same table: a WANT of the opposite is a
+#: DISLIKE of the value. 嘈的餐廳 names the noise the user is asking for, and the row answered it
+#: as a request for the quiet, so the ranking raised the quiet merchants over the loud ones the
+#: query asked for. Both directions are read in one function (`polarity.antonym_direction`), and
+#: it decides the want from the SENTENCE (a bridge verb before the surface, the attributive
+#: particle after it) rather than from a marker here, because "好嘈" is a complaint about a place
+#: and a request for one in the same words, and only the frame tells them apart.
 ANTONYM_TERMS: dict[tuple[str, str], frozenset[str]] = {
     ("ambience", "quiet"): frozenset({"嘈"}),
 }
