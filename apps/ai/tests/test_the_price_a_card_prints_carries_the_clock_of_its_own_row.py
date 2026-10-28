@@ -126,7 +126,7 @@ def test_the_printed_price_carries_a_fact_stamped_with_the_rows_own_clock():
 
 def test_a_price_past_its_ttl_is_surfaced_with_the_copy_the_contract_names():
     card, bundle = _card(_offering_row())
-    attach_price_staleness(card, bundle)
+    attach_price_staleness(card, bundle, locale="zh-HK")
     stale = [r for r in (card.ai_match.reasons if card.ai_match else [])
              if r.label == "price_stale"]
     assert stale, (
@@ -148,7 +148,7 @@ def test_a_price_inside_its_ttl_renders_without_the_warning():
     assert facts, "a fresh price still needs its fact - the grounding is not a staleness device"
     assert facts[0].stale is False
     assert facts[0].observed_at == FRESH
-    attach_price_staleness(card, bundle)
+    attach_price_staleness(card, bundle, locale="zh-HK")
     assert not [r for r in card.ai_match.reasons if r.label == "price_stale"], (
         "a price inside its TTL was marked stale - the check would then warn on every card "
         "and the warning would stop meaning anything")

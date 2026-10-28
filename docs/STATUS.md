@@ -26486,3 +26486,86 @@ production file was changed by this unit; `git status` after the arms answers cl
   `_scope_tiers_the_api_admits` (scoped inside the record after D588's later-`@Pattern` trap),
   `SQL.user_preferences_for` and the `_MEMORY` shadow `values` CTE, `p.scope` in the owner's list,
   and the live census of `user_preferences` by `scope` with `count(conversation_id)`.
+
+## 603. D605 · the card's only warning was the one sentence written in the language the callee chose (`apps/ai/nexus_ai/search/cards.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_the_stale_price_notice_is_written_in_the_locale_the_user_asked_in.py`)
+
+**What was measured.** Same query (`咖啡店`, limit 6, `subject_types=("merchant",)`) through the
+real `search()`, once per request locale, reading the cards' own `ai_match.reasons`
+(`tmp/d605_locale_probe.py`):
+
+    locale   price_stale rows   the notice says       the sibling reasons say
+    zh-HK    6/6 cards           價格可能已更新         評分 4.1（257+ 條評價）/ 符合「咖啡店」
+    zh-CN    6/6 cards           價格可能已更新         评分 4.1（257+ 条评价）/ 符合「咖啡店」
+    en       6/6 cards           價格可能已更新         rated 4.1 (257+ reviews) / matches “咖啡店”
+
+Every other string on the card follows the request - the rating bullet, the match bullet, the
+title's language, the open-now meter, the sponsored label, because `build_card` takes `locale`
+and passes it down - and the one bullet that §5 reserves for a stale price is printed from
+`stale_copy("zh-HK")` with the literal written inside the callee (`search/cards.py:651` before
+this unit), while its own caller (`service.py:1585`) never received the locale at all. This is
+not a rare path on this plane: 0 of its 2,080 stored `price` facts is inside the 6-hour TTL
+(newest `observed_at` 2026-09-22), and D589 put a price fact with the row's own clock under every
+priced card, so every card the probe asked about raised the notice - which means the
+wrong-language path is the only path a user of this plane can hit.
+
+**The localisation itself was already correct, and already gated.** `STALE_COPY` carries all three
+languages (`trust/freshness.py:42-46`), `stale_copy(locale)` falls back to zh-HK for anything else
+(`:103`), and `test_freshness.py:91` pins the three sentences plus the fallback. So the defect was
+never a missing translation - it was a caller throwing the choice away, which is why the fix is
+one argument and not a table.
+
+**The fix makes the wrong state unrepresentable rather than untested.** `attach_price_staleness`
+is now `(card, bundle, *, locale)` with no default, and `service.py:1585` passes the request's own
+`locale` variable. The default was refused on purpose: with `locale: str = "zh-HK"` a future caller
+that forgets the argument prints Traditional Chinese to an English reader and nothing fails, which
+is this unit's defect with one step removed - the same shape D587 answered by flooring a declared
+weight instead of defaulting it. Four call sites moved: the pipeline, `test_cards.py:204`, and
+D589's door twice (`:129`, `:151`). That door's `stale[0].text == stale_copy("zh-HK")` was not
+weakened; it now states the locale it builds its card with, so it asserts the same promise against
+a signature that can no longer silently pick one.
+
+**A second producer of the same sentence is left open and named.** `adapters/platform.py:246`
+writes `"stale_copy": "價格可能已更新"` into a stub cart item, and the module carries no locale
+concept at all (measured: 0 occurrences of the word `locale` in `adapters/platform.py`), while
+`test_stub_platform.py:100` asserts that exact literal. Plumbing a locale through the platform
+adapter's cart path is a wider change than this unit's evidence should carry, so it is filed in
+PLAN rather than folded in. The web is noted honestly too: the reason filter
+`renderableReasons` (`apps/web/src/lib/facts.ts:112`) has no component consumer yet (measured: no
+other reference in `apps/web/src`), so this unit's claim is about the sentence the API ships, not
+about a pixel that has not been wired yet.
+
+**Arms.** Four, each mutating one shipped clause and restoring byte-for-byte (`restored=True` four
+times), control **9 passed**:
+
+* A - the callee's literal put back (`text=stale_copy("zh-HK")`) while the locale argument stays
+  plumbed: **3 failed, 6 passed** - the English row, the Simplified row and
+  `test_the_callee_does_not_choose_a_locale_of_its_own`. This arm is the pre-fix state, and it shows
+  the two half-defects are one: a caller can pass a locale and still be overruled.
+* B - the pipeline hardcodes `locale="zh-HK"` instead of forwarding the request's variable:
+  **1 failed, 8 passed** - `test_the_pipeline_hands_the_notice_the_locale_it_was_given`. That row
+  was rewritten mid-unit for this reason: it first asserted the word `locale` appeared in the call,
+  which arm B satisfies with a literal. It now matches `locale=locale`, so a caller that "fixes" the
+  signature and keeps a constant goes red.
+* C - the parameter re-defaulted to `"zh-HK"`: **1 failed, 8 passed**,
+  `test_the_callee_cannot_be_called_without_naming_a_locale` - the row that keeps the required-ness
+  from being decoration.
+* D - `build_card`'s admitted-locale tuple widened to include `fr-FR`, which `STALE_COPY` has no
+  sentence for: **1 failed, 8 passed**,
+  `test_the_stale_copy_table_covers_every_locale_the_card_builder_admits`. The table and the guard
+  are in two modules; this row is the only thing that notices when one runs ahead.
+
+**Verified after the edit.** The door **9 passed**; the blast radius of the signature change -
+`test_search_pipeline.py`, `test_pipeline.py`, `test_cards_carry_the_contract_fields.py`,
+`test_compare_grid.py`, `test_no_dead_constants.py`, `test_understand_recommend_compare.py` -
+**45 passed**; `test_cards.py`, the D589 door and `test_freshness.py` beside the door: **48 passed,
+2 skipped**; `ruff check` clean over the two changed modules and the three changed doors. The live
+probe re-run after the fix answers `價格可能已更新` / `价格可能已更新` / `price may have changed` for
+zh-HK / zh-CN / en, on the same six cards. Disclosed rather than hidden: the full-suite baseline
+launched at `ca66248` was still running (33%) while these files changed, so its verdict describes a
+tree this unit had already edited; everything quoted above was run at the final bytes, and the
+whole suite is re-run at them before it is ever cited.
+
+- readers: `_stale_card` / `_notice` (the rendered sentence), `_function_body` (the callee's own
+  text, with its own `stale_copy(` presence assert so the literal-free claim cannot go vacuous),
+  `re.findall` over `service.py`'s call expression, `STALE_COPY`'s keys against `build_card`'s
+  guard tuple, and the TypeError probe that grades the signature.

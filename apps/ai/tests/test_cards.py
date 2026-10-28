@@ -201,7 +201,7 @@ def test_attach_price_staleness_surfaces_stale():
                               value={"amount": 100}, source="merchant", observed_at=NOW)
     price_fact.stale = True
     card = EntityCard(id=SUBJ, slug="x", title="X")
-    attach_price_staleness(card, bundle)
+    attach_price_staleness(card, bundle, locale="zh-HK")
     assert card.ai_match is not None
     stale_reasons = [r for r in card.ai_match.reasons if r.label == "price_stale"]
     assert len(stale_reasons) == 1

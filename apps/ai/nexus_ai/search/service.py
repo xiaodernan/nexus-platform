@@ -1582,7 +1582,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                           availability=cand.raw.get("availability"),
                           query=plan.query_text,
                           sponsor_label=(sponsor_label(locale, w) if cand.sponsored else None))
-        cards.append(attach_price_staleness(card, bundle))
+        cards.append(attach_price_staleness(card, bundle, locale=locale))
 
     took_ms = int((time.perf_counter() - started) * 1000)
     # D593: the strategy string names the lanes that SCORED, not the lanes that were asked

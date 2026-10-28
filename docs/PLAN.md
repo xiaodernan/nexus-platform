@@ -2175,3 +2175,15 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   something to honour it against. `test_a_preference_scoped_to_one_conversation_is_read_back_by_every_search.py`
   pins the gap in both directions and its shadow rows go red either way, so the decision cannot be
   made by accident. Owner: the AI lane with the platform lane; the spec question is §117's.
+
+- **The stub cart writes the same stale-price sentence with no locale in sight (D605's second
+  producer)** - `adapters/platform.py:246` puts `"stale_copy": "價格可能已更新"` into a cart item
+  beside a `stale` boolean, and the module has no locale concept at all (measured: 0 occurrences of
+  the word `locale` in `adapters/platform.py`; `add_cart_item` takes `cart_id, offering_id,
+  quantity, options, token, tenant`). `test_stub_platform.py:100` asserts that exact literal under a
+  `# §20 localisation` comment, so the stub's own door currently grades the wrong-language copy as
+  correct. D605 fixed the card path and left this one named rather than folding a wider change into
+  its evidence. Two repairs, different shapes: give the adapter the request locale, or stop shipping
+  a sentence from it and let the client render the notice from `stale` - the item already carries the
+  boolean, and §5's promise is about surfacing staleness, not about which module owns the wording.
+  Owner: the AI lane with the platform adapter's owner.

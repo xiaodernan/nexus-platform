@@ -642,13 +642,19 @@ def drop_ungrounded_reasons(card: EntityCard) -> tuple[EntityCard, int]:
     return card, dropped
 
 
-def attach_price_staleness(card: EntityCard, bundle: FactBundle) -> EntityCard:
-    """§5: a stale price is surfaced, never silently rendered."""
+def attach_price_staleness(card: EntityCard, bundle: FactBundle, *, locale: str) -> EntityCard:
+    """§5: a stale price is surfaced, never silently rendered.
+
+    `locale` is required rather than defaulted: the sentence is the card's only warning, and a
+    caller that could omit the argument would print Traditional Chinese to an English reader -
+    which is the defect this signature exists to close (D587's floor has the same shape: the
+    wrong value has to be unrepresentable, not merely untested).
+    """
     price_fact = bundle.get("price", card.id) or bundle.get("avg_price_hkd", card.id)
     if price_fact and price_fact.stale:
         card.ai_match = card.ai_match or AiMatch(score=0.0)
         card.ai_match.reasons.append(MatchExplanation(
-            label="price_stale", text=stale_copy("zh-HK"), value=None,
+            label="price_stale", text=stale_copy(locale), value=None,
             fact_id=price_fact.fact_id))
     return card
 
