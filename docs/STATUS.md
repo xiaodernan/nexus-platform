@@ -27103,3 +27103,124 @@ two copies of one dish.
   `facts_from_rows`' re-evaluation of the clock, and
   `tmp/d609_district_cite_probe.py` + `tmp/d609_cost_probe.py` + `tmp/d609_final_live.py` as the
   re-runnable measurements.
+
+## 608. D610 · a stored latitude is not a number an answer may fuzz onto (`apps/ai/nexus_ai/trust/verification.py`, `apps/ai/tests/test_a_stored_latitude_is_not_a_number_an_answer_may_fuzz_onto.py`)
+
+**This unit collects a cost §607 disclosed instead of absorbing.** Its first finding was that
+`build_ground_set` feeds every scalar of every bundle fact into `GroundSet.numbers`, so D609's
+wider load put 108 `lat`/`lng` values on a merchant page, and PLAN carried the choice: "Either the
+table carries a per-kind tolerance with a km-scale bound for `lat`/`lng`, or the geo scalars stay
+out of the ground set while the district half of the same value stays in."
+
+**What the reservoir was.** `GroundSet.find` decides a numeric claim by
+`diff <= max(abs_tol, rel*abs(value))`, and the tolerance is looked up by the KIND OF THE CLAIM:
+two per cent for a money claim, six hundredths for a rating, and for anything the extraction could
+not type - the `_bare_kind` fallback - `TOLERANCE[NUMBER_KIND] = (0.01, 0.5)`, an ABSOLUTE
+half-unit floor. Half a degree of latitude is ~55 km and of longitude at this latitude ~51 km,
+while the plane's 684 locations span 32.2 km north-to-south and 26.7 km east-to-west
+(`tmp/d610_live.py`, one query over those same 684 rows): one tolerance step is wider than the
+whole map. Re-measured before building on it (`tmp/d610_probe.py`, the plane as of 2026-10-29;
+bundle plus the card dump, a geo page near Central at `limit` 6):
+
+    [merchant] 1,444 numbers / 791 strings | 120 coordinate-derived, over 54 address facts
+    [offering]   520 numbers / 465 strings |  88 coordinate-derived, over 38 address facts
+    lat band 22.2748..22.2973   ->  fuzzy window 21.7748..22.7973
+    lng band 114.1551..114.1850 ->  fuzzy window 113.6551..114.6850
+
+and five invented positions came back `grounded=True`, each citing a real `address` fact's
+`fact_id`: `22.4` -> 22.297322 (11 km away), `22.29` -> 22.290682, `114.05` -> 114.15512 (11 km),
+`114.5` -> 114.184999 (32 km), `22.385428` -> 22.297322 (9.8 km from the position actually
+stored). `verified=False` is a report a fabricated coordinate never triggers, and `as_dict()`
+ships it to the client through `pipeline.py:255` as though it had checked.
+
+**Which keys, measured before the rule was written.** `tmp/d610_key_probe.py` walked all 5,692
+rows of `facts` and every flattened card dump on a live page: the ONLY coordinate-shaped leaf keys
+in the corpus are `lat` and `lng`, both inside `address` (684 of each), and the same pair
+re-appears in the record path as `facts.value.lat` / `facts.value.lng`, 6 of each per page.
+108 + 12 = 120 and 76 + 12 = 88 - the reservoir, fully accounted for, with nothing else in the
+plane left to close.
+
+**Why the second shape and not the first.** A per-kind km-scale tolerance would need a claim kind
+nothing emits: `extract_claims` has no coordinate pattern, no `REASON_COPY` sentence and no mock
+summary prints a position, so a coordinate reaches the gate as an untyped bare number - which is
+exactly the claim the product cannot tell apart from a count or a price. §4 asks a claim to resolve
+to a FACT, not to a rounding of one. So the position leaves the number pool entirely and stays in
+the string pool, where an exact textual echo remains traceable and a fuzz does not.
+
+**Three hunks shipped.** `_scalars(value, key="")` yields `(key, value)` instead of a bare value,
+so the leaf's own key travels with it; `COORDINATE_LEAVES` names `lat`/`lng`/`lon`/`latitude`/
+`longitude` and `_is_coordinate` compares it to the LAST dotted segment, case-folded and stripped
+(a substring rule would close `plate` and `translate`, and a flattened card key arrives dotted);
+`_feed` gains `leaf` and returns after `gs.add_string(text)` when either the leaf or the attribute
+is a coordinate. The attribute half of that `or` is what closes the record path, where `_flatten`
+has already handed the dotted key in as the attribute.
+
+**Door: 19 rows**, red first at **10 failed, 9 passed**, green at **19 passed** -
+`apps/ai/tests/test_a_stored_latitude_is_not_a_number_an_answer_may_fuzz_onto.py`, pure and
+DB-free, the plane measured separately.
+
+**Eight arms and a control, re-run at the final bytes.** The full suite §607 started was still
+executing against the live tree (43%, 0 failures) and the house rule is that no `nexus_ai` source
+is mutated under a running suite, so `tmp/d610_arms.py` builds a throw-away COPY of the package
+(`tmp/d610_armtree`), proves which copy the door imports by printing `verification.py.__file__`,
+mutates one clause at a time, restores, and tears the tree down - a shadow of a file the ledger
+cites would otherwise turn the citation gate's ambiguity class red for a name nobody is citing.
+
+    A  the leaf matched as a SUBSTRING, not by equality      1 failed, 18 passed
+    B  the closed set is empty - the pre-D610 module        10 failed,  9 passed
+    C  only the leaf read, so a flattened record key misses  1 failed, 18 passed
+    D  the gate swallows the STRING as well as the number    1 failed, 18 passed
+    E  the FIRST dotted segment decides                      2 failed, 17 passed
+    F  `_scalars` loses the key when it walks a LIST         0 failed, 19 passed
+    G  the key is not case-folded                            1 failed, 18 passed
+    H  `_scalars` never keeps the dict key it descended      9 failed, 10 passed
+    CONTROL at the shipped bytes                            19 passed
+
+**F is an equivalent mutant, recorded rather than quietly dropped.** The rule reads only the LAST
+segment, so a key lost while descending a list is re-issued by the dict branch one level down:
+`{"points": [{"lat": ...}]}` still arrives as `lat`. That list row is discriminated by E and H and
+not by F, which is also the proof that the rule depends on the leaf and not on the path. B is the
+module as it stood before this unit, and it moves exactly the door's red ten.
+
+**Sweep at the final bytes: 189 rows, 0 failed.** 72 passed / 2 skipped over the gate's own
+readers (`test_verification.py`, `test_verification_ground.py`, `test_verification_claims.py`,
+`test_every_card_surface_enforces_the_grounding.py`, `test_merchant_agent_grounding.py`,
+`test_recommend_reasons_grounded.py`, `test_facts.py`, `test_cards.py`) and 117 passed / 21
+skipped over the pipeline the gate sits in (`test_pipeline.py`, `test_search_pipeline.py`,
+`test_search_endpoint.py`, the four stream files, `test_trust_claim_kinds.py`,
+`test_the_trust_surface_is_used.py`, `test_compare_grid.py`,
+`test_understand_recommend_compare.py`, `test_live_search_contract.py` and the retrieval-citation
+door). The shipped consumer is one: `api/pipeline.py:251`,
+`verify_generated_text(raw, pack.bundle, records=pack.items)`. `ruff check` clean on the source
+and the door.
+
+**Live after** (`tmp/d610_live.py`): the merchant page's set is **1,324 numbers / 791 strings** -
+the numbers down by exactly the 120 coordinate scalars, the strings unmoved - and the offering
+page's **432 / 465**, down by 88. Bundle-only, the two pages are back to the **1,078** and **264**
+numbers §607 recorded BEFORE its load widened, at the **600** and **289** strings recorded after:
+the widening that bought the district citation now costs strings only. The same bundle with its
+`address` facts removed holds the identical 1,324 numbers and 244 fewer strings, so the district
+and the address line still feed the page. `114.05` and `114.5` are ungrounded, and on the offering
+page all six probes are. The summary the shipped mock makes for these two pages asserts two claims
+apiece - `6 個` (count) and `470m` (distance) on the merchant page, a count and an entity on the
+offering one - `verified=True`, `stripped=0`, before and after.
+
+**The residual is filed, not absorbed.** `22.4`, `22.29` and `22.385428` still ground on the live
+merchant page, by migrating to a plain stored `22.0`: the `count` inside that merchant's `rating`
+fact (`4751f27f-ee66-5a11-b2f1-6c01f9b2437b`, value `{"count": 22, "value": 3.56, "max_score": 5,
+...}`). Two rules meet there - every leaf of a fact value enters under the fact's own ATTRIBUTE, so
+a review count sits in the same pool as the rating it was counted from, and the half-unit floor is
+absolute for any untyped claim. Whether an untyped bare number should require an exact stored
+value instead is a new PLAN bullet, with the live numbers on it. The other candidate measured the
+same day - the offering page answering `雲吞蝦麵（下午茶版）` twice - was measured and not taken:
+20 groups over 40 rows, a `-2` slug suffix and a different price inside each pair (168/160,
+420/450, 296/350), 0.8% of the plane's 5,170 active offerings - an ingest question, not a trust
+boundary.
+
+- readers: `GroundSet.numbers` and `GroundSet.find`'s tolerance lookup (unchanged, and the reason
+  the fix had to sit at the feed rather than at the match), `build_ground_set`'s fact loop and its
+  `records`/`_flatten` loop, `_scalars`' `(key, value)` shape, `_feed`'s coordinate gate,
+  `COORDINATE_LEAVES`, `_is_coordinate`, `verify_generated_text`'s one shipped call site at
+  `api/pipeline.py:251`, `VerificationReport.as_dict` (the report is the same object, it simply has
+  fewer numbers to lean on), and `tmp/d610_probe.py` + `tmp/d610_key_probe.py` +
+  `tmp/d610_live.py` + `tmp/d610_arms.py` as the re-runnable measurements.

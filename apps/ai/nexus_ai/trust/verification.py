@@ -80,6 +80,23 @@ ENTITY_STOPWORDS = frozenset({
     "nexus", "sponsored", "demo",
 })
 
+#: D610: a coordinate is a place's POSITION, not a quantity an answer may round onto.
+#: Every number in the ground set is matched by `TOLERANCE[NUMBER_KIND] = (0.01, 0.5)`, and
+#: 0.5 of a degree is ~55 km - wider than the territory this product answers in. The 684
+#: `address` facts of the live plane each carry a `lat` and a `lng`, so letting them join as
+#: numbers made any invented position inside that band read as grounded, citing a real
+#: `fact_id`. They still join as STRINGS: an exact echo stays traceable, a fuzz does not.
+COORDINATE_LEAVES = frozenset({"lat", "lng", "lon", "latitude", "longitude"})
+
+
+def _is_coordinate(key: str) -> bool:
+    """Whether the LAST dotted segment of a stored key names a coordinate.
+
+    Matched by equality, never by substring: `plate` and `translate` contain `lat`, and a
+    `_flatten`ed card key arrives as `facts.value.lat`.
+    """
+    return (key or "").split(".")[-1].strip().lower() in COORDINATE_LEAVES
+
 
 @dataclass
 class Claim:
@@ -165,8 +182,8 @@ def build_ground_set(bundle: FactBundle | None = None, *,
                     records: Iterable[dict[str, Any]] = ()) -> GroundSet:
     gs = GroundSet()
     for fact in (bundle.facts if bundle else []):
-        for raw in _scalars(fact.value):
-            _feed(gs, raw, fact.attribute, fact.fact_id)
+        for key, raw in _scalars(fact.value):
+            _feed(gs, raw, fact.attribute, fact.fact_id, leaf=key)
         if fact.attribute:
             gs.add_string(str(fact.attribute))
     for rec in records:
@@ -187,8 +204,12 @@ def build_ground_set(bundle: FactBundle | None = None, *,
     return gs
 
 
-def _feed(gs: GroundSet, raw: Any, attribute: str, fact_id: Any) -> None:
+def _feed(gs: GroundSet, raw: Any, attribute: str, fact_id: Any, *,
+          leaf: str = "") -> None:
     text = str(raw)
+    if _is_coordinate(attribute) or _is_coordinate(leaf):
+        gs.add_string(text)
+        return
     num = _to_float(text)
     kind = _attr_kind(attribute)
     if num is not None and kind in (MONEY_KIND, RATING_KIND, DISTANCE_KIND, MINUTES_KIND,
@@ -512,15 +533,20 @@ def _attr_kind(attribute: str) -> str:
     return NUMBER_KIND
 
 
-def _scalars(value: Any) -> Iterable[Any]:
+def _scalars(value: Any, key: str = "") -> Iterable[tuple[str, Any]]:
+    """Every leaf of a stored fact value, with the leaf's own key.
+
+    The key travels: `address` files a `district` and a `lat` in one jsonb value, and D610
+    is the rule that they must not be treated alike.
+    """
     if isinstance(value, dict):
-        for v in value.values():
-            yield from _scalars(v)
+        for k, v in value.items():
+            yield from _scalars(v, f"{key}.{k}" if key else str(k))
     elif isinstance(value, (list, tuple, set)):
         for v in value:
-            yield from _scalars(v)
+            yield from _scalars(v, key)
     elif value is not None:
-        yield value
+        yield key, value
 
 
 def _flatten(rec: dict[str, Any], prefix: str = "") -> Iterable[tuple[str, Any]]:

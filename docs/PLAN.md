@@ -2304,8 +2304,19 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   latitude - about 55 km - now matches a fact and reads as grounded. That tolerance was written for
   prices and distances, not for coordinates, and D609 made 54 of them reachable per page. Either the
   table carries a per-kind tolerance with a km-scale bound for `lat`/`lng`, or the geo scalars stay
-  out of the ground set while the district half of the same value stays in. Owner: the trust lane
-  with the AI lane.
+  out of the ground set while the district half of the same value stays in - **closed by D610**: the
+  second shipped. `_feed` now receives the LEAF KEY of the scalar it is feeding (`_scalars` yields
+  `(key, value)` instead of a bare value), `COORDINATE_LEAVES` names `lat`/`lng`/`lon`/`latitude`/
+  `longitude` and is matched against the LAST dotted segment only - a substring rule would close
+  `plate` and `translate`, and a flattened card key arrives as `facts.value.lat` - and a coordinate
+  joins the ground set as a string, never as a number. Live after (`tmp/d610_live.py`): a merchant
+  geo page's set is **1,324 numbers / 791 strings** where D609 left 1,444 / 791, and an offering
+  page's **432 / 465** where it was 520 / 465 - the numbers fall by exactly the 120 and 88
+  coordinate scalars and the strings do not move; the same bundle with its `address` facts removed
+  now holds the SAME 1,324 numbers while carrying 244 fewer strings, so the district and the
+  address line still feed the page and only the position stopped being a quantity. Both invented
+  longitude readings (`114.05`, `114.5`) are ungrounded, and all six probes are ungrounded on the
+  offering page. Owner: the trust lane with the AI lane.
 
 - **A location's clock joins the bundle and no score, and nothing decides whether that is right** -
   `facts_from_rows` groups into `facts_by_subject` under each fact's OWN `subject_id`, and
@@ -2360,3 +2371,19 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   locations, or the ranking's tie-break choosing the same product twice over. Filed because the
   measurement was in front of this unit and its cause was not. Owner: the AI lane with the offering
   ingest owner.
+
+
+- **A bare number the extraction cannot type still fuzzes onto any quantity on the page within half
+  a unit - the half of D610 that closing the coordinates did not reach** - after the reservoir
+  closed, the live merchant page still reads a claim of `22.4` as grounded, and it cites the
+  `rating` fact's `{"count": 22, "value": 3.56, "max_score": 5, …}` (`4751f27f-…`): every leaf of a
+  fact value enters the ground set under the fact's own ATTRIBUTE, so a review count filed as
+  `rating` sits in the same pool as the rating, and `TOLERANCE[NUMBER_KIND] = (0.01, 0.5)` puts an
+  ABSOLUTE half-unit floor under any claim `_bare_kind` could not type as money or rating. A page
+  carrying a count of 22, a 22-minute walk or a party of 22 therefore vouches for every number
+  within 0.5 of it (`tmp/d610_live.py`, 2026-10-29). The floor is load-bearing where the kinds are
+  typed - it is what lets `700m` ground onto a computed 683m - so the open question is whether an
+  UNTYPED bare number should instead require an exact stored value, and what that costs shipped
+  copy: on these two pages the mock summary's own claims are `6 個` (count) and `470m` (distance),
+  both typed, so the floor is exercised today only by numbers a model invents. Owner: the trust
+  lane.
