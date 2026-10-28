@@ -21,12 +21,29 @@ Measured on this plane (the door below re-reads it, so the figures live): every 
 offering with a price is past the 6h price TTL and most have no `price` fact for their own
 subject, which is the population whose cells print a number and cite nothing.
 
-Arms (`tmp/d590_arms.py`, each file restored byte-identically): not grounding the cell reddens
-the stamped-clock, stale, live and citation rows; stamping it with the request time reddens the
-fresh/stale pair and the live stamp; reusing a stored fact's clock instead of the row's reddens
-the no-twin row; promoting `price_source='estimated'` to `merchant` reddens the source row;
-filling a missing clock with `now` reddens the merchant row; and dropping the clock column from
-the compare read reddens the live column gate.
+Arms, measured (`tmp/d590_arms.py` and `tmp/d590fu_arms.py`; each file restored byte-identically,
+the rows each moved named by the run):
+
+* the grid stops grounding its cell - 11 of the 14 rows, including all five source ids except
+  the merchant's own and all three live rows;
+* the cell stamped with the request time (the kernel's `observed_at=stamp` dropped, so `synth`
+  takes its own clock) - the stamped-clock row, the past-TTL id, the live read row and the
+  both-branches row. The inside-TTL id stays green, which is its right: a now-stamped number IS
+  fresh;
+* `synth`'s `stale` back to the constant - the past-TTL id here, three rows on the card door;
+* the kernel's already-vouched guard dropped - **14 passed here**, one row red on the D589 card
+  door. The grid cannot reach that guard: its price branch is an `elif` after the stored-fact
+  lookup, so a subject that already has a `price` fact never calls the kernel. This door's
+  no-twin row is carried instead by the grid reading the stored fact at all
+  (`bundle.get("price", sid)` emptied), which reddens it and the both-branches row;
+* the compare read stops carrying the clock - the offering branch's values nulled with the
+  aliases kept reddens the three live rows on their grounding asserts, and dropping the column
+  from both branches reddens the same three with the text gate itself moving
+  (`:195`, read with `--tb=line`);
+* an unearned `price_source` promoted to a merchant claim - the estimated, blank, absent and
+  observed ids, the merchant's own id correctly unmoved, plus the card door's estimated row;
+* a missing clock filled with `now` - this door's merchant row and the card door's
+  no-invented-timestamp row.
 """
 
 from __future__ import annotations
