@@ -32,10 +32,22 @@
  *                `packages/ui/README.md` for "the measured ratios". This reader recomputes every printed
  *                pair from the hex values in the same file and fails when the printed number is not the
  *                measurement (to the one decimal the comment prints), or when a pair is under 4.5:1.
+ *                It then walks a second population the printed claims cannot cover: every body-text
+ *                token against every neutral ground in the same theme (5 x 6 = 30 cells per theme).
+ *                A printed claim is measured against the ONE ground its comment names, while a
+ *                component composes its own pair from two tokens -- measured, the light `ink-faint`
+ *                printed 4.8:1 against `#ffffff` and landed at 4.48:1 on the canvas, which is the
+ *                4.477:1 the live visual test reports. A source reader cannot resolve a className
+ *                composition, so the palette must hold for every composition it allows, and this
+ *                axis is what makes that a check instead of an intention.
  *
  * WHAT IT DOES NOT DO, stated rather than implied. It is a source reader, not a browser: it does not
  * resolve the style that lands on a node, so a contrast pair assembled from two classNames on two
- * elements is invisible to it, as is any pair the palette does not print. It cannot see an accessible name
+ * elements is invisible to it unless both sides are palette tokens on a neutral ground -- which is the
+ * case the ground matrix covers and the reason it exists. A tinted ground (`accent-soft`,
+ * `positive-soft`, `warning-soft`, `danger-soft`) is outside it, because those pair with their own
+ * semantic ink and the census would be guessing which token a component meant to put there. It cannot
+ * see an accessible name
  * that arrives from the *content* of an `aria-labelledby` target rather than its presence. Its JSX scanner
  * skips comments but not string literals, so a `<Input` written inside a string would be censused like any
  * other -- that direction over-reports, which is the direction this project accepts (section 84). The
@@ -413,7 +425,13 @@ const contrast = (() => {
     { name: 'light', block: blockAt(':root') },
     { name: 'dark', block: blockAt('.dark') },
   ];
+  // The population of the ground matrix, named rather than inferred. `ink-disabled` is declared
+  // large-text/icons only and `ink-inverse` is text ON the inverse surface, so neither is body text
+  // on a neutral ground; every other ink -- plus the chip's own ink -- is.
+  const TEXT_TOKENS = ['ink-strong', 'ink', 'ink-muted', 'ink-faint', 'neutral-chip-ink'];
+  const NEUTRAL_GROUNDS = ['surface', 'surface-raised', 'canvas', 'surface-muted', 'surface-sunken', 'neutral-chip'];
   const pairs = [];
+  const matrix = [];
   for (const t of themes) {
     if (!t.block) fail(`tokens.css has no ${t.name} block, so its ratios cannot be recomputed`);
     const hex = {};
@@ -428,9 +446,23 @@ const contrast = (() => {
       if (!hex[c.token] || !bg) fail(`tokens.css's ${t.name} block prints a ratio for --nexus-${c.token} without the hex that would recompute it`);
       pairs.push({ theme: t.name, ...c, bg, computed: ratio(c.hex, bg) });
     }
+    // A named token that the theme does not declare would make the matrix silently narrower than the
+    // population it claims to judge -- the same refusal this reader already applies to an unknown UI
+    // symbol, for the same reason.
+    for (const name of TEXT_TOKENS) {
+      if (!hex[name]) fail(`tokens.css's ${t.name} block declares no --nexus-${name}, so the ground matrix would skip a body-text token it names`);
+    }
+    for (const name of NEUTRAL_GROUNDS) {
+      if (!hex[name]) fail(`tokens.css's ${t.name} block declares no --nexus-${name}, so the ground matrix would skip a ground text can land on`);
+    }
+    for (const token of TEXT_TOKENS) {
+      for (const ground of NEUTRAL_GROUNDS) {
+        matrix.push({ theme: t.name, token, ground, hex: hex[token], bg: hex[ground], computed: ratio(hex[token], hex[ground]) });
+      }
+    }
   }
   if (pairs.length === 0) fail('tokens.css prints no ratio this reader can recompute, so the contrast axis measured nothing');
-  return { pairs, readme: existsSync(UI_README) };
+  return { pairs, matrix, readme: existsSync(UI_README) };
 })();
 
 for (const p of contrast.pairs) {
@@ -441,6 +473,11 @@ for (const p of contrast.pairs) {
     note(`contrast -- ${p.theme} --nexus-${p.token} on ${p.bg} measures ${p.computed.toFixed(2)}:1, under the 4.5:1 the palette's own header states`);
   }
 }
+for (const m of contrast.matrix) {
+  if (m.computed < 4.5) {
+    note(`contrast -- ${m.theme} --nexus-${m.token} on --nexus-${m.ground} measures ${m.computed.toFixed(2)}:1, under the 4.5:1 every body-text token must clear on every neutral ground`);
+  }
+}
 if (!contrast.readme) {
   note('contrast -- packages/ui/src/styles/tokens.css cites packages/ui/README.md for its measured ratios, and that file does not exist');
 }
@@ -448,6 +485,7 @@ if (!contrast.readme) {
 /* ---------------------------------------------------------------- the verdict */
 
 const tightest = contrast.pairs.reduce((a, b) => (b.computed < a.computed ? b : a));
+const tightestCell = contrast.matrix.reduce((a, b) => (b.computed < a.computed ? b : a));
 console.log("NEXUS -- the console pages' accessibility promise, censused on four axes");
 console.log(`  plane read            ${PLANE}`);
 console.log(`  render tree           ${renderTree.length} file(s): ${consolePages.length} console page(s), ${consoleComponents.length} console component(s), ${shellFiles.length} shell file(s), ${uiFiles.length} @nexus/ui module(s)`);
@@ -455,7 +493,11 @@ console.log(`  landmarks             1 <main> expected; ${mainCount} found (id="
 console.log(`  names                 ${controlsCensused} control(s) censused for an accessible name`);
 console.log(`  focus order           0 positive tabindex expected; ${outlineSites} outline-none site(s), ${outlineInherited} answered by the field wrapper's focus-within`);
 console.log(`  contrast              ${contrast.pairs.length} printed pair(s) recomputed; tightest ${tightest.theme} --nexus-${tightest.token} on ${tightest.bg} = ${tightest.computed.toFixed(2)}:1`);
+console.log(`  ground matrix         ${contrast.matrix.length} cell(s) recomputed (every body-text token x every neutral ground, per theme); tightest ${tightestCell.theme} --nexus-${tightestCell.token} on --nexus-${tightestCell.ground} = ${tightestCell.computed.toFixed(2)}:1`);
 if (VERBOSE) {
+  for (const m of contrast.matrix) {
+    console.log(`      ${m.theme.padEnd(5)} --nexus-${m.token.padEnd(17)} on --nexus-${m.ground.padEnd(15)} ${m.computed.toFixed(2).padStart(6)}:1`);
+  }
   for (const p of contrast.pairs) {
     console.log(`      ${p.theme.padEnd(5)} --nexus-${p.token.padEnd(12)} printed ${String(p.printed).padStart(5)}:1  measured ${p.computed.toFixed(2).padStart(6)}:1`);
   }
@@ -468,4 +510,4 @@ if (offenders.length > 0) {
   console.log(`\nRESULT: FAIL -- ${offenders.length} accessibility offender(s) in the console render tree`);
   process.exit(1);
 }
-console.log('\nRESULT: PASS -- every console page keeps its landmark, every control its name, every outline its ring, and every printed ratio its measurement');
+console.log('\nRESULT: PASS -- every console page keeps its landmark, every control its name, every outline its ring, every printed ratio its measurement, and every body-text token AA on every neutral ground');

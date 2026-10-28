@@ -4,11 +4,13 @@
  *
  * A validator whose first run is also its first test has not been tested, so every arm states the verdict
  * it expects *before* the shipped checker is called, and the harness exits non-zero if a prediction
- * misses. Nine arms must redden, one per way the reader claims a console page can lose a landmark, a
+ * misses. Ten arms must redden, one per way the reader claims a console page can lose a landmark, a
  * name, a focus ring or a printed ratio: a second `<main>`, a page that renders no console nav, an
  * `<Input>` composed without a `label`, a raw `<input>` with no accessible name, a positive `tabIndex`,
  * an `outline-none` nothing answers (the plant that found the rule answering for itself), a ratio edited
- * away from its measurement, a pair dropped under the bar, and the cited README removed.
+ * away from its measurement, a pair dropped under the bar, the cited README removed, and -- the arm the
+ * ground matrix exists for -- a token whose printed claim stays true while the canvas it is painted on
+ * falls under AA.
  *
  * Three arms must refuse with exit 2 rather than pass, because "did not run" and "found nothing" are
  * different answers (D93, D96): a console file importing a `@nexus/ui` symbol the census does not know, a
@@ -106,7 +108,7 @@ const ARMS = [
     name: 'control: this tree as it stands',
     apply: () => {},
     expect: 0,
-    must: [/RESULT: PASS/, /20\/20 console page\(s\) render AdminChrome\/MerchantChrome/, /10 printed pair\(s\) recomputed/],
+    must: [/RESULT: PASS/, /20\/20 console page\(s\) render AdminChrome\/MerchantChrome/, /10 printed pair\(s\) recomputed/, /60 cell\(s\) recomputed/],
   },
   {
     name: 'a second <main> in a console page',
@@ -162,9 +164,21 @@ const ARMS = [
   {
     name: 'a text colour dropped under the 4.5:1 bar',
     apply: (d) => edit(d, 'packages/ui/src/styles/tokens.css',
-      '--nexus-ink-faint: #6a7288;', '--nexus-ink-faint: #9aa2b4;'),
+      '--nexus-ink-faint: #62697d;', '--nexus-ink-faint: #9aa2b4;'),
     expect: 1,
     must: [/under the 4\.5:1 the palette's own header states/],
+  },
+  {
+    // The class the ground matrix exists for, isolated: the printed claim stays TRUE (4.8:1 is really
+    // what #6a7288 measures on #ffffff) and the only thing that moves is a composition no printed claim
+    // covered -- the canvas the product paints. Measured before the matrix: this run was green, and the
+    // live visual test was the only reader that ever saw it (4.477:1 on the home page).
+    name: 'a text colour that clears AA on the ground its claim names, and fails on the canvas',
+    apply: (d) => edit(d, 'packages/ui/src/styles/tokens.css',
+      '--nexus-ink-faint: #62697d; /* 5.5:1 on surface; 4.8:1 on the darkest neutral ground */',
+      '--nexus-ink-faint: #6a7288; /* 4.8:1 on surface */'),
+    expect: 1,
+    must: [/--nexus-ink-faint on --nexus-canvas measures 4\.48:1/, /every neutral ground/],
   },
   {
     name: 'the README the palette cites, removed',
@@ -239,4 +253,4 @@ if (fails) {
   console.log('\nRESULT: FAIL -- the accessibility census does not do what its arms claim');
   process.exit(1);
 }
-console.log('\nRESULT: PASS -- the census reddens on every way a landmark, name, focus ring or printed ratio can break, and refuses when it cannot see');
+console.log('\nRESULT: PASS -- the census reddens on every way a landmark, name, focus ring, printed ratio or neutral-ground pair can break, and refuses when it cannot see');
