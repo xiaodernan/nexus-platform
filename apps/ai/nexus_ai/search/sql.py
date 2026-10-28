@@ -676,7 +676,8 @@ def _tsconfig_to_cfg(ts_config: str) -> str:
 def build_chunk_query(*, tenant_id: str, merchant_id: str | None, text: str,
                       embedding: list[float] | None, top_k: int = 8,
                       ts_config: str = "simple") -> CandidateQuery:
-    """Hybrid chunk retrieval — RAG §7: tsvector ∪ vector, tenant (+merchant) filtered
+    """Hybrid chunk retrieval — RAG §7: tsvector ∪ vector, tenant (+merchant) and document
+    readiness filtered
 
     BEFORE ranking, `source_uri`/`document_id` carried so every answer can cite.
 
@@ -702,6 +703,11 @@ def build_chunk_query(*, tenant_id: str, merchant_id: str | None, text: str,
     tenant_ph = p.add(str(tenant_id))
     limit_ph = p.add(int(max(1, min(top_k, 40))))  # §9: rerank budget is top-40
     where = [f"c.tenant_id = {tenant_ph}::uuid",
+             # D586: `markForReindex` moves a rewritten document to status='pending' and, by
+             # its own comment, "does not touch `chunks`" - so the superseded text stays in
+             # the table for the whole rebuild window. Retrieval that never reads the column
+             # cites a merchant's old menu as their current one.
+             "d.status = 'indexed'",
              f"({kw_expr} > 0 OR {trigram_expr} > 0 OR c.embedding IS NOT NULL)"]
     if merchant_id:
         where.append(f"c.merchant_id = {p.add(str(merchant_id))}::uuid")
