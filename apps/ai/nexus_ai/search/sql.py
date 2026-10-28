@@ -558,14 +558,23 @@ ORDER BY r.merchant_id, r.helpful_count DESC, r.created_at DESC
 
 
 def user_preferences_for(user_id: str, kinds: Iterable[str] | None = None) -> tuple[str, list[Any]]:
-    """Read user preferences for ranking personalization.
-    
+    """Read the user's LIVE preferences for ranking personalization.
+
     Returns rows with (kind, key, value, weight, source) for the given user.
     If kinds is provided, only returns preferences of those kinds.
+
+    D585: the deadline is part of the row. `IdentityRepository.upsertPreference` computes
+    `expires_at = now + ttlDays` on every insert and the shipped types name the promise
+    ("Inferred memory may expire; declared memory does not", `packages/types/src/auth.ts`).
+    A read that never looks at the column keeps ranking with a memory the platform has
+    already let go of, and `service.py` attaches its `_preference_label` to the card as a
+    reason the user was told they no longer have - D522's shape, the reader not looking at
+    the column the writer writes. A NULL deadline is the declared case: never expires.
     """
     p = Params()
     uid_ph = p.add(str(user_id))
-    where = [f"user_id = {uid_ph}::uuid"]
+    where = [f"user_id = {uid_ph}::uuid",
+             "(expires_at is null or expires_at > now())"]
     if kinds:
         kind_list = [str(k) for k in kinds]
         where.append(f"kind = ANY({p.add(kind_list)}::text[])")
