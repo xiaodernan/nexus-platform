@@ -467,6 +467,29 @@ def _canonical_category(filters: dict[str, Any]) -> None:
         filters["category"] = matched[0]
 
 
+def _apply_category_leaf(plan: SearchPlan, caller_named_category: bool) -> None:
+    """D601: a word in the query that NAMES one taxonomy leaf answers that leaf.
+
+    `match_category` answers the coarse bucket the contract's `Intent.category` carries -
+    `restaurant` for 拉麵, `beauty` for 按摩 - and a bucket is coarser than the leaf the user
+    named: 按摩 was answered with every beauty leaf (nail salons, hair salons, skin clinics) at
+    top-10 precision 0.3, and 珍珠奶茶 matched no category at all (0.0). The search FILTER is
+    where that refinement belongs: it already resolves a leaf spelling exactly (D524), and both
+    lanes read `filters["category"]`, so writing the leaf there keeps the live and fixture lanes
+    answering the same question.
+
+    A caller who passed their own `category` keeps it - the chip on a card outranks a word in
+    the query, and overriding it would answer a filter nobody asked for.
+    """
+    if caller_named_category:
+        return
+    from nexus_ai.nlu.lexicon import match_leaf
+
+    leaf = match_leaf(plan.query_text or "")
+    if leaf:
+        plan.filters["category"] = leaf
+
+
 def _keep_category_spelling(filters: dict[str, Any], raw: Any) -> None:
     """D524: the caller's OWN spelling of the category, kept beside the bucket.
 
@@ -587,10 +610,12 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     now = now or datetime.now(timezone.utc)
     plan = SearchPlan(now=now, limit=limit)
     plan.query_text = (query or (intent.raw_query if intent else "") or "").strip()
+    caller_named_category = bool(_plain(filters).get("category"))
     if intent is None:
         plan.filters = _plain(filters)
         _keep_category_spelling(plan.filters, (plan.filters or {}).get("category"))
         _canonical_category(plan.filters)
+        _apply_category_leaf(plan, caller_named_category)
         _canonical_district(plan.filters)
         _canonical_tags(plan.filters)
         _canonical_kind(plan.filters)
@@ -604,6 +629,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     _keep_category_spelling(out, out.get("category"))
     out.setdefault("category", intent.category)
     _canonical_category(out)
+    _apply_category_leaf(plan, caller_named_category)
     _canonical_district(out)
     _canonical_tags(out)
     _canonical_kind(out)

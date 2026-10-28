@@ -2090,3 +2090,15 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   cuisine preference, and service words through `category=beauty` (a root admitting six leaves).
   Next unit: let a word that NAMES a taxonomy leaf answer with that leaf (the filter already
   honours leaf spellings after D524), and measure it on this door.
+
+- **D601 closed the leaf half of the retrieval door; the ranking half is still unmeasured** -
+  every leaf-named word now answers with its leaf (mean p@10 0.667 -> 1.000), which means that
+  door's metric is now a FILTER check. Queries whose answer is not one leaf - 安靜的咖啡店,
+  適合情侶約會的地方, 可以帶寵物的餐廳, 戶外座位 - need their own family: a share-of-top-10
+  carrying the preferred attribute, with its own baseline. Owner: the AI lane. This is the
+  instrument the embedding pass should be judged by.
+- **`test_lexicon.py::test_unknown_lowercased` is red at HEAD** - `canon_constraint("vegan")`
+  answers `vegetarian` while the row asserts `vegan`; `HEAD:nexus_ai/nlu/lexicon.py` loaded on its
+  own answers `vegetarian` too, so the red predates D601. It may be the right behaviour (vegan is
+  a subset of vegetarian for cuisine matching) with a stale assertion, or a table that folded two
+  values into one. Owner: the lane that shipped D584's follow-up.

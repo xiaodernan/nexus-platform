@@ -26185,3 +26185,50 @@ nine searches and the slug census. `ruff check`: All checks passed. No product l
 unit.
 
 - readers: the case table, the gate constants and the three live rows in the new door.
+
+## 598. D601 · a word that names one taxonomy leaf was answered with its whole root (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_a_word_that_names_one_leaf_answers_with_that_leaf.py`)
+
+**What was measured.** D600's door put numbers on the live plane: top-10 precision against the
+merchant's own taxonomy slugs. 按摩 **0.3**, 髮型屋 **0.4**, 護膚 **0.3**, 壽司 **0.5**, 拉麵
+**0.8**, 點心 **0.9**, and 珍珠奶茶 **0.0**. The plans say why: `match_category` answers the
+coarse bucket the contract's `Intent.category` documents, so 按摩/髮型屋/護膚 became
+`category=beauty` - a ROOT admitting all six beauty leaves - 壽司/拉麵/點心 became
+`category=restaurant` plus a soft cuisine preference, and 珍珠奶茶 matched no category at all.
+
+**Where the refinement belongs.** Not in the intent lane: `API_CONTRACT.md` §7.1 documents
+`"category": "restaurant"` and the `intent_v1` suite asserts it, so making `match_category`
+answer `ramen` reddened three eval cases in the first attempt (**28/31, accuracy 0.9032** against
+a 0.95 gate). The refinement is the SEARCH plan's: `nlu.lexicon.LEAF_SYNONYMS` names the leaves
+whose meaning is one leaf, `match_leaf` answers the leaf the query's HEAD names (rightmost cue,
+ties by length, and a bucket cue further right means the sentence ended on the coarser word), and
+`plan_from_intent` writes that leaf into `filters["category"]` - a value both lanes already read
+and the SQL clause already resolves exactly when the spelling is a leaf (D524).
+
+**Measured after the change**, same door, same plane: 拉麵 0.8 -> **1.0**, 點心 0.9 -> **1.0**,
+壽司 0.5 -> **1.0**, 按摩 0.3 -> **1.0**, 髮型屋 0.4 -> **1.0**, 護膚 0.3 -> **1.0**, 珍珠奶茶
+0.0 -> **1.0**, the four already-perfect cases unchanged; mean **0.667 -> 1.000**. The plans now
+carry `category=ramen|sushi|dimsum|spa-massage|hair-salon|nail-salon|skin-clinic|bubble-tea`
+while `extract_intent_dict("拉麵")["category"]` stays `restaurant`.
+
+**Honesty about the metric.** For a leaf-named word the FILTER now guarantees the answer, so the
+door's p@10 measures filter precision, not ranking quality; the docstring says so and the gate
+moved to mean 0.95 / case 0.90. Ranking quality needs queries whose answer is not one leaf
+(preferences, ambience) - filed in PLAN as the door's next family.
+
+**What did not move.** A caller who passes their own `category` filter keeps it (a card chip
+outranks a word in the query); 咖啡 stays `cafe` because the corpus splits it into four leaves;
+cuisine adjectives (日式/泰式) stay preferences.
+
+**Verified.** The new door **28 passed**; the retrieval door, `test_search_plan`,
+`test_the_category_filter_answers_the_same_question_on_both_lanes` and `test_category_inference`
+**89 passed** together with it; the lexicon/plan neighbourhood (`test_lexicon`,
+`test_lexicon_readers_are_words`, `test_canonical_forms`, `test_preferences_are_soft`,
+`test_the_two_readers_agree`, `test_the_category_filter_keeps_the_leaf_the_caller_named`,
+`test_the_filter_speaks_the_avoid_vocabulary`) **358 passed, 1 failed**. The failure is
+`test_lexicon.py::test_unknown_lowercased`, and it is **red at HEAD without this change**:
+`canon_constraint("vegan")` answers `vegetarian` on `HEAD:nexus_ai/nlu/lexicon.py` too (checked by
+loading that file directly). It belongs to D584's follow-up lane and is filed, not touched here.
+`intent_v1` + `safety_injection_v1` with `--fail-on-gate`: **PASS**. `ruff check`: All checks
+passed.
+
+- readers: `LEAF_SYNONYMS`, `match_leaf`, `_apply_category_leaf`.

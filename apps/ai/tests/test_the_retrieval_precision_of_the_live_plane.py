@@ -6,25 +6,35 @@ that kind? The judge is the taxonomy itself - the door reads each merchant's own
 set straight from `merchant_categories`/`categories`, never from the query's filter, so a plan that
 widened the filter cannot also widen what counts as right.
 
-Baseline, measured on the seeded plane 2026-10-29 (470 published merchants, 0 of 2118 chunks
-embedded, `strategy=hybrid_v1+postgres`), top-10 precision per case:
+Baseline and the landing, both measured on the seeded plane 2026-10-29 (470 published
+merchants, 0 of 2118 chunks embedded, `strategy=hybrid_v1+postgres`), top-10 precision per case:
 
-    query    leaf the corpus holds   p@10
-    拉麵     ramen                  0.8
-    火鍋     hotpot                 1.0
-    咖啡     cafe                   1.0
-    酒吧     bar                    1.0
-    點心     dimsum                 0.9
-    壽司     sushi                  0.5
-    甜品     bakery-dessert         1.0
-    按摩     spa-massage            0.3
-    髮型屋   hair-salon             0.4
+    query      leaf the corpus holds   before   after
+    拉麵       ramen                  0.8      1.0
+    火鍋       hotpot                 1.0      1.0
+    咖啡       cafe                   1.0      1.0
+    酒吧       bar                    1.0      1.0
+    點心       dimsum                 0.9      1.0
+    壽司       sushi                  0.5      1.0
+    甜品       bakery-dessert         1.0      1.0
+    按摩       spa-massage            0.3      1.0
+    髮型屋     hair-salon             0.4      1.0
+    美甲       nail-salon             0.8      1.0
+    護膚       skin-clinic            0.3      1.0
+    珍珠奶茶   bubble-tea             0.0      1.0
+    mean                              0.667    1.000
 
-Mean 0.733, and in every case the first row is right. The weak three are why this door exists:
-壽司 is answered through `category=restaurant` plus a soft `cuisine=japanese` preference, and
-按摩/髮型屋 are answered through `category=beauty`, a ROOT that admits all six beauty leaves.
-Precision cannot improve by ranking alone once the filter admits every nail salon for a massage
-query - that is a lane question, and this door is the instrument that will say so.
+The "before" column is why this door exists. 壽司 was answered through `category=restaurant`
+plus a soft `cuisine=japanese` preference; 按摩/髮型屋/護膚 were answered through
+`category=beauty`, a ROOT that admits all six beauty leaves; and 珍珠奶茶 matched no category at
+all, so the page was whatever the keyword lane ranked first. D601 made a word that NAMES one
+leaf answer with that leaf (`nlu.lexicon.LEAF_SYNONYMS`, preferred over the bucket when it sits
+at least as far right), and the filter already honours a leaf spelling exactly (D524).
+
+Read the after column for what it is: for a leaf-named word the FILTER now guarantees the
+answer, so p@10 measures the filter's precision and a widened filter reddens here by name. It is
+NOT a measure of ranking quality - that needs queries whose answer is not one leaf (preferences,
+ambience), and it is filed in PLAN as the next family this door should grow.
 
 The gate is deliberately coarse: the mean stays at or above 0.70 and no case falls below 0.30, so
 a change that trades one case for another reddens, while ordinary re-seeding noise does not.
@@ -52,11 +62,14 @@ CASES = [
     ("甜品", "bakery-dessert"),
     ("按摩", "spa-massage"),
     ("髮型屋", "hair-salon"),
+    ("美甲", "nail-salon"),
+    ("護膚", "skin-clinic"),
+    ("珍珠奶茶", "bubble-tea"),
 ]
 
 TOP_K = 10
-MEAN_FLOOR = 0.70
-CASE_FLOOR = 0.30
+MEAN_FLOOR = 0.95
+CASE_FLOOR = 0.90
 
 SLUG_MIRROR = """
 SELECT mc.merchant_id::text AS merchant_id, array_agg(DISTINCT s.slug) AS slugs
@@ -131,5 +144,4 @@ def test_the_mean_precision_holds_the_recorded_baseline(plane):
     mean = sum(scores.values()) / len(scores)
     per_case = {q: round(v, 3) for q, v in scores.items()}
     assert mean >= MEAN_FLOOR, (
-        f"mean p@{TOP_K} fell to {mean:.3f} from the recorded 0.733 baseline; per case "
-        f"{per_case}")
+        f"mean p@{TOP_K} fell to {mean:.3f} from the measured 1.000; per case {per_case}")

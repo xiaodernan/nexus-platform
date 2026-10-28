@@ -595,6 +595,31 @@ def match_district(text: str) -> tuple[str, dict[str, Any]] | None:
     return (best[1], best[2]) if best else None
 
 
+#: Words that NAME one taxonomy leaf (D601). `match_category` otherwise answers a BUCKET, and a
+#: bucket is coarser than the leaf the caller named: 按摩 resolved to `beauty`, a root holding six
+#: leaves, so a massage query was answered with nail salons and gyms' neighbours (measured top-10
+#: precision 0.3, D600's door), and 珍珠奶茶 matched no category at all (0.0). The filter already
+#: honours a leaf spelling exactly (D524) - what was missing was a reader that emits one.
+#:
+#: Only words whose meaning IS one leaf are here. 咖啡 stays `cafe` because the corpus splits it
+#: into four leaves (tea-house, bakery-dessert, bubble-tea, specialty-coffee); 日式/泰式 stay
+#: cuisine words because a cuisine adjective does not name a leaf. Every slug is also listed as a
+#: cue of itself, so a caller who passes `hair-salon` is not rewritten into `beauty` by the
+#: bucket table (`salon` is a beauty cue and would win the rightmost rule on a tie).
+LEAF_SYNONYMS: dict[str, tuple[str, ...]] = {
+    "ramen": ("拉麵", "拉面", "ramen"),
+    "sushi": ("壽司", "寿司", "sushi"),
+    "dimsum": ("點心", "点心", "dim sum", "dimsum"),
+    "hotpot": ("火鍋", "火锅", "hot pot", "hotpot"),
+    "spa-massage": ("按摩", "massage", "spa", "水療", "水疗", "spa-massage"),
+    "hair-salon": ("髮型屋", "发型屋", "髮型", "发型", "理髮", "理发", "haircut",
+                   "hair salon", "hair-salon"),
+    "nail-salon": ("美甲", "nail", "nails", "nail-salon"),
+    "skin-clinic": ("護膚", "护肤", "facial", "skin-clinic"),
+    "bubble-tea": ("珍珠奶茶", "奶茶", "bubble tea", "boba", "bubble-tea"),
+}
+
+
 def match_category(text: str) -> tuple[str, float] | None:
     """Return (category, confidence). Confidence 0.95 for a direct hit, lower for the
     generic `retail`/`attraction` fallbacks so the model never over-claims.
@@ -630,6 +655,46 @@ def match_category(text: str) -> tuple[str, float] | None:
     rightmost, best_len, best_cat = (specific or hits)[0]
     generic = best_cat in ("retail", "attraction", "restaurant")
     return best_cat, (0.7 if generic and best_len <= 2 else 0.95)
+
+
+def match_leaf(text: str) -> str | None:
+    """The ONE taxonomy leaf a query names, or None (D601).
+
+    This is a SEARCH-side reader, not the intent lane's: `match_category` keeps answering the
+    coarse bucket the contract's `Intent.category` documents (`restaurant` for 拉麵), and the
+    search plan refines that bucket into the leaf the user actually named. Keeping the two
+    apart is what lets the intent eval keep asserting the contract while the filter answers
+    `ramen`.
+
+    The rightmost cue wins, ties break on length, exactly like `match_category` - CJK puts the
+    head noun last, so 拉麵店的咖啡 is a cafe and 咖啡店的拉麵 is ramen.
+    """
+    from nexus_ai.nlu.canonical import canonical
+
+    canon = canonical(text)
+    low = canon.lower()
+    best: tuple[int, int, str] | None = None
+    for leaf, terms in LEAF_SYNONYMS.items():
+        for term in terms:
+            t = term.lower().strip()
+            positions = cue_positions(t, canon, low) if t else []
+            if not positions:
+                continue
+            candidate = (max(positions) + len(t), len(t), leaf)
+            if best is None or candidate[:2] > best[:2]:
+                best = candidate
+    if best is None:
+        return None
+    # The leaf answers only when it IS the head: 拉麵店的咖啡 is a cafe, and a bucket cue that
+    # sits further right than the leaf means the sentence ended on the coarser word.
+    bucket_end = 0
+    for terms in CATEGORY_SYNONYMS.values():
+        for term in terms:
+            t = term.lower().strip()
+            positions = cue_positions(t, canon, low) if t else []
+            if positions:
+                bucket_end = max(bucket_end, max(positions) + len(t))
+    return best[2] if best[0] >= bucket_end else None
 
 
 def match_cuisine_terms(text: str) -> list[tuple[str, str]]:
@@ -747,7 +812,8 @@ def proper_nouns(text: str) -> list[str]:
 #: place) so that the canonicalisation is visible in one place and the tables above stay
 #: readable.
 _CANONICALISED_TABLES = (
-    "CATEGORY_SYNONYMS", "CUISINE_TERMS", "SORT_RULES", "CONSTRAINT_RULES", "DISTRICTS",
+    "CATEGORY_SYNONYMS", "LEAF_SYNONYMS", "CUISINE_TERMS", "SORT_RULES",
+    "CONSTRAINT_RULES", "DISTRICTS",
     "PREFERENCE_RULES", "PREFERENCE_CUES", "PREFERENCE_RULE_VALUES", "COMPARE_CUES",
     "DISCOVER_CUES", "RESERVE_CUES", "PURCHASE_CUES", "ASK_MERCHANT_CUES", "PLAN_CUES",
     "NEARBY_TERMS", "OPEN_PRICE_WORDS", "CONSTRAINT_CANON",
