@@ -25925,3 +25925,87 @@ fixture lane has no taxonomy plane, so it always answers the walk. The two agree
 or a word (`cafe`, `restaurant`, `tea-house`) and can differ when a caller names a leaf whose
 root its bucket stands for (`specialty-coffee` -> cafe). Filed in PLAN rather than papered
 over with a fixture-only taxonomy copy.
+
+## 592. D590 follow-up · the arms ran after the door shipped, and one claim did not hold - the shared guard is the card's (`apps/ai/tests/test_the_price_cell_of_the_comparison_grid_carries_its_rows_clock.py`)
+
+**What was measured.** D590's door went in with its arms paragraph written first and the arms
+run afterwards, which is the shape this ledger has called out by name. Running them - 8 arms,
+each file restored byte-identically, the rows that moved read by name with `-rf` - graded every
+claim, and one did not hold. Dropping the kernel's already-vouched guard
+(`bundle.get("price", sid) or bundle.get("avg_price_hkd", sid)`) left this door at **14 passed**
+and reddened one row of D589's card door. The reason is the grid's own shape: `if price_fact and
+isinstance(price_fact.value, dict)` then `elif row.get("avg_price_hkd") is not None`, so a
+subject that already has a `price` fact never calls `ground_row_price`, and the line the
+no-twin row was said to arm is not what keeps it green. The guard is real and it is carried -
+by the card, which reaches the kernel for every price it prints (D589's duplication row, 1 red).
+What this door's no-twin row leans on is the grid reading its stored fact at all, and the arm
+that says so (`bundle.get("price", sid)` emptied) reddens that row and the both-branches live
+row: **2 failed**.
+
+**The other seven arms held, and the rows each moves is now named in the door.** The grid
+stopping its grounding reddens 11 of the 14 (the stamped-clock row, both staleness ids, four of
+the five source ids - the merchant's own stays green, correctly - and all three live rows);
+stamping with the request time instead of the row's clock reddens 4 here and 4 on the card door,
+and leaves the inside-TTL id green because a now-stamped number genuinely is fresh; `synth`'s
+`stale` back to the constant reddens the past-TTL id here and 3 on the card door; an unearned
+`price_source` promoted to a merchant claim reddens the estimated, blank, absent and observed
+ids plus the card door's estimated row; and a missing clock filled with `now` reddens this
+door's merchant row and the card door's no-invented-timestamp row.
+
+**A gate that looked like decoration is not one.** Nulling the offering branch's clock values
+while keeping the column aliases, and dropping the column from both branches, each fail the same
+three live rows - **3 failed** either way - which made the row's text gate
+(`assert "price_updated_at" in text`) look like it was already carried by the grounding assert
+underneath it. Run with `--tb=line`, the second arm fails AT the gate, so the gate reddens before
+any value is read; the first arm then shows the grounding assert is not doing nothing either. Two
+arms, two claims, one row.
+
+**Left open, named.** The population that would reach the kernel's guard through the grid is a
+bundle holding an `avg_price_hkd` fact for a subject whose row prints a price. Nothing writes
+that attribute: this plane's `facts` census is `price` 1,560 offering + 520 merchant rows, and
+`avg_price_hkd` appears in no attribute column at all - while three readers name it
+(`cards.py`'s per-card fact list, `DISPUTED_ATTRIBUTES`, `attach_price_staleness`). An attribute
+with readers and no writer is filed here rather than given a fixture that invents one.
+
+**Verified after the edit.** The two price doors together: **23 passed** with
+`NEXUS_TEST_DATABASE_URL` set; the grid door alone **10 passed, 4 skipped** without it;
+`ruff check` over it: All checks passed. No product line moved in this unit - what changed is
+what the door says about itself, which is the only thing the arms can refute.
+
+- readers: the docstring's arms paragraph, re-aimed at the measurements above.
+
+## 593. D597 · the category mirror was read by every candidate query, including the ones that never asked (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/tests/test_the_category_filter_answers_the_same_question_on_both_lanes.py`)
+
+**What was measured.** D596 added `category_slugs` to both lanes' SELECT so the fixture predicate
+could mirror the live WHERE, and it added it unconditionally. That put the taxonomy walk into
+every merchant and offering candidate query - including the unfiltered ones, which this module's
+own door (`test_search_sql.py::test_no_category_means_no_taxonomy_join`) promises do not touch
+the tree. Measured with `EXPLAIN (ANALYZE)` against the seeded plane, unfiltered merchant query,
+`LIMIT 60`: at HEAD **152.7 ms** with `Index Only Scan ... merchant_categories mc2 ... loops=60`;
+after the edit **40.4 ms** with no `merchant_categories` node at all. Three interleaved runs
+each, medians: unfiltered **65.8 ms -> 36.3 ms**, `filters={"category": "cafe"}` **18.1 ms ->
+8.6 ms** (the filtered query still carries the mirror, by design). The unfiltered plan is now
+byte-for-byte the plan D524 left behind.
+
+**The fix, and what it does not do.** `CATEGORY_SLUGS_SUBQUERY` is emitted only when
+`filters.get("category")` is set; otherwise the SELECT answers `'{}'::text[]`, which is the
+honest answer for a query nobody filters on a bucket - no reader looks at the column when no
+bucket was named. The filter clause itself did not move: live kept **184** restaurant, **79**
+cafe, **39** bar, **28** tea-house, **0** dessert, the same numbers D596 reported.
+
+**The parity door had to change with it, and the change is the point.** It compared the live
+lane against `_filter_static` on rows from an *unfiltered* `merchant_candidates` call - the one
+call that no longer carries the mirror. Left as written it now reads empty slugs and predicts 0
+for every bucket (**4 failed**, `no live row carries category_slugs`), which is the same
+test-design error D596 fixed one layer down: a door that reads its data through the code path it
+is grading. The door now reads the two-level slug map itself (`SELECT ... FROM
+merchant_categories ... CROSS JOIN LATERAL (VALUES (c.slug), (pc.slug))`), attaches it to the
+catalogue rows, and compares. A second row asserts that a *filtered* SELECT answers exactly that
+map, so the mirror is still graded - by the query that is supposed to carry it.
+
+**Verified after the edit.** `test_search_sql.py`, `test_search_plan.py` and the parity door
+together: **48 passed** with `NEXUS_TEST_DATABASE_URL` set (live rows included, 5 buckets
+parametrized). `ruff check` over the two modules and the door: All checks passed.
+
+- readers: `CATEGORY_SLUGS_SUBQUERY` and `_category_slugs_select` in `search/sql.py`; the
+  parity door's `SLUG_MIRROR` and its three live rows.

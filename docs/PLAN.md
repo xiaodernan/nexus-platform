@@ -2042,3 +2042,13 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   the predicate. A fixture-only taxonomy copy would be a second writer of the taxonomy; the
   honest fix is to hand the fixture lane the plane's leaf set from the DB, and that is a
   fixture-API decision. Owner: the AI lane.
+
+- **`avg_price_hkd` is a fact attribute with three readers and no writer** - D590's follow-up
+  arms found the guard that keeps a second price fact from being written is unreachable through
+  the comparison grid precisely because the spelling it watches for is never stored. Measured on
+  this plane: `facts` holds `price` on 1,560 offering and 520 merchant rows and no
+  `avg_price_hkd` row at all, while `cards.py`'s per-card fact list, `DISPUTED_ATTRIBUTES` and
+  `attach_price_staleness` each ask for it. Either a writer names it (the platform's fact-ingest
+  lane, from `merchants.avg_price_hkd`) or the readers drop an alias no corpus produces - and a
+  fixture that invents the attribute would be this lane writing its own evidence. Owner: the AI
+  lane with the platform lane.

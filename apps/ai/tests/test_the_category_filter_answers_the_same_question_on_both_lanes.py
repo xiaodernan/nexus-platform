@@ -8,11 +8,14 @@ the live plane: `filters={"category": "cafe"}` kept **79** merchants live and **
 fixture predicate; restaurant **184** and 0; bar **39** and 0. A fixture-backed test that asked
 whether a category filter filtered anything was answered "no" for every live-shaped row.
 
-The mirror is data, not taxonomy knowledge: both lanes' SELECT now carry `category_slugs`
-(the merchant's leaf slugs AND their parents', the same two levels the clause walks), and
-`_filter_static` matches the resolved bucket against them. A fixture that stores the coarse
-bucket in `category_primary` itself - the shape all 57 of the suite's own fixture rows use -
-keeps the old comparison, so nothing that was right moved.
+The mirror is data, not taxonomy knowledge: a category-filtered SELECT carries
+`category_slugs` (the merchant's leaf slugs AND their parents', the same two levels the clause
+walks), and `_filter_static` matches the resolved bucket against them. It carries them ONLY
+when a category filter is set (D597): an unfiltered candidate query promises no taxonomy walk
+(`tests/test_search_sql.py` holds that promise), so this file reads the same two-level mirror
+itself and attaches it to the catalogue rows the predicate is asked about. A fixture that
+stores the coarse bucket in `category_primary` itself - the shape all 57 of the suite's own
+fixture rows use - keeps the old comparison, so nothing that was right moved.
 
 What this does NOT mirror, named rather than hidden: D524's leaf-exact rule. The live clause
 asks the taxonomy whether the caller's spelling is a leaf and, if it is, skips the root walk;
@@ -64,6 +67,18 @@ class TestTheFixtureLane:
 
 live = pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
 
+# D597: the mirror the product SELECT carries when a category is named, read directly here so
+# the parity claim is measured on the catalogue the fixture predicate is handed.
+SLUG_MIRROR = """
+SELECT mc.merchant_id::text AS merchant_id, array_agg(DISTINCT s.slug) AS slugs
+FROM merchant_categories mc
+JOIN categories c ON c.id = mc.category_id
+LEFT JOIN categories pc ON pc.id = c.parent_id
+CROSS JOIN LATERAL (VALUES (c.slug), (pc.slug)) AS s(slug)
+WHERE s.slug IS NOT NULL
+GROUP BY mc.merchant_id
+"""
+
 
 @pytest.fixture(scope="module")
 def plane():
@@ -82,11 +97,16 @@ def plane():
         try:
             backend = S.PostgresBackend(db)
             rows = await backend.merchant_candidates(**dict(common, embedding=None))
+            slugs = {str(r["merchant_id"]): [str(x) for x in (r["slugs"] or [])]
+                     for r in await db.fetch(SLUG_MIRROR)}
             kept = {}
+            carried = {}
             for bucket in BUCKETS:
-                kept[bucket] = {r["slug"] for r in await backend.merchant_candidates(
-                    **dict(common, embedding=None, filters={"category": bucket}))}
-            return rows, kept
+                live_rows = await backend.merchant_candidates(
+                    **dict(common, embedding=None, filters={"category": bucket}))
+                kept[bucket] = {r["slug"] for r in live_rows}
+                carried[bucket] = live_rows
+            return rows, slugs, kept, carried
         finally:
             await db_pool.dispose()
 
@@ -94,18 +114,29 @@ def plane():
 
 
 @live
-def test_the_live_rows_carry_the_slugs_the_clause_walks(plane):
-    rows, _kept = plane
-    assert rows and any(r.get("category_slugs") for r in rows), (
-        "no live row carries `category_slugs` - the SELECT does not read the tree")
+def test_a_filtered_query_carries_the_slugs_the_clause_walks(plane):
+    _rows, slugs, _kept, carried = plane
+    for bucket, live_rows in carried.items():
+        assert all(r.get("category_slugs") for r in live_rows), (
+            f"category={bucket}: a returned row carries no `category_slugs`, so the fixture "
+            f"lane cannot mirror the live WHERE")
+        for row in live_rows:
+            assert set(row["category_slugs"]) == set(slugs.get(str(row["id"]), [])), (
+                f"{row['slug']}: SELECT answered {sorted(row['category_slugs'])} and the "
+                f"tree holds {sorted(slugs.get(str(row['id']), []))}")
 
 
 @live
 @pytest.mark.parametrize("bucket", BUCKETS)
 def test_both_lanes_keep_the_same_merchants(plane, bucket):
-    rows, kept = plane
-    predicted = {r["slug"] for r in rows
-                 if not S._filter_static([dict(r)], "", {"category": bucket}) == []}
+    rows, slugs, kept, _carried = plane
+    catalog = []
+    for row in rows:
+        copy = dict(row)
+        copy["category_slugs"] = slugs.get(str(row["id"]), [])
+        catalog.append(copy)
+    predicted = {r["slug"] for r in catalog
+                 if S._filter_static([dict(r)], "", {"category": bucket})}
     assert kept[bucket] == predicted, (
         f"category={bucket}: live kept {len(kept[bucket])} and the fixture predicate "
         f"{len(predicted)}; live-only {sorted(kept[bucket] - predicted)[:3]}, "
@@ -114,5 +145,5 @@ def test_both_lanes_keep_the_same_merchants(plane, bucket):
 
 @live
 def test_the_bucket_that_matches_nothing_matches_nothing_on_both(plane):
-    _rows, kept = plane
+    _rows, _slugs, kept, _carried = plane
     assert kept["dessert"] == set(), kept["dessert"]
