@@ -25439,3 +25439,57 @@ tree can resolve different dependency sets and nothing compares them; whether th
 git is a decision for the lane that owns the venv, and this unit did not make it.
 
 ---
+
+## 576. D581 · A declared preference that names a merchant weakness had no reader — the seed writes the fact as a LIST and the preference plane read only booleans (`apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_the_weak_aspects_list_is_read_by_a_preference.py`)
+
+**What was measured.** PLAN's open item said it in one line: "the `weak_aspects`
+attribute is a LIST, not a boolean" — the matcher reads booleans, so a merchant that is weak
+at something cannot be demoted by a preference naming that weakness. Measured on the plane the
+service reads (470 published rows): 118 carry a non-empty `weak_aspects`, and the histogram is
+taste 23, seating 22, ambience 21, mtr_distance 20, service 19, portion 18, **noise 15**,
+waiting_time 15, cleanliness 12, value 10. Every branch of the preference matcher in
+`apps/ai/nexus_ai/search/service.py` asked `attrs.get(<scalar>) is True/False`; no branch named
+`weak_aspects`, so a declared preference of kind `weakness` reached the loop, found no branch,
+left `match_fn` empty and contributed nothing — `personalization` was `None` for every merchant
+in the result, whatever the profile said. The fact was in the corpus and the reader did not
+exist, which is the D488 shape (two readers of one fact) with the second reader missing.
+
+**The fix is one branch, and it reads the list as a SET.** The new arm (kind `weakness`, any
+non-empty key) pulls the boolean out of the stored `{"value": ...}` envelope exactly the way the
+weather and time arms do, and then answers `_sided(w, liked=not is_weak)` where `is_weak` is
+membership of the key in the merchant's own `weak_aspects` — membership, not substring, so a
+preference naming `noise` is silent about a merchant weak at `service`. A value of `false` emits
+no signal rather than a reversed one: "weakness noise = false" is not a sentence this contract
+has a meaning for, and inventing one would be the D527 inversion reached from the other side.
+
+**Verified on the shipped reader, and proved to fail.** Over the live corpus's 470 rows fed
+through `search()` with only the profile preference added — kind `weakness`, key `noise`, value
+true, weight 0.8 — the 15 merchants whose list names `noise` score **0.200** and the other 455
+score **0.800**; with the branch deleted the same run reports 3 FAILED in the new door. The door
+itself is 3 rows: the source-level row (the reader must name the list, so the branch cannot be
+deleted while the file still claims to support it), the demotion row (weak < strong on one
+preference), and the membership row (a merchant weak at `service` must not be read as weak at
+`noise`; a merchant weak at `noise` must score below it). `ruff check` over the two touched
+files: All checks passed.
+
+**Left open, named rather than left to be rediscovered.**
+
+- The empty list is read as strength. 352 of the 470 published merchants carry no `weak_aspects`
+  at all, and the branch answers them `liked=True` for any declared weakness — absence of the
+  fact is being read as the fact's negation. The corpus does not distinguish "no weakness
+  recorded" from "no weakness", so a merchant nobody has reviewed is promoted as if it were
+  strong. A three-valued reading (`None` when the list is empty) would keep the ranking honest
+  but changes what the plane scores for 75% of its rows; that is a product decision, filed here
+  rather than made.
+- Nothing PRODUCES a `weakness` preference yet. The arm is reachable only from a declared
+  profile row (the test seeds one by hand); the NLU writes `noise_avoid:noise` as a constraint,
+  not a weakness preference, so the sentence "唔好嘈" still does not reach this branch. The
+  constraint plane's own reader is the next unit's question.
+- `generate.py` writes `quiet_ambience` as `aspect_mean["noise"] >= 4.2` and `lively_ambience`
+  as `< 3.0`, so the same aspect has three spellings on one row (`weak_aspects` membership, the
+  two booleans) and this branch reads only the first. Measured: 188 quiet, 12 lively, 15 weak at
+  noise. Which of the three a refusal should exclude is not settled by this unit.
+
+- readers: `ruff check` clean; the door 3 passed; the branch-removed control 3 failed; no
+  18-step gate was re-run, because nothing here reaches the database-backed steps except the
+  probe above, which reads the live plane through the shipped `PostgresBackend`.

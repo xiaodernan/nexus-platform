@@ -110,7 +110,13 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The `ambience` preference's two spellings** — the seed stores `style/ambience` with `{"value": "quiet"}` while the lexicon's preference key is `ambience` with value `quiet`. The matcher reads the stored shape, so it fires; but a typed "安靜" produces `ambience=quiet` (a string), and the two shapes are read by different code paths. Worth one vocabulary decision rather than two readers.
 - **The seeded merchants carry no `vegetarian` attribute** — **closed this session by D559**: the seed writes the boolean attribute `cuisine_vegetarian` (`m["leaf"] == "vegetarian"`) and the stored-preference branch now reads it, so the declared vegetarian preference fires on the attribute the seed writes and the full-suite attribute gate went green.
 - **The `personalization` weight is one number for two different things** — after D397 the preference and the feedback signals combine by maximum, so the number no longer says WHICH evidence produced it. A separate `preference` weight would need a `ranking_weights.yaml` change (the weights must sum to 1.0) and a strategy version bump; the current shape is defensible and the change is a product decision, not a bug fix.
-- **The `weak_aspects` attribute is a LIST, not a boolean** — the matcher reads booleans, so a merchant that is weak at something cannot be demoted by a preference naming that weakness. The vocabulary has no "prefer a merchant who is strong at X" rule, so the gap is a missing RULE rather than a broken matcher.
+- **The `weak_aspects` attribute is a LIST, not a boolean** — **closed by D581**: the
+  preference matcher now reads the list as a set (`kind == "weakness"`), so a declared
+  preference naming `noise` scores the 15 merchants weak at noise 0.200 against 0.800 for the
+  rest of the live plane. Two residues were filed by that unit: the empty list is read as
+  strength (352 of 470 rows carry none), and nothing PRODUCES a `weakness` preference — the
+  sentence "唔好嘈" still writes `noise_avoid:noise` as a constraint, whose reader is the next
+  unit's question.
 - **A Chinese query's candidate pool is not subject-bounded** - **half closed by measurement
   in the 2026-10-28 session**: `cjk_keywords()`'s bigram containment in
   `apps/ai/nexus_ai/search/sql.py` DOES reach the English tags on the merchant lane - measured on
