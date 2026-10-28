@@ -828,5 +828,78 @@ def _hyphenate_district_aliases() -> None:
     setattr(module, "DISTRICTS", folded)
 
 
+def _add_cuisine_refusal_surfaces() -> None:
+    """Give every cuisine the ASK lane names a way to REFUSE it (D584).
+
+    Measured on the live plane: 8 of the 11 `CUISINE_TERMS` values had no refusal surface
+    at all - 唔好日料, 唔好素食 and 唔好泰國菜 wrote no constraint, while 唔好海鮮 removed
+    its merchants. The user who refuses a cuisine the product can name is refused by three
+    cuisines out of eleven, and for the other eight the only thing their sentence does is
+    write a polarity the ranking prices at 0.06 of the score
+    (`infra/config/ranking_weights.yaml`), which cannot move the answer: measured, 素食唔好
+    scored the vegetarian merchants at 0.0 and still served them at ranks 1, 2 and 4.
+
+    The `avoid` lane itself bites, so nothing downstream was broken and nothing needed
+    fixing there: `avoid=["vegetarian"]` removed all 6 merchants the corpus tags vegetarian
+    (and 3 more through the category), `avoid=["japanese"]` its 28, `avoid=["seafood"]` its
+    14. The words had simply never been written down - the cuisine row of CONSTRAINT_RULES
+    is a hand-copied list of three surfaces, and the vocabulary the query is read with grew
+    beside it (D493: one word, one set of spellings, both directions).
+
+    So the surfaces come from `CUISINE_TERMS`, and the ninth cuisine cannot be added to the
+    ask side without the refuse side getting it too. Two guards keep the change from moving
+    a sentence that already works:
+
+    * a surface that already refuses something keeps that meaning. 咖哩 stays `curry` and
+      牛排 stays `beef` (it contains the existing surface 牛), so the derived rows only ever
+      fill a gap - no (rule, value) pair a user's sentence produced before changes now;
+    * a one-character CJK surface is not derived. 齋 and 蟹 complete longer words (長齋, 蟹黃)
+      and D579's word-boundary rule is not in the matcher yet, so neither lane may trust a
+      single character - the same floor D582 left 吵 on.
+
+    Runs after the canonicalisation, because `_canonical_node` REBINDS the table it
+    canonicalises: a row list built beside CONSTRAINT_RULES would freeze the pre-canonical
+    spelling and be a second vocabulary of its own.
+    """
+    import sys
+
+    module = sys.modules[__name__]
+    rules = getattr(module, "CONSTRAINT_RULES", None)
+    terms = getattr(module, "CUISINE_TERMS", None)
+    canon = getattr(module, "CONSTRAINT_CANON", None)
+    if not (isinstance(rules, list) and isinstance(terms, dict) and isinstance(canon, dict)):
+        return
+
+    already = [str(v).strip() for _key, _negs, values in rules for v in values]
+
+    def _refused_today(surface: str) -> bool:
+        # Exact or as the tail of a longer word: 牛排 already refuses beef because 牛 is a
+        # surface, and deriving `western` for it would refuse a second thing than it does.
+        return any(surface == e or (e and e in surface) for e in already)
+
+    derived: list[str] = []
+    for value, surfaces in terms.items():
+        for surface in surfaces:
+            word = str(surface).strip()
+            if not word or _refused_today(word):
+                continue
+            if len(word) == 1 and not word.isascii():
+                continue
+            derived.append(word)
+            canon.setdefault(word, value)
+            canon.setdefault(word.lower(), value)
+    if derived:
+        # Folded into the row that already refuses cuisines rather than added as a twin:
+        # the canon is taken per SURFACE, so 辣 keeps `spicy` and 咖哩 keeps `curry` beside
+        # the 96 new words, and a reader of this table sees one cuisine row, not two that
+        # differ only in when they were written down.
+        for index, (key, negs, values) in enumerate(rules):
+            if key == "cuisine_avoid":
+                rules[index] = (key, negs, [*values, *derived])
+                return
+        rules.append(("cuisine_avoid", list(_CONSTRAINT_NEGATIONS), derived))
+
+
 _canonicalise_vocabulary()
 _hyphenate_district_aliases()
+_add_cuisine_refusal_surfaces()

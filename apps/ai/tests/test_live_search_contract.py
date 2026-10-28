@@ -300,9 +300,18 @@ def test_a_refused_cuisine_is_not_served_at_the_top(live_settings):
     refused_top = {i["slug"] for i in (refused.get("items") or [])[:4]}
     assert wanted_top & vegetarian, (
         "a cuisine the user asked for does not lead the answer - the preference never fired")
-    assert not (wanted_top & refused_top), (
-        f"the merchants a cuisine the user asked for leads with are still at the top when "
-        f"the user refuses that cuisine: {sorted(wanted_top & refused_top)}")
+    # D584: this asked for the two heads to be DISJOINT, which was never the promise. A
+    # merchant that carries nothing about the cuisine legitimately leads both answers -
+    # measured here, `banyan-ridge-0153`, category `Steakhouse`, tag `western-grill`, no
+    # offering naming vegetarian - and refusing a cuisine does not make it stop being a
+    # good answer. What the refusal promises is about the population the sentence names:
+    # none of the merchants carrying the refused cuisine may lead. Under the bug this
+    # function was written against they ranked 1, 2, 3 and 4, so this half is as red as
+    # the disjointness it replaces, and does not rest on who else happens to be good.
+    refused_leads_with = refused_top & vegetarian
+    assert not refused_leads_with, (
+        f"the merchants carrying the cuisine the user refuses are still at the top: "
+        f"{sorted(refused_leads_with)}")
 
 
 def test_a_leaf_the_caller_names_is_not_broadened_to_its_root(live_settings):
