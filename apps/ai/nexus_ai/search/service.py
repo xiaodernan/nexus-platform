@@ -1221,10 +1221,17 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             if is_outdoor_pref:
                                 if attrs.get("outdoor_style") is True:
                                     return _sided(w, liked=True)
-                                if attrs.get("indoor_style") is True:
-                                    return _sided(w, liked=False)
+                                # D594: the seating fact is answered BEFORE the indoor
+                                # fallback. `indoor_style` is written True on every row the
+                                # seed generates ("most HK venues are indoor" - its own
+                                # comment), so as a fallback it answered for the whole corpus
+                                # and the 111 merchants that record `outdoor_seating` never
+                                # reached their own leg: measured on the live plane, all 470
+                                # scored 0.5 for an outdoor preference at weight 0.5.
                                 if attrs.get("outdoor_seating") is True:
                                     return _sided(w * 0.8, liked=True)
+                                if attrs.get("indoor_style") is True:
+                                    return _sided(w, liked=False)
                             else:
                                 if attrs.get("indoor_style") is True:
                                     return _sided(w, liked=True)

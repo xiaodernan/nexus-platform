@@ -2020,8 +2020,16 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   product half remains: `make ai-embed` is what fills the 2118 chunks, and until it runs the
   golden path is lexical-only on a vectorless corpus. Owner: the AI lane (the pass) with the
   seed lane (whether a demo plane should be re-embedded after every reseed).
-- **Two live-set reds D583 measured and did not inherit** -
-  `test_a_refused_cuisine_is_not_served_at_the_top` and
-  `test_the_outdoor_preference_scores_the_merchants_that_carry_it` reproduce byte-identically
-  with HEAD's build and reach the offering lane 0 times. Each needs its own unit; neither is
-  filed as repaired.
+- **Two live-set reds D583 measured and did not inherit** - `test_a_refused_cuisine_is_not_served_at_the_top`
+  now passes with `test_live_search_contract.py` (13 passed), and
+  `test_the_outdoor_preference_scores_the_merchants_that_carry_it` was the real defect D594
+  fixed: the generator writes `indoor_style: True` on every row, the matcher asked it before
+  `outdoor_seating`, and all 470 merchants scored 0.5 for an outdoor preference. Both are
+  closed; the residue D594 filed is the mirror question below.
+- **The indoor preference is vacuous on a corpus whose every row is `indoor_style: True`** -
+  D594 stopped the constant from answering the OUTDOOR question, but `style/indoor` still reads
+  `indoor_style` first, so it rewards all 470 merchants equally and its two negative legs
+  (`outdoor_style`, `outdoor_seating`) are never reached. The generator's comment ("most HK
+  venues are indoor") is a real fact; whether the preference should read a constant as one is a
+  product question, and the seed lane may prefer to write the fact only where it discriminates.
+  Owner: the AI lane with the seed lane.

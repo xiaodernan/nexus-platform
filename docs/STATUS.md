@@ -25778,3 +25778,36 @@ white - and only the canvas cell moves), `npm run test:web` 160 passed and `toke
 3:1) is a different bound and no reader in this repository measures it. And the density of the
 grounds is the palette's own: a seventh neutral ground added to the theme is caught by the
 refusal, but the person who adds it still has to decide which tokens may sit on it.
+
+## 588. D594 · a fact written on every row answered for every row, and the outdoor preference could not tell the two halves apart (`apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_the_corpus_default_does_not_answer_for_the_outdoor_fact.py`)
+
+**What was measured.** `generate.py` writes `indoor_style: True` on every merchant ("most HK
+venues are indoor" - its own comment) and `outdoor_seating` on about a fifth of them. The
+outdoor matcher asked `outdoor_style`, then `indoor_style`, then `outdoor_seating`, so the
+constant answered before the specific fact. On the live plane at this HEAD an outdoor
+preference at weight 0.5 scored **all 470** merchants **0.5** - the 160 carriers and the 310
+merchants without the fact were indistinguishable - and the live door
+`test_the_outdoor_preference_scores_the_merchants_that_carry_it` was red with exactly that
+message. The first reading of the red blamed the fixture (its rows carry `slug` and
+`attributes` but no `subject_id`, so the population collapses under dedupe); that was real and
+was fixed in the probe, and the defect survived it, which is what moved the search into the
+matcher's leg order.
+
+**The order is the fix.** `outdoor_seating` is now read before the `indoor_style` fallback, so a
+merchant whose only outdoor fact is seating reaches its own half-strength leg instead of being
+answered by the corpus default. The three cells at weight 0.9: seating-only **0.72** (the
+`w * 0.8` leg), `outdoor_style` **0.90** (the full leg, and it wins over seating), neither
+**0.10** (the indoor fallback, now genuinely a fallback).
+
+**Verified, and proved to fail.** The new door is 3 offline rows and 1 live row. Offline:
+**3 passed**, and with the two legs put back in the old order the seating-only row fails
+(0.72 -> 0.10) while the neighbouring cells keep passing - the pin is on the order, not on the
+arithmetic. Live (`NEXUS_TEST_DATABASE_URL` set): the door plus the lane's own file are
+**16 passed**, the previously-red row included. `ruff check` over the two files: All checks
+passed.
+
+**Left open.** The indoor preference is still vacuous on this corpus: `style/indoor` reads
+`indoor_style` first, the generator writes it True on all 470 rows, so the preference rewards
+everyone equally and its two negative legs are never reached. Filed in PLAN as a product
+question for the AI lane with the seed lane - the constant is a real fact, and whether a
+preference should read it as one is not this unit's to decide.
