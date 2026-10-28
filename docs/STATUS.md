@@ -25291,7 +25291,7 @@ That is the next unit: derive each collection's membership from its claim the wa
 - The 5 GONE and 2 NO-BASE rows the census carries are untouched by this unit and remain its named backlog; D280 audited the GONE set as true statements about positions rather than stale pointers.
 
 - readers: the strict census on the tree this section lands on (27c6e68) reads MOVED 0 / NOT-UNIQUE 0 over 263 judged citations, 256 of them still naming the line they were written against, and the divergence line at 0 — and 8 of those 263 are the full-path pointers this very row writes, which is why the population the D576 chain left at 255 grew here and why the two figures are quoted from the same commit rather than remembered · the same census through the pre-fix reader, on the same repository with one ledger line edited and uncommitted, read MOVED 0 / NO-BASE 5 with `RESULT: PASS` exit 0 — that is the reverse control, run on the shipped plane rather than described · step 15 plain PASS · gate step 8 files 0 strict offenders over 803 citation-shaped tokens, 0 UNTRACKED TARGETs and 0 UNCOMMITTED TARGETs, with the blank-line backlog still at 30 at HEAD and none of it filed by this section · its arm battery 13 of 13 held, 0 missed, each arm a one-property change on a throwaway repository of its own · the sections gate 529 STATUS sections and 300 DECISIONS decisions, 0 missing and 0 duplicated on both planes · no 18-step gate was filed in this unit: the database-backed steps were not re-run here, and the figures above come from the readers this change can reach.
-## 556. D559 · the search's `cuisine` preference now reads the seed's own `cuisine_vegetarian` boolean
+## 577. D591 · the search's `cuisine` preference now reads the seed's own `cuisine_vegetarian` boolean
 
 **The defect.** PLAN's open AI-lane item "the seeded merchants carry no `vegetarian` attribute"
 was still open: the seed writes each merchant's vegetarian fact as the boolean attribute
@@ -25321,6 +25321,14 @@ after the one annotation the kind unit's reader needed.
 **Left open.** The live demo database could not be re-probed this unit (the local docker daemon is
 not running in this environment), so the behavioural witness here is the fixture lane's
 StaticBackend, the way the lane's preference units did before their live probes.
+
+**The number was repaired, not the claim.** This unit landed at 16:28 as `D559` / section 556; the
+cleanup unit landed at 17:53 against the same section number, so the ledger held two sections
+answering one cite (`check_ledger_sections.mjs`: `duplicate numbers 2`, duplicated at HEAD as well
+as on disk). The later copy keeps `D559` because the two scripts that cite that number
+(`scripts/db_schema_drift.sh`, `scripts/check_launcher_log_mode.sh`) mean the cleanup's traps, and
+this earlier unit is renumbered to `D591` / section 577, per the precedent §553 set for the S540
+fork. Nothing else in the section moved: the same commit, the same file, the same measurement.
 
 ---
 
@@ -25493,3 +25501,209 @@ files: All checks passed.
 - readers: `ruff check` clean; the door 3 passed; the branch-removed control 3 failed; no
   18-step gate was re-run, because nothing here reaches the database-backed steps except the
   probe above, which reads the live plane through the shipped `PostgresBackend`.
+
+## 578. D582 · the query that asks for a value's opposite now points the value at -1 (`apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_a_like_of_an_antonym_refuses_the_value.py`)
+
+**What was measured.** 嘈 is a surface of the `ambience/quiet` row's own token list, so a
+sentence that asked for the noise inherited the row's +1: on the served plane `quiet_ambience`
+is true on 188 of 470 published merchants and false on 282 (0 lack the attribute), and the
+ranker scored the quiet half 1.0 against the loud half 0.0 for a user who had asked for the
+loud one. D570 wrote the refusal of the opposite ("唔好嘈" wants quiet); this writes the want,
+which cannot be a sign flip because the same character carries four readings. Measured through
+`extract_intent` on the shipped reader, after the change: 嘈的餐廳 → `quiet -1`;
+特別嘈的餐廳 → `-1`; 太嘈 / 好嘈 / 有冇嘈 → `+1`; 唔好嘈 → `+1` (and the refusal
+`noise_avoid:noise` beside it); 安靜的餐廳 → `+1`.
+
+**The frame is the sentence, not a marker table.** `is_asked_for` reads a bridge verb
+(想 / 要 / 食 / want / like ...) in the surface's own clause before it and the attributive
+particle (的 / 嘅) in its own clause after it; `antonym_direction` composes that with the cue
+reader, so a refusal inverts, a question (D533) and a frameless complaint keep the row's own
+polarity, and only a framed want turns the value to -1. `polarity_for` is untouched - the pure
+cue reader still answers what the sentence does to the surface, which its own tests pin.
+
+**Verified, and proved to fail.** The door is 47 rows generated from `ANTONYM_TERMS` itself
+(a second antonym pair joins every walk the moment it exists), and it passes; with the
+`antonym_direction` call replaced by D570's `-1 → +1` rule alone, 6 of those rows fail. The
+50-row run of this door with D581's is green.
+
+**Left open.** The bare 嘈 inside a longer surface ("二手煙" is 煙's sibling shape, D535's item)
+is still read at the shorter surface's own reach; no preference rule names 煙 today, so the
+residue is unreachable rather than measured. And 嘈死 / 咁嘈 stay at +1 by design - they are
+complaints and requests in the same words, and this unit refused to guess.
+
+- readers: the door 47 passed; the control 6 failed; `ruff check` clean over the two files.
+
+## 579. D583 · the offering lane reads a Chinese word the way the merchant lane already does (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/tests/test_the_offering_lane_reads_a_chinese_word_the_merchant_lane_already_does.py`)
+
+**What was measured.** The merchant lane learned CJK containment in D407; the offering lane
+never did, so a Chinese query scored every offering that mentioned the word identically -
+`kw_score` a constant 0.3333 - and the page was ordered by whatever else the row carried.
+The same containment leg now runs over the offering's own text (name, name_zh,
+description), and the text-match OR admits a row the containment lane found, so the promise
+the door makes is the ORDER, not recall alone.
+
+**Verified, and proved to fail.** The door's ORDER claim fails on the pre-fix expression for
+咖啡 / 拉麵 / 甜品, and its recall claim fails for 拉麵 / 甜品, so it is not a tautology. On
+this session's sweep the file is green inside a 4454-passed / 31-skipped run (the live rows
+need `NEXUS_TEST_DATABASE_URL`, unset here; the commit reports 13 passed + 4 skipped offline).
+
+**Left open, and measured as not this change's.** Two live-set reds in the wider run -
+`test_a_refused_cuisine_is_not_served_at_the_top` and
+`test_the_outdoor_preference_scores_the_merchants_that_carry_it` - reproduce byte-identically
+with HEAD's `build_offering_query`, reach the offering lane 0 times, and are filed as their own
+defects rather than repaired here.
+
+- readers: the door green in the sweep; the two pre-fix controls red; no 18-step gate re-run,
+  because the change is one SQL expression the live probe covers.
+
+## 580. D584 · a cuisine the user can ask for is now one they can refuse (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_a_cuisine_the_user_can_ask_for_is_a_cuisine_they_can_refuse.py`, `apps/ai/tests/test_live_search_contract.py`)
+
+**What was measured.** At HEAD, 8 of the 11 cuisines the ask lane names had no refusal
+surface at all: "唔好素食" and "唔想食日本嘢" wrote no constraint, so the avoid filter never saw
+a thing the user had just said. The fix derives the surfaces from `CUISINE_TERMS` instead of
+hand-keeping a second list, folds them into the existing `cuisine_avoid` row (the table stays
+5 rows), and lets D546's planner derivation carry them to the filter by construction.
+
+**Two withheld, on purpose.** A single CJK character (一字 surfaces complete longer words,
+D579's boundary) and 齋, which the corpus does not write as a tag. Six surfaces that already
+refused something keep refusing exactly the same value.
+
+**Measured on the live plane.** vegetarian removes 9 of 470 merchants (6 carry the tag),
+japanese 28, seafood 30, cantonese 11, and no refusal empties the answer; the golden ask is
+unchanged. D522's whole-head disjointness assertion in `test_live_search_contract.py` was
+measuring the top page only; it now pins the refused cuisine out of the top, which is what the
+row actually promises.
+
+**Left open.** The refusal derives from the ask vocabulary, so a cuisine the ask lane cannot
+name still cannot be refused - the asymmetry is now one vocabulary's, not two lists'. The
+dimension is named in PLAN rather than left to be rediscovered.
+
+- readers: the door green in the sweep; the live figures above are the commit's own probe.
+
+## 581. D584 follow-up · three reds on the sweep were D584's own debt, and the third was real (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/tests/test_a_cuisine_the_user_can_ask_for_is_a_cuisine_they_can_refuse.py`, `apps/ai/tests/test_a_degree_adverb_does_not_end_the_refusals_clause.py`, `apps/ai/tests/test_the_constraint_lane_reads_the_clause.py`)
+
+**What was measured, before touching anything.** The lane reads all 118 canon surfaces under
+both cues and writes each value under exactly one key, so two of the three reds were
+declarations and arithmetic rather than lost reads - and the third was real.
+
+- 82 census rows raised `KeyError`: `KEY_OF` (the lane test's declaration of which lane each
+  canon value is a fact in) never declared the 10 cuisines D584 folded into the canon.
+  Declared now, by what the fact is: a refused cuisine filters the corpus's cuisine tags.
+- The degree-adverb census walks the refusal vocabulary with a stride, and its floor clause
+  reddened: 50 gap rows cannot cover a surface table that grew to 117 entries, so 67 surfaces
+  had silently dropped out of the walk. The walk now runs as long as the longest of its three
+  tables, which is what the clause claims.
+- D584 derived its surfaces from `CUISINE_TERMS` and put every one of them in the cuisine row.
+  生蠔 / 生蚝 / 海魚菜 / 大排档 / 大排檔 are that vocabulary's spellings of the seafood cuisine,
+  and `seafood` has been a DIET fact since before this lane grew, so one fact was being
+  refused under two keys - against D545's rule. It changes no filter, because D546 merges
+  every key into one `avoid` list, which is exactly why nothing downstream noticed. A derived
+  surface now goes to the row that already owns its value, and the door walks the whole table
+  so the ninth cuisine cannot arrive with a value that belongs to another lane.
+
+**Arms.** Routing everything to the cuisine row (D584's behaviour) 6 door + 5 lane red;
+moving the default lane to `noise_avoid` reddens 77 lane rows while the door stays green - the
+door grades the owned values, the census grades the rest; striking one declaration 15 red; the
+stride put back 1 red. Every file was restored byte-identically.
+
+- readers: both doors green in this session's sweep (4454 passed, 31 skipped); the commit
+  reports 4,477 passed across the refusal lane, both census doors, the seed derivation, the
+  live search contract, the vocabulary reference gate and the trust files.
+
+## 582. D585 · a preference the platform let expire stops being read back (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/tests/test_a_preference_the_platform_let_expire_is_not_read_back.py`)
+
+**What was measured.** The write plane stamps the deadline - `IdentityRepository.upsertPreference`
+computes `expires_at = now + ttlDays` on every insert - and the shipped types name the promise
+("Inferred memory may expire; declared memory does not"). The AI lane's only read of the table
+selected kind, key, value, weight, source and filtered on `user_id` alone: it never looked at
+`expires_at`, so `service.py` turned an expired memory into a `pref_rule`, scored candidates
+with it, and printed its `_preference_label` on the card as a reason the user had already taken
+back. D522's shape: the reader not looking at the column the writer writes.
+
+**This plane cannot show it**, because `quality.sql` records that all seven seeded preferences
+expire 2026-12-21, so the gate runs the SHIPPED SQL against a values list that shadows the
+table: same query, same placeholders, rows the plane does not have, nothing written. Red before
+the predicate: the read returned the two expired rows alongside the two live ones, and the
+style-filtered read leaked the expired style row too.
+
+**Left open.** The predicate is the read's, so any future reader of the same table that copies
+the six-column select re-inherits the defect; the gate pins the shipped read, not the shape.
+
+- readers: the file's offline rows green in the sweep; its 4 live rows skipped without
+  `NEXUS_TEST_DATABASE_URL`, and the commit's own red-before measurement is quoted above.
+
+## 583. D585 follow-up · the seed census judged a rare attribute dead from a sample that could not see it (`apps/ai/tests/test_the_seed_derives_preferences_from_leaves_the_taxonomy_writes.py`)
+
+**What was measured.** The preference census went red at HEAD with `scenic_view` true for 0 of
+60 merchants. The corpus is fine: the live plane carries the fact on 10 of 470. The gate ran the
+generator (fixed seed 20260921) at `--merchants 60`, and the same seed writes the attribute
+0/60, 2/120, 6/240, 11/520 - about a 2% rate - so at 60 the census was one deterministic draw
+away from reporting a live preference as inert.
+
+**The fix is the scale, and the refusal names it.** The gate now runs at the generator's own
+shipped default (520 merchants, the corpus the product is served) and fails as "the sample is
+too small to census" if someone puts a small scale back, rather than blaming the data. Proved
+by arm: `--merchants 60` reproduces the red and names the sample, not the attribute.
+
+- readers: the file green in this session's sweep; the arm above is the commit's own run.
+
+## 584. D586 · a chunk is cited only from a document the pipeline called ready (`apps/ai/nexus_ai/rag/` retrieval read, `apps/ai/tests/test_a_chunk_is_cited_only_from_a_document_the_pipeline_called_ready.py`)
+
+**What was measured.** `markForReindex` moves a rewritten merchant document to
+`documents.status='pending'` and, as its own comment says, "does not touch `chunks`" - the
+superseded text stays in the table for the whole rebuild window. The AI lane's retrieval joined
+chunks to documents, selected `d.source_uri` for the citation and never mentioned `d.status`, so
+an answer could quote a merchant's old menu or old opening hours with a `source_uri` pointing at
+the document the merchant had already changed. Measured: with every document reported as
+pending, the shipped read returned the same top-5 rows it returns today - the citation was
+willing to name a document the pipeline had withdrawn.
+
+**This plane cannot show it** (all 1,040 documents are 'indexed'), so the gate shadows only the
+documents side of the join with a CTE built from the real table and one column overridden: same
+query text, real chunks, nothing written. Arms: `d.status <> 'failed'` reddens the pending and
+processing shadows while leaving the indexed census green, and dropping the predicate reddens
+the column gate.
+
+**Left open.** The refusal is `failed`-only, so a `pending` document's chunks are still
+retrievable until the rebuild lands - the row now records that the citation names a READY
+document, which is the narrower claim this unit could prove without inventing a visibility rule
+the platform has not written.
+
+- readers: 3 offline rows green in the sweep; 5 live rows skipped without
+  `NEXUS_TEST_DATABASE_URL`.
+
+## 585. D589 · the price a card prints had no fact behind it (`apps/ai/nexus_ai/search/cards.py`, `apps/ai/nexus_ai/trust/facts.py`, `apps/ai/tests/test_the_price_a_card_prints_carries_the_clock_of_its_own_row.py`, `apps/ai/tests/test_facts.py`)
+
+**What was measured.** `_price_of` renders the row's own `price_amount`, while
+`attach_price_staleness` answers §5 only from the facts bundle. On this plane 3,373 of its 4,707
+priced offerings have no `price` fact at all, so those cards print a number with nothing to
+cite, the web's `resolvedPrice` returns null, and the page paints the unverified marker over a
+merchant's own published price. `build_card` now grounds the number before the flags are read: a
+`price` fact stamped with the row's own `price_updated_at` - V1 annotates that column "drives
+freshness TTL" - and never with the request time, because stamping `now` would launder a 36-day
+old number into a fresh one, which is the thing §5 forbids. Where the facts table already
+vouches for a price nothing is written, so the fix cannot manufacture a §4 conflict over a
+subject that has one; the fact takes the row's own `price_source` with `demo` as the floor
+rather than `merchant` (D501).
+
+**The other half was in `FactBundle.synth`.** `stale = ttl <= 0 and False` is False for every
+attribute, so a computed fact stamped days ago reported itself fresh and §5's price check read
+that field. It now returns the verdict `facts_from_rows` already reaches for a stored row,
+computed in one timezone frame - `cards._now` answers naive local time when a row carries no
+`as_of`, and a naive observation compared against the UTC clock raises.
+
+**On the live plane** all 4,707 priced clocks are past the 6h price TTL (36 days old), so the
+golden path's cards now carry the number AND the staleness warning for the same reason. Arms:
+no grounding 5 red; request-time stamp 4; the constant put back 3; the fact written to the
+bundle but not cited on the card 1; no "already vouches" guard 1; an unknown `price_source`
+promoted to merchant 1; a missing clock filled with `now` 1. `test_facts.py`'s synth row went
+red because it asserted the constant's answer; it now pins both sides of the clock (an
+observation from 2024 is stale, one computed for this request is not).
+
+**Left open.** Every demo price is stale by construction until the plane is re-seeded, so the
+warning is honest but uninformative on the demo corpus; and `price_stale` on a card whose price
+now has a fact is the same flag the unverified marker reads, so the two states share one word
+in the payload.
+
+- readers: both files green in this session's sweep; 2 live rows of the price door skipped
+  without `NEXUS_TEST_DATABASE_URL`.

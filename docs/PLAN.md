@@ -1982,3 +1982,43 @@ reach the `ramen`-tagged merchants now (the containment leg in `search/sql.py`),
 entry said it could not; and the embedding pass the 2026-10-27 entry recorded as done is not
 present on the plane the service reads. Both were re-measured against the live plane rather than
 argued from the log, which is the only reason the discrepancy is visible at all.
+
+---
+
+### 2026-10-28 (later) - the ledger caught up with seven landings, and the next residues
+
+**Landed.** D581 (§576) - the declared-weakness reader, this session's own unit: the preference
+matcher reads `weak_aspects` as a set, and the live corpus's 15 noise-weak merchants score 0.200
+against 0.800 for the rest. D582-D589 (§578-§585) were landed by the sibling lanes with their
+doors green and their sections written here from their own commits and this session's sweep
+(**4454 passed, 31 skipped** across the nine files; the live rows skip without
+`NEXUS_TEST_DATABASE_URL`). The duplicated section 556 was repaired: the earlier cuisine unit is
+now D591/§577, so the ledger's section numbers are unique again (`check_ledger_sections.mjs` was
+red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads 0 offenders).
+
+**The queue this leaves, in the order the measurements justify.**
+
+- **The avoid constraint reads nothing the corpus writes for `noise` and `queue`** - measured on
+  the live plane at this HEAD: `avoid=["noise"]`, `["queue"]` and `["smoking"]` each remove 0 of
+  470 published merchants, while the corpus DOES carry the fact for two of the three
+  (`weak_aspects` names noise on 15 and waiting_time on 15; `lively_ambience` true on 12). D581
+  proved a preference can read the list; the hard filter still cannot, so "唔好嘈" writes
+  `noise_avoid:noise` and the answer is unchanged. The fix is one leg on both lanes (the SQL
+  clause and `_filter_static`, whose D549 gate compares them over 20 words) plus the aspect
+  vocabulary that maps `queue` to the corpus's `waiting_time`. Owner: the AI lane.
+- **`smoking` has no fact in the corpus at all** - `generate.py` writes no smoking attribute or
+  tag, so no reader can exclude on it and none should pretend to. The refusal surface exists
+  (`smoking_avoid`); the fact does not. Owner: the seed lane, before the AI lane can serve it.
+- **Every demo price is stale by construction** - all 4,707 priced clocks are 36 days old and the
+  price TTL is six hours (AGENT_CONTRACT §5), so D589's honest warning now fires on the whole
+  golden path. Either the plane is re-seeded on the demo cadence or the TTL for demo rows is a
+  contract question; nothing in the AI lane can decide it alone.
+- **The vector lane still retrieves nothing and the strategy string still names it** - 0 of 2118
+  chunks carry an embedding on the plane the service reads, while the response says
+  `hybrid_v1+postgres+vector`. Running `make ai-embed` is the product answer; making the string
+  report what ran is the honesty answer. Owner: the AI lane.
+- **Two live-set reds D583 measured and did not inherit** -
+  `test_a_refused_cuisine_is_not_served_at_the_top` and
+  `test_the_outdoor_preference_scores_the_merchants_that_carry_it` reproduce byte-identically
+  with HEAD's build and reach the offering lane 0 times. Each needs its own unit; neither is
+  filed as repaired.
