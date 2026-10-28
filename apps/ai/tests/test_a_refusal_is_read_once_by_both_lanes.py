@@ -28,6 +28,11 @@ the door re-classifies when the normalizer changes - the clause comma is the cas
 Under the old normaliser a comma arrived as a space and no reader could see the boundary;
 the shapes below are classified by what the prepared text actually says, so the door lands
 on whichever side of that change its basis is.
+
+The debt this file was written to arm is paid: `NEGATION_CUES` and the constraint rules now
+read one vocabulary, so `SHARED_NEGATIONS` carries every negation the product knows and the
+agreement rows walk all of them. What replaces the debt pin is the pair of doors that keep
+the list one in BOTH directions, plus the four retired words held to their new answer.
 """
 
 from __future__ import annotations
@@ -56,11 +61,11 @@ POLARITY_NEGATIONS = canonical_node(tuple(c.strip() for c in P.NEGATION_CUES))
 #: the negations BOTH lanes read - the population the agreement rows are built from.
 SHARED_NEGATIONS = tuple(c for c in RULE_NEGATIONS if c in POLARITY_NEGATIONS)
 
-#: the negations the constraint table reads and the polarity table does not. The pin is
-#: the debt: it may shrink as the vocabulary is unified, and must not grow. The one list
-#: is what D493's door argues for; it holds that direction only, which is why this half
-#: could open. Filed as the next unit, with the word-boundary question 別 and 少 bring.
-NEGATIONS_THE_POLARITY_LANE_LACKS = ("不吃", "別", "少", "避免")
+#: The four refusals the constraint table used to read alone (D493's debt, the pin D539
+#: armed and this unit pays). They are named here because the door below walks them by
+#: name: a word that left BOTH tables would otherwise leave no trace, and the pin this
+#: replaces was exactly the list that could only ever shrink.
+RETIRED_DEBT_NEGATIONS = ("不吃", "別", "少", "避免")
 UNSHARED_NEGATIONS = tuple(c for c in RULE_NEGATIONS if c not in POLARITY_NEGATIONS)
 
 #: Every surface a constraint rule can name, and the key each rule files it under.
@@ -290,34 +295,61 @@ def test_a_latin_negation_inside_a_word_reaches_nothing():
         f"{sentence!r}: the polarity lane found a negation the matcher does not")
 
 
-@pytest.mark.parametrize("negation", UNSHARED_NEGATIONS, ids=list(UNSHARED_NEGATIONS))
-def test_a_negation_the_polarity_lane_lacks_still_refuses_and_still_boosts(negation: str):
-    """The debt is armed, not merely named: each pinned word must still bite.
+@pytest.mark.parametrize("negation", RETIRED_DEBT_NEGATIONS, ids=list(RETIRED_DEBT_NEGATIONS))
+def test_a_retired_debt_negation_refuses_and_disfavors(negation: str) -> None:
+    """The four words that were read by one lane only are read by both, at every surface.
 
-    The constraint lane reads these negations and the polarity lane does not, so the
-    product still writes the refusal and still boosts the value it refused. This row is the
-    measurement that keeps the pin honest - a word added to the pin that does NOT produce
-    the contradiction is a hiding place, and a word removed from the tables to make the pin
-    shrink is caught by the first clause instead.
+    This is the debt paid and held: for each collision surface the sentence writes the
+    plan's refusal AND leaves the value out of the boosted set. A negation that drifts
+    back out of `NEGATION_CUES` reddens here (the constraint rules keep reading it, so the
+    refusal still writes and only the boost comes back), and a value that drifts out of
+    BOTH vocabularies is caught by the floor below rather than passing quietly.
     """
-    assert negation in RULE_NEGATIONS, (
-        f"{negation!r} is pinned as a debt but no constraint rule reads it - the hole was "
-        f"closed by deleting the negation, not by teaching the polarity lane to read it")
-    bites = []
+    assert negation in POLARITY_NEGATIONS, (
+        f"{negation!r} is retired from the debt but the polarity table does not carry it - "
+        f"the hole was closed by deleting the word, not by teaching both lanes to read it")
+    bit = False
     for surface in COLLISION_SURFACES:
         sentence = _prepare(_phrase(negation, "", surface))
         ex = extract_intent(sentence)
-        if _refused(ex) & _boosted(ex):
-            bites.append(sentence)
-    assert bites, (
-        f"the polarity lane still lacks {negation!r} but no refusal written with it is "
-        f"boosted any more - re-measure the debt: the contradiction has moved")
+        refused = _refused(ex)
+        if not refused:
+            continue
+        bit = True
+        both = refused & _boosted(ex)
+        assert not both, (
+            f"{sentence!r}: the plan's avoid list carries {sorted(both)} and the intent asks "
+            f"the ranking to boost the same value - one sentence, two answers")
+    assert bit, (
+        f"the retired negation {negation!r} wrote no refusal over {len(COLLISION_SURFACES)} "
+        f"surfaces - the row cannot hold a debt it never reaches")
 
 
-def test_the_debt_pin_is_only_the_words_the_polarity_lane_lacks():
-    """The list of negations may shrink as the vocabulary is unified; it may not grow."""
-    grown = sorted(set(UNSHARED_NEGATIONS) - set(NEGATIONS_THE_POLARITY_LANE_LACKS))
-    assert not grown, (
-        f"the constraint rules read {grown} and the polarity table does not - a new negation "
-        f"taught to one lane only. Either add it to NEGATION_CUES, or explain in PLAN why "
-        f"the ranking must keep reading the value as wanted")
+def test_the_two_lanes_read_one_negation_vocabulary() -> None:
+    """The refusal vocabulary is ONE list, in both directions.
+
+    D493's lesson was that a copy which is a subset answers less; the mirror image - a copy
+    that carries FOUR words the other does not - is the same defect pointed the other way,
+    and it is the one this door closes. Neither half is allowed to grow a private word.
+    """
+    private_to_rules = sorted(set(UNSHARED_NEGATIONS))
+    assert not private_to_rules, (
+        f"the constraint rules read {private_to_rules} and the polarity table does not - "
+        f"one lane refuses what the other boosts. Add the word to NEGATION_CUES.")
+    private_to_polarity = sorted(set(POLARITY_NEGATIONS) - set(RULE_NEGATIONS))
+    assert not private_to_polarity, (
+        f"the polarity table reads {private_to_polarity} and no constraint rule does - the "
+        f"lanes answer to one refusal vocabulary, so a word belongs in both or neither.")
+
+
+def test_the_one_vocabulary_still_reaches_every_rule_key() -> None:
+    """Unifying the list must not narrow what the constraint lane can refuse."""
+    keys: set[str] = set()
+    for negation in POLARITY_NEGATIONS:
+        for surface in VALUES:
+            ex = extract_intent(_prepare(_phrase(negation, "", surface)))
+            keys |= {k for k, _v in _written(ex)}
+    missing = sorted(set(RULE_KEYS) - keys)
+    assert not missing, (
+        f"no negation in the shared list refuses anything for {missing} - the rule's surface "
+        f"is reachable only through a word this vocabulary no longer carries")

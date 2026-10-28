@@ -68,13 +68,13 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   (`orchestrator/planner.py`) in the present tense under a declaration that says it is not
   built yet (D542). Only a reader of the sentence could see the claim flip.
   Owner: the AI lane.
-- **The four negations only the constraint table carries split the two lanes** - 不吃 / 別 /
-  避免 / 少 are absent from the polarity table (D493's debt), so "海鲜 避免" writes
-  `diet_avoid:seafood` and the preference `cuisine seafood +1` in one sentence, where the
-  shared negation answers both consistently ("海鲜 avoid" -> the constraint and -1). The
-  reader is shared (D541); the two vocabularies are not yet one. The eat-less shape reads the
-  same split now (D543): "海鲜 少吃" writes the constraint and boosts the seafood.
-  Owner: the AI lane.
+- **The four negations only the constraint table carries split the two lanes** - **closed by
+  D579**: the four joined `NEGATION_CUES`, `_CONSTRAINT_NEGATIONS` is that list, and the two
+  lanes now locate a refusal through one `negation_positions`; "海鲜 避免" writes the constraint
+  and reads the cuisine -1. The half that was not a vocabulary patch is the word boundary:
+  別 and 少 are one character and the tail of 特別 / 最少 / 多少, so `NEGATION_COMPOUNDS` keeps a
+  cue inside a longer word from refusing anything - measured before it, "特別辣的餐廳" wrote
+  `cuisine_avoid:spicy`, filtering out the spice the user asked for. Owner: the AI lane.
 - **The polarity lane refuses the WORD where the user asked for its opposite** - the token
   嗜 sits in the quiet preference rule's own token list, and the cue negates the token it
   finds, so "唔好嗜" (do not be noisy) writes `noise_avoid:noise` AND reads the
@@ -111,14 +111,48 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The seeded merchants carry no `vegetarian` attribute** — **closed this session by D559**: the seed writes the boolean attribute `cuisine_vegetarian` (`m["leaf"] == "vegetarian"`) and the stored-preference branch now reads it, so the declared vegetarian preference fires on the attribute the seed writes and the full-suite attribute gate went green.
 - **The `personalization` weight is one number for two different things** — after D397 the preference and the feedback signals combine by maximum, so the number no longer says WHICH evidence produced it. A separate `preference` weight would need a `ranking_weights.yaml` change (the weights must sum to 1.0) and a strategy version bump; the current shape is defensible and the change is a product decision, not a bug fix.
 - **The `weak_aspects` attribute is a LIST, not a boolean** — the matcher reads booleans, so a merchant that is weak at something cannot be demoted by a preference naming that weakness. The vocabulary has no "prefer a merchant who is strong at X" rule, so the gap is a missing RULE rather than a broken matcher.
-- **A Chinese query's candidate pool is not subject-bounded** — the merchant lane's text match is blind to CJK (`tsvector` cannot segment it and the `%` operator needs three-character trigrams), and the corpus's tags are English, so 拉麵 matches **zero** `ramen` tags and the answer is a relevance order over every restaurant. Measured on the live plane while landing D406; the merchant lane's trigram work (D366) does not reach the candidate FILTER, only the score.
+- **A Chinese query's candidate pool is not subject-bounded** - **half closed by measurement
+  in the 2026-10-28 session**: `cjk_keywords()`'s bigram containment in
+  `apps/ai/nexus_ai/search/sql.py` DOES reach the English tags on the merchant lane - measured on
+  the live plane, "拉麵" returned 西海 / 祥甬餐室 / 鼎埔小廚 / 祥軒 / 西棧 and all 12 merchants in that
+  result carry the `ramen` tag, while "我想食拉麵" held the same order at a lower fraction score
+  (1 of 4 bigrams). The open half is the OFFERING lane: `build_offering_query()` has no
+  containment leg, so a Chinese query still reaches no offering. The D406 claim that 拉麵 matches
+  zero `ramen` tags was measured against a plane the re-seed has since replaced.
 - **The compare grid's row LABELS are raw attribute keys** — the rows are fact-backed (`price`, `rating`, `category`, `district`, `open_state`, `distance`) but the labels are the keys themselves; the surface that prints them is the web lane's (`packages/ui/src/trust/CompareTable.tsx`), reported and not edited here.
-- **The corpus's tags are English** — 拉麵 matches zero `ramen` tags, so a Chinese query reaches only the merchants that spell the word in Chinese (D407's lane). A translation layer for the tags is the open half of that unit.
+- **The corpus's tags are English** - the merchant lane's bigram containment closes the ask
+  (see the item above, re-measured in the 2026-10-28 session); what is still open is a
+  translation layer for the OFFERING rows, which carry no CJK at all and are read by a query with
+  no containment leg.
 - **The open state's `opens_at`/`closes_at` are TIME strings, the contract declares them datetimes** — `compute_open` produces "18:00" ✓ and `OpenState` declares `Optional[datetime]` ✓, so the card cannot pass them through ✓ (a validation error ✗) and the `closes_hhmm` the computation produces is dropped by the contract's model ✗. Which of the two shapes is right is a contract question — "closes at 18:00" is a time of day ✓, not an instant ✓, and `as_of` already carries the instant ✓ — so it is not decided in the AI lane's files.
 - **Three ledger sections are invisible to the readers** — the sibling lane's D425/D426/D427 landed as `## 419 · D425 · …` (the number before a MIDDLE DOT), while the readers' pattern is `^## (\d+)\. ` (a number, a DOT, a space) ✓. So `check_ledger_sections.mjs` does not count them ✓, its duplicate-number check does not cover them ✓, and a future section could take 419/420/421 without the reader noticing ✗. Reported, not edited: those are the sibling lane's sections ✓. The format that works is `## 419. D425 · …` ✓ (as this lane's sections are written ✓).
 - **The live demo corpus was never wrong** — D403's claim that "54 merchants' descriptions carry 餐庁" was itself a code-point mistake: the corpus has always carried 餐廳 (U+9910 U+5EF3), and the 54 are the CORRECT word. D414 withdrew the claim with the measurement (the corpus has 54 of U+9910 U+5EF3 and 0 of U+9910 U+5EF6). No re-seed is needed; the item is closed.
 - **The live demo plane's corpus predates the seed generator** — D419 measured it: 0 of the plane's 500 published rows carry `date_occasion` (the generator learned to write it in D383), so the occasion preferences are understood and then do nothing there, and the personalization signal reads 0.5 (neutral) instead of 1.0. The re-seed is the seed lane's call — on a shared plane the load truncates the AI lane's own 968 `agent_runs` rows and the platform's demo rows, and the `nexus_ai` role cannot even read those tables to tell whether they hold anything. The recipe (measured on a throwaway database in D419): `python data/seed/generate.py --counts <n>` then the `data/seed/out/*.sql` files applied in order with `--single-transaction`. **D422 showed why it matters**: the lane's live suite was green on the stale plane and failed four times on a plane seeded from the current generator.
 - **The seed's Chinese text could be checked against the canonical table** — D418 measured that 0 of the 470 published rows hold a character the canonical table changes, so the corpus is entirely in the standard forms ✓. The seed's GENERATOR is the other half: it writes the vocabulary the product's matchers read ✓ (D419's table), so both sides are checked — but nothing checks that automatically, and a generator change that dropped an attribute would take the preference with it.
+- **The polarity lane reads the LIKE of an antonym as the LIKE of the value** - 嘈 is in the
+  `ambience/quiet` rule's own token list, so "嘈的餐廳" (a noisy restaurant) writes
+  `ambience/quiet +1` and the ranking boosts the quiet merchants for the user who asked for the
+  noisy ones; "太嘈" and "特別嘈的餐廳" measured the same. D570 gave the lane the inversion for a
+  REFUSAL of the opposite (唔好嘈 wants quiet, so -1 becomes +1); the mirror half - a LIKE of the
+  opposite is a DISLIKE of the value - is not written, and it cannot be a bare sign flip, because
+  a QUESTION about the opposite ("有冇嘈") must stay neutral-to-positive (D533). Owner: the AI
+  lane.
+- **`scenic_view` is nearly dead in the corpus the product is served from** - the seed derives it
+  from `SCENIC_LEAVES` (the hotel leaves plus `seafood-grill`) times a 0.3 coin, and the live
+  plane carries it True on 10 of 520 merchants; at the seed gate's smallest scale (60 merchants)
+  it is now 0, which is why `test_the_seed_derives_preferences_from_leaves_the_taxonomy_writes.py`
+  is red on a tree that touches nothing but `data/seed`. The preference the NLU emits for 海景 /
+  維港 / 景觀 / 山景 / 天台 / rooftop - the archetypal Hong Kong ask - can be satisfied by 1.9% of the
+  plane. Owner: the AI lane with the seed lane.
+- **The vector lane retrieves nothing on the demo plane, and the run log says otherwise** - the
+  plane `nexus-platform-postgres` / `nexus` serves the AI on has `chunks=2118, embedded=0`
+  (measured twice this session), while this plan's own 2026-10-27 entry records "2118 of 2118
+  chunks carry a vector, `hashing`, one stamp" and a 48-row non-zero `vec_score` witness. A
+  re-seed after that entry truncated the chunks; the strategy string the API still answers with
+  says `hybrid_v1+postgres+vector`. Either the pass runs again (`make ai-embed`) or the strategy
+  string stops naming a lane that ran nothing - the honesty rule (unverifiable is rendered
+  unverified) points at the second being the contract and the first being the product.
+  Owner: the AI lane.
 
 ### Completed this session (AI lane)
 
@@ -1908,3 +1942,37 @@ the clause boundary surviving normalisation.
    `docs/DEPLOYMENT.md` §6, the checklist written for the next agent, still sends it to
    `nexus-platform-testpg`, which exited three weeks ago, and carries three numbers this machine no
    longer agrees with.
+
+---
+
+### 2026-10-28 - the four refusals, an interpreter that could not start, and a plane that is not what its own log says
+
+**Two units landed** (§574 D579, §575 D580) and one baseline was taken. The golden sentence
+"帮我找一个适合情侣约会的地方" runs end to end against the live rows on this machine: HTTP 200,
+`degraded: false`, `strategy: 'hybrid_v1+postgres+vector'`, `relevance_floor_applied: true`,
+`total_estimate: 60`. Read the last two against the code before trusting them -
+`total_estimate` is `len(ranked)` while the candidate SQL's own default `limit` is 60, so every
+query reports 60 with `next_cursor: null` (API_CONTRACT §2 promises a total estimate), and the
+strategy string names a `+vector` lane on a plane where 0 of 2118 chunks carry an embedding.
+Every demo price fact also carries a September `expires_at`, so the cards honestly say
+`price_stale` - the price TTL is 6 hours by AGENT_CONTRACT §5, which means the demo plane is
+always stale unless it was seeded within the last six hours, and no re-seed was run here.
+
+**D579** closed the split-lane refusal PLAN had armed (the four negations) and paid for it with a
+word-boundary rule, because the two one-character cues are the tail of 特別 / 最少 / 多少 and
+"特別辣的餐廳" was filtering out the spice the user asked for. **D580** opened the local path back
+up: the venv's own `_editable_impl_nexus_ai.pth` held this project's non-ASCII path, site.py reads
+a `.pth` with the locale encoding, cp936 cannot decode those bytes, and so EVERY interpreter in
+the venv died at startup - `make unit`, `make test`, `make dev-ai`, `make ai-embed` and a plain
+`python -c "import nexus_ai"` alike. The hazard was already written in `docs/ENVIRONMENT_REPORT.md`
+§8 as a reason to prefer `uv run --no-sync`; it is now a script, a Makefile line and eleven tests.
+
+**Suite state on this machine:** 10876 passed, 2 failed, 76 skipped, 51 deselected (867.95 s), and
+both reds are named in §574 - one was D580's own door, fixed the same session, one is the seed
+`scenic_view` door filed above. The live-database integration subset is green (15 passed).
+
+**A note on measurement, because two of this session's claims replaced earlier ones:** 拉麵 does
+reach the `ramen`-tagged merchants now (the containment leg in `search/sql.py`), which the D406
+entry said it could not; and the embedding pass the 2026-10-27 entry recorded as done is not
+present on the plane the service reads. Both were re-measured against the live plane rather than
+argued from the log, which is the only reason the discrepancy is visible at all.

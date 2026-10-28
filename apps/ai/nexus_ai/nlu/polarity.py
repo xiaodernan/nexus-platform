@@ -34,6 +34,15 @@ answered -1 for the 咖喱 - a refusal of the very thing the clause before it as
 normalizer now writes CLAUSE_SEPARATOR where the comma was - whitespace, so every `\s*` in
 the field rules still reads across it, and not ASCII whitespace, so the fold cannot flatten
 it back into one - and the boundary, the filler and the clause-final tail all read it.
+
+The locator this module hands both lanes is `negation_positions`: the matcher's spelling,
+minus the two positions where no refusal sits (the existential question's verb, D533, and a
+one-character cue that is the tail of another word - 特別 is "especially"). A cue table the
+constraint lane reads and this lane does not is the same contradiction in the other
+direction, measured on the live service: 避免 / 不吃 / 別 / 少 wrote the plan's `avoid` and
+a +1 preference for the value in the same sentence, so the product filtered for what it also
+boosted. The vocabulary is one list now, and the boundary rule is what makes the
+single-character rows of that list safe to read.
 """
 
 from __future__ import annotations
@@ -72,11 +81,34 @@ CLAUSE_SEPARATOR = "\u3000"
 #: word 冇 and 無 are, in the spelling a Simplified user types; the constraint table reads
 #: it through `_CONSTRAINT_NEGATIONS`, which derives from this list, so one entry fixes
 #: both lanes (D493's shape).
+#:
+#: The four refusals the constraint table read and this table did not (D493's debt, the
+#: pin D539 armed). Measured on the live service, each of them wrote the plan's `avoid`
+#: AND a +1 preference for the same value: "避免海鮮" filtered the seafood out and floated
+#: what was left of the seafood to the top, and "不吃辣" / "別推薦辣味" / "少食辣" did the
+#: same for the spicy. One vocabulary, read by both lanes (D495's lesson: a fix that takes
+#: a SUBSET of the missing words is the same defect it was fixing) - and the single-character
+#: rows among them are the reason this table now needs `_completes_a_word`, because 特別 is
+#: "especially", not "do not".
 NEGATION_CUES: tuple[str, ...] = (
     "唔好", "唔要", "唔想", "唔鍾意", "唔鍾", "唔食", "唔想要", "不要", "不想", "不喜歡", "不喜欢",
     "不想要", "讨厌", "討厭", "没咩", "冇", "無", "沒有", "没有", "没", "唔係", "不是", "不好",
+    "不吃", "別", "避免", "少",
     "not ", "no ", "don't", "dont", "do not", "avoid", "without", "hate", "dislike",
 )
+
+#: The characters that make a one-character refusal the TAIL of a different word. 別 and
+#: 少 refuse a value only when they are the word the user typed; under 特 or 最 they are the
+#: second syllable of 特別 ("especially") and 最少 ("at least"). Measured on the live
+#: service, the constraint lane already read "特別辣的餐廳" as a refusal of the 辣 - the
+#: product filtered out the very thing the user asked for - so widening this table to the
+#: single-character cues without the boundary rule would hand the same mistake to the
+#: ranking lane too. A cue whose own entry is absent here is read at every position the
+#: matcher finds: the rule refuses a compound, not a vocabulary.
+NEGATION_COMPOUNDS: dict[str, tuple[str, ...]] = {
+    "別": ("特", "分", "個", "性", "識", "告", "送", "差", "闊", "訣", "永", "話", "區", "離"),
+    "少": ("多", "最", "缺", "年", "老"),
+}
 
 #: D447: the cue table is canonicalised at import, like the lexicon's (D435), the state
 #: merger's (D421) and the time parser's (D446). The text is canonicalised before it
@@ -85,7 +117,7 @@ NEGATION_CUES: tuple[str, ...] = (
 #: The Latin entries carry a trailing space, which is how the constraint table spells them
 #: too; a reader that locates cues with the ONE matcher strips it first, because "no " is
 #: not a word (D538).
-_CANONICALISED_TABLES = ("NEGATION_CUES",)
+_CANONICALISED_TABLES = ("NEGATION_CUES", "NEGATION_COMPOUNDS")
 
 
 def _canonicalise_tables() -> None:
@@ -314,6 +346,32 @@ def is_existential_question(low: str, cue_at: int) -> bool:
     return lead >= 0 and low[lead:cue_at] == _EXISTENTIAL_LEAD
 
 
+def _completes_a_word(cue: str, text: str, cue_at: int) -> bool:
+    """Whether the cue at `cue_at` is the second syllable of a longer, different word."""
+    if len(cue) != 1 or cue.isascii():
+        return False
+    compounds = NEGATION_COMPOUNDS.get(cue)
+    if not compounds:
+        return False
+    return cue_at > 0 and text[cue_at - 1] in compounds
+
+
+def negation_positions(cue: str, text: str, low: str) -> list[int]:
+    """Where a refusal reads in the text - the ONE locator both lanes ask.
+
+    The matcher answers where a cue's SPELLING sits (D478/D538); this answers where a
+    refusal is. Two positions the bare matcher finds and no refusal lives at: a cue under
+    the lead of the existential question - 有冇 X asks whether X exists (D533) - and a
+    one-character cue that is the tail of another word - 特別 is "especially". Both lanes
+    read the refusal through here, so the plan's `avoid` list and the ranking's polarity
+    cannot disagree about one position the way they could not disagree about one clause
+    (D536/D538).
+    """
+    return [at for at in cue_positions(cue, text, low)
+            if not is_existential_question(low, at)
+            and not _completes_a_word(cue, text, at)]
+
+
 def polarity_for(text: str, token: str) -> int:
     """+1 when the preference is wanted, -1 when it is negated, 0 when it is ungoverned.
 
@@ -348,12 +406,9 @@ def polarity_for(text: str, token: str) -> int:
             continue
         # Every occurrence, not just the first: "有冇辣，冇海鮮" asks about spicy and
         # refuses seafood, and a reader that stops at the first 冇 answers neither.
-        for cue_at in cue_positions(c, text, low):
+        for cue_at in negation_positions(c, text, low):
             # The cue must not sit inside the preference token itself.
             if idx <= cue_at < idx + len(tok):
-                continue
-            # D533: a cue under a leading 有 is the existential question's verb.
-            if is_existential_question(low, cue_at):
                 continue
             if cue_at < idx:
                 if clause_attached(forward_gap(low, cue_at + len(c), idx)):

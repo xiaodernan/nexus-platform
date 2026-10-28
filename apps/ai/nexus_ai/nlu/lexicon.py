@@ -262,14 +262,15 @@ def _normalize_token(value: str) -> str:
     return "".join(out)
 
 # ------------------------------------------------------------------ constraints (negated)
-#: D493: the negations the product understands are ONE list. The constraint table's
-#: own list was a SUBSET of the polarity module's vocabulary (D486's lesson: a copy
-#: that is a subset answers less), so a word the product reads as a negation - "I
-#: don't want", "I hate", "no" - was not a negation here, and "I don't want
-#: spicy" gave NO constraint at all. The four words the table alone used are kept.
-_CONSTRAINT_NEGATIONS = list(dict.fromkeys([*NEGATION_CUES,
-                                   "\u4e0d\u5403", "\u5225",
-                                   "\u907f\u514d", "\u5c11"]))
+#: D493: the negations the product understands are ONE list. The constraint table's own
+#: list was a SUBSET of the polarity module's vocabulary (D486's lesson: a copy that is a
+#: subset answers less), and it then carried FOUR words the polarity list did not - 不吃 /
+#: 別 / 避免 / 少 - which is the same defect pointed the other way: one lane refused what
+#: the other boosted. Measured on the live service, "避免海鮮" wrote `diet_avoid:seafood`
+#: AND a +1 seafood preference in one sentence. Nothing is appended here any more; the list
+#: IS `NEGATION_CUES`, and the single-character rows of it are read through
+#: `negation_positions`, which refuses a cue that is the tail of another word.
+_CONSTRAINT_NEGATIONS = list(dict.fromkeys(NEGATION_CUES))
 
 # D536: the values are the SURFACE FORMS a user types, matched against the canonicalised
 #: query - so a form the product's own CONSTRAINT_CANON names must be in the list or the

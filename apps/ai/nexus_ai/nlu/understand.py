@@ -43,7 +43,7 @@ from nexus_ai.nlu.polarity import (
     clause_attached,
     clause_final,
     forward_gap,
-    is_existential_question,
+    negation_positions,
 )
 from nexus_ai.nlu.timeparse import HK_TZ, parse_time
 
@@ -625,13 +625,10 @@ def constraint_hits(text: str) -> list[tuple[str, str]]:
     for key, negs, values in CONSTRAINT_RULES:
         for neg in negs:
             # D480: the ONE matcher, for the negation and for the value - "no" inside
-            # "notebook" is not a negation.
+            # "notebook" is not a negation. `negation_positions` adds the two refusals
+            # the spelling alone cannot tell: 有冇's verb (D533) and 特別's tail.
             cue = neg.strip()
-            for start in cue_positions(cue, text, low):
-                # D533: 有冇 X asks whether X exists; the cue under the 有 is the
-                # question's verb, not a refusal of the thing asked about.
-                if is_existential_question(low, start):
-                    continue
+            for start in negation_positions(cue, text, low):
                 after = start + len(cue)
                 for v in values:
                     value = v.strip()

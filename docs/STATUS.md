@@ -25324,3 +25324,118 @@ StaticBackend, the way the lane's preference units did before their live probes.
 
 ---
 
+## 574. D579 · the four refusals only one lane read are read by both now, and a one-character cue inside a longer word is not a refusal (`apps/ai/nexus_ai/nlu/polarity.py`, `apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/tests/test_a_one_character_refusal_inside_a_longer_word_is_not_a_refusal.py`, `apps/ai/tests/test_a_refusal_is_read_once_by_both_lanes.py`, `apps/ai/tests/test_the_eat_less_refusal_puts_the_verb_after_the_cue.py`)
+
+**What was measured, on the product's own reader.** Four refusals a Hong Kong user types -
+不吃, 別, 避免, 少 - were in the constraint table and absent from the polarity table, so one
+sentence answered the two lanes differently. Through `extract_intent` on the shipped code,
+"海鲜 避免" wrote `constraints: [diet_avoid:seafood]` and `preferences: [cuisine seafood,
+polarity +1]` in the same breath: the search plan removed the seafood merchants and the ranking
+lane was told to boost them. 不吃辣, 別推薦辣味 and 少食辣 measured the same shape, and the
+eat-less sentence PLAN named - "海鲜 少吃" - was the same defect again. The split was armed, not
+discovered: PLAN's open AI-lane item named these four words, and D539's door carried them as
+`NEGATIONS_THE_POLARITY_LANE_LACKS` with the instruction to file the next unit.
+
+**The fix is one vocabulary, and the other half is a boundary.** `_CONSTRAINT_NEGATIONS` is now
+`dict.fromkeys(NEGATION_CUES)` - the private four left the constraint table and joined the
+polarity list, so no lane can be taught a word the other does not read (D493's argument, applied
+in the direction it was written for). Adding those four words alone would have imported a new
+defect, because 別 and 少 are ONE character and are the tail of other words the user means:
+特別 ("especially"), 最少, 多少. Measured with only the vocabulary half done, "特別辣的餐廳" wrote
+`cuisine_avoid:spicy` - the product filtering out the thing the user asked for, the D522 shape
+reached from the other side - while "特別安靜的餐廳" read +1. So belonging to a word is now decided
+where belonging to a clause is decided: `NEGATION_COMPOUNDS` names, per one-character cue, the
+characters that make it the second syllable of something else, and `negation_positions` is the
+ONE locator both lanes ask, beside the existential-question skip D533 already made there.
+`constraint_hits` and `polarity_for` both read through it, so a refusal the search filters for and
+a dislike the ranking demotes are decided at the same positions in the same text.
+
+**The doors, and what each holds.** The new boundary file (51 rows) walks every compound the
+table declares and asserts each governs nothing in either lane, that 特別辣的餐廳 keeps its +1 and
+writes no constraint, that the same cue STILL refuses when it is a word on its own (so a boundary
+rule cannot quietly delete a refusal), and that every declared compound is a real pair around a
+cue the table carries. D539's file lost its debt pin and gained three rows in its place: a
+retired-debt negation must refuse AND disfavor, the two tables must hold one vocabulary in both
+directions, and the one vocabulary must still reach every rule key. D543's eat-less file inverted
+the row it had pinned as a measurement: the same sentence now asserts the polarity lane reads -1
+where it once proved it read +1.
+
+**Verified, not claimed.** The negation cluster (the two updated files) -> **2179 passed**; the new
+boundary door -> **51 passed**; `ruff check nexus_ai tests` -> All checks passed; `mypy
+nexus_ai/nlu` -> Success, 9 source files; the live-database subset (the contract, search,
+preference, CJK-match and avoid-vocabulary integration files) -> **15 passed, 56 deselected**;
+the full unit suite -> **10876 passed, 2 failed, 76 skipped** in 867.95 s, and both reds are
+named - one is §575's own door, which the same session fixed (a test file that hand-wrote a
+character D453's vocabulary gate does not carry), and one is the seed-preference door, which reads
+only `data/seed` and is untouched by anything in this diff; PLAN's queue now names it. Behavioural
+spot checks on the shipped reader, after the change: 避免海鮮 and 海鮮 避免 both write the refusal
+and read seafood -1; 我唔食辣, 唔食辣, 少辣 and 別推薦辣味 all refuse; 最少辣, 多少辣, 人少一點的餐廳 and
+特別安靜 write nothing; 有冇辣 stays a question at +1 (D533); 唔好太嘈 still inverts to quiet +1 (D570).
+
+**Left open, named rather than left to be rediscovered.**
+
+- The compound table is a hand-list for the two cues that needed it. A one-character refusal that
+  joins `NEGATION_CUES` later gets no boundary guard until someone writes its pairs, and 冇, 無 and
+  没 each have spellings that sit inside longer words too. Segmentation, not vocabulary.
+- A bare 嘈 is in the quiet preference rule's own token list, so "嘈的餐廳" (a noisy restaurant)
+  reads `ambience/quiet +1` - the like of the opposite is filed as the next polarity unit, and it
+  is the mirror half of D570's inversion, which only turns a refusal of the opposite into a like.
+
+- readers: no gate reads the two vocabularies against each other except the rows in D539's file,
+  which now judge both directions and are green; no 18-step gate was re-run here, because nothing
+  in a change that lives entirely in `nlu` reaches the database-backed steps.
+
+## 575. D580 · the interpreter that runs the AI suite could not start on the machine the project is developed on, and no gate could say so (`scripts/repair_ai_editable_path.py`, `Makefile`, `apps/ai/tests/test_the_local_interpreter_can_read_its_editable_install.py`)
+
+**What was measured.** `uv sync` writes `apps/ai/.venv/Lib/site-packages/_editable_impl_nexus_ai.pth`
+holding the repository's own absolute path, and Python's site handling opens a `.pth` with the
+interpreter's LOCALE encoding. On this machine the project directory name is not ASCII and the
+locale is cp936, so the decode failed at startup:
+
+    UnicodeDecodeError: 'gbk' codec can't decode byte 0xae in position 7
+
+and it failed for every route into the venv - `uv run pytest`, `.venv/Scripts/python.exe -m pytest`,
+`uv run uvicorn` and `python -c "import nexus_ai"` all died before reading a line of code. So
+`make unit`, `make test`, `make dev-ai` and `make ai-embed` were closed, and with them every door
+in this repository, locally. `PYTHONUTF8=1` and `-X utf8` do not change the encoding site.py uses
+for a `.pth`, so this was not a knob anyone could turn; CI runs on Linux, where the locale is
+UTF-8, so no CI job could see the machine being broken either. D515 recorded the hazard in
+`docs/ENVIRONMENT_REPORT.md` §8 and worked around it with `uv run --no-sync` in one recipe - which
+holds only as long as nobody lets uv sync, and this session proved that: the plain `make unit` path
+was broken anyway.
+
+**The fix.** `scripts/repair_ai_editable_path.py` moves the bytes a `.pth` cannot carry: the paths
+go into a UTF-8 side file that an importer module reads with an EXPLICIT encoding, and the `.pth`
+becomes the ASCII `import` line site.py executes. It judges the interpreter's own locale encoding,
+rewrites only a `.pth` that fails that decode, is idempotent, says nothing when the install is
+already readable, and exits 0 on a tree with no venv - because the recipes now call it before
+every AI command. It imports nothing from the project, so it runs under the only interpreter left
+available while the venv is broken: the system one. `make unit`, `make test`, `make dev-ai` and
+`make ai-embed` run it first, and the new `make ai-install` (uv sync, then the repair) is the
+fresh-clone path, because a repair that runs before the install exists has nothing to fix.
+
+**The door proves the byte rule on both platforms.** The new file (11 rows) drives the script over
+a synthetic venv whose recorded path is non-ASCII. On Linux that path decodes under the locale and
+the install is never broken, so the script gained `--locale-encoding`: the door names an encoding
+that cannot read the path, and the row means the same thing on every platform - nothing in the
+recipes passes it. The rows hold: the path moves and the `.pth` that is left imports a module that
+exists; a repaired importer puts the package directory on a child interpreter's path (the claim
+that was failing, proved by an import rather than by a file); a `.pth` the locale CAN read is left
+byte-for-byte untouched; no venv is not an error; `--check` names the file and writes nothing; the
+second run is a no-op; and the two facts about this interpreter - every `.pth` it will be handed
+decodes under its own locale encoding, and `nexus_ai` resolves inside this tree, so the suite
+certifies the code under review and not an installed copy.
+
+**Verified, not claimed.** The new door -> **11 passed**; this machine's install repaired into the
+same shape the script writes (side file, importer, ASCII `.pth`), then `.venv/Scripts/python.exe`
+importing `nexus_ai` from `apps/ai/nexus_ai/__init__.py`; the full unit suite run through that
+interpreter -> 10876 passed (§574 names the two reds); `ruff check` over `nexus_ai tests` and the
+script -> All checks passed. The first attempt at this door put a literal 获 in the test file,
+because the story is about this directory's name; D453's vocabulary gate reddened it, which is that
+gate doing its job, and the fixture now uses characters the product's own vocabulary carries.
+
+**Left open.** `apps/ai/uv.lock` is generated by `uv sync` and untracked, so two machines on this
+tree can resolve different dependency sets and nothing compares them; whether the lock belongs in
+git is a decision for the lane that owns the venv, and this unit did not make it.
+
+---

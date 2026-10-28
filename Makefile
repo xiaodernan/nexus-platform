@@ -22,6 +22,15 @@ AI_PORT        ?= 8010
 PLATFORM_PORT  ?= 8090
 AI_APP         ?= app.main:app
 AI_HOST        ?= 127.0.0.1
+# D579: every AI recipe runs this first. `uv sync` writes the repository's own absolute path into a
+# `.pth` in the venv, and Python opens a `.pth` with the interpreter's LOCALE encoding - so on a
+# machine where the project path is not ASCII and the locale is not UTF-8 (Windows + gbk, measured)
+# EVERY interpreter in the venv dies at startup and `make unit` / `make dev-ai` cannot begin. The
+# script moves those bytes into a UTF-8 side file and is a no-op where the `.pth` already reads,
+# so this costs Linux CI nothing. It runs under any interpreter, because a broken venv leaves only
+# the system one.
+AI_REPAIR = @if command -v python3 >/dev/null 2>&1; then python3 scripts/repair_ai_editable_path.py; \
+elif command -v python >/dev/null 2>&1; then python scripts/repair_ai_editable_path.py; fi
 # D9 pins these away from 5432/6379/3000/8000/8080 because unrelated stacks own them on this machine.
 # The demo-plane credentials and the flyway disable are the boot recipe D304 measured: the datasource
 # password fails closed when absent (D7), the demo ledger lags its schema so a booting flyway would try
@@ -30,7 +39,7 @@ AI_HOST        ?= 127.0.0.1
 # makes the boot work against the demo database (the profile's flyway user needs the root password).
 
 .PHONY: help infra-up infra-down infra-logs db-reset db-migrate seed dev-web dev-ai dev-platform \
-        test unit e2e up down logs status ps lint clean
+        test unit e2e up down logs status ps lint clean ai-install ai-embed
 
 help: ## Show this help
 	@echo "NEXUS — available targets (Phase 1 path is infra-up -> db-migrate -> seed -> dev-*)"
@@ -58,6 +67,7 @@ seed: ## Apply infra/db/seed/*.sql (tenant hong-kong only); the demo dataset is 
 	bash scripts/db_apply_migrations.sh --seed
 
 ai-embed: ## Fill chunks.embedding for the chunks that have none (RAG §2 worker; inspect with --dry-run, canary with --limit)
+	$(AI_REPAIR)
 	cd apps/ai && NEXUS_DATABASE_URL='postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/$(DB_NAME)' \
 	  bash -c 'command -v uv >/dev/null 2>&1 && uv run --no-sync python -m nexus_ai.rag.embed \
 	  || python -m nexus_ai.rag.embed'
@@ -81,6 +91,7 @@ dev-web: ## Next.js dev server on :3002 (apps/web)
 	cd apps/web && npm run dev -- --port $(WEB_PORT)
 
 dev-ai: ## FastAPI dev server on :8010 (apps/ai, uv-managed venv, demo database)
+	$(AI_REPAIR)
 	cd apps/ai && NEXUS_DATABASE_URL='postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/$(DB_NAME)' \
 	  bash -c 'command -v uv >/dev/null 2>&1 && uv run uvicorn $(AI_APP) --reload --host $(AI_HOST) --port $(AI_PORT) \
 	  || python -m uvicorn $(AI_APP) --reload --host $(AI_HOST) --port $(AI_PORT)'
@@ -91,12 +102,22 @@ dev-platform: ## Spring Boot dev server on :8090 (services/platform, Maven; the 
 
 # ------------------------------------------------------------------ tests
 test: ## Unit + integration tests for every stack present in the tree
+	$(AI_REPAIR)
 	@if [ -f package.json ]; then npm run test --if-present; fi
 	@if [ -d apps/ai ]; then (cd apps/ai && (uv run pytest -q || python -m pytest -q)); fi
 	@if [ -f services/platform/pom.xml ]; then (cd services/platform && mvn -q test); fi
 
 unit: ## Fast unit tests only (no DB) — apps/ai suite
+	$(AI_REPAIR)
 	cd apps/ai && (uv run pytest -q -m "not integration" || python -m pytest -q -m "not integration")
+
+# D579: the venv this creates is the thing the repair exists for - `uv sync` writes the project's
+# own path into a `.pth` an interpreter with a non-UTF-8 locale cannot read. Run this once after
+# a fresh clone, before the first `make unit` (whose own repair has no venv to fix yet).
+ai-install: ## Create or refresh the AI venv, then make it bootable on any locale
+	cd apps/ai && (uv sync --extra dev || uv sync) && cd ../.. \
+	  && { command -v python3 >/dev/null 2>&1 && python3 scripts/repair_ai_editable_path.py \
+	       || python scripts/repair_ai_editable_path.py; }
 
 # The harness reads its three service URLs from the environment and falls back to the framework defaults,
 # which are NOT this Makefile's ports. Export them here, derived from the *_PORT knobs above, so `make e2e`

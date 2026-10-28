@@ -23,8 +23,8 @@ object - both stay unread in the backward direction.
 The door walks the product's own tables: every surface the constraint rules name, every
 negation they read, every verb the bridge carries. Each row charges the constraint lane,
 and the shared negations charge the polarity lane too, because a refusal one lane writes
-and the other does not read is the D493 debt - pinned at the new shape here, not fixed
-here.
+and the other does not read is the D493 debt - the four words that carried it are in the
+one vocabulary now, so the rows below hold the shape CLOSED.
 """
 
 from __future__ import annotations
@@ -172,8 +172,8 @@ def test_the_verb_tail_does_not_open_the_backward_arm(text: str, want) -> None:
         f"{text!r} wrote {sorted(got) or 'nothing'} - the lane reads {sorted(want)}")
 
 
-#: the D493 debt at the new shape: the four negations only the constraint table reads
-#: write the refusal while the polarity lane still boosts the value.
+#: the four negations that used to live only in the constraint table, at the new shape:
+#: the refusal is written AND the value is refused, in the same sentence.
 DEBT = (
     ("海鲜 少吃", "海鮮"),
     ("辣 避免食", "辣"),
@@ -183,21 +183,23 @@ DEBT = (
 
 
 @pytest.mark.parametrize("text,surface", DEBT, ids=[t for t, _s in DEBT])
-def test_the_debt_is_measured_at_the_new_shape_too(text: str, surface: str) -> None:
-    """The shared reader made the split measurable here as well - the debt is not fixed.
+def test_the_debt_is_closed_at_the_new_shape_too(text: str, surface: str) -> None:
+    """The shape that used to prove the split now proves it shut - and stays armed.
 
-    The constraint lane refuses; the polarity lane, whose table does not carry these
-    four words, reads the value as wanted. The debt gate next door holds the pin; this
-    row keeps the new shape inside its reach.
+    These four rows are the ones D493's debt was measured at: the constraint lane refused
+    the value while the polarity lane, whose table did not carry the word, read it as
+    wanted. One vocabulary now, so a refusal at this shape must also read -1. The row is
+    NOT deleted: a negation that drifts back out of `NEGATION_CUES` reddens here, at the
+    eat-less shape, not only at the plain one next door.
     """
     sentence = _prepare(text)
     ex = extract_intent(sentence)
     assert _written(ex), f"{text!r} wrote no refusal at all - the cue stopped reading"
     sign = P.polarity_for(sentence, surface)
-    assert sign == 1, (
-        f"{text!r}: the polarity lane reads {sign:+d} - if the four negations joined "
-        f"NEGATION_CUES this row would redden on purpose; update the debt pin, do not "
-        f"delete this row")
+    assert sign == -1, (
+        f"{text!r}: the plan's avoid list carries the value and the polarity lane reads "
+        f"{sign:+d} - the product is filtering for what it also boosts, which is the shape "
+        f"this row exists to catch")
 
 
 def test_the_census_population_is_real():
