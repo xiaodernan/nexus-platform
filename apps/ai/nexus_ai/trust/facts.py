@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable
 from uuid import UUID, uuid5, NAMESPACE_DNS
 
@@ -150,8 +150,20 @@ class FactBundle:
         now = observed_at or datetime.now(timezone.utc)
         ttl = freshness.ttl_for_attribute(attribute)
         if expires_at is None and ttl > 0:
-            expires_at = now + __import__("datetime").timedelta(seconds=ttl)
+            expires_at = now + timedelta(seconds=ttl)
         cap = SOURCE_CONFIDENCE_CAP.get(source, 0.5)
+        # D589: `stale` is the clock's answer, the verdict `facts_from_rows` already reaches for
+        # a stored row - `ttl <= 0 and False` is False for every attribute, so a computed fact
+        # stamped days ago reported itself fresh and §5's price check reads that field. The
+        # verdict is computed in one tz frame: `cards._now` answers naive local time when the row
+        # carries no `as_of`, and a naive observation compared against the UTC clock raises.
+        reference = datetime.now(timezone.utc)
+
+        def _aware(moment: datetime) -> datetime:
+            return moment if moment.tzinfo else moment.replace(tzinfo=reference.tzinfo)
+
+        verdict = freshness.evaluate(_aware(now), attribute, now=reference,
+                                     expires_at=(_aware(expires_at) if expires_at else None))
         # A computed fact's id is a pure function of its content + observed_at (uuid5, not
         # uuid4): a replayed request yields byte-identical frames and re-synthesising the
         # same value is idempotent, which is what lets the SSE stream be reproducible.
@@ -161,7 +173,7 @@ class FactBundle:
             attribute=attribute, value=value, source=cast(FactSource, source),
             confidence=round(min(confidence, cap), 3), observed_at=now,
             expires_at=expires_at,
-            stale=ttl <= 0 and False,
+            stale=verdict.stale,
         ))
 
     def explanations(self, attribute: str, subject_id: Any, label: str, text: str,

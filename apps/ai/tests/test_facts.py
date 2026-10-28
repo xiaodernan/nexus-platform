@@ -186,7 +186,13 @@ def test_synth_is_idempotent_and_marks_observed():
                  value=True, observed_at=NOW)
     assert f1.fact_id == f2.fact_id      # same content + observed_at => same id (reproducible SSE)
     assert f1.source == "observed"
-    assert f1.stale is False
+    # D589: this used to assert `stale is False`, which the synthesiser answered from the
+    # constant `ttl <= 0 and False` rather than from the clock. `open_now` carries no TTL of
+    # its own, so the 24h default applies and an observation frozen in 2024 is stale.
+    assert f1.stale is True
+    live = b.synth(subject_type="merchant", subject_id=SUBJECT, attribute="open_now",
+                   value=True, observed_at=datetime.now(timezone.utc))
+    assert live.stale is False           # computed for this request, so this request can use it
 
 
 # ------------------------------------------------------------- bundle indexing helpers

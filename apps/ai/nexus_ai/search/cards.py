@@ -26,7 +26,7 @@ from nexus_ai.contract import (
     OpenState,
 )
 from nexus_ai.search.ranking import Candidate, Scored
-from nexus_ai.trust.facts import FactBundle, resolve_conflicts, stable_fact_id
+from nexus_ai.trust.facts import FactBundle, SOURCE_RANK, resolve_conflicts, stable_fact_id
 from nexus_ai.trust.freshness import stale_copy
 
 #: reason label -> per-locale copy template. `{}` slots are filled from grounded values.
@@ -241,6 +241,11 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
 
     title = _title(rec, card_type, locale)
     price = _price_of(cand, rec, card_type)
+    # D589: ground the number about to be printed, before `flags` reads the bundle for a
+    # conflict over it.
+    rendered_price = _ground_rendered_price(bundle, cand, rec, price, subject_uuid)
+    if rendered_price is not None:
+        facts.insert(0, rendered_price)
     rating_value = cand.rating
     rating = ({"value": round(float(rating_value), 2), "count": int(cand.rating_count or 0),
                "fact_id": str(computed["rating"].fact_id)}
@@ -471,6 +476,58 @@ def _price_of(cand: Candidate, rec: dict[str, Any], card_type: str) -> Money | N
              else (rec.get("price_model") or "fixed"))
     currency = str(rec.get("currency") or "HKD")
     return Money.of(amount, currency=currency, model=model)
+
+
+def _price_clock(rec: dict[str, Any]) -> datetime | None:
+    """The row's own stamp for the price it publishes, or None when it has no such column.
+
+    `V1__init.sql:228` annotates `offerings.price_updated_at` as "drives freshness TTL (§20)"
+    and `OfferingRepository` moves it on every price write; `sql.py:454` selects it into the
+    candidate row. `merchants` has no price clock, so a merchant row answers None - and the
+    reader then claims nothing rather than inventing a stamp.
+    """
+    stamp = rec.get("price_updated_at")
+    if isinstance(stamp, str):
+        try:
+            stamp = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    return stamp if isinstance(stamp, datetime) else None
+
+
+def _ground_rendered_price(bundle: FactBundle, cand: Candidate, rec: dict[str, Any],
+                           price: Money | None, subject_id: UUID) -> Fact | None:
+    """§4: the number the card prints has to resolve to a fact.
+
+    The card renders the row's own price column (`_price_of`), while the trust answers for it
+    only if somebody wrote a `price` row for that subject - measured at HEAD, 3,373 of this
+    plane's 4,707 priced offerings have none, so those cards print a price with nothing to cite
+    and `attach_price_staleness` (§5) has nothing to read. The web's own reader names the
+    consequence: `resolvedPrice` returns null for a card with no price fact, and the page renders
+    the unverified marker over a merchant's own published number.
+
+    The fact is stamped with the row's price clock, NOT with the request time: stamping it `now`
+    would launder a 36-day-old number into a fresh one, which is what §5 forbids. Where the
+    facts table already vouches for a price (or for `avg_price_hkd`) nothing is written, so the
+    reader cannot manufacture a §4 conflict against its own row.
+    """
+    if price is None:
+        return None
+    stamp = _price_clock(rec)
+    if stamp is None:
+        return None
+    if bundle.get("price", subject_id) or bundle.get("avg_price_hkd", subject_id):
+        return None
+    # D501's rule, applied to the column's own vocabulary: a source the hierarchy does not
+    # know (`estimated` among them) is not vouchable and never becomes a merchant claim.
+    source = str(rec.get("price_source") or "").strip()
+    if source not in SOURCE_RANK:
+        source = "demo"
+    return bundle.synth(subject_type=cand.subject_type, subject_id=subject_id,
+                        attribute="price",
+                        value={"amount": price.amount, "currency": price.currency,
+                               "model": price.model},
+                        source=source, confidence=0.9, observed_at=stamp)
 
 
 def _image_of(rec: dict[str, Any]) -> EntityImage | None:
