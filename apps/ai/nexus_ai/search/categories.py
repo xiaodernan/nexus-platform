@@ -127,6 +127,33 @@ def aspect_terms(value: str | None) -> list[str]:
     return out
 
 
+#: Boolean ATTRIBUTES whose TRUE means the merchant carries the weakness a refused
+#: constraint names. The seed writes `lively_ambience` when `aspect_mean["noise"] < 3.0`
+#: (`data/seed/generate.py`), i.e. a second spelling of the same fact `weak_aspects` records
+#: as `noise`. Measured on the live plane (2026-10-29): `weak_aspects` names `noise` on 15 of
+#: 470 published merchants, the attribute is true on 12, and their union is 16 - one merchant
+#: (`nori-veranda-0512`) carries only the attribute, so reading the list alone let a refusal
+#: of noise keep a merchant the corpus calls noisy.
+ASPECT_ATTRIBUTES: dict[str, tuple[str, ...]] = {
+    "noise": ("lively_ambience",),
+}
+
+
+def aspect_attributes(value: str | None) -> list[str]:
+    """The boolean attribute names a refused constraint stands for (D598).
+
+    Same expansion rule as `aspect_terms`: the caller's word, folded into every spelling the
+    readers use, looked up in the corpus's own attribute vocabulary. Empty for a word the
+    corpus records in no boolean attribute - `smoking` has no entry because no row carries it.
+    """
+    out: list[str] = []
+    for spelling in _spellings(value):
+        for name in ASPECT_ATTRIBUTES.get(spelling, ()):
+            if name not in out:
+                out.append(name)
+    return out
+
+
 def resolve(bucket: str | None) -> list[str]:
     """Slugs standing for `bucket`, deduped, order-stable. Empty when nothing was asked."""
     if not bucket:
@@ -141,5 +168,5 @@ def resolve(bucket: str | None) -> list[str]:
     return out
 
 
-__all__ = ["ALIASES", "ASPECT_AVOID", "aspect_terms", "avoid_terms",
-           "canonical_tag", "resolve"]
+__all__ = ["ALIASES", "ASPECT_ATTRIBUTES", "ASPECT_AVOID", "aspect_attributes",
+           "aspect_terms", "avoid_terms", "canonical_tag", "resolve"]

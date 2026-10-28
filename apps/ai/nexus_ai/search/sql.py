@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import datetime, time
 from typing import Any, Iterable
 
-from nexus_ai.search.categories import (aspect_terms, avoid_terms,
+from nexus_ai.search.categories import (aspect_attributes, aspect_terms, avoid_terms,
                                      resolve as resolve_category)
 from nexus_ai.search.tokens import cjk_keywords
 
@@ -163,6 +163,24 @@ CATEGORY_SLUGS_SUBQUERY = """coalesce((SELECT array_agg(DISTINCT s.slug)
 
 def _category_slugs_select(filters: dict[str, Any]) -> str:
     return CATEGORY_SLUGS_SUBQUERY if filters.get("category") else "'{}'::text[]"
+
+
+def _avoid_attributes(avoid: Iterable[Any]) -> list[str]:
+    """The boolean attributes a refused word stands for (D598).
+
+    D595 joined `avoid` to `weak_aspects`, the LIST the corpus writes. The same fact has a
+    second spelling: `lively_ambience` is true exactly when the seed's noise score is below
+    3.0. Measured on the live plane, the list names `noise` on 15 of 470 merchants and the
+    attribute is true on 12, with a union of 16 - one merchant carries only the attribute, so
+    the list alone kept a noisy merchant through a refusal of noise. Empty when no refused
+    word has an attribute spelling, so a cuisine-only refusal adds no leg.
+    """
+    out: list[str] = []
+    for value in avoid:
+        for name in aspect_attributes(str(value)):
+            if name not in out:
+                out.append(name)
+    return out
 
 
 def build_merchant_query(
@@ -330,6 +348,11 @@ def build_merchant_query(
         aspect_leg = ("" if not aspects else
                       f"\n            OR coalesce(m.attributes->'weak_aspects','[]'::jsonb)"
                       f" ?| {p.add(aspects)}::text[]")
+        # D598: the same weakness spelled as a boolean attribute. Per name, so refusing two
+        # words stays an OR of two facts rather than a demand that one row carry both.
+        for name in _avoid_attributes(avoid):
+            aspect_leg += f"\n            OR m.attributes @> {p.add(json.dumps({name: True}))}::jsonb"
+
         avoid_clause = f"""AND NOT (
             m.tags && {av_ph}::text[]
             OR coalesce(m.category_primary,'') = ANY({av_ph}::text[]){aspect_leg}
@@ -488,6 +511,11 @@ def build_offering_query(
         aspect_leg = ("" if not aspects else
                       f"\n            OR coalesce(m.attributes->'weak_aspects','[]'::jsonb)"
                       f" ?| {p.add(aspects)}::text[]")
+        # D598: the same weakness spelled as a boolean attribute. Per name, so refusing two
+        # words stays an OR of two facts rather than a demand that one row carry both.
+        for name in _avoid_attributes(avoid):
+            aspect_leg += f"\n            OR m.attributes @> {p.add(json.dumps({name: True}))}::jsonb"
+
         avoid_clause = f"""AND NOT (m.tags && {av_ph}::text[]
             OR coalesce(m.category_primary,'') = ANY({av_ph}::text[]){aspect_leg}
             OR (coalesce(o.name,'') || ' ' || coalesce(o.name_zh,'')
@@ -505,6 +533,7 @@ SELECT o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.description, o.descript
        m.display_name_zh AS merchant_name_zh, m.category_primary AS category,
        m.avg_price_hkd, m.data_origin, m.plan, m.tags,
        coalesce(m.attributes->'weak_aspects','[]'::jsonb) AS merchant_weak_aspects,
+       coalesce(m.attributes->'lively_ambience', 'false'::jsonb) AS merchant_lively_ambience,
        {category_slugs_select} AS category_slugs,
        'offering'::text AS subject_type, o.id::text AS subject_id, o.merchant_id::text AS merchant_id_key,
        {geo_select},

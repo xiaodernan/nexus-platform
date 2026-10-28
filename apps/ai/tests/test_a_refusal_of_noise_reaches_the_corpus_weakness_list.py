@@ -16,6 +16,11 @@ on its row as `merchant_weak_aspects`, because the live clause reads `m.attribut
 
 Measured after the change, on the same plane: noise 470 -> 455, queue 470 -> 455, smoking
 470 -> 470, and the offerings of the noise-weak merchants 4707 -> 4568.
+
+D598 gave the noise fact its second spelling (`lively_ambience`, true exactly when the seed's
+noise score is below 3.0). The live rows below now read the UNION of the two spellings - 16
+merchants, 470 -> 454 - because a refusal of noise that kept `nori-veranda-0512` would still be
+serving a merchant this corpus calls noisy. The bridge row (list names only) is unchanged.
 """
 
 from __future__ import annotations
@@ -101,10 +106,14 @@ def plane():
             b = S.PostgresBackend(db)
             rows = await b.merchant_candidates(**dict(common, embedding=None))
             carriers = {}
-            for word, aspect in (("noise", "noise"), ("queue", "waiting_time")):
+            for word, aspect in (("noise_list", "noise"), ("queue", "waiting_time")):
                 carriers[word] = {r["slug"] for r in rows
                                   if aspect in ((r.get("attributes") or {})
                                                 .get("weak_aspects") or [])}
+            # D598: the same fact spelled as a boolean attribute; the refusal reads both.
+            carriers["noise"] = carriers["noise_list"] | {
+                r["slug"] for r in rows
+                if (r.get("attributes") or {}).get("lively_ambience") is True}
             kept = {}
             for word in ("noise", "queue", "smoking"):
                 kept[word] = {r["slug"] for r in await b.merchant_candidates(
@@ -158,6 +167,8 @@ def test_the_offering_lane_excludes_the_weak_merchants_offerings(plane):
     """The other lane reads the same merchant list, through the column it carries."""
     rows, carriers, _kept, every_offering, kept_offering = plane
     weak_ids = {str(r["id"]) for r in rows if r["slug"] in carriers["noise"]}
+    assert carriers["noise_list"] < carriers["noise"], (
+        "the union is not wider than the list - the second spelling was not read")
     expected = {str(o["id"]) for o in every_offering
                 if str(o.get("merchant_id")) not in weak_ids}
     got = {str(o["id"]) for o in kept_offering}

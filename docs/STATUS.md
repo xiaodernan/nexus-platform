@@ -26009,3 +26009,41 @@ parametrized). `ruff check` over the two modules and the door: All checks passed
 
 - readers: `CATEGORY_SLUGS_SUBQUERY` and `_category_slugs_select` in `search/sql.py`; the
   parity door's `SLUG_MIRROR` and its three live rows.
+
+## 594. D598 · a refusal of noise read the corpus's list and not its second spelling (`apps/ai/nexus_ai/search/categories.py`, `apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_a_refusal_of_noise_reads_the_corpus_second_spelling.py`)
+
+**What was measured.** D595 joined `avoid` to `weak_aspects`, the LIST the seed writes. The same
+corpus spells the same fact a second way: `data/seed/generate.py:1220` writes
+`lively_ambience` exactly when `aspect_mean["noise"] < 3.0`, so a TRUE value *is* the weakness.
+Census on the live plane (2026-10-29): published merchants **470**, `weak_aspects` names `noise`
+on **15**, the attribute is true on **12**, union **16** - and `nori-veranda-0512` carries only
+the attribute. `avoid=["noise"]` kept it, with its **7 offerings**: merchants 470 -> **455** when
+the list alone was read, 470 -> **454** now; offerings 4,707 -> 4,568 -> **4,561**.
+
+**The join.** `categories.ASPECT_ATTRIBUTES` / `aspect_attributes(value)` is the vocabulary, read
+by both lanes exactly as `aspect_terms` already was. The SQL clause grows one
+`m.attributes @> $n::jsonb` leg PER attribute name (so refusing two words is an OR of two facts,
+not a demand that a row carry both), with the JSON bound - `test_the_live_clause_reads_the_
+attribute_per_name` asserts the name appears in the parameters and *not* in the SQL text. The
+offering SELECT carries `merchant_lively_ambience` beside `merchant_weak_aspects`, because the
+live clause reads `m.attributes` on both lanes; `_filter_static` reads the same map, and a FALSE
+or absent value is not evidence of noise (its own row).
+
+**The neighbouring door had to move, and did.** D595's
+`test_avoiding_noise_drops_exactly_the_merchants_weak_at_it` asserted `kept == rows - list`, so it
+was red the moment the second spelling was read (**2 failed**): its premise, not the product,
+named only half the fact. It now reads the union and asserts the union is strictly wider than the
+list, so a future edit that drops the attribute leg reddens there by name.
+
+**Verified after the edit.** The two doors together: **17 passed** with
+`NEXUS_TEST_DATABASE_URL` set. `test_live_search_contract.py` **13 passed**, and
+`test_the_fixture_lane_answers_the_same_avoid_question.py` passed in the same run; one live row of
+the combined run timed out at the service's 3 s `statement_timeout` and passed alone 107 s later -
+the plane was under another lane's load, not this change (the same query answered 25 s wall in a
+standalone measurement with a 120 s budget). `ruff check` over the three modules and the two
+doors: All checks passed.
+
+**Left open, named.** `ASPECT_AVOID` and `ASPECT_ATTRIBUTES` are hand-lists; only the pairings a
+human read off the generator are on them. `weak_aspects` carries more names than the lexin can
+refuse (`service`, `seating`, `taste`, `ambience`, `mtr_distance`), and whether any is a refusal
+is a product question - filed in PLAN rather than mapped by guess.

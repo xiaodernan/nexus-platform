@@ -2002,8 +2002,10 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   by D595**: `categories.aspect_terms` bridges the constraint value to the corpus's aspect name
   (`queue` -> `waiting_time`), the SQL clause and `_filter_static` both read it, and the live
   plane moves 470 -> 455 for `noise` and for `queue`, with the offering lane 4707 -> 4568.
-  Residues filed: `lively_ambience` is a second spelling of the noise fact (12 merchants, union
-  16) that nothing reads, and the bridge is a hand-list that grows by hand.
+  The `lively_ambience` residue is **closed by D598**: the refusal now reads both spellings
+  (union 16, 470 -> 454, offering lane 4707 -> 4561), the attribute leg is bound per name, and
+  `aspect_attributes` is the one map both lanes read. Residue: the bridge is a hand-list that
+  grows by hand, and only the words measured so far are on it.
 - **`smoking` has no fact in the corpus at all** - `generate.py` writes no smoking attribute or
   tag, so no reader can exclude on it and none should pretend to. The refusal surface exists
   (`smoking_avoid`); the fact does not. D595's gate now asserts that the refusal drops 0 and
@@ -2052,3 +2054,11 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   lane, from `merchants.avg_price_hkd`) or the readers drop an alias no corpus produces - and a
   fixture that invents the attribute would be this lane writing its own evidence. Owner: the AI
   lane with the platform lane.
+
+- **The refusal bridge is a hand-list and only three facts have been measured** - D595 and D598
+  closed `noise`/`queue` and the noise fact's second spelling, but `ASPECT_AVOID` and
+  `ASPECT_ATTRIBUTES` name the pairings a human read off the generator. `weak_aspects` on this
+  plane carries more names than the two the lexin can refuse (`service`, `seating`, `taste`,
+  `ambience`, `mtr_distance`); whether any of them is a thing a guest would refuse is a product
+  question, and inventing a mapping would be this lane writing its own evidence. Owner: the AI
+  lane with the seed lane.

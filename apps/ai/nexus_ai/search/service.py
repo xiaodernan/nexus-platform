@@ -300,19 +300,42 @@ def _static_avoid_aspects(avoid: Any) -> set[str]:
     return {t.lower() for value in (avoid or []) for t in aspect_terms(str(value)) if t}
 
 
-def _static_row_avoids_aspect(row: dict[str, Any], aspects: set[str]) -> bool:
-    """The aspect leg: `attributes->'weak_aspects' ?| aspects`, on the row's own attributes.
+def _static_avoid_attributes(avoid: Any) -> set[str]:
+    """The boolean attributes a refused word stands for (D598).
+
+    The live clause asks `categories.aspect_attributes`; this is the same reader, so the two
+    lanes agree on which spellings of a weakness exist rather than each carrying a copy.
+    """
+    from nexus_ai.search.categories import aspect_attributes
+
+    return {n.lower() for value in (avoid or []) for n in aspect_attributes(str(value)) if n}
+
+
+def _static_row_avoids_aspect(row: dict[str, Any], aspects: set[str],
+                              attributes: set[str] = frozenset()) -> bool:
+    """The aspect legs: the `weak_aspects` list, and the boolean spellings of the same fact.
 
     A merchant row carries its own `attributes`; an offering row carries the MERCHANT's list
-    under `merchant_weak_aspects`, because the live clause reads `m.attributes` on both lanes.
+    under `merchant_weak_aspects` and the merchant's boolean leg under `merchant_<name>`,
+    because the live clause reads `m.attributes` on both lanes.
     """
+    if not aspects and not attributes:
+        return False
+    is_merchant = bool(row.get("display_name"))
+    attrs: Any = row.get("attributes") if is_merchant else None
+    attrs = attrs if isinstance(attrs, dict) else {}
+    if attributes:
+        # D598: `lively_ambience` is true exactly when the seed's noise score is low, so a
+        # TRUE value is the weakness; an absent or false one is not evidence either way.
+        for name in attributes:
+            if is_merchant:
+                if attrs.get(name) is True:
+                    return True
+            elif row.get("merchant_" + name) is True:
+                return True
     if not aspects:
         return False
-    weak: Any = None
-    if row.get("display_name"):
-        # a merchant row (the same rule `_filter_static` uses for `subject_type`)
-        attrs = row.get("attributes") or {}
-        weak = attrs.get("weak_aspects") if isinstance(attrs, dict) else None
+    weak: Any = attrs.get("weak_aspects") if is_merchant else None
     if not weak:
         weak = row.get("merchant_weak_aspects") or []
     return bool({str(x).strip().lower() for x in weak if x} & aspects)
@@ -362,7 +385,8 @@ def _static_avoids(row: dict[str, Any], avoid: Any,
         return True
     # D595: the refused aspect the corpus records as a merchant weakness. A merchant row reads
     # its own list; an offering row reads the merchant's, carried beside it by the live SELECT.
-    if _static_row_avoids_aspect(row, _static_avoid_aspects(avoid)):
+    if _static_row_avoids_aspect(row, _static_avoid_aspects(avoid),
+                                  _static_avoid_attributes(avoid)):
         return True
     if row.get("display_name"):
         # the merchant lane: the EXISTS leg looks at the merchant's OWN offerings.
