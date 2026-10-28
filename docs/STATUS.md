@@ -26569,3 +26569,139 @@ whole suite is re-run at them before it is ever cited.
   text, with its own `stale_copy(` presence assert so the literal-free claim cannot go vacuous),
   `re.findall` over `service.py`'s call expression, `STALE_COPY`'s keys against `build_card`'s
   guard tuple, and the TypeError probe that grades the signature.
+
+## 604. D606 · the surface that answers a Hong Kong reader was written in the Simplified script, and the census that measures it takes its characters from the AI lane (`scripts/check_ui_script.mjs`, `scripts/falsify_ui_script.mjs`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/i18n/trust-labels.ts`)
+
+**What was measured.** `apps/web/src/lib/i18n/dict.ts` declares `Locale = 'zh-HK' | 'en'`, folds every
+`zh*` spelling a browser offers onto ONE dictionary (`normalizeLocale`, same file), and sets
+`htmlLang: 'zh-HK'` — so that dictionary IS the Hong Kong copy. It was written in the Simplified script:
+精选, 你附近热门, 商户中心, 用一句话找到今天想去的地方. The file did not agree with itself inside one
+object: `collections` read '精选' while `collectionsTitle` in the same block read '精選合集' — one word,
+two scripts, both shipped. The census this section ships measures the whole shape against the committed
+plane (HEAD `ae2da90`, its own blobs laid out into a directory and aimed at the reader with `--repo`,
+because a before-figure that outlives its commit is only a memory):
+
+    before — HEAD's own blobs  RESULT: FAIL — 1,260 simplified character(s) in 491 literal(s) of 2 zh block(s)
+                               491 WRONG-SCRIPT rows · counted-not-charged: 台→臺 55× | 面→麵 18× | 嘅→的 0×
+    after  — this commit       RESULT: PASS — 0 simplified character(s) over 814 literal(s) of 2 zh block(s)
+                               blocks admitted by their declaration: zhHK (dict.ts), zhLabels (trust-labels.ts)
+
+**The repair is 495 lines in two carriers, and the script is not the whole decision.** `git diff
+--numstat` on the two files: 468 changed lines in `dict.ts`, 27 in `trust-labels.ts`, every one of them
+an in-place rewrite (adds equal deletes), line counts unchanged, LF preserved (CR=0 on both). A
+character-to-character map is what produced most of those lines, and it is also what would have quietly
+corrupted the rest, because the pair table maps CHARACTERS and Chinese words are chosen by their
+meaning: `bakery` held 面包, which is 麵包 in Traditional — a WORD change the map cannot see (which is
+why the census prints 面 17× here against 18× at HEAD while charging no 面 at all). The word-level
+decisions taken by reading each site, not a converter: 回覆 kept over 回復 (both are Traditional and this
+product writes the first); 線 kept over 綫; 裡 kept over 裏; 連結 kept over 連接; 戶 for every 户. And
+the three places where a blind map breaks a correct word were checked by reading their context rather
+than trusting a rule — 菜系 and 系統 keep 系 (七 occurrences, all of them "system/cuisine", none of them
+the copula), 關係 keeps 係 (not 系), and 商家 keeps 家, which is the same glyph in both scripts.
+
+**Why the census derives its characters instead of keeping a third list.** `readPairTable` cuts
+`CANONICAL_FORMS` out of `apps/ai/nexus_ai/nlu/canonical.py` (239 entries, whose keys are written
+`\uXXXX` on purpose per D409) and `_TRAD_SIMP_PAIRS` out of `apps/ai/nexus_ai/nlu/lexicon.py` (144
+pairs), and charges their union minus three names. A hand-typed list would be a third copy of a
+vocabulary the AI lane already gates (D435, D446, D447), and the census would go stale the first time a
+pair moved. The derivation is therefore tested as a property, not as a fixture: a literal holding 后 is
+NOT charged while neither table maps it, and the SAME literal reddens once `lexicon.py` is taught the
+pair — with no edit to the census. Widening the AI tables was also rejected as a route: `lexicon.py`
+builds `SIMPLIFIED_MARKERS`/`TRADITIONAL_MARKERS` from those pairs, so a web-only addition would change
+what the NLU thinks a Simplified character is.
+
+**Three characters are counted and not charged, and the census prints all three with their counts.**
+台 — the table maps it to 臺, the product writes 平台 (58× in this carrier) and 平臺 nowhere in `apps/`,
+so 臺 is a word choice this product already made the other way. 面 — 面 IS Traditional (頁面, 版面); its
+canonical 麵 is the noodle word, and charging the character would demand 頁麵 from a page that means
+"page". 嘅 — a Cantonese particle, not a script variant, and its canonical 的 rewrites a WORD; it is not
+in the pair table at all, which is why the census prints `嘅→的 0×` for these carriers by construction and
+says so rather than looking silent. An exclusion that holds nothing is a hiding place, so the count is
+printed with the reason.
+
+**Tests that pinned the Simplified spelling had to be re-aimed, and that is a measurement, not a
+side-note.** The repair changes bytes that fifteen assertions read: `scripts/verify_merchant_page.py`
+(2 lines), `apps/web/src/lib/platform-catalog.test.ts` (1) and
+`tests/e2e/specs/consumer/vertical-slice.spec.ts` (12, including the matcher that asked for 对比 and now
+asks for 對比, the shipped spelling). A scratch probe outside the repository (in `tmp/`, which this commit
+does not carry) re-ran every re-aimed pattern against the shipped copy and refused any pattern that still
+held a character this repair rewrote: **13/13 match**, and it ended with one deliberate leftover — the
+matcher at line 146 accepts `/Open|营业|開館|營業/` and is meant to survive either script, so it is left and
+named rather than "fixed". Simplified user utterances are also left alone on purpose: they are what a
+caller types, not what the product answers with.
+
+**The census found a defect in itself, and its own arm is what found it.** The PROSE arm plants a `//`
+comment inside a zh block carrying 对比 and 商户 and predicts PASS (comments are not copy — charging them
+would make this census a gate on the repository's English discussion of Chinese). It held — while the
+carrier's population collapsed from 814 literals to 50. `literalsOf` advanced the line counter at a
+newline and never cleared the `//` mode, so a comment ran to the END OF THE BLOCK and every literal after
+it was invisible: a green run over a census that had read 6% of the file. A scratch probe in the same
+`tmp/` directory reproduced it in eight lines (`over 50 literal(s)`, 台 1×), the fix clears the mode at the
+newline, and the recorded PASS population was then re-checked rather than assumed — a line scan of the two
+shipped blocks finds no `//` or `/*` comment inside either, so the 814 counted before the fix was genuine.
+This is the class D98/D150-D152/D191-D192 keep catching: an arm can hold for a reason that has nothing to
+do with the rule it names.
+
+**Arms.** Twenty-one, in the house grammar: each states its verdict before the shipped reader runs, each
+gets its own copy of the two AI tables and the i18n carriers under the system temp directory (a hand
+copy — `cpSync` recursive kills this Node host), and each mutation throws if the needle it rewrites is
+absent, so no arm can pass on an unmutated tree. Their counts come from the baseline run they take first
+(`baseLiterals` 814, `baseTai` 55) rather than from a remembered number, so a carrier that grows reddens
+the battery instead of letting it assert a stale population.
+
+* control: the repaired carriers as they stand → PASS over the derived literal count, both blocks named,
+  and no `UNREFERENCED`/`WRONG-SCRIPT` line.
+* the DEFECT pair: 话 planted in a dict literal → `FAIL — 1 simplified character(s) in 1 literal(s)`
+  naming `dict.ts` and `[话]`; the same plant one line apart holding 台 → PASS, with 台 at base+1 and the
+  literal count at base+1 (the exclusion is doing work, and the arm says which side of it it is on);
+  a third plant holding 对 → FAIL `[对]`.
+* PROSE vs COPY: a `//` comment (which also holds an apostrophe — the exact shape a regex scanner reads
+  as a string) and a multi-line `/* */` comment → both PASS with the population unmoved, and the copy
+  AFTER the block comment is still read; the same two characters inside a backtick literal → FAIL.
+* THE POPULATION: a `zh` block nothing in its file reads is DISCLOSED as `UNREFERENCED` and its copy is
+  still judged (dirty → `server.ts` `WRONG-SCRIPT [对]`; clean → PASS at base+1, a flag not an offender);
+  the identical body under an `en` name is outside the population entirely.
+* THE DERIVATION: uncharged while unmapped, charged once `lexicon.py` is taught the pair.
+* REFUSALS (all exit 2, distinct from exit 1): a zh block whose closing `};` is indented — "has no
+  closing `};` in column 0"; `canonical.py` emptied — "holds no CANONICAL_FORMS table this reader can
+  cut"; the AI tables absent; the carriers absent; an unknown flag; `--repo` given twice (that arm runs
+  through `runArgv` with `noRepo`, because the harness otherwise prepends its own `--repo` and the arm
+  measures a three-value flag instead of the two it claims).
+* THE KNOBS: `--report` over a planted red prints the offender and exits 0; `--verbose` prints the derived
+  fix beside it (`→ '用一句話，找到今天想去的地方'`); the trust carrier reddens on its own `[价]`, which is
+  what proves the census reads both files and not only the big one.
+
+**Wiring.** `scripts/check_reader_reachability.mjs` refuses to let a `scripts/check_*.mjs` live that no
+surface invokes, so the census ships reached: gate step 14 runs the reader and its arms beside the slot-
+and duplicate-key censuses, and `.github/workflows/ci.yml` runs both in `contract-drift` — that job, not
+the `web` job, because the charged set comes from `apps/ai/nexus_ai/nlu/*.py` and a change there must be
+able to widen what the web plane is allowed to print. Both new steps declare `shell: bash`, which is the
+rule D195 attached to every step that pipes a reader into `tee`. Measured after the wiring:
+`check_reader_reachability.mjs` prints 19 first-party readers, 19 invoked, 0 unreached, 16 piped CI steps
+each protected, exit 0; `falsify_reader_reachability.mjs` **15 arms · 15 held**, its control arm reading
+the same 19 from the shipped tree so a census of a stale directory cannot agree by luck. The gate script
+stays LF and parses (`bash -n`), and the workflow still parses as YAML with the two steps in the
+`contract-drift` job.
+
+**Verified.** The census: PASS over 814 literals. Its arms: **21 held · 0 missed**. `npm run typecheck:web`
+clean, `npm run test:web` **160 passed (12 files)**, `npm run lint:web` **0 errors** (6 warnings, all
+pre-existing), re-aim check **13/13**. No AI table was widened and no seed row was touched.
+
+**Residue, named rather than left implied.** The census judges the two declared `zh` blocks and nothing
+else, and the other Simplified carriers stay where they are: `apps/web/src/lib/mock/seed.ts` holds 275
+occurrences of table-mapped characters (88 distinct), `apps/web/src/lib/mock/index.ts` 87 (55 distinct),
+`apps/web/src/lib/console-fixtures.ts` 43 (28), `apps/web/src/lib/console-merchant.ts` 31 (23) — counted
+over the whole file, comments included, which is a different instrument from the census and is stated as
+such. The mock one is not inert: its default `strings` (`apps/web/src/lib/mock/index.ts:78`) is what a
+demo-plane caller gets, and it answers 预算 / 价格 / 评分 / 距离 / 营业时间 / 匹配 — with 位况, a coinage
+neither script uses, standing in for the availability label. The merchant console's Simplified is a
+different surface with its own readers (D483's zh-CN bank is Simplified ON PURPOSE), so those four files
+are named as residue and not edited here. The AI lane's own follow-up-question bank was repaired under
+D483 by hand and still has no census over it; this reader's `scanCarriers` is exported, so widening its
+population is an edit to one file rather than a new reader.
+
+- readers: `CANONICAL_FORMS` and `_TRAD_SIMP_PAIRS` (cut by their own declarations), every top-level
+  `const zh…: … = {` block in `apps/web/src/lib/i18n/*.ts` (admission by declaration shape, not by a name
+  written into this census), the six-state literal scanner that separates copy from prose, the reference
+  graph that decides whether a block is `UNREFERENCED`, and `scripts/falsify_ui_script.mjs`'s baseline run
+  for the two population counts the arms assert.

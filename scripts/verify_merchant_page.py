@@ -85,12 +85,12 @@ check('review title and body quoted verbatim',
 # 5b. A 404 from /reviews/summary is an absent section, not a failed read.
 summary_status = get(f'{PLATFORM}/api/v1/merchants/{SLUG}/reviews/summary')[0]
 check('summary endpoint is 404 for this merchant', summary_status == 404, f'HTTP {summary_status}')
-check('no degraded banner', '部分资料暂时无法读取' not in body)
+check('no degraded banner', '部分資料暫時無法讀取' not in body)
 
 # 6. Honest absence: no rating fact exists, so the rating must not read as a verified number.
 check('rating has no fact to cite', 'rating' not in facts)
 check('rating number is not presented', '3.6' not in body and '3.62' not in body)
-check('unverified marker present', '未验证' in body)
+check('unverified marker present', '未驗證' in body)
 
 failed = [c for c in checks if not c[1]]
 for name, ok, evidence in checks:

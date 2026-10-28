@@ -385,6 +385,22 @@ jobs:
         shell: bash
         run: |
           node scripts/falsify_console_a11y.mjs | tee console-a11y-arms.txt
+      # D606 — the SCRIPT the zh-HK copy is written in. `apps/web/src/lib/i18n/dict.ts` declares
+      # `Locale = 'zh-HK' | 'en'`, collapses every `zh*` spelling onto ONE dictionary, and set that dictionary
+      # in the Simplified script — so a Hong Kong reader was answered in another market's script, inside the
+      # same object that already wrote 精選合集. This step lives here rather than in the `web` job because the
+      # census takes its character knowledge from the AI lane's own pair tables (canonical.py, lexicon.py): a
+      # change under apps/ai can widen what is charged, and this is the job that runs on every change and
+      # installs nothing. Both arms of the pair declare `shell: bash` — see the shell note above.
+      - name: The zh-HK UI copy is written in Traditional characters
+        shell: bash
+        run: |
+          node scripts/check_ui_script.mjs | tee ui-script.txt
+          { echo "## zh-HK UI script"; echo '```'; cat ui-script.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: The zh-HK script census can still fail (its own arms)
+        shell: bash
+        run: |
+          node scripts/falsify_ui_script.mjs | tee ui-script-arms.txt
       - name: Every reader is reachable, and every pipe that runs one can fail
         shell: bash
         run: |

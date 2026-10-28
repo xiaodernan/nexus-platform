@@ -249,7 +249,7 @@ describe('the trust chain the merchant page renders through', () => {
 
   it('keeps a rating with no fact of its own unrenderable rather than showing the column', () => {
     expect(findFact(card, 'rating')).toBeNull();
-    // The number still travels on the card; the renderer decides, and it must decide 未验证.
+    // The number still travels on the card; the renderer decides, and it must decide 未驗證.
     expect(card.rating).toEqual({ value: 3.62, count: 8 });
   });
 

@@ -480,7 +480,7 @@ trap - EXIT
 trap cleanup EXIT
 
 # --------------------------------------------------------------------------- 14. the console, and the readers nobody ran
-step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_slot_keys.mjs + check_duplicate_keys.mjs + check_reader_reachability.mjs + check_citation_supports_sentence.mjs — the console's two promises, the client plane's list members, and whether every reader in scripts/ is reachable from a gate that can fail"
+step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_slot_keys.mjs + check_duplicate_keys.mjs + check_ui_script.mjs + check_reader_reachability.mjs + check_citation_supports_sentence.mjs — the console's two promises, the client plane's list members, the script the zh-HK copy is written in, and whether every reader in scripts/ is reachable from a gate that can fail"
 # D195. Three things were true at once on the shipped bytes, and each one is the same shape this lane has now
 # closed four times (D98, D150-D152, D191, D192) — a rule that cannot fire on the plane the gate reads is not a
 # rule the gate has, and a reader nothing runs is not a gate either.
@@ -537,6 +537,17 @@ step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_slo
 # census is only as good as the arms that show it reddening.
 ( cd "$ROOT" && node scripts/check_duplicate_keys.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/falsify_duplicate_keys.mjs ) 2>&1 | sed -e 's/^/    /'
+# D606. `scripts/check_ui_script.mjs` asks the script question the console census never thought to ask: the
+# web plane's ONE zh-HK dictionary was written in the Simplified script, so a Hong Kong reader was answered
+# in the script of another market — `精选` beside `精選合集` inside the same object. The census derives the
+# characters it charges from the AI lane's own pair tables (canonical.py, lexicon.py) instead of keeping a
+# third list, admits the blocks it reads by their declaration (`const zh…: … = {`), and charges only string
+# literals — so this repository's English-language discussion of Chinese is not copy it can red. Its arms
+# run here for the reason every reader's arms do, and their count is the battery's own print rather than a
+# number kept in this comment; the pair that carries the design is the one where a planted 话 reddens the
+# carrier and the same planted 台 does not, which is what shows the exclusion list doing work.
+( cd "$ROOT" && node scripts/check_ui_script.mjs ) 2>&1 | sed -e 's/^/    /'
+( cd "$ROOT" && node scripts/falsify_ui_script.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/falsify_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/check_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
 # The sentence-support census is a reporting invocation BY DESIGN: it exits 0 whatever it finds, because

@@ -30,7 +30,7 @@ async function cardPrices(page: Page): Promise<number[]> {
 
 /** The §105 degraded notice: the stage list's warning row, with the label the dict prints. */
 function degradedNotice(page: Page) {
-  return page.locator('ol li').filter({ hasText: /流式搜索失败|降级|degraded/i }).first();
+  return page.locator('ol li').filter({ hasText: /流式搜索失敗|降級|degraded/i }).first();
 }
 
 test.describe('consumer core journey', () => {
@@ -55,7 +55,7 @@ test.describe('consumer core journey', () => {
     await page.keyboard.press('Enter');
 
     // §116: staged progress, no chain-of-thought leakage
-    await expect(page.getByText(/理解|搜索|对比|找到|Understanding|Searching/i).first()).toBeVisible();
+    await expect(page.getByText(/理解|搜索|對比|找到|Understanding|Searching/i).first()).toBeVisible();
     await expect(page.getByText(/找到|Found/).first()).toBeVisible({ timeout: 20000 });
 
     const found = cards(page);
@@ -96,16 +96,16 @@ test.describe('consumer core journey', () => {
     await page.goto('/search?q=' + encodeURIComponent('帮我找附近适合朋友聚会的餐厅'));
     await expect(cards(page).first()).toBeVisible({ timeout: 20000 });
 
-    await page.getByRole('button', { name: /太贵了| cheaper/i }).first().click();
+    await page.getByRole('button', { name: /太貴了| cheaper/i }).first().click();
     await expect(cards(page).first()).toBeVisible();
     // §34 through to §67: the refinement is not a re-render of the same answer, it is a
     // different order. The sort the user asked for has to be readable in the card list.
     const prices = await cardPrices(page);
     expect(prices.length, 'the cheaper turn answered with fewer than two priced cards').toBeGreaterThan(1);
-    expect(prices, `太贵了 did not order the answer by price: ${prices.join(', ')}`).toEqual(
+    expect(prices, `太貴了 did not order the answer by price: ${prices.join(', ')}`).toEqual(
       [...prices].sort((a, b) => a - b),
     );
-    await page.getByRole('button', { name: /近一点|closer/i }).first().click();
+    await page.getByRole('button', { name: /近一點|closer/i }).first().click();
     // §8: a preference re-orders the answer; it must never empty it.
     await expect(cards(page).first()).toBeVisible();
   });
@@ -116,16 +116,16 @@ test.describe('consumer core journey', () => {
     for (let i = 0; i < 3; i++) await cards(page).nth(i).locator('button[aria-pressed]').click();
     // Selecting the third card opens the tray; the comparison table is the cost surface (§37).
     await expect(page.locator('table')).toBeVisible();
-    for (const row of [/Price|价格|人均/, /Rating|评分/, /Distance|距离/]) {
+    for (const row of [/Price|價格|人均/, /Rating|評分/, /Distance|距離/]) {
       await expect(page.locator('table').getByText(row).first()).toBeVisible();
     }
     // Each chip's remove control names its own card, so it can be addressed and it drops
     // exactly that card rather than whichever chip happens to be first.
-    const tray = page.getByRole('region', { name: /对比|Compare/ });
+    const tray = page.getByRole('region', { name: /對比|Compare/ });
     const chips = tray.locator('ul > li');
     await expect(chips).toHaveCount(3);
     const title = (await chips.first().locator('a').innerText()).trim();
-    await chips.first().getByRole('button', { name: `从对比中移除 ${title}` }).click();
+    await chips.first().getByRole('button', { name: `從對比中移除 ${title}` }).click();
     await expect(chips).toHaveCount(2);
     await expect(chips.getByRole('link', { name: title })).toHaveCount(0);
   });
@@ -155,7 +155,7 @@ test.describe('consumer core journey', () => {
     // The surface's own comment records that no Reserve button exists yet (§44 unwired); when the
     // booking UI lands, its slots need a hook this file can wait on.
     await page.locator('section[aria-labelledby="hours-title"]').waitFor({ state: 'visible' }).catch(() => {});
-    await page.getByRole('button', { name: /预订|Reserve/i }).click();
+    await page.getByRole('button', { name: /預訂|Reserve/i }).click();
     await expect(page.getByText(/NX-RES-/)).toBeVisible();
   });
 
@@ -165,15 +165,15 @@ test.describe('consumer core journey', () => {
     // The browser calls the BFF, never the AI service directly.
     await page.goto('/search?q=' + encodeURIComponent('附近咖啡馆'));
     await expect(cards(page).first()).toBeVisible({ timeout: 20000 });
-    await expect(page.getByText(/运行编号|run [0-9a-f]{8}-/i).first()).toBeVisible({ timeout: 20000 });
-    await expect(page.getByText(/流式搜索失败|Streaming failed/i)).toHaveCount(0);
+    await expect(page.getByText(/運行編號|run [0-9a-f]{8}-/i).first()).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/流式搜索失敗|Streaming failed/i)).toHaveCount(0);
 
     await page.route('**/api/nexus/ai/stream', (r) => r.abort('failed'));
     await page.goto('/search?q=' + encodeURIComponent('附近咖啡馆'));
     // deterministic search must still return cards, plus a visible fallback marker
     await expect(cards(page).first()).toBeVisible({ timeout: 15000 });
     await expect(degradedNotice(page)).toBeVisible();
-    await expect(page.getByText(/运行编号|run [0-9a-f]{8}-/i)).toHaveCount(0);
+    await expect(page.getByText(/運行編號|run [0-9a-f]{8}-/i)).toHaveCount(0);
   });
 
   test('MVP success test: first meaningful action inside 5 minutes (§141)', async ({ page }) => {
