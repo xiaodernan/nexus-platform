@@ -2102,3 +2102,20 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   own answers `vegetarian` too, so the red predates D601. It may be the right behaviour (vegan is
   a subset of vegetarian for cuisine matching) with a stale assertion, or a table that folded two
   values into one. Owner: the lane that shipped D584's follow-up.
+
+- **A stated access preference does not lift the ranking, and parking is anti-correlated** -
+  D602 measured lift (top-10 share / population share) on the live plane: quiet 1.39, outdoor
+  0.88, mtr 0.67, parking **0.00** (true on 28% of restaurants, none in the top ten). The
+  preference lane writes `personalization` at weight 0.06, so a preference can move a row by at
+  most 0.06 while quality and distance spread wider. The fix is a ranking decision (a query-stated
+  preference is stronger evidence than a stored one; or the weight is data to revisit), and the
+  door now asserts the defect so a fix reddens it. Owner: the AI lane with the ranking owner.
+- **`可以帶寵物的餐廳` is answered with pet groomers** - `match_category`'s rightmost-cue rule read
+  寵物 over the head noun 餐廳 and produced `category=pet`; the answer population is 10 pet
+  groomers, and the pet-friendly preference never gets a chance on it. The fix is a head-noun rule
+  for the bucket matcher (the leaf reader already has one), measured by D600's door once the plan
+  is right. Owner: the AI lane.
+- **`date_occasion` is true on every restaurant** - 184 of 184, so the occasion/date preference is
+  inert on this corpus in the same way `indoor_style` is. Either the seed writes the fact where it
+  discriminates or the preference is documented as a corpus constant and its door row keeps
+  asserting the vacuity. Owner: the seed lane with the AI lane.

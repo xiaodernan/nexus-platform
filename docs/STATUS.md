@@ -26232,3 +26232,41 @@ loading that file directly). It belongs to D584's follow-up lane and is filed, n
 passed.
 
 - readers: `LEAF_SYNONYMS`, `match_leaf`, `_apply_category_leaf`.
+
+## 599. D602 · a preference the user states in the sentence was measured for the first time (`apps/ai/tests/test_the_stated_preference_moves_the_ranking_of_the_live_plane.py`)
+
+**What was measured.** D600's door grades whether the answer is the kind of place named; nothing
+graded the other half - whether a stated preference lifts the rows that carry it. The metric is
+LIFT: share of the top ten carrying the attribute divided by the share of the whole filtered
+population carrying it. Measured on the seeded plane (2026-10-29, no embeddings):
+
+    query               attribute            population   base   top10   lift
+    安靜的咖啡店        quiet_ambience       79 cafes     0.43   0.60    1.39
+    適合情侶約會的地方  date_occasion        184 rest.    1.00   1.00    1.00
+    可以帶寵物的餐廳    pet_friendly_access  10 (!!)      0.30   0.30    1.00
+    有戶外座位的餐廳    outdoor_seating      184 rest.    0.23   0.20    0.88
+    有停車場的餐廳      parking_access       184 rest.    0.28   0.00    0.00
+    近地鐵站的餐廳      mtr_near_access      184 rest.    0.30   0.20    0.67
+
+**Three findings, each named rather than smoothed.** (1) Quiet lifts, and only quiet: the
+preference lane feeds `personalization`, weight 0.06, so a preference can move a row by at most
+0.06 while quality and distance spread wider - a 43%-quiet population reaches 0.60. (2) The date
+case is VACUOUS: all 184 restaurants record `date_occasion: true`, so no ordering can demonstrate
+that preference - the same corpus-constant shape D594 fixed for the outdoor fact, recorded here
+instead of claimed as a win. (3) The access preferences do not lift at all, and `parking_access`
+is ANTI-correlated: true on 28% of restaurants, 0 of the top ten.
+
+**The pet case is not a ranking miss but a misread.** `可以帶寵物的餐廳` produced
+`category=pet` - pet GROOMERS - because the sentence named 寵物 and the rightmost-cue rule read it
+over the head noun 餐廳; the population behind that answer is 10 rows, not 184. Filed in PLAN as
+its own defect with these numbers.
+
+**The gate.** Quiet must keep lift >= 1.2. The date row asserts the corpus constancy (so a seed
+that makes it discriminating reddens and asks for a real test), and the access row asserts the
+measured DEFECT (`lift < 1.0` for all three) so that a fix reddens it and forces the table above
+to move. A door that recorded a 0.00 lift as "expected" without that shape would hide the defect.
+
+**Verified.** The door: **3 passed** with `NEXUS_TEST_DATABASE_URL` set, 9.9 s.
+`ruff check`: All checks passed. No product line moved in this unit.
+
+- readers: the case table, `WORKING`, and the three live rows.
