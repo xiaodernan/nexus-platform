@@ -26301,3 +26301,108 @@ retrieval door and `test_search_plan`: **38 passed** with `NEXUS_TEST_DATABASE_U
 
 - readers: `_possessive_before`, the `generic_head` branch in `match_category`, and the updated
   lexicon row.
+
+## 601. D587 · the strength the shipped API writes when the caller says nothing is the strength the ranker reads as no evidence at all (`services/platform/src/main/java/com/nexus/identity/IdentityRepository.java`, `services/platform/src/test/java/com/nexus/identity/PreferenceWeightDoorTest.java`, `apps/ai/tests/test_a_preference_written_through_the_api_is_not_read_as_silence.py`)
+
+**What was measured.** D588 aligned the preference VOCABULARY across the planes; the same two
+lanes had never compared the one NUMBER they share. `upsertPreference` bound
+`weight == null ? 0.5 : weight`, `user_preferences.weight` is `NOT NULL DEFAULT 0.500`
+(`infra/db/migrations/V1__init.sql:67`), and 0.5 is precisely the ranker's zero-evidence point:
+D527's `_sided` reflects every matcher's weight around it, so the distance from 0.5 carries the
+strength and 0.5 carries none. A caller who declared a preference and said nothing about its
+strength therefore got a row that is stored, listed to them under §32, and answers exactly what no
+row answers. Worse, the two write paths disagreed about what silence means: `PATCH` coalesced
+(`coalesce(:weight, weight)` - keep what is stored) while the POST's `on conflict do update` wrote
+`excluded.weight`, so re-saving a preference the owner had already rated at 0.9, in the body the
+"save" button actually sends, reset it to the dead number. Two independent defects, one column.
+
+The fixture lane, one candidate at a time, the same query, with the row absent / at 0.5 / at the
+new default - all seven branches the branch table has a clause for, both sides of each:
+
+    branch                    satisfies                  does not satisfy
+                   no row    w=0.5    w=0.7      no row    w=0.5    w=0.7
+    access/accessible       0.493735  0.493735  0.505735  0.493735  0.493735  0.481735
+    view/scenic             0.493735  0.493735  0.505735  0.493735  0.493735  0.481735
+    style/ambience          0.493735  0.493735  0.505735  0.493735  0.493735  0.493735
+    time_pref/open_late     0.493735  0.493735  0.505735  0.493735  0.493735  0.481735
+    weather/rainy_day       0.493735  0.493735  0.505735  0.493735  0.493735  0.481735
+    budget/per_person_max_hkd 0.493735 0.493735 0.505735  0.522603  0.522603  0.510603
+    location/home_district  0.493735  0.493735  0.505735  0.493735  0.493735  0.493735
+
+All fourteen `no row` cells equal their `w=0.5` cells to the last decimal - which is what makes 0.5
+the absence of a signal rather than a weak one. At 0.7 the fourteen split: every branch lifts the
+merchant that satisfies the user by exactly 0.012000, five push the one that does not down by the
+same, and two (`style/ambience`, `location/home_district`) leave it where silence leaves it. So the
+promise this door keeps is the DIRECTION of each side's delta and not which candidate wins the page;
+it could not be the latter - in the budget pair the expensive candidate starts 0.028868 ABOVE the
+cheap one (0.522603 against 0.493735) and stays above it, because price is read by signals other
+than the preference.
+
+**The fix is the smallest thing that makes the number mean what the caller meant.** An absent
+strength on a NEW `declared` row is stored at `DECLARED_PREFERENCE_WEIGHT` = 0.7 (line 38), which
+sits inside the band the platform's own demo data declares for its consumers - measured off
+`generate.py`'s `prefs` list with `ast`: 0.4 to 1.0, with 0.8/0.9/0.95/1.0 the strengths most rows
+state, so 0.7 is "stated, not rated" and not a constant nobody can see reflected anywhere. An
+absent strength on an EXISTING row leaves the stored weight alone, which is the `coalesce` PATCH
+already did. An explicit number bypasses both and is stored as given, including below neutral -
+D527 reads that as weak evidence FOR, and the write plane has no business rewriting it toward the
+floor. The names follow D588's shape: the constant lives in the write plane and the read plane
+reads it out of the Java source by name, so neither can drift again without somebody answering.
+`NEUTRAL_PREFERENCE_WEIGHT` (line 41) exists only so the write plane can say which number it
+refuses to store.
+
+**A second writer turned up while asking who writes this column.**
+`NotificationRepository.setPreference` inserts `kind='notification_channel'` rows with no `weight`
+column at all, so the DDL's 0.500 lands there too - measured as inert for ranking (0 occurrences of
+that kind in `search/service.py`, 0 in `MeController`), because no ranking clause reads it, but the
+rows are user-visible through `GET /api/v1/me/preferences` at a weight no caller stated and no
+`PreferenceBody` validator will let that caller edit. Left open and named rather than folded: the
+repair belongs to the notification lane's own door, not to this unit's evidence.
+
+**The fixture's own premise was wrong first.** This door initially built candidates with an empty
+`attributes` JSONB, and the budget and location rows then refused to move at ANY weight - not
+because the write plane was innocent but because the preference loop is entered only for a merchant
+that already has non-empty attrs (`if attrs and mid not in merchant_attrs`, then `if mid not in
+merchant_attrs: continue`), so `_enriched_attrs` never runs and the candidate's own `avg_price_hkd`
+and `district` are invisible to it. A census of the live plane says no row is shaped that way today
+(0 of 470 published merchants, 0 of 4,707 active offerings answer empty or NULL), so the fixture now
+carries the shape the plane has (`_LIVE_JSONB`) and the shape question got its own tripwire row
+with a dead-point control beside it, so that a future move distinguishes "the gate changed" from
+"the fixture broke". Filing it, not fixing it: widening a ranking gate is a separate unit.
+
+**How much this buys is bounded, and the bound is measured rather than assumed.** The delta a
+stored preference contributes is exactly `0.06 x |weight - 0.5|` - probed on one candidate across
+0.5/0.6/0.7/0.9/1.0: 0.000000 / 0.006000 / 0.012000 / 0.024000 / 0.030000. So D587 turns a
+declared preference from 0 into 0.012 of a 0.03 ceiling, which is the arithmetic behind D602's
+finding (that a preference cannot out-voice quality and distance); this unit does not claim to
+have moved that ceiling, only to have stopped the write plane from setting every row to its floor.
+
+**Arms.** Four, each mutating one shipped clause or this door's own reader and restoring
+byte-for-byte (`restored=True` four times):
+
+* A - `DECLARED_PREFERENCE_WEIGHT` back to the shipped `0.5`: **8 failed, 9 passed** in the Python
+  door - the inequality row and all seven delta rows. This arm IS the pre-fix state.
+  `test_the_gate_reads_both_planes` stayed green under it, because 0.5 sits inside the seed's
+  declared band: the band row keeps the default honest about these users, it is not the gate for
+  this defect.
+* D - the shipped default re-created exactly (`weight != null ? weight : 0.5`) with the coalesce
+  left in place, against the Java door: **1 failure of 5**, `aSilentDeclarationIsStoredAsEvidence`.
+* B - the `coalesce` off the DO UPDATE with the default still 0.7: **1 failure of 5**,
+  `silenceDoesNotResetAStatedStrength`. D and B moving one row each, and different rows, is the
+  measurement that says these were two defects; the three remaining Java rows stayed green under
+  both, so no arm here stands in for the other.
+* C - the Java constant renamed so the Python door's reader cannot find it: **1 error during
+  collection**, the door's own assert, no row run. A reader that fell back to a guessed number
+  would keep promising an answer against a value nothing wrote.
+
+**Verified after the edit.** The Python door: **17 passed** with `NEXUS_TEST_DATABASE_URL` set and
+**17 passed** without it (it holds no DB row), `ruff check` clean. `mvn -o -q compile -DskipTests`
+exit 0; `mvn -o -q test -Dtest=PreferenceWeightDoorTest,FavoriteDoorTest,MemoryDeletionDoorTest`
+exit 0 with surefire answering 5, 6 and 9 tests and 0 failures, 0 errors, 0 skipped - the two
+neighbouring identity doors walk the same repository object this unit changed, and neither asserts
+a stored WEIGHT.
+
+- readers: `_java_constant` (by name, across the repo boundary), `_seed_declared_weights`,
+  `_Backend.user_preferences`, `_row` / `_score` and the `_LIVE_JSONB` fold, `PREFERENCES`;
+  `IdentityRepository.DECLARED_PREFERENCE_WEIGHT` / `NEUTRAL_PREFERENCE_WEIGHT` and the
+  `insertWeight` / `weight_given` bind pair inside `upsertPreference`.

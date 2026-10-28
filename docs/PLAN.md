@@ -2118,3 +2118,39 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   inert on this corpus in the same way `indoor_style` is. Either the seed writes the fact where it
   discriminates or the preference is documented as a corpus constant and its door row keeps
   asserting the vacuity. Owner: the seed lane with the AI lane.
+
+- **An `inferred` preference written with no confidence is still stored at the dead number (D587's
+  residue)** - D587 gave the DECLARED lane a floor (`DECLARED_PREFERENCE_WEIGHT` = 0.7, read across
+  the repo boundary by `test_a_preference_written_through_the_api_is_not_read_as_silence.py`) and
+  left the inference lane at `NEUTRAL_PREFERENCE_WEIGHT`, because a guess the platform made without
+  a stated confidence is not evidence the user offered. `PreferenceWeightDoorTest
+  ::inferenceStillAnswersNeutralAndThatIsFiled` pins that behaviour as the open question it is. Two
+  real repairs, and they are different products: the behaviour pipeline computes a confidence from
+  how many observations agree and passes it in, or the write plane refuses an `inferred` row whose
+  weight is absent (400 rather than a silent 0.5 - which is the shape §33's editability presumes).
+  Choosing is a personalization-quality call, so it is not this lane's to make alone. Owner: the AI
+  lane with the platform lane.
+
+- **A candidate whose `attributes` JSONB is empty is invisible to the whole stored-preference layer
+  (D587's fixture question, filed not fixed)** - the preference loop in `search/service.py` is
+  entered only `if attrs and mid not in merchant_attrs`, so `_enriched_attrs` - the fold that hands
+  a candidate its OWN `avg_price_hkd` and `district` to the budget and location branches - never
+  runs for a row with an empty JSONB, at any weight. Census: 0 of 470 published merchants and 0 of
+  4,707 active offerings answer empty or NULL today, so the defect has no victims yet; it acquires
+  them the first time a merchant is created through a path that does not fill `attributes`. The
+  repair is to make the fold reachable for a candidate that has no JSONB rather than to keep the
+  loop's guard, and the tripwire row
+  `test_a_candidate_with_an_empty_jsonb_is_invisible_to_the_whole_preference_layer` goes red when it
+  is fixed - fold that row into the parametrised table rather than restoring its premise. Owner: the
+  AI lane.
+
+- **`notification_channel` rows are written without a `weight` at all (found while asking who writes
+  this column)** - `NotificationRepository.setPreference` names six columns in its INSERT and leaves
+  `weight` to the DDL's `NOT NULL DEFAULT 0.500`, i.e. to the number D587 just proved the ranker
+  reads as no evidence. Measured inert: 0 occurrences of that kind in `search/service.py` and 0 in
+  `MeController`, so no ranking clause reads it today. The user-facing half is not inert -
+  `GET /api/v1/me/preferences` lists these rows with that weight, and `PreferenceBody`'s kind
+  pattern does not accept `notification_channel`, so §33's "editable" promise does not reach a row
+  the notification panel wrote. Either the notification lane states a weight it means (it reads only
+  `value.enabled`, so any number is a lie) or its rows are excluded from the preference list the
+  user edits. Owner: the platform lane with the notification owner.

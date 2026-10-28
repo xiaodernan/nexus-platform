@@ -25,6 +25,21 @@ public class IdentityRepository {
             u.marketing_opt_in, u.last_login_at, u.created_at, u.updated_at, u.tenant_id
             """;
 
+    /**
+     * The strength stored when someone declares a preference and states no strength. It is NOT the
+     * schema's {@code DEFAULT 0.500}: in the ranker ({@code apps/ai/nexus_ai/search/service.py}) 0.5
+     * is the point of no evidence - every matcher reflects a weight around it (D527), so a row at 0.5
+     * scores a merchant exactly as the same merchant scores for a user who has no row at all. A
+     * declared preference written at 0.5 is memory that is stored, listed to the user under §32, and
+     * answers nothing. 0.7 sits inside the band the demo corpus's own declared rows occupy (0.4 to 1.0)
+     * and below the strengths most of them state (0.8, 0.9, 0.95, 1.0), so a caller who said "I like X"
+     * is ranked as someone who likes X, not as someone who said nothing.
+     */
+    public static final double DECLARED_PREFERENCE_WEIGHT = 0.7;
+
+    /** The ranker's no-evidence point. Named so the write plane can say what it refuses to store. */
+    public static final double NEUTRAL_PREFERENCE_WEIGHT = 0.5;
+
     private final TenantJdbc jdbc;
 
     public IdentityRepository(TenantJdbc jdbc) {
@@ -296,18 +311,28 @@ public class IdentityRepository {
         requireUserInTenant(tenant, userId);
         java.time.OffsetDateTime expiresAt = ttlDays == null ? null
                 : java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC).plusDays(ttlDays);
+        String resolvedSource = source == null ? "declared" : source;
+        // A caller who declared a preference and said nothing about its strength did not say it is
+        // neutral, so silence is not stored as 0.5: see DECLARED_PREFERENCE_WEIGHT for what the ranker
+        // does with that number. An explicit weight - from any source, on either path - is stored as
+        // given, including a number below 0.5, which the ranker reads as weak evidence FOR (D527).
+        double insertWeight = weight != null ? weight
+                : "declared".equals(resolvedSource) ? DECLARED_PREFERENCE_WEIGHT : NEUTRAL_PREFERENCE_WEIGHT;
         Map<String, Object> row = jdbc.crossTenantReturning("""
                 insert into user_preferences (user_id, kind, key, value, weight, source, scope, expires_at)
                 values (:user_id, :kind, :key, cast(:value as jsonb), cast(:weight as numeric), :source, :scope,
                         cast(:expires_at as timestamptz))
                 on conflict (user_id, kind, key) do update
-                  set value = excluded.value, weight = excluded.weight, source = excluded.source,
+                  set value = excluded.value,
+                      weight = coalesce(cast(:weight_given as numeric), user_preferences.weight),
+                      source = excluded.source,
                       scope = excluded.scope, expires_at = excluded.expires_at, updated_at = now()
                 returning id
                 """, Json.map("user_id", userId, "kind", kind, "key", key,
                 "value", value instanceof String s ? s : Json.write(value),
-                "weight", weight == null ? 0.5 : weight,
-                "source", source == null ? "declared" : source,
+                "weight", insertWeight,
+                "weight_given", weight,
+                "source", resolvedSource,
                 "scope", scope == null ? "long_term" : scope,
                 "expires_at", expiresAt));
         return Json.uuid(row, "id");
