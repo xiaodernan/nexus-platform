@@ -26080,3 +26080,33 @@ results exist". Filed in PLAN with the cost note.
 
 - readers: `with_total` in `build_merchant_query` / `build_offering_query`, `_pool_total()` and
   the `total_estimate=` line in `search()`.
+
+## 597. D600 · the live plane had no retrieval-precision measurement at all (`apps/ai/tests/test_the_retrieval_precision_of_the_live_plane.py`)
+
+**Why a door and not a change.** Twelve live doors ask whether a filter was honoured, a fact was
+carried or a lane was named honestly. None asked the question a user asks - are the places in
+front of me the kind of place I named? - so the ranking could regress without a red row. The
+embedding pass (`make ai-embed`, 0 of 2118 chunks filled) has been queued for two days and there
+was no instrument that could say whether filling them helps.
+
+**What it measures.** Nine queries whose answer the taxonomy files under a leaf, top-10 precision
+against the merchant's OWN slug set read straight from `merchant_categories`/`categories`. The
+door never reads the query's filter, so a plan that widens the filter cannot widen what counts as
+right. Baseline on the seeded plane (2026-10-29, `strategy=hybrid_v1+postgres`, no embeddings):
+
+    ramen 0.8 · hotpot 1.0 · cafe 1.0 · bar 1.0 · dimsum 0.9
+    sushi 0.5 · bakery-dessert 1.0 · spa-massage 0.3 · hair-salon 0.4      mean 0.733
+
+Every case puts a right answer first. The three weak ones are diagnosed in the door: 壽司 is
+answered through `category=restaurant` plus a soft `cuisine=japanese` preference, and
+按摩/髮型屋 through `category=beauty`, a ROOT that admits all six beauty leaves - so no amount of
+ranking can repair the filter, which is the point of writing it down.
+
+**The gate.** Mean at or above 0.70 and no case below 0.30. Coarse on purpose: it reddens on a
+trade of one case for another, not on re-seeding noise.
+
+**Verified.** The door: **3 passed** with `NEXUS_TEST_DATABASE_URL` set, 15.6 s including the
+nine searches and the slug census. `ruff check`: All checks passed. No product line moved in this
+unit.
+
+- readers: the case table, the gate constants and the three live rows in the new door.
