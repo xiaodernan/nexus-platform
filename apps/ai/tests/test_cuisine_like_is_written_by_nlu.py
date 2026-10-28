@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
 
 from nexus_ai.nlu.understand import extract_intent
 

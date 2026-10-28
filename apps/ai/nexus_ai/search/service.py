@@ -437,52 +437,28 @@ def _canonical_district(filters: dict[str, Any]) -> None:
 
 
 def _canonical_tags(filters: dict[str, Any]) -> None:
-    """D509: the caller's `filters.tags` is the same fact as the intent's tags, and
-    it must be read by the SAME constraint framework - the lexin's CONSTRAINT_RULES,
-    exactly as `match_category` routes `filters.category` and `match_district` routes
-    `filters.district`.  A word the product does not know is left alone - the reader
-    must not invent a constraint the caller did not ask for.
+    """D509/D516: the caller's `filters.tags` is the same fact as the intent's tags, and
+    it must be read by the ONE spelling reader the product has - `categories.canonical_tag`,
+    the same function the seed's aliases and the SQL readers fold through. The seed is the
+    writer and the SQL `&&` predicate is the reader: the corpus stores every tag as a
+    lowercase hyphen slug, so a caller who spelled the tag the way prose does ("Cantonese",
+    "escape_room", "dim sum") got an empty page.
 
-    Known constraints (those named in CONSTRAINT_RULES negations or values) are
-    normalised to the corpus spelling so the filter and query vocabulary agree.
+    The reader RESPELLS and never REWORDS - case and separators fold, no alias table, no
+    lexicon resolve - so a word the product does not know keeps its word and still matches
+    nothing, rather than being resolved into a tag the caller never asked for.
     """
     if not filters.get("tags"):
         return
-    from nexus_ai.nlu.lexicon import CONSTRAINT_RULES
+    from nexus_ai.search.categories import canonical_tag
 
-    # Normalise every tag the way the corpus stores them:
-    #   lowercase + hyphenate separators (D394 / categories._slug)
-    def _norm(tag: str) -> str:
-        out = []
-        for ch in tag.lower():
-            if ch.isalnum() or ch == '-':
-                out.append(ch)
-        return "".join(out).replace('--', '-')
-
-    # Determine if each tag is a known constraint (in CONSTRAINT_RULES)
-    # and normalise its spelling so the filter speaks the same vocabulary as the query.
     raw = filters["tags"]
     if isinstance(raw, str):
-        tags_list = [raw]
+        # `{"tags": "ramen"}` is ONE tag; iterating the string would hand the predicate
+        # five tags, none of which any merchant carries.
+        filters["tags"] = [canonical_tag(raw)]
     else:
-        tags_list = list(raw)
-
-    normalised = []
-    for tag in tags_list:
-        # Check if this tag is known to the constraint framework
-        known = False
-        for _ckey, _negations, _cvalues in CONSTRAINT_RULES:
-            if tag in _negations or tag in [v.lower() for v in _cvalues]:
-                known = True
-                break
-        if known:
-            # Known constraint - normalise spelling so filter and query vocabulary agree
-            normalised.append(_norm(tag))
-        else:
-            # Unknown tag - leave alone, do not resolve into a constraint
-            # the caller did not ask for.
-            normalised.append(tag)
-    filters["tags"] = normalised
+        filters["tags"] = [canonical_tag(str(t)) for t in raw]
 
 
 def _canonical_kind(filters: dict[str, Any]) -> None:
@@ -503,7 +479,7 @@ def _canonical_kind(filters: dict[str, Any]) -> None:
     from nexus_ai.search.service import KIND_TO_SUBJECT
 
     # Canonical kind terms from the intent mapping
-    canonical_kinds = set()
+    canonical_kinds: set[str] = set()
     for kinds in KIND_TO_SUBJECT.values():
         canonical_kinds.update(kinds)
     # The filter uses "merchant", "product", "service", "experience"
@@ -1191,6 +1167,24 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 return None
                             return _match
                         match_fn = make_spicy_match(val, float(weight))
+
+                # CUISINE: vegetarian
+                elif kind == "cuisine" and key == "vegetarian":
+                    val = value.get("value") if isinstance(value, dict) else None
+                    if isinstance(val, bool):
+                        def make_vegetarian_match(v, w):
+                            def _match(attrs):
+                                # D554: the seed writes the preference as the boolean
+                                # attribute `<kind>_<key>` (`cuisine_vegetarian`), the same
+                                # fact spelled the way the attribute-name gate reads
+                                # (`<key>_<kind>` for occasions, `<kind>_<key>` here).
+                                if attrs.get("cuisine_vegetarian") is True:
+                                    return _sided(w, liked=v)
+                                if attrs.get("cuisine_vegetarian") is False:
+                                    return _sided(w, liked=not v)
+                                return None
+                            return _match
+                        match_fn = make_vegetarian_match(val, float(weight))
 
                 # STYLE: outdoor, indoor
                 elif kind == "style" and key in ("outdoor", "indoor"):

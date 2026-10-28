@@ -25291,3 +25291,36 @@ That is the next unit: derive each collection's membership from its claim the wa
 - The 5 GONE and 2 NO-BASE rows the census carries are untouched by this unit and remain its named backlog; D280 audited the GONE set as true statements about positions rather than stale pointers.
 
 - readers: the strict census on the tree this section lands on (27c6e68) reads MOVED 0 / NOT-UNIQUE 0 over 263 judged citations, 256 of them still naming the line they were written against, and the divergence line at 0 — and 8 of those 263 are the full-path pointers this very row writes, which is why the population the D576 chain left at 255 grew here and why the two figures are quoted from the same commit rather than remembered · the same census through the pre-fix reader, on the same repository with one ledger line edited and uncommitted, read MOVED 0 / NO-BASE 5 with `RESULT: PASS` exit 0 — that is the reverse control, run on the shipped plane rather than described · step 15 plain PASS · gate step 8 files 0 strict offenders over 803 citation-shaped tokens, 0 UNTRACKED TARGETs and 0 UNCOMMITTED TARGETs, with the blank-line backlog still at 30 at HEAD and none of it filed by this section · its arm battery 13 of 13 held, 0 missed, each arm a one-property change on a throwaway repository of its own · the sections gate 529 STATUS sections and 300 DECISIONS decisions, 0 missing and 0 duplicated on both planes · no 18-step gate was filed in this unit: the database-backed steps were not re-run here, and the figures above come from the readers this change can reach.
+## 556. D559 · the search's `cuisine` preference now reads the seed's own `cuisine_vegetarian` boolean
+
+**The defect.** PLAN's open AI-lane item "the seeded merchants carry no `vegetarian` attribute"
+was still open: the seed writes each merchant's vegetarian fact as the boolean attribute
+    `"cuisine_vegetarian": m["leaf"] == "vegetarian"`,
+and the NLU emits the `(cuisine, vegetarian)` preference for a query that names one - but no
+preference branch read that boolean, so the stored/declared preference plane was inert while the
+typed leg (the cuisine bridge, D394) served the leaf. The full-suite check that holds the two
+sources apart went red on it:
+
+    the seed writes attributes no matcher reads - dead data that looks load-bearing: ['cuisine_vegetarian']
+
+**The fix.** The stored-preference branch for `(cuisine, vegetarian)` now reads the boolean the
+seed writes - `attrs.get("cuisine_vegetarian") is True` answers the preference's side and
+`is False` its refusal - the same boolean shape the sibling branch reads its own fact through
+(`spicy_cuisine`). The typed leg keeps the leaf bridge, which is where a typed query's own words
+are served.
+
+**Verified, not claimed.** The new gate `tests/test_the_vegetarian_preference_reaches_the_seeds_own_attribute.py`
+holds the reader to the seed's boolean (the source-level check, the seed staleness check, and two
+behavioural separations: a declared vegetarian preference moves a vegetarian merchant UP the
+ranking, a refused one moves it DOWN). With the boolean read in place the attribute gate that went
+red is green again, and this session also closed the tags-gate regression the kind-vocabulary unit
+had left behind (the reader restored to `categories.canonical_tag`; the tags, kind, D554 JSON-text,
+clause-final and cuisine-vocabulary gates - 84 tests - went green again). Ruff and mypy are clean
+after the one annotation the kind unit's reader needed.
+
+**Left open.** The live demo database could not be re-probed this unit (the local docker daemon is
+not running in this environment), so the behavioural witness here is the fixture lane's
+StaticBackend, the way the lane's preference units did before their live probes.
+
+---
+

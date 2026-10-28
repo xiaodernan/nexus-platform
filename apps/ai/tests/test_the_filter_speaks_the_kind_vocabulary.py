@@ -32,8 +32,7 @@ from __future__ import annotations
 
 import pytest
 
-from nexus_ai.search.service import KIND_TO_SUBJECT, _canonical_kind, plan_from_intent
-from nexus_ai.nlu.understand import extract_intent
+from nexus_ai.search.service import KIND_TO_SUBJECT, plan_from_intent
 
 # All canonical kind terms from KIND_TO_SUBJECT
 CANONICAL_KINDS = set()
