@@ -9728,7 +9728,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
 
                     The consequence is not telemetry only. `search/sql.py:205,365` builds
                     `attributes @> {param}::jsonb` from a `json.dumps(...)` value, and `plan_from_intent`
-                    fills that filter from positive `intent.preferences` (`search/service.py:646-649`).
+                    fills that filter from positive `intent.preferences` (`search/service.py:655-658`).
                     Measured on `nexus`, one connection each: `attributes @> '{"data_origin":"demo"}'
                     matched 5534 rows on the fixed plane and 0 on the pre-fix plane. End to end,
                     `POST /ai/v1/search` with `filters={"attributes":{"data_origin":"demo"}}` answered 200
@@ -16066,7 +16066,7 @@ turn 1 `帮我找附近适合朋友聚会的餐厅` → `sort_preference: distan
 turn 2 `太贵了` → `sort_preference: price_low, budget: null` (the new effect, and §8 still unbroken —
 no number appears); turn 3 `近一点` → `radius_m: 1000` (the nearby default 2000 × `RADIUS_TIGHTEN`). The
 state merge works end to end. **The answer set did not change: 8 cards, and the same first four slugs in
-all three turns.** That is a separate, precisely located defect: `search/service.py:576` writes
+all three turns.** That is a separate, precisely located defect: `search/service.py:585` writes
 `plan.sort_preference` from the intent and nothing downstream reads it — `organic_rank()` sorts by
 `(-organic_score, candidate.key())` and `plan.radius_m` is the only planning field the retrieval honours.
 So a refinement can be correctly remembered and still produce an identical page; the chip that this unit
@@ -23744,7 +23744,7 @@ rows the test reads.
 
 **Residue measured and filed, not fixed.** The ranking matcher for `style/outdoor` reads
 `outdoor_style` at full weight and `outdoor_seating` at 0.8 of it
-(`search/service.py:1206`, `:1211`), but measured on this plane `outdoor_style` is written on
+(`search/service.py:1215`, `:1211`), but measured on this plane `outdoor_style` is written on
 **0** merchants while `outdoor_seating` is written on 94 - the plane predates the generator
 that emits the style flag, so the half of the matcher that gives full weight is unmeasurable
 here and only the fixture tests exercise it. Re-seeding the plane (or the CI's fresh seed) is
@@ -24681,7 +24681,7 @@ the strict reader reports **MOVED 0**. `--selftest` → **PASS — 13 case(s), 0
 **What is left, named.** Step 16 still reddens on **NOT-UNIQUE 3** - citations whose quoted text
 occurs on more than one line, so no tool can choose: `docs/STATUS.md:4421 -> data/seed/load.sh:161`
 (2 lines hold `"DO \$\$"`), `docs/STATUS.md:22178 -> search/sql.py:131` (2 lines hold
-`wsq = f"websearch_to_tsquery('`), `docs/STATUS.md:23747 -> search/service.py:1063` (3 lines hold
+`wsq = f"websearch_to_tsquery('`), `docs/STATUS.md:23747 -> search/service.py:1072` (3 lines hold
 `if attrs.get("outdoor_style")`). Each needs the citing sentence read against the candidates.
 
 ## 566. D570 · "don't be noisy" was read as a DISLIKE of quiet - the antonym surface inverted the ranking for 40% of the plane (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/polarity.py`)
@@ -26502,7 +26502,7 @@ Every other string on the card follows the request - the rating bullet, the matc
 title's language, the open-now meter, the sponsored label, because `build_card` takes `locale`
 and passes it down - and the one bullet that §5 reserves for a stale price is printed from
 `stale_copy("zh-HK")` with the literal written inside the callee (`search/cards.py:651` before
-this unit), while its own caller (`service.py:1584`) never received the locale at all. This is
+this unit), while its own caller (`service.py:1593`) never received the locale at all. This is
 not a rare path on this plane: 0 of its 2,080 stored `price` facts is inside the 6-hour TTL
 (newest `observed_at` 2026-09-22), and D589 put a price fact with the row's own clock under every
 priced card, so every card the probe asked about raised the notice - which means the
@@ -26515,7 +26515,7 @@ never a missing translation - it was a caller throwing the choice away, which is
 one argument and not a table.
 
 **The fix makes the wrong state unrepresentable rather than untested.** `attach_price_staleness`
-is now `(card, bundle, *, locale)` with no default, and `service.py:1584` passes the request's own
+is now `(card, bundle, *, locale)` with no default, and `service.py:1593` passes the request's own
 `locale` variable. The default was refused on purpose: with `locale: str = "zh-HK"` a future caller
 that forgets the argument prints Traditional Chinese to an English reader and nothing fails, which
 is this unit's defect with one step removed - the same shape D587 answered by flooring a declared
@@ -26709,7 +26709,7 @@ population is an edit to one file rather than a new reader.
 ## 605. D607 · an offering's own party bounds were SELECTed into every row and applied by no reader (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_an_offering_that_cannot_seat_the_party_is_not_answered_for_it.py`)
 
 **What was measured.** The offering SELECT already carries `o.bookable, o.min_party_size,
-o.max_party_size` (`sql.py:555`) and the plan already knows the party (`service.py:441`, filled
+o.max_party_size` (`sql.py:555`) and the plan already knows the party (`service.py:450`, filled
 from the intent at `:660`, and already used hard against slot capacity at `sql.py:637` -
 `AND capacity_left >= :party_size`). Nothing compared the party to the offering. Read-only probe of
 the offering lane, top 12 per query (`tmp/d606_probe.py`):
@@ -26750,9 +26750,9 @@ every second page assume an order that the lane does not actually give them.
 `party_size` and appends, only when the caller named a party, `(o.max_party_size IS NULL OR
 o.max_party_size >= $n)` and `(o.min_party_size IS NULL OR o.min_party_size <= $n)` (`sql.py:464`);
 the party is bound, never interpolated, which the door checks by reading the two comparison operands
-out of the built text. `_filter_static` mirrors the same predicate (`service.py:271`) so the fixture
+out of the built text. `_filter_static` mirrors the same predicate (`service.py:280`) so the fixture
 lane answers the request the live lane answers (D449), and the pipeline dispatches the plan's own
-value (`service.py:972`). NULL is kept meaningful on purpose: an offering that never stated a cap is
+value (`service.py:981`). NULL is kept meaningful on purpose: an offering that never stated a cap is
 not a small offering, and 4,730 of the 5,534 rows are that offering - a clause without the NULL arm
 deletes the majority of the catalogue, which is arm B's red. Absence is kept meaningful too:
 `party_size=None` means the caller asked no question about the party, and both lanes answer it with
@@ -26864,7 +26864,7 @@ neither number is wrong and neither is a proxy for the other. What the plane kee
 one: **684 of 684** `locations` rows carry both halves, all **470** published merchants with a
 primary location have both, `mtr_walk_min` spans 2..25, and the three spellings of the same
 five-minute threshold agree exactly - 132 merchants by the column, by the
-`attributes->'mtr_within_5min'` trait the ranking lane already reads (`service.py:1389`) and by
+`attributes->'mtr_within_5min'` trait the ranking lane already reads (`service.py:1398`) and by
 the `mtr-5min` tag, **0 disagreements**. Printing the number therefore contradicts nothing the
 answer already claims.
 
@@ -26959,7 +26959,7 @@ l.id`, unprojected on both lanes today) or re-filing the facts by `merchant_id` 
 decision with two shapes and different reach, which is why it is in PLAN with its counts rather
 than folded into a transit unit's evidence. The second: the census said `merchant_lively_ambience`
 and `mean_rating` had no readers and both were wrong - the first is read under a key the refusal
-lane COMPOSES (`row.get("merchant_" + name)`, `search/service.py:342`) and the second is an inner
+lane COMPOSES (`row.get("merchant_" + name)`, `search/service.py:351`) and the second is an inner
 alias re-exported one line up as `tenant_mean_rating`. A "0 readers" line in that census is a
 queue, not a verdict, and this unit re-checked each one before filing it.
 
@@ -27082,7 +27082,7 @@ from 1,078 numbers / 323 strings to **1,186 / 600** and an offering page's from 
 `TOLERANCE[NUMBER_KIND] = (0.01, 0.5)` a number invented within half a degree of a real latitude -
 about 55 km - now reads as grounded. (ii) Location facts join the bundle and no score:
 `facts_by_subject` buckets under each fact's own `subject_id` and `Candidate.freshness` reads the
-merchant's own list (`search/service.py:807`), which
+merchant's own list (`search/service.py:816`), which
 `test_a_location_fact_moves_no_ranking_number` pins as a rule while the question stays open.
 (iii) `_disputed_attributes` still resolves over the card's own subject and cannot be wrong yet -
 exactly 1 `address` fact per location (684 facts over 684 distinct subjects, `locs_with_two = 0`).
@@ -27806,7 +27806,7 @@ category at all (the fallback reads `category_primary`, `demo_data.py:124` write
 under `category`, and the demo's third value `retail` is not a taxonomy slug at all - `resolve('retail')`
 is `['retail','shopping']`, and the live offering lane answers that bucket with 166 rows reached through
 the `shopping` root, while the static lane answers it with none); D596's parity door cannot see this gate
-by construction; the no-bucket degraded answer is a §105 contract question; and `service.py:280`'s
+by construction; the no-bucket degraded answer is a §105 contract question; and `service.py:289`'s
 `text_matched` is now load-bearing in a way it was not, because a row the words never touched reaches
 the ranking floor (`ranking.py:262` reads the flag) while the flag claims the words matched.
 
@@ -27894,7 +27894,7 @@ nothing.
 
 - readers: `embed.py`'s `run`, `embed_pending` and `worker_settings`; `db/pool.py:214-240` (the pool
   and the `statement_timeout` it sets); `api/pipeline.py:171-197` (which decides the vector lane and
-  what it hands `search`); `search/service.py:1620-1629` (the strategy suffix and its condition); and
+  what it hands `search`); `search/service.py:1629-1638` (the strategy suffix and its condition); and
   this unit's four `tmp/` measurements (`d618_pending`, `d618_embed`, `d618_p10`, `d618_lift`, with
   probes `d618_p10_probe.py`, `d618_lift_probe.py`).
 
@@ -27904,7 +27904,7 @@ nothing.
 live plane and printed six lifts for six sentences; two of its three findings were that the access
 preferences do not lift and that parking is anti-correlated. The harness behind that table called
 `S.search(backend=..., plan=plan)` - and `search()` takes the query's preferences as a KEYWORD,
-`intent_preferences` (`service.py:933`), which the door never passed. The production pipeline does
+`intent_preferences` (`service.py:942`), which the door never passed. The production pipeline does
 pass it (`api/pipeline.py:192-197`, from the same Intent the door had in hand). Measured 2026-10-30:
 in the door's call the preference lane scores **0.5 - neutral - on every row of every case**
 (`tmp/d620_lift_prod.txt`, column "door"), so the table was the default ordering's base-rate
@@ -27950,7 +27950,7 @@ measurement is a lift, not an attribution. The date case is still vacuous. And t
 effect on a STATED preference is still unmeasured - §616's column is now known to be the wrong
 comparison, which is the open bullet in PLAN.
 
-- readers: `service.py:1499-1600` (the transient preference branch), `service.py:933` (the parameter
+- readers: `service.py:1508-1609` (the transient preference branch), `service.py:942` (the parameter
   the door omitted), `api/pipeline.py:171-197` (the production call site), `ranking.py:147` and
   `:228` (the neutral score this door measures against), and this unit's four `tmp/` readings
   (`d620_lift_prod`, `d620_fired`, `d620_fired.txt` probe, `d620_old_door`).
@@ -28007,8 +28007,8 @@ writes it twice. And the indoor half is untouched and still dead: `indoor_style`
 470, so a typed indoor preference scores **184 of 184** rows 1.0 (`tmp/d621_indoor_live.py`) - a
 preference that cannot move a page. Filed in PLAN.
 
-- readers: `service.py:866-868` (`_INTENT_ATTR_ALIASES`), `service.py:1562-1595` (the derived-name
-  walk this unit replaced), `service.py:1365-1398` (the stored branch, which already reads both
+- readers: `service.py:875-877` (`_INTENT_ATTR_ALIASES`), `service.py:1571-1604` (the derived-name
+  walk this unit replaced), `service.py:1374-1407` (the stored branch, which already reads both
   spellings), and this unit's six `tmp/` readings (`d621_attr_census`, `d621_overlap`,
   `d621_indoor_probe`, `d621_rank`, `d621_vector_pref`, `d621_arms`, `d621_indoor_live`).
 
@@ -28016,7 +28016,7 @@ preference that cannot move a page. Filed in PLAN.
 
 **The constant.** `indoor_style` is written True on **all 470** published rows - the seed's own
 comment says "most HK venues are indoor" - and BOTH readers asked it first: the stored branch at
-`service.py:1390-1395` and the typed branch through the derived name `indoor_style`. So a request for
+`service.py:1399-1404` and the typed branch through the derived name `indoor_style`. So a request for
 indoor seating scored every candidate 1.0 and could not move a page; measured on the 184 restaurants
 its filter admits, **184 of 184** carried 1.0 and none carried 0.0 (`tmp/d622_indoor_arms.py`). The
 111 places the corpus says seat you outside were never demoted for it.
@@ -28051,6 +28051,57 @@ this unit made the pair ask a fact that can differ. The two readers differ in st
 nothing here says which of the two outdoor spellings the seed should keep; that is the bullet D621
 filed.
 
-- readers: `service.py:866-882` (`_indoor_evidence`), `service.py:1389-1400` (the stored branch's
-  indoor arm), `service.py:1562-1600` (the typed branch, where the pair now splits off before the
+- readers: `service.py:875-891` (`_indoor_evidence`), `service.py:1398-1409` (the stored branch's
+  indoor arm), `service.py:1571-1609` (the typed branch, where the pair now splits off before the
   name walk), and this unit's two `tmp/` readings (`d622_indoor_arms`, `d622_indoor_live`).
+
+## 621. D623 · the vector lane costs a stated preference one row of ten in two of six sentences (`apps/ai/tests/test_the_stated_preference_moves_the_ranking_of_the_live_plane.py`)
+
+**The question that was still open.** §618 corrected this door's harness, but the bullet §616 left in
+PLAN was wrong for the same reason: its on/off column toggled `embedding` inside a call that never
+received `intent_preferences`, so it compared two preferenceless orderings. Nobody had measured what
+the vector lane does to a preference the user actually stated.
+
+**The measurement.** The same six sentences, the same plan, read twice from the same fixture: once
+through `S.search(..., intent_preferences=...)` with no embedding, once through `run_search` - the
+function the routes call - where the preference and the hashing vector lane share one score. Both
+count how many of the top ten rows carry the attribute (`tmp/d623_pairs.txt`):
+
+    attribute            pref only   production   rows lost
+    quiet_ambience         1.00        1.00          0
+    pet_friendly_access    0.90        0.90          0
+    date_occasion          1.00        1.00          0   (vacuous either way)
+    outdoor_seating        0.80        0.80          0
+    parking_access         0.90        0.80          1
+    mtr_near_access        1.00        0.90          1
+
+**What the numbers say.** The lane never HELPED a stated preference on this plane, and in two of six
+sentences it demoted one row of ten. The size of that trade is set by the weights, not by the lane:
+`infra/config/ranking_weights.yaml:22` gives personalization **0.06** of the score against relevance's
+**0.34** (`:17`), and a fired preference takes only half of its span (0.5 neutral to 1.0), so the whole
+mechanism can move a row by **0.03**. Against a fused keyword/vector term worth more than ten times
+that, a near-tie goes to relevance - which is exactly what a one-row cost looks like.
+
+**The bound.** Measured maximum 0.10; the door asserts **0.20**. The headroom is deliberate and is the
+mirror of the floors elsewhere in these doors: the two sentences at 0.10 are one row, a re-seed that
+demotes one further row must not redden a door whose job is to notice a lane going silent, and a cost
+of two rows of ten is a lane outranking the sentence the user wrote. The step from 0.10 to 0.20 is the
+bluntest reading this fixture can support at ten rows - recording it as a fraction of a page rather
+than pretending to a finer resolution is the honest form.
+
+**Not claimed.** The hashing provider is not a semantic lane - its "vectors" are hashed token bags - so
+this bounds the WIRING (that the fused relevance term and the preference term meet in one score and
+that the preference still reaches it) and says nothing about what an embedding model would do; a
+provider swap must re-read this door. No weight changed: 0.03 is the ceiling the current YAML gives
+the entire preference mechanism, and against relevance's 0.34 it means a stated preference can never
+win a near-tie on its own - whether 0.06 is the right share is a product question this door does not
+answer. Nothing here measures what the vector lane BUYS on relevance, only what it costs a
+preference. And `date_occasion` remains vacuous at 1.00/1.00 - §620's bullet.
+
+**The gate.** This file: **16 passed** - five lift legs, five witness legs (the preference reached the
+ranking; the preferenceless lane's top ten fires 0.0), the vacuous case, and D623's five bound legs.
+With nine neighbouring preference doors: **228 passed**. Readings in `tmp/d623_pairs.txt`.
+
+- readers: `tests/test_the_stated_preference_moves_the_ranking_of_the_live_plane.py:181` (the bound),
+  `:120-124` (the preference-only call the bound is measured against), and
+  `infra/config/ranking_weights.yaml:17,22` (the two weights that set the size of the trade).

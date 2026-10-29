@@ -57,7 +57,8 @@ CASES = [
     ("近地鐵站的餐廳", "mtr_near_access"),
 ]
 
-#: query -> the lift the production path must keep. Measured 2.32 / 4.04 / 1.75 / 2.89 / 3.01.
+#: query -> the lift the production path must keep. Measured 2.32 / 4.04 / 3.50 / 2.89 / 3.01
+#: (outdoor was 1.75 before D621 taught the reader both spellings of the fact).
 WORKING = {
     "安靜的咖啡店": 1.8,
     "可以帶寵物的餐廳": 2.5,
@@ -104,6 +105,7 @@ def plane():
             out = {}
             for query, attr in CASES:
                 intent = validate_intent(extract_intent_dict(query))
+                intent_prefs = [p.model_dump() for p in intent.preferences]
                 plan = S.plan_from_intent(intent, query=query, limit=TOP_K)
                 population = await backend.merchant_candidates(
                     tenant_id=S.DEFAULT_TENANT_ID, text=None, embedding=None,
@@ -114,7 +116,13 @@ def plane():
                 share = sum(1 for r in rows if _true(r, attr)) / len(rows)
                 # The same plan through the call this door USED to make: no intent_preferences.
                 _c, _r, _b, bare = await S.search(backend=backend, plan=plan)
-                out[query] = {"base": base, "share": share,
+                # The preference WITHOUT the vector lane - the pair this door compares so that a
+                # lane which reorders against a stated preference has to say so here (D623).
+                _c2, _r2, _b2, pref_only = await S.search(
+                    backend=backend, plan=plan, intent_preferences=intent_prefs)
+                share_pref = (sum(1 for s in pref_only[:TOP_K]
+                                  if _true(s.candidate.raw["row"], attr)) / TOP_K)
+                out[query] = {"base": base, "share": share, "share_pref": share_pref,
                               "lift": (share / base) if base else 0.0,
                               "population": len(population),
                               "filters": dict(plan.filters or {}),
@@ -167,3 +175,34 @@ def test_the_date_case_cannot_demonstrate_anything_on_this_corpus(plane):
         f"the corpus no longer records date_occasion on every restaurant (base {got['base']:.2f}, "
         f"top10 {got['share']:.2f}) - this case can now be a real test of the occasion "
         f"preference, and the door should say so")
+
+@pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
+@pytest.mark.parametrize("query", sorted(WORKING))
+def test_the_vector_lane_does_not_outrank_the_stated_preference(plane, query):
+    """D623: the same preference with and without the vector lane, one row of ten apart at most.
+
+    Measured 2026-10-30 (`tmp/d623_pairs.txt`), preference-only against the production page:
+
+        attribute            pref only   production   rows lost
+        quiet_ambience        1.00        1.00         0
+        pet_friendly_access   0.90        0.90         0
+        date_occasion         1.00        1.00         0   (vacuous either way)
+        outdoor_seating       0.80        0.80         0
+        parking_access        0.90        0.80         1
+        mtr_near_access       1.00        0.90         1
+
+    The vector lane never helps a stated preference on this plane and costs one row of ten in two
+    of six sentences. That is the honest size of the trade: `infra/config/ranking_weights.yaml`
+    gives personalization 0.06 of the score and relevance 0.34, so a fired preference can swing a
+    row by at most 0.03 while the fused keyword/vector term swings it by more than ten times that.
+    A lane that can reorder a page against what the user asked for is worth a bound, not a
+    paragraph - and the bound is one row ABOVE the measurement, so a re-seed that moves a single
+    row does not redden this door while a lane that costs two rows of ten is called out here.
+    """
+    got = plane[query]
+    lost = got["share_pref"] - got["share"]
+    assert lost <= 0.2 + 1e-9, (
+        f"{query}: the vector lane cost the preference {lost:.2f} of the top ten "
+        f"({got['share_pref']:.2f} without it, {got['share']:.2f} with it, strategy "
+        f"{got['strategy']}) - measured 2026-10-30 was 0.10 at the widest (two sentences), so "
+        "two rows of ten means the lane is outranking the user's own sentence")

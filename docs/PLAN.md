@@ -2616,11 +2616,14 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   2.89 through `run_search` (base 0.28, top-10 0.80, 8 of 10 rows firing). Nothing in the ranking was
   changed. What stays open is the general question the wrong table hid: which stated preferences move
   a page by how much, measured on the lane the routes use.
-- **The vector lane's effect on a STATED preference is still unmeasured.** §616's on/off column
-  toggled `embedding` inside a call that never received the preference, so it compared two
-  preferenceless orderings; with the preference in the ranking the comparison has to be redone (the
-  same six sentences, `embedding=None` against the hashing lane, both through `run_search`-equivalent
-  input). Until then, no door says whether the vector lane helps or hurts a preference.
+- **Measured by D623 (§621): the vector lane costs a stated preference one row of ten.** The same
+  six sentences through `run_search` and through `S.search(intent_preferences=...)` with no embedding:
+  parking 0.90 -> 0.80, MTR 1.00 -> 0.90, the other four unchanged, and the door now reddens at two
+  rows. What stays open is the SIZE of that trade and whether it should exist - personalization
+  carries 0.06 of the score against relevance's 0.34, so a fired preference can move a row by 0.03 at
+  most and can never win a near-tie on its own. No door answers whether 0.06 is the right share, no
+  door has compared a real embedding provider against the hashing stand-in on this axis, and nothing
+  measures what the lane BUYS on relevance.
 
 - **Closed by D622 (§620): the indoor preference now asks a fact that can say no.** D621 (§619)
   measured the constant - `有室內座位嘅餐廳` scored 184 of 184 restaurants 1.0 - and D622 gave the pair
