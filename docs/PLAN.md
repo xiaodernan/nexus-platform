@@ -2218,7 +2218,7 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `offerings.duration_minutes` is populated on 804 offerings, the same count as the rows stating a
   party bound, so the corpus's bookable rows do carry a duration. Java names the column 13 times,
   the web 0 times, and the AI lane's SQL never selects it (measured: 1 occurrence of the word in
-  `nexus_ai`, which is D607's own comment). `_slot_window` (`service.py:896`) and `slots_for`
+  `nexus_ai`, which is D607's own comment). `_slot_window` (`service.py:895`) and `slots_for`
   (`sql.py:622`) bound a time window and a capacity, never an offering's length, so a
   recommendation can propose a two-hour offering into a one-hour slot and nothing between the card
   and the booking says so. The product question comes first: does the slot window come from the
@@ -2272,9 +2272,9 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
 - **Two of the census's zero-reader tokens were the census being wrong, and the ones left are named
   here rather than "fixed" (D608's method, audited)** - `merchant_lively_ambience` is read: the
   static refusal's offering leg looks the row value up under a key it COMPOSES
-  (`row.get("merchant_" + name)`, `search/service.py:343`), which a name-match census cannot see.
+  (`row.get("merchant_" + name)`, `search/service.py:342`), which a name-match census cannot see.
   `mean_rating` is read too - it is the inner aggregate alias re-exported one line up as
-  `tenant_mean_rating` (`search/sql.py:388`, `:393`) and consumed at `service.py:802`. So the
+  `tenant_mean_rating` (`search/sql.py:388`, `:393`) and consumed at `service.py:801`. So the
   census's output is a queue, not a verdict, and every "0 readers" gets re-checked against
   composition and aliasing before it is filed. What survives: `address_line1` (the bullet above),
   and the whole `reviews_for` builder (`search/sql.py:649`) - no caller outside its own three tests,
@@ -2321,7 +2321,7 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
 - **A location's clock joins the bundle and no score, and nothing decides whether that is right** -
   `facts_from_rows` groups into `facts_by_subject` under each fact's OWN `subject_id`, and
   `Candidate.freshness` reads `facts_by_subject.get(subject_id)` for the candidate's own id
-  (`search/service.py:808`), so the 54 location facts D609 now loads cannot lift or sink the
+  (`search/service.py:807`), so the 54 location facts D609 now loads cannot lift or sink the
   merchant's freshness contribution. D609 pinned that with
   `test_a_location_fact_moves_no_ranking_number` because a citation unit must not re-rank the plane
   on the side; the open question is the product one - a merchant whose nearest location's address
@@ -2567,3 +2567,39 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   user's own script - but no candidate row carries that name today, because
   `CATEGORY_SLUGS_SUBQUERY` aggregates slugs only, so the reason either widens that column or costs a
   taxonomy lookup per request. Owner: the AI lane with the copy owner.
+
+- **The demo catalogue's OFFERING rows answer no category at all.** `_filter_static`'s coarse
+  fallback compares the bucket to `category_primary`, and an offering row does not carry that key:
+  `api/demo_data.py:124` builds `"category": parent["category_primary"]`, so the two demo offerings
+  spell their bucket under a column the predicate never reads. Measured (`tmp/d615_offering_leg.txt`):
+  the demo offering lane keeps **0 of 2** for every bucket tried (`restaurant`, `cafe`, `retail`,
+  `bakery`, `ramen`) — including `restaurant` for the milk-tea set whose own row says `restaurant` —
+  while the live lane answers the same filters with **2384** (restaurant), **342** (bubble-tea) and
+  **166** (retail) offerings (`tmp/d616_offering_live.txt`). A user on the degraded path asking for
+  a milk-tea set (`想飲杯奶茶` → `category='bubble-tea'`) is told the catalogue has none, and it has
+  one. Two layers, one repair: the fallback needs the offering's own spelling, and the demo rows
+  need the same two-level `category_slugs` mirror the product SELECT builds — even with the key
+  fixed, `bubble-tea` (手搖飲品, a leaf under the `cafe` root, 45 `merchant_categories` rows) is not
+  the inherited value `restaurant`. The demo catalogue's third value is worse: `retail` is not a slug
+  in the taxonomy at all — `resolve('retail')` is `['retail','shopping']` and the live offering lane
+  answers that bucket with 166 rows reached through the `shopping` root (`tmp/d616_taxonomy.txt`).
+  Filed with the honest non-claim: `想買行山鞋` → `footwear` answers 0 on BOTH lanes (no such leaf
+  reaches any offering), so that one is not a divergence.
+- **D596's parity door cannot see this gate, by construction.** Every row of
+  `test_the_category_filter_answers_the_same_question_on_both_lanes.py` asks
+  `S._filter_static(rows, "", {"category": bucket})` — text empty — so it compares the two lanes'
+  *filter* semantics and never the order in which the same function applies text and filter. Widen
+  it (or keep the D615 door beside it) so a text-carrying request is part of the parity claim.
+- **The no-bucket case is left as it is, deliberately.** `想去美髮` reads no category, and the demo
+  lane then answers it with the text gate alone (0 cards; the catalogue holds no salon — honest) while
+  the live lane answers 60 merchants of 35 different primaries (measured, `tmp/d615_same_request.txt`).
+  "Should the degraded path answer a request its catalogue cannot satisfy with the nearest thing it
+  has, or with nothing?" is a question about the degraded contract (§105), not about this predicate;
+  this unit changes only the case where the catalogue DOES hold the answer.
+- **`text_matched` on the static lane claims more than it knows.** `service.py:280` sets
+  `r.setdefault("text_matched", bool(low))` — every row that survives a request carrying any text is
+  marked as text-matched, including a row with zero token hits. After D615 such a row can now reach
+  the ranking floor (`ranking.py:262` reads the flag), so the flag is load-bearing in a way it was
+  not before: the lane keeps the row and simultaneously tells the ranker the user's words appeared in
+  it. Measured before/after on the eight demo requests; not repaired here because the live flag is a
+  per-row SQL expression and the two would then disagree in the other direction.

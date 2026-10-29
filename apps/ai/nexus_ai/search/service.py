@@ -224,6 +224,10 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
                    filters: dict[str, Any],
                    offerings: Sequence[dict[str, Any]] = (),
                    party_size: int | None = None) -> list[dict[str, Any]]:
+    from nexus_ai.search.categories import canonical_tag, resolve
+
+    bucket = str(filters["category"]) if filters.get("category") else ""
+    slugs = {canonical_tag(x) for x in resolve(bucket)} if bucket else set()
     low = (text or "").lower()
     out: list[dict[str, Any]] = []
     for r in rows:
@@ -231,32 +235,27 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
                        ("display_name", "display_name_zh", "name", "name_zh", "description",
                         "category_primary", "district")).lower()
         hay += " " + " ".join(str(t) for t in (r.get("tags") or []))
+        # D615: the bucket leg is decided HERE, before the text gate below. A row that answers
+        # the category the request named is an answer even when the user's own words appear
+        # nowhere in it: the live lane reads text as a score and a `text_matched` flag, never
+        # as a WHERE (sql.py:314-329), and this backend serves the degraded path, where
+        # vetoing such a row answered 想飲杯咖啡 with no cafe although the catalogue holds one.
+        in_bucket = False
+        if bucket:
+            row_slugs = {canonical_tag(str(x)) for x in (r.get("category_slugs") or [])}
+            in_bucket = (bool(row_slugs & slugs) if row_slugs
+                         else r.get("category_primary") == bucket)
         score = 0.0
         if low:
             tokens = _static_tokens(low)
             hits = sum(1 for t in tokens if t in hay)
             name_hit = any(t in str(r.get("display_name") or "").lower()
                            or t in str(r.get("name") or "").lower() for t in tokens)
-            if hits == 0 and not name_hit:
+            if hits == 0 and not name_hit and not in_bucket:
                 continue
             score = min(1.0, 0.25 * hits + (0.4 if name_hit else 0.0))
-        if filters.get("category"):
-            # D596: the live lane resolves the bucket into taxonomy slugs and walks one tree
-            # level; this lane compared the bucket to `category_primary`, which on a live row
-            # holds the leaf's DISPLAY NAME ("Tea House"). Measured at HEAD: `category=cafe`
-            # kept 79 merchants live and 0 here, restaurant 184 and 0. A row that carries the
-            # resolved slugs (`category_slugs`, both lanes' SELECT) is matched on them; a
-            # fixture that stores the coarse bucket itself keeps the old comparison.
-            from nexus_ai.search.categories import canonical_tag, resolve
-
-            bucket = str(filters["category"])
-            slugs = {canonical_tag(x) for x in resolve(bucket)}
-            row_slugs = {canonical_tag(str(x)) for x in (r.get("category_slugs") or [])}
-            if row_slugs:
-                if not (row_slugs & slugs):
-                    continue
-            elif r.get("category_primary") != bucket:
-                continue
+        if bucket and not in_bucket:
+            continue
         if filters.get("district") and str(r.get("district") or "").lower() != \
                 str(filters["district"]).lower():
             continue

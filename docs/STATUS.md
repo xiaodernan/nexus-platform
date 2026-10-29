@@ -9728,7 +9728,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
 
                     The consequence is not telemetry only. `search/sql.py:205,365` builds
                     `attributes @> {param}::jsonb` from a `json.dumps(...)` value, and `plan_from_intent`
-                    fills that filter from positive `intent.preferences` (`search/service.py:647-649`).
+                    fills that filter from positive `intent.preferences` (`search/service.py:646-649`).
                     Measured on `nexus`, one connection each: `attributes @> '{"data_origin":"demo"}'
                     matched 5534 rows on the fixed plane and 0 on the pre-fix plane. End to end,
                     `POST /ai/v1/search` with `filters={"attributes":{"data_origin":"demo"}}` answered 200
@@ -16066,7 +16066,7 @@ turn 1 `帮我找附近适合朋友聚会的餐厅` → `sort_preference: distan
 turn 2 `太贵了` → `sort_preference: price_low, budget: null` (the new effect, and §8 still unbroken —
 no number appears); turn 3 `近一点` → `radius_m: 1000` (the nearby default 2000 × `RADIUS_TIGHTEN`). The
 state merge works end to end. **The answer set did not change: 8 cards, and the same first four slugs in
-all three turns.** That is a separate, precisely located defect: `search/service.py:577` writes
+all three turns.** That is a separate, precisely located defect: `search/service.py:576` writes
 `plan.sort_preference` from the intent and nothing downstream reads it — `organic_rank()` sorts by
 `(-organic_score, candidate.key())` and `plan.radius_m` is the only planning field the retrieval honours.
 So a refinement can be correctly remembered and still produce an identical page; the chip that this unit
@@ -23744,7 +23744,7 @@ rows the test reads.
 
 **Residue measured and filed, not fixed.** The ranking matcher for `style/outdoor` reads
 `outdoor_style` at full weight and `outdoor_seating` at 0.8 of it
-(`search/service.py:1207`, `:1211`), but measured on this plane `outdoor_style` is written on
+(`search/service.py:1206`, `:1211`), but measured on this plane `outdoor_style` is written on
 **0** merchants while `outdoor_seating` is written on 94 - the plane predates the generator
 that emits the style flag, so the half of the matcher that gives full weight is unmeasurable
 here and only the fixture tests exercise it. Re-seeding the plane (or the CI's fresh seed) is
@@ -24681,7 +24681,7 @@ the strict reader reports **MOVED 0**. `--selftest` → **PASS — 13 case(s), 0
 **What is left, named.** Step 16 still reddens on **NOT-UNIQUE 3** - citations whose quoted text
 occurs on more than one line, so no tool can choose: `docs/STATUS.md:4421 -> data/seed/load.sh:161`
 (2 lines hold `"DO \$\$"`), `docs/STATUS.md:22178 -> search/sql.py:131` (2 lines hold
-`wsq = f"websearch_to_tsquery('`), `docs/STATUS.md:23747 -> search/service.py:1064` (3 lines hold
+`wsq = f"websearch_to_tsquery('`), `docs/STATUS.md:23747 -> search/service.py:1063` (3 lines hold
 `if attrs.get("outdoor_style")`). Each needs the citing sentence read against the candidates.
 
 ## 566. D570 · "don't be noisy" was read as a DISLIKE of quiet - the antonym surface inverted the ranking for 40% of the plane (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/polarity.py`)
@@ -26502,7 +26502,7 @@ Every other string on the card follows the request - the rating bullet, the matc
 title's language, the open-now meter, the sponsored label, because `build_card` takes `locale`
 and passes it down - and the one bullet that §5 reserves for a stale price is printed from
 `stale_copy("zh-HK")` with the literal written inside the callee (`search/cards.py:651` before
-this unit), while its own caller (`service.py:1585`) never received the locale at all. This is
+this unit), while its own caller (`service.py:1584`) never received the locale at all. This is
 not a rare path on this plane: 0 of its 2,080 stored `price` facts is inside the 6-hour TTL
 (newest `observed_at` 2026-09-22), and D589 put a price fact with the row's own clock under every
 priced card, so every card the probe asked about raised the notice - which means the
@@ -26515,7 +26515,7 @@ never a missing translation - it was a caller throwing the choice away, which is
 one argument and not a table.
 
 **The fix makes the wrong state unrepresentable rather than untested.** `attach_price_staleness`
-is now `(card, bundle, *, locale)` with no default, and `service.py:1585` passes the request's own
+is now `(card, bundle, *, locale)` with no default, and `service.py:1584` passes the request's own
 `locale` variable. The default was refused on purpose: with `locale: str = "zh-HK"` a future caller
 that forgets the argument prints Traditional Chinese to an English reader and nothing fails, which
 is this unit's defect with one step removed - the same shape D587 answered by flooring a declared
@@ -26709,7 +26709,7 @@ population is an edit to one file rather than a new reader.
 ## 605. D607 · an offering's own party bounds were SELECTed into every row and applied by no reader (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_an_offering_that_cannot_seat_the_party_is_not_answered_for_it.py`)
 
 **What was measured.** The offering SELECT already carries `o.bookable, o.min_party_size,
-o.max_party_size` (`sql.py:555`) and the plan already knows the party (`service.py:442`, filled
+o.max_party_size` (`sql.py:555`) and the plan already knows the party (`service.py:441`, filled
 from the intent at `:660`, and already used hard against slot capacity at `sql.py:637` -
 `AND capacity_left >= :party_size`). Nothing compared the party to the offering. Read-only probe of
 the offering lane, top 12 per query (`tmp/d606_probe.py`):
@@ -26750,9 +26750,9 @@ every second page assume an order that the lane does not actually give them.
 `party_size` and appends, only when the caller named a party, `(o.max_party_size IS NULL OR
 o.max_party_size >= $n)` and `(o.min_party_size IS NULL OR o.min_party_size <= $n)` (`sql.py:464`);
 the party is bound, never interpolated, which the door checks by reading the two comparison operands
-out of the built text. `_filter_static` mirrors the same predicate (`service.py:272`) so the fixture
+out of the built text. `_filter_static` mirrors the same predicate (`service.py:271`) so the fixture
 lane answers the request the live lane answers (D449), and the pipeline dispatches the plan's own
-value (`service.py:973`). NULL is kept meaningful on purpose: an offering that never stated a cap is
+value (`service.py:972`). NULL is kept meaningful on purpose: an offering that never stated a cap is
 not a small offering, and 4,730 of the 5,534 rows are that offering - a clause without the NULL arm
 deletes the majority of the catalogue, which is arm B's red. Absence is kept meaningful too:
 `party_size=None` means the caller asked no question about the party, and both lanes answer it with
@@ -26864,7 +26864,7 @@ neither number is wrong and neither is a proxy for the other. What the plane kee
 one: **684 of 684** `locations` rows carry both halves, all **470** published merchants with a
 primary location have both, `mtr_walk_min` spans 2..25, and the three spellings of the same
 five-minute threshold agree exactly - 132 merchants by the column, by the
-`attributes->'mtr_within_5min'` trait the ranking lane already reads (`service.py:1390`) and by
+`attributes->'mtr_within_5min'` trait the ranking lane already reads (`service.py:1389`) and by
 the `mtr-5min` tag, **0 disagreements**. Printing the number therefore contradicts nothing the
 answer already claims.
 
@@ -26959,7 +26959,7 @@ l.id`, unprojected on both lanes today) or re-filing the facts by `merchant_id` 
 decision with two shapes and different reach, which is why it is in PLAN with its counts rather
 than folded into a transit unit's evidence. The second: the census said `merchant_lively_ambience`
 and `mean_rating` had no readers and both were wrong - the first is read under a key the refusal
-lane COMPOSES (`row.get("merchant_" + name)`, `search/service.py:343`) and the second is an inner
+lane COMPOSES (`row.get("merchant_" + name)`, `search/service.py:342`) and the second is an inner
 alias re-exported one line up as `tenant_mean_rating`. A "0 readers" line in that census is a
 queue, not a verdict, and this unit re-checked each one before filing it.
 
@@ -27082,7 +27082,7 @@ from 1,078 numbers / 323 strings to **1,186 / 600** and an offering page's from 
 `TOLERANCE[NUMBER_KIND] = (0.01, 0.5)` a number invented within half a degree of a real latitude -
 about 55 km - now reads as grounded. (ii) Location facts join the bundle and no score:
 `facts_by_subject` buckets under each fact's own `subject_id` and `Candidate.freshness` reads the
-merchant's own list (`search/service.py:808`), which
+merchant's own list (`search/service.py:807`), which
 `test_a_location_fact_moves_no_ranking_number` pins as a rule while the question stays open.
 (iii) `_disputed_attributes` still resolves over the card's own subject and cannot be wrong yet -
 exactly 1 `address` fact per location (684 facts over 684 distinct subjects, `locs_with_two = 0`).
@@ -27663,3 +27663,157 @@ re-runnable record of what the clause reaches.
   `resolve` (a bucket that is already a slug resolves to itself, so the parent leg lives in the ROW,
   not in the resolver), `_subtitle` in `search/cards.py`, `categories.name_zh` (unread by any card),
   and the published-status predicate the probe had to be told about.
+
+## 613. D615 · the degraded path answered a category request by whether the merchant's NAME repeats the user's word (`apps/ai/nexus_ai/search/service.py`)
+
+**How the unit arrived, and why the fixture lane is not a test lane.** D613 left a question about the
+category block's `elif` fallback and D614 filed the card half of it. This unit went to find out whether
+that fallback is reachable in production, and the honest answer is that the lane it belongs to is.
+`api/deps.py:43-47` hands every route `demo_backend()` - the labelled demo catalogue - whenever there
+is no DB handle, and `search/categories.py:9` keeps the raw bucket in the resolver's output precisely
+because that catalogue has no taxonomy plane to walk. So `_filter_static` is not a stand-in someone
+forgot to delete; it is the code path a user stands on while the plane is down.
+
+**What it answers there.** The text gate scored the query and `continue`d on
+`hits == 0 and not name_hit` three lines BEFORE the category block ran - two separate reads of one
+row, with the veto first, so a row the text gate struck never reached the bucket gate at all. The
+bytes this unit reproduced the failure on are the ones `02d494d` carries, and the patch below is what
+joined the two reads. `tmp/d615_gate_split.py` runs the shipped chain (utterance -> `merge_turn` ->
+`plan_from_intent`) over eight sentences and then
+runs `_filter_static` twice on the same rows: once with the plan's own `query_text`, once with `text=""`
+so the category block is the only gate left standing.
+
+    附近有餐廳嗎  bucket=restaurant  category gate keeps 4   shipped keeps 2   vetoed: 蘭桂坊小館, 香料街廚房
+    想飲杯咖啡    bucket=cafe        category gate keeps 1   shipped keeps 0   vetoed: 竹苑茶室
+    想去買嘢      bucket=retail      category gate keeps 1   shipped keeps 0   vetoed: 彩虹運動用品
+
+The two survivors of the restaurant request are `銀礦餐廳` and `維港灣景餐廳`: the ones whose Chinese
+name spells the word the user typed. For the cafe and the shop the catalogue holds exactly one row
+each and the degraded path returns nothing at all - and a following line printed the rule: for
+`想飲杯咖啡` not ONE of the six demo rows' `display_name`, `display_name_zh`, `name`, `name_zh`, `description`,
+`category_primary`, `district` or the row's `tags` contains any token of the utterance (the hay is 112-145 characters of English and a Chinese
+name that says 茶室, not 咖啡). So the answer to "is there a cafe" is decided by whether the merchant's
+name repeats the customer's word, not by the category the customer named.
+
+**The plane does not do this, and the door that proves it is a parity row.**
+`tmp/d615_same_request.py` asks the live lane the same eight requests and prints, for each, the rows it
+returns and their `text_matched` flag:
+
+    想飲啤酒    bucket=bar        LIVE 39 rows, text_matched on 0   DEMO 0
+    想去買嘢    bucket=retail     LIVE 20 rows, text_matched on 0   DEMO 0 (catalog holds 1)
+    想飲杯咖啡  bucket=cafe       LIVE 60 rows, text_matched on 26  DEMO 0 (catalog holds 1)
+
+`想飲啤酒` - a beer - reaches 39 bars and not one of them mentions 啤酒 in its name, its Chinese name or
+its tags. The plane answers anyway, because its text is a SELECTed score and a flag
+(`sql.py:314-329`), never a WHERE clause. This unit's door pins exactly that as the mirror claim:
+`test_the_users_words_never_narrow_what_the_live_filter_keeps` asks three of these sentences twice -
+once as a pure browse of the bucket (`text=None`) and once with the customer's words - and asserts the
+two returned sets are EQUAL. It was green before the patch - the divergence was entirely on the lane
+that vetoes. D488 filed "one request, two answers", D549 filed it for `avoid`, D607 for party size:
+this is the fourth instance and the only one a user sees as "no results".
+
+**Why D596's parity door cannot see it.** Every row of
+`test_the_category_filter_answers_the_same_question_on_both_lanes.py` calls
+`S._filter_static(rows, "", {"category": bucket})` - text empty - including the `predicted` set inside
+`test_both_lanes_keep_the_same_merchants`. It compares what the two lanes think a BUCKET means and
+never what they think a bucket means *inside a sentence*. Nothing here weakens it; the new door sits
+beside it and the PLAN queue carries the widening.
+
+**The fix is order, not threshold.** Four clause-level edits to `_filter_static`, applied by
+`tmp/d615_patch.py` from the same anchor bytes the arms graded: the bucket and its resolved slugs are
+computed once per request instead of once per row; each row's bucket membership (`in_bucket`) is decided
+before the text gate, from `category_slugs` when the row carries them and from `category_primary` when
+it does not (the D596 comparison, unchanged in every respect); the veto becomes
+`if hits == 0 and not name_hit and not in_bucket`; and the in-loop category block collapses to
+`if bucket and not in_bucket: continue`. Nothing else moved: `kw_score` still pays only for words that
+actually appear, `text_matched` keeps its current meaning, and a request that names no category is
+still answered by the text gate alone.
+
+**What this deliberately leaves alone.** `想去美髮` reads no category, and the demo lane then returns 0
+cards while the plane returns 60 merchants of 35 different primaries. That is not the same defect: the
+demo catalogue genuinely holds no salon, so "nothing" is the honest answer, and making the degraded path
+substitute the nearest thing it has is a decision about the §105 degraded contract, not about this
+predicate. Filed, with the numbers, rather than quietly widened.
+
+**Verified.** New door `tests/test_a_merchant_the_category_holds_is_not_dropped_by_the_text_gate.py`:
+9 rows green (6 of them red at the shipped bytes). The fifteen files this unit chose as the lane's
+neighbours - `test_search_plan.py`, `test_search_pipeline.py`, `test_demo_data.py`,
+`test_deps.py`, `test_framing_parity.py`, `test_preferences_are_soft.py`, `test_polarity_effect.py`,
+`test_cuisine_vocabulary.py`, `test_sort_preference_reader.py`, `test_the_category_filter_answers_the_same_question_on_both_lanes.py`,
+`test_the_fixture_lane_answers_the_same_avoid_question.py`, `test_the_intent_cuisine_reads_the_rows_columns.py`,
+`test_an_offering_that_cannot_seat_the_party_is_not_answered_for_it.py`,
+`test_a_refusal_is_not_evidence_for_everything_else.py`, `test_total_estimate_counts_the_pool_behind_the_cap.py` -
+ran 165 green in the copy tree and 165 green against the patched tree. The full suite at these bytes is
+`4 failed, 33073 passed, 43 skipped` (`tmp/d615_suite.txt`), and all four reds are the RAG lane another
+unit is editing in this same working tree: three `test_rag_embed.py::TestTheWorkerBudget` rows failing
+inside `dataclasses.replace()`, and
+`test_citations_resolve.py::test_a_chunk_fact_id_resolves_to_a_fact_row`, whose `/ai/v1/rag/retrieve`
+call logs `routes_rag.py:91 chunk retrieval failed` in the same run. This patch is proved out of them
+by `tmp/d615_headcheck.py`, which runs those four test IDs twice inside an isolated copy - once with
+`git show 02d494d:apps/ai/nexus_ai/search/service.py` and once with the bytes this unit ships - and
+gets the identical failure set both times (`tmp/d615_headcheck.txt`).
+
+Named rather than glossed: that list is not the set of files that touch this lane. Four more construct
+`StaticBackend` or call `demo_backend` - `test_a_refusal_of_noise_reaches_the_corpus_weakness_list.py`,
+`test_a_refusal_of_noise_reads_the_corpus_second_spelling.py`, `test_preferences_ranking.py`,
+`test_the_strategy_string_names_only_the_lane_that_scored.py` - and they were not in the arm run; they
+ran here against the patched bytes at 28 green and 1 skipped, the skip being that file's own row for a
+plane with no embedded chunks. The full-suite run covers both sets.
+
+**A red this unit found in its own door.** The suite also runs `test_vocabulary_is_the_reference.py`,
+which builds the CJK a test file may use out of the `nexus_ai` package's DATA strings and scans every
+file in `tests/`. It failed on this door's assertion constants: they quoted 想飲杯咖啡 out of
+`tmp/d615_gate_split.txt`, and 杯 (U+676F) is a measure word no data string in the product carries.
+§611 filed exactly this shape for §608's committed door - "the gate is a whole-suite test and the door
+was green on its own". The door now asserts 想飲咖啡, and that substitution is only honest if the
+shorter sentence asks the same question, so `tmp/d615_door_reword2.txt` runs both spellings through
+`merge_turn` -> `plan_from_intent` and prints `bucket='cafe'`, `hits=0`, `name_hit=False` for each:
+the same request, the same pre-patch veto, the same row. The door then re-ran 8 green + 1 live row
+offline with the vocabulary gate beside it (11 passed, 1 skipped), and the **Arms** table below was
+RE-RUN against the bytes this commit ships - CONTROL 6 red / 159 green, FIXED 165 green, unchanged
+from the first measurement. That re-run caught a second thing worth recording: by then the live tree
+already carried this unit's patch, so the harness's original base - read `service.py` from the live
+tree - graded CONTROL as fixed (165 passed) and every mutated arm as PATTERN NOT FOUND. The harness
+now takes its base from `git show 02d494d:` and asserts, before any arm runs, that the FIXED arm's
+bytes equal the live file's.
+
+**Arms** (`tmp/d615_arms.py`, one mutation at a time inside the throw-away copy `tmp/d615_armtree`, torn
+down after the run; `tmp/d615_arms.txt`):
+
+    CONTROL (shipped bytes)                         6 failed, 159 passed  - the six are this door's
+    FIXED  (the patch)                              165 passed
+    A    the text veto is removed outright          3 failed, 162 passed
+    B    the coarse `category_primary` fallback is dropped   8 failed, 157 passed
+    C    a bucket match is counted as a text hit    1 failed, 164 passed
+    D    the bucket leg stops filtering             10 failed, 155 passed
+
+A is the arm that keeps the fix narrow: deleting the veto instead of conditioning it also breaks
+`test_search_plan.py::test_text_match_filters` and `test_search_pipeline.py::test_strategy_and_health_fields`,
+so the text gate is load-bearing for a request that names no category and this unit leaves it exactly
+as it was. B is
+the arm that keeps D596's fallback: dropping it re-colours six door rows AND `test_category_filter` and
+D596's own `test_a_coarse_bucket_still_filters_the_catalogue_rows` - the coarse comparison is what every
+fixture in this suite, and the shipped demo catalogue, is written in. C is the arm that keeps the score
+honest: paying a bucket match as if the words had hit flattens the ranking, and the one row that moves
+is `test_a_bucket_match_the_words_never_hit_earns_no_text_score`. D is the arm that shows the new
+expression still filters: removing the `if bucket and not in_bucket: continue` that replaces the in-loop
+block takes down ten rows - this unit's wrong-bucket row, `test_search_plan.py`'s
+`test_category_filter`, all three of D596's offline rows and all five of its live `both_lanes` rows - so
+the collapse of a duplicated block into one line did not lose the filter any of them are asserting.
+
+**Filed to PLAN, four bullets, by their own titles.** The demo catalogue's offering rows answer no
+category at all (the fallback reads `category_primary`, `demo_data.py:124` writes the offering's bucket
+under `category`, and the demo's third value `retail` is not a taxonomy slug at all - `resolve('retail')`
+is `['retail','shopping']`, and the live offering lane answers that bucket with 166 rows reached through
+the `shopping` root, while the static lane answers it with none); D596's parity door cannot see this gate
+by construction; the no-bucket degraded answer is a §105 contract question; and `service.py:280`'s
+`text_matched` is now load-bearing in a way it was not, because a row the words never touched reaches
+the ranking floor (`ranking.py:262` reads the flag) while the flag claims the words matched.
+
+- readers: `_filter_static` (the text gate, the bucket leg, the veto), `deps.Deps.backend()` and
+  `backend_degraded()` (why the fixture lane is a production lane), `sql.py`'s `kw_score` and
+  `matched_flag` expressions (the live lane's text-is-score evidence), `categories.resolve` and the
+  `retail`/`shopping` mapping, `ranking._has_query_signal`, `api/demo_data.py::_merchant_rows` and
+  `_offering_rows` (the two row shapes), and this unit's seven `tmp/` measurements
+  (`d615_gate_split`, `d615_same_request`, `d615_demo_names`, `d615_offering_leg`,
+  `d616_offering_live`, `d616_taxonomy`, `d615_door_reword2`).
