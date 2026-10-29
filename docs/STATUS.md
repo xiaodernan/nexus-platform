@@ -27897,3 +27897,60 @@ nothing.
   what it hands `search`); `search/service.py:1620-1629` (the strategy suffix and its condition); and
   this unit's four `tmp/` measurements (`d618_pending`, `d618_embed`, `d618_p10`, `d618_lift`, with
   probes `d618_p10_probe.py`, `d618_lift_probe.py`).
+
+## 618. CORRECTION to §599 and §616: the lift door answered a lane the request path never uses - with the preference in the ranking, parking lifts 2.89 (`apps/ai/tests/test_the_stated_preference_moves_the_ranking_of_the_live_plane.py`)
+
+**What §599 published, and what it actually measured.** §599 (D602) opened the preference half of the
+live plane and printed six lifts for six sentences; two of its three findings were that the access
+preferences do not lift and that parking is anti-correlated. The harness behind that table called
+`S.search(backend=..., plan=plan)` - and `search()` takes the query's preferences as a KEYWORD,
+`intent_preferences` (`service.py:933`), which the door never passed. The production pipeline does
+pass it (`api/pipeline.py:192-197`, from the same Intent the door had in hand). Measured 2026-10-30:
+in the door's call the preference lane scores **0.5 - neutral - on every row of every case**
+(`tmp/d620_lift_prod.txt`, column "door"), so the table was the default ordering's base-rate
+correlation with each fact, published as the effect of the preference the user stated.
+
+**What production answers, through `run_search`** (same plane: 470 published merchants, 2,118 chunks
+embedded, strategy `hybrid_v1+postgres+vector`; `tmp/d620_lift_prod.txt`, `tmp/d620_fired.txt`):
+
+    query               attribute            base   §599 "door"   production   fired
+    安靜的咖啡店        quiet_ambience       0.43   1.39           2.32         10/10
+    可以帶寵物的餐廳    pet_friendly_access  0.22   2.24           4.04          9/10
+    適合情侶約會的地方  date_occasion        1.00   1.00           1.00         10/10  (vacuous)
+    有戶外座位的餐廳    outdoor_seating      0.23   0.88           1.75          7/10
+    有停車場的餐廳      parking_access       0.28   0.00           2.89          8/10
+    近地鐵站的餐廳      mtr_near_access      0.30   0.67           3.01          9/10
+
+Three of §599's findings are false as written, and the row that asserted them as a KNOWN DEFECT
+(`test_the_access_preferences_do_not_yet_lift_the_top_ten`, `len(worse) == 3`) passed on HEAD's bytes
+against today's plane - **4 passed** (`tmp/d620_old_door.txt`) - because it was reporting its own
+harness. The "fired" column is the witness: it counts top-ten rows whose `personalization` score left
+the 0.5 neutral, and the same call WITHOUT `intent_preferences` reads 0/10 on every case. Six days of
+§599's table are not the product's; they are the second reader's.
+
+**§616 inherited the same error.** D618's lift column (and the PLAN bullet it filed: "parking lifts
+nothing, with or without the vector lane") was measured on this harness with `embedding` toggled - the
+preference was still never handed in, so that column is the preferenceless ordering under two vector
+settings, not the vector lane's effect on a stated preference. Corrected here rather than edited
+there: the earlier section stands as written, and the re-measurement with the preference in hand is
+filed in PLAN.
+
+**The door, rewritten and green (11 passed).** Five parametrized floors on the production lift
+(1.8 / 2.5 / 1.4 / 2.0 / 2.0 against measured 2.32 / 4.04 / 1.75 / 2.89 / 3.01); five parametrized
+legs that ask the two calls the same question and require them to disagree (production fires on at
+least 60% of the top ten, measured 1.00 / 0.90 / 0.70 / 0.80 / 0.90, while the preferenceless lane
+fires on 0%); and the date leg, which asserts the corpus constant that makes that case vacuous and
+will announce the day it stops being one. The floors sit below the measured values on purpose: a
+re-seed that moves a percentage point must not redden a door whose job is to notice a lane going
+silent.
+
+**Not claimed.** No product change: the ranking was already doing this, and nothing about the lane
+was repaired. No claim about how the 0.06 personalization weight compares to the other terms - the
+measurement is a lift, not an attribution. The date case is still vacuous. And the vector lane's
+effect on a STATED preference is still unmeasured - §616's column is now known to be the wrong
+comparison, which is the open bullet in PLAN.
+
+- readers: `service.py:1499-1600` (the transient preference branch), `service.py:933` (the parameter
+  the door omitted), `api/pipeline.py:171-197` (the production call site), `ranking.py:147` and
+  `:228` (the neutral score this door measures against), and this unit's four `tmp/` readings
+  (`d620_lift_prod`, `d620_fired`, `d620_fired.txt` probe, `d620_old_door`).

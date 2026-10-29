@@ -2604,18 +2604,20 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   it. Measured before/after on the eight demo requests; not repaired here because the live flag is a
   per-row SQL expression and the two would then disagree in the other direction.
 
-- **The lift door measures a lane the request path never uses.** `test_the_stated_preference_moves_the_ranking_of_the_live_plane.py`
-  calls `S.search(..., embedding=None)`, so it pins the keyword-only ordering; with `NEXUS_EMBEDDING_PROVIDER`
-  set, `api/pipeline.py:180-189` embeds every query and the lane becomes `hybrid_v1+postgres+vector`.
-  Measured by D618 (§616) on a fully embedded plane (`tmp/d618_lift.txt`): outdoor 0.88 -> 1.31, MTR
-  0.67 -> 1.00, pet 2.24 -> 1.80, quiet 1.39 -> 1.39, parking 0.00 -> 0.00. The door should ask the
-  production path (through `run_search`) and pin those four numbers; until it does, a change to the
-  vector lane moves the product and reddens nothing.
-- **`parking_access` lifts nothing, with or without the vector lane.** Base rate 0.28, top-10 0.00 on
-  both lanes (`tmp/d618_lift.txt`) - the preference weight is 0.06 and the fact is either absent from
-  the rows that rank well or not reached by the preference key. The next unit on the access family
-  should read what `ranking.py` does with `parking` before changing the corpus.
-- **The vector lane is ungraded in both directions.** The same measurement has it raising outdoor
-  (0.88 -> 1.31) and MTR (0.67 -> 1.00) while lowering pet (2.24 -> 1.80); no door says which trade is
-  acceptable, so the lane can improve one preference and hurt another with every test green. A graded
-  comparison of the two lanes over a fixed preference set is the missing door.
+- **Closed by D620 (§618): the lift door now asks the production path.** It called `S.search(...)`
+  without `intent_preferences` - the keyword `api/pipeline.py:192-197` fills - so the preference lane
+  scored neutral 0.5 on every row and the table was the default ordering's base-rate correlation.
+  Through `run_search` the lifts are quiet 2.32, pet 4.04, outdoor 1.75, parking 2.89, MTR 3.01
+  (`tmp/d620_lift_prod.txt`), and the door's ten new legs require the two calls to disagree
+  (`tmp/d620_fired.txt`). The stale numbers this bullet used to carry (outdoor 1.31, MTR 1.00, pet
+  1.80, parking 0.00) were measured with `embedding` toggled and the preference still absent.
+- **`parking_access` lifts - it was the harness that did not.** D618 (§616) filed "parking lifts
+  nothing, with or without the vector lane" from that same preferenceless call; D620 (§618) measured
+  2.89 through `run_search` (base 0.28, top-10 0.80, 8 of 10 rows firing). Nothing in the ranking was
+  changed. What stays open is the general question the wrong table hid: which stated preferences move
+  a page by how much, measured on the lane the routes use.
+- **The vector lane's effect on a STATED preference is still unmeasured.** §616's on/off column
+  toggled `embedding` inside a call that never received the preference, so it compared two
+  preferenceless orderings; with the preference in the ranking the comparison has to be redone (the
+  same six sentences, `embedding=None` against the hashing lane, both through `run_search`-equivalent
+  input). Until then, no door says whether the vector lane helps or hurts a preference.
