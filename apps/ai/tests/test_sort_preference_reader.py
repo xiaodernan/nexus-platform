@@ -149,19 +149,27 @@ MERCHANTS = [
 ]
 
 #: Same three, Chinese cards and Chinese tags, because the chain case starts from a
-#: Chinese utterance and `_filter_static` matches on those strings.
+#: Chinese utterance and `_filter_static` matches on those strings. They also carry
+#: `category_slugs`: `plan_from_intent` reads 拉麵 into the taxonomy bucket `ramen`, and a
+#: category-filtered candidate row is matched on its leaf slug AND its parent's (D596, D597).
+#: Without the field this lane compares the bucket to `category_primary`, which on these
+#: fixtures is the coarse `restaurant`, so all three cards are dropped and the chain rows below
+#: fail on an EMPTY answer set rather than on the order they are named for.
 ZH_MERCHANTS = [
     {"subject_id": "z1", "merchant_id": "z1", "subject_type": "merchant",
      "display_name": "沙田拉麵屋", "category_primary": "restaurant", "district": "Sha Tin",
      "avg_price_hkd": 120, "rating_agg": 4.5, "review_count": 10, "tags": ["拉麵"],
+     "category_slugs": ["ramen", "restaurant"],
      "price_amount": 100},
     {"subject_id": "z2", "merchant_id": "z2", "subject_type": "merchant",
      "display_name": "觀塘拉麵店", "category_primary": "restaurant", "district": "Kwun Tong",
      "avg_price_hkd": 400, "rating_agg": 4.8, "review_count": 300, "tags": ["拉麵"],
+     "category_slugs": ["ramen", "restaurant"],
      "price_amount": 380},
     {"subject_id": "z3", "merchant_id": "z3", "subject_type": "merchant",
      "display_name": "旺角拉麵館", "category_primary": "restaurant", "district": "Mong Kok",
      "avg_price_hkd": 250, "rating_agg": 4.2, "review_count": 40, "tags": ["拉麵"],
+     "category_slugs": ["ramen", "restaurant"],
      "price_amount": 230},
 ]
 

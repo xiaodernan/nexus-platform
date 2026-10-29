@@ -2526,3 +2526,24 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   enforces one ROW per kind and one LANE per value; nothing enforces one SURFACE per row, and the
   arms prove the gap: dropping `_refused_today` appends 102 further copies and moves none of the four
   doors that read this vocabulary. Owner: the AI lane.
+
+- **The static lane's category fallback compares a slug bucket to a display-name column** -
+  `_filter_static` matches a row that carries `category_slugs` against `resolve(bucket)` and otherwise
+  falls through `elif r.get("category_primary") != bucket`. On the live plane that column is a NAME:
+  the 23 merchants a `category=ramen` clause reaches carry `'Ramen & Noodles'`, `'Italian'`,
+  `'Dim Sum'`, `'Vietnamese'`, `'Steakhouse'`, `'Malaysian & Singaporean'` in it
+  (`tmp/d614_select_run.txt`), so the comparison can only ever match a row that invents a slug in a
+  name column - which is exactly what D596 measured from the other side (`category=cafe` kept 79
+  merchants live, 0 in this lane). It still fires live for one shape: a merchant with no
+  `merchant_categories` rows gets `'{}'::text[]` from `CATEGORY_SLUGS_SUBQUERY`, so `row_slugs` is
+  empty, so it is dropped by a comparison that could not have matched anyway. The direction is safe -
+  an uncategorised merchant should not answer a category request - but the rule is enforced by
+  accident, and no door names the shape. Owner: the AI lane.
+
+- **A fixture must carry the two-level `category_slugs` mirror, or it is testing the fallback** -
+  every shipped candidate row carries leaf AND parent slugs (both lanes' SELECT, D596/D597), and D613
+  found two end-to-end rows whose fixtures did not, which made them fail on an EMPTY answer set while
+  looking like a ranking bug (`tmp/d613_static_probe.txt`). Nothing checks the shape of a hand-built
+  row, so the next fixture that filters by category repeats the mistake. The cheap fix is a door over
+  the fixture backends: any row list a category-filtered plan is pointed at either carries
+  `category_slugs` on every row or says why not. Owner: the AI lane.

@@ -27537,3 +27537,76 @@ sharpest form.
   `tests/test_lexicon.py`, and `tmp/d612_probe.py` + `tmp/d612_widening.py` + `tmp/d612_dupes.py` +
   `tmp/d612_floor.py` + `tmp/d612_hole.txt` + `tmp/d615_avoid.py` + `tmp/d615_canon_gap.py` +
   `tmp/d615_simp.py` + `tmp/d612_arms.py` as the re-runnable measurements.
+
+## 611. D613 · the two chain rows of the sort-preference reader were red on an EMPTY answer set, and the fixture was the row-shape outlier (`apps/ai/tests/test_sort_preference_reader.py`)
+
+**§609's suite handed these over by name.** `test_the_followup_sentence_reaches_the_served_order` and
+`test_closer_orders_by_distance_only_when_distance_is_known` both failed with
+`assert [] == ['觀塘拉麵店', '旺角拉麵館', '沙田拉麵屋']` - not a wrong order but no order at all, no
+cards served. Reproduced at those bytes: **2 failed, 11 passed**. The file's own docstring promises
+that "a preference re-orders, it never re-scores and never filters", so a reader door whose END TO END
+rows answer with an empty set is asserting nothing about the reader.
+
+**Where the cards went.** `tmp/d613_static_probe.py` runs the two utterances through the shipped
+chain and prints each stage, so the drop is placed rather than argued:
+
+    cue '拉麵' + '太贵了' -> filters {'category': 'ramen', 'open_now': False}  price_low  kept []
+    cue '拉麵' + '近一点' -> filters {'category': 'ramen', 'open_now': False}  distance   kept []
+
+`plan_from_intent` is doing its job - the cue 拉麵 reaches the taxonomy bucket `ramen` - and the
+answer set dies one step later, in `search/service.py::_filter_static`'s category block. That block
+(D596) matches a row that carries `category_slugs` against `resolve(bucket)`, and falls back to
+`r.get("category_primary") != bucket` when the row carries nothing. The ZH fixtures declare
+`"category_primary": "restaurant", the coarse bucket, while the plan's bucket is the leaf `ramen`, so
+all three cards were dropped before the ranking table was ever consulted.
+
+**The comparison the fallback cannot win.** On a live row `category_primary` is not a slug at all: the
+23 merchants a `category=ramen` clause reaches (`tmp/d614_select_run.txt`) carry
+`'Ramen & Noodles'`, `'Italian'`, `'Dim Sum'`, `'Vietnamese'`, `'Steakhouse'` in that column. D596
+measured the same mismatch from the other side - `category=cafe` kept 79 merchants live and 0 in the
+static lane - and its fix was to match on the resolved slugs. What this unit adds is where the
+fallback still fires live: a merchant with NO category link rows gets `'{}'::text[]` from
+`CATEGORY_SLUGS_SUBQUERY`, so `row_slugs` is empty, so it is compared slug-against-display-name and
+dropped. The direction is safe (an uncategorised merchant should not answer a category request) but
+the branch only looks right because nothing tests that shape.
+
+**The repair is data.** Each of the three ZH fixtures gains
+`"category_slugs": ["ramen", "restaurant"]` - the leaf-plus-parent mirror the SELECT of both lanes
+emits for a category-filtered candidate row (D596, D597; `resolve('ramen')` is itself just
+`['ramen']`, the parent comes from the subquery). The `#:` block above the list states why the field
+is there, because a fixture that silently grows a column is a fixture nobody can read - and the
+column is what the failing rows were missing, not the ranking.
+
+**Verified.** `tests/test_sort_preference_reader.py` -> **13 passed** (from **2 failed, 11 passed**).
+The unit changes no `nexus_ai` source, so the two rows now test the order they are named for instead
+of an absence.
+
+**Arms** (`tmp/d613_arms.py`, fixture/service edits inside the throw-away copy tree `tmp/d613_armtree`,
+torn down after the run - `tmp/d613_arms.txt`):
+
+    A  the slugs name izakaya, not ramen          2 failed, 11 passed
+    B  the slugs are empty                        2 failed, 11 passed
+    C  the plan's bucket is a leaf the rows omit     2 failed, 11 passed
+    D  the bucket is named twice over             13 passed (equivalent)
+       CONTROL (shipped bytes)                   13 passed
+
+Each of the three reds is exactly the two chain rows. B is the arm that matters: emptying the new
+field sends the lane back down the `elif` and the rows are red again, which is the proof that the
+column the fixtures gained is the column doing the filtering rather than a decoration that happens to
+sit next to a green run. A and C say the match is on the bucket the PLAN carries and not on the card's
+own words - neither arm touches 拉麵 in `tags` or in `display_name`, so a lane that matched on text
+would have stayed green. D is the honest equivalent: the same slug listed twice changes nothing.
+
+**Filed to PLAN.** Two bullets: the static lane's `elif` compares a slug bucket to a display-name
+column, which is where an uncategorised live row is dropped by accident rather than by rule; and the
+fixture rule this unit learned - a fixture must carry the two-level `category_slugs` mirror, because
+every shipped row does. The live question the probe opened next - 23 merchants reached by
+`category=ramen`, 11 of them with a non-ramen `category_primary`, and a card that prints
+`category_primary` without ever saying which category matched - is D614's, and this unit files it in
+PLAN rather than fixing a filter that is behaving as written.
+
+- readers: `ZH_MERCHANTS` and the `#:` block above it, the three chain cases that start from
+  `merge_turn`, `_filter_static`'s category block and its `elif` fallback,
+  `CATEGORY_SLUGS_SUBQUERY` and `_category_slugs_select` (the only producers of the field the fixtures
+  gained), `tmp/d613_static_probe.py` + `tmp/d613_arms.py` + `tmp/d614_select.py` as the re-runnable
+  measurements.
