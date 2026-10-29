@@ -27610,3 +27610,56 @@ PLAN rather than fixing a filter that is behaving as written.
   `CATEGORY_SLUGS_SUBQUERY` and `_category_slugs_select` (the only producers of the field the fixtures
   gained), `tmp/d613_static_probe.py` + `tmp/d613_arms.py` + `tmp/d614_select.py` as the re-runnable
   measurements.
+
+## 612. D614 · the category filter answered an Italian house for a ramen request, and the filter turned out to be right (`docs/PLAN.md`)
+
+**The question §611 opened.** Its probe reached the live plane to check what `category_primary`
+holds, and the row it printed said the taxonomy leaf is a NAME: `filters.category=ramen` returns
+merchants whose own card says `Italian`, `Dim Sum`, `Vietnamese`, `Hot Pot`, `Steakhouse`. Filed as
+"the search answers with the wrong merchants", this unit went to measure whether that is a filter
+bug, and it is not.
+
+**What the clause reaches, measured.** `resolve('ramen')` is `['ramen']` and the taxonomy has exactly
+one row it can name: `1566a4c5… slug='ramen' name='Ramen & Noodles' parent_slug='restaurant'`. The
+clause `c.slug = ANY(slugs) OR pc.slug = ANY(slugs)` reaches **23 merchants**, and the join counts say
+how: **`by_self=23`, `by_parent=0`** - not one of them arrived through an ancestor, every one carries
+the `ramen` leaf in its own `merchant_categories` rows (`tmp/d614_select_run.txt`). The per-merchant
+lists confirm it: `'Clay Room' -> ['italian', 'ramen', 'restaurant']`, `'Crimson Veranda' ->
+['izakaya', 'ramen', 'restaurant']`, `'Cinder Gate' -> ['hotpot', 'ramen', 'restaurant']`. A
+restaurant that serves both pasta and ramen is a real restaurant, and it is the second card the corpus
+says it is. **11 of the 23 print a primary that is not ramen** - which is the whole of the surprise,
+and it is a naming problem, not a matching one. Disclosed rather than smoothed: 22 of the 23 are
+published; the probe's own SQL carried no `m.status` predicate, so one `pending_review` row is in the
+list above and not in a shipped answer (`sql.py:785` adds `m.status = 'published'`).
+
+**What the card actually says.** `search/cards.py:517` builds the subtitle as
+`bits = [cand.category or rec.get("category_primary")]`, so the Italian ramen house is printed as
+"Italian · Central" and nothing on the card tells the user that the ramen tag is why they are seeing
+it. The row does carry the answer - `category_slugs` is in `raw` whenever a category filter ran - but
+only as slugs: `CATEGORY_SLUGS_SUBQUERY` aggregates `s.slug` and no name, so a reason in the user's
+own script needs either a wider column or a taxonomy lookup per request. The corpus can do it:
+`categories.name_zh` is populated (`ramen -> 拉麵粉麵`, `hotpot -> 火鍋`, `izakaya -> 居酒屋`,
+`tmp/d614_dupes.txt`).
+
+**A second thing the probe found on the way.** `Ginger Studio` appeared twice in the reached list, and
+it is not a double count: `dc5f1725…` is the Italian one, `bbecb58a…` the Malaysian & Singaporean one,
+two DISTINCT merchants sharing a display name. The probe then asked how many such collisions the plane
+carries: **7 names cover 14 merchants of the 470 published** (Banyan Room, Cove Gate, Ginger Studio,
+Marble Kitchen, Saffron Table, Zenith Stop, 知嶺 - every one a pair, so no name is shared by three),
+which means one answer can carry two cards a user cannot tell apart. A corpus question, not a reader
+bug, and it sits in no gate today.
+
+**Why this unit files instead of fixing.** Three candidate repairs were considered and all three are
+product decisions rather than defects: naming the matched category on the card (needs the taxonomy
+name in the row or a lookup, and copy in three locales), demoting a merchant whose PRIMARY category is
+not the bucket (which would silently contradict the corpus's own multi-category model), and merging the
+duplicate display names (seed data). PLAN carries them as "A card that answers a category request
+never says which category matched it", with the measured reach, the `by_parent=0` fact that makes the
+filter innocent, the `name_zh` availability, and the duplicate-name pairs. Nothing in `nexus_ai`
+changed, so no door grew either: §611's probe and `tmp/d614_select.py` + `tmp/d614_dupes.py` stay the
+re-runnable record of what the clause reaches.
+
+- readers: `build_merchant_query`'s `category_clause` and `CATEGORY_SLUGS_SUBQUERY` (both innocent),
+  `resolve` (a bucket that is already a slug resolves to itself, so the parent leg lives in the ROW,
+  not in the resolver), `_subtitle` in `search/cards.py`, `categories.name_zh` (unread by any card),
+  and the published-status predicate the probe had to be told about.
