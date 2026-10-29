@@ -27817,3 +27817,83 @@ the ranking floor (`ranking.py:262` reads the flag) while the flag claims the wo
   `_offering_rows` (the two row shapes), and this unit's seven `tmp/` measurements
   (`d615_gate_split`, `d615_same_request`, `d615_demo_names`, `d615_offering_leg`,
   `d616_offering_live`, `d616_taxonomy`, `d615_door_reword2`).
+
+## 616. D618 · the embedding worker borrowed the request path's 3 s budget, so a pass over the plane could never finish (`apps/ai/nexus_ai/rag/embed.py`, `apps/ai/tests/test_rag_embed.py`)
+
+**What it borrowed, and what that cost.** `run()` used the process pool (`db_pool.db()`) or built one
+with `db_pool.connect(settings)` - the pool every request uses, whose connections are initialised with
+`statement_timeout = settings.db_statement_timeout_ms` (`db/pool.py:233`), 3,000 ms by default. One
+batch stores 32 rows of 1,024 floats in a single statement. Measured on the seeded plane 2026-10-29
+(2,118 chunks, 470 published merchants, provider `hashing`): the pass wrote **1,376** chunks and then
+raised `QueryCanceledError` out of `database.write` - and because the write sat **outside**
+`embed_pending`'s `try` (the `else:` branch at `embed.py:186-195`), the one slow batch ended the whole
+run. `make ai-embed` could not finish a plane on this machine, and no leg of
+`tests/test_rag_embed.py` could see it: all eighteen handed in a fake DB that never times out.
+
+**The fix is two questions, each now answered once.** (1) *How long may a batch take?* The worker has
+its own budget: `EMBED_STATEMENT_TIMEOUT_MS = 120_000`, and `worker_settings()` takes the **largest**
+of the explicit request, that floor, and `settings.db_statement_timeout_ms` - an operator who tuned a
+bigger plane keeps their value, and the request path's 3 s can never shrink it. `run()` now connects
+`force_new=True` with that budget (the CLI disposes it), so a request pool's budget is never
+inherited. (2) *Can one slow write end the pass?* No: the write moved inside the batch's `try`, so a
+timeout is a **refused batch** - the rows stay pending, `report.failures` names the batch and the
+error, and the pass continues. That is the contract `adapter.embed` already had.
+
+**Measured after the fix** (`tmp/d618_pending.txt`, `tmp/d618_embed.txt`):
+
+    before the run   `742 chunk(s) await embedding`   (1,376 of 2,118 were stored by the pass that died)
+    the pass         stored 742 of 742 chunks, 24 batches, 4.27 s, 0 failures
+    after the run    `0 chunk(s) await embedding`
+
+`--dry-run` is the "before" line and a plain run is the "after" line, so the two numbers are two reads
+of the same table, not a remembered state.
+
+**What the plane answers now that every chunk carries a vector.** The strategy string was
+`hybrid_v1+postgres` before this unit and is `hybrid_v1+postgres+vector` on four of five probe
+sentences after it (`拉麵`, `咖啡`, a date sentence, a quiet-cafe sentence). The fifth,
+`有停車場嘅火鍋`, reports `vector_lane=True` and **no** `+vector`: by D593's rule the suffix is printed
+only when a row carried a non-zero `vec_score`, so its absence says no chunk contributed to those ten
+rows. A lane named by the flag that asked would have claimed work it did not do.
+
+Precision did not move, and could not have: the twelve leaf-named cases of D600 are answered by the
+FILTER and the vector lane only reorders inside it - 12 of 12 at p@10 = 1.00, the right row first in
+every case, mean 1.000 (`tmp/d618_p10.txt`, run through `run_search` so the lane is the production
+one, not a hand-built `S.search` call).
+
+The preference numbers DID move, in both directions (`tmp/d618_lift.txt`; the no-embedding column
+reproduces D602's table exactly, which is how this harness shows it asks the same question):
+
+    query                attribute             base    lift, no embeddings   lift, hashing lane
+    安靜的咖啡店         quiet_ambience        0.43    1.39                  1.39
+    可以帶寵物的餐廳     pet_friendly_access   0.22    2.24                  1.80
+    適合情侶約會的地方   date_occasion         1.00    1.00                  1.00  (vacuous: every row true)
+    有戶外座位的餐廳     outdoor_seating       0.23    0.88                  1.31
+    有停車場的餐廳       parking_access        0.28    0.00                  0.00
+    近地鐵站的餐廳       mtr_near_access       0.30    0.67                  1.00
+
+**The gate** is four new legs in `tests/test_rag_embed.py`, and the file goes from 18 to **22 passed**:
+the worker floor wins over a smaller settings budget (3,000 -> 120,000); a larger settings budget is
+kept (900,000 stays); an explicit `--statement-timeout-ms` is honoured (240,000); and a write that
+times out is a refused batch, not a dead pass (2 rows, 0 stored, 2 failures, each naming the timeout).
+`ruff check` is clean on both files. The two live doors that this unit's subject feeds - D600's
+precision door and D602's lift door - were re-run on the fully embedded plane: **7 passed**.
+
+**Not claimed.** `hashing` is not a semantic adapter: the lift moves are what a hashing lane does to
+this corpus, not evidence of paraphrase recall, and the semantic provider was not run here. p@10 = 1.00
+is the filter's precision, not a ranking quality claim. `parking_access` still lifts nothing (0.00
+either way) - this unit embeds the plane, it does not make that preference work. The pet row fell
+(2.24 -> 1.80) and that is recorded as measured, not as a regression: nothing yet says which direction
+is right, which is the point of the first filed bullet. And the 3 s request budget is untouched - the
+claim is only that a batch write must not inherit it.
+
+**Filed to PLAN, three bullets by their own titles.** The lift door measures a lane the request path
+never uses (`embedding=None` while `api/pipeline.py:180-189` embeds every query when a provider is
+configured); `parking_access` lifts nothing with or without the vector lane; and the vector lane is
+ungraded in both directions, so a change that trades outdoor for pet moves the product and reddens
+nothing.
+
+- readers: `embed.py`'s `run`, `embed_pending` and `worker_settings`; `db/pool.py:214-240` (the pool
+  and the `statement_timeout` it sets); `api/pipeline.py:171-197` (which decides the vector lane and
+  what it hands `search`); `search/service.py:1620-1629` (the strategy suffix and its condition); and
+  this unit's four `tmp/` measurements (`d618_pending`, `d618_embed`, `d618_p10`, `d618_lift`, with
+  probes `d618_p10_probe.py`, `d618_lift_probe.py`).

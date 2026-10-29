@@ -47,6 +47,13 @@ from nexus_ai.search.sql import Params, vector_literal
 log = logging.getLogger("nexus_ai.rag.embed")
 
 BATCH_SIZE = 32
+
+#: D618: the worker's own statement budget. The pool it used to borrow is the REQUEST path's,
+#: sized so a slow search cannot pin a connection (3 s by default). A batch writes 32 rows of
+#: 1024 floats and takes longer than that on this machine: measured 2026-10-29, the pass wrote
+#: 1,376 of 2,118 chunks and then died on `QueryCanceledError` - not a refusal, an abort, so
+#: `make ai-embed` could never finish here.
+EMBED_STATEMENT_TIMEOUT_MS = 120_000
 NIL_UUID = "00000000-0000-0000-0000-000000000000"
 
 # Every value reaches the server as a bound parameter, and the uuid parameters are cast to
@@ -87,6 +94,27 @@ class EmbedReport:
     @property
     def refused_rows(self) -> int:
         return self.scanned - self.stored
+
+
+def worker_settings(settings: Any, requested_ms: Optional[int] = None) -> Any:
+    """`settings` with the worker's statement budget (D618).
+
+    The worker's own budget is the floor; a settings object that asks for MORE (an operator
+    tuning a big plane) keeps its larger value. Never smaller: the request path's budget is not
+    a batch write's budget.
+    """
+    from copy import copy
+    from dataclasses import is_dataclass, replace
+
+    budget = max(int(requested_ms or EMBED_STATEMENT_TIMEOUT_MS),
+                 int(getattr(settings, "db_statement_timeout_ms", 0) or 0))
+    # The real ``Settings`` is a dataclass; a test (or an embedder) may hand in any object with
+    # the three attributes ``connect`` reads. ``replace`` is the right verb only for the first.
+    if is_dataclass(settings) and not isinstance(settings, type):
+        return replace(settings, db_statement_timeout_ms=budget)
+    clone = copy(settings)
+    setattr(clone, "db_statement_timeout_ms", budget)
+    return clone
 
 
 def model_tag(adapter: Any) -> str:
@@ -187,11 +215,13 @@ async def embed_pending(database: Any, adapter: Any, *, tenant_id: Optional[str]
             answer = await adapter.embed(texts)
             sql, params = build_store_query(ids, answer, model=tag, stamped_at=stamped_at,
                                             texts=texts)
-        except Exception as exc:  # the row stays pending; a poisoned batch cannot end the pass
+            written = await database.write(sql, *params)
+        except Exception as exc:
+            # the row stays pending; a poisoned batch cannot end the pass (D618 extends this to
+            # the WRITE, which is where the budget used to abort the run)
             report.failures.append(f"batch starting at {first_id}: {exc}")
             log.warning("refused embedding batch at %s: %s", first_id, exc)
         else:
-            written = await database.write(sql, *params)
             report.stored += len(written)
         if remaining is not None:
             remaining -= len(rows)
@@ -203,16 +233,19 @@ async def embed_pending(database: Any, adapter: Any, *, tenant_id: Optional[str]
 
 
 async def run(settings: Any = None, *, tenant_id: Optional[str] = None,
-              batch_size: int = BATCH_SIZE, limit: Optional[int] = None) -> EmbedReport:
+              batch_size: int = BATCH_SIZE, limit: Optional[int] = None,
+              statement_timeout_ms: Optional[int] = None) -> EmbedReport:
     """The worker entry point: pool, adapter from the configured provider, one pass."""
     from nexus_ai.config import get_settings
     from nexus_ai.db import pool as db_pool
     from nexus_ai.models.embeddings import get_embedding_adapter
 
     settings = settings or get_settings()
-    database = db_pool.db()
-    if database is None:
-        database = await db_pool.connect(settings)
+    # D618: always a worker-budgeted pool. `db_pool.connect(force_new=True)` replaces whatever
+    # the process had, and the caller disposes it (the CLI does), so a request pool's 3 s budget
+    # is never inherited by a batch write.
+    database = await db_pool.connect(worker_settings(settings, statement_timeout_ms),
+                                     force_new=True)
     if database is None:
         raise EmbeddingRefusal(
             "no database pool — the store stage has nowhere to write; set NEXUS_DATABASE_URL")
@@ -244,6 +277,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     help="stop after this many pending rows (a canary run)")
     ap.add_argument("--dry-run", action="store_true",
                     help="report what is pending and write nothing")
+    ap.add_argument("--statement-timeout-ms", type=int, default=None,
+                    help="the worker's own statement budget (default "
+                         f"{EMBED_STATEMENT_TIMEOUT_MS}); the request path's 3 s is not a "
+                         "batch write's budget")
     args = ap.parse_args(list(argv) if argv is not None else None)
 
     async def go() -> int:
@@ -261,7 +298,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             await db_pool.dispose()
             return 0
         report = await run(settings, tenant_id=args.tenant, batch_size=args.batch,
-                           limit=args.limit)
+                           limit=args.limit,
+                           statement_timeout_ms=args.statement_timeout_ms)
         print(_describe(report))
         await db_pool.dispose()
         return 1 if report.failures else 0

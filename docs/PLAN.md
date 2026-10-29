@@ -2603,3 +2603,19 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   not before: the lane keeps the row and simultaneously tells the ranker the user's words appeared in
   it. Measured before/after on the eight demo requests; not repaired here because the live flag is a
   per-row SQL expression and the two would then disagree in the other direction.
+
+- **The lift door measures a lane the request path never uses.** `test_the_stated_preference_moves_the_ranking_of_the_live_plane.py`
+  calls `S.search(..., embedding=None)`, so it pins the keyword-only ordering; with `NEXUS_EMBEDDING_PROVIDER`
+  set, `api/pipeline.py:180-189` embeds every query and the lane becomes `hybrid_v1+postgres+vector`.
+  Measured by D618 (§616) on a fully embedded plane (`tmp/d618_lift.txt`): outdoor 0.88 -> 1.31, MTR
+  0.67 -> 1.00, pet 2.24 -> 1.80, quiet 1.39 -> 1.39, parking 0.00 -> 0.00. The door should ask the
+  production path (through `run_search`) and pin those four numbers; until it does, a change to the
+  vector lane moves the product and reddens nothing.
+- **`parking_access` lifts nothing, with or without the vector lane.** Base rate 0.28, top-10 0.00 on
+  both lanes (`tmp/d618_lift.txt`) - the preference weight is 0.06 and the fact is either absent from
+  the rows that rank well or not reached by the preference key. The next unit on the access family
+  should read what `ranking.py` does with `parking` before changing the corpus.
+- **The vector lane is ungraded in both directions.** The same measurement has it raising outdoor
+  (0.88 -> 1.31) and MTR (0.67 -> 1.00) while lowering pet (2.24 -> 1.80); no door says which trade is
+  acceptable, so the lane can improve one preference and hurt another with every test green. A graded
+  comparison of the two lanes over a fixed preference set is the missing door.

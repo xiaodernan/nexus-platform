@@ -51,6 +51,14 @@ class FakeDB:
         return [{"id": "x"} for _ in range(self.written_per_write)]
 
 
+class TimingOutDB(FakeDB):
+    """A database whose WRITE outlives the budget - the shape that ended a real pass."""
+
+    async def write(self, sql, *params):
+        self.writes.append((sql, params))
+        raise TimeoutError("canceling statement due to statement timeout")
+
+
 class FakeAdapter:
     def __init__(self, answer_count: int):
         self.answer_count = answer_count
@@ -158,3 +166,31 @@ class TestEmbedPending:
     async def test_batch_size_must_be_positive(self):
         with pytest.raises(ValueError):
             await E.embed_pending(FakeDB(ROWS), FakeAdapter(1), batch_size=0, now=NOW)
+
+class TestTheWorkerBudget:
+    """D618 - the pass borrowed the request path's 3 s budget and died on a batch write.
+
+    Measured on the seeded plane 2026-10-29: `python -m nexus_ai.rag.embed` wrote 1,376 of 2,118
+    chunks and then raised `QueryCanceledError` out of the write. Nothing was refused; the RUN
+    ended, so `make ai-embed` could never finish on this machine.
+    """
+
+    def test_the_worker_floor_wins_over_a_smaller_settings_budget(self):
+        st = SimpleNamespace(db_statement_timeout_ms=3_000)
+        assert E.worker_settings(st).db_statement_timeout_ms == E.EMBED_STATEMENT_TIMEOUT_MS
+
+    def test_a_larger_settings_budget_is_kept(self):
+        st = SimpleNamespace(db_statement_timeout_ms=900_000)
+        assert E.worker_settings(st).db_statement_timeout_ms == 900_000
+
+    def test_an_explicit_request_is_honoured(self):
+        st = SimpleNamespace(db_statement_timeout_ms=3_000)
+        assert E.worker_settings(st, 240_000).db_statement_timeout_ms == 240_000
+
+    async def test_a_write_that_times_out_is_a_refused_batch_not_a_dead_pass(self):
+        db = TimingOutDB([{"id": ID1, "text": "a"}, {"id": ID2, "text": "b"}])
+        report = await E.embed_pending(db, FakeAdapter(1), batch_size=1, now=NOW)
+        assert report.scanned == 2, "the pass stopped at the first slow write"
+        assert report.stored == 0
+        assert len(report.failures) == 2, report.failures
+        assert all("statement timeout" in f for f in report.failures)
