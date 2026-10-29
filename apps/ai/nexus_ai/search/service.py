@@ -854,6 +854,23 @@ def _sided(w: float, *, liked: bool) -> float:
 #: attribute the seed actually writes -
 #: `test_the_typed_preference_speaks_the_corpus_spelling.py` holds the two planes
 #: to each other.
+def _indoor_evidence(attrs: dict[str, Any]) -> bool | None:
+    """Whether the corpus says this place is INDOOR, or says it seats you outside.
+
+    D622: `indoor_style` is written True on all 470 published rows ("most HK venues are
+    indoor" - the seed's own comment), so as a first question it answers for the whole corpus
+    and an indoor preference cannot move a page: measured, every one of the 184 restaurants a
+    有室內座位 request filters to scored 1.0.  The discriminating fact is on the other side -
+    `outdoor_seating`/`outdoor_style` name the places that are NOT indoor-first - so the
+    outdoor witness is asked first and the constant is only the fallback.
+    """
+    if attrs.get("outdoor_seating") is True or attrs.get("outdoor_style") is True:
+        return False
+    if attrs.get("indoor_style") is True:
+        return True
+    return None
+
+
 _INTENT_ATTR_ALIASES: dict[tuple[str, str], tuple[str, ...]] = {
     ("time_pref", "open_late"): ("opens_late",),
     # D621: the corpus writes "this place has outdoor space" twice - `outdoor_style` on 63 rows
@@ -1384,12 +1401,15 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 if attrs.get("indoor_style") is True:
                                     return _sided(w, liked=False)
                             else:
-                                if attrs.get("indoor_style") is True:
-                                    return _sided(w, liked=True)
-                                if attrs.get("outdoor_style") is True:
-                                    return _sided(w, liked=False)
+                                # D622: the outdoor witness comes first, for the reason
+                                # `_indoor_evidence` states - `indoor_style` is a constant, so
+                                # asking it first liked every row and demoted none.
                                 if attrs.get("outdoor_seating") is True:
                                     return _sided(w * 0.8, liked=False)
+                                if attrs.get("outdoor_style") is True:
+                                    return _sided(w, liked=False)
+                                if attrs.get("indoor_style") is True:
+                                    return _sided(w, liked=True)
                             return None
                         return _match
                     match_fn = make_outdoor_match(is_outdoor, float(weight))
@@ -1549,6 +1569,16 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 # `opens_late`, the stored path scores those halves 0.9 / 0.1, and the
                 # typed one scored nothing at all. One fact, two readers, and the one
                 # serving the live query was the broken one (D518/D522 again).
+                if (str(pref_kind), str(pref_value)) == ("style", "indoor"):
+                    # D622: a name-derived walk cannot express this one - the fact it needs is
+                    # "does NOT seat you outside" - so the pair gets its own reader, the same
+                    # `_indoor_evidence` the stored branch asks.
+                    verdict = _indoor_evidence(attrs)
+                    if verdict is not None:
+                        intent_pref_scores.append(
+                            (1.0 if verdict else 0.0) if polarity > 0
+                            else (0.0 if verdict else 1.0))
+                    continue
                 attr_keys = [f"{pref_value}_{pref_kind}",   # date_occasion
                              f"{pref_kind}_{pref_value}"]   # occasion_date
                 attr_keys += [a for a in _INTENT_ATTR_ALIASES.get(

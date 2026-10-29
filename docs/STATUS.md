@@ -28011,3 +28011,46 @@ preference that cannot move a page. Filed in PLAN.
   walk this unit replaced), `service.py:1365-1398` (the stored branch, which already reads both
   spellings), and this unit's six `tmp/` readings (`d621_attr_census`, `d621_overlap`,
   `d621_indoor_probe`, `d621_rank`, `d621_vector_pref`, `d621_arms`, `d621_indoor_live`).
+
+## 620. D622 · a preference for indoor seating was answered by a fact that is true on every row (`apps/ai/nexus_ai/search/service.py`)
+
+**The constant.** `indoor_style` is written True on **all 470** published rows - the seed's own
+comment says "most HK venues are indoor" - and BOTH readers asked it first: the stored branch at
+`service.py:1390-1395` and the typed branch through the derived name `indoor_style`. So a request for
+indoor seating scored every candidate 1.0 and could not move a page; measured on the 184 restaurants
+its filter admits, **184 of 184** carried 1.0 and none carried 0.0 (`tmp/d622_indoor_arms.py`). The
+111 places the corpus says seat you outside were never demoted for it.
+
+**One home for the pair.** `_indoor_evidence` asks the witness that can say NO first - `outdoor_seating`
+or `outdoor_style` true means this place is not indoor-first - and keeps the constant only as the
+fallback; silence stays `None`. Both readers call it, so a stored declaration and a typed sentence
+cannot take different sides. The stored branch's strength (0.8 of the weight, the arm it shares with
+the outdoor side) is unchanged; what changed is that it now has a side.
+
+**Measured** (`tmp/d622_indoor_arms.py`, `tmp/d622_indoor_live.py`; 470 published merchants, a
+`有室內座位嘅餐廳` request over the 184 restaurants it filters to):
+
+    reading                     scored 1.0   scored 0.0   outdoor share of the top ten
+    constant (HEAD's shape)     184          0            0.20   (the population's own is 0.23)
+    this unit                   122          62           0.00
+
+The page moves by two rows of ten and the ranking moves by 62: the merchants that record outdoor
+space now answer "not what you asked for" instead of "yes". Read the two-row number for what it is -
+the personalization weight cannot outweigh a quality gap - and the 62 for what it is, a signal that
+did not exist before.
+
+**The gate** is `tests/test_the_indoor_preference_asks_the_fact_that_can_say_no.py`: five offline
+legs (seating-only demoted, indoor-only liked, unstated neutral, a refusal reads the same witness,
+and the STORED reader takes the same direction) and one live leg that pins the top-ten outdoor share
+at or below 0.10 (measured 0.00, 0.20 at HEAD's shape). With D620's and D621's doors beside it:
+**22 passed**; the ten-file preference regression set: **227 passed**.
+
+**Not claimed.** No corpus change: `indoor_style` is still true on every row and still says nothing;
+this unit made the pair ask a fact that can differ. The two readers differ in strength (0.2 against
+0.0 for the same merchant) and that difference is older than this unit - recorded, not repaired. And
+nothing here says which of the two outdoor spellings the seed should keep; that is the bullet D621
+filed.
+
+- readers: `service.py:866-882` (`_indoor_evidence`), `service.py:1389-1400` (the stored branch's
+  indoor arm), `service.py:1562-1600` (the typed branch, where the pair now splits off before the
+  name walk), and this unit's two `tmp/` readings (`d622_indoor_arms`, `d622_indoor_live`).

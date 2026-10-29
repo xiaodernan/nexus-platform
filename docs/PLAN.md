@@ -2622,12 +2622,12 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   same six sentences, `embedding=None` against the hashing lane, both through `run_search`-equivalent
   input). Until then, no door says whether the vector lane helps or hurts a preference.
 
-- **`indoor_style` is true on all 470 published rows, so a typed indoor preference is a constant.**
-  D621 (§619) measured it: `有室內座位嘅餐廳` scores **184 of 184** restaurants 1.0
-  (`tmp/d621_indoor_live.py`), so the preference cannot change a page, and the stored branch's
-  indoor half has the same shape (`service.py:1390-1395` asks `indoor_style` first). A discriminating
-  fact has to be chosen - `outdoor_seating is False` is true on 359 rows - and the two readers have to
-  agree on it before the corpus or the matcher changes.
+- **Closed by D622 (§620): the indoor preference now asks a fact that can say no.** D621 (§619)
+  measured the constant - `有室內座位嘅餐廳` scored 184 of 184 restaurants 1.0 - and D622 gave the pair
+  one home (`_indoor_evidence`: the outdoor witness first, `indoor_style` only as the fallback, used by
+  BOTH readers). The 111 merchants that record outdoor space now answer "not what you asked for"
+  (62 of the 184, the page moving 0.20 -> 0.00 of its top ten). What stays open is the corpus: the
+  attribute itself still says the same thing on every row.
 - **The seed writes "outdoor" twice, and the two spellings disagree on 407 rows.** `outdoor_style`
   (63 true / 407 false) and `outdoor_seating` (111 true / 359 false) are both present on all 470 rows
   (`tmp/d621_overlap.py`): 14 both, 49 style only, 97 seat only, 310 neither. D621 made the reader
