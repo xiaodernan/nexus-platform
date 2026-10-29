@@ -856,6 +856,13 @@ def _sided(w: float, *, liked: bool) -> float:
 #: to each other.
 _INTENT_ATTR_ALIASES: dict[tuple[str, str], tuple[str, ...]] = {
     ("time_pref", "open_late"): ("opens_late",),
+    # D621: the corpus writes "this place has outdoor space" twice - `outdoor_style` on 63 rows
+    # and `outdoor_seating` on 111, of which 97 carry no style flag (measured 2026-10-30). The
+    # typed-preference reader derived only `outdoor_style`, so those 97 answered None (neutral)
+    # and the outdoor preference could reach at most 63 of the 111 merchants that state the fact.
+    # The stored branch already reads both (`outdoor_seating` at weight 0.8); this is the same
+    # fact reaching the reader that serves the query the user just typed.
+    ("style", "outdoor"): ("outdoor_seating",),
 }
 
 
@@ -1547,27 +1554,27 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 attr_keys += [a for a in _INTENT_ATTR_ALIASES.get(
                     (str(pref_kind), str(pref_value)), ()) if a not in attr_keys]
 
-                for attr_key in attr_keys:
-                    if attrs.get(attr_key) is True:
-                        weight = 1.0 if polarity > 0 else 0.0
-                        intent_pref_scores.append(weight)
-                        # D392: name the preference that fired, so the card can say WHICH.
-                        # D396: a preference typed in THIS query is "typed", not "declared".
-                        if weight >= 0.5:
-                            intent_matched_labels.append(
-                                {"label": _preference_label(str(pref_kind), str(pref_value),
-                                                           pref_value),
-                                 "source": "typed"})
-                        break
-                    elif attrs.get(attr_key) is False:
-                        weight = 0.0 if polarity > 0 else 1.0
-                        intent_pref_scores.append(weight)
-                        if weight >= 0.5:
-                            intent_matched_labels.append(
-                                {"label": _preference_label(str(pref_kind), str(pref_value),
-                                                           pref_value),
-                                 "source": "typed"})
-                        break
+                # D621: ANY witness of the fact wins over a sibling spelling that says no.
+                # The first version took the first attribute that was PRESENT, so a corpus
+                # that writes one fact twice (`outdoor_style: false` + `outdoor_seating: true`
+                # on 97 of 470 rows, measured) scored those merchants on the spelling that
+                # happened to come first and never read the one that agreed with the user.
+                # This is D527's lesson on the other side: a matcher must not let one
+                # attribute's silence about a fact overrule another attribute's statement of it.
+                weight: float | None = None
+                if any(attrs.get(k) is True for k in attr_keys):
+                    weight = 1.0 if polarity > 0 else 0.0
+                elif any(attrs.get(k) is False for k in attr_keys):
+                    weight = 0.0 if polarity > 0 else 1.0
+                if weight is not None:
+                    intent_pref_scores.append(weight)
+                    # D392: name the preference that fired, so the card can say WHICH.
+                    # D396: a preference typed in THIS query is "typed", not "declared".
+                    if weight >= 0.5:
+                        intent_matched_labels.append(
+                            {"label": _preference_label(str(pref_kind), str(pref_value),
+                                                       pref_value),
+                             "source": "typed"})
             if intent_pref_scores:
                 avg_score = sum(intent_pref_scores) / len(intent_pref_scores)
                 existing = personalization.get(sid)

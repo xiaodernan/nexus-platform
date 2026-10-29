@@ -2621,3 +2621,15 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   preferenceless orderings; with the preference in the ranking the comparison has to be redone (the
   same six sentences, `embedding=None` against the hashing lane, both through `run_search`-equivalent
   input). Until then, no door says whether the vector lane helps or hurts a preference.
+
+- **`indoor_style` is true on all 470 published rows, so a typed indoor preference is a constant.**
+  D621 (§619) measured it: `有室內座位嘅餐廳` scores **184 of 184** restaurants 1.0
+  (`tmp/d621_indoor_live.py`), so the preference cannot change a page, and the stored branch's
+  indoor half has the same shape (`service.py:1390-1395` asks `indoor_style` first). A discriminating
+  fact has to be chosen - `outdoor_seating is False` is true on 359 rows - and the two readers have to
+  agree on it before the corpus or the matcher changes.
+- **The seed writes "outdoor" twice, and the two spellings disagree on 407 rows.** `outdoor_style`
+  (63 true / 407 false) and `outdoor_seating` (111 true / 359 false) are both present on all 470 rows
+  (`tmp/d621_overlap.py`): 14 both, 49 style only, 97 seat only, 310 neither. D621 made the reader
+  read both, which fixes the symptom; whether the corpus should carry one fact or two is a seed
+  question, and every future reader will pay for the answer being "two".

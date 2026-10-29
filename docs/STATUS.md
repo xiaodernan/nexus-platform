@@ -27954,3 +27954,60 @@ comparison, which is the open bullet in PLAN.
   the door omitted), `api/pipeline.py:171-197` (the production call site), `ranking.py:147` and
   `:228` (the neutral score this door measures against), and this unit's four `tmp/` readings
   (`d620_lift_prod`, `d620_fired`, `d620_fired.txt` probe, `d620_old_door`).
+
+## 619. D621 · one fact written twice: `outdoor_style: false` overruled `outdoor_seating: true` on 37 of 184 restaurants (`apps/ai/nexus_ai/search/service.py`)
+
+**What the typed reader did.** The ``intent_preferences`` branch derives the attribute names a
+preference could be written under (`f"{value}_{kind}"`, `f"{kind}_{value}"`, plus
+`_INTENT_ATTR_ALIASES`) and then walks them, **stopping at the first name that is present** - true
+OR false - and breaking. Two defects sit in that sentence. The alias table knew only
+`("time_pref", "open_late")`, so `style/outdoor` derived `outdoor_style` and `style_outdoor` and
+never named `outdoor_seating` at all. And `outdoor_style` is present on **all 470** published rows
+(63 true, 407 false), so for the merchants the seed describes by seating alone the first present
+name answered "no" and the seating fact was never read.
+
+**The census** (`tmp/d621_attr_census.py`, `tmp/d621_overlap.py`, 2026-10-30, 470 published rows):
+
+    outdoor_style     present 470   true  63   false 407
+    outdoor_seating   present 470   true 111   false 359
+    both true 14 | style only 49 | seat only 97 | neither 310
+    within the 184 restaurants a 有戶外座位 request filters to: 37 record style=false + seating=true
+
+**Four arms, one at a time** (`tmp/d621_arms.txt`):
+
+    A  alias added, loop unchanged            0 rows' preference score changed; best seat-only rank 13 -> 13
+    B  alias added, ANY witness wins         37 rows changed (0.0 -> 1.0); best seat-only rank 13 -> 2
+    C  alias removed (HEAD's reader)         seat_only 0.0 for a request for outdoor space
+    D  both spellings false (control)         neither 0.0 - the preference still discriminates
+
+A is why the unit is two lines and not one: the alias alone reaches nothing while a sibling
+spelling is present and says no.
+
+**The fix.** `("style", "outdoor")` gains `outdoor_seating` as an alias, and the walk asks
+`any(...) is True` before `any(...) is False` - D527's lesson ("a matcher that demands its own
+attribute answers None for every merchant the corpus leaves it out of") on the other side: one
+attribute's *no* must not overrule another attribute's *yes*. Silence still answers nothing: a
+merchant that states neither spelling stays `None` (measured, leg four).
+
+**What it does to the page** (`tmp/d621_vector_pref.py`, `tmp/d621_rank.py`): the outdoor lift goes
+**1.75 -> 3.50** (top-10 share 0.40 -> 0.80 of a 0.23 base), the best seat-only merchant moves from
+rank 13 to rank 2, and 170 of the 184 rows change rank - 14 keep theirs. The other five sentences of
+D620's door are unchanged to the second decimal (2.32 / 4.04 / 1.00 / 2.89 / 3.01), which is the
+control that this unit moved one preference and not the lane.
+
+**The gate** is `tests/test_the_outdoor_preference_reads_both_spellings.py`, five legs over the four
+shapes the corpus writes: seating-only scores 1.0 (red at HEAD: 0.0), style-only still scores 1.0,
+both-false is still 0.0, neither is still `None`, and a refusal (polarity -1) reads the same witness
+the other way round. D620's live door moves its outdoor floor from 1.4 to 2.5 and its table row to
+3.50. Both files together: **16 passed**.
+
+**Not claimed.** No corpus change: the seed still writes the fact twice and the two spellings still
+disagree on 407 rows, which is a data question this unit did not touch. Nothing about why the seed
+writes it twice. And the indoor half is untouched and still dead: `indoor_style` is true on 470 of
+470, so a typed indoor preference scores **184 of 184** rows 1.0 (`tmp/d621_indoor_live.py`) - a
+preference that cannot move a page. Filed in PLAN.
+
+- readers: `service.py:866-868` (`_INTENT_ATTR_ALIASES`), `service.py:1562-1595` (the derived-name
+  walk this unit replaced), `service.py:1365-1398` (the stored branch, which already reads both
+  spellings), and this unit's six `tmp/` readings (`d621_attr_census`, `d621_overlap`,
+  `d621_indoor_probe`, `d621_rank`, `d621_vector_pref`, `d621_arms`, `d621_indoor_live`).

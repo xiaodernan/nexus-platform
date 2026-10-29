@@ -24,7 +24,7 @@ Measured on the seeded plane 2026-10-30 (470 published merchants, 2,118 chunks e
     安靜的咖啡店        quiet_ambience       79 cafes     0.43   1.00    2.32
     可以帶寵物的餐廳    pet_friendly_access  184 rest.    0.22   0.90    4.04
     適合情侶約會的地方  date_occasion        184 rest.    1.00   1.00    1.00  (vacuous)
-    有戶外座位的餐廳    outdoor_seating      184 rest.    0.23   0.40    1.75
+    有戶外座位的餐廳    outdoor_seating      184 rest.    0.23   0.80    3.50
     有停車場的餐廳      parking_access       184 rest.    0.28   0.80    2.89
     近地鐵站的餐廳      mtr_near_access      184 rest.    0.30   0.90    3.01
 
@@ -61,7 +61,7 @@ CASES = [
 WORKING = {
     "安靜的咖啡店": 1.8,
     "可以帶寵物的餐廳": 2.5,
-    "有戶外座位的餐廳": 1.4,
+    "有戶外座位的餐廳": 2.5,
     "有停車場的餐廳": 2.0,
     "近地鐵站的餐廳": 2.0,
 }
