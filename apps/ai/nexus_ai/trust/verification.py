@@ -124,13 +124,18 @@ class Claim:
 class GroundSet:
     """Every scalar the text is allowed to assert, with the fact that backs it."""
 
-    numbers: list[tuple[float, str, Any]] = field(default_factory=list)   # (value, attribute, fact_id)
+    #: D611: `(value, kind, attribute, fact_id)`. The kind is the one `_feed` already computed
+    #: and threw away, so a stored number can be refused as a witness of a claim it never made:
+    #: a price is not a distance, a review count is not a walk time, a day of the week is not a
+    #: rating. Without it the whole page is one pool, matched by the CLAIM's tolerance only.
+    numbers: list[tuple[float, str, str, Any]] = field(default_factory=list)
     strings: set[str] = field(default_factory=set)                         # times, names, labels
     times: set[int] = field(default_factory=set)                           # minute-of-day
     entities: set[str] = field(default_factory=set)                        # normalised names
 
-    def add_number(self, value: float, attribute: str, fact_id: Any = None) -> None:
-        self.numbers.append((float(value), attribute, fact_id))
+    def add_number(self, value: float, attribute: str, fact_id: Any = None, *,
+                   kind: str | None = None) -> None:
+        self.numbers.append((float(value), kind or _attr_kind(attribute), attribute, fact_id))
 
     def add_string(self, value: str) -> None:
         v = value.strip()
@@ -162,7 +167,9 @@ class GroundSet:
             return (False, None, None)
         rel, abs_tol = TOLERANCE.get(claim.kind, TOLERANCE[NUMBER_KIND])
         best: tuple[float, Any, float] | None = None
-        for value, _attr, fact_id in self.numbers:
+        for value, entry_kind, _attr, fact_id in self.numbers:
+            if entry_kind != claim.kind:
+                continue
             diff = abs(value - claim.value)
             if diff <= max(abs_tol, rel * abs(value)):
                 if best is None or diff < best[0]:
@@ -186,12 +193,18 @@ def build_ground_set(bundle: FactBundle | None = None, *,
             _feed(gs, raw, fact.attribute, fact.fact_id, leaf=key)
         if fact.attribute:
             gs.add_string(str(fact.attribute))
+    records = list(records)
     for rec in records:
         for key, val in _flatten(rec):
             _feed(gs, val, str(key), None)
         for key in ("display_name", "name", "title", "display_name_zh", "name_zh", "slug"):
             if rec.get(key):
                 gs.add_entity(str(rec[key]))
+    # D611: the length of the page is a fact the system holds, and once every stored number is
+    # typed it is the only COUNT of results in the ground set. `找到 6 個` used to be vouched by
+    # one card's `travel_minutes` 6; nothing on the page counted six of anything.
+    if records:
+        gs.add_number(float(len(records)), "result_count", None)
     for n in extra_numbers:
         try:
             gs.add_number(float(n), "request", None)
@@ -211,14 +224,10 @@ def _feed(gs: GroundSet, raw: Any, attribute: str, fact_id: Any, *,
         gs.add_string(text)
         return
     num = _to_float(text)
-    kind = _attr_kind(attribute)
-    if num is not None and kind in (MONEY_KIND, RATING_KIND, DISTANCE_KIND, MINUTES_KIND,
-                                    COUNT_KIND, PERCENT_KIND, NUMBER_KIND):
-        gs.add_number(num, attribute, fact_id)
-    if num is not None and attribute in ("avg_price_hkd", "price_amount", "price",
-                                        "rating", "rating_agg", "distance_m", "meters",
-                                        "capacity_left", "party_size", "min_spend"):
-        gs.add_number(num, attribute, fact_id)
+    if num is not None:
+        # the `kind in (the seven names)` test this replaces was vacuous - `_attr_kind` returns
+        # one of them for EVERY key - and the `if` after it re-added what the first had added.
+        gs.add_number(num, attribute, fact_id, kind=_number_kind(attribute, leaf))
     gs.add_string(text)
     if isinstance(raw, datetime):
         gs.add_number(raw.timestamp(), attribute, fact_id)
@@ -531,6 +540,20 @@ def _attr_kind(attribute: str) -> str:
     if "count" in a or "review_count" in a:
         return COUNT_KIND
     return NUMBER_KIND
+
+
+def _number_kind(path: str, leaf: str = "") -> str:
+    """What kind a stored number IS, from the most specific key that names one.
+
+    A stored value is nested: a `rating` fact files `{"count": 40, "value": 4.42, "max_score":
+    5}`, a card's `distance` block files `{"meters": 468, "travel_minutes": 6}`. The leaf decides
+    when it names a kind (`count` -> COUNT, `travel_minutes` -> MINUTES, though the path there
+    reads DISTANCE); the path decides when the leaf is generic, so `rating.value` stays a RATING
+    instead of joining the untyped pool.
+    """
+    last = (leaf or (path or "").split(".")[-1]).strip().lower()
+    named = _attr_kind(last) if last else NUMBER_KIND
+    return named if named != NUMBER_KIND else _attr_kind(path)
 
 
 def _scalars(value: Any, key: str = "") -> Iterable[tuple[str, Any]]:

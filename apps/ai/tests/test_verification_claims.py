@@ -18,7 +18,10 @@ def _claim(value: float, text: str, start: int) -> V.Claim:
 
 
 def _ground() -> V.GroundSet:
-    return V.build_ground_set(None, extra_numbers=[320])
+    # D611: these rows assert on a MONEY claim, and a claim now needs a witness of its own kind,
+    # so the 320 is fed through a price-shaped key rather than through `extra_numbers` (a number
+    # of no kind).
+    return V.build_ground_set(None, records=[{"avg_price_hkd": 320}])
 
 
 class TestVerifyClaims:
@@ -34,7 +37,7 @@ class TestVerifyClaims:
         assert (grounded.grounded, grounded.grounded_value) == (True, 320.0)
         assert (fabricated.grounded, fabricated.grounded_value) == (False, None)
 
-    def test_a_request_number_has_no_fact_id(self):
+    def test_a_card_column_number_has_no_fact_id(self):
         claim = _claim(320, "HK$320", 0)
         V.verify_claims([claim], _ground())
         assert claim.fact_id is None

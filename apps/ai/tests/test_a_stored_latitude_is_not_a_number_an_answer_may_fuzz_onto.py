@@ -63,7 +63,7 @@ from nexus_ai.trust.facts import FactBundle
 # a verbatim `address` value from the live plane (tmp/d609_address_shape.txt)
 ADDRESS_VALUE = {"lat": 22.297322, "lng": 114.184999,
                  "line1": "2/F, Unit 10, 2 Sing Street Plaza, Sha Tin",
-                 "line2": "沙田成街2號 藝軒10室", "district": "Sha Tin", "synthetic": True}
+                 "line2": "沙田成街2號 中心10室", "district": "Sha Tin", "synthetic": True}
 
 
 def _fact(*, attribute: str, value, fact_id=None) -> Fact:
@@ -72,8 +72,8 @@ def _fact(*, attribute: str, value, fact_id=None) -> Fact:
                 observed_at=datetime(2026, 1, 1, tzinfo=timezone.utc))
 
 
-def _number(value: float, norm: str | None = None) -> V.Claim:
-    return V.Claim(kind=V.NUMBER_KIND, text=str(value), start=0, end=0, value=value,
+def _number(value: float, norm: str | None = None, *, kind: str = V.NUMBER_KIND) -> V.Claim:
+    return V.Claim(kind=kind, text=str(value), start=0, end=0, value=value,
                    norm=norm if norm is not None else str(value))
 
 
@@ -101,7 +101,8 @@ class TestACoordinateIsNotAQuantity:
     def test_the_record_path_is_closed_too(self):
         rec = {"display_name": "Café", "facts": [{"value": dict(ADDRESS_VALUE)}]}
         gs = V.build_ground_set(None, records=[rec])
-        assert [n[0] for n in gs.numbers] == []
+        # the one number this page contributes is its own length (D611) - no coordinate is in it
+        assert gs.numbers == [(1.0, V.COUNT_KIND, "result_count", None)]
         assert gs.find(_number(22.4))[0] is False
 
     def test_the_full_spellings_are_closed(self):
@@ -126,11 +127,13 @@ class TestACoordinateIsNotAQuantity:
         assert gs.find(_number(22.4))[0] is True
 
     def test_a_number_that_merely_looks_like_a_coordinate_survives(self):
-        # the gate is keyed, not value-shaped: 22.0 under `count` is a count and stays a number
+        # the gate is keyed, not value-shaped: 22.0 under `count` is a count and stays in the
+        # pool. D611 is the rule that it vouches for a COUNT claim of 22 and not for a bare 22.05.
         bundle = FactBundle([_fact(attribute="stats", value={"lat": 22.3, "count": 22.0})])
         gs = V.build_ground_set(bundle)
         assert [n[0] for n in gs.numbers] == [22.0]
-        assert gs.find(_number(22.05))[0] is True
+        assert gs.find(_number(22, "22", kind=V.COUNT_KIND))[0] is True
+        assert gs.find(_number(22.05))[0] is False
 
     def test_key_case_and_padding_do_not_smuggle_one_back(self):
         bundle = FactBundle([_fact(attribute="address", value={"Lat": 22.4, " LNG": 114.5})])
@@ -142,7 +145,7 @@ class TestTheAddressFactStillMeansSomething:
         gs = V.build_ground_set(_address_bundle())
         assert "sha tin" in gs.strings
         assert "2/f, unit 10, 2 sing street plaza, sha tin" in gs.strings
-        assert "沙田成街2號 藝軒10室" in gs.strings
+        assert "沙田成街2號 中心10室" in gs.strings
 
     def test_an_exact_echo_of_a_coordinate_is_still_a_stored_string(self):
         gs = V.build_ground_set(_address_bundle())
@@ -152,9 +155,11 @@ class TestTheAddressFactStillMeansSomething:
 
 class TestNothingElseMoves:
     def test_a_price_still_grounds_its_own_number(self):
+        # "its own" is now literal: the stored 188.44 vouches for a MONEY claim of 188, which is
+        # what the copy that ships says (row below), and for nothing else.
         price = _fact(attribute="avg_price_hkd", value=188.44)
         gs = V.build_ground_set(_address_bundle(price))
-        grounded, fact_id, value = gs.find(_number(188.0, norm="188"))
+        grounded, fact_id, value = gs.find(_number(188.0, "188", kind=V.MONEY_KIND))
         assert grounded is True
         assert fact_id == price.fact_id
         assert value == 188.44
@@ -181,7 +186,7 @@ class TestNothingElseMoves:
 class TestVerifiedText:
     def test_a_fabricated_coordinate_is_stripped_and_a_real_price_kept(self):
         bundle = _address_bundle(_fact(attribute="avg_price_hkd", value=188.44))
-        report = V.verify_generated_text("北緯 22.4 度附近，HK$188。", bundle=bundle)
+        report = V.verify_generated_text("22.4 度附近，HK$188。", bundle=bundle)
         assert report.hallucination_count == 1
         assert report.verified is False
         assert "22.4" not in report.text
@@ -192,7 +197,7 @@ class TestVerifiedText:
         # tolerance used to be wide enough to call that grounded. A claim must resolve to a
         # fact, not to a rounding of one.
         bundle = _address_bundle()
-        report = V.verify_generated_text("北緯 22.29 度", bundle=bundle)
+        report = V.verify_generated_text("22.29 度", bundle=bundle)
         assert report.hallucination_count == 1
         assert report.stripped[0].value == 22.29
         assert "22.29" not in report.text

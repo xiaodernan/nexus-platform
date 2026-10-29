@@ -27224,3 +27224,174 @@ boundary.
   `api/pipeline.py:251`, `VerificationReport.as_dict` (the report is the same object, it simply has
   fewer numbers to lean on), and `tmp/d610_probe.py` + `tmp/d610_key_probe.py` +
   `tmp/d610_live.py` + `tmp/d610_arms.py` as the re-runnable measurements.
+
+## 609. D611 · a stored number vouches only for a claim of its own kind (`apps/ai/nexus_ai/trust/verification.py`, `apps/ai/tests/test_a_stored_number_vouches_only_for_a_claim_of_its_own_kind.py`)
+
+**This unit collects the residual §608 filed instead of absorbing.** §608 closed the coordinate
+reservoir and named what was left: the live merchant page still read an invented `22.4` as grounded
+because it landed on the `22` of one merchant's `rating` fact `{"count": 22, "value": 3.56, …}`, and
+PLAN asked whether an UNTYPED bare number should need an exact stored value. Re-deriving that
+residual found it was not one number's problem but the pool's: §608's coordinates were the only
+keys the ground set refused to look at, and every other key went in as a bare value.
+
+**What the reservoir is.** `_feed` computed `kind = _attr_kind(attribute)` for every scalar, used it
+for one membership test, and then called `add_number(value, attribute, fact_id)` - the kind was
+built and thrown away. `GroundSet.find` looks up `TOLERANCE` by the KIND OF THE CLAIM and compares
+the claim's value against every number on the page. So a price, a review count, a day-of-week index
+and a walk time are one pool, and four assertions a live page reported as grounded were each vouched
+by a number of a kind it did not say (`tmp/d611_probe2.txt`, the plane as of 2026-10-29, a geo page
+near Central at `limit` 6):
+
+    步行 700m  (distance) <- price.amount 681.71          |700-681.71| = 18.3, DISTANCE floor 60 m
+    評分 4.0  (rating)   <- opening_hours.weekday 4      a day of the week, inside the 6% band
+    6 分鐘    (minutes)  <- opening_hours.weekday 6      the same index
+    16 分鐘   (minutes)  <- rating.count 16              a review count
+
+**How big the pool is, and what is in it.** 1,324 numbers on that page, of which **578 are the
+`weekday` integers 0..6** inside `opening_hours` facts and 360 are `rating` values, counts and
+max_scores. Counting them also found a defect nobody had named: `_feed`'s second `if` - a literal
+attribute list from an earlier unit - re-added numbers the test above it had already accepted,
+because `_attr_kind` returns one of the seven kind names for EVERY key, so its whole codomain is
+inside the first test's tuple. A live `both` page files **1,744 entries, 938 of them distinct**.
+
+**Which key types a number, because a stored value is nested.** A `rating` fact files
+`{"count": 40, "value": 4.42, "max_score": 5, …}` and a card's `distance` block files
+`{"meters": 468, "travel_minutes": 6}`. Two shapes were measured and rejected: typing by the
+ATTRIBUTE alone keeps the review count 40 in the rating pool (vouch #4 above reads `rating.count`),
+and typing by the LEAF alone puts 4.42 in the number pool, because `value` names no kind - which
+strips 96 rating claims over the simulated pages. The rule shipped is the most specific key that
+DOES name a kind: the leaf when it names one (`count` -> COUNT, `travel_minutes` -> MINUTES, so
+`distance.travel_minutes` reads MINUTES though its path reads DISTANCE), the path when the leaf is
+generic (`rating.value` stays a RATING).
+
+**The cost, measured before the rule was written.** `tmp/d611_blast2.py` rebuilt the pool with leaf
+keys from the same bundle and records and asked, for every claim the shipped pipeline actually
+produces over 15 pages (both lanes x 5 queries x 3 locales), whether it grounds today and whether it
+would under each candidate: **359 claims that ground today still ground, 4 stop** - and all four are
+the same sentence, `找到 6 個`, the length of the page, which today is vouched by one card's
+`travel_minutes` 6 and by no stored count at all. A page's own length is a fact the system holds, so
+`build_ground_set` files `len(records)` under `result_count` (`trust/verification.py:207`); without
+it this unit would have silenced an honest page, and with it one count witness per page now carries
+no `fact_id` - both halves are filed in PLAN.
+
+**Five hunks shipped.** `GroundSet.numbers` is a 4-tuple `(value, kind, attribute, fact_id)`
+(:131) and `add_number` takes the kind it did not have before (:136-138); `find` refuses an entry
+whose kind is not the claim's (:171) and its text tail fallback stays exactly as it ships;
+`build_ground_set` materialises `records` and files the page length (:196-207); `_feed` collapses
+its two duplicate adds into one that names the kind (:226-230); `_number_kind` is the new reader of
+the most specific key (:545). The strict refusal was chosen over the two looser candidates because
+it costs nothing extra on shipped copy - the simulation's V2 (kind match, value fallback) kept the
+same 359.
+
+**Door: 22 rows**, red first at **16 failed, 6 passed**, green at **22 passed** -
+`apps/ai/tests/test_a_stored_number_vouches_only_for_a_claim_of_its_own_kind.py`, pure and DB-free.
+It reads the live shapes verbatim (a `price`, a `rating` and an `opening_hours` fact and the card
+dump `api/pipeline.py:251` passes as `records`) and pins both sides: four wrong-kind numbers are not
+witnesses, the page length is, the six keys that name a kind type themselves, the pool holds each
+stored number once (the duplicate add's arrest), and the copy a live card carries - `找到 6 個`,
+`距離你 470m`, `評分 4.4（40+ 條評價）`, `港鐵 Central 站步行 14 分鐘` - loses no claim.
+
+**Three of §610's nineteen rows moved, and each moved because the rule says so - not to clear a
+red.** `test_the_record_path_is_closed_too` asserted an empty pool and now asserts the one entry the
+page legitimately contributes (`(1.0, COUNT, "result_count", None)`), with the coordinate still
+absent; `test_a_number_that_merely_looks_like_a_coordinate_survives` kept its pool assertion and
+gained the new half - the `22.0` under `count` vouches for a COUNT claim of 22 and no longer for a
+bare 22.05; `test_a_price_still_grounds_its_own_number` now says what "its own" means, vouching a
+MONEY claim of 188 for a stored 188.44. `test_verification_ground.py` and
+`test_verification_claims.py` were re-aimed the same way: four tolerance rows and two report rows
+seed through a key that names money, a rating, a count instead of `extra_numbers`, which is a number
+of no kind, and the pool tuples gained the kind slot.
+
+**A red this unit found in a unit already committed.** The full suite §610 was fenced with came back
+`8 failed, 33,014 passed, 43 skipped` and one of those failures was
+`test_vocabulary_is_the_reference` naming §608's own door file: it hand-spelled 軒, 北 and 緯 in its
+data strings - characters no `nexus_ai` data string carries - and §608's disclosure covered the
+43%-deep suite but not this gate, because the gate is a whole-suite test and the door was green on
+its own. Fixed here in both files: `沙田成街2號 中心10室` for the address line, `22.4 度附近，HK$188。`
+for the copy (the row's claim is the bare number - the `北緯` label was a word the product has never
+heard of, so removing it costs the assertion nothing), and in the new door `尖沙咀海圍123號 中心18室`,
+`藝記 Clay Ridge`, `營業 4 小時` for 富, 譽 and 左右. The gate is green at 3 passed and the D610 door
+still passes 19.
+
+**Eight arms and a control, run at the shipped bytes.** `tmp/d611_arms.py` copies the package to
+`tmp/d611_armtree` (no `nexus_ai` source is mutated under a running suite), prints
+`verification.__file__` to prove which copy the door imports, mutates one clause, runs the 22 rows,
+restores, and tears the tree down.
+
+    A  `find` ignores the stored kind - the pre-D611 matcher  7 failed, 15 passed
+    B  the ATTRIBUTE alone decides the kind                   2 failed, 20 passed
+    C  the LEAF alone decides the kind                        3 failed, 19 passed
+    D  the FIRST dotted segment is the leaf                  20 failed,  2 passed
+    E  `add_number` files the attribute where the kind goes   12 failed, 10 passed
+    F  the page length is never filed                         2 failed, 20 passed
+    G  the length is filed even for an empty page             1 failed, 21 passed
+    H  `_feed`'s legacy second `if` comes back                1 failed, 21 passed
+    CONTROL at the shipped bytes                             22 passed
+
+Unlike §608's F, no arm here is an equivalent mutant. C is the measurement that rejected the
+leaf-only rule (it moves `test_the_value_leaf_of_a_rating_is_a_rating` and the live-copy row with
+it), B is the one that rejected attribute-only, and D's twenty reds are the record path's: on
+`_flatten`ed card keys like `distance.travel_minutes` the first segment is a different kind from the
+last.
+
+**Live after** (`tmp/d611_live.txt`, the same two pages, both through the shipped `find`): the
+merchant pool is **1,085 numbers** where §608 left 1,324 - down by the 239 duplicate entries the
+second `if` made, and typed `{'money': 72, 'number': 766, 'count': 73, 'rating': 120, 'distance':
+24, 'minutes': 30}` (the 73rd count is `result_count`; 120 = the 66 values plus the 54 bounds a
+looser simulation had filed separately). `步行 700m` is ungrounded, `評分 22` and `最平 HK$22` are
+ungrounded, and so are `22.4`, `22.05`, `114.05`, `114.5`. `評分 4.0`, `6 分鐘` and `16 分鐘` come
+back GROUNDED on witnesses of their own kind - a real `rating.value` of 3.99, stored minutes - which
+is the honest shape of the fix: it changes the witness, and where the page genuinely holds the kind
+the claim says, the verdict stays. Both pages' shipped summaries still assert two claims apiece with
+`verified=True, stripped=0`.
+
+**Sweeps at the final bytes: 0 failed.** 102 passed over the trust doors (both doors, the two
+re-aimed files, `test_verification.py`, `test_trust_claim_kinds.py`,
+`test_the_trust_surface_is_used.py`, the vocabulary gate), 105 passed over the verification readers
+(`test_eval_cli.py`, `test_eval_suites.py`, `test_run_agent_names_are_roster_agents.py`, the §609
+district door and the two trust-surface files), 163 passed and 1 skipped over the pipeline and copy
+doors (every `*price*`, `*strategy*`, `*card*`, `*compare*`, `*recommend*` file, `test_mock_adapter.py`,
+`test_preferences_ranking.py`, `test_live_ai_contract.py`, `test_live_preferences.py`). `ruff check`
+clean on the source and the four test files; the five ledger gates rc=0.
+
+**Full suite over the shipped tree: 7 failed, 33,056 passed, 43 skipped in 1:18:41**
+(`tmp/d611_suite.txt`, started at the final bytes - no `nexus_ai` source was mutated while it ran,
+which is why the arms went into the copy tree). None of the seven is this unit's, and each is
+attributable in one line: three are `tests/test_rag_embed.py::TestTheWorkerBudget`
+(`TypeError: replace() should be called on dataclass instances`) - the concurrent lane's in-flight
+embed-worker settings work, in files this unit neither read nor staged; one is
+`tests/test_citations_resolve.py::test_a_chunk_fact_id_resolves_to_a_fact_row` at line 69, whose own
+message says "the retrieval returned no chunk - the corpus is not reachable", the pre-existing red
+§608 carried; one is `tests/test_lexicon.py::TestConstraintCanon::test_unknown_lowercased` at 205,
+`assert 'vegetarian' == 'vegan'`, which is the cuisine fold and is D612's to fix; two are
+`tests/test_sort_preference_reader.py::test_the_followup_sentence_reaches_the_served_order` and
+`::test_closer_orders_by_distance_only_when_distance_is_known`, both
+`assert [] == ['觀塘拉麵店', '旺角拉麵館', '沙田拉麵屋']` - an empty answer set, not a wrong order, and
+D613's. The trust lane's own numbers moved nowhere in the suite: the 102, 105 and 163-row sweeps
+above are the same files the suite runs, and the suite's 33,056 include both this unit's 22 rows and
+§608's re-aimed 19.
+
+**Residuals, measured and filed in PLAN rather than absorbed.** The day-of-week indices still sit in
+the NUMBER pool (578 of the page) and their half-unit floor still vouches for an invented bare 4 -
+the row `test_a_bare_number_still_grounds_on_a_stored_number_of_no_kind` pins it on purpose.
+`max_score` sits in the RATING pool, so an invented `評分 5.0` has the scale as a witness (excluding
+bounds measured free on shipped copy, but it is a second rule). `COUNT_RE` needs the unit word right
+after the digits, so the `40` of the shipped `（40+ 條評價）` is read as a rating and kept only by
+`find`'s exact-text fallback with no `fact_id`. No stored key names a percent, so the PERCENT pool is
+empty by construction and a `92%` can only echo. `min_party_size`/`max_party_size` read as numbers,
+so an `8 位` claim has no capacity witness. The page-length witness is one per page and cites no
+fact. And the probe that re-ran the whole page through `verify_generated_text` found a fifth reader
+of this gate, pre-existing and untouched here: a live merchant page's own reason bullets carry three
+ENTITY claims quoting the user's query - `「咖啡店」` - and all three are ungrounded, because the
+entities pool is built from card names and never from the request, and `api/pipeline.py:251` verifies
+only the model's summary.
+
+- readers: `GroundSet.numbers`' shape and `add_number`'s new keyword, `GroundSet.find`'s numeric loop
+  (its tolerance lookup is unchanged, and its text tail fallback is unchanged - the reason a
+  `（40+ 條評價）` bullet still passes), `build_ground_set`'s record loop and the new page-length
+  entry, `_feed`'s two adds folded into one, `_number_kind` beside `_attr_kind`,
+  `verify_generated_text`'s one shipped call site at `api/pipeline.py:251`,
+  `VerificationReport.as_dict` (same object, fewer numbers to lean on), the two re-aimed files
+  `tests/test_verification_ground.py` and `tests/test_verification_claims.py`, and
+  `tmp/d611_probe.py` + `tmp/d611_probe2.py` + `tmp/d611_blast.py` + `tmp/d611_blast2.py` +
+  `tmp/d611_shape.py` + `tmp/d611_live.py` + `tmp/d611_arms.py` as the re-runnable measurements.

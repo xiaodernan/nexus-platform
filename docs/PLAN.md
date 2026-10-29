@@ -2386,4 +2386,87 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   UNTYPED bare number should instead require an exact stored value, and what that costs shipped
   copy: on these two pages the mock summary's own claims are `6 個` (count) and `470m` (distance),
   both typed, so the floor is exercised today only by numbers a model invents. Owner: the trust
-  lane.
+  lane. **Closed by D611 for the pool, narrowed to the floor.** The count 22 no longer shares a
+  pool with the rating it was counted from: every stored number now carries the kind its OWN key
+  names (`_number_kind`, `trust/verification.py:545`) and `find` refuses a witness of a kind the
+  claim did not say (`trust/verification.py:171`). Live after (`tmp/d611_live.txt`, the same two
+  pages): `評分 22` and `最平 HK$22` are ungrounded, and so are all four D610 probes read as bare
+  numbers - `22.4`, `22.05`, `114.05`, `114.5` - because the `22` that used to catch them is filed
+  as a COUNT now. What survives is the floor itself, narrowed to numbers no key types: the
+  day-of-week indices below.
+
+- **The seven day-of-week integers inside every `opening_hours` fact are the largest untyped class
+  in the ground set** - 578 of the 1,085 numbers a live merchant page carries are
+  `zones[].weekday` values 0..6 (`tmp/d611_probe2.txt`), filed as plain NUMBER because the leaf
+  `weekday` names no kind, so the half-unit floor still lets an invented `4` or `6` ground on a
+  Thursday. D611 pinned this rather than hiding it:
+  `test_a_bare_number_still_grounds_on_a_stored_number_of_no_kind` asserts that `營業 4 小時`
+  grounds, and the live `en` page's own summary claim `6` comes back grounded as a NUMBER. The
+  repair is not a tolerance change: a weekday is neither a quantity nor a clock, so either the day
+  joins `strings` and an answer that says `週四` grounds by text, or the ground set grows a DAY
+  claim kind the extractor has to learn to emit - a new kind is a change to §4's vocabulary, not
+  to this pool. Owner: the trust lane.
+
+- **`max_score` sits in the RATING pool, so an invented `評分 5.0` has a witness that is the
+  scale rather than an opinion** - the leaf names no kind, so the path decides and
+  `rating.max_score` reads RATING. Measured as arm V3 of the blast (`tmp/d611_blast2.py`, 15 pages,
+  both lanes x 5 queries x 3 locales): excluding the bounds changes nothing that ships - no claim
+  on any of the fifteen pages reads a bound - so the fix is free, and it was still left out because
+  it is a SECOND rule (a scale bound is not a value) bolted onto a unit that had already bought its
+  cost with the page-length witness below. Note what the live page does today: `評分 4.0`, which
+  D611 measured as vouched by a weekday index before, now comes back grounded on a real
+  `rating.value` of 3.99/4.0 (`tmp/d611_live.txt`) - a right answer for a claim nobody asked for.
+  Owner: the trust lane.
+
+- **A count written with a bound loses its type before it reaches the pool** - `COUNT_RE` needs the
+  unit word immediately after the digits, so the literal `+` in the shipped bullet
+  `評分 4.4（40+ 條評價）` costs the 40 its count: the claim comes out a RATING of 40. It is kept
+  anyway, by `find`'s exact-text tail fallback (`claim.norm in self.strings`), which returns
+  `fact_id=None`. §18 asks a kept claim to trace to a fact, so this one is kept on the echo of a
+  stored scalar rather than on the fact that stores it - the reason the bullet survives is a string
+  match, not the typing D611 added. Either `COUNT_RE` accepts a bound between the digits and the
+  unit, or the fallback stops being a pass. Owner: the trust lane (the extractor's typing, not the
+  pool).
+
+- **No stored key names a percent, so the PERCENT pool is empty by construction** - `_attr_kind`
+  returns money, rating, distance, minutes, count or number and never PERCENT, so under the kind
+  rule a `92%` claim can only be kept by an exact-text echo. Measured cost: zero percent claims
+  over the 15 simulated pages of shipped copy (`tmp/d611_blast2.txt`), so nothing that ships pays
+  this today - and the first card that prints a satisfaction percent will print an ungrounded one.
+  `test_a_percent_has_no_stored_key_that_names_it` pins the shape so the day it costs something it
+  is a decision, not a discovery. Owner: the trust lane.
+
+- **A party size is a count of people and the ground set files it as a number** - D607's
+  `min_party_size`/`max_party_size` read NUMBER under `_attr_kind` (the leaf names a `size`, not a
+  `count`), so an answer that says `8 位` cannot be vouched by the capacity actually stored, even
+  though the plane holds it for every offering row. Owner: the trust lane with the offering lane.
+
+- **The page's own length is now a count witness with no fact behind it** - once every stored
+  number is typed, nothing on a page counts six of anything, and the shipped sentence `找到 6 個`
+  was vouched by one card's `travel_minutes` 6; `build_ground_set` therefore files
+  `len(records)` under `result_count` (`trust/verification.py:207`). What that buys and what it
+  costs, both measured: the alternative (no witness) strips 4 claims over the 15 simulated pages,
+  all four of them exactly this sentence, and the witness itself is one number per page with
+  `fact_id=None` - so a fabricated count that happens to equal the page length is kept and cites
+  nothing, and a count of six is now vouched whether or not the retrieval *intended* six. Owner:
+  the trust lane.
+
+- **A card's own reason bullets quote the user's query, and nothing in the ground set is that
+  query** - pre-existing, and D611 found it only because it re-ran the whole page through
+  `verify_generated_text`: a live merchant page's three bullet lines each carry an ENTITY claim
+  `「咖啡店」` and all three come back ungrounded (`verified=False, stripped=3`,
+  `tmp/d611_live.txt`), because the entities pool is built from card names and slugs and never from
+  the request text - although the bullets are copy ABOUT the request. It is invisible today because
+  `api/pipeline.py:251` verifies the model's summary and the bullets are template copy that no gate
+  reads; the entity path is untouched by D611, so this is not a regression but a fifth reader of
+  the same gate. Either the request joins the ground set at that call site or the bullets stop
+  quoting it. Owner: the trust lane with the ranking owner.
+
+- **A claim is vouched for by the page, not by the card it is about** - `build_ground_set` is handed
+  the whole bundle and the whole record list and `find` searches that one pool, so on a live
+  merchant page the invented `評分 4.0` grounds on fact `c7b18a20`, whose rating is 3.99 - a
+  different merchant from the one any sentence carrying that number is about (`tmp/d611_live.txt`,
+  2026-10-29). D611 made the witness the right KIND, which is the cheaper half of the honesty
+  question; the half left is that no claim is tied to the subject it names. Closing it means the
+  verifier knowing which card a sentence is about - a per-claim subject `extract_claims` does not
+  produce and `REASON_COPY` does not need today. Owner: the trust lane with the copy owner.

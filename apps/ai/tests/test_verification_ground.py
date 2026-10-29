@@ -35,7 +35,7 @@ class TestBuildGroundSet:
     def test_request_numbers_and_entities(self):
         gs = V.build_ground_set(None, extra_numbers=[320], entities=["龍苑"],
                                 extra_strings=["18:30"])
-        assert (320.0, "request", None) in gs.numbers
+        assert (320.0, V.NUMBER_KIND, "request", None) in gs.numbers
         assert "龍苑" in gs.entities
         assert "18:30" in gs.strings
         assert 1110 in gs.times  # 18:30 as minute-of-day
@@ -43,26 +43,30 @@ class TestBuildGroundSet:
     def test_records_contribute_numbers_and_entities(self):
         gs = V.build_ground_set(None, records=[{"display_name": "Ramen House",
                                                 "avg_price_hkd": 120}])
-        assert (120.0, "avg_price_hkd", None) in gs.numbers
+        assert (120.0, V.MONEY_KIND, "avg_price_hkd", None) in gs.numbers
         assert "ramen house" in gs.entities
 
 
 class TestGroundSetFind:
+    # D611: a request number is a number of no kind, and a typed claim now needs a witness of
+    # its own kind, so these tolerance rows seed through the feed path - a key that names money,
+    # a rating, a count - rather than through `extra_numbers`.
+
     def test_money_within_tolerance(self):
-        gs = V.build_ground_set(None, extra_numbers=[320])
+        gs = V.build_ground_set(None, records=[{"avg_price_hkd": 320}])
         assert gs.find(_claim(V.MONEY_KIND, value=320)) == (True, None, 320.0)
 
     def test_money_far_off_is_ungrounded(self):
-        gs = V.build_ground_set(None, extra_numbers=[320])
+        gs = V.build_ground_set(None, records=[{"avg_price_hkd": 320}])
         assert gs.find(_claim(V.MONEY_KIND, value=500)) == (False, None, None)
 
     def test_rating_tolerance_is_tight(self):
-        gs = V.build_ground_set(None, extra_numbers=[4.6])
+        gs = V.build_ground_set(None, records=[{"rating": 4.6}])
         assert gs.find(_claim(V.RATING_KIND, value=4.65)) == (True, None, 4.6)
         assert gs.find(_claim(V.RATING_KIND, value=4.8)) == (False, None, None)
 
     def test_count_is_exact(self):
-        gs = V.build_ground_set(None, extra_numbers=[3])
+        gs = V.build_ground_set(None, records=[{"review_count": 3}])
         assert gs.find(_claim(V.COUNT_KIND, value=3)) == (True, None, 3.0)
         assert gs.find(_claim(V.COUNT_KIND, value=4)) == (False, None, None)
 
@@ -78,7 +82,7 @@ class TestGroundSetFind:
 
 class TestVerifyText:
     def test_all_grounded_is_not_stripped(self):
-        gs = V.build_ground_set(None, extra_numbers=[320, 4.6])
+        gs = V.build_ground_set(None, records=[{"avg_price_hkd": 320, "rating": 4.6}])
         r = V.verify_text("Price HK$320, rating 4.6", gs)
         assert r.claim_count == 2
         assert r.grounded_count == 2
@@ -88,7 +92,7 @@ class TestVerifyText:
         assert r.note is None
 
     def test_fabricated_claim_is_stripped(self):
-        gs = V.build_ground_set(None, extra_numbers=[320])
+        gs = V.build_ground_set(None, records=[{"avg_price_hkd": 320}])
         r = V.verify_text("Price HK$500", gs)
         assert r.claim_count == 1
         assert r.hallucination_count == 1
@@ -98,7 +102,7 @@ class TestVerifyText:
         assert "500" not in r.text
 
     def test_strip_false_keeps_the_text_but_reports_it(self):
-        gs = V.build_ground_set(None, extra_numbers=[320])
+        gs = V.build_ground_set(None, records=[{"avg_price_hkd": 320}])
         r = V.verify_text("Price HK$500", gs, strip=False)
         assert r.text == "Price HK$500"
         assert len(r.stripped) == 1
