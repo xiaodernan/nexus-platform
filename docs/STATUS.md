@@ -28105,3 +28105,96 @@ With nine neighbouring preference doors: **228 passed**. Readings in `tmp/d623_p
 - readers: `tests/test_the_stated_preference_moves_the_ranking_of_the_live_plane.py:181` (the bound),
   `:120-124` (the preference-only call the bound is measured against), and
   `infra/config/ranking_weights.yaml:17,22` (the two weights that set the size of the trade).
+
+## 622. D624 · the price a Hong Kong user writes comes AFTER the amount, and the ranker read only one end of it (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/search/ranking.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/cards.py`)
+
+**The census.** Twenty-seven ways to state a price, in the two languages and the two registers this
+product serves (`tmp/d624_census.txt`). Eight reached the plan (預算300以內, 預算$300以內, 唔超過$500,
+under 300, below $300, max 300, 以內300, and one that read the wrong end). **The other nineteen
+produced no budget at all**, and they were the natural ones: every ceiling cue in `BUDGET_MAX_RE` /
+`BUDGET_WORD_RE` must PRECEDE the number - the English and formal shape ("under 300", "最多300") -
+while a Hong Kong user writes the ceiling after it.
+
+    shape the user writes      before this unit          after
+    300蚊以內                 no budget                 max 300
+    300以下                   no budget                 max 300
+    500蚊以下                 no budget                 max 500
+    $300以下                  no budget                 max 300
+    300蚊樓下                 no budget                 max 300
+    人均300以內                 no budget                 max 300, per person
+    每人300蚊以內               no budget                 max 300, per person
+    每位$200以內                max 200, per PARTY        max 200, per person
+    人均$300                     no budget                 max 300, per person
+    人均消費300蚊                no budget                 max 300, per person
+    平過300蚊                    no budget                 max 300
+    300–500蚊                   no budget                 min 300, max 500
+    $300-$500                  no budget                 min 300, max 500
+    預算 300 - 500             max 300 (the LOW end)     min 300, max 500
+    300蚊以上                 no budget                 min 300
+    一千蚊以下                  no budget                 no budget - CJK numerals
+
+**The floor, twice dropped.** 「300蚊以上」 was silent for the same reason (`BUDGET_MIN_RE` also
+reads cue-first), and a range was read from the wrong end: 「預算 300 - 500」 answered `max=300` -
+the LOW number - so a user asking for a 300-500 band was answered with everything under 300. Then a
+floor that DID parse was dropped on the way to the ranker: `plan_from_intent` copied
+`intent.budget.max` into the plan and nothing copied `.min`, so `price_fit` had one end to work with
+no matter what the sentence said.
+
+**The repair.** Four shapes in the reader - `SPEND_CEILING_RE` (trailing ceiling, with or without a
+currency token), `SPEND_FLOOR_RE` (trailing floor), `PER_PERSON_POINT_RE` (a bare per-head figure,
+「人均$300」) and `BUDGET_RANGE_RE` (a band) - plus `每位` in `PER_PERSON_RE`, which had read a
+per-head figure as a party total. The range is guarded by `_range_is_money`: an amount pair is money
+only when a currency token sits inside it or a budget cue immediately precedes it, so 「10至20人」
+stays a party size, 「500米以內」 stays a radius and 「12歲以上」 stays an age. On the ranking
+side the plan and the candidate carry `budget_min`, and `price_fit` scores the BAND: 1.0 inside, both
+ends decaying on the same log scale at the same tolerance, so a row at half the floor scores what a
+row at twice the cap scores. A floor on its own makes every row above it in band - it used to fall
+through to the neutral-band curve, which answered HK$900 with 0.55 for a 「300蚊以上」 request, i.e.
+inverted the ask. The card's `within_budget` line now states `HK$300-500` rather than half the band.
+
+**Measured** - 27 sentences: **25 reach the plan**. The two that do not are Chinese numerals
+(`一千蚊以下`), which `numerals.py` cannot read - it has no 百 or 千 (`tmp/d624_census_after.txt`).
+
+Live, on the 184 restaurants the 餐廳 filter admits (population median HK$90.8, `tmp/d624_live2.txt`):
+
+    request        band        population in band   top ten in band   price_fit of the page
+    300蚊以內      [-, 300]          0.984                10/10             all 1.00
+    100蚊以下      [-, 100]          0.565                10/10             all 1.00
+    300-500蚊    [300, 500]        0.016                 2/10             1.00 1.00 0.41 0.07 ...
+    300蚊以上    [300, -]          0.016                 1/10             1.00 0.82 0.45 0.41 ...
+
+**The ceiling cannot bite on this corpus, and the page that looks like it did is a different defect.**
+Two thirds of the restaurants are already under HK$300, so a cap of 300 - or of 100 - has almost
+nothing to demote, and the page for 「100蚊以下」 sits at HK$26-46 with the budget removed as well.
+That control page is NOT the 「餐廳」 page (HK$88-343), and the only difference between the two plans
+is the query text - so the price of that page came from the TEXT MATCH, not from `price_fit`. The rows
+on the budget page carry `relevance` 0.11-0.16 where 「餐廳」 alone carries 1.00: the budget phrase is
+matched as content and drags every row's relevance down. That is the next unit and it is filed, not
+fixed here.
+
+**The floor does reach the page, and the corpus is what caps it.** 「300-500蚊」 scored the top ten
+1.00 / 1.00 / 0.41 / 0.07 / 0.07 / 0.82 / 0.06 / 0.01 / 0.45 / 0.19 - the band acting inside the page -
+and moved 1 of 10 rows into band, from 1 of 10 at HEAD. It cannot move more: **3 of the 184
+restaurants are priced 300-500**, and none are 500-800. 「300蚊以上」 put its one in-band row at
+rank 1 and demoted HK$83 to 0.06.
+
+**Not claimed.** No corpus change and no weight change: `price_fit` still carries 0.10, so the band
+loses any near-tie to relevance whatever the sentence says. `budget_per` is still READ AND IGNORED by
+`price_fit` - a per-head figure and a party total are compared identically, and the seed writes
+`avg_price_hkd` with `"model": "per_person"` - so that mismatch is older than this unit and is filed
+rather than guessed at. A band the corpus cannot fill still answers with ten rows outside it and says
+nothing about it. And nothing here explains why the 「餐廳」 page's prices (HK$88-343) sit so far above
+the population's median (HK$90.8).
+
+**The gate** is `tests/test_a_budget_reaches_both_ends_of_the_ranker.py`: 25 offline legs - 13 parse
+shapes across ceiling, per-head, floor and range, four non-money guards, the band's flat-inside /
+equal-decay property, a floor on its own, the plan carrying both ends, and `organic_rank` ordering a
+synthetic band - plus one live leg that reads the band acting inside the page. With six neighbouring
+files (`test_search_plan`, `test_cards`, `test_preferences_ranking`, `test_sponsored_ranking`,
+`test_understand_unknowns`, `test_understand_resolution`): **122 passed**. The NLU-side set alone
+(seven files) was **73 passed**.
+
+- readers: `nlu/understand.py:68-101` (the four new shapes), `:114` (`每位` in `PER_PERSON_RE`),
+  `:573-585` (`_range_is_money`); `search/ranking.py:189-212` (`price_fit`'s band);
+  `search/service.py:451` (`SearchPlan.budget_min`) and `:670` (the copy that was missing);
+  `search/cards.py:406-413` (the band on the card).

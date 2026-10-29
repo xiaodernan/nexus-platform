@@ -54,10 +54,55 @@ BUDGET_MAX_RE = re.compile(
     re.IGNORECASE,
 )
 BUDGET_WORD_RE = re.compile(
-    r"(?:under|less than|below|within|max|最多|唔超過|不超过|以下|以內|以内|少過|唔多過)\s*"
+    r"(?:under|less than|below|within|max|最多|唔超過|不超过|以下|以內|以内|"
+    r"少過|唔多過|平過|便宜過|唔貴過|不貴过|不超過)\s*"
     r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})",
     re.IGNORECASE,
 )
+#: D624: the ceiling a HK user writes comes AFTER the amount. Every ceiling cue above - and in
+#: BUDGET_WORD_RE - must PRECEDE the number, which is the English/formal shape ("under 300",
+#: "最多300"). Measured 2026-10-30 (`tmp/d624_census.txt`): "300蚊以內", "300以下", "500蚊以下", "$3000以下",
+#: "人均300以內", "每位$200以內" and "300蚊樓下" ALL produced no budget at all, so a stated price
+#: ceiling never reached the ranker. This is the trailing half; the currency token is OPTIONAL
+#: but a unit word is not skipped over - "500米以內" is a radius and stays without a budget.
+SPEND_CEILING_RE = re.compile(
+    r"(\d{2,5})(?:\.\d{1,2})?\s*(?:"
+    r"(?:蚊|元|塊|块|hk\$|hkd|港幣|港币|\$|dollars?)\s*"
+    r"(?:以內|以内|以下|樓下|楼下|之內|之内|內|内|左右|上下)"
+    r"|(?:以內|以内|以下|樓下|楼下|之內|之内)"
+    r")",
+    re.IGNORECASE,
+)
+#: D624: a RANGE is money only when the sentence marks it as money - a currency token inside
+#: the span, or a budget cue before it - so "10至20人" stays a party size. Measured
+#: 2026-10-30: "預算 300 - 500" read max=300 (the LOW end, so a user asking for 300-500 got
+#: only ≤300) and "$300-$500" read nothing at all (`tmp/d624_census.txt`).
+BUDGET_RANGE_RE = re.compile(
+    r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})(?:\s*(?:蚊|元|塊|块))?\s*"
+    r"(?:-|–|—|~|～|至|到|to)\s*(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})"
+    r"(?:\s*(?:蚊|元|塊|块))?",
+    re.IGNORECASE,
+)
+#: D624: the per-head price POINT with no ceiling word - "人均$300", "人均消費300蚊".
+#: A user who names a per-head figure is stating a budget; every one of those shapes was silent.
+PER_PERSON_POINT_RE = re.compile(
+    r"(?:每人|人均|每位|per ?person|p/?p|per head|人頭)\s*"
+    r"(?:消費額|消費|佐)?\s*(?:大約|大概|約|差不多)?\s*"
+    r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})(?:\.\d{1,2})?",
+    re.IGNORECASE,
+)
+#: D624: the same amount-first shape for a FLOOR - "300蚊以上" carried no budget at all, so a
+#: user who names the bottom of a band got the cheapest rows in the corpus. BUDGET_MIN_RE reads
+#: only the cue-first form ("超過300").
+SPEND_FLOOR_RE = re.compile(
+    r"(\d{2,5})(?:\.\d{1,2})?\s*(?:"
+    r"(?:蚊|元|塊|块|hk\$|hkd|港幣|港币|\$|dollars?)\s*"
+    r"(?:以上|或以上|起跳|打上|起)"
+    r"|(?:以上|或以上|起跳|打上)"
+    r")",
+    re.IGNORECASE,
+)
+CURRENCY_TOKENS = ("hk$", "hkd", "港幣", "港币", "$", "蚊", "元", "塊", "块")
 BUDGET_MIN_RE = re.compile(
     r"(?:over|above|at least|超過|超过|以上|最少|至少)\s*(?:hk\$|hkd|\$)?\s*(\d{2,5})"
     r"|(?:hk\$|hkd|\$)\s*(\d{2,5})\s*(?:以上|over|起跳)",
@@ -66,7 +111,7 @@ BUDGET_MIN_RE = re.compile(
 CURRENCY_AMOUNT_RE = re.compile(
     r"(?:hk\$|hkd|港幣|港币)\s*(\d{2,5})(?:\.\d{1,2})?", re.IGNORECASE
 )
-PER_PERSON_RE = re.compile(r"(?:每人|人均|per ?person|p/?p|per head|人頭)", re.IGNORECASE)
+PER_PERSON_RE = re.compile(r"(?:每人|人均|每位|per ?person|p/?p|per head|人頭)", re.IGNORECASE)
 PER_ITEM_RE = re.compile(r"(?:每件|每款|each|per item|一双|一对|一對)", re.IGNORECASE)
 
 #: CJK counters need no trailing boundary (they are word chars); latin units do.
@@ -525,10 +570,30 @@ def _fill_time(ex: IntentExtraction, text: str, context: dict[str, Any]) -> Inte
     return ex
 
 
+def _range_is_money(span: str, before: str) -> bool:
+    """D624: an amount pair is a budget only when the sentence SAYS it is money.
+
+    "10至20人" is a party size and must never become a HK$10-20 ceiling; a currency token
+    inside the span, or a budget cue immediately before it, is what separates the two.
+    """
+    low = span.lower()
+    if any(tok in low for tok in CURRENCY_TOKENS):
+        return True
+    return bool(re.search(r"(?:預算|预算|budget|max|最多|不超過|唔超過)\s*$",
+                          before.lower()))
+
+
 def _fill_budget(ex: IntentExtraction, text: str) -> IntentExtraction:
     budget: dict[str, Any] = {"min": None, "max": None, "currency": "HKD", "per": None}
     found = False
-    for rx in (BUDGET_MAX_RE, BUDGET_WORD_RE):
+    rng = BUDGET_RANGE_RE.search(text)
+    low = (text[:rng.start() + 1] if rng else "")
+    if rng and (_range_is_money(rng.group(0), low)):
+        ends = sorted((float(rng.group(1)), float(rng.group(2))))
+        budget["min"], budget["max"] = ends
+        ex.confidence["budget"] = 0.9
+        found = True
+    for rx in ((() if found else (BUDGET_MAX_RE, BUDGET_WORD_RE, SPEND_CEILING_RE))):
         m = rx.search(text)
         if m:
             budget["max"] = float(m.group(1))
@@ -538,6 +603,18 @@ def _fill_budget(ex: IntentExtraction, text: str) -> IntentExtraction:
     if not found:
         m = CURRENCY_AMOUNT_RE.search(text)
         if m and any(cue_in(w, text, text.lower()) for w in OPEN_PRICE_WORDS):
+            budget["max"] = float(m.group(1))
+            ex.confidence["budget"] = 0.8
+            found = True
+    if not found:
+        m = SPEND_FLOOR_RE.search(text)
+        if m:
+            budget["min"] = float(m.group(1))
+            ex.confidence["budget"] = 0.85
+            found = True
+    if not found:
+        m = PER_PERSON_POINT_RE.search(text)
+        if m:
             budget["max"] = float(m.group(1))
             ex.confidence["budget"] = 0.8
             found = True

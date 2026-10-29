@@ -406,6 +406,10 @@ def _reason_text(label: str, cand: Candidate, *, locale: str,
     if label == "within_budget":
         if cand.budget_max is None or cand.price is None:
             return ""
+        # D624: a range names both ends, so the card states the band the user asked for rather
+        # than half of it.
+        if cand.budget_min is not None:
+            return template.format(p=f"HK${cand.budget_min:g}-{cand.budget_max:g}")
         return template.format(p=f"HK${cand.budget_max:g}")
     if label == "top_rated":
         if cand.rating is None or not cand.rating_count:

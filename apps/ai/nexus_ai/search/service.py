@@ -438,6 +438,8 @@ class SearchPlan:
     radius_m: int | None = None
     budget_max: float | None = None
     budget_per: str = "party"
+    #: D624: the floor a range states (「300-500蚊」). Read by `ranking.price_fit`.
+    budget_min: float | None = None
     party_size: int | None = None
     at: datetime | None = None
     now: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -656,6 +658,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     if intent.budget:
         plan.budget_max = intent.budget.max
         plan.budget_per = intent.budget.per or "party"
+        plan.budget_min = intent.budget.min
     plan.party_size = intent.party_size
     plan.sort_preference = intent.sort_preference or "relevance"
     plan.at = intent.time.starts_at if intent.time else None
@@ -802,6 +805,7 @@ def candidates_from_rows(rows: Sequence[dict[str, Any]], plan: SearchPlan, *,
             distance_m=_num(row.get("meters")),
             price=_row_price(row),
             budget_max=plan.budget_max, budget_per=plan.budget_per,
+            budget_min=plan.budget_min,
             availability=availability,
             popularity=_num(row.get("popularity_score")) or 0.0,
             freshness=mean_remaining_fraction(facts_by_subject.get(subject_id, []),

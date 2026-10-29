@@ -2054,6 +2054,38 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   lane, from `merchants.avg_price_hkd`) or the readers drop an alias no corpus produces - and a
   fixture that invents the attribute would be this lane writing its own evidence. Owner: the AI
   lane with the platform lane.
+- **The budget phrase is matched as CONTENT, so stating a price changes WHICH rows are retrieved.**
+  D624 (§622) made the budget reach the ranker, and then could not read its effect off a page: the
+  184 restaurants' prices are 26-343 with median 90.8, so a cap of 300 or 100 leaves almost nothing
+  to demote - and the control page (the SAME plan with the budget removed, so no `price_fit` at all)
+  already sits at HK$26-46 while 「餐廳」 alone answers HK$88-343. The rows on the budget page carry
+  `relevance` 0.11-0.16 where 「餐廳」 carries 1.00: `canonical(plan.query_text)` is handed to the
+  retrieval whole, so `300`, `蚊` and `以內` are counted as query terms that no row can match and
+  every row's score is divided by them. The next unit is to drop the phrases a lane already handles
+  (budget, party, district, time) from the MATCH text while leaving the card's wording untouched -
+  and the measurement to beat is the control pages in `tmp/d624_live2.txt`. Owner: the AI lane.
+
+- **A band the corpus cannot fill still answers with ten rows outside it and says nothing.**
+  Measured 2026-10-30: **3 of the 184 restaurants are priced 300-500** and none are 500-800, so
+  「500-800蚊」 returns ten rows that are all out of band - the top one at HK$92 - with no line on any
+  card saying the band was missed. A `price_fit` of 0.02 is a demotion, not an answer, and the
+  product's answer needs a refusal (or a widened band) when the corpus cannot seat the ask. That is
+  the same shape as the degradation path's refusals and should reuse their copy. Owner: the AI lane
+  with the seed lane (a corpus with prices is the other half).
+
+- **`budget_per` is read by `price_fit` and then ignored.** 「人均300」 now parses to `per: person`
+  (§622) and 「預算300」 to `per: party`, and the two are scored IDENTICALLY, because `price_fit`
+  takes `budget_per` and never reads it. The seed writes `avg_price_hkd` with `"model":
+  "per_person"` (`data/seed/generate.py:1051`), so the row's number is per head: a party budget of
+  1,000 for four should compare against 250 a head, and today it compares against 1,000. Nothing in
+  the platform says what an OFFERING's `price_amount` means (a slot total, a per-head price, a set
+  menu), so the fix needs that decision first. Owner: the platform lane with the AI lane.
+
+- **Chinese numerals in a price are silent.** 「一千蚊以下」 and 「人均一千蚊以內」 are the
+  only two of D624's twenty-seven shapes that still reach no budget (§622): `numerals.py` rewrites
+  十 and below and has no 百 or 千, and `normalise_numerals` is called with `only_before` markers for
+  hours and party sizes only. The hour and party lanes already prove the shape works; the budget
+  lane needs the same call with a currency marker. Owner: the AI lane.
 
 - **The refusal bridge is a hand-list and only three facts have been measured** - D595 and D598
   closed `noise`/`queue` and the noise fact's second spelling, but `ASPECT_AVOID` and

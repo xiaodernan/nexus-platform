@@ -139,6 +139,7 @@ class Candidate:
     distance_m: float | None = None
     price: float | None = None
     budget_max: float | None = None
+    budget_min: float | None = None
     budget_per: str = "party"
     availability: str | None = None      # available | limited | full | None(unknown)
     popularity: float = 0.0              # already 0..1
@@ -186,12 +187,26 @@ def distance_score(distance_m: float | None, cfg: DistanceConfig) -> float:
 
 
 def price_fit(price: float | None, budget_max: float | None, cfg: PriceConfig,
-              budget_per: str = "party") -> float:
-    """Inside budget scores 1.0; over budget decays on log distance (§6)."""
+              budget_per: str = "party", budget_min: float | None = None) -> float:
+    """Inside budget scores 1.0; over budget decays on log distance (§6).
+
+    D624: a budget has TWO ends. 「300-500蚊」 states a floor and a ceiling, and until this unit
+    only the ceiling reached the ranker - the floor was parsed into `Intent.budget.min` and then
+    dropped, so the answer to a request for 300-500 was the cheapest rows in the corpus. The floor
+    decays on the same log scale as the ceiling, at the same tolerance, so an in-band row scores
+    1.0 and a row at half the floor scores what a row at twice the cap scores.
+    """
     if price is None:
         return 0.5
     p = max(0.01, float(price))
+    floor = float(budget_min) if budget_min is not None and float(budget_min) > 0 else None
+    if floor is not None and p < floor:
+        return _norm01(math.exp(-math.log(floor / p) / cfg.tolerance))
     if budget_max is None or budget_max <= 0:
+        # A floor on its own is still a budget: every row at or above it is in band, so the
+        # band scores 1.0 rather than falling back to the band-neutral curve.
+        if floor is not None:
+            return 1.0
         return _norm01(math.exp(-abs(math.log(p / cfg.neutral_band_hkd)) / 2.0))
     cap = float(budget_max)
     if p <= cap:
@@ -223,7 +238,8 @@ def score_candidate(c: Candidate, w: RankingWeights) -> tuple[float, dict[str, f
         "relevance": _norm01(c.relevance),
         "quality": quality_component(c, w),
         "distance": distance_score(c.distance_m, w.distance),
-        "price_fit": price_fit(c.price, c.budget_max, w.price, c.budget_per),
+        "price_fit": price_fit(c.price, c.budget_max, w.price, c.budget_per,
+                               c.budget_min),
         "availability": availability_score(c.availability, w.availability),
         "personalization": (w.personalization.neutral if c.personalization is None
                             else _norm01(c.personalization)),
