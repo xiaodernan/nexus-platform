@@ -243,8 +243,17 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         in_bucket = False
         if bucket:
             row_slugs = {canonical_tag(str(x)) for x in (r.get("category_slugs") or [])}
+            # D616: the coarse leg reads the bucket the ROW states. A merchant row spells it
+            # in `category_primary`; an offering row spells it in `category` - `demo_data.py:124`
+            # writes the inherited value under that key and `test_demo_data.py::
+            # test_category_and_district_inherited` pins it, while the live SELECT aliases the
+            # same column `m.category_primary AS category` (sql.py:570). Reading only the first
+            # key kept 0 of the 2 demo offerings for EVERY bucket, including the one its own row
+            # states, so the degraded path answered a product request with nothing while the
+            # plane answered it from the mirror the live row also carries.
+            stated = (r.get("category_primary"), r.get("category"))
             in_bucket = (bool(row_slugs & slugs) if row_slugs
-                         else r.get("category_primary") == bucket)
+                         else bucket in stated)
         score = 0.0
         if low:
             tokens = _static_tokens(low)

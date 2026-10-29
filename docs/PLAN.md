@@ -2250,8 +2250,8 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `offerings.duration_minutes` is populated on 804 offerings, the same count as the rows stating a
   party bound, so the corpus's bookable rows do carry a duration. Java names the column 13 times,
   the web 0 times, and the AI lane's SQL never selects it (measured: 1 occurrence of the word in
-  `nexus_ai`, which is D607's own comment). `_slot_window` (`service.py:895`) and `slots_for`
-  (`sql.py:622`) bound a time window and a capacity, never an offering's length, so a
+  `nexus_ai`, which is D607's own comment). `_slot_window` (`service.py:932`) and `slots_for`
+  (`sql.py:634`) bound a time window and a capacity, never an offering's length, so a
   recommendation can propose a two-hour offering into a one-hour slot and nothing between the card
   and the booking says so. The product question comes first: does the slot window come from the
   offering's own duration, or from what the caller asked for? Owner: the AI lane with the
@@ -2304,9 +2304,9 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
 - **Two of the census's zero-reader tokens were the census being wrong, and the ones left are named
   here rather than "fixed" (D608's method, audited)** - `merchant_lively_ambience` is read: the
   static refusal's offering leg looks the row value up under a key it COMPOSES
-  (`row.get("merchant_" + name)`, `search/service.py:342`), which a name-match census cannot see.
+  (`row.get("merchant_" + name)`, `search/service.py:351`), which a name-match census cannot see.
   `mean_rating` is read too - it is the inner aggregate alias re-exported one line up as
-  `tenant_mean_rating` (`search/sql.py:388`, `:393`) and consumed at `service.py:801`. So the
+  `tenant_mean_rating` (`search/sql.py:388`, `:393`) and consumed at `service.py:813`. So the
   census's output is a queue, not a verdict, and every "0 readers" gets re-checked against
   composition and aliasing before it is filed. What survives: `address_line1` (the bullet above),
   and the whole `reviews_for` builder (`search/sql.py:649`) - no caller outside its own three tests,
@@ -2353,7 +2353,7 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
 - **A location's clock joins the bundle and no score, and nothing decides whether that is right** -
   `facts_from_rows` groups into `facts_by_subject` under each fact's OWN `subject_id`, and
   `Candidate.freshness` reads `facts_by_subject.get(subject_id)` for the candidate's own id
-  (`search/service.py:807`), so the 54 location facts D609 now loads cannot lift or sink the
+  (`search/service.py:820`), so the 54 location facts D609 now loads cannot lift or sink the
   merchant's freshness contribution. D609 pinned that with
   `test_a_location_fact_moves_no_ranking_number` because a citation unit must not re-rank the plane
   on the side; the open question is the product one - a merchant whose nearest location's address
@@ -2617,6 +2617,18 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   answers that bucket with 166 rows reached through the `shopping` root (`tmp/d616_taxonomy.txt`).
   Filed with the honest non-claim: `想買行山鞋` → `footwear` answers 0 on BOTH lanes (no such leaf
   reaches any offering), so that one is not a divergence.
+  **Closed by D616 (§614) for the column; the leaf half stays open and is now its own bullet.** The
+  coarse leg of `_filter_static` now compares the bucket to the pair the row states
+  (`category_primary`, `category`), so the demo offering lane keeps 1 of its 2 rows for `restaurant`
+  and 1 for `retail` - the milk-tea set and the shoe, each stated on its own row - and the two
+  sentences that ask those words go from 0 cards to 1 card on the degraded path
+  (`tmp/d616_offering_lane.txt`, the "with the key read" column of sections A and C; the door is
+  `test_the_bucket_leg_reads_the_column_an_offering_row_states.py`). Renaming the column was the other
+  repair and was refused: `tests/test_demo_data.py::test_category_and_district_inherited` pins
+  `r["category"] == parent["category_primary"]` as the offering row shape, and `_static_avoids` in the
+  same file already reads both keys. What stays open is this bullet's second layer - a demo row states
+  its parent's coarse bucket, not a taxonomy leaf, so `bubble-tea` still answers nothing - filed as
+  D616's first bullet with the counts.
 - **D596's parity door cannot see this gate, by construction.** Every row of
   `test_the_category_filter_answers_the_same_question_on_both_lanes.py` asks
   `S._filter_static(rows, "", {"category": bucket})` — text empty — so it compares the two lanes'
@@ -2628,7 +2640,7 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   "Should the degraded path answer a request its catalogue cannot satisfy with the nearest thing it
   has, or with nothing?" is a question about the degraded contract (§105), not about this predicate;
   this unit changes only the case where the catalogue DOES hold the answer.
-- **`text_matched` on the static lane claims more than it knows.** `service.py:280` sets
+- **`text_matched` on the static lane claims more than it knows.** `service.py:289` sets
   `r.setdefault("text_matched", bool(low))` — every row that survives a request carrying any text is
   marked as text-matched, including a row with zero token hits. After D615 such a row can now reach
   the ranking floor (`ranking.py:262` reads the flag), so the flag is load-bearing in a way it was
@@ -2668,3 +2680,70 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   (`tmp/d621_overlap.py`): 14 both, 49 style only, 97 seat only, 310 neither. D621 made the reader
   read both, which fixes the symptom; whether the corpus should carry one fact or two is a seed
   question, and every future reader will pay for the answer being "two".
+
+- **The leaf layer is still missing from the demo catalogue.** D616 teaches `_filter_static` the
+  column an offering row states, which makes `restaurant` answer the milk-tea set and `retail` answer
+  the shoe. It does not make `bubble-tea` answer either: `想飲杯奶茶` resolves to `bubble-tea`
+  (手搖飲品, a leaf under the `cafe` root, 45 `merchant_categories` rows - `tmp/d616_taxonomy.txt`),
+  and the demo offering inherits its parent merchant's `restaurant`, so the degraded path answers a
+  bubble-tea request with nothing although the catalogue holds a row named 招牌凍奶茶套餐, while the
+  live lane answers the same filter with **342** offerings (`tmp/d616_offering_live.txt`). Closing it
+  is fixture authoring - a taxonomy leaf has to be written onto each demo row - not a predicate
+  change, and it needs the same decision for `cafe`: this fix leaves 0 demo offerings on that bucket
+  while the plane answers it with 79 merchants and 658 offerings (`tmp/d616_shopping_live.txt`, the
+  two `bucket=cafe` lines). Owner: whoever authors `api/demo_data.py`.
+- **The static text haystack scores a column the plane never scores, and misses the one the
+  offering shape uses.** `service.py:234-236` builds the searchable string from `display_name,
+  display_name_zh, name, name_zh, description, category_primary, district` plus `tags` - it includes
+  the MERCHANT's bucket column. Neither live keyword expression does: `sql.py:314-321` scores
+  `m.search_tsv`, `m.display_name`, `m.display_name_zh`, `m.description` and `m.tags`, and
+  `sql.py:524-531` scores `o.search_tsv`, `o.name`, `o.name_zh`, `o.description`,
+  `o.description_zh` - and `docs/DATABASE.md:271` records that the tsv triggers are built from
+  "name/description/tags fields". So a request whose word is a category name can earn a text hit from
+  `category_primary` on the fixture lane and cannot earn one from it on the plane, while the OFFERING
+  shape's own bucket column (`category`) is in neither list - D616 widens the bucket leg to read it
+  and leaves the score leg alone. The two halves are separable and were measured apart: the arm that
+  widens the haystack as well reddens exactly one row -
+  `test_the_bucket_column_an_offering_states_earns_it_no_text_score`, the row that pins a bucket match
+  earns no text score (`tmp/d616_arms.txt`, arm C). So reading the column changes which rows ANSWER;
+  scoring it would change which rows RANK, on a lane the plane does not rank this way at all. Owner:
+  the AI lane, with the neighbouring half of the same string: `description_zh` is scored by the live
+  offering expression (`sql.py:524-531`) and is in the haystack not at all, so the fixture lane is
+  blind in both directions - it searches a column the plane does not score, and does not search a
+  column the plane does.
+- **`ALIASES` runs one way, so a caller who names the taxonomy root reaches rows the degraded lane
+  cannot name.** `resolve("retail")` answers `['retail', 'shopping']` and `resolve("shopping")`
+  answers `['shopping']` (`tmp/d616_offering_lane.py`, the `resolve()` block) - the table maps
+  bucket to slug and never slug back to bucket. The demo's one retail row therefore stays unreachable
+  from a request that names the root its own bucket means: `bucket='shopping'` keeps 0 offering rows
+  and 0 merchant rows even with the column read (`tmp/d616_offering_lane.txt`, sections A and D:
+  `retail` keeps `demo-rainbow-sports-store`, `shopping` keeps nothing). `categories.py:9-11` writes
+  the reason the raw bucket is kept - "the fixture catalogue ... stores the coarse bucket in `category`
+  itself" - which is the OFFERING key, not the one the coarse leg read before this unit. Reading the
+  alias table both ways, or authoring the demo rows in slug spelling, is a decision about §105's
+  degraded contract and is left open here. The plane has no such split, which is what makes it a
+  contract question rather than a bug: `bucket='shopping'` answers **166** live offerings and **20**
+  live merchants - exactly what `bucket='retail'` answers, because the mirror every filtered live row
+  carries includes the parent root (`tmp/d616_shopping_live.txt`, `sql.py:156-161`). The same probe
+  counts the population behind those numbers by the status the offering SELECT actually filters on -
+  5,170 `active` of 5,538 offerings - and prints 0 for `published`, because that is the merchant status
+  and an earlier probe of this unit's asked the offering table a question it does not answer
+  (`tmp/d616_offering_live.txt` keeps that line; `sql.py:438` is the filter). Owner: the AI lane, with
+  §105.
+- **Two rows the full suite reddened at the base commit, so neither is this unit's and neither is
+  repaired here.**
+  `tests/test_citations_resolve.py::test_a_chunk_fact_id_resolves_to_a_fact_row` fails on its own
+  assertion `the retrieval returned no chunk - the corpus is not reachable`
+  (`apps/ai/tests/test_citations_resolve.py:69`, `tmp/d616_suite2.txt`), and it is red in a copy
+  exported from `git archive 9ae67e8` with none of this unit's bytes in it (`tmp/d616_attrib.txt`) - so
+  the unreachable corpus is sitting in committed history, which is more than §613 recorded when it met
+  the same row and filed it as the RAG lane's in-flight edit. Owner: the RAG lane, with
+  `nexus_ai/rag/embed.py`.
+  `tests/test_vocabulary_is_the_reference.py::test_every_test_file_uses_characters_the_product_knows`
+  reddens on U+6B72, which is the character in `12歲以上的餐廳` at
+  `apps/ai/tests/test_a_budget_reaches_both_ends_of_the_ranker.py:93` - a parametrize row the D624
+  commit `9ae67e8` shipped and HEAD still holds - and `git grep -c 歲 HEAD -- apps/ai/nexus_ai` returns
+  nothing, so the word is in no data string of the package the gate reads its reference from (the rule
+  D453 set). Either the lexicon is missing a word a real customer writes, or that row asserts a parse
+  the product cannot have; this unit measured which file the character is in and stopped there. Owner:
+  the time/amount lane that shipped the row, with the lexicon.

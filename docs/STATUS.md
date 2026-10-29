@@ -28198,3 +28198,165 @@ files (`test_search_plan`, `test_cards`, `test_preferences_ranking`, `test_spons
   `:573-585` (`_range_is_money`); `search/ranking.py:189-212` (`price_fit`'s band);
   `search/service.py:451` (`SearchPlan.budget_min`) and `:670` (the copy that was missing);
   `search/cards.py:406-413` (the band on the card).
+
+## 614. D616 · the degraded path answered every categorised product request with nothing, because the bucket leg reads a column an offering row does not have (`apps/ai/nexus_ai/search/service.py`)
+
+**How the unit arrived.** D615 moved the bucket leg of `_filter_static` ahead of the text gate and
+filed, as its first PLAN bullet, the half it did not touch: the coarse fallback compares the request's
+bucket to `category_primary`, and `api/demo_data.py:124` builds an offering row with the parent's
+bucket under `category` (`"category": parent["category_primary"]`). This unit went to find out whether
+that is a latent tidiness note or a user-facing answer, and it is the second.
+
+**What the catalogue actually holds and what the predicate reads.**
+`tmp/d616_offering_lane.py` prints both demo offering rows first:
+
+    slug=demo-milk-tea-set    category='restaurant'  category_primary='<ABSENT>'  category_slugs='<ABSENT>'
+    slug=demo-running-shoes   category='retail'      category_primary='<ABSENT>'  category_slugs='<ABSENT>'
+
+so the keys the bucket leg reads are the keys neither row carries. Run over the eight buckets
+`restaurant, cafe, retail, bakery, ramen, bubble-tea, shopping, footwear`, the shipped offering lane
+keeps **0 of 2 for every one of them** - including `restaurant` for a set meal whose own row says
+`restaurant`, and `retail` for a shoe whose own row says `retail`. The same two rows with the bucket
+moved into the column the predicate reads answer `restaurant` with 1 and `retail` with 1; the other six
+buckets stay 0, which is the honest answer and is pinned as such.
+
+**The user sees it as "no results" on a sentence, not on a probe.** The same script then runs the
+eight sentences D615 measured, in D615's order, plus the two this unit's offering probe added
+(`bubble-tea`, `footwear`) - and it runs them through the intent that scopes a search to
+offerings (`purchase` - `KIND_TO_SUBJECT` in `search/service.py`), so the answer is a card list:
+
+    附近有餐廳嗎    bucket=restaurant   shipped 0 cards | with the key read 1 (招牌凍奶茶套餐 Signature Milk Tea Set)
+    想飲杯咖啡      bucket=cafe         shipped 0 cards | with the key read 0
+    想食拉麵        bucket=ramen        shipped 0 cards | with the key read 0
+    想去買嘢        bucket=retail       shipped 0 cards | with the key read 1 (行山跑步鞋 Trail Running Shoes)
+    想搵運動用品    bucket=<none>       shipped 0 cards | with the key read 0
+    想去美髮        bucket=<none>       shipped 0 cards | with the key read 0
+    想食甜品        bucket=bakery       shipped 0 cards | with the key read 0
+    想飲啤酒        bucket=bar          shipped 0 cards | with the key read 0
+    想飲杯奶茶      bucket=bubble-tea   shipped 0 cards | with the key read 0
+    想買行山鞋      bucket=footwear     shipped 0 cards | with the key read 0
+
+Two of those ten ask for what the catalogue actually holds, and the degraded path did not give it: the
+milk-tea set is the demo catalogue's only `restaurant` offering and the shoe its only `retail` one; each
+row states exactly the bucket the customer named. The other eight stay 0 after the fix, which is the
+honest answer for a catalogue that holds no ramen, no beer and no salon - and is pinned as 0 in the door.
+
+**The plane has no such gap, and the difference is one alias.** `sql.py:570` builds the live offering
+row's bucket column as `m.category_primary AS category` — the same inherited value, under the same
+`category` key the demo writes — alongside `category_slugs` at 574, produced by the LATERAL at
+156-161 that aggregates both `c2.slug` and its parent's. So a live offering is reachable by its leaf
+and by its root, and the predicate's slug leg fires before the coarse leg is ever consulted. Measured
+on the plane (`tmp/d616_offering_live.txt`): **2384** offerings for `restaurant`, **166** for `retail`,
+**342** for `bubble-tea`, **0** for `footwear`. On a live request the coarse leg never runs at all: a
+row can only answer the category filter by carrying a slug the resolver named, so every row a filtered
+SELECT returns has a non-empty `category_slugs` - which is what D596's
+`test_a_filtered_query_carries_the_slugs_the_clause_walks` asserts and this unit's door re-asserts for
+the offering shape - and `row_slugs` therefore takes the first branch. The demo catalogue is the only
+production row shape the coarse leg is asked about, and there it read a key no offering has.
+
+**The row shape is an asserted convention, and this very file already reads it that way.**
+`tests/test_demo_data.py::test_category_and_district_inherited` asserts
+`r["category"] == parent["category_primary"]` for every demo offering - the key is pinned, not
+accidental - and the suite's own offering fixture is written the same way
+(`tests/test_search_pipeline.py:28-32`, `"kind": "experience", "category": "restaurant"`). Stronger
+than either: the refusal leg of this same predicate reads BOTH keys - `_static_avoids` folds
+`str(row.get("category_primary") or row.get("category"))` into the category leg it vetoes with, because
+an offering row carries its bucket under the second name - and `_static_avoids` decides which lane a
+row belongs to by the row's own shape (`if row.get("display_name")`), not by which caller handed it
+over. So one file holds two legs over the same two row shapes: one of them was taught both keys in an
+earlier unit, the other is still asking an offering for a merchant's column. Renaming the column would
+have moved an asserted contract; teaching the bucket leg the column the offering shape uses brings it
+level with its neighbour.
+
+**The fix is one expression.** `tmp/d616_patch.py` replaces the coarse leg's comparison with the
+bucket the row states:
+
+    stated = (r.get("category_primary"), r.get("category"))
+    in_bucket = (bool(row_slugs & slugs) if row_slugs else bucket in stated)
+
+The slug mirror still decides whenever a row carries one - that is why a live-shaped row whose
+`category` holds a display NAME ("Bubble Tea") can never be kept by it, and why the widening cannot
+loosen the lane D596 built. Nothing else moved: the diff this unit ships is 10 added lines and the one
+comparison they replace (`tmp/d616_only_service.patch`), and the text gate, `kw_score`,
+`text_matched`, district, price, avoid and party size sit outside those lines.
+
+**What this deliberately leaves alone, named three times.** (1) The leaf layer: `想飲杯奶茶` resolves to
+`bubble-tea` - 手搖飲品, a leaf under the `cafe` root, 45 `merchant_categories` rows
+(`tmp/d616_taxonomy.txt`) - and the demo's milk-tea set inherits its parent's `restaurant`, so the
+degraded path still answers a bubble-tea request with nothing although the catalogue holds a row named
+招牌凍奶茶套餐. Closing that needs taxonomy labels authored onto the fixture rows, which is a content
+decision about the demo catalogue, not a predicate repair. (2) The text haystack at
+`service.py:234-236` reads `category_primary` and not `category`, so the same column blindness still
+costs an offering its text score. That half is left, and the door says what leaving it costs nobody:
+the arm that widens the haystack too (C) reddens exactly one row -
+`test_the_bucket_column_an_offering_states_earns_it_no_text_score` - the row that pins that stating a
+bucket is not the same as the user's words appearing in it. Scoring a bucket would move the fixture
+lane further from the plane, which scores no category at all (`sql.py:314-321`, `sql.py:524-531`).
+(3) `ALIASES` maps a bucket to its slugs and never a slug back to a bucket, so `resolve("retail")` is
+`['retail', 'shopping']` while `resolve("shopping")` is `['shopping']` (`tmp/d616_resolve.txt`). The
+plane answers both words with the same pool - **166** offerings and **20** merchants each
+(`tmp/d616_shopping_live.txt`) - because its mirror carries the parent root, and the degraded lane
+answers `retail` (after this unit) but still `shopping` with nothing, because the coarse leg compares
+the raw bucket and the demo row spells it `retail`. Reading the table both ways is a decision about
+§105's degraded contract, filed in PLAN with these numbers.
+
+**Verified.** The arms ran on two bases: first at `d66dc4f` over 177 rows
+(`tmp/d616_arms_base_d66dc4f.txt`), then at `9ae67e8`, the commit this one ships on top of, over
+194. The same 5 rows are red on both runs, by name; the population grew by 17 rows, and this unit
+did not decompose where those came from. Each arm runs the D616 door, the D615 door and the
+seventeen files that read this predicate - 194 rows - in an isolated copy tree exported from `git
+archive 9ae67e8` - the whole `nexus_ai` package and the whole `tests` directory, not only the file
+this unit changes, so the base is pinned against the concurrent lanes' in-flight worktree edits
+and CONTROL measures the bytes this unit replaced rather than the bytes already on disk
+(`tmp/d616_arms.txt`). CONTROL: 5 rows red - 5 of them in this unit's own door, namely the four
+that ask an offering for the bucket its own row states plus the live row that compares the two
+lanes - and 189 of 194 passing. FIXED: 194 green. The harness refuses to start unless the blob
+that `git show 9ae67e8:` plus `tmp/d616_only_service.patch` produces is byte-identical to the arm
+it grades, so what the copy measured is the commit's own bytes rather than the shared worktree's -
+which is the distinction that matters here, because the worktree holds two other lanes' hunks in
+this very file. Four arms, each the guard for a boundary this unit did not cross. Letting the
+coarse leg vote beside the mirror (A) reddens exactly one row,
+`test_the_mirror_wins_even_when_the_other_column_names_a_bucket`: the widening ships only with the
+mirror deciding first. Trading `category_primary` for `category` instead of joining them (B)
+reddens 14 rows across 4 files - 7 in D615's door, 4 here, 2 in D596's parity door, and 1 in
+`test_search_plan.py::test_category_filter` - so the merchant key is not redundant and the smaller
+"fix" breaks the lane that was already answering. Widening the haystack too (C) reddens the one
+row that pins a bucket match earns no text score. And comparing the RESOLVED slugs in the coarse
+leg (D), the clause closest to the live expression and wider than what ships, reddens
+`test_the_coarse_leg_stays_exact_and_does_not_walk_the_taxonomy`. Arm D is worth reading twice:
+`tmp/d616_taxonomy2.txt` asks the `categories` table for the twelve buckets this lane can be
+handed and gets `['bakery', 'footwear', 'retail']` back as NOT slugs at all, so on the degraded
+lane an EXACT raw-bucket comparison is the only leg that can fire for a row whose bucket the
+product's own taxonomy does not contain - and it is the leg this unit just taught to read
+`category`. The full AI suite ran on the shared worktree with this hunk in it: 4 failed, 33092
+passed, 43 skipped in 8665.70s (2:24:25) (`tmp/d616_suite2.txt`). This unit's door is in `tests/`,
+the suite collects that directory, and no row of it is among the 4. Whether the 4 are this unit's
+is a measurable question and two scripts answer it. `tmp/d616_attrib.py` re-runs the four red
+FILES in a copy exported from `git archive 9ae67e8` - the commit this one ships on top of, holding
+none of this unit's bytes - and gets 2 failed, 18 passed (`tmp/d616_attrib.txt`). Two are red
+there too: `test_citations_resolve.py::test_a_chunk_fact_id_resolves_to_a_fact_row` fails on its
+own assertion `the retrieval returned no chunk - the corpus is not reachable`
+(`apps/ai/tests/test_citations_resolve.py:69`, and `routes_rag.py` logs `chunk retrieval failed`
+on the same call), which is more than §613 recorded when it met this row and filed it as another
+lane's in-flight edit, because a base commit holds it now; and
+`test_vocabulary_is_the_reference.py::test_every_test_file_uses_characters_the_product_knows`
+reddens on U+6B72 at `apps/ai/tests/test_a_budget_reaches_both_ends_of_the_ranker.py:93`, a
+parametrize row `9ae67e8` shipped, which the package's own data does not carry.
+`tmp/d616_owncheck.py` runs the same four files in a copy of HEAD's bytes for every file plus
+exactly the hunk this commit ships: 2 failed, 18 passed (`tmp/d616_owncheck.txt`) - the same two
+rows again, so the other two,
+`test_no_dead_constants.py::test_every_module_level_name_is_read_by_the_product` and
+`test_the_intent_cuisine_reads_the_rows_columns.py::test_the_intent_block_reads_the_rows_own_columns`,
+are red on the worktree and green on these bytes. The worktree is not this unit's tree: its
+`nlu/understand.py` holds 922 lines against HEAD's 879, and `search/service.py` carries four hunks
+that are not this commit's. Both base reds are filed in PLAN by this unit with the numbers above;
+neither is repaired here.
+
+- readers: `_filter_static` (the coarse bucket leg, the slug leg, the haystack),
+  `api/demo_data.py::_offering_rows` and `_merchant_rows`,
+  `tests/test_demo_data.py::test_category_and_district_inherited`, `tests/test_search_pipeline.py`'s
+  offering fixture, `sql.build_offering_query` (the `category` alias and the `category_slugs`
+  mirror), `KIND_TO_SUBJECT`, `categories.resolve`/`ALIASES` (the `retail`/`shopping` pair), the
+  `categories` table itself, and this unit's ten `tmp/` measurements (`d616_offering_lane`,
+  `d616_offering_live`, `d616_taxonomy`, `d616_taxonomy2`, `d616_resolve`, `d616_shopping_live`,
+  `d616_arms`, `d616_suite2`, `d616_attrib`, `d616_owncheck`).
