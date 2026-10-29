@@ -2470,3 +2470,59 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   question; the half left is that no claim is tied to the subject it names. Closing it means the
   verifier knowing which card a sentence is about - a per-claim subject `extract_claims` does not
   produce and `REASON_COPY` does not need today. Owner: the trust lane with the copy owner.
+
+- **A dish refusal is carried out as a cuisine refusal, and the taxonomy already holds the finer
+  leaf** - `lexicon._add_cuisine_refusal_surfaces()` folds every `CUISINE_TERMS` surface into
+  `CONSTRAINT_CANON`, so `拉麵` and `壽司` both canonicalise to `japanese` and `avoid_terms` expands
+  that to `['japanese', 'sushi', 'ramen', 'izakaya']`. On the plane (`tmp/d615_avoid.txt`, 470
+  published merchants, 2026-10-29) that refusal removes **28 merchants on the tag leg and 25 on the
+  offering-name leg**, while the taxonomy's own `ramen` leaf - a real slug, 22 merchants - would
+  remove 12 and 12. So the sentence "I don't want ramen" is answered by hiding every Japanese
+  restaurant, including the 32 that carry no ramen category at all. The widening is right for the
+  words that NAME a cuisine (日本嘢 → `japanese`) and over-broad for the words that name a dish, and
+  the table cannot tell the two apart because it stores one flat list per cuisine. Either the fold
+  keeps a dish's own slug when the taxonomy has one - `ramen`, `sushi`, `izakaya` are siblings under
+  the `restaurant` root, so `categories.resolve` already reaches them - or the product accepts that
+  a dish refusal is a cuisine refusal. D612 pinned the behaviour with its numbers in
+  `tests/test_lexicon.py::TestConstraintCanon::test_a_dish_surface_refuses_its_whole_cuisine`
+  instead of choosing. Owner: the AI lane with the ask-lane owner.
+
+- **Words a user actually says that carry no refusal at all** - `唔想食燒烤` produces
+  `constraints=[]` (`tmp/d615_simp.txt`, `tmp/d612_hole2.txt`), so the plan filters nothing and the
+  barbecue houses stay in the answer, while `烤肉` - the Korean list's spelling of the same food -
+  refuses `korean`. The word is not absent from the vocabulary, it is in the wrong LANE: a hand wrote
+  燒烤 / 烧烤 as a surface of `style/outdoor` (the D548 row that folds in 露天, the barbecue-AREA
+  sense), so the sentence reads `preferences=[('style','outdoor',-1)]` - the user is talking about
+  food and the ranking lane answers by pushing terraces down. `火鍋` / `火锅` are worse: nothing in
+  either lane, although the taxonomy has a `hotpot` leaf. Also carrying no refusal in the same sweep:
+  串燒, 自助餐, 甜品, 快餐, 小吃, 咖啡. This is not the hole D584's follow-up door watches for:
+  `test_the_surfaces_that_refuse_nothing_are_the_single_characters` walks `CUISINE_TERMS` and says
+  anything that refuses nothing and is not one character is a hole - a word that is not a surface of
+  any cuisine is invisible to it by construction. Filing rather than filling, because the fix is a
+  vocabulary decision (which word joins which list, in which lane, and with what value) rather than a
+  reader bug - and one word with two senses (the food and the place) is that decision in its sharpest
+  form. Owner: the AI lane with the ask-lane owner.
+
+- **The Simplified↔Traditional bridge is in the reader, and the table does not carry it** -
+  `CUISINE_TERMS` is itself canonicalised at import, so `CONSTRAINT_CANON` gained only Traditional
+  keys: `canon_constraint("点心")` answers `点心` and `constraint_hits("唔想食点心")` answers `[]`, while
+  the shipped sentence works (`唔想食点心` → `cuisine_avoid: dim_sum`) because
+  `understand.extract_intent` runs `canonical(text)` on the QUERY before any vocabulary comparison -
+  deliberately kept out of `normalize_query` by D420 so a Simplified user is not answered in the
+  Traditional locale. No consumer is broken today (`canon_constraint` has exactly one shipped caller,
+  and it feeds the row's own value), but a second caller that skips the fold gets a raw CJK word into
+  `avoid`, where `avoid_terms` hands it back unchanged and the tag predicate `&&` matches no row.
+  Pinned in `test_a_simplified_surface_is_folded_upstream_not_here` so the next caller reads the
+  bridge's location before assuming it. Owner: the AI lane.
+
+- **The refusal table lists 96 surfaces and means 81 things** - 21 entries across the five rows are
+  repeats (`tmp/d612_dupes.py`: 15 in `cuisine_avoid`, 3 in `diet_avoid`, 2 in `feature_avoid`, 1 in
+  `smoking_avoid`), every one of them a Traditional spelling, which is the signature of
+  `_canonicalise_vocabulary()` rewriting both spellings of one word (純素 and 纯素) to the same string
+  inside a row that already held it. Nothing downstream sees it: `constraint_hits` dedups on
+  `(key, canon)`, so one sentence writes one refusal either way - measured identical for 純素, 點心,
+  海鮮. The cost is that a row's LENGTH is not its vocabulary, so any reader that counts the table
+  (the fold's own docstring says "the 96 new words") over-reads it by 15. D584's follow-up door
+  enforces one ROW per kind and one LANE per value; nothing enforces one SURFACE per row, and the
+  arms prove the gap: dropping `_refused_today` appends 102 further copies and moves none of the four
+  doors that read this vocabulary. Owner: the AI lane.

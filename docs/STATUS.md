@@ -27395,3 +27395,145 @@ only the model's summary.
   `tests/test_verification_ground.py` and `tests/test_verification_claims.py`, and
   `tmp/d611_probe.py` + `tmp/d611_probe2.py` + `tmp/d611_blast.py` + `tmp/d611_blast2.py` +
   `tmp/d611_shape.py` + `tmp/d611_live.py` + `tmp/d611_arms.py` as the re-runnable measurements.
+
+## 610. D612 · the row three units filed and none fixed turned out to be the fold, and the fold refuses a dish as its whole cuisine (`apps/ai/tests/test_lexicon.py`)
+
+**The hand-off came first.** `test_lexicon.py::TestConstraintCanon::test_unknown_lowercased` pins the
+FALLBACK of `canon_constraint` - `CONSTRAINT_CANON.get(v, CONSTRAINT_CANON.get(v.lower(), …))` - and
+tested it with `vegan`. `_add_cuisine_refusal_surfaces()` landed with D584's fold and made `vegan` a
+known surface, so the row has been red since then: §598 counted it ("red at HEAD without this
+change"), §600 counted it again ("filed under D584's follow-up"), §609's suite named it as
+`assert 'vegetarian' == 'vegan'` at `tests/test_lexicon.py:205` and passed it here. Reproduced at
+those bytes: **1 failed, 48 passed**. The honest repair is not a new expectation but a word still
+outside the vocabulary, so the row keeps testing the fallback instead of the table's size:
+`canon_constraint("KETO") == "keto"`, green at 49 rows.
+
+**What the fold does, counted.** It runs at import (after `_canonicalise_vocabulary()`) and appends
+every surface of every `CUISINE_TERMS` value into the `cuisine_avoid` row unless `_refused_today()`
+says that surface already refuses something. `CONSTRAINT_CANON` ends at **118 entries, 82 of them
+fold-added**, and those 82 carry only **11 distinct values** (cantonese, dim_sum, indian, italian,
+japanese, korean, malaysian, seafood, thai, vegetarian, western). The row itself lists **96 surfaces
+and means 81 things**: `_canonicalise_vocabulary()` rewrites both spellings of one hand-written word
+(純素 and 纯素) onto the SAME string inside a row that is a list, so **21 duplicate entries** sit across
+the table (`tmp/d612_dupes_run.txt`). Nothing downstream notices, because `constraint_hits` dedups on
+`(key, canon)` - which is also why no door had ever read the duplicates.
+
+**What the fold costs: a dish refusal executes as a cuisine refusal.** The fold points every surface
+of a cuisine at the cuisine VALUE, so `拉麵`, `壽司`, `sushi`, `居酒屋` all write
+`('cuisine_avoid', 'japanese')`, and `avoid_terms('japanese')` expands to
+`['japanese', 'sushi', 'ramen', 'izakaya']`. Measured on the live plane - 470 published merchants,
+`tmp/d615_avoid.txt` - `avoid='japanese'` removes **28 merchants on the tag leg and 25 on the offering-name
+leg**, while `avoid='ramen'` removes **12 on each**. The overlap says what the extra 16 are: 2 merchants carry
+both, 20 carry only `ramen`, and **32 carry only `japanese`** - izakayas, sushi bars, teppanyaki. The corpus
+HAS the finer leaf: `categories` is 77 rows and `ramen` is one of them ('Ramen & Noodles', parent slug
+`restaurant`), 22 merchants carry it as a category - while **no merchant carries `japanese` as a category at
+all**, so the coarse value reaches only tags and names. Refusing the dish as its cuisine is therefore a
+product decision, not a vocabulary limit, and the ask lane already carries the finer tool: `category=ramen`
+resolves through `search/categories.resolve` to leaf AND parent. The sharpest case in the same fold is not a
+dish but a place type - `大排檔` (a hawker stall) refuses `seafood` and so removes the 14 seafood-tagged
+merchants from a sentence that said nothing about fish.
+
+**What the fold does not cover: the words no hand put in a refusal row.** The census D584 added walks
+`CUISINE_TERMS` values, so it can only ever ask "is every cuisine the user can ASK for also
+refusable"; it cannot see a food word that no refusal row names. Measured over eleven ordinary food
+words (`tmp/d612_hole.txt`, `tmp/d612_hole2.txt`): 火鍋 reads as NOTHING at all -
+`constraints=[]` and `preferences=[]` - while 燒烤, which is in the vocabulary, is in the wrong lane:
+a hand wrote it as a surface of `style/outdoor` (the 露天 / barbecue-AREA sense, added by D548), so
+`唔想食燒烤` yields `preferences=[('style','outdoor',-1)]` and `constraints=[]`. The sentence is about
+food, and the plan answers it by ranking terraces lower and refusing nothing; `烤肉` - the Korean
+list's own spelling of the first of those two foods - refuses `korean` cleanly. Also in the same sweep:
+串燒, 自助餐, 甜品, 快餐, 小吃, 咖啡 carry no refusal, while 素食, 奶茶 and 大排檔 do.
+
+**Where the Simplified bridge actually lives.** `canon_constraint('点心')` is `'点心'` - the table holds
+only Traditional spellings - yet `唔想食点心` end to end yields
+`{'key': 'cuisine_avoid', 'value': 'dim_sum'}` (`tmp/d615_simp_run.txt`), because `extract_intent`
+calls `canonical(text)` before the matcher and D420 deliberately keeps that out of `normalize_query`
+so a Simplified user is answered in their own script. The bridge is therefore in the READER, not the
+table: a caller that goes straight to `canon_constraint` or `constraint_hits` gets the raw word, and
+`constraint_hits('唔想食排队')` is `[]` while `排隊` refuses `queue`. The row
+`test_a_simplified_surface_is_folded_upstream_not_here` pins both halves so the next reader knows
+which layer to fix.
+
+**The floor had no door, and arm E said so.** The fold skips one-character CJK surfaces, because a
+bare 齋 or 蟹 completes a longer word. Dropping that guard (arm E) moved **none** of the four doors
+that read this vocabulary - which meant the guard was either dead weight or unwatched. It is
+unwatched: `tmp/d612_floor.py` (output `tmp/d612_floor_run.txt`) appends the two surfaces by hand and
+the shipped reader answers `唔想食蟹黃飯` -> `[('diet_avoid', 'seafood')]` and `唔想食長齋` ->
+`[('cuisine_avoid', 'vegetarian')]`.
+A bowl of crab-roe rice becomes a fish refusal and a period of fasting becomes a vegetarian one.
+`test_a_one_character_surface_never_joins_a_refusal_row` now pins the floor from the table side (no
+row lists a one-character surface) and from the reader side (`canon_constraint('蟹')` stays `'蟹'`),
+and arm E then moves exactly that one row.
+
+**Verified, in the order the door grew.** `1 failed, 48 passed` (the stale row, reproduced) -> **49
+passed** after the re-aim -> **53 passed** with the four consequence rows (`a_cuisine_surface_refuses_its_cuisine`,
+`a_dish_surface_refuses_its_whole_cuisine` carrying the 28-vs-12 numbers,
+`a_word_outside_the_refusal_vocabulary_refuses_nothing`, `a_simplified_surface_is_folded_upstream_not_here`)
+-> **54 passed** with the floor row, and **241 passed** over the five files that read this vocabulary
+(`test_lexicon`, `test_vocabulary_is_the_reference`, `test_vocabulary_code_points`,
+`test_vocabulary_traditional_forms`, `test_lexicon_readers_are_words`). No `nexus_ai` source changed,
+so this unit's evidence is the shipped code's behaviour, and every number above is a measurement
+rather than a proposal.
+
+**Arms** (`tmp/d612_arms.py`, run in the copy tree `tmp/d612_armtree`, four doors each, torn down -
+`tmp/d612_arms_run.txt`):
+
+    A  the fold never runs                        4f/50p  +  11f/10p/8s  + 17p  + 51p
+    B  a surface is stored as its own value       4f/50p  +   8f/21p     + 17p  + 73p
+    C  the lowercase twin is not stored           1f/53p  +  29p         + 17p  + 161p
+    D  `_refused_today` always says no            54p     +  29p         + 17p  + 161p
+    E  the one-character floor is dropped         1f/53p  +  29p         + 17p  + 183p
+    F  the lane-ownership map is ignored          54p     +   6f/23p     + 17p  + 161p
+       CONTROL (shipped bytes)                   54p     +  29p         + 17p  + 161p
+
+A is the fold's own blast radius - it moves the census rows and the seafood-dish parameters of the
+vocabulary gate, so the fold is what makes 素食 a refusal at all. B is the design the fold replaced:
+store each surface as itself, and `test_a_cjk_surface_never_reaches_the_filter_as_itself` plus the
+two-lanes agreement row go red, because the filter then compares CJK against `&&` on ascii tags. C is
+one row (`vegan`/`bbq` need the lowercase twin). D is the honest-equivalent arm and the reason the
+duplicate count is a fact rather than a defect: letting the fold append what a row already carries
+leaves every door green - it adds **102** repeat entries and changes no reading, because
+`constraint_hits` dedups. E moved one row, the floor row above. F is §584-follow-up's lane-ownership
+door doing its job: ignoring the map moves `test_no_value_is_refused_under_two_lanes` and the five
+seafood-dish parameters.
+
+**Sweep over every file that reads this vocabulary: 1 failed, 29,342 passed, 1 warning in 1:37:00**
+(`tmp/d612_sweep.txt`, at the shipped bytes, over the 28 files
+`grep -l "canon_constraint|CONSTRAINT_CANON|CUISINE_TERMS|constraint_hits" tests/*.py` names). The one
+red is `tests/test_citations_resolve.py::test_a_chunk_fact_id_resolves_to_a_fact_row`, and it is in this
+sweep for the same reason its own data line is fragile: `RAMEN = L.CUISINE_TERMS["japanese"][5]` at that
+file's line 38 reads the table positionally. Its assert is the HTTP status, and the body it prints is
+`503 … canceling statement due to statement timeout` out of `nexus_ai/api/routes_rag.py:57`'s retrieval
+read; it reproduces alone in 4.31s, so it is not the sweep's load, and it is the row §609's full-suite
+paragraph already carried as the pre-existing red §608 left behind (there it came back empty rather than
+slow). The working tree carries the concurrent lane's `M apps/ai/nexus_ai/rag/embed.py`, which is the
+lane that writes the vectors that read searches, and this unit changed one test file - so the row is
+named here rather than absorbed, and no vocabulary reader moved for the cuisine fold beyond the rows
+counted above.
+
+**Filed to PLAN, four bullets, by their own titles.** "A dish refusal is carried out as a cuisine
+refusal, and the taxonomy already holds the finer leaf" - the 28/25 vs 12/12 split, the 32
+japanese-only merchants, and the alternative already on the bench (`resolve('ramen')` is `['ramen']`,
+so the avoid lane can name the leaf it already knows how to reach). "Words a user actually says that
+carry no refusal at all" - the hole the census cannot see, now with its sharpest case: 燒烤 IS in the
+vocabulary, as a surface of `style/outdoor` (D548's 露天 row, the barbecue-AREA sense), so a sentence
+about food moves terraces down and refuses nothing. "The Simplified↔Traditional bridge is in the
+reader, and the table does not carry it" - so a direct caller of `canon_constraint` gets the raw word.
+"The refusal table lists 96 surfaces and means 81 things" - the 21 repeats, measured per row (15 in
+`cuisine_avoid`, 3 in `diet_avoid`, 2 in `feature_avoid`, 1 in `smoking_avoid`), and arm D's 102
+appends as the cost of the guard that hides them. Left open, not absorbed: whether a place type
+(大排檔) should refuse a diet value at all is the same product question as the dish rows with a
+different noun, and one word with two senses (the food and the place) is that question in its
+sharpest form.
+
+- readers: `canon_constraint`'s three-lookup fallback and the row that pinned it,
+  `_add_cuisine_refusal_surfaces`' guard (`_refused_today` + the one-character skip), the
+  `cuisine_avoid` row's 96-surface list, `constraint_hits`' `(key, canon)` dedup, `avoid_terms`'
+  expansion of `japanese`/`seafood`/`dim_sum`, the tag/primary/offering-name legs of the avoid clause
+  in `search/sql.py`, `extract_intent`'s `canonical(text)` call, the four doors in
+  `tests/test_a_cuisine_the_user_can_ask_for_is_a_cuisine_they_can_refuse.py`,
+  `tests/test_constraint_table_is_the_vocabulary.py`,
+  `tests/test_a_one_character_refusal_inside_a_longer_word_is_not_a_refusal.py` and
+  `tests/test_lexicon.py`, and `tmp/d612_probe.py` + `tmp/d612_widening.py` + `tmp/d612_dupes.py` +
+  `tmp/d612_floor.py` + `tmp/d612_hole.txt` + `tmp/d615_avoid.py` + `tmp/d615_canon_gap.py` +
+  `tmp/d615_simp.py` + `tmp/d612_arms.py` as the re-runnable measurements.

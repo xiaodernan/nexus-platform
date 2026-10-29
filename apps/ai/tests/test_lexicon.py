@@ -202,7 +202,63 @@ class TestConstraintCanon:
         assert L.canon_constraint("排隊") == "queue"
 
     def test_unknown_lowercased(self):
-        assert L.canon_constraint("vegan") == "vegan"
+        # The fallback needs a token NO table claims. `vegan` used to land here, and the cuisine
+        # fold (`_add_cuisine_refusal_surfaces`) has since made it a known surface - so the row
+        # moved to a word still outside the vocabulary rather than to a new expectation, because
+        # what is under test is the fallback, not the table's size.
+        assert L.canon_constraint("KETO") == "keto"
+
+    def test_a_cuisine_surface_refuses_its_cuisine(self):
+        # The fold's own purpose: the ask lane's spelling and the diet lane's word for one
+        # cuisine answer ONE value, so 素食 / 純素 / vegetarian / vegan are the same refusal and
+        # the plan's `avoid` list carries one fact, not four.
+        for surface in ("素食", "純素", "vegetarian", "vegan"):
+            assert L.canon_constraint(surface) == "vegetarian", surface
+        # A Latin surface is stored under BOTH spellings, so the case the user typed is not the
+        # case the table was written in: `BBQ` is the Korean list's surface, minuscule reads it.
+        assert L.canon_constraint("bbq") == "korean"
+
+    def test_a_dish_surface_refuses_its_whole_cuisine(self):
+        # The cost the fold also buys, pinned with the number rather than left in a table a
+        # reader cannot see: 拉麵 and 壽司 answer the SAME `japanese`, and
+        # `categories.avoid_terms('japanese')` is ['japanese', 'sushi', 'ramen', 'izakaya'] - on
+        # the live plane that refusal drops 28 tagged merchants where the taxonomy's own `ramen`
+        # leaf would drop 12 of its 22 (`tmp/d615_avoid.txt`, 470 published merchants,
+        # 2026-10-29). The corpus HAS the finer leaf, so refusing the dish as its cuisine is a
+        # product decision, not a vocabulary limit.
+        assert L.canon_constraint("拉麵") == "japanese"
+        assert L.canon_constraint("壽司") == "japanese"
+
+    def test_a_word_outside_the_refusal_vocabulary_refuses_nothing(self):
+        # The other edge of the same table: 烤肉 - the Korean list's spelling - refuses `korean`,
+        # while 燒烤, the ordinary word for the same food, is in no refusal row at all, so the
+        # reader passes it through untouched and the plan filters nothing. One fact, two
+        # outcomes, and the difference is only which list a hand happened to write.
+        assert L.canon_constraint("烤肉") == "korean"
+        assert L.canon_constraint("燒烤") == "燒烤"
+
+    def test_a_simplified_surface_is_folded_upstream_not_here(self):
+        # `understand.extract_intent` canonicalises the TEXT before any vocabulary comparison
+        # (its `canonical(text)`, kept out of `normalize_query` by D420 so a Simplified user is
+        # answered in their own script), and `CUISINE_TERMS` was itself canonicalised - which is
+        # why a Simplified 点心 still reads as a dim-sum refusal end to end while this table holds
+        # only the Traditional spelling. The bridge is in the reader, not here: a caller that
+        # skips it gets the raw word back.
+        assert L.canon_constraint("點心") == "dim_sum"
+        assert L.canon_constraint("点心") == "点心"
+
+    def test_a_one_character_surface_never_joins_a_refusal_row(self):
+        # The fold's floor, pinned from the table side because no door pinned it from the matcher
+        # side: 蟹 and 齋 are surfaces the ask lane names, and the moment either sits in a row the
+        # refusal reader fires on the word it is the TAIL OF - `唔想食蟹黃飯` refuses seafood and
+        # `唔想食長齋` refuses vegetarian (`tmp/d612_floor.py`, both measured by adding the two
+        # characters to the rows in memory and asking the shipped `constraint_hits`). A CJK cue has
+        # no word boundaries for the matcher to lean on, so a one-character surface is skipped on
+        # the way in rather than trusted.
+        bare = [s for _key, _negs, values in L.CONSTRAINT_RULES for s in map(str, values)]
+        assert "蟹" not in bare and "齋" not in bare
+        assert L.canon_constraint("蟹") == "蟹"
+        assert L.canon_constraint("齋") == "齋"
 
     def test_none_yields_empty(self):
         assert L.canon_constraint(None) == ""
