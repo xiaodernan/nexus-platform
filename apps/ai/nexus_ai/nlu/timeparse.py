@@ -111,6 +111,61 @@ def _canonicalise_tables() -> None:
 _canonicalise_tables()
 
 
+#: D630: a part-of-day cue can open a word that NAMES the thing instead of dating the
+#: sentence. A CJK cue has no word boundary (§D478), so 下午 inside 下午茶 - which is this
+#: product's `afternoon_tea` CATEGORY - read as a 14:00 window, and a query that named a
+#: category and no time at all carried `open_time: 14:00` in its plan.
+#: `afternoon tea` has the same shape: the Latin rule only stops a cue being read INSIDE a
+#: word, not at the front of a longer phrase.
+#:
+#: The boundary has to come from a vocabulary, and the one that names what a request FINDS
+#: is the category table - so this map is BUILT from `lexicon.CATEGORY_SYNONYMS` on first
+#: use rather than copied beside it. A copy is the thing that drifts (§D438).
+_GUARDED_CUES: dict[str, tuple[str, ...]] | None = None
+
+
+def _guarded_cues() -> dict[str, tuple[str, ...]]:
+    """cue -> the longer category surfaces that open with it, so a cue at the front of one
+    is not read on its own.
+
+    Two of the 37 cues have one: 下午 -> 下午茶 and afternoon -> afternoon tea. The table is
+    the lexicon's, so a category that is added later is guarded the day it is written.
+    """
+    global _GUARDED_CUES
+    if _GUARDED_CUES is None:
+        from nexus_ai.nlu.lexicon import CATEGORY_SYNONYMS
+
+        surfaces = {canonical(w.lower()) for words in CATEGORY_SYNONYMS.values() for w in words}
+        table: dict[str, tuple[str, ...]] = {}
+        for _label, tokens, _start, _end in PART_OF_DAY:
+            for tok in tokens:
+                longer = tuple(sorted(s for s in surfaces
+                                      if len(s) > len(tok) and s.startswith(tok)))
+                if longer:
+                    table[tok] = longer
+        _GUARDED_CUES = table
+    return _GUARDED_CUES
+
+
+def _reads_as_a_time(cue: str, text: str, low: str) -> bool:
+    """Whether a reading of `cue` dates the sentence, rather than opening a word that names
+    what to find.
+
+    Every reading is checked, not just the first: 下午3點去食下午茶 dates the sentence from the
+    cue at index 0 and names a category from the one at index 6, and the clock is still read.
+    """
+    positions = cue_positions(cue, text, low)
+    if not positions:
+        return False
+    surfaces = _guarded_cues().get(cue)
+    if not surfaces:
+        return True
+    swallowed: set[int] = set()
+    for surface in surfaces:
+        swallowed.update(cue_positions(surface, text, low))
+    return any(p not in swallowed for p in positions)
+
+
 def clock_match(text: str) -> re.Match[str] | None:
     """The clock in a text, with the Chinese numerals read as digits.
 
@@ -168,11 +223,20 @@ def _guess_meridiem(hour: int, meridiem: str | None, part: str | None) -> int:
     return hour
 
 
-def _find_part(text: str, low: str) -> tuple[str, time, time] | None:
+def _find_part(text: str, low: str, *, naming: bool = False) -> tuple[str, time, time] | None:
+    """The part of day the text names, if any.
+
+    D630: `naming` asks the looser question - which part of day the words name, even when they
+    name it from inside a word that names something else (`下午茶`). The meridiem of an explicit
+    clock reads this, because 「下午茶3點」 means three in the afternoon and not three in the
+    morning; the window does not, because that cue is the CATEGORY and not a time.
+    """
     best: tuple[int, tuple[str, time, time]] | None = None
     for label, tokens, start, end in PART_OF_DAY:
         for tok in tokens:
             if not cue_in(tok, text, low):
+                continue
+            if not naming and not _reads_as_a_time(tok, text, low):
                 continue
             if best is None or len(tok) > best[0]:
                 best = (len(tok), (label, start, end))
@@ -216,6 +280,8 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
     low = text.lower()
 
     part = _find_part(text, low)
+    # D630: the cue 下午茶 swallows still says which half of the day a bare hour is in.
+    part_hint = part or _find_part(text, low, naming=True)
     weekday, next_week = (None, False)
     wd = _find_weekday(text)
     if wd:
@@ -254,10 +320,10 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
             day = today
 
     # ---- 1. explicit clock time -------------------------------------------
-    if clock and not _valid_clock(clock, part):
+    if clock and not _valid_clock(clock, part_hint):
         clock = None
     if clock:
-        hh, mm, part_label = _clock_to_hm(clock, part)
+        hh, mm, part_label = _clock_to_hm(clock, part_hint)
         anchor = day or (today if (is_today or is_tonight or part) else None)
         if anchor is None:
             anchor = today

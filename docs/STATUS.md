@@ -28710,3 +28710,61 @@ With D628's and D624's doors and four neighbouring files: **127 passed**.
 
 - readers: `nlu/understand.py:120-128` (`TIME_SPAN_RE`), `:627-643` (`match_core`'s `strip_time`);
   `search/service.py:636-637` (the caller that sets it from `intent.time`).
+
+## 627. D630 · 下午茶 is a category, and the time lane read the 下午 inside it as 14:00 (`apps/ai/nexus_ai/nlu/timeparse.py`)
+
+**The reading.** `_find_part` asked `cue_in(tok, ...)` - a bare substring test, because a CJK cue has no
+word boundary (§478). 下午 is a part-of-day cue and the first two characters of 下午茶, which is this
+product's own `afternoon_tea` CATEGORY row (`lexicon.py:82`). So the plan for 「下午茶」 carried
+`open_weekday: 5, open_time: 14:00` (`tmp/d630_census.txt`), and that pair is a hard SQL constraint on
+`business_hours` (`search/sql.py:232-243`): a merchant closed at two in the afternoon was not on the page
+for a request that named a category and no time at all. Four Chinese shapes carried it (「下午茶」,
+「下午茶餐廳」, 「有咩下午茶好介紹」, 「下午茶自助餐」) and so did the English `afternoon tea` - the Latin rule
+stops a cue being read INSIDE a word ("ramen" is not `am`), not at the FRONT of a longer phrase.
+
+**The same cue also swallowed a part of day the user did state.** 「今晚下午茶」 came back as 14:00 with
+`open_now: True`: 今晚 and 下午 tie on length, the afternoon row of the table is read first, and the night
+the user named was lost. After the repair it reads the night band (18:00).
+
+**The boundary has to come from a vocabulary.** The one that names what a request FINDS is the category
+table, so `_guarded_cues()` is BUILT from `lexicon.CATEGORY_SYNONYMS` on first use rather than copied
+beside it (§438). Measured over the tables, not assumed (`tmp/d630_map.py`, `tmp/d630_lexicon.py`): 37
+part-of-day cues, 153 category surfaces, and exactly TWO cues open a longer surface - 下午 → 下午茶 and
+afternoon → afternoon tea. A scan of all 1632 string leaves in `nlu/lexicon` adds no third: `am` sits
+inside `ambience`, and the Latin word rule already refuses that one.
+
+**The repair** is one function, `_reads_as_a_time`, used by `_find_part`: a cue reads only if one of its
+positions is not the start of a longer category surface. The window follows it; the MERIDIEM does not -
+`part_hint` keeps the loose reading for an explicit clock, because 「下午茶3點」 means three in the
+afternoon (15:00, and 03:00 before the second half of this change) and 「下午3點去食下午茶」 still dates the
+sentence from the cue at index 0 while naming a category from the one at index 6.
+
+**Measured on the plan** (`tmp/d630_census.txt`, `tmp/d630_census2.txt`): the five shapes now carry the
+category and `time: NONE` - no `open_time`, no `open_weekday`, and the match text unchanged (`下午茶`), so
+the category still finds its rows. 下午嘅餐廳 is still 14:00, 下午3點嘅餐廳 still 15:00, and 「今晚下午茶」
+dates to the night.
+
+**What the dropped filter would have hidden, measured** (`tmp/d630_harm.txt`): 42 published merchants hold
+`tea-house` or `cha-chan-teng`, all 42 open at 14:00 on a Saturday - so the page count is unchanged today
+(42 either way) and the defect was in what the plan SAID, not in a row it lost. The population is real
+though: 39 of the 470 published merchants are closed at 14:00 on a Saturday, and the day one of them is
+filed under a tea category the old reading would hide it.
+
+**Not claimed.** 「午市套餐」 and 「午市有咩好食」 still read 11:30 (`午市` is a cue and no category surface
+opens with it, so the vocabulary does not speak about it); a menu-word table (套餐, 自助餐, 放題) is the
+next unit, filed in PLAN. Nothing here decides what time 下午茶 IS served - the product answers the
+category, not a clock. The open-at hour a user DOES state is untouched: 「下午嘅餐廳」, 「下午3點嘅餐廳」 and
+`afternoon 3pm` all keep theirs.
+
+**The gate** is `tests/test_an_afternoon_tea_is_not_a_time_of_day.py`: seventeen legs - six compounds
+carry their category and no time, three plans carry no hour, three legs that the bare part of day and its
+clock still date the sentence, the meridiem of 「下午茶3點」, the night 「今晚下午茶」 no longer loses to the
+word inside the category, the guard set against the literal two (it reddens the day the lexicon gains a
+third surface), and two live legs (the page for 「下午茶」 carries no hour and answers all 42 tea merchants;
+the 39 rows closed at 14:00 are still there to hide). Falsified: with `_reads_as_a_time` forced to `True`,
+ten of the seventeen redden (`tmp/d630_falsify.txt`). With eight time-parser files: **253 passed, 2
+skipped**; with three intent/category files: **4145 passed**.
+
+- readers: `nlu/timeparse.py:121-147` (`_GUARDED_CUES` and `_guarded_cues`), `:150-170` (`_reads_as_a_time`),
+  `:226-245` (`_find_part`, guarded), `:284` (`part_hint`) and `:323-326` (the meridiem reads the loose one);
+  source of the table: `nlu/lexicon.py:82` (`afternoon_tea`).

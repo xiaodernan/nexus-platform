@@ -2077,14 +2077,22 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   still embeds the WHOLE sentence, so the two lanes read different texts and nothing says that is
   right. Owner: the AI lane.
 
-- **「下午茶餐廳」 is read as a 14:00 TIME and as the cafe category at once.** 下午茶 is a noun - the
-  afternoon-tea category - and `Intent.time` takes it as an afternoon hour: measured 2026-10-30, the plan
-  for `下午茶餐廳` carries `category: cafe`, `open_now: False`, `open_weekday: 5`, `open_time: 14:00`.
-  D629 (§626) guarded its own strip with `(?!茶)` so the word survives in the match text, but the false
-  time reading is older than that unit and is untouched: a request for an afternoon-tea place is being
-  asked whether it is open at two in the afternoon. The fix is a compound guard in `_fill_time`, and the
-  measurement to beat is the plan above. Owner: the AI lane.
-
+- **「下午茶餐廳」 was read as a 14:00 TIME and as the cafe category at once - closed by D630** (§627).
+  下午茶 is a noun - the afternoon-tea category - and the time lane read the 下午 inside it because a CJK
+  cue has no word boundary: the plan carried `open_weekday: 5, open_time: 14:00` for a request that named
+  a category and no time. The repair is not in `_fill_time` (as this item guessed) but in `_find_part`:
+  `_reads_as_a_time` refuses a cue position that opens a longer CATEGORY surface, and the guard table is
+  BUILT from `lexicon.CATEGORY_SYNONYMS` rather than copied - two of the 37 cues have one (下午 → 下午茶,
+  afternoon → afternoon tea), measured. The same reading had swallowed the 今晚 in 「今晚下午茶」; it now
+  dates to the night band. Measured on the corpus: 42 tea merchants, all open at 14:00 on a Saturday, so
+  no page changed today - but 39 of the 470 published merchants are closed then, and that is the
+  population the unstated filter had to hide.
+- **A menu word the corpus names is still read as a time - only the CATEGORY half was closed by D630.**
+  「午市套餐」 and 「午市有咩好食」 still carry `open_weekday: 5, open_time: 11:30` (`tmp/d630_census.txt`),
+  and 「午市套餐」 has no category at all: `午市` is a cue and no category surface opens with it, so the
+  guard D630 added cannot speak about it. The question is whether a menu word (套餐, 自助餐, 放題, 餐牌)
+  is content the ranker should match or a time the plan should filter - and the census that chose the
+  category table has to choose that vocabulary too. Owner: the AI lane.
 
 - **A band the corpus cannot fill still answers with ten rows outside it and says nothing.**
   Measured 2026-10-30: **3 of the 184 restaurants are priced 300-500** and none are 500-800, so
