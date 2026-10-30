@@ -780,6 +780,34 @@ def match_leaf(text: str) -> str | None:
     return best[2] if best[0] >= bucket_end else None
 
 
+def leaf_surfaces(text: str, leaf: str) -> tuple[str, ...]:
+    """The spellings the sentence writes for the LEAF its filter will select - D638.
+
+    A leaf word is answered by the category FILTER the plan refines into (`_apply_category_leaf`),
+    so it is not also a search term - the same rule the bucket word follows (D635). Measured
+    2026-10-30 (`tmp/d638_before.txt`): 「拉麵」 filtered to the 22- row ramen pool and then scored the
+    rows that write 拉麵 1.00 and the rest 0.145-0.154; 「點心」 nine of ten at 1.00 and the last at
+    0.072; 「珍珠奶茶」 carried 0.19-0.24 on every row although no row writes it, so the term was pure
+    noise on a pool its own filter had chosen.
+
+    Only the leaf the plan actually selected is read (`match_leaf`'s own head rule decides that),
+    and the spellings are deduplicated: the tables list the canonical form twice.
+    """
+    from nexus_ai.nlu.canonical import canonical
+
+    canon = canonical(text)
+    low = canon.lower()
+    seen: set[str] = set()
+    out: list[str] = []
+    for term in LEAF_SYNONYMS.get(leaf, ()):
+        key = (term or "").lower().strip()
+        if not key or key in seen or not cue_in(key, canon, low):
+            continue
+        seen.add(key)
+        out.append(term)
+    return tuple(out)
+
+
 def match_cuisine_terms(text: str) -> list[tuple[str, str]]:
     """(cuisine, the surface term that matched it) - the ONE cuisine matcher.
 

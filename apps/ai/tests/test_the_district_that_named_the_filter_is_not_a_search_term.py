@@ -61,7 +61,7 @@ def test_a_district_the_plan_is_not_about_keeps_its_word(text):
     ("旺角", "", "a district is a filter by itself"),
     ("Mong Kok 嘅餐廳", "", "the alias leaves too"),
     ("旺角新開嘅餐廳", "新開", "a content word survives"),
-    ("旺角嘅拉麵", "拉麵", "a LEAF word is content - no lane consumes it (§632)"),
+    ("旺角嘅拉麵", "", "D638: the leaf word leaves with its own filter too (§635)"),
     ("附近嘅餐廳", "附近", "no district was named, so no district filter answers the word"),
 ])
 def test_the_plan_strips_only_the_word_its_filter_answers(text, left, why):

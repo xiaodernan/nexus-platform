@@ -678,6 +678,18 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     out.setdefault("category", intent.category)
     _canonical_category(out)
     _apply_category_leaf(plan, caller_named_category)
+    # D638: the LEAF word is the filter word too. `_apply_category_leaf` may have refined the bucket
+    # into the leaf the sentence named (拉麵 -> ramen), so the sentence's own spelling of that leaf is
+    # answered by the filter and must leave the match text - exactly as the bucket word does (D635).
+    # The match text is recomputed here because the leaf is only known now.
+    if out.get("category") and out.get("category") != intent.category:
+        from nexus_ai.nlu.lexicon import leaf_surfaces
+
+        leaf_words = leaf_surfaces(plan.query_text, str(out["category"]))
+        if leaf_words:
+            plan.match_text = _match_core(plan.query_text,
+                                          strip_time=bool(intent.time),
+                                          strip_surfaces=surfaces + leaf_words)
     _canonical_district(out)
     _canonical_tags(out)
     _canonical_kind(out)

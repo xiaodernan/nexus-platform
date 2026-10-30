@@ -2076,9 +2076,13 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `「100蚊以下嘅餐廳」`, `「咖啡店」` and `「下午茶」` now reach the lanes as nothing and answer their filter's
   pool. The DISTRICT word joined them in D637 (§634): the plan places a geo filter at the district's
   own coordinates, so the word divides a pool its own filter chose (旺角嘅餐廳 scored two of five rows
-  1.00 and three at 0.269 / 0.189 / 0.123). What stays open: the LEAF's word, because `「點心餐廳」`
-  keeps 點心 - a filter AND a word 9 rows write, and whether the rows that write it serve dim sum
-  better is a census nobody has run. Owner: the AI lane.
+  1.00 and three at 0.269 / 0.189 / 0.123). The LEAF's word followed in D638 (§635): 拉麵/點心/壽司
+  are refined into `filters.category` by D601, so their own spelling is answered by the filter and
+  leaves too (before: 8 of ten at 1.00, and 珍珠奶茶 carried 0.19-0.24 on a pool whose rows never
+  write it). What stays open: a COMPOUND with a generic shop suffix - 「火鍋店」 leaves 店 (246 of the
+  470 rows carry it, so it splits the hotpot pool), and 「點心店」/「壽司店」 resolve to the retail
+  bucket through that 店 and lose their leaf - the second half is a filter-level error, not a text
+  one. Owner: the AI lane.
 - **The word that named the CATEGORY was also a search term - closed by D635** (§632). `「餐廳」`
   was BOTH the filter that selects 184 rows and a keyword, so 「7點嘅餐廳」 scored the two rows that
   write 餐廳 in their description 1.00, one at trigram noise 0.069, and the other eight 0.00 - and

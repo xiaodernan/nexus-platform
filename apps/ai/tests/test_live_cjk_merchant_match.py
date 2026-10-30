@@ -37,9 +37,12 @@ DB_URL = os.environ.get("NEXUS_TEST_DATABASE_URL", "").strip()
 #: that writes it is answered by the category filter and the word leaves the match text - this
 #: file's promise (the merchants that mention the word rank above the ones that do not) is about
 #: the words NO lane consumed. 酒家 is carried by 11 merchant NAMES and 3 descriptions and names no
-#: category; 拉麵 by 8 descriptions and none (`tmp/d635_names2.py`).
+#: category; 拉麵 by 8 descriptions and none (`tmp/d635_names2.py`) - until D638 gave the ramen LEAF
+#: its own filter's answer, so 拉麵 is no longer a word any lane leaves alone. 中心 is carried by 8
+#: rows and names no category, no leaf and no district (`tmp/d638_words3.py`), and the eight served
+#: for it split 5/3 between the rows that write it and the rows that do not.
 TEA = "\u9152\u5bb6"
-RAMEN = "\u62c9\u9eb5"
+CENTRE = "\u4e2d\u5fc3"
 
 
 # --------------------------------------------------------------------------- the query
@@ -64,7 +67,7 @@ def test_the_lane_binds_its_words_as_a_parameter():
 
 def test_a_keyword_query_is_one_word():
     assert cjk_keywords(TEA) == [TEA]
-    assert cjk_keywords(RAMEN) == [RAMEN]
+    assert cjk_keywords(CENTRE) == [CENTRE]
 
 
 def test_an_english_query_has_no_chinese_words():
@@ -97,7 +100,7 @@ async def _merchant_text(slugs: list[str]) -> dict[str, str]:
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("word", [TEA, RAMEN])
+@pytest.mark.parametrize("word", [TEA, CENTRE])
 def test_every_served_card_mentions_the_word_the_user_typed(word, live_settings=None):
     if not DB_URL:
         pytest.skip("NEXUS_TEST_DATABASE_URL is not set - live DB test skipped")
@@ -147,23 +150,25 @@ def test_the_english_path_still_answers_with_the_merchants_that_match(live_setti
     settings = Settings(llm_provider="mock", embedding_provider="hashing",
                         database_url=DB_URL, internal_token="")
     # D635: "coffee" is the cafe bucket's Latin spelling, so it is answered by the filter - the
-    # English lane's own evidence is a word no category answers.
+    # English lane's own evidence is a word no category answers. "ramen" was that word until D638
+    # taught the leaf lane to strip it; "bistro" is carried by 5 rows, names no category, and the
+    # eight served for it split 5/3 (`tmp/d638_words4.py`).
     with TestClient(create_app(settings)) as c:
-        r = c.post("/ai/v1/search", json={"query": "ramen", "limit": 8})
+        r = c.post("/ai/v1/search", json={"query": "bistro", "limit": 8})
         assert r.status_code == 200, r.text
         items = r.json().get("items") or []
 
-    assert items, "the corpus holds ramen houses and the English query found none"
+    assert items, "the corpus holds bistros and the English query found none"
     slugs = [str(i.get("slug")) for i in items]
     texts = asyncio.run(_merchant_text(slugs))
     # D422: the same ORDER promise as the Chinese case (the lane is a score, not a
     # filter) - the merchants that mention ramen rank above the ones that do not.
-    mentioning = [s for s in slugs if "ramen" in texts.get(s, "")]
+    mentioning = [s for s in slugs if "bistro" in texts.get(s, "")]
     if not mentioning:
-        pytest.skip("this corpus carries no merchant whose text mentions ramen")
+        pytest.skip("this corpus carries no merchant whose text mentions bistro")
     worst_mentioning = max(slugs.index(s) for s in mentioning)
     others = [slugs.index(s) for s in slugs if s not in mentioning]
     best_other = min(others) if others else len(slugs)
     assert worst_mentioning < best_other, (
-        f"the merchants that mention coffee are not ranked above the ones that do not: "
+        f"the merchants that mention bistro are not ranked above the ones that do not: "
         f"{slugs}")

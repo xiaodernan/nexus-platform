@@ -29116,6 +29116,59 @@ three live district pages and the two-spelling leg (`tmp/d637_falsify.txt`).
 
 - readers: `nlu/lexicon.py:598-627` (`district_surfaces`); `search/service.py:645-657` (the plan adds
   them to `strip_surfaces`), `:554` (`_canonical_district`, the same reader for the filter).
+## 635. D638 · the leaf a query named is answered by its filter, and was also a search term on that filter's rows (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/search/service.py`)
+
+**How the unit arrived.** §632 (D635) took the BUCKET word out of the match text and filed the rest:
+"What stays open: ... the LEAF's word, because 「點心餐廳」 keeps 點心 (a filter AND a word 9 rows
+write)". §634 (D637) then took the district. D601 had already refined the coarse bucket into the leaf
+the sentence names and written it into `filters.category` (拉麵 -> `ramen`, 點心 -> `dimsum`), so the
+leaf word was the one filter word still doubling as a term.
+
+**Measured before** (`tmp/d638_before.txt`):
+
+    拉麵        filter ramen        relevance 1.00 x8, then 0.145, 0.154
+    點心        filter dimsum       relevance 1.00 x9, then 0.072
+    壽司        filter sushi        relevance 1.00 x5, then 0.134-0.167
+    珍珠奶茶    filter bubble-tea    relevance 0.19-0.24 on ALL TEN - no row writes 珍珠奶茶
+
+The first three split the page by whether a row happened to write the word its own filter had
+selected. The fourth is the sharper shape: the pool was already the bubble-tea leaf's, the word was
+in nobody's text, so every card carried a cosine against a phrase the corpus never says.
+
+**The leaf lane's own reader answers the strip.** `lexicon.leaf_surfaces(text, leaf)` returns the
+sentence's spelling of the leaf the plan selected - `LEAF_SYNONYMS`' own terms, deduplicated, and
+nothing at all for any other leaf - and `plan_from_intent` recomputes the match text where the leaf
+becomes known: `_apply_category_leaf` runs AFTER the first `match_text`, because the leaf is a
+refinement of the bucket, so the strip cannot be built before it. `match_leaf`'s head rule still
+decides WHICH leaf the sentence names (拉麵店的咖啡 is a cafe), and only that leaf's spellings leave.
+
+**Measured after** (`tmp/d638_after.txt`): all four pages carry relevance 0.0 on every card; the two
+spellings of one leaf answer the same ten (`拉麵`/`ramen` and `珍珠奶茶`/`bubble tea`); each page still
+opens on its own category (`Ramen & Noodles`, `Dim Sum`, `Sushi & Sashimi`, `Bubble Tea`), so the
+FILTER is what answered; and a content word survives - 「平價拉麵」 reaches the lane as 平價, 「寧靜拉麵」 as
+寧靜, 「拉麵 4個人」 as nothing, and 「拉麵同埋壽司」 as 拉麵同埋, because only the leaf the plan CHOSE leaves.
+
+**Not claimed.** 「泰式」 stays in the match text: no lane parses a cuisine at all (`cuisines=None`,
+`match_cuisine_terms` has no caller in the intent lane), so nothing answers it - the existing PLAN item
+about a typed cuisine not being stored covers the writer side. A compound with a generic shop suffix
+is a different defect and is filed: 「火鍋店」 leaves 店 in the match text (246 of the 470 rows carry 店,
+so it splits the hotpot pool), and 「點心店」/「壽司店」 resolve to the RETAIL bucket through that same 店
+and lose their leaf entirely - that one is a filter-level error, not a match-text one.
+
+**The gate** is `tests/test_a_leaf_word_the_filter_answered_is_not_a_search_term.py`: 28 legs - the
+leaf lane and the strip reading the same word for seven (word, leaf) pairs, two leaves the plan did not
+select keeping their words, nine plan legs (four leaves leaving, three content words surviving, the
+party leaving with it, the chosen leaf winning over the other), and six live legs (four leaf pages with
+relevance 0.0, two spellings of one leaf answering one page, and the leaf still steering the pool).
+D407/D422's live control had to be re-based again: its CJK sample 拉麵 is now consumed by the leaf
+lane, so it reads 中心 (8 rows, five of the eight served write it) and its English control "bistro"
+(5 rows, five of eight) - both measured (`tmp/d638_words3.py`, `tmp/d638_words4.py`). Falsified: with
+`leaf_surfaces` made to return nothing, **21 of the 28** redden, including all four live leaf pages and
+both two-spelling legs (`tmp/d638_falsify.txt`). With the D635-D638 gates, search plan, lexicon, eval
+suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
+
+- readers: `nlu/lexicon.py:783-810` (`leaf_surfaces`), `:743-780` (`match_leaf`, the head rule that
+  chooses the leaf); `search/service.py:497-517` (`_apply_category_leaf`), `:681-694` (the recompute).
 ## 617. D619 · the availability object every card sends matches neither branch of the block the contract publishes (`apps/ai/nexus_ai/search/cards.py`, `apps/ai/nexus_ai/contract.py`)
 
 **How the unit arrived.** The 2026-09-23 live-payload run filed two rows of its AI table against this
