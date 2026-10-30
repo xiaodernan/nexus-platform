@@ -2116,13 +2116,22 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   span it removes leaves the separator behind. The party the intent keeps is the upper end (4), which
   is the reading the product wants; the words are what is wrong. Owner: the AI lane.
 
-- **`budget_per` is read by `price_fit` and then ignored.** 「人均300」 now parses to `per: person`
-  (§622) and 「預算300」 to `per: party`, and the two are scored IDENTICALLY, because `price_fit`
-  takes `budget_per` and never reads it. The seed writes `avg_price_hkd` with `"model":
-  "per_person"` (`data/seed/generate.py:1051`), so the row's number is per head: a party budget of
-  1,000 for four should compare against 250 a head, and today it compares against 1,000. Nothing in
-  the platform says what an OFFERING's `price_amount` means (a slot total, a per-head price, a set
-  menu), so the fix needs that decision first. Owner: the platform lane with the AI lane.
+- **`budget_per` was read by `price_fit` and then ignored - closed for the MERCHANT lane by D632** (§629).
+  「人均300」 parses to `per: person` and 「預算300」 to `per: party`, and both were scored against the row
+  number directly. The seed writes `avg_price_hkd` with `"model": "per_person"`
+  (`data/seed/generate.py:1051`), so the row IS per head: a party total is now shared across the party
+  before the two are compared, and 「4個人預算1000-2000嘅餐廳」 (HK$250-500 a head) leads with the rows
+  inside that band where it led with an HK$88.43 row at price_fit 0.005. What stays open is the
+  OFFERING lane: nothing in the platform says what an offering's `price_amount` means (a slot total, a
+  per-head price, a set menu), so the same division is not applied there - and the card still prints
+  the per-head number with nothing saying it is per head, so a guest reading four cards cannot add them
+  up to their budget. Owner: the platform lane with the AI lane (the card half is the cards lane).
+
+- **A party budget with no party size is still a party total.** 「預算1000嘅餐廳」 carries
+  `per: party` and no `party_size`, so D632's division cannot run and the number is compared as if it
+  were per head - the generous reading, which today answers every restaurant (max HK$354.55) as inside
+  it. Whether a bare cap should be read per head instead is a product copy decision, not a measurement.
+  Owner: the AI lane.
 
 - **Chinese numerals in a price are silent.** 「一千蚊以下」 and 「人均一千蚊以內」 are the
   only two of D624's twenty-seven shapes that still reach no budget (§622): `numerals.py` rewrites

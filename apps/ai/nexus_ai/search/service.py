@@ -821,6 +821,9 @@ def candidates_from_rows(rows: Sequence[dict[str, Any]], plan: SearchPlan, *,
             price=_row_price(row),
             budget_max=plan.budget_max, budget_per=plan.budget_per,
             budget_min=plan.budget_min,
+            # D632: the party the request names, so a `per: party` budget can be shared
+            # across it before it meets a per-head price.
+            party_size=plan.party_size,
             availability=availability,
             popularity=_num(row.get("popularity_score")) or 0.0,
             freshness=mean_remaining_fraction(facts_by_subject.get(subject_id, []),

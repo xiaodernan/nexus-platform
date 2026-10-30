@@ -28821,3 +28821,45 @@ estimated-price file: **86 passed**.
 
 - readers: `nlu/understand.py:646-660` (`_fill_budget` and the window), `:595-605` (`_range_is_money`);
   the ranking side unchanged: `search/ranking.py:189-218` (`price_fit`, the band this unit finally reaches).
+
+## 629. D632 · a party's budget was compared against one head's price (`apps/ai/nexus_ai/search/ranking.py`, `apps/ai/nexus_ai/search/service.py`)
+
+**Two numbers, two meanings.** 「4個人預算1000」 is a total for four (`per: party`, §622) and
+`merchants.avg_price_hkd` is per head - the seed writes `"model": "per_person"` on every price fact
+(`data/seed/generate.py:1051`). `price_fit` took `budget_per` as a parameter and never read it, so the
+total was compared against the head: the generous direction, and on this corpus a silent one, because
+every one of the 184 published restaurants is priced at or below HK$354.55 (`tmp/d632_prices.txt`) - so
+**all 184** were answered as inside a HK$1000 cap.
+
+**The band is where it bites** (`tmp/d632_page_before.txt`): 「4個人預算1000-2000嘅餐廳」 asks HK$250-500
+a head, and before this unit EVERY card on its page scored 0.093 or less on the price axis (the top one
+0.005) - a band nothing could be in, so the price lane decided nothing and the page was ordered by the
+other components, leading with an HK$88.43 row.
+
+**The repair** shares a `per: party` budget across the party before the comparison, in the one place the
+comparison happens (`ranking.price_fit`), and the candidate carries the party it is shared across
+(`Candidate.party_size`, filled from `plan.party_size`). A `per: person` budget is NOT divided again, a
+party of one and a party of none are no-ops, and the plan keeps the number the user wrote - a card that
+repeats the budget has to repeat their number, so the sharing is the ranker's rule and not a rewrite.
+
+**Measured on the page** (`tmp/d632_page_after.txt`): 「4個人預算1000-2000嘅餐廳」 now leads with HK$343.14
+and HK$274.73, both inside the per-head band, at price_fit 1.00 - where the first was HK$88.43 at 0.005.
+「10個人預算500嘅餐廳」 (HK$50 a head) leads with HK$43.14 and now carries decay on the page (0.85, 0.83)
+where every card was 1.00 before. 「4個人預算1000嘅餐廳」 is unchanged and asserted to be: at HK$250 a head
+176 of the 184 are inside it, which is the case a normalisation must NOT move.
+
+**Not claimed.** A party budget with no party size (「預算1000嘅餐廳」) cannot be shared and keeps the
+generous reading - filed. The OFFERING lane is untouched: nothing says what an offering's `price_amount`
+means, and this lane will not invent it. The card still prints a per-head number with nothing saying so,
+so four cards cannot be added up to the total - filed with the cards lane.
+
+**The gate** is `tests/test_a_party_budget_is_divided_by_the_party.py`: twenty-eight legs - nine prices
+against the head-share identity (budget and band), the two no-op shapes, the per-head leg that must not
+be divided, three plan legs, the candidate-carries-the-party leg, and three live legs (the band page
+begins inside it, the ten-person page begins under HK$50 and still carries decay, and the HK$1000 party
+page is unchanged with its census of 176 of 184). Falsified: with the division disabled, 14 of the 28
+redden and the live leg reports HK$88.43 for a HK$50-a-head ask (`tmp/d632_falsify.txt`). With the D631,
+D624 and D630 doors and four ranking files: **127 passed**.
+
+- readers: `search/ranking.py:141-146` (`Candidate.party_size`), `:192-215` (`price_fit` and the division),
+  `:247-249` (the scorer passes it); `search/service.py:824-828` (`party_size=plan.party_size`).

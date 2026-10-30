@@ -141,6 +141,9 @@ class Candidate:
     budget_max: float | None = None
     budget_min: float | None = None
     budget_per: str = "party"
+    #: D632: the party a request names. A budget with `per: party` is shared across it before
+    #: it is compared to a PER-HEAD row price.
+    party_size: int | None = None
     availability: str | None = None      # available | limited | full | None(unknown)
     popularity: float = 0.0              # already 0..1
     freshness: float | None = None       # mean remaining-TTL fraction, None = unknown
@@ -187,7 +190,8 @@ def distance_score(distance_m: float | None, cfg: DistanceConfig) -> float:
 
 
 def price_fit(price: float | None, budget_max: float | None, cfg: PriceConfig,
-              budget_per: str = "party", budget_min: float | None = None) -> float:
+              budget_per: str = "party", budget_min: float | None = None,
+              party_size: int | None = None) -> float:
     """Inside budget scores 1.0; over budget decays on log distance (§6).
 
     D624: a budget has TWO ends. 「300-500蚊」 states a floor and a ceiling, and until this unit
@@ -198,6 +202,15 @@ def price_fit(price: float | None, budget_max: float | None, cfg: PriceConfig,
     """
     if price is None:
         return 0.5
+    if budget_per == "party" and party_size and int(party_size) > 1:
+        # D632: the row's number is PER HEAD - the seed writes `"model": "per_person"` on
+        # every price fact (`data/seed/generate.py:1051`) - so a party total has to be
+        # shared out before the two are compared. 「4個人預算1000」 is HK$250 a head, and
+        # every one of the 184 restaurants (max HK$354.55) was answered as inside it.
+        if budget_max is not None:
+            budget_max = float(budget_max) / int(party_size)
+        if budget_min is not None:
+            budget_min = float(budget_min) / int(party_size)
     p = max(0.01, float(price))
     floor = float(budget_min) if budget_min is not None and float(budget_min) > 0 else None
     if floor is not None and p < floor:
@@ -239,7 +252,7 @@ def score_candidate(c: Candidate, w: RankingWeights) -> tuple[float, dict[str, f
         "quality": quality_component(c, w),
         "distance": distance_score(c.distance_m, w.distance),
         "price_fit": price_fit(c.price, c.budget_max, w.price, c.budget_per,
-                               c.budget_min),
+                               c.budget_min, c.party_size),
         "availability": availability_score(c.availability, w.availability),
         "personalization": (w.personalization.neutral if c.personalization is None
                             else _norm01(c.personalization)),
