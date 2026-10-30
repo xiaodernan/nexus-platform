@@ -158,8 +158,21 @@ export async function homeRails(request: RailsRequest): Promise<NexusResult<Home
     recommended: take(3),
     recently_viewed: take(4),
   };
-  if (failed === rails.length) throw new Error('all rails failed');
-  return failed ? degraded(data, false, `${failed} of ${rails.length} rails unavailable`) : { data, mocked: false };
+  // §105: a page that states what it could not read beats an error boundary that states nothing, and
+  // the home page already renders `degradedReason` for exactly this. All-fail used to `throw`, which
+  // contradicted both the page's own comment ("the rails that could not be fetched are simply absent")
+  // and the partial case one line below it: the same fact at 5 of 5 is not a different kind of fact.
+  //
+  // Measured while writing this: the throw was also UNREACHABLE from `/`. The page passes
+  // `signedIn: false`, and the favourites rail is then `Promise.resolve([])`, which cannot reject --
+  // so an anonymous viewer can fail at most 4 of 5 and the crash branch never ran. It was a policy
+  // nothing could trigger, filed as the cause of six e2e reds it could not have caused. The witness
+  // is `home-rails-degrade.test.ts`, which counts the requests an anonymous call makes (4, all to
+  // `ai`) and pins the reason at "4 of 5", so a future edit that made the fifth rail rejectable
+  // would fail a test rather than quietly reintroduce a crash page.
+  return failed
+    ? degraded(data, false, `${failed} of ${rails.length} rails unavailable`)
+    : { data, mocked: false };
 }
 
 /* ------------------------------------------------------------- search (§7) */
