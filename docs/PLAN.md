@@ -2074,9 +2074,11 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   the vector lane now embeds the same text (`api/pipeline.py:179-190`), so a request whose words
   were all consumed embeds nothing. Measured: `「7點嘅餐廳」`, `「今晚7點嘅餐廳」`, `「4個人嘅餐廳」`,
   `「100蚊以下嘅餐廳」`, `「咖啡店」` and `「下午茶」` now reach the lanes as nothing and answer their filter's
-  pool. What stays open: DISTRICT, because 18 of the 470 rows name 銅鑼灾 or 觀塘 in their own
-  text, so a strip there is not free; and the LEAF's word, because `「點心餐廳」` keeps 點心 (a filter
-  AND a word 9 rows write) - the same measurement decides both. Owner: the AI lane.
+  pool. The DISTRICT word joined them in D637 (§634): the plan places a geo filter at the district's
+  own coordinates, so the word divides a pool its own filter chose (旺角嘅餐廳 scored two of five rows
+  1.00 and three at 0.269 / 0.189 / 0.123). What stays open: the LEAF's word, because `「點心餐廳」`
+  keeps 點心 - a filter AND a word 9 rows write, and whether the rows that write it serve dim sum
+  better is a census nobody has run. Owner: the AI lane.
 - **The word that named the CATEGORY was also a search term - closed by D635** (§632). `「餐廳」`
   was BOTH the filter that selects 184 rows and a keyword, so 「7點嘅餐廳」 scored the two rows that
   write 餐廳 in their description 1.00, one at trigram noise 0.069, and the other eight 0.00 - and
@@ -2947,3 +2949,13 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   been arguing with the JSON on paper rather than on the wire. Owner: the card lane, one door per class
   - these are A1, A3, A4 and A5 of the 2026-09-23 table, and the address-scope row is new since that
   run.
+
+- **`understand.match_core` is called only by tests, and has been since D628 wrote the alias.** The suite
+  row `test_no_dead_constants.py::test_every_module_level_name_is_read_by_the_product` is **1 failed, 2
+  passed** in a tree of `28303aa`, in the same tree plus D619's five files, and in a tree of `c8cff34`,
+  against **3 passed** in a tree of `2b9d37d` (`tmp/d619_deadcheck.txt`); the name it lists is
+  `match_core (nlu/understand.py)`. `c8cff34` (D628) is the commit `git log -S` returns for
+  `from nexus_ai.nlu.understand import match_core as _match_core`, and the gate counts reads rather than
+  mentions, so a binding that renames on import leaves the product holding no read of the name at all -
+  the function is wired up and the census cannot see it wired. Either import it under its own name or
+  declare it with the reason. Owner: the lane that owns `nlu/understand.py` and `search/service.py`.

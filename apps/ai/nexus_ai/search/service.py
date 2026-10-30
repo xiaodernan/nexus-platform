@@ -646,6 +646,15 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     surfaces: tuple[str, ...] = ()
     if named and intent is not None and named[0] == intent.category:
         surfaces = named[1]
+    # D637: and the DISTRICT word leaves the same way. The plan is about to place a geo filter at
+    # the district's own coordinates, so a row is in the pool because it is IN that district - the
+    # word cannot narrow it further, it only divides the pool's relevance. Only the district the
+    # filter will actually use is returned, and only when the location lane named one (a radius
+    # or the session's own position writes no word).
+    if intent is not None and intent.location is not None and intent.location.type == "district":
+        from nexus_ai.nlu.lexicon import district_surfaces
+
+        surfaces += district_surfaces(plan.query_text, intent.location.value)
     plan.match_text = _match_core(plan.query_text,
                                   strip_time=bool(intent is not None and intent.time),
                                   strip_surfaces=surfaces)

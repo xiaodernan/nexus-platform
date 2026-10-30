@@ -89,12 +89,14 @@ def test_the_canonical_form_keeps_the_length():
 
 @pytest.mark.parametrize("query,core", [
     ("7點嘅餐廳", ""),
-    ("旺角餐廳", "旺"),
+    ("旺角餐廳", ""),
     ("點心餐廳", "點心"),
 ])
 def test_the_plan_hands_the_lane_what_no_filter_answered(query, core):
-    """旺角 is a district and 點心 a leaf: both are still counted (filed, PLAN), so the plan keeps
-    their first character - what this leg pins is that the bucket word is what left."""
+    """點心 is a LEAF and still counted (filed, PLAN), so the plan keeps it - what this leg pins is
+    that the bucket word is what left. 旺角 was the same until D637 gave the district word its own
+    filter's answer (§633); it is "" here now and `test_the_district_that_named_the_filter_is_not_a
+    _search_term.py` owns that promise."""
     plan = plan_from_intent(validate_intent(extract_intent_dict(query)), query=query, limit=TOP_K)
     assert plan.match_text.startswith(core) if core else plan.match_text == "", plan.match_text
     assert plan.query_text == query, "the card still shows the user's own words"

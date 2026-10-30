@@ -595,6 +595,44 @@ def match_district(text: str) -> tuple[str, dict[str, Any]] | None:
     return (best[1], best[2]) if best else None
 
 
+def district_surfaces(text: str, name: str | None = None) -> tuple[str, ...]:
+    """The spellings the sentence writes for the district its filter will select - D637.
+
+    A district is answered by a FILTER - the geo radius the plan is built around - so the word
+    that named it is not a search term, for the same reason the category word is not one (D635).
+    Measured 2026-10-30 (`tmp/d637_before.txt`): 「旺角嘅餐廳」 filtered to the 5 rows inside the
+    radius and then scored the two whose text says 旺角 at 1.00 and the other three at
+    0.269 / 0.189 / 0.123; 「銅鑼灣嘅餐廳」 put two of six at 1.00 and the rest at 0.055-0.339.
+    relevance is the largest weight in the score (§632), so the word decided the page.
+
+    `name` is the district the plan is ABOUT to filter on (`intent.location.value`). When the
+    sentence names a different one, nothing is returned: the strip may only remove the word the
+    filter actually answers.
+    """
+    from nexus_ai.nlu.canonical import canonical
+
+    matched = match_district(text)
+    if not matched:
+        return ()
+    found, spec = matched
+    if name is not None and found != name:
+        return ()
+    canon = canonical(text)
+    low = canon.lower()
+    # The table repeats some spellings (觀塘 and 銅鑼灣 are each listed twice), and a district's NAME
+    # is often one of its own aliases ("Mong Kok"), so the list is deduplicated by lowercase: what
+    # matters is the SPAN, and two spellings of one span would be stripped twice.
+    seen: set[str] = set()
+    out: list[str] = []
+    for alias in (found, *spec.get("aliases", ())):
+        key = (alias or "").lower()
+        if not key or key in seen or not cue_in(alias, canon, low):
+            continue
+        seen.add(key)
+        out.append(alias)
+    return tuple(out)
+
+
 #: Words that NAME one taxonomy leaf (D601). `match_category` otherwise answers a BUCKET, and a
 #: bucket is coarser than the leaf the caller named: 按摩 resolved to `beauty`, a root holding six
 #: leaves, so a massage query was answered with nail salons and gyms' neighbours (measured top-10

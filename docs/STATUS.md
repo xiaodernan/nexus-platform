@@ -29064,6 +29064,58 @@ D628-D636 gates, the budget/party/understand files and the live CJK file: **557 
 - readers: `nlu/understand.py:75-95` (`_MONEY_SIDES`, `_NOT_MONEY`, the two cue tables), `:658-675`
   (`_PARTY_AFTER`, `_budget_amount`), `:700-712` (the residue table), `:715-717` (`_MATCH_CORE_RES`),
   `:777-820` (`_fill_budget`'s ceiling, floor and minimum loops).
+## 634. D637 · the district that named the geo filter was also a search term, on the rows it had ordered (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/search/service.py`)
+
+**How the unit arrived.** §632 (D635) took the category word out of the match text and filed the
+district beside the leaf: "What stays open: DISTRICT, because 18 of the 470 rows name 銅鑼灣 or 觀塘 in
+their own text, so a strip there is not free". This is that unit, and the measurement says the word is
+not merely not-free - it is the same defect one filter along.
+
+**Measured before** (`tmp/d637_before.txt`):
+
+    旺角嘅餐廳    5 rows    relevance 1.00, 1.00, 0.269, 0.189, 0.123   (scores .767 .731 .487 .482 .418)
+    觀塘嘅餐廳    7 rows    relevance 1.00 x6, 0.166
+    銅鑼灣嘅餐廳  6 rows    relevance 1.00, 1.00, 0.339, 0.231, 0.165, 0.055
+
+The plan already places a geo filter at the district's own coordinates, so a row is in the pool
+because it IS in that district: the word cannot narrow it further, it only divides the pool's
+relevance, and relevance carries the largest weight in the score (§632). Seven of the 470 rows write
+旺角 somewhere in name, description, tags or attributes (eleven 觀塘, seven 銅鑼灣, twelve 尖沙咀), so the
+page opened on whichever rows happened to write the word and the other three rows of the 旺角 pool lost
+0.28-0.35 of the score to a term their own filter had answered.
+
+**The filter's own reader answers the strip.** `lexicon.district_surfaces()` calls `match_district`,
+the ONE reader the location lane uses (D481's matcher), and returns the spellings the sentence writes
+for THAT district - the name, the aliases, the Latin form - and nothing when the district it read is a
+different one. `plan_from_intent` adds them to the same `strip_surfaces` the category lane uses, and
+only when `intent.location.type == "district"`: a radius or the session's position writes no word, so
+nothing is removed. The table repeats some spellings (觀塘 and 銅鑼灣 are each listed twice) and a
+district's name is often one of its own aliases, so the list is deduplicated by lowercase - what
+matters is the SPAN, and two spellings of one span would be stripped twice.
+
+**Measured after** (`tmp/d637_after.txt`): every card on all three district pages carries relevance 0.0
+and the page is the pool's own score order (旺角 0.427 down to 0.377, 觀塘 0.405 to 0.331, 銅鑼灣 0.408 to
+0.338); 「旺角嘅餐廳」 and 「Mong Kok 嘅餐廳」 answer the same five ids; 「深水埗嘅餐廳」 still answers nothing
+(no rows inside its radius), so the filter is what is answering and not the strip; and a content word
+survives - 「旺角新開嘅餐廳」 reaches the lane as 新開 and nothing else, 「旺角嘅拉麵」 as 拉麵.
+
+**Not claimed.** A district name that is part of a merchant's own name is stripped too (「旺角冰室」 leaves
+冰室) - the strip is by span, and the leaf word is what still finds the row. 「附近嘅餐廳」 keeps 附近: the
+nearby lane is not a district, and with no session position it resolves nothing. A caller who overrides
+`filters.district` does not lose the query's word to a filter the plan never built - the surfaces are
+read against the district the LOCATION lane named.
+
+**The gate** is `tests/test_the_district_that_named_the_filter_is_not_a_search_term.py`: 20 legs - the
+lane and the strip reading the same word for six (district, spelling) pairs, a district the plan is not
+about keeping its word, six plan legs (both filter words leaving, the alias leaving, three content words
+surviving), the geo filter still being in the plan, and three live legs (three district pages with
+relevance 0.0 on every card, the two spellings of one district answering one page, and the pool still
+being the pool - three small pages and 深水埗's empty one). The D635 gate's 旺角餐廳 leg moves from 旺 to
+"". Falsified: with `district_surfaces` made to return nothing, **15 of the 20** redden, including all
+three live district pages and the two-spelling leg (`tmp/d637_falsify.txt`).
+
+- readers: `nlu/lexicon.py:598-627` (`district_surfaces`); `search/service.py:645-657` (the plan adds
+  them to `strip_surfaces`), `:554` (`_canonical_district`, the same reader for the filter).
 ## 617. D619 · the availability object every card sends matches neither branch of the block the contract publishes (`apps/ai/nexus_ai/search/cards.py`, `apps/ai/nexus_ai/contract.py`)
 
 **How the unit arrived.** The 2026-09-23 live-payload run filed two rows of its AI table against this
@@ -29154,20 +29206,23 @@ Arm B is the one that says something about the gate itself: `AvailabilityBrief` 
 loses `fact_id` and `as_of` in silence and the wire still carries the old `source_fact_id`. That is
 why two of the nine rows read the model's own `model_fields` instead of only the payload.
 
-**The twelve commits that landed while the suite ran, and what they move.** The other lane shipped D620
-through D635 during the 75 minutes this unit's census was open, so the commit this one now follows is
-`28303aa`, not the `2b9d37d` the arms were built from. `tmp/d619_headcheck.py` compares the two commits
-path by path over everything the arms judge: `contract.py`, `search/cards.py`, `search/sql.py`, the three
-door files, `test_candidates_from_rows.py`, `infra/config/ranking_weights.yaml`, the three
-`packages/types/src/schemas` documents and both `packages/types/scripts` validators are identical bytes at
-both commits; `search/service.py` and `search/ranking.py` are not - which is the request path, not the
-builder. So the census and the doors were re-run on `28303aa`'s own bytes: the planes serve the same 41
-cards (5 demo, 36 live), **41 of 41 offend and all 4 shapes offend with 2 issues each** without this
-unit's two source files, **0 of 41 and 0 of 4** with them, and the 35 rows spanning the new door, the two
-re-aimed doors and `test_candidates_from_rows.py` pass on the shipped bytes. `test_card_nested_shapes.py`
-reads `docs/API_CONTRACT.md`, so a rebuilt tree that leaves `docs/` out turns its two contract-block rows
-red for a reason that is the tree's, not the product's; the head-check tree carries `docs` and
-`tmp/d619_nested_probe.py` records what the omission said.
+**Thirteen commits landed while the suite ran, and one of them carried this section's text.** The other
+lane shipped D620 through D636 while this unit measured, so the commit this one follows is `dab2c06`, not
+the `2b9d37d` the arms were built from; and because the index of a shared worktree is shared, `dab2c06`
+staged §617 along with its own §633 - the ledger text of this unit reached the repository inside that
+commit, and this commit carries the corrections those sentences needed once its parent moved out from
+under them. `tmp/d619_headcheck.py` compares the two commits path by path over everything the arms judge:
+`contract.py`, `search/cards.py`, `search/sql.py`, the three door files, `test_candidates_from_rows.py`,
+`infra/config/ranking_weights.yaml`, the three `packages/types/src/schemas` documents and both
+`packages/types/scripts` validators are identical bytes at both commits; `search/service.py` and
+`search/ranking.py` are not - which is the request path, not the builder. So the census and the doors were
+re-run on the current commit's bytes, and they read the same on `dab2c06` as on `28303aa`: the planes serve
+the same 41 cards (5 demo, 36 live), **41 of 41 offend and all 4 shapes offend with 2 issues each**
+without this unit's two source files, **0 of 41 and 0 of 4** with them, and the 35 rows spanning the new
+door, the two re-aimed doors and `test_candidates_from_rows.py` pass. A rebuilt tree has to carry `docs/`:
+`test_card_nested_shapes.py` reads `docs/API_CONTRACT.md`, and a tree without it turns that door's two
+contract-block rows red for a reason that is the tree's, not the product's
+(`tmp/d619_nested_probe.txt`).
 
 **Two doors had to be re-aimed, and their claims did not change.**
 `test_card_fact_references.py`'s availability row now reads `card.availability.fact_id` - it still
@@ -29191,15 +29246,18 @@ no suite red is D619's. Three are red at the parent commit and are already named
 U+6B72, and
 `test_vocabulary_canonical_coverage.py::test_every_vocabulary_table_is_canonicalised_or_already_canonical`
 on `understand.CURRENCY_TOKENS` (U+5E01). The fourth,
-`test_no_dead_constants.py::test_every_module_level_name_is_read_by_the_product`, is green on BOTH
-passes, so it was not this unit's: at the run it named bytes the shared worktree held and no commit had -
-`nlu/understand.py` at 1069 lines against the parent's 879, `search/service.py` at 1803 against 1774
-(`tmp/d619_owncheck.txt`). Both files are since committed, and the row is red on the commit the other
-lane left behind: `tmp/d619_deadcheck.py` runs that one file in a tree of `28303aa` alone and in the same
-tree plus this unit's five files, and both give **1 failed, 2 passed** on the same assertion, whose text
-is "a public name nobody calls is a promise nobody keeps" and whose subject is
-`match_core (nlu/understand.py)`. Identical rows on both passes, so the red belongs to the request lane
-and it is now filed in PLAN rather than left as this unit's.
+`test_no_dead_constants.py::test_every_module_level_name_is_read_by_the_product`, is green on BOTH passes,
+so it was not this unit's at the run - it named bytes the shared worktree held and no commit had,
+`nlu/understand.py` at 1069 lines against the parent's 879 and `search/service.py` at 1803 against 1774
+(`tmp/d619_owncheck.txt`). Those bytes have since been committed, and the row is red on the other lane's
+own commits: `tmp/d619_deadcheck.py` runs that one file in four rebuilt trees and gives
+**1 failed, 2 passed** on `28303aa` alone, on `28303aa` plus this unit's five files, and on `c8cff34`
+alone, against **3 passed** on `2b9d37d`. The message names one subject, `match_core (nlu/understand.py)`,
+and its text is "a public name nobody calls is a promise nobody keeps"; `c8cff34` (D628) is the commit
+`git log -S` returns for the line
+`from nexus_ai.nlu.understand import match_core as _match_core`, and this gate counts reads rather than
+mentions, so an import that binds an alias leaves the name itself unread. The row has been red since D628,
+belongs to the request lane, and is filed in PLAN instead of being left ambiguous next to D619's door.
 
 **The same census without the availability filter is what this unit leaves standing.**
 `tmp/d619_full_offences.mjs` runs the whole-card verdict over these same 41 payloads. On **41 of 41**
