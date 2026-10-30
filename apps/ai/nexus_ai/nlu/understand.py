@@ -720,6 +720,9 @@ _MATCH_CORE_CUES = re.compile(r"(?:預算|预算|budget|人均|每人|每位|人
 _MATCH_CORE_EDGES = re.compile(r"^[\s嘅的，,、。?？]+|[\s嘅的，,、。?？]+$")
 
 
+_SHOP_SUFFIX_AFTER = re.compile(r"(?:店|舖|鋪|shop|store)(?![a-z])", re.IGNORECASE)
+
+
 def _strip_surface_spans(text: str, surfaces: Sequence[str]) -> str:
     """Blank out every span one of `surfaces` occupies, found through the ONE matcher (D481).
 
@@ -743,6 +746,14 @@ def _strip_surface_spans(text: str, surfaces: Sequence[str]) -> str:
         return text
     chars = list(text)
     for start, end in spans:
+        # D639: a generic shop noun that FOLLOWS the removed word belongs to it - 「火鍋店」 is the
+        # hotpot surface plus the suffix, and the suffix alone is a term 246 of the 470 published
+        # rows carry, so leaving it divides the hotpot pool by whether a name happens to say 店.
+        # The suffix is absorbed only where a surface was just removed; 「燒味店」 (no leaf, no
+        # category surface of its own) leaves the 店 its own strip found.
+        suffix = _SHOP_SUFFIX_AFTER.match(text, end)
+        if suffix:
+            end = suffix.end()
         for i in range(start, min(end, len(chars))):
             chars[i] = " "
     return "".join(chars)

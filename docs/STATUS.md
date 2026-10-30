@@ -29169,6 +29169,61 @@ suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
 
 - readers: `nlu/lexicon.py:783-810` (`leaf_surfaces`), `:743-780` (`match_leaf`, the head rule that
   chooses the leaf); `search/service.py:497-517` (`_apply_category_leaf`), `:681-694` (the recompute).
+## 636. D639 · the generic shop noun 店 won the filter and stayed in the match text (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/understand.py`)
+
+**How the unit arrived.** §635 (D638) took the LEAF's own spelling out of the match text and closed by
+naming what it had left: "a compound with a generic shop suffix is a different defect: 「火鍋店」 leaves
+店 in the match text (246 of the 470 rows carry 店, so it splits the hotpot pool), and 「點心店」/「壽司店」
+resolve to the RETAIL bucket through that same 店 and lose their leaf entirely - that one is a
+filter-level error, not a match-text one." Both shapes turned out to have ONE cause: 店 is a cue of
+`CATEGORY_SYNONYMS['retail']`, and `match_leaf`'s head rule refuses a leaf whose word sits LEFT of any
+bucket cue - so in a compound the generic suffix outranked the dish it followed.
+
+**Measured before** (`tmp/d639_before.txt`, `tmp/d639_census.txt`):
+
+    火鍋店        filter hotpot   leaf None   match_text 店
+    旺角嘅火鍋店   filter hotpot   leaf None   match_text 店
+    點心店        filter retail   leaf None   match_text 點心
+    壽司店        filter retail   leaf None   match_text 壽司
+    拉麵店        filter retail   leaf None   match_text 拉麵
+    寵物店        filter pet      leaf None   match_text 店
+
+The first two split the hotpot pool by whether a name happens to say 店 - **246 of the 470** published
+rows say it and 1 says 舖. The next three answered the RETAIL catalogue for a restaurant the sentence
+had named, which is the sharper error: the filter was the wrong one, not merely noisy. 寵物店 is the
+same suffix harm on a bucket that did resolve.
+
+**The repair has two moments, because the two shapes fail in different places.** `match_leaf` skips a
+`GENERIC_SHOP_NOUNS` term (`店 舖 鋪 商店 shop store`) when it computes the bucket end - 店 names no
+product, so 「點心店」 is a dim-sum shop and keeps its leaf, while 「點心餐廳」 still ends on a real noun and
+still refuses it. And `_strip_surface_spans` ABSORBS a generic suffix that follows the span it just
+removed, so 火鍋|店 leaves whole; the absorption happens only after a surface of its own was removed, so
+a word with no surface (燒味店, no 燒味 leaf in the taxonomy) keeps the 燒味 as content.
+
+**Measured after** (`tmp/d639_after.txt`, `tmp/d639_pairs.txt`): 點心店 / 壽司店 / 拉麵店 / 火鍋店 each
+carry the leaf their head names, reach the lane as nothing, and answer the SAME ten ids as 點心 / 壽司 /
+拉麵 / 火鍋 (`same=True`, 10/10 on all four pairs); 旺角嘅火鍋店 and 寵物店 reach the lane as nothing too.
+The cases that should NOT move did not: 燒味店 still reads retail with 燒味, 花店 retail with 花, 點心餐廳
+restaurant with 點心 (a real head noun still refuses the leaf), and 平價點心店 keeps 平價 while the compound
+leaves.
+
+**Not claimed.** 糖水店 still reads retail with 糖水 - there is no dessert leaf to refine into, and
+inventing one belongs to the taxonomy, not the lane. 「點心餐廳」 keeping 點心 as a term is filed separately:
+the head noun 餐廳 is the bucket READER's choice, not the leaf's. English "restaurants" is still stripped
+to `s` by §632's surface strip - a suffix rule for the plural is its own unit.
+
+**The gate** is `tests/test_a_generic_shop_suffix_is_not_a_head_noun.py`: 22 legs - six leaf readings
+(five compounds that name a leaf, 燒味店 that names none), two real-head refusals (點心餐廳, 拉麵店的咖啡),
+nine plan legs (the suffix not stealing the filter, the suffix leaving with its surface, a district and a
+compound both leaving, 平價 surviving, 寵物店 absorbing its own bucket spelling, 花店 and 燒味店 keeping
+content they have no leaf for), four live pair legs (compound page == plain page, ids AND relevance) and
+one live leg asserting relevance 0.0 on every card of all four compound pages. Falsified by emptying
+`GENERIC_SHOP_NOUNS` and making `_SHOP_SUFFIX_AFTER` never match: **17 of the 22** redden, including all
+four live pairs (`tmp/d639_falsify.txt`). With the D636-D638 gates, search plan, lexicon, live CJK and
+eval suites: **410 passed**.
+
+- readers: `nlu/lexicon.py:743-748` (`GENERIC_SHOP_NOUNS`), `:785-786` (the skip in `match_leaf`);
+  `nlu/understand.py:723` (`_SHOP_SUFFIX_AFTER`), `:749-757` (the absorption in `_strip_surface_spans`).
 ## 617. D619 · the availability object every card sends matches neither branch of the block the contract publishes (`apps/ai/nexus_ai/search/cards.py`, `apps/ai/nexus_ai/contract.py`)
 
 **How the unit arrived.** The 2026-09-23 live-payload run filed two rows of its AI table against this

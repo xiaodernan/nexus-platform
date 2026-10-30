@@ -740,6 +740,14 @@ def category_surfaces(text: str) -> tuple[str, tuple[str, ...]] | None:
     return chosen[2], chosen[3]
 
 
+#: D639: the words that say "a shop" and nothing more. They are cues of the RETAIL bucket
+#: (`CATEGORY_SYNONYMS['retail']`), but in a compound they are a SUFFIX: 「點心店」 is a dim-sum shop,
+#: not the retail catalogue, and 「拉麵店」 a ramen house. Measured 2026-10-30: 點心店 / 壽司店 / 拉麵店 /
+#: 燒味店 / 糖水店 each read `filters.category = retail` and no leaf at all (`tmp/d639_before.txt`),
+#: because the head rule below saw 店 sitting further right than the leaf and refused it.
+GENERIC_SHOP_NOUNS = frozenset({"店", "舖", "鋪", "商店", "shop", "store"})
+
+
 def match_leaf(text: str) -> str | None:
     """The ONE taxonomy leaf a query names, or None (D601).
 
@@ -774,6 +782,8 @@ def match_leaf(text: str) -> str | None:
     for terms in CATEGORY_SYNONYMS.values():
         for term in terms:
             t = term.lower().strip()
+            if t in GENERIC_SHOP_NOUNS:
+                continue
             positions = cue_positions(t, canon, low) if t else []
             if positions:
                 bucket_end = max(bucket_end, max(positions) + len(t))

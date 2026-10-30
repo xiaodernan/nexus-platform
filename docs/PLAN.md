@@ -2079,10 +2079,10 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   1.00 and three at 0.269 / 0.189 / 0.123). The LEAF's word followed in D638 (§635): 拉麵/點心/壽司
   are refined into `filters.category` by D601, so their own spelling is answered by the filter and
   leaves too (before: 8 of ten at 1.00, and 珍珠奶茶 carried 0.19-0.24 on a pool whose rows never
-  write it). What stays open: a COMPOUND with a generic shop suffix - 「火鍋店」 leaves 店 (246 of the
-  470 rows carry it, so it splits the hotpot pool), and 「點心店」/「壽司店」 resolve to the retail
-  bucket through that 店 and lose their leaf - the second half is a filter-level error, not a text
-  one. Owner: the AI lane.
+  write it). The COMPOUND with a generic shop suffix closed in D639 (§636): 店 is a retail cue, so
+  `match_leaf` refused a leaf that sat left of it (「點心店」/「壽司店」/「拉麵店」 answered the retail
+  catalogue) and left 店 as a term on the pages that did resolve - 246 of the 470 rows say it, 1 says
+  舖. The suffix now names no head noun and leaves with the surface it follows. Owner: the AI lane.
 - **The word that named the CATEGORY was also a search term - closed by D635** (§632). `「餐廳」`
   was BOTH the filter that selects 184 rows and a keyword, so 「7點嘅餐廳」 scored the two rows that
   write 餐廳 in their description 1.00, one at trigram noise 0.069, and the other eight 0.00 - and
@@ -2094,13 +2094,16 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   for either lane, and no 符合「…」 bullet on a card (`tmp/d635_after.txt`). The D407/D422 promise
   "the rows that mention the word rank first" is now pinned on words no lane consumes (酒家, 拉麵).
 
-- **The LEAF's word is still a filter AND a keyword, and the page splits on it.** 「拉麵」 narrows the
+- **The LEAF's word was a filter AND a keyword, and the page split on it - closed by D638** (§635). 「拉麵」 narrows the
   bucket to 22 rows (`category: ramen`) and then matches 拉麵 as TEXT inside them: the 8 rows that
   write it in their description score 1.00 and the other 14 carry 0.145-0.154 (`tmp/d635_leaf.py`).
   「點心」 is the same shape on a 25-row pool (1.00 x9, then 0.072). Whether a DISH word is content or
   a filter is the question §630 asked about 午市, and it needs the same kind of census first: does a
-  row that writes 拉麵 serve ramen more often than one that does not? Until that is measured D635
-  strips the BUCKET's spelling and not the LEAF's. Owner: the AI lane.
+  row that writes 拉麵 serve ramen more often than one that does not? D638 answered it without that
+  census: the leaf the spelling names IS the filter that selected the pool, so the spelling is answered
+  by the filter and leaves the match text (`lexicon.leaf_surfaces`, measured: 8 of ten had scored 1.00
+  on it). What stays open is a compound whose head is a generic shop noun - closed by D639 (§636).
+  Owner: the AI lane.
 
 - **「下午茶餐廳」 was read as a 14:00 TIME and as the cafe category at once - closed by D630** (§627).
   下午茶 is a noun - the afternoon-tea category - and the time lane read the 下午 inside it because a CJK
