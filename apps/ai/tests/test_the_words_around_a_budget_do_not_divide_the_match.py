@@ -52,12 +52,25 @@ STRIPPED = [
     ("4至6位嘅餐廳", "a party range counted in seats"),
     ("2至4個嘅餐廳", "a party range counted in 個"),
     ("10至20人嘅餐廳", "a two-digit party range the money rule used to eat"),
+    ("至多1000蚊嘅餐廳", "D636: a ceiling cue the lane did not read until D636"),
+    ("頂多1000蚊嘅餐廳", "the other ceiling spelling"),
+    ("少於1000蚊嘅餐廳", "a ceiling cue with no rule at all until D636"),
+    ("低於1000蚊嘅餐廳", "the same"),
+    ("起碼1000蚊嘅餐廳", "a floor cue with no rule until D636"),
+    ("多過1000蚊嘅餐廳", "a floor cue the only rule read as nothing"),
+    ("貴過1000蚊嘅餐廳", "the same, without a unit either"),
+    ("高於1000蚊嘅餐廳", "the same"),
+    ("at most 300 restaurants", "a ceiling cue with no rule at all until D636"),
+    ("no more than 300 restaurants", "the same"),
+    ("up to 300 restaurants", "the same"),
 ]
 
 
 @pytest.mark.parametrize("text,why", STRIPPED)
 def test_the_words_the_lane_consumed_leave_the_match_text(text, why):
-    assert match_core(text) == "餐廳", (
+    # D636: three of these are written in English, whose noun is not 餐廳.
+    noun = "餐廳" if "餐" in text else "restaurants"
+    assert match_core(text) == noun, (
         f"「{text}」 ({why}) still matches {match_core(text)!r} - those words divide every row's "
         "relevance by a term no row carries")
 
@@ -65,7 +78,6 @@ def test_the_words_the_lane_consumed_leave_the_match_text(text, why):
 @pytest.mark.parametrize("text", [
     "最多人排隊嘅餐廳",   # 最多 is content here, and nothing was consumed
     "最多人嘅餐廳",
-    "至多1000蚊嘅餐廳",   # a cue the budget lane does not read: nothing consumed, nothing stripped
 ])
 def test_a_word_that_no_lane_consumed_stays(text):
     assert match_core(text) == text, (

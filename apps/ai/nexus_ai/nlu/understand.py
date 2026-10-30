@@ -59,6 +59,38 @@ BUDGET_WORD_RE = re.compile(
     r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})",
     re.IGNORECASE,
 )
+#: D636: two families of cue were missing from every ceiling and floor rule. Measured on the
+#: building plane 2026-10-31 (`tmp/d636_before.txt`): 至多/頂多/不多過/少於/低於 and `at most`,
+#: `no more than`, `up to` read NO budget at all, and so did 多過/貴過/起碼/高於 and `more than`.
+#: A user who capped the price at 至多1000 got the unfiltered catalogue; a user who floored it at
+#: 起碼1000 got the cheapest rows, because the floor lane never saw the sentence.
+#:
+#: The CJK cues added here count things that are not money - 「至多40人」 is a party, 「少於10分鐘」
+#: a wait, 「低於30度」 a temperature - so each one reads a budget only when the amount is marked
+#: as money: a currency token on one side of the digits (`_MONEY_SIDES`). 「貴過」 needs no marker,
+#: because "more expensive than" IS a price. The Latin cues are money in this domain ("at most 300"
+#: in a restaurant request), so they read a bare amount but refuse one that is a clock, a party or
+#: a duration (`_NOT_MONEY`) - "up to 12pm" is the time lane's, and 「up to 12pm」 already answers
+#: `before:1200` (`tmp/d636_collide.txt`).
+_MONEY_BEFORE = r"(?:hk\$|hkd|港幣|港币|\$)"
+_MONEY_AFTER = r"(?:蚊|元|塊|块|港幣|港币|dollars?)"
+_MONEY_SIDES = (rf"(?:{_MONEY_BEFORE}\s*(\d{{2,5}})(?:\.\d{{1,2}})?"
+                rf"|(\d{{2,5}})(?:\.\d{{1,2}})?\s*{_MONEY_AFTER})")
+_NOT_MONEY = (r"(?!\s*(?:am|pm|:|點|時|时|人|位|個|个|people|pax|persons?|guests?|diners?|"
+              r"mins?|minutes?|hours?|hrs?|days?|weeks?|months?|years?|%))")
+BUDGET_CEILING_CUE_RE = re.compile(
+    r"(?:至多|頂多|不多過|少於|低於)\s*" + _MONEY_SIDES
+    + r"|(?:at\s+most|no\s+more\s+than|up\s+to)\s*(?:hk\$|hkd|\$)?\s*(\d{2,5})(?:\.\d{1,2})?"
+    + _NOT_MONEY,
+    re.IGNORECASE,
+)
+BUDGET_FLOOR_CUE_RE = re.compile(
+    r"貴過\s*(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})(?:\.\d{1,2})?"
+    r"|(?:多過|起碼|高於)\s*" + _MONEY_SIDES
+    + r"|more\s+than\s*(?:hk\$|hkd|\$)?\s*(\d{2,5})(?:\.\d{1,2})?"
+    + _NOT_MONEY,
+    re.IGNORECASE,
+)
 #: D624: the ceiling a HK user writes comes AFTER the amount. Every ceiling cue above - and in
 #: BUDGET_WORD_RE - must PRECEDE the number, which is the English/formal shape ("under 300",
 #: "最多300"). Measured 2026-10-30 (`tmp/d624_census.txt`): "300蚊以內", "300以下", "500蚊以下", "$3000以下",
@@ -618,6 +650,31 @@ def _range_is_money(span: str, before: str) -> bool:
                           before.lower()))
 
 
+#: D636: the digits after a cue-first ceiling can count PEOPLE instead of dollars - 「最多40人」 is
+#: a party cap, 「唔多過12人」 the same - and the ceiling lane read each as an HK$ ceiling, so a
+#: party of forty filtered the catalogue by PRICE. Measured 2026-10-31 (`tmp/d636_party.txt`):
+#: 少過12個人 / 唔多過12人 / 不超過12位 / 最多40人 each read max=12/12/12/40 AND the party size.
+#: A word-cue amount followed by a counter is not money.
+_PARTY_AFTER = re.compile(r"\s*(?:個|个|位|人|people|pax|persons?|guests?|diners?)", re.IGNORECASE)
+
+
+def _budget_amount(text: str, m: "re.Match[str] | None") -> float | None:
+    """The amount a cue-first budget rule read, or None when those digits count a party.
+
+    Every rule below writes its digits in one of several groups (a ceiling may put the currency
+    before or after the number), so the first non-empty group is the amount.
+    """
+    if m is None:
+        return None
+    for i in range(1, m.re.groups + 1):
+        if not m.group(i):
+            continue
+        if _PARTY_AFTER.match(text, m.end(i)):
+            return None
+        return float(m.group(i))
+    return None
+
+
 #: D628: the phrases that name no content. A price and a party size are consumed by their own
 #: lanes and no row can contain them, so matching them does not find anything - it divides every
 #: row's relevance by a term nobody can meet. Measured on the seeded plane 2026-10-30
@@ -636,13 +693,18 @@ def _range_is_money(span: str, before: str) -> bool:
 #:
 #: Both rules run AFTER the amount is gone, which is what makes them exact rather than a guess: the
 #: strip replaces a span with a SPACE, so a unit word that belonged to a consumed amount now sits
-#: against whitespace (the 蚊 in 至多1000蚊 is still against its digit, and nothing was read out of
-#: that shape, so it stays), and a ceiling cue sits where the span began. 「最多人」 is content and
+#: against whitespace (「最多1000蚊」 consumed 蚊 with its span under D633; the unit rule only
+#: catches an amount the range rule left behind), and a cue sits where the span began.
+#: 「最多人」 is content and
 #: stays. The cue list is `BUDGET_WORD_RE`'s own CJK cues minus 以下/以內, which
 #: `SPEND_CEILING_RE` already carries whole.
+#: D636: and the two cue families added that day, because the PARTY strip strands them too -
+#: 「多過4人嘅餐廳」 is left as 「多過 餐廳」, a cue against whitespace, and 「at most 12 people」 as
+#: 「at most」. Same predicate as above: only a cue that a strip left against whitespace goes.
 _MATCH_CORE_RESIDUE = (
     re.compile(r"(?<=\s)(?:蚊|元|塊|块)(?=[\s嘅的，,、?？]|$)", re.IGNORECASE),
-    re.compile(r"(?:最多|唔超過|不超过|不超過|少過|唔多過|平過|便宜過|唔貴過|不貴过)(?=[\s嘅的]|$)",
+    re.compile(r"(?:唔多過|不多過|最多|唔超過|不超过|不超過|少於|低於|高於|至多|頂多|起碼|貴過|"
+               r"少過|多過|平過|便宜過|唔貴過|不貴过)(?=[\s嘅的]|$)",
                re.IGNORECASE),
 )
 #:
@@ -651,8 +713,8 @@ _MATCH_CORE_RESIDUE = (
 #: D633: the PARTY span is read FIRST - a party range and a budget range share the shape N-M, and
 #: the money rule used to take 「10至20」 out of 「10至20人」 and leave the counter behind.
 _MATCH_CORE_RES = (PARTY_SPAN_RE, BUDGET_RANGE_RE, SPEND_CEILING_RE, SPEND_FLOOR_RE,
-                   PER_PERSON_POINT_RE, BUDGET_MAX_RE, BUDGET_WORD_RE, BUDGET_MIN_RE,
-                   CURRENCY_AMOUNT_RE)
+                   PER_PERSON_POINT_RE, BUDGET_MAX_RE, BUDGET_WORD_RE, BUDGET_CEILING_CUE_RE,
+                   BUDGET_FLOOR_CUE_RE, BUDGET_MIN_RE, CURRENCY_AMOUNT_RE)
 _MATCH_CORE_CUES = re.compile(r"(?:預算|预算|budget|人均|每人|每位|人頭|per\s?person|p/p)",
                               re.IGNORECASE)
 _MATCH_CORE_EDGES = re.compile(r"^[\s嘅的，,、。?？]+|[\s嘅的，,、。?？]+$")
@@ -726,10 +788,13 @@ def _fill_budget(ex: IntentExtraction, text: str) -> IntentExtraction:
         budget["min"], budget["max"] = ends
         ex.confidence["budget"] = 0.9
         found = True
-    for rx in ((() if found else (BUDGET_MAX_RE, BUDGET_WORD_RE, SPEND_CEILING_RE))):
-        m = rx.search(text)
-        if m:
-            budget["max"] = float(m.group(1))
+    # D636: the two cue families the ceiling had no rule for (至多/頂多/不多過/少於/低於,
+    # `at most`, `no more than`, `up to`), read through the same party guard as the rest.
+    for rx in (() if found else (BUDGET_MAX_RE, BUDGET_WORD_RE, BUDGET_CEILING_CUE_RE,
+                                 SPEND_CEILING_RE)):
+        amount = _budget_amount(text, rx.search(text))
+        if amount is not None:
+            budget["max"] = amount
             ex.confidence["budget"] = 0.9 if rx is BUDGET_MAX_RE else 0.85
             found = True
             break
@@ -740,11 +805,15 @@ def _fill_budget(ex: IntentExtraction, text: str) -> IntentExtraction:
             ex.confidence["budget"] = 0.8
             found = True
     if not found:
-        m = SPEND_FLOOR_RE.search(text)
-        if m:
-            budget["min"] = float(m.group(1))
-            ex.confidence["budget"] = 0.85
-            found = True
+        # D636: and the floor's own (多過/貴過/起碼/高於, `more than`) ahead of the amount-first
+        # shape, so 「起碼1000蚊」 is a floor instead of nothing.
+        for rx in (BUDGET_FLOOR_CUE_RE, SPEND_FLOOR_RE):
+            amount = _budget_amount(text, rx.search(text))
+            if amount is not None:
+                budget["min"] = amount
+                ex.confidence["budget"] = 0.85
+                found = True
+                break
     if not found:
         m = PER_PERSON_POINT_RE.search(text)
         if m:
@@ -752,9 +821,9 @@ def _fill_budget(ex: IntentExtraction, text: str) -> IntentExtraction:
             ex.confidence["budget"] = 0.8
             found = True
     if not found:
-        m = BUDGET_MIN_RE.search(text)
-        if m:
-            budget["min"] = float(m.group(1) or m.group(2))
+        amount = _budget_amount(text, BUDGET_MIN_RE.search(text))
+        if amount is not None:
+            budget["min"] = amount
             ex.confidence["budget"] = 0.8
             found = True
     if found:

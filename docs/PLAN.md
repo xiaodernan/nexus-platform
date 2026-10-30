@@ -2133,10 +2133,24 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `PARTY_RE`, keeping the upper end). Measured: 0 of the 470 published rows carry 蚊, 元, 塊, 最多,
   唔超過 or 不超過, and both equivalences now hold on the live plane - 「2至4人嘅餐廳」 answers the same
   ten ids as 「餐廳」 at 1.00, and 「最多1000-2000嘅餐廳」 the same ten as 「1000-2000蚊嘅餐廳」.
-- **A ceiling cue the budget lane does not know stays in the match text, and its amount is not read.**
-  「至多1000蚊嘅餐廳」 parses no budget at all (`至多` is not in `BUDGET_WORD_RE`) and is left whole
-  (`tmp/d633_cues.txt`), so the page is the unfiltered catalogue with a term no row carries. 至多 is
-  the twin of 最多, which the table already reads. Owner: the AI lane.
+- **A ceiling or a floor written another way read no budget - closed by D636** (§633). 至多 / 頂多 /
+  不多過 / 少於 / 低於 1000蚊 and `at most` / `no more than` / `up to` 300 parsed `budget=None`, and so
+  did the floors 多過 / 貴過 / 起碼 / 高於 1000蚊 (`tmp/d636_before.txt`), while 0 of the 470 published
+  rows carry any of those spellings. Two cue tables now read them: the CJK cues require the amount to
+  be marked as money (至多40人 is a party, 少於10分鐘 a wait), the Latin ones refuse a clock, a party or a
+  duration (`up to 12pm` stays the time lane's). `_budget_amount` also refuses a cue-first amount
+  followed by a counter, which closed a worse shape on the rules that already existed: 「最多40人嘅餐廳」
+  filtered the page by HK$40 and 「唔多過12人」 by HK$12 (`tmp/d636_party.txt`). Measured after: every
+  ceiling spelling answers 最多1000蚊's page, every floor 超過1000蚊's, and 至多100 still answers a
+  different page from 至多1000.
+- **A Latin party cap leaves its cue in the match text.** 「at most 12 people」 reads `party_size=12`
+  and reaches the keyword lane as `at most` - `_MATCH_CORE_RESIDUE` only strips a CJK cue stranded by a
+  strip, because a Latin cue can be the start of an unread phrase (`up to 30 mins` must not lose
+  `up to`). The CJK 至多12人 is stripped. Owner: the AI lane.
+- **An English category word leaves its plural.** 「at most 1000 restaurants」 reaches the lane as `s`:
+  D635's surface strip removes `restaurant` out of `restaurants` and the plural marker stays, so every
+  English page ties at relevance 0.5 and its order is a tie-break (`tmp/d636_plan.py`). Owner: the AI
+  lane with the lexicon lane.
 - **A party range in English is not a party.** 「2-4 people」 is read as no party at all, and
   「party of 2 to 4」 as a party of TWO (`tmp/d633_cues.txt`) - `PARTY_RE` reads one number, and the
   `party(?:\s*of)?` alternative takes the first. The CJK range is read and stripped (D633); the Latin
@@ -2867,3 +2881,69 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   137 is blank too) - the same "prose quotes a spelling to explain the rule" exemption
   `apps/ai/tests/test_uuid_id_bindings.py:60` asks for and the gate's grammar cannot tell apart. Owner:
   whoever next reads the comment plane's exemptions.
+
+- **API_CONTRACT §2 writes the card's availability block as two fields; the published object has
+  eight, and the gate has to declare the difference.** §2's prose says `{status, next_slot}`, and the
+  definition's own `description` still quotes it that way (`EntityCard.availability` =
+  `{status, next_slot}`), while
+  `packages/types/src/schemas/fact.json#/$defs/AvailabilityInfo` requires those two and names six more
+  (`next_slot_ends_at`, `capacity_left`, `pool_id`, `slot_id`, `fact_id`, `as_of`). D619 makes the card
+  send four of them, so `test_card_nested_shapes.py` now declares `("as_of", "fact_id")` as extras for
+  that object - the same bargain that file already strikes for `estimated_price`, which it names in its
+  `DECLARED_EXTRAS` and attributes to D472 - and the same reason: the machine
+  half of the contract is ahead of the prose half. Owner: whoever next edits §2, and the edit is to
+  write the eight names into it rather than to cut them from the JSON.
+
+- **`AvailabilityBrief`'s `extra="ignore"` is how a legal property becomes invisible.** The brief is
+  built with `extra="ignore"`, so a key the model does not declare is dropped without a word - that is
+  what let `fact_id` and `as_of` be lost for the whole life of the object, and arm B of
+  `tmp/d619_arms.py` measures exactly that silence (8 of the 9 door rows stay red with the card-side
+  patch in place, because the model has nowhere to put the two new keys). Three of the block's six
+  optional properties have their columns in the row the lane already reads: `sql.slots_for` selects
+  `slot_id`, `capacity_left` and `ends_at`, which is the instant `next_slot_ends_at` names. The card
+  cannot show any of them because the model does not name them, and `pool_id` is not selected by any
+  query at all. A reader asking "how many seats are left" is answered
+  today with a word. Owner: the card lane, when a reason string or a badge needs the number.
+
+- **`full` is a slot-row word in two lanes and a contract word in none.** The AI ranking lane reports
+  the seats being gone as `full` (`candidates_from_rows`'s ternary, pinned by
+  `test_candidates_from_rows.py`'s own row), and the web's `AvailabilitySlot` type
+  (`apps/web/src/lib/types.ts`) declares `available | limited | full`; the published
+  `AVAILABILITY_STATUS` has no `full` at all and uses `unavailable` for that case. D619 translates at
+  the card boundary, which is where the contract lives, and leaves both lanes' internal vocabulary
+  alone - `availability_score` still reads `full`, and the web's slot table still says it. The
+  disagreement is measured, not resolved: a fourth lane that copies either word into a card would send
+  an off-enum value again. Owner: whoever unifies the slot-row vocabulary.
+
+- **The web mock sends the key this unit found illegal.** `apps/web/src/lib/mock/index.ts` builds an
+  availability object with `source_fact_id`, the pointer name of `CardOpeningState`, on the same object
+  the AI lane has been refusing - so a renderer that validates the mock against
+  `AvailabilityInfo` gets `additionalProperties: false` back, exactly as the live cards did. The mock
+  plane is the frontend lane's; the fix is the same two-word rename (`source_fact_id` -> `fact_id`)
+  plus a status word the enum has. Owner: the frontend lane.
+
+- **The signalled half of the block is still only measured through `build_card`.** Neither plane holds a
+  slot row a request can reach: the seeded horizon is 32,492 rows ending 2026-10-12 13:30 UTC, and the
+  windows these sentences open fall on 2026-10-29 and later (`tmp/d619_slot_window.txt`). D619's four
+  shapes therefore come from the builder, not from a served card, and every served card on either plane
+  now reports `unknown`. Moving the horizon means running the seed, and the widest reset the seed offers
+  - `RESEED_DEPENDENTS=1` over the list `data/seed/generate.py` spells as `DEPENDENT_TABLES` - empties
+  `agent_runs`, `llm_calls` and `events` along with the demo rows. The generator calls those three "the
+  request-time observability ledger", and says of that reset "anything the platform wrote here is lost",
+  which is why it is opt-in. Declined on this shared machine.
+  Owner: whoever runs a private plane; on that plane `tmp/d619_dump_cards.py` and
+  `tmp/d619_validate.mjs` should start reporting cards whose status is `available` or `limited` with a
+  `next_slot`, which no machine in this project has been able to show.
+
+- **The availability object was one of eight refusals these same 41 payloads still draw.**
+  `tmp/d619_full_offences.mjs` prints the whole-card verdict over the cards D619 fixed: `rating.fact_id`
+  and `distance.fact_id` into blocks published without them (41 of 41, and 6 of the 6 live cards that
+  carry a distance), `organic_rank` and `score_breakdown` on a card object that declares neither
+  (41 of 41), `actions[0].type` of `view` against `CARD_ACTION_TYPE`'s split verbs and
+  `actions[1].endpoint` of `/ai/v1/compare` against `^(/api/v1/|/checkout/|https://)` (41 of 41 each,
+  with 14 cards sending an `ask` type too), and every live card that carries an `address` fact (6)
+  failing `entity_card_facts_scoped` because §607 moved that fact's subject to the location. Two of
+  these are already declared in `test_card_nested_shapes.py`'s own `DECLARED_EXTRAS`, so the lane has
+  been arguing with the JSON on paper rather than on the wire. Owner: the card lane, one door per class
+  - these are A1, A3, A4 and A5 of the 2026-09-23 table, and the address-scope row is new since that
+  run.

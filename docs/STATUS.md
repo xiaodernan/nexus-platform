@@ -29008,3 +29008,242 @@ live CJK file: **728 passed**.
   (`category_surfaces`); `nlu/understand.py:661-687` (`_strip_surface_spans`), `:690-712` (`match_core`);
   `search/service.py:451` (`match_text: str | None`), `:645-651` (the plan passes the surfaces), `:1022-1024`
   (no text when nothing is left); `api/pipeline.py:179-190` (the vector lane reads the match text).
+
+## 633. D636 · the ceiling and the floor are written many ways, and the lane read three of them (`apps/ai/nexus_ai/nlu/understand.py`)
+
+**How the unit arrived.** §630 (D633) named one spelling and filed it as a non-claim: 「至多1000蚊嘅餐廳」
+"parses no budget at all (`至多` is not in `BUDGET_WORD_RE`) and is left whole". The D633 gate then pinned the
+shape as a STAY - `test_a_word_that_no_lane_consumed_stays` listed it beside 最多人. So a user who capped the
+price the way Cantonese writes it got the unfiltered catalogue, and the words were matched instead.
+
+**Measured before** (`tmp/d636_before.txt`, nineteen shapes, an `.env`-free probe). 至多 / 頂多 / 不多過 /
+少於 / 低於 1000蚊 and `at most` / `no more than` / `up to` 300 read `budget=None`; 多過 / 貴過 / 起碼 /
+高於 1000蚊 read `budget=None` too. 最多, 唔多過, 1000蚊以下, under 300, over 1000 and at least 300 all read
+their band. **0 of the 470** published rows carry any of the thirteen cue spellings in name, description
+or tags (`tmp/d636_live2.txt`), so these were not merely quieter requests - they reached the ranker with
+nothing while carrying a term no row could meet.
+
+**Two tables, one rule for each family.** `BUDGET_CEILING_CUE_RE` reads 至多/頂多/不多過/少於/低於 and
+`at most`/`no more than`/`up to`; `BUDGET_FLOOR_CUE_RE` reads 貴過, then 多過/起碼/高於, and `more than`.
+The CJK cues count things that are not money - 「至多40人」 is a party, 「少於10分鐘」 a wait, 「低於30度」 a
+temperature - so each reads a budget only when the amount is marked as money on one side of the digits;
+貴過 is a price by itself and needs no marker. The Latin cues are money in this domain, so they take a
+bare amount but refuse one that is a clock, a party or a duration: `up to 12pm` already answers
+`before:1200` in the time lane (`tmp/d636_collide.txt`), and `_NOT_MONEY` keeps it there.
+
+**A party cap was a price before this unit.** The guard is not new-only. Measured (`tmp/d636_party.txt`),
+「最多40人嘅餐廳」 read `max=40` AND `party=40`; 「唔多過12人」 / 「不超過12位」 / 「少過12個人」 each read
+`max=12`. The ceiling lane filtered the page by HK$40 for a party of forty. `_budget_amount` now refuses a
+cue-first amount followed by a counter (個/位/人/people/pax/persons/guests/diners), for every rule in
+`_fill_budget`, and the party lane keeps the number.
+
+**Measured after** (`tmp/d636_after.txt`, `tmp/d636_live.py`, `tmp/d636_live2.py`): all twelve ceiling
+spellings read `max=1000`, all eight floor spellings `min=1000`; 至多 / 頂多 / 不多過 / 少於 / 低於 answer
+the same ten ids at the same relevance as 最多1000蚊, and 多過 / 貴過 / 起碼 / 高於 the same ten as
+超過1000蚊. The number still moves the page - 至多100 answers a different ten from 至多1000 and a cap of 100
+matches 「最多100」 exactly (188 of the 470 rows cost ≤100, 410 ≤1000) - so the agreement is not two unread
+cues agreeing, which is the trap a two-spelling test falls into. 「最多40人」 answers the page 「40個人」 does.
+
+**Not claimed.** 起碼1000 without a unit (蚊/元/$) still reads no budget - the unit is what separates a
+price from a count. An English party cap leaves its cue: 「at most 12 people」 reaches the lane as `at most`
+(there is no Latin residue rule; the CJK 至多12人 is stripped). And an English category word leaves its
+plural: 「restaurants」 is stripped to `s` by D635's surface strip, so the English legs tie at relevance 0.5
+and their order is a tie-break - both filed in PLAN. The ranker's price curve is untouched: this unit only
+makes the amount arrive.
+
+**The gate** is `tests/test_a_ceiling_written_another_way_reaches_the_ranker.py`: 73 legs - twelve ceiling
+spellings, eight floor spellings, the cue leaving the match text for all twenty, eleven party caps that
+must stay parties, six shapes that are not money (a wait, a temperature, an unmarked number), the two
+`up to` clocks, three plan legs, and six live legs (a census of the thirteen cues, five ceilings answering
+最多1000's page, four floors answering 超過1000's, the 100-vs-1000 cap pair, and two party caps answering
+the party page). The D633 gate's stay-list loses 至多1000蚊 and gains twelve new shapes. Falsified: with
+the two tables made unreadable and the strip left on, **24 of the 73** redden - every new offline
+spelling, the plan leg, all nine live page legs and the cap pair (`tmp/d636_falsify.txt`). With the
+D628-D636 gates, the budget/party/understand files and the live CJK file: **557 passed**.
+
+- readers: `nlu/understand.py:75-95` (`_MONEY_SIDES`, `_NOT_MONEY`, the two cue tables), `:658-675`
+  (`_PARTY_AFTER`, `_budget_amount`), `:700-712` (the residue table), `:715-717` (`_MATCH_CORE_RES`),
+  `:777-820` (`_fill_budget`'s ceiling, floor and minimum loops).
+## 617. D619 · the availability object every card sends matches neither branch of the block the contract publishes (`apps/ai/nexus_ai/search/cards.py`, `apps/ai/nexus_ai/contract.py`)
+
+**How the unit arrived.** The 2026-09-23 live-payload run filed two rows of its AI table against this
+object and this file, and nothing has moved them since: **A2** -
+`availability: {status: null, next_slot: null, source_fact_id: null}`, "AvailabilityStatus is not
+nullable and the field is `fact_id`, not `source_fact_id`" - and the availability half of **A6**, the
+card rendering availability with no `as_of` and no backing fact. The card's availability object is the
+one place where the AI lane writes a dict of its own making into a slot the contract publishes as a
+closed object, and §422's unit (D428) left a footprint there: it filled a citation into that dict, and
+the key it chose is the open state's name. Neither that unit nor any later one asked the published
+schema what the object accepts. The yardstick here is the contract package's own artefacts:
+`packages/types/src/schemas/entity_card.json` makes `availability` a `oneOf` of
+`fact.json#/$defs/AvailabilityInfo` and null, and that definition requires `status` and `next_slot`,
+sets `additionalProperties: false`, and gives `status` exactly four words
+(`available | limited | unavailable | unknown`). The judgement is made by the validator the package
+tests itself with - `packages/types/scripts/json-schema-mini.mjs` and the cross-object rules in
+`packages/types/scripts/rules.mjs` - not by a subset written for this unit. That validator loads
+`packages/types/dist/schemas` through `manifest.json`, exactly as the shipped harness does; `dist/` is
+generated and in no commit, so the door test added here reads `src/schemas` - for this object the two
+definitions agree key for key, in the same order.
+
+**Why the payloads were captured in-process.** `scripts/verify_payload_conformance.mjs` is the shipped
+harness for exactly this question, but it reads the running services, and neither :8010 (AI) nor :8090
+(platform) is listening on this machine; starting one would write `agent_runs` rows into the shared
+demo plane. So `tmp/d619_dump_cards.py` drives the app's own `TestClient` and writes the cards out
+verbatim - 5 on the demo plane, 36 on the live plane, 41 in all - and `tmp/d619_validate.mjs` hands
+those files to the published schemas and rules. At the bytes this unit replaces, the answer is
+`tmp/d619_arms_A_detail.txt`: **41 of 41 cards offend**, and both complaints fire on every one of them:
+
+    /availability: oneOf - no oneOf branch matched
+    rule entity_card_rendered_value_backed - renders "availability" but no fact carries attribute
+      availability | capacity; availability has no as_of — AGENT §5 sets its TTL to 0, so the stamp
+      is mandatory
+
+**Three ways the object fails the block, and where each came from.** The first is a name. §610's
+unit (D428) gave the card's open state and its availability brief the same pointer, `source_fact_id`,
+because `OpenState` carries it - but `EntityCard.availability` points at `AvailabilityInfo`, whose
+eight properties do not include it and which names the same pointer `fact_id`. Since the block forbids
+anything else, that one key is enough to make the object match no branch. The second is a filter: the
+bytes this unit replaces filled the brief from a comprehension over `("status", "next_slot")` that
+kept a key only `if (availability or {}).get(k) is not None`, so whenever the slot read came back
+empty the required `status` key was dropped rather than sent null - and `status: null` is not one of
+the four words either. That is the case on **41 of 41** cards,
+because today neither plane has a slot row to read: the plane holds 32,492 slots whose last instant is
+2026-10-12 13:30 UTC while the windows these sentences open fall on 2026-10-29 and later
+(`tmp/d619_slot_window.txt`), so every served card took the branch the filter was written to skip.
+The third is a vocabulary disagreement: the ranking lane reports the seats being gone as `full` - the
+ternary in `candidates_from_rows`, pinned by
+`test_candidates_from_rows.py`'s own `availability == "full"` row - and `full` is not one of the four
+words the published block allows.
+
+**The fourth finding is the package's rule, and no card on either plane could show it.**
+`entity_card_rendered_value_backed` refuses `available` or `limited` without `next_slot` - "a bookable
+claim needs a slot (DECISIONS D6: never fabricate one)" - and requires `as_of` for every non-`unknown`
+status, because AGENT_CONTRACT §5 sets availability's TTL to 0. Both are reachable from the producer:
+`candidates_from_rows` builds `next_slot` from `_iso(av_row.get("starts_at"))`, and the lane's own
+fixture vocabulary feeds slot dicts with no instant at all. Because the served planes hold no slot
+rows, `tmp/d619_dump_shapes.py` builds the four shapes the builder can receive and passes whole cards
+to the same validator. At the base bytes all four offend, two issues each; with the two files as they
+now stand, none does (`tmp/d619_arms.txt`).
+
+**What the card sends now.** A module-level `CONTRACT_AVAILABILITY_STATUS` map translates the lane's
+word into the block's: `full` becomes `unavailable`, `available` and `limited` keep their names, and
+anything unrecognised - including no read at all - becomes `unknown`, the fourth word the block itself
+offers for "not established". Both required keys are always sent, so a card that read no slot says
+`{"status":"unknown","next_slot":null,"as_of":null,"fact_id":null}` instead of omitting the
+claim. A bookable word with no instant behind it is demoted to `unknown`, which is what the rule's own
+text prescribes: never fabricate the slot, and do not promise the booking either. The citation is the
+block's name, `fact_id`, and the stamp is the clock the candidate already carries - `as_of` is written
+into the same `raw` dict as the availability by the only function that produces either, so the card
+stamps the row it read rather than inventing a time.
+
+**Eight arms, each built from `git archive` of `2b9d37d` - the commit HEAD was when this unit opened**
+(`tmp/d619_arms.py`; `tmp/d619_arms.txt`). The door is the new
+`apps/ai/tests/test_the_card_sends_the_availability_object_the_published_schema_accepts.py`, 9 rows:
+
+    A  base bytes                          8 rows red, 1 green · 41 of 41 served cards offend · 4 of 4 shapes offend
+    B  cards.py only                       8 rows red · 41 of 41 offend - the brief has nowhere to put the two keys
+    C  contract.py only                    7 rows red · 41 of 41 offend - the block accepts keys the card never sends
+    D  shipped bytes                       9 rows green · 0 of 41 · 0 of 4 shapes
+    E  D, without the map's `full` entry   1 row red (the translation) - the contract accepts it, the reader loses it
+    F  D, without the bookable demotion    1 row red, and 1 validator offence on the no-instant shape
+    G  D, without the `as_of` stamp        1 row red, and 1 validator offence on each stamped-word shape
+    H  D, without the `fact_id` citation   1 row red - the schema stays quiet, only the claim about the source breaks
+
+Arm B is the one that says something about the gate itself: `AvailabilityBrief` sets
+`model_config = ConfigDict(extra="ignore")`, so a card built with the new keys against the old model
+loses `fact_id` and `as_of` in silence and the wire still carries the old `source_fact_id`. That is
+why two of the nine rows read the model's own `model_fields` instead of only the payload.
+
+**The twelve commits that landed while the suite ran, and what they move.** The other lane shipped D620
+through D635 during the 75 minutes this unit's census was open, so the commit this one now follows is
+`28303aa`, not the `2b9d37d` the arms were built from. `tmp/d619_headcheck.py` compares the two commits
+path by path over everything the arms judge: `contract.py`, `search/cards.py`, `search/sql.py`, the three
+door files, `test_candidates_from_rows.py`, `infra/config/ranking_weights.yaml`, the three
+`packages/types/src/schemas` documents and both `packages/types/scripts` validators are identical bytes at
+both commits; `search/service.py` and `search/ranking.py` are not - which is the request path, not the
+builder. So the census and the doors were re-run on `28303aa`'s own bytes: the planes serve the same 41
+cards (5 demo, 36 live), **41 of 41 offend and all 4 shapes offend with 2 issues each** without this
+unit's two source files, **0 of 41 and 0 of 4** with them, and the 35 rows spanning the new door, the two
+re-aimed doors and `test_candidates_from_rows.py` pass on the shipped bytes. `test_card_nested_shapes.py`
+reads `docs/API_CONTRACT.md`, so a rebuilt tree that leaves `docs/` out turns its two contract-block rows
+red for a reason that is the tree's, not the product's; the head-check tree carries `docs` and
+`tmp/d619_nested_probe.py` records what the omission said.
+
+**Two doors had to be re-aimed, and their claims did not change.**
+`test_card_fact_references.py`'s availability row now reads `card.availability.fact_id` - it still
+pins "the brief names the fact the card already carries", which is what §610 wrote it for - and its
+fixture now carries the row clock the shipped producer puts in the same dict.
+`test_card_nested_shapes.py`'s `DECLARED_EXTRAS` for `availability` is now `("as_of", "fact_id")` and
+no longer `("source_fact_id",)`, because API_CONTRACT §2 writes that block in prose as
+`{status, next_slot}` and names neither.
+
+**The suite, and who owns its four reds.** The full run on the shared worktree finished at 4525.49 s
+(1:15:25) with **4 failed, 33168 passed, 43 skipped** (`tmp/d619_suite.txt`), and this unit's door is
+not among the failures. `tmp/d619_owncheck.py` rebuilds the tree the commit ships - `git archive` of
+`2b9d37d` for `apps/ai`, `infra/config` and `packages/types/src/schemas`, then this
+unit's two source files and its three door files, and nothing else - and runs the four red files in it:
+**3 failed, 19 passed in 40.40 s**. The same four files at the parent commit's bytes alone, with no
+door, give **3 failed, 10 passed in 50.00 s**. The two passes name the identical three rows, and the
+nine-pass difference between them is exactly this unit's door, green on the bytes this commit ships. So
+no suite red is D619's. Three are red at the parent commit and are already named and filed by §615:
+`test_citations_resolve.py::test_a_chunk_fact_id_resolves_to_a_fact_row`,
+`test_vocabulary_is_the_reference.py::test_every_test_file_uses_characters_the_product_knows` on
+U+6B72, and
+`test_vocabulary_canonical_coverage.py::test_every_vocabulary_table_is_canonicalised_or_already_canonical`
+on `understand.CURRENCY_TOKENS` (U+5E01). The fourth,
+`test_no_dead_constants.py::test_every_module_level_name_is_read_by_the_product`, is green on BOTH
+passes, so it was not this unit's: at the run it named bytes the shared worktree held and no commit had -
+`nlu/understand.py` at 1069 lines against the parent's 879, `search/service.py` at 1803 against 1774
+(`tmp/d619_owncheck.txt`). Both files are since committed, and the row is red on the commit the other
+lane left behind: `tmp/d619_deadcheck.py` runs that one file in a tree of `28303aa` alone and in the same
+tree plus this unit's five files, and both give **1 failed, 2 passed** on the same assertion, whose text
+is "a public name nobody calls is a promise nobody keeps" and whose subject is
+`match_core (nlu/understand.py)`. Identical rows on both passes, so the red belongs to the request lane
+and it is now filed in PLAN rather than left as this unit's.
+
+**The same census without the availability filter is what this unit leaves standing.**
+`tmp/d619_full_offences.mjs` runs the whole-card verdict over these same 41 payloads. On **41 of 41**
+the card still sends `rating.fact_id`, and `common.json#/$defs/RatingInfo` - closed at `value`,
+`count`, `smoothed` - answers `/rating: oneOf - no oneOf branch matched`; the card sends
+`distance.fact_id` into a block closed at `meters`, `text`, `travel_minutes` and `from`, and the six
+live cards that carry a distance all take that refusal. On **41 of 41** the card
+carries `organic_rank` and `score_breakdown`, two properties `entity_card.json` does not declare on a
+closed object, and `actions[0].type` is `view`, which is not in `CARD_ACTION_TYPE` (the enum splits
+that verb into `view_menu` and `view_reviews`), while `actions[1].endpoint` is `/ai/v1/compare` and the
+schema's pattern is `^(/api/v1/|/checkout/|https://)`. Fourteen cards add an `ask` action, and every
+one of the six live cards that carries an `address` fact fails `rule entity_card_facts_scoped`: §607's
+unit (D609) moved that fact's subject to the location, and the rule wants the subject the card declares.
+Two of those disagreements are already written down in this lane's own gate -
+`test_card_nested_shapes.py` declares `("fact_id",)` as a known extra for both `rating` and
+`distance` - so they are not mistakes waiting to be noticed; they are a bargain between the card and a
+prose §2 that the published JSON does not agree to. Each is a unit with a door of its own. They are
+counted here so the next one starts from a number rather than a recollection.
+
+**Left open, and named.** §2's markdown is the half of the contract that is behind on the JSON: the
+published object has carried `fact_id` and `as_of` - and `capacity_left`, `pool_id`, `slot_id`,
+`next_slot_ends_at` - while §2's block still reads `{status, next_slot}`; this unit declares the two
+it sends in the gate rather than rewrite §2. `AvailabilityBrief`'s `extra="ignore"` means the block's
+other four legal properties are dropped without a word if the lane ever fills them - the same silence
+arm B measures. The web lane's `apps/web/src/lib/mock/index.ts` emits an availability object with
+`source_fact_id`, so it carries the key this unit found illegal; that file belongs to the frontend
+lane. The ranking lane keeps `full` as its own vocabulary - `availability_score` reads it and
+`test_candidates_from_rows.py` pins it - and the translation happens at the card boundary, which is
+where the contract lives. And because the planes hold no slot rows today, the signalled half of the
+block is exercised here through `build_card`, not through a served card: `tmp/d619_slot_window.txt`
+records why, and the re-seed that would put live slots on the shared plane is declined.
+
+- readers: `service.candidates_from_rows` (the only producer of `status`, `next_slot` and the `raw`
+  `as_of` the stamp copies), `sql.slots_for` (the row those words come from, and the
+  `capacity_left > 0` filter that keeps `full` unreachable on the seeded plane),
+  `ranking.availability_score` and `test_candidates_from_rows.py` (the lane's own `full`, left alone),
+  `contract.AvailabilityBrief` and its `extra="ignore"`, `EntityCard.availability`'s `oneOf` in
+  `packages/types/src/schemas/entity_card.json`, `fact.json#/$defs/AvailabilityInfo` and
+  `enums.ts`'s `AVAILABILITY_STATUS` (the block, and the four words), `rules.mjs`'s
+  `entity_card_rendered_value_backed` (the package's own reading of this object), the re-aimed doors
+  `test_card_fact_references.py` and `test_card_nested_shapes.py`, the frontend lane's two copies of
+  the same disagreement (`apps/web/src/lib/types.ts`'s `AvailabilitySlot`,
+  `apps/web/src/lib/mock/index.ts`), and this unit's seventeen `tmp/` measurements
+  (`d619_availability_wire`, `d619_slot_window`, `d619_avail_census`, `d619_dump_cards`,
+  `d619_dump_shapes`, `d619_validate`, `d619_full_offences`, `d619_arms`, `d619_arms_A_detail`,
+  `d619_agent_runs`, `d619_owncheck`, `d619_headcheck`, `d619_deadcheck`, `d619_nested_probe`,
+  `d619_patch`, `d619_patch2`, `d619_suite`).
