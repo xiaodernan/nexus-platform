@@ -29464,3 +29464,95 @@ records why, and the re-seed that would put live slots on the shared plane is de
   `d619_dump_shapes`, `d619_validate`, `d619_full_offences`, `d619_arms`, `d619_arms_A_detail`,
   `d619_agent_runs`, `d619_owncheck`, `d619_headcheck`, `d619_deadcheck`, `d619_nested_probe`,
   `d619_patch`, `d619_patch2`, `d619_suite`).
+
+## 638. D641 · the mock plane could not answer the Traditional copy its own page offers (`apps/web/src/lib/mock/index.ts`, `scripts/check_ui_script.mjs`, `apps/web/src/lib/mock/vocabulary-spelling.test.ts`)
+
+**How the unit arrived.** §604 (D606) repaired the script the product ANSWERS IN and said where it stopped:
+"the census judges the two declared `zh` blocks and nothing else", with `apps/web/src/lib/mock/index.ts`
+among the carriers "named as residue and not edited here". The other half of the seam — what a reader
+TYPES — had no owner. Two shapes hid it. `lib/prompts.ts` declares its starter prompts as
+`const BY_LOCALE: Record<Locale, ExamplePrompt[]>`, and `carrierFiles` cut only `const zh…: T = {` blocks,
+so the copy that invites a Hong Kong reader to type in Traditional sat outside the population that gates
+Traditional. And the mock plane's matcher vocabulary — the regexes that decide which cue a query hits —
+was read by no instrument at all, in either script. §6's relevance floor turns both into an empty page: a
+complete miss is dropped rather than ranked, so the legitimate way of typing the demo's own first example
+returns nothing.
+
+**Measured before.** The parent's reader certifies the parent's page; this unit's reader on the same bytes
+does not. Both were run from their own tree against a directory holding `6145c6c`'s own blobs (`--repo`):
+
+    6145c6c's reader, 6145c6c's bytes   RESULT: PASS — 0 simplified character(s) over 814 literal(s) of 2 zh block(s)   rc 0
+    this unit's reader, same bytes      RESULT: FAIL — 20 simplified character(s) in 5 literal(s) of 4 zh block(s)   rc 1
+          WRONG-SCRIPT apps/web/src/lib/prompts.ts:18 :19 :20 :21 :22 — five of five starter prompts
+
+The two blocks the old admission could not see are `DICTS` (`apps/web/src/lib/i18n/dict.ts:2052`) and
+`BY_LOCALE` (`apps/web/src/lib/prompts.ts:20-35`), both locale-keyed maps: what was missing was the
+population, not the copy. The reader prints such a map's span one line EARLIER than its declaration —
+`2051-2052`, and 2051 is empty — so a row that copies the printed span verbatim draws the BLANK LINE
+charge; this row cites the line that holds the `const`. The vocabulary then needed an instrument before
+it could be counted, and
+`git show 6145c6c:apps/web/src/lib/mock/index.ts` laid on the repaired tree gave it (`tmp/d641m_parent_teeth.mjs`;
+bytes restored and proved — `45383d9ffdac -> 45383d9ffdac`):
+
+    vocabulary-spelling.test.ts   3 failed | 5 passed (8)   26 one-script cues charged (pairs charged 243; authority 239/239 — canonical.py 239 entries, lexicon.py 144 pairs); the hand-carriage leg named 验/驗 and 办/辦 among them
+    search-relevance.test.ts      2 failed | 5 passed (7)   "serves every zh-HK starter prompt the home page offers" → 週末找一個適合情侶約會的地方 renders an empty results page; "returns the same cards … whichever script" → shipped (empty) against twin wan-chai-listening-bar,harbour-quiet-bar,haeto-bistro,lung-yuen-kitchen,sha-tin-hotpot,north-point-inn at 0.86,0.81,0.73,0.68,0.65,0.45
+    stream-route-parity.test.ts   1 failed | 5 passed (6)   "date_weekend" → zh-HK: the results frame carried no cards at all
+
+One sentence carries the middle row, because it is the whole defect: the Traditional prompt returned
+NOTHING and its Simplified twin returned six cards with scores. The script the product shows the reader is
+the script the product cannot hear.
+
+**The repair is the vocabulary, the copy, and one instrument per side of the seam.** `mock/index.ts` now
+carries both spellings of every cue a reader can type — `BUDGET_PATTERNS` (`:177`), `CATEGORY_HINTS`
+(`:191-196`), `TAG_HINTS` (`:198-203`), `CUISINE_VOCABULARY` (`:338-352`) and the inline tests of
+`understandQuery` (`:220-248`: 清汤|清湯, 我这边|我這邊, 周末|週末|週六|周六, 晚上 … 点|點, 订|訂, 平价|平價,
+评分|評分, 现在|現在|今晚). `apps/web/src/lib/prompts.ts:20-35` re-types the `zh-HK` five in Traditional, so
+the invitation and the answer are one script — D606's rule applied to the copy that ASKS.
+`scripts/check_ui_script.mjs:415-433` admits a second declaration shape, `const X: Record<Locale, …> = {`,
+charged only under its `zh…` keys with `SIMPLIFIED_LOCALES` (`:110`) letting `zh-CN`/`zh-SG` go, and each
+directory now names its own role in the refusal, because "i18n directory" described neither of them. The
+walk stays flat, and that is stated rather than assumed: `src/lib/mock` is not in the population, which is
+why the fixture the two witnesses share sits outside the census on two counts and says so in its header.
+
+**Two instruments were written, not one more assertion.** `apps/web/src/lib/mock/vocabulary-spelling.test.ts`
+is a census over the matcher vocabulary: a regex-literal state machine (`oneScriptCues`, `:207`) reads every
+non-test `.ts` in `src/lib/mock`, and its pair authority is cut as TEXT out of the two AI tables
+(`chargedPairs`, `:106`) exactly as §604 cut it for the copy. Four pairs those tables do not declare
+(`HANDED_ON_PAIRS`, `:50` — 周/週, 后/後, 验/驗, 办/辦) are hand-carried, with a leg that reddens the moment
+the tables learn one, so the hand-carriage is a debt with a due date instead of a permanent blind spot.
+`stream-route-parity.test.ts` measures the shipped seam and not the data plane: `beforeAll` stubs
+`NEXT_PUBLIC_DATA_MODE=mock` BEFORE the route is `await import`ed (`:30-34`), because `IS_MOCK` is decided
+at module load; its first leg refuses to grade anything unless the frames say the mock provider answered
+(`:88`); and legs 2-6 compare the ordered slug list AND every card's `ai_match.score` between the two
+spellings of one prompt. The twins live in `simplified-twins.ts:30` so the two witnesses cannot drift apart.
+
+**Measured after.** `node scripts/check_ui_script.mjs` → `RESULT: PASS — 0 simplified character(s) over
+824 literal(s) of 4 zh block(s)`, rc 0 (population 814 → 824 literals, 2 → 4 blocks).
+`node ../../node_modules/vitest/vitest.mjs run` in `apps/web` → `Test Files 16 passed (16)` /
+`Tests 185 passed (185)`. `node scripts/falsify_ui_script.mjs` → `30 arms · 30 held · 0 missed`, rc 0, up
+from the 21 the parent declares (both counts derived by counting the `name:` entries inside `ARMS` on each
+plane, not remembered). The new legs: the shape-(2) block is charged; the same map with only a `zh-CN` key
+is not; a `zh-HK` value written Simplified reddens it; and each half of the carrier population refuses by
+name when its directory is missing from the plane.
+
+**Not claimed.** No AI table was widened — §604's reason still holds (a web-only addition would change what
+the NLU counts as a Simplified character), and the four hand-carried pairs stay in the web's own file,
+named there. This unit repairs the MOCK plane; in live mode the same query goes to the AI lane, and nothing
+here measures that path. `tests/e2e/specs/consumer/vertical-slice.spec.ts:53` and `:96` still type the
+Simplified prompts (measured: 帮我找沙田适合情侣约会的餐厅，预算500港币，安静一点，周六晚上 / 帮我找附近适合朋友聚会的餐厅);
+they are a reverse control now, not a witness — with both scripts answering, that spec cannot see a
+regression in either direction. Two cue alternatives are dead as written and were left alone: `evenight` in
+`apps/web/src/lib/mock/index.ts:223` and `hkdb?` in `apps/web/src/lib/mock/index.ts:177` — a typo pattern
+that can still match, which is the vocabulary lane's call and not this one's. And `tmp/` is gitignored and
+does get swept: every figure above was re-run for this row rather than copied from an earlier window, and
+the parent-bytes experiment is reproducible from `git show 6145c6c:apps/web/src/lib/mock/index.ts` alone.
+
+- readers: `apps/web/src/lib/mock/index.ts:177`, `:191-196`, `:198-203`, `:220-248`, `:338-352` (the four
+  vocabularies and the inline cues), `apps/web/src/lib/prompts.ts:20-35` (the invitation),
+  `scripts/check_ui_script.mjs:415-433` with `:110` and `:345` (the two shapes, the let-go locales, the
+  `isZhKey` predicate), `apps/web/src/lib/mock/vocabulary-spelling.test.ts:50`, `:106`, `:207` (hand-carried
+  pairs, derived authority, the charge), `apps/web/src/lib/mock/simplified-twins.ts:30`,
+  `apps/web/src/lib/mock/stream-route-parity.test.ts:30-34`, `:50`, `:88`, `:99`,
+  `apps/web/src/lib/mock/search-relevance.test.ts:59-63`, `:124-140`, `scripts/falsify_ui_script.mjs:258`
+  (the `ARMS` roster), and `apps/web/src/lib/env.ts`'s `IS_MOCK` — the module-load constant the route
+  witness has to pin before it may import the handler.

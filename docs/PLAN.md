@@ -2966,3 +2966,27 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   mentions, so a binding that renames on import leaves the product holding no read of the name at all -
   the function is wired up and the census cannot see it wired. Either import it under its own name or
   declare it with the reason. Owner: the lane that owns `nlu/understand.py` and `search/service.py`.
+
+- **Four script pairs are hand-carried by the web, and the due date is printed.** `apps/web/src/lib/mock/vocabulary-spelling.test.ts:50`
+  carries 周/週, 后/後, 验/驗, 办/辦 because neither `nlu/canonical.py` nor `nlu/lexicon.py` declares them, and
+  the leg at `:253` reddens the moment a table learns one, so the blind spot cannot outlive its cause
+  quietly. Widening the tables is not a free edit: `lexicon.py` builds `SIMPLIFIED_MARKERS` and
+  `TRADITIONAL_MARKERS` from `_TRAD_SIMP_PAIRS`, so teaching it 后/後 changes what the NLU votes a query's
+  locale to be — the reason §604 (D606) rejected the same widening from the other side.
+  Owner: the AI lane, and §429's spelling census (`tests/test_timeparse_spellings.py` and its siblings)
+  runs in the same commit.
+
+- **The consumer e2e spec types the Simplified prompts, so it now witnesses neither script.**
+  `tests/e2e/specs/consumer/vertical-slice.spec.ts:53` types 帮我找沙田适合情侣约会的餐厅，预算500港币，安静一点，周六晚上
+  and `:96` types 帮我找附近适合朋友聚会的餐厅. D641 made both spellings answer on the mock plane, which is what the
+  product should do, and what it does to that spec is make it unable to see the defect again: a
+  vocabulary that drifts back to one script keeps that run green. Owner: the e2e lane — one leg per
+  script, or read the fixture the web witnesses already share (`apps/web/src/lib/mock/simplified-twins.ts`).
+
+- **Two cue alternatives in the mock vocabulary match nothing the product writes.**
+  `apps/web/src/lib/mock/index.ts:177` ends its currency cue with `hkdb?|hkd`, and `hkdb?` already matches
+  every string `hkd` matches, so the last alternative is dead; the `b?` half reaches 港币 as `hkbd`, which
+  grep over `apps` and `packages` finds nowhere. `:223` carries `evenight` beside `evening` — one
+  occurrence in the whole repository, in the cue itself, with no test or corpus row naming it. Either is
+  a deliberate typo tolerance waiting for a sentence that says so, or a leftover. Owner: the lane that
+  owns the mock vocabulary.
