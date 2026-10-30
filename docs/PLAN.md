@@ -2066,18 +2066,25 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   lane, from `merchants.avg_price_hkd`) or the readers drop an alias no corpus produces - and a
   fixture that invents the attribute would be this lane writing its own evidence. Owner: the AI
   lane with the platform lane.
-- **The price and the party no longer touch the match text; TIME and DISTRICT still do.** D628
-  (§625) added `match_core()`: the keyword lane now reads `canonical(plan.match_text)`, which is the
-  user's sentence MINUS the spans a lane already consumes - the price (every shape §622 taught the
-  reader) and the party size. Measured: `「4個人嘅餐廳」` answers the same ten subject ids as
-  `「餐廳」` (48 of 60 pool rows were shared before), and `「100蚊以下嘅餐廳」` answers nine of ten rows at
-  relevance 1.00 against 0.11-0.16. What stays open is the same measurement for the two phrases
-  whose words a row CAN carry: `「今晩7點嘅餐廳」` carries relevance 0.143 and `「銅鑼灾嘅餐廳」` 0.543,
-  so both still divide every row's score - but a description may legitimately say 晚上 or name its
-  own district, so stripping them is a product decision with a measurement to beat, not the
-  provable no-op the price and the party were (`tmp/d628_shapes.txt`). The other half is the vector
-  lane: `api/pipeline.py:179-185` still embeds the WHOLE sentence, so the two lanes now read
-  different texts and nothing says that is right. Owner: the AI lane.
+- **The price, the party and the time no longer touch the match text; DISTRICT and the vector lane
+  still do.** D628 (§625) added `match_core()` and D629 (§626) extended it to the time: the keyword lane
+  reads `canonical(plan.match_text)`, which is the user's sentence MINUS the spans a lane already
+  consumes - the price (every shape §622 taught the reader), the party size, and (only when the time
+  lane parsed one) the time. Measured: `「4個人嘅餐廳」` and `「今晚7點嘅餐廳」` answer the same ten
+  subject ids as `「餐廳」`; `「100蚊以下嘅餐廳」` answers nine of ten rows at relevance 1.00 against
+  0.11-0.16. What stays open: DISTRICT, because 18 of the 470 rows name 銅鑼灾 or 觀塘 in their own text,
+  so a strip there is not free and needs its own measurement. And the vector lane - `api/pipeline.py:179-185`
+  still embeds the WHOLE sentence, so the two lanes read different texts and nothing says that is
+  right. Owner: the AI lane.
+
+- **「下午茶餐廳」 is read as a 14:00 TIME and as the cafe category at once.** 下午茶 is a noun - the
+  afternoon-tea category - and `Intent.time` takes it as an afternoon hour: measured 2026-10-30, the plan
+  for `下午茶餐廳` carries `category: cafe`, `open_now: False`, `open_weekday: 5`, `open_time: 14:00`.
+  D629 (§626) guarded its own strip with `(?!茶)` so the word survives in the match text, but the false
+  time reading is older than that unit and is untouched: a request for an afternoon-tea place is being
+  asked whether it is open at two in the afternoon. The fix is a compound guard in `_fill_time`, and the
+  measurement to beat is the plan above. Owner: the AI lane.
+
 
 - **A band the corpus cannot fill still answers with ten rows outside it and says nothing.**
   Measured 2026-10-30: **3 of the 184 restaurants are priced 300-500** and none are 500-800, so

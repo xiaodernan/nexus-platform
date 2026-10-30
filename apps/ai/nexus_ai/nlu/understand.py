@@ -114,6 +114,18 @@ CURRENCY_AMOUNT_RE = re.compile(
 #: D628: the span a party size occupies, written so it can be REMOVED from a text. `PARTY_RE`
 #: above opens with `(?:\D|^)`, which consumes the character before the number - fine for a
 #: search, wrong for a substitution.
+#: D629: the span a time occupies. Unlike the price and the party, a cue word CAN be content
+#: (下午 in 下午茶), so this one is only applied when the time lane actually parsed a time
+#: (`match_core(..., strip_time=True)`), not unconditionally.
+TIME_SPAN_RE = re.compile(
+    r"(?:\u4eca\u665a|\u660e\u665a|\u5f8c\u665a|\u807d\u65e5|\u660e\u5929|\u660e\u65e5|\u4eca\u65e5|\u4eca\u5929|\u671d\u65e9|\u65e9\u6668|\u664f\u665d|\u4e0b\u5348(?!\u8336)|\u4e2d\u5348|\u665a\u4e0a|\u591c\u665a|\u591c\u5bb5)?\s*"
+    r"\d{1,2}\s*(?:\u9ede|\u70b9|\u6642|\u65f6)(?:\s*\d{1,2}\s*\u5206)?"
+    r"|\d{1,2}:\d{2}"
+    r"|\d{1,2}\s*(?:am|pm)\b"
+    r"|(?:\u4eca\u665a|\u660e\u665a|\u5f8c\u665a|\u807d\u65e5|\u660e\u5929|\u660e\u65e5|\u671d\u65e9|\u664f\u665d|\u4e0b\u5348(?!\u8336)|\u4e2d\u5348|\u665a\u4e0a|\u591c\u665a)"
+    r"|(?:\u661f\u671f|\u79ae\u62dc|\u793c\u62dc)[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u65e5\u5929]",
+    re.IGNORECASE,
+)
 PARTY_SPAN_RE = re.compile(
     r"(?:\u6211\u54cb|\u6211\u5011|\u6211\u4eec)?\s*\d{1,2}\s*"
     r"(?:\u500b\s*\u4eba|\u4e2a\s*\u4eba|\u4f4d\u4eba|\u500b|\u4e2a|\u4f4d|\u4eba)(?:\u5605|\u7684)?"
@@ -612,13 +624,18 @@ _MATCH_CORE_CUES = re.compile(r"(?:預算|预算|budget|人均|每人|每位|人
 _MATCH_CORE_EDGES = re.compile(r"^[\s嘅的，,、。?？]+|[\s嘅的，,、。?？]+$")
 
 
-def match_core(text: str) -> str:
+def match_core(text: str, *, strip_time: bool = False) -> str:
     """The part of a sentence that names WHAT to find, with the spans a lane already handles removed.
 
     Returns "" when nothing is left - the caller keeps the original text in that case, because a
     request that is ONLY a constraint (「4個人」) is still a request.
+
+    `strip_time` is set by the caller when the time lane PARSED a time: the cue words can be
+    content (下午茶), so they are not removed on a guess.
     """
     t = text or ""
+    if strip_time:
+        t = TIME_SPAN_RE.sub(" ", t)
     for rx in _MATCH_CORE_RES:
         t = rx.sub(" ", t)
     t = _MATCH_CORE_CUES.sub(" ", t)

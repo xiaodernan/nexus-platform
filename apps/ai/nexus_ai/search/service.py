@@ -633,7 +633,8 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     now = now or datetime.now(timezone.utc)
     plan = SearchPlan(now=now, limit=limit)
     plan.query_text = (query or (intent.raw_query if intent else "") or "").strip()
-    plan.match_text = _match_core(plan.query_text)
+    plan.match_text = _match_core(plan.query_text,
+                                  strip_time=bool(intent is not None and intent.time))
     caller_named_category = bool(_plain(filters).get("category"))
     if intent is None:
         plan.filters = _plain(filters)

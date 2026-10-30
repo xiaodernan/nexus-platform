@@ -28658,3 +28658,55 @@ doors beside it: **33 passed**.
 - readers: `nlu/understand.py:117-125` (`PARTY_SPAN_RE`), `:596-626` (`match_core` and the strip list);
   `search/service.py:445-447` (`SearchPlan.match_text`), `:636` (the plan fills it) and `:998-1001` (the
   retrieval reads it, with the fallback).
+
+## 626. D629 · the time a user states filtered the rows AND divided their relevance by a term no row carries (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/search/service.py`)
+
+**The census that makes this provable.** D628 removed the phrases that name no content - a price and a
+party size - and left time and district alone because a row CAN carry those words. The census says
+otherwise for time (`tmp/d629_time.py`, the 470 published merchants, name + description + tags):
+
+    surface     rows carrying it
+    今晚          0/470
+    7點           0/470
+    下午          0/470
+    晚上          0/470
+    明晚          0/470
+    中午          0/470
+    朝早          0/470
+    點            9/470   (all of them 點心)
+
+So a time phrase cannot find anything either: it only divides every row's `kw_score` by a term nobody
+can meet, and the candidate pool is ordered by that score. Measured: `「今晚7點嘅餐廳」` carried 0.143 on
+every row where `「餐廳」` carries 1.00, and its sixty-row pool was chosen by that diluted number.
+
+**The lane was never idle.** The same plan keeps the constraint: `open_now: True`, `open_weekday: 4`,
+`open_time: 19:00` (`tmp/d629_live.txt`). This unit removes the phrase from the MATCH text and touches
+nothing else - the filter still asks the opening-hours lane, the card still prints the user's words.
+
+**The repair**, in `match_core(..., strip_time=True)`, called from `plan_from_intent` only when
+`intent.time` is set. `TIME_SPAN_RE` covers a cue and a clock (`今晚7點`, `明日中午`), a bare clock (`7點`, `19:00`,
+`7pm`) and a cue on its own (`今晚`). Two guards, both measured rather than assumed: the cue words are
+stripped only when the time lane PARSED a time (a cue can be content), and `下午` carries `(?!茶)` inside
+the span so `下午茶餐廳` - which this product answers as a cafe - keeps its word either way. `點心餐廳` is
+untouched because the span needs a digit before the counter.
+
+**Measured on the page.** `「今晚7點嘅餐廳」` now answers the SAME ten subject ids as `「餐廳」` at
+relevance 1.00 on all ten (0.143 before), with `total_estimate` still 184 - the strip changes which rows
+win, never which rows exist, and the time filter still narrows what they are drawn from.
+
+**Not claimed.** `「7點嘅餐廳」` answers a pool of ELEVEN rows (open at 07:00 on a weekday) and eight of
+its ten cards carry relevance 0.0: the pool was chosen by the filter, not the text, and a card with no
+text match is exactly what this unit makes visible rather than hides. Nothing here changes the
+relevance floor's treatment of such a pool. `下午茶餐廳` is still read as a 14:00 time by `Intent.time` -
+a pre-existing reading of a compound that is a CATEGORY, filed in PLAN and not repaired here. District
+stays in the match text: 18 of the 470 rows name 銅鑼灾 or 觀塘 in their own text, so it is matchable
+and the strip would not be free. The vector lane still embeds the whole sentence.
+
+**The gate** is `tests/test_a_time_the_user_states_is_not_matched.py`: twelve legs - five parsed-time
+strips, the default-not-stripping leg, three content-survives legs (`下午茶餐廳`, `點心餐廳`, a district),
+the plan keeping the time filter while dropping its words, a live census leg that reddens the day a row
+carries a time surface, and a live page leg (same ten ids as `餐廳`, every relevance ≥ 0.9, 184 both).
+With D628's and D624's doors and four neighbouring files: **127 passed**.
+
+- readers: `nlu/understand.py:120-128` (`TIME_SPAN_RE`), `:627-643` (`match_core`'s `strip_time`);
+  `search/service.py:636-637` (the caller that sets it from `intent.time`).
