@@ -28563,3 +28563,34 @@ vector-lane strategy string) before this section was written, so the ledger reco
   six e2e reds, which need the AI and platform services — 8010 and 8090 are closed on this machine
   (measured), so the corrected attribution above rests on the request count in the test rather than
   on a browser run.
+
+---
+
+## 624. D626 · the compare grid's row names are a vocabulary in two trees, and nothing joined them (`apps/web/src/lib/compare-row-labels.test.ts`)
+
+**The report, measured.** PLAN carried "the compare grid's row LABELS are raw attribute keys". The
+claim is false as written and was already false when it was filed: `_compare_rows` in
+`apps/ai/nexus_ai/api/routes_discover.py` emits exactly `price`, `rating`, `category`, `district`,
+`open_state`, `distance`, and `apps/web/src/lib/i18n/trust-labels.ts` carries all six in both
+locales (`價格 / Price`, `營業狀態 / Opening state`, …). `CompareTable` prints
+`labels.rowLabels?.[row.attribute] ?? row.attribute`, so the fallback existed but was never reached.
+
+**What was actually missing is a witness for the next row.** The `??` fallback is silent in both
+directions: the AI can add a row the label map does not carry and the grid prints the identifier to
+a reader in a Chinese interface, and the label map can keep a name no row prints. Two vocabularies,
+one fact, no reader comparing them — the D488 shape, in a place where the failure is cosmetic enough
+to survive review.
+
+**The witness reads the other tree as text.** `compare-row-labels.test.ts` parses the
+`for attribute, cells in (...)` loop out of the Python source (importing it would let a broken list
+satisfy its own assertion), refuses with a named error if that shape is gone or names no pairs, and
+then requires: a label for every emitted attribute in both locales; no label for an attribute that is
+not emitted; the two locales in step; and that no label matches `^[a-z][a-z_]*$` — the `open_state`
+defect stated as a rule, chosen so it does not redden on the correct English `Price` (the first
+draft compared label to key case-insensitively and failed on five correct English labels, which is
+how the rule found its right form).
+
+- readers: `npm run test:web` → **169 passed** (14 files; the 5 new ones are this unit's).
+  Falsified by hand: renaming the zh `open_state` label to `opening_state` reddens three of the five
+  with `{ "zh-HK": ["open_state"], en: [] }`, and the file is restored afterwards. `npx tsc --noEmit`
+  clean; eslint on the new file clean. PLAN's item is rewritten in place as closed.

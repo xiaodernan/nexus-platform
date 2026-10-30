@@ -131,7 +131,13 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   (1 of 4 bigrams). The open half is the OFFERING lane: `build_offering_query()` has no
   containment leg, so a Chinese query still reaches no offering. The D406 claim that 拉麵 matches
   zero `ramen` tags was measured against a plane the re-seed has since replaced.
-- **The compare grid's row LABELS are raw attribute keys** — the rows are fact-backed (`price`, `rating`, `category`, `district`, `open_state`, `distance`) but the labels are the keys themselves; the surface that prints them is the web lane's (`packages/ui/src/trust/CompareTable.tsx`), reported and not edited here.
+- **The compare grid's row LABELS are raw attribute keys** — **closed by D626, and it was already
+  closed when this item was written**: both locales carry all six labels (`price`, `rating`,
+  `category`, `district`, `open_state`, `distance`) and `_compare_rows` emits exactly those six, so
+  nothing was printing a raw key. What was missing is a witness for the *next* row — the AI could add
+  `availability` and the grid would print the identifier to a reader in a Chinese interface, silently.
+  `apps/web/src/lib/compare-row-labels.test.ts` now reads the AI's row list as text and requires set
+  equality with both label maps, plus that no label looks like an identifier.
 - **The corpus's tags are English** - the merchant lane's bigram containment closes the ask
   (see the item above, re-measured in the 2026-10-28 session); what is still open is a
   translation layer for the OFFERING rows, which carry no CJK at all and are read by a query with
