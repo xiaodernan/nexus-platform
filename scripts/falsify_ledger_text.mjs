@@ -323,6 +323,52 @@ const PLANT_DOTPATH = fixture('plant_dot_paths.md', [
 // basename. Over the excluded root the twin is not in the index, so the name is held once and the cite resolves;
 // over the root that keeps its twin the same sentence reddens as AMBIGUOUS. That pair is the difference the
 // exclusion makes, and it is the shape of the failure D196 actually hit.
+// D640 — the copy tree. `tmp/cta_arms/` is gitignored, holds no path any commit names, and on
+// 2026-10-31 another lane left nine full copies of the repository there (`A_base`, `B_cards_only`, …). The
+// walker is a filesystem walk, so every path cite of a shipped file resolved to ten candidates and 322
+// committed rows were filed AMBIGUOUS - a red about a copy no checkout can open. The repair reads HEAD's own
+// tree and drops a candidate under a top-level segment that tree never names, leaving at least one candidate.
+// Two roots here prove both halves, because the claim is about SHIPMENT and not about copies:
+//   · `copy-root` commits `probe/` and `deep/` and keeps the twin copy under `tmp/cta_arms/A_base/` untracked,
+//     so the cite resolves to the shipped file and the run is green;
+//   · `copy-twice-root` commits a twin under `deep/` as well, so two SHIPPED files hold the name and the same
+//     citation is AMBIGUOUS - the rule prefers what a commit ships, it does not prefer the shallow path.
+// Both then pin their own premise: `git ls-tree` must show one twin in the first root and two in the second, so
+// a fixture where the seeding silently failed cannot pass as an arm that held.
+const COPY_ROOT = join(FIX, 'copy-root');
+const COPY2_ROOT = join(FIX, 'copy-twice-root');
+const gitIn = (dir, args) => execFileSync('git', args, { cwd: dir, stdio: 'ignore' });
+const shippedTwins = (dir) => execFileSync('git', ['ls-tree', '-r', '--name-only', 'HEAD'], { cwd: dir, encoding: 'utf8' })
+  .split(/\r?\n/).filter((rel) => rel.endsWith('twin.mjs')).length;
+for (const [dir, alsoDeep] of [[COPY_ROOT, false], [COPY2_ROOT, true]]) {
+  mkIndexRoot(dir, alsoDeep ? 'deep' : '.scratch');
+  mkdirSync(join(dir, 'tmp', 'cta_arms', 'A_base', 'probe', 'a'), { recursive: true });
+  writeFileSync(join(dir, 'tmp', 'cta_arms', 'A_base', 'probe', 'a', 'twin.mjs'),
+    CRLF(['export const scratchTwin = 9;', '', '// second line']), 'utf8');
+  if (alsoDeep) {
+    writeFileSync(join(dir, 'deep', 'twin.mjs'), CRLF(['export const secondShippedTwin = 4;', '', '// second line']), 'utf8');
+  }
+  gitIn(dir, ['init', '-q']);
+  gitIn(dir, ['add', '-f', 'probe', 'deep']);
+  gitIn(dir, ['-c', 'user.email=gate@example.invalid', '-c', 'user.name=gate', 'commit', '-q', '-m', 'seed']);
+}
+// The plant the two arms share. Its THIRD cite is not decoration: `deep/cited.mjs` resolves under every
+// root here, and a plant whose every citation is ambiguous never reaches the AMBIGUOUS arm at all - measured
+// while writing this one, `twin.mjs:1` plus `probe/a/twin.mjs:1` alone printed `2 citation(s) found and 0
+// file(s) resolved` and exited 2, the census's refusal for an index that sees nothing, which is the same
+// vacuity trap PLANT_ALONE pins from the other side.
+const PLANT_COPY = fixture('plant_copy_tree.md', [
+  '# D640 plant',
+  '',
+  '## D989 A basename beside an unshipped copy',
+  '',
+  'The plain one is at deep/cited.mjs:1, the vague one is at twin.mjs:1 and the precise one is at probe/a/twin.mjs:1.',
+]);
+const COPYED_TWINS = shippedTwins(COPY_ROOT);
+const COPY2_TWINS = shippedTwins(COPY2_ROOT);
+if (COPYED_TWINS !== 1 || COPY2_TWINS !== 2) {
+  throw new Error(`the copy fixtures shipped ${COPYED_TWINS} and ${COPY2_TWINS} twin(s); the arms predict 1 and 2`);
+}
 const PLANT_BARE = fixture('plant_bare_twin.md', [
   '# D197 plant',
   '',
@@ -474,6 +520,13 @@ const ARMS = [
     args: [`--text=${PLANT_BARE}`], cwd: EXC_ROOT, expect: 0,
     must: [/every citation-shaped token resolves/, /citation-shaped\s+2/],
     absent: [/FALSE LEDGER CITATIONS/, /AMBIGUOUS/] },
+  { name: 'a copy of the repository under a gitignored tree is not a second holder of the name',
+    args: [`--text=${PLANT_COPY}`], cwd: COPY_ROOT, expect: 0,
+    must: [/every citation-shaped token resolves/, /citation-shaped\s+3/, /strict offenders\s+0/],
+    absent: [/AMBIGUOUS/, /FALSE LEDGER CITATIONS/, /RESULT: NOT CHECKED/] },
+  { name: 'two names the commit ships are still AMBIGUOUS beside that copy — shipment decides, not depth',
+    args: [`--text=${PLANT_COPY}`], cwd: COPY2_ROOT, expect: 1,
+    must: [/FALSE LEDGER CITATIONS \(1\)/, /AMBIGUOUS/, /2 files hold it: /] },
   { name: 'the same sentence over a root that keeps its twin is AMBIGUOUS (D196\'s failure, witnessed)',
     args: [`--text=${PLANT_BARE}`], cwd: KEEP_ROOT, expect: 1,
     must: [/FALSE LEDGER CITATIONS \(1\)/, /AMBIGUOUS/, /2 files hold it: /] },

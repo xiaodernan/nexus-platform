@@ -29169,6 +29169,54 @@ suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
 
 - readers: `nlu/lexicon.py:783-810` (`leaf_surfaces`), `:743-780` (`match_leaf`, the head rule that
   chooses the leaf); `search/service.py:497-517` (`_apply_category_leaf`), `:681-694` (the recompute).
+## 637. D640 · a copy of the repository under a gitignored tree was a second holder of every name (`scripts/check_ledger_citations.mjs`, `scripts/falsify_ledger_text.mjs`)
+
+**How the unit arrived.** The D639 commit's own ledger gate, step 8, came back red with **322 strict
+offenders** - every one of them AMBIGUOUS, and every one naming a file this repository ships. Nothing in the
+paragraphs had changed. Another lane had left nine full copies of the tree under the gitignored
+`tmp/cta_arms/` (`A_base`, `B_cards_only`, `C_contract_only`, … `I_shared_label`, created that morning), and
+the census walks the filesystem: a cite of `docs/API_CONTRACT.md` or `db/pool.py` then resolved to TEN files,
+and a name more than one file holds is exactly what AMBIGUOUS refuses. `git ls-tree -r --name-only HEAD`
+holds **0** paths under `tmp/`, so no commit has ever shipped one of those copies; the census was certifying
+names no checkout could open.
+
+**Measured before** (`tmp/d639_cite_full.txt`): 322 offenders, all AMBIGUOUS, all of them in sections this
+run was not writing (D70, D86, D88, D114, D117, D133, D138, D154, D160 and their neighbours), `distinct files
+cited 109`.
+
+**The repair reads the tree the commit ships.** `SHIPPED_ROOTS` is the set of top-level names in HEAD's
+`git ls-tree`; `dropUnshippedCopies` drops a candidate whose first path segment is not one of them - but only
+when at least one candidate survives. That last clause is not politeness: the AI lanes' evidence notes
+(`tmp/d63x_before.txt`) resolve ONLY through `tmp/`, and dropping them unconditionally would turn 251
+committed cites into FILE NOT FOUND. Under a tree that ships nothing (a harness fixture with no git), the
+function is inert and every candidate competes as before.
+
+**Measured after** (`tmp/d641_cite.txt`): **0** strict offenders, `distinct files cited 159`, and every
+citation-shaped token resolves. One number moved the other way: the blank-line backlog at HEAD went **26 ->
+53**, because 27 cites that had been hidden behind AMBIGUOUS now resolve to their shipped file and land on an
+empty line - counted and not judged (D161), which is the honest direction for a row that used to be invisible.
+
+**The arms, and the host that cannot run them.** `falsify_ledger_text.mjs` grew a pair over two fixture roots
+that are real git repositories, because the claim is about SHIPMENT and not about copies: `copy-root` commits
+`probe/` and keeps a twin under `tmp/cta_arms/A_base/` untracked - the cite resolves to the shipped file and
+the run is green - while `copy-twice-root` also ships a twin under `deep/`, so two shipped files hold the name
+and the same plant is AMBIGUOUS (`2 files hold it`). Each root asserts its own `git ls-tree` count first, so a
+seeding failure cannot pass as an arm that held. The plant needs a third, always-resolvable cite: measured,
+the bare twin cite beside the precise path cite alone refuses the run (`2 citation(s) found and 0 file(s) resolved`,
+exit 2) instead of reaching the AMBIGUOUS arm. **The harness itself cannot run on this host**: its own guard
+refuses with "bash could not start a shell on this host (WSL … execvpe(/bin/bash) failed)" at HEAD as well as
+here, so both arms were executed by invoking the checker directly, on the same fixtures, and both held - and
+with `dropUnshippedCopies` mutated to `return cands`, `copy-root` reddens with 2 AMBIGUOUS rows naming the
+copy (`tmp/d640_armfix`), which is the failure the fix removes.
+
+**Not claimed.** The nine copy trees are still on disk; this unit makes the census read past them, it does
+not delete another lane's experiment. A cite into `tmp/` that no shipped file answers still counts in the
+untracked-target class, unchanged. And `tmp` is deliberately NOT added to `VENDOR_DIRS`: that would empty the
+251 measurement cites the AI lanes rely on, which is the opposite of what the walk needs here.
+
+- readers: `scripts/check_ledger_citations.mjs:286-290` (`SHIPPED_ROOTS`, `dropUnshippedCopies`), `:403-421`
+  (every branch of `resolve` that can return more than one candidate);
+  `scripts/falsify_ledger_text.mjs:338-370` (the two fixtures), `:522-530` (the arm pair).
 ## 636. D639 · the generic shop noun 店 won the filter and stayed in the match text (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/understand.py`)
 
 **How the unit arrived.** §635 (D638) took the LEAF's own spelling out of the match text and closed by

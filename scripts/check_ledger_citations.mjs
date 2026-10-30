@@ -267,6 +267,28 @@ try {
 
 const BY_BASENAME = new Map();
 const BY_STEM = new Map();
+/**
+ * D640 — the top-level names HEAD's tree ships. A candidate under a segment NOT in this set is a copy of the
+ * repository, not a second holder of the name.
+ *
+ * Measured 2026-10-31: another lane's card experiment left nine full trees under the gitignored `tmp/cta_arms/`
+ * (`A_base`, `B_cards_only`, … `I_shared_label`), and `git ls-tree -r --name-only HEAD | grep ^tmp/` is empty —
+ * no commit has ever named a path there. The walker is a filesystem walk, so every one of the 322 committed
+ * citations that names `docs/API_CONTRACT.md`, `db/pool.py`, `docs/STATUS.md` and their neighbours resolved to
+ * TEN files and was filed AMBIGUOUS — 322 rows in sections this run was not writing, reddening the gate for a
+ * scratch copy no reader could ever open from a checkout.
+ *
+ * The drop is conditional on leaving at least one candidate: a cite that resolves ONLY through an unshipped
+ * tree (the `tmp/d63x_before.txt` measurement notes the AI lanes cite) keeps its candidate and stays in the
+ * untracked-target class, where it has always been counted. A new file under a shipped root still competes
+ * with its namesake and stays AMBIGUOUS, because the ambiguity is the fact and the fix there is `git add`.
+ */
+const SHIPPED_ROOTS = TRACKED === null ? null : new Set([...TRACKED].map((rel) => rel.split('/')[0]));
+function dropUnshippedCopies(cands) {
+  if (SHIPPED_ROOTS === null || cands.length < 2) return cands;
+  const kept = cands.filter((rel) => SHIPPED_ROOTS.has(rel.split('/')[0]));
+  return kept.length ? kept : cands;
+}
 for (const rel of FILES) {
   const base = rel.split('/').pop();
   BY_BASENAME.set(base, [...(BY_BASENAME.get(base) ?? []), rel]);
@@ -378,25 +400,25 @@ function citeLines(cite, rel, lines, section, where, judgedHere) {
 function resolve(name) {
   // `./.gitignore` is the root-relative form the ledgers need for a file the repo root owns twice over:
   // bare `.gitignore` is held by the root AND by packages/sdk, so a root cite has to say it is at the root.
-  if (name.startsWith('./')) return FILES.filter((rel) => rel === name.slice(2));
+  if (name.startsWith('./')) return dropUnshippedCopies(FILES.filter((rel) => rel === name.slice(2)));
   // An elided prefix arrives in two spellings: `…/a/b.java`, whose `…` the tokenizer strips and leaves a
   // leading slash; and `x/.../a/b.java`, whose dots survive inside the token. Both are resolved by suffix
   // on the tail after the elision.
   if (name.startsWith('/')) {
     const tail = name.slice(1);
-    return FILES.filter((rel) => rel === tail || rel.endsWith(`/${tail}`));
+    return dropUnshippedCopies(FILES.filter((rel) => rel === tail || rel.endsWith(`/${tail}`)));
   }
   if (name.split('/').includes('...')) {
     const segs = name.split('/');
     const tail = segs.slice(segs.lastIndexOf('...') + 1).join('/');
-    return FILES.filter((rel) => rel === tail || rel.endsWith(`/${tail}`));
+    return dropUnshippedCopies(FILES.filter((rel) => rel === tail || rel.endsWith(`/${tail}`)));
   }
-  if (name.includes('/')) return FILES.filter((rel) => rel === name || rel.endsWith(`/${name}`));
-  if (MIGRATIONS.has(name)) return MIGRATIONS.get(name);
-  if (LEDGER_EXT.test(name)) return BY_BASENAME.get(name) ?? [];
+  if (name.includes('/')) return dropUnshippedCopies(FILES.filter((rel) => rel === name || rel.endsWith(`/${name}`)));
+  if (MIGRATIONS.has(name)) return dropUnshippedCopies(MIGRATIONS.get(name));
+  if (LEDGER_EXT.test(name)) return dropUnshippedCopies(BY_BASENAME.get(name) ?? []);
   const outer = name.match(/^([A-Z][A-Za-z0-9_]*)\.[A-Z][A-Za-z0-9_]*$/);       // Outer.Nested
   const stem = outer ? `${outer[1]}.java` : name;
-  return BY_BASENAME.get(stem) ?? BY_STEM.get(stem) ?? [];
+  return dropUnshippedCopies(BY_BASENAME.get(stem) ?? BY_STEM.get(stem) ?? []);
 }
 
 /* ------------------------------------------------------------------ what is a citation */
