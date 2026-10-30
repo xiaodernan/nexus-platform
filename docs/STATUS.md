@@ -28526,3 +28526,40 @@ is identical at 311.
   left alone), `nlu/understand.py`'s `CURRENCY_TOKENS` (a base red this unit files, not fixes), and
   this unit's eight `tmp/` measurements (`d617_tiebreak`, `d617_pool_ties`,
   `d617_scope3`, `d617_census`, `d617_nine`, `d617_arms`, `d617_owncheck`, `d617_basered`).
+
+---
+
+## 623. D625 · the home page's all-rails-fail branch threw, and could not be reached from the page that owns it (`apps/web/src/lib/data.ts`, `apps/web/src/lib/home-rails-degrade.test.ts`)
+
+**The defect.** `homeRails` composed five rails with `Promise.allSettled` and then read
+`if (failed === rails.length) throw new Error('all rails failed')`. Three things in the same file
+said otherwise: the page's own header comment ("the rails that could not be fetched are simply
+absent"), the §105 policy in the `degraded()` helper directly above ("a partial page with a stated
+reason beats a fake-complete page"), and `app/page.tsx:83`, which already renders `degradedReason`
+in a warning banner. All-fail is the same fact at 5 of 5; it is not a different kind of fact. The
+branch now returns `degraded(data, false, '5 of 5 rails unavailable')` like every other count.
+
+**The finding is that the branch could not run, and that PLAN had blamed it for six e2e reds.**
+`app/page.tsx` passes `signedIn: false`, and the fifth rail is then
+`request.signedIn ? nexusGet(...) : Promise.resolve([])` — a promise that cannot reject. So an
+anonymous viewer fails at most **4 of 5**, `failed === rails.length` is never true on `/`, and the
+crash branch has never executed in production. PLAN's "six of the e2e suite's ten reds inherit it"
+therefore cannot be true of this branch: those six are the four search rails coming back rejected
+(the page renders degraded with no rails, which is what the landing assertions then fail on), and
+the repair for them is the rails themselves. PLAN's item is corrected in place rather than left
+for the next reader to chase a dead line.
+
+**The witness counts, it does not restate.** `home-rails-degrade.test.ts` mocks the two seams
+(`env.IS_MOCK`, `api/base.nexusGet`) and asserts behaviour: five rejecting rails resolve to
+`degraded` with `5 of 5 rails unavailable` and five requests; an anonymous call makes **4** requests,
+all with target `ai`, and reports `4 of 5` — so the favourites rail is provably never asked and the
+crash branch cannot be re-entered without failing a test; one failure keeps the four that answered
+in their documented slots; zero failures is not degraded and each rail lands where the interface
+says. The commit that lands this says `D593` in its message; that number was taken by §586 (the
+vector-lane strategy string) before this section was written, so the ledger records it as D625.
+
+- readers: `npm run test:web` → **164 passed** (13 files; the 4 new ones are this unit's);
+  `npx tsc --noEmit` clean; `npm run lint:web` → **0 errors**, 6 pre-existing warnings. Not run: the
+  six e2e reds, which need the AI and platform services — 8010 and 8090 are closed on this machine
+  (measured), so the corrected attribution above rests on the request count in the test rather than
+  on a browser run.

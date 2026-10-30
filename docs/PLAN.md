@@ -38,9 +38,15 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 
 ### Open, waiting on the owning lane
 
-- **The web surface's home page throws when every rail fails** — the data layer degrades on partial
-  failure and throws on all-fail; the one-line shape is named in D318, and six of the e2e suite's ten
-  reds inherit it. Owner: the web stream.
+- **The web surface's home page throws when every rail fails** — **corrected and closed by D625**:
+  the throw was real (`data.ts`, `if (failed === rails.length) throw`) and now degrades, but it was
+  **unreachable from `/`**, so it cannot be the cause of the six e2e reds this item blamed on it. The
+  page passes `signedIn: false`, and the favourites rail is then `Promise.resolve([])` — a promise
+  that cannot reject — so an anonymous viewer fails at most 4 of 5 and the crash branch never ran.
+  The six reds are the four search rails being unreachable (a degraded page with empty rails, which
+  is what the landing assertions then fail on); the fix for those is the rails, not this branch.
+  Witness: `apps/web/src/lib/home-rails-degrade.test.ts` counts the requests (4 for an anonymous
+  call, all to `ai`) and pins the reason at "4 of 5".
 - **The e2e test markers** — the harness waits on nine data-testid names the rebuilt surface does not
   print (D328's census); the surface's owner either re-adds the markers or consents to the
   route-contract selectors the rewrite already uses (D329). Owner decision, harness lane consents.
