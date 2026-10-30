@@ -66,7 +66,7 @@ BUDGET_WORD_RE = re.compile(
 #: ceiling never reached the ranker. This is the trailing half; the currency token is OPTIONAL
 #: but a unit word is not skipped over - "500米以內" is a radius and stays without a budget.
 SPEND_CEILING_RE = re.compile(
-    r"(\d{2,5})(?:\.\d{1,2})?\s*(?:"
+    r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})(?:\.\d{1,2})?\s*(?:"
     r"(?:蚊|元|塊|块|hk\$|hkd|港幣|港币|\$|dollars?)\s*"
     r"(?:以內|以内|以下|樓下|楼下|之內|之内|內|内|左右|上下)"
     r"|(?:以內|以内|以下|樓下|楼下|之內|之内)"
@@ -95,7 +95,7 @@ PER_PERSON_POINT_RE = re.compile(
 #: user who names the bottom of a band got the cheapest rows in the corpus. BUDGET_MIN_RE reads
 #: only the cue-first form ("超過300").
 SPEND_FLOOR_RE = re.compile(
-    r"(\d{2,5})(?:\.\d{1,2})?\s*(?:"
+    r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})(?:\.\d{1,2})?\s*(?:"
     r"(?:蚊|元|塊|块|hk\$|hkd|港幣|港币|\$|dollars?)\s*"
     r"(?:以上|或以上|起跳|打上|起)"
     r"|(?:以上|或以上|起跳|打上)"
@@ -110,6 +110,16 @@ BUDGET_MIN_RE = re.compile(
 )
 CURRENCY_AMOUNT_RE = re.compile(
     r"(?:hk\$|hkd|港幣|港币)\s*(\d{2,5})(?:\.\d{1,2})?", re.IGNORECASE
+)
+#: D628: the span a party size occupies, written so it can be REMOVED from a text. `PARTY_RE`
+#: above opens with `(?:\D|^)`, which consumes the character before the number - fine for a
+#: search, wrong for a substitution.
+PARTY_SPAN_RE = re.compile(
+    r"(?:\u6211\u54cb|\u6211\u5011|\u6211\u4eec)?\s*\d{1,2}\s*"
+    r"(?:\u500b\s*\u4eba|\u4e2a\s*\u4eba|\u4f4d\u4eba|\u500b|\u4e2a|\u4f4d|\u4eba)(?:\u5605|\u7684)?"
+    r"|party(?:\s*of)?\s*\d{1,2}\b"
+    r"|\d{1,2}\s*(?:people|pax|persons?|guests|diners)\b",
+    re.IGNORECASE,
 )
 PER_PERSON_RE = re.compile(r"(?:每人|人均|每位|per ?person|p/?p|per head|人頭)", re.IGNORECASE)
 PER_ITEM_RE = re.compile(r"(?:每件|每款|each|per item|一双|一对|一對)", re.IGNORECASE)
@@ -581,6 +591,39 @@ def _range_is_money(span: str, before: str) -> bool:
         return True
     return bool(re.search(r"(?:預算|预算|budget|max|最多|不超過|唔超過)\s*$",
                           before.lower()))
+
+
+#: D628: the phrases that name no content. A price and a party size are consumed by their own
+#: lanes and no row can contain them, so matching them does not find anything - it divides every
+#: row's relevance by a term nobody can meet. Measured on the seeded plane 2026-10-30
+#: (`tmp/d628_shapes.txt`), `kw_score` for the whole sentence against the rows it retrieves:
+#:
+#:     餐廳                  1.00
+#:     100蚊以下嘅餐廳        0.325
+#:     人均100以下嘅餐廳      0.200
+#:     4個人嘅餐廳            0.343 / 0.200
+#:
+#: so a user who states a budget is served the page the DILUTED score chose. The strip below removes
+#: exactly those spans; nothing else - a constraint that IS content (`安靜` in `安靜嘅咖啡店`) stays.
+_MATCH_CORE_RES = (BUDGET_RANGE_RE, SPEND_CEILING_RE, SPEND_FLOOR_RE, PER_PERSON_POINT_RE,
+                   BUDGET_MAX_RE, BUDGET_WORD_RE, BUDGET_MIN_RE, CURRENCY_AMOUNT_RE, PARTY_SPAN_RE)
+_MATCH_CORE_CUES = re.compile(r"(?:預算|预算|budget|人均|每人|每位|人頭|per\s?person|p/p)",
+                              re.IGNORECASE)
+_MATCH_CORE_EDGES = re.compile(r"^[\s嘅的，,、。?？]+|[\s嘅的，,、。?？]+$")
+
+
+def match_core(text: str) -> str:
+    """The part of a sentence that names WHAT to find, with the spans a lane already handles removed.
+
+    Returns "" when nothing is left - the caller keeps the original text in that case, because a
+    request that is ONLY a constraint (「4個人」) is still a request.
+    """
+    t = text or ""
+    for rx in _MATCH_CORE_RES:
+        t = rx.sub(" ", t)
+    t = _MATCH_CORE_CUES.sub(" ", t)
+    t = _MATCH_CORE_EDGES.sub("", re.sub(r"\s+", " ", t).strip())
+    return t.strip()
 
 
 def _fill_budget(ex: IntentExtraction, text: str) -> IntentExtraction:

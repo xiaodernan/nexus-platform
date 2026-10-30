@@ -32,6 +32,7 @@ from nexus_ai.nlu.lexicon import (
     cuisine_matches,
 )
 from nexus_ai.nlu.timeparse import HK_TZ
+from nexus_ai.nlu.understand import match_core as _match_core
 from nexus_ai.search import sql as S
 from nexus_ai.search.cards import build_card, compute_open, attach_price_staleness
 from nexus_ai.search.ranking import (
@@ -441,6 +442,9 @@ class SearchPlan:
     """What the deterministic pipeline needs from the caller — no model involved."""
 
     query_text: str = ""
+    #: D628: the text handed to the retrieval lanes - `query_text` minus the spans a lane already
+    #: consumed (a price, a party size). Empty means "no strip was possible": use `query_text`.
+    match_text: str = ""
     subject_types: tuple[str, ...] = ("merchant",)
     filters: dict[str, Any] = field(default_factory=dict)
     geo: tuple[float, float] | None = None
@@ -629,6 +633,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     now = now or datetime.now(timezone.utc)
     plan = SearchPlan(now=now, limit=limit)
     plan.query_text = (query or (intent.raw_query if intent else "") or "").strip()
+    plan.match_text = _match_core(plan.query_text)
     caller_named_category = bool(_plain(filters).get("category"))
     if intent is None:
         plan.filters = _plain(filters)
@@ -991,7 +996,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     # ORDER BY / LIMIT) when asked, and the response reports that sum; a backend that does not
     # answer the column keeps `len(ranked)`, and the larger of the two wins so a page that was
     # not capped by the pool never shrinks its answer.
-    common = dict(tenant_id=str(tenant_id), text=canonical(plan.query_text) or None,
+    common = dict(tenant_id=str(tenant_id),
+                  text=canonical(plan.match_text or plan.query_text) or None,
                   filters=plan.filters, geo=plan.geo, radius_m=plan.radius_m,
                   limit=max(60, plan.limit * 3), with_total=True)
     pool_total = 0

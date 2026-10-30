@@ -28594,3 +28594,67 @@ how the rule found its right form).
   Falsified by hand: renaming the zh `open_state` label to `opening_state` reddens three of the five
   with `{ "zh-HK": ["open_state"], en: [] }`, and the file is restored afterwards. `npx tsc --noEmit`
   clean; eslint on the new file clean. PLAN's item is rewritten in place as closed.
+
+## 625. D628 · the phrase that names no content was matched as a query term, and §622's price page was `sort_preference` (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/search/service.py`)
+
+**The correction first.** §622 said the price of 「100蚊以下嘅餐廳」's page "came from the TEXT MATCH, not from
+`price_fit`". It did not. Those shapes also set `sort_preference = price_low` in `plan_from_intent`, and
+that sort re-orders the pool by price ascending whatever the score says (`ranking.py:299-330`). Measured
+2026-10-30: 「100蚊以下嘅餐廳」 and 「300蚊以內嘅餐廳」 answer `price_low`, while 「300-500蚊嘅餐廳」
+answers `relevance` - which is why only the first two produced a price-ascending page. The evidence
+§622 rested on (relevance 0.11-0.16 against 1.00) is real and stands; the inference drawn from the
+page's ORDER was wrong, and it is recorded here rather than edited away.
+
+**The defect the same measurement points at.** The price and the party spans were handed to the
+retrieval whole, and `kw_score` counts them as query terms (`sql.py:305-321`, the `contains_frac`
+denominator and the AND-shaped tsquery). No row can contain them, so they do not find anything - they
+divide every row's score by a term nobody can meet (`tmp/d628_shapes.txt`, `tmp/d628_final.txt`):
+
+    sentence                 kw_score before   after      pool shared with 餐廳
+    餐廳                      1.00             1.00       60/60  (the control)
+    100蚊以下嘅餐廳            0.325            1.00       54/60
+    人均100以下嘅餐廳          0.200            1.00       34/60
+    4個人嘅餐廳                0.343 / 0.200    1.00       48/60
+
+The pool matters more than the score: `sql.py` orders the candidate SELECT by exactly this number, so
+the phrase decided WHICH sixty rows the ranker ever saw. 「4個人嘅餐廳」 answered a different ten from
+「餐廳」 with nothing in the party lane to justify it - the party's own lane is slot capacity and the
+merchants table carries no party column at all.
+
+**The repair.** `nlu/understand.match_core()` removes exactly the spans that have their own lane - a
+price (all five shapes §622 taught the reader, plus the bare currency amount) and a party size
+(`PARTY_SPAN_RE`, written without `PARTY_RE`'s leading `(?:\D|^)` because that consumes the character
+before the number and cannot be substituted). `SearchPlan.match_text` carries the result and the
+retrieval reads `canonical(match_text or query_text)`; `query_text` is untouched, so the card still
+shows the user's words (D418's promise). An empty core falls back to the original text - 「我哋4個人，預算800」
+names no subject but is still a request.
+
+**What is NOT stripped, and why.** A constraint that IS content stays: `安靜嘅咖啡店` and
+`有戶外座位嘅餐廳` are matched as written, because a row's own description can carry those words.
+Time and district phrases are left alone for now and filed with their measurements - `今晩7點嘅餐廳`
+0.143 and `銅鑼灾嘅餐廳` 0.543 - because a description can say 晚上 or name its own district, so
+stripping them is a product decision and not the same provable no-op.
+
+**Measured on the page** (`tmp/d628_final.txt`, 470 published merchants): `「4個人嘅餐廳」` now answers
+the SAME ten subject ids as `「餐廳」` (before: a different ten, 48 of 60 pool rows shared), and
+`「100蚊以下嘅餐廳」` answers nine of ten rows at relevance 1.00 where it answered 0.11-0.16 before,
+with `total_estimate` still 184 - the strip changes which rows WIN, never which rows exist.
+
+**Not claimed.** The vector lane still embeds the WHOLE sentence (`api/pipeline.py:179-185`): only the
+keyword lane reads `match_text`, and with the hashing provider this door cannot say whether an embedding
+of 「100蚊以下嘅餐廳」 is better or worse than one of 「餐廳」 - a real provider must decide that
+asymmetry, and it is filed. Nothing here says the pool should be chosen by a text score at all when the
+filters already bound it to 184 rows. And the party page being identical to the plain page is a claim
+about THIS corpus, which has no party column: a corpus that could seat parties would have to answer the
+difference in its own lane.
+
+**The gate** is `tests/test_a_phrase_that_names_no_content_is_not_matched.py`: fifteen legs - six shapes
+whose strip must leave `餐廳`, three empty-core cases, five phrases that are content and must survive
+untouched, the plan keeping `query_text` while `match_text` strips, and two live legs (the party page's
+ten subject ids against `餐廳`'s, and a ceiling page with eight or more rows at relevance ≥ 0.9 and
+`total_estimate` 184). With D624's door and four neighbouring files: **80 passed, 1 skipped**; five live
+doors beside it: **33 passed**.
+
+- readers: `nlu/understand.py:117-125` (`PARTY_SPAN_RE`), `:596-626` (`match_core` and the strip list);
+  `search/service.py:445-447` (`SearchPlan.match_text`), `:636` (the plan fills it) and `:998-1001` (the
+  retrieval reads it, with the fallback).
