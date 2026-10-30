@@ -26709,8 +26709,8 @@ population is an edit to one file rather than a new reader.
 ## 605. D607 · an offering's own party bounds were SELECTed into every row and applied by no reader (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_an_offering_that_cannot_seat_the_party_is_not_answered_for_it.py`)
 
 **What was measured.** The offering SELECT already carries `o.bookable, o.min_party_size,
-o.max_party_size` (`sql.py:555`) and the plan already knows the party (`service.py:450`, filled
-from the intent at `:660`, and already used hard against slot capacity at `sql.py:637` -
+o.max_party_size` (`sql.py:562`) and the plan already knows the party (`service.py:450`, filled
+from the intent at `:660`, and already used hard against slot capacity at `sql.py:649` -
 `AND capacity_left >= :party_size`). Nothing compared the party to the offering. Read-only probe of
 the offering lane, top 12 per query (`tmp/d606_probe.py`):
 
@@ -26748,7 +26748,7 @@ every second page assume an order that the lane does not actually give them.
 
 **The repair is one clause per lane and one argument in between.** `build_offering_query` takes
 `party_size` and appends, only when the caller named a party, `(o.max_party_size IS NULL OR
-o.max_party_size >= $n)` and `(o.min_party_size IS NULL OR o.min_party_size <= $n)` (`sql.py:464`);
+o.max_party_size >= $n)` and `(o.min_party_size IS NULL OR o.min_party_size <= $n)` (`sql.py:471`);
 the party is bound, never interpolated, which the door checks by reading the two comparison operands
 out of the built text. `_filter_static` mirrors the same predicate (`service.py:280`) so the fixture
 lane answers the request the live lane answers (D449), and the pipeline dispatches the plan's own
@@ -27630,7 +27630,7 @@ restaurant that serves both pasta and ramen is a real restaurant, and it is the 
 says it is. **11 of the 23 print a primary that is not ramen** - which is the whole of the surprise,
 and it is a naming problem, not a matching one. Disclosed rather than smoothed: 22 of the 23 are
 published; the probe's own SQL carried no `m.status` predicate, so one `pending_review` row is in the
-list above and not in a shipped answer (`sql.py:785` adds `m.status = 'published'`).
+list above and not in a shipped answer (`sql.py:797` adds `m.status = 'published'`).
 
 **What the card actually says.** `search/cards.py:517` builds the subtitle as
 `bits = [cand.category or rec.get("category_primary")]`, so the Italian ramen house is printed as
@@ -28241,7 +28241,7 @@ milk-tea set is the demo catalogue's only `restaurant` offering and the shoe its
 row states exactly the bucket the customer named. The other eight stay 0 after the fix, which is the
 honest answer for a catalogue that holds no ramen, no beer and no salon - and is pinned as 0 in the door.
 
-**The plane has no such gap, and the difference is one alias.** `sql.py:570` builds the live offering
+**The plane has no such gap, and the difference is one alias.** `sql.py:582` builds the live offering
 row's bucket column as `m.category_primary AS category` — the same inherited value, under the same
 `category` key the demo writes — alongside `category_slugs` at 574, produced by the LATERAL at
 156-161 that aggregates both `c2.slug` and its parent's. So a live offering is reachable by its leaf
@@ -28291,7 +28291,7 @@ costs an offering its text score. That half is left, and the door says what leav
 the arm that widens the haystack too (C) reddens exactly one row -
 `test_the_bucket_column_an_offering_states_earns_it_no_text_score` - the row that pins that stating a
 bucket is not the same as the user's words appearing in it. Scoring a bucket would move the fixture
-lane further from the plane, which scores no category at all (`sql.py:314-321`, `sql.py:524-531`).
+lane further from the plane, which scores no category at all (`sql.py:314-321`, `sql.py:531-538`).
 (3) `ALIASES` maps a bucket to its slugs and never a slug back to a bucket, so `resolve("retail")` is
 `['retail', 'shopping']` while `resolve("shopping")` is `['shopping']` (`tmp/d616_resolve.txt`). The
 plane answers both words with the same pool - **166** offerings and **20** merchants each
@@ -28360,3 +28360,169 @@ neither is repaired here.
   `categories` table itself, and this unit's ten `tmp/` measurements (`d616_offering_lane`,
   `d616_offering_live`, `d616_taxonomy`, `d616_taxonomy2`, `d616_resolve`, `d616_shopping_live`,
   `d616_arms`, `d616_suite2`, `d616_attrib`, `d616_owncheck`).
+
+## 615. D617 · neither page cut has a last key, so a deeper page is not a continuation of the page above it (`apps/ai/nexus_ai/search/sql.py`)
+
+**How the unit arrived.** D599 gave both candidate SELECTs a `pool_total` window and left the `ORDER BY`
+underneath it alone; D616 read the bucket a row states inside the same predicate. Neither touched the
+order. The question this unit went to measure was the one the plan's own follow-up shape asks: the
+service fetches `max(60, plan.limit * 3)` rows (`service.py:996`), re-sorts them with a final key
+(`ranking.py:273` sorts `(-organic_score, candidate.key())`), and shows 20 - so the order the customer
+sees is total, and the order that decided which rows exist is not.
+
+**What the cut actually sorts on, measured at the bytes this unit replaces.** Both cuts ended after the
+rating term - `ORDER BY {order_expr} DESC, m.rating_agg DESC` and
+`ORDER BY {kw_score} DESC, o.rating_agg DESC`, which are `sql.py:409` and `sql.py:600` now that the tail
+is on them. `tmp/d617_census.py` asks the plane, for
+each lane and each page size, which sort key the cut lands on and how many pool rows carry that key:
+
+    merchant  browse restaurant   pool 184   LIMIT 20 -> key (0.0, 4.41) carried by 5, 1 on page, 4 cut
+    merchant  browse restaurant   pool 184   LIMIT 60 -> key (0.0, 4.13) carried by 4, 3 on page, 1 cut
+    offering  browse restaurant   pool 2384  LIMIT 20 -> key (0.0, 5.0) carried by 89, 20 on page, 69 cut
+    offering  browse restaurant   pool 2384  LIMIT 60 -> key (0.0, 5.0) carried by 89, 60 on page, 29 cut
+    offering  text 附近有餐廳嗎      pool 4707  LIMIT 60 -> key (0.0, 5.0) carried by 186, 60 on page, 126 cut
+
+Every one of those five cuts falls inside a tie group, and the class is not universal: the same probe
+over the merchant lane's `附近有餐廳嗎` shows a boundary key carried by exactly 1 pool row and 0 cut
+(`tmp/d617_census.txt`, section A), so how often the cut bites is a property of how the demo rows are
+rated, not of every request. The offering lane is the extreme: the entire 60-row candidate page is
+drawn from 89 rows that share the top key, so which 60 - and therefore which 20 the customer is shown -
+is not decided by anything the query states.
+
+**What a customer feels is the second page.** The follow-up cue is real and documented: 其他 / next /
+more options set `filters.exclude` from `shown_ids` (`state_merger.py:49`, `state_merger.py:175-180`),
+and the SQL implements it (`sql.py:222-223`, `sql.py:462-463`). `tmp/d617_pool_ties.py` ran the pair at
+the base bytes: for the offering browse, the page served with those 20 excluded shares 11 of its 20
+rows with rows 21-40 of the same 60-row fetch, and the 9 that differ are not invented - 4 of them are
+rows the same fetch puts at 41-60 and the other 5 rows it puts inside its own first 20, which the
+20-row page did not serve either, so none of the 9 is a row the customer had already seen
+(`tmp/d617_nine_base.txt`). The merchant browse shows the same shape at a smaller scale (19 of 20
+overlap, 1 row of page 1 changes), and one merchant shape is the defect seen from the other side: with
+`附近有餐廳嗎` the two pages hold the same 20 ids and only their order differs. On the patched tree all
+eight shapes give way to `the same rows`: page 2 is `deep[20:40]` exactly, 20 of 20
+(`tmp/d617_nine_tied.txt`).
+
+**The fix is a last key, and the key is the one the presentation already uses.** `tmp/d617_patch.py`
+appends `m.id` / `o.id` to the two cuts and nothing else. `subject_id` is projected as
+`m.id::text` / `o.id::text` and `Candidate.key()` is `subject_type:subject_id`, so the cut's last term
+and the sort's last term are the same value; the probe checked the two orders agree on the plane
+(`tmp/d617_pool_ties.txt`: "ids ascending inside every tie group: True" in all eight cases). Nothing
+above the tail moved - the relevance expression still leads, the rating still second, the WHERE and the
+window are byte-identical.
+
+**What it costs.** Measured on one connection with the two variants interleaved nine times each, the
+tail is not a measurable cost: at LIMIT 60 the merchant page runs 46.39 ms shipped against 41.31 tailed
+and the offering page 377.89 against 366.54 (`tmp/d617_pool_ties.txt`, BASE half), and the same shape
+re-measured two minutes later on the patched tree returns 38.29 / 35.25 and 564.27 / 556.58. The spread
+between two runs of one variant is wider than the gap the tail introduces - the merchant `tied` column
+medians 41.31 ms and peaks 170.42 ms in the same nine runs - so the honest verdict is that the plan
+cannot see the extra key.
+
+**What this deliberately leaves alone, named three times.** (1) The cut decides the ORDER of a tie and
+not who is IN the answer: the 29 offerings the 60-row cut drops stay dropped, now permanently, and the
+door pins that the boundary key is still a tie so the day the plane changes the non-claim has to be
+re-worded rather than quietly deleted. (2) The candidate cut is blind to the distance the geo lane
+computes - `tmp/d617_census.txt` section B: at a 2500 m radius around the corpus's median coordinate
+the pool is 119 restaurants, 33 of the nearest 60 reach the page, and the id tail changes that number
+by nothing, because the ORDER BY never mentions `meters`. Fixing it means deciding that a "near me"
+request sorts by distance, which is a ranking decision, not a continuation one. (3) The chunk rerank
+budget (`sql.py:865`, `ORDER BY {score} DESC`) cuts 40 rows the same way with no tail, and on the
+keyword-only path - which is production whenever the embedder raises (`routes_rag.py:45-49`) - all 40
+of them score 0 on every leg the SELECT projects for a Chinese sentence (`tmp/d617_census.txt` section
+C, over a plane of 2118 chunks that all carry an embedding). That is a question about how a budget of
+40 should be spent when nothing separates the rows, and an id tail would answer it with the same
+permanence this unit's tail does. Filed in PLAN with these numbers; both scope pins are in the door.
+
+**Verified.** The arms ran at `36eb165`, the commit this one ships on top of, over 157 rows - this
+unit's 10-row door plus the fourteen files that read an order (`tmp/d617_arms.txt`) - each arm graded
+in a fresh copy tree whose `sql.py` is `git show 36eb165:apps/ai/nexus_ai/search/sql.py` plus one
+clause, so CONTROL measures the bytes this unit replaced and not the shared worktree's, which right now
+carries another lane's hunks in `service.py`. CONTROL: 5 red, all five inside this unit's door - the two
+structural rows that ask the cut for its last key and the three live rows that ask the plane for the
+prefix, the continuation and the id order - and 152 passing. FIXED: 157 green, and the harness refuses
+to run at all unless the live `sql.py` is byte-identical to the bytes the FIXED arm writes.
+`tmp/d617_arms_files.py` maps every red name back to the file that holds it; two names in the reader set
+are held by two files each (`test_the_containment_lane_is_off_for_an_english_query`,
+`test_the_lane_binds_its_words_as_a_parameter`) and neither is a red, so nothing in this paragraph rests
+on a guessed file. Five arms, each the guard for a boundary this unit did not cross. Tailing only the
+merchant cut (A) leaves the same 5 red - three of the door's live rows loop over both lanes, so half the
+fix is not part of the fix. Tailing with the row's slug (B) is deterministic and still 5 red, and
+`test_tied_rows_reach_the_page_in_subject_id_order` is the row that proves why: on this plane slug order
+is not id order, and id order is what `Candidate.key()` presents. Leading with the tail (C) is the arm
+that turns the tie-break into the ranking - 6 red, being the door's opens-with-`ts_rank` row, its two
+last-key rows and the row that asks the best-scoring subject to open the page, plus
+`test_the_page_the_offering_lane_returns_is_ordered_by_mention[咖啡]` and `[拉麵]` from D610's door - and
+2 further rows of that same file SKIP rather than pass, because a leading id changes which 60 offerings
+the cut reaches and the page stops mentioning 甜品 or coffee at all (`tmp/d617_arms_c_skips.txt`). That
+is the evidence that where the tail sits is not cosmetic: put it first and the unit stops being a
+tie-break and becomes a re-ranking that other doors notice. Descending it (D) reddens 3 - the two
+structural rows and the live id-order row - so the direction has to match the lane that presents the
+answer. And giving the chunk budget the same treatment (E) reddens exactly 1 row,
+`test_the_chunk_rerank_budget_is_left_as_it_was_found`: this unit filed that cut rather than deciding
+it, and the pin exists so that the day someone decides it the door asks for a new claim instead of
+silently agreeing.
+
+**The same shift has a second plane, and a duty in it.** This unit adds 7 lines inside
+`sql.build_merchant_query` and 5 inside `sql.build_offering_query`, so every line of that file below them
+moves - by 7 for the first block and by a further 5 for the second - and a citation written against the old
+number now names a different line. For a span whose start lands in the gap, the gate's BLANK LINE state is
+the only kind of break a reader can see without semantics. `tmp/d617_cite_census.py` walks the 860
+non-ledger files git can name and finds 24 cites of `sql.py` lines: 9 already SAME, and 15 whose HEAD line
+and worktree line disagree. Six of those 15 were valid at the base commit and were moved by this unit, and
+this unit re-aims them: `test_uuid_id_bindings.py:61` (span 413-419), three in
+`test_the_bucket_leg_reads_the_column_an_offering_row_states.py` (570, 574, 524-531),
+`test_the_district_a_card_prints_is_filed_under_a_subject_the_answer_never_loads.py:20` (613) and the
+previous unit's scratch script `tmp/d616_shopping_live.py` (414-424, which the gate charges the same way).
+`tmp/d617_cite_reaim.py` moves all six to 420-426, 582, 586, 531-538, 625 and 421-431,
+and asserts before each write that HEAD's old line and the live new line hold the same text at both ends
+of a span - the same content-equality rule the ledger reader uses, applied to source comments because no
+shipped reader covers them. Four cites in the census's remaining nine were already pointing at a line
+their own sentence does not describe at the base commit: `sql.py:637` is quoted twice for
+`AND capacity_left >= :party_size`, which stands at 464 and 649 in HEAD's file; `sql.py:410` for
+`build_offering_query`, which is at 414; `sql.py:555` for the two party columns, which are at 567; and
+`sql.py:454` for a projected clock column, which is at 566. This unit leaves all four - a cite that was
+wrong before the shift is its author's claim, not this shift's side effect - and files them with those
+numbers. The last three rows of the fifteen are this unit's own: the door's `409`/`600`/`865` and
+`service.py:251`'s re-aimed `582` all name the plane the commit ships, which is what a cite written by
+this unit is for. Measured consequence: `check_comment_citations.mjs` reports **3 strict offenders before
+and 1 after** (`tmp/d617_gate_comments.txt`, `tmp/d617_gate_comments_after.txt`,
+`tmp/d617_gate_comments_final.txt`), and the survivor is not a claim about the product at all: line 147 of
+`scripts/check_line_cite_drift.mjs` is a JSDoc example showing the citation grammar, and the line of the
+sql file it names as an example is blank in HEAD's copy too, so it is neither this unit's nor really an
+offender, and this unit files it in PLAN rather than editing a gate's own comment.
+`check_ledger_numbers.mjs` cannot vouch for this section and says so: one `--expect` judges one noun, and
+§615 writes the `files` noun twice - the fourteen files of the arms and the 860 of the census - so the run
+answers AMBIGUOUS (`tmp/d617_gate_numbers_expect.txt`) and both counts rest on their own dumps instead of
+on this gate.
+
+**The suite, and who owns its four reds.** The full run on the shared worktree finished at 4852.09 s
+(1:20:52) with **4 failed, 33159 passed, 43 skipped** (`tmp/d617_suite.txt`), and this unit's door is
+not among the failures. `tmp/d617_owncheck.py` rebuilds the tree the commit ships - `git archive` of
+HEAD's `apps/ai` for every file, then this unit's `sql.py` and this unit's door, and nothing else - and
+runs the four red files in it: 3 failed, 20 passed in 13.62 s. The same four files at HEAD's bytes
+alone, with no door, give 3 failed, 10 passed in 8.83 s (`tmp/d617_owncheck.txt`). The two passes name
+the identical three rows, and the 10-row difference between them is exactly this unit's door, green on
+the bytes this commit ships. So no suite red is D617's. Three are red at the parent commit:
+`test_citations_resolve.py::test_a_chunk_fact_id_resolves_to_a_fact_row`, failing its own assertion
+that the retrieval returned no chunk, and
+`test_vocabulary_is_the_reference.py::test_every_test_file_uses_characters_the_product_knows` on U+6B72,
+both already filed by §614's PLAN bullet ("Two rows the full suite reddened at the base commit"), and
+the third - `test_vocabulary_canonical_coverage.py::test_every_vocabulary_table_is_canonicalised_or_already_canonical`
+on `understand.CURRENCY_TOKENS` (U+5E01) - which is new since that run and is filed here.
+`tmp/d617_basered.py` prints the three reasons at HEAD's bytes, and
+`tmp/d617_basered_live.txt` prints the same three rows on the shared worktree two hours later: the
+plane names a second table, `understand._MATCH_CORE_RES`, that is in no commit, and it names two more
+characters - U+6669 and U+707E - in a test file that is also untracked. That is the difference this
+unit is careful about: the fourth red,
+`test_no_dead_constants.py::test_every_module_level_name_is_read_by_the_product`, is green on BOTH
+passes, so it belongs to the bytes the worktree holds and this commit does not stage - `nlu/understand.py`
+is 922 lines there against HEAD's 879, and `search/service.py` 1780 against 1774, while `rag/embed.py`
+is identical at 311.
+
+- readers: `sql.build_merchant_query` / `sql.build_offering_query` (the two cuts),
+  `ranking.rank`'s final `Candidate.key()` sort, `service._fetch_*` (the page size the cut answers to),
+  `nlu/state_merger.py` (the exclude cue), the exclude clauses in both builders, the geo and transit
+  LATERALs that are the other two ORDER BYs of the same SELECTs, `sql.build_chunk_query` (the budget
+  left alone), `nlu/understand.py`'s `CURRENCY_TOKENS` (a base red this unit files, not fixes), and
+  this unit's eight `tmp/` measurements (`d617_tiebreak`, `d617_pool_ties`,
+  `d617_scope3`, `d617_census`, `d617_nine`, `d617_arms`, `d617_owncheck`, `d617_basered`).

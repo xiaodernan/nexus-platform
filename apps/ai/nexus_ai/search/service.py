@@ -247,7 +247,7 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
             # in `category_primary`; an offering row spells it in `category` - `demo_data.py:124`
             # writes the inherited value under that key and `test_demo_data.py::
             # test_category_and_district_inherited` pins it, while the live SELECT aliases the
-            # same column `m.category_primary AS category` (sql.py:570). Reading only the first
+            # same column `m.category_primary AS category` (sql.py:582). Reading only the first
             # key kept 0 of the 2 demo offerings for EVERY bucket, including the one its own row
             # states, so the degraded path answered a product request with nothing while the
             # plane answered it from the mirror the live row also carries.

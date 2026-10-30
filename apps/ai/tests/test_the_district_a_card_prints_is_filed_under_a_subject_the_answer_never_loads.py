@@ -17,7 +17,7 @@ Measured on the live plane (`tmp/d609_district_cite_probe.py`, 2026-10-29), by
     capacity       offering   n=157
 
 So `address` is the ONE attribute this plane files under a third kind of subject, and the load
-has no way to reach it: `facts_for` asks `WHERE subject_id = ANY(...)` (`sql.py:613`) with
+has no way to reach it: `facts_for` asks `WHERE subject_id = ANY(...)` (`sql.py:625`) with
 `subject_ids`, which `search()` fills from the candidate rows' own ids (`service.py:985`), and
 the geo LATERAL that produces the district selects `l.id` inside its subquery (`sql.py:276`) and
 projected five other columns from it - never the id. The location's uuid is on no list the load

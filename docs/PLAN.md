@@ -2197,7 +2197,7 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
 - **The memory tier a caller chooses has to be decided, not silently absorbed (D604's gap)** -
   `user_preferences.scope` (`session|long_term`, `V1__init.sql:69`) is validated by the shipped door
   (`MeController.java:57`), stored by the shipped INSERT (`IdentityRepository.java:322`) and listed
-  back to the owner (`p.scope`, `:283`/`:301`), while `user_preferences_for` (`sql.py:651`) - the AI
+  back to the owner (`p.scope`, `:283`/`:301`), while `user_preferences_for` (`sql.py:663`) - the AI
   lane's only read of the table - never names `scope` or `conversation_id`, so a preference scoped
   to one conversation ranks every later answer forever. Census: 7 rows across 1 owner, all
   `long_term`, `count(conversation_id)` = 0, so there is no live victim yet. The two repairs are
@@ -2233,9 +2233,10 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   written before that row is changed. Owner: the AI lane with whoever owns the §117 memory-and-
   intent vocabulary that would have to carry the rule.
 
-- **A page whose ordering key is tied is not a population, and a filter measured on it measures the
-  planner (D607's method, and a defect of its own)** - the offering lane's `ORDER BY` is
-  `kw_score DESC, o.rating_agg DESC` (`sql.py:576`) with no final tie-break. Measured on `下午茶`
+- **Closed by D617 (§615): a page whose ordering key is tied is not a population, and a filter
+  measured on it measures the planner.** D607's method, and a defect of its own: the offering
+  lane's `ORDER BY` was `kw_score DESC, o.rating_agg DESC` with no final tie-break - `sql.py:600`
+  is that line, now carrying the tail this unit added. Measured on `下午茶`
   at `LIMIT 200`: 200 rows over 27 distinct `(kw_score, rating_agg)` keys, and **148 of the 200
   share one key** - `(1.75, 0.0)` - which is also the key of the page's last row, so the cut falls
   inside that tie group and which rows win it is the planner's choice. Adding the party predicate
@@ -2244,14 +2245,17 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   claim had to move to whole per-merchant populations (`POPULATION` in D607's door), and
   `filters.exclude` - the already-seen list - plus every second page is unstable under a change to
   an unrelated predicate. Either the ordering owes a deterministic tie-break (`o.id` is the obvious
-  one) or the paging contract has to say out loud that it does not exist. Owner: the AI lane.
+  one) or the paging contract has to say out loud that it does not exist. D617 took the first
+  branch on both page cuts; §615 records what the tail does not decide - the tie group keeps its
+  size, so the population a page is drawn from is still whatever the cap happens to reach, and
+  no door yet answers whether the answer should say so out loud. Owner: the AI lane.
 
 - **How long an offering takes is read by nobody who books one (D607's census)** -
   `offerings.duration_minutes` is populated on 804 offerings, the same count as the rows stating a
   party bound, so the corpus's bookable rows do carry a duration. Java names the column 13 times,
   the web 0 times, and the AI lane's SQL never selects it (measured: 1 occurrence of the word in
   `nexus_ai`, which is D607's own comment). `_slot_window` (`service.py:932`) and `slots_for`
-  (`sql.py:634`) bound a time window and a capacity, never an offering's length, so a
+  (`sql.py:646`) bound a time window and a capacity, never an offering's length, so a
   recommendation can propose a two-hour offering into a one-hour slot and nothing between the card
   and the booking says so. The product question comes first: does the slot window come from the
   offering's own duration, or from what the caller asked for? Owner: the AI lane with the
@@ -2309,7 +2313,7 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `tenant_mean_rating` (`search/sql.py:388`, `:393`) and consumed at `service.py:813`. So the
   census's output is a queue, not a verdict, and every "0 readers" gets re-checked against
   composition and aliasing before it is filed. What survives: `address_line1` (the bullet above),
-  and the whole `reviews_for` builder (`search/sql.py:649`) - no caller outside its own three tests,
+  and the whole `reviews_for` builder (`search/sql.py:661`) - no caller outside its own three tests,
   and it sits on the dead-name exemption list at `tests/test_no_dead_constants.py:63` with a comment
   describing it as "the review rows for a set of merchants" while the product already renders review
   rows, with their ids, from the platform lane (`apps/web/src/components/merchant-view.tsx:209`).
@@ -2697,7 +2701,7 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   display_name_zh, name, name_zh, description, category_primary, district` plus `tags` - it includes
   the MERCHANT's bucket column. Neither live keyword expression does: `sql.py:314-321` scores
   `m.search_tsv`, `m.display_name`, `m.display_name_zh`, `m.description` and `m.tags`, and
-  `sql.py:524-531` scores `o.search_tsv`, `o.name`, `o.name_zh`, `o.description`,
+  `sql.py:531-538` scores `o.search_tsv`, `o.name`, `o.name_zh`, `o.description`,
   `o.description_zh` - and `docs/DATABASE.md:271` records that the tsv triggers are built from
   "name/description/tags fields". So a request whose word is a category name can earn a text hit from
   `category_primary` on the fixture lane and cannot earn one from it on the plane, while the OFFERING
@@ -2708,7 +2712,7 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   earns no text score (`tmp/d616_arms.txt`, arm C). So reading the column changes which rows ANSWER;
   scoring it would change which rows RANK, on a lane the plane does not rank this way at all. Owner:
   the AI lane, with the neighbouring half of the same string: `description_zh` is scored by the live
-  offering expression (`sql.py:524-531`) and is in the haystack not at all, so the fixture lane is
+  offering expression (`sql.py:531-538`) and is in the haystack not at all, so the fixture lane is
   blind in both directions - it searches a column the plane does not score, and does not search a
   column the plane does.
 - **`ALIASES` runs one way, so a caller who names the taxonomy root reaches rows the degraded lane
@@ -2728,7 +2732,7 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   counts the population behind those numbers by the status the offering SELECT actually filters on -
   5,170 `active` of 5,538 offerings - and prints 0 for `published`, because that is the merchant status
   and an earlier probe of this unit's asked the offering table a question it does not answer
-  (`tmp/d616_offering_live.txt` keeps that line; `sql.py:438` is the filter). Owner: the AI lane, with
+  (`tmp/d616_offering_live.txt` keeps that line; `sql.py:445` is the filter). Owner: the AI lane, with
   §105.
 - **Two rows the full suite reddened at the base commit, so neither is this unit's and neither is
   repaired here.**
@@ -2747,3 +2751,65 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   D453 set). Either the lexicon is missing a word a real customer writes, or that row asserts a parse
   the product cannot have; this unit measured which file the character is in and stopped there. Owner:
   the time/amount lane that shipped the row, with the lexicon.
+
+- **The candidate cut is blind to the distance the geo lane computes.** D617 gave the two page cuts a
+  last key and left this shape alone, because it is not an ordering gap but a ranking decision. Measured
+  on the plane at the corpus's own median coordinate, which 205 of its 684 locations share
+  (`tmp/d617_census.txt` B, `tmp/d617_scope3.txt`): a 2500 m request pools 119 restaurants, and only 33
+  of the 60 nearest reach the candidate page - the page's farthest row sits at 1514 m while the ORDER BY
+  never mentions `meters`. A 1000 m request pools 71 and all 60 nearest reach it, so the blindness only
+  bites once the pool outgrows the cap. The door pins the non-claim (`sql.py:409` sorted by distance is
+  a different unit's decision), and what stays open is whether a "near me" sentence should rank by
+  distance at all when the user's words and the rating are what the lane currently answers with.
+- **The chunk rerank budget spends its whole 40 rows on nothing.** `sql.py:865` cuts `ORDER BY {score}
+  DESC` with no last key, and on the keyword-only path - which is production whenever the embedder raises,
+  because `routes_rag.py:45-49` sets `embedding = None` and lets the request through - the budget's 40
+  rows are indistinguishable. Measured over a plane of 2118 chunks that ALL carry an embedding and whose
+  documents are all `indexed`: 附近有餐廳嗎 returns 40 of 40 rows with score (0.0, 0.0, 0.0) on every leg
+  the SELECT projects, while `coffee` separates 37 distinct keys in the same 40. An id tail would make
+  the 40 deterministic and still spend them on 40 arbitrary chunks, so this unit filed it instead of
+  patching it. What stays open is the budget question: what should a rerank top-40 contain when nothing
+  in the query separates the candidates.
+- **`popularity_score` was considered as the tie-break and rejected.** The largest offering tie group
+  (1978 rows at key (0.0, 0.0)) carries 92 distinct popularity values spread 0.03 to 0.95, and the 60
+  rows the shipped page draws from it carry 45 of them (`tmp/d617_scope3.txt`) - so it would separate
+  the page, and it would do it by a number no user asked the plane to rank by. All 1978 rows of that
+  group are `data_origin='demo'`, so the number is also only as real as the seed that wrote it. The id
+  is the key the presentation layer already sorts on (`ranking.py:273`), which makes it the one tail
+  that changes no answer's content.
+- **The 60-row candidate cap is what a tie group gets cut against.** `service.py:996` fetches
+  `max(60, plan.limit * 3)` and the page shows 20, so the offering browse's 89-member boundary group is
+  decided by a cap nobody states as a relevance rule: at LIMIT 20 the census cuts 69 of the 89, at
+  LIMIT 60 it cuts 29, and the pool behind it is 2384 (`pool_total`, D599's window). What stays open is
+  whether the answer should say so - a caller that asks for 20 of a page whose boundary is an 89-way tie
+  is being handed a number the data does not support, and no door measures that.
+- **`understand.CURRENCY_TOKENS` holds a character the canonicalisation rewrites, and the suite says so
+  at the base commit.** D617 found this while attributing its own suite: the row is red at `36eb165`
+  with one offender - `understand.CURRENCY_TOKENS` (U+5E01) - and the table is the tuple
+  `("hk$", "hkd", "港幣", "港币", "$", "蚊", "元", "塊", "块")` at
+  `apps/ai/nexus_ai/nlu/understand.py:105`, which D624's `9ae67e8` added
+  (`tmp/d617_basered.txt` keeps the assertion at HEAD's bytes; `tmp/d617_basered_live.txt` the same run
+  on the shared worktree, where `understand._MATCH_CORE_RES` joins the offender list and is in no
+  commit). The rule is D447's: a vocabulary table not run through the canonicalisation at import holds
+  entries its own reader can never receive, because the request text is canonicalised before it is
+  compared. What is NOT measured here is the user consequence - the Traditional `港幣` sits in the same
+  tuple, so the Simplified entry may be dead-but-covered rather than dead-and-unique, and only an arm
+  that removes one of the two can tell which. Owner: the amount lane that shipped the table, with
+  `nlu/canonical`.
+
+- **Four cites in three doors point at a `sql.py` line their own sentence does not describe, and were
+  already wrong at the base commit.** D617 re-aimed the six cites its `+7`/`+12` insertion shifted
+  (`tmp/d617_cite_reaim.py`) and found these four in the same census (`tmp/d617_cite_census.txt`):
+  `test_an_offering_that_cannot_seat_the_party_is_not_answered_for_it.py:8` and `:180` cite `sql.py:637`
+  for `AND capacity_left >= :party_size`, which stands at `sql.py:464` and `sql.py:649` in `36eb165`;
+  `:10` of the same file cites 410 for `build_offering_query`, declared at 414; `:179` cites 555 for the
+  two party columns in the projection, which are at 567; and
+  `test_the_price_a_card_prints_carries_the_clock_of_its_own_row.py:20` cites 454 for a projected clock
+  column that is at 566. Each sentence is right about the code and wrong about the number, so the repair
+  is four digits rather than a re-read - and none of the four is this unit's breakage, which is why this
+  unit names them instead of moving them. The census's fifth offender is a different animal:
+  `scripts/check_line_cite_drift.mjs:147` prints `search/sql.py:137` as an EXAMPLE of the citation
+  grammar inside a JSDoc block, and `check_comment_citations.mjs` charges it as a blank-line cite (HEAD's
+  137 is blank too) - the same "prose quotes a spelling to explain the rule" exemption
+  `apps/ai/tests/test_uuid_id_bindings.py:60` asks for and the gate's grammar cannot tell apart. Owner:
+  whoever next reads the comment plane's exemptions.

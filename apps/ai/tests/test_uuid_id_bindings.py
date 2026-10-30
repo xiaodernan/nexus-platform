@@ -58,7 +58,7 @@ DB_URL = os.environ.get("NEXUS_TEST_DATABASE_URL", "").strip()
 # index can serve `<> ANY`, so the cast costs nothing there, and the values come from a
 # request field this service does not validate as uuids.
 # A line that is only a comment is exempt: prose here quotes the old spelling to explain the
-# rule (sql.py:413-419), and a door that charges its own documentation cannot be read.
+# rule (sql.py:420-426), and a door that charges its own documentation cannot be read.
 ID_CAST_EQUALITY = re.compile(r"\b[\w.]*(?:_id|\bid)\s*::\s*text\s*=")
 ID_EQ_ANY_UUID = re.compile(r"\b([\w.]*(?:_id|\bid)) = ANY\(")
 COMMENT = re.compile(r"^\s*#")

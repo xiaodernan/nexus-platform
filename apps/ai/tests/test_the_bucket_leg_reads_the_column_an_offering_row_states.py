@@ -16,7 +16,7 @@ meal whose own row says `restaurant`. The same rows, with the bucket moved to th
 predicate reads, answer `restaurant` with 1 and `retail` with 1.
 
 The live lane has no such gap: its offering SELECT emits `m.category_primary AS category`
-(`sql.py:570`) ALONGSIDE the two-level `category_slugs` mirror (`sql.py:574`, built at 156-161), so
+(`sql.py:582`) ALONGSIDE the two-level `category_slugs` mirror (`sql.py:586`, built at 156-161), so
 the plane answers these buckets from the mirror - 2384 rows for `restaurant`, 166 for `retail`
 (`tmp/d616_offering_live.txt`) - while the degraded path answers both with nothing.
 
@@ -101,7 +101,7 @@ class TestTheOfferingLane:
     def test_the_bucket_column_an_offering_states_earns_it_no_text_score(self):
         # Reading the column is not the same as scoring it. No live keyword expression scores a
         # category (`sql.py:314-321` scores `m.search_tsv`, the two names, the description and the
-        # tags; `sql.py:524-531` does the same for `o.`), so a row kept because it STATES the bucket
+        # tags; `sql.py:531-538` does the same for `o.`), so a row kept because it STATES the bucket
         # must still arrive with the text score its words earned - none.
         rows = [{"id": "o3", "slug": "o3", "name": "Set Menu", "category": "restaurant"}]
         assert kept(rows, "restaurant") == ["o3"]

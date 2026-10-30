@@ -378,6 +378,13 @@ def build_merchant_query(
     # the pool. Measured on the seeded plane (2026-10-29): the exact counts are cafe 79,
     # restaurant 184, unfiltered 470, and the unfiltered query cost 22.4 ms with the column
     # against 234.1 ms without it cold.
+    # D617: the ORDER BY in the query below is not a total order, so which row sits on the page
+    # boundary is the heap's choice and not the score's. Measured on the seeded plane (2026-10-30,
+    # `tmp/d617_census.txt`): `browse restaurant` pools 184 merchants and the key at the LIMIT-20
+    # boundary, (kw 0.0, rating 4.41), is carried by 5 rows - 1 reaches the page, 4 are cut. Re-read
+    # with those 20 excluded it is a different 19 of 20 (`tmp/d617_pool_ties.txt`). `m.id` is the
+    # tie-break the Python lane already applies after `-organic_score` (`ranking.py:273` sorts on
+    # `Candidate.key()`, which is the same id), so the two lanes now order a tie the same way.
     total_select = "count(*) OVER () AS pool_total,\n       " if with_total else ""
     sql = f"""
 SELECT {total_select}m.id, m.slug, m.display_name, m.display_name_zh, m.description, m.category_primary,
@@ -399,7 +406,7 @@ CROSS JOIN LATERAL (
 ) tm
 WHERE {' AND '.join(where)}
   {avoid_clause}
-ORDER BY {order_expr} DESC, m.rating_agg DESC
+ORDER BY {order_expr} DESC, m.rating_agg DESC, m.id
 LIMIT {limit_ph}
 """
     return CandidateQuery(sql=sql, params=p.values, ts_config=cfg)
@@ -559,6 +566,11 @@ def build_offering_query(
 
     # D599: the offering lane's own pool size, the same window as the merchant lane; the
     # search service sums the lanes it asked for and reports that instead of the capped page.
+    # D617: this cut ties harder than the merchant lane's. `browse restaurant` pools 2384 offerings
+    # and the whole 60-row page is drawn from the 89 rows that share the boundary key (kw 0.0,
+    # rating 5.0), leaving 29 of those 89 cut (`tmp/d617_census.txt`). With no id tail the rows that
+    # fill page 1 are the heap's: 17 of 20 change, and 18 on the text request, when only the
+    # tie-break differs (`tmp/d617_pool_ties.txt`). `o.id` is the lane's last resort here too.
     total_select = "count(*) OVER () AS pool_total,\n       " if with_total else ""
     sql = f"""
 SELECT {total_select}o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.description, o.description_zh,
@@ -585,7 +597,7 @@ JOIN merchants m ON m.id = o.merchant_id
 {geo_join}
 WHERE {' AND '.join(where)}
   {avoid_clause}
-ORDER BY {kw_score} DESC, o.rating_agg DESC
+ORDER BY {kw_score} DESC, o.rating_agg DESC, o.id
 LIMIT {limit_ph}
 """
     return CandidateQuery(sql=sql, params=p.values, ts_config=cfg)
