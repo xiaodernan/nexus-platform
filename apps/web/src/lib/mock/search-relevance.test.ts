@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { EntityCard } from '@nexus/ui/trust/types';
 import { examplePrompts } from '../prompts';
 import { mockSearch } from './index';
+import { SIMPLIFIED_TWINS } from './simplified-twins';
 
 /**
  * CJK relevance regression for the mock data plane (§6).
@@ -83,5 +84,59 @@ describe('mockSearch — unspaced CJK queries (§6 relevance)', () => {
     const meters = nearby.map((card) => card.distance?.meters ?? Infinity);
     expect(meters.every((value) => value <= 3000), 'near_me results must stay inside the stated radius').toBe(true);
     expect([...meters].sort((a, b) => a - b)).toEqual(meters);
+  });
+});
+
+/**
+ * D641 / STATUS §638 — the mock plane answered a Traditional query with NOTHING.
+ *
+ * `lib/prompts.ts` offers 週末找一個適合情侶約會的地方; its matcher vocabulary cued 约会 and 餐厅 in the
+ * Simplified script only, so the query produced no scene token and no category and fell below the §6
+ * relevance floor. `vocabulary-spelling.test.ts` censuses the cue lists for that; this block measures the
+ * thing the reader actually sees: the same prompt, typed either way, must return the same page. The twins
+ * themselves live in `./simplified-twins`, shared with `stream-route-parity.test.ts`, which asks the same
+ * question through the shipped `POST /api/nexus/ai/stream`.
+ */
+
+describe('mockSearch — one prompt, either script (D641)', () => {
+  it('the twin list is the shipped prompt list, and each twin is a different spelling', () => {
+    const shipped = examplePrompts('zh-HK');
+    expect(Object.keys(SIMPLIFIED_TWINS).sort(), 'the twin list and prompts.ts no longer hold the same keys')
+      .toEqual(shipped.map((prompt) => prompt.key).sort());
+    const problems: string[] = [];
+    for (const prompt of shipped) {
+      const twin = SIMPLIFIED_TWINS[prompt.key];
+      const trad = new Set([...prompt.query]);
+      const simp = new Set([...(twin ?? '')]);
+      const onlyTrad = [...trad].filter((c) => !simp.has(c));
+      const onlySimp = [...simp].filter((c) => !trad.has(c));
+      // Both directions: a twin that merely adds a Simplified character to the Traditional string would
+      // share every one of its own characters with the query it is supposed to be an alternative to.
+      if (onlyTrad.length === 0 || onlySimp.length === 0) {
+        problems.push(`${prompt.key}: not two spellings of one query (only in shipped: ${onlyTrad.join('') || '—'} / only in twin: ${onlySimp.join('') || '—'})`);
+      }
+    }
+    expect(problems, `the fixture restates rather than respells:\n${problems.join('\n')}`).toEqual([]);
+  });
+
+  it('returns the same cards, in the same order, whichever script the prompt is typed in', () => {
+    const problems: string[] = [];
+    for (const prompt of examplePrompts('zh-HK')) {
+      const twin = SIMPLIFIED_TWINS[prompt.key] as string;
+      const traditional = mockSearch({ query: prompt.query }).items;
+      const simplified = mockSearch({ query: twin }).items;
+      // Parity over two empty pages is the defect wearing a green badge, so both sides are counted first.
+      if (traditional.length === 0) problems.push(`${prompt.key}: the shipped zh-HK prompt returns nothing — parity would compare two empty pages`);
+      if (simplified.length === 0) problems.push(`${prompt.key}: its Simplified twin "${twin}" returns nothing (the §638 shape: one-script cues fall below the relevance floor)`);
+      const byScript = (cards: typeof traditional) => cards.map((card) => card.slug).join(',');
+      if (byScript(traditional) !== byScript(simplified)) {
+        problems.push(`${prompt.key}: different cards\n    shipped: ${byScript(traditional)}\n    twin:    ${byScript(simplified)}`);
+      }
+      const scores = (cards: typeof traditional) => cards.map((card) => card.ai_match?.score ?? 'none').join(',');
+      if (scores(traditional) !== scores(simplified)) {
+        problems.push(`${prompt.key}: the two spellings score the same cards differently\n    shipped: ${scores(traditional)}\n    twin:    ${scores(simplified)}`);
+      }
+    }
+    expect(problems, `the scripts do not agree:\n${problems.join('\n')}`).toEqual([]);
   });
 });

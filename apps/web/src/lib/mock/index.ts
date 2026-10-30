@@ -174,7 +174,7 @@ export function allCards(options: CardBuildOptions = {}): EntityCard[] {
 
 /* ------------------------------------------------------------------ query NLU */
 
-const BUDGET_PATTERNS: Array<RegExp> = [/预算\s*(\d+)/, /budget\s*(\d+)/i, /港币?\s*(\d+)\s*(?:以内|以下)/, /(\d+)\s*(?:港币|hkdb?|hkd)/i];
+const BUDGET_PATTERNS: Array<RegExp> = [/(?:预算|預算)\s*(\d+)/, /budget\s*(\d+)/i, /(?:货|貨)(?:币|幣)?\s*(\d+)\s*(?:以内|以下|以內)/, /(\d+)\s*(?:港币|港幣|货币|貨幣|hkdb?|hkd)/i];
 const DISTRICT_WORDS: Array<[RegExp, DistrictKey]> = [
   [/沙田|sha tin/i, 'sha_tin'], [/中環|中环|central/i, 'central'], [/旺角|mong kok/i, 'mong_kok'],
   [/銅鑼灣|铜锣湾|causeway/i, 'causeway_bay'], [/灣仔|湾仔|wan chai/i, 'wan_chai'], [/尖沙咀|tsim sha/i, 'tsim_sha_tsui'],
@@ -182,17 +182,24 @@ const DISTRICT_WORDS: Array<[RegExp, DistrictKey]> = [
   [/將軍澳|将军澳|tseung/i, 'tseung_kwan_o'], [/佐敦|jordan/i, 'jordan'], [/上水|sheung shui/i, 'sheung_shui'],
 ];
 
+/* Every cue below carries BOTH script spellings of the word it recognises. A Hong Kong reader types
+ * 約會 as readily as 约会 — D606 repaired the copy they are ANSWERED in; these are the words they TYPE —
+ * and a one-script cue list answers the other script with an empty page, because the relevance floor drops
+ * the whole result set instead of ranking it. The AI lane's cue lists (lexicon.py URGENCY_FLEXIBLE,
+ * timeparse.py) hand-carry both spellings for the same reason. The census that keeps this plane doing it
+ * is apps/web/src/lib/mock/vocabulary-spelling.test.ts. */
 const CATEGORY_HINTS: Array<[RegExp, string]> = [
-  [/餐厅|Restaurant|restaurant|食|美食|晚饭|晚餐/i, 'restaurant'], [/咖啡|cafe|coffee|面包|烘焙/i, 'cafe'],
-  [/健身|gym|fitness|运动/i, 'fitness'], [/酒吧|bar/i, 'entertainment'], [/酒店|住宿|hotel|inn/i, 'hotel'],
-  [/按摩|理疗|spa|recovery|beauty|美容/i, 'beauty'], [/跑|行山|活动|activities|体验/i, 'activities'], [/买|鞋|购物|shop/i, 'shopping'],
+  [/餐厅|餐廳|Restaurant|restaurant|食|美食|晚饭|晚飯|晚餐/i, 'restaurant'], [/咖啡|cafe|coffee|面包|麵包|烘焙/i, 'cafe'],
+  [/健身|gym|fitness|运动|運動/i, 'fitness'], [/酒吧|bar/i, 'entertainment'], [/酒店|住宿|hotel|inn/i, 'hotel'],
+  [/按摩|理疗|理療|spa|recovery|beauty|美容/i, 'beauty'], [/跑|行山|活动|活動|activities|体验|體驗/i, 'activities'],
+  [/买|買|鞋|购物|購物|shop/i, 'shopping'],
 ];
 
 const TAG_HINTS: Array<[RegExp, string]> = [
-  [/约会|date/i, 'date-night'], [/安静|quiet/i, 'quiet'], [/朋友|聚会|group|friends/i, 'friends'],
-  [/便宜|平价|cheap|budget/i, 'cheap'], [/辣|spicy/i, 'spicy'], [/小孩|亲子|家庭|family/i, 'family'],
+  [/约会|約會|date/i, 'date-night'], [/安静|安靜|quiet/i, 'quiet'], [/朋友|聚会|聚會|group|friends/i, 'friends'],
+  [/便宜|平价|平價|cheap|budget/i, 'cheap'], [/辣|spicy/i, 'spicy'], [/小孩|亲子|親子|家庭|family/i, 'family'],
   [/深夜|晚上|late/i, 'late-night'], [/雨天|下雨|rain/i, 'rainy-day'], [/早餐|早上|早|early/i, 'early'],
-  [/素食|vegetarian|素/i, 'no-spicy'], [/海景|sea view/i, 'sea-view'], [/工作|办公|laptop|wifi/i, 'work'],
+  [/素食|vegetarian|素/i, 'no-spicy'], [/海景|sea view/i, 'sea-view'], [/工作|办公|辦公|laptop|wifi/i, 'work'],
 ];
 
 /** Deterministic stand-in for `POST /ai/v1/query/understand` (mock provider, D4). */
@@ -210,17 +217,17 @@ export function understandQuery(query: string, context: { locale?: string; geo?:
   const district = districtEntry ? DISTRICTS[districtEntry[1]] : null;
   const categoryEntry = CATEGORY_HINTS.find(([pattern]) => pattern.test(query));
   const tags = TAG_HINTS.filter(([pattern]) => pattern.test(query)).map(([, tag]) => tag);
-  const avoidSpicy = /不吃辣|不要辣|no spicy|清汤/i.test(query);
-  const nearMe = /附近|near me|我这边/i.test(query);
-  const weekend = /周末|週六|周六|saturday|weekend/i.test(query);
-  const evening = /晚上|晚市|夜晚|evenight|evening|pm|点/i.test(query);
+  const avoidSpicy = /不吃辣|不要辣|no spicy|清汤|清湯/i.test(query);
+  const nearMe = /附近|near me|我这边|我這邊/i.test(query);
+  const weekend = /周末|週末|週六|周六|saturday|weekend/i.test(query);
+  const evening = /晚上|晚市|夜晚|evenight|evening|pm|点|點/i.test(query);
 
   const startsAt = new Date(now.getTime() + (weekend ? 4 : evening ? 0.2 : 1) * 86_400_000);
   if (evening) startsAt.setHours(19, 0, 0, 0);
 
   return {
     raw_query: query,
-    intent: /订|book|reserve/i.test(query) ? 'reserve' : categoryEntry ? 'discover_merchant' : 'discover_merchant',
+    intent: /订|訂|book|reserve/i.test(query) ? 'reserve' : categoryEntry ? 'discover_merchant' : 'discover_merchant',
     category: categoryEntry ? categoryEntry[1] : null,
     location: district
       ? { type: 'district', value: district.name, resolved: district.geo, radius_m: null }
@@ -237,8 +244,8 @@ export function understandQuery(query: string, context: { locale?: string; geo?:
     party_size: null,
     preferences: tags.map((tag) => ({ key: 'scene', value: tag, polarity: 1 as const })).concat(avoidSpicy ? [{ key: 'ambience', value: 'no-spicy', polarity: 1 as const }] : []),
     constraints: avoidSpicy ? [{ key: 'cuisine_avoid', value: 'spicy' }] : [],
-    sort_preference: /近|最近|close|near/i.test(query) ? 'distance' : /便宜|平价|cheap|低/i.test(query) ? 'price_low' : /评分|最好|top|rated/i.test(query) ? 'rating' : 'relevance',
-    urgency: /现在|今晚|today|now/i.test(query) ? 'now' : 'normal',
+    sort_preference: /近|最近|close|near/i.test(query) ? 'distance' : /便宜|平价|平價|cheap|低/i.test(query) ? 'price_low' : /评分|評分|最好|top|rated/i.test(query) ? 'rating' : 'relevance',
+    urgency: /现在|現在|今晚|today|now/i.test(query) ? 'now' : 'normal',
     language: context.locale ?? 'zh-HK',
     confidence: {
       category: categoryEntry ? 0.9 : 0.35,
@@ -261,7 +268,7 @@ export function mergeIntent(previous: Intent | null, followUp: string): Intent {
   const next: Intent = structuredClone(base);
   next.raw_query = followUp;
 
-  if (/太贵|贵了|太貴|expensive|too much|cheap/i.test(followUp)) {
+  if (/太贵|贵了|太貴|貴了|expensive|too much|cheap/i.test(followUp)) {
     if (next.budget && next.budget.max != null) {
       next.budget = { ...next.budget, max: Math.round(next.budget.max * 0.7) };
       next.sort_preference = next.sort_preference === 'relevance' ? 'price_low' : next.sort_preference;
@@ -271,7 +278,7 @@ export function mergeIntent(previous: Intent | null, followUp: string): Intent {
       next.sort_preference = 'price_low';
     }
   }
-  if (/近一点|近一些|太遠|太远|closer|nearer|近啲/i.test(followUp)) {
+  if (/近一点|近一點|近一些|太遠|太远|closer|nearer|近啲/i.test(followUp)) {
     next.sort_preference = 'distance';
     next.location = { type: next.location?.type ?? 'near_me', value: next.location?.value ?? null, resolved: next.location?.resolved ?? null, radius_m: Math.max(600, Math.round((next.location?.radius_m ?? 3000) * 0.6)) };
   }
@@ -280,10 +287,10 @@ export function mergeIntent(previous: Intent | null, followUp: string): Intent {
       next.constraints = [...next.constraints, { key: 'cuisine_avoid', value: 'spicy' }];
     }
   }
-  if (/安静|靜一点|quiet/i.test(followUp)) {
+  if (/安静|安靜|靜一点|靜一點|quiet/i.test(followUp)) {
     next.preferences = [...next.preferences.filter((preference) => preference.key !== 'ambience'), { key: 'ambience', value: 'quiet', polarity: 1 }];
   }
-  if (/周末|周六|晚上|tonight|weekend/i.test(followUp)) {
+  if (/周末|週末|周六|晚上|tonight|weekend/i.test(followUp)) {
     const starts = new Date(mockNow().getTime() + 3 * 86_400_000);
     starts.setHours(19, 0, 0, 0);
     next.time = { type: 'explicit', starts_at: starts.toISOString() };
@@ -329,19 +336,19 @@ function queryTokens(query: string): string[] {
  * records are written in; scene words come from `TAG_HINTS` so the two lists cannot drift apart.
  */
 const CUISINE_VOCABULARY: Array<[RegExp, string[]]> = [
-  [/日料|日本料理|日式|和食|寿司|刺身|拉麵|拉面|居酒屋/, ['japanese', 'ramen']],
-  [/火鍋|火锅|打边炉|麻辣/, ['hotpot', 'sichuan']],
+  [/日料|日本料理|日式|和食|寿司|壽司|刺身|拉麵|拉面|居酒屋/, ['japanese', 'ramen']],
+  [/火鍋|火锅|打边炉|打邊爐|麻辣/, ['hotpot', 'sichuan']],
   [/點心|点心|饮茶|飲茶|早茶|粤菜|粵菜/, ['dimsum', 'cantonese']],
-  [/韓式|韩式|泡菜|烧肉|烤肉|bbq/i, ['korean', 'bbq']],
-  [/素食|斋菜|素菜|vegetarian|veg/i, ['vegetarian']],
+  [/韓式|韩式|泡菜|烧肉|燒肉|烤肉|bbq/i, ['korean', 'bbq']],
+  [/素食|斋菜|齋菜|素菜|vegetarian|veg/i, ['vegetarian']],
   [/咖啡|手冲|手沖|cafe|coffee|早午餐|brunch/i, ['coffee', 'brunch']],
   [/面包|麵包|烘焙|可颂|可頌|bakery/i, ['bakery']],
   [/健身|举铁|舉鐵|力量|gym|fitness/i, ['gym', 'strength']],
   [/按摩|理疗|理療|舒压|舒壓|恢复|恢復|recovery/, ['massage', 'recovery']],
-  [/酒吧|鸡尾酒|雞尾酒|喝一杯|cocktail/i, ['bar', 'cocktails']],
+  [/酒吧|鸡尾酒|雞尾酒|鷄尾酒|喝一杯|cocktail/i, ['bar', 'cocktails']],
   [/酒店|住宿|过夜|過夜|民宿|hotel|inn/i, ['boutique-hotel']],
   [/鞋|雨天|下雨|雨伞|雨傘|rainy/i, ['footwear', 'rainy-day']],
-  [/跑步|行山|远足|遠足|跑团|running|hiking/i, ['running', 'outdoor']],
+  [/跑步|行山|远足|遠足|跑团|跑團|running|hiking/i, ['running', 'outdoor']],
 ];
 
 /** Query → slug-vocabulary tokens the records are indexed under (scenes + cuisines). */

@@ -15,9 +15,9 @@
  * committed copy of the two carriers; the recipe is `git show <this file's parent>:apps/web/src/lib/i18n/
  * dict.ts` (and trust-labels.ts, plus the two AI tables) into a directory, then
  * `node scripts/check_ui_script.mjs --repo=<that directory>`, because a before-figure that outlives its
- * commit is only a memory unless someone can re-run it. On the repaired carriers in this repository it
- * prints `PASS — 0 simplified character(s) over 814 literal(s)`, and `scripts/falsify_ui_script.mjs`
- * re-derives the population count it asserts from its own baseline run — so a carrier that grows cannot
+ * commit is only a memory unless someone can re-run it. What the carriers in this repository score TODAY
+ * is printed by the run itself, and `scripts/falsify_ui_script.mjs` re-derives every count its arms assert
+ * from its own baseline run — so this header quotes no measurement, and a carrier that grows cannot
  * quietly make this header true again.
  *
  * WHY THIS IS A GATE AND NOT A ONE-OFF EDIT. The convention is not this lane's invention. D483 found
@@ -35,9 +35,23 @@
  *   from the two tables the product already maintains, rather than typing a third list by hand; the AI
  *   lane's own gates (D435, D446, D447) keep those tables honest, so a pair added for the NLU is a pair
  *   this reader knows without an edit here.
- *   THE CARRIERS — every top-level `const zh…: … = {` block in `apps/web/src/lib/i18n/*.ts`. Structural
- *   admission: the declaration's own shape (a `zh`-prefixed locale constant) is what makes a block part
- *   of the population, not a name written into this file. `en` blocks are not read.
+ *   THE CARRIERS — two admission shapes, both structural:
+ *     (1) every top-level `const zh…: … = {` block in `apps/web/src/lib/i18n/*.ts`. The declaration's own
+ *         shape (a `zh`-prefixed locale constant) is what makes a block part of the population, not a name
+ *         written into this file, and the whole block is one locale's copy.
+ *     (2) every top-level `const …: Record<Locale, …> = {` block in `apps/web/src/lib/*.ts` and
+ *         `apps/web/src/lib/i18n/*.ts`. Here the copy's locale is a fact about WHERE each literal sits, so
+ *         this reader takes it from the map's own outermost keys and charges only the `zh…` half; `en`
+ *         entries are not read.
+ *     Neither shape admits a `*.test.ts`: a test fixture is not what a reader is answered in, and the
+ *     census says so out loud rather than by a directory list nobody reads.
+ *   SHAPE (2) EXISTS BECAUSE SHAPE (1) MISSED SOMETHING. `apps/web/src/lib/prompts.ts` — the starter
+ *   prompts a reader taps on the home page — declares `const BY_LOCALE: Record<Locale, ExamplePrompt[]>`
+ *   one directory above `i18n/`, and its `zh-HK` half was still written in the Simplified script while
+ *   D606 repaired the dictionary. Admitting copy by the NAME of the constant holding it cannot see copy
+ *   that admits itself by the TYPE it is declared as; `Locale` is what `dict.ts` itself declares and what
+ *   the compiler checks, so it is the same fact in a second spelling — and a census keyed on one spelling
+ *   of a fact is the hiding place D559 named.
  *
  * WHAT IT CHARGES. Only STRING LITERALS inside those blocks — comments and prose are not copy, and
  * charging them would make this reader a gate on this repository's English-language discussion of
@@ -59,7 +73,11 @@
  * WHAT IT DOES NOT DO, stated rather than implied.
  *   - It does not judge the seed's Chinese, the AI's reply templates, the console fixtures or the mock
  *     plane. Those carriers hold their own script decisions (the AI's zh-CN bank is Simplified ON
- *     PURPOSE, D483) and are named as residue in the ledger section this reader came with.
+ *     PURPOSE, D483) and are named as residue in the ledger section this reader came with. The mock
+ *     plane's Chinese is not copy either — it is a MATCHER, and the question a matcher asks is a
+ *     different one: D641's census (`apps/web/src/lib/mock/vocabulary-spelling.test.ts`) charges a
+ *     matcher's vocabulary for NOT answering the other script, which is the opposite verdict from the one
+ *     this reader would give it.
  *   - It does not know whether a Traditional character is the RIGHT word, only whether a Simplified-only
  *     one is in copy that declares itself zh-HK. A copy that writes 臺 for every 平台 passes.
  *   - It does not read the running site. It reads the shipped source; a locale switch at runtime still
@@ -85,6 +103,11 @@ export const EXCLUSIONS = {
   面: { to: '麵', why: '面 is Traditional for face/surface (頁面); 麵 is the noodle word' },
   嘅: { to: '的', why: 'a Cantonese particle, not a script variant; the seed carries it as HK text' },
 };
+
+/** A `zh…` key that names a locale the product writes Simplified ON PURPOSE is not zh-HK copy. The
+ *  `Locale` union has exactly one zh member today, so this is the boundary for the day a zh-CN map
+ *  joins the same population — D483 repaired the AI's zh-CN bank and deliberately left it Simplified. */
+export const SIMPLIFIED_LOCALES = /^zh-(CN|SG)$/i;
 
 /**
  * Read the two tables the product already keeps.
@@ -177,7 +200,8 @@ export function zhBlocks(src, file) {
 }
 
 /**
- * The string literals of a block, with their line numbers.
+ * The string literals of a block, with the line and the nesting depth each sits at, and the `key:`
+ * tokens the scan passes.
  *
  * One left-to-right scanner over the block's text, tracking six states (code, `//` comment, `/*`
  * comment, `'`, `"`, backtick) so the two mistakes a regex makes here are not made: a `//` comment that
@@ -185,13 +209,29 @@ export function zhBlocks(src, file) {
  * the next one and charge the comment's Chinese as copy), and a quote inside a comment is not copy. The
  * header's promise — literals only, prose never — is this function's job to keep, which is why it is a
  * scanner and not a pattern.
+ *
+ * The same walk counts braces and records keys because a `Record<Locale, …>` map says which locale a
+ * piece of copy belongs to by WHERE that copy sits, and only a scanner knows where. A key is recorded
+ * when a bare identifier or a quoted string in code position is followed by `:`; a ternary's `:` can be
+ * read as a key by this rule, and the consequence is bounded: the reader only ever charges a key whose
+ * spelling starts with `zh`, so the false key would have to be named that to matter.
  */
-export function literalsOf(block) {
-  const out = [];
+export function blockScan(block) {
+  const literals = [];
+  const keys = [];
   const text = block.lines.join('\n');
   let i = 0;
   let line = block.from + 1;
   let mode = null;
+  let depth = block.baseDepth ?? 0;
+
+  /** Does the next non-space character after `at` begin a property/ternary colon? */
+  const colonFollows = (at) => {
+    let k = at;
+    while (k < text.length && (text[k] === ' ' || text[k] === '\t')) k += 1;
+    return text[k] === ':';
+  };
+
   while (i < text.length) {
     const ch = text[i];
     const next = text[i + 1];
@@ -212,9 +252,12 @@ export function literalsOf(block) {
     }
     if (ch === '/' && next === '/') { mode = 'line'; i += 2; continue; }
     if (ch === '/' && next === '*') { mode = 'block'; i += 2; continue; }
+    if (ch === '{' || ch === '[' || ch === '(') { depth += 1; i += 1; continue; }
+    if (ch === '}' || ch === ']' || ch === ')') { depth -= 1; i += 1; continue; }
     if (ch === '\'' || ch === '"' || ch === '`') {
       const start = i;
       const startLine = line;
+      const startDepth = depth;
       i += 1;
       while (i < text.length) {
         if (text[i] === '\\') { i += 2; continue; }
@@ -224,14 +267,82 @@ export function literalsOf(block) {
       }
       // The span itself is not returned as text: the scanner walks it once, so re-slicing here would
       // need the newline count it may contain.
-      out.push({ line: startLine, span: text.slice(start, i) });
-      line += (text.slice(start, i).match(/\n/g) ?? []).length;
+      const span = text.slice(start, i);
+      const isKey = colonFollows(i);
+      if (isKey) keys.push({ name: span.slice(1, -1), at: start, line: startLine, depth: startDepth });
+      literals.push({ line: startLine, at: start, depth: startDepth, span, isKey });
+      line += (span.match(/\n/g) ?? []).length;
+      continue;
+    }
+    if (/[A-Za-z0-9_$]/.test(ch)) {
+      let k = i;
+      while (k < text.length && /[A-Za-z0-9_$]/.test(text[k])) k += 1;
+      if (depth >= 1 && colonFollows(k)) keys.push({ name: text.slice(i, k), at: i, line, depth });
+      i = k;
       continue;
     }
     i += 1;
   }
-  return out;
+  return { literals, keys };
 }
+
+/**
+ * Every top-level `const …: Record<Locale, …> = {` block in one carrier: admission shape (2).
+ *
+ * The locale of a piece of copy in one of these is one of the map's own keys, so the block is cut the
+ * same way a `zh` block is — to the first `};` in column 0 — and a map that CLOSES on its declaration
+ * line is read from that line (the `{` is inside the text the scanner walks, so the depth the keys are
+ * recorded at matches the multi-line case). A declaration with neither is a refusal: a population cut
+ * short reads greener than the file it came from.
+ */
+export function localeMapBlocks(src, file) {
+  const lines = src.split(/\r?\n/);
+  const blocks = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const m = /^const ([A-Za-z0-9_]+)\s*:\s*Record<\s*Locale\s*,[^=]*=\s*\{/.exec(lines[i]);
+    if (!m) continue;
+    let end = -1;
+    for (let j = i + 1; j < lines.length; j += 1) {
+      if (/^\};/.test(lines[j])) { end = j; break; }
+    }
+    if (end >= 0) {
+      blocks.push({ name: m[1], from: i + 1, to: end + 1, lines: lines.slice(i + 1, end), locale: true, baseDepth: 1 });
+      continue;
+    }
+    if (closesOnTheLine(lines[i])) {
+      blocks.push({ name: m[1], from: i, to: i + 1, lines: [lines[i]], locale: true, baseDepth: 0, oneLine: true });
+      continue;
+    }
+    return { blocks, problems: [`${file}: const ${m[1]} at line ${i + 1} is a locale-keyed map this reader cannot cut`] };
+  }
+  return { blocks, problems: [] };
+}
+
+/** Does a declaration line open a brace and close it again, strings aside? */
+function closesOnTheLine(line) {
+  const stripped = line.replace(/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`/g, "''");
+  let depth = 0;
+  for (const ch of stripped) {
+    if (ch === '{' || ch === '[' || ch === '(') depth += 1;
+    if (ch === '}' || ch === ']' || ch === ')') depth -= 1;
+    if (depth === 0 && ch === '}') return true;
+  }
+  return false;
+}
+
+/** Which of a locale map's outermost keys a literal sits under; null when no key claims it. */
+function localeOf(lit, keys) {
+  if (lit.isKey) return null;
+  let found = null;
+  for (const k of keys) {
+    if (k.depth !== 1 || k.at > lit.at) continue;
+    found = k.name;
+  }
+  return found;
+}
+
+/** Is a map key a locale this census reads as Hong Kong Chinese? */
+const isZhKey = (k) => /^zh/i.test(k) && !SIMPLIFIED_LOCALES.test(k);
 
 export function scanCarriers(repo, table, carriers) {
   const offenders = [];
@@ -243,8 +354,10 @@ export function scanCarriers(repo, table, carriers) {
   for (const file of carriers) {
     const rel = file.slice(repo.length + 1).replace(/\\/g, '/');
     const src = readFileSync(file, 'utf8');
-    const { blocks, problems: bp } = zhBlocks(src, rel);
-    problems.push(...bp);
+    const { blocks: named, problems: np } = zhBlocks(src, rel);
+    const { blocks: keyed, problems: kp } = localeMapBlocks(src, rel);
+    problems.push(...np, ...kp);
+    const blocks = [...named.map((b) => ({ ...b, locale: false })), ...keyed].sort((a, b) => a.from - b.from);
     for (const block of blocks) {
       // Reach, not rendering: the block's identifier must be READ somewhere in the file outside the block's
       // own lines. `zhHK` is read by the `DICTS` registry and `zhLabels` by the `trustLabels()` picker — an
@@ -253,8 +366,27 @@ export function scanCarriers(repo, table, carriers) {
       // directions.
       const outside = src.split(/\r?\n/).filter((_, k) => k < block.from - 1 || k > block.to - 1)
         .some((l) => new RegExp('\\b' + block.name + '\\b').test(l));
-      blocksJudged.push({ rel, name: block.name, from: block.from, to: block.to, referenced: outside });
-      for (const lit of literalsOf(block)) {
+      const { literals: lits, keys } = blockScan(block);
+      const localeKeys = [...new Set(keys.filter((k) => k.depth === 1).map((k) => k.name))];
+      const charged = [];
+      for (const lit of lits) {
+        if (!block.locale) { charged.push(lit); continue; }
+        const key = localeOf(lit, keys);
+        if (key === null) {
+          // Not a silent pass: copy no key claims could be zh-HK copy, and guessing which half of the map
+          // it belongs to would make this census's green mean something other than the file's.
+          if ([...lit.span].some((c) => table.has(c) && !EXCLUSIONS[c])) {
+            problems.push(`${rel}:${lit.line} copy inside the locale map ${block.name} sits under no key this reader can read`);
+          }
+          continue;
+        }
+        if (isZhKey(key)) charged.push(lit);
+      }
+      blocksJudged.push({
+        rel, name: block.name, from: block.from, to: block.to, referenced: outside,
+        locale: block.locale, locales: localeKeys, charged: charged.length, oneLine: Boolean(block.oneLine),
+      });
+      for (const lit of charged) {
         literals += 1;
         const chars = [];
         for (const c of new Set([...lit.span])) {
@@ -269,14 +401,35 @@ export function scanCarriers(repo, table, carriers) {
   return { offenders, literals, blocksJudged, excludedSeen, problems };
 }
 
+/**
+ * The carriers, in both admission shapes: `apps/web/src/lib/i18n/*.ts` (where a `zh`-prefixed constant is
+ * the whole dictionary) and `apps/web/src/lib/*.ts` (where a `Record<Locale, …>` map is the copy).
+ *
+ * The old population was the i18n directory alone, which is a LOCATION rule wearing a structural costume:
+ * `prompts.ts` declares `Record<Locale, …>` exactly as `dict.ts` does and merely lives one directory up.
+ * Widening the directory costs nothing at admission — shape (1) still needs a `zh`-prefixed constant and
+ * shape (2) still needs the `Record<Locale` annotation — so files that hold neither contribute nothing.
+ * A `*.test.ts` is out of the population: a test fixture is not what a reader is answered in, and the
+ * harness plants a dirty block into one to show the cut is real rather than assumed.
+ */
 export function carrierFiles(repo) {
-  const dir = join(repo, 'apps/web/src/lib/i18n');
-  if (!existsSync(dir)) return { files: [], problems: [`no i18n directory at ${dir}`] };
-  const files = readdirSync(dir)
-    .filter((f) => /\.ts$/.test(f))
-    .map((f) => join(dir, f))
-    .filter((p) => statSync(p).isFile());
-  return { files, problems: [] };
+  // Each directory names itself, so a refusal says which half of the population is missing rather than
+  // calling `apps/web/src/lib` an "i18n directory" it never was.
+  const dirs = [
+    { rel: join('apps', 'web', 'src', 'lib'), role: 'the locale-keyed copy carriers (shape 2)' },
+    { rel: join('apps', 'web', 'src', 'lib', 'i18n'), role: 'the dictionaries (shape 1)' },
+  ];
+  const problems = [];
+  const found = new Set();
+  for (const { rel, role } of dirs) {
+    const dir = join(repo, rel);
+    if (!existsSync(dir)) { problems.push(`no carrier directory ${role} at ${dir}`); continue; }
+    for (const f of readdirSync(dir).filter((n) => /\.ts$/.test(n) && !/\.test\.ts$/.test(n))) {
+      const p = join(dir, f);
+      if (statSync(p).isFile()) found.add(p);
+    }
+  }
+  return { files: [...found].sort(), problems };
 }
 
 function main() {
@@ -303,7 +456,8 @@ function main() {
   console.log(`zh-HK UI script census — ${repo}`);
   console.log(`pair table: ${table.size} simplified character(s) known (canonical.py ${detail.canonical}, lexicon.py ${detail.lexicon})`);
   for (const b of r.blocksJudged) {
-    console.log(`block ${b.name} — ${b.rel}:${b.from}-${b.to}${b.referenced ? '' : '  UNREFERENCED (nothing in this file reads the block, so its copy may not be what the site renders — disclosed, not charged)'}`);
+    const shape = b.locale ? `  LOCALE-MAP (keys ${b.locales.join(', ') || '—'}; only the zh… half is charged)` : '';
+    console.log(`block ${b.name} — ${b.rel}:${b.from}-${b.to}${b.referenced ? '' : '  UNREFERENCED (nothing in this file reads the block, so its copy may not be what the site renders — disclosed, not charged)'}${shape}`);
   }
   const seen = [...r.excludedSeen.entries()].map(([c, n]) => `${c}→${EXCLUSIONS[c].to} ${n}× (${EXCLUSIONS[c].why})`);
   console.log(`excluded, counted not charged: ${seen.join(' | ')}`);
