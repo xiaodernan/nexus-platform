@@ -28863,3 +28863,52 @@ D624 and D630 doors and four ranking files: **127 passed**.
 
 - readers: `search/ranking.py:141-146` (`Candidate.party_size`), `:192-215` (`price_fit` and the division),
   `:247-249` (the scorer passes it); `search/service.py:824-828` (`party_size=plan.party_size`).
+
+## 630. D633 · the words around a budget stayed in the match text and divided every row's relevance (`apps/ai/nexus_ai/nlu/understand.py`)
+
+**What the strip removed and what it left.** D628 built `match_core` to take out the spans a lane has
+already consumed, and every budget regex stops at the digits - so the words that belong to the amount
+stayed behind. Measured (`tmp/d633_cues.txt`, `match_core` on the live sentences):
+
+    shape                   match text before    after
+    最多1000蚊嘅餐廳         蚊嘅餐廳             餐廳
+    唔超過1000蚊嘅餐廳       蚊嘅餐廳             餐廳
+    最多1000-2000嘅餐廳     最多 嘅餐廳          餐廳
+    唔超過1000-2000嘅餐廳    唔超過 嘅餐廳        餐廳
+    2至4人嘅餐廳            2至 餐廳            餐廳
+    10至20人嘅餐廳          人嘅餐廳             餐廳
+    最多人嘅餐廳            最多人嘅餐廳（unchanged - content, nothing consumed）
+    至多1000蚊嘅餐廳        至多1000蚊嘅餐廳（unchanged - the lane reads no budget here）
+
+Each left-over word is a term no row can carry: **0 of the 470 published rows** hold 蚊, 元, 塊, 最多,
+唔超過 or 不超過 anywhere in name, description or tags (`tmp/d633_residue.txt`). So the strip was leaving
+a divisor behind, and the ten cards of 「最多1000-2000嘅餐廳」 carried relevance **0.250-0.284** where the
+same band written 「1000-2000蚊嘅餐廳」 carried 1.00 (`tmp/d633_live_before.txt`).
+
+**The ten-person shape was the worst of it**, and it was not a residue but a collision: 「10至20人」 is a
+party RANGE and the BUDGET range rule shares its shape, so the money rule took 「10至20」 out of it and
+left the counter 人 behind. The party span is now read FIRST.
+
+**Three rules, each at the moment the text allows** (§630): a unit word goes AFTER the amount, where the
+strip has left it against whitespace (which is what makes the rule exact - the 蚊 in 至多1000蚊 is still
+against its digit and stays, because nothing was read out of that shape); a ceiling cue goes after too,
+where the strip stranded it; and the party span is read first, so a party range is taken whole. 「最多人」
+is content and is asserted to survive.
+
+**Measured after** (`tmp/d633_live_after.txt`): 「2至4人嘅餐廳」 answers the SAME ten subject ids as
+「4個人嘅餐廳」 and as 「餐廳」 at relevance 1.00 on all ten (0.250-0.284 and a different ten before), and
+「最多1000-2000嘅餐廳」 answers the same ten as 「1000-2000蚊嘅餐廳」 and as 「唔超過1000-2000嘅餐廳」.
+
+**Not claimed.** 「至多1000蚊嘅餐廳」 reads no budget at all (`至多` is not in `BUDGET_WORD_RE`) and is left
+whole - filed. A party range in English is still not a party: 「2-4 people」 reads none and 「party of 2 to
+4」 reads TWO - both filed. The card still prints the user's own words, so nothing a guest sees changed.
+
+**The gate** is `tests/test_the_words_around_a_budget_do_not_divide_the_match.py`: twenty-four legs -
+thirteen shapes that reach the keyword lane as 「餐廳」, three words that must survive because no lane
+consumed them (`最多人` twice, `至多`), four party-range readings, the plan leg, a live census leg that
+reddens the day a row carries one of these words, and two live equivalence legs. Falsified: with the
+residue pass disabled and the old strip order, 9 of the 24 redden, including the live band leg
+(`tmp/d633_falsify.txt`). With the D628, D629, D630, D631 and D632 doors and an intent file: **149 passed**.
+
+- readers: `nlu/understand.py:129-140` (`PARTY_SPAN_RE`, the range alternative first), `:637-645`
+  (`_MATCH_CORE_RESIDUE`), `:647-649` (`_MATCH_CORE_RES`, the party span first) and `:655-672` (`match_core`).

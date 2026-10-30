@@ -2106,39 +2106,22 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   above 354, not just 500-800. The band now REACHES the ranker for every spelling a user writes, and
   the page for 「預算1000-2000嘅餐廳」 is still ten rows at HK$26-355 with nothing on any card saying so:
   a demotion is not an answer. Owner: the AI lane with the seed lane.
-- **A budget cue's own words stay in the match text after its band is stripped.** 「最多1000-2000嘅餐廳」
-  reaches the keyword lane as `最多 嘅餐廳` and 「唔超過1000-2000嘅餐廳」 as `唔超過 嘅餐廳`
-  (`tmp/d631_shapes.txt`): `_MATCH_CORE_CUES` strips 預算/预算/budget/人均/每人/每位/人頭 but not 最多 or
-  唔超過, so a term no row carries still divides every row's relevance - the shape D628 measured at
-  0.25 against 1.00. Owner: the AI lane.
-- **A party RANGE leaves its tail in the match text.** 「2至4人嘅餐廳」 reaches the keyword lane as
-  `2至 嘅餐廳` (`tmp/d631_shapes.txt`): `PARTY_SPAN_RE` (D628) reads one number, not a range, so the
-  span it removes leaves the separator behind. The party the intent keeps is the upper end (4), which
-  is the reading the product wants; the words are what is wrong. Owner: the AI lane.
-
-- **`budget_per` was read by `price_fit` and then ignored - closed for the MERCHANT lane by D632** (§629).
-  「人均300」 parses to `per: person` and 「預算300」 to `per: party`, and both were scored against the row
-  number directly. The seed writes `avg_price_hkd` with `"model": "per_person"`
-  (`data/seed/generate.py:1051`), so the row IS per head: a party total is now shared across the party
-  before the two are compared, and 「4個人預算1000-2000嘅餐廳」 (HK$250-500 a head) leads with the rows
-  inside that band where it led with an HK$88.43 row at price_fit 0.005. What stays open is the
-  OFFERING lane: nothing in the platform says what an offering's `price_amount` means (a slot total, a
-  per-head price, a set menu), so the same division is not applied there - and the card still prints
-  the per-head number with nothing saying it is per head, so a guest reading four cards cannot add them
-  up to their budget. Owner: the platform lane with the AI lane (the card half is the cards lane).
-
-- **A party budget with no party size is still a party total.** 「預算1000嘅餐廳」 carries
-  `per: party` and no `party_size`, so D632's division cannot run and the number is compared as if it
-  were per head - the generous reading, which today answers every restaurant (max HK$354.55) as inside
-  it. Whether a bare cap should be read per head instead is a product copy decision, not a measurement.
-  Owner: the AI lane.
-
-- **Chinese numerals in a price are silent.** 「一千蚊以下」 and 「人均一千蚊以內」 are the
-  only two of D624's twenty-seven shapes that still reach no budget (§622): `numerals.py` rewrites
-  十 and below and has no 百 or 千, and `normalise_numerals` is called with `only_before` markers for
-  hours and party sizes only. The hour and party lanes already prove the shape works; the budget
-  lane needs the same call with a currency marker. Owner: the AI lane.
-
+- **A budget cue's own words were left in the match text after its band was stripped - closed by D633**
+  (§630). 「最多1000-2000嘅餐廳」 reached the keyword lane as `最多 嘅餐廳`, 「最多1000蚊嘅餐廳」 as
+  `蚊嘅餐廳`, 「2至4人嘅餐廳」 as `2至 餐廳` and 「10至20人嘅餐廳」 as `人嘅餐廳` - each word a term no row
+  carries, dividing every card's relevance to 0.25-0.28. The strip now removes the unit that followed
+  a consumed amount, the ceiling cue it stranded, and the whole party RANGE (read as a party by
+  `PARTY_RE`, keeping the upper end). Measured: 0 of the 470 published rows carry 蚊, 元, 塊, 最多,
+  唔超過 or 不超過, and both equivalences now hold on the live plane - 「2至4人嘅餐廳」 answers the same
+  ten ids as 「餐廳」 at 1.00, and 「最多1000-2000嘅餐廳」 the same ten as 「1000-2000蚊嘅餐廳」.
+- **A ceiling cue the budget lane does not know stays in the match text, and its amount is not read.**
+  「至多1000蚊嘅餐廳」 parses no budget at all (`至多` is not in `BUDGET_WORD_RE`) and is left whole
+  (`tmp/d633_cues.txt`), so the page is the unfiltered catalogue with a term no row carries. 至多 is
+  the twin of 最多, which the table already reads. Owner: the AI lane.
+- **A party range in English is not a party.** 「2-4 people」 is read as no party at all, and
+  「party of 2 to 4」 as a party of TWO (`tmp/d633_cues.txt`) - `PARTY_RE` reads one number, and the
+  `party(?:\s*of)?` alternative takes the first. The CJK range is read and stripped (D633); the Latin
+  one is neither. Owner: the AI lane.
 - **The refusal bridge is a hand-list and only three facts have been measured** - D595 and D598
   closed `noise`/`queue` and the noise fact's second spelling, but `ASPECT_AVOID` and
   `ASPECT_ATTRIBUTES` name the pairings a human read off the generator. `weak_aspects` on this

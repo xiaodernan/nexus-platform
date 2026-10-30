@@ -127,6 +127,13 @@ TIME_SPAN_RE = re.compile(
     re.IGNORECASE,
 )
 PARTY_SPAN_RE = re.compile(
+    # D633: a RANGE is one party too - 「2至4人」 is read as 4 by `PARTY_RE` and the strip removed
+    # only the tail, leaving 「2至」 in the match text; 「10至20人」 was worse, because the BUDGET
+    # range rule took 「10至20」 first and left 「人」. The range alternative comes FIRST, so the
+    # whole span goes before the money rule can claim half of it.
+    r"(?:\u6211\u54cb|\u6211\u5011|\u6211\u4eec)?\s*\d{1,2}\s*"
+    r"(?:\u81f3|\u5230|[-–~～]|to)\s*\d{1,2}\s*"
+    r"(?:\u500b\s*\u4eba|\u4e2a\s*\u4eba|\u4f4d\u4eba|\u500b|\u4e2a|\u4f4d|\u4eba)|"
     r"(?:\u6211\u54cb|\u6211\u5011|\u6211\u4eec)?\s*\d{1,2}\s*"
     r"(?:\u500b\s*\u4eba|\u4e2a\s*\u4eba|\u4f4d\u4eba|\u500b|\u4e2a|\u4f4d|\u4eba)(?:\u5605|\u7684)?"
     r"|party(?:\s*of)?\s*\d{1,2}\b"
@@ -615,10 +622,31 @@ def _range_is_money(span: str, before: str) -> bool:
 #:     人均100以下嘅餐廳      0.200
 #:     4個人嘅餐廳            0.343 / 0.200
 #:
+#: D633: and the words that belong to the amount ITSELF. Every budget regex above stops at the
+#: digits, so 「最多1000蚊嘅餐廳」 was stripped to 「蚊嘅餐廳」 and 「最多1000-2000嘅餐廳」 to
+#: 「最多 嘅餐廳」 - the cue and the unit stay in the match text, where they divide every row's
+#: relevance by a term no row can meet. Measured (`tmp/d633_residue.txt`): 0 of the 470 published
+#: rows carry 蚊, 元, 塊, 最多, 唔超過 or 不超過 anywhere in name, description or tags.
+#:
+#: Both rules run AFTER the amount is gone, which is what makes them exact rather than a guess: the
+#: strip replaces a span with a SPACE, so a unit word that belonged to a consumed amount now sits
+#: against whitespace (the 蚊 in 至多1000蚊 is still against its digit, and nothing was read out of
+#: that shape, so it stays), and a ceiling cue sits where the span began. 「最多人」 is content and
+#: stays. The cue list is `BUDGET_WORD_RE`'s own CJK cues minus 以下/以內, which
+#: `SPEND_CEILING_RE` already carries whole.
+_MATCH_CORE_RESIDUE = (
+    re.compile(r"(?<=\s)(?:蚊|元|塊|块)(?=[\s嘅的，,、?？]|$)", re.IGNORECASE),
+    re.compile(r"(?:最多|唔超過|不超过|不超過|少過|唔多過|平過|便宜過|唔貴過|不貴过)(?=[\s嘅的]|$)",
+               re.IGNORECASE),
+)
+#:
 #: so a user who states a budget is served the page the DILUTED score chose. The strip below removes
 #: exactly those spans; nothing else - a constraint that IS content (`安靜` in `安靜嘅咖啡店`) stays.
-_MATCH_CORE_RES = (BUDGET_RANGE_RE, SPEND_CEILING_RE, SPEND_FLOOR_RE, PER_PERSON_POINT_RE,
-                   BUDGET_MAX_RE, BUDGET_WORD_RE, BUDGET_MIN_RE, CURRENCY_AMOUNT_RE, PARTY_SPAN_RE)
+#: D633: the PARTY span is read FIRST - a party range and a budget range share the shape N-M, and
+#: the money rule used to take 「10至20」 out of 「10至20人」 and leave the counter behind.
+_MATCH_CORE_RES = (PARTY_SPAN_RE, BUDGET_RANGE_RE, SPEND_CEILING_RE, SPEND_FLOOR_RE,
+                   PER_PERSON_POINT_RE, BUDGET_MAX_RE, BUDGET_WORD_RE, BUDGET_MIN_RE,
+                   CURRENCY_AMOUNT_RE)
 _MATCH_CORE_CUES = re.compile(r"(?:預算|预算|budget|人均|每人|每位|人頭|per\s?person|p/p)",
                               re.IGNORECASE)
 _MATCH_CORE_EDGES = re.compile(r"^[\s嘅的，,、。?？]+|[\s嘅的，,、。?？]+$")
@@ -637,6 +665,8 @@ def match_core(text: str, *, strip_time: bool = False) -> str:
     if strip_time:
         t = TIME_SPAN_RE.sub(" ", t)
     for rx in _MATCH_CORE_RES:
+        t = rx.sub(" ", t)
+    for rx in _MATCH_CORE_RESIDUE:
         t = rx.sub(" ", t)
     t = _MATCH_CORE_CUES.sub(" ", t)
     t = _MATCH_CORE_EDGES.sub("", re.sub(r"\s+", " ", t).strip())
