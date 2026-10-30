@@ -2101,6 +2101,20 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   product's answer needs a refusal (or a widened band) when the corpus cannot seat the ask. That is
   the same shape as the degradation path's refusals and should reuse their copy. Owner: the AI lane
   with the seed lane (a corpus with prices is the other half).
+  **Re-measured by D631 (§628)**: of the 184 published restaurants, 3 are priced 300-500 and NONE above
+  HK$500 (`tmp/d631_restaurants.txt`) - so the band that cannot be seated is every band with a floor
+  above 354, not just 500-800. The band now REACHES the ranker for every spelling a user writes, and
+  the page for 「預算1000-2000嘅餐廳」 is still ten rows at HK$26-355 with nothing on any card saying so:
+  a demotion is not an answer. Owner: the AI lane with the seed lane.
+- **A budget cue's own words stay in the match text after its band is stripped.** 「最多1000-2000嘅餐廳」
+  reaches the keyword lane as `最多 嘅餐廳` and 「唔超過1000-2000嘅餐廳」 as `唔超過 嘅餐廳`
+  (`tmp/d631_shapes.txt`): `_MATCH_CORE_CUES` strips 預算/预算/budget/人均/每人/每位/人頭 but not 最多 or
+  唔超過, so a term no row carries still divides every row's relevance - the shape D628 measured at
+  0.25 against 1.00. Owner: the AI lane.
+- **A party RANGE leaves its tail in the match text.** 「2至4人嘅餐廳」 reaches the keyword lane as
+  `2至 嘅餐廳` (`tmp/d631_shapes.txt`): `PARTY_SPAN_RE` (D628) reads one number, not a range, so the
+  span it removes leaves the separator behind. The party the intent keeps is the upper end (4), which
+  is the reading the product wants; the words are what is wrong. Owner: the AI lane.
 
 - **`budget_per` is read by `price_fit` and then ignored.** 「人均300」 now parses to `per: person`
   (§622) and 「預算300」 to `per: party`, and the two are scored IDENTICALLY, because `price_fit`

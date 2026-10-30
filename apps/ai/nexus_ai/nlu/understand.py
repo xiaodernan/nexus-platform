@@ -647,7 +647,11 @@ def _fill_budget(ex: IntentExtraction, text: str) -> IntentExtraction:
     budget: dict[str, Any] = {"min": None, "max": None, "currency": "HKD", "per": None}
     found = False
     rng = BUDGET_RANGE_RE.search(text)
-    low = (text[:rng.start() + 1] if rng else "")
+    # D631: the cue may sit DIRECTLY against the digits - 「預算1000-2000」 is the shape a HK user
+    # writes, and the window used to stop one character PAST the span's start, so the cue ended on
+    # a digit and the band was dropped (read as the ceiling 1000: `tmp/d631_mechanism.txt`). It
+    # worked for a Latin cue only because a space separated it from the number.
+    low = (text[:rng.start()] if rng else "")
     if rng and (_range_is_money(rng.group(0), low)):
         ends = sorted((float(rng.group(1)), float(rng.group(2))))
         budget["min"], budget["max"] = ends

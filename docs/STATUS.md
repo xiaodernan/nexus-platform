@@ -28768,3 +28768,56 @@ skipped**; with three intent/category files: **4145 passed**.
 - readers: `nlu/timeparse.py:121-147` (`_GUARDED_CUES` and `_guarded_cues`), `:150-170` (`_reads_as_a_time`),
   `:226-245` (`_find_part`, guarded), `:284` (`part_hint`) and `:323-326` (the meridiem reads the loose one);
   source of the table: `nlu/lexicon.py:82` (`afternoon_tea`).
+
+## 628. D631 · a budget written against the cue lost its floor, and only a space or a currency saved it (`apps/ai/nexus_ai/nlu/understand.py`)
+
+**The window.** `_fill_budget` asked `_range_is_money` with `text[:rng.start() + 1]` - the sentence up
+to one character PAST where the amount begins (`understand.py:654`). `_range_is_money` then anchors its
+cue test at the end of that window, so a cue written directly against the digits ended on a digit and
+the test failed. Measured on eight shapes (`tmp/d631_mechanism.txt`):
+
+    shape                    window given to the cue test   band read
+    預算1000-2000            「預算1」                       min None, max 1000
+    最多1000-2000            「最多1」                       min None, max 1000
+    唔超過1000-2000          「唔超過1」                     min None, max 1000
+    我哋4個人，預算1000-2000  「…預算1」                      min None, max 1000
+    budget1000-2000          「budget1」                     min None, max 1000
+    預算 1000-2000           「預算 」                       min 1000, max 2000
+    預算$1000-2000           「預算$」                       min 1000, max 2000
+    預算300-500嘅餐廳        「預算3」                       min None, max 300
+
+So the floor D624 built reached the ranker only for a spelling whose cue happened to be followed by a
+SPACE or a CURRENCY token - 蚊 inside the span works too (`預算1000至2000蚊`) - and for every other
+Chinese spelling the band collapsed into its own ceiling. 「預算300-500嘅餐廳」 was answered as "at most
+300" and led with an HK$88.43 row.
+
+**The repair** is the window: `text[:rng.start()]`, so the cue test sees the sentence up to where the
+amount begins. The conservative rule is unchanged and still refuses a party: 「10至20人」 and 「2至4人」
+read as parties and carry no budget at all - the cue test is the same, only the window it is asked
+about moved.
+
+**Measured on the page** (`tmp/d631_page_before.txt`, `tmp/d631_page_after.txt`): 「預算300-500嘅餐廳」
+now leads with the HK$343.14 row, which is inside the band, where it led with HK$88.43 before; the three
+queries 「預算1000-2000」, 「預算 1000-2000」 and 「預算$1000-2000」 answer the same ten ids at the same
+scores, so punctuation no longer decides what the plan carries.
+
+**What the page still cannot do, measured** (`tmp/d631_restaurants.txt`): of the 184 published
+restaurants, 3 are priced 300-500 and NONE above HK$500. So 「預算1000-2000嘅餐廳」 carries the band into
+the ranker and still answers ten rows at HK$26-355, with nothing on any card saying the band was missed:
+that is the open refusal item in PLAN, narrowed here to "every band with a floor above 354", and it is
+not repaired by this unit.
+
+**Not claimed.** `budget_per` is still read by `price_fit` and ignored, so 「4個人預算1000」 compares a
+party total against a per-head number (filed). 「最多」 and 「唔超過」 survive into the match text after the
+band is stripped (`最多 嘅餐廳`), and 「2至4人嘅餐廳」 leaves `2至 嘅餐廳` - both filed, both D628-class.
+
+**The gate** is `tests/test_a_budget_cue_against_the_digits_keeps_the_floor.py`: twenty-two legs - eight
+shapes at the intent and again at the plan, the punctuation-independence leg, two party-range legs, the
+ranker leg (in band 1.0, below the floor < 0.10), and two live legs (the first card for 「預算300-500嘅餐廳」
+is inside the band; the corpus census that 3 are in band and none above HK$500). Falsified: putting the
+`+ 1` back reddens 14 of the 22, including the page leg, which then reports HK$88.43 as the first card
+(`tmp/d631_falsify.txt`). With the D624 door, the D630 door, the D629 door, two NLU files and an
+estimated-price file: **86 passed**.
+
+- readers: `nlu/understand.py:646-660` (`_fill_budget` and the window), `:595-605` (`_range_is_money`);
+  the ranking side unchanged: `search/ranking.py:189-218` (`price_fit`, the band this unit finally reaches).
