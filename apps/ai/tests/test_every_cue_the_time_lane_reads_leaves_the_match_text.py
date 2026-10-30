@@ -98,7 +98,8 @@ def test_the_set_named_after_the_hour_survives(text, core):
 def test_the_plan_keeps_the_time_as_a_filter_and_drops_the_cue():
     q = "深夜嘅餐廳"
     plan = plan_from_intent(validate_intent(extract_intent_dict(q)), query=q, limit=TOP_K)
-    assert plan.match_text == "餐廳", f"the plan matched {plan.match_text!r}"
+    # D635: the bucket word left with the filter that answers it, so nothing is left to search.
+    assert plan.match_text == "", f"the plan matched {plan.match_text!r}"
     assert plan.filters.get("open_time") is not None, (
         f"the time lane's filter was lost too: {dict(plan.filters or {})}")
 
@@ -168,7 +169,12 @@ def test_no_published_row_answers_a_part_of_the_day_as_text(plane):
 
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
 def test_the_part_of_the_day_no_longer_divides_the_page(plane):
-    """Measured 2026-10-30: 0.25 flat on every card; the shared rows now score as 餐廳 does."""
+    """Measured 2026-10-30: 0.25 flat on every card; the shared rows now score as 餐廳 does.
+
+    D635 left this page with no keyword at all (the bucket word is answered by the filter), so the
+    cue's own reading is pinned on the plan instead: 深夜 must reach the lane as nothing, which is
+    what makes the two pages agree row for row.
+    """
     got, plain = plane["pages"]["深夜嘅餐廳"], plane["pages"]["餐廳"]
     shared = sorted(set(got) & set(plain))
     assert len(shared) >= 20, f"the two pools lost their overlap: {len(shared)} shared row(s)"
@@ -176,5 +182,6 @@ def test_the_part_of_the_day_no_longer_divides_the_page(plane):
     assert not differing, (
         "the cue still divides the relevance of rows both pages hold: "
         f"{list(differing.items())[:5]}")
-    assert len(set(got.values())) > 1, (
-        "every card on the page scores the same - that is a flat cue score, not a match")
+    assert match_core("深夜嘅餐廳", strip_time=True) == "餐廳", (
+        "the cue reached the match text: "
+        f"{match_core('深夜嘅餐廳', strip_time=True)!r}")

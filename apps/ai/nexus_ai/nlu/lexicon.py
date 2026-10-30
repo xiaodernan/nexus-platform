@@ -625,6 +625,48 @@ def _possessive_before(canon: str, start: int) -> bool:
     return start > 0 and canon[start - 1] in ("的", "嘅")
 
 
+def _category_hits(canon: str, low: str
+) -> list[tuple[int, int, str, tuple[str, ...]]]:
+    """Every category the sentence names, with the spellings it writes for each.
+
+    D635: the spellings are carried through the same pass that chooses the bucket, so the strip
+    that undoes this lane reads the words this reader actually used rather than a second search
+    of `CATEGORY_SYNONYMS` (§D438). A spelling of a bucket that LOSES is not one of them:
+    寵物 in 「有冇寵物友善嘅咖啡店」 is a preference, because the head is 咖啡店, and stripping
+    it would take the word the user asked for and leave the filler behind.
+    """
+    hits: list[tuple[int, int, str, tuple[str, ...]]] = []
+    for cat, terms in CATEGORY_SYNONYMS.items():
+        longest = 0
+        rightmost = -1
+        present: list[str] = []
+        for term in terms:
+            t = term.lower().strip()
+            # D481: the ONE matcher, and the RIGHTMOST match still decides (CJK puts the
+            # head noun last). "spa" inside "spaghetti" is not a spa.
+            positions = cue_positions(t, canon, low) if t else []
+            idx = max(positions) if positions else -1
+            if idx >= 0:
+                longest = max(longest, len(t))
+                rightmost = max(rightmost, idx + len(t))
+                present.append(t)
+        if longest:
+            hits.append((rightmost, longest, cat, tuple(present)))
+    hits.sort(key=lambda x: (-x[0], -x[1], x[2]))
+    return hits
+
+
+def _chosen_category(hits: list[tuple[int, int, str, tuple[str, ...]]], canon: str
+                     ) -> tuple[int, int, str, tuple[str, ...]]:
+    """The one bucket the sentence is ABOUT, and the spellings of it (D603, D635)."""
+    generic_head = any(h[2] in ("retail", "attraction", "restaurant")
+                       and _possessive_before(canon, h[0] - h[1]) for h in hits)
+    specific = ([] if generic_head else
+                [h for h in hits if h[2] not in ("retail", "attraction", "restaurant")
+                 and h[1] >= 2])
+    return (specific or hits)[0]
+
+
 def match_category(text: str) -> tuple[str, float] | None:
     """Return (category, confidence). Confidence 0.95 for a direct hit, lower for the
     generic `retail`/`attraction` fallbacks so the model never over-claims.
@@ -636,37 +678,28 @@ def match_category(text: str) -> tuple[str, float] | None:
     from nexus_ai.nlu.canonical import canonical
 
     canon = canonical(text)
-    low = canon.lower()
-    hits: list[tuple[int, int, str]] = []
-    for cat, terms in CATEGORY_SYNONYMS.items():
-        longest = 0
-        rightmost = -1
-        for term in terms:
-            t = term.lower().strip()
-            # D481: the ONE matcher, and the RIGHTMOST match still decides (CJK puts the
-            # head noun last). "spa" inside "spaghetti" is not a spa.
-            positions = cue_positions(t, canon, low) if t else []
-            idx = max(positions) if positions else -1
-            if idx >= 0:
-                longest = max(longest, len(t))
-                rightmost = max(rightmost, idx + len(t))
-        if longest:
-            hits.append((rightmost, longest, cat))
+    hits = _category_hits(canon, canon.lower())
     if not hits:
         return None
-    hits.sort(key=lambda x: (-x[0], -x[1], x[2]))
-    # D603: the possessive marks the HEAD. 宠物美容 is a pet groomer (specific word first), but
-    # 帶寵物的餐廳 is a RESTAURANT that allows pets - the 的 makes 餐廳 the noun the sentence is
-    # about, and reading 寵物 as the category answered a sentence about restaurants with ten pet
-    # groomers. Measured at HEAD: `match_category('可以帶寵物的餐廳')` answered `pet`.
-    generic_head = any(h[2] in ("retail", "attraction", "restaurant")
-                       and _possessive_before(canon, h[0] - h[1]) for h in hits)
-    specific = ([] if generic_head else
-                [h for h in hits if h[2] not in ("retail", "attraction", "restaurant")
-                 and h[1] >= 2])
-    rightmost, best_len, best_cat = (specific or hits)[0]
+    _rightmost, best_len, best_cat, _present = _chosen_category(hits, canon)
     generic = best_cat in ("retail", "attraction", "restaurant")
     return best_cat, (0.7 if generic and best_len <= 2 else 0.95)
+
+
+def category_surfaces(text: str) -> tuple[str, tuple[str, ...]] | None:
+    """(the bucket the sentence names, the spellings it writes for it) - D635.
+
+    The choice is `match_category`'s own (`_chosen_category`), so the strip and the filter cannot
+    disagree about which word named the bucket. Only the chosen bucket's spellings are returned.
+    """
+    from nexus_ai.nlu.canonical import canonical
+
+    canon = canonical(text)
+    hits = _category_hits(canon, canon.lower())
+    if not hits:
+        return None
+    chosen = _chosen_category(hits, canon)
+    return chosen[2], chosen[3]
 
 
 def match_leaf(text: str) -> str | None:

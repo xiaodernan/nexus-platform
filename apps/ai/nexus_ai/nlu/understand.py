@@ -12,7 +12,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Sequence
 
 from nexus_ai.nlu.matching import cue_in, cue_positions
 from nexus_ai.nlu.lexicon import (
@@ -658,7 +658,36 @@ _MATCH_CORE_CUES = re.compile(r"(?:預算|预算|budget|人均|每人|每位|人
 _MATCH_CORE_EDGES = re.compile(r"^[\s嘅的，,、。?？]+|[\s嘅的，,、。?？]+$")
 
 
-def match_core(text: str, *, strip_time: bool = False) -> str:
+def _strip_surface_spans(text: str, surfaces: Sequence[str]) -> str:
+    """Blank out every span one of `surfaces` occupies, found through the ONE matcher (D481).
+
+    D635: a category is answered by a FILTER, so the word that named it is not a search term - and
+    the word the user wrote is not always the table's spelling (餐廳/餐厅, 咖啡店/咖啡店). The positions are
+    read off the CANONICAL text, which is character-for-character the same length as the user's
+    (`CANONICAL_FORMS` maps one character to one character - pinned by the gate), so a span found
+    there is the same span here and the user's own spelling is what gets blanked.
+    """
+    if not surfaces:
+        return text
+    from nexus_ai.nlu.canonical import canonical
+
+    canon = canonical(text)
+    low = canon.lower()
+    spans: set[tuple[int, int]] = set()
+    for surface in surfaces:
+        for start in cue_positions(surface, canon, low):
+            spans.add((start, start + len(surface)))
+    if not spans:
+        return text
+    chars = list(text)
+    for start, end in spans:
+        for i in range(start, min(end, len(chars))):
+            chars[i] = " "
+    return "".join(chars)
+
+
+def match_core(text: str, *, strip_time: bool = False,
+               strip_surfaces: Sequence[str] = ()) -> str:
     """The part of a sentence that names WHAT to find, with the spans a lane already handles removed.
 
     Returns "" when nothing is left - the caller keeps the original text in that case, because a
@@ -666,10 +695,14 @@ def match_core(text: str, *, strip_time: bool = False) -> str:
 
     `strip_time` is set by the caller when the time lane PARSED a time: the cue words can be
     content (下午茶), so they are not removed on a guess.
+    `strip_surfaces` is the category lane's own answer (`lexicon.category_surfaces`): the
+    spellings of the bucket the sentence is about, which its filter has already selected
+    (D635). It is empty when no bucket was named or the text named a different one.
     """
     t = text or ""
     if strip_time:
         t = TIME_SPAN_RE.sub(" ", t)
+    t = _strip_surface_spans(t, strip_surfaces)
     for rx in _MATCH_CORE_RES:
         t = rx.sub(" ", t)
     for rx in _MATCH_CORE_RESIDUE:

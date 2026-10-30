@@ -75,8 +75,11 @@ def test_the_plan_keeps_the_users_words_and_matches_the_core():
     q = "100蚊以下嘅餐廳"
     plan = plan_from_intent(validate_intent(extract_intent_dict(q)), query=q, limit=TOP_K)
     assert plan.query_text == q, "the card shows the user's own words - D418's promise"
-    assert plan.match_text == "餐廳", (
-        f"the plan matched {plan.match_text!r} - the price is still being counted as a query term")
+    # D635: the bucket word left too, with the filter that answers it, so the plan has no term at
+    # all: the price is not a query term and neither is the category it was written against.
+    assert plan.match_text == "", (
+        f"the plan matched {plan.match_text!r} - a word the filters already answer is being "
+        "counted as a query term")
 
 
 @pytest.fixture(scope="module")
@@ -102,6 +105,7 @@ def pages():
                 pack = await run_search(Deps(st), intent, query=q, limit=TOP_K)
                 out[q] = dict(ids=[s.candidate.subject_id for s in pack.scored[:TOP_K]],
                               rel=[s.candidate.relevance for s in pack.scored[:TOP_K]],
+                              prices=[s.candidate.price for s in pack.scored[:TOP_K]],
                               total=getattr(pack.response, "total_estimate", None))
             return out
         finally:
@@ -122,10 +126,14 @@ def test_a_party_size_no_longer_answers_a_different_ten(pages):
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
 def test_a_ceiling_no_longer_divides_every_rows_relevance(pages):
     got = pages["100蚊以下嘅餐廳"]
-    high = sum(1 for r in got["rel"] if r >= 0.9)
-    # Measured 9 of 10 at 1.00 (the tenth is a row whose own text never carries 餐廳), against
-    # 0 of 10 in 0.11-0.16 before the strip.
-    assert high >= 8, f"only {high} of ten rows carry a real match: {got['rel']}"
+    plain = pages["餐廳"]
+    # Measured before the strip: 0.11-0.16 on every card and a different ten from 「餐廳」. D628
+    # took the price out of the match text; D635 took the bucket word out with its filter, so no
+    # card claims a term at all - and the ceiling is still doing the work the words used to do:
+    # every card is at or under HK$100 while the plain page opens at HK$354.60.
+    assert got["rel"] == plain["rel"] == [0.0] * TOP_K, (got["rel"], plain["rel"])
+    assert all(p is not None and p <= 100 for p in got["prices"]), got["prices"]
+    assert plain["prices"][0] > 100, plain["prices"][0]
     assert got["total"] == 184, (
         f"the pool changed size ({got['total']}) - the strip must not add or remove rows, only stop "
         "counting terms no row can meet")

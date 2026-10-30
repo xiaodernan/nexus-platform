@@ -176,13 +176,18 @@ async def run_search(deps: Deps, intent: Intent | None, *, query: str = "",
     backend = deps.backend()
     vector_lane = False
     embedding: list[float] | None = None
-    if plan.query_text:
+    if plan.match_text:
         # D507: every provider feeds the pgvector lane. The guard used to read
         # `embedding_provider == "hashing"`, which asked the offline adapter for a vector and
         # refused the semantic one - so the provider the docs name for paraphrase recall
         # (AGENT_CONTRACT §6) never reached the lane it exists to serve.
+        # D635: and the TEXT it embeds is the match text, the same one the keyword lane
+        # reads - so a request whose words were all consumed by filters has nothing
+        # embedded (a cosine on 「7點嘅餐廳」 put the same fabricated relevance back through
+        # the other lane), and a request with a content word embeds that word rather than a
+        # sentence carrying the time and the price beside it.
         try:
-            embedding = (await deps.embeddings().embed([plan.query_text]))[0]
+            embedding = (await deps.embeddings().embed([plan.match_text]))[0]
         except Exception:  # the keyword lane is the floor
             embedding = None
     vector_lane = bool(embedding) and backend.name == "postgres"

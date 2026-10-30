@@ -2066,24 +2066,35 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   lane, from `merchants.avg_price_hkd`) or the readers drop an alias no corpus produces - and a
   fixture that invents the attribute would be this lane writing its own evidence. Owner: the AI
   lane with the platform lane.
-- **The price, the party and the time no longer touch the match text; DISTRICT and the vector lane
-  still do.** D628 (§625) added `match_core()` and D629 (§626) extended it to the time: the keyword lane
-  reads `canonical(plan.match_text)`, which is the user's sentence MINUS the spans a lane already
-  consumes - the price (every shape §622 taught the reader), the party size, and (only when the time
-  lane parsed one) the time. Measured: `「4個人嘅餐廳」` and `「今晚7點嘅餐廳」` answer the same ten
-  subject ids as `「餐廳」`; `「100蚊以下嘅餐廳」` answers nine of ten rows at relevance 1.00 against
-  0.11-0.16. What stays open: DISTRICT, because 18 of the 470 rows name 銅鑼灾 or 觀塘 in their own text,
-  so a strip there is not free and needs its own measurement. And the vector lane - `api/pipeline.py:179-185`
-  still embeds the WHOLE sentence, so the two lanes read different texts and nothing says that is
-  right. Owner: the AI lane.
-- **The CATEGORY word is matched as text against the rows the category filter already chose, and it
-  is the last divider D634 left.** The price, the party and the time are out of the match text
-  (§625-§631); what remains is the word that names the bucket. 「餐廳」 is BOTH the filter that
-  selects 184 rows and a keyword, so 「7點嘅餐廳」 scores the two rows that write 餐廳 in their
-  description 1.00 and the other eight 0.00 or 0.069, on an 11-row pool (`tmp/d634_zero_rel.txt`);
-  「週末嘅餐廳」 splits a 14-row pool the same way. relevance carries 0.34 of the score - the
-  largest weight in `ranking_weights.yaml` - so a third of the page's order is decided by whether a
-  merchant wrote the name of its own category. Owner: the AI lane.
+- **The price, the party, the time and the CATEGORY word no longer touch the match text; DISTRICT
+  and the LEAF's word still do.** D628 (§625) added `match_core()`, D629 (§626) extended it to the
+  time, D634 (§631) made the time span the lane's own table, and D635 (§632) removed the word that
+  named the bucket: the keyword lane reads `canonical(plan.match_text)`, the user's sentence MINUS
+  every span a lane answers exactly - the price, the party size, the time, and the category - and
+  the vector lane now embeds the same text (`api/pipeline.py:179-190`), so a request whose words
+  were all consumed embeds nothing. Measured: `「7點嘅餐廳」`, `「今晚7點嘅餐廳」`, `「4個人嘅餐廳」`,
+  `「100蚊以下嘅餐廳」`, `「咖啡店」` and `「下午茶」` now reach the lanes as nothing and answer their filter's
+  pool. What stays open: DISTRICT, because 18 of the 470 rows name 銅鑼灾 or 觀塘 in their own
+  text, so a strip there is not free; and the LEAF's word, because `「點心餐廳」` keeps 點心 (a filter
+  AND a word 9 rows write) - the same measurement decides both. Owner: the AI lane.
+- **The word that named the CATEGORY was also a search term - closed by D635** (§632). `「餐廳」`
+  was BOTH the filter that selects 184 rows and a keyword, so 「7點嘅餐廳」 scored the two rows that
+  write 餐廳 in their description 1.00, one at trigram noise 0.069, and the other eight 0.00 - and
+  relevance carries 0.34 of the score, so the page opened on the two rows that happened to write
+  the word and put a 4.13-star/443-review restaurant third (`tmp/d634_zero_rel.txt`). The strip now
+  takes the spellings of the bucket the sentence is ABOUT (`lexicon.category_surfaces`, the same
+  choice `match_category` makes), a spelling of a bucket that lost (the 寵物 in 「有冇寵物友善嘅咖啡店」)
+  stays content, and when nothing is left the request is answered by its filters alone - no text
+  for either lane, and no 符合「…」 bullet on a card (`tmp/d635_after.txt`). The D407/D422 promise
+  "the rows that mention the word rank first" is now pinned on words no lane consumes (酒家, 拉麵).
+
+- **The LEAF's word is still a filter AND a keyword, and the page splits on it.** 「拉麵」 narrows the
+  bucket to 22 rows (`category: ramen`) and then matches 拉麵 as TEXT inside them: the 8 rows that
+  write it in their description score 1.00 and the other 14 carry 0.145-0.154 (`tmp/d635_leaf.py`).
+  「點心」 is the same shape on a 25-row pool (1.00 x9, then 0.072). Whether a DISH word is content or
+  a filter is the question §630 asked about 午市, and it needs the same kind of census first: does a
+  row that writes 拉麵 serve ramen more often than one that does not? Until that is measured D635
+  strips the BUCKET's spelling and not the LEAF's. Owner: the AI lane.
 
 - **「下午茶餐廳」 was read as a 14:00 TIME and as the cafe category at once - closed by D630** (§627).
   下午茶 is a noun - the afternoon-tea category - and the time lane read the 下午 inside it because a CJK

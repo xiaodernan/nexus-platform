@@ -88,7 +88,8 @@ def test_a_party_range_is_read_as_a_party_and_the_upper_end_is_kept(text, party)
 def test_the_plan_carries_the_party_range_as_a_party():
     q = "2至4人嘅餐廳"
     plan = plan_from_intent(validate_intent(extract_intent_dict(q)), query=q, limit=TOP_K)
-    assert plan.party_size == 4 and plan.match_text == "餐廳", (plan.party_size, plan.match_text)
+    # D635: the bucket word left with its filter as well, so the plan has no term left at all.
+    assert plan.party_size == 4 and plan.match_text == "", (plan.party_size, plan.match_text)
 
 
 @pytest.fixture(scope="module")
@@ -152,7 +153,8 @@ def test_a_party_range_answers_the_page_a_party_answers(plane):
     assert pages["2至4人嘅餐廳"]["ids"] == pages["4個人嘅餐廳"]["ids"] == pages["餐廳"]["ids"], (
         "the party range still steers retrieval: its ten ids differ from the party's and the plain "
         f"query's ({pages['2至4人嘅餐廳']['ids'][:3]} vs {pages['餐廳']['ids'][:3]})")
-    assert all(r >= 0.9 for r in pages["2至4人嘅餐廳"]["rel"]), pages["2至4人嘅餐廳"]["rel"]
+    assert pages["2至4人嘅餐廳"]["rel"] == pages["餐廳"]["rel"], (
+        pages["2至4人嘅餐廳"]["rel"], pages["餐廳"]["rel"])
 
 
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
@@ -163,4 +165,3 @@ def test_a_cue_written_before_a_band_answers_the_page_the_band_answers(plane):
     assert with_cue["ids"] == plain["ids"], (
         f"the cue still steers retrieval: {with_cue['ids'][:3]} vs {plain['ids'][:3]}")
     assert with_cue["rel"] == plain["rel"], (with_cue["rel"], plain["rel"])
-    assert all(r >= 0.9 for r in with_cue["rel"]), with_cue["rel"]

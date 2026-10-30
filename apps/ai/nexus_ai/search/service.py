@@ -29,6 +29,7 @@ from nexus_ai.contract import EntityCard, FacetValue, Intent, SearchResponse
 from nexus_ai.nlu.lexicon import (
     CONSTRAINT_RULES,
     canon_constraint,
+    category_surfaces,
     cuisine_matches,
 )
 from nexus_ai.nlu.timeparse import HK_TZ
@@ -443,8 +444,11 @@ class SearchPlan:
 
     query_text: str = ""
     #: D628: the text handed to the retrieval lanes - `query_text` minus the spans a lane already
-    #: consumed (a price, a party size). Empty means "no strip was possible": use `query_text`.
-    match_text: str = ""
+    #: consumed (a price, a party size).
+    #: D635: `None` means nobody computed it, and the service reads `query_text` (a hand-built
+    #: plan that only names a query keeps working); "" means the lanes consumed EVERY word, so
+    #: there is nothing to search and the request is answered by its filters alone.
+    match_text: str | None = None
     subject_types: tuple[str, ...] = ("merchant",)
     filters: dict[str, Any] = field(default_factory=dict)
     geo: tuple[float, float] | None = None
@@ -633,8 +637,18 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     now = now or datetime.now(timezone.utc)
     plan = SearchPlan(now=now, limit=limit)
     plan.query_text = (query or (intent.raw_query if intent else "") or "").strip()
+    # D635: the word that named the CATEGORY is answered by the category filter - the row is in
+    # the pool because it IS a restaurant - so it is not also a search term. `category_surfaces`
+    # is the category lane's own reading (it returns the spellings of the bucket the sentence is
+    # about, and nothing for a bucket that lost), so a preference word such as the 寵物 in
+    # 「有冇寵物友善嘅咖啡店」 stays content while the 咖啡店 leaves with its filter.
+    named = category_surfaces(plan.query_text) if intent is not None else None
+    surfaces: tuple[str, ...] = ()
+    if named and intent is not None and named[0] == intent.category:
+        surfaces = named[1]
     plan.match_text = _match_core(plan.query_text,
-                                  strip_time=bool(intent is not None and intent.time))
+                                  strip_time=bool(intent is not None and intent.time),
+                                  strip_surfaces=surfaces)
     caller_named_category = bool(_plain(filters).get("category"))
     if intent is None:
         plan.filters = _plain(filters)
@@ -1001,7 +1015,12 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     # answer the column keeps `len(ranked)`, and the larger of the two wins so a page that was
     # not capped by the pool never shrinks its answer.
     common = dict(tenant_id=str(tenant_id),
-                  text=canonical(plan.match_text or plan.query_text) or None,
+                  # D635: an empty match text is a request answered entirely by its filters -
+                  # there is no term to search, and falling back to the raw sentence would put
+                  # back the very word the filter consumed. A plan that never computed one
+                  # (`None`) falls back as it always did.
+                  text=canonical(plan.match_text if plan.match_text is not None
+                                 else plan.query_text) or None,
                   filters=plan.filters, geo=plan.geo, radius_m=plan.radius_m,
                   limit=max(60, plan.limit * 3), with_total=True)
     pool_total = 0

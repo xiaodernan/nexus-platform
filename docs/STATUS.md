@@ -28956,3 +28956,55 @@ files: **385 passed**.
 - readers: `nlu/timeparse.py:174-176` (`_STRIP_TABLES`), `:178-184` (`_strip_cues`), `:187-208`
   (`cue_alternation`, the generated guard); `nlu/understand.py:120-135` (`_TIME_CUE` and `TIME_SPAN_RE`),
   `:661-679` (`match_core`).
+
+## 632. D635 · the word that named the category was also a search term, on the rows the category had already chosen (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/api/pipeline.py`)
+
+**The last divider the strip left.** §625-§631 took the price, the party and the time out of the match
+text. What stayed is the word that named the BUCKET: 「餐廳」 is both the filter that selects 184 rows
+and a keyword. Measured 2026-10-30 (`tmp/d634_zero_rel.txt`): 「7點嘅餐廳」 filters to the 11
+restaurants open at 07:00 on a Saturday and then scores them **1.00, 1.00, 0.00, 0.00, 0.00, 0.069, 0.00 x4**
+- two rows whose description happens to say 餐廳, one at trigram noise, eight at nothing.
+
+**relevance is the largest weight in the score** (0.34 of 1.00, `infra/config/ranking_weights.yaml`), so
+that split DECIDED the page: it opened at 0.66 with the two rows that wrote the word, and put 威屋酒家 -
+4.13 stars on 443 reviews, the best-evidenced row in the pool - third at 0.353. 「咖啡店」 shows the
+same defect without a time: all 79 cafes carried 0.333-0.389, not one of them a match.
+
+**The strip is the category lane's own answer.** `lexicon.category_surfaces()` returns the bucket the
+sentence is ABOUT and the spellings it writes for it, chosen by the same `_chosen_category` that
+`match_category` uses - so the strip and the filter cannot disagree. A spelling of a bucket that LOST
+stays content: the 寵物 in 「有冇寵物友善嘅咖啡店」 is a preference (the head is 咖啡店). A category the lane
+INFERRED (「幫我揵個適合約會嘅地方」) writes no word, so nothing is removed.
+
+**An empty match text means no search at all.** `plan.match_text == ""` (`None` still means "nobody
+computed it", which is what a hand-built `SearchPlan` does), the keyword lane gets no text, and the
+vector lane no longer embeds the sentence - measured (`tmp/d635_vec_both.txt`): 「安靜嘅咖啡店」 carried
+0.11 / 0.00 / 0.073 / 0.053 / 0.079 from a cosine against a phrase no row can contain, and carries 0.00 on
+all five now. The card stops claiming a match it cannot ground: no page-level term, no 符合「…」 bullet.
+
+**Measured after** (`tmp/d635_after.txt`): 「餐廳」, 「7點嘅餐廳」, 「咖啡店」 and 「下午茶」 reach the lanes as
+NOTHING, each page is its filter's pool (184 / 11 / 79 / 42) in score order with relevance 0.0 on every
+card and no match bullet, and the 11-row page now opens with 威屋酒家. The word 酒家 (11 names) and
+拉麵 (8 descriptions) still rank their rows - no lane consumes them.
+
+**Not claimed.** The names of a LEAF and a DISTRICT still divide: 「點心餐廳」 keeps 點心 (a dim-sum
+filter AND a word 9 rows write) and 「旺角餐廳」 keeps 旺角 - both filed in PLAN. Filler survives
+(「有冇…咖啡店」 reaches the lane as 有冇寵物友善). And 咖啡/coffee are the cafe bucket's own spellings, so
+the D407/D422 order promise (the rows that mention the word rank first) is now pinned on words no lane
+consumes - 酒家 and 拉麵 - because for a bucket word the promise became "the pool is the bucket",
+which is the point of the commit.
+
+**The gate** is `tests/test_the_word_that_named_the_category_is_not_a_search_term.py`: 211 legs - every
+( bucket, spelling) pair in `CATEGORY_SYNONYMS` must be read by `match_category` and by
+`category_surfaces` as the same bucket, five sentences where the bucket word leaves and the content
+stays, the bucket that lost (寵物), the user's own simplified spelling (餐厅), the length-preserving
+canonical map the span strip leans on, three plan legs, the inferred category, and five live legs (the
+three filter-answered pages claim no term, the eleven are in score order, and 點心 still carries its
+page). Falsified: with the strip disabled, 5 of the 211 redden, including all three filter-answered
+pages (`tmp/d635_falsify.txt`). With the D628-D634 gates, the search/ranking/understand files and the
+live CJK file: **728 passed**.
+
+- readers: `nlu/lexicon.py:628-657` (`_category_hits`), `:659-668` (`_chosen_category`), `:689-702`
+  (`category_surfaces`); `nlu/understand.py:661-687` (`_strip_surface_spans`), `:690-712` (`match_core`);
+  `search/service.py:451` (`match_text: str | None`), `:645-651` (the plan passes the surfaces), `:1022-1024`
+  (no text when nothing is left); `api/pipeline.py:179-190` (the vector lane reads the match text).

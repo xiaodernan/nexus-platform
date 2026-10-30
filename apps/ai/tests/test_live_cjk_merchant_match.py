@@ -33,13 +33,18 @@ from nexus_ai.search.tokens import cjk_keywords
 
 DB_URL = os.environ.get("NEXUS_TEST_DATABASE_URL", "").strip()
 
-KAFFE = "\u5496\u5561"
+#: D635: 咖啡 is the cafe BUCKET's own spelling (`lexicon.CATEGORY_SYNONYMS['cafe']`), so a query
+#: that writes it is answered by the category filter and the word leaves the match text - this
+#: file's promise (the merchants that mention the word rank above the ones that do not) is about
+#: the words NO lane consumed. 酒家 is carried by 11 merchant NAMES and 3 descriptions and names no
+#: category; 拉麵 by 8 descriptions and none (`tmp/d635_names2.py`).
+TEA = "\u9152\u5bb6"
 RAMEN = "\u62c9\u9eb5"
 
 
 # --------------------------------------------------------------------------- the query
 def test_the_merchant_query_carries_a_containment_lane():
-    q = SQL.build_merchant_query(tenant_id="t", text=KAFFE, embedding=None)
+    q = SQL.build_merchant_query(tenant_id="t", text=TEA, embedding=None)
     assert "strpos(" in q.sql, "the containment lane is missing from the merchant query"
     assert "unnest(" in q.sql
 
@@ -53,12 +58,12 @@ def test_the_containment_lane_is_off_for_an_english_query():
 
 def test_the_lane_binds_its_words_as_a_parameter():
     # Nothing is inlined: the words are bound, so a quote in a query cannot become SQL.
-    q = SQL.build_merchant_query(tenant_id="t", text=KAFFE, embedding=None)
-    assert any(v == [KAFFE] for v in q.params), q.params
+    q = SQL.build_merchant_query(tenant_id="t", text=TEA, embedding=None)
+    assert any(v == [TEA] for v in q.params), q.params
 
 
 def test_a_keyword_query_is_one_word():
-    assert cjk_keywords(KAFFE) == [KAFFE]
+    assert cjk_keywords(TEA) == [TEA]
     assert cjk_keywords(RAMEN) == [RAMEN]
 
 
@@ -92,7 +97,7 @@ async def _merchant_text(slugs: list[str]) -> dict[str, str]:
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("word", [KAFFE, RAMEN])
+@pytest.mark.parametrize("word", [TEA, RAMEN])
 def test_every_served_card_mentions_the_word_the_user_typed(word, live_settings=None):
     if not DB_URL:
         pytest.skip("NEXUS_TEST_DATABASE_URL is not set - live DB test skipped")
@@ -141,19 +146,21 @@ def test_the_english_path_still_answers_with_the_merchants_that_match(live_setti
 
     settings = Settings(llm_provider="mock", embedding_provider="hashing",
                         database_url=DB_URL, internal_token="")
+    # D635: "coffee" is the cafe bucket's Latin spelling, so it is answered by the filter - the
+    # English lane's own evidence is a word no category answers.
     with TestClient(create_app(settings)) as c:
-        r = c.post("/ai/v1/search", json={"query": "coffee", "limit": 8})
+        r = c.post("/ai/v1/search", json={"query": "ramen", "limit": 8})
         assert r.status_code == 200, r.text
         items = r.json().get("items") or []
 
-    assert items, "the corpus holds coffee houses and the English query found none"
+    assert items, "the corpus holds ramen houses and the English query found none"
     slugs = [str(i.get("slug")) for i in items]
     texts = asyncio.run(_merchant_text(slugs))
     # D422: the same ORDER promise as the Chinese case (the lane is a score, not a
-    # filter) - the merchants that mention coffee rank above the ones that do not.
-    mentioning = [s for s in slugs if "coffee" in texts.get(s, "")]
+    # filter) - the merchants that mention ramen rank above the ones that do not.
+    mentioning = [s for s in slugs if "ramen" in texts.get(s, "")]
     if not mentioning:
-        pytest.skip("this corpus carries no merchant whose text mentions coffee")
+        pytest.skip("this corpus carries no merchant whose text mentions ramen")
     worst_mentioning = max(slugs.index(s) for s in mentioning)
     others = [slugs.index(s) for s in slugs if s not in mentioning]
     best_other = min(others) if others else len(slugs)

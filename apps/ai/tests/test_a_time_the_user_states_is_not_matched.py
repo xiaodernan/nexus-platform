@@ -57,7 +57,9 @@ def test_a_word_that_is_content_survives_the_time_strip(text):
 def test_the_plan_keeps_the_time_as_a_filter_and_drops_its_words():
     q = "今晚7點嘅餐廳"
     plan = plan_from_intent(validate_intent(extract_intent_dict(q)), query=q, limit=TOP_K)
-    assert plan.match_text == "餐廳", f"the plan matched {plan.match_text!r}"
+    # D635: the bucket word left with its own filter, so what is left is nothing - the request is
+    # answered by the constraints it named, and no word of it is a search term.
+    assert plan.match_text == "", f"the plan matched {plan.match_text!r}"
     assert plan.filters.get("open_time") is not None, (
         f"the time lane's filter was lost too: {dict(plan.filters or {})} - the strip is for the "
         "MATCH text, not for the constraint")
@@ -121,10 +123,12 @@ def test_no_published_row_carries_a_time_surface(plane):
 
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
 def test_stating_a_time_no_longer_answers_a_different_ten(plane):
-    """Measured 2026-10-30: relevance 0.143 for every row of the time page, now 1.00."""
+    """Measured 2026-10-30: relevance 0.143 for every row of the time page, then 1.00 after
+    D629, and after D635 the page is the filter's own - the bucket word left with the filter, so
+    the two requests are one page, ids and relevance both."""
     got = plane["pages"]["今晚7點嘅餐廳"]
     plain = plane["pages"]["餐廳"]
     assert got["ids"] == plain["ids"], (
         "the time phrase still steers the retrieval: its ten subject ids differ from 「餐廳」's")
-    assert all(r >= 0.9 for r in got["rel"]), f"the page carries no real match: {got['rel']}"
+    assert got["rel"] == plain["rel"], (got["rel"], plain["rel"])
     assert got["total"] == plain["total"] == 184, (got["total"], plain["total"])
