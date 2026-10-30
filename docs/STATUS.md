@@ -29206,17 +29206,20 @@ Arm B is the one that says something about the gate itself: `AvailabilityBrief` 
 loses `fact_id` and `as_of` in silence and the wire still carries the old `source_fact_id`. That is
 why two of the nine rows read the model's own `model_fields` instead of only the payload.
 
-**Thirteen commits landed while the suite ran, and one of them carried this section's text.** The other
-lane shipped D620 through D636 while this unit measured, so the commit this one follows is `dab2c06`, not
-the `2b9d37d` the arms were built from; and because the index of a shared worktree is shared, `dab2c06`
-staged §617 along with its own §633 - the ledger text of this unit reached the repository inside that
-commit, and this commit carries the corrections those sentences needed once its parent moved out from
-under them. `tmp/d619_headcheck.py` compares the two commits path by path over everything the arms judge:
+**Fourteen commits landed while the suite ran, and the branch took this section's text twice without its
+bytes.** The other lane shipped D620 through D637 while this unit measured, so the commit this one follows
+is `3d8c0c6`, not the `2b9d37d` the arms were built from; and because the index of a shared worktree is
+shared, `dab2c06` (D636) carried §617 as it was first written, then `4389090` carried these corrections
+together with this unit's five code files, and the branch was rewound past it - `git reflog` names the
+`reset: moving to HEAD~1` between `4389090` and `3d8c0c6` - so the re-commit kept the ledger and dropped
+the product. This commit is the dropped half. `tmp/d619_headcheck.py` compares the two commits path by
+path over everything the arms judge:
 `contract.py`, `search/cards.py`, `search/sql.py`, the three door files, `test_candidates_from_rows.py`,
 `infra/config/ranking_weights.yaml`, the three `packages/types/src/schemas` documents and both
 `packages/types/scripts` validators are identical bytes at both commits; `search/service.py` and
-`search/ranking.py` are not - which is the request path, not the builder. So the census and the doors were
-re-run on the current commit's bytes, and they read the same on `dab2c06` as on `28303aa`: the planes serve
+`search/ranking.py` are not - which is the request path, not the builder. The census and the doors were
+then re-run on every commit the branch became under this unit, and they read the same on `28303aa`,
+`dab2c06` and `3d8c0c6`: the planes serve
 the same 41 cards (5 demo, 36 live), **41 of 41 offend and all 4 shapes offend with 2 issues each**
 without this unit's two source files, **0 of 41 and 0 of 4** with them, and the 35 rows spanning the new
 door, the two re-aimed doors and `test_candidates_from_rows.py` pass. A rebuilt tree has to carry `docs/`:

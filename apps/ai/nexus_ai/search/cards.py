@@ -29,6 +29,15 @@ from nexus_ai.search.ranking import Candidate, Scored
 from nexus_ai.trust.facts import FactBundle, SOURCE_RANK, resolve_conflicts, stable_fact_id
 from nexus_ai.trust.freshness import stale_copy
 
+#: the contract's word for the status the ranking lane reports. `AvailabilityInfo.status` is an enum
+#: of four words and `full` is not one of them, while the seats being gone is exactly what
+#: `unavailable` means; an unrecognised word answers `unknown`, because the card may not claim a
+#: slot it did not read.
+CONTRACT_AVAILABILITY_STATUS: dict[str | None, str] = {
+    None: "unknown", "available": "available", "limited": "limited",
+    "full": "unavailable", "unavailable": "unavailable", "unknown": "unknown",
+}
+
 #: reason label -> per-locale copy template. `{}` slots are filled from grounded values.
 REASON_COPY: dict[str, dict[str, str]] = {
     "matches_query": {"zh-HK": "符合「{q}」", "zh-CN": "符合「{q}」", "en": "matches “{q}”"},
@@ -296,12 +305,17 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
                                           fact_id=(anchor.fact_id if anchor else None)))
 
     image = _image_of(rec)
-    # D423: the contract's OpenState and AvailabilityBrief both carry a `source_fact_id`
-    # - the trust primitive (§4/§19: any AI-stated fact cites one of these) - and the
-    # card's construction FILTERED the keys it passed, so the field was always null
+    # D423: the card's open state and its availability brief each cite the fact they were
+    # computed from - the trust primitive (§4/§19: any AI-stated fact cites one of these) -
+    # and the card's construction FILTERED the keys it passed, so the field was always null
     # while the card carried the very fact it names in its own `facts` list. The same
     # filter dropped `opens_at` and `closes_at`, so a card that said "Open until 18:00"
     # never said when it closed. Both are filled from the facts the card already has.
+    # D619 corrects one clause of this note: the two objects do NOT share the pointer's name.
+    # `CardOpeningState` carries `source_fact_id`; the object `EntityCard.availability` points at
+    # is `AvailabilityInfo`, whose properties do not include it and which names the same pointer
+    # `fact_id` - so the key D428 added to the availability brief was a property the published
+    # object refuses, on every card the lane has ever sent.
     # The `opens_at` / `closes_at` that compute_open produces are TIME strings ("18:00")
     # while the contract declares them as datetimes - that disagreement is filed, and it
     # is why only the fields the two shapes agree on are passed through.
@@ -310,12 +324,27 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
     open_fact = computed.get("open_state")
     if open_fact is not None:
         open_fields["source_fact_id"] = open_fact.fact_id
-    availability_fields: dict[str, Any] = {k: (availability or {}).get(k)
-                                          for k in ("status", "next_slot")
-                                          if (availability or {}).get(k) is not None}
+    # D619: `status` is a required enum, not an optional echo of the lane's row - a card that
+    # asked the pool for a slot and got none says `unknown`, which AGENT_CONTRACT §5 and
+    # DECISIONS D6 make a legal answer precisely so it does not have to fabricate a slot. The
+    # `is not None` filter this replaces dropped the key instead, so 41 of the 41 cards measured
+    # by `tmp/d619_dump_cards.py` sent `status: null` and matched neither branch of the block's
+    # `oneOf`. `full` is the ranking lane's word (service.py:810) and is off the enum; the
+    # contract's word for a slot with no seats left is `unavailable`. `as_of` is mandatory for a
+    # bookable word - the freshness table puts availability's TTL at 0 - and the stamp is the
+    # row clock the candidate already carries, not a new claim.
+    lane_slot = (availability or {}).get("next_slot")
+    contract_status = CONTRACT_AVAILABILITY_STATUS.get((availability or {}).get("status"), "unknown")
+    # `available` and `limited` are bookable claims and the contract's rule refuses either without
+    # an instant behind it (DECISIONS D6: never fabricate a slot), so a word the lane could not
+    # stamp with a moment is reported as `unknown` - the fourth word, and the one that asks nothing.
+    if contract_status in ("available", "limited") and lane_slot is None:
+        contract_status = "unknown"
+    availability_fields: dict[str, Any] = {"status": contract_status, "next_slot": lane_slot}
     availability_fact = computed.get("availability")
     if availability_fact is not None:
-        availability_fields["source_fact_id"] = availability_fact.fact_id
+        availability_fields["fact_id"] = availability_fact.fact_id
+        availability_fields["as_of"] = (cand.raw or {}).get("as_of")
     return EntityCard(
         card_type=card_type, id=subject_uuid, slug=str(rec.get("slug") or sid),
         title=title, subtitle=_subtitle(rec, cand, card_type),

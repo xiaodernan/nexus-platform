@@ -106,10 +106,13 @@ class OpenState(BaseModel):
 
 
 class AvailabilityBrief(BaseModel):
+    # the key names are `fact.json#/$defs/AvailabilityInfo`'s, which forbids anything else:
+    # the citation is `fact_id` there, not `OpenState`'s `source_fact_id`.
     model_config = ConfigDict(extra="ignore")
     status: Optional[str] = None
     next_slot: Optional[datetime] = None
-    source_fact_id: Optional[UUID] = None
+    as_of: Optional[datetime] = None
+    fact_id: Optional[UUID] = None
 
 
 class CardAction(_Strict):

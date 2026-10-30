@@ -32,7 +32,12 @@ DECLARED_EXTRAS: dict[str, tuple[str, ...]] = {
     # the trust primitive (§4/§19: any AI-stated fact cites one of these) - the D423 unit
     "rating": ("fact_id",),
     "distance": ("fact_id",),
-    "availability": ("source_fact_id",),
+    # D619: the availability block §2 writes in prose is `{status, next_slot}`, while the
+    # published JSON object (`packages/types/src/schemas/fact.json#/$defs/AvailabilityInfo`)
+    # also names `fact_id` and `as_of`. The card sends those two - and no longer the
+    # `source_fact_id` this gate used to declare, which is a key of the OPEN block only.
+    # §2's prose naming neither is filed; the JSON is the machine-checked half of the contract.
+    "availability": ("as_of", "fact_id"),
     # the flag §2 names in prose ("estimated_price on offering cards") - D472, and the
     # flag that says a fact is DISPUTED (§4: a conflict creates a `trust_signals` row
     # rather than silently picking) - D497. §2 says a new flag name belongs in §2 -

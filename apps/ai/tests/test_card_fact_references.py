@@ -9,6 +9,13 @@ one, so it was null as well.
 These cases pin the reference: the card's open state and its availability brief point at the
 facts the card already carries, so a reader can trace every rendered number back to its
 source.
+
+D619 corrected the NAME this file used for the availability brief's pointer. The two objects do
+not share one: `EntityCard.open` points at `CardOpeningState`, which carries `source_fact_id`,
+while `EntityCard.availability` points at `fact.json#/$defs/AvailabilityInfo`, whose properties
+do not include it and which names the same pointer `fact_id`. The brief's field was therefore a
+key the published block refuses, on every card the lane sent - see
+`tmp/d619_avail_census.py` and `tmp/d619_validate.mjs`. The claim of these cases did not change.
 """
 
 from __future__ import annotations
@@ -34,7 +41,7 @@ def _card(open_state: dict | None, availability: dict | None):
     bundle = FactBundle()
     cand = _candidate()
     cand.raw = {"row": {"slug": "s-1", "display_name": "A Bistro", "category_primary": "restaurant"},
-                "text_matched": True}
+                "text_matched": True, "as_of": NOW}
     return build_card(cand, Scored(candidate=cand, score=0.9, organic_score=0.9, breakdown={}),
                       bundle, locale="zh-HK", open_state=open_state, availability=availability,
                       query="bistro")
@@ -54,11 +61,13 @@ def test_the_availability_brief_names_its_fact():
     card = _card({"is_open": True, "text": "Open", "as_of": NOW.isoformat()},
                  {"status": "available", "next_slot": NOW.isoformat()})
     assert card.availability is not None
-    assert card.availability.source_fact_id is not None, (
+    assert card.availability.fact_id is not None, (
         "the availability brief does not name the fact it came from")
     facts = {f.attribute: f for f in (card.facts or [])}
     assert facts.get("availability") is not None
-    assert str(card.availability.source_fact_id) == str(facts["availability"].fact_id)
+    assert str(card.availability.fact_id) == str(facts["availability"].fact_id)
+    assert "source_fact_id" not in card.availability.model_dump(), (
+        "the brief carries a key AvailabilityInfo does not have")
 
 
 def test_a_card_with_no_open_state_still_builds():
