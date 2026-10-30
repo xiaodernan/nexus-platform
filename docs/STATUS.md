@@ -28912,3 +28912,47 @@ residue pass disabled and the old strip order, 9 of the 24 redden, including the
 
 - readers: `nlu/understand.py:129-140` (`PARTY_SPAN_RE`, the range alternative first), `:637-645`
   (`_MATCH_CORE_RESIDUE`), `:647-649` (`_MATCH_CORE_RES`, the party span first) and `:655-672` (`match_core`).
+
+## 631. D634 · the time strip undid six of the twenty-five spellings the time lane reads (`apps/ai/nexus_ai/nlu/timeparse.py`, `apps/ai/nexus_ai/nlu/understand.py`)
+
+**A hand list beside a table drifts.** D629 took the clock out of the match text and left `TIME_SPAN_RE`
+to undo everything else by hand. `PART_OF_DAY` writes 25 CJK spellings (22 words) and the date tables
+write 14 Latin ones; the hand list read six of the CJK spellings (今晚, 朝早, 下午, 中午, 晚上, 夜晚) and
+none of the Latin. So 19 spellings - 16 words: 早上, 上午, 清晨, 早晨, 正午, 午市, 下晝, 午後, 傍晚,
+黃昏/黄昏, 晚間/晚间, 晚黑, 夜間/夜间, 深夜, 宵夜, 今夜 - reached the keyword lane as search terms.
+
+**None of them can find anything** (`tmp/d634_carriers.txt`, 470 published rows, name + description + tags):
+22 of the 22 CJK words appear in **0** rows. The one that does is 午市 (115 rows - its own lunch set),
+which is the shape D630 already met from the other side. And a term no row carries does not filter, it
+DIVIDES: 「深夜嘅餐廳」 scored exactly **0.25** on all ten cards and every one printed 符合「深夜嘅餐廳」
+(`tmp/d634_cards.txt`) - a claim no row can meet, on the page the user is reading.
+
+**The span is now built from the lane's own tables** (`timeparse.cue_alternation()`): `PART_OF_DAY`, the
+six date tables, `WEEKDAY_TOKENS` and the clock, longest spelling first so a short cue cannot shadow a
+long one, a Latin cue carrying its word boundaries (§D478). The category guard D630 measured is
+regenerated from `_guarded_cues()` rather than written by hand, so 下午 in 下午茶 is still not a time.
+The gate walks the tables, so a cue the lane learns is stripped the day it is written (§D438).
+
+**Measured after** (`tmp/d634_after.txt`): 「深夜嘅餐廳」, 「下晝嘅餐廳」 and 「宵夜嘅餐廳」 answer ten cards
+at relevance 1.00 where they answered 0.25 flat, 「週末嘅餐廳」 stops carrying 週末, and on the keyword lane
+「深夜嘅餐廳」 and 「餐廳」 now score the 46 rows they share IDENTICALLY (0 differing, against 38 of 46
+before - `tmp/d634_falsify.txt`).
+
+**Not claimed.** 午市 IS carried by 115 rows and the strip takes it anyway: the hour is the filter, 套餐 is
+the noun that stays (「午市套餐」 reaches the lane as 套餐), and the page for 「午市嘅餐廳」 is the noon pool.
+English filler survives ("restaurants open in the evening" keeps `restaurants open in the`). And the page
+STILL splits where the word is the CATEGORY: 「週末嘅餐廳」 shows 1.00, 1.00, 1.00, 0.068, 0.00 ... because
+餐廳 is matched as text against rows the category filter already chose - the next unit.
+
+**The gate** is `tests/test_every_cue_the_time_lane_reads_leaves_the_match_text.py`: 250 legs - every
+`PART_OF_DAY` spelling (25 CJK + 14 Latin) and every date table's spelling must leave 「餐廳」, the span
+must read each cue at position 0, a census leg that walks the module's own `*_TOKENS` tables, four
+words that must survive (下午茶 twice, 下午3點去食下午茶, 點心餐廳), two for the set a cue opens, the plan
+leg, and two live legs (22 of 22 words in 0 rows with 午市 named, and the shared-row equality above).
+Falsified: with the hand list restored, 19 of the 25 CJK legs redden and the live leg reports 0.25 flat
+and 38 of 46 shared rows differing (`tmp/d634_falsify.txt`). With the D628-D633 gates and the parser
+files: **385 passed**.
+
+- readers: `nlu/timeparse.py:174-176` (`_STRIP_TABLES`), `:178-184` (`_strip_cues`), `:187-208`
+  (`cue_alternation`, the generated guard); `nlu/understand.py:120-135` (`_TIME_CUE` and `TIME_SPAN_RE`),
+  `:661-679` (`match_core`).

@@ -45,7 +45,7 @@ from nexus_ai.nlu.polarity import (
     forward_gap,
     negation_positions,
 )
-from nexus_ai.nlu.timeparse import HK_TZ, parse_time
+from nexus_ai.nlu.timeparse import HK_TZ, cue_alternation, parse_time
 
 # --------------------------------------------------------------------------- patterns
 BUDGET_MAX_RE = re.compile(
@@ -117,13 +117,19 @@ CURRENCY_AMOUNT_RE = re.compile(
 #: D629: the span a time occupies. Unlike the price and the party, a cue word CAN be content
 #: (下午 in 下午茶), so this one is only applied when the time lane actually parsed a time
 #: (`match_core(..., strip_time=True)`), not unconditionally.
+#: D634: and the cue words are the LANE's own table, not a list written beside it. This one
+#: held eight CJK spellings out of the 23 `PART_OF_DAY` writes, so 「深夜嘅餐廳」 kept 深夜 in the match text
+#: (measured 2026-10-30: 0 of the 470 published rows carry it, `tmp/d634_carriers.txt`) and
+#: all ten cards printed 符合「深夜嘅餐廳」 - a match no row can have. The whole table is
+#: written by `timeparse.cue_alternation()`: the parts of the day, the days, the weekdays
+#: and the clock, so a cue the lane learns is stripped the day it is written (§D438).
+_TIME_CUE = cue_alternation()
 TIME_SPAN_RE = re.compile(
-    r"(?:\u4eca\u665a|\u660e\u665a|\u5f8c\u665a|\u807d\u65e5|\u660e\u5929|\u660e\u65e5|\u4eca\u65e5|\u4eca\u5929|\u671d\u65e9|\u65e9\u6668|\u664f\u665d|\u4e0b\u5348(?!\u8336)|\u4e2d\u5348|\u665a\u4e0a|\u591c\u665a|\u591c\u5bb5)?\s*"
-    r"\d{1,2}\s*(?:\u9ede|\u70b9|\u6642|\u65f6)(?:\s*\d{1,2}\s*\u5206)?"
+    rf"(?:{_TIME_CUE})?\s*"
+    r"\d{1,2}\s*(?:點|点|時|时)(?:\s*\d{1,2}\s*分)?"
     r"|\d{1,2}:\d{2}"
     r"|\d{1,2}\s*(?:am|pm)\b"
-    r"|(?:\u4eca\u665a|\u660e\u665a|\u5f8c\u665a|\u807d\u65e5|\u660e\u5929|\u660e\u65e5|\u671d\u65e9|\u664f\u665d|\u4e0b\u5348(?!\u8336)|\u4e2d\u5348|\u665a\u4e0a|\u591c\u665a)"
-    r"|(?:\u661f\u671f|\u79ae\u62dc|\u793c\u62dc)[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u65e5\u5929]",
+    rf"|{_TIME_CUE}",
     re.IGNORECASE,
 )
 PARTY_SPAN_RE = re.compile(

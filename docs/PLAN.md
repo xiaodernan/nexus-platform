@@ -2076,6 +2076,14 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   so a strip there is not free and needs its own measurement. And the vector lane - `api/pipeline.py:179-185`
   still embeds the WHOLE sentence, so the two lanes read different texts and nothing says that is
   right. Owner: the AI lane.
+- **The CATEGORY word is matched as text against the rows the category filter already chose, and it
+  is the last divider D634 left.** The price, the party and the time are out of the match text
+  (§625-§631); what remains is the word that names the bucket. 「餐廳」 is BOTH the filter that
+  selects 184 rows and a keyword, so 「7點嘅餐廳」 scores the two rows that write 餐廳 in their
+  description 1.00 and the other eight 0.00 or 0.069, on an 11-row pool (`tmp/d634_zero_rel.txt`);
+  「週末嘅餐廳」 splits a 14-row pool the same way. relevance carries 0.34 of the score - the
+  largest weight in `ranking_weights.yaml` - so a third of the page's order is decided by whether a
+  merchant wrote the name of its own category. Owner: the AI lane.
 
 - **「下午茶餐廳」 was read as a 14:00 TIME and as the cafe category at once - closed by D630** (§627).
   下午茶 is a noun - the afternoon-tea category - and the time lane read the 下午 inside it because a CJK

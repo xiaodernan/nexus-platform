@@ -166,6 +166,57 @@ def _reads_as_a_time(cue: str, text: str, low: str) -> bool:
     return any(p not in swallowed for p in positions)
 
 
+#: D634: the tables whose spellings the DATE lane reads and the strip in
+#: `understand.match_core` has to undo. `PART_OF_DAY` holds a part of the day, the other
+#: six hold a day: today, tonight, tomorrow, the day after, next week, the weekend. The
+#: clock and the weekday are grammar, not vocabulary, and `cue_alternation` writes them
+#: for the same reason.
+_STRIP_TABLES = (TODAY_TOKENS, TONIGHT_TOKENS, TOMORROW_TOKENS, AFTER_TOMORROW_TOKENS,
+                 NEXT_WEEK_TOKENS, WEEKEND_TOKENS)
+
+
+def _strip_cues() -> list[str]:
+    """Every spelling the lane reads, longest first so a short cue cannot shadow a long one."""
+    tokens = {t for _label, spellings, _start, _end in PART_OF_DAY for t in spellings}
+    for table in _STRIP_TABLES:
+        tokens.update(table)
+    tokens.update(WEEKDAY_TOKENS)
+    return sorted(tokens, key=lambda t: (-len(t), t))
+
+
+def cue_alternation() -> str:
+    """Regex source: any cue the date lane reads, in one alternative.
+
+    D634: `understand.TIME_SPAN_RE` undoes this lane, and it was a hand-written list of
+    eight CJK cues - 15 of the 23 `PART_OF_DAY` spellings and every date word outside
+    今晚/明晚/後晚/聽日/明天/明日/朝早/晏晝/下午/中午/晚上/夜晚 were missing, so 「深夜嘅餐廳」
+    kept 深夜 in the match text and printed 符合「深夜嘅餐廳」 on ten cards while 0 of the
+    470 published rows carry the word. A list beside a table is the thing that drifts
+    (§D438); this one is built FROM the table, so a cue added to the lane is stripped the
+    day it is written and the gate that walks the table reddens if this module and the
+    strip fall out of step again.
+
+    A Latin cue is a WORD (§D478) and carries its boundaries here too; a CJK cue has none.
+    A cue that opens a longer word which NAMES a category is guarded from the category
+    table's own surfaces (§D630), so 下午 in 下午茶 is not read as 14:00 and is not
+    stripped from a sentence that names the category.
+    """
+    guards = _guarded_cues()
+    parts: list[str] = []
+    for cue in _strip_cues():
+        longer = guards.get(cue)
+        guard = ""
+        if longer:
+            tails = "|".join(re.escape(s[len(cue):].lstrip()) for s in longer)
+            guard = rf"(?!\s*(?:{tails}))"
+        body = re.escape(cue)
+        if cue.isascii():
+            parts.append(rf"(?<![a-z]){body}{guard}(?![a-z])")
+        else:
+            parts.append(f"{body}{guard}")
+    return "(?:" + "|".join(parts) + ")"
+
+
 def clock_match(text: str) -> re.Match[str] | None:
     """The clock in a text, with the Chinese numerals read as digits.
 
