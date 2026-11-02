@@ -29169,6 +29169,44 @@ suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
 
 - readers: `nlu/lexicon.py:783-810` (`leaf_surfaces`), `:743-780` (`match_leaf`, the head rule that
   chooses the leaf); `search/service.py:497-517` (`_apply_category_leaf`), `:681-694` (the recompute).
+## 647. D650 · the question a user wraps a request in was searched as content
+(`apps/ai/nexus_ai/nlu/understand.py`)
+
+**How the unit arrived.** Every strip in this lane so far removed a word some lane had ANSWERED - a price,
+a party, a clock, a category, a district. A Cantonese request also carries a frame that no lane answers at
+all (「有冇…」, 「邊間…」, 「推介…」), and it was left in the match text by default, where a term nobody can
+meet does not find anything: it divides every row's score by itself.
+
+**Measured** (`tmp/d650_census2.py`, `tmp/d650_page.py`): **0 of the 470 published rows** carry 有冇,
+有沒有, 有咩, 邊間, 哪間, 邊度, 哪裡, 邊個, 邊區, 推介 or 推薦 anywhere in name, description or tags, and
+
+    咖啡店         match text ""       every card relevance 0.000
+    有冇咖啡店     match text "有冇"   every card relevance 0.100, different page order
+    邊間咖啡店好   match text "邊間 好"
+
+**The repair** is `_QUESTION_FRAME`, applied where the other consumed cues are (`_match_core`). It is
+deliberately narrow, and the exclusions are measured rather than stylistic: 好 is a preference the ranker
+reads (「邊間咖啡店好」 keeps `好`); 附近 is a location a lane should answer, so stripping it would delete
+the request's geography; 有 is a verb that opens content words (有機 is organic); 安靜 is a preference that
+IS content (「有冇安靜嘅咖啡店」 keeps `安靜`); 搵 and 找 are verbs.
+
+**Measured after** (`tmp/d650_probe3.py`): all ten framed spellings reach the lane as nothing and keep
+their category filter (cafe/restaurant); 「有冇2人嘅咖啡店」 keeps its party of two; and each framed request
+answers the SAME ten ids, relevance and total as its content alone - 有冇咖啡店, 有沒有咖啡店, 推介咖啡店
+and 有冇推介嘅咖啡店 against 咖啡店 (79 cafes).
+
+**Not claimed.** The leftover verb in 「邊度有咖啡店」 (`有`) is still content and still the keyword lane's;
+the same for 附近. Both are filed as their own items, not folded into this strip because each can be
+answered by a lane (a location lane, a preference lane) rather than deleted.
+
+**The gate** is `tests/test_a_question_frame_is_not_a_search_term.py`: 21 legs - ten frame strips, two
+category legs, four survival legs (好 / 附近 / 有 / 安靜), a party leg, a live carrier census over the same
+eleven words, and four live page pairs. Falsified by deleting the `_QUESTION_FRAME.sub` line: **18 red,
+3 green** (`tmp/d650_falsify.txt`). With search-plan, lexicon, time, category, shop and budget suites:
+**209 passed**.
+
+- readers: `nlu/understand.py:811-819` (`_QUESTION_FRAME`), `:899` (the strip in `_match_core`).
+
 ## 646. D649 · a party range was read as a price band when a budget cue sat in front of it
 (`apps/ai/nexus_ai/nlu/understand.py`)
 

@@ -2165,6 +2165,11 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   knew only single clocks. A range is now one span read at its UPPER end, the same rule D643 gave a
   party and D624 money. Still open: 「open until 6pm」 reaches the lane as `open until` and 「24小時
   4-6pm」 as `24小時`. Owner: the AI lane.
+- **The question frame was searched as content - closed by D650** (§647). 「有冇咖啡店」 reached the lane
+  as `有冇` and every card's relevance was divided (0.100 against 0.000 for 「咖啡店」) while 0 of the 470
+  published rows carry the word. The frame is now stripped where the other consumed cues are, and a framed
+  request answers its content's page. Deliberately still content: 好 (a preference), 附近 (a location a lane
+  should answer), 有 (a verb that opens 有機), 安靜 (a preference). Owner: the AI lane.
 - **A party range read as a price band - closed by D649** (§646). 「最多10-20人」 answered party 20 AND a
   HK$10-20 band, because the RANGE rule only asked for a currency token or a budget cue in front, and 最多
   is both. Guards now refuse the band when a party counter follows, and refuse the CEILING amount when a

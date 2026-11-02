@@ -808,6 +808,16 @@ _MATCH_CORE_RES = (PARTY_SPAN_RE, BUDGET_RANGE_RE, SPEND_CEILING_RE, SPEND_FLOOR
                    BUDGET_FLOOR_CUE_RE, BUDGET_MIN_RE, CURRENCY_AMOUNT_RE)
 _MATCH_CORE_CUES = re.compile(r"(?:預算|预算|budget|人均|每人|每位|人頭|per\s?person|p/p)",
                               re.IGNORECASE)
+#: D650: the interrogative FRAME a user wraps a request in - 「有冇咖啡店」, 「邊間咖啡店好」,
+#: 「推介咖啡店」. These words name nothing a merchant can be, and the corpus says so: measured
+#: 2026-11-02 (`tmp/d650_census2.py`) 0 of the 470 published rows carry 有冇, 有沒有, 有咩, 邊間,
+#: 哪間, 邊度, 哪裡, 邊個, 邊區, 推介 or 推薦 anywhere in name, description or tags. Left in the
+#: match text they only divide every row's score: 「有冇咖啡店」 answered relevance 0.1 on every card
+#: against 0.0 for 「咖啡店」, and the page order changed (`tmp/d650_page.py`).
+#: Deliberately NOT here: 好 (a preference the ranker reads), 附近 (a location a lane should answer)
+#: and 搵/找 (verbs) - each is its own item, and each can still be content.
+_QUESTION_FRAME = re.compile(r"(?:有冇|有沒有|有咩|邊間|哪間|邊度|哪裡|邊個|邊區|推介|推薦)",
+                             re.IGNORECASE)
 _MATCH_CORE_EDGES = re.compile(r"^[\s嘅的，,、。?？]+|[\s嘅的，,、。?？]+$")
 
 
@@ -886,6 +896,7 @@ def match_core(text: str, *, strip_time: bool = False,
     for rx in _MATCH_CORE_RESIDUE:
         t = rx.sub(" ", t)
     t = _MATCH_CORE_CUES.sub(" ", t)
+    t = _QUESTION_FRAME.sub(" ", t)
     t = _MATCH_CORE_EDGES.sub("", re.sub(r"\s+", " ", t).strip())
     return t.strip()
 
