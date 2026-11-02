@@ -37,10 +37,15 @@ async def _run(plan, backend=None, **kw):
 
 
 class TestTextFiltering:
-    async def test_text_match_returns_only_matching_merchant(self):
+    async def test_text_ranks_the_matching_merchant_it_does_not_remove_the_others(self):
+        # D658: text is a score on BOTH lanes - `build_merchant_query` has no text predicate in its
+        # WHERE at all (`sql.py:423`), so a live request for ramen answers the whole pool with the
+        # ramen rows first. This lane answered only the ramen row, which is why 「安靜」+cafe came
+        # back empty here against 10 live rows (`tmp/d658_gap.py`).
         cards, resp, _, scored = await _run(S.SearchPlan(query_text="ramen", limit=10))
-        assert len(scored) == 1
-        assert cards[0].title == "Ramen House"
+        assert len(scored) == 2
+        assert cards[0].title == "Ramen House"          # the row that mentions it ranks first
+        assert scored[0].candidate.relevance > scored[1].candidate.relevance
 
     async def test_no_text_returns_all_organic(self):
         cards, resp, _, scored = await _run(S.SearchPlan(limit=10))

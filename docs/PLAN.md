@@ -3195,12 +3195,26 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   Gate `test_a_locative_frame_is_not_a_search_term.py`, 16 legs, 15 red on HEAD. Owner: the NLU lane - and
   D650's disclosure leg lost its 附近 / 有 rows to this unit, which is the list draining as designed.
 
-- **「附近有咩好推介」 reads `好`, and the fixture lane still answers an empty page when the text matches
-  nothing.** Two residues one step out from D657. 好 is an EVALUATION word: it survives every frame strip,
-  is 0 rows of content, and makes `_filter_static` drop the whole pool - it needs its own census (好味 and
-  好食 are content, so a bare 好 cannot be stripped by the same rule). Separately, when the match text matches
-  NOTHING at all the two lanes disagree about the PAGE while agreeing about the pool: `xyzzy` + category cafe
-  gives `total_estimate` 79 on both sides, 10 rows live and 0 rows on the fixture (`tmp/d657_nomatch.py`) -
-  the live WHERE ORs its keyword leg with the bucket legs, the fixture's hit test is a hard `continue`. That
-  is the D488 shape on the keyword leg and needs a gate of its own. Owner: the NLU lane for 好, the search
-  lane for the keyword leg.
+- **The query text was a WHERE on the fixture lane - closed by D658 (§655).** `build_merchant_query` has no
+  text predicate in its WHERE at all: the words reach `kw_score` and `text_matched` and nothing else
+  (`sql.py:329-344`, `:423`), so a live request whose words match nothing answers the whole filtered pool
+  ordered by quality. `_filter_static` dropped every row that mentioned none of them. Measured on the
+  published plane (`tmp/d658_gap.py`), page / total: 「安靜」+cafe 0/79 here against 10/79 live, 「海景」
+  0/184 against 10/184, 「寵物友善」 0/10 against 10/10, 「素食」 3/184 against 10/184, and a word the corpus
+  does not hold (`xyzzy`, no filter) 0/0 against 10/470. D615's category exception is generalised: every row
+  the HARD filters keep is an answer, ranked by how well its words match. `text_matched` moved with it - it
+  was `bool(low)` (true on every row of a texted request) and is now the per-row hit, which is what
+  `_has_query_signal` needs to tell an irrelevant match from a non-match. Two gates encoded the veto and were
+  re-aimed rather than deleted: `test_search_pipeline.py`'s text leg now asserts the ramen row ranks FIRST
+  and both rows answer, and the `+vector` strategy leg now removes its row with a district because text
+  removes nothing. Gate `test_text_is_a_score_on_both_lanes.py`, 8 legs, 7 red on HEAD. Owner: the search
+  lane - and the next thing this leaves visible is that the two lanes still ORDER differently (next bullet).
+
+- **「附近有咩好推介」 reads `好`, and the two lanes still order a page differently.** Two residues one step out from D657. 好 is an EVALUATION word: it survives every frame strip,
+  is 0 rows of content, and makes the fixture lane answer its whole pool with every relevance 0 - it needs its
+  own census (好味 and 好食 are content, so a bare 好 cannot be stripped by the same rule). Owner: the NLU lane.
+  The ORDER is a separate open item, now that D658 made the page SIZE the same: `same_order` was false for all
+  eight queries censused in `tmp/d658_gap.py` before and after, because the live lane orders in SQL on
+  `kw_score` (then rating, then id) while the fixture lane ranks in Python with the full weight vector. Which
+  order is the product's is a decision, not a drift to paper over - a gate here would pin whichever lane
+  happened to be written first. Owner: the ranking/search lane, with its own census of the two sequences.

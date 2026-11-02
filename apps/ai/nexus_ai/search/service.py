@@ -256,14 +256,24 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
             stated = (r.get("category_primary"), r.get("category"))
             in_bucket = (bool(row_slugs & slugs) if row_slugs
                          else bucket in stated)
+        # D658: text is a SCORE on both lanes, never a WHERE. `build_merchant_query` puts no text
+        # predicate in its WHERE at all - the words reach only `kw_score` and the `text_matched`
+        # flag (`sql.py:329-344`, `:423`) - while this lane dropped every row with no keyword hit.
+        # Measured on the published plane (`tmp/d658_gap.py`): 「安靜」+cafe answered 0 of 79 rows
+        # here against 10 live, 「海景」+restaurant 0 of 184 against 10, 「寵物友善」 0 of 10 against
+        # 10, and a word the corpus does not hold (`xyzzy`) 0 rows and total 0 here against 10 rows
+        # and total 470. D615 made the CATEGORY an exception to that veto; this removes the veto
+        # instead, because the live lane has no exception to make - every row the HARD filters keep
+        # is an answer, ranked by how well its words match. The category leg below stays: it IS a
+        # WHERE (`sql.py:449-453`), and in_bucket is what reads it.
         score = 0.0
+        matched = False
         if low:
             tokens = _static_tokens(low)
             hits = sum(1 for t in tokens if t in hay)
             name_hit = any(t in str(r.get("display_name") or "").lower()
                            or t in str(r.get("name") or "").lower() for t in tokens)
-            if hits == 0 and not name_hit and not in_bucket:
-                continue
+            matched = bool(hits or name_hit)
             score = min(1.0, 0.25 * hits + (0.4 if name_hit else 0.0))
         if bucket and not in_bucket:
             continue
@@ -341,7 +351,11 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
                 continue
         r["kw_score"] = max(float(r.get("kw_score") or 0.0), score)
         r.setdefault("vec_score", 0.0)
-        r.setdefault("text_matched", bool(low))
+        # D658: the flag means "this row mentions the text", which is what the live SELECT's own
+        # `text_matched` is (`sql.py:337-344`) and what `_has_query_signal` reads to tell an
+        # irrelevant MATCH from a non-match. It was `bool(low)` - true on every row of a texted
+        # request - so the floor judged rows by keyword score alone and a no-hit row looked matched.
+        r.setdefault("text_matched", matched)
         r.setdefault("subject_type", "merchant" if r.get("display_name") else "offering")
         out.append(r)
     return out

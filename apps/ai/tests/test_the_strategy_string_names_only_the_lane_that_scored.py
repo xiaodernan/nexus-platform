@@ -50,10 +50,11 @@ def _rows(*vec_scores: float | None) -> list[dict]:
     return out
 
 
-async def _strategy(rows: list[dict], *, vector_lane: bool, query: str = "") -> str:
+async def _strategy(rows: list[dict], *, vector_lane: bool, query: str = "",
+                    filters: dict | None = None) -> str:
     backend = S.StaticBackend(merchants=rows)
     _cards, resp, _bundle, _scored = await S.search(
-        backend=backend, plan=S.SearchPlan(query_text=query, limit=10),
+        backend=backend, plan=S.SearchPlan(query_text=query, filters=filters or {}, limit=10),
         vector_lane=vector_lane)
     return resp.strategy
 
@@ -75,10 +76,14 @@ class TestTheSuffixIsEarned:
             f"the strategy {strategy!r} names a vector lane the caller did not ask for")
 
     async def test_the_rows_that_scored_are_the_ranked_ones(self):
-        # m2 owns the non-zero score and the query filters it out; m1 stays at 0.0.
-        strategy = await _strategy(_rows(0.0, 0.62), vector_lane=True, query="ramen")
+        # m2 owns the non-zero score and a HARD filter removes it; m1 stays at 0.0. This leg used
+        # the query text to remove the row until D658 (§655): text is a score on both lanes and
+        # now removes nothing, so the separation it was written for needs a filter that still does
+        # - a district, which is a WHERE (`sql.py:228-231`) on both lanes.
+        strategy = await _strategy(_rows(0.0, 0.62), vector_lane=True,
+                                   filters={"district": "Sha Tin"})
         assert not strategy.endswith("+vector"), (
-            f"the strategy {strategy!r} counted a row the query did not rank")
+            f"the strategy {strategy!r} counted a row the filter did not rank")
 
     async def test_a_missing_attribute_is_not_a_score(self):
         strategy = await _strategy(_rows(None, None), vector_lane=True)

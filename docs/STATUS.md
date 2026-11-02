@@ -30567,3 +30567,63 @@ its own.
   unit's gate, and `tmp/d657_residue.py`, `tmp/d657_census.py`, `tmp/d657_pool.py`, `tmp/d657_keep.py`,
   `tmp/d657_falsify.txt`, `tmp/d657_nomatch.py` (the measurements).
 
+## 655. D658 · the query text was a WHERE on the degraded lane and a score on the live one (`apps/ai/nexus_ai/search/service.py`)
+
+**The live lane has no text predicate at all, and the fixture lane had one.** In `build_merchant_query` the
+words reach `kw_score` (`sql.py:329-338`) and the `text_matched` flag (`:337-344`) and nothing else: the WHERE
+(`:423`) is composed of the HARD filters alone, so a request whose words match nothing still answers the whole
+filtered pool, ordered by quality. `_filter_static` dropped every row that mentioned none of the words
+(`service.py:265`, `if hits == 0 and not name_hit and not in_bucket: continue`). Measured on the published
+plane, same plan against both lanes (`tmp/d658_gap.py`):
+
+    plan                    fixture (before)   live       fixture (after)
+    安靜 + cafe              0 rows / 79        10 / 79    10 / 79
+    海景 + restaurant       0 rows / 184       10 / 184   10 / 184
+    寵物友善 + pet           0 rows / 10        10 / 10    10 / 10
+    素食 + restaurant       3 rows / 184       10 / 184   10 / 184
+    xyzzy (no filter)       0 rows / 0         10 / 470   10 / 470
+
+The last line is the shape in one row: a word the corpus does not hold answered NOTHING here and 470 rows
+there. This is D615's exception generalised - D615 made the CATEGORY an exception to the veto because
+"the live lane reads text as a score and a `text_matched` flag, never as a WHERE", and the same sentence is
+true of every row, not only the bucket's. The category leg stays where it is (`service.py:277`): that clause
+IS a WHERE on both lanes (`sql.py:449-453`).
+
+**`text_matched` moved with it, and it was wrong in a second way.** The flag means "this row mentions the
+text" on the live SELECT, and `ranking._has_query_signal` reads it to tell an irrelevant MATCH (relevance
+below the floor -> dropped before scoring) from a NON-match (kept, ranked by quality). The fixture lane set
+it to `bool(low)` - true on every row of a texted request - so the floor treated a no-hit row as a match and
+judged it by a keyword score of 0. It is now `matched` per row (`service.py:259-275`, `:354-359`).
+
+**Two gates encoded the old behaviour and were re-aimed, not deleted.** `test_search_pipeline.py`'s
+`TestTextFiltering` asserted "text returns only the matching merchant"; its new name says what the live lane
+does - two answers, the ramen row ranked first. `test_the_strategy_string_names_only_the_lane_that_scored.py`
+had a leg that used the query text to remove a row and then demanded the `+vector` suffix not be earned; text
+removes nothing now, so that leg removes its row with a DISTRICT instead - the separation it was written for
+(ranked rows, not fetched rows) is unchanged and now rests on a clause that is still a WHERE.
+
+**The gate** is `tests/test_text_is_a_score_on_both_lanes.py`, 8 legs: four fixture legs (a no-hit row is
+still an answer, the hit row ranks above it, a word no row holds answers the whole pool with every relevance
+0, and the flag is per row), one leg that a hard filter still removes rows while text removes none, and three
+live legs (fixture == live in BOTH page size and total for 安靜+cafe, 海景+restaurant and xyzzy, with the
+fixture page no longer empty). Falsified against HEAD: **7 red / 1 green** (`tmp/d658_falsify.txt`); the green
+is the hard-filter leg, which was never the defect.
+
+**Adjacent**, run once and green apart from one live leg that timed out under load and passes alone: every
+suite in the tree that drives `StaticBackend` (36 files) plus `test_search_pipeline.py` and
+`test_demo_data.py` - 467 passed, 1 skipped, and, after the two re-aims, 12 passed for the timed-out file.
+`test_an_offering_that_cannot_seat_the_party_is_not_answered_for_it.py` hit the 120 s statement timeout only
+inside the batched run (four live-heavy files in one process) and answers in 9 s alone.
+
+**Not claimed.** (a) The two lanes still ORDER differently: `same_order` was false for all eight censused
+queries before and after, because the live lane orders in SQL on `kw_score` and the fixture lane ranks in
+Python. This unit claims the population and the page SIZE, not the sequence - ordering parity is its own
+unit and needs its own census. (b) `_static_tokens` and `tsquery` do not tokenise alike, so a relevance
+number is not comparable across lanes; only membership is. (c) The relevance floor still drops rows that
+mention the word and score below it - unchanged, and still the ranking lane's rule.
+
+- readers: `search/service.py:259-275` (the score, not the veto), `:277` (the category leg that stays),
+  `:354-359` (the flag), `search/sql.py:329-344` (the live score and flag), `:423` (a WHERE with no text in
+  it), `:449-453` (the category clause that IS one), the two re-aimed gates, this unit's gate, and
+  `tmp/d658_gap.py`, `tmp/d658_falsify.txt` (the measurements).
+
