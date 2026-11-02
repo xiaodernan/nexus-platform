@@ -29169,6 +29169,63 @@ suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
 
 - readers: `nlu/lexicon.py:783-810` (`leaf_surfaces`), `:743-780` (`match_leaf`, the head rule that
   chooses the leaf); `search/service.py:497-517` (`_apply_category_leaf`), `:681-694` (the recompute).
+## 644. D647 · a clock range was read at one end and left a fragment of itself in the match text
+(`apps/ai/nexus_ai/nlu/timeparse.py`, `apps/ai/nexus_ai/nlu/understand.py`)
+
+**How the unit arrived.** §640 (D643) settled which end of a PARTY range is the reading, and D624 did
+the same for money; the clock never got the rule, because `CLOCK_RE` is a `search` and it answers with
+the FIRST clock of the sentence. `TIME_SPAN_RE` knew only single clocks, so the rest of the range had
+nowhere to go.
+
+**Measured before** (`tmp/d646_before.txt`):
+
+    4-6pm          open_time 18:00  match text "4-"
+    4pm-6pm        open_time 16:00  match text "-"            (the FLOOR answered)
+    4 pm - 6 pm    open_time 16:00  match text "-"
+    4點至6點       open_time 04:00  match text "至"
+    from 4 to 6pm  open_time 18:00  match text "from 4 to"
+    6-9pm dinner   open_time 21:00  match text "6- dinner"
+
+Two defects in one sentence, and they disagreed with each other: 「4-6pm」 answered 18:00 while
+「4pm-6pm」 answered 16:00 - the same request read by whichever clock happened to sit first.
+
+**The repair.** `CLOCK_RANGE_RE` names a range (a clock marker - 點/時/am/pm/colon - ends it, so
+「2-4 people」, 「100-200蚊」 and 「4-6」 are not clocks), and `clock_match` returns the SECOND clock: a
+real `CLOCK_RE` match, so the meridiem guess and the early/late cues around the clock keep reading
+the clock itself. `understand._TIME_CLOCK_RANGE` removes the range as ONE span, from the sentence
+(through an optional `from`) to the second clock, and it is still applied only when the time lane
+parsed a time - the D629 guard that keeps 下午 in 下午茶.
+
+**Measured after** (`tmp/d646_after.txt`, `tmp/d646_pairs.txt`): every range spelling answers its upper
+end and reaches the lane as nothing - `4-6pm`, `4pm-6pm`, `4 pm - 6 pm`, `19:30-21:00`,
+`11:30-13:30`, `11-13點`, `下午4-6點`, `下午4點至6點`, `下午4點至6點半` (18:30), `from 4 to 6pm`,
+`星期一4-6pm`. Content survives (`quiet 4-6pm` → `quiet`, `6-9pm dinner` → `dinner`), and each range
+answers the SAME ten ids with the same relevance and the same filters as its upper end alone: `6pm`,
+`下午6點`, `21:00`, and `4點至6點` against `4-6點`.
+
+**A leg re-based on the way, and why.** D629's live leg compared 「今晚7點嘅餐廳」 against 「餐廳」 and
+pinned `total == 184`. It was red at HEAD before this unit touched anything (`tmp/d646_page.py`): the
+weekday-evening filter narrows the pool to 170 rows on this corpus, and 「今晚」 also writes `open_now`,
+so the no-time page can never hold the same rows at any hour - the leg was pinning an availability
+table, not the strip. It now compares two SPELLINGS of one time (「今晚7點嘅餐廳」 vs
+「今晚19:00嘅餐廳」): same ids, same relevance, same total, which is the same claim without a calendar
+in it.
+
+**Not claimed.** 「4-6點」 and 「4點至6點」 carry no meridiem word, so both answer 06:00 - the bare-hour
+convention `4-6點` already used; the two spellings now agree instead of one answering 04:00. 「open
+until 6pm」 still reaches the lane as `open until` and 「24小時 4-6pm」 as `24小時`: a direction cue and
+a constant-hours phrase are their own filed items, not a clock range.
+
+**The gate** is `tests/test_a_clock_range_is_one_span.py`: 54 legs - fourteen upper-end readings, the
+same fourteen strips, four content survivals, three no-meridiem legs, four not-a-clock legs, the
+party/money controls, three single-clock controls, three direction-cue controls, the late-cue leg, a
+range-and-party sentence, and six live pairs. Falsified by restoring HEAD's two files: **33 red, 33
+green** (`tmp` run, this section). With the time suites, the D629/D645/D643 gates and the open-time
+binding: **662 passed**.
+
+- readers: `nlu/timeparse.py:83-90` (`CLOCK_RANGE_RE`), `:234-252` (`clock_match`),
+  `nlu/understand.py:162-169` (`_TIME_CLOCK_RANGE`), `:170-178` (`TIME_SPAN_RE`).
+
 ## 642. D645 · a Latin cap beside a party stayed in the match text (`apps/ai/nexus_ai/nlu/understand.py`)
 
 **How the unit arrived.** §640 (D643) taught `PARTY_SPAN_RE` to remove a Latin RANGE from its start and

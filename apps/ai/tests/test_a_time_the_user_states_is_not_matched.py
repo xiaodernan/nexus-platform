@@ -94,7 +94,7 @@ def plane():
                                             str(r["description"] or ""),
                                             " ".join(r["tags"] or [])]))
             pages = {}
-            for q in ("餐廳", "今晚7點嘅餐廳"):
+            for q in ("今晚7點嘅餐廳", "今晚19:00嘅餐廳"):
                 intent = validate_intent(extract_intent_dict(q))
                 pack = await run_search(Deps(st), intent, query=q, limit=TOP_K)
                 pages[q] = dict(ids=[s.candidate.subject_id for s in pack.scored[:TOP_K]],
@@ -124,11 +124,19 @@ def test_no_published_row_carries_a_time_surface(plane):
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
 def test_stating_a_time_no_longer_answers_a_different_ten(plane):
     """Measured 2026-10-30: relevance 0.143 for every row of the time page, then 1.00 after
-    D629, and after D635 the page is the filter's own - the bucket word left with the filter, so
-    the two requests are one page, ids and relevance both."""
+    D629, and after D635 the page is the filter's own - the bucket word left with the filter.
+
+    Re-based 2026-11-02 (D646). The leg compared the time page against 「餐廳」's and pinned
+    `total == 184`, and both halves described the availability table rather than the strip: a
+    weekday-evening filter narrows the pool (170 rows of 184 on this corpus today), and 「今晚」
+    also writes `open_now`, so the no-time page can never be the same rows at any hour. The same
+    claim without a calendar in it: two SPELLINGS of one time answer ONE page - same ids, same
+    relevance, same total - which only holds while the words themselves are not scored.
+    """
     got = plane["pages"]["今晚7點嘅餐廳"]
-    plain = plane["pages"]["餐廳"]
-    assert got["ids"] == plain["ids"], (
-        "the time phrase still steers the retrieval: its ten subject ids differ from 「餐廳」's")
-    assert got["rel"] == plain["rel"], (got["rel"], plain["rel"])
-    assert got["total"] == plain["total"] == 184, (got["total"], plain["total"])
+    other = plane["pages"]["今晚19:00嘅餐廳"]
+    assert got["ids"] == other["ids"], (
+        "two spellings of one time answered different pages: "
+        f"{got['ids'][:3]} vs {other['ids'][:3]}")
+    assert got["rel"] == other["rel"], (got["rel"], other["rel"])
+    assert got["total"] == other["total"], (got["total"], other["total"])

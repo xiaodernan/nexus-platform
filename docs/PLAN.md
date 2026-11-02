@@ -2159,6 +2159,12 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   noun (`table for up to 6 people` is one span), and every capped party answers its bare size page. Still
   open on the same strip: 「minimum of 4 people」 leaves `minimum of`, and 「at most 4」 with no party and
   no money word stays text. Owner: the AI lane.
+- **A clock range was read at one end and half-stripped - closed by D647** (§644). 「4-6pm」 answered
+  18:00 but kept `4-` in the match text, 「4pm-6pm」 answered 16:00 (the floor) and kept `-`, 「4點至6點」
+  answered 04:00 and kept `至`: `CLOCK_RE` is a search, so it answered the first clock, and `TIME_SPAN_RE`
+  knew only single clocks. A range is now one span read at its UPPER end, the same rule D643 gave a
+  party and D624 money. Still open: 「open until 6pm」 reaches the lane as `open until` and 「24小時
+  4-6pm」 as `24小時`. Owner: the AI lane.
 - **An English category word left its plural - closed by D644** (§641). 「at most 1000 restaurants」 reached
   the lane as `s`: D635's surface strip removes `restaurant` out of `restaurants` and the marker stayed, so
   every English page tied at relevance 0.5 (`tmp/d636_plan.py`). The marker is now absorbed after a LATIN

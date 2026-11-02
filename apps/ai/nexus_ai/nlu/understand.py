@@ -156,9 +156,20 @@ CURRENCY_AMOUNT_RE = re.compile(
 #: written by `timeparse.cue_alternation()`: the parts of the day, the days, the weekdays
 #: and the clock, so a cue the lane learns is stripped the day it is written (§D438).
 _TIME_CUE = cue_alternation()
+#: D647: a clock RANGE is one span - 「4-6pm」 kept `4-`, 「4pm-6pm」 kept `-`, 「4點至6點」 kept
+#: `至`, and the keyword lane searched the fragment as content. The span runs from the sentence
+#: (through an optional `from`) to the SECOND clock, because the upper end is the reading.
+_TIME_CLOCK_RANGE = (
+    r"(?:from\s+|由|从|從)?\s*"
+    r"\d{1,2}\s*(?::\s*\d{2}|點|点|時|时|am|pm)?"
+    r"(?:\s*(?:半|\d{1,2}\s*(?:分|分鐘|分钟)))?\s*"
+    r"(?:-|–|—|~|～|至|到|to)\s*"
+    r"\d{1,2}\s*(?::\s*\d{2}|點|点|時|时|am|pm)"
+    r"(?:\s*(?:半|\d{1,2}\s*(?:分|分鐘|分钟)))?"
+)
 TIME_SPAN_RE = re.compile(
-    rf"(?:{_TIME_CUE})?\s*"
-    r"\d{1,2}\s*(?:點|点|時|时)(?:\s*\d{1,2}\s*分)?"
+    rf"(?:{_TIME_CUE})?\s*" + _TIME_CLOCK_RANGE + r"|"
+    rf"\d{{1,2}}\s*(?:點|点|時|时)(?:\s*\d{{1,2}}\s*分)?"
     r"|\d{1,2}:\d{2}"
     r"|\d{1,2}\s*(?:am|pm)\b"
     rf"|{_TIME_CUE}",

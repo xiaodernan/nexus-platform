@@ -75,6 +75,20 @@ CLOCK_RE = re.compile(
     re.VERBOSE,
 )
 
+#: D647: a clock RANGE - 「4-6pm」, 「4pm-6pm」, 「4點至6點」. Its reading is the UPPER end, the
+#: same rule D643 gave a party range and D624 a money range, because `parse_time` answers when
+#: the outing starts and 「4-6pm」 already read 6pm through `CLOCK_RE` while 「4pm-6pm」 read the
+#: floor. Measured 2026-11-02 (`tmp/d646_before.txt`): 4pm-6pm answered open_time 16:00 and
+#: 4點至6點 04:00, both the wrong end of the same sentence.
+CLOCK_RANGE_RE = re.compile(
+    r"\d{1,2}\s*(?::\s*\d{2}|點|点|時|时|am|pm|AM|PM)?"
+    r"(?:\s*(?:半|\d{1,2}\s*(?:分|分鐘|分钟)))?\s*"
+    r"(?:-|–|—|~|～|至|到|to)\s*"
+    r"(\d{1,2}\s*(?::\s*\d{2}|點|点|時|时|am|pm|AM|PM)"
+    r"(?:\s*(?:半|\d{1,2}\s*(?:分|分鐘|分钟)))?)",
+    re.IGNORECASE,
+)
+
 #: The characters a Chinese numeral may precede when it is an HOUR (D445: 九點 is 9 o'clock
 #: - the product read the weekday numerals and not the hour ones, so a user who wrote a
 #: number the way they speak got nothing).
@@ -226,7 +240,16 @@ def clock_match(text: str) -> re.Match[str] | None:
     """
     from nexus_ai.nlu.numerals import normalise_numerals
 
-    return CLOCK_RE.search(normalise_numerals(text or "", only_before=_HOUR_MARKERS))
+    normalised = normalise_numerals(text or "", only_before=_HOUR_MARKERS)
+    # D647: a RANGE is read at its upper end - the second clock is the one `parse_time` answers
+    # with, and the match it returns is a real `CLOCK_RE` match so every reader of the groups
+    # (the meridiem guess, the early/late cues around it) keeps working on the clock itself.
+    rng = CLOCK_RANGE_RE.search(normalised)
+    if rng:
+        upper = CLOCK_RE.search(normalised, rng.start(1))
+        if upper is not None and upper.end() <= rng.end():
+            return upper
+    return CLOCK_RE.search(normalised)
 
 
 @dataclass
