@@ -3224,6 +3224,16 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   11 red on HEAD (the green is the int-compat leg). Owner: any lane that turns an extractor quality
   into a filter.
 
+- **The word that says UNTIL was read as a clock on the day - closed by D662 (§659).** `OPEN_LATE_CUES`
+  knew 還營業/仍開/開住/營業中/`open at`/`open until`/營業到 and not 開到 - the ordinary Cantonese spelling
+  of "open until" - so 「開到晚上九點半」 came back as a WINDOW STARTING at 21:30 (250 merchants open at
+  that clock) and 「開到九點半嘅餐廳」 as a window at 09:30 (13 of 184 restaurants). 開至, 營業至 and
+  "till" were missing with it. The nine spellings are rows in the table now and the one reader does
+  the rest: 283 merchants at "closing >= 21:30" on both lanes (`tmp/d661_probe.py`). Gate
+  `test_the_word_that_says_until_is_not_a_clock.py`, 15 legs, 14 red on HEAD. Filed: the cue and its
+  clock still stay in `match_text` (the CJK clock-span strip), and a bare 九點半 is still 09:30 by the
+  parser's convention. Owner: the time lane.
+
 - **The locative frame was searched as content - closed by D657 (§654).** `_QUESTION_FRAME` knew 有冇, 邊度,
   哪裡 and 推介 and not 附近, so 「附近嘅咖啡店」「附近的咖啡店」「附近有咩餐廳」 carried `附近` into the match text
   and 「邊度有咖啡店」 carried the orphaned `有`, 「哪里有咖啡店」 the whole `哪里有`, 「近我嘅咖啡店」 the `近我`.

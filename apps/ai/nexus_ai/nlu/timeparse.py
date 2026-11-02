@@ -60,7 +60,13 @@ LATE_CUES = ("之後", "以後", "以後", "過後", "过后", "以後", "后", 
              "最少", "至少", "起跳", "或以上", "以上")
 EARLY_CUES = ("之前", "以前提前", "before", "up to", "以內", "以内", "內", "前")
 OPEN_LATE_CUES = ("還营业", "還營業", "还营业", "仍開", "仍开", "開住", "开住", "營業中",
-                  "still open", "open at", "open until", "营业到", "營業到", "夜晚都")
+                  "still open", "open at", "open until", "营业到", "營業到", "夜晚都",
+                  # D662: 「開到九點半」 is the ordinary Cantonese spelling of "open until", and the
+                  # table knew 營業到 but not it - so the sentence was read as a WINDOW STARTING at
+                  # 21:30 (and 「開到九點半」 at 09:30). 開至 / 營業至 / 开到 / 开至 are the written and
+                  # simplified spellings, and "till" / "til" / "thru" the English ones.
+                  "開到", "开到", "開至", "开至", "營業至", "营业至",
+                  "open till", "open til", "open thru")
 
 #: How many characters around the clock a direction word may sit in. The window is
 #: derived from the cue tables themselves - the longest cue, plus the space that

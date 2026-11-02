@@ -30819,3 +30819,51 @@ so it is not this unit's - filed where it belongs.
   `:679-680` (the plan's clocks), `:953-957` (HHMM -> clock), `:1016-1029` (`_hhmm_clock`), the
   re-aimed legs in `test_time_before_cue.py`, this unit's gate, and `tmp/d661_probe.py`,
   `tmp/d661_after.py`, `tmp/d661_census2.py`, `tmp/d661_falsify.txt` (the measurements).
+
+## 659. D662 · the word that says UNTIL was read as a clock on the day (`apps/ai/nexus_ai/nlu/timeparse.py`)
+
+**The table of "still open" words did not know the most ordinary spelling of it.** `OPEN_LATE_CUES`
+(`timeparse.py:62-67`) is the one source for the words that turn a clock into a CLOSING time - it knew
+還營業, 仍開, 開住, 營業中, `open at`, `open until`, 營業到, 夜晚都. It did not know 開到, so 「開到九點半」
+went down the explicit-clock branch and came back as a WINDOW STARTING at 09:30 - `starts_at` and
+`ends_at` both filled - and 「開到晚上九點半」 as a window starting at 21:30. The same for 開至, 營業至
+and the English "till". Measured end to end on the published plane (`tmp/d661_probe.py`, both lanes):
+
+    sentence                     before                                    after
+    開到晚上九點半               window at 21:30 -> 250 merchants           closing >= 21:30 -> 283
+    開到九點半嘅餐廳             window at 09:30 -> 13 of 184 restaurants  closing >= 09:30 -> 184
+    open till 6:30pm             window at 18:30                           closing >= 18:30 -> 465
+
+250 is "restaurants open AT 21:30" - the wrong question, asked of a sentence that named when the
+kitchen CLOSES. And the 09:30 row is the sentence read as a breakfast request for a 09:30 window: 13
+restaurants answered a question about late-night closing.
+
+**The repair is a table row, not a branch.** 開到 / 开到 / 開至 / 开至 / 營業至 / 营业至 / `open till` /
+`open til` / `open thru` join `OPEN_LATE_CUES`, and the existing reader (`parse_time`, one `any(cue_in
+...)` over the table) does the rest, so the plan carries `open_late_after:2130` with NO window and the
+filters get `min_closing_hour = 21:30` - the clock D661 taught the filter to keep.
+
+**The gate** is `tests/test_the_word_that_says_until_is_not_a_clock.py`, 15 legs: every spelling must
+be IN the table (the table is the source, so the gate asks it), the three Cantonese spellings must
+answer `open_late_after:0930` with no window, the three English ones `open_late_after:1830` with no
+window, the bare word with no clock must state no time at all, the plan must ask for 21:30 with no
+`at`, and both lanes must answer the same pool for both spellings of one request. Falsified against
+HEAD: **14 red / 1 green** (`tmp/d662_falsify.txt`); the green is the "a bare until with no clock
+states no time" leg.
+
+**Adjacent**, run and green, never full: this gate plus the time and cue suites and the pipeline
+(`test_timeparse`, `test_time_before_cue`, `test_time_cue_positions`, `test_time_markers_are_words`,
+`test_weekday_tokens_are_readable`, `test_lexicon_readers_are_words`, `test_first_turn_readers_are_words`,
+`test_a_clock_range_is_one_span`, `test_search_pipeline`, D661's gate) - **834 passed**.
+
+**Not claimed.** (a) The cue and the clock it governs are still left in `match_text` (`開到 九點半`):
+the strip is the CJK clock-span question, not the cue table's, and it is filed rather than folded in
+(`test_a_clock_range_is_one_span.py`'s own note files the same for "open until 6pm"). (b) A bare
+九點半 with no part of day is still 09:30 - the parse convention D661 also filed - so 「開到九點半」
+answers "closing at or after 09:30", which today is every restaurant; the sentence is UNDERSTOOD
+correctly now, the hour it means is the convention's question. (c) 到 on its own is NOT a cue: it is
+the tail of 去到/睇到/食到 and would make every one of them a closing filter.
+
+- readers: `nlu/timeparse.py:62-67` (the table and the nine spellings), `:372-374` (the one reader),
+  `:413-431` (where the cue turns the clock into a quality), this unit's gate, and `tmp/d661_probe.py`,
+  `tmp/d662_probe.py`, `tmp/d662_falsify.txt` (the measurements).
