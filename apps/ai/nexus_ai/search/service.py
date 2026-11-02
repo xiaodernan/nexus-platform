@@ -184,13 +184,15 @@ class StaticBackend:
         # D549: the merchant lane's avoid clause reads the merchant's OWN offerings too
         # (`EXISTS (SELECT 1 FROM offerings ao WHERE ao.merchant_id = m.id ...)`), so the
         # fixture lane is handed the same list the live lane would join against.
-        return _filter_static(rows, text or "", filters or {}, offerings=self.offerings)
+        return _filter_static(rows, text or "", filters or {}, offerings=self.offerings,
+                              hours=self._hours)
 
     async def offering_candidates(self, *, text=None, filters=None,
                                   party_size: int | None = None, **_kw: Any
                                   ) -> list[dict[str, Any]]:
         rows = [dict(r) for r in self.offerings]
-        return _filter_static(rows, text or "", filters or {}, party_size=party_size)
+        return _filter_static(rows, text or "", filters or {}, party_size=party_size,
+                              hours=self._hours)
 
     async def facts(self, subject_ids: Sequence[str]) -> list[dict[str, Any]]:
         ids = {str(s) for s in subject_ids}
@@ -225,11 +227,13 @@ class StaticBackend:
 def _filter_static(rows: list[dict[str, Any]], text: str,
                    filters: dict[str, Any],
                    offerings: Sequence[dict[str, Any]] = (),
-                   party_size: int | None = None) -> list[dict[str, Any]]:
+                   party_size: int | None = None,
+                   hours: Sequence[dict[str, Any]] = ()) -> list[dict[str, Any]]:
     from nexus_ai.search.categories import canonical_tag, resolve
 
     bucket = str(filters["category"]) if filters.get("category") else ""
     slugs = {canonical_tag(x) for x in resolve(bucket)} if bucket else set()
+    hour_sets = _static_hour_index(hours)
     low = (text or "").lower()
     out: list[dict[str, Any]] = []
     for r in rows:
@@ -340,6 +344,15 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         if str(filters.get("kind") or "") in ("product", "service", "experience") \
                 and "kind" in r and str(r.get("kind") or "") != str(filters["kind"]):
             continue
+        # D659: the HOUR filters are three clauses on one plane and nothing on the other two.
+        # `open_weekday`+`open_time` (`sql.py:247-258`), `min_closing_hour` (`:259-264`) and
+        # `max_opening_hour` (`:265-272`) are EXISTS over `business_hours` on the merchant SELECT;
+        # the offering SELECT carried none of them and this lane read no clock at all, so 「開到
+        # 晚上」 answered 470 of 470 merchants here against 369 live, and every offering in the
+        # plane whether its shop was open or not (`tmp/d659_open2.py`). A row whose merchant states
+        # no matching hours fails the EXISTS on the live lane, so it fails here too.
+        if not _static_hours_fit(r, filters, hour_sets):
+            continue
         if _static_avoids(r, filters.get("avoid"), offerings):
             continue
         if party_size:
@@ -359,6 +372,80 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         r.setdefault("subject_type", "merchant" if r.get("display_name") else "offering")
         out.append(r)
     return out
+
+
+def _static_hour_index(hours: Sequence[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    """business_hours rows grouped by merchant - what the live EXISTS joins against (D659)."""
+    out: dict[str, list[dict[str, Any]]] = {}
+    for row in hours or ():
+        key = str(row.get("merchant_id") or "")
+        if key:
+            out.setdefault(key, []).append(row)
+    return out
+
+
+def _static_hour_value(value: Any) -> Any:
+    """`time` in the filters and in the rows, and `str` in a hand-written fixture row."""
+    if isinstance(value, str):
+        from datetime import time as _time
+
+        try:
+            return _time.fromisoformat(value)
+        except ValueError:
+            return None
+    return value
+
+
+def _static_open_at(row: dict[str, Any], at: Any) -> bool:
+    """`opens_at <= at < closes_at`, inverted for a row that crosses midnight (D659)."""
+    opens = _static_hour_value(row.get("opens_at"))
+    closes = _static_hour_value(row.get("closes_at"))
+    if row.get("crosses_midnight"):
+        return (opens is not None and opens <= at) or (closes is not None and closes > at)
+    return opens is not None and closes is not None and opens <= at < closes
+
+
+def _static_hours_fit(r: dict[str, Any], filters: dict[str, Any],
+                      hour_sets: dict[str, list[dict[str, Any]]]) -> bool:
+    """The three hour clauses the live merchant WHERE reads, mirrored on one row (D659).
+
+    Each is an EXISTS over `business_hours`: one row that satisfies the clause is enough, and a
+    merchant whose rows satisfy none of it fails - so a row with NO hours row fails too, which is
+    what `EXISTS` does. The clauses are independent: a request naming an hour tests `opens_at <=
+    t < closes_at` (with `crosses_midnight` inverting the comparison), `min_closing_hour` tests
+    `closes_at >= h OR crosses_midnight`, `max_opening_hour` tests `opens_at <= h OR
+    crosses_midnight`.
+    """
+    weekday = filters.get("open_weekday")
+    at = _static_hour_value(filters.get("open_time"))
+    min_closing = filters.get("min_closing_hour")
+    max_opening = filters.get("max_opening_hour")
+    if weekday is None and min_closing is None and max_opening is None:
+        return True
+    key = str(r.get("merchant_id") or r.get("subject_id") or r.get("id") or "")
+    rows = hour_sets.get(key) or []
+    if weekday is not None and at is not None:
+        if not any(str(h.get("weekday")) == str(weekday) and _static_open_at(h, at) for h in rows):
+            return False
+    if min_closing is not None:
+        from datetime import time as _time
+
+        limit = _time(int(min_closing), 0)
+        if not any(bool(h.get("crosses_midnight"))
+                   or (_static_hour_value(h.get("closes_at")) is not None
+                       and _static_hour_value(h.get("closes_at")) >= limit)
+                   for h in rows):
+            return False
+    if max_opening is not None:
+        from datetime import time as _time
+
+        limit = _time(int(max_opening), 0)
+        if not any(bool(h.get("crosses_midnight"))
+                   or (_static_hour_value(h.get("opens_at")) is not None
+                       and _static_hour_value(h.get("opens_at")) <= limit)
+                   for h in rows):
+            return False
+    return True
 
 
 def _static_price(r: dict[str, Any]) -> tuple[Any, Any]:

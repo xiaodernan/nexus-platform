@@ -496,6 +496,29 @@ def build_offering_query(
             f"AND lower(coalesce(ld.district,'')) = lower({p.add(str(filters['district']))}))")
     for key, value in (filters.get("attributes") or {}).items():
         where.append(f"o.attributes @> {p.add(json.dumps({str(key): value}, ensure_ascii=False))}::jsonb")
+    # D659: the three HOUR clauses the merchant SELECT reads (`:247-272`) and this one never did,
+    # so 「開到晚上」 answered 4,707 offerings with 3,907 under a shop open at that hour
+    # (`tmp/d659_open2.py`). An offering is bookable when its SHOP is open, and the join has the
+    # shop; the predicates are the merchant's own, written against `m.id`.
+    if filters.get("open_weekday") is not None and filters.get("open_time") is not None:
+        wd = p.add(int(filters["open_weekday"]))
+        tm = p.add(filters["open_time"])
+        where.append(
+            f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
+            f"AND bh.weekday = {wd}::smallint AND ("
+            f"(bh.crosses_midnight = false AND bh.opens_at <= {tm}::time AND bh.closes_at > {tm}::time) "
+            f"OR (bh.crosses_midnight = true AND (bh.opens_at <= {tm}::time "
+            f"OR bh.closes_at > {tm}::time))))")
+    if filters.get("min_closing_hour") is not None:
+        where.append(
+            f"EXISTS (SELECT 1 FROM business_hours bc WHERE bc.merchant_id = m.id AND ("
+            f"bc.closes_at >= ({p.add(int(filters['min_closing_hour']))}::int * interval '1 hour')::time "
+            f"OR bc.crosses_midnight = true))")
+    if filters.get("max_opening_hour") is not None:
+        where.append(
+            f"EXISTS (SELECT 1 FROM business_hours bo WHERE bo.merchant_id = m.id AND ("
+            f"bo.opens_at <= ({p.add(int(filters['max_opening_hour']))}::int * interval '1 hour')::time "
+            f"OR bo.crosses_midnight = true))")
     # D607: an offering states the party it physically fits (`docs/DATABASE.md:72` calls
     # bookable/min/max_party_size/duration_minutes the Booking columns), and this lane already
     # selects the two bounds into the row. It applied neither, while applying slot capacity

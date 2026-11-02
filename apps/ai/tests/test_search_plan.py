@@ -110,9 +110,16 @@ class TestFilterStatic:
     def test_empty_text_keeps_all(self):
         assert len(S._filter_static(self._rows(), "", {})) == 3
 
-    def test_text_match_filters(self):
+    def test_text_scores_and_does_not_filter(self):
+        # D658 (§655): `build_merchant_query` has no text predicate in its WHERE (`sql.py:423`), so
+        # a live request for ramen answers the whole filtered pool with the ramen row first. This
+        # lane used to return only the ramen row - 「安靜」 + cafe answered 0 of 79 here against 10
+        # live (`tmp/d658_gap.py`).
         out = S._filter_static(self._rows(), "ramen", {})
-        assert [r["display_name"] for r in out] == ["Ramen House"]
+        assert [r["display_name"] for r in out] == ["Ramen House", "Sushi Zen", "Cafe 沙田"]
+        scores = {r["display_name"]: r["kw_score"] for r in out}
+        assert scores["Ramen House"] > 0.0
+        assert scores["Sushi Zen"] == 0.0 and scores["Cafe 沙田"] == 0.0
 
     def test_category_filter(self):
         out = S._filter_static(self._rows(), "", {"category": "cafe"})

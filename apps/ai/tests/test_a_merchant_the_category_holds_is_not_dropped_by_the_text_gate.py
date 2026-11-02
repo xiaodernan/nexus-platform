@@ -107,13 +107,18 @@ class TestTheTextGateDoesNotVetoTheCategory:
                          display_name="Coffee Shop", display_name_zh="咖啡")]
         assert kept("想飲咖啡", rows, {"category": "cafe"}) == []
 
-    def test_a_request_that_names_no_category_is_left_to_the_text_gate(self):
-        # The fix is about the bucket leg only: with no bucket named, a word the row never
-        # spells is still no answer (and the demo catalogue genuinely holds no salon).
+    def test_a_request_that_names_no_category_still_scores_the_word(self):
+        # D615 kept the bucketed row when the words missed; D658 (§655) generalised it - the live
+        # lane has no text predicate at all, so a word the row never spells is a SCORE of 0 and not
+        # a veto. Both rows answer, the one that spells the word first.
         rows = [cafe_row(), cafe_row(id="m2", slug="shop", category_primary="retail",
                                      display_name="Rainbow Sports Store")]
-        assert kept("Rainbow", rows, {}) == ["shop"]
-        assert kept("想飲咖啡", rows, {}) == []
+        assert sorted(kept("Rainbow", rows, {})) == ["shop", "tea"]
+        assert sorted(kept("想飲咖啡", rows, {})) == ["shop", "tea"]
+        # Order is the ranker's, not this filter's: the word is a SCORE on the row (the live
+        # SELECT orders by `kw_score`, `sql.py:425`, after the WHERE has kept both).
+        scored = {r["slug"]: r["kw_score"] for r in S._filter_static(rows, "Rainbow", {})}
+        assert scored["shop"] > 0.0 and scored["tea"] == 0.0, scored
 
     def test_a_bucket_match_the_words_never_hit_earns_no_text_score(self):
         # Keeping the row is not the same as ranking it first: the words still score the words.

@@ -30627,3 +30627,59 @@ mention the word and score below it - unchanged, and still the ranking lane's ru
   it), `:449-453` (the category clause that IS one), the two re-aimed gates, this unit's gate, and
   `tmp/d658_gap.py`, `tmp/d658_falsify.txt` (the measurements).
 
+## 656. D659 · the clock in the request was read by one of three readers (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`)
+
+**Three hour clauses on one SELECT, none on the other two readers.** `build_merchant_query` asks whether the
+merchant is open at the hour the user named (`open_weekday` + `open_time`, `sql.py:247-258`), whether it stays
+open past an hour (`min_closing_hour`, `:259-264`) and whether it opens by one (`max_opening_hour`, `:265-272`),
+each an EXISTS over `business_hours`. The OFFERING SELECT carried none of the three, and `_filter_static` read
+no clock at all. Measured on the published plane (`tmp/d659_open2.py`), weekday 1 at 19:00:
+
+    plan                                   fixture (before)   live (before)   both (after)
+    merchants open at 19:00                470 of 470         369             369
+    offerings under a shop open at 19:00   4,707 of 4,707     4,707           3,907
+
+470 and 4,707 are the whole planes; 3,907 is the offerings whose merchant is open at that hour. So the same
+request answered three different questions, and only one of them was the user's. An offering is bookable when
+its SHOP is open, and the join already holds the shop - the three clauses are the merchant's own, written
+against `m.id` (`sql.py:498-518`).
+
+**The fixture lane now reads the hours it is handed.** `StaticBackend(hours=...)` already served `hours()` to
+the cards; `merchant_candidates` and `offering_candidates` now pass the same list into `_filter_static`
+(`service.py:187-195`), which indexes it per merchant (`:377-385`) and applies the three predicates with the
+live lane's own edges (`:400-445`):
+
+- `opens_at <= at < closes_at`, with `crosses_midnight` inverting the comparison - the live clause's strict and
+  loose ends are kept, so a shop closing exactly at 19:00 does NOT answer a request for 19:00 (a leg pins it);
+- `closes_at >= h OR crosses_midnight`, `opens_at <= h OR crosses_midnight`;
+- a merchant whose rows satisfy NO clause fails, because that is what `EXISTS` does - so a row with no hours
+  row at all is dropped, which is a leg of its own rather than a guess about what "unknown" should mean.
+
+**The gate** is `tests/test_the_hour_a_row_states_is_read_by_every_reader.py`, 13 legs: four hour shapes
+(open, closing exactly at the hour, a night shop at 01:00 and at 03:00), the no-hours row, the weekday (the
+same hours filed on another day answer nothing), the two boundary clauses, an offering inheriting its shop's
+hours, and five live legs (both lanes equal on the three merchant clauses and two offering clauses, each
+strictly smaller than the plane). Falsified against HEAD: **13 red / 0 green** (`tmp/d659_falsify.txt`).
+
+**Two more gates encoded D658's veto and were re-aimed here, because this unit's adjacent run found them.**
+`test_search_plan.py::TestFilterStatic::test_text_match_filters` asserted that `_filter_static` returns only
+the matching row; it is now `test_text_scores_and_does_not_filter` (all three rows, the ramen row scored, the
+others at 0) - the live WHERE has no text in it at all. `test_a_merchant_the_category_holds_is_not_dropped_by_
+the_text_gate.py`'s complementary leg asserted that a request naming NO category is still filtered by the text;
+it now asserts both rows answer and only the one spelling the word scores. D615's gate was written before
+D658 and its second leg was the half that unit left standing on purpose; the pin moved with the rule.
+
+**Adjacent**, run and green, never full: the hour/open/time-adjacent suites (145), then the direct
+`_filter_static` callers plus the pipeline and D658's gate (122), after the two re-aims above (39).
+
+**Not claimed.** (a) `open_late_after` and the "is it open right now" CARD field are different readers and were
+not touched; the cards already publish `open_state` from `hours_for`, and this unit only aligns the FILTER.
+(b) A merchant with no `business_hours` rows is filtered out by an hour request on both lanes - that is the
+EXISTS, mirrored, not a claim that such a merchant is closed. (c) The three clauses are per-merchant, so an
+offering's own hours (none exist in the schema, `docs/DATABASE.md:69-73`) cannot narrow further.
+
+- readers: `search/sql.py:247-272` (the merchant clauses), `:498-518` (the offering mirror this unit added),
+  `search/service.py:187-195` (the hours handed to the lane), `:377-445` (the three predicates),
+  `:347-356` (where the lane applies them), the two re-aimed gates, this unit's gate, and `tmp/d659_open2.py`,
+  `tmp/d659_falsify.txt` (the measurements).
+

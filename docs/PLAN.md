@@ -3180,8 +3180,30 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   answers both of its districts on both lanes, which the string comparison could not express. Still open, and
   filed rather than guessed: the near-me lane, `district_layout` and `subdistrict` are untouched, and the
   comparison is exact lowercase equality (`Shatin` is not `Sha Tin`) - that is the vocabulary lane's question.
-  Owner: the search lane, with the geo filters (`open_weekday` / `open_time` / near-me) that are still
-  live-only because they need the same kind of join.
+  Owner: the search lane, with the near-me lane, which is still live-only because it needs the same kind of
+  join.
+
+- **The clock in the request was read by one of three readers - closed by D659 (§656).** The merchant SELECT
+  has three hour clauses - `open_weekday`+`open_time` (`sql.py:247-258`), `min_closing_hour` (`:259-264`) and
+  `max_opening_hour` (`:265-272`), each an EXISTS over `business_hours` - and the offering SELECT carried none
+  of them while `_filter_static` read no clock at all. Measured at weekday 1 / 19:00 (`tmp/d659_open2.py`):
+  470 merchants in the fixture lane against 369 live, and 4,707 offerings on BOTH planes against the 3,907
+  whose shop is open at that hour. An offering is bookable when its shop is open, so the three clauses are
+  written against `m.id` on the offering SELECT (`:498-518`), and the fixture lane now applies them from the
+  hours the backend hands it (`StaticBackend(hours=...)`, the same rows `hours()` serves the cards). Each edge
+  is the live clause's own: `opens_at <= at < closes_at` with `crosses_midnight` inverting it, `closes_at >= h
+  OR crosses_midnight`, `opens_at <= h OR crosses_midnight`, and a merchant with no matching row FAILS because
+  that is what EXISTS does. Gate `test_the_hour_a_row_states_is_read_by_every_reader.py`, 13 legs, 13 red on
+  HEAD. Two gates that still encoded D658's text veto (`test_search_plan.py`'s `_filter_static` text leg and
+  D615's "no category is left to the text gate" leg) were re-aimed here, because this unit's adjacent run
+  found them. Owner: any lane that adds a join-clause to one SELECT.
+
+- **`min_closing_hour` and `max_opening_hour` are whole-hour integers, and the corpus is not.** The clauses
+  read `h::int * interval '1 hour'` (`sql.py:263`, `:271`), so `open_late_after=21.5` has no spelling and
+  「開到晚上九點半」 can only be rounded or dropped; `business_hours.closes_at` is a `time` with minutes
+  (`00:00`-`23:59` measured) and 1,231 rows open at exactly 18:00 while 391 open at 18:30. Whether a half hour
+  should reach the filter at all is a product decision (§8 says do not guess a time), so this is filed rather
+  than widened. Owner: the search lane, with the time lane that produced the number.
 
 - **The locative frame was searched as content - closed by D657 (§654).** `_QUESTION_FRAME` knew 有冇, 邊度,
   哪裡 and 推介 and not 附近, so 「附近嘅咖啡店」「附近的咖啡店」「附近有咩餐廳」 carried `附近` into the match text
