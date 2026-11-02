@@ -179,6 +179,31 @@ def _districts_select(ref: str, filters: dict[str, Any]) -> str:
             f"FROM locations ld2 WHERE ld2.merchant_id = {ref}), '{{}}'::text[])")
 
 
+def _clock_filter(value: Any) -> time | None:
+    """A clock filter's value as a `time` (D661).
+
+    The two keys are spelled `min_closing_hour` / `max_opening_hour`, and the request carries a
+    CLOCK: the extractor's quality is HHMM (`open_late_after:2130`), and the corpus closes at 18:30,
+    21:30 and 22:30 - 2,908 of its 5,472 hour rows close at a non-zero minute. An int is still read
+    as `int:00`, so a hand-built caller keeps its meaning; anything unreadable answers None, which
+    leaves the clause out rather than guessing an hour the request never said.
+    """
+    if value is None:
+        return None
+    if isinstance(value, time):
+        return value
+    if isinstance(value, str):
+        try:
+            return time.fromisoformat(value)
+        except ValueError:
+            return None
+    if isinstance(value, (int, float)):
+        minutes = int(round(float(value) * 60))
+        if 0 <= minutes < 24 * 60:
+            return time(minutes // 60, minutes % 60)
+    return None
+
+
 def _points_select(ref: str, geo: tuple[float, float] | None) -> str:
     """Every location the row has, as a jsonb array of points, when a radius was asked (D660).
 
@@ -273,19 +298,19 @@ def build_merchant_query(
             f"(bh.crosses_midnight = false AND bh.opens_at <= {tm}::time AND bh.closes_at > {tm}::time) "
             f"OR (bh.crosses_midnight = true AND (bh.opens_at <= {tm}::time "
             f"OR bh.closes_at > {tm}::time))))")
-    min_closing = filters.get("min_closing_hour")
+    min_closing = _clock_filter(filters.get("min_closing_hour"))
     if min_closing is not None:
         where.append(
             f"EXISTS (SELECT 1 FROM business_hours bc WHERE bc.merchant_id = m.id AND ("
-            f"bc.closes_at >= ({p.add(int(min_closing))}::int * interval '1 hour')::time "
+            f"bc.closes_at >= {p.add(min_closing)}::time "
             f"OR bc.crosses_midnight = true))")
     # D463: the mirror of the filter above - the merchant has to OPEN at or before the
     # hour the user named ("before seven", "up to seven").
-    max_opening = filters.get("max_opening_hour")
+    max_opening = _clock_filter(filters.get("max_opening_hour"))
     if max_opening is not None:
         where.append(
             f"EXISTS (SELECT 1 FROM business_hours bo WHERE bo.merchant_id = m.id AND ("
-            f"bo.opens_at <= ({p.add(int(max_opening))}::int * interval '1 hour')::time "
+            f"bo.opens_at <= {p.add(max_opening)}::time "
             f"OR bo.crosses_midnight = true))")
 
     # ---- geo lane: bbox prefilter then haversine on the nearest primary location
@@ -528,15 +553,17 @@ def build_offering_query(
             f"(bh.crosses_midnight = false AND bh.opens_at <= {tm}::time AND bh.closes_at > {tm}::time) "
             f"OR (bh.crosses_midnight = true AND (bh.opens_at <= {tm}::time "
             f"OR bh.closes_at > {tm}::time))))")
-    if filters.get("min_closing_hour") is not None:
+    min_closing = _clock_filter(filters.get("min_closing_hour"))
+    if min_closing is not None:
         where.append(
             f"EXISTS (SELECT 1 FROM business_hours bc WHERE bc.merchant_id = m.id AND ("
-            f"bc.closes_at >= ({p.add(int(filters['min_closing_hour']))}::int * interval '1 hour')::time "
+            f"bc.closes_at >= {p.add(min_closing)}::time "
             f"OR bc.crosses_midnight = true))")
-    if filters.get("max_opening_hour") is not None:
+    max_opening = _clock_filter(filters.get("max_opening_hour"))
+    if max_opening is not None:
         where.append(
             f"EXISTS (SELECT 1 FROM business_hours bo WHERE bo.merchant_id = m.id AND ("
-            f"bo.opens_at <= ({p.add(int(filters['max_opening_hour']))}::int * interval '1 hour')::time "
+            f"bo.opens_at <= {p.add(max_opening)}::time "
             f"OR bo.crosses_midnight = true))")
     # D607: an offering states the party it physically fits (`docs/DATABASE.md:72` calls
     # bookable/min/max_party_size/duration_minutes the Booking columns), and this lane already

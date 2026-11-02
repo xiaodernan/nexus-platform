@@ -30754,3 +30754,68 @@ its bbox square there. That shape has no producer, so it is filed rather than gu
   clauses), `search/service.py:190-191`/`:198-199` (the lane's arguments), `:367-371` (where the clause
   applies), `:393-412` (`_static_nearest_metres`), `:1098` (`meters` onto the candidate), this unit's
   gate, and `tmp/d660_both.py`, `tmp/d660_geo.py`, `tmp/d660_falsify.txt` (the measurements).
+
+## 658. D661 · the half hour in the request was rounded away before either reader saw it (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`)
+
+**The extractor carries a clock; the plan threw the minutes away.** `parse_time` answers four digits -
+`open_late_after:2130`, `before:0730` - and `plan_from_intent` divided them by 100 (`int(q)//100`), so
+「營業到晚上九點半」 asked the search for a closing time of NINE O'CLOCK. Both readers then built their
+clause from that hour: the live EXISTS bound `int(h) * interval '1 hour'` (merchant `sql.py:301-306`,
+offering `:556-561`) and the fixture lane built `time(int(h), 0)` (`service.py:476-487`). The corpus is
+not on the hour - 2,908 of its 5,472 `business_hours` rows close at a non-zero minute (18:30: 244,
+21:30: 102, 22:30: 616, 23:30: 267, 23:59: 92; 00:29: 33) and 2,028 open at one (07:30: 268,
+11:30: 810) - so the rounded request answered the wrong pool. Measured on the published plane
+(`tmp/d661_probe.py`, `tmp/d661_after.py`):
+
+    what is measured                     bound before      count before   bound now    count now
+    merchants closing >= 21:00           21:00             285            21:00        285
+    merchants closing >= 21:30           21:00 (!)         285            21:30        283
+    offerings closing >= 21:30           21:00 (!)         3,238          21:30        3,217
+    營業到晚上九點半 (plan)        late=21:00        -              late=21:30   -
+    營業到晚上九點半嘅餐廳 (pool) -                 184 of 184     -            184 of 184
+    九點半之後仲開 (pool)            late=09:00        470 of 470     late=09:30   470 of 470
+    open until 6:30pm (pool)             late=18:00        470 of 470     late=18:30   465
+
+The last two rows are honest about what is NOT this unit: a bare 「九點半」 is 09:30 by the
+parser's bare-hour convention (filed), and all 184 restaurants in the corpus close at or after 21:30,
+so that sentence's pool does not move even though the bound it asks for does. The filter's own answer
+is the row above it: 285 -> 283 merchants, 3,238 -> 3,217 offerings, both lanes, and every half-hour
+sentence that names a part of the day now asks for the clock it said.
+
+**The repair carries a `datetime.time`, the value `open_time` already binds (D399).** The plan fields
+hold a clock (`service.py:679-680`), `plan_from_intent` parses the four digits with `_hhmm_clock`
+(`:1016-1029`, called at `:953-957`), both filter keys now hold the same clock, and both readers bind
+it: `_clock_filter` (`sql.py:182-204`) answers a `time` for the two clauses on both SELECTs, and
+`_static_hour_value` (`service.py:426-441`) answers one for the fixture comparison. An int is still
+read as `int:00` - a hand-built caller or an older test keeps its meaning, and a leg pins it. The
+whole request now answers the same pool on both lanes: 283 merchants and 3,217 offerings at 21:30.
+
+**The gate** is `tests/test_the_half_hour_in_the_request_is_not_rounded_to_the_hour.py`, 12 legs: four
+plan legs (Cantonese with and without a part of day, the English clock, the "before" mirror), four
+fixture legs (the closing boundary at exactly 21:30, the opening boundary, an offering answering its
+shop's clock, and the int-compat leg), and four live legs (both lanes equal at 21:30 for merchants and
+offerings, and each lane answering 285/283 and 3,238/3,217 at the two clocks). Falsified against HEAD:
+**11 red / 1 green** (`tmp/d661_falsify.txt`); the green is the int-compat leg, the half this unit
+must not break.
+
+**Adjacent**, run and green, never full: this gate, `test_time_before_cue`, D659's hour gate, D660's
+radius gate, `test_timeparse`, `test_a_clock_range_is_one_span`, `test_time_cue_positions`,
+`test_search_plan`, `test_sql_builders` and `test_the_plan_reads_the_extractors_own_shape`
+(**232 passed**). Three legs of `test_time_before_cue` encoded the old int-hour rule (D463's own
+comment said why) and were re-aimed here to the clock the sentence carries.
+
+**Not claimed.** (a) 「開到九點半」 is still read as an explicit window at 09:30, because 開到 is not in
+`OPEN_LATE_CUES` - that is the cue table's question, filed as the next unit rather than folded in
+here. (b) A bare 「九點半」 with no part of day stays 09:30 (`open_late_after:0930`); the corpus closes
+at 23:30 and the sentence means the evening, but that is the bare-hour convention the parser already
+files, not a rounding. (c) The three clock clauses' EDGES are untouched: `closes_at >= h`,
+`opens_at <= h` and the strict `opens_at <= at < closes_at` are D659's, and this unit only changes what
+value is bound. (d) `test_stream.py::test_results_payload_schema_and_cards` ("sha tin" answers no
+items) is red on a CLEAN HEAD worktree with this unit stashed (`D:\获客平台_headcheck`, now removed),
+so it is not this unit's - filed where it belongs.
+
+- readers: `search/sql.py:182-204` (`_clock_filter`), `:301-314` and `:556-567` (the four clauses),
+  `search/service.py:426-441` (`_static_hour_value`), `:476-487` (the two fixture comparisons),
+  `:679-680` (the plan's clocks), `:953-957` (HHMM -> clock), `:1016-1029` (`_hhmm_clock`), the
+  re-aimed legs in `test_time_before_cue.py`, this unit's gate, and `tmp/d661_probe.py`,
+  `tmp/d661_after.py`, `tmp/d661_census2.py`, `tmp/d661_falsify.txt` (the measurements).

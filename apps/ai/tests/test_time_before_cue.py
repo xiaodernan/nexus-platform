@@ -18,6 +18,8 @@ a reference (D409, D446).
 
 from __future__ import annotations
 
+from datetime import time
+
 from nexus_ai.nlu import timeparse as T
 from nexus_ai.nlu.numerals import CN_DIGITS
 
@@ -80,25 +82,27 @@ def test_the_plan_carries_the_direction_into_the_search_filters():
     # the same path the search takes: the rules fill the intent, the contract validates it
     intent = validate_intent(extract_intent_dict(SEVEN + HOUR + BEFORE, {"locale": "zh-HK"}))
     plan = plan_from_intent(intent)
-    assert plan.open_early_before == 7, (
+    # D661: the plan carries the CLOCK the sentence said, not its hour. The value used to be an
+    # int hour because the SQL multiplied it by `interval '1 hour'`; both lanes now bind a time.
+    assert plan.open_early_before == time(7, 0), (
         f"the plan carries {plan.open_early_before!r} - the direction never reached it")
-    assert plan.filters.get("max_opening_hour") == 7, plan.filters
+    assert plan.filters.get("max_opening_hour") == time(7, 0), plan.filters
 
 
-def test_the_open_late_filter_asks_for_the_HOUR_and_not_the_hhmms():
-    # D463: the quality carries HHMM ("open_late_after:1000") and the filter's SQL is
-    # `(X::int * interval '1 hour')::time` - so X has to be the HOUR. 1000 hours is 41
-    # days, and the time part of that interval is four in the afternoon: the "open late
-    # after ten" filter was asking the database for a closing hour of 16:00.
+def test_the_open_late_filter_asks_for_the_clock_and_not_the_hhmms():
+    # D463: the quality carries HHMM ("open_late_after:1000") and the filter's SQL took an int
+    # HOUR, so the number had to be divided by 100. D661: the four digits ARE a clock - the SQL
+    # binds a `time` now, because the division also threw away the half hour (「九點半」 asked for
+    # 09:00 and the whole plane answered).
     from nexus_ai.api.pipeline import validate_intent
     from nexus_ai.nlu.understand import extract_intent_dict
     from nexus_ai.search.service import plan_from_intent
 
     intent = validate_intent(extract_intent_dict(SEVEN + HOUR + AFTER, {"locale": "zh-HK"}))
     plan = plan_from_intent(intent)
-    assert plan.open_late_after == 7, (
-        f"the plan carries {plan.open_late_after!r} - the filter's SQL wants the hour")
-    assert plan.filters.get("min_closing_hour") == 7, plan.filters
+    assert plan.open_late_after == time(7, 0), (
+        f"the plan carries {plan.open_late_after!r} - the filter's SQL wants the clock")
+    assert plan.filters.get("min_closing_hour") == time(7, 0), plan.filters
 
 
 def test_the_search_filter_is_the_mirror_of_the_open_late_one():
@@ -113,4 +117,4 @@ def test_the_search_filter_is_the_mirror_of_the_open_late_one():
     sql = built.sql if hasattr(built, "sql") else built[0]
     params = built.params if hasattr(built, "params") else built[1]
     assert "opens_at <=" in sql, sql[:600]
-    assert 7 in params, params
+    assert time(7, 0) in params, params

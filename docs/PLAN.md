@@ -3211,12 +3211,18 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   11 legs, 9 red on HEAD (the two greens are the no-radius legs). Owner: any lane that adds a geo clause
   to one reader.
 
-- **`min_closing_hour` and `max_opening_hour` are whole-hour integers, and the corpus is not.** The clauses
-  read `h::int * interval '1 hour'` (`sql.py:263`, `:271`), so `open_late_after=21.5` has no spelling and
-  「開到晚上九點半」 can only be rounded or dropped; `business_hours.closes_at` is a `time` with minutes
-  (`00:00`-`23:59` measured) and 1,231 rows open at exactly 18:00 while 391 open at 18:30. Whether a half hour
-  should reach the filter at all is a product decision (§8 says do not guess a time), so this is filed rather
-  than widened. Owner: the search lane, with the time lane that produced the number.
+- **The half hour in the request was rounded away before either reader saw it - closed by D661
+  (§658).** `parse_time` answers four digits (`open_late_after:2130`) and `plan_from_intent`
+  divided them by 100, so 「營業到晚上九點半」 asked the SQL for 21:00 - and the SQL built that hour with
+  `int(h) * interval '1 hour'` while the fixture lane built `time(int(h), 0)`. The corpus is not on the
+  hour: 2,908 of 5,472 hour rows close at a non-zero minute (18:30: 244, 21:30: 102, 22:30: 616) and
+  2,028 open at one. Measured (`tmp/d661_probe.py`), closing at or after 21:00 holds 285 merchants and
+  3,238 offerings; at or after 21:30, 283 and 3,217 - and every half-hour sentence was asked of the
+  database as a whole hour (470 of 470 merchants for 09:00 and 21:00 alike). The plan fields and both filter keys now hold a `datetime.time`, both
+  readers bind it (`sql._clock_filter`, `service._static_hour_value`), and an int is still `int:00` for
+  a hand-built caller. Gate `test_the_half_hour_in_the_request_is_not_rounded_to_the_hour.py`, 12 legs,
+  11 red on HEAD (the green is the int-compat leg). Owner: any lane that turns an extractor quality
+  into a filter.
 
 - **The locative frame was searched as content - closed by D657 (§654).** `_QUESTION_FRAME` knew 有冇, 邊度,
   哪裡 and 推介 and not 附近, so 「附近嘅咖啡店」「附近的咖啡店」「附近有咩餐廳」 carried `附近` into the match text

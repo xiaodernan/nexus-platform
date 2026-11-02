@@ -21,7 +21,7 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time as clock_time, timedelta, timezone
 from typing import Any, Protocol, Sequence
 from uuid import UUID
 
@@ -424,14 +424,19 @@ def _static_hour_index(hours: Sequence[dict[str, Any]]) -> dict[str, list[dict[s
 
 
 def _static_hour_value(value: Any) -> Any:
-    """`time` in the filters and in the rows, and `str` in a hand-written fixture row."""
+    """`time` in the filters and in the rows, `str` in a hand-written fixture row, and an INT hour
+    from a hand-built caller or an older test (D661) - read as `int:00`, the live helper's own
+    reading (`sql._clock_filter`)."""
     if isinstance(value, str):
-        from datetime import time as _time
-
         try:
-            return _time.fromisoformat(value)
+            return clock_time.fromisoformat(value)
         except ValueError:
             return None
+    if isinstance(value, (int, float)):
+        minutes = int(round(float(value) * 60))
+        if not 0 <= minutes < 24 * 60:
+            return None
+        return clock_time(minutes // 60, minutes % 60)
     return value
 
 
@@ -453,7 +458,8 @@ def _static_hours_fit(r: dict[str, Any], filters: dict[str, Any],
     what `EXISTS` does. The clauses are independent: a request naming an hour tests `opens_at <=
     t < closes_at` (with `crosses_midnight` inverting the comparison), `min_closing_hour` tests
     `closes_at >= h OR crosses_midnight`, `max_opening_hour` tests `opens_at <= h OR
-    crosses_midnight`.
+    crosses_midnight`. D661: `h` is a `time`, not an hour - the half hour the request names is
+    part of the comparison, and an int is read as `int:00`.
     """
     weekday = filters.get("open_weekday")
     at = _static_hour_value(filters.get("open_time"))
@@ -467,19 +473,15 @@ def _static_hours_fit(r: dict[str, Any], filters: dict[str, Any],
         if not any(str(h.get("weekday")) == str(weekday) and _static_open_at(h, at) for h in rows):
             return False
     if min_closing is not None:
-        from datetime import time as _time
-
-        limit = _time(int(min_closing), 0)
-        if not any(bool(h.get("crosses_midnight"))
+        limit = _static_hour_value(min_closing)
+        if limit is not None and not any(bool(h.get("crosses_midnight"))
                    or (_static_hour_value(h.get("closes_at")) is not None
                        and _static_hour_value(h.get("closes_at")) >= limit)
                    for h in rows):
             return False
     if max_opening is not None:
-        from datetime import time as _time
-
-        limit = _time(int(max_opening), 0)
-        if not any(bool(h.get("crosses_midnight"))
+        limit = _static_hour_value(max_opening)
+        if limit is not None and not any(bool(h.get("crosses_midnight"))
                    or (_static_hour_value(h.get("opens_at")) is not None
                        and _static_hour_value(h.get("opens_at")) <= limit)
                    for h in rows):
@@ -670,10 +672,12 @@ class SearchPlan:
     at: datetime | None = None
     now: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     open_now: bool = False
-    open_late_after: int | None = None
-    #: D463: the merchant's OPENING hour has to be at or before this - the mirror
-    #: of `open_late_after`, which asks for a CLOSING hour at or after it.
-    open_early_before: int | None = None
+    #: D661: the CLOCK the request asks the shop to still be open at (`closes_at >=`), and the
+    #: mirror - the clock it has to open by (`opens_at <=`). Both were int HOURS, and the
+    #: extractor's quality carries HHMM: 「營業到晚上九點半」 asked for 21:00, which the corpus
+    #: answers with all 470 merchants because almost every shop closes after nine.
+    open_late_after: clock_time | None = None
+    open_early_before: clock_time | None = None
     sort_preference: str = "relevance"
     avoid: list[str] = field(default_factory=list)
     # Soft preference signals for the ranking lane. Never a hard filter: only explicit
@@ -944,12 +948,12 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     plan.at = at
     quality = _field(time, "quality") if time else None
     if quality and quality.startswith("open_late_after:"):
-        # D463: the quality carries HHMM and the filter wants the HOUR -
-        # 1000 hours is 41 days, and its time part is four in the afternoon.
-        plan.open_late_after = int(quality.split(":", 1)[1]) // 100
+        # D661: HHMM -> the CLOCK the filter binds. D463 divided it by 100 because the SQL took an
+        # int HOUR (`int * interval '1 hour'`), so 「九點半」 asked for nine and the half hour was
+        # gone before either lane saw it; both lanes now bind a `time`, like `open_time` does.
+        plan.open_late_after = _hhmm_clock(quality.split(":", 1)[1])
     if quality and quality.startswith("before:"):
-        # D463: the same HHMM -> HOUR, for the same reason.
-        plan.open_early_before = int(quality.split(":", 1)[1]) // 100
+        plan.open_early_before = _hhmm_clock(quality.split(":", 1)[1])
     if time and _field(time, "type") == "unspecified" and not plan.at:
         plan.at = None
     if intent.urgency == "now":
@@ -1007,6 +1011,21 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     out["open_time"] = plan.at.astimezone(HK_TZ).time() if plan.at else None
     plan.filters = {k: v for k, v in out.items() if v not in (None, "", [], {})}
     return plan
+
+
+def _hhmm_clock(value: Any) -> clock_time | None:
+    """`2130` -> 21:30 and `930` -> 09:30 - the extractor's quality, as a clock (D661).
+
+    Unreadable answers None rather than a guess: an unknown clock leaves the filter off, which is
+    the same thing the old `// 100` did with a bad value (and never reached the SQL).
+    """
+    text = str(value or "").strip()
+    if not (3 <= len(text) <= 4 and text.isdigit()):
+        return None
+    hours, minutes = int(text[:-2]), int(text[-2:])
+    if hours > 23 or minutes > 59:
+        return None
+    return clock_time(hours, minutes)
 
 
 def _field(obj: Any, name: str) -> Any:
