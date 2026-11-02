@@ -3198,6 +3198,19 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   D615's "no category is left to the text gate" leg) were re-aimed here, because this unit's adjacent run
   found them. Owner: any lane that adds a join-clause to one SELECT.
 
+- **The radius the request named reached one lane only - closed by D660 (§657).** `build_merchant_query`
+  turns a geo request into a bbox prefilter plus a haversine on the nearest location inside it, drops a
+  merchant with no location there and keeps only `loc.meters <= radius` (`sql.py:291-320`); the offering
+  SELECT does the same on its own join (`:553-580`). `_filter_static` read no point and no radius, so a
+  radius request answered the whole plane on that lane: 1,000 m -> 470 merchants against live's 0,
+  5,000 m -> 470 against 95, and offerings 5,000 m -> 4,707 against 970 (`tmp/d660_both.py`). The repair
+  publishes the row's own points as `location_points` on BOTH projections (`sql.py:182-198`, `:427`,
+  `:661`, only when a geo lane was asked) and the lane measures them with `sql.haversine_m` (`:112-117`),
+  the function `haversine_expr` mirrors in SQL - one formula. After: 0/0, 21/21, 95/95, 339/339 and
+  233/233, 970/970, 3,392/3,392. Gate `test_the_radius_the_request_names_is_read_by_both_lanes.py`,
+  11 legs, 9 red on HEAD (the two greens are the no-radius legs). Owner: any lane that adds a geo clause
+  to one reader.
+
 - **`min_closing_hour` and `max_opening_hour` are whole-hour integers, and the corpus is not.** The clauses
   read `h::int * interval '1 hour'` (`sql.py:263`, `:271`), so `open_late_after=21.5` has no spelling and
   「開到晚上九點半」 can only be rounded or dropped; `business_hours.closes_at` is a `time` with minutes

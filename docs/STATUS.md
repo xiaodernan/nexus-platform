@@ -30683,3 +30683,74 @@ offering's own hours (none exist in the schema, `docs/DATABASE.md:69-73`) cannot
   `:347-356` (where the lane applies them), the two re-aimed gates, this unit's gate, and `tmp/d659_open2.py`,
   `tmp/d659_falsify.txt` (the measurements).
 
+## 657. D660 · the radius the request named was a WHERE on one lane and a number no second reader knew (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`)
+
+**A geo request answered "everything near" on the degraded lane.** `build_merchant_query` turns the
+request's `geo` into a bbox from `bbox(lat, lng, radius_m or 5000)`, keeps the nearest `locations` row
+inside that box by `haversine_expr`, drops a merchant with no location in it (`loc.id IS NOT NULL`) and,
+when `radius_m` is named, keeps only `loc.meters <= radius` (`sql.py:291-320`); `build_offering_query`
+does the same on its own join (`:553-580`). `_filter_static` read no point and no radius at all, so the
+same plan answered the whole plane on the fixture lane. Measured on the published plane
+(`tmp/d660_both.py`), HEAD-before:
+
+    plan                                     fixture (before)   live (before)
+    merchants,  1,000 m around 22.30,114.18   470 of 470         0
+    merchants,  2,000 m                       470                21
+    merchants,  5,000 m                       470                95
+    merchants,  8,000 m around 22.42,114.21   470                339
+    offerings,  2,000 m                       4,707              233
+    offerings,  5,000 m                       4,707              970
+    offerings,  8,000 m                       4,707              3,392
+
+470 and 4,707 are the whole planes. A 1,000 m request answered 470 merchants against the live lane's 0,
+and the fixture lane could not have answered otherwise: nothing in `_filter_static` knew which row was
+where.
+
+**The repair publishes the row's points, and both lanes measure with one formula.** `_points_select`
+(`sql.py:182-198`) renders `location_points` as a jsonb array of `{lat, lng}` over the row's own
+`locations`, on BOTH projections - the merchant SELECT (`:427`) and the offering one, where the
+locations belong to `o.merchant_id` (`:661`) - and returns `'[]'::jsonb` when no geo lane was asked, the
+`category_slugs`/`districts` economy. `StaticBackend` hands `geo` and `radius_m` to the lane
+(`service.py:190-191`, `:198-199`), `_filter_static` applies the clause right after the hours clause
+(`:367-371`), and `_static_nearest_metres` (`:393-412`) measures with `sql.haversine_m`
+(`sql.py:112-117`) - the Python function `haversine_expr` (`:128-135`) already mirrors in SQL, so the
+two lanes measure with ONE formula rather than two copies of one.
+
+The live clause takes the nearest location INSIDE the bbox the radius implies; this one takes the
+nearest over ALL of the row's locations. They answer the same question because a bbox is a superset of
+its own disc: a point outside the disc is either outside the bbox or farther away than a point inside
+it. A row with no location is dropped when a radius is asked and kept when none is - the live
+`loc.id IS NOT NULL` mirrored, and a leg pins each side. `meters` is written onto the surviving row,
+because the live projection carries it (`sql.py:304`) and the card prints it.
+
+**After**, both lanes equal on every measurement above:
+
+    1,000 m 0/0 · 2,000 m 21/21 · 5,000 m 95/95 · 8,000 m 339/339
+    offerings 2,000 m 233/233 · 5,000 m 970/970 · 8,000 m 3,392/3,392
+
+**The gate** is `tests/test_the_radius_the_request_names_is_read_by_both_lanes.py`, 11 legs: no geo keeps
+every row (merchant and offering), a radius keeps the rows inside it, the nearest of several locations is
+the one measured, a row with no location is dropped by a radius and kept without one, an offering answers
+its shop's distance, the distance lands on the row the card prints, and four live legs pin both planes
+equal under a 2,000 m, a 5,000 m and an 8,000 m request plus the one-row offering case. Falsified against
+HEAD: **9 red / 2 green** (`tmp/d660_falsify.txt`); the two greens are the "keeps everything without a
+radius" legs, which are the half this unit does not change.
+
+**Adjacent**, run and green, never full: this unit's gate, D609's station gate, D659's, D655's and
+D656's hour/filter/district gates, `test_demo_data`, `test_search_pipeline` and `test_search_plan`
+(**135 passed**).
+
+**Not claimed.** (a) The nearest location's DISTRICT and MTR fields stay the live lane's own display
+answer (D608/D609); this unit publishes the geometry and the distance, not a second display join.
+(b) `meters` reaches the card as `Candidate.distance_m` (`service.py:1098`); it is not added to
+`candidate.raw`, so a consumer reading the raw dict still sees the live projection's field only, which
+is the same number. (c) A plan that names a geo always carries a radius (`_apply_geo`,
+`service.py:1032-1042`, pinned by `test_search_plan.py:188`), so the disc is the only cut the planner
+can produce; a hand-built plan with a geo and no radius is not mirrored, and the live lane would keep
+its bbox square there. That shape has no producer, so it is filed rather than guessed.
+
+- readers: `search/sql.py:112-117` (`haversine_m`), `:128-135` (`haversine_expr`), `:182-198`
+  (`_points_select`), `:427` and `:661` (the two projections), `:291-320` and `:553-580` (the live
+  clauses), `search/service.py:190-191`/`:198-199` (the lane's arguments), `:367-371` (where the clause
+  applies), `:393-412` (`_static_nearest_metres`), `:1098` (`meters` onto the candidate), this unit's
+  gate, and `tmp/d660_both.py`, `tmp/d660_geo.py`, `tmp/d660_falsify.txt` (the measurements).

@@ -179,6 +179,22 @@ def _districts_select(ref: str, filters: dict[str, Any]) -> str:
             f"FROM locations ld2 WHERE ld2.merchant_id = {ref}), '{{}}'::text[])")
 
 
+def _points_select(ref: str, geo: tuple[float, float] | None) -> str:
+    """Every location the row has, as a jsonb array of points, when a radius was asked (D660).
+
+    The radius clause is a bbox prefilter plus a haversine on the nearest location INSIDE that box
+    (`:274-302`), a shape the fixture lane has no join for. This publishes the points instead, and
+    the fixture lane computes the same distance with the same formula (`haversine_m`, which
+    `haversine_expr` mirrors in SQL). Only computed when a geo lane is asked for - the
+    `category_slugs` and `districts` economy.
+    """
+    if not geo:
+        return "'[]'::jsonb"
+    return (f"coalesce((SELECT jsonb_agg(jsonb_build_object('lat', l3.lat, 'lng', l3.lng)) "
+            f"FROM locations l3 WHERE l3.merchant_id = {ref} "
+            f"AND l3.lat IS NOT NULL AND l3.lng IS NOT NULL), '[]'::jsonb)")
+
+
 def _avoid_attributes(avoid: Iterable[Any]) -> list[str]:
     """The boolean attributes a refused word stands for (D598).
 
@@ -214,6 +230,7 @@ def build_merchant_query(
     filters = filters or {}
     category_slugs_select = _category_slugs_select(filters)
     districts_select_m = _districts_select("m.id", filters)
+    points_select_m = _points_select("m.id", geo)
     text_ph = p.add(text or "")
     tsq = f"plainto_tsquery('{cfg}'::regconfig, {text_ph})"
     wsq = f"websearch_to_tsquery('{cfg}'::regconfig, {text_ph})"
@@ -407,6 +424,7 @@ SELECT {total_select}m.id, m.slug, m.display_name, m.display_name_zh, m.descript
        m.attributes, m.data_origin, m.plan, m.images, m.ai_agent_enabled,
        {category_slugs_select} AS category_slugs,
        {districts_select_m} AS districts,
+       {points_select_m} AS location_points,
        'merchant'::text AS subject_type, m.id::text AS subject_id, m.id::text AS merchant_id,
        {geo_select},
        {kw_score} AS kw_score,
@@ -453,6 +471,7 @@ def build_offering_query(
     filters = filters or {}
     category_slugs_select = _category_slugs_select(filters)
     districts_select_o = _districts_select("o.merchant_id", filters)
+    points_select_o = _points_select("o.merchant_id", geo)
     text_ph = p.add(text or "")
     tsq = f"plainto_tsquery('{cfg}'::regconfig, {text_ph})"
     wsq = f"websearch_to_tsquery('{cfg}'::regconfig, {text_ph})"
@@ -639,6 +658,7 @@ SELECT {total_select}o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.descripti
        coalesce(m.attributes->'lively_ambience', 'false'::jsonb) AS merchant_lively_ambience,
        {category_slugs_select} AS category_slugs,
        {districts_select_o} AS districts,
+       {points_select_o} AS location_points,
        'offering'::text AS subject_type, o.id::text AS subject_id, o.merchant_id::text AS merchant_id_key,
        {geo_select},
        {kw_score} AS kw_score,

@@ -184,15 +184,19 @@ class StaticBackend:
         # D549: the merchant lane's avoid clause reads the merchant's OWN offerings too
         # (`EXISTS (SELECT 1 FROM offerings ao WHERE ao.merchant_id = m.id ...)`), so the
         # fixture lane is handed the same list the live lane would join against.
+        # D660: the radius reaches this lane the same way the live SELECT receives it - the
+        # pipeline passes `geo` / `radius_m` to both backends (`service.py:1249`).
         return _filter_static(rows, text or "", filters or {}, offerings=self.offerings,
-                              hours=self._hours)
+                              hours=self._hours, geo=_kw.get("geo"),
+                              radius_m=_kw.get("radius_m"))
 
     async def offering_candidates(self, *, text=None, filters=None,
                                   party_size: int | None = None, **_kw: Any
                                   ) -> list[dict[str, Any]]:
         rows = [dict(r) for r in self.offerings]
         return _filter_static(rows, text or "", filters or {}, party_size=party_size,
-                              hours=self._hours)
+                              hours=self._hours, geo=_kw.get("geo"),
+                              radius_m=_kw.get("radius_m"))
 
     async def facts(self, subject_ids: Sequence[str]) -> list[dict[str, Any]]:
         ids = {str(s) for s in subject_ids}
@@ -228,7 +232,9 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
                    filters: dict[str, Any],
                    offerings: Sequence[dict[str, Any]] = (),
                    party_size: int | None = None,
-                   hours: Sequence[dict[str, Any]] = ()) -> list[dict[str, Any]]:
+                   hours: Sequence[dict[str, Any]] = (),
+                   geo: tuple[float, float] | None = None,
+                   radius_m: int | None = None) -> list[dict[str, Any]]:
     from nexus_ai.search.categories import canonical_tag, resolve
 
     bucket = str(filters["category"]) if filters.get("category") else ""
@@ -353,6 +359,16 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         # no matching hours fails the EXISTS on the live lane, so it fails here too.
         if not _static_hours_fit(r, filters, hour_sets):
             continue
+        # D660: the RADIUS. The live clause is a bbox prefilter plus a haversine on the nearest
+        # location inside it, and a row with no location is dropped (`sql.py:291-320`). Measured on
+        # the published plane (`tmp/d660_geo.py`): a 1,000 m request answered 470 of 470 rows here
+        # against 0 live, and 5,000 m answered 470 against 95. `haversine_m` is the SAME function
+        # `haversine_expr` mirrors in SQL, so the two lanes measure with one formula.
+        if geo:
+            metres = _static_nearest_metres(r, geo)
+            if metres is None or (radius_m and metres > float(radius_m)):
+                continue
+            r["meters"] = metres
         if _static_avoids(r, filters.get("avoid"), offerings):
             continue
         if party_size:
@@ -372,6 +388,29 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         r.setdefault("subject_type", "merchant" if r.get("display_name") else "offering")
         out.append(r)
     return out
+
+
+def _static_nearest_metres(r: dict[str, Any], geo: tuple[float, float]) -> float | None:
+    """The nearest of the row's own locations, in metres - or None when it states none (D660).
+
+    The live lane picks the nearest location INSIDE the bbox the radius implies and drops a row
+    with none (`sql.py:291-320`); a bbox is a superset of its own disc, so the nearest over ALL
+    the row's points answers the same question, and `haversine_m` is the formula the SQL mirrors.
+    """
+    from nexus_ai.search.sql import haversine_m
+
+    points = r.get("location_points") or []
+    best: float | None = None
+    for point in points:
+        if not isinstance(point, dict):
+            continue
+        lat, lng = point.get("lat"), point.get("lng")
+        if lat is None or lng is None:
+            continue
+        metres = haversine_m(float(geo[0]), float(geo[1]), float(lat), float(lng))
+        if best is None or metres < best:
+            best = metres
+    return best
 
 
 def _static_hour_index(hours: Sequence[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
