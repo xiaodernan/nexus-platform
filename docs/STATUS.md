@@ -29169,6 +29169,46 @@ suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
 
 - readers: `nlu/lexicon.py:783-810` (`leaf_surfaces`), `:743-780` (`match_leaf`, the head rule that
   chooses the leaf); `search/service.py:497-517` (`_apply_category_leaf`), `:681-694` (the recompute).
+## 645. D648 · a dash range that named no party was removed from the sentence anyway
+(`apps/ai/nexus_ai/nlu/understand.py`)
+
+**How the unit arrived.** §642 (D645) taught `PARTY_SPAN_RE` that a Latin RANGE is one span, and wrote
+the lead (`table for`, `party of`) and the cap cue (`at most`) as OPTIONAL so a bare `2-4 people` would
+still match. Both optional means the range by itself matches - which is a rule that removes words on
+behalf of a lane that answered nothing.
+
+**Measured** (`tmp/d648_probe2.py`):
+
+    2-4               party None   match text ""    (the words vanished)
+    2-4蚊             party None   match text ""
+    3-8蚊             party None   match text ""
+    at most 2 to 4    party None   match text ""    (a cue alone is not a party)
+    2-4蚊嘅餐廳       party None   match text ""    (the request lost its amount too)
+
+**The rule restored** is the one D643 already used: a span leaves the sentence when the PARTY lane reads
+it. That lane needs a LEAD (`party of 2 to 4`, `table for 4 to 6 people`, `for 4 to 6`) or a UNIT
+(`2-4 people`, `4-6 guests`, `2至4人`), and a bare cue is not enough - measured, `at most 2 to 4` reads no
+party. The range alternative is now two: `_PARTY_LEAD_ONLY` (the lead, required) and the unit-carrying
+form with no lead. The other Latin alternatives were already unit-seeking or `for`-bound, so this was the
+only hole.
+
+**Measured after** (`tmp/d648_probe3.py`): the seven unread shapes keep every word and read no party and
+no band; the eleven read shapes still read their party and leave nothing; `20-40蚊嘅餐廳` still reads
+20-40 and empties the text; content beside an unread range survives (`cheap 2-4 旺角` → `cheap 2-4`).
+
+**Not claimed.** `2-4蚊` is still not a PRICE BAND. The money lane takes two to five digits by design
+(D624), so a one-digit amount marked as money reads no band on either side of this change; what changed
+is that its words now stay in the sentence instead of vanishing. The band itself is a separate item.
+
+**The gate** is `tests/test_a_range_no_party_lane_reads_is_not_a_party.py`: 30 legs - seven unread
+shapes twice (words kept, lanes silent), eleven read shapes, the money band, a content leg, and three
+live pairs. Falsified by putting the OPTIONAL lead back on the range alternative: **5 red, 25 green**
+(`tmp/d648_falsify.txt`), every red one of the "keeps its words" legs. With the D643, D645, D647 party,
+budget, plan and lexicon suites: **406 passed**.
+
+- readers: `nlu/understand.py:196-201` (`_PARTY_LEAD_ONLY`), `:216-223` (the two range alternatives in
+  `PARTY_SPAN_RE`).
+
 ## 644. D647 · a clock range was read at one end and left a fragment of itself in the match text
 (`apps/ai/nexus_ai/nlu/timeparse.py`, `apps/ai/nexus_ai/nlu/understand.py`)
 

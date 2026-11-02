@@ -193,6 +193,12 @@ _PARTY_CUE = (r"(?:(?:at\s+most|no\s+more\s+than|not\s+more\s+than|up\s+to|less\
 #: 「party of」) - and it is OPTIONAL, so a bare 「12 people」 matches exactly as it did before. The cue
 #: comes AFTER it, which is what makes 「table for up to 6 people」 one span.
 _PARTY_LEAD = r"(?:(?:party|group)\s*(?:of)?|tables?\s*for|seats?\s*for|for\b)?\s*"
+#: D648: the same lead, REQUIRED. A range is removed only when the party lane actually reads it,
+#: and that lane needs a lead (`party of 2 to 4`) or a unit (`2-4 people`) - a cue alone is not
+#: enough (`at most 2 to 4` answers no party at all). Measured 2026-11-02 (`tmp/d648_probe2.py`):
+#: `2-4`, `2-4蚊` and `at most 2 to 4` were stripped by D645's alternative while all three read
+#: party None, so the words left the sentence and nobody answered them.
+_PARTY_LEAD_ONLY = r"(?:(?:party|group)\s*(?:of)?|tables?\s*for|seats?\s*for|for\b)\s*"
 #: And a cap written after the party - 「4 people at most」, 「4 people or fewer」.
 _PARTY_TRAIL = r"(?:\s*(?:at\s+most|or\s+fewer|or\s+less))?"
 
@@ -208,8 +214,12 @@ PARTY_SPAN_RE = re.compile(
     # D643: the LATIN range. 「2-4 people」 was read as 4 by the tail alternative and stripped only
     # 「4 people」, leaving 「2-」; 「party of 2 to 4」 READ THE LOWER END (2) because `PARTY_RE`'s cue
     # alternative stopped at the first number, and its strip left 「to 4」.
-    _PARTY_LEAD + _PARTY_CUE + r"(?<!\d)\d{1,2}\s*(?:[-–~～]|to|and\b)\s*\d{1,2}"
+    _PARTY_LEAD_ONLY + _PARTY_CUE + r"(?<!\d)\d{1,2}\s*(?:[-–~～]|to|and\b)\s*\d{1,2}"
     r"(?:\s*(?:people|pax|persons?|guests|diners|人))?"
+    + _NO_DURATION +
+    # D648: the same range with NO lead has to carry the unit itself.
+    r"|" + _PARTY_CUE + r"(?<!\d)\d{1,2}\s*(?:[-–~～]|to|and\b)\s*\d{1,2}"
+    r"\s*(?:(?:people|pax|persons?|guests|diners)\b|人)"
     + _NO_DURATION +
     r"|between\s*\d{1,2}\s*and\s*\d{1,2}"
     r"(?:\s*(?:people|pax|persons?|guests|diners|人))?|"
