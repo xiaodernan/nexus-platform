@@ -110,8 +110,12 @@ SPEND_CEILING_RE = re.compile(
 #: 2026-10-30: "預算 300 - 500" read max=300 (the LOW end, so a user asking for 300-500 got
 #: only ≤300) and "$300-$500" read nothing at all (`tmp/d624_census.txt`).
 BUDGET_RANGE_RE = re.compile(
-    r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})(?:\s*(?:蚊|元|塊|块))?\s*"
-    r"(?:-|–|—|~|～|至|到|to)\s*(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})"
+    # D651: ONE digit is enough when the sentence says it is money - 「5至10蚊」, 「$2-$4」,
+    # 「2蚊-4蚊」 all read no band at all before this, because the pattern demanded two digits. The
+    # span is only money when the sentence says so (`_range_is_money`), and the strip below asks the
+    # same question, so widening the digits cannot turn 「2-4」 or 「10至20人」 into a price.
+    r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{1,5})(?:\s*(?:蚊|元|塊|块))?\s*"
+    r"(?:-|–|—|~|～|至|到|to)\s*(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{1,5})"
     r"(?:\s*(?:蚊|元|塊|块))?",
     re.IGNORECASE,
 )
@@ -738,6 +742,27 @@ def _range_is_money(span: str, before: str, after: str = "") -> bool:
 #: party of forty filtered the catalogue by PRICE. Measured 2026-10-31 (`tmp/d636_party.txt`):
 #: 少過12個人 / 唔多過12人 / 不超過12位 / 最多40人 each read max=12/12/12/40 AND the party size.
 #: A word-cue amount followed by a counter is not money.
+def _strip_money_ranges(t: str) -> str:
+    """D651: a money range leaves the text only when `_range_is_money` says it IS money.
+
+    The tuple `_MATCH_CORE_RES` removes spans a lane answered, and it can ask nothing: it is a list
+    of patterns. The money range now accepts ONE digit (`5至10蚊`), and a bare 「2-4」 must keep its
+    words (D648), so this one span is removed by the same predicate the READING uses - one rule,
+    not a second narrower pattern that could drift from it.
+    """
+    out: list[str] = []
+    last = 0
+    for m in BUDGET_RANGE_RE.finditer(t):
+        before = t[max(0, m.start() - 12):m.start()]
+        if not _range_is_money(m.group(0), before, t[m.end():]):
+            continue
+        out.append(t[last:m.start()])
+        out.append(" ")
+        last = m.end()
+    out.append(t[last:])
+    return "".join(out)
+
+
 _PARTY_AFTER = re.compile(r"\s*(?:個|个|位|人|people|pax|persons?|guests?|diners?)", re.IGNORECASE)
 
 #: D649: and the same counter one RANGE further out - 「最多10-20人」 puts `-20人` between the digits
@@ -803,7 +828,10 @@ _MATCH_CORE_RESIDUE = (
 #: exactly those spans; nothing else - a constraint that IS content (`安靜` in `安靜嘅咖啡店`) stays.
 #: D633: the PARTY span is read FIRST - a party range and a budget range share the shape N-M, and
 #: the money rule used to take 「10至20」 out of 「10至20人」 and leave the counter behind.
-_MATCH_CORE_RES = (PARTY_SPAN_RE, BUDGET_RANGE_RE, SPEND_CEILING_RE, SPEND_FLOOR_RE,
+#: D651: the money RANGE is not in this tuple - it leaves the text only when `_range_is_money`
+#: says it is money (`_strip_money_ranges` below), because one digit is now enough for the READING
+#: and a bare 「2-4」 must keep its words (D648).
+_MATCH_CORE_RES = (SPEND_CEILING_RE, SPEND_FLOOR_RE,
                    PER_PERSON_POINT_RE, BUDGET_MAX_RE, BUDGET_WORD_RE, BUDGET_CEILING_CUE_RE,
                    BUDGET_FLOOR_CUE_RE, BUDGET_MIN_RE, CURRENCY_AMOUNT_RE)
 _MATCH_CORE_CUES = re.compile(r"(?:預算|预算|budget|人均|每人|每位|人頭|per\s?person|p/p)",
@@ -891,6 +919,12 @@ def match_core(text: str, *, strip_time: bool = False,
     if strip_time:
         t = TIME_SPAN_RE.sub(" ", t)
     t = _strip_surface_spans(t, strip_surfaces)
+    # D633/D651: the PARTY span goes FIRST, then the money RANGE, then everything else - a party
+    # range and a money range share the shape N-M, and 「最多1000-2000」 must be taken as one band
+    # before `BUDGET_MAX_RE` can read the 1000 and leave `-2000` behind (measured after the first
+    # cut of D651, `tmp/d651_probe.py`).
+    t = PARTY_SPAN_RE.sub(" ", t)
+    t = _strip_money_ranges(t)
     for rx in _MATCH_CORE_RES:
         t = rx.sub(" ", t)
     for rx in _MATCH_CORE_RESIDUE:

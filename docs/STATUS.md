@@ -29169,6 +29169,52 @@ suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
 
 - readers: `nlu/lexicon.py:783-810` (`leaf_surfaces`), `:743-780` (`match_leaf`, the head rule that
   chooses the leaf); `search/service.py:497-517` (`_apply_category_leaf`), `:681-694` (the recompute).
+## 648. D651 · a one-digit amount marked as money was read by nobody (`apps/ai/nexus_ai/nlu/understand.py`)
+
+**How the unit arrived.** §645 (D648) stopped the party strip from removing "2-4蚊", and closed with the
+band itself open: the money range demanded two to five digits (`\d{2,5}`), so the same numbers with a
+leading digit were read as text while 「20-40蚊」 read a band.
+
+**Measured** (`tmp/d651_probe.py`):
+
+    5至10蚊     band None      match text "5至10蚊"
+    $2-$4       band None      match text "$2-$4"
+    2蚊-4蚊     band None      match text "2蚊-4蚊"
+    20-40蚊     band 20-40     match text ""
+
+**The repair** widens the READING to one digit and makes the STRIP ask the same question the reading
+asks. `_strip_money_ranges` runs `BUDGET_RANGE_RE` and keeps every match `_range_is_money` refuses - a
+bare 「2-4」 is not money, so it keeps its words (D648) - and `BUDGET_RANGE_RE` left the
+`_MATCH_CORE_RES` tuple because that tuple can only remove by pattern. One predicate now governs reading
+and stripping, so a one-digit span cannot be read one way and removed another.
+
+**Order, measured the hard way.** The party span goes first, then the money range, then the rest of the
+amount rules. With the money range still inside the tuple, 「最多1000-2000」 reached `BUDGET_MAX_RE` first,
+which consumed 1000 and left `-2000` in the match text (`tmp/d651_probe.py`, first cut).
+
+**Measured after**: `5至10蚊`, `$2-$4`, `2蚊-4蚊`, `hk$5-$10`, `5蚊-10蚊` and `2-4蚊` all read their band
+and leave no words; `2-4`, `10-20`, `1-2` and `3-8` keep their words and read no band; the party ranges
+(`10至20人`, `最多10-20人`, `2至4人`, `2-4 people`) still read their party and no band; the two-digit bands
+(`100-200蚊`, `20-40蚊嘅餐廳`, `最多1000-2000`, `最多1000-2000蚊`, `預算1000-2000`) are untouched; and
+`4-6pm` is still a clock. Each pair of spellings of one band answers one page: `$2-$4`/`2-4蚊`,
+`5至10蚊`/`5蚊-10蚊`, `100-200蚊`/`最多100-200蚊`.
+
+**A leg re-based on the way, and why.** D648's gate pinned five one-digit shapes as UNREAD - and D651 is
+the unit that reads them, so those five legs now assert the opposite. The file keeps the two shapes that
+are still nobody's (`2-4`, `at most 2 to 4`) and says in the docstring that the money-marked ones moved
+to `test_a_one_digit_money_range_reads_its_band`.
+
+**Not claimed.** A range with no money marking and no cue (`2-4`, `10-20`) is still nobody's: the money
+lane may read it only when the sentence says it is money, and the party lane needs a lead or a unit.
+
+**The gate** is `tests/test_a_one_digit_money_range_reads_its_band.py`: 29 legs - six one-digit bands twice
+(reading and strip), four no-marking ranges, four party ranges, five two-digit bands, the clock control,
+and three live pairs. Falsified by putting `\d{2,5}` back: **14 red, 15 green** (`tmp/d651_falsify.txt`).
+With the party, budget, plan, clock and question-frame suites: **420 passed**.
+
+- readers: `nlu/understand.py:112-121` (`BUDGET_RANGE_RE`), `:745-764` (`_strip_money_ranges`),
+  `:834` (`_MATCH_CORE_RES` without the money range), `:923-929` (the strip order in `_match_core`).
+
 ## 647. D650 · the question a user wraps a request in was searched as content
 (`apps/ai/nexus_ai/nlu/understand.py`)
 

@@ -18,10 +18,10 @@ it. That lane needs a LEAD (`party of 2 to 4`) or a UNIT (`2-4 people`), and a b
 enough - measured, `at most 2 to 4` answers no party. So the range alternative is now two:
 `_PARTY_LEAD_ONLY` (the lead, required) or the unit itself.
 
-What this does NOT do: it does not read `2-4蚊` as a price band. The money lane takes two to five
-digits by design (D624), so a one-digit amount marked as money still reads no band - but its words
-now STAY in the sentence and reach the keyword lane, which is the honest half of the repair. The
-band itself is a separate item.
+What this did NOT do on its own: read `2-4蚊` as a price band. The money lane took two to five digits
+by design (D624) at the time, so a one-digit amount marked as money read no band - its words simply
+STAYED in the sentence instead of vanishing. D651 later gave that band its own unit, so the legs that
+pinned it here were re-based; this file now pins the range NO lane reads (`2-4`, `at most 2 to 4`).
 """
 
 from __future__ import annotations
@@ -37,7 +37,11 @@ from nexus_ai.search.service import plan_from_intent
 DB_URL = os.environ.get("NEXUS_TEST_DATABASE_URL", "").strip()
 TOP_K = 10
 
-UNREAD = ["2-4", "2-4蚊", "3-8蚊", "$2-$4", "2蚊-4蚊", "5至10蚊", "at most 2 to 4"]
+#: D651 re-based four of these: a range MARKED as money with one digit (`2-4蚊`, `3-8蚊`, `$2-$4`,
+#: `2蚊-4蚊`, `5至10蚊`) now reads a band and leaves the text, which is the money lane's business and
+#: `test_a_one_digit_money_range_reads_its_band`'s claim. What this unit owns is the range NO lane
+#: reads, and that is now only the bare pair and the bare cue.
+UNREAD = ["2-4", "at most 2 to 4"]
 
 
 @pytest.mark.parametrize("text", UNREAD)
