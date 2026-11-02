@@ -3081,3 +3081,14 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   occurrence in the whole repository, in the cue itself, with no test or corpus row naming it. Either is
   a deliberate typo tolerance waiting for a sentence that says so, or a leftover. Owner: the lane that
   owns the mock vocabulary.
+
+- **`plan_from_intent` could not plan the extractor's own output - closed by D652 (§649).**
+  `extract_intent` returns an object whose `location`, `budget`, `time` and `constraints` entries are
+  plain dicts, and every read of those fields was attribute access: 咖啡店 died on `'dict' object
+  has no attribute 'type'`, 「300-500蚊」 on `'max'`, and 「今晩7點」 one layer deeper on a string
+  `starts_at` reaching `astimezone`. Two tests in `tests/test_transient_preference_label.py` were red at
+  `5122794` for it, which is how the unit arrived. The reads now go through `_field` (dict `get` or
+  `getattr`) and the ISO instant is parsed where it enters `plan.at`; ten sentences plan identically from
+  both shapes. STILL OPEN, and filed rather than guessed: `run_search` dumps each preference with
+  `model_dump`, so it takes the model only - either it learns the same tolerance, or the preference list
+  gets one reader. Owner: the search lane. The measurement is `tmp/d652_parity.py`.

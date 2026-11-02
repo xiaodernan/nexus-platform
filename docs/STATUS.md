@@ -30086,3 +30086,64 @@ to the location subject. The live plane's reserve action is unchanged in shape a
   this unit's thirteen `tmp/` measurements (`cta_dump`, `cta_offences`, `cta_counts`, `cta_slugcheck`,
   `cta_cards_before`, `cta_cards_after`, `cta_planes_before`, `cta_planes_after`, `cta_wholecard`,
   `cta_arms`, `cta_arms_16rows_1bb5b35`, plus `d642_owncheck`, `d642_headcheck` and `d642_suite`).
+
+## 649. D652 · the planner read the extractor's own dicts as models and could not plan the sentence (`apps/ai/nexus_ai/search/service.py`)
+
+**How the unit arrived.** A focused run of the preference suites left two reds that were not this
+lane's: `tests/test_transient_preference_label.py` failed at `service.py:654` with `'dict' object
+has no attribute 'type'`, in a tree of `5122794` with none of this session's edits applied.
+`plan_from_intent` is typed `Intent | None` and handed two shapes - the pipeline's
+`validate_intent` model, and, from direct callers and from those two tests, `extract_intent`'s
+output, whose `location`, `budget`, `time` and each `constraints` entry are plain dicts. Every
+read was attribute access, so the extractor's own answer could not be planned:
+
+    咖啡店             AttributeError: 'dict' object has no attribute 'type'
+    300-500蚊的餐廴     AttributeError: 'dict' object has no attribute 'max'
+    今晩7點的餐廴    AttributeError: 'str' object has no attribute 'astimezone'
+
+The third is one layer down: the dict's `starts_at` is the ISO string the wire carries, and every
+reader of `plan.at` calls datetime methods on it, so the parse belongs at the boundary.
+
+**The repair** is `_field(obj, name)` - a dict answers `get`, anything else `getattr` - the choice
+`_plain` already makes for `filters`, applied at every read of the four fields (the district
+surface strip, the district / radius / resolved reads, the budget's three ends, the time's instant
+and quality, and a constraint's key and value), plus
+`datetime.fromisoformat(at.replace("Z", "+00:00"))` where the instant enters the plan - the
+idiom `routes_stream.py` and `stream.py` already use. The extractor's `{}` stays falsy, so a
+sentence that names no place, no time and no budget takes the path it always did.
+
+**Measured after** (`tmp/d652_parity.py`): ten sentences plan identically from both shapes -
+filters (as JSON), geo, radius, budget ends and per, party, `at`, both open-hours bounds, the match
+text and the avoid list. Spot rows: 咖啡店 `{"category": "cafe"}` and no geo; 尖沙咀餐廴 `district: Tsim
+Sha Tsui` with `(22.2988, 114.1722)`; 「300-500蚊」 `min 300.0 / max 500.0`, per party; 「今晩7點」 an aware
+datetime equal to the model's; 「唔食花生」 `avoid ["peanut"]`.
+
+**The gate** is `tests/test_the_plan_reads_the_extractors_own_shape.py`: 25 legs - ten "it plans at
+all" and ten shape-parity legs over the same ten sentences, then one leg each for the empty boxes,
+the district with its geo, the budget's two ends, the instant (a datetime, equal to the model's)
+and the refusal. Falsified against the parent's real bytes: **25 of 25 red** (`tmp/d652_falsify.txt`)
+- every leg is about the one boundary this unit moved. The two reds that started the unit are
+green in the same run.
+
+**Adjacent**, each run and green: this gate with `test_transient_preference_label.py` (27), then
+`test_search_plan.py`, `test_a_leaf_word_the_filter_answered_is_not_a_search_term.py`,
+`test_an_afternoon_tea_is_not_a_time_of_day.py`,
+`test_a_budget_cue_against_the_digits_keeps_the_floor.py`,
+`test_a_question_frame_is_not_a_search_term.py` and
+`test_live_the_typed_preference_moves_the_lane.py` (122).
+
+**Not claimed.** (a) `run_search` still takes the contract's Intent - it dumps every preference with
+`model_dump`, so the extractor's list of preference dicts would fail there; the PLANNER is the
+entry point this unit repaired, and the two red tests meet it there. (b) A plain dict for the whole
+intent (`intent["category"]`) is still not read: the extractor returns an object whose FIELDS are
+dicts, which is the shape in the tree. (c) `plan.at` for a dict time is parsed from the ISO string
+the extractor writes while the model path gets a datetime from pydantic; the gate asserts the two
+agree rather than that either parse is the only correct one.
+
+- readers: `search/service.py:632` (`plan_from_intent`), `:654` (the district strip, the first
+  unguarded read), `:696`/`:701` (district, radius, resolved), `:716` (budget), `:722` (instant),
+  `:726`/`:729` (the two quality bounds), `:738` (`constraints`), `:782` (`_plain`, the shape
+  reader this follows), `:790` (`_field`), `apps/ai/nexus_ai/nlu/understand.py` (`extract_intent`,
+  the shape's writer), `apps/ai/nexus_ai/api/pipeline.py:174` (the model caller),
+  `apps/ai/tests/test_the_plan_reads_the_extractors_own_shape.py` (this unit's gate), and
+  `tmp/d652_parity.py`, `tmp/d652_falsify.txt` (the measurements).

@@ -651,10 +651,17 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     # word cannot narrow it further, it only divides the pool's relevance. Only the district the
     # filter will actually use is returned, and only when the location lane named one (a radius
     # or the session's own position writes no word).
-    if intent is not None and intent.location is not None and intent.location.type == "district":
+    # D652: the LOCATION arrives in two shapes - the contract's model (the pipeline calls
+    # `validate_intent`) and the extractor's plain dict (`extract_intent`, whose `location` is a
+    # mapping). The guard used `is not None` and then read `.type` off it, so every direct caller
+    # with the extractor's own output died before the plan existed - `'dict' object has no attribute
+    # 'type'` - and the extractor returns `{}` for a sentence that names no place, which is falsy for
+    # the three reads below. One reader for both shapes, the choice `_plain` already makes for filters.
+    location = _field(intent, "location") if intent is not None else None
+    if location and _field(location, "type") == "district":
         from nexus_ai.nlu.lexicon import district_surfaces
 
-        surfaces += district_surfaces(plan.query_text, intent.location.value)
+        surfaces += district_surfaces(plan.query_text, _field(location, "value"))
     plan.match_text = _match_core(plan.query_text,
                                   strip_time=bool(intent is not None and intent.time),
                                   strip_surfaces=surfaces)
@@ -693,38 +700,52 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     _canonical_district(out)
     _canonical_tags(out)
     _canonical_kind(out)
-    if intent.location and intent.location.value:
-        out.setdefault("district", intent.location.value)
-    if intent.location and intent.location.radius_m:
-        plan.radius_m = int(intent.location.radius_m)
+    if location and _field(location, "value"):
+        out.setdefault("district", _field(location, "value"))
+    if location and _field(location, "radius_m"):
+        plan.radius_m = int(_field(location, "radius_m"))
     _apply_geo(plan, geo)
-    if plan.geo is None and intent.location and intent.location.resolved:
-        plan.geo = (intent.location.resolved.lat, intent.location.resolved.lng)
+    resolved = _field(location, "resolved")
+    if plan.geo is None and resolved:
+        plan.geo = (_field(resolved, "lat"), _field(resolved, "lng"))
     if plan.geo is None and out.get("district"):
         d = DISTRICTS.get(str(out["district"]))
         if d:
             plan.geo = (d["lat"], d["lng"])
             plan.radius_m = plan.radius_m or int(d.get("radius_m") or 2500)
-    if intent.budget:
-        plan.budget_max = intent.budget.max
-        plan.budget_per = intent.budget.per or "party"
-        plan.budget_min = intent.budget.min
+    # D652: the BUDGET and the TIME arrive in the same two shapes as the location - the model's
+    # fields or the extractor's dicts - and both were read as models, so a direct caller's plan
+    # died on `'dict' object has no attribute 'max'` / `'starts_at'`. `_field` asks the same
+    # question of either shape; `{}` (the extractor's "nothing") stays falsy for both.
+    budget = _field(intent, "budget")
+    if budget:
+        plan.budget_max = _field(budget, "max")
+        plan.budget_per = _field(budget, "per") or "party"
+        plan.budget_min = _field(budget, "min")
     plan.party_size = intent.party_size
     plan.sort_preference = intent.sort_preference or "relevance"
-    plan.at = intent.time.starts_at if intent.time else None
-    if intent.time and intent.time.quality and intent.time.quality.startswith(
-            "open_late_after:"):
+    time = _field(intent, "time")
+    at = _field(time, "starts_at") if time else None
+    if isinstance(at, str):
+        # D652: the extractor's instant is the ISO string the wire carries, and every reader of
+        # `plan.at` (the open-state calculation, `out["open_time"]`, the cards) calls datetime
+        # methods on it. Parsed at the boundary, the same `replace("Z", "+00:00")` the stream and
+        # the card reader use; an empty string is the extractor's "no time" and stays None.
+        at = datetime.fromisoformat(at.replace("Z", "+00:00")) if at else None
+    plan.at = at
+    quality = _field(time, "quality") if time else None
+    if quality and quality.startswith("open_late_after:"):
         # D463: the quality carries HHMM and the filter wants the HOUR -
         # 1000 hours is 41 days, and its time part is four in the afternoon.
-        plan.open_late_after = int(intent.time.quality.split(":", 1)[1]) // 100
-    if intent.time and intent.time.quality and intent.time.quality.startswith("before:"):
+        plan.open_late_after = int(quality.split(":", 1)[1]) // 100
+    if quality and quality.startswith("before:"):
         # D463: the same HHMM -> HOUR, for the same reason.
-        plan.open_early_before = int(intent.time.quality.split(":", 1)[1]) // 100
-    if intent.time and intent.time.type == "unspecified" and not plan.at:
+        plan.open_early_before = int(quality.split(":", 1)[1]) // 100
+    if time and _field(time, "type") == "unspecified" and not plan.at:
         plan.at = None
     if intent.urgency == "now":
         plan.open_now = True
-    for c in intent.constraints:
+    for c in (intent.constraints or ()):
         # D546: EVERY refusal the lane reads reaches the avoid lane. This used to name three
         # of the five keys the refusal lane writes - `cuisine_avoid`, plus the caller's own
         # `avoid` / `exclude` - so a sentence the lane read arrived at the plan with its
@@ -735,8 +756,8 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
         # remembering this line. The value goes through the ONE canon reader
         # (`canon_constraint`), the same reader `_fill_constraints` uses, so a caller who
         # hands the planner a surface form gets the term set the lane's own reading writes.
-        if c.key in AVOID_CONSTRAINT_KEYS:
-            value = canon_constraint(c.value)
+        if _field(c, "key") in AVOID_CONSTRAINT_KEYS:
+            value = canon_constraint(_field(c, "value"))
             # D546: deduped here too, the way the caller's list is merged below. Measured
             # at HEAD, an Intent carrying the same refusal twice under two spellings
             # ("花生" and "peanut") left `plan.avoid == ['peanut', 'peanut']`; the merge
@@ -777,6 +798,19 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     out["open_time"] = plan.at.astimezone(HK_TZ).time() if plan.at else None
     plan.filters = {k: v for k, v in out.items() if v not in (None, "", [], {})}
     return plan
+
+
+def _field(obj: Any, name: str) -> Any:
+    """A field of the contract's model OR of the extractor's plain dict (D652).
+
+    `plan_from_intent` is handed both: the pipeline passes `validate_intent`'s model, and direct
+    callers pass `extract_intent`'s output, whose `location` is a dict of the same four fields.
+    Reading `.type` off that dict raised `'dict' object has no attribute 'type'` and the sentence
+    could not be planned at all - so the reader asks both shapes, as `_plain` does for filters.
+    """
+    if isinstance(obj, dict):
+        return obj.get(name)
+    return getattr(obj, name, None)
 
 
 def _plain(filters: Any) -> dict[str, Any]:
