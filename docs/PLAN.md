@@ -3092,3 +3092,26 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   both shapes. STILL OPEN, and filed rather than guessed: `run_search` dumps each preference with
   `model_dump`, so it takes the model only - either it learns the same tolerance, or the preference list
   gets one reader. Owner: the search lane. The measurement is `tmp/d652_parity.py`.
+
+- **「點心餐廳」 keeping 點心 as a search term was filed as a defect and is the recall - closed by D653 (§650).**
+  §635 wrote "點心餐廳 keeps 點心 (a filter AND a word 9 rows write)" into its not-claimed list, with the
+  hypothesis that the word divides the pool. Measured (`tmp/d652_counts_parent.txt`): the plan is
+  `category: restaurant` with match text 點心, and nine of the top ten answer at relevance 1.000 while the
+  plain 餐廳 page answers none of them - the term is what finds the dim-sum rows inside the 184-row
+  restaurant pool. The same night's attempt to strip cuisine words from the match text (because 0 of
+  the 470 rows write 泰式/韓式/日式, the shape D635-D650 closed four times over) dropped 泰式餐廳's
+  thai rows from 8 of the top ten to 1: the keyword lane's `word_similarity` reaches the corpus's own
+  spelling (泰國 4 rows, 韓國 3, 點心 9) and that is the recall. The word stays; the property is pinned
+  in `tests/test_a_cuisine_adjective_still_finds_its_cuisine_rows.py`. Owner: any lane that reads
+  "no row writes it" as "it cannot match".
+
+- **A typed cuisine's preference alone answers two rows out of ten.** With the same `cuisine=thai`
+  preference and the adjective taken out of the match text, the top ten held 2 thai rows - one at #1,
+  one at #10 - while the page with the adjective held 8 (`tmp/d652_pref_only.py`). The adjective is the
+  recall (above), so this is not an argument for stripping it; it is the ranking lane's own gap: a typed
+  cuisine reaches `personalization` as 1.0 against 0.5 for everything else, and on a 184-row pool the
+  quality, price-fit and availability dimensions outvote a 0.5-wide preference. Either a typed cuisine
+  narrows the pool (the taxonomy can already answer it - `CUISINE_LEAVES` maps thai to its leaves) or
+  the cuisine preference gets its own weight. Neither is free: a filter changes a soft preference into a
+  hard one (8 thai rows would answer a 10-row page with 8), so the change needs its own census of what
+  each cuisine would return. Owner: the search/ranking lane.

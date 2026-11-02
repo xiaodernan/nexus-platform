@@ -30147,3 +30147,52 @@ agree rather than that either parse is the only correct one.
   the shape's writer), `apps/ai/nexus_ai/api/pipeline.py:174` (the model caller),
   `apps/ai/tests/test_the_plan_reads_the_extractors_own_shape.py` (this unit's gate), and
   `tmp/d652_parity.py`, `tmp/d652_falsify.txt` (the measurements).
+
+## 650. D653 · the cuisine adjective looked like noise in the match text and was the recall (`apps/ai/tests/test_a_cuisine_adjective_still_finds_its_cuisine_rows.py`)
+
+**A negative result, recorded because it is a trap.** 「泰式餐廳」 reads cuisine `thai` and category
+`restaurant`, the intent carries the preference - and **0 of the 470 published rows write 泰式, 韓式,
+日式 or 料理 anywhere** (`tmp/d652_census2.py`). The word looked like a term no row can meet, the
+exact shape D635 (category), D637 (district), D638 (leaf) and D650 (frame) each closed, so this unit
+removed it from the match text - and the page fell over in the other direction (`tmp/d652_counts_parent.txt`,
+`tmp/d652_after.txt`):
+
+    泰式餐廳                     top-10 thai rows 8    relevance 0.127-0.158 on every card
+    泰式餐廳, adjective removed   top-10 thai rows 1    relevance 0.000 on every card
+    餐廳 (the plain page)        top-10 thai rows 0
+    泰式餐廳's preference alone  top-10 thai rows 2    (one at #1, one at #10)
+
+The relevance is not noise. `search/sql.py`'s `kw_score` GREATEST includes
+`word_similarity(text, name || description || tags)`, and 泰式 is one character from 泰國, which 4 rows
+write (3 韓國, 9 點心). The adjective is how the keyword lane reaches the corpus's spelling; take it
+out and only the cuisine PREFERENCE is left, which lifts one row to the top and one more to tenth.
+
+**So the word stays, and the gate is the deliverable.** `tests/test_a_cuisine_adjective_still_finds_its_cuisine_rows.py`
+pins the property instead of the repair: 15 legs - the adjective in the match text for 泰式/韓式/日式料理,
+the same three words read as cuisines by the preference lane (the trap: it IS answered, just not only
+there), the bare bucket answering no term, a live census that reddens if the corpus ever writes one
+of the adjectives, three live pages where the cuisine rows outnumber the plain page's, 點心餐廳's nine
+rows at 1.000, and the preference-alone count. Falsified by re-applying the strip this unit tried:
+**9 red / 6 green** (`tmp/d653_falsify.txt`), and the six greens are the legs that are not about the
+strip (the preference reads the word either way, the census, the two bare-bucket legs) - predicted
+before the run.
+
+**「點心餐廳」 stops being an open defect.** §635 filed "點心餐廳 keeps 點心 (a filter AND a word 9 rows write)"
+as unfinished; measured (`tmp/d652_counts_parent.txt`) the plan is `category: restaurant` with match
+text 點心, and nine of the top ten answer at relevance 1.000 on the 184-row restaurant pool while
+the plain page answers none. Keeping the word is the recall, not a leak - the same finding as the
+adjective, and PLAN now says so.
+
+**Not claimed.** (a) Noun forms whose word the corpus does not write still carry the hashing floor:
+日本料理 0.083-0.104 and 西餐 0.333 flat on all ten (`tmp/d652_matrix_before.txt`), and 西式 is written by 5 rows
+(風味/味道/料理 0, 館 43, 店 246) - a different word, a different census, no cut made.
+(b) The cuisine preference's own weight: two of ten rows is thin for a cuisine the user typed, and
+that is filed in PLAN rather than chased here. (c) The style adjective is still a preference value
+only; a REFUSAL (唔要泰式) keeps its word in the text, which is D584's lane.
+
+- readers: `apps/ai/nexus_ai/search/sql.py:314` (`kw_score`, the word_similarity term that does the
+  work), `apps/ai/nexus_ai/nlu/lexicon.py:104` (`CUISINE_TERMS`), `:821` (`match_cuisine_terms`),
+  `apps/ai/nexus_ai/search/service.py:640` (`category_surfaces` + `_match_core`, where the strip
+  would have gone), `apps/ai/tests/test_cuisine_style_forms.py` (the vocabulary the trap starts
+  from), this unit's gate, and `tmp/d652_census2.py`, `tmp/d652_counts_parent.txt`, `tmp/d652_after.txt`,
+  `tmp/d653_falsify.txt` (the measurements).
