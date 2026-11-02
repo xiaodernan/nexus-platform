@@ -844,8 +844,21 @@ _MATCH_CORE_CUES = re.compile(r"(?:預算|预算|budget|人均|每人|每位|人
 #: against 0.0 for 「咖啡店」, and the page order changed (`tmp/d650_page.py`).
 #: Deliberately NOT here: 好 (a preference the ranker reads), 附近 (a location a lane should answer)
 #: and 搵/找 (verbs) - each is its own item, and each can still be content.
-_QUESTION_FRAME = re.compile(r"(?:有冇|有沒有|有咩|邊間|哪間|邊度|哪裡|邊個|邊區|推介|推薦)",
-                             re.IGNORECASE)
+# D657: the LOCATIVE frame and the existential that follows it. 附近/近我 ask for a POSITION the
+# sentence does not give, so the word cannot narrow a pool that has already been placed - and
+# `邊度有`/`哪里有` are the question 有冇 already was, one auxiliary further in. Measured on the
+# published plane (`tmp/d657_census.py`): 0 of 470 merchants and 0 of 5,538 offerings write 附近,
+# 近我, 哪里 or 有得食 in a name or a description. The COMPOUND runs FIRST and takes the auxiliary
+# with the interrogative and is applied before the vocabulary spans, because the retail surface is
+# the verb 買 and the span strip leaves the 得 behind (measured: 「邊度有得買手信」 -> `得 手信`);
+# a BARE 有 is deliberately
+# not in either table, because 有機 (organic) is content and would lose its first character.
+_QUESTION_FRAME_COMPOUND = re.compile(
+    r"(?:邊度|哪裡|哪里|邊區|邊間|哪間)\s*(?:有(?:得(?:食|買|玩|做))?|可以)",
+    re.IGNORECASE)
+_QUESTION_FRAME = re.compile(
+    r"(?:有冇|有沒有|有咩|邊間|哪間|邊度|哪裡|哪里|邊個|邊區|推介|推薦|附近|近我|我附近)",
+    re.IGNORECASE)
 _MATCH_CORE_EDGES = re.compile(r"^[\s嘅的，,、。?？]+|[\s嘅的，,、。?？]+$")
 
 
@@ -916,6 +929,11 @@ def match_core(text: str, *, strip_time: bool = False,
     (D635). It is empty when no bucket was named or the text named a different one.
     """
     t = text or ""
+    # D657: the locative/existential frame runs FIRST, before the vocabulary spans. The retail
+    # category's own surface is the verb 買, so `_strip_surface_spans` blanked it before the compound
+    # could see it and 「邊度有得買手信」 came back as `得 手信` - a lone 得 left to be searched.
+    # A frame is structure, not vocabulary: it is removed before the lane's own tables read the text.
+    t = _QUESTION_FRAME_COMPOUND.sub(" ", t)
     if strip_time:
         t = TIME_SPAN_RE.sub(" ", t)
     t = _strip_surface_spans(t, strip_surfaces)

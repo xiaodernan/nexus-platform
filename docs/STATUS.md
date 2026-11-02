@@ -30501,3 +30501,69 @@ question (`tests/test_the_district_speaks_the_corpus_spelling.py`), not this one
   `search/service.py:270-282` (the mirror), this unit's gate, and `tmp/d656_district2.py`,
   `tmp/d656_falsify.txt` (the measurements).
 
+## 654. D657 · the word that asks for a place was searched for as a place (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/tests/test_a_question_frame_is_not_a_search_term.py`)
+
+**`_QUESTION_FRAME` carried eleven tokens and not the locative.** 有冇, 有沒有, 有咩, 邊間, 哪間, 邊度,
+哪裡, 邊個, 邊區, 推介 and 推薦 were known; 附近 was not, and 有 survived whenever the interrogative in
+front of it left (邊度|有). Measured (`tmp/d657_residue.py`):
+
+    sentence            match text before            after
+    附近嘅咖啡店         「附近」                     ""
+    附近的咖啡店         「附近」                     ""
+    附近有咩餐廳         「附近」                     ""
+    邊度有咖啡店         「有」                       ""
+    哪里有咖啡店         「哪里有」                   ""
+    近我嘅咖啡店         「近我」                     ""
+
+A frame is not a search term, and the census says so: **0 of 470 published merchants and 0 of 5,538
+offerings** write 附近, 近我, 哪里 or 有得食 in a name or a description (`tmp/d657_census.py`). The residue
+was not idle waste either. A non-empty match text is a HARD predicate on the fixture lane - `_filter_static`
+drops every row with no keyword hit and no name hit - so all four sentences answered **ZERO rows** there
+while the live lane answered 10 of 79 (`tmp/d657_pool.py`); 79 is the whole cafe pool, because the live
+WHERE ORs its keyword leg with the bucket legs. The interaction D635 closed for 咖啡店 and D637 closed for
+尖沙咀 was still open for 附近, and on the degraded lane it emptied the page rather than merely ranking it.
+
+**The repair adds the token and the shape it comes in.** 附近 / 近我 / 我附近 join the table, and a second
+rule takes the AUXILIARY with the interrogative - `(?:邊度|哪裡|哪里|邊區|邊間|哪間)\s*(?:有(?:得(?:食|買|玩|
+做))?|可以)` - so 「邊度有得食拉麵」 leaves 拉麵 and not 有得食. Two things that look like details and are not:
+
+- A BARE 有 stays out of both tables. 有機 is content ("organic") and would lose its first character;
+  「有機食品」 must still be searched for. The compound needs the interrogative in front of it, which is
+  exactly the grammatical shape the auxiliary appears in.
+- The compound runs BEFORE the vocabulary spans, not after. The retail category's own surface is the VERB
+  買 (`lexicon.category_surfaces("邊度有得買手信")` -> `('retail', ('買', '買'))`), so the span strip blanked
+  it first and the sentence came back as `得 手信` - a lone 得 left to search for. Measured after the first
+  cut, fixed by moving the frame strip to the top of `match_core` (`understand.py:932-936`): a frame is
+  structure, and structure is read before the lane's vocabulary.
+
+**The gate** is `tests/test_a_locative_frame_is_not_a_search_term.py`, 16 legs: eight sentences whose match
+text must be empty (including 尖沙咀附近嘅咖啡店, where the district leaves with its own filter), five
+content-survival legs (素食, 海景, 有機, 手信, and 有機食品 as the bare-有 guard), the named-category leg
+(拉麵 still taken by its filter), and two live legs (both lanes answer 10 of 79 - the defect was 0). Falsified
+against HEAD: **15 red / 1 green** (`tmp/d657_falsify.txt`); the green is 有機食品, which the parent already
+read correctly because a bare 有 was never stripped.
+
+**One pin changed hands.** D650's `test_a_question_frame_is_not_a_search_term.py` shipped a disclosure leg,
+`test_a_word_this_unit_does_not_own_survives`, with four rows - 安靜, 好, 附近, 有 - the words that unit
+deliberately left alone. 附近 and 有 are now this unit's, so the two rows are removed there and their
+expectation lives in the new gate; the comment names D657 and the file, 安靜 and 好 stay. A disclosure that a
+later unit closes is how the list is supposed to drain.
+
+**Adjacent**, run and green, never full: the frame, refusal, time-cue, transient-preference and cuisine gates
+(324), then the lexicon and understand suites (4,391 - `test_understand_resolution.py` alone is minutes; noted
+so it is not run casually).
+
+**Not claimed.** (a) 「附近有咩好推介」 now reads `好` - an EVALUATION word, not this unit's, and still a
+0-row page on the fixture lane; filed. (b) 附近 asks for a POSITION the sentence does not give, and with no
+geo lane the service answers the category pool rather than asking for one - that is a dialogue decision (§8),
+not a frame. (c) The fixture lane still drops every row when the match text matches nothing at all: measured
+`xyzzy` + category cafe, both lanes say 79 in `total_estimate` and live answers 10 rows while the fixture
+answers none (`tmp/d657_nomatch.py`). That is the keyword leg's hard/soft split between the lanes, a unit of
+its own.
+
+- readers: `nlu/understand.py:847-861` (the compound and the table), `:932-936` (where the frame strip runs
+  and why it runs there), `:918` (`match_core`, the only caller), `search/service.py:734` (the plan's
+  `match_text`), `tests/test_a_question_frame_is_not_a_search_term.py:62-70` (the re-aimed disclosure), this
+  unit's gate, and `tmp/d657_residue.py`, `tmp/d657_census.py`, `tmp/d657_pool.py`, `tmp/d657_keep.py`,
+  `tmp/d657_falsify.txt`, `tmp/d657_nomatch.py` (the measurements).
+

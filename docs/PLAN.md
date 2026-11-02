@@ -3182,3 +3182,25 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   comparison is exact lowercase equality (`Shatin` is not `Sha Tin`) - that is the vocabulary lane's question.
   Owner: the search lane, with the geo filters (`open_weekday` / `open_time` / near-me) that are still
   live-only because they need the same kind of join.
+
+- **The locative frame was searched as content - closed by D657 (§654).** `_QUESTION_FRAME` knew 有冇, 邊度,
+  哪裡 and 推介 and not 附近, so 「附近嘅咖啡店」「附近的咖啡店」「附近有咩餐廳」 carried `附近` into the match text
+  and 「邊度有咖啡店」 carried the orphaned `有`, 「哪里有咖啡店」 the whole `哪里有`, 「近我嘅咖啡店」 the `近我`.
+  No row writes any of them (0 of 470 merchants, 0 of 5,538 offerings, `tmp/d657_census.py`), and the residue
+  was not idle: a non-empty match text is a hard predicate on the fixture lane, which answered ZERO rows for
+  all four sentences while live answered 10 of 79 (`tmp/d657_pool.py`). The table now carries 附近 / 近我 /
+  我附近 and a COMPOUND rule that takes the auxiliary with the interrogative (邊度有得食, 哪裡有, 邊間可以); a
+  bare 有 stays out because 有機 is content. Two ordering facts are recorded in the code: the compound runs
+  before the vocabulary spans, because the retail surface IS the verb 買 and the span strip left `得 手信`.
+  Gate `test_a_locative_frame_is_not_a_search_term.py`, 16 legs, 15 red on HEAD. Owner: the NLU lane - and
+  D650's disclosure leg lost its 附近 / 有 rows to this unit, which is the list draining as designed.
+
+- **「附近有咩好推介」 reads `好`, and the fixture lane still answers an empty page when the text matches
+  nothing.** Two residues one step out from D657. 好 is an EVALUATION word: it survives every frame strip,
+  is 0 rows of content, and makes `_filter_static` drop the whole pool - it needs its own census (好味 and
+  好食 are content, so a bare 好 cannot be stripped by the same rule). Separately, when the match text matches
+  NOTHING at all the two lanes disagree about the PAGE while agreeing about the pool: `xyzzy` + category cafe
+  gives `total_estimate` 79 on both sides, 10 rows live and 0 rows on the fixture (`tmp/d657_nomatch.py`) -
+  the live WHERE ORs its keyword leg with the bucket legs, the fixture's hit test is a hard `continue`. That
+  is the D488 shape on the keyword leg and needs a gate of its own. Owner: the NLU lane for 好, the search
+  lane for the keyword leg.

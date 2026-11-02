@@ -62,10 +62,12 @@ def test_the_frame_leaves_the_category_it_framed():
 @pytest.mark.parametrize("text,left", [
     ("有冇安靜嘅咖啡店", "安靜"),
     ("邊間咖啡店好", "好"),
-    ("附近嘅咖啡店", "附近"),
-    ("邊度有咖啡店", "有"),
 ])
 def test_a_word_this_unit_does_not_own_survives(text, left):
+    # D657 (§654) took two of the four rows this leg shipped with: 附近 and 有 are the LOCATIVE
+    # frame and the auxiliary after it, and its own gate reads "" for both
+    # (`test_a_locative_frame_is_not_a_search_term.py`). 安靜 is a preference and 好 is an
+    # evaluation word with no owner yet - filed, not dropped.
     assert _plan(text).match_text == left, (text, _plan(text).match_text)
 
 
