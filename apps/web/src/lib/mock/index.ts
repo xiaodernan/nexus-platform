@@ -174,7 +174,7 @@ export function allCards(options: CardBuildOptions = {}): EntityCard[] {
 
 /* ------------------------------------------------------------------ query NLU */
 
-const BUDGET_PATTERNS: Array<RegExp> = [/(?:预算|預算)\s*(\d+)/, /budget\s*(\d+)/i, /(?:货|貨)(?:币|幣)?\s*(\d+)\s*(?:以内|以下|以內)/, /(\d+)\s*(?:港币|港幣|货币|貨幣|hkdb?|hkd)/i];
+const BUDGET_PATTERNS: Array<RegExp> = [/(?:预算|預算)\s*(\d+)/, /budget\s*(\d+)/i, /(?:货|貨)(?:币|幣)?\s*(\d+)\s*(?:以内|以下|以內)/, /(\d+)\s*(?:港币|港幣|货币|貨幣|hkdb?)/i];
 const DISTRICT_WORDS: Array<[RegExp, DistrictKey]> = [
   [/沙田|sha tin/i, 'sha_tin'], [/中環|中环|central/i, 'central'], [/旺角|mong kok/i, 'mong_kok'],
   [/銅鑼灣|铜锣湾|causeway/i, 'causeway_bay'], [/灣仔|湾仔|wan chai/i, 'wan_chai'], [/尖沙咀|tsim sha/i, 'tsim_sha_tsui'],
@@ -202,6 +202,172 @@ const TAG_HINTS: Array<[RegExp, string]> = [
   [/素食|vegetarian|素/i, 'no-spicy'], [/海景|sea view/i, 'sea-view'], [/工作|办公|辦公|laptop|wifi/i, 'work'],
 ];
 
+/* ------------------------------------------------------------------ time lane */
+
+/** `timeparse.HK_TZ` is a fixed +08:00 and Hong Kong keeps no summer time, so the answer is written
+ *  in that arithmetic and both planes name the same instant for the same query. The lane used
+ *  `setHours(19,…)` instead, which follows the device's own zone: this door was written on a machine
+ *  already on Hong Kong time — where the two readings agree and the divergence is reasoned, not
+ *  measured — so that half is recorded in the ledger as not claimed rather than as fixed. */
+const HK_OFFSET_MS = 8 * 3_600_000;
+
+type PartOfDayWindow = { label: string; start: [number, number]; end: [number, number]; tokens: string[] };
+
+/**
+ * The five parts of the day, hand-carried from `apps/ai/nexus_ai/nlu/timeparse.py::PART_OF_DAY`
+ * (the web bundle cannot import the service, and D626 says read its tree as text rather than
+ * pretend to share it). D645: this table replaces the one boolean `evening` that used to answer the
+ * whole time question with a hard-coded 19:00 — 「早上」 and 「下午3點」 both came back as 7pm.
+ * `stated-time.test.ts` re-derives every token, label and window bound from the Python source, so
+ * a row added on one plane and not the other is a red test, not a silent drift.
+ */
+const PART_OF_DAY_WINDOWS: PartOfDayWindow[] = [
+  { label: 'morning', start: [7, 0], end: [11, 30], tokens: ['朝早', '早上', '上午', '清晨', '早晨', 'morning', 'am'] },
+  { label: 'noon', start: [11, 30], end: [14, 30], tokens: ['中午', '正午', '午市', 'lunch', 'luncheon', 'noon', 'midday'] },
+  { label: 'afternoon', start: [14, 0], end: [18, 0], tokens: ['下晝', '下午', '午後', 'afternoon', 'pm'] },
+  { label: 'evening', start: [17, 0], end: [19, 30], tokens: ['傍晚', '黃昏', '黄昏', 'evening', 'dusk'] },
+  { label: 'night', start: [18, 0], end: [23, 0], tokens: ['夜晚', '晚間', '晚间', '晚上', '晚黑', '夜間', '夜间', '深夜', '宵夜', '今晚', '今夜', 'tonight', 'night', 'midnight', 'overnight'] },
+];
+
+/** The three clock shapes of `timeparse.CLOCK_RE`: 19:30, 7點 / 7點半 / 7時15分, 10pm. Digits only —
+ *  the service rewrites Chinese numerals first (`numerals.normalise_numerals`) and that lane is not
+ *  here, so 「九點」 arrives as text the mock reads as no clock. Queued. */
+const CLOCK_RE = /(?:(\d{1,2})\s*[:：]\s*(\d{2}))|(?:(\d{1,2})\s*(?:點|点|時|时|o'?clock)(半|\d{1,2}(?:分|分鐘|分钟)?)?)|(?:(\d{1,2})\s*(am|pm))/i;
+
+const WEEKEND_CUE = /周末|週末|週六|周六|saturday|weekend/i;
+
+/**
+ * A Latin cue reads only between letters — `matching.cue_positions` writes that boundary (§D538),
+ * and without it `am` inside "camp" is a morning. A CJK cue has no boundary to ask for (§D478) and
+ * stays a plain substring.
+ */
+function cuePattern(token: string): RegExp {
+  const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (escaped.charCodeAt(0) < 128) return new RegExp(`(?:^|[^a-z])${escaped}(?:es|s)?(?:$|[^a-z])`, 'i');
+  return new RegExp(escaped);
+}
+
+/** Longest cue wins, as it does in `timeparse._find_part`: `noon` must not shadow `afternoon`. */
+const TIME_CUES: Array<{ token: string; window: PartOfDayWindow; pattern: RegExp }> = PART_OF_DAY_WINDOWS
+  .flatMap((window) => window.tokens.map((token) => ({ token, window, pattern: cuePattern(token) })))
+  .sort((a, b) => b.token.length - a.token.length);
+
+/**
+ * D630 on this plane: a cue that only OPENs a word naming a thing does not date the sentence.
+ * 「下午茶」 is afternoon tea, not 14:00. The service builds its guard from
+ * `lexicon.CATEGORY_SYNONYMS` at first use; this lane has no afternoon-tea category of its own yet,
+ * so the two surfaces the guard needs are carried here and `stated-time.test.ts` re-derives the
+ * roster from the lexicon, which is the only way a hand-carried list stays honest.
+ */
+const CATEGORY_SURFACES = ['下午茶', 'afternoon tea'];
+
+/** Every index at which `needle` reads `haystack`. A Latin needle keeps the word boundary a cue is
+ *  matched behind (`cuePattern`); a CJK needle is a plain substring, as `matching.cue_positions` says. */
+function occurrences(needle: string, haystack: string): number[] {
+  const text = haystack.toLowerCase();
+  const word = needle.toLowerCase();
+  const isLatin = needle.charCodeAt(0) < 128;
+  const indexes: number[] = [];
+  for (let index = 0; index + word.length <= text.length; index += 1) {
+    if (!text.startsWith(word, index)) continue;
+    if (isLatin) {
+      const before = index === 0 ? '' : text.charAt(index - 1);
+      const after = text.charAt(index + word.length);
+      if (/[a-z]/.test(before) || /[a-z]/.test(after)) continue;
+    }
+    indexes.push(index);
+  }
+  return indexes;
+}
+
+/**
+ * True when EVERY place the cue occurs sits inside a longer surface that names a category, so the
+ * sentence names a thing and not a time. `_guarded_cues` checks each reading rather than the first:
+ * 「下午3點去食下午茶」 dates the turn from the cue at index 0 and names a category from the one at
+ * index 6, so the guard has to be about positions, not about whether the word appears anywhere.
+ */
+function cueOpensACategory(token: string, query: string): boolean {
+  const surfaces = CATEGORY_SURFACES.filter((surface) => surface.length > token.length && surface.toLowerCase().startsWith(token.toLowerCase()));
+  if (surfaces.length === 0) return false;
+  const indexes = occurrences(token, query);
+  if (indexes.length === 0) return false;
+  const swallowed = new Set<number>();
+  for (const surface of surfaces) {
+    for (const start of occurrences(surface, query)) {
+      for (let offset = 0; offset < surface.length; offset += 1) swallowed.add(start + offset);
+    }
+  }
+  return indexes.every((index) => swallowed.has(index));
+}
+
+/** `dayShift` 0 is today on the Hong Kong wall clock, whatever timezone the reader's device is in. */
+function hkInstant(now: Date, dayShift: number, hour: number, minute: number): Date {
+  const shifted = new Date(now.getTime() + HK_OFFSET_MS);
+  return new Date(Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate() + dayShift, hour, minute) - HK_OFFSET_MS);
+}
+
+/** `timeparse._guess_meridiem`: an explicit am/pm wins, otherwise the part of day decides the half. */
+function guessMeridiem(hour: number, meridiem: string | null, partLabel: string | null): number {
+  if (meridiem === 'am') return hour === 12 ? 0 : hour;
+  if (meridiem === 'pm') return hour === 12 ? hour : hour + 12;
+  if (partLabel !== null && ['afternoon', 'evening', 'night'].includes(partLabel) && hour < 12) return hour + 12;
+  if (partLabel === 'noon' && hour < 11) return hour + 12;
+  return hour;
+}
+
+function readClock(query: string, partLabel: string | null): { hour: number; minute: number } | null {
+  const match = CLOCK_RE.exec(query);
+  if (!match) return null;
+  let hour: number;
+  let minute = 0;
+  let meridiem: string | null = null;
+  if (match[1] !== undefined) {
+    hour = Number.parseInt(match[1], 10);
+    minute = Number.parseInt(match[2] ?? '0', 10);
+  } else if (match[5] !== undefined) {
+    hour = Number.parseInt(match[5], 10);
+    meridiem = (match[6] ?? '').toLowerCase();
+  } else {
+    hour = Number.parseInt(match[3] ?? '', 10);
+    const tail = match[4];
+    if (tail === '半') minute = 30;
+    else if (tail) {
+      const digits = Number(tail.replace(/\D/g, '') || '0');
+      minute = digits > 59 ? 0 : digits;
+    }
+  }
+  const finalHour = guessMeridiem(hour, meridiem, partLabel);
+  // `timeparse._valid_clock`: an hour the clock cannot show is not a time, and §8 forbids
+  // inventing one to answer with.
+  if (!(finalHour >= 0 && finalHour <= 23 && minute >= 0 && minute <= 59)) return null;
+  return { hour: finalHour, minute };
+}
+
+/**
+ * The time a query states, or null when it states none — §8 again: never guess a time the visitor
+ * did not say. A stated clock wins; otherwise the part of day names its own window's opening hour;
+ * otherwise, including 「週六」 with no hour in it, the mock asks instead of answering.
+ */
+function readStatedTime(query: string, now: Date): Date | null {
+  const dayShift = WEEKEND_CUE.test(query) ? 4 : 0;
+  const window = TIME_CUES.find(({ token, pattern }) => pattern.test(query) && !cueOpensACategory(token, query))?.window ?? null;
+  const clock = readClock(query, window?.label ?? null);
+  if (clock) {
+    const start = hkInstant(now, dayShift, clock.hour, clock.minute);
+    // 「晚上8點」 said at 9pm is tomorrow — unless the visitor pinned the day (`parse_time` branch 1).
+    if (start.getTime() < now.getTime() && dayShift === 0) return new Date(start.getTime() + 86_400_000);
+    return start;
+  }
+  if (window) {
+    const start = hkInstant(now, dayShift, window.start[0], window.start[1]);
+    const end = hkInstant(now, dayShift, window.end[0], window.end[1]);
+    // A window still open tonight is tonight, even past its opening hour (branch 5).
+    if (end.getTime() <= now.getTime() && dayShift === 0) return new Date(start.getTime() + 86_400_000);
+    return start;
+  }
+  return null;
+}
+
 /** Deterministic stand-in for `POST /ai/v1/query/understand` (mock provider, D4). */
 export function understandQuery(query: string, context: { locale?: string; geo?: GeoPoint | null } = {}): Intent {
   const now = mockNow();
@@ -219,11 +385,7 @@ export function understandQuery(query: string, context: { locale?: string; geo?:
   const tags = TAG_HINTS.filter(([pattern]) => pattern.test(query)).map(([, tag]) => tag);
   const avoidSpicy = /不吃辣|不要辣|no spicy|清汤|清湯/i.test(query);
   const nearMe = /附近|near me|我这边|我這邊/i.test(query);
-  const weekend = /周末|週末|週六|周六|saturday|weekend/i.test(query);
-  const evening = /晚上|晚市|夜晚|evenight|evening|pm|点|點/i.test(query);
-
-  const startsAt = new Date(now.getTime() + (weekend ? 4 : evening ? 0.2 : 1) * 86_400_000);
-  if (evening) startsAt.setHours(19, 0, 0, 0);
+  const statedTime = readStatedTime(query, now);
 
   return {
     raw_query: query,
@@ -239,7 +401,7 @@ export function understandQuery(query: string, context: { locale?: string; geo?:
           context.geo
           ? { type: 'near_me', value: null, resolved: context.geo, radius_m: null }
           : null,
-    time: weekend || evening ? { type: 'explicit', starts_at: startsAt.toISOString() } : { type: 'none' },
+    time: statedTime ? { type: 'explicit', starts_at: statedTime.toISOString() } : { type: 'none' },
     budget: budgetMax !== null ? { min: null, max: budgetMax, currency: 'HKD', per: 'party' } : null,
     party_size: null,
     preferences: tags.map((tag) => ({ key: 'scene', value: tag, polarity: 1 as const })).concat(avoidSpicy ? [{ key: 'ambience', value: 'no-spicy', polarity: 1 as const }] : []),
@@ -250,11 +412,11 @@ export function understandQuery(query: string, context: { locale?: string; geo?:
     confidence: {
       category: categoryEntry ? 0.9 : 0.35,
       budget: budgetMax !== null ? 0.88 : 0,
-      time: weekend || evening ? 0.7 : 0,
+      time: statedTime ? 0.7 : 0,
       location: district ? 0.94 : context.geo ? 0.6 : 0,
     },
     // §8: never guess party size or a time the user did not state.
-    unknowns: [budgetMax === null ? 'budget' : null, weekend || evening ? null : 'time', 'party_size'].filter((value): value is string => Boolean(value)),
+    unknowns: [budgetMax === null ? 'budget' : null, statedTime ? null : 'time', 'party_size'].filter((value): value is string => Boolean(value)),
   };
 }
 
@@ -290,10 +452,14 @@ export function mergeIntent(previous: Intent | null, followUp: string): Intent {
   if (/安静|安靜|靜一点|靜一點|quiet/i.test(followUp)) {
     next.preferences = [...next.preferences.filter((preference) => preference.key !== 'ambience'), { key: 'ambience', value: 'quiet', polarity: 1 }];
   }
-  if (/周末|週末|周六|晚上|tonight|weekend/i.test(followUp)) {
-    const starts = new Date(mockNow().getTime() + 3 * 86_400_000);
-    starts.setHours(19, 0, 0, 0);
-    next.time = { type: 'explicit', starts_at: starts.toISOString() };
+  // The follow-up is read by the same reader the first turn uses. This used to be a second,
+  // hand-copied cue list — it left out 週六 and saturday, and pinned every hit to 19:00 — so the
+  // merge and the understanding disagreed about the same words (D645).
+  const statedTime = readStatedTime(followUp, mockNow());
+  if (statedTime) {
+    next.time = { type: 'explicit', starts_at: statedTime.toISOString() };
+    next.confidence = { ...next.confidence, time: 0.7 };
+    next.unknowns = next.unknowns.filter((value) => value !== 'time');
   }
   return next;
 }

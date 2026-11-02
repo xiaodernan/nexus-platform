@@ -164,15 +164,17 @@ function regexLiteralsOf(source: string, file: string): RegexSite[] {
     // A `/` after a value — an identifier, a closing bracket, a literal — divides; anywhere else it opens.
     if (/[A-Za-z0-9_$)\]}']/.test(lastCode)) { lastCode = ch; step(i, i + 1); continue; }
     let j = i + 1;
-    let classDepth = 0;
+    let inClass = false;
     let closed = -1;
     while (j < source.length) {
       const c = source[j]!;
       if (c === '\n') break;
       if (c === '\\') { j += 2; continue; }
-      if (c === '[') classDepth += 1;
-      else if (c === ']') classDepth = Math.max(0, classDepth - 1);
-      else if (c === '/' && classDepth === 0) { closed = j; break; }
+      // Inside a class a `[` is a literal and only `]` ends it, so depth counting is wrong here:
+      // `/[.*+?^${}()|[\]\\]/g` (the escaper in index.ts) closed at the wrong slash and the census threw.
+      if (inClass) { if (c === ']') inClass = false; }
+      else if (c === '[') inClass = true;
+      else if (c === '/') { closed = j; break; }
       j += 1;
     }
     if (closed < 0) throw new Error(`${file}:${line} holds a slash that opens a regex this reader cannot close — skipping it would make the census blind, not green`);
