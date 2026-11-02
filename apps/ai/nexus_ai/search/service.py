@@ -452,6 +452,18 @@ def _static_hour_value(value: Any) -> Any:
     return value
 
 
+def _static_open_during(row: dict[str, Any], start: Any, end: Any) -> bool:
+    """Does the row trade for any instant of `[start, end)` - the window twin of `_static_open_at`
+    (D666). A crossing-midnight row is open from `opens_at` to midnight and from midnight to
+    `closes_at`, so it overlaps the window when EITHER of its edges lands inside it; a normal row
+    overlaps when its interval straddles the window, which is the plain interval test."""
+    opens = _static_hour_value(row.get("opens_at"))
+    closes = _static_hour_value(row.get("closes_at"))
+    if row.get("crosses_midnight"):
+        return (opens is not None and opens < end) or (closes is not None and closes > start)
+    return (opens is not None and closes is not None and opens < end and closes > start)
+
+
 def _static_open_at(row: dict[str, Any], at: Any) -> bool:
     """`opens_at <= at < closes_at`, inverted for a row that crosses midnight (D659)."""
     opens = _static_hour_value(row.get("opens_at"))
@@ -481,8 +493,17 @@ def _static_hours_fit(r: dict[str, Any], filters: dict[str, Any],
         return True
     key = str(r.get("merchant_id") or r.get("subject_id") or r.get("id") or "")
     rows = hour_sets.get(key) or []
+    until = _static_hour_value(filters.get("open_until"))
     if weekday is not None and at is not None:
-        if not any(str(h.get("weekday")) == str(weekday) and _static_open_at(h, at) for h in rows):
+        # D666: a band asks whether the row is open ANYWHERE in the window; a clock the user said
+        # asks whether it is open AT that instant. One filter shape, two questions, and the pair
+        # (`open_time`, `open_until`) is what says which one was asked.
+        if until is not None and until > at:
+            ok = any(str(h.get("weekday")) == str(weekday) and _static_open_during(h, at, until)
+                     for h in rows)
+        else:
+            ok = any(str(h.get("weekday")) == str(weekday) and _static_open_at(h, at) for h in rows)
+        if not ok:
             return False
     # D665: a day with no clock asks which rows TRADE that day, the live clause mirrored - a row
     # with no hours at all is still dropped (it is the EXISTS).
@@ -670,6 +691,14 @@ def _static_tokens(low: str) -> list[str]:
 #: clock the user said. `timeparse`'s bare-day branch answers 09:00-23:00 and its weekend branch
 #: Saturday 09:00 (`timeparse.py:452-473`); a sentence that names 今日/聽日/週末 names a DAY.
 DAY_LEVEL_QUALITIES = frozenset({"all_day", "weekend"})
+
+#: D666: the parsed qualities that name a PART OF DAY, which is a WINDOW and not a clock the user
+#: said. `timeparse`'s band table answers a band (`timeparse.py:44-50`: morning 07:00-11:30, noon
+#: 11:30-14:30, afternoon 14:00-18:00, evening 17:00-19:30, night 18:00-23:00) and the plan wrote
+#: its START as the instant the shop had to be open AT - so 「聽日朝早嘅咖啡店」 asked for 07:00 and
+#: answered 0 of 79 cafes (`tmp/d666_probe.py`). A band means "open at some point inside it", which
+#: is `open_until`: the same start, in the same `time` column, with the clause read as an overlap.
+PART_OF_DAY_QUALITIES = frozenset({"morning", "noon", "afternoon", "evening", "night"})
 
 
 @dataclass
@@ -969,6 +998,12 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
         # the card reader use; an empty string is the extractor's "no time" and stays None.
         at = datetime.fromisoformat(at.replace("Z", "+00:00")) if at else None
     plan.at = at
+    # D666: the window's other edge. The extractor states it as `ends_at` in the same ISO shape as
+    # `starts_at` (`timeparse.py`'s ParsedTime), and the wire carries it; a caller that states only
+    # a start leaves it None, which is a POINT and not a window.
+    ends = _field(time, "ends_at") if time else None
+    if isinstance(ends, str):
+        ends = datetime.fromisoformat(ends.replace("Z", "+00:00")) if ends else None
     quality = _field(time, "quality") if time else None
     if quality and quality.startswith("open_late_after:"):
         # D661: HHMM -> the CLOCK the filter binds. D463 divided it by 100 because the SQL took an
@@ -1037,6 +1072,13 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     # `open_weekday` (and `plan.at` stays for the card's open state); the hour leaves.
     if plan.at and quality not in DAY_LEVEL_QUALITIES:
         out["open_time"] = plan.at.astimezone(HK_TZ).time()
+        # D666: and when the words named a BAND, the band's far edge comes with it. `type` is the
+        # discriminator D665's day-level set could not be: an explicit clock beside a band word
+        # ("晚上8點") is `explicit` and stays a point, while the band alone is `range`.
+        if quality in PART_OF_DAY_QUALITIES and _field(time, "type") == "range" and ends:
+            until = ends.astimezone(HK_TZ).time()
+            if until > out["open_time"]:
+                out["open_until"] = until
     plan.filters = {k: v for k, v in out.items() if v not in (None, "", [], {})}
     return plan
 

@@ -302,12 +302,29 @@ def build_merchant_query(
         # bound to it makes asyncpg raise on the encode
         # ("'str' object has no attribute 'hour'") before the query ever runs.
         tm = p.add(filters["open_time"])
-        where.append(
-            f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
-            f"AND bh.weekday = {wd}::smallint AND ("
-            f"(bh.crosses_midnight = false AND bh.opens_at <= {tm}::time AND bh.closes_at > {tm}::time) "
-            f"OR (bh.crosses_midnight = true AND (bh.opens_at <= {tm}::time "
-            f"OR bh.closes_at > {tm}::time))))")
+        # D666: a part of day states a WINDOW (`open_until`) and the question is an overlap, not
+        # "open at the band's first minute" - which answered 0 of 79 cafes for 「朝早」
+        # (`tmp/d666_probe.py`). The opening edge is strict in the window form: a shop that opens
+        # exactly when the window closes was never open inside it.
+        start_at = _clock_filter(filters["open_time"])
+        until = _clock_filter(filters.get("open_until"))
+        if until is not None and start_at is not None and until > start_at:
+            tu = p.add(until)
+            where.append(
+                f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
+                f"AND bh.weekday = {wd}::smallint AND ("
+                f"(bh.crosses_midnight = false AND bh.opens_at < {tu}::time "
+                f"AND bh.closes_at > {tm}::time) "
+                f"OR (bh.crosses_midnight = true AND (bh.opens_at < {tu}::time "
+                f"OR bh.closes_at > {tm}::time))))")
+        else:
+            where.append(
+                f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
+                f"AND bh.weekday = {wd}::smallint AND ("
+                f"(bh.crosses_midnight = false AND bh.opens_at <= {tm}::time "
+                f"AND bh.closes_at > {tm}::time) "
+                f"OR (bh.crosses_midnight = true AND (bh.opens_at <= {tm}::time "
+                f"OR bh.closes_at > {tm}::time))))")
     min_closing = _clock_filter(filters.get("min_closing_hour"))
     if min_closing is not None:
         where.append(
@@ -567,12 +584,29 @@ def build_offering_query(
     if filters.get("open_weekday") is not None and filters.get("open_time") is not None:
         wd = p.add(int(filters["open_weekday"]))
         tm = p.add(filters["open_time"])
-        where.append(
-            f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
-            f"AND bh.weekday = {wd}::smallint AND ("
-            f"(bh.crosses_midnight = false AND bh.opens_at <= {tm}::time AND bh.closes_at > {tm}::time) "
-            f"OR (bh.crosses_midnight = true AND (bh.opens_at <= {tm}::time "
-            f"OR bh.closes_at > {tm}::time))))")
+        # D666: a part of day states a WINDOW (`open_until`) and the question is an overlap, not
+        # "open at the band's first minute" - which answered 0 of 79 cafes for 「朝早」
+        # (`tmp/d666_probe.py`). The opening edge is strict in the window form: a shop that opens
+        # exactly when the window closes was never open inside it.
+        start_at = _clock_filter(filters["open_time"])
+        until = _clock_filter(filters.get("open_until"))
+        if until is not None and start_at is not None and until > start_at:
+            tu = p.add(until)
+            where.append(
+                f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
+                f"AND bh.weekday = {wd}::smallint AND ("
+                f"(bh.crosses_midnight = false AND bh.opens_at < {tu}::time "
+                f"AND bh.closes_at > {tm}::time) "
+                f"OR (bh.crosses_midnight = true AND (bh.opens_at < {tu}::time "
+                f"OR bh.closes_at > {tm}::time))))")
+        else:
+            where.append(
+                f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
+                f"AND bh.weekday = {wd}::smallint AND ("
+                f"(bh.crosses_midnight = false AND bh.opens_at <= {tm}::time "
+                f"AND bh.closes_at > {tm}::time) "
+                f"OR (bh.crosses_midnight = true AND (bh.opens_at <= {tm}::time "
+                f"OR bh.closes_at > {tm}::time))))")
     min_closing = _clock_filter(filters.get("min_closing_hour"))
     if min_closing is not None:
         where.append(

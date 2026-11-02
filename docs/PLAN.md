@@ -3273,6 +3273,19 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   table a new day-level quality would have to join. Owner: any lane that turns an extractor window
   into a filter.
 
+- **A part of day was read as the clock at its first minute - closed by D666 (§663).**
+  `timeparse` states each band as a window (`timeparse.py:44-50`) and the plan published the START as
+  the instant a shop had to be open AT, so 「聽日朝早嘅咖啡店」 asked for 07:00 and answered 0 of 79
+  cafes, 「聽日中午嘅餐廳」 98 of 184, 「聽日晚黑嘅餐廳」 136 of 184 (`tmp/d666_probe.py`). The plan
+  now carries the band's far edge as `open_until` beside the same `open_time` (`service.py:1073-1081`,
+  discriminator `type == "range"`), and both readers ask an interval overlap instead of a point
+  (`service.py:455-464`, `sql.py:305-319`, `:587-601`). After: 78 / 174 / 174, and the id sets are
+  equal on both lanes for seven band sentences (`tmp/d666_sets.py`). Gate
+  `test_a_part_of_day_is_a_window_and_not_its_first_minute.py`, 13 legs, 5 red on HEAD. Filed: 深夜
+  and 宵夜 sit in the 18:00-23:00 band, 凌晨 has no band at all, the overlap has no minimum dwell, and
+  a crossing WINDOW (once the table has one) would read one day's weekday. Owner: the vocabulary and
+  time lanes for the band table; the window reader carries a corrected band unchanged.
+
 - **The locative frame was searched as content - closed by D657 (§654).** `_QUESTION_FRAME` knew 有冇, 邊度,
   哪裡 and 推介 and not 附近, so 「附近嘅咖啡店」「附近的咖啡店」「附近有咩餐廳」 carried `附近` into the match text
   and 「邊度有咖啡店」 carried the orphaned `有`, 「哪里有咖啡店」 the whole `哪里有`, 「近我嘅咖啡店」 the `近我`.

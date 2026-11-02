@@ -31053,3 +31053,78 @@ answered "which day".
   `:557-565` (the clause on both SELECTs), `nlu/timeparse.py:452-473` (the two conventions), this
   unit's gate, and `tmp/d665_counts.py`, `tmp/d665_weekdays.py`, `tmp/d665_falsify.txt` (the
   measurements).
+
+## 663. D666 · a part of day was read as the clock at its first minute (`apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/sql.py`)
+
+**The band is a window, and the plan wrote one edge of it as a point.** `timeparse` states each part
+of day as a band (`timeparse.py:44-50`: morning 07:00-11:30, noon 11:30-14:30, afternoon 14:00-18:00,
+evening 17:00-19:30, night 18:00-23:00), and `plan_from_intent` published the band's START as
+`open_time` - the instant a shop had to be open AT. So 「聽日朝早嘅咖啡店」 asked both lanes for shops
+open at 07:00 and answered **0 of 79 cafes**: every cafe in the corpus opens at 08:00 or later.
+Measured on the published plane (`tmp/d666_probe.py`, Wednesday 09:00 HK, the two lanes agreeing
+before and after - the defect is the QUESTION, not a lane):
+
+    sentence              filters (before)      pool (before)   pool (now)
+    聽日朝早嘅咖啡店      wd=2, 07:00           0 of 79         78
+    聽日中午嘅餐廳        wd=2, 11:30           98 of 184       174
+    聽日朝早嘅餐廳        wd=2, 07:00           0 of 184        13
+    聽日晚黑嘅餐廳        wd=2, 18:00           136 of 184      174
+    今晚嘅餐廳            wd=1, 18:00           142 of 184      177
+    今個週末嘅咖啡店      wd=5, the day         the day         79 (unchanged, §662)
+    今晚十一點嘅餐廳      wd=1, 23:00           34              34   (a clock, unchanged)
+
+**One filter shape, two questions.** `open_time` stays the start, in the same `time` column D399 gave
+it, and `open_until` is the band's far edge: `plan_from_intent` reads the extractor's `ends_at`
+(`service.py:1001-1006`) and writes the pair only when the parse is a BAND - `type` is `range` and
+the quality is in `PART_OF_DAY_QUALITIES` (`:697-701`, `:1073-1081`). The `type` field is what tells
+the two apart, and D665's day-level set could not: a band word beside a clock ("今晚十一點") carries
+the band's own `quality`, while its `type` is `explicit`. With both keys read, the clause is an
+interval overlap - "open at some point inside the band" - which is what the sentence means; with only
+`open_time` it is the point it always was.
+
+**Both readers, one interval test.** The fixture lane's `_static_open_during`
+(`service.py:455-464`) and the SQL on both SELECTs (`sql.py:305-319`, `:587-601`) test
+`opens_at < end AND closes_at > start`, and read a crossing-midnight row as the two intervals it is
+(`opens_at < end OR closes_at > start`) - so a 22:00-02:00 shop answers a night band and never a
+morning one. The opening edge is strict in the window form: a shop that opens exactly when the
+window closes was never open inside it.
+
+**Set equality, not just totals** (`tmp/d666_sets.py`): every id on both lanes, seven sentences -
+morning cafes 78, noon restaurants 174, night restaurants 174, afternoon cafes 74, tonight 177,
+morning restaurants 13, evening restaurants 177 - `same=True` with an empty symmetric difference on
+every one.
+
+**The gate** is `tests/test_a_part_of_day_is_a_window_and_not_its_first_minute.py`, 13 legs: the plan
+carries both edges of a band, a clock the user says is still a point (聽日7點), a band word beside a
+clock is still a point (今晚十一點), a day is still a day and neither edge (§662), a shop that opens
+inside the band answers it while the same shop does not answer the band's first minute (the crux),
+a shop that opens when the band closes and one that closes when it opens never answer, a row with no
+hours still fails, a crossing-midnight shop answers the night band and not the morning one, an
+offering answers its shop's band, and both lanes answer 78 / 174 / 174 with the noon answer strictly
+above the 11:30 point's 98. Falsified against HEAD: **5 red / 8 green** (`tmp/d666_falsify.txt`);
+the greens pin what must not move - the clock legs, the day leg, and the three row shapes the old
+point question already excluded for the right answer's wrong reason.
+
+**Adjacent**, run and green, never full: this gate, §662's day gate, `test_an_afternoon_tea_is_not_a_
+time_of_day` (its 14:00 legs still hold - the START did not move), `test_a_clock_range_is_one_span`
+(clock ranges are `explicit` and unchanged), `test_the_hour_a_row_states_is_read_by_every_reader`,
+`test_the_half_hour_in_the_request_is_not_rounded_to_the_hour`, `test_open_time_binding`,
+`test_a_time_the_user_states_is_not_matched`, `test_timeparse`, `test_search_plan`,
+`test_search_pipeline`, `test_demo_data` - **208 passed, nothing re-aimed**.
+
+**Not claimed.** (a) The band edges are the parser's table, so 深夜 and 宵夜 fall inside the night
+band 18:00-23:00 - a band the corpus says is wrong for "deep night" - and 凌晨 has no band at all
+(`extract_intent("凌晨嘅餐廳")` carries no time), so that sentence answers all 184 restaurants. Both
+are the vocabulary lane's rows to fix; the window reader would carry a corrected band unchanged.
+(b) The overlap is of ANY length: a shop open 11:00-11:30 answers a morning band by half an hour, and
+no minimum dwell is asked - not measured against what a person means. (c) A band that would cross
+midnight (a 00:00-03:00 深夜, once the table has one) reads `open_weekday` from its start and the
+window test assumes one day; the crossing row shape is handled, the crossing WINDOW is not.
+(d) 週末 is still Saturday only (§662), which is exact on this corpus because no published shop
+trades Sunday without Saturday (23 trade Saturday only, 0 the other way) - latent, not live.
+
+- readers: `search/service.py:697-701` (`PART_OF_DAY_QUALITIES`), `:1001-1006` (the `ends_at` read),
+  `:1073-1081` (where the pair is written), `:455-464` (`_static_open_during`), `:496-507` (the
+  fixture clause), `search/sql.py:305-319` and `:587-601` (the clause on both SELECTs),
+  `nlu/timeparse.py:44-50` (the bands), this unit's gate, and `tmp/d666_probe.py`,
+  `tmp/d666_sets.py`, `tmp/d666_falsify.txt` (the measurements).
