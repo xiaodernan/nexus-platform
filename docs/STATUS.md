@@ -30983,3 +30983,73 @@ rows the radius already placed.
   `:1014-1024`), `:585-595` (`match_district`, the one matcher), `:19-49` (the table), the re-aimed leg
   in `test_the_district_that_named_the_filter_is_not_a_search_term.py`, this unit's gate, and
   `tmp/d664_counts.py`, `tmp/d664_probe.py`, `tmp/d664_falsify.txt` (the measurements).
+
+## 662. D665 · a request that named a DAY was answered as nine o'clock that morning (`apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/sql.py`)
+
+**The parser's convention was read as the user's clock.** `parse_time`'s bare-day branch answers a
+whole-day window, 09:00-23:00 by convention (`nlu/timeparse.py:470-473`, quality `all_day`), and a
+weekend as Saturday 09:00 to Monday 00:00 (`:452-456`). `plan_from_intent` then wrote the window's
+START as the hour the request named (`service.py:1030-1038`), so every day-level sentence became a
+09:00 point on both lanes. Measured on the published plane (`tmp/d665_counts.py`, Wednesday 09:00 HK):
+
+    sentence              plan (before)       pool (before)    pool (now, both lanes)
+    今日嘅咖啡店          wd=1, open 09:00    35 of 79 cafes   74
+    聽日嘅餐廳            wd=2, open 09:00    13 of 184        174
+    今個週末嘅咖啡店      wd=5, open 09:00    36 cafes         79
+    今晚嘅餐廳            wd=1, open 18:00    142 of 184       142
+
+`聽日嘅餐廳` answering 13 restaurants is the shape of it: most restaurants open at 11:30, so a 09:00
+point excluded 171 of 184 from a request that named a DAY and no hour at all.
+
+**The hour leaves, the day and the instant stay.** `DAY_LEVEL_QUALITIES` (`service.py:668-672`) names
+the two parsed qualities whose start is a convention and not a clock, and `open_time` is written only
+when the quality is not one of them (`:1034-1038`). `open_weekday` still comes from `plan.at`, and
+`plan.at` itself stays - the card's open state reads it - so what changed is that neither lane asks
+the database "open at nine" on behalf of a sentence that never said nine.
+
+**And once the hour was gone, the DAY was read by no reader at all.** The live lane's clause required
+BOTH `open_weekday` and `open_time` (`sql.py:289-300` before this unit, mirrored on the offering
+SELECT at `:545-556`), so with the hour removed `聽日嘅餐廳` answered all 184 restaurants on live
+against the fixture's 174 - the gate's first run, which is how this second half was found. A day is a
+real filter (a shop with no hours row that day is closed that day, D422), so the clause now exists on
+both SELECTs - `EXISTS (SELECT 1 FROM business_hours bd WHERE bd.merchant_id = m.id AND bd.weekday =
+$n::smallint)` (`sql.py:289-297`, `:557-565`) - and the fixture lane mirrors it in `_static_hours_fit`
+(`service.py:486-491`): a row with no hours row for that weekday fails, as `EXISTS` does.
+
+**Both lanes now answer one census, and it is not the plane** (`tmp/d665_weekdays.py`): weekday alone,
+merchants, fixture = live = the raw SQL count on every day of the week -
+
+    Mon 441   Tue 449   Wed 447   Thu 470   Fri 470   Sat 470   Sun 447
+
+which is what the gate's last leg pins. 470 on Thu-Sat is the whole plane by fact, not by omission:
+every published merchant states a Thursday, Friday and Saturday row.
+
+**The gate** is `tests/test_the_day_the_request_names_is_not_nine_o_clock.py`, 10 legs: 今日 and 聽日
+keep `open_weekday` and write no `open_time`, a clock the user says still binds (聽日7點 -> 07:00 on
+Tuesday), a part of day still keeps its window start (今晚 -> 18:00), a weekday-only filter keeps the
+rows that trade that day (including a crossing-midnight row) and still drops the row that states no
+hours, a clock with the weekday still asks the clock, an offering answers its shop's weekday, both
+lanes agree on the two sentences (174 restaurants, 74 cafes) and on every weekday of the week.
+Falsified against HEAD: **7 red / 3 green** (`tmp/d665_falsify.txt`); the greens are the three legs
+that pin what must NOT move - the user's clock, the part of day, and the clock-with-weekday clause.
+
+**Adjacent**, run and green, never full: this gate, `test_the_hour_a_row_states_is_read_by_every_reader`,
+`test_the_half_hour_in_the_request_is_not_rounded_to_the_hour`, `test_open_time_binding`,
+`test_a_time_the_user_states_is_not_matched`, `test_timeparse`, `test_search_plan`,
+`test_search_pipeline`, `test_demo_data` - **124 passed**.
+
+**Not claimed.** (a) The day-level set is two names (`all_day`, `weekend`) because those are the two
+the parser answers today; a new day-level quality would have to be added to `DAY_LEVEL_QUALITIES`, and
+nothing asserts that the table is complete - the table is the reader. (b) `plan.at` still carries the
+convention's hour, so a bare 今日 card computes its open state at 09:00; that is the window's start,
+not a filter, and it is the same convention (filed here rather than changed). (c) A merchant that
+states NO hours at all is dropped from any day request - the `EXISTS` that D422 gave the live lane -
+and both lanes now agree that it is; 0 published merchants are in that shape. (d) The half hour, the
+part of day and the cue words are still D661's and D662's questions; this unit moved only what
+answered "which day".
+
+- readers: `search/service.py:668-672` (`DAY_LEVEL_QUALITIES`), `:1034-1038` (where `open_time` is
+  written), `:486-491` (the fixture mirror of the weekday clause), `search/sql.py:289-297` and
+  `:557-565` (the clause on both SELECTs), `nlu/timeparse.py:452-473` (the two conventions), this
+  unit's gate, and `tmp/d665_counts.py`, `tmp/d665_weekdays.py`, `tmp/d665_falsify.txt` (the
+  measurements).

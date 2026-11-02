@@ -3258,6 +3258,21 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   Also re-aimed a leg red since D657 (「附近嘅餐廳」 -> 「新開嘅餐廳」, the same claim). Owner: the
   vocabulary lane for romanisations the table does not list.
 
+- **A request that named a DAY was answered as nine o'clock that morning - closed by D665 (§662).**
+  `parse_time`'s bare-day branch answers 09:00-23:00 by convention (`timeparse.py:470-473`, `all_day`)
+  and a weekend as Saturday 09:00, and `plan_from_intent` wrote that START as the hour the request
+  named - so 「聽日嘅餐廳」 asked the database for shops open at nine and answered 13 of its 184
+  restaurants, 「今日嘅咖啡店」 35 of 79, 「今個週末嘅咖啡店」 36 (`tmp/d665_counts.py`). The hour now
+  leaves the plan for the two day-level qualities (`service.py:668-672`, `:1034-1038`) and the DAY stays
+  as `open_weekday`; the card's instant stays too. Removing the hour exposed the second half: no clause
+  read `open_weekday` alone, so live answered all 184. Both SELECTs now carry the weekday `EXISTS`
+  (`sql.py:289-297`, `:557-565`) and the fixture mirrors it, and every day of the week answers one
+  census on three readers - 441/449/447/470/470/470/447 (`tmp/d665_weekdays.py`). Gate
+  `test_the_day_the_request_names_is_not_nine_o_clock.py`, 10 legs, 7 red on HEAD. Filed: `plan.at`
+  still carries the convention's hour for the card's open state, and `DAY_LEVEL_QUALITIES` is the
+  table a new day-level quality would have to join. Owner: any lane that turns an extractor window
+  into a filter.
+
 - **The locative frame was searched as content - closed by D657 (§654).** `_QUESTION_FRAME` knew 有冇, 邊度,
   哪裡 and 推介 and not 附近, so 「附近嘅咖啡店」「附近的咖啡店」「附近有咩餐廳」 carried `附近` into the match text
   and 「邊度有咖啡店」 carried the orphaned `有`, 「哪里有咖啡店」 the whole `哪里有`, 「近我嘅咖啡店」 the `近我`.

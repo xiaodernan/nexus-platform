@@ -484,6 +484,11 @@ def _static_hours_fit(r: dict[str, Any], filters: dict[str, Any],
     if weekday is not None and at is not None:
         if not any(str(h.get("weekday")) == str(weekday) and _static_open_at(h, at) for h in rows):
             return False
+    # D665: a day with no clock asks which rows TRADE that day, the live clause mirrored - a row
+    # with no hours at all is still dropped (it is the EXISTS).
+    if weekday is not None and at is None:
+        if not any(str(h.get("weekday")) == str(weekday) for h in rows):
+            return False
     if min_closing is not None:
         limit = _static_hour_value(min_closing)
         if limit is not None and not any(bool(h.get("crosses_midnight"))
@@ -661,6 +666,12 @@ def _static_tokens(low: str) -> list[str]:
 
 
 # --------------------------------------------------------------------------- request shaping
+#: D665: the parsed qualities whose START is the convention for "the whole day" rather than a
+#: clock the user said. `timeparse`'s bare-day branch answers 09:00-23:00 and its weekend branch
+#: Saturday 09:00 (`timeparse.py:452-473`); a sentence that names 今日/聽日/週末 names a DAY.
+DAY_LEVEL_QUALITIES = frozenset({"all_day", "weekend"})
+
+
 @dataclass
 class SearchPlan:
     """What the deterministic pipeline needs from the caller — no model involved."""
@@ -1018,9 +1029,14 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     # D399: the open-at-time filter binds a `time` COLUMN, and a `time` column needs a
     # `datetime.time` - a string made asyncpg raise
     # `invalid input for query argument $7: '18:00:00' ('str' object has no attribute 'hour')`
-    # on every query carrying a clock time, which is the product's own e2e sentence
+    # on every query carrying a clock time, which the product's own e2e sentence
     # ("...周六晚上"). The value is a time, not a string that happens to look like one.
-    out["open_time"] = plan.at.astimezone(HK_TZ).time() if plan.at else None
+    # D665: a DAY-level window's start is NOT a clock the user named. The bare-day branch
+    # answers 09:00-23:00 by convention (a weekend, Saturday 09:00), so 「聽日嘅餐廳」 asked the
+    # database for shops open at nine and answered 13 of its 184 restaurants. The day stays as
+    # `open_weekday` (and `plan.at` stays for the card's open state); the hour leaves.
+    if plan.at and quality not in DAY_LEVEL_QUALITIES:
+        out["open_time"] = plan.at.astimezone(HK_TZ).time()
     plan.filters = {k: v for k, v in out.items() if v not in (None, "", [], {})}
     return plan
 

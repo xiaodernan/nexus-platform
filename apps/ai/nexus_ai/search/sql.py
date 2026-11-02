@@ -286,6 +286,16 @@ def build_merchant_query(
         where.append(
             f"EXISTS (SELECT 1 FROM locations ld WHERE ld.merchant_id = m.id "
             f"AND lower(coalesce(ld.district,'')) = lower({p.add(str(filters['district']))}))")
+    # D665: a DAY with no clock is a WEEKDAY filter, not nine o'clock. `plan_from_intent`
+    # stopped writing `open_time` for a day-level quality (`service.py:DAY_LEVEL_QUALITIES`),
+    # and no clause here read `open_weekday` alone - so 「聽日嘅餐廳」 answered all 184
+    # restaurants: the weekday was never read on this lane at all. A shop with no hours row
+    # that day is closed that day (D422), which is what the EXISTS says.
+    if filters.get("open_weekday") is not None and filters.get("open_time") is None:
+        wd = p.add(int(filters["open_weekday"]))
+        where.append(
+            f"EXISTS (SELECT 1 FROM business_hours bd WHERE bd.merchant_id = m.id "
+            f"AND bd.weekday = {wd}::smallint)")
     if filters.get("open_weekday") is not None and filters.get("open_time") is not None:
         wd = p.add(int(filters["open_weekday"]))
         # D399: bind a `datetime.time`, not a string. The column is `time`, and a string
@@ -544,6 +554,16 @@ def build_offering_query(
     # so 「開到晚上」 answered 4,707 offerings with 3,907 under a shop open at that hour
     # (`tmp/d659_open2.py`). An offering is bookable when its SHOP is open, and the join has the
     # shop; the predicates are the merchant's own, written against `m.id`.
+    # D665: a DAY with no clock is a WEEKDAY filter, not nine o'clock. `plan_from_intent`
+    # stopped writing `open_time` for a day-level quality (`service.py:DAY_LEVEL_QUALITIES`),
+    # and no clause here read `open_weekday` alone - so 「聽日嘅餐廳」 answered all 184
+    # restaurants: the weekday was never read on this lane at all. A shop with no hours row
+    # that day is closed that day (D422), which is what the EXISTS says.
+    if filters.get("open_weekday") is not None and filters.get("open_time") is None:
+        wd = p.add(int(filters["open_weekday"]))
+        where.append(
+            f"EXISTS (SELECT 1 FROM business_hours bd WHERE bd.merchant_id = m.id "
+            f"AND bd.weekday = {wd}::smallint)")
     if filters.get("open_weekday") is not None and filters.get("open_time") is not None:
         wd = p.add(int(filters["open_weekday"]))
         tm = p.add(filters["open_time"])
