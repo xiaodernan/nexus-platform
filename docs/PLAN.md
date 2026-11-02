@@ -2160,10 +2160,13 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   D635's surface strip removes `restaurant` out of `restaurants` and the plural marker stays, so every
   English page ties at relevance 0.5 and its order is a tie-break (`tmp/d636_plan.py`). Owner: the AI
   lane with the lexicon lane.
-- **A party range in English is not a party.** 「2-4 people」 is read as no party at all, and
-  「party of 2 to 4」 as a party of TWO (`tmp/d633_cues.txt`) - `PARTY_RE` reads one number, and the
-  `party(?:\s*of)?` alternative takes the first. The CJK range is read and stripped (D633); the Latin
-  one is neither. Owner: the AI lane.
+- **A party range in English was read at the wrong end and half-stripped - closed by D643** (§640).
+  「2-4 people」 answered party 4 but kept `2-` in the match text, 「party of 2 to 4」 answered the FLOOR
+  (2), 「party of 2-4」 2, 「table for 4 to 6 people」 4, and 「group of 2 to 4」 no party at all
+  (`tmp/d641_before.txt`). D633 had already answered this for Chinese - a range is ONE party and its
+  size is the UPPER end - so the Latin reader now says the same and the strip removes the whole span,
+  cue included; a duration after `for` (「for 2 hours」) is not a table and is left alone. Owner: the AI
+  lane.
 - **The refusal bridge is a hand-list and only three facts have been measured** - D595 and D598
   closed `noise`/`queue` and the noise fact's second spelling, but `ASPECT_AVOID` and
   `ASPECT_ATTRIBUTES` name the pairings a human read off the generator. `weak_aspects` on this

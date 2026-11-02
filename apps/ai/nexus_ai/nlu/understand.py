@@ -164,6 +164,11 @@ TIME_SPAN_RE = re.compile(
     rf"|{_TIME_CUE}",
     re.IGNORECASE,
 )
+#: D643: 「for 2」 is a party only when no DURATION follows it. Measured: 「for 2 hours」 read a
+#: party of two and now also stripped its own cue, leaving 「hours」 - a duration is not a table.
+_NO_DURATION = (r"(?!\s*(?:hours?|hrs?|minutes?|mins?|days?|weeks?|months?|years?|"
+                r"小時|小时|分鐘|分钟|天|日|星期|個月|个月|年))")
+
 PARTY_SPAN_RE = re.compile(
     # D633: a RANGE is one party too - 「2至4人」 is read as 4 by `PARTY_RE` and the strip removed
     # only the tail, leaving 「2至」 in the match text; 「10至20人」 was worse, because the BUDGET
@@ -174,6 +179,20 @@ PARTY_SPAN_RE = re.compile(
     r"(?:\u500b\s*\u4eba|\u4e2a\s*\u4eba|\u4f4d\u4eba|\u500b|\u4e2a|\u4f4d|\u4eba)|"
     r"(?:\u6211\u54cb|\u6211\u5011|\u6211\u4eec)?\s*\d{1,2}\s*"
     r"(?:\u500b\s*\u4eba|\u4e2a\s*\u4eba|\u4f4d\u4eba|\u500b|\u4e2a|\u4f4d|\u4eba)(?:\u5605|\u7684)?"
+    # D643: the LATIN range. 「2-4 people」 was read as 4 by the tail alternative and stripped
+    # only 「4 people」, leaving 「2-」 in the match text; 「party of 2 to 4」 READ THE LOWER END
+    # (2) because `PARTY_RE`'s cue alternative stopped at the first number, and its strip left
+    # 「to 4」. Measured 2026-11-02 (`tmp/d641_before.txt`). The cue form comes before the bare
+    # one so 「table for 4 to 6 people」 leaves nothing at all, and the single 「for 4」 joined it
+    # in the same measurement (「table for 4」 answered party 4 and kept the whole sentence).
+    r"|(?:(?:party|group)\s*(?:of)?|table\s+for|for\b)\s*\d{1,2}\s*(?:[-–~～]|to|and\b)\s*\d{1,2}"
+    r"(?:\s*(?:people|pax|persons?|guests|diners|人))?"
+    + _NO_DURATION +
+    r"|between\s*\d{1,2}\s*and\s*\d{1,2}"
+    r"(?:\s*(?:people|pax|persons?|guests|diners|人))?|"
+    r"\d{1,2}\s*(?:[-–~～]|to\b)\s*\d{1,2}\s*(?:people|pax|persons?|guests|diners)\b|"
+    r"(?:table\s+|seats?\s+)?for\s*\d{1,2}(?:\s*(?:people|pax|persons?|guests|diners))?\b"
+    + _NO_DURATION +
     r"|party(?:\s*of)?\s*\d{1,2}\b"
     r"|\d{1,2}\s*(?:people|pax|persons?|guests|diners)\b",
     re.IGNORECASE,
@@ -183,7 +202,14 @@ PER_ITEM_RE = re.compile(r"(?:每件|每款|each|per item|一双|一对|一對)"
 
 #: CJK counters need no trailing boundary (they are word chars); latin units do.
 PARTY_RE = re.compile(
-    r"(?:\D|^)\s*(?:我哋|我們|我们)?\s*(\d{1,2})\s*(?:個|个|位|人)"
+    # D643: a latin RANGE is one party and its size is the UPPER end, the same reading D633 gave
+    # 「2至4人」. The lower number is not captured at all, because `party_size_of` takes the first
+    # non-empty group and a capture there would answer with the floor.
+    r"(?:(?:party|group)\s*(?:of)?|table\s+for|for\b)\s*\d{1,2}\s*(?:[-–~～]|to|and\b)\s*(\d{1,2})\b"
+    + _NO_DURATION +
+    r"|between\s*\d{1,2}\s*and\s*(\d{1,2})\b"
+    r"|\d{1,2}\s*(?:[-–~～]|to\b)\s*(\d{1,2})\s*(?:people|pax|persons?|guests|diners)\b"
+    r"|(?:\D|^)\s*(?:我哋|我們|我们)?\s*(\d{1,2})\s*(?:個|个|位|人)"
     r"|(?:party(?:\s*of)?|for)\s*(\d{1,2})\b"
     r"|(\d{1,2})\s*(?:people|pax|persons?|guests|diners)\b",
     re.IGNORECASE,

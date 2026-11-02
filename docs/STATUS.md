@@ -29169,6 +29169,60 @@ suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
 
 - readers: `nlu/lexicon.py:783-810` (`leaf_surfaces`), `:743-780` (`match_leaf`, the head rule that
   chooses the leaf); `search/service.py:497-517` (`_apply_category_leaf`), `:681-694` (the recompute).
+## 640. D643 · an English party range was read at the wrong end and left half of itself in the text (`apps/ai/nexus_ai/nlu/understand.py`)
+
+**How the unit arrived.** §636 (D639) closed the compound-suffix question, and the PLAN item it had
+pointed past - "a party range in English is not a party" - was two units old and measured only on its
+two easiest spellings. D633 had already settled the same question for Chinese: 「2至4人」 is ONE party,
+its size the UPPER end, and the whole span leaves the match text. The Latin half had neither.
+
+**Measured before** (`tmp/d641_before.txt`):
+
+    2-4 people               party  4   match text "2-"
+    2 to 4 people            party  4   match text "2 to"
+    party of 2 to 4          party  2   match text "to 4"
+    party of 2-4             party  2   match text "-4"
+    table for 4 to 6 people  party  4   match text "table for 4 to"
+    4-6 guests               party  6   match text "4-"
+    group of 2 to 4          party  -   match text "group of 2 to 4"
+    table for 4              party  4   match text "table for 4"
+
+Two defects in one shape. `PARTY_RE` is an alternation tried left to right, and every Latin alternative
+stopped at ONE number: the cue form read the digit nearest the cue (the FLOOR when a cue precedes the
+range) and the unit form only matched a number standing immediately before its noun (so the upper end
+answered, and the floor stayed in the text). And the strip knew neither shape, so whatever it did not
+read it also did not remove.
+
+**The repair reads the range the way D633 reads the Chinese one.** The cue forms (`party of`, `group
+of`, `table for`, `for`) come first and capture the UPPER end; the bare form requires a unit
+(`people`, `pax`, `persons`, `guests`, `diners`) after the second number; `between 2 and 4 people` is
+the same question and joined them; and the single `for 4` went in with its own unit because the same
+measurement showed it answering party 4 while keeping the whole sentence. The lower number is never
+captured, because `party_size_of` answers with the first non-empty group and a capture there would
+return the floor. `_NO_DURATION` guards the `for` cue: 「for 2 hours」 read a party of two, and once the
+strip knew that cue it removed its own words and left `hours` - a duration is not a table.
+
+**Measured after** (`tmp/d641_after.txt`, `tmp/d641_edges.txt`, `tmp/d641_pairs2.txt`): all sixteen
+spellings read the upper end and reach the lane as nothing; 「quiet 2-4 people」 reaches it as `quiet`
+and 「romantic table for 4 to 6 people」 as `romantic`; a content word beside the range survives; and on
+the live plane each range answers the SAME ten ids, relevance included, as the single spelling of its
+upper end - 4 people / 2-4 people, party of 4 / party of 2 to 4, table for 6 / table for 4 to 6 people,
+for 6 / for 4 to 6.
+
+**Not claimed.** 「100-200蚊」 is still the price lane's range (budget 100-200, party None) and 「4-6pm」
+still the time lane's (party None, time read `4-6pm`, and its `4-` residue is the TIME strip's own
+filed item). 「2-4蚊」 is still no band at all: a dash range with no money cue and no party cue belongs
+to nobody, filed. And 「for 2 hours」 still answers `party_size=2` - the guard stops the STRIP, not that
+older reading of `for N`, which is a duration defect filed separately.
+
+**The gate** is `tests/test_a_party_range_written_with_a_dash_is_one_party.py`: 33 legs - twelve
+readings (twelve range spellings, one per shape), ten strip legs (each range leaves the text empty,
+including the two single `for N` forms), three content legs, two money-range legs, one clock-range leg,
+one duration leg, and four live pairs. Falsified by reverting the file to HEAD, which is the pre-D641
+reader: **23 of the 33** redden, including all four live pairs (`tmp/d641_falsify.txt`). With the party,
+budget, plan and lexicon suites: **320 passed**.
+
+- readers: `nlu/understand.py:167-199` (`_NO_DURATION`, `PARTY_SPAN_RE`), `:203-216` (`PARTY_RE`).
 ## 637. D640 · a copy of the repository under a gitignored tree was a second holder of every name (`scripts/check_ledger_citations.mjs`, `scripts/falsify_ledger_text.mjs`)
 
 **How the unit arrived.** The D639 commit's own ledger gate, step 8, came back red with **322 strict
