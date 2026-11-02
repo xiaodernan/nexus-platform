@@ -748,6 +748,14 @@ _MATCH_CORE_EDGES = re.compile(r"^[\s嘅的，,、。?？]+|[\s嘅的，,、。?
 
 _SHOP_SUFFIX_AFTER = re.compile(r"(?:店|舖|鋪|shop|store)(?![a-z])", re.IGNORECASE)
 
+#: D644: the PLURAL LICENCE. `CATEGORY_SYNONYMS` writes the singular (`restaurant`, `cafe`, `shop`),
+#: and the strip blanks exactly the span a surface occupies - so a plural sentence kept its own
+#: marker: measured 2026-11-02 (`tmp/d644_before.txt`), 「restaurants」 reached the lane as `s`, and
+#: 「cafes」, 「bars」, 「hotels」, 「shops」 the same. No row carries a lone `s`, so every English
+#: page tied at relevance 0.5 and its order was a tie-break. The marker is absorbed only straight
+#: after a span whose own last character is LATIN (咖啡店 has no plural), so a CJK surface is untouched.
+_PLURAL_AFTER = re.compile(r"(?:es|s)\b", re.IGNORECASE)
+
 
 def _strip_surface_spans(text: str, surfaces: Sequence[str]) -> str:
     """Blank out every span one of `surfaces` occupies, found through the ONE matcher (D481).
@@ -780,6 +788,12 @@ def _strip_surface_spans(text: str, surfaces: Sequence[str]) -> str:
         suffix = _SHOP_SUFFIX_AFTER.match(text, end)
         if suffix:
             end = suffix.end()
+        # D644: and the plural marker of the word just removed - `restaurant|s` is one word, not a
+        # surface plus a term nobody writes.
+        if end and end <= len(text) and text[end - 1:end].isascii() and text[end - 1:end].isalpha():
+            plural = _PLURAL_AFTER.match(text, end)
+            if plural:
+                end = plural.end()
         for i in range(start, min(end, len(chars))):
             chars[i] = " "
     return "".join(chars)

@@ -29169,6 +29169,54 @@ suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
 
 - readers: `nlu/lexicon.py:783-810` (`leaf_surfaces`), `:743-780` (`match_leaf`, the head rule that
   chooses the leaf); `search/service.py:497-517` (`_apply_category_leaf`), `:681-694` (the recompute).
+## 641. D644 · an English plural category word reached the lane as its own plural marker (`apps/ai/nexus_ai/nlu/understand.py`)
+
+**How the unit arrived.** §632 (D635) took the word that named the category out of the match text, and
+closed by recording the Latin residue it could not handle: "an English category word leaves its plural -
+`at most 1000 restaurants` reaches the lane as `s`". `CATEGORY_SYNONYMS` writes the singular, and the strip
+blanks exactly the span a surface occupies, so the marker the user typed stayed behind.
+
+**Measured before** (`tmp/d644_before.txt`):
+
+    restaurants               filter restaurant   match text "s"
+    at most 1000 restaurants  filter restaurant   match text "s"
+    cafes                     filter cafe         match text "s"
+    bars                      filter bar          match text "s"
+    hotels                    filter hotel        match text "s"
+    shops                     filter retail       match text "s"
+
+No published row carries a lone `s`, so the term could only divide: on the live plane every English page
+tied at relevance 0.5 and its order was the ranker's own tie-break - the same shape §625-§631 closed four
+times, one letter wide.
+
+**The repair absorbs the marker, not the word.** `_PLURAL_AFTER` takes `es` or `s` that follows a span the
+strip just removed, and only when that span's own last character is LATIN - 「咖啡店」 has no plural and its
+mark is untouched. It is the same absorption shape D639 gave the shop suffix, one rule narrower.
+
+**Measured after** (`tmp/d644_after.txt`, `tmp/d644_pairs.txt`): all five plurals reach the lane as
+nothing, and each answers the SAME ten ids as its singular, relevance 0.0 on every card -
+restaurant/restaurants, cafe/cafes, bar/bars, hotel/hotels, shop/shops. Content survives: 「quiet
+restaurants」 reaches the lane as `quiet`, 「romantic cafes」 as `romantic`, and the budget leg keeps its
+band (`at most 1000 restaurants` reads max 1000).
+
+**Not claimed.** A losing bucket's spelling is deliberately left alone: 「coffee shops」 is the cafe filter
+with `shops` still content, and 「dessert shops」 the bakery filter with `shops` - D635 measured that ruling
+and this unit re-pins it rather than widening the strip. 「bakeries」 and 「steakhouses」 name no bucket at
+all (`category=None`, whole text kept), so no marker rule can help them; that is the vocabulary's item.
+And 「restaurants in 旺角」 reaches the lane as `in`, which is the filler item already filed, not a plural.
+
+**A leg re-based on the way, and why.** D635's gate pinned `total == 11` for 「7點嘅餐廳」, measured on a
+**Saturday**. The corpus opens different hours on a Monday: the same request answers **8**. The number was
+pinning a calendar rather than the unit, so that leg now compares the page against the SAME intent searched
+as an empty sentence (both 8 today) - the unit's actual claim, with no date in it.
+
+**The gate** is `tests/test_a_plural_category_word_is_one_word.py`: 18 legs - five plural readings (filter
+and empty text), one budget leg, three content legs, two losing-bucket legs, one CJK leg, five live pairs
+and one live relevance-0 leg. Falsified with `_PLURAL_AFTER` made to match nothing: **15 of the 18** redden,
+including all five live pairs (`tmp/d644_falsify.txt`). With the D635-D643 category, shop, range, plan,
+lexicon and eval suites: **432 passed**.
+
+- readers: `nlu/understand.py:751-757` (`_PLURAL_AFTER`), `:790-796` (the absorption in `_strip_surface_spans`).
 ## 640. D643 · an English party range was read at the wrong end and left half of itself in the text (`apps/ai/nexus_ai/nlu/understand.py`)
 
 **How the unit arrived.** §636 (D639) closed the compound-suffix question, and the PLAN item it had

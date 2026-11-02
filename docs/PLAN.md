@@ -2156,9 +2156,10 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   and reaches the keyword lane as `at most` - `_MATCH_CORE_RESIDUE` only strips a CJK cue stranded by a
   strip, because a Latin cue can be the start of an unread phrase (`up to 30 mins` must not lose
   `up to`). The CJK 至多12人 is stripped. Owner: the AI lane.
-- **An English category word leaves its plural.** 「at most 1000 restaurants」 reaches the lane as `s`:
-  D635's surface strip removes `restaurant` out of `restaurants` and the plural marker stays, so every
-  English page ties at relevance 0.5 and its order is a tie-break (`tmp/d636_plan.py`). Owner: the AI
+- **An English category word left its plural - closed by D644** (§641). 「at most 1000 restaurants」 reached
+  the lane as `s`: D635's surface strip removes `restaurant` out of `restaurants` and the marker stayed, so
+  every English page tied at relevance 0.5 (`tmp/d636_plan.py`). The marker is now absorbed after a LATIN
+  surface, and each plural answers its singular's page with relevance 0.0 on every card. Owner: the AI
   lane with the lexicon lane.
 - **A party range in English was read at the wrong end and half-stripped - closed by D643** (§640).
   「2-4 people」 answered party 4 but kept `2-` in the match text, 「party of 2 to 4」 answered the FLOOR

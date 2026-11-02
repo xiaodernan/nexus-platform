@@ -129,8 +129,15 @@ def plane():
         await db_pool.connect(st, force_new=True)
         try:
             out = {}
-            for q in ("餐廳", "7點嘅餐廳", "咖啡店", "點心餐廳"):
+            for q in ("餐廳", "7點嘅餐廳", "咖啡店", "點心餐廳", ""):
                 intent = validate_intent(extract_intent_dict(q))
+                if q == "":
+                    # D644: the SAME intent with no text at all - the page its filters answer alone.
+                    # The literal total for 「7點嘅餐廳」 (11) was measured on a SATURDAY, and the
+                    # corpus's opening hours differ by weekday: re-measured on a Monday it is 8, so
+                    # that number pinned a calendar, not the unit. The invariant this unit claims is
+                    # that the word left and the filters answered - this is it, without a date.
+                    intent = validate_intent(extract_intent_dict("7點嘅餐廳"))
                 pack = await run_search(Deps(st), intent, query=q, limit=TOP_K)
                 out[q] = dict(
                     total=getattr(pack.response, "total_estimate", None),
@@ -147,7 +154,7 @@ def plane():
 
 
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
-@pytest.mark.parametrize("query,total", [("餐廳", 184), ("7點嘅餐廳", 11), ("咖啡店", 79)])
+@pytest.mark.parametrize("query,total", [("餐廳", 184), ("咖啡店", 79)])
 def test_a_page_answered_by_its_filters_claims_no_term(plane, query, total):
     """Measured before: 1.00 / 0.069 / 0.00 on the eleven, and 0.333-0.389 on the seventy-nine."""
     page = plane[query]
@@ -156,6 +163,22 @@ def test_a_page_answered_by_its_filters_claims_no_term(plane, query, total):
     assert set(page["rel"]) == {0.0}, f"a term no filter consumed is still dividing the page: {page['rel']}"
     assert not any(page["claims"]), (
         "a card prints 符合「…」 on a page with no search term - the claim is ungrounded")
+
+
+@pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
+def test_a_time_and_a_bucket_are_answered_by_the_filters_alone(plane):
+    """「7點嘅餐廳」 is no text at all, so its page must be the page those filters answer with no query.
+
+    D644 re-based this leg: `total == 11` was the SATURDAY count and the corpus opens different hours
+    on a Monday (8), so the literal pinned a calendar rather than the unit. What the unit promises is
+    that the bucket word left and the filters answered, so the comparison is against the same intent
+    searched as an empty sentence.
+    """
+    page = plane["7點嘅餐廳"]
+    assert page["core"] == "", page["core"]
+    assert page["total"] == plane[""]["total"], (page["total"], plane[""]["total"])
+    assert set(page["rel"]) == {0.0}, page["rel"]
+    assert not any(page["claims"]), "a card claims 符合「…」 on a page with no search term"
 
 
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
