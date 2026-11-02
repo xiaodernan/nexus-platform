@@ -267,9 +267,19 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
             score = min(1.0, 0.25 * hits + (0.4 if name_hit else 0.0))
         if bucket and not in_bucket:
             continue
-        if filters.get("district") and str(r.get("district") or "").lower() != \
-                str(filters["district"]).lower():
-            continue
+        # D656: the live clause is an EXISTS over `locations` (`sql.py:228-231`), so a merchant with two
+        # locations in two districts answers either. The row publishes that set as `districts`
+        # (`sql.py:211-221`); the single `district` column is the geo lane's nearest pick and is the
+        # fallback for a row list that states only one. Before this, the published merchant rows carried
+        # `district: NULL` (geo_select is NULL without a lat/lng), so this lane answered 0 rows for every
+        # district where the live lane answered 194 (`tmp/d656_district2.py`).
+        if filters.get("district"):
+            wanted = str(filters["district"]).lower()
+            mine = {str(d).lower() for d in (r.get("districts") or ())}
+            if not mine and r.get("district") is not None:
+                mine = {str(r["district"]).lower()}
+            if wanted not in mine:
+                continue
         # D654: the price the caller filters on is the row's OWN price, and the live clauses read
         # two column pairs - `merchants.avg_price_hkd` with a NULL arm on both ends (sql.py:214-217), and
         # an offering's `COALESCE(price_amount, price_max|price_min)` (sql.py:454-459). This lane read one

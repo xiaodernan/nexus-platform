@@ -30440,3 +30440,64 @@ rating is filtered on the stale number; freshness is §5's notice, not the filte
   `tmp/d655_tags_offering.py`, `tmp/d655_kind.py`, `tmp/d655_falsify_all.txt`, `tmp/d655_falsify_sql.txt`
   (the measurements).
 
+## 653. D656 · the district filter was answered by one plane and by neither reader on the other (`apps/ai/nexus_ai/search/sql.py`, `apps/ai/nexus_ai/search/service.py`)
+
+**One filter, two holes, and both were the row's fault.** The merchant SELECT asks whether the merchant
+HAS a location in the district - `EXISTS (SELECT 1 FROM locations ...)` (`sql.py:228-231`) - which is the
+right question for a shop with two branches. The fixture lane compared ONE string on the row
+(`service.py:270` before this unit), and the offering SELECT carried no district clause at all. Measured on
+the published plane, same plan against both lanes (`tmp/d656_district2.py`):
+
+    plan                            fixture (before)   live (before)   live (after)   fixture (after)
+    merchants, district Sha Tin         0                194             194            194
+    merchants, district Tai Wai         0                137             137            137
+    offerings, district Sha Tin         0              4,707           1,941          1,941
+    offerings, district Tai Wai         0              4,707           1,357          1,357
+
+The fixture lane answered NOTHING, and the reason is not the comparison: the row it is handed is the live
+projection, and that projection's `district` column is `NULL` unless a lat/lng was asked for - `geo_select`
+is the literal `NULL::text AS district` when there is no geo lane (`sql.py:261-263`). A merchant with a
+`locations` row in Sha Tin published no district to compare against. The live offering plane answered
+EVERYTHING, because the clause it needed was never written while the merchant plane had it two functions up.
+Neither lane could answer, and both failed in opposite directions - which is why a parity gate alone would
+not have found this: 0 and 4,707 are both "wrong", and only the plane's own census says by how much.
+
+**The repair publishes the set the clause tests.** `_districts_select` (`sql.py:168-180`) renders
+`array_agg(DISTINCT lower(coalesce(locations.district, '')))` for the merchant the row stands for, and both
+projections carry it as `districts` (`:409`, `:618`) - computed only when a district was asked for, the
+economy `_category_slugs_select` already uses one screen up (`:164-165`). The offering SELECT gains the
+merchant's own EXISTS (`:490-495`), and the mirror reads SET MEMBERSHIP with the single string as fallback
+(`service.py:270-282`), which is what the demo rows state (`api/demo_data.py:99`) - a demo row names one
+district and has no set, and a row list that has only one district must not be thought to have none.
+
+`districts` is deliberately not the same column as `district`: `district` is the geo lane's NEAREST location
+and is what a card prints; `districts` is every district the merchant is filed under and is what the filter
+asks. Collapsing them would make a two-branch shop answer one district and print the other.
+
+**The gate** is `tests/test_the_district_filter_answers_the_locations_the_row_holds.py`, 11 legs: four
+fixture shapes (the set's own district, the same district in another case, the second district of a two-branch
+row, and a district no row lists), an offering fixture leg (two offerings under different districts), four
+live population legs (fixture total == live total for both planes on both districts, and live < the whole
+corpus), one live two-branch leg (a published merchant with two districts answers BOTH, on both lanes - which
+the string comparison could not express), and one leg that runs the real builders (`SQL.build_merchant_query`,
+`SQL.build_offering_query`) on the real plane and reads `districts` off the rows they return, so the projection
+is measured rather than mirrored by the gate's own hand-written SQL. Falsified against HEAD: **10 red / 1
+green** (`tmp/d656_falsify.txt`) - the green is the district that matches nothing, which answers 0 on both
+sides for the right reason.
+
+**Adjacent**, run and green, never full: the four district vocabulary/spelling suites, the geo card suites,
+the D655 fixture-filter gate - 269 passed - plus `test_demo_data.py` and `test_search_pipeline.py` (31), because
+the fallback path is the demo plane's.
+
+**Not claimed.** (a) `districts` is computed only when a district filter is present; a caller that wants the
+set without asking for a district gets `'{}'`. That is the `category_slugs` bargain and it is enough for both
+readers here, but it is a choice, not a free lunch. (b) The comparison is exact lowercase equality, so
+`Shatin` and `Sha Tin` are different districts - the spelling a caller types is the vocabulary lane's
+question (`tests/test_the_district_speaks_the_corpus_spelling.py`), not this one's. (c) The near-me lane,
+`district_layout` and `subdistrict` are untouched.
+
+- readers: `search/sql.py:168-180` (the published set), `:216` / `:455` (both call sites), `:409` / `:618`
+  (the two projections), `:490-495` (the offering clause), `:228-231` (the merchant clause it mirrors),
+  `search/service.py:270-282` (the mirror), this unit's gate, and `tmp/d656_district2.py`,
+  `tmp/d656_falsify.txt` (the measurements).
+

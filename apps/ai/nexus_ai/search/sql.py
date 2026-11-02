@@ -165,6 +165,20 @@ def _category_slugs_select(filters: dict[str, Any]) -> str:
     return CATEGORY_SLUGS_SUBQUERY if filters.get("category") else "'{}'::text[]"
 
 
+def _districts_select(ref: str, filters: dict[str, Any]) -> str:
+    """The districts a merchant is located in, lowercase, when the caller asked for one (D656).
+
+    The district clause is an EXISTS over `locations` and the fixture lane has no join, so the
+    only thing that lane can read is a column on the row. This publishes that column: the row's
+    DISTRICTS, not the one district the geo lane picks for display. Only computed when a district
+    is asked for, which is what `_category_slugs_select` does one screen up.
+    """
+    if not filters.get("district"):
+        return "'{}'::text[]"
+    return (f"coalesce((SELECT array_agg(DISTINCT lower(coalesce(ld2.district, ''))) "
+            f"FROM locations ld2 WHERE ld2.merchant_id = {ref}), '{{}}'::text[])")
+
+
 def _avoid_attributes(avoid: Iterable[Any]) -> list[str]:
     """The boolean attributes a refused word stands for (D598).
 
@@ -199,6 +213,7 @@ def build_merchant_query(
     cfg = _tsconfig(ts_config)
     filters = filters or {}
     category_slugs_select = _category_slugs_select(filters)
+    districts_select_m = _districts_select("m.id", filters)
     text_ph = p.add(text or "")
     tsq = f"plainto_tsquery('{cfg}'::regconfig, {text_ph})"
     wsq = f"websearch_to_tsquery('{cfg}'::regconfig, {text_ph})"
@@ -391,6 +406,7 @@ SELECT {total_select}m.id, m.slug, m.display_name, m.display_name_zh, m.descript
        m.avg_price_hkd, m.rating_agg, m.review_count, m.popularity_score, m.tags,
        m.attributes, m.data_origin, m.plan, m.images, m.ai_agent_enabled,
        {category_slugs_select} AS category_slugs,
+       {districts_select_m} AS districts,
        'merchant'::text AS subject_type, m.id::text AS subject_id, m.id::text AS merchant_id,
        {geo_select},
        {kw_score} AS kw_score,
@@ -436,6 +452,7 @@ def build_offering_query(
     cfg = _tsconfig(ts_config)
     filters = filters or {}
     category_slugs_select = _category_slugs_select(filters)
+    districts_select_o = _districts_select("o.merchant_id", filters)
     text_ph = p.add(text or "")
     tsq = f"plainto_tsquery('{cfg}'::regconfig, {text_ph})"
     wsq = f"websearch_to_tsquery('{cfg}'::regconfig, {text_ph})"
@@ -470,6 +487,13 @@ def build_offering_query(
     # the join already has, so the clause is the merchant's own spelling.
     if filters.get("tags"):
         where.append(f"m.tags && {p.add([str(t) for t in filters['tags']])}::text[]")
+    # D656: `district` is the merchant plane's clause (`:228-231`) and this SELECT carried none, so a
+    # district request was answered here by all 4,707 offerings instead of the 1,941 under a merchant
+    # located in Sha Tin (`tmp/d656_district2.py`). Same predicate, on the merchant the join has.
+    if filters.get("district"):
+        where.append(
+            f"EXISTS (SELECT 1 FROM locations ld WHERE ld.merchant_id = m.id "
+            f"AND lower(coalesce(ld.district,'')) = lower({p.add(str(filters['district']))}))")
     for key, value in (filters.get("attributes") or {}).items():
         where.append(f"o.attributes @> {p.add(json.dumps({str(key): value}, ensure_ascii=False))}::jsonb")
     # D607: an offering states the party it physically fits (`docs/DATABASE.md:72` calls
@@ -591,6 +615,7 @@ SELECT {total_select}o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.descripti
        coalesce(m.attributes->'weak_aspects','[]'::jsonb) AS merchant_weak_aspects,
        coalesce(m.attributes->'lively_ambience', 'false'::jsonb) AS merchant_lively_ambience,
        {category_slugs_select} AS category_slugs,
+       {districts_select_o} AS districts,
        'offering'::text AS subject_type, o.id::text AS subject_id, o.merchant_id::text AS merchant_id_key,
        {geo_select},
        {kw_score} AS kw_score,

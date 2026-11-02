@@ -3168,10 +3168,17 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   (`tmp/d655_falsify_all.txt`), the SQL half alone 1 red / 16 green (`tmp/d655_falsify_sql.txt`). Owner: any
   lane that adds a clause to one SELECT.
 
-- **An offering's `district` is a string compare on the fixture lane and a `locations` EXISTS on the live one.**
-  `search/service.py:270` compares the row's own `district` where the merchant lane asks whether the merchant
-  HAS a location in the district (`search/sql.py:228-231`), and the offering SELECT carries no district clause
-  at all - the two lanes agree today only because the offering projection's `geo_select` fills the column from
-  the merchant. A merchant with two locations in two districts, or a null `locations` row, is where the two
-  readings part; that needs a census before it needs a clause. Owner: the search lane, with the geo filters
-  (`open_weekday` / `open_time` / near-me) that are still live-only for the same join reason.
+- **An offering's `district` is a string compare on the fixture lane and a `locations` EXISTS on the live one -
+  closed by D656 (§653).** Measured on the published plane, the two lanes did not disagree by a row or two:
+  a district filter answered 0 merchants and 0 offerings on the fixture lane and 194 merchants / 4,707
+  offerings on the live one, because the projection's `district` is `NULL` without a lat/lng and the offering
+  SELECT carried no district clause at all. Both projections now publish `districts` -
+  `array_agg(DISTINCT lower(coalesce(locations.district,'')))`, computed only when a district is asked, the
+  `category_slugs` economy (`sql.py:168-180`) - the offering SELECT gained the merchant's own EXISTS
+  (`:490-495`), and the mirror reads set membership with the single string as fallback for the demo rows.
+  After: 194 / 137 / 1,941 / 1,357, both lanes equal (`tmp/d656_district2.py`). A two-branch merchant now
+  answers both of its districts on both lanes, which the string comparison could not express. Still open, and
+  filed rather than guessed: the near-me lane, `district_layout` and `subdistrict` are untouched, and the
+  comparison is exact lowercase equality (`Shatin` is not `Sha Tin`) - that is the vocabulary lane's question.
+  Owner: the search lane, with the geo filters (`open_weekday` / `open_time` / near-me) that are still
+  live-only because they need the same kind of join.
