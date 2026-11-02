@@ -1011,6 +1011,17 @@ def _hyphenate_district_aliases() -> None:
             slug = canonical_tag(form)
             if slug and slug not in aliases:
                 aliases.append(slug)
+            # D664: and the RUN-TOGETHER spelling. `canonical_tag` folds a space to a hyphen and
+            # never removes it, so "tai wai" published `tai wai` and `tai-wai` and "taiwai" - what
+            # a person types on a phone - resolved to no district at all: 3 of the 24 districts
+            # carried that spelling BY HAND (shatin, mongkok, wanchai) and the other 21 answered
+            # nothing, which since D658 means the whole plane (the text is a score, so a query no
+            # row mentions answers everything). Latin only - a CJK alias has no separators - and
+            # the shortest are skipped because `cwb`/`tst`/`tko`/`ssp` are already one word.
+            compact = slug.replace("-", "").replace(" ", "")
+            if (compact.isascii() and len(compact) >= 5 and compact not in aliases
+                    and compact != slug):
+                aliases.append(compact)
         folded[name] = {**spec, "aliases": aliases}
     setattr(module, "DISTRICTS", folded)
 

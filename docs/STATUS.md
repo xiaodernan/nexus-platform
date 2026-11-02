@@ -30923,3 +30923,63 @@ measured here.
   branch), `:922-927` (the district placed at its own coordinates), `:393-413`
   (`_static_nearest_metres`), this unit's gate, and `tmp/d663_probe3.py`, `tmp/d663_probe4.py`,
   `tmp/d663_livecounts.py`, `tmp/d663_demo.py`, `tmp/d663_falsify.txt` (the measurements).
+
+## 661. D664 · every district answered "tai wai" and "tai-wai" and none answered "taiwai" (`apps/ai/nexus_ai/nlu/lexicon.py`)
+
+**One separator rule, and it never removed the separator.** `_hyphenate_district_aliases`
+(`lexicon.py:984-1027`) folds every district alias through `categories.canonical_tag` - the product's
+one separator rule - so "Tai Wai" is reachable as `tai wai` and `tai-wai`. The rule rewrites the space
+to a hyphen; it never makes the two words ONE, so the spelling a person types on a phone resolved to
+no district at all. Three of the 24 districts carried the run-together form BY HAND (`shatin`,
+`mongkok`, `wanchai`) and the other 21 did not. Measured on the published plane
+(`tmp/d664_counts.py`), both lanes:
+
+    query            district filter   match text     pool (before)   pool (now)
+    tai wai          Tai Wai           ""             137             137
+    tai-wai          Tai Wai           ""             137             137
+    taiwai           none              "taiwai"       470 (!)         137
+    maonshan         none              "maonshan"     470 (!)         50
+    kowloonbay       none              "kowloonbay"   470 (!)         14
+    causewaybay      none              "causewaybay"  470 (!)         15
+
+470 is the WHOLE published plane. Since D658 the query text is a score and not a WHERE, so a query no
+row mentions answers everything, ranked by nothing: the user who typed the district as one word was
+handed the entire catalogue where the spaced spelling answered the district's own 137 merchants.
+
+**The repair is a derivation, not 21 table rows.** The fold now also publishes the run-together
+spelling - the folded slug with its separators removed, Latin only and at least five characters, since
+`cwb`/`tst`/`tko`/`ssp` are already one word (`lexicon.py:1014-1024`). The table still states each
+NAME once; the spellings follow from the one rule, and the three hand-written compact aliases stay
+because they are what the table already shipped (the gate checks them too).
+
+**The gate** is `tests/test_every_district_answers_its_own_run_together_spelling.py`, 42 legs: every
+multi-word Latin alias in the table must resolve to its own district when run together (a leg per
+alias), the alias must be published on the row it belongs to (a leg per alias), the plan must FILTER
+`taiwai` as Tai Wai with nothing left in the match text, and one live leg pins the three spellings of
+Tai Wai to one pool, 137 on both lanes, strictly smaller than the plane. Falsified against HEAD:
+**36 red / 6 green** (`tmp/d664_falsify.txt`); the greens are the three hand-written compact aliases
+(two legs each).
+
+**Adjacent**, run and green, never full: this gate, `test_lexicon`, `test_lexicon_readers_are_words`,
+the district-vocabulary gate, D637's strip gate, D519's corpus-spelling gate, D656's district gate,
+D663's district-only-row gate, `test_search_pipeline`, `test_search_plan`, `test_demo_data` and
+`test_framing_parity` - **607 passed, one red found and re-aimed** below.
+
+**One gate still encoded a pre-D657 rule and was re-aimed here, because this unit's adjacent run found
+it.** `test_the_district_that_named_the_filter_is_not_a_search_term.py`'s last leg used 「附近嘅餐廳」
+to mean "no district was named, so the word stays"; D657 made 附近 a QUESTION FRAME that is stripped
+for its own reason, so the leg had been red since D657. It now uses 「新開嘅餐廳」, which keeps the
+original claim (the category word leaves, a content word no filter answers survives) with no district
+in the sentence.
+
+**Not claimed.** (a) The run-together spelling is derived from the LATIN alias only; a CJK name has no
+separators, and a romanisation the table does not list (e.g. `tsimshatsui` now, `yaumatei` never) is
+still the vocabulary lane's row to add. (b) `canonical_tag` remains the one separator rule; this unit
+adds a spelling, not a second rule. (c) The district STRING and the district RADIUS are still two
+readers of one fact (D656/D663) - the run-together spelling only makes the string reader reach the
+rows the radius already placed.
+
+- readers: `nlu/lexicon.py:984-1027` (`_hyphenate_district_aliases`, this unit's block at
+  `:1014-1024`), `:585-595` (`match_district`, the one matcher), `:19-49` (the table), the re-aimed leg
+  in `test_the_district_that_named_the_filter_is_not_a_search_term.py`, this unit's gate, and
+  `tmp/d664_counts.py`, `tmp/d664_probe.py`, `tmp/d664_falsify.txt` (the measurements).

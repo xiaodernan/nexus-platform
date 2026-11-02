@@ -3247,6 +3247,17 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   HEAD (the green is D660's radius leg). Owner: the near-me lane and the district lane, which still
   place points the fixture lane cannot measure.
 
+- **Every district answered "tai wai" and "tai-wai" and none answered "taiwai" - closed by D664
+  (§661).** `_hyphenate_district_aliases` folds each alias through `canonical_tag`, which turns a
+  space into a hyphen and never removes it, so the run-together spelling resolved to no district: 3 of
+  24 districts carried it by hand (shatin/mongkok/wanchai) and 21 did not. Since D658 the text is a
+  SCORE, so "taiwai" answered the WHOLE plane - 470 rows - where "tai wai" answered Tai Wai's 137;
+  "maonshan" 470 vs 50, "kowloonbay" 470 vs 14 (`tmp/d664_counts.py`). The fold now publishes the
+  run-together form (folded slug minus separators, Latin and >= 5 chars), so the table states each name
+  once. Gate `test_every_district_answers_its_own_run_together_spelling.py`, 42 legs, 36 red on HEAD.
+  Also re-aimed a leg red since D657 (「附近嘅餐廳」 -> 「新開嘅餐廳」, the same claim). Owner: the
+  vocabulary lane for romanisations the table does not list.
+
 - **The locative frame was searched as content - closed by D657 (§654).** `_QUESTION_FRAME` knew 有冇, 邊度,
   哪裡 and 推介 and not 附近, so 「附近嘅咖啡店」「附近的咖啡店」「附近有咩餐廳」 carried `附近` into the match text
   and 「邊度有咖啡店」 carried the orphaned `有`, 「哪里有咖啡店」 the whole `哪里有`, 「近我嘅咖啡店」 the `近我`.

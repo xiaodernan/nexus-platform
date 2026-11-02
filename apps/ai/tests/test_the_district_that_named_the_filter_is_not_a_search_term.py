@@ -62,7 +62,10 @@ def test_a_district_the_plan_is_not_about_keeps_its_word(text):
     ("Mong Kok 嘅餐廳", "", "the alias leaves too"),
     ("旺角新開嘅餐廳", "新開", "a content word survives"),
     ("旺角嘅拉麵", "", "D638: the leaf word leaves with its own filter too (§635)"),
-    ("附近嘅餐廳", "附近", "no district was named, so no district filter answers the word"),
+    # D664: this leg used 「附近嘅餐廳」, whose 附近 D657 made a QUESTION FRAME (it is stripped for
+    # the locative reason, not by a district filter). The leg's claim - a word no filter answers
+    # stays in the text - keeps its own spelling here, with no district named.
+    ("新開嘅餐廳", "新開", "no district was named, so the strip answers nothing but the category"),
 ])
 def test_the_plan_strips_only_the_word_its_filter_answers(text, left, why):
     plan = plan_from_intent(validate_intent(extract_intent_dict(text)), query=text, limit=TOP_K)
