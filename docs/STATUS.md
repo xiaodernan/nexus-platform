@@ -29169,6 +29169,66 @@ suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
 
 - readers: `nlu/lexicon.py:783-810` (`leaf_surfaces`), `:743-780` (`match_leaf`, the head rule that
   chooses the leaf); `search/service.py:497-517` (`_apply_category_leaf`), `:681-694` (the recompute).
+## 642. D645 · a Latin cap beside a party stayed in the match text (`apps/ai/nexus_ai/nlu/understand.py`)
+
+**How the unit arrived.** §640 (D643) taught `PARTY_SPAN_RE` to remove a Latin RANGE from its start and
+closed with the single party still unclean; §635 (D636) had refused a bare Latin cue as residue because
+`up to 30 mins` must not lose `up to`. Both statements describe the same rule, and this is its shape: a
+cue belongs to the span only when a PARTY follows it.
+
+**Measured before** (`tmp/d645_before.txt`):
+
+    at most 12 people       party 12   match text "at most"
+    no more than 12 people  party 12   match text "no more than"
+    up to 12 people         party 12   match text "up to"
+    less than 12 people     party 12   match text "less than"
+    not more than 8 people  party  8   match text "not more than"
+    max 10 people           party 10   match text "max"
+    at least 4 people       party  4   match text ""
+    最少4人                 party  4   match text ""
+
+The size was answered and the cap was not, so the keyword lane searched a phrase the utterance had already
+spent (`at most`, `up to`, `max`) beside a party the same utterance had already named.
+
+**The repair.** `_PARTY_CUE` names the cap or floor (at most / no more than / not more than / up to / less
+than / at least / more than / minimum / min / max / 最少 / 至少 / 起碼 / 起码) and is OPTIONAL; it comes
+AFTER `_PARTY_LEAD` - the noun a party belongs to, `table for`, `party of` - which is what makes
+`table for up to 6 people` ONE span instead of `up to` plus a party. `_PARTY_TRAIL` names the cap written
+after the party (`4 people at most`, `4 people or fewer`). A cue with no party behind it is untouched:
+`up to 30 mins` still reaches the lane as all four words, party None.
+
+**Two traps the measurement set.** (a) The first cut put the cue in front of an unanchored `\d{1,2}`, so
+the range alternative matched `00-20` INSIDE a band and 「唔超過1000-2000嘅餐廳」 lost its band: nine of the
+277 adjacent legs went red until each new digit start carried `(?<!\d)`. (b) D643's `for N` alternative,
+the party with NO unit (`table for 4`, `for 6`), had been folded into a form that requires a unit, and
+`table for 4`/`seats for 4` then kept their words; it is back as its own alternative, still guarded by
+`_NO_DURATION` so `for 2 hours` keeps its own two words and its (separately filed) party reading.
+
+**Measured after** (`tmp/d645_after.txt`, `tmp/d645_edges.txt`, `tmp/d645_pairs.txt`): every cue spelling
+above reaches the lane as nothing; `at most 1000`, `up to 1000`, `no more than 1000蚊`, `最多1000蚊` still
+read a ceiling of 1000 with an empty match text; content survives (`quiet at most 12 people` → `quiet`,
+`romantic table for up to 6 people` → `romantic`); and each capped party answers the SAME ten ids with the
+same relevance as its bare size - twelve people, no-more-than, up-to, less-than, not-more-than, max,
+at-least, minimum, 最多12人, 最少4人 and `table for 6 people` vs `table for up to 6 people`.
+
+**Not claimed.** `minimum of 4 people` still leaves `minimum of` (the `of` between cue and number);
+`at most 4 people in 旺角` leaves the filler `in` and `at most 12 people please` the filler `please` - both
+the filed filler item. `at most 4` with no party and no money word stays text on both sides, because the
+budget lane claims no one-digit cap either way. `at most 1000-2000` still reads a ceiling of 1000 and
+leaves `at most`, and `不多過1000-2000嘅餐廳` reads no band at all - identical at HEAD, so both are the
+budget lane's shapes, not this strip's. `6 people` and `table for up to 6 people` still answer different
+pages, and so do `6 people` and `table for 6 people` at HEAD: the noun changes the page, which is a
+separate question.
+
+**The gate** is `tests/test_a_latin_cap_beside_a_party_is_part_of_it.py`: 68 legs - 23 cue readings, the
+same 23 strips, five content survivals, two `up to 30 mins` controls, four money-cap controls, eleven live
+pairs. Falsified by restoring HEAD's `understand.py`: **35 red, 33 green**. With the party, budget, plan,
+lexicon, eval, category, shop and range suites: **277 passed**; `test_search_plan` + `test_lexicon` +
+`test_eval_suites` alone: **120 passed**.
+
+- readers: `nlu/understand.py:179-186` (`_PARTY_CUE`, `_PARTY_LEAD`, `_PARTY_TRAIL`), `:188-219`
+  (`PARTY_SPAN_RE`), `:762` (`_MATCH_CORE_RES`).
+
 ## 641. D644 · an English plural category word reached the lane as its own plural marker (`apps/ai/nexus_ai/nlu/understand.py`)
 
 **How the unit arrived.** §632 (D635) took the word that named the category out of the match text, and

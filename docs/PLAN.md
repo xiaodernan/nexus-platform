@@ -2152,10 +2152,13 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   filtered the page by HK$40 and 「唔多過12人」 by HK$12 (`tmp/d636_party.txt`). Measured after: every
   ceiling spelling answers 最多1000蚊's page, every floor 超過1000蚊's, and 至多100 still answers a
   different page from 至多1000.
-- **A Latin party cap leaves its cue in the match text.** 「at most 12 people」 reads `party_size=12`
-  and reaches the keyword lane as `at most` - `_MATCH_CORE_RESIDUE` only strips a CJK cue stranded by a
-  strip, because a Latin cue can be the start of an unread phrase (`up to 30 mins` must not lose
-  `up to`). The CJK 至多12人 is stripped. Owner: the AI lane.
+- **A Latin party cap left its cue in the match text - closed by D645** (§642). 「at most 12 people」 read
+  `party_size=12` and reached the keyword lane as `at most`; `_MATCH_CORE_RESIDUE` only strips a CJK cue
+  stranded by a strip, because a Latin cue can be the start of an unread phrase (`up to 30 mins` must not
+  lose `up to`). The cap is now part of the party span only when a party follows it, after an optional
+  noun (`table for up to 6 people` is one span), and every capped party answers its bare size page. Still
+  open on the same strip: 「minimum of 4 people」 leaves `minimum of`, and 「at most 4」 with no party and
+  no money word stays text. Owner: the AI lane.
 - **An English category word left its plural - closed by D644** (§641). 「at most 1000 restaurants」 reached
   the lane as `s`: D635's surface strip removes `restaurant` out of `restaurants` and the marker stayed, so
   every English page tied at relevance 0.5 (`tmp/d636_plan.py`). The marker is now absorbed after a LATIN

@@ -169,34 +169,55 @@ TIME_SPAN_RE = re.compile(
 _NO_DURATION = (r"(?!\s*(?:hours?|hrs?|minutes?|mins?|days?|weeks?|months?|years?|"
                 r"小時|小时|分鐘|分钟|天|日|星期|個月|个月|年))")
 
+#: D645: the LATIN cap or floor that sits beside a party - 「at most 12 people」 is one span, not a
+#: number `PARTY_RE` reads plus a cue nobody answered. Measured 2026-11-02 (`tmp/d645_before.txt`):
+#: at most / no more than / up to / less than / not more than / max each stayed in the match text while
+#: the party lane answered the size behind them, and 「at least 4 people」 / 「最少4人」 the same on the
+#: floor side. The cue is part of the span only when a PARTY follows it: 「up to 30 mins」 is the same
+#: words with no party behind them and keeps all of itself, which is D636's reason for refusing a bare
+#: Latin cue as residue.
+_PARTY_CUE = (r"(?:(?:at\s+most|no\s+more\s+than|not\s+more\s+than|up\s+to|less\s+than|"
+              r"at\s+least|more\s+than|minimum|min\.?|max(?:imum)?\.?|最少|至少|起碼|起码)\.?\s*)?")
+#: What may stand between the sentence and the number - the noun a party belongs to (「table for」,
+#: 「party of」) - and it is OPTIONAL, so a bare 「12 people」 matches exactly as it did before. The cue
+#: comes AFTER it, which is what makes 「table for up to 6 people」 one span.
+_PARTY_LEAD = r"(?:(?:party|group)\s*(?:of)?|tables?\s*for|seats?\s*for|for\b)?\s*"
+#: And a cap written after the party - 「4 people at most」, 「4 people or fewer」.
+_PARTY_TRAIL = r"(?:\s*(?:at\s+most|or\s+fewer|or\s+less))?"
+
 PARTY_SPAN_RE = re.compile(
     # D633: a RANGE is one party too - 「2至4人」 is read as 4 by `PARTY_RE` and the strip removed
     # only the tail, leaving 「2至」 in the match text; 「10至20人」 was worse, because the BUDGET
-    # range rule took 「10至20」 first and left 「人」. The range alternative comes FIRST, so the
-    # whole span goes before the money rule can claim half of it.
-    r"(?:\u6211\u54cb|\u6211\u5011|\u6211\u4eec)?\s*\d{1,2}\s*"
-    r"(?:\u81f3|\u5230|[-–~～]|to)\s*\d{1,2}\s*"
-    r"(?:\u500b\s*\u4eba|\u4e2a\s*\u4eba|\u4f4d\u4eba|\u500b|\u4e2a|\u4f4d|\u4eba)|"
-    r"(?:\u6211\u54cb|\u6211\u5011|\u6211\u4eec)?\s*\d{1,2}\s*"
-    r"(?:\u500b\s*\u4eba|\u4e2a\s*\u4eba|\u4f4d\u4eba|\u500b|\u4e2a|\u4f4d|\u4eba)(?:\u5605|\u7684)?"
-    # D643: the LATIN range. 「2-4 people」 was read as 4 by the tail alternative and stripped
-    # only 「4 people」, leaving 「2-」 in the match text; 「party of 2 to 4」 READ THE LOWER END
-    # (2) because `PARTY_RE`'s cue alternative stopped at the first number, and its strip left
-    # 「to 4」. Measured 2026-11-02 (`tmp/d641_before.txt`). The cue form comes before the bare
-    # one so 「table for 4 to 6 people」 leaves nothing at all, and the single 「for 4」 joined it
-    # in the same measurement (「table for 4」 answered party 4 and kept the whole sentence).
-    r"|(?:(?:party|group)\s*(?:of)?|table\s+for|for\b)\s*\d{1,2}\s*(?:[-–~～]|to|and\b)\s*\d{1,2}"
+    # range rule took 「10至20」 first and left 「人」. The range alternative comes FIRST.
+    r"(?:我哋|我們|我们)?\s*\d{1,2}\s*"
+    r"(?:至|到|[-–~～]|to)\s*\d{1,2}\s*"
+    r"(?:個\s*人|个\s*人|位人|個|个|位|人)|"
+    r"(?:我哋|我們|我们)?\s*\d{1,2}\s*"
+    r"(?:個\s*人|个\s*人|位人|個|个|位|人)(?:嘅|的)?|" +
+    # D643: the LATIN range. 「2-4 people」 was read as 4 by the tail alternative and stripped only
+    # 「4 people」, leaving 「2-」; 「party of 2 to 4」 READ THE LOWER END (2) because `PARTY_RE`'s cue
+    # alternative stopped at the first number, and its strip left 「to 4」.
+    _PARTY_LEAD + _PARTY_CUE + r"(?<!\d)\d{1,2}\s*(?:[-–~～]|to|and\b)\s*\d{1,2}"
     r"(?:\s*(?:people|pax|persons?|guests|diners|人))?"
     + _NO_DURATION +
     r"|between\s*\d{1,2}\s*and\s*\d{1,2}"
     r"(?:\s*(?:people|pax|persons?|guests|diners|人))?|"
-    r"\d{1,2}\s*(?:[-–~～]|to\b)\s*\d{1,2}\s*(?:people|pax|persons?|guests|diners)\b|"
-    r"(?:table\s+|seats?\s+)?for\s*\d{1,2}(?:\s*(?:people|pax|persons?|guests|diners))?\b"
+    r"\d{1,2}\s*(?:[-–~～]|to\b)\s*\d{1,2}\s*(?:people|pax|persons?|guests|diners)\b|" +
+    # D643/D645: and the single party, cue and all.
+    _PARTY_LEAD + _PARTY_CUE + r"(?<!\d)\d{1,2}\s*(?:people|pax|persons?|guests|diners|人|位)"
+    + _PARTY_TRAIL
+    + _NO_DURATION +
+    # D643 kept as its own alternative: a party named by `for` with NO unit - 「table for 4」,
+    # 「for 6」. The alternatives above all need a unit, and a `for N` is a table unless a
+    # duration follows (`_NO_DURATION`).
+    r"|(?:tables?\s+|seats?\s+)?for\s*(?<!\d)\d{1,2}(?:\s*(?:people|pax|persons?|guests|diners))?\b"
     + _NO_DURATION +
     r"|party(?:\s*of)?\s*\d{1,2}\b"
-    r"|\d{1,2}\s*(?:people|pax|persons?|guests|diners)\b",
+    r"|\d{1,2}\s*(?:people|pax|persons?|guests|diners)\b"
+    + _PARTY_TRAIL,
     re.IGNORECASE,
 )
+
 PER_PERSON_RE = re.compile(r"(?:每人|人均|每位|per ?person|p/?p|per head|人頭)", re.IGNORECASE)
 PER_ITEM_RE = re.compile(r"(?:每件|每款|each|per item|一双|一对|一對)", re.IGNORECASE)
 
