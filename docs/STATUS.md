@@ -30371,3 +30371,72 @@ freshness is §5's notice, not the filter's business.
   clauses it mirrors), `:583` (the offering projection whose `avg_price_hkd` is the merchant's),
   `contract.py:260` (`Filters.max_price` / `min_price`), this unit's gate, and
   `tmp/d654_minprice2.py`, `tmp/d654_falsify.txt` (the measurements).
+## 652. D655 · five row filters and one offering-only filter were read by the live WHERE and by no second reader (`apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/sql.py`)
+
+**The fixture lane answered the whole corpus for every filter the caller named.** `_filter_static` read
+category, district, price, avoid and party - each of those closed by its own unit (D549 for `avoid`, D607
+for the party, D654 for the price floor). §7.1 makes every filter in the request hard, and the live WHERE
+reads six more row predicates that the mirror had never heard of: `min_rating` (`sql.py:219`), the tag
+overlap (`:221`, `&&`), `exclude` (`:223`), `merchant_id` (`:225`), the JSONB containment (`:227`), and -
+on the OFFERING SELECT only - `kind` (`:448`). Measured on the published plane with the same plan pointed
+at both lanes (`tmp/d655_census.py`):
+
+    filter                              fixture (before)   live    fixture (after)
+    min_rating 4.6                      470 rows            26      26
+    tags ["thai"]                       470 rows             8       8
+    exclude [two ids]                   470 rows           468     468
+    attributes {"quiet_ambience": true} 470 rows           188     188
+
+470 is the whole published corpus. The degraded path did not answer a wrong question about a subset: it
+answered every row in the plane, which is the shape §635 and D607 each closed one predicate at a time and
+the reason the fixture lane exists at all - a fork between the two lanes is a test that passes for two
+different reasons.
+
+**One of those five had a second hole, and it was in the live lane.** `tags` is the merchant's alone -
+`offerings` publishes no tag column and the offering SELECT already selects `m.tags` into the row
+(`sql.py:583`) so the ranker can see them - but its WHERE never filtered on it. Measured
+(`tmp/d655_tags_offering.py`), `tags: ["thai"]` on the offering plane:
+
+    offering rows under published merchants     4,707
+    answered by the live lane (before)          4,707   (0 of the top ten under a thai merchant)
+    answered by the live lane (after)             103   (10 of 10 under a thai merchant)
+
+So the mirror could not be honest by copying the clause: a fixture that drops offerings for a tag the live
+plane ignores pins the defect instead of reporting it, and the parity leg would then demand the wrong
+answer. The clause is added to the offering SELECT (`sql.py:466-472`, the merchant's own spelling
+`m.tags && ...::text[]`), and the mirror reads the same column.
+
+**`kind` is the mirror image: a live clue the mirror never read.** `o.kind` is on the offering SELECT
+(`sql.py:448`) and on no merchant clause, so a merchant row survives a kind (470 of 470, measured). The
+fixture answered all 4,707 offerings for each kind while live answered 3,572 / 822 / 313
+(`tmp/d655_kind.py`). The mirror keys on the row STATING a kind, which is the same discriminator the
+projection publishes: the merchant SELECT has no `kind` column (`sql.py:392-394`), so `"kind" in r` is
+"this is an offering row" without a second flag to keep in sync.
+
+**The gate** is `tests/test_the_fixture_lane_reads_every_row_filter.py`, 21 legs: ten fixture shapes
+(floor, a NULL rating under a floor of 0, tag overlap, tag miss, two tags, exclude, merchant_id, attributes
+true / false / a pair no row states), four offering fixture legs (merchant_id, exclude, the merchant's tag,
+`kind` on both a service and a product row plus a merchant row that must survive it), four live population
+legs (fixture total == live total, and live < 470 so the filter has something to remove), one live
+offering-tag leg (0 < live < 4,707 and fixture == live), and three live kind legs (fixture == live per
+kind). Falsified against the parent's real bytes: **21 red / 0 green** (`tmp/d655_falsify_all.txt`). The
+SQL half alone is **1 red / 16 green** (`tmp/d655_falsify_sql.txt`) - the offering-tag parity leg is the
+only one that can see a clause the sibling SELECT already had.
+
+**Adjacent**, run and green, never full: the price-floor and category-parity suites from the two units
+before this one, `test_demo_data.py`, the offering party and bucket suites, the tags vocabulary suite and
+the offering's Chinese-word suite - 265 passed, then 110, then 56 on the final shape.
+
+**Not claimed.** (a) An offering's `district` is still unread by the offering SELECT, and `_filter_static`
+compares the row's own `district` string where the merchant lane uses a `locations` EXISTS (`sql.py:228-231`):
+the two lanes agree today only because the offering projection's `geo_select` fills that column from the
+merchant. That is a queued unit, not a guess. (b) `open_weekday` / `open_time` / geo filters are still live-only
+- they need a join, and D549's pattern says a mirror of a join is its own unit. (c) A row with a stale
+rating is filtered on the stale number; freshness is §5's notice, not the filter's business.
+
+- readers: `search/service.py:289-320` (the block, five clauses plus `kind`), `search/sql.py:214-227` (the
+  merchant clauses it mirrors), `:448` (`o.kind`), `:466-472` (the offering tag clause this unit added),
+  `:583` (`m.tags` selected into the offering row), this unit's gate, and `tmp/d655_census.py`,
+  `tmp/d655_tags_offering.py`, `tmp/d655_kind.py`, `tmp/d655_falsify_all.txt`, `tmp/d655_falsify_sql.txt`
+  (the measurements).
+

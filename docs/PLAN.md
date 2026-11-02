@@ -3151,3 +3151,27 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   the cuisine preference gets its own weight. Neither is free: a filter changes a soft preference into a
   hard one (8 thai rows would answer a 10-row page with 8), so the change needs its own census of what
   each cuisine would return. Owner: the search/ranking lane.
+- **The fixture lane read none of the request's six remaining row filters - closed by D655 (§652).**
+  `_filter_static` mirrored category, district, price, avoid and party and stopped there, while §7.1's hard
+  filters also reach `min_rating` (`sql.py:219`), the tag overlap (`:221`), `exclude` (`:223`), `merchant_id`
+  (`:225`), the JSONB containment (`:227`) and - offering-only - `kind` (`:448`). Same plan, both lanes,
+  published plane (`tmp/d655_census.py`): min_rating 4.6 answered 470 rows in the fixture lane against 26
+  live, a thai tag 470 against 8, two excluded ids 470 against 468, `quiet_ambience: true` 470 against 188 -
+  470 being the whole corpus, so the degraded path was not ranking a subset wrongly, it was answering a
+  request it never applied. Reading the SAME filter on the second live SELECT found one defect on the stronger
+  lane: `tags: [thai]` answered 4,707 offerings with none of them under a thai merchant, because that WHERE
+  selected `m.tags` into the row (`:583`) and never filtered on it - 103 after the clause, 10 of 10 tagged.
+  `kind` was the mirror image: read by the offering SELECT, and by the fixture lane never - 4,707 / 4,707 /
+  4,707 against 3,572 / 822 / 313. The mirror keeps each clause's own edge: a NULL rating fails a floor
+  (SQL's `>=` on NULL), a tag passes on any overlap (`&&`), attributes are containment of every named pair.
+  Gate `tests/test_the_fixture_lane_reads_every_row_filter.py`, 21 legs, 21 red on the parent
+  (`tmp/d655_falsify_all.txt`), the SQL half alone 1 red / 16 green (`tmp/d655_falsify_sql.txt`). Owner: any
+  lane that adds a clause to one SELECT.
+
+- **An offering's `district` is a string compare on the fixture lane and a `locations` EXISTS on the live one.**
+  `search/service.py:270` compares the row's own `district` where the merchant lane asks whether the merchant
+  HAS a location in the district (`search/sql.py:228-231`), and the offering SELECT carries no district clause
+  at all - the two lanes agree today only because the offering projection's `geo_select` fills the column from
+  the merchant. A merchant with two locations in two districts, or a null `locations` row, is where the two
+  readings part; that needs a census before it needs a clause. Owner: the search lane, with the geo filters
+  (`open_weekday` / `open_time` / near-me) that are still live-only for the same join reason.

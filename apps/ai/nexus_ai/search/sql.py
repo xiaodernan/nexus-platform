@@ -463,6 +463,13 @@ def build_offering_query(
         where.append(f"o.id::text <> ALL({p.add([str(x) for x in filters['exclude']])}::text[])")
     if filters.get("min_rating") is not None:
         where.append(f"o.rating_agg >= {p.add(float(filters['min_rating']))}")
+    # D655: `tags` is the one row filter this SELECT never read. It selects `m.tags` into the row
+    # (`:583`) and the merchant SELECT filters on the same column (`:221`), but this WHERE did not,
+    # so a `tags: [thai]` request was answered on this plane by 4,707 offerings - none of them under a
+    # merchant carrying the tag (`tmp/d655_tags_offering.py`). The tag belongs to the merchant, which
+    # the join already has, so the clause is the merchant's own spelling.
+    if filters.get("tags"):
+        where.append(f"m.tags && {p.add([str(t) for t in filters['tags']])}::text[]")
     for key, value in (filters.get("attributes") or {}).items():
         where.append(f"o.attributes @> {p.add(json.dumps({str(key): value}, ensure_ascii=False))}::jsonb")
     # D607: an offering states the party it physically fits (`docs/DATABASE.md:72` calls

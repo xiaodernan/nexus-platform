@@ -286,6 +286,40 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         # it. This lane read category, district and max_price and nothing else, so the
         # fixture backend answered a different question about the same request than the
         # live one - the D488 shape, one lane over.
+        # D655: the rest of the caller's HARD filters (§7.1), each read by the live WHERE and by
+        # nothing here: `min_rating` (`sql.py:219`), the tag overlap (`:221`, `&&`), `exclude`
+        # (`:223`), `merchant_id` (`:225`) and the JSONB containment (`:227`). Measured on the
+        # published plane, the fixture lane answered all 470 rows for every one of them while the
+        # live lane answered 26 / 8 / 468 / 188 (min_rating 4.6, tag thai, two excluded ids, and
+        # `quiet_ambience: true`) - `tmp/d655_census.py`.
+        rating = r.get("rating_agg")
+        if filters.get("min_rating") is not None and (
+                rating is None or float(rating) < float(filters["min_rating"])):
+            continue
+        if filters.get("tags"):
+            mine = {str(t) for t in (r.get("tags") or [])}
+            if not mine & {str(t) for t in filters["tags"]}:
+                continue
+        own_id = str(r.get("subject_id") or r.get("id") or "")
+        if filters.get("exclude") and own_id in {str(x) for x in filters["exclude"]}:
+            continue
+        if filters.get("merchant_id"):
+            own_merchant = str(r.get("merchant_id") or own_id)
+            if own_merchant != str(filters["merchant_id"]):
+                continue
+        attrs = r.get("attributes") or {}
+        if any(not isinstance(attrs, dict) or attrs.get(k) != v
+               for k, v in (filters.get("attributes") or {}).items()):
+            continue
+        # D655: `kind` is the OFFERING plane's own hard filter - `o.kind` on that SELECT (`sql.py:448`)
+        # and nothing on the merchant SELECT, so a merchant row survives it (470 of 470, measured). The
+        # merchant projection publishes no `kind` column (`sql.py:392-394`), which is the discriminator
+        # here: a row that states a kind is an offering row.
+        # Measured on the published plane, the fixture lane answered all 4,707 offerings for each of
+        # the three kinds while the live lane answered 3,572 / 822 / 313 (`tmp/d655_kind.py`).
+        if str(filters.get("kind") or "") in ("product", "service", "experience") \
+                and "kind" in r and str(r.get("kind") or "") != str(filters["kind"]):
+            continue
         if _static_avoids(r, filters.get("avoid"), offerings):
             continue
         if party_size:
