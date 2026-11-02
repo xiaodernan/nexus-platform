@@ -3234,6 +3234,19 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   clock still stay in `match_text` (the CJK clock-span strip), and a bare 九點半 is still 09:30 by the
   parser's convention. Owner: the time lane.
 
+- **The district's own coordinates deleted every row that states a district and no point - closed by
+  D663 (§660).** D637 puts a district filter at the district's coordinates (`service.py:922-927`) so
+  the live lane can order by distance, and D660 made the fixture lane cut by the row's own
+  `location_points` - so a row with a district and NO lat/lng satisfied the first and was deleted by
+  the second. Measured (`tmp/d663_livecounts.py`): district Sha Tin answered 0 on the fixture lane
+  against 194 live, Wan Chai 0 against 13, and the offline demo catalogue (6 rows, all with a district,
+  none with coordinates) answered zero items for "sha tin" - `test_stream` was red on `master` since
+  D660. The rule both readers share now: a geo request cuts the rows that state a location, and a row
+  that states none is dropped only when it states no district either (its `meters` stays unknown).
+  Gate `test_a_row_that_states_only_a_district_still_answers_a_district_request.py`, 7 legs, 6 red on
+  HEAD (the green is D660's radius leg). Owner: the near-me lane and the district lane, which still
+  place points the fixture lane cannot measure.
+
 - **The locative frame was searched as content - closed by D657 (§654).** `_QUESTION_FRAME` knew 有冇, 邊度,
   哪裡 and 推介 and not 附近, so 「附近嘅咖啡店」「附近的咖啡店」「附近有咩餐廳」 carried `附近` into the match text
   and 「邊度有咖啡店」 carried the orphaned `有`, 「哪里有咖啡店」 the whole `哪里有`, 「近我嘅咖啡店」 the `近我`.

@@ -30811,8 +30811,9 @@ at 23:30 and the sentence means the evening, but that is the bare-hour conventio
 files, not a rounding. (c) The three clock clauses' EDGES are untouched: `closes_at >= h`,
 `opens_at <= h` and the strict `opens_at <= at < closes_at` are D659's, and this unit only changes what
 value is bound. (d) `test_stream.py::test_results_payload_schema_and_cards` ("sha tin" answers no
-items) is red on a CLEAN HEAD worktree with this unit stashed (`D:\获客平台_headcheck`, now removed),
-so it is not this unit's - filed where it belongs.
+items) was red on a CLEAN HEAD worktree at `588266d` with this unit stashed
+(`D:\获客平台_headcheck`, removed): it belongs to D660's radius cut, not to this unit, and §660
+names and closes it.
 
 - readers: `search/sql.py:182-204` (`_clock_filter`), `:301-314` and `:556-567` (the four clauses),
   `search/service.py:426-441` (`_static_hour_value`), `:476-487` (the two fixture comparisons),
@@ -30867,3 +30868,58 @@ the tail of 去到/睇到/食到 and would make every one of them a closing filt
 - readers: `nlu/timeparse.py:62-67` (the table and the nine spellings), `:372-374` (the one reader),
   `:413-431` (where the cue turns the clock into a quality), this unit's gate, and `tmp/d661_probe.py`,
   `tmp/d662_probe.py`, `tmp/d662_falsify.txt` (the measurements).
+
+## 660. D663 · the district's own coordinates deleted every row that states a district and no point (`apps/ai/nexus_ai/search/service.py`)
+
+**Two units, one row, and the row disappeared.** D637 places a district filter at the district's own
+coordinates so the live lane can order by distance (`service.py:922-927`, `DISTRICTS[...]["radius_m"]`),
+and D660 taught the fixture lane to apply the radius from each row's own `location_points`
+(`service.py:367-371`). A row that states a district but NO coordinates satisfies the first and is
+deleted by the second: the geo cut treated "no point" as "not here". Measured on the published plane,
+plan `plan_from_intent("Sha Tin")` (`tmp/d663_livecounts.py`, `tmp/d663_demo.py`):
+
+    plan                          fixture (before)   live   fixture (now)
+    merchants, district Sha Tin   0                  194    194
+    merchants, district Wan Chai  0                  13     13
+    demo catalogue, "sha tin"     0 items            -      2 items (both in Sha Tin)
+
+The third row is `tests/test_stream.py::test_results_payload_schema_and_cards`, red on `master` since
+D660 - the whole offline catalogue is this case: 6 rows, every one with a `district`, none with a
+lat/lng. The unit was found by re-running an adjacent suite, not by the unit that opened it; §658's
+adjacent note (d) says so and points here.
+
+**The rule the two readers now share.** A geo request cuts the rows that STATE a location (D660, with
+`haversine_m` and the radius), and a row that states none is dropped ONLY when it states no district
+either: a row that says "Sha Tin" has already answered the district clause above (`service.py:289-300`),
+which is the district the plan's point was derived from; its `meters` stays None because there is
+nothing to measure. A row that states neither a point nor a district cannot answer a geo request on
+either lane, and D660's radius cut for rows that do state points is untouched - the gate pins both sides
+(`service.py:367-385`).
+
+**The gate** is `tests/test_a_row_that_states_only_a_district_still_answers_a_district_request.py`,
+7 legs: the offline catalogue answers "sha tin" with exactly its two Sha Tin rows, a hand-built
+district-only row answers (with no distance printed), a row with neither a location nor a district is
+dropped, D660's radius still cuts the rows that state points (300 m kept, 6 km dropped, the distance
+printed), a far row that states its district keeps answering that district, and two live legs pin both
+lanes equal on Sha Tin (194) and Wan Chai (13). Falsified against HEAD: **6 red / 1 green**
+(`tmp/d663_falsify.txt`); the green is D660's radius leg, the half this unit must not weaken.
+
+**Adjacent**, run and green, never full: this gate, `test_stream` (the red on `master`), `test_demo_data`,
+`test_deps`, `test_search_pipeline`, `test_search_plan`, D655's five-filter gate, D659's hour gate,
+`test_every_card_surface_enforces_the_grounding`, `test_framing_parity`, D658's text gate and D659's
+bucket-offering leg - **153 passed**.
+
+**Not claimed.** (a) A row that states a district and no point is NOT distance-ordered when the request
+carries a radius: it answers, with `meters` unknown, because the fixture lane cannot measure what a row
+does not state; the live plane stores a point for every published merchant, so this shape is the
+fixture's own. (b) The district string set and the 2500 m disc agree 194/194 and 13/13 here; that
+agreement is D656's question and is not guaranteed by this unit - the district clause and the radius
+remain two readers. (c) The offering lane reaches the same branch through its merchant's points
+(`_filter_static` is one function for both), but the demo offering rows state no points either, so a
+district request on `kind=product` answers by the merchant's district on the fixture lane only; not
+measured here.
+
+- readers: `search/service.py:289-300` (the district clause), `:367-385` (the geo cut and this unit's
+  branch), `:922-927` (the district placed at its own coordinates), `:393-413`
+  (`_static_nearest_metres`), this unit's gate, and `tmp/d663_probe3.py`, `tmp/d663_probe4.py`,
+  `tmp/d663_livecounts.py`, `tmp/d663_demo.py`, `tmp/d663_falsify.txt` (the measurements).

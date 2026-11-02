@@ -364,11 +364,23 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         # the published plane (`tmp/d660_geo.py`): a 1,000 m request answered 470 of 470 rows here
         # against 0 live, and 5,000 m answered 470 against 95. `haversine_m` is the SAME function
         # `haversine_expr` mirrors in SQL, so the two lanes measure with one formula.
+        # D663: a row that states NO location is not deleted when it states the DISTRICT the
+        # request named. The plan places a district filter at the district's own coordinates
+        # (`DISTRICTS[...]`, `service.py:922-927`) so the live lane can order by distance, and the
+        # clause above has already answered the district the row claims - so a row without a point
+        # is in the pool by its own statement. Only a row that states NEITHER is dropped, which is
+        # what the live `loc.id IS NOT NULL` does to it. The offline demo catalogue is all of this
+        # case (6 rows, every one with a district and none with a lat/lng) and it answered zero
+        # items for "sha tin" until this branch existed (`tests/test_stream.py`).
         if geo:
             metres = _static_nearest_metres(r, geo)
-            if metres is None or (radius_m and metres > float(radius_m)):
+            if metres is None:
+                if not (filters.get("district") and (r.get("district") or r.get("districts"))):
+                    continue
+            elif radius_m and metres > float(radius_m):
                 continue
-            r["meters"] = metres
+            else:
+                r["meters"] = metres
         if _static_avoids(r, filters.get("avoid"), offerings):
             continue
         if party_size:
