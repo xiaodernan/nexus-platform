@@ -270,8 +270,17 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         if filters.get("district") and str(r.get("district") or "").lower() != \
                 str(filters["district"]).lower():
             continue
-        if filters.get("max_price") is not None and r.get("avg_price_hkd") is not None \
-                and float(r["avg_price_hkd"]) > float(filters["max_price"]):
+        # D654: the price the caller filters on is the row's OWN price, and the live clauses read
+        # two column pairs - `merchants.avg_price_hkd` with a NULL arm on both ends (sql.py:214-217), and
+        # an offering's `COALESCE(price_amount, price_max|price_min)` (sql.py:454-459). This lane read one
+        # column and one END, so a caller's floor was answered by 184 restaurant rows of which 181
+        # were below it (measured, `tmp/d654_minprice2.py`). One reader for both kinds, NULL still passing.
+        ceiling, floor = _static_price(r)
+        if filters.get("max_price") is not None and ceiling is not None \
+                and float(ceiling) > float(filters["max_price"]):
+            continue
+        if filters.get("min_price") is not None and floor is not None \
+                and float(floor) < float(filters["min_price"]):
             continue
         # D549: `avoid` is a HARD filter (7.1) and the live lane has always excluded on
         # it. This lane read category, district and max_price and nothing else, so the
@@ -292,6 +301,22 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         r.setdefault("subject_type", "merchant" if r.get("display_name") else "offering")
         out.append(r)
     return out
+
+
+def _static_price(r: dict[str, Any]) -> tuple[Any, Any]:
+    """(the amount a ceiling reads, the amount a floor reads) - the live SELECT's own pair (D654).
+
+    A merchant row states `avg_price_hkd`; an offering states `price_amount` with `price_max` /
+    `price_min` as its two bounds, and the live clauses COALESCE the one over the other. A row that
+    states no price answers None twice, and the live clause lets it through - an unstated price is
+    not a cheap one.
+    """
+    if (str(r.get("subject_type") or "") == "offering"
+            or r.get("price_amount") is not None or "price_min" in r or "price_max" in r):
+        amount = r.get("price_amount")
+        return (amount if amount is not None else r.get("price_max"),
+                amount if amount is not None else r.get("price_min"))
+    return r.get("avg_price_hkd"), r.get("avg_price_hkd")
 
 
 def _static_avoid_terms(avoid: Any) -> set[str]:

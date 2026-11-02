@@ -30196,3 +30196,64 @@ only; a REFUSAL (唔要泰式) keeps its word in the text, which is D584's lane.
   would have gone), `apps/ai/tests/test_cuisine_style_forms.py` (the vocabulary the trap starts
   from), this unit's gate, and `tmp/d652_census2.py`, `tmp/d652_counts_parent.txt`, `tmp/d652_after.txt`,
   `tmp/d653_falsify.txt` (the measurements).
+
+## 651. D654 · a caller's price floor was answered by rows below it on the fixture lane (`apps/ai/nexus_ai/search/service.py`)
+
+**§7.1 says the request's filters are hard, and the fixture lane read half of one.** `Filters.min_price`
+and `max_price` are the caller's own bounds. The live clauses read both ends - `merchants` as
+`avg_price_hkd IS NULL OR avg_price_hkd >= x` (`search/sql.py:216`) and an offering as
+`COALESCE(price_amount, price_min)` (`:457`) - while `_filter_static` read ONE column
+(`avg_price_hkd`) and only its CEILING. The degraded lane therefore answered a different question
+from the same plan. Measured on the published plane (`tmp/d654_minprice2.py`), `餐廳` with
+`min_price: 300`:
+
+    184 restaurant rows, 181 of them below the floor
+    live lane       3 answers, total 3,     none below the floor
+    fixture (before) 10 answers, 7 below,   total 184
+    fixture (after)  3 answers, none below, total 3
+
+The same read had a second hole on the other kind of row: an offering states `price_amount` with
+`price_max` / `price_min` as bounds, and a fixture offering row was filtered by its `avg_price_hkd`
+alias - which on the live offering SELECT (`sql.py:583`) is the MERCHANT's average, not the offering's
+price. A ceiling could exclude an offering by the price of the shop it sits in; measured with four
+fixture rows: 「100 in a 900 shop」 was kept by a 300 floor and 「400-800 in a 100 shop」 was dropped.
+
+**The repair** is `_static_price(r)`: the pair the live SELECT reads - the row's `price_amount` over
+its `price_max` for a ceiling and over its `price_min` for a floor when the row IS an offering
+(`subject_type` says so, with the price keys as the fallback for a bare fixture), and
+`avg_price_hkd` otherwise. NULL answers None twice and passes both ends, which is what both live
+clauses do: an unstated price is not a cheap one.
+
+**The gate** is `tests/test_a_price_floor_is_read_by_both_lanes.py`: 9 legs - four merchant filter
+shapes (floor, ceiling, both, a floor of 0), two offering shapes (an amount that differs from the
+shop's average, and a band with no amount), a live census that both sides of the floor exist, and
+one leg per end asserting the two lanes remove the same rows. The set is compared only where the
+population fits the page (3 of 184 rows clear the floor); the ceiling keeps 181 and is compared by
+TOTAL, because a page cut inside a tie group replaces rows the filter did not remove - D607 measured
+21 of 200 for the party predicate, and this leg does not hide it. Falsified against the parent's
+real bytes: **5 red / 4 green** (`tmp/d654_falsify.txt`) - the four that stay green are the ceiling
+(already read), a floor of 0 (nothing to remove), the census and the ceiling's parity.
+
+**Adjacent**, run and green: the budget / party / price-clock / demo-data / offering-party suites -
+`test_a_budget_cue_against_the_digits_keeps_the_floor.py`,
+`test_a_budget_reaches_both_ends_of_the_ranker.py`, `test_a_party_budget_is_divided_by_the_party.py`,
+`test_demo_data.py`, `test_estimated_price_flag.py`,
+`test_the_price_a_card_prints_carries_the_clock_of_its_own_row.py`,
+`test_the_price_cell_of_the_comparison_grid_carries_its_rows_clock.py`,
+`test_the_stale_price_notice_is_written_in_the_locale_the_user_asked_in.py`,
+`test_the_words_around_a_budget_do_not_divide_the_match.py`,
+`test_a_merchant_the_category_holds_is_not_dropped_by_the_text_gate.py` and
+`test_an_offering_that_cannot_seat_the_party_is_not_answered_for_it.py` - **188 passed**.
+
+**Not claimed.** (a) The NLU budget still reaches the ranker as `plan.budget_min/max` and
+`price_fit`, not as these hard filters - that is the documented soft/hard split (§7.1), and this
+unit only makes the caller's own filter key honest. (b) The offering lane's SQL reads
+`COALESCE(price_amount, price_max)` while its row also carries `price_band`; the band is not a
+number and is untouched. (c) A row whose price is stale is still filtered on the stale number -
+freshness is §5's notice, not the filter's business.
+
+- readers: `search/service.py:278` (the price legs in `_filter_static`, where the floor was missing),
+  `:306` (`_static_price`, this unit's reader), `search/sql.py:214-217` / `:454-459` (the two live
+  clauses it mirrors), `:583` (the offering projection whose `avg_price_hkd` is the merchant's),
+  `contract.py:260` (`Filters.max_price` / `min_price`), this unit's gate, and
+  `tmp/d654_minprice2.py`, `tmp/d654_falsify.txt` (the measurements).
