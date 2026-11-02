@@ -658,17 +658,39 @@ def _image_of(rec: dict[str, Any]) -> EntityImage | None:
 
 def build_actions(card_type: str, subject_id: UUID, rec: dict[str, Any],
                   locale: str = "zh-HK") -> list[CardAction]:
+    # D642: `actions[]` is the one part of the card that names a ROUTE rather than a fact, and
+    # `$defs/CardAction` closes it - `additionalProperties: false`, an enum on `type`, a pattern on
+    # `endpoint`. The verbs here were spelled from AGENT_CONTRACT §10, which is the registry of
+    # EVENTS (`view`, `cart_add` are names a `POST /api/v1/events` accepts, not CTA kinds), and the
+    # third was invented (`ask`, in no registry at all). `CARD_ACTION_TYPE`'s words are
+    # `view_menu`, `add_to_cart`, `message`.
+    # The endpoints were the AI lane's own doors - `/ai/v1/merchant-agent/chat`, `/ai/v1/compare` -
+    # which the block's pattern rejects and whose own description says why: "always a platform path
+    # (`/api/v1/...`), never an `/ai/v1/...` path", because mutations go through the platform with a
+    # scoped token (API_CONTRACT §0, DECISIONS D5). The platform doors are `POST /api/v1/conversations`
+    # (API_CONTRACT §7; the merchant's agent answers there because `mode` defaults to `ai` -
+    # `ConversationService.java:79`) and the client-side `compare`, whose endpoint the block makes
+    # `null` (its description, and `packages/types/fixtures/entity_card.json:47`).
     labels = {
-        "zh-HK": {"view": "查看", "reserve": "訂枱", "add": "加入購物車", "compare": "比較"},
-        "zh-CN": {"view": "查看", "reserve": "订位", "add": "加入购物车", "compare": "比较"},
-        "en": {"view": "View", "reserve": "Reserve", "add": "Add to cart",
+        "zh-HK": {"view": "查看", "ask": "問", "reserve": "訂枱", "add": "加入購物車", "compare": "比較"},
+        "zh-CN": {"view": "查看", "ask": "问", "reserve": "订位", "add": "加入购物车", "compare": "比较"},
+        "en": {"view": "View", "ask": "Ask", "reserve": "Reserve", "add": "Add to cart",
                "compare": "Compare"},
     }
     L = labels.get(locale, labels["zh-HK"])
-    slug = rec.get("slug") or str(subject_id)
-    out = [CardAction(type="view", label=L["view"], endpoint=f"/api/v1/merchants/{slug}")]
+    # The browse CTA is a merchant path, so it carries a merchant slug. On the offering lane the row's
+    # own `slug` is the OFFERING's (`search/sql.py:576`) and its owner arrives separately (`:581`,
+    # `api/demo_data.py:121`), so reading `slug` printed an offering slug where a merchant slug
+    # belongs - and `GET /api/v1/merchants/{idOrSlug}` answers those with its own not-found branch
+    # (`CatalogController.java:487`).
+    merchant_slug = str(rec.get("merchant_slug") or rec.get("slug") or subject_id)
+    out = [CardAction(type="view_menu", label=L["view"],
+                      endpoint=f"/api/v1/merchants/{merchant_slug}")]
     if card_type == "merchant" and rec.get("ai_agent_enabled"):
-        out.append(CardAction(type="ask", label=L["view"], endpoint="/ai/v1/merchant-agent/chat",
+        # A card that asks the merchant a question is a `message` CTA. Its label was `L["view"]`, so
+        # the card printed two buttons reading 查看 side by side and a user could not tell them apart
+        # even though one of them opened a thread.
+        out.append(CardAction(type="message", label=L["ask"], endpoint="/api/v1/conversations",
                               payload={"merchant_id": str(subject_id)}))
     if card_type != "merchant" and rec.get("bookable"):
         out.append(CardAction(type="reserve", label=L["reserve"],
@@ -676,9 +698,11 @@ def build_actions(card_type: str, subject_id: UUID, rec: dict[str, Any],
                               payload={"merchant_id": str(rec.get("merchant_id") or ""),
                                        "offering_id": str(subject_id)}))
     elif card_type != "merchant":
-        out.append(CardAction(type="cart_add", label=L["add"], endpoint="/api/v1/carts/items",
+        out.append(CardAction(type="add_to_cart", label=L["add"], endpoint="/api/v1/carts/items",
                               payload={"offering_id": str(subject_id), "quantity": 1}))
-    out.append(CardAction(type="compare", label=L["compare"], endpoint="/ai/v1/compare",
+    # `compare` is the client-side-only action the block names, so it carries no endpoint at all;
+    # the payload stays because the subject ids are what the client compares.
+    out.append(CardAction(type="compare", label=L["compare"], endpoint=None,
                           payload={"subject_ids": [str(subject_id)]}))
     return out
 

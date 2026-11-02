@@ -89,23 +89,26 @@ def test_travel_minutes():
 
 
 # ------------------------------------------------------------- build_actions wiring
+# D642 re-aimed these five rows: the verbs are `CARD_ACTION_TYPE`'s and the endpoints are the
+# platform's, so `view` -> `view_menu`, `ask` -> `message` on `/api/v1/conversations`,
+# `cart_add` -> `add_to_cart`, and `compare` carries the null the block prescribes.
 def test_build_actions_merchant_view_and_compare():
     actions = build_actions("merchant", SUBJ, {"slug": "sushi-zen"}, "zh-HK")
-    assert [a.type for a in actions] == ["view", "compare"]
+    assert [a.type for a in actions] == ["view_menu", "compare"]
     assert actions[0].endpoint == "/api/v1/merchants/sushi-zen"
     assert actions[0].label == "查看"
 
 
-def test_build_actions_merchant_agent_enabled_adds_ask():
+def test_build_actions_merchant_agent_enabled_adds_message():
     actions = build_actions("merchant", SUBJ, {"slug": "s", "ai_agent_enabled": True}, "en")
-    assert [a.type for a in actions] == ["view", "ask", "compare"]
-    assert actions[1].endpoint == "/ai/v1/merchant-agent/chat"
+    assert [a.type for a in actions] == ["view_menu", "message", "compare"]
+    assert actions[1].endpoint == "/api/v1/conversations"
 
 
 def test_build_actions_bookable_offering_reserves():
     actions = build_actions("product", SUBJ, {"slug": "p", "bookable": True,
                                               "merchant_id": "m1"}, "zh-HK")
-    assert [a.type for a in actions] == ["view", "reserve", "compare"]
+    assert [a.type for a in actions] == ["view_menu", "reserve", "compare"]
     reserve = next(a for a in actions if a.type == "reserve")
     assert reserve.endpoint == "/api/v1/reservations"
     assert reserve.payload["offering_id"] == str(SUBJ)
@@ -113,8 +116,8 @@ def test_build_actions_bookable_offering_reserves():
 
 def test_build_actions_non_bookable_offering_adds_to_cart():
     actions = build_actions("product", SUBJ, {"slug": "p"}, "en")
-    assert [a.type for a in actions] == ["view", "cart_add", "compare"]
-    cart = next(a for a in actions if a.type == "cart_add")
+    assert [a.type for a in actions] == ["view_menu", "add_to_cart", "compare"]
+    cart = next(a for a in actions if a.type == "add_to_cart")
     assert cart.endpoint == "/api/v1/carts/items"
     assert cart.payload["quantity"] == 1
 
@@ -180,7 +183,7 @@ def test_build_card_numbers_and_bullets_all_grounded():
     # every bullet traces to a fact (§18)
     assert card.ai_match is not None
     assert all(r.fact_id is not None for r in card.ai_match.reasons)
-    assert [a.type for a in card.actions] == ["view", "compare"]
+    assert [a.type for a in card.actions] == ["view_menu", "compare"]
 
 
 def test_build_card_title_locale_order():

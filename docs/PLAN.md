@@ -2950,12 +2950,71 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   carry a distance), `organic_rank` and `score_breakdown` on a card object that declares neither
   (41 of 41), `actions[0].type` of `view` against `CARD_ACTION_TYPE`'s split verbs and
   `actions[1].endpoint` of `/ai/v1/compare` against `^(/api/v1/|/checkout/|https://)` (41 of 41 each,
-  with 14 cards sending an `ask` type too), and every live card that carries an `address` fact (6)
-  failing `entity_card_facts_scoped` because §607 moved that fact's subject to the location. Two of
-  these are already declared in `test_card_nested_shapes.py`'s own `DECLARED_EXTRAS`, so the lane has
-  been arguing with the JSON on paper rather than on the wire. Owner: the card lane, one door per class
-  - these are A1, A3, A4 and A5 of the 2026-09-23 table, and the address-scope row is new since that
-  run.
+  with 14 cards sending an `ask` type too) - the last two are **closed by D642** (§639), which put the
+  verbs on the registry's words, the doors on `/api/v1/...`, `compare`'s endpoint on the null the block's
+  own description names, and an offering card's browse path on its merchant's slug - and every live card
+  that carries an `address` fact (6) failing `entity_card_facts_scoped` because §607 moved that fact's
+  subject to the location. Two of these are already declared in `test_card_nested_shapes.py`'s own
+  `DECLARED_EXTRAS`, so the lane has been arguing with the JSON on paper rather than on the wire. Owner:
+  the card lane, one door per class - what these six lines leave is A1 and A3 of the 2026-09-23 table,
+  the `/distance` `oneOf` and the address-scope row, which is new since that run.
+
+- **The card's CTA doors have no reader in the shipped client, and that is what makes this class
+  latent rather than live.** `packages/ui/src/trust/EntityCard.tsx` renders the buttons, takes their
+  words from `action.label`, chooses an icon only for four verbs the wire does not publish, and calls
+  `onAction` - which no call site anywhere in the repo passes (`grep -rn onAction` = 3 hits, all inside
+  that file), while `endpoint` has no reader in `apps/` or `packages/` at all. So a wrong door was a
+  contract offence, not a broken click, and the one symptom a user could see was the duplicated label.
+  The doors D642 chose are therefore judged against the contract and against the platform's own routes,
+  not against a run-through. Owner: the frontend lane, when it wires `onAction`; until then nothing in
+  this repository proves a client follows these paths.
+
+- **`packages/ui`'s action vocabulary is a second plane the wire does not have.**
+  `packages/ui/src/trust/types.ts`'s `CardAction.type` union names 8 words, of which `favorite`,
+  `ask_ai`, `directions` and `details` are not in `CARD_ACTION_TYPE` at all - `apps/web/src/lib/mock/index.ts`
+  sends `favorite` on every mock card, and `directions` is the plural of a word the registry spells
+  `direction` - while `compare`, `message`, `direction`, `buy`, `view_reviews`, `external_link` and
+  `follow`, 7 of the 11, cannot be written in that interface. The block publishes seven keys (`type`,
+  `label`, `endpoint`, `method`, `requires_auth`, `secondary`, `payload`) and that interface declares
+  five of them, so it can name neither the client-side flag nor the auth requirement it is asked about.
+  The 2026-09-23 table's A4 row predicted the consequence as "a CTA whose verb the renderer does not
+  know renders as an unlabelled button"; the shipped renderer prints `action.label`, so the verb never
+  reaches the caption - the row is right that the wire was offended and wrong about what the user saw,
+  and quoting it needs re-reading. Owner: the frontend lane, and the edit is one union with the
+  registry, not a translation table.
+
+- **`CardAction.type` is `str` in the AI model, so nothing at the boundary refuses a verb.**
+  The block publishes an 11-word enum and the model declares a free string - `view`, `ask` and
+  `cart_add` left this lane for the whole life of the object because no code asked whether the word was
+  in a registry; `extra="forbid"` (the `_Strict` base) already stops a key the block refuses, so the
+  asymmetry is only about the verb. A `Literal` of the 11 words would move the check onto the wire, at
+  the cost of refusing a verb the block adds later - which is the bargain the contract itself describes
+  ("unknown values are rejected on the wire"). D642's door reads the JSON enum, so a schema move turns
+  the door red instead of turning a card wrong. Owner: the card lane, if a second producer ever builds
+  actions.
+
+- **Three of the five doors the card now prints are authenticated POSTs, and the card says neither.**
+  `POST /api/v1/conversations`, `POST /api/v1/carts/items` and `POST /api/v1/reservations` - each behind
+  `@RequiresAuth` in its controller (`ConversationController.java`, `CartController.java`,
+  `ReservationController.java`) - are the doors D642 chose because they are the platform's own. The
+  block already publishes the words that tell a client how to knock: `method` and `requires_auth`, and
+  the shipped fixture uses both (`packages/types/fixtures/entity_card.json:46` sends
+  `"method": "POST", "requires_auth": true` on a reserve CTA, `:47` sends `"secondary": true` with the
+  null endpoint). This lane's `CardAction` declares four of the seven keys and none of those three, so
+  the card names a door and leaves the verb, the auth requirement and the secondary flag unsaid - a
+  client that follows `endpoint` blind sends a GET to a POST and no credentials to a route that asks for
+  them. D642 pins the gap rather than filling it (a door row asserts the three keys are absent and turns
+  red when the model gains them), because which CTA is `secondary`, and whether `requires_auth` is a
+  claim this lane may make about a route it does not own, needs the same read the verbs got. Owner: the
+  card lane next - the measure is the three controllers, and the fields are already in the JSON.
+
+- **Arms that copy the whole tree leave a second holder of every name.** This unit's nine arms each built
+  a full `git archive` copy under the gitignored `tmp/` (nine names, 76 MB), and the ledger census walks
+  the filesystem rather than the index - which is the hazard §637's unit (D640) shipped the gate's
+  tolerance for, on the run that found them. The copies are removed and the driver now removes them
+  itself (`tmp/cta_arms.py` deletes its trees unless `CTA_KEEP=1`); `tmp/d619_owncheck.py` shows the
+  shape that leaves nothing behind, and a driver that keeps trees for reading should keep only the
+  records it prints. Owner: any lane that runs a full-tree arm next, including this one.
 
 - **`understand.match_core` is called only by tests, and has been since D628 wrote the alias.** The suite
   row `test_no_dead_constants.py::test_every_module_level_name_is_read_by_the_product` is **1 failed, 2

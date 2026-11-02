@@ -118,7 +118,13 @@ class AvailabilityBrief(BaseModel):
 class CardAction(_Strict):
     type: str
     label: str
-    endpoint: str
+    # D642: `endpoint` is required but NULLABLE on the wire - `$defs/CardAction` types it
+    # ["string","null"] and its description says "Null for client-side-only actions such as
+    # `compare`", which is what `packages/types/fixtures/entity_card.json:47` sends. Declared `str`
+    # here, the model could not express the one action the block names as client-side, so the builder
+    # filled it with an `/ai/v1/...` path the same block's pattern rejects. The key stays present
+    # (`pipeline.py:214` dumps without `exclude_none`), which is what `required` asks for.
+    endpoint: Optional[str] = None
     payload: dict[str, Any] = Field(default_factory=dict)
 
 

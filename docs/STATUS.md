@@ -29556,3 +29556,148 @@ the parent-bytes experiment is reproducible from `git show 6145c6c:apps/web/src/
   `apps/web/src/lib/mock/search-relevance.test.ts:59-63`, `:124-140`, `scripts/falsify_ui_script.mjs:258`
   (the `ARMS` roster), and `apps/web/src/lib/env.ts`'s `IS_MOCK` — the module-load constant the route
   witness has to pin before it may import the handler.
+
+## 639. D642 · every CTA the card prints named a verb and a door the closed block refuses (`apps/ai/nexus_ai/search/cards.py`, `apps/ai/nexus_ai/contract.py`)
+
+**How the unit arrived.** §617's own verdict left this class named and unopened, on purpose: the whole-card
+run over the same payloads reported `actions[0].type` of `view` against `CARD_ACTION_TYPE` and
+`actions[1].endpoint` of `/ai/v1/compare` against `^(/api/v1/|/checkout/|https://)`, and the filing said
+"one door per class". `actions` is the only part of the card that names a ROUTE rather than a fact, and
+`$defs/CardAction` closes it: seven published keys (`endpoint`, `label`, `method`, `payload`,
+`requires_auth`, `secondary`, `type`), `additionalProperties: false`, `required: [type, label, endpoint]`, an
+11-word enum on `type` (`packages/types/src/enums.ts:191`, whose description warns that "unknown values
+are rejected on the wire (AGENT_CONTRACT §3 'unknown values are hard errors')"), a pattern and a type
+`["string","null"]` on `endpoint`, and a description that settles the door question in prose - "always a
+platform path (`/api/v1/...`), never an `/ai/v1/...` path, because mutations go through the platform with
+a scoped token (API_CONTRACT §0, DECISIONS D5)" - and calls `compare` the client-side-only action, which
+`packages/types/fixtures/entity_card.json:47` sends as `endpoint: null`.
+
+**What the lane sent, measured.** `tmp/cta_dump.py` captured the cards in-process - 6 demo / 14 actions and
+54 live / 137, 60 cards and 151 actions - plus the 12 row shapes the builder can receive (4 shapes x 3
+locales, 33 actions), because no served card on either plane has an agent-enabled offering or a bookable
+offering in every locale; 72 payloads and 184 actions in all. `tmp/cta_offences.mjs` judged them with the
+contract package's own validator: **60 of 60 served cards and 12 of 12 shapes offend, 15 distinct
+classes**, and the six counts are `view`/`ask`/`cart_add` verbs outside the enum **108**, endpoints on
+`/ai/v1/` **96**, endpoints outside the pattern **96**, `compare` carrying an endpoint **72**, missing
+required keys **0**, and payloads whose labels collide **24** (`tmp/cta_counts_before.txt`). Two of the
+three verbs are not a CTA vocabulary at all: `view` and `cart_add` are AGENT_CONTRACT §10 *event* names
+(`docs/AGENT_CONTRACT.md:181`, the same words `V1__init.sql:768` comments on `events.name` and
+`packages/types/src/schemas/event.json` requires), and `ask` is in no registry. The block's words for
+those three buttons are `view_menu`, `add_to_cart` and `message`.
+
+**The third finding is one no schema can see.** The browse CTA is `/api/v1/merchants/{slug}`, and on the
+offering lane the row's own `slug` is the OFFERING's - `search/sql.py` names `o.slug` in the SELECT and
+carries the owner separately as `merchant_slug` (`:576`, `:581`; the demo catalogue is the same shape,
+`api/demo_data.py:121`). `tmp/cta_slugcheck.py` asked the live tables which table each printed slug is in
+(merchants 520 rows, offerings 1627): of the **54** merchant paths on live cards, **45 over 38 slugs** are
+in merchants only and **9 over 7 slugs** are in offerings only - `preserved-fruit-gift-set` x3,
+`preserved-fruit-gift-set-large`, `preserved-fruit-gift-set-for-2`, `tea-gift-box`, `kids-cut-small`,
+`blind-bottle-deal-small`, `ginseng-chicken-soup` - with none in neither and none in both; one of the six
+demo paths is `demo-milk-tea-set`. `GET /api/v1/merchants/{idOrSlug}` resolves those through `requireRow`,
+whose not-found branch is `ApiException.notFound("merchant_not_found")` (`CatalogController.java:484-488`),
+so the button that means "see this place" answers its own 404.
+
+**The fourth is a label the block cannot police.** The agent CTA's label was `L["view"]`, so a card with an
+agent printed two buttons reading 查看 side by side - the only producer of that word as an action label is
+this dict - `grep -rn` over `apps` and `packages` puts the pair 查看/比較 in `search/cards.py`'s `labels`
+and nowhere else - and a Playwright accessibility snapshot this machine still holds under
+`tests/e2e/report/data/`, from the failed compare-table leg of `specs/consumer/vertical-slice.spec.ts`,
+renders `button "查看"`, `button "查看"`, `button "比較"` on one Noodle & Rice Diner card, with four such
+adjacent pairs on that page. `label` is a free string in the block, so nothing above the builder can catch it; 24 of
+the 72 payloads carried it.
+
+**What the card sends now.** The verbs are the registry's: `view_menu`, `message`, `reserve`,
+`add_to_cart`, `compare`. The doors are the platform's: `/api/v1/merchants/{merchant_slug}`, where the slug
+comes from `merchant_slug` first and the row's own `slug` only on the merchant lane, so an offering card now
+names its owner; `/api/v1/conversations` with the payload the card already sent, `{merchant_id}`, because
+`ConversationService.java:78-79` defaults `channel` to `web` and `mode` to `ai` - the merchant's agent
+answers there, and API_CONTRACT §7 (`docs/API_CONTRACT.md:325`) makes that the whole body;
+`/api/v1/reservations` (`ReservationController.java:80`) and `/api/v1/carts/items`
+(`CartController.java:80`) as before; and `null` for `compare`. Making the null expressible needed the
+second file: `CardAction.endpoint` was declared `str`, so the one action the block names as client-side
+could only be sent by lying about its door - it is `Optional[str] = None` now, and the key stays present
+because `api/pipeline.py:214` dumps cards with `model_dump(mode="json")` and no `exclude_none`, which is
+what `required` asks for. The agent button reads 問 / 问 / "Ask"; 詢 and 訊 are not in the character set
+`tests/test_vocabulary_is_the_reference.py` derives from the package's own data strings, so the word had to
+come from the set that is.
+
+**Nine arms, each built from `git archive` of `d4a93d7`** (`tmp/cta_arms.py`; `tmp/cta_arms.txt`). Three
+commits landed under this unit while its suite ran, so the run was repeated on the parent it now follows:
+`tmp/d642_headcheck.txt` checks the thirteen files the arms and the census judge, finds all of them
+byte-identical except `nlu/lexicon.py` and `nlu/understand.py`, and re-measures the census on the new
+parent - 6 demo / 14 actions, 54 live / 137, 12 shapes / 33, 15 classes before and 0 after, the same
+numbers as the run on `1bb5b35`, which it also keeps (`tmp/cta_arms_16rows_1bb5b35.txt`, 16 rows then). The
+door is the new `test_every_cta_the_card_prints_is_a_verb_and_a_path_the_contract_publishes.py`, 17 rows,
+plus the five rows of `test_cards.py` that asserted the old verbs and the old `/ai/v1/...` endpoints and
+had to be re-aimed. In the arms the census is trimmed to the three asks the door itself serves (5 demo /
+12 live payloads), so the payload counts below are the arm's own and not the ledger's 6/54.
+**A** base bytes: 14 red, 15 classes. **B** the builder alone: 14 red plus 3 ERROR rows besides, and the
+census cannot even dump - `CardAction` refuses the null (`ValidationError: … endpoint … Input should be a
+valid string`) - so the model half is load-bearing, not decorative. **C** the model alone: 14 red, 15
+classes, because nothing was aimed at the block. **D** shipped: **17 passed**, 0 of 5 / 0 of 12 / 0 of 12
+payloads offending, 0 classes. **E** `view` back as the verb: 10 red, 7 green, 3 classes. **F**
+`/ai/v1/merchant-agent/chat` back for the agent CTA: 4 red, 13 green, 1 demo and 2 of 12 live payloads
+offending, 3 classes. **G** a path on `compare`: 8 red, 9 green, 6 classes. **H** the offering's own slug
+in the browse path: **2 red and 0 schema offences** - the pattern accepts
+`/api/v1/merchants/preserved-fruit-gift-set`, which is why the slug has two door rows of its own rather
+than living in the validator. **I** 查看 on both buttons: 1 red, 16 green, 0 classes. Each single-line
+mutation reddens exactly the rows that name it, and the foot of the record reads `the live worktree was not
+written to by this run` - the check that compares the two live files' bytes to what the run started with,
+added after an earlier pass of this script resolved a `str(WindowsPath)` split to the drive root. The nine
+trees the arms built were full `git archive` copies under the gitignored `tmp/cta_arms/`, which is the shape
+§637's unit (D640) shipped the ledger census's tolerance for; the script removes them when it finishes, and
+the records above are what the run leaves behind.
+
+**The suite's eleven red rows name no owner until they are re-run on the bytes this commit ships**
+(`tmp/d642_suite.txt`: `11 failed, 33894 passed, 43 skipped in 1:36:23`; `tmp/d642_owncheck.txt` runs the
+nine files that hold them twice, once with this unit's two source files and two door files and once with
+none, on a tree archived from `d4a93d7` - the other lane's in-flight worktree bytes are in neither pass).
+**10 of the 11 are red on both**, i.e. already red at the parent, and the 11th
+(`test_an_indexed_document_is_cited_exactly_as_it_is_today`) is green on both, i.e. it came from the
+worktree the suite ran on, not from these bytes. The shipped pass counts 52 green rows against the base
+pass's 35: the 17 rows between them are this unit's door, and it is green on the commit's own bytes.
+
+**What the shipped renderer does with a verb it does not know - read before claiming a user consequence.**
+`packages/ui/src/trust/EntityCard.tsx:134-153` prints at most three CTAs, takes their words from
+`action.label`, chooses an icon only for `favorite`, `share`, `ask_ai` and `directions`, and calls
+`onAction` - which no call site passes anywhere in the repo (`grep -rn onAction` returns 3 hits, all inside
+that file), and `endpoint` has no reader in `apps/` or `packages/` at all. So the verbs and the doors were
+latent, and the label collision was the visible half; the slice never truncates a CTA today because a card
+is a merchant (2-3 actions) or an offering (3). The UI's own interface is its separate disagreement:
+`packages/ui/src/trust/types.ts:98-104` declares an 8-word union of which 4 (`favorite`, `ask_ai`,
+`directions`, `details`) are not in `CARD_ACTION_TYPE`, names no word for 7 that are (`compare`, `message`,
+`direction`, `buy`, `view_reviews`, `external_link`, `follow`), and carries `method` - a key the block does
+publish but this lane never sends, since its `CardAction` is `extra="forbid"` and declares only four of the
+block's seven keys (`type`, `label`, `endpoint`, `payload`), leaving `method`, `requires_auth` and
+`secondary` unsendable from here even though
+`packages/types/fixtures/entity_card.json:46-47` ships them (`"method": "POST", "requires_auth": true` on
+the reserve CTA, `"secondary": true` on the compare one). Both are allow-listed, so the block permits what
+this lane declines to send. A client typed with the UI's interface could not represent `compare`, the verb
+every card now sends. That gap is pinned by a door row rather than closed, and the whole class is filed for
+the frontend lane, not silently fixed from here.
+
+**Residual classes, re-measured after this unit** (`tmp/cta_wholecard_after.txt` vs
+`tmp/cta_wholecard_before.txt`): the `actions` classes are gone from both planes - demo goes from 8 distinct
+schema classes to 3, live from 9 to 4. Of the 2026-09-23 table, A2 was closed by §617 and A4/A5 are this
+unit's; what remains is A1 (`organic_rank` and `score_breakdown` on a closed card object, 60 each) and
+A3/A6 together in the rating rows (`/rating` matches no `oneOf` branch - 6 demo, 48 live - and 6 rule
+offences say the card renders a rating no fact backs), plus two classes the table never named: `/distance`
+matching no branch either (12 live) and the 13 `entity_card_facts_scoped` rows §607 moved
+to the location subject. The live plane's reserve action is unchanged in shape and still resolves:
+`{"type": "reserve", "label": "訂枱", "endpoint": "/api/v1/reservations", "payload": {"merchant_id":
+"b0eeb146-…", "offering_id": "120097dd-…"}}`.
+
+- readers: `search/cards.build_actions` (the only producer of these verbs, doors and labels),
+  `contract.CardAction` and its `_Strict` base (the model the wire dumps), `api/pipeline` (the dump that
+  keeps `endpoint` present), `search/sql` (which slug the offering SELECT names, and which it names as the
+  owner), `api/demo_data` (the same shape on the demo catalogue), `packages/types/src/schemas/entity_card.json`'s
+  `$defs/CardAction` and `CardActionType`, `packages/types/src/enums.ts`'s `CARD_ACTION_TYPE`,
+  `packages/types/fixtures/entity_card.json` (the null the block's description names),
+  `packages/types/scripts/json-schema-mini.mjs` and `rules.mjs` (the shipped judgement),
+  `docs/AGENT_CONTRACT.md` §10 (the event registry the verbs were read from), `docs/API_CONTRACT.md` §0/§7,
+  `CatalogController.requireRow`, `ConversationService`'s defaults, `CartController` and
+  `ReservationController` (the doors), `packages/ui/src/trust/EntityCard.tsx` and `types.ts`,
+  `apps/web/src/lib/mock/index.ts` (what a client makes of a verb), the re-aimed rows of `test_cards.py`, and
+  this unit's thirteen `tmp/` measurements (`cta_dump`, `cta_offences`, `cta_counts`, `cta_slugcheck`,
+  `cta_cards_before`, `cta_cards_after`, `cta_planes_before`, `cta_planes_after`, `cta_wholecard`,
+  `cta_arms`, `cta_arms_16rows_1bb5b35`, plus `d642_owncheck`, `d642_headcheck` and `d642_suite`).
