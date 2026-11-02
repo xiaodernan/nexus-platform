@@ -29169,6 +29169,48 @@ suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
 
 - readers: `nlu/lexicon.py:783-810` (`leaf_surfaces`), `:743-780` (`match_leaf`, the head rule that
   chooses the leaf); `search/service.py:497-517` (`_apply_category_leaf`), `:681-694` (the recompute).
+## 646. D649 · a party range was read as a price band when a budget cue sat in front of it
+(`apps/ai/nexus_ai/nlu/understand.py`)
+
+**How the unit arrived.** §635 (D636) refused a cue-first CEILING whose digits counted people - 「最多40人」
+- and closed with the range rule still on its older, weaker test: a currency token inside the span, or a
+budget cue immediately before it. The cue 最多 is BOTH a party cap and a budget cap, so the weaker test
+cannot tell "ten to twenty of us" from "ten to twenty dollars".
+
+**Measured** (`tmp/d649_probe2.py`):
+
+    最多10-20人          party 20  budget 10-20   (a party of 10-20 filtered the catalogue by price)
+    最多10-20 people     party 20  budget 10-20
+    at most 10-20 people party 20  budget max 10  (the ceiling lane read the digits by itself)
+    預算10-20人          party 20  budget 10-20
+    最多40-60人          party -   budget 40-60
+
+**Two guards, one span.** `_PARTY_COUNTER_AFTER` refuses the RANGE band when a party counter follows the
+second number (個 / 个 / 位 / 人 / people / pax / persons / guests / diners). `_PARTY_RANGE_AFTER` refuses
+the CEILING amount when what follows the digits the cue rule read is a range separator and a second
+number that ends in that counter - `-20人` sits between the digits (10) and the counter, so the existing
+`_PARTY_AFTER` never saw it and the ceiling lane answered HK$10 on its own.
+
+**Measured after**: every capped party range reads its party and no budget (`最多10-20人`, `最多10至20人`,
+`最多10-20個人`, `預算10-20人`, `預算10至20位`, `最多4-6位`, `最多10-20 people`, `at most 10-20 people`), each
+leaves no words, `最多40-60人` leaves neither a party nor a band, and each capped party answers the same
+ten ids with the same relevance as its bare size.
+
+**Not claimed.** The money shapes are untouched: `最多1000-2000`, `最多1000-2000蚊`, `預算1000-2000`,
+`100-200蚊` and `20-40蚊嘅餐廳` still read their band, `最多1000蚊` still reads its ceiling, and `10-20人`
+still reads party 20 with no band - the guard is about the counter, not about the cue. And a ONE-DIGIT
+amount marked as money (`2-4蚊`, `5至10蚊`, `$2-$4`) still reads no band, because the money lane takes two
+to five digits by design (D624); its words stay in the sentence since D648. That band is its own item.
+
+**The gate** is `tests/test_a_capped_party_range_is_not_a_price_band.py`: 28 legs - eight capped party
+ranges twice (reading and strip), the above-40 case, five money-band controls, the money-ceiling control,
+the plain party range, and four live pairs. Falsified by removing both guards: **11 red, 17 green**
+(`tmp/d649_falsify.txt`), including all three party-range live pairs. With the budget, party, plan and
+lexicon suites: **380 passed**.
+
+- readers: `nlu/understand.py:712-716` (`_PARTY_COUNTER_AFTER`), `:718-733` (`_range_is_money`),
+  `:746-750` (`_PARTY_RANGE_AFTER`), `:902` (the call that hands it the tail).
+
 ## 645. D648 · a dash range that named no party was removed from the sentence anyway
 (`apps/ai/nexus_ai/nlu/understand.py`)
 

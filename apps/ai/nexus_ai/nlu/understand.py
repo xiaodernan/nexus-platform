@@ -705,13 +705,28 @@ def _fill_time(ex: IntentExtraction, text: str, context: dict[str, Any]) -> Inte
     return ex
 
 
-def _range_is_money(span: str, before: str) -> bool:
+#: D649: the counter that turns a range into PEOPLE. D636 refused a cue-first CEILING whose digits
+#: counted people (`最多40人`); the RANGE rule had no such guard, so 「最多10-20人」 answered party 20
+#: AND a HK$10-20 band - a party of ten to twenty filtered the catalogue by price. Measured
+#: 2026-11-02 (`tmp/d649_probe2.py`).
+_PARTY_COUNTER_AFTER = re.compile(
+    r"^\s*(?:(?:個|个|位|人)(?!\s*(?:蚊|元|塊|块))|(?:people|pax|persons?|guests|diners)\b)",
+    re.IGNORECASE,
+)
+
+
+def _range_is_money(span: str, before: str, after: str = "") -> bool:
     """D624: an amount pair is a budget only when the sentence SAYS it is money.
 
     "10至20人" is a party size and must never become a HK$10-20 ceiling; a currency token
     inside the span, or a budget cue immediately before it, is what separates the two.
+
+    D649: and a range followed by a party counter is people whatever sits in front of it -
+    the currency check alone let 「最多10-20人」 through, because the cue 最多 is also a budget cue.
     """
     low = span.lower()
+    if _PARTY_COUNTER_AFTER.match(after or ""):
+        return False
     if any(tok in low for tok in CURRENCY_TOKENS):
         return True
     return bool(re.search(r"(?:預算|预算|budget|max|最多|不超過|唔超過)\s*$",
@@ -725,6 +740,14 @@ def _range_is_money(span: str, before: str) -> bool:
 #: A word-cue amount followed by a counter is not money.
 _PARTY_AFTER = re.compile(r"\s*(?:個|个|位|人|people|pax|persons?|guests?|diners?)", re.IGNORECASE)
 
+#: D649: and the same counter one RANGE further out - 「最多10-20人」 puts `-20人` between the digits
+#: the ceiling rule read (10) and the counter, so `_PARTY_AFTER` never saw it and the ceiling lane
+#: answered HK$10 for a party of twenty. The pair has to be read as one span.
+_PARTY_RANGE_AFTER = re.compile(
+    r"\s*(?:[-–—~～]|至|到|to)\s*\d{1,5}\s*(?:個|个|位|人|people|pax|persons?|guests?|diners?)",
+    re.IGNORECASE,
+)
+
 
 def _budget_amount(text: str, m: "re.Match[str] | None") -> float | None:
     """The amount a cue-first budget rule read, or None when those digits count a party.
@@ -737,7 +760,7 @@ def _budget_amount(text: str, m: "re.Match[str] | None") -> float | None:
     for i in range(1, m.re.groups + 1):
         if not m.group(i):
             continue
-        if _PARTY_AFTER.match(text, m.end(i)):
+        if _PARTY_AFTER.match(text, m.end(i)) or _PARTY_RANGE_AFTER.match(text, m.end(i)):
             return None
         return float(m.group(i))
     return None
@@ -876,7 +899,7 @@ def _fill_budget(ex: IntentExtraction, text: str) -> IntentExtraction:
     # a digit and the band was dropped (read as the ceiling 1000: `tmp/d631_mechanism.txt`). It
     # worked for a Latin cue only because a space separated it from the number.
     low = (text[:rng.start()] if rng else "")
-    if rng and (_range_is_money(rng.group(0), low)):
+    if rng and (_range_is_money(rng.group(0), low, text[rng.end():])):
         ends = sorted((float(rng.group(1)), float(rng.group(2))))
         budget["min"], budget["max"] = ends
         ex.confidence["budget"] = 0.9

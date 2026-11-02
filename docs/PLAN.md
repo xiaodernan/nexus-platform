@@ -2165,6 +2165,11 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   knew only single clocks. A range is now one span read at its UPPER end, the same rule D643 gave a
   party and D624 money. Still open: 「open until 6pm」 reaches the lane as `open until` and 「24小時
   4-6pm」 as `24小時`. Owner: the AI lane.
+- **A party range read as a price band - closed by D649** (§646). 「最多10-20人」 answered party 20 AND a
+  HK$10-20 band, because the RANGE rule only asked for a currency token or a budget cue in front, and 最多
+  is both. Guards now refuse the band when a party counter follows, and refuse the CEILING amount when a
+  range separator and a second number that ends in that counter follow it. Still open: a one-digit amount
+  marked as money (`2-4蚊`, `5至10蚊`, `$2-$4`) reads no band at all. Owner: the AI lane.
 - **A range strip removed words no lane read - closed by D648** (§645). D645's range alternative wrote
   its lead and cue as optional, so 「2-4」, 「2-4蚊」, 「3-8蚊」 and 「at most 2 to 4」 lost their words while
   the party lane answered nothing (`party_size=None`) and the money lane answered no band. A range is
