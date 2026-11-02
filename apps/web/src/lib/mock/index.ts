@@ -216,7 +216,7 @@ type PartOfDayWindow = { label: string; start: [number, number]; end: [number, n
 /**
  * The five parts of the day, hand-carried from `apps/ai/nexus_ai/nlu/timeparse.py::PART_OF_DAY`
  * (the web bundle cannot import the service, and D626 says read its tree as text rather than
- * pretend to share it). D645: this table replaces the one boolean `evening` that used to answer the
+ * pretend to share it). D646: this table replaces the one boolean `evening` that used to answer the
  * whole time question with a hard-coded 19:00 — 「早上」 and 「下午3點」 both came back as 7pm.
  * `stated-time.test.ts` re-derives every token, label and window bound from the Python source, so
  * a row added on one plane and not the other is a red test, not a silent drift.
@@ -282,9 +282,9 @@ function occurrences(needle: string, haystack: string): number[] {
 
 /**
  * True when EVERY place the cue occurs sits inside a longer surface that names a category, so the
- * sentence names a thing and not a time. `_guarded_cues` checks each reading rather than the first:
- * 「下午3點去食下午茶」 dates the turn from the cue at index 0 and names a category from the one at
- * index 6, so the guard has to be about positions, not about whether the word appears anywhere.
+ * sentence names a thing and not a time. `timeparse._reads_as_a_time` checks each reading rather than
+ * the first — 「下午3點去食下午茶」 dates the turn from the cue at index 0 and names a category from the
+ * one at index 6 — so the guard has to be about positions, not about whether the word appears at all.
  */
 function cueOpensACategory(token: string, query: string): boolean {
   const surfaces = CATEGORY_SURFACES.filter((surface) => surface.length > token.length && surface.toLowerCase().startsWith(token.toLowerCase()));
@@ -454,7 +454,7 @@ export function mergeIntent(previous: Intent | null, followUp: string): Intent {
   }
   // The follow-up is read by the same reader the first turn uses. This used to be a second,
   // hand-copied cue list — it left out 週六 and saturday, and pinned every hit to 19:00 — so the
-  // merge and the understanding disagreed about the same words (D645).
+  // merge and the understanding disagreed about the same words (D646).
   const statedTime = readStatedTime(followUp, mockNow());
   if (statedTime) {
     next.time = { type: 'explicit', starts_at: statedTime.toISOString() };

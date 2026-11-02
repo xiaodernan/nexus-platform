@@ -3074,13 +3074,49 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   vocabulary that drifts back to one script keeps that run green. Owner: the e2e lane — one leg per
   script, or read the fixture the web witnesses already share (`apps/web/src/lib/mock/simplified-twins.ts`).
 
-- **Two cue alternatives in the mock vocabulary match nothing the product writes.**
-  `apps/web/src/lib/mock/index.ts:177` ends its currency cue with `hkdb?|hkd`, and `hkdb?` already matches
-  every string `hkd` matches, so the last alternative is dead; the `b?` half reaches 港币 as `hkbd`, which
-  grep over `apps` and `packages` finds nowhere. `:223` carries `evenight` beside `evening` — one
-  occurrence in the whole repository, in the cue itself, with no test or corpus row naming it. Either is
-  a deliberate typo tolerance waiting for a sentence that says so, or a leftover. Owner: the lane that
-  owns the mock vocabulary.
+- **Two cue alternatives in the mock vocabulary match nothing the product writes - closed by D646 (§643).**
+  `apps/web/src/lib/mock/index.ts:177` ended its currency cue with `hkdb?|hkd`, and `hkdb?` already matches every
+  string `hkd` matches, so the last alternative was dead; the `b?` half reaches 港币 as `hkbd`, which grep over `apps`
+  and `packages` still finds nowhere, and it stays because `500 hkdb` is the only evidence that a typo tolerance is
+  owed — a leg keeps both spellings at 500 so the dead one cannot be dropped for the live one. Reading the table the
+  other cue lived in widened the unit into the lane beside it: `evenight` sat in a one-boolean `evening` regex that
+  answered 「下午3點」 with 19:00, and that boolean is gone. Its token retired with the table, so this bullet's second
+  citation is dated to before `9778b7e`; `apps/web/src/lib/mock/index.ts:224` is the five windows the service
+  publishes now. Owner: the lane that owns the mock vocabulary.
+
+- **The mock reads digits, so 「九點」 states an hour and gets no time back.** `apps/ai/nexus_ai/nlu/numerals.py:70`
+  rewrites Chinese numerals before `CLOCK_RE` runs, and the web has no mirror of that pass, so
+  `apps/web/src/lib/mock/index.ts:235` sees no clock and §8's floor makes the lane ask. Either carry the ten
+  characters the service normalises or refuse them by name — a silent `none` cannot be told apart from a correct
+  one. Owner: the web lane, and the door is `apps/web/src/lib/mock/stated-time.test.ts`.
+
+- **Three published time kinds have no carrier on the web.** `packages/types/src/enums.ts:515` and
+  `packages/types/src/schemas/intent.json:123` publish `explicit / relative / range / open_now / unspecified`, and
+  `apps/ai/nexus_ai/api/pipeline.py:43` aliases the service's `none` to `unspecified`; `apps/web/src/lib/types.ts:59`
+  spells its no-time `none` and has no `range`, so a 「6pm–9pm」 query cannot be answered on the mock plane in any
+  shape the contract recognises. Owner: the web lane — the mock's clock reader can only publish what the type can
+  hold, which §643 discloses as not claimed rather than fixing blind.
+
+- **The mock's weekend is `+4` days, not the next Saturday.** `apps/web/src/lib/mock/index.ts:352` shifts four days
+  whatever the weekday of the query, so a Wednesday asking for 週六 gets Sunday and a Saturday asking gets Wednesday;
+  「週六」 with no hour publishes nothing, which is the right answer for the wrong reason. Deriving the day is a
+  calendar, not a constant. Owner: the web lane.
+
+- **「晚市」 is dated by neither plane now.** The parent's boolean dated it 19:00; `PART_OF_DAY`
+  (`apps/ai/nexus_ai/nlu/timeparse.py:44`) carries 午市 on the noon side and nothing for a night market on the night
+  side, and the mock re-derived the service's roster faithfully, so a night-market query now asks for a time. This
+  is a vocabulary decision for the service lane, not a drift between the planes — the door would go red the moment
+  one side learned the word and the other did not.
+
+- **The host-timezone half of §643 is reasoned, not measured.** The door was written on a machine already at +08:00,
+  where the mock's `hkInstant` and the parent's `setHours` agree. A leg that runs the same reader under a different
+  `TZ` turns that disclosure into a measurement; until then the claim "the parent answered in the device's zone" is
+  a reading of the code, not of an output. Owner: the web lane.
+
+- **The service's guard docstring is two tokens stale.** `apps/ai/nexus_ai/nlu/timeparse.py:145` says "Two of the 37
+  cues have one" while the table it judges publishes 39 tokens; the count is the number the sentence was written
+  against, and the census that reads it (`apps/web/src/lib/mock/stated-time.test.ts`) reads the table, not the
+  prose. Owner: the AI lane.
 
 - **`plan_from_intent` could not plan the extractor's own output - closed by D652 (§649).**
   `extract_intent` returns an object whose `location`, `budget`, `time` and `constraints` entries are

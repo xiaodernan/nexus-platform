@@ -6,7 +6,7 @@ import type { IntentTime } from '../types';
 import { mergeIntent, understandQuery } from './index';
 
 /**
- * D645 — the mock plane published a time the visitor never said, and never read one they did.
+ * D646 — the mock plane published a time the visitor never said, and never read one they did.
  *
  * THE DEFECT. This lane answered the whole time question with one boolean, `evening`, whose cue list
  * carried the bare characters 点/點 and the words 晚市 and evenight. So 「帮我找一间安静一點的餐厅」
@@ -170,7 +170,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('the mock plane publishes only the time a query states (D645)', () => {
+describe('the mock plane publishes only the time a query states (D646)', () => {
   it('reads its own authority: the service windows, their bounds and the +08:00 clock', () => {
     expect(WINDOWS.map((window) => window.label).sort(), `labels read from ${timeparsePath}`).toEqual(
       ['afternoon', 'evening', 'morning', 'night', 'noon'],
@@ -231,7 +231,7 @@ describe('the mock plane publishes only the time a query states (D645)', () => {
         expect(bare.type, `"${pair.cue}" alone still dates the turn — the guard protects the surface, not the word`).toBe('explicit');
       }
     }
-    // The guard is positional, as the service's `_cue_reads` is: every reading is checked, not the first.
+    // The guard is positional, as the service's `_reads_as_a_time` is: every reading is checked, not the first.
     const both = publishedTime('下午茶有，下午也有', EARLY);
     expect(both.type, 'a second, bare 下午 after a category must open the window again').toBe('explicit');
     expect(both.starts_at, `"${both.starts_at}" is not the afternoon window the second reading names`).toBe(hkInstant(new Date(EARLY), 14, 0));

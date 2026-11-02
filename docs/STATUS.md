@@ -30087,6 +30087,120 @@ to the location subject. The live plane's reserve action is unchanged in shape a
   `cta_cards_before`, `cta_cards_after`, `cta_planes_before`, `cta_planes_after`, `cta_wholecard`,
   `cta_arms`, `cta_arms_16rows_1bb5b35`, plus `d642_owncheck`, `d642_headcheck` and `d642_suite`).
 
+## 643. D646 · the mock plane invented 19:00 for every evening-ish word and read no clock at all (`apps/web/src/lib/mock/index.ts`, `apps/web/src/lib/mock/stated-time.test.ts`)
+
+**The number moved, and that is a fact about the tree, not a typo.** The code landed as `9778b7e`, titled D645,
+because D645/§642 were free — re-read on disk, not remembered — when the unit started. The lane that owns
+`nlu/understand.py` claimed the same pair for its own party-cap unit and committed `d8a7c25` while this entry was
+being written, so the ledger files this unit as **D646 / §643**, and the four `D645` mentions the web files shipped
+with (two in `index.ts`, two in `stated-time.test.ts`, one of them the door's own `describe` title) are re-aimed by
+this commit. `scripts/check_ledger_sections.mjs` calls a duplicated section number a FORK and exits 1, which is the
+gate that made re-aiming the only legal move: two sections cannot answer one citation. The scratch files keep the
+`d645_*` names they were written with, because a measurement is dated by the number the unit carried at the time.
+That lane has filed D647–D653 as §644–§650 in the same window, and §643 stayed free throughout —
+`check_ledger_sections.mjs`, run against the tree before this entry was staged, printed 606 sections at HEAD and
+607 on disk with 0 missing and 0 duplicated, and named §643 as the one disk-only section: the state every ledger
+entry passes through on its way in.
+
+**How the unit arrived.** §638 (D641) taught the mock to answer a Traditional query at all, and its queue bullet
+charged two dead alternatives in that file's vocabulary. Reading the vocabulary to fix a cue instead of deleting
+one found the lane the cue belongs to: every part-of-day word, and every clock, was one boolean. The whole of the
+parent's time answer, from `eb06e80:apps/web/src/lib/mock/index.ts`:
+
+    const weekend = /周末|週末|週六|周六|saturday|weekend/i.test(query);
+    const evening = /晚上|晚市|夜晚|evenight|evening|pm|点|點/i.test(query);
+    const startsAt = new Date(now.getTime() + (weekend ? 4 : evening ? 0.2 : 1) * 86_400_000);
+    if (evening) startsAt.setHours(19, 0, 0, 0);
+    time: weekend || evening ? { type: 'explicit', starts_at: startsAt.toISOString() } : { type: 'none' },
+
+Four things live in those five lines, and none of them is a time reading. A clock that was typed is thrown away:
+「下午3點」 came back as 19:00 (measured on the parent's own bytes — the reverse control's third line). A 點 that
+is not a clock dates the turn: 「安静一點」 — *a little quieter* — published an `explicit` instant. `setHours` follows
+the reader's device zone, and `0.2` of a day is 4 h 48 min, so the invented evening was both a hard-coded hour and
+a fractional one. 「晚市」 was dated while 「朝早」, 「中午」 and 「傍晚」 were not dated at all, and a bare 「週六」 moved
+the visit four days out to whatever minute the device happened to be in — §8 forbids exactly this: never guess a
+time the visitor did not state.
+
+**What ships.** `PART_OF_DAY_WINDOWS` carries the five windows, their bounds and all 39 tokens, hand-carried from
+`apps/ai/nexus_ai/nlu/timeparse.py::PART_OF_DAY` — the web bundle cannot import the service and D626 says read its
+tree as text rather than pretend to share it. `readClock` reads the three shapes of the service's `CLOCK_RE`
+(`19:30`, `7點 / 7點半 / 7時15分`, `10pm`) through the same alternation, `guessMeridiem` copies `_guess_meridiem` so
+an explicit am/pm wins and otherwise the part of day decides the half, `_valid_clock`'s bound rejects an hour the
+clock cannot show, and a window rolls to tomorrow on its **closing** hour, not its opening one — 「下午」 asked at
+17:05 is still this afternoon. `readStatedTime` is now one exported reader used by the first turn and by
+`mergeIntent`, which is what the follow-up leg charges: the two turns had separate hand-copied cue lists and read
+「周六晚上7點」 two ways in one request.
+
+**The authority is read, not remembered.** The door reads `timeparse.py` and `lexicon.py` as text and re-derives
+every token, label and window bound, plus the guard roster: **194** category surfaces, **39** part-of-day tokens
+across **5** windows, **2** guarded cue→surface pairs (`下午 → 下午茶`, `afternoon → afternoon tea`). Both new readers
+throw on an empty population, per D626 — a blind census printed green for three days elsewhere in this repository
+and is not being re-introduced here. `tmp/d645_guard_probe.mjs` is the same derivation run standalone, and its
+output is what the paragraph above quotes.
+
+**D630 on this plane, and the copy that got it wrong.** A cue that only OPENS a word naming a thing does not date
+the sentence. The first guard asked whether the query names the surface *anywhere*, so 「下午茶有，下午也有」 lost
+its second, bare 下午 — the same presence-vs-position mistake the service's `_reads_as_a_time` does not make, since
+it checks each reading rather than the first. The shipped guard collects every index at which the cue reads the
+query, every index swallowed by a longer category surface, and fires only when the first set is inside the second;
+`下午茶` alone publishes nothing, `下午3點去食下午茶` keeps its 15:00. `occurrences` returns no index rather than
+disagreeing with `cuePattern` about where a Latin cue may start, and a cue with no occurrences is not guarded —
+a matcher disagreement can only ever cost a guard, never a cue.
+
+**The gate** is `apps/web/src/lib/mock/stated-time.test.ts`: 11 legs, all green; `npx vitest run` in `apps/web`:
+`Test Files 17 passed (17)` / `Tests 196 passed (196)`; `npx tsc --noEmit` → `TSC_EXIT=0`; lint 0 errors, 6 warnings
+in files this unit did not touch.
+
+**Twelve arms, each cutting one clause, every prediction written before the run** (`tmp/d645_arms.mjs`, report in
+`tmp/d645_arms.txt`): A1 the meridiem is never guessed (4 red), A2 every window opens at 19:00 again (3), A3 a bare
+點 is evening, as the parent read it (2), A4 a window rolls on its opening hour (1), A5 the follow-up goes back to
+its own cue list (1), A6 the full-width colon is not a separator (2), A7 the weekend stops moving the day out (1),
+A8 the Latin currency cue dropped whole (1), A9 a third capture group shifts every clock read (5), A10 the guard is
+never built (2), A11 the guard asks whether the surface appears anywhere — the copy this unit first shipped (1),
+A12 the guard fires for its cues whatever the query says (4). **12/12 MATCHED, 27 reds, no arm reddened a leg it
+did not predict.** The first pass came back with three MISMATCHes and none of them was an assert to loosen: A1, A2
+and A9 also redden the new positional leg, because that leg reads the meridiem, a window bound and the capture
+arity — the predictions were re-derived and re-run. A11 was one arm named for a positional defect while its splice
+disabled the guard wholly, which is two mechanisms in one arm; it is split into A11 and A12 so each names the
+reading its own bytes perform.
+
+**Reverse control, and the three legs that cannot see the parent.** The same door run against `eb06e80`'s real
+bytes (`tmp/d645_parent_reverse.mjs`, output in `tmp/d645_parent_reverse.txt`): **8 RED, 3 GREEN** of 11. The
+greens are disclosed rather than rounded away. 「asks for the time in the same breath it says it has none」 checks
+that `unknowns` and `time.type` agree, and the parent's guesses were internally consistent — that leg witnesses a
+contract, not a reading. 「moves a stated weekend hour out of today」 names 「週六晚上7點」, where guessing evening
+means 19:00 and reading a stated 7點 in the evening mean the same instant, so the leg agrees with the parent by
+accident. 「keeps the currency cue」 is a regression guard for the alternative *this* unit dropped; on the parent the
+cue still carried it, so green is its right answer there and it proves nothing about the time lane. A leg that
+passes on the defective bytes is a leg whose prediction was written from the fix, not from the defect — the two
+accidental greens are the ones a future unit should widen, not trust.
+
+**Not claimed.** (a) The device-zone half: the door was written on a machine already on Hong Kong time, so
+`hkInstant`'s +08:00 arithmetic and `setHours` agree here and the divergence is reasoned, not measured — the
+parent's `setHours(19,…)` is gone but no leg proves it was ever wrong on a non-HK host. (b) 「週六」 with no hour
+still returns no time rather than asking, and the `+4` day shift for a stated weekend hour is a magic number, not
+a derived next-Saturday; both are queued. (c) Chinese numerals: the service rewrites them first
+(`numerals.normalise_numerals`) and the mock reads digits only, so 「九點」 arrives as text and is published as no
+time. (d) The published vocabulary `range` / `open_now` / `unspecified` has no carrier in the web's `IntentTime`,
+which spells its no-time `none` — the mock cannot answer a 6pm–9pm query at all. (e) 「晚市」 is dated by neither
+plane now, and the lexicon carries no afternoon-tea category for the guard's roster to grow into on this side.
+(f) The service's own docstring (`apps/ai/nexus_ai/nlu/timeparse.py:145`) still says "Two of the 37 cues" while the
+table reads 39 tokens; the count is the service lane's, and this unit read it as text rather than editing it.
+
+- readers: `apps/web/src/lib/mock/index.ts:224` (`PART_OF_DAY_WINDOWS`), `:235` (`CLOCK_RE`), `:244`
+  (`cuePattern`, the Latin boundary), `:251` (`TIME_CUES`, longest-cue-wins), `:262` (`CATEGORY_SURFACES`),
+  `:266` (`occurrences`), `:289` (`cueOpensACategory`), `:310` (`guessMeridiem`), `:318` (`readClock`),
+  `:351` (`readStatedTime`), `:353` (the guard's only call site), `:428`/`:458` (`mergeIntent`, which now shares
+  the reader), `apps/web/src/lib/mock/stated-time.test.ts:102`/`:117`/`:128` (the surface and roster readers that
+  throw on an empty population), `:220` (the positional leg), `:243` (the §8 both-directions leg), `:264` (the
+  roll), `:293` (the follow-up), `:325` (the clock-spelling census),
+  `apps/web/src/lib/mock/vocabulary-spelling.test.ts:167` (the scanner that reads a character class as a class),
+  `apps/ai/nexus_ai/nlu/timeparse.py:22` (`HK_TZ`), `:71` (`PART_OF_DAY`), `:127` (`_guarded_cues`), `:150`
+  (`_reads_as_a_time`), `:234` (`CLOCK_RE`), `:263` (`_guess_meridiem`), `:449` (`_valid_clock`),
+  `apps/ai/nexus_ai/nlu/lexicon.py` (`CATEGORY_SYNONYMS`, the 194 surfaces), `apps/web/src/lib/types.ts:59`
+  (`IntentTime`'s `type` union, whose `none` has no published twin), and this unit's `tmp/` measurements (`d645_arms.mjs`,
+  `d645_arms.txt`, `d645_parent_reverse.mjs`, `d645_parent_reverse.txt`, `d645_guard_probe.mjs`).
+
 ## 649. D652 · the planner read the extractor's own dicts as models and could not plan the sentence (`apps/ai/nexus_ai/search/service.py`)
 
 **How the unit arrived.** A focused run of the preference suites left two reds that were not this
