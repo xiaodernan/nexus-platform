@@ -220,7 +220,11 @@ def test_a_point_to_measure_from_gives_a_distance(live_settings):
     for it in body.get("items") or []:
         distance = it.get("distance") or {}
         assert distance.get("meters") is not None, f"{it.get('slug')} has no distance"
-        assert distance.get("fact_id"), "the distance has no fact"
+        # D668 / DECISIONS D28: the distance is cited by the fact row, not by a `fact_id` inside
+        # the closed DistanceInfo block the card sends.
+        backed = {f.get("attribute") for f in (it.get("facts") or [])}
+        assert "distance_m" in backed, (
+            f"{it.get('slug')} prints a distance no fact backs: {sorted(backed)}")
 
 
 def test_a_query_naming_the_cuisine_in_its_own_name_finds_it(live_settings):

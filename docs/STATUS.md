@@ -31298,3 +31298,185 @@ stream works on the blocks, not on the object that holds them.
   `tmp/d643_headcheck.py`; and the superseded worktree-pass records `tmp/d643_measure.py`,
   `d643_before`, `d643_after`, `d643_offences_before`, `d643_offences_after`, `d643_cards_before`,
   `d643_cards_after`.
+
+## 665. D668 · the card cited a value twice, inside the closed block that holds the number and in `facts[]`, and D28 had already ruled which copy to keep (`apps/ai/nexus_ai/search/cards.py`)
+
+**How the unit arrived.** §664 closed A1 of the 2026-09-23 table and ended on the residue it left:
+  the same census still answered **76 `oneOf` refusals**, 19 demo and 45 live at `/rating` and 12
+  live at `/distance`, and the section said the next unit of this stream "works on the blocks, not
+  on the object that holds them". That next unit had been ruled already, two pages earlier in the
+  same repository: **DECISIONS D28** ("Where a card citation lives: `facts[]` for values, on the
+  object for live state", 2026-09-23) names the key, names the block (`RatingInfo` "is closed at
+  `{value, count, smoothed?}`"), and names the remedy - 「`rating.fact_id` is dropped at the
+  service」 - and points at "the AI's projection (`STATUS.md` row A3)" as the one place a schema
+  change was *not* needed. The ruling was recorded; the projection was never edited, so the lane
+  kept sending the copy D28 says a value block must not carry.
+
+What kept the gate green is the same mechanism §667 filed, one level down and this time inside a
+  gate that does police nested objects. `test_card_nested_shapes.py`'s `DECLARED_EXTRAS` carried
+  `"rating": ("fact_id",)` and `"distance": ("fact_id",)`, and the two comment lines above the list
+  gave the contract's own sentence as the reason - "the trust primitive (§4/§19: any AI-stated fact
+  cites one of these) - the D423 unit". §667's closing bullet asked that a declared extra name the
+  reader that needs it. The reader the sentence describes does exist, and it is not the card block:
+  §4/§19 speak of a **fact's** citation, `/compare` carries its own on the cell
+  (`CompareCell.fact_id` in `packages/types/src/common.ts`, §37), and the trust badge resolves the
+  rating through `findFact(card, 'rating')`. The list cited a real clause for a key no reader
+  reads, which is why this unit deletes the two entries rather than annotating them.
+
+**What the lane sent, measured on `b33de4e`.** `tmp/d668_measure.py` runs the eleven asks on both
+  planes in-process (`TestClient`, nothing started, no row written), resolves every card key
+  through the published `$ref`s - `common.json#/$defs/RatingInfo`, `.../DistanceInfo`,
+  `fact.json#/$defs/AvailabilityInfo`, `entity_card.json#/$defs/CardOpeningState` - and hands the
+  payloads to the contract package's own validator (`tmp/d619_full_offences.mjs`), into
+  `tmp/d668_before.txt`. **19 of 19 demo cards, 45 of 54 live cards send `rating.fact_id`, and all
+  12 live cards that carry a distance send `distance.fact_id`.** The block's copy is not the
+  pointer's home: **19 of 19, 45 of 45 and 12 of 12 of those cards also carry the identical UUID in
+  `facts[]`**, because `build_card` appends `computed["rating"]` and `computed["distance_m"]` to
+  `facts` in the loop above and then reads their `fact_id` back out two lines later. The validator
+  refuses exactly those keys - 76 rows, every one `oneOf - no oneOf branch matched`, on 19/19 and
+  54/54 cards - and `RatingInfo` is closed at `{value, count, smoothed}`, so the card sends two of
+  the three published fields plus one the block has never named. Take only those keys out and the
+  verdict is **0 schema offences on both planes**: the demo census has no card with any offence at
+  all, and the live census keeps 18 cards whose rows are rules, not schema - **9
+  `entity_card_rendered_value_backed`** and **12 `entity_card_facts_scoped`**, the two classes §664
+  already filed and this unit does not claim.
+
+The census is a sweep, so it also says where the lane was right. `ai_match`, `availability`,
+  `open`, `price` and `image` sit inside their published shapes on every card; the three booleans
+  `flags` sends beyond its five published names (`conflicting_fact`, `estimated_price`,
+  `verified_visit`) are legal because that block is open (`additionalProperties: {"type":
+  "boolean"}`) and **0** of those 19 or 54 duplicate a pointer in `facts[]` - a flag is not a
+  citation, which is the same distinction D28 drew from the other side.
+
+**The readers are on D28's side, not the card's.** `packages/ui/src/trust/Renderers.tsx` resolves
+  the badge through `findFact(card, 'rating')` and then reads `card.rating?.value` and `.count`, so
+  the pointer it trusts is the fact row's; `CardRating` and `CardDistance` in
+  `packages/ui/src/trust/types.ts` publish `{value, count}` and `{meters, text, travel_minutes}`,
+  which is §2's prose to the field and leaves no place for a key the lane sends;
+  `apps/web/src/lib/facts.ts` derives every `factId` it hands a component from a `Fact` (`factId:
+  fact.fact_id` at `:54`, `:66`, `:79`, `:94`) - and its `rating_fact_id` is a column of the
+  platform's own listing row, not of a card block. A `git grep -nE "(rating|distance)[?.]+fact_id"`
+  over `apps/web`, `packages/ui/src` and `packages/types/src` answers **0 lines**: nothing shipped
+  asks for what the block carried. Inside the AI lane the only readers were two asserts, and this
+  unit re-aimed both at the backing fact row - `test_cards.py` now reads `{f.attribute for f in
+  card.facts}` and `test_live_search_contract.py`'s distance row reads the card's `facts[]`.
+
+**What the card sends now.** `rating = {value, count}` and `distance = {meters, text,
+  travel_minutes}`, one expression each: the rating ternary that produced two shapes depending on
+  whether `computed` held a rating row collapses to the one §2 spells. Re-measured on these bytes
+  (`tmp/d668_after.txt`): **0 pointers inside either block on either plane**, 0 schema offences,
+  the rule residue unchanged at 9 and 12 rows, and every value still citable - 19 of 19 demo and 45
+  of 45 live rating cards that had a backing fact keep it, and 12 of 12 distances do. The outbound
+  road shrinks by exactly the keys: `HttpLLMAdapter._user_text` on the same census answers **58,770
+  against 59,739** bytes on demo and **216,293 against 219,200** on live, with the control putting
+  back 19 and 57 keys - **51 bytes each** - and the demo control landing on §664's after-figure to
+  the byte, which is the cross-check that the two records measured the same card and not two
+  different ones. The two STATE blocks keep their citations, published as D28 wrote them:
+  `availability.fact_id` and `open.source_fact_id` are untouched, and the door pins that so a later
+  tidy-up cannot "unify" the card by deleting the two pointers the contract does name. One
+  measurement forced a change to that row: `AvailabilityBrief` serializes its own `fact_id`
+  default, so a card that cites nothing still has the word on the wire - presence is not citation,
+  and the row reads `c[word].get(pointer)` for that reason (arm `F` below).
+
+**Arms - which half of the fix carries which claim.** `tmp/d668_arms.py` lays nine arms over trees
+  of `b33de4e` (`git archive`, this unit's test bytes laid over each, nothing written to the live
+  worktree, arm trees deleted at the end), and each runs the door plus the two re-aimed readers and
+  the nested-shapes gate, then `tmp/d668_arm_census.py` re-runs the eleven asks and the validator
+  judges the dump (`tmp/d668_arms.txt`; the run's last line verifies the live worktree's product,
+  gate and door bytes are unchanged by it).
+
+- `A_parent_bytes` - the parent's `cards.py` under this unit's door and readers: **6 failed, 39
+  passed**, 76 schema offences, census 19/19 + 45/54 + 12/12. Run first, on its own bytes, the
+  parent's `test_card_nested_shapes.py` answers **3 passed** over these same cards.
+- `B_fix_only` - this unit's `cards.py`, the parent's declaration left standing: **45 passed, 0
+  offences.** The declaration is not what refused the card; it is what hid it, and B is the arm
+  that shows an allowance stops being read the moment the key leaves.
+- `C_shipped` - all of this unit's bytes: **45 passed, 0 offences.**
+- `D_rating_back` and `E_distance_back` - each expression returned alone: **7 failed** (64
+  offences) and **4 failed** (12 offences). The two charges are separate and each is policed by
+  itself, and D's seventh red is `test_the_nested_objects_carry_the_contract_fields` - with the
+  declaration deleted, the predecessor gate refuses the key too, which is the row `I` shows is
+  load-bearing.
+- `F_over_removal` - the two published STATE pointers also taken: **exactly 1 red**,
+  `test_the_state_blocks_keep_their_own_pointers`, and the census then answers 0 blocks naming a
+  real fact where A answered 16 demo and 43 live. The rule side rises from 9 to **68
+  `entity_card_rendered_value_backed`** with 16 demo and 54 live cards offending: a card that
+  cites nothing is a bigger offence than a card that cites twice, and this unit is a move.
+- `G_loss_not_move` - `rating` and `distance_m` also taken out of `facts`: **4 red** (the two
+  re-aimed readers, `test_build_card_numbers_and_bullets_all_grounded`, and the door's own
+  `test_the_pointer_the_card_still_gives_is_the_facts_own_row`), **0 schema offences**, and 19
+  demo / 54 live rating cards and 12 distance cards left uncitable. This is the shape the fix
+  could have shipped as, and it is legal against a closed block - which is why the door asserts
+  the backing fact, not only the absence.
+- `H_widen_the_schema` - `fact_id` added to the published `RatingInfo` (D28's temptation): **1
+  red**, `test_the_published_value_block_is_closed_and_names_no_pointer[rating]`. The yardstick
+  rows read the schema rather than reciting it, so the contract cannot be edited into licensing
+  the key it refused; D28's closing note is that under that fix "the closed-object check ...
+  would have been the thing deleted".
+- `I_readd_with_allowance` - D's re-add with the parent's `DECLARED_EXTRAS` back: **6 red, all of
+  them the door's, and the gate not red.** The pair to B and the reason the two entries had to
+  go: with the allowance restored, the shipped suite is green against a card the contract refuses
+  on 64 rows.
+
+**Suite.** `tmp/d668_shipped_suite.py` archives the whole tracked tree at `b33de4e`, overlays
+  exactly the five files this unit ships, and runs `pytest tests -q --tb=line -rf` against the live
+  database: **19 failed, 34,459 passed, 44 skipped, 1 warning in 2,371.36s (0:39:31)**, rc=1
+  (`tmp/d668_suite.txt`; the tree is deleted when the run ends unless `D668_KEEP_TREE=1`, so the
+  bytes measured are the parent's plus these five files and no other lane's worktree state).
+  `tmp/d668_owncheck.py` then runs the seven files that hold those 19 rows twice more on trees of
+  `b33de4e` - once with this unit's bytes laid over the parent, once with the parent alone - and
+  **the two passes print the same 18 rows**: `18 failed, 244 passed` against `18 failed, 232
+  passed`, with **0 rows red only with this unit's bytes** and 0 rows this unit fixes
+  (`tmp/d668_owncheck.txt`). None of the five files this unit stages holds a suite red at all,
+  which is the attribution the ledger claims. Thirteen of the eighteen sit in the district lane's
+  `test_the_district_a_card_prints_is_filed_under_a_subject_the_answer_never_loads.py`, the file
+  D667 re-aimed and this unit leaves alone, and the other five name the citation, dead-constant,
+  category-word and two vocabulary gates. The 19th row,
+  `test_the_documents_name_modules_that_exist`, is green on both owncheck passes and red only on
+  the suite run, for the tree-shaped reason D667 measured (`tmp/d643_docpath_root.py`, §664): a
+  whole-tree archive does hold `data/seed/generate.py`, so `_repo_root` stops inside the tree,
+  where no gitignored `tmp/` was ever archived, and the row reads PLAN's record names as 37
+  unresolvable citations over 33 distinct files. Neither verdict is this unit's.
+
+**Residual classes, on the bytes this unit ships.** Nothing else moved, and three classes are now
+  visible in the shape the fix leaves. **9 live product cards print `rating={"value": 0.0, "count":
+  0}` with no `rating` fact at all** - the phantom zero §664 named. Before this unit those cards
+  took the ternary's else-branch, so they never had a block pointer either and nothing regressed;
+  after it, the number has no citation anywhere on the card, and the door's
+  `test_the_pointer_the_card_still_gives_is_the_facts_own_row` is written against a card the
+  builder fills, so it cannot see these nine. **`RatingInfo.smoothed` is published and produced by
+  nobody**: `common.json` and `packages/types/src/common.ts` name it as the discriminator for
+  AGENT_CONTRACT §6's Bayesian-smoothed quality score, `ranking.py` computes that score for the
+  `quality` component only, and `build_card` prints `cand.rating` - the raw aggregate - and never
+  sets the flag, so the card's rating is unambiguously the raw mean and says so only by silence;
+  `git grep smoothed` over the shipped surfaces is the type, the schema and one i18n sentence.
+  **The availability block's citation is a serialized default**: all 19 demo and 54 live blocks are
+  exactly `{status: "unknown", next_slot: null, as_of: null, fact_id: null}`, while
+  `entity_card_rendered_value_backed` gates its availability branch behind `status !== "unknown"` -
+  so the empty pointer is legal, unpoliced, and a consequence of the seed horizon §619 filed rather
+  than of this unit. The `open` half of A6 is not in these numbers: 16 demo and 43 live blocks send
+  `is_open`, `as_of` and a `source_fact_id` that is one of the card's facts, and the remaining 3
+  and 11 send no verdict, so the rule's open branch never meets an unpunished claim.
+
+- readers: `search/cards.build_card` (the only producer, and the gate, because `EntityCard.rating`
+  and `.distance` are `Optional[dict[str, Any]]` - `extra="ignore"` cannot refuse a key the model
+  does not name, which the door pins in
+  `test_the_model_cannot_be_the_gate_because_it_types_both_blocks_as_free_dicts`),
+  `search/cards.synth_computed_facts` (the `rating` and `distance_m` rows `facts[]` keeps),
+  `contract.EntityCard`, `models/base.HttpLLMAdapter._user_text` (the outbound road the meter
+  reads), `packages/types/src/schemas/common.json#/$defs/RatingInfo` and `DistanceInfo`,
+  `fact.json#/$defs/AvailabilityInfo`, `entity_card.json#/$defs/CardOpeningState` and its `oneOf`
+  branches for `rating`/`distance`, `packages/types/scripts/rules.mjs`'s
+  `entity_card_rendered_value_backed` (both its rating and availability branches),
+  `packages/ui/src/trust/Renderers.tsx`, `packages/ui/src/trust/types.ts` (`CardRating`,
+  `CardDistance`), `packages/types/src/common.ts` (`RatingInfo.smoothed`, `CompareCell.fact_id`),
+  `apps/web/src/lib/facts.ts`, `docs/API_CONTRACT.md` §2, `docs/AGENT_CONTRACT.md` §4/§5/§6/§19
+  and §37, `docs/DECISIONS.md` D28, the three re-aimed test files and the deleted
+  `DECLARED_EXTRAS` entries, and this unit's `tmp/` records: `tmp/d668_measure.py` with
+  `d668_before` and `d668_cards_before`; `tmp/d668_capture.py` with `d668_cards_simulated`;
+  `tmp/d668_patch.py`; `tmp/d668_after.py` with `d668_after`, `d668_cards_after` and
+  `d668_cards_control`; `tmp/d668_arm_census.py` and `tmp/d668_arms.py` with `d668_arms`, the
+  nine `d668_cards_<arm>.json` dumps and `d668_arms_run.log`; `tmp/d668_shipped_suite.py` with
+  `d668_suite`; `tmp/d668_owncheck.py` with `d668_owncheck`; `tmp/d668_rewrap.py` (the ledger's
+  own wrap pass); `tmp/d619_full_offences.mjs` (reused as the judge); `tmp/d668_land.py` and
+  `tmp/d668_plan_patch.py`.

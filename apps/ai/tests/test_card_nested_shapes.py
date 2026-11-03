@@ -29,9 +29,12 @@ CONTRACT = REPO / "docs" / "API_CONTRACT.md"
 
 #: The fields a nested object carries that the contract's blocks do not spell out.
 DECLARED_EXTRAS: dict[str, tuple[str, ...]] = {
-    # the trust primitive (§4/§19: any AI-stated fact cites one of these) - the D423 unit
-    "rating": ("fact_id",),
-    "distance": ("fact_id",),
+    # D668: `rating` and `distance` used to declare `fact_id` here, and the declaration was the
+    # whole reason the gate passed - DECISIONS D28 rules that a rendered VALUE is cited by
+    # `facts[]`, §2 spells both blocks without a pointer (`"rating": { "value": 4.6, "count": 213 }`),
+    # and the published JSON closes both. The card sends neither key now, so there is nothing left
+    # to declare, and `test_the_declared_extras_and_gaps_still_exist` refuses an empty declaration
+    # rather than leaving the two names as a permanent allowance.
     # D619: the availability block §2 writes in prose is `{status, next_slot}`, while the
     # published JSON object (`packages/types/src/schemas/fact.json#/$defs/AvailabilityInfo`)
     # also names `fact_id` and `as_of`. The card sends those two - and no longer the

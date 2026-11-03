@@ -272,19 +272,22 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
     rendered_price = _ground_rendered_price(bundle, cand, rec, price, subject_uuid)
     if rendered_price is not None:
         facts.insert(0, rendered_price)
+    # D668 (DECISIONS D28): a rendered VALUE is cited by `facts[]`, not by a pointer inside the
+    # number. `RatingInfo` and `DistanceInfo` are `additionalProperties: false` over their own
+    # fields, `computed`'s rating and distance rows are already in `facts` (the loop above), and
+    # 19 of 19 demo, 45 of 45 live rating and 12 of 12 live distance cards sent the identical UUID
+    # twice - the block's copy being the one the contract's validator refused. The two STATES keep
+    # their citations, published as they are: availability's `fact_id` below, and the open block's
+    # `source_fact_id`, because a TTL-0 claim is only true as of the moment it names.
     rating_value = cand.rating
-    rating = ({"value": round(float(rating_value), 2), "count": int(cand.rating_count or 0),
-               "fact_id": str(computed["rating"].fact_id)}
-              if rating_value is not None and "rating" in computed
-              else ({"value": round(float(rating_value), 2), "count": int(cand.rating_count or 0)}
-                    if rating_value is not None else None))
+    rating = ({"value": round(float(rating_value), 2), "count": int(cand.rating_count or 0)}
+              if rating_value is not None else None)
 
     distance = None
     if cand.distance_m is not None:
         distance = {"meters": int(round(cand.distance_m)),
                     "text": meters_text(cand.distance_m),
-                    "travel_minutes": travel_minutes(cand.distance_m),
-                    "fact_id": str(computed["distance_m"].fact_id)}
+                    "travel_minutes": travel_minutes(cand.distance_m)}
 
     flags = EntityFlags(
         sponsored=bool(cand.sponsored),

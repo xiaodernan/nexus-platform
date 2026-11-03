@@ -2979,7 +2979,9 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
 - **The availability object was one of eight refusals these same 41 payloads still draw.**
   `tmp/d619_full_offences.mjs` prints the whole-card verdict over the cards D619 fixed: `rating.fact_id`
   and `distance.fact_id` into blocks published without them (41 of 41, and 6 of the 6 live cards that
-  carry a distance), `organic_rank` and `score_breakdown` on a card object that declares neither
+  carry a distance) - **closed by D668** (§665), which took both keys off the builder and left the
+  citation where D28 puts a value: on the `facts[]` row the card already sent beside them -
+  `organic_rank` and `score_breakdown` on a card object that declares neither
   (41 of 41) - **closed by D667** (§664), which took both off the model and off the builder and left
   the eight components on `Scored.breakdown` and the position on `Candidate.raw["organic_rank"]`,
   where the ranking already reads them - `actions[0].type` of `view` against
@@ -2991,12 +2993,57 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   that carries an `address` fact (6) failing `entity_card_facts_scoped` because §607 moved that fact's
   subject to the location. Two of these are already declared in `test_card_nested_shapes.py`'s own
   `DECLARED_EXTRAS`, so the lane has been arguing with the JSON on paper rather than on the wire. Owner:
-  the card lane, one door per class - what these six lines leave is A3 of the 2026-09-23 table
-  (`rating: {value, count, fact_id}` against a block closed at `{value, count, smoothed?}`, which is
-  both a `oneOf` refusal on the 19 demo and 45 live cards that print a rating and a
-  `entity_card_rendered_value_backed` rule offence on the 9 that print one no fact carries), the
-  `/distance` `oneOf` on the 12 live cards that print one for the same reason, and the 12
-  address-scope `entity_card_facts_scoped` rows, which are new since that run.
+  the card lane, one door per class. D668 (§665) opened A3 and the distance twin the table never
+  named: the `oneOf` refusal on the 19 demo and 45 live cards that print a rating, and on the 12 that
+  print a distance, is gone - the key left the block and the `facts[]` row stayed. What these lines
+  still leave is the `entity_card_rendered_value_backed` offence on the 9 live cards that print
+  `rating={"value": 0.0, "count": 0}` with no `rating` fact, which is now cited nowhere on the card
+  rather than twice, and the 12 address-scope `entity_card_facts_scoped` rows, new since that run.
+
+- **The allowance quoted the contract, and the contract was talking about a different object.**
+  `test_card_nested_shapes.py` carried `"rating": ("fact_id",)` and `"distance": ("fact_id",)` under a
+  comment that cites §4/§19 - "the trust primitive: any AI-stated fact cites one of these" - and that
+  sentence is true of a `Fact` row and of `/compare`'s `CompareCell.fact_id` (§37), not of a pointer
+  inside a value block. So the gate read the prose plane of the contract while the validator read the
+  JSON plane, and the two disagree only for this key. `tmp/d668_arms.py` prices the difference: arm
+  `B_fix_only` ships the fix with the parent's allowance standing and stays green, and arm
+  `I_readd_with_allowance` puts the key back with the allowance back and reddens only the door - 6
+  rows against a card the schema refuses on 64. This unit's answer is a row that reads the readers:
+  `test_no_shipped_reader_asks_for_a_pointer_inside_a_value_block` greps `apps/web`, `packages/ui/src`
+  and `packages/types/src` for the access it forbids, and also asserts that
+  `Renderers.tsx` still resolves the badge through `findFact(card, 'rating')` - so if the reader moves
+  back to the block, the premise fails loudly instead of quietly becoming true. Owner: any lane that
+  writes a `DECLARED_*` list - the entry has to name a reader line, not a clause.
+
+- **The phantom zero rating is now uncitable, and it is the cheapest card-side fix left on this
+  census.** 9 of the 54 live cards print `rating={"value": 0.0, "count": 0}` and carry no `rating`
+  fact, which `entity_card_rendered_value_backed` has been naming all along. `packages/types/src/common.ts`
+  says of that shape "a null/0 count means not yet rated", and AGENT §4 says a number with no fact must
+  not render, so the honest card sends `rating: null` - the block's `oneOf` already names the null
+  branch - rather than a zero the user reads as a score. D668 did not touch it: before the fix those
+  nine took the ternary's else-branch and had no block pointer either, so nothing regressed, but the
+  door's `test_the_pointer_the_card_still_gives_is_the_facts_own_row` only holds for cards that have
+  the fact. Owner: the card lane, 9 rows of `tmp/d668_after.txt` to start from.
+
+- **`RatingInfo.smoothed` is published, documented and produced by nobody.** `common.json` and
+  `packages/types/src/common.ts` name it as the flag for AGENT_CONTRACT §6's Bayesian-smoothed quality
+  score; `search/ranking.py` computes exactly that score for the `quality` component; `build_card`
+  prints `cand.rating`, the raw aggregate, and never sets the field. So the card's rating is
+  unambiguously the raw mean and signals it only by silence, and `git grep smoothed` over `apps/web`,
+  `packages/ui/src` and `packages/types/src` returns the type, the schema and one i18n sentence - no
+  reader. Either the lane starts saying which of the two numbers it prints, or the field is a fossil
+  and belongs in the same edit as its description. Owner: the AI lane with AGENT §6's author.
+
+- **The availability block's pointer is a serialized default, and the rule is written so it cannot
+  see it.** All 19 demo and 54 live cards send exactly `availability = {status: "unknown", next_slot:
+  null, as_of: null, fact_id: null}`, because `AvailabilityBrief` is built whether or not the pool
+  answered and the seeded horizon ends 2026-10-12 (§619's filed row). `entity_card_rendered_value_backed` gates
+  its availability branch behind `status !== "unknown"`, so the empty citation is legal - and unpoliced
+  - on every card the lane serves. D668 keeps the published pointer (D28: a state cites on the surface)
+  and pins its truth rather than its presence: `test_the_state_blocks_keep_their_own_pointers` requires
+  a pointer that names a fact, and arm `F_over_removal` is what that row is for. Owner: whoever moves
+  the horizon - on that plane this door is already in the suite, and the `open` block (16 demo, 43 live
+  cards naming a real fact) is the shape it should start matching.
 
 - **The gate that should have caught this declared the exception, in the producer's own words.**
   `test_cards_carry_the_contract_fields.py` asserted `tuple(extra) == DECLARED_EXTRAS` with the two

@@ -177,9 +177,10 @@ def test_build_card_numbers_and_bullets_all_grounded():
                     breakdown={"relevance": 0.8},
                     contributions=[("relevance", 0.5), ("distance", 0.2), ("quality", 0.1)])
     card = build_card(cand, scored, bundle, locale="zh-HK", query="壽司")
-    # rendered numbers carry a fact_id
-    assert card.rating["fact_id"]
-    assert card.distance["fact_id"]
+    # D668 / DECISIONS D28: a rendered number is cited by its fact ROW, not by a pointer inside
+    # the value the card renders - `RatingInfo` and `DistanceInfo` are closed and name neither.
+    backed = {f.attribute for f in card.facts}
+    assert {"rating", "distance_m"} <= backed, f"the card prints numbers {sorted(backed)} backs"
     # every bullet traces to a fact (§18)
     assert card.ai_match is not None
     assert all(r.fact_id is not None for r in card.ai_match.reasons)
