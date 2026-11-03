@@ -31990,3 +31990,184 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   not re-run); `tmp/d670_shipped_suite.py` with `d670_suite.txt` and the collision record
   `d670_suite_collision.txt`; `tmp/d670_owncheck.py` with `d670_owncheck.txt`; `tmp/d670_land.py`
   (which writes both docs files and refuses to land the same section twice).
+
+## 668. D671 · the length a bookable offering states reaches no projection and no card field, the 157 capacity facts that also state it are all expired, and every slot that could hold one is in the past (`measure-only: nothing changed`)
+
+**How the unit arrived.** `docs/PLAN.md` has carried one bullet for this since D607's census: 「How
+  long an offering takes is read by nobody who books one」, with four assertions and one question it
+  left for someone else (「The product question comes first: does the slot window come from the
+  offering's own duration, or from what the caller asked for?」). The unit's own title carried a fifth
+  number that no saved record holds - 「157 of the 804 carry a capacity fact and all 157 are past
+  `expires_at`」 - so this unit's job was to reproduce it or drop it. The October census
+  `tmp/d617_duration.txt` holds the column side and one wrong negative, and the bullet's two function
+  cites had drifted by 376 and 156 lines. Nothing here is a fix: every number is re-read on
+  `7e4ed16`, the drifted cites are re-aimed, the 157 is reproduced exactly, one census claim is
+  disproved, and three consequences the bullet never reached are measured and filed for the lanes that
+  own them.
+
+**What was run.** Four read-only instruments, all on the shipped bytes, all against the live
+  database, all in-process:
+  - `tmp/d671_measure.py` (`tmp/d671_measure.txt`, `tmp/d671_cards.json`) - the code census (who names
+  the column, on which line, in each of the five trees), the column's population, the facts and
+  capacity questions, the `availability_slots` census, and the eleven-ask census served through
+  `TestClient(create_app(...))` then joined to `entities_for`-shaped ground truth;
+  - `tmp/d671_probe.py` (`tmp/d671_probe.txt`) - the four numbers that first run raised and did not
+  settle: the duration inside the capacity facts' own `value`, the expiry clock over the whole `facts`
+  table, the clock over the whole `availability_slots` table, and the breakdown of the offerings
+  longer than every slot their merchant publishes;
+  - `tmp/d671_cards.py` (`tmp/d671_cards.txt`, `tmp/d671_cards.json`) - eight asks aimed at the
+  offering lanes, because the eleven-ask census answers 54 cards of which 11 are offerings and exactly
+  one of those 11 states a length. Each served card is recorded with its published type, whether the
+  JSON carries the key its own type declares, its CTA verbs and its `availability` block, and each
+  offering id is then read back with its duration, its bookability and its merchant's slot table;
+  - `tmp/d671_route.py` (`tmp/d671_route.txt`) - the third finding needed the lane's own decision, not
+  an inference from the cards, so it serves the same eight asks through the shipped route with a
+  listener wrapped around `plan_from_intent` and prints the intent object, the `subject_types` the
+  plan ends with and the card types that come back on one and the same call.
+  No gate was written, because nothing was changed to gate; no suite was run, because no file the
+  suite reads differs from `7e4ed16`, and §667's own suite verdict therefore still describes this
+  plane.
+
+**The four assertions, re-read.** 「`offerings.duration_minutes` is populated on 804 offerings」 -
+  holds, and is narrower than it sounds: 804 of 5,538 rows, all of them > 0, all of them `bookable`,
+  and **the same 804** carry `min_party_size` and `max_party_size` (`tmp/d671_probe.txt` section 5:
+  `bookable=804, has_min=804, has_max=804, has_dur=804, has_both=804` - the four Booking columns
+  co-occur on exactly one set of rows). By kind it is 584 of 978 `service`, 220 of 376 `experience`
+  and **0 of the 4,184 `product`**; the values are six numbers (30: 115 rows, 45: 117, 60: 212,
+  90: 121, 120: 133, 180: 106) and 749 of the 804 are `active`, so the lane's own status filter drops
+  55 of them before any of this is reached.
+  「Java names the column 13 times」 - **9** on this plane: 7 in `OfferingRepository.java`, 1 in
+  `MerchantContentController.java`, 1 in `CatalogReadTest.java`. 「the web 0 times」 - holds for
+  `apps/web` (0) and `packages/ui/src` (0); the 11 lines that do name it are all in
+  `packages/types/src`, which declares rather than reads. 「the AI lane's SQL never selects it」 -
+  holds and is understated: `nexus_ai` names the column once, in a comment (`search/sql.py:623`), and
+  the one gate file that names it names it in its own docstring
+  (`test_an_offering_that_cannot_seat_the_party_is_not_answered_for_it.py:4`).
+  The two function cites are both wrong - `_slot_window` is at `search/service.py:1308`, not `:932`,
+  and `slots_for` at `search/sql.py:802`, not `:646`; `service.py:932` is an argument of a different
+  call and `sql.py:646` sits inside the geo LATERAL of `build_offering_query`.
+
+**The 157, reproduced - and the census's negative is wrong.** `tmp/d671_measure.txt` section 3 reads
+  the `facts` table three ways and each gives the same answer: `subject_type` splits 2,928 `offering`
+  / 2,080 `merchant` / 684 `location`; the offering-keyed attributes are `price` 1,564, `rating` 1,207
+  and **`capacity` 157**; and the LATERAL join of that attribute against the rows that state a
+  duration returns `with_dur 804, dur_and_capacity 157, dur_capacity_expired 157,
+  dur_capacity_live 0`. So the number in the task title is exactly right and so is its verdict: every
+  capacity fact the plane holds sits on an offering that also states a duration, and not one is still
+  live. What October got wrong is its headline line - `tmp/d617_duration.txt` records 「facts rows
+  naming a duration: []」 and 「duration facts by subject_type: []」 because it searched the
+  **attribute name**. The number lives in the fact's `value`: all 157 `capacity` rows carry a numeric
+  `duration_minutes` beside `max_party_size` (`tmp/d671_probe.txt` section 1, `n 157, has_key 157,
+  is_number 157, has_party 157`), the platform seeds it that way (`CatalogReadTest.java:353` seeds
+  `{"max_party_size": 8, "duration_minutes": 90}`), and **every one agrees with the column** - fact 60
+  against column 60 on 46 rows, 45 on 27, 120 on 24, 90 on 23, 30 on 19, 180 on 18: 157 of 157, no
+  disagreement anywhere in the corpus. The plane therefore held each of those lengths twice, once in a
+  column no projection reads and once in a fact whose every copy the table itself calls expired, and
+  neither reached a card.
+
+**The field the card cannot send.** `packages/types/src/card.ts:151` declares
+  `duration_minutes?: number | null` on `ServiceCard` and `:164` on `ExperienceCard`, and
+  `packages/types/src/schemas/entity_card.json:98` publishes the property as
+  `{"type": ["integer","null"], "minimum": 0}` while its per-type blocks **forbid** it on `merchant`
+  (`:117`), `product` (`:135`) and `collection` (`:196`) and leave it allowed on exactly `service` and
+  `experience` - the two kinds the 804 rows belong to, to the row. On the lane's side of the same
+  contract, `apps/ai/nexus_ai/contract.py:168` is the whole `EntityCard` model and carries no
+  `duration_minutes`, no `bookable`, no `min_party_size`/`max_party_size`, no `stock_quantity`, no
+  `purchasable` and no `season`; `search/sql.py:733` projects `o.kind, …, o.bookable,
+  o.min_party_size, o.max_party_size` into the offering row - three of the four Booking columns, the
+  length dropped; and `entities_for` (`:945`) projects none of the four. So the road from the column
+  to the field is missing at both ends, and the card type that publishes it is the card type the 804
+  rows are. Measured served (`tmp/d671_cards.txt`): eight asks, **48 cards, 18 of them
+  `service`/`experience`, 0 carrying a `duration_minutes` key, 0 naming a `next_slot`**; the 16
+  distinct offerings behind them split 9 with a duration and 7 without, **0 of the 9 print it**, and
+  **10 of the 18 offering cards print a 「預訂」 CTA** - `reserve` in `actions[]`, which
+  `search/cards.py:709` keys on `rec.get("bookable")` alone. The card therefore invites the booking
+  and cannot state the length the booking needs.
+
+**The slot half, and the clock that hides it.** D607's charge was that a recommendation can 「propose
+  a two-hour offering into a one-hour slot」. On this corpus the sentence is true and unreachable at
+  once. `tmp/d671_probe.txt` section 3: `availability_slots` holds **32,492 rows over 396 merchants**
+  at three lengths (90 min: 24,490; 60 min: 7,650; 1200 min: 352), and every one of the 32,492 is
+  already over - first start 2026-09-21, last end **2026-10-13**, `running 0`, `future 0`,
+  `merchants_with_a_live_slot 0`, against a `now()` of 2026-11-03. `slots_for` bounds
+  `starts_at >= window[0] AND starts_at <= window[1]` with a window anchored at the request
+  (`_slot_window`: `at ± (30 min, 2 h)`, or `now .. now+3 h` for `open_now`), so on this data it
+  answers nothing for any ask, which is why 48 of 48 and 54 of 54 served cards print
+  `availability = {status: 'unknown', next_slot: null}`. The length question is still a real charge,
+  because the corpus says what it would have been: **295 of the 804** offerings are longer than the
+  LONGEST slot their own merchant publishes (`tmp/d671_measure.txt` section 6:
+  `merchant_has_no_slot 0, longest_slot_too_short 295, a_slot_can_hold_it 509`; service 214 of 584,
+  experience 81 of 220; `tmp/d671_probe.txt` section 4 gives the five classes - 90 against 60 on 95
+  rows, 120 against 60 on 97, 180 against 60 on 75, 120 against 90 on 15, 180 against 90 on 13), and
+  6 of the 16 offerings `tmp/d671_cards.py` served are in that class with a 「預訂」 verb on the card.
+  And no number in the lane is the offering's: the only length the AI lane computes is invented,
+  `nlu/timeparse.py:511` `_default_duration`, which returns 90 for a `lunch`/`noon` part, 120 for
+  `morning`, `afternoon` and any part the table does not know, and 150 for `evening`/`night`, and is
+  used at `:418` to set `window_end` from the **part-of-day word** - never from the offering the same
+  answer then recommends.
+
+**The clock over the whole grounding plane.** The same probe reads `facts` end to end
+  (`tmp/d671_probe.txt` section 2): 5,692 rows, `never_expires 0`, **`expired 5,692`**, `live 0`,
+  earliest expiry 2026-09-20, latest 2026-10-29, against the same `now()` of 2026-11-03 - every
+  `address` (684), `cuisine` (520), merchant `rating`/`opening_hours`/`price` (520 each) and offering
+  `price` (1,564), `rating` (1,207) and `capacity` (157) row is past `expires_at`. This unit changed
+  no line, so it states the consequence as a measurement and no more: `mean_remaining_fraction`, the
+  freshness the ranking reads, runs over exactly those rows, and every citation §4 demands resolves
+  against a fact the table itself says has expired. That is a seed clock, not a reader bug - no line
+  of the AI lane makes it true and none can fix it - and it is the reason the two fixes above are
+  unmeasurable on the live plane today.
+
+**The routing its own aimed capture tripped over.** Three of the eight asks were chosen only to reach
+  the offering lanes - `{"filters": {"kind": "service"}}`, `{"kind": "experience"}` and
+  `{"kind": "product"}`, each with no `query` - and all three came back as the same six `merchant`
+  cards (`tmp/d671_cards.txt`). `tmp/d671_route.py` reads the decision out of the shipped route with a
+  listener wrapped around `plan_from_intent`: those three arrive with `intent=None` and leave with
+  `subject_types=['merchant']`, while `髮` with `kind=service` and `導賞` with `kind=experience`
+  arrive with `intent='unknown'`, leave with `subject_types=['offering']` and serve six offering cards
+  each. The code gives the split as one line's position: `subject_types` is a field defaulting to
+  `("merchant",)` (`search/service.py:715`), the choice of statement reads it at `:1380`/`:1385`, and
+  the upgrade that honours a caller-named kind sits at `:946`, **below** the `if intent is None`
+  return at `:934-943`. So the lane does read `filters.kind`, just never on the path a text-less
+  request takes - and `build_merchant_query` (`sql.py:241`) has no kind predicate for it to fall
+  through to, because the only live one is inside `build_offering_query` (`sql.py:535`). A caller who
+  names a product kind is answered a restaurant. Filed with its mechanism measured; the answer is the
+  lane's.
+
+**What this unit did not decide.** It did not add the field to `EntityCard`, did not project the
+  column, did not make `slots_for` respect a length, and did not re-aim the card's CTA: PLAN's own
+  open question (does the window come from the offering or from the caller) is a product decision, the
+  published field has no reader in either UI tree, and with no live slot anywhere a fix would ship
+  unverifiable on this corpus. It did not move the line its own capture tripped over: the
+  `filters.kind` routing is filed below with its mechanism measured, and lifting `:946` above the
+  `intent is None` return is the lane's answer to give, not a measurement's. It did not re-check
+  D607's party-bound clause, which sits on the same projection and is already gated. And it re-seeded
+  nothing.
+
+**Readers.** The field is published in `packages/types/src/card.ts:151`/`:164` and
+  `packages/types/src/schemas/entity_card.json:98`/`:117`/`:135`/`:196`; the row that could feed it is
+  `apps/ai/nexus_ai/search/sql.py:733` (`build_offering_query`) and the one that does not is `:945`
+  (`entities_for`); the model that cannot carry it is `apps/ai/nexus_ai/contract.py:168`; the verb
+  that books it is `apps/ai/nexus_ai/search/cards.py:709`; the windows are
+  `apps/ai/nexus_ai/search/service.py:1308` (`_slot_window`) and `apps/ai/nexus_ai/search/sql.py:802`
+  (`slots_for`); the invented length is `apps/ai/nexus_ai/nlu/timeparse.py:511` (used at `:418`); the
+  lane choice that makes a kind-only ask answer merchants is `search/service.py:715` (the field's
+  `("merchant",)` default), `:934-943` (the `if intent is None` return), `:946` (the kind upgrade
+  below it) and `:1380`/`:1385`, with `KIND_TO_SUBJECT` at `:64`; the columns are
+  `infra/db/migrations/V1__init.sql` (`offerings`, and
+  `availability_slots` at `:277-292` with `CHECK (ends_at > starts_at)`) and `docs/DATABASE.md:72`
+  (the Booking columns); and the earlier census this unit corrects is `tmp/d617_duration.txt`.
+  - this unit's `tmp/` records: `tmp/d671_measure.py` with `d671_measure.txt` and `d671_run.log`;
+  `tmp/d671_probe.py` with `d671_probe.txt` and `d671_probe_run.log` (its first two runs died on
+  Postgres syntax - `count(DISTINCT …) FILTER` is not a legal aggregate and `over` is a reserved word
+  - and both failures are in the run log, above the output of the pass that fixed them);
+  `tmp/d671_cards.py` with `d671_cards.txt`, `d671_cards.json` and `d671_cards_run.log` (the first
+  version ran seven asks and hand-counted nothing; the eighth, `kind=product` with no text, was added
+  when the `filters.kind` bullet needed the third case in the saved record, and the totals line is
+  computed in the script); `tmp/d671_route.py` with `d671_route.txt` and `d671_route_run.log` (the
+  listener on `plan_from_intent`; after every ask had been served and printed, the run's last line is
+  the app's own telemetry write raising `pool is closing` at `api/runs.py:254` through
+  `db/pool.py:159` - which `runs.py` catches and logs as 「events insert failed (continuing
+  degraded)」, the client having already begun closing the pool - so that instrument persisted no
+  event and no corpus row either); `tmp/d618_capacity.py` (the superseded draft
+  of the first instrument, kept because it is where the 157 claim was first written down); and
+  `tmp/d668_capture.py`, whose `ASKS` list the first instrument reuses as the eleven-ask census.

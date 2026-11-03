@@ -2359,16 +2359,69 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   size, so the population a page is drawn from is still whatever the cap happens to reach, and
   no door yet answers whether the answer should say so out loud. Owner: the AI lane.
 
-- **How long an offering takes is read by nobody who books one (D607's census)** -
-  `offerings.duration_minutes` is populated on 804 offerings, the same count as the rows stating a
-  party bound, so the corpus's bookable rows do carry a duration. Java names the column 13 times,
-  the web 0 times, and the AI lane's SQL never selects it (measured: 1 occurrence of the word in
-  `nexus_ai`, which is D607's own comment). `_slot_window` (`service.py:932`) and `slots_for`
-  (`sql.py:646`) bound a time window and a capacity, never an offering's length, so a
-  recommendation can propose a two-hour offering into a one-hour slot and nothing between the card
-  and the booking says so. The product question comes first: does the slot window come from the
-  offering's own duration, or from what the caller asked for? Owner: the AI lane with the
-  reservation owner.
+- **How long an offering takes is read by nobody who books one, and the card has no field to state
+  it with (D607's census; re-measured, corrected and widened by D671 (§668), which changed no
+  line)** - the column is real and the corpus is not empty: 804 of 5,538 `offerings` rows carry a
+  `duration_minutes` (30/45/60/90/120/180, 749 of them `active`), all 804 are `bookable` and the same
+  804 carry both party bounds, and they are exactly 584 `service` + 220 `experience` + 0 `product`.
+  The lane's text still says what D607 said: `nexus_ai` names the column once, in a comment
+  (`search/sql.py:623`), `build_offering_query` projects the other three Booking columns and drops
+  this one (`search/sql.py:733`), and `entities_for` (`:945`) projects none. What D607 did not know is
+  that the published contract already asks for it: `packages/types/src/card.ts:151`/`:164` declare
+  `duration_minutes` on `ServiceCard` and `ExperienceCard`, `entity_card.json:98` publishes the
+  property and the per-type blocks forbid it on `merchant`, `product` and `collection` while leaving
+  it allowed on exactly the two kinds the 804 rows belong to - and `contract.py:168`, the whole
+  `EntityCard`, has no such field, so the road is missing at both ends. Served, it is measurable:
+  48 cards over eight offering-aimed asks, 18 of them `service`/`experience`, **0 carrying the key**,
+  10 of them printing 「預訂」 (`tmp/d671_cards.txt`). Two of the bullet's cites and one of the
+  census's negatives were wrong: Java names the column **9** times, not 13; `_slot_window` is at
+  `search/service.py:1308` and `slots_for` at `search/sql.py:802`, not `:932`/`:646`; and
+  「facts rows naming a duration: []」 (`tmp/d617_duration.txt`) searched the attribute name - the
+  number lives in the `value`, and all 157 `capacity` facts keyed to offerings carry a numeric
+  `duration_minutes` that agrees with the column on 157 of 157 rows. The product question this bullet
+  closed with is still the first thing to answer, and the two bullets it now hands its findings to are
+  measured rather than assumed. Owner: the AI lane with the reservation owner.
+
+- **A card books what no slot of its merchant can hold: 295 of the 804.** `availability_slots` rows
+  are 90 min (24,490), 60 min (7,650) or 1200 min (352), and 295 offerings are longer than the LONGEST
+  slot their own merchant publishes - 214 of the 584 `service` and 81 of the 220 `experience`
+  (`tmp/d671_measure.txt` section 6; the five classes in `tmp/d671_probe.txt` section 4 are 90 against
+  60 on 95 rows, 120 against 60 on 97, 180 against 60 on 75, 120 against 90 on 15, 180 against 90 on
+  13). Six of the sixteen offerings `tmp/d671_cards.py` served are in that class and their cards
+  print 「預訂」, which `search/cards.py:709` keys on `bookable` alone. Three honest shapes exist and
+  the corpus does not pick one: refuse the pair, offer the offering only with a slot long enough, or
+  print the length and let the reservation server answer it. Which is a product answer, and today
+  none of them is measurable - see the bullet below. Owner: the AI lane with the reservation owner.
+
+- **The whole grounding plane is in the past: 5,692 of 5,692 facts expired, 32,492 of 32,492 slots
+  over.** At measurement `now()` was 2026-11-03; the latest `facts.expires_at` is 2026-10-29 and the
+  latest `availability_slots.ends_at` is 2026-10-13 (`tmp/d671_probe.txt` sections 2-3). Measured in
+  the same runs: `slots_for` therefore answers 0 rows for every window the lane can build, so 48 of
+  48 and 54 of 54 served cards print `availability = {status: 'unknown', next_slot: null}`;
+  `mean_remaining_fraction`, the freshness the ranking reads, runs over rows the table itself declares
+  expired; and every §4 citation resolves to an expired fact. No line of the AI lane makes this true
+  and no line of it can fix it, but it blocks the two bullets above and every availability claim this
+  ledger has ever made on the live plane. Owner: whoever owns `data/seed` (the seed's own clock, not
+  the reader's).
+
+- **A `filters.kind` with no text answers merchants, and the kind it was given is dropped.** Three
+  asks - `{filters: {kind: service}}`, `{kind: experience}`, `{kind: product}`, each `limit 6`, none
+  with a `query` - each serve the **same 6 `merchant` cards** (香峰, 瀚館, 盛甬酒吧, 星灶, 瀚軒, 星里), and
+  the same two kinds served with a text leg (`髮`, `導賞`) serve the offering kind they asked for
+  (`tmp/d671_cards.txt`). The decision is read out of the shipped bytes, not inferred: a listener on
+  `plan_from_intent` (`tmp/d671_route.txt`) shows the three text-less asks arriving with
+  `intent=None` and leaving with `subject_types=['merchant']`, and the two asks that carry a text leg
+  arriving with `intent='unknown'` and leaving with `subject_types=['offering']`. The code is one
+  line's position: `subject_types` is a field defaulting to `("merchant",)` (`search/service.py:715`),
+  the upgrade that honours a caller-named kind is `if filters and _plain(filters).get("kind") in
+  ("product", "service", "experience")` at `:946`, and it sits **below** the `if intent is None`
+  return at `:934-943` - so a request that names a kind and no text leaves the function before the
+  line that would read it. `build_merchant_query` (`sql.py:241`) carries no `kind` predicate at all
+  and the only live one is inside `build_offering_query` (`sql.py:535`), which that request never
+  reaches: a caller who names a product kind gets a restaurant. So the lane does consult
+  `filters.kind`, just not on this path. This unit measured it and stopped: it is a routing claim, not
+  a column-nobody-reads claim, and D614 and D616 already own the shape of it for `filters.category`.
+  Owner: the AI lane.
 
 - **A fixture merchant that names its coarse bucket cannot answer a leaf the live lane answers, and
   HEAD is red on it (found while proving D607's reds were not D607's)** -
@@ -3076,6 +3129,10 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   no rated row reaches the branch - so only the impossible-fixture leg can state WHICH column the gate
   reads, which is why that leg exists. Gate
   `test_the_comparison_grid_puts_each_cell_under_its_own_subject.py`, 18 legs, 14 red on HEAD.
+  §667's grid is not the only reader of the same dead clock: D671 (§668) measured that all 5,692
+  `facts` rows and all 32,492 `availability_slots` rows are in the past, so every cell of a grid that
+  cites a fact today cites a row the table itself calls expired, and `open_state` is the one attribute
+  row that does not depend on either table.
 
 - **`CompareCell.subject_id` is published, and this lane has never emitted it.**
   `packages/types/src/search.ts:204` declares `subject_id?: Uuid | null` while
