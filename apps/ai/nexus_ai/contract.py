@@ -184,9 +184,17 @@ class EntityCard(BaseModel):
     actions: list[CardAction] = Field(default_factory=list)
     facts: list[Fact] = Field(default_factory=list)
     flags: EntityFlags = Field(default_factory=EntityFlags)
-    # ranking internals, never rendered by the UI but needed by /compare + eval
-    organic_rank: Optional[int] = None
-    score_breakdown: dict[str, float] = Field(default_factory=dict)
+    # D667: no ranking internal sits here. The published card
+    # (`packages/types/src/schemas/entity_card.json`) is a closed object of 43 properties and names
+    # neither `organic_rank` nor the eight-component `score_breakdown`, so every card the lane
+    # answered was two closed-object offences - 19 of 19 demo and 54 of 54 live payloads. The comment
+    # this replaces claimed "/compare + eval" needed them: the compare route answers `CompareRow`
+    # attribute cells and never reads a card dict, and 0 lines in `apps/web`, `packages/ui` or
+    # `packages/types` name either key. Neither is a debug rung either - `debug|explain|verbose`
+    # occurs zero times across API_CONTRACT and AGENT_CONTRACT - and these dicts are serialized
+    # verbatim into the summary call to a model provider, so the paid/organic position and this
+    # user's component scores left the lane twice per answer. The ranking keeps both where it reads
+    # them: `Scored.breakdown` and `Candidate.raw["organic_rank"]` (`search/ranking.py`).
 
 
 class IntentLocation(_Strict):

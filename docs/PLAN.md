@@ -2980,7 +2980,10 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `tmp/d619_full_offences.mjs` prints the whole-card verdict over the cards D619 fixed: `rating.fact_id`
   and `distance.fact_id` into blocks published without them (41 of 41, and 6 of the 6 live cards that
   carry a distance), `organic_rank` and `score_breakdown` on a card object that declares neither
-  (41 of 41), `actions[0].type` of `view` against `CARD_ACTION_TYPE`'s split verbs and
+  (41 of 41) - **closed by D667** (§664), which took both off the model and off the builder and left
+  the eight components on `Scored.breakdown` and the position on `Candidate.raw["organic_rank"]`,
+  where the ranking already reads them - `actions[0].type` of `view` against
+  `CARD_ACTION_TYPE`'s split verbs and
   `actions[1].endpoint` of `/ai/v1/compare` against `^(/api/v1/|/checkout/|https://)` (41 of 41 each,
   with 14 cards sending an `ask` type too) - the last two are **closed by D642** (§639), which put the
   verbs on the registry's words, the doors on `/api/v1/...`, `compare`'s endpoint on the null the block's
@@ -2988,8 +2991,74 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   that carries an `address` fact (6) failing `entity_card_facts_scoped` because §607 moved that fact's
   subject to the location. Two of these are already declared in `test_card_nested_shapes.py`'s own
   `DECLARED_EXTRAS`, so the lane has been arguing with the JSON on paper rather than on the wire. Owner:
-  the card lane, one door per class - what these six lines leave is A1 and A3 of the 2026-09-23 table,
-  the `/distance` `oneOf` and the address-scope row, which is new since that run.
+  the card lane, one door per class - what these six lines leave is A3 of the 2026-09-23 table
+  (`rating: {value, count, fact_id}` against a block closed at `{value, count, smoothed?}`, which is
+  both a `oneOf` refusal on the 19 demo and 45 live cards that print a rating and a
+  `entity_card_rendered_value_backed` rule offence on the 9 that print one no fact carries), the
+  `/distance` `oneOf` on the 12 live cards that print one for the same reason, and the 12
+  address-scope `entity_card_facts_scoped` rows, which are new since that run.
+
+- **The gate that should have caught this declared the exception, in the producer's own words.**
+  `test_cards_carry_the_contract_fields.py` asserted `tuple(extra) == DECLARED_EXTRAS` with the two
+  names already in the list, and the comment beside the list quoted the model's claim ("/compare +
+  eval") as its reason - so the pass was defined, not measured. The second gate missed it
+  differently: `test_card_nested_shapes.py` walks the card's keys and `continue`s on any name the
+  contract's block does not spell out, so an undeclared ROOT key is invisible to a gate built to
+  police nested ones. D667 empties the list and adds a door that reads the published property set,
+  so a future exception has to be a published field rather than a producer's sentence. Owner: any
+  lane that writes a `DECLARED_*` list - the reason an extra is allowed belongs to the reader that
+  needs it, and a door row should name the reader, not the comment.
+
+- **`EntityCard` is `extra="ignore"` while the published root object is closed, and that asymmetry
+  cuts both ways.** The lenience is deliberate and pinned by
+  `test_contract.py`'s `test_lenient_models_ignore_fields_a_newer_server_adds`, because
+  `test_search_endpoint.py`, `test_stream.py` and `test_understand_recommend_compare.py` validate
+  card dicts back into this model. The cost is that a builder kwarg the contract does not name
+  vanishes rather than raising: `tmp/d643_arms.py` arm `C_model_only` ships this unit's model with
+  the parent's builder - which still passes both internals - and the census comes out clean, and
+  arm `G_builder_sends_again` puts the two kwargs back on the shipped tree and reddens nothing. So
+  the wire is closed by the field list alone, and the honest shape is a strict writer model beside
+  the lenient reader model (the same mechanism the `AvailabilityBrief` bullet files from the other
+  side: there it loses keys the contract ALLOWS, here it would drop keys it forbids). D667 pins the
+  behaviour in `test_an_undeclared_kwarg_sends_nothing_and_raises_nothing` rather than changing it;
+  arm `H_model_forbids_extra` shows that row is the one that turns red if the model becomes strict.
+  Owner: the card lane, when a second producer needs the card model.
+
+- **The card now tells no position at all, and the published block has a place for one.**
+  `packages/types/src/schemas/fact.json#/$defs/AiMatchInfo` is closed at four keys - `score`,
+  `reasons`, `strategy`, `rank` - and `rank` is an `["integer","null"]` with `minimum: 0`, so the
+  contract permits a card to say where it sits. `nexus_ai.contract.AiMatch` declares two of the
+  four, so this lane cannot send either of the other two, and
+  `entity_card_sponsored_has_no_organic_rank` (`packages/types/scripts/rules.mjs`) reads
+  `instance.ai_match.rank` on a `flags.sponsored` card - a rule that has had nothing to police,
+  because the position went onto a key the schema does not know. Before sending `rank` the lane has
+  to answer the sponsored half: AGENT_CONTRACT §6 makes paid placement something that "never feeds
+  `score`", so a sponsored card must send `rank: null` and an organic one a number, which is a claim
+  about the answer rather than a dict move. Owner: the card lane, with the sponsored rows measured
+  first (0 of the 19 demo and 54 live cards of `tmp/d643_parent.py` carry `flags.sponsored`).
+
+- **The summary request forwards the whole card dict, so every published field is provider-visible
+  by default.** `run_search` builds `SearchPack.items` as `c.model_dump(mode="json")` and
+  `compose_summary` hands that list to the provider as `LLMRequest(payload={"records": ...})`, and
+  `HttpLLMAdapter._user_text` serializes the payload verbatim when the task sets no prompt. Measured
+  on the live census (`tmp/d643_parent_after.txt`): 219,031 bytes of outbound user text for 54 cards,
+  and 26,287 for one six-card answer - after this unit removed 10,806 bytes of internals from the
+  first and 1,212 from the second, with the demo plane down from 63,563 to 59,739. Nothing projects
+  the card onto the prompt, so a field added for a renderer is a field added for the model, and there
+  is no allow-list to forget. That is the reason D667's door reads the outbound text and not only the
+  HTTP body. Owner: the AI lane if the prompt needs a smaller shape than the render contract - and
+  any unit that adds a card field should say what it costs the provider.
+
+- **`SearchRequest.include_sponsored` is published, honoured by the service, and unreachable from a
+  route.** The field defaults to `True` on the request model, `service.search` takes an
+  `include_sponsored` parameter, and its last step is `apply_sponsored(ranked, w) if
+  include_sponsored else ranked` - but nothing in `api/` reads the request's value, so the two
+  routes that build a plan never hand it in and a client that sets it to `false` gets the promoted
+  slots anyway. It is the only published request field with a service-side behaviour and no path to
+  it (`grep -rn include_sponsored apps/ai/nexus_ai` = the model, the signature, the call). Owner:
+  the card lane - forwarding it is one argument, and the door is a request that says `false` and
+  answers no sponsored card. Neither plane's census holds one yet: `tmp/d643_parent.py` counts 0 of
+  its 19 demo and 54 live payloads with `flags.sponsored`.
 
 - **The card's CTA doors have no reader in the shipped client, and that is what makes this class
   latent rather than live.** `packages/ui/src/trust/EntityCard.tsx` renders the buttons, takes their

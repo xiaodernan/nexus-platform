@@ -355,9 +355,11 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
                          reasons=reasons),
         actions=build_actions(card_type, subject_uuid, rec, locale),
         facts=facts, flags=flags,
-        organic_rank=row.get("organic_rank"),
-        score_breakdown={k: round(float(v), 4)
-                         for k, v in (scored.breakdown if scored else {}).items()},
+        # D667: `organic_rank` and `score_breakdown` used to be set here and left with every card.
+        # The published card is a closed object that names neither, no shipped renderer reads
+        # either, and the summary task forwards these dicts to a model provider word for word. The
+        # score the UI does cite is `ai_match` - `score` plus the grounded `reasons` - and the
+        # components stay on `Scored.breakdown` / `Candidate.raw["organic_rank"]` for the lane.
     )
 
 

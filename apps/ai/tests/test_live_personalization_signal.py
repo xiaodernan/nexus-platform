@@ -56,15 +56,30 @@ def _rows_carrying(attribute: str) -> int:
     return asyncio.run(_go())
 
 
-def _cards(query: str, limit: int = 6) -> list[dict]:
-    from fastapi.testclient import TestClient
+def _scored(query: str, limit: int = 6) -> list:
+    """The ranking lane's own rows for this sentence, on the live plane, through the call the routes make.
 
-    from nexus_ai.api.app import create_app
+    D667 moved this read off the card. The card used to answer with `score_breakdown`, and the
+    published `EntityCard` is a closed object that never named it, so the component score is read
+    where it lives - `Scored.breakdown` - via `api.pipeline.run_search`, the function
+    `api/routes_search.py` calls, so the preference is in the ranking by construction.
+    """
+    from nexus_ai.api.deps import Deps
+    from nexus_ai.api.pipeline import run_search, validate_intent
+    from nexus_ai.db import pool as db_pool
+    from nexus_ai.nlu.understand import extract_intent_dict
 
-    with TestClient(create_app(_settings())) as c:
-        r = c.post("/ai/v1/search", json={"query": query, "limit": limit})
-        assert r.status_code == 200, r.text
-        return r.json().get("items") or []
+    async def _go():
+        settings = _settings()
+        db = await db_pool.connect(settings, force_new=True)
+        try:
+            intent = validate_intent(extract_intent_dict(query))
+            pack = await run_search(Deps(settings), intent, query=query, limit=limit)
+            return list(pack.scored[:limit])
+        finally:
+            await db_pool.dispose()
+
+    return asyncio.run(_go())
 
 
 @pytest.mark.integration
@@ -81,11 +96,11 @@ def test_the_occasion_preference_reaches_the_ranking(live_settings=None):
             f"preference cannot fire here. Re-seed the plane (data/seed/load.sh) to measure "
             f"it; the CI seeds a fresh one and runs this.")
 
-    cards = _cards(DATE_SENTENCE)
-    assert cards, "the sentence answered with no cards"
-    values = [(it.get("slug"), (it.get("score_breakdown") or {}).get("personalization"))
-              for it in cards]
-    assert all(v is not None for _s, v in values), f"a card has no personalization: {values}"
+    scored = _scored(DATE_SENTENCE)
+    assert scored, "the sentence answered with no ranked rows"
+    values = [(s.candidate.key(), s.breakdown.get("personalization")) for s in scored]
+    assert all(v is not None for _s, v in values), (
+        f"a ranked row carries no personalization component: {values}")
     assert max(v for _s, v in values) > 0.5, (
         f"the occasion preference is understood and then does nothing: {values}")
 

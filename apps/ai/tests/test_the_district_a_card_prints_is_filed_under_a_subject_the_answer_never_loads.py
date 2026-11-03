@@ -45,8 +45,8 @@ and cites the fact of the row the district actually came from.
 **What this unit does not touch, and says so.** (1) Ranking: `facts_by_subject` buckets a fact
 under the fact's OWN `subject_id`, and `Candidate.freshness` reads
 `facts_by_subject.get(subject_id)` (`service.py:808`) - the merchant's own list. Location facts
-join the bundle and no score, and a row below pins that the widening moves no card's
-`score_breakdown`. Whether a location's clock belongs in its merchant's freshness contribution
+join the bundle and no score, and a row below pins that the widening moves no ranked row's
+`Scored.breakdown`. Whether a location's clock belongs in its merchant's freshness contribution
 is a ranking decision with its own evidence to gather. (2) `_disputed_attributes` still resolves
 conflicts over the card's own subject; measured exactly 1 `address` fact per location (684 facts
 over 684 locations), so no conflict exists to surface yet. (3) The comparison grid synthesises
@@ -183,6 +183,23 @@ async def _search(rows, facts=(), *, subject_types=("merchant",), query="咖啡�
                         radius_m=RADIUS, limit=6, now=now)
     cards, _resp, bundle, _scored = await S.search(backend=backend, plan=plan, locale=locale)
     return cards, bundle, backend
+
+
+async def _ranked(rows, facts=(), *, subject_types=("merchant",), query="咖啡店", now=NOW,
+                  locale="zh-HK"):
+    """The ranking lane's own rows for the same harness `_search` builds.
+
+    D667: the card no longer carries `score_breakdown` - the published card is a closed object that
+    never named it - so the door that checks a fact load moves no score reads it off `Scored`,
+    which is where the lane keeps it.
+    """
+    backend = _Recorder(merchants=[r for r in rows if r["subject_type"] == "merchant"],
+                        offerings=[r for r in rows if r["subject_type"] == "offering"],
+                        facts=facts)
+    plan = S.SearchPlan(query_text=query, subject_types=subject_types, geo=GEO,
+                        radius_m=RADIUS, limit=6, now=now)
+    _cards, _resp, _bundle, scored = await S.search(backend=backend, plan=plan, locale=locale)
+    return list(scored)
 
 
 def _district_bullet(card):
@@ -376,13 +393,12 @@ def test_a_merchant_keyed_address_fact_still_resolves():
 def test_a_location_fact_moves_no_ranking_number():
     """`Candidate.freshness` reads `facts_by_subject.get(subject_id)` - the merchant's OWN list
     (service.py:808). Widening the fetch must not silently widen that score."""
-    with_fact, _b1, _r1 = asyncio.run(
-        _search([_merchant_row()], [_address_fact(LOCATION, "Central")]))
-    without, _b2, _r2 = asyncio.run(_search([_merchant_row(location_id=None)]))
+    with_fact = asyncio.run(_ranked([_merchant_row()], [_address_fact(LOCATION, "Central")]))
+    without = asyncio.run(_ranked([_merchant_row(location_id=None)]))
     assert with_fact and without
-    assert with_fact[0].score_breakdown == without[0].score_breakdown, (
-        f"loading the location's address fact changed the card's score breakdown "
-        f"({without[0].score_breakdown} -> {with_fact[0].score_breakdown}) - this unit cites "
+    assert with_fact[0].breakdown == without[0].breakdown, (
+        f"loading the location's address fact changed the ranking's score breakdown "
+        f"({without[0].breakdown} -> {with_fact[0].breakdown}) - this unit cites "
         "districts, it does not re-rank them")
 
 

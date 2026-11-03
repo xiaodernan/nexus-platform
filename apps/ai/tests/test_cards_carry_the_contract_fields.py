@@ -1,9 +1,15 @@
 """D471 - a card carries the fields the CONTRACT's §2 names, and nothing else unnamed.
 
 API_CONTRACT §2 is the single render contract for the consumer, AI and MCP surfaces, and it
-spells the card out field by field. The service's `EntityCard` carries those fields ✓ and
-two ranking internals ✓ (`organic_rank` ✓, `score_breakdown` ✓ - the model says they are
-never rendered by the UI but are needed by /compare and the eval ✓).
+spells the card out field by field. The service's `EntityCard` carries those fields and, until
+D667, two ranking internals on top - `organic_rank` and the eight-component `score_breakdown` -
+behind a model comment that said /compare and the eval needed them. Neither reader exists: the
+compare route answers `CompareRow` attribute cells rather than card dicts, and no line in the
+shipped client, the UI package or the contract package names either key. The published root
+object is closed, so they were two schema offences on every card the lane answered, and the
+summary task forwards those card dicts verbatim to a model provider. The declared-extras list
+below is empty on purpose, and the gate reads the contract's block, so a contract that later
+publishes a debug rung will not silently re-admit them.
 
 The cross-lane `EntityCardBase` is RICHER than the contract: it promises ten fields §2
 does not name (`description` ✓, `tenant_id` ✓, `merchant_id` ✓, `category` ✓, `tags` ✓,
@@ -28,9 +34,10 @@ from nexus_ai.config import Settings
 REPO = Path(__file__).resolve().parents[3]
 CONTRACT = REPO / "docs" / "API_CONTRACT.md"
 
-#: The fields the service's card carries that the contract's §2 does not name. The model
-#: says why: "ranking internals, never rendered by the UI but needed by /compare + eval".
-DECLARED_EXTRAS = ("organic_rank", "score_breakdown")
+#: The fields the service's card may carry that the contract's §2 does not name. D667 emptied
+#: it - the two ranking internals that used to sit behind this declaration are on no card and in
+#: no field of the model, and the gate below requires that to stay true.
+DECLARED_EXTRAS: tuple[str, ...] = ()
 
 
 def _contract_card_fields() -> set[str]:

@@ -189,8 +189,10 @@ def test_entity_card_defaults_are_the_render_contract():
     assert card.card_type == "merchant"
     assert card.flags.sponsored is False and card.flags.demo is False
     assert card.actions == [] and card.facts == []
-    assert card.score_breakdown == {}
-    assert card.organic_rank is None
+    # D667: the published card is a closed object that names neither ranking internal, so the model
+    # may not carry one "just for the lane" - every field it declares is a field it sends.
+    assert not {"organic_rank", "score_breakdown"} & set(C.EntityCard.model_fields), (
+        "the card model re-admits a ranking internal the closed contract refuses")
 
 
 def test_entity_card_rejects_an_unknown_card_type():

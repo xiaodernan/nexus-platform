@@ -31128,3 +31128,173 @@ trades Sunday without Saturday (23 trade Saturday only, 0 the other way) - laten
   fixture clause), `search/sql.py:305-319` and `:587-601` (the clause on both SELECTs),
   `nlu/timeparse.py:44-50` (the bands), this unit's gate, and `tmp/d666_probe.py`,
   `tmp/d666_sets.py`, `tmp/d666_falsify.txt` (the measurements).
+
+## 664. D667 · the card sent two ranking internals the published closed object refuses, and they left on both roads (`apps/ai/nexus_ai/contract.py`, `apps/ai/nexus_ai/search/cards.py`)
+
+**How the unit arrived.** A1 is the oldest row of the 2026-09-23 violation table to outlive every
+whole-card unit before it: §617 closed A2, D642 closed A4 and A5, and D642's own closing paragraph
+left A1 named and unopened - "what remains is A1 (`organic_rank` and `score_breakdown` on a closed
+card object, 60 each)". It survived because the gate that polices the card's root keys had been told
+to allow them: `test_cards_carry_the_contract_fields.py` asserts
+`tuple(extra) == DECLARED_EXTRAS` with `("organic_rank", "score_breakdown")` written into that list,
+and the two comment lines above the list justify it with the model's own sentence - "ranking
+internals, never rendered by the UI but needed by /compare + eval". The claim was carried by the
+producer's sentence. The second gate missed it in the other direction: `test_card_nested_shapes.py`
+walks the card's keys and `continue`s on any name the contract's block does not spell out, so an
+undeclared key on the ROOT is invisible to a gate written to police nested objects.
+
+**What the lane sent, measured on the commit this unit follows.** `tmp/d643_parent.py` lays this
+unit's two source files on a tree of `65ac3ab` and runs the same census twice on that one tree, so
+before and after differ by nothing else: each half asks eleven questions of each plane in-process
+(`TestClient`, nothing started, no row written) and hands the payloads to the contract package's own
+validator (`tmp/d619_full_offences.mjs`), into `tmp/d643_parent_before.txt` and
+`tmp/d643_parent_after.txt`. **19 of 19 demo payloads and 54 of 54 live payloads carried both keys** -
+152 component values on the demo plane, 432 on the live, 73 organic positions (values 1..6) among
+them - and the validator wrote **146 identical closed-object offences**, 73 rows of
+`/: additionalProperties - property "organic_rank" is not part of the contract (closed object)` and
+73 more naming `score_breakdown`: one pair per payload, since every card sent both
+(`tmp/d643_cards_parent_before.json`). The published root is `additionalProperties: false` over 43
+properties with `required: [card_type, id, title, facts, flags]`, and **no published property name
+contains `organic` or `score` at all**. The eight components are `availability`, `distance`,
+`freshness`, `personalization`, `popularity`, `price_fit`, `quality`, `relevance` - which is this
+user's ranking, feature by feature, and `personalization` is the one that states what the lane
+inferred about the user rather than about the place. `EntityCard` itself declared 17 fields, and a
+card built with neither key still dumped both, because the model's defaults wrote them.
+
+**The second road out is the provider.** `run_search` builds `SearchPack.items` as
+`c.model_dump(mode="json")` and `compose_summary` hands that list to the model as
+`LLMRequest(task_class="summary", payload={"records": ...})`; `HttpLLMAdapter._user_text` returns
+`json.dumps(req.payload, ensure_ascii=False)` when the task sets no prompt, which the summary task
+does not. Measured through that function itself on the same census: the live plane's outbound user
+text is **229,837 bytes with the two keys and 219,031 without (-10,806, -4.7%)**, the demo plane's
+**63,563 against 59,739 (-3,824, -6.0%)**, and the fullest single answer each plane serves is
+**27,499 against 26,287** on live and **19,974 against 18,768** on demo, six cards each. So a
+paid/organic position and a per-user component vector travelled with every summary call, alongside
+the card's own text, for as long as the model declared them.
+
+**There is no reader, and there is no rung to put them behind.**
+`git grep -nE "organic_rank|score_breakdown" -- apps/web packages/ui/src packages/types/src` answers
+**0 lines** - no shipped client, UI package or contract type names either key - and the `/compare`
+the model's comment cited answers `CompareRow` attribute cells (`routes_discover._compare_rows`),
+never a card dict. The remedy the A1 row offered - "if it belongs anywhere it is a debug rung behind
+an explicit flag" - is not published either: `debug`, `explain` and `verbose` appear **0 times**
+across `docs/API_CONTRACT.md` and `docs/AGENT_CONTRACT.md`, no request model names such a field, and
+every request model extends `_Strict` (`extra="forbid"`), so a client that asked would be refused
+rather than served internals. Inventing the rung is a contract edit, not a lane edit, so this unit
+removes the two fields rather than gating them.
+
+**What the card sends now.** Fifteen fields, not seventeen, every one of them inside the 43 the block
+publishes. Re-measured on the shipped bytes of the same tree: **0 of 19 demo and 0 of 54 live
+payloads carry either key**, the component count is 0 where it was 152 and 432, the validator's
+closed-object count is **0** (was 146), and the outbound text is the "without" figure to the byte.
+The internals are not lost: `Scored.breakdown` still carries all eight components and
+`Candidate.raw["organic_rank"]` still carries the position (`search/ranking.py` writes it in the step
+that places promoted slots); the same in-process ranking call answers `8 components, organic_rank=1`
+on both passes while the card's own key list goes from `['organic_rank', 'score_breakdown']` to `[]`.
+That is what the four re-aimed readers now read - `test_live_personalization_signal.py` scores the
+occasion preference off `run_search`'s own `scored` rows instead of off a card,
+`test_the_district_…` compares two `Scored.breakdown` values through a `_ranked` harness beside its
+`_search`, `test_contract.py` asserts the two names are absent from `EntityCard.model_fields` rather
+than equal to their defaults, and `test_cards_carry_the_contract_fields.py` runs with an empty
+`DECLARED_EXTRAS`. The explanation the card still gives is the one the contract publishes: `ai_match`
+-> `fact.json#/$defs/AiMatchInfo`, closed at `{score, reasons, strategy, rank}` with
+`required: [score, reasons]`.
+
+**Arms - which of the two files is the gate.** `tmp/d643_arms.py` lays eight pairs of edits over a
+tree of `65ac3ab` and runs the door plus the four re-aimed gates in each (`tmp/d643_arms_2.txt`, one
+row list per arm in `tmp/d643_arm_*.txt`). Each arm's measure pass asks the three questions the
+door's client covers, so it counts 4 demo and 18 live payloads and says so rather than quoting the
+ledger's 19 and 54.
+
+- `A_base_bytes` - the parent's two source files under this unit's five test files: **25 failed, 47
+  passed**, 44 closed-object offences, outbound text 13,802 against 12,995 on demo and 89,423 against
+  85,811 on live. `A - D` is exactly **12 rows** and every one is a claim this unit makes: the two
+  census rows, the three `test_a_built_card_carries_no_ranking_internal` shapes,
+  `test_the_model_declares_no_field_the_published_card_refuses`,
+  `test_the_model_sends_no_key_the_lane_never_set`,
+  `test_entity_card_defaults_are_the_render_contract`,
+  `test_every_card_carries_the_contract_fields_and_only_the_declared_extras`,
+  `test_an_undeclared_kwarg_sends_nothing_and_raises_nothing`,
+  `test_the_summary_text_a_provider_reads_carries_no_component_score` and
+  `test_the_recommend_answer_is_closed_the_same_way`. Under the parent's own bytes that same gate
+  answers 2 passed, which is how a declared exception becomes a green test.
+- `B_builder_only` - `build_card` stops setting the keys while `EntityCard` still declares them:
+  **25 failed, 44 offences unchanged**, and the census still answers 4 and 18 payloads carrying both.
+  A declared field with a default is serialized whether the builder writes it or not, so the producer
+  alone is not the gate and removing only the producer would have shipped the same 146 offences.
+- `C_model_only` and `G_builder_sends_again` - the model drops the fields, with the builder silent
+  (`C`) or still passing the kwargs (`G`): **13 failed, 0 offences, 0 bytes on both**, and the 13 are
+  district rows this unit inherits rather than writes - `tmp/d643_district_headtree_reds.txt` comes
+  from a tree of the parent alone, without this unit's bytes, and
+  `tmp/d643_district_worktree_reds.txt` is the same thirteen rows from the shared worktree; the two
+  files are identical. `extra="ignore"` swallows the kwargs, so it is the model's field list, not the
+  builder, that decides what leaves the lane - which is why `contract.py` is a file this unit had to
+  edit and not only `cards.py`.
+- `E_organic_back` and `F_breakdown_back` - each key returned on its own: **25 failed and 22
+  offences** (one sentence per payload, not two) and the outbound text sits back up by 88 and 92
+  bytes on demo, 396 and 414 on live. The door's two claims are separate and each is policed alone:
+  returning either one is a red, not a partial pass.
+- `H_model_forbids_extra` - `EntityCard` tightened to `extra="forbid"` instead of losing the fields:
+  **15 failed**, the thirteen plus the door's
+  `test_an_undeclared_kwarg_sends_nothing_and_raises_nothing` and `test_contract.py`'s
+  `test_lenient_models_ignore_fields_a_newer_server_adds`. Two gates assert the leniency on purpose -
+  `test_search_endpoint.py` and `test_stream.py` validate card dicts back into this model, and a
+  server that adds a field must not break the lane - so a stricter model is not the remedy either.
+  What `ignore` keeps trading is filed in PLAN rather than hidden here.
+
+**Suite.** `tmp/d643_shipped_suite.py` archives the whole tracked tree at `65ac3ab`, overlays exactly
+the seven files this unit ships, and runs `pytest tests -q --tb=line -rf` against the live database:
+**19 failed, 34,447 passed, 44 skipped, 1 warning in 2,308.17s (0:38:28)**, rc=1
+(`tmp/d643_suite.txt`; the earlier run on the shared worktree, 12 reds at `2de9262`, is kept as
+`tmp/d643_suite_worktree_2de9262.txt`). `tmp/d643_owncheck.py` then runs the seven files that hold
+those 19 rows twice more on trees of `65ac3ab` - once with this unit's bytes laid over the parent,
+once with the parent alone - and **the two passes print the same 18 rows**: `18 failed, 250 passed`
+against `18 failed, 232 passed`, 18 rows red at the parent too, **0 rows red only with this unit's
+bytes**, 0 rows this unit fixes (`tmp/d643_owncheck.txt`). Thirteen of the eighteen sit in
+`test_the_district_a_card_prints_is_filed_under_a_subject_the_answer_never_loads.py`, the file this
+unit re-aims, which is why the check is per row and not per file: a staged file holds reds, none of
+them caused by these bytes. The 19th row, `test_the_documents_name_modules_that_exist`, is green on
+both owncheck passes and red on the suite run because of the shape of the tree rather than its
+content: the rule finds the repository root at the first parent holding `data/seed/generate.py`, the
+owncheck's prefix archive carries no `data/` so the walk leaves the tree at the real worktree, where
+gitignored `tmp/` is on disk and all 34 `tmp/*.py` records `docs/PLAN.md` names resolve, while a
+whole-tree archive does hold the marker and so reads a tree whose `tmp/` was never archived
+(`tmp/d643_docpath_root.py`). Neither verdict is this unit's.
+
+**Residual classes, re-measured on the bytes this unit ships.** `tmp/d644_measure.py` reads the
+after-census (`tmp/d643_cards_parent_after.json`) against the published blocks themselves rather than
+a list written here. A1's two classes are gone from both planes and nothing else moved: the census
+still answers **76 `oneOf` refusals** - 19 demo `/rating`, 45 live `/rating`, 12 live `/distance` -
+and the rule side is unchanged at **9 `entity_card_rendered_value_backed`** ("renders `rating` but no
+fact carries attribute rating", every one a product card printing `rating={"value": 0.0, "count":
+0}`) plus **12 `entity_card_facts_scoped`** rows whose subject is a location. The refusals are not a
+third class: `RatingInfo` is closed at `{value, count, smoothed}` and `DistanceInfo` at `{meters,
+text, travel_minutes, from}`, and every card repeats a `fact_id` inside them - 19 of 19 demo ratings,
+45 of 54 live ratings, 12 of 12 live distances. That one key is what the branch refuses, and removing
+it alone answers all 76 (`tmp/d644_before.txt`: demo 19 cards with an offence to 0, live 57 refusals
+to 0 schema offences, 18 cards left with rule rows only). Of the 2026-09-23 table that leaves A3/A6,
+the rating rows, and two classes the table never named - the citation inside the block, and the
+phantom zero rating. The card's root is now clean on every served payload, so the next unit in this
+stream works on the blocks, not on the object that holds them.
+
+- readers: `contract.EntityCard` and its `extra="ignore"` config (the model the wire dumps),
+  `search/cards.build_card` (the only producer of the two keys), `search/ranking.organic_rank` /
+  `apply_sponsored` and `Scored.breakdown` (where the values live now), `api/pipeline.run_search`
+  (the dump into `SearchPack.items`) and `compose_summary` (the summary request that carries them),
+  `models/base.HttpLLMAdapter._user_text` (the serializer that made the payload the prompt),
+  `api/routes_discover._compare_rows` (the reader the model's comment named),
+  `packages/types/src/schemas/entity_card.json` (the closed root), `common.json#/$defs/RatingInfo`
+  and `DistanceInfo` (the two blocks the residual refusals sit in) and `fact.json#/$defs/AiMatchInfo`
+  (the explanation block), `packages/types/scripts/rules.mjs`'s
+  `entity_card_sponsored_has_no_organic_rank` (which reads `ai_match.rank`, not the key removed),
+  `apps/web`, `packages/ui/src` and `packages/types/src` (the 0-line reader sweep), the four re-aimed
+  test files, `test_doc_paths_are_real.py:_repo_root` (the rule behind the tree-shaped red), and this
+  unit's `tmp/` records: `tmp/d643_parent.py` with `d643_parent`, `d643_parent_before`,
+  `d643_parent_after`, `d643_cards_parent_before`, `d643_cards_parent_after`; `tmp/d643_arms.py`
+  with `d643_arms_2` and the eight `d643_arm_*.txt` row lists;
+  `d643_district_headtree_reds` and `d643_district_worktree_reds`; `tmp/d643_shipped_suite.py` with
+  `d643_suite` and `d643_suite_worktree_2de9262`; `tmp/d643_owncheck.py` with `d643_owncheck`;
+  `tmp/d643_docpath_root.py` with `d643_docpath_root`; `tmp/d643_fixnum.py`, `tmp/d643_land.py`,
+  `tmp/d643_headcheck.py`; and the superseded worktree-pass records `tmp/d643_measure.py`,
+  `d643_before`, `d643_after`, `d643_offences_before`, `d643_offences_after`, `d643_cards_before`,
+  `d643_cards_after`.
