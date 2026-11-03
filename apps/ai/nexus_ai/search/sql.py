@@ -726,11 +726,20 @@ def build_offering_query(
     # fill page 1 are the heap's: 17 of 20 change, and 18 on the text request, when only the
     # tie-break differs (`tmp/d617_pool_ties.txt`). `o.id` is the lane's last resort here too.
     total_select = "count(*) OVER () AS pool_total,\n       " if with_total else ""
+    # D674: the fourth Booking column. `docs/DATABASE.md:72` names bookable/min_party_size/
+    # max_party_size/duration_minutes as the Booking columns and this SELECT already carried three of
+    # them - the length was the one dropped, so the row the card is built from could not say how long
+    # the thing it invites the user to book takes (`tmp/d674_measure.txt`: 54 served cards, 36 of them
+    # offerings, 13 of those 28 distinct offerings stating a length in the column, 0 printing it). The
+    # published card declares the field on exactly the two kinds these rows are
+    # (`packages/types/src/card.ts:151`/`:164`, `entity_card.json:98`) and names this column as its
+    # source. No predicate reads it: `WHERE` is untouched, so which rows answer a request is unchanged.
     sql = f"""
 SELECT {total_select}o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.description, o.description_zh,
        o.kind, o.price_amount, o.price_min, o.price_max, o.currency, o.price_model,
        o.price_source, o.price_updated_at, o.stock_quantity, o.stock_updated_at,
-       o.bookable, o.min_party_size, o.max_party_size, o.rating_agg, o.review_count,
+       o.bookable, o.min_party_size, o.max_party_size, o.duration_minutes,
+       o.rating_agg, o.review_count,
        o.popularity_score, o.attributes, o.images, o.constraints,
        m.slug AS merchant_slug, m.display_name AS merchant_name,
        m.display_name_zh AS merchant_name_zh, m.category_primary AS category,

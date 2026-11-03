@@ -357,12 +357,24 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
     if availability_fact is not None:
         availability_fields["fact_id"] = availability_fact.fact_id
         availability_fields["as_of"] = (cand.raw or {}).get("as_of")
+    # D674: the length the offering itself states. `packages/types/src/card.ts:150` names the column as
+    # this field's source ("Duration in minutes — V1 `offerings.duration_minutes`"), the same four
+    # Booking columns `docs/DATABASE.md:72` lists, and the offering read already carried three of them
+    # into this row - only the length was missing. It matters because the verb below is keyed on
+    # `bookable` alone: every card printing 「訂枱」 invited a booking and could not say what the
+    # booking takes. On this corpus the two come off one set of rows - 804 offerings are `bookable` and
+    # the same 804 state `duration_minutes` > 0 (`tmp/d674_measure.txt`), so 17 of the 36 served
+    # offering cards now answer both. A row that states nothing prints null, which the published block
+    # allows; the lane does not borrow a length from the title's prose or from
+    # `nlu/timeparse.py`'s `_default_duration`, which is a part-of-day guess about a different thing.
+    duration = rec.get("duration_minutes")
     return EntityCard(
         card_type=card_type, id=subject_uuid, slug=str(rec.get("slug") or sid),
         title=title, subtitle=_subtitle(rec, cand, card_type),
         image=image, price=price, rating=rating, distance=distance,
         open=OpenState(**open_fields) if open_state else OpenState(is_open=None),
         availability=AvailabilityBrief(**availability_fields),
+        duration_minutes=duration,
         ai_match=AiMatch(score=round(float(scored.score if scored else 0.0), 4),
                          reasons=reasons),
         actions=build_actions(card_type, subject_uuid, rec, locale),

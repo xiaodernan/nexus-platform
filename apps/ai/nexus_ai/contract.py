@@ -12,7 +12,7 @@ from decimal import Decimal
 from typing import Any, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_serializer
 
 IntentKind = Literal[
     "discover_merchant",
@@ -165,6 +165,18 @@ class AiMatch(BaseModel):
     reasons: list[MatchExplanation] = Field(default_factory=list)
 
 
+#: D674: the two card types the published closed object leaves `duration_minutes` legal on.
+#: `packages/types/src/schemas/entity_card.json` publishes the key at its base (`:98`,
+#: `{"type": ["integer", "null"], "minimum": 0}`) and then names it `false` - the key must not appear
+#: at all - under `merchant` (`:117`), `product` (`:135`) and `collection` (`:196`), while
+#: `service`/`experience` (`:151`/`:164` of `card.ts`) declare it as their own field. "Absent" is not
+#: something `Optional[int] = None` can express in a `model_dump`, so the rule lives on the model
+#: rather than at each of the lane's two dump sites (`api/pipeline.py:214` and the nested card list of
+#: `api/stream.py:116`); a gate reads the five `allOf` blocks back out of the schema file, so widening
+#: the contract shows up there before it can show up here unnoticed.
+DURATION_CARD_TYPES = frozenset({"service", "experience"})
+
+
 class EntityCard(BaseModel):
     """§2 the single render contract for consumer + AI + MCP surfaces."""
 
@@ -180,6 +192,10 @@ class EntityCard(BaseModel):
     distance: Optional[dict[str, Any]] = None
     open: Optional[OpenState] = None
     availability: Optional[AvailabilityBrief] = None
+    # D674: how long the offering takes, in the offering's own words. A service/experience card that
+    # prints a `reserve` CTA states the length the booking needs; on a card type that forbids the key
+    # this never reaches the wire, whatever the row carried.
+    duration_minutes: Optional[int] = None
     ai_match: Optional[AiMatch] = None
     actions: list[CardAction] = Field(default_factory=list)
     facts: list[Fact] = Field(default_factory=list)
@@ -195,6 +211,14 @@ class EntityCard(BaseModel):
     # verbatim into the summary call to a model provider, so the paid/organic position and this
     # user's component scores left the lane twice per answer. The ranking keeps both where it reads
     # them: `Scored.breakdown` and `Candidate.raw["organic_rank"]` (`search/ranking.py`).
+
+    @model_serializer(mode="wrap")
+    def _closed_object_shape(self, handler: Any) -> dict[str, Any]:
+        """Drop the keys this card's own type refuses, so a null never stands in for an absent field."""
+        data = handler(self)
+        if self.card_type not in DURATION_CARD_TYPES:
+            data.pop("duration_minutes", None)
+        return data
 
 
 class IntentLocation(_Strict):

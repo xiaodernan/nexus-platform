@@ -2360,27 +2360,98 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   no door yet answers whether the answer should say so out loud. Owner: the AI lane.
 
 - **How long an offering takes is read by nobody who books one, and the card has no field to state
-  it with (D607's census; re-measured, corrected and widened by D671 (§668), which changed no
-  line)** - the column is real and the corpus is not empty: 804 of 5,538 `offerings` rows carry a
-  `duration_minutes` (30/45/60/90/120/180, 749 of them `active`), all 804 are `bookable` and the same
-  804 carry both party bounds, and they are exactly 584 `service` + 220 `experience` + 0 `product`.
-  The lane's text still says what D607 said: `nexus_ai` names the column once, in a comment
-  (`search/sql.py:623`), `build_offering_query` projects the other three Booking columns and drops
-  this one (`search/sql.py:733`), and `entities_for` (`:945`) projects none. What D607 did not know is
-  that the published contract already asks for it: `packages/types/src/card.ts:151`/`:164` declare
-  `duration_minutes` on `ServiceCard` and `ExperienceCard`, `entity_card.json:98` publishes the
-  property and the per-type blocks forbid it on `merchant`, `product` and `collection` while leaving
-  it allowed on exactly the two kinds the 804 rows belong to - and `contract.py:168`, the whole
-  `EntityCard`, has no such field, so the road is missing at both ends. Served, it is measurable:
-  48 cards over eight offering-aimed asks, 18 of them `service`/`experience`, **0 carrying the key**,
-  10 of them printing 「預訂」 (`tmp/d671_cards.txt`). Two of the bullet's cites and one of the
-  census's negatives were wrong: Java names the column **9** times, not 13; `_slot_window` is at
-  `search/service.py:1308` and `slots_for` at `search/sql.py:802`, not `:932`/`:646`; and
-  「facts rows naming a duration: []」 (`tmp/d617_duration.txt`) searched the attribute name - the
-  number lives in the `value`, and all 157 `capacity` facts keyed to offerings carry a numeric
-  `duration_minutes` that agrees with the column on 157 of 157 rows. The product question this bullet
-  closed with is still the first thing to answer, and the two bullets it now hands its findings to are
-  measured rather than assumed. Owner: the AI lane with the reservation owner.
+  it with - closed by D674 (§671)** - the column is real and the corpus is not empty: 804 of 5,538
+  `offerings` rows carry a positive `duration_minutes`, 0 state zero and 4,734 state nothing, all
+  804 are `bookable` and the same 804 carry both party bounds, and they are exactly 584 `service` +
+  220 `experience` + 0 `product`, at 30 (115), 45 (117), 60 (212), 90 (121), 120 (133), 180 (106);
+  682 of the 4,707 offerings the lane can actually answer (an `active` offering of a `published`
+  merchant, over 470 merchants) state a length. The road was missing at BOTH ends, which is what
+  D671 (§668) found and D674 read: `entity_card.json:98` publishes the property as `{"type":
+  ["integer", "null"], "minimum": 0}` and the per-type branches forbid the KEY - not the null, the
+  key - on `merchant` (`:117`), `product` (`:135`) and `collection` (`:196`), leaving it on exactly
+  the two kinds those 804 rows belong to; `packages/types/src/card.ts:150` names the column as the
+  field's source (「Duration in minutes — V1 `offerings.duration_minutes`」); and
+  `contract.EntityCard` carried no such field over `model_config = ConfigDict(extra="ignore")` while
+  `build_offering_query` projected three of the four Booking columns `docs/DATABASE.md:72` names and
+  dropped the length. Served, it is measurable at two sizes: §668's own pass (48 cards over eight
+  offering-aimed asks, 18 offerings, **0 carrying the key**, 10 printing 「預訂」, `tmp/d671_cards.txt`)
+  and D674's re-measure on these bytes (nine asks, **54 cards, 36 of them offerings, 0 carrying the
+  key**; 28 distinct offerings, **13 stating a length in the column and 0 printing it**; **17 of the
+  36 printing a `reserve` CTA**, `tmp/d674_measure.txt`). The card asks the user to book and cannot
+  say what the booking takes, and on this corpus the invitation and the length are exactly the same
+  804 rows. Java is not the gap - `services/platform/src/main/java/com/nexus/catalog/
+  OfferingRepository.java` names the column nine times, from its SELECT through its PATCH. What
+  ships is three lines of behaviour: the offering projection gains `o.duration_minutes` and `WHERE`
+  gains nothing; `EntityCard` gains the field, `DURATION_CARD_TYPES = frozenset({"service",
+  "experience"})` and a `@model_serializer(mode="wrap")` that pops the key on the three types the
+  closed object refuses - a closed object demands ABSENCE, which `Optional[int] = None` cannot
+  express in a `model_dump`, and the lane has two dump sites (`api/pipeline.py:214`,
+  `api/stream.py:116`), so the rule sits on the model rather than in dict surgery twice; and
+  `build_card` passes `rec.get("duration_minutes")` with no fallback. The card prints the column and
+  not the offering's prose: `tmp/d674_probe.txt` reads the titles and finds 221 reachable offerings
+  naming a length, on which the column agrees at 15, disagrees at 111 (「全身按摩60分鐘」 carries 90,
+  「相機租借(按日)（小份）」 carries 90 against a name that says a day, 「舊區導賞(3小時)（加大份）」 carries 30) and states
+  nothing at 95 - a title reader would contradict the row on 111 cards and invent on 95 more, so the
+  disagreement is seed data, filed below, not something the lane hides. Door
+  `test_the_length_an_offering_states_reaches_the_card_that_invites_the_booking.py`, 21 legs - 15
+  offline, 6 live - serves **21 passed, 1 warning in 15.55s** with the live database and `15 passed,
+  6 skipped` without one (`tmp/d674_door_live.log`); it reads the five `allOf` branches and
+  `$defs/CardType` back out of `entity_card.json` instead of reciting them, so a contract edit
+  reddens a yardstick leg before it can redden a card. `tmp/d674_arms.py`'s eleven arms over trees
+  of `26a5477` (`tmp/d674_arms.txt`) each move the legs that name their wrong answer: parent bytes
+  13 failed / 225 passed, the fix without the door 217 passed with no red, the shipped bytes 238
+  passed, then 12 for the projection alone, 6 when the field is modelled but never emitted, 7 with
+  the serializer deleted (a neighbour gate among them), 11 when it pops whatever the type, 4 for `or
+  120` on a silent row, 3 for a predicate in `WHERE` (D607's no-party leg among them), 21 across six
+  files for a renamed field, and 3 when the card emits what the read never projected. The suite on
+  these bytes is 26 failed, 34,528 passed, 44 skipped in 3,265.62s (`tmp/d674_suite.txt`), and
+  `tmp/d674_owncheck.py` prints the same 26 rows on both of its passes over trees of the same commit
+  - SHIPPED 26 failed / 268 passed, BASE 26 failed / 247 passed - so 0 rows are this unit's, 0 are
+  cured by it, none of the door's legs is red, and the 21 greens over D673's 34,507 are the door.
+  The 26 are §667's 19 plus the 7 part-of-day legs that hold only on a Tuesday; §667 ran on a
+  Tuesday and this ran on Wednesday 2026-11-04. Owner: the AI lane.
+
+- **The comparison grid still states no length, because `entities_for` projects none of the four
+  Booking columns** - D674 put `duration_minutes` on the offering card and left the grid alone: the
+  read `apps/ai/nexus_ai/api/routes_discover.py` runs for a comparison (`sql.py`'s `entities_for`)
+  selects neither `bookable`, the party bounds nor the length (`tmp/d674_measure.txt` section 1
+  names all four projections and their three readers), so a grid answering two `service` rows shows
+  their price, rating and open state and cannot show what either of them takes. Same published field
+  (`card.ts:151`/`:164`), same column, second reader. §670 already found this read answers in the
+  statement's own order; the length is the second thing it does not carry. Owner: the AI lane.
+
+- **111 offerings state a length in the column that their own title contradicts, and 95 more name
+  one the column never states** - of the 4,707 reachable offerings, 221 name a length in their name
+  (`tmp/d674_probe.txt`: 「全身按摩60分鐘」 carries 90; 「相機租借(按日)（小份）」 carries 90 against 1,440 in the name;
+  「舊區導賞(3小時)（二人份）」 carries 90; 「水上活動半日」 carries 60 against 720), and the column agrees on 15. The
+  card prints the column, because `card.ts:150` names that column as the field's source and the lane
+  invents nothing; so an AI answer can now say 90 next to a title that says 60分鐘, which reads as a
+  wrong answer rather than as a seed inconsistency. Either the seed reconciles the two or the card
+  has to stop printing one of them. Owner: whoever owns `data/seed`.
+
+- **No first-party renderer reads the length the card now prints** - `git grep duration_minutes
+  26a5477` answers 0 hits in `apps/web` and 0 in `packages/ui` (`tmp/d674_measure.txt` section 1
+  counts the same 0/0 before the fix): the field is declared in `packages/types`
+  (`card.ts:151`/`:164`, `merchant.ts:182`/`:441`, `entity_card.json:98`) and reaches the wire for
+  13 of the 28 offerings a served page answers, and nothing on the front end shows it. Not a defect
+  in the lane that ships it, and the reason the unit's user consequence is stated as 「the card says
+  it」 rather than 「the user sees it」. Owner: the web lane.
+
+- **The static plane can never show a length: its catalogue holds no service or experience row** -
+  `api/demo_data.py`'s `_offering_rows()` returns 2 rows, both `kind=product`, and the only Booking
+  key either carries is `bookable` (`tmp/d674_measure.txt` section 5); its `_merchant_rows()` carry
+  none of the four. The card type the closed object leaves the key on is a type the demo catalogue
+  does not contain, so `test_no_demo_card_sends_a_key_the_closed_object_refuses` stays green on a
+  demo plane that cannot answer the question either way. Owner: the static/demo lane.
+
+- **`V1__init.sql:234` declares `duration_minutes integer` with no CHECK, while the published card
+  says `minimum: 0`** - nothing in the migrations constrains the column (the name occurs once in
+  `infra/db/migrations/`), and the Java write path passes whatever integer a PATCH body carries
+  (`MerchantContentController.java:707` `putInteger`), so a merchant could store `-30` and the AI
+  card would print `-30` inside an object whose published property refuses it. Today the corpus
+  holds none: 5,538 rows split 804 positive + 0 zero + 4,734 NULL, which leaves no room for a
+  negative, so the exposure is the write path, not the data. A CHECK belongs in a new `V<n>__*.sql`,
+  not in V1 (migrations are append-only). Owner: the platform lane with the migration owner.
 
 - **A card books what no slot of its merchant can hold: 295 of the 804.** `availability_slots` rows
   are 90 min (24,490), 60 min (7,650) or 1200 min (352), and 295 offerings are longer than the LONGEST
