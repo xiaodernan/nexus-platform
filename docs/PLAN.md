@@ -2996,9 +2996,10 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   the card lane, one door per class. D668 (§665) opened A3 and the distance twin the table never
   named: the `oneOf` refusal on the 19 demo and 45 live cards that print a rating, and on the 12 that
   print a distance, is gone - the key left the block and the `facts[]` row stayed. What these lines
-  still leave is the `entity_card_rendered_value_backed` offence on the 9 live cards that print
-  `rating={"value": 0.0, "count": 0}` with no `rating` fact, which is now cited nowhere on the card
-  rather than twice, and the 12 address-scope `entity_card_facts_scoped` rows, new since that run.
+  still leave was the `entity_card_rendered_value_backed` offence on the 9 live cards that print
+  `rating={"value": 0.0, "count": 0}` with no `rating` fact, cited nowhere on the card rather than
+  twice - **closed by D669** (§666), which stopped the card stating a score its own `count` denies -
+  and the 12 address-scope `entity_card_facts_scoped` rows, new since that run.
 
 - **The allowance quoted the contract, and the contract was talking about a different object.**
   `test_card_nested_shapes.py` carried `"rating": ("fact_id",)` and `"distance": ("fact_id",)` under a
@@ -3015,15 +3016,48 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   back to the block, the premise fails loudly instead of quietly becoming true. Owner: any lane that
   writes a `DECLARED_*` list - the entry has to name a reader line, not a clause.
 
-- **The phantom zero rating is now uncitable, and it is the cheapest card-side fix left on this
-  census.** 9 of the 54 live cards print `rating={"value": 0.0, "count": 0}` and carry no `rating`
-  fact, which `entity_card_rendered_value_backed` has been naming all along. `packages/types/src/common.ts`
-  says of that shape "a null/0 count means not yet rated", and AGENT §4 says a number with no fact must
-  not render, so the honest card sends `rating: null` - the block's `oneOf` already names the null
-  branch - rather than a zero the user reads as a score. D668 did not touch it: before the fix those
-  nine took the ternary's else-branch and had no block pointer either, so nothing regressed, but the
-  door's `test_the_pointer_the_card_still_gives_is_the_facts_own_row` only holds for cards that have
-  the fact. Owner: the card lane, 9 rows of `tmp/d668_after.txt` to start from.
+- **The phantom zero rating is uncitable no longer - closed by D669 (§666), which also corrects the
+  remedy this line prescribed.** The nine live product cards that printed
+  `rating={"value": 0.0, "count": 0}` with no `rating` fact now print `{"value": null, "count": 0}`,
+  and the validator's `entity_card_rendered_value_backed` answers 0 rows on the same census (18 live
+  cards with rule rows before, 12 after, all 12 the address-scope class). What this line got wrong is
+  the SHAPE it told the next unit to send: 「the honest card sends `rating: null` - the block's
+  `oneOf` already names the null branch」. `RatingInfo` requires `count` and makes only `value`
+  nullable, so the block can say "no score" without taking the review count off the answer, and the
+  count is a fact about the subject. Measured both ways (`tmp/d669_arms.txt`): this line's remedy is
+  arm `E_block_gone`, which clears the same 9 rule rows while 9 live cards lose their `count` - 4
+  door rows red, the non-vacuity one among them - against the shipped branch, which nulls the value
+  alone (`C_shipped`, 66 passed). The condition was in the same file all along:
+  `synth_computed_facts` builds the rating fact `if cand.rating is not None and cand.rating_count`
+  and `build_card` filled the block `if rating_value is not None`, so the two halves of one module
+  asked the same pair of `NOT NULL DEFAULT 0` columns different questions, and the nine cards were
+  the gap. `G_cite_the_phantom` is the other temptation - give the 0.0 the fact it lacked - and the
+  validator goes quiet (54 numbers, 54 backed, 0 rows) on a card that still says zero stars, which is
+  why the door asserts the value and not only the citation. Gate
+  `test_a_subject_with_no_reviews_prints_no_rating_score.py`, 13 legs, 5 red under `61d2b52`'s bytes,
+  0 under this commit's, and `B_fix_without_door` says the fix reddens nothing that already existed -
+  the door is what carries the claim.
+
+- **The comparison grid prints the same phantom, and its cells do not follow its own headers.**
+  Filed by the census that found D669 (`tmp/d669_compare.py`, `tmp/d669_compare.txt`); all of it
+  outside `search/cards.py` and untouched by this unit. First: three of the four rating cells of
+  every batch state a value that cites no fact - the same unrated products, read straight off
+  `rating_agg` by `routes_discover._compare_rows` when the bundle holds no rating fact, alongside the
+  neighbour's cited 4.23 - and the grid's `_cell` has no `count` to state, so D669's fix does not
+  port. A null value there is exactly the `E_block_gone` shape the new door refuses, so the compare
+  lane owes its own decision about what an unrated cell shows. Second, and worse for the reader:
+  asked the same four subjects in one order and then the reverse, `CompareResponse.subjects` echoes
+  the request both times, while the rating cells come back as the identical sequence
+  `(4.23, 4.25, 0.0, 0.0)` and the two cells that name a subject id swap
+  (`2373754c, 8226bca5` against `8226bca5, 2373754c`). The cells are appended in the order the
+  database returned the rows, `subjects` is the request, and `search/sql.entities_for` - the
+  merchant-then-offering `UNION ALL` - has **no ORDER BY at all**, so
+  `packages/ui/src/trust/CompareTable.tsx`, which maps `row.cards` to `cellIndex` and renders cell
+  `i` under header `i`, can print one subject's number under another subject's name. Third: the
+  shipped gate `test_live_ai_contract.py::test_the_comparison_grid_carries_price_rating_and_distance`
+  asserts that every cell of every row has `value is not None`, so it demands the phantom by hand and
+  any fix here begins by re-aiming that row. Owner: the compare lane, with those three batches as the
+  starting rows - the same nine products `tmp/d668_after.txt` named, reached through the second door.
 
 - **`RatingInfo.smoothed` is published, documented and produced by nobody.** `common.json` and
   `packages/types/src/common.ts` name it as the flag for AGENT_CONTRACT §6's Bayesian-smoothed quality

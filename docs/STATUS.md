@@ -31480,3 +31480,231 @@ The census is a sweep, so it also says where the lane was right. `ai_match`, `av
   `d668_suite`; `tmp/d668_owncheck.py` with `d668_owncheck`; `tmp/d668_rewrap.py` (the ledger's
   own wrap pass); `tmp/d619_full_offences.mjs` (reused as the judge); `tmp/d668_land.py` and
   `tmp/d668_plan_patch.py`.
+
+## 666. D669 · the card printed a score for a subject nobody rated - `count: 0` and `value: 0.0` in the same block, and the lane's own trust rule refused to cite it (`apps/ai/nexus_ai/search/cards.py`)
+
+**How the unit arrived.** §665 landed the pointer move and filed, in its own words, what the move
+  left visible: 「The phantom zero rating is now uncitable, and it is the cheapest card-side fix
+  left on this census」 - nine live product cards printing `rating={"value": 0.0, "count": 0}` with
+  no `rating` fact anywhere on the card, owner named as the card lane, starting rows named as the
+  nine `entity_card_rendered_value_backed` offences in `tmp/d668_after.txt`. The clause the residue
+  cites is AGENT_CONTRACT §4's first line - 「Any value shown to a user (price, hours, rating,
+  distance, availability) must resolve to a `facts` row or be visibly marked as an estimate」 - and
+  the contract package's validator writes its rule rows from exactly that sentence, so the residue
+  was not an opinion about style: the shipped judge had been naming these nine cards since §664.
+
+That residue also prescribed the remedy, and the measurement this unit ran said the prescription
+  was one shape too far. PLAN wrote 「the honest card sends `rating: null` - the block's `oneOf`
+  already names the null branch」. `common.json#/$defs/RatingInfo` publishes `value` as
+  `["number","null"]` and REQUIRES `count`, so the block already has a way to say "no score" without
+  disappearing - and the number of reviews a subject has is a fact about that subject, which is the
+  first thing lost when the block goes. Arm `E_block_gone` below is the filed remedy, measured: it
+  clears the same nine rule rows and takes the count off the answer, and the door's presence and
+  non-vacuity rows are what refuse it. The shipped fix keeps the block and nulls the score.
+
+**What the lane sent, measured on `61d2b52`.** `tmp/d669_measure.py` re-runs the eleven-ask census
+  through `tmp/d668_capture.py` - the same capture §665 measured, on both planes, in-process
+  (`TestClient`, nothing started, no row written) - then asks the database what sits behind each
+  printed number (`tmp/d669_rows.py`) and hands the payloads to `tmp/d619_full_offences.mjs`
+  unchanged, into `tmp/d669_before.txt`. **0 of 19 demo cards print a rating with no reviews behind
+  it** - the fixture rows all carry reviews - and **9 of 54 live cards print
+  `rating={"value": 0.0, "count": 0}`, none of the nine carrying a `rating` fact**: their `facts[]`
+  holds `price` and `relevance` and nothing else. The other 45 live cards print a number, a non-zero
+  count, and the fact that states it. All nine are `card_type: product`, and their slugs are
+  `preserved-fruit-gift-set` (three of the nine, distinct ids), `preserved-fruit-gift-set-large`,
+  `preserved-fruit-gift-set-for-2`, `tea-gift-box`, `loose-tea-50g-tin`,
+  `aged-pu-erh-cake-small-2` and `blind-bottle-deal-afternoon`. The validator answers 0 schema
+  offences on both planes and, on live, 18 cards with rule rows: **exactly those 9
+  `entity_card_rendered_value_backed`** and the 12 `entity_card_facts_scoped` address rows §665
+  already filed as another unit's. The nine are not a class the ledger inferred from a list written
+  here - they are the judge's own rows. Of the eleven asks, two answer these nine - `gift set` with
+  `filters.kind = product` serves six of them and 「比較中環同旺角」 the other three - which is why
+  the door sends those two and `cheapest set menu` as the rated control rather than the whole
+  census, and why one of its rows exists to prove the two still reach them.
+
+Those nine are `61d2b52`'s answer. Re-running the same capture in the shared worktree, which carries
+  the concurrent lane's uncommitted `search/service.py` and `nlu/timeparse.py`, serves a different
+  nine unrated products - still six from `kind=product` and three from the comparison ask, and still
+  nine distinct subjects (`tmp/d669_askreach.py`, `tmp/d669_askreach.txt`) - while a census over the
+  archive tree of the same commit reproduces these nine ids exactly. That is why the door's live rows
+  assert a property of whatever cards answer rather than naming these slugs, and why every number in
+  this section is measured on an archived tree and not in the worktree.
+
+**Where the number comes from.** `V1__init.sql` gives both tables the same pair -
+  `rating_agg numeric(3,2) NOT NULL DEFAULT 0` and `review_count integer NOT NULL DEFAULT 0` (`:95-96`
+  for merchants, `:241-242` for offerings) - so an entity nobody has ever rated does not arrive as
+  NULL: it arrives as the number zero, and "rated zero stars" and "nobody rated this" are the same
+  value in the column. `packages/types/src/common.ts` states which of the two the published shape
+  means: 「A null/0 count means "not yet rated", and quality shrinks to the tenant mean (AGENT_CONTRACT
+  §6)」. DECISIONS D24 had already ruled the pair from the other side, and its fourth item is the
+  honest version of the same ambiguity - 「`rating_agg`/`popularity_score` are `NOT NULL DEFAULT 0`,
+  so a merchant nobody rated simply has the lowest rating there is」 - which is a decision about
+  ORDER (it leads `sort=rating`, trails `sort=-rating`), not a licence to print the default as a
+  score. D24's third item, three lines above, is the sentence the card ignored: 「"no summary exists"
+  and "this place has no reviews" are different facts」.
+
+**The rest of the lane already answers this correctly, which is what makes the block the bug.**
+  `synth_computed_facts` builds the backing fact `if cand.rating is not None and cand.rating_count` -
+  it reads the COUNT, and that is why the nine had no fact to cite. `build_card` filled the block
+  `if rating_value is not None` - it read only whether the column was fetched, and that is why the
+  same nine got a block. The two halves of one file asked the same pair of columns different
+  questions. Everything else in the path asks the right one: `_reason_text("top_rated")` returns the
+  empty string when `cand.rating is None or not cand.rating_count`, so the card writes no sentence
+  naming a score for these subjects; `ranking.bayesian_quality` shrinks n=0 onto the tenant mean, so
+  the ranking treats the same row as no evidence (AGENT §6 verbatim); `packages/ui/src/trust/
+  Renderers.tsx` refuses a badge `typeof rating !== 'number'`; `apps/web/app/m/[slug]/page.tsx`
+  publishes `aggregateRating` only `if typeof rating.value === 'number'` - so the card that sends
+  `null` loses a badge and loses a structured-data claim, while the card that sent `0.0` published
+  「ratingValue: 0」 to a search engine. Only the block itself spoke the zero, and it spoke it on the
+  one surface the trust rule reads.
+
+**The columns behind the nine, read from the rows the cards name.** `tmp/d669_rows.py` asks the
+  database through the product's own read-only pool (`nexus_ai.db.pool.connect` +
+  `Database.readonly`, `SET TRANSACTION READ ONLY` - the venv has asyncpg and no SQLAlchemy, and this
+  unit writes no row). Every one of the nine reads `rating_agg=0.0 review_count=0`, so the printed
+  0.0 is the column verbatim and not a rounding of a real average. Corpus-wide the pair does not
+  disagree anywhere: **4,331 of 5,538 offerings have `review_count = 0`, and all 4,331 have
+  `rating_agg = 0`; 0 rows have a non-zero rating with zero reviews or a zero rating with reviews; 0
+  of 520 merchants has zero reviews at all.** So `count = 0` is a reliable statement of "nobody has
+  rated this", which is what the fix keys on, and the nine are a third of the offerings table's
+  unrated tail surfacing on one ask - not nine odd rows.
+
+**What the card sends now.** one branch of one expression: `value` is the rounded aggregate when a
+  review was counted, and `null` when none was, with `count` still stating the zero. Re-measured on
+  these bytes (`tmp/d669_after.py`, `tmp/d669_after.txt`): demo unchanged at **19 blocks, 19 numbers,
+  19 backed**; live at **54 blocks, 45 numbers all backed, 9 null scores that still state `count: 0`**
+  - **0 cards lost the block and 0 rating facts arrived without a block**, which are the two ways
+  this fix could have eaten the answer instead of correcting it. The validator on the shipped card
+  goes from 18 live cards with rule rows to **12**, with **0 `entity_card_rendered_value_backed`**
+  rows left and the 12 address-scope rows untouched; the control - the same census with `0.0` put
+  back into those nine blocks - reproduces the before-record exactly (18 cards, 9 + 12 rows), which
+  is the cross-check that the two verdicts differ by the fix and not by the capture. 0 schema
+  offences on either plane either way: `value` was always nullable, so nothing here needed the
+  contract edited. The provider road costs **9 bytes on the live census** - `HttpLLMAdapter.
+  _user_text` answers 216,379 against the control's 216,370, one byte per card for `null` against
+  `0.0` - and is byte-identical on demo at 58,770, which is also §665's after-figure for the same
+  asks, so the two units' records measure the same card.
+
+**Arms - which row carries which half of the claim.** `tmp/d669_arms.py` lays eight arms over
+  `git archive` trees of `61d2b52`, with only the files each arm is named for replaced, the live
+  worktree never written and the trees deleted at the end; each runs the door plus the six gates that
+  read a card, then `tmp/d669_arm_census.py` re-runs the eleven asks and the validator judges the
+  dump (`tmp/d669_arms.txt`; the last line verifies the live worktree's product and door bytes are
+  unchanged by the run).
+
+- `A_parent_bytes` - the parent's `cards.py`, the parent's own gates first: **53 passed**, so nothing
+  shipped policed a card that states a score nobody reviewed. Under this unit's door the same tree
+  answers **5 failed, 61 passed** - the three shape rows, the live census row and the non-vacuity
+  row - with the census at 54 numbers, 45 backed, **9 PHANTOM** and the validator writing its 9
+  `entity_card_rendered_value_backed`. The door's other eight legs are green at the parent on
+  purpose: they are the yardstick rows that read the schema, the DDL, the two readers and the
+  builder's exclusivity, and they must not depend on the fix.
+- `B_fix_without_door` - this unit's `cards.py` over the parent's test tree: **53 passed**. The fix
+  reddens nothing that already existed, which is the finding that makes this unit's claim carried by
+  one new file rather than by a re-aimed one.
+- `C_shipped` - all of this unit's bytes: **66 passed**, 0 phantoms, 0 rule rows of this class.
+- `D_zero_back` - the parent's expression returned: **5 failed**, 9 phantoms, 9 rule rows. The cheapest
+  possible regression, and the door sees it on the served answer rather than only on a built dict.
+- `E_block_gone` - PLAN's filed remedy (`rating` absent for a subject with no reviews): **4 failed** -
+  the three shape rows and the non-vacuity row - and the census says what it cost: **9 live cards
+  send no rating block at all** and `count` disappears from the answer with it, while the rule rows
+  go to 0 exactly as the filed remedy predicted. This is the arm the ledger's own prescription needed
+  measured, and it is why the door asserts the presence of the count, not only the absence of the
+  score.
+- `F_null_always` - `value: null` whenever the column was read, reviews or not: **1 failed**, the
+  rated control row, and the census shows the damage the single red understates - demo's 19 printed
+  numbers become 0, and live's 45 become 0. The branch has to key on the count, and no gate but the
+  door's would notice the answers vanishing.
+- `G_cite_the_phantom` - keep the `0.0` and give it the missing fact (`synth_computed_facts` widened
+  to `if cand.rating is not None`): **5 failed**, and the validator goes quiet - 54 numbers, 54
+  backed, **0 `entity_card_rendered_value_backed` rows, 0 schema offences, 12 live cards offending
+  instead of 18**. The card still says the subject was rated zero stars, and the census still counts
+  9 phantoms, but the citation is satisfied. This is the arm that prices what the rule does and does
+  not mean: satisfying §4's letter is a citation, and a citation of a default is how a fabricated
+  number becomes unrefusable. The fix had to be on the value, not on the pointer.
+- `H_count_dropped` - `{"value": null}` with `count` left off: **8 failed, 73 schema offences**, and
+  the red set includes the predecessor gate `test_the_nested_objects_carry_the_contract_fields`, so
+  the published required pair is policed twice over. `count` is the key that carries the meaning,
+  which is what both this arm and `E` are the door's rows written against.
+
+**Gate.** `apps/ai/tests/test_a_subject_with_no_reviews_prints_no_rating_score.py`, 13 legs - 5 red
+  under the parent's bytes (`A`) and none under this commit's (`C`), and 1 red under the one-branch
+  wrong answer (`F`). With the six gates that read a card - `test_cards.py`,
+  `test_card_nested_shapes.py`, `test_live_search_contract.py`, `test_live_ai_contract.py`,
+  `test_answer_shapes_match_the_contract_models.py` and §665's door - the seven files run **66 passed**
+  on these bytes, and no gate needed re-aiming: unlike §668, this unit removed no key a reader reads,
+  because the two published readers already refused the number.
+
+**Suite.** `tmp/d669_shipped_suite.py` archives the whole tracked tree at `61d2b52`, overlays exactly
+  the two files this unit ships, and runs `pytest tests -q --tb=line -rf` against the live database:
+  **19 failed, 34,472 passed, 44 skipped, 1 warning in 2,309.81s (0:38:29)**, rc=1
+  (`tmp/d669_suite.txt`; the tree is deleted when the run ends unless `D669_KEEP_TREE=1`, so the
+  bytes measured are the parent's plus these two files and no other lane's worktree state).
+  `tmp/d669_owncheck.py` then runs the seven files that hold those 19 rows twice more on trees of
+  `61d2b52` - once with this unit's bytes laid over the parent, once with the parent alone - and
+  **the two passes print the same 18 rows**: `18 failed, 245 passed` against `18 failed, 232 passed`,
+  with **0 rows red only with this unit's bytes** and 0 rows this unit fixes
+  (`tmp/d669_owncheck.txt`). The passed counts differ by exactly thirteen, which is this door's leg
+  count, so the arithmetic of the two passes says the unit adds thirteen green rows and moves no red
+  - and the suite's own totals agree with it: §665 ran the same command over `b33de4e` plus its five
+  files, which is `61d2b52` exactly, and recorded `19 failed, 34,459 passed`, so the thirteen rows
+  this run adds are the only difference between the two ledgers' passed counts. Neither file this
+  unit stages holds a suite red at all.
+  Thirteen of the eighteen sit in the district lane's
+  `test_the_district_a_card_prints_is_filed_under_a_subject_the_answer_never_loads.py`, and the other
+  five name the citation, dead-constant, category-word and two vocabulary gates. The 19th row,
+  `test_the_documents_name_modules_that_exist`, is green on both owncheck passes and red only on the
+  suite run, for the tree-shaped reason §664 measured: a whole-tree archive does hold
+  `data/seed/generate.py`, so `_repo_root` stops inside the tree, where no gitignored `tmp/` was ever
+  archived, and the row reads the ledgers' record names as unresolvable citations. Neither verdict is
+  this unit's.
+
+**What these bytes leave, and what they file.** The fix is one branch, and the census this unit ran
+  to find it measured a second producer of the same phantom that this unit does not touch:
+  `/ai/v1/compare`. `tmp/d669_compare.py` sends batches of three of the nine unrated products
+  beside a rated neighbour (`tmp/d669_compare.txt`). Three findings, all pre-existing and all
+  outside this unit's file:
+
+- the grid prints the same phantom: **every rating cell of every batch states a value, 3 of the 4
+  cite no fact**, and the three are the unrated products - `rating_agg` read straight off the row by
+  `routes_discover._compare_rows` when the bundle holds no rating fact (`:301-304`). The fix for
+  that is not this unit's moved into another file: the grid's `_cell` (`:258`) has no `count` to
+  state, so a null value there is the block-gone shape arm `E` refuses, and the compare lane owes
+  its own decision about what an unrated cell shows.
+- the grid's cells do not follow the grid's own header row. The probe asked four subjects in one
+  order and in the reverse: `CompareResponse.subjects` echoes the request (both times), and the
+  rating cells come back as the identical sequence `(4.23, 4.25, 0.0, 0.0)` both ways while the two
+  cells that name a subject id swap (`2373754c, 8226bca5` against `8226bca5, 2373754c`). The cause
+  is a code read the measurement matches: `_compare_rows` appends cells while iterating the rows the
+  database returned, `subjects=list(body.subject_ids)` is the request (`:411`), and
+  `search/sql.entities_for` (`:916`, the UNION ALL at `:933-954`) has **no ORDER BY at all** - the
+  merchant branch first, then the offering branch, in whatever order the scan yields.
+  `packages/ui/src/trust/CompareTable.tsx:84` renders `row.cards.map((cell, cellIndex))` positionally
+  under header `i`, so a cell can sit under the wrong name.
+- the shipped gate asks for the phantom by hand: `test_live_ai_contract.py::
+  test_the_comparison_grid_carries_price_rating_and_distance` asserts, over every row of every
+  batch, that `cell.get("value") is not None` (`:136-139`). Any compare-side fix has to re-aim that
+  row first, or it will read as a regression the moment an unrated subject stops printing a number.
+
+Owner for all three: the compare lane, with these three batches as the starting rows - the same
+  nine products `tmp/d668_after.txt` named for this unit, reached through the second door.
+
+- readers: `search/cards.build_card` (the only writer of the block, and the gate, because
+  `EntityCard.rating` is `Optional[dict[str, Any]]` with `extra="ignore"`, which the door pins in
+  `test_the_builder_is_the_only_place_the_score_is_chosen` over a `git grep` of `apps/ai/nexus_ai`),
+  `search/cards.synth_computed_facts` (whose `and cand.rating_count` is the condition the block
+  should have shared), `search/cards._reason_text` (the sentence that already declined),
+  `search/ranking.bayesian_quality` (AGENT §6's shrink, unchanged),
+  `packages/types/src/schemas/common.json#/$defs/RatingInfo` and `entity_card.json`'s
+  `rating` `oneOf`, `packages/types/scripts/rules.mjs`'s `entity_card_rendered_value_backed`,
+  `infra/db/migrations/V1__init.sql`, `packages/types/src/common.ts`,
+  `packages/ui/src/trust/Renderers.tsx`, `apps/web/app/m/[slug]/page.tsx`,
+  `docs/AGENT_CONTRACT.md` §4 and §6, `docs/DECISIONS.md` D24 items 3 and 4, and this unit's
+  `tmp/` records: `tmp/d669_measure.py` with `d669_before` and `d669_cards_before`;
+  `tmp/d669_rows.py` (the read-only column census); `tmp/d669_askreach.py` with `d669_askreach`
+  (which asks serve the nine); `tmp/d669_compare.py` with `d669_compare`;
+  `tmp/d669_after.py` with `d669_after`, `d669_cards_after` and `d669_cards_control`;
+  `tmp/d669_arm_census.py` and `tmp/d669_arms.py` with `d669_arms` and the eight
+  `d669_cards_<arm>.json` dumps; `tmp/d668_capture.py` (reused as the card capture);
+  `tmp/d619_full_offences.mjs` (reused as the judge); `tmp/d669_shipped_suite.py` with `d669_suite`;
+  `tmp/d669_owncheck.py` with `d669_owncheck`; `tmp/d669_land.py` and `tmp/d669_plan_patch.py`.

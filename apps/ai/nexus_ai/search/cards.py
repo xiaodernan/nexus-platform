@@ -279,8 +279,17 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
     # twice - the block's copy being the one the contract's validator refused. The two STATES keep
     # their citations, published as they are: availability's `fact_id` below, and the open block's
     # `source_fact_id`, because a TTL-0 claim is only true as of the moment it names.
+    # D669: a count of 0 reviews is the answer to "was this rated?", and the columns say it with a
+    # zero - `rating_agg numeric(3,2) NOT NULL DEFAULT 0` (`V1__init.sql`), and `common.ts` states
+    # "a null/0 count means not yet rated". `synth_computed_facts` above already asks that question
+    # (`and cand.rating_count`), which is why the 9 unrated live cards had no fact to cite; the
+    # block asked only whether the column was read, so it printed the default as a score of zero -
+    # the worst value on the scale, about a thing nobody scored. `RatingInfo.value` is nullable, so
+    # the card now says what it knows: no score, and 0 reviews.
     rating_value = cand.rating
-    rating = ({"value": round(float(rating_value), 2), "count": int(cand.rating_count or 0)}
+    rating_count = int(cand.rating_count or 0)
+    rating = ({"value": (round(float(rating_value), 2) if rating_count else None),
+               "count": rating_count}
               if rating_value is not None else None)
 
     distance = None
