@@ -2404,24 +2404,68 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   ledger has ever made on the live plane. Owner: whoever owns `data/seed` (the seed's own clock, not
   the reader's).
 
-- **A `filters.kind` with no text answers merchants, and the kind it was given is dropped.** Three
-  asks - `{filters: {kind: service}}`, `{kind: experience}`, `{kind: product}`, each `limit 6`, none
-  with a `query` - each serve the **same 6 `merchant` cards** (香峰, 瀚館, 盛甬酒吧, 星灶, 瀚軒, 星里), and
-  the same two kinds served with a text leg (`髮`, `導賞`) serve the offering kind they asked for
-  (`tmp/d671_cards.txt`). The decision is read out of the shipped bytes, not inferred: a listener on
-  `plan_from_intent` (`tmp/d671_route.txt`) shows the three text-less asks arriving with
-  `intent=None` and leaving with `subject_types=['merchant']`, and the two asks that carry a text leg
-  arriving with `intent='unknown'` and leaving with `subject_types=['offering']`. The code is one
-  line's position: `subject_types` is a field defaulting to `("merchant",)` (`search/service.py:715`),
-  the upgrade that honours a caller-named kind is `if filters and _plain(filters).get("kind") in
-  ("product", "service", "experience")` at `:946`, and it sits **below** the `if intent is None`
-  return at `:934-943` - so a request that names a kind and no text leaves the function before the
-  line that would read it. `build_merchant_query` (`sql.py:241`) carries no `kind` predicate at all
-  and the only live one is inside `build_offering_query` (`sql.py:535`), which that request never
-  reaches: a caller who names a product kind gets a restaurant. So the lane does consult
-  `filters.kind`, just not on this path. This unit measured it and stopped: it is a routing claim, not
-  a column-nobody-reads claim, and D614 and D616 already own the shape of it for `filters.category`.
-  Owner: the AI lane.
+- **A `filters.kind` with no text answers merchants, and the kind it was given is dropped - closed
+  by D673 (§670).** Three asks - `{filters: {kind: service}}`, `{kind: experience}`, `{kind: product}`,
+  each `limit 6`, none with a `query` - served the same six merchant cards, and the same kinds served
+  with a text leg served the offering kind they asked for (`tmp/d671_cards.txt`); the listener on
+  `plan_from_intent` showed the text-less asks arriving with `intent=None` and leaving with
+  `subject_types=['merchant']` (`tmp/d671_route.txt`). The code was one line's position: the reader of
+  a caller-named kind sat below the `if intent is None` return, so a request naming a kind and no
+  sentence left the function before the line that would honour it, and `build_merchant_query` -
+  which carries no `kind` predicate at all - ran instead (`sql.py:241`; the only live one is
+  `sql.py:536`, inside `build_offering_query`). The reader now runs inside the `intent is None` branch,
+  before its return, unchanged in what it tests and in what it sets (`service.py:943-948`); the intent
+  path keeps its copy below (`:952-953`), so both exits carry a reader -
+  `test_both_exits_from_this_function_have_a_reader_for_a_named_kind` counts two - and it is not a
+  move of the lower reader above the return, which the first arms run measured as inert because two
+  readers survive the hoist (`tmp/d673_arms_v1_inert_d.txt`), and not a widening: `kind: "merchant"`
+  and no kind still answer merchants, pinned from both planes. Before the line moved, the candidate
+  rule was served in memory over the same six asks (`tmp/d672_measure.py`, `tmp/d672_measure.txt`,
+  `tmp/d672_measure.json`): each kind ask answers its own kind - 6 of 6 at `limit 6`, 20 of 20 at
+  `limit 20` - `{kind: product, district: Central}` answers a different six products out of the 90
+  active ones under a Central location (`tmp/d673_central_products.txt`), and every served row is an
+  `active` offering of a `published` merchant. After, on this unit's bytes through the shipped route
+  with the live database, the door serves **24 passed** in 29.88s (`tmp/d673_door_live.log`) and the
+  same file on a tree of the parent serves **12 failed, 12 passed** (`tmp/d673_door_head.log`): the
+  three kinds answer three different six offerings, `kind=merchant` and the absent kind still answer
+  merchants, page 2 of `kind=product` is still products, and the Central bound holds against the
+  `locations` EXISTS the filter actually reads. Two defects in the door's scaffolding were repaired on
+  the way, not in its assertions: the `item` ask had been sent over HTTP although the published
+  `Literal` refuses it with a 422 (it is now never served, and a leg asserts the 422), and its
+  ground-truth read assumed `merchants.district`, which is not a column here. Eight arms over trees of
+  `33ca220` (`tmp/d673_arms.py`, `tmp/d673_arms.txt`): parent bytes 12 failed / 118 passed, the fix
+  without the door 106 passed with no red, the shipped bytes 130 passed, and each wrong answer moves
+  the legs that name it - 3 under `D_intent_copy_removed`, 3 under `E_widened_to_merchant`, 1 under
+  `F_reads_canonical`, 8 under `G_upgrades_on_any`, 11 under `H_mixed_subjects`. Reachability is the
+  published model, not traffic: 121 hits name `/ai/v1/search` and **0** of them build a `filters`
+  object carrying a `kind` (`tmp/d673_census.txt`; the first census pass is kept because both its
+  probes and its after-run were invalid - `tmp/d673_census_run.log`), while `api/pipeline.py:174`
+  reaches the same branch without HTTP. The suite on these bytes is **26 failed, 34,507 passed,
+  44 skipped in 5,767.27s** (`tmp/d673_suite.txt`), and the owncheck prints the same 26 rows with and
+  without this unit's two bytes - 0 red only here, 0 cured here, the 24-passed gap being the door's
+  own legs (`tmp/d673_owncheck.txt`). Nineteen are §667's set leg for leg; the 7 new rows are the two
+  part-of-day doors, whose parent bytes ask the parser for a weekday without a `now` and so hold only
+  on a Tuesday - §667 ran on Tuesday, this ran on Wednesday, and the part-of-day lane is re-aiming
+  both files in the worktree now. Gate
+  `test_a_kind_named_with_no_sentence_at_all_is_answered_by_that_kind.py`, 24 legs, 12 offline and 12
+  live, none skipped. Owner: the AI lane.
+
+- **A kind ask with no sentence has no match text, so nothing embeds, the semantic lane never runs,
+  and the six offerings it now answers arrive unranked** - `plan_from_intent` leaves `match_text=''`
+  for every text-less ask (measured across both passes of `tmp/d672_measure.txt`), and
+  `api/pipeline.py:179` opens the vector lane with `if plan.match_text:`. The rows are the right kind
+  now; their order is the statement's tie-break, not a relevance. A browse that names only a filter -
+  kind, district, price - has no ranking signal at all, and the ranking plane has never been asked to
+  read one. Owner: the AI lane, with the ranker's owner.
+
+- **A kind synonym is canonicalised into the filter and still never upgrades the subject, because both
+  exits read the raw value** - `_canonical_kind` (`service.py:852`) maps 「item」 to `product` inside
+  `plan.filters`, while the subject readers at `service.py:947` and `:952` test
+  `_plain(filters).get("kind")`, which is still `item`. The published `Literal` (`contract.py:267`)
+  refuses that spelling at the API with a 422, so the gap is reachable only from an internal caller -
+  which is exactly what `api/pipeline.py:174` is. Pinned, not repaired, by
+  `test_a_synonym_kind_reaches_the_filter_but_not_the_subject`, and arm `F` is the version that reads
+  the canonicalised value (1 leg moves). Owner: the AI lane.
 
 - **A fixture merchant that names its coarse bucket cannot answer a leaf the live lane answers, and
   HEAD is red on it (found while proving D607's reds were not D607's)** -

@@ -940,6 +940,12 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
         _canonical_tags(plan.filters)
         _canonical_kind(plan.filters)
         _apply_geo(plan, geo)
+        # D673: the same reader the intent path has for a kind the CALLER named. That upgrade sat
+        # below this return and was the only one, so a request with no sentence - `{"kind":
+        # "product"}` with no `query`, which the published Filters model accepts - left the function
+        # first and was answered by `build_merchant_query`, a statement with no kind predicate.
+        if filters and _plain(filters).get("kind") in ("product", "service", "experience"):
+            plan.subject_types = ("offering",)
         return plan
 
     plan.subject_types = KIND_TO_SUBJECT.get(intent.intent, ("merchant",))

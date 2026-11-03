@@ -32171,3 +32171,125 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   event and no corpus row either); `tmp/d618_capacity.py` (the superseded draft
   of the first instrument, kept because it is where the 157 claim was first written down); and
   `tmp/d668_capture.py`, whose `ASKS` list the first instrument reuses as the eleven-ask census.
+
+## 670. D673 · a caller-named kind is dropped by the one exit of the planner that has no sentence to read it from (`apps/ai/nexus_ai/search/service.py`)
+
+**How the unit arrived.** §668 measured the length no card carries, and while it was serving the asks
+  that measurement needed, `tmp/d671_cards.py` sent three that name a kind and nothing else -
+  `{filters: {kind: service}}`, `{kind: experience}`, `{kind: product}`, each `limit 6`, none with a
+  `query` - and all three came back as the identical six merchants (香峰, 瀚館, 盛甬酒吧, 星灶, 瀚軒,
+  星里), so the kind the caller named decided nothing at all (`tmp/d671_cards.txt`). PLAN filed that
+  as an open clause with its numbers and an owner; this unit is that clause. It is not a reading of a
+  sentence: the utterance plane is not involved, because there is no utterance.
+
+**Where the line was, read out of the lane.** `contract.py:267` publishes the request's
+  `filters.kind` as `Optional[Literal["merchant", "product", "service", "experience"]]` and
+  `contract.py:322` makes `query` optional, so `{"filters": {"kind": "product"}, "limit": 6}` is a valid
+  `SearchRequest` on the published surface. `tmp/d671_route.py` (record `tmp/d671_route.txt`) listened
+  inside `plan_from_intent`: the three text-less asks arrive with `intent=None` and leave with
+  `subject_types=['merchant']`, while the same filter WITH a text leg (`髮` + `kind=service`) leaves
+  with `['offering']` and answers six services. The mechanism is a position. `SearchPlan.subject_types`
+  defaults to `("merchant",)` (`service.py:715`), and the only reader of a caller-named kind sat at
+  `service.py:952` - below the `if intent is None: ... return plan` exit at `:934-949`. A request that
+  names a kind and no sentence leaves the function before the line that would honour it, and what runs
+  is `sql.py:241` `build_merchant_query`, a statement with no kind predicate at all: the only live one
+  is `sql.py:536`, inside `build_offering_query`. A caller who asks for products is served restaurants.
+
+**What would answer, before a line moved.** `tmp/d672_measure.py` (record `tmp/d672_measure.txt`,
+  `tmp/d672_measure.json`; written under this unit's earlier label) serves the same six asks twice -
+  once on the shipped bytes, once with the candidate rule wrapped around `plan_from_intent` in memory,
+  nothing written and nothing started but a `TestClient`. The first pass answers six merchants to every
+  kind and reports `cards whose own kind is not the kind named: 0`, which is the vacuous version of the
+  same sentence: no card carries a kind because no card is an offering. The candidate pass answers the
+  kind it was told - service 6 of 6, experience 6 of 6, product 6 of 6, service 20 of 20 at `limit 20`,
+  and `kind=product` + `district=Central` a different six products from a pool the census counts at 90
+  active products under a Central location (`tmp/d673_central_products.txt`, run of
+  `tmp/d672_district.py`) - with three different first cards, so the kinds are three different answers
+  and not one answer re-labelled. The fix was worth making before it was made.
+
+**What the fix is, and what it is not.** Two lines inside the `intent is None` branch, before its
+  return, at `service.py:943-948`: the same test the intent path already runs
+  (`if filters and _plain(filters).get("kind") in ("product", "service", "experience")`) and the same
+  value it sets. The intent path keeps its own copy at `:952-953`, so both exits from the function carry
+  a reader for a named kind, and
+  `test_both_exits_from_this_function_have_a_reader_for_a_named_kind` counts two in the shipped source.
+  It is not a widening: `kind: "merchant"` and the absence of a kind keep answering merchants, pinned
+  from both planes. And it is deliberately not the hoist - the first arms run measured that moving the
+  lower reader above the branch leaves the function with two readers and the count leg green, so an
+  inert arm looks like a passing suite (`tmp/d673_arms_v1_inert_d.txt`, kept because the shape of that
+  mistake is the point); arm `D` deletes the intent path's copy instead, and three legs move.
+
+**The door.** `test_a_kind_named_with_no_sentence_at_all_is_answered_by_that_kind.py`, 24 legs - 12
+  offline on the plan the function returns and 12 live through `TestClient` on the shipped route against
+  the live database: `24 passed, 1 warning in 29.88s` (`tmp/d673_door_live.log`). The same file on a
+  tree of the parent is `12 failed, 12 passed` (`tmp/d673_door_head.log`) - the twelve live-and-shape
+  legs that name the kind it was given. Two defects in the door's own scaffolding were repaired on the
+  way, not in its assertions: the `item` ask was sent over HTTP although the published `Literal` refuses
+  that spelling with a 422, so it is now never served and a leg asserts the 422 instead of pretending
+  the synonym reaches a caller; and the district leg's ground truth read `merchants.district`, which is
+  not a column in this schema - the filter's own semantics are the `locations` EXISTS behind it, and the
+  leg now asks each served offering whether its merchant has a Central location.
+
+**Arms.** `tmp/d673_arms.py` builds trees of `33ca220` and lays over each only the files an arm is
+  named for (`tmp/d673_arms.txt`); every arm runs this door plus the seven neighbour gates that read the
+  same plan (`test_search_plan.py`, `test_search_pipeline.py`, `test_the_filter_speaks_the_kind_vocabulary.py`,
+  `test_the_district_filter_answers_the_locations_the_row_holds.py`, `test_a_price_floor_is_read_by_both_lanes.py`,
+  `test_an_offering_that_cannot_seat_the_party_is_not_answered_for_it.py`, `test_candidates_from_rows.py`):
+  `A_parent_bytes` 12 failed / 118 passed, `B_fix_without_door` 106 passed with no red - the two lines
+  redden nothing that already existed, so the door is what carries the claim - `C_shipped` 130 passed,
+  `D_intent_copy_removed` 3 (the intent-wins leg, the shape count, and the text leg that already worked),
+  `E_widened_to_merchant` 3 (both merchant legs and the shape count), `F_reads_canonical` 1 (the synonym
+  leg: read the canonicalised value instead of the raw one and the residue becomes a repair nobody asked
+  for), `G_upgrades_on_any` 8 (upgrade the subject whatever the filter holds and the merchant and
+  no-kind legs go), `H_mixed_subjects` 11 (`("merchant", "offering")` instead of `("offering",)` - the
+  kind answer is not the merchant answer with an offering appended).
+
+**Who can reach it, and what it chooses between.** `tmp/d673_census.py` (record
+  `tmp/d673_census.txt`) asks the repository for a caller of the shape. 121 hits name
+  `/ai/v1/search` - `apps/web` 13, `packages` 27, `apps/ai` 77, e2e 4 - and of all of them **0** build a
+  `filters` object that carries a `kind` on one line, with `apps/web` and `packages` at 0 hits for a
+  `filters` payload in any shape. So this is a published-surface repair, not a live traffic bug: no
+  first-party caller sends it today, and any API caller may, because the model accepts it. One internal
+  caller reaches the same branch without HTTP: `api/pipeline.py:174` hands `plan_from_intent` the
+  `intent` its caller resolved - which `run_search` accepts as `Intent | None` - together with the
+  filters it was passed. What the branch chooses between, live: 313 experiences, 822 services and 3,572
+  products that are `active` rows of a `published` merchant (4,707 offerings of every kind reachable),
+  against the 470 published merchants every one of those asks was drawing from. The census's first pass
+  is kept in `tmp/d673_census_run.log`: its probes matched every mention of `kind` rather than every
+  carrier of one, `.mypy_cache` included, and its in-process after-pass imported the worktree package
+  that already held the fix, so it reported that nothing moved. Both halves were rewritten before the
+  numbers above were taken.
+
+**Suite.** `tmp/d673_shipped_suite.py` archives the whole tracked tree at `33ca220`, lays over exactly
+  the two bytes this unit ships - the door, and `service.py` rebuilt from the parent plus this unit's
+  hunk, asserted free of the other lane's uncommitted `late_night` line before the run - and runs
+  `pytest tests -q -p no:cacheprovider --no-header --tb=line -rf` against the live database: **26
+  failed, 34,507 passed, 44 skipped, 1 warning in 5,767.27s (1:36:07)**, rc=1
+  (`tmp/d673_suite.txt`; the tree is deleted when the run ends unless `D673_KEEP_TREE=1`).
+  `tmp/d673_owncheck.py` then runs those nine files twice on trees of the same commit - SHIPPED (the
+  two bytes laid over, plus this door) and BASE (the parent alone) - and the two passes print the same
+  26 rows: **26 failed / 271 passed** against **26 failed / 247 passed**, 0 rows red only with this
+  unit's bytes, 0 rows this unit fixes, and this unit's own door green in both
+  (`tmp/d673_owncheck.txt`). The 24-row gap between the passed counts is the door's leg count. The 19
+  rows these bytes share with the ledger are §667's own set, named leg for leg; the other 7 are new
+  since §667 and are not this unit's either - they are `test_a_part_of_day_is_a_window_and_not_its_first_minute.py`
+  (2) and `test_the_day_the_request_names_is_not_nine_o_clock.py` (5), whose parent bytes call
+  `extract_intent(text)` with no `now`, so those legs read the machine's clock and their constants
+  (`open_weekday == 1`, commented 「Tuesday in Hong Kong」) hold on a Tuesday only. §667's suite ran on
+  Tuesday; this one ran on Wednesday, which is the whole of the difference. The same two files are
+  being re-aimed in the worktree right now by the part-of-day lane (uncommitted: one `now` handed to
+  both readers, the constants moved to Wednesday), so neither row is filed here - naming it is enough
+  for the next reader to attribute a suite by.
+
+**What these bytes leave, and what they file.** The fix is two lines on one exit of one function, and
+  it leaves three things. A kind synonym (`{"kind": "item"}`) is canonicalised into the filter by
+  `_canonical_kind` (`service.py:852`) and still never upgrades the subject, because both exits read
+  the raw value; the published `Literal` refuses that spelling at the API, so it is reachable only
+  from an internal caller - pinned by a leg, filed as a clause. A kind ask with no sentence has no
+  match text at all (`tmp/d672_measure.txt` records `match_text=''` for every text-less pass), and
+  `api/pipeline.py:179` opens with `if plan.match_text:` - so nothing is embedded, the pgvector lane
+  never runs, and the six offerings the fix now returns arrive in the statement's own order rather
+  than a ranked one; filed as a clause, not repaired here. And the surface this unit repaired has no
+  first-party caller: the census found 0 filters payloads in `apps/web` and `packages`, so a user
+  browsing by kind without a sentence is a thing the published contract allows and this product does
+  not yet do - which is a question for the web lane, not a defect in this one.
