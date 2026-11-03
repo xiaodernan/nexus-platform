@@ -31708,3 +31708,285 @@ Owner for all three: the compare lane, with these three batches as the starting 
   `d669_cards_<arm>.json` dumps; `tmp/d668_capture.py` (reused as the card capture);
   `tmp/d619_full_offences.mjs` (reused as the judge); `tmp/d669_shipped_suite.py` with `d669_suite`;
   `tmp/d669_owncheck.py` with `d669_owncheck`; `tmp/d669_land.py` and `tmp/d669_plan_patch.py`.
+
+## 667. D670 · the comparison grid answered the read's sequence under the request's names, and printed the phantom its own published type already allows a blank for (`apps/ai/nexus_ai/api/routes_discover.py`)
+
+**How the unit arrived.** §666 fixed the card and filed, in its own closing section, that the census
+  which found that phantom had measured a second producer of it: `/ai/v1/compare`. PLAN named three
+  charges and an owner (「the compare lane, with those three batches as the starting rows」): the grid's
+  rating cells print `rating_agg` when no fact backs them; 「asked the same four subjects in one order
+  and then the reverse, `CompareResponse.subjects` echoes the request both times, while the rating
+  cells come back as the identical sequence」; and 「the shipped gate … asserts that every cell of every
+  row has `value is not None`, so it demands the phantom by hand and any fix here begins by re-aiming
+  that row」. All three were measured before this unit touched a line, in `tmp/d669_compare.txt`, and
+  all three live in a file §666 does not stage.
+
+**What the grid sent, measured on `0034f2c`.** `tmp/d670_measure.py` sends every batch of subjects
+  the eleven-ask census can serve - in-process, `TestClient` over `create_app`, nothing started and no
+  row written, its own capture rather than §666's `tmp/d668_capture.py` - to `/ai/v1/compare`, reads the
+  same `entities_for` statement through the
+  product's read-only pool to get the sequence and columns behind each cell, and writes
+  `tmp/d670_before.txt`. `contract.CompareRequest.subject_ids` is `Field(min_length=2, max_length=5)`,
+  so a six-subject ask is a 422 and each batch is cut to five with the cut recorded - 14 batches, 11
+  asks plus 5 order probes. Over them:
+
+- **14 of 14 batches** handed the grid a row sequence that is not the sequence the request named, and
+  **47 of the 65 rating cells** printed a number belonging to another subject of the same batch. 3
+  were ambiguous (two subjects of one batch share the value, so the mislabelling cannot be
+  attributed) and the remaining 15 agree with their own header by coincidence.
+  - the probe needs no inference. One list of four ids, asked in three orders, returned the identical
+  rows every time - `rating [4.23, 4.25, 4.57, 4.55]`, `price ['208.83', '143.33', '354.55',
+  '109.87']`, the same category, open_state, district and distance rows - while `subjects` echoed
+  each order correctly. `tmp/d670_rows.txt` reads the statement itself: the same four subjects come
+  back in the same sequence however they are named (the three orders return it as permutations
+  `[0, 1, 3, 2]`, `[3, 2, 0, 1]`, `[0, 3, 2, 1]` of the list they were named in), the sequence
+  repeats over three runs of the shipped text, and that text holds no `ORDER BY`.
+  - **8 of the 65 cells** state a score for a subject whose own row says nobody reviewed it, and all 8
+  name no `fact_id`: `bundle.get("rating", sid)` empty, the branch falls through to
+  `row["rating_agg"]`, and `V1__init.sql:95-96`/`:241-242` declare on both tables
+  `rating_agg numeric(3,2) NOT NULL DEFAULT 0` beside `review_count integer NOT NULL DEFAULT 0`. So
+  an unrated subject arrives as the worst number on the scale, about a thing nobody scored, in the
+  one cell §4 says must resolve to a fact.
+  - a named subject the read cannot answer for loses its cell entirely. `tmp/d670_missing.txt` counts
+  50 of 520 merchants not published, 368 offerings not `active` and 463 offerings whose merchant is
+  not reachable; a three-subject ask of `[reachable offering, draft merchant, a uuid nobody holds]`
+  answers 200, echoes **three** subjects and returns **one** cell in every attribute row - the two
+  surviving numbers therefore sit under the first two names regardless of which they belong to.
+
+`tmp/d670_uncited.py` then crosses the 65 cells against the columns and the facts plane
+  (`tmp/d670_uncited.txt`): **57 cited-and-rated, 8 uncited-and-unrated, and nothing in either
+  remaining class** - 0 of 999 rated reachable offerings and 0 of 470 rated merchants lack a `rating`
+  fact of their own, and 0 of the 1,727 stored `rating` facts sit on a row whose `review_count` is 0.
+  Two things follow, and both shaped the fix: the fall-through is reached **only** by an unrated
+  subject, so keying it on the count needs no new fact and removes every phantom; and the pair is never
+  in disagreement corpus-wide (`tmp/d670_rows.txt`: 3,708 of the 4,707 reachable offerings have no
+  reviews and all 3,708 carry `rating_agg = 0`; 0 rows have a score with no reviews or reviews with a
+  zero score), so the count is a trustworthy condition. The classifier attributes a cell to the row the
+  grid iterated and says which rule it used in its own first line - `db` for the before-record,
+  `request` for `tmp/d670_uncited_after.txt`; run through the parent's rule the after-dump would call
+  two correct blanks 「a fact the columns deny」, which is the instrument, not the answer.
+
+**Where the pairing is promised.** `packages/types/src/search.ts:189` publishes `CompareRow.cards`
+  as 「One cell per compared subject, in request order」, `:199-200` types a cell's `value` as
+  `string | number | null` - 「null when the subject has no value for this attribute - spec §37 shows
+  blank cells, never a fabricated one」 - and `:204` declares `subject_id?: Uuid | null`, which the
+  lane has never emitted. `packages/ui/src/trust/CompareTable.tsx` takes its headers from the caller's
+  card list and renders `row.cards.map((cell, cellIndex) => …)` keyed `${row.attribute}-${cellIndex}`,
+  so position is the only pairing the reader has. The response model cannot carry it:
+  `contract.CompareRow.cards` is `list[dict[str, Any]]`, and the door's
+  `test_the_response_model_cannot_be_the_gate` reads that annotation rather than arguing it.
+
+The prose plane reads the same §37 as 「per-cell fact ids」 (`docs/PRODUCT.md:44`,
+  `docs/CONSUMER.md:38`, `docs/ROADMAP.md:64`'s done-note), and a blank cell carries no `fact_id`, so
+  this unit has to choose between the two sentences §37 is read by. It chooses the one the lane already
+  enforces: §4 says a *value* must resolve to a fact, `test_understand_recommend_compare.py:93`
+  forbids a pointer on an empty cell, and §666 settled the same pair on the card surface by removing
+  the number rather than inventing a citation for it. A cell that states nothing cites nothing; a cell
+  that states a number cites it. `API_CONTRACT.md:331` names the cell's keys and the `distance` rule
+  but says nothing about which subject a cell belongs to - the ordering promise lives only in the type
+  and the renderer, which is why the door reads both files rather than quoting the contract.
+
+The renderer's own handling of a blank was read before this shipped, and it is the reason a blank is
+  safe: `packages/ui/src/trust/CompareTable.tsx:84` maps every cell to a `<td>` keyed
+  `${row.attribute}-${cellIndex}` with no filter, and `:85`/`:95-96` decide only the PAINT -
+  `const factBacked = Boolean(cell.fact_id)`, and an unbacked cell renders `labels.unverified` in the
+  faint type instead of the number. So an unrated subject keeps its column and its position: the fix's
+  blanks reach the reader as a stated 「unverified」 cell rather than a deleted one, which is what makes
+  the type's 「never a fabricated one」 readable without shifting the neighbours. The door's renderer leg
+  pins what the reader MAPS (`row.cards.map((cell, cellIndex)` and the positional key); the no-drop
+  half is recorded here from the file rather than gated, because this unit's suite verdict is measured
+  against the bytes it shipped and adding a leg after that run would quote a gate the run never ran.
+
+**What the lane sends now.** Three edits in one file, all in `_grid` and its one caller. The grid
+  takes the subjects it is answering for as a required keyword-only argument and keys its columns by
+  them: `by_subject = {str(r.get("subject_id")): r for r in entity_rows}` and
+  `order = [str(s) for s in subject_ids]`, so the cells are appended in the sequence the request named
+  and in that sequence's length. `column_for` returns `by_subject.get(sid) or {}` - a subject the read
+  could not answer for is a column of nothing, and every attribute cell for it is the blank the type
+  already allows, with no fabricated value and no `fact_id` to cite. The rating fall-through reads the
+  count, not the number: `row.get("rating_agg") if row.get("review_count") else None`.
+
+Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`: the grid no longer
+  depends on the read's sequence, the statement has exactly one caller (`routes_discover.S_entities`),
+  and `test_uuid_id_bindings.py` already polices its bound-id shape - adding a sort to fix a caller
+  that reads by key would be a change to the wrong layer. It is not a `subject_id` key added to the
+  cell: `test_understand_recommend_compare.py:77` pins the emitted key set to exactly
+  `{value, fact_id, source, observed_at, confidence}`, no published reader asks for the id, and
+  emitting it here would be a contract change wearing a bug fix - so the residue below files it
+  instead. And it does not gate the stored-fact road on the count: measured 0 of 1,727 rating facts
+  sit on an unrated row, so a guard there would be unmeasured code.
+
+**What these bytes answer.** `tmp/d670_after.txt` (the same instrument, the same asks, the shipped
+  bytes): **0 cells stating a score for a subject with `review_count` 0**, 0 ambiguous, and the probe
+  now moves with its headers - the reversed ask returns `rating [4.57, 4.55, 4.25, 4.23]` against the
+  forward `[4.23, 4.25, 4.55, 4.57]`, and price, category, district, open_state and distance with
+  them. Its totals line still flags 「3 cells that state another subject's number / 3 cells naming no
+  fact_id」, and its own detail lines say what those three are: `header loose-tea-50g-tin is 0.0, the
+  cell prints None` - the fix's correct blanks, counted by an instrument that compares a cell with the
+  column default it removed. The classifier under the shipped rule
+  (`tmp/d670_uncited_after.txt`) is the same 14 batches read with the pairing the code now keeps: 57
+  cells that state a value, **57 cited and rated, 0 in every other class, 3 blank**. One batch changed
+  shape rather than position: `kind=product` now answers **no rating row at all**, because all five of
+  its subjects are unrated and `_compare_rows` drops a row whose cells are all blank (D401) - the
+  consequence this unit states instead of discovering later, pinned by
+  `test_a_grid_of_only_unrated_subjects_shows_no_rating_row` so that the next change to it is a
+  decision.
+
+**Arms - which leg carries which half of the claim.** `tmp/d670_arms.py` lays nine arms over
+  `git archive` trees of `0034f2c`, replacing only the files each arm is named for, then runs the door
+  plus the five gates that read the grid (`test_compare_grid.py`,
+  `test_the_price_cell_of_the_comparison_grid_carries_its_rows_clock.py`,
+  `test_understand_recommend_compare.py`, `test_live_ai_contract.py` and §666's card door) and finally
+  re-runs `tmp/d670_measure.py` inside the arm, so the cell counts in the record are the counts the
+  before-record used (`tmp/d670_arms.txt`; the last line verifies the live worktree's kernel, door and
+  gate bytes are unchanged by the run). Each line says how many files it ran, because the first pass
+  did not and the number is the proof the door was in the run: `tmp/d670_arms_first.txt` has arms C
+  through I at 48 legs - every gate leg and none of the door's 18 - so six of them printed the same
+  total as the deliberately doorless arm B and one printed 2 failed of 48. The parent archive holds no
+  file with this door's name, and the runner filtered the absent path out instead of complaining, so
+  those arms were inert rather than green. The second pass overlays the door
+  whatever the tree contains: `6 file(s)` means the door ran, `5 file(s)` means it was withheld on
+  purpose.
+
+- `A_parent_bytes` - the parent's kernel with the parent's gates first: **48 passed**, so nothing
+  shipped policed a cell that belongs to its neighbour's header. With this door overlaid: **14
+  failed, 52 passed** - every leg of the ordering, blank-column, count-gate and served-census halves,
+  and the instrument again reports 47 mislabelled cells, 3 ambiguous, 8 phantoms and 8 uncited. The
+  door's other four legs are green at the parent on purpose: they read the published type, the
+  renderer, the response model and the DDL, and a yardstick that depends on the fix is no yardstick.
+  - `B_fix_without_door` - this unit's kernel and re-aimed gates, door withheld: **48 passed**. The fix
+  reddens nothing that already existed, which is why the claim is carried by one new file.
+  - `C_shipped` - all of this unit's bytes: **66 passed** (18 door legs + 48 gate legs), and the
+  instrument's phantom count at 0.
+  - `D_row_order_back` - the parent's `order` expression put back under the new signature: **7 failed**
+ - both ordering legs, both served-census legs, the non-vacuity leg and the two
+  read-cannot-answer legs - and the instrument, which reads served bytes rather than this unit's
+  asserts, independently goes from 3 flagged cells to **48**. This is the arm that says the pairing,
+  not the signature, is the fix.
+  - `E_subjects_optional` - `subject_ids` grows a `| None = None` default and falls back to row order:
+  **1 failed**, `test_the_grid_takes_the_subjects_it_answers_for_as_a_required_keyword`. The
+  behaviour it installs is indistinguishable on this corpus (`_compare_rows` always names the
+  subjects), so the leg that pins the signature is the only thing that can see it - which is why that
+  leg exists.
+  - `F_skip_unanswered` - the half-fix that keys the columns but drops a named subject the read has no
+  row for: **2 failed**, `test_a_subject_the_read_has_no_row_for_still_holds_its_column` and its
+  served twin. Cells shift again, and nothing else in the suite notices.
+  - `G_count_gate_dropped` - the fall-through prints the aggregate whatever the count says: **6 failed**
+ - the count leg, both unrated-shape legs, the all-unrated row leg, the served phantom leg and the
+  non-vacuity leg - and the instrument returns to 65 rating cells, **8 phantoms, 8 uncited**. D669's
+  defect on this surface, measured back into existence.
+  - `H_key_on_the_number` - `if row.get("rating_agg")` instead of `if row.get("review_count")`: **1
+  failed**, the impossible-fixture leg (`rating_agg = 4.9` with `review_count = 0`). On this corpus
+  the two conditions select the same rows - every unrated row's aggregate is 0 and no rated row
+  reaches the branch - so only a fixture can state which column the gate reads. That arm is the
+  reason that fixture exists.
+  - `I_fact_road_dropped` - the stored `rating` fact no longer consulted: **3 failed** -
+  `test_the_stored_rating_fact_is_still_the_primary_road` plus the two shipped gates
+  `test_compare_never_fabricates_values` and `test_the_comparison_grid_carries_price_rating_and_distance`
+ - and the instrument says 60 of 60 cells name no `fact_id`. The fall-through is the exception, and
+  the gates that police citation see it go.
+
+**Gate.** `apps/ai/tests/test_the_comparison_grid_puts_each_cell_under_its_own_subject.py`, 18 legs
+  in three halves: four yardsticks that read the published pairing (`search.ts`, `CompareTable.tsx`,
+  the response model's `cards` annotation, the two DDL blocks), nine offline rows that call `_grid`
+  with rows handed over in the read's order and subjects named in another, and five live rows that ask
+  the served endpoint through `TestClient` and cross every cell with the columns and facts of the
+  subject it now sits under. 14 legs red under the parent's bytes (`A`), none under this commit's
+  (`C`); the arms that break one half red exactly the legs that name it - 7 under `D`, 6 under `G`,
+  2 under `F`, 1 each under `E` and `H`. Its live half is written in two sequential phases on purpose:
+  `db.pool.connect(force_new=True)` - the only way a test can read this service's own SQL - CLOSES the
+  pool the running app is using, so a census that interleaves ground-truth reads with served requests
+  degrades the app to the demo fixture and judges the fix against rows it never answered; the first
+  run of this door failed that way (`tmp/d670_door_run1.log`, 3 failed) before the phases were
+  separated and a `not served["degraded"]` assert added. Four legs need no fix to be true and are
+  green at the parent by design.
+
+**Suite.** `tmp/d670_shipped_suite.py` archives the whole tracked tree at `0034f2c`, overlays exactly
+  the five files this unit ships (`routes_discover.py`, the door and the three gates it re-aimed) and
+  runs `pytest tests -q -p no:cacheprovider --no-header --tb=line -rf` against the live database:
+  **19 failed, 34,490 passed, 44 skipped, 1 warning in 2,916.24s (0:48:36)**, rc=1
+  (`tmp/d670_suite.txt`; the tree is deleted when the run ends unless
+  `D670_KEEP_TREE=1`, so the bytes measured are the parent's plus these five files and no other
+  lane's worktree state). The first launch of this run is not in that record: two passes shared one
+  archive tree, `shutil.rmtree` met a file the other pass still held open (WinError 32) and the
+  second died at collection with rc=2 (`tmp/d670_suite_collision.txt`) - which is why the runner now
+  moves an existing tree aside instead of removing it.
+  `tmp/d670_owncheck.py` then runs the seven files that hold those 19 rows twice more
+  on trees of `0034f2c` - once with this unit's five bytes laid over the parent, once with the parent
+  alone - and **the two passes print the same 18 rows**: `18 failed, 250 passed` against
+  `18 failed, 232 passed`, with **0 rows red only with this unit's bytes** and 0 rows this unit fixes
+  (`tmp/d670_owncheck.txt`). The passed counts differ by exactly eighteen, which is this door's leg
+  count, and the suite's own totals agree with it: §666 recorded `19 failed, 34,472 passed` over the
+  content this commit's parent holds, and the three gates this unit re-aimed gained no legs (9, 4 and
+  9 test functions before and after), so the eighteen rows between 34,472 and 34,490 are the door's.
+  Thirteen of the eighteen sit in the district lane's
+  `test_the_district_a_card_prints_is_filed_under_a_subject_the_answer_never_loads.py`; the other five
+  name the citation, dead-constant and category-word rows and the two vocabulary gates. The 19th row,
+  `test_the_documents_name_modules_that_exist`, is green on both owncheck passes and green when
+  re-run in the worktree (`tmp/d670_docpaths_worktree.log`, 1 passed), red only inside the suite's own
+  archive, for the tree-shaped reason §664 measured: a whole-tree archive holds
+  `data/seed/generate.py`, so `_repo_root` stops inside the tree, where no gitignored `tmp/` was ever
+  archived, and the row reads the ledgers' record names as unresolvable citations. Neither verdict is
+  this unit's, and no file this unit stages holds a suite red at all.
+
+**What these bytes leave, and what they file.** The fix is three expressions inside one function, and
+  it makes the pairing true without ever naming it in the payload. What it leaves is a promise carried
+  by prose and a position carried by two producers, one of which this unit did not touch:
+
+- the grid's cells now sit under the right headers and still do not say whose they are:
+  `packages/types/src/search.ts:204` publishes `CompareCell.subject_id?: Uuid | null` and this lane
+  has never emitted it. The cells are correct positionally now, so a reader that wants the
+  pairing named can only get it from the index; either the lane starts stating it (which moves
+  `test_understand_recommend_compare.py:77`'s exact-key-set assert and belongs with a `packages/ui`
+  reader that uses it) or the field is a fossil and its owner should take it out with its
+  description. Owner: the compare lane with the types lane - the same pair §666 named for
+  `RatingInfo.smoothed`.
+  - a comparison whose subjects are all unrated no longer shows a rating row at all. That is D401's
+  all-blank rule meeting §666's phantom rule, and the door pins the behaviour, not the choice: if the
+  product wants 「未評分」 printed once per column instead of the row vanishing, the row needs a
+  blank-cell shape the `attribute` label can carry. Owner: the product, with this unit's
+  `kind=product` batch as the starting ask.
+  - `entities_for` still answers in whatever sequence its `UNION ALL` yields, and its merchant branch
+  still precedes the offering branch regardless of the order ids were named in. Nothing in the
+  compare lane depends on that any more, and this unit measured no other surface that reads the
+  sequence positionally - which is a finding, not a clean bill: the next caller of `S_entities` that
+  zips rows against a request list inherits D670 exactly. Owner: whoever adds the second caller.
+  - the rule that keeps a blank cell in its column lives only in the renderer and in prose.
+  `CompareTable.tsx:84` maps the row with no filter and `:85`/`:96` choose only the paint, so the
+  blanks this unit started serving stay under their own headers - but
+  `packages/types/src/search.ts:201` tells the opposite story ("Renderer drops the cell when null"),
+  and no gate on either side of the boundary tests the no-drop behaviour. A future change that
+  filtered unbacked cells would re-create this unit's defect in the browser, where no AI-side gate
+  can see it. Owner: the `packages/ui`/web test lane, whose
+  `apps/web/src/lib/compare-row-labels.test.ts` already watches this grid from the web side by
+  reading the AI's row list as text instead of importing it.
+  - the second producer of this payload keeps the shift this unit removed. `mockCompare`
+  (`apps/web/src/lib/mock/index.ts:703-704`) maps the named ids over `SEED_MERCHANTS` and
+  `.filter(Boolean)`s the result, so an id the fixture lacks disappears and its neighbours slide left
+  - unreachable today, because every mock card is `card_type: 'merchant'` (`:128`) and the demo
+  search therefore only ever names ids the list holds. This unit read that file, it did not measure
+  it; the PLAN bullet carries the reachability limit. Owner: the static lane.
+
+- readers: `routes_discover._grid` (the only writer of a cell, and now the only place the sequence is
+  chosen) and its one caller `_compare_rows` (`:233`, which names the subjects it was given),
+  `routes_discover._cell` (`:263`, whose key set `test_understand_recommend_compare.py:77` pins),
+  `contract.CompareRow.cards` (`:484`, `list[dict[str, Any]]` - the reason the pairing cannot be
+  gated in the model), `search/sql.entities_for` (unchanged, still unordered),
+  `packages/types/src/search.ts:189`/`:199-200`/`:201`/`:204`,
+  `packages/ui/src/trust/CompareTable.tsx:84-96`,
+  `apps/web/app/api/nexus/ai/compare/route.ts:52`/`:64` (mock branch and live forward),
+  `apps/web/src/components/search-results.tsx:269-281` (the caller whose selection is the id list),
+  `infra/db/migrations/V1__init.sql:95-96`/`:241-242`, and the four gates this unit re-aimed or added:
+  `test_compare_grid.py`, `test_live_ai_contract.py`,
+  `test_the_price_cell_of_the_comparison_grid_carries_its_rows_clock.py` and the door.
+  - this unit's `tmp/` records: `tmp/d670_measure.py` with `d670_before.txt`, `d670_after.txt`,
+  `d670_batches.json` and `d670_after_batches.json`; `tmp/d670_rows.py` with `d670_rows.txt` (the
+  statement's own sequence, three orders and a geo variant); `tmp/d670_missing.py` with
+  `d670_missing.txt` (which named subjects have no row); `tmp/d670_uncited.py` with `d670_uncited.txt`
+  and `d670_uncited_after.txt` (the cell classifier, and the attribution switch its docstring names);
+  `tmp/d670_arms.py` with `d670_arms.txt` and the inert first pass `d670_arms_first.txt` plus both run
+  logs; `tmp/d670_door_run1-3.log`; `tmp/d670_kernel.diff` and `tmp/d670_gates.diff`;
+  `tmp/d669_compare.py` with `d669_compare.txt` (the census that filed these three charges, read but
+  not re-run); `tmp/d670_shipped_suite.py` with `d670_suite.txt` and the collision record
+  `d670_suite_collision.txt`; `tmp/d670_owncheck.py` with `d670_owncheck.txt`; `tmp/d670_land.py`
+  (which writes both docs files and refuses to land the same section twice).

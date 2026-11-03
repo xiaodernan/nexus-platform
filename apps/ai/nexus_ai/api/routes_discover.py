@@ -176,6 +176,11 @@ async def _compare_rows(deps: Deps, subject_ids: list[str], tenant: str,
     D401: a `geo` adds the `distance` row. The distances come from the same primary
     location the search's geo lane reads, so the two lanes cannot disagree about how
     far a merchant is.
+
+    D670: the grid is handed `subject_ids` as well as the rows, because the rows arrive in
+    `entities_for`'s order and some named subjects are not in them at all - the order and the
+    length of that read are neither of them a promise the response can keep under the headers it
+    echoes.
     """
     meta: dict[str, Any] = {"source": "static", "degraded": deps.backend_degraded()}
     hours_map: dict[str, list[Any]]
@@ -225,8 +230,8 @@ async def _compare_rows(deps: Deps, subject_ids: list[str], tenant: str,
                     distances[mid] = float(d["meters"])
                 if d.get("district") is not None:
                     districts[mid] = str(d["district"])
-    return _grid(entity_rows, facts, hours_map, now=now, locale=locale,
-                 distances=distances, districts=districts), meta
+    return _grid(entity_rows, facts, hours_map, subject_ids=[str(s) for s in subject_ids],
+                 now=now, locale=locale, distances=distances, districts=districts), meta
 
 
 def S_entities(tenant: str, ids: list[str]):
@@ -264,16 +269,33 @@ def _cell(value: Any, fact: Any) -> dict[str, Any]:
 
 
 def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
-          hours_map: dict[str, list[Any]], *, now: Any, locale: str,
+          hours_map: dict[str, list[Any]], *, subject_ids: list[str], now: Any, locale: str,
           distances: dict[str, float] | None = None,
           districts: dict[str, str] | None = None
           ) -> list[dict[str, Any]]:
+    """The comparison's attribute rows, one cell per NAMED subject in the order it was named.
+
+    D670: the cells used to be appended in the order `sql.entities_for` handed its rows back - a
+    `UNION ALL` with no ORDER BY, whose sequence is a property of the id SET and not of the request
+    (`tmp/d670_rows.py`: the same four subjects come back in the same order however they are named) -
+    while the response's `subjects` is the request list. `packages/types/src/search.ts` publishes
+    `cards` as "One cell per compared subject, in request order" and `packages/ui` renders
+    `row.cards` positionally under the header, so the two sequences were the same table read two
+    ways: 47 of the 65 rating cells of `tmp/d670_before.txt` printed a number belonging to another
+    subject, and a named subject whose row the status filter drops got no cell at all, shifting
+    every later number under the wrong name. The grid is now keyed by the subjects it was asked
+    about, so a subject the read could not answer is a BLANK cell rather than a missing one.
+    """
     rows: list[dict[str, Any]] = []
-    order = [str(r.get("subject_id")) for r in entity_rows]
+    by_subject = {str(r.get("subject_id")): r for r in entity_rows}
+    order = [str(s) for s in subject_ids]
 
     def column_for(sid: str) -> dict[str, Any]:
-        row = next(r for r in entity_rows if str(r.get("subject_id")) == sid)
-        return row
+        # A subject the compare read did not answer for (unpublished, inactive, or its merchant
+        # unpublished) is not an error: it is a subject this grid knows nothing about, and the
+        # published cell type says so - `value: string | number | null`, "null when the subject has
+        # no value for this attribute - spec §37 shows blank cells, never a fabricated one".
+        return by_subject.get(sid) or {}
 
     price_cells, rating_cells, cat_cells, district_cells, open_cells = [], [], [], [], []
     for sid in order:
@@ -300,7 +322,17 @@ def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
         price_cells.append(_cell(price_val, price_fact))
         rating_fact = bundle.get("rating", sid)
         rating_val = rating_fact.value.get("value") if rating_fact and isinstance(
-            rating_fact.value, dict) else row.get("rating_agg")
+            rating_fact.value, dict) else (
+            # D670: the fall-through road. `tmp/d670_uncited.py` measured that it is reached by
+            # nothing else - all 999 rated offerings and 470 rated merchants the compare read can
+            # answer for hold their own `rating` fact, so a row with reviews never gets here - and
+            # every cell it produced printed `rating_agg` for a row with `review_count` 0, where
+            # `V1__init.sql` declares the column `numeric(3,2) NOT NULL DEFAULT 0`. That is 8 of
+            # the census's 65 rating cells: the worst score on the scale, about a thing nobody
+            # scored, in a cell with no fact behind it (§4). `common.ts` states the pair's meaning
+            # - "a null/0 count means not yet rated" - and this table's cell has no `count` to
+            # state, so the answer for an unrated subject is the blank the type already allows.
+            row.get("rating_agg") if row.get("review_count") else None)
         rating_cells.append(_cell(rating_val, rating_fact))
         cat = row.get("category") or row.get("category_primary")
         cat_fact = bundle.get("category", sid)

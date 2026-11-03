@@ -3037,27 +3037,90 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `test_a_subject_with_no_reviews_prints_no_rating_score.py`, 13 legs, 5 red under `61d2b52`'s bytes,
   0 under this commit's, and `B_fix_without_door` says the fix reddens nothing that already existed -
   the door is what carries the claim.
+  This line's own second reader - `/ai/v1/compare`'s rating cells, the 8 cells of
+  `tmp/d670_before.txt` that print `0.0` and cite nothing - is closed by D670 (§667), which keys
+  the grid's fall-through on `review_count` and publishes the blank the cell's own type already
+  allows; the card keeps the `count` because a block can state it, and a `CompareCell` cannot, so
+  the two surfaces answer the same pair of columns in their own shapes.
 
-- **The comparison grid prints the same phantom, and its cells do not follow its own headers.**
-  Filed by the census that found D669 (`tmp/d669_compare.py`, `tmp/d669_compare.txt`); all of it
-  outside `search/cards.py` and untouched by this unit. First: three of the four rating cells of
-  every batch state a value that cites no fact - the same unrated products, read straight off
-  `rating_agg` by `routes_discover._compare_rows` when the bundle holds no rating fact, alongside the
-  neighbour's cited 4.23 - and the grid's `_cell` has no `count` to state, so D669's fix does not
-  port. A null value there is exactly the `E_block_gone` shape the new door refuses, so the compare
-  lane owes its own decision about what an unrated cell shows. Second, and worse for the reader:
-  asked the same four subjects in one order and then the reverse, `CompareResponse.subjects` echoes
-  the request both times, while the rating cells come back as the identical sequence
-  `(4.23, 4.25, 0.0, 0.0)` and the two cells that name a subject id swap
-  (`2373754c, 8226bca5` against `8226bca5, 2373754c`). The cells are appended in the order the
-  database returned the rows, `subjects` is the request, and `search/sql.entities_for` - the
-  merchant-then-offering `UNION ALL` - has **no ORDER BY at all**, so
-  `packages/ui/src/trust/CompareTable.tsx`, which maps `row.cards` to `cellIndex` and renders cell
-  `i` under header `i`, can print one subject's number under another subject's name. Third: the
-  shipped gate `test_live_ai_contract.py::test_the_comparison_grid_carries_price_rating_and_distance`
-  asserts that every cell of every row has `value is not None`, so it demands the phantom by hand and
-  any fix here begins by re-aiming that row. Owner: the compare lane, with those three batches as the
-  starting rows - the same nine products `tmp/d668_after.txt` named, reached through the second door.
+- **The comparison grid prints the same phantom, and its cells do not follow its own headers - closed
+  by D670 (§667).** All three charges measured on `0034f2c` before a line changed
+  (`tmp/d670_measure.py`, `tmp/d670_before.txt`): **14 of 14 batches** answered in a sequence the
+  request never named and **47 of the 65 rating cells** printed another subject's number (3 ambiguous,
+  the other 15 agreeing with their header by coincidence); **8 cells** stated a score for a subject
+  whose row says nobody reviewed it and all 8 cited nothing; and a three-subject ask whose second and
+  third rows the status filter drops echoed three subjects while returning **one** cell per attribute
+  row (`tmp/d670_missing.txt`: 50 of 520 merchants unpublished, 368 offerings inactive, 463 offerings
+  whose merchant is unreachable; `tmp/d670_rows.txt`: the same four subjects come back in the same
+  sequence however they are named, and the statement's text holds no `ORDER BY`).
+  `routes_discover._grid` now takes the subjects it answers for as a required keyword-only argument,
+  keys its columns by them and appends in request order; a subject the read cannot answer for keeps
+  its column and shows the blank `packages/types/src/search.ts:199-200` already allows
+  (`by_subject.get(sid) or {}`); and the rating fall-through reads `review_count` instead of printing
+  the aggregate's `NOT NULL DEFAULT 0`. After: 0 phantoms, 0 ambiguous, and the probe rows move with
+  their headers (`tmp/d670_after.txt`); read under the shipped pairing rule, every one of the 57
+  value-bearing cells is cited and rated (`tmp/d670_uncited_after.txt`). Two decisions this line did
+  not get to make: the fix is **not** an `ORDER BY` on `entities_for` - the grid reads by key now and
+  the statement has exactly one caller - and it does **not** emit `CompareCell.subject_id`, which is
+  the next bullet rather than a bug fix wearing a contract change. The gate this line said to re-aim
+  first was re-aimed, not deleted: `test_live_ai_contract.py::
+  test_the_comparison_grid_carries_price_rating_and_distance` now requires one cell per subject and a
+  citation behind every trust value, and the zip of database rows against cells in
+  `test_the_price_cell_of_the_comparison_grid_carries_its_rows_clock.py` became a lookup by subject -
+  that zip was the same positional assumption wearing a gate. `tmp/d670_arms.txt` prices the wrong
+  answers: `D_row_order_back` reddens 7 legs and returns the mislabelling to 48 cells,
+  `F_skip_unanswered` (key the columns but drop the unanswered subject) reddens only the two
+  blank-column legs, `G_count_gate_dropped` brings the phantom back on 8 cells with 8 citations lost,
+  `I_fact_road_dropped` leaves 60 of 60 cells citing nothing, and `H_key_on_the_number`
+  (`if row.get("rating_agg")`) is **invisible on this corpus** - every unrated row's aggregate is 0 and
+  no rated row reaches the branch - so only the impossible-fixture leg can state WHICH column the gate
+  reads, which is why that leg exists. Gate
+  `test_the_comparison_grid_puts_each_cell_under_its_own_subject.py`, 18 legs, 14 red on HEAD.
+
+- **`CompareCell.subject_id` is published, and this lane has never emitted it.**
+  `packages/types/src/search.ts:204` declares `subject_id?: Uuid | null` while
+  `apps/ai/tests/test_understand_recommend_compare.py:77` pins the emitted key set to exactly
+  `{value, fact_id, source, observed_at, confidence}`, and no reader in `packages/ui/src` or
+  `apps/web` asks for the id. D670 made the positional pairing true - a cell's subject IS the header
+  it sits under, which is what the type's prose says - but the field still implies the pairing is
+  named. Either the compare lane starts writing it with a reader that uses it (and line 77 moves with
+  it, the way §665 moved the pointer allowance) or it joins `RatingInfo.smoothed` as a fossil.
+  Owner: the compare lane with the types lane.
+
+- **A comparison of subjects nobody has rated now shows no rating row at all.** D401 drops an
+  attribute row whose cells are all blank, §667 makes an unrated subject's cell blank, and the two
+  rules meet in the `kind=product` batch: four rows where it answered five (`tmp/d670_after.txt`).
+  `test_a_grid_of_only_unrated_subjects_shows_no_rating_row` pins the behaviour and not the choice -
+  if the product wants 「未評分」 to appear per column instead of the row vanishing, the row needs a
+  shape a blank cell can carry, which is a `CompareRow` decision, not a `_grid` one. Owner: the
+  product, with that batch as the starting ask.
+
+- **`entities_for` still answers in whatever sequence its `UNION ALL` yields.** Nothing in the compare
+  lane depends on it any more, and this unit measured no other surface that zips that sequence against
+  a request list - a finding, not a clean bill: the next caller of `routes_discover.S_entities` that
+  pairs rows positionally inherits D670 exactly, and the statement text will keep passing every gate
+  until then. Owner: whoever adds the second caller.
+
+- **The renderer's rule for an unbacked cell is prose, not a gate.** `CompareTable.tsx:84` maps the row
+  with no filter and `:85`/`:96` paint `labels.unverified` in the `<td>` when `fact_id` is null, so the
+  column keeps its place and §667's blank cells stay safe to serve. The doc comment at
+  `packages/types/src/search.ts:201` states the opposite of that behaviour ("Renderer drops the
+  cell when null"), and nothing on either side tests the no-drop rule: if a future change filtered
+  unbacked cells out of the row, the remaining numbers would slide under the wrong headers in the
+  browser and every AI-side gate would stay green. Owner: the `packages/ui`/web test lane, whose
+  neighbour `apps/web/src/lib/compare-row-labels.test.ts` already watches this same grid from the web
+  side by reading the AI's row list as text rather than importing it.
+
+- **The demo lane's own compare producer keeps the shift this unit removed, unreachable for now.**
+  `apps/web/src/lib/mock/index.ts:703-704` builds `mockCompare` by mapping the named ids over
+  `SEED_MERCHANTS` and `.filter(Boolean)`-ing the result, so an id the fixture does not hold vanishes
+  and the surviving columns slide left under the wrong headers - the same positional pairing, in the
+  second producer of the same payload. It is a read, not a measurement: every mock card is
+  `card_type: 'merchant'` (`:128`), so the ids the demo search hands the compare button are all in
+  that list today, and this unit ran nothing on the static lane. The moment the mock catalogue serves
+  an offering card the way `/ai/v1/compare` already answers one, the demo grid mislabels silently and
+  no vitest file imports `mockCompare`. Owner: the static lane, with D616's offering-row finding as
+  the neighbour.
 
 - **`RatingInfo.smoothed` is published, documented and produced by nobody.** `common.json` and
   `packages/types/src/common.ts` name it as the flag for AGENT_CONTRACT §6's Bayesian-smoothed quality

@@ -92,7 +92,10 @@ def _row(**over):
 
 def _grid_row(row, bundle=None):
     bundle = bundle if bundle is not None else FactBundle(facts=[])
-    grid = _grid([row], bundle, {}, now=NOW, locale="zh-HK")
+    # D670: the grid now needs the subject list it is answering for, because the rows it was
+    # handed arrive in `entities_for`'s order and not the caller's. One row, one subject.
+    grid = _grid([row], bundle, {}, subject_ids=[str(row["subject_id"])],
+                 now=NOW, locale="zh-HK")
     price = next(r for r in grid if r["attribute"] == "price")
     return price["cards"][0], bundle, grid
 
@@ -276,9 +279,12 @@ def test_both_branches_of_one_real_comparison_cite_what_each_row_can_support():
     assert set(by_subject) == set(ids), f"the compare read lost a branch: {list(by_subject)}"
     fact_text, fact_params = facts_for(ids, ["price", "rating", "category"])
     bundle = FactBundle(facts_from_rows(_run(fact_text, *fact_params), now=NOW))
-    grid = _grid(rows, bundle, {}, now=NOW, locale="zh-HK")
-    cells = {str(r["subject_id"]): c
-             for r, c in zip(rows, next(g["cards"] for g in grid if g["attribute"] == "price"))}
+    grid = _grid(rows, bundle, {}, subject_ids=ids, now=NOW, locale="zh-HK")
+    # D670 re-aimed this mapping. It used to zip the DATABASE rows against the cells, which is
+    # the positional assumption this unit removes: `entities_for` answers `[merchant, offering]`
+    # in its own sequence, so the zip only ever agreed by luck. The cells are now the named
+    # subjects' cells, in the order they were named, so the row is looked up by subject.
+    cells = dict(zip(ids, next(g["cards"] for g in grid if g["attribute"] == "price")))
 
     stored = bundle.get("price", pair[0]["merchant"])
     merchant = cells[pair[0]["merchant"]]

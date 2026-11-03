@@ -74,6 +74,7 @@ def test_the_grid_keeps_the_distance_row_when_a_point_is_given():
         [_entity_row(M1, M1), _entity_row(M2, M2)],
         bundle,
         {M1: [], M2: []},
+        subject_ids=[M1, M2],
         now=datetime.now(timezone.utc), locale="zh-HK",
         distances={M1: 410.0, M2: 1400.0},
     )
@@ -91,6 +92,7 @@ def test_the_grid_has_no_distance_row_without_a_point():
         [_entity_row(M1, M1)],
         bundle,
         {M1: []},
+        subject_ids=[M1],
         now=datetime.now(timezone.utc), locale="zh-HK",
     )
     assert "distance" not in [r["attribute"] for r in rows]
@@ -102,6 +104,7 @@ def test_the_grid_keeps_the_district_row_when_the_location_knows_it():
         [_entity_row(M1, M1), _entity_row(M2, M2)],
         bundle,
         {M1: [], M2: []},
+        subject_ids=[M1, M2],
         now=datetime.now(timezone.utc), locale="zh-HK",
         districts={M1: "Sha Tin", M2: "Tai Wai"},
     )
@@ -116,6 +119,7 @@ def test_the_category_cell_is_fact_backed():
         [_entity_row(M1, M1)],
         bundle,
         {M1: []},
+        subject_ids=[M1],
         now=datetime.now(timezone.utc), locale="zh-HK",
     )
     category = next(r for r in rows if r["attribute"] == "category")

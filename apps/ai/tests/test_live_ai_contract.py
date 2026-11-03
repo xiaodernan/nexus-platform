@@ -133,10 +133,26 @@ def test_the_comparison_grid_carries_price_rating_and_distance(live_settings):
         assert "rating" in attributes
         assert "distance" in attributes, attributes
 
+        # D670 re-aimed the tail of this leg. It used to assert `cell.value is not None` for
+        # every cell of every row, which asked for the phantom by hand: the merchants a search
+        # answers can include one nobody rated, and the grid printed the column's
+        # `NOT NULL DEFAULT 0` so the cell would not be empty. §37 promises the three ROWS are
+        # there, and `packages/types/src/search.ts` types a cell's value as nullable for a
+        # subject with nothing to show - so what this gate now requires is the grid's own shape:
+        # one cell per compared subject, in the order they were named, and a trust value that
+        # cites something. Which subject each cell belongs to is `D670`'s door.
+        subjects = [str(s) for s in body["subjects"]]
+        assert subjects == [str(i) for i in ids], subjects
+        trust = {"price", "rating", "open_state", "district", "distance"}
         for row in body["rows"]:
-            for cell in row["cards"]:
-                assert cell.get("value") is not None, \
-                    f"the {row['attribute']} row has an empty cell"
+            assert len(row["cards"]) == len(subjects), \
+                f"the {row['attribute']} row has {len(row['cards'])} cells for " \
+                f"{len(subjects)} subjects"
+            if row["attribute"] in trust:
+                for cell in row["cards"]:
+                    if cell.get("value") is not None:
+                        assert cell.get("fact_id"), (
+                            f"the {row['attribute']} row prints {cell['value']} and cites nothing")
 
 
 def test_a_sponsored_card_is_labelled(live_settings):
