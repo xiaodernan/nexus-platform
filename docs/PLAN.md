@@ -2412,13 +2412,107 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   Tuesday and this ran on Wednesday 2026-11-04. Owner: the AI lane.
 
 - **The comparison grid still states no length, because `entities_for` projects none of the four
-  Booking columns** - D674 put `duration_minutes` on the offering card and left the grid alone: the
-  read `apps/ai/nexus_ai/api/routes_discover.py` runs for a comparison (`sql.py`'s `entities_for`)
-  selects neither `bookable`, the party bounds nor the length (`tmp/d674_measure.txt` section 1
-  names all four projections and their three readers), so a grid answering two `service` rows shows
-  their price, rating and open state and cannot show what either of them takes. Same published field
-  (`card.ts:151`/`:164`), same column, second reader. §670 already found this read answers in the
-  statement's own order; the length is the second thing it does not carry. Owner: the AI lane.
+  Booking columns - closed by D675 (§672)** - D674 put `duration_minutes` on the offering card and
+  left the grid alone, and the reason was the read: `entities_for`, which
+  `apps/ai/nexus_ai/api/routes_discover.py` runs for a comparison, answered a merchant-then-offering
+  `UNION ALL` of 22 columns per branch and named none of the four Booking columns
+  `docs/DATABASE.md:72` lists, while `build_offering_query` - the search's own offering projection,
+  which has fed this same table its subjects ever since - names all four (`tmp/d674_measure.txt`
+  counts 4/4 against 0/4; `tmp/d675_measure.txt` re-measures it on these bytes before a line moved).
+  Served on the parent, over exactly those subjects: eight asks answering 48 cards over 28 distinct
+  offerings, 17 of them printing a length of 45, 60, 90 or 120, and four `POST /ai/v1/compare` calls
+  answering **3-4 rows each with no attribute naming a length**. The grid had six rows (`price,
+  rating, category, district, open_state, distance`), the word `duration` sat in neither the module
+  that emits them nor the file that names them, and a reader who compared two salons was shown what
+  each costs, what each is rated and whether each is open, and not what either of them takes - while
+  682 of the 4,707 reachable offerings state a length, and the values are 30, 45, 60, 90, 120 and
+  180 and nothing else (`tmp/d675_dur_stats.txt`: 0 at zero, 0 negative). What ships is the column
+  and the row: `entities_for` selects `o.duration_minutes` in the offering branch and `NULL::int AS
+  duration_minutes` in the merchant's - `merchants` has no such column, and a positional `UNION ALL`
+  demands both branches answer the slot, so both now select 23 - and `_grid` builds the cell the way
+  it builds the `open_state` and `distance` rows: a localized text from the new
+  `DURATION_COPY`/`duration_text()` in `search/cards.py`, a fact cited on it, a blank cell for a
+  subject that states nothing (D670's blank-is-not-missing), and no row at all for a batch where
+  nobody states a length, which the grid's existing `any value` guard already does.
+  `apps/web/src/lib/i18n/trust-labels.ts` gains 「時長」 and "Duration" on the same commit, because
+  §624's `compare-row-labels.test.ts` reads the emitter's row list as text and reddens when the two
+  vocabularies part. Nothing borrows the 157 `capacity` facts that carry a numeric
+  `duration_minutes` of their own - D611 is what happens when a number of one kind vouches for a
+  claim of another - and `WHERE` gained no predicate, so which subjects answer a comparison is
+  unchanged. Measured after, on the shipped bytes (`tmp/d675_measure_after.txt`): the emitter and
+  both label blocks carry 7 names in the same order, two live batches answer `duration` values `['45
+  分鐘', '90 分鐘']` and `['120 分鐘', '90 分鐘']` with 2/2 cells cited and `source='merchant'`, each cell
+  agreeing with the same subject's own card, and two published merchants still answer four rows with
+  no length row. Door `test_the_length_an_offering_states_reaches_the_grid_that_compares_it.py`, 27
+  legs, and §671's own residue leg re-aimed from 「the compare read names neither」 to 「the compare
+  read now names this」. `tmp/d675_arms.py`'s twelve arms over trees of `c3dcb97`
+  (`tmp/d675_arms.txt`) each move the legs that name their wrong answer: parent bytes 22 failed /
+  247 passed, the fix without the door 242 passed with no red, the shipped bytes 269 passed, then 20
+  for the projection alone with the grid still answering six rows, 7 for a row built on a read that
+  still cannot answer it (only the live legs - a fixture cannot show what the database does not
+  carry), 3 for an uncited cell, 7 for `or 60` on a subject that states nothing (one of them §667's
+  neighbour gate, which notices an invented number under a real subject), 1 for a cell that ignores
+  the request's locale, 1 for a row nobody named, 22 with the merchant branch's positional NULL
+  deleted - 12 of them neighbour gates, because an unequal `UNION ALL` is a 503 for the whole
+  comparison plane - 12 for a row built and never emitted, and exactly 1 for a cell that reads the
+  `capacity` fact before the column. 26 failed, 34,555 passed, 44 skipped in 3,372.08s
+  (`tmp/d675_suite.txt`), and `tmp/d675_owncheck.py` prints the same 26 rows on both of its passes
+  over trees of the same commit - SHIPPED 26 failed / 274 passed, BASE 26 failed / 247 passed - so 0
+  rows are this unit's, 0 are cured by it, none of the grid door's legs is red, and the 27 greens
+  over the parent are the door. The 26 are §667's 19 plus the 7 part-of-day legs that hold only on a
+  Tuesday; §667 ran on a Tuesday and this ran on Wednesday 2026-11-04. Owner: the AI lane.
+
+- **`duration` is the fourth attribute name the AI lane emits outside `FACT_ATTRIBUTE`** - the cell
+  this row cites carries `attribute="duration"`, `facts.attribute` is free text
+  (`packages/types/src/schemas/fact.json:32`) and `packages/types/src/enums.ts:290`'s
+  `FACT_ATTRIBUTE` registry is 12 names that do not include it - nor `category`, `open_state` or
+  `distance_m`, the three the lane has been synthesising since D401. A registry four names short of
+  the emitter is a registry nobody reads: either it grows to what the lane states or it is dropped
+  and the schema's free text is the contract. Owner: the contract owner.
+
+- **Every `duration` citation is a fact of the request, so an auditor resolves nothing** - `facts`
+  holds no stored `duration` row, and `bundle.synth()` mints one per call: the ids in
+  `agent_runs.fact_ids` (verified recorded by this unit's live leg) resolve inside the response and
+  vanish with it. That is how the `open_state` and `distance` rows already work, so it is not a
+  regression, but a claim that a table is grounded deserves one sentence in `docs/OBSERVABILITY.md`
+  saying what a synthesised id is worth after the call. Owner: the AI lane with the observability
+  owner.
+
+- **The comparison grid cannot show a length on the demo plane either** - the bullet above §671's
+  (「The static plane can never show a length: its catalogue holds no service or experience row」) is
+  now true of both readers: `api/demo_data.py` names `duration_minutes` nowhere
+  (`tmp/d675_measure_after.txt` section 4) and its two offering rows are both `kind=product`, so a
+  degraded comparison answers the six older rows and no length row while a live one answers seven.
+  Not this row's defect and not fixable in this lane; the catalogue is. Owner: the static/demo lane.
+
+- **The row is positional: `CompareCell.subject_id` is still absent from the wire** -
+  `search.ts:204` declares it optional and `_grid` still sends no key, so the seventh row sits under
+  whatever header the response's `subject_ids` happen to be in, and only D670's keying inside
+  `_grid` keeps a cell under its own subject. A renderer that reorders or filters columns by id
+  cannot tell which cell is whose. Owner: the web lane with the contract owner.
+
+- **The party bounds are the two Booking columns this row leaves behind** - `bookable` reaches the
+  card's CTA (D674), `duration_minutes` now reaches card and grid, and
+  `min_party_size`/`max_party_size` reach neither: the search selects both and honours them as a
+  filter since D607, and no grid row names them, so a comparison of two offerings states what each
+  costs and how long each takes but not how many each seats. The projection edit is the one this
+  unit just made twice. Owner: the AI lane.
+
+- **The seed's length/prose disagreement now prints in two readers** - the bullet below (§671's 「111
+  offerings state a length in the column that their own title contradicts」) was written about the
+  card; the grid can now put 「舊區導賞(3小時)」 beside 「30 分鐘」 in the same column as a neighbour's 「90 分鐘」,
+  which is the same seed contradiction in a wider table and the one place it is now side-by-side
+  rather than one card at a time. The column still wins, because the lane invents nothing and
+  `card.ts:150` names it as the source. Owner: whoever owns `data/seed`.
+
+- **The grid's `open_state` row, and the card's availability block, print one English string at a
+  reader of any locale** - found while this unit was standing in `_grid`, not measured:
+  `compute_open()` builds its `text` from three English templates ("Open until {hh:mm}", "Opens
+  {hh:mm}", "Closed"), and both readers copy it verbatim - the card's availability object and this
+  cell. `REASON_COPY` in the same module already holds 「{when} 營業至 {close}」 and 「現正營業」 and selects
+  per locale, but only for the card's reason line. §603 (D605) closed exactly this shape on one card
+  string; the open-state text is the same defect with two readers, and the localized vocabulary is
+  already written. Owner: the AI lane.
 
 - **111 offerings state a length in the column that their own title contradicts, and 95 more name
   one the column never states** - of the 4,707 reachable offerings, 221 name a length in their name

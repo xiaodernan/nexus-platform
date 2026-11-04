@@ -932,6 +932,15 @@ def entities_for(tenant_id: str, subject_ids: Iterable[str]) -> tuple[str, list[
     has no such column - V1 gives it `avg_price_hkd` and `price_band` and no price clock - so
     the merchant branch selects NULLs for both and its cell keeps the unverified marker
     instead of a stamp this table cannot support.
+
+    D675: the same asymmetry holds for `duration_minutes`, and the grid now reads it. This is
+    the projection §671 filed as residue - the card had been given the length an offering
+    states while this read, which answers the same subjects, still named none of the four
+    Booking columns, so the table that puts two of them side by side could state each one's
+    price, rating and open state and not what either of them takes. The merchant branch
+    selects `NULL::int` for the same reason it selects NULLs for the price clock: `merchants`
+    has no length column, and a `UNION ALL` matches its branches by position, so an offering
+    row's length arrives under a name the merchant rows also answer - with nothing.
     """
     p = Params()
     ids = [str(s) for s in subject_ids if s]
@@ -945,6 +954,7 @@ SELECT m.id::text AS subject_id, 'merchant'::text AS subject_type, m.id::text AS
        m.category_primary AS category, m.avg_price_hkd, NULL::text AS currency,
        NULL::text AS price_model,
        NULL::timestamptz AS price_updated_at, NULL::text AS price_source,
+       NULL::int AS duration_minutes,
        m.rating_agg, m.review_count, m.description,
        m.data_origin, m.plan, m.attributes, m.images, m.ai_agent_enabled, m.status
 FROM merchants m
@@ -955,6 +965,7 @@ SELECT o.id::text, 'offering', o.merchant_id::text,
        o.slug, o.name, o.name_zh, o.kind, m.category_primary,
        COALESCE(o.price_amount, o.price_min), o.currency, o.price_model,
        o.price_updated_at, o.price_source,
+       o.duration_minutes,
        o.rating_agg, o.review_count, o.description,
        m.data_origin, m.plan, o.attributes, o.images, m.ai_agent_enabled, o.status
 FROM offerings o JOIN merchants m ON m.id = o.merchant_id

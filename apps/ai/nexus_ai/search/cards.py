@@ -98,6 +98,22 @@ def travel_minutes(meters: float | None) -> int | None:
     return max(1, int(round(float(meters) / 80.0)))
 
 
+#: D675: the comparison grid's length cell, per locale. The number is the merchant's own
+#: `offerings.duration_minutes`, so no copy here re-expresses it: 90 is 「90 分鐘」 and never
+#: "1.5 小時", because a cell that converts is a cell that can disagree with the card that
+#: prints the same column.
+DURATION_COPY: dict[str, str] = {
+    "zh-HK": "{m} 分鐘", "zh-CN": "{m} 分钟", "en": "{m} min",
+}
+
+
+def duration_text(minutes: Any, locale: str = "zh-HK") -> str:
+    if minutes is None:
+        return ""
+    template = DURATION_COPY.get(locale) or DURATION_COPY["zh-HK"]
+    return template.format(m=int(minutes))
+
+
 # --------------------------------------------------------------------------- open state
 def compute_open(hours: Sequence[dict[str, Any]], *, now: datetime,
                  at: datetime | None = None) -> dict[str, Any]:

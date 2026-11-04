@@ -196,18 +196,22 @@ def test_the_offering_read_selects_the_fourth_booking_column():
         "unchanged by this unit, and a WHERE here would silently shrink the pool")
 
 
-def test_the_merchant_read_and_the_compare_read_still_name_neither():
+def test_the_merchant_read_still_names_neither_and_the_compare_read_now_names_this():
     merchant_head, _ = _select_and_where(SQL.build_merchant_query, text=None, embedding=None,
                                          filters={}, limit=6)
     assert "duration" not in merchant_head, (
         "`merchants` has no such column - a merchant row carries no length of its own, and the "
         "card type that reads this projection refuses the key anyway")
+    # §671 pinned the compare read as the residue it left behind - "if a duration column is added
+    # to the grid, this is the projection to edit" - and D675 edited it. This half is now a
+    # positive pin: the table that compares two offerings answers what each of them takes.
     compare_sql, _params = SQL.entities_for(TENANT, [str(SUBJ)])
-    assert "duration_minutes" not in compare_sql, (
-        "filed residue, pinned so it stays a known gap rather than an accident: the /compare grid "
-        "answers six attribute rows (price, rating, category, district, open_state, distance) and "
-        "has no length row, so this read still needs nothing. If a duration column is added to the "
-        "grid, this is the projection to edit")
+    assert "o.duration_minutes" in compare_sql, (
+        "the /ai/v1/compare read stopped selecting the length the card prints, so the grid that "
+        "compares two offerings answers what either of them costs and not what either takes")
+    assert "NULL::int AS duration_minutes" in compare_sql, (
+        "the merchant branch needs the column in the same slot - a `UNION ALL` matches by position, "
+        "and a merchant states no length, so NULL rather than nothing")
 
 
 # ------------------------------------------------------------------ the card

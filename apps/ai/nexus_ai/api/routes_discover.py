@@ -22,7 +22,7 @@ from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import compose_summary, run_search, understand
 from nexus_ai.contract import (
     MAX_QUERY_LENGTH, CompareRequest, CompareResponse, CompareRow, RecommendRequest, RecommendResponse, UnderstandRequest, UnderstandResponse)
-from nexus_ai.search.cards import (compute_open, ground_row_price, meters_text,
+from nexus_ai.search.cards import (compute_open, duration_text, ground_row_price, meters_text,
                                    travel_minutes)
 from nexus_ai.trust.facts import FactBundle, facts_from_rows
 
@@ -181,6 +181,11 @@ async def _compare_rows(deps: Deps, subject_ids: list[str], tenant: str,
     `entities_for`'s order and some named subjects are not in them at all - the order and the
     length of that read are neither of them a promise the response can keep under the headers it
     echoes.
+
+    D675: the grid grew a `duration` row, and the row it reads is the one that had to change -
+    `entities_for` is a different projection from the search's, and it named none of the four
+    Booking columns, so the same offering states its length on a card and not in the table that
+    compares it with the one it was ranked beside.
     """
     meta: dict[str, Any] = {"source": "static", "degraded": deps.backend_degraded()}
     hours_map: dict[str, list[Any]]
@@ -298,6 +303,7 @@ def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
         return by_subject.get(sid) or {}
 
     price_cells, rating_cells, cat_cells, district_cells, open_cells = [], [], [], [], []
+    duration_cells: list[dict[str, Any]] = []
     for sid in order:
         row = column_for(sid)
         price_fact = bundle.get("price", sid)
@@ -373,6 +379,24 @@ def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
             open_cells.append(_cell(state.get("text"), open_fact))
         else:
             open_cells.append(_cell(None, None))
+        # D675: the length the offering states. The card was given this number one unit earlier
+        # and the table that answers the same subjects still could not, because the compare read
+        # named none of the four Booking columns. The cell is the merchant's own recorded column,
+        # so it is grounded like the price clock and the open_state row above: `CompareTable`
+        # renders a cell with no `fact_id` as the unverified marker, and the row is the answer to
+        # "how long does this take", which nobody should have to distrust. A subject that states
+        # nothing is a blank cell and not a missing one (D670), and a batch in which none states
+        # one - merchants, products - loses the whole row on the guard below rather than printing
+        # a row of dashes.
+        minutes = row.get("duration_minutes")
+        if minutes is None:
+            duration_cells.append(_cell(None, None))
+        else:
+            length_text = duration_text(minutes, locale)
+            duration_cells.append(_cell(length_text, bundle.synth(
+                subject_type=str(row.get("subject_type") or "offering"), subject_id=sid,
+                attribute="duration", value={"minutes": int(minutes), "text": length_text},
+                source="merchant", confidence=0.9, observed_at=now)))
 
     # D401: the distance row, when the caller gave a point to measure from.
     distance_cells: list[dict[str, Any]] = []
@@ -392,7 +416,7 @@ def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
 
     for attribute, cells in (("price", price_cells), ("rating", rating_cells),
                              ("category", cat_cells), ("district", district_cells),
-                             ("open_state", open_cells),
+                             ("open_state", open_cells), ("duration", duration_cells),
                              ("distance", distance_cells)):
         compare_row = CompareRow(attribute=attribute, cards=cells)
         if any(c["value"] is not None for c in compare_row.cards):
