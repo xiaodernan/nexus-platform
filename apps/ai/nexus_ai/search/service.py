@@ -698,7 +698,7 @@ DAY_LEVEL_QUALITIES = frozenset({"all_day", "weekend"})
 #: its START as the instant the shop had to be open AT - so 「聽日朝早嘅咖啡店」 asked for 07:00 and
 #: answered 0 of 79 cafes (`tmp/d666_probe.py`). A band means "open at some point inside it", which
 #: is `open_until`: the same start, in the same `time` column, with the clause read as an overlap.
-PART_OF_DAY_QUALITIES = frozenset({"morning", "noon", "afternoon", "evening", "night"})
+PART_OF_DAY_QUALITIES = frozenset({"morning", "noon", "afternoon", "evening", "night", "late_night"})
 
 
 @dataclass

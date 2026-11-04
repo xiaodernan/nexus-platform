@@ -48,6 +48,11 @@ PART_OF_DAY: list[tuple[str, tuple[str, ...], time, time]] = [
     ("evening", ("傍晚", "黃昏", "黄昏", "evening", "dusk"), time(17, 0), time(19, 30)),
     ("night", ("夜晚", "晚間", "晚间", "晚上", "晚黑", "夜間", "夜间", "深夜", "宵夜", "今晚",
                "今夜", "tonight", "night", "midnight", "overnight"), time(18, 0), time(23, 0)),
+    # D672: 凌晨 was in NO table - not this one, not the date words - so 「凌晨嘅餐廳」 carried no
+    # time at all and answered the whole restaurant plane (184 of 184, `tmp/d667_counts.py`). It is
+    # the small hours of the coming night, 00:00-05:00, which is the only band that starts at
+    # midnight; the window reader D666 added carries it without a new clause.
+    ("late_night", ("凌晨", "凌晨時分", "凌晨时分"), time(0, 0), time(5, 0)),
 ]
 
 WEEKEND_TOKENS = ("週末", "周末", "weekend", "打side", "兩日", "双休")
@@ -289,13 +294,29 @@ def _combine(day: date, hh: int, mm: int) -> datetime:
     return datetime(day.year, day.month, day.day, hh, mm, tzinfo=HK_TZ)
 
 
+def _part_meridiem(hour: int, part: str | None) -> int:
+    """The hour a part-of-day hint puts a clock in (D672).
+
+    A band word that reaches past midnight - 「深夜兩點」 - names 02:00, and the rule that added
+    twelve to every hour below noon made it 14:00: the sentence asked the database for the
+    AFTERNOON and answered 177 of 184 restaurants (`tmp/d667_counts.py`). 6-11 at night are still
+    pm (18:00-23:00); only 0-5 are the small hours, and no other band contains them.
+    """
+    if part == "night" and hour < 6:
+        return hour
+    if part in ("afternoon", "evening", "night") and hour < 12:
+        return hour + 12
+    return hour
+
+
 def _guess_meridiem(hour: int, meridiem: str | None, part: str | None) -> int:
     if meridiem == "am":
         return 0 if hour == 12 else hour
     if meridiem == "pm":
         return hour if hour == 12 else hour + 12
-    if part in ("afternoon", "evening", "night") and hour < 12:
-        return hour + 12
+    shifted = _part_meridiem(hour, part)
+    if shifted != hour:
+        return shifted
     if part == "morning" and hour == 12:
         return 12
     if part == "noon" and hour < 11:
@@ -489,8 +510,7 @@ def _clock_to_hm(m: re.Match, part: tuple[str, time, time] | None) -> tuple[int,
     part_label = part[0] if part else None
     if m.group(1):  # 19:30
         hh, mm = int(m.group(1)), int(m.group(2))
-        if hh < 12 and part_label in ("afternoon", "evening", "night"):
-            hh += 12
+        hh = _part_meridiem(hh, part_label)
         return hh, mm, part_label
     if m.group(5):  # 10pm
         hh = _guess_meridiem(int(m.group(5)), m.group(6).lower(), None)
@@ -509,7 +529,7 @@ def _clock_to_hm(m: re.Match, part: tuple[str, time, time] | None) -> tuple[int,
 
 
 def _default_duration(part_label: str | None) -> int:
-    return {"night": 150, "evening": 150, "afternoon": 120, "lunch": 90,
+    return {"night": 150, "evening": 150, "afternoon": 120, "lunch": 90, "late_night": 150,
             "noon": 90, "morning": 120}.get(part_label or "", 120)
 
 

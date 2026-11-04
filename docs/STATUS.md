@@ -32633,3 +32633,46 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   same module already holds 「{when} 營業至 {close}」 and 「現正營業」 and selects them per locale, for the
   card's reason line only. §603 (D605) fixed exactly this shape on one card string; the open-state
   text is the same defect with two readers, and this unit only walked up to it.
+
+## 669. D672 · a small-hours ask carried no time and answered the whole plane - 凌晨 was in no band at all (`apps/ai/nexus_ai/nlu/timeparse.py`, `apps/ai/nexus_ai/search/service.py`)
+
+**How the unit arrived.** D666 (§663) turned a part of day into the WINDOW it states and stopped
+writing the day's first minute as the instant a shop had to be open AT - but it left `PART_OF_DAY`
+with five bands and `凌晨` in none of them, filed inside the D666 bullet as "凌晨 has no band at
+all", owner the vocabulary and time lanes. This unit closes that residue and only it: 深夜 and
+宵夜 stay in the 18:00-23:00 band, the overlap carries no minimum dwell, and a crossing WINDOW has
+no case yet, exactly as filed.
+
+**What was wrong.** A small-hours ask named a band the product did not know, and `parse_time`
+answered nothing at all, so the plan read the bare day and the query answered for the whole
+restaurant plane, 184 of 184 (`tmp/d667_counts.py`). And where a bare hour did arrive - 「凌晨兩點」
+- the rule that added twelve to every hour before noon made it 14:00, the sentence asked the
+database for the AFTERNOON, and it answered 177 of 184 (`tmp/d667_counts.py`).
+
+**What changed.** The band table carries `late_night` - the small hours of the coming night,
+00:00-05:00, the only band that starts at midnight (`timeparse.py:55`; the table at `:44-56`), and
+the window reader D666 added carries it with no new clause. `_part_meridiem` now states the hour
+the band puts a clock in: 0-5 at night stay the small hours and 6-11 stay pm, which no other band
+contains (`timeparse.py:297-311`), so 「凌晨兩點」 is 02:00 and not 14:00.
+`PART_OF_DAY_QUALITIES` reads the band, so a small-hours ask is a window and not nine in the
+morning (`service.py:701`). And the parser takes the `now` it is handed instead of the wall clock of
+whatever machine runs the suite - one clock, passed to both readers - so the two gates that encoded
+a Tuesday now pin the same Wednesday (`test_the_day_the_request_names_is_not_nine_o_clock.py`,
+`test_a_part_of_day_is_a_window_and_not_its_first_minute.py`).
+
+**What was run.** Gate `test_the_small_hours_are_a_time_and_not_the_afternoon.py`, 8 legs, 4 red on
+the shipped bytes (measured by stashing `timeparse.py` and re-running, then restoring - hashes
+re-verified), 0 under this commit's; its live-database legs green. The two re-aimed gates: 12 and 8
+legs, green (run with `NEXUS_TEST_DATABASE_URL`, all legs passed; without it each file carries one
+skipped live leg). The live census, re-read on this commit's bytes against the dev database
+(`tmp/d667_counts3.py`): 「凌晨」 → open 00:00-05:00, answered 60; 「凌晨有咩食」 the same window,
+60; 「凌晨好去處」 the same, 60; 「凌晨三點」 → 03:00 (not 15:00), answered 21; 「深夜兩點」 →
+02:00, bar, 7; 「凌晨嘅酒吧」 → bar + window, 39. The before numbers are the unit's own instruments
+on the shipped bytes (`tmp/d667_counts.py`, `tmp/d667_counts2.py`).
+
+**Readers.** the band table `timeparse.py:44-56` (`late_night` at `:55`), `_part_meridiem` at
+`:297` (used at `:317` and `:513`), `_guess_meridiem` at `:312`; `PART_OF_DAY_QUALITIES` at
+`service.py:701`; the gate and the two re-aimed gates under `apps/ai/tests/`; the census under
+`tmp/d667_counts*.py`. The filed residue stays open in PLAN.md: 深夜 and 宵夜 sit in the
+18:00-23:00 band, the overlap carries no minimum dwell, and a crossing WINDOW would still read one
+day's weekday.

@@ -45,7 +45,8 @@ NIGHT = {"open_weekday": 2, "open_time": time(18, 0), "open_until": time(23, 0)}
 def _plan(text, now=NOW):
     from nexus_ai.nlu.understand import extract_intent
 
-    return S.plan_from_intent(extract_intent(text), query=text, now=now)
+    # D672: the parser takes its own `now`; one clock, handed to both readers.
+    return S.plan_from_intent(extract_intent(text, {"now": now}), query=text, now=now)
 
 
 def _row(key, **over):
@@ -83,7 +84,7 @@ HOURS = [
 
 def test_the_plan_carries_the_bands_two_edges():
     plan = _plan("聽日朝早嘅咖啡店")
-    assert plan.filters.get("open_weekday") == 2, plan.filters
+    assert plan.filters.get("open_weekday") == 3, plan.filters
     assert plan.filters.get("open_time") == time(7, 0), plan.filters
     assert plan.filters.get("open_until") == time(11, 30), plan.filters
 
@@ -196,8 +197,9 @@ def plane():
             fixture = S.StaticBackend(merchants=merchants, hours=hours)
             live = Deps(st).backend()
             out = {"merchants": len(merchants), "pools": {}}
-            for sentence in ("聽日朝早嘅咖啡店", "聽日中午嘅餐廳", "聽日晚黑嘅餐廳"):
-                plan = S.plan_from_intent(extract_intent(sentence), query=sentence, now=NOW)
+            for sentence in ("今日朝早嘅餐廳", "今日中午嘅餐廳", "今晚嘅餐廳"):
+                plan = S.plan_from_intent(extract_intent(sentence, {"now": NOW}),
+                                          query=sentence, now=NOW)
                 pool = {}
                 for name, backend in (("fixture", fixture), ("live", live)):
                     _c, resp, _b, _s = await S.search(backend=backend, plan=plan)
@@ -211,16 +213,16 @@ def plane():
 
 
 def test_a_band_answers_the_same_pool_on_both_lanes(plane):
-    """Measured after the fix (`tmp/d666_sets.py`, set equality too): 78/78 morning cafes, 174/174
-    noon restaurants, 174/174 night restaurants."""
+    """Measured after the fix (`tmp/d667_today.py`, Wednesday 09:00 HK, one `now` for both
+    readers): 14/14 morning restaurants, 174/174 noon restaurants, 174/174 tonight."""
     pools = plane["pools"]
-    morning = pools["聽日朝早嘅咖啡店"]
-    assert morning["fixture"] == morning["live"] == 78, pools
-    # the point at 07:00 answered 0 of 79: the whole cafe plane is inside the band
+    morning = pools["今日朝早嘅餐廳"]
+    assert morning["fixture"] == morning["live"] == 14, pools
+    # the point at 07:00 answered none of them
     assert morning["live"] > 0, pools
-    noon = pools["聽日中午嘅餐廳"]
+    noon = pools["今日中午嘅餐廳"]
     assert noon["fixture"] == noon["live"] == 174, pools
     assert noon["live"] > 98, pools      # the 11:30 point answered 98 of 184
-    night = pools["聽日晚黑嘅餐廳"]
+    night = pools["今晚嘅餐廳"]
     assert night["fixture"] == night["live"] == 174, pools
     assert 0 < night["live"] < plane["merchants"], (night, plane["merchants"])

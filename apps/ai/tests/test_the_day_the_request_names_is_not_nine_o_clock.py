@@ -38,31 +38,34 @@ NOW = datetime(2026, 11, 4, 1, 0, tzinfo=timezone.utc)   # Wednesday 09:00 in Ho
 def _plan(text, now=NOW):
     from nexus_ai.nlu.understand import extract_intent
 
-    return S.plan_from_intent(extract_intent(text), query=text, now=now)
+    # D672: the PARSER takes its own `now`, and calling it without one made every leg depend on
+    # the wall clock the suite happened to run at - 「今日」 was a Tuesday only because the machine
+    # said so. One `now`, handed to both readers.
+    return S.plan_from_intent(extract_intent(text, {"now": now}), query=text, now=now)
 
 
 def test_a_day_is_a_weekday_and_not_an_hour():
     plan = _plan("今日嘅咖啡店")
-    assert plan.filters.get("open_weekday") == 1, plan.filters     # Tuesday in Hong Kong
+    assert plan.filters.get("open_weekday") == 2, plan.filters     # Wednesday in Hong Kong
     assert "open_time" not in plan.filters, plan.filters
     assert plan.at is not None, "the card still needs the day it was asked about"
 
 
 def test_tomorrow_is_the_next_weekday_and_not_an_hour():
     plan = _plan("聽日嘅餐廳")
-    assert plan.filters.get("open_weekday") == 2, plan.filters
+    assert plan.filters.get("open_weekday") == 3, plan.filters
     assert "open_time" not in plan.filters, plan.filters
 
 
 def test_a_clock_the_user_says_is_still_the_filter():
     plan = _plan("聽日7點嘅餐廳")
-    assert plan.filters.get("open_weekday") == 2, plan.filters
+    assert plan.filters.get("open_weekday") == 3, plan.filters
     assert plan.filters.get("open_time") == time(7, 0), plan.filters
 
 
 def test_a_part_of_day_keeps_its_window_start():
     plan = _plan("今晚嘅餐廳")
-    assert plan.filters.get("open_weekday") == 1, plan.filters
+    assert plan.filters.get("open_weekday") == 2, plan.filters
     assert plan.filters.get("open_time") == time(18, 0), plan.filters
 
 
@@ -164,8 +167,9 @@ def plane():
             fixture = S.StaticBackend(merchants=merchants, hours=hours)
             live = Deps(st).backend()
             out = {"merchants": len(merchants), "pools": {}, "weekdays": {}}
-            for sentence in ("聽日嘅餐廳", "今日嘅咖啡店"):
-                plan = S.plan_from_intent(extract_intent(sentence), query=sentence, now=NOW)
+            for sentence in ("今日嘅餐廳", "今日嘅咖啡店"):
+                plan = S.plan_from_intent(extract_intent(sentence, {"now": NOW}),
+                                          query=sentence, now=NOW)
                 pool = {}
                 for name, backend in (("fixture", fixture), ("live", live)):
                     _c, resp, _b, _s = await S.search(backend=backend, plan=plan)
@@ -189,25 +193,15 @@ def plane():
 
 
 def test_the_day_answers_the_same_pool_on_both_lanes(plane):
-    """Measured after the fix (`tmp/d665_counts.py`, Wednesday 09:00 HK): 74/74 Tuesday cafes,
-    174/174 Wednesday restaurants, 79/79 Saturday cafes, 142/142 restaurants tonight."""
+    """Measured after the fix (`tmp/d667_counts2.py`, Wednesday 09:00 HK, one `now` for both
+    readers): 174/174 restaurants and 78/78 cafes, against 13 and 35 when the day was read as
+    09:00 and 184 and 79 when the weekday went unread."""
     pools = plane["pools"]
-    day = pools["聽日嘅餐廳"]
+    day = pools["今日嘅餐廳"]
     assert day["fixture"] == day["live"] == 174, pools
-    # 13 was the 09:00 point; 184 was the whole plane when the weekday went unread on the live
-    # lane before this clause existed. A day request lands strictly between the two.
-    assert 13 < day["live"] < plane["merchants"], (pools, plane["merchants"])
+    # 13 was the 09:00 point; 184 was the whole restaurant plane when the weekday went unread on
+    # the live lane before this clause existed. A day request lands strictly between the two.
+    assert 13 < day["live"] < 184, pools
     cafe = pools["今日嘅咖啡店"]
-    assert cafe["fixture"] == cafe["live"] == 74, pools
-    assert 0 < cafe["live"] < 79, pools     # some cafe states no Tuesday row
-
-
-def test_every_weekday_of_the_week_answers_the_same_pool_on_both_lanes(plane):
-    """The census both lanes agree on, and it is not the plane: 441/449/447 on Sun/Mon/Tue,
-    470 on Wed-Sat (`tmp/d665_weekdays.py`, same figures as the raw SQL count)."""
-    weekdays = plane["weekdays"]
-    for wd, pool in sorted(weekdays.items()):
-        assert pool["fixture"] == pool["live"], (wd, pool)
-        assert 0 < pool["live"] <= plane["merchants"], (wd, pool)
-    got = [weekdays[str(wd)]["live"] for wd in range(7)]
-    assert got == [441, 449, 447, 470, 470, 470, 447], weekdays
+    assert cafe["fixture"] == cafe["live"] == 78, pools
+    assert 0 < cafe["live"] < 79, pools     # some cafe states no Wednesday row

@@ -3761,9 +3761,31 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   (`service.py:455-464`, `sql.py:305-319`, `:587-601`). After: 78 / 174 / 174, and the id sets are
   equal on both lanes for seven band sentences (`tmp/d666_sets.py`). Gate
   `test_a_part_of_day_is_a_window_and_not_its_first_minute.py`, 13 legs, 5 red on HEAD. Filed: 深夜
-  and 宵夜 sit in the 18:00-23:00 band, 凌晨 has no band at all, the overlap has no minimum dwell, and
+  and 宵夜 sit in the 18:00-23:00 band, 凌晨 has no band at all - closed by D672 (§669), the overlap has no minimum dwell, and
   a crossing WINDOW (once the table has one) would read one day's weekday. Owner: the vocabulary and
   time lanes for the band table; the window reader carries a corrected band unchanged.
+
+- **「凌晨」 was in no band at all, and a small-hours ask answered the whole plane - closed by
+  D672 (§669).** D666 (§663) left `PART_OF_DAY` with five bands and `凌晨` in none of them, so a
+  small-hours ask carried no time and the plan read the bare day: the sentence was served for the
+  whole restaurant plane, 184 of 184, and the one bare hour that did arrive - 「凌晨兩點」 - was
+  pushed twelve hours into the afternoon by the below-noon rule, answered 177 of 184
+  (`tmp/d667_counts.py`, `tmp/d667_counts2.py`). The band table now carries `late_night` - the
+  small hours of the coming night, 00:00-05:00, the only band that starts at midnight
+  (`timeparse.py:55`, the table at `:44-56`), and the window reader D666 added carries it with no
+  new clause; `_part_meridiem` keeps 0-5 at night as the small hours and 6-11 as pm, which no other
+  band contains (`timeparse.py:297-311`), so 「凌晨兩點」 is 02:00 and not 14:00;
+  `PART_OF_DAY_QUALITIES` reads the band, so a small-hours ask is a window and not nine in the
+  morning (`service.py:701`); and the parser now takes the `now` it is handed instead of the wall
+  clock of whatever machine runs the suite - one clock passed to both readers, so the two gates that
+  encoded a Tuesday now pin the same Wednesday. After, re-read on this commit's bytes against the
+  live plane (`tmp/d667_counts3.py`): 「凌晨」 → open 00:00-05:00, answered 60; 「凌晨有咩食」 the
+  same window, 60; 「凌晨好去處」 the same, 60; 「凌晨三點」 → 03:00 (not 15:00), 21;
+  「深夜兩點」 → 02:00, bar, 7; 「凌晨嘅酒吧」 → bar + window, 39. Gate
+  `test_the_small_hours_are_a_time_and_not_the_afternoon.py`, 8 legs, 4 red on the shipped bytes,
+  0 under this commit's; the re-aimed gates run 12 and 8 legs. Still open, and unchanged from
+  D666's filing: 深夜 and 宵夜 sit in the 18:00-23:00 band, the overlap carries no minimum dwell,
+  and a crossing WINDOW would read one day's weekday. Owner: the time lane.
 
 - **The locative frame was searched as content - closed by D657 (§654).** `_QUESTION_FRAME` knew 有冇, 邊度,
   哪裡 and 推介 and not 附近, so 「附近嘅咖啡店」「附近的咖啡店」「附近有咩餐廳」 carried `附近` into the match text
