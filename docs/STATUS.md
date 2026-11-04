@@ -32676,3 +32676,49 @@ on the shipped bytes (`tmp/d667_counts.py`, `tmp/d667_counts2.py`).
 `tmp/d667_counts*.py`. The filed residue stays open in PLAN.md: 深夜 and 宵夜 sit in the
 18:00-23:00 band, the overlap carries no minimum dwell, and a crossing WINDOW would still read one
 day's weekday.
+
+## 673. D677 · a lunch service is a meal occasion, not a clock - 「午市套餐」 answered for the 11:30-14:30 pool, shared by none of the 115 rows that wrote it as their own lunch set (`apps/ai/nexus_ai/nlu/timeparse.py`)
+
+**How the unit arrived.** The residue D630 filed and did not take: 「午市套餐」 and 「午市有冇好食」
+still carried `open_weekday: 5, open_time: 11:30` (`tmp/d630_census.txt`), and the guard could not
+speak because `午市` is a cue and no category surface opens with it (the two sentences' own
+categories answer fine on the current bytes - 下午茶 and 早茶 are guarded; the meal-occasion head is
+what survived). The census ran before the change; 470 published rows, **115 carry 午市**, every one
+its own lunch set, and no row means "open at 11:30" by writing it.
+
+**What was wrong.** 午市 was the noon cue - the only CJK one the corpus carries (D634 measured the
+rest at 0 rows) - so an occasion the corpus writes freely became a filter nobody asked for:
+「午市套餐」 was served for the pool that is open 11:30-14:30 on the day asked, and the rows that
+wrote the set (all of them) were indistinguishable from rows that never open at noon.
+
+**What changed.** The decision, the one D630 made for the category table: a meal-occasion word is
+neither content nor a filter - it is understood and constrains nothing. `PART_OF_DAY`'s noon keeps
+中午 / 正午 / lunch / luncheon / noon / midday (`timeparse.py:46`); 午市 retires to
+`MENU_OCCASION_TOKENS` (`:58-63`), a strip-only entry so D634's pinned pair survives unchanged
+(`午市套餐 → 套餐`, `午市嘅餐廳 → 餐廳`, and `TIME_SPAN_RE` still reads it) and the word still leaves
+the match text; `_STRIP_TABLES` reads the new table (`:206-207`); and it narrows nothing. The noon
+the product reads has its own words, and they still read it: 中午嘅餐廳 -> 11:30-14:30, with the
+Wednesday pin the other gates carry.
+
+**What was run.** The door `test_a_lunch_service_is_not_a_time.py`, 8 legs, 4 red on the shipped
+bytes (the four no-hour legs; the fifth red was this gate's own mis-aimed expectation - 有冇 is the
+question frame and the honest remainder is 好食 - re-aimed in the gate, never in the product), 0
+under this commit's; 8 passed with the live database including the served-page leg. After, on this
+commit's bytes against the live plane (`tmp/d677_census.txt`): 「午市套餐」 → no open filters,
+match `套餐`, answered 470 (the whole published plane); 「午市有冇好食」 → no open filters, answered
+470; 「午市嘅咖啡店」 → the cafe pool, 79; 「午市」 alone → no open filters, 470. `lunch` as the
+English noon cue is deliberately unchanged (the filed sentences are Chinese) and `apps/web`'s mock
+still mirrors the retired table - the web lane's file, filed rather than edited here.
+`test_every_cue_the_time_lane_reads_leaves_the_match_text.py` was re-aimed for the same reason its
+reds have always been re-aimed: the assumption it guarded (午市 the one cue the corpus carried)
+now holds for every cue the lane has - its census counts nothing and its two live legs pass,
+256 green with the live database.
+
+**Readers.** the band `timeparse.py:44-56`, the noon line `:46`, the D677 note and table
+`:58-63`, `_STRIP_TABLES` `:206-207`; the gate and the re-aimed census gate under `apps/ai/tests/`;
+the census `tmp/d677_census.py` / `tmp/d677_census.txt` and the D630 records it cites. Known
+drift, said rather than patched: §669's cites into `timeparse.py` move by seven lines here
+(`午市` left at `:46`, the table grew at `:57-63`); the ledger is append-only and the drift is
+filed, not rewritten. The filed residue stays open: 宵夜 stays in the 18:00-23:00 band, the
+overlap carries no minimum dwell, a crossing WINDOW would read one day's weekday, and English
+menu phrases (`lunch set`) still read noon.

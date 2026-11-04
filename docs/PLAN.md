@@ -2115,12 +2115,29 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   dates to the night band. Measured on the corpus: 42 tea merchants, all open at 14:00 on a Saturday, so
   no page changed today - but 39 of the 470 published merchants are closed then, and that is the
   population the unstated filter had to hide.
-- **A menu word the corpus names is still read as a time - only the CATEGORY half was closed by D630.**
-  「午市套餐」 and 「午市有咩好食」 still carry `open_weekday: 5, open_time: 11:30` (`tmp/d630_census.txt`),
-  and 「午市套餐」 has no category at all: `午市` is a cue and no category surface opens with it, so the
-  guard D630 added cannot speak about it. The question is whether a menu word (套餐, 自助餐, 放題, 餐牌)
-  is content the ranker should match or a time the plan should filter - and the census that chose the
-  category table has to choose that vocabulary too. Owner: the AI lane.
+- **A menu word the corpus names is no longer read as a time - closed by D677 (§673).**
+  「午市套餐」and「午市有冇好食」were served for the pool open 11:30-14:30 on the day asked
+  (`tmp/d630_census.txt`): 午市 was the noon cue, no category surface opens with it, so D630's
+  guard could not speak. The census ran before the change; 470 published rows, **115 carry
+  午市**, every one its own lunch set, and no row means "open at 11:30" by writing it. The
+  decision, the one D630 made for the category table: a meal-occasion word is neither content
+  nor a filter. `PART_OF_DAY`'s noon keeps 中午 / 正午 / lunch / luncheon / noon / midday
+  (`timeparse.py:46`); 午市 retires to `MENU_OCCASION_TOKENS` (`:58-63`) - a strip-only entry,
+  so D634's pinned pair survives (`午市套餐 → 套餐`, `午市嘅餐廳 → 餐廳`, `TIME_SPAN_RE` still
+  reads it) and the word still leaves the match text - and it narrows nothing: the two filed
+  sentences answer the whole plane ranked by their own words (`tmp/d677_census.txt`: total
+  470, and 午市嘅咖啡店 79, the cafe pool). English `lunch` stays the noon cue - the filed
+  sentences are Chinese, and the word is a genuine clock reading in English - and
+  `apps/web/src/lib/mock/index.ts` still mirrors the retired table (the web lane's file,
+  filed rather than edited here). The English menu phrases (`lunch set`) still read noon and
+  stay filed with English honesty. Gate `test_a_lunch_service_is_not_a_time.py`, 8 legs,
+  4 red on the shipped bytes, 0 under this commit's (the fifth red was this gate's own
+  mis-aimed expectation - 有冇 is the question frame and leaves 好食 - re-aimed in the gate,
+  never in the product); `test_every_cue_the_time_lane_reads_leaves_the_match_text.py` re-aimed
+  for the same reason (the assumption it guarded - 午市 the one cue the corpus carried - now
+  holds for every cue the lane has; 256 green with the live database). Still open and
+  unchanged: 宵夜 stays in the 18:00-23:00 band, the overlap carries no minimum dwell, and a
+  crossing WINDOW would read one day's weekday. Owner: the AI lane.
 
 - **A band the corpus cannot fill still answers with ten rows outside it and says nothing.**
   Measured 2026-10-30: **3 of the 184 restaurants are priced 300-500** and none are 500-800, so

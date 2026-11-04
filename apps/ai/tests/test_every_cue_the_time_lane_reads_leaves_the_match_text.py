@@ -1,9 +1,10 @@
 """The strip undid eight of the twenty-three ways the time lane writes a part of the day.
 
 Measured 2026-10-30 (`tmp/d634_carriers.txt`): 22 of the 23 CJK `PART_OF_DAY` spellings appear in
-**0** of the 470 published rows' name, description or tags. The one that does is 午市 (115 rows -
-the lunch set), so no row can answer a part of the day as a TEXT: those words only divide every
-row's `kw_score`. `tmp/d634_cards.txt` shows what that looked like: 「深夜嘅餐廳」 scored exactly
+**0** of the 470 published rows' name, description or tags. The one that does was 午市 (115 rows -
+the lunch set) - D677 retired it from the lane entirely, a lunch-service occasion and never a clock -
+so no cue the lane has is carried: no row can answer a part of the day as a TEXT, and those words only
+divide every row's `kw_score`. `tmp/d634_cards.txt` shows what that looked like: 「深夜嘅餐廳」 scored exactly
 0.25 on all ten cards and every one of them printed 符合「深夜嘅餐廳」.
 
 D629 took the price, the party and the clock out of the match text and left this list to undo the
@@ -156,15 +157,16 @@ def plane():
 def test_no_published_row_answers_a_part_of_the_day_as_text(plane):
     """The census the strip leans on, walked over the lane's own table.
 
-    If a re-seed ever writes 深夜 or 早上 into a description, removing the cue can cost a match
-    and this leg must redden rather than let the assumption go stale (午市 already does, and the
-    strip takes it because the hour is the filter and 套餐 is the noun).
+    If a re-seed ever writes a cue into a description, removing it can cost a match and this
+    leg must redden rather than let the assumption go stale. (D677 retired the one word the
+    corpus carried - 午市, a lunch-service occasion, never a clock - so the assumption now
+    holds for every cue the lane has; the rows still carrying it lose it to the strip, which
+    is D634's pinned pair, not a part of the day.)
     """
     answering = {c: n for c, n in plane["carriers"].items() if n}
-    assert answering == {"午市": answering.get("午市")}, (
+    assert not answering, (
         f"{answering} of {plane['rows']} rows carry a part of the day - the strip is no longer "
         "provably free, so the reader has to weigh it again")
-    assert answering["午市"] > 0, "午市 stopped appearing - re-read whether it still needs the note"
 
 
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")

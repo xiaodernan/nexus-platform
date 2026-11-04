@@ -43,7 +43,7 @@ WEEKDAY_TOKENS: dict[str, int] = {
 #: part-of-day windows in local HK time, (start, end, canonical label)
 PART_OF_DAY: list[tuple[str, tuple[str, ...], time, time]] = [
     ("morning", ("朝早", "早上", "上午", "清晨", "早晨", "morning", "am"), time(7, 0), time(11, 30)),
-    ("noon", ("中午", "正午", "午市", "lunch", "luncheon", "noon", "midday"), time(11, 30), time(14, 30)),
+    ("noon", ("中午", "正午", "lunch", "luncheon", "noon", "midday"), time(11, 30), time(14, 30)),
     ("afternoon", ("下晝", "下午", "午後", "afternoon", "pm"), time(14, 0), time(18, 0)),
     ("evening", ("傍晚", "黃昏", "黄昏", "evening", "dusk"), time(17, 0), time(19, 30)),
     ("night", ("夜晚", "晚間", "晚间", "晚上", "晚黑", "夜間", "夜间", "深夜", "宵夜", "今晚",
@@ -54,6 +54,13 @@ PART_OF_DAY: list[tuple[str, tuple[str, ...], time, time]] = [
     # midnight; the window reader D666 added carries it without a new clause.
     ("late_night", ("凌晨", "凌晨時分", "凌晨时分"), time(0, 0), time(5, 0)),
 ]
+
+# D677: 午市 names the lunch SERVICE - the meal occasion - never a clock hour. The corpus was
+# measured: 115 of the 470 published merchants carry it, all their own lunch sets, and no row
+# means "open at 11:30" by writing it. The strip keeps undoing it (D634's pinned pair survives);
+# what changes is only the READING: it is understood, and it narrows nothing. The noon the
+# product reads has its own words - 中午 / 正午 / lunch / luncheon / noon / midday.
+MENU_OCCASION_TOKENS = ("午市",)
 
 WEEKEND_TOKENS = ("週末", "周末", "weekend", "打side", "兩日", "双休")
 TODAY_TOKENS = ("今日", "今天", "日頭", "today", "而家", "家下", "現在", "现在", "now")
@@ -197,7 +204,7 @@ def _reads_as_a_time(cue: str, text: str, low: str) -> bool:
 #: clock and the weekday are grammar, not vocabulary, and `cue_alternation` writes them
 #: for the same reason.
 _STRIP_TABLES = (TODAY_TOKENS, TONIGHT_TOKENS, TOMORROW_TOKENS, AFTER_TOMORROW_TOKENS,
-                 NEXT_WEEK_TOKENS, WEEKEND_TOKENS)
+                 NEXT_WEEK_TOKENS, WEEKEND_TOKENS, MENU_OCCASION_TOKENS)
 
 
 def _strip_cues() -> list[str]:
