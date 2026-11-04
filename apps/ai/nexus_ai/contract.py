@@ -276,6 +276,11 @@ class Intent(_Strict):
     mentioned_entities: list[str] = Field(default_factory=list)
     # resolved merchant id(s) when the surface already knows them
     merchant_id: Optional[UUID] = None
+    # §7.1 / §34: the subjects the surface has already shown, which the next answer must not
+    # repeat. The ALT cues write it (`state_merger.py`), `plan_from_intent` folds it into the
+    # one filter key both reads already implement (`sql.py` `filters.exclude`), and it travels
+    # back as `previous_intent` - the state is the only thing that survives a turn.
+    excluded_ids: list[str] = Field(default_factory=list)
 
 
 class SearchRequestFilters(_Strict):

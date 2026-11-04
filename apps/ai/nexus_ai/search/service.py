@@ -1060,6 +1060,20 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
         if a and a not in merged_avoid:
             merged_avoid.append(a)
     out["avoid"] = merged_avoid
+    # D676: the exclusion a follow-up turn carries reaches the one filter key both reads already
+    # implement. `state_merger` writes `Intent.excluded_ids` from the ALT cues (其他 / next / more
+    # options) and `sql.py` has cut on `filters.exclude` since D617 (`build_merchant_query`
+    # `<> ALL(...)`, mirrored by the fixture lane at `:334`), but nothing between the two read the
+    # field: measured before this unit, a second turn naming the ids it had been shown was answered
+    # with the first turn's state thrown away (`tmp/d676_measure.txt` §4-§5). The caller's own list
+    # is kept and the state's ids merge into it, deduped and order-stable, as `avoid` does above.
+    merged_exclude: list[str] = []
+    for sid in [*(out.get("exclude") or []), *(_field(intent, "excluded_ids") or [])]:
+        s = str(sid)
+        if s and s not in merged_exclude:
+            merged_exclude.append(s)
+    if merged_exclude:
+        out["exclude"] = merged_exclude
     out["attributes"] = {**out.get("attributes", {}), **plan.attributes}
     out["open_now"] = plan.open_now
     if plan.open_late_after is not None:

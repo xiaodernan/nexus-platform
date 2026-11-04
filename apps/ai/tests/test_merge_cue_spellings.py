@@ -71,7 +71,7 @@ def test_the_show_others_cue_answers_to_both_spellings():
     context = {"shown_ids": ["m1", "m2"]}
     for turn in ("\u63db\u4e00\u9593", "\u6362\u4e00\u95f4"):
         intent = _merge(turn, context)
-        assert (intent.get("filters") or {}).get("exclude") == ["m1", "m2"], (
+        assert intent.get("excluded_ids") == ["m1", "m2"], (
             turn.encode("unicode_escape").decode())
 
 

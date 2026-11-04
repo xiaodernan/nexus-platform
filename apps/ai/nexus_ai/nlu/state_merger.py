@@ -172,12 +172,20 @@ def merge_turn(state: dict[str, Any] | Intent | None, followup: str,
         changes.append({"op": "set", "field": "intent", "from": None, "to": "compare"})
 
     # ---- "show me others" ----------------------------------------------
+    # D676: the exclusion is a field of the state. It used to be written into
+    # `base["filters"]["exclude"]` - a key `Intent` does not declare and both `_Strict` and the
+    # published `intent.json` refuse - so `validate_intent` answered None for the merged turn and
+    # `pipeline.py` fell to `floor("state_merge_rejected")`: the cue that asks for others threw
+    # away the category, the budget and the district it was carried with, and searched for the
+    # word 其他 instead. The set grows with each turn, because the client carries the state back
+    # and the exclusion of turn 2 is still true in turn 3.
     if _any(low, match_text, ALT_CUES):
         seen = [str(s) for s in (context.get("shown_ids") or []) if str(s)]
-        filters = base.setdefault("filters", {})
-        if isinstance(filters, dict) and seen:
-            filters["exclude"] = sorted(set([*(filters.get("exclude") or []), *seen]))
-            changes.append({"op": "exclude", "field": "filters.exclude", "to": len(seen)})
+        if seen:
+            held = [str(s) for s in (base.get("excluded_ids") or [])]
+            base["excluded_ids"] = sorted(set(held) | set(seen))
+            changes.append({"op": "exclude", "field": "excluded_ids", "from": len(held),
+                            "to": len(base["excluded_ids"])})
 
     # ---- any remaining explicit content in the follow-up ---------------
     residual = extract_intent(match_text, {**context, "locale": locale})

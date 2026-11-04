@@ -19,8 +19,9 @@ for what a customer sees):
 
 Because which tie survives is not a function of the keys, the pages do not line up: for the offering
 browse, the first 20 rows of the 60-row fetch are not the 20-row page (17 of the 20 differ once an id
-tail is added), and the documented "show me others" follow-up - `filters.exclude`, written from
-`shown_ids` at `state_merger.py:179` by the ALT cues 其他 / next / more options (`state_merger.py:49`) -
+tail is added), and the documented "show me others" follow-up - `context.shown_ids` written into
+`Intent.excluded_ids` by the ALT cues 其他 / next / more options (`state_merger.py`) and folded into
+the read's `filters.exclude` by the planner (D676) -
 serves a second page that shares only 11 of its 20 rows with rows 21-40 of the deeper fetch. The 9
 that differ are not mis-sorted - both pages hold rows carrying the same two keys, and the keys are
 what the sort can see; which members of that group each cut reaches is not a function of them.

@@ -117,7 +117,7 @@ def test_compare_cue_flips_to_compare_intent_with_top_subjects():
 # ------------------------------------------------------------- "show me others"
 def test_other_cue_excludes_shown_ids():
     res = merge_turn(_base(), "其他", context={"shown_ids": ["a", "b"]})
-    assert res.intent["filters"]["exclude"] == ["a", "b"]
+    assert res.intent["excluded_ids"] == ["a", "b"]
 
 
 # ------------------------------------------------------------- reset
