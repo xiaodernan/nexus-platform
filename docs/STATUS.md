@@ -33050,3 +33050,59 @@ does not declare.
 
 - readers: `contract.py:283`, `nlu/state_merger.py:185`, `search/service.py:1092` (the three files
   `7509e55` touched), the 27-leg gate above, and `tmp/d700_alt2.py` (the measurement).
+## 679. D700 · the present moment is a clock, and the request that names it filtered nothing
+
+**`而家` / `現在` / `now` were DAY words.** They sat in `TODAY_TOKENS`, so 「而家開嘅餐廳」 fell to the
+day-only branch and was read as `all_day` - the 09:00-23:00 convention - and D665 then (correctly)
+refused to ask the database for nine o'clock, because a DAY is not a clock. The plan carried
+`open_now=True` and neither lane read it: the request answered every restaurant in the plane.
+Measured on the published plane (`tmp/d701_opennow.py`, `tmp/d701_after.py`, Thursday 2026-11-05):
+
+    request             09:00 HK                              20:00 HK
+    而家開嘅餐廳        184 of 184 restaurants -> 14          184 (every restaurant is open at eight)
+    現在營業嘅餐廳      184 -> 14, the same page as 而家       184
+    依家開緊嘅咖啡店    79 cafes -> 36                         -
+    open now cafe       79 -> 36                              -
+    而家 (bare)         470 -> 123                           470 -> 316
+    今日嘅餐廳          184 -> 184 (unchanged - a DAY still names no hour, D665)
+
+The 14 and 123 are hand counts of the same predicate at 09:00 (`opens_at <= 09:00 < closes_at`, the
+`crosses_midnight` arm inverted), not a range someone liked.
+
+**The fix is a table and one branch.** The words that name the PRESENT have their own table
+(`NOW_TOKENS`, `timeparse.py:78`) and the lane answers them with the instant the request was asked at -
+`ParsedTime("explicit", now, ...)`, quality `now` (`:525-531`). The plan then writes the same two keys a
+named clock writes (`open_weekday`, `open_time`), so BOTH lanes filter by construction - no new predicate
+in either SELECT - and `open_now` keeps its slot meaning. `今日` / 聽日 / 今晚 are untouched, and the cue
+joins `_STRIP_TABLES` (`:236`): a cue the lane READ must leave the match text, or it divides every row's
+score against a word no row writes (`match_text` was 「而家開」 after the reading and before the strip).
+
+**The gate** is `tests/test_the_present_moment_is_a_clock_and_not_a_day.py`, 16 legs: the two tables do
+not overlap; four spellings parse as the current instant; a day and a band still do not; the plan asks
+for 09:00 on Thursday; the cue leaves the match text; the fixture lane answers the breakfast shop at
+09:00 and the dinner pair at 20:00 and leaves 「今日」 with all three; and the live legs pin the pool to
+the hand counts at both clocks, the two spellings to one page, and 「今日」 to a bigger pool than the
+hour. Falsified against HEAD's `timeparse.py` plus a two-line shim (`NOW_TOKENS = ()`): **10 red, 6
+green**.
+
+**Re-aimed, not deleted**: `test_timeparse_spellings.py` compared 「現在」 and 「现在」 on the wall clock,
+which for a MOMENT differs by the microseconds between the two calls. It now hands both one fixed
+instant and asserts both name it - the same claim, and a stronger one.
+
+**Adjacent**, run and green, never full: the whole time lane, the state merger, the cue-shadowing and
+spelling gates, the understand set (unknowns, answer-is-intent), `test_search_plan`,
+`test_search_pipeline` - **822 passed**.
+
+**Not claimed.** (a) The verb stays in the match text: `match_core` leaves 開 in 「而家開嘅餐廳」 and
+營業 in 「現在營業嘅餐廳」 - the predicate-as-search-term item D650's comment files (搵/找 are the same
+family), and 0 of the plane's rows write either. (b) `而家三點` still rolls a past clock to tomorrow (the
+clock reader's rule), because a stated clock wins over the moment word. (c) The slot window still opens
+`now .. now+3h` when the plan has no instant (`_slot_window`), unchanged. (d) A request that names a
+moment AND a day (「聽日而家」) reads the moment only; nobody writes that sentence.
+
+**No PLAN bullet is written for this unit** (§675 note (d)): `docs/PLAN.md` still holds another lane's
+uncommitted edits. The bullet's text is saved at `tmp/d700_plan_bullet.txt`.
+
+- readers: `nlu/timeparse.py:78` (the table), `:454` (the read), `:525` (the branch), `:236` (the strip),
+  this unit's gate, the re-aimed spelling leg, and `tmp/d701_opennow.py`, `tmp/d701_after.py`,
+  `tmp/d701_after2.py`.

@@ -69,7 +69,13 @@ PART_OF_DAY: list[tuple[str, tuple[str, ...], time, time]] = [
 MENU_OCCASION_TOKENS = ("午市",)
 
 WEEKEND_TOKENS = ("週末", "周末", "weekend", "打side", "兩日", "双休")
-TODAY_TOKENS = ("今日", "今天", "日頭", "today", "而家", "家下", "現在", "现在", "now")
+TODAY_TOKENS = ("今日", "今天", "日頭", "today")
+#: D700: the words that name THE PRESENT MOMENT, not a day. They sat in `TODAY_TOKENS`, so
+#: 「而家開嘅餐廳」 fell to the day-only branch and read as `all_day` - 09:00-23:00 by convention -
+#: and D665 then correctly refused to ask the database for nine o'clock, because a DAY is not a
+#: clock. A word that names NOW is a clock: measured, the request answered all 184 restaurants
+#: (`tmp/d701_opennow.py`) with `open_now=True` carried but unread by either lane.
+NOW_TOKENS = ("而家", "依家", "家下", "現在", "现在", "現正", "现正", "now", "right now")
 TONIGHT_TOKENS = ("今晚", "今齊", "tonight", "今期")
 TOMORROW_TOKENS = ("聽日", "听日", "明日", "明天", "tomorrow")
 AFTER_TOMORROW_TOKENS = ("後日", "后日", "大後日", "the day after tomorrow")
@@ -224,7 +230,10 @@ def _reads_as_a_time(cue: str, text: str, low: str) -> bool:
 #: six hold a day: today, tonight, tomorrow, the day after, next week, the weekend. The
 #: clock and the weekday are grammar, not vocabulary, and `cue_alternation` writes them
 #: for the same reason.
-_STRIP_TABLES = (TODAY_TOKENS, TONIGHT_TOKENS, TOMORROW_TOKENS, AFTER_TOMORROW_TOKENS,
+#: D700: NOW_TOKENS joins the strip tables - a cue the lane READ (「而家開嘅餐廳」 is answered by the
+#: current hour) must leave the match text, or it divides every row's score against a word no row
+#: writes. Measured after the reading was fixed and before this line: `match_text` was 「而家開」.
+_STRIP_TABLES = (TODAY_TOKENS, NOW_TOKENS, TONIGHT_TOKENS, TOMORROW_TOKENS, AFTER_TOMORROW_TOKENS,
                  NEXT_WEEK_TOKENS, WEEKEND_TOKENS, MENU_OCCASION_TOKENS)
 
 
@@ -442,6 +451,7 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
     is_tonight = any(cue_in(tok, text, low) for tok in TONIGHT_TOKENS)
     is_tomorrow = any(cue_in(tok, text, low) for tok in TOMORROW_TOKENS)
     is_today = any(cue_in(tok, text, low) for tok in TODAY_TOKENS)
+    is_now = any(cue_in(tok, text, low) for tok in NOW_TOKENS)
     is_after_tomorrow = any(cue_in(tok, text, low) for tok in AFTER_TOMORROW_TOKENS)
     # D698: a direction word ("until", "after") names the hour the shop CLOSES, and a closing
     # hour with no part of day is read on the evening band - the same reading `_part_meridiem`
@@ -511,6 +521,14 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
             hh, mm = _closing_clock(hh, mm)
         return ParsedTime("relative", None, None, _raw(raw_text),
                           quality=f"open_late_after:{hh:02d}{mm:02d}", confidence=0.8)
+
+    # ---- 2b. the present moment, which is a clock ---------------------------
+    # D700: 「而家開嘅餐廳」 / 「現在營業」 / "open now" name the instant the request is asked at,
+    # and the hour that instant falls in is the filter's own `open_time` - the same clause a named
+    # clock uses. An explicit clock in the sentence still wins (it is read above).
+    if is_now:
+        return ParsedTime("explicit", now, now + timedelta(hours=2), _raw(raw_text),
+                          quality="now", confidence=0.8)
 
     # ---- 3. day + part-of-day window --------------------------------------
     if day is not None and part:

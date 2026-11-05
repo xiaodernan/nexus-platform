@@ -11,6 +11,8 @@ read, so the two spellings of a word meet (§429, D435).
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from nexus_ai.nlu.timeparse import WEEKDAY_TOKENS, parse_time
 
 #: 星期 禮拜 礼拜 週 周 三 食飯
@@ -61,11 +63,16 @@ def test_every_spelling_of_the_weekday_reads_the_same_day():
     assert len(days) == 1, f"the spellings of the weekday read as different days: {days}"
 
 def test_the_day_words_read_in_both_spellings():
-    now = parse_time(NOW_TRADITIONAL)
-    now_simplified = parse_time(NOW_SIMPLIFIED)
+    # D700 re-aimed the 現在 pair: the word names the PRESENT MOMENT now (a clock, not the all_day
+    # convention), so two calls on the wall clock differ by the microseconds between them - that is
+    # the reading, not a drift. One fixed instant is the same claim, and a stronger one: both
+    # spellings name THAT instant.
+    fixed = datetime(2026, 11, 5, 1, 0, tzinfo=timezone.utc)
+    now = parse_time(NOW_TRADITIONAL, now=fixed)
+    now_simplified = parse_time(NOW_SIMPLIFIED, now=fixed)
     assert now is not None and now_simplified is not None
-    assert now.starts_at == now_simplified.starts_at, (
-        "現在 and 现在 read as different moments")
+    assert now.starts_at == now_simplified.starts_at == fixed, (
+        "現在 and 现在 read as different moments", now.starts_at, now_simplified.starts_at)
 
     tomorrow = parse_time(TOMORROW_CANTONESE)
     tomorrow_plain = parse_time(TOMORROW_PLAIN)
