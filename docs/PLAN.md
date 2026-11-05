@@ -128,8 +128,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   `apps/ai/nexus_ai/search/sql.py` DOES reach the English tags on the merchant lane - measured on
   the live plane, "拉麵" returned 西海 / 祥甬餐室 / 鼎埔小廚 / 祥軒 / 西棧 and all 12 merchants in that
   result carry the `ramen` tag, while "我想食拉麵" held the same order at a lower fraction score
-  (1 of 4 bigrams). The open half is the OFFERING lane: `build_offering_query()` has no
-  containment leg, so a Chinese query still reaches no offering. The D406 claim that 拉麵 matches
+  (1 of 4 bigrams). The offering lane `build_offering_query()` now has a strpos containment leg
+  (D583/D692) that matches CJK bigrams against offering name/description text, so a Chinese query
+  can find offering results instead of reaching no offering. The D406 claim that 拉麵 matches
   zero `ramen` tags was measured against a plane the re-seed has since replaced.
 - **The compare grid's row LABELS are raw attribute keys** — **closed by D626, and it was already
   closed when this item was written**: both locales carry all six labels (`price`, `rating`,
