@@ -52,9 +52,16 @@ def test_lively_ambience_infers_a_bar():
     assert ex.category == "bar"
 
 
-def test_open_late_infers_a_bar():
+def test_open_late_infers_no_category():
+    # D701: this leg used to assert `bar`, and it encoded the defect: a CLOCK was voting a kind
+    # of shop, so 「想找个通宵营业的地方」 answered the 39 bars of the plane while 44 restaurants
+    # are open in the same window (`tmp/d701c.py`). A time preference says WHEN; the kinds of
+    # shop that are open then are the plane's answer. The preference itself is still read - the
+    # ranking lane maps it to the `opens_late` attribute - and the hour is still carried.
     ex = extract_intent("想找个通宵营业的地方", {"locale": "zh-HK"})
-    assert ex.category == "bar"
+    assert ex.category is None, ex.category
+    assert any(p.get("key") == "time_pref" and p.get("value") == "open_late"
+               for p in ex.preferences), ex.preferences
 
 
 def test_scenic_view_infers_a_category():

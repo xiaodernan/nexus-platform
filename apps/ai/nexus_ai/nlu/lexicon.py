@@ -160,6 +160,12 @@ PREFERENCE_RULES: list[tuple[str, str, list[str], int]] = [
     ("style", "indoor", ["室內", "室内", "indoor", "有蓋", "有盖", "雨淋唔到"], 1),
 ]
 
+#: D701: the words that name a MEAL taken after the evening. They are in the deep-night
+#: band as well (`nlu/timeparse.py`), and they were the two words whose row in
+#: `_PREFERENCE_CATEGORY_MAP` let a clock vote `bar`; the meal they name is food, so the
+#: category is read from the word and the hour from the band.
+SUPPER_CUES = ("宵夜", "夜宵", "supper")
+
 #: D570: a surface that names the OPPOSITE of a preference's value. The rule keeps it, because a
 #: QUESTION about it still reads the preference +1 (有無嘈 asks whether it is noisy, D533), but a
 #: REFUSAL of it must not flip the preference to -1: "唔好嘈" (don't be noisy) WANTS quiet, and the

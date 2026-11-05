@@ -29,6 +29,7 @@ from nexus_ai.nlu.lexicon import (
     RESERVE_CUES,
     ASK_MERCHANT_CUES,
     SORT_RULES,
+    SUPPER_CUES,
     URGENCY_FLEXIBLE,
     URGENCY_NOW,
     detect_language,
@@ -499,6 +500,12 @@ def _fill_category(ex: IntentExtraction, text: str) -> IntentExtraction:
         cat, conf = hit
         ex.category = cat
         ex.confidence["category"] = conf
+    if not ex.category and any(cue_in(c, text, text.lower()) for c in SUPPER_CUES):
+        # D701: 宵夜 / 夜宵 name a MEAL taken after the evening, so the food bucket is read
+        # from the word itself rather than inferred from the clock it also carries. The
+        # confidence is an inference's (below a named category's 0.95) because the word
+        # names the hour as well.
+        ex.category, ex.confidence["category"] = "restaurant", 0.6
     cuisines = match_cuisines(text)
     if cuisines:
         if not ex.category:
@@ -558,7 +565,13 @@ _PREFERENCE_CATEGORY_MAP: dict[tuple[str, str], list[tuple[str, float]]] = {
     ("price_sense", "cheap"): [("restaurant", 0.6), ("cafe", 0.5)],
     ("price_sense", "premium"): [("restaurant", 0.7), ("hotel", 0.5)],
     ("weather", "rainy_day"): [("restaurant", 0.6), ("cafe", 0.5), ("mall", 0.5)],
-    ("time_pref", "open_late"): [("bar", 0.8), ("restaurant", 0.5)],
+    # D701: `("time_pref", "open_late")` stood here as bar 0.8 / restaurant 0.5, and that one
+    # row is why a CLOCK named a kind of shop: 「深夜」 and 「宵夜」 - two time words of the
+    # deep-night band - answered the 39 bars of the plane and nothing else (`tmp/d701c.py`),
+    # while 44 restaurants are open in the same window. A time preference says WHEN, and the
+    # kinds of shop that are open then are the plane's answer, not a vote here. The one food
+    # word in that row keeps its meaning through `SUPPER_CUES` in `_fill_category`, because
+    # 宵夜 is a meal and not merely a clock.
     ("cuisine", "spicy"): [("restaurant", 0.8), ("hotpot", 0.6)],
 }
 

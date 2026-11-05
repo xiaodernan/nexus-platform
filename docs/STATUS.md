@@ -33106,3 +33106,70 @@ uncommitted edits. The bullet's text is saved at `tmp/d700_plan_bullet.txt`.
 - readers: `nlu/timeparse.py:78` (the table), `:454` (the read), `:525` (the branch), `:236` (the strip),
   this unit's gate, the re-aimed spelling leg, and `tmp/d701_opennow.py`, `tmp/d701_after.py`,
   `tmp/d701_after2.py`.
+
+
+## 680. D701 · a clock names an hour, and the kind of shop is not the clock's to say (`nlu/understand.py`, `nlu/lexicon.py`)
+
+**One row of `_PREFERENCE_CATEGORY_MAP` was a clock voting for a kind of shop.** The row read
+`("time_pref", "open_late") -> bar 0.8 / restaurant 0.5`, and `_infer_category_from_signals` takes the
+highest-scoring candidate, so a sentence that only said WHEN was answered as a WHERE: 「深夜」 and
+「宵夜」 both returned the plane's 39 bars and nothing else, while 44 restaurants are open in the same
+window. Seven spellings sat in that row - 宵夜 / 夜宵 / 通宵 / 深夜 / 夜晚 / open late / late night - and
+every one of them reached the bar bucket when the turn named no kind (`tmp/d701b.py`, `tmp/d701c.py`,
+470 published merchants, reference instant 11:00 HKT Thursday):
+
+    request         category read        pool before   pool after
+    深夜            bar                  39            104  (every kind open 23:00-05:00)
+    宵夜            bar                  39            44   (the restaurants open in it)
+    食宵夜          bar                  39            44
+    深夜有咩食      bar                  39            104
+    深夜嘅餐廳      restaurant, named    44            44   (unchanged)
+    晚上嘅餐廳      restaurant, named    184           184  (unchanged)
+    酒吧            bar, named           39            39   (unchanged)
+
+The 104 is the plane's own count of merchants open in the crossing window on Thursday, read from
+`business_hours` with the same predicate both lanes use; 44 is the restaurant subset the D698 gate
+already pins. Neither is a number picked to make a page.
+
+**The fix is a deletion and a split.** The map entry is gone: a TIME preference names no category, and
+nothing about the hour is lost, because the ranking lane already reads `time_pref/open_late` as the
+`opens_late` attribute (`search/service.py:1309`) and the band still writes `open_weekday` / `open_time` /
+`open_until`. What the deletion would also take is the one FOOD word in the row - 宵夜 is a meal, not
+only an hour - so the meal has its own table (`SUPPER_CUES`, `nlu/lexicon.py:167`) read in
+`_fill_category` (`:503`) after the named-category reader: 宵夜 / 夜宵 / supper answer the food bucket at
+an inference's confidence (0.6, below a named category's 0.95) and the band keeps the hour. A named
+kind still wins, because it is read first: 宵夜酒吧 is a bar, 宵夜咖啡店 a cafe.
+
+**The gate** is `tests/test_a_clock_names_an_hour_and_not_a_kind_of_shop.py`, 18 legs: five clock
+spellings name no category; a named kind beside the clock keeps it; four supper spellings answer food;
+the supper rule does not override a named kind; 宵夜 keeps 23:00-05:00 while it learns its kind; the
+inference function votes nothing for `time_pref/open_late` and still votes `bar` for a lively ambience;
+the plan of a bare clock carries the window and no kind; and the live legs pin the bare clock to the
+whole window, the supper to the restaurant subset of it, and the two named requests to their old pools.
+Falsified against HEAD's two NLU files: **14 red, 22 green**.
+
+**Re-aimed, not deleted**: `test_category_inference.py::test_open_late_infers_a_bar` asserted the
+defect by name (「想找个通宵营业的地方」 -> bar). It now asserts `category is None` AND that the
+preference is still read (`time_pref/open_late` in `preferences`) - the same sentence, the corrected
+claim, plus the leg that keeps the hour.
+
+**Adjacent**, run and green, never full: the category gates (vocabulary, leaf, both lanes, the word
+that named the category), the time lane (timeparse, spellings, lunch service, small hours, deep night,
+the present moment), the understand set (answer-is-intent, unknowns), `test_a_clock_names_an_hour...`,
+`test_search_pipeline` - **515 passed, 1 red that is red at HEAD too**
+(`test_the_word_of_a_bucket_that_lost_stays_content`, 寵物友善 residue, untouched here). One earlier
+batch of preference-weight files is **91 red at HEAD and 91 red here** - measured both ways rather than
+assumed, and filed below.
+
+**Filed, not claimed.** (a) The EATING words still set no intent: 「有咩好食」「食咩好」「想食嘢」
+「肚餓」 each answer `intent=unknown`, so 「深夜有咩食」 reads the window (104) but not the food - the
+food word there is 食, not 宵夜, and it is the next unit's (NLU lane: a meal verb is a discover
+request). (b) 通宵 and 24小時 still carry NO window at all (通宵 is in no band; 24小時 is in no table),
+so they answer the plane unfiltered by the hour - the same family, one step out. (c) The front-end mock
+still files 深夜 / 宵夜 under its 18:00-23:00 `night` band (`apps/web/src/lib/mock/index.ts:229`), a
+different lane's file. (d) `_PREFERENCE_CATEGORY_MAP` keeps its other rows; the claim here is only that
+a clock is not one of them.
+
+- readers: `nlu/understand.py:503` (the supper rule), `:568` (where the row stood), `nlu/lexicon.py:167`
+  (`SUPPER_CUES`), this unit's gate, the re-aimed inference leg, and `tmp/d701b.py`, `tmp/d701c.py`,
+  `tmp/d701f.py`.
