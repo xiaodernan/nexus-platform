@@ -166,6 +166,19 @@ PREFERENCE_RULES: list[tuple[str, str, list[str], int]] = [
 #: category is read from the word and the hour from the band.
 SUPPER_CUES = ("宵夜", "夜宵", "supper")
 
+#: D702: the words that say the user wants EATING. They were in no table at all, so
+#: 「有咩好食」「食咩好」「想食嘢」「肚餓」 each came back `intent=unknown` and answered the whole
+#: plane - 470 of 470 merchants, measured (`tmp/d702_before.py`) - while the same question
+#: with a noun (「食飯」) was a discovery because 食飯 is a category synonym. A bare 食 is NOT
+#: here: it is a substring of 素食, 小食 and 食堂, each of which has its own reading, and of
+#: 食煙, which is not a meal. Each cue below is a phrase whose meaning is eating.
+EAT_CUES = ("想食嘢", "想吃東西", "想吃东西", "想食", "想吃",
+            "食咩好", "食乜好", "吃咩好", "吃乜好", "食咩", "食乜", "吃咩", "吃乜",
+            "食啲咩", "有咩食", "有乜食", "有咩好食", "有乜好食", "咩好食", "乜好食",
+            "吃什麼", "吃什么", "吃點什麼", "吃点什麼",
+            "肚餓", "肚饿", "肚子餓", "肚子饿", "饿了", "餓了",
+            "搵食", "觅食", "覓食", "something to eat", "hungry", "grab a bite")
+
 #: D570: a surface that names the OPPOSITE of a preference's value. The rule keeps it, because a
 #: QUESTION about it still reads the preference +1 (有無嘈 asks whether it is noisy, D533), but a
 #: REFUSAL of it must not flip the preference to -1: "唔好嘈" (don't be noisy) WANTS quiet, and the

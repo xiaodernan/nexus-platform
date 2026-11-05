@@ -36,11 +36,13 @@ from nexus_ai.nlu.understand import extract_intent
 DB_URL = os.environ.get("NEXUS_TEST_DATABASE_URL", "").strip()
 NOW = datetime(2026, 11, 5, 3, 0, tzinfo=timezone.utc)   # 11:00 in Hong Kong, a Thursday
 
-#: the words that name an hour and nothing else
-CLOCK_WORDS = ["深夜", "深夜有咩食", "夜晚", "open late", "late night", "深夜嘅酒吧"]
+#: the words that name an hour and nothing else. D702 took 深夜有咩食 out of this list: the
+#: MEAL word in that sentence (食) names food, and the corrected reading answers restaurants in
+#: the window - the hour leg stays (test_the_bare_clock...below), the category does not.
+CLOCK_WORDS = ["深夜", "夜晚", "open late", "late night"]
 
 
-@pytest.mark.parametrize("word", CLOCK_WORDS[:5])
+@pytest.mark.parametrize("word", CLOCK_WORDS)
 def test_a_clock_names_no_category(word):
     assert extract_intent(word, {"now": NOW}).category is None, word
 

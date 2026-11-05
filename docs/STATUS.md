@@ -33170,6 +33170,82 @@ still files 深夜 / 宵夜 under its 18:00-23:00 `night` band (`apps/web/src/li
 different lane's file. (d) `_PREFERENCE_CATEGORY_MAP` keeps its other rows; the claim here is only that
 a clock is not one of them.
 
-- readers: `nlu/understand.py:503` (the supper rule), `:568` (where the row stood), `nlu/lexicon.py:167`
+- readers: `nlu/understand.py:506` (the supper rule), `:577` (where the row stood - both moved by
+  D702's insertions above them in the same file), `nlu/lexicon.py:167`
   (`SUPPER_CUES`), this unit's gate, the re-aimed inference leg, and `tmp/d701b.py`, `tmp/d701c.py`,
   `tmp/d701f.py`.
+
+
+## 681. D702 · eating is a request, and the words for it were in no table (`nlu/lexicon.py`, `nlu/understand.py`)
+
+**The product understood 「食飯」 and not 「有咩好食」.** 食飯 is a category synonym for restaurant, so
+the noun carried the sentence: intent discover, kind restaurant, 184 of 184. The same question without
+its noun - 「食咩好」「食乜好」「有咩食」「有乜食」「有咩好食」「想食嘢」「肚餓」 - matched nothing at
+all and came back `intent=unknown` with no category, so the search answered the whole plane: 470 of
+470 published merchants (`tmp/d702_before.py`, 11:00 HKT Thursday). 「搵食」 was a discovery only
+because 搵 is in `DISCOVER_CUES`, and it still carried no kind. D701 filed this as the residue of its
+own unit (a clock is not a kind of shop, but 深夜有咩食 still answered 104 merchants of every kind
+instead of the food in that window).
+
+    request              before                     after
+    食咩好 / 食乜好      470 (all)                  184 restaurants
+    有咩食 / 有乜食      470                        184
+    有咩好食 / 有乜好食  470                        184
+    想食嘢              470                        184
+    肚餓                470                        184
+    搵食                470 (a discovery, no kind) 184
+    深夜有咩食          104 (no kind)              44   (the restaurants in the deep-night window)
+    而家想食嘢          255 (no kind)              14   (the restaurants open at 11:00)
+    唔想食辣            404 (no kind)              118  (restaurants, spicy AVOIDED)
+    食煙                470                        470  (unchanged - not a meal)
+    食飯 / 素食 / 小食    184                        184  (unchanged - their own reading)
+
+The 14 and 44 are the same hand counts the two most recent gates pin (`business_hours`, Thursday,
+`opens_at <= 11:00 < closes_at` and the crossing window), not numbers chosen to match a page.
+
+**The fix is a table, two readers, and a strip.** EATING has its own table (`EAT_CUES`,
+`nlu/lexicon.py:175`), and every cue in it is a PHRASE whose meaning is eating: a bare 食 is
+deliberately absent, because it is a substring of 素食, 小食 and 食堂 (each with its own reading) and of
+食煙, which is not a meal - measured, 食煙 still answers the whole plane after the change. The table is
+read twice: in the intent reader as one more signal that a sentence is a discovery
+(`understand.py:460-462`), and in the category reader as the food bucket at 0.6, an inference's
+confidence and the same one the supper word gets (`:512`). A named kind is asked for first in both
+places, so 想食甜品 stays the bakery pool (40), 食咩好咖啡店 the cafe pool (79) and 有咩好食嘅火鍋 the
+hotpot pool (19). The phrase also leaves the match text (`_EAT_FRAME`, `:891`), built from the same
+table so the reader and the strip cannot drift, and it runs BEFORE `_QUESTION_FRAME`: the general frame
+takes 有咩 first and left the verb it was part of (measured: 「有咩食」 reached the lane as `食` and
+「有咩好食」 as `好食` until the order was swapped).
+
+**The gate** is `tests/test_a_meal_is_a_request_to_eat.py`, 40 legs: the table carries every spelling
+the gate uses (so a missing phrase cannot pass as a product behaviour); nine meal spellings are a
+discovery with the food bucket below a named kind's confidence and an empty match text; 食煙 and 食烟
+are not meals; 食飯 / 素食 / 小食 did not move; three named kinds win; 唔想食辣 keeps `spicy` in
+`constraints`; the window of 「深夜有咩食」 is still on the plan; and the live legs pin 食咩好 and 食飯
+to the restaurant plane, 深夜有咩食 to the 44 and 而家想食嘢 to the 14, and 食煙 to the whole plane.
+Falsified against HEAD's two files with the table appended and the READER shimmed to `()`: **21 red,
+19 green**.
+
+**Re-aimed, not deleted**: D701's gate listed 「深夜有咩食」 among the words that name an hour and
+nothing else, and this unit is what makes that sentence name food. The leg left the clock list (with
+the reason in the code) and the hour leg stays: 深夜有咩食 still carries 23:00-05:00, now with the kind
+the meal word gives it.
+
+**Adjacent**, run and green, never full: every gate that reads `match_core` (the question frame, the
+budget words, the ranges, the time cues, the words that named the category), the category vocabulary
+and leaf gates, `test_search_pipeline`, `test_understand_*`, this unit's gate and D701's -
+**683 passed** in the frame batch and 57 in the first, plus the 1 pre-existing red
+(`test_the_word_of_a_bucket_that_lost_stays_content`, 寵物友善) that is red at HEAD too.
+
+**Filed, not claimed.** (a) 「想食日本嘢」 now reads restaurant but not the CUISINE: 日本嘢 is not a
+spelling any cuisine row carries, and the match text keeps 日本嘢 (0 rows write it). The cuisine
+spelling lane owns that word. (b) 「唔想食辣」 leaves `唔 辣` in the match text: the negation and the
+value are removed by their own lanes only when they are a *constraint span*, and this sentence's 辣 is
+read as an avoid value, not stripped - the same predicate-as-search-term family D650 and D700 filed.
+(c) The Eat table is Cantonese-led (想食嘢 / 食咩好) with Mandarin and English spellings beside it; a
+spelling a user writes and this table does not carry is a reach gap, not a bug fixed here. (d) The
+offering lane is untouched by this unit: a meal request still answers merchants, and whether 「食咩好」
+should offer DISHES is a product decision (§674's tag-reach item is the same question one step out).
+
+- readers: `nlu/lexicon.py:175` (`EAT_CUES`), `nlu/understand.py:460` (the discovery signal), `:512`
+  (the food bucket), `:891` (the frame), `:983` (where it is applied), this unit's gate, the re-aimed
+  clock leg, and `tmp/d702_before.py`, `tmp/d702_text.py`, `tmp/d702_hand.py`.

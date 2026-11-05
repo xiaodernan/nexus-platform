@@ -29,6 +29,7 @@ from nexus_ai.nlu.lexicon import (
     RESERVE_CUES,
     ASK_MERCHANT_CUES,
     SORT_RULES,
+    EAT_CUES,
     SUPPER_CUES,
     URGENCY_FLEXIBLE,
     URGENCY_NOW,
@@ -456,7 +457,9 @@ def _fill_intent_kind(ex: IntentExtraction, text: str) -> IntentExtraction:
         ex.intent, ex.confidence["intent"] = "plan_experience", 0.8
     elif has(DISCOVER_CUES):
         ex.intent, ex.confidence["intent"] = "discover_merchant", 0.75
-    elif match_category(text) or match_cuisines(text) or has(NEARBY_TERMS)             or has(PREFERENCE_RULE_VALUES) or _has_budget_word(text) or _has_constraint(text):
+    elif (match_category(text) or match_cuisines(text) or has(NEARBY_TERMS)
+          or has(PREFERENCE_RULE_VALUES) or _has_budget_word(text) or _has_constraint(text)
+          or has(EAT_CUES)):
         # "预算 300 港币，想吃日料" names *what* they want without a discovery verb.
         ex.intent, ex.confidence["intent"] = "discover_merchant", 0.6
     else:
@@ -505,6 +508,12 @@ def _fill_category(ex: IntentExtraction, text: str) -> IntentExtraction:
         # from the word itself rather than inferred from the clock it also carries. The
         # confidence is an inference's (below a named category's 0.95) because the word
         # names the hour as well.
+        ex.category, ex.confidence["category"] = "restaurant", 0.6
+    if not ex.category and any(cue_in(c, text, text.lower()) for c in EAT_CUES):
+        # D702: the act of eating names no KIND of place, only food - so the food bucket is
+        # read from the verb at an inference's confidence and the same 0.6 the supper word
+        # gets (D701). A sentence that names its kind keeps it: 想食日本嘢 still reads the
+        # cuisine, and 食咩好甜品 still reads the bakery.
         ex.category, ex.confidence["category"] = "restaurant", 0.6
     cuisines = match_cuisines(text)
     if cuisines:
@@ -875,6 +884,14 @@ _QUESTION_FRAME = re.compile(
 _MATCH_CORE_EDGES = re.compile(r"^[\s嘅的，,、。?？]+|[\s嘅的，,、。?？]+$")
 
 
+#: D702: the meal FRAME, built from the one table the reader uses, so a phrase the lane READ
+#: leaves the match text - the rule `_QUESTION_FRAME` and the time lane already follow. The
+#: alternation is longest-first, or 食咩 would take 食咩好 down to a stray 好 (D480: one
+#: matcher, not a second hand-written pattern that can drift from the reader).
+_EAT_FRAME = re.compile(
+    "|".join(re.escape(c) for c in sorted(EAT_CUES, key=len, reverse=True)),
+    re.IGNORECASE)
+
 _SHOP_SUFFIX_AFTER = re.compile(r"(?:店|舖|鋪|shop|store)(?![a-z])", re.IGNORECASE)
 
 #: D644: the PLURAL LICENCE. `CATEGORY_SYNONYMS` writes the singular (`restaurant`, `cafe`, `shop`),
@@ -961,6 +978,9 @@ def match_core(text: str, *, strip_time: bool = False,
     for rx in _MATCH_CORE_RESIDUE:
         t = rx.sub(" ", t)
     t = _MATCH_CORE_CUES.sub(" ", t)
+    # D702: the meal frame runs FIRST, or 有咩食 is already 食 when it arrives: the
+    # general frame takes 有咩 and leaves the verb it was part of.
+    t = _EAT_FRAME.sub(" ", t)
     t = _QUESTION_FRAME.sub(" ", t)
     t = _MATCH_CORE_EDGES.sub("", re.sub(r"\s+", " ", t).strip())
     return t.strip()
