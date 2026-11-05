@@ -33012,3 +33012,41 @@ lane's uncommitted edits. The bullet's text is saved at `tmp/d698_plan_bullet.tx
   anchors), `search/service.py:467` and `:515` (the fixture twin), `:722` (the quality set), `:1121`
   (the plan's edges), `search/sql.py:311` and `:605` (both lanes' crossing clause), this unit's gate,
   and `tmp/d699_bands.py`, `tmp/d699_measure2.py`, `tmp/d699_check2.py`, `tmp/d699_probe2.py`.
+## 678. D699 · the one code claim the truncated stub left unverified is the D676 work, and it holds
+
+**What was open.** §674 restored the ledger and censused the eighteen stub entries: only five of them
+touch code, and D679's was the one whose claim no restored section covered. Its subject reads "update
+STATUS.md with AI-lane units D672-D678; also update ambience preference consolidation", and its diff
+is the `Intent.excluded_ids` road (`contract.py` +5, `nlu/state_merger.py` +16, `search/service.py` +14)
+plus one line in each of two gates. The stub's own text called the ambience half "consolidation" and
+named no field, so there was nothing to test there; the code half is exactly D676's design, landed at
+`7509e55` after §672 (D676) described it. The claim is verified here rather than assumed.
+
+**Measured fresh on this commit** (`tmp/d700_alt2.py`, the published plane, turn 1 「咖啡店」):
+
+    turn 1 「咖啡店」      category=cafe   total 79   first five ids kept
+    turn 2 「其他」        category=cafe   total 74   excluded_ids = the five   overlap 0
+    turn 2 「仲有其他」    category=cafe   total 74   the same five             overlap 0
+    turn 2 「next options」 category=cafe   total 74   the same five             overlap 0
+    turn 2 「其他咖啡店」  category=cafe   total 74   the same five             overlap 0
+
+The 79 - 74 = 5 is the exclusion, and the category surviving the cue is the defect D679 fixed (the old
+write put `filters.exclude` into a `_Strict` model, `validate_intent` answered None, and the turn fell
+to a fresh extraction of the word 其他).
+
+**The gate already exists and is green**: `tests/test_the_follow_up_that_asks_for_others_keeps_the_turn
+_and_leaves_the_rows_shown.py`, 27 legs - the merged state validates, the field is the one the model
+declares, a second ALT turn GROWS the list, the change record names the field, a cue with nothing shown
+invents none, the planner folds it into `filters.exclude`, both SELECTs cut on it, the fixture lane
+answers the same question, the published `intent.ts` / `intent.json` / `API_CONTRACT` §7.1 declare it,
+and the live stream and JSON doors leave the rows they showed. **27 passed** on this commit.
+
+**Not claimed** (all pinned by that gate's own final four legs): (a) a body naming `exclude` in
+`SearchRequestFilters` is still refused - the key the reads act on is undeclared on the request's
+contract; (b) the console still sends no `shown_ids`, so the browser's 其他 keeps the turn and shows
+the same rows; (c) a re-extract turn drops the exclusion (`_overlay` copies memory key by key); (d) the
+served frame still carries `mentioned_entities` and `merchant_id`, which the closed published object
+does not declare.
+
+- readers: `contract.py:283`, `nlu/state_merger.py:185`, `search/service.py:1092` (the three files
+  `7509e55` touched), the 27-leg gate above, and `tmp/d700_alt2.py` (the measurement).
