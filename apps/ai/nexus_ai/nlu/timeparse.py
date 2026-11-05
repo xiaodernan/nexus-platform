@@ -46,8 +46,14 @@ PART_OF_DAY: list[tuple[str, tuple[str, ...], time, time]] = [
     ("noon", ("中午", "正午", "lunch", "luncheon", "noon", "midday"), time(11, 30), time(14, 30)),
     ("afternoon", ("下晝", "下午", "午後", "afternoon", "pm"), time(14, 0), time(18, 0)),
     ("evening", ("傍晚", "黃昏", "黄昏", "evening", "dusk"), time(17, 0), time(19, 30)),
-    ("night", ("夜晚", "晚間", "晚间", "晚上", "晚黑", "夜間", "夜间", "深夜", "宵夜", "今晚",
+    # D699: 深夜 and 宵夜 are not the evening. Both name the hours AFTER the evening - the shops
+    # still open at eleven at night and later - and they sat in the 18:00-23:00 band, so 「深夜嘅
+    # 餐廳」 answered every restaurant open for dinner (439 of 470 published merchants) instead of
+    # the 104 that are open at 23:00 or after (`tmp/d699_bands.py`). A band that crosses midnight
+    # is one window with two edges: 23:00 is its start and 05:00 its far edge.
+    ("night", ("夜晚", "晚間", "晚间", "晚上", "晚黑", "夜間", "夜间", "今晚",
                "今夜", "tonight", "night", "midnight", "overnight"), time(18, 0), time(23, 0)),
+    ("deep_night", ("深夜", "夜深", "半夜", "宵夜", "夜宵"), time(23, 0), time(5, 0)),
     # D672: 凌晨 was in NO table - not this one, not the date words - so 「凌晨嘅餐廳」 carried no
     # time at all and answered the whole restaurant plane (184 of 184, `tmp/d667_counts.py`). It is
     # the small hours of the coming night, 00:00-05:00, which is the only band that starts at
@@ -324,9 +330,9 @@ def _part_meridiem(hour: int, part: str | None) -> int:
     AFTERNOON and answered 177 of 184 restaurants (`tmp/d667_counts.py`). 6-11 at night are still
     pm (18:00-23:00); only 0-5 are the small hours, and no other band contains them.
     """
-    if part == "night" and hour < 6:
+    if part in ("night", "deep_night") and hour < 6:
         return hour
-    if part in ("afternoon", "evening", "night") and hour < 12:
+    if part in ("afternoon", "evening", "night", "deep_night") and hour < 12:
         return hour + 12
     return hour
 
@@ -510,7 +516,10 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
     if day is not None and part:
         label, p_start, p_end = part
         start = _combine(day, p_start.hour, p_start.minute)
-        end = _combine(day, p_end.hour, p_end.minute)
+        # D699: a band that crosses midnight ends on the NEXT day - 23:00-05:00 is one window,
+        # and the far edge on the same date would be earlier than its start.
+        end = _combine(day + timedelta(days=1) if p_end < p_start else day,
+                       p_end.hour, p_end.minute)
         if start < now:
             rolled = start + timedelta(days=1)
             # only roll when the user did not pin a weekday/date themselves
@@ -529,6 +538,14 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
     # ---- 5. part-of-day only ("晚上10點後" handled above; "夜晚" here) -------
     if part:
         label, p_start, p_end = part
+        if p_end < p_start:
+            # D699: the crossing band is "the coming night". Before five in the morning that night
+            # is the one the user is inside (it began yesterday at 23:00); any other hour the
+            # coming one begins tonight. Anchoring on `end <= now` put 09:00 at TOMORROW's night.
+            anchor = today - timedelta(days=1) if now.hour < p_end.hour else today
+            start = _combine(anchor, p_start.hour, p_start.minute)
+            end = _combine(anchor + timedelta(days=1), p_end.hour, p_end.minute)
+            return ParsedTime("range", start, end, _raw(raw_text), quality=label, confidence=0.5)
         start = _combine(today, p_start.hour, p_start.minute)
         end = _combine(today, p_end.hour, p_end.minute)
         if end <= now:
@@ -579,7 +596,7 @@ def _clock_to_hm(m: re.Match, part: tuple[str, time, time] | None) -> tuple[int,
 
 def _default_duration(part_label: str | None) -> int:
     return {"night": 150, "evening": 150, "afternoon": 120, "lunch": 90, "late_night": 150,
-            "noon": 90, "morning": 120}.get(part_label or "", 120)
+            "deep_night": 180, "noon": 90, "morning": 120}.get(part_label or "", 120)
 
 
 def _cue_near(text: str, clock: re.Match, cues: tuple[str, ...]) -> bool:

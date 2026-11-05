@@ -464,6 +464,19 @@ def _static_open_during(row: dict[str, Any], start: Any, end: Any) -> bool:
     return (opens is not None and closes is not None and opens < end and closes > start)
 
 
+def _static_open_across(row: dict[str, Any], start: Any, end: Any) -> bool:
+    """Does the row trade for any instant of the window `[start, 24:00)` + `[00:00, end)` - the
+    crossing-window twin of `_static_open_during` (D699). A row that crosses midnight trades
+    through it, so it always overlaps; a same-day row does when it closes after the window's
+    start or opens before its far edge."""
+    if row.get("crosses_midnight"):
+        return True
+    opens = _static_hour_value(row.get("opens_at"))
+    closes = _static_hour_value(row.get("closes_at"))
+    return ((closes is not None and closes > start)
+            or (opens is not None and opens < end))
+
+
 def _static_open_at(row: dict[str, Any], at: Any) -> bool:
     """`opens_at <= at < closes_at`, inverted for a row that crosses midnight (D659)."""
     opens = _static_hour_value(row.get("opens_at"))
@@ -498,7 +511,14 @@ def _static_hours_fit(r: dict[str, Any], filters: dict[str, Any],
         # D666: a band asks whether the row is open ANYWHERE in the window; a clock the user said
         # asks whether it is open AT that instant. One filter shape, two questions, and the pair
         # (`open_time`, `open_until`) is what says which one was asked.
-        if until is not None and until > at:
+        if until is not None and until < at:
+            # D699: the window crosses midnight. A row overlaps it when the row is open at any
+            # instant of [at, 24:00) or of [00:00, until): a crossing row always is (it trades
+            # through midnight), and a same-day row is when it closes after the start or opens
+            # before the far edge.
+            ok = any(str(h.get("weekday")) == str(weekday) and _static_open_across(h, at, until)
+                     for h in rows)
+        elif until is not None and until > at:
             ok = any(str(h.get("weekday")) == str(weekday) and _static_open_during(h, at, until)
                      for h in rows)
         else:
@@ -698,7 +718,8 @@ DAY_LEVEL_QUALITIES = frozenset({"all_day", "weekend"})
 #: its START as the instant the shop had to be open AT - so 「聽日朝早嘅咖啡店」 asked for 07:00 and
 #: answered 0 of 79 cafes (`tmp/d666_probe.py`). A band means "open at some point inside it", which
 #: is `open_until`: the same start, in the same `time` column, with the clause read as an overlap.
-PART_OF_DAY_QUALITIES = frozenset({"morning", "noon", "afternoon", "evening", "night", "late_night"})
+PART_OF_DAY_QUALITIES = frozenset({"morning", "noon", "afternoon", "evening", "night", "late_night",
+                                  "deep_night"})
 
 
 @dataclass
@@ -1097,7 +1118,11 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
         # ("晚上8點") is `explicit` and stays a point, while the band alone is `range`.
         if quality in PART_OF_DAY_QUALITIES and _field(time, "type") == "range" and ends:
             until = ends.astimezone(HK_TZ).time()
-            if until > out["open_time"]:
+            # D699: a band that CROSSES midnight (深夜 23:00-05:00) states a far edge EARLIER than
+            # its start. The old comparison dropped it, so a crossing band became the single
+            # instant 23:00 and the last hours of the night were never asked for; the two edges
+            # are one window in both orders, and the lanes read the order as which shape it is.
+            if until != out["open_time"]:
                 out["open_until"] = until
     plan.filters = {k: v for k, v in out.items() if v not in (None, "", [], {})}
     return plan

@@ -32948,3 +32948,67 @@ another lane's uncommitted edits in the working tree. The bullet's text is saved
 - readers: `nlu/timeparse.py:81` (UNTIL), `:91` (NOW), `:95` (the union D662 reads), `:334` (the closing
   clock), `:443` (the split question), `:473` and `:504` (both arms), this unit's gate, the four re-aimed
   gates, and `tmp/d698_until.py`, `tmp/d698_pairs.py`, `tmp/d698_edge.py`, `tmp/d698_headalias.py`.
+## 677. D698 · the hours after the evening are the hours after the evening (`nlu/timeparse.py`, both lanes)
+
+**深夜 and 宵夜 sat in the 18:00-23:00 band.** Both words name the hours AFTER the evening - the shops
+still open at eleven at night and later - and the band made them the evening, so 「深夜嘅餐廳」 asked
+for shops open during dinner and answered every restaurant. Measured on the published plane
+(`tmp/d699_bands.py`, `tmp/d699_measure2.py`, 2026-11-05, 470 published merchants):
+
+    request        plan carried before   pool before     plan after          pool after
+    深夜嘅餐廳     evening 18:00-23:00    184 (all)       23:00-05:00         44 of 184
+    宵夜嘅餐廳     evening 18:00-23:00    184 (all)       23:00-05:00         44, the same page
+    晚上嘅餐廳     evening 18:00-23:00    184             18:00-23:00         184 (did not move)
+    深夜 (bare)    evening 18:00-23:00    470 (all)       23:00-05:00         39 (its time_pref names bars)
+    凌晨嘅餐廳     small hours 00:00-05:00 0              00:00-05:00         0 (unchanged)
+
+The 44 is not a guess: a hand count of the plane with the same predicate (restaurant bucket, Thursday
+hours, `crosses_midnight OR closes_at > 23:00 OR opens_at < 05:00`) is 44 (`tmp/d699_check2.py`), and
+the offering lane answers the 1,107 offerings under those shops.
+
+**The band is one window with two edges, and neither lane had that shape.** 23:00 to 05:00 crosses
+midnight, and three separate readers assumed `until > start`:
+
+  * `plan_from_intent` dropped the far edge (`if until > out["open_time"]`, `service.py:1121`), so the
+    crossing band became the single instant 23:00 - the last hours of the night were never asked for.
+    The plan now carries both edges whatever their order (`:1121-1127`).
+  * the fixture lane's window test only knew a same-day interval; `_static_open_across`
+    (`service.py:467`) is its crossing twin - a row that crosses midnight trades through the window,
+    a same-day row does when it closes after the start or opens before the far edge (`:515-521`).
+  * both SELECTs had the same hole. Their crossing clause (`sql.py:311` merchant, `:605` offering) is
+    `crosses_midnight OR closes_at > start OR opens_at < until` - the same rule, in SQL.
+
+**A band word must not move the anchor to tomorrow.** The parser's part-only branch rolled the window
+when its END was behind the clock, which for a crossing band is always true after 05:00 - 09:00 asked
+for TOMORROW's night. The crossing band is anchored on the night it belongs to: before 05:00 the user
+is inside the night that began yesterday, at any other hour the coming one begins tonight
+(`timeparse.py:542`). A day-pinned crossing window ends on the next day (`:519`).
+
+**The gate** is `tests/test_the_hours_after_the_evening_are_their_own_hours.py`, 19 legs: the band
+table (five spellings at 23:00-05:00, not in the night band; the evening and 凌晨 keep their own); the
+parse (crossing start/end, today not tomorrow, 01:00 inside the night); the plan carries BOTH edges
+and the weekday; a clock inside the band is still an evening clock (深夜十一點 -> 23:00); the fixture
+lane keeps only the shops open after eleven on five hand-built rows and leaves the evening and 凌晨
+answers unchanged; and the live legs pin the pool to a hand count, the two words to one page, the
+evening to its own count, tomorrow's night to Friday, and the offering lane to the same window.
+Falsified against HEAD's three files: **11 red, 8 green**.
+
+**Adjacent**, run and green, never full: the whole time lane (band, cue, spelling, half-hour, until,
+day-level, small-hours gates), `test_search_pipeline`, `test_search_plan` and D696's offering gate -
+**767 passed**.
+
+**Not claimed.** (a) A bare 深夜 / 宵夜 still names the `bar` category through the lexicon's
+`time_pref:open_late` rule (measured: 夜晚 does the same); a TIME word setting a CATEGORY is its own
+item and this unit did not touch the preference tables. (b) The window still reads ONE weekday: the
+23:00 edge's day, so at 01:00 on Friday the rows read are Friday's, not Thursday-night's - D667's
+filed residue, unchanged. (c) "open until midnight" still takes the night band (18:00-23:00) because
+午夜 is not a clock, and 開到十二點半 stays 12:30 (§676). (d) A shop whose hours row states no weekday
+is still dropped (the EXISTS), which is D422's rule.
+
+**No PLAN bullet is written for this unit** (§675 note (d)): `docs/PLAN.md` still carries another
+lane's uncommitted edits. The bullet's text is saved at `tmp/d698_plan_bullet.txt`.
+
+- readers: `nlu/timeparse.py:56` (the band), `:333` (its meridiem), `:519` and `:542` (the two
+  anchors), `search/service.py:467` and `:515` (the fixture twin), `:722` (the quality set), `:1121`
+  (the plan's edges), `search/sql.py:311` and `:605` (both lanes' crossing clause), this unit's gate,
+  and `tmp/d699_bands.py`, `tmp/d699_measure2.py`, `tmp/d699_check2.py`, `tmp/d699_probe2.py`.

@@ -308,7 +308,19 @@ def build_merchant_query(
         # exactly when the window closes was never open inside it.
         start_at = _clock_filter(filters["open_time"])
         until = _clock_filter(filters.get("open_until"))
-        if until is not None and start_at is not None and until > start_at:
+        if until is not None and start_at is not None and until < start_at:
+            # D699: the band CROSSES midnight (深夜 23:00-05:00). Its two edges are [start, 24:00)
+            # and [00:00, until): a row that crosses midnight trades through the window, and a
+            # same-day row does when it closes after the start or opens before the far edge -
+            # measured on the published plane, 104 merchants against the 439 the evening window
+            # (18:00-23:00) answered for the same request (`tmp/d699_bands.py`).
+            tu = p.add(until)
+            where.append(
+                f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
+                f"AND bh.weekday = {wd}::smallint AND ("
+                f"bh.crosses_midnight = true OR bh.closes_at > {tm}::time "
+                f"OR bh.opens_at < {tu}::time))")
+        elif until is not None and start_at is not None and until > start_at:
             tu = p.add(until)
             where.append(
                 f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
@@ -590,7 +602,16 @@ def build_offering_query(
         # exactly when the window closes was never open inside it.
         start_at = _clock_filter(filters["open_time"])
         until = _clock_filter(filters.get("open_until"))
-        if until is not None and start_at is not None and until > start_at:
+        if until is not None and start_at is not None and until < start_at:
+            # D699: the crossing window, the same arm as the merchant lane's above - an offering
+            # is bookable when its SHOP is open, and 深夜 straddles midnight.
+            tu = p.add(until)
+            where.append(
+                f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
+                f"AND bh.weekday = {wd}::smallint AND ("
+                f"bh.crosses_midnight = true OR bh.closes_at > {tm}::time "
+                f"OR bh.opens_at < {tu}::time))")
+        elif until is not None and start_at is not None and until > start_at:
             tu = p.add(until)
             where.append(
                 f"EXISTS (SELECT 1 FROM business_hours bh WHERE bh.merchant_id = m.id "
