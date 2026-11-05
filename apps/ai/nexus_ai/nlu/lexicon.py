@@ -184,7 +184,12 @@ SUPPER_CUES = ("宵夜", "夜宵", "supper")
 #: with a noun (「食飯」) was a discovery because 食飯 is a category synonym. A bare 食 is NOT
 #: here: it is a substring of 素食, 小食 and 食堂, each of which has its own reading, and of
 #: 食煙, which is not a meal. Each cue below is a phrase whose meaning is eating.
-EAT_CUES = ("想食嘢", "想吃東西", "想吃东西", "想食", "想吃",
+#: D706: 食嘢 is that phrase - the one every Cantonese speaker writes - and it sat in NO row,
+#: so only a sentence that happened to write a LONGER cue was read (想食嘢 answered the
+#: restaurant plane, 食嘢 answered all 470). Two characters, so it is not the bare verb: none of
+#: 素食 / 小食 / 食煙 contains it, and it writes 0 of the 470 published merchants and 0 of the
+#: 5,538 offerings (`tmp/d706_census.py`) - a phrase no row can meet can only be a cue.
+EAT_CUES = ("想食嘢", "食嘢", "想吃東西", "想吃东西", "想食", "想吃",
             "食咩好", "食乜好", "吃咩好", "吃乜好", "食咩", "食乜", "吃咩", "吃乜",
             "食啲咩", "有咩食", "有乜食", "有咩好食", "有乜好食", "咩好食", "乜好食",
             "吃什麼", "吃什么", "吃點什麼", "吃点什麼",

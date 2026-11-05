@@ -33394,7 +33394,7 @@ read that verdict. Measured on the published plane (470 merchants, 11:00 HKT Thu
     request           rows with kw 0   vec on those rows   page
     想食日本嘢        8 of 8            0.060 - 0.100       Italian / Steakhouse, 0 japanese
     想食日式        8 of 8            0.073 - 0.108       Ramen 1st, four Sushi in eight
-    附近有咉好推介   8 of 8            0.061 - 0.064       a different eight from the same noise
+    附近有咩好推介   8 of 8            0.061 - 0.064       a different eight from the same noise
 
 `想食日本嘢` and `想食日式` are ONE request in two spellings: same plan, same pool of 184
 restaurants, same cuisine preference. They answered unrelated pages, because the two spellings hash to
@@ -33485,3 +33485,64 @@ answers through `price_fit`, but the cuisine now dominates the sort.
   `api/pipeline.py:204`, this unit's gate, the re-aimed D652 guard, and `tmp/d705_measure.py`,
   `tmp/d705_diff.py`, `tmp/d705_cost.py`, `tmp/d705_d652.py`, `tmp/d705_dbg.py`, `tmp/d705_prefonly.py`,
   `tmp/d705_table.py`.
+
+## 685. D706 · the phrase every speaker writes for eating was in no row of the table (`nlu/lexicon.py`)
+
+**`EAT_CUES` is a table of PHRASES on purpose.** Its own comment says why the bare verb is not in it:
+食 is a substring of 素食, 小食 and 食堂, each of which has its own reading, and of 食煙, which is not a
+meal. The phrase that every Cantonese speaker actually writes for eating, 食嘢, was in no row of it
+either - so only a sentence that happened to write a LONGER cue was read. Measured on the published
+plane (`tmp/d706_probe.py`, 11:00 HKT Thursday):
+
+    request        intent      kind        pool   match text
+    想食嘢        discover    restaurant  184    -
+    食嘢          unknown     none        470    食嘢
+    通宵食嘢      unknown     none        104    食嘢
+    去邊食嘢    discover    none        470    去邊食嘢
+    深夜有咩食    discover    restaurant   44    -
+
+The two spellings of one request answered 470 against 184, and 通宵食嘢 read the HOUR (104 shops
+open 23:00-05:00) and not the FOOD - a page of live-music bars and wine bars for a sentence that asks
+where to eat.
+
+**The word was read before it was written.** `tmp/d706_census.py`: 食嘢 writes 0 of the 470 published
+merchants and 0 of the 5,538 offerings, and so does 去邊. A phrase no row can meet can only be a cue,
+never content - which is exactly what the table's phrase rule requires and what the bare verb fails.
+
+**The fix is one token.** 食嘢 joins `EAT_CUES` (`lexicon.py:192`), and nothing else was written by
+hand: the discovery signal (`understand.py:462`), the food bucket at an inference's confidence
+(`:512`) and the meal frame (`:891`, built FROM that table) all read it. One table, three readers.
+
+    request        before                          after
+    通宵食嘢      unknown, none, 104, 「食嘢」    discover, restaurant, 44, no term
+    食嘢          unknown, none, 470, 「食嘢」    discover, restaurant, 184, no term
+    去邊食嘢    discover, none, 470            discover, restaurant, 184 (「去邊」 filed)
+    深夜有咩食    discover, restaurant, 44       unchanged
+    素食 / 小食 / 食煙     unchanged                      unchanged
+
+The 44 is the restaurant subset of the 104 open in the window - the two numbers D701 and D703 already
+pin - so the night meal moves from the window's whole answer to its restaurants and no new number is
+introduced.
+
+**The gate** is `tests/test_the_phrase_for_eating_is_safe_where_the_verb_is_not.py`, 17 legs: the
+table carries 食嘢 and still carries no bare 食; the three words the bare verb would have broken keep
+their own reading (素食 and 小食 are food, 食煙 is not); five sentences read a meal; the phrase
+leaves the match text; 通宵食嘢 keeps the hour it names; 通宵 alone is still a window and not a
+meal; and the live legs pin 44 / 184 / 44 / 104 and the rows on the night page. Falsified against
+HEAD's `lexicon.py`: **8 red, 9 green**.
+
+**Adjacent**, run and green, never full: the D701, D702, D703, D704 and D705 gates,
+`test_understand_answer_is_the_intent`, `test_category_inference`,
+`test_structured_preferences` - **184 passed, 8 red that are red at HEAD too**
+(`test_structured_preferences`, measured on both trees).
+
+**Filed, not claimed.** (a) 去邊 survives as the match term of 去邊食嘢, and 去 survives 去邊度食嘢's
+compound strip (`tmp/d706_neg.py`): they write 0 of the 470, so they cost the page nothing today, but
+they are the question frame's own residue and belong with D650/D657. (b) 唔想食嘢 answers the
+restaurant plane and leaves 唔 as the term - a negated request, and the polarity lane's question, not
+this table's. (c) 食煙 still reads the whole 470 as an unknown sentence, which is right (it names no
+place); nothing here claims it should.
+
+- readers: `nlu/lexicon.py:192` (`EAT_CUES`), `nlu/understand.py:462` (the discovery signal), `:512`
+  (the food bucket), `:891` (`_EAT_FRAME`), this unit's gate, and `tmp/d706_probe.py`,
+  `tmp/d706_census.py`, `tmp/d706_neg.py`.
