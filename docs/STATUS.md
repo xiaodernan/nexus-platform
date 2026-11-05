@@ -33135,7 +33135,7 @@ already pins. Neither is a number picked to make a page.
 nothing about the hour is lost, because the ranking lane already reads `time_pref/open_late` as the
 `opens_late` attribute (`search/service.py:1309`) and the band still writes `open_weekday` / `open_time` /
 `open_until`. What the deletion would also take is the one FOOD word in the row - 宵夜 is a meal, not
-only an hour - so the meal has its own table (`SUPPER_CUES`, `nlu/lexicon.py:167`) read in
+only an hour - so the meal has its own table (`SUPPER_CUES`, `nlu/lexicon.py:179`) read in
 `_fill_category` (`:503`) after the named-category reader: 宵夜 / 夜宵 / supper answer the food bucket at
 an inference's confidence (0.6, below a named category's 0.95) and the band keeps the hour. A named
 kind still wins, because it is read first: 宵夜酒吧 is a bar, 宵夜咖啡店 a cafe.
@@ -33171,7 +33171,7 @@ different lane's file. (d) `_PREFERENCE_CATEGORY_MAP` keeps its other rows; the 
 a clock is not one of them.
 
 - readers: `nlu/understand.py:506` (the supper rule), `:577` (where the row stood - both moved by
-  D702's insertions above them in the same file), `nlu/lexicon.py:167`
+  D702's insertions above them in the same file), `nlu/lexicon.py:179`
   (`SUPPER_CUES`), this unit's gate, the re-aimed inference leg, and `tmp/d701b.py`, `tmp/d701c.py`,
   `tmp/d701f.py`.
 
@@ -33204,7 +33204,7 @@ The 14 and 44 are the same hand counts the two most recent gates pin (`business_
 `opens_at <= 11:00 < closes_at` and the crossing window), not numbers chosen to match a page.
 
 **The fix is a table, two readers, and a strip.** EATING has its own table (`EAT_CUES`,
-`nlu/lexicon.py:175`), and every cue in it is a PHRASE whose meaning is eating: a bare 食 is
+`nlu/lexicon.py:187`), and every cue in it is a PHRASE whose meaning is eating: a bare 食 is
 deliberately absent, because it is a substring of 素食, 小食 and 食堂 (each with its own reading) and of
 食煙, which is not a meal - measured, 食煙 still answers the whole plane after the change. The table is
 read twice: in the intent reader as one more signal that a sentence is a discovery
@@ -33246,7 +33246,7 @@ spelling a user writes and this table does not carry is a reach gap, not a bug f
 offering lane is untouched by this unit: a meal request still answers merchants, and whether 「食咩好」
 should offer DISHES is a product decision (§674's tag-reach item is the same question one step out).
 
-- readers: `nlu/lexicon.py:175` (`EAT_CUES`), `nlu/understand.py:460` (the discovery signal), `:512`
+- readers: `nlu/lexicon.py:187` (`EAT_CUES`), `nlu/understand.py:460` (the discovery signal), `:512`
   (the food bucket), `:891` (the frame), `:983` (where it is applied), this unit's gate, the re-aimed
   clock leg, and `tmp/d702_before.py`, `tmp/d702_text.py`, `tmp/d702_hand.py`.
 
@@ -33318,3 +33318,66 @@ or the suites asks that way, and the duration lane would own it if one appeared.
 - readers: `nlu/timeparse.py:68` (the row), `:54` (overnight left), `:397` (longest cue wins), `:242`
   (the strip walks the table), this unit's gate, the re-aimed range leg, and `tmp/d703_before.py`,
   `tmp/d703_census.py`.
+
+
+## 683. D704 · the cuisine a user writes was in no row of the table (`nlu/lexicon.py`)
+
+**「想食日本嘢」 read the food and no cuisine.** `CUISINE_TERMS` carried 日料 / 日本菜 / 日本料理 /
+壽司 for japanese and had no row at all for vietnamese, so the two spellings a Hong Kong eater actually
+types - 日本嘢 and 日式 - reached no reader: the intent answered the restaurant bucket and no cuisine
+preference, and the page was the whole 184-restaurant plane ordered by rating
+(`tmp/d704_census.py`). 「越南菜」 was worse: no category at all, 470 of 470 published merchants - every
+bar, gym and shop in the plane - and 「想食越南嘢」 the 184 again. The taxonomy has both: a
+`vietnamese` leaf (13 published merchants) and the japanese bridge sushi / ramen / izakaya (54
+merchants, `tmp/d704_ctl.py`).
+
+The control is inside the same table. 「想食韓國嘢」 put THREE Korean shops at the top of its page and
+「想食泰國嘢」 FOUR Thai ones, because 韓國 and 泰國 are spellings the table holds - while 日本嘢 put
+none of the 54 japanese shops in its top ten (`tmp/d704_ctl2.py`). The defect is the row, not the
+engine.
+
+**The fix is three spellings and one row.** japanese gains 日本嘢, 日式 and 日本 (`lexicon.py:112`) and
+the table gains a vietnamese row of its own (`:128`): 越南, 越南菜, 越南嘢, 越式, pho, 河粉. The
+corpus was read before the words were written, and they can only be the cuisine: 日本, 日式, 日本嘢,
+越南嘢, 中菜, 川菜 and 上海菜 write 0 of the 470 published merchants and 0 of the 5,538 offerings, and
+越南 writes one merchant and seven offerings (`tmp/d704_words.py`). A cuisine stays SOFT - D394's
+preference ranks and does not filter - so the plan's kind is still the restaurant bucket
+(`test_the_cuisine_is_still_soft`), and this unit only makes the word reach the preference.
+
+    request        cuisine read   category     pool     japanese in an 8-row page
+    想食日本嘢     none           restaurant   184      0
+                   japanese       restaurant   184      Ramen 1st, Sushi 7th
+    想食日式       none           restaurant   184      0
+                   japanese       restaurant   184      Ramen 1st, Sushi 7th
+    越南菜         none           (none)       470      -
+                   vietnamese     restaurant   184      -
+
+**The gate** is `tests/test_a_cuisine_is_read_from_the_spelling_its_user_writes.py`, 17 legs: the
+table carries every japanese and vietnamese spelling this gate uses; five sentences read the cuisine
+into both `cuisine` and `cuisine_like`; the simplified sentence reads the same cuisine; the plan's kind
+is still the bucket (softness preserved); and the live legs pin the japanese page to at least one
+japanese shop with a japanese shop FIRST, 越南菜 to a pool smaller than the plane, and the Korean
+control to no japanese shop at all. Falsified against HEAD's `lexicon.py`: **12 red, 5 green**.
+
+**Adjacent**, run and green, never full: the category vocabulary and leaf gates, D701's and D702's
+gates, the word-that-named-the-category gate, `test_preferences_ranking`, `test_preference_polarity`,
+`test_understand_answer_is_the_intent`, and `test_structured_preferences` - **528 passed, 9 red that
+are red at HEAD too** (8 legs of `test_structured_preferences` and the 寵物友善 residue; measured on
+both trees rather than assumed).
+
+**Filed, not claimed.** (a) THE VECTOR LANE HIDES THE WHOLE FIX on the offline provider: with
+`embedding_provider=hashing` the page for 「想食日本嘢」 is Italian steakhouses and no japanese shop at
+all, because a cosine score becomes `relevance` through `GREATEST(kw, vec)` and the hashing cosine is
+noise on a query whose words match no row (`tmp/d704_vec.py`: vec 0.06-0.11 on rows with kw 0.0;
+personalization moves the score by 0.03, the vector by more). The numbers above are read with the
+vector lane off, which is a real path (`embedding = None` when the provider raises). This is the next
+unit and it is a product decision, not a spelling one: what a vector score means when it is the only
+signal. (b) 中菜, 中餐, 川菜 and 上海菜 still read NOTHING - the taxonomy has no chinese, sichuan or
+shanghainese leaf, and `_CUISINE_CATEGORY_MAP` names `sichuan` as if one existed - so those sentences
+answer the whole 470 with the word in the match text. Naming a leaf the taxonomy does not hold is the
+taxonomy's question, not the vocabulary's. (c) A cuisine word stays in the match text (韓國嘢 is kept
+today because three merchants write 韓國); whether 日本嘢 should leave it is the cue-strip question
+D650/D700 filed, and the corpus cannot answer it for a phrase nobody writes.
+
+- readers: `nlu/lexicon.py:112` (the japanese row), `:128` (the vietnamese row), this unit's gate, and
+  `tmp/d704_census.py`, `tmp/d704_words.py`, `tmp/d704_ctl2.py`, `tmp/d704_vec.py`.

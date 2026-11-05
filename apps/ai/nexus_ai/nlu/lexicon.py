@@ -102,8 +102,16 @@ _CUISINE_STYLE_FORMS: dict[str, tuple[str, ...]] = {
 }
 
 CUISINE_TERMS: dict[str, list[str]] = {
-    "japanese": ["日料", "日本菜", "日本料理", "壽司", "寿司", "sushi", "ramen", "拉麵", "拉面",
-                 "居酒屋", "izakaya", "鐵板燒", "日籍", "japanese"],
+    # D704: 日本嘢 and 日式 are the spellings a Cantonese eater writes for the cuisine, and
+    # neither was in this row: measured on the published plane (`tmp/d704_census.py`), 「想食
+    # 日本嘢」 read restaurant and NO cuisine, so the page was the whole 184-restaurant plane
+    # ordered by rating with no Japanese shop in its top ten, while 「想食韓國嘢」 and 「想食
+    # 泰國嘢」 - spellings this table already carries - put THREE Korean and FOUR Thai shops
+    # first (`tmp/d704_ctl2.py`). 日本 / 日式 / 日本嘢 write 0 of the 470 published merchants
+    # (`tmp/d704_words.py`), so the word can only be the cuisine.
+    "japanese": ["日料", "日本菜", "日本料理", "日本嘢", "日式", "日本", "壽司", "寿司",
+                 "sushi", "ramen", "拉麵", "拉面", "居酒屋", "izakaya", "鐵板燒", "日籍",
+                 "japanese"],
     "cantonese": ["廣東", "粤菜", "粵菜", "趙潤保", "cantonese", "茶記", "碟頭飯", "燒臘", "烧腊"],
     "korean": ["韓國", "韩国", "韓式", "韩式", "korean", "BBQ", "烤肉", "参鶏湯", "參雞湯"],
     "thai": ["泰國", "泰国", "泰式", "thai", "冬蔭", "冬阴功", "凍陳功", "som tam"],
@@ -114,6 +122,10 @@ CUISINE_TERMS: dict[str, list[str]] = {
     "seafood": ["海鮮", "海鲜", "seafood", "大排檔", "大排档", "蟹", "生蠔", "生蚝"],
     "dim_sum": ["飲茶", "饮茶", "dim sum", "dimsum", "點心", "点心", "一盅兩件"],
     "malaysian": ["馬來西亞", "马来西亚", "malaysian", "檳城", "槟城", "叻沙", "laksa"],
+    # D704: the taxonomy has a `vietnamese` leaf (13 published merchants) and this table had
+    # no row for it at all - 「越南菜」 answered no category and the whole plane (470,
+    # `tmp/d704_census.py`), and 「想食越南嘢」 read restaurant with no cuisine.
+    "vietnamese": ["越南", "越南菜", "越南嘢", "vietnamese", "pho", "河粉", "越式"],
 }
 
 # ------------------------------------------------------------------ preferences
