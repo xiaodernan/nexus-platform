@@ -2004,6 +2004,31 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     else:
                         intent_pref_scores.append(0.5)
                     continue
+                # D695: `weakness:<aspect>` targets the merchant's `weak_aspects` LIST
+                # (D581). A user who refuses noise ("唔好嘈") gets `weakness:noise`
+                # so the ranking lane demotes merchants weak at that aspect.
+                if str(pref_kind) == "weakness":
+                    aspect = str(pref_value)
+                    weak = {str(x) for x in (attrs.get("weak_aspects") or []) if x}
+                    is_weak = aspect in weak
+                    if polarity > 0:
+                        # User wants strength at this aspect: demote weak, boost not-weak
+                        weight = 1.0
+                        intent_pref_scores.append(
+                            0.5 + abs(weight - 0.5) if not is_weak
+                            else 0.5 - abs(weight - 0.5))
+                    else:
+                        # User dislikes strength here: boost weak, demote not-weak
+                        weight = 1.0
+                        intent_pref_scores.append(
+                            0.5 + abs(weight - 0.5) if is_weak
+                            else 0.5 - abs(weight - 0.5))
+                    if intent_pref_scores and intent_pref_scores[-1] >= 0.5:
+                        intent_matched_labels.append(
+                            {"label": _preference_label(str(pref_kind), str(pref_value),
+                                       pref_value),
+                             "source": "typed_weakness"})
+                    continue
 
                 # D530: `time_pref/open_late` is the one preference whose attribute is
                 # not spelled `{value}_{kind}` or `{kind}_{value}`. The stored branch

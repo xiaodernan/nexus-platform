@@ -187,6 +187,14 @@ _ATTACHED_GAP = 3
 #: lane leaves a bare mention alone (`is_asked_for` says what it would otherwise guess).
 _ATTRIBUTIVE_PARTICLES = ("的", "嘅")
 
+#: D695: the weakness aspect an antonym surface points at. When the sentence refuses the
+#: antonym ("唔好嘈" refuses noise), the user wants strength at that aspect - so a
+#: `weakness:noise` preference is produced alongside the inverted `ambience/quiet` one.
+#: The search lane's stored-preference matcher (D581) reads `weak_aspects` LIST for this key.
+WEAKNESS_ASPECTS: dict[tuple[str, str], str] = {
+    ("ambience", "quiet"): "noise",
+}
+
 #: D535: the words that COORDINATE two clauses. The normalizer turns a clause comma
 #: into a space, but the conjunction survives it - so "cheap and no curry" still says
 #: which clause the refusal belongs to, and the reader must read it: the refusal is the
@@ -570,6 +578,10 @@ def apply_polarity(preferences: list[dict[str, Any]], text: str,
     one place that knows both the (key, value) and the surface, so both directions of the
     inversion live in one function instead of one in each reader (D570, D582).
 
+    D695: when an antonym surface inverts the preference ("唔好嘈" refuses noise, so
+    quiet points at +1), a `weakness:<aspect>` preference is also produced so the
+    ranking lane can demote merchants weak at that aspect (`weak_aspects` LIST).
+
     Also deduplicates preferences by (key, value) keeping the first occurrence.
     """
     from nexus_ai.nlu.lexicon import ANTONYM_TERMS
@@ -590,7 +602,23 @@ def apply_polarity(preferences: list[dict[str, Any]], text: str,
         if token and token.lower() in text.lower():
             sign = polarity_for(text, token)
             if token.strip().lower() in ANTONYM_TERMS.get((key, value), frozenset()):
-                sign = antonym_direction(sign, text, token)
+                inverted = antonym_direction(sign, text, token)
+                # D695: when antonym_direction actually flips the sign
+                # (refusal of opposite wants the value, or LIKE of opposite
+                # dislikes the value), produce a weakness:<aspect> preference
+                # so the ranking lane can demote merchants weak at that aspect.
+                if inverted != sign:
+                    aspect = WEAKNESS_ASPECTS.get((key, value))
+                    if aspect is not None and inverted:
+                        weakness_pref = {
+                            "key": "weakness",
+                            "value": aspect,
+                            "polarity": inverted,
+                        }
+                        if ("weakness", aspect) not in seen:
+                            seen.add(("weakness", aspect))
+                            out.append(weakness_pref)
+                sign = inverted
             if sign:
                 pref = {**pref, "polarity": sign}
         out.append(pref)

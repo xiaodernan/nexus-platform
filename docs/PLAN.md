@@ -120,9 +120,12 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   preference matcher now reads the list as a set (`kind == "weakness"`), so a declared
   preference naming `noise` scores the 15 merchants weak at noise 0.200 against 0.800 for the
   rest of the live plane. Two residues were filed by that unit: the empty list is read as
-  strength (352 of 470 rows carry none), and nothing PRODUCES a `weakness` preference — the
-  sentence "唔好嘈" still writes `noise_avoid:noise` as a constraint, whose reader is the next
-  unit's question.
+  strength (352 of 470 rows carry none), and nothing PRODUCES a `weakness` preference — **closed
+  by D695**: `apply_polarity` now appends a `weakness:noise` preference whenever an antonym
+  surface inverts the ambience preference (e.g. "唔好嘈" → weakness:noise +1), and the
+  intent_preferences ranking path in `search/service.py` reads it against the merchant's
+  `weak_aspects` LIST. The sentence "唔好嘈" now writes both `noise_avoid:noise` (constraint)
+  AND `weakness:noise` (preference).
 - **A Chinese query's candidate pool is not subject-bounded** - **half closed by measurement
   in the 2026-10-28 session**: `cjk_keywords()`'s bigram containment in
   `apps/ai/nexus_ai/search/sql.py` DOES reach the English tags on the merchant lane - measured on
