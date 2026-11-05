@@ -261,8 +261,19 @@ class Intent(_Strict):
     raw_query: str
     intent: IntentKind = "unknown"
     category: Optional[str] = None
-    location: IntentLocation = Field(default_factory=IntentLocation)
-    time: IntentTime = Field(default_factory=IntentTime)
+    # D710: the contract publishes each ref as `oneOf [ref, null]` and null is its word for
+    # 「the user said nothing」 (`packages/types/src/schemas/intent.json`: "Null means the user
+    # said nothing about place — the agent asks (spec §8) instead of using the tenant's default
+    # district"). A `default_factory` sent an object of nulls - neither branch, since `LocationRef`
+    # requires a `type` and `LocationRefType` has no null - so the published validator refused 14
+    # of 14 turns in `tmp/d687_hollow_measure.txt` (27 issues on these two paths); the shape that
+    # publish permits inbound was refused here (422 at `["body","intent","location"]`); and
+    # `bool()` of the hollow object is what `search/service.py:984` reads to set `strip_time`, so
+    # every live turn removed its time vocabulary although `nlu/understand.py:964` allows that only
+    # "when the time lane PARSED a time" - 「邊度有午市自助餐」 searched as 「自助餐」, 16 of 20 live
+    # rows apart. Absent is what both directions and that reader ask for.
+    location: Optional[IntentLocation] = None
+    time: Optional[IntentTime] = None
     budget: Optional[IntentBudget] = None
     party_size: Optional[int] = None
     preferences: list[PreferenceItem] = Field(default_factory=list)
@@ -281,6 +292,19 @@ class Intent(_Strict):
     # one filter key both reads already implement (`sql.py` `filters.exclude`), and it travels
     # back as `previous_intent` - the state is the only thing that survives a turn.
     excluded_ids: list[str] = Field(default_factory=list)
+
+    @field_validator("location", "time", mode="before")
+    @classmethod
+    def _a_ref_that_says_nothing_is_absent(cls, value: Any) -> Any:
+        """`{}` is what the writers send for 「nothing was said」; the published shape says null.
+
+        Read the empty mapping as absent so the model answers the same question as the
+        extractor's plain dict (`understand.py:380`, `state_merger.py:222`), and leave a ref
+        with any member set alone: a place named without a type is still that place.
+        """
+        if isinstance(value, dict) and not any(value.values()):
+            return None
+        return value
 
 
 class SearchRequestFilters(_Strict):

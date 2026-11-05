@@ -125,7 +125,27 @@ def test_the_second_turn_narrows_the_distance_in_both_spellings(client):
         intent, items, _prices = _turn(client, word, dict(first))
         assert intent.get("sort_preference") == "distance", (
             f"{word.encode('unicode_escape').decode()} did not name the order")
+        assert items, "the refinement emptied the answer"
         location = intent.get("location") or {}
+        # D710: the radius this leg required was invented from a location that said nothing.
+        # `_tighten_radius` (nlu/state_merger.py) tests the SHAPE of the previous ref - `if loc` -
+        # and a silent turn's hollow object passed, so 「近啲」 wrote DEFAULT_NEARBY_RADIUS_M with no
+        # anchor behind it. The same eight cards come back with or without the number
+        # (`tmp/d710_radius.txt`), so it only ever rode on the wire; §8 forbids inventing it.
+        assert location.get("radius_m") is None, (
+            f"{word.encode('unicode_escape').decode()} invented a radius with nothing to measure from")
+        assert "location" in (intent.get("unknowns") or []), (
+            "a turn that named no place must say so - intent.json's null means the agent asks")
+
+
+def test_the_second_turn_tightens_the_radius_there_is_something_to_measure_from(client):
+    """D710: the anchored half of the same promise, so the null above is not read as a lost feature."""
+    first, items, _prices = _turn(client, f"{L.DISTRICTS['Sha Tin']['aliases'][0]}嘅{RAMEN}")
+    assert items, "the first turn served no cards"
+    for word in (CLOSER_TRADITIONAL, CLOSER_SIMPLIFIED):
+        intent, _items, _prices = _turn(client, word, dict(first))
+        location = intent.get("location") or {}
+        assert location.get("resolved"), "the district the user named was not carried into the follow-up"
         assert location.get("radius_m"), "the radius was not tightened"
 
 # ------------------------------------------------------------------ D528: changing your mind

@@ -387,7 +387,11 @@ secret. This is D20: the platform owns every commerce and conversation write, so
 Conversation state merges successive turns: "太贵了" → `budget.max *= 0.7`; "近一点" → `sort_preference=distance`,
 `location.radius_m` tightened; "不吃辣" → append constraint; "其他 / next / more options" → union
 `context.shown_ids` into `excluded_ids`, which the search reads as its `exclude` filter (both candidate
-lanes cut `id <> ALL(...)`). Merge rules live in `apps/ai/nexus_ai/nlu/state_merger.py`.
+lanes cut `id <> ALL(...)`). A radius is tightened only where there is something to measure it
+from: with no place named on any turn the merge sets the order, leaves `location` in `unknowns`
+and invents no number (§8), and the absent ref is the null this section publishes rather
+than an object whose every member is null (D710). Merge rules live in
+`apps/ai/nexus_ai/nlu/state_merger.py`.
 
 ## 8. Growth & creator
 

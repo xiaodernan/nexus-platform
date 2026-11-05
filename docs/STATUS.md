@@ -33759,3 +33759,205 @@ files were swept into the shared index by the concurrent lane's `7509e55` before
 so the code is in the tree under another unit's commit and this section is where its evidence is.
 `tmp/d676_shipped_suite.py` re-checks the four code files byte-for-byte against `041d6dc` before it
 runs anything, which is the check that the sweep lost nothing.
+## 689. D710 · the turn that said nothing about place or time sent an object of nulls where the contract publishes null (`apps/ai/nexus_ai/contract.py`, `docs/API_CONTRACT.md`)
+
+*The claim.* `packages/types/src/schemas/intent.json` publishes `location` and `time` as
+`oneOf [ref, null]` and says what the null means — "Null means the user said nothing about place —
+the agent asks (spec §8) instead of using the tenant's default district." `contract.py` built both
+fields with `Field(default_factory=…)`, so a turn that named no place and read no time dumped an
+OBJECT whose every member is null — neither branch, because `LocationRef` requires a `type` and
+`LocationRefType` has no null in it. Three readers of that one default, measured at `96bb33f` before
+any line changed:
+
+  * OUTBOUND (`tmp/d687_hollow_measure.txt`): the published validator refused **14 of 14** turns of
+    an ordinary battery, **27** of those issues on these two paths alone (14 `/time: oneOf`,
+    13 `/location: oneOf`).
+  * A RULE, not only a branch (`tmp/d687_rule.txt`, `tmp/d687_unknowns.txt`) — `rules.mjs:76`'s
+    `intent_unknowns_are_unsettled` says a field named in `unknowns` must be null / absent / empty in
+    the same object. It fails **11 of 14** turns; nine name `location` (`understand.py:1292`) while
+    the frame carries an object of nulls, two name `intent` while carrying `intent="unknown"`. After
+    this unit **3** stay, and they are pinned, not fixed.
+  * INBOUND (`tmp/d710_inbound_base.txt`): the shape the contract publishes is refused by the model —
+    `{"location": null, "time": null}` answers **HTTP 422** at `["body","intent","location"]`,
+    "Input should be a valid dictionary or object to extract fields from", while the hollow object
+    the service itself emits answers **HTTP 200** and echoes the hollow object back. So a caller that
+    follows the published contract does not get an answer built on its own state, and a caller that
+    copies the service keeps the defect. Over the shipped bytes the same three posts answer **200,
+    200, 200** and the first two echo `location=null` (`tmp/d710_inbound.txt`): the shape the contract
+    publishes is now the shape the service accepts, sends and round-trips.
+
+*One of the readers is a shape test, and it was holding up a number.* `nlu/state_merger.py`'s
+`_tighten_radius` decides whether there is something to measure a radius from with
+`cur = DEFAULT_NEARBY_RADIUS_M if loc else None` - a test on the *shape* of the previous turn's
+location. The hollow object passed it, so 「拉麵」 then 「近啲」 wrote `radius_m: 1000` into a frame whose
+`type`, `value` and `resolved` were all null: a number on the wire with no anchor behind it, while the
+live plane returned the identical eight cards with or without it (`tmp/d710_radius_parent.txt` vs
+`tmp/d710_radius_shipped.txt`). With the ref absent, the follow-up takes that function's own
+documented fallback - "no geo anchor: switch the sort, but never invent a radius (§8)" - keeps
+`sort_preference="distance"`, keeps the same eight cards, and now declares `unknowns=["location"]`,
+which is exactly what `intent.json`'s sentence says the null is for (the agent asks). The anchored
+conversation does not move: 「沙田嘅拉麵」 then 「近啲」 still carries the district, the resolved point and
+`radius_m: 1000`. The leg that pinned the invented number is
+`test_live_conversation_refinement.py`'s `test_the_second_turn_narrows_the_distance_in_both_spellings`;
+it is re-aimed here, and the anchored half of its promise got a leg of its own beside it, so the null
+cannot be read as a feature lost.
+  * AND IT IS READ: `plan_from_intent` sets `strip_time=bool(intent is not None and intent.time)`
+    (`search/service.py:984`, again at `:1022`) where `match_core`'s own docstring says the caller may
+    set it only "when the time lane PARSED a time" (`nlu/understand.py:964`). `bool()` of a model
+    instance is True whatever it holds, so **9 of 14** turns stripped their time vocabulary with no
+    time behind the strip; for **3** of them the search text changed — 「邊度有午市自助餐」 was searched
+    as 「自助餐」 and 「邊度有午市優惠」 as 「優惠」, and on the live plane **16 of the 20** rows served to
+    each are rows that word would not have selected (`tmp/d687_hollow_measure.txt`). The extractor's
+    own `to_dict` returns `{}` for the same sentence (`understand.py:380-381`) — falsy — so the two
+    shapes answered differently to one question, the D652 split opened again by one field default.
+    The same line also reads `.time` as an ATTRIBUTE where `_field` one line above exists precisely to
+    spare a plain-dict intent (`'dict' object has no attribute 'time'`, `tmp/d687_hollow_measure.txt`
+    line 75); that reader is this unit's neighbour and not its business.
+
+*What ships.* `Intent.location` and `Intent.time` become `Optional[IntentLocation] = None` /
+`Optional[IntentTime] = None`, and one `mode="before"` validator on the two fields reads an empty
+mapping as absent: `{}` and `None` both arrive as `None`, a ref with any member set stays itself.
+That is the one ref for both directions — the writers (`nlu/understand.py:380-381`
+`self.location or {}`, `nlu/state_merger.py:222-223` `setdefault("location", {})`) keep sending `{}`,
+the model now answers the same question as those dicts, the frame that goes out carries the null the
+published `oneOf` names, and the body the contract permits is accepted. No reader line changed:
+`service.py:984`'s `bool()` and the leaf recomputation at `:1022` are the same bytes, and with the
+ref absent `bool(None)` is False, which is what `match_core`'s docstring asked for; `_field`
+(`service.py:1178`) already treats a `None` ref as no location. Two existing gate legs pinned the
+hollow object and are re-aimed: `apps/ai/tests/test_contract.py`'s
+`test_intent_defaults_are_honest_about_what_is_unknown` asserted `intent.location.value is None` and
+`intent.time.type is None` - it now asserts `is None` for both, the same way the same leg already
+reads `budget` - and the conversation leg above, with the anchored case added beside it. Five files
+ship: the model, the two gates, the door, and §7.1's sentence, qualified below to stop promising the
+number this unit stopped inventing.
+
+*Gate.* `apps/ai/tests/test_a_turn_that_said_nothing_about_place_or_time_sends_the_null_the_contract_publishes.py`,
+27 functions / 67 collected legs. On the parent's bytes **44 legs red, 23 passed**; over the shipped
+`contract.py` **67 passed, 0 red** (`tmp/d710_prove.txt`). Per turn of a 14-turn battery it requires
+that the served frame leaves no ref that says nothing and that the model and the extractor's own
+`to_dict` agree about what was said; it reads the published `oneOf` for both refs and requires the
+null branch to be the one sent, quotes the schema's own sentence for what the null means, posts the
+shape the contract publishes to the served route and requires an answer rather than a 422, round-trips
+the frame the service sends back through the service, and keeps a partly-filled ref, a named district
+and a quality-only time saying what they say. Three legs re-read the live plane: the occasion word
+that the strip removed, the page the lunch word divides, and the turn that really did read a time.
+Six legs pin what this unit does NOT fix - the two keys still outside the closed object, `unknowns`
+naming a field the published shape does not know, the `urgency` value a clock turn writes outside the
+published domain, `time.quality` outside `TimeRef`, `nearby` outside `LocationRefType`, and the
+plain-dict intent still dying at `service.py:984` - and one pins the three turns the published rule
+still fails, so the unit cannot be credited with a fix it did not make.
+The gate pass — 108 files, every gate that reads a plan or an intent, fix in and new door out —
+ran **9 failed, 3128 passed** in 499s, and the same 108 files over the parent's bytes with no fix ran
+**7 failed, 3130 passed** in 790s (`tmp/d710_gates_base.txt`). The two legs the fix adds are the two
+this unit re-aims: `test_contract.py`'s defaults leg (the pass ran before the re-aim) and
+`test_live_conversation_refinement.py`'s radius leg. The seven that are red on both planes are the
+tree this lands in, not the change: the compound-page head-noun leg, three leaf-word legs, the
+question-frame survivor 「邊間咖啡店好」, the stored-preference label leg and the bucket-that-lost leg.
+
+*Arms.* Nine trees archived from `96bb33f`, each holding the shipped gates with one piece of
+`contract.py` reverted, and the 15 gate files that read a plan or an intent plus the new door run in
+every one of them - 16 files per arm (`tmp/d710_arms.txt`). Both re-aimed legs ship in every tree, so
+a red names a piece of the model and never a gate the arm was not meant to move. Counted as
+*failed / of the door / in the other files*:
+
+  * **A_before_all** - the parent's file with the door present - **46 / 44 / 2**, the two being
+    exactly `test_contract.py`'s defaults leg and `test_live_conversation_refinement.py`'s radius leg.
+    Every pin this unit leaves alone stayed green, so the door reddens its own claim, not the
+    neighbourhood.
+  * **B_fix_without_new_door** - **0 failed, 191 passed**: the fix moves no row that already existed.
+  * **C_shipped** - **0 failed, 258 passed**: the reference for D through I.
+  * **D_default_factory_back** - the two fields hollow again, the normaliser kept - **80 / 55 / 25**.
+    This is what the frame going OUT is made of, and nothing else.
+  * **E_validator_gone** - `Optional` with no normaliser - **42 / 41 / 1**, the one being the radius
+    leg: the `{}` the writers send becomes an `IntentLocation()` again, which is falsy for nobody, so
+    the two halves of this unit are one claim and a reviewer cannot ship either alone.
+  * **F_guard_reads_type** - the guard asks 「is there a `type`?」 - **2 / 2 / 0**: a place named
+    without a type is read as silence, and only the two legs that hold a partly-filled ref and a
+    quality-only time notice.
+  * **G_guard_reads_value** - the guard asks 「is there a `value`?」 - **10 / 10 / 0**: a TIME ref has
+    no `value` member, so every time is nothing said and a parsed cue never leaves.
+  * **H_location_only** - the fix ships for `location` and not for `time` - **70 / 45 / 25**.
+  * **I_time_only** - the mirror - **71 / 51 / 20**.
+
+The reds outside the new door in D, H and I are the same hollow ref seen by its other readers -
+`test_pipeline.py`'s two validation legs, `test_search_endpoint.py`'s ranking and path legs, the 「其他」
+door's state legs, and the two gates this unit re-aims - which is why one field cannot be fixed beside
+the other: a half-fix leaves the neighbours red.
+
+*Suite.* The whole suite on the bytes this unit ships, on a `git archive` of `96bb33f` with the five
+files laid over it (`tmp/d710_shipped_suite.py`, `tmp/d710_suite.txt`): 162 failed, 37280 passed,
+44 skipped in 4178.75s (1:09:38), `rc=1`. The header of that record prints the tree's own empty
+`Intent` as `location=None time=None`, so the claim is measured inside the pinned tree and not in
+the worktree. `tmp/d710_owncheck.py` then asks which of the 162 are this unit's, on two trees of the
+same commit (`tmp/d710_owncheck.txt`): SHIPPED - HEAD plus this unit's `contract.py`, its two
+re-aimed gates, the qualified §7.1 and the door - 162 failed, 788 passed in 233.72s over 28 files;
+BASE - HEAD alone, no door - 162 failed, 721 passed in 235.90s over 27. Rows red only with this
+unit's bytes: 0. Rows red only at the base and cured by it: 0. This unit's own door red in SHIPPED:
+0 of its legs. The two passes differ by 788 - 721 = 67 passed, which is the door's leg count to the
+row, so the whole difference this unit makes on the suite is its own door going green and nothing
+else moving. Both re-aimed gates are green with the shipped model in the tree, which is the other
+half of the same record. The 162 are red at `96bb33f` as committed, in 27 files this unit never
+overlays, in one plane - the preference, ranking, vocabulary and district-fact files, whose product
+bytes the concurrent lane still holds uncommitted (`tmp/d710_suite.txt` names each row, and the run
+header names the two files it deliberately did not overlay). That count is also larger than the last
+few lanes quoted (`tmp/d674_suite.txt` ran 26 red on a smaller suite, and these runs are not
+comparable row for row across a growing plane), but the direction is one lane's to look at, and it
+is filed below rather than followed here.
+
+*Filed, not fixed.*
+  * The published rule keeps failing on **3** turns and the door pins them (`tmp/d687_rule.txt`):
+    「lunch buffet」 and 「晏啲得唔得」 name `intent` in `unknowns` while carrying `intent="unknown"` -
+    the fallback word, which `UnknownField` does not name either - and 「set lunch menu near me」 names
+    `location` while its ref carries `type="nearby"`, a member `LocationRefType` does not have.
+  * The served `intent` frame still carries keys the closed published object refuses -
+    `mentioned_entities`, `merchant_id`, a `preference` kind of `ambience`, `urgency="now"`,
+    `time.quality` (`tmp/d687_measure.txt`). That is the next unit, not this one.
+  * The two planes disagree about the whole DOMAIN, not only the null. The census of it is
+    `tmp/d711_published_domain.txt`: **7** values the published schema offers and the served model
+    refuses inbound - `LocationRefType`'s `mtr_station`, `point` and `current_location`,
+    `TimeRefType`'s `open_now`, `BudgetUnit`'s `total`, `UrgencyLevel`'s `low` and `high` (a type
+    outside the model's literals answers `HTTP 422` at that path, `tmp/d710_inbound_base.txt`, so the
+    published way to ask 「而家開唔開」 is refused by the service, and `open_now`'s own published
+    description says it "triggers the live-hours computation") - and **6** published optional keys
+    refused as `extra_forbidden` because `_Strict` closes the model: `LocationRef.area`,
+    `LocationRef.confidence`, `TimeRef.timezone`, `PreferenceTerm.confidence`,
+    `PreferenceTerm.introduced_at_turn`, `ConstraintTerm.expression`. The other direction is the D710
+    family one field over: the model offers `city` and `nearby` as location types, a `quality` member
+    on `IntentTime`, `urgency` values `now` and `flexible` and the two frame keys, and the closed
+    published object names none of them.
+  * `search/service.py` reads `.time` as an ATTRIBUTE at the two `strip_time` lines while `_field` a
+    few lines below exists precisely because the same value arrives as a model or as a dict, so a
+    plain-dict intent still dies there (`AttributeError: 'dict' object has no attribute 'time'`,
+    `tmp/d687_hollow_measure.txt`).
+  * Nothing on the CI plane validates an `intent` frame: `scripts/verify_payload_conformance.mjs`
+    checks live payloads of other shapes, so 14 of 14 refused frames were invisible to it.
+  * The web lane's demo plane invents the radius this unit stopped inventing:
+    `apps/web/src/lib/mock/index.ts` seeds `radius_m: 3000` with `type: 'near_me'` and tightens with
+    `(next.location?.radius_m ?? 3000) * 0.6`, so a null from the AI lane becomes a number there
+    (owner: the web lane).
+  * **162** rows of the committed plane are red at `96bb33f` with nothing overlaid at all
+    (`tmp/d710_owncheck.txt`, BASE pass), in 27 files of the preference / ranking / vocabulary /
+    district-fact plane - `test_a_weak_preference_is_not_evidence_against_it.py` alone accounts for
+    **90** of them. This unit's suite pass cannot tell why they are red and does not guess; the rows
+    are the lane that owns that plane's to look at, and the count is quoted here so the next lane
+    that runs a suite can attribute against it instead of absorbing it.
+
+*Doc.* §7.1 of `docs/API_CONTRACT.md` promised `"近一点" → sort_preference=distance,
+location.radius_m tightened` unconditionally. This unit makes the second half conditional on there
+being something to measure from, so the sentence now carries the qualification, in the same paragraph
+as the merge rules it describes: "A radius is tightened only where there is something to measure it
+from: with no place named on any turn the merge sets the order, leaves `location` in `unknowns` and
+invents no number (§8), and the absent ref is the null this section publishes rather than an object
+whose every member is null (D710)." The splice is a byte-level replace on a CRLF file that carries
+full-width punctuation elsewhere (`tmp/d710_doc.py`, `tmp/d710_doc2.py`), and it asserts the
+line-ending count before writing. No gate reads that sentence: the files that name §7.1 quote it in
+their own docstrings only (`test_state_merger.py`, `test_follow_up_question.py`).
+
+*Planes.* Everything here was measured against `96bb33f`, the commit this unit lands on, and the fix
+lived only in the worktree while the lane landed `§688` around it, so the suite and the arms each ran
+on a `git archive` of that commit with this unit's bytes laid over it (`tmp/d710_shipped_suite.py`,
+`tmp/d687_arms.py`); the worktree was never the plane for either number. The outbound counts come from
+`tmp/d687_hollow_measure.txt`, the rule failures from `tmp/d687_rule.txt` and `tmp/d687_unknowns.txt`,
+the inbound refusals from `tmp/d710_inbound_base.txt` and their cure from `tmp/d710_inbound.txt`, the
+strip consequences from `tmp/d687_hollow_measure.txt`, the radius from `tmp/d710_radius_parent.txt`
+and `tmp/d710_radius_shipped.txt`, and the domain census from `tmp/d711_published_domain.txt`.

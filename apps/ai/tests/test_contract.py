@@ -115,8 +115,11 @@ def test_intent_defaults_are_honest_about_what_is_unknown():
     assert intent.sort_preference == "relevance"
     assert intent.urgency == "normal"
     assert intent.language == "zh-HK"
-    assert intent.location.value is None
-    assert intent.time.type is None
+    # D710: the honest default is the null the published shape describes, not an object
+# whose every member is null - `oneOf [LocationRef, null]` has no branch for that, and
+# `bool()` of it is what made `search/service.py:984` strip a time the lane never parsed.
+    assert intent.location is None
+    assert intent.time is None
 
 
 def test_intent_lists_are_not_shared_between_instances():

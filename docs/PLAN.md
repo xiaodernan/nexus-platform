@@ -3863,3 +3863,23 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   measured three families deep (`tmp/d687_measure.txt`) and the next unit. Gate
   `apps/ai/tests/test_the_follow_up_that_asks_for_others_keeps_the_turn_and_leaves_the_rows_shown.py`,
   27 legs, 17 arms over `041d6dc` (`tmp/d676_arms.txt`). Owner: the AI lane.
+- **The silent turn sent an object of nulls where the contract publishes null** - **closed by D710
+  (§689)** - `packages/types/src/schemas/intent.json` publishes `Intent.location` and `Intent.time` as
+  `oneOf [ref, null]` and says null is the word for 「the user said nothing about place - the agent asks
+  (spec §8)」, while `contract.py` built both with `Field(default_factory=…)`. A turn that named no
+  place and read no time therefore went out as an OBJECT of nulls - neither branch, since
+  `LocationRef` requires a `type` and `LocationRefType` has no null - and the published validator
+  refused 14 of 14 battery turns (27 issues on these two paths, `tmp/d687_hollow_measure.txt`); the
+  same shape inbound answered HTTP 422 at `["body","intent","location"]` (`tmp/d710_inbound_base.txt`);
+  `rules.mjs`'s `intent_unknowns_are_unsettled` failed 11 of 14 turns on it (`tmp/d687_rule.txt`, 3
+  stay); and `search/service.py`'s `strip_time=bool(… intent.time)` was True for every live turn, so
+  9 of 14 stripped time vocabulary the time lane had never parsed and 3 of them searched a different
+  text - 「邊度有午市自助餐」 as 「自助餐」, 16 of 20 live rows apart. The two fields are `Optional` now,
+  with one `mode="before"` validator reading an empty mapping as absent, so `{}` and `null` answer the
+  same question and a ref with any member set still says what it says. A reader that tested the SHAPE
+  of the previous ref (`state_merger.py`'s `_tighten_radius`) was holding up a `radius_m: 1000` with no
+  anchor behind it; the same eight cards come back without it (`tmp/d710_radius.txt`), the distance
+  order stays, and the turn now declares `location` unknown instead of inventing a number. Gate
+  `apps/ai/tests/test_a_turn_that_said_nothing_about_place_or_time_sends_the_null_the_contract_publishes.py`,
+  27 legs (44 red on the parent, all green on the fix), with 9 arms over `96bb33f`
+  (`tmp/d710_arms.txt`). Owner: the AI lane.
