@@ -33249,3 +33249,72 @@ should offer DISHES is a product decision (§674's tag-reach item is the same qu
 - readers: `nlu/lexicon.py:175` (`EAT_CUES`), `nlu/understand.py:460` (the discovery signal), `:512`
   (the food bucket), `:891` (the frame), `:983` (where it is applied), this unit's gate, the re-aimed
   clock leg, and `tmp/d702_before.py`, `tmp/d702_text.py`, `tmp/d702_hand.py`.
+
+
+## 682. D703 · an ask to stay open all night named no hour at all (`nlu/timeparse.py`)
+
+**通宵 and 24小時 are one request and it carried no window.** Both sit in the
+`time_pref/open_late` row, so the preference was read and the ranking lane got `opens_late` - but no
+band named them, so the plan carried no `open_time`, and the page was the plane ordered by rating: 470
+of 470 published merchants for 「通宵」, 「通宵營業」 and 「24小時」, with the cue still in the match
+text. With a kind, 「24小時餐廳」, 「通宵嘅餐廳」 and 「24小時營業嘅餐廳」 answered all 184 restaurants
+(`tmp/d703_before.py`, 11:00 HKT Thursday). Two English spellings were worse than silent: `overnight`
+sat in the EVENING band (18:00-23:00) - the hours BEFORE the night it names - and "all night" fell to
+the bare token "night" for the same reason, so both answered 439 merchants opened for dinner.
+
+    request               before                          after
+    通宵 / 通宵營業       470, cue in the match text       104  (every kind open 23:00-05:00)
+    24小時                470                              104
+    24小時餐廳            184 (all restaurants)            44   (the restaurants in that window)
+    24小時營業嘅餐廳      184                              44
+    通宵嘅餐廳            184                              44
+    overnight             439 on the evening band          104
+    all night             439 on the evening band          104
+    今晚 / tonight        184, evening 18:00-23:00          184  (unchanged)
+
+**The fix is the band table.** 通宵, 通宵營業, 24小時, 24小時營業, 24h, "24 hours", "open 24", "all
+night" and `overnight` join `deep_night` (`timeparse.py:68`), and `overnight` leaves the evening row
+(`:54`). The longest cue wins in `_find_part` (`:397`), so "all night" beats "night" without taking
+今晚 or tonight away from the evening; the window reader D699 built carries the crossing band with no
+new clause, so both lanes filter through the keys they already read. The cues are band tokens, so the
+strip table that walks `PART_OF_DAY` (`:242`) removes them from the match text by construction - no
+second list to drift.
+
+**24小時 is a proxy and is called one.** The corpus has no 24-hour attribute to ask: `business_hours`
+is the only writer, and 21 published merchants carry a 00:00-23:59 zone (`tmp/d703_census.py`). A shop
+open at every hour is open at three in the morning, so the deep-night window answers the ask - it
+returns the shops that are open in the small hours. It does NOT claim the row is open at noon, and the
+section says so rather than letting the window imply it.
+
+**The gate** is `tests/test_an_open_all_night_ask_names_the_night.py`, 32 legs: the band carries every
+spelling (the Simplified 24小时 / 24小时营业 are pinned through the parse leg instead, because
+`nlu/canonical` rewrites the tables at import - measured, the tuple holds 24小時 where the source
+writes 24小时); the evening did not move; every spelling parses to the crossing window at 23:00-05:00
+anchored on today; "all night" is 23:00 while "tonight" stays 18:00; the plan of a bare cue carries the
+window, weekday and no match text; a named kind keeps its door and gets the hour; and the live legs pin
+通宵 / 24小時 / `overnight` to the same page as 深夜, and 24小時餐廳 to the 44 restaurants of that
+window by comparing it with 深夜嘅餐廳 and 今晚嘅餐廳 instead of a number. Falsified against HEAD's
+`timeparse.py`: **30 red, 2 green**.
+
+**Re-aimed, not deleted**: `test_a_clock_range_is_one_span.py` read 「24小時 4-6pm」 as "a content word
+beside the range" (the cue survived with the value "24小時"). It is not content - it is a band cue the
+lane reads now - so the leg is replaced by one that asserts the same sentence still takes the explicit
+range AND leaves no 24小時 in the match text.
+
+**Adjacent**, run and green, never full: the whole time lane (timeparse, spellings, markers, ranges,
+lunch service), the three night bands (deep night, small hours, the present moment), D701's and D702's
+gates, the cue-strip gate, `test_open_time_binding`, `test_understand_answer_is_the_intent`,
+`test_search_pipeline` - **673 passed**.
+
+**Filed, not claimed.** (a) 「通宵食嘢」 reads the window (104) but not the food: D702's meal table
+carries 想食嘢 and not the bare 食嘢, so the sentence keeps 食嘢 in the match text - the meal table's
+spellings want their own census rather than one more phrase appended here. (b) 「而家通宵」 reads the
+moment (open_now, 255) and drops the band, because a stated clock wins over the moment word - D700's
+own filed note (b), unchanged. (c) The front-end mock still files 深夜 / 宵夜 under its 18:00-23:00
+`night` band and has no 通宵 row at all (`apps/web/src/lib/mock/index.ts:229`), a different lane's
+file. (d) 24小時 as a BOOKING length (「租24小時」) is read as this window; no sentence in the corpus
+or the suites asks that way, and the duration lane would own it if one appeared.
+
+- readers: `nlu/timeparse.py:68` (the row), `:54` (overnight left), `:397` (longest cue wins), `:242`
+  (the strip walks the table), this unit's gate, the re-aimed range leg, and `tmp/d703_before.py`,
+  `tmp/d703_census.py`.

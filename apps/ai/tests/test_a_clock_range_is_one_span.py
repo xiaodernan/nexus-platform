@@ -82,10 +82,19 @@ def test_the_clock_range_leaves_the_match_text_whole(text, hm):
     ("quiet 4-6pm", "quiet"),
     ("4-6pm quiet", "quiet"),
     ("6-9pm dinner", "dinner"),
-    ("24小時 4-6pm", "24小時"),
 ])
 def test_a_content_word_beside_the_range_survives(text, left):
     assert _plan(text).match_text == left, (text, _plan(text).match_text)
+
+
+def test_a_time_cue_beside_the_range_does_not_survive():
+    """D703: this leg used to read ("24小時 4-6pm", "24小時") - 24小時 as CONTENT beside the range.
+
+    It is not content: it names the hours the shop is open through, and it is in the deep-night band
+    now, so the lane READ it and a cue the lane read leaves the match text (D700's rule). The range
+    still wins the clock - an explicit 4-6pm beats a band - and the band cue is stripped all the same.
+    """
+    assert _plan("24小時 4-6pm").match_text == "", _plan("24小時 4-6pm").match_text
 
 
 @pytest.mark.parametrize("text,hm", [

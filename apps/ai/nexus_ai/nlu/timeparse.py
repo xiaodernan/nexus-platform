@@ -52,8 +52,22 @@ PART_OF_DAY: list[tuple[str, tuple[str, ...], time, time]] = [
     # the 104 that are open at 23:00 or after (`tmp/d699_bands.py`). A band that crosses midnight
     # is one window with two edges: 23:00 is its start and 05:00 its far edge.
     ("night", ("夜晚", "晚間", "晚间", "晚上", "晚黑", "夜間", "夜间", "今晚",
-               "今夜", "tonight", "night", "midnight", "overnight"), time(18, 0), time(23, 0)),
-    ("deep_night", ("深夜", "夜深", "半夜", "宵夜", "夜宵"), time(23, 0), time(5, 0)),
+               "今夜", "tonight", "night", "midnight"), time(18, 0), time(23, 0)),
+    # D703: 通宵 and 24小時 name the same hours 深夜 does - the shops still open through
+    # the night - and they carried NO window at all: measured on the published plane
+    # (`tmp/d703_before.py`) 「通宵」, 「通宵營業」 and 「24小時」 each answered all 470
+    # published merchants with the cue still in the match text, and 「24小時餐廳」 /
+    # 「通宵嘅餐廳」 the whole 184-restaurant plane. "overnight" was in the EVENING band
+    # (18:00-23:00) - the hours BEFORE the night it names - and "all night" fell to
+    # "night" the same way. The longest cue wins in `_find_part`, so "all night" beats
+    # "night" without taking the evening word away from 今晚 / tonight.
+    # 24小時 is read as this window rather than as a predicate of its own: a shop open
+    # at every hour is open at three in the morning, and the corpus has no 24-hour
+    # attribute to ask - `business_hours` is the only writer (21 merchants carry a
+    # 00:00-23:59 zone).
+    ("deep_night", ("深夜", "夜深", "半夜", "宵夜", "夜宵", "通宵", "通宵營業",
+                    "24小時", "24小时", "24小時營業", "24小时营业", "24h", "24 hours",
+                    "open 24", "all night", "overnight"), time(23, 0), time(5, 0)),
     # D672: 凌晨 was in NO table - not this one, not the date words - so 「凌晨嘅餐廳」 carried no
     # time at all and answered the whole restaurant plane (184 of 184, `tmp/d667_counts.py`). It is
     # the small hours of the coming night, 00:00-05:00, which is the only band that starts at
