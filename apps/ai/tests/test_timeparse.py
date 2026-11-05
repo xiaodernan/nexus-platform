@@ -76,11 +76,12 @@ def test_tomorrow_is_bare_all_day():
 
 
 def test_open_late_after_is_a_recurring_quality_not_a_date():
-    # "營業到10點後" -> a recurring closing-time filter, no pinned start/end
+    # "營業到10點後" -> a recurring closing-time filter, no pinned start/end. D698: the closing
+    # hour of a bare 10 is 22:00, not 10:00 (a closing time of 10:00 is met by every shop).
     r = parse_time("營業到10點後", now=NOW)
     assert r.type == "relative"
     assert r.starts_at is None and r.ends_at is None
-    assert r.quality == "open_late_after:1000"
+    assert r.quality == "open_late_after:2200"
 
 
 def test_to_intent_dict_emits_zulu_timestamps_and_nulls():

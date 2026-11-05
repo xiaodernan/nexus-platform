@@ -32880,3 +32880,71 @@ queue item stays visibly open until its owner lands the file.
 - readers: `search/sql.py:693-698` (this unit's term), `:405` (the merchant lane's, which it mirrors),
   `:681-684` (the fraction's two arms), this unit's gate, and `tmp/d696_raise.txt`,
   `tmp/d696_measure.py`, `tmp/d696_falsify.txt` (the measurements).
+## 676. D697 · a shop open until ten is open until ten AT NIGHT (`apps/ai/nexus_ai/nlu/timeparse.py`)
+
+**The sentence named a closing hour and the parser read a morning one.** D662 taught the lane the
+words that turn a clock into a CLOSING time (開到 / 營業到 / 開至 / until), and left the clock itself to
+the twelve-hour default - so 「開到十點」 asked the database for shops whose closing hour is at or after
+10:00, which every shop meets, and the sentence filtered nothing. Measured on the published plane
+(`tmp/d698_until.py`, `tmp/d698_pairs.py`, 470 published merchants, 2026-11-05):
+
+    request              plan carried   pool before    pool after    the same request, marked
+    開到九點             late=09:00     470 (all)      285           開到晚上九點 -> 285
+    開到十點             late=10:00     470 (all)      266           開到晚上十點 -> 266
+    開到十一點           late=11:00     470 (all)      221           開到晚上十一點 -> 221
+    開到十二點           late=12:00     470 (all)      103           開到晚上十二點 -> 103
+    營業到十點           late=10:00     470 (all)      266           營業到晚上十點 -> 266
+    開到朝早十點         late=10:00     470            470           (the morning word keeps the morning)
+
+After the fix each bare spelling answers the SAME page, row for row, as its marked spelling
+(`same_page=True` in `tmp/d698_pairs.py`) - one request, one answer.
+
+**The root cause is a table that mixed two questions.** `OPEN_LATE_CUES` held both the words that name
+WHEN THE SHOP CLOSES (`開到`, `營業到`, `open until`, "till") and the words that name a MOMENT the shop is
+open at (`還營業`, `營業中`, `open at`). Only the first kind makes the clock an evening clock: 「開到十點」
+is 22:00, while "open at 10" is ten in the morning unless the sentence says pm. The table is now two -
+`OPEN_UNTIL_CUES` (`timeparse.py:81`) and `OPEN_NOW_CUES` (`:91`) - and `OPEN_LATE_CUES` is their union
+(`:95`), which is what D662's gate reads. `parse_time` asks the UNTIL question separately (`:443`) and a
+closing clock with no part of day is read by `_closing_clock` (`:334`) on the evening band - the same
+reading `_part_meridiem` gives a night clock, so the two spellings cannot drift apart again. A part of
+day still wins: 「開到朝早十點」 and 「開到下午三點」 are unchanged.
+
+**Twelve is the end of the day, not noon.** 「開到十二點」 carried 12:00, and the filter's rule is
+"closes at or after H" - a closing hour of noon is met by every shop. No `time` value can name midnight
+(00:00 is the first minute, met by every shop), but 23:59 is exactly the shops still open on the last
+minute of the day, so a UNTIL clock of 0:00 or 12:00 with no minute is 23:59 (`:334-352`): 470 -> 103.
+「開到十二點半」 (00:30 the next morning) is filed, not guessed.
+
+**The gate** is `tests/test_a_shop_open_until_ten_is_open_until_ten_pm.py`, 42 legs: the two cue tables
+are the two questions and their union is the old table; every until spelling reads 九/十/十一 as
+21:00/22:00/23:00; the four twelve-o'clock spellings are 23:59; a part of day still wins; the plain
+fixture lane DROPS the shop that shuts at 10:30 am for 「開到十點」 and keeps it for 「開到朝早十點」; and
+the live legs pin bare == marked page identity for five pairs, each strictly smaller than the plane.
+Falsified against HEAD's bytes plus a two-line shim aliasing the new names to the old table: **31 red,
+11 green** (the green are the legs whose claim HEAD already met - the union, the explicit pm, the part of
+day, and 開到零點's literal 00:00 quality).
+
+**Re-aimed, not deleted.** Four gates pinned the twelve-hour default and each now carries the reason in
+place: `test_the_word_that_says_until_is_not_a_clock.py` (開到九點半 0930 -> 2130; D662's own residue),
+`test_timeparse.py` (營業到10點後 1000 -> 2200), `test_time_before_cue.py` (七點之後 0700 -> 1900, in both
+the parser and the plan leg), `test_the_half_hour_in_the_request_is_not_rounded_to_the_hour.py`
+(九點半之後仲開 0930 -> 2130 - that gate's subject is the rounding, which is untouched).
+
+**Adjacent**, run and green, never full: every time/night band, cue-position, spelling, lunch/menu,
+open-time-binding, small-hours, day-level, clock-range and half-hour gate plus this one - **688 passed**.
+
+**Not claimed.** (a) 「開到十二點半」 still reads 12:30 (it wants 00:30, and a closing hour past midnight
+needs the `crosses_midnight` reading or a next-day clock - a schema question, not a table row). (b)
+"open until midnight" still takes the night BAND branch (18:00-23:00 window) because the word 午夜 is not
+a clock. (c) "open until 10" with no am/pm names no time at all - English bare hours are not in
+`CLOCK_RE`, so the cue has nothing to read. (d) 「開到兩點」 stays 02:00 (late-night or afternoon, the
+sentence does not say), which is the small-hours lane's filed ambiguity. (e) 深夜 / 宵夜 still sit in the
+18:00-23:00 band (the D667 residue) - this unit changed the CLOSING clock, not the band table.
+
+**No PLAN bullet is written for this unit either** (§675's note (d) still stands): `docs/PLAN.md` carries
+another lane's uncommitted edits in the working tree. The bullet's text is saved at
+`tmp/d697_plan_bullet.txt` and lands when that lane commits the file.
+
+- readers: `nlu/timeparse.py:81` (UNTIL), `:91` (NOW), `:95` (the union D662 reads), `:334` (the closing
+  clock), `:443` (the split question), `:473` and `:504` (both arms), this unit's gate, the four re-aimed
+  gates, and `tmp/d698_until.py`, `tmp/d698_pairs.py`, `tmp/d698_edge.py`, `tmp/d698_headalias.py`.

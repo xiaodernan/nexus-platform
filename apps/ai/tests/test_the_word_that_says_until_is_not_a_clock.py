@@ -42,9 +42,13 @@ def test_the_table_names_every_spelling_of_until(spelling):
 
 @pytest.mark.parametrize("spelling", UNTIL_CJK)
 def test_a_cantonese_until_is_a_closing_time_and_not_a_window(spelling):
+    # D698 re-aimed this leg: 九點半 is a CLOSING hour, so it is 21:30 (the evening reading of a
+    # bare closing clock) - the 09:30 this leg used to pin was the twelve-hour default that made
+    # the filter keep the whole plane. The morning spelling keeps its own reading: see
+    # `test_a_shop_open_until_ten_is_open_until_ten_pm.py`.
     parsed = parse_time(spelling + "九點半", now=NOW)
     assert parsed is not None, spelling
-    assert parsed.quality == "open_late_after:0930", (spelling, parsed.quality)
+    assert parsed.quality == "open_late_after:2130", (spelling, parsed.quality)
     assert parsed.starts_at is None and parsed.ends_at is None, (spelling, parsed)
 
 

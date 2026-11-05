@@ -71,14 +71,28 @@ NEXT_WEEK_TOKENS = ("下週", "下周", "來週", "来週", "next week", "下星
 LATE_CUES = ("之後", "以後", "以後", "過後", "过后", "以後", "后", "後", "after", "past",
              "最少", "至少", "起跳", "或以上", "以上")
 EARLY_CUES = ("之前", "以前提前", "before", "up to", "以內", "以内", "內", "前")
-OPEN_LATE_CUES = ("還营业", "還營業", "还营业", "仍開", "仍开", "開住", "开住", "營業中",
-                  "still open", "open at", "open until", "营业到", "營業到", "夜晚都",
-                  # D662: 「開到九點半」 is the ordinary Cantonese spelling of "open until", and the
-                  # table knew 營業到 but not it - so the sentence was read as a WINDOW STARTING at
-                  # 21:30 (and 「開到九點半」 at 09:30). 開至 / 營業至 / 开到 / 开至 are the written and
-                  # simplified spellings, and "till" / "til" / "thru" the English ones.
-                  "開到", "开到", "開至", "开至", "營業至", "营业至",
-                  "open till", "open til", "open thru")
+#: D698: the words that name WHEN A SHOP CLOSES. These turn the clock beside them into a
+#: CLOSING hour, and a closing hour with no part of day is an evening hour: 「開到十點」 is
+#: 22:00, not 10:00 (the morning has its own words - 「開到朝早十點」). Measured before the
+#: split (`tmp/d698_until.py`, published plane): 開到九點 / 十點 / 十一點 each answered the
+#: WHOLE plane, 470 of 470 merchants, because a closing hour of 09:00-11:00 is met by every
+#: shop, while 開到晚上九點 / 十點 / 十一點 answered 285 / 266 / 221 - one request, two answers,
+#: and the bare one asked for nothing at all.
+OPEN_UNTIL_CUES = ("营业到", "營業到", "夜晚都",
+                   # D662: 「開到九點半」 is the ordinary Cantonese spelling of "open until", and the
+                   # table knew 營業到 but not it - so the sentence was read as a WINDOW STARTING at
+                   # 21:30 (and 「開到九點半」 at 09:30). 開至 / 營業至 / 开到 / 开至 are the written and
+                   # simplified spellings, and "till" / "til" / "thru" the English ones.
+                   "開到", "开到", "開至", "开至", "營業至", "营业至",
+                   "open until", "open till", "open til", "open thru")
+#: D698: the words that name a MOMENT the shop is open at, not its closing hour. The clock
+#: beside these keeps its own meridiem: "open at 10" is ten in the morning unless the sentence
+#: says pm, so these must not take the evening reading below.
+OPEN_NOW_CUES = ("還营业", "還營業", "还营业", "仍開", "仍开", "開住", "开住", "營業中",
+                 "still open", "open at")
+#: The union - the question "is this sentence about the shop being open?". D662's gate reads
+#: this table, and the spellings it pins are all rows of the two tables above.
+OPEN_LATE_CUES = OPEN_UNTIL_CUES + OPEN_NOW_CUES
 
 #: How many characters around the clock a direction word may sit in. The window is
 #: derived from the cue tables themselves - the longest cue, plus the space that
@@ -125,6 +139,7 @@ _CANONICALISED_TABLES = (
     "TODAY_TOKENS", "TONIGHT_TOKENS", "TOMORROW_TOKENS", "AFTER_TOMORROW_TOKENS",
     "NEXT_WEEK_TOKENS", "WEEKEND_TOKENS", "WEEKDAY_TOKENS", "WEEKDAY_SUFFIX",
     "PART_OF_DAY", "EARLY_CUES", "LATE_CUES", "OPEN_LATE_CUES",
+    "OPEN_UNTIL_CUES", "OPEN_NOW_CUES",
 )
 
 
@@ -316,6 +331,25 @@ def _part_meridiem(hour: int, part: str | None) -> int:
     return hour
 
 
+def _closing_clock(hour: int, minute: int, part: str | None = None) -> tuple[int, int]:
+    """D698: the clock a CLOSING hour names when the sentence named no part of day.
+
+    A shop "open until ten" is open until ten at night; the morning needs its own word. The
+    evening band's reading is reused (`_part_meridiem(hour, "night")`: 6-11 -> pm, 0-5 as
+    themselves) so the two spellings of one closing time cannot drift apart again.
+
+    「開到十二點」 is midnight, and the filter is "closes at or after H": no `time` value can
+    name midnight (00:00 is the first minute, met by every shop), but 23:59 is exactly the
+    shops still open on the last minute of the day. The half hour of twelve (開到十二點半,
+    which is 00:30 the next morning) is filed, not guessed.
+    """
+    if part in (None, "evening", "night") and minute == 0 and hour in (0, 12):
+        return 23, 59
+    if part is None:
+        return _part_meridiem(hour, "night"), minute
+    return hour, minute
+
+
 def _guess_meridiem(hour: int, meridiem: str | None, part: str | None) -> int:
     if meridiem == "am":
         return 0 if hour == 12 else hour
@@ -403,8 +437,12 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
     is_tomorrow = any(cue_in(tok, text, low) for tok in TOMORROW_TOKENS)
     is_today = any(cue_in(tok, text, low) for tok in TODAY_TOKENS)
     is_after_tomorrow = any(cue_in(tok, text, low) for tok in AFTER_TOMORROW_TOKENS)
-    open_late = any(cue_in(tok, text, low) for tok in OPEN_LATE_CUES) or bool(
+    # D698: a direction word ("until", "after") names the hour the shop CLOSES, and a closing
+    # hour with no part of day is read on the evening band - the same reading `_part_meridiem`
+    # gives a night clock. "still open"/"open at" name a MOMENT and keep the clock's own half.
+    until = any(cue_in(tok, text, low) for tok in OPEN_UNTIL_CUES) or bool(
         clock and _late_suffix(text, clock))
+    open_late = until or any(cue_in(tok, text, low) for tok in OPEN_NOW_CUES)
 
     day: date | None = None
     if weekday is not None:
@@ -432,6 +470,8 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
         clock = None
     if clock:
         hh, mm, part_label = _clock_to_hm(clock, part_hint)
+        if until:
+            hh, mm = _closing_clock(hh, mm, part_label)
         anchor = day or (today if (is_today or is_tonight or part) else None)
         if anchor is None:
             anchor = today
@@ -461,6 +501,8 @@ def parse_time(text: str, now: datetime | None = None) -> ParsedTime | None:
     late_hours = _bare_hour(text) if open_late else None
     if late_hours is not None:
         hh, mm = late_hours
+        if until:
+            hh, mm = _closing_clock(hh, mm)
         return ParsedTime("relative", None, None, _raw(raw_text),
                           quality=f"open_late_after:{hh:02d}{mm:02d}", confidence=0.8)
 

@@ -62,9 +62,11 @@ def test_the_up_to_cue_is_read_too():
 
 
 def test_the_after_cue_still_means_what_it_meant():
+    # D698: "after seven" is a CLOSING hour, and a bare closing clock is read on the evening
+    # band - seven at night, 19:00. The cue still means what it meant; the clock does now too.
     parsed = _parse(SEVEN + HOUR + AFTER)
     assert parsed is not None
-    assert parsed.quality == "open_late_after:0700", parsed.quality
+    assert parsed.quality == "open_late_after:1900", parsed.quality
 
 
 def test_a_plain_time_is_still_a_window():
@@ -100,9 +102,9 @@ def test_the_open_late_filter_asks_for_the_clock_and_not_the_hhmms():
 
     intent = validate_intent(extract_intent_dict(SEVEN + HOUR + AFTER, {"locale": "zh-HK"}))
     plan = plan_from_intent(intent)
-    assert plan.open_late_after == time(7, 0), (
+    assert plan.open_late_after == time(19, 0), (
         f"the plan carries {plan.open_late_after!r} - the filter's SQL wants the clock")
-    assert plan.filters.get("min_closing_hour") == time(7, 0), plan.filters
+    assert plan.filters.get("min_closing_hour") == time(19, 0), plan.filters
 
 
 def test_the_search_filter_is_the_mirror_of_the_open_late_one():

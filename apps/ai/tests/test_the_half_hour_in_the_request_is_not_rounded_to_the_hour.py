@@ -46,7 +46,10 @@ def _plan(text):
 
 @pytest.mark.parametrize("text,field,key,expected", [
     ("營業到晚上九點半", "open_late_after", "min_closing_hour", time(21, 30)),
-    ("九點半之後仲開", "open_late_after", "min_closing_hour", time(9, 30)),
+    # D698: a bare closing clock is an evening clock, so 九點半 is 21:30 - this leg used to pin
+    # 09:30 (the rounding fix's old twelve-hour default) and the sentence no longer asks for the
+    # morning. The rounding itself is what this gate is about and is unchanged.
+    ("九點半之後仲開", "open_late_after", "min_closing_hour", time(21, 30)),
     ("open until 6:30pm", "open_late_after", "min_closing_hour", time(18, 30)),
     ("七點半前", "open_early_before", "max_opening_hour", time(7, 30)),
 ])
