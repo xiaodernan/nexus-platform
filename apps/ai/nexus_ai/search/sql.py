@@ -689,14 +689,13 @@ def build_offering_query(
         f" COALESCE(similarity(coalesce(o.name_zh,''), {text_ph}), 0),"
         f" COALESCE(word_similarity({text_ph}, coalesce(o.name,'') || ' ' ||"
         f" coalesce(o.name_zh,'') || ' ' || coalesce(o.description,'') || ' ' ||"
-        f" coalesce(o.description_zh,'')), 0))"
-        # D692: give the CJK strpos containment leg proper weight so Chinese
-        # queries matching offering names/descriptions are ranked above non-matches.
-        # Without this, the contains_frac boost was too small to move offerings
-        # ahead of the rating-ordered default page, so Chinese queries appeared
-        # to reach no offering despite matching rows existing.
-        + ("" if not ck or not contains_frac or not contains_count_str
-           else f" + 1.0::float8")
+        f" coalesce(o.description_zh,'')), 0)) + "
+        # D583/D696: the same containment FRACTION the merchant lane adds (`+ contains_frac`,
+        # `:400`), so one Chinese word answers both lanes by the same score. D692/D693 wrote
+        # this leg as a flat `+ 1.0` behind two names that do not exist in this function
+        # (`ck`, `contains_count_str`), which raised NameError on EVERY offering request -
+        # measured in §675.
+        + contains_frac
     )
     has_text = bool((text or "").strip())
     match = (f"(o.search_tsv @@ {tsq} OR o.search_tsv @@ {wsq} OR o.name % {text_ph}"

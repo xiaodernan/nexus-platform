@@ -32822,3 +32822,61 @@ restored 669-673 mean):
 - readers: this file (`git show 271262e:docs/STATUS.md` is the restored text), `git show 67db1b8 --stat`
   (the truncation), `git show 377ef3a --stat` (the only post-truncation unit with a gate), and
   `tmp/d697_stubmap.py` (the unit-to-commit census quoted above).
+
+## 675. D696 · every offering request raised before it reached the database (`apps/ai/nexus_ai/search/sql.py`)
+
+**The offering lane's text score named two variables that exist nowhere.** D692 and D693 put a CJK
+containment boost into `build_offering_query`'s `kw_score` behind `ck` and `contains_count_str`; the
+function's names are `cjk` and `contains_count`, so the expression raised before any SQL was built -
+for EVERY offering request, with or without Chinese in the sentence:
+
+    $ python -c "from nexus_ai.search import sql as S; S.build_offering_query(tenant_id='t', text='quiet', filters={})"
+    NameError: name 'ck' is not defined
+    (identical for 咖啡, 拉麵, 甜品, and through S.search with subject_types=('offering',),
+     tmp/d696_raise.txt)
+
+The fixture lane never builds SQL, so nothing in the suite saw it: the offline answers stayed green
+while the live offering plane answered nothing at all. That is the shape D488/D449 keeps finding - one
+plane has two readers, one of them untested - except that here the second reader never ran.
+
+**The repair is not the boost those two units argued for.** Their premise was that `contains_frac` was
+"too small to move offerings ahead of the rating-ordered default page". Measured through the repaired
+lane (`tmp/d696_measure.py`, 2026-11-05), the fraction - the merchant lane's own term since D407 - puts
+every mentioning row on the first page:
+
+    word   mentioning offerings on page one (of 10)   scores
+    咖啡   10                                         0.6790 .. 0.6634
+    拉麵   10                                         0.7065 .. 0.6881
+    甜品   10                                         0.7223 .. 0.6752
+    quiet   0                                         (nothing states it; the request still answers its
+                                                       filtered pool, D658)
+
+So the leg is `+ contains_frac` (`sql.py:693-698`), the same expression the merchant lane adds at
+`:405`, and the flat `+ 1.0` left with the two dead names it arrived with. One fraction, two lanes.
+
+**The gate** is `tests/test_an_offering_request_reaches_the_database_at_all.py`, 10 legs: the builder
+answers six request shapes without raising (the regression itself), the score ADDS the containment
+fraction rather than comparing it, both lanes carry the same fraction, and live legs pin 10 of 10
+mentioning rows on page one for 咖啡/拉麵/甜品 with the top row a mentioning row, and 10 rows with none
+mentioning for a word no offering states. Falsified against HEAD: **8 red, 2 errors** (the live fixture
+errors because nothing can be built) - `tmp/d696_falsify.txt`.
+
+**Adjacent**, run and green, never full: this gate, `test_the_offering_lane_reads_a_chinese_word_the_
+merchant_lane_already_does`, the party-size and bucket and both length gates, `test_search_pipeline`,
+`test_search_plan`, `test_the_fixture_lane_reads_every_row_filter`, `test_a_price_floor_is_read_by_both_
+lanes` - **163 passed**.
+
+**Not claimed.** (a) The two lanes still ORDER an offering page differently (D658's open item): the
+fraction equalises the boost, not the weight vector around it. (b) A Chinese query still answers the
+whole filtered offering plane (4,707 rows here) ranked by score rather than a text-filtered subset - the
+D658 rule, unchanged. (c) The CJK-to-English-tag leg a later lane began in the working tree (mapping
+拉麵 to `ramen`/`japanese` tags) is NOT here: it was half-applied and unbuildable (§674), and it needs
+its own census of how many offerings are only reachable by tag before it can be argued.
+
+(d) No PLAN bullet is written for this unit: `docs/PLAN.md` carries another lane's uncommitted edits in
+the working tree, and committing them inside this unit would put that lane's work in this commit. The
+queue item stays visibly open until its owner lands the file.
+
+- readers: `search/sql.py:693-698` (this unit's term), `:405` (the merchant lane's, which it mirrors),
+  `:681-684` (the fraction's two arms), this unit's gate, and `tmp/d696_raise.txt`,
+  `tmp/d696_measure.py`, `tmp/d696_falsify.txt` (the measurements).
