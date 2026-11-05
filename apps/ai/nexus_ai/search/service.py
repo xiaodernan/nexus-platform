@@ -163,6 +163,29 @@ class PostgresBackend:
             return []
 
 
+def _tenant_mean_rating(rows: Sequence[dict[str, Any]]) -> float:
+    """The mean the Bayesian quality shrinks toward, read off the row set the lane holds (D708).
+
+    The live SELECT computes it as `avg(rating_agg)` over the tenant's published merchants with a
+    positive rating (`sql.py:524-528`), and the shared reader defaults to 3.5 only when a ROW states
+    nothing (`candidates_from_rows`, `service.py:1257`). The fixture backend never stated it, so every
+    fixture row was shrunk toward a constant while the live plane shrank toward the tenant's own mean:
+    one row, one rating, two quality scores - measured 0.7939 against 0.8542 (`tmp/d708_order.py`) -
+    and the page orders disagreed on 8 of 8 queries. The rows a fixture backend is handed ARE the
+    tenant's merchant set, so the mean is derivable here in exactly the shape the live lane derives
+    it. A row that states its own value keeps it.
+    """
+    values: list[float] = []
+    for row in rows:
+        try:
+            value = float(row.get("rating_agg") or 0.0)
+        except (TypeError, ValueError):
+            continue
+        if value > 0:
+            values.append(value)
+    return sum(values) / len(values) if values else 3.5
+
+
 class StaticBackend:
     """Fixture-driven backend: keeps ranking/card/eval logic testable without a database."""
 
@@ -182,6 +205,9 @@ class StaticBackend:
     async def merchant_candidates(self, *, text=None, filters=None, **_kw: Any
                                   ) -> list[dict[str, Any]]:
         rows = [dict(r) for r in self.merchants]
+        mean = _tenant_mean_rating(rows)
+        for row in rows:
+            row.setdefault("tenant_mean_rating", mean)
         # D549: the merchant lane's avoid clause reads the merchant's OWN offerings too
         # (`EXISTS (SELECT 1 FROM offerings ao WHERE ao.merchant_id = m.id ...)`), so the
         # fixture lane is handed the same list the live lane would join against.
@@ -195,6 +221,11 @@ class StaticBackend:
                                   party_size: int | None = None, **_kw: Any
                                   ) -> list[dict[str, Any]]:
         rows = [dict(r) for r in self.offerings]
+        # D708: the offering SELECT reads the same tenant mean as the merchant one (`sql.py:817`),
+        # so the fixture lane's offering rows get it from the merchant set it was handed.
+        mean = _tenant_mean_rating(self.merchants)
+        for row in rows:
+            row.setdefault("tenant_mean_rating", mean)
         return _filter_static(rows, text or "", filters or {}, party_size=party_size,
                               hours=self._hours, geo=_kw.get("geo"),
                               radius_m=_kw.get("radius_m"))

@@ -33603,3 +33603,60 @@ two tables, and the discovery signal is the one that disagrees.
 - readers: `nlu/lexicon.py:209` (`EVALUATION_CUES`), `nlu/understand.py:901` (`_EVALUATION_ONLY`),
   `:998` (the whole-remainder strip), this unit's gate, and `tmp/d707_census.py`, `tmp/d707_page.py`,
   `tmp/d707_harm.py`, `tmp/d707_census2.py`, `tmp/d707_probe.py`.
+
+## 687. D708 · the mean a quality was shrunk toward was the row set's on one lane and a constant on the other (`search/service.py`)
+
+**Most of a shop's quality score is its tenant's mean, and only one lane knew it.** `bayesian_quality`
+shrinks a rating toward the tenant mean by n/(n+K) with K=15 - so at six reviews the mean carries fifteen
+of twenty-one shares. The live SELECT computes it as `avg(rating_agg)` over the tenant's published
+merchants (`sql.py:527`, and the offering SELECT at `:817`); the fixture backend never stated it, so
+`candidates_from_rows` fell back to its own 3.5 (`service.py:1288`) on every row. One row, one rating, two
+qualities (measured `tmp/d708_order.py`, 11:00 HKT Thursday):
+
+    row        rating  reviews  quality, fixture   quality, live
+    9c7d5b7e   4.53    6        0.7939             0.8542
+
+The tenant mean is 3.8278 over the 470 published rows, and the disagreement was not decoration: the two
+lanes answered one ten-row page in a different ORDER on 8 of 8 censused queries (`tmp/d658_gap.py`).
+
+**The decision, since two orders cannot both be the product's: the page is the RANKER's order over the
+pool the filters keep.** A backend that was handed a merchant set was handed the mean as well, and must
+state it. `_tenant_mean_rating` (`service.py:166`) reads `avg(rating_agg)` over the rows with a positive
+rating - the shape the live subquery uses (`sql.py:524-528`) - and the static backend states it on the
+merchant rows (`service.py:208`) and on the offering rows (`:226`) unless a row already states its own.
+The 3.5 in `candidates_from_rows` stays what it is: the answer for a ROW that says nothing, which is a
+different question from the answer for a SET.
+
+    query      same order, before   after
+    拉麵       no                   yes
+    安靜       no                   yes
+    寵物友善   no                   yes
+    咖啡       no                   yes
+    火鍋       no                   yes
+    素食 / 海景 / xyzzy   no        no - filed below, each for its own reason
+
+**The gate** is `tests/test_the_mean_a_quality_is_shrunk_toward_is_the_row_sets_own.py`, 12 legs: the
+reader answers the set's own mean, ignores a row with no rating, and keeps 3.5 for an empty set; a row
+handed to the backend is scored with the set's mean while a row that states its own keeps it; a four-row
+fixture is pinned to flip its leader from B to A when the mean moves from the constant to the set's own
+(both orders asserted, so the leg cannot pass by accident); and the five queries above are pinned to
+answer ONE sequence on both planes, plus the live mean (3.8278) the five depend on. Falsified against
+HEAD's `service.py`: **10 red, 2 green**.
+
+**Adjacent**, run and green, never full: the ranking components and weights, the candidate reader, the
+sponsored and preference rankings, the stream and the two lanes' preference gates - **292 passed, 101
+red that are red at HEAD too** (verified: the same 24 files answer the same 101 red with this unit's
+`service.py` reverted; those reds are the preference lane's, not this one's).
+
+**Filed.** (a) 素食 and 海景: the live keyword score is ts_rank plus trigram similarity, which credits a
+SHARED CHARACTER - 海薈, a hot-pot house, answers 「海景」 at kw 0.3333 and leads the live page, while the
+fixture lane counts exact substring hits and does not answer it at all (`tmp/d708_gap2.py`). Which lane is
+right is not in doubt - D705 already ruled that a shared character is not meaning - and the keyword arm
+is the next unit. (b) xyzzy: with no text at all the live CUT keeps the 60 rows with the highest rating
+(`sql.py:537`) while the page is the ranker's top ten of all 470, and rating is one of the eight features
+the ranker weights - so the two pages are each a top ten of a DIFFERENT set (`tmp/d708_gap2.py`). The cut
+is the unit after that: a cut may only be ordered by a term of the score it stands in for.
+
+- readers: `search/service.py:166` (`_tenant_mean_rating`), `:208` and `:226` (the two row kinds it is
+  stated on), `:1288` (the per-row fallback that stays), `search/sql.py:527` and `:817` (the live means),
+  this unit's gate, and `tmp/d708_order.py`, `tmp/d708_mean.py`, `tmp/d708_gap2.py`.
