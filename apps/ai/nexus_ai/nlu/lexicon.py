@@ -196,6 +196,18 @@ EAT_CUES = ("想食嘢", "食嘢", "想吃東西", "想吃东西", "想食", "�
             "肚餓", "肚饿", "肚子餓", "肚子饿", "饿了", "餓了",
             "搵食", "觅食", "覓食", "something to eat", "hungry", "grab a bite")
 
+#: D707: the words that EVALUATE what the sentence asks for and name nothing themselves.
+#: 好 is the one every Cantonese speaker writes - 「附近有咩好推介」, 「有咩好餐廳」 - and the corpus
+#: holds no instance of it: 0 of the 470 published merchants and 0 of the 5,538 offerings write
+#: 好 in a name, a description or a tag (`tmp/d707_census.py`), so as a search term it can only
+#: ever be a false match - a row whose NAME happened to write 好 (好味小館) would be credited
+#: with a word the user wrote as an opinion.
+#: It cannot be stripped the way a frame word is: 好味, 好食, 好正 and 好喝 are CONTENT and
+#: 好嘈 is a preference the polarity lane reads, so there is no substring rule here. `match_core`
+#: blanks a cue only when it is the WHOLE remainder - the state a head noun leaves it in when its
+#: own filter has already answered it (D635: the category surface leaves with its filter).
+EVALUATION_CUES = ("好",)
+
 #: D570: a surface that names the OPPOSITE of a preference's value. The rule keeps it, because a
 #: QUESTION about it still reads the preference +1 (有無嘈 asks whether it is noisy, D533), but a
 #: REFUSAL of it must not flip the preference to -1: "唔好嘈" (don't be noisy) WANTS quiet, and the

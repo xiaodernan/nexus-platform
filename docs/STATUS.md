@@ -33546,3 +33546,60 @@ place); nothing here claims it should.
 - readers: `nlu/lexicon.py:192` (`EAT_CUES`), `nlu/understand.py:462` (the discovery signal), `:512`
   (the food bucket), `:891` (`_EAT_FRAME`), this unit's gate, and `tmp/d706_probe.py`,
   `tmp/d706_census.py`, `tmp/d706_neg.py`.
+
+## 686. D707 · the word that says "good" was searched as if it named something (`nlu/lexicon.py`, `nlu/understand.py`)
+
+**The request was answered by a character that names an opinion.** `_QUESTION_FRAME` strips the frame a
+user wraps a request in - 有咩, 邊間, 推介, 附近 (D650, D657) - and deliberately left 好 out of it, on the
+ground that 好 is "a preference the ranker reads". So when the head noun left with its own filter (D635),
+好 was the only thing left and it became the search term. Measured (`tmp/d707_census.py`,
+`tmp/d707_page.py`, 11:00 HKT Thursday):
+
+    request              match text   what the term did
+    附近有咩好推介       「好」       nothing - 0 of 470 rows write it
+    有咩好推介           「好」       nothing (intent unknown, no constraint named)
+    附近有咩好餐廳       「好」       nothing
+    附近有咩好咖啡店     「好」       nothing
+    好味的餐廳           「好味」     content, and it stays
+
+**The corpus says the word is nowhere: 0 of the 470 published merchants and 0 of the 5,538 offerings
+carry 好 in a name, a description or a tag.** Today the residue therefore moves no page on either lane.
+What it does is worse than move a page: it lets a character that means "good" CLAIM a match on a row that
+happens to write it. Measured on the fixture lane with two identical rows whose names differ in that
+character alone (`tmp/d707_harm.py`):
+
+    row        score with 「好」 as the term   score with no term
+    好味小館   0.5268                          equal
+    山水小館   0.3058                          equal
+
+A 0.22 gap for a request that said nothing about either restaurant - D705's rule one lane over: a score
+that is not meaning may not claim a match.
+
+**The rule is the whole remainder, not a substring.** 好味, 好食, 好正, 好喝 and 好嘈 all OPEN with 好, and
+好嘈 is the surface the polarity lane reads (`ANTONYM_TERMS`, D570/D582). So `EVALUATION_CUES` is read by
+`match_core` only when the cue is the WHOLE of what is left (`understand.py:998`) - the state the head
+noun leaves it in once its own filter has answered it. The table (`lexicon.py:209`) carries one word and
+says why: a phrase no row can meet can be a cue, but a character the content words above open with
+cannot be blanked by a table that treats its spellings as substrings.
+
+**The gate** is `tests/test_an_opinion_is_not_a_search_term.py`, 20 legs: the table carries 好 and nothing
+else; seven sentences that only ask for something good leave no term; eight words and sentences that open
+with 好 keep their content; one leg pins the shape in both directions (`有咩好推介` -> "", `好味的推介` ->
+好味); the fixture lane gives a row that writes 好 no credit over an identical row that does not; and the
+live legs pin the census (0/470, 0/5,538) and that 「附近有咩好推介」 and 「附近有咩推介」 answer ONE page -
+same total, same eight ids. Falsified against HEAD's `lexicon.py` and `understand.py`: **11 red, 9 green**.
+
+**Adjacent**, run and green, never full: the D650/D657 frame gates, the D701/D702/D703/D706 gates, the
+afternoon-tea boundary, the time/party/budget match-core gates and the antonym-polarity gate - **506
+passed**.
+
+**Filed, not claimed.** (a) 好去處 survives as the term of 「附近有咩好去處」, and 去處, 地方, 推介 and 推薦
+write 0 of 470 and 0 of 5,538 too (`tmp/d707_census2.py`) - the same class of residue, but they are
+generic heads rather than evaluations, so they belong to the frame table and not to this one. (b) 推介 is
+a frame word (`understand.py:882`) but is NOT in `DISCOVER_CUES`, which carries 推薦/推荐 - so
+「有咩好推介」 reads `intent=unknown` while 「附近有咩好推介」 reads `discover_merchant` off 附近. One word,
+two tables, and the discovery signal is the one that disagrees.
+
+- readers: `nlu/lexicon.py:209` (`EVALUATION_CUES`), `nlu/understand.py:901` (`_EVALUATION_ONLY`),
+  `:998` (the whole-remainder strip), this unit's gate, and `tmp/d707_census.py`, `tmp/d707_page.py`,
+  `tmp/d707_harm.py`, `tmp/d707_census2.py`, `tmp/d707_probe.py`.

@@ -30,6 +30,7 @@ from nexus_ai.nlu.lexicon import (
     ASK_MERCHANT_CUES,
     SORT_RULES,
     EAT_CUES,
+    EVALUATION_CUES,
     SUPPER_CUES,
     URGENCY_FLEXIBLE,
     URGENCY_NOW,
@@ -892,6 +893,14 @@ _EAT_FRAME = re.compile(
     "|".join(re.escape(c) for c in sorted(EAT_CUES, key=len, reverse=True)),
     re.IGNORECASE)
 
+#: D707: the EVALUATION words as one matcher, read from the table (`lexicon.EVALUATION_CUES`).
+#: A bare 好 is not a frame word and cannot be blanked as a substring - 好味/好食/好正/好喝/好嘈
+#: all open with it - so it leaves the match text only when it is the WHOLE remainder, which is
+#: exactly the state the head noun leaves behind: 「附近有咩好推介」 -> 有咩 and 推介 leave as the frame,
+#: 好 is what is left, and no row can meet it (`tmp/d707_census.py`).
+_EVALUATION_ONLY = re.compile(
+    r"(?:%s)+" % "|".join(re.escape(c) for c in EVALUATION_CUES), re.IGNORECASE)
+
 _SHOP_SUFFIX_AFTER = re.compile(r"(?:店|舖|鋪|shop|store)(?![a-z])", re.IGNORECASE)
 
 #: D644: the PLURAL LICENCE. `CATEGORY_SYNONYMS` writes the singular (`restaurant`, `cafe`, `shop`),
@@ -983,6 +992,11 @@ def match_core(text: str, *, strip_time: bool = False,
     t = _EAT_FRAME.sub(" ", t)
     t = _QUESTION_FRAME.sub(" ", t)
     t = _MATCH_CORE_EDGES.sub("", re.sub(r"\s+", " ", t).strip())
+    # D707: an evaluation word that is the WHOLE remainder modifies a head noun a filter already
+    # answered. It names nothing, so it must not be searched - a row that writes 好 in its name
+    # would be credited with a match for a word the user wrote as an opinion.
+    if t and _EVALUATION_ONLY.fullmatch(t):
+        t = ""
     return t.strip()
 
 
