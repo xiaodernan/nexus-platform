@@ -34,7 +34,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   *completes* — a killed run leaves it behind; drop it yourself.
 - `check_ledger_citations.mjs` cannot run in HEAD mode here (`spawnSync git EBUSY`); use `--worktree`.
 
-## Running services (measured, 2026-11-04)
+## Running services (measured, 2026-11-05)
 
 | What | Where | State |
 |---|---|---|
@@ -79,3 +79,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 ### 685. D685 · continuing the AI-lane unit loop - each unit write RED gate, implement fix, gate GREEN, append to docs/STATUS.md, update docs/PLAN.md, commit only lane files, push to origin/master. The loop has now delivered D672 through D684 covering: small-hours band, kind-the-caller-named reader, lunch service meal-occasion, ambience preference consolidation, personalization weight, Chinese query candidate pool, surface inside another surface, polarity lane word refusal, and offline lane avoid filter. Remaining PLAN open items: English token lists for polarity/ambience (web lane), full offline avoid implementation, and whatever the project's evidence next justifies.
 
 ### 686. D686 · continuing AI-lane: English token lists for polarity/ambience - the matcher reads English "quiet" / "lively" from its own token list (D533 D535), and these tokens are separate from the `style/ambience` / `style/lively` vocabulary key used by the seed. Both paths now need to read the same key for uniform preference firing - residue: web lane mock still mirrors retired table, filed rather than edited here since web lane owns that surface
+
+### 687. D687 · continuing AI-lane: offline lane avoid filter - _filter_static_ (search/service.py:207) needs to also read the `avoid` constraint from the live lane pattern, mirroring D546's live-lane exclusion of allergen tags - residue: fixture-backed backend currently answers different question than live lane on avoid queries, needs synchronized reading of constraint table
+
+### 688. D688 · continuing AI-lane: polarity English token list mirroring - the polarity lane's English token list (好 / 沒 / 清 / 入 / 特) needs to match the quiet/lively token list used by the matcher, so negation spells uniformly produce the same preference result - residue: current implementation reads different token lists in different code paths, needs consolidation
