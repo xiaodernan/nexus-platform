@@ -243,6 +243,8 @@ def build_merchant_query(
     tenant_id: str,
     text: str | None,
     embedding: list[float] | None,
+    vector_semantic: bool = True,
+    cuisine_slugs: Sequence[str] | None = None,
     ts_config: str = "simple",
     filters: dict[str, Any] | None = None,
     geo: tuple[float, float] | None = None,
@@ -464,8 +466,36 @@ def build_merchant_query(
                             OR coalesce(ao.attributes->'allergens','[]'::jsonb)
                                ?| {av_ph}::text[])))"""
 
-    order_expr = (f"(GREATEST({kw_score}, COALESCE(vv.vec_score, 0)))" if embedding
-                  else kw_score)
+    # D705: a cuisine the request TYPES has to reach this cut. The scorer lifts a cuisine
+    # row to relevance 1.0, but it can only rank the rows this LIMIT returned - and with
+    # `kw_score` 0 on every row of 「泰式餐廳」 (no published merchant writes 泰式) the cut
+    # was simply the highest-rated 60 of the 184 restaurants: 3 Korean shops answered
+    # 「韓式餐廳」 and 4 Thai 「泰式餐廳」, while the plane holds 13 Korean and 13 Thai
+    # (`tmp/d705_dbg.py`). Raising the cut to the whole pool instead costs 15x the request
+    # (774 ms against 50 ms for 184 rows, `tmp/d705_cost.py`), so the cut is ORDERED by the
+    # taxonomy instead: the leaves the cuisine names go first and the rest fill behind them.
+    # This is a shallow witness - the join table's own slugs - and the scorer's
+    # `cuisine_matches` is still the decider; a row the join does not carry can be ordered
+    # late but can never be called a cuisine row it is not.
+    cut_prefix = ""
+    if cuisine_slugs:
+        leaf_ph = p.add(sorted({str(x) for x in cuisine_slugs if x}))
+        cut_prefix = (f"(EXISTS (SELECT 1 FROM merchant_categories mcx"
+                      f" JOIN categories cx ON cx.id = mcx.category_id"
+                      f" LEFT JOIN categories pcx ON pcx.id = cx.parent_id"
+                      f" WHERE mcx.merchant_id = m.id"
+                      f" AND (cx.slug = ANY({leaf_ph}::text[])"
+                      f" OR pcx.slug = ANY({leaf_ph}::text[])))) DESC, ")
+    # D705: this ORDER BY is the CANDIDATE CUT, not the page order - it decides which
+    # `max(60, limit*3)` rows ever reach the scorer, so it runs before any preference the
+    # request states is read. Ordering it by a cosine that may not testify therefore picks
+    # the candidate set by noise: measured on 「想食日本嘢」, `limit=8` fetched 60 rows
+    # ordered by 0.06-0.11 of hashing noise and not one of the plane's 54 japanese shops was
+    # among them, so no later fix could put one on the page (`tmp/d705_arms.py`). A
+    # non-semantic cosine is excluded from the cut for the same reason `_relevance`
+    # (service.py) caps it: it may refine a keyword match, never choose one.
+    order_expr = (f"(GREATEST({kw_score}, COALESCE(vv.vec_score, 0)))"
+                  if embedding and vector_semantic else kw_score)
 
     # D599: `total_estimate` was `len(ranked)`, and the candidate fetch is capped at
     # `max(60, limit * 3)`, so every answer above the cap claimed the cap as its total: the
@@ -504,7 +534,7 @@ CROSS JOIN LATERAL (
 ) tm
 WHERE {' AND '.join(where)}
   {avoid_clause}
-ORDER BY {order_expr} DESC, m.rating_agg DESC, m.id
+ORDER BY {cut_prefix}{order_expr} DESC, m.rating_agg DESC, m.id
 LIMIT {limit_ph}
 """
     return CandidateQuery(sql=sql, params=p.values, ts_config=cfg)

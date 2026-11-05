@@ -176,6 +176,7 @@ async def run_search(deps: Deps, intent: Intent | None, *, query: str = "",
     backend = deps.backend()
     vector_lane = False
     embedding: list[float] | None = None
+    adapter = None
     if plan.match_text:
         # D507: every provider feeds the pgvector lane. The guard used to read
         # `embedding_provider == "hashing"`, which asked the offline adapter for a vector and
@@ -187,16 +188,27 @@ async def run_search(deps: Deps, intent: Intent | None, *, query: str = "",
         # the other lane), and a request with a content word embeds that word rather than a
         # sentence carrying the time and the price beside it.
         try:
-            embedding = (await deps.embeddings().embed([plan.match_text]))[0]
+            adapter = deps.embeddings()
+            embedding = (await adapter.embed([plan.match_text]))[0]
         except Exception:  # the keyword lane is the floor
+            adapter = None
             embedding = None
     vector_lane = bool(embedding) and backend.name == "postgres"
+    # D705: the adapter's own verdict on its space travels with the lane. `vector_lane`
+    # says a cosine was ASKED FOR; `vector_semantic` says what it may CLAIM. The hashing
+    # adapter publishes `semantic = False` and has said so in `health()` since it was
+    # written, but the search lane never read it - so a dev-only bag-of-ngrams cosine was
+    # fused into `relevance` as if it were meaning, and it could outvote a preference the
+    # user had typed in the same query (0.34 x 0.10 of noise against 0.06 x 0.5 of
+    # preference). An adapter that does not declare the attribute is not trusted to testify.
+    vector_semantic = bool(getattr(adapter, "semantic", False))
     # `search()` matches preferences by key, so it takes them as plain dicts; the contract hands
     # out PreferenceItem models, and calling `.get` on one crashed every query that had a preference.
     intent_prefs = [p.model_dump() for p in intent.preferences] if intent else None
     cards, response, bundle, scored = await deterministic_search(
         backend=backend, plan=plan, tenant_id=deps.tenant_id(),
         embedding=embedding if vector_lane else None, vector_lane=vector_lane,
+        vector_semantic=vector_semantic,
         user_id=str(user_id) if user_id else None,
         intent_preferences=intent_prefs, locale=locale)
     degraded = deps.backend_degraded() or response.degraded

@@ -30,6 +30,7 @@ from nexus_ai.nlu.lexicon import (
     CONSTRAINT_RULES,
     canon_constraint,
     category_surfaces,
+    cuisine_leaves,
     cuisine_matches,
 )
 from nexus_ai.nlu.timeparse import HK_TZ
@@ -1194,9 +1195,23 @@ def _row_sponsored(row: dict[str, Any]) -> bool:
     return bool(attrs.get("sponsored") or attrs.get("promoted"))
 
 
-def _relevance(row: dict[str, Any], *, vector_lane: bool) -> float:
+def _relevance(row: dict[str, Any], *, vector_lane: bool,
+               semantic: bool = True) -> float:
     kw = float(row.get("kw_score") or 0.0)
     vec = float(row.get("vec_score") or 0.0) if vector_lane else 0.0
+    if not semantic:
+        # D705: `relevance` answers "does this row answer the query's words?", and it has
+        # two witnesses: the keyword lane and the vector cosine. A cosine is a witness only
+        # in a SEMANTIC space. The hashing adapter is a signed bag-of-ngrams projection -
+        # it measures shared surface tokens, which is the very thing the keyword lane
+        # already measures, better (ts_rank + trigram + containment over name, description
+        # and tags) and with a `text_matched` verdict attached. So a non-semantic cosine
+        # may not testify LOUDER than the keyword lane: it is capped by `kw`. Where `kw` is
+        # 0 the row is one the keyword lane declined to claim, and noise cannot claim it -
+        # measured on 「想食日本嘢」, where all 8 rows had kw 0.0 and 0.06-0.11 of noise
+        # ordered them, and 「想食日式」 - the same request - ordered a different 8 because
+        # the noise differed (`tmp/d705_measure.py`).
+        vec = min(vec, kw)
     fused = max(kw, vec) + 0.35 * min(kw, vec)
     return round(max(0.0, min(1.0, fused)), 4)
 
@@ -1208,6 +1223,8 @@ def candidates_from_rows(rows: Sequence[dict[str, Any]], plan: SearchPlan, *,
                          personalization: dict[str, float],
                          weights: RankingWeights,
                          vector_lane: bool,
+                         vector_semantic: bool = True,
+                         typed_cuisine: dict[str, float] | None = None,
                          preference_labels: dict[str, list[dict[str, str]]] | None = None,
                          ) -> list[Candidate]:
     out: list[Candidate] = []
@@ -1225,7 +1242,16 @@ def candidates_from_rows(rows: Sequence[dict[str, Any]], plan: SearchPlan, *,
                                   at=plan.at) if subject_type == "merchant" else None
         cand = Candidate(
             subject_type=subject_type, subject_id=subject_id, merchant_id=merchant_id,
-            relevance=_relevance(row, vector_lane=vector_lane),
+            # D705: a cuisine the user typed in THIS query answers "does this row answer
+            # what was asked?" as squarely as a keyword does - more squarely, when the
+            # corpus never spells the word (no published row writes 泰式, 韓式 or 日式, and
+            # `kw_score` on all three pages is 0.000 for every row: `tmp/d705_d652.py`).
+            # It used to land in `personalization` - 0.06, the weight of the feedback EMA,
+            # i.e. +0.03 over neutral - so the page needed a 0.05-0.15 cosine to find the
+            # cuisine rows at all, and that cosine then poisoned every page where the
+            # query's characters were common. At request weight it needs nothing else.
+            relevance=max(_relevance(row, vector_lane=vector_lane, semantic=vector_semantic),
+                          (typed_cuisine or {}).get(subject_id, 0.0)),
             rating=_num(row.get("rating_agg")),
             rating_count=int(row.get("review_count") or 0),
             tenant_mean_rating=_num(row.get("tenant_mean_rating")) or 3.5,
@@ -1378,6 +1404,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                  tenant_id: UUID | str = DEFAULT_TENANT_ID,
                  embedding: Sequence[float] | None = None,
                  vector_lane: bool = False,
+                 vector_semantic: bool = True,
                  user_id: str | None = None,
                  intent_preferences: Sequence[dict[str, Any]] | None = None,
                  locale: str = "zh-HK",
@@ -1421,10 +1448,31 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                  else plan.query_text) or None,
                   filters=plan.filters, geo=plan.geo, radius_m=plan.radius_m,
                   limit=max(60, plan.limit * 3), with_total=True)
+    # D705: the cuisines this request types, in the taxonomy's own slugs, so the candidate
+    # cut above can be ordered by them (`sql.py`). A cuisine the user typed is a LIKE the
+    # corpus cannot spell, so no keyword score can find it - the cut has to be told.
+    typed_slugs: list[str] = []
+    for pref in (intent_preferences or ()):
+        if int(pref.get("polarity", 1) or 1) <= 0:
+            continue
+        key = str(pref.get("key") or "")
+        if key == "cuisine":
+            typed_slugs.extend(cuisine_leaves(str(pref.get("value") or "")))
+        elif key == "cuisine_like":
+            try:
+                typed_slugs.extend(cuisine_leaves(str(v))
+                                   for v in (json.loads(str(pref.get("value") or "{}"))
+                                             .get("values") or []))
+            except Exception:
+                pass
+    typed_slugs = sorted({s for s in typed_slugs if s})
+
     pool_total = 0
     if "merchant" in plan.subject_types:
         merchant_rows = await backend.merchant_candidates(
-            embedding=list(embedding) if embedding else None, **common)
+            embedding=list(embedding) if embedding else None,
+            vector_semantic=vector_semantic, cuisine_slugs=typed_slugs or None,
+            **common)
         rows += merchant_rows
         pool_total += _pool_total(merchant_rows)
     if "offering" in plan.subject_types:
@@ -1481,6 +1529,10 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
 
     personalization: dict[str, float] = {}
     # D392: which preference fired for which subject, so the card can name it.
+    # D705: a cuisine the user TYPED in this query is part of what they asked for, not a
+    # memory about them - so it is remembered here and folded into `relevance` below. See
+    # `candidates_from_rows` for why it cannot stay in `personalization`.
+    typed_cuisine: dict[str, float] = {}
     preference_labels: dict[str, list[dict[str, str]]] = {}
 
     # Build merchant_attrs map once for all preference types
@@ -1983,6 +2035,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         weight = 1.0 if polarity > 0 else 0.0
                         intent_pref_scores.append(weight)
                         if weight >= 0.5:
+                            typed_cuisine[sid] = 1.0
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                            pref_value),
@@ -2018,6 +2071,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             weight = 1.0 if polarity > 0 else 0.0
                             intent_pref_scores.append(weight)
                             if weight >= 0.5:
+                                typed_cuisine[sid] = 1.0
                                 intent_matched_labels.append(
                                     {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
@@ -2115,6 +2169,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                       slots_by_merchant=slots_by_merchant,
                                       personalization=personalization, weights=w,
                                       vector_lane=vector_lane,
+                                      vector_semantic=vector_semantic,
+                                      typed_cuisine=typed_cuisine,
                                       preference_labels=preference_labels)
     ranked = organic_rank(candidates, w)
     ranked = apply_sort_preference(ranked, plan.sort_preference)

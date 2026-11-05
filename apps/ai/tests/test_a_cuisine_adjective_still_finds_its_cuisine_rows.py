@@ -9,19 +9,23 @@ then went red in the other direction:
     泰式餐廳    top-10 thai rows 8    relevance 0.127-0.158
     泰式餐廳    with the word removed, top-10 thai rows 1 (2 with the preference alone)
 
-The relevance is not noise. The keyword lane scores `word_similarity` against the corpus's own
-spelling (`apps/ai/nexus_ai/search/sql.py`, the `kw_score` GREATEST), and 泰式 is one character from
-泰國 — which 4 rows write (4 泰國, 3 韓國, 9 點心). The adjective is how the page reaches the rows; only
-the preference is left when it goes, and the preference lifts ONE row to the top and one more to
-the tenth slot, not eight.
+**D705 corrected the reading of that measurement, not the decision.** The 0.127-0.158 was not
+`word_similarity`: with the lane's own verdict honoured (`vector_semantic`), `kw_score` is **0.0000 on
+every row of all three pages** (`tmp/d705_d652.py`), and the relevance was the OFFLINE HASHING COSINE
+- a signed bag-of-ngrams projection, which shares the one character 泰 between 泰式 and 泰國. The
+durable conclusion (the adjective stays in the match text) is unchanged and is still gated here; what
+changed is WHY the page carried Thai rows. D705 gave a cuisine the user TYPES request weight -
+relevance, not the 0.06 personalization bucket the feedback EMA uses - so the page no longer needs a
+cosine to find the cuisine at all, and the same preference with the term taken out answers the same
+ten rows (`tmp/d705_prefonly.py`).
 
 So this is a REGRESSION GUARD, not a fix: the adjective stays in the match text, and these legs
 redden if a later reader removes it for the reason this unit removed it. The same measurement
 closes the PLAN item that called 「點心餐廳」 keeping 點心 a defect — it is the same recall: 9 of the
 top 10 answer at relevance 1.000.
 
-Not claimed: the preference's own weight (2 of 10 rows is thin for a typed cuisine) is filed in
-PLAN as its own item, measured here rather than chased.
+Not claimed here: whether the adjective should now be stripped. It is inert (`kw` 0 on every row it
+scores) and it is not ours to remove in a lane that is not the NLU's.
 """
 
 from __future__ import annotations
@@ -165,11 +169,14 @@ def test_a_dim_sum_restaurant_reads_nine_rows_at_full_relevance(plane):
 
 
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
-def test_the_preference_alone_does_not_fill_the_page(plane):
-    # The defect this unit did NOT chase, pinned so it cannot be mistaken for a reason to strip
-    # the word: with the same `cuisine=thai` preference and no term, two rows answer.
+def test_the_preference_alone_now_fills_the_page_too(plane):
+    # D652 read 2 of 10 here and argued the adjective was the recall. That was the preference
+    # being scored at 0.06 (the feedback EMA's weight) while a hashing cosine was scored at
+    # 0.34. D705 moved a TYPED cuisine to relevance, so the term changes nothing at all now:
+    # the same preference with the row's own text taken out answers the same ten rows.
     assert plane["pref_only"]["core"] == "", plane["pref_only"]["core"]
     alone = _count(plane["pref_only"], {"thai"})
     with_word = _count(plane["pages"]["泰式餐廳"], {"thai"})
-    assert alone <= 3, (alone, plane["pref_only"]["rel"])
-    assert with_word >= alone + 4, (with_word, alone)
+    assert alone >= 6, (alone, plane["pref_only"]["rel"])
+    assert plane["pref_only"]["ids"] == plane["pages"]["泰式餐廳"]["ids"], (
+        plane["pref_only"]["ids"], plane["pages"]["泰式餐廳"]["ids"])

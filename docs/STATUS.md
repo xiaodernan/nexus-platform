@@ -33381,3 +33381,107 @@ D650/D700 filed, and the corpus cannot answer it for a phrase nobody writes.
 
 - readers: `nlu/lexicon.py:112` (the japanese row), `:128` (the vietnamese row), this unit's gate, and
   `tmp/d704_census.py`, `tmp/d704_words.py`, `tmp/d704_ctl2.py`, `tmp/d704_vec.py`.
+
+## 684. D705 · the score that found the cuisine was never the one that knew it (`search/service.py`, `search/sql.py`, `models/embeddings.py`, `api/pipeline.py`)
+
+**`relevance` had two witnesses and treated them as one kind of evidence.** It was
+`max(kw, vec) + 0.35*min(kw, vec)`, and the offline embedder is `HashingEmbedding` - a signed
+bag-of-ngrams projection, whose own docstring says it measures "shared surface tokens, not meaning"
+and whose `health()` has reported `semantic: False` since it was written. Nothing in the search lane
+read that verdict. Measured on the published plane (470 merchants, 11:00 HKT Thursday,
+`tmp/d705_measure.py`), with the lane on:
+
+    request           rows with kw 0   vec on those rows   page
+    想食日本嘢        8 of 8            0.060 - 0.100       Italian / Steakhouse, 0 japanese
+    想食日式        8 of 8            0.073 - 0.108       Ramen 1st, four Sushi in eight
+    附近有咉好推介   8 of 8            0.061 - 0.064       a different eight from the same noise
+
+`想食日本嘢` and `想食日式` are ONE request in two spellings: same plan, same pool of 184
+restaurants, same cuisine preference. They answered unrelated pages, because the two spellings hash to
+different noise. The cosine was worth 0.34 x 0.10 of the score; a preference the user typed in the
+same query is worth 0.06 x 0.5. Noise outranked the user's own words.
+
+**Three things were wrong, and they are one causal chain.** (1) A cosine that cannot say what its
+number MEANS may not testify louder than the lane that can: `_relevance` now caps it by `kw`
+(`service.py:1214`), so a non-semantic cosine refines a keyword match and can never create one.
+(2) The CANDIDATE CUT is an ORDER BY that runs before any preference is scored, so it was choosing
+which `max(60, limit*3)` rows ever reach the scorer by the same noise: `limit=8` on `想食日本嘢` fetched
+60 restaurants ordered by 0.06-0.11 and not one of the plane's 54 japanese shops was among them, so no
+later fix could put one on the page. The cut now excludes a non-semantic cosine (`sql.py:497`) and
+is ordered by the cuisine the request TYPES (`sql.py:480`), because the scorer can only rank what the
+cut returned. (3) A cuisine the user typed was landing in `personalization` - the feedback EMA's
+0.06 bucket, i.e. +0.03 over neutral - so the page needed a 0.05-0.15 cosine to find the cuisine at
+all. A typed cuisine is now relevance (`service.py:1253`), which is what the question means.
+
+**The cut could not simply be lifted.** Fetching the whole 184-row pool instead of 60 costs 15x the
+request (774 ms against 50 ms, `tmp/d705_cost.py`), so the cuisine rows are ordered first INSIDE the
+cap. That leg is a shallow witness - the join table's own slugs - and the scorer's `cuisine_matches`
+stays the decider; a row the join does not carry can be ordered late but is never called a cuisine
+row it is not. The cut of a non-semantic lane is byte-identical to the cut of no lane
+(`test_the_cut_of_a_non_semantic_lane_is_the_cut_of_no_lane`), and a request that types no cuisine
+pays nothing for the leg (`test_an_untyped_request_pays_nothing_for_the_cuisine_leg`).
+
+    request        HEAD page, first ten                                     now
+    想食日本嘢  Italian, Steakhouse, Italian, Steakhouse, Italian,   10 japanese (Ramen 2, Sushi 8)
+                   Steakhouse, Hot Pot, Steakhouse, Hot Pot, Italian        (0 japanese before)
+    日式料理   7 japanese with European Bistro and Steakhouse               10 japanese
+                   at positions 4 and 5
+    韓式餐廳   7 Korean                                                  8 Korean
+    泰式餐廳   8 Thai + 2 Fusion                                          8 Thai + Steakhouse, Italian
+    素食     3 Vegetarian                                              6 Vegetarian
+
+Read through `run_search` at `limit=10` (`tmp/d705_table.py`), on both trees, measured rather than
+assumed.
+
+**The mode it must not break is the semantic one.** A real 1024-d cosine MAY stand alone - that is
+the paraphrase recall `AGENT_CONTRACT` §6 promises - and `test_a_semantic_cosine_may_stand_alone` plus
+`test_the_semantic_fusion_is_unchanged` pin it. The adapter publishes the verdict as an attribute
+(`embeddings.py:28`), not through an await on the hot path, and `health()` reports that same attribute
+so the two cannot drift (`test_health_reports_the_attribute_rather_than_a_second_opinion`). An adapter
+that does not declare it is not trusted to testify: `pipeline.py:204` reads
+`getattr(adapter, "semantic", False)`.
+
+**The gate** is `tests/test_a_score_that_is_not_meaning_may_not_claim_a_match.py`, 32 legs: both
+adapters' declarations and their agreement with `health()`; the fusion capped, refining and unchanged;
+the cut ordered by the cuisine and not by the cosine, and unchanged when neither is asked; the
+row-to-`Candidate` map handing the verdict through; the pipeline carrying a hashing verdict as False
+and a semantic one as True; and the live pages - `想日日本嘢` leading with a japanese shop, the two
+spellings answering the SAME ten rows, five measured requests whose page with a lane that cannot
+testify equals the page with no lane, and a leg that fails on the old fusion so the file cannot pass
+by being vacuous. Falsified against HEAD's four files: **22 red, 1 green, 9 errors**.
+
+**Adjacent**, run and green, never full: the embeddings, candidates-from-rows, search-plan,
+search-sql, sql-builder, semantic-lane, strategy-string, page-cut, total-estimate, preferences-soft,
+preferences-ranking, rag-chinese, text-is-a-score, live-cjk and typed-preference-spelling gates -
+**237 passed, 1 skipped**; the D701/D702/D703/D704 gates and the understand gates - **118 passed, 8
+red that are red at HEAD too** (`test_structured_preferences`, measured on both trees); and
+`test_a_preference_written_through_the_api_is_not_read_as_silence` - **10 passed, 7 red at HEAD and 7
+red here**, measured both ways rather than assumed.
+
+**A ledger sentence was wrong and this unit corrects it, not the decision.** D652 (§652) measured
+泰式餐廳 at "relevance 0.127-0.158" on 8 of 10 Thai rows and read it as the keyword lane's
+`word_similarity` reaching 泰國 one character away. `tmp/d705_d652.py` shows `kw_score` is **0.0000 on
+every row of 泰式餐廳, 韓式餐廳 and 日式料理**; the relevance was the hashing cosine sharing
+the character 泰. Its decision (the adjective stays in the match text) stands and is still gated, but
+its stated reason does not, and the leg that argued from it - "the preference alone does not fill the
+page, 2 of 10" - argued from the same 0.06 bucket this unit moved. It now asserts the opposite and
+records why: with the term taken out the page answers the same ten rows (`tmp/d705_prefonly.py`).
+The adjective is now inert, and whether to strip it is not this lane's call.
+
+**Filed, not claimed.** (a) `VECTOR_FLOOR = 0.05` (`sql.py:26`) is calibrated to the hashing noise
+floor, not to a semantic cosine - a real model's 0.05 means "unrelated" and a real match answers
+0.6-0.9, so the floor is one lane's number applied to the other. (b) The semantic arm of this rule
+has no live witness: `NEXUS_EMBEDDING_PROVIDER=http` is not configured on this machine, so the
+"a cosine may stand alone" path is pinned by unit legs only. (c) The cut's cuisine leg reads
+`merchant_categories`; a merchant whose cuisine were spelled only in `category_primary` would be
+ordered late - no published row is in that case today (the probe's 8 Korean and 8 Thai are found by
+the join). (d) A typed cuisine now outranks every other signal at relevance 1.0, which is right for
+`泰式餐廳` and worth re-reading for a request that names a cuisine AND a budget - the budget still
+answers through `price_fit`, but the cuisine now dominates the sort.
+
+- readers: `search/service.py:1198` (`_relevance`), `:1214` (the cap), `:1253` (the typed cuisine),
+  `:1468` (the cuisines the cut is told), `search/sql.py:480` (the cut's cuisine leg), `:497` (the cut's
+  cosine), `models/embeddings.py:28`/`:51`/`:92` (the verdict and the two adapters),
+  `api/pipeline.py:204`, this unit's gate, the re-aimed D652 guard, and `tmp/d705_measure.py`,
+  `tmp/d705_diff.py`, `tmp/d705_cost.py`, `tmp/d705_d652.py`, `tmp/d705_dbg.py`, `tmp/d705_prefonly.py`,
+  `tmp/d705_table.py`.

@@ -19,6 +19,13 @@ _CACHE: dict[tuple[str, str], tuple[float, ...]] = {}
 class EmbeddingAdapter(Protocol):
     name: str
     dim: int
+    #: D705: whether the space this adapter writes is SEMANTIC. The search lane reads this
+    #: to decide what a cosine from it may claim: a semantic cosine is a witness that a row
+    #: answers the query, a lexical one is a second copy of the keyword lane. Published on
+    #: the adapter rather than discovered by asking `health()`, because the search path
+    #: needs the answer without an await on, and the two cannot drift if `health()` reports
+    #: this attribute. An adapter that does not declare it is not trusted to testify.
+    semantic: bool
 
     async def embed(self, texts: Sequence[str]) -> list[list[float]]: ...
 
@@ -37,6 +44,11 @@ class HashingEmbedding:
 
     name = "hashing"
     dim = DIM
+    #: D705: a signed bag-of-ngrams projection measures SHARED SURFACE TOKENS, not meaning -
+    #: the class docstring has said so since it was written, and `health()` reported it as
+    #: `semantic: False` - but nothing in the search lane read that verdict, so the cosine
+    #: was fused into `relevance` exactly as a semantic one was.
+    semantic = False
 
     def __init__(self, dim: int = DIM):
         if dim != DIM:
@@ -44,7 +56,7 @@ class HashingEmbedding:
 
     async def health(self) -> dict[str, object]:
         return {"provider": self.name, "ok": True, "dim": self.dim,
-                "semantic": False,
+                "semantic": self.semantic,
                 "note": "dev-only lexical hashing, not a semantic model"}
 
     def embed_one(self, text: str) -> list[float]:
@@ -75,6 +87,9 @@ class HttpEmbedding:
 
     name = "http"
     dim = DIM
+    #: D705: the endpoint this class speaks is a real 1024-d embedding model, so its cosine
+    #: is meaning and may stand alone as relevance.
+    semantic = True
 
     def __init__(self, *, base_url: str, api_key: str, model: str = "",
                  timeout_s: float = 20.0, client=None, dim: int = DIM):
@@ -94,7 +109,7 @@ class HttpEmbedding:
 
     async def health(self) -> dict[str, object]:
         return {"provider": self.name, "ok": True, "dim": self.dim, "model": self.model,
-                "semantic": True}
+                "semantic": self.semantic}
 
     async def embed(self, texts: Sequence[str]) -> list[list[float]]:
         """One `/embeddings` request per call, rows placed by the endpoint's own `index`.
