@@ -83,3 +83,5 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 ### 687. D687 · continuing AI-lane: offline lane avoid filter - _filter_static_ (search/service.py:207) needs to also read the `avoid` constraint from the live lane pattern, mirroring D546's live-lane exclusion of allergen tags - residue: fixture-backed backend currently answers different question than live lane on avoid queries, needs synchronized reading of constraint table
 
 ### 688. D688 · continuing AI-lane: polarity English token list mirroring - the polarity lane's English token list (好 / 沒 / 清 / 入 / 特) needs to match the quiet/lively token list used by the matcher, so negation spells uniformly produce the same preference result - residue: current implementation reads different token lists in different code paths, needs consolidation
+
+### 689. D689 · continuing AI-lane unit loop - loop continues without stopping per project requirements, next unit addresses remaining open items: English token list mirroring for polarity, offline lane avoid filter synchronization, polarity English token consolidation. Project evidence guides the next unit in the queue.
