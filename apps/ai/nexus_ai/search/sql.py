@@ -695,8 +695,8 @@ def build_offering_query(
         # Without this, the contains_frac boost was too small to move offerings
         # ahead of the rating-ordered default page, so Chinese queries appeared
         # to reach no offering despite matching rows existing.
-        + ("" if not ck or not contains_frac else
-           f" + (1.0 - similar(o.search_tsv, to_tsvector('simple', {text_ph})))::float8")
+        + ("" if not ck or not contains_frac or not contains_count_str
+           else f" + 1.0::float8")
     )
     has_text = bool((text or "").strip())
     match = (f"(o.search_tsv @@ {tsq} OR o.search_tsv @@ {wsq} OR o.name % {text_ph}"
