@@ -130,8 +130,10 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   result carry the `ramen` tag, while "我想食拉麵" held the same order at a lower fraction score
   (1 of 4 bigrams). The offering lane `build_offering_query()` now has a strpos containment leg
   (D583/D692) that matches CJK bigrams against offering name/description text, so a Chinese query
-  can find offering results instead of reaching no offering. The D406 claim that 拉麵 matches
-  zero `ramen` tags was measured against a plane the re-seed has since replaced.
+  can find offering results instead of reaching no offering. The strpos weighting was revised in
+  D693 to use a fixed 1.0::float8 boost for robustness, and D694 identifies the next round of
+  preference mirroring and matching work for the offering lane and NLU, building on the cuisine_like
+  (D691) and offering CJK strpos weighting (D692/D693) work completed this session.
 - **The compare grid's row LABELS are raw attribute keys** — **closed by D626, and it was already
   closed when this item was written**: both locales carry all six labels (`price`, `rating`,
   `category`, `district`, `open_state`, `distance`) and `_compare_rows` emits exactly those six, so
