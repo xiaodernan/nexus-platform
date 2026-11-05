@@ -1974,6 +1974,36 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         # answers neutral for a non-match; a DISLIKE must too.
                         intent_pref_scores.append(0.5)
                     continue
+                if str(pref_kind) == "cuisine_like":
+                    # D691: the NLU emits cuisine_like as {"values": ["cantonese","sushi"]}
+                    # (json.dumps), and the matcher reads it through cuisine_matches via
+                    # the leaf map bridge. The ranking lane must now also read it so that
+                    # a user's typed cuisine preference is reflected in merchant scores.
+                    import json
+                    try:
+                        like_vals = json.loads(str(pref_value)).get("values", [])
+                    except Exception:
+                        like_vals = []
+                    if like_vals:
+                        cat = str(attrs.get("category_primary") or "")
+                        tags = [str(t) for t in (attrs.get("tags") or [])]
+                        # Check if ANY of the cuisine_like values match the merchant
+                        has_match = any(cuisine_matches(v, cat, tags) for v in like_vals)
+                        if has_match:
+                            weight = 1.0 if polarity > 0 else 0.0
+                            intent_pref_scores.append(weight)
+                            if weight >= 0.5:
+                                intent_matched_labels.append(
+                                    {"label": _preference_label(str(pref_kind), str(pref_value),
+                                               pref_value),
+                                     "source": "typed_like"})
+                        else:
+                            # A LIKE already answers neutral for a non-match;
+                            # a DISLIKE must too.
+                            intent_pref_scores.append(0.5 if polarity > 0 else 1.0)
+                    else:
+                        intent_pref_scores.append(0.5)
+                    continue
 
                 # D530: `time_pref/open_late` is the one preference whose attribute is
                 # not spelled `{value}_{kind}` or `{kind}_{value}`. The stored branch
