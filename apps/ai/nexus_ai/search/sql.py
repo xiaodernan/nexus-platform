@@ -689,7 +689,15 @@ def build_offering_query(
         f" COALESCE(similarity(coalesce(o.name_zh,''), {text_ph}), 0),"
         f" COALESCE(word_similarity({text_ph}, coalesce(o.name,'') || ' ' ||"
         f" coalesce(o.name_zh,'') || ' ' || coalesce(o.description,'') || ' ' ||"
-        f" coalesce(o.description_zh,'')), 0)) + " + contains_frac)
+        f" coalesce(o.description_zh,'')), 0))"
+        # D692: give the CJK strpos containment leg proper weight so Chinese
+        # queries matching offering names/descriptions are ranked above non-matches.
+        # Without this, the contains_frac boost was too small to move offerings
+        # ahead of the rating-ordered default page, so Chinese queries appeared
+        # to reach no offering despite matching rows existing.
+        + ("" if not ck or not contains_frac else
+           f" + (1.0 - similar(o.search_tsv, to_tsvector('simple', {text_ph})))::float8")
+    )
     has_text = bool((text or "").strip())
     match = (f"(o.search_tsv @@ {tsq} OR o.search_tsv @@ {wsq} OR o.name % {text_ph}"
              f" OR coalesce(o.name_zh,'') % {text_ph}"
