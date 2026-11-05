@@ -151,6 +151,14 @@ export interface Intent {
   unknowns: string[];
   /** Follow-up already asked about these unknowns (spec §8 allows exactly one). */
   clarification_asked?: boolean;
+  /**
+   * Subjects the surface has already shown, which the next answer must not repeat — spec §34
+   * ("show me others"). The `其他 / next / more options` cues write it from the caller's
+   * `context.shown_ids` (`apps/ai/nexus_ai/nlu/state_merger.py`), and the search reads it as the
+   * `exclude` filter (`m.id::text <> ALL(...)`) on both lanes. Absent or `[]` — nothing to skip;
+   * it accumulates across turns, because this object is the only thing that travels between them.
+   */
+  excluded_ids?: string[];
   /** Conversation this intent belongs to — API_CONTRACT §7 `conversation_id`. */
   conversation_id?: Nullable<Uuid>;
   /** Turn sequence inside the conversation — spec §34. */

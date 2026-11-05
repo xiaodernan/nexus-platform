@@ -84,6 +84,11 @@
       "type": "boolean",
       "description": "spec §8 allows exactly one follow-up, so the flag must be recorded."
     },
+    "excluded_ids": {
+      "type": "array",
+      "description": "spec §34 「show me others»: subjects the surface already showed, which the next answer must not repeat. Written from `context.shown_ids` by the ALT cues (`nlu/state_merger.py`) and read as the search's `exclude` filter (`search/sql.py`, mirrored by the fixture lane). Absent or `[]` means nothing to skip.",
+      "items": { "type": "string" }
+    },
     "conversation_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
     "turn": { "type": "integer", "minimum": 0 },
     "provider": {

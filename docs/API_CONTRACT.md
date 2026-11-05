@@ -380,11 +380,14 @@ secret. This is D20: the platform owns every commerce and conversation write, so
   "urgency": "normal",
   "language": "zh-HK",
   "confidence": { "category":0.95, "budget":0.9, "time":0.8 },
-  "unknowns": ["party_size"]           // §8 — never guess; ask in one follow-up only
+  "unknowns": ["party_size"],          // §8 — never guess; ask in one follow-up only
+  "excluded_ids": []                   // §34 — subjects already shown, which the next answer must not repeat
 }
 ```
 Conversation state merges successive turns: "太贵了" → `budget.max *= 0.7`; "近一点" → `sort_preference=distance`,
-`location.radius_m` tightened; "不吃辣" → append constraint. Merge rules live in `apps/ai/nexus_ai/nlu/state_merger.py`.
+`location.radius_m` tightened; "不吃辣" → append constraint; "其他 / next / more options" → union
+`context.shown_ids` into `excluded_ids`, which the search reads as its `exclude` filter (both candidate
+lanes cut `id <> ALL(...)`). Merge rules live in `apps/ai/nexus_ai/nlu/state_merger.py`.
 
 ## 8. Growth & creator
 

@@ -3845,3 +3845,21 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `kw_score` (then rating, then id) while the fixture lane ranks in Python with the full weight vector. Which
   order is the product's is a decision, not a drift to paper over - a gate here would pin whichever lane
   happened to be written first. Owner: the ranking/search lane, with its own census of the two sequences.
+
+
+- **The follow-up that asks for others lost the turn it carried** - **closed by D709 (§688)**. 「其他
+  / 換一間 / next」 wrote the rows the surface had shown into `filters.exclude`, a key the closed
+  `Intent` refuses, so the merged turn failed its own model, the pipeline fell to
+  `floor("state_merge_rejected")` and the category, the budget and the district it was carried with
+  were thrown away - and the exclusion itself was read by nothing, though both candidate lanes have
+  cut on `filters.exclude` since D617. `Intent.excluded_ids` is now declared, `state_merger` unions
+  the shown ids into it and records the field it actually changed, `plan_from_intent` folds it back
+  into `filters.exclude` beside `constraints`, and `intent.ts` / `schemas/intent.json` / §7.1 moved
+  with it. Four residues filed: the request's `SearchRequestFilters` still declares no `exclude`, so
+  a caller that names the ids it was shown gets a 422; the re-extract `_overlay` copies memory key by
+  key and drops `excluded_ids`, so a long new question after a 「其他」 answers without the exclusion;
+  the console sends no `shown_ids` at all, so the browser repeats its rows until the web lane does
+  (owner: the web lane); and the published closed `Intent` still refuses keys the frame sends - now
+  measured three families deep (`tmp/d687_measure.txt`) and the next unit. Gate
+  `apps/ai/tests/test_the_follow_up_that_asks_for_others_keeps_the_turn_and_leaves_the_rows_shown.py`,
+  27 legs, 17 arms over `041d6dc` (`tmp/d676_arms.txt`). Owner: the AI lane.

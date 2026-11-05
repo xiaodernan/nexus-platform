@@ -33660,3 +33660,102 @@ is the unit after that: a cut may only be ordered by a term of the score it stan
 - readers: `search/service.py:166` (`_tenant_mean_rating`), `:208` and `:226` (the two row kinds it is
   stated on), `:1288` (the per-row fallback that stays), `search/sql.py:527` and `:817` (the live means),
   this unit's gate, and `tmp/d708_order.py`, `tmp/d708_mean.py`, `tmp/d708_gap2.py`.
+
+
+## 688. D709 · the follow-up that asks for others threw away the turn it carried, because its exclusion had no declared home (`nlu/state_merger.py`, `search/service.py`, `contract.py`, `packages/types/src/schemas/intent.json`)
+
+*The claim.* 「其他 / 換一間 / next / more options」 is a turn that means *the same question, different
+rows*. `state_merger.py` read the cue and wrote the rows the surface had shown into
+`base["filters"]["exclude"]` — a key `Intent` does not declare (`_Strict`, `extra="forbid"`) and the
+published `packages/types/src/schemas/intent.json` closes. So `validate_intent` answered `None` for
+the merged turn (`pipeline.py:116`) and `pipeline.py:121` fell to `floor("state_merge_rejected")`:
+the cue that asks for other rows discarded the category, the budget and the district it was carried
+with and searched for the word 其他 instead. And the exclusion itself was read by nothing, because
+`plan_from_intent` named no such field — although both candidate reads have cut on
+`filters.exclude` since D617. Measured over `7e8ca97` before any line changed
+(`tmp/d676_measure.txt`): 17 filter keys are acted on and 11 are declared; seven served bodies are
+422 `extra_forbidden` where four controls answer 200 (§1-§2); the cue with NOTHING shown still
+gained the key, so the turn failed its own model even with nothing to exclude — `setdefault` ran
+outside the `if seen:` guard (§4: `filters: {}`, `validate_intent -> NoneType`); served over
+`/ai/v1/search/stream`, turn 1 「咖啡店」 answered `category='cafe'` with four ids and turn 2 「其他」
+answered `raw_query='其他'`, `category=None`, `intent='unknown'` (§5).
+
+*What ships is the road, not a new predicate.* `Intent.excluded_ids: list[str]` — declared, so the
+merged state validates and travels back as `previous_intent`; the state is the only thing that
+survives between turns, so an exclusion held anywhere else is forgotten by turn 3, which is also why
+the cue unions the new ids into the list instead of replacing it. `state_merger` writes it from
+`context.shown_ids` and records `{"op":"exclude","field":"excluded_ids","from":0,"to":2}` — the
+field it actually changed, which is what §34 asks an `agent_run` to be able to say.
+`plan_from_intent` folds it into `filters.exclude` beside the way `constraints` fold into `avoid`,
+keeping the caller's own list and merging deduped. The published shape moves with it: `intent.ts`,
+`schemas/intent.json` and `API_CONTRACT` §7.1 — a field the served frame carries and the closed
+published object refuses is D643's defect, and this unit is not going to manufacture another one.
+Re-measured after (`tmp/d676_measure_after.txt`): every ALT spelling validates with
+`category=cafe`; `plan.filters` keys `['category','exclude','open_now']`; a second cue grows the
+list to `['state-1','turn-1']`; served turn 2 answers `category='cafe'`, `raw_query='咖啡店 · 其他'`
+with the four shown ids on the frame and `rows … served again: []`; the fixture lane answers
+`['m-b']`; and the live plane, asked for its own first page and told to drop the third row, returns
+20 rows before and 20 after with the named row gone and 18 others moved up — a cut, not a collapse.
+
+*Gate.* `apps/ai/tests/test_the_follow_up_that_asks_for_others_keeps_the_turn_and_leaves_the_rows_shown.py`,
+27 legs — the cue table, the state, the change record, the plan, both SQL clauses, both fixture
+legs, the published shape, three demo-plane served legs and three live legs, plus four
+*not-this-unit* pins. 24 passed / 3 skipped with no database, **27 passed** on the live plane.
+`packages/types`: `npm run test` rc=0 — build, `gen:schemas` 7 documents, `conformance` 433 checks,
+31 unit tests, 0 fail (`tmp/d676_types_test.txt`).
+
+*Arms* (`tmp/d676_arms.txt`, 17 trees over `041d6dc`, each reverting one shipped piece rather than
+adding a wrong one — this unit's code half had already been swept into the shared tree, so the base
+is the shipped code and an arm is a question about it): `A_before_all` 24 failed / 159 passed;
+`B_fix_without_new_door` 156 passed — the fix reddens nothing that already existed; `C_shipped` 183
+passed. Then one piece at a time: `D_merger_poison_key` 19 (the validation family, both served
+planes, and the two gates that were re-aimed at the new field), `E_merger_empty_guard_gone` 1 (the
+leg that says an unstated exclusion is not recorded), `F_no_contract_field` 18 and
+`G_field_is_a_string` 18 (the declared home is load-bearing on its own), `H_no_planner_fold` 10,
+`I_fold_overwrites_caller` 1, `J_union_overwrites_held` 1, `K_change_labels_old_field` 1,
+`L_schema_undeclared` 2, `M_ts_undeclared` 1, `N_doc_silent` 1, `O_merchant_clause_gone` 5 (the door
+plus D617's `test_the_excluded_next_page_is_the_next_twenty_rows` plus the live legs),
+`P_offering_clause_gone` 2, `Q_fixture_lane_blind` 4 — the D684 shape, one key over. The first pass
+of O and P deleted the clause inside its own `if`, so both trees were IndentationErrors ("7
+errors", nothing attributed); they were re-run with the guard kept and its body replaced, and the
+record says so.
+
+*Suite.* (`tmp/d676_suite.txt`, the whole AI suite over a `git archive` of `041d6dc` with exactly
+the bytes this unit ships laid over it - the three published files and the door - because the live
+tree is shared and its code half had already been swept through it): **28 failed, 34572 passed, 44
+skipped, 31 errors in 1:21:24**. The prior pin was 26 failed / 34555 passed (`tmp/d675_suite.txt`,
+quoted at §674) and the owncheck (`tmp/d676_owncheck.txt`) says what the two extra reds and the 31
+errors are: it re-ran the 10 files that held a red, once over the shipped bytes plus the door (15
+files: **19 failed**, 490 passed) and once over `041d6dc` with neither (10 files: **19 failed**, 293
+passed), and the two red sets are the same 19 rows - `rows red only with this unit's bytes: 0`,
+`this unit's own door red in SHIPPED: 0 of its legs`. Nine of the 28 and all 31 errors did not
+reproduce once nothing else was in flight: 49 lines of the suite record read
+`ConnectionRefusedError [WinError 1225]` at fixture setup, because I had started the next unit's
+live door and its gate pass against the same Postgres container while this suite was still running.
+That is my concurrency, not these bytes. The 19 that survive are red at HEAD with none of this
+unit's work in the tree: 13 of them in
+`test_the_district_a_card_prints_is_filed_under_a_subject_the_answer_never_loads.py` and one each in
+the citation resolver, the doc-path gate, the dead-constant gate, the category-word gate and the two
+vocabulary-reference gates - `tmp/d676_owncheck.txt` names every leg.
+
+*Filed, not fixed.* (1) `SearchRequestFilters` still declares no `exclude`, so a body that names the
+ids it was shown is a 422 — six of the seven undeclared keys are the plan's own vocabulary and only
+`exclude` is one a caller could honestly name, which is a decision about the request's contract, not
+a line in a model. (2) The re-extract branch `_overlay` copies memory key by key and `excluded_ids`
+is not in its list, so a long new question after a 「其他」 answers without the exclusion
+(`tmp/d676_measure_after.txt` §B: `category=restaurant budget=300 excluded_ids=[]`) — whether a new
+question inherits the pages of the old one is a product call. (3) The console sends no `shown_ids`:
+`apps/web/app/api/nexus/ai/stream/route.ts` builds `context` as `{geo, locale, now}`, so the
+browser's 「其他」 keeps its turn from this unit onward and still repeats its rows until somebody
+sends the ids. Owner: the web lane. (4) The served frame still carries `mentioned_entities` and
+`merchant_id`, which the published closed object refuses — and the census of that family now
+includes `location`/`time` sent as hollow objects (`{"type": null, …}` where the schema accepts only
+a full ref or `null`) and a `confidence` key `preference:ambience` that breaks the published
+snake_case `propertyNames` (`tmp/d687_measure.txt`, every one of three frames refused, 4-5 issues
+each). Owner: the AI lane with the contract owner — the next unit.
+
+*One note on the number.* This unit was measured and patched over `7e8ca97` as D676; its three code
+files were swept into the shared index by the concurrent lane's `7509e55` before this entry landed,
+so the code is in the tree under another unit's commit and this section is where its evidence is.
+`tmp/d676_shipped_suite.py` re-checks the four code files byte-for-byte against `041d6dc` before it
+runs anything, which is the check that the sweep lost nothing.
