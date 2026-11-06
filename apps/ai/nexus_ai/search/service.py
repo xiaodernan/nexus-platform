@@ -2077,6 +2077,25 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                  "source": "typed_cuisine_vegetarian"})
                     continue
 
+                # D704: `cuisine/spicy` emitted by the NLU when a user types
+                # "辣", "香辣", "spicy" etc. maps to the merchant's `spicy_cuisine`
+                # boolean attribute. Generic cuisine_matches would check for a "spicy"
+                # tag which no merchant carries; the seed writes spicy_cuisine instead.
+                if str(pref_kind) == "cuisine" and str(pref_value) == "spicy":
+                    val = attrs.get("spicy_cuisine")
+                    score = None
+                    if val is True:
+                        score = 1.0 if polarity > 0 else 0.0
+                    elif val is False:
+                        score = 0.0 if polarity > 0 else 1.0
+                    intent_pref_scores.append(score if score is not None else 0.5)
+                    if score is not None and score >= 0.5:
+                        intent_matched_labels.append(
+                            {"label": _preference_label(str(pref_kind), str(pref_value),
+                                               pref_value),
+                                 "source": "typed_cuisine_spicy"})
+                    continue
+
                 # D394: a typed cuisine ("japanese") meets the taxonomy ("sushi") through
                 # the lexicon's leaf map, not through an attribute name.
                 if str(pref_kind) == "cuisine":
