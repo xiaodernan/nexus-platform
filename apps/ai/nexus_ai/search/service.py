@@ -2391,6 +2391,30 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                  "source": "typed_occasion_business"})
                     continue
 
+                # D713: `occasion/solo` emitted by the NLU when a user types "一個人" / "solo"
+                # etc. maps to the merchant's `solo_occasion` boolean attribute. The stored
+                # branch (line ~1744) reads the same attribute; this is the transient lane's
+                # mirror.
+                if str(pref_kind) == "occasion" and str(pref_value) == "solo":
+                    def make_solo_match(p):
+                        def _match(a2):
+                            if a2.get("solo_occasion") is True:
+                                return _sided(p, liked=True)
+                            if a2.get("solo_occasion") is False:
+                                return _sided(p, liked=False)
+                            return None
+                        return _match
+                    match_fn = make_solo_match(1.0)
+                    score = match_fn(attrs)
+                    if score is not None:
+                        intent_pref_scores.append(score)
+                        if score >= 0.5:
+                            intent_matched_labels.append(
+                                {"label": _preference_label(str(pref_kind), str(pref_value),
+                                               pref_value),
+                                 "source": "typed_occasion_solo"})
+                    continue
+
                 # D700: `price_sense` (cheap/premium) emitted by the NLU when a user types
                 # "平", "cheap", "貴", "premium" etc. maps to the merchant's `avg_price_hkd`.
                 # The stored branch (line ~1790) reads the same attribute; this is the
