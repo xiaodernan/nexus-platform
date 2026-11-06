@@ -9,11 +9,19 @@ import { getDict } from '@/lib/i18n';
  * Route-level failure boundary. Like the 404 it cannot read request state, so it uses the default
  * locale; the message shown is the real one from the failed render, and the request id is surfaced
  * when the envelope carried one (§1 error contract).
+ *
+ * The `data-nexus-error-boundary` marker is the handle the visual suite asserts on: a screenshot
+ * taken while this component is on screen records the product's failure state as its baseline, and
+ * the suite could not tell the difference without a stable name for it (D627).
  */
 export default function ErrorBoundary({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const dict = getDict(DEFAULT_LOCALE);
   return (
-    <Container size="shell" className="flex flex-col items-start gap-4 py-16 sm:py-24">
+    <Container
+      size="shell"
+      data-nexus-error-boundary="route"
+      className="flex flex-col items-start gap-4 py-16 sm:py-24"
+    >
       <h1 className="text-2xl font-semibold tracking-tight text-ink-strong sm:text-3xl">{dict.states.error}</h1>
       <p className="max-w-prose text-sm leading-relaxed text-ink-muted">{dict.merchant.degradedTitle}</p>
       <p className="flex max-w-prose items-start gap-1.5 rounded-md border border-line bg-surface px-3 py-2 text-xs text-ink-muted">

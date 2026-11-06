@@ -33967,3 +33967,53 @@ on a `git archive` of that commit with this unit's bytes laid over it (`tmp/d710
 the inbound refusals from `tmp/d710_inbound_base.txt` and their cure from `tmp/d710_inbound.txt`, the
 strip consequences from `tmp/d687_hollow_measure.txt`, the radius from `tmp/d710_radius_parent.txt`
 and `tmp/d710_radius_shipped.txt`, and the domain census from `tmp/d711_published_domain.txt`.
+
+---
+
+## 690. D711 · the visual baselines recorded the product's failure states, and nothing could say so (`tests/e2e/specs/visual/quality.spec.ts`, `apps/web/app/error.tsx`, `apps/web/src/components/site-chrome.tsx`, `packages/ui/src/styles/tokens.css`, `tests/e2e/playwright.config.ts`)
+
+**What the committed images were.** The six baselines under
+`tests/e2e/specs/visual/quality.spec.ts-snapshots/` were captured on 2026-10-11 and each one
+photographed a *failure state of the product*: the home baseline is the **route error boundary** (the
+「載入失敗」 page, with `digest 356e000392` on it), the search baseline is the honest empty state, and
+the merchant baseline is the sign-in gate. A visual regression test whose baseline is a crash passes
+only while the product is broken, and nothing in the suite could tell the difference: the image was
+the assertion.
+
+**Why they were failure states.** They were recorded against whatever the machine happened to be
+running. `apps/web/.env.local` — gitignored, developer-local — sets
+`NEXT_PUBLIC_DATA_MODE=live`, while CI has no such file and runs the **mock** plane, so the suite
+could not have been green in both places at once. And the search route's query,
+`帮我找附近适合约会的餐厅`, answers **0 cards** on the mock plane (measured), so it photographed the
+empty state rather than the results page; the product's own starter prompt
+(`週末找一個適合情侶約會的地方`, `lib/prompts.ts` — the copy a reviewer types first) answers **6**.
+
+**What the suite now states before it records anything.** Every screenshot asserts three
+preconditions first: the page is not the error boundary (`[data-nexus-error-boundary]`, count 0); the
+page is on the mock plane (`[data-nexus-demo-notice="mock"]`, count exactly 1 — the §155 notice
+renders only there, so a live run fails loudly instead of quietly recording a corpus-dependent
+image); and the page rendered its own content (the route's own heading is on screen). Both handles
+are new named attributes — `error.tsx` and `DataModeNotice` had no stable name for what they are.
+
+**The six baselines were regenerated** on the mock plane, for both the `desktop` and `visual`
+projects, after that review.
+
+**A product defect fell out of the run.** The reduced-motion promise (§78) was half implemented: the
+`[data-reveal]` block forced `opacity: 1` and `transform: none` but left the **animation running** —
+measured, **28** animated elements on the home page under `prefers-reduced-motion: reduce`, against
+a floor of 5. The block now also says `animation: none !important`.
+
+**The harness's budget was the tool's, not the project's.** Playwright's 30s default timed out on
+`page.goto` while a dev server compiled a route (measured 16-32s for one cold compile). The suite
+timeout is now 60s, and the responsive check is `test.slow()`; the assertions, not the tooling,
+decide what is red.
+
+- readers: the visual suite on the mock plane → **12 passed** (both projects × 6 checks), exit 0,
+  twice in a row — once warm, once after a cold recompile. Falsified by hand: making the home page
+  throw reddens the guard with `Expected: 0, Received: 1` on `[data-nexus-error-boundary]` and
+  **writes no baseline**; the file is restored afterwards. The harness that runs it (mock plane,
+  fresh port, whole-process-tree shutdown) is `tmp/run_visual.sh` — a local tool, not committed.
+  `npm run test:web` → **201 passed / 203**, the 2 reds being `src/lib/mock/stated-time.test.ts` —
+  that file and `src/lib/mock/index.ts` are another lane's in-flight D721 (its part-of-day windows
+  disagree with the service's `timeparse.py`: 7 labels against 4, and 深夜 opens five hours early),
+  reported and not edited here. `npx tsc --noEmit` clean.

@@ -321,6 +321,11 @@ body {
  */
 @media (prefers-reduced-motion: reduce) {
   [data-reveal] {
+    /* The animation itself must stop, not merely the two properties it moves: a reader who asked
+     * for reduced motion should not have 28 animations running on the page, and the visual suite
+     * counts them (the §78 check reads `animationName`). `opacity`/`transform` are forced so the
+     * content is visible even before JavaScript has run (D628). */
+    animation: none !important;
     opacity: 1 !important;
     transform: none !important;
   }

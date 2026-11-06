@@ -18,6 +18,15 @@ export default defineConfig({
   testDir: './specs',
   outputDir: path.join(here, '.artifacts', 'test-results'),
   fullyParallel: true,
+  /**
+   * The suite runs against a live stack — the platform on 8090, the AI on 8010, the web on 3002 —
+   * and the harness's own servers are dev servers, where the first request for a route compiles
+   * it. Playwright's 30s default is the framework's budget, not this project's: a cold compile on
+   * this machine measured 16-32s for one route, which is a latency of the harness and not a
+   * verdict on the product. 60s is the smallest budget that leaves the assertions, and not the
+   * tooling, deciding what is red.
+   */
+  timeout: 60_000,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 3 : undefined,

@@ -142,7 +142,7 @@ export function DataModeNotice({ locale }: { locale: string }) {
   if (!IS_MOCK) return null;
   const dict = getDict(locale);
   return (
-    <div className="border-b border-warning/70 bg-warning-soft">
+    <div data-nexus-demo-notice="mock" className="border-b border-warning/70 bg-warning-soft">
       <Container size="shell" className="flex flex-wrap items-center gap-2 py-2 text-xs text-warning">
         <Icon name="info" size={14} className="shrink-0" />
         <span className="font-semibold">{dict.home.demoTitle}</span>
