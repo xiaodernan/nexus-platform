@@ -2139,6 +2139,44 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                              "source": "typed_weakness"})
                     continue
 
+                # D699: `style/ambience` (quiet/lively) emitted by the NLU when a user types
+                # "有情調" etc. maps to the merchant's `quiet_ambience`/`lively_ambience`
+                # boolean attributes. The stored branch (line ~1694) reads the same attributes;
+                # this is the transient lane's mirror.
+                if str(pref_kind) == "style" and str(pref_value) in ("quiet", "lively", "ambience"):
+                    amb = str(pref_value)
+                    if amb == "ambience":
+                        # Generic "good ambience" - either quiet or lively counts
+                        def make_style_ambience_match():
+                            def _match(a2):
+                                if a2.get("quiet_ambience") is True or a2.get("lively_ambience") is True:
+                                    return _sided(1.0, liked=True)
+                                return None
+                            return _match
+                        match_fn = make_style_ambience_match()
+                    else:
+                        want = "quiet_ambience" if amb == "quiet" else "lively_ambience"
+                        other = "lively_ambience" if amb == "quiet" else "quiet_ambience"
+
+                        def make_style_ambience_match(want_key, other_key):
+                            def _match(a2):
+                                if a2.get(want_key) is True:
+                                    return _sided(1.0, liked=True)
+                                if a2.get(other_key) is True:
+                                    return _sided(1.0, liked=False)
+                                return None
+                            return _match
+                        match_fn = make_style_ambience_match(want, other)
+                    score = match_fn(attrs)
+                    if score is not None:
+                        intent_pref_scores.append(score)
+                        if score >= 0.5:
+                            intent_matched_labels.append(
+                                {"label": _preference_label(str(pref_kind), str(pref_value),
+                                               pref_value),
+                                 "source": "typed_style_ambience"})
+                    continue
+
                 # D530: `time_pref/open_late` is the one preference whose attribute is
                 # not spelled `{value}_{kind}` or `{kind}_{value}`. The stored branch
                 # below reads `opens_late`; the two derived names are
