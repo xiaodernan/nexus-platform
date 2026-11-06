@@ -106,10 +106,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   chili, sulphite, mollusc, pork, garlic, sesame, coconut, peanut, herb and pepper, and none
   of the three. They therefore exclude only what their spelling matches in an offering's
   name: measured, 6, 33 and 0 of 470 published merchants. Owner: the AI lane.
-- **`meat` is in no table at all** - "no meat" writes no constraint and no preference, though
-  the corpus carries the vegetarian merchants the refusal points at. The cuisine bridge maps a
-  word to the taxonomy's leaves (D394); "meat" has no entry to map.
-  Owner: the AI lane.
+- **`meat` is in no table at all** — **closed by D698**: "肉"/"meat" is now in `CUISINE_TERMS["vegetarian"]`, so "no meat" writes a `cuisine:vegetarian` preference (polarity inverted by negation) that points at the vegetarian merchants the corpus carries. The cuisine bridge now has an entry for "meat" to map.
 ### Open, waiting on the AI lane (next)
 
 - **The `food/cuisine_like` structured preference** — **closed by D691**: the NLU emits `cuisine_like` preferences (`{"values": [...]}`) and the search ranking lane now reads them through `cuisine_matches`, so user's typed cuisine words are reflected in merchant scores. Prior to this, the NLU emitted `cuisine_like` but the ranking lane only handled `pref_kind == "cuisine"`, so typed cuisine preferences had no effect on scores.
@@ -144,10 +141,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   `availability` and the grid would print the identifier to a reader in a Chinese interface, silently.
   `apps/web/src/lib/compare-row-labels.test.ts` now reads the AI's row list as text and requires set
   equality with both label maps, plus that no label looks like an identifier.
-- **The corpus's tags are English** - the merchant lane's bigram containment closes the ask
-  (see the item above, re-measured in the 2026-10-28 session); what is still open is a
-  translation layer for the OFFERING rows, which carry no CJK at all and are read by a query with
-  no containment leg.
+- **The corpus's tags are English** — **closed by D696**: the offering lane's `build_offering_query()` now maps CJK cuisine keywords to English tags via `_CJK_TO_TAG_MAP` (derived from `CUISINE_TERMS`), so a Chinese query like "拉麵" matches offerings whose merchants carry the "ramen"/"japanese"/"sushi" tag. Also fixed the `ck`/`contains_count_str` NameError that raised on every offering request (D696). The merchant lane's CJK containment already reached tags; this is the offering lane's equivalent.
 - **The open state's `opens_at`/`closes_at` are TIME strings, the contract declares them datetimes** — `compute_open` produces "18:00" ✓ and `OpenState` declares `Optional[datetime]` ✓, so the card cannot pass them through ✓ (a validation error ✗) and the `closes_hhmm` the computation produces is dropped by the contract's model ✗. Which of the two shapes is right is a contract question — "closes at 18:00" is a time of day ✓, not an instant ✓, and `as_of` already carries the instant ✓ — so it is not decided in the AI lane's files.
 - **Three ledger sections are invisible to the readers** — the sibling lane's D425/D426/D427 landed as `## 419 · D425 · …` (the number before a MIDDLE DOT), while the readers' pattern is `^## (\d+)\. ` (a number, a DOT, a space) ✓. So `check_ledger_sections.mjs` does not count them ✓, its duplicate-number check does not cover them ✓, and a future section could take 419/420/421 without the reader noticing ✗. Reported, not edited: those are the sibling lane's sections ✓. The format that works is `## 419. D425 · …` ✓ (as this lane's sections are written ✓).
 - **The live demo corpus was never wrong** — D403's claim that "54 merchants' descriptions carry 餐庁" was itself a code-point mistake: the corpus has always carried 餐廳 (U+9910 U+5EF3), and the 54 are the CORRECT word. D414 withdrew the claim with the measurement (the corpus has 54 of U+9910 U+5EF3 and 0 of U+9910 U+5EF6). No re-seed is needed; the item is closed.

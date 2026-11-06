@@ -118,7 +118,7 @@ CUISINE_TERMS: dict[str, list[str]] = {
     "italian": ["意大利", "意粉", "pasta", "italian", "薄餅", "薄饼", "pizza", "披薩", "披萨"],
     "indian": ["印度", "indian", "curry", "咖哩", "咖喱", "tandoori", "naan"],
     "western": ["牛排", "steak", "西餐", "western", "burger", "漢堡", "汉堡"],
-    "vegetarian": ["素食", "齋", "vegetarian", "vegan", "純素", "纯素"],
+    "vegetarian": ["素食", "齋", "vegetarian", "vegan", "純素", "纯素", "肉", "meat"],
     "seafood": ["海鮮", "海鲜", "seafood", "大排檔", "大排档", "蟹", "生蠔", "生蚝"],
     "dim_sum": ["飲茶", "饮茶", "dim sum", "dimsum", "點心", "点心", "一盅兩件"],
     "malaysian": ["馬來西亞", "马来西亚", "malaysian", "檳城", "槟城", "叻沙", "laksa"],

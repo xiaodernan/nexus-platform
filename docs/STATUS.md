@@ -32839,6 +32839,12 @@ The fixture lane never builds SQL, so nothing in the suite saw it: the offline a
 while the live offering plane answered nothing at all. That is the shape D488/D449 keeps finding - one
 plane has two readers, one of them untested - except that here the second reader never ran.
 
+Fixed: renamed `ck` → `cjk` and `contains_count_str` → `contains_count` so `build_offering_query`
+returns valid SQL for every request. D696 also adds tag-based containment: CJK cuisine keywords map
+to English tags via `_CJK_TO_TAG_MAP` (derived from `CUISINE_TERMS`), so "拉麵" matches offerings
+whose merchants carry "ramen"/"japanese"/"sushi" tags — the offering lane's equivalent of the
+merchant lane's tag containment (D583).
+
 **The repair is not the boost those two units argued for.** Their premise was that `contains_frac` was
 "too small to move offerings ahead of the rating-ordered default page". Measured through the repaired
 lane (`tmp/d696_measure.py`, 2026-11-05), the fraction - the merchant lane's own term since D407 - puts
