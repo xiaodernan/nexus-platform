@@ -2259,6 +2259,30 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                  "source": "typed_open_late"})
                     continue
 
+                # D703: `weather/rainy_day` emitted by the NLU when a user types
+                # "下雨", "rainy", " typhoon" etc. maps to the merchant's `indoor_style`
+                # / `outdoor_style` boolean attributes. The stored branch reads the same
+                # attributes; this is the transient lane's mirror.
+                if str(pref_kind) == "weather" and str(pref_value) == "rainy_day":
+                    def make_rainy_match(p):
+                        def _match(a2):
+                            if a2.get("indoor_style") is True:
+                                return _sided(p, liked=True)
+                            if a2.get("outdoor_style") is True:
+                                return _sided(p, liked=False)
+                            return None
+                        return _match
+                    match_fn = make_rainy_match(1.0)
+                    score = match_fn(attrs)
+                    if score is not None:
+                        intent_pref_scores.append(score)
+                        if score >= 0.5:
+                            intent_matched_labels.append(
+                                {"label": _preference_label(str(pref_kind), str(pref_value),
+                                               pref_value),
+                                 "source": "typed_rainy_day"})
+                    continue
+
                 # D530: `time_pref/open_late` is the one preference whose attribute is
                 # not spelled `{value}_{kind}` or `{kind}_{value}`. The stored branch
                 # below reads `opens_late`; the two derived names are
