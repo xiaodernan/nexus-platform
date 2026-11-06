@@ -2215,6 +2215,30 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                              "source": "typed_price_sense"})
                     continue
 
+                # D701: `time_pref/open_late` emitted by the NLU when a user types
+                # "宵夜", "深夜", "open late" etc. maps to the merchant's `opens_late`
+                # boolean attribute. The stored branch reads the same attribute;
+                # this is the transient lane's mirror.
+                if str(pref_kind) == "time_pref" and str(pref_value) == "open_late":
+                    def make_late_match(p):
+                        def _match(a2):
+                            if a2.get("opens_late") is True:
+                                return _sided(p, liked=True)
+                            if a2.get("opens_late") is False:
+                                return _sided(p, liked=False)
+                            return None
+                        return _match
+                    match_fn = make_late_match(1.0)
+                    score = match_fn(attrs)
+                    if score is not None:
+                        intent_pref_scores.append(score)
+                        if score >= 0.5:
+                            intent_matched_labels.append(
+                                {"label": _preference_label(str(pref_kind), str(pref_value),
+                                               pref_value),
+                                 "source": "typed_open_late"})
+                    continue
+
                 # D530: `time_pref/open_late` is the one preference whose attribute is
                 # not spelled `{value}_{kind}` or `{kind}_{value}`. The stored branch
                 # below reads `opens_late`; the two derived names are
