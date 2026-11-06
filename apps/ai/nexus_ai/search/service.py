@@ -2487,6 +2487,30 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                  "source": "typed_parking"})
                     continue
 
+                # D717: `style/outdoor` emitted by the NLU when a user types "戶外" /
+                # "outdoor" etc. maps to the merchant's `outdoor_style` boolean attribute.
+                # The stored branch (line ~1902) reads the same attribute; this is the
+                # transient lane's mirror.
+                if str(pref_kind) == "style" and str(pref_value) == "outdoor":
+                    def make_outdoor_match(p):
+                        def _match(a2):
+                            if a2.get("outdoor_style") is True:
+                                return _sided(p, liked=True)
+                            if a2.get("outdoor_style") is False:
+                                return _sided(p, liked=False)
+                            return None
+                        return _match
+                    match_fn = make_outdoor_match(1.0)
+                    score = match_fn(attrs)
+                    if score is not None:
+                        intent_pref_scores.append(score)
+                        if score >= 0.5:
+                            intent_matched_labels.append(
+                                {"label": _preference_label(str(pref_kind), str(pref_value),
+                                               pref_value),
+                                 "source": "typed_outdoor"})
+                    continue
+
                 # D700: `price_sense` (cheap/premium) emitted by the NLU when a user types
                 # "平", "cheap", "貴", "premium" etc. maps to the merchant's `avg_price_hkd`.
                 # The stored branch (line ~1790) reads the same attribute; this is the
