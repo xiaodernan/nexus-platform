@@ -2088,7 +2088,6 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     # (json.dumps), and the matcher reads it through cuisine_matches via
                     # the leaf map bridge. The ranking lane must now also read it so that
                     # a user's typed cuisine preference is reflected in merchant scores.
-                    import json
                     try:
                         like_vals = json.loads(str(pref_value)).get("values", [])
                     except Exception:
