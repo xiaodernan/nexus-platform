@@ -2057,6 +2057,26 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 if not pref_kind or not pref_value:
                     continue
 
+                # D702: `cuisine/vegetarian` emitted by the NLU when a user types
+                # "素食" etc. maps to the merchant's `cuisine_vegetarian` boolean
+                # attribute. The stored branch reads the same attribute; this is
+                # the transient lane's mirror. Generic cuisine_matches would check
+                # for a "vegetarian" tag which no merchant carries.
+                if str(pref_kind) == "cuisine" and str(pref_value) == "vegetarian":
+                    val = attrs.get("cuisine_vegetarian")
+                    score = None
+                    if val is True:
+                        score = 1.0 if polarity > 0 else 0.0
+                    elif val is False:
+                        score = 0.0 if polarity > 0 else 1.0
+                    intent_pref_scores.append(score if score is not None else 0.5)
+                    if score is not None and score >= 0.5:
+                        intent_matched_labels.append(
+                            {"label": _preference_label(str(pref_kind), str(pref_value),
+                                               pref_value),
+                                 "source": "typed_cuisine_vegetarian"})
+                    continue
+
                 # D394: a typed cuisine ("japanese") meets the taxonomy ("sushi") through
                 # the lexicon's leaf map, not through an attribute name.
                 if str(pref_kind) == "cuisine":
