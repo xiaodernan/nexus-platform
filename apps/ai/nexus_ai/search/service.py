@@ -2439,6 +2439,30 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                  "source": "typed_mtr_near"})
                     continue
 
+                # D715: `access/accessible` emitted by the NLU when a user types "輪椅" /
+                # "accessible" etc. maps to the merchant's `accessible_access` /
+                # `wheelchair_access` boolean attributes. The stored branch (line ~1956)
+                # reads the same attributes; this is the transient lane's mirror.
+                if str(pref_kind) == "access" and str(pref_value) == "accessible":
+                    def make_accessible_match(p):
+                        def _match(a2):
+                            if a2.get("accessible_access") is True or a2.get("wheelchair_access") is True:
+                                return _sided(p, liked=True)
+                            if a2.get("accessible_access") is False or a2.get("wheelchair_access") is False:
+                                return _sided(p, liked=False)
+                            return None
+                        return _match
+                    match_fn = make_accessible_match(1.0)
+                    score = match_fn(attrs)
+                    if score is not None:
+                        intent_pref_scores.append(score)
+                        if score >= 0.5:
+                            intent_matched_labels.append(
+                                {"label": _preference_label(str(pref_kind), str(pref_value),
+                                               pref_value),
+                                 "source": "typed_accessible"})
+                    continue
+
                 # D700: `price_sense` (cheap/premium) emitted by the NLU when a user types
                 # "平", "cheap", "貴", "premium" etc. maps to the merchant's `avg_price_hkd`.
                 # The stored branch (line ~1790) reads the same attribute; this is the
