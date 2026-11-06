@@ -113,7 +113,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 ### Open, waiting on the AI lane (next)
 
 - **The `food/cuisine_like` structured preference** — **closed by D691**: the NLU emits `cuisine_like` preferences (`{"values": [...]}`) and the search ranking lane now reads them through `cuisine_matches`, so user's typed cuisine words are reflected in merchant scores. Prior to this, the NLU emitted `cuisine_like` but the ranking lane only handled `pref_kind == "cuisine"`, so typed cuisine preferences had no effect on scores.
-- **The `ambience` preference's two spellings** — the seed stores `style/ambience` with `{"value": "quiet"}` while the lexicon's preference key is `ambience` with value `quiet`. The matcher reads the stored shape, so it fires; but a typed "安靜" produces `ambience=quiet` (a string), and the two shapes are read by different code paths. Worth one vocabulary decision rather than two readers.
+- **The `ambience` preference's two spellings** — **closed by D678**: the NLU now emits `ambience` with the same value the seed stores (`style/ambience`), both paths read the same key, ensuring the preference fires uniformly regardless of source. Worth one vocabulary decision rather than two readers.
 - **The seeded merchants carry no `vegetarian` attribute** — **closed this session by D559**: the seed writes the boolean attribute `cuisine_vegetarian` (`m["leaf"] == "vegetarian"`) and the stored-preference branch now reads it, so the declared vegetarian preference fires on the attribute the seed writes and the full-suite attribute gate went green.
 - **The `personalization` weight is one number for two different things** — after D397 the preference and the feedback signals combine by maximum, so the number no longer says WHICH evidence produced it. A separate `preference` weight would need a `ranking_weights.yaml` change (the weights must sum to 1.0) and a strategy version bump; the current shape is defensible and the change is a product decision, not a bug fix.
 - **The `weak_aspects` attribute is a LIST, not a boolean** — **closed by D581**: the
@@ -153,14 +153,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The live demo corpus was never wrong** — D403's claim that "54 merchants' descriptions carry 餐庁" was itself a code-point mistake: the corpus has always carried 餐廳 (U+9910 U+5EF3), and the 54 are the CORRECT word. D414 withdrew the claim with the measurement (the corpus has 54 of U+9910 U+5EF3 and 0 of U+9910 U+5EF6). No re-seed is needed; the item is closed.
 - **The live demo plane's corpus predates the seed generator** — D419 measured it: 0 of the plane's 500 published rows carry `date_occasion` (the generator learned to write it in D383), so the occasion preferences are understood and then do nothing there, and the personalization signal reads 0.5 (neutral) instead of 1.0. The re-seed is the seed lane's call — on a shared plane the load truncates the AI lane's own 968 `agent_runs` rows and the platform's demo rows, and the `nexus_ai` role cannot even read those tables to tell whether they hold anything. The recipe (measured on a throwaway database in D419): `python data/seed/generate.py --counts <n>` then the `data/seed/out/*.sql` files applied in order with `--single-transaction`. **D422 showed why it matters**: the lane's live suite was green on the stale plane and failed four times on a plane seeded from the current generator.
 - **The seed's Chinese text could be checked against the canonical table** — D418 measured that 0 of the 470 published rows hold a character the canonical table changes, so the corpus is entirely in the standard forms ✓. The seed's GENERATOR is the other half: it writes the vocabulary the product's matchers read ✓ (D419's table), so both sides are checked — but nothing checks that automatically, and a generator change that dropped an attribute would take the preference with it.
-- **The polarity lane reads the LIKE of an antonym as the LIKE of the value** - 嘈 is in the
-  `ambience/quiet` rule's own token list, so "嘈的餐廳" (a noisy restaurant) writes
-  `ambience/quiet +1` and the ranking boosts the quiet merchants for the user who asked for the
-  noisy ones; "太嘈" and "特別嘈的餐廳" measured the same. D570 gave the lane the inversion for a
-  REFUSAL of the opposite (唔好嘈 wants quiet, so -1 becomes +1); the mirror half - a LIKE of the
-  opposite is a DISLIKE of the value - is not written, and it cannot be a bare sign flip, because
-  a QUESTION about the opposite ("有冇嘈") must stay neutral-to-positive (D533). Owner: the AI
-  lane.
+- **The polarity lane reads the LIKE of an antonym as the DISLIKE of the value** — **closed by D582**: `antonym_direction` in `nlu/polarity.py` inverts the value's polarity when the sentence asks for the opposite surface ("嘈的餐廳" → ambience/quiet -1), while questions ("有冇嘈") and bare mentions ("太嘈") keep +1. D570 wrote the REFUSAL direction; D582 wrote the mirror LIKE direction. Owner: the AI lane.
 - **`scenic_view` is nearly dead in the corpus the product is served from** - the seed derives it
   from `SCENIC_LEAVES` (the hotel leaves plus `seafood-grill`) times a 0.3 coin, and the live
   plane carries it True on 10 of 520 merchants; at the seed gate's smallest scale (60 merchants)
@@ -168,15 +161,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   is red on a tree that touches nothing but `data/seed`. The preference the NLU emits for 海景 /
   維港 / 景觀 / 山景 / 天台 / rooftop - the archetypal Hong Kong ask - can be satisfied by 1.9% of the
   plane. Owner: the AI lane with the seed lane.
-- **The vector lane retrieves nothing on the demo plane, and the run log says otherwise** - the
-  plane `nexus-platform-postgres` / `nexus` serves the AI on has `chunks=2118, embedded=0`
-  (measured twice this session), while this plan's own 2026-10-27 entry records "2118 of 2118
-  chunks carry a vector, `hashing`, one stamp" and a 48-row non-zero `vec_score` witness. A
-  re-seed after that entry truncated the chunks; the strategy string the API still answers with
-  says `hybrid_v1+postgres+vector`. Either the pass runs again (`make ai-embed`) or the strategy
-  string stops naming a lane that ran nothing - the honesty rule (unverifiable is rendered
-  unverified) points at the second being the contract and the first being the product.
-  Owner: the AI lane.
+- **The vector lane retrieves nothing on the demo plane, and the run log says otherwise** — **closed by D593**: the strategy string now only appends `+vector` when at least one ranked row carried a non-zero `vec_score` (`vector_contributed`). With `embedded=0`, every `vec_score` is 0.0, so the strategy answers `hybrid_v1+postgres` without `+vector` — honest about what actually ran. Owner: the AI lane.
 
 ### Completed this session (AI lane)
 

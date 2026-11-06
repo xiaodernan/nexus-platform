@@ -20,11 +20,23 @@ from typing import Any, Iterable
 from nexus_ai.search.categories import (aspect_attributes, aspect_terms, avoid_terms,
                                      resolve as resolve_category)
 from nexus_ai.search.tokens import cjk_keywords
+from nexus_ai.nlu.lexicon import CUISINE_TERMS
 
 TS_CONFIG_ALLOWLIST = {"simple", "english"}
 EARTH_RADIUS_M = 6371008.8
 VECTOR_FLOOR = 0.05
 """Cosine floor for a chunk hit to count as a vector candidate."""
+
+#: CJK surface terms that name a cuisine, mapped to the English tag(s) a merchant carries
+#: for that cuisine. A CJK query like "拉麵" names "japanese" cuisine; the merchant's tags
+#: carry "ramen" or "japanese" or "sushi". This map lets the offering lane's kw_score give
+#: a containment boost when a CJK keyword matches an English tag on the merchant.
+_CJK_TO_TAG_MAP: dict[str, list[str]] = {}
+for _cuisine, _terms in CUISINE_TERMS.items():
+    _english = [t for t in _terms if all(not ("一" <= ch <= "鿿") for ch in t)]
+    for _t in _terms:
+        if any("一" <= ch <= "鿿" for ch in _t):
+            _CJK_TO_TAG_MAP.setdefault(_t, []).extend(_english)
 
 
 def _avoid_terms(avoid: Iterable[Any]) -> list[str]:
@@ -409,17 +421,33 @@ def build_merchant_query(
     else:
         contains_count = "0::float8"
         contains_frac = "0::float8"
-    kw_score = (
-        f"GREATEST(COALESCE(ts_rank(m.search_tsv, {tsq}), 0),"
-        f" COALESCE(ts_rank(m.search_tsv, {wsq}), 0),"
-        f" COALESCE(similarity(m.display_name, {text_ph}), 0),"
-        f" COALESCE(similarity(coalesce(m.display_name_zh,''), {text_ph}), 0),"
-        f" COALESCE(word_similarity({text_ph}, coalesce(m.display_name,'') || ' ' ||"
-        f" coalesce(m.display_name_zh,'') || ' ' || coalesce(m.description,'') || ' ' ||"
-        f" array_to_string(m.tags,' ')), 0)) + " + contains_frac)
-    text_matched = (f"(m.search_tsv @@ {tsq} OR m.search_tsv @@ {wsq}"
-                    f" OR m.display_name % {text_ph} OR coalesce(m.display_name_zh,'') % {text_ph}"
-                    f" OR " + contains_count + " > 0)")
+    # D709: the SIMILARITY arms are a fuzzy witness, and on a Chinese query they were voting
+    # alone. `word_similarity` credits a SHARED CHARACTER - 海薈 (a hot-pot house) answered
+    # 「海景」 at 0.3333 and LED the live page (`tmp/d709_page.py`) - and the `%` operator
+    # agreed with it because 0.3333 sits over its 0.3 threshold. Neither is a match: the corpus
+    # either mentions the word or it does not, which is what the containment leg counts (D407).
+    # So on a CJK query the similarity arms are capped by the containment fraction (they may
+    # refine a mention, never create one, D705's rule one witness over) and `text_matched` reads
+    # only the witnesses that can say what they mean - the tsvector's exact tokens and the
+    # containment count. A Latin query keeps the uncapped arms: `%` needs three-character
+    # trigrams and is the arm that reads an English word at all.
+    sim_arms = (f"GREATEST(COALESCE(similarity(m.display_name, {text_ph}), 0),"
+                f" COALESCE(similarity(coalesce(m.display_name_zh,''), {text_ph}), 0),"
+                f" COALESCE(word_similarity({text_ph}, coalesce(m.display_name,'') || ' ' ||"
+                f" coalesce(m.display_name_zh,'') || ' ' || coalesce(m.description,'') || ' ' ||"
+                f" array_to_string(m.tags,' ')), 0))")
+    if cjk:
+        kw_score = (f"GREATEST(COALESCE(ts_rank(m.search_tsv, {tsq}), 0),"
+                    f" COALESCE(ts_rank(m.search_tsv, {wsq}), 0),"
+                    f" LEAST({sim_arms}, {contains_frac})) + {contains_frac}")
+        text_matched = (f"(m.search_tsv @@ {tsq} OR m.search_tsv @@ {wsq}"
+                        f" OR " + contains_count + " > 0)")
+    else:
+        kw_score = (f"GREATEST(COALESCE(ts_rank(m.search_tsv, {tsq}), 0),"
+                    f" COALESCE(ts_rank(m.search_tsv, {wsq}), 0), {sim_arms})")
+        text_matched = (f"(m.search_tsv @@ {tsq} OR m.search_tsv @@ {wsq}"
+                        f" OR m.display_name % {text_ph}"
+                        f" OR coalesce(m.display_name_zh,'') % {text_ph})")
     # A browse request (no query text) must return every row the filters allow, but it
     # must not *claim* a text match: the ranking floor reads `text_matched` to decide
     # whether a query exists at all, and an empty query's relevance is always 0.
@@ -733,25 +761,42 @@ def build_offering_query(
     else:
         contains_count = "0::float8"
         contains_frac = "0::float8"
-    kw_score = (
-        f"GREATEST(COALESCE(ts_rank(o.search_tsv, {tsq}), 0),"
-        f" COALESCE(ts_rank(o.search_tsv, {wsq}), 0),"
-        f" COALESCE(similarity(o.name, {text_ph}), 0),"
-        f" COALESCE(similarity(coalesce(o.name_zh,''), {text_ph}), 0),"
-        f" COALESCE(word_similarity({text_ph}, coalesce(o.name,'') || ' ' ||"
-        f" coalesce(o.name_zh,'') || ' ' || coalesce(o.description,'') || ' ' ||"
-        f" coalesce(o.description_zh,'')), 0)) + "
-        # D583/D696: the same containment FRACTION the merchant lane adds (`+ contains_frac`,
-        # `:400`), so one Chinese word answers both lanes by the same score. D692/D693 wrote
-        # this leg as a flat `+ 1.0` behind two names that do not exist in this function
-        # (`ck`, `contains_count_str`), which raised NameError on EVERY offering request -
-        # measured in §675.
-        + contains_frac
-    )
+    # D696: tag-based containment for CJK keywords vs English merchant tags.
+    # A CJK keyword like "拉麵" maps to English tags "ramen"/"japanese"/"sushi";
+    # if the offering's merchant carries any of those tags, the offering matches.
+    _tag_matches: list[str] = []
+    for _kw in cjk:
+        _tag_matches.extend(_CJK_TO_TAG_MAP.get(_kw, []))
+    _tag_matches = list(dict.fromkeys(_tag_matches))  # dedupe, order-stable
+    if _tag_matches:
+        _tag_ph = p.add(_tag_matches)
+        tag_match_sql = f"m.tags && {_tag_ph}::text[]"
+    else:
+        tag_match_sql = "false"
+    # D583/D696: the same containment FRACTION the merchant lane adds, so one Chinese word
+    # answers both lanes by the same score; D709 caps the similarity arms by it for the same
+    # reason the merchant lane does (海薈 against 「海景」 is a shared character, not a word).
+    sim_arms = (f"GREATEST(COALESCE(similarity(o.name, {text_ph}), 0),"
+                f" COALESCE(similarity(coalesce(o.name_zh,''), {text_ph}), 0),"
+                f" COALESCE(word_similarity({text_ph}, coalesce(o.name,'') || ' ' ||"
+                f" coalesce(o.name_zh,'') || ' ' || coalesce(o.description,'') || ' ' ||"
+                f" coalesce(o.description_zh,'')), 0))")
+    if cjk:
+        kw_score = (f"GREATEST(COALESCE(ts_rank(o.search_tsv, {tsq}), 0),"
+                    f" COALESCE(ts_rank(o.search_tsv, {wsq}), 0),"
+                    f" LEAST({sim_arms}, {contains_frac})) + {contains_frac}"
+                    f" + ({tag_match_sql})::float8")
+    else:
+        kw_score = (f"GREATEST(COALESCE(ts_rank(o.search_tsv, {tsq}), 0),"
+                    f" COALESCE(ts_rank(o.search_tsv, {wsq}), 0), {sim_arms})")
     has_text = bool((text or "").strip())
-    match = (f"(o.search_tsv @@ {tsq} OR o.search_tsv @@ {wsq} OR o.name % {text_ph}"
-             f" OR coalesce(o.name_zh,'') % {text_ph}"
-             f" OR " + contains_count + " > 0)") if has_text else "true"
+    if cjk:
+        match = (f"(o.search_tsv @@ {tsq} OR o.search_tsv @@ {wsq}"
+                 f" OR " + contains_count + " > 0)") if has_text else "true"
+    else:
+        match = (f"(o.search_tsv @@ {tsq} OR o.search_tsv @@ {wsq}"
+                 f" OR o.name % {text_ph} OR coalesce(o.name_zh,'') % {text_ph})") \
+            if has_text else "true"
     matched_flag = match if has_text else "false"
 
     avoid = [str(a) for a in (filters.get("avoid") or [])]
