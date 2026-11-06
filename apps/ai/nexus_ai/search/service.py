@@ -1887,17 +1887,19 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     # answered nobody - the merchant's own weakness was invisible to the
                     # preference plane.
                     val = value.get("value") if isinstance(value, dict) else None
-                    if isinstance(val, bool):
-                        def make_weakness_match(key_name, v, w):
+                    # D720: accept `value: "noise"` (string aspect name, as emitted by the
+                    # transient lane in D695) as well as `value: true` (boolean). A boolean
+                    # `false` means the user dislikes weakness (prefers merchants that ARE
+                    # weak at the aspect).
+                    is_like = True if val is True or val == "noise" else False if val is False else None
+                    if is_like is not None:
+                        def make_weakness_match(key_name, liked, w):
                             def _match(attrs):
                                 weak = {str(x) for x in (attrs.get("weak_aspects") or []) if x}
                                 is_weak = key_name in weak
-                                # D581: a merchant weak at a named aspect fails a requirement
-                                # for strength there; a merchant that is not weak answers on
-                                # the user's own side of the preference.
-                                return _sided(w, liked=not is_weak) if v else None
+                                return _sided(w, liked=is_weak if liked else not is_weak)
                             return _match
-                        match_fn = make_weakness_match(str(key), val, float(weight))
+                        match_fn = make_weakness_match(str(key), is_like, float(weight))
                 # STYLE: outdoor, indoor
                 elif kind == "style" and key in ("outdoor", "indoor"):
                     # D527: the row's VALUE says which way it points. This branch used to
