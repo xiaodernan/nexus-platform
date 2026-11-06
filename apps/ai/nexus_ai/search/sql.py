@@ -421,6 +421,19 @@ def build_merchant_query(
     else:
         contains_count = "0::float8"
         contains_frac = "0::float8"
+    # D705: CJK queries also match English tags on the merchant's tags column.
+    # A CJK keyword like "拉麵" maps to English tags "ramen"/"japanese"/"sushi";
+    # if the merchant carries any of those tags, the kw_score gets a containment boost.
+    # This mirrors D696's offering-lane fix and uses the same _CJK_TO_TAG_MAP.
+    _tag_matches_m: list[str] = []
+    for _kw in cjk:
+        _tag_matches_m.extend(_CJK_TO_TAG_MAP.get(_kw, []))
+    _tag_matches_m = list(dict.fromkeys(_tag_matches_m))
+    if _tag_matches_m:
+        _tag_ph_m = p.add(_tag_matches_m)
+        tag_match_sql_m = f"m.tags && {_tag_ph_m}::text[]"
+    else:
+        tag_match_sql_m = "false"
     # D709: the SIMILARITY arms are a fuzzy witness, and on a Chinese query they were voting
     # alone. `word_similarity` credits a SHARED CHARACTER - 海薈 (a hot-pot house) answered
     # 「海景」 at 0.3333 and LED the live page (`tmp/d709_page.py`) - and the `%` operator
@@ -439,7 +452,8 @@ def build_merchant_query(
     if cjk:
         kw_score = (f"GREATEST(COALESCE(ts_rank(m.search_tsv, {tsq}), 0),"
                     f" COALESCE(ts_rank(m.search_tsv, {wsq}), 0),"
-                    f" LEAST({sim_arms}, {contains_frac})) + {contains_frac}")
+                    f" LEAST({sim_arms}, {contains_frac})) + {contains_frac}"
+                    f" + ({tag_match_sql_m})::float8")
         text_matched = (f"(m.search_tsv @@ {tsq} OR m.search_tsv @@ {wsq}"
                         f" OR " + contains_count + " > 0)")
     else:
