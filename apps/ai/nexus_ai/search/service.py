@@ -2177,6 +2177,44 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                  "source": "typed_style_ambience"})
                     continue
 
+                # D700: `price_sense` (cheap/premium) emitted by the NLU when a user types
+                # "平", "cheap", "貴", "premium" etc. maps to the merchant's `avg_price_hkd`.
+                # The stored branch (line ~1790) reads the same attribute; this is the
+                # transient lane's mirror.
+                if str(pref_kind) == "price_sense" and str(pref_value) in ("cheap", "premium"):
+                    is_cheap = str(pref_value) == "cheap"
+                    price = attrs.get("avg_price_hkd")
+                    score = None
+                    if price is not None:
+                        try:
+                            price = float(price)
+                        except Exception:
+                            price = None
+                    if price is not None:
+                        if is_cheap:
+                            if price <= 100:
+                                score = 1.0
+                            elif price <= 200:
+                                score = 0.5
+                            else:
+                                score = 0.0
+                        else:
+                            if price >= 400:
+                                score = 1.0
+                            elif price >= 200:
+                                score = 0.5
+                            else:
+                                score = 0.0
+                        if polarity <= 0:
+                            score = 1.0 - score
+                    intent_pref_scores.append(score if score is not None else 0.5)
+                    if score is not None and score >= 0.5:
+                        intent_matched_labels.append(
+                            {"label": _preference_label(str(pref_kind), str(pref_value),
+                                               pref_value),
+                             "source": "typed_price_sense"})
+                    continue
+
                 # D530: `time_pref/open_late` is the one preference whose attribute is
                 # not spelled `{value}_{kind}` or `{kind}_{value}`. The stored branch
                 # below reads `opens_late`; the two derived names are
