@@ -2216,6 +2216,33 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                  "source": "typed_style_ambience"})
                     continue
 
+                # D706: `ambience/quiet` and `ambience/lively` emitted by the NLU when a user
+                # types "安靜" / "熱鬧" etc. maps to the merchant's `quiet_ambience` /
+                # `lively_ambience` boolean attributes. The stored branch (line ~1694) reads
+                # the same attributes; this is the transient lane's mirror.
+                if str(pref_kind) == "ambience" and str(pref_value) in ("quiet", "lively"):
+                    want = "quiet_ambience" if str(pref_value) == "quiet" else "lively_ambience"
+                    other = "lively_ambience" if str(pref_value) == "quiet" else "quiet_ambience"
+
+                    def make_ambience_match(want_key, other_key, p):
+                        def _match(a2):
+                            if a2.get(want_key) is True:
+                                return _sided(p, liked=True)
+                            if a2.get(other_key) is True:
+                                return _sided(p, liked=False)
+                            return None
+                        return _match
+                    match_fn = make_ambience_match(want, other, 1.0)
+                    score = match_fn(attrs)
+                    if score is not None:
+                        intent_pref_scores.append(score)
+                        if score >= 0.5:
+                            intent_matched_labels.append(
+                                {"label": _preference_label(str(pref_kind), str(pref_value),
+                                               pref_value),
+                                 "source": "typed_ambience"})
+                    continue
+
                 # D700: `price_sense` (cheap/premium) emitted by the NLU when a user types
                 # "平", "cheap", "貴", "premium" etc. maps to the merchant's `avg_price_hkd`.
                 # The stored branch (line ~1790) reads the same attribute; this is the
