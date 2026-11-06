@@ -2463,6 +2463,30 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                  "source": "typed_accessible"})
                     continue
 
+                # D716: `access/parking` emitted by the NLU when a user types "停車場" /
+                # "parking" etc. maps to the merchant's `parking_access` boolean attribute.
+                # The stored branch (line ~1976) reads the same attribute; this is the
+                # transient lane's mirror.
+                if str(pref_kind) == "access" and str(pref_value) == "parking":
+                    def make_parking_match(p):
+                        def _match(a2):
+                            if a2.get("parking_access") is True:
+                                return _sided(p, liked=True)
+                            if a2.get("parking_access") is False:
+                                return _sided(p, liked=False)
+                            return None
+                        return _match
+                    match_fn = make_parking_match(1.0)
+                    score = match_fn(attrs)
+                    if score is not None:
+                        intent_pref_scores.append(score)
+                        if score >= 0.5:
+                            intent_matched_labels.append(
+                                {"label": _preference_label(str(pref_kind), str(pref_value),
+                                               pref_value),
+                                 "source": "typed_parking"})
+                    continue
+
                 # D700: `price_sense` (cheap/premium) emitted by the NLU when a user types
                 # "平", "cheap", "貴", "premium" etc. maps to the merchant's `avg_price_hkd`.
                 # The stored branch (line ~1790) reads the same attribute; this is the
