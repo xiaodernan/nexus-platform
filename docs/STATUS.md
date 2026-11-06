@@ -34017,3 +34017,43 @@ decide what is red.
   that file and `src/lib/mock/index.ts` are another lane's in-flight D721 (its part-of-day windows
   disagree with the service's `timeparse.py`: 7 labels against 4, and 深夜 opens five hours early),
   reported and not edited here. `npx tsc --noEmit` clean.
+
+---
+
+## 691. D712 · the readability check said "on both themes" and read one, and the dark half of the palette had never met a browser (`tests/e2e/specs/visual/quality.spec.ts`)
+
+**The claim was false.** `readability: primary text meets AA contrast on both themes` went to `/`,
+measured once, and never touched the dark palette. That half of the sheet is not a small thing:
+`packages/ui/src/styles/tokens.css` carries a complete `.dark` block, the Tailwind preset is
+configured `darkMode: ['class']` (`packages/ui/tailwind-preset.ts:15`), the icon set has `sun` and
+`moon` — and **nothing in the product ever puts that class on `<html>`**. There is no
+`classList.add('dark')`, no `prefers-color-scheme` rule and no toggle component; the token sheet's
+own header even promises "a theme switch is a single `class` change on `<html>` (no re-render / no
+FOUC flash when the inline script in `app/layout.tsx` applies the stored theme before paint)", and
+that inline script does not exist either. So the dark palette was carried, configured and promised,
+and read by no browser and no user.
+
+**The measurement had a trap, and it produced two false defects before the truth.** A class flip
+that changes a custom property invalidates the properties that **depend** on it, and that second
+pass happens after the first. The first run reported the accent buttons (`预订`, `菜单`) at
+**1.97:1**; after forcing a recalculation it reported `收藏` / `分享` at **2.69:1**. Both were stale
+readings: the same element, in the same page, reported `color: rgb(82,90,112)` (the *light* muted
+ink) while its own `--nexus-ink-muted` already read `#a7afc3`, and the two Playwright projects
+disagreed with each other about the same button. The check now waits **two animation frames**
+before it measures — the dependent invalidation needs the second one.
+
+**What is true, measured.** With the theme settled, the dark palette is AA-clean on the live page:
+the readability check now measures both themes and **passes** both. That agrees with the static
+matrix D592 computed from the token sheet (the dark theme's tightest cell is 5.26:1), and it is the
+first browser reading the dark half of the palette has ever had.
+
+**What is filed, not decided.** The dark theme is unreachable in the product: the tokens, the
+preset's `darkMode: ['class']` and the icons are all shipped, so the switch is the smaller half of
+"ship it or drop the palette" — a product decision, recorded here with the evidence rather than
+taken here.
+
+- readers: the visual suite on the mock plane → **12 passed**, exit 0 (both projects × 6 checks),
+  with the readability check now measuring two themes instead of one. The stale-readings were
+  diagnosed with a throwaway probe under `tests/e2e/specs/visual/` (removed afterwards) that read
+  the computed styles, the inherited custom properties and the matching rules; the diagnosis is in
+  the check's own comment so the next reader does not have to rediscover it.

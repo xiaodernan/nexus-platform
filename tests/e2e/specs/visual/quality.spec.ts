@@ -79,9 +79,12 @@ test('responsive: mobile-first means no horizontal scroll at 375px', async ({ pa
   }
 });
 
-test('readability: primary text meets AA contrast on both themes', async ({ page }) => {
-  await page.goto('/');
-  const contrast = await page.evaluate(() => {
+/**
+ * The contrast of every primary text element on the page, measured the way WCAG measures it:
+ * relative luminance of the computed colour against the computed background it actually sits on.
+ */
+async function measureContrast(page: Page) {
+  return page.evaluate(() => {
     const parse = (c: string): number[] => (c.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number);
     const num = (v: number | undefined) => (Number.isFinite(v) ? (v as number) : 0);
     const lum = (rgb: number[]) => {
@@ -108,8 +111,40 @@ test('readability: primary text meets AA contrast on both themes', async ({ page
       return { text: el.textContent?.slice(0, 24), ratio: (Math.max(fg, b) + 0.05) / (Math.min(fg, b) + 0.05) };
     });
   });
-  const weak = contrast.filter((c) => c.ratio < 4.5 && c.text?.trim());
-  expect(weak, `below AA: ${JSON.stringify(weak.slice(0, 5))}`).toEqual([]);
+}
+
+/**
+ * The name says "both themes", so the test now measures both. The dark palette is a real block of
+ * `tokens.css` (`.dark { ... }`) and the Tailwind preset is configured `darkMode: ['class']`, but
+ * nothing in the product ever puts that class on `<html>` — so the dark half of the sheet had never
+ * been read by a browser, and this check's name was a claim it did not make.
+ *
+ * The class is applied here directly: whether the PRODUCT should ship a dark theme is a product
+ * decision (filed, not decided here), but the palette is in the sheet, and a palette nobody renders
+ * is a palette nobody measures.
+ */
+test('readability: primary text meets AA contrast on both themes', async ({ page }) => {
+  await page.goto('/');
+  for (const theme of ['light', 'dark'] as const) {
+    if (theme === 'dark') {
+      await page.evaluate(() => document.documentElement.classList.add('dark'));
+      // Wait for TWO animation frames before measuring. A class flip that changes a custom
+      // property invalidates the properties that DEPEND on it (a `color: var(--nexus-ink-muted)`
+      // declaration), and that second pass happens after the first one -- so a measurement taken in
+      // between reads the previous theme's colours. Measured here: the same element reported
+      // `color: rgb(82,90,112)` (the light muted ink) while its own `--nexus-ink-muted` already
+      // read `#a7afc3`, and the two Playwright projects disagreed with each other on the same page.
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+          }),
+      );
+    }
+    const contrast = await measureContrast(page);
+    const weak = contrast.filter((c) => c.ratio < 4.5 && c.text?.trim());
+    expect(weak, `below AA in the ${theme} theme: ${JSON.stringify(weak.slice(0, 5))}`).toEqual([]);
+  }
 });
 
 test('motion respects prefers-reduced-motion (§78)', async ({ browser }) => {
