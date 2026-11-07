@@ -34138,3 +34138,14 @@ side effect.
 **Measured.** Open/closed/opens-at text now renders in the user's locale (zh-HK, zh-CN, en) in both card availability blocks and compare grid cells.
 
 - readers: open_state locale-aware in cards and compare grid - D605's open-state residue closed.
+
+
+## 726. D726 · alias accessibility to access in preference ranking (stored + transient)
+
+**The gap.** ccessibility is a writable kind (published contract's word for step-free preference) that the ranker never read - it only handled ccess/*. A caller obeying the types package stored a row that answered nothing (D527 mirror).
+
+**The fix.** Aliased ccessibility to ccess in the preference ranking reader for all access keys (pet_friendly, mtr_near, accessible, parking) in both stored and transient (intent) paths. Updated the AST-based test readers to recognize kind in (...) forms. Updated 	est_a_preference_kind_the_ranker_reads_is_one_the_api_accepts.py to reflect ccessibility is now readable.
+
+**Measured.** 25 passed, 1 skipped on accessibility/preference declaration tests. No double-scoring (same branch handles both spellings per D545).
+
+- readers: accessibility/step_free preferences now read by ranking; activity/brand remain unread (recorded).
