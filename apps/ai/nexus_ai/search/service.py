@@ -1265,6 +1265,7 @@ def candidates_from_rows(rows: Sequence[dict[str, Any]], plan: SearchPlan, *,
                          vector_semantic: bool = True,
                          typed_cuisine: dict[str, float] | None = None,
                          preference_labels: dict[str, list[dict[str, str]]] | None = None,
+                         locale: str = "zh-HK",
                          ) -> list[Candidate]:
     out: list[Candidate] = []
     for row in rows:
@@ -2706,7 +2707,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                       vector_lane=vector_lane,
                                       vector_semantic=vector_semantic,
                                       typed_cuisine=typed_cuisine,
-                                      preference_labels=preference_labels)
+                                      preference_labels=preference_labels,
+                                      locale=locale)
     ranked = organic_rank(candidates, w)
     ranked = apply_sort_preference(ranked, plan.sort_preference)
     ranked = apply_sponsored(ranked, w) if include_sponsored else ranked
@@ -2741,10 +2743,41 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     strategy = f"{w.version}+{backend.name}"
     if vector_contributed:
         strategy += "+vector"
+    # D728: if a budget band was requested and no returned result falls within it,
+    # state that plainly rather than showing out-of-band rows with no explanation.
+    notice = None
+    if cards and (plan.budget_min is not None or plan.budget_max is not None):
+        bmin = plan.budget_min
+        bmax = plan.budget_max
+        if plan.budget_per == "party" and plan.party_size and int(plan.party_size) > 1:
+            ps = int(plan.party_size)
+            if bmax is not None:
+                bmax = float(bmax) / ps
+            if bmin is not None:
+                bmin = float(bmin) / ps
+        in_band = False
+        for s in top:
+            p = s.candidate.price
+            if p is None:
+                continue
+            p = float(p)
+            if bmin is not None and p < float(bmin):
+                continue
+            if bmax is not None and float(bmax) > 0 and p > float(bmax):
+                continue
+            in_band = True
+            break
+        if not in_band:
+            _BAND_NOTICE = {
+                "zh-HK": "暫時未有符合你預算範圍的結果，以下是較接近的選項。",
+                "zh-CN": "暂时没有符合你预算范围的结果，以下是较接近的选项。",
+                "en": "No results matched your budget range; here are the closest options.",
+            }
+            notice = _BAND_NOTICE.get(locale) or _BAND_NOTICE["zh-HK"]
     response = SearchResponse(
         items=cards, facets=facets, took_ms=took_ms, strategy=strategy,
         degraded=False, provider="none", total_estimate=max(len(ranked), pool_total),
-        agent_run_id=None, relevance_floor_applied=True)
+        agent_run_id=None, relevance_floor_applied=True, notice=notice)
     return cards, response, bundle, top
 
 

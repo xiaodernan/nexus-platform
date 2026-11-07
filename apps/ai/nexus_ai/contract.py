@@ -229,7 +229,10 @@ class IntentLocation(_Strict):
 
 
 class IntentTime(_Strict):
-    type: Optional[Literal["explicit", "relative", "range", "unspecified"]] = None
+    # D725: `open_now` is the member `packages/types/src/schemas/intent.json` publishes for
+    # this field and this model did not, so the frame the schema's own fixture ships was
+    # refused inbound (`tmp/d711_published_domain.txt`).
+    type: Optional[Literal["explicit", "relative", "range", "open_now", "unspecified"]] = None
     starts_at: Optional[datetime] = None
     ends_at: Optional[datetime] = None
     raw: Optional[str] = None
@@ -404,6 +407,9 @@ class SearchResponse(BaseModel):
     # D467: the answer carries the intent it understood - the route used to patch this
     # field onto the dumped model, so the model did not describe the answer.
     intent: Optional[Intent] = None
+    # D728: when a requested price band cannot be satisfied by the returned results,
+    # the response states that plainly rather than showing out-of-band rows with no explanation.
+    notice: Optional[str] = None
 
 
 class ConversationView(BaseModel):
