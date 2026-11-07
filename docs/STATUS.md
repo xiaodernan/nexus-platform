@@ -34205,3 +34205,14 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Fix.** Updated PLAN item to PARTIAL D731 with accurate state. No code change required.
 
 - readers: noise/queue avoid parity confirmed; smoking remains ungrounded without corpus facts.
+
+
+## 732. D732 · compute_open returns datetime opens_at/closes_at for OpenState contract
+
+**The gap.** `compute_open()` returned `opens_at`/`closes_at` as `HH:MM` strings while `OpenState` declares `Optional[datetime]`; `build_card` previously dropped them to avoid validation issues, so the contract fields were never populated.
+
+**The fix.** `compute_open()` now returns `opens_at`/`closes_at` as datetimes anchored to HK local day (cross-midnight closes use the next day). `build_card` passes them through to `OpenState` and defensively drops legacy `HH:MM` strings. `closes_hhmm` remains on the raw open_state dict for display/reason text.
+
+**Measured.** `test_cards.py` passes (17 passed). `OpenState` accepts the new values.
+
+- readers: open state contract alignment; `closes_hhmm`/text behavior unchanged.
