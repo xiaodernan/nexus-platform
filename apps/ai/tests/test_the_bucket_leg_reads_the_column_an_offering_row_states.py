@@ -79,8 +79,11 @@ class TestTheOfferingLane:
 
     def test_an_offering_still_answers_no_bucket_it_does_not_state(self):
         rows = offerings()
-        for bucket in ("cafe", "bar", "bakery", "ramen"):
+        # D738: demo now includes a cafe offering (jasmine tea, Bamboo Tea House);
+        # buckets no demo offering states still answer empty.
+        for bucket in ("bar", "bakery", "ramen"):
             assert kept(rows, bucket) == [], bucket
+        assert kept(rows, "cafe") == ["demo-jasmine-tea"]
 
     def test_words_that_appear_nowhere_in_the_offering_do_not_veto_its_bucket(self):
         # \u60f3\u53bb\u8cb7\u5622 - "want to go shopping": no token of it appears in the

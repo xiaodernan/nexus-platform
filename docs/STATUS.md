@@ -34268,3 +34268,13 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** `tests/test_demo_data.py`, `tests/test_the_bucket_leg_reads_the_column_an_offering_row_states.py`, and `tests/test_search_plan.py`/`tests/test_search_pipeline.py` passed (73 passed, 1 DB-skipped in the targeted run). No change to cross-lane web/type contracts.
 
 - readers: demo/static degraded path is closer to live row shape for category/district filtering; bubble-tea/cafe fixture semantics remain fixture-authoring decisions (PLAN 3016).
+
+## 738. D738 · demo catalogue gains a cafe offering (static cafe bucket parity)
+
+**The gap.** The static/demo catalogue had 0 offerings on the `cafe` bucket while the live plane answered cafe with many merchant/offering rows (PLAN 3016 noted "leaves 0 demo offerings on that bucket"). D737 added `category_slugs`/leaf support, but no cafe offering existed.
+
+**The fix.** Added `demo-jasmine-tea` (Jasmine Tea Pot / 茉莉花茶, product, HKD 38) under `demo-bamboo-tea-house`, added `tea-house` leaf slug to Bamboo Tea House, and updated demo contract tests/counts (`test_demo_data.py`: 3 offerings, 20 facts). Updated `test_the_bucket_leg_reads_the_column_an_offering_row_states.py` to reflect that `cafe` is now a bucket a demo offering states (keeps `demo-jasmine-tea`) while bar/bakery/ramen still answer empty.
+
+**Measured.** `tests/test_demo_data.py tests/test_the_bucket_leg_reads_the_column_an_offering_row_states.py tests/test_search_plan.py` → 63 passed, 1 DB-skipped.
+
+- readers: degraded/static demo now includes a cafe offering; bubble-tea semantic fixture decision remains open (PLAN 3016).

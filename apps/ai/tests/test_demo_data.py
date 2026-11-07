@@ -54,7 +54,7 @@ class TestMerchantRows:
 class TestOfferingRows:
     def test_count_and_origin(self):
         rows = DD._offering_rows()
-        assert len(rows) == 2
+        assert len(rows) == 3
         assert all(r["data_origin"] == "demo" for r in rows)
 
     def test_every_offering_references_a_real_merchant(self):
@@ -75,7 +75,7 @@ class TestOfferingRows:
 class TestFactRows:
     def test_count_and_freshness(self):
         facts = DD._fact_rows(NOW)
-        assert len(facts) == 19
+        assert len(facts) == 20
         assert all(f["stale"] is False for f in facts)
         assert all(f["observed_at"] == NOW - timedelta(hours=2) for f in facts)
 
@@ -83,7 +83,7 @@ class TestFactRows:
         facts = DD._fact_rows(NOW)
         offering_prices = [f for f in facts
                            if f["subject_type"] == "offering" and f["attribute"] == "price"]
-        assert len(offering_prices) == len(DD._OFFERINGS) == 2
+        assert len(offering_prices) == len(DD._OFFERINGS) == 3
 
     def test_merchant_price_facts_only_where_price_exists(self):
         facts = DD._fact_rows(NOW)
@@ -128,8 +128,8 @@ class TestDemoBackend:
     def test_counts(self):
         b = DD.demo_backend(now=NOW)
         assert len(b.merchants) == 6
-        assert len(b.offerings) == 2
-        assert len(b._facts) == 19
+        assert len(b.offerings) == 3
+        assert len(b._facts) == 20
         assert len(b._hours) == 35
 
     def test_demo_is_active(self):

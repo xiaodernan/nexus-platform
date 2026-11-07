@@ -66,6 +66,7 @@ _MERCHANTS: list[dict[str, Any]] = [
     {
         "slug": "demo-bamboo-tea-house", "display_name": "Bamboo Tea House",
         "display_name_zh": "竹苑茶室", "category_primary": "cafe",
+        "category_leaf_slugs": ["tea-house"],
         "description": "Demo quiet tea house in Kowloon City (synthetic).",
         "tags": ["demo", "quiet", "afternoon"], "district": "Kowloon City",
         "avg_price_hkd": 60.0, "rating_agg": 4.5, "review_count": 58, "popularity": 0.4,
@@ -86,6 +87,9 @@ _OFFERINGS: list[dict[str, Any]] = [
     {"slug": "demo-running-shoes", "name": "Trail Running Shoes", "name_zh": "行山跑步鞋",
      "kind": "product", "price_amount": 699.0, "merchant_slug": "demo-rainbow-sports-store",
      "description": "Demo footwear SKU (synthetic)."},
+    {"slug": "demo-jasmine-tea", "name": "Jasmine Tea Pot", "name_zh": "茉莉花茶",
+     "kind": "product", "price_amount": 38.0, "merchant_slug": "demo-bamboo-tea-house",
+     "description": "Demo tea offering (synthetic)."},
 ]
 
 
