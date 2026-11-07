@@ -2107,7 +2107,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         intent_matched_labels.append(
                             {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_cuisine_vegetarian"})
+                                 "source": "typed"})
                     continue
 
                 # D704: `cuisine/spicy` emitted by the NLU when a user types
@@ -2126,7 +2126,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         intent_matched_labels.append(
                             {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_cuisine_spicy"})
+                                 "source": "typed"})
                     continue
 
                 # D394: a typed cuisine ("japanese") meets the taxonomy ("sushi") through
@@ -2177,7 +2177,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 intent_matched_labels.append(
                                     {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                     "source": "typed_like"})
+                                     "source": "typed"})
                         else:
                             # A LIKE already answers neutral for a non-match;
                             # a DISLIKE must too.
@@ -2208,7 +2208,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         intent_matched_labels.append(
                             {"label": _preference_label(str(pref_kind), str(pref_value),
                                        pref_value),
-                             "source": "typed_weakness"})
+                             "source": "typed"})
                     continue
 
                 # D699: `style/ambience` (quiet/lively) emitted by the NLU when a user types
@@ -2246,7 +2246,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_style_ambience"})
+                                 "source": "typed"})
                     continue
 
                 # D706: `ambience/quiet` and `ambience/lively` emitted by the NLU when a user
@@ -2273,7 +2273,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_ambience"})
+                                 "source": "typed"})
                     continue
 
                 # D707: `view/scenic` emitted by the NLU when a user types "海景" / "維港" /
@@ -2315,7 +2315,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_scenic"})
+                                 "source": "typed"})
                     continue
 
                 # D708: `access/pet_friendly` emitted by the NLU when a user types
@@ -2341,7 +2341,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_pet_friendly"})
+                                 "source": "typed"})
                     continue
 
                 # D709: `occasion/date` emitted by the NLU when a user types
@@ -2365,7 +2365,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_occasion_date"})
+                                 "source": "typed"})
                     continue
 
                 # D710: `occasion/group` emitted by the NLU when a user types "聚會" / "group"
@@ -2389,7 +2389,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_occasion_group"})
+                                 "source": "typed"})
                     continue
 
                 # D711: `occasion/family` emitted by the NLU when a user types "親子" / "family"
@@ -2413,7 +2413,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_occasion_family"})
+                                 "source": "typed"})
                     continue
 
                 # D712: `occasion/business` emitted by the NLU when a user types "商務" / "business"
@@ -2437,7 +2437,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_occasion_business"})
+                                 "source": "typed"})
                     continue
 
                 # D713: `occasion/solo` emitted by the NLU when a user types "一個人" / "solo"
@@ -2461,7 +2461,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_occasion_solo"})
+                                 "source": "typed"})
                     continue
 
                 # D714: `access/mtr_near` emitted by the NLU when a user types "地鐵" / "mtr"
@@ -2485,7 +2485,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_mtr_near"})
+                                 "source": "typed"})
                     continue
 
                 # D715: `access/accessible` emitted by the NLU when a user types "輪椅" /
@@ -2509,7 +2509,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_accessible"})
+                                 "source": "typed"})
                     continue
 
                 # D716: `access/parking` emitted by the NLU when a user types "停車場" /
@@ -2533,7 +2533,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_parking"})
+                                 "source": "typed"})
                     continue
 
                 # D717: `style/outdoor` emitted by the NLU when a user types "戶外" /
@@ -2557,7 +2557,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_outdoor"})
+                                 "source": "typed"})
                     continue
 
                 # D718: `style/indoor` emitted by the NLU when a user types "室內" / "indoor"
@@ -2581,7 +2581,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_indoor"})
+                                 "source": "typed"})
                     continue
 
                 # D700: `price_sense` (cheap/premium) emitted by the NLU when a user types
@@ -2619,7 +2619,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         intent_matched_labels.append(
                             {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                             "source": "typed_price_sense"})
+                             "source": "typed"})
                     continue
 
                 # D701: `time_pref/open_late` emitted by the NLU when a user types
@@ -2643,7 +2643,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_open_late"})
+                                 "source": "typed"})
                     continue
 
                 # D703: `weather/rainy_day` emitted by the NLU when a user types
@@ -2667,7 +2667,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                             intent_matched_labels.append(
                                 {"label": _preference_label(str(pref_kind), str(pref_value),
                                                pref_value),
-                                 "source": "typed_rainy_day"})
+                                 "source": "typed"})
                     continue
 
                 # D530: `time_pref/open_late` is the one preference whose attribute is
