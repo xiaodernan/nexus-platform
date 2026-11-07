@@ -2217,15 +2217,10 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   the noise at this corpus size but not free at production scale).
 
 - **`accessibility` is a writable kind that nothing reads, and `access` is the word that works**
-  - D588 widened both write lists to the kinds the ranking table has a clause for and refused to
-  shrink them, so three accepted words still have no reader: `activity` and `brand` never had
-  one, and `accessibility` is the trap - the published contract's own word for a step-free
-  preference, while the ranker's clause and the seed's row (`generate.py:1173`) both spell it
-  `access`. A caller who obeys the types package stores a row that answers nothing, which is the
-  mirror image of the fault D527 caught. Either the reader grows one clause that resolves both
-  spellings, or the stored rows are migrated and the contract retires the word - and a second
-  `if kind == "accessibility"` branch scoring the same signal twice would put one value in two
-  lanes (D545). Owner: the AI lane with the platform lane.
+  - **CLOSED by D726 (AI reader alias)** - D588 widened both write lists to the kinds the ranking table has a clause for and refused to
+  shrink them. D726 aliases `accessibility` to `access` in the preference ranking reader (stored + transient paths),
+  so a caller who obeys the published types now stores a row that IS read. `activity` and `brand` still have no reader
+  (recorded). Owner: the AI lane with the platform lane.
 
 - **Retrieval precision now has a door, and it names three weak queries (D600)** - mean p@10
   0.733 over nine leaf-named queries, with 壽司 0.5, 按摩 0.3 and 髮型屋 0.4. The diagnosis is
