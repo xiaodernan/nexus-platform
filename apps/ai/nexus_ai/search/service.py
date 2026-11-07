@@ -1023,13 +1023,15 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
         # below this return and was the only one, so a request with no sentence - `{"kind":
         # "product"}` with no `query`, which the published Filters model accepts - left the function
         # first and was answered by `build_merchant_query`, a statement with no kind predicate.
-        if filters and _plain(filters).get("kind") in ("product", "service", "experience"):
+        # D673 → D749: read the canonicalised value (`_canonical_kind` mutates plan.filters),
+        # not a fresh `_plain(filters)` copy of the caller's raw spelling.
+        if filters and plan.filters.get("kind") in ("product", "service", "experience"):
             plan.subject_types = ("offering",)
         return plan
 
+    # D749: subject reader reads the canonicalised filter (`out`, after `_canonical_kind`), never a
+    # copy of the caller's raw spelling - a synonym like Item reaches KIND_TO_SUBJECT's own word.
     plan.subject_types = KIND_TO_SUBJECT.get(intent.intent, ("merchant",))
-    if filters and _plain(filters).get("kind") in ("product", "service", "experience"):
-        plan.subject_types = ("offering",)
     out = plan.filters = _plain(filters)
     _keep_category_spelling(out, out.get("category"))
     out.setdefault("category", intent.category)
@@ -1050,6 +1052,10 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
     _canonical_district(out)
     _canonical_tags(out)
     _canonical_kind(out)
+    # D749: after the canonicalisation, not off the raw `_plain(filters)` copy — the subject
+    # reader and the filter the offerings query is built from were disagreeing on "item".
+    if filters and out.get("kind") in ("product", "service", "experience"):
+        plan.subject_types = ("offering",)
     if location and _field(location, "value"):
         out.setdefault("district", _field(location, "value"))
     if location and _field(location, "radius_m"):

@@ -2612,14 +2612,16 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   kind, district, price - has no ranking signal at all, and the ranking plane has never been asked to
   read one. Owner: the AI lane, with the ranker's owner.
 
-- **A kind synonym is canonicalised into the filter and still never upgrades the subject, because both
-  exits read the raw value** - `_canonical_kind` (`service.py:852`) maps 「item」 to `product` inside
-  `plan.filters`, while the subject readers at `service.py:947` and `:952` test
-  `_plain(filters).get("kind")`, which is still `item`. The published `Literal` (`contract.py:267`)
-  refuses that spelling at the API with a 422, so the gap is reachable only from an internal caller -
-  which is exactly what `api/pipeline.py:174` is. Pinned, not repaired, by
-  `test_a_synonym_kind_reaches_the_filter_but_not_the_subject`, and arm `F` is the version that reads
-  the canonicalised value (1 leg moves). Owner: the AI lane.
+- **CLOSED by D749: the kind-synonym residue is fixed, both paths.** `_canonical_kind` still
+  canonicalises `item -> product` into `plan.filters`, and the subject readers now read that
+  canonicalised filter rather than `_plain(filters)` copies of the raw spelling:
+  the intent-`None` return checks `plan.filters.get("kind")` (after `_canonical_kind`), and the
+  intent path sets `plan.subject_types` after `_canonical_kind(out)` from `out.get("kind")`.
+  The published `Literal` still refuses `item` at the API with a 422, so the fix is an
+  internal-caller courtesy (pipeline.py:174), exactly what this residue described. Gate
+  `test_a_kind_named_with_no_sentence_at_all_is_answered_by_that_kind.py` updated to the fixed
+  behaviour (`item` now answers `("offering",)` and the filter stays the canonical value).
+  `test_both_exits_from_this_function_have_a_reader_for_a_named_kind` passes unchanged.
 
 - **A fixture merchant that names its coarse bucket cannot answer a leaf the live lane answers, and
   HEAD is red on it (found while proving D607's reds were not D607's)** -

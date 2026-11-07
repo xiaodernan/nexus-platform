@@ -34388,3 +34388,17 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** `tests/test_the_word_that_named_the_category_is_not_a_search_term.py` — 206 passed, 5 live-skipped. **The complete tracked pre-existing detector-red batch is now zero.**
 
 - readers: match_text for the existential-frame query is 寵物友善 (precision boost without losing content); every prior red detector row is now folded.
+
+## 749. D749 · kind synonym reached the filter but not the subject — both paths read the canonicalised value
+
+**The gap.** `_canonical_kind` maps caller synonyms (`item`→`product`, `shop`→`merchant`, etc.) into `plan.filters`, but the two `plan.subject_types` exits read `_plain(filters).get("kind")` — a fresh shallow COPY of the caller's RAW spelling. The canonicalisation reader therefore produced two different worlds for one caller: the predicate the offering query was built from (`product`) was not the predicate the subject reader answered against (`merchant`), so a text-less internal kind ask with a synonym never opened `offering_candidates` at all (the PLAN item's own measurement). The published `Literal` refuses these synonyms at the API (422), so the residue was reachable only via `api/pipeline.py:174` calling `plan_from_intent` directly.
+
+**The fix.** Both exits read the CANONICAL value, not a second raw copy:
+- intent-`None` path: the `D673` check is now `plan.filters.get("kind")` after `_canonical_kind(plan.filters)`;
+- intent path: the `if filters and ...` block moved to AFTER `_canonical_kind(out)`, setting `plan.subject_types = ("offering",)` from `out.get("kind")`.
+
+The published contract is unchanged (API 422s on `item`); this is the internal-caller consistency the filed residue asked for.
+
+**Measured.** `test_a_kind_named_with_no_sentence_at_all_is_answered_by_that_kind.py` — 12 passed (renamed expectation `test_a_synonym_kind_reaches_the_filter_and_the_subject`; `test_both_exits_from_this_function_have_a_reader_for_a_named_kind` passes unchanged).
+
+- readers: text-less kind asks with synonyms now reach `offering_candidates`; the two readers of a caller's kind can no longer disagree.

@@ -156,12 +156,14 @@ def test_the_upgrade_does_not_invent_a_sentence_the_caller_never_gave():
     assert plan.filters.get("kind") == "service"
 
 
-def test_a_synonym_kind_reaches_the_filter_but_not_the_subject():
-    # pins the residue filed in docs/PLAN.md rather than fixing it: `_canonical_kind` rewrites
-    # `item` into `product` inside the filter, and both paths read the RAW value for the subject.
-    # A change that honours synonyms must move this leg on purpose, on both paths at once.
+def test_a_synonym_kind_reaches_the_filter_and_the_subject():
+    # D749: the residue filed in docs/PLAN.md is fixed — both paths now read the value
+    # `_canonical_kind` canonicalises into, so `item` reaches `product` for the subject
+    # read as well as the filter the serving path bakes into the query; the published
+    # Filters model still refuses `item` at the API (see the live leg below), so the
+    # canonicalisation is an internal-caller courtesy, not a widened contract.
     plan = _plan({"kind": "item"})
-    assert plan.subject_types == ("merchant",), plan.subject_types
+    assert plan.subject_types == ("offering",), plan.subject_types
     assert plan.filters.get("kind") == "product", plan.filters
 
 
