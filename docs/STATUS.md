@@ -34238,3 +34238,14 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Fix.** PLAN clarified as documented residue with defensive guidance. No code change.
 
 - readers: nested CJK surface matching remains a defensive concern for future token additions.
+
+
+## 735. D735 · category-filtered cards explain matched category when primary differs
+
+**The gap.** A card returned by a category-filtered search (e.g. ramen) could display a different primary category (e.g. Italian) for a multi-category merchant, with no reason explaining why it matched.
+
+**The fix.** Added optional `category_filter`/`category_spelling` to `build_card`/`build_reasons` and passed them from `search()`. When a category filter is active and the displayed primary appears to differ from the filter (heuristic), append a grounded `category_match` reason citing a synthesized category fact (§18). Uses the request's spelling/label for copy.
+
+**Measured.** `test_cards.py` (17 passed), compare/understand tests (17 passed), category+card/reason/search filtered run (214 passed; 1 pre-existing unrelated NLU failure).
+
+- readers: category-filtered results can now cite why a multi-category card matched the requested category.

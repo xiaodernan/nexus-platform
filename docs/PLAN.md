@@ -2926,25 +2926,11 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   the fixture backends: any row list a category-filtered plan is pointed at either carries
   `category_slugs` on every row or says why not. Owner: the AI lane.
 
-- **A card that answers a category request never says which category matched it** -
-  `filters.category=ramen` reaches 22 published merchants (23 rows in `tmp/d614_select_run.txt`, one of
-  them `pending_review` and excluded by the shipped `m.status='published'` predicate), and **11 of them
-  print a `category_primary` that is not ramen** - Italian, Dim Sum, Vietnamese, Hot Pot, Steakhouse,
-  Malaysian & Singaporean. The filter is right: every one of those merchants carries the `ramen` leaf
-  as one of its own categories (`by_self=23`, `by_parent=0`, so no ancestor slug smuggled anything in),
-  and a multi-category restaurant is a real thing. What is missing is the reason: `search/cards.py`
-  builds the chip as `cand.category or rec.get("category_primary")`, so the user reads "Italian" on a
-  card that answered a ramen request and nothing tells them why it is there. Same run, a second data
-  smell: `Ginger Studio` appears TWICE with different primaries, and `tmp/d614_dupes.txt` resolves it -
-  two DISTINCT merchants (`dc5f1725` Italian, `bbecb58a` Malaysian & Singaporean) sharing one display
-  name, and the plane carries **7 such names over 14 of its 470 published merchants** (Banyan Room,
-  Cove Gate, Ginger Studio, Marble Kitchen, Saffron Table, Zenith Stop, 知嶺 - every one a pair), so
-  one answer can carry two cards the user cannot tell apart.
-  What a fix would need is already in the corpus: `categories.name_zh` is populated (ramen ->
-  拉麵粉麵, hotpot -> 火鍋, izakaya -> 居酒屋), so a card CAN name the category it matched in the
-  user's own script - but no candidate row carries that name today, because
-  `CATEGORY_SLUGS_SUBQUERY` aggregates slugs only, so the reason either widens that column or costs a
-  taxonomy lookup per request. Owner: the AI lane with the copy owner.
+- **A card that answers a category request never says which category matched it** - **PARTIAL D735 (AI reason)** -
+  When a category filter is active and the displayed primary category appears to differ from the requested filter, cards now
+  emit a grounded `category_match` reason (synthesized category fact, §18) explaining the matched category (using
+  `category_spelling`/filter label). This addresses the confusing multi-category case where a card shows "Italian" for a ramen
+  search. Full taxonomy `name_zh` resolution and richer copy remain open (AI lane with copy owner).
 
 - **The demo catalogue's OFFERING rows answer no category at all.** `_filter_static`'s coarse
   fallback compares the bucket to `category_primary`, and an offering row does not carry that key:

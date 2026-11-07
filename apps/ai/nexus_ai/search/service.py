@@ -2726,7 +2726,9 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                           open_state=cand.raw.get("open_state"),
                           availability=cand.raw.get("availability"),
                           query=plan.query_text,
-                          sponsor_label=(sponsor_label(locale, w) if cand.sponsored else None))
+                          sponsor_label=(sponsor_label(locale, w) if cand.sponsored else None),
+                          category_filter=(plan.filters or {}).get("category"),
+                          category_spelling=(plan.filters or {}).get("category_spelling"))
         cards.append(attach_price_staleness(card, bundle, locale=locale))
 
     took_ms = int((time.perf_counter() - started) * 1000)

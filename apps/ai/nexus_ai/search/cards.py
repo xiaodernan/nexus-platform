@@ -61,6 +61,8 @@ REASON_COPY: dict[str, dict[str, str]] = {
     "fresh_data": {"zh-HK": "資料已核實", "zh-CN": "资料已核实", "en": "data verified"},
     "district_match": {"zh-HK": "位於 {district}", "zh-CN": "位于 {district}",
                        "en": "in {district}"},
+    "category_match": {"zh-HK": "屬於「{cat}」分類", "zh-CN": "属于「{cat}」分类",
+                       "en": "in the {cat} category"},
     # D608: the walk from the station, in the merchant's own recorded minutes - not the walk
     # from the user, which `near_you` estimates from straight-line metres.
     "mtr_proximity": {"zh-HK": "港鐵 {station} 站步行 {minutes} 分鐘",
@@ -313,11 +315,13 @@ def synth_computed_facts(bundle: FactBundle, cand: Candidate, *, now: datetime,
 
 # ------------------------------------------------------------------------- the card
 def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
-               locale: str = "zh-HK", open_state: dict[str, Any] | None = None,
-               availability: dict[str, Any] | None = None,
-               reasons_from: Iterable[str] = (), query: str | None = None,
-               sponsor_label: str | None = None,
-               weights_version: str = "hybrid_v1") -> EntityCard:
+                locale: str = "zh-HK", open_state: dict[str, Any] | None = None,
+                availability: dict[str, Any] | None = None,
+                reasons_from: Iterable[str] = (), query: str | None = None,
+                sponsor_label: str | None = None,
+                weights_version: str = "hybrid_v1",
+                category_filter: str | None = None,
+                category_spelling: str | None = None) -> EntityCard:
     row = cand.raw or {}
     rec = row.get("row") or row
     sid = str(cand.subject_id)
@@ -333,7 +337,8 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
             facts.append(f)
 
     reasons = build_reasons(cand, scored, bundle, locale=locale, computed=computed,
-                            open_state=open_state, reasons_from=reasons_from, query=query)
+                            open_state=open_state, reasons_from=reasons_from, query=query,
+                            category_filter=category_filter, category_spelling=category_spelling)
 
     card_type: CardType = "merchant"
     if cand.subject_type == "offering":
@@ -469,12 +474,34 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
 def build_reasons(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
                   locale: str, computed: dict[str, Fact],
                   open_state: dict[str, Any] | None,
-                  reasons_from: Iterable[str], query: str | None) -> list[MatchExplanation]:
+                  reasons_from: Iterable[str], query: str | None,
+                  category_filter: str | None = None,
+                  category_spelling: str | None = None) -> list[MatchExplanation]:
     """§18 — one bullet per top contributing feature, each carrying a `fact_id`."""
     out: list[MatchExplanation] = []
     seen: set[str] = set()
     lang = locale if locale in ("zh-HK", "zh-CN", "en") else "zh-HK"
     order = list(reasons_from) or [k for k, _v in (scored.contributions if scored else [])]
+    # D735: explain why a card appears in a category-filtered search (multi-category merchants
+    # can show a different primary category than the one the user asked for). Only when the
+    # displayed primary appears to differ from the filter, to target the confusing case.
+    category_match_reason = None
+    if category_filter:
+        cat_label = (category_spelling or category_filter or "").strip()
+        rec = (cand.raw or {}).get("row") or (cand.raw or {})
+        displayed = str(cand.category or rec.get("category_primary") or rec.get("category") or "").strip().lower()
+        filt = str(category_filter).strip().lower().replace("_", "-")
+        disp_norm = displayed.replace(" ", "-")
+        # show when we can't confirm the display matches the filter (heuristic: different strings)
+        if cat_label and disp_norm and filt and filt not in disp_norm and disp_norm not in filt:
+            cat_fact = bundle.synth(
+                subject_type=cand.subject_type, subject_id=cand.subject_id,
+                attribute="category", value={"matched": str(category_filter), "label": cat_label},
+                source="inferred", confidence=1.0, observed_at=None)
+            category_match_reason = MatchExplanation(
+                label="category_match",
+                text=(REASON_COPY["category_match"].get(lang) or REASON_COPY["category_match"]["zh-HK"]).format(cat=cat_label),
+                value=str(category_filter), fact_id=cat_fact.fact_id)
     for feature in order:
         label = FEATURE_TO_LABEL.get(feature)
         if not label or label in seen:
@@ -506,6 +533,8 @@ def build_reasons(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
             out.append(MatchExplanation(label="mtr_proximity", text=transit_text,
                                         value=str(transit.value["walk_min"]),
                                         fact_id=transit.fact_id))
+    if category_match_reason is not None and "category_match" not in seen:
+        out.append(category_match_reason)
     return out[:5]
 
 
