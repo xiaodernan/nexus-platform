@@ -88,19 +88,16 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   user who asked for a quiet one. Measured identical under every spelling of the negation
   (唔好 / 兇 / 無 / 没 / 沒), so it is the reader's token choice rather than a
   vocabulary hole. Owner: the AI lane.
-- **The offline lane never reads `avoid` at all** - `_filter_static`
-  (`search/service.py:207`) filters on category, district and max_price and nothing else, so
-  the fixture-backed backend answers a different question about the same hard filter than the
-  live one does: after D546 the live lanes exclude every row carrying an avoided allergen
-  tag and the offline lane excludes none of them. The D488 shape (two readers of one fact),
-  one lane over. Owner: the AI lane.
-- **`smoking`, `noise` and `queue` name no tag the corpus writes** - the constraint lane
-  reads and the canon spells them (D545), the planner now carries them (D546), and the avoid
-  clause excludes nothing: measured on the live corpus, `avoid=["smoking"]`,
-  `avoid=["noise"]` and `avoid=["queue"]` each removed 0 of 470 published merchants. The
-  corpus DOES record a noise fact - `attributes.weak_aspects` can name `noise` and
-  `quiet_ambience` is written from the same aspect - so the refusal has a row to point at;
-  nothing reads it yet. Owner: the AI lane.
+- **The offline lane never reads `avoid` at all** - **CLOSED by D730 (verified; originally fixed by D549)** -
+  `_filter_static` now reads `filters.get("avoid")` via `_static_avoids()` (and has since D549's hard-filter
+  parity work). The PLAN description was stale. Verified: `_filter_static(..., {'avoid': ['seafood']})` excludes
+  rows carrying the avoided tag. Owner: the AI lane.
+- **`smoking`, `noise` and `queue` name no tag the corpus writes** - **PARTIAL D731 (noise/queue read; smoking corpus-unfunded)** -
+  D595/D598-style logic is present in SQL and static avoid: `noise` maps to `weak_aspects`/`lively_ambience`, `queue` to
+  `weak_aspects.waiting_time` via `aspect_terms`/`aspect_attributes`. Verified in static path: avoiding `noise`/`queue`
+  excludes rows carrying those aspect facts. `smoking` still has no corpus tag/attribute/aspect mapping and no grounded fact
+  to exclude on (data gap). The old "avoid clause excludes nothing / nothing reads it yet" claim is stale for noise/queue.
+  Owner: the AI lane.
 - **`onion`, `ginger` and `coriander` are named by the diet rule and absent from the corpus's
   allergen vocabulary** - the corpus writes gluten, soy, dairy, egg, shellfish, fish, nuts,
   chili, sulphite, mollusc, pork, garlic, sesame, coconut, peanut, herb and pepper, and none
@@ -2728,16 +2725,11 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   attributes are allowed to speak plainly; D609 names it rather than inventing a marker. Owner: the
   AI lane with the product owner.
 
-- **The comparison grid files its own `address` fact under the merchant, and the card lane now
-  refuses that key** - `apps/ai/nexus_ai/api/routes_discover.py:325-330` (D401) synthesises a
-  merchant-keyed `address` fact when the grid finds none, from the merchant's primary location.
-  D609's rule is that a row which names a location cites that location's fact and nothing else,
-  because the nearest location and the primary one differ in district for 133 of the plane's 145
-  published multi-location merchants. So the same product shows the same merchant in two cells and
-  the two surfaces can vouch for different districts with different shapes of citation - one stored
-  under a key the plane's own `facts` table never uses, one stored and read under the location's id.
-  Reconciling them means either the grid reads the geo lane's location too, or the D401 synth stops
-  claiming a key the corpus does not file; either is a decision about who owns the grid's geo row.
+- **The comparison grid files its own address fact under the merchant, and the card lane now
+  refuses that key** - **PARTIAL D729** - D401 synthesized a merchant-keyed `address` fact in the grid
+  fallback; D729 stops that synthesis (shows district ungrounded when no stored/location fact is found)
+  to avoid claiming a key the corpus does not file and conflicting with D609's location-keyed rule.
+  Full reconciliation (grid reading geo lane's location for compare context) remains open.
   Owner: the AI lane.
 
 - **The fact load's id list now grows with the places on a page, measured only at `limit` 6** - a

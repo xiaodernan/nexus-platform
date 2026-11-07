@@ -34183,3 +34183,25 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** Compare tests pass (29 passed, 7 skipped). Honest degradation: ungrounded > mis-grounded.
 
 - readers: compare grid no longer synthesizes misleading merchant-keyed address facts in fallback.
+
+
+## 730. D730 · offline avoid PLAN item closed (verified; D549 parity already in place)
+
+**The gap (recorded).** PLAN stated the offline/static lane never read `avoid` (`_filter_static` only checked category/district/max_price). The description was stale.
+
+**Verified.** `_filter_static` has applied `filters.get("avoid")` via `_static_avoids()` since D549 (hard-filter parity). Measured: `_filter_static(..., {'avoid': ['seafood']})` excludes rows carrying the avoided tag.
+
+**Fix.** Closed stale PLAN item; no code change required.
+
+- readers: offline/static and live avoid behavior are aligned for tag/attribute-based avoids covered by `_static_avoids`.
+
+
+## 731. D731 · smoking/noise/queue avoid PLAN accuracy (noise/queue read; smoking corpus-unfunded)
+
+**The gap (recorded as stale).** PLAN claimed avoid clause excludes nothing for smoking/noise/queue and "nothing reads it yet" for noise facts.
+
+**Verified.** SQL and static avoid both read aspect/attribute mappings: `noise` -> `weak_aspects` `noise` + `lively_ambience` attribute; `queue` -> `weak_aspects` `waiting_time` (via `aspect_terms`/`aspect_attributes`). Static-path probe confirms `avoid=['noise']` and `avoid=['queue']` exclude rows carrying those aspect facts. `smoking` has no corpus tag/attribute/aspect mapping (intentional; no grounded fact) - data gap remains.
+
+**Fix.** Updated PLAN item to PARTIAL D731 with accurate state. No code change required.
+
+- readers: noise/queue avoid parity confirmed; smoking remains ungrounded without corpus facts.
