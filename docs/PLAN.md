@@ -2502,14 +2502,10 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `card.ts:150` names it as the source. Owner: whoever owns `data/seed`.
 
 - **The grid's `open_state` row, and the card's availability block, print one English string at a
-  reader of any locale** - found while this unit was standing in `_grid`, not measured:
-  `compute_open()` builds its `text` from three English templates ("Open until {hh:mm}", "Opens
-  {hh:mm}", "Closed"), and both readers copy it verbatim - the card's availability object and this
-  cell. `REASON_COPY` in the same module already holds 「{when} 營業至 {close}」 and 「現正營業」 and selects
-  per locale, but only for the card's reason line. §603 (D605) closed exactly this shape on one card
-  string; the open-state text is the same defect with two readers, and the localized vocabulary is
-  already written. Owner: the AI lane.
-
+  reader of any locale** - **CLOSED by D725** - `compute_open()` now takes `locale` and uses
+  `OPEN_STATE_COPY` templates ("營業至 {close}" / "营业至 {close}" / "Open until {close}", etc.).
+  Callers in `search/service.py` and `api/routes_discover.py` pass locale. Card availability and
+  grid `open_state` cells now render in the user's locale.
 - **111 offerings state a length in the column that their own title contradicts, and 95 more name
   one the column never states** - of the 4,707 reachable offerings, 221 name a length in their name
   (`tmp/d674_probe.txt`: 「全身按摩60分鐘」 carries 90; 「相機租借(按日)（小份）」 carries 90 against 1,440 in the name;

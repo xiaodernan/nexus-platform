@@ -1732,7 +1732,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                                              float(weight))
 
                 # ACCESS: pet_friendly -> boolean
-                elif kind == "access" and key == "pet_friendly":
+                elif kind in ("access", "accessibility") and key == "pet_friendly":
                     val = value.get("value") if isinstance(value, dict) else None
                     if isinstance(val, bool):
                         def make_pet_match(v, w):
@@ -1945,7 +1945,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     match_fn = make_outdoor_match(is_outdoor, float(weight))
 
                 # ACCESS: mtr_near -> boolean
-                elif kind == "access" and key == "mtr_near":
+                elif kind in ("access", "accessibility") and key == "mtr_near":
                     val = value.get("value") if isinstance(value, dict) else None
                     if isinstance(val, bool):
                         def make_mtr_match(v, w):
@@ -1960,7 +1960,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         match_fn = make_mtr_match(val, float(weight))
 
                 # ACCESS: accessible -> boolean
-                elif kind == "access" and key == "accessible":
+                elif kind in ("access", "accessibility") and key == "accessible":
                     val = value.get("value") if isinstance(value, dict) else None
                     if isinstance(val, bool):
                         def make_accessible_match(v, w):
@@ -1980,7 +1980,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                         match_fn = make_accessible_match(val, float(weight))
 
                 # ACCESS: parking -> boolean
-                elif kind == "access" and key == "parking":
+                elif kind in ("access", "accessibility") and key == "parking":
                     val = value.get("value") if isinstance(value, dict) else None
                     if isinstance(val, bool):
                         def make_parking_match(v, w):
@@ -2296,7 +2296,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 # "寵物" / "pet friendly" etc. maps to the merchant's `pet_friendly_access`
                 # boolean attribute. The stored branch (line ~1730) reads the same attribute;
                 # this is the transient lane's mirror.
-                if str(pref_kind) == "access" and str(pref_value) == "pet_friendly":
+                if str(pref_kind) in ("access", "accessibility") and str(pref_value) == "pet_friendly":
                     val = str(pref_value) == "pet_friendly"  # always True for this key
 
                     def make_pet_match(p):
@@ -2442,7 +2442,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 # etc. maps to the merchant's `mtr_near_access` / `mtr_within_5min` boolean
                 # attributes. The stored branch (line ~1940) reads the same attributes; this is
                 # the transient lane's mirror.
-                if str(pref_kind) == "access" and str(pref_value) == "mtr_near":
+                if str(pref_kind) in ("access", "accessibility") and str(pref_value) == "mtr_near":
                     def make_mtr_match(p):
                         def _match(a2):
                             if a2.get("mtr_near_access") is True or a2.get("mtr_within_5min") is True:
@@ -2466,7 +2466,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 # "accessible" etc. maps to the merchant's `accessible_access` /
                 # `wheelchair_access` boolean attributes. The stored branch (line ~1956)
                 # reads the same attributes; this is the transient lane's mirror.
-                if str(pref_kind) == "access" and str(pref_value) == "accessible":
+                if str(pref_kind) in ("access", "accessibility") and str(pref_value) == "accessible":
                     def make_accessible_match(p):
                         def _match(a2):
                             if a2.get("accessible_access") is True or a2.get("wheelchair_access") is True:
@@ -2490,7 +2490,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 # "parking" etc. maps to the merchant's `parking_access` boolean attribute.
                 # The stored branch (line ~1976) reads the same attribute; this is the
                 # transient lane's mirror.
-                if str(pref_kind) == "access" and str(pref_value) == "parking":
+                if str(pref_kind) in ("access", "accessibility") and str(pref_value) == "parking":
                     def make_parking_match(p):
                         def _match(a2):
                             if a2.get("parking_access") is True:

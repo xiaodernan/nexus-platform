@@ -85,6 +85,9 @@ def _readable_kinds() -> set[str]:
     The same technique D527's gate uses for (kind, key) pairs: reading the table rather than
     importing it means a branch written five minutes ago is in the census, and a branch
     deleted is no longer counted as promised.
+
+    D726: handles both `kind == "x"` and `kind in ("x", "y")` forms so that aliased
+    spellings (e.g. `accessibility` as an alias for `access`) are counted as readable.
     """
     tree = ast.parse(_SERVICE.read_text(encoding="utf-8"))
     kinds: set[str] = set()
@@ -98,6 +101,10 @@ def _readable_kinds() -> set[str]:
                 comparator = sub.comparators[0]
                 if isinstance(comparator, ast.Constant) and isinstance(comparator.value, str):
                     kinds.add(comparator.value)
+                elif isinstance(comparator, (ast.Tuple, ast.List, ast.Set)):
+                    for elt in comparator.elts:
+                        if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                            kinds.add(elt.value)
     return kinds
 
 
@@ -224,11 +231,10 @@ class TestWhatTheWritePlanesAcceptThatNothingReads:
 
     def test_the_unread_writable_kinds_are_the_ones_named_here(self):
         unread = sorted(WRITABLE - READABLE - DISPLAY_ONLY)
-        assert unread == ["accessibility", "activity", "brand"], (
+        assert unread == ["activity", "brand"], (
             f"the write planes accept {unread} that the ranker has no clause for. Each is a "
             f"different debt and this row is the census that keeps them visible: "
-            f"`accessibility` is the trap - the API's own word for a step-free preference, "
-            f"while the reader and the seed spell it `access`, so a caller who obeys the "
-            f"contract stores a row nothing answers for; `activity` and `brand` have never "
-            f"had a reader. Either a clause appeared (fold it into the census above) or the "
-            f"vocabulary grew a word nobody answers")
+            f"D726 aliased `accessibility` to `access` in the ranking reader, so a caller "
+            f"who obeys the published types now stores a row that IS read. `activity` and "
+            f"`brand` have never had a reader. Either a clause appeared (fold it into the "
+            f"census above) or the vocabulary grew a word nobody answers")
