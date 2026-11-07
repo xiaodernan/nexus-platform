@@ -110,7 +110,11 @@ def test_the_grid_keeps_the_district_row_when_the_location_knows_it():
     )
     district = next(r for r in rows if r["attribute"] == "district")
     assert district["cards"][0]["value"] == "Sha Tin"
-    assert district["cards"][0]["fact_id"], "a district cell without a fact id renders as unverified"
+    # D729: district from the districts-map fallback is shown but ungrounded (no synthesized
+    # merchant-keyed address fact). D609's address facts are location-keyed; synthesizing a
+    # merchant-keyed fact claimed a key the corpus does not file. Ungrounded is more honest
+    # than mis-grounded until the grid reads the geo lane's location context.
+    assert district["cards"][0]["fact_id"] is None
 
 
 def test_the_category_cell_is_fact_backed():

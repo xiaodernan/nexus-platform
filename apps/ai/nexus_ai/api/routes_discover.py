@@ -361,12 +361,11 @@ def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
             # same fact the address fact would carry.
             district = districts.get(str(row.get("merchant_id") or sid))
         if addr_fact is None and district is not None:
-            # The district is the merchant's own claim about where it is, so it gets a
-            # fact with the source and the timestamp, the way the open_state row does.
-            addr_fact = bundle.synth(
-                subject_type="merchant", subject_id=sid, attribute="address",
-                value={"district": district}, source="merchant", confidence=0.9,
-                observed_at=now)
+            # D729: do not synthesize a merchant-keyed address fact from the districts map fallback.
+            # D609 established address facts are keyed to location_id (nearest location in geo context);
+            # synthesizing under merchant id claims a key the corpus does not file and can contradict
+            # location-keyed facts. Show the district value ungrounded rather than mis-ground it.
+            pass
         district_cells.append(_cell(district, addr_fact))
         hours = hours_map.get(str(row.get("merchant_id") or sid), [])
         state = compute_open(hours, now=now, locale=locale) if hours else {"is_open": None}
