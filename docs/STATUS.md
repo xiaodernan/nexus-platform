@@ -34249,3 +34249,12 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** `test_cards.py` (17 passed), compare/understand tests (17 passed), category+card/reason/search filtered run (214 passed; 1 pre-existing unrelated NLU failure).
 
 - readers: category-filtered results can now cite why a multi-category card matched the requested category.
+
+
+## 736. D736 · refine category_match reason trigger and fact timestamp
+
+**Refinement of D735.** `category_match` now fires when `category_spelling` is present or when display differs from a non-broad filter (avoids noise on broad buckets). Passes `now` to `build_reasons` so the synthesized category fact carries a proper timestamp.
+
+**Measured.** `test_cards.py` passes (17 passed).
+
+- readers: category-match explanation is more targeted.
