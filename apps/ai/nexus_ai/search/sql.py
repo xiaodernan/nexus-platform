@@ -967,7 +967,7 @@ ORDER BY r.merchant_id, r.helpful_count DESC, r.created_at DESC
 
 
 def user_preferences_for(user_id: str, kinds: Iterable[str] | None = None,
-                         scope: str | None = None, conversation_id: UUID | None = None
+                         scope: str | None = "long_term", conversation_id: UUID | None = None
                          ) -> tuple[str, list[Any]]:
     """Read the user's LIVE preferences for ranking personalization.
 

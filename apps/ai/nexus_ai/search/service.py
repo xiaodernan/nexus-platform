@@ -92,8 +92,8 @@ class SearchBackend(Protocol):
 
     async def feedback(self, user_id: str, subject_ids: Sequence[str]) -> list[dict[str, Any]]: ...
 
-    async def user_preferences(self, user_id: str, kinds: Sequence[str] | None = None
-                               ) -> list[dict[str, Any]]: ...
+    async def user_preferences(self, user_id: str, kinds: Sequence[str] | None = None,
+                               conversation_id: Any = None) -> list[dict[str, Any]]: ...
 
 
 class PostgresBackend:
@@ -149,18 +149,39 @@ class PostgresBackend:
             log.info("feedback read failed", exc_info=True)
             return []
 
-    async def user_preferences(self, user_id: str, kinds: Sequence[str] | None = None
-                               ) -> list[dict[str, Any]]:
+    async def user_preferences(self, user_id: str, kinds: Sequence[str] | None = None,
+                               conversation_id: Any = None) -> list[dict[str, Any]]:
         if not user_id:
             return []
-        sql_text, params = S.user_preferences_for(user_id, kinds)
-        if not sql_text:
-            return []
         try:
-            return await self.db.readonly(sql_text, *params, schema=self.search_path)
+            rows = await self._read_preferences(
+                user_id, kinds, scope="long_term", conversation_id=None)
+            if conversation_id:
+                try:
+                    conv = UUID(str(conversation_id))
+                except (ValueError, TypeError):
+                    conv = None
+                if conv is not None:
+                    session_rows = await self._read_preferences(
+                        user_id, kinds, scope="session", conversation_id=conv)
+                    seen = {(r.get("kind"), r.get("key")) for r in rows}
+                    for row in session_rows:
+                        if (row.get("kind"), row.get("key")) not in seen:
+                            seen.add((row.get("kind"), row.get("key")))
+                            rows.append(row)
+            return rows
         except Exception:  # pragma: no cover - telemetry must never break a search
             log.info("user_preferences read failed", exc_info=True)
             return []
+
+    async def _read_preferences(self, user_id: str, kinds: Sequence[str] | None,
+                                scope: str | None,
+                                conversation_id: UUID | None) -> list[dict[str, Any]]:
+        sql_text, params = S.user_preferences_for(
+            user_id, kinds, scope=scope, conversation_id=conversation_id)
+        if not sql_text:
+            return []
+        return await self.db.readonly(sql_text, *params, schema=self.search_path)
 
 
 def _tenant_mean_rating(rows: Sequence[dict[str, Any]]) -> float:
@@ -255,8 +276,8 @@ class StaticBackend:
     async def feedback(self, user_id: str, subject_ids: Sequence[str]) -> list[dict[str, Any]]:
         return []
 
-    async def user_preferences(self, user_id: str, kinds: Sequence[str] | None = None
-                               ) -> list[dict[str, Any]]:
+    async def user_preferences(self, user_id: str, kinds: Sequence[str] | None = None,
+                               conversation_id: Any = None) -> list[dict[str, Any]]:
         return []
 
 
@@ -1448,6 +1469,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                  user_id: str | None = None,
                  intent_preferences: Sequence[dict[str, Any]] | None = None,
                  locale: str = "zh-HK",
+                 conversation_id: UUID | str | None = None,
                  include_sponsored: bool = True) -> tuple[list[EntityCard], SearchResponse,
                                                           FactBundle, list[Scored]]:
     """Deterministic search end-to-end. Returns cards, the response, the grounding bundle and
@@ -1601,7 +1623,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     # 2. Persistent user_preferences from database (D382, requires user_id)
     # Applies to ALL candidates, not just those with feedback
     if user_id:
-        pref_rows = await backend.user_preferences(str(user_id))
+        pref_rows = await backend.user_preferences(str(user_id), conversation_id=conversation_id)
         if pref_rows:
             # Parse structured preference values and build matching rules
             pref_rules: list[dict[str, Any]] = []

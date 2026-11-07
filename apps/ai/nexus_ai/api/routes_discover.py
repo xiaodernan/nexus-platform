@@ -101,7 +101,8 @@ async def recommend(request: Request, body: RecommendRequest):
         pack = await run_search(deps, intent, query=query or intent.raw_query,
                                 geo=body.geo, now=body.now,
                                 limit=max(1, min(body.limit, 50)), locale=body.locale,
-                                user_id=body.user_id)
+                                user_id=body.user_id,
+                                conversation_id=body.conversation_id)
     except Exception as exc:
         log.exception("recommend search failed")
         return errors.error_response("ai_unavailable", str(exc),

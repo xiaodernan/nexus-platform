@@ -164,7 +164,7 @@ def test_the_declared_dislike_separates_the_merchants():
         async def merchant_candidates(self, *, text=None, filters=None, **_kw):
             return [dict(r) for r in self.merchants]
 
-        async def user_preferences(self, user_id, kinds=None):
+        async def user_preferences(self, user_id, kinds=None, conversation_id=None):
             return [dict(p) for p in self.merchant_prefs
                     if str(p.get("user_id")) == user_id]
 

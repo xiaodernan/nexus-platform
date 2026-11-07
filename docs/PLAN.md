@@ -105,6 +105,13 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The `ambience` preference's two spellings** — **closed by D678**: the NLU now emits `ambience` with the same value the seed stores (`style/ambience`), both paths read the same key, ensuring the preference fires uniformly regardless of source. Worth one vocabulary decision rather than two readers.
 - **The seeded merchants carry no `vegetarian` attribute** — **closed this session by D559**: the seed writes the boolean attribute `cuisine_vegetarian` (`m["leaf"] == "vegetarian"`) and the stored-preference branch now reads it, so the declared vegetarian preference fires on the attribute the seed writes and the full-suite attribute gate went green.
 - **The `personalization` weight is one number for two different things** — after D397 the preference and the feedback signals combine by maximum, so the number no longer says WHICH evidence produced it. A separate `preference` weight would need a `ranking_weights.yaml` change (the weights must sum to 1.0) and a strategy version bump; the current shape is defensible and the change is a product decision, not a bug fix.
+- **D742: the memory-tier read is wired through `search()`.** D723 gave `user_preferences_for`
+  `scope`/`conversation_id` parameters and claimed the tier was honoured, but no caller passed
+  them; the chain was completed in D742 (durable-tier default everywhere, conversation-bound
+  session memory for recommend/stream turns only, D604 gate folded). Remaining residue from
+  that audit: five red-by-design detector rows fail identically at clean HEAD (polarity_effect,
+  preference_source typed label, empty-jsonb invisibility, two indoor_style witnesses) and
+  are not this lane's regression; fold them as their own units.
 - **The `weak_aspects` attribute is a LIST, not a boolean** — **closed by D581**: the
   preference matcher now reads the list as a set (`kind == "weakness"`), so a declared
   preference naming `noise` scores the 15 merchants weak at noise 0.200 against 0.800 for the

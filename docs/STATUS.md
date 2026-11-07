@@ -34308,3 +34308,20 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** Targeted static/search tests passed (`test_demo_data`, bucket leg, `test_search_plan/pipeline`, category-not-dropped-by-text-gate): 81 passed, 2 DB-skipped.
 
 - readers: static text scoring is closer to live offering keyword coverage for Chinese description fields.
+
+## 742. D742 · ranking wire complete: memory tier flows into the search path (completion of D723/D604)
+
+**The gap (found on review of my own state check).** D723 taught `user_preferences_for` to accept `scope` and `conversation_id`, and D604's PLAN/ledger claimed the lane's read honours the tier — but no caller ever passed those arguments: `search()` called `backend.user_preferences(user_id)` unfiltered, `PostgresBackend.user_preferences()` passed neither `scope` nor `conversation_id` into the SQL builder, and nothing carried a `conversation_id` from the stream/recommend routes into the ranking call. A session-tier preference (even one bound to a conversation) still ranked every later answer forever — exactly the D604/D723 defect — and the D723-modified gate `test_a_preference_scoped_to_one_conversation_is_read_back_by_every_search.py::test_the_ranking_read_names_neither_column_the_tier_lives_in` was red on master as landed.
+
+**The fix (wire it, don't just filter the SQL).**
+
+* `user_preferences_for` now defaults to the durable tier: `scope="long_term"` (a caller opting into session/conversation memory must still say so explicitly).
+* `SearchBackend.user_preferences`, `PostgresBackend` and `StaticBackend` accept `conversation_id` parallel to `kinds`; `PostgresBackend` reads `long_term` always, plus `session` rows bound to the given conversation, and drops a session row whose `(kind, key)` duplicates a durable one (durable wins).
+* `search()`, `run_search`, `stream.search_stream_events`, and `routes_discover::recommend` now thread `conversation_id` end-to-end (`/ai/v1/search` has no such field on `SearchRequest`, so it keeps the durable-tier read).
+* D604 gate folded: `test_the_ranking_read_names_neither_column_the_tier_lives_in` becomes `test_the_ranking_read_names_the_tier_it_honours` (the durable read names `scope`; the conversation-bound read names `conversation_id`), and the "red on purpose" shadow test is now `test_a_session_tier_preference_does_not_rank_every_later_answer_forever` (durable-only default, conversation-bound session read, raw session-tier read).
+* New gate `tests/test_the_ranking_read_honours_the_memory_tier.py`: forwarding through `search()`, long_term-only default, durable+bound-session merge, dedupe, unparsable conversation is never honoured, protocol keyword presence, StaticBackend accepts the kwarg.
+* 22 test files whose fixture backends overrode `user_preferences()` were given the `conversation_id=None` kwarg so they satisfy the widened protocol (no behavior change; signature-only).
+
+**Measured.** Targeted suites (D742 gate, D604 gate, weakness preference, ranking/structured/evidence/reason/source/transient preference, polarity, cuisine): 270 passed, 16 skipped, 5 FAILED — all 5 fail identically at clean HEAD (`test_polarity_effect`, `test_preference_source::typed_ambience-vs-typed`, `test_a_preference_written_through_the_api_is_not_read_as_silence::empty_jsonb`, two `test_the_indoor_preference_asks_the_fact_that_can_say_no` indoor_style witness rows) and are pre-existing red-by-design detector rows, **not** regressions from this unit (diffs of those files confined to the added `conversation_id=None` kwarg; service/cards logic they assert on is untouched). One of them (`test_polarity_effect`) was verified red on stashed clean HEAD.
+
+- readers: the search path now reads durable memory by default and conversation-bound session memory for the conversation that made it; unbound session memory never reaches the ranker. Pre-existing red detector rows remain to be folded as their own units.

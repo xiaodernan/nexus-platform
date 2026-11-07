@@ -170,7 +170,8 @@ class SearchPack:
 async def run_search(deps: Deps, intent: Intent | None, *, query: str = "",
                      geo: Any = None, filters: Any = None, now: datetime | None = None,
                      limit: int = 8, locale: str = "zh-HK",
-                     user_id: Any = None) -> SearchPack:
+                     user_id: Any = None,
+                     conversation_id: Any = None) -> SearchPack:
     plan = plan_from_intent(intent, query=(query or (intent.raw_query if intent else "")),
                             geo=geo, filters=filters, now=now, limit=limit, locale=locale)
     backend = deps.backend()
@@ -210,7 +211,8 @@ async def run_search(deps: Deps, intent: Intent | None, *, query: str = "",
         embedding=embedding if vector_lane else None, vector_lane=vector_lane,
         vector_semantic=vector_semantic,
         user_id=str(user_id) if user_id else None,
-        intent_preferences=intent_prefs, locale=locale)
+        intent_preferences=intent_prefs, locale=locale,
+        conversation_id=conversation_id)
     degraded = deps.backend_degraded() or response.degraded
     # D502: the §18/§19 grounding boundary - a bullet without a `fact_id` must not render
     # (AGENT_CONTRACT §4) - is enforced HERE, in the one function every card surface

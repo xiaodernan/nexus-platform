@@ -76,7 +76,7 @@ def _mean(live_settings, rows) -> float:
         async def merchant_candidates(self, *, text=None, filters=None, **_kw):
             return [dict(r) for r in self.merchants]
 
-        async def user_preferences(self, user_id, kinds=None):
+        async def user_preferences(self, user_id, kinds=None, conversation_id=None):
             return [{"user_id": "u1", "kind": KIND, "key": KEY,
                      "value": json.dumps({"value": True}), "weight": WEIGHT,
                      "source": "declared", "scope": "long_term"}]

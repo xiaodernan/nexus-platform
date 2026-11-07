@@ -110,7 +110,8 @@ async def search_stream_events(*, query: str, deps: Deps,
         yield await _status(next(stage_iter))
         pack: SearchPack = await run_search(
             deps, intent_res.intent, query=query, geo=_context_geo(context),
-            now=_context_now(context), limit=limit, locale=locale, user_id=user_id)
+            now=_context_now(context), limit=limit, locale=locale, user_id=user_id,
+            conversation_id=conversation_id)
         yield await _status(next(stage_iter))
         yield ("results", StreamResultsFrame(
             set_id=pack.set_id, items=pack.items).model_dump(mode="json"))

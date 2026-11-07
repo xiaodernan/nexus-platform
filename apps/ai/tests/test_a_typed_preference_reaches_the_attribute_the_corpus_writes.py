@@ -89,7 +89,7 @@ async def test_the_same_preference_declared_and_typed_read_the_same_attribute():
     import json
 
     class WithStored(Backend):
-        async def user_preferences(self, user_id, kinds=None):
+        async def user_preferences(self, user_id, kinds=None, conversation_id=None):
             return [{"user_id": "u1", "kind": "time_pref", "key": "open_late",
                      "value": json.dumps({"value": True}), "weight": 1.0,
                      "source": "declared", "scope": "long_term"}]

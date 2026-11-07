@@ -60,7 +60,7 @@ class PrefStaticBackend(S.StaticBackend):
         super().__init__(*args, **kwargs)
         self._user_prefs = user_prefs or []
     
-    async def user_preferences(self, user_id: str, subject_ids: list[str] | None = None) -> list[dict]:
+    async def user_preferences(self, user_id: str, subject_ids: list[str] | None = None, conversation_id=None) -> list[dict]:
         return [dict(p) for p in self._user_prefs if str(p.get("user_id")) == user_id]
 
 
@@ -75,7 +75,7 @@ async def test_search_with_user_preference_boosts_matching_merchant():
         async def merchant_candidates(self, *, text=None, filters=None, **_kw):
             return [dict(r) for r in self.merchants]
         
-        async def user_preferences(self, user_id: str, subject_ids: list[str] | None = None) -> list[dict]:
+        async def user_preferences(self, user_id: str, subject_ids: list[str] | None = None, conversation_id=None) -> list[dict]:
             return [dict(p) for p in self._user_prefs if str(p.get("user_id")) == user_id]
     
     backend = SqlLikeBackend(

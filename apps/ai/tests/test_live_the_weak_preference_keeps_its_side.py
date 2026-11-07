@@ -47,7 +47,7 @@ def _rows(live_settings) -> tuple[list[dict], list[dict]]:
             return await self.db.readonly(
                 "select * from merchants where status = 'published' order by slug")
 
-        async def user_preferences(self, user_id, kinds=None):
+        async def user_preferences(self, user_id, kinds=None, conversation_id=None):
             return [{"user_id": "u1", "kind": KIND, "key": KEY,
                      "value": json.dumps({"value": True}), "weight": WEIGHT,
                      "source": "declared", "scope": "long_term"}]
@@ -82,7 +82,7 @@ def _mean_personalization(live_settings, rows, kind, key, weight, value) -> floa
         async def merchant_candidates(self, *, text=None, filters=None, **_kw):
             return [dict(r) for r in self.merchants]
 
-        async def user_preferences(self, user_id, kinds=None):
+        async def user_preferences(self, user_id, kinds=None, conversation_id=None):
             return [{"user_id": "u1", "kind": kind, "key": key,
                      "value": json.dumps({"value": value}), "weight": weight,
                      "source": "declared", "scope": "long_term"}]

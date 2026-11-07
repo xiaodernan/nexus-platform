@@ -56,7 +56,7 @@ def _halves(live_settings) -> tuple[list[dict], list[dict]]:
             return await self.db.readonly(
                 "select * from merchants where status = 'published' order by slug")
 
-        async def user_preferences(self, user_id, kinds=None):
+        async def user_preferences(self, user_id, kinds=None, conversation_id=None):
             return [dict(p) for p in STORED]
 
     async def _go():
@@ -87,7 +87,7 @@ def _mean(live_settings, rows, intent_prefs) -> float:
         async def merchant_candidates(self, *, text=None, filters=None, **_kw):
             return [dict(r) for r in self.merchants]
 
-        async def user_preferences(self, user_id, kinds=None):
+        async def user_preferences(self, user_id, kinds=None, conversation_id=None):
             return [dict(p) for p in STORED]
 
     async def _go():

@@ -112,7 +112,8 @@ def _scope_tiers_the_api_admits() -> list[str]:
     return [t.strip() for t in match.group(1).split("|") if t.strip()]
 
 
-def _read_rows(live_settings, memory, *, kinds=None) -> list[dict]:
+def _read_rows(live_settings, memory, *, kinds=None, scope="long_term",
+                conversation_id=None) -> list[dict]:
     """Run the lane's OWN read against a `values` list shadowing `user_preferences`.
 
     The CTE carries the table's name, so the shipped SQL's `FROM user_preferences` resolves to
@@ -120,7 +121,8 @@ def _read_rows(live_settings, memory, *, kinds=None) -> list[dict]:
     """
     from nexus_ai.db import pool as db_pool
 
-    sql_text, params = SQL.user_preferences_for(_USER, kinds)
+    sql_text, params = SQL.user_preferences_for(_USER, kinds, scope=scope,
+                                                conversation_id=conversation_id)
     tuples = ",\n              ".join(
         f"('{_USER}'::uuid, {kind!r}, {key!r}, {value!r}::jsonb, {weight}::numeric, "
         f"{source!r}, {scope!r}, {'null::uuid' if conv is None else repr(conv) + '::uuid'}, "
@@ -157,28 +159,41 @@ def live_settings():
 
 
 # ------------------------------------------------------------- the reader's view of the tier
-def test_the_ranking_read_names_neither_column_the_tier_lives_in():
-    """The cheapest form of the defect, read off the built SQL rather than remembered.
+def test_the_ranking_read_names_the_tier_it_honours():
+    """The cheapest form of the repair, read off the built SQL rather than remembered.
 
     `weight`/`source`/`expires_at` are all decisions this lane already made about which columns the
-    ranker owes; `scope` and `conversation_id` are the two it has now looked at (D604).
+    ranker owes; `scope` and `conversation_id` are the two it has now looked at (D604/D723, wired
+    by D742). The default durable read names the tier it honours; the conversation-bound read
+    names `conversation_id`.
     """
     sql_text, _params = SQL.user_preferences_for(_USER)
-    assert "scope" in sql_text and "conversation_id" in sql_text, (
-        f"the preference read now names the tier - it says:\n{sql_text}\nif the tier is honoured, "
-        f"this row has done its job: fold it into the shadow read below rather than restoring "
-        f"the premise")
+    assert "scope" in sql_text, (
+        f"the default ranking read no longer restricts itself to the durable tier - it says:\n"
+        f"{sql_text}\na session-tier preference would again rank every later answer forever")
+    bound, _params = SQL.user_preferences_for(_USER, scope="session",
+                                              conversation_id=_CONV)
+    assert "conversation_id" in bound, (
+        f"the conversation-bound read no longer names `conversation_id` - it says:\n{bound}\n"
+        f"a session-tier row bound to one conversation will rank every conversation again")
 
 
 @live_only
-def test_a_preference_scoped_to_one_conversation_is_read_back_by_every_search(live_settings):
-    """The two tiers arrive as one set, whether or not the session row knows its conversation."""
-    got = _keys(_read_rows(live_settings, _MEMORY))
-    assert got == {"ambience", "scenic", "per_person_max_hkd"}, (
-        f"the shipped read returned {sorted(got)} for a user holding one durable preference and "
-        f"two scoped to a session - the session rows are being kept as durable memory. A fix "
-        f"that honours the tier should drop BOTH session rows out of this set, and this row goes "
-        f"red on purpose: the repair is filed in PLAN, not silently absorbed")
+def test_a_session_tier_preference_does_not_rank_every_later_answer_forever(live_settings):
+    """The repair landed: the default durable read drops both session rows; a conversation
+    binds its own session rows."""
+    durable = _keys(_read_rows(live_settings, _MEMORY))
+    assert durable == {"ambience"}, (
+        f"the durable read returned {sorted(durable)} - a session-tier preference is still "
+        f"ranking later answers forever, which is the defect this gate was written to catch")
+    bound = _keys(_read_rows(live_settings, _MEMORY, scope="session",
+                             conversation_id=_CONV))
+    assert bound == {"scenic"}, (
+        f"a conversation-bound read returned {sorted(bound)} - the durable key, or the "
+        f"session row bound to ANOTHER conversation, leaked into this conversation's ranking")
+    unbound_session = _keys(_read_rows(live_settings, _MEMORY, scope="session"))
+    assert unbound_session == {"scenic", "per_person_max_hkd"}, (
+        f"a raw session-tier read returned {sorted(unbound_session)}")
 
 
 @live_only

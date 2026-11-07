@@ -92,7 +92,7 @@ async def test_a_refusal_of_indoor_reads_the_same_witness():
 async def test_the_stored_reader_answers_the_same_way():
     """The declaration path must not keep the old order - one fact, two readers (D518)."""
     class WithStored(Backend):
-        async def user_preferences(self, user_id, kinds=None):
+        async def user_preferences(self, user_id, kinds=None, conversation_id=None):
             return [{"user_id": "u1", "kind": "style", "key": "indoor",
                      "value": json.dumps({"value": True}), "weight": 1.0,
                      "source": "declared", "scope": "global"}]

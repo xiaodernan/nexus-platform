@@ -53,7 +53,7 @@ def _run(kind: str, key: str, value: bool, weak_by_sid: dict) -> dict[str, float
             async def merchant_candidates(self, *, text=None, filters=None, **_kw):
                 return [dict(r) for r in self.merchants]
 
-            async def user_preferences(self, user_id, kinds=None):
+            async def user_preferences(self, user_id, kinds=None, conversation_id=None):
                 return [dict(p) for p in self._prefs if str(p.get("user_id")) == user_id]
 
         b = Backend()
