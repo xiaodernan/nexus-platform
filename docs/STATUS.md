@@ -34258,3 +34258,13 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** `test_cards.py` passes (17 passed).
 
 - readers: category-match explanation is more targeted.
+
+## 737. D737 · demo catalogue rows carry taxonomy `category_slugs`/district mirrors for static parity
+
+**The gap.** Demo/static rows lacked `category_slugs`, `districts`, and `location_points`, so `_filter_static` fell back to coarse `category`/`category_primary`/single-district comparisons and missed the slug-mirror path live rows use when filtered. The degraded/demo lane also could not answer a taxonomy-root bucket (e.g. `shopping`) against rows that only stated `retail` when slug intersection was unavailable.
+
+**The fix.** `apps/ai/nexus_ai/api/demo_data.py` now builds `category_slugs` from `resolve(category_primary)` for merchants and offerings, carries `districts`/`location_points` fields, preserves the existing `category`/`category_primary` relationship tests pin, and supports optional `category_leaf_slugs` (Silver Mine / its milk-tea offering include `cha-chan-teng`). With `category_slugs` present, `_filter_static` uses slug intersection (live-shaped behavior); `resolve('retail')` includes `shopping`, so demo retail rows can answer `shopping` buckets via the slug mirror.
+
+**Measured.** `tests/test_demo_data.py`, `tests/test_the_bucket_leg_reads_the_column_an_offering_row_states.py`, and `tests/test_search_plan.py`/`tests/test_search_pipeline.py` passed (73 passed, 1 DB-skipped in the targeted run). No change to cross-lane web/type contracts.
+
+- readers: demo/static degraded path is closer to live row shape for category/district filtering; bubble-tea/cafe fixture semantics remain fixture-authoring decisions (PLAN 3016).

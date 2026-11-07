@@ -3023,7 +3023,11 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   is fixture authoring - a taxonomy leaf has to be written onto each demo row - not a predicate
   change, and it needs the same decision for `cafe`: this fix leaves 0 demo offerings on that bucket
   while the plane answers it with 79 merchants and 658 offerings (`tmp/d616_shopping_live.txt`, the
-  two `bucket=cafe` lines). Owner: whoever authors `api/demo_data.py`.
+  two `bucket=cafe` lines). **Partially addressed by D737:** demo rows now carry `category_slugs`
+  (resolved taxonomy expansion), `districts`, and `location_points`, and support
+  `category_leaf_slugs` (Silver Mine / its milk-tea offering include `cha-chan-teng`). The specific
+  NLU→`bubble-tea` vs cha-chaan-teng milk-tea semantic mismatch and "no cafe offering in demo" remain
+  open fixture decisions. Owner: whoever authors `api/demo_data.py`.
 - **The static text haystack scores a column the plane never scores, and misses the one the
   offering shape uses.** `service.py:234-236` builds the searchable string from `display_name,
   display_name_zh, name, name_zh, description, category_primary, district` plus `tags` - it includes

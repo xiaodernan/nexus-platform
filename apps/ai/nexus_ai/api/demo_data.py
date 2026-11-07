@@ -37,6 +37,7 @@ _MERCHANTS: list[dict[str, Any]] = [
     {
         "slug": "demo-silver-mine-restaurant", "display_name": "Silver Mine Restaurant",
         "display_name_zh": "銀礦餐廳", "category_primary": "restaurant",
+        "category_leaf_slugs": ["cha-chan-teng"],
         "description": "Demo cha chaan teng in Sha Tin — baked rice and milk tea (synthetic).",
         "tags": ["demo", "cha-chaan-teng", "family"], "district": "Sha Tin",
         "avg_price_hkd": 90.0, "rating_agg": 4.4, "review_count": 182, "popularity": 0.62,
@@ -89,18 +90,26 @@ _OFFERINGS: list[dict[str, Any]] = [
 
 
 def _merchant_rows() -> list[dict[str, Any]]:
+    from nexus_ai.search.categories import canonical_tag, resolve
+
     rows = []
     for m in _MERCHANTS:
         mid = _id("merchant", m["slug"])
+        category_primary = m["category_primary"]
+        category_slugs = [canonical_tag(s) for s in resolve(category_primary)]
+        for leaf in m.get("category_leaf_slugs") or []:
+            leaf = canonical_tag(leaf)
+            if leaf and leaf not in category_slugs:
+                category_slugs.append(leaf)
         rows.append({
             "id": mid, "slug": m["slug"], "display_name": m["display_name"],
             "display_name_zh": m["display_name_zh"], "description": m["description"],
-            "category_primary": m["category_primary"], "tags": m["tags"],
-            "district": m["district"], "avg_price_hkd": m["avg_price_hkd"],
-            "rating_agg": m["rating_agg"], "review_count": m["review_count"],
-            "popularity_score": m["popularity"], "attributes": {},
-            "data_origin": "demo", "plan": "pro", "images": None,
-            "ai_agent_enabled": m["slug"] == "demo-lan-kwai-fong",
+            "category_primary": category_primary, "category_slugs": category_slugs,
+            "tags": m["tags"], "district": m["district"], "districts": [m["district"]],
+            "avg_price_hkd": m["avg_price_hkd"], "rating_agg": m["rating_agg"],
+            "review_count": m["review_count"], "popularity_score": m["popularity"],
+            "attributes": {}, "data_origin": "demo", "plan": "pro", "images": None,
+            "location_points": [], "ai_agent_enabled": m["slug"] == "demo-lan-kwai-fong",
             "subject_type": "merchant", "subject_id": mid, "merchant_id": mid,
             "kw_score": 0.0, "vec_score": 0.0, "text_matched": False,
         })
@@ -108,12 +117,20 @@ def _merchant_rows() -> list[dict[str, Any]]:
 
 
 def _offering_rows() -> list[dict[str, Any]]:
+    from nexus_ai.search.categories import canonical_tag, resolve
+
     rows = []
     merchants = {m["slug"]: m for m in _MERCHANTS}
     for o in _OFFERINGS:
         oid = _id("offering", o["slug"])
         parent = merchants[o["merchant_slug"]]
         mid = _id("merchant", o["merchant_slug"])
+        category = parent["category_primary"]
+        category_slugs = [canonical_tag(s) for s in resolve(category)]
+        for leaf in parent.get("category_leaf_slugs") or []:
+            leaf = canonical_tag(leaf)
+            if leaf and leaf not in category_slugs:
+                category_slugs.append(leaf)
         rows.append({
             "id": oid, "slug": o["slug"], "name": o["name"], "name_zh": o["name_zh"],
             "description": o["description"], "kind": o["kind"],
@@ -121,10 +138,12 @@ def _offering_rows() -> list[dict[str, Any]]:
             "merchant_id": mid, "merchant_slug": parent["slug"],
             "merchant_name": parent["display_name"],
             "merchant_name_zh": parent["display_name_zh"],
-            "category": parent["category_primary"], "district": parent["district"],
-            "avg_price_hkd": o["price_amount"], "rating_agg": 4.0, "review_count": 12,
-            "popularity_score": 0.2, "attributes": {}, "data_origin": "demo",
-            "plan": "pro", "images": None, "bookable": False,
+            "category": category, "category_primary": category,
+            "category_slugs": category_slugs, "district": parent["district"],
+            "districts": [parent["district"]], "avg_price_hkd": o["price_amount"],
+            "rating_agg": 4.0, "review_count": 12, "popularity_score": 0.2,
+            "attributes": {}, "data_origin": "demo", "plan": "pro", "images": None,
+            "location_points": [], "bookable": False,
             "subject_type": "offering", "subject_id": oid,
             "kw_score": 0.0, "vec_score": 0.0, "text_matched": False,
         })
