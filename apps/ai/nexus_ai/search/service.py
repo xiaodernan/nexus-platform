@@ -1073,6 +1073,14 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
         plan.open_early_before = _hhmm_clock(quality.split(":", 1)[1])
     if time and _field(time, "type") == "unspecified" and not plan.at:
         plan.at = None
+    if time and _field(time, "type") == "open_now":
+        # D725: the published spelling of 「開唔開」. `TimeRefType` names `open_now` and
+        # says it "triggers the live-hours computation"; the model refused the word and this
+        # reader skipped it, so the only spelling that reached the plan was the unpublished
+        # `urgency="now"` below it (`tmp/d711_opennow_plan.txt`). The same signal, and the
+        # same reach: the (now, now+3h) window of `_slot_window`, not a row filter - the
+        # candidate query is byte-identical with `filters.open_now` set, measured.
+        plan.open_now = True
     if intent.urgency == "now":
         plan.open_now = True
     for c in (intent.constraints or ()):
@@ -1270,7 +1278,7 @@ def candidates_from_rows(rows: Sequence[dict[str, Any]], plan: SearchPlan, *,
             need = int(plan.party_size or 1)
             availability = "available" if left >= need else ("limited" if left else "full")
         open_state = compute_open(hours_by_merchant.get(merchant_id, []), now=plan.now,
-                                  at=plan.at) if subject_type == "merchant" else None
+                                  at=plan.at, locale=locale) if subject_type == "merchant" else None
         cand = Candidate(
             subject_type=subject_type, subject_id=subject_id, merchant_id=merchant_id,
             # D705: a cuisine the user typed in THIS query answers "does this row answer
@@ -1571,13 +1579,10 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     for r in deduped:
         mid = str(r.get("merchant_id") or r.get("id"))
         attrs = r.get("attributes")
-        if attrs and mid not in merchant_attrs:
-            if isinstance(attrs, str):
-                try:
-                    attrs = json.loads(attrs)
-                except Exception:
-                    attrs = {}
-            merchant_attrs[mid] = attrs
+        # D722: must record attrs even when empty, so the fold below can
+        # enrich candidates whose attributes JSONB is NULL or {}. Without this,
+        # candidates with empty JSONB are invisible to the preference loop entirely.
+        merchant_attrs[mid] = attrs if attrs is not None else {}
 
     # 1. Feedback-based personalization (requires user_id and subject_ids)
     grouped: dict[str, list[float]] = {}

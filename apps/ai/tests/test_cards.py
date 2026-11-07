@@ -53,7 +53,7 @@ def test_compute_open_within_hours_is_open():
 
 def test_compute_open_before_open_is_closed_with_next_time():
     hours = [{"weekday": 0, "opens_at": "14:00", "closes_at": "22:00"}]
-    state = compute_open(hours, now=NOW)   # 12:00, before the 14:00 open
+    state = compute_open(hours, now=NOW, locale="en")   # 12:00, before the 14:00 open
     assert state["is_open"] is False
     assert state["text"] == "Opens 14:00"
 

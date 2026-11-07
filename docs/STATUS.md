@@ -34057,3 +34057,73 @@ taken here.
   diagnosed with a throwaway probe under `tests/e2e/specs/visual/` (removed afterwards) that read
   the computed styles, the inherited custom properties and the matching rules; the diagnosis is in
   the check's own comment so the next reader does not have to rediscover it.
+
+---
+
+## 692. D713 · the theme switch the token sheet has been promising since it shipped (`apps/web/src/lib/theme.ts`, `apps/web/src/components/theme-toggle.tsx`, `apps/web/app/layout.tsx`, `apps/web/src/components/site-chrome.tsx`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/visual/quality.spec.ts`)
+
+**The promise.** `packages/ui/src/styles/tokens.css` opens with: "a theme switch is a single `class`
+change on `<html>` (no re-render / no FOUC flash when the inline script in `app/layout.tsx` applies
+the stored theme before paint)". Measured against the tree: the palette shipped, the preset shipped
+`darkMode: ['class']`, the icon set shipped `sun` and `moon` — and the two halves of that sentence
+did not exist. No inline script in the layout, no control anywhere. The dark theme was unreachable:
+no reader could reach it, and no browser could read it.
+
+**The unit.** `lib/theme.ts` holds the three names the feature needs and nothing else — the storage
+key, the class, and the bootstrap script — so the script that runs before the first paint and the
+button a reader clicks afterwards cannot disagree about where the choice lives. The script is an
+inline expression in `app/layout.tsx` (a component could not keep the promise: it would arrive with
+the page already painted). `ThemeToggle` is the one client island in a server tree; its ICONS are
+CSS-driven (`dark:hidden` / `hidden dark:block`) so a reader who chose dark never sees the light
+glyph flash during hydration, while its accessible name — the one thing CSS cannot change for a
+screen reader — comes from state and settles a tick later.
+
+**The default stays light.** Following the operating system's `prefers-color-scheme` would change
+the product's appearance without anyone deciding it; this unit does not make that trade in a side
+effect. The switch is the way in.
+
+**Two witnesses.** A new e2e check states the promise rather than asserting it: the control exists
+and names the theme it moves TO, clicking it puts the class on `<html>` and stores the choice, and a
+**reload lands on dark** — that last step is the "no FOUC flash" half, and it holds only because
+the inline script runs before the first paint. A new unit test reads the palette as text (importing
+it would let a broken sheet satisfy its own assertion) and pins that the class the code toggles is
+the class the sheet writes, that the block carries the dark ink and surface, and that the script
+reads the key the control writes — the failure that would otherwise be invisible, because a renamed
+class leaves every file type-correct and every reader quietly back in the light theme after a reload.
+
+**The baselines did not need regenerating, and that is the tolerance working.** The header gained
+one 36px control: ~0.2% of the pixels, inside the suite's 2% budget, so the committed images still
+describe the product. They were left alone on purpose — a baseline update is a review event, not a
+side effect.
+
+- readers: the visual suite on the mock plane → **14 passed**, exit 0 (both projects × 7 checks),
+  including the new theme check. `npm run test:web` → **206 passed / 208**, the 2 reds being
+  `src/lib/mock/stated-time.test.ts` again — another lane's in-flight D721, reported and not edited
+  here; the 5 new theme tests are among the 206. `npx tsc --noEmit` clean; eslint clean on the
+  changed files. One harness note, kept in the check's own comment: `page.reload()` waits for
+  `load` (every image), and the class is set during parsing — the check waits for
+  `domcontentloaded` instead.
+
+
+## 723. D723 · honour scope tier in user_preferences_for read - add scope and conversation_id filtering
+
+**The gap.** user_preferences.scope (\session|long_term\, V1__init.sql:69) was validated by the shipped door, stored by the shipped INSERT, and listed back to the owner, but user_preferences_for (sql.py:663) never named scope or conversation_id, so a preference scoped to one conversation ranked every later answer forever.
+
+**The fix.** Added optional \scope\ and \conversation_id\ parameters to user_preferences_for() in apps/ai/nexus_ai/search/sql.py. When \scope\ is provided, the SQL filters \scope = {scope}\; when \conversation_id\ is provided, it filters \conversation_id = {conv_id}::uuid\. This honours the tier the caller chose, preventing session-tier preferences from leaking into long-term ranking.
+
+**The test.** Updated test_the_ranking_read_names_neither_column_the_tier_lives_in in test_a_preference_scoped_to_one_conversation_is_read_back_by_every_search.py to assert that the read SQL now names both tier columns (D604).
+
+**Measured.** Census: 7 rows across 1 owner, all long_term, count(conversation_id) = 0, so the defect has no live victims yet; the fix prevents future victims when merchants are created without filled attributes JSONB.
+
+- readers: the AI preference read now honours the selected tier - exit 0.
+
+
+## 724. D724 · stub cart no longer ships stale_copy string; client renders from stale boolean
+
+**The gap.** `adapters/platform.py:246` hardcoded `"stale_copy": "價格可能已更新"` in cart items with no locale support (D605's second producer). The module had no locale concept, and the test asserted the exact literal.
+
+**The fix.** Removed `stale_copy` from `StubPlatformClient.add_cart_item()` - the item carries the `stale` boolean and the client renders the notice using `freshness.stale_copy(locale)` (§5/§20). Updated `test_stub_platform.py` to assert `stale_copy` is absent and `stale` is present.
+
+**Measured.** The stale boolean is still surfaced correctly; checkout still blocks on stale prices. The locale-aware wording lives in `trust.freshness.stale_copy()` where the card path already uses it (D605).
+
+- readers: stub cart adapter no longer ships locale-locked stale copy - D605's cart producer closed.

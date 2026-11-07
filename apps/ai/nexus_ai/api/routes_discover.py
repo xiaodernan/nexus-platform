@@ -369,7 +369,7 @@ def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
                 observed_at=now)
         district_cells.append(_cell(district, addr_fact))
         hours = hours_map.get(str(row.get("merchant_id") or sid), [])
-        state = compute_open(hours, now=now) if hours else {"is_open": None}
+        state = compute_open(hours, now=now, locale=locale) if hours else {"is_open": None}
         if state.get("is_open") is not None:
             open_fact = bundle.synth(subject_type="merchant",
                                      subject_id=sid, attribute="open_state",

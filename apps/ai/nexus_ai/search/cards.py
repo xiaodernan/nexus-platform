@@ -106,6 +106,21 @@ DURATION_COPY: dict[str, str] = {
     "zh-HK": "{m} 分鐘", "zh-CN": "{m} 分钟", "en": "{m} min",
 }
 
+#: D725: open-state text templates, per locale. The grid's `open_state` row and the
+#: card's availability block both read `compute_open()`'s `text` field; without locale
+#: support they printed English strings to every reader (PLAN D605's open-state residue).
+OPEN_STATE_COPY: dict[str, dict[str, str]] = {
+    "open_until": {"zh-HK": "營業至 {close}", "zh-CN": "营业至 {close}", "en": "Open until {close}"},
+    "opens_at": {"zh-HK": "{open} 開門", "zh-CN": "{open} 开门", "en": "Opens {open}"},
+    "closed": {"zh-HK": "已休息", "zh-CN": "已休息", "en": "Closed"},
+}
+
+
+def _open_state_text(key: str, locale: str, **kw: str) -> str:
+    templates = OPEN_STATE_COPY.get(key, {})
+    template = templates.get(locale) or templates.get("zh-HK") or ""
+    return template.format(**kw) if kw else template
+
 
 def duration_text(minutes: Any, locale: str = "zh-HK") -> str:
     if minutes is None:
@@ -116,7 +131,7 @@ def duration_text(minutes: Any, locale: str = "zh-HK") -> str:
 
 # --------------------------------------------------------------------------- open state
 def compute_open(hours: Sequence[dict[str, Any]], *, now: datetime,
-                 at: datetime | None = None) -> dict[str, Any]:
+                 at: datetime | None = None, locale: str = "zh-HK") -> dict[str, Any]:
     """Opening state computed from `business_hours`, never guessed (§2).
 
     `hours` rows are `{weekday, opens_at, closes_at, crosses_midnight}` with weekday
@@ -136,9 +151,10 @@ def compute_open(hours: Sequence[dict[str, Any]], *, now: datetime,
     for h in yesterday:
         closes = _as_time(h.get("closes_at"))
         if closes and clock < closes:
+            close_str = _hhmm(closes)
             return {"is_open": True, "opens_at": None, "closes_at": _iso(closes),
-                    "text": f"Open until {_hhmm(closes)}", "as_of": local.isoformat(),
-                    "closes_hhmm": _hhmm(closes)}
+                    "text": _open_state_text("open_until", locale, close=close_str),
+                    "as_of": local.isoformat(), "closes_hhmm": close_str}
     if not today:
         # D422: the merchant's own hours are the CLAIM. A venue that lists Mon-Sat is
         # saying it is closed on Sundays, and "closed" is the answer - not "unknown".
@@ -147,7 +163,8 @@ def compute_open(hours: Sequence[dict[str, Any]], *, now: datetime,
         # for ~5% of the merchants because they were treated as the second one.
         if not hours:
             return {"is_open": None, "text": None, "as_of": local.isoformat()}
-        return {"is_open": False, "opens_at": None, "closes_at": None, "text": "Closed",
+        return {"is_open": False, "opens_at": None, "closes_at": None,
+                "text": _open_state_text("closed", locale),
                 "as_of": local.isoformat(), "closes_hhmm": None}
     for h in today:
         opens, closes = _as_time(h.get("opens_at")), _as_time(h.get("closes_at"))
@@ -158,13 +175,19 @@ def compute_open(hours: Sequence[dict[str, Any]], *, now: datetime,
         else:
             is_open = opens <= clock < closes
         if is_open:
+            close_str = _hhmm(closes)
             return {"is_open": True, "opens_at": _iso(opens), "closes_at": _iso(closes),
-                    "text": f"Open until {_hhmm(closes)}", "as_of": local.isoformat(),
-                    "closes_hhmm": _hhmm(closes)}
+                    "text": _open_state_text("open_until", locale, close=close_str),
+                    "as_of": local.isoformat(), "closes_hhmm": close_str}
     opens_today = [t for t in (_as_time(h.get("opens_at")) for h in today) if t is not None]
     nxt = min(opens_today, default=None)
-    return {"is_open": False, "opens_at": _iso(nxt) if nxt else None, "closes_at": None,
-            "text": f"Opens {_hhmm(nxt)}" if nxt else "Closed",
+    if nxt:
+        nxt_str = _hhmm(nxt)
+        return {"is_open": False, "opens_at": _iso(nxt) if nxt else None, "closes_at": None,
+                "text": _open_state_text("opens_at", locale, open=nxt_str),
+                "as_of": local.isoformat(), "closes_hhmm": None}
+    return {"is_open": False, "opens_at": None, "closes_at": None,
+            "text": _open_state_text("closed", locale),
             "as_of": local.isoformat(), "closes_hhmm": None}
 
 

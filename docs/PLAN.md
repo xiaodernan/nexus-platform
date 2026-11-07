@@ -2305,13 +2305,13 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `value.enabled`, so any number is a lie) or its rows are excluded from the preference list the
   user edits. Owner: the platform lane with the notification owner.
 
-- **The memory tier a caller chooses has to be decided, not silently absorbed (D604's gap)** -
+- **The memory tier a caller chooses has to be decided, not silently absorbed (D604's gap)** - **CLOSED by D723** -
   `user_preferences.scope` (`session|long_term`, `V1__init.sql:69`) is validated by the shipped door
   (`MeController.java:57`), stored by the shipped INSERT (`IdentityRepository.java:322`) and listed
   back to the owner (`p.scope`, `:283`/`:301`), while `user_preferences_for` (`sql.py:663`) - the AI
-  lane's only read of the table - never names `scope` or `conversation_id`, so a preference scoped
-  to one conversation ranks every later answer forever. Census: 7 rows across 1 owner, all
-  `long_term`, `count(conversation_id)` = 0, so there is no live victim yet. The two repairs are
+  lane's only read of the table - now honours `scope` and `conversation_id` (D723), so a preference scoped
+  to one conversation no longer ranks every later answer forever. Census: 7 rows across 1 owner, all
+  `long_term`, `count(conversation_id)` = 0, the defect is resolved. The two repairs are
   different products and one clause resolves both (D545): honour the tier in the ranking read, which
   means the writer owes the conversation key and §6's split between `conversations.state` and
   `user_preferences` has to be re-read, or refuse `scope="session"` at the door until there is
@@ -2320,16 +2320,10 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   made by accident. Owner: the AI lane with the platform lane; the spec question is §117's.
 
 - **The stub cart writes the same stale-price sentence with no locale in sight (D605's second
-  producer)** - `adapters/platform.py:246` puts `"stale_copy": "價格可能已更新"` into a cart item
-  beside a `stale` boolean, and the module has no locale concept at all (measured: 0 occurrences of
-  the word `locale` in `adapters/platform.py`; `add_cart_item` takes `cart_id, offering_id,
-  quantity, options, token, tenant`). `test_stub_platform.py:100` asserts that exact literal under a
-  `# §20 localisation` comment, so the stub's own door currently grades the wrong-language copy as
-  correct. D605 fixed the card path and left this one named rather than folding a wider change into
-  its evidence. Two repairs, different shapes: give the adapter the request locale, or stop shipping
-  a sentence from it and let the client render the notice from `stale` - the item already carries the
-  boolean, and §5's promise is about surfacing staleness, not about which module owns the wording.
-  Owner: the AI lane with the platform adapter's owner.
+  producer)** - **CLOSED by D724** - `adapters/platform.py:246` no longer ships `stale_copy` from the
+  adapter; the item carries the `stale` boolean and the client renders the notice using
+  `freshness.stale_copy(locale)` (§5/§20). `test_stub_platform.py` updated to assert `stale_copy` is
+  absent and `stale` boolean is present. D605 fixed the card path; D724 fixes the cart adapter path.
 
 - **A party a merchant cannot seat is not answerable by any clause D607 wrote, because the merchant
   lane has nothing to compare it against (D607's scope limit)** - `min/max_party_size` live on
@@ -3565,11 +3559,15 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   citation is dated to before `9778b7e`; `apps/web/src/lib/mock/index.ts:224` is the five windows the service
   publishes now. Owner: the lane that owns the mock vocabulary.
 
-- **The mock reads digits, so 「九點」 states an hour and gets no time back.** `apps/ai/nexus_ai/nlu/numerals.py:70`
-  rewrites Chinese numerals before `CLOCK_RE` runs, and the web has no mirror of that pass, so
-  `apps/web/src/lib/mock/index.ts:235` sees no clock and §8's floor makes the lane ask. Either carry the ten
-  characters the service normalises or refuse them by name — a silent `none` cannot be told apart from a correct
-  one. Owner: the web lane, and the door is `apps/web/src/lib/mock/stated-time.test.ts`.
+- **The mock reads digits, so 「九點」 states an hour and gets no time back - closed by D721 (§696).**
+  `apps/ai/nexus_ai/nlu/numerals.py:70` rewrites Chinese numerals before `CLOCK_RE` runs, and the web had no mirror
+  of that pass, so `apps/web/src/lib/mock/index.ts:378` saw no clock and §8's floor made the lane ask. Measured over
+  the 33 sentences of `tmp/d655_before.txt` against the service's own `parse_time` (`tmp/d655_service.txt`): 19
+  published nothing and 4 published the part-of-day window's opening hour where the service published the hour.
+  The mirror now carries the digit table, both scripts of every character (`canonical.py` is the authority for the
+  second spelling), the value-1 skip and the positional/十 composition, and the door is
+  `apps/web/src/lib/mock/numeral-hours.test.ts` — it reads the service's tables as TEXT, so a numeral learned there
+  and not here is a red test. Owner: the web lane.
 
 - **Three published time kinds have no carrier on the web.** `packages/types/src/enums.ts:515` and
   `packages/types/src/schemas/intent.json:123` publish `explicit / relative / range / open_now / unspecified`, and
