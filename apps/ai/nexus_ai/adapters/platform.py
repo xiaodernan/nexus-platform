@@ -242,8 +242,7 @@ class StubPlatformClient:
                 "offering_id": offering_id, "quantity": int(quantity),
                 "unit_price": unit, "currency": offering.get("currency", "HKD"),
                 "price_source": offering.get("price_source", "merchant"),
-                "stale": stale,
-                **({"stale_copy": "價格可能已更新"} if stale else {})}
+                "stale": stale}
         cart["items"].append(item)
         cart["total"] = round(sum((i["unit_price"] or 0) * i["quantity"]
                                   for i in cart["items"]), 2)

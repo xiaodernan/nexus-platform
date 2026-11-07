@@ -97,7 +97,10 @@ async def test_stale_price_is_flagged_and_blocks_checkout():
     cart = await c.add_cart_item(cart_id=cart["id"], offering_id="o_stale", quantity=1)
     item = cart["items"][0]
     assert item["stale"] is True
-    assert item["stale_copy"] == "價格可能已更新"  # §20 localisation
+    # D724: stale_copy is no longer shipped from the adapter; the client renders
+    # the notice from `stale` boolean using freshness.stale_copy(locale) (§5/§20).
+    # The item carries the boolean; the wording is the client's responsibility.
+    assert "stale_copy" not in item
     priced = await c.price_check(cart["id"])
     assert priced["stale_count"] == 1
     with pytest.raises(PlatformRejectedRequest) as exc:
