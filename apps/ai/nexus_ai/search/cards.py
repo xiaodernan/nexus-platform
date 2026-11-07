@@ -165,10 +165,21 @@ def compute_open(hours: Sequence[dict[str, Any]], *, now: datetime,
     """
     moment = at or now
     from nexus_ai.nlu.timeparse import HK_TZ
+    from datetime import timedelta
 
     local = moment.astimezone(HK_TZ) if moment.tzinfo else moment.replace(tzinfo=HK_TZ)
     wd = local.weekday()
     clock = local.time()
+    local_date = local.date()
+    tz = local.tzinfo
+
+    def _dt(t: time, *, day_offset: int = 0) -> datetime:
+        # D732: contract OpenState declares opens_at/closes_at as Optional[datetime];
+        # compute_open previously returned HH:MM strings (Pydantic-rejected for datetime fields).
+        # Anchor to the relevant HK local day; crosses-midnight closes land on the next day.
+        d = local_date + timedelta(days=day_offset)
+        return datetime.combine(d, t, tzinfo=tz)
+
     today = [h for h in hours if int(h.get("weekday") or 0) == wd]
     yesterday = [h for h in hours if int(h.get("weekday") or 0) == (wd - 1) % 7
                  and h.get("crosses_midnight")]
@@ -176,7 +187,7 @@ def compute_open(hours: Sequence[dict[str, Any]], *, now: datetime,
         closes = _as_time(h.get("closes_at"))
         if closes and clock < closes:
             close_str = _hhmm(closes)
-            return {"is_open": True, "opens_at": None, "closes_at": _iso(closes),
+            return {"is_open": True, "opens_at": None, "closes_at": _dt(closes),
                     "text": _open_state_text("open_until", locale, close=close_str),
                     "as_of": local.isoformat(), "closes_hhmm": close_str}
     if not today:
@@ -196,18 +207,20 @@ def compute_open(hours: Sequence[dict[str, Any]], *, now: datetime,
             continue
         if h.get("crosses_midnight"):
             is_open = clock >= opens or clock < closes
+            close_offset = 1 if clock >= opens else 0
         else:
             is_open = opens <= clock < closes
+            close_offset = 0
         if is_open:
             close_str = _hhmm(closes)
-            return {"is_open": True, "opens_at": _iso(opens), "closes_at": _iso(closes),
+            return {"is_open": True, "opens_at": _dt(opens), "closes_at": _dt(closes, day_offset=close_offset),
                     "text": _open_state_text("open_until", locale, close=close_str),
                     "as_of": local.isoformat(), "closes_hhmm": close_str}
     opens_today = [t for t in (_as_time(h.get("opens_at")) for h in today) if t is not None]
     nxt = min(opens_today, default=None)
     if nxt:
         nxt_str = _hhmm(nxt)
-        return {"is_open": False, "opens_at": _iso(nxt) if nxt else None, "closes_at": None,
+        return {"is_open": False, "opens_at": _dt(nxt), "closes_at": None,
                 "text": _open_state_text("opens_at", locale, open=nxt_str),
                 "as_of": local.isoformat(), "closes_hhmm": None}
     return {"is_open": False, "opens_at": None, "closes_at": None,
@@ -391,11 +404,14 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
     # is `AvailabilityInfo`, whose properties do not include it and which names the same pointer
     # `fact_id` - so the key D428 added to the availability brief was a property the published
     # object refuses, on every card the lane has ever sent.
-    # The `opens_at` / `closes_at` that compute_open produces are TIME strings ("18:00")
-    # while the contract declares them as datetimes - that disagreement is filed, and it
-    # is why only the fields the two shapes agree on are passed through.
+    # D732: compute_open now returns opens_at/closes_at as datetimes anchored to HK local day
+    # (contract OpenState declares Optional[datetime]). Pass them through; drop legacy HH:MM strings.
     open_fields: dict[str, Any] = {k: v for k, v in (open_state or {}).items()
-                                   if k in ("is_open", "text", "as_of")}
+                                   if k in ("is_open", "text", "as_of", "opens_at", "closes_at")}
+    for k in ("opens_at", "closes_at"):
+        v = open_fields.get(k)
+        if isinstance(v, str):
+            open_fields[k] = None
     open_fact = computed.get("open_state")
     if open_fact is not None:
         open_fields["source_fact_id"] = open_fact.fact_id
