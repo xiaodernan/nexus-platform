@@ -34298,3 +34298,13 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** `tests/test_demo_data.py`, `tests/test_the_bucket_leg_reads_the_column_an_offering_row_states.py`, `tests/test_search_plan.py` — 63 passed, 1 DB-skipped.
 
 - readers: demo fixture uses a real taxonomy root slug for shopping; `retail` bucket requests remain compatible via category resolution.
+
+## 741. D741 · static text haystack includes `description_zh` for offering/row parity
+
+**The gap.** `_filter_static`'s text haystack omitted `description_zh`, while the live offering keyword expression scores `o.description_zh` (PLAN 3027 residue). The static/degraded lane could miss text matches present in Chinese descriptions.
+
+**The fix.** Added `description_zh` to the static row haystack in `apps/ai/nexus_ai/search/service.py`. This only adds potential text matches (no removals); `category_primary`/`district` remain in the haystack as before (separate parity question).
+
+**Measured.** Targeted static/search tests passed (`test_demo_data`, bucket leg, `test_search_plan/pipeline`, category-not-dropped-by-text-gate): 81 passed, 2 DB-skipped.
+
+- readers: static text scoring is closer to live offering keyword coverage for Chinese description fields.

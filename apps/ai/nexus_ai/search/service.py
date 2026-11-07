@@ -277,7 +277,7 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
     for r in rows:
         hay = " ".join(str(r.get(k) or "") for k in
                        ("display_name", "display_name_zh", "name", "name_zh", "description",
-                        "category_primary", "district")).lower()
+                        "description_zh", "category_primary", "district")).lower()
         hay += " " + " ".join(str(t) for t in (r.get("tags") or []))
         # D615: the bucket leg is decided HERE, before the text gate below. A row that answers
         # the category the request named is an answer even when the user's own words appear
