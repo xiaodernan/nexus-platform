@@ -2918,7 +2918,12 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   (the fold's own docstring says "the 96 new words") over-reads it by 15. D584's follow-up door
   enforces one ROW per kind and one LANE per value; nothing enforces one SURFACE per row, and the
   arms prove the gap: dropping `_refused_today` appends 102 further copies and moves none of the four
-  doors that read this vocabulary. Owner: the AI lane.
+  doors that read this vocabulary. **Closed by D751:** the canonicalisation + derived refusal
+  rows are now followed by `_dedup_constraint_rule_surfaces()` (order-preserving, in-row gaps
+  only) and `test_the_refusal_rows_count_surfaces_once.py` enforces one surface per row (the
+  door this bullet demanded). Measured post-fix: cuisine_avoid 106->91, diet_avoid 29->26,
+  smoking_avoid 4->3, feature_avoid 5->3, TOTAL 148->127, zero dupes; no refusal sentence's
+  answer changed (`constraint_hits` already dedups on `(key, canon)`).
 
 - **The static lane's category fallback compares a slug bucket to a display-name column** -
   `_filter_static` matches a row that carries `category_slugs` against `resolve(bucket)` and otherwise

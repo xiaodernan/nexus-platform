@@ -34412,3 +34412,13 @@ The published contract is unchanged (API 422s on `item`); this is the internal-c
 **Measured.** The gate itself: 5 passed (1 Starlette deprecation warning only).
 
 - readers: fixture backends can no longer silently ship rows without the mirror; the uncategorised-merchant rule is pinned by name, not held by accident.
+
+## 751. D751 · the refusal rows count surfaces once (dedup the canonicalisation + derived rows, gate the shape)
+
+**The gap (PLAN).** `CONSTRAINT_RULES` after canonicalisation + the D584-derived refusal rows carried in-row surface duplicates — 21 confirmed of the five rows (`cuisine_avoid` 106→91 after fold; diet 29→26; smoking 4→3; feature 5→3; total 148→127). The table's length lied about its vocabulary, and nothing enforced one SURFACE per row.
+
+**The fix.** `_dedup_constraint_rule_surfaces()` runs at the end of the vocabulary fold (after `_add_cuisine_refusal_surfaces`): order-preserving, in-row, one surface once per row. No refusal-sentence behavior change: `constraint_hits` already dedups on `(key, canon)`; nothing downstream relied on list length. New gate `test_the_refusal_rows_count_surfaces_once.py` enforces the shape (no in-row duplicates; no row emptied; every surface canonises).
+
+**Measured.** Post-import probe: zero dupes across all five rows; `tests/test_the_refusal_rows_count_surfaces_once.py` — 3 passed; refusal-avoidance suite (`test_the_refusals_the_product_could_not_read.py`, 18 passed; `test_a_cuisine_the_user_can_ask_for_is_a_cuisine_they_can_refuse.py` 16 passed); `test_lexicon.py` 54 passed. Note: `test_a_refusal_is_read_once_by_both_lanes.py` collects 9877 cases (a full-PLAN stress-flag door) and is not completable interactively in reasonable time here; every targeted refusal suite finishes green, and the fold changes no sentence-visible semantics.
+
+- readers: a refusal row's LENGTH is its vocabulary; any reader counting it no longer over-reads the table.

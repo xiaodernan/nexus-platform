@@ -1163,6 +1163,38 @@ def _add_cuisine_refusal_surfaces() -> None:
                 rules[index] = (key, negs, [*values, *extra])
 
 
+def _dedup_constraint_rule_surfaces() -> None:
+    """Drop the in-row surface duplicates the canonicalisation creates (D751).
+
+    The canonicalisation is a SPELLING rewrite, not a structural one (D446): a row that held
+    both 純素 and 纯素 holds two copies of the same string after `_canonical_node` runs. The
+    derived refusal surfaces are added under the row that already refuses their kind, so they
+    arrive already distinct-in-value but can still land beside an in-row duplicate, so the
+    fold runs only once, after all the derivation, not once per table.
+
+    Everything downstream (`constraint_hits`, the census doors) dedup-or-handle duplicates,
+    so dropping them changes no refusal sentence's answer; the change is that a row's LENGTH
+    once again says how many surfaces it means, and the fold's own docstring counts honestly.
+    """
+    import sys
+
+    module = sys.modules[__name__]
+    rules = getattr(module, "CONSTRAINT_RULES", None)
+    if not isinstance(rules, list):
+        return
+    for index, (key, negs, values) in enumerate(rules):
+        seen: set[str] = set()
+        dedup: list[str] = []
+        for surface in values:
+            s = str(surface).strip()
+            if not s or s in seen:
+                continue
+            seen.add(s)
+            dedup.append(s)
+        rules[index] = (key, negs, dedup)
+
+
 _canonicalise_vocabulary()
 _hyphenate_district_aliases()
 _add_cuisine_refusal_surfaces()
+_dedup_constraint_rule_surfaces()
