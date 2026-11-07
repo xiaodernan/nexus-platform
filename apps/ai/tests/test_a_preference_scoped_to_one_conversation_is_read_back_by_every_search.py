@@ -161,10 +161,10 @@ def test_the_ranking_read_names_neither_column_the_tier_lives_in():
     """The cheapest form of the defect, read off the built SQL rather than remembered.
 
     `weight`/`source`/`expires_at` are all decisions this lane already made about which columns the
-    ranker owes; `scope` and `conversation_id` are the two it has never looked at.
+    ranker owes; `scope` and `conversation_id` are the two it has now looked at (D604).
     """
     sql_text, _params = SQL.user_preferences_for(_USER)
-    assert "scope" not in sql_text and "conversation_id" not in sql_text, (
+    assert "scope" in sql_text and "conversation_id" in sql_text, (
         f"the preference read now names the tier - it says:\n{sql_text}\nif the tier is honoured, "
         f"this row has done its job: fold it into the shadow read below rather than restoring "
         f"the premise")

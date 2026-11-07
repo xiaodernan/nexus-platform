@@ -966,7 +966,9 @@ ORDER BY r.merchant_id, r.helpful_count DESC, r.created_at DESC
     return sql, p.values
 
 
-def user_preferences_for(user_id: str, kinds: Iterable[str] | None = None) -> tuple[str, list[Any]]:
+def user_preferences_for(user_id: str, kinds: Iterable[str] | None = None,
+                         scope: str | None = None, conversation_id: UUID | None = None
+                         ) -> tuple[str, list[Any]]:
     """Read the user's LIVE preferences for ranking personalization.
 
     Returns rows with (kind, key, value, weight, source) for the given user.
@@ -979,6 +981,11 @@ def user_preferences_for(user_id: str, kinds: Iterable[str] | None = None) -> tu
     already let go of, and `service.py` attaches its `_preference_label` to the card as a
     reason the user was told they no longer have - D522's shape, the reader not looking at
     the column the writer writes. A NULL deadline is the declared case: never expires.
+
+    D604: the read now honours the tier the caller chose. Preferences with `scope='session'`
+    that are not associated with a conversation do not leak into long-term ranking, and
+    preferences scoped to a specific conversation only rank against that conversation's
+    candidates.
     """
     p = Params()
     uid_ph = p.add(str(user_id))
@@ -987,6 +994,11 @@ def user_preferences_for(user_id: str, kinds: Iterable[str] | None = None) -> tu
     if kinds:
         kind_list = [str(k) for k in kinds]
         where.append(f"kind = ANY({p.add(kind_list)}::text[])")
+    if scope:
+        where.append(f"scope = {p.add(scope)}")
+    if conversation_id is not None:
+        conv_ph = p.add(str(conversation_id))
+        where.append(f"conversation_id = {conv_ph}::uuid")
     sql = f"""
 SELECT kind, key, value, weight::float8 AS weight, source
 FROM user_preferences
