@@ -1899,11 +1899,14 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     # weak at the aspect).
                     is_like = True if val is True or val == "noise" else False if val is False else None
                     if is_like is not None:
-                        def make_weakness_match(key_name, liked, w):
+                        def make_weakness_match(key_name, avoids_weakness, w):
                             def _match(attrs):
                                 weak = {str(x) for x in (attrs.get("weak_aspects") or []) if x}
                                 is_weak = key_name in weak
-                                return _sided(w, liked=is_weak if liked else not is_weak)
+                                # avoids_weakness True (value true/"noise"): user dislikes this
+                                # weakness — demote merchants weak at it, prefer not-weak.
+                                # avoids_weakness False: user tolerates/prefers weakness at it.
+                                return _sided(w, liked=(not is_weak) if avoids_weakness else is_weak)
                             return _match
                         match_fn = make_weakness_match(str(key), is_like, float(weight))
                 # STYLE: outdoor, indoor
