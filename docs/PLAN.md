@@ -2985,13 +2985,11 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   "Should the degraded path answer a request its catalogue cannot satisfy with the nearest thing it
   has, or with nothing?" is a question about the degraded contract (§105), not about this predicate;
   this unit changes only the case where the catalogue DOES hold the answer.
-- **`text_matched` on the static lane claims more than it knows.** `service.py:289` sets
-  `r.setdefault("text_matched", bool(low))` — every row that survives a request carrying any text is
-  marked as text-matched, including a row with zero token hits. After D615 such a row can now reach
-  the ranking floor (`ranking.py:262` reads the flag), so the flag is load-bearing in a way it was
-  not before: the lane keeps the row and simultaneously tells the ranker the user's words appeared in
-  it. Measured before/after on the eight demo requests; not repaired here because the live flag is a
-  per-row SQL expression and the two would then disagree in the other direction.
+- **`text_matched` on the static lane claims more than it knows.** **CLOSED — the defect was already
+  repaired (D658) and the PLAN line was stale; stale lines re-verified and closed by D746.**
+  `_filter_static` passes `matched = bool(hits or name_hit)` to `r.setdefault("text_matched", matched)`,
+  never `bool(low)`, so a row with zero token hits is no longer presented to the ranker as matched.
+  No code change needed in this unit; the item is closed as stale documentation.
 
 - **Closed by D620 (§618): the lift door now asks the production path.** It called `S.search(...)`
   without `intent_preferences` - the keyword `api/pipeline.py:192-197` fills - so the preference lane

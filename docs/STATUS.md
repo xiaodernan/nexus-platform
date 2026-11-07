@@ -34358,3 +34358,13 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** `test_a_preference_written_through_the_api_is_not_read_as_silence.py` 17 passed; indoor/outdoor typed, corpus-spelling, `outdoor/indoor/rainy_day/transient`, `style_ambience` — 52 passed (3 DB-skips); the full detector batch 32 passed. **All five pre-existing detector reds identified in the D742 audit are now folded (D743/D744/D745).**
 
 - readers: typed indoor preference answers change on corpus-true facts; every prior master detector row now passes, each by fixing the product path it was filming, not by widening premises or restoring old constants.
+
+## 746. D746 · close stale PLAN residue: static `text_matched` no longer over-claims (already fixed by D658)
+
+**The gap (recorded).** PLAN listed: "`text_matched` on the static lane claims more than it knows. `service.py:289` sets `r.setdefault(\"text_matched\", bool(low))` — every row that survives a request carrying any text is marked as text-matched…".
+
+**Verified (code).** Current `_filter_static` (post-D658) computes `matched = bool(hits or name_hit)` and passes exactly that to `r.setdefault("text_matched", matched)`; there is no `bool(low)` on any `text_matched` path in `nexus_ai`. The mark is now true only when the row mentions the text, matching the live SELECT's own `text_matched` semantics and `_has_query_signal`'s purpose.
+
+**Fix.** PLAN bullet closed as stale documentation; code unchanged.
+
+- readers: static ranking floor no longer judges zero-hit rows as matched; the floor signal is honest on both lanes.
