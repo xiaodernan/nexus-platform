@@ -60,14 +60,11 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The readability floor** — live text measures 4.477:1 against the 4.5 AA bound the visual test
   asserts. Owner: the web stream.
 
-- **A surface inside another surface reads past the clause's reach** - "煙" inside "二手煙"
-  sits two characters further from the cue, and the reach is the clause (D535), so "no want 二手煙"
-  reads the 二手煙 -1 and the 煙 +1. The two lanes agree about the CONSTRAINT now (D545's canon
-  gives the nested pair one value, so the refusal is written once), so it is the reader's reach
-  rather than a contradiction - but a preference keyed on the shorter surface would be boosted by
-  a sentence that refuses the longer one. No preference rule names 煙 or 吵 today, which is why
-  the residue is unreachable in production rather than merely unmeasured.
-  Owner: the AI lane.
+- **A surface inside another surface reads past the clause's reach** - **DOCUMENTED RESIDUE (D734; unreachable in production)** -
+  "煙" inside "二手煙": constraint canon dedupes the refusal (D545), so the constraint lane writes one value. The hypothetical risk is a
+  preference token matching the shorter surface inside a refused longer phrase and being boosted. No preference rule names 煙/吸煙 today,
+  so this is unreachable in production. Defensive fix if a future rule adds those tokens: prefer longest-match / exclude spans covered by
+  longer constraint matches. Owner: the AI lane.
 - **The declarations are checked by name, not by sentence** - the doc gate's exemption
   tables are green as long as a judged document still puts the name in backticks, whatever
   the sentence now says about it: measured, `docs/AI.md` describes the planner

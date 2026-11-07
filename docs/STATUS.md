@@ -34227,3 +34227,14 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Fix.** Closed stale PLAN item with residue noted. No new code change.
 
 - readers: Chinese negated-noisy/quiet polarity conflict addressed; English token residue remains filed.
+
+
+## 734. D734 · nested surface (二手煙/煙) documented as unreachable residue
+
+**The gap.** Shorter token "煙" can appear inside "二手煙"; constraint canon dedupes refusals (D545). Hypothetical preference boost if a future rule names 煙/吸煙.
+
+**Verified.** No current preference rule names 煙/吸煙; constraint path is deduped. Unreachable in production.
+
+**Fix.** PLAN clarified as documented residue with defensive guidance. No code change.
+
+- readers: nested CJK surface matching remains a defensive concern for future token additions.
