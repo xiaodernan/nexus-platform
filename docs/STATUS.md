@@ -34171,3 +34171,15 @@ side effect.
 **Measured.** Budget/ranking tests pass (82 passed, 9 skipped). Contract extension is additive (`extra="ignore"` models).
 
 - readers: budget band mismatches now surface an explicit notice instead of silent out-of-band results.
+
+
+## 729. D729 · compare grid stops synthesizing merchant-keyed address facts in fallback
+
+**The gap.** D401 synthesized a merchant-keyed ddress fact when district came from the primary-location fallback; D609 established address facts are location-keyed, so the grid could claim a key the corpus does not file and contradict location-keyed citations.
+
+**The fix.** In 
+outes_discover.py grid fallback, when no stored address fact is found but district is known from the districts map, show the district value ungrounded (no fact_id) instead of synthesizing a merchant-keyed fact. Updated 	est_compare_grid.py to expect ungrounded fallback.
+
+**Measured.** Compare tests pass (29 passed, 7 skipped). Honest degradation: ungrounded > mis-grounded.
+
+- readers: compare grid no longer synthesizes misleading merchant-keyed address facts in fallback.
