@@ -2229,16 +2229,17 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     else:
                         want = "quiet_ambience" if amb == "quiet" else "lively_ambience"
                         other = "lively_ambience" if amb == "quiet" else "quiet_ambience"
+                        positive = int(polarity or 1) > 0
 
-                        def make_style_ambience_match(want_key, other_key):
+                        def make_style_ambience_match(want_key, other_key, pos):
                             def _match(a2):
                                 if a2.get(want_key) is True:
-                                    return _sided(1.0, liked=True)
+                                    return _sided(1.0, liked=pos)
                                 if a2.get(other_key) is True:
-                                    return _sided(1.0, liked=False)
+                                    return _sided(1.0, liked=not pos)
                                 return None
                             return _match
-                        match_fn = make_style_ambience_match(want, other)
+                        match_fn = make_style_ambience_match(want, other, positive)
                     score = match_fn(attrs)
                     if score is not None:
                         intent_pref_scores.append(score)
@@ -2257,15 +2258,15 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     want = "quiet_ambience" if str(pref_value) == "quiet" else "lively_ambience"
                     other = "lively_ambience" if str(pref_value) == "quiet" else "quiet_ambience"
 
-                    def make_ambience_match(want_key, other_key, p):
+                    def make_ambience_match(want_key, other_key, p, positive):
                         def _match(a2):
                             if a2.get(want_key) is True:
-                                return _sided(p, liked=True)
+                                return _sided(p, liked=positive)
                             if a2.get(other_key) is True:
-                                return _sided(p, liked=False)
+                                return _sided(p, liked=not positive)
                             return None
                         return _match
-                    match_fn = make_ambience_match(want, other, 1.0)
+                    match_fn = make_ambience_match(want, other, 1.0, int(polarity or 1) > 0)
                     score = match_fn(attrs)
                     if score is not None:
                         intent_pref_scores.append(score)

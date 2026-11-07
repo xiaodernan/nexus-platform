@@ -34335,3 +34335,13 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** `test_preference_source.py`, `test_preferences_ranking.py`, `test_transient_preference_label.py`, `test_structured_preferences.py`, `test_preference_evidence.py`, `test_preference_reason.py`, `test_the_ranking_read_honours_the_memory_tier.py` — 50 passed. No other consumer expects the `typed_*` spelling (grep: zero references in tests/PLAN). Pre-existing red detector rows now: 4 (polarity_effect, empty-jsonb invisibility, two indoor_style witnesses) — all still fail identically at clean HEAD.
 
 - readers: typed-preference cards tell the truth about their tier ("this turn's ask", not "your usual"); typed and stored buckets route correctly on both sides.
+
+## 744. D744 · a typed negated ambience preference now demotes rather than boosts (D393/D706 mirror)
+
+**The gap (measured).** A query like 「唔好安靜嘅店」 writes `ambience/quiet polarity=-1`, but both ambience branches of the transient lane scored the quiet attribute as if polarity were `+1` (`make_ambience_match` ignored polarity entirely; `make_style_ambience_match` had no notion of polarity). The comment fragment"D392" in the ranking code showed negation was read for other kinds; ambience was the mirror nobody flipped — `test_polarity_effect.py::test_the_negated_preference_demotes_rather_than_boosts` was red at clean HEAD.
+
+**The fix.** Both ambience branches (D704 `style/ambience`, D706 `ambience/quiet|lively`) now pass `positive = int(polarity or 1) > 0` into the matcher: a user who refuses the value gets `_sided(w, liked=False)` on rows carrying the wanted attribute and the mirror on rows carrying the opposite, so the quiet row scores 0.0/0.0-side and the loud row wins the page — "not quiet" actually ranks the loud one first.
+
+**Measured.** `test_polarity_effect.py` 2 passed (was 1 failed at clean HEAD); `test_ambience_transient.py`, style/ambience transient, weakness antonym, preference source/reason/evidence/ranking, structured preferences, transient labels, D742 gate — 61 passed in the batch (1 Starlette deprecation warning only).
+
+- readers: typed negation of ambience is honoured on the transient lane (D393's promise for the NLU→search path); the 5th pre-existing detector red is folded. Remaining pre-existing reds: `test_a_preference_written_through_the_api_is_not_read_as_silence::empty_jsonb` and two `test_the_indoor_preference_asks_the_fact_that_can_say_no` indoor_style witnesses (unchanged by this unit).

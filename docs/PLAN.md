@@ -114,8 +114,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   are not this lane's regression; fold them as their own units. **Partially folded by D743:**
   the transient producers now emit the one source spelling every consumer honours (`typed`), closing
   `test_preference_source::test_a_typed_preference_is_labelled_typed` and the typed/stored reason
-  bucketing. Remaining pre-existing reds: polarity_effect, empty-jsonb invisibility, two
-  indoor_style witnesses.
+  bucketing. **D744 folded another** (typed negated ambience now demotes rather than boosts).
+  Remaining pre-existing reds: empty-jsonb invisibility, two indoor_style witnesses.
 - **The `weak_aspects` attribute is a LIST, not a boolean** — **closed by D581**: the
   preference matcher now reads the list as a set (`kind == "weakness"`), so a declared
   preference naming `noise` scores the 15 merchants weak at noise 0.200 against 0.800 for the
