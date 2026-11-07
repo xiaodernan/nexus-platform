@@ -2905,8 +2905,11 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   Traditional locale. No consumer is broken today (`canon_constraint` has exactly one shipped caller,
   and it feeds the row's own value), but a second caller that skips the fold gets a raw CJK word into
   `avoid`, where `avoid_terms` hands it back unchanged and the tag predicate `&&` matches no row.
-  Pinned in `test_a_simplified_surface_is_folded_upstream_not_here` so the next caller reads the
-  bridge's location before assuming it. Owner: the AI lane.
+  **Closed by D752:** `canon_constraint` now folds its own input through `canonical(text)`, so a
+  caller that skips the upstream fold reads the same ASCII value as one that runs it — the
+  bridge is no longer only in the reader, it is in the canon. `test_lexicon.py::
+  test_a_simplified_surface_is_folded_here` replaces the old `test_a_simplified_surface_is_
+  folded_upstream_not_here` pin (which held a now-false premise).
 
 - **The refusal table lists 96 surfaces and means 81 things** - 21 entries across the five rows are
   repeats (`tmp/d612_dupes.py`: 15 in `cuisine_avoid`, 3 in `diet_avoid`, 2 in `feature_avoid`, 1 in

@@ -202,10 +202,9 @@ class TestConstraintCanon:
         assert L.canon_constraint("排隊") == "queue"
 
     def test_unknown_lowercased(self):
-        # The fallback needs a token NO table claims. `vegan` used to land here, and the cuisine
-        # fold (`_add_cuisine_refusal_surfaces`) has since made it a known surface - so the row
-        # moved to a word still outside the vocabulary rather than to a new expectation, because
-        # what is under test is the fallback, not the table's size.
+        # The fallback needs a token NO table claims. what is under test is the fallback,
+        # not the table's size. KETO is a surface the vocabulary does not name, so it
+        # falls through to its lowercased form.
         assert L.canon_constraint("KETO") == "keto"
 
     def test_a_cuisine_surface_refuses_its_cuisine(self):
@@ -237,15 +236,13 @@ class TestConstraintCanon:
         assert L.canon_constraint("烤肉") == "korean"
         assert L.canon_constraint("燒烤") == "燒烤"
 
-    def test_a_simplified_surface_is_folded_upstream_not_here(self):
-        # `understand.extract_intent` canonicalises the TEXT before any vocabulary comparison
-        # (its `canonical(text)`, kept out of `normalize_query` by D420 so a Simplified user is
-        # answered in their own script), and `CUISINE_TERMS` was itself canonicalised - which is
-        # why a Simplified 点心 still reads as a dim-sum refusal end to end while this table holds
-        # only the Traditional spelling. The bridge is in the reader, not here: a caller that
-        # skips it gets the raw word back.
+    def test_a_simplified_surface_is_folded_here(self):
+        # D752: the fold now lives in `canon_constraint` itself, not only upstream in
+        # `understand.extract_intent` — so a second caller that skips `canonical(text)` gets the
+        # same ASCII value as one that runs it. Simplified and Traditional 点心/點心 both read
+        # dim_sum; the D420 guarantee is untouched (the user's text is not rewritten anywhere).
         assert L.canon_constraint("點心") == "dim_sum"
-        assert L.canon_constraint("点心") == "点心"
+        assert L.canon_constraint("点心") == "dim_sum"
 
     def test_a_one_character_surface_never_joins_a_refusal_row(self):
         # The fold's floor, pinned from the table side because no door pinned it from the matcher

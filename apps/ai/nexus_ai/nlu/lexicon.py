@@ -953,7 +953,15 @@ CONSTRAINT_CANON = {
 
 def canon_constraint(value: str) -> str:
     v = (value or "").strip()
-    return CONSTRAINT_CANON.get(v, CONSTRAINT_CANON.get(v.lower(), v.lower() or v))
+    from nexus_ai.nlu.canonical import canonical
+
+    # D752: fold the input through the canonicaliser too, not only the query text upstream.
+    # A second caller that skips the fold used to get the raw CJK word back (`avoid_terms`
+    # hands it straight back to the `&&` predicate, which matches no row). Folding here is
+    # free of the D420 concern: it changes the ASCII value the lane writes, never the locale
+    # the user speaks (the user's text is not rewritten anywhere from here).
+    folded = canonical(v)
+    return CONSTRAINT_CANON.get(folded, CONSTRAINT_CANON.get(folded.lower(), folded.lower() or folded))
 
 
 def quoted_entities(text: str) -> list[str]:

@@ -34422,3 +34422,13 @@ The published contract is unchanged (API 422s on `item`); this is the internal-c
 **Measured.** Post-import probe: zero dupes across all five rows; `tests/test_the_refusal_rows_count_surfaces_once.py` — 3 passed; refusal-avoidance suite (`test_the_refusals_the_product_could_not_read.py`, 18 passed; `test_a_cuisine_the_user_can_ask_for_is_a_cuisine_they_can_refuse.py` 16 passed); `test_lexicon.py` 54 passed. Note: `test_a_refusal_is_read_once_by_both_lanes.py` collects 9877 cases (a full-PLAN stress-flag door) and is not completable interactively in reasonable time here; every targeted refusal suite finishes green, and the fold changes no sentence-visible semantics.
 
 - readers: a refusal row's LENGTH is its vocabulary; any reader counting it no longer over-reads the table.
+
+## 752. D752 · `canon_constraint` folds its own input (the Simplified→Traditional bridge is no longer only upstream)
+
+**The gap (PLAN).** `CONSTRAINT_CANON` gained only Traditional keys from `_canonicalise_vocabulary()`, so `canon_constraint("点心")` answered `点心` while `constraint_hits("唔想食点心")` answered `[]`; the shipped Simplified sentence only worked because `understand.extract_intent` canonicalised the query before any vocabulary comparison. A second caller skipping that fold got a raw CJK word into `avoid`, where `avoid_terms`' `&&` predicate matches no row.
+
+**The fix.** `canon_constraint(value)` now runs `canonical(value)` on its own before the table lookup — the same fold the query gets upstream, moved to the one canon reader every consumer goes through. The D420 promise is untouched (nothing rewrites the user's text for the answer; the fold only widens the ASCII value space the readers agree on). `test_lexicon.py::test_a_simplified_surface_is_folded_here` replaces the upstream-pinning test (`点心` now answers `dim_sum`, same as `點心`). Probe: `canon_constraint('点心') == 'dim_sum'`, `canon_constraint('xyzzy') == 'xyzzy'` (unknown passes through lowercased as before).
+
+**Measured.** `test_lexicon.py` 54 passed; refusal-avoidance sweep (`test_a_cuisine_the_user_can_ask_for_is_a_cuisine_they_can_refuse.py` 16 passed; `test_the_refusals_the_product_could_not_read.py` 18; `test_a_refusal_is_not_evidence_for_everything_else.py`, `test_every_refusal_the_lane_reads_reaches_the_avoid_filter.py`, `test_the_clause_is_the_unit_of_refusal.py`, `test_an_antonym_refusal_means_the_value.py`) — 213 passed. Note: the commit also absorbs a pre-existing same-lane (AI-lane) edit in `test_lexicon.py` (an unrelated comment about the `KETO` fallback wording; no behavior change there).
+
+- readers: Simplified surfaces reach `avoid` with the right ASCII value even for a caller that never folds the query; the canon carries the bridge instead of only the reader.
