@@ -34160,3 +34160,14 @@ side effect.
 **Measured.** Compare tests pass (17 + 20 passed, 7 skipped). No grid emission until web lane adds labels.
 
 - readers: party bounds now available in compare entity projection; grid row pending web label coordination.
+
+
+## 728. D728 · budget band mismatch notice on search response
+
+**The gap.** A requested price band (e.g. 500-800) that the corpus cannot satisfy still returned out-of-band results with no explanation; `price_fit` demoted them but the user saw no notice.
+
+**The fix.** Added `notice` (optional) to `SearchResponse`. In `search/service.py`, when a budget band is requested and no returned candidate's price falls within the normalized band (respecting `budget_per`/`party_size`), set a locale-aware notice: "No results matched your budget range - here are the closest options" (zh-HK/zh-CN/en variants).
+
+**Measured.** Budget/ranking tests pass (82 passed, 9 skipped). Contract extension is additive (`extra="ignore"` models).
+
+- readers: budget band mismatches now surface an explicit notice instead of silent out-of-band results.

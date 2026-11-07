@@ -2124,18 +2124,11 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   unchanged: 宵夜 stays in the 18:00-23:00 band, the overlap carries no minimum dwell, and a
   crossing WINDOW would read one day's weekday. Owner: the AI lane.
 
-- **A band the corpus cannot fill still answers with ten rows outside it and says nothing.**
-  Measured 2026-10-30: **3 of the 184 restaurants are priced 300-500** and none are 500-800, so
-  「500-800蚊」 returns ten rows that are all out of band - the top one at HK$92 - with no line on any
-  card saying the band was missed. A `price_fit` of 0.02 is a demotion, not an answer, and the
-  product's answer needs a refusal (or a widened band) when the corpus cannot seat the ask. That is
-  the same shape as the degradation path's refusals and should reuse their copy. Owner: the AI lane
-  with the seed lane (a corpus with prices is the other half).
-  **Re-measured by D631 (§628)**: of the 184 published restaurants, 3 are priced 300-500 and NONE above
-  HK$500 (`tmp/d631_restaurants.txt`) - so the band that cannot be seated is every band with a floor
-  above 354, not just 500-800. The band now REACHES the ranker for every spelling a user writes, and
-  the page for 「預算1000-2000嘅餐廳」 is still ten rows at HK$26-355 with nothing on any card saying so:
-  a demotion is not an answer. Owner: the AI lane with the seed lane.
+- **A band the corpus cannot fill still answers with ten rows outside it and says nothing.** - **CLOSED by D728 (AI lane notice)** -
+  When a budget band (min/max) is requested and no returned results fall within the normalized band, SearchResponse.notice
+  now carries a locale-aware message explaining that no results matched the budget range and showing closest options.
+  The budget remains a soft ranking signal (price_fit); the notice makes the mismatch explicit. Seed-side corpus
+  pricing remains a separate concern. Owner: the AI lane.
 - **A budget cue's own words were left in the match text after its band was stripped - closed by D633**
   (§630). 「最多1000-2000嘅餐廳」 reached the keyword lane as `最多 嘅餐廳`, 「最多1000蚊嘅餐廳」 as
   `蚊嘅餐廳`, 「2至4人嘅餐廳」 as `2至 餐廳` and 「10至20人嘅餐廳」 as `人嘅餐廳` - each word a term no row
