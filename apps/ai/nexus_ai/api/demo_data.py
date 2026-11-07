@@ -73,9 +73,9 @@ _MERCHANTS: list[dict[str, Any]] = [
     },
     {
         "slug": "demo-rainbow-sports-store", "display_name": "Rainbow Sports Store",
-        "display_name_zh": "彩虹運動用品", "category_primary": "retail",
+        "display_name_zh": "彩虹運動用品", "category_primary": "shopping",
         "description": "Demo running-gear retailer in Sha Tin (synthetic).",
-        "tags": ["demo", "retail", "sports"], "district": "Sha Tin",
+        "tags": ["demo", "shopping", "sports"], "district": "Sha Tin",
         "avg_price_hkd": None, "rating_agg": 4.1, "review_count": 44, "popularity": 0.3,
     },
 ]

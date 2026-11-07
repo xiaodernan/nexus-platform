@@ -34288,3 +34288,13 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** `tests/test_the_weak_aspects_list_is_read_by_a_preference.py` 3 passed; `tests/test_weakness_preference_from_antonym.py` 7 passed (10 passed, 1 warning). No corpus/data changes.
 
 - readers: stored declared `weakness` preferences now demote weak merchants as intended; explicit empty `weak_aspects` remains "not weak at listed aspects" per D581; missing-data-vs-assessed-empty is still a data-shape residue.
+
+## 740. D740 · demo retail merchant uses taxonomy `shopping` slug (with alias-safe filtering)
+
+**The gap.** The demo retail merchant stored `category_primary="retail"`, which PLAN notes is not a taxonomy slug (live retail bucket resolves through `shopping`). D737 added resolved `category_slugs`, but the stored primary remained non-canonical.
+
+**The fix.** `apps/ai/nexus_ai/api/demo_data.py`: Rainbow Sports Store now uses `category_primary="shopping"` and `shopping` tag. `category_slugs` are resolved from the stored primary; request buckets like `retail` still match because `resolve('retail')` includes `shopping` and `_filter_static` intersects resolved request slugs with row slugs.
+
+**Measured.** `tests/test_demo_data.py`, `tests/test_the_bucket_leg_reads_the_column_an_offering_row_states.py`, `tests/test_search_plan.py` — 63 passed, 1 DB-skipped.
+
+- readers: demo fixture uses a real taxonomy root slug for shopping; `retail` bucket requests remain compatible via category resolution.
