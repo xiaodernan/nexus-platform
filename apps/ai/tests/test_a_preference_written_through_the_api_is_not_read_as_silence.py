@@ -133,12 +133,12 @@ class _Backend(S.StaticBackend):
 
 
 #: Every live row carries a non-empty `attributes` JSONB (measured: 0 of 470 published merchants
-#: and 0 of 4,707 active offerings answer empty or NULL), and the stored-preference layer is
-#: gated on exactly that - `merchant_attrs` is filled only by the `if attrs and mid not in
-#: merchant_attrs` guard in `search/service.py`, so a candidate with an empty JSONB never reaches
-#: `_enriched_attrs`, and its own price and district are invisible to the budget and location
-#: branches. The fixture keeps the shape the plane has so this gate measures the product and not
-#: the artifact; the shape question itself has its own row below and is filed in PLAN.
+#: and 0 of 4,707 active offerings answer empty or NULL). The stored-preference layer used to be
+#: gated on exactly that - `merchant_attrs` was filled only for a non-empty `attributes` JSONB -
+#: but D722 records every candidate (empty JSONB means empty dict, not no fold), so the fold is
+#: reachable for bare rows too. The fixture keeps the shape the plane has so this gate measures
+#: the product and not the artifact; the shape question itself has its own row and is filed in
+#: PLAN.
 _LIVE_JSONB = {"outdoor_seating": False}
 
 
@@ -248,26 +248,27 @@ def test_the_weight_the_api_writes_by_default_changes_the_answer(kind, key, valu
 
 
 
-def test_a_candidate_with_an_empty_jsonb_is_invisible_to_the_whole_preference_layer():
-    """Recorded, not fixed - the shape this gate's fixture deliberately avoids.
+def test_a_candidate_with_an_empty_jsonb_is_visible_to_the_budget_matcher():
+    """Folded by D722 - this row was recorded red before the fold landed.
 
-    `_enriched_attrs` exists to fold a candidate's OWN columns (`avg_price_hkd`, `district`) into
-    the map the budget and location branches read, but the loop that calls it is entered only for
-    a merchant that already has a non-empty `attributes` JSONB. A row with none - which no live
-    row is today, and which the API's merchant-create path can produce - therefore ignores a
-    stated budget or home district entirely, at any weight. This row is the tripwire: fix the
-    gate and it goes red, and the fix is to make the fold reachable rather than to widen this
-    premise. The dead-point assert below is the control - a preference at 0.5 answers nothing for
+    `_enriched_attrs` folds a candidate's OWN columns (`avg_price_hkd`, `district`) into the map
+    the budget and location branches read; the loop that calls it used to be entered only for a
+    non-empty `attributes` JSONB, so a bare row folded nothing at all. D722 records every
+    candidate in `merchant_attrs` (empty JSONB means empty dict, not no fold), so the fold is
+    now reachable and the candidate is visible to the budget branch. This row keeps the account
+    of that: the product now matches the premise rather than the premise matching the product.
+    The dead-point assert below stays as the control - a preference at 0.5 answers nothing for
     EVERY candidate, so if only that one moves, the fixture broke rather than the product.
     """
     empty = {"attrs": {}, "price": 100, "live_shape": False}
     silence = _score("budget", "per_person_max_hkd", 200, None, **empty)
     at_default = _score("budget", "per_person_max_hkd", 200, DECLARED_DEFAULT, **empty)
     at_neutral = _score("budget", "per_person_max_hkd", 200, NEUTRAL_POINT, **empty)
-    assert at_default == pytest.approx(silence), (
-        f"a budget preference at the write plane's default now moves a candidate whose JSONB is "
-        f"empty ({silence} -> {at_default}) - the gate in `search/service.py` changed, so this "
-        f"row has done its job: fold it into the table above instead of restoring the premise")
+    assert at_default > silence, (
+        f"a budget preference at the write plane's default still leaves an empty-JSONB "
+        f"candidate at silence ({silence} -> {at_default}) - the fold went away or the price "
+        f"column stopped reaching the budget branch; re-read `_enriched_attrs` and "
+        f"`merchant_attrs` in search/service.py")
     assert at_neutral == pytest.approx(silence), (
         f"an empty-JSONB candidate at the dead point moved too ({silence} -> {at_neutral}) - the "
         f"fixture, not the product, is what changed")

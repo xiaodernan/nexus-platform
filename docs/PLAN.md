@@ -115,7 +115,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   the transient producers now emit the one source spelling every consumer honours (`typed`), closing
   `test_preference_source::test_a_typed_preference_is_labelled_typed` and the typed/stored reason
   bucketing. **D744 folded another** (typed negated ambience now demotes rather than boosts).
-  Remaining pre-existing reds: empty-jsonb invisibility, two indoor_style witnesses.
+  **D745 folded the rest:** the empty-JSONB budget tripwire is now the D722-visible shape, and
+  the typed `style/indoor` D718 shadow is gone (D622 `_indoor_evidence` owns the pair).
+  All five pre-existing detector reds are folded; none were fixed by restoring premises.
 - **The `weak_aspects` attribute is a LIST, not a boolean** — **closed by D581**: the
   preference matcher now reads the list as a set (`kind == "weakness"`), so a declared
   preference naming `noise` scores the 15 merchants weak at noise 0.200 against 0.800 for the

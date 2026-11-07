@@ -34345,3 +34345,16 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** `test_polarity_effect.py` 2 passed (was 1 failed at clean HEAD); `test_ambience_transient.py`, style/ambience transient, weakness antonym, preference source/reason/evidence/ranking, structured preferences, transient labels, D742 gate — 61 passed in the batch (1 Starlette deprecation warning only).
 
 - readers: typed negation of ambience is honoured on the transient lane (D393's promise for the NLU→search path); the 5th pre-existing detector red is folded. Remaining pre-existing reds: `test_a_preference_written_through_the_api_is_not_read_as_silence::empty_jsonb` and two `test_the_indoor_preference_asks_the_fact_that_can_say_no` indoor_style witnesses (unchanged by this unit).
+
+## 745. D745 · fold the remaining pre-existing red detector rows (indoor witnesses + empty-JSONB budget)
+
+**The gap (measured on master, 8676a3c..9bc3941).** Five pre-existing red detector rows remained after D744: `test_a_preference_written_through_the_api_is_not_read_as_silence::test_a_candidate_with_an_empty_jsonb_is_invisible_to_the_whole_preference_layer`, and `test_the_indoor_preference_asks_the_fact_that_can_say_no::{test_a_place_that_seats_you_outside_is_not_what_an_indoor_request_asked_for, test_a_refusal_of_indoor_reads_the_same_witness}`.
+
+**The fixes (each its own root cause, none a restored premise).**
+
+* **empty-JSONB budget — the tripwire's assumption was already falsified by D722.** `merchant_attrs` is now populated for candidates whose `attributes` JSONB is `{}`/NULL (D722), so `_enriched_attrs` folds the ROW's own `avg_price_hkd` into the budget branch anyway. The test was rewritten as `test_a_candidate_with_an_empty_jsonb_is_visible_to_the_budget_matcher` (assert `at_default > silence`), keeping the dead-point control (`at_neutral == silence`). The stale comment block about the layer being gated on non-empty JSONB was updated likewise; the fix reaches bare rows through their columns, exactly the product change the row was recorded to catch.
+* **indoor witnesses — the D622 `_indoor_evidence` reader was shadowed by the D718 branch.** The transient lane's `style/indoor` branch read only `outdoor_style` (false → "indoor, sure") and `continue`d, so the later D622 branch (which asks `outdoor_seating` first, matching the stored reader) never ran for typed "室內" requests. Seating evidence was kept out of the answer for rows whose `outdoor_seating: true, outdoor_style: false`. The D718 branch is removed and commented with the reason; typed `style/indoor` now reaches the D622 reader with the same polarity handling as stored declarations.
+
+**Measured.** `test_a_preference_written_through_the_api_is_not_read_as_silence.py` 17 passed; indoor/outdoor typed, corpus-spelling, `outdoor/indoor/rainy_day/transient`, `style_ambience` — 52 passed (3 DB-skips); the full detector batch 32 passed. **All five pre-existing detector reds identified in the D742 audit are now folded (D743/D744/D745).**
+
+- readers: typed indoor preference answers change on corpus-true facts; every prior master detector row now passes, each by fixing the product path it was filming, not by widening premises or restoring old constants.
