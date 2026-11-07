@@ -34278,3 +34278,13 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** `tests/test_demo_data.py tests/test_the_bucket_leg_reads_the_column_an_offering_row_states.py tests/test_search_plan.py` → 63 passed, 1 DB-skipped.
 
 - readers: degraded/static demo now includes a cafe offering; bubble-tea semantic fixture decision remains open (PLAN 3016).
+
+## 739. D739 · stored weakness preference no longer inverts demotion (D581 contract restored)
+
+**The gap (measured).** The stored-preference `weakness` branch in `search/service.py` used `_sided(w, liked=is_weak if is_like else not is_weak)` with `is_like` true for `value` true/"noise" (avoid this weakness). That scored merchants *weak at the aspect* higher than not-weak merchants — the opposite of D581's contract. `tests/test_the_weak_aspects_list_is_read_by_a_preference.py` failed 2/3 on master before this fix (weak=0.8, strong=0.2).
+
+**The fix.** Renamed the flag to `avoids_weakness` and return `_sided(w, liked=(not is_weak) if avoids_weakness else is_weak)`, so avoiding a weakness demotes merchants weak at that aspect and prefers not-weak merchants (D581). The intent-preferences `weakness` path (D695) was already correct.
+
+**Measured.** `tests/test_the_weak_aspects_list_is_read_by_a_preference.py` 3 passed; `tests/test_weakness_preference_from_antonym.py` 7 passed (10 passed, 1 warning). No corpus/data changes.
+
+- readers: stored declared `weakness` preferences now demote weak merchants as intended; explicit empty `weak_aspects` remains "not weak at listed aspects" per D581; missing-data-vs-assessed-empty is still a data-shape residue.
