@@ -71,7 +71,11 @@ def test_the_word_of_a_bucket_that_lost_stays_content():
     bucket, surfaces = category_surfaces("有冇寵物友善嘅咖啡店")
     assert bucket == "cafe"
     assert "寵物" not in surfaces, surfaces
-    assert match_core("有冇寵物友善嘅咖啡店", strip_surfaces=surfaces) == "有冇寵物友善"
+    # D650/D657 landed the frame-first rule (" the question a user wraps a request in is not
+    # searched as content") after this expectation was written, and it strips the existential
+    # cue too — so the match text is the preference and nothing else. What this leg pins is the
+    # SURFACE half: the word 寵物, a different bucket, must NOT leave with the cafe.
+    assert match_core("有冇寵物友善嘅咖啡店", strip_surfaces=surfaces) == "寵物友善"
 
 
 def test_the_users_own_spelling_is_what_gets_blanked():

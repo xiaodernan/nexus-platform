@@ -34378,3 +34378,13 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** Bucket-leg / tags-vocabulary / pipeline / text-is-score suites 341 passed. The one red in that batch (`test_the_word_that_named_the_category_is_not_a_search_term.py::test_the_word_of_a_bucket_that_lost_stays_content`) is a pre-existing NLU `match_core` failure unrelated to this change (no NLU path touched; recorded since D735) and remains red as before.
 
 - readers: static text scoring no longer credits bucket/district words the plane never scores; the haystack is now down to what both lanes read aloud (names, descriptions, tags).
+
+## 748. D748 · fold the last pre-existing red: `test_the_word_of_a_bucket_that_lost_stays_content` reconciled with D650/D657
+
+**The gap (pre-existing red since D650/D657; noted in PLAN, D735-D736-D741-D747 ledgers).** The test pinned `match_core("有冇寵物友善嘅咖啡店", strip_surfaces=surfaces)` to `"有冇寵物友善"`. D650/D657 introduced the frame-first rule (D650 "the question a user wraps a request in was searched as content", D657 "the word that asks for a place was searched for as a place"), which strips the existential cue 有冇 before the surface spans ever run — so the remainder is `寵物友善`, as the substring check verified ([0x5bf5 0x7269 0x53cb 0x5584]).
+
+**The fix — fold the stale expectation, not the product.** The leg's actual claim is the SURFACE half: the word 寵物 names a different bucket, is not the sentence's bucket, and must not leave with the cafe filter. That claim is unchanged and now passes. The test expectation is updated to `寵物友善` with a comment stating D650/D657's frame-first rule strips the existential scaffold too. No NLU code was modified; the corrected pipeline earns back the search text it was built to produce.
+
+**Measured.** `tests/test_the_word_that_named_the_category_is_not_a_search_term.py` — 206 passed, 5 live-skipped. **The complete tracked pre-existing detector-red batch is now zero.**
+
+- readers: match_text for the existential-frame query is 寵物友善 (precision boost without losing content); every prior red detector row is now folded.
