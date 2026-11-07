@@ -3055,11 +3055,9 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   widens the haystack as well reddens exactly one row -
   `test_the_bucket_column_an_offering_states_earns_it_no_text_score`, the row that pins a bucket match
   earns no text score (`tmp/d616_arms.txt`, arm C). So reading the column changes which rows ANSWER;
-  scoring it would change which rows RANK, on a lane the plane does not rank this way at all. Owner:
-  the AI lane, with the neighbouring half of the same string: `description_zh` is scored by the live
-  offering expression (`sql.py:531-538`) and is in the haystack not at all, so the fixture lane is
-  blind in both directions - it searches a column the plane does not score, and does not search a
-  column the plane does.
+  scoring it would change which rows RANK, on a lane the plane does not rank this way at all.
+  **CLOSED by D741 (description_zh added) and D747 (category_primary/district removed).** The
+  static haystack now reads what BOTH lanes read aloud: names, descriptions (en+zh), tags.
 - **`ALIASES` runs one way, so a caller who names the taxonomy root reaches rows the degraded lane
   cannot name.** `resolve("retail")` answers `['retail', 'shopping']` and `resolve("shopping")`
   answers `['shopping']` (`tmp/d616_offering_lane.py`, the `resolve()` block) - the table maps

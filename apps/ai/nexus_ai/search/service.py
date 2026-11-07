@@ -298,8 +298,13 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
     for r in rows:
         hay = " ".join(str(r.get(k) or "") for k in
                        ("display_name", "display_name_zh", "name", "name_zh", "description",
-                        "description_zh", "category_primary", "district")).lower()
+                        "description_zh")).lower()
         hay += " " + " ".join(str(t) for t in (r.get("tags") or []))
+        # D747: `category_primary` and `district` were in the haystack, but the live keyword
+        # expression scores neither — the category under the bucket leg D616/D618, the district
+        # through the geo lane/EXISTS, never a ts_rank text column. The static lane held them as
+        # a text signal, so a query word matching a bucket or district boosted a row's text score
+        # on the fixture lane only (and widened answers to `Cafe`-matching queries). Removed.
         # D615: the bucket leg is decided HERE, before the text gate below. A row that answers
         # the category the request named is an answer even when the user's own words appear
         # nowhere in it: the live lane reads text as a score and a `text_matched` flag, never

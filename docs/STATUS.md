@@ -34368,3 +34368,13 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Fix.** PLAN bullet closed as stale documentation; code unchanged.
 
 - readers: static ranking floor no longer judges zero-hit rows as matched; the floor signal is honest on both lanes.
+
+## 747. D747 · static text haystack drops bucket/district columns (live keyword parity)
+
+**The gap.** The static-lane text haystack included `category_primary` and `district`, though the live keyword expression scores neither (category is D616's bucket leg, district is the geo EXISTS; `sql.py:314-321` scores names/description/tags only). A static row could earn a text hit from a bucket or district word a live row never scores — and `Cafe`-matching text could widen coverage for rows that only share the category column.
+
+**The fix.** Removed both columns from the static haystack in `search/service.py`. The bucket gate and geo/district filters stay exactly where they were (they are WHERE/EXISTS, not text scoring). `tags` remain (the live expression scores them), as do `description_zh` (D741).
+
+**Measured.** Bucket-leg / tags-vocabulary / pipeline / text-is-score suites 341 passed. The one red in that batch (`test_the_word_that_named_the_category_is_not_a_search_term.py::test_the_word_of_a_bucket_that_lost_stays_content`) is a pre-existing NLU `match_core` failure unrelated to this change (no NLU path touched; recorded since D735) and remains red as before.
+
+- readers: static text scoring no longer credits bucket/district words the plane never scores; the haystack is now down to what both lanes read aloud (names, descriptions, tags).
