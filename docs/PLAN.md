@@ -81,13 +81,11 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   別 and 少 are one character and the tail of 特別 / 最少 / 多少, so `NEGATION_COMPOUNDS` keeps a
   cue inside a longer word from refusing anything - measured before it, "特別辣的餐廳" wrote
   `cuisine_avoid:spicy`, filtering out the spice the user asked for. Owner: the AI lane.
-- **The polarity lane refuses the WORD where the user asked for its opposite** - the token
-  嗜 sits in the quiet preference rule's own token list, and the cue negates the token it
-  finds, so "唔好嗜" (do not be noisy) writes `noise_avoid:noise` AND reads the
-  preference `ambience/quiet` **-1** - the ranking lane demotes the quiet merchants for a
-  user who asked for a quiet one. Measured identical under every spelling of the negation
-  (唔好 / 兇 / 無 / 没 / 沒), so it is the reader's token choice rather than a
-  vocabulary hole. Owner: the AI lane.
+- **The polarity lane refuses the WORD where the user asked for its opposite** - **CLOSED by D733 (core fixed by D683; residue noted)** -
+  D683 addressed the token-choice conflict for the Chinese case via ambiguous-polarity handling (`AMBIGUOUS_POLARITY_NEGATION` for
+  ambience/quiet with "嘈"); the negated noisy term no longer demotes quiet merchants as a quiet-preference -1 in that path.
+  Residue from D683 commit remains: English quiet/lively token lists still read by the matcher (filed; web lane surface context).
+  Owner: the AI lane.
 - **The offline lane never reads `avoid` at all** - **CLOSED by D730 (verified; originally fixed by D549)** -
   `_filter_static` now reads `filters.get("avoid")` via `_static_avoids()` (and has since D549's hard-filter
   parity work). The PLAN description was stale. Verified: `_filter_static(..., {'avoid': ['seafood']})` excludes

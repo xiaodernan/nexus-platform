@@ -34216,3 +34216,14 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 **Measured.** `test_cards.py` passes (17 passed). `OpenState` accepts the new values.
 
 - readers: open state contract alignment; `closes_hhmm`/text behavior unchanged.
+
+
+## 733. D733 · polarity "word vs opposite" PLAN item closed (core fixed by D683)
+
+**The gap (recorded).** PLAN described "唔好嘈" writing `noise_avoid` while also reading `ambience/quiet` as -1, demoting quiet merchants.
+
+**Verified (code).** D683 added ambiguous-polarity handling; lexicon carries `AMBIGUOUS_POLARITY_NEGATION` for `("ambience","quiet")` with "嘈", preventing the negated noisy token from being misread as a quiet-preference dislike in that path. Commit `f74527eb` notes English quiet/lively token list residue (separate surface).
+
+**Fix.** Closed stale PLAN item with residue noted. No new code change.
+
+- readers: Chinese negated-noisy/quiet polarity conflict addressed; English token residue remains filed.
