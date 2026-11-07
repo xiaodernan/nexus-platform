@@ -34402,3 +34402,13 @@ The published contract is unchanged (API 422s on `item`); this is the internal-c
 **Measured.** `test_a_kind_named_with_no_sentence_at_all_is_answered_by_that_kind.py` — 12 passed (renamed expectation `test_a_synonym_kind_reaches_the_filter_and_the_subject`; `test_both_exits_from_this_function_have_a_reader_for_a_named_kind` passes unchanged).
 
 - readers: text-less kind asks with synonyms now reach `offering_candidates`; the two readers of a caller's kind can no longer disagree.
+
+## 750. D750 · door over the fixture backends: any row list a category-filtered plan is pointed at carries the slug mirror or says why not
+
+**The gap (PLAN).** Two bullets filed there: (a) the static lane's category fallback compares a slug bucket to a display-name column — on the live plane that is a NAME ("Ramen & Noodles"), so an uncategorised merchant (`'{}'::text[]` slug mirror) could never answer anyway, but the rule was enforced by accident; (b) every shipped candidate row carries the two-level mirror, and hand-built fixture rows that filter by category repeat the `tmp/d613_static_probe.txt` failure mode (empty answer set looking like a ranking bug), and nothing checked a fixture row's shape.
+
+**The fix — one gate file, two halves, no behavior change.** `tests/test_the_shipped_fixture_rows_carry_the_slug_mirror.py` now asserts: every shipped demo merchant row carries non-empty `category_slugs`; every demo offering likewise; kept rows under `cafe`/`shopping`/`retail` have slugs intersecting the resolved bucket; the LIVE-shaped empty-mirror NAME row answers nothing for `ramen`/`cafe` (the PLAN bullet's own direction, now a named pin instead of an accident); and the D616 coarse case (fixture bucket spelling) answers the bucket deliberately.
+
+**Measured.** The gate itself: 5 passed (1 Starlette deprecation warning only).
+
+- readers: fixture backends can no longer silently ship rows without the mirror; the uncategorised-merchant rule is pinned by name, not held by accident.

@@ -2931,15 +2931,20 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `merchant_categories` rows gets `'{}'::text[]` from `CATEGORY_SLUGS_SUBQUERY`, so `row_slugs` is
   empty, so it is dropped by a comparison that could not have matched anyway. The direction is safe -
   an uncategorised merchant should not answer a category request - but the rule is enforced by
-  accident, and no door names the shape. Owner: the AI lane.
+  accident, and no door names the shape. **Closed by D750:** the live shape is now a named pin in
+  `test_the_shipped_fixture_rows_carry_the_slug_mirror.py::test_a_live_shaped_row_with_an_empty_slug_mirror_is_answered_by_no_category`
+  (bucket `ramen`/`cafe` over `'{}'`-mirror NAME rows answers []), and the D616 coarse leg is pinned
+  deliberately as the fixture case (bucket-spelling rows answer it) rather than left implicit.
 
 - **A fixture must carry the two-level `category_slugs` mirror, or it is testing the fallback** -
   every shipped candidate row carries leaf AND parent slugs (both lanes' SELECT, D596/D597), and D613
   found two end-to-end rows whose fixtures did not, which made them fail on an EMPTY answer set while
   looking like a ranking bug (`tmp/d613_static_probe.txt`). Nothing checks the shape of a hand-built
-  row, so the next fixture that filters by category repeats the mistake. The cheap fix is a door over
-  the fixture backends: any row list a category-filtered plan is pointed at either carries
-  `category_slugs` on every row or says why not. Owner: the AI lane.
+  row, so the next fixture that filters by category repeats the mistake. **Closed by D750:**
+  `test_the_shipped_fixture_rows_carry_the_slug_mirror.py` asserts every shipped demo merchant
+  and offering row carries a non-empty two-level `category_slugs` mirror, that bucket filtering
+  leaves the kept rows' slugs intersecting the resolved bucket, and that the empty-mirror/name
+  shape answers nothing regardless of its raw spelling.
 
 - **A card that answers a category request never says which category matched it** - **PARTIAL D735 (AI reason)** -
   When a category filter is active and the displayed primary category appears to differ from the requested filter, cards now
