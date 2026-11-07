@@ -34149,3 +34149,14 @@ side effect.
 **Measured.** 25 passed, 1 skipped on accessibility/preference declaration tests. No double-scoring (same branch handles both spellings per D545).
 
 - readers: accessibility/step_free preferences now read by ranking; activity/brand remain unread (recorded).
+
+
+## 727. D727 · party bounds projected in compare query + party_size_text helper (grid row blocked on web labels)
+
+**The gap.** min_party_size/max_party_size are filtered by D607 but not surfaced in compare grid; entities_for didn't project them.
+
+**The fix.** Added min_party_size/max_party_size to entities_for SQL (both merchant/offering branches) and added party_size_text() with locale-aware formatting in search/cards.py. Attempted to add party_size row to compare grid but reverted emission: 	est_the_length_an_offering_states_reaches_the_grid_that_compares_it.py requires web frontend rowLabels to match emitted attributes (cross-lane). SQL projection + helper are ready.
+
+**Measured.** Compare tests pass (17 + 20 passed, 7 skipped). No grid emission until web lane adds labels.
+
+- readers: party bounds now available in compare entity projection; grid row pending web label coordination.

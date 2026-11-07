@@ -129,6 +129,30 @@ def duration_text(minutes: Any, locale: str = "zh-HK") -> str:
     return template.format(m=int(minutes))
 
 
+#: D727: the comparison grid's party-size cell, per locale. The numbers are the
+#: offering's own `min_party_size`/`max_party_size` columns (D607 bounds them as filters;
+#: D727 surfaces them in the compare grid). A subject that states neither is blank.
+PARTY_SIZE_COPY: dict[str, dict[str, str]] = {
+    "range": {"zh-HK": "{min}-{max} 人", "zh-CN": "{min}-{max} 人", "en": "{min}-{max} people"},
+    "min_only": {"zh-HK": "{min}+ 人", "zh-CN": "{min}+ 人", "en": "{min}+ people"},
+    "max_only": {"zh-HK": "最多 {max} 人", "zh-CN": "最多 {max} 人", "en": "Up to {max} people"},
+}
+
+
+def party_size_text(min_size: Any, max_size: Any, locale: str = "zh-HK") -> str:
+    if min_size is None and max_size is None:
+        return ""
+    templates = PARTY_SIZE_COPY
+    if min_size is not None and max_size is not None:
+        t = templates["range"].get(locale) or templates["range"]["zh-HK"]
+        return t.format(min=int(min_size), max=int(max_size))
+    if min_size is not None:
+        t = templates["min_only"].get(locale) or templates["min_only"]["zh-HK"]
+        return t.format(min=int(min_size))
+    t = templates["max_only"].get(locale) or templates["max_only"]["zh-HK"]
+    return t.format(max=int(max_size))
+
+
 # --------------------------------------------------------------------------- open state
 def compute_open(hours: Sequence[dict[str, Any]], *, now: datetime,
                  at: datetime | None = None, locale: str = "zh-HK") -> dict[str, Any]:

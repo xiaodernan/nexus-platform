@@ -1070,6 +1070,9 @@ def entities_for(tenant_id: str, subject_ids: Iterable[str]) -> tuple[str, list[
     selects `NULL::int` for the same reason it selects NULLs for the price clock: `merchants`
     has no length column, and a `UNION ALL` matches its branches by position, so an offering
     row's length arrives under a name the merchant rows also answer - with nothing.
+
+    D727: adds `min_party_size`/`max_party_size` (the remaining Booking columns D607 filters on)
+    so the compare grid can surface party bounds alongside duration.
     """
     p = Params()
     ids = [str(s) for s in subject_ids if s]
@@ -1084,6 +1087,7 @@ SELECT m.id::text AS subject_id, 'merchant'::text AS subject_type, m.id::text AS
        NULL::text AS price_model,
        NULL::timestamptz AS price_updated_at, NULL::text AS price_source,
        NULL::int AS duration_minutes,
+       NULL::int AS min_party_size, NULL::int AS max_party_size,
        m.rating_agg, m.review_count, m.description,
        m.data_origin, m.plan, m.attributes, m.images, m.ai_agent_enabled, m.status
 FROM merchants m
@@ -1095,6 +1099,7 @@ SELECT o.id::text, 'offering', o.merchant_id::text,
        COALESCE(o.price_amount, o.price_min), o.currency, o.price_model,
        o.price_updated_at, o.price_source,
        o.duration_minutes,
+       o.min_party_size, o.max_party_size,
        o.rating_agg, o.review_count, o.description,
        m.data_origin, m.plan, o.attributes, o.images, m.ai_agent_enabled, o.status
 FROM offerings o JOIN merchants m ON m.id = o.merchant_id

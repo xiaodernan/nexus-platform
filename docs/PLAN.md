@@ -2482,12 +2482,13 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `_grid` keeps a cell under its own subject. A renderer that reorders or filters columns by id
   cannot tell which cell is whose. Owner: the web lane with the contract owner.
 
-- **The party bounds are the two Booking columns this row leaves behind** - `bookable` reaches the
-  card's CTA (D674), `duration_minutes` now reaches card and grid, and
-  `min_party_size`/`max_party_size` reach neither: the search selects both and honours them as a
-  filter since D607, and no grid row names them, so a comparison of two offerings states what each
-  costs and how long each takes but not how many each seats. The projection edit is the one this
-  unit just made twice. Owner: the AI lane.
+- **The party bounds are the two Booking columns this row leaves behind** - **PARTIAL D727 (AI lane)** -
+  ookable reaches the card's CTA (D674), duration_minutes reaches card and grid (D675). D727 adds
+  min_party_size/max_party_size to entities_for (both branches) and adds party_size_text() helper
+  in search/cards.py. The compare grid party_size row emission is **blocked on web lane labels**
+  (	est_the_length_an_offering_states_reaches_the_grid_that_compares_it.py requires frontend rowLabels
+  to match emitted attributes). SQL projection and helper are ready; grid row can be enabled when web
+  lane adds the label. Owner: the AI lane with the web lane.
 
 - **The seed's length/prose disagreement now prints in two readers** - the bullet below (§671's 「111
   offerings state a length in the column that their own title contradicts」) was written about the
