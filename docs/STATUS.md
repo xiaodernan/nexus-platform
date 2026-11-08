@@ -35699,3 +35699,27 @@ sentence is canonical.
 
 **Measured.** `intent_v1` 69/69 · gates PASS (`accuracy` 1.0000, `hallucination_rate` 0.0000).
 No code change; one line in one case file.
+
+
+## 809. D809 · the live plane in this session carries no `jiebacfg` — AI-lane environment from here is the gate
+
+**The door.** The AI-lane suites in this session run against the live plane at 127.0.0.1:5433.
+The seeded corpus (for the AI lane `apps/ai/`) needs `jiebacfg` — a `psql regconfig` that lives
+in `data/seed/out` and is only provisioned on a re-seeded test plane. I ran the full live
+suite; the plane is missing it.
+
+**The measurement.**
+
+- `test_live_canonical_query.py` — 3 passed.
+- `test_live_ai_contract.py` — 4 of 4 failed at `text search configuration "jiebacfg" does not exist`.
+- `test_live_conversation_refinement.py` — fails identically for the same reason.
+
+**Honest position.** CI (`nexus_test`) carries the seed-rebuilt `jiebacfg`, so the same live
+suites in CI answer the obvious question. This dev plane cannot; this is the seed-lane's
+rebuild burden and not an AI-lane defect — the AI lane's query text is the same; the failure
+is in the regconfig, not in `apps/ai/`. None of the four failures traces to AI-lane code.
+
+**What this does NOT claim.** The live-DB-gated tests pass. They cannot be validly green here;
+any claim that they pass on this plane would be a fabrication. The pure-unit suites remain
+green (eval gates 69/69, 47/47; hygiene 14/14; cue-grammar 181; match-text 1,236; mypy 61
+files clean; ruff clean).

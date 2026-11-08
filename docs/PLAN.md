@@ -463,6 +463,10 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D808** `product-e2e-sentence` (the AI.md §2 sentence) gains the three remaining assertions
   it always promised: `category: restaurant`, `budget.max: 500` (currency HKD, per party);
   69/69 green; no code change.
+- **D809** this dev plane doesn't carry `jiebacfg`; the live-DB suites
+  `test_live_canonical_query` 3/3 green; the rest fail against `text search configuration
+  "jiebacfg" does not exist` — a seed-lane environment fact, not AI-lane code. CI's nexus_test
+  plane carries the regconfig and the seed; the AI lane's health is proven there.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
