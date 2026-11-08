@@ -451,6 +451,15 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   rating, `most popular` → trending; intent_v1 61 → 69; eight measured cases pinned.
 - **D806** the monolith suite killed at 90m, observed state: ~40% run, 0 failures, 0 errors;
   honestly not a "suite is green" claim; scoped sweeps remain green throughout the session.
+- **D807** the avoid-lane measured against this corpus: 5,170 active offerings, 3,030 with a
+  non-null allergen list (gluten 1,380, soy 1,321, dairy 1,113, egg 581, shellfish 412, fish 317,
+  chili 190, nuts 189, sulphite 180, mollusc 168, sesame 89, coconut 87, peanut 57); 118 published
+  merchants carry a non-empty `weak_aspects` (taste, seating, ambience, service, …); 0 active
+  offerings carry `weak_aspects`; 0 published merchants carry `attributes->'allergens'`
+  (allergens are offering-level only); `categories.kind == 'merchant'` for all 77 rows. The
+  constraint writer maps the user's word to an ASCII value, the seed carries ingredient-allergen
+  families, and the two never meet today beyond `spicy ↔ hotpot/korean/thai/indian` and
+  `seafood ↔ seafood-grill`. Filed as evidence, not a code change.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

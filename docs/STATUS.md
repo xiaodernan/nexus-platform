@@ -35640,3 +35640,45 @@ cue-grammar 181 / match_text 1,236 green.
 
 **Final observation.** Continuing to run scoped sweeps is the strategy this unit's ledger item
 records honestly — full monolith green is NOT proven, cumulative-observed 40% is.
+
+
+## 807. D807 · the avoid lane measured against this corpus: the seed has the facts, the lexicon needs an owner to wire them
+
+**The door.** The avoid lane is wired (D549: `_filter_static`,D546: `build_merchant_query`, D558:
+`build_offering_query`); its job is to exclude rows the user has refused to consume — allergen,
+dietary, ideological, religious. The question: does the corpus carry the data that lane can
+read, and does the constraint lexicon read it?
+
+**The measurement** (2026-11-09, live dev plane). Offering tags and allergens on the seeded
+marketplace (`status='active'` — 5,170 published offerings):
+
+- Every active offering carries a non-null `attributes->'allergens'` for 3,030 of them; the
+  value is a JSON list from the seed's token set: gluten 1,380, soy 1,321, dairy 1,113, egg 581,
+  shellfish 412, fish 317, chili 190, nuts 189, sulphite 180, mollusc 168, sesame 89, coconut 87,
+  peanut 57, herb 33, pepper 11.
+- Offering `attributes->'weak_aspects'`: 0 of 5,170 non-null — the seed never fills the field.
+- Published merchants: 118 carry a non-empty `weak_aspects` (taste, seating, ambience, service,
+  mtr_distance, cleanliness, portion, waiting_time, value…); 352 carry the empty list. 0 merchants
+  carry `attributes->'allergens'` (the seed writes allergens on the offering, never the merchant).
+- `categories.kind = 'merchant'` for 77 rows; there is no cuisine-leaf taxonomy table — cuisine
+  identity rides on `tags` and `category_primary`.
+
+**The honest conclusion.** The constraint surface is wired, the path exists (`entity_refuse`
+— `CONSTRAINT_CANON` — `avoid_terms` — the WHERE clause — `_static_avoid_terms` in the fixture
+lane too). But the constraint writer's word list and the corpus' allergen list speak DIFFERENT
+languages: `CONSTRAINT_CANON` maps the user's word to an ASCII value (`猪肉`/`pork`), the avoid
+term expansion is `pig`-like lexical match against tags and/or category leaves through
+`categories.avoid_terms`; the corpus offers ingredient-allergen buckets (dairy, gluten, soy, egg,
+shellfish, fish, peanut …), not pig/beef/chicken/fish literal-token tags — seafood-grill/singmal/
+dimsum/hotpot/sushi/ramen/specialty-coffee/cantonese are cuisine tags. The only avoid values
+that can exclude today are the ones cuisine-shaped: `spicy` (hotpot/korean/thai/indian) and
+`seafood` (seafood-grill matches 14 merchants). Everything an allergen-aware user might write
+(`no egg`, `no gluten`, `avoid dairy`, `shellfish-free`) reaches the lane today and does NOTHING —
+3,030 offerings in the corpus carry these facts, and no word-clause path reads them.
+
+**What this is not.** No gate is red here. No code is broken. The lexicon and the seed are two
+designers answering the same question: the constraint writer gave us the grammar, the seed gave
+us the data, and they never met for the allergen class. Whether they should meet — and which
+nozzle is the right one (new cuisine leaves `pork` / `egg` / `shellfish`, a new allergen axis in
+`ASPECT_AVOID`, or a new attribute leg in both SQL paths and the fixture) — is the owner's call,
+not the AI lane's. Filed as measured evidence, not "fixed" in this lane.
