@@ -15,7 +15,8 @@ import json
 import math
 from dataclasses import dataclass
 from datetime import datetime, time
-from typing import Any, Iterable
+from typing import Any, Iterable, Sequence
+from uuid import UUID
 
 from nexus_ai.search.categories import (aspect_attributes, aspect_terms, avoid_terms,
                                      resolve as resolve_category)

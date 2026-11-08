@@ -34501,3 +34501,16 @@ candidate lane did not.
 - readers: Chinese queries now segment through `jiebacfg` instead of matching the whole
   CJK run as one opaque token; Â§111 (Chinese is the primary language) is now honored by the
   text search lane.
+
+## 756. D756 ¡¤ Fix ruff F821 undefined names in nexus_ai.search.sql (clears nexus_ai ruff)
+
+**The gap.** uff check nexus_ai reported 2 F821 errors in search/sql.py:
+Sequence (line 267, cuisine_slugs annotation) and UUID (line 978,
+user_preferences_for annotation) were referenced without imports. With
+rom __future__ import annotations these were runtime-harmless but flagged by ruff.
+
+**The fix.** Added Sequence to rom typing import ... and rom uuid import UUID.
+No behavior change.
+
+**Measured.** uff check nexus_ai ¡ú all checks passed (was 2 errors).
+	est_search_sql.py + category/bucket filter suites: 22 passed, 8 DB-skipped.
