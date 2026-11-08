@@ -34432,3 +34432,22 @@ The published contract is unchanged (API 422s on `item`); this is the internal-c
 **Measured.** `test_lexicon.py` 54 passed; refusal-avoidance sweep (`test_a_cuisine_the_user_can_ask_for_is_a_cuisine_they_can_refuse.py` 16 passed; `test_the_refusals_the_product_could_not_read.py` 18; `test_a_refusal_is_not_evidence_for_everything_else.py`, `test_every_refusal_the_lane_reads_reaches_the_avoid_filter.py`, `test_the_clause_is_the_unit_of_refusal.py`, `test_an_antonym_refusal_means_the_value.py`) — 213 passed. Note: the commit also absorbs a pre-existing same-lane (AI-lane) edit in `test_lexicon.py` (an unrelated comment about the `KETO` fallback wording; no behavior change there).
 
 - readers: Simplified surfaces reach `avoid` with the right ASCII value even for a caller that never folds the query; the canon carries the bridge instead of only the reader.
+
+## 753. D753 · D596 parity gate widened to text-carrying requests
+
+**The gap (PLAN).** `test_the_category_filter_answers_the_same_question_on_both_lanes.py` only asked
+`_filter_static(rows, "", {"category": bucket})` with empty text, so it compared the two lanes'
+filter semantics but never the order in which the same function applies text and filter — the
+D615/D658 principle (category is a hard WHERE, text is just a score that never vetoes) had no
+text-carrying witness.
+
+**The fix.** Added `test_category_is_a_hard_filter_text_is_only_a_score`, which runs
+`_filter_static` with `text="milk tea"` and asserts: (1) both cafes in the bucket survive even
+though one carries no matching words; (2) the restaurant is dropped even though its words match
+perfectly; (3) `text_matched` is per-row (true where words appear, false where they do not).
+
+**Measured.** `test_the_category_filter_answers_the_same_question_on_both_lanes.py` — 4 passed,
+7 live-skipped (no DB URL). No source change; the widening is a gate only.
+
+- readers: text never overrides the category bucket leg; the static lane's text gate is now
+  covered by the same parity claim as the filter leg.

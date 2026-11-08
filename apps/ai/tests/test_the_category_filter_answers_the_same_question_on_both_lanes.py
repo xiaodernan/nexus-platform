@@ -64,6 +64,27 @@ class TestTheFixtureLane:
         rows = [_row(id="a", slug="a", category_primary="Tea House", category_slugs=[])]
         assert S._filter_static(rows, "", {"category": "cafe"}) == []
 
+    def test_category_is_a_hard_filter_text_is_only_a_score(self):
+        # D753: widening the D596 parity door to a text-carrying request. A category filter
+        # is a WHERE on both lanes: a row in the bucket survives even when the user's words
+        # appear nowhere in it. A row outside the bucket is dropped even when its words match
+        # perfectly - text never overrides the bucket leg (D615/D658).
+        cafe_in_text = _row(id="a", slug="a", category_primary="cafe",
+                            display_name="Cafe Central", description="dim sum and milk tea")
+        cafe_no_text = _row(id="b", slug="b", category_primary="cafe",
+                            display_name="Cafe Quiet", description="quiet corners")
+        rest_text = _row(id="c", slug="c", category_primary="restaurant",
+                         display_name="Ramen House", description="milk tea and ramen")
+        kept = {r["slug"] for r in S._filter_static(
+            [cafe_in_text, cafe_no_text, rest_text], "milk tea", {"category": "cafe"})}
+        # both cafes answer the category; the restaurant does not, even though its words match
+        assert kept == {"a", "b"}, kept
+        # the cafe whose name carries the words is text-matched; the other cafe is kept anyway
+        by_slug = {r["slug"]: r for r in S._filter_static(
+            [cafe_in_text, cafe_no_text, rest_text], "milk tea", {"category": "cafe"})}
+        assert by_slug["a"].get("text_matched") is True
+        assert by_slug["b"].get("text_matched") is False
+
 
 live = pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
 

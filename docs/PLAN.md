@@ -2989,11 +2989,15 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   same file already reads both keys. What stays open is this bullet's second layer - a demo row states
   its parent's coarse bucket, not a taxonomy leaf, so `bubble-tea` still answers nothing - filed as
   D616's first bullet with the counts.
-- **D596's parity door cannot see this gate, by construction.** Every row of
-  `test_the_category_filter_answers_the_same_question_on_both_lanes.py` asks
-  `S._filter_static(rows, "", {"category": bucket})` — text empty — so it compares the two lanes'
-  *filter* semantics and never the order in which the same function applies text and filter. Widen
-  it (or keep the D615 door beside it) so a text-carrying request is part of the parity claim.
+- **Closed by D753: the D596 parity door now sees text-carrying requests.**
+  `test_the_category_filter_answers_the_same_question_on_both_lanes.py` gained
+  `test_category_is_a_hard_filter_text_is_only_a_score`, which asks `_filter_static` with
+  non-empty text and asserts: (1) a row in the bucket survives even when its words do not
+  appear (category is a hard WHERE, D615/D658); (2) a row outside the bucket is dropped
+  even when its words match perfectly (text never overrides the bucket); (3) text_matched is
+  per-row (true on the cafe whose words match, false on the cafe whose do not). The gate
+  now covers both lanes' filter semantics AND the text/score ordering.
+
 - **The no-bucket case is left as it is, deliberately.** `想去美髮` reads no category, and the demo
   lane then answers it with the text gate alone (0 cards; the catalogue holds no salon — honest) while
   the live lane answers 60 merchants of 35 different primaries (measured, `tmp/d615_same_request.txt`).
