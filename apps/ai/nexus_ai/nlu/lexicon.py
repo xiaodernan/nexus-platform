@@ -270,6 +270,10 @@ CUISINE_LEAVES: dict[str, tuple[str, ...]] = {
     "malaysian": ("singmal",),
     "vegetarian": ("vegetarian",),
     "specialty-coffee": ("specialty-coffee",),
+    # D704: the seed writes a `vietnamese` leaf (13 published merchants) and CUISINE_TERMS
+    # carries the vocabulary for it; the bridge row was missed, so a merchant tagged for the
+    # cuisine answered nothing and the preference could fire only through the fallback.
+    "vietnamese": ("vietnamese",),
     # D526: the seed's own `spicy_cuisine` derivation, respelled into CAT_TREE.
     "spicy": ("hotpot", "korean", "thai", "indian", "singmal"),
 }

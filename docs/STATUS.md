@@ -34602,3 +34602,18 @@ all transient-preference suites.
 **Measured.** The two detector reds pass (8 passed across the file). mypy clean
 (59 files), `ruff check .` all-checks-passed. Broader sweep: 597 passed / 22 DB-skipped,
 0 failures.
+
+
+## 761. D761 · the Vietnamese bridge names the leaf the seed writes (D704 tail folded)
+
+**The gap.** `test_the_cuisine_bridge_speaks_the_seeds_leaves.py` failed on master at
+`vietnamese`: `CUISINE_TERMS` carries the Vietnamese vocabulary (13 published merchants,
+D704 added it), but `CUISINE_LEAVES` had no `vietnamese` row, so a merchant tagged for the
+cuisine fired the preference only through the fallback and the bridge gate refused the pair.
+
+**The fix.** Added `"vietnamese": ("vietnamese",)` to `CUISINE_LEAVES` (lexicon.py) - the
+leaf spelling the seed's CAT_TREE writes (verified: `data/seed/seed_pools.py` CAT_TREE
+contains the `vietnamese` leaf). No other vocabulary added; no premise widened.
+
+**Measured.** `test_the_cuisine_bridge_speaks_the_seeds_leaves.py` 27 passed; all 83 seed-
+adjacent suites green. `mypy nexus_ai` / `ruff check nexus_ai` clean.

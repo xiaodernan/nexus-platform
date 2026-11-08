@@ -316,6 +316,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   D621 ANY-witness reader owns the pair, folding the two
   `test_the_outdoor_preference_reads_both_spellings.py` detector reds.
 
+- **D761** the Vietnamese cuisine bridge row added (`vietnamese` leaf), folding the
+  failing `test_the_cuisine_bridge_speaks_the_seeds_leaves.py` detector red (D704 tail).
+
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
 ### Standing invariants (re-run this session, on this plane)
