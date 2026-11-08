@@ -331,6 +331,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   `test_the_word_the_contract_publishes_for_open_now_opens_the_hours_window.py`, D725/D730
   era) and `apps/ai/uv.lock` (36 packages, `uv lock --check` green) were gathered into
   master so `uv sync` on a fresh CI checkout resolves deterministically.
+- **D767** `tests/test_the_filter_keeps_a_row_only_as_far_as_the_row_says.py` pins the
+  D764 geo rule from the gate side (a row kept at its stated `meters`, cut beyond
+  radius, dropped without location, points beyond radius cut).
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

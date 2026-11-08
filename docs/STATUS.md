@@ -34709,3 +34709,22 @@ and the two gate files, untouched.
 
 - readers: every machine that runs `uv sync` gets the same dependency graph the findings here
   were measured against.
+
+
+## 767. D767 · pin the static lane's geo answer (D764's rule, gate-side)
+
+**The gap.** The D764 fix ("a row that states its own computed `meters` is kept at that
+distance") was measured through the D609 detector gate but no unit pinned the rule on its own:
+`_filter_static`'s geo column reads the row's points or the row's own distance, the request
+radius cuts a far row either way, and a row that states neither a point, a distance nor a
+district is dropped - exactly as the live `loc.id IS NOT NULL` does.
+
+**The fix.** New gate `tests/test_the_filter_keeps_a_row_only_as_far_as_the_row_says.py`:
+a row stating `meters=468.0` without points is kept at 468; the request radius cuts a 5,000 m row;
+a row stating neither is dropped under a geo request; a row whose points lie beyond the radius is
+dropped; a row whose points place it within the radius is kept with a computed distance stamped.
+
+**Measured.** 5 passed. mypy clean, `ruff check .` all-checks-passed.
+
+- readers: the offline lane now agrees with the live geo contract without a fixture lane's
+  answer depending on which shape a row arrived in.
