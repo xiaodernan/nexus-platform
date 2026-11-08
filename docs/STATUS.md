@@ -35143,3 +35143,24 @@ subset-match shape the budget and party cases use.
 **Measured.** intent_v1 55/55, gates PASS (accuracy 1.0000, hallucination_rate 0.0000); the eval
 harness tests 47 passed; the cases were written after running the extractor and pinning what it
 answers, not what it should.
+
+
+## 787. D787 · the eval case files are gated as a corpus, not trusted by a reader
+
+**The door.** The gates the suites enforce are about the product's answers — accuracy,
+hallucination, containment. The files themselves were the only unchecked surface: two case ids
+the harness cannot tell apart, an `expect` key the extractor never emits, or a `must_not` key that
+contradicts the expectation would all pass every pure-logic test in `test_eval_suites.py`
+untouched, and share one blind spot with a human reader: they read the file and believe it.
+
+**The gate.** `test_the_eval_case_files_keep_their_shape.py` — 13 legs, one per property: ids
+unique and slugs; only the four known keys carry; `expect` keys resolve to keys the extraction
+actually emits (read from the code at test time, not frozen in prose); `must_not` keys the same;
+`expect` and `must_not` never name the same key; only the empty query case may carry an empty
+query; the safety suite names one of exactly three kinds and exactly the attacks may claim an
+expect_signal; the files decode as UTF-8; and both case COUNTS are pinned, so a case added
+without running its harness is a diff the reader can see.
+
+**Measured.** 13 passed at HEAD. The corpus at the time: intent_v1 55 cases, safety_injection_v1
+27, both files clean of duplicate ids and unknown keys, expect/must_not disjoint. The gate reddens
+by construction on any future case that forks the shape — that is the whole of it.

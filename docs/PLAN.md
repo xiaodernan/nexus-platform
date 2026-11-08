@@ -387,6 +387,10 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   party/location/time stay absent.
 - **D786** the time lane both spellings plus the two 不要-refusal cues and the two bare sort cues
   join as cases: intent_v1 47 → 55; the time cases pin type and quality, never the timestamp.
+- **D787** a corpus-shape gate pins both case files (`test_the_eval_case_files_keep_their_shape.py`):
+  ids unique and slugs, known keys only, expect/must_not keys drawn from the extractor's own keyset,
+  expect ∩ must_not = ∅, UTF-8 decode, and both case counts. The eval harness's own files now carry
+  their invariant.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
