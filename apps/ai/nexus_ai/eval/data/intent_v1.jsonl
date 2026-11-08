@@ -29,3 +29,8 @@
 {"expect": {"intent": "discover_merchant"}, "id": "never-invent-a-district", "must_not": ["location", "budget", "party_size"], "query": "拉麵"}
 {"expect": {"category": "restaurant", "intent": "discover_merchant"}, "id": "never-invent-a-time", "must_not": ["time", "budget", "party_size"], "query": "餐廳"}
 {"expect": {"intent": "unknown"}, "id": "an-empty-query-knows-nothing", "must_not": ["category", "budget", "party_size", "location", "time"], "query": ""}
+{"id":"cat-cafe-simp","query":"咖啡","expect":{"category":"cafe","intent":"discover_merchant"},"must_not":["budget","party_size","location"]}
+{"id":"cat-bakery-simplified","query":"蛋糕","expect":{"category":"bakery","intent":"discover_merchant"},"must_not":["budget","party_size","location"]}
+{"id":"cat-bar-simplified","query":"酒吧","expect":{"category":"bar","intent":"discover_merchant"},"must_not":["budget","party_size","location"]}
+{"id":"cat-gym-simplified","query":"健身房","expect":{"category":"gym","intent":"discover_merchant"},"must_not":["budget","party_size","location"]}
+{"id":"cat-hotel-simplified","query":"酒店","expect":{"category":"hotel","intent":"discover_merchant"},"must_not":["budget","party_size","location"]}

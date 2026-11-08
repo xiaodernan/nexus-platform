@@ -368,6 +368,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   `backend.merchant_candidates(...)`, bounded, with no fabrication.
 - **D780** the offering-lane read tools ship — `search_products` (kind='product') and
   `search_services` (kind='service') through `backend.offering_candidates(...)`.
+- **D781** the eval suite cover widened on the Simplified-CATEGORY surfaces: five new
+  intent_v1 cases (`cat-cafe-simp`, `cat-bakery-simplified`, `cat-bar-simplified`,
+  `cat-gym-simplified`, `cat-hotel-simplified`).
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

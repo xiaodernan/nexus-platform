@@ -35019,3 +35019,18 @@ returns list); `limit=100` refused at the validator before the backend is touche
 
 **Measured.** 47 in-lane dispatch gates green; 80 in the dispatch/tools/health/names
 subset; mypy 61 files clean; ruff clean.
+
+
+## 781. D781 · intent_v1 coverage widened with the Simplified CATEGORY surface
+
+**The gap.** The intent_v1 suite was 31 cases and only covered Traditional-named
+categories for all non-Chinese surfaces except `cat-restaurant-simp`; the
+Simplified spellings of `cat-bakery`, `cat-bar`, `cat-gym`, `cat-hotel`, `cat-cafe`
+were all untested. The Simplified forms have all been in production since release.
+
+**The fix.** Five new cases, all verified passing against the current NLU before being
+committed: `cat-cafe-simp`, `cat-bakery-simplified`, `cat-bar-simplified`,
+`cat-gym-simplified`, `cat-hotel-simplified`. Suite now 36 cases.
+
+**Measured.** intent_v1 sweeps 36/36 [PASS]; hallucination_rate 0.0000 [PASS].
+eval gate PASS (2 suites).
