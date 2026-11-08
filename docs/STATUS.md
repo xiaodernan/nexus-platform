@@ -35034,3 +35034,18 @@ committed: `cat-cafe-simp`, `cat-bakery-simplified`, `cat-bar-simplified`,
 
 **Measured.** intent_v1 sweeps 36/36 [PASS]; hallucination_rate 0.0000 [PASS].
 eval gate PASS (2 suites).
+
+
+## 782. D782 · the manifest's HTTP readiness claim is gated to the registry
+
+**The gap.** `/ai/v1/tools` reports `implemented` and `data_path_via_http` — the test suite
+asserted that connection indirectly, but no invariant held the two together: a drift between
+`implemented:true` without `data_path_via_http` (or vice versa) could have landed silently,
+through any future edit to the manifest's composition.
+
+**The fix.** Two new legs in `test_health_and_tools.py` pin the coupling:
+`data_path_via_http` must equal `implemented` for every advertised tool; unregistered
+tools must never claim the HTTP path. A third pins the overall list of implemented
+tools at exactly the six today's registry holds.
+
+**Measured.** 8 passed (was 5). mypy 61 files clean; ruff clean.

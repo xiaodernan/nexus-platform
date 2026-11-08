@@ -53,6 +53,32 @@ def test_every_live_tool_dispatches(client):
         assert bucket["data_path_via_http"] is True
 
 
+def test_data_path_via_http_advertised_only_with_implemented(client):
+    body = client.get("/ai/v1/tools").json()
+    mismatches = [t for t in body["tools"]
+                  if t["data_path_via_http"] != t["implemented"]]
+    assert not mismatches, (
+        f"tools with mismatched data_path_via_http vs implemented: {mismatches}")
+
+
+def test_six_tools_report_implemented(client):
+    body = client.get("/ai/v1/tools").json()
+    implemented = [t for t in body["tools"] if t["implemented"]]
+    assert len(implemented) == 6
+    names = {t["name"] for t in implemented}
+    assert names == {"search_merchants", "get_business_hours", "get_price",
+                     "get_user_preferences",
+                     "search_products", "search_services"}
+
+
+def test_no_unregistered_tool_claims_a_http_data_path(client):
+    body = client.get("/ai/v1/tools").json()
+    for bucket in body["tools"]:
+        if not bucket["implemented"]:
+            assert bucket["data_path_via_http"] is False, (
+                f"{bucket['name']} claims data_path_via_http without implemented")
+
+
 def test_tools_count_matches_canonical(client):
     body = client.get("/ai/v1/tools").json()
     assert body["count"] == len(body["tools"]) == len(CANONICAL_TOOLS)
