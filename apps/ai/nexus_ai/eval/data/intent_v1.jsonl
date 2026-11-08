@@ -59,3 +59,11 @@
 {"id":"date-ask-is-not-a-plan","query":"七月一日放假吗","expect":{"intent":"unknown"},"must_not":["category","budget","party_size","location","time"]}
 {"id":"reserve-simp-yuding","query":"预订今晚六点的","expect":{"intent":"reserve"},"must_not":["category","budget","party_size","location"]}
 {"id":"reserve-trad-yuding","query":"預訂今晚六點的","expect":{"intent":"reserve"},"must_not":["category","budget","party_size","location"]}
+{"id":"sort-cheapest-en","query":"cheapest","expect":{"sort_preference":"price_low"},"must_not":["category","budget","party_size","location","time"]}
+{"id":"sort-affordable-en","query":"affordable","expect":{"sort_preference":"price_low"},"must_not":["category","budget","party_size","location","time"]}
+{"id":"sort-best-rated-en","query":"best rated","expect":{"sort_preference":"rating"},"must_not":["category","budget","party_size","location","time"]}
+{"id":"sort-top-rated-en","query":"top rated","expect":{"sort_preference":"rating"},"must_not":["category","budget","party_size","location","time"]}
+{"id":"sort-highest-rated-en","query":"highest rated","expect":{"sort_preference":"rating"},"must_not":["category","budget","party_size","location","time"]}
+{"id":"sort-trending-en","query":"trending","expect":{"sort_preference":"trending"},"must_not":["category","budget","party_size","location","time"]}
+{"id":"sort-most-popular-en","query":"most popular","expect":{"sort_preference":"trending"},"must_not":["category","budget","party_size","location","time"]}
+{"id":"sort-nearest-en","query":"nearest","expect":{"sort_preference":"distance"},"must_not":["category","budget","party_size","location","time"]}

@@ -353,9 +353,12 @@ URGENCY_FLEXIBLE = ['得閒', '得閑', '有空', '隨時', '隨時', 'anytime',
 # ------------------------------------------------------------------ sorting hints
 SORT_RULES: list[tuple[str, list[str]]] = [
     ("distance", ['近', 'closest', 'nearest', '距離', '距离', 'nearby', '少行', '行幾耐']),
-    ("price_low", ['平', 'cheap', '最平', '便宜', 'low price', 'under', '以下', '以內', '以内']),
-    ("rating", ['好評', '好评', '最佳', 'rating', '頂尖', '顶尖', '评分', '評分', '最高分']),
-    ("trending", ['熱門', '热门', 'trending', '人气', '人氣', '最受歡迎', '最受欢迎的']),
+    ("price_low", ['平', 'cheap', '最平', '便宜', 'low price', 'under', '以下', '以內', '以内',
+                  'cheapest', 'affordable', 'most affordable']),
+    ("rating", ['好評', '好评', '最佳', 'rating', '頂尖', '顶尖', '评分', '評分', '最高分',
+               'best rated', 'top rated', 'highest rated']),
+    ("trending", ['熱門', '热门', 'trending', '人气', '人氣', '最受歡迎', '最受欢迎的',
+                 'most popular']),
 ]
 
 # ------------------------------------------------------------------ entity hints

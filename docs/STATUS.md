@@ -35595,3 +35595,26 @@ envelope — verified here). `safety_injection_v1` envelope arm: 3 → 4.
 
 **Measured.** envelope_containment 4/4; containment 37/37; false-positive rate 0/6; the case-file
 hygiene gate pin moves (it pins 47). mypy / ruff unchanged (one new line in the case file).
+
+
+## 805. D805 · the English sort superlatives land where the corpus is silent
+
+**The gap.** `SORT_RULES` carried the Chinese neighbourhood of every sort value but nothing
+English for the user's own spelling variants: `cheapest`, `affordable`, `most affordable`,
+`best rated`, `top rated`, `highest rated`, `most popular`. A query written in English read a
+preference the query carried but answered `sort_preference: relevance` — the same class of bite
+D776 closed in a different lane.
+
+**The repair.** `SORT_RULES` gains the six English superlatives (`cheapest`, `affordable`,
+`most affordable` → price_low; `best rated`, `top rated`, `highest rated` → rating;
+`most popular` → trending). All measured 0 of 17,058 corpus strings; `most reviewed` is NOT a
+rating and `hottest` is NOT a price/preference lane (hot taste is not price nor rating) - left
+unmapped deliberately, noted here rather than forced.
+
+**The gate.** intent_v1 61 → 69 cases — eight measured rows: `cheapest`, `affordable`,
+`best rated`, `top rated`, `highest rated`, `trending`, `most popular`, `nearest`. `accuracy`
+1.0000; `hallucination_rate` 0.0000. The case-file hygiene gate's pin moves with the widening
+(it pins 69).
+
+**Measured.** eval harness suites + CLI: eval-suites + CLI + hygiene + cue-grammar — 230 passed;
+mypy 61 files clean; ruff clean.

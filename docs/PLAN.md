@@ -446,6 +446,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   pinned by two intent_v1 cases (59 → 61).
 - **D804** the envelope arm gains `envelope-forge-twice`: two forged delimiters in one text, both
   redacted; `safety_injection_v1` 46 → 47 cases, envelope arm 3 → 4.
+- **D805** the English sort superlatives land where the corpus is silent: `cheapest` /
+  `affordable` / `most affordable` → price_low, `best rated` / `top rated` / `highest rated` →
+  rating, `most popular` → trending; intent_v1 61 → 69; eight measured cases pinned.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
