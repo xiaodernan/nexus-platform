@@ -34945,3 +34945,24 @@ validator, never reaching the backend. `test_health_and_tools.py` pins the two l
 
 **Measured.** 36 dispatch gates; 109 across dispatch/tools/health/regconfig/geo pins;
 eval gate PASS; mypy nexus_ai 61 files clean; `ruff check .` all-checks-passed.
+
+
+## 778. D778 · the caller's own personal-memory read tool ships (`get_user_preferences`)
+
+**The gap.** The second real read-only tool (`get_price`, D777) left the caller's own
+stored preferences still unreachable through the registry. The backend already answers
+`/user_preferences(user_id, kinds, conversation_id)` — the same call the ranking signal
+already reads — so the tool needs no new plumbing at all.
+
+**The fix.** `build_get_user_preferences` registers the tool: `kinds[]?` and
+`conversation_id` optional; **the handler reads only the caller's own rows** — the subject
+is the identity source; any `user_id` arriving in the input envelope refuses with
+`InvalidArguments`, before the backend is touched. Empty kinds and empty result both
+return `[]`.
+
+`test_health_and_tools.py` pins three live tools (hours, price, personal preferences),
+everything else advertised `implemented:false`; the headline stays `"skeleton"`.
+
+**Gates.** 4 new legs: the caller's own rows read; envelope identity refused; bad kinds
+refused; empty subject returns empty. 40 in-lane dispatch gates green; 77 in the
+dispatch/tools/health/names subset; eval gate PASS; mypy 61 files clean; ruff clean.

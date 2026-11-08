@@ -41,7 +41,7 @@ CANONICAL_TOOLS: tuple[str, ...] = CANONICAL_TOOL_NAMES
 _DATA_PATH_TOOLS = frozenset({
     "search_merchants", "search_products", "search_services", "get_business_hours",
     "get_price", "retrieve_merchant_documents", "summarize_reviews", "compare_entities",
-    "record_event",
+    "record_event", "get_user_preferences",
 })
 
 

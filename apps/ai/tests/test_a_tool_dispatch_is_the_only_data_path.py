@@ -429,6 +429,52 @@ class TestGetPriceDispatches:
                                                      "subject_type": "lawyer"}))
 
 
+class TestGetUserPreferencesDispatches:
+    """D778 - the caller's own preference rows answer through the registry, honestly."""
+
+    def test_get_user_preferences_reads_the_callers_own_rows(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        out = asyncio.run(registry.dispatch(subject="u1", tool="get_user_preferences",
+                                            arguments={}))
+        assert out["user_id"] == "u1"
+        assert out["preferences"] == []
+
+    def test_get_user_preferences_never_takes_user_id_from_the_envelope(self):
+        """A caller that lies about identity: the registry reads the subject, not the input."""
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        with pytest.raises(InvalidArguments):
+            asyncio.run(registry.dispatch(subject="u1", tool="get_user_preferences",
+                                          arguments={"user_id": "someone-else"}))
+
+    def test_get_user_preferences_bad_kinds_refused(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        with pytest.raises(InvalidArguments):
+            asyncio.run(registry.dispatch(subject="u1", tool="get_user_preferences",
+                                          arguments={"kinds": "not-a-list"}))
+
+    def test_get_user_preferences_empty_subject_answers_empty(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        out = asyncio.run(registry.dispatch(subject="", tool="get_user_preferences",
+                                            arguments={}))
+        assert out == {"user_id": "", "preferences": []}
+
+
 class TestRealReadOnlyToolDispatches:
 
     def test_get_business_hours_dispatches_full_row(self):

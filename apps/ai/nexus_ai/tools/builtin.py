@@ -129,7 +129,64 @@ def build_get_price(registry: Registry, backend: SearchBackend) -> ToolSpec:
     return spec
 
 
+def build_get_user_preferences(
+    registry: Registry, backend: SearchBackend
+) -> ToolSpec:
+    """Register the `get_user_preferences` read tool against `backend`."""
+
+    spec = ToolSpec(
+        name="get_user_preferences",
+        version="1",
+        description=(
+            "Read the caller's stored long-term and (optional) conversation-bound "
+            "preferences. The handler reads ONLY the caller's own rows — it ignores any "
+            "`user_id` that might arrive in the input envelope — and returns [] for "
+            "users with nothing stored, or off-line where the demo catalogue answers "
+            "with no preference rows."
+        ),
+        input_schema={
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "kinds": {"type": "array", "items": {"type": "string"}},
+                "conversation_id": {"type": "string", "minLength": 1},
+            },
+        },
+        output_schema={
+            "type": "object",
+            "properties": {
+                "user_id": {"type": "string"},
+                "preferences": {"type": "array"},
+            },
+            "required": ["user_id", "preferences"],
+        },
+        permission=PERMISSION_READ,
+        cache_ttl_s=0,
+        timeout_ms=1500,
+        retries=0,
+        side_effect=False,
+        cost_class="db",
+        fallback="none",
+    )
+
+    async def handler(args: Mapping[str, Any], *, subject: str):
+        if not isinstance(subject, str) or not subject:
+            return {"user_id": "", "preferences": []}
+        rows = await backend.user_preferences(
+            subject,
+            kinds=args.get("kinds"),
+            conversation_id=(args.get("conversation_id")
+                             if isinstance(args.get("conversation_id"), str) else None),
+        )
+        return {"user_id": subject,
+                "preferences": [dict(row) for row in rows]}
+
+    registry.register(spec, handler=handler)
+    return spec
+
+
 def register_read_tools(registry: Registry, backend: SearchBackend) -> Registry:
     build_get_business_hours(registry, backend)
     build_get_price(registry, backend)
+    build_get_user_preferences(registry, backend)
     return registry

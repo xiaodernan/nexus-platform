@@ -362,6 +362,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D777** the second read-only tool every plane can answer is implemented: `get_price`
   through `backend.facts()`; validator widened with `enum`; `test_health_and_tools.py` pins
   both live tools.
+- **D778** the caller's own personal-memory read tool ships — `get_user_preferences`
+  reads only the caller's own rows; identity in the input envelope is refused.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
