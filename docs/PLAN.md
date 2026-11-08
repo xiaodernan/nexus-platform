@@ -413,6 +413,12 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D793** the re-extract branch inherits `excluded_ids` (the D676 leftover): §34's one memory
   promise, pinned by `test_a_re_extract_turn_carries_the_exclusion_forward` and the long Mandarin
   question leg; the D676 gate's old pin of the drop rewritten to the new truth.
+- **D794** the jailbreak-assertion family joins the injection scanner: `ignore_instructions_zh`
+  reads `忘掉` with any modifier permutation, `instruction_prefix` accepts the fullwidth CIK colon,
+  `jailbreak_mode` catches `sudo mode` / `free mode` / `free of limits` / `现在没有任何限制` /
+  `自由模式`; safety_injection_v1 32 → 38 measured cases; the six residual round-battery shapes
+  are filed not fixed (override-all, admin-override, message-ends, you-must-execute,
+  never-any-rules, limit-removed).
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

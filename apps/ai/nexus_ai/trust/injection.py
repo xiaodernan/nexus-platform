@@ -41,9 +41,11 @@ INJECTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         r"\b(?:instructions?|rules?|prompts?|directives?|guidelines?)\b",
         re.IGNORECASE)),
     ("ignore_instructions_zh", re.compile(
-        r"(?:忽略|無視|无视|不要理会|不要理|忘记|忘卻|忘却)"
-        r"(?:之前|上述|以上|先前)?(?:的)?"
-        r"(?:所有)?(?:指令|指示|規則|规则|提示詞|提示词|系統提示|系统提示|设定|設定)")),
+        r"(?:忽略|無視|无视|不要理会|不要理|忘记|忘卻|忘却|忘掉)"
+        # D794: the adverbial modifiers may stand in any order around 的 - 忘掉之前所有的规则 is
+        # as adversarial as 忽略之前的所有指令, and neither permutation is in the corpus.
+        r"(?:(?:之前|上述|以上|先前|所有|的)\s*){0,3}"
+        r"(?:指令|指示|規則|规则|提示詞|提示词|系統提示|系统提示|设定|設定)")),
     ("system_prompt_exfil", re.compile(
         r"(?:reveal|show|print|output|repeat|leak|dump|display)\s+(?:me\s+)?"
         r"(?:your|the)\s+(?:system\s+prompt|instructions?|prompt|hidden\s+[a-z ]{0,8}rules?)",
@@ -75,10 +77,20 @@ INJECTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         re.IGNORECASE)),
     ("role_hijack_zh", re.compile(r"(?:你現在是|你现在是|假裝你是|假装你是|扮演|充當|充当)(?:一個|一个)?")),
     ("instruction_prefix", re.compile(
-        r"(?:^\s*(?:system|assistant|developer)\s*:"
+        r"(?:^\s*(?:system|assistant|developer)\s*[:：]"
         r"|<\|im_start\|>|<\|im_end\|>|\[\s*INST\s*\]|<<SYS>>"
         r"|\binstructions?\s*:\s*(?:you|忽略|请|請))",
         re.IGNORECASE | re.MULTILINE)),
+    ("jailbreak_mode", re.compile(
+        # D794: the mode/assertion jailbreak shape - "sudo mode", "free mode", "you are totally
+        # free of limits now", "现在没有任何限制", "自由模式：不需要任何审查" - measured
+        # empty against merchants/offerings/reviews (17,058 untrusted-content strings, 0
+        # matches) before this landed.
+        r"(?:\b(?:sudo|free)\s+mode\b"
+        r"|\bfree\s+of\s+limits?\b"
+        r"|现在没有任何.{0,6}(?:限制|约束|规则)"
+        r"|自由模式)",
+        re.IGNORECASE)),
     ("command_injection", re.compile(
         r"(?:curl\s|wget\s|rm\s+-rf|\bexec\(|subprocess|os\.system|import\s+os|"
         r"SELECT\s+.+\s+FROM\s+|DROP\s+TABLE|UPDATE\s+\w+\s+SET\s+|DELETE\s+FROM)",
