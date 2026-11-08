@@ -402,6 +402,10 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   same measurement. The first cut of 請問 broke the canon (it matched nothing); the entry lands
   canonical-only, the frame gate pins the measured spelling, the residue keeps the user's own
   (D635).
+- **D791** the injection scanner reads the Simplified exfil order (object-first 原封不动地输出）, the
+  two-word-adverbial English exfil, the developer-mode jailbreak, and the authority claim — zero
+  false positives over 17,058 untrusted-content strings; safety_injection_v1 27 → 32 measured
+  cases. Base64 exfil and forged-delimiter shapes are filed, not fixed.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
