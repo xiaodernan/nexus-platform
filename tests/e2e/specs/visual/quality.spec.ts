@@ -114,14 +114,46 @@ async function measureContrast(page: Page) {
 }
 
 /**
+ * The theme switch is the control the token sheet has been promising since it shipped, so its
+ * promise is checked here rather than asserted in prose:
+ *  - the control exists and names itself for the theme it moves TO;
+ *  - clicking it puts the dark class on `<html>` and stores the choice;
+ *  - a RELOAD lands on dark without the reader seeing the light theme first — that is the
+ *    "no FOUC flash" half of the promise, and it is only true if the inline script in
+ *    `app/layout.tsx` applies the stored theme before the first paint.
+ */
+test('theme: the switch flips the theme, and a reload keeps it', async ({ page }) => {
+  await page.goto('/');
+  const toggle = page.locator('[data-nexus-theme-toggle]');
+  await expect(toggle).toHaveCount(1);
+  await expect(toggle).toHaveAttribute('aria-label', '切換至深色主題');
+
+  await toggle.click();
+  await expect(page.locator('html')).toHaveClass(/dark/);
+  const stored = await page.evaluate(() => window.localStorage.getItem('nexus-theme'));
+  expect(stored, 'the choice is stored, or a reload cannot restore it').toBe('dark');
+
+  // `domcontentloaded`, not the default `load`: the class on `<html>` is set while the document is
+  // parsed, and waiting for every image to load is the harness's latency, not the promise's.
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  // The class must already be on `<html>` by the time the first paint is checked, which is what
+  // the inline script buys: no flash of the light theme for a reader who chose dark.
+  await expect(page.locator('html')).toHaveClass(/dark/);
+  await expect(toggle).toHaveAttribute('aria-label', '切換至淺色主題');
+
+  await toggle.click();
+  await expect(page.locator('html')).not.toHaveClass(/dark/);
+});
+
+/**
  * The name says "both themes", so the test now measures both. The dark palette is a real block of
  * `tokens.css` (`.dark { ... }`) and the Tailwind preset is configured `darkMode: ['class']`, but
- * nothing in the product ever puts that class on `<html>` — so the dark half of the sheet had never
+ * nothing in the product ever put that class on `<html>` — so the dark half of the sheet had never
  * been read by a browser, and this check's name was a claim it did not make.
  *
- * The class is applied here directly: whether the PRODUCT should ship a dark theme is a product
- * decision (filed, not decided here), but the palette is in the sheet, and a palette nobody renders
- * is a palette nobody measures.
+ * The class is applied here directly: the switch (the test above) is a control for readers, and a
+ * check that depends on clicking a control can fail because the control moved. What matters is the
+ * palette, and the palette is the class.
  */
 test('readability: primary text meets AA contrast on both themes', async ({ page }) => {
   await page.goto('/');
