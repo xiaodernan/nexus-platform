@@ -35192,3 +35192,27 @@ plane: `NEXUS_TEST_DATABASE_URL` is unset).
 plus the suffix file itself) — 1,210 passed, 141 DB-skipped; `test_the_word_that_named_the_category…`
 and vocabulary census 244 passed; mypy 61 files clean; ruff clean. Full monolith suite not re-run —
 the sweep is the coverage this unit certifies (its budget elapsed 1h55m last attempt for 35%).
+
+
+## 789. D789 · the Mandarin existential 有什么 leaves the residue with its own frame
+
+**The gap.** Measured 2026-11-09 (probe against the live plan, `tmp`-free): the Cantonese frame
+carries `有咩` in `_QUESTION_FRAME`, and `有沒有` joined the same table in D657 — the Mandarin
+twin `有什么` did not. A Simplified user who wrote 「有什么推荐」 answered
+`intent: unknown, match_text: "有什么"`; 「附近有什么好吃的」 answered `"有什么好吃"`; 「有什么热饭」
+answered `"有什么热饭"`. Every one is the same class of defect D650/D657/D702 closed on the
+Cantonese script, on the script the product's own e2e sentence is written in.
+
+**The repair.** `有什么` joins `_QUESTION_FRAME` (U+6709 有 U+4EC0 什 U+4E48 么 — all Identity
+under the canon, so no census rows move). `什么` alone is deliberately NOT added: 什么是拉麵 is the
+question about the word itself, and bare 什么 keeps all of itself, by the same rule that kept
+`安靜` and `有机`. The evaluation-word predicate is unchanged.
+
+**Measured after.** `有什么推荐`, `有什么推介`, `有什么好推介`, `有什么好推荐`, `有什么好咖啡店`,
+`有什么餐厅`, `有什么拉麵馆`, `有什么推介咖啡店`, `吃什么拉麵`, `附近有什么好推介` — all empty
+match text. `附近有什么好吃的`, `有什么好吃的`, `附近有什么好吃的餐厅` — `好吃` survives;
+`有什么热饭` — `热饭` survives. The match_text/inline-span sweep (the 34 gate files) — 1,224
+passed, 141 DB-skipped; vocabulary census 244 passed (prior state re-verified); mypy 61 files
+clean; ruff clean. The D650 gate (`test_a_question_frame_is_not_a_search_term.py`) widened with
+ten frame rows (empty expectation) and four content rows (measured spelling); its live-DB census
+pass picks 有什么 up automatically (still skipping for want of `NEXUS_TEST_DATABASE_URL`).

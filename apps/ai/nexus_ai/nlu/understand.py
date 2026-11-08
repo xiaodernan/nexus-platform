@@ -883,7 +883,7 @@ _QUESTION_FRAME_COMPOUND = re.compile(
     r"(?:邊度|哪裡|哪里|邊區|邊間|哪間)\s*(?:有(?:得(?:食|買|玩|做))?|可以)",
     re.IGNORECASE)
 _QUESTION_FRAME = re.compile(
-    r"(?:有冇|有沒有|有咩|邊間|哪間|邊度|哪裡|哪里|邊個|邊區|推介|推薦|附近|近我|我附近)",
+    r"(?:有冇|有沒有|有咩|有什么|邊間|哪間|邊度|哪裡|哪里|邊個|邊區|推介|推薦|附近|近我|我附近)",
     re.IGNORECASE)
 _MATCH_CORE_EDGES = re.compile(r"^[\s嘅的，,、。?？]+|[\s嘅的，,、。?？]+$")
 

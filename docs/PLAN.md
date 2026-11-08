@@ -394,6 +394,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D788** `_SHOP_SUFFIX_AFTER` absorbs 館/馆 after a removed surface (the D639 class on the other
   script). 「有没有拉麵馆」 and 「有没有拉麵館」 reach the restaurant lane with an empty match text;
   the no-surface rows (「饭馆」, 「燒味館」) are unchanged by construction.
+- **D789** `有什么` joins `_QUESTION_FRAME` — the Mandarin twin of `有咩` / D657's `有沒有`. Empty
+  match text on the ten framed Mandarin rows measured; `好吃` and `热饭` survive as content; bare
+  `什么` is untouched by construction.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

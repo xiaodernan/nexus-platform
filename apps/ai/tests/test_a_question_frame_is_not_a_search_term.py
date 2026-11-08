@@ -20,9 +20,15 @@ deliberately narrow. NOT stripped, each for a measured reason:
 - 搵 / 找 / 有 - verbs; 有 especially, because 有機 (organic) is content.
 - 安靜 - a preference that IS content (`有冇安靜嘅咖啡店` keeps `安靜`).
 
-The gate walks the same eleven words against the live corpus, in the shape D629's time-surface leg
+The gate walks the same twelve words against the live corpus, in the shape D629's time-surface leg
 uses: if a re-seed ever writes one of them into a description, the strip is no longer provably free
 and the leg reddens rather than letting the assumption go stale.
+
+D789 added the Mandarin twin 有什么 to the frame table (`_QUESTION_FRAME`), with the same
+measurement: 附近有什么好吃的 etc. Measured 2026-11-09 at HEAD after the repair -
+`有什么推荐`, `有什么推介`, `有什么好咖啡店`, `有什么拉麵馆`, `吃什么拉麵` answer with an empty
+match text; `附近有什么好吃的` keeps 好吃; `有什么热饭` keeps 热饭; 「什么」 alone is NOT a frame
+and leaves with whatever follows it.
 """
 
 from __future__ import annotations
@@ -38,7 +44,7 @@ from nexus_ai.search.service import plan_from_intent
 DB_URL = os.environ.get("NEXUS_TEST_DATABASE_URL", "").strip()
 TOP_K = 10
 
-FRAME = ["有冇", "有沒有", "有咩", "邊間", "哪間", "邊度", "哪裡", "邊個", "邊區", "推介", "推薦"]
+FRAME = ["有冇", "有沒有", "有咩", "有什么", "邊間", "哪間", "邊度", "哪裡", "邊個", "邊區", "推介", "推薦"]
 
 
 def _plan(text):
@@ -48,6 +54,9 @@ def _plan(text):
 @pytest.mark.parametrize("text", [
     "有冇咖啡店", "有沒有咖啡店", "有咩咖啡店", "邊間咖啡店", "哪間咖啡店", "邊個咖啡店",
     "邊區咖啡店", "推介咖啡店", "推薦咖啡店", "有冇推介嘅咖啡店",
+    # D789: the Mandarin twin, blanking at the same words.
+    "有什么推荐", "有什么推介", "有什么好推介", "有什么好推荐", "有什么好咖啡店",
+    "有什么餐厅", "有什么拉麵馆", "有什么推介咖啡店", "吃什么拉麵", "附近有什么好推介",
 ])
 def test_the_frame_leaves_the_match_text(text):
     assert _plan(text).match_text == "", (text, _plan(text).match_text)
@@ -65,6 +74,12 @@ def test_the_frame_leaves_the_category_it_framed():
     # term at all, and 0 of the 470 published merchants / 5,538 offerings carry one. The
     # question-frame leg filed this row open, and D707 closed it as residue.
     ("邊間咖啡店好", ""),
+    # D789: the Simplified twin keeps content the same way - the evaluation word survives as a
+    # term, the hot-food word does too. The user's own spelling is what the residue keeps (D635).
+    ("附近有什么好吃的", "好吃"),
+    ("有什么好吃的", "好吃"),
+    ("附近有什么好吃的餐厅", "好吃"),
+    ("有什么热饭", "热饭"),
 ])
 def test_a_word_this_unit_does_not_own_survives(text, left):
     # D657 (§654) took two of the four rows this leg shipped with: 附近 and 有 are the LOCATIVE
