@@ -230,6 +230,44 @@ class TestTheManifest:
         assert set(names) == {"search_merchants", "get_price"}
 
 
+class TestSpecValidation:
+    def test_unknown_cost_class_refused(self):
+        reg, _ = _registry()
+        spec = _spec("search_merchants", cost_class="magic")
+        with pytest.raises(Exception):
+            reg.register(spec)
+
+    def test_bad_timeout_refused(self):
+        reg, _ = _registry()
+        spec = _spec("search_merchants", timeout_ms=0)
+        with pytest.raises(Exception):
+            reg.register(spec)
+
+    def test_negative_retries_refused(self):
+        reg, _ = _registry()
+        spec = _spec("search_merchants", retries=-1)
+        with pytest.raises(Exception):
+            reg.register(spec)
+
+    def test_negative_cache_ttl_refused(self):
+        reg, _ = _registry()
+        spec = _spec("search_merchants", cache_ttl_s=-1)
+        with pytest.raises(Exception):
+            reg.register(spec)
+
+    def test_bad_permission_kind_refused(self):
+        reg, _ = _registry()
+        spec = _spec("search_merchants", permission="tool:admin")
+        with pytest.raises(Exception):
+            reg.register(spec)
+
+    def test_per_subject_grant_marker_accepted(self):
+        reg, _ = _registry()
+        spec = _spec("refund_payment", permission="grant:refund_payment",
+                     side_effect=True)
+        reg.register(spec)
+
+
 class TestCacheBehaviour:
     def test_cache_hit_never_calls_handler_twice(self):
         calls = {"n": 0}

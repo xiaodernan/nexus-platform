@@ -34856,3 +34856,24 @@ handler call.
 **Measured.** 23 passed (18 + 5). ruff clean (`nexus_ai` + `tests`); mypy clean (60 files).
 
 - readers: cache lifetime now matches the ToolSpec the caller holds.
+
+
+## 774. D774 · the registry validates the spec it registers
+
+**The gap.** `ToolSpec` could be registered with a typo'd `cost_class`, a non-positive
+`timeout_ms`, negative `retries`/`cache_ttl_s`, or a `permission` string that names a
+fictitious grant kind - each a contract §3 field, each previously silently accepted because
+nothing checked it at the point the module claims it owns the registry's invariants.
+
+**The fix.** `Registry.register` now refuses at registration time: `cost_class` not in the
+§3 set `db|vector|llm_cheap|llm_reason|external`; non-positive `timeout_ms`; negative
+`retries`; negative `cache_ttl_s`; `permission` not a §3 grant kind nor a per-subject
+`grant:<tool>` marker. A spec that fails any of these never enters the registry.
+
+**Gates.** 6 legs: unknown cost class refused; zero timeout refused; negative retries
+refused; negative cache TTL refused; unknown permission kind refused; per-subject grant
+marker accepted.
+
+**Measured.** 29 passed (23 + 6). ruff clean (`nexus_ai` + `tests`); mypy clean (60 files).
+
+- readers: a spec the registry holds is a spec the contract holds.

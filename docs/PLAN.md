@@ -350,6 +350,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   explicit user action). `/ai/v1/tools` now honestly reports `registry_status: "skeleton"`.
 - **D773** the registry honours `cache_ttl_s` — `_Cache` is keyed on spec + canonicalised
   args; zero TTL and side-effect tools bypass; hits short-circuit the handler.
+- **D774** the registry validates every `ToolSpec` at `register()` — cost_class, timeout_ms,
+  retries, cache_ttl_s, permission kinds — and refuses the unknown, so a spec the
+  registry holds is a spec the contract holds.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

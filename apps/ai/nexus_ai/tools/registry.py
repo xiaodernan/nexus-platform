@@ -257,6 +257,8 @@ _HANDLER = Callable[..., Awaitable[Any]]  # public for docs only
 
 
 # ------------------------------------------------------------ the registry
+_COST_CLASSES = frozenset({"db", "vector", "llm_cheap", "llm_reason", "external"})
+
 class Registry:
     """An agent reaches the world ONLY through here.
 
@@ -282,6 +284,20 @@ class Registry:
             raise ToolError(
                 f"{spec.name!r} is neither a §3 canonical tool name nor a named "
                 f"never-in-default-grant tool")
+        if spec.cost_class not in _COST_CLASSES:
+            raise ToolError(
+                f"{spec.name!r}: cost_class {spec.cost_class!r} is not one of the "
+                f"{sorted(_COST_CLASSES)} §3 names")
+        if spec.timeout_ms <= 0:
+            raise ToolError(f"{spec.name!r}: timeout_ms must be positive")
+        if spec.retries < 0:
+            raise ToolError(f"{spec.name!r}: retries must not be negative")
+        if spec.cache_ttl_s < 0:
+            raise ToolError(f"{spec.name!r}: cache_ttl_s must not be negative")
+        if spec.permission not in PERMISSION_KINDS and not spec.permission.startswith("grant:"):
+            raise ToolError(
+                f"{spec.name!r}: permission {spec.permission!r} is neither a §3 grant kind "
+                f"({PERMISSION_KINDS}) nor a per-subject grant (grant:<tool>)")
         self._specs[spec.name] = spec
         if handler is not None:
             self._handlers[spec.name] = handler
