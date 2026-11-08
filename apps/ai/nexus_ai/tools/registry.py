@@ -396,13 +396,6 @@ class Registry:
         self._emit(started, subject=subject, tool=tool, result=result, outcome="ok")
         return result
 
-    async def dispatch_raw(self, *, subject: str, tool: str,
-                           arguments: Mapping[str, Any] | None = None,
-                           idempotency_key: str | None = None) -> Any:
-        """`dispatch` without the envelope — same pipeline, raw result (or raised ToolError)."""
-        return await self.dispatch(subject=subject, tool=tool,
-                                   arguments=arguments, idempotency_key=idempotency_key)
-
     # ---------------------------------------------------- audit
     def _emit(self, started: float, *, subject: str, tool: str, outcome: str,
               reason: str | None = None, result: Any = None) -> dict[str, Any]:

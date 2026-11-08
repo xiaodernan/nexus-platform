@@ -34877,3 +34877,11 @@ marker accepted.
 **Measured.** 29 passed (23 + 6). ruff clean (`nexus_ai` + `tests`); mypy clean (60 files).
 
 - readers: a spec the registry holds is a spec the contract holds.
+
+
+## 775. D775 · fold `Registry.dispatch_raw` — dead code from D772 retracted
+
+`dispatch_raw()` duplicated `dispatch()` minus the audit sink. Nothing called it; it existed
+because the author wrote both in one motion. The pipeline has exactly one profile — `dispatch`
+with its events — and D772's gate covers it. Removed; no call sites; the 29-gate suite is
+unchanged (29 passed). ruff clean; mypy clean (60 files).
