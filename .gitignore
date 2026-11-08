@@ -101,6 +101,11 @@ pids/
 tmp/
 .cache/
 
+# Agent workspaces and private memory scratch — derived local work, never tracked.
+.workbuddy-ai/
+.scratch/
+.pytest_tmp_*/
+
 # ------------------------------------------------------------------ editors / OS
 .idea/
 .vscode/*
