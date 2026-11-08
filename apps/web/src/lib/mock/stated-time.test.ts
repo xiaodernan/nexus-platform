@@ -173,11 +173,11 @@ afterEach(() => {
 describe('the mock plane publishes only the time a query states (D646)', () => {
   it('reads its own authority: the service windows, their bounds and the +08:00 clock', () => {
     expect(WINDOWS.map((window) => window.label).sort(), `labels read from ${timeparsePath}`).toEqual(
-      ['afternoon', 'evening', 'morning', 'night', 'noon'],
+      ['afternoon', 'deep_night', 'evening', 'late_night', 'morning', 'night', 'noon'],
     );
     expect(ALL_TOKENS.length, 'no part-of-day word was read out of the service table').toBeGreaterThanOrEqual(35);
     for (const window of WINDOWS) {
-      expect(window.tokens.length, `${window.label} carries no cue — the row was read wrong`).toBeGreaterThanOrEqual(4);
+      expect(window.tokens.length, `${window.label} carries no cue — the row was read wrong`).toBeGreaterThanOrEqual(3);
     }
     // The roster has to be in the shipped file, not only in the lane's behaviour.
     const mockSource = readFileSync(join(repoRoot, 'apps', 'web', 'src', 'lib', 'mock', 'index.ts'), 'utf8');

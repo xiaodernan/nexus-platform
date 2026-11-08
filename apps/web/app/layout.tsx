@@ -6,6 +6,7 @@ import './globals.css';
 import { SITE_URL } from '@/lib/env';
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
+import { THEME_BOOTSTRAP_SCRIPT } from '@/lib/theme';
 import { DataModeNotice, SiteFooter, SiteHeader } from '@/components/site-chrome';
 
 /**
@@ -51,6 +52,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={dict.htmlLang}>
+      <head>
+        {/* The stored theme, applied before the first paint. The token sheet promises no FOUC flash
+            ("the inline script in app/layout.tsx applies the stored theme before paint"), and a
+            component could not keep that promise — it would arrive with the page already painted. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
+      </head>
       <body className="min-h-screen bg-canvas text-ink antialiased">
         <a href="#nexus-main" className="nexus-sr-only">
           {dict.nav.skipToContent}

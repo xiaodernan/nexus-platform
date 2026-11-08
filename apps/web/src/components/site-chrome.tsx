@@ -1,6 +1,10 @@
 /**
  * The page chrome. Deliberately server components: they contain no state, and keeping them on the
- * server means the only client JavaScript on a first paint is the search experience itself.
+ * server means the only client JavaScript on a first paint is the search experience itself — and,
+ * since D713, the theme switch (`ThemeToggle`), which is the one control that cannot exist without
+ * a click handler. It is an island in a server tree: the rest of the chrome stays on the server,
+ * and the theme it controls is applied by the inline script in `app/layout.tsx` before the first
+ * paint, so the island's arrival changes nothing that was already on screen.
  *
  * Nav links point at routes that exist today. Linking an unfinished section would be a broken
  * promise in the interface, which §155 treats as a defect rather than a TODO.
@@ -11,6 +15,7 @@ import { Container, Icon, cx } from '@nexus/ui';
 import { IS_MOCK, TENANT } from '@/lib/env';
 import { getDict, type Dict } from '@/lib/i18n';
 import { cityPath, labelFor } from '@/lib/directory';
+import { ThemeToggle } from './theme-toggle';
 
 /**
  * The one place that decides whether the `/{city}` directory may be advertised. `/guides` and
@@ -70,6 +75,7 @@ export function SiteHeader({ locale }: { locale: string }) {
               {dict.home.demoTitle}
             </span>
           ) : null}
+          <ThemeToggle labels={{ toDark: dict.nav.themeToDark, toLight: dict.nav.themeToLight }} />
           <Link
             href="/search"
             className={cx(

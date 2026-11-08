@@ -214,24 +214,86 @@ const HK_OFFSET_MS = 8 * 3_600_000;
 type PartOfDayWindow = { label: string; start: [number, number]; end: [number, number]; tokens: string[] };
 
 /**
- * The five parts of the day, hand-carried from `apps/ai/nexus_ai/nlu/timeparse.py::PART_OF_DAY`
+ * The seven parts of the day, hand-carried from `apps/ai/nexus_ai/nlu/timeparse.py::PART_OF_DAY`
  * (the web bundle cannot import the service, and D626 says read its tree as text rather than
  * pretend to share it). D646: this table replaces the one boolean `evening` that used to answer the
  * whole time question with a hard-coded 19:00 — 「早上」 and 「下午3點」 both came back as 7pm.
- * `stated-time.test.ts` re-derives every token, label and window bound from the Python source, so
- * a row added on one plane and not the other is a red test, not a silent drift.
+ * D672/D699 added `deep_night` and `late_night` to the service; the mock was still answering them
+ * with the `night` row (start 18:00, end 23:00), so 「深夜嘅餐廳」 answered the whole dinner plane
+ * instead of the late-night subset. The test re-derives every token, label and window bound from
+ * the Python source, so a row added on one plane and not the other is a red test, not a silent
+ * drift.
  */
 const PART_OF_DAY_WINDOWS: PartOfDayWindow[] = [
   { label: 'morning', start: [7, 0], end: [11, 30], tokens: ['朝早', '早上', '上午', '清晨', '早晨', 'morning', 'am'] },
   { label: 'noon', start: [11, 30], end: [14, 30], tokens: ['中午', '正午', '午市', 'lunch', 'luncheon', 'noon', 'midday'] },
   { label: 'afternoon', start: [14, 0], end: [18, 0], tokens: ['下晝', '下午', '午後', 'afternoon', 'pm'] },
   { label: 'evening', start: [17, 0], end: [19, 30], tokens: ['傍晚', '黃昏', '黄昏', 'evening', 'dusk'] },
-  { label: 'night', start: [18, 0], end: [23, 0], tokens: ['夜晚', '晚間', '晚间', '晚上', '晚黑', '夜間', '夜间', '深夜', '宵夜', '今晚', '今夜', 'tonight', 'night', 'midnight', 'overnight'] },
+  { label: 'night', start: [18, 0], end: [23, 0], tokens: ['夜晚', '晚間', '晚间', '晚上', '晚黑', '夜間', '夜间', '今晚', '今夜', 'tonight', 'night', 'midnight'] },
+  { label: 'deep_night', start: [23, 0], end: [5, 0], tokens: ['深夜', '夜深', '半夜', '宵夜', '夜宵', '通宵', '通宵營業', '24小時', '24小时', '24小時營業', '24小时营业', '24h', '24 hours', 'open 24', 'all night', 'overnight'] },
+  { label: 'late_night', start: [0, 0], end: [5, 0], tokens: ['凌晨', '凌晨時分', '凌晨时分'] },
 ];
 
-/** The three clock shapes of `timeparse.CLOCK_RE`: 19:30, 7點 / 7點半 / 7時15分, 10pm. Digits only —
- *  the service rewrites Chinese numerals first (`numerals.normalise_numerals`) and that lane is not
- *  here, so 「九點」 arrives as text the mock reads as no clock. Queued. */
+/**
+ * `numerals.CN_DIGITS` — the ten digits, the two zero spellings, and the two spellings of TWO. The
+ * service holds the canonical 兩 only because its text is canonicalised before it is read
+ * (`canonical.py` maps 两 to 兩); this plane has no canonicalisation and hand-carries both scripts
+ * (D641), so `numeral-hours.test.ts` re-derives the roster from `numerals.py` and checks the pair.
+ */
+const CN_DIGITS = new Map<string, number>([
+  ['零', 0], ['〇', 0], ['一', 1], ['二', 2], ['兩', 2], ['两', 2], ['三', 3], ['四', 4], ['五', 5],
+  ['六', 6], ['七', 7], ['八', 8], ['九', 9], ['十', 10],
+]);
+
+/** `timeparse._HOUR_MARKERS` in both scripts. A numeral is rewritten only when an hour marker
+ *  follows it immediately, which is what keeps 星期三 a weekday and 三小時 a duration instead of
+ *  handing both to the clock. */
+const HOUR_MARKERS = '點点時时';
+
+/** `numerals.CN_NUMBER_RE`, built from the table the way the service builds it — the roster is
+ *  declared once, so a character added to the table is a character the reader matches tomorrow. */
+const CN_HOUR_RUN = new RegExp(`[${[...CN_DIGITS.keys()].join('')}]{1,3}(?=[${HOUR_MARKERS}])`, 'g');
+
+/** `numerals.cn_number`: one digit is itself, a run without 十 reads positionally, and a run with 十
+ *  is its tens place plus its ones place — 十二 is 12, 二十 is 20, 二十一 is 21. Mirrored rather than
+ *  improved: an out-of-range run is the authority's out-of-range value too, and `_valid_clock`
+ *  refuses it there, so 「三十三點」 publishes no time on either plane. */
+function cnNumber(text: string): number | null {
+  if (!text) return null;
+  if (!text.includes('十')) {
+    let total = 0;
+    for (const character of text) {
+      const value = CN_DIGITS.get(character);
+      if (value === undefined) return null;
+      total = total * 10 + value;
+    }
+    return total;
+  }
+  const head = text.slice(0, text.indexOf('十'));
+  const tail = text.slice(text.indexOf('十') + 1);
+  const tens = head === '' ? 1 : CN_DIGITS.get(head);
+  if (tens === undefined) return null;
+  const ones = tail === '' ? 0 : CN_DIGITS.get(tail);
+  if (ones === undefined) return null;
+  return tens * 10 + ones;
+}
+
+/**
+ * `numerals.normalise_numerals(text, only_before=_HOUR_MARKERS)` — the rewrite `clock_match` runs
+ * before it looks for a clock, so 九點 and 9點 are one hour. **The Chinese ONE is not rewritten**:
+ * the product has already decided what it means in these sentences (安靜一點 is a degree, not
+ * one o'clock) and the compounds are unaffected, because 十一 is eleven and not one.
+ */
+function normaliseHourNumerals(query: string): string {
+  return query.replace(CN_HOUR_RUN, (run) => {
+    const value = cnNumber(run);
+    return value === null || value === 1 ? run : String(value);
+  });
+}
+
+/** The three clock shapes of `timeparse.CLOCK_RE`: 19:30, 7點 / 7點半 / 7時15分, 10pm. The text is
+ *  read through `normaliseHourNumerals` first, exactly as `clock_match` does, so the hour may be
+ *  written as a digit or as a Chinese numeral and the mock answers the same instant either way. */
 const CLOCK_RE = /(?:(\d{1,2})\s*[:：]\s*(\d{2}))|(?:(\d{1,2})\s*(?:點|点|時|时|o'?clock)(半|\d{1,2}(?:分|分鐘|分钟)?)?)|(?:(\d{1,2})\s*(am|pm))/i;
 
 const WEEKEND_CUE = /周末|週末|週六|周六|saturday|weekend/i;
@@ -310,13 +372,15 @@ function hkInstant(now: Date, dayShift: number, hour: number, minute: number): D
 function guessMeridiem(hour: number, meridiem: string | null, partLabel: string | null): number {
   if (meridiem === 'am') return hour === 12 ? 0 : hour;
   if (meridiem === 'pm') return hour === 12 ? hour : hour + 12;
-  if (partLabel !== null && ['afternoon', 'evening', 'night'].includes(partLabel) && hour < 12) return hour + 12;
+  if (partLabel !== null && ['afternoon', 'evening', 'night', 'deep_night', 'late_night'].includes(partLabel) && hour < 12) return hour + 12;
   if (partLabel === 'noon' && hour < 11) return hour + 12;
   return hour;
 }
 
 function readClock(query: string, partLabel: string | null): { hour: number; minute: number } | null {
-  const match = CLOCK_RE.exec(query);
+  // The same rewrite `clock_match` runs before it searches: 九點 is 9點, and a numeral that is not
+  // in front of an hour marker stays the word it is.
+  const match = CLOCK_RE.exec(normaliseHourNumerals(query));
   if (!match) return null;
   let hour: number;
   let minute = 0;
