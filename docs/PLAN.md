@@ -334,6 +334,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D767** `tests/test_the_filter_keeps_a_row_only_as_far_as_the_row_says.py` pins the
   D764 geo rule from the gate side (a row kept at its stated `meters`, cut beyond
   radius, dropped without location, points beyond radius cut).
+- **D768** the stale D650 好 leg in `test_a_question_frame_is_not_a_search_term.py` is
+  reconciled to D707 (a whole-remainder evaluation word is residue, not content).
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

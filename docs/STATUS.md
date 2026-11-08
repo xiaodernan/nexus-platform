@@ -34728,3 +34728,19 @@ dropped; a row whose points place it within the radius is kept with a computed d
 
 - readers: the offline lane now agrees with the live geo contract without a fixture lane's
   answer depending on which shape a row arrived in.
+
+
+## 768. D768 · fold the stale D650 question-frame expectation against D707's decision
+
+**The gap.** `test_a_question_frame_is_not_a_search_term.py::test_a_word_this_unit_does_not_own_survives[邊間咖啡店好]`
+failed identically at clean HEAD: it demanded `好` stay in the match text, because D650 wrote it
+before any lane answered for the word. D707 later ruled the opposite way on evidence — a bare
+evaluation word as the WHOLE remainder is not a search term (0 of 470 merchants, 0 of 5,538
+offerings carry it), and its gate pins `_EVALUATION_ONLY` to blank exactly that state. Both
+sources were in the tree. The gate's case row went stale relative to the product's own recorded
+decision.
+
+**The fix.** The leg now pins the opposite expectation — `邊間咖啡店好` matches text `""` —
+and the comment names D650/D657/D707 as the adjudication history. No NLU code changed.
+
+**Measured.** 14 passed across the suite (5 DB-skipped). Adjacent NLU grammar suites green.

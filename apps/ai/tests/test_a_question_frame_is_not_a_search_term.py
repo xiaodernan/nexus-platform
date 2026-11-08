@@ -61,13 +61,17 @@ def test_the_frame_leaves_the_category_it_framed():
 
 @pytest.mark.parametrize("text,left", [
     ("有冇安靜嘅咖啡店", "安靜"),
-    ("邊間咖啡店好", "好"),
+    # D707 superseded the D650 expectation: a whole-remainder evaluation word is not a search
+    # term at all, and 0 of the 470 published merchants / 5,538 offerings carry one. The
+    # question-frame leg filed this row open, and D707 closed it as residue.
+    ("邊間咖啡店好", ""),
 ])
 def test_a_word_this_unit_does_not_own_survives(text, left):
     # D657 (§654) took two of the four rows this leg shipped with: 附近 and 有 are the LOCATIVE
     # frame and the auxiliary after it, and its own gate reads "" for both
-    # (`test_a_locative_frame_is_not_a_search_term.py`). 安靜 is a preference and 好 is an
-    # evaluation word with no owner yet - filed, not dropped.
+    # (`test_a_locative_frame_is_not_a_search_term.py`). 安靜 is a preference and stays. 好 was
+    # an evaluation word with no owner when D650 wrote this leg; D707 later filed it as residue,
+    # not content - the whole remainder is not searched, by its own gate.
     assert _plan(text).match_text == left, (text, _plan(text).match_text)
 
 
