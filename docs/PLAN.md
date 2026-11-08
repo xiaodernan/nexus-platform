@@ -327,6 +327,10 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   (D609 gate: 13 detector reds folded).
 - **D765** the typed `cuisine/vegetarian` D702 branch answers only when the stand-in
   attribute speaks; the D394 column matcher answers when it is silent (D522 shape).
+- **D766** the in-lane untracked gates (`test_the_locale_..._open_state_it_prints.py`,
+  `test_the_word_the_contract_publishes_for_open_now_opens_the_hours_window.py`, D725/D730
+  era) and `apps/ai/uv.lock` (36 packages, `uv lock --check` green) were gathered into
+  master so `uv sync` on a fresh CI checkout resolves deterministically.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

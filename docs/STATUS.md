@@ -34691,3 +34691,21 @@ other branch touched.
 
 **Measured.** 12 passed across the gate. 83 cuisine/vegetarian/spicy/cooking suites green.
 mypy and ruff clean.
+
+
+## 766. D766 · gather the in-lane untracked gates and the lockfile into master
+
+**The gap.** Two AI-lane gate test files (`test_the_locale_a_card_is_printed_in_reaches_the_open_state_it_prints.py`,
+`test_the_word_the_contract_publishes_for_open_now_opens_the_hours_window.py`, D725/D730) were
+untracked on the working tree, and `apps/ai/uv.lock` (36 packages in sync with `pyproject.toml`) was
+never tracked. CI runs `uv sync --all-extras` with no lockfile, so a dependency drift in a fresh
+checkout would resolve against whatever `uv` picks that day — every gate reading a dependency
+(hence a gate that cannot reproduce the version the finding was measured on).
+
+**The fix.** Added `apps/ai/uv.lock` (uv writes it deterministically; `uv lock --check` exits 0)
+and the two gate files, untouched.
+
+**Measured.** The two gate files: 41 passed / 6 DB-skipped. `uv lock --check` -> exit 0.
+
+- readers: every machine that runs `uv sync` gets the same dependency graph the findings here
+  were measured against.
