@@ -1512,13 +1512,22 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     # ORDER BY / LIMIT) when asked, and the response reports that sum; a backend that does not
     # answer the column keeps `len(ranked)`, and the larger of the two wins so a page that was
     # not capped by the pool never shrinks its answer.
+    # D755: Chinese text search. `plainto_tsquery('simple', ...)` cannot SEGMENT
+    # CJK text (a CJK run with no spaces becomes ONE token), so a Chinese sentence
+    # matches nothing in the tsvector lane. When the query carries CJK characters,
+    # ask the SQL lane to use the `cjk_zh` (`jiebacfg`) configuration which segments
+    # Chinese into searchable bigrams. Non-CJK text keeps `simple`.
+    _text_for_cfg = canonical(plan.match_text if plan.match_text is not None
+                              else plan.query_text) or None
+    _ts_cfg = "cjk_zh" if _text_for_cfg and any(
+        "\u4e00" <= ch <= "\u9fff" for ch in _text_for_cfg) else "simple"
     common = dict(tenant_id=str(tenant_id),
                   # D635: an empty match text is a request answered entirely by its filters -
                   # there is no term to search, and falling back to the raw sentence would put
                   # back the very word the filter consumed. A plan that never computed one
                   # (`None`) falls back as it always did.
-                  text=canonical(plan.match_text if plan.match_text is not None
-                                 else plan.query_text) or None,
+                  text=_text_for_cfg,
+                  ts_config=_ts_cfg,
                   filters=plan.filters, geo=plan.geo, radius_m=plan.radius_m,
                   limit=max(60, plan.limit * 3), with_total=True)
     # D705: the cuisines this request types, in the taxonomy's own slugs, so the candidate

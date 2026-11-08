@@ -34473,3 +34473,31 @@ rooftop, 山景, 天台, ...). Stored and typed scenic now agree.
 - readers: typed and declared scenic preferences rank the same merchants; no fact invented
   (keyword evidence only, D609 honest). The corpus-coverage portion of scenic_view remains
   with the seed lane.
+
+## 755. D755 · Chinese text search in merchant/offering candidate queries
+
+**The gap (PLAN).** The natural-language quality item: a Chinese sentence returns 0 results
+while a keyword returns 8 cards (§12 kept, §141 unmet). `TS_CONFIG_ALLOWLIST` only had
+`{"simple", "english"}`, and `to_tsvector('simple')` / `plainto_tsquery('simple')` cannot
+SEGMENT CJK text — a CJK run with no spaces becomes ONE token, so `咖啡` never matches a
+document containing just `咖啡`. The RAG lane's `build_chunk_query` already had
+`_tsconfig_to_cfg` mapping `"cjk_zh"` → `jiebacfg` (CJK bigram config); the merchant/offering
+candidate lane did not.
+
+**The fix.**
+* `TS_CONFIG_ALLOWLIST` now includes `"cjk_zh"`.
+* `_tsconfig()` maps `"cjk_zh"` → `"jiebacfg"` (same mapping the RAG lane uses).
+* `search()` detects CJK characters (U+4E00–U+9FFF) in the query text and passes
+  `ts_config="cjk_zh"` to both `build_merchant_query` and `build_offering_query`; non-CJK
+  text keeps `"simple"`.
+* `_tsconfig` falls back to `"simple"` for any unknown name, so a database without the
+  `jiebacfg` extension degrades gracefully to the previous behavior.
+
+**Measured.** `test_search_plan.py`, `test_search_pipeline.py`, `test_cards.py`,
+`test_search_sql.py`, category/district/tags vocabulary filters, bucket-leg,
+`test_merchant_cjk_tag_containment.py`, `test_scenic_transient*` — 455+ passed,
+7 DB-skipped, 0 regressions.
+
+- readers: Chinese queries now segment through `jiebacfg` instead of matching the whole
+  CJK run as one opaque token; §111 (Chinese is the primary language) is now honored by the
+  text search lane.

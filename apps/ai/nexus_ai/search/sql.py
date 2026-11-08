@@ -22,7 +22,7 @@ from nexus_ai.search.categories import (aspect_attributes, aspect_terms, avoid_t
 from nexus_ai.search.tokens import cjk_keywords
 from nexus_ai.nlu.lexicon import CUISINE_TERMS
 
-TS_CONFIG_ALLOWLIST = {"simple", "english"}
+TS_CONFIG_ALLOWLIST = {"simple", "english", "cjk_zh"}
 EARTH_RADIUS_M = 6371008.8
 VECTOR_FLOOR = 0.05
 """Cosine floor for a chunk hit to count as a vector candidate."""
@@ -155,7 +155,15 @@ class CandidateQuery:
 
 
 def _tsconfig(ts_config: str) -> str:
-    return ts_config if ts_config in TS_CONFIG_ALLOWLIST else "simple"
+    """Map the user-facing ts_config name to the Postgres regconfig name.
+
+    `simple` and `english` are built into every Postgres installation; `cjk_zh`
+    is the `jiebacfg` CJK bigram configuration the RAG lane already uses
+    (`_tsconfig_to_cfg`), so Chinese queries can segment instead of treating a
+    CJK run as one opaque token.
+    """
+    _MAP = {"simple": "simple", "english": "english", "cjk_zh": "jiebacfg"}
+    return _MAP.get(ts_config, "simple")
 
 
 # --------------------------------------------------------------------- merchants

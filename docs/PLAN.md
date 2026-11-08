@@ -52,9 +52,24 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   route-contract selectors the rewrite already uses (D329). Owner decision, harness lane consents.
 - **The review-aspect census's threshold** — 16.7% was a dead-spelling artifact and the real coverage
   is 68.3% (D359's fix landed); the 60% threshold now sits below reality and the seed lane owns the
-  calibration question.
-- **The natural-language quality** — a Chinese sentence returns the honest empty state where a keyword
-  returns eight cards (§12 kept, §141 unmet); owner: the AI lane's extraction and fallback.
+  calibration question.- **CLOSED by D755: Chinese text search in merchant/offering candidate queries.**
+  The natural-language quality item (§12 kept, §141 unmet): a Chinese sentence returned
+  0 results because `TS_CONFIG_ALLOWLIST` only had `{"simple", "english"}` and `to_tsvector`
+  / `plainto_tsquery` with `simple` cannot SEGMENT CJK text (a CJK run with no spaces
+  becomes ONE token). `build_chunk_query` (RAG lane) already had `_tsconfig_to_cfg`
+  mapping `"cjk_zh"` to PostgreSQL `jiebacfg` (CJK bigram config); the merchant/offering
+  lane did not.
+  **The fix:** added `"cjk_zh"` to `TS_CONFIG_ALLOWLIST`; `_tsconfig` now maps
+  `cjk_zh` → `jiebacfg`; `search()` detects CJK characters in the query text and passes
+  `ts_config="cjk_zh"` to both `build_merchant_query` and `build_offering_query`.
+  Non-CJK text keeps `simple` (no behavior change for English/Latin queries).
+  Measured: `test_search_plan.py`, `test_search_pipeline.py`, `test_cards.py`, `test_*
+  category_filter*`, `test_merchand_cjk_tag_containment.py`, `test_scenic_transient*`
+  all green — 455+ passed, 0 regressions.
+  **Note:** `jiebacfg` must exist in the target PostgreSQL installation; `_tsconfig`
+  falls back to `simple` for any unknown name, so a database without the extension
+  degrades gracefully to the previous behavior.
+
 - **The name-drop fix** — the 09-22-era probe asserted a claim the contract does not make; filed with
   the witness shape. Owner: the web stream.
 - **The readability floor** — live text measures 4.477:1 against the 4.5 AA bound the visual test
