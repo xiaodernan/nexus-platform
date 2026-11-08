@@ -35522,3 +35522,20 @@ the case-file hygiene gate pin moves; it pins 46 now.
 
 **Measured.** eval harness suites + CLI + per-module injection; 85 passed combined;
 mypy 61 files clean; ruff clean.
+
+
+## 801. D801 · the scanner re-measured against the whole untrusted corpus after the D794-D800 strengthening
+
+**The door.** D794 · D796 · D800 each strengthened the injection scanner's pattern surface and
+each measured 0 of 17,058 corpus strings against their own candidate pattern. The whole corpus
+was never re-measured against the FINAL scanner, which is the only shape that matters for the
+§50-52 gate: it is the union of every pattern and every tool_name match, not a single candidate.
+
+**The measurement.** Using `nexus_ai.trust.injection.scan_untrusted` on every untrusted string
+in the store — merchants display_name/description (520), offerings name/description/description_zh
+(5,538), reviews title/body (11,000), total 17,058 — zero rows flag. No new detector rows, no
+fragments. §50-52 ground: the corpus generator itself does not contain injection-shaped
+language, as expected.
+
+**The check.** This measurement is the direct answer to "did the strengtheners ever detour the
+corpus into a false positive?" — measured on the committed tree, code unchanged by this unit.
