@@ -35488,3 +35488,37 @@ no district, no time. All measured at HEAD with a live probe; none asserts anyth
 **Measured.** intent_v1 58/58, gates PASS (accuracy 1.0000, hallucination_rate 0.0000); the
 case-file hygiene gate's intent pin moves with the widening (it pins 58); eval harness CLI
 runs green; mypy/ruff untouched (data + one line in a test).
+
+
+## 800. D800 · the god/AI-mode attack verbs and the role-assignment jailbreak land
+
+**The gap.** Round-6 attack battery at HEAD: nine of fourteen flagged, five standing unflagged -
+`act as an administrator`, `Acting as an admin`, `god mode`, `AI mode`, `train-language`,
+`bypass`. A residual census of every candidate against the corpus (merchants display_name/
+_desc, offerings full-text, reviews full-text — 17,058 strings) measured `god mode`,
+`AI mode`, `acting-as-an-(admin|developer)`, and `bypass` at ZERO; `bypass` was NOT landed
+— its plain-English use (POS "bypass the checkout", consumer "bypass the queue") is as natural
+as adversarial vocabulary; the role/authority-assignment family and `god/AI mode` clear it
+cleanly.
+
+**The repair.** Two changes in `injection.py` — `jailbreak_mode` now matches
+`(sudo|free|god|ai)\s+mode`; `role_hijack` now matches
+`acting\s+as\s+(?:a|an)\s+(?:[a-z]+\s+)?(admin(?:istrator)?|developer|owner|root|system)` — a
+"developer console" / "administrator" shape, disguised as a benign occupation. `acting as
+an assistant` / `acting as a cashier` stay clean, and `bypass` joins nothing — both measured
+on the corpus and recorded here instead.
+
+**The census.** All landed shapes measured 0 of 17,058 (full reviews body + title,
+merchants, offerings across name/description/full-text). The six §50-52 benign controls
+unaffected; the new legs stay clean (any `acting as [a b c]...
+owner` inside listings flagged zero corpus examples, and the phrase `acting as a cashier` in
+HK hawker/dine-in context stays unflagged).
+
+**The gate.** safety_injection_v1 42 → 46 measured cases — `jailbreak-god-mode`,
+`jailbreak-ai-mode` (jailbreak_mode twice), `acting-as-administrator`, `acting-as-developer`
+(role_hijack twice), every case written after running the scanner and recording its answer.
+`injection_containment` 37/37, `envelope_containment` 3/3, `false_positive_rate` 0/6;
+the case-file hygiene gate pin moves; it pins 46 now.
+
+**Measured.** eval harness suites + CLI + per-module injection; 85 passed combined;
+mypy 61 files clean; ruff clean.

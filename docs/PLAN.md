@@ -433,6 +433,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D799** the category-never-invented rows join intent_v1 (55 → 58): silent-treatment,
   stranger-things, weather-in-the-area — all measured at HEAD, all with
   `intent: unknown`, all with `must_not: [category, budget, party_size, location, time]`.
+- **D800** `jailbreak_mode` now reads `god mode` / `AI mode`; `role_hijack` reads
+  `acting as a/administrator developer owner root system`; 0 of 17,058 corpus strings each;
+  safety_injection_v1 42 → 46 measured cases; `bypass` filed not landed (ambiguous register).
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
