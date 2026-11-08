@@ -14,8 +14,6 @@ distance; the request still has to fall inside the radius.
 
 from __future__ import annotations
 
-import pytest
-
 import nexus_ai.search.service as S
 
 

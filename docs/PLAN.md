@@ -336,6 +336,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   radius, dropped without location, points beyond radius cut).
 - **D768** the stale D650 好 leg in `test_a_question_frame_is_not_a_search_term.py` is
   reconciled to D707 (a whole-remainder evaluation word is residue, not content).
+- **D769** `tests/test_the_regconfig_the_chinese_query_asks_for_exists.py` pins the D755
+  mapping `cjk_zh`->`jiebacfg` and the fallback to `simple`.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

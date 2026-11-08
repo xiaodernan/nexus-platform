@@ -34744,3 +34744,16 @@ decision.
 and the comment names D650/D657/D707 as the adjudication history. No NLU code changed.
 
 **Measured.** 14 passed across the suite (5 DB-skipped). Adjacent NLU grammar suites green.
+
+
+## 769. D769 · pin the D755 regconfig mapping (gate-side)
+
+**The gap.** `_tsconfig` (search/sql.py) turns the caller-typed `ts_config="cjk_zh"` onto
+`jiebacfg` — the whole of D755's text-search repair — and only `_tsconfig` stands between a
+typo and a database that cannot run the query. No gate pinned the mapping from the gate side.
+
+**The fix.** `tests/test_the_regconfig_the_chinese_query_asks_for_exists.py`: `cjk_zh` ->
+`jiebacfg`, the built-ins unchanged; an unknown name degrades to `simple`; every reachable
+value remains inside the map, so no caller can reach an inlineable regconfig name.
+
+**Measured.** 4 passed. ruff clean.
