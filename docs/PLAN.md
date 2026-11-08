@@ -438,6 +438,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   safety_injection_v1 42 → 46 measured cases; `bypass` filed not landed (ambiguous register).
 - **D801** the full-store corpus re-measured against the final strengthened scanner:
   17,058 strings, zero flags. §50-52 stands; no code change.
+- **D802** `七月一日放假吗` no longer falls into `plan_experience` — the `一日` cue was dropped
+  from `PLAN_CUES` after measuring 0 corpus occurrences; pinned as one intent_v1 case
+  (58 → 59); the date ask now reads `intent: unknown`.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

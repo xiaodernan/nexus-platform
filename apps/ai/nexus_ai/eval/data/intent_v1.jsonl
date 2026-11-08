@@ -56,3 +56,4 @@
 {"id":"never-invent-a-category-silent","query":"the silent treatment","expect":{"intent":"unknown"},"must_not":["category","budget","party_size","location","time"]}
 {"id":"never-invent-a-category-stranger","query":"stranger things","expect":{"intent":"unknown"},"must_not":["category","budget","party_size","location","time"]}
 {"id":"never-invent-a-category-weather","query":"weather in the area","expect":{"intent":"unknown"},"must_not":["category","budget","party_size","location","time"]}
+{"id":"date-ask-is-not-a-plan","query":"七月一日放假吗","expect":{"intent":"unknown"},"must_not":["category","budget","party_size","location","time"]}

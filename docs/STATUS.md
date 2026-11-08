@@ -35539,3 +35539,21 @@ language, as expected.
 
 **The check.** This measurement is the direct answer to "did the strengtheners ever detour the
 corpus into a false positive?" — measured on the committed tree, code unchanged by this unit.
+
+
+## 802. D802 · `七月一日放假吗` is not a travel plan — the `一日` cue read every date as a day-trip
+
+**The gap.** A measured comprehension failure: `extract_intent_dict('七月一日放假吗')` answered
+`intent: plan_experience`. The cause was `PLAN_CUES` in `nexus_ai/nlu/lexicon.py` carrying the
+two-character cue `一日`, which matches every `<month>月一日` date (`一月一日`, `七月一日`) by
+way of loose CJK substring matching (no segmenter in front of the vocabulary).
+
+**The repair.** `一日` removed from `PLAN_CUES`. The cue had no mirror in the live corpus
+(measured 0 of 17,058 untrusted-content strings); the remaining entries (`半日`, `行程`,
+`安排`, `点玩`/`點玩`) keep their match and their own evidence. The date ask now reads
+`intent: unknown`. Pinned as one intent_v1 case: `date-ask-is-not-a-plan`, measured
+58 → 59; gates PASS (accuracy 1.0000, hallucination 0.0000).
+
+**Measured.** `tests/test_first_turn_cues_are_words.py` + `tests/test_follow_up_question_follows_the_priority.py`
+181 passed; mypy / ruff untouched (one row in the vocabulary table); the behaviour change is one
+row in `lexicon.py` plus one case in `intent_v1.jsonl`.

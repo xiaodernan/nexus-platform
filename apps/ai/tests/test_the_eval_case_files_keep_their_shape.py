@@ -118,7 +118,7 @@ def test_safety_exactly_the_attacks_may_claim_an_expect_signal():
 def test_the_case_files_are_the_counts_measured():
     # The suite's bounds are the ones CI names; the case COUNTS are part of the same promise,
     # and the way a case files for appeal is by being added - loudly failure, not silently skipped.
-    assert len(_load("intent_v1")) == 58
+    assert len(_load("intent_v1")) == 59
     assert len(_load("safety_injection_v1")) == 46
 
 
