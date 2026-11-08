@@ -34451,3 +34451,25 @@ perfectly; (3) `text_matched` is per-row (true where words appear, false where t
 
 - readers: text never overrides the category bucket leg; the static lane's text gate is now
   covered by the same parity claim as the filter leg.
+
+## 754. D754 · stored `view/scenic` reader matches scenic keywords (D719 mirrored to stored path)
+
+**The gap.** D719 made the *transient* scenic reader fall back to scenic keywords in a
+merchant's name/description when its `scenic_view` boolean attribute is absent (scenic_view
+is True on only 10 of 520 merchants, 1.9%). The *stored* scenic reader (line ~1816) did not
+have this fallback - it returned `None` whenever `scenic_view` was unset, so a declared
+scenic preference could not match a keyword-described merchant, while a typed one could.
+Stored and typed scenic disagreed for the same merchant.
+
+**The fix.** Added the same D719 keyword fallback to the stored scenic branch in
+`search/service.py`: when `scenic_view` is neither True nor False, match if the row's
+name/name_zh/description/description_zh contains a scenic keyword (海景, 維港, 景觀,
+rooftop, 山景, 天台, ...). Stored and typed scenic now agree.
+
+**Measured.** New test `test_stored_scenic_preference_matches_name_keywords_too` in
+`test_scenic_transient_keyword.py` (stored path mirrors transient D719 behavior); full file
+4 passed. Existing scenic suites green.
+
+- readers: typed and declared scenic preferences rank the same merchants; no fact invented
+  (keyword evidence only, D609 honest). The corpus-coverage portion of scenic_view remains
+  with the seed lane.

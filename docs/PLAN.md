@@ -156,13 +156,17 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The live demo plane's corpus predates the seed generator** — D419 measured it: 0 of the plane's 500 published rows carry `date_occasion` (the generator learned to write it in D383), so the occasion preferences are understood and then do nothing there, and the personalization signal reads 0.5 (neutral) instead of 1.0. The re-seed is the seed lane's call — on a shared plane the load truncates the AI lane's own 968 `agent_runs` rows and the platform's demo rows, and the `nexus_ai` role cannot even read those tables to tell whether they hold anything. The recipe (measured on a throwaway database in D419): `python data/seed/generate.py --counts <n>` then the `data/seed/out/*.sql` files applied in order with `--single-transaction`. **D422 showed why it matters**: the lane's live suite was green on the stale plane and failed four times on a plane seeded from the current generator.
 - **The seed's Chinese text could be checked against the canonical table** — D418 measured that 0 of the 470 published rows hold a character the canonical table changes, so the corpus is entirely in the standard forms ✓. The seed's GENERATOR is the other half: it writes the vocabulary the product's matchers read ✓ (D419's table), so both sides are checked — but nothing checks that automatically, and a generator change that dropped an attribute would take the preference with it.
 - **The polarity lane reads the LIKE of an antonym as the DISLIKE of the value** — **closed by D582**: `antonym_direction` in `nlu/polarity.py` inverts the value's polarity when the sentence asks for the opposite surface ("嘈的餐廳" → ambience/quiet -1), while questions ("有冇嘈") and bare mentions ("太嘈") keep +1. D570 wrote the REFUSAL direction; D582 wrote the mirror LIKE direction. Owner: the AI lane.
-- **`scenic_view` is nearly dead in the corpus the product is served from** - the seed derives it
+- **`scenic_view` is nearly dead in the corpus the product is served from - AI lane reader improvement done.** - the seed derives it
   from `SCENIC_LEAVES` (the hotel leaves plus `seafood-grill`) times a 0.3 coin, and the live
   plane carries it True on 10 of 520 merchants; at the seed gate's smallest scale (60 merchants)
   it is now 0, which is why `test_the_seed_derives_preferences_from_leaves_the_taxonomy_writes.py`
-  is red on a tree that touches nothing but `data/seed`. The preference the NLU emits for 海景 /
-  維港 / 景觀 / 山景 / 天台 / rooftop - the archetypal Hong Kong ask - can be satisfied by 1.9% of the
-  plane. Owner: the AI lane with the seed lane.
+  is red on a tree that touches nothing but `data/seed` - that data portion remains with the seed lane.
+  **AI lane done (D707/D719/D754):** both the transient and stored `view/scenic` readers now also
+  match merchants whose name/description contains scenic keywords (海景, 維港, 景觀, rooftop,
+  山景, 天台...) - the same words the NLU reads as scenic cues - so a scenic preference matches
+  even when the boolean attribute was never written (D609 honest: no fact invented, keyword evidence
+  only). `test_scenic_transient_keyword.py` covers both stored and transient paths. The remaining
+  corpus-coverage portion stays with the seed lane.
 - **The vector lane retrieves nothing on the demo plane, and the run log says otherwise** — **closed by D593**: the strategy string now only appends `+vector` when at least one ranked row carried a non-zero `vec_score` (`vector_contributed`). With `embedded=0`, every `vec_score` is 0.0, so the strategy answers `hybrid_v1+postgres` without `+vector` — honest about what actually ran. Owner: the AI lane.
 
 ### Completed this session (AI lane)

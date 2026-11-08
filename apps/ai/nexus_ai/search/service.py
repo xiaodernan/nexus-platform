@@ -1822,6 +1822,23 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                     return _sided(w, liked=v)
                                 if attrs.get("scenic_view") is False:
                                     return _sided(w, liked=not v)
+                                # D719: scenic_view is True on only 10 of 520 merchants,
+                                # so a scenic preference almost never matches. Also match
+                                # merchants whose name or description contains scenic
+                                # keywords - these are the same words the NLU reads as
+                                # scenic cues, so a merchant that describes itself as
+                                # having a view matches even if the boolean attribute was
+                                # never written. The transient lane does the same
+                                # (line ~2295), so stored and typed scenic agree.
+                                text = (str(attrs.get("name", "")) + " " +
+                                        str(attrs.get("name_zh", "")) + " " +
+                                        str(attrs.get("description", "")) + " " +
+                                        str(attrs.get("description_zh", ""))).lower()
+                                scenic_keywords = ("海景", "維港", "维港", "景觀", "景观",
+                                                   "view", "skyline", "山景", "天台", "天臺",
+                                                   "rooftop")
+                                if any(k in text for k in scenic_keywords):
+                                    return _sided(w, liked=True)
                                 return None
                             return _match
                         match_fn = make_scenic_match(val, float(weight))

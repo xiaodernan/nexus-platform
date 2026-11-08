@@ -83,3 +83,55 @@ class TestScenicTransientRanks:
         # Both scenic_view=True and name-containing-海景 should rank above plain
         assert scenic[0].organic_score > plain[0].organic_score
         assert sea_view[0].organic_score > plain[0].organic_score
+
+    async def test_stored_scenic_preference_matches_name_keywords_too(self):
+        # D754: the stored scenic reader mirrors the transient D719 fallback - a
+        # merchant whose name/description contains scenic keywords matches even
+        # when its scenic_view attribute was never written.
+        import nexus_ai.search.service as S
+
+        class StaticLikeBackend(S.StaticBackend):
+            async def merchant_candidates(self, *, text=None, filters=None, **_kw):
+                return [dict(r) for r in self.merchants]
+
+            async def user_preferences(self, user_id, kinds=None, conversation_id=None):
+                return [dict(p) for p in self._prefs
+                        if str(p.get("user_id")) == user_id]
+
+        backend = StaticLikeBackend(
+            merchants=[
+                {"subject_id": "m1", "merchant_id": "m1", "subject_type": "merchant",
+                 "display_name": "Harbor View Hotel", "display_name_zh": "維港景觀酒店",
+                 "category_primary": "hotel", "rating_agg": 4.5, "review_count": 30,
+                 "avg_price_hkd": 500, "tags": ["hotel"],
+                 "attributes": {"scenic_view": True}},
+                {"subject_id": "m2", "merchant_id": "m2", "subject_type": "merchant",
+                 "display_name": "Sea View Restaurant", "display_name_zh": "海景餐廳",
+                 "category_primary": "restaurant", "rating_agg": 4.0, "review_count": 20,
+                 "avg_price_hkd": 300, "tags": ["seafood"],
+                 "attributes": {}},  # no scenic_view attribute, but name contains 海景
+                {"subject_id": "m3", "merchant_id": "m3", "subject_type": "merchant",
+                 "display_name": "Plain Cafe", "display_name_zh": "普通咖啡",
+                 "category_primary": "cafe", "rating_agg": 4.0, "review_count": 15,
+                 "avg_price_hkd": 80, "tags": ["cafe"],
+                 "attributes": {}},  # no scenic_view, no scenic keywords
+            ],
+        )
+        backend._prefs = [
+            {"user_id": "u1", "kind": "view", "key": "scenic",
+             "value": '{"value": true}', "weight": 1.0,
+             "source": "declared", "scope": "long_term"},
+        ]
+
+        plan = S.SearchPlan(query_text="店", limit=10)
+        cards, resp, _, scored = await S.search(
+            backend=backend, plan=plan, user_id="u1")
+
+        assert len(scored) == 3
+        scenic = [s for s in scored if s.candidate.subject_id == "m1"]
+        sea_view = [s for s in scored if s.candidate.subject_id == "m2"]
+        plain = [s for s in scored if s.candidate.subject_id == "m3"]
+        assert scenic and sea_view and plain
+        # stored scenic_view=True and name-containing-海景 both rank above plain
+        assert scenic[0].organic_score > plain[0].organic_score
+        assert sea_view[0].organic_score > plain[0].organic_score
