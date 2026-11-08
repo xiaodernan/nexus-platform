@@ -406,6 +406,10 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   two-word-adverbial English exfil, the developer-mode jailbreak, and the authority claim — zero
   false positives over 17,058 untrusted-content strings; safety_injection_v1 27 → 32 measured
   cases. Base64 exfil and forged-delimiter shapes are filed, not fixed.
+- **D792** correction: those two filed-not-fixed reds measure benign against the envelope —
+  `<ENDDATA>` and the base64 probe both arrive as inert text and `wrap_untrusted` flags False on
+  each; the envelope redacts only our own shape and §8's registry-only tool resolution covers the
+  rest. §791 stands as a historical record; the correction lives as §792.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
