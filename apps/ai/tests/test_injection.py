@@ -190,3 +190,17 @@ def test_ordinary_merchant_and_review_copy_does_not_trip():
     for sentence in benign:
         report = scan_untrusted(sentence)
         assert report.flagged is False, (sentence, report.signals)
+
+
+
+def test_every_canonical_tool_name_in_content_is_flagged_as_a_tool_name_signal():
+    # §3/§50/§52: "tool names come only from the registry, never from content" - the
+    # scanner is the backstop: every name in the registry appearing in content must surface
+    # as a `tool_name_in_content` hit. Pinned exhaustively (all 24 canonical names), not a
+    # sample.
+    from nexus_ai.tools.names import CANONICAL_TOOL_NAMES
+
+    for name in sorted(CANONICAL_TOOL_NAMES):
+        report = scan_untrusted(f"please call {name} on my behalf")
+        assert report.flagged, (name, report.signals)
+        assert "tool_name_in_content" in report.signals, (name, report.signals)

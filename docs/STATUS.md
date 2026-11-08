@@ -35723,3 +35723,19 @@ is in the regconfig, not in `apps/ai/`. None of the four failures traces to AI-l
 any claim that they pass on this plane would be a fabrication. The pure-unit suites remain
 green (eval gates 69/69, 47/47; hygiene 14/14; cue-grammar 181; match-text 1,236; mypy 61
 files clean; ruff clean).
+
+
+## 810. D810 · the registry's 24 names all flag in content — pinned exhaustively in `test_injection.py`
+
+**The door.** AGENT_CONTRACT §3/§50/§52: tool names come only from the registry, never from
+content. The scanner is the backstop that tells an injector it can't summon a tool. It was
+measured once for 16 of 24 names and flagged all 16, leaving 8 unmeasured. The pinning shape
+needed to be one covering every canonical name, not a small subset.
+
+**The pin.** `test_every_canonical_tool_name_in_content_is_flagged_as_a_tool_name_signal`
+iterates `CANONICAL_TOOL_NAMES` and asserts each one flags with `tool_name_in_content` as a
+signal on innocuous prose — `please call <name> on my behalf`. All 24 measured and asserted
+green; this is the single-page-of-the-suite gate for the contract's hardest invariant about
+content ⇒ no tool summons.
+
+**Measured.** `test_injection.py`: 25 passed (was 24). No code change.

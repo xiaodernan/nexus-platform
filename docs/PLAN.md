@@ -467,6 +467,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   `test_live_canonical_query` 3/3 green; the rest fail against `text search configuration
   "jiebacfg" does not exist` — a seed-lane environment fact, not AI-lane code. CI's nexus_test
   plane carries the regconfig and the seed; the AI lane's health is proven there.
+- **D810** `test_injection.py` pins all 24 canonical tool names appearing in innocuous content —
+  each flags as `tool_name_in_content`; 25 passed (was 24); the content⇒tool promise is now a
+  gate, not a spot-check.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
