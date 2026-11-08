@@ -34918,3 +34918,30 @@ the honest manifest: `get_business_hours` is the only `implemented:true` entry.
 
 - readers: the agent needs one tool that answers today and a channel that says the rest are
   not there yet.
+
+
+## 777. D777 · a second read-only tool every plane can answer is implemented and dispatched
+
+**The gap.** D776 lit the dispatch registry for `get_business_hours`. The facts table
+already carries honest price rows for every merchant with an `avg_price_hkd` and for every
+offering with a `price_amount` — that is the second tool every plane can answer without
+reaching the LLM path, the platform stub, or the network.
+
+**The fix.** `nexus_ai/tools/builtin.py` gains `build_get_price(registry, backend)`: reads
+`price`-attributed facts through `backend.facts()` — `subject_id` + `subject_type`
+(`merchant` or `offering`). Empty `price` object is the honest answer for a subject with
+no price fact; never invents one.
+
+`register_read_tools()` now registers both tools. `Deps.tool_registry()` builds the pair.
+
+**Honest widening of the contract enough for this unit**: `_validate` now honours
+`enum` — every `enum` member is compared strictly, so a spec like
+`{"type": "string", "enum": ["merchant", "offering"]}` refuses anything else.
+
+**Gates.** 4 new legs: merchant price row returns `{amount, currency}`; offering price
+row too; empty-fact subject returns `price == {}`; `subject_type` enum is refused at the
+validator, never reaching the backend. `test_health_and_tools.py` pins the two live tools
+(implemented:true, data_path_via_http) with every other canonical name false.
+
+**Measured.** 36 dispatch gates; 109 across dispatch/tools/health/regconfig/geo pins;
+eval gate PASS; mypy nexus_ai 61 files clean; `ruff check .` all-checks-passed.

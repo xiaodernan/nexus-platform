@@ -230,6 +230,9 @@ def _validate(schema: Mapping[str, Any], value: Any, *, path: str) -> None:
                 _validate(props[key], item, path=f"{path}.{key}")
             elif not extra_ok:
                 raise ValueError(f"{path}: property {key!r} is not declared")
+    raw_enum = schema.get("enum")
+    if isinstance(raw_enum, Sequence) and value not in raw_enum:
+        raise ValueError(f"{path}: value {value!r} is not one of the allowed enum values")
     if isinstance(value, str):
         min_len = schema.get("minLength")
         if isinstance(min_len, int) and len(value) < min_len:

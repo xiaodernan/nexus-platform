@@ -369,8 +369,67 @@ async def _fake(*, subject):
     return {"rows": []}
 
 
+class TestGetPriceDispatches:
+    """D777 - the facts-table price read answers through the registry, honestly."""
+
+    def test_get_price_returns_the_merchant_price_row(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        merchant_id = next(r.get("merchant_id") or r.get("subject_id")
+                           for r in backend._facts
+                           if r["attribute"] == "price" and r["subject_type"] == "merchant")
+        out = asyncio.run(registry.dispatch(subject="u1", tool="get_price",
+                                            arguments={"subject_id": merchant_id,
+                                                      "subject_type": "merchant"}))
+        out = asyncio.run(registry.dispatch(subject="u1", tool="get_price",
+                                            arguments={"subject_id": merchant_id,
+                                                      "subject_type": "merchant"}))
+        assert out["subject_id"] == merchant_id
+        assert isinstance(out["price"], dict) and out["price"]
+        assert "amount" in out["price"] and "currency" in out["price"]
+
+    def test_get_price_returns_the_offering_price_row(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        offering_id = next(r.get("subject_id")
+                           for r in backend._facts
+                           if r["attribute"] == "price" and r["subject_type"] == "offering")
+        out = asyncio.run(registry.dispatch(subject="u1", tool="get_price",
+                                            arguments={"subject_id": offering_id,
+                                                      "subject_type": "offering"}))
+        assert out["subject_id"] == offering_id
+        assert isinstance(out["price"], dict) and out["price"]
+
+    def test_get_price_empty_facts_returns_empty_price(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        out = asyncio.run(registry.dispatch(subject="u1", tool="get_price",
+                                            arguments={"subject_id": "nobody",
+                                                      "subject_type": "merchant"}))
+        assert out["price"] == {}
+
+    def test_get_price_rejects_unknown_subject_type(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        with pytest.raises(InvalidArguments):
+            asyncio.run(registry.dispatch(subject="u1", tool="get_price",
+                                          arguments={"subject_id": "x",
+                                                     "subject_type": "lawyer"}))
+
+
 class TestRealReadOnlyToolDispatches:
-    """D776 - the one live read-only tool answers through the registry, honestly."""
 
     def test_get_business_hours_dispatches_full_row(self):
         from nexus_ai.api.demo_data import demo_backend

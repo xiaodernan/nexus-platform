@@ -26,7 +26,6 @@ from nexus_ai.tools.registry import (
 if TYPE_CHECKING:
     from nexus_ai.search.service import SearchBackend
 
-
 def build_get_business_hours(registry: Registry, backend: SearchBackend) -> ToolSpec:
     """Register the `get_business_hours` read tool against `backend`."""
 
@@ -74,6 +73,63 @@ def build_get_business_hours(registry: Registry, backend: SearchBackend) -> Tool
     return spec
 
 
+def build_get_price(registry: Registry, backend: SearchBackend) -> ToolSpec:
+    """Register the `get_price` read tool against `backend`."""
+
+    spec = ToolSpec(
+        name="get_price",
+        version="1",
+        description=(
+            "Read the honest price row for ONE subject (a merchant or an offering), "
+            "through the facts table. Returns the price object exactly as the corpus "
+            "writes it ({amount, currency, model?}); empty `price` when the corpus "
+            "records none - never invents a price."
+        ),
+        input_schema={
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "subject_id": {"type": "string", "minLength": 1},
+                "subject_type": {"type": "string", "enum": ["merchant", "offering"]},
+            },
+            "required": ["subject_id", "subject_type"],
+        },
+        output_schema={
+            "type": "object",
+            "properties": {
+                "subject_id": {"type": "string"},
+                "subject_type": {"type": "string"},
+                "price": {"type": "object"},
+            },
+            "required": ["subject_id", "subject_type", "price"],
+        },
+        permission=PERMISSION_READ,
+        cache_ttl_s=300,
+        timeout_ms=1500,
+        retries=1,
+        side_effect=False,
+        cost_class="db",
+        fallback="none",
+    )
+
+    async def handler(args: Mapping[str, Any], *, subject: str):  # noqa: ARG001
+        subject_id = str(args["subject_id"])
+        subject_type = str(args["subject_type"])
+        rows = await backend.facts([subject_id])
+        for row in rows:
+            if (str(row.get("attribute")) == "price"
+                    and str(row.get("subject_type")) == subject_type):
+                value = row.get("value")
+                return {"subject_id": subject_id,
+                        "subject_type": subject_type,
+                        "price": dict(value) if isinstance(value, Mapping) else {}}
+        return {"subject_id": subject_id, "subject_type": subject_type, "price": {}}
+
+    registry.register(spec, handler=handler)
+    return spec
+
+
 def register_read_tools(registry: Registry, backend: SearchBackend) -> Registry:
     build_get_business_hours(registry, backend)
+    build_get_price(registry, backend)
     return registry
