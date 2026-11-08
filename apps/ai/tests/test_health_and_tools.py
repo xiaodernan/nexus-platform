@@ -38,14 +38,16 @@ def test_tools_manifest_is_honest(client):
     implemented = {t["name"] for t in body["tools"] if t["implemented"]}
     # the live read-only tools are honest; every other canonical name advertises implemented:false
     assert implemented == {"search_merchants", "get_business_hours", "get_price",
-                           "get_user_preferences"}
+                           "get_user_preferences",
+                           "search_products", "search_services"}
     assert "search_merchants" in names
 
 
 def test_every_live_tool_dispatches(client):
     body = client.get("/ai/v1/tools").json()
     for name in ("search_merchants", "get_business_hours", "get_price",
-                 "get_user_preferences"):
+                 "get_user_preferences",
+                 "search_products", "search_services"):
         bucket = next(t for t in body["tools"] if t["name"] == name)
         assert bucket["implemented"] is True
         assert bucket["data_path_via_http"] is True

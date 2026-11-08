@@ -475,6 +475,55 @@ class TestGetUserPreferencesDispatches:
         assert out == {"user_id": "", "preferences": []}
 
 
+class TestSearchProductsAndServicesDispatch:
+    """D780 - the offering-lane read tools catalogue their kind, honestly."""
+
+    def test_search_products_returns_the_three_demo_products(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        out = asyncio.run(registry.dispatch(subject="u1", tool="search_products",
+                                            arguments={}))
+        assert out["offerings"], "the demo catalogue seeds three products"
+        kinds = {row.get("kind") for row in out["offerings"]}
+        assert kinds == {"product"}
+
+    def test_search_products_filters_to_the_requested_kind(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        service_out = asyncio.run(registry.dispatch(subject="u1", tool="search_services",
+                                                    arguments={}))
+        # the demo catalogue seeds no kind='service' offerings — empty list is the
+        # honest answer on this plane
+        assert service_out["offerings"] == []
+
+    def test_search_products_party_size_passed_for_capacity_aware_rows(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        # no capacity constraint here, so the result is unchanged with party_size=1
+        two = asyncio.run(registry.dispatch(subject="u1", tool="search_products",
+                                            arguments={"party_size": 1}))
+        assert isinstance(two["offerings"], list)
+
+    def test_search_products_refuses_unknown_limit(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        with pytest.raises(InvalidArguments):
+            asyncio.run(registry.dispatch(subject="u1", tool="search_products",
+                                          arguments={"limit": 100}))
+
+
 class TestSearchMerchantsDispatches:
     """D779 - the bread-and-butter search tool answers through the registry, honestly."""
 

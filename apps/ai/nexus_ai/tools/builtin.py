@@ -256,6 +256,77 @@ def build_search_merchants(
     return spec
 
 
+def build_search_offering(
+    registry: Registry,
+    backend: SearchBackend,
+    tenant_id: str | None = None,
+    *,
+    kind: str,
+) -> ToolSpec:
+    """Register a `search_products` / `search_services` tool against `backend`."""
+    from nexus_ai.search.service import DEFAULT_TENANT_ID
+
+    tenant = str(tenant_id or DEFAULT_TENANT_ID)
+
+    name = f"search_{kind}s"
+
+    spec = ToolSpec(
+        name=name,
+        version="1",
+        description=(
+            f"Search the offerings plane filtered to kind={kind!r}. Bounded, "
+            f"server-side tenant-scoped, never fabricated."
+        ),
+        input_schema={
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "text": {"type": "string"},
+                "category": {"type": "string"},
+                "district": {"type": "string"},
+                "party_size": {"type": "integer", "minimum": 1, "maximum": 50},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+            },
+        },
+        output_schema={
+            "type": "object",
+            "properties": {
+                "text": {"type": "string"},
+                "offerings": {"type": "array"},
+            },
+            "required": ["offerings"],
+        },
+        permission=PERMISSION_READ,
+        cache_ttl_s=0,
+        timeout_ms=3000,
+        retries=0,
+        side_effect=False,
+        cost_class="db",
+        fallback="none",
+    )
+
+    async def handler(args: Mapping[str, Any], *, subject: str):  # noqa: ARG001
+        filters: dict[str, Any] = {"kind": kind}
+        if args.get("category"):
+            filters["category"] = str(args["category"])
+        if args.get("district"):
+            filters["district"] = str(args["district"])
+        rows = await backend.offering_candidates(
+            tenant_id=tenant,
+            text=args.get("text") or None,
+            filters=filters,
+            party_size=(args.get("party_size")
+                        if isinstance(args.get("party_size"), int) else None),
+            limit=int(args.get("limit") or 20),
+            with_total=True,
+        )
+        return {"text": args.get("text") or "",
+                "offerings": [dict(row) for row in rows]}
+
+    registry.register(spec, handler=handler)
+    return spec
+
+
 def register_read_tools(
     registry: Registry,
     backend: SearchBackend,
@@ -265,4 +336,6 @@ def register_read_tools(
     build_get_price(registry, backend)
     build_get_user_preferences(registry, backend)
     build_search_merchants(registry, backend, tenant_id)
+    build_search_offering(registry, backend, tenant_id, kind="product")
+    build_search_offering(registry, backend, tenant_id, kind="service")
     return registry

@@ -366,6 +366,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   reads only the caller's own rows; identity in the input envelope is refused.
 - **D779** the bread-and-butter read tool ships — `search_merchants` through
   `backend.merchant_candidates(...)`, bounded, with no fabrication.
+- **D780** the offering-lane read tools ship — `search_products` (kind='product') and
+  `search_services` (kind='service') through `backend.offering_candidates(...)`.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

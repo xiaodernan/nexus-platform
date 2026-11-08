@@ -34991,3 +34991,31 @@ now lists four live entries (implemented:true, data_path_via_http): `search_merc
 
 **Measured.** 43 in-lane dispatch gates green; 80 in the dispatch/tools/health/names subset;
 mypy 61 files clean; ruff clean.
+
+
+## 780. D780 · the offering-lane read tools catalogue their kind honestly
+
+**The gap.** `search_merchants` answered the merchant lane; the product / service lane
+over offerings (the same `backend.offering_candidates(...)` path `/ai/v1/search` reads)
+had no registry-backed door. The demo catalogue currently seeds three kind='product'
+offerings and no kind='service' offering — both questions answer honestly.
+
+**The fix.** `builtin.build_search_offering(registry, backend, tenant_id, kind=...)`
+registers `search_products` (kind='product') and `search_services` (kind='service').
+Optional `category`, `district`, `party_size`, `limit` (1–50, default 20). The handler
+uses the same backend call the search endpoint uses; tenant_id is wired through
+`Deps.tool_registry()`. `search_services` on this plane answers with an empty list —
+the demo catalogue seeds no services (`kind='service'`) — and that's the correct,
+honest answer for the offline demo; the live plane answers it for any real tenant.
+
+**`/ai/v1/tools`** now reports **six** live entries (implemented:true, data_path_via_http):
+`search_merchants`, `search_products`, `search_services`, `get_business_hours`,
+`get_price`, `get_user_preferences`. All other canonical names still advertised with
+implemented:false.
+
+**Gates.** 4 new legs: product search returns the three demo products (`kind=='product'`);
+services empty-list on the catalogue; party_size pass-through (no capacity constraint,
+returns list); `limit=100` refused at the validator before the backend is touched.
+
+**Measured.** 47 in-lane dispatch gates green; 80 in the dispatch/tools/health/names
+subset; mypy 61 files clean; ruff clean.

@@ -40,6 +40,7 @@ CANONICAL_TOOLS: tuple[str, ...] = CANONICAL_TOOL_NAMES
 #: (still `implemented: false` for dispatch purposes — there is no registry yet).
 _DATA_PATH_TOOLS = frozenset({
     "search_merchants", "get_business_hours", "get_price", "get_user_preferences",
+    "search_products", "search_services",
 })
 
 
