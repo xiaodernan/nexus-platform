@@ -303,6 +303,19 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The numbering: the D-numbers 428-454, 458-505, 508, and 506-507, the sections 422-448, 452-497, 498-499, 505, and 506, are this lane's** — the sibling lane worked in parallel and took **D455-D457 / §449-§451** and then **D490-D491 / §484-§485** and **D493 / §487** and **D493 / §487** (their commits landed on top of this lane's D489 ✓), so this lane's next unit is **D509 / §501** ✓. If the next unit collides, renumber it (as D409 did, and D414 recorded, and as D492 did when the sibling took §485 mid-unit ✓) — the readers cannot see the sibling's sections, so only the two lanes can keep the numbering straight. **Note: the sibling commits `docs/STATUS.md` wholesale ✓, so an uncommitted ledger entry can be swept into their commit ✓ — write the entry last ✓ and commit it at once ✓.**
 - **Fresh gate** re-certified through step 6 on the live plane: 217 quality checks, none red; step 7 is the sandbox's node-spawn refusal
 
+- **D757** mypy clean for `nexus_ai` (31 -> 0 errors): renamed the transient preference
+  matcher factories to distinct spellings, flattened the `cuisine_like` typed-preference
+  slug generator (was binding tuples into a `list[str]` consumer), and tidied the
+  name reuses the checker flagged.
+- **D758** `FactBundle.synth` coerces a non-UUID subject_id (content-derived fallback),
+  folding the two detector reds (`test_parking_transient`, `test_pet_friendly_transient`)
+  that crashed on `ValueError` for rows like `m1`. New gate pins both directions.
+- **D759** `ruff check .` clean for the whole `apps/ai` tree (21 -> 0: F401 unused
+  imports, F841 unused `db` bindings, one E731 lambda).
+- **D760** the `style/outdoor` shadow (single-attribute D717 matcher) is gone - the
+  D621 ANY-witness reader owns the pair, folding the two
+  `test_the_outdoor_preference_reads_both_spellings.py` detector reds.
+
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
 ### Standing invariants (re-run this session, on this plane)
