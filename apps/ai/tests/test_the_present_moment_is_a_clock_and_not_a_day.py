@@ -33,11 +33,28 @@ EVENING = datetime(2026, 11, 5, 12, 0, tzinfo=timezone.utc)   # Thursday 20:00 i
 
 
 def test_the_present_moment_is_not_a_day_word():
-    for word in ("而家", "依家", "現在", "现在", "now"):
+    # D446/D768 discipline: `parse_time` canonicalises the sentence before its tables read it
+    # (timeparse.py: `text = canonical(text)` in `parse_time`), and every cue table the parser
+    # reads holds the CANONICAL spellings only - NOW_TOKENS carries the canonical 現在 twice,
+    # and the Simplified 现在 (U+73B0 U+5728) is unreachable by construction. The stale
+    # expectation that both spellings sit in the table cannot hold; the user's own spelling
+    # still works, through the boundary canon, and that behaviour is pinned by
+    # test_the_simplified_spelling_parses_as_the_same_present_moment below.
+    for word in ("而家", "依家", "現在", "now"):
         assert word in NOW_TOKENS, (word, NOW_TOKENS)
         assert word not in TODAY_TOKENS, (word, TODAY_TOKENS)
     for word in ("今日", "今天", "today"):
         assert word in TODAY_TOKENS and word not in NOW_TOKENS, word
+
+
+def test_the_simplified_spelling_parses_as_the_same_present_moment():
+    # The half the table cannot pin: the user's own spelling of the cue reaches the same lane
+    # through `parse_time`'s canonical boundary.
+    simplified = parse_time("现在", now=MORNING)
+    canonical = parse_time("現在", now=MORNING)
+    assert simplified is not None and canonical is not None
+    assert simplified.quality == canonical.quality == "now"
+    assert simplified.starts_at == canonical.starts_at == MORNING
 
 
 @pytest.mark.parametrize("sentence", ["而家開嘅餐廳", "現在營業嘅餐廳", "依家開緊嘅咖啡店",

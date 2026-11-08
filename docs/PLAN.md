@@ -373,6 +373,12 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   `cat-gym-simplified`, `cat-hotel-simplified`).
 - **D782** two legs pin the manifest's `implemented` ↔ `data_path_via_http` coupling; a third
   pins the implemented list at exactly the six today's registry holds.
+- **D783** every span strip in `match_core` reads the canonical spelling of its text and blanks
+  the same positions in the user's own (`_sub_spans_by_canonical`); the money-range predicate does
+  the same; a Simplified 起码4人 now reaches the same lane the canonical spelling does, and the
+  residue keeps the user's spelling (D635). The one stale present-moment expectation folded to the
+  canonical table, with `test_the_simplified_spelling_parses_as_the_same_present_moment` pinning
+  the user-visible half.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

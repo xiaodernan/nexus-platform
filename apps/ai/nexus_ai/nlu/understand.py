@@ -775,9 +775,12 @@ def _strip_money_ranges(t: str) -> str:
     """
     out: list[str] = []
     last = 0
-    for m in BUDGET_RANGE_RE.finditer(t):
-        before = t[max(0, m.start() - 12):m.start()]
-        if not _range_is_money(m.group(0), before, t[m.end():]):
+    from nexus_ai.nlu.canonical import canonical
+
+    canon = canonical(t)
+    for m in BUDGET_RANGE_RE.finditer(canon):
+        before = canon[max(0, m.start() - 12):m.start()]
+        if not _range_is_money(m.group(0), before, canon[m.end():]):
             continue
         out.append(t[last:m.start()])
         out.append(" ")
@@ -954,6 +957,27 @@ def _strip_surface_spans(text: str, surfaces: Sequence[str]) -> str:
     return "".join(chars)
 
 
+def _sub_spans_by_canonical(text: str, rx: "re.Pattern[str]", keep: str = " ") -> str:
+    """Blank the spans `rx` matches, found on the CANONICAL spelling of `text`.
+
+    D783: every cue table in this module holds the canonical spelling (D415/D417), while a
+    residue keeps the user's own (D635). The canon mapping is one character to one character,
+    so a span found there is a span at the same positions here - the span is blanked in the
+    user's own text and the words around it keep their spelling.
+    """
+    from nexus_ai.nlu.canonical import canonical
+
+    canon = canonical(text)
+    spans = [m.span() for m in rx.finditer(canon)]
+    if not spans:
+        return text
+    chars = list(text)
+    for start, end in spans:
+        for k in range(start, end):
+            chars[k] = keep
+    return "".join(chars)
+
+
 def match_core(text: str, *, strip_time: bool = False,
                strip_surfaces: Sequence[str] = ()) -> str:
     """The part of a sentence that names WHAT to find, with the spans a lane already handles removed.
@@ -972,30 +996,32 @@ def match_core(text: str, *, strip_time: bool = False,
     # category's own surface is the verb 買, so `_strip_surface_spans` blanked it before the compound
     # could see it and 「邊度有得買手信」 came back as `得 手信` - a lone 得 left to be searched.
     # A frame is structure, not vocabulary: it is removed before the lane's own tables read the text.
-    t = _QUESTION_FRAME_COMPOUND.sub(" ", t)
+    t = _sub_spans_by_canonical(t, _QUESTION_FRAME_COMPOUND)
     if strip_time:
-        t = TIME_SPAN_RE.sub(" ", t)
+        t = _sub_spans_by_canonical(t, TIME_SPAN_RE)
     t = _strip_surface_spans(t, strip_surfaces)
     # D633/D651: the PARTY span goes FIRST, then the money RANGE, then everything else - a party
     # range and a money range share the shape N-M, and 「最多1000-2000」 must be taken as one band
     # before `BUDGET_MAX_RE` can read the 1000 and leave `-2000` behind (measured after the first
     # cut of D651, `tmp/d651_probe.py`).
-    t = PARTY_SPAN_RE.sub(" ", t)
+    t = _sub_spans_by_canonical(t, PARTY_SPAN_RE)
     t = _strip_money_ranges(t)
     for rx in _MATCH_CORE_RES:
-        t = rx.sub(" ", t)
+        t = _sub_spans_by_canonical(t, rx)
     for rx in _MATCH_CORE_RESIDUE:
-        t = rx.sub(" ", t)
-    t = _MATCH_CORE_CUES.sub(" ", t)
+        t = _sub_spans_by_canonical(t, rx)
+    t = _sub_spans_by_canonical(t, _MATCH_CORE_CUES)
     # D702: the meal frame runs FIRST, or 有咩食 is already 食 when it arrives: the
     # general frame takes 有咩 and leaves the verb it was part of.
-    t = _EAT_FRAME.sub(" ", t)
-    t = _QUESTION_FRAME.sub(" ", t)
+    t = _sub_spans_by_canonical(t, _EAT_FRAME)
+    t = _sub_spans_by_canonical(t, _QUESTION_FRAME)
     t = _MATCH_CORE_EDGES.sub("", re.sub(r"\s+", " ", t).strip())
     # D707: an evaluation word that is the WHOLE remainder modifies a head noun a filter already
     # answered. It names nothing, so it must not be searched - a row that writes 好 in its name
     # would be credited with a match for a word the user wrote as an opinion.
-    if t and _EVALUATION_ONLY.fullmatch(t):
+    from nexus_ai.nlu.canonical import canonical as _canonical
+
+    if t and _EVALUATION_ONLY.fullmatch(_canonical(t)):
         t = ""
     return t.strip()
 

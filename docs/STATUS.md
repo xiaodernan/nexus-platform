@@ -35049,3 +35049,39 @@ tools must never claim the HTTP path. A third pins the overall list of implement
 tools at exactly the six today's registry holds.
 
 **Measured.** 8 passed (was 5). mypy 61 files clean; ruff clean.
+
+
+## 783. D783 · the residue strip reads the canonical spelling, the present-moment gate folds to the canonical table
+
+**The gap.** The D645 measurement found 「起码4人」 returning `起码` as its search text.
+`match_core` ran every span strip directly on the user's raw text, while every cue table in the
+module holds the CANONICAL spellings only (D415/D417) and the canon mapping is one character to
+one character. A Simplified user's cue could therefore never match: the party lane read the 4,
+but the residue strip left the Simplified cue in the search text — no row is named 起码, so the
+cue divided the pool against nothing. The same class applied to the money-range predicate
+(`_range_is_money`), which read raw-text neighbours for Simplified `块` the canonical table spells
+`塊`.
+
+**The fix.** Every span strip in `match_core` now reads CANONICAL text
+(`_sub_spans_by_canonical`), found by the same `cue_in`-style matcher, and blanks the same
+positions in the user's own text — the one-character-to-one-character canon mapping keeps the
+spans aligned, so the residue keeps the user's spelling (D635) while the tables stay
+canonical-only. The money range does the same via the canonical copy. The CJK frame/meal/
+party/budget/evaluation cues all arrive through the projection now; the D707 evaluation-only
+fullmatch compares canonically, which is spelling-agnostic by construction.
+
+**The fold.** One pre-existing red surfaced, identical at clean HEAD:
+`test_the_present_moment_is_not_a_day_word` demanded the Simplified 现在 (U+73B0 U+5728) in
+`NOW_TOKENS`, unreachable by construction — `parse_time` canonicalises before its cue tables read
+it (`timeparse.py`), so the table carries the canonical spelling only. The expectation folds to
+the canonical table, and the half that still pins the user's own spelling is new:
+`test_the_simplified_spelling_parses_as_the_same_present_moment` asserts the Simplified cue
+parses to the same instant as the canonical one.
+
+**Measured.** The 31 gate files whose cases read `match_core` / carry a `match_text` expectation
+— 1,196 passed, 141 DB-skipped. CJK batch 828 passed (57 in the latin-cap party file among them,
+green for the Simplified 4人 case); timeparse batch 66; word-that-named-a-category batch 267;
+party/budget sweep 382; intent_v1 36/36; safety_injection_v1 27/27; mypy 61 files clean; ruff
+clean; the vocabulary census (`test_vocabulary_canonical_coverage`) green. The monolith pytest
+run was killed at 35% with zero recorded failures on the intermediate tree; the targeted sweep is
+the coverage this unit certifies.
