@@ -379,6 +379,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   residue keeps the user's spelling (D635). The one stale present-moment expectation folded to the
   canonical table, with `test_the_simplified_spelling_parses_as_the_same_present_moment` pinning
   the user-visible half.
+- **D784** the CJK party cues both spellings join the eval suite as cases: intent_v1 36 → 41,
+  all measured at D783 first; every kept case answers `intent: unknown` on a party-only query,
+  which is the correct refusal to invent a request kind (§8).
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

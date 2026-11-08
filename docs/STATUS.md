@@ -35085,3 +35085,22 @@ party/budget sweep 382; intent_v1 36/36; safety_injection_v1 27/27; mypy 61 file
 clean; the vocabulary census (`test_vocabulary_canonical_coverage`) green. The monolith pytest
 run was killed at 35% with zero recorded failures on the intermediate tree; the targeted sweep is
 the coverage this unit certifies.
+
+
+## 784. D784 · the Simplified party floors are eval cases, not anecdotes
+
+**The door.** D783 made 「起码4人」 reach the same lanes the canonical spelling does; the behaviour
+that a measurement lived as now lives as a case — a Simplified user typing 起码4人 gets `party_size`
+4, `intent` unknown, budget/location/time absent. That is what the contract promises: read what the
+user said, guess nothing else.
+
+**The widening.** `intent_v1` 36 → 41 cases. Five measured cases pin the CJK party cues in both
+spellings (the D415 pairing): 起码4人 (the zh-CN one), 起碼4人 (the zh-HK twin), 至少6位,
+至多3人， 最多12人. Every case was produced by running the extractor first and writing down what
+it answers, not by reasoning about what it should answer — none of the five is a guess, including
+`intent: unknown` for the party-only queries, which is the correct refusal to invent a request kind
+(§8).
+
+**Measured.** intent_v1 41/41 cases, gates PASS (accuracy 1.0000, hallucination_rate 0.0000); the
+eval harness tests 47 passed; the case file's bytes are plain UTF-8 with no BOM and LF endings; the
+five cases were written against the D783 tree (9ced8a7).

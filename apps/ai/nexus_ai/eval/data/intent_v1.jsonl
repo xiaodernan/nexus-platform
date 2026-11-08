@@ -34,3 +34,8 @@
 {"id":"cat-bar-simplified","query":"酒吧","expect":{"category":"bar","intent":"discover_merchant"},"must_not":["budget","party_size","location"]}
 {"id":"cat-gym-simplified","query":"健身房","expect":{"category":"gym","intent":"discover_merchant"},"must_not":["budget","party_size","location"]}
 {"id":"cat-hotel-simplified","query":"酒店","expect":{"category":"hotel","intent":"discover_merchant"},"must_not":["budget","party_size","location"]}
+{"id":"party-simp-floor-cue","query":"起码4人","expect":{"party_size":4},"must_not":["budget","location","time"]}
+{"id":"party-trad-floor-cue","query":"起碼4人","expect":{"party_size":4},"must_not":["budget","location","time"]}
+{"id":"party-min-6-seats","query":"至少6位","expect":{"party_size":6},"must_not":["budget","location","time"]}
+{"id":"party-cap-3","query":"至多3人","expect":{"party_size":3},"must_not":["budget","location","time"]}
+{"id":"party-cap-12","query":"最多12人","expect":{"party_size":12},"must_not":["budget","location","time"]}
