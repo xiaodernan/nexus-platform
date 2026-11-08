@@ -385,6 +385,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D785** the CJK budget cues both spellings, plus the English per-person dollar shapes, join as
   cases: intent_v1 41 → 47; every kept case pins only `budget` fields (`min`/`max`/`per`),
   party/location/time stay absent.
+- **D786** the time lane both spellings plus the two 不要-refusal cues and the two bare sort cues
+  join as cases: intent_v1 47 → 55; the time cases pin type and quality, never the timestamp.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

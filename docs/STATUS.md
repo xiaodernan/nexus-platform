@@ -35124,3 +35124,22 @@ hold.
 
 **Measured.** intent_v1 47/47, gates PASS (accuracy 1.0000, hallucination_rate 0.0000); the eval
 harness tests 47 passed; mypy/ruff unaffected (data-only change for the suite and the ledger).
+
+
+## 786. D786 · the time lane reaches both spellings, in the user's words
+
+**The door.** D784 and D785 widened party and budget; the rest of the rule floor sits on the same
+orthography — a Simplified user who wrote 现在 measured the time lane and it answered `explicit, now`,
+the same quality the canonical spelling does. The widening is the time lane's own cues, in both
+scripts the suite already alleges the product serves.
+
+**The widening.** `intent_v1` 47 → 55 cases. Eight measured cases pin: `而家` (zh-HK) and `现在`
+(zh-CN) as the same `explicit, now` window; `tonight` (en, quality night); `明天` (zh, all_day);
+`不要辣` and `不要姜` — the 姜 (U+59DC) record that D545 needed a canon entry for — refuse `cuisine_avoid:spicy`
+and `diet_avoid:ginger` respectively; `最便宜` and `最高分` bare, as the price_low/rating sort cues.
+The time cases pin type and quality only, never the timestamp (it measures the run), the same
+subset-match shape the budget and party cases use.
+
+**Measured.** intent_v1 55/55, gates PASS (accuracy 1.0000, hallucination_rate 0.0000); the eval
+harness tests 47 passed; the cases were written after running the extractor and pinning what it
+answers, not what it should.

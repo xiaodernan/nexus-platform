@@ -45,3 +45,11 @@
 {"id":"budget-simp-floor-1000","query":"超过1000","expect":{"budget":{"min":1000.0}},"must_not":["party_size","location","time"]}
 {"id":"budget-cap-moe-1000","query":"最多1000","expect":{"budget":{"max":1000.0}},"must_not":["party_size","location","time"]}
 {"id":"budget-per-person-zh-1000","query":"每人1000","expect":{"budget":{"max":1000.0,"per":"person"}},"must_not":["party_size","location","time"]}
+{"id":"time-now-zh-hk","query":"而家","expect":{"time":{"type":"explicit","quality":"now"}},"must_not":["budget","party_size","location"]}
+{"id":"time-now-zh-cn","query":"现在","expect":{"time":{"type":"explicit","quality":"now"}},"must_not":["budget","party_size","location"]}
+{"id":"time-tonight-en","query":"tonight","expect":{"time":{"quality":"night"}},"must_not":["budget","party_size","location"]}
+{"id":"time-tomorrow-zh","query":"明天","expect":{"time":{"quality":"all_day"}},"must_not":["budget","party_size","location"]}
+{"id":"avoid-spicy-simp","query":"不要辣","expect":{"constraints":[{"key":"cuisine_avoid","value":"spicy"}]},"must_not":["party_size","location","time","budget"]}
+{"id":"avoid-ginger-simp","query":"不要姜","expect":{"constraints":[{"key":"diet_avoid","value":"ginger"}]},"must_not":["party_size","location","time","budget"]}
+{"id":"sort-low-zh-bare","query":"最便宜","expect":{"sort_preference":"price_low"},"must_not":["party_size","location","time","budget"]}
+{"id":"sort-rating-zh-bare","query":"最高分","expect":{"sort_preference":"rating"},"must_not":["party_size","location","time","budget"]}
