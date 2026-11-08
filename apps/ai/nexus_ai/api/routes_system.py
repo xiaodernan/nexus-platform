@@ -5,7 +5,7 @@ Health never 5xx's: an unhealthy dependency is *reported*, not raised, so orches
 and the §105 ladder can see the real mode (mock vs live, DB up vs down) instead of a
 misleading non-2xx. `/ai/v1/tools` is an honest manifest — the canonical
 `AGENT_CONTRACT §3` tool names with a `registry_status` flag — because the dispatch
-registry (`tools/registry.py`) is not part of this HTTP layer yet; advertising it as live
+registry (`tools/registry.py`) ships with its pipeline enforced but no tool handlers registered yet; advertising it as live
 would be a fabrication. `/ai/v1/feedback` writes only the AI-owned `feedback_events`
 table and, offline, records nothing and says so.
 """
@@ -94,14 +94,16 @@ async def health(request: Request):
 # --------------------------------------------------------------------------- tools
 @router.get("/ai/v1/tools")
 async def tools(request: Request):
-    """Honest registry manifest: names + permissions, `implemented:false` until the
-    dispatch registry (AGENT_CONTRACT §3) ships. Never advertise a capability absent."""
+    """Honest registry manifest. The dispatch registry module ships (tools/registry.py)
+    with the §3 pipeline enforced; no tool handlers are registered yet, so no capability
+    is dispatchable. The canonical names are still listed, with `implemented:false` and
+    `registry_status="skeleton"` - never advertise a capability that does not exist."""
     manifest = []
     for name in CANONICAL_TOOLS:
         manifest.append(ToolManifestEntry(
             name=name,
             implemented=False,
-            registry_status="not_built",
+            registry_status="skeleton",
             data_path_via_http=name in _DATA_PATH_TOOLS,
         ))
     # D473: the answer is built through the contract's model (D451: the degraded flag
@@ -109,10 +111,12 @@ async def tools(request: Request):
     return degraded_json(ToolsManifestResponse(
         tools=manifest,
         count=len(manifest),
-        registry_status="not_built",
-        note=("the tool-dispatch registry (tools/registry.py) is not part of this HTTP "
-              "layer; these are the canonical §3 names with the endpoints that already "
-              "exercise the same read paths, not live dispatchable tools"),
+        registry_status="skeleton",
+        note=("the tool-dispatch registry (tools/registry.py) ships with the §3 pipeline "
+              "enforced - permission check, argument validation, timeout/retry, audit - "
+              "but no tool handlers are registered; these are the canonical §3 names with "
+              "the endpoints that already exercise the same read paths, not live "
+              "dispatchable tools"),
         degraded=True,
     ).model_dump(mode="json"))
 

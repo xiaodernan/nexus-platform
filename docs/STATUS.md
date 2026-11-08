@@ -34796,3 +34796,40 @@ already carries a DECLARED list for exactly this case, per the gate's own contra
 each, and the same "what this test is doing with it" note every other entry carries.
 
 **Measured.** 3 passed (1 skipped live-only, 1 skipped DB-gated).
+
+
+## 772. D772 · the tool-dispatch registry exists — AGENT_CONTRACT §3's pipeline, enforced
+
+**The gap.** `AGENT_CONTRACT §3` names a tool registry with a dispatch pipeline
+(permission → argument validation → timeout/retry → execute → result validation → audit) and
+§4 names the grants taxonomy plus two tools that are never in a default grant. The plan
+filed the registry as not built; the manifest at `/ai/v1/tools` was `registry_status:
+not_built` honestly outright, and no dispatch existed anywhere.
+
+**The fix.** `apps/ai/nexus_ai/tools/registry.py` — the registry module. The pipeline is
+enforced: `Registry.dispatch` resolves an unknown tool to a hard `UnknownTool`; resolves the
+caller's permissions via a per-subject resolver; refuses `refund_payment` and
+`publish_campaign` outright (they are never in a default grant, only in an explicit
+per-subject grant); requires an explicit user action (`idempotency_key`) for side-effect
+tools; validates arguments against the spec's `input_schema`; executes with the spec's
+`timeout_ms` (default 4 s) and `retries`; validates the result against `output_schema`; and
+audits every outcome — including denials — via the audit sink. Nothing is reachable through
+the registry that nobody implemented; `manifest()` reports exactly what is registered,
+not what the contract promises.
+
+The manifest at `/ai/v1/tools` now honestly reports `registry_status: "skeleton"` (the
+registry module ships with its pipeline enforced; no tool handlers registered yet, so no
+capability is dispatchable), confirmed by `test_health_and_tools.py`.
+
+**Gates.** `tests/test_a_tool_dispatch_is_the_only_data_path.py` pins: unknown tools are
+hard errors (including unregistered canonical names); missing/extra/wrong-typed args refused;
+side-effect tools need an idempotency key and are refused otherwise; the two
+never-in-default-grant tools are refused even with side-effect grants except via an explicit
+per-subject grant; timeout raises `ToolTimeout`; retry succeeds on a second attempt and
+exhausts to `ToolExecutionFailed`; `ToolError` from a handler passes through unretried; both
+successful and denied calls are audited.
+
+**Measured.** 18 new gate legs green; the two endpoints' suites green (`test_health_and_tools`
+4 passed); `mypy nexus_ai` 60 source files clean; `ruff check .` all-checks-passed.
+
+- readers: an agent that needs data asks the registry; nothing reaches data any other way.

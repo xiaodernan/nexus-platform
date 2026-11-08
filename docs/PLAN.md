@@ -344,6 +344,10 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   so the canonicalised query always matches the table.
 - **D771** the D453 test-file vocabulary census folded: 17 characters the product does
   not know added to the DECLARED list with Unihan kDefinition glosses.
+- **D772** the tool-dispatch registry ships: `nexus_ai.tools.registry` enforces AGENT_CONTRACT
+  §3 (permission → argument validation → timeout/retry → result validation → audit)
+  and §4 (the two never-in-default-grant tools always denied; side-effect tools need an
+  explicit user action). `/ai/v1/tools` now honestly reports `registry_status: "skeleton"`.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

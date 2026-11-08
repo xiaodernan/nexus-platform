@@ -31,7 +31,7 @@ def test_tools_manifest_is_honest(client):
     r = client.get("/ai/v1/tools")
     assert r.status_code == 200
     body = r.json()
-    assert body["registry_status"] == "not_built"
+    assert body["registry_status"] == "skeleton"
     assert body["degraded"] is True
     names = {t["name"] for t in body["tools"]}
     assert set(CANONICAL_TOOLS) <= names
