@@ -89,7 +89,7 @@ TODAY_TOKENS = ("今日", "今天", "日頭", "today")
 #: and D665 then correctly refused to ask the database for nine o'clock, because a DAY is not a
 #: clock. A word that names NOW is a clock: measured, the request answered all 184 restaurants
 #: (`tmp/d701_opennow.py`) with `open_now=True` carried but unread by either lane.
-NOW_TOKENS = ("而家", "依家", "家下", "現在", "现在", "現正", "现正", "now", "right now")
+NOW_TOKENS = ("而家", "依家", "家下", "現在", "現在", "現正", "現正", "now", "right now")
 TONIGHT_TOKENS = ("今晚", "今齊", "tonight", "今期")
 TOMORROW_TOKENS = ("聽日", "听日", "明日", "明天", "tomorrow")
 AFTER_TOMORROW_TOKENS = ("後日", "后日", "大後日", "the day after tomorrow")

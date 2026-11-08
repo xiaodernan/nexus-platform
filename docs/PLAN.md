@@ -338,6 +338,12 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   reconciled to D707 (a whole-remainder evaluation word is residue, not content).
 - **D769** `tests/test_the_regconfig_the_chinese_query_asks_for_exists.py` pins the D755
   mapping `cjk_zh`->`jiebacfg` and the fallback to `simple`.
+- **D770** the vocabulary is written in the canonical spelling: the D435/D446/D447
+  class fold - 15 vocabulary tables re-spelled from Simplified to the canonical form
+  ('东'/'点'/'现'/'币'/'为'/'内'/'楼'/'过'/'还'/'个'/'时'/'钟'/'码'),
+  so the canonicalised query always matches the table.
+- **D771** the D453 test-file vocabulary census folded: 17 characters the product does
+  not know added to the DECLARED list with Unihan kDefinition glosses.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

@@ -189,10 +189,10 @@ SUPPER_CUES = ("宵夜", "夜宵", "supper")
 #: restaurant plane, 食嘢 answered all 470). Two characters, so it is not the bare verb: none of
 #: 素食 / 小食 / 食煙 contains it, and it writes 0 of the 470 published merchants and 0 of the
 #: 5,538 offerings (`tmp/d706_census.py`) - a phrase no row can meet can only be a cue.
-EAT_CUES = ("想食嘢", "食嘢", "想吃東西", "想吃东西", "想食", "想吃",
+EAT_CUES = ("想食嘢", "食嘢", "想吃東西", "想吃東西", "想食", "想吃",
             "食咩好", "食乜好", "吃咩好", "吃乜好", "食咩", "食乜", "吃咩", "吃乜",
             "食啲咩", "有咩食", "有乜食", "有咩好食", "有乜好食", "咩好食", "乜好食",
-            "吃什麼", "吃什么", "吃點什麼", "吃点什麼",
+            "吃什麼", "吃什么", "吃點什麼", "吃點什麼",
             "肚餓", "肚饿", "肚子餓", "肚子饿", "饿了", "餓了",
             "搵食", "觅食", "覓食", "something to eat", "hungry", "grab a bite")
 

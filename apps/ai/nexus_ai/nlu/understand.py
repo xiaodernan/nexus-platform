@@ -52,14 +52,14 @@ from nexus_ai.nlu.timeparse import HK_TZ, cue_alternation, parse_time
 
 # --------------------------------------------------------------------------- patterns
 BUDGET_MAX_RE = re.compile(
-    r"(?:预算|預算|budget)\s*(?:系|是|為|为)?\s*(?:最多|唔超過|不超过|內|內|以内|以內)?\s*"
-    r"(?:hk\$|hkd|港幣|港币|蚊|\$)?\s*(\d{2,5})(?:\.\d{1,2})?",
+    r"(?:預算|預算|budget)\s*(?:系|是|為|爲)?\s*(?:最多|唔超過|不超過|內|內|以內|以內)?\s*"
+    r"(?:hk\$|hkd|港幣|港幣|蚊|\$)?\s*(\d{2,5})(?:\.\d{1,2})?",
     re.IGNORECASE,
 )
 BUDGET_WORD_RE = re.compile(
-    r"(?:under|less than|below|within|max|最多|唔超過|不超过|以下|以內|以内|"
-    r"少過|唔多過|平過|便宜過|唔貴過|不貴过|不超過)\s*"
-    r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})",
+    r"(?:under|less than|below|within|max|最多|唔超過|不超過|以下|以內|以內|"
+    r"少過|唔多過|平過|便宜過|唔貴過|不貴過|不超過)\s*"
+    r"(?:hk\$|hkd|港幣|港幣|\$)?\s*(\d{2,5})",
     re.IGNORECASE,
 )
 #: D636: two families of cue were missing from every ceiling and floor rule. Measured on the
@@ -75,11 +75,11 @@ BUDGET_WORD_RE = re.compile(
 #: in a restaurant request), so they read a bare amount but refuse one that is a clock, a party or
 #: a duration (`_NOT_MONEY`) - "up to 12pm" is the time lane's, and 「up to 12pm」 already answers
 #: `before:1200` (`tmp/d636_collide.txt`).
-_MONEY_BEFORE = r"(?:hk\$|hkd|港幣|港币|\$)"
-_MONEY_AFTER = r"(?:蚊|元|塊|块|港幣|港币|dollars?)"
+_MONEY_BEFORE = r"(?:hk\$|hkd|港幣|港幣|\$)"
+_MONEY_AFTER = r"(?:蚊|元|塊|块|港幣|港幣|dollars?)"
 _MONEY_SIDES = (rf"(?:{_MONEY_BEFORE}\s*(\d{{2,5}})(?:\.\d{{1,2}})?"
                 rf"|(\d{{2,5}})(?:\.\d{{1,2}})?\s*{_MONEY_AFTER})")
-_NOT_MONEY = (r"(?!\s*(?:am|pm|:|點|時|时|人|位|個|个|people|pax|persons?|guests?|diners?|"
+_NOT_MONEY = (r"(?!\s*(?:am|pm|:|點|時|時|人|位|個|個|people|pax|persons?|guests?|diners?|"
               r"mins?|minutes?|hours?|hrs?|days?|weeks?|months?|years?|%))")
 BUDGET_CEILING_CUE_RE = re.compile(
     r"(?:至多|頂多|不多過|少於|低於)\s*" + _MONEY_SIDES
@@ -88,7 +88,7 @@ BUDGET_CEILING_CUE_RE = re.compile(
     re.IGNORECASE,
 )
 BUDGET_FLOOR_CUE_RE = re.compile(
-    r"貴過\s*(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})(?:\.\d{1,2})?"
+    r"貴過\s*(?:hk\$|hkd|港幣|港幣|\$)?\s*(\d{2,5})(?:\.\d{1,2})?"
     r"|(?:多過|起碼|高於)\s*" + _MONEY_SIDES
     + r"|more\s+than\s*(?:hk\$|hkd|\$)?\s*(\d{2,5})(?:\.\d{1,2})?"
     + _NOT_MONEY,
@@ -101,10 +101,10 @@ BUDGET_FLOOR_CUE_RE = re.compile(
 #: ceiling never reached the ranker. This is the trailing half; the currency token is OPTIONAL
 #: but a unit word is not skipped over - "500米以內" is a radius and stays without a budget.
 SPEND_CEILING_RE = re.compile(
-    r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})(?:\.\d{1,2})?\s*(?:"
-    r"(?:蚊|元|塊|块|hk\$|hkd|港幣|港币|\$|dollars?)\s*"
-    r"(?:以內|以内|以下|樓下|楼下|之內|之内|內|内|左右|上下)"
-    r"|(?:以內|以内|以下|樓下|楼下|之內|之内)"
+    r"(?:hk\$|hkd|港幣|港幣|\$)?\s*(\d{2,5})(?:\.\d{1,2})?\s*(?:"
+    r"(?:蚊|元|塊|块|hk\$|hkd|港幣|港幣|\$|dollars?)\s*"
+    r"(?:以內|以內|以下|樓下|樓下|之內|之內|內|內|左右|上下)"
+    r"|(?:以內|以內|以下|樓下|樓下|之內|之內)"
     r")",
     re.IGNORECASE,
 )
@@ -117,8 +117,8 @@ BUDGET_RANGE_RE = re.compile(
     # 「2蚊-4蚊」 all read no band at all before this, because the pattern demanded two digits. The
     # span is only money when the sentence says so (`_range_is_money`), and the strip below asks the
     # same question, so widening the digits cannot turn 「2-4」 or 「10至20人」 into a price.
-    r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{1,5})(?:\s*(?:蚊|元|塊|块))?\s*"
-    r"(?:-|–|—|~|～|至|到|to)\s*(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{1,5})"
+    r"(?:hk\$|hkd|港幣|港幣|\$)?\s*(\d{1,5})(?:\s*(?:蚊|元|塊|块))?\s*"
+    r"(?:-|–|—|~|～|至|到|to)\s*(?:hk\$|hkd|港幣|港幣|\$)?\s*(\d{1,5})"
     r"(?:\s*(?:蚊|元|塊|块))?",
     re.IGNORECASE,
 )
@@ -127,28 +127,28 @@ BUDGET_RANGE_RE = re.compile(
 PER_PERSON_POINT_RE = re.compile(
     r"(?:每人|人均|每位|per ?person|p/?p|per head|人頭)\s*"
     r"(?:消費額|消費|佐)?\s*(?:大約|大概|約|差不多)?\s*"
-    r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})(?:\.\d{1,2})?",
+    r"(?:hk\$|hkd|港幣|港幣|\$)?\s*(\d{2,5})(?:\.\d{1,2})?",
     re.IGNORECASE,
 )
 #: D624: the same amount-first shape for a FLOOR - "300蚊以上" carried no budget at all, so a
 #: user who names the bottom of a band got the cheapest rows in the corpus. BUDGET_MIN_RE reads
 #: only the cue-first form ("超過300").
 SPEND_FLOOR_RE = re.compile(
-    r"(?:hk\$|hkd|港幣|港币|\$)?\s*(\d{2,5})(?:\.\d{1,2})?\s*(?:"
-    r"(?:蚊|元|塊|块|hk\$|hkd|港幣|港币|\$|dollars?)\s*"
+    r"(?:hk\$|hkd|港幣|港幣|\$)?\s*(\d{2,5})(?:\.\d{1,2})?\s*(?:"
+    r"(?:蚊|元|塊|块|hk\$|hkd|港幣|港幣|\$|dollars?)\s*"
     r"(?:以上|或以上|起跳|打上|起)"
     r"|(?:以上|或以上|起跳|打上)"
     r")",
     re.IGNORECASE,
 )
-CURRENCY_TOKENS = ("hk$", "hkd", "港幣", "港币", "$", "蚊", "元", "塊", "块")
+CURRENCY_TOKENS = ("hk$", "hkd", "港幣", "港幣", "$", "蚊", "元", "塊", "块")
 BUDGET_MIN_RE = re.compile(
-    r"(?:over|above|at least|超過|超过|以上|最少|至少)\s*(?:hk\$|hkd|\$)?\s*(\d{2,5})"
+    r"(?:over|above|at least|超過|超過|以上|最少|至少)\s*(?:hk\$|hkd|\$)?\s*(\d{2,5})"
     r"|(?:hk\$|hkd|\$)\s*(\d{2,5})\s*(?:以上|over|起跳)",
     re.IGNORECASE,
 )
 CURRENCY_AMOUNT_RE = re.compile(
-    r"(?:hk\$|hkd|港幣|港币)\s*(\d{2,5})(?:\.\d{1,2})?", re.IGNORECASE
+    r"(?:hk\$|hkd|港幣|港幣)\s*(\d{2,5})(?:\.\d{1,2})?", re.IGNORECASE
 )
 #: D628: the span a party size occupies, written so it can be REMOVED from a text. `PARTY_RE`
 #: above opens with `(?:\D|^)`, which consumes the character before the number - fine for a
@@ -168,15 +168,15 @@ _TIME_CUE = cue_alternation()
 #: (through an optional `from`) to the SECOND clock, because the upper end is the reading.
 _TIME_CLOCK_RANGE = (
     r"(?:from\s+|由|从|從)?\s*"
-    r"\d{1,2}\s*(?::\s*\d{2}|點|点|時|时|am|pm)?"
-    r"(?:\s*(?:半|\d{1,2}\s*(?:分|分鐘|分钟)))?\s*"
+    r"\d{1,2}\s*(?::\s*\d{2}|點|點|時|時|am|pm)?"
+    r"(?:\s*(?:半|\d{1,2}\s*(?:分|分鐘|分鐘)))?\s*"
     r"(?:-|–|—|~|～|至|到|to)\s*"
-    r"\d{1,2}\s*(?::\s*\d{2}|點|点|時|时|am|pm)"
-    r"(?:\s*(?:半|\d{1,2}\s*(?:分|分鐘|分钟)))?"
+    r"\d{1,2}\s*(?::\s*\d{2}|點|點|時|時|am|pm)"
+    r"(?:\s*(?:半|\d{1,2}\s*(?:分|分鐘|分鐘)))?"
 )
 TIME_SPAN_RE = re.compile(
     rf"(?:{_TIME_CUE})?\s*" + _TIME_CLOCK_RANGE + r"|"
-    rf"\d{{1,2}}\s*(?:點|点|時|时)(?:\s*\d{{1,2}}\s*分)?"
+    rf"\d{{1,2}}\s*(?:點|點|時|時)(?:\s*\d{{1,2}}\s*分)?"
     r"|\d{1,2}:\d{2}"
     r"|\d{1,2}\s*(?:am|pm)\b"
     rf"|{_TIME_CUE}",
@@ -185,7 +185,7 @@ TIME_SPAN_RE = re.compile(
 #: D643: 「for 2」 is a party only when no DURATION follows it. Measured: 「for 2 hours」 read a
 #: party of two and now also stripped its own cue, leaving 「hours」 - a duration is not a table.
 _NO_DURATION = (r"(?!\s*(?:hours?|hrs?|minutes?|mins?|days?|weeks?|months?|years?|"
-                r"小時|小时|分鐘|分钟|天|日|星期|個月|个月|年))")
+                r"小時|小時|分鐘|分鐘|天|日|星期|個月|個月|年))")
 
 #: D645: the LATIN cap or floor that sits beside a party - 「at most 12 people」 is one span, not a
 #: number `PARTY_RE` reads plus a cue nobody answered. Measured 2026-11-02 (`tmp/d645_before.txt`):
@@ -195,7 +195,7 @@ _NO_DURATION = (r"(?!\s*(?:hours?|hrs?|minutes?|mins?|days?|weeks?|months?|years
 #: words with no party behind them and keeps all of itself, which is D636's reason for refusing a bare
 #: Latin cue as residue.
 _PARTY_CUE = (r"(?:(?:at\s+most|no\s+more\s+than|not\s+more\s+than|up\s+to|less\s+than|"
-              r"at\s+least|more\s+than|minimum|min\.?|max(?:imum)?\.?|最少|至少|起碼|起码)\.?\s*)?")
+              r"at\s+least|more\s+than|minimum|min\.?|max(?:imum)?\.?|最少|至少|起碼|起碼)\.?\s*)?")
 #: What may stand between the sentence and the number - the noun a party belongs to (「table for」,
 #: 「party of」) - and it is OPTIONAL, so a bare 「12 people」 matches exactly as it did before. The cue
 #: comes AFTER it, which is what makes 「table for up to 6 people」 one span.
@@ -215,9 +215,9 @@ PARTY_SPAN_RE = re.compile(
     # range rule took 「10至20」 first and left 「人」. The range alternative comes FIRST.
     r"(?:我哋|我們|我们)?\s*\d{1,2}\s*"
     r"(?:至|到|[-–~～]|to)\s*\d{1,2}\s*"
-    r"(?:個\s*人|个\s*人|位人|個|个|位|人)|"
+    r"(?:個\s*人|個\s*人|位人|個|個|位|人)|"
     r"(?:我哋|我們|我们)?\s*\d{1,2}\s*"
-    r"(?:個\s*人|个\s*人|位人|個|个|位|人)(?:嘅|的)?|" +
+    r"(?:個\s*人|個\s*人|位人|個|個|位|人)(?:嘅|的)?|" +
     # D643: the LATIN range. 「2-4 people」 was read as 4 by the tail alternative and stripped only
     # 「4 people」, leaving 「2-」; 「party of 2 to 4」 READ THE LOWER END (2) because `PARTY_RE`'s cue
     # alternative stopped at the first number, and its strip left 「to 4」.
@@ -258,7 +258,7 @@ PARTY_RE = re.compile(
     + _NO_DURATION +
     r"|between\s*\d{1,2}\s*and\s*(\d{1,2})\b"
     r"|\d{1,2}\s*(?:[-–~～]|to\b)\s*(\d{1,2})\s*(?:people|pax|persons?|guests|diners)\b"
-    r"|(?:\D|^)\s*(?:我哋|我們|我们)?\s*(\d{1,2})\s*(?:個|个|位|人)"
+    r"|(?:\D|^)\s*(?:我哋|我們|我们)?\s*(\d{1,2})\s*(?:個|個|位|人)"
     r"|(?:party(?:\s*of)?|for)\s*(\d{1,2})\b"
     r"|(\d{1,2})\s*(?:people|pax|persons?|guests|diners)\b",
     re.IGNORECASE,
@@ -329,9 +329,9 @@ RADIUS_RE = re.compile(
     r"(\d{1,3})\s*(?:公里|公里|km|千米)", re.IGNORECASE
 )
 METERS_RE = re.compile(r"(\d{3,5})\s*(?:米|m\b)", re.IGNORECASE)
-WALK_MIN_RE = re.compile(r"(?:行|walk|步行|走)\s*(\d{1,2})\s*(?:分鐘|分钟|min|minute)", re.IGNORECASE)
+WALK_MIN_RE = re.compile(r"(?:行|walk|步行|走)\s*(\d{1,2})\s*(?:分鐘|分鐘|min|minute)", re.IGNORECASE)
 
-OPEN_PRICE_WORDS = ("預算", "预算", "budget", "price", "價錢", "价钱", "多少錢", "多少钱", "平", "貴", "贵")
+OPEN_PRICE_WORDS = ("預算", "預算", "budget", "price", "價錢", "价钱", "多少錢", "多少钱", "平", "貴", "贵")
 
 
 def _wire_value(row: dict[str, Any]) -> dict[str, Any]:
@@ -461,7 +461,7 @@ def _fill_intent_kind(ex: IntentExtraction, text: str) -> IntentExtraction:
     elif (match_category(text) or match_cuisines(text) or has(NEARBY_TERMS)
           or has(PREFERENCE_RULE_VALUES) or _has_budget_word(text) or _has_constraint(text)
           or has(EAT_CUES)):
-        # "预算 300 港币，想吃日料" names *what* they want without a discovery verb.
+        # "預算 300 港币，想吃日料" names *what* they want without a discovery verb.
         ex.intent, ex.confidence["intent"] = "discover_merchant", 0.6
     else:
         ex.intent, ex.confidence["intent"] = "unknown", 0.2
@@ -487,7 +487,7 @@ def _has_constraint(text: str) -> bool:
 
 
 #: A stated price/quantity limit with no discovery verb is still a discovery request.
-_BUDGET_WORDS = ("預算", "预算", "budget", "hk$", "hkd", "港幣", "港币", "蚊", "too expensive",
+_BUDGET_WORDS = ("預算", "預算", "budget", "hk$", "hkd", "港幣", "港币", "蚊", "too expensive",
                  "cheap", "平啲", "貴啲", "under", "within", "less than", "以內", "以内")
 
 
@@ -737,7 +737,7 @@ def _fill_time(ex: IntentExtraction, text: str, context: dict[str, Any]) -> Inte
 #: AND a HK$10-20 band - a party of ten to twenty filtered the catalogue by price. Measured
 #: 2026-11-02 (`tmp/d649_probe2.py`).
 _PARTY_COUNTER_AFTER = re.compile(
-    r"^\s*(?:(?:個|个|位|人)(?!\s*(?:蚊|元|塊|块))|(?:people|pax|persons?|guests|diners)\b)",
+    r"^\s*(?:(?:個|個|位|人)(?!\s*(?:蚊|元|塊|块))|(?:people|pax|persons?|guests|diners)\b)",
     re.IGNORECASE,
 )
 
@@ -756,7 +756,7 @@ def _range_is_money(span: str, before: str, after: str = "") -> bool:
         return False
     if any(tok in low for tok in CURRENCY_TOKENS):
         return True
-    return bool(re.search(r"(?:預算|预算|budget|max|最多|不超過|唔超過)\s*$",
+    return bool(re.search(r"(?:預算|預算|budget|max|最多|不超過|唔超過)\s*$",
                           before.lower()))
 
 
@@ -786,13 +786,13 @@ def _strip_money_ranges(t: str) -> str:
     return "".join(out)
 
 
-_PARTY_AFTER = re.compile(r"\s*(?:個|个|位|人|people|pax|persons?|guests?|diners?)", re.IGNORECASE)
+_PARTY_AFTER = re.compile(r"\s*(?:個|個|位|人|people|pax|persons?|guests?|diners?)", re.IGNORECASE)
 
 #: D649: and the same counter one RANGE further out - 「最多10-20人」 puts `-20人` between the digits
 #: the ceiling rule read (10) and the counter, so `_PARTY_AFTER` never saw it and the ceiling lane
 #: answered HK$10 for a party of twenty. The pair has to be read as one span.
 _PARTY_RANGE_AFTER = re.compile(
-    r"\s*(?:[-–—~～]|至|到|to)\s*\d{1,5}\s*(?:個|个|位|人|people|pax|persons?|guests?|diners?)",
+    r"\s*(?:[-–—~～]|至|到|to)\s*\d{1,5}\s*(?:個|個|位|人|people|pax|persons?|guests?|diners?)",
     re.IGNORECASE,
 )
 
@@ -842,8 +842,8 @@ def _budget_amount(text: str, m: "re.Match[str] | None") -> float | None:
 #: 「at most」. Same predicate as above: only a cue that a strip left against whitespace goes.
 _MATCH_CORE_RESIDUE = (
     re.compile(r"(?<=\s)(?:蚊|元|塊|块)(?=[\s嘅的，,、?？]|$)", re.IGNORECASE),
-    re.compile(r"(?:唔多過|不多過|最多|唔超過|不超过|不超過|少於|低於|高於|至多|頂多|起碼|貴過|"
-               r"少過|多過|平過|便宜過|唔貴過|不貴过)(?=[\s嘅的]|$)",
+    re.compile(r"(?:唔多過|不多過|最多|唔超過|不超過|不超過|少於|低於|高於|至多|頂多|起碼|貴過|"
+               r"少過|多過|平過|便宜過|唔貴過|不貴過)(?=[\s嘅的]|$)",
                re.IGNORECASE),
 )
 #:
@@ -857,7 +857,7 @@ _MATCH_CORE_RESIDUE = (
 _MATCH_CORE_RES = (SPEND_CEILING_RE, SPEND_FLOOR_RE,
                    PER_PERSON_POINT_RE, BUDGET_MAX_RE, BUDGET_WORD_RE, BUDGET_CEILING_CUE_RE,
                    BUDGET_FLOOR_CUE_RE, BUDGET_MIN_RE, CURRENCY_AMOUNT_RE)
-_MATCH_CORE_CUES = re.compile(r"(?:預算|预算|budget|人均|每人|每位|人頭|per\s?person|p/p)",
+_MATCH_CORE_CUES = re.compile(r"(?:預算|預算|budget|人均|每人|每位|人頭|per\s?person|p/p)",
                               re.IGNORECASE)
 #: D650: the interrogative FRAME a user wraps a request in - 「有冇咖啡店」, 「邊間咖啡店好」,
 #: 「推介咖啡店」. These words name nothing a merchant can be, and the corpus says so: measured

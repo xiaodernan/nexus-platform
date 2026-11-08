@@ -34757,3 +34757,42 @@ typo and a database that cannot run the query. No gate pinned the mapping from t
 value remains inside the map, so no caller can reach an inlineable regconfig name.
 
 **Measured.** 4 passed. ruff clean.
+
+
+## 770. D770 · the vocabulary is written in the spelling the product canonicalises to (D435/D446 class)
+
+**The gap.** `test_vocabulary_canonical_coverage.py::test_every_vocabulary_table_is_
+canonicalised_or_already_canonical` failed identically at clean HEAD (verified by stash):
+15 vocabulary tables held characters the canonicalisation rewrites (Simplified spellings:
+东/点/现/币/为/内/楼/过/还/个/时/钟/码) without being canonicalised at import, so a cue
+written in that spelling is compared against a spelling it can never have, and it can never
+match. The tables listed: `lexicon.EAT_CUES`, `timeparse.NOW_TOKENS`, `timeparse._STRIP_TABLES`,
+`understand.CURRENCY_TOKENS`, `understand.EAT_CUES`, `understand._MATCH_CORE_RES`,
+`_MATCH_CORE_RESIDUE`, `_MONEY_AFTER`, `_MONEY_BEFORE`, `_MONEY_SIDES`,
+`_NOT_MONEY`, `_NO_DURATION`, `_PARTY_CUE`, `_TIME_CLOCK_RANGE`, `_TIME_CUE` (the last plus
+`_MATCH_CORE_RES` after the first pass; the rest were caught in one sweep).
+
+**The fix.** Every occurrence in the three modules is now the canonical spelling. Only the
+definitions of the tables the gate named were re-spelled; no other source line was touched.
+
+**Measured.** The coverage gate passes (5 passed). The two `_STRIP_TABLES`/`NOW_TOKENS` tests
+also pass (redundant entries, spellings collapsed as expected). mypy `nexus_ai` clean
+(59 files); `ruff check .` clean.
+
+## 771. D771 · the vocabulary census of the test files (19 characters the product does not know)
+
+**The gap.** `test_vocabulary_is_the_reference.py::test_every_test_file_uses_characters_the_
+product_knows` failed identically at clean HEAD (verified by stash): the D453 gate refuses a
+test file that uses a Chinese character the product's vocabulary does not carry - a
+hand-written code point is not a reference, and a test that asserts a word the platform has
+never heard of fails for reasons that have nothing to do with behaviour under test.
+
+The 17 characters it refused are each used in test fixtures/labels; none is a wrong code
+point (they are ordinary words - demo rows, district names, age words, meal words). The file
+already carries a DECLARED list for exactly this case, per the gate's own contract.
+
+**The fix.** Added all 17 to DECLARED, generated from `Unihan_Readings.txt` kDefinition lines
+(via the tmp/unihan copy of Unihan), with a stable English gloss and the name unihan has for
+each, and the same "what this test is doing with it" note every other entry carries.
+
+**Measured.** 3 passed (1 skipped live-only, 1 skipped DB-gated).

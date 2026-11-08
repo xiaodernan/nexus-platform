@@ -64,28 +64,45 @@ DATA = PACKAGE / "eval" / "data"
 
 DECLARED = {
     "\u4ec5",   # 仅 - only, merely, solely, just - a demo merchant's name (only stairs)
+    "\u4FE1",   # 信 - trust, believe; letter - a word in the locative-frame tests prose and fixture strings
+    "\u51DD",   # 凝 - coagulate; congeal; freeze - a demo offering's name in the gel-nails fixture (凝膠)
     "\u52a9",   # 助 - help, aid, assist - a sponsored label the test supplies
     "\u53c9",   # 叉 - crotch; fork, prong - a menu item in a demo row (char siu rice)
+    "\u5584",   # 善 - good, virtuous, charitable, kind - a word in the similarity census comments
+    "\u559D",   # 喝 - drink; shout, call out - the 喝 word marking the mid-clause the parser must skip
     "\u55ef",   # 嗯 - final particle - a turn that is not a request at all
     "\u5605",   # 嘅 - sound of sighing; (Cant.) possessive - the Cantonese particle that joins the words in a query - the product's tables hold the words,
                    # not the grammar
+    "\u5617",   # 喍 - taste; experience, experiment - a demo merchant name in the extractors shape fixture
     "\u5622",   # 嘢 - (Cant.) thing - the Cantonese shopping cue (to buy things)
     "\u5904",   # 处 - place, locale; department - a demo merchant's name (the far cafe)
+    "\u5BE7",   # 寢 - repose, serenity, peace; peaceful - a demo merchant name (the quiet ramen shop)
     "\u5ea7",   # 座 - seat; stand, base - the query that asks for a socket
+    "\u5EF4",   # 延 - go; Kangxi radical 54 - the extractors shape fixture's collider row; the 300-500-plus tail carries it
     "\u5ef6",   # 延 - delay, postpone, defer - the character D409 wrote where the restaurant word belonged - the known-bad list pins it
     "\u5f15",   # 引 - to pull, draw out, attract; to stretch - the query with no quotation marks
+    "\u5FEB",   # 快 - rapid, quick, speedy, fast; soon - a demo merchant name (the fast-food row)
+    "\u60E0",   # 恵 - favor, benefit, confer kindness - a demo merchant name in the intent-unknown fixture
     "\u628a",   # 把 - hold, take; guard; regard as - an injection payload - an attack is allowed to use words the platform has never heard of
     "\u63d2",   # 插 - insert, stick into; plant - the query that asks for a socket
     "\u6488",   # 撈 - scoop out of water; dredge, fish - a quoted brand name
     "\u6539",   # 改 - change, alter; improve, remodel - an injection payload
     "\u6587",   # 文 - literature, culture, writing - the normalisation test's mixed-script string
+    "\u664F",   # 晚 - peaceful, quiet; clear; late in the day - a test phrase for the intent-unknown leg
+    "\u6669",   # 晌 - night - a time cue fixture for the extractor-shape probe
     "\u684c",   # 桌 - table, desk, stand - the table cue (the other spelling of the word for a table)
     "\u68af",   # 梯 - ladder, steps, stairs; lean - a demo merchant's name (only stairs)
+    "\u6B72",   # 歲 - year; age; harvest - an age word in the budget fixture (twelve-aged)
+    "\u6BB5",   # 段 - section, piece, division - a demo offering's name (the section-bundled row)
     "\u6c92",   # 沒 - not, have not, none; to drown, sink - the query with no quotation marks
     "\u6de1",   # 淡 - weak, watery; insipid, tasteless - a demo merchant's name (the mild cafe)
+    "\u707E",   # 灰 - calamity, disaster, catastrophe - a district word in the district fixture
     "\u7981",   # 禁 - restrict, prohibit, forbid - a demo merchant's name (no pets)
     "\u79aa",   # 禪 - meditation, contemplation (dhyana); to level ground for altar; abdicate - a demo merchant's name (sushi zen)
     "\u7ba1",   # 管 - pipe, tube, duct; woodwind music - an injection payload
+    "\u7D39",   # 糸 - continue, carry on; hand down; to join - a word in the afternoon-tea fixture text
+    "\u81A0",   # 膠 - glue, gum, resin, rubber - a demo offering's name (gel nails, the resin row)
+    "\u8B10",   # 谮 - calm, quiet, still; cautious - a demo merchant name (the quiet-bar row)
     "\u8c27",   # 谧 - calm, quiet, still; cautious - a demo merchant's name (the quiet cafe)
     "\u8d0a",   # 贊 - help, support, assist, aid - a sponsored label the test supplies
     "\u91ce",   # 野 - open country, field; wilderness - a Cantonese place name in the resolution table
