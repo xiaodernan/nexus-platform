@@ -39,3 +39,9 @@
 {"id":"party-min-6-seats","query":"至少6位","expect":{"party_size":6},"must_not":["budget","location","time"]}
 {"id":"party-cap-3","query":"至多3人","expect":{"party_size":3},"must_not":["budget","location","time"]}
 {"id":"party-cap-12","query":"最多12人","expect":{"party_size":12},"must_not":["budget","location","time"]}
+{"id":"budget-en-at-least-1000","query":"at least 1000","expect":{"budget":{"min":1000.0}},"must_not":["party_size","location","time"]}
+{"id":"budget-en-per-person-1000","query":"per person 1000","expect":{"budget":{"max":1000.0,"per":"person"}},"must_not":["party_size","location","time"]}
+{"id":"budget-en-under-100-person","query":"under 100 dollars per person","expect":{"budget":{"max":100.0,"per":"person"}},"must_not":["party_size","location","time"]}
+{"id":"budget-simp-floor-1000","query":"超过1000","expect":{"budget":{"min":1000.0}},"must_not":["party_size","location","time"]}
+{"id":"budget-cap-moe-1000","query":"最多1000","expect":{"budget":{"max":1000.0}},"must_not":["party_size","location","time"]}
+{"id":"budget-per-person-zh-1000","query":"每人1000","expect":{"budget":{"max":1000.0,"per":"person"}},"must_not":["party_size","location","time"]}

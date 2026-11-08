@@ -382,6 +382,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D784** the CJK party cues both spellings join the eval suite as cases: intent_v1 36 → 41,
   all measured at D783 first; every kept case answers `intent: unknown` on a party-only query,
   which is the correct refusal to invent a request kind (§8).
+- **D785** the CJK budget cues both spellings, plus the English per-person dollar shapes, join as
+  cases: intent_v1 41 → 47; every kept case pins only `budget` fields (`min`/`max`/`per`),
+  party/location/time stay absent.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

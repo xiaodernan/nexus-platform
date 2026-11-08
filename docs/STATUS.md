@@ -35104,3 +35104,23 @@ it answers, not by reasoning about what it should answer — none of the five is
 **Measured.** intent_v1 41/41 cases, gates PASS (accuracy 1.0000, hallucination_rate 0.0000); the
 eval harness tests 47 passed; the case file's bytes are plain UTF-8 with no BOM and LF endings; the
 five cases were written against the D783 tree (9ced8a7).
+
+
+## 785. D785 · the money cues the Simplified user writes are eval cases too
+
+**The door.** D784 widened the party cues; the budget lane is the same door on the same page — a
+Simplified user who wrote 超过1000 typed the floor of the budget in the user's own spelling and
+the rule floor answered `min` 1000. The D784 cases were party-only; the budget lane had
+`budget-simplified` (`预算500港币的拉麵`, the ceiling, max 500) but nothing pinning the floor
+direction, the per-person shapes, or the CJK spellings.
+
+**The widening.** `intent_v1` 41 → 47 cases. Six measured cases pin the money cues across scripts:
+`at least 1000` (the floor reading), `per person 1000` and `每人1000` (the same shape in the two
+langs), `under 100 dollars per person` (the dollar ceiling, English, `per: person`), and the two
+CJK spellings a Simplified user reaches the same ceiling with: `超过1000` (min 1000) and `最多1000`
+(max 1000). Every case was written after running the extractor and writing down what it answers;
+none of the six invents a budget it does not know, which is the §8 promise this suite exists to
+hold.
+
+**Measured.** intent_v1 47/47, gates PASS (accuracy 1.0000, hallucination_rate 0.0000); the eval
+harness tests 47 passed; mypy/ruff unaffected (data-only change for the suite and the ledger).
