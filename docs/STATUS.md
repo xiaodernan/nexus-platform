@@ -35469,3 +35469,22 @@ pinning the invariant: neither file may carry a CR byte. 14 legs pass (was 13).
 whole corpus hygiene file 14 passed; the commit path is clean of the `LF will be replaced
 by CRLF` warning for the eval data, and git status now shows no modifications for either.jsonl
 file at HEAD.
+
+
+## 799. D799 · the no-category-context never-inventory: what a user did NOT say is pinned too
+
+**The door.** intent_v1 carried nothing that proves an UNKNOWN question never silently yields a
+merchant context — the suite pinned budget/party/location/time-absence but no category. A phrase
+like `stranger things` clears because it's not a merchant word, exactly like the `never-invent-*`
+rows already pin for budget, district, time. Three probes measured on the committed tree show
+none of them drops a category; this unit pins those readings.
+
+**The widening.** intent_v1 55 → 58 cases, exactly three measured rows, each with
+`intent: unknown` and `must_not: [category, budget, party_size, location, time]`:
+the-silent-treatment, stranger-things, weather-in-the-area — no category, no budget, no party,
+no district, no time. All measured at HEAD with a live probe; none asserts anything but the
+§8 contract that nothing is invented.
+
+**Measured.** intent_v1 58/58, gates PASS (accuracy 1.0000, hallucination_rate 0.0000); the
+case-file hygiene gate's intent pin moves with the widening (it pins 58); eval harness CLI
+runs green; mypy/ruff untouched (data + one line in a test).

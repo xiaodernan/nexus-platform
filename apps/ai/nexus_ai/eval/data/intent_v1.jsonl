@@ -53,3 +53,6 @@
 {"id":"avoid-ginger-simp","query":"不要姜","expect":{"constraints":[{"key":"diet_avoid","value":"ginger"}]},"must_not":["party_size","location","time","budget"]}
 {"id":"sort-low-zh-bare","query":"最便宜","expect":{"sort_preference":"price_low"},"must_not":["party_size","location","time","budget"]}
 {"id":"sort-rating-zh-bare","query":"最高分","expect":{"sort_preference":"rating"},"must_not":["party_size","location","time","budget"]}
+{"id":"never-invent-a-category-silent","query":"the silent treatment","expect":{"intent":"unknown"},"must_not":["category","budget","party_size","location","time"]}
+{"id":"never-invent-a-category-stranger","query":"stranger things","expect":{"intent":"unknown"},"must_not":["category","budget","party_size","location","time"]}
+{"id":"never-invent-a-category-weather","query":"weather in the area","expect":{"intent":"unknown"},"must_not":["category","budget","party_size","location","time"]}

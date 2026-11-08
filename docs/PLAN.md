@@ -430,6 +430,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   same text, the same spans, byte-for-byte; 57 party-cap cases still green.
 - **D798** both case files normalised to LF (HEAD stores them that way); the hygiene gate pins
   it: 14 legs pass, the case-file pair will never carry mixed endings again.
+- **D799** the category-never-invented rows join intent_v1 (55 → 58): silent-treatment,
+  stranger-things, weather-in-the-area — all measured at HEAD, all with
+  `intent: unknown`, all with `must_not: [category, budget, party_size, location, time]`.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
