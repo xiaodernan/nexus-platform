@@ -39,9 +39,7 @@ CANONICAL_TOOLS: tuple[str, ...] = CANONICAL_TOOL_NAMES
 #: read-only tools this HTTP layer already answers *through its endpoints*
 #: (still `implemented: false` for dispatch purposes — there is no registry yet).
 _DATA_PATH_TOOLS = frozenset({
-    "search_merchants", "search_products", "search_services", "get_business_hours",
-    "get_price", "retrieve_merchant_documents", "summarize_reviews", "compare_entities",
-    "record_event", "get_user_preferences",
+    "search_merchants", "get_business_hours", "get_price", "get_user_preferences",
 })
 
 

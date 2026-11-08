@@ -34966,3 +34966,28 @@ everything else advertised `implemented:false`; the headline stays `"skeleton"`.
 **Gates.** 4 new legs: the caller's own rows read; envelope identity refused; bad kinds
 refused; empty subject returns empty. 40 in-lane dispatch gates green; 77 in the
 dispatch/tools/health/names subset; eval gate PASS; mypy 61 files clean; ruff clean.
+
+
+## 779. D779 · the bread-and-butter read tool ships (`search_merchants`)
+
+**The gap.** Three `/ai/v1/tools` read tools answered through the registry; the canonical
+bread-and-butter — what the user typed and the product answers today — was still listed
+`implemented:false`. `/ai/v1/search` already exists and already answers this question on
+every plane; nothing prevents the registry from registering the same path honestly.
+
+**The fix.** `builtin.build_search_merchants` registers the tool against
+`backend.merchant_candidates(tenant_id=DEFAULT_TENANT_ID, text=..., filters=..., limit=...,
+with_total=True)`. The handler builds `filters` only from argparse's `category` / `district`
+/ `open_now` flags and honours the spec's bounded `limit` (1–50, default 20). The demo
+catalogue answers offline; the Postgres backend serves the live tenant.
+
+`Deps.tool_registry()` wires `tenant_id`; tests exercise it through the same backend seam.
+
+**Gates.** 3 new legs: `category=restaurant` on the demo catalogue pulls the four rows;
+`limit=99` refused at the validator before the backend is touched; one dispatch == one
+backend call, counted by interposing on `backend.merchant_candidates`. `test_health_and_tools.py`
+now lists four live entries (implemented:true, data_path_via_http): `search_merchants`,
+`get_business_hours`, `get_price`, `get_user_preferences`.
+
+**Measured.** 43 in-lane dispatch gates green; 80 in the dispatch/tools/health/names subset;
+mypy 61 files clean; ruff clean.

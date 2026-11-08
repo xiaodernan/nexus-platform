@@ -475,6 +475,51 @@ class TestGetUserPreferencesDispatches:
         assert out == {"user_id": "", "preferences": []}
 
 
+class TestSearchMerchantsDispatches:
+    """D779 - the bread-and-butter search tool answers through the registry, honestly."""
+
+    def test_search_merchants_returns_candidates_with_a_category_filter(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        out = asyncio.run(registry.dispatch(subject="u1", tool="search_merchants",
+                                            arguments={"category": "restaurant"}))
+        assert {"text", "merchants"} <= set(out)
+        slugs = {m["slug"] for m in out["merchants"]}
+        assert "demo-silver-mine-restaurant" in slugs
+
+    def test_search_merchants_refuses_unknown_limit(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        with pytest.raises(InvalidArguments):
+            asyncio.run(registry.dispatch(subject="u1", tool="search_merchants",
+                                          arguments={"limit": 99}))
+
+    def test_search_merchants_calls_backend_once_per_dispatch(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        calls = {"n": 0}
+        original = backend.merchant_candidates
+
+        async def counted(**kw):
+            calls["n"] += 1
+            return await original(**kw)
+
+        backend.merchant_candidates = counted  # type: ignore[method-assign]
+
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        asyncio.run(registry.dispatch(subject="u1", tool="search_merchants",
+                                      arguments={"category": "restaurant"}))
+        assert calls["n"] == 1
+
+
 class TestRealReadOnlyToolDispatches:
 
     def test_get_business_hours_dispatches_full_row(self):

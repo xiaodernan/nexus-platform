@@ -67,7 +67,8 @@ class Deps:
         from nexus_ai.tools.registry import Registry
 
         if self._registry is None:
-            self._registry = register_read_tools(Registry(), self.backend())
+            self._registry = register_read_tools(Registry(), self.backend(),
+                                                 tenant_id=self.tenant_id())
         return self._registry
 
     # ------------------------------------------------------------------ models

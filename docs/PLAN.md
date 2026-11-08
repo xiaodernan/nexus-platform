@@ -364,6 +364,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   both live tools.
 - **D778** the caller's own personal-memory read tool ships — `get_user_preferences`
   reads only the caller's own rows; identity in the input envelope is refused.
+- **D779** the bread-and-butter read tool ships — `search_merchants` through
+  `backend.merchant_candidates(...)`, bounded, with no fabrication.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

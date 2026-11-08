@@ -185,8 +185,84 @@ def build_get_user_preferences(
     return spec
 
 
-def register_read_tools(registry: Registry, backend: SearchBackend) -> Registry:
+def build_search_merchants(
+    registry: Registry,
+    backend: SearchBackend,
+    tenant_id: str | None = None,
+) -> ToolSpec:
+    """Register the `search_merchants` read tool against `backend`."""
+
+    from nexus_ai.search.service import DEFAULT_TENANT_ID
+
+    tenant = str(tenant_id or DEFAULT_TENANT_ID)
+
+    spec = ToolSpec(
+        name="search_merchants",
+        version="1",
+        description=(
+            "Search the merchant plane the same way /ai/v1/search does, with a strict "
+            "bounded envelope. Returns candidate merchant rows; never fabricates rows "
+            "or attribute values."
+        ),
+        input_schema={
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "text": {"type": "string"},
+                "category": {"type": "string"},
+                "district": {"type": "string"},
+                "open_now": {"type": "boolean"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+            },
+        },
+        output_schema={
+            "type": "object",
+            "properties": {
+                "text": {"type": "string"},
+                "merchants": {"type": "array"},
+                "total": {"type": "integer"},
+            },
+            "required": ["merchants"],
+        },
+        permission=PERMISSION_READ,
+        cache_ttl_s=0,
+        timeout_ms=3000,
+        retries=0,
+        side_effect=False,
+        cost_class="db",
+        fallback="none",
+    )
+
+    async def handler(args: Mapping[str, Any], *, subject: str):  # noqa: ARG001
+        text = args.get("text") or None
+        filters: dict[str, Any] = {}
+        if args.get("category"):
+            filters["category"] = str(args["category"])
+        if args.get("district"):
+            filters["district"] = str(args["district"])
+        if args.get("open_now"):
+            filters["open_now"] = True
+        rows = await backend.merchant_candidates(
+            tenant_id=tenant,
+            text=text,
+            filters=filters or None,
+            limit=int(args.get("limit") or 20),
+            with_total=True,
+        )
+        return {"text": args.get("text") or "",
+                "merchants": [dict(row) for row in rows]}
+
+    registry.register(spec, handler=handler)
+    return spec
+
+
+def register_read_tools(
+    registry: Registry,
+    backend: SearchBackend,
+    tenant_id: str | None = None,
+) -> Registry:
     build_get_business_hours(registry, backend)
     build_get_price(registry, backend)
     build_get_user_preferences(registry, backend)
+    build_search_merchants(registry, backend, tenant_id)
     return registry
