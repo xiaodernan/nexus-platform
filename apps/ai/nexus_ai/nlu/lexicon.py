@@ -363,6 +363,8 @@ COMPARE_CUES = ["比較", "比较", "対比", "对比", "contrast", "compare", "
                 "边间", "which", "vs", "versus", "同", "好過"]
 RESERVE_CUES = ['預約',
                 '预约',
+                '预订',
+                '預訂',
                 'book',
                 'reserve',
                 '留位',

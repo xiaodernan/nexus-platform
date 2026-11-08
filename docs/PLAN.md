@@ -441,6 +441,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D802** `七月一日放假吗` no longer falls into `plan_experience` — the `一日` cue was dropped
   from `PLAN_CUES` after measuring 0 corpus occurrences; pinned as one intent_v1 case
   (58 → 59); the date ask now reads `intent: unknown`.
+- **D803** `预订` / `預訂` join `RESERVE_CUES` — both measure 0–6 against 17,058 corpus strings;
+  the reservation ask now reads in both Chinese spellings (`我想预订明天晚上的` → `reserve`);
+  pinned by two intent_v1 cases (59 → 61).
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

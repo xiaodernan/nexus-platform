@@ -35557,3 +35557,25 @@ way of loose CJK substring matching (no segmenter in front of the vocabulary).
 **Measured.** `tests/test_first_turn_cues_are_words.py` + `tests/test_follow_up_question_follows_the_priority.py`
 181 passed; mypy / ruff untouched (one row in the vocabulary table); the behaviour change is one
 row in `lexicon.py` plus one case in `intent_v1.jsonl`.
+
+
+## 803. D803 · the Chinese reservation verb 预订/預訂 lands in the reserve bucket
+
+**The gap.** A measured comprehension failure: `extract_intent_dict('预订今晚六点的')` answered
+`intent: unknown` — the user's reservation ask never reached the reserve lane because
+`RESERVE_CUES` in `nexus_ai/nlu/lexicon.py` carried `預約` / `預約` / `book` / `reserve` / `留位`
+/ `訂枱` / `layout`-adjacent tables but not `预订` (Simplified, U+9884 U+8BA2) or `預訂` (Traditional,
+U+9810 U+8A02). Both are unambiguous verbs of booking; both measured 0–6 occurrences across
+17,058 untrusted-content strings (`預訂` 6/17,058, `预订` 0/17,058) — no corpus false-positive
+risk.
+
+**The repair.** `预订` and `預訂` joined `RESERVE_CUES`. `预订今晚六点的` / `預訂今晚六點的` /
+`我想预订明天晚上的` / `预约一下` / `booked already` / `table for two` — all read `intent: reserve`.
+The reservation intent is now read in both spellings a Chinese-speaking district types.
+
+**The gate.** intent_v1 59 → 61 cases — `reserve-simp-yuding` and `reserve-trad-yuding`. `intent:
+reserve` pinned in both spellings; all 61 measured green; the case-file hygiene gate's pin moves
+with the widening (it pins 61).
+
+**Measured.** eval harness CLI PASS (61/61); `first_turn_cues_are_words` + `understand_unknowns`
+174 passed; mypy / ruff unchanged (one row in the vocabulary table).

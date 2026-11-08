@@ -57,3 +57,5 @@
 {"id":"never-invent-a-category-stranger","query":"stranger things","expect":{"intent":"unknown"},"must_not":["category","budget","party_size","location","time"]}
 {"id":"never-invent-a-category-weather","query":"weather in the area","expect":{"intent":"unknown"},"must_not":["category","budget","party_size","location","time"]}
 {"id":"date-ask-is-not-a-plan","query":"七月一日放假吗","expect":{"intent":"unknown"},"must_not":["category","budget","party_size","location","time"]}
+{"id":"reserve-simp-yuding","query":"预订今晚六点的","expect":{"intent":"reserve"},"must_not":["category","budget","party_size","location"]}
+{"id":"reserve-trad-yuding","query":"預訂今晚六點的","expect":{"intent":"reserve"},"must_not":["category","budget","party_size","location"]}
