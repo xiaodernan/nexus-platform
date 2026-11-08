@@ -23,7 +23,7 @@
 {"expect": {"intent": "compare"}, "id": "intent-compare", "must_not": ["budget", "party_size"], "query": "比較中環同旺角"}
 {"expect": {"intent": "reserve"}, "id": "intent-reserve", "must_not": ["budget", "party_size"], "query": "訂桌"}
 {"expect": {"intent": "purchase"}, "id": "intent-purchase", "must_not": ["budget", "party_size"], "query": "買"}
-{"expect": {"intent": "discover_merchant", "location": {"type": "district", "value": "Sha Tin"}, "preferences": [{"key": "ambience", "polarity": 1, "value": "quiet"}, {"key": "occasion", "polarity": 1, "value": "date"}], "unknowns": []}, "id": "product-e2e-sentence", "must_not": ["party_size"], "query": "帮我找沙田适合情侣约会的餐厅，预算500港币，安静一点，周六晚上"}
+{"expect": {"intent": "discover_merchant", "category": "restaurant", "location": {"type": "district", "value": "Sha Tin"}, "budget": {"max": 500.0, "currency": "HKD", "per": "party"}, "preferences": [{"key": "ambience", "polarity": 1, "value": "quiet"}, {"key": "occasion", "polarity": 1, "value": "date"}], "unknowns": []}, "id": "product-e2e-sentence", "must_not": ["party_size"], "query": "帮我找沙田适合情侣约会的餐厅，预算500港币，安静一点，周六晚上"}
 {"expect": {"intent": "discover_merchant"}, "id": "never-invent-a-party-size", "must_not": ["party_size", "budget", "location", "time"], "query": "情侣约会嘅餐廳"}
 {"expect": {"intent": "discover_merchant"}, "id": "never-invent-a-budget", "must_not": ["budget", "party_size", "location", "time"], "query": "好食嘅餐廳"}
 {"expect": {"intent": "discover_merchant"}, "id": "never-invent-a-district", "must_not": ["location", "budget", "party_size"], "query": "拉麵"}
