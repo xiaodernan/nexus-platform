@@ -63,6 +63,8 @@ tests/e2e/.auth/
 # Evidence artifacts (screenshots, traces, HAR) stay on disk but out of git; keep the folder tracked.
 tests/evidence/*
 !tests/evidence/.gitkeep
+# Playwright's HTML reports and trace bundles — pure derived output, never source of truth.
+tests/e2e/report/
 
 # ------------------------------------------------------------------ local data volumes / caches
 # Named compose volumes (nexus_pgdata / nexus_redisdata) live inside Docker Desktop, but anyone who
