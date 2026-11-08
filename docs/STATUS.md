@@ -34833,3 +34833,26 @@ successful and denied calls are audited.
 4 passed); `mypy nexus_ai` 60 source files clean; `ruff check .` all-checks-passed.
 
 - readers: an agent that needs data asks the registry; nothing reaches data any other way.
+
+
+## 773. D773 · the dispatch registry honours `cache_ttl_s`
+
+**The gap.** `ToolSpec.cache_ttl_s` was declared but read by nothing - a contract field
+whose TTL had no consequence, decorative configuration. AGENT_CONTRACT §3 names
+`cache_ttl_s` as a per-tool dispatch property; a registry that silently ignores it is a
+registry that ignores the contract it ships under.
+
+**The fix.** `nexus_ai/tools/registry._Cache` (in-process, monotonic-clock keyed on spec
+name + canonicalsed argument dict) now backs dispatch: hit short-circuits the handler
+(`outcome="ok_cached"`); miss falls through to the pipeline; zero-TTL specs and
+side-effect tools never enter the cache; an entry expires at its declared TTL and never
+outlives it. JSON-unserialisable arguments never cache.
+
+**Gates.** 5 legs in `tests/test_a_tool_dispatch_is_the_only_data_path.py`: cache hit
+short-circuits the handler; different args are different hits; side-effect tools bypass
+caching even with a nonzero TTL; zero TTL never caches; TTL expiry requires a fresh
+handler call.
+
+**Measured.** 23 passed (18 + 5). ruff clean (`nexus_ai` + `tests`); mypy clean (60 files).
+
+- readers: cache lifetime now matches the ToolSpec the caller holds.

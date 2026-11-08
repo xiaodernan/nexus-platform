@@ -34,11 +34,57 @@ are refused outright.
 from __future__ import annotations
 
 import asyncio
+import json
 import time
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Mapping, Sequence
 
 from nexus_ai.tools.names import CANONICAL_TOOL_NAMES, NEVER_IN_DEFAULT_GRANT
+
+
+class _Cache:
+    """In-process TTL cache keyed on spec name + canonicalised argument dict.
+
+    Side-effect tools bypass it entirely; specs whose `cache_ttl_s` is 0 never enter it;
+    args that cannot be JSON-canonically dumped never enter it either. The life of a hit
+    is bounded by the spec's `cache_ttl_s`, never beyond.
+    """
+
+    def __init__(self, clock: Callable[[], float]) -> None:
+        self._clock = clock
+        self._store: dict[tuple[str, str], tuple[float, Any]] = {}
+
+    def _key(self, *, spec: ToolSpec, arguments: Mapping[str, Any]) -> tuple[str, str] | None:
+        try:
+            key = json.dumps(dict(arguments), sort_keys=True, separators=(",", ":"),
+                             default=str)
+        except (TypeError, ValueError):
+            return None
+        return (spec.name, key)
+
+    def get(self, *, spec: ToolSpec, arguments: Mapping[str, Any]) -> Any:
+        ck = self._key(spec=spec, arguments=arguments)
+        if ck is None:
+            return _MISS
+        hit = self._store.get(ck)
+        if hit is None:
+            return _MISS
+        expires_at, value = hit
+        if self._clock() >= expires_at:
+            del self._store[ck]
+            return _MISS
+        return value
+
+    def set(self, *, spec: ToolSpec, arguments: Mapping[str, Any], value: Any) -> None:
+        ck = self._key(spec=spec, arguments=arguments)
+        if ck is None:
+            return
+        self._store[ck] = (self._clock() + spec.cache_ttl_s, value)
+
+
+#: sentinel for "no cache hit" — identity-compared only, never leaked out.
+_MISS = object()
+
 
 # ------------------------------------------------------------ permission kinds
 PERMISSION_READ = "tool:read"
@@ -228,6 +274,7 @@ class Registry:
         self._clock = clock or time.monotonic
         self._specs: dict[str, ToolSpec] = {}
         self._handlers: dict[str, _HANDLER] = {}
+        self._cache = _Cache(self._clock)
 
     # ---------------------------------------------------- registration
     def register(self, spec: ToolSpec, handler: "_HANDLER | None" = None) -> None:
@@ -286,6 +333,16 @@ class Registry:
                        outcome="denied", reason=f"invalid_arguments: {schema_err}")
             raise InvalidArguments(tool, schema_err)
 
+        # ---- cache (hit) ----
+        use_cache = spec.cache_ttl_s > 0 and not spec.side_effect
+        if use_cache:
+            cached = self._cache.get(spec=spec, arguments=args)
+            if cached is not _MISS:
+                self._emit(started, subject=subject, tool=tool,
+                           outcome="ok_cached")
+                return cached
+
+
         # ---- execute with timeout/retry (§3 timeout is per-tool, default 4 s)
         handler = self._handlers.get(tool)
         if handler is None:
@@ -318,6 +375,8 @@ class Registry:
                        outcome="failed", reason=f"result_validation_failed: {result_err}")
             raise ResultValidationFailed(tool, result_err)
 
+        if use_cache:
+            self._cache.set(spec=spec, arguments=args, value=result)
         self._emit(started, subject=subject, tool=tool, result=result, outcome="ok")
         return result
 

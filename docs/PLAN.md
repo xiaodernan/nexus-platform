@@ -348,6 +348,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   §3 (permission → argument validation → timeout/retry → result validation → audit)
   and §4 (the two never-in-default-grant tools always denied; side-effect tools need an
   explicit user action). `/ai/v1/tools` now honestly reports `registry_status: "skeleton"`.
+- **D773** the registry honours `cache_ttl_s` — `_Cache` is keyed on spec + canonicalised
+  args; zero TTL and side-effect tools bypass; hits short-circuit the handler.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

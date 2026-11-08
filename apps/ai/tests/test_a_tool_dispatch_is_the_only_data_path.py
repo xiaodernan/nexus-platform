@@ -230,5 +230,101 @@ class TestTheManifest:
         assert set(names) == {"search_merchants", "get_price"}
 
 
+class TestCacheBehaviour:
+    def test_cache_hit_never_calls_handler_twice(self):
+        calls = {"n": 0}
+
+        async def counted(_args, *, subject):
+            calls["n"] += 1
+            return {"rows": [str(calls["n"])]}
+
+        reg, events = _registry()
+        spec = _spec("search_merchants", cache_ttl_s=60)
+        reg.register(spec, handler=counted)
+        first = asyncio.run(reg.dispatch(subject="u1", tool="search_merchants",
+                                         arguments={"query": "x"}))
+        second = asyncio.run(reg.dispatch(subject="u1", tool="search_merchants",
+                                          arguments={"query": "x"}))
+        assert first == second
+        assert calls["n"] == 1
+        assert any(e["outcome"] == "ok_cached" for e in events)
+
+    def test_different_args_are_different_hits(self):
+        calls = {"n": 0}
+
+        async def counted(_args, *, subject):
+            calls["n"] += 1
+            return {"rows": [str(calls["n"])]}
+
+        reg, _ = _registry()
+        spec = _spec("search_merchants", cache_ttl_s=60)
+        reg.register(spec, handler=counted)
+        asyncio.run(reg.dispatch(subject="u1", tool="search_merchants",
+                                 arguments={"query": "x"}))
+        asyncio.run(reg.dispatch(subject="u1", tool="search_merchants",
+                                 arguments={"query": "y"}))
+        assert calls["n"] == 2
+
+    def test_side_effect_never_enters_cache(self):
+        calls = {"n": 0}
+
+        async def counted(_args, *, subject):
+            calls["n"] += 1
+            return {"rows": []}
+
+        reg, _ = _registry(permissions=lambda _s: {PERMISSION_READ,
+                                                   PERMISSION_SIDE_EFFECT})
+        spec = _spec("create_reservation", permission=PERMISSION_SIDE_EFFECT,
+                     side_effect=True, cache_ttl_s=60)
+        reg.register(spec, handler=counted)
+        for idem in ("i1", "i2"):
+            asyncio.run(reg.dispatch(subject="u1", tool="create_reservation",
+                                     arguments={"query": "q"},
+                                     idempotency_key=idem))
+        assert calls["n"] == 2
+
+    def test_cache_expires_after_ttl(self):
+        times = iter([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 61.0, 61.0, 61.0, 61.0])
+
+        def tick():
+            return next(times)
+
+        calls = {"n": 0}
+
+        async def counted(_args, *, subject):
+            calls["n"] += 1
+            return {"rows": [str(calls["n"])]}
+
+        reg = Registry(audit=lambda e: None, clock=tick)
+        spec = _spec("search_merchants", cache_ttl_s=60)
+        reg.register(spec, handler=counted)
+        first = asyncio.run(reg.dispatch(subject="u1", tool="search_merchants",
+                                         arguments={"query": "x"}))
+        second = asyncio.run(reg.dispatch(subject="u1", tool="search_merchants",
+                                          arguments={"query": "x"}))
+        assert first == second
+        assert calls["n"] == 1  # still cached (t = 0.0 < 60.0)
+        third = asyncio.run(reg.dispatch(subject="u1", tool="search_merchants",
+                                         arguments={"query": "x"}))
+        assert third == {"rows": ["2"]}
+        assert calls["n"] == 2  # TTL expired at t = 61.0
+
+    def test_zero_ttl_never_caches(self):
+        calls = {"n": 0}
+
+        async def counted(_args, *, subject):
+            calls["n"] += 1
+            return {"rows": []}
+
+        reg, _ = _registry()
+        spec = _spec("search_merchants", cache_ttl_s=0)
+        reg.register(spec, handler=counted)
+        asyncio.run(reg.dispatch(subject="u1", tool="search_merchants",
+                                 arguments={"query": "x"}))
+        asyncio.run(reg.dispatch(subject="u1", tool="search_merchants",
+                                 arguments={"query": "x"}))
+        assert calls["n"] == 2
+
+
 async def _fake(*, subject):
     return {"rows": []}
