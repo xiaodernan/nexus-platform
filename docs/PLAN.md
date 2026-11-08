@@ -419,6 +419,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   `自由模式`; safety_injection_v1 32 → 38 measured cases; the six residual round-battery shapes
   are filed not fixed (override-all, admin-override, message-ends, you-must-execute,
   never-any-rules, limit-removed).
+- **D795** the scanner's own per-module gate carries the strengtheners D791/D794 added: authority
+  claims, `忘掉` modifier permutation, disregard-en, developer-model, the full jailbreak family,
+  the fullwidth prefix, and a ten-line benign control set that stays unflagged; 13 → 24 legs.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

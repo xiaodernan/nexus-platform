@@ -35378,3 +35378,27 @@ moves with the widening; it pins 38 now.
 **Measured.** eval harness suites + CLI 60 passed; mypy 61 files clean; ruff clean. The attack
 battery grew from 7/20 flagged at HEAD to 13/20 flagged, with the 6 landed shapes all green and
 the benign control set unchanged at 0/11.
+
+
+## 795. D795 · the injection scanner's own contract carries its new signals
+
+**The door.** D791 and D794 strengthened the scanner and widened the eval suites; the per-module
+contract tests in `test_injection.py` knew only the signals as they stood before those units. The
+scanner strengtheners landed measured behavior (an authority-claim claim flagged by
+`authority_claim_zh`; `忘掉` read with any modifier order; `developer_mode`; the `jailbreak_mode`
+family; the fullwidth CIK prefix) and the per-module contract never named them — so the coverage
+of the adversarial surface sat where a reader had to trust the two eval harnesses rather than
+the unit's own battery, exactly the layering §50-52 cares about.
+
+**The gate.** Eleven legs appended to `test_injection.py`, each pinning one measured behaviour:
+the authority claim both ways it was measured; `忘掉` and the modifier permutation group order;
+`Disregard your earlier instructions ...`; `developer_mode` and `debug mode model`; the whole
+`jailbreak_mode` family verbatim as measured; the fullwidth CIK colon for both `system` and
+`assistant`; and a 10-line benign control set naming the shapes a false-positive would have to
+claim — `no size limits`, `自由泳池在二楼`, `the developer came by at 10 and fixed the till`,
+`our system is a cashier till` — all of which stay unflagged, because §50-52's answer is measured
+refusals, not clever guesses.
+
+**Measured.** 24 passed (was 13). The neighbouring gates (the corpus-shape hygiene file, the two
+eval harness suites, the manifest tests, the framing parity gate) all stay green, 95 passed
+combined; mypy untouched (test-only change); ruff clean.
