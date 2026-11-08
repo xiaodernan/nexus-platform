@@ -50,11 +50,12 @@ and asks for a new door:
     `{geo, locale, now}` and never sends `shown_ids`, so the browser's 「其他」 now keeps the turn it
     carried - the defect this unit closes - and still shows the same rows again, because nothing has
     told the server which ones those were.
-  * it leaves the re-extract branch alone. A turn long enough and filter-bearing enough to take
-    `_overlay` answers a state without the exclusion (§B of `tmp/d676_measure_after.txt`:
-    `excluded_ids=[]` after a state that carried one), because `_overlay` copies memory key by key
-    and `excluded_ids` is not in its list. Whether a new question should inherit the pages of the
-    old one is a product decision.
+  * it inherits through the re-extract branch. D676 filed the omission as an open product
+    question (§B of `tmp/d676_measure_after.txt`); D793 closed it as the one decision `§34`'s
+    own words carry - the exclusion is a memory the new turn did not contradict, exactly as
+    `party_size` / `location` / `budget` / `constraints` / `preferences` are, and the state is the
+    only memory between turns. `_overlay` now keeps the carry; the measured pin lives at
+    `test_a_re_extract_turn_carries_the_exclusion_forward`.
   * it sends no field the published schema refuses. The served frame still carries
     `mentioned_entities` and `merchant_id`, which `intent.json` does not declare - 2 of 17 keys,
     measured in §E - and closing that is its own unit.
@@ -158,6 +159,26 @@ def test_the_change_record_names_the_field_it_changed():
     grown = [c for c in _merged("其他", state=_merged("其他", shown=SHOWN[:1]).intent,
                                 shown=SHOWN).changes if c.get("op") == "exclude"]
     assert (grown[0]["from"], grown[0]["to"]) == (1, 2), grown[0]
+
+
+def test_a_long_new_question_after_an_others_ask_carries_the_exclusion_forward():
+    """The D676 §B leftover, closed here.
+
+    The re-extract branch used to answer a state without the exclusion after a long turn: 33
+    codepoints of new Mandarin after 「其他」 answered `excluded_ids: null` when the turn before
+    it had `[a1, b2]` to hold (§B of `tmp/d676_measure_after.txt`). The exclusion is the ONE
+    memory that outlives the turn that made it (`§34`: the state is the ONLY thing that survives
+    between turns), and a new question contradicts nothing about which rows were shown. The
+    re-extract branch now inherits it, exactly as it inherits `party_size` / `location` / `budget` /
+    `constraints` / `preferences` - memory the new turn does not contradict stays.
+    """
+    state = _merged("其他", shown=SHOWN).intent
+    long_turn = "我想找沙田的一家安静餐厅吃熊肉火锅和日本寿司omakase或者烧肉"
+    after = _merged(long_turn, state=state, shown=[]).intent
+    assert sorted(after.get("excluded_ids") or []) == sorted(SHOWN), after.get("excluded_ids")
+    assert after["category"] == "hotpot", after
+    assert validate_intent(after) is not None
+    assert validate_intent(after).excluded_ids == after["excluded_ids"]
 
 
 def test_a_cue_with_nothing_shown_invents_no_exclusion():
@@ -422,18 +443,19 @@ def test_not_this_units_claim_the_console_sends_no_shown_ids():
     assert re.search(r"context:\s*\{[^}]*now", BFF_ROUTE), "the BFF's context changed shape"
 
 
-def test_not_this_units_claim_a_re_extract_turn_drops_the_exclusion():
-    """`_overlay` copies memory key by key, and `excluded_ids` is not in its list.
+def test_a_re_extract_turn_carries_the_exclusion_forward():
+    """The re-extract branch used to drop it. §34 says the state is the only memory.
 
-    Measured after this unit (`tmp/d676_measure_after.txt` §B): a state carrying one exclusion,
-    followed by a long turn that carries new filters, answers `category=restaurant budget=300
-    excluded_ids=[]`. Whether a new question inherits the pages of the old one is a product call.
+    D676 filed this as an open product question (§B of `tmp/d676_measure_after.txt`), and D793
+    closed it as the one decision §34's own words carry: the exclusion is a memory the new turn
+    did not contradict, exactly as `party_size` / `location` / `budget` / `constraints` /
+    `preferences` are. `_overlay` keeps the carry; a new question fires no `exclude` cue here
+    because the show-ids mechanism is the client's, not the turn's.
     """
-    merged = _merged("想食日本菜，預算300，喺中環，最好有海景，安静一點",
+    merged = _merged("我想找一個安靜嘅餐廳，預算300，不要海鮮，香港人開嘅",
                      state={**TURN1, "excluded_ids": ["state-1"]})
     assert validate_intent(merged.intent) is not None
-    assert validate_intent(merged.intent).excluded_ids == []
-
+    assert validate_intent(merged.intent).excluded_ids == ["state-1"]
 
 def test_not_this_units_claim_the_frame_sends_two_keys_the_schema_refuses():
     """`mentioned_entities` and `merchant_id` are served and undeclared - 2 of 17 (§E).

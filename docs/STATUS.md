@@ -35309,3 +35309,36 @@ along. The §791 entry stands as a historical record; the correction lives here.
 **Measured.** `wrap_untrusted` flagged=False on both probes (measured verbatim in this unit);
 `safety_injection_v1` PASS (23/23 attacks, 0/6 ordinary texts flagged); hygiene gate 13 legs
 green; mypy / ruff untouched. No code change in this unit — ledger-only.
+
+
+## 793. D793 · the re-extract branch inherits the exclusion; the state is the only memory (§34)
+
+**The gap.** An old filed leftover, named in D676's own entry and repriced here: a long new
+question after an 「其他」 re-extract answers without the exclusion it was asked to carry —
+`_overlay` copies memory key by key and `excluded_ids` was not in its list (`tmp/d676_measure_after.txt`
+§B, `excluded_ids=[]` after a state that held one). Measured again at HEAD with a 33-codepoint
+Mandarin turn after 「其他」: the exclusion the user had set came back `null`.
+
+**The repair.** `_overlay` keeps `excluded_ids` from the carried state the same way it keeps
+`party_size` / `location` / `budget` / `constraints` / `preferences` — memory the new turn did not
+contradict stays, which is the whole content of §34 and the one memory promise the product can
+keep between turns. The re-extract is the same path `party_size` already takes: a long new
+question carries old memory, on the strength of §34's own sentence, and this unit does it with a
+permanent pin.
+
+**The fold.** D676's own gate pinned the old behaviour (`test_not_this_units_claim_a_re_extract_turn_
+drops_the_exclusion`) — a pin of dead behaviour after this repair, so the pin is rewritten to
+`test_a_re_extract_turn_carries_the_exclusion_forward` and its docstring bullet updated to match.
+A new leg pins the fix against a long Mandarin question with brand-new content
+(`test_a_long_new_question_after_an_others_ask_carries_the_exclusion_forward`).
+
+**The product call this made, openly.** D676 left the inheritance as an open question — its own
+entry says "whether a new question inherits the pages of the old one is a product call". This unit
+answers yes: the exclusion is written by the user's own ask for a different page, it is memory the
+new turn contradicts nothing about, and no row-order promise is broken by carrying it. The line is
+drawn at §34 and the pin above; if the owner disagrees, this unit reverts as one commit and the
+pin returns to the old answer.
+
+**Measured.** the D676 gate file: 25 passed, 3 DB-skipped; follow-up question suites 41 passed;
+mypy 61 files clean; ruff clean. The 33-codepoint probe: merged exclusion holds both ids before
+and after. What this unit does NOT do: land shown_ids on the wire — that is the web lane's turn.

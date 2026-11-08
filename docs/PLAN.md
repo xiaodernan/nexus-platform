@@ -410,6 +410,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   `<ENDDATA>` and the base64 probe both arrive as inert text and `wrap_untrusted` flags False on
   each; the envelope redacts only our own shape and §8's registry-only tool resolution covers the
   rest. §791 stands as a historical record; the correction lives as §792.
+- **D793** the re-extract branch inherits `excluded_ids` (the D676 leftover): §34's one memory
+  promise, pinned by `test_a_re_extract_turn_carries_the_exclusion_forward` and the long Mandarin
+  question leg; the D676 gate's old pin of the drop rewritten to the new truth.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

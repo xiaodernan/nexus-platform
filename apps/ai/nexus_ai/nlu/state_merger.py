@@ -243,6 +243,13 @@ def _overlay(fresh: dict[str, Any], base: dict[str, Any], turn: str) -> dict[str
     for key in ("party_size",):
         if out.get(key) is None and base.get(key) is not None:
             out[key] = base[key]
+    if not out.get("excluded_ids") and base.get("excluded_ids"):
+        # D676: the excluded ids are the client's own memory of the rows it was shown - §34
+        # keeps a memory the new turn did not contradict, and a long new question contradicts
+        # nothing about which rows were already shown. Measured 2026-11-09 (D793): a 33-codepoint
+        # Mandarin turn after 其他 dropped the exclusion to null, and the follow-up page could
+        # repeat the rows the user asked not to see.
+        out["excluded_ids"] = base["excluded_ids"]
     if not out.get("location") and base.get("location"):
         out["location"] = base["location"]
     if not out.get("budget") and base.get("budget"):
