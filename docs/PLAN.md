@@ -353,6 +353,12 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D774** the registry validates every `ToolSpec` at `register()` — cost_class, timeout_ms,
   retries, cache_ttl_s, permission kinds — and refuses the unknown, so a spec the
   registry holds is a spec the contract holds.
+- **D775** removed the unused `dispatch_raw` from the registry — one pipeline, not two.
+- **D776** the one read-only tool every plane can answer is implemented and dispatched:
+  `get_business_hours` through `nexus_ai/tools/builtin.py` with the backend wired lazily in
+  `Deps.tool_registry()`. `/ai/v1/tools` now builds its manifest from the registry —
+  `get_business_hours` is the only `implemented:true` entry; the headline stays
+  `skeleton` until the whole catalogue ships.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

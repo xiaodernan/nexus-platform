@@ -34885,3 +34885,36 @@ marker accepted.
 because the author wrote both in one motion. The pipeline has exactly one profile — `dispatch`
 with its events — and D772's gate covers it. Removed; no call sites; the 29-gate suite is
 unchanged (29 passed). ruff clean; mypy clean (60 files).
+
+
+## 776. D776 · the one read-only tool every plane can answer is implemented and dispatched
+
+**The gap.** The dispatch registry shipped (D772) with its pipeline enforced; no tool handler
+existed, so nothing in the canonical set was dispatchable. For the first tool the backend
+can answer honestly — `get_business_hours` — there is no excuse for leaving the registry empty.
+
+**The fix.** `nexus_ai/tools/builtin.py` wires `register_read_tools(registry, backend)`;
+`get_business_hours` is registered against the live backend path with a spec the contract
+already names (reads through `backend.hours()`; the demo catalogue's `_hours` answers it
+offline; Postgres answers it online).
+
+- `Deps.tool_registry()` builds the registry lazily, backend-backed, per Deps instance.
+- `/ai/v1/tools` now builds its manifest from the registry: `get_business_hours` is listed
+  `implemented:true` (`data_path_via_http`), every other canonical name stays
+  `implemented:false`, and the headline `registry_status` stays `skeleton` until all of
+  them are implemented — honesty at the byte level, not at the endpoint label.
+- Validator widened to `minLength`, `minimum`, `maximum`, `minItems`, `maxItems`, and
+  JSON-Schema boolean/integer correctly distinct (`True` is not an integer).
+
+**Gates.** 3 new gate legs in `test_a_tool_dispatch_is_the_only_data_path.py`: the demo rows
+dispatch with a real test backend and return rows; an empty string is refused with
+`InvalidArguments` before the backend is touched; the cache short-circuits — exactly one
+`hours()` call for two dispatches of the same arguments. `test_health_and_tools.py` now pins
+the honest manifest: `get_business_hours` is the only `implemented:true` entry.
+
+**Measured.** 32 in-lane dispatch gates green; 78 in the dispatch/tools/health/names subset;
+456 across the NLU/timetime sweeps; eval gate PASS (2 suites); mypy `nexus_ai` 61 files clean;
+`ruff check .` all-checks-passed.
+
+- readers: the agent needs one tool that answers today and a channel that says the rest are
+  not there yet.

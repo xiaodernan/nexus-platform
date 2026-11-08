@@ -180,14 +180,23 @@ class ResultValidationFailed(ToolError):
 
 
 # ------------------------------------------------------------ schema validation
-_TYPES: dict[str, type | tuple[type, ...]] = {
-    "object": dict,
-    "array": list,
-    "string": str,
-    "number": (int, float),
-    "integer": int,
-    "boolean": bool,
-    "null": type(None),
+def _is_integer(value: Any) -> bool:
+    # JSON Schema treats true/false as a distinct primitive from numbers.
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _is_number(value: Any) -> bool:
+    return (isinstance(value, int) and not isinstance(value, bool)) or isinstance(value, float)
+
+
+_TYPES: dict[str, Callable[[Any], bool]] = {
+    "object": lambda value: isinstance(value, dict),
+    "array": lambda value: isinstance(value, list),
+    "string": lambda value: isinstance(value, str),
+    "number": lambda value: _is_number(value),
+    "integer": lambda value: _is_integer(value),
+    "boolean": lambda value: isinstance(value, bool),
+    "null": lambda value: value is None,
 }
 
 
@@ -198,9 +207,12 @@ def _validate(schema: Mapping[str, Any], value: Any, *, path: str) -> None:
         return
     field = schema.get("type")
     if field is not None:
-        types = (_TYPES[field],) if isinstance(field, str) else tuple(
-            _TYPES[t] for t in field)
-        if not any(isinstance(value, t) for t in types):
+        if isinstance(field, str):
+            fields = (field,)
+        else:
+            fields = tuple(field)  # e.g. ["string", "null"]
+        preds = [_TYPES[name] for name in fields if name in _TYPES]
+        if preds and not any(predicate(value) for predicate in preds):
             raise ValueError(f"{path}: expected {field}, got {type(value).__name__}")
     if value is None:
         return
@@ -218,11 +230,32 @@ def _validate(schema: Mapping[str, Any], value: Any, *, path: str) -> None:
                 _validate(props[key], item, path=f"{path}.{key}")
             elif not extra_ok:
                 raise ValueError(f"{path}: property {key!r} is not declared")
+    if isinstance(value, str):
+        min_len = schema.get("minLength")
+        if isinstance(min_len, int) and len(value) < min_len:
+            raise ValueError(f"{path}: shorter than minLength {min_len}")
+        max_len = schema.get("maxLength")
+        if isinstance(max_len, int) and len(value) > max_len:
+            raise ValueError(f"{path}: longer than maxLength {max_len}")
+    if _is_number(value):
+        minimum = schema.get("minimum")
+        if isinstance(minimum, (int, float)) and value < minimum:
+            raise ValueError(f"{path}: below minimum {minimum}")
+        maximum = schema.get("maximum")
+        if isinstance(maximum, (int, float)) and value > maximum:
+            raise ValueError(f"{path}: above maximum {maximum}")
     if isinstance(value, list):
+        items = value
         item = schema.get("items")
         if isinstance(item, Mapping):
-            for idx, element in enumerate(value):
+            for idx, element in enumerate(items):
                 _validate(item, element, path=f"{path}[{idx}]")
+        min_items = schema.get("minItems")
+        if isinstance(min_items, int) and len(items) < min_items:
+            raise ValueError(f"{path}: fewer than minItems {min_items}")
+        max_items = schema.get("maxItems")
+        if isinstance(max_items, int) and len(items) > max_items:
+            raise ValueError(f"{path}: more than maxItems {max_items}")
 
 
 def _check(schema: Mapping[str, Any] | None, value: Any) -> str | None:

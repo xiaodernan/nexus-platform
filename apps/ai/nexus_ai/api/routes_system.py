@@ -94,16 +94,26 @@ async def health(request: Request):
 # --------------------------------------------------------------------------- tools
 @router.get("/ai/v1/tools")
 async def tools(request: Request):
-    """Honest registry manifest. The dispatch registry module ships (tools/registry.py)
-    with the §3 pipeline enforced; no tool handlers are registered yet, so no capability
-    is dispatchable. The canonical names are still listed, with `implemented:false` and
-    `registry_status="skeleton"` - never advertise a capability that does not exist."""
+    """Honest registry manifest. The dispatch registry ships (tools/registry.py +
+    builtin.py). `get_business_hours` is registered and dispatchable; the remaining
+    canonical §3 names are listed with implemented:false until each ships. The status
+    string and the entries both tell the truth; nothing pretends to be reachable that
+    is not, and nothing claims live orchestration the process does not hold."""
+    # D776: the manifest is built from the registry the process actually holds.
+    # A registered tool is advertised as implemented; an unregistered canonical name is
+    # advertised as not implemented - nothing pretends to be dispatchable that is not.
+    deps: Deps = request.app.state.deps
+    registry = deps.tool_registry()
+    live_count = sum(1 for name in CANONICAL_TOOLS if registry.spec(name) is not None)
+    status = "live" if live_count == len(CANONICAL_TOOLS) else "skeleton"
+
     manifest = []
     for name in CANONICAL_TOOLS:
+        spec = registry.spec(name)
         manifest.append(ToolManifestEntry(
             name=name,
-            implemented=False,
-            registry_status="skeleton",
+            implemented=spec is not None,
+            registry_status=status,
             data_path_via_http=name in _DATA_PATH_TOOLS,
         ))
     # D473: the answer is built through the contract's model (D451: the degraded flag
@@ -111,12 +121,13 @@ async def tools(request: Request):
     return degraded_json(ToolsManifestResponse(
         tools=manifest,
         count=len(manifest),
-        registry_status="skeleton",
-        note=("the tool-dispatch registry (tools/registry.py) ships with the §3 pipeline "
-              "enforced - permission check, argument validation, timeout/retry, audit - "
-              "but no tool handlers are registered; these are the canonical §3 names with "
-              "the endpoints that already exercise the same read paths, not live "
-              "dispatchable tools"),
+        registry_status=status,
+        note=(
+            f"the tool-dispatch registry ships with the §3 pipeline enforced; "
+            f"{live_count} of {len(CANONICAL_TOOLS)} canonical read-only tools are "
+            f"implemented (get_business_hours through the live backend path). "
+            f"Remaining canonical names are listed but not yet dispatchable; they "
+            f"appear with implemented:false."),
         degraded=True,
     ).model_dump(mode="json"))
 

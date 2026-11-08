@@ -31,6 +31,7 @@ class Deps:
         self.settings = settings or get_settings()
         self.ledger = RunLedger()
         self._router: Any = None
+        self._registry: Any = None
 
     # ------------------------------------------------------------------ database
     def database(self) -> Any | None:
@@ -49,6 +50,25 @@ class Deps:
     def backend_degraded(self) -> bool:
         """True when we are answering from the offline demo catalogue, never live data."""
         return not self.db_available()
+
+    def _degraded(self) -> bool:
+        return self.backend_degraded()
+
+    # ------------------------------------------------------------------ tools
+    def tool_registry(self) -> Any:
+        """The AI agent's tool-dispatch registry (AGENT_CONTRACT §3).
+
+        Built per Deps instance; `builtin.register_read_tools` wires the read-only tools
+        whose backend paths exist on every plane. A tool the caller's plan does not have
+        would appear here only if implemented — advertising an unimplemented tool as
+        reachable would be a fabricated capability.
+        """
+        from nexus_ai.tools.builtin import register_read_tools
+        from nexus_ai.tools.registry import Registry
+
+        if self._registry is None:
+            self._registry = register_read_tools(Registry(), self.backend())
+        return self._registry
 
     # ------------------------------------------------------------------ models
     def router(self) -> Any:

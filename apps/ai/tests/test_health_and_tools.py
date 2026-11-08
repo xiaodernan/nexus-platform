@@ -35,9 +35,17 @@ def test_tools_manifest_is_honest(client):
     assert body["degraded"] is True
     names = {t["name"] for t in body["tools"]}
     assert set(CANONICAL_TOOLS) <= names
-    # no capability is advertised as live dispatch when the registry does not exist
-    assert all(t["implemented"] is False for t in body["tools"])
-    assert all("search_merchants" for t in body["tools"])
+    implemented = {t["name"] for t in body["tools"] if t["implemented"]}
+    # one live read-only tool is honest; every other canonical name advertises implemented:false
+    assert implemented <= {"get_business_hours"}
+    assert "search_merchants" in names
+
+
+def test_get_business_hours_is_the_one_live_tool(client):
+    body = client.get("/ai/v1/tools").json()
+    bucket = next(t for t in body["tools"] if t["name"] == "get_business_hours")
+    assert bucket["implemented"] is True
+    assert bucket["data_path_via_http"] is True
 
 
 def test_tools_count_matches_canonical(client):

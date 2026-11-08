@@ -17,6 +17,7 @@ import asyncio
 
 import pytest
 
+from nexus_ai.tools.builtin import register_read_tools
 from nexus_ai.tools.names import CANONICAL_TOOL_NAMES, NEVER_IN_DEFAULT_GRANT
 from nexus_ai.tools.registry import (
     PERMISSION_READ,
@@ -366,3 +367,57 @@ class TestCacheBehaviour:
 
 async def _fake(*, subject):
     return {"rows": []}
+
+
+class TestRealReadOnlyToolDispatches:
+    """D776 - the one live read-only tool answers through the registry, honestly."""
+
+    def test_get_business_hours_dispatches_full_row(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        merchant_id = next(r["merchant_id"] for r in backend.merchants)
+        out = asyncio.run(registry.dispatch(subject="u1", tool="get_business_hours",
+                                            arguments={"merchant_id": merchant_id}))
+        assert out["merchant_id"] == merchant_id
+        assert isinstance(out["weekly_hours"], list) and out["weekly_hours"]
+        assert out["weekly_hours"][0]["merchant_id"] == merchant_id
+
+    def test_get_business_hours_validates_input_before_dispatch(self):
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        registry = register_read_tools(Registry(permissions=lambda _s: {PERMISSION_READ}),
+                                       backend)
+        with pytest.raises(InvalidArguments):
+            asyncio.run(registry.dispatch(subject="u1", tool="get_business_hours",
+                                          arguments={"merchant_id": ""}))
+
+    def test_cache_hit_short_circuits_the_handler(self):
+        """Setting cache_ttl_s on a live read-only tool caches the answer."""
+        from nexus_ai.api.demo_data import demo_backend
+
+        backend = demo_backend()
+        merchant_id = next(r["merchant_id"] for r in backend.merchants)
+        calls = {"n": 0}
+        original_hours = backend.hours
+
+        async def counted(merchant_ids):
+            calls["n"] += 1
+            return await original_hours(merchant_ids)
+
+        backend.hours = counted  # type: ignore[method-assign]
+
+        registry = Registry(permissions=lambda _s: {PERMISSION_READ})
+        from nexus_ai.tools.builtin import build_get_business_hours
+
+        spec = build_get_business_hours(registry, backend)  # registers with cache_ttl_s=300
+        assert spec.cache_ttl_s == 300
+        first = asyncio.run(registry.dispatch(subject="u1", tool="get_business_hours",
+                                              arguments={"merchant_id": merchant_id}))
+        second = asyncio.run(registry.dispatch(subject="u1", tool="get_business_hours",
+                                               arguments={"merchant_id": merchant_id}))
+        assert first == second
+        assert calls["n"] == 1
