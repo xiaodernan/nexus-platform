@@ -35579,3 +35579,19 @@ with the widening (it pins 61).
 
 **Measured.** eval harness CLI PASS (61/61); `first_turn_cues_are_words` + `understand_unknowns`
 174 passed; mypy / ruff unchanged (one row in the vocabulary table).
+
+
+## 804. D804 · the envelope arm gains the double-forge case
+
+**The gap.** `safety_injection_v1`'s `envelope` arm pinned three shapes — a single `END`, a single
+`START`, a bare closing tag — and no case where ONE text forges the envelope MULTIPLE times. The
+untrusted-content attacker who forges twice is the same class; nothing in the harness proved the
+sanitizer redacts them all rather than stopping at the first.
+
+**The repair.** One case added, `envelope-forge-twice`: two forged delimiters in one text, one at
+the start and one immediately after, both replaced by `[redacted-delimiter]` and neither surviving.
+The existing untrusted `<UNTRUSTED_DATA>` spliced text stays as-is (it does not parse as our
+envelope — verified here). `safety_injection_v1` envelope arm: 3 → 4.
+
+**Measured.** envelope_containment 4/4; containment 37/37; false-positive rate 0/6; the case-file
+hygiene gate pin moves (it pins 47). mypy / ruff unchanged (one new line in the case file).
