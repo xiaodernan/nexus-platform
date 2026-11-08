@@ -35216,3 +35216,29 @@ passed, 141 DB-skipped; vocabulary census 244 passed (prior state re-verified); 
 clean; ruff clean. The D650 gate (`test_a_question_frame_is_not_a_search_term.py`) widened with
 ten frame rows (empty expectation) and four content rows (measured spelling); its live-DB census
 pass picks 有什么 up automatically (still skipping for want of `NEXUS_TEST_DATABASE_URL`).
+
+
+## 790. D790 · the discourse particles are census-measured frame cues, and 請問 the one that broke the canon
+
+**The door.** The Mandarin sentence carries its question to the ear before the verb — 「有早茶吗」
+ends with the particle that no row can meet, and measured **0 of 520** published merchants and **0 of
+5,538** published offerings carry 吗（U+5417）、啊（U+554A）、呢（U+5462）、咯（U+55DC）、
+嘛（U+561B） or 請問 — the same silence D650 measured for 有冇. The static lane drops every row that
+does not hit the residue's tokens, so a residue carrying 「吗」 divides the whole pool by a word no
+row can meet. 吧（U+5427） carries 28/43 rows and 能（U+80FD） carries 2 offerings — both census'd
+0/0-able but NOT added, because the measurement says they are not silence.
+
+**The repair.** The six measured words join `_QUESTION_FRAME` — the same table the Cantonese frame
+uses (`有咩`, D657's `有沒有`). One of them broke on the way: my first cut of the opening formula
+landed as 请问（U+8BF7 U+95EE）, which the canonical text can never hold — `canonical('请问')` is
+`請問`（U+8ACF U+554F）, so the alternative never matched and no row could trigger it. The entry
+lands as the canonical pair; a Simplified user never wrote the Traditional spelling, only the
+boundary can fold them, which is the whole of D415/D417 read one table at a time.
+
+**The gate.** `test_a_question_frame_is_not_a_search_term.py`: FRAME census widens 12 → 18 words
+(lives on the live plane; skips without `NEXUS_TEST_DATABASE_URL`); two frame rows pin 请问 and
+有没有拉麵馆吗 as empty match text; ten content rows pin the residue spelling — `有什么好吃的吗`
+keeps 好吃， `有没有早茶吗` keeps 早茶， `有早茶啊/呢/咯/嘛` keeps 有早茶， `好吃的呢` keeps
+好吃， `有什么热饭吗` keeps 热饭， `请问哪里有吃饭的地方` keeps 地方. The file passes 40 legs
+(5 DB-skipped). The match_text/inline-span sweep — 1,236 passed, 141 DB-skipped; mypy 61 files
+clean; ruff clean.

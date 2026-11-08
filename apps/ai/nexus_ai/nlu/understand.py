@@ -883,7 +883,14 @@ _QUESTION_FRAME_COMPOUND = re.compile(
     r"(?:邊度|哪裡|哪里|邊區|邊間|哪間)\s*(?:有(?:得(?:食|買|玩|做))?|可以)",
     re.IGNORECASE)
 _QUESTION_FRAME = re.compile(
-    r"(?:有冇|有沒有|有咩|有什么|邊間|哪間|邊度|哪裡|哪里|邊個|邊區|推介|推薦|附近|近我|我附近)",
+    r"(?:有冇|有沒有|有咩|有什么|邊間|哪間|邊度|哪裡|哪里|邊個|邊區|推介|推薦|附近|近我|我附近"
+    # D790: the discourse particles and the opening formula - each measured 0 of 520 published
+    # merchants and 0 of 5,538 published offerings to carry it (tmp census 2026-11-09, read-only),
+    # so a residue carrying one divides every row in the static lane by words no row can meet.
+    # They are CJK-only and carry no position, written as themselves - 吗 (U+5417), 啊 (U+554A),
+    # 呢 (U+5462), 咯 (U+55DC), 嘛 (U+561B) and 请问 (U+8BF7 U+95EE). 吧 (U+5427) and 能 carry rows
+    # and are NOT in this table by measurement.
+    r"|吗|啊|呢|咯|嘛|請問)",
     re.IGNORECASE)
 _MATCH_CORE_EDGES = re.compile(r"^[\s嘅的，,、。?？]+|[\s嘅的，,、。?？]+$")
 

@@ -397,6 +397,11 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D789** `有什么` joins `_QUESTION_FRAME` — the Mandarin twin of `有咩` / D657's `有沒有`. Empty
   match text on the ten framed Mandarin rows measured; `好吃` and `热饭` survive as content; bare
   `什么` is untouched by construction.
+- **D790** the discourse particles and the opening formula join the frame, measured 0 of 520
+  merchants and 0 of 5,538 offerings (吗/啊/呢/咯/嘛/請問); 吧/能 carry rows and stay out by the
+  same measurement. The first cut of 請問 broke the canon (it matched nothing); the entry lands
+  canonical-only, the frame gate pins the measured spelling, the residue keeps the user's own
+  (D635).
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

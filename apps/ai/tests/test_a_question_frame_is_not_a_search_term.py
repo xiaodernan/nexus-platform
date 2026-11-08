@@ -20,7 +20,7 @@ deliberately narrow. NOT stripped, each for a measured reason:
 - 搵 / 找 / 有 - verbs; 有 especially, because 有機 (organic) is content.
 - 安靜 - a preference that IS content (`有冇安靜嘅咖啡店` keeps `安靜`).
 
-The gate walks the same twelve words against the live corpus, in the shape D629's time-surface leg
+The gate walks the same eighteen words against the live corpus, in the shape D629's time-surface leg
 uses: if a re-seed ever writes one of them into a description, the strip is no longer provably free
 and the leg reddens rather than letting the assumption go stale.
 
@@ -44,7 +44,9 @@ from nexus_ai.search.service import plan_from_intent
 DB_URL = os.environ.get("NEXUS_TEST_DATABASE_URL", "").strip()
 TOP_K = 10
 
-FRAME = ["有冇", "有沒有", "有咩", "有什么", "邊間", "哪間", "邊度", "哪裡", "邊個", "邊區", "推介", "推薦"]
+FRAME = ["有冇", "有沒有", "有咩", "有什么", "邊間", "哪間", "邊度", "哪裡",
+         "邊個", "邊區", "推介", "推薦",
+         "吗", "啊", "呢", "咯", "嘛", "請問"]
 
 
 def _plan(text):
@@ -57,6 +59,10 @@ def _plan(text):
     # D789: the Mandarin twin, blanking at the same words.
     "有什么推荐", "有什么推介", "有什么好推介", "有什么好推荐", "有什么好咖啡店",
     "有什么餐厅", "有什么拉麵馆", "有什么推介咖啡店", "吃什么拉麵", "附近有什么好推介",
+    # D790: the discourse particles and the opening formula - measured 0 of 520 merchants and
+    # 0 of 5,538 offerings carry them; the question frame blanks them (`tmp`-free live census
+    # 2026-11-09, read-only).
+    "有没有拉麵馆吗", "请问有没有拉麵",
 ])
 def test_the_frame_leaves_the_match_text(text):
     assert _plan(text).match_text == "", (text, _plan(text).match_text)
@@ -80,6 +86,17 @@ def test_the_frame_leaves_the_category_it_framed():
     ("有什么好吃的", "好吃"),
     ("附近有什么好吃的餐厅", "好吃"),
     ("有什么热饭", "热饭"),
+    # D790: the discourse particle leaves, the word in front of it keeps its spelling.
+    ("有什么好吃的吗", "好吃"),
+    ("有没有早茶吗", "早茶"),
+    ("有早茶吗", "有早茶"),
+    ("有早茶啊", "有早茶"),
+    ("有早茶呢", "有早茶"),
+    ("有早茶咯", "有早茶"),
+    ("有早茶嘛", "有早茶"),
+    ("好吃的呢", "好吃"),
+    ("有什么热饭吗", "热饭"),
+    ("请问哪里有吃饭的地方", "地方"),
 ])
 def test_a_word_this_unit_does_not_own_survives(text, left):
     # D657 (§654) took two of the four rows this leg shipped with: 附近 and 有 are the LOCATIVE
