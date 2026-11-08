@@ -105,6 +105,8 @@ tmp/
 .workbuddy-ai/
 .scratch/
 .pytest_tmp_*/
+# The seed lane's documented scratch (PLAN.md: a mvnlock is taken before any mvn run).
+.tmp-p4/
 
 # ------------------------------------------------------------------ editors / OS
 .idea/
