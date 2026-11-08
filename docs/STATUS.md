@@ -35618,3 +35618,25 @@ unmapped deliberately, noted here rather than forced.
 
 **Measured.** eval harness suites + CLI: eval-suites + CLI + hygiene + cue-grammar — 230 passed;
 mypy 61 files clean; ruff clean.
+
+
+## 806. D806 · the AI-lane monolith test suite runs clean to 40%, but the clock won
+
+**The door.** The full test suite (`pytest` over the entire `tests/` directory) has been
+started several times in this session and never crossed the CI-authorised 90 minute cap. The
+first-window result observed (this session's second attempt, killed at 90m): **39-40% of the
+suite had run, zero failures recorded, zero errors, zero DB skips.**
+
+**Why this is not a claim of green.** The suite takes longer than any single window the
+session gets to hold it, so the figure is a cumulative-checkpoint reading rather than a
+completion. The 1,224-test `match_text`/inline-span sweep passes green (matched through the
+CJK digest every earlier unit measured), the `test_first_turn_cues_are_words` layer passes 181,
+the safety/eval suites remain 100% green; `mypy` 61 files clean; `ruff` clean. The suite's
+behaviour beyond 40% is unmeasured by this run; the next natural checkpoint is a fresh start
+with a bigger budget or a per-file sweep of remaining regions.
+
+**Measured so far.** intent_v1 69 / safety_injection_v1 47 / hygiene 14 legs / injection 24 legs /
+cue-grammar 181 / match_text 1,236 green.
+
+**Final observation.** Continuing to run scoped sweeps is the strategy this unit's ledger item
+records honestly — full monolith green is NOT proven, cumulative-observed 40% is.

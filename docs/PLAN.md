@@ -449,6 +449,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D805** the English sort superlatives land where the corpus is silent: `cheapest` /
   `affordable` / `most affordable` → price_low, `best rated` / `top rated` / `highest rated` →
   rating, `most popular` → trending; intent_v1 61 → 69; eight measured cases pinned.
+- **D806** the monolith suite killed at 90m, observed state: ~40% run, 0 failures, 0 errors;
+  honestly not a "suite is green" claim; scoped sweeps remain green throughout the session.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
