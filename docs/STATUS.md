@@ -35450,3 +35450,22 @@ is byte-for-byte identical.
 **Measured.** `apps/ai/tests/test_a_latin_cap_beside_a_party_is_part_of_it.py` — 57 passed,
 11 DB-skipped (identically green before this edit; the deletion is behavior-neutral in the
 table). mypy 61 files clean; ruff clean.
+
+
+## 798. D798 · the case files are byte-clean for the census: LF-only is pinned, not assumed
+
+**The door.** When the two case files were widened (intent_v1 47 → 55, safety_injection_v1
+32 → 38), the original rows carried CRLF while the appended rows landed LF-only, and
+git's own `LF will be replaced by CRLF` warning at commit time made the mismatch silent in
+the diff. Close enough to confuse the one invariant that reads these files byte-wise: HEAD
+stores both LF-only. The mixed state was honest — Python `Add-Content` on Windows and my
+LF-only appends both wrote their own truth, and nobody pinned the difference.
+
+**The repair.** The working tree's two case files were normalised to LF (the rows go to
+match HEAD byte-for-byte), and one leg was added to `test_the_eval_case_files_keep_their_shape.py`
+pinning the invariant: neither file may carry a CR byte. 14 legs pass (was 13).
+
+**Measured.** The LF-only leg reds on either file the day any extra CR sneaks in; the
+whole corpus hygiene file 14 passed; the commit path is clean of the `LF will be replaced
+by CRLF` warning for the eval data, and git status now shows no modifications for either.jsonl
+file at HEAD.

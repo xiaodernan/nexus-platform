@@ -126,3 +126,12 @@ def test_both_files_decode_as_utf_8():
     for suite in ("intent_v1", "safety_injection_v1"):
         raw = (Path(__file__).parent.parent / "nexus_ai" / "eval" / "data" / f"{suite}.jsonl").read_bytes()
         raw.decode("utf-8")
+
+
+def test_both_case_files_are_lf_only():
+    # Mixed line endings silently parse but corrupt byte-level gates that compare against HEAD
+    # (e.g. tmp-census byte sums). Both case files are LF-only in the store, pinned here so a
+    # future stray CR byte fails the gate instead of drifting the file bytes unnoticed.
+    for suite in ("intent_v1", "safety_injection_v1"):
+        raw = (Path(__file__).parent.parent / "nexus_ai" / "eval" / "data" / f"{suite}.jsonl").read_bytes()
+        assert b"\r" not in raw, f"{suite}.jsonl carries a CR byte - the case file is not LF-only"

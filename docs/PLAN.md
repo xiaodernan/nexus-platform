@@ -428,6 +428,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   measured cases.
 - **D797** `_PARTY_CUE` sheds the duplicate `起碼` inherited from D645 — the table matches the
   same text, the same spans, byte-for-byte; 57 party-cap cases still green.
+- **D798** both case files normalised to LF (HEAD stores them that way); the hygiene gate pins
+  it: 14 legs pass, the case-file pair will never carry mixed endings again.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
