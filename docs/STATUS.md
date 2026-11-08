@@ -35432,3 +35432,21 @@ moves with the widening; it pins 42 now.
 
 **Measured.** eval harness suites + CLI: 84 passed combined across the hygiene file, the two
 suites, the CLI and the per-module contract; mypy 61 files clean; ruff clean.
+
+
+## 797. D797 · the party-cue table sheds the duplicate it has carried since D645
+
+**The door.** `_PARTY_CUE`'s Traditional CJK floor spellings read `最少|至少|起碼|起碼` —
+the same `起碼` written twice, a byte-level artifact of the code point as the table landed in
+D645 (Simplified `起码` never had a slot in this table at all; the user's Simplified text is
+canonicalised to this spelling at the boundary, D415/D417, so a table entry for it would be dead
+by construction and the census gate flagged the spelling I tried).
+
+**The repair.** One occurrence of the duplicated `起碼` (U+8D77 U+78BC) removed. `_PARTY_CUE`
+reads `最少|至少|起碼` — identical match behaviour: whichever spelling maps binds first now, the
+sample is preserved only once, and the span the table feeds to PARTY_SPAN_RE / _PARTY_LEAD_ONLY
+is byte-for-byte identical.
+
+**Measured.** `apps/ai/tests/test_a_latin_cap_beside_a_party_is_part_of_it.py` — 57 passed,
+11 DB-skipped (identically green before this edit; the deletion is behavior-neutral in the
+table). mypy 61 files clean; ruff clean.

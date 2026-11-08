@@ -195,7 +195,7 @@ _NO_DURATION = (r"(?!\s*(?:hours?|hrs?|minutes?|mins?|days?|weeks?|months?|years
 #: words with no party behind them and keeps all of itself, which is D636's reason for refusing a bare
 #: Latin cue as residue.
 _PARTY_CUE = (r"(?:(?:at\s+most|no\s+more\s+than|not\s+more\s+than|up\s+to|less\s+than|"
-              r"at\s+least|more\s+than|minimum|min\.?|max(?:imum)?\.?|最少|至少|起碼|起碼)\.?\s*)?")
+              r"at\s+least|more\s+than|minimum|min\.?|max(?:imum)?\.?|最少|至少|起碼)\.?\s*)?")
 #: What may stand between the sentence and the number - the noun a party belongs to (「table for」,
 #: 「party of」) - and it is OPTIONAL, so a bare 「12 people」 matches exactly as it did before. The cue
 #: comes AFTER it, which is what makes 「table for up to 6 people」 one span.

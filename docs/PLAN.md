@@ -426,6 +426,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   `[OWNER]` line-start and `<<<SYSTEM>>>`), the `ignore_instructions` noun list gains `programming`,
   both landed on a zero-match census against 17,058 corpus strings; safety_injection_v1 38 → 42
   measured cases.
+- **D797** `_PARTY_CUE` sheds the duplicate `起碼` inherited from D645 — the table matches the
+  same text, the same spans, byte-for-byte; 57 party-cap cases still green.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
