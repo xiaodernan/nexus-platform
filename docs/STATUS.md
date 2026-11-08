@@ -34617,3 +34617,77 @@ contains the `vietnamese` leaf). No other vocabulary added; no premise widened.
 
 **Measured.** `test_the_cuisine_bridge_speaks_the_seeds_leaves.py` 27 passed; all 83 seed-
 adjacent suites green. `mypy nexus_ai` / `ruff check nexus_ai` clean.
+
+
+## 762. D762 · the no-dead-constants gate folded (D755 tail)
+
+**The gap.** `test_no_dead_constants.py` failed on the D755 tip: `TS_CONFIG_ALLOWLIST`
+(search/sql.py) was written by D755 and read by nothing — `_tsconfig` had moved to an inline
+map. Two names existed read only by the tests and none of them declared (D503): the
+underscore-aliased `match_core` import in `search/service.py` hid the product's own read
+from the census, and the promises `OPEN_LATE_CUES` (timeparse) and `party_size_text`
+(cards.py, D727's shipped helper for the grid row the web lane's `rowLabels` still blocks)
+had no declaration.
+
+**The fix.** `_TS_CONFIG_MAP` is now the module-level table `_tsconfig` reads (the constant
+is renamed and used, no behaviour change). `match_core` is imported un-aliased in
+`search/service.py`, so the product genuinely reads it. `OPEN_LATE_CUES` and
+`party_size_text` are declared in `test_no_dead_constants.py`'s `DECLARED_EXPORTS` with the
+reason each kept.
+
+**Measured.** 3 passed across the gate. `mypy nexus_ai` and `ruff check .` clean.
+
+- readers: nothing new shipped; one dead constant replaced by a live one, one real product
+  read unhidden, two documented promises.
+
+## 763. D763 · the constraint-lane clause gate declares the Vietnamese cuisine row (D704 tail)
+
+**The gap.** `test_the_constraint_lane_reads_the_clause.py::test_the_surface_form_is_read_
+as_its_canon_value[越南菜/越式]` failed identically at clean HEAD (verified by stash): the
+D704 cuisine vocabulary carries `vietnamese`, and `_add_cuisine_refusal_surfaces` folds its
+surfaces into the canon and the cuisine row — but the clause gate's `KEY_OF`, which
+declares the lane each value belongs to, had not gained the D704 row. `KEY_OF["vietnamese"]`
+did not exist, so the refusal surfaces a user could write wrote a fact no lane could claim.
+
+**The fix.** `KEY_OF["vietnamese"] = "cuisine_avoid"` with a comment tying it to the D704
+tail (same declaration class as the ten siblings D584 wrote). No other value touched; no
+premise widened.
+
+**Measured.** 286 passed across the gate (was 2 failing).
+
+- readers: a user who refuses 越南菜/越式 now writes a `cuisine_avoid:vietnamese` constraint
+  the gate can see.
+
+## 764. D764 · the static lane's geo answer honours the row's own computed distance
+
+**The gap.** `test_the_district_a_card_prints_is_filed_under_a_subject_the_answer_never_loads.py`
+failed identically at clean HEAD (13 of 13 DB-free cases): "the fixture lane answered nothing".
+The fixture rows state no `location_points` but do state `meters` — the exact shape
+`build_merchant_query`'s output carries under a geo request (haversine over the row's picked
+location, NULL elsewhere). `_filter_static` computed distances from `location_points` only,
+saw a row with no points, and dropped a row the live geo answer says is ~468 m away.
+
+**The fix.** When the row states no `location_points` but states `meters` as a number, the
+static lane uses it (the live SQL emits `meters` only for rows sitting a location in the bbox,
+which is exactly what `ORDER BY meters ASC` orders by). A row that states neither a point nor
+a district is dropped as before (D663); a row that states a district but no point answers in
+the district's radius as before.
+
+**Measured.** 15 passed across the gate (13 detector reds folded). mypy and ruff clean.
+190 passed across geo/district/search-cal suites, 0 regressions.
+
+## 765. D765 · the typed `cuisine/vegetarian` no longer shadows the D394 column matcher
+
+**The gap.** `test_the_intent_cuisine_reads_the_rows_columns.py` failed identically at clean
+HEAD (4 cases): the D702 branch read `cuisine_vegetarian` from the JSONB and `continue`d
+before the D394 generic column matcher saw the row's own `tags`/`category_primary`. The
+fixture (and any merchant the seed leaves without the stand-in attribute) scored 0.5 on a
+cuisine its columns refused or answered — the exact D522 shape D702 was written against.
+
+**The fix.** The D702 branch now answers only when `cuisine_vegetarian` is present as True
+or False; when the row is silent it falls through to the D394 generic `cuisine_matches`
+matcher, whose column read is honest evidence when the JSONB holds nothing (D394/D522). No
+other branch touched.
+
+**Measured.** 12 passed across the gate. 83 cuisine/vegetarian/spicy/cooking suites green.
+mypy and ruff clean.

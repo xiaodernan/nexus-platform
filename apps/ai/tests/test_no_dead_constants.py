@@ -62,6 +62,9 @@ DECLARED_EXPORTS = frozenset({
     "reset_settings_cache",  # config.py - the settings cache's resetter
     "reviews_for",         # search/sql.py - the review rows for a set of merchants
     "time_today",          # search/sql.py - the SQL's local-time helper
+    # D762: the two the gate still refused. Both are promises, not accidents:
+    "OPEN_LATE_CUES",      # nlu/timeparse.py - the late-evening spelling table the test gates hold
+    "party_size_text",     # search/cards.py - D727 helper shipped for the grid row (web rowLabels)
 })
 
 

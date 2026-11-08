@@ -34,7 +34,7 @@ from nexus_ai.nlu.lexicon import (
     cuisine_matches,
 )
 from nexus_ai.nlu.timeparse import HK_TZ
-from nexus_ai.nlu.understand import match_core as _match_core
+from nexus_ai.nlu.understand import match_core
 from nexus_ai.search import sql as S
 from nexus_ai.search.cards import build_card, compute_open, attach_price_staleness
 from nexus_ai.search.ranking import (
@@ -432,6 +432,19 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         # items for "sha tin" until this branch existed (`tests/test_stream.py`).
         if geo:
             metres = _static_nearest_metres(r, geo)
+            if metres is None:
+                # The row itself may state a computed distance: `build_merchant_query`'s output
+                # under a geo request carries `meters`, set only for rows that sit a location in
+                # the bbox (`sql.py`'s haversine over the picked location, NULL elsewhere). A
+                # row that states no `location_points` but does state `meters` is a row the live
+                # lane kept at that distance, so the static lane answers identically instead of
+                # dropping a row the geo lane's own answer says is here.
+                row_metres = r.get("meters")
+                if row_metres is not None:
+                    try:
+                        metres = float(row_metres)
+                    except (TypeError, ValueError):
+                        metres = None
             if metres is None:
                 if not (filters.get("district") and (r.get("district") or r.get("districts"))):
                     continue
@@ -1006,7 +1019,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
         from nexus_ai.nlu.lexicon import district_surfaces
 
         surfaces += district_surfaces(plan.query_text, _field(location, "value"))
-    plan.match_text = _match_core(plan.query_text,
+    plan.match_text = match_core(plan.query_text,
                                   strip_time=bool(intent is not None and intent.time),
                                   strip_surfaces=surfaces)
     caller_named_category = bool(_plain(filters).get("category"))
@@ -1046,7 +1059,7 @@ def plan_from_intent(intent: Intent | None, *, query: str | None = None,
 
         leaf_words = leaf_surfaces(plan.query_text, str(out["category"]))
         if leaf_words:
-            plan.match_text = _match_core(plan.query_text,
+            plan.match_text = match_core(plan.query_text,
                                           strip_time=bool(intent.time),
                                           strip_surfaces=surfaces + leaf_words)
     _canonical_district(out)
@@ -2130,9 +2143,11 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 # D702: `cuisine/vegetarian` emitted by the NLU when a user types
                 # "素食" etc. maps to the merchant's `cuisine_vegetarian` boolean
                 # attribute. The stored branch reads the same attribute; this is
-                # the transient lane's mirror. Generic cuisine_matches would check
-                # for a "vegetarian" tag which no merchant carries.
-                if str(pref_kind) == "cuisine" and str(pref_value) == "vegetarian":
+                # the transient lane's mirror. The D394 generic matcher below reads the
+                # row's own columns, and only answers when this attribute silences itself:
+                # it proves nothing either way, and the row statement is more than silence.
+                if (str(pref_kind) == "cuisine" and str(pref_value) == "vegetarian"
+                        and attrs.get("cuisine_vegetarian") in (True, False)):
                     val = attrs.get("cuisine_vegetarian")
                     score = None
                     if val is True:

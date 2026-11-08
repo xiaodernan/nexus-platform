@@ -80,6 +80,11 @@ KEY_OF = {
     "thai": "cuisine_avoid",
     "vegetarian": "cuisine_avoid",
     "western": "cuisine_avoid",
+    # D704 tail: the Vietnamese vocabulary landed after the D584 table was written, so
+    # `_add_cuisine_refusal_surfaces` folds its surfaces into the cuisine row/column and the
+    # gate needs the same declaration. The fact IS a cuisine the corpus tags, like its 10
+    # siblings.
+    "vietnamese": "cuisine_avoid",
     "pork": "diet_avoid",
     "beef": "diet_avoid",
     "seafood": "diet_avoid",

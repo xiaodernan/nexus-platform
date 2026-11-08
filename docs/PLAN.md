@@ -318,6 +318,15 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 
 - **D761** the Vietnamese cuisine bridge row added (`vietnamese` leaf), folding the
   failing `test_the_cuisine_bridge_speaks_the_seeds_leaves.py` detector red (D704 tail).
+- **D762** the no-dead-constants gate folded: `_TS_CONFIG_MAP` is now the live constant
+  `_tsconfig` reads, `match_core` imported un-aliased, `OPEN_LATE_CUES`/`party_size_text`
+  declared with reasons (D464 pattern).
+- **D763** the constraint-lane clause gate declares `vietnamese` in `KEY_OF`
+  (`cuisine_avoid`) — the D704-tail D584-side missing declaration.
+- **D764** the static lane's geo answer honours a live-shaped row's own `meters`
+  (D609 gate: 13 detector reds folded).
+- **D765** the typed `cuisine/vegetarian` D702 branch answers only when the stand-in
+  attribute speaks; the D394 column matcher answers when it is silent (D522 shape).
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
