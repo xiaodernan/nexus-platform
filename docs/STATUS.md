@@ -35682,3 +35682,20 @@ us the data, and they never met for the allergen class. Whether they should meet
 nozzle is the right one (new cuisine leaves `pork` / `egg` / `shellfish`, a new allergen axis in
 `ASPECT_AVOID`, or a new attribute leg in both SQL paths and the fixture) — is the owner's call,
 not the AI lane's. Filed as measured evidence, not "fixed" in this lane.
+
+
+## 808. D808 · the AI.md §2 example sentence is the test for itself, not decoration
+
+**The door.** `docs/AI.md` §2 pins the sentence `帮我找沙田适合情侣约会的餐厅，预算500港币，安静一点，
+周六晚上` — and `intent_v1` named the case `product-e2e-sentence` but asserted only
+`intent: discover_merchant`, the district, and two preferences. The AI.md text makes five
+promises about this sentence; the case pinned three and held out the other two (budget, category).
+
+**The repair.** The case gains the missing assertions, all measured at HEAD:
+`category: restaurant`, `budget.max: 500.0`, `currency: HKD`, `per: party`. The two preferences
+`ambience/quiet` and `occasion/date` unchanged. The `must_not: [party_size]` stays — the §8
+discipline the case asserts is never-invent-a-party-size does not change just because the
+sentence is canonical.
+
+**Measured.** `intent_v1` 69/69 · gates PASS (`accuracy` 1.0000, `hallucination_rate` 0.0000).
+No code change; one line in one case file.

@@ -460,6 +460,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   constraint writer maps the user's word to an ASCII value, the seed carries ingredient-allergen
   families, and the two never meet today beyond `spicy ↔ hotpot/korean/thai/indian` and
   `seafood ↔ seafood-grill`. Filed as evidence, not a code change.
+- **D808** `product-e2e-sentence` (the AI.md §2 sentence) gains the three remaining assertions
+  it always promised: `category: restaurant`, `budget.max: 500` (currency HKD, per party);
+  69/69 green; no code change.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 
