@@ -904,7 +904,7 @@ _EAT_FRAME = re.compile(
 _EVALUATION_ONLY = re.compile(
     r"(?:%s)+" % "|".join(re.escape(c) for c in EVALUATION_CUES), re.IGNORECASE)
 
-_SHOP_SUFFIX_AFTER = re.compile(r"(?:店|舖|鋪|shop|store)(?![a-z])", re.IGNORECASE)
+_SHOP_SUFFIX_AFTER = re.compile(r"(?:店|舖|鋪|shop|store|館|馆)(?![a-z])", re.IGNORECASE)
 
 #: D644: the PLURAL LICENCE. `CATEGORY_SYNONYMS` writes the singular (`restaurant`, `cafe`, `shop`),
 #: and the strip blanks exactly the span a surface occupies - so a plural sentence kept its own

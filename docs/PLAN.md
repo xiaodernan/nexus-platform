@@ -391,6 +391,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   ids unique and slugs, known keys only, expect/must_not keys drawn from the extractor's own keyset,
   expect ∩ must_not = ∅, UTF-8 decode, and both case counts. The eval harness's own files now carry
   their invariant.
+- **D788** `_SHOP_SUFFIX_AFTER` absorbs 館/馆 after a removed surface (the D639 class on the other
+  script). 「有没有拉麵馆」 and 「有没有拉麵館」 reach the restaurant lane with an empty match text;
+  the no-surface rows (「饭馆」, 「燒味館」) are unchanged by construction.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

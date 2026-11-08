@@ -47,6 +47,13 @@ TOP_K = 10
     ("火鍋店", "hotpot"),
     ("平價點心店", "dimsum"),
     ("燒味店", None),
+    # D788: the same suffix in the other script - 「拉麵館」 is the Traditional noun the Simplified
+    # user knows as 馆, and the leaf rule had it from the start (match_leaf answers ramen on both).
+    ("拉麵館", "ramen"),
+    ("拉麵馆", "ramen"),
+    ("火鍋館", "hotpot"),
+    ("點心館", "dimsum"),
+    ("燒味館", None),
 ])
 def test_a_generic_shop_suffix_does_not_refuse_the_leaf(text, leaf):
     assert match_leaf(text) == leaf, (text, match_leaf(text))
@@ -71,6 +78,18 @@ def test_a_real_head_noun_still_refuses_the_leaf(text, leaf):
     ("寵物店", "pet", "", "店 is the pet bucket's own spelling here, and it leaves with it"),
     ("花店", "retail", "花", "no leaf exists, so the 花 stays content"),
     ("燒味店", "retail", "燒味", "no 燒味 leaf in the taxonomy - filed, not invented"),
+    # D788: the same absorb in the other spelling - the restaurant/café surfaces are answered by
+    # their filter, and the 館/馆 word the user wrote with them leaves with them (measured
+    # 2026-11-09: 「有没有拉麵馆」 carried 馆; it carries nothing now).
+    ("有没有拉麵馆", "ramen", "", "the existential frame in Simplified, the surface and the noun both leave"),
+    ("有没有拉麵館", "ramen", "", "the Traditional twin"),
+    ("拉麵馆", "ramen", "", "the surface and its trailing noun leave together"),
+    ("火鍋館", "hotpot", "", "the same"),
+    ("點心館", "dimsum", "", "the dim-sum surface and the suffix leave together"),
+    ("旺角嘅拉麵館", "ramen", "", "the district and the compound both leave"),
+    ("平價拉麵館", "ramen", "平價", "a content word survives"),
+    ("燒味館", None, "燒味館", "no 燒味 leaf in the taxonomy - filed, not invented"),
+    ("饭馆", None, "饭馆", "no restaurant surface at all - nothing is removed"),
 ])
 def test_the_plan_strips_the_suffix_and_keeps_the_content(text, filter_, left, why):
     plan = plan_from_intent(validate_intent(extract_intent_dict(text)), query=text, limit=TOP_K)

@@ -35164,3 +35164,31 @@ without running its harness is a diff the reader can see.
 **Measured.** 13 passed at HEAD. The corpus at the time: intent_v1 55 cases, safety_injection_v1
 27, both files clean of duplicate ids and unknown keys, expect/must_not disjoint. The gate reddens
 by construction on any future case that forks the shape — that is the whole of it.
+
+
+## 788. D788 · the Simplified Mandarin noun 馆/館 leaves with the surface it follows, as 店 always has
+
+**The gap.** Measured 2026-11-09 (`tmp`-free probe against the live plan): a Simplified Mandarin user
+who wrote「有没有拉麵馆」reached the restaurant lane correctly — intent `discover_merchant`, bucket
+`restaurant`, leaf `ramen` — but the match text kept `馆`. `_SHOP_SUFFIX_AFTER` (the D639/D644 suffix
+absorb, which blanks a generic place-noun that FOLLOWS a removed surface) carried only 店|舖|鋪|shop|store,
+and the same regex ran for the Cantonese/Traditional spelling only accidentally. The residue `馆`
+was a search term nobody wrote — 246 of the published rows carry it, the same division D639 fixed
+for 店, on exactly one code point the table did not name.
+
+**The fix.** `_SHOP_SUFFIX_AFTER` gains 館 and 馆 (U+9928, U+9986, the Traditional and Simplified pair).
+The absorb runs only immediately after a span the surfaces just removed, so a query with no restaurant
+surface (「饭馆」, 「食館」, 「烧味馆」) is untouched by construction — the measured residue for all
+three is unchanged, and each was added to the gate to prove it.
+
+**The gate.** `test_a_generic_shop_suffix_is_not_a_head_noun.py` widened with the measured rows:
+`有没有拉麵馆` / `有没有拉麵館` / `拉麵馆` → `ramen`, empty match text; `火鍋館` → hotpot;
+`點心館` → dimsum; `旺角嘅拉麵館` → ramen + district Mong Kok; `平價拉麵館` → ramen + 平價 survives;
+`燒味館` / `饭馆` → no surface, no removal, all of it searched. The file's own legs are green
+(31 passed, 5 DB-skipped), its live-DB page pair is untouched by the change (no live check on this
+plane: `NEXUS_TEST_DATABASE_URL` is unset).
+
+**Measured.** The match_text/inline-span sweep (the 33 gate files reading `match_core`/`match_text`,
+plus the suffix file itself) — 1,210 passed, 141 DB-skipped; `test_the_word_that_named_the_category…`
+and vocabulary census 244 passed; mypy 61 files clean; ruff clean. Full monolith suite not re-run —
+the sweep is the coverage this unit certifies (its budget elapsed 1h55m last attempt for 35%).
