@@ -38,7 +38,7 @@ INJECTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("ignore_instructions", re.compile(
         r"\b(?:ignore|disregard|forget|discard|override|command|order|force)\b"
         r"[\s\w',-]{0,30}?"
-        r"\b(?:instructions?|rules?|prompts?|directives?|guidelines?)\b",
+        r"\b(?:instructions?|rules?|prompts?|directives?|guidelines?|programming)\b",
         re.IGNORECASE)),
     ("ignore_instructions_zh", re.compile(
         r"(?:忽略|無視|无视|不要理会|不要理|忘记|忘卻|忘却|忘掉)"
@@ -79,6 +79,8 @@ INJECTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("instruction_prefix", re.compile(
         r"(?:^\s*(?:system|assistant|developer)\s*[:：]"
         r"|<\|im_start\|>|<\|im_end\|>|\[\s*INST\s*\]|<<SYS>>"
+        r"|^\s*\[(?:SYSTEM|ADMIN|OWNER)\]"
+        r"|<<<SYSTEM>>>"
         r"|\binstructions?\s*:\s*(?:you|忽略|请|請))",
         re.IGNORECASE | re.MULTILINE)),
     ("jailbreak_mode", re.compile(

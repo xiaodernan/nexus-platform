@@ -119,7 +119,7 @@ def test_the_case_files_are_the_counts_measured():
     # The suite's bounds are the ones CI names; the case COUNTS are part of the same promise,
     # and the way a case files for appeal is by being added - loudly failure, not silently skipped.
     assert len(_load("intent_v1")) == 55
-    assert len(_load("safety_injection_v1")) == 38
+    assert len(_load("safety_injection_v1")) == 42
 
 
 def test_both_files_decode_as_utf_8():

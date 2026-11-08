@@ -422,6 +422,10 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **D795** the scanner's own per-module gate carries the strengtheners D791/D794 added: authority
   claims, `忘掉` modifier permutation, disregard-en, developer-model, the full jailbreak family,
   the fullwidth prefix, and a ten-line benign control set that stays unflagged; 13 → 24 legs.
+- **D796** `instruction_prefix` gains the `[SYSTEM]`-style lane openers (`[SYSTEM]`/`[ADMIN]`/
+  `[OWNER]` line-start and `<<<SYSTEM>>>`), the `ignore_instructions` noun list gains `programming`,
+  both landed on a zero-match census against 17,058 corpus strings; safety_injection_v1 38 → 42
+  measured cases.
 
 All ledger checks PASS. Contract drift: 117 parsed / 109 served / no gap.
 

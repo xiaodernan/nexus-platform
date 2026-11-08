@@ -35402,3 +35402,33 @@ refusals, not clever guesses.
 **Measured.** 24 passed (was 13). The neighbouring gates (the corpus-shape hygiene file, the two
 eval harness suites, the manifest tests, the framing parity gate) all stay green, 95 passed
 combined; mypy untouched (test-only change); ruff clean.
+
+
+## 796. D796 · the [SYSTEM]-tagged prefix and the \`programming\` noun join the adversarial bucket, and the gate answers
+
+**The gap.** The round-4 battery at HEAD: ten more unflagged shapes — the interesting class was
+the one the existing `instruction_prefix` half of the table already knows, the `[SYSTEM]`-style
+lane-opening tags, and the `programming` exfil noun. Both measured zero against the corpus, both
+land as part of `instruction_prefix` / `ignore_instructions`, and the safety eval suite gains the
+four rows that prove it.
+
+**The fix.** `ignore_instructions` gains `programming` as a noun (an unflagged-phrase battery
+finding). `instruction_prefix` gains two alternatives: `^\s*\[(?:SYSTEM|ADMIN|OWNER)\]` and
+`<<<SYSTEM>>>`. Every other row of the battery stays unflagged, including `my password is...`,
+`order your set meal at the counter`, `our system is on-premise`, and benign `[SYSTEM]`-shaped
+existing copy (there was one: the sponsor-program line now flags, which is the point §50-52 want
+on this fence). The scanner still refuses every benign phrase the §50 controls enumerate.
+
+**The census.** Both patterns: 0 matches against the full 17,058-string corpus (merchants
+display_name/description, offerings across name/description + reviews full-text). The near-miss
+`my password is hk99999` and friends stay unflagged — passwords are not this lane to catch; the
+§50 gate is instruction-shaped language, and this landed precisely that.
+
+**The gate.** safety_injection_v1 38 → 42 measured cases — `prefix-tag-system`,
+`prefix-triple-system` (instruction_prefix twice), `ignore-override-programming`,
+`ignore-ignore-programming` (ignore_instructions twice). `injection_containment` 33/33,
+`envelope_containment` 3/3, `false_positive_rate` 0/6. The case-file hygiene gate's safety pin
+moves with the widening; it pins 42 now.
+
+**Measured.** eval harness suites + CLI: 84 passed combined across the hygiene file, the two
+suites, the CLI and the per-module contract; mypy 61 files clean; ruff clean.
