@@ -168,7 +168,7 @@ def plane():
                   internal_token="", db_statement_timeout_ms=120000)
 
     async def _go():
-        db = await db_pool.connect(st, force_new=True)
+        await db_pool.connect(st, force_new=True)
         try:
             out = {}
             for upper, range_ in PAIRS:

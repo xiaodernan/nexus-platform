@@ -34502,15 +34502,103 @@ candidate lane did not.
   CJK run as one opaque token; §111 (Chinese is the primary language) is now honored by the
   text search lane.
 
-## 756. D756 �� Fix ruff F821 undefined names in nexus_ai.search.sql (clears nexus_ai ruff)
 
-**The gap.** uff check nexus_ai reported 2 F821 errors in search/sql.py:
-Sequence (line 267, cuisine_slugs annotation) and UUID (line 978,
-user_preferences_for annotation) were referenced without imports. With
-rom __future__ import annotations these were runtime-harmless but flagged by ruff.
+## 756. D756 · Fix ruff F821 undefined names in nexus_ai.search.sql (clears nexus_ai ruff)
 
-**The fix.** Added Sequence to rom typing import ... and rom uuid import UUID.
+**The gap.** `ruff check nexus_ai` reported 2 F821 errors in `search/sql.py`:
+`Sequence` (line 267, `cuisine_slugs` annotation) and `UUID` (line 978,
+`user_preferences_for` annotation) were referenced without imports. With
+`from __future__ import annotations` these were runtime-harmless but flagged by ruff.
+
+**The fix.** Added `Sequence` to `from typing import ...` and `from uuid import UUID`.
 No behavior change.
 
-**Measured.** uff check nexus_ai �� all checks passed (was 2 errors).
-	est_search_sql.py + category/bucket filter suites: 22 passed, 8 DB-skipped.
+**Measured.** `ruff check nexus_ai` -> all checks passed (was 2 errors).
+`test_search_sql.py` + category/bucket filter suites: 22 passed, 8 DB-skipped.
+
+## 757. D757 · mypy clean for nexus_ai — one real bug fixed (typed cuisine_like preference)
+
+**The gap.** `mypy nexus_ai` reported 31 errors in 2 files (checked 59 source files) on the tip.
+They clustered into four shapes, one of which hid a real defect:
+
+* **Checker-flagged overload in the transient preference matcher** — the transient branch of
+  `search()` defines inner matcher factories with the same names as the stored branch but
+  different signatures (`make_ambience_match`, `make_scenic_match`, `make_pet_match`,
+  `make_mtr_match`, `make_accessible_match`, `make_parking_match`, `make_outdoor_match`,
+  `make_late_match`, `make_rainy_match`), plus two same-name variants within an if/else
+  (`make_style_ambience_match`, one no-arg and one with args). Renamed the transient spellings
+  (`_typed` / `_either`) — no behaviour change, the closure bodies are untouched.
+* **One genuine latent defect in the transient cuisine path** — the typed `cuisine_like`
+  preference did `typed_slugs.extend(cuisine_leaves(str(v)) for v in ...)`, extending the
+  slug list with a generator of **tuples**, so a transient `cuisine_like` preference earned
+  `[('ramen', ...), ...]` where the SQL binder expects `list[str]`. Now flattens properly
+  (`for s in cuisine_leaves(str(v))`).
+* **Name reuse flagged by the checker**: `weight` assigned in both stored and transient
+  branches (transient renamed `intent_weight`), `p` assigned to both the preference row and
+  the budget price loop (budget loop renamed `card_price` / `price_v`), `key: Any | None`
+  vs `str` in the stored preference loop (bound as `str(p.get("key") or "")`),
+  `is_like: bool` vs `bool | None` in the weakness branch (renamed `weakness_like`).
+* One-liners: `terms` -> `syn_terms` in the bucket reader, and the `_static_row_avoids_aspect`
+  default now reads `set[str] | frozenset[str]`.
+
+**Measured.** `mypy nexus_ai` -> Success: no issues found in 59 source files (was 31 errors).
+`test_search_pipeline` / `test_search_plan` / `test_cards` / preference suites: 639 passed,
+22 DB-skipped, 0 regressions (the two pre-existing `test_parking_transient` /
+`test_pet_friendly_transient` reds are folded in D758).
+
+- readers: the transient `cuisine_like` preference now binds typed slugs as strings, not tuples.
+
+## 758. D758 · FactBundle.synth coerces a non-UUID subject_id (two detector reds folded)
+
+**The gap.** The keyword-transient gates (`test_parking_transient`, `test_pet_friendly_transient`)
+serve rows with `subject_id: "m1"`, which is not a UUID. `synth_computed_facts` fell back to a
+content-derived id, but the `.synth()` call sites that pass the RAW id — the `category_match`
+fact (`cards.py`), the price fact (`cards.py`) and `FactBundle.synth` itself (`trust/facts.py`) —
+did `UUID(str(subject_id))` unconditionally, so a card on the static fixture plane raised
+`ValueError: badly formed hexadecimal UUID string` and the answer vanished into a 500.
+
+**The fix.** `FactBundle.synth` now passes a valid UUID through unchanged and falls back to
+`stable_fact_id("nexus", subject_type, subject_id)` for anything else — the same content-derived
+fallback `cards._coerce_uuid` and `synth_computed_facts.subject_uuid` already used; no new
+policy, one more caller honoured. New gate
+`tests/test_the_synth_path_survives_a_row_whose_id_is_not_a_uuid.py` pins both directions
+(a valid UUID passes through; `m1` yields a deterministic id).
+
+**Measured.** Both detector reds now pass (6 passed). `mypy nexus_ai` and `ruff check nexus_ai` clean.
+
+## 759. D759 · ruff clean for the whole apps/ai tree (lint hygiene across the tests)
+
+**The gap.** `ruff check .` reported 21 errors in the tests/ tree: F401 unused imports
+(`pytest`, `asyncio`, `timedelta`, `HK_TZ`, ...), F841 unused locals (`db = await db_pool.connect(...)`
+in nine files — the binding removed, the `connect()` call kept, since the pool is still exercised),
+one unused `with_word` local in a cuisine-adjective gate, and one E731 lambda assignment
+(converted to `def key(rows)`).
+
+**The fix.** All 21 folded to zero: AI-lane test files only, no other lane touched, no behaviour
+change (the fixtures still run).
+
+**Measured.** `ruff check .` -> All checks passed! (was 21 errors). The edited suites:
+328 passed / 62 DB-skipped; the two pre-existing
+`test_the_outdoor_preference_reads_both_spellings.py` reds are unchanged (pre-existing at clean
+HEAD, not introduced here).
+
+
+## 760. D760 · fold the two D621 outdoor detector reds — the ANY-witness reader owns `style/outdoor` again
+
+**The gap.** `test_the_outdoor_preference_reads_both_spellings.py` failed identically at clean
+HEAD: `test_a_merchant_whose_seating_says_yes_is_not_read_through_its_style_flag` and
+`test_a_refusal_of_outdoor_space_reads_the_same_witness`. The transient `style/outdoor`
+preference was read by the D717 branch from `outdoor_style` alone and `continue`d — so the
+D621 ANY-witness reader (which reads `outdoor_seating` as a second spelling, via
+`_INTENT_ATTR_ALIASES[("style", "outdoor")]`) never ran for it. A typed request for outdoor
+space scored the 37-of-184 restaurants whose `outdoor_style` says false while
+`outdoor_seating` says true as 0.0 — the exact rows D621 was built to rescue.
+
+**The fix.** Removed the shadow branch (the single-attribute D717 matcher). The ANY-witness
+reader owns the pair now — one reader for one fact, the same rule D718 applied to
+`style/indoor`. `test_outdoor_transient.py` (relative ranking, m1 > m2) stays green, as do
+all transient-preference suites.
+
+**Measured.** The two detector reds pass (8 passed across the file). mypy clean
+(59 files), `ruff check .` all-checks-passed. Broader sweep: 597 passed / 22 DB-skipped,
+0 failures.

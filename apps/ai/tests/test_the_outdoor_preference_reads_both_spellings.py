@@ -27,7 +27,6 @@ seed writes. The live half is D620's lift door, whose outdoor floor is raised to
 
 from __future__ import annotations
 
-import pytest
 
 import nexus_ai.search.service as S
 

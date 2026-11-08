@@ -827,8 +827,8 @@ def match_leaf(text: str) -> str | None:
     # The leaf answers only when it IS the head: 拉麵店的咖啡 is a cafe, and a bucket cue that
     # sits further right than the leaf means the sentence ended on the coarser word.
     bucket_end = 0
-    for terms in CATEGORY_SYNONYMS.values():
-        for term in terms:
+    for syn_terms in CATEGORY_SYNONYMS.values():
+        for term in syn_terms:
             t = term.lower().strip()
             if t in GENERIC_SHOP_NOUNS:
                 continue

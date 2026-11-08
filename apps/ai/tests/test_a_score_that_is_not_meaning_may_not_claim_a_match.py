@@ -281,7 +281,7 @@ def plane():
         return scored
 
     async def _go():
-        db = await db_pool.connect(st, force_new=True)
+        await db_pool.connect(st, force_new=True)
         try:
             deps = Deps(st)
             live = deps.backend()
@@ -296,7 +296,8 @@ def plane():
                 off = await _page(live, deps, sentence, embedding=None, vector_lane=False)
                 old = await _page(live, deps, sentence, embedding=vec,
                                   vector_lane=bool(vec), vector_semantic=True)
-                key = lambda rows: [s.candidate.subject_id for s in rows]
+                def key(rows):
+                    return [s.candidate.subject_id for s in rows]
                 out[sentence] = {
                     "asked": key(asked), "off": key(off), "old": key(old),
                     "first": asked[0].candidate.category if asked else None,

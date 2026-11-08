@@ -176,7 +176,6 @@ def test_the_preference_alone_now_fills_the_page_too(plane):
     # the same preference with the row's own text taken out answers the same ten rows.
     assert plane["pref_only"]["core"] == "", plane["pref_only"]["core"]
     alone = _count(plane["pref_only"], {"thai"})
-    with_word = _count(plane["pages"]["泰式餐廳"], {"thai"})
     assert alone >= 6, (alone, plane["pref_only"]["rel"])
     assert plane["pref_only"]["ids"] == plane["pages"]["泰式餐廳"]["ids"], (
         plane["pref_only"]["ids"], plane["pages"]["泰式餐廳"]["ids"])

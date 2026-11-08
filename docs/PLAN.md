@@ -52,7 +52,8 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   route-contract selectors the rewrite already uses (D329). Owner decision, harness lane consents.
 - **The review-aspect census's threshold** — 16.7% was a dead-spelling artifact and the real coverage
   is 68.3% (D359's fix landed); the 60% threshold now sits below reality and the seed lane owns the
-  calibration question.- **CLOSED by D755: Chinese text search in merchant/offering candidate queries.**
+  calibration question.
+- **CLOSED by D755: Chinese text search in merchant/offering candidate queries.**
   The natural-language quality item (§12 kept, §141 unmet): a Chinese sentence returned
   0 results because `TS_CONFIG_ALLOWLIST` only had `{"simple", "english"}` and `to_tsvector`
   / `plainto_tsquery` with `simple` cannot SEGMENT CJK text (a CJK run with no spaces
@@ -317,8 +318,8 @@ node scripts/check_reader_reachability.mjs           # 14 of 14 readers invoked
 node scripts/check_status_citations.mjs              # PASS
 cd apps/web && npx tsc --noEmit && npx vitest run    # clean / 136
 cd apps/ai && ./.venv/Scripts/python.exe -m pytest -q   # 830 passed with the live DB / 804 passed, 26 skipped without it
-cd apps/ai && ./.venv/Scripts/python.exe -m ruff check .   # All checks passed! (D408's rule set, stated in pyproject.toml)
-cd apps/ai && ./.venv/Scripts/python.exe -m mypy nexus_ai  # Success: no issues found in 51 source files
+cd apps/ai && ./.venv/Scripts/python.exe -m ruff check .   # All checks passed! (D408's rule set, stated in pyproject.toml) - D756/D759
+cd apps/ai && ./.venv/Scripts/python.exe -m mypy nexus_ai  # Success: no issues found in 59 source files - D757
 cd apps/ai && ./.venv/Scripts/python.exe -m nexus_ai.eval.cli --suite intent_v1,safety_injection_v1 --fail-on-gate   # RESULT: PASS - 2 suite(s), 0 failing (D410)
 cd services/platform && mvn -o test                  # 251 passed (D295's whole measurement)
 ```

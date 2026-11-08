@@ -71,7 +71,7 @@ def _scored(query: str, limit: int = 6) -> list:
 
     async def _go():
         settings = _settings()
-        db = await db_pool.connect(settings, force_new=True)
+        await db_pool.connect(settings, force_new=True)
         try:
             intent = validate_intent(extract_intent_dict(query))
             pack = await run_search(Deps(settings), intent, query=query, limit=limit)

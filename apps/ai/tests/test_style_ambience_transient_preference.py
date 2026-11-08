@@ -15,7 +15,6 @@ Pure for the polarity part, DB-backed for the ranking part.
 
 from __future__ import annotations
 
-import pytest
 
 from nexus_ai.nlu.understand import extract_intent
 

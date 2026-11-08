@@ -13,9 +13,7 @@ Pure and DB-free.
 
 from __future__ import annotations
 
-import pytest
-
-from nexus_ai.search.sql import _CJK_TO_TAG_MAP, build_merchant_query
+from nexus_ai.search.sql import _CJK_TO_TAG_MAP
 
 
 class TestMerchantCjkTagContainment:

@@ -167,9 +167,19 @@ class FactBundle:
         # A computed fact's id is a pure function of its content + observed_at (uuid5, not
         # uuid4): a replayed request yields byte-identical frames and re-synthesising the
         # same value is idempotent, which is what lets the SSE stream be reproducible.
+        # D758: the SUBJECT id is not always a UUID - the static fixture backend serves
+        # rows with ids like `m1`, and the renderer synthesises facts against them. A
+        # raw `UUID(str(subject_id))` refused every such row with `ValueError`, so a
+        # Chinese query whose cards scored well vanished into a 500. The contract still
+        # requires a UUID `subject_id` on the wire, so fall back to a content-derived id
+        # the same way `cards._coerce_uuid` and `synth_computed_facts.subject_uuid` do.
+        try:
+            synth_subject_id = UUID(str(subject_id))
+        except (ValueError, AttributeError, TypeError):
+            synth_subject_id = stable_fact_id("nexus", subject_type, subject_id)
         return self.add(Fact(
             fact_id=stable_fact_id(subject_type, subject_id, attribute, value, now),
-            subject_type=subject_type, subject_id=UUID(str(subject_id)),
+            subject_type=subject_type, subject_id=synth_subject_id,
             attribute=attribute, value=value, source=cast(FactSource, source),
             confidence=round(min(confidence, cap), 3), observed_at=now,
             expires_at=expires_at,

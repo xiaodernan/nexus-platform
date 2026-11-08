@@ -658,7 +658,7 @@ def _static_avoid_attributes(avoid: Any) -> set[str]:
 
 
 def _static_row_avoids_aspect(row: dict[str, Any], aspects: set[str],
-                              attributes: set[str] = frozenset()) -> bool:
+                              attributes: set[str] | frozenset[str] = frozenset()) -> bool:
     """The aspect legs: the `weak_aspects` list, and the boolean spellings of the same fact.
 
     A merchant row carries its own `attributes`; an offering row carries the MERCHANT's list
@@ -1542,9 +1542,9 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
             typed_slugs.extend(cuisine_leaves(str(pref.get("value") or "")))
         elif key == "cuisine_like":
             try:
-                typed_slugs.extend(cuisine_leaves(str(v))
-                                   for v in (json.loads(str(pref.get("value") or "{}"))
-                                             .get("values") or []))
+                typed_slugs.extend(s for v in (json.loads(str(pref.get("value") or "{}"))
+                                              .get("values") or [])
+                                   for s in cuisine_leaves(str(v)))
             except Exception:
                 pass
     typed_slugs = sorted({s for s in typed_slugs if s})
@@ -1649,7 +1649,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
             pref_rules: list[dict[str, Any]] = []
             for p in pref_rows:
                 kind = p.get("kind")
-                key = p.get("key")
+                key = str(p.get("key") or "")
                 weight = p.get("weight")
                 raw_value = p.get("value")
                 if not (kind and key and weight is not None):
@@ -1956,8 +1956,8 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     # transient lane in D695) as well as `value: true` (boolean). A boolean
                     # `false` means the user dislikes weakness (prefers merchants that ARE
                     # weak at the aspect).
-                    is_like = True if val is True or val == "noise" else False if val is False else None
-                    if is_like is not None:
+                    weakness_like: bool | None = True if val is True or val == "noise" else False if val is False else None
+                    if weakness_like is not None:
                         def make_weakness_match(key_name, avoids_weakness, w):
                             def _match(attrs):
                                 weak = {str(x) for x in (attrs.get("weak_aspects") or []) if x}
@@ -1967,7 +1967,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 # avoids_weakness False: user tolerates/prefers weakness at it.
                                 return _sided(w, liked=(not is_weak) if avoids_weakness else is_weak)
                             return _match
-                        match_fn = make_weakness_match(str(key), is_like, float(weight))
+                        match_fn = make_weakness_match(str(key), weakness_like, float(weight))
                 # STYLE: outdoor, indoor
                 elif kind == "style" and key in ("outdoor", "indoor"):
                     # D527: the row's VALUE says which way it points. This branch used to
@@ -2256,19 +2256,19 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     amb = str(pref_value)
                     if amb == "ambience":
                         # Generic "good ambience" - either quiet or lively counts
-                        def make_style_ambience_match():
+                        def make_style_ambience_either_match():
                             def _match(a2):
                                 if a2.get("quiet_ambience") is True or a2.get("lively_ambience") is True:
                                     return _sided(1.0, liked=True)
                                 return None
                             return _match
-                        match_fn = make_style_ambience_match()
+                        match_fn = make_style_ambience_either_match()
                     else:
                         want = "quiet_ambience" if amb == "quiet" else "lively_ambience"
                         other = "lively_ambience" if amb == "quiet" else "quiet_ambience"
                         positive = int(polarity or 1) > 0
 
-                        def make_style_ambience_match(want_key, other_key, pos):
+                        def make_style_ambience_match_typed(want_key, other_key, pos):
                             def _match(a2):
                                 if a2.get(want_key) is True:
                                     return _sided(1.0, liked=pos)
@@ -2276,7 +2276,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                     return _sided(1.0, liked=not pos)
                                 return None
                             return _match
-                        match_fn = make_style_ambience_match(want, other, positive)
+                        match_fn = make_style_ambience_match_typed(want, other, positive)
                     score = match_fn(attrs)
                     if score is not None:
                         intent_pref_scores.append(score)
@@ -2295,7 +2295,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                     want = "quiet_ambience" if str(pref_value) == "quiet" else "lively_ambience"
                     other = "lively_ambience" if str(pref_value) == "quiet" else "quiet_ambience"
 
-                    def make_ambience_match(want_key, other_key, p, positive):
+                    def make_ambience_match_typed(want_key, other_key, p, positive):
                         def _match(a2):
                             if a2.get(want_key) is True:
                                 return _sided(p, liked=positive)
@@ -2303,7 +2303,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 return _sided(p, liked=not positive)
                             return None
                         return _match
-                    match_fn = make_ambience_match(want, other, 1.0, int(polarity or 1) > 0)
+                    match_fn = make_ambience_match_typed(want, other, 1.0, int(polarity or 1) > 0)
                     score = match_fn(attrs)
                     if score is not None:
                         intent_pref_scores.append(score)
@@ -2321,7 +2321,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 if str(pref_kind) == "view" and str(pref_value) == "scenic":
                     val = str(pref_value) == "scenic"  # always True for this key
 
-                    def make_scenic_match(p):
+                    def make_scenic_match_typed(p):
                         def _match(a2):
                             if a2.get("scenic_view") is True:
                                 return _sided(p, liked=True)
@@ -2345,7 +2345,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 return _sided(p, liked=True)
                             return None
                         return _match
-                    match_fn = make_scenic_match(1.0)
+                    match_fn = make_scenic_match_typed(1.0)
                     score = match_fn(attrs)
                     if score is not None:
                         intent_pref_scores.append(score)
@@ -2363,7 +2363,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 if str(pref_kind) in ("access", "accessibility") and str(pref_value) == "pet_friendly":
                     val = str(pref_value) == "pet_friendly"  # always True for this key
 
-                    def make_pet_match(p):
+                    def make_pet_match_typed(p):
                         def _match(a2):
                             if a2.get("pet_friendly_access") is True:
                                 return _sided(p, liked=True)
@@ -2371,7 +2371,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 return _sided(p, liked=False)
                             return None
                         return _match
-                    match_fn = make_pet_match(1.0)
+                    match_fn = make_pet_match_typed(1.0)
                     score = match_fn(attrs)
                     if score is not None:
                         intent_pref_scores.append(score)
@@ -2507,7 +2507,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 # attributes. The stored branch (line ~1940) reads the same attributes; this is
                 # the transient lane's mirror.
                 if str(pref_kind) in ("access", "accessibility") and str(pref_value) == "mtr_near":
-                    def make_mtr_match(p):
+                    def make_mtr_match_typed(p):
                         def _match(a2):
                             if a2.get("mtr_near_access") is True or a2.get("mtr_within_5min") is True:
                                 return _sided(p, liked=True)
@@ -2515,7 +2515,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 return _sided(p, liked=False)
                             return None
                         return _match
-                    match_fn = make_mtr_match(1.0)
+                    match_fn = make_mtr_match_typed(1.0)
                     score = match_fn(attrs)
                     if score is not None:
                         intent_pref_scores.append(score)
@@ -2531,7 +2531,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 # `wheelchair_access` boolean attributes. The stored branch (line ~1956)
                 # reads the same attributes; this is the transient lane's mirror.
                 if str(pref_kind) in ("access", "accessibility") and str(pref_value) == "accessible":
-                    def make_accessible_match(p):
+                    def make_accessible_match_typed(p):
                         def _match(a2):
                             if a2.get("accessible_access") is True or a2.get("wheelchair_access") is True:
                                 return _sided(p, liked=True)
@@ -2539,7 +2539,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 return _sided(p, liked=False)
                             return None
                         return _match
-                    match_fn = make_accessible_match(1.0)
+                    match_fn = make_accessible_match_typed(1.0)
                     score = match_fn(attrs)
                     if score is not None:
                         intent_pref_scores.append(score)
@@ -2555,7 +2555,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 # The stored branch (line ~1976) reads the same attribute; this is the
                 # transient lane's mirror.
                 if str(pref_kind) in ("access", "accessibility") and str(pref_value) == "parking":
-                    def make_parking_match(p):
+                    def make_parking_match_typed(p):
                         def _match(a2):
                             if a2.get("parking_access") is True:
                                 return _sided(p, liked=True)
@@ -2563,7 +2563,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 return _sided(p, liked=False)
                             return None
                         return _match
-                    match_fn = make_parking_match(1.0)
+                    match_fn = make_parking_match_typed(1.0)
                     score = match_fn(attrs)
                     if score is not None:
                         intent_pref_scores.append(score)
@@ -2574,29 +2574,14 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                  "source": "typed"})
                     continue
 
-                # D717: `style/outdoor` emitted by the NLU when a user types "戶外" /
-                # "outdoor" etc. maps to the merchant's `outdoor_style` boolean attribute.
-                # The stored branch (line ~1902) reads the same attribute; this is the
-                # transient lane's mirror.
-                if str(pref_kind) == "style" and str(pref_value) == "outdoor":
-                    def make_outdoor_match(p):
-                        def _match(a2):
-                            if a2.get("outdoor_style") is True:
-                                return _sided(p, liked=True)
-                            if a2.get("outdoor_style") is False:
-                                return _sided(p, liked=False)
-                            return None
-                        return _match
-                    match_fn = make_outdoor_match(1.0)
-                    score = match_fn(attrs)
-                    if score is not None:
-                        intent_pref_scores.append(score)
-                        if score >= 0.5:
-                            intent_matched_labels.append(
-                                {"label": _preference_label(str(pref_kind), str(pref_value),
-                                               pref_value),
-                                 "source": "typed"})
-                    continue
+                # D717/D760 (superseded): the `style/outdoor` typed preference used to be
+                # read here from `outdoor_style` alone, which shadowed the D621 ANY-witness
+                # reader below (outdoor_seating as a second spelling of the same fact). A typed
+                # request therefore scored the merchants whose outdoor_style says false while
+                # outdoor_seating says true as 0.0 - the exact rows D621 was built to rescue,
+                # and the merchants carrying only the seating fact were unreadable from the
+                # transient path at all. The ANY-witness reader owns the pair now - one
+                # reader, the same rule D718 applied to `style/indoor`.
 
                 # D718 (superseded): the `style/indoor` typed preference used to be read here
                 # from `outdoor_style` alone, which shadowed the D622 `_indoor_evidence`
@@ -2648,7 +2633,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 # boolean attribute. The stored branch reads the same attribute;
                 # this is the transient lane's mirror.
                 if str(pref_kind) == "time_pref" and str(pref_value) == "open_late":
-                    def make_late_match(p):
+                    def make_late_match_typed(p):
                         def _match(a2):
                             if a2.get("opens_late") is True:
                                 return _sided(p, liked=True)
@@ -2656,7 +2641,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 return _sided(p, liked=False)
                             return None
                         return _match
-                    match_fn = make_late_match(1.0)
+                    match_fn = make_late_match_typed(1.0)
                     score = match_fn(attrs)
                     if score is not None:
                         intent_pref_scores.append(score)
@@ -2672,7 +2657,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 # / `outdoor_style` boolean attributes. The stored branch reads the same
                 # attributes; this is the transient lane's mirror.
                 if str(pref_kind) == "weather" and str(pref_value) == "rainy_day":
-                    def make_rainy_match(p):
+                    def make_rainy_match_typed(p):
                         def _match(a2):
                             if a2.get("indoor_style") is True:
                                 return _sided(p, liked=True)
@@ -2680,7 +2665,7 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                                 return _sided(p, liked=False)
                             return None
                         return _match
-                    match_fn = make_rainy_match(1.0)
+                    match_fn = make_rainy_match_typed(1.0)
                     score = match_fn(attrs)
                     if score is not None:
                         intent_pref_scores.append(score)
@@ -2722,16 +2707,16 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 # happened to come first and never read the one that agreed with the user.
                 # This is D527's lesson on the other side: a matcher must not let one
                 # attribute's silence about a fact overrule another attribute's statement of it.
-                weight: float | None = None
+                intent_weight: float | None = None
                 if any(attrs.get(k) is True for k in attr_keys):
-                    weight = 1.0 if polarity > 0 else 0.0
+                    intent_weight = 1.0 if polarity > 0 else 0.0
                 elif any(attrs.get(k) is False for k in attr_keys):
-                    weight = 0.0 if polarity > 0 else 1.0
-                if weight is not None:
-                    intent_pref_scores.append(weight)
+                    intent_weight = 0.0 if polarity > 0 else 1.0
+                if intent_weight is not None:
+                    intent_pref_scores.append(intent_weight)
                     # D392: name the preference that fired, so the card can say WHICH.
                     # D396: a preference typed in THIS query is "typed", not "declared".
-                    if weight >= 0.5:
+                    if intent_weight >= 0.5:
                         intent_matched_labels.append(
                             {"label": _preference_label(str(pref_kind), str(pref_value),
                                                        pref_value),
@@ -2805,13 +2790,13 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
                 bmin = float(bmin) / ps
         in_band = False
         for s in top:
-            p = s.candidate.price
-            if p is None:
+            card_price = s.candidate.price
+            if card_price is None:
                 continue
-            p = float(p)
-            if bmin is not None and p < float(bmin):
+            price_v = float(card_price)
+            if bmin is not None and price_v < float(bmin):
                 continue
-            if bmax is not None and float(bmax) > 0 and p > float(bmax):
+            if bmax is not None and float(bmax) > 0 and price_v > float(bmax):
                 continue
             in_band = True
             break

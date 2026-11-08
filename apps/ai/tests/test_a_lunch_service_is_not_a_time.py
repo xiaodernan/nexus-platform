@@ -87,7 +87,6 @@ def test_the_english_noon_cue_is_unchanged():
 @live_only
 def test_the_served_page_for_a_lunch_set_is_not_the_noon_pool_only():
     """The product half: the served answer is every restaurant 套餐 can mean, not the 11:30 pool."""
-    import asyncio
 
     from fastapi.testclient import TestClient
 

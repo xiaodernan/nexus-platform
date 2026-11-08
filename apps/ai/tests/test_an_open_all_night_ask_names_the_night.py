@@ -30,7 +30,7 @@ is asking for at 03:00, and it does not claim the row is open at noon.
 from __future__ import annotations
 
 import os
-from datetime import datetime, time, timedelta, timezone
+from datetime import datetime, time, timezone
 
 import pytest
 

@@ -24,7 +24,6 @@ radius behaviour for rows that do state points is untouched (a leg pins each sid
 from __future__ import annotations
 
 import os
-from datetime import time as clock
 
 import pytest
 
