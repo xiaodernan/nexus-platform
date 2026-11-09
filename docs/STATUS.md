@@ -24850,7 +24850,7 @@ a ledger may cite (`LEDGER_FILE`, `scripts/source_index.mjs:130`): extensioned b
 extensionless names, or a dot file the repository owns. The three readers that walk the ledger population point
 at it (`scripts/check_ledger_citations.mjs:222`, `scripts/citation_blank_census.mjs:96`,
 `scripts/citation_blank_sites.mjs:48`), and so does the falsifier that witnesses the reader's own index
-(`scripts/falsify_ledger_text.mjs:766`), which had kept a private copy of the same predicate and would have
+(`scripts/falsify_ledger_text.mjs:818`), which had kept a private copy of the same predicate and would have
 counted one file short of the reader's — the root `Makefile` its extension test cannot name.
 
 **The second red was D571's own commit, and the ledger is where it is corrected.** D571 added six lines to
@@ -28708,7 +28708,7 @@ the plan keeping the time filter while dropping its words, a live census leg tha
 carries a time surface, and a live page leg (same ten ids as `餐廳`, every relevance ≥ 0.9, 184 both).
 With D628's and D624's doors and four neighbouring files: **127 passed**.
 
-- readers: `nlu/understand.py:120-128` (`TIME_SPAN_RE`), `:627-643` (`match_core`'s `strip_time`);
+- readers: `nlu/understand.py:177-184` (`TIME_SPAN_RE`), `:627-643` (`match_core`'s `strip_time`);
   `search/service.py:636-637` (the caller that sets it from `intent.time`).
 
 ## 627. D630 · 下午茶 is a category, and the time lane read the 下午 inside it as 14:00 (`apps/ai/nexus_ai/nlu/timeparse.py`)
@@ -28717,7 +28717,7 @@ With D628's and D624's doors and four neighbouring files: **127 passed**.
 word boundary (§478). 下午 is a part-of-day cue and the first two characters of 下午茶, which is this
 product's own `afternoon_tea` CATEGORY row (`lexicon.py:82`). So the plan for 「下午茶」 carried
 `open_weekday: 5, open_time: 14:00` (`tmp/d630_census.txt`), and that pair is a hard SQL constraint on
-`business_hours` (`search/sql.py:232-243`): a merchant closed at two in the afternoon was not on the page
+`business_hours` (`search/sql.py:322-331`): a merchant closed at two in the afternoon was not on the page
 for a request that named a category and no time at all. Four Chinese shapes carried it (「下午茶」,
 「下午茶餐廳」, 「有咩下午茶好介紹」, 「下午茶自助餐」) and so did the English `afternoon tea` - the Latin rule
 stops a cue being read INSIDE a word ("ramen" is not `am`), not at the FRONT of a longer phrase.
@@ -28910,7 +28910,7 @@ reddens the day a row carries one of these words, and two live equivalence legs.
 residue pass disabled and the old strip order, 9 of the 24 redden, including the live band leg
 (`tmp/d633_falsify.txt`). With the D628, D629, D630, D631 and D632 doors and an intent file: **149 passed**.
 
-- readers: `nlu/understand.py:129-140` (`PARTY_SPAN_RE`, the range alternative first), `:637-645`
+- readers: `nlu/understand.py:212-241` (`PARTY_SPAN_RE`, the range alternative first), `:637-645`
   (`_MATCH_CORE_RESIDUE`), `:647-649` (`_MATCH_CORE_RES`, the party span first) and `:655-672` (`match_core`).
 
 ## 631. D634 · the time strip undid six of the twenty-five spellings the time lane reads (`apps/ai/nexus_ai/nlu/timeparse.py`, `apps/ai/nexus_ai/nlu/understand.py`)
@@ -28954,7 +28954,7 @@ and 38 of 46 shared rows differing (`tmp/d634_falsify.txt`). With the D628-D633 
 files: **385 passed**.
 
 - readers: `nlu/timeparse.py:215-176` (`_STRIP_TABLES`), `:178-184` (`_strip_cues`), `:187-208`
-  (`cue_alternation`, the generated guard); `nlu/understand.py:120-135` (`_TIME_CUE` and `TIME_SPAN_RE`),
+  (`cue_alternation`, the generated guard); `nlu/understand.py:177-184` (`_TIME_CUE` and `TIME_SPAN_RE`),
   `:661-679` (`match_core`).
 
 ## 632. D635 · the word that named the category was also a search term, on the rows the category had already chosen (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/api/pipeline.py`)
@@ -29927,7 +29927,7 @@ here measures that path. `tests/e2e/specs/consumer/vertical-slice.spec.ts:53` an
 Simplified prompts (measured: 帮我找沙田适合情侣约会的餐厅，预算500港币，安静一点，周六晚上 / 帮我找附近适合朋友聚会的餐厅);
 they are a reverse control now, not a witness — with both scripts answering, that spec cannot see a
 regression in either direction. Two cue alternatives are dead as written and were left alone: `evenight` in
-`apps/web/src/lib/mock/index.ts:223` and `hkdb?` in `apps/web/src/lib/mock/index.ts:177` — a typo pattern
+`apps/web/src/lib/mock/index.ts:227` and `hkdb?` in `apps/web/src/lib/mock/index.ts:177` — a typo pattern
 that can still match, which is the vocabulary lane's call and not this one's. And `tmp/` is gitignored and
 does get swept: every figure above was re-run for this row rather than copied from an earlier window, and
 the parent-bytes experiment is reproducible from `git show 6145c6c:apps/web/src/lib/mock/index.ts` alone.
@@ -30304,7 +30304,7 @@ adjective, and PLAN now says so.
 that is filed in PLAN rather than chased here. (c) The style adjective is still a preference value
 only; a REFUSAL (唔要泰式) keeps its word in the text, which is D584's lane.
 
-- readers: `apps/ai/nexus_ai/search/sql.py:314` (`kw_score`, the word_similarity term that does the
+- readers: `apps/ai/nexus_ai/search/sql.py:468` (`kw_score`, the word_similarity term that does the
   work), `apps/ai/nexus_ai/nlu/lexicon.py:104` (`CUISINE_TERMS`), `:821` (`match_cuisine_terms`),
   `apps/ai/nexus_ai/search/service.py:731` (`category_surfaces` + `_match_core`, where the strip
   would have gone), `apps/ai/tests/test_cuisine_style_forms.py` (the vocabulary the trap starts
@@ -30623,7 +30623,7 @@ number is not comparable across lanes; only membership is. (c) The relevance flo
 mention the word and score below it - unchanged, and still the ranking lane's rule.
 
 - readers: `search/service.py:317-275` (the score, not the veto), `:277` (the category leg that stays),
-  `:354-359` (the flag), `search/sql.py:329-344` (the live score and flag), `:423` (a WHERE with no text in
+  `:354-359` (the flag), `search/sql.py:457-488` (the live score and flag), `:423` (a WHERE with no text in
   it), `:449-453` (the category clause that IS one), the two re-aimed gates, this unit's gate, and
   `tmp/d658_gap.py`, `tmp/d658_falsify.txt` (the measurements).
 
@@ -30751,7 +30751,7 @@ its bbox square there. That shape has no producer, so it is filed rather than gu
 
 - readers: `search/sql.py:132-117` (`haversine_m`), `:128-135` (`haversine_expr`), `:182-198`
   (`_points_select`), `:427` and `:661` (the two projections), `:291-320` and `:553-580` (the live
-  clauses), `search/service.py:190-191`/`:198-199` (the lane's arguments), `:367-371` (where the clause
+  clauses), `search/service.py:237-239,:250-252` (the lane's arguments), `:367-371` (where the clause
   applies), `:393-412` (`_static_nearest_metres`), `:1098` (`meters` onto the candidate), this unit's
   gate, and `tmp/d660_both.py`, `tmp/d660_geo.py`, `tmp/d660_falsify.txt` (the measurements).
 
@@ -30919,7 +30919,7 @@ remain two readers. (c) The offering lane reaches the same branch through its me
 district request on `kind=product` answers by the merchant's district on the fixture lane only; not
 measured here.
 
-- readers: `search/service.py:289-300` (the district clause), `:367-385` (the geo cut and this unit's
+- readers: `search/service.py:354-357` (the district clause), `:367-385` (the geo cut and this unit's
   branch), `:922-927` (the district placed at its own coordinates), `:393-413`
   (`_static_nearest_metres`), this unit's gate, and `tmp/d663_probe3.py`, `tmp/d663_probe4.py`,
   `tmp/d663_livecounts.py`, `tmp/d663_demo.py`, `tmp/d663_falsify.txt` (the measurements).
