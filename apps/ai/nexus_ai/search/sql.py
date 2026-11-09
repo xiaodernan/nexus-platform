@@ -472,7 +472,7 @@ def build_merchant_query(
         kw_score = (f"GREATEST(COALESCE(ts_rank(m.search_tsv, {tsq}), 0),"
                     f" COALESCE(ts_rank(m.search_tsv, {wsq}), 0),"
                     f" LEAST({sim_arms}, {contains_frac})) + {contains_frac}"
-                    f" + ({tag_match_sql_m})::float8")
+                    f" + ({tag_match_sql_m})::int::float8")
         text_matched = (f"(m.search_tsv @@ {tsq} OR m.search_tsv @@ {wsq}"
                         f" OR " + contains_count + " > 0)")
     else:
@@ -818,7 +818,7 @@ def build_offering_query(
         kw_score = (f"GREATEST(COALESCE(ts_rank(o.search_tsv, {tsq}), 0),"
                     f" COALESCE(ts_rank(o.search_tsv, {wsq}), 0),"
                     f" LEAST({sim_arms}, {contains_frac})) + {contains_frac}"
-                    f" + ({tag_match_sql})::float8")
+                    f" + ({tag_match_sql})::int::float8")
     else:
         kw_score = (f"GREATEST(COALESCE(ts_rank(o.search_tsv, {tsq}), 0),"
                     f" COALESCE(ts_rank(o.search_tsv, {wsq}), 0), {sim_arms})")
