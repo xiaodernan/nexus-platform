@@ -36069,3 +36069,39 @@ NOT edited — the operator substitution (D22 §7) is already documented in STAT
 
 - readers: the repo's own front door is honest about what runs where, and no tracked file carries a
   credential as decoration.
+
+## 820. D820 · the live plane on the current seed — both databases, 21/21, and what the fresh corpus taught
+
+**Why two verify databases.** The live pytest suite was launched against `nexus_ai_verify` (seeded
+from a 2026-10-28 corpus generation, months older than head — that corpus was what `load.sh` was
+served). Regenerating `data/seed/out/` on 2026-11-09 with the current generator produced a corpus
+whose collections satisfy their own copy again (the claims gate reads 144/144 supported claims,
+the CI-scale seed passes 140/140), so a fresh-corpus witness plane was also built: `nexus_verify2`
+(migrated fresh V1–V10 + demo seed: 470 merchants / 32,612 slots / 2121 chunks / 5688 facts).
+
+**Measured on nexus_verify2, with D813/D814/D819 in tree:**
+- `test_live_ai_contract.py` — **4/4 green** (was 4/4 red at D809's jiebacfg error, then 3 pass /
+  1 fail at the §37 district trust cell, closed by D819 — the compare grid's district cell now
+  carries the location-keyed address fact);
+- `test_live_search_contract.py` + `test_live_cjk_merchant_match.py` + `test_live_canonical_query.py` —
+  25/25 on the fresh corpus; eval suites unaffected;
+- fresh CJK `預算300以内 日本料理 中環` warm path: **429 ms / 258 ms / 267 ms**;
+- API contract e2e on the fresh plane (platform :8090 repointed, AI :8010 rebooted):
+  **21 passed, 3 documented skips** (mobile/§105 §2s warm 457 ms).
+
+**The stale corpus is now recorded.** `nexus_ai_verify` holds the 2026-10-28 generation — it was
+the plane the D815/D816 live-stack verification ran on; the corpus difference changes nothing that
+unit measured (service/config facts), and both verify databases are disposable. The next load on a
+dev plane gets the current seed via `data/seed/load.sh`. The disk artifacts a lane trusts to be
+fresh were not; treat `data/seed/out/` as build output with a generation timestamp, not as source.
+
+**What this does NOT claim.** The in-flight live pytest run (launched 2026-11-09 08:15) still holds
+the OLD-corpus plane and its verdict is reported separately from D813/D814; nothing in the fresh
+-corpus run is a statement about that run's outcome. The platform/AI services stand on the fresh
+plane for the remaining session window.
+
+**Commits.** No source change beyond D813/D814/D819 — this unit is verification + the regeneration
+of the stale local seed artifacts (gitignored, regenerable).
+
+- readers: the stack that runs today is verified twice, on two corpora, with the 24 names the
+  registry keeps visible and the collection copy its members can support.
