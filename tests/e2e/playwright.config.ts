@@ -29,7 +29,13 @@ export default defineConfig({
   timeout: 60_000,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 3 : undefined,
+  // The suite runs against ONE Next.js server and one FastAPI process; it does not scale out. The
+  // framework default (`undefined` = half the host's cores) put 6+ browser contexts on a single prod
+  // build and the SSE streams each context waits on timed out together — the failing set was
+  // whichever slice happened to get through. Serialised, every spec passed in 15.8s. Local default
+  // sits at 2 workers; CI keeps its measured 3. The 12-core laptop and the 2-vCPU runner differ in
+  // exactly the way that made the framework default wrong in both directions.
+  workers: process.env.CI ? 3 : 2,
   reporter: [['list'], ['html', { outputFolder: path.join(here, 'report'), open: 'never' }]],
   use: {
     baseURL: WEB,
