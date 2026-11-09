@@ -1,0 +1,284 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.dev/schemas/merchant_profile.json",
+  "title": "MerchantProfile",
+  "description": "GET /api/v1/merchants/{id_or_slug} — the composed public merchant profile: the §4 card plus the surfaces a merchant page must carry (locations, weekly hours, taxonomy memberships, top offerings, review stats). Closed object, snake_case keys. It is the *profile* wire; the §4 directory card is `entity_card.json` and is intentionally a subset of this shape. `category`/`city`/`district` are served as plain strings here: the profile is the one surface that carries the taxonomy `name` for prose rendering, not the §2 taxonomy `code` (the code lives on the card, in `attributes`, and in the §29 directory routes). Prices, ratings and availability rendered on the profile cite facts (AGENT_CONTRACT §4).",
+  "type": "object",
+  "additionalProperties": false,
+  "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+  "required": ["card_type", "id", "title", "facts", "flags"],
+  "properties": {
+    "card_type": { "const": "merchant" },
+    "id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid" },
+    "slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "minLength": 1, "maxLength": 96 },
+    "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "subtitle": { "type": ["string", "null"], "maxLength": 256 },
+    "description": { "type": ["string", "null"], "maxLength": 4096 },
+    "display_name": {
+      "type": "object",
+      "title": "LocalizedName",
+      "description": "`display_name.en` / `display_name_zh`, both as V1 writes them.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["en"],
+      "properties": {
+        "en": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "zh": { "type": ["string", "null"], "maxLength": 256 }
+      }
+    },
+    "legal_name": { "type": ["string", "null"], "maxLength": 512 },
+    "category": { "type": "string", "minLength": 1, "maxLength": 128, "description": "The taxonomy `name` (e.g. `Tea House`), NOT the §2 code. Free-form prose; never compare by equality — the §14/§16 filter carries the taxonomy ids instead." },
+    "city": { "type": ["string", "null"], "maxLength": 128 },
+    "district": { "type": ["string", "null"], "maxLength": 128 },
+    "price_band": { "type": ["string", "null"], "pattern": "^\\${1,4}$" },
+    "tags": { "type": "array", "maxItems": 32, "items": { "type": "string", "minLength": 1, "maxLength": 64 } },
+    "attributes": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/JsonObject" },
+    "status": { "type": "string", "enum": ["draft", "pending_review", "published", "suspended"] },
+    "ai_agent_enabled": { "type": "boolean" },
+    "ownership_verified": { "type": "boolean" },
+    "data_origin": { "type": "string", "minLength": 1, "maxLength": 64, "description": "`demo` / `imported` / `observed`; the seed writes `demo` (DECISIONS D6). Vocab kept open rather than an enum a producer cannot yet honor." },
+    "created_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time" },
+    "updated_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time" },
+    "price": { "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/Price" }, { "type": "null" }] },
+    "rating": { "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/RatingInfo" }, { "type": "null" }] },
+    "open": { "oneOf": [{ "$ref": "https://nexus.dev/schemas/entity_card.json#/$defs/CardOpeningState" }, { "type": "null" }] },
+    "facts": { "type": "array", "maxItems": 64, "items": { "$ref": "https://nexus.dev/schemas/fact.json" } },
+    "flags": { "$ref": "https://nexus.dev/schemas/entity_card.json#/$defs/EntityFlags" },
+    "image": { "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/ImageAsset" }, { "type": "null" }] },
+    "images": { "type": "array", "maxItems": 24, "items": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/ImageAsset" } },
+    "contact": {
+      "type": "object",
+      "title": "ContactInfo",
+      "description": "Merchant-supplied contact block (`contact jsonb`). Every route of contact a consumer must be able to see; absent keys are absent, not empty.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["data_origin"],
+      "properties": {
+        "site": { "type": ["string", "null"], "maxLength": 512 },
+        "email": { "type": ["string", "null"], "maxLength": 320 },
+        "phone": { "type": ["string", "null"], "maxLength": 64 },
+        "whatsapp": { "type": ["string", "null"], "maxLength": 64 },
+        "data_origin": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
+    },
+    "socials": {
+      "type": "object",
+      "title": "SocialsMap",
+      "description": "Known platform handles. Unknown platforms are allowed as additional keys (the block is `jsonb` open by V1 design), each value a handle URL or null.",
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "additionalProperties": { "type": ["string", "null"], "maxLength": 512 },
+      "properties": {
+        "facebook": { "type": ["string", "null"], "maxLength": 512 },
+        "instagram": { "type": ["string", "null"], "maxLength": 512 },
+        "openrice": { "type": ["string", "null"], "maxLength": 512 }
+      }
+    },
+    "locations": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "title": "MerchantLocation",
+        "additionalProperties": false,
+        "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+        "required": ["location_id", "is_primary"],
+        "properties": {
+          "location_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid" },
+          "label": { "type": ["string", "null"], "maxLength": 128 },
+          "address_line1": { "type": ["string", "null"], "maxLength": 512 },
+          "address_line2": { "type": ["string", "null"], "maxLength": 512 },
+          "district": { "type": ["string", "null"], "maxLength": 128 },
+          "area": { "type": ["string", "null"], "maxLength": 32 },
+          "city": { "type": ["string", "null"], "maxLength": 128 },
+          "postcode": { "type": ["string", "null"], "maxLength": 16 },
+          "geo": { "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/GeoPoint" }, { "type": "null" }] },
+          "mtr": {
+            "oneOf": [
+              {
+                "type": "object",
+                "title": "MtrStop",
+                "description": "V1 `locations.mtr_station` / `mtr_walk_min`. `walk_minutes` is minutes, never seconds.",
+                "additionalProperties": false,
+                "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+                "required": ["station", "walk_minutes"],
+                "properties": {
+                  "station": { "type": ["string", "null"], "maxLength": 128 },
+                  "walk_minutes": { "type": ["integer", "null"], "minimum": 0, "maximum": 99 }
+                }
+              },
+              { "type": "null" }
+            ]
+          },
+          "is_primary": { "type": "boolean" },
+          "geo_properties": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/JsonObject" }
+        }
+      }
+    },
+    "business_hours": {
+      "type": "array",
+      "maxItems": 14,
+      "items": {
+        "type": "object",
+        "title": "BusinessHour",
+        "additionalProperties": false,
+        "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+        "required": ["weekday", "crosses_midnight"],
+        "properties": {
+          "weekday": { "type": ["integer", "null"], "minimum": 0, "maximum": 6, "description": "0=Monday .. 6=Sunday, as V1 writes it." },
+          "opens_at": { "type": ["string", "null"], "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$" },
+          "closes_at": { "type": ["string", "null"], "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$" },
+          "crosses_midnight": { "type": "boolean" },
+          "source": { "type": ["string", "null"], "maxLength": 64 },
+          "location_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid_or_null" },
+          "updated_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" }
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "title": "CategoryMembership",
+        "additionalProperties": false,
+        "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+        "required": ["category_id", "slug", "name", "kind"],
+        "properties": {
+          "category_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid" },
+          "slug": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/slug" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "name_zh": { "type": ["string", "null"], "maxLength": 128 },
+          "kind": { "type": "string", "minLength": 1, "maxLength": 32 },
+          "parent_slug": { "type": ["string", "null"], "maxLength": 128 },
+          "parent_name": { "type": ["string", "null"], "maxLength": 128 }
+        }
+      }
+    },
+    "menu_count": { "type": "integer", "minimum": 0 },
+    "top_offerings": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "title": "TopOffering",
+        "additionalProperties": false,
+        "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+        "required": ["offering_id", "merchant_id", "created_at", "updated_at", "flags", "kind", "slug", "name", "status"],
+        "properties": {
+          "offering_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid" },
+          "merchant_id": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/uuid" },
+          "created_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time" },
+          "updated_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time" },
+          "flags": {
+            "type": "object",
+            "title": "OfferingFlags",
+            "description": "Offering-level honesty markers, closed sub-set of the card flags.",
+            "additionalProperties": false,
+            "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+            "required": ["demo", "estimated_price"],
+            "properties": {
+              "demo": { "type": "boolean" },
+              "estimated_price": { "type": "boolean" },
+              "unverified": { "type": "boolean" }
+            }
+          },
+          "kind": { "type": "string", "enum": ["product", "service", "experience"] },
+          "slug": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/slug" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "name_zh": { "type": ["string", "null"], "maxLength": 256 },
+          "description": { "type": ["string", "null"], "maxLength": 2048 },
+          "description_zh": { "type": ["string", "null"], "maxLength": 2048 },
+          "price": { "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/Money" }, { "type": "null" }] },
+          "currency": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/currency_code" },
+          "price_model": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/PriceModel" },
+          "price_min": { "type": ["number", "null"], "minimum": 0 },
+          "price_max": { "type": ["number", "null"], "minimum": 0 },
+          "price_source": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/PriceSource" },
+          "price_updated_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+          "stock": {
+            "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "object" }, { "type": "null" }],
+            "description": "`null` = unknown; an integer = remaining units; an object = per-location breakdown. Never a zero masquerading as 'out of stock'."
+          },
+          "bookable": { "type": ["boolean", "null"] },
+          "min_party_size": { "type": ["integer", "null"], "minimum": 0, "maximum": 99 },
+          "max_party_size": { "type": ["integer", "null"], "minimum": 0, "maximum": 99 },
+          "duration_minutes": { "type": ["integer", "null"], "minimum": 0 },
+          "images": { "type": "array", "maxItems": 8, "items": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/ImageAsset" } },
+          "attributes": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/JsonObject" },
+          "constraints": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/JsonObject" },
+          "options": {
+            "type": "array",
+            "maxItems": 12,
+            "items": {
+              "type": "object",
+              "title": "OfferingOption",
+              "additionalProperties": false,
+              "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+              "required": ["name", "values"],
+              "properties": {
+                "name": { "type": "string", "minLength": 1, "maxLength": 64 },
+                "values": {
+                  "type": "array",
+                  "maxItems": 16,
+                  "items": {
+                    "type": "object",
+                    "title": "OfferingOptionValue",
+                    "additionalProperties": false,
+                    "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+                    "required": ["delta", "label"],
+                    "properties": {
+                      "delta": { "type": "number", "description": "Price delta in HKD (positive = surcharge, negative = discount)." },
+                      "label": { "type": "string", "minLength": 1, "maxLength": 64 }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "status": { "type": "string", "minLength": 1, "maxLength": 32 },
+          "rating": { "oneOf": [{ "$ref": "https://nexus.dev/schemas/common.json#/$defs/RatingInfo" }, { "type": "null" }] },
+          "facts": { "type": "array", "maxItems": 32, "items": { "$ref": "https://nexus.dev/schemas/fact.json" } }
+        }
+      }
+    },
+    "review_stats": {
+      "type": ["object", "null"],
+      "title": "ReviewStats",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+      "required": ["published_reviews", "average_rating"],
+      "properties": {
+        "published_reviews": { "type": "integer", "minimum": 0 },
+        "average_rating": { "type": ["number", "null"], "minimum": 0, "maximum": 5 },
+        "positive_reviews": { "type": "integer", "minimum": 0 },
+        "negative_reviews": { "type": "integer", "minimum": 0 },
+        "verified_purchase_reviews": { "type": "integer", "minimum": 0 },
+        "verified_reservation_reviews": { "type": "integer", "minimum": 0 },
+        "latest_review_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+        "distribution": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "title": "RatingBucket",
+            "additionalProperties": false,
+            "propertyNames": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/snake_case_key" },
+            "required": ["bucket", "count", "share"],
+            "properties": {
+              "bucket": { "type": "integer", "minimum": 1, "maximum": 5 },
+              "count": { "type": "integer", "minimum": 0 },
+              "share": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          }
+        },
+        "computed_at": { "$ref": "https://nexus.dev/schemas/common.json#/$defs/iso_date_time_or_null" },
+        "source": { "type": ["string", "null"], "maxLength": 512 },
+        "note": { "type": ["string", "null"], "maxLength": 512 }
+      }
+    },
+    "review_summary": {
+      "type": ["object", "string", "null"],
+      "description": "`null` today (the review agent has not written one); an object later. Never required."
+    }
+  }
+}

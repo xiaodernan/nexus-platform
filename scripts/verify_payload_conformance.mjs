@@ -179,7 +179,12 @@ async function main() {
       const detail = await call(PLATFORM, 'GET', `/api/v1/merchants/${encodeURIComponent(first.slug)}`, undefined);
       record('platform merchant profile', PLATFORM, `/api/v1/merchants/${first.slug}`, 'GET', detail);
       if (!detail.ok) failures.push(`merchant profile ${first.slug}: HTTP ${detail.status}`);
-      else note('merchant_profile', `GET /api/v1/merchants/{slug} has no published schema (${Object.keys(detail.body ?? {}).length} top-level keys unchecked)`);
+      else if (!docs['merchant_profile']) {
+        note('merchant_profile', `the runtime did not load merchant_profile.json from dist — run npm run gen:schemas`);
+      } else {
+        failures.push(...(await check('merchant_profile', detail.body, docs, store,
+          `merchant profile ${first.slug}`, rules)));
+      }
     }
   }
 
