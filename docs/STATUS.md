@@ -36378,3 +36378,42 @@ deleted; nothing this session removed is tracked by git.
 run), 68213ee (D825 ledger).
 
 - readers: the wire the product publishes is now the wire it serves on the directory path; the open doors are the merchant_profile schema and the filmed §170 run.
+## 828. D828 · the merchant profile gets its published schema — the conformance gate now measures it, and the wire proves it
+
+**The gap.** The payload-conformance verifier reported the merchant profile as `NO SCHEMA — GET
+/api/v1/merchants/{slug} has no published schema (36 top-level keys unchecked)`: the one surface both the
+consumer page and the evidence pack render, on the wire, unvalidated, since the pack recorded the note and
+moved on.
+
+**The schema.** `packages/types/src/schemas/merchant_profile.json` (draft 2020-12, closed object, snake_case
+keys, reusing `$ref`s into `common.json` / `entity_card.json` / `fact.json` exactly as `entity_card` does —
+no new primitives, no re-review of shared defs). Closed where the wire is closed, nullable where the service
+serves null (the seed writes `price_band="$$"`, hours carry `location_id`, offerings embed `flags`), and
+honest about the one deliberately-free shape: `category` on the profile is the taxonomy **display name** (the
+§4 directory card carries the §2 code; the §29 routes carry the slug — a reader is barred from equality-
+comparing this field, and the description says so in plain text). The first cut missed three keys the live
+wire embeds on offerings (`created_at` / `updated_at` / `flags:{demo, estimated_price}`) — caught by
+validating against the real payload, not by re-reading the spec, then added and re-attested.
+
+**Verified.**
+- `npm run gen:schemas` → 8 schemas, manifest updated (dist is gitignored).
+- `npm run conformance` → **8 schemas, 28 enum bindings, 50 fixture cases, 21 custom rules, 558 checks —
+  conformance OK**.
+- `npm run test:unit` → **31/31**.
+- `verify_payload_conformance.mjs` against the live plane → **39 payloads validated, 0 rejected by schema
+  keywords, 0 by cross-object rules** — the `NO SCHEMA` line is gone; the profile check is now part of the
+  gateed count.
+
+The gate's own engine is unchanged: `json-schema-mini.mjs` validated the new schema identically to the
+seven it knew, because the schema uses only keywords it already implements.
+
+**Not done, honestly.** The TS-side `MerchantProfile` interface in `merchant.ts` is a row-shaped type that
+no longer matches the composed wire and was NOT touched — renaming or reshaping it is a product-type
+decision, not a verification fix, and nothing claimed here settles it. The `review_summary` key is typed as
+"object | string | null" because the wire serves null today and the review agent's shape is unspecified.
+The §9 admin reads remain documented-not-built.
+
+**Commits.** 1a9700b (this unit: schema + verifier wiring); the conformance gate from dist is regenerated
+on demand (`npm run gen:schemas`).
+
+- readers: every consumer-rendered payload the plane serves is now gated — directory, search, profile, facts, envelopes. The §9 admin reads and filmed §170 remain the open doors.
