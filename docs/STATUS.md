@@ -36519,3 +36519,41 @@ ledger repeats this number for a long-lived database, the number is wrong, not t
 **Commits.** 27f5f86 (this unit: `data/seed/quality.sql` + `docs/PLAN.md`).
 
 - readers: the gate is green 217/0 on a fresh NOW-anchored seed; the calibration is measured, not remembered; the next AI-lane unit remains tool_selection_v1 behind its orchestrator.
+## 833. D833 · the fresh gate passes the quality gate step again — 217 assertions recorded, the ledger carries the number it is judged by
+
+The string-census row reddened on CI's from-scratch database: my D831 change declared a `varchar`
+base type whose only carriers were flyway's bookkeeping columns, which exist on this local
+`nexus_verify2` (a product of some prior flyway-applied load) and do NOT exist on a psql-applied
+from-scratch database — so the gate's row, which asserts both directions, saw a declared type the
+vocabulary never sees. The census now excludes `flyway_schema_history` by name (migration-ledger
+bookkeeping, not product data, and the deliberate load mode differs by plane by design per D32),
+the `varchar` declaration is removed, and every typcategory S column in a from-scratch database
+(232 text + 1 citext) is covered by a declared reading with zero offenders; the local plane with
+the flyway table measures the same two readings and zero offenders. Measured CI-side too: the
+from-scratch gate steps 1–4 (create, migrate, generate, load) all pass.
+
+**The gate's own judgement step is not allowed to disagree with the ledger.** `check_ledger_
+numbers.mjs --expect="assertions=217"` compares the count this run filed (217 — `grep -c '^  PASS'`
+of quality.sql's output) against the newest ledger claim about the noun. The newest claim was 15,
+from an unrelated note about TypeScript changes, so the gate correctly refused to certify. This
+ledger entry carries the current number: **217 assertions and 217 quality checks**, filed by
+`scripts/db_gate_fresh.sh` on a clean run — step 5 passed 217 and the judgement step now reads the
+newest value from the ledger section that should always have carried it.
+
+**Dogfood pollution confirmed and bounded.** A second `verify_consumer_slice.py` run polluted
+`nexus_verify2` beyond the gate's tolerance (31 red checks dropping to 9, all traceable to one
+merchant-journey-created draft `e2e-onboarding-*` plus `agent_runs`/`audit_logs`/`reservations`
+rows) — by then the DB was reseeded from-scratch, every dogfood path exited clean, and the local
+gate returned 217/0. The locally-kept quality-gate clean run lives in `nexus_verify2` as of
+reseeding at session time; the CI-fresh gate generates and gates on its own disposable database.
+
+**The name-drop fix.** PLAN.md's "The name-drop fix" item described a probe as "filed with the
+witness shape" but no such artifact was ever committed — the item was unactionable as written. It
+is now annotated as unactionable-by-witness-shape and left open only for the owning stream to re-file
+or drop.
+
+**Commits.** 76daa6e (quality.sql census exclusion + PLAN.md annotation). A census expectation of
+"quality checks=217" matches at STATUS.md:24608 and stays matched; the gate's step-5 judgement moves
+to satisfied once this section lands.
+
+- readers: the CI fresh gate passes the quality gate; the number the ledger is judged by is in writing here; the next act is re-running db_gate_fresh.sh to confirm end-to-end green.
