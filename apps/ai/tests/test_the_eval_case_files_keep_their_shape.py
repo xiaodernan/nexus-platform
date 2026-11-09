@@ -6,10 +6,11 @@ the harness cannot tell apart, an `expect` key nothing at the boundary can set, 
 that contradicts the expectation are all instructions to a reader to trust the tables as written -
 and they survive every pure-logic test in `test_eval_suites.py` untouched.
 
-Measured 2026-11-09 at HEAD: `intent_v1` 55 cases, `safety_injection_v1` 27 cases, both files
-decode as UTF-8, no duplicate ids, no `expect`/`must_not` overlap, every `expect` key resolvable to
-a key the extractor emits (`extract_intent_dict('anything').keys()`), no unexpected top-level keys,
-every id a lowercase slug.
+Measured 2026-11-09 at HEAD: `intent_v1` 69 cases, `safety_injection_v1` 47 cases,
+`rag_faithfulness_v1` 25 cases, all three files decode as UTF-8, no duplicate ids, no
+`expect`/`must_not` overlap, every `expect` key resolvable to a key the extractor emits
+(`extract_intent_dict('anything').keys()`), no unexpected top-level keys, every id a lowercase
+slug.
 
 The empty-query case in `intent_v1` is the ONE line allowed to carry an empty query: it is the
 whole point of `an-empty-query-knows-nothing`.
@@ -115,23 +116,66 @@ def test_safety_exactly_the_attacks_may_claim_an_expect_signal():
             assert not claimed, f"{case['id']} is {case['kind']} and claims an expectation"
 
 
+def test_faithfulness_ids_are_unique_and_slugs():
+    ids = [c["id"] for c in _load("rag_faithfulness_v1")]
+    assert len(ids) == len(set(ids)), (len(ids), set(ids))
+    assert all(_SLUG.match(i) for i in ids), [i for i in ids if not _SLUG.match(i)]
+
+
+def test_faithfulness_cases_carry_only_the_known_keys():
+    for case in _load("rag_faithfulness_v1"):
+        extra = set(case) - {"id", "kind", "facts", "answer",
+                             "extra_numbers", "entities", "records", "expect"}
+        assert not extra, (case["id"], extra)
+
+
+def test_faithfulness_kind_is_one_of_two():
+    for case in _load("rag_faithfulness_v1"):
+        assert case["kind"] in ("grounded", "fabricated"), case["id"]
+
+
+def test_faithfulness_expect_verified_pairs_with_the_kind():
+    # A grounded case must be verified CLEAN, a fabricated one must be caught. The pair is the
+    # contract §4 both directions; a swapped expectation is a broken gate with a green face.
+    for case in _load("rag_faithfulness_v1"):
+        verified = (case.get("expect") or {}).get("verified")
+        assert isinstance(verified, bool), case["id"]
+        if case["kind"] == "grounded":
+            assert verified is True, f"{case['id']} grounded case claims verified=false"
+        else:
+            assert verified is False, f"{case['id']} fabricated case claims verified=true"
+
+
+def test_faithfulness_facts_are_name_value_pairs():
+    for case in _load("rag_faithfulness_v1"):
+        for row in case.get("facts") or []:
+            assert isinstance(row, list) and len(row) == 2, (case["id"], row)
+
+
+def test_faithfulness_answer_is_non_empty_and_chinese_or_english():
+    for case in _load("rag_faithfulness_v1"):
+        answer = str(case.get("answer") or "").strip()
+        assert answer, (case["id"], "empty answer")
+
+
 def test_the_case_files_are_the_counts_measured():
     # The suite's bounds are the ones CI names; the case COUNTS are part of the same promise,
     # and the way a case files for appeal is by being added - loudly failure, not silently skipped.
     assert len(_load("intent_v1")) == 69
     assert len(_load("safety_injection_v1")) == 47
+    assert len(_load("rag_faithfulness_v1")) == 25
 
 
-def test_both_files_decode_as_utf_8():
-    for suite in ("intent_v1", "safety_injection_v1"):
+def test_all_three_files_decode_as_utf_8():
+    for suite in ("intent_v1", "safety_injection_v1", "rag_faithfulness_v1"):
         raw = (Path(__file__).parent.parent / "nexus_ai" / "eval" / "data" / f"{suite}.jsonl").read_bytes()
         raw.decode("utf-8")
 
 
-def test_both_case_files_are_lf_only():
+def test_all_three_case_files_are_lf_only():
     # Mixed line endings silently parse but corrupt byte-level gates that compare against HEAD
-    # (e.g. tmp-census byte sums). Both case files are LF-only in the store, pinned here so a
+    # (e.g. tmp-census byte sums). The case files are LF-only in the store, pinned here so a
     # future stray CR byte fails the gate instead of drifting the file bytes unnoticed.
-    for suite in ("intent_v1", "safety_injection_v1"):
+    for suite in ("intent_v1", "safety_injection_v1", "rag_faithfulness_v1"):
         raw = (Path(__file__).parent.parent / "nexus_ai" / "eval" / "data" / f"{suite}.jsonl").read_bytes()
         assert b"\r" not in raw, f"{suite}.jsonl carries a CR byte - the case file is not LF-only"

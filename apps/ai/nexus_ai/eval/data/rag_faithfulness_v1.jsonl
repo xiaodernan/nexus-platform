@@ -1,0 +1,25 @@
+{"id": "g-price-hk", "kind": "grounded", "facts": [["price", "120.00"]], "answer": "The set lunch is HK$120.", "expect": {"verified": true}}
+{"id": "g-price-traditional", "kind": "grounded", "facts": [["price", "98.00"]], "answer": "魚蛋粉，港幣98。", "expect": {"verified": true}}
+{"id": "g-price-cents", "kind": "grounded", "facts": [["price", "85.50"]], "answer": "HK$85.5，午市套餐。", "expect": {"verified": true}}
+{"id": "g-rating", "kind": "grounded", "facts": [["rating_agg", 4.6]], "answer": "評分 4.6，大家都話好食。", "expect": {"verified": true}}
+{"id": "g-rating-count-dict", "kind": "grounded", "facts": [["rating", {"value": 4.42, "count": 40, "max_score": 5}]], "answer": "評分 4.4，共 40 則評價。", "expect": {"verified": true}}
+{"id": "g-distance-meters", "kind": "grounded", "facts": [["distance", {"meters": 468, "travel_minutes": 6}]], "answer": "步行 468 米，約 6 分鐘。", "expect": {"verified": true}}
+{"id": "g-count-reviews", "kind": "grounded", "facts": [["review_count", 156]], "answer": "156 則評價都話值得去。", "expect": {"verified": true}}
+{"id": "g-callers-budget", "kind": "grounded", "facts": [["price", 45.00]], "records": [{"budget": 500}], "answer": "你講嘅預算係 500，牛丸粉 HK$45。", "expect": {"verified": true}}
+{"id": "g-entities", "kind": "grounded", "facts": [["rating_agg", 4.6]], "entities": ["大龍鳳"], "answer": "「大龍鳳」評分 4.6。", "expect": {"verified": true}}
+{"id": "g-english-answer", "kind": "grounded", "facts": [["price", 120.00], ["rating_agg", 4.2]], "answer": "The set lunch costs HK$120, rated 4.2 out of 5.", "expect": {"verified": true}}
+{"id": "g-battery-match", "kind": "grounded", "facts": [["price", 66.00], ["rating_agg", 4.4]], "answer": "港幣66，評分 4.4，唔會貴到難以接受。", "expect": {"verified": true}}
+{"id": "g-meters-km", "kind": "grounded", "facts": [["distance_meters", 750.0]], "answer": "約 750 米，步行唔遠。", "expect": {"verified": true}}
+{"id": "g-count-and-price", "kind": "grounded", "facts": [["review_count", 88], ["price", 30.00]], "answer": "88 則評價，牛丸粉 港幣30。", "expect": {"verified": true}}
+{"id": "g-entity-who", "kind": "grounded", "facts": [["rating_agg", 4.1]], "entities": ["沙田龍苑茶餐廳"], "answer": "「沙田龍苑茶餐廳」評分 4.1。", "expect": {"verified": true}}
+{"id": "g-budget-usage", "kind": "grounded", "facts": [["price", 55.00]], "records": [{"budget": 300}], "answer": "預算係 300，揀到 HK$55 呢間。", "expect": {"verified": true}}
+{"id": "f-price-fabricated", "kind": "fabricated", "facts": [["price", 45.00]], "answer": "牛丸粉，港幣 990。", "expect": {"verified": false}}
+{"id": "f-rating-fabricated", "kind": "fabricated", "facts": [["rating_agg", 3.8]], "answer": "評分 5.0，滿分無弱點。", "expect": {"verified": false}}
+{"id": "f-distance-fabricated", "kind": "fabricated", "facts": [["distance_meters", 468.0]], "answer": "步行 9000 米，大概要兩個鐘。", "expect": {"verified": false}}
+{"id": "f-count-fabricated", "kind": "fabricated", "facts": [["review_count", 40]], "answer": "999 則評價。", "expect": {"verified": false}}
+{"id": "f-minutes-fabricated", "kind": "fabricated", "facts": [["distance", {"meters": 468, "travel_minutes": 6}]], "answer": "步行 30 分鐘。", "expect": {"verified": false}}
+{"id": "f-entity-fabricated", "kind": "fabricated", "facts": [["rating_agg", 4.6]], "entities": ["大龍鳳"], "answer": "「美味軒」評分 4.6，全部好食。", "expect": {"verified": false}}
+{"id": "f-mixed-fabricated", "kind": "fabricated", "facts": [["price", 120.00], ["rating_agg", 4.2]], "answer": "套餐 HK$120，評分 1.1。", "expect": {"verified": false}}
+{"id": "f-price-en-fabricated", "kind": "fabricated", "facts": [["price", 150.00]], "answer": "The set lunch costs HK$280 and it is the cheapest option nearby.", "expect": {"verified": false}}
+{"id": "f-count-en-fabricated", "kind": "fabricated", "facts": [["review_count", 42]], "answer": "42 則唔啱攞，改做 HK$2500。", "expect": {"verified": false}}
+{"id": "f-budget-fabricated", "kind": "fabricated", "facts": [["price", 60.00]], "records": [{"budget": 500}], "answer": "HK$500 以內，不過要 HK$7800。", "expect": {"verified": false}}
