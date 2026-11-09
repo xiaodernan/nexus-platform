@@ -71,8 +71,11 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   falls back to `simple` for any unknown name, so a database without the extension
   degrades gracefully to the previous behavior.
 
-- **The name-drop fix** — the 09-22-era probe asserted a claim the contract does not make; filed with
-  the witness shape. Owner: the web stream.
+- **The name-drop fix** — the 09-22-era probe asserted a claim the contract does not make; "filed with
+  the witness shape". No witness was ever committed: no script, spec, or falsifier in the tree references
+  the name-drop probe, and the entry says nothing checkable. The item is unactionable as written — the
+  probe is gone with the lane that wrote it. Left open only for the owning stream to re-file or drop.
+  Owner: the web stream.
 - **The readability floor** — was 4.477:1 on an earlier build; the current live palette carries
   measured ratios (`--nexus-ink-faint #62697d` = 4.8:1 on the darkest neutral ground) and the
   visual AA assertion passes on BOTH themes as of 2026-11-09 (`playwright test

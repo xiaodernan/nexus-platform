@@ -3057,6 +3057,11 @@ BEGIN
                AND c.relkind = 'r'
                AND a.attnum > 0 AND NOT a.attisdropped
                AND (t.typcategory = 'S' OR bt.typcategory = 'S')
+               -- flyway's own bookkeeping table (D32 lineage) is not product data vocabulary;
+               -- whether a given plane carries one depends on which migration driver built the
+               -- database (psql-applied here, flyway-applied elsewhere in this project's history)
+               -- — so the census reads it exactly nowhere and declares nothing for it.
+               AND c.relname <> 'flyway_schema_history'
              ORDER BY 1, 2
   LOOP
     EXECUTE format('INSERT INTO vocab_data SELECT %L, %L, count(DISTINCT %I), count(*), '
@@ -3242,11 +3247,7 @@ INSERT INTO str_type VALUES
                  || 'count(DISTINCT col::text) are the same question and only one is paid for'),
  ('citext', 'two',  'V1:6 creates citext "for case-insensitive emails": the type folds case, the ::text cast '
                  || 'the details print does not, so a citext column is measured under BOTH readings and the '
-                 || 'gap between them is reported rather than smoothed over'),
- ('varchar','one',  'the only varchar columns in this database are flyway_schema_history''s five '
-                 || 'bookkeeping fields (version, description, type, script, installed_by) — '
-                 || 'varchar compares what it stores like text; the reading is declared because this gate '
-                 || 'covers every column it catches, not only the ones the seed writes');
+                 || 'gap between them is reported rather than smoothed over');
 
 INSERT INTO qc
 SELECT 'the string census declares a reading for every type it catches',
