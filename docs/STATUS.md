@@ -36248,3 +36248,49 @@ claimed: CI does not go green on the push alone — the runner flips it.
 entry records their AI eval lane closing out with a suite CI can gate on.
 
 - readers: the release gate now measures the preference lane end-to-end; the next AI unit is `tool_selection_v1` or the ARCHITECTURE §4 acceptance (a recorded live screenshot).
+## 824. D824 · the evidence collector could not recognise the zh-HK build, and hung forever when it could not — the live pack is captured again
+
+**The collector defects.** `apps/web/scripts/collect-evidence.mjs` failed on every live run today with
+two classes of breakage, both honest findings rather than test fixes:
+
+1. **Locale-drift markers.** The search-meta line the zh-HK build prints is 「運行編號 <uuid>」, which the
+   old simplified-only regex `/运行编号|run [0-9a-f]{8}-/i` did not match — the check failed after 20s
+   on a page that rendered perfectly. The same drift hit the merchant gate (`需要登錄後查看` vs the
+   simplified `需要登录后查看`), the admin gate (`身份認證之後` vs `身份认证之后`), and the two recorded
+   markers for the search body (`來源事實`, `模型暫不可用`). All now accept Traditional + Simplified +
+   English spellings; the assertions are unchanged in strength.
+
+2. **The browser leak.** When a check threw before the manifest was written (search failed → the
+   merchant-link guard threw), `main()` never closed the chromium context/browser, the node event
+   loop never drained, and every caller of `npm run evidence` hung forever (CI-invocation-unsafe).
+   The failure path now closes both handles before the error propagates.
+
+**Verified live.** After the fix, against the NOW-anchored `nexus_verify2` plane (web :3002, platform
+:8090, AI :8010): 5/5 surfaces captured — `home` (heading 想說就去。, 9 sections, no rails-unavailable
+notice), `search` (8 cards, `first_merchant=/m/copper-spring-0156`, summary marker now true,
+model_free_notice true), `merchant` （園海酒家， 7 reviews, open), `merchant-console` and
+`admin-console` sign-in gates. `manifest.json` `ok: true`. The pack is gitignored by design
+(`tests/evidence/*`; only `.gitkeep` tracked) — the gate it serves is ARCHITECTURE.md §10 ("UI verified
+in a real browser, screenshot under tests/evidence/").
+
+**The planes were down.** Recorded honestly: this session stopped :8090/:8010 for the morning's DB
+reload and did not restart them until this unit — which is why the 12:0x evidence captures showed a
+degraded landing page ("rails unavailable", AI offline) and the merchant SSR stalled. Both services
+are back, serving :8090 and :8010, healthy against verify2.
+
+**The reservation anchor.** The noon reseed used the default anchor (2026-09-22) to pin the count-pin
+corpus, which pushed the 21-day availability horizon into October 2026 — the consumer slice then
+showed `verify_reservation` 0/30 with `slot['capacity_left']` None (today is 2026-11-09). The DB was
+regenerated with `--now` and reloaded, matching the CI anchor D822 chose for PR/CI (reservation walks
+need future slots). After the reload: the full slice is green — 14/14, reservation 30/30, merchant
+page 19/19, 25 explanation bullets, dangling=[] — and the fresh evidence pack above was captured on
+this corpus. The count-pin failures recorded in ## 823 were measured before this reload; the
+NOW-anchored corpus keeps the same count-pin debt (offerings 5,534 either way today).
+
+**What this does NOT claim.** The evidence pack is not a CI artifact and not committed; the runner's
+visual-baseline parity is still open. The two regenerated `test_live`-scratch files this session's
+runs touched (`out/`, seed artifacts) are gitignored and were regenerated, not committed.
+
+**Commits.** 7aedd7c (this unit, collector only).
+
+- readers: the §10 evidence gate can now actually pass on the current plane; the remaining long poles are the ARCHITECTURE §170 filmed end-to-end acceptance and CI-green on the runner.
