@@ -216,15 +216,15 @@ async function main() {
       const cards = surface.locator('article[data-card-type]');
       await wait(surface, cards, 'the first result card', 25000);
       // `done` is the only event that prints the run meta; waiting for it proves the stream ended.
-      await wait(surface, surface.getByText(/运行编号|run [0-9a-f]{8}-/i), 'the stream run id', 20000);
+      await wait(surface, surface.getByText(/運行編號|运行编号|run [0-9a-f]{8}-/i), 'the stream run id', 20000);
       const body = await surface.locator('body').innerText();
       const href = await cards.first().locator('a[href^="/m/"]').first().getAttribute('href');
       return {
         heading: (await surface.locator('h1').first().innerText()).trim(),
         cards: await cards.count(),
-        summary: /来源事实|source facts/i.test(body),
-        model_free_notice: /模型暂不可用|model is unavailable/i.test(body),
-        fallback_notice: /流式搜索失败|Streaming failed/i.test(body),
+        summary: /来源事实|來源事實|source facts/i.test(body),
+        model_free_notice: /模型暂不可用|模型暫不可用|model is unavailable/i.test(body),
+        fallback_notice: /流式搜索失败|流式搜索失敗|Streaming failed/i.test(body),
         first_merchant: href,
       };
     },
@@ -232,6 +232,10 @@ async function main() {
 
   const merchantPath = search.first_merchant;
   if (typeof merchantPath !== 'string' || !merchantPath.startsWith('/m/')) {
+    // A failure that strands the chromium process hangs every caller of this script, so the
+    // surface that cannot be captured closes its own browser on the way out.
+    await context.close().catch(() => {});
+    await browser.close().catch(() => {});
     throw new Error(`the search returned no merchant link (got ${JSON.stringify(merchantPath)})`);
   }
 
@@ -256,7 +260,7 @@ async function main() {
     name: 'merchant-console',
     url: `${base}/merchant`,
     check: async (surface) => {
-      await wait(surface, surface.getByText(/需要登录后查看|Sign-in required/i), 'the merchant sign-in gate', 15000);
+      await wait(surface, surface.getByText(/需要登錄後查看|需要登录后查看|Sign-in required/i), 'the merchant sign-in gate', 15000);
       return { gate: 'sign-in-required' };
     },
   });
@@ -265,7 +269,7 @@ async function main() {
     name: 'admin-console',
     url: `${base}/admin`,
     check: async (surface) => {
-      await wait(surface, surface.getByText(/身份认证之后|sits behind identity/i), 'the admin sign-in gate', 15000);
+      await wait(surface, surface.getByText(/身份認證之後|身份认证之后|sits behind identity/i), 'the admin sign-in gate', 15000);
       return { gate: 'sign-in-required' };
     },
   });
