@@ -340,6 +340,11 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
                             open_state=open_state, reasons_from=reasons_from, query=query,
                             category_filter=category_filter, category_spelling=category_spelling,
                             now=_now(row))
+    # §18: the category_match bullet synthesised its own fact inside build_reasons; put it on the card
+    # too, or the card shows a source the reader cannot resolve.
+    cat_fact = computed.get("category_match")
+    if cat_fact is not None and cat_fact not in facts:
+        facts.append(cat_fact)
 
     card_type: CardType = "merchant"
     if cand.subject_type == "offering":
@@ -505,6 +510,9 @@ def build_reasons(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
                 label="category_match",
                 text=(REASON_COPY["category_match"].get(lang) or REASON_COPY["category_match"]["zh-HK"]).format(cat=cat_label),
                 value=str(category_filter), fact_id=cat_fact.fact_id)
+            # §18: the bullet ships with the fact it cites — stash it so build_card can put it in the
+            # card's own facts list. A bullet whose fact is not on the card is a dangling citation.
+            computed["category_match"] = cat_fact
     for feature in order:
         label = FEATURE_TO_LABEL.get(feature)
         if not label or label in seen:
