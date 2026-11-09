@@ -36673,3 +36673,71 @@ git-visible fact is the worktree list returning to one entry.
 - readers: `git worktree list`, `git status --porcelain`, `git log --oneline master..a1bcf85`,
   `git log --oneline master..d0f3b91`, `git branch -a`, `git rev-list --left-right --count
   master...origin/master`.
+
+## 845. D845 · the cloud plane: a registry, a config server and an edge that routes the monolith by URI (`services/cloud/`, `scripts/cloud_smoke.sh`, `infra/docker-compose.yml`)
+
+**A sidecar, not a rewrite.** The directive was to add Spring Cloud elements; the honest shape is a
+plane that serves traffic today without asking the monolith to become a distributed system. The parent
+pom's header comment states the rule: the gateway routes the platform's and the AI service's documented
+ports by URI, never `lb://`, and no platform Java file changed in this unit. The only pre-existing file
+touched is compose, and only as an opt-in profile.
+
+**Three services, each with one job.**
+
+- **registry** (`eureka-server`, :8761): nothing registers itself here; the gateway is the first
+  client (`EurekaServerApplication.java:11-13`). Self-preservation is off so a killed gateway
+  disappears in seconds instead of lingering as a zombie the smoke would then believe.
+- **config** (`config-server`, :8888): native profile reading a packaged repository
+  (`ConfigServerApplication.java:12-14`), serving `nexus-gateway.yml:6` whose `label: cloud-smoke` is
+  the marker the round-trip is judged by.
+- **gateway** (`gateway`, :8088): Spring Cloud Gateway WebFlux (`GatewayApplication.java:13-15`). The
+  route table is three URI routes - `/api/v1/**` -> platform, `/ai/v1/**` -> AI, `/**` -> web - with an
+  **optional** config import so the edge boots when the config server is down, and self registration
+  so the registry learns about the edge even though the edge does not need the registry to route.
+  `EdgeRequestIdFilter.java:22-36` mints `X-Request-Id` at the first hop and keeps a caller-supplied
+  id; `EdgeInfoController.java:33-34` exposes the resolved label and route table at `/cloud/info`
+  without exposing the environment.
+
+**The smoke is the proof, and it is offline.** `scripts/cloud_smoke.sh:87-123` builds the reactor,
+starts the three jars on loopback ports 18761/18888/18088, then asserts five things: the config server
+serves the file; the gateway resolved `cloud-smoke` rather than its local default; the route table
+carries the platform and AI ids and honours a URI override (`:98-102`); a routed miss still carries
+`X-Request-Id`; and Eureka lists `NEXUS-GATEWAY`. The platform/AI/web URIs are deliberately pointed at
+closed port 9 - the unit proves the wiring, not a proxied request, and it needs no database or upstream.
+
+**Two facts that were not obvious, and how they were caught.**
+
+- Spring Cloud Gateway 4.3 moved the property prefix to `spring.cloud.gateway.server.webflux.*`;
+  the older `spring.cloud.gateway.routes` is silently ignored. The prefix came from the cached 4.3.5
+  jar's own configuration metadata, and the smoke's route-table assertion is what stops a later edit
+  from turning the edge into a gateway with zero routes and a green health check.
+- The three resource files are `application.yaml`, not `application.yml`. Three new `application.yml`
+  basenames made three historical cites ambiguous (DECISIONS D133, STATUS 42 and 142), and the citation
+  census went red with exactly three AMBIGUOUS rows. The census is doing its job: a basename is a
+  namespace. The `.yaml` extension is unique for those historical reads, and Spring Boot loads it
+  unchanged - the smoke was rerun after the rename and passed again.
+
+**Compose is the deployment path, not the test path.** The opt-in `cloud` profile
+(`infra/docker-compose.yml:162-222`) builds one image per module from one Dockerfile (Java 21 build,
+Java 25 runtime, `MODULE` build arg) and points the gateway at `host.docker.internal` on the full
+profile's published ports. `docker compose --profile cloud config --quiet` exits 0.
+
+**Evidence.** `mvn -B -DskipTests package` in `services/cloud` -> BUILD SUCCESS, 3 modules, 20.3 s;
+`scripts/cloud_smoke.sh` -> PASS (exit 0), run once before and once after the `.yaml` rename; `docker
+compose --profile cloud config --quiet` -> exit 0; citation census 0 strict offenders; ledger sections
+and status citations PASS. Commit 064d955: 17 files, +701, no deletions outside compose.
+
+**Not claimed.** (a) The Docker images were not built and the `cloud` profile was not started - the
+smoke runs jars on the host. (b) The platform, AI and web routes were not exercised end-to-end; their
+URIs point at a closed port by design. (c) The monolith is not a Eureka client and no route uses
+`lb://`; that is the next step, not a property of this one. (d) The edge adds no TLS, auth or rate
+limiting yet. (e) The smoke is deliberately not a step in `db_gate_fresh.sh`: it needs no database and
+would add a Maven build to every gate run.
+
+- readers: `services/cloud/eureka-server/src/main/java/com/nexus/cloud/eureka/EurekaServerApplication.java:11-13`,
+  `services/cloud/config-server/src/main/java/com/nexus/cloud/config/ConfigServerApplication.java:12-14`,
+  `services/cloud/config-server/src/main/resources/config-repo/nexus-gateway.yml:6`,
+  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/GatewayApplication.java:13-15`,
+  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRequestIdFilter.java:22-36`,
+  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeInfoController.java:33-34`,
+  `scripts/cloud_smoke.sh:87-123`, `infra/docker-compose.yml:162-222`.
