@@ -281,11 +281,12 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .nexus-pulse,
+  .nexus-shimmer,
   .nexus-shimmer::after {
     animation: none !important;
   }
   .nexus-pulse {
-    animation: none !important;
     opacity: 1 !important;
     transform: none !important;
   }

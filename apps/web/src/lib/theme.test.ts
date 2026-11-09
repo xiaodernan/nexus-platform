@@ -59,6 +59,23 @@ describe('the theme has one name, and the palette ships it', () => {
     expect(THEME_BOOTSTRAP_SCRIPT).toContain('}catch(e){}})();');
   });
 
+  it('cancels the skeleton shimmer itself under reduced motion, not only a pseudo-element', () => {
+    // The animation lives on the `.nexus-shimmer` element, set by `[animation:nexus-shimmer_1.5s_infinite]`
+    // in `primitives/Skeleton.tsx`. A reduced-motion block that cancels only `.nexus-shimmer::after` cancels
+    // an element that never exists — the page shipped 28 running animations to a reduced-motion request,
+    // which WebKit reported and the §78 leg caught (D812).
+    const reducedBlocks = [
+      ...tokensCss.matchAll(/@media \(prefers-reduced-motion: reduce\)\s*\{([^@]*?)\n\}/gs),
+    ].map((match) => match[1]);
+    expect(reducedBlocks.length, 'tokens.css has no reduced-motion block at all').toBeGreaterThan(0);
+    const shimmerBlock = reducedBlocks.find((block) => block.includes('.nexus-shimmer'));
+    expect(shimmerBlock, 'no reduced-motion block in tokens.css names .nexus-shimmer').toBeTruthy();
+    // The bare class must be a stated target: a `.nexus-shimmer` followed by `,` or `{` — never
+    // satisfied by `.nexus-shimmer::after` alone, whose first following character is `:`.
+    expect(shimmerBlock).toMatch(/(^|[\s,{])\.nexus-shimmer\s*[,{]/m);
+    expect(shimmerBlock).toContain('animation: none !important');
+  });
+
   it('accepts only the two themes the product has', () => {
     expect(isTheme('light')).toBe(true);
     expect(isTheme('dark')).toBe(true);
