@@ -36198,4 +36198,53 @@ constants throughout. The full live run used a throwaway DB that will be dropped
 
 - readers: CI was touched on the frame it depends on; live-slice verification is not a CI claim.
   The consumer orchestration (consumer specs + merchant journeys) remains the next unit.
+## 823. D823 · personalization_v1 ships — typed preferences must lift their own candidate, measured (25/25)
 
+**The `personalization_v1` suite.** The AI release gate now measures the preference lane itself, not
+just its side effects. `nexus_ai/eval/personalization_v1.py` builds two byte-identical candidates
+(same category, tags, rating, district, only the preference-read attribute differs), runs the real
+ranking path (`S.search` with `intent_preferences=`), and requires the positive candidate's organic
+score to exceed the negative one's — `preference_lift >= 1.0`. The 25 cases cover the preference
+rules the NLU emits (ambience x2, cuisine x2, view, time_pref, occasion x5, access x4, style, price x2,
+weather) in the CJK and English cue that elicits each pair. Price preferences are scored on the
+row's own `avg_price_hkd` column (60 vs 300 for cheap, 500 vs 120 for premium), not a boolean
+attribute, matching the scorer's actual read. The gate is `--fail-on-gate`, wired into CI's eval step
+(`intent_v1,rag_faithfulness_v1,safety_injection_v1,personalization_v1`) — all four suites pass, 166
+cases total.
+
+**Preference elicitation is gated too.** The runner reports `preferences_elicited` and the hygiene
+gate requires every case's query to emit the named `key`/`value` pair through `extract_intent` — a
+case whose query elicits nothing fails the suite before it ever reaches a paired merchant. The
+hygiene gate gained five legs (LF-only byte check, slug uniqueness, the `preference_pair` shapes
+only, the two fixtures must differ, NLU elicitation) and the count moved to four files: 25/25 legs
+green.
+
+**Lexicon.** `停車` / `停车` (bare cue, no suffix) now emit `access/parking` — previously only
+「停車場」「停车场」did, so a plain 停車 request produced no preference.
+
+**Declared, not replaced.** Five codepoints written in the injection tests fail the product's
+reference-vocabulary rule because the kitchen-focused corpus never carries them: U+5BA1 (審),
+U+889C (袜), U+53E3 (口), U+5FC5 (必), U+718A (熊). Each is an attack payload or transit copy the
+test deliberately uses. Rather than swap the characters (a swap would fabricate the payload the test
+measures), they are DECLARED in `test_vocabulary_is_the_reference.py` with reasons; the gate stays
+strict.
+
+**mypy.** `personalization_v1.py` passes `mypy nexus_ai` clean; the harness runs the ranking lane
+through the same `validate_intent → plan_from_intent → S.search(intent_preferences=…)` chain the
+API uses — no mocks of the scorer.
+
+**The marathon live suite.** A full `uv run pytest -q` against verify2 completed: 37,995 passed,
+26 failed, 2h 04m. Every one of the 26 is a count-pin written against a historical `out/` snapshot
+(e.g. `census["offerings"] == 5538` while a seed generated today writes 5,534; the generator is
+deterministic for a fixed `--base-date` but its default anchor moved, and CI reseeds fresh on every
+run). None trace to D813/D814/D819/D820/D821/D822/D823. The count-pin debt is unchanged from the
+earlier ledger entry and remains pinned there.
+
+**Scope.** The CI eval gate is now four suites; `tool_selection_v1` remains specified-not-built. The
+full live monolith was run but its count-pin failures are corpus drift, not defects. What is not
+claimed: CI does not go green on the push alone — the runner flips it.
+
+**Commits.** 96a4523 (this unit). D821/D822 chronology is recorded in `## 821` / `## 822`; this
+entry records their AI eval lane closing out with a suite CI can gate on.
+
+- readers: the release gate now measures the preference lane end-to-end; the next AI unit is `tool_selection_v1` or the ARCHITECTURE §4 acceptance (a recorded live screenshot).
