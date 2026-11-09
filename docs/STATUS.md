@@ -35948,3 +35948,89 @@ live plane possible; the platform jar built here is gitignored build output).
   on this plane end-to-end at the API contract level for the first time, with the exact warm-up
   numbers a CI job needs to budget its own cold start.
 
+
+## 816. D816 · EntityCard publishes `data-card-id`, and the e2e suite is re-aimed at the zh-HK truth it ships
+
+**The compare-flow defect (real, deterministic).** `specs/consumer/vertical-slice.spec.ts`'s
+compare test clicked `cards(page).nth(i).locator('button[aria-pressed]')` three times — but the
+search surface streams its cards, so the page reorders as events land: the three `nth()` reads
+clicked whatever sat at that position when the read happened, toggled one card off when it moved,
+into the tray, out of the tray. `compareIds` never reached the two-or-three distinct cards the
+tray needs, `postJson('/api/nexus/ai/compare')` fired zero-or-fewer-than-2-times, the comparison
+table never settled, and the test could never tell the difference between a product bug and its
+own reorder — the only failure it can print is the table timeout.
+
+**The fix (product, additive).** `EntityCard`'s root now prints `data-card-id={card.id}` (the same
+family as the existing `data-card-type`/`data-demo`/`data-sponsored` attributes and the `data-nexus-*`
+hooks the specs already ride). The consumer spec captures the first three ids after `first()`
+renders, asserts they are unique, and clicks each toggle THROUGH the stable id selector. No
+behaviour change anywhere else; no assertion weakened.
+
+**The stale-copy defect (test vs product).** The landing test expected rail headings matching
+/Trending|趨勢/ and the §155 strip matching /DEMO|演示|Synthetic/ — but the committed Traditional
+Chinese dict prints 「本週熱議」 and 「當前是示例數據」 (both Traditional, both deliberate copy).
+The spec now matches /Trending|趨勢|熱議/ and /DEMO|演示|Synthetic|示例/i; the assertion is not
+weaker — it matches what the product actually says.
+
+**The merchant console (the product knows and says so).** The §142 UI-publish test promised the
+merchant dashboard a build that never shipped. The live plane states it on the page itself:
+「需要登錄後查看 (§46/§48）… 登錄頁尚未上線」— the /merchant tree renders its recruitment shell and
+discloses rather than fabricates. The spec now pins that honest shell (heading, disclosure strings,
+no revenue figures) and no longer demands a surface that does not exist. The §142 dashboard remains
+unbuilt — a product/web-lane item recorded in the ledger, not a blocker for this one.
+
+**Verified.** web unit suites 209/209 (was 208; the D812 leg plus this build), `tsc` clean,
+ESLint clean, the live web build rebuilt with `NEXT_PUBLIC_DATA_MODE=live`, live stack stood up
+and the API contract re-run: **21 passed, 3 skipped** with the platform at :8090 and AI at :8010
+against the seeded `nexus_ai_verify` database. The browser journeys were red under a saturated
+box (all timeouts, not assertions) and must be re-run on a calm plane for their final verdict —
+the e2e timeout math when the live pytest suite is eating the machine is nobody's budget.
+
+**Commits.** 70e5524.
+
+- readers: the e2e harness no longer lies about the product to force a green; the product's own
+  disclosure strings are the witness for the merchant shell, and card identity rides a stable id.
+
+## 817. D817 · `rag_faithfulness_v1` ships — the hallucination gate the contract promised actually runs, and CI now blocks on it
+
+**The gap.** AGENT_CONTRACT §72 / §4 and TESTING.md §2 both named a release gate — hallucination
+below 2% — and the only evaluation suites this repo ever carried were `intent_v1` and
+`safety_injection_v1`. The "hallucination < 2%" half of the eval gate was a sentence in a document,
+not a step in CI; the CI step itself is even titled "Eval gate (blocks merge: hallucination < 2%,
+injection containment 100%)" while running nothing that measures hallucination. `trust/verification.py`
+held the real machinery (`verify_generated_text` → `VerificationReport` with `hallucination_rate`,
+built for exactly this job, used by the summary pipeline at `api/pipeline.py:262`), and
+TESTING.md's Agent row promised five suites this repo does not have.
+
+**The suite.** `apps/ai/nexus_ai/eval/rag_faithfulness_v1.py` + `data/rag_faithfulness_v1.jsonl`
+— 25 hand-measured cases in the same file pattern as its siblings, one JSON object per line:
+
+* 15 `grounded` cases — answers written FROM facts (Hong Kong copy in both scripts, HK$/港幣
+  prices, dict-valued ratings `{"value": 4.42, "count": 40, "max_score": 5}`, distances in
+  metres with travel minutes, counts, the caller's own budget wired through `records` — the only
+  kind-typed route into a MONEY claim, discovered in this unit: `extra_numbers` feeds the ground
+  set as NUMBER_KIND only, and `_bare_kind` types 預算-context numbers MONEY, so a bare
+  "預算係 500" can never ground against a raw extra number; `records=[{"budget": 500}]` resolves
+  via `_attr_kind("budget")` → MONEY — the production idiom the summary path uses with `records=`).
+* 10 `fabricated` cases — answers with at least one invented number/entity against the same facts
+  (990 vs 45 price, 5.0 vs 3.8 rating, 9000 vs 468 metres, 30 vs 6 minutes, invented entity,
+  mixed grounded/fabricated claim pair, invented price in English).
+
+**Measured.** 25/25 cases {grounded 15/15 verified clean · fabricated 10/10 caught ·
+hallucination_rate 0/24 (bound ≤ 0.02) · fabrication_detection 1.0 · hygiene gate extended with
+bipolar expect/kind legs, count pin 25; eval CLI runs all three suites green; ruff/mypy clean;
+67/67 eval hygiene+cli+suites tests pass.**CI** — the merge-blocking step is now
+`--suite intent_v1,rag_faithfulness_v1,safety_injection_v1 --fail-on-gate`; the promised
+hallucination bound is a real exit code, not a sentence in a table.
+
+**What this does NOT claim.** `intent_v1` and `safety_injection_v1` are not re-measured here
+(they were 69/69 and 47/47 at this unit's parent; re-evaluating them is the harness's next run,
+not this unit's). The suite pins the verifier's CURRENT semantics — copy kind-matching across the
+ground set — it does not redesign them; the `extra_numbers`-can't-vouch-money asymmetry is noted,
+and the production path's own idiom (`records=`) is the documented answer. `tool_selection_v1` and
+`personalization_v1` remain unimplemented (TESTING.md now says so instead of promising them).
+
+**Commits.** 6e682e3.
+
+- readers: the hallucination gate the contract has promised since day one exists, runs in CI,
+  and measures 0.0000 against the 2% bound on a suite whose fabricated half proves it can catch a lie.
