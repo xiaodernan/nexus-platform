@@ -61,3 +61,61 @@ separately and are reported in the provider's own lane.
 - **Visual regression flakiness** (fonts/animations/streaming UI) vs. real signal — needs stabilized waits on `event: done`.
 - **Playwright + streaming SSE + demo auth** coupling makes E2E brittle; the failure-ladder UI (degraded fallback) needs
   its own deterministic test hook rather than timing-dependent waits.
+
+
+## 8. The live-verification runbook (measured on this dev plane, 2026-11-09)
+
+The Phase-1 stack (`make dev-web` / `dev-ai` / `dev-platform`) had never been booted on this machine,
+and the API contract suite had never run against it. This is the exact, measured path. Everything
+here was executed and its output quoted in the ledger (D811–D815).
+
+### 8.1 Throwaway seeded database (never touch `nexus`)
+```powershell
+docker exec nexus-platform-postgres psql -U postgres -c "CREATE DATABASE nexus_ai_verify"
+NEXUS_DB_NAME=nexus_ai_verify C:\Program Files\Git\bin\bash.exe scripts\db_apply_migrations.sh
+NEXUS_DB_NAME=nexus_ai_verify CONTAINER=nexus-platform-postgres DB=nexus_ai_verify USER=postgres `
+  C:\Program Files\Git\bin\bash.exe data/seed/load.sh
+```
+Result: 58 base tables migrated V1–V10 as postgres, role grants rebound, demo seed loaded
+(520 merchants / 5534 offerings / 11000 reviews / 2118 chunks / 5688 facts / 32492 slots).
+**Drop it when finished**: `psql … -c "DROP DATABASE nexus_ai_verify"`.
+
+### 8.2 Services against the verify DB
+```powershell
+# platform (Spring Boot, :8090) — SPRING_FLYWAY_ENABLED=false is required: the repo splits the
+# migration ledger (schema_migrations via scripts/db_apply_migrations.sh, Flyway inside the jar)
+# and the dev database has both; the jar must not re-flyway V1–V10 onto it.
+mvn -o -DskipTests package          # exit 0, nexus-platform.jar built
+$env:NEXUS_PORT='8090'; $env:NEXUS_PLATFORM_DB_URL='jdbc:postgresql://127.0.0.1:5433/nexus_ai_verify'
+$env:NEXUS_DB_PASSWORD='nexus_dev_app_only'; $env:SPRING_FLYWAY_ENABLED='false'
+java -jar services/platform/target/nexus-platform.jar
+
+# AI (FastAPI, :8010) — deterministic, no external LLM
+cd apps/ai
+$env:NEXUS_DATABASE_URL='postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus_ai_verify'
+$env:NEXUS_LLM_PROVIDER='mock'
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8010
+```
+The web (live mode) serves from the same tree: `cd apps/web; $env:NEXT_PUBLIC_DATA_MODE='live'; npx next build; node ..\..\node_modules\next\dist\bin\next start -p 3002`.
+**The `data-nexus-demo-notice="mock"` strip must NOT be present in live mode — its presence is the mock-plane proof; its absence is the live-plane proof.**
+
+### 8.3 The three suites and what they measured
+```powershell
+cd tests/e2e
+$env:NEXUS_WEB_URL='http://127.0.0.1:3002'; $env:NEXUS_PLATFORM_URL='http://127.0.0.1:8090'; $env:NEXUS_AI_URL='http://127.0.0.1:8010'
+$env:NEXUS_TEST_DATABASE_URL='postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus_ai_verify'
+npx playwright test specs/api --reporter=list      # 21 passed, 3 documented skips
+npx playwright test specs/consumer specs/merchant  # browser journeys — needs the live web up (8.2)
+cd ..\..\apps\ai; uv run pytest -q                  # the live-DB suite against the verify DB
+```
+Measured warm-up on the AI service (cold vs warm): the CJK §105 query went **16.7 s → 7.8 s → 9.5 s →
+0.50 s / 0.59 s** — the 2 s budget in `specs/api` is only met once caches are warm; CI or a cold
+harness must budget for the first calls (or warm with a probe before the suite).
+
+### 8.4 Reading a red here
+The verify DB carries the demo seed — a red from exact counts (e.g. the district-spread gate
+`merchants == 520`) means the corpus CHANGED, not that the product broke; the seed lane owns that
+target. HTTP-level failures in the API spec are service/config facts; browser failures under a
+saturated machine (many workers + a full test suite on one box) are usually budget artifacts —
+re-run on a calm machine before treating them as product defects (all of this landed over hours of
+background-suite contention).
