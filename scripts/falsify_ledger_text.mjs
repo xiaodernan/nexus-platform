@@ -354,8 +354,9 @@ for (const [dir, alsoDeep] of [[COPY_ROOT, false], [COPY2_ROOT, true]]) {
 }
 // The plant the two arms share. Its THIRD cite is not decoration: `deep/cited.mjs` resolves under every
 // root here, and a plant whose every citation is ambiguous never reaches the AMBIGUOUS arm at all - measured
-// while writing this one, `twin.mjs:1` plus `probe/a/twin.mjs:1` alone printed `2 citation(s) found and 0
-// file(s) resolved` and exited 2, the census's refusal for an index that sees nothing, which is the same
+// while writing this one, the two plants whose only citations name basename/copy-of-shaped files
+// printed `2 citation(s) found and 0 file(s) resolved` and exited 2, the census's refusal for an index
+// that sees nothing, which is the same
 // vacuity trap PLANT_ALONE pins from the other side.
 const PLANT_COPY = fixture('plant_copy_tree.md', [
   '# D640 plant',

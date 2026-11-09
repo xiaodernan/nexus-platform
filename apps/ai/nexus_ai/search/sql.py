@@ -570,7 +570,7 @@ def build_merchant_query(
     # `tmp/d617_census.txt`): `browse restaurant` pools 184 merchants and the key at the LIMIT-20
     # boundary, (kw 0.0, rating 4.41), is carried by 5 rows - 1 reaches the page, 4 are cut. Re-read
     # with those 20 excluded it is a different 19 of 20 (`tmp/d617_pool_ties.txt`). `m.id` is the
-    # tie-break the Python lane already applies after `-organic_score` (`ranking.py:273` sorts on
+    # tie-break the Python lane already applies after `-organic_score` (`ranking.py:286` sorts on
     # `Candidate.key()`, which is the same id), so the two lanes now order a tie the same way.
     total_select = "count(*) OVER () AS pool_total,\n       " if with_total else ""
     sql = f"""
@@ -868,7 +868,7 @@ def build_offering_query(
     # the thing it invites the user to book takes (`tmp/d674_measure.txt`: 54 served cards, 36 of them
     # offerings, 13 of those 28 distinct offerings stating a length in the column, 0 printing it). The
     # published card declares the field on exactly the two kinds these rows are
-    # (`packages/types/src/card.ts:151`/`:164`, `entity_card.json:98`) and names this column as its
+    # (`packages/types/src/schemas/entity_card.json:98`) and names this column as its
     # source. No predicate reads it: `WHERE` is untouched, so which rows answer a request is unchanged.
     sql = f"""
 SELECT {total_select}o.id, o.merchant_id, o.slug, o.name, o.name_zh, o.description, o.description_zh,

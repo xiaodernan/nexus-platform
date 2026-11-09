@@ -27,7 +27,7 @@ import type { Collection, EntityCard, Guide } from './types';
  *
  * THE SECOND DISAGREEMENT: THE TITLE IS A PAIR, NOT A STRING. `CollectionsController.summary()` serves
  * `title` as `{"en": title, "zh": title_zh}` — one projection shared by `/api/v1/collections`,
- * `/api/v1/guides`, both detail routes and the draft-create answer — because `docs/API_CONTRACT.md:397`
+ * `/api/v1/guides`, both detail routes and the draft-create answer — because `docs/API_CONTRACT.md:398`
  * promises "`collections.slug`, `title` (+ `title_zh` for the zh-HK locale)" and the row stores two
  * columns. The web's view-model declares `title: string` and rendered the map raw, so all four growth
  * routes answered **HTTP 500** with `Objects are not valid as a React child (found: object with keys

@@ -347,7 +347,7 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
             continue
         # D656: the live clause is an EXISTS over `locations` (`sql.py:228-231`), so a merchant with two
         # locations in two districts answers either. The row publishes that set as `districts`
-        # (`sql.py:211-221`); the single `district` column is the geo lane's nearest pick and is the
+        # (`sql.py:199-210`); the single `district` column is the geo lane's nearest pick and is the
         # fallback for a row list that states only one. Before this, the published merchant rows carried
         # `district: NULL` (geo_select is NULL without a lat/lng), so this lane answered 0 rows for every
         # district where the live lane answered 194 (`tmp/d656_district2.py`).
@@ -780,7 +780,7 @@ def _static_tokens(low: str) -> list[str]:
 # --------------------------------------------------------------------------- request shaping
 #: D665: the parsed qualities whose START is the convention for "the whole day" rather than a
 #: clock the user said. `timeparse`'s bare-day branch answers 09:00-23:00 and its weekend branch
-#: Saturday 09:00 (`timeparse.py:452-473`); a sentence that names 今日/聽日/週末 names a DAY.
+#: Saturday 09:00 (`timeparse.py:417-432`); a sentence that names 今日/聽日/週末 names a DAY.
 DAY_LEVEL_QUALITIES = frozenset({"all_day", "weekend"})
 
 #: D666: the parsed qualities that name a PART OF DAY, which is a WINDOW and not a clock the user

@@ -127,7 +127,7 @@ class TestTheCutIsATotalOrder:
         assert order_terms(offering_sql())[-1] == "o.id"
 
     def test_the_tie_break_is_the_id_the_row_carries_as_its_subject_key(self):
-        # `ranking.py:273` ends its own sort with `candidate.key()` = `subject_type:subject_id`, and
+        # `ranking.py:286` ends its own sort with `candidate.key()` = `subject_type:subject_id`, and
         # `subject_id` is projected from exactly this column. A slug or a popularity score would also
         # be deterministic, and would decide the page by a key the answer does not sort by.
         for sql_text, id_term in ((merchant_sql(), "m.id"), (offering_sql(), "o.id")):

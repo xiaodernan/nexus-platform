@@ -825,7 +825,7 @@ def build_actions(card_type: str, subject_id: UUID, rec: dict[str, Any],
     L = labels.get(locale, labels["zh-HK"])
     # The browse CTA is a merchant path, so it carries a merchant slug. On the offering lane the row's
     # own `slug` is the OFFERING's (`search/sql.py:576`) and its owner arrives separately (`:581`,
-    # `api/demo_data.py:121`), so reading `slug` printed an offering slug where a merchant slug
+    # `api/demo_data.py:142`), so reading `slug` printed an offering slug where a merchant slug
     # belongs - and `GET /api/v1/merchants/{idOrSlug}` answers those with its own not-found branch
     # (`CatalogController.java:487`).
     merchant_slug = str(rec.get("merchant_slug") or rec.get("slug") or subject_id)
