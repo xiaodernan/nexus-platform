@@ -56,9 +56,12 @@ Feedback updates personalization weights **slowly (EMA, min 3 signals)** and is 
 per-user model; the user can inspect/delete them (§32, §33).
 
 ## 7. Evaluation
-`personalization_v1` + `search_relevance_v1` measure task success, precision@10, relevance nDCG and **hallucination rate**
-(explanations citing non-existent facts count as hallucinations). Gate: hallucination < 2%, no task-success regression
->3pp ([`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §11).
+`personalization_v1` (shipped, CI-gated, preference-lift = 1.0) measures the typed-preference lift on the
+ranking lane; `search_relevance_v1` is **specified, not built** — honest relevance labels are an open
+task, and inventing them would fabricate truth. That suite also owns task success, precision@10 and
+relevance nDCG; **hallucination rate** is gated today by `rag_faithfulness_v1` (≤ 2%, measured 0.0000).
+Explanations citing non-existent facts count as hallucinations. Gate: hallucination < 2%, no
+task-success regression >3pp ([`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §11).
 
 ## Open questions / risks
 - **Cold-start personalization:** with no `user_preferences` and no feedback, `w_personalization` contributes nothing;

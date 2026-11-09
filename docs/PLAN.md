@@ -73,8 +73,12 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 
 - **The name-drop fix** — the 09-22-era probe asserted a claim the contract does not make; filed with
   the witness shape. Owner: the web stream.
-- **The readability floor** — live text measures 4.477:1 against the 4.5 AA bound the visual test
-  asserts. Owner: the web stream.
+- **The readability floor** — was 4.477:1 on an earlier build; the current live palette carries
+  measured ratios (`--nexus-ink-faint #62697d` = 4.8:1 on the darkest neutral ground) and the
+  visual AA assertion passes on BOTH themes as of 2026-11-09 (`playwright test
+  specs/visual/quality.spec.ts -g readability --project=visual`, 1 passed). The prior measurement
+  did not survive the token pass; either way the test is the oracle, and the test is green.
+  Owner: the web stream — closed to this reading.
 
 - **A surface inside another surface reads past the clause's reach** - **DOCUMENTED RESIDUE (D734; unreachable in production)** -
   "煙" inside "二手煙": constraint canon dedupes the refusal (D545), so the constraint lane writes one value. The hypothetical risk is a

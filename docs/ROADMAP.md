@@ -3,19 +3,23 @@
 Status: **implementation well advanced — the vertical slice is substantially landed as of 2026-11-09.**
 The document bodies below are historical milestones, not a status board. Measured state, verifiable
 in the ledger (`docs/STATUS.md`): the Postgres/pgvector schema V1–V10 + role split are live; a seeded
-synthetic Hong Kong corpus (470 published merchants / 5,538 offerings / 11,000 reviews); deterministic
+synthetic Hong Kong corpus (470 published merchants / 5,534 offerings / 11,000 reviews — regenerated
+2026-11-09); deterministic
 search with CJK containment + canonicalisation; ranking (organic floor + sort preferences); streaming
 conversational search with deterministic fallback; trust layer (fact verification with required
 `fact_id`s, injection containment, tool-name scanner) — CI's release gate runs `intent_v1` 69/69,
-`rag_faithfulness_v1` 25/25 (hallucination ≤ 2%, measured 0.0000) and `safety_injection_v1` 47/47
-(100% containment); the API contract suite passes 21/21 on the live stack; the visual suite
-21/21 on the mock plane; web unit suites 209 green; the live-verification runbook is
+`rag_faithfulness_v1` 25/25 (hallucination ≤ 2%, measured 0.0000), `safety_injection_v1` 47/47
+(100% containment) and `personalization_v1` 25/25 (preference-lift = 1.0); the API contract suite
+passes 21/21 on the live stack; the visual suite 21/21 on the mock plane; web unit suites 209
+green; the platform suite 288 green (`mvn -o test`, BUILD SUCCESS 2026-11-09); the live-verification
+runbook is
 [TESTING.md](TESTING.md) §8. **Honest gaps still open:** the merchant console sign-in
 (§46/§48 — the page renders its shell and discloses it; §142 unbuilt), the vector lane's real
-embeddings (mock hashing embeds only on this plane), `tool_selection_v1` and
-`personalization_v1` suites (the orchestrator is not built), and visual-baseline parity across
-platforms (win32 snapshots; CI runs chromium projects only). The vertical-slice path is proven at
-the API-contract and browser-suite level, not yet recorded as a filmed §170 run this session.
+embeddings (mock hashing embeds only on this plane), `tool_selection_v1` and the
+`search_relevance_v1` suite (the orchestrator and honest labels are not built), and visual-baseline
+parity across platforms (win32 snapshots; CI runs chromium projects only). The vertical-slice path
+is proven at the API-contract and browser-suite level, not yet recorded as a filmed §170 run this
+session.
 
 Milestones **M0–M7** come from [`DECISIONS.md`](DECISIONS.md) D8 (which
 collapses the spec's 13 §167 milestones into 7 because "anything not on the vertical-slice path is deferred"). §n →
