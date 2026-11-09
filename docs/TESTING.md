@@ -103,11 +103,14 @@ The web (live mode) serves from the same tree: `cd apps/web; $env:NEXT_PUBLIC_DA
 ```powershell
 cd tests/e2e
 $env:NEXUS_WEB_URL='http://127.0.0.1:3002'; $env:NEXUS_PLATFORM_URL='http://127.0.0.1:8090'; $env:NEXUS_AI_URL='http://127.0.0.1:8010'
-$env:NEXUS_TEST_DATABASE_URL='postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus_ai_verify'
-npx playwright test specs/api --reporter=list      # 21 passed, 3 documented skips
-npx playwright test specs/consumer specs/merchant  # browser journeys — needs the live web up (8.2)
+$env:NEXUS_TEST_DATABASE_URL='postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus_verify2'
+npx playwright test specs/api --reporter=list      # measured 2026-11-09: 4/4 passed
+npx playwright test specs/consumer specs/merchant specs/consumer/card-media.spec.ts   # measured 2026-11-09: 8/8 consumer, 5/5 merchant, 3/3 card-media (1 documented skip)
 cd ..\..\apps\ai; uv run pytest -q                  # the live-DB suite against the verify DB
 ```
+The visual project asserts the mock plane's demo notice (`[data-nexus-demo-notice="mock"]`);
+on a live plane it fails 3/3 by design — it belongs to the mock build, and red there is the
+spec's own "this plane is live" signal, not a product defect.
 Measured warm-up on the AI service (cold vs warm): the CJK §105 query went **16.7 s → 7.8 s → 9.5 s →
 0.50 s / 0.59 s** — the 2 s budget in `specs/api` is only met once caches are warm; CI or a cold
 harness must budget for the first calls (or warm with a probe before the suite).
@@ -119,3 +122,14 @@ target. HTTP-level failures in the API spec are service/config facts; browser fa
 saturated machine (many workers + a full test suite on one box) are usually budget artifacts —
 re-run on a calm machine before treating them as product defects (all of this landed over hours of
 background-suite contention).
+
+### 8.5 The known-good command set (measured 2026-11-09, NOW-anchored demo corpus)
+```powershell
+python scripts/verify_consumer_slice.py            # 14/14 against the live plane
+node scripts/verify_served_reads.mjs --base http://127.0.0.1:8090   # PASS, 611 checks
+node scripts/verify_payload_conformance.mjs        # 39 payloads validated, 0 rejected
+python -m nexus_ai.eval.cli --suite intent_v1,rag_faithfulness_v1,safety_injection_v1,personalization_v1 --fail-on-gate  # PASS, 166 cases
+cd apps/web; npm run evidence                      # 5/5 surfaces, manifest ok=true
+```
+When the live plane serves NOW-anchored data, these are the confirmations the plane is honest;
+if one of them goes red, read ��8.4 before suspecting the product.
