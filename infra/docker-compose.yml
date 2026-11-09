@@ -177,7 +177,7 @@ services:
     environment:
       NEXUS_EUREKA_PORT: 8761
     ports:
-      - "127.0.0.1:${NEXUS_EUREKA_HOST_PORT:-8761}:8761"
+      - "127.0.0.1:${NEXUS_EUREKA_HOST_PORT:-18761}:8761"
 
   config-server:
     image: nexus/config:dev
@@ -192,7 +192,7 @@ services:
     environment:
       NEXUS_CONFIG_PORT: 8888
     ports:
-      - "127.0.0.1:${NEXUS_CONFIG_HOST_PORT:-8888}:8888"
+      - "127.0.0.1:${NEXUS_CONFIG_HOST_PORT:-18888}:8888"
 
   gateway:
     image: nexus/gateway:dev
@@ -219,7 +219,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "127.0.0.1:${NEXUS_GATEWAY_HOST_PORT:-8088}:8088"
+      - "127.0.0.1:${NEXUS_GATEWAY_HOST_PORT:-18088}:8088"
 
 volumes:
   pgdata:

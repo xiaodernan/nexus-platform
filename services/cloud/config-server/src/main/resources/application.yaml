@@ -1,5 +1,8 @@
 server:
-  port: ${NEXUS_CONFIG_PORT:8888}
+  # D847: the host face of the plane is one documented block (18761/18888/18088), not three canonical
+  # numbers each free by luck. :8888 was free when measured, but it is the default every other Spring
+  # Cloud stack on this machine reaches for, and :8761 already proved that one of them gets there first.
+  port: ${NEXUS_CONFIG_PORT:18888}
 
 spring:
   application:

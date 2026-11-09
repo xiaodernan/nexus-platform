@@ -1,5 +1,8 @@
 server:
-  port: ${NEXUS_GATEWAY_PORT:8088}
+  # D847: the host face of the cloud plane is 18761/18888/18088. See eureka-server's application.yaml
+  # for why the canonical block is not safe here; the three numbers move together or R3/R4 of
+  # scripts/check_cloud_plane_ports.mjs reddens.
+  port: ${NEXUS_GATEWAY_PORT:18088}
 
 spring:
   application:
@@ -7,7 +10,7 @@ spring:
   config:
     # Optional on purpose: the edge must serve traffic when the config server is down, and the smoke
     # run asserts the label changes when it is up. Fail-fast belongs to production overlays, not here.
-    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:8888}
+    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:18888}
   cloud:
     gateway:
       server:
@@ -38,7 +41,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:8761/eureka/}
+      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:18761/eureka/}
     register-with-eureka: true
     fetch-registry: true
   instance:

@@ -1,5 +1,10 @@
 server:
-  port: ${NEXUS_EUREKA_PORT:8761}
+  # D847: 18761, not the canonical 8761. On the machine this plane was measured on, :8761 is held by
+  # another checkout's registry (services/nexus-registry, a path this repo does not have) listing
+  # FOOTBALL-CORE and NEXUS-API. A registry is not a port you can share: the edge would register into
+  # somebody else's topology and discover services nobody here owns. Same reasoning as D9's 5433/6380.
+  # The container keeps 8761 internally (compose sets NEXUS_EUREKA_PORT); only the host face moves.
+  port: ${NEXUS_EUREKA_PORT:18761}
 
 spring:
   application:
