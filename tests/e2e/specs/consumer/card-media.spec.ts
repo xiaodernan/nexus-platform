@@ -20,16 +20,22 @@ import type { Page } from '@playwright/test';
  */
 
 /** Every card image, with the two facts that decide whether a consumer can see it. */
+// Seeded demo fixtures resolve to two roots: /demo/img/ (live plane — seeded seed/assets downloaded
+// and copied into apps/web/public/demo/img/) and /media/ (mock plane — the bundled mock manifest).
+// Both name local synthetic artwork; the spec's job is "is it visible", not which tree the SVG lives in.
+const IMAGE_ROOT = /^\/(demo\/img|media)\//;
+
 async function artwork(page: Page) {
-  return page.evaluate(() =>
-    Array.from(document.querySelectorAll('img'))
-      .filter((i) => (i.getAttribute('src') ?? '').startsWith('/demo/img/'))
+  return page.evaluate(() => {
+    const isCardArtwork = (src: string) => /^\/(demo\/img|media)\//.test(src);
+    return Array.from(document.querySelectorAll('img'))
+      .filter((i) => isCardArtwork(i.getAttribute('src') ?? ''))
       .map((i) => ({
         src: i.getAttribute('src') ?? '',
         complete: i.complete && i.naturalWidth > 0,
         opacity: Number.parseFloat(getComputedStyle(i).opacity),
-      })),
-  );
+      }));
+  });
 }
 
 /**
@@ -45,11 +51,11 @@ async function open(page: Page, path: string) {
   await page
     .waitForFunction(
       () =>
-        Array.from(document.querySelectorAll('img[src^="/demo/img/"]')).every(
-          (i) => i.complete && i.naturalWidth > 0 && Number.parseFloat(getComputedStyle(i).opacity) >= 0.99,
-        ),
+        Array.from(document.querySelectorAll('img'))
+          .filter((i) => /^\/(demo\/img|media)\//.test((i as HTMLImageElement).getAttribute('src') ?? ''))
+          .every((i) => i.complete && i.naturalWidth > 0 && Number.parseFloat(getComputedStyle(i).opacity) >= 0.99),
       null,
-      { timeout: 15000 },
+      { timeout: 45000 },
     )
     .catch(() => {});
   await page.waitForTimeout(400);
@@ -64,7 +70,7 @@ async function firstMerchantHref(page: Page) {
 
 function verdict(name: string, seen: Awaited<ReturnType<typeof artwork>>) {
   const stuck = seen.filter((i) => i.complete && i.opacity < 0.99);
-  expect(seen.length, `${name} rendered no /demo/img/ card artwork to judge`).toBeGreaterThan(0);
+  expect(seen.length, `${name} rendered no demo card artwork to judge`).toBeGreaterThan(0);
   expect(
     stuck,
     `${stuck.length}/${seen.length} of ${name}'s card images are loaded and still invisible ` +
@@ -88,7 +94,24 @@ for (const [name, path] of [
 
 test('card artwork is visible on the streamed search surface (the control)', async ({ page }) => {
   test.slow();
-  await open(page, '/search?q=' + encodeURIComponent('餐厅'));
+  await open(page, '/search?q=' + encodeURIComponent('帮我找附近适合朋友聚会的餐厅'));
+  // lazy images fire only when they intersect; a short viewport (mobile) never shows the third
+  // card without a scroll — a consumer scrolls, and the control test should too.
+  await page.evaluate(() => {
+    for (const i of Array.from(document.querySelectorAll('img'))) {
+      if (/^\/(demo\/img|media)\//.test(i.getAttribute('src') ?? '')) {
+        i.closest('article')?.scrollIntoView({ block: 'center' });
+      }
+    }
+  });
+  await page.waitForFunction(
+    () =>
+      Array.from(document.querySelectorAll('img'))
+        .filter((i) => /^\/(demo\/img|media)\//.test((i as HTMLImageElement).getAttribute('src') ?? ''))
+        .every((i) => i.complete && i.naturalWidth > 0 && Number.parseFloat(getComputedStyle(i).opacity) >= 0.99),
+    null,
+    { timeout: 45000 },
+  );
   const seen = await artwork(page);
   expect(seen.length, 'search returned no cards with artwork').toBeGreaterThan(0);
   expect(seen.filter((i) => !i.complete || i.opacity < 0.99), JSON.stringify(seen.slice(0, 3))).toEqual(

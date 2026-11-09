@@ -4,11 +4,12 @@ import { test, expect, demoLogin } from '../../lib/fixture.js';
 
 test.describe('merchant journey', () => {
   test('the merchant console renders its honest shell before sign-in exists (§46/§48)', async ({ page }) => {
-    // Both planes carry the disclosure — the live budget session says the sign-in page is
-    // unbuilt, the mock plane says the same in its own words; the §155 strip and the no-fabricated-
-    // figures claim are the invariants, not the mode-specific copy.
+    // Both planes carry the disclosure and the same document title; the live session says the sign-in
+    // page is unbuilt in its own words, the mock plane says it in more words. What holds on both:
+    // the honest disclosure, no fabricated business figures. The heading is in <title>, and
+    // `getByText` never meets it — assert it on the document instead.
     await page.goto('/merchant');
-    await expect(page.getByText(/商戶經營概覽/).first()).toBeVisible();
+    await expect(page).toHaveTitle(/商戶經營概覽/);
     await expect(page.getByText(/登錄/).first()).toBeVisible();
     await expect(page.getByText(/尚未上線/).first()).toBeVisible();
     // The disclosure and not a fake console: no fabricated revenue figures on this page.

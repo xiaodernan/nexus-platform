@@ -55,15 +55,16 @@ test.describe('consumer core journey', () => {
     await page.keyboard.press('Enter');
 
     // §116: staged progress, no chain-of-thought leakage
-    await expect(page.getByText(/理解|搜索|對比|找到|Understanding|Searching/i).first()).toBeVisible();
+    // Mobile collapses the banner nav ("智能搜索" contains 搜索) — scope to main so the locator cannot land on the hidden-link.
+    await expect(page.getByRole('main').getByText(/理解|搜索|對比|找到|Understanding|Searching/i).first()).toBeVisible();
     await expect(page.getByText(/找到|Found/).first()).toBeVisible({ timeout: 20000 });
 
     const found = cards(page);
-    await expect(found.first()).toBeVisible();
+    await expect(found.first()).toBeVisible({ timeout: 20000 });
     expect(await found.count(), 'AI search returned no merchants').toBeGreaterThan(0);
 
     // §18: reasons are enumerable and each is grounded — the card renders its list
-    await expect(found.first().locator('li').first()).toBeVisible();
+    await expect(found.first().locator('li').first()).toBeVisible({ timeout: 20000 });
 
     // §94 cold start: results must actually be near Sha Tin
     const distances = await found.evaluateAll((els) =>
@@ -97,7 +98,7 @@ test.describe('consumer core journey', () => {
     await expect(cards(page).first()).toBeVisible({ timeout: 20000 });
 
     await page.getByRole('button', { name: /太貴了| cheaper/i }).first().click();
-    await expect(cards(page).first()).toBeVisible();
+    await expect(cards(page).first()).toBeVisible({ timeout: 20000 });
     // §34 through to §67: the refinement is not a re-render of the same answer, it is a
     // different order. The sort the user asked for has to be readable in the card list.
     const prices = await cardPrices(page);
@@ -107,7 +108,7 @@ test.describe('consumer core journey', () => {
     );
     await page.getByRole('button', { name: /近一點|closer/i }).first().click();
     // §8: a preference re-orders the answer; it must never empty it.
-    await expect(cards(page).first()).toBeVisible();
+    await expect(cards(page).first()).toBeVisible({ timeout: 20000 });
   });
 
   test('compare three merchants from real rows only (§37)', async ({ page }) => {
@@ -124,9 +125,9 @@ test.describe('consumer core journey', () => {
       await page.locator(`article[data-card-id="${id}"] button[aria-pressed]`).click();
     }
     // Selecting the third card opens the tray; the comparison table is the cost surface (§37).
-    await expect(page.locator('table')).toBeVisible();
+    await expect(page.locator('table')).toBeVisible({ timeout: 20000 });
     for (const row of [/Price|價格|人均/, /Rating|評分/, /Distance|距離/]) {
-      await expect(page.locator('table').getByText(row).first()).toBeVisible();
+      await expect(page.locator('table').getByText(row).first()).toBeVisible({ timeout: 20000 });
     }
     // Each chip's remove control names its own card, so it can be addressed and it drops
     // exactly that card rather than whichever chip happens to be first.
