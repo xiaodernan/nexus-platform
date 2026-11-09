@@ -35780,3 +35780,44 @@ server was stopped afterwards. The live-plane caveat of D809 stands unchanged.
 - readers: the web mock plane and the service now agree on all seven time windows; the e2e suite is
   reproducible end-to-end on a built mock plane, 14 of 14.
 
+
+## 812. D812 · the §78 reduced-motion promise was half implemented — the shimmer animation ran on the element while the sheet cancelled a pseudo-element that never exists
+
+**The finding.** The `mobile` Playwright project (iPhone 13 → WebKit) had never been green on this
+plane: the harness's `test:visual` carries `--update-snapshots=missing`, nobody had committed the
+mobile baselines, and `npx playwright install webkit` was missing on this machine (WebKit 26.6
+installed now). First real run: the home/search/merchant @1440 screenshots failed on absent
+baselines, and the §78 leg (`reduced-motion users still get long animations`, expected < 5) measured
+**28 running animations**. Desktop Chrome and the visual project passed, so this looked
+engine-specific — it was not: it was a cascade bug both engines share, and Chrome masked it by
+reporting `animationName: none` for the same spans.
+
+**The defect.** `packages/ui/src/styles/tokens.css`'s reduced-motion block cancelled
+`.nexus-shimmer::after`, but `primitives/Skeleton.tsx` renders the shimmer as
+`<span class="nexus-shimmer absolute inset-0 ... [animation:nexus-shimmer_1.5s_infinite]" />` — the
+animation lives on the ELEMENT via a Tailwind arbitrary property, and there is no `::after`
+pseudo-element anywhere. The sheet's own comment says the §78 check counts the page's animations;
+the rule it shipped could never cancel the element carrying them. 28 spans (the home rails' skeleton
+placeholders) animated on every first paint for a reduced-motion request.
+
+**The fix.** `.nexus-shimmer` itself joins the `animation: none !important` reduced-motion block
+(the `.nexus-pulse` sibling keeps its own opacity/transform reset). A unit leg in
+`theme.test.ts` now reads the palette as text and pins that a reduced-motion block names the BARE
+`.nexus-shimmer` class — a `.nexus-shimmer::after` cannot satisfy the assertion (its next character
+is `:`) — plus `animation: none !important`. `tokens.css` rebuilt into the production bundle.
+
+**Measured.** `npx vitest run src/lib/theme.test.ts` 6/6. Production build on the mock plane
+rebuilt. `quality.spec.ts`: **21/21 across mobile, desktop, visual projects** (including §78 on
+mobile). Mobile baselines for home/search/merchant @1440 regenerated deliberately from the FIXED
+build and each reviewed as the genuine product (the §155 warning strip, the hero, the search
+evidence panel with 6 found cards, the merchant tabs) — none is a failure state. No committed
+baseline was deleted; the auto-generated `merchant-mobile-win32.png` from the pre-fix build was
+removed before regeneration. `pnpm`/`npm` runs stayed on the repo's scripts; the three probe
+scripts were deleted after use.
+
+**Commits.** 0ef43fa.
+
+- readers: the §78 promise is now honoured on the element that carries the animation, and the mobile
+  suite exists and is green; the honest difference between "Chrome says 0" and "the promise is kept"
+  is pinned in a unit test, not asserted in a comment.
+
