@@ -65,6 +65,13 @@ public class MerchantCards {
     public static final String COLUMNS = String.join("\n",
             "       m.id, m.slug, m.display_name, m.display_name_zh, m.category_primary, m.description, m.tags,",
             "       m.avg_price_hkd, m.rating_agg, m.review_count, m.data_origin, m.ownership_verified,",
+            // §2 `category` is the closed snake_case code, never the display name. `merchants.category_primary`
+            // writes the taxonomy's `name`, so the code is resolved against the one place it exists —
+            // the taxonomy itself, whose leaves carry `tea-house`-style slugs. The pick is deterministic:
+            // a tenant's own row never beats the shared global row, and sort_order breaks the rest.
+            // (An unbounded subquery here exploded on nexus_test, where meter-scale duplicate leaf names
+            //  have piled up from repeated suite runs — `more than one row returned`.)
+            "       (select c.slug from categories c where c.kind = 'merchant' and c.name = m.category_primary order by (c.tenant_id is null) desc, c.sort_order, c.slug limit 1) as category_slug,",
             "       m.updated_at, m.images,",
             "       loc.district, loc.city,",
             OPEN_NOW + " as is_open,",

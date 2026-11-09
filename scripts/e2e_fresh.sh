@@ -168,14 +168,14 @@ echo "    -> tables=$TABLES migrations=$MIGRATIONS"
 if [ "$SKIP_GENERATE" = "1" ]; then
   step "3/10 seed generation skipped (--skip-generate)"
 else
-  step "3/10 generate the synthetic dataset"
+  step "3/10 generate the synthetic dataset (--now; the walk needs slots in the future)"
   PYTHON="${PYTHON:-python}"
-  ( cd "$ROOT" && "$PYTHON" data/seed/generate.py ) 2>&1 | tail -3 | sed -e 's/^/    /'
+  ( cd "$ROOT" && "$PYTHON" data/seed/generate.py --now ) 2>&1 | tail -3 | sed -e 's/^/    /'
 fi
 
-step "4/10 load the seed into the fresh database"
-CONTAINER="$CONTAINER" DB="$E2E_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 \
-  "$ROOT/data/seed/load.sh" | tail -6 | sed -e 's/^/    /'
+step "4/10 load the seed into the fresh database (SEED_ANCHOR=1: stamp the load window)"
+CONTAINER="$CONTAINER" DB="$E2E_DB" USER="$PGUSER" RESEED_DEPENDENTS=1 SEED_ANCHOR=1 \
+  "$ROOT/data/seed/load.sh" | tail -8 | sed -e 's/^/    /'
 FACTS="$(psql_e2e "SELECT count(*) FROM facts WHERE attribute='rating'")"
 echo "    -> rating facts loaded: $FACTS"
 

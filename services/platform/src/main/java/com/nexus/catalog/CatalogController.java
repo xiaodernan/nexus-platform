@@ -341,13 +341,15 @@ public class CatalogController {
 
     // ---- views -----------------------------------------------------------
 
-    /** A directory row: the §2 card plus the two location columns a grid needs to render its own filter chips. */
+    /** A directory row: the §2 card plus the district a grid needs to render its own filter chips. */
     private static Map<String, Object> listItem(Map<String, Object> row, String currency, Instant asOf) {
         Map<String, Object> item = MerchantCards.card(row, currency, asOf);
         item.put("district", Json.str(row, "district"));
-        item.put("city", Json.str(row, "city"));
-        item.put("category", Json.str(row, "category_primary"));
-        item.put("avg_price_hkd", Json.dec(row, "avg_price_hkd"));
+        // §2's closed `category` is snake_case; the corpus writes the taxonomy display name.
+        // The taxonomy key (tea-house) folded through its own separator rule lands on the
+        // schema's spelling (tea_house).
+        String slug = Json.str(row, "category_slug");
+        item.put("category", slug == null ? null : slug.replace('-', '_'));
         return item;
     }
 
