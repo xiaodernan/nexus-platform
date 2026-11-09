@@ -35907,3 +35907,44 @@ reported separately from D813. No ranking semantics changed.
 - readers: the CJK lanes can now prepare their queries at all; parity is measurably 6/8 with a
   decision-ready delta, not a hypothesis.
 
+
+## 815. D815 · the live stack boots on the dev plane and the API contract suite answers 21/21 against it
+
+**The stack, measured.** Both NEXUS services run against a seeded throwaway verify database
+(`nexus_ai_verify`: migrated fresh V1–V10 as postgres, role grants re-bound, full demo seed loaded:
+520 merchants / 5534 offerings / 11000 reviews / 2118 chunks):
+- **platform** `nexus-platform.jar` (built `mvn -o -DskipTests package`, exit 0) on :8090 with
+  `SPRING_FLYWAY_ENABLED=false` (the repo's Flyway-vs-`schema_migrations` split, D30/D32 — the
+  migrations were applied by `scripts/db_apply_migrations.sh`, not by boot) — `GET /api/v1/merchants`
+  answers 200 in ~6 s from a cold start;
+- **AI** `uv run uvicorn app.main:app` on :8010 with `NEXUS_LLM_PROVIDER=mock` (deterministic, no
+  external LLM) against the same verify DB.
+
+**The suite.** `tests/e2e/specs/api/contract.spec.ts` — **21 passed, 3 skipped across api/desktop/
+mobile projects** (the same 7 contract tests per project; the 3 skips are the spec's own §54
+checkout skip + two feature-flagged legs, per its own `test.skip(...)`). Coverage: error envelope
+shape, snake_case + X-Request-Id echo, cursor pagination cap, 401 on unauthenticated writes, the
+§52 403 for a held-against-someone-else's workspace, the self-serve 201 draft merchant, the §19
+EntityCard trust check against the live AI, the §105 deterministic-no-LLM search, and the
+health/readiness pair with the web.
+
+**The warm-up fact (measured 3 times).** The CJK §105 query (「预算300以内 日本料理 中環」) measured
+16.7 s cold, 7.8 s, 9.5 s, then **0.50 s / 0.59 s warm** — the AI pipeline caches plan/embedding
+work on first touch. The first two attempts at the suite failed §105's 2 s budget purely on cold
+cache + 7 parallel workers + the in-flight live pytest run stealing CPU; after warming, the same
+assertion measures 0.67–1.1 s. No product defect; the gate is honest about a warm system.
+
+**What this does NOT claim.** The consumer/merchant browser specs (vertical-slice, journey) have
+NOT been run against the live stack — they need the web served in `NEXT_PUBLIC_DATA_MODE=live`, a
+separate live build, and a CPU budget the in-flight live pytest run does not give; they are the next
+unit once it lands. The verify DB still carries the e2e self-serve draft merchant from the §52 pass
+(harmless: no locations, no published rows; `spread["merchants"] == 520` unaffected). The verify DB
+is disposable and is dropped when the D813 full-suite verdict is recorded.
+
+**Commits.** No source change — this unit is environment + verification (D813/D814's code made the
+live plane possible; the platform jar built here is gitignored build output).
+
+- readers: NEXUS's own documented Phase-1 stack (infra-up → migrate → seed → dev-*) is now measured
+  on this plane end-to-end at the API contract level for the first time, with the exact warm-up
+  numbers a CI job needs to budget its own cold start.
+
