@@ -9706,7 +9706,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     `asyncpg.connect`. The service's connections come from `db/pool.py::connect`, which
                     passes `init=_init_connection`, and `_init_connection` registered `encoder=json.dumps`
                     on `jsonb`. Every writer in the service already passes `json.dumps(...)` text
-                    (`api/runs.py:118-121,158-159`, `search/sql.py:205,365`), so that text was encoded a
+                    (`api/runs.py:118-121,158-159`, `search/sql.py:317,672`), so that text was encoded a
                     second time and stored as a jsonb *string*: `jsonb_typeof = 'string'`, every key read
                     NULL, only `#>> '{}'` reaching the payload · the shape D86's quality.sql header
                     describes from the data side.
@@ -9726,7 +9726,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     of the 62 jsonb columns censused · are stamped 2026-09-27T15:34:09Z, written the day
                     *after* that measurement. A row count cannot say when; a timestamp can.
 
-                    The consequence is not telemetry only. `search/sql.py:205,365` builds
+                    The consequence is not telemetry only. `search/sql.py:317,672` builds
                     `attributes @> {param}::jsonb` from a `json.dumps(...)` value, and `plan_from_intent`
                     fills that filter from positive `intent.preferences` (`search/service.py:746-658`).
                     Measured on `nexus`, one connection each: `attributes @> '{"data_origin":"demo"}'
@@ -16066,7 +16066,7 @@ turn 1 `帮我找附近适合朋友聚会的餐厅` → `sort_preference: distan
 turn 2 `太贵了` → `sort_preference: price_low, budget: null` (the new effect, and §8 still unbroken —
 no number appears); turn 3 `近一点` → `radius_m: 1000` (the nearby default 2000 × `RADIUS_TIGHTEN`). The
 state merge works end to end. **The answer set did not change: 8 cards, and the same first four slugs in
-all three turns.** That is a separate, precisely located defect: `search/service.py:585` writes
+all three turns.** That is a separate, precisely located defect: `search/service.py:1095` writes
 `plan.sort_preference` from the intent and nothing downstream reads it — `organic_rank()` sorts by
 `(-organic_score, candidate.key())` and `plan.radius_m` is the only planning field the retrieval honours.
 So a refinement can be correctly remembered and still produce an identical page; the chip that this unit
@@ -30184,7 +30184,7 @@ a derived next-Saturday; both are queued. (c) Chinese numerals: the service rewr
 time. (d) The published vocabulary `range` / `open_now` / `unspecified` has no carrier in the web's `IntentTime`,
 which spells its no-time `none` — the mock cannot answer a 6pm–9pm query at all. (e) 「晚市」 is dated by neither
 plane now, and the lexicon carries no afternoon-tea category for the guard's roster to grow into on this side.
-(f) The service's own docstring (`apps/ai/nexus_ai/nlu/timeparse.py:145`) still says "Two of the 37 cues" while the
+(f) The service's own docstring (`apps/ai/nexus_ai/nlu/timeparse.py:204`) still says "Two of the 37 cues" while the
 table reads 39 tokens; the count is the service lane's, and this unit read it as text rather than editing it.
 
 - readers: `apps/web/src/lib/mock/index.ts:227` (`PART_OF_DAY_WINDOWS`), `:235` (`CLOCK_RE`), `:244`
@@ -30816,7 +30816,7 @@ items) was red on a CLEAN HEAD worktree at `588266d` with this unit stashed
 names and closes it.
 
 - readers: `search/sql.py:213-204` (`_clock_filter`), `:301-314` and `:556-567` (the four clauses),
-  `search/service.py:426-441` (`_static_hour_value`), `:476-487` (the two fixture comparisons),
+  `search/service.py:509-524` (`_static_hour_value`), `:533-545` (the two fixture comparisons),
   `:679-680` (the plan's clocks), `:953-957` (HHMM -> clock), `:1016-1029` (`_hhmm_clock`), the
   re-aimed legs in `test_time_before_cue.py`, this unit's gate, and `tmp/d661_probe.py`,
   `tmp/d661_after.py`, `tmp/d661_census2.py`, `tmp/d661_falsify.txt` (the measurements).
