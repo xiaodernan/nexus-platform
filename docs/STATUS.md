@@ -36447,3 +36447,42 @@ themselves (the 20 s ceiling still stands on slow planes).
 **Commits.** 46b71ac (this unit). D828's conformance + evidence pack remain green on this plane.
 
 - readers: §168's consumer half is verified end-to-end on this plane; §170 remains unrecorded; CI runs this suite nightly with its own 3-worker budget.
+## 830. D830 · every runnable browser/api suite measured on this plane — 35 pass, the one red is red by its own design
+
+Coverage measurement of the e2e tree against the live stack (web :3002 NOW-anchored verify2, platform
+:8090 joined to the same DB, AI :8010 mock provider):
+
+**API contract (`specs/api/contract.spec.ts`), 4/4 ok (project `api`)** — unauthenticated writes are
+refused, EntityCard payloads pass the §19 trust check, the no-LLM deterministic fallback is up, health
+probes across services answer.
+
+**Consumer journey (`specs/consumer/vertical-slice.spec.ts`, desktop)** — 8 pass / 1 skip (the skip is
+the reservation mutation path, gated by `NEXUS_E2E_WRITE_PATHS` on purpose).
+
+**Merchant journey (`specs/merchant/journey.spec.ts`), 5/5 ok** — the §46/§48 shell discloses its own
+honesty, AI import drafts with evidence and never silently publishes, the agent answers from its KB and
+hands off when unsure, marketing can draft but never publish, cross-tenant isolation holds (one merchant
+can never read another's rows). §142's structural half is real here; the §46 sign-in gate remains an
+unbuilt UI decision.
+
+**Card media (`specs/consumer/card-media.spec.ts`), 3/3 ok** — artwork is visible on SSR'd home, merchant
+detail, and the streamed search surface.
+
+**Visual (`specs/visual/quality.spec.ts`, project `visual`)** — 4 pass / 3 fail: `home`, `search`,
+`merchant` @1440 each assert `[data-nexus-demo-notice="mock"]` — the mock-plane demo notice, which
+`DataModeNotice` renders ONLY when `NEXT_PUBLIC_DATA_MODE=mock`. This plane serves LIVE, so the
+assertion is false here by the mock-plane contract the file itself documents ("a live run fails; CI runs
+mock"). On this corpus those three visual runs are red for exactly the reason the spec names; red-by-design,
+re-verified in D558 against the same plane.
+
+**What this changes.** The ledger's testing totals can now quote the browser tier honestly: 35 passing,
+1 documented skip, 3 intentionally-live-red visual proofs (mock-plane only). No spec on this plane is in
+an unknown state.
+
+**What this does NOT claim.** The mock plane's 21/21 visual parity is a CI/mock build matter and was not
+rebuilt locally this session. `vertical_slice.spec.ts` green is still not §170 "MVP COMPLETE" (filmed,
+recorded run).
+
+**Commits.** (nothing in this unit — verification only)  — tree unchanged since D829.
+
+- readers: the browser tier is now fully enumerated on this plane; the open items are the §170 film and the mock-plane visual reruns.
