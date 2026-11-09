@@ -4005,6 +4005,14 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `kw_score` (then rating, then id) while the fixture lane ranks in Python with the full weight vector. Which
   order is the product's is a decision, not a drift to paper over - a gate here would pin whichever lane
   happened to be written first. Owner: the ranking/search lane, with its own census of the two sequences.
+  **Superseded by D814: the census now exists.** `tests/test_the_two_lanes_in_this_corpus_order_the_page.py`
+  (with D814's boolean-cast fix landed) measures both lanes over one shared corpus of the 470 published
+  merchants for eight queries: six are identical in membership AND order with a full shared prefix (安靜 cafe,
+  寵物友善, 適合約會的餐廳, 週末約會, 週末找一個適合情侶約會的地方, 幫我找附近適合約會的餐廳); two differ
+  (海景, 素食), each by 2 of the served 10 rows. Observed, unverified mechanism: on those two CJK queries the
+  live lane reports relevance 0.0 for every row (the fixture reports 0.25 for its matched rows), so the live
+  page is the hard-filter pool ordered by quality - the parked decision is now whether to unify kw_score/
+  relevance semantics across lanes, and the census is its evidence, not its answer.
 
 
 - **The follow-up that asks for others lost the turn it carried** - **closed by D709 (§688)**. 「其他
