@@ -39,10 +39,18 @@ tests/e2e           Playwright suites; tests/evidence holds screenshots of every
 cp .env.example .env          # fill nothing for the mock/demo path
 make infra-up                 # postgres (pgvector) + redis
 make db-migrate seed          # schema + synthetic demo data
-make dev-platform             # :8080  commerce core
-make dev-ai                   # :8000  AI service
-make dev-web                  # :3000  consumer app
+make dev-platform             # :8090  commerce core
+make dev-ai                   # :8010  AI service
+make dev-web                  # :3002  consumer app
 ```
+
+Ports 3000/8000/8080 are occupied by other projects on this dev machine; the Makefile maps NEXUS to
+**web 3002 · AI 8010 · platform 8090** (and CI publishes the postgres/redis image pair on
+5433/6380 for the same reason). The harness fallback in `tests/e2e/playwright.config.ts` (3000 /
+8080 / 8000) is a framework default for a CI plane that boots its own stack; local runs export
+`NEXUS_WEB_URL`/`NEXUS_PLATFORM_URL`/`NEXUS_AI_URL`. The measured live-verification runbook —
+throwaway seeded database, service boot with the Flyway caveat, warm-up timings, and what each
+suite measured — is in [docs/TESTING.md](docs/TESTING.md) §8.
 
 `NEXUS_LLM_PROVIDER=mock` (default) runs the whole product offline: intent extraction and summaries use
 deterministic heuristics, and every response is labelled degraded. Point `NEXUS_LLM_BASE_URL` +
