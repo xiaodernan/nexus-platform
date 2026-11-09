@@ -7,10 +7,10 @@ that contradicts the expectation are all instructions to a reader to trust the t
 and they survive every pure-logic test in `test_eval_suites.py` untouched.
 
 Measured 2026-11-09 at HEAD: `intent_v1` 69 cases, `safety_injection_v1` 47 cases,
-`rag_faithfulness_v1` 25 cases, all three files decode as UTF-8, no duplicate ids, no
-`expect`/`must_not` overlap, every `expect` key resolvable to a key the extractor emits
-(`extract_intent_dict('anything').keys()`), no unexpected top-level keys, every id a lowercase
-slug.
+`rag_faithfulness_v1` 25 cases, `personalization_v1` 25 cases — all four files decode as UTF-8,
+no duplicate ids, no `expect`/`must_not` overlap, every `expect` key resolvable to a key the
+extractor emits (`extract_intent_dict('anything').keys()`), no unexpected top-level keys, every id a
+lowercase slug.
 
 The empty-query case in `intent_v1` is the ONE line allowed to carry an empty query: it is the
 whole point of `an-empty-query-knows-nothing`.
@@ -158,24 +158,65 @@ def test_faithfulness_answer_is_non_empty_and_chinese_or_english():
         assert answer, (case["id"], "empty answer")
 
 
+def test_personalization_ids_are_unique_and_slugs():
+    ids = [c["id"] for c in _load("personalization_v1")]
+    assert len(ids) == len(set(ids)), (len(ids), set(ids))
+    assert all(_SLUG.match(i) for i in ids), [i for i in ids if not _SLUG.match(i)]
+
+
+def test_personalization_cases_carry_only_the_known_keys():
+    for case in _load("personalization_v1"):
+        extra = set(case) - {"id", "kind", "preference", "query",
+                             "positive_attrs", "negative_attrs"}
+        assert not extra, (case["id"], extra)
+
+
+def test_personalization_kind_is_preference_pair():
+    for case in _load("personalization_v1"):
+        assert case["kind"] == "preference_pair", case["id"]
+
+
+def test_personalization_positive_and_negative_differ():
+    # A pair of identical fixtures would rank by the 0.348 baseline both ways and the lift
+    # gate would pass vacuously — a personalization suite that can't fail any lift is not
+    # a personalization suite.
+    for case in _load("personalization_v1"):
+        assert case["positive_attrs"] != case["negative_attrs"], case["id"]
+
+
+def test_personalization_query_elicits_the_named_preference():
+    import json
+
+    _ = json  # imported for clarity below
+    from nexus_ai.nlu.understand import extract_intent
+
+    for case in _load("personalization_v1"):
+        prefs = extract_intent(case["query"]).preferences
+        key, value = case["preference"]
+        assert any(p.get("key") == key and p.get("value") == value for p in prefs), (
+            f"{case['id']}: query {case['query']!r} does not emit {key}/{value} — "
+            f"NLU emitted {prefs}; the case would measure nothing but the baseline")
+
+
 def test_the_case_files_are_the_counts_measured():
     # The suite's bounds are the ones CI names; the case COUNTS are part of the same promise,
     # and the way a case files for appeal is by being added - loudly failure, not silently skipped.
     assert len(_load("intent_v1")) == 69
     assert len(_load("safety_injection_v1")) == 47
     assert len(_load("rag_faithfulness_v1")) == 25
+    assert len(_load("personalization_v1")) == 25
 
 
-def test_all_three_files_decode_as_utf_8():
-    for suite in ("intent_v1", "safety_injection_v1", "rag_faithfulness_v1"):
+def test_all_four_files_decode_as_utf_8():
+    for suite in ("intent_v1", "safety_injection_v1", "rag_faithfulness_v1", "personalization_v1"):
         raw = (Path(__file__).parent.parent / "nexus_ai" / "eval" / "data" / f"{suite}.jsonl").read_bytes()
         raw.decode("utf-8")
 
 
-def test_all_three_case_files_are_lf_only():
+def test_all_four_case_files_are_lf_only():
     # Mixed line endings silently parse but corrupt byte-level gates that compare against HEAD
     # (e.g. tmp-census byte sums). The case files are LF-only in the store, pinned here so a
     # future stray CR byte fails the gate instead of drifting the file bytes unnoticed.
-    for suite in ("intent_v1", "safety_injection_v1", "rag_faithfulness_v1"):
+    for suite in ("intent_v1", "safety_injection_v1", "rag_faithfulness_v1", "personalization_v1"):
         raw = (Path(__file__).parent.parent / "nexus_ai" / "eval" / "data" / f"{suite}.jsonl").read_bytes()
         assert b"\r" not in raw, f"{suite}.jsonl carries a CR byte - the case file is not LF-only"

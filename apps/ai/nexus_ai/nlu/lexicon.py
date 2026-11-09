@@ -147,7 +147,7 @@ PREFERENCE_RULES: list[tuple[str, str, list[str], int]] = [
                         "天台", "天臺", "rooftop"], 1),
     ("access", "mtr_near", ["地鐵", "地铁", "mtr", "港鐵", "港铁", "駅", "站邊"], 1),
     ("access", "accessible", ["輪椅", "轮椅", "無障礙", "无障碍", "accessible", "walker"], 1),
-    ("access", "parking", ["停車場", "停车场", "停泊", "泊車", "泊车", "car park", "parking",
+    ("access", "parking", ["停車場", "停车场", "停車", "停车", "停泊", "泊車", "泊车", "car park", "parking",
                            "有車位", "车位", "車位"], 1),
     ("access", "pet_friendly", ["寵物", "宠物", "pet friendly", "pet-friendly", "帶狗", "带狗"], 1),
     ("price_sense", "cheap", ["平", "便宜", "cheap", "廉價", "廉价", "抵", "經濟", "经济",

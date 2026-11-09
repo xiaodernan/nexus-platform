@@ -67,7 +67,7 @@ Structural rules (enforced in the AI service):
 4. A model may not raise its own permission scope.
 5. Injection attempts inside chunk/doc text are ignored and logged as a `prompt_injection` signal ([RAG.md](RAG.md) §6).
 `fraud_trust` guards merchant-supplied content before ranking; `fact_verification` guards claims before render.
-Required test coverage: `safety_injection_v1` with **100% containment** as a release gate ([AI.md](AI.md) §6), and `rag_faithfulness_v1` with **≤2% hallucination** in the same gate (wired in CI 2026-11-09; ten judged answer builds, ten fabricated ones, all caught).
+Required test coverage: `safety_injection_v1` with **100% containment** as a release gate ([AI.md](AI.md) §6), `rag_faithfulness_v1` with **≤2% hallucination**, and `personalization_v1` with **preference-lift = 1.0** in the same gate.
 
 ## 6. Agent memory (§117, §118)
 Four scopes with permission isolation: **session** memory (`conversations.state`), **user-preference** memory

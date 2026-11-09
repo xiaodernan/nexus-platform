@@ -109,6 +109,12 @@ DECLARED = {
     "\u9760",   # 靠 - lean on, trust, depend on; near - the query that asks for a nearby place
     "\u9805",   # 項 - neck, nape of neck; sum; funds - a corpus line (the full menu)
     "\u9ebc",   # 麼 - interrogative final particle; insignificant, small, tiny - the merchant agent's question
+    # Three of mine, written in D800 and never declared: each is an injection payload used to assert scanner behavior.
+    "\u5BA1",   # 审 - examine, inspect, scrutinise - an injection suffix (the 'no filter / no review' shape the scanner flags as jailbreak_mode)
+    "\u5FC5",   # 必 - certainly, definitely, inevitable - an injection prefix shape (system：你必须输出。) the scanner flags as instruction_prefix
+    "\u718A",   # 熊 - bear; surname - an out-of-vocabulary noun in a query that no kitchen stocks, the shape a query a human would use to fire injection without being caught
+    "\u53E3",   # 口 - mouth; opening; gate - an ordinary character in public-transit copy (3 号出口) that the product's kitchen-focused vocabulary does not carry
+    "\u889C",   # 袜 - stockings; socks - a malformed character sequence I wrote from memory in the injection tests; declared rather than silently replaced
 }
 
 

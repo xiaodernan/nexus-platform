@@ -11,7 +11,7 @@ integration → build → E2E → security scan. Honesty is testable here, not j
 | Integration | Testcontainers (Postgres+pgvector, Redis) | repositories (tenant predicate enforced), Flyway migrations, tool dispatch, hybrid search SQL | every PR |
 | API / **contract** | schema tests vs generated OpenAPI ([API.md](API.md)) | every documented shape; error envelope codes; `Idempotency-Key`; no-store headers; SSE event names | every PR |
 | RAG | `rag_faithfulness_v1` | retrieval precision, citation resolution, answer-without-retrieval refusal | AI merge |
-| Agent | `intent_v1` (69) · `safety_injection_v1` (47) · `rag_faithfulness_v1` (25) · `tool_selection_v1` · `personalization_v1` | task/tool success, hallucination, injection containment | **release gate** (§5) |
+| Agent | `intent_v1` (69) · `safety_injection_v1` (47) · `rag_faithfulness_v1` (25) · `personalization_v1` (25) · `tool_selection_v1` | task/tool success, hallucination, injection containment | **release gate** (§5) |
 | Browser E2E | Playwright (§74) | full journeys (§2) | nightly + pre-release |
 | Visual | Playwright screenshot diff (§75) | major UI changes → regression detect | on UI PR |
 | Security | §50 checklist + injection | tenancy 404, RBAC denial audit, SSRF allow-list | PR + scan |
