@@ -4065,3 +4065,25 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   `apps/ai/tests/test_a_turn_that_said_nothing_about_place_or_time_sends_the_null_the_contract_publishes.py`,
   27 legs (44 red on the parent, all green on the fix), with 9 arms over `96bb33f`
   (`tmp/d710_arms.txt`). Owner: the AI lane.
+
+### The cloud plane (Spring Cloud) - the microservice lane the project asked for
+
+The plane exists (§845): Eureka registry, Config Server and a WebFlux gateway, proven by
+`scripts/cloud_smoke.sh`. D847 (§847) moved its host face off another project's registry to the
+measured-free 18761/18888/18088 block and left `scripts/check_cloud_plane_ports.mjs` asking who owns every
+coordinate on each run. The queue below is the order the evidence justifies; each step keeps the monolith's
+normal boot unchanged unless a profile opts in.
+
+- **NEXT - D848: the platform registers, and the edge routes by name.** The platform jar carries no
+  eureka/actuator library and `:8090/actuator/health` is a 404 (measured, `tmp/d847_measure.txt`), so the
+  gateway can only route by hardcoded host:port. Add an opt-in `cloud` profile (eureka client + actuator,
+  disabled by default), switch the platform route to `lb://NEXUS-PLATFORM`, and prove one REAL proxied
+  request through the edge to the registered live platform. Closes §845(b) and §845(c). The loadbalancer
+  starter is already on the gateway classpath; nothing of ours is registered yet.
+- **Then - the edge earns its keep:** circuit breaker/fallback and request rate limiting at the gateway,
+  `X-Request-Id` propagation into the platform's MDC (Micrometer/tracing), and a decision on TLS/auth at the
+  edge. §845 "Not claimed" (d) and §847 (d) are the open receipts.
+- **Then - deployment:** build the three Docker images and start the `cloud` compose profile end to end
+  (§845(a)); decide whether the smoke belongs in `db_gate_fresh.sh` (§845(e) says why it does not today).
+- **Standing rule:** any new host coordinate runs `scripts/check_cloud_plane_ports.mjs` first - on this
+  machine a canonical port is presumed contested until measured free (D9, D847).

@@ -29870,7 +29870,7 @@ does not. Both were run from their own tree against a directory holding `6145c6c
     this unit's reader, same bytes      RESULT: FAIL — 20 simplified character(s) in 5 literal(s) of 4 zh block(s)   rc 1
           WRONG-SCRIPT apps/web/src/lib/prompts.ts:18 :19 :20 :21 :22 — five of five starter prompts
 
-The two blocks the old admission could not see are `DICTS` (`apps/web/src/lib/i18n/dict.ts:2059`) and
+The two blocks the old admission could not see are `DICTS` (`apps/web/src/lib/i18n/dict.ts:2190`) and
 `BY_LOCALE` (`apps/web/src/lib/prompts.ts:20-35`), both locale-keyed maps: what was missing was the
 population, not the copy. The reader prints such a map's span one line EARLIER than its declaration —
 `2051-2052`, and 2051 is empty — so a row that copies the printed span verbatim draws the BLANK LINE
@@ -34120,7 +34120,7 @@ side effect.
 
 ## 724. D724 · stub cart no longer ships stale_copy string; client renders from stale boolean
 
-**The gap.** `adapters/platform.py:246` hardcoded `"stale_copy": "價格可能已更新"` in cart items with no locale support (D605's second producer). The module had no locale concept, and the test asserted the exact literal.
+**The gap.** `adapters/platform.py:287` hardcoded `"stale_copy": "價格可能已更新"` in cart items with no locale support (D605's second producer). The module had no locale concept, and the test asserted the exact literal.
 
 **The fix.** Removed `stale_copy` from `StubPlatformClient.add_cart_item()` - the item carries the `stale` boolean and the client renders the notice using `freshness.stale_copy(locale)` (§5/§20). Updated `test_stub_platform.py` to assert `stale_copy` is absent and `stale` is present.
 
@@ -36698,10 +36698,10 @@ touched is compose, and only as an opt-in profile.
   id; `EdgeInfoController.java:33-34` exposes the resolved label and route table at `/cloud/info`
   without exposing the environment.
 
-**The smoke is the proof, and it is offline.** `scripts/cloud_smoke.sh:87-123` builds the reactor,
+**The smoke is the proof, and it is offline.** `scripts/cloud_smoke.sh:130-166` builds the reactor,
 starts the three jars on loopback ports 18761/18888/18088, then asserts five things: the config server
 serves the file; the gateway resolved `cloud-smoke` rather than its local default; the route table
-carries the platform and AI ids and honours a URI override (`:98-102`); a routed miss still carries
+carries the platform and AI ids and honours a URI override (`:141-145`); a routed miss still carries
 `X-Request-Id`; and Eureka lists `NEXUS-GATEWAY`. The platform/AI/web URIs are deliberately pointed at
 closed port 9 - the unit proves the wiring, not a proxied request, and it needs no database or upstream.
 
@@ -36740,7 +36740,7 @@ would add a Maven build to every gate run.
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/GatewayApplication.java:13-15`,
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRequestIdFilter.java:22-36`,
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeInfoController.java:33-34`,
-  `scripts/cloud_smoke.sh:87-123`, `infra/docker-compose.yml:162-222`.
+  `scripts/cloud_smoke.sh:130-166`, `infra/docker-compose.yml:162-222`.
 ## 846. D846 · the consumer's question gets a thread: the agent door relays a user turn, the chat writes both sides, and the merchant page asks (`services/platform/src/main/java/com/nexus/conversation/ConversationService.java`, `apps/ai/nexus_ai/api/routes_stream.py`, `apps/web/src/components/ask-merchant.tsx`)
 
 **The gap, in three places.** The §142 loop was open at every joint: the platform's internal agent door accepted only `ai_agent|system`, so a consumer's own turn had no write path; the AI stream wrote `agent_runs` and nothing else, so the merchant inbox could not see what was asked; and the merchant page had no question box, so the loop had no entering edge. Each joint is closed here, and the joins are proven by three suites rather than by prose.
@@ -36758,3 +36758,67 @@ would add a Maven build to every gate run.
 **Not claimed.** (a) No laptop end-to-end run with a real `NEXUS_AI_INTERNAL_TOKEN` against a seeded database: the platform door and the AI relay are proven by their suites, and the web route by a mocked jar, but the three were not started together in this unit. (b) The widget keeps its transcript in memory only; a reload does not rehydrate the thread from the platform read. (c) A mock answer is not grounded - it says so. (d) The first question publishes the existing `LeadCaptured` event once; follow-ups do not add leads.
 
 - readers: `services/platform/src/main/java/com/nexus/conversation/ConversationService.java:218-247`, `services/platform/src/test/java/com/nexus/conversation/ConversationApiTest.java:175-215`, `apps/ai/nexus_ai/adapters/platform.py:74-84`, `apps/ai/nexus_ai/adapters/platform.py:195-206`, `apps/ai/nexus_ai/api/routes_stream.py:73`, `apps/ai/nexus_ai/api/routes_stream.py:138-142`, `apps/ai/nexus_ai/api/routes_stream.py:160-180`, `apps/ai/tests/test_merchant_agent_dialogue.py:1-97`, `apps/web/src/components/ask-merchant.tsx:31-108`, `apps/web/src/components/merchant-view.tsx:161`, `apps/web/src/lib/api/ask-route.test.ts:1-131`, `apps/web/src/lib/i18n/dict.ts:134-161`, `apps/ai/tests/test_doc_paths_are_real.py:72-78`, `docs/PLAN.md:68`, `docs/PLAN.md:337`.
+## 847. D847 · the cloud plane's default registry belongs to another project: the host face moves to a measured-free block, and one gate asks who owns every coordinate (`scripts/check_cloud_plane_ports.mjs`, `scripts/cloud_smoke.sh`, `services/cloud/eureka-server/src/main/resources/application.yaml`)
+
+**The gap, measured read-only.** §845 landed the plane on the canonical defaults 8761/8888/8088 while the
+smoke retyped 18761/18888/18088 as overrides - two copies of one port map, and nobody asking who owns the
+first copy. At dc103e4, `tmp/d847_measure.txt` (GET only, nothing registered) measured :8761 answering
+HTTP 200 and listing FOOTBALL-CORE (metadata `product=football-os`) and NEXUS-API; the holding process runs
+`services\nexus-registry\target\nexus-registry-0.1.0-SNAPSHOT.jar`, a path this repository does not contain.
+A gateway started with no overrides would register NEXUS-GATEWAY into another product's registry and
+discover services nobody here owns, and the `cloud` compose profile could not bind its published registry
+port at all. This is D9's port lesson one plane over - the platform's own `application.yml` says it for the
+AI port ("a default that points at a port another stack serves would post our query text ... to a service
+that is not ours"); here what leaks is the service topology. The same measurement records the monolith's
+half of §845(c): the platform jar carries 0 eureka/spring-cloud/actuator libraries and
+`:8090/actuator/health` answers 404.
+
+**The door.** `scripts/check_cloud_plane_ports.mjs` asks five rules of the six surfaces that carry the
+plane's coordinates: R1 every default host port is free or answered by a service this repo declares
+(identity by what answers, not by who we hoped); R2 the default zone's registry lists no undeclared
+application; R3 the edge's zone/config ports are the modules' own defaults; R4 compose publishes the module
+default on the host face; R5 the smoke retypes no port literal. Exit grammar 0/1/2 with
+`--dir`/`--report`/`--no-probe`/`--verbose`; a probe is a GET, so proving a collision cannot be the act that
+causes one, and the code is set on `process.exitCode` because `process.exit()` mid-socket-close aborts this
+Node with a libuv assertion. At HEAD it reddened with 5 offenders - R1 and R2 on the foreign registry, R5
+on each of the three retyped smoke literals (`tmp/d847_door_red.txt`).
+
+**The fix.** The host face moves to 18761/18888/18088, measured free; the container-internal ports stay
+canonical (8761/8888/8088) because a container network cannot collide with the host's, and compose now
+publishes `18761:8761`, `18888:8888`, `18088:8088`. The smoke reads each module's declared default through
+`module_port()` instead of retyped literals, and asserts registry isolation through `plane_names()` - the
+names derived from the repo's own `spring.application.name` declarations - BEFORE the gateway registers as
+well as after, so a foreign registry is caught without our instance ever being written into it.
+
+**The arms.** `scripts/falsify_cloud_plane_ports.mjs` predicts each verdict before calling the shipped
+reader: 13 arms, 13 held (`tmp/d847_arms.txt`). Four fixture servers on ephemeral loopback ports - registry,
+config, edge, and an always-404 port where drifted coordinates land - and paired arms differing in one
+property: the foreign-registry defect vs its declared-names twin; bound-but-404 vs ours; each second copy
+(R3/R4/R5) vs the agreeing plant; two limits pinned (the upstream URLs are not this plane's to judge, the
+container-internal port is not the host port); four refusals and a report. The first run missed 9 of 13 and
+the cause was the harness, not the reader: `spawnSync` blocks the parent's event loop, so the fixture
+servers could not answer the child's probes and every timeout dressed up as FOREIGN - the run loop is
+async `spawn` now; and a drift arm aimed at `fixture+1` could land on another fixture, so the fourth server
+makes "the wrong port" a port the harness controls.
+
+**Evidence.** Gate exit 0, `RESULT: PASS - 3 host coordinates, 4 live probe(s), no offender`, all four FREE
+with the vacuous-population note printed (`tmp/d847_door_green.txt`). Full smoke on the shipped bytes
+exit 0: config round-trip `cloud-smoke`, route table and URI override, `X-Request-Id` on a routed miss,
+NEXUS-GATEWAY registered, isolation holding both before (`none yet`) and after (`NEXUS-GATEWAY`) -
+`tmp/d847_smoke_shipped.txt`. §845's smoke cite re-aimed 87-123 -> 130-166 (nested :98-102 -> :141-145), and
+the two MOVED cites D846 left (dict.ts 2059->2190, platform.py 246->287, already in
+`tmp/d847_base_check_line_cite_drift.txt`) repaired through `apply_line_cite_reaim.mjs` in the same pass.
+
+**Not claimed.** (a) Free today is a measurement, not a reservation - the gate re-asks on every run.
+(b) The platform is still not a Eureka client and no route uses `lb://`; §845(c) is the next unit, not a
+property of this one. (c) The images were not built and the `cloud` profile was not started. (d) The edge
+still adds no TLS, auth, rate limit or circuit breaker. (e) R1's identity is HTTP shape, not
+authentication: a squatter answering our exact JSON would read as ours.
+
+- readers: `scripts/check_cloud_plane_ports.mjs:20-33`, `scripts/falsify_cloud_plane_ports.mjs:193-287`,
+  `scripts/cloud_smoke.sh:31-37`, `scripts/cloud_smoke.sh:81-106`,
+  `services/cloud/eureka-server/src/main/resources/application.yaml:2-7`,
+  `services/cloud/config-server/src/main/resources/application.yaml:2-5`,
+  `services/cloud/gateway/src/main/resources/application.yaml:13`,
+  `services/cloud/gateway/src/main/resources/application.yaml:44`, `infra/docker-compose.yml:180`,
+  `infra/docker-compose.yml:195`, `infra/docker-compose.yml:222`.
