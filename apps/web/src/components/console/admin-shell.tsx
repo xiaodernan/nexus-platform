@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { Badge } from '@nexus/ui';
 
@@ -35,6 +36,9 @@ export function AdminDenied({ access, locale }: { access: Extract<AdminAccess, {
     return (
       <ConsoleContainer>
         <p className="text-sm text-ink-muted">{gate.signIn}</p>
+        <Link href="/signin" className="mt-3 inline-flex text-xs font-medium text-accent hover:underline">
+          {dict.signin.submit}
+        </Link>
       </ConsoleContainer>
     );
   }

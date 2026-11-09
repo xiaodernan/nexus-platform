@@ -26,7 +26,7 @@
  * banner (§109, §155). No fixture is ever returned for a *live* read.
  */
 
-import { nexusGet } from './api/base';
+import { nexusAuthedGet } from './api/base';
 import { IS_MOCK } from './env';
 import {
   conversionRate,
@@ -224,7 +224,7 @@ export async function adminGate(session: {
   if (!session.signedIn) return { granted: false, reason: 'sign_in_required' };
 
   try {
-    const payload = await nexusGet<unknown>('platform', '/api/v1/me', {
+    const payload = await nexusAuthedGet<unknown>('platform', '/api/v1/me', {
       cache: 'no-store',
       cookieHeader: session.cookieHeader ?? null,
     });
@@ -368,7 +368,7 @@ async function readPage<T>(
   },
 ): Promise<ReadOutcome<T>> {
   try {
-    const payload = await nexusGet<unknown>('platform', path, {
+    const payload = await nexusAuthedGet<unknown>('platform', path, {
       searchParams: options.searchParams,
       cache: 'no-store',
     });
@@ -967,7 +967,7 @@ export async function adminAiCostsRead(groupBy: CostGroupBy): Promise<ConsoleRea
     return okRead({ data: demoCostRows(groupBy), origin: 'mock', source: DEMO_SOURCE(path), asOf: null, demo: true });
   }
   try {
-    const payload = await nexusGet<unknown>('platform', '/api/v1/admin/ai/costs', {
+    const payload = await nexusAuthedGet<unknown>('platform', '/api/v1/admin/ai/costs', {
       searchParams: { group_by: groupBy, limit: 100 },
       cache: 'no-store',
     });
@@ -1026,7 +1026,7 @@ export async function adminSearchAnalyticsRead(): Promise<ConsoleRead<AdminSearc
     return okRead({ data: demoSearchAnalytics(), origin: 'mock', source: DEMO_SOURCE(path), asOf: null, demo: true });
   }
   try {
-    const payload = await nexusGet<unknown>('platform', '/api/v1/admin/search/analytics', { cache: 'no-store' });
+    const payload = await nexusAuthedGet<unknown>('platform', '/api/v1/admin/search/analytics', { cache: 'no-store' });
     const record = recordOf(payload);
     if (!record) return failedRead({ source: path, errorCode: 'invalid_payload' });
     const totalsRecord = recordOf(record.totals);
@@ -1144,7 +1144,7 @@ export async function adminSystemHealthRead(): Promise<ConsoleRead<AdminSystemHe
     return okRead({ data: demoSystemHealth(), origin: 'mock', source: DEMO_SOURCE(path), asOf: null, demo: true });
   }
   try {
-    const payload = await nexusGet<unknown>('platform', '/api/v1/admin/system/health', { cache: 'no-store' });
+    const payload = await nexusAuthedGet<unknown>('platform', '/api/v1/admin/system/health', { cache: 'no-store' });
     const parsed = parseSystemHealth(payload);
     if (!parsed) return failedRead({ source: path, errorCode: 'invalid_payload' });
     return okRead({

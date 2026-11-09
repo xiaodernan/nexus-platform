@@ -10,7 +10,22 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { nexusGet, nexusFetch } from '@/lib/api/base';
+import { nexusAuthedGet, nexusGet, nexusFetch } from '@/lib/api/base';
+
+/**
+ * The ambient request jar. `nexusAuthedGet` reads it only when the caller passes no explicit
+ * header — the console gate derives its own header and that one must win.
+ */
+vi.mock('next/headers', () => ({
+  cookies: async () => ({
+    get: (name: string) =>
+      name === 'nexus_session'
+        ? { value: 'sess-ambient' }
+        : name === 'nexus_csrf'
+          ? { value: 'csrf-ambient' }
+          : undefined,
+  }),
+}));
 
 const fetchMock = vi.fn();
 
@@ -59,5 +74,27 @@ describe('nexusFetch — the raw seam still returns the parsed body + demo flag'
     });
     expect(Array.isArray(data.items)).toBe(true);
     expect(requestId).toBe('req-1');
+  });
+});
+
+describe('nexusAuthedGet — the console session rides the platform read', () => {
+  it('an explicit cookie header wins over the ambient request jar', async () => {
+    await nexusAuthedGet('platform', '/api/v1/me', {
+      cookieHeader: 'nexus_session=sess-explicit; nexus_csrf=csrf-explicit',
+    });
+    const headers = firstCall().init.headers as Record<string, string>;
+    expect(headers.cookie).toBe('nexus_session=sess-explicit; nexus_csrf=csrf-explicit');
+  });
+
+  it('falls back to the request jar when the caller passes no header', async () => {
+    await nexusAuthedGet('platform', '/api/v1/me');
+    const headers = firstCall().init.headers as Record<string, string>;
+    expect(headers.cookie).toBe('nexus_session=sess-ambient; nexus_csrf=csrf-ambient');
+  });
+
+  it('never attaches the session to the AI target', async () => {
+    await nexusAuthedGet('ai', '/ai/v1/search');
+    const headers = firstCall().init.headers as Record<string, string>;
+    expect(headers.cookie).toBeUndefined();
   });
 });

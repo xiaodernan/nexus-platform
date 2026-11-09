@@ -5,13 +5,13 @@
  * failure instead of quietly serving fixtures (data.ts header: the §155 failure this layer exists
  * to prevent).
  *
- * Identity: there is no login page yet, so nothing here fabricates a session. `app/merchant/**`
- * decides "demo mode" vs "sign-in required" from the cookie in the page; this module only answers
- * the reads once that decision is made.
+ * Identity: `/signin` is the only route that sets a session in live mode, and nothing here
+ * fabricates one. `app/merchant/**` decides "demo mode" vs "sign-in required" from the cookie in
+ * the page; this module only answers the reads once that decision is made.
  */
 
 import { IS_MOCK } from './env';
-import { nexusGet } from './api/base';
+import { nexusAuthedGet } from './api/base';
 import {
   analyticsEventSeries,
   analyticsProvidedFields,
@@ -64,7 +64,7 @@ export async function merchantOverviewRead(businessId: string): Promise<ConsoleR
     return okRead({ data, origin: 'mock', source, asOf: data.computed_at, demo: true });
   }
   try {
-    const data = await nexusGet<MerchantOverviewPayload>('platform', `/api/v1/merchant/businesses/${encodeURIComponent(businessId)}/overview`);
+    const data = await nexusAuthedGet<MerchantOverviewPayload>('platform', `/api/v1/merchant/businesses/${encodeURIComponent(businessId)}/overview`);
     return okRead({ data, origin: 'live', source, asOf: data.computed_at ?? null, demo: data.data_origin === 'demo' });
   } catch (cause) {
     return failedRead({ source, errorCode: reasonOf(cause), requestId: (cause as { requestId?: string }).requestId ?? null });
@@ -87,7 +87,7 @@ export async function merchantInboxRead(businessId: string): Promise<ConsoleRead
     return okRead({ data, origin: 'mock', source, asOf, demo: true });
   }
   try {
-    const page = await nexusGet<CursorPage<MerchantConversationThread>>('platform', '/api/v1/merchant/conversations', {
+    const page = await nexusAuthedGet<CursorPage<MerchantConversationThread>>('platform', '/api/v1/merchant/conversations', {
       searchParams: { merchant_id: businessId, limit: 20 },
     });
     const items = (page.items ?? []).map((thread) => ({ ...thread, demo: false }));
@@ -673,7 +673,7 @@ export async function merchantOfferingsRead(businessId: string): Promise<Console
     return okRead({ data, origin: 'mock', source: `${source} (fixtures)`, asOf: new Date().toISOString(), demo: true });
   }
   try {
-    const page = await nexusGet<CursorPage<WireOfferingRow>>('platform', `/api/v1/merchants/${encodeURIComponent(businessId)}/menu`, {
+    const page = await nexusAuthedGet<CursorPage<WireOfferingRow>>('platform', `/api/v1/merchants/${encodeURIComponent(businessId)}/menu`, {
       searchParams: { limit: 50 },
     });
     const data = (page.items ?? []).map(toOfferingRow).filter((row): row is MerchantOfferingRow => row !== null);
@@ -747,7 +747,7 @@ export async function merchantReservationsRead(businessId: string): Promise<Cons
     return okRead({ data, origin: 'mock', source: `${source} (fixtures)`, asOf: new Date().toISOString(), demo: true });
   }
   try {
-    const page = await nexusGet<CursorPage<WireReservation>>('platform', '/api/v1/merchant/reservations', {
+    const page = await nexusAuthedGet<CursorPage<WireReservation>>('platform', '/api/v1/merchant/reservations', {
       searchParams: { merchant_id: businessId, limit: 50 },
     });
     const data = (page.items ?? []).map(toReservation).filter((row): row is MerchantReservation => row !== null);
@@ -799,7 +799,7 @@ export async function merchantThreadRead(threadId: string): Promise<ConsoleRead<
     return okRead({ data, origin: 'mock', source: `${source} (fixtures)`, asOf: new Date().toISOString(), demo: true });
   }
   try {
-    const payload = await nexusGet<{
+    const payload = await nexusAuthedGet<{
       conversation?: { id?: unknown; status?: unknown; mode?: unknown; consumer_name?: unknown; data_origin?: unknown };
       messages?: unknown;
       handoffs?: unknown;
@@ -904,7 +904,7 @@ export async function merchantReviewIntelRead(merchantId: string): Promise<Conso
     return okRead({ data, origin: 'mock', source: `${source} (fixtures)`, asOf: data.generated_at, demo: true });
   }
   try {
-    const payload = await nexusGet<WireReviewIntel>('platform', `/api/v1/merchants/${encodeURIComponent(merchantId)}/reviews/summary`);
+    const payload = await nexusAuthedGet<WireReviewIntel>('platform', `/api/v1/merchants/${encodeURIComponent(merchantId)}/reviews/summary`);
     const data = toReviewIntel(payload);
     return okRead({ data, origin: 'live', source, asOf: data.generated_at, demo: data.demo });
   } catch (cause) {
@@ -968,7 +968,7 @@ export async function merchantCampaignsRead(businessId: string): Promise<Console
     return okRead({ data, origin: 'mock', source: `${source} (fixtures)`, asOf: new Date().toISOString(), demo: true });
   }
   try {
-    const page = await nexusGet<CursorPage<WireCampaign>>('platform', '/api/v1/merchant/campaigns', {
+    const page = await nexusAuthedGet<CursorPage<WireCampaign>>('platform', '/api/v1/merchant/campaigns', {
       searchParams: { merchant_id: businessId, limit: 50 },
     });
     const data = (page.items ?? []).map(toCampaign).filter((row): row is MerchantCampaign => row !== null);
@@ -1055,7 +1055,7 @@ export async function merchantImportJobRead(jobId: string): Promise<ConsoleRead<
     return okRead({ data, origin: 'mock', source: `${source} (fixtures)`, asOf: data.updated_at, demo: true });
   }
   try {
-    const data = toImportJob(await nexusGet<WireImportJob>('platform', `/api/v1/merchant/imports/${encodeURIComponent(jobId)}`));
+    const data = toImportJob(await nexusAuthedGet<WireImportJob>('platform', `/api/v1/merchant/imports/${encodeURIComponent(jobId)}`));
     return okRead({ data, origin: 'live', source, asOf: data.updated_at, demo: data.demo });
   } catch (cause) {
     return failedRead({ source, errorCode: reasonOf(cause), requestId: (cause as { requestId?: string }).requestId ?? null });
@@ -1135,7 +1135,7 @@ export async function merchantKnowledgeRead(businessId: string): Promise<Console
     return okRead({ data, origin: 'mock', source: `${source} (fixtures)`, asOf: new Date().toISOString(), demo: true });
   }
   try {
-    const page = await nexusGet<CursorPage<WireKnowledgeDocument>>('platform', '/api/v1/merchant/knowledge-base', {
+    const page = await nexusAuthedGet<CursorPage<WireKnowledgeDocument>>('platform', '/api/v1/merchant/knowledge-base', {
       searchParams: { merchant_id: businessId, limit: 50 },
     });
     const data = (page.items ?? []).map(toKnowledgeDocument).filter((row): row is KnowledgeDocument => row !== null);
@@ -1212,7 +1212,7 @@ export async function merchantAnalyticsRead(
     return okRead({ data, origin: 'mock', source: `${source} (fixtures)`, asOf: data.computed_at, demo: true });
   }
   try {
-    const payload = await nexusGet<WireAnalytics>('platform', '/api/v1/merchant/analytics', {
+    const payload = await nexusAuthedGet<WireAnalytics>('platform', '/api/v1/merchant/analytics', {
       searchParams: { from: range.from, to: range.to, metric: range.metric, merchant_id: businessId },
     });
     // The served read reports `metrics` (six totals) + `series` (events per day) + `window`, and no
@@ -1299,7 +1299,7 @@ export async function merchantMembersRead(businessId: string): Promise<ConsoleRe
     return okRead({ data, origin: 'mock', source: `${source} (fixtures)`, asOf: new Date().toISOString(), demo: true });
   }
   try {
-    const payload = await nexusGet<{ members?: unknown; items?: unknown }>('platform', '/api/v1/merchant/members', {
+    const payload = await nexusAuthedGet<{ members?: unknown; items?: unknown }>('platform', '/api/v1/merchant/members', {
       searchParams: { merchant_id: businessId },
     });
     const data = rows(payload.members ?? payload.items)
@@ -1321,7 +1321,7 @@ export async function merchantAgentConfigRead(businessId: string): Promise<Conso
     return okRead({ data, origin: 'mock', source: `${source} (fixtures)`, asOf: data.updated_at, demo: true });
   }
   try {
-    const payload = await nexusGet<Record<string, unknown>>('platform', '/api/v1/merchant/ai-agent/config', {
+    const payload = await nexusAuthedGet<Record<string, unknown>>('platform', '/api/v1/merchant/ai-agent/config', {
       searchParams: { merchant_id: businessId },
     });
     const data: AiAgentConfig = {
@@ -1351,7 +1351,7 @@ export async function merchantApiKeysRead(businessId: string): Promise<ConsoleRe
     return okRead({ data, origin: 'mock', source: `${source} (fixtures)`, asOf: new Date().toISOString(), demo: true });
   }
   try {
-    const payload = await nexusGet<{ api_keys?: unknown; items?: unknown }>('platform', '/api/v1/merchant/api-keys', {
+    const payload = await nexusAuthedGet<{ api_keys?: unknown; items?: unknown }>('platform', '/api/v1/merchant/api-keys', {
       searchParams: { merchant_id: businessId },
     });
     const data = rows(payload.api_keys ?? payload.items)

@@ -655,6 +655,27 @@ export interface Dict {
     };
   };
   states: { loading: string; error: string; empty: string };
+  /**
+   * `/signin` — the local sign-in desk (§46/§48). Live mode had no route that sets the cookie the
+   * consoles read, so every operator surface was unreachable; this is that route.
+   */
+  signin: {
+    title: string;
+    intro: string;
+    roles: { merchant: string; consumer: string; admin: string };
+    merchantHint: string;
+    consumerHint: string;
+    adminHint: string;
+    submit: string;
+    submitting: string;
+    success: (role: string) => string;
+    failed: (code: string) => string;
+    signOut: string;
+    signingOut: string;
+    signedOut: string;
+    deniedTitle: string;
+    deniedBody: string;
+  };
   footer: {
     exploreTitle: string;
     demoTitle: string;
@@ -887,9 +908,9 @@ const zhHK: Dict = {
     adminTitle: '人工審核隊列',
     adminIntro: '所有對外發佈的內容（指南、優惠、資料變更）都要經過這裡的人工確認（§27）；模型只能生成草案。',
     backToSite: '返回站點',
-    demoBanner: '當前為示例模式（NEXT_PUBLIC_DATA_MODE=mock）：頁面讀取的是合成夾具目錄，全部數字均為演示數據；真實數據需要登錄，而登錄頁尚未上線。',
+    demoBanner: '當前為示例模式（NEXT_PUBLIC_DATA_MODE=mock）：頁面讀取的是合成夾具目錄，全部數字均為演示數據；真實數據需要登錄，示例登入在 /signin。',
     signInRequiredTitle: '需要登錄後查看',
-    signInRequiredText: '控制台位於身份認證之後（§46/§48）。登錄頁尚未上線，因此實時模式下這裡不展示任何經營數據；本頁保持可渲染，方便評審界面與文案。',
+    signInRequiredText: '控制台位於身份認證之後（§46/§48）。請先到 /signin 以示例身份登入；實時模式下這裡不展示任何經營數據，本頁保持可渲染，方便評審界面與文案。',
     businessPickerLabel: '示例商戶',
     demoIdentityNote: (name) => `當前查看的是演示身份「${name}」（合成夾具，不代表任何真實商戶）。`,
     notWiredTitle: '尚未接入實時接口',
@@ -949,7 +970,7 @@ const zhHK: Dict = {
       liveSubmittedTitle: '已提交，等待人工審核',
       liveSubmitFailed: (code) => `提交失敗（${code}）：平台沒有接受這次修改，下方內容仍是你未提交的原樣。`,
       gateNote: '通過審核後才會生效：發佈永遠需要一個明確的人工動作（§27）。',
-      signInBlockNote: '實時模式下需要先登錄才能提交；登錄頁尚未上線。',
+      signInBlockNote: '實時模式下需要先登錄才能提交；示例登入在 /signin。',
       rowsTitle: '當前已發佈的商品/服務',
     },
     paid: {
@@ -1210,7 +1231,7 @@ const zhHK: Dict = {
         demoRole: '演示身份（未認證）',
         forbidden: (role) => `當前身份的角色是「${role}」，不是 platform_admin 或 platform_ops（§68），因此不展示任何運營數據。`,
         unverified: (code) => `無法確認你的角色（${code}），因此按最小權限處理：不展示任何運營數據（§105）。`,
-        signIn: '管理端位於身份認證之後（§68）。登錄頁尚未上線，因此實時模式下不展示任何數據。',
+        signIn: '管理端位於身份認證之後（§68）。請先到 /signin 以管理員身份登入，實時模式下否則不展示任何數據。',
       },
       counters: {
         users: '用戶',
@@ -1347,6 +1368,23 @@ const zhHK: Dict = {
         sourceNote: '每個依賴在本次調用中被真實探測；數據庫狀態來自一次真實的 select 1。',
       },
     },
+  },
+  signin: {
+    title: '示例登入',
+    intro: '本地演示用的登入口：選一個示例身份即可以該身份繼續瀏覽。真實環境需要完整的身份認證。',
+    roles: { merchant: '商戶', consumer: '消費者', admin: '管理員' },
+    merchantHint: '以示例商戶（example.hk）登入，可進入商戶控制台。',
+    consumerHint: '以示例消費者登入，可保存收藏與查看個人資料。',
+    adminHint: '以示例管理員登入，可進入人工審核隊列。',
+    submit: '繼續',
+    submitting: '正在登入…',
+    success: (role) => `已作為${role}登入。`,
+    failed: (code) => `登入被拒絕：${code}。`,
+    signOut: '登出',
+    signingOut: '正在登出…',
+    signedOut: '已登出。',
+    deniedTitle: '示例登入已被此環境關閉',
+    deniedBody: '平台把 /api/v1/auth/demo 以 nexus.demo.login-enabled=false 關閉了。本頁只能用作說明；身份認證的正式流程還未上線。',
   },
   states: { loading: '加載中…', error: '加載失敗', empty: '暫無內容' },
   footer: {
@@ -1582,9 +1620,9 @@ const en: Dict = {
     adminTitle: 'Human review queue',
     adminIntro: 'Everything published (guides, coupons, listing changes) passes a human decision here (§27); models only produce drafts.',
     backToSite: 'Back to site',
-    demoBanner: 'Demo mode (NEXT_PUBLIC_DATA_MODE=mock): every read below comes from the synthetic fixture catalogue and is demo-badged. Real data requires sign-in, and the sign-in page does not exist yet.',
+    demoBanner: 'Demo mode (NEXT_PUBLIC_DATA_MODE=mock): every read below comes from the synthetic fixture catalogue and is demo-badged. Real data requires sign-in at /signin.',
     signInRequiredTitle: 'Sign-in required',
-    signInRequiredText: 'The consoles sit behind identity (§46/§48). There is no login page yet, so live mode shows no business data here; the page stays renderable so the surface can still be reviewed.',
+    signInRequiredText: 'The consoles sit behind identity (§46/§48). Sign in at /signin with an example identity; live mode shows no business data here, and the page stays renderable so the surface can still be reviewed.',
     businessPickerLabel: 'Demo business',
     demoIdentityNote: (name) => `Viewing the demo identity “${name}” (synthetic fixture — not a real merchant).`,
     notWiredTitle: 'Not wired to a live endpoint',
@@ -1644,7 +1682,7 @@ const en: Dict = {
       liveSubmittedTitle: 'Submitted — waiting for human review',
       liveSubmitFailed: (code) => `Submit failed (${code}): the platform did not accept the change; the fields below are untouched.`,
       gateNote: 'Nothing takes effect until a person approves it: publishing is always an explicit human action (§27).',
-      signInBlockNote: 'In live mode a session is required before submitting; the login page does not exist yet.',
+      signInBlockNote: 'In live mode a session is required before submitting; the demo sign-in lives at /signin.',
       rowsTitle: 'Currently published offerings',
     },
     paid: {
@@ -1905,7 +1943,7 @@ const en: Dict = {
         demoRole: 'Demo identity (unauthenticated)',
         forbidden: (role) => `The acting identity’s role is “${role}”, not platform_admin or platform_ops (§68), so no operational data is shown.`,
         unverified: (code) => `Your role could not be verified (${code}), so this fails closed: no operational data is shown (§105).`,
-        signIn: 'The admin console sits behind identity (§68). There is no login page yet, so live mode shows no data.',
+        signIn: 'The admin console sits behind identity (§68). Sign in at /signin as an admin; until then live mode shows no data.',
       },
       counters: {
         users: 'Users',
@@ -2042,6 +2080,23 @@ const en: Dict = {
         sourceNote: 'Each dependency is probed on this call; the database state comes from a real select 1.',
       },
     },
+  },
+  signin: {
+    title: 'Demo sign-in',
+    intro: 'This desk is for the demo plane: pick an example identity to continue as. Production requires full identity verification.',
+    roles: { merchant: 'Merchant', consumer: 'Consumer', admin: 'Admin' },
+    merchantHint: 'Sign in as an example merchant (example.hk) to reach the merchant console.',
+    consumerHint: 'Sign in as an example consumer to save favourites and view your profile.',
+    adminHint: 'Sign in as an example admin to reach the moderation queue.',
+    submit: 'Continue',
+    submitting: 'Signing in…',
+    success: (role) => `Signed in as ${role}.`,
+    failed: (code) => `Sign-in refused: ${code}.`,
+    signOut: 'Sign out',
+    signingOut: 'Signing out…',
+    signedOut: 'Signed out.',
+    deniedTitle: 'The demo sign-in is disabled in this environment',
+    deniedBody: 'The platform closed /api/v1/auth/demo with nexus.demo.login-enabled=false. This page is an explanation only; the real identity flow is not available yet.',
   },
   states: { loading: 'Loading…', error: 'Could not load', empty: 'Nothing here yet' },
   footer: {

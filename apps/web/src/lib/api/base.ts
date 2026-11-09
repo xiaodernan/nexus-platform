@@ -184,3 +184,35 @@ export async function nexusGet<T>(target: 'platform' | 'ai', path: string, optio
   const { data } = await nexusFetch<T>(target, path, { method: 'GET', ...options });
   return data;
 }
+
+/**
+ * Same as `nexusGet`, but the platform read carries the caller's session cookie — for the
+ * authenticated console surfaces (§46/§48). Public consumer reads stay anonymous because their
+ * callers use `nexusGet` directly. The session is attached only for the `platform` target and is
+ * never logged; the AI target never sees it.
+ */
+export async function nexusAuthedGet<T>(target: 'platform' | 'ai', path: string, options?: RequestOptions): Promise<T> {
+  if (target === 'platform') {
+    // An explicit cookie header wins over the ambient request jar: the console gate derives the
+    // caller's session itself and passes it in, and that header must not be discarded here.
+    let cookieHeader = options?.cookieHeader ?? null;
+    if (!cookieHeader) {
+      const { cookies } = await import('next/headers');
+      const jar = await cookies();
+      const parts: string[] = [];
+      const session = jar.get('nexus_session')?.value;
+      const csrf = jar.get('nexus_csrf')?.value;
+      if (session) parts.push(`nexus_session=${session}`);
+      if (csrf) parts.push(`nexus_csrf=${csrf}`);
+      cookieHeader = parts.length > 0 ? parts.join('; ') : null;
+    }
+    const { data } = await nexusFetch<T>(target, path, {
+      method: 'GET',
+      ...options,
+      cookieHeader,
+    });
+    return data;
+  }
+  const { data } = await nexusFetch<T>(target, path, { method: 'GET', ...options });
+  return data;
+}

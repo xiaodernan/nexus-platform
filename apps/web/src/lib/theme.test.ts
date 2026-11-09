@@ -66,10 +66,14 @@ describe('the theme has one name, and the palette ships it', () => {
     // which WebKit reported and the §78 leg caught (D812).
     const reducedBlocks = [
       ...tokensCss.matchAll(/@media \(prefers-reduced-motion: reduce\)\s*\{([^@]*?)\n\}/gs),
-    ].map((match) => match[1]);
+    ].map((match) => match[1] ?? '');
     expect(reducedBlocks.length, 'tokens.css has no reduced-motion block at all').toBeGreaterThan(0);
     const shimmerBlock = reducedBlocks.find((block) => block.includes('.nexus-shimmer'));
     expect(shimmerBlock, 'no reduced-motion block in tokens.css names .nexus-shimmer').toBeTruthy();
+
+    if (!shimmerBlock) {
+      throw new Error('no reduced-motion block in tokens.css names .nexus-shimmer');
+    }
     // The bare class must be a stated target: a `.nexus-shimmer` followed by `,` or `{` — never
     // satisfied by `.nexus-shimmer::after` alone, whose first following character is `:`.
     expect(shimmerBlock).toMatch(/(^|[\s,{])\.nexus-shimmer\s*[,{]/m);

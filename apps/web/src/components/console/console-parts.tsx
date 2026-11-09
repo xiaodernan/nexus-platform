@@ -57,8 +57,8 @@ export function ConsoleDemoBanner({ locale }: { locale: string }) {
 }
 
 /**
- * The honest gate state: no login page exists, so live mode must not pretend there is a session.
- * Renders instead of redirecting so reviewers can still see the surface.
+ * The honest gate state: `/signin` is the only route that sets a session in live mode, so this
+ * stops and points there. Renders instead of redirecting so reviewers can still see the surface.
  */
 export function SignInRequired({ locale }: { locale: string }) {
   const dict = getDict(locale);
@@ -67,6 +67,14 @@ export function SignInRequired({ locale }: { locale: string }) {
       icon="lock"
       title={dict.console.signInRequiredTitle}
       description={dict.console.signInRequiredText}
+      action={
+        <Link
+          href="/signin"
+          className="rounded-md border border-line px-3 py-1.5 text-xs font-medium text-accent hover:border-accent"
+        >
+          {dict.signin.submit}
+        </Link>
+      }
       className="mt-8"
     />
   );
