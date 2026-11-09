@@ -254,7 +254,7 @@ jobs:
           # failing on its own command line and generating nothing, and the suite below it never ran
           # against a seeded database. The three scale flags are separate options, and these are the
           # numbers the broken line meant.
-          python data/seed/generate.py --merchants 80 --offerings 600 --reviews 1200
+          python data/seed/generate.py --merchants 80 --offerings 600 --reviews 1200 --now
           # The seed's four collections advertise what their members are -- a quiet list of tables, a
           # Tai Wai list under HK$100 -- and the reader parses the SHIPPED copy back out of the shipped
           # templates and holds every claim against the SHIPPED rows. It runs BEFORE the load so a seed
