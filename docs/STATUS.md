@@ -36334,3 +36334,47 @@ test.
 append 0970d1e.
 
 - readers: the web and platform lanes are green on this machine; the open lanes are the honest-label suite (search_relevance_v1), filmed §170 acceptance, and CI-green on the runner.
+## 827. D827 · the directory card now conforms to the wire it declares — P2/P3/P4 closed, and the throwaway e2e cycle runs green again
+
+**The violations.** The payload-conformance verifier was reporting the three standing directory-card
+failures the ledger already ruled service-side: `avg_price_hkd` (an unlicensed duplicate of
+`price.amount` as a bare float — §1 says money is a decimal *string* + currency), `city: "Hong Kong"`
+(the tenant IS Hong Kong; no §4 surface reads city), and `category: "Tea House"` (the display name
+where the closed schema demands `^[a-z][a-z0-9]*(_[a-z0-9]+)*$`). Nothing on the web or in the evidence
+pack reads any of the three — the §29 pages read the SEO page plane (`/api/v1/seo/page`), not this card
+projection — so the service side simply stopped emitting them. `CATEGORY` is now folded from the
+taxonomy itself (`merchants.category_primary` == `categories.name`, join is exact and unique on the
+seed corpus): `tea-house → tea_house` per the product's own one-separator separator rule.
+
+**The first cut was wrong, measured.** `mvn -o test` went 287/288 — `CatalogReadTest.
+categoryFilterFollowsTheTaxonomy` returned 500: `PSQLException: more than one row returned`. My
+subquery assumed `categories.name` is unique; that holds on the fresh seed (nexus_verify2, 0 duplicates)
+and does NOT hold on `nexus_test`, where two leaf names have piled up 22 rows each from repeated suite
+runs. The fix picks deterministically — global leaf first (`(c.tenant_id is null) desc`), then
+`sort_order`, then `slug` with `limit 1`. 288/288 green re-run.
+
+**The e2e throwaway harness couldn't have run today at all.** `scripts/e2e_fresh.sh` regenerated
+with the default 2026-09-22 base, so the 21-day availability horizon was already over by 2026-11-09
+and the reservation walk had nothing to book (its loader said so itself: "SEED_ANCHOR was off.
+Re-run with SEED_ANCHOR=1"). Step 3/10 now runs `generate.py --now` and step 4/10 stamps the load with
+`SEED_ANCHOR=1`. Re-run end to end: **preflight 20/20, served reads 626/626, reservation walk PASS,
+review walk PASS, workspace walk 22/22, seeded consumer surface 14/14, rate-limit rung PASS, contract
+runtime PASS** — exit 0. (The stale failed run was cleaned: its kept DB `nexus_e2e_180358_1794200215`
+was dropped and the :8092 listener is down.)
+
+**The live plane.** The same fix ships on :8090 against `nexus_verify2` —
+`GET /api/v1/merchants?sort=-rating&limit=3` answers `category: tea_house / craft_workshop /
+spa_massage`, `price` carries the only representation of the price, and `city`/`avg_price_hkd` are gone.
+`verify_payload_conformance.mjs`: **38 validated, 0 rejected, payload conformance OK** (the one
+remaining disclosure is the merchant_profile, which carries no published schema — undocumented, not
+judged). `verify_consumer_slice.py`: **14/14** — reservation walk 30/30. `mvn -o test`: **288/288**.
+
+**What this does NOT claim.** The conformance verifier still reports the merchant_profile as NO SCHEMA
+(36 unchecked keys) — publishing that schema is its own unit. The §9 admin reads stay documented-
+unserved (verification still notes it). The e2e `--keep` stack and its nexus_e2e_* databases are
+deleted; nothing this session removed is tracked by git.
+
+**Commits.** cc03912 (this unit), dd05fc4 (D826 falsify negative control, pulled forward by the same
+run), 68213ee (D825 ledger).
+
+- readers: the wire the product publishes is now the wire it serves on the directory path; the open doors are the merchant_profile schema and the filmed §170 run.
