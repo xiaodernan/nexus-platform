@@ -36034,3 +36034,38 @@ and the production path's own idiom (`records=`) is the documented answer. `tool
 
 - readers: the hallucination gate the contract has promised since day one exists, runs in CI,
   and measures 0.0000 against the 2% bound on a suite whose fabricated half proves it can catch a lie.
+
+## 818. D818 · the developer launcher committed a signing secret it never used, and the contributor path now boots the stack that actually runs
+
+**The tracked secret.** `apps/ai/start_ai.py` — tracked since the Phase-1 wrap — carried a
+hard-coded `NEXUS_JWT_SECRET` (real-looking bytes), a `NEXUS_DATABASE_URL` with the dev role,
+the dev tenant, the local platform origin, and an absolute `D:\获客平台` path. Verified before
+deleting anything: `NEXUS_JWT_SECRET` is referenced NOWHERE else in the tree — the AI service reads
+the database/redis/model variables, never the JWT one; the constant signed nothing, verified
+nothing, and §131 forbids it anyway. Rewritten as a thin one-command launcher that reads the
+environment with the Makefile's defaults and prints nothing secret. The secret bytes remain in git
+history — they sign nothing, are clearly synthetic, and their true disposition is a note for whoever
+owns secret rotation; the value itself needed no rotation because it granted nothing.
+
+**The contributor path.** `README.md`'s quick start said `make dev-platform # :8080` and
+`make dev-ai # :8000` — both ports are other projects on this machine, and the AI-e2e harness fallback
+(:3000/:8080/:8000) pointed Playwright at CareerOS before `NEXUS_WEB_URL`/`NEXUS_*_URL` are set.
+The README now boots the map the Makefile actually serves — web :3002 · AI :8010 · platform :8090 —
+names the foreign-project occupants, and hands the stranger to `docs/TESTING.md` §8 (the measured
+throwaway-seeded-database runbook: migrations, role grants, demo seed, both services with the
+`SPRING_FLYWAY_ENABLED=false` caveat, warm-up timings, and how each suite behaves).
+
+**Verification.** `git grep` for the removed bytes: zero copies. A bounded sweep for other
+secret-like assigned strings in tracked files: only a test fixture (`erase-door-password`), which is
+a dummy by name. README, TESTING.md §8, start_ai.py all pushed; the live stack from D815 stands on
+this machine for the next window.
+
+**What this does NOT claim.** Nothing was rotated anywhere — the removed bytes granted nothing, and
+nothing is edited outside this lane's scope. The stale documentary ports inside the contract files
+(API_CONTRACT.md / ARCHITECTURE.md / AI.md / MCP.md) are the contract authors' artefacts and were
+NOT edited — the operator substitution (D22 §7) is already documented in STATUS's own port map.
+
+**Commits.** 4601561, 50fe995, c9f427f.
+
+- readers: the repo's own front door is honest about what runs where, and no tracked file carries a
+  credential as decoration.
