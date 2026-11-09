@@ -27082,7 +27082,7 @@ from 1,078 numbers / 323 strings to **1,186 / 600** and an offering page's from 
 `TOLERANCE[NUMBER_KIND] = (0.01, 0.5)` a number invented within half a degree of a real latitude -
 about 55 km - now reads as grounded. (ii) Location facts join the bundle and no score:
 `facts_by_subject` buckets under each fact's own `subject_id` and `Candidate.freshness` reads the
-merchant's own list (`search/service.py:816`), which
+merchant's own list (`search/service.py:1609`), which
 `test_a_location_fact_moves_no_ranking_number` pins as a rule while the question stays open.
 (iii) `_disputed_attributes` still resolves over the card's own subject and cannot be wrong yet -
 exactly 1 `address` fact per location (684 facts over 684 distinct subjects, `locs_with_two = 0`).
@@ -29167,7 +29167,7 @@ lane, so it reads 中心 (8 rows, five of the eight served write it) and its Eng
 both two-spelling legs (`tmp/d638_falsify.txt`). With the D635-D638 gates, search plan, lexicon, eval
 suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
 
-- readers: `nlu/lexicon.py:783-810` (`leaf_surfaces`), `:743-780` (`match_leaf`, the head rule that
+- readers: `nlu/lexicon.py:849-874` (`leaf_surfaces`), `:807-825` (`match_leaf`, the head rule that
   chooses the leaf); `search/service.py:581-517` (`_apply_category_leaf`), `:681-694` (the recompute).
 ## 648. D651 · a one-digit amount marked as money was read by nobody (`apps/ai/nexus_ai/nlu/understand.py`)
 
@@ -30678,7 +30678,7 @@ not touched; the cards already publish `open_state` from `hours_for`, and this u
 EXISTS, mirrored, not a claim that such a merchant is closed. (c) The three clauses are per-merchant, so an
 offering's own hours (none exist in the schema, `docs/DATABASE.md:69-73`) cannot narrow further.
 
-- readers: `search/sql.py:247-272` (the merchant clauses), `:498-518` (the offering mirror this unit added),
+- readers: `search/sql.py:272-329` (the merchant clauses), `:610-725` (the offering mirror this unit added),
   `search/service.py:235-195` (the hours handed to the lane), `:377-445` (the three predicates),
   `:347-356` (where the lane applies them), the two re-aimed gates, this unit's gate, and `tmp/d659_open2.py`,
   `tmp/d659_falsify.txt` (the measurements).
@@ -31049,8 +31049,8 @@ part of day and the cue words are still D661's and D662's questions; this unit m
 answered "which day".
 
 - readers: `search/service.py:759-672` (`DAY_LEVEL_QUALITIES`), `:1034-1038` (where `open_time` is
-  written), `:486-491` (the fixture mirror of the weekday clause), `search/sql.py:289-297` and
-  `:557-565` (the clause on both SELECTs), `nlu/timeparse.py:522-473` (the two conventions), this
+  written), `:486-491` (the fixture mirror of the weekday clause), `search/sql.py:322-326` and
+  `:677-681` (the clause on both SELECTs), `nlu/timeparse.py:522-473` (the two conventions), this
   unit's gate, and `tmp/d665_counts.py`, `tmp/d665_weekdays.py`, `tmp/d665_falsify.txt` (the
   measurements).
 
@@ -31125,7 +31125,7 @@ trades Sunday without Saturday (23 trade Saturday only, 0 the other way) - laten
 
 - readers: `search/service.py:788-701` (`PART_OF_DAY_QUALITIES`), `:1001-1006` (the `ends_at` read),
   `:1073-1081` (where the pair is written), `:455-464` (`_static_open_during`), `:496-507` (the
-  fixture clause), `search/sql.py:305-319` and `:587-601` (the clause on both SELECTs),
+  fixture clause), `search/sql.py:338-356` and `:690-706` (the clause on both SELECTs),
   `nlu/timeparse.py:44-50` (the bands), this unit's gate, and `tmp/d666_probe.py`,
   `tmp/d666_sets.py`, `tmp/d666_falsify.txt` (the measurements).
 
@@ -33016,7 +33016,7 @@ lane's uncommitted edits. The bullet's text is saved at `tmp/d698_plan_bullet.tx
 
 - readers: `nlu/timeparse.py:56` (the band), `:333` (its meridiem), `:519` and `:542` (the two
   anchors), `search/service.py:538` and `:515` (the fixture twin), `:722` (the quality set), `:1121`
-  (the plan's edges), `search/sql.py:311` and `:605` (both lanes' crossing clause), this unit's gate,
+  (the plan's edges), `search/sql.py:344-386` and `:694-741` (both lanes' crossing clause), this unit's gate,
   and `tmp/d699_bands.py`, `tmp/d699_measure2.py`, `tmp/d699_check2.py`, `tmp/d699_probe2.py`.
 ## 678. D699 · the one code claim the truncated stub left unverified is the D676 work, and it holds
 
