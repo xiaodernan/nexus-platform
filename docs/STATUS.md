@@ -4155,7 +4155,7 @@ plants            fourteen cases, replayed over the final shipped text: P0 basel
                     commerce/OrderRepository.java (rule 7 · `options` really is on those lines, as
                     order_items.options, so only table attribution can see it), and a filename with no line
                     (rule 5). The rest: rule 1 CatalogRepositori.java, rule 2 with an `__init__.py` cite (the index holds 8 of them), rule 3
-                    `:99999` past EOF and `:84-78` backwards · the latter two in the `why` column, which is
+                    `:99999` past EOF and `:78-84` backwards · the latter two in the `why` column, which is
                     where they were hiding, see mistake (3); rule 6 quoting "photos" at a line that reads
                     "items"; the non-vacuity guard with an answer row deleted; and P11/P12 on the parser itself ·
                     P11 (a `;` inside a `-- comment` mid-list) is required to stay GREEN, P12 (a bare `;` where
@@ -9728,7 +9728,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
 
                     The consequence is not telemetry only. `search/sql.py:317,672` builds
                     `attributes @> {param}::jsonb` from a `json.dumps(...)` value, and `plan_from_intent`
-                    fills that filter from positive `intent.preferences` (`search/service.py:746-658`).
+                    fills that filter from positive `intent.preferences` (`search/service.py:658-746`).
                     Measured on `nexus`, one connection each: `attributes @> '{"data_origin":"demo"}'
                     matched 5534 rows on the fixed plane and 0 on the pre-fix plane. End to end,
                     `POST /ai/v1/search` with `filters={"attributes":{"data_origin":"demo"}}` answered 200
@@ -9817,7 +9817,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     (plan, tool_calls, retrieval) = 12 cells, plus 4 `events` x 2 (properties, context) = 8,
                     so 20 cells over 8 rows. A census over every jsonb column of every public table in
                     `nexus` finds exactly those five columns and no others, every one of them written
-                    2026-09-27 23:29-23:34 · the day after §119's "no row newer than 2026-09-22" reading,
+                    2026-09-27 23:23-29:34 · the day after §119's "no row newer than 2026-09-22" reading,
                     which is why that reading dated the residue to a writer it had just cleared.
 
                     The repair, and its reversal. Repair: eight UPDATEs in one transaction, one per column
@@ -27087,7 +27087,7 @@ merchant's own list (`search/service.py:1609`), which
 (iii) `_disputed_attributes` still resolves over the card's own subject and cannot be wrong yet -
 exactly 1 `address` fact per location (684 facts over 684 distinct subjects, `locs_with_two = 0`).
 (iv) The comparison grid synthesises its own merchant-keyed `address` fact when it finds none
-(`apps/ai/nexus_ai/api/routes_discover.py:338-330`, D401) - now a different shape of the same fact,
+(`apps/ai/nexus_ai/api/routes_discover.py:330-338`, D401) - now a different shape of the same fact,
 on a second surface, under a different key. (v) The fetch goes 54 → 108 ids on a merchant geo page
 and 60 → 98 on an offering page, measured only at `limit` 6, with no cap on the load. A sixth thing
 came out of the same live run: that offering page answers `雲吞蝦麵（下午茶版）` twice, identically -
@@ -27894,7 +27894,7 @@ nothing.
 
 - readers: `embed.py`'s `run`, `embed_pending` and `worker_settings`; `db/pool.py:214-240` (the pool
   and the `statement_timeout` it sets); `api/pipeline.py:171-197` (which decides the vector lane and
-  what it hands `search`); `search/service.py:1801-1638` (the strategy suffix and its condition); and
+  what it hands `search`); `search/service.py:1638-1801` (the strategy suffix and its condition); and
   this unit's four `tmp/` measurements (`d618_pending`, `d618_embed`, `d618_p10`, `d618_lift`, with
   probes `d618_p10_probe.py`, `d618_lift_probe.py`).
 
@@ -28197,7 +28197,7 @@ files (`test_search_plan`, `test_cards`, `test_preferences_ranking`, `test_spons
 - readers: `nlu/understand.py:71-101` (the four new shapes), `:114` (`每位` in `PER_PERSON_RE`),
   `:573-585` (`_range_is_money`); `search/ranking.py:189-212` (`price_fit`'s band);
   `search/service.py:522` (`SearchPlan.budget_min`) and `:670` (the copy that was missing);
-  `search/cards.py:480-413` (the band on the card).
+  `search/cards.py:413-480` (the band on the card).
 
 ## 614. D616 · the degraded path answered every categorised product request with nothing, because the bucket leg reads a column an offering row does not have (`apps/ai/nexus_ai/search/service.py`)
 
@@ -28656,7 +28656,7 @@ ten subject ids against `餐廳`'s, and a ceiling page with eight or more rows a
 doors beside it: **33 passed**.
 
 - readers: `nlu/understand.py:117-125` (`PARTY_SPAN_RE`), `:596-626` (`match_core` and the strip list);
-  `search/service.py:516-447` (`SearchPlan.match_text`), `:636` (the plan fills it) and `:998-1001` (the
+  `search/service.py:447-516` (`SearchPlan.match_text`), `:636` (the plan fills it) and `:998-1001` (the
   retrieval reads it, with the fallback).
 
 ## 626. D629 · the time a user states filtered the rows AND divided their relevance by a term no row carries (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/search/service.py`)
@@ -28765,7 +28765,7 @@ the 39 rows closed at 14:00 are still there to hide). Falsified: with `_reads_as
 ten of the seventeen redden (`tmp/d630_falsify.txt`). With eight time-parser files: **253 passed, 2
 skipped**; with three intent/category files: **4145 passed**.
 
-- readers: `nlu/timeparse.py:161-147` (`_GUARDED_CUES` and `_guarded_cues`), `:150-170` (`_reads_as_a_time`),
+- readers: `nlu/timeparse.py:147-161` (`_GUARDED_CUES` and `_guarded_cues`), `:150-170` (`_reads_as_a_time`),
   `:226-245` (`_find_part`, guarded), `:284` (`part_hint`) and `:323-326` (the meridiem reads the loose one);
   source of the table: `nlu/lexicon.py:82` (`afternoon_tea`).
 
@@ -28819,7 +28819,7 @@ is inside the band; the corpus census that 3 are in band and none above HK$500).
 (`tmp/d631_falsify.txt`). With the D624 door, the D630 door, the D629 door, two NLU files and an
 estimated-price file: **86 passed**.
 
-- readers: `nlu/understand.py:669-660` (`_fill_budget` and the window), `:595-605` (`_range_is_money`);
+- readers: `nlu/understand.py:660-669` (`_fill_budget` and the window), `:595-605` (`_range_is_money`);
   the ranking side unchanged: `search/ranking.py:189-218` (`price_fit`, the band this unit finally reaches).
 
 ## 629. D632 · a party's budget was compared against one head's price (`apps/ai/nexus_ai/search/ranking.py`, `apps/ai/nexus_ai/search/service.py`)
@@ -28862,7 +28862,7 @@ redden and the live leg reports HK$88.43 for a HK$50-a-head ask (`tmp/d632_falsi
 D624 and D630 doors and four ranking files: **127 passed**.
 
 - readers: `search/ranking.py:141-146` (`Candidate.party_size`), `:192-215` (`price_fit` and the division),
-  `:247-249` (the scorer passes it); `search/service.py:916-828` (`party_size=plan.party_size`).
+  `:247-249` (the scorer passes it); `search/service.py:828-916` (`party_size=plan.party_size`).
 
 ## 630. D633 · the words around a budget stayed in the match text and divided every row's relevance (`apps/ai/nexus_ai/nlu/understand.py`)
 
@@ -28953,7 +28953,7 @@ Falsified: with the hand list restored, 19 of the 25 CJK legs redden and the liv
 and 38 of 46 shared rows differing (`tmp/d634_falsify.txt`). With the D628-D633 gates and the parser
 files: **385 passed**.
 
-- readers: `nlu/timeparse.py:215-176` (`_STRIP_TABLES`), `:178-184` (`_strip_cues`), `:187-208`
+- readers: `nlu/timeparse.py:176-215` (`_STRIP_TABLES`), `:178-184` (`_strip_cues`), `:187-208`
   (`cue_alternation`, the generated guard); `nlu/understand.py:177-184` (`_TIME_CUE` and `TIME_SPAN_RE`),
   `:661-679` (`match_core`).
 
@@ -29004,7 +29004,7 @@ page). Falsified: with the strip disabled, 5 of the 211 redden, including all th
 pages (`tmp/d635_falsify.txt`). With the D628-D634 gates, the search/ranking/understand files and the
 live CJK file: **728 passed**.
 
-- readers: `nlu/lexicon.py:684-657` (`_category_hits`), `:659-668` (`_chosen_category`), `:689-702`
+- readers: `nlu/lexicon.py:657-684` (`_category_hits`), `:659-668` (`_chosen_category`), `:689-702`
   (`category_surfaces`); `nlu/understand.py:684-687` (`_strip_surface_spans`), `:690-712` (`match_core`);
   `search/service.py:522` (`match_text: str | None`), `:645-651` (the plan passes the surfaces), `:1022-1024`
   (no text when nothing is left); `api/pipeline.py:181-190` (the vector lane reads the match text).
@@ -29114,7 +29114,7 @@ being the pool - three small pages and 深水埗's empty one). The D635 gate's �
 "". Falsified: with `district_surfaces` made to return nothing, **15 of the 20** redden, including all
 three live district pages and the two-spelling leg (`tmp/d637_falsify.txt`).
 
-- readers: `nlu/lexicon.py:654-627` (`district_surfaces`); `search/service.py:736-657` (the plan adds
+- readers: `nlu/lexicon.py:627-654` (`district_surfaces`); `search/service.py:657-736` (the plan adds
   them to `strip_surfaces`), `:554` (`_canonical_district`, the same reader for the filter).
 ## 635. D638 · the leaf a query named is answered by its filter, and was also a search term on that filter's rows (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/search/service.py`)
 
@@ -29168,7 +29168,7 @@ both two-spelling legs (`tmp/d638_falsify.txt`). With the D635-D638 gates, searc
 suites, pipeline, stream, cards, RAG containment and live CJK: **545 passed**.
 
 - readers: `nlu/lexicon.py:849-874` (`leaf_surfaces`), `:807-825` (`match_leaf`, the head rule that
-  chooses the leaf); `search/service.py:581-517` (`_apply_category_leaf`), `:681-694` (the recompute).
+  chooses the leaf); `search/service.py:517-581` (`_apply_category_leaf`), `:681-694` (the recompute).
 ## 648. D651 · a one-digit amount marked as money was read by nobody (`apps/ai/nexus_ai/nlu/understand.py`)
 
 **How the unit arrived.** §645 (D648) stopped the party strip from removing "2-4蚊", and closed with the
@@ -29251,7 +29251,7 @@ eleven words, and four live page pairs. Falsified by deleting the `_QUESTION_FRA
 3 green** (`tmp/d650_falsify.txt`). With search-plan, lexicon, time, category, shop and budget suites:
 **209 passed**.
 
-- readers: `nlu/understand.py:837-819` (`_QUESTION_FRAME`), `:899` (the strip in `_match_core`).
+- readers: `nlu/understand.py:819-837` (`_QUESTION_FRAME`), `:899` (the strip in `_match_core`).
 
 ## 646. D649 · a party range was read as a price band when a budget cue sat in front of it
 (`apps/ai/nexus_ai/nlu/understand.py`)
@@ -29292,7 +29292,7 @@ the plain party range, and four live pairs. Falsified by removing both guards: *
 (`tmp/d649_falsify.txt`), including all three party-range live pairs. With the budget, party, plan and
 lexicon suites: **380 passed**.
 
-- readers: `nlu/understand.py:735-716` (`_PARTY_COUNTER_AFTER`), `:718-733` (`_range_is_money`),
+- readers: `nlu/understand.py:716-735` (`_PARTY_COUNTER_AFTER`), `:718-733` (`_range_is_money`),
   `:746-750` (`_PARTY_RANGE_AFTER`), `:902` (the call that hands it the tail).
 
 ## 645. D648 · a dash range that named no party was removed from the sentence anyway
@@ -29363,8 +29363,8 @@ the clock itself. `understand._TIME_CLOCK_RANGE` removes the range as ONE span, 
 parsed a time - the D629 guard that keeps 下午 in 下午茶.
 
 **Measured after** (`tmp/d646_after.txt`, `tmp/d646_pairs.txt`): every range spelling answers its upper
-end and reaches the lane as nothing - `4-6pm`, `4pm-6pm`, `4 pm - 6 pm`, `19:30-21:00`,
-`11:30-13:30`, `11-13點`, `下午4-6點`, `下午4點至6點`, `下午4點至6點半` (18:30), `from 4 to 6pm`,
+end and reaches the lane as nothing - `4-6pm`, `4pm-6pm`, `4 pm - 6 pm`, `19:21-30:00`,
+`11:13-30:30`, `11-13點`, `下午4-6點`, `下午4點至6點`, `下午4點至6點半` (18:30), `from 4 to 6pm`,
 `星期一4-6pm`. Content survives (`quiet 4-6pm` → `quiet`, `6-9pm dinner` → `dinner`), and each range
 answers the SAME ten ids with the same relevance and the same filters as its upper end alone: `6pm`,
 `下午6點`, `21:00`, and `4點至6點` against `4-6點`.
@@ -29389,7 +29389,7 @@ range-and-party sentence, and six live pairs. Falsified by restoring HEAD's two 
 green** (`tmp` run, this section). With the time suites, the D629/D645/D643 gates and the open-time
 binding: **662 passed**.
 
-- readers: `nlu/timeparse.py:123-90` (`CLOCK_RANGE_RE`), `:234-252` (`clock_match`),
+- readers: `nlu/timeparse.py:90-123` (`CLOCK_RANGE_RE`), `:234-252` (`clock_match`),
   `nlu/understand.py:165-169` (`_TIME_CLOCK_RANGE`), `:170-178` (`TIME_SPAN_RE`).
 
 ## 642. D645 · a Latin cap beside a party stayed in the match text (`apps/ai/nexus_ai/nlu/understand.py`)
@@ -29499,7 +29499,7 @@ and one live relevance-0 leg. Falsified with `_PLURAL_AFTER` made to match nothi
 including all five live pairs (`tmp/d644_falsify.txt`). With the D635-D643 category, shop, range, plan,
 lexicon and eval suites: **432 passed**.
 
-- readers: `nlu/understand.py:774-757` (`_PLURAL_AFTER`), `:790-796` (the absorption in `_strip_surface_spans`).
+- readers: `nlu/understand.py:757-774` (`_PLURAL_AFTER`), `:790-796` (the absorption in `_strip_surface_spans`).
 ## 640. D643 · an English party range was read at the wrong end and left half of itself in the text (`apps/ai/nexus_ai/nlu/understand.py`)
 
 **How the unit arrived.** §636 (D639) closed the compound-suffix question, and the PLAN item it had
@@ -29655,7 +29655,7 @@ one live leg asserting relevance 0.0 on every card of all four compound pages. F
 four live pairs (`tmp/d639_falsify.txt`). With the D636-D638 gates, search plan, lexicon, live CJK and
 eval suites: **410 passed**.
 
-- readers: `nlu/lexicon.py:799-748` (`GENERIC_SHOP_NOUNS`), `:785-786` (the skip in `match_leaf`);
+- readers: `nlu/lexicon.py:748-799` (`GENERIC_SHOP_NOUNS`), `:785-786` (the skip in `match_leaf`);
   `nlu/understand.py:746` (`_SHOP_SUFFIX_AFTER`), `:749-757` (the absorption in `_strip_surface_spans`).
 ## 617. D619 · the availability object every card sends matches neither branch of the block the contract publishes (`apps/ai/nexus_ai/search/cards.py`, `apps/ai/nexus_ai/contract.py`)
 
@@ -30367,7 +30367,7 @@ number and is untouched. (c) A row whose price is stale is still filtered on the
 freshness is §5's notice, not the filter's business.
 
 - readers: `search/service.py:336` (the price legs in `_filter_static`, where the floor was missing),
-  `:306` (`_static_price`, this unit's reader), `search/sql.py:245-217` / `:454-459` (the two live
+  `:306` (`_static_price`, this unit's reader), `search/sql.py:217-245` / `:454-459` (the two live
   clauses it mirrors), `:583` (the offering projection whose `avg_price_hkd` is the merchant's),
   `contract.py:260` (`Filters.max_price` / `min_price`), this unit's gate, and
   `tmp/d654_minprice2.py`, `tmp/d654_falsify.txt` (the measurements).
@@ -30434,7 +30434,7 @@ merchant. That is a queued unit, not a guess. (b) `open_weekday` / `open_time` /
 - they need a join, and D549's pattern says a mirror of a join is its own unit. (c) A row with a stale
 rating is filtered on the stale number; freshness is §5's notice, not the filter's business.
 
-- readers: `search/service.py:289-320` (the block, five clauses plus `kind`), `search/sql.py:245-227` (the
+- readers: `search/service.py:289-320` (the block, five clauses plus `kind`), `search/sql.py:227-245` (the
   merchant clauses it mirrors), `:448` (`o.kind`), `:466-472` (the offering tag clause this unit added),
   `:583` (`m.tags` selected into the offering row), this unit's gate, and `tmp/d655_census.py`,
   `tmp/d655_tags_offering.py`, `tmp/d655_kind.py`, `tmp/d655_falsify_all.txt`, `tmp/d655_falsify_sql.txt`
@@ -30496,9 +30496,9 @@ readers here, but it is a choice, not a free lunch. (b) The comparison is exact 
 question (`tests/test_the_district_speaks_the_corpus_spelling.py`), not this one's. (c) The near-me lane,
 `district_layout` and `subdistrict` are untouched.
 
-- readers: `search/sql.py:199-180` (the published set), `:216` / `:455` (both call sites), `:409` / `:618`
+- readers: `search/sql.py:180-199` (the published set), `:216` / `:455` (both call sites), `:409` / `:618`
   (the two projections), `:490-495` (the offering clause), `:228-231` (the merchant clause it mirrors),
-  `search/service.py:328-282` (the mirror), this unit's gate, and `tmp/d656_district2.py`,
+  `search/service.py:282-328` (the mirror), this unit's gate, and `tmp/d656_district2.py`,
   `tmp/d656_falsify.txt` (the measurements).
 
 ## 654. D657 · the word that asks for a place was searched for as a place (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/tests/test_a_question_frame_is_not_a_search_term.py`)
@@ -30561,9 +30561,9 @@ not a frame. (c) The fixture lane still drops every row when the match text matc
 answers none (`tmp/d657_nomatch.py`). That is the keyword leg's hard/soft split between the lanes, a unit of
 its own.
 
-- readers: `nlu/understand.py:873-861` (the compound and the table), `:932-936` (where the frame strip runs
+- readers: `nlu/understand.py:861-873` (the compound and the table), `:932-936` (where the frame strip runs
   and why it runs there), `:918` (`match_core`, the only caller), `search/service.py:826` (the plan's
-  `match_text`), `tests/test_a_question_frame_is_not_a_search_term.py:77-70` (the re-aimed disclosure), this
+  `match_text`), `tests/test_a_question_frame_is_not_a_search_term.py:70-77` (the re-aimed disclosure), this
   unit's gate, and `tmp/d657_residue.py`, `tmp/d657_census.py`, `tmp/d657_pool.py`, `tmp/d657_keep.py`,
   `tmp/d657_falsify.txt`, `tmp/d657_nomatch.py` (the measurements).
 
@@ -30622,7 +30622,7 @@ unit and needs its own census. (b) `_static_tokens` and `tsquery` do not tokenis
 number is not comparable across lanes; only membership is. (c) The relevance floor still drops rows that
 mention the word and score below it - unchanged, and still the ranking lane's rule.
 
-- readers: `search/service.py:317-275` (the score, not the veto), `:277` (the category leg that stays),
+- readers: `search/service.py:275-317` (the score, not the veto), `:277` (the category leg that stays),
   `:354-359` (the flag), `search/sql.py:457-488` (the live score and flag), `:423` (a WHERE with no text in
   it), `:449-453` (the category clause that IS one), the two re-aimed gates, this unit's gate, and
   `tmp/d658_gap.py`, `tmp/d658_falsify.txt` (the measurements).
@@ -30679,7 +30679,7 @@ EXISTS, mirrored, not a claim that such a merchant is closed. (c) The three clau
 offering's own hours (none exist in the schema, `docs/DATABASE.md:69-73`) cannot narrow further.
 
 - readers: `search/sql.py:272-329` (the merchant clauses), `:610-725` (the offering mirror this unit added),
-  `search/service.py:235-195` (the hours handed to the lane), `:377-445` (the three predicates),
+  `search/service.py:195-235` (the hours handed to the lane), `:377-445` (the three predicates),
   `:347-356` (where the lane applies them), the two re-aimed gates, this unit's gate, and `tmp/d659_open2.py`,
   `tmp/d659_falsify.txt` (the measurements).
 
@@ -30749,7 +30749,7 @@ is the same number. (c) A plan that names a geo always carries a radius (`_apply
 can produce; a hand-built plan with a geo and no radius is not mirrored, and the live lane would keep
 its bbox square there. That shape has no producer, so it is filed rather than guessed.
 
-- readers: `search/sql.py:132-117` (`haversine_m`), `:128-135` (`haversine_expr`), `:182-198`
+- readers: `search/sql.py:117-132` (`haversine_m`), `:128-135` (`haversine_expr`), `:182-198`
   (`_points_select`), `:427` and `:661` (the two projections), `:291-320` and `:553-580` (the live
   clauses), `search/service.py:237-239,:250-252` (the lane's arguments), `:367-371` (where the clause
   applies), `:393-412` (`_static_nearest_metres`), `:1098` (`meters` onto the candidate), this unit's
@@ -30815,7 +30815,7 @@ items) was red on a CLEAN HEAD worktree at `588266d` with this unit stashed
 (`D:\获客平台_headcheck`, removed): it belongs to D660's radius cut, not to this unit, and §660
 names and closes it.
 
-- readers: `search/sql.py:213-204` (`_clock_filter`), `:301-314` and `:556-567` (the four clauses),
+- readers: `search/sql.py:204-213` (`_clock_filter`), `:301-314` and `:556-567` (the four clauses),
   `search/service.py:509-524` (`_static_hour_value`), `:533-545` (the two fixture comparisons),
   `:679-680` (the plan's clocks), `:953-957` (HHMM -> clock), `:1016-1029` (`_hhmm_clock`), the
   re-aimed legs in `test_time_before_cue.py`, this unit's gate, and `tmp/d661_probe.py`,
@@ -30865,7 +30865,7 @@ answers "closing at or after 09:30", which today is every restaurant; the senten
 correctly now, the hour it means is the convention's question. (c) 到 on its own is NOT a cue: it is
 the tail of 去到/睇到/食到 and would make every one of them a closing filter.
 
-- readers: `nlu/timeparse.py:82-67` (the table and the nine spellings), `:372-374` (the one reader),
+- readers: `nlu/timeparse.py:67-82` (the table and the nine spellings), `:372-374` (the one reader),
   `:413-431` (where the cue turns the clock into a quality), this unit's gate, and `tmp/d661_probe.py`,
   `tmp/d662_probe.py`, `tmp/d662_falsify.txt` (the measurements).
 
@@ -30979,7 +30979,7 @@ adds a spelling, not a second rule. (c) The district STRING and the district RAD
 readers of one fact (D656/D663) - the run-together spelling only makes the string reader reach the
 rows the radius already placed.
 
-- readers: `nlu/lexicon.py:1048-1027` (`_hyphenate_district_aliases`, this unit's block at
+- readers: `nlu/lexicon.py:1027-1048` (`_hyphenate_district_aliases`, this unit's block at
   `:1014-1024`), `:585-595` (`match_district`, the one matcher), `:19-49` (the table), the re-aimed leg
   in `test_the_district_that_named_the_filter_is_not_a_search_term.py`, this unit's gate, and
   `tmp/d664_counts.py`, `tmp/d664_probe.py`, `tmp/d664_falsify.txt` (the measurements).
@@ -30987,7 +30987,7 @@ rows the radius already placed.
 ## 662. D665 · a request that named a DAY was answered as nine o'clock that morning (`apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/sql.py`)
 
 **The parser's convention was read as the user's clock.** `parse_time`'s bare-day branch answers a
-whole-day window, 09:00-23:00 by convention (`nlu/timeparse.py:550-473`, quality `all_day`), and a
+whole-day window, 09:00-23:00 by convention (`nlu/timeparse.py:473-550`, quality `all_day`), and a
 weekend as Saturday 09:00 to Monday 00:00 (`:452-456`). `plan_from_intent` then wrote the window's
 START as the hour the request named (`service.py:1030-1038`), so every day-level sentence became a
 09:00 point on both lanes. Measured on the published plane (`tmp/d665_counts.py`, Wednesday 09:00 HK):
@@ -31048,16 +31048,16 @@ and both lanes now agree that it is; 0 published merchants are in that shape. (d
 part of day and the cue words are still D661's and D662's questions; this unit moved only what
 answered "which day".
 
-- readers: `search/service.py:759-672` (`DAY_LEVEL_QUALITIES`), `:1034-1038` (where `open_time` is
+- readers: `search/service.py:672-759` (`DAY_LEVEL_QUALITIES`), `:1034-1038` (where `open_time` is
   written), `:486-491` (the fixture mirror of the weekday clause), `search/sql.py:322-326` and
-  `:677-681` (the clause on both SELECTs), `nlu/timeparse.py:522-473` (the two conventions), this
+  `:677-681` (the clause on both SELECTs), `nlu/timeparse.py:473-522` (the two conventions), this
   unit's gate, and `tmp/d665_counts.py`, `tmp/d665_weekdays.py`, `tmp/d665_falsify.txt` (the
   measurements).
 
 ## 663. D666 · a part of day was read as the clock at its first minute (`apps/ai/nexus_ai/search/service.py`, `apps/ai/nexus_ai/search/sql.py`)
 
 **The band is a window, and the plan wrote one edge of it as a point.** `timeparse` states each part
-of day as a band (`timeparse.py:44-50`: morning 07:00-11:30, noon 11:30-14:30, afternoon 14:00-18:00,
+of day as a band (`timeparse.py:44-50`: morning 07:00-11:30, noon 11:14-30:30, afternoon 14:00-18:00,
 evening 17:00-19:30, night 18:00-23:00), and `plan_from_intent` published the band's START as
 `open_time` - the instant a shop had to be open AT. So 「聽日朝早嘅咖啡店」 asked both lanes for shops
 open at 07:00 and answered **0 of 79 cafes**: every cafe in the corpus opens at 08:00 or later.
@@ -31123,7 +31123,7 @@ window test assumes one day; the crossing row shape is handled, the crossing WIN
 (d) 週末 is still Saturday only (§662), which is exact on this corpus because no published shop
 trades Sunday without Saturday (23 trade Saturday only, 0 the other way) - latent, not live.
 
-- readers: `search/service.py:788-701` (`PART_OF_DAY_QUALITIES`), `:1001-1006` (the `ends_at` read),
+- readers: `search/service.py:701-788` (`PART_OF_DAY_QUALITIES`), `:1001-1006` (the `ends_at` read),
   `:1073-1081` (where the pair is written), `:455-464` (`_static_open_during`), `:496-507` (the
   fixture clause), `search/sql.py:338-356` and `:690-706` (the clause on both SELECTs),
   `nlu/timeparse.py:44-50` (the bands), this unit's gate, and `tmp/d666_probe.py`,
@@ -31961,7 +31961,7 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   `apps/web/src/lib/compare-row-labels.test.ts` already watches this grid from the web side by
   reading the AI's row list as text instead of importing it.
   - the second producer of this payload keeps the shift this unit removed. `mockCompare`
-  (`apps/web/src/lib/mock/index.ts:767-704`) maps the named ids over `SEED_MERCHANTS` and
+  (`apps/web/src/lib/mock/index.ts:704-767`) maps the named ids over `SEED_MERCHANTS` and
   `.filter(Boolean)`s the result, so an id the fixture lacks disappears and its neighbours slide left
   - unreachable today, because every mock card is `card_type: 'merchant'` (`:128`) and the demo
   search therefore only ever names ids the list holds. This unit read that file, it did not measure
@@ -32677,7 +32677,7 @@ on the shipped bytes (`tmp/d667_counts.py`, `tmp/d667_counts2.py`).
 18:00-23:00 band, the overlap carries no minimum dwell, and a crossing WINDOW would still read one
 day's weekday.
 
-## 673. D677 · a lunch service is a meal occasion, not a clock - 「午市套餐」 answered for the 11:30-14:30 pool, shared by none of the 115 rows that wrote it as their own lunch set (`apps/ai/nexus_ai/nlu/timeparse.py`)
+## 673. D677 · a lunch service is a meal occasion, not a clock - 「午市套餐」 answered for the 11:14-30:30 pool, shared by none of the 115 rows that wrote it as their own lunch set (`apps/ai/nexus_ai/nlu/timeparse.py`)
 
 **How the unit arrived.** The residue D630 filed and did not take: 「午市套餐」 and 「午市有冇好食」
 still carried `open_weekday: 5, open_time: 11:30` (`tmp/d630_census.txt`), and the guard could not
@@ -32688,7 +32688,7 @@ its own lunch set, and no row means "open at 11:30" by writing it.
 
 **What was wrong.** 午市 was the noon cue - the only CJK one the corpus carries (D634 measured the
 rest at 0 rows) - so an occasion the corpus writes freely became a filter nobody asked for:
-「午市套餐」 was served for the pool that is open 11:30-14:30 on the day asked, and the rows that
+「午市套餐」 was served for the pool that is open 11:14-30:30 on the day asked, and the rows that
 wrote the set (all of them) were indistinguishable from rows that never open at noon.
 
 **What changed.** The decision, the one D630 made for the category table: a meal-occasion word is
@@ -32697,7 +32697,7 @@ neither content nor a filter - it is understood and constrains nothing. `PART_OF
 `MENU_OCCASION_TOKENS` (`:58-63`), a strip-only entry so D634's pinned pair survives unchanged
 (`午市套餐 → 套餐`, `午市嘅餐廳 → 餐廳`, and `TIME_SPAN_RE` still reads it) and the word still leaves
 the match text; `_STRIP_TABLES` reads the new table (`:206-207`); and it narrows nothing. The noon
-the product reads has its own words, and they still read it: 中午嘅餐廳 -> 11:30-14:30, with the
+the product reads has its own words, and they still read it: 中午嘅餐廳 -> 11:14-30:30, with the
 Wednesday pin the other gates carry.
 
 **What was run.** The door `test_a_lunch_service_is_not_a_time.py`, 8 legs, 4 red on the shipped
