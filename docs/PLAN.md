@@ -467,6 +467,13 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   `test_live_canonical_query` 3/3 green; the rest fail against `text search configuration
   "jiebacfg" does not exist` — a seed-lane environment fact, not AI-lane code. CI's nexus_test
   plane carries the regconfig and the seed; the AI lane's health is proven there.
+  **Superseded by D813/D815:** the `jiebacfg` premise was false everywhere in-tree (nothing creates
+  it: not V1–V10, not CI, not this DB — now resolves to `simple`, CJK matching runs on the D407
+  containment lane). The live path IS buildable here: `scripts/db_apply_migrations.sh` +
+  `data/seed/load.sh` into a throwaway `nexus_ai_verify` (migrated fresh, full demo seed), CJK live
+  suites 22/22, and the platform+AI stack with the API contract e2e 21/21 (D815). The standing
+  limitation that remains true: on the shared `nexus` database the live-DB suites were never the
+  right host regardless, and the verify DB is the witness plane, not a shared scratchpad.
 - **D810** `test_injection.py` pins all 24 canonical tool names appearing in innocuous content —
   each flags as `tool_name_in_content`; 25 passed (was 24); the content⇒tool promise is now a
   gate, not a spot-check.
