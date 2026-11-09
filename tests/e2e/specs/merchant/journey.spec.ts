@@ -4,14 +4,13 @@ import { test, expect, demoLogin } from '../../lib/fixture.js';
 
 test.describe('merchant journey', () => {
   test('the merchant console renders its honest shell before sign-in exists (§46/§48)', async ({ page }) => {
-    // The live phase-1 product states it on the page: the merchant console sits behind an auth that
-    // does not exist yet (「需要登錄後查看 … 登錄頁尚未上線」), so the page renders its shell and
-    // discloses that instead of fake business data for a session that cannot exist. The journey
-    // test this replaces promised the §142 dashboard a build that never shipped.
+    // Both planes carry the disclosure — the live budget session says the sign-in page is
+    // unbuilt, the mock plane says the same in its own words; the §155 strip and the no-fabricated-
+    // figures claim are the invariants, not the mode-specific copy.
     await page.goto('/merchant');
     await expect(page.getByText(/商戶經營概覽/).first()).toBeVisible();
-    await expect(page.getByText(/需要登錄後查看/).first()).toBeVisible();
-    await expect(page.getByText(/登錄頁尚未上線/).first()).toBeVisible();
+    await expect(page.getByText(/登錄/).first()).toBeVisible();
+    await expect(page.getByText(/尚未上線/).first()).toBeVisible();
     // The disclosure and not a fake console: no fabricated revenue figures on this page.
     await expect(page.getByText(/營收|收入額|成交額/)).toHaveCount(0);
   });

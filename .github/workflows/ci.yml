@@ -262,13 +262,24 @@ jobs:
           node scripts/check_collection_claims.mjs
           bash data/seed/load.sh
       - name: Boot services
+        env:
+          # The harness falls back to :3000/:8080/:8000 (playwright.config.ts), so these are the
+          # ports this job boots; the env is set anyway so the suite names the same services CI
+          # did — a drift is loud, not a silent 404 against some other tenant's port 3000.
+          NEXUS_WEB_URL: http://127.0.0.1:3000
+          NEXUS_PLATFORM_URL: http://127.0.0.1:8080
+          NEXUS_AI_URL: http://127.0.0.1:8000
         run: |
-          mvn -B -q -f services/platform/pom.xml spring-boot:run &
-          (cd apps/ai && uv run uvicorn nexus_ai.main:app --port 8000) &
+          NEXUS_PORT=8080 mvn -B -q -f services/platform/pom.xml spring-boot:run &
+          (cd apps/ai && NEXUS_DATABASE_URL='postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test' NEXUS_LLM_PROVIDER=mock uv run uvicorn app.main:app --port 8000) &
           npm ci && npm run build --workspace @nexus/web
           npm run start --workspace @nexus/web &
-          npx wait-on http://127.0.0.1:8080/actuator/health http://127.0.0.1:8000/healthz http://127.0.0.1:3000
+          npx wait-on http://127.0.0.1:8080/actuator/health http://127.0.0.1:8000/ai/v1/health http://127.0.0.1:3000
       - name: Playwright — vertical slice, journeys, contract, visual
+        env:
+          NEXUS_WEB_URL: http://127.0.0.1:3000
+          NEXUS_PLATFORM_URL: http://127.0.0.1:8080
+          NEXUS_AI_URL: http://127.0.0.1:8000
         run: |
           cd tests/e2e && npm ci && npx playwright install --with-deps chromium
           npm run test:api && npm run test:consumer && npm run test:merchant
