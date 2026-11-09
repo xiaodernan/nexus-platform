@@ -36557,3 +36557,34 @@ or drop.
 to satisfied once this section lands.
 
 - readers: the CI fresh gate passes the quality gate; the number the ledger is judged by is in writing here; the next act is re-running db_gate_fresh.sh to confirm end-to-end green.
+## 842. D842 · the CI fresh gate is green end to end — 18 of 18, exit 0
+
+Five attempts this session on `scripts/db_gate_fresh.sh`, each one reddening for a different,
+findable reason, ending with every step green on a from-scratch run:
+
+1. **Step 3/18 falsify_flag_dialect** — the negative control's expectation was tied to the *historical* default plane being sick, and the live plane had become healthy. The mutant's fallback address now points at RFC-863 port 9, which refuses by construction. (D826.)
+2. **Step 5/18 quality.sql** — the D831 one-way varchar reading only held where flyway_schema_history existed; the fresh gate built from psql migrations has no such table, so the row enforcing both directions refused to run. The exclusion moved to the census input (`flyway_schema_history` excluded from the string census by name) rather than a one-way declaration; both planes read 2 base types / 2 declarations, zero offenders. (D835.)
+3. **Step 6/18 truncate probe** — always passed; 0-arg reddens elsewhere.
+4. **Step 7/18 jsonb reads census** — 35 "name is ambiguous" rows all traced to lane worktrees under `tmp/` reading back as the source tree; the exclusion set gained `tmp` (zero tracked files there), and two unanswered jsonb keys (`merchants.attributes ? 'weak_aspects'`, `… ? 'lively_ambience'`) gained their full answer rows with their site citations confirmed. 37/37 arms held. (D834, D835-related.)
+5. **Step 9/18 comment citations** — ten in-source citations pointed at lines that were BLANK or duplicate-matched at HEAD; all re-aimed to the block the author meant. 0 offenders, 167 resolving. (D836.)
+6. **Step 16/18 line_cite_drift --strict MOVED,NOT-UNIQUE** — 164 mechanical re-aims landed; 21 NOT-UNIQUE citations re-aimed in two batches; the shuffle left 43 reversed ranges (writer's new/old convention) as 43 BACKWARDS citations in the ledger-citation census; pointing the two halves of every backwards range at their own ends restored zero offenders. (D837, D838, D839, D840, D841.)
+
+**The end result.** `db_gate_fresh.sh` completes with exit 0 against master HEAD on a
+from-scratch database. Step by step: schema apply (58 tables, 10 migrations), seed generate
+(re-checked PASS), seed claims reader (4/4), flag-dialect falsifier (20/20), collection-claims
+reader (4/4), collection reader (reddens on a plant, PASS), quality.sql (217 checks), truncate
+probe (4/4), jsonb reads census (37/37), ledger citations (0 offenders), comment citations
+(0 offenders), ledger sections, falsifier registry, status citations, committed-plane
+re-verification, console i18n / a11y / ui / reachability / citation-supports-sentence
+(konsolen gron), line_cite_drift (468/487 exact), strict MOVED,NOT-UNIQUE (clean),
+ledger numbers declared at 217/217, and the script's own self-consistency census.
+
+**What this does NOT claim.** The gate is green on this machine's from-scratch database. The
+CI-runner path (`.github/workflows/ci.yml` `e2e:` job) runs the same steps on ubuntu-latest and
+a small `CI` corpus; whether the runner's runner still goes green for that combination is the
+runner's call and was not observed this session. The count-pin failures in the monolith live
+suite against `nexus_verify2` are the same corpus drift set as in D823 (26 cases), unchanged.
+
+**Commits.** 03e8173, efdc889, 5f19d40, 1304d62, 2ca355e, 85f696a, ef966b8 (this unit's chain).
+
+- readers: the gate is green end to end; the open doors remain the merchant-side §142 "AI agent answers a consumer question" loop and the filmed §170 run.
