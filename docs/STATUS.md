@@ -36294,3 +36294,43 @@ runs touched (`out/`, seed artifacts) are gitignored and were regenerated, not c
 **Commits.** 7aedd7c (this unit, collector only).
 
 - readers: the §10 evidence gate can now actually pass on the current plane; the remaining long poles are the ARCHITECTURE §170 filmed end-to-end acceptance and CI-green on the runner.
+## 825. D825 · the docs stop promising the unbuilt — readability floor closed by measurement, platform suite measured, corpus count corrected
+
+**The readability floor.** PLAN.md had carried an open web-stream item: "live text measures 4.477:1
+against the 4.5 AA bound the visual test asserts". The floor was re-measured on the current live
+build (web :3002, NOW-anchored verify2): the visual project's AA assertion passes on **both** themes —
+`NEXUS_WEB_URL=http://127.0.0.1:3002 npx playwright test specs/visual/quality.spec.ts -g readability
+--project=visual` → 1 passed, 7.3s (specs/visual/quality.spec.ts:158). The current palette carries
+measured ratios — `--nexus-ink-faint #62697d` = 4.8:1 on the darkest neutral ground, `--nexus-ink-muted
+#525a70` = 6.9:1 light / `#a7afc3` = 8.4:1 dark — so the weak reading did not survive the token pass.
+PLAN.md's item is closed to this measurement, not to a remembered one: the test is the named oracle
+and the test is green.
+
+**The platform suite.** `mvn -o test` (offline, this machine): **Tests run: 288, Failures: 0, Errors:
+0 — BUILD SUCCESS**. Recorded because the ledger last carried the platform unit count as a fragment;
+the full count is the number a reader trusts today.
+
+**ROADMAP's dated note.** Now states what a fresh checkout would actually see: the CI release gate is
+four suites — `intent_v1` 69/69, `rag_faithfulness_v1` 25/25 (0.0000), `safety_injection_v1` 47/47
+(100% containment), `personalization_v1` 25/25 (preference-lift = 1.0); the offerings figure is
+5,534 on the corpus regenerated 2026-11-09 (the note said 5,538 — the same regeneration that moved
+offerings also moved the reservation availability horizon, which is why the live DB now runs
+NOW-anchored, matching the CI anchor D822 chose); web unit 209 green; platform 288 green;
+`search_relevance_v1` is named **specified, not built** — honest relevance labels are an open task
+(TESTING.md §6), and inventing them would fabricate truth, so the suite stays unbuilt until a
+labeling process that won't fabricate truth exists. `tool_selection_v1` stays specified-not-built
+behind its orchestrator blocker, same sentence-file reason.
+
+**RECOMMENDATION.md §7.** Now separates the two lanes it used to conflate: personalization_v1 (shipped,
+CI-gated, the lift-gate) from search_relevance_v1 (specified, not built); hallucination gating is
+attributed to `rag_faithfulness_v1`, which is the suite that actually measures it.
+
+**What this does NOT claim.** No CI run was observed green on the runner for this push; local reads and
+the current live plane are what ground the numbers. The readability reading is for the current build,
+not every future palette change — the gate fails when that changes, which is the point of it being a
+test.
+
+**Commits.** b359836 (this unit; PLAN / ROADMAP / RECOMMENDATION). D824 shipped 7aedd7c + the STATUS
+append 0970d1e.
+
+- readers: the web and platform lanes are green on this machine; the open lanes are the honest-label suite (search_relevance_v1), filmed §170 acceptance, and CI-green on the runner.
