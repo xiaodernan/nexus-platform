@@ -1,0 +1,35 @@
+server:
+  port: ${NEXUS_EUREKA_PORT:8761}
+
+spring:
+  application:
+    name: nexus-eureka
+
+eureka:
+  instance:
+    hostname: ${NEXUS_EUREKA_HOST:127.0.0.1}
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  server:
+    # A local/dev registry must reflect reality: a killed gateway should disappear quickly instead
+    # of being kept alive by self-preservation.
+    enable-self-preservation: false
+    eviction-interval-timer-in-ms: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    com.netflix.eureka: WARN
+    com.netflix.discovery: WARN

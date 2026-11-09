@@ -1,0 +1,64 @@
+server:
+  port: ${NEXUS_GATEWAY_PORT:8088}
+
+spring:
+  application:
+    name: nexus-gateway
+  config:
+    # Optional on purpose: the edge must serve traffic when the config server is down, and the smoke
+    # run asserts the label changes when it is up. Fail-fast belongs to production overlays, not here.
+    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:8888}
+  cloud:
+    gateway:
+      server:
+        webflux:
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+          routes:
+            - id: platform
+              uri: ${NEXUS_PLATFORM_URI:http://127.0.0.1:8090}
+              predicates:
+                - Path=/api/v1/**
+            - id: ai
+              uri: ${NEXUS_AI_URI:http://127.0.0.1:8010}
+              predicates:
+                - Path=/ai/v1/**
+            - id: web
+              uri: ${NEXUS_WEB_URI:http://127.0.0.1:3000}
+              predicates:
+                - Path=/**
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: ${NEXUS_CORS_ORIGINS:http://localhost:3000}
+                allowedMethods: "*"
+                allowedHeaders: "*"
+                allowCredentials: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      access: unrestricted
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO

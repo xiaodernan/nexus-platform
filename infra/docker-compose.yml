@@ -159,6 +159,68 @@ services:
     ports:
       - "127.0.0.1:${NEXUS_WEB_HOST_PORT:-3000}:3000"
 
+  # ------------------------------------------------------------------ cloud plane (opt-in: --profile cloud)
+  # Spring Cloud sidecars for the edge, built from services/cloud with one Dockerfile. They are NOT
+  # in `full`: the monolith serves :8080 correctly without them. The plane's wiring is proven without
+  # Docker by scripts/cloud_smoke.sh; this profile is the deployment path, and it has not been
+  # exercised by the smoke script (Docker image build is a separate, unclaimed step).
+  eureka:
+    image: nexus/eureka:dev
+    container_name: nexus-eureka
+    profiles: ["cloud"]
+    build:
+      context: ../services/cloud
+      dockerfile: Dockerfile
+      args:
+        MODULE: eureka-server
+    restart: unless-stopped
+    environment:
+      NEXUS_EUREKA_PORT: 8761
+    ports:
+      - "127.0.0.1:${NEXUS_EUREKA_HOST_PORT:-8761}:8761"
+
+  config-server:
+    image: nexus/config:dev
+    container_name: nexus-config
+    profiles: ["cloud"]
+    build:
+      context: ../services/cloud
+      dockerfile: Dockerfile
+      args:
+        MODULE: config-server
+    restart: unless-stopped
+    environment:
+      NEXUS_CONFIG_PORT: 8888
+    ports:
+      - "127.0.0.1:${NEXUS_CONFIG_HOST_PORT:-8888}:8888"
+
+  gateway:
+    image: nexus/gateway:dev
+    container_name: nexus-gateway
+    profiles: ["cloud"]
+    build:
+      context: ../services/cloud
+      dockerfile: Dockerfile
+      args:
+        MODULE: gateway
+    restart: unless-stopped
+    depends_on: [eureka, config-server]
+    environment:
+      NEXUS_GATEWAY_PORT: 8088
+      NEXUS_EUREKA_URI: http://eureka:8761/eureka/
+      NEXUS_CONFIG_URI: http://config-server:8888
+      # Defaults match the `full` profile's published ports; override when the platform/AI/web run
+      # on the host dev ports instead (8090/8010/3000).
+      NEXUS_PLATFORM_URI: ${NEXUS_CLOUD_PLATFORM_URI:-http://host.docker.internal:8080}
+      NEXUS_AI_URI: ${NEXUS_CLOUD_AI_URI:-http://host.docker.internal:8000}
+      NEXUS_WEB_URI: ${NEXUS_CLOUD_WEB_URI:-http://host.docker.internal:3000}
+      NEXUS_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}
+      TZ: Asia/Hong_Kong
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:${NEXUS_GATEWAY_HOST_PORT:-8088}:8088"
+
 volumes:
   pgdata:
     name: nexus_pgdata

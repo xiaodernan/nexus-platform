@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.nexus</groupId>
+  <artifactId>nexus-cloud</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>NEXUS Cloud</name>
+  <description>Spring Cloud sidecar plane: service registry, config server and edge gateway in front of the modular monolith</description>
+
+  <!--
+    This tree is a SIDECAR to services/platform and apps/ai, not a replacement. It adds the three
+    Spring Cloud elements the deployment shape needs at the edge (Eureka, Config Server, Gateway)
+    without asking the monolith to become a distributed system in this phase: the gateway routes to
+    the platform's and the AI service's documented ports by URI, and the monolith stays a single
+    Spring Boot process. A later unit may register the monolith with Eureka and switch the routes to
+    lb://; nothing here depends on that.
+
+    Java 21 is deliberate even though services/platform targets 25: the local build image set holds
+    maven:3.9-eclipse-temurin-21, and the produced jars run on eclipse-temurin:25-jre. Version
+    alignment with the monolith is a compile-target decision, not a protocol one.
+  -->
+
+  <properties>
+    <java.version>21</java.version>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <spring-boot.version>3.5.16</spring-boot.version>
+    <spring-cloud.version>2025.0.3</spring-cloud.version>
+    <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
+  </properties>
+
+  <modules>
+    <module>eureka-server</module>
+    <module>config-server</module>
+    <module>gateway</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring-cloud.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${maven-compiler-plugin.version}</version>
+          <configuration>
+            <release>${maven.compiler.release}</release>
+            <parameters>true</parameters>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <version>${spring-boot.version}</version>
+          <executions>
+            <execution>
+              <goals><goal>repackage</goal></goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

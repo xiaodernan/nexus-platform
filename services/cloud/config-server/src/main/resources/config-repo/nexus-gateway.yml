@@ -1,0 +1,6 @@
+# Served to `nexus-gateway` over the config server. The value is deliberately a smoke marker: the
+# gateway's /cloud/info shows the label it actually resolved, so a passing smoke run proves the
+# config-server round-trip rather than the gateway's local default ("local").
+nexus:
+  edge:
+    label: cloud-smoke
