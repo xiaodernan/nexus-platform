@@ -9,7 +9,7 @@ Status: **to be built** — the tables, headers and endpoints this document desc
 | Signal | Where it is written | Read surface |
 |---|---|---|
 | logs | structured JSON lines, every service, fields `ts level service tenant_id request_id actor_id msg` | stdout → container log driver |
-| metrics | request latency histograms, DB pool, cache hit ratio, queue depth | `GET /actuator/health`, `/actuator/metrics` (platform), `/ai/healthz` + `/ai/v1/observability/summary` |
+| metrics | request latency histograms, DB pool, cache hit ratio, queue depth | `GET /actuator/health`, `/actuator/metrics` (platform), `/ai/v1/health` + `/ai/v1/observability/summary` |
 | traces | `X-Request-Id` generated at the edge and forwarded to platform → AI → tools; every span writes `agent_runs` | `GET /api/v1/admin/ai/runs` |
 | AI behaviour | `agent_runs` (plan, tool_calls, retrieval, fact_ids, tokens, cost, fallback_used) + `llm_calls` per model call | admin AI views |
 
