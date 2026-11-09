@@ -218,10 +218,15 @@ public class ConversationService {
     public Map<String, Object> agentMessage(TenantContext tenant, HttpServletRequest request, UUID conversationId,
                                             Map<String, Object> body) {
         Map<String, Object> conv = conversations.findConversation(tenant, conversationId);
-        String senderType = orDefault(Paging.enumFilter(str(body.get("sender_type")), List.of("ai_agent", "system"),
-                "sender_type"), "ai_agent");
-        String role = orDefault(Paging.enumFilter(str(body.get("role")), List.of("assistant", "tool", "system"),
-                "role"), "ai_agent".equals(senderType) ? "assistant" : "system");
+        String senderType = orDefault(Paging.enumFilter(str(body.get("sender_type")),
+                List.of("ai_agent", "system", "user"), "sender_type"), "ai_agent");
+        String role = orDefault(Paging.enumFilter(str(body.get("role")),
+                List.of("assistant", "tool", "system", "user"), "role"),
+                switch (senderType) {
+                    case "user" -> "user";
+                    case "ai_agent" -> "assistant";
+                    default -> "system";
+                });
         String content = requireText(body.get("content"), "content");
         String contentType = orDefault(Paging.enumFilter(str(body.get("content_type")),
                 List.of("text", "cards", "comparison", "form"), "content_type"), "text");
@@ -230,8 +235,22 @@ public class ConversationService {
         BigDecimal confidence = decimalOrNull(body.get("confidence"), "confidence");
         boolean handoff = Boolean.TRUE.equals(body.get("handoff"));
 
+        UUID senderId = Json.uuidOrNull(str(body.get("agent_subject_id")));
+        if ("user".equals(senderType)) {
+            // D846: the consumer's turn is relayed by the AI service through this same audited door.
+            // The thread already knows whose question it is, so the sender is the owner - never an id
+            // the relay supplies - and a consumer turn can carry neither a confidence nor a handoff.
+            if (handoff) {
+                throw ApiException.validation("A consumer turn cannot raise a handoff",
+                        Json.map("field", "handoff", "conversation_id", conversationId.toString()));
+            }
+            senderId = Json.uuid(conv, "user_id");
+            agentRunId = null;
+            confidence = null;
+        }
+
         Map<String, Object> message = conversations.appendMessage(conversationId, senderType,
-                Json.uuidOrNull(str(body.get("agent_subject_id"))), role, content, contentType,
+                senderId, role, content, contentType,
                 Json.write(payload), agentRunId, confidence, handoff);
         conversations.touchConversation(tenant, conversationId, null, handoff ? "handoff" : null);
 

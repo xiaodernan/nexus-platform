@@ -75,8 +75,6 @@ DECLARED_PROMISES = {
     "orchestrator/planner.py": "the orchestrator is not built yet (AGENTS.md's promise)",
     "apps/ai/nexus_ai/orchestrator/planner.py": (
         "the orchestrator is not built yet (AGENTS.md's promise)"),
-    "apps/ai/nexus_ai/tools/registry.py": (
-        "the tool registry is not built yet (AGENTS.md's promise)"),
 }
 
 #: The names a document borrows from OUTSIDE this repository - a file that is real, just

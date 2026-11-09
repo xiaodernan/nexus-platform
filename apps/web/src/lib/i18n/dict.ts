@@ -131,6 +131,34 @@ export interface Dict {
     cuisineLabel: string;
     attributesLabel: string;
   };
+  /**
+   * The merchant Q&A widget (§142). The agent answers only from the merchant's knowledge base and
+   * hands off when it cannot; the copy below frames those two outcomes and never asserts anything
+   * about the merchant itself.
+   */
+  ask: {
+    title: string;
+    hint: string;
+    placeholder: string;
+    submit: string;
+    submitting: string;
+    reading: string;
+    you: string;
+    agent: string;
+    empty: string;
+    handoffTitle: string;
+    handoffBody: string;
+    signInTitle: string;
+    signInBody: string;
+    signInCta: string;
+    errorTitle: string;
+    errorBody: string;
+    demoNote: string;
+    citations: (count: number) => string;
+    runId: (id: string) => string;
+    clear: string;
+    mockAnswer: (name: string) => string;
+  };
   offering: {
     notFoundTitle: string;
     notFoundText: string;
@@ -798,6 +826,30 @@ const zhHK: Dict = {
     degradedTitle: '部分資料暫時無法讀取',
     cuisineLabel: '菜系',
     attributesLabel: '設施與特色',
+  },
+  ask: {
+    title: '問問這間商戶',
+    hint: '由商戶知識庫回答；找不到答案時會轉交商戶團隊，不會猜測。',
+    placeholder: '例如：週六晚上七點有位嗎？招牌菜是什麼？',
+    submit: '送出問題',
+    submitting: '正在回覆…',
+    reading: '查閱商戶知識庫…',
+    you: '你',
+    agent: '商戶助理',
+    empty: '還沒有對話。問一個關於營業時間、價格或預約的問題。',
+    handoffTitle: '已轉交商戶團隊',
+    handoffBody: '知識庫沒有足夠資料回答這題；商戶可在收件箱看到這條對話並接手回覆。',
+    signInTitle: '登錄後才可提問',
+    signInBody: '提問會建立一條你可追蹤的對話，因此需要先登錄。',
+    signInCta: '前往登錄',
+    errorTitle: '暫時無法回答',
+    errorBody: '商戶助理暫不可用；你的問題未被記錄，請稍後再試。',
+    demoNote: '示例環境：此回答未經商戶知識庫檢索，也未寫入任何對話。',
+    citations: (count) => `${count} 條知識庫依據`,
+    runId: (id) => `運行編號 ${id}`,
+    clear: '開始新對話',
+    mockAnswer: (name) =>
+      `示例環境尚未連接商戶知識庫，因此不會代「${name}」作答。連接平台與 AI 後，這裡會先檢索該商戶已發佈的資料；找不到時才轉交商戶團隊。`,
   },
   offering: {
     notFoundTitle: '找不到該商品或服務',
@@ -1510,6 +1562,30 @@ const en: Dict = {
     degradedTitle: 'Some sections could not be loaded',
     cuisineLabel: 'Cuisine',
     attributesLabel: 'Features',
+  },
+  ask: {
+    title: 'Ask this merchant',
+    hint: 'Answered from this merchant’s own knowledge base; when it cannot answer, the team takes over instead of guessing.',
+    placeholder: 'e.g. Is there a table on Saturday at 7pm? What is the signature dish?',
+    submit: 'Send question',
+    submitting: 'Answering…',
+    reading: 'Reading the merchant knowledge base…',
+    you: 'You',
+    agent: 'Merchant assistant',
+    empty: 'No conversation yet. Ask about opening hours, prices or reservations.',
+    handoffTitle: 'Handed to the merchant team',
+    handoffBody: 'The knowledge base does not hold enough to answer this; the merchant can see this thread in their inbox and reply.',
+    signInTitle: 'Sign in to ask',
+    signInBody: 'A question opens a conversation you can track, so it needs an account first.',
+    signInCta: 'Go to sign in',
+    errorTitle: 'Cannot answer right now',
+    errorBody: 'The merchant assistant is unavailable; your question was not recorded. Please try again later.',
+    demoNote: 'Demo mode: this answer came from no knowledge base and was not written to any conversation.',
+    citations: (count) => `${count} knowledge-base references`,
+    runId: (id) => `Run ${id}`,
+    clear: 'Start a new conversation',
+    mockAnswer: (name) =>
+      `Demo mode is not connected to a merchant knowledge base, so it will not answer for ${name}. With the platform and AI services attached it would search what this merchant has published, and hand over to the team only when nothing answers.`,
   },
   offering: {
     notFoundTitle: 'Offering not found',

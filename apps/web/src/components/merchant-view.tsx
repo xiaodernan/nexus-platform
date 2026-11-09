@@ -21,6 +21,7 @@ import { getDict, trustLabels } from '@/lib/i18n';
 import { merchantToCard, offeringToCard } from '@/lib/adapters';
 import type { MerchantPage } from '@/lib/data';
 import { CardGrid } from './cards';
+import { AskMerchant } from './ask-merchant';
 import { FactList } from './fact-list';
 
 function Panel({
@@ -151,6 +152,13 @@ export function MerchantView({
             : null}
         </Panel>
       ) : null}
+
+      {/*
+        §142: the ask widget sits between "about" and "menu" because it is the one panel that
+        contacts the merchant — a consumer who reads the description and wants to know more
+        should not have to scroll past the whole menu to find the question box.
+      */}
+      <AskMerchant merchantId={detail.id} merchantSlug={detail.slug} locale={locale} />
 
       <Panel id="menu" title={dict.merchant.menu}>
         {page.offerings.items.length ? (

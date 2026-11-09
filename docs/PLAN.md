@@ -65,7 +65,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   `ts_config="cjk_zh"` to both `build_merchant_query` and `build_offering_query`.
   Non-CJK text keeps `simple` (no behavior change for English/Latin queries).
   Measured: `test_search_plan.py`, `test_search_pipeline.py`, `test_cards.py`, `test_*
-  category_filter*`, `test_merchand_cjk_tag_containment.py`, `test_scenic_transient*`
+  category_filter*`, `test_merchant_cjk_tag_containment.py`, `test_scenic_transient*`
   all green — 455+ passed, 0 regressions.
   **Note:** `jiebacfg` must exist in the target PostgreSQL installation; `_tsconfig`
   falls back to `simple` for any unknown name, so a database without the extension
@@ -334,7 +334,7 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
   (D609 gate: 13 detector reds folded).
 - **D765** the typed `cuisine/vegetarian` D702 branch answers only when the stand-in
   attribute speaks; the D394 column matcher answers when it is silent (D522 shape).
-- **D766** the in-lane untracked gates (`test_the_locale_..._open_state_it_prints.py`,
+- **D766** the in-lane untracked gates (`test_the_locale_a_card_is_printed_in_reaches_the_open_state_it_prints.py`,
   `test_the_word_the_contract_publishes_for_open_now_opens_the_hours_window.py`, D725/D730
   era) and `apps/ai/uv.lock` (36 packages, `uv lock --check` green) were gathered into
   master so `uv sync` on a fresh CI checkout resolves deterministically.

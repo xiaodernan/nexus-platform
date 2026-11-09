@@ -68,6 +68,9 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
     try:
         yield ("status", StreamStatusFrame(
             stage="understanding", text=copy["reading"]).model_dump(mode="json"))
+        # D846: the consumer's question is persisted before the answer is attempted, so a merchant
+        # inbox shows what was asked even when the model or the stream later fails.
+        await _persist_turn(deps, body=body, sender_type="user", content=body.message)
         chunks: list[dict[str, Any]] = []
         db = deps.database()
         if db is not None:
@@ -87,6 +90,7 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
         # evidence. A chunk that matched only by trigram noise is not, and the
         # containment test is what tells them apart.
         grounded = any(bool(c.get("hit")) for c in chunks)
+        all_cited = [str(c.get("id")) for c in chunks if c.get("id")]
         provider = "mock"
         answer_text = ""
         usage: dict[str, Any] = {}
@@ -116,7 +120,7 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
             answer_text = call.response.text
             yield ("summary", StreamSummaryFrame(
                 text=answer_text,
-                citations=[str(c.get("id")) for c in chunks if c.get("id")][:8],
+                citations=all_cited[:8],
             ).model_dump(mode="json"))
         else:
             answer_text = t["none_grounded"] + " " + t["handoff"]
@@ -127,10 +131,15 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
             cost_usd=float((usage or {}).get("cost_usd") or 0.0),
             degraded=not grounded, provider=provider).model_dump(mode="json"))
         await _record_chat(deps, run_id=run_id, body=body, grounded=grounded,
-                          answer=answer_text, citations=[str(c.get("id")) for c in chunks
-                                                       if c.get("id")],
+                          answer=answer_text, citations=all_cited,
                           latency_ms=_ms_since(started), provider=provider,
                           usage=usage, llm_records=llm_records)
+        # The run row exists before the answer references it (messages.agent_run_id -> agent_runs.id).
+        await _persist_turn(
+            deps, body=body, sender_type="ai_agent", content=answer_text,
+            role="assistant", agent_run_id=run_id, handoff=not grounded,
+            handoff_reason=None if grounded else "no_grounded_chunks",
+            payload={"retrieval": all_cited})
     except Exception as exc:  # the same inside-stream error contract as search
         log.exception("merchant-agent stream failed")
         # D444: the failed turn is still a task, and §8 says every task writes a run - the
@@ -146,6 +155,29 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
         await _record_chat(deps, run_id=run_id, body=body, grounded=False, answer="",
                            citations=[], latency_ms=_ms_since(started), provider="none",
                            status="failed", error=str(exc))
+
+
+async def _persist_turn(deps: Any, *, body: Any, sender_type: str, content: str,
+                        **fields: Any) -> None:
+    """D846: relay one dialogue turn through the platform's audited internal door.
+
+    Only when `NEXUS_AI_INTERNAL_TOKEN` is configured - the door answers 501 otherwise, and the
+    platform's contract makes that a deployment decision, not something this stream may fake.
+    Persistence is never allowed to replace the answer with an error frame: a failed write is
+    logged and the consumer still gets the model's answer.
+    """
+    token = str(getattr(deps.settings, "internal_token", "") or "")
+    conversation_id = str(body.conversation_id) if body.conversation_id else ""
+    if not token or not conversation_id:
+        return
+    from nexus_ai.adapters.platform import get_platform_client
+
+    try:
+        await get_platform_client(deps.settings).append_conversation_message(
+            conversation_id, sender_type=sender_type, content=content,
+            internal_token=token, tenant=deps.tenant_id(), **fields)
+    except Exception as exc:  # noqa: BLE001 - the answer outranks the ledger write
+        log.warning("merchant-agent dialogue write failed for %s: %s", conversation_id, exc)
 
 
 async def _record_chat(deps: Any, *, run_id: str, body: Any, grounded: bool, answer: str,

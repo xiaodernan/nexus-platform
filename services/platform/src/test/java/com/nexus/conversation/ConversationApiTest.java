@@ -170,6 +170,36 @@ class ConversationApiTest extends NexusIntegrationTest {
                 + "and subject_id = :c", Map.of("c", conversation))).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("The internal door persists a relayed consumer turn as the thread owner, without confidence or handoff")
+    void agentDoorRelaysConsumerTurn() {
+        UUID conversation = openThread();
+        ResponseEntity<String> res = aiPost(conversation, Map.of(
+                "content", "Do you have a private room for eight?",
+                "sender_type", "user",
+                "role", "user",
+                "confidence", "0.99",
+                "handoff", false));
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Map<String, Object> msg = row("select sender_type, sender_id, role, confidence, handoff, agent_run_id "
+                + "from messages where conversation_id = :c and sender_type = 'user'", Map.of("c", conversation));
+        assertThat(msg.get("sender_type")).isEqualTo("user");
+        // The owner is the thread's user, not any sender the relay could name.
+        assertThat(String.valueOf(msg.get("sender_id"))).isEqualTo(consumer.toString());
+        assertThat(msg.get("role")).isEqualTo("user");
+        assertThat(msg.get("confidence")).isNull();
+        assertThat(msg.get("handoff")).isEqualTo(false);
+        // The thread holds its opening system row plus the question.
+        assertThat(count("select count(*) from messages where conversation_id = :c", Map.of("c", conversation)))
+                .isEqualTo(2);
+
+        // A consumer turn cannot escalate; that is the agent's decision, not the shopper's.
+        ResponseEntity<String> escalate = aiPost(conversation, Map.of(
+                "content", "Please escalate me.", "sender_type", "user", "handoff", true));
+        assertThat(escalate.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(escalate.getBody()).contains("handoff");
+    }
+
     // ---------------------------------------------------------------- (a) merchant inbox + evidence
 
     @Test

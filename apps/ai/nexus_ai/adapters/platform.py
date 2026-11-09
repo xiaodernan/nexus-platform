@@ -71,6 +71,15 @@ class PlatformClient(Protocol):
     async def get_order_status(self, order_id: str, *, token: str | None = None,
                                tenant: str | None = None) -> dict[str, Any]: ...
 
+    async def append_conversation_message(
+            self, conversation_id: str, *, sender_type: str, content: str,
+            role: str | None = None, agent_run_id: str | None = None,
+            confidence: float | None = None, handoff: bool = False,
+            handoff_reason: str | None = None,
+            payload: dict[str, Any] | None = None,
+            internal_token: str | None = None,
+            tenant: str | None = None) -> dict[str, Any]: ...
+
 
 # --------------------------------------------------------------------------- shared rules
 @dataclass
@@ -104,7 +113,8 @@ class HttpPlatformClient:
         self.timeout_s = timeout_s
 
     def _headers(self, token: str | None, tenant: str | None,
-                 idempotency_key: str | None = None) -> dict[str, str]:
+                 idempotency_key: str | None = None,
+                 internal_token: str | None = None) -> dict[str, str]:
         headers = {"content-type": "application/json"}
         if token:
             headers["Authorization"] = f"Bearer {token}"
@@ -112,11 +122,14 @@ class HttpPlatformClient:
             headers["X-Tenant"] = tenant
         if idempotency_key:
             headers["Idempotency-Key"] = idempotency_key
+        if internal_token:
+            headers["X-Internal-Token"] = internal_token
         return headers
 
     async def _request(self, method: str, path: str, *, token: str | None,
                        tenant: str | None, json_body: dict[str, Any] | None = None,
-                       idempotency_key: str | None = None) -> dict[str, Any]:
+                       idempotency_key: str | None = None,
+                       internal_token: str | None = None) -> dict[str, Any]:
         import httpx
 
         url = f"{self.base_url}{path}"
@@ -124,7 +137,8 @@ class HttpPlatformClient:
             async with httpx.AsyncClient(timeout=self.timeout_s) as client:
                 resp = await client.request(method, url, json=json_body,
                                             headers=self._headers(token, tenant,
-                                                                  idempotency_key))
+                                                                  idempotency_key,
+                                                                  internal_token))
         except httpx.HTTPError as exc:
             raise PlatformUnavailable(f"platform {method} {path} unreachable: {exc}") from exc
         if resp.status_code >= 400:
@@ -177,6 +191,33 @@ class HttpPlatformClient:
                                tenant: str | None = None) -> dict[str, Any]:
         return await self._request("GET", f"/api/v1/orders/{order_id}", token=token,
                                    tenant=tenant)
+
+    async def append_conversation_message(
+            self, conversation_id: str, *, sender_type: str, content: str,
+            role: str | None = None, agent_run_id: str | None = None,
+            confidence: float | None = None, handoff: bool = False,
+            handoff_reason: str | None = None,
+            payload: dict[str, Any] | None = None,
+            internal_token: str | None = None,
+            tenant: str | None = None) -> dict[str, Any]:
+        """D846: the single audited door for the AI-relayed dialogue (user turn and answer)."""
+        if not internal_token:
+            raise PlatformUnavailable("NEXUS_AI_INTERNAL_TOKEN is unset")
+        body: dict[str, Any] = {"sender_type": sender_type, "content": content,
+                                "handoff": handoff}
+        if role:
+            body["role"] = role
+        if agent_run_id:
+            body["agent_run_id"] = agent_run_id
+        if confidence is not None:
+            body["confidence"] = confidence
+        if handoff_reason:
+            body["handoff_reason"] = handoff_reason
+        if payload:
+            body["payload"] = payload
+        return await self._request(
+            "POST", f"/api/v1/internal/conversations/{conversation_id}/agent-message",
+            token=None, tenant=tenant, json_body=body, internal_token=internal_token)
 
 
 # --------------------------------------------------------------------------- offline stub
@@ -311,6 +352,25 @@ class StubPlatformClient:
         if not order:
             raise PlatformRejectedRequest(f"order {order_id} not found", status=404)
         return dict(order)
+
+    async def append_conversation_message(
+            self, conversation_id: str, *, sender_type: str, content: str,
+            role: str | None = None, agent_run_id: str | None = None,
+            confidence: float | None = None, handoff: bool = False,
+            handoff_reason: str | None = None,
+            payload: dict[str, Any] | None = None,
+            internal_token: str | None = None,
+            tenant: str | None = None) -> dict[str, Any]:
+        if sender_type not in ("user", "ai_agent", "system"):
+            raise PlatformRejectedRequest(
+                f"sender_type {sender_type!r} is not allowed", status=422)
+        if not content or not content.strip():
+            raise PlatformRejectedRequest("content is required", status=422)
+        self._record("append_conversation_message", conversation_id=conversation_id,
+                     sender_type=sender_type, content=content, handoff=handoff,
+                     has_internal_token=bool(internal_token), tenant=tenant)
+        return {"message_id": f"stub-msg-{len(self.calls)}", "handoff_id": None,
+                "stub": True}
 
 
 _STUB = StubPlatformClient()
