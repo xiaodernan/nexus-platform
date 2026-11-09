@@ -36588,3 +36588,64 @@ suite against `nexus_verify2` are the same corpus drift set as in D823 (26 cases
 **Commits.** 03e8173, efdc889, 5f19d40, 1304d62, 2ca355e, 85f696a, ef966b8 (this unit's chain).
 
 - readers: the gate is green end to end; the open doors remain the merchant-side §142 "AI agent answers a consumer question" loop and the filmed §170 run.
+
+## 843. D843 · the demo plane had no door — `/signin` is the route that sets the session the consoles already read (`apps/web/app/signin/page.tsx`, `apps/web/app/api/nexus/auth/route.ts`, `apps/web/src/lib/api/base.ts`)
+
+**Both halves existed; nothing joined them.** `services/platform` has served `POST /api/v1/auth/demo`,
+switch-gated by `nexus.demo.login-enabled` (`AuthController.java:115-126`), and every console gate in
+`apps/web` reads the `nexus_session` cookie before it reads any data (`merchant-shell.tsx:29-41`,
+`admin-shell.tsx:20-27`). But no route in the browser ever called the door, so a live deployment had no
+way to produce the cookie the gates require: each operator surface stopped at "sign-in required" with no
+next step. A page that only says what is missing is the §155 failure this repository keeps re-learning.
+
+**The landing is an adoption, and it is named as one.** The three new files arrived as an untracked draft
+from a lane that stopped; this unit adopts them under D243's terms and adds what they left unreachable:
+(a) the 403 branch, so the platform's stated refusal renders `deniedTitle`/`deniedBody` instead of a
+failed attempt; (b) `nexusAuthedGet`'s header precedence, so the console gate's own cookie is not
+discarded; (c) the copy that still said no login page exists, now pointing at `/signin` and linked from
+both denial surfaces. The draft's `theme.test.ts` null-guard is kept because the strict typecheck
+rejected the un-narrowed `shimmerBlock`.
+
+**What the buttons do.** `signin-actions.tsx` POSTs the chosen role to the BFF with
+`credentials: 'same-origin'` (`:25-56`), and only navigates after the platform has answered; a 403 is a
+deployment decision and renders the explanation (`:38-42`, `:73-80`), while any other refusal keeps the
+desk and prints the code. Sign-out calls the same route with `DELETE` (`:59-71`), which clears both
+cookies issue-side because the platform's `/logout` requires a session this page may not have.
+
+**The BFF forwards, it does not invent.** `app/api/nexus/auth/route.ts` accepts JSON and a role from the
+three the platform seeds, calls `/api/v1/auth/demo` with `x-tenant`, and returns the platform's status and
+`Set-Cookie` headers unchanged (`:42-91`); `DELETE` expires `nexus_session` and `nexus_csrf` without
+calling upstream (`:93-96`). Nothing in the body is filtered: the platform already decided what the body
+may say, and this route's job is to not disagree with it.
+
+**`nexusAuthedGet`: the caller's header wins.** The helper rebuilt the Cookie header from `next/headers`
+every time, so `adminGate`'s explicitly derived `cookieHeader` (`console-admin.ts:227-230`) was silently
+discarded - the gate verified one session and the read sent another (or none). An explicit header is now
+used when present and the request jar only when it is not (`base.ts:194-215`); the AI target still never
+receives either. Three legs pin it (`base.test.ts:80-99`): explicit precedence, ambient fallback, and the
+AI target's absence. All console reads in `console-admin.ts` and `console-merchant.ts` now go through the
+helper, so a signed-in operator's session reaches `/api/v1/me`, the merchant reads and the admin reads.
+
+**The copy stops denying a page that exists.** Four strings per language said the login page was not
+live (`dict.ts:911`, `:913`, `:973`, `:1234`; `:1623`, `:1625`, `:1685`, `:1946`); each now names
+`/signin`. `SignInRequired` renders the link as its action (`console-parts.tsx:63-81`) and `AdminDenied`'s
+sign-in state renders it under the sentence (`admin-shell.tsx:35-43`). The new dictionary block is
+`dict.ts:662-679` (shape), `:1372-1387` (zh-HK), `:2084-2099` (en).
+
+**Evidence.** `npm run typecheck:web` exit 0; `npm run test:web` 19 files / **212 passed** (209 before;
+`base.test.ts` 3 -> 6); `npm run lint:web` 0 errors, 6 pre-existing warnings. Commits 9cc03e8 (11 files,
++439/-35) and cab56be (+2/-2) - 12 files, +441/-37 together.
+
+**Not claimed.** (a) Identity is still the demo door: no password, OTP or SSO, and `/demo` is the only
+subject issuer this route knows. (b) The page has no browser-tier leg in this unit; the 403 arm is pinned
+by the platform's own refusal path, not by a rendered-browser assertion. (c) The cookie round-trip is
+pinned at the seam (`base.test.ts`) and by types, not by an end-to-end live sign-in run; the platform's
+`AuthTokenTest` covers the door itself. (d) A signed-in consumer's home page does not yet show a name -
+only the consoles read the session. (e) The console reads' new session carriage is a behaviour change no
+live request exercised in this session: the platform was not running when the suite ran.
+
+- readers: `app/signin/page.tsx:26-37`, `src/components/signin-actions.tsx:25-56`, `:59-71`, `:73-80`,
+  `app/api/nexus/auth/route.ts:42-91`, `:93-96`, `src/lib/api/base.ts:194-215`,
+  `src/lib/api/base.test.ts:80-99`, `src/lib/console-admin.ts:227`, `src/lib/console-merchant.ts:67`,
+  `src/lib/i18n/dict.ts:662-679`, `:1372-1387`, `:2084-2099`,
+  `src/components/console/console-parts.tsx:63-81`, `src/components/console/admin-shell.tsx:35-43`.
