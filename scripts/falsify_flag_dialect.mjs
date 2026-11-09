@@ -230,8 +230,12 @@ if (MUTATES) {
     const anchor = 'const parsed = parseFlags(argv, SPEC);';
     const hits = src.split(anchor).length - 1;
     if (hits !== 1) throw new Error(`the shared-parser call appears ${hits} times in the reader, expected exactly one — the mutant has no anchor`);
+    // The default this mutant falls back to when a flag is glued and dropped. It must be
+    // a plane that refuses by construction — never a live one — or this arm measures the
+    // health of whatever happens to serve :8090 and goes red on a machine whose default
+    // plane is merely healthy. RFC 863 closed port 9 refuses fast on this platform and on CI.
     const old = 'const arg = (n, f) => { const i = argv.indexOf(`--${n}`); return i >= 0 && argv[i + 1] ? argv[i + 1] : f; };\n'
-      + "const parsed = { ok: true, value: { '--base': arg('base', 'http://127.0.0.1:8090'), '--tenant': arg('tenant', 'hong-kong') }, flag: {} };";
+      + "const parsed = { ok: true, value: { '--base': arg('base', 'http://127.0.0.1:9'), '--tenant': arg('tenant', 'hong-kong') }, flag: {} };";
     writeFileSync(join(FIX, 'verify_served_reads.mjs'), src.replace(anchor, old), 'utf8');
     copyFileSync(join(SCRIPTS, 'cli_args.mjs'), join(FIX, 'cli_args.mjs'));
     const nested = await new Promise((done) => {
