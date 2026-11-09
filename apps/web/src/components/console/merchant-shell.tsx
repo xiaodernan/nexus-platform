@@ -11,8 +11,8 @@ import { ConsoleContainer, ConsoleDemoBanner, ConsolePageHeader, SignInRequired 
 import { ConsoleNav, merchantNavItems } from './console-nav';
 
 /**
- * Identity for `app/merchant/**`. There is no login page yet, so this never fabricates a session:
- * live mode without the cookie stops at `SignInRequired` (the page renders the stop instead of
+ * Identity for `app/merchant/**`. `/signin` is the route that sets the session in live mode, so a
+ * live request without the cookie stops at `SignInRequired` (the page renders the stop instead of
  * redirecting, so the surface stays reviewable), and mock mode states it is viewing a demo identity.
  */
 export interface MerchantSession {
