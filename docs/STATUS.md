@@ -36486,3 +36486,36 @@ recorded run).
 **Commits.** (nothing in this unit — verification only)  — tree unchanged since D829.
 
 - readers: the browser tier is now fully enumerated on this plane; the open items are the §170 film and the mock-plane visual reruns.
+## 831. D831 · the quality gate goes green from zero — dogfood pollution unwound, the varchar reading declared, the aspect floor calibrated
+
+**The pollution.** The gate on the NOW-anchored `nexus_verify2` reported 32 failing checks: one draft
+merchant (`e2e-onboarding-<run>`, the merchant-journey §31/§32 AI-import test's own output) plus
+`agent_runs`/carts/`audit_logs` rows from the consumer/merchant dogfood walks. Every red row traced to
+that traffic — the seed itself ships 520 rows on purpose (470 published, 33 pending_review, 7 suspended,
+10 draft) and every one of those is `data_origin='demo'`. Resolution was to stop confusing the gate's two
+jobs: it exists for **fresh seeds in CI before any mutation**, not for a year's accumulation of dogfood
+rows. `nexus_verify2` was regenerated `--now`, reloaded with `SEED_ANCHOR=1`, and the gate was run first:
+**217 rows PASS, 0 failing** (exit 0). The consumer slice was then re-walked against it (14/14,
+reservation 30/30) as the dogfood path it is — which re-dirties the gate exactly as designed, and that is
+how CI uses it.
+
+**The two fixes, honestly.** (1) The string census declared readings for `text` and `citext` but no reading
+for `varchar` — the five `flyway_schema_history` columns (version, description, type, script, installed_by),
+instantiated by Flyway-compatible loaders on `nexus_verify2`, are what caught it. `varchar` now reads
+`one`, with the reason written where the row asserts it — the gate covers every column it catches, not
+only the columns the seed writes. (2) The review-aspect floor moved `0.6 → 0.65` against a measured
+**7509/11000 = 68.3%** on this corpus (the PLAN note's own number, re-measured today rather than trusted).
+The 16.7% dead-spelling artifact remains >12 points below the live rate; PLAN.md's item is updated to
+carry the measured link.
+
+**Evidence.** Fresh NOW-anchored reseed; platform restarted against it (`:8090`, 200 ok); `verify_consumer_
+slice.py` **14/14**; evidence pack recaptured (5/5 surfaces, `manifest ok: true`, 2026-11-09T05:33Z).
+
+**What this does NOT claim.** The clean-gate result is a fresh-seed reading, not a fresh-clone reading —
+the CI-fresh gate runs through `db_gate_fresh.sh` on a from-scratch database and the two are different
+claims which the runner makes. The dogfood loop dirties the gate every time it runs, by design; if the
+ledger repeats this number for a long-lived database, the number is wrong, not the gate.
+
+**Commits.** 27f5f86 (this unit: `data/seed/quality.sql` + `docs/PLAN.md`).
+
+- readers: the gate is green 217/0 on a fresh NOW-anchored seed; the calibration is measured, not remembered; the next AI-lane unit remains tool_selection_v1 behind its orchestrator.
