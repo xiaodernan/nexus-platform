@@ -36649,3 +36649,27 @@ live request exercised in this session: the platform was not running when the su
   `src/lib/api/base.test.ts:80-99`, `src/lib/console-admin.ts:227`, `src/lib/console-merchant.ts:67`,
   `src/lib/i18n/dict.ts:662-679`, `:1372-1387`, `:2084-2099`,
   `src/components/console/console-parts.tsx:63-81`, `src/components/console/admin-shell.tsx:35-43`.
+## 844. D844 · the two remaining worktrees were stale checkouts, not lanes - removed (`docs/STATUS.md`)
+
+**What was there.** `git worktree list` named two extra checkouts beside the main one:
+`D:/nexus-wrap-verify` at a1bcf85 and `D:/tmp-nexus-head` at d0f3b91. Neither was a live lane:
+
+- `git status --porcelain` in both printed nothing - no untracked or modified work to adopt;
+- `git log --oneline master..a1bcf85` and `master..d0f3b91` printed nothing - both commits are
+  ancestors of master, so neither tree held a commit the mainline had not already absorbed;
+- `git branch -a` listed only `master`, and `git fetch --prune` left `master...origin/master` at
+  `3 0` - the three D843 commits ahead, nothing behind.
+
+**What was done.** Both worktrees were removed; `git worktree list` now prints only the main
+checkout. `D:/nexus-wrap-verify` first refused removal with "Directory not empty" because it kept a
+261 MB ignored `node_modules`; after the checks above (empty status, no unique commits) the orphaned
+directory was deleted and the removal was complete. The tracked tree it held was a1bcf85's, and the
+`新建 文本文档.txt` in it is tracked at that commit, not a private draft.
+
+**Not claimed.** This is a filesystem consolidation, not a merge: there was nothing to merge. It
+does not touch the D84x code or ledgers, and the deletion itself is outside git's record - the only
+git-visible fact is the worktree list returning to one entry.
+
+- readers: `git worktree list`, `git status --porcelain`, `git log --oneline master..a1bcf85`,
+  `git log --oneline master..d0f3b91`, `git branch -a`, `git rev-list --left-right --count
+  master...origin/master`.
