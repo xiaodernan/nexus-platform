@@ -1061,7 +1061,12 @@ SELECT m.id::text AS merchant_id,
           FROM locations l
          WHERE l.merchant_id = m.id
          ORDER BY l.is_primary DESC, {expr} ASC NULLS LAST
-         LIMIT 1) AS district
+         LIMIT 1) AS district,
+       (SELECT l.id::text
+          FROM locations l
+         WHERE l.merchant_id = m.id
+         ORDER BY l.is_primary DESC, {expr} ASC NULLS LAST
+         LIMIT 1) AS loc_id
   FROM merchants m
  WHERE m.tenant_id = {tenant_ph}::uuid
    AND m.id = ANY({ids_ph}::uuid[])

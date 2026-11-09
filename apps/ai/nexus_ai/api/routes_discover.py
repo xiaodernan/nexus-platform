@@ -191,17 +191,41 @@ async def _compare_rows(deps: Deps, subject_ids: list[str], tenant: str,
     meta: dict[str, Any] = {"source": "static", "degraded": deps.backend_degraded()}
     hours_map: dict[str, list[Any]]
     db = deps.database()
+    nearest_loc: dict[str, str] = {}
+    distances: dict[str, float] = {}
+    districts: dict[str, str] = {}
     if db is not None:
         meta["source"] = "postgres"
         sql_text, params = S_entities(tenant, subject_ids)
         entity_rows = await db.readonly(sql_text, *params,
                                         schema=deps.settings.db_search_path)
-        facts_sql, facts_params = _facts_all(subject_ids)
+        hours_map = await _hours_by_merchant(db, deps,
+                                             [str(r["merchant_id"]) for r in entity_rows])
+        # D609 keyed address facts to location_id; the district cell needs those facts,
+        # so the one geo read runs BEFORE the facts read and carries both consumers:
+        # the location ids join the fact read, and meters/district serve the grid.
+        if geo is not None:
+            from nexus_ai.search.sql import compare_geo
+
+            d_sql, d_params = compare_geo(tenant,
+                                          [str(r["merchant_id"]) for r in entity_rows],
+                                          float(geo.lat), float(geo.lng))
+            if d_sql:
+                for d in await db.readonly(d_sql, *d_params,
+                                           schema=deps.settings.db_search_path):
+                    mid = str(d["merchant_id"])
+                    loc_id = d.get("loc_id")
+                    if loc_id:
+                        nearest_loc[mid] = str(loc_id)
+                    if d.get("meters") is not None:
+                        distances[mid] = float(d["meters"])
+                    if d.get("district") is not None:
+                        districts[mid] = str(d["district"])
+        fact_subject_ids = list(subject_ids) + list(nearest_loc.values())
+        facts_sql, facts_params = _facts_all(fact_subject_ids)
         fact_rows = await db.readonly(facts_sql, *facts_params,
                                       schema=deps.settings.db_search_path) if facts_sql \
             else []
-        hours_map = await _hours_by_merchant(db, deps,
-                                             [str(r["merchant_id"]) for r in entity_rows])
     else:
         from nexus_ai.api.demo_data import demo_backend
 
@@ -222,22 +246,9 @@ async def _compare_rows(deps: Deps, subject_ids: list[str], tenant: str,
 
     now = datetime.now(timezone.utc)
     facts = FactBundle(facts_from_rows(fact_rows, now=now))
-    distances: dict[str, float] = {}
-    districts: dict[str, str] = {}
-    if geo is not None and db is not None:
-        from nexus_ai.search.sql import compare_geo
-
-        d_sql, d_params = compare_geo(tenant, [str(r["merchant_id"]) for r in entity_rows],
-                                       float(geo.lat), float(geo.lng))
-        if d_sql:
-            for d in await db.readonly(d_sql, *d_params, schema=deps.settings.db_search_path):
-                mid = str(d["merchant_id"])
-                if d.get("meters") is not None:
-                    distances[mid] = float(d["meters"])
-                if d.get("district") is not None:
-                    districts[mid] = str(d["district"])
     return _grid(entity_rows, facts, hours_map, subject_ids=[str(s) for s in subject_ids],
-                 now=now, locale=locale, distances=distances, districts=districts), meta
+                 now=now, locale=locale, distances=distances, districts=districts,
+                 nearest_loc=nearest_loc), meta
 
 
 def S_entities(tenant: str, ids: list[str]):
@@ -277,7 +288,8 @@ def _cell(value: Any, fact: Any) -> dict[str, Any]:
 def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
           hours_map: dict[str, list[Any]], *, subject_ids: list[str], now: Any, locale: str,
           distances: dict[str, float] | None = None,
-          districts: dict[str, str] | None = None
+          districts: dict[str, str] | None = None,
+          nearest_loc: dict[str, str] | None = None
           ) -> list[dict[str, Any]]:
     """The comparison's attribute rows, one cell per NAMED subject in the order it was named.
 
@@ -356,6 +368,15 @@ def _grid(entity_rows: list[dict[str, Any]], bundle: FactBundle,
         addr_fact = bundle.get("address", sid)
         district = addr_fact.value.get("district") if addr_fact and isinstance(
             addr_fact.value, dict) else row.get("district")
+        nearest_id = (nearest_loc or {}).get(str(row.get("merchant_id") or sid))
+        if addr_fact is None and nearest_id:
+            # D609: address facts are keyed to the LOCATION, and the compare holds that
+            # location (compare_geo's nearest/primary pick — the same one the distance row
+            # reads). The merchant sid finds no "address" fact; the location id does, and
+            # that fact IS the cell's provenance, keyed the way the corpus files it.
+            addr_fact = bundle.get("address", nearest_id)
+            if addr_fact and isinstance(addr_fact.value, dict):
+                district = addr_fact.value.get("district") or district
         if district is None and districts:
             # D401: the entity rows carry no district column, so the grid's district row
             # was empty and dropped every time. The primary location's district is the
