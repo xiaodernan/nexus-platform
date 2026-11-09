@@ -36161,3 +36161,41 @@ verify_reservation.py are unchanged — the walk works once the demo plane carri
 
 - readers: the slice is green, not the demo. The demo world is a demo world; its anchor is chosen on
   purpose, and this entry names which plane carries which anchor so a reader can duplicate the result.
+
+## 822. D822 · the CI e2e job could never have booted, and a full live verification was captured before any of it stopped
+
+**The CI e2e job.** `.github/workflows/ci.yml` shipped `mvn -B -q spring-boot:run` against `nexus_test`
+with no SPRING_FLYWAY_ENABLED and no AI database env — the platform would have flown past the
+migrations the job itself applies two steps later, or died at plumbing mismatch on the first touch;
+the AI service was launched as `nexus_ai.main:app`, which does not exist (exactly what `start_ai.py`
+runs is `app.main:app`); and `healthz` is not a path this API serves (it is `/ai/v1/health`). The
+job's `wait-on` step would have timed out on every run. The fix does the three things the frame
+acknowledges: explicit `SPRING_FLYWAY_ENABLED=false` on the platform boot, the correct AI module
+path, `/ai/v1/health` instead of `/healthz`, the AI service pointed at the seeded `nexus_test` with
+`NEXUS_LLM_PROVIDER=mock`, explicit `NEXUS_WEB_URL`/`NEXUS_PLATFORM_URL`/`NEXUS_AI_URL` exports so the
+harness reads the same services the job boots, and a HEAD-anchored seed for the reservation journey
+(reservation walks need future slots; PR/CI anchor is now today's date).
+
+**Live verification on the dev plane (verify2 throwaway DB).** The full stack — platform :8090,
+AI :8010, web live on :3002 — served on the verify2 fresh-anchored corpus and answered green on the
+full consumer slice (the §168 end-to-end script): directory cards render, 8 priced cards all cite
+a price/rating/hours fact, every served fact carries a parseable `expires_at`, 24 facts non-stale
+pre-TTL, deterministic search returned 5 cards with 25 explanation bullets (missing=[] dangling=[]),
+merchant page 19/19, reservation walk 30/30.
+
+**Card media spec.** The SSR card art test found its previous fixture-pinned assertion (`/demo/img/`)
+actually resolves to two different art trees across planes — live is `/demo/img/*.svg` downloaded
+by `generate.py`, mock is the bundled `/media/*.svg` manifest. The spec now accepts both and was
+still seen flaky on WebKit real-world load; on the calm machine the SSR tests pass 6/6.
+
+**What this does NOT claim.** No e2e suite was discovered green in CI: the fix corrects the harness
+to match what CI boots, the suite now runs the same path this plane lived under, and the tick box is
+the CI runner's to flip on next push. Worker count on the runner is unchanged (3) since CI's
+2-vCPU budget differs from this machine's 12-core; timeouts in the triangle use the file's own 10–20s
+constants throughout. The full live run used a throwaway DB that will be dropped.
+
+**Commits.** 84bf63d, ae5eed4, b508164.
+
+- readers: CI was touched on the frame it depends on; live-slice verification is not a CI claim.
+  The consumer orchestration (consumer specs + merchant journeys) remains the next unit.
+
