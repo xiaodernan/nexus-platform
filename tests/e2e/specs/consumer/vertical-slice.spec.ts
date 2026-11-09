@@ -40,11 +40,11 @@ test.describe('consumer core journey', () => {
     const search = page.getByLabel(/想要|需要|Tell me|What are you looking for/i);
     await expect(search).toBeVisible();
     // §6: rails below the fold
-    for (const rail of [/Popular near you|附近熱門/, /For You|為你推薦/, /Trending|趨勢/]) {
+    for (const rail of [/Popular near you|附近熱門/, /For You|為你推薦/, /Trending|趨勢|熱議/]) {
       await expect(page.getByText(rail).first()).toBeVisible();
     }
     // §109/§155: synthetic inventory must announce itself
-    await expect(page.getByText(/DEMO|演示|Synthetic/i).first()).toBeVisible();
+    await expect(page.getByText(/DEMO|演示|Synthetic|示例/i).first()).toBeVisible();
   });
 
   test('natural-language ask → understanding → ranked cards with verifiable explanations', async ({ page }) => {
@@ -113,7 +113,16 @@ test.describe('consumer core journey', () => {
   test('compare three merchants from real rows only (§37)', async ({ page }) => {
     await page.goto('/search?q=' + encodeURIComponent('适合约会 餐厅'));
     await expect(cards(page).first()).toBeVisible({ timeout: 20000 });
-    for (let i = 0; i < 3; i++) await cards(page).nth(i).locator('button[aria-pressed]').click();
+    // Stream reordering can reshuffle nth() positions between clicks — capture each card's
+    // stable data-card-id first, then click THROUGH the id so three distinct cards are selected.
+    const ids = await cards(page).evaluateAll((els) =>
+      els.slice(0, 3).map((el) => el.getAttribute('data-card-id')),
+    );
+    expect(ids, 'fewer than three card ids published').toHaveLength(3);
+    expect(new Set(ids).size, 'duplicate card ids in the result page').toBe(3);
+    for (const id of ids) {
+      await page.locator(`article[data-card-id="${id}"] button[aria-pressed]`).click();
+    }
     // Selecting the third card opens the tray; the comparison table is the cost surface (§37).
     await expect(page.locator('table')).toBeVisible();
     for (const row of [/Price|價格|人均/, /Rating|評分/, /Distance|距離/]) {

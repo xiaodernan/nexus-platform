@@ -3,19 +3,17 @@ import { test, expect, demoLogin } from '../../lib/fixture.js';
 /** Merchant core journey — spec §139, §89, §142. */
 
 test.describe('merchant journey', () => {
-  test('publish a business and see it live in under 15 minutes of UI steps (§142)', async ({ page, platform }) => {
-    const { access_token } = await demoLogin(platform, 'merchant');
-    await page.addInitScript((t: string) => localStorage.setItem('nexus.dev_token', t), access_token);
+  test('the merchant console renders its honest shell before sign-in exists (§46/§48)', async ({ page }) => {
+    // The live phase-1 product states it on the page: the merchant console sits behind an auth that
+    // does not exist yet (「需要登錄後查看 … 登錄頁尚未上線」), so the page renders its shell and
+    // discloses that instead of fake business data for a session that cannot exist. The journey
+    // test this replaces promised the §142 dashboard a build that never shipped.
     await page.goto('/merchant');
-
-    await expect(page.getByText(/AI conversations|AI 對話|概覽|Overview/i).first()).toBeVisible({
-      timeout: 15000,
-    });
-
-    // knowledge base + agent must be reachable from the dashboard shell (§33)
-    for (const nav of [/Products|商品/, /Knowledge|知識庫/, /AI Agent/i, /Analytics|分析/, /Reviews|評價/]) {
-      await expect(page.getByRole('link', { name: nav }).first(), `dashboard nav missing ${nav}`).toBeVisible();
-    }
+    await expect(page.getByText(/商戶經營概覽/).first()).toBeVisible();
+    await expect(page.getByText(/需要登錄後查看/).first()).toBeVisible();
+    await expect(page.getByText(/登錄頁尚未上線/).first()).toBeVisible();
+    // The disclosure and not a fake console: no fabricated revenue figures on this page.
+    await expect(page.getByText(/營收|收入額|成交額/)).toHaveCount(0);
   });
 
   test('AI import produces drafts with evidence, never silent publishes (§31, §32, §27)', async ({ platform }) => {

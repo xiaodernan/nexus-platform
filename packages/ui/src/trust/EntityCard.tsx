@@ -90,6 +90,7 @@ export function EntityCard({
         className,
       )}
       data-card-type={card.card_type}
+      data-card-id={card.id}
       data-demo={demo ? 'true' : undefined}
       data-sponsored={sponsored ? 'true' : undefined}
     >
