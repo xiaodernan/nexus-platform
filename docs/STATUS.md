@@ -35821,3 +35821,89 @@ scripts were deleted after use.
   suite exists and is green; the honest difference between "Chrome says 0" and "the promise is kept"
   is pinned in a unit test, not asserted in a comment.
 
+
+## 813. D813 · the Chinese query asked for a regconfig that exists nowhere — it resolves to the built-ins, and the CJK live suites ran for the first time
+
+**The defect (measured).** The live plane could not answer a Chinese query at all. `ts_config="cjk_zh"`
+was mapped onto `jiebacfg` — a CJK bigram text-search configuration that exists NOWHERE this project
+reaches: not in `pg_ts_config` on this dev database (listed: the 30 built-ins only), not in V1–V10,
+not in CI, nowhere in the repository. A reference to a missing regconfig is a hard SQL error, so
+every CJK merchant/offering/chunk query asked Postgres for something that has never existed on
+any database this repo boots. D809 recorded the failure exactly as `text search configuration
+"jiebacfg" does not exist` and parked it as the seed lane's burden; the premise that some plane
+carried it was never true in-tree.
+
+**The fix.** `cjk_zh` now resolves to `simple` on both mappings (`_TS_CONFIG_MAP` for the
+merchant/offering builders, `_tsconfig_to_cfg` for the chunk builder), with comments stating the
+truth: the CJK matcher is the D407 containment lane (bigram `strpos` count, the similarity arms
+capped by it, the CJK→English tag boost). The tsvector arm contributes 0 for a CJK run — exactly
+what it could ever contribute — instead of a 500 that answers every Chinese request with an error.
+The re-aimed test (`test_the_regconfig_the_chinese_query_asks_for_exists.py`) now pins that the
+CJK name maps to configs present on every stock PostgreSQL, on both builders, plus the quote
+inlineability arms it always carried. The full monolith live suite was RE-LAUNCHED against a
+seeded throwaway database before this unit landed; its verdict is reported separately.
+
+**Measured (seeded throwaway verify DB — migrated fresh V1–V10, full demo seed: 520 merchants /
+5534 offerings / 11000 reviews / 2118 chunks / 5688 facts):**
+- CJK live suites `test_live_cjk_merchant_match.py` + `test_live_search_contract.py`: **22 passed**
+- `tests/test_sql_builders.py` 27/27; re-aimed regconfig test 5/5; eval harness suites 61/61
+- mypy clean; ruff clean
+
+**What this does NOT claim.** The full monolith suite is not green on this plane and was not
+captured by this entry; the pre-fix run was in flight at commit time and its CJK rows show the
+pre-fix defect by construction. The verify DB remains seeded for the post-fix full re-run, and the
+open decision on ranking parity is parked in PLAN.md with D814's census.
+
+**Commits.** 27936de.
+
+- readers: the Chinese query now executes everywhere this project reaches; the CJK matcher is the
+  containment lane and always was — the regconfig was a borrow from a database that never shipped.
+
+
+## 814. D814 · the CJK keyword-tag boost cast a boolean to float8 — impossible SQL, the CJK lanes could never have prepared — and
+the two lanes' ORDER census finally exists
+
+**The defect (measured).** D705/D696 added a CJK-keyword→English-tag containment boost to both
+candidate queries (`+ (m.tags && $N::text[])::float8`). PostgreSQL has no boolean→float8 cast —
+`select (false)::float8` is a hard error, and so is ANY cast of that expression, on EVERY CJK query,
+tag-matches or not. That is the second half of D809/D813's failure mode, invisible behind the
+regconfig error that fired first. The fixture lane computed its boost in Python and never touched
+the cast, which is why no unit test ever turned red: the defect only executes against a live
+PostgreSQL.
+
+**The fix.** Both lanes: `(expr)::int::float8` (boolean→integer→float8 — measured working on this
+database). One-line changes in each builder.
+
+**The census the PLAN item was parked on.** `tests/test_the_two_lanes_in_this_corpus_order_the_page.py`
+measures both lanes over ONE shared corpus (the same 470 published merchants fed to StaticBackend,
+with the same hours) for eight queries, asserting nothing:
+- identical membership AND order with a full shared prefix (10/10): 安靜 cafe, 寵物友善, 適合約會的餐廳,
+  週末約會, 週末找一個適合情侶約會的地方, 幫我找附近適合約會的餐廳 (6 of 8) — the D615/D658/D655 work
+  moved the lanes much closer than the pre-D658 0/8 measurement (the earlier fixture-weekend empty
+  report was this census's missing `hours` argument, not a product defect);
+- differ: 海景 and 素食, each by 2 of the served 10 rows. Observed, mechanism UNVERIFIED: the live lane
+  reports relevance 0.0 for every row on those CJK queries while the fixture scores its matched rows
+  0.25 — the live page is the hard-filter pool ordered by quality.
+
+**Corpus measurements for the parked ranking decision (evidence for the owner, not a decision):**
+- `quiet-hours` 27 published merchants · `mtr-5min` 132 · `late-night` 27 · `vegetarian` 6 ·
+- NO scenic/view tag and NO pet-friendly tag exists in the regenerated demo corpus (only
+  `pet-grooming`, which is a service, not a pet policy) — an attribute tag map for 海景/寵物友善
+  would match nothing on this seed; `安靜→quiet-hours`, `地鐵/mtr→mtr-5min`, `深夜/宵夜→late-night`
+  are exact, measurable boosts;
+- the CJK→tag map currently derives ONLY from `CUISINE_TERMS` (拉麵→ramen/japanese/sushi), which is
+  why 素食 gets 2.0 kw on matching rows (1.0 containment + 1.0 tag) and 海景 gets 0.0.
+
+**Measured.** CJK live suites 22/22 with the fix; `test_sql_builders.py` 27/27; regconfig test 5/5;
+eval harness 61/61; mypy/ruff clean; PLAN.md's ORDER bullet superseded with these numbers.
+
+**What this does NOT claim.** The ORDER decision (whether to unify kw_score/relevance semantics
+across the lanes, and whether to extend the attribute tag map) is NOT taken here — it is the
+ranking owner's product call with all evidence in tree. The full monolith live suite verdict is
+reported separately from D813. No ranking semantics changed.
+
+**Commits.** ac267be, 0a021d5.
+
+- readers: the CJK lanes can now prepare their queries at all; parity is measurably 6/8 with a
+  decision-ready delta, not a hypothesis.
+
