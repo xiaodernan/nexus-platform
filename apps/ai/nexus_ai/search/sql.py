@@ -23,7 +23,14 @@ from nexus_ai.search.categories import (aspect_attributes, aspect_terms, avoid_t
 from nexus_ai.search.tokens import cjk_keywords
 from nexus_ai.nlu.lexicon import CUISINE_TERMS
 
-_TS_CONFIG_MAP = {"simple": "simple", "english": "english", "cjk_zh": "jiebacfg"}
+#: regconfigs that EXIST on every stock PostgreSQL this repository bootstraps (pgvector/pgvector:pg16,
+#: migrations V1–V10 create none). `jiebacfg` was referenced here from D755 but exists nowhere this
+#: project reaches — not on this dev database, not in the CI workflow, not in any migration — and a
+#: reference to a missing regconfig is a HARD SQL ERROR (`text search configuration "jiebacfg" does
+#: not exist`) on every CJK query. CJK matching therefore runs on the containment lane (D407's
+#: `strpos` count over bigrams), the similarity arms capped by it, and the CJK→English tag map;
+#: the tsvector arm contributes 0 for a CJK run, which a missing-regconfig 500 never could.
+_TS_CONFIG_MAP = {"simple": "simple", "english": "english", "cjk_zh": "simple"}
 EARTH_RADIUS_M = 6371008.8
 VECTOR_FLOOR = 0.05
 """Cosine floor for a chunk hit to count as a vector candidate."""
@@ -158,10 +165,14 @@ class CandidateQuery:
 def _tsconfig(ts_config: str) -> str:
     """Map the user-facing ts_config name to the Postgres regconfig name.
 
-    `simple` and `english` are built into every Postgres installation; `cjk_zh`
-    is the `jiebacfg` CJK bigram configuration the RAG lane already uses
-    (`_tsconfig_to_cfg`), so Chinese queries can segment instead of treating a
-    CJK run as one opaque token. Unknown names fall back to `simple`.
+    Only regconfigs that exist on a stock install are reachable. `simple` and
+    `english` are built in; `cjk_zh` resolves to `simple` because the `jiebacfg`
+    bigram configuration that D755 assumed exists is created nowhere in this
+    repository (measured D813: not in V1–V10, not in CI, not on this dev database),
+    and a reference to a missing regconfig is a hard error on every Chinese query.
+    CJK matching is the containment lane's job (`tokens.cjk_keywords`, D407); the
+    tsvector arm was never able to beat it on simple. Unknown names fall back to
+    `simple`.
     """
     return _TS_CONFIG_MAP.get(ts_config, "simple")
 
@@ -1118,10 +1129,15 @@ WHERE o.tenant_id = {tenant_ph}::uuid AND o.id = ANY({ids_ph}::uuid[])
 
 
 def _tsconfig_to_cfg(ts_config: str) -> str:
-    """Map user-friendly ts_config name to Postgres tsvector config name."""
+    """Map user-friendly ts_config name to Postgres tsvector config name.
+
+    `cjk_zh` resolves to `simple`: the bigram regconfig it was assumed to hold
+    (`jiebacfg`) is created nowhere this project reaches (D813), and a reference to
+    a missing regconfig is a hard SQL error on every Chinese chunk query.
+    """
     mapping = {
         "simple": "simple",
-        "cjk_zh": "jiebacfg",  # CJK Bigram configuration for Chinese
+        "cjk_zh": "simple",
         "english": "english",
     }
     return mapping.get(ts_config, "simple")
@@ -1136,9 +1152,12 @@ def build_chunk_query(*, tenant_id: str, merchant_id: str | None, text: str,
     BEFORE ranking, `source_uri`/`document_id` carried so every answer can cite.
 
     If `ts_config` is `"simple"`, uses Postgres `to_tsvector('simple')` which cannot
-    segment CJK ideographs — Chinese/Japanese/Korean words without spaces will not
-    match. Use `ts_config="cjk_zh"` for CJK-aware trigram matching, or `"english"`
-    for Western text.
+    segment CJK ideographs — Chinese matching rides on the trigram lane
+    (`similarity()`), which is independent of the lexical config and does work on
+    two-character words. `ts_config="english"` for Western text. `"cjk_zh"` is accepted
+    and resolves to `simple`: the bigram regconfig it implied is created nowhere this
+    project reaches (D813), and a reference to it was a hard SQL error on every Chinese
+    chunk query.
     """
     p = Params()
     cfg = _tsconfig_to_cfg(ts_config)

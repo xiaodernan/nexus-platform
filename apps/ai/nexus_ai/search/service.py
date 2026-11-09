@@ -1525,11 +1525,14 @@ async def search(*, backend: SearchBackend, plan: SearchPlan,
     # ORDER BY / LIMIT) when asked, and the response reports that sum; a backend that does not
     # answer the column keeps `len(ranked)`, and the larger of the two wins so a page that was
     # not capped by the pool never shrinks its answer.
-    # D755: Chinese text search. `plainto_tsquery('simple', ...)` cannot SEGMENT
+    # D755 + D813: Chinese text search. `plainto_tsquery('simple', ...)` cannot SEGMENT
     # CJK text (a CJK run with no spaces becomes ONE token), so a Chinese sentence
-    # matches nothing in the tsvector lane. When the query carries CJK characters,
-    # ask the SQL lane to use the `cjk_zh` (`jiebacfg`) configuration which segments
-    # Chinese into searchable bigrams. Non-CJK text keeps `simple`.
+    # matches nothing in the tsvector lane — and the `jiebacfg` bigram configuration
+    # D755 asked for exists nowhere this project bootstraps (measured: not in V1–V10,
+    # not in CI, not on this dev database), where a reference to it was a HARD SQL ERROR
+    # on every CJK query. CJK matching therefore runs entirely on the containment lane
+    # (D407's bigram `strpos` count) and the CJK→English tag map; non-CJK text keeps
+    # `simple`, which loses nothing the broken reference ever answered.
     _text_for_cfg = canonical(plan.match_text if plan.match_text is not None
                               else plan.query_text) or None
     _ts_cfg = "cjk_zh" if _text_for_cfg and any(
