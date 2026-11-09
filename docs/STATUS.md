@@ -36417,3 +36417,33 @@ The §9 admin reads remain documented-not-built.
 on demand (`npm run gen:schemas`).
 
 - readers: every consumer-rendered payload the plane serves is now gated — directory, search, profile, facts, envelopes. The §9 admin reads and filmed §170 remain the open doors.
+## 829. D829 · the e2e harness stopped overloading the one prod server it measures — the consumer journey is green deterministically
+
+**The flake.** `tests/e2e/specs/consumer/vertical-slice.spec.ts` passed 7/8 (landing flaked cold), then
+failed 4/8 (landing + compare + conversation-refinement + LLM-outage, each at the 20 s
+`article[data-card-type]` wait). Serialised with `--workers=1` every spec passed in 15.8 s; with the
+framework default (`workers: undefined` → half the host's cores — ~6 on this 12-core machine), the 6+ browser
+contexts each wait on SSE streams from ONE Next.js prod server, and the streams timed out together — whichever
+slice fell through, failed that run. Root cause class: `fullyParallel: true` + one server, not a product defect
+(the single-threaded run was clean twice).
+
+**The fix.** `tests/e2e/playwright.config.ts` sets the local default to `workers: 2` (CI keeps its measured 3 —
+`workers: process.env.CI ? 3 : 2`). Verified: the full consumer suite with no `--workers` flag →
+**8 passed / 1 skipped** (the skip is the reservation write path, gated by `NEXUS_E2E_WRITE_PATHS` — never
+turned on this plane), in about 13 s.
+
+**State of the §168 vertical slice on this plane (web :3002, platform :8090, AI :8010, nexus_verify2
+NOW-anchored).** Coverage by spec: landing renders H1 + search box + demo badge + rails (cards render, 8
+priced), natural-language ask renders facts-backed cards (24.9 s), zero ungrounded numbers across the evidence
+(`scoring=0`, flags labelled), conversation refinement re-orders and never empties the list, three-card compare
+works, merchant page renders facts/hours/menu/reviews (19/19), LLM-outage behaviour verified at the stream layer,
+MVP first-action inside 5 minutes passes. The reservation mutation path is written but intentionally gated.
+
+**What this does NOT claim.** `vertical_slice.spec.ts` green is not the same as §170 "MVP COMPLETE" — that bar
+(per ROADMAP) is a filmed end-to-end including a merchant-side response, and no §170 recording was captured this
+session. The default-workers fix removes one nondeterminism class of the harness, not the stream timeouts
+themselves (the 20 s ceiling still stands on slow planes).
+
+**Commits.** 46b71ac (this unit). D828's conformance + evidence pack remain green on this plane.
+
+- readers: §168's consumer half is verified end-to-end on this plane; §170 remains unrecorded; CI runs this suite nightly with its own 3-worker budget.
