@@ -50,9 +50,9 @@ Read the tail of `STATUS.md` first — its head is stale by construction.
 - **The e2e test markers** — the harness waits on nine data-testid names the rebuilt surface does not
   print (D328's census); the surface's owner either re-adds the markers or consents to the
   route-contract selectors the rewrite already uses (D329). Owner decision, harness lane consents.
-- **The review-aspect census's threshold** — 16.7% was a dead-spelling artifact and the real coverage
-  is 68.3% (D359's fix landed); the 60% threshold now sits below reality and the seed lane owns the
-  calibration question.
+- **The review-aspect census's threshold** — the 60% floor now sits at 65% (measured 68.3%
+  on the 2026-11-09 NOW-anchored corpus, 7509/11000 reviews; D359's fix landed, 16.7% was the
+  dead-spelling artifact). Owner: the seed lane; calibrated in D831.
 - **CLOSED by D755: Chinese text search in merchant/offering candidate queries.**
   The natural-language quality item (§12 kept, §141 unmet): a Chinese sentence returned
   0 results because `TS_CONFIG_ALLOWLIST` only had `{"simple", "english"}` and `to_tsvector`

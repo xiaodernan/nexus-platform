@@ -509,7 +509,7 @@ INSERT INTO qc
 SELECT 'reviews cite concrete aspects (§55 inputs)',
        (SELECT count(*) FROM reviews WHERE EXISTS (
           SELECT 1 FROM aspect_keywords k WHERE reviews.body ILIKE '%' || k.keyword || '%'
-       )) * 1.0 / nullif((SELECT count(*) FROM reviews),0) > 0.6,
+       )) * 1.0 / nullif((SELECT count(*) FROM reviews),0) >= 0.65,
        (SELECT count(*) FROM reviews WHERE EXISTS (
           SELECT 1 FROM aspect_keywords k WHERE reviews.body ILIKE '%' || k.keyword || '%'
        )) || ' of ' || (SELECT count(*) FROM reviews) || ' reviews name an aspect';
@@ -3242,7 +3242,11 @@ INSERT INTO str_type VALUES
                  || 'count(DISTINCT col::text) are the same question and only one is paid for'),
  ('citext', 'two',  'V1:6 creates citext "for case-insensitive emails": the type folds case, the ::text cast '
                  || 'the details print does not, so a citext column is measured under BOTH readings and the '
-                 || 'gap between them is reported rather than smoothed over');
+                 || 'gap between them is reported rather than smoothed over'),
+ ('varchar','one',  'the only varchar columns in this database are flyway_schema_history''s five '
+                 || 'bookkeeping fields (version, description, type, script, installed_by) — '
+                 || 'varchar compares what it stores like text; the reading is declared because this gate '
+                 || 'covers every column it catches, not only the ones the seed writes');
 
 INSERT INTO qc
 SELECT 'the string census declares a reading for every type it catches',
