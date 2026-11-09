@@ -119,17 +119,14 @@ function plantMany(name, pairs) {
 const UNKNOWN_KIND = plant('unknown_kind.sql',
   "'reachable', 'CollectionsController.java:295,:303',", "'maybe-read', 'CollectionsController.java:295,:303',");
 
-// D194 — the other direction of the same drift. This census expects four kinds; re-filing EVERY row of
-// one kind under `dead-reader` leaves a branch with no member. (The plane now carries two `reachable`
-// rows - the platform one and the `apps/ai` read of `offerings.attributes.allergens` - so re-filing a
-// single anchor no longer empties the branch; both are re-filed here.) Both kinds expect a findable
-// read, so the read census' own numbers do not move and the single observable change is the unused
-// branch. Measured on the bytes before the rule existed: the run printed `1 classify no row on this
-// plane (reachable)` and exited 0 — a sentence with no consequence, which is what D193 stopped doing
-// for `--roots`.
+// KIND_UNUSED — a fixture that blanks the `reachable` branch by re-filing every reachable row to
+// dead-reader. The shipped plane carries four: `collections.seo.noindex`, `offerings.attributes.allergens`,
+// and the two avoid-lane reads from D834 (`merchants.attributes.weak_aspects`, `lively_ambience`).
 const KIND_UNUSED = plantMany('kind_unused.sql', [
   ["('collections', 'seo', 'noindex', 'reachable'", "('collections', 'seo', 'noindex', 'dead-reader'"],
   ["('offerings', 'attributes', 'allergens', 'reachable'", "('offerings', 'attributes', 'allergens', 'dead-reader'"],
+  ["('merchants', 'attributes', 'weak_aspects', 'reachable'", "('merchants', 'attributes', 'weak_aspects', 'dead-reader'"],
+  ["('merchants', 'attributes', 'lively_ambience', 'reachable'", "('merchants', 'attributes', 'lively_ambience', 'dead-reader'"],
 ]);
 
 // D194 — the seam's input itself. Every plant above writes a real file, so nothing ever pointed `--quality` at a
