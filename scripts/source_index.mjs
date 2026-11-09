@@ -57,6 +57,13 @@ import { join } from 'node:path';
  * and the four names only the ledger census had are insurance against a build that leaves output behind, with
  * `out_smoke` covering the seed smoke directory exactly as `out` already covers `data/seed/out`.
  *
+ * D833 (2026-11-09, measured) adds `tmp`: this checkout held four lane worktrees under `tmp/` (`d676_stree.held`,
+ * `d687_btree`, `d730_stree_shipped`, `d730_stree_shipped.held`) — `data/seed/generate.py`,
+ * `CollectionsRepository.java`, `ImportService.java`, and friends each matched five basenames where the
+ * repository holds one, and the CI fresh gate's step 7 (`check_jsonb_reads.mjs`) refused to certify with 35
+ * "names are ambiguous" rows (rc 1, control rc 1). No tracked file lives under `tmp/` (`git ls-files tmp/` is
+ * empty) and the directory is gitignored — same predicate `docs/.workbuddy-ai` answered for its own.
+ *
  * D197 added `.scratch` — the name is spelled out here because the cost of NOT having it was measured, not
  * guessed. `.scratch/` is a lane's working directory for witness scripts and drafts; it holds no tracked file, and
  * until now the three readers walked it as if it were part of the repository. A D196 landing found what that
@@ -78,7 +85,7 @@ import { join } from 'node:path';
  */
 export const VENDOR_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.venv', 'target', 'build', 'dist',
   '.next', 'out', 'out_smoke', 'coverage', '.pytest_cache', '.mypy_cache', '.ruff_cache', '.tmp-out', '.tmp-p4',
-  '.workbuddy-ai', 'vendor', '.qoder', '.specraft', 'logs', '.scratch']);
+  '.workbuddy-ai', 'vendor', '.qoder', '.specraft', 'logs', '.scratch', 'tmp']);
 
 /** Files the build compiles or the seed runs — the site census's predicate. */
 export const SOURCE_EXT = /\.(java|py|ts|tsx|mjs|cjs|sql|sh)$/;

@@ -2709,6 +2709,10 @@ BEGIN
       ('documents', 'metadata', 'degraded'), ('documents', 'metadata', 'proposals'),
       -- D360-era: the AI search reads the allergens array the menu source carries (offerings.attributes).
       ('offerings', 'attributes', 'allergens'),
+      -- The avoid lane reads two keys out of merchants.attributes: the weak_aspects list (?| on the avoid
+      -- terms, both query lanes) and the lively_ambience boolean (the ambient scoring leg).
+      ('merchants', 'attributes', 'weak_aspects'),
+      ('merchants', 'attributes', 'lively_ambience'),
       -- Not a read at all: shipped in a payload, named by no source read anywhere. Kept because D84's own
       -- residue said the mirror defect deserves a row, and step 7 reddens if a read for it ever appears.
       ('tenants', 'config', 'currency_default')
@@ -2788,6 +2792,21 @@ INSERT INTO read_answer VALUES
  -- The mirror of every row above: not a read that resolves to nothing, a payload key no read names. D46
  -- found this one and its answer was never wired into a census; D84 then mis-filed it as `reachable`
  -- because a write site was read as a read site. step 7 of the gate reddens if a read for it appears.
+ -- The avoid lane's two jsonb legs. Measured on the NOW-anchored corpus (2026-11-09):
+ -- weak_aspects non-empty on 118 of 470 published merchants; lively_ambience true on 12.
+ -- The avoid scoring leg (D595) reads both — ?| on the list at sql.py:827, the boolean leg at sql.py:883-884 —
+ -- and the leg SPLITS the decision, not joins it: a merchant weak on a refused word leaves the list, the matching
+ -- boolean joins it, exactly one of the two is needed.
+ ('merchants', 'attributes', 'weak_aspects', 'reachable',
+  'generate.py:1279 writes it; apps/ai/nexus_ai/search/sql.py:513,:843 reads it with ?|, :883 projects it',
+  'the avoid lane wants the list of things a merchant is weak on; 118 of 470 published rows carry a '
+  || 'non-empty list (noise, mtr_distance, seating, cleanliness and friends); the avoid clause fails '
+  || 'the refused-word merchant against the OR leg and the merchant leaves the avoided set'),
+ ('merchants', 'attributes', 'lively_ambience', 'reachable',
+  'generate.py:1220 writes it from aspect_mean["noise"] < 3.0; apps/ai/nexus_ai/search/sql.py:884 reads it',
+  'the second spelling of the noise fact: a merchant the seed scored quiet is loud-ambience-refused by the '
+  || 'avoid lane the other way around; 12 merchants carry true; the avoid leg picks it up instead of an '
+  || 'array membership test for the same signal'),
  ('tenants', 'config', 'currency_default', 'never-read', 'generate.py:1136 writes it; no read site found',
   'the seed stamps a default currency on the tenant config and nothing in services/platform or apps/ai '
   || 'asks for it, so the key is served-invisible: it is not a broken read, it is an unread write, and '
@@ -3675,7 +3694,7 @@ INSERT INTO shape_answer VALUES
   || 'options, a real state and not an unreadable one. Named against the column, not the word: order_items.options '
   || 'is a different column, written by commerce/OrderRepository.java:78-84'),
  ('reviews', 'photos', 'array-only',
-  'generate.py:276 lists the photos column; CatalogController.java:388 (Json.jsonArray(row, "photos")),'
+  'generate.py:276 lists the photos column; CatalogController.java:390 (Json.jsonArray(row, "photos")),'
   || ' selected by ReviewRepository.java:48 and CatalogRepository.java:59',
   'every one of the 11,000 payloads is [] — the column exists to hold review photos and no seeded review has '
   || 'one, which D81 counted from the other side');
