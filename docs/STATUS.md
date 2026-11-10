@@ -37297,3 +37297,44 @@ config only, never by a probe. (e) CI does not build the images and does not run
   `services/cloud/.dockerignore`,
   `infra/docker-compose.yml` (the `cloud` profile: eureka/config/gateway services),
   `docs/PLAN.md` (the cloud-plane queue's deployment item).
+
+## 854. D854 — the orchestrator's first user-reachable agent surface: POST /ai/v1/agent/plan
+
+**What was missing.** D851 built the planner and executor; nothing could call them. §10's loop was a
+library with tests, not a surface — an agent lane nobody's caller could invoke, and a tool registry with no
+request-driven path to the audit ledger.
+
+**The route (`apps/ai/nexus_ai/api/routes_agent.py`).** `POST /ai/v1/agent/plan`: body
+`{query, context?:{merchant_id?, subject_id?, subject_type?}, execute?=true, subject?}`. Strict by
+construction — unknown body keys and unknown context keys are 422; the three context keys are the only ones;
+`query` 1..4000. The deterministic planner plans (clause-split, min necessary steps, six-step cap, §10 rule
+2); with `execute=true` (default) the executor dispatches through the one registry the process holds and the
+response carries each step's verdict. A refused turn is answered without tools; `execute=false` returns the
+plan with `report: null`; answer composition is never performed — the caller renders tool-backed content only
+under `report.answerable`. Read-only tools only; the planner cannot emit a side-effect tool, so no
+idempotency key is required of the caller. Zero-LLM path recorded as such (provider `none`, tokens 0, cost
+0.0). The run lands in `agent_runs` either way (`agent="agent_plan"`, §10 rule 4) with the executor's real
+verdicts in `tool_calls` — never a fabricated one (an unexecuted plan records `[]`).
+
+**MEASURED.** Unit tests **10 passed** (hours end-to-end on the demo backend with the first seeded demo
+merchant's real rows; greeting refusal; plan-only mode; missing context → skip + `needs_clarification`; 422s
+for unknown context key / empty query / extra body key; the run lands in the ledger with the verdict; a
+refused grant is a failed verdict never a 500; zero-LLM cost recorded). App-surface pins green (`REQUIRED_PATHS`
+gains `/ai/v1/agent/plan`; `test_app_surface`, `test_health_and_tools`, and the agent suite together: **28
+passed**). LIVE this session (verify2-backed AI, mock provider): greeting → refusal, nothing planned,
+`answerable: false`; `execute=false` → plan for `get_user_preferences`, `report: null`; `how much` with demo
+merchant context → `get_price` `ok` (answerable); hours → real `weekly_hours` rows from the verify2 corpus
+(`ms=94.0`, merchant `8fcdeff4-…`). The JSON envelope initially failed to serialise `datetime.time` in the
+hours rows — caught by the first live probe, fixed with `jsonable_encoder` at the boundary, re-measured.
+Platform `:8090` was found DOWN this session (the same class of silent crash as the web plane earlier) and
+was restarted detached; the web merchant console re-verified end-to-end (sign-in → 200; `/merchant` → 200 at
+91,899 bytes with `basil-leaf-0419` at 36,204 and `v_merchant_funnel` at 38,225).
+
+**Not claimed.** (a) Auth on the route — it is service-to-service (§7.0), consistent with the other internal
+surfaces; no browser calls it. (b) The LLM-level loop, roster agents and §10's 12s request budget.
+(c) Multi-entity turns; one subject `context` per call. (d) Budget beyond the six-step cap and the registry's
+per-step timeout. (e) The answer the caller composes from verdicts — the surface returns data, never prose.
+
+- readers: `apps/ai/nexus_ai/api/routes_agent.py` (the route), `apps/ai/nexus_ai/api/app.py` (router wiring),
+  `apps/ai/tests/test_the_agent_plan_surface.py`, `apps/ai/tests/test_app_surface.py`,
+  `docs/API_CONTRACT.md` (§7), `docs/TRACEABILITY.md` (§11-14).
