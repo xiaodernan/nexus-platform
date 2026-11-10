@@ -37338,3 +37338,32 @@ per-step timeout. (e) The answer the caller composes from verdicts — the surfa
 - readers: `apps/ai/nexus_ai/api/routes_agent.py` (the route), `apps/ai/nexus_ai/api/app.py` (router wiring),
   `apps/ai/tests/test_the_agent_plan_surface.py`, `apps/ai/tests/test_app_surface.py`,
   `docs/API_CONTRACT.md` (§7), `docs/TRACEABILITY.md` (§11-14).
+
+## 855. D855 — two lanes, one number: 851 is bound here, and the 午市 landing is credited where it belongs
+
+**What happened.** While this session's AI lane landed its unit, a parallel lane (the mock-plane numeral
+unit) appended `## 851` from a tree this session never pulled (commit 9e24292, `STATUS: append D851 - the
+hour a visitor speaks was read by nobody on the mock plane`; its repair shipped in D801-web, e6f3f384, with
+its measurements re-run and pinned against the D850-era tree). This session, appending from its own tail,
+wrote `## 851` for the orchestrator (commit 2ded267) — and `## 852` for a unit whose files it found
+**uncommitted in the working tree**: the 午市 retirement (apps/web/src/lib/mock/index.ts +
+stated-time.test.ts), verified here (vitest 15/15, 2026-11-10) and committed as 575beaa as a **carried
+lane**, not authored work. No history was rewritten; both 851s stand as committed.
+
+**The binding, plainly:**
+
+- `## 851` (9e24292) — the mock-plane numeral unit. Chinese numerals rewritten before the clock regex
+  (numerals.py:70, gated by the hour marker at timeparse.py:156); the web mock gained the mirror pass.
+- `## 851` (2ded267, 09eb721) — the orchestrator unit: planner/executor, `tool_selection_v1`, the
+  five-suite CI gate. Disjoint code; the number is the collision, nothing else.
+- `## 852` (575beaa, 46c1a1b) — the 午市 retirement. Carried by this session, credited to the parallel
+  lane. NOT authored here. `stated-time.test.ts` 15/15 on this session's re-run.
+- `## 853` — the cloud deployment images (597e194, c1e609b).
+- `## 854` — the agent surface /ai/v1/agent/plan (80a4e88, a86c23b).
+
+**From here on, units number from 856.** Nothing in CI reads unit numbers for a verdict; the ledger is the
+only place the numbers live, and this entry binds them for the record.
+
+**Not claimed.** Which session authored the 午市 files — found uncommitted and landed at 575beaa with
+thanks, not with a claim; the parallel lane's own intent for a D852 is unknown. That either 851 is edited
+retroactively — both stand as committed; this entry is the correction, not a rewrite.
