@@ -4113,7 +4113,10 @@ normal boot unchanged unless a profile opts in.
   stays on the monolith; the limiter is per gateway process by design. `scripts/check_cloud_edge.mjs`
   gates the wiring; the smokes carry the behavioural assertions (the breaker is tripped live on the
   dead-port fixture, the limiter is hammered live through the lb smoke).
-- **NEXT - deployment:** build the three Docker images and start the `cloud` compose profile end to end
-  (§845(a)); decide whether the smoke belongs in `db_gate_fresh.sh` (§845(e) says why it does not today).
+- **Deployment LANDED, deployment proof partial (D853/§853):** the three images build from the
+  host-verified jars (`Dockerfile`; `Dockerfile.build` is the self-contained source build for CI or a warm
+  network); the `cloud` compose profile is validated (`docker compose config --services`), but the
+  containers never left `Created` on this saturated host this session — the running-plane proof remains
+  open. The smoke does NOT belong in `db_gate_fresh.sh` (§845(e)); its gate is the CI `cloud` job.
 - **Standing rule:** any new host coordinate runs `scripts/check_cloud_plane_ports.mjs` first - on this
   machine a canonical port is presumed contested until measured free (D9, D847).

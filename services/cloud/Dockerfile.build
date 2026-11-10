@@ -1,0 +1,22 @@
+# The self-contained source build — the path for CI or a machine with a warm network. It compiles
+# the reactor inside the build container (Java 21) and runs it on Java 25, matching the parent
+# pom's stated split. On a cold network the Maven Central tree downloads inside the image and the
+# build is slow; compose uses `Dockerfile` (the jar the smokes verified) instead.
+#
+#   docker build -f services/cloud/Dockerfile.build --build-arg MODULE=gateway services/cloud
+#
+# D851: the module sources are copied in (the pom-only version of this file could never produce a
+# working jar) and the Maven local repo is a BuildKit cache mount, so the first build downloads
+# Maven Central exactly once.
+FROM maven:3.9-eclipse-temurin-21 AS build
+ARG MODULE
+WORKDIR /src
+COPY . .
+RUN --mount=type=cache,target=/root/.m2 mvn -q -B clean package -pl "${MODULE}" -am -DskipTests
+
+FROM eclipse-temurin:25-jre
+ARG MODULE
+WORKDIR /app
+COPY --from=build /src/${MODULE}/target/app.jar /app/app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
