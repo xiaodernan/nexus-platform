@@ -497,7 +497,7 @@ Three changes, each covering a distinct way to be wrong:
    base paths accepted as strict prefixes and *extensions* (`/x/{id}/reindex`) still reported.
 
 Current ledger: **101 routes parsed · 64 served · 29 client-only · 0 missing · 0 undocumented**, over a 270-file
-corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:328` runs it with `--report`, so
+corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:373` runs it with `--report`, so
 CI stays advisory while the 29 rows are worked off; the split is by owner, not by excuse.
 
 Two of those 30 were true gaps that the old matcher hid, and both became visible rather than passed (that count is
@@ -4191,7 +4191,7 @@ next              reported to their lanes, not edited: the AI service binds json
                     through asyncpg, which quotes a str again · 188 string-valued jsonb rows on the live demo
                     database, 34 of them events.properties (task #62); and the web lane declares Guide.body_blocks
                     required (apps/web/src/lib/types.ts:271), maps over it at growth-view.tsx:72, synthesises it
-                    in lib/mock/index.ts:878, while the string body_blocks does not occur anywhere in
+                    in lib/mock/index.ts:885, while the string body_blocks does not occur anywhere in
                     services/platform/src/main/java · a live §8 guide cannot satisfy the type its reader assumes.
                     Residue this row owns: (a) "the cited line mentions the row's table, column or key" is a
                     disjunction over three identifiers, so a citation to the right line for the wrong reason
@@ -10459,10 +10459,10 @@ reports its LAST command unless the shell holds it. `scripts/db_gate_fresh.sh:51
 own pipes together, and D150/D151’s proof that step 11 can stop the run is a proof about that one line; GitHub
 Actions does not hold them, and its documented default for a `run:` step on Linux is `bash -e {0}`
 (workflow-syntax reference, the shell table: unspecified -> `bash -e {0}`; `shell: bash` -> `bash --noprofile
---norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:325-335)
+--norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:370-380)
 so that the report is an artifact, and none of them declared a shell, so none of them could fail. Measured in a
 shell rather than argued: `false | tee /dev/null` exits 0 under `bash -e` and 1 under `bash -eo pipefail`. All three
-declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:310), and the census prints
+declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:355), and the census prints
 `7 step(s) pipe a checker into tee` with 0 UNPROTECTED.
 (C) TWO COUNTS IN THIS UNIT’S OWN PROSE WERE WRONG, AND RUNNING A FILE CORRECTED BOTH. The note written above the
 piped steps said three steps "carried Hard-fail in their own comments". One of the three does; one of the other two
@@ -21785,7 +21785,7 @@ Two defects in one seam, and each one hid the other.
 
 **§352 corrected by supersession, not by editing.** That row wrote this file's network path as `pragma: no cover` and never exercised, and counted 16 cases in it; all three are false from this row on. It stands as written, because editing an earlier section shifts the line numbers of every section after it — the exact drift that gate step 16 reads.
 
-**Reported, not fixed here.** `/ai/v1/health` answers with `settings.embedding_provider` (apps/ai/nexus_ai/api/routes_system.py:84), not with the adapter the factory built. `embedding_provider=http` with no credentials builds `HashingEmbedding` (apps/ai/nexus_ai/models/embeddings.py:194,180) and health still reports `http`, with `dim` and `model` from the same config — so the surface that exists to say which provider is serving answers a different question than the one the factory decided. The degrade itself is pinned by a test; the disclosure changes a served contract shape and needs its own witness.
+**Reported, not fixed here.** `/ai/v1/health` answers with `settings.embedding_provider` (apps/ai/nexus_ai/api/routes_system.py:85), not with the adapter the factory built. `embedding_provider=http` with no credentials builds `HashingEmbedding` (apps/ai/nexus_ai/models/embeddings.py:194,180) and health still reports `http`, with `dim` and `model` from the same config — so the surface that exists to say which provider is serving answers a different question than the one the factory decided. The degrade itself is pinned by a test; the disclosure changes a served contract shape and needs its own witness.
 
 **Discipline note.** The general form: **a test file's docstring that forbids a path from being exercised is a claim about the code, and the code has to be asked whether it can run at all** — a method that raises on its first line survives every suite-wide green count, and the pragma is what makes it look deliberate. And the second form: **"is the provider X" is not the question "is a vector available"**; gating a capability on a configuration label makes the lane depend on which adapter was named, when the two conditions that actually decide it (a vector exists, and a backend that can use one) were already combined on the line below the guard.
 
@@ -24855,9 +24855,9 @@ counted one file short of the reader's — the root `Makefile` its extension tes
 
 **The second red was D571's own commit, and the ledger is where it is corrected.** D571 added six lines to
 `.github/workflows/ci.yml` above three committed citations, so its own commit moved the file under three rows
-written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:328` (the
-`--report` run), `.github/workflows/ci.yml:325-335` (the three steps that pipe a reader into `tee`),
-`.github/workflows/ci.yml:310` (the note that says why they declare `shell: bash`). Each was read at the commit
+written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:373` (the
+`--report` run), `.github/workflows/ci.yml:370-380` (the three steps that pipe a reader into `tee`),
+`.github/workflows/ci.yml:355` (the note that says why they declare `shell: bash`). Each was read at the commit
 that wrote the row (`3d4820e`: 240, 255, 258) and at HEAD (246, 261, 264) before the re-aim, the range's end
 included (276 at `3d4820e` is 282 at HEAD).
 
@@ -25126,9 +25126,9 @@ reader filed all ten MOVED against the commit that carried them, which is the re
 a new one: a citation is EXACT while the line it names still holds the text it held when its row was
 written, so a commit that shifts a cited file invalidates the rows that cite it even when the ledger itself
 did not move. The ten are re-aimed from the same `--reaim` output, the three range ends moving with their
-starts, and every target was read by hand first: `.github/workflows/ci.yml:328` is the `--report` run,
-`.github/workflows/ci.yml:325-335` is the three steps that pipe a checker into `tee`,
-`.github/workflows/ci.yml:310` is the note that says why they declare `shell: bash`,
+starts, and every target was read by hand first: `.github/workflows/ci.yml:373` is the `--report` run,
+`.github/workflows/ci.yml:370-380` is the three steps that pipe a checker into `tee`,
+`.github/workflows/ci.yml:355` is the note that says why they declare `shell: bash`,
 `.github/workflows/ci.yml:266-270` is the block that boots Spring on 8080, uvicorn on 8000 and Next on
 3000 and waits on all three, `scripts/falsify_reader_reachability.mjs:169-175` is the arm that used to
 resolve last-wins, and `scripts/db_gate_fresh.sh:579` and `scripts/db_gate_fresh.sh:567` are step 16's
@@ -25248,7 +25248,7 @@ That is the next unit: derive each collection's membership from its claim the wa
 - `tai-wai-under-100` — 全部成員都喺大圍區，人均低於100蚊。清單共有9間。全部商戶均為虛構。 — 9 members, all in Tai Wai, all below HK$100. Its members also include a `service`, and the copy does not name kinds: the sentence says what the list supports and stays silent about what it does not;
 - `weekend-family-sha-tin` (itinerary) — 由午餐、活動同晚餐組成嘅示範一日行程。全部成員都係親子嘅商戶。行程包含週末供求時段。全線共9個站。全部商戶均為虛構。 — 9 members, kinds restaurant/activity/experience, all in Sha Tin, all carrying `family_occasion`, all with Sunday slots and Saturday-and-Sunday pairs.
 
-**Wiring, and the CI step that was failing on its own command line.** Gate step 3 runs the census and then its arms immediately after generation (`scripts/db_gate_fresh.sh:172`, `:175`), placed after the `if` so it also runs under `--skip-generate` — the census judges the bytes step 4 loads, so a plane someone else generated is exactly the plane worth checking. CI runs it in both jobs that load the seed: `ai` after its generate (`.github/workflows/ci.yml:180` → `:185`, which needed a `setup-node` step because that job had none) and `e2e` before `load.sh` (`:257` → `:262`); the `changes` filter now counts `data/seed/` as an input to the `ai` job (`:48`) because the seed *is* that job's input. While wiring `e2e` this unit read the generate command already there and found it dead: `python data/seed/generate.py --counts merchants=80,offerings=600,reviews=1200`. `--counts` takes a preset NAME — `full|ci|smoke` — so argparse refused the value, the step failed on its own command line, and the "Start data stores + schema + demo data" step was generating nothing for the suite that followed it. The three separate scale flags carry the numbers that line meant, and the plane they produce now self-checks PASS and reads PASS through the census.
+**Wiring, and the CI step that was failing on its own command line.** Gate step 3 runs the census and then its arms immediately after generation (`scripts/db_gate_fresh.sh:172`, `:175`), placed after the `if` so it also runs under `--skip-generate` — the census judges the bytes step 4 loads, so a plane someone else generated is exactly the plane worth checking. CI runs it in both jobs that load the seed: `ai` after its generate (`.github/workflows/ci.yml:225` → `:185`, which needed a `setup-node` step because that job had none) and `e2e` before `load.sh` (`:257` → `:262`); the `changes` filter now counts `data/seed/` as an input to the `ai` job (`:48`) because the seed *is* that job's input. While wiring `e2e` this unit read the generate command already there and found it dead: `python data/seed/generate.py --counts merchants=80,offerings=600,reviews=1200`. `--counts` takes a preset NAME — `full|ci|smoke` — so argparse refused the value, the step failed on its own command line, and the "Start data stores + schema + demo data" step was generating nothing for the suite that followed it. The three separate scale flags carry the numbers that line meant, and the plane they produce now self-checks PASS and reads PASS through the census.
 
 **What it does not do, stated rather than implied.**
 
@@ -25278,7 +25278,7 @@ That is the next unit: derive each collection's membership from its claim the wa
 
 **The fix, and what it gives up.** Blame at HEAD. `blameByLine(git, path, rev = 'HEAD')` (`scripts/check_line_cite_drift.mjs:117`), one call site passing it (`:208`), so the basis and the text are one reading again and the strict classes can no longer be emptied by an edit. What the edit represents is then counted instead of judged: the census walks the disk copy of each ledger against HEAD's copy line by line (`:218`) and prints one number per run (`:355`) — `ledger lines differing between disk and HEAD: N (the census grades HEAD's copy, so a number edited on disk is not judged until it is committed)` — with a second clause naming how many of the ledgers have no disk copy at all, because on a plane like an archive tree their divergence is unknown rather than zero. It read 1 on the plane that produced the false green and 0 after this unit's re-aim was committed. This is a disclosure, not a verdict: the numbers a lane is typing are simply not graded yet, and nothing here pretends to know what they will mean once they are.
 
-**The harness had the seam in the other direction.** Every arm of `scripts/falsify_line_cite_drift.mjs` spawns the reader as it sits on disk, while the gate runs the file as committed (`scripts/db_gate_fresh.sh:567` for the census, `:579` for the strict one, `:566` for the arms; CI runs the census at `.github/workflows/ci.yml:373` and the arms at `:367`). So an arm battery green against an uncommitted reader is a green for a file nobody has installed. The harness now compares that one path's worktree bytes with its HEAD blob (`scripts/falsify_line_cite_drift.mjs:64`) and refuses with exit 2, printing the diff line and the stat, when they differ. Measured: run while D577's reader edit was still uncommitted it printed `RESULT: NOT CHECKED — the reader on disk is not the reader at HEAD`, with `1 file changed, 44 insertions(+), 10 deletions(-)`, and no arm ran; after the reader landed the same command runs its full battery. The check is scoped to the reader's own path and not to `git status`, because in a worktree several lanes write to, the status line names every one of them and the only divergence that changes what an arm proves is this file's bytes.
+**The harness had the seam in the other direction.** Every arm of `scripts/falsify_line_cite_drift.mjs` spawns the reader as it sits on disk, while the gate runs the file as committed (`scripts/db_gate_fresh.sh:567` for the census, `:579` for the strict one, `:566` for the arms; CI runs the census at `.github/workflows/ci.yml:418` and the arms at `:367`). So an arm battery green against an uncommitted reader is a green for a file nobody has installed. The harness now compares that one path's worktree bytes with its HEAD blob (`scripts/falsify_line_cite_drift.mjs:64`) and refuses with exit 2, printing the diff line and the stat, when they differ. Measured: run while D577's reader edit was still uncommitted it printed `RESULT: NOT CHECKED — the reader on disk is not the reader at HEAD`, with `1 file changed, 44 insertions(+), 10 deletions(-)`, and no arm ran; after the reader landed the same command runs its full battery. The check is scoped to the reader's own path and not to `git status`, because in a worktree several lanes write to, the status line names every one of them and the only divergence that changes what an arm proves is this file's bytes.
 
 **Arm 13 changes the one property no earlier arm touched** — whether the citing line exists as a commit (`scripts/falsify_line_cite_drift.mjs:292`). Three readings of the same repository: a clean plane whose committed citation is stale, `MOVED 1` and `diverges 0`; that plane with the correct number typed into the ledger on disk, still `MOVED 1`, `--strict MOVED` exit 1, `diverges 1`; those same bytes committed, `EXACT 1` and `diverges 0`. Predicted before the run, and held — 13 of 13.
 
@@ -29927,7 +29927,7 @@ here measures that path. `tests/e2e/specs/consumer/vertical-slice.spec.ts:53` an
 Simplified prompts (measured: 帮我找沙田适合情侣约会的餐厅，预算500港币，安静一点，周六晚上 / 帮我找附近适合朋友聚会的餐厅);
 they are a reverse control now, not a witness — with both scripts answering, that spec cannot see a
 regression in either direction. Two cue alternatives are dead as written and were left alone: `evenight` in
-`apps/web/src/lib/mock/index.ts:227` and `hkdb?` in `apps/web/src/lib/mock/index.ts:177` — a typo pattern
+`apps/web/src/lib/mock/index.ts:234` and `hkdb?` in `apps/web/src/lib/mock/index.ts:177` — a typo pattern
 that can still match, which is the vocabulary lane's call and not this one's. And `tmp/` is gitignored and
 does get swept: every figure above was re-run for this row rather than copied from an earlier window, and
 the parent-bytes experiment is reproducible from `git show 6145c6c:apps/web/src/lib/mock/index.ts` alone.
@@ -30187,11 +30187,11 @@ plane now, and the lexicon carries no afternoon-tea category for the guard's ros
 (f) The service's own docstring (`apps/ai/nexus_ai/nlu/timeparse.py:204`) still says "Two of the 37 cues" while the
 table reads 39 tokens; the count is the service lane's, and this unit read it as text rather than editing it.
 
-- readers: `apps/web/src/lib/mock/index.ts:227` (`PART_OF_DAY_WINDOWS`), `:235` (`CLOCK_RE`), `:244`
+- readers: `apps/web/src/lib/mock/index.ts:234` (`PART_OF_DAY_WINDOWS`), `:235` (`CLOCK_RE`), `:244`
   (`cuePattern`, the Latin boundary), `:251` (`TIME_CUES`, longest-cue-wins), `:262` (`CATEGORY_SURFACES`),
   `:266` (`occurrences`), `:289` (`cueOpensACategory`), `:310` (`guessMeridiem`), `:318` (`readClock`),
   `:351` (`readStatedTime`), `:353` (the guard's only call site), `:428`/`:458` (`mergeIntent`, which now shares
-  the reader), `apps/web/src/lib/mock/stated-time.test.ts:102`/`:117`/`:128` (the surface and roster readers that
+  the reader), `apps/web/src/lib/mock/stated-time.test.ts:104`/`:117`/`:128` (the surface and roster readers that
   throw on an empty population), `:220` (the positional leg), `:243` (the §8 both-directions leg), `:264` (the
   roll), `:293` (the follow-up), `:325` (the clock-spelling census),
   `apps/web/src/lib/mock/vocabulary-spelling.test.ts:167` (the scanner that reads a character class as a class),
@@ -36698,7 +36698,7 @@ touched is compose, and only as an opt-in profile.
   id; `EdgeInfoController.java:33-34` exposes the resolved label and route table at `/cloud/info`
   without exposing the environment.
 
-**The smoke is the proof, and it is offline.** `scripts/cloud_smoke.sh:130-166` builds the reactor,
+**The smoke is the proof, and it is offline.** `scripts/cloud_smoke.sh:134-170` builds the reactor,
 starts the three jars on loopback ports 18761/18888/18088, then asserts five things: the config server
 serves the file; the gateway resolved `cloud-smoke` rather than its local default; the route table
 carries the platform and AI ids and honours a URI override (`:141-145`); a routed miss still carries
@@ -36739,8 +36739,8 @@ would add a Maven build to every gate run.
   `services/cloud/config-server/src/main/resources/config-repo/nexus-gateway.yml:6`,
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/GatewayApplication.java:13-15`,
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRequestIdFilter.java:22-36`,
-  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeInfoController.java:33-34`,
-  `scripts/cloud_smoke.sh:130-166`, `infra/docker-compose.yml:162-222`.
+  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeInfoController.java:39-40`,
+  `scripts/cloud_smoke.sh:134-170`, `infra/docker-compose.yml:162-222`.
 ## 846. D846 · the consumer's question gets a thread: the agent door relays a user turn, the chat writes both sides, and the merchant page asks (`services/platform/src/main/java/com/nexus/conversation/ConversationService.java`, `apps/ai/nexus_ai/api/routes_stream.py`, `apps/web/src/components/ask-merchant.tsx`)
 
 **The gap, in three places.** The §142 loop was open at every joint: the platform's internal agent door accepted only `ai_agent|system`, so a consumer's own turn had no write path; the AI stream wrote `agent_runs` and nothing else, so the merchant inbox could not see what was asked; and the merchant page had no question box, so the loop had no entering edge. Each joint is closed here, and the joins are proven by three suites rather than by prose.
@@ -36820,7 +36820,7 @@ authentication: a squatter answering our exact JSON would read as ours.
   `services/cloud/eureka-server/src/main/resources/application.yaml:2-7`,
   `services/cloud/config-server/src/main/resources/application.yaml:2-5`,
   `services/cloud/gateway/src/main/resources/application.yaml:13`,
-  `services/cloud/gateway/src/main/resources/application.yaml:44`, `infra/docker-compose.yml:180`,
+  `services/cloud/gateway/src/main/resources/application.yaml:96`, `infra/docker-compose.yml:180`,
   `infra/docker-compose.yml:195`, `infra/docker-compose.yml:222`.
 
 ## 848. D848 — the merchant console's live identity: the caller's own merchant, not the mock fixture (D843 follow-through)
@@ -36901,8 +36901,8 @@ rebuilt bytes this session (both smokes PASS).
 - readers: `services/platform/pom.xml:38`, `:94-102`,
   `services/platform/src/main/resources/application.yml:54-67`,
   `services/platform/src/main/resources/application-cloud.yml:10-25`,
-  `services/cloud/gateway/src/main/resources/application.yaml:24`, `:72-82`,
-  `scripts/check_cloud_discovery.mjs:16-29`, `scripts/cloud_lb_smoke.sh:76-121`,
+  `services/cloud/gateway/src/main/resources/application.yaml:26`, `:72-82`,
+  `scripts/check_cloud_discovery.mjs:16-29`, `scripts/cloud_lb_smoke.sh:77-122`,
   `.github/workflows/ci.yml:50`, `:134-170`, `:482`, `:489`.
 
 ## 850. D850 — the edge earns its keep: three breakers, an honest fallback, a per-client limiter, one request id
@@ -36979,7 +36979,7 @@ a browser retrace of the pre-fix world.
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/TokenBucket.java:1-41`,
   `services/cloud/gateway/src/test/java/com/nexus/cloud/gateway/TokenBucketTest.java`,
   `scripts/cloud_smoke.sh:126-128`, `:156-170`, `scripts/cloud_lb_smoke.sh:106-107`, `:125-151`,
-  `scripts/check_cloud_edge.mjs`, `.github/workflows/ci.yml:154-158`.
+  `scripts/check_cloud_edge.mjs`, `.github/workflows/ci.yml:156-160`.
 
 ## 851. D851 · the hour a visitor speaks was read by nobody on the mock plane (`apps/web/src/lib/mock/index.ts`, `apps/web/src/lib/mock/numeral-hours.test.ts`)
 
@@ -36987,7 +36987,7 @@ a browser retrace of the pre-fix world.
 raw text to it. `apps/ai/nexus_ai/nlu/timeparse.py:305` runs
 `normalise_numerals(text, only_before=_HOUR_MARKERS)` and searches the REWRITTEN string; the pass is
 `apps/ai/nexus_ai/nlu/numerals.py:70` and the marker roster is `timeparse.py:156` (`"點時"`). The web had
-no mirror of that pass, so `apps/web/src/lib/mock/index.ts:297` saw no clock in 「九點」 and §8's floor made
+no mirror of that pass, so `apps/web/src/lib/mock/index.ts:304` saw no clock in 「九點」 and §8's floor made
 the lane ask for a time the visitor had already given. Where a part-of-day word was present the mock fell
 back to that window's opening hour instead, which is a wrong answer wearing the shape of a right one.
 
@@ -37011,7 +37011,7 @@ back to that window's opening hour instead, which is a wrong answer wearing the 
   one of them is a sentence a Hong Kong visitor types.
 
 *What ships.* One rewrite pass in front of the clock, mirroring the service rather than improving on it:
-`CN_DIGITS` (`apps/web/src/lib/mock/index.ts:243`), `HOUR_MARKERS` (`:251`), `CN_HOUR_RUN` (`:255`, built from the roster's own
+`CN_DIGITS` (`apps/web/src/lib/mock/index.ts:250`), `HOUR_MARKERS` (`:251`), `CN_HOUR_RUN` (`:255`, built from the roster's own
 keys so a digit added to the table is a digit the reader matches), `cnNumber` (`:261`),
 `normaliseHourNumerals` (`:287`) and the call at `:383`. Three decisions in it are not obvious and are
 copied, not chosen:
@@ -37024,7 +37024,7 @@ copied, not chosen:
     an hour marker follows immediately, which is what keeps 星期三 a weekday and 三小時 a duration
     instead of handing both to the clock. Dropping the lookahead is arm A2.
   * **An out-of-range run is the authority's out-of-range value too.** 三十三點 becomes `33點`, and the
-    `_valid_clock` mirror at `apps/web/src/lib/mock/index.ts:406` refuses it there exactly as the service refuses it, so the
+    `_valid_clock` mirror at `apps/web/src/lib/mock/index.ts:413` refuses it there exactly as the service refuses it, so the
     numeral reader does not grow a bounds check the service does not have. The same mirroring loses the
     minute tail on BOTH planes — see *Not claimed*.
 
@@ -37074,7 +37074,7 @@ the shipped rewrite bytes with each splice applied (`tmp/d721_why.mjs`, `tmp/d72
 
   * **A5** — with 十 out of the roster the run breaks at it, so 三十三點 rewrites to `三十3點` and the tail
     三 alone reaches the marker: the clock reads `3點` and publishes 03:00 for a sentence that states no
-    legal hour. The base rewrites the whole run to `33點`, which `apps/web/src/lib/mock/index.ts:406` refuses.
+    legal hour. The base rewrites the whole run to `33點`, which `apps/web/src/lib/mock/index.ts:413` refuses.
   * **A8** — summing turns 二五 into 7 instead of 25, so 二五點 rewrites to `7點`: a legal hour where the
     authority's out-of-range 25 was refused. The refusal is the bounds check's, and a reader that
     mis-composes the number walks straight past it.
@@ -37109,7 +37109,7 @@ would have been `tail`'s.
 read 「深夜」 as `2026-11-02T10:00:00.000Z` where the service opens it at `15:00:00.000Z`. The cause was
 D698 (§677), which added `deep_night` at `timeparse.py:68` and reads it in the meridiem shift at
 `:356` and `:358`. The other lane's `e6f3f384` added the two missing bands to `PART_OF_DAY_WINDOWS`
-(`apps/web/src/lib/mock/index.ts:227`, now **seven** windows, the service's seven), and the mock's roster
+(`apps/web/src/lib/mock/index.ts:234`, now **seven** windows, the service's seven), and the mock's roster
 now names the same seven labels with the same bounds. The two reds are gone — the suite is green — so
 this unit's next step was taken by the lane that owed it, and this section records the taking rather
 than claiming it. One divergence that band change did NOT settle is carried below and in PLAN: the
@@ -37126,7 +37126,7 @@ that moves one has to change a green test rather than rediscover the gap:
     15:00 there and 03:00 here, and 下午茶三點 now agrees with 下午茶3點 — the numeral pass made the two
     spellings of one sentence consistent without making either consistent with the service.
   * **A named weekday moves the day there and is not a cue here at all.** 星期日三點 is Sunday on the
-    service; this lane knows only 週六 and shifts by a constant `+4` (`apps/web/src/lib/mock/index.ts:416`), so the leg requires
+    service; this lane knows only 週六 and shifts by a constant `+4` (`apps/web/src/lib/mock/index.ts:423`), so the leg requires
     the weekday sentence to publish the same instant as a bare 三點. The refusals leg's 星期三 row is the
     same gap seen from the other side: the service answers `range:Wed 09:00` and this lane has no `range`
     carrier to publish it in (`apps/web/src/lib/types.ts` spells its no-time `none`), which is the
@@ -37206,7 +37206,7 @@ cannot honestly read.
   `apps/ai/nexus_ai/eval/cli.py`,
   `apps/ai/tests/test_the_orchestrator_plans_the_min_necessary_steps.py`,
   `apps/ai/tests/test_the_eval_case_files_keep_their_shape.py`,
-  `.github/workflows/ci.yml:254`,
+  `.github/workflows/ci.yml:258`,
   `docs/AGENT_CONTRACT.md`, `docs/AI.md`, `docs/TRACEABILITY.md`, `docs/TESTING.md`, `docs/ROADMAP.md`.
 
 ## 852. D852 — the mock plane read a word the service already retired: 午市 out of the noon band

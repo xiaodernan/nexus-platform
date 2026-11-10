@@ -5092,7 +5092,7 @@ checker; what is being retracted is the claim of having counted it.
 placeholders in `apps/ai/nexus_ai/api/runs.py` (:118, :120, :121, :158, :159, :182, :207, :208) through asyncpg,
 whose codec quotes a `str` a second time — D86 measured the result at 188 string-valued jsonb rows on the live
 demo database, 34 of them `events.properties`. And the web lane's `Guide` type declares `body_blocks` required
-(`apps/web/src/lib/types.ts:271`), `growth-view.tsx:72` maps over it, `lib/mock/index.ts:1051` synthesises it, and
+(`apps/web/src/lib/types.ts:271`), `growth-view.tsx:72` maps over it, `lib/mock/index.ts:1058` synthesises it, and
 the string `body_blocks` does not occur anywhere in `services/platform/src/main/java` — so a live §8 guide cannot
 satisfy the type the reader assumes. Both are cited here and left for their owners.
 
