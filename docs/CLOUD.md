@@ -78,7 +78,7 @@ cd apps/ai && NEXUS_AI_EUREKA_ENABLED=true NEXUS_AI_HOST_PORT=8010 \
 | `cloud_lb_smoke.sh` | one REAL `/api/v1/health` through lb://NEXUS-PLATFORM, one through lb://NEXUS-AI; X-Request-Id echo; deterministic limiter |
 | `cloud_refresh.sh` | config edit lands at the edge with no restart (`POST /actuator/refresh`) |
 | `cloud_monolith_refresh.sh` | config edit lands ON THE MONOLITH with no restart (v1 → repo rewrite → POST refresh → v2 banner, same pid) |
-| `cloud_retry_smoke.sh` | idempotent GET retries twice past a transient 5xx upstream; POSTs never retried; failing POST lands `edge_upstream_unavailable` (503); the edge's actuator surface carries `http.server.requests` + `resilience4j.circuitbreaker.*` (measured; the gateway's Retry filter exposes no meter) |
+| `cloud_retry_smoke.sh` | idempotent GET retries twice past a transient 5xx upstream; POSTs never retried; failing POST lands `edge_upstream_unavailable` (503); `nexus.edge.response.5xx == 1` (the fallback 503 — the two 500s never leave the wire, the Retry filter writes a final 200); actuator carries `http.server.requests` + `resilience4j.circuitbreaker.*` (the gateway Retry filter itself emits no meter) |
 | `cloud_ai_admin_smoke.sh` | the FastAPI service shows UP in the Spring Boot Admin (`/instances` — the Python service joins the window) |
 | `db_gate_fresh.sh` | the seeded database gate (unrelated plane; not the cloud job's dependency) |
 

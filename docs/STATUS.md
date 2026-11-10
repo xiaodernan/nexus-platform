@@ -38182,3 +38182,32 @@ move the moment this lands); that the demo plane is reachable on any other host 
 machine's documented ports).
 
 - readers: `README.md` (the "What exists today" section).
+
+## 880. D880 — the edge counts its own 5xx responses, nothing inferred: `nexus.edge.response.5xx`
+
+**What shipped.** `EdgeResponseMetricsFilter` (new `WebFilter`, LOWEST_PRECEDENCE) counts **every 5xx status
+that LEAVES the edge**, tagged `route` (the matched route id, `unknown` when unmatched). Exposed via
+actuator metrics (`health,info,gateway,refresh,metrics`), verified before and after.
+
+**What it honestly caught (and why it measured differently than expected).** First assert expected 3
+(two retry-arm 500s + one fallback 503) — the smoke FAILED with exactly **1**. The truth: Spring's Retry
+filter absorbs the two 500s as its own replays; the route's synthetic FINAL response is 200 — the edge
+never writes a 5xx on a retry-armed upstream path. Only the POST arm's 503 fallback leaves the wire as
+5xx. The filter is not wrong; my expectation was. The ledger records the correct, measured value:
+**`nexus.edge.response.5xx == 1`** (fallback only, deterministic on every smoke run).
+
+**Verification this unit did earn.** `cloud_retry_smoke.sh` PASS with the new metric assertion (GET → 200
+after two retries; POST → 503 `edge_upstream_unavailable`, 1 fixture hit; `nexus.edge.response.5xx == 1`;
+http.server.requests + resilience4j.circuitbreaker.* counters all present). `cloud_smoke.sh` PASS with
+the filter in place. `check_cloud_plane.mjs` extended with the filter's presence claim → **52 checks held**.
+
+**Not claimed.** That the 500s the edge absorbed are observable anywhere (the Retry filter's internals
+have no meter — counted separately would require filter ownership; not taken). That this metric predicts
+anything — it counts past 5xx responses, not failures waiting to happen. That a non-5xx failure (404s,
+timeouts without status) is captured — deliberately not. In the 5xx fallback path, the counter tags
+`platform` or `ai` as applicable; unmatched paths tag `unknown`.
+
+- readers: `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeResponseMetricsFilter.java`,
+  `scripts/cloud_retry_smoke.sh` (the counter assertion),
+  `scripts/check_cloud_plane.mjs` (the 52nd check),
+  `services/cloud/gateway/src/main/resources/application.yaml` (metrics exposure, D876).

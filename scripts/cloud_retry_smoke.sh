@@ -127,4 +127,16 @@ printf '%s' "$post_body" | grep -q 'edge_upstream_unavailable' \
     || fail "POST to a failing upstream answered 503 but not the honest envelope: $post_body"
 echo "  failing POST lands edge_upstream_unavailable (503) instead of 405"
 
+# D875/D880: the D880 counter sees what LEAVES the edge — the two 500s on the GET arm never did
+# (the Retry filter absorbed them and wrote a final 200), so only the POST arm's 503 fallback counted.
+echo "== the edge counts its own 5xx responses (nexus.edge.response.5xx) =="
+metric_body="$(curl -fsS "http://127.0.0.1:$GATEWAY_PORT/actuator/metrics/nexus.edge.response.5xx" 2>/dev/null)" \
+    || fail "nexus.edge.response.5xx missing — metrics exposure or the filter is broken"
+printf '%s' "$metric_body" | grep -q '"statistic":"COUNT"' \
+    || fail "no COUNT measurement in $metric_body"
+count="$(printf '%s' "$metric_body" | grep -oE '"value":[0-9.]+' | head -1 | cut -d: -f2 | cut -d. -f1)"
+[ "$count" = "1" ] \
+    || fail "nexus.edge.response.5xx = $count, expected exactly 1 (the POST fallback 503; the 500s never leave the edge — the Retry filter writes a final 200)"
+echo "  nexus.edge.response.5xx = $count — the two 500s were absorbed by Retry; the 503 fallback counted — honest, not derived"
+
 echo "PASS: cloud retry smoke — two retries on idempotent GETs past a transient 5xx; POSTs never retried"

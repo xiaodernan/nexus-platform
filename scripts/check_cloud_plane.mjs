@@ -124,6 +124,11 @@ const targets = ['eureka-server', 'config-server', 'gateway', 'admin-server']
   .map((m) => existsSync(join(root, 'services/cloud', m, 'target/app.jar')));
 notes.push(`app.jar present on disk for ${targets.filter(Boolean).length}/${targets.length} modules (informational)`);
 
+/* extra: the honest edge counter still exists (D880) */
+check('edge 5xx counter filter exists', 'services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeResponseMetricsFilter.java',
+      existsSync(join(root, 'services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeResponseMetricsFilter.java'))
+      && read('services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeResponseMetricsFilter.java').includes('nexus.edge.response.5xx'));
+
 if (failures.length) {
   console.log('CLOUD PLANE — FAIL');
   for (const f of failures) console.log('  - ' + f);
