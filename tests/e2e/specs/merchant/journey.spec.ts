@@ -3,16 +3,16 @@ import { test, expect, demoLogin } from '../../lib/fixture.js';
 /** Merchant core journey — spec §139, §89, §142. */
 
 test.describe('merchant journey', () => {
-  test('the merchant console renders its honest shell before sign-in exists (§46/§48)', async ({ page }) => {
-    // Both planes carry the disclosure and the same document title; the live session says the sign-in
-    // page is unbuilt in its own words, the mock plane says it in more words. What holds on both:
-    // the honest disclosure, no fabricated business figures. The heading is in <title>, and
-    // `getByText` never meets it — assert it on the document instead.
+  test('the merchant console refuses the anonymous caller and links to /signin (§46/§48)', async ({ page }) => {
+    // D843/D848 landed the sign-in door and the live console. The pre-signin shell therefore became
+    // sign-in required, not "not yet live" — the page now renders the honest sign-in prompt or the
+    // signed-in console, never a fake data surface. What still holds on both modes: the document
+    // title names the surface and no fabricated figures render.
     await page.goto('/merchant');
     await expect(page).toHaveTitle(/商戶經營概覽/);
-    await expect(page.getByText(/登錄/).first()).toBeVisible();
-    await expect(page.getByText(/尚未上線/).first()).toBeVisible();
-    // The disclosure and not a fake console: no fabricated revenue figures on this page.
+    await expect(page.getByText(/需要登錄後查看/).first()).toBeVisible();
+    await expect(page.locator('a[href="/signin"]').first()).toBeVisible();
+    // The disclosed state and not a fake console: no fabricated revenue figures on this page.
     await expect(page.getByText(/營收|收入額|成交額/)).toHaveCount(0);
   });
 

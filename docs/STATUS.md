@@ -37737,3 +37737,39 @@ that admin's image is signed, scanned, or proven reproducible beyond the single-
 
 - readers: `services/cloud/Dockerfile`, `services/cloud/Dockerfile.build`, `infra/docker-compose.yml`
   (the `cloud` profile, admin-server service), `services/cloud/admin-server/pom.xml`.
+
+## 866. D866 — the merchant-agent end-to-end proof, one spec rewritten to match what shipped
+
+**What made it red.** `specs/merchant/journey.spec.ts:6` asserted text from the pre-sign-in era: `/merchant`
+showed a placeholder asking the visitor to wait until sign-in existed. D843 landed `/signin`; D848 wired
+`merchantSession` to the caller's own `/api/v1/me` membership; the page now renders either the sign-in
+prompt (anonymous) or the live console (signed-in). The honest placeholder the test expected could no
+longer exist — the test was red on every plane, including this one.
+
+**The fix.** Rewrote the test to what the page honestly renders NOW:
+
+```ts
+test('the merchant console refuses the anonymous caller and links to /signin (§46/§48)', ...)
+  await page.goto('/merchant');
+  await expect(page).toHaveTitle(/商戶經營概覽/);
+  await expect(page.getByText(/需要登錄後查看/).first()).toBeVisible();
+  await expect(page.locator('a[href="/signin"]').first()).toBeVisible();
+  await expect(page.getByText(/營收|收入額|成交額/)).toHaveCount(0);
+```
+
+Two structural assertions kept: the document title names the surface, and NO fabricated revenue figures
+render. The anonymous-refuses assertion replaces the "sit and wait for sign-in" marker.
+
+**Re-measured.** `npm run test:merchant`: **10 passed (3.8s, 2 skipped)** — all journeys green against the
+live plane (web :3002, platform :8090 verify2, AI :8010 mock, zh-HK locale). Consumer suite re-run for
+regression safety: **22 passed, 2 skipped (2 skipped reserved for reservation/pending)**.
+
+**Not claimed.** That the test caught the regression it was written to catch — it was retired for the
+stronger reason: the page behavior changed through D843/D848, and the test asserted the old behavior. That the
+member console is now publicly acceptable without sign-in protection — D843 made this the right thing, so
+anonymous viewers get the prompt, not the data. That the `325+ lines` of evidence capture code is touched here
+— only the one assertion block was. That `.artifacts/` or `playwright-report/` change is checked in — never.
+Anything about tenant administration beyond the demo path.
+
+- readers: `tests/e2e/specs/merchant/journey.spec.ts`, `apps/web/src/components/console/console-parts.tsx`,
+  `apps/web/src/lib/i18n/dict.ts` (the `signInRequiredTitle` string).
