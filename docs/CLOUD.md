@@ -71,6 +71,7 @@ cd apps/ai && NEXUS_AI_EUREKA_ENABLED=true NEXUS_AI_HOST_PORT=8010 \
 | gate | what it proves |
 |---|---|
 | `check_cloud_plane_ports.mjs` | every host coordinate belongs to a service this repo declares |
+| `check_cloud_plane.mjs` | the whole plane, one reader (D878): reactor modules; app names/host ports; the load-bearing tokens (HA guard, window-not-wider, breakers, backoff, GET-only retry); compose `cloud` profile; CI job wiring; this page — 51 checks |
 | `check_cloud_discovery.mjs` | the platform and AI register by opt-in; the edge routes lb:// by profile; env override wins; smoke proofs exist |
 | `check_cloud_edge.mjs` | breaker + fallback + limiter + request-id wiring is intact |
 | `cloud_smoke.sh` | config server round-trip, gateway resolves config, route table, breaker trips on dead port, NEXUS-ADMIN discovery smoke (admin passes and lists the gateway) |
@@ -78,9 +79,10 @@ cd apps/ai && NEXUS_AI_EUREKA_ENABLED=true NEXUS_AI_HOST_PORT=8010 \
 | `cloud_refresh.sh` | config edit lands at the edge with no restart (`POST /actuator/refresh`) |
 | `cloud_monolith_refresh.sh` | config edit lands ON THE MONOLITH with no restart (v1 → repo rewrite → POST refresh → v2 banner, same pid) |
 | `cloud_retry_smoke.sh` | idempotent GET retries twice past a transient 5xx upstream; POSTs never retried; failing POST lands `edge_upstream_unavailable` (503); the edge's actuator surface carries `http.server.requests` + `resilience4j.circuitbreaker.*` (measured; the gateway's Retry filter exposes no meter) |
+| `cloud_ai_admin_smoke.sh` | the FastAPI service shows UP in the Spring Boot Admin (`/instances` — the Python service joins the window) |
 | `db_gate_fresh.sh` | the seeded database gate (unrelated plane; not the cloud job's dependency) |
 
-The `cloud` CI job (`.github/workflows/ci.yml`) runs `cloud_smoke.sh`, both readers, applies migrations, `cloud_lb_smoke.sh`, then the refresh smoke, the monolith-refresh smoke and the retry smoke. The gate `needs.cloud` is in the `required` job's `needs`.
+The `cloud` CI job (`.github/workflows/ci.yml`) runs `cloud_smoke.sh`, all readers (ports, discovery, edge, plane), applies migrations and `cloud_lb_smoke.sh`, then the refresh/monolith-refresh/retry smokes and the ai-admin smoke. The gate `needs.cloud` is in the `required` job's `needs`.
 
 ## What this plane does NOT claim (read this)
 

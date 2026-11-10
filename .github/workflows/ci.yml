@@ -153,11 +153,12 @@ jobs:
       # The lb smoke also boots the Python AI service with the opt-in registration.
       - uses: astral-sh/setup-uv@v5
       - run: bash scripts/cloud_smoke.sh
-      - name: Edge wiring reads (D849 discovery + D850 resilience + D847 plane ports)
+      - name: Edge wiring reads (D849 discovery + D850 resilience + D847/D878 plane guards)
         run: |
           node scripts/check_cloud_discovery.mjs
           node scripts/check_cloud_edge.mjs
           node scripts/check_cloud_plane_ports.mjs
+          node scripts/check_cloud_plane.mjs
       - name: Apply migrations (the same files the platform job applies)
         run: |
           sudo apt-get update -y && sudo apt-get install -y postgresql-client

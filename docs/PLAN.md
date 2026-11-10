@@ -4177,6 +4177,13 @@ normal boot unchanged unless a profile opts in.
   end-to-end: throwaway repo, v1 banner → rewrite → POST refresh → v2, same pid, `config_source=config-server`.
   CI's `cloud` job runs it after the edge refresh smoke (with the CI DB env). Base `dev` boot verified:
   `{"banner":"unmanaged","config_source":"local-default","profiles":["dev"]}`.
+- **D878 (§878): one reader for the whole plane — `scripts/check_cloud_plane.mjs`.** The reactor is the
+  four named modules; every module keeps its app name, host port and load-bearing token (eureka's
+  port-suffixed instance-id — D858's co-existence guard; admin's `register-with-eureka: false` — D859; three
+  CircuitBreakers and GET-only Retry — D850/D875); compose `cloud` declares all four images with admin
+  depending on eureka+gateway; the CI job invokes all six smokes + the readers; `docs/CLOUD.md` lists them
+  all and keeps the `NOT claim` honesty heading. 51 checks, PASS. The gateway Retry also gained
+  `backoff` (5ms, ×2, max 50ms) — smoke PASS after the edit.
 - **Standing rule:** any new host coordinate runs `scripts/check_cloud_plane_ports.mjs` first - on this
   machine a canonical port is presumed contested until measured free (D9, D847).
 - **D875 (§875): the edge retries idempotent GETs past a transient upstream, and the fallback stops 405-ing POST.**
